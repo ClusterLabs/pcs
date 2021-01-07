@@ -34,7 +34,10 @@ class ShowConstraintsWithSetTest(TestCase):
 
     def test_return_line_list_with_id(self):
         self.assertEqual(
-            ["Resource Sets:", fixture_constraint_console(),],
+            [
+                "Resource Sets:",
+                fixture_constraint_console(),
+            ],
             command.show_constraints_with_set(
                 [fixture_constraint()], show_detail=True
             ),

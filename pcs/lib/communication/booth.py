@@ -56,7 +56,8 @@ class BoothSendConfig(
     def _get_success_report(self, node_label):
         return ReportItem.info(
             reports.messages.BoothConfigAcceptedByNode(
-                node=node_label, name_list=[self._booth_name],
+                node=node_label,
+                name_list=[self._booth_name],
             )
         )
 
@@ -164,7 +165,9 @@ class BoothSaveFiles(
                 self._report(
                     ReportItem.error(
                         reports.messages.BoothConfigDistributionNodeError(
-                            target.label, reason, file,
+                            target.label,
+                            reason,
+                            file,
                         )
                     )
                 )

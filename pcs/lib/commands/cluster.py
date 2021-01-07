@@ -100,7 +100,9 @@ from pcs.lib.tools import (
 
 
 def node_clear(
-    env: LibraryEnvironment, node_name, allow_clear_cluster_node=False,
+    env: LibraryEnvironment,
+    node_name,
+    allow_clear_cluster_node=False,
 ):
     """
     Remove specified node from various cluster caches.
@@ -150,7 +152,8 @@ def verify(env: LibraryEnvironment, verbose=False):
         env.report_processor.report(
             ReportItem.error(
                 reports.messages.InvalidCibContent(
-                    verify_stderr, can_be_more_verbose,
+                    verify_stderr,
+                    can_be_more_verbose,
                 )
             )
         )
@@ -274,7 +277,8 @@ def setup(
         target_report_list,
         target_list,
     ) = target_factory.get_target_list_with_reports(
-        [node["name"] for node in nodes if "name" in node], allow_skip=False,
+        [node["name"] for node in nodes if "name" in node],
+        allow_skip=False,
     )
     report_processor.report_list(target_report_list)
 
@@ -346,7 +350,8 @@ def setup(
     # TODO This should be in the file distribution call but so far we don't
     # have a call which allows to save and delete files at the same time.
     com_cmd = RemoveFilesWithoutForces(
-        env.report_processor, {"pcsd settings": {"type": "pcsd_settings"}},
+        env.report_processor,
+        {"pcsd settings": {"type": "pcsd_settings"}},
     )
     com_cmd.set_targets(target_list)
     run_and_raise(env.get_node_communicator(), com_cmd)
@@ -499,7 +504,8 @@ def setup_local(
 
     # Get targets just for address defaulting, no need to report unknown nodes
     _, target_list = target_factory.get_target_list_with_reports(
-        [node["name"] for node in nodes if "name" in node], allow_skip=False,
+        [node["name"] for node in nodes if "name" in node],
+        allow_skip=False,
     )
 
     # Use an address defined in known-hosts for each node with no addresses
@@ -634,7 +640,9 @@ def _create_corosync_conf(
     corosync_conf.set_quorum_options(quorum_options)
     corosync_conf.create_link_list(link_list)
     corosync_conf.set_transport_options(
-        transport_options, compression_options, crypto_options,
+        transport_options,
+        compression_options,
+        crypto_options,
     )
 
     _verify_corosync_conf(corosync_conf)  # raises if corosync not valid
@@ -660,7 +668,9 @@ def _config_update(
         )
     elif transport_type in corosync_constants.TRANSPORTS_UDP:
         report_list += config_validators.update_transport_udp(
-            transport_options, compression_options, crypto_options,
+            transport_options,
+            compression_options,
+            crypto_options,
         )
     else:
         report_processor.report(
@@ -675,7 +685,9 @@ def _config_update(
 
     corosync_conf.set_totem_options(totem_options)
     corosync_conf.set_transport_options(
-        transport_options, compression_options, crypto_options,
+        transport_options,
+        compression_options,
+        crypto_options,
     )
     _verify_corosync_conf(corosync_conf)  # raises if corosync not valid
 
@@ -736,8 +748,8 @@ def config_update_local(
     # allow/need CIB to be handled by LibraryEnvironment.
     _ensure_live_env(env)
     corosync_conf_instance = FileInstance.for_corosync_conf()
-    corosync_conf: config_facade.ConfigFacade = corosync_conf_instance.raw_to_facade(
-        corosync_conf_content
+    corosync_conf: config_facade.ConfigFacade = (
+        corosync_conf_instance.raw_to_facade(corosync_conf_content)
     )
     _config_update(
         env.report_processor,
@@ -866,7 +878,8 @@ def add_nodes(
         target_report_list,
         cluster_nodes_target_list,
     ) = target_factory.get_target_list_with_reports(
-        cluster_nodes_names, skip_non_existing=skip_offline_nodes,
+        cluster_nodes_names,
+        skip_non_existing=skip_offline_nodes,
     )
     report_processor.report_list(target_report_list)
     # get a target for qnetd if needed
@@ -1012,7 +1025,8 @@ def add_nodes(
     online_cluster_target_list = []
     if cluster_nodes_target_list:
         com_cmd = GetOnlineTargets(
-            report_processor, ignore_offline_targets=skip_offline_nodes,
+            report_processor,
+            ignore_offline_targets=skip_offline_nodes,
         )
         com_cmd.set_targets(cluster_nodes_target_list)
         online_cluster_target_list = run_com(
@@ -1046,7 +1060,8 @@ def add_nodes(
         )
         if online_cluster_target_list:
             com_cmd = CheckCorosyncOffline(
-                report_processor, allow_skip_offline=False,
+                report_processor,
+                allow_skip_offline=False,
             )
             com_cmd.set_targets(online_cluster_target_list)
             run_com(env.get_node_communicator(), com_cmd)
@@ -1481,7 +1496,8 @@ def _host_check_cluster_setup(
                     ReportItem(
                         severity=severity,
                         message=reports.messages.HostAlreadyInClusterServices(
-                            host_name, sorted(cannot_be_running_service_list),
+                            host_name,
+                            sorted(cannot_be_running_service_list),
                         ),
                     )
                 )
@@ -1586,7 +1602,8 @@ def _get_watchdog_defaulter(report_processor: ReportProcessor, targets_dict):
         report_processor.report(
             ReportItem.info(
                 reports.messages.UsingDefaultWatchdog(
-                    settings.sbd_watchdog_default, node["name"],
+                    settings.sbd_watchdog_default,
+                    node["name"],
                 )
             )
         )
@@ -1647,7 +1664,9 @@ def _verify_corosync_conf(corosync_conf_facade):
         raise LibraryError(
             ReportItem.error(
                 reports.messages.CorosyncConfigCannotSaveInvalidNamesValues(
-                    bad_sections, bad_attr_names, bad_attr_values,
+                    bad_sections,
+                    bad_attr_names,
+                    bad_attr_values,
                 )
             )
         )
@@ -1704,7 +1723,8 @@ def remove_nodes(env, node_list, force_flags=None):
         target_report_list,
         cluster_nodes_target_list,
     ) = target_factory.get_target_list_with_reports(
-        cluster_nodes_names, skip_non_existing=skip_offline,
+        cluster_nodes_names,
+        skip_non_existing=skip_offline,
     )
     known_nodes = {target.label for target in cluster_nodes_target_list}
     unknown_nodes = {
@@ -1713,7 +1733,8 @@ def remove_nodes(env, node_list, force_flags=None):
     report_processor.report_list(target_report_list)
 
     com_cmd = GetOnlineTargets(
-        report_processor, ignore_offline_targets=skip_offline,
+        report_processor,
+        ignore_offline_targets=skip_offline,
     )
     com_cmd.set_targets(cluster_nodes_target_list)
     online_target_list = run_com(env.get_node_communicator(), com_cmd)
@@ -1765,7 +1786,8 @@ def remove_nodes(env, node_list, force_flags=None):
             )
         )
         com_cmd = CheckCorosyncOffline(
-            report_processor, allow_skip_offline=False,
+            report_processor,
+            allow_skip_offline=False,
         )
         com_cmd.set_targets(staying_online_target_list)
         run_com(env.get_node_communicator(), com_cmd)
@@ -1786,7 +1808,8 @@ def remove_nodes(env, node_list, force_flags=None):
                 report_processor.report(
                     ReportItem(
                         severity=reports.item.get_severity(
-                            report_codes.FORCE_QUORUM_LOSS, force_quorum_loss,
+                            report_codes.FORCE_QUORUM_LOSS,
+                            force_quorum_loss,
                         ),
                         message=reports.messages.CorosyncQuorumWillBeLost(),
                     )
@@ -1795,7 +1818,8 @@ def remove_nodes(env, node_list, force_flags=None):
             report_processor.report(
                 ReportItem(
                     severity=reports.item.get_severity(
-                        report_codes.FORCE_QUORUM_LOSS, force_quorum_loss,
+                        report_codes.FORCE_QUORUM_LOSS,
+                        force_quorum_loss,
                     ),
                     message=reports.messages.CorosyncQuorumLossUnableToCheck(),
                 )
@@ -1892,7 +1916,10 @@ def remove_nodes_from_cib(env: LibraryEnvironment, node_list):
 
 
 def add_link(
-    env: LibraryEnvironment, node_addr_map, link_options=None, force_flags=None,
+    env: LibraryEnvironment,
+    node_addr_map,
+    link_options=None,
+    force_flags=None,
 ):
     """
     Add a corosync link to a cluster

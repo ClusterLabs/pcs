@@ -118,7 +118,10 @@ class CreateMixin:
             agent_name,
             operations=[],
             meta_attributes={},
-            instance_attributes={"must-set": "value", "must-set-new": "B",},
+            instance_attributes={
+                "must-set": "value",
+                "must-set-new": "B",
+            },
         )
 
     def test_unfencing(self):
@@ -173,7 +176,10 @@ class CreateMixin:
             agent_name,
             operations=[],
             meta_attributes={},
-            instance_attributes={"must-set": "value", "must-set-new": "B",},
+            instance_attributes={
+                "must-set": "value",
+                "must-set-new": "B",
+            },
             ensure_disabled=True,
         )
 
@@ -227,7 +233,10 @@ class CreateMixin:
                 agent_name,
                 operations=[],
                 meta_attributes={},
-                instance_attributes={"must-set": "value", "must-set-new": "B",},
+                instance_attributes={
+                    "must-set": "value",
+                    "must-set-new": "B",
+                },
             ),
             [fixture.error(report_codes.ID_ALREADY_EXISTS, id="stonith-test")],
             expected_in_processor=False,
@@ -252,8 +261,12 @@ class CreateMixin:
             self.env_assist.get_env(),
             "stonith-test",
             agent_name,
-            operations=[{"name": "bad-action"},],
-            meta_attributes={"metaname": "metavalue",},
+            operations=[
+                {"name": "bad-action"},
+            ],
+            meta_attributes={
+                "metaname": "metavalue",
+            },
             instance_attributes={"undefined": "attribute"},
             allow_invalid_operation=True,
             allow_invalid_instance_attributes=True,
@@ -330,7 +343,8 @@ class CreateMixin:
 
         (
             self.config.runner.pcmk.load_agent(
-                agent_name=f"stonith:{agent_name}", agent_is_missing=True,
+                agent_name=f"stonith:{agent_name}",
+                agent_is_missing=True,
             )
             .runner.cib.load()
             .env.push_cib(resources=self._expected_cib(expected_cib_unknown))
@@ -404,7 +418,10 @@ class CreateMixin:
             agent_name,
             operations=[],
             meta_attributes={},
-            instance_attributes={"must-set": "value", "must-set-new": "B",},
+            instance_attributes={
+                "must-set": "value",
+                "must-set-new": "B",
+            },
             wait=timeout,
         )
         self.env_assist.assert_reports(
@@ -462,7 +479,10 @@ class CreateInGroup(CreateMixin, TestCase):
                 "0-group",
                 operations=[],
                 meta_attributes={},
-                instance_attributes={"must-set": "value", "must-set-new": "B",},
+                instance_attributes={
+                    "must-set": "value",
+                    "must-set-new": "B",
+                },
             ),
             [
                 fixture.error(
@@ -509,7 +529,10 @@ class CreateInGroup(CreateMixin, TestCase):
             "my-group",
             operations=[],
             meta_attributes={},
-            instance_attributes={"must-set": "value", "must-set-new": "B",},
+            instance_attributes={
+                "must-set": "value",
+                "must-set-new": "B",
+            },
             adjacent_resource_id=adjacent,
             put_after_adjacent=after,
         )

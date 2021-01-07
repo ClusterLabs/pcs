@@ -114,7 +114,8 @@ class GetQuorumStatus(AllSameDataMixin, OneByOneStrategyMixin, RunRemotelyBase):
             self._report(
                 ReportItem.warning(
                     reports.messages.CorosyncQuorumGetStatusError(
-                        e.reason, node=node,
+                        e.reason,
+                        node=node,
                     )
                 )
             )

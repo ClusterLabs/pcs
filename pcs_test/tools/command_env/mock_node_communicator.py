@@ -53,7 +53,10 @@ def log_response(response, indent=0):
         label_data.append(("respose_code", response.response_code))
     else:
         label_data.extend(
-            [("errno", response.errno), ("error_msg", response.error_msg),]
+            [
+                ("errno", response.errno),
+                ("error_msg", response.error_msg),
+            ]
         )
 
     label_data.append(("data", parse_qs(response.request.data)))
@@ -342,7 +345,8 @@ class NodeCommunicator:
 
     def add_requests(self, request_list):
         _, add_request_call = self.__call_queue.take(
-            CALL_TYPE_HTTP_ADD_REQUESTS, request_list,
+            CALL_TYPE_HTTP_ADD_REQUESTS,
+            request_list,
         )
 
         expected_request_list = add_request_call.request_list

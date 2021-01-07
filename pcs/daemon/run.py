@@ -60,7 +60,9 @@ def configure_app(
             object via the method `initialize`.
         """
         routes = sinatra_remote.get_routes(
-            ruby_pcsd_wrapper, sync_config_lock, https_server_manage,
+            ruby_pcsd_wrapper,
+            sync_config_lock,
+            https_server_manage,
         )
 
         if not disable_gui:
@@ -72,7 +74,8 @@ def configure_app(
                     url_prefix="/ui/",
                     app_dir=os.path.join(public_dir, "ui"),
                     fallback_page_path=os.path.join(
-                        public_dir, "ui_instructions.html",
+                        public_dir,
+                        "ui_instructions.html",
                     ),
                     session_storage=session_storage,
                 )
@@ -102,7 +105,8 @@ def main():
 
     sync_config_lock = Lock()
     ruby_pcsd_wrapper = ruby_pcsd.Wrapper(
-        settings.pcsd_ruby_socket, debug=env.PCSD_DEBUG,
+        settings.pcsd_ruby_socket,
+        debug=env.PCSD_DEBUG,
     )
     make_app = configure_app(
         session.Storage(env.PCSD_SESSION_LIFETIME),

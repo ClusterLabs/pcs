@@ -33,7 +33,8 @@ class LibCommunicatorLogger(CommunicatorLoggerInterface):
         self._reporter.report(
             ReportItem.debug(
                 reports.messages.NodeCommunicationStarted(
-                    request.url, request.data,
+                    request.url,
+                    request.data,
                 )
             )
         )
@@ -59,7 +60,9 @@ class LibCommunicatorLogger(CommunicatorLoggerInterface):
         self._reporter.report(
             ReportItem.debug(
                 reports.messages.NodeCommunicationFinished(
-                    url, response.response_code, response.data,
+                    url,
+                    response.response_code,
+                    response.data,
                 )
             )
         )
@@ -74,7 +77,8 @@ class LibCommunicatorLogger(CommunicatorLoggerInterface):
         self._reporter.report(
             ReportItem.debug(
                 reports.messages.NodeCommunicationNotConnected(
-                    response.request.host_label, response.error_msg,
+                    response.request.host_label,
+                    response.error_msg,
                 )
             )
         )
@@ -83,7 +87,8 @@ class LibCommunicatorLogger(CommunicatorLoggerInterface):
             self._reporter.report(
                 ReportItem.warning(
                     reports.messages.NodeCommunicationProxyIsSet(
-                        response.request.host_label, response.request.dest.addr,
+                        response.request.host_label,
+                        response.request.dest.addr,
                     )
                 )
             )
@@ -136,13 +141,15 @@ class LibCommunicatorLogger(CommunicatorLoggerInterface):
 
     def log_no_more_addresses(self, response):
         msg = "No more addresses for node {label} to run '{req}'".format(
-            label=response.request.host_label, req=response.request.url,
+            label=response.request.host_label,
+            req=response.request.url,
         )
         self._logger.warning(msg)
         self._reporter.report(
             ReportItem.warning(
                 reports.messages.NodeCommunicationNoMoreAddresses(
-                    response.request.host_label, response.request.url,
+                    response.request.host_label,
+                    response.request.url,
                 )
             )
         )
@@ -270,7 +277,9 @@ def response_to_report_item(
     return ReportItem(
         severity=ReportItemSeverity(severity, forceable),
         message=report_item(
-            response.request.host_label, response.request.action, reason,
+            response.request.host_label,
+            response.request.action,
+            reason,
         ),
     )
 

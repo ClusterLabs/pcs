@@ -126,8 +126,14 @@ class TestListAgentsForStandardAndProvider(TestCase):
 @mock.patch(
     "pcs.lib.resource_agent.list_resource_agents",
     lambda runner, standard: {
-        "ocf:test": ["Stateful", "Delay",],
-        "service": ["corosync", "pacemaker_remote",],
+        "ocf:test": [
+            "Stateful",
+            "Delay",
+        ],
+        "service": [
+            "corosync",
+            "pacemaker_remote",
+        ],
     }.get(standard, []),
 )
 @mock.patch.object(LibraryEnvironment, "cmd_runner", lambda self: "mock_runner")
@@ -339,7 +345,10 @@ class TestDescribeAgent(TestCase):
             (
                 severity.ERROR,
                 report_codes.UNABLE_TO_GET_AGENT_METADATA,
-                {"agent": "ocf:test:Dummy", "reason": start_tag_error_text(),},
+                {
+                    "agent": "ocf:test:Dummy",
+                    "reason": start_tag_error_text(),
+                },
             ),
         )
 

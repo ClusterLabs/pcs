@@ -336,7 +336,9 @@ def _validate_addr_type(
         report_items.append(
             ReportItem.error(
                 reports.messages.CorosyncAddressIpVersionWrongForLink(
-                    addr, ADDR_IPV6, link_number=link_index,
+                    addr,
+                    ADDR_IPV6,
+                    link_number=link_index,
                 )
             )
         )
@@ -347,7 +349,9 @@ def _validate_addr_type(
         report_items.append(
             ReportItem.error(
                 reports.messages.CorosyncAddressIpVersionWrongForLink(
-                    addr, ADDR_IPV4, link_number=link_index,
+                    addr,
+                    ADDR_IPV4,
+                    link_number=link_index,
                 )
             )
         )
@@ -617,7 +621,8 @@ def _check_link_options_count(link_count, max_allowed_link_count):
         report_items.append(
             ReportItem.error(
                 reports.messages.CorosyncTooManyLinksOptions(
-                    link_count, max_allowed_link_count,
+                    link_count,
+                    max_allowed_link_count,
                 )
             )
         )
@@ -1053,7 +1058,8 @@ def remove_links(linknumbers_to_remove, linknumbers_existing, transport):
         report_items.append(
             ReportItem.error(
                 reports.messages.CorosyncLinkDoesNotExistCannotRemove(
-                    sorted(nonexistent), sorted(existing),
+                    sorted(nonexistent),
+                    sorted(existing),
                 )
             )
         )
@@ -1100,7 +1106,8 @@ def update_link(
         return [
             ReportItem.error(
                 reports.messages.CorosyncLinkDoesNotExistCannotUpdate(
-                    linknumber, linknumbers_existing,
+                    linknumber,
+                    linknumbers_existing,
                 )
             )
         ]
@@ -1215,7 +1222,8 @@ def _report_non_unique_addresses(existing_addrs, new_addrs):
 
 
 def _get_transport_udp_generic_validators(
-    options: Mapping[str, str], allow_empty_values: bool,
+    options: Mapping[str, str],
+    allow_empty_values: bool,
 ) -> List[validate.ValidatorInterface]:
     # No need to support force:
     # * values are either an enum or numbers with no range set - nothing to
@@ -1260,7 +1268,9 @@ def _validate_transport_udp(
         report_items.append(
             ReportItem.error(
                 reports.messages.CorosyncTransportUnsupportedOptions(
-                    "compression", "udp/udpu", ["knet"],
+                    "compression",
+                    "udp/udpu",
+                    ["knet"],
                 )
             )
         )
@@ -1268,7 +1278,9 @@ def _validate_transport_udp(
         report_items.append(
             ReportItem.error(
                 reports.messages.CorosyncTransportUnsupportedOptions(
-                    "crypto", "udp/udpu", ["knet"],
+                    "crypto",
+                    "udp/udpu",
+                    ["knet"],
                 )
             )
         )
@@ -1316,7 +1328,8 @@ def update_transport_udp(
 
 
 def _get_transport_knet_generic_validators(
-    options: Mapping[str, str], allow_empty_values: bool,
+    options: Mapping[str, str],
+    allow_empty_values: bool,
 ) -> List[validate.ValidatorInterface]:
     validators = [
         validate.ValueIn("ip_version", constants.IP_VERSION_VALUES),
@@ -1341,7 +1354,8 @@ def _get_transport_knet_generic_validators(
 
 
 def _get_transport_knet_compression_validators(
-    options: Mapping[str, str], allow_empty_values: bool,
+    options: Mapping[str, str],
+    allow_empty_values: bool,
 ) -> List[validate.ValidatorInterface]:
     validators = [
         validate.ValueNonnegativeInteger("level"),
@@ -1368,7 +1382,8 @@ def _get_transport_knet_compression_validators(
 
 
 def _get_transport_knet_crypto_validators(
-    options: Mapping[str, str], allow_empty_values: bool,
+    options: Mapping[str, str],
+    allow_empty_values: bool,
 ) -> List[validate.ValidatorInterface]:
     validators = [
         validate.ValueIn("cipher", ("none", "aes256", "aes192", "aes128")),
@@ -1383,7 +1398,8 @@ def _get_transport_knet_crypto_validators(
     return (
         [
             validate.NamesIn(
-                constants.TRANSPORT_KNET_CRYPTO_OPTIONS, option_type="crypto",
+                constants.TRANSPORT_KNET_CRYPTO_OPTIONS,
+                option_type="crypto",
             )
         ]
         + _get_unsuitable_keys_and_values_validators(
@@ -1407,13 +1423,16 @@ def _validate_transport_knet(
     # * changes to names and values in corosync are very rare
 
     generic_validators = _get_transport_knet_generic_validators(
-        generic_options, allow_empty_values=allow_empty_values,
+        generic_options,
+        allow_empty_values=allow_empty_values,
     )
     crypto_validators = _get_transport_knet_crypto_validators(
-        crypto_options, allow_empty_values=allow_empty_values,
+        crypto_options,
+        allow_empty_values=allow_empty_values,
     )
     compression_validators = _get_transport_knet_compression_validators(
-        compression_options, allow_empty_values=allow_empty_values,
+        compression_options,
+        allow_empty_values=allow_empty_values,
     )
 
     return (
@@ -1488,13 +1507,21 @@ def update_transport_knet(
     #   1. set it to "none"
     #   2. set it to default, which is "none" according to `man corosync.conf`,
     #      by using value of empty string
-    crypto_cipher_enabled = crypto_options.get(
-        "cipher", current_crypto_options.get("cipher", "none"),
-    ) not in ["none", ""]
+    crypto_cipher_enabled = (
+        crypto_options.get(
+            "cipher",
+            current_crypto_options.get("cipher", "none"),
+        )
+        not in ["none", ""]
+    )
 
-    crypto_hash_disabled = crypto_options.get(
-        "hash", current_crypto_options.get("hash", "none"),
-    ) in ["none", ""]
+    crypto_hash_disabled = (
+        crypto_options.get(
+            "hash",
+            current_crypto_options.get("hash", "none"),
+        )
+        in ["none", ""]
+    )
 
     if crypto_cipher_enabled and crypto_hash_disabled:
         report_items.append(
@@ -1721,7 +1748,9 @@ def add_quorum_device(
     """
     model_validators = {
         "net": lambda: _qdevice_add_model_net_options(
-            model_options, node_ids, force_options=force_options,
+            model_options,
+            node_ids,
+            force_options=force_options,
         ),
     }
     if model in model_validators:

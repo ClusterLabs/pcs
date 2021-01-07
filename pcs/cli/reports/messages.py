@@ -479,7 +479,9 @@ def _resource_move_ban_clear_master_resource_not_promotable(
 ) -> str:
     return (
         "when specifying --master you must use the promotable clone id{_id}"
-    ).format(_id=format_optional(promotable_id, " ({})"),)
+    ).format(
+        _id=format_optional(promotable_id, " ({})"),
+    )
 
 
 def _skip_reason_to_string(reason: types.ReasonType) -> str:

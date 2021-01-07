@@ -46,7 +46,11 @@ class ResourceRelationNode(TestCase):
                 id=f"ent_id{index}",
                 type=str(ResourceRelationType.INNER_RESOURCES.value),
                 members=[f"{index}m1", f"{index}m2", f"{index}m0"],
-                metadata=dict(id=f"ent_id{index}", k0="val0", k1="val1",),
+                metadata=dict(
+                    id=f"ent_id{index}",
+                    k0="val0",
+                    k1="val1",
+                ),
             ),
         )
 
@@ -74,7 +78,11 @@ class ResourceRelationNode(TestCase):
                 [
                     ResourceRelationDto(ent1, [], False),
                     ResourceRelationDto(
-                        ent2, [ResourceRelationDto(ent3, [], False),], False,
+                        ent2,
+                        [
+                            ResourceRelationDto(ent3, [], False),
+                        ],
+                        False,
                     ),
                 ],
                 False,
@@ -87,7 +95,8 @@ class ResourceRelationNode(TestCase):
         obj = lib.ResourceRelationNode(ent)
         obj.stop()
         self.assert_dto_equal(
-            ResourceRelationDto(ent, [], True), obj.to_dto(),
+            ResourceRelationDto(ent, [], True),
+            obj.to_dto(),
         )
 
     def test_add_member(self):
@@ -97,7 +106,9 @@ class ResourceRelationNode(TestCase):
         obj.add_member(lib.ResourceRelationNode(ent1))
         self.assert_dto_equal(
             ResourceRelationDto(
-                ent0, [ResourceRelationDto(ent1, [], False)], False,
+                ent0,
+                [ResourceRelationDto(ent1, [], False)],
+                False,
             ),
             obj.to_dto(),
         )
@@ -107,7 +118,8 @@ class ResourceRelationNode(TestCase):
         obj = lib.ResourceRelationNode(ent)
         obj.add_member(obj)
         self.assert_dto_equal(
-            ResourceRelationDto(ent, [], False), obj.to_dto(),
+            ResourceRelationDto(ent, [], False),
+            obj.to_dto(),
         )
 
     def test_add_member_already_have_parent(self):

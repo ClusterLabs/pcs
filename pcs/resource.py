@@ -148,7 +148,9 @@ def _defaults_set_create_cmd(
 
 
 def resource_defaults_set_create_cmd(
-    lib: Any, argv: Sequence[str], modifiers: InputModifiers,
+    lib: Any,
+    argv: Sequence[str],
+    modifiers: InputModifiers,
 ) -> None:
     """
     Options:
@@ -161,7 +163,9 @@ def resource_defaults_set_create_cmd(
 
 
 def resource_op_defaults_set_create_cmd(
-    lib: Any, argv: Sequence[str], modifiers: InputModifiers,
+    lib: Any,
+    argv: Sequence[str],
+    modifiers: InputModifiers,
 ) -> None:
     """
     Options:
@@ -203,7 +207,9 @@ def _defaults_config_cmd(
 
 
 def resource_defaults_config_cmd(
-    lib: Any, argv: Sequence[str], modifiers: InputModifiers,
+    lib: Any,
+    argv: Sequence[str],
+    modifiers: InputModifiers,
 ) -> None:
     """
     Options:
@@ -216,7 +222,9 @@ def resource_defaults_config_cmd(
 
 
 def resource_op_defaults_config_cmd(
-    lib: Any, argv: Sequence[str], modifiers: InputModifiers,
+    lib: Any,
+    argv: Sequence[str],
+    modifiers: InputModifiers,
 ) -> None:
     """
     Options:
@@ -242,7 +250,9 @@ def _defaults_set_remove_cmd(
 
 
 def resource_defaults_set_remove_cmd(
-    lib: Any, argv: Sequence[str], modifiers: InputModifiers,
+    lib: Any,
+    argv: Sequence[str],
+    modifiers: InputModifiers,
 ) -> None:
     """
     Options:
@@ -254,7 +264,9 @@ def resource_defaults_set_remove_cmd(
 
 
 def resource_op_defaults_set_remove_cmd(
-    lib: Any, argv: Sequence[str], modifiers: InputModifiers,
+    lib: Any,
+    argv: Sequence[str],
+    modifiers: InputModifiers,
 ) -> None:
     """
     Options:
@@ -280,15 +292,20 @@ def _defaults_set_update_cmd(
 
     set_id = argv[0]
     groups = group_by_keywords(
-        argv[1:], set(["meta"]), keyword_repeat_allowed=False,
+        argv[1:],
+        set(["meta"]),
+        keyword_repeat_allowed=False,
     )
     lib_command(
-        set_id, prepare_options(groups["meta"]),
+        set_id,
+        prepare_options(groups["meta"]),
     )
 
 
 def resource_defaults_set_update_cmd(
-    lib: Any, argv: Sequence[str], modifiers: InputModifiers,
+    lib: Any,
+    argv: Sequence[str],
+    modifiers: InputModifiers,
 ) -> None:
     """
     Options:
@@ -300,7 +317,9 @@ def resource_defaults_set_update_cmd(
 
 
 def resource_op_defaults_set_update_cmd(
-    lib: Any, argv: Sequence[str], modifiers: InputModifiers,
+    lib: Any,
+    argv: Sequence[str],
+    modifiers: InputModifiers,
 ) -> None:
     """
     Options:
@@ -1025,7 +1044,8 @@ def resource_update(lib, args, modifiers, deal_with_guest_change=True):
     # "res_id" is an id of the primitive.
     if deal_with_guest_change:
         _detect_guest_change(
-            prepare_options(meta_values), modifiers.get("--force"),
+            prepare_options(meta_values),
+            modifiers.get("--force"),
         )
 
     utils.dom_update_meta_attr(
@@ -1386,7 +1406,8 @@ def resource_meta(lib, argv, modifiers):
         raise CmdLineInputError()
     res_id = argv.pop(0)
     _detect_guest_change(
-        prepare_options(argv), modifiers.get("--force"),
+        prepare_options(argv),
+        modifiers.get("--force"),
     )
 
     dom = utils.get_cib_dom()
@@ -2040,7 +2061,9 @@ def remove_resource_references(
             tag.removeChild(obj_ref)
             if tag.getElementsByTagName("obj_ref").length == 0:
                 remove_resource_references(
-                    dom, tag.getAttribute("id"), output=output,
+                    dom,
+                    tag.getAttribute("id"),
+                    output=output,
                 )
                 tag.parentNode.removeChild(tag)
     constraint.remove_constraints_containing(
@@ -2340,7 +2363,9 @@ def resource_disable_cmd(lib, argv, modifiers):
         return
     if modifiers.get("--safe") or modifiers.get("--no-strict"):
         lib.resource.disable_safe(
-            argv, not modifiers.get("--no-strict"), modifiers.get("--wait"),
+            argv,
+            not modifiers.get("--no-strict"),
+            modifiers.get("--wait"),
         )
         return
     lib.resource.disable(argv, modifiers.get("--wait"))
@@ -2846,10 +2871,12 @@ def resource_node_lines(node):
                 _bundle_container_strings(node)
                 + _bundle_network_strings(node)
                 + _bundle_mapping_strings(
-                    "Port Mapping:", node.findall("network/port-mapping"),
+                    "Port Mapping:",
+                    node.findall("network/port-mapping"),
                 )
                 + _bundle_mapping_strings(
-                    "Storage Mapping:", node.findall("storage/storage-mapping"),
+                    "Storage Mapping:",
+                    node.findall("storage/storage-mapping"),
                 )
                 + _meta_vars_lines(node),
                 indent_step=1,

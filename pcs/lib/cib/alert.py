@@ -69,7 +69,8 @@ def ensure_recipient_value_is_unique(
                     allow_duplicity,
                 ),
                 message=reports.messages.CibAlertRecipientAlreadyExists(
-                    alert.get("id", None), recipient_value,
+                    alert.get("id", None),
+                    recipient_value,
                 ),
             )
         )

@@ -26,7 +26,9 @@ class AppTest(fixtures_app.AppTest):
 
     def get_routes(self):
         return sinatra_remote.get_routes(
-            self.wrapper, self.lock, self.https_server_manage,
+            self.wrapper,
+            self.lock,
+            self.https_server_manage,
         )
 
 

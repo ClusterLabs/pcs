@@ -255,13 +255,23 @@ class HostShortcuts:
             communication_list = [
                 dict(
                     label=node,
-                    output=json.dumps(dict(pending=False, online=True,)),
+                    output=json.dumps(
+                        dict(
+                            pending=False,
+                            online=True,
+                        )
+                    ),
                 )
                 for node in pacemaker_started_node_list
             ] + [
                 dict(
                     label=node,
-                    output=json.dumps(dict(pending=True, online=False,)),
+                    output=json.dumps(
+                        dict(
+                            pending=True,
+                            online=False,
+                        )
+                    ),
                 )
                 for node in pacemaker_not_started_node_list
             ]

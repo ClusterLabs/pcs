@@ -550,7 +550,10 @@ class PcmkShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                cmd, stdout=stdout, stderr=stderr, returncode=returncode,
+                cmd,
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode,
             ),
             before=before,
             instead=instead,
@@ -693,7 +696,10 @@ class PcmkShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                cmd, stdout=stdout, stderr=stderr, returncode=returncode,
+                cmd,
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode,
             ),
             before=before,
             instead=instead,
@@ -709,7 +715,8 @@ class PcmkShortcuts:
         string stderr -- crm_resource help text
         """
         self.__calls.place(
-            name, RunnerCall(["crm_resource", "--help-all"], stderr=stderr),
+            name,
+            RunnerCall(["crm_resource", "--help-all"], stderr=stderr),
         )
 
     def wait(

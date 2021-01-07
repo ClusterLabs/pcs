@@ -10,7 +10,8 @@ from pcs.lib.commands.sbd import get_cluster_sbd_status
 
 
 warn_unable_to_get_sbd_status = partial(
-    fixture.warn, report_codes.UNABLE_TO_GET_SBD_STATUS,
+    fixture.warn,
+    report_codes.UNABLE_TO_GET_SBD_STATUS,
 )
 
 
@@ -189,6 +190,8 @@ class GetClusterSbdStatus(TestCase):
                     report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
                     fatal=False,
                 ),
-                fixture.error(report_codes.COROSYNC_CONFIG_NO_NODES_DEFINED,),
+                fixture.error(
+                    report_codes.COROSYNC_CONFIG_NO_NODES_DEFINED,
+                ),
             ]
         )

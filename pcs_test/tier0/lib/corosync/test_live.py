@@ -30,7 +30,10 @@ class GetLocalCorosyncConfTest(TestCase):
             (
                 severity.ERROR,
                 report_codes.UNABLE_TO_READ_COROSYNC_CONFIG,
-                {"path": path, "reason": "No such file or directory",},
+                {
+                    "path": path,
+                    "reason": "No such file or directory",
+                },
             ),
         )
 
@@ -94,7 +97,9 @@ class SetExpectedVotesTest(TestCase):
             (
                 severity.ERROR,
                 report_codes.COROSYNC_QUORUM_SET_EXPECTED_VOTES_ERROR,
-                {"reason": cmd_stderr,},
+                {
+                    "reason": cmd_stderr,
+                },
             ),
         )
 
@@ -267,7 +272,9 @@ class QuorumStatusParse(TestCase):
         self.assertEqual(status.qdevice_votes, 0)
         self.assertEqual(
             status._data["node_list"],
-            [{"name": "rh70-node1", "votes": 1, "local": True},],
+            [
+                {"name": "rh70-node1", "votes": 1, "local": True},
+            ],
         )
 
     def test_no_quorate_with_qdevice(self):
@@ -304,7 +311,9 @@ class QuorumStatusParse(TestCase):
         self.assertEqual(status.qdevice_votes, 0)
         self.assertEqual(
             status._data["node_list"],
-            [{"name": "rh70-node1", "votes": 1, "local": True},],
+            [
+                {"name": "rh70-node1", "votes": 1, "local": True},
+            ],
         )
 
     def test_error_empty_string(self):
@@ -424,7 +433,11 @@ class QuorumStatusParse(TestCase):
 
 class QuorumStatusQuorumLossNodes(TestCase):
     def test_not_quorate(self):
-        status = lib.QuorumStatus({"quorate": False,})
+        status = lib.QuorumStatus(
+            {
+                "quorate": False,
+            }
+        )
         self.assertEqual(
             status.stopping_nodes_cause_quorum_loss(["rh70-node3"]), False
         )
@@ -605,7 +618,11 @@ class QuorumStatusQuorumLossNodes(TestCase):
 
 class QuorumStatusQuorumLossLocal(TestCase):
     def test_not_quorate(self):
-        status = lib.QuorumStatus({"quorate": False,})
+        status = lib.QuorumStatus(
+            {
+                "quorate": False,
+            }
+        )
         self.assertEqual(status.stopping_local_node_cause_quorum_loss(), False)
 
     def test_local_node_not_in_list(self):

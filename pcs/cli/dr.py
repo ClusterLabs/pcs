@@ -17,7 +17,11 @@ from pcs.common.interface import dto
 from pcs.common.str_tools import indent
 
 
-def config(lib: Any, argv: Sequence[str], modifiers: InputModifiers,) -> None:
+def config(
+    lib: Any,
+    argv: Sequence[str],
+    modifiers: InputModifiers,
+) -> None:
     """
     Options: None
     """
@@ -50,7 +54,9 @@ def _config_site_lines(site_dto: DrConfigSiteDto) -> List[str]:
 
 
 def set_recovery_site(
-    lib: Any, argv: Sequence[str], modifiers: InputModifiers,
+    lib: Any,
+    argv: Sequence[str],
+    modifiers: InputModifiers,
 ) -> None:
     """
     Options:
@@ -62,7 +68,11 @@ def set_recovery_site(
     lib.dr.set_recovery_site(argv[0])
 
 
-def status(lib: Any, argv: Sequence[str], modifiers: InputModifiers,) -> None:
+def status(
+    lib: Any,
+    argv: Sequence[str],
+    modifiers: InputModifiers,
+) -> None:
     """
     Options:
       * --full - show full details, node attributes and failcount
@@ -70,7 +80,9 @@ def status(lib: Any, argv: Sequence[str], modifiers: InputModifiers,) -> None:
       * --request-timeout - HTTP timeout for node authorization check
     """
     modifiers.ensure_only_supported(
-        "--full", "--hide-inactive", "--request-timeout",
+        "--full",
+        "--hide-inactive",
+        "--request-timeout",
     )
     if argv:
         raise CmdLineInputError()
@@ -112,7 +124,11 @@ def status(lib: Any, argv: Sequence[str], modifiers: InputModifiers,) -> None:
         raise error("Unable to get status of all sites")
 
 
-def destroy(lib: Any, argv: Sequence[str], modifiers: InputModifiers,) -> None:
+def destroy(
+    lib: Any,
+    argv: Sequence[str],
+    modifiers: InputModifiers,
+) -> None:
     """
     Options:
       * --skip-offline - skip unreachable nodes (including missing auth token)

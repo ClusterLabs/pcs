@@ -20,7 +20,9 @@ def create_with_set(lib, argv, modifiers):
     """
     modifiers.ensure_only_supported("--force", "-f")
     command.create_with_set(
-        lib.constraint_ticket.set, argv, modifiers,
+        lib.constraint_ticket.set,
+        argv,
+        modifiers,
     )
 
 

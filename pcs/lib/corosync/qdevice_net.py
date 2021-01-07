@@ -113,7 +113,8 @@ def qdevice_setup(runner):
         raise LibraryError(
             ReportItem.error(
                 reports.messages.QdeviceInitializationError(
-                    __model, join_multilines([stderr, stdout]),
+                    __model,
+                    join_multilines([stderr, stdout]),
                 )
             )
         )
@@ -156,7 +157,8 @@ def qdevice_status_generic_text(runner, verbose=False):
         raise LibraryError(
             ReportItem.error(
                 reports.messages.QdeviceGetStatusError(
-                    __model, join_multilines([stderr, stdout]),
+                    __model,
+                    join_multilines([stderr, stdout]),
                 )
             )
         )
@@ -179,7 +181,8 @@ def qdevice_status_cluster_text(runner, cluster=None, verbose=False):
         raise LibraryError(
             ReportItem.error(
                 reports.messages.QdeviceGetStatusError(
-                    __model, join_multilines([stderr, stdout]),
+                    __model,
+                    join_multilines([stderr, stdout]),
                 )
             )
         )
@@ -304,7 +307,8 @@ def client_setup(runner, ca_certificate):
         raise LibraryError(
             ReportItem.error(
                 reports.messages.QdeviceInitializationError(
-                    __model, e.strerror,
+                    __model,
+                    e.strerror,
                 )
             )
         ) from e
@@ -316,7 +320,8 @@ def client_setup(runner, ca_certificate):
         raise LibraryError(
             ReportItem.error(
                 reports.messages.QdeviceInitializationError(
-                    __model, join_multilines([stderr, stdout]),
+                    __model,
+                    join_multilines([stderr, stdout]),
                 )
             )
         )
@@ -362,14 +367,16 @@ def client_generate_certificate_request(runner, cluster_name):
         raise LibraryError(
             ReportItem.error(
                 reports.messages.QdeviceInitializationError(
-                    __model, join_multilines([stderr, stdout]),
+                    __model,
+                    join_multilines([stderr, stdout]),
                 )
             )
         )
     return _get_output_certificate(
         stdout,
         lambda reason: reports.messages.QdeviceInitializationError(
-            __model, reason,
+            __model,
+            reason,
         ),
     )
 
@@ -386,7 +393,8 @@ def client_cert_request_to_pk12(runner, cert_request):
         )
     # save the signed certificate request, corosync tool only works with files
     tmpfile = _store_to_tmpfile(
-        cert_request, reports.messages.QdeviceCertificateImportError,
+        cert_request,
+        reports.messages.QdeviceCertificateImportError,
     )
     # transform it
     stdout, stderr, retval = runner.run(
@@ -419,7 +427,8 @@ def client_import_certificate_and_key(runner, pk12_certificate):
         )
     # save the certificate, corosync tool only works with files
     tmpfile = _store_to_tmpfile(
-        pk12_certificate, reports.messages.QdeviceCertificateImportError,
+        pk12_certificate,
+        reports.messages.QdeviceCertificateImportError,
     )
     stdout, stderr, retval = runner.run(
         [__qdevice_certutil, "-m", "-c", tmpfile.name]

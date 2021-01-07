@@ -12,29 +12,43 @@ from pcs.lib.commands import tag as cmd_tag
 
 class TestTagConfig(TestCase):
     tag_dicts_list = [
-        {"tag_id": "tag1", "idref_list": ["i1", "i2"],},
-        {"tag_id": "tag2", "idref_list": ["j1", "j2"],},
+        {
+            "tag_id": "tag1",
+            "idref_list": ["i1", "i2"],
+        },
+        {
+            "tag_id": "tag2",
+            "idref_list": ["j1", "j2"],
+        },
     ]
 
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.config.runner.cib.load(
             tags=fixture_tags_xml(
-                [("tag1", ("i1", "i2")), ("tag2", ("j1", "j2")),]
+                [
+                    ("tag1", ("i1", "i2")),
+                    ("tag2", ("j1", "j2")),
+                ]
             ),
             resources=fixture_resources_for_ids(),
         )
 
     def test_success_no_args(self):
         self.assertEqual(
-            cmd_tag.config(self.env_assist.get_env(), []), self.tag_dicts_list,
+            cmd_tag.config(self.env_assist.get_env(), []),
+            self.tag_dicts_list,
         )
 
     def test_tag_id_does_not_exist(self):
         self.env_assist.assert_raise_library_error(
             lambda: cmd_tag.config(
                 self.env_assist.get_env(),
-                ["nonexistent_tag1", "tag2", "nonexistent_tag2",],
+                [
+                    "nonexistent_tag1",
+                    "tag2",
+                    "nonexistent_tag2",
+                ],
             )
         )
         self.env_assist.assert_reports(
@@ -53,7 +67,9 @@ class TestTagConfig(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.report_unexpected_element(
-                    "id1", "primitive", expected_types=["tag"],
+                    "id1",
+                    "primitive",
+                    expected_types=["tag"],
                 ),
             ]
         )

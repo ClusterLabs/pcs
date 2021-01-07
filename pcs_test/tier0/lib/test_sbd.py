@@ -350,7 +350,10 @@ class InitializeBlockDeviceTest(TestCase):
             (
                 Severities.ERROR,
                 report_codes.SBD_DEVICE_INITIALIZATION_ERROR,
-                {"device_list": device_list, "reason": error_msg,},
+                {
+                    "device_list": device_list,
+                    "reason": error_msg,
+                },
             ),
         )
         cmd = [
@@ -455,7 +458,10 @@ class GetLocalSbdDeviceListTest(TestCase):
             (
                 Severities.ERROR,
                 report_codes.UNABLE_TO_GET_SBD_CONFIG,
-                {"node": node, "reason": error,},
+                {
+                    "node": node,
+                    "reason": error,
+                },
             ),
         )
         mock_config_exists.assert_called_once_with(settings.sbd_config)
@@ -504,7 +510,10 @@ class GetDeviceMessagesInfoTest(TestCase):
             (
                 Severities.ERROR,
                 report_codes.SBD_DEVICE_LIST_ERROR,
-                {"device": device, "reason": output,},
+                {
+                    "device": device,
+                    "reason": output,
+                },
             ),
         )
         self.mock_runner.run.assert_called_once_with(
@@ -538,7 +547,10 @@ class GetDeviceSbdHeaderDumpTest(TestCase):
             (
                 Severities.ERROR,
                 report_codes.SBD_DEVICE_DUMP_ERROR,
-                {"device": device, "reason": output,},
+                {
+                    "device": device,
+                    "reason": output,
+                },
             ),
         )
         self.mock_runner.run.assert_called_once_with(
@@ -605,7 +617,10 @@ class ValidateDeviceDictTest(TestCase):
                 (
                     Severities.ERROR,
                     report_codes.SBD_NO_DEVICE_FOR_NODE,
-                    {"node": "node1", "sbd_enabled_in_cluster": False,},
+                    {
+                        "node": "node1",
+                        "sbd_enabled_in_cluster": False,
+                    },
                 ),
                 (
                     Severities.ERROR,
@@ -619,12 +634,18 @@ class ValidateDeviceDictTest(TestCase):
                 (
                     Severities.ERROR,
                     report_codes.SBD_DEVICE_PATH_NOT_ABSOLUTE,
-                    {"node": "node2", "device": "dev/sda2",},
+                    {
+                        "node": "node2",
+                        "device": "dev/sda2",
+                    },
                 ),
                 (
                     Severities.ERROR,
                     report_codes.SBD_DEVICE_PATH_NOT_ABSOLUTE,
-                    {"node": "node4", "device": "../dev/sda2",},
+                    {
+                        "node": "node4",
+                        "device": "../dev/sda2",
+                    },
                 ),
             ],
         )

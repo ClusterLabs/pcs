@@ -37,12 +37,16 @@ class ReportItemSeverity(ImplementsToDto, ImplementsFromDto):
 
     def to_dto(self) -> ReportItemSeverityDto:
         return ReportItemSeverityDto(
-            level=self.level, force_code=self.force_code,
+            level=self.level,
+            force_code=self.force_code,
         )
 
     @classmethod
     def from_dto(cls, dto_obj: ReportItemSeverityDto) -> "ReportItemSeverity":
-        return cls(level=dto_obj.level, force_code=dto_obj.force_code,)
+        return cls(
+            level=dto_obj.level,
+            force_code=dto_obj.force_code,
+        )
 
     @classmethod
     def error(
@@ -100,7 +104,9 @@ class ReportItemMessage(ImplementsToDto):
                     payload[attr_name] = attr_val
 
         return ReportItemMessageDto(
-            code=self.code, message=self.message, payload=payload,
+            code=self.code,
+            message=self.message,
+            payload=payload,
         )
 
 

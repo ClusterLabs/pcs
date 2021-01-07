@@ -17,7 +17,8 @@ class SuccessMinimal(TestCase):
         self.config.env.set_cib_data("<cib />")
         self.env_assist.assert_raise_library_error(
             lambda: cluster.remove_nodes_from_cib(
-                self.env_assist.get_env(), self.nodes,
+                self.env_assist.get_env(),
+                self.nodes,
             ),
             [
                 fixture.error(
@@ -32,14 +33,17 @@ class SuccessMinimal(TestCase):
         self.config.runner.systemctl.is_active("pacemaker")
         for node in self.nodes:
             self.config.runner.pcmk.remove_node(
-                node, name=f"remove_node.{node}",
+                node,
+                name=f"remove_node.{node}",
             )
         cluster.remove_nodes_from_cib(self.env_assist.get_env(), self.nodes)
 
     def test_failure_pcmk_running(self):
         err_msg = "an error"
         self.config.runner.systemctl.is_active("pacemaker")
-        self.config.runner.pcmk.remove_node(self.nodes[0],)
+        self.config.runner.pcmk.remove_node(
+            self.nodes[0],
+        )
         self.config.runner.pcmk.remove_node(
             self.nodes[1],
             returncode=1,
@@ -48,7 +52,8 @@ class SuccessMinimal(TestCase):
         )
         self.env_assist.assert_raise_library_error(
             lambda: cluster.remove_nodes_from_cib(
-                self.env_assist.get_env(), self.nodes,
+                self.env_assist.get_env(),
+                self.nodes,
             ),
             [
                 fixture.error(
@@ -83,7 +88,8 @@ class SuccessMinimal(TestCase):
         self.config.runner.systemctl.is_active("pacemaker", is_active=False)
         # TODO: we do not test environment variables in runner
         self.config.runner.place(
-            cmd + [cmd_xpath.format(self.nodes[0])], name="remove_node_success",
+            cmd + [cmd_xpath.format(self.nodes[0])],
+            name="remove_node_success",
         )
         self.config.runner.place(
             cmd + [cmd_xpath.format(self.nodes[1])],
@@ -93,7 +99,8 @@ class SuccessMinimal(TestCase):
         )
         self.env_assist.assert_raise_library_error(
             lambda: cluster.remove_nodes_from_cib(
-                self.env_assist.get_env(), self.nodes,
+                self.env_assist.get_env(),
+                self.nodes,
             ),
             [
                 fixture.error(

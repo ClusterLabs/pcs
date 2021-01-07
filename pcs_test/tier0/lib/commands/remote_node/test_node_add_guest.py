@@ -365,7 +365,8 @@ class AddGuest(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    reports.codes.INVALID_RESPONSE_FORMAT, node=NODE_NAME,
+                    reports.codes.INVALID_RESPONSE_FORMAT,
+                    node=NODE_NAME,
                 )
             ]
         )
@@ -487,7 +488,10 @@ class AddGuest(TestCase):
 
     def test_unknown_host(self):
         self.config.env.set_known_hosts_dests(
-            {NODE_1: NODE_1_DEST_LIST, NODE_2: NODE_2_DEST_LIST,}
+            {
+                NODE_1: NODE_1_DEST_LIST,
+                NODE_2: NODE_2_DEST_LIST,
+            }
         )
         (
             self.config.local.load_cib().corosync_conf.load(
@@ -510,7 +514,10 @@ class AddGuest(TestCase):
     def test_unknown_host_skip_offline(self):
         pcmk_authkey_content = b"password"
         self.config.env.set_known_hosts_dests(
-            {NODE_1: NODE_1_DEST_LIST, NODE_2: NODE_2_DEST_LIST,}
+            {
+                NODE_1: NODE_1_DEST_LIST,
+                NODE_2: NODE_2_DEST_LIST,
+            }
         )
         (
             self.config.local.load_cib()
@@ -530,7 +537,10 @@ class AddGuest(TestCase):
     ):
         generate_binary_key.return_value = b"password"
         self.config.env.set_known_hosts_dests(
-            {NODE_1: NODE_1_DEST_LIST, NODE_2: NODE_2_DEST_LIST,}
+            {
+                NODE_1: NODE_1_DEST_LIST,
+                NODE_2: NODE_2_DEST_LIST,
+            }
         )
         (
             self.config.local.load_cib()
@@ -764,7 +774,11 @@ class NotLive(TestCase):
     def test_wait(self):
         self.env_assist.assert_raise_library_error(
             lambda: node_add_guest(self.env_assist.get_env(), wait=1),
-            [fixture.error(reports.codes.WAIT_FOR_IDLE_NOT_LIVE_CLUSTER,),],
+            [
+                fixture.error(
+                    reports.codes.WAIT_FOR_IDLE_NOT_LIVE_CLUSTER,
+                ),
+            ],
             expected_in_processor=False,
         )
 
@@ -883,7 +897,10 @@ class RemoteService(TestCase):
             self.config.local.run_pacemaker_remote(
                 NODE_NAME,
                 NODE_DEST_LIST,
-                result={"code": "fail", "message": "Action failed",},
+                result={
+                    "code": "fail",
+                    "message": "Action failed",
+                },
             )
         )
         self.env_assist.assert_raise_library_error(
@@ -892,7 +909,8 @@ class RemoteService(TestCase):
         self.env_assist.assert_reports(
             REPORTS[:"pcmk_remote_enable_success"]
             + EXTRA_REPORTS.select(
-                "pcmk_remote_enable_failed", "pcmk_remote_start_failed",
+                "pcmk_remote_enable_failed",
+                "pcmk_remote_start_failed",
             )
         )
 
@@ -901,7 +919,10 @@ class RemoteService(TestCase):
             self.config.local.run_pacemaker_remote(
                 NODE_NAME,
                 NODE_DEST_LIST,
-                result={"code": "fail", "message": "Action failed",},
+                result={
+                    "code": "fail",
+                    "message": "Action failed",
+                },
             ).local.push_cib()
         )
         node_add_guest(
@@ -951,7 +972,8 @@ class AuthkeyDistribution(TestCase):
         self.env_assist.assert_reports(
             REPORTS[:"authkey_distribution_success"]
             + EXTRA_REPORTS.only(
-                "manage_services_connection_failed", command="remote/put_file",
+                "manage_services_connection_failed",
+                command="remote/put_file",
             )
         )
 
@@ -960,7 +982,10 @@ class AuthkeyDistribution(TestCase):
             self.config.local.push_existing_authkey_to_remote(
                 NODE_NAME,
                 NODE_DEST_LIST,
-                distribution_result={"code": "conflict", "message": "",},
+                distribution_result={
+                    "code": "conflict",
+                    "message": "",
+                },
             )
         )
 
@@ -978,14 +1003,18 @@ class AuthkeyDistribution(TestCase):
             self.config.local.push_existing_authkey_to_remote(
                 NODE_NAME,
                 NODE_DEST_LIST,
-                distribution_result={"code": "conflict", "message": "",},
+                distribution_result={
+                    "code": "conflict",
+                    "message": "",
+                },
             )
             .local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST)
             .local.push_cib()
         )
 
         node_add_guest(
-            self.env_assist.get_env(), allow_incomplete_distribution=True,
+            self.env_assist.get_env(),
+            allow_incomplete_distribution=True,
         )
 
         self.env_assist.assert_reports(

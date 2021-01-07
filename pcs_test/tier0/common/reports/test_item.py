@@ -66,7 +66,9 @@ class ReportItemMessageToDtoTest(TestCase):
                     list_of_str=["str1", "str0"],
                     optional_list_of_int=[0, 1, 0],
                     optional_mapping_str_to_any=dict(
-                        str1=1, key="val", another=False,
+                        str1=1,
+                        key="val",
+                        another=False,
                     ),
                 ),
             ),

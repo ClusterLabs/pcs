@@ -45,7 +45,9 @@ def export_cfg(cfg_struct):
 def dr_cfg_fixture(local_role, remote_role, nodes):
     return export_cfg(
         dict(
-            local=dict(role=local_role.value,),
+            local=dict(
+                role=local_role.value,
+            ),
             remote_sites=[
                 dict(
                     role=remote_role.value,
@@ -105,7 +107,10 @@ class CheckLive(TestCase):
         )
         self.config.env.set_cib_data("<cib />")
         self.assert_live_required(
-            [file_type_codes.CIB, file_type_codes.COROSYNC_CONF,]
+            [
+                file_type_codes.CIB,
+                file_type_codes.COROSYNC_CONF,
+            ]
         )
 
 
@@ -223,7 +228,11 @@ class FailureValidations(TestCase):
             lambda: dr.set_recovery_site(self.env_assist.get_env(), orig_node),
         )
         self.env_assist.assert_reports(
-            [fixture.error(report_codes.DR_CONFIG_ALREADY_EXIST,)]
+            [
+                fixture.error(
+                    report_codes.DR_CONFIG_ALREADY_EXIST,
+                )
+            ]
         )
 
     def test_local_nodes_name_missing(self):
@@ -273,7 +282,12 @@ class FailureValidations(TestCase):
             lambda: dr.set_recovery_site(self.env_assist.get_env(), orig_node),
         )
         self.env_assist.assert_reports(
-            [fixture.error(report_codes.NODE_IN_LOCAL_CLUSTER, node=orig_node,)]
+            [
+                fixture.error(
+                    report_codes.NODE_IN_LOCAL_CLUSTER,
+                    node=orig_node,
+                )
+            ]
         )
 
     def test_tokens_missing_for_local_nodes(self):
@@ -312,7 +326,12 @@ class FailureValidations(TestCase):
             lambda: dr.set_recovery_site(self.env_assist.get_env(), orig_node),
         )
         self.env_assist.assert_reports(
-            [fixture.error(report_codes.HOST_NOT_FOUND, host_list=[orig_node],)]
+            [
+                fixture.error(
+                    report_codes.HOST_NOT_FOUND,
+                    host_list=[orig_node],
+                )
+            ]
         )
 
     def test_tokens_missing_for_remote_cluster(self):
@@ -335,7 +354,8 @@ class FailureValidations(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.HOST_NOT_FOUND, host_list=remote_nodes[-1:],
+                    report_codes.HOST_NOT_FOUND,
+                    host_list=remote_nodes[-1:],
                 )
             ]
         )
@@ -364,7 +384,11 @@ class FailureRemoteCorocyncConf(TestCase):
     def test_network_issue(self):
         self.config.http.corosync.get_corosync_conf(
             communication_list=[
-                dict(label=self.node, was_connected=False, error_msg=REASON,)
+                dict(
+                    label=self.node,
+                    was_connected=False,
+                    error_msg=REASON,
+                )
             ]
         )
         self.env_assist.assert_raise_library_error(
@@ -387,7 +411,11 @@ class FailureRemoteCorocyncConf(TestCase):
     def test_file_does_not_exist(self):
         self.config.http.corosync.get_corosync_conf(
             communication_list=[
-                dict(label=self.node, response_code=400, output=REASON,)
+                dict(
+                    label=self.node,
+                    response_code=400,
+                    output=REASON,
+                )
             ]
         )
         self.env_assist.assert_raise_library_error(
@@ -518,7 +546,11 @@ class FailureRemoteDrCfgDistribution(TestCase):
         self.config.http.files.put_files(
             communication_list=self.success_communication
             + [
-                dict(label=node, was_connected=False, error_msg=REASON,)
+                dict(
+                    label=node,
+                    was_connected=False,
+                    error_msg=REASON,
+                )
                 for node in self.failed_nodes
             ],
             pcs_disaster_recovery_conf=dr_cfg_fixture(
@@ -545,7 +577,11 @@ class FailureRemoteDrCfgDistribution(TestCase):
         self.config.http.files.put_files(
             communication_list=self.success_communication
             + [
-                dict(label=node, response_code=400, output=REASON,)
+                dict(
+                    label=node,
+                    response_code=400,
+                    output=REASON,
+                )
                 for node in self.failed_nodes
             ],
             pcs_disaster_recovery_conf=dr_cfg_fixture(
@@ -677,7 +713,11 @@ class FailureLocalDrCfgDistribution(TestCase):
         self.config.http.files.put_files(
             communication_list=self.success_communication
             + [
-                dict(label=node, was_connected=False, error_msg=REASON,)
+                dict(
+                    label=node,
+                    was_connected=False,
+                    error_msg=REASON,
+                )
                 for node in self.failed_nodes
             ],
             pcs_disaster_recovery_conf=dr_cfg_fixture(
@@ -704,7 +744,11 @@ class FailureLocalDrCfgDistribution(TestCase):
         self.config.http.files.put_files(
             communication_list=self.success_communication
             + [
-                dict(label=node, response_code=400, output=REASON,)
+                dict(
+                    label=node,
+                    response_code=400,
+                    output=REASON,
+                )
                 for node in self.failed_nodes
             ],
             pcs_disaster_recovery_conf=dr_cfg_fixture(

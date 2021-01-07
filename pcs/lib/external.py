@@ -100,7 +100,9 @@ class CommandRunner:
         self._reporter.report(
             ReportItem.debug(
                 reports.messages.RunExternalProcessStarted(
-                    log_args, stdin_string, env_vars,
+                    log_args,
+                    stdin_string,
+                    env_vars,
                 )
             )
         )
@@ -133,7 +135,8 @@ class CommandRunner:
             raise LibraryError(
                 ReportItem.error(
                     reports.messages.RunExternalProcessError(
-                        log_args, e.strerror,
+                        log_args,
+                        e.strerror,
                     )
                 )
             ) from e
@@ -150,7 +153,10 @@ class CommandRunner:
         self._reporter.report(
             ReportItem.debug(
                 reports.messages.RunExternalProcessFinished(
-                    log_args, retval, out_std, out_err,
+                    log_args,
+                    retval,
+                    out_std,
+                    out_err,
                 )
             )
         )

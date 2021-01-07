@@ -231,7 +231,8 @@ class PropertyTest(TestCase):
         )
 
         output, returnVal = pcs(
-            self.temp_cib.name, "property set enable-acl=TRUE --force".split(),
+            self.temp_cib.name,
+            "property set enable-acl=TRUE --force".split(),
         )
         ac(output, "")
         self.assertEqual(returnVal, 0)

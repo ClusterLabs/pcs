@@ -54,7 +54,10 @@ def qdevice_destroy(lib_env: LibraryEnvironment, model, proceed_if_used=False):
 
 
 def qdevice_status_text(
-    lib_env: LibraryEnvironment, model, verbose=False, cluster=None,
+    lib_env: LibraryEnvironment,
+    model,
+    verbose=False,
+    cluster=None,
 ):
     """
     Get runtime status of a quorum device in plain text
@@ -124,7 +127,9 @@ def qdevice_kill(lib_env: LibraryEnvironment, model):
 
 
 def qdevice_net_sign_certificate_request(
-    lib_env: LibraryEnvironment, certificate_request, cluster_name,
+    lib_env: LibraryEnvironment,
+    certificate_request,
+    cluster_name,
 ):
     """
     Sign node certificate request by qnetd CA
@@ -254,7 +259,8 @@ def _service_start(lib_env: LibraryEnvironment, func):
     lib_env.report_processor.report(
         ReportItem.info(
             reports.messages.ServiceActionSucceeded(
-                reports.const.SERVICE_ACTION_START, "quorum device",
+                reports.const.SERVICE_ACTION_START,
+                "quorum device",
             )
         )
     )
@@ -317,7 +323,9 @@ def _service_enable(lib_env: LibraryEnvironment, func):
         raise LibraryError(
             ReportItem.error(
                 reports.messages.ServiceActionFailed(
-                    reports.const.SERVICE_ACTION_ENABLE, e.service, e.message,
+                    reports.const.SERVICE_ACTION_ENABLE,
+                    e.service,
+                    e.message,
                 )
             )
         ) from e
@@ -337,7 +345,9 @@ def _service_disable(lib_env: LibraryEnvironment, func):
         raise LibraryError(
             ReportItem.error(
                 reports.messages.ServiceActionFailed(
-                    reports.const.SERVICE_ACTION_DISABLE, e.service, e.message,
+                    reports.const.SERVICE_ACTION_DISABLE,
+                    e.service,
+                    e.message,
                 )
             )
         ) from e

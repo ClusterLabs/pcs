@@ -73,7 +73,10 @@ class QdeviceSetupTest(TestCase):
             (
                 severity.ERROR,
                 report_codes.QDEVICE_INITIALIZATION_ERROR,
-                {"model": "net", "reason": "test error\nstdout",},
+                {
+                    "model": "net",
+                    "reason": "test error\nstdout",
+                },
             ),
         )
 
@@ -102,7 +105,10 @@ class QdeviceDestroyTest(TestCase):
             (
                 severity.ERROR,
                 report_codes.QDEVICE_DESTROY_ERROR,
-                {"model": "net", "reason": "test message",},
+                {
+                    "model": "net",
+                    "reason": "test message",
+                },
             ),
         )
         mock_rmtree.assert_called_once_with(_qnetd_cert_dir)
@@ -134,7 +140,10 @@ class QdeviceStatusGenericTest(TestCase):
             (
                 severity.ERROR,
                 report_codes.QDEVICE_GET_STATUS_ERROR,
-                {"model": "net", "reason": "status error\nsome info",},
+                {
+                    "model": "net",
+                    "reason": "status error\nsome info",
+                },
             ),
         )
         self.mock_runner.run.assert_called_once_with([_qnetd_tool, "-s"])
@@ -186,7 +195,10 @@ class QdeviceStatusClusterTest(TestCase):
             (
                 severity.ERROR,
                 report_codes.QDEVICE_GET_STATUS_ERROR,
-                {"model": "net", "reason": "status error\nsome info",},
+                {
+                    "model": "net",
+                    "reason": "status error\nsome info",
+                },
             ),
         )
         self.mock_runner.run.assert_called_once_with([_qnetd_tool, "-l"])
@@ -255,7 +267,8 @@ class QdeviceSignCertificateRequestTest(CertificateTestCase):
         self.assertEqual(result, mock_get_cert.return_value)
 
         mock_tmp_store.assert_called_once_with(
-            "certificate request", reports.messages.QdeviceCertificateSignError,
+            "certificate request",
+            reports.messages.QdeviceCertificateSignError,
         )
         self.mock_runner.run.assert_called_once_with(
             [
@@ -284,7 +297,9 @@ class QdeviceSignCertificateRequestTest(CertificateTestCase):
             (
                 severity.ERROR,
                 report_codes.QDEVICE_NOT_INITIALIZED,
-                {"model": "net",},
+                {
+                    "model": "net",
+                },
             ),
         )
         mock_tmp_store.assert_not_called()
@@ -321,12 +336,15 @@ class QdeviceSignCertificateRequestTest(CertificateTestCase):
             (
                 severity.ERROR,
                 report_codes.QDEVICE_CERTIFICATE_SIGN_ERROR,
-                {"reason": "tool output error\nstdout",},
+                {
+                    "reason": "tool output error\nstdout",
+                },
             ),
         )
 
         mock_tmp_store.assert_called_once_with(
-            "certificate request", reports.messages.QdeviceCertificateSignError,
+            "certificate request",
+            reports.messages.QdeviceCertificateSignError,
         )
         self.mock_runner.run.assert_called_once_with(
             [
@@ -356,7 +374,8 @@ class QdeviceSignCertificateRequestTest(CertificateTestCase):
         )
 
         mock_tmp_store.assert_called_once_with(
-            "certificate request", reports.messages.QdeviceCertificateSignError,
+            "certificate request",
+            reports.messages.QdeviceCertificateSignError,
         )
         self.mock_runner.run.assert_called_once_with(
             [
@@ -396,7 +415,10 @@ class ClientDestroyTest(TestCase):
             (
                 severity.ERROR,
                 report_codes.QDEVICE_DESTROY_ERROR,
-                {"model": "net", "reason": "test message",},
+                {
+                    "model": "net",
+                    "reason": "test message",
+                },
             ),
         )
         mock_rmtree.assert_called_once_with(_client_cert_dir)
@@ -444,7 +466,10 @@ class ClientSetupTest(TestCase):
             (
                 severity.ERROR,
                 report_codes.QDEVICE_INITIALIZATION_ERROR,
-                {"model": "net", "reason": "tool output error\nstdout",},
+                {
+                    "model": "net",
+                    "reason": "tool output error\nstdout",
+                },
             ),
         )
         with open(self.ca_file_path, "rb") as a_file:
@@ -474,7 +499,8 @@ class ClientGenerateCertificateRequestTest(CertificateTestCase):
         )
         self.assertEqual(1, len(mock_get_cert.mock_calls))
         self.assertEqual(
-            "tool output", mock_get_cert.call_args[0][0],
+            "tool output",
+            mock_get_cert.call_args[0][0],
         )
         self.assertEqual(
             reports.messages.QdeviceInitializationError("net", "tool output"),
@@ -492,7 +518,9 @@ class ClientGenerateCertificateRequestTest(CertificateTestCase):
             (
                 severity.ERROR,
                 report_codes.QDEVICE_NOT_INITIALIZED,
-                {"model": "net",},
+                {
+                    "model": "net",
+                },
             ),
         )
         self.mock_runner.run.assert_not_called()
@@ -509,7 +537,10 @@ class ClientGenerateCertificateRequestTest(CertificateTestCase):
             (
                 severity.ERROR,
                 report_codes.QDEVICE_INITIALIZATION_ERROR,
-                {"model": "net", "reason": "tool output error\nstdout",},
+                {
+                    "model": "net",
+                    "reason": "tool output error\nstdout",
+                },
             ),
         )
         self.mock_runner.run.assert_called_once_with(
@@ -556,7 +587,9 @@ class ClientCertRequestToPk12Test(CertificateTestCase):
             (
                 severity.ERROR,
                 report_codes.QDEVICE_NOT_INITIALIZED,
-                {"model": "net",},
+                {
+                    "model": "net",
+                },
             ),
         )
         mock_tmp_store.assert_not_called()
@@ -593,7 +626,9 @@ class ClientCertRequestToPk12Test(CertificateTestCase):
             (
                 severity.ERROR,
                 report_codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
-                {"reason": "tool output error\nstdout",},
+                {
+                    "reason": "tool output error\nstdout",
+                },
             ),
         )
 
@@ -645,7 +680,8 @@ class ClientImportCertificateAndKeyTest(CertificateTestCase):
         )
 
         mock_tmp_store.assert_called_once_with(
-            "pk12 certificate", reports.messages.QdeviceCertificateImportError,
+            "pk12 certificate",
+            reports.messages.QdeviceCertificateImportError,
         )
         self.mock_runner.run.assert_called_once_with(
             [_client_cert_tool, "-m", "-c", self.mock_tmpfile.name]
@@ -662,7 +698,9 @@ class ClientImportCertificateAndKeyTest(CertificateTestCase):
             (
                 severity.ERROR,
                 report_codes.QDEVICE_NOT_INITIALIZED,
-                {"model": "net",},
+                {
+                    "model": "net",
+                },
             ),
         )
 
@@ -681,7 +719,8 @@ class ClientImportCertificateAndKeyTest(CertificateTestCase):
         )
 
         mock_tmp_store.assert_called_once_with(
-            "pk12 certificate", reports.messages.QdeviceCertificateImportError,
+            "pk12 certificate",
+            reports.messages.QdeviceCertificateImportError,
         )
         self.mock_runner.run.assert_not_called()
 
@@ -697,15 +736,19 @@ class ClientImportCertificateAndKeyTest(CertificateTestCase):
             (
                 severity.ERROR,
                 report_codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
-                {"reason": "tool output error\nstdout",},
+                {
+                    "reason": "tool output error\nstdout",
+                },
             ),
         )
 
         mock_tmp_store.assert_called_once_with(
-            "pk12 certificate", reports.messages.QdeviceCertificateImportError,
+            "pk12 certificate",
+            reports.messages.QdeviceCertificateImportError,
         )
         mock_tmp_store.assert_called_once_with(
-            "pk12 certificate", reports.messages.QdeviceCertificateImportError,
+            "pk12 certificate",
+            reports.messages.QdeviceCertificateImportError,
         )
         self.mock_runner.run.assert_called_once_with(
             [_client_cert_tool, "-m", "-c", self.mock_tmpfile.name]
@@ -761,12 +804,15 @@ class GetOutputCertificateTest(TestCase):
 
         assert_raise_library_error(
             lambda: lib._get_output_certificate(
-                cert_tool_output, report_item_message,
+                cert_tool_output,
+                report_item_message,
             ),
             (
                 severity.ERROR,
                 report_codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
-                {"reason": cert_tool_output,},
+                {
+                    "reason": cert_tool_output,
+                },
             ),
         )
 
@@ -784,7 +830,8 @@ class GetOutputCertificateTest(TestCase):
 
         assert_raise_library_error(
             lambda: lib._get_output_certificate(
-                cert_tool_output, report_item_message,
+                cert_tool_output,
+                report_item_message,
             ),
             (
                 severity.ERROR,

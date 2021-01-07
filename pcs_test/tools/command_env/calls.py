@@ -176,7 +176,10 @@ class CallListBuilder:
 
         if before and instead:
             raise self.__cannot_use_before_and_instead(
-                name, call, before, instead,
+                name,
+                call,
+                before,
+                instead,
             )
 
         if not hasattr(call, "type") or not call.type:
@@ -192,7 +195,8 @@ class CallListBuilder:
     def __error_with_context(self, message):
         return AssertionError(
             "{0}\nIn the confituration call collection are calls:\n{1}".format(
-                message, show_calls(self.__name_list, self.__call_list),
+                message,
+                show_calls(self.__name_list, self.__call_list),
             )
         )
 
@@ -229,6 +233,9 @@ class CallListBuilder:
                 "Cannot put call named '{0}' ({1}) {2} '{3}'"
                 " because '{3}' does not exist."
             ).format(
-                name, call, where_type, where_name,
+                name,
+                call,
+                where_type,
+                where_name,
             )
         )

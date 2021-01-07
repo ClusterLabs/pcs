@@ -23,7 +23,11 @@ class ValuesToPairs(TestCase):
                 "second": validate.ValuePair("B", "b"),
             },
             validate.values_to_pairs(
-                {"first": "A", "second": "B",}, lambda key, value: value.lower()
+                {
+                    "first": "A",
+                    "second": "B",
+                },
+                lambda key, value: value.lower(),
             ),
         )
 
@@ -34,7 +38,10 @@ class ValuesToPairs(TestCase):
                 "second": validate.ValuePair("B", "b"),
             },
             validate.values_to_pairs(
-                {"first": validate.ValuePair("A", "aaa"), "second": "B",},
+                {
+                    "first": validate.ValuePair("A", "aaa"),
+                    "second": "B",
+                },
                 lambda key, value: value.lower(),
             ),
         )
@@ -43,13 +50,24 @@ class ValuesToPairs(TestCase):
 class PairsToValues(TestCase):
     def test_keep_values_if_is_not_pair(self):
         self.assertEqual(
-            {"first": "A", "second": "B",},
-            validate.pairs_to_values({"first": "A", "second": "B",}),
+            {
+                "first": "A",
+                "second": "B",
+            },
+            validate.pairs_to_values(
+                {
+                    "first": "A",
+                    "second": "B",
+                }
+            ),
         )
 
     def test_extract_normalized_values(self):
         self.assertEqual(
-            {"first": "aaa", "second": "B",},
+            {
+                "first": "aaa",
+                "second": "B",
+            },
             validate.pairs_to_values(
                 {
                     "first": validate.ValuePair(original="A", normalized="aaa"),
@@ -84,7 +102,13 @@ class ValidatorAll(TestCase):
                     validate.ValuePositiveInteger("x"),
                     validate.ValueIn("y", ["a", "b"]),
                 ]
-            ).validate({"x": "abcd", "y": "defg", "z": "hijk",}),
+            ).validate(
+                {
+                    "x": "abcd",
+                    "y": "defg",
+                    "z": "hijk",
+                }
+            ),
             [
                 fixture.error(
                     reports.codes.INVALID_OPTIONS,
@@ -132,14 +156,19 @@ class ValidatorFirstError(TestCase):
                 reports.item.ReportItem(
                     severity,
                     reports.messages.InvalidOptionValue(
-                        self._option_name, value.original, "test report",
+                        self._option_name,
+                        value.original,
+                        "test report",
                     ),
                 )
             ]
 
     def setUp(self):
         self.validator = validate.ValidatorFirstError(
-            [self.Validator("name1"), self.Validator("name2"),]
+            [
+                self.Validator("name1"),
+                self.Validator("name2"),
+            ]
         )
 
     def test_no_reports(self):
@@ -207,7 +236,12 @@ class ValidatorFirstError(TestCase):
 class CorosyncOption(TestCase):
     def test_valid(self):
         assert_report_item_list_equal(
-            validate.CorosyncOption().validate({"name_-/NAME09": "value",}), []
+            validate.CorosyncOption().validate(
+                {
+                    "name_-/NAME09": "value",
+                }
+            ),
+            [],
         )
 
     def test_forbidden_characters(self):
@@ -248,7 +282,12 @@ class DependsOnOption(TestCase):
         assert_report_item_list_equal(
             validate.DependsOnOption(
                 ["name"], "prerequisite", option_type="type"
-            ).validate({"name": "value", "prerequisite": "value",}),
+            ).validate(
+                {
+                    "name": "value",
+                    "prerequisite": "value",
+                }
+            ),
             [],
         )
 
@@ -275,7 +314,12 @@ class DependsOnOption(TestCase):
         assert_report_item_list_equal(
             validate.DependsOnOption(
                 ["name1", "name2", "name3"], "prerequisite"
-            ).validate({"name1": "value", "name3": "value",}),
+            ).validate(
+                {
+                    "name1": "value",
+                    "name3": "value",
+                }
+            ),
             [
                 fixture.error(
                     reports.codes.PREREQUISITE_OPTION_IS_MISSING,
@@ -360,13 +404,18 @@ class IsRequiredSome(TestCase):
 class MutuallyExclusive(TestCase):
     def test_returns_empty_report_when_valid(self):
         assert_report_item_list_equal(
-            validate.MutuallyExclusive(["a", "b"]).validate({"a": "A"}), [],
+            validate.MutuallyExclusive(["a", "b"]).validate({"a": "A"}),
+            [],
         )
 
     def test_returns_mutually_exclusive_report_on_2_names_conflict(self):
         assert_report_item_list_equal(
             validate.MutuallyExclusive(["a", "b", "c"]).validate(
-                {"a": "A", "b": "B", "d": "D",}
+                {
+                    "a": "A",
+                    "b": "B",
+                    "d": "D",
+                }
             ),
             [
                 fixture.error(
@@ -381,7 +430,14 @@ class MutuallyExclusive(TestCase):
         assert_report_item_list_equal(
             validate.MutuallyExclusive(
                 ["a", "b", "c", "e"], option_type="option"
-            ).validate({"a": "A", "b": "B", "c": "C", "d": "D",}),
+            ).validate(
+                {
+                    "a": "A",
+                    "b": "B",
+                    "c": "C",
+                    "d": "D",
+                }
+            ),
             [
                 fixture.error(
                     reports.codes.MUTUALLY_EXCLUSIVE_OPTIONS,
@@ -560,7 +616,9 @@ class ValueValidatorImplementation(validate.ValueValidator):
         return [
             reports.item.ReportItem.error(
                 reports.messages.InvalidOptionValue(
-                    self._option_name, value.original, "test report",
+                    self._option_name,
+                    value.original,
+                    "test report",
                 )
             )
         ]
@@ -836,7 +894,8 @@ class ValueId(TestCase):
             validate.ValueId("id").validate({"id": ""}),
             [
                 fixture.error(
-                    reports.codes.INVALID_ID_IS_EMPTY, id_description="id",
+                    reports.codes.INVALID_ID_IS_EMPTY,
+                    id_description="id",
                 ),
             ],
         )
@@ -877,7 +936,12 @@ class ValueId(TestCase):
             validate.ValueId("id", id_provider=id_provider).validate(
                 {"id": "used"}
             ),
-            [fixture.error(reports.codes.ID_ALREADY_EXISTS, id="used",),],
+            [
+                fixture.error(
+                    reports.codes.ID_ALREADY_EXISTS,
+                    id="used",
+                ),
+            ],
         )
 
     def test_pair_invalid(self):
@@ -1017,7 +1081,9 @@ class ValueIn(TestCase):
     def test_supports_warning(self):
         assert_report_item_list_equal(
             validate.ValueIn(
-                "a", ["b"], severity=reports.item.ReportItemSeverity.warning(),
+                "a",
+                ["b"],
+                severity=reports.item.ReportItemSeverity.warning(),
             ).validate({"a": "c"}),
             [
                 fixture.warn(
@@ -1333,7 +1399,8 @@ class ValueScore(TestCase):
         ]:
             with self.subTest(score=score):
                 assert_report_item_list_equal(
-                    validate.ValueScore("a").validate({"a": score}), [],
+                    validate.ValueScore("a").validate({"a": score}),
+                    [],
                 )
 
     def test_not_valid_score(self):
@@ -1341,7 +1408,12 @@ class ValueScore(TestCase):
             with self.subTest(score=score):
                 assert_report_item_list_equal(
                     validate.ValueScore("a").validate({"a": score}),
-                    [fixture.error(reports.codes.INVALID_SCORE, score=score,),],
+                    [
+                        fixture.error(
+                            reports.codes.INVALID_SCORE,
+                            score=score,
+                        ),
+                    ],
                 )
 
 
@@ -1375,7 +1447,8 @@ class ValueVersion(TestCase):
         for version in ["123", "123.456", "123.456.789", "1.2.3.4"]:
             with self.subTest(value=version):
                 assert_report_item_list_equal(
-                    validate.ValueVersion("a").validate({"a": version}), [],
+                    validate.ValueVersion("a").validate({"a": version}),
+                    [],
                 )
 
     def test_reports_about_invalid_interval(self):

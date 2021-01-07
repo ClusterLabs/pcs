@@ -35,7 +35,10 @@ class GetStatusTextTest(TestCase):
             (
                 severity.ERROR,
                 report_codes.COROSYNC_QUORUM_GET_STATUS_ERROR,
-                {"reason": "status error\nsome info", "node": "",},
+                {
+                    "reason": "status error\nsome info",
+                    "node": "",
+                },
             ),
         )
         self.mock_runner.run.assert_called_once_with([self.qdevice_tool, "-s"])

@@ -60,5 +60,10 @@ class PcmkShortcuts:
             param_list=[
                 ("data_json", json.dumps(dict(node_list=nodes_to_remove)))
             ],
-            output=json.dumps(dict(code="success", message="",)),
+            output=json.dumps(
+                dict(
+                    code="success",
+                    message="",
+                )
+            ),
         )

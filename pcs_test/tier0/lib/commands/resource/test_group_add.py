@@ -296,10 +296,15 @@ class GroupAddWait(TestCase):
             resources=etree_to_str(resources_state)
         )
         resource.group_add(
-            self.env_assist.get_env(), "G", ["R1", "R2"], wait=self.timeout,
+            self.env_assist.get_env(),
+            "G",
+            ["R1", "R2"],
+            wait=self.timeout,
         )
         self.env_assist.assert_reports(
-            [fixture.report_resource_running("G", {"Started": ["node1"]}),]
+            [
+                fixture.report_resource_running("G", {"Started": ["node1"]}),
+            ]
         )
 
     def test_group_not_running(self):
@@ -322,8 +327,13 @@ class GroupAddWait(TestCase):
             resources=etree_to_str(resources_state)
         )
         resource.group_add(
-            self.env_assist.get_env(), "G", ["R1", "R2"], wait=self.timeout,
+            self.env_assist.get_env(),
+            "G",
+            ["R1", "R2"],
+            wait=self.timeout,
         )
         self.env_assist.assert_reports(
-            [fixture.report_resource_not_running("G"),]
+            [
+                fixture.report_resource_not_running("G"),
+            ]
         )

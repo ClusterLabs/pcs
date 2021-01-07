@@ -24,7 +24,11 @@ class ShowResourceRelationsCmd(TestCase):
                     "d1",
                     ResourceRelationType.RSC_PRIMITIVE,
                     [],
-                    {"class": "ocf", "provider": "pacemaker", "type": "Dummy",},
+                    {
+                        "class": "ocf",
+                        "provider": "pacemaker",
+                        "type": "Dummy",
+                    },
                 ),
                 [
                     ResourceRelationDto(
@@ -140,7 +144,11 @@ def _fixture_dummy(_id):
         _id,
         ResourceRelationType.RSC_PRIMITIVE,
         [],
-        {"class": "ocf", "provider": "pacemaker", "type": "Dummy",},
+        {
+            "class": "ocf",
+            "provider": "pacemaker",
+            "type": "Dummy",
+        },
     )
 
 
@@ -216,7 +224,12 @@ class ResourcePrintableNode(TestCase):
     def test_primitive_without_provider_class(self):
         obj = relations.ResourcePrintableNode(
             RelationEntityDto(
-                "d1", ResourceRelationType.RSC_PRIMITIVE, [], {"type": "Dummy",}
+                "d1",
+                ResourceRelationType.RSC_PRIMITIVE,
+                [],
+                {
+                    "type": "Dummy",
+                },
             ),
             [],
             False,
@@ -230,7 +243,10 @@ class ResourcePrintableNode(TestCase):
                 "d1",
                 ResourceRelationType.RSC_PRIMITIVE,
                 [],
-                {"class": "ocf", "type": "Dummy",},
+                {
+                    "class": "ocf",
+                    "type": "Dummy",
+                },
             ),
             [],
             False,
@@ -246,7 +262,10 @@ class ResourcePrintableNode(TestCase):
                 "d1",
                 ResourceRelationType.RSC_PRIMITIVE,
                 [],
-                {"provider": "pacemaker", "type": "Dummy",},
+                {
+                    "provider": "pacemaker",
+                    "type": "Dummy",
+                },
             ),
             [],
             False,
@@ -258,7 +277,9 @@ class ResourcePrintableNode(TestCase):
 
     def test_other(self):
         obj = relations.ResourcePrintableNode(
-            RelationEntityDto("an_id", "a_type", [], {}), [], False,
+            RelationEntityDto("an_id", "a_type", [], {}),
+            [],
+            False,
         )
         self.assertEqual(
             "an_id (resource: <unknown>)", obj.get_title(verbose=True)
@@ -267,7 +288,9 @@ class ResourcePrintableNode(TestCase):
 
     def test_other_not_verbose(self):
         obj = relations.ResourcePrintableNode(
-            RelationEntityDto("an_id", "a_type", [], {}), [], False,
+            RelationEntityDto("an_id", "a_type", [], {}),
+            [],
+            False,
         )
         self.assertEqual("an_id", obj.get_title(verbose=False))
         self.assertEqual([], obj.detail)
@@ -294,7 +317,10 @@ class RelationPrintableNode(TestCase):
             {
                 "id": "order_set_id",
                 "sets": [
-                    {"members": ["d1", "d2", "d3"], "metadata": {},},
+                    {
+                        "members": ["d1", "d2", "d3"],
+                        "metadata": {},
+                    },
                     {
                         "members": ["d4", "d5", "d0"],
                         "metadata": {
@@ -442,7 +468,9 @@ class RelationPrintableNode(TestCase):
                 "inner:g1",
                 ResourceRelationType.INNER_RESOURCES,
                 ["m0"],
-                {"id": "g1",},
+                {
+                    "id": "g1",
+                },
             ),
             [],
             False,
@@ -456,7 +484,9 @@ class RelationPrintableNode(TestCase):
                 "inner:g1",
                 ResourceRelationType.INNER_RESOURCES,
                 ["m0"],
-                {"id": "g1",},
+                {
+                    "id": "g1",
+                },
             ),
             [],
             False,
@@ -470,7 +500,9 @@ class RelationPrintableNode(TestCase):
                 "outer:g1",
                 ResourceRelationType.OUTER_RESOURCE,
                 [],
-                {"id": "g1",},
+                {
+                    "id": "g1",
+                },
             ),
             [],
             False,
@@ -484,7 +516,9 @@ class RelationPrintableNode(TestCase):
                 "outer:g1",
                 ResourceRelationType.OUTER_RESOURCE,
                 [],
-                {"id": "g1",},
+                {
+                    "id": "g1",
+                },
             ),
             [],
             False,
@@ -495,7 +529,12 @@ class RelationPrintableNode(TestCase):
     def test_unknown_not_verbose(self):
         obj = relations.RelationPrintableNode(
             RelationEntityDto(
-                "random", "undifined type", [], {"id": "random_id",}
+                "random",
+                "undifined type",
+                [],
+                {
+                    "id": "random_id",
+                },
             ),
             [],
             False,
@@ -506,7 +545,12 @@ class RelationPrintableNode(TestCase):
     def test_unknown(self):
         obj = relations.RelationPrintableNode(
             RelationEntityDto(
-                "random", "undifined type", [], {"id": "random_id",}
+                "random",
+                "undifined type",
+                [],
+                {
+                    "id": "random_id",
+                },
             ),
             [],
             False,

@@ -55,7 +55,8 @@ class DestroyTest(TestCase):
     def test_lib_call_minimal(self):
         booth_cmd.config_destroy(self.lib, [], dict_to_modifiers(dict()))
         self.lib.booth.config_destroy.assert_called_once_with(
-            ignore_config_load_problems=False, instance_name=None,
+            ignore_config_load_problems=False,
+            instance_name=None,
         )
 
     def test_lib_call_full(self):
@@ -63,7 +64,8 @@ class DestroyTest(TestCase):
             self.lib, [], dict_to_modifiers(dict(name="my_booth", force=True))
         )
         self.lib.booth.config_destroy.assert_called_once_with(
-            ignore_config_load_problems=True, instance_name="my_booth",
+            ignore_config_load_problems=True,
+            instance_name="my_booth",
         )
 
 
@@ -77,7 +79,10 @@ class AddTicketTest(TestCase):
             self.lib, ["ticketA"], dict_to_modifiers(dict())
         )
         self.lib.booth.config_ticket_add.assert_called_once_with(
-            "ticketA", {}, instance_name=None, allow_unknown_options=False,
+            "ticketA",
+            {},
+            instance_name=None,
+            allow_unknown_options=False,
         )
 
     def test_lib_call_full(self):
@@ -115,7 +120,8 @@ class DeleteRemoveTicketMixin:
             self.lib, ["ticketA"], dict_to_modifiers(dict())
         )
         self.lib.booth.config_ticket_remove.assert_called_once_with(
-            "ticketA", instance_name=None,
+            "ticketA",
+            instance_name=None,
         )
 
     def test_lib_call_full(self):
@@ -123,11 +129,16 @@ class DeleteRemoveTicketMixin:
             self.lib,
             ["ticketA"],
             dict_to_modifiers(
-                {"name": "my_booth", "booth-conf": "C", "booth-key": "K",}
+                {
+                    "name": "my_booth",
+                    "booth-conf": "C",
+                    "booth-key": "K",
+                }
             ),
         )
         self.lib.booth.config_ticket_remove.assert_called_once_with(
-            "ticketA", instance_name="my_booth",
+            "ticketA",
+            instance_name="my_booth",
         )
 
 
@@ -149,7 +160,9 @@ class CreateTest(AssertPcsMixin, TestCase):
             self.lib, ["ip", "1.2.3.4"], dict_to_modifiers(dict())
         )
         self.lib.booth.create_in_cluster.assert_called_once_with(
-            "1.2.3.4", instance_name=None, allow_absent_resource_agent=False,
+            "1.2.3.4",
+            instance_name=None,
+            allow_absent_resource_agent=False,
         )
 
     def test_lib_call_full(self):
@@ -180,7 +193,9 @@ class DeleteRemoveTestMixin(AssertPcsMixin):
             self.lib, [], dict_to_modifiers(dict())
         )
         self.lib.booth.remove_from_cluster.assert_called_once_with(
-            resource_remove, instance_name=None, allow_remove_multiple=False,
+            resource_remove,
+            instance_name=None,
+            allow_remove_multiple=False,
         )
 
     def test_lib_call_full(self):
@@ -211,7 +226,9 @@ class TicketGrantTest(TestCase):
     def test_lib_call_minimal(self):
         booth_cmd.ticket_grant(self.lib, ["ticketA"], dict_to_modifiers(dict()))
         self.lib.booth.ticket_grant.assert_called_once_with(
-            "ticketA", instance_name=None, site_ip=None,
+            "ticketA",
+            instance_name=None,
+            site_ip=None,
         )
 
     def test_lib_call_full(self):
@@ -221,7 +238,9 @@ class TicketGrantTest(TestCase):
             dict_to_modifiers(dict(name="my_booth")),
         )
         self.lib.booth.ticket_grant.assert_called_once_with(
-            "ticketA", instance_name="my_booth", site_ip="1.2.3.4",
+            "ticketA",
+            instance_name="my_booth",
+            site_ip="1.2.3.4",
         )
 
 
@@ -235,7 +254,9 @@ class TicketRevokeTest(TestCase):
             self.lib, ["ticketA"], dict_to_modifiers(dict())
         )
         self.lib.booth.ticket_revoke.assert_called_once_with(
-            "ticketA", instance_name=None, site_ip=None,
+            "ticketA",
+            instance_name=None,
+            site_ip=None,
         )
 
     def test_lib_call_full(self):
@@ -245,7 +266,9 @@ class TicketRevokeTest(TestCase):
             dict_to_modifiers(dict(name="my_booth")),
         )
         self.lib.booth.ticket_revoke.assert_called_once_with(
-            "ticketA", instance_name="my_booth", site_ip="1.2.3.4",
+            "ticketA",
+            instance_name="my_booth",
+            site_ip="1.2.3.4",
         )
 
 
@@ -267,17 +290,24 @@ class ConfigTest(TestCase):
     def test_lib_call_minimal(self):
         booth_cmd.config_show(self.lib, [], dict_to_modifiers(dict()))
         self.lib.booth.config_text.assert_called_once_with(
-            instance_name=None, node_name=None,
+            instance_name=None,
+            node_name=None,
         )
 
     def test_lib_call_full(self):
         booth_cmd.config_show(
             self.lib,
             ["node1"],
-            dict_to_modifiers({"name": "my_booth", "request-timeout": "10",}),
+            dict_to_modifiers(
+                {
+                    "name": "my_booth",
+                    "request-timeout": "10",
+                }
+            ),
         )
         self.lib.booth.config_text.assert_called_once_with(
-            instance_name="my_booth", node_name="node1",
+            instance_name="my_booth",
+            node_name="node1",
         )
 
 
@@ -323,7 +353,8 @@ class Sync(TestCase):
     def test_lib_call_minimal(self):
         booth_cmd.sync(self.lib, [], dict_to_modifiers(dict()))
         self.lib.booth.config_sync.assert_called_once_with(
-            instance_name=None, skip_offline_nodes=False,
+            instance_name=None,
+            skip_offline_nodes=False,
         )
 
     def test_lib_call_full(self):
@@ -341,7 +372,8 @@ class Sync(TestCase):
             ),
         )
         self.lib.booth.config_sync.assert_called_once_with(
-            instance_name="my_booth", skip_offline_nodes=True,
+            instance_name="my_booth",
+            skip_offline_nodes=True,
         )
 
 
@@ -353,11 +385,15 @@ class BoothServiceTestMixin:
 
     def test_lib_call_minimal(self):
         self.cli_cmd(self.lib, [], dict_to_modifiers(dict()))
-        self.lib_cmd.assert_called_once_with(instance_name=None,)
+        self.lib_cmd.assert_called_once_with(
+            instance_name=None,
+        )
 
     def test_lib_call_full(self):
         self.cli_cmd(self.lib, [], dict_to_modifiers(dict(name="my_booth")))
-        self.lib_cmd.assert_called_once_with(instance_name="my_booth",)
+        self.lib_cmd.assert_called_once_with(
+            instance_name="my_booth",
+        )
 
 
 class Enable(BoothServiceTestMixin, TestCase):
@@ -404,17 +440,24 @@ class Pull(TestCase):
     def test_lib_call_minimal(self):
         booth_cmd.pull(self.lib, ["node1"], dict_to_modifiers(dict()))
         self.lib.booth.pull_config.assert_called_once_with(
-            "node1", instance_name=None,
+            "node1",
+            instance_name=None,
         )
 
     def test_lib_call_full(self):
         booth_cmd.pull(
             self.lib,
             ["node1"],
-            dict_to_modifiers({"name": "my_booth", "request-timeout": "10",}),
+            dict_to_modifiers(
+                {
+                    "name": "my_booth",
+                    "request-timeout": "10",
+                }
+            ),
         )
         self.lib.booth.pull_config.assert_called_once_with(
-            "node1", instance_name="my_booth",
+            "node1",
+            instance_name="my_booth",
         )
 
 
@@ -432,7 +475,9 @@ class Status(TestCase):
 
     def test_lib_call_minimal(self):
         booth_cmd.status(self.lib, [], dict_to_modifiers(dict()))
-        self.lib.booth.get_status.assert_called_once_with(instance_name=None,)
+        self.lib.booth.get_status.assert_called_once_with(
+            instance_name=None,
+        )
 
     def test_lib_call_full(self):
         booth_cmd.status(self.lib, [], dict_to_modifiers(dict(name="my_booth")))

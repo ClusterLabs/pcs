@@ -997,7 +997,9 @@ class ResourceEnable(TestCase):
 
     def test_wait(self):
         resource.resource_enable_cmd(
-            self.lib, ["R1", "R2"], dict_to_modifiers(dict(wait="10")),
+            self.lib,
+            ["R1", "R2"],
+            dict_to_modifiers(dict(wait="10")),
         )
         self.resource.enable.assert_called_once_with(["R1", "R2"], "10")
 
@@ -1034,7 +1036,9 @@ class ResourceManage(TestCase):
 
     def test_monitor(self):
         resource.resource_manage_cmd(
-            self.lib, ["R1", "R2"], dict_to_modifiers(dict(monitor=True)),
+            self.lib,
+            ["R1", "R2"],
+            dict_to_modifiers(dict(monitor=True)),
         )
         self.resource.manage.assert_called_once_with(
             ["R1", "R2"], with_monitor=True
@@ -1075,7 +1079,9 @@ class ResourceUnmanage(TestCase):
 
     def test_monitor(self):
         resource.resource_unmanage_cmd(
-            self.lib, ["R1", "R2"], dict_to_modifiers(dict(monitor=True)),
+            self.lib,
+            ["R1", "R2"],
+            dict_to_modifiers(dict(monitor=True)),
         )
         self.resource.unmanage.assert_called_once_with(
             ["R1", "R2"], with_monitor=True

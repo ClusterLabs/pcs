@@ -21,7 +21,10 @@ class BoothShortcuts:
         name="http.booth.send_config",
     ):
         data = {
-            "config": {"name": "{}.conf".format(booth_name), "data": config,}
+            "config": {
+                "name": "{}.conf".format(booth_name),
+                "data": config,
+            }
         }
         if authfile and authfile_data:
             data["authfile"] = {
@@ -56,7 +59,9 @@ class BoothShortcuts:
             param_list=[("name", booth_name)],
             output=json.dumps(
                 {
-                    "config": {"data": config_data,},
+                    "config": {
+                        "data": config_data,
+                    },
                     "authfile": {
                         "name": authfile,
                         "data": base64.b64encode(authfile_data).decode("utf-8")
@@ -91,6 +96,10 @@ class BoothShortcuts:
             action="remote/booth_save_files",
             param_list=param_list,
             output=json.dumps(
-                {"saved": saved, "existing": existing, "failed": failed,}
+                {
+                    "saved": saved,
+                    "existing": existing,
+                    "failed": failed,
+                }
             ),
         )

@@ -89,7 +89,9 @@ def join_multilines(strings):
 
 
 def format_optional(
-    value: Any, template: str = "{} ", empty_case: str = "",
+    value: Any,
+    template: str = "{} ",
+    empty_case: str = "",
 ) -> str:
     # Number 0 is considered False which does not suit our needs so we check
     # for it explicitly. Beware that False == 0 is true, so we must have an

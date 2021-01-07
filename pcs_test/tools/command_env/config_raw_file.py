@@ -58,7 +58,10 @@ class RawFileConfig:
             be placed
         """
         call = RawFileReadCall(
-            file_type_code, path, content=content, exception_msg=exception_msg,
+            file_type_code,
+            path,
+            content=content,
+            exception_msg=exception_msg,
         )
         self.__calls.place(name, call, before, instead)
 

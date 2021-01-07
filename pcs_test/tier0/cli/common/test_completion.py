@@ -9,10 +9,17 @@ from pcs.cli.common.completion import (
 
 tree = {
     "resource": {
-        "op": {"add": {}, "defaults": {}, "remove": {},},
+        "op": {
+            "add": {},
+            "defaults": {},
+            "remove": {},
+        },
         "clone": {},
     },
-    "cluster": {"auth": {}, "cib": {},},
+    "cluster": {
+        "auth": {},
+        "cib": {},
+    },
 }
 
 
@@ -49,9 +56,18 @@ class SuggestionTest(TestCase):
 class HasCompletionEnvironmentTest(TestCase):
     def test_returns_false_if_environment_inapplicable(self):
         inapplicable_environments = [
-            {"COMP_CWORD": "1", "PCS_AUTO_COMPLETE": "1",},
-            {"COMP_WORDS": "pcs resource", "PCS_AUTO_COMPLETE": "1",},
-            {"COMP_WORDS": "pcs resource", "COMP_CWORD": "1",},
+            {
+                "COMP_CWORD": "1",
+                "PCS_AUTO_COMPLETE": "1",
+            },
+            {
+                "COMP_WORDS": "pcs resource",
+                "PCS_AUTO_COMPLETE": "1",
+            },
+            {
+                "COMP_WORDS": "pcs resource",
+                "COMP_CWORD": "1",
+            },
             {
                 "COMP_WORDS": "pcs resource",
                 "COMP_CWORD": "1",
@@ -93,7 +109,10 @@ class MakeSuggestionsEnvironment(TestCase):
         self.assertRaises(
             EnvironmentError,
             lambda: make_suggestions(
-                {"COMP_CWORD": "1", "PCS_AUTO_COMPLETE": "1",},
+                {
+                    "COMP_CWORD": "1",
+                    "PCS_AUTO_COMPLETE": "1",
+                },
                 suggestion_tree=tree,
             ),
         )

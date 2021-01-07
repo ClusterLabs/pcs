@@ -36,7 +36,10 @@ class BoothShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                cmd, stdout=stdout, stderr=stderr, returncode=returncode,
+                cmd,
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode,
             ),
             before=before,
             instead=instead,
@@ -71,7 +74,10 @@ class BoothShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                cmd, stdout=stdout, stderr=stderr, returncode=returncode,
+                cmd,
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode,
             ),
             before=before,
             instead=instead,
@@ -106,7 +112,10 @@ class BoothShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                cmd, stdout=stdout, stderr=stderr, returncode=returncode,
+                cmd,
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode,
             ),
             before=before,
             instead=instead,

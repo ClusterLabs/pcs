@@ -102,7 +102,8 @@ def split_list_by_any_keywords(arg_list, keyword_label):
     if "=" in arg_list[0]:
         raise CmdLineInputError(
             "Invalid character '=' in {} '{}'".format(
-                keyword_label, arg_list[0],
+                keyword_label,
+                arg_list[0],
             )
         )
     current_keyword = None

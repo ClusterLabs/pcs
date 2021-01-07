@@ -100,7 +100,8 @@ class ClusterConfigMixin(AssertPcsMixin):
             "tier1_cluster_config_show_corosync.conf"
         )
         self.pcs_runner = PcsRunner(
-            cib_file=None, corosync_conf_opt=self.corosync_conf_file.name,
+            cib_file=None,
+            corosync_conf_opt=self.corosync_conf_file.name,
         )
         write_data_to_tmpfile(
             fixture_corosync_conf_minimal(), self.corosync_conf_file
@@ -111,7 +112,8 @@ class ClusterConfigMixin(AssertPcsMixin):
 
     def test_default_output(self):
         self.assert_pcs_success(
-            self.command.split(), stdout_full=self.fixture_text_output(),
+            self.command.split(),
+            stdout_full=self.fixture_text_output(),
         )
 
     def test_text_output(self):

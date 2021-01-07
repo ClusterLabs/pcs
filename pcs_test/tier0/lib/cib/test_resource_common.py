@@ -137,7 +137,9 @@ class FindOneOrMoreResources(TestCase):
         self.assertIsNone(resource)
         assert_report_item_list_equal(
             report_list,
-            [fixture.report_not_found("R-missing", context_type="resources"),],
+            [
+                fixture.report_not_found("R-missing", context_type="resources"),
+            ],
         )
 
     def test_more_existing(self):
@@ -1119,13 +1121,15 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
     def test_master_false_promotable_clone(self):
         element = self._fixture_clone(True)
         assert_report_item_list_equal(
-            self.validate(element, False), [],
+            self.validate(element, False),
+            [],
         )
 
     def test_master_true_promotable_clone(self):
         element = self._fixture_clone(True)
         assert_report_item_list_equal(
-            self.validate(element, True), [],
+            self.validate(element, True),
+            [],
         )
 
     def test_master_true_clone(self):
@@ -1155,13 +1159,15 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
     def test_master_false_master(self):
         element = self._fixture_master()
         assert_report_item_list_equal(
-            self.validate(element, False), [],
+            self.validate(element, False),
+            [],
         )
 
     def test_master_true_master(self):
         element = self._fixture_master()
         assert_report_item_list_equal(
-            self.validate(element, True), [],
+            self.validate(element, True),
+            [],
         )
 
     def test_master_false_promotable_clone_resource(self):
@@ -1209,7 +1215,8 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             self.validate(element.find("./primitive"), True),
             [
                 fixture.error(
-                    report_codes.CANNOT_MOVE_RESOURCE_CLONE, resource_id="R",
+                    report_codes.CANNOT_MOVE_RESOURCE_CLONE,
+                    resource_id="R",
                 ),
             ],
         )
@@ -1220,7 +1227,8 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             self.validate(element.find("./primitive"), False),
             [
                 fixture.error(
-                    report_codes.CANNOT_MOVE_RESOURCE_CLONE, resource_id="R",
+                    report_codes.CANNOT_MOVE_RESOURCE_CLONE,
+                    resource_id="R",
                 ),
             ],
         )
@@ -1231,7 +1239,8 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             self.validate(element.find("./group"), True),
             [
                 fixture.error(
-                    report_codes.CANNOT_MOVE_RESOURCE_CLONE, resource_id="G",
+                    report_codes.CANNOT_MOVE_RESOURCE_CLONE,
+                    resource_id="G",
                 ),
             ],
         )
@@ -1242,7 +1251,8 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             self.validate(element.find("./group"), False),
             [
                 fixture.error(
-                    report_codes.CANNOT_MOVE_RESOURCE_CLONE, resource_id="G",
+                    report_codes.CANNOT_MOVE_RESOURCE_CLONE,
+                    resource_id="G",
                 ),
             ],
         )
@@ -1253,7 +1263,8 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             self.validate(element.find("./group/primitive"), True),
             [
                 fixture.error(
-                    report_codes.CANNOT_MOVE_RESOURCE_CLONE, resource_id="R",
+                    report_codes.CANNOT_MOVE_RESOURCE_CLONE,
+                    resource_id="R",
                 ),
             ],
         )
@@ -1264,7 +1275,8 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             self.validate(element.find("./group/primitive"), False),
             [
                 fixture.error(
-                    report_codes.CANNOT_MOVE_RESOURCE_CLONE, resource_id="R",
+                    report_codes.CANNOT_MOVE_RESOURCE_CLONE,
+                    resource_id="R",
                 ),
             ],
         )
@@ -1338,7 +1350,8 @@ class FindResourcesToDelete(TestCase):
 
     def test_clone_with_group(self):
         self.assert_element2element_list(
-            "E-clone", ["E-clone", "E", "E1", "E2"],
+            "E-clone",
+            ["E-clone", "E", "E1", "E2"],
         )
 
     def test_group_in_clone(self):
@@ -1349,7 +1362,8 @@ class FindResourcesToDelete(TestCase):
 
     def test_master_with_group(self):
         self.assert_element2element_list(
-            "F-master", ["F-master", "F", "F1", "F2"],
+            "F-master",
+            ["F-master", "F", "F1", "F2"],
         )
 
     def test_group_in_master(self):

@@ -90,7 +90,9 @@ class RemoveGuest(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.config.env.set_known_hosts_dests(
-            {NODE_NAME: NODE_DEST_LIST,}
+            {
+                NODE_NAME: NODE_DEST_LIST,
+            }
         )
 
     def find_by(self, identifier):
@@ -124,7 +126,9 @@ class RemoveGuestOthers(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.config.env.set_known_hosts_dests(
-            {NODE_NAME: NODE_DEST_LIST,}
+            {
+                NODE_NAME: NODE_DEST_LIST,
+            }
         )
 
     def test_success_with_wait(self):
@@ -232,12 +236,19 @@ class MultipleResults(TestCase):
             .error(
                 "multiple_result_found",
                 report_codes.MULTIPLE_RESULTS_FOUND,
-                result_identifier_list=[VIRTUAL_MACHINE_ID, REMOTE_HOST, "C",],
+                result_identifier_list=[
+                    VIRTUAL_MACHINE_ID,
+                    REMOTE_HOST,
+                    "C",
+                ],
                 result_type="resource",
                 search_description=REMOTE_HOST,
                 force_code=report_codes.FORCE_REMOVE_MULTIPLE_NODES,
             )
-            .as_warn("multiple_result_found", "multiple_result_found_warn",)
+            .as_warn(
+                "multiple_result_found",
+                "multiple_result_found_warn",
+            )
         )
         self.dest_list_b = [Destination("B-ADDR", 2224)]
         self.config.env.set_known_hosts_dests(
@@ -347,7 +358,9 @@ class AuthkeyRemove(TestCase):
             )
         )
         self.config.env.set_known_hosts_dests(
-            {NODE_NAME: NODE_DEST_LIST,}
+            {
+                NODE_NAME: NODE_DEST_LIST,
+            }
         )
 
     def test_fails_when_offline(self):
@@ -370,7 +383,10 @@ class AuthkeyRemove(TestCase):
             communication_list=[
                 dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
             ],
-            result={"code": "unexpected", "message": "Access denied",},
+            result={
+                "code": "unexpected",
+                "message": "Access denied",
+            },
         )
         self.env_assist.assert_raise_library_error(
             lambda: node_remove_guest(self.env_assist.get_env())
@@ -386,7 +402,10 @@ class AuthkeyRemove(TestCase):
                 communication_list=[
                     dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
                 ],
-                result={"code": "unexpected", "message": "Access denied",},
+                result={
+                    "code": "unexpected",
+                    "message": "Access denied",
+                },
             )
             .env.push_cib(remove=GUEST_NVPAIR_XPATHS)
             .runner.pcmk.remove_node(NODE_NAME)
@@ -404,7 +423,9 @@ class PcmkRemoteServiceDestroy(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.config.env.set_known_hosts_dests(
-            {NODE_NAME: NODE_DEST_LIST,}
+            {
+                NODE_NAME: NODE_DEST_LIST,
+            }
         )
         self.config.runner.cib.load(resources=FIXTURE_RESOURCES)
 
@@ -427,7 +448,10 @@ class PcmkRemoteServiceDestroy(TestCase):
             self.config.local.destroy_pacemaker_remote(
                 label=NODE_NAME,
                 dest_list=NODE_DEST_LIST,
-                result={"code": "fail", "message": "Action failed",},
+                result={
+                    "code": "fail",
+                    "message": "Action failed",
+                },
             )
         )
         self.env_assist.assert_raise_library_error(
@@ -436,7 +460,8 @@ class PcmkRemoteServiceDestroy(TestCase):
         self.env_assist.assert_reports(
             REPORTS[:"pcmk_remote_disable_success"]
             + EXTRA_REPORTS.select(
-                "pcmk_remote_disable_failed", "pcmk_remote_stop_failed",
+                "pcmk_remote_disable_failed",
+                "pcmk_remote_stop_failed",
             )
         )
 
@@ -445,7 +470,10 @@ class PcmkRemoteServiceDestroy(TestCase):
             self.config.local.destroy_pacemaker_remote(
                 label=NODE_NAME,
                 dest_list=NODE_DEST_LIST,
-                result={"code": "fail", "message": "Action failed",},
+                result={
+                    "code": "fail",
+                    "message": "Action failed",
+                },
             )
             .local.remove_authkey(
                 communication_list=[
@@ -460,7 +488,8 @@ class PcmkRemoteServiceDestroy(TestCase):
         )
         self.env_assist.assert_reports(
             REPORTS.remove(
-                "pcmk_remote_disable_success", "pcmk_remote_stop_success",
+                "pcmk_remote_disable_success",
+                "pcmk_remote_stop_success",
             )
             + EXTRA_REPORTS.select(
                 "pcmk_remote_disable_failed_warn",

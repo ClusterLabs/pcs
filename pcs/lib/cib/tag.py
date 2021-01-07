@@ -47,7 +47,8 @@ def _validate_tag_id(tag_id: str, id_provider: IdProvider) -> ReportItemList:
 
 
 def _validate_tag_id_not_in_idref_list(
-    tag_id: str, idref_list: Container[str],
+    tag_id: str,
+    idref_list: Container[str],
 ) -> ReportItemList:
     """
     Validate that idref_list does not contain tag_id.
@@ -61,7 +62,8 @@ def _validate_tag_id_not_in_idref_list(
 
 
 def _validate_add_remove_duplicate_reference_ids(
-    idref_list: Iterable[str], add_or_not_remove: bool = True,
+    idref_list: Iterable[str],
+    add_or_not_remove: bool = True,
 ) -> ReportItemList:
     """
     Validate that idref_list does not contain duplicates.
@@ -76,7 +78,8 @@ def _validate_add_remove_duplicate_reference_ids(
         return [
             ReportItem.error(
                 reports.messages.TagAddRemoveIdsDuplication(
-                    sorted(duplicate_ids_list), add_or_not_remove,
+                    sorted(duplicate_ids_list),
+                    add_or_not_remove,
                 )
             )
         ]
@@ -103,7 +106,8 @@ def _validate_tag_create_idref_list_not_empty(
 
 
 def _validate_reference_ids_are_resources(
-    resources_section: _Element, idref_list: Iterable[str],
+    resources_section: _Element,
+    idref_list: Iterable[str],
 ) -> ReportItemList:
     """
     Validate that ids are resources.
@@ -142,7 +146,8 @@ def validate_create_tag(
 
 
 def validate_remove_tag(
-    constraint_section: _Element, to_remove_tag_list: Iterable[str],
+    constraint_section: _Element,
+    to_remove_tag_list: Iterable[str],
 ) -> ReportItemList:
     """
     Validation function for tag removal. List of tag elements is not empty and
@@ -162,7 +167,8 @@ def validate_remove_tag(
     report_list = []
     for tag_id in to_remove_tag_list:
         constraint_list = find_constraints_referencing_tag(
-            constraint_section, tag_id,
+            constraint_section,
+            tag_id,
         )
         if constraint_list:
             report_list.append(
@@ -236,7 +242,9 @@ class ValidateTagUpdateByIds:
         return self._remove_obj_ref_element_list
 
     def validate(
-        self, resources_section: _Element, tags_section: _Element,
+        self,
+        resources_section: _Element,
+        tags_section: _Element,
     ) -> ReportItemList:
         """
         Run the validation and return a report item list
@@ -260,7 +268,8 @@ class ValidateTagUpdateByIds:
         tags_section -- tags section of a cib
         """
         tag_list, report_list = find_tag_elements_by_ids(
-            tags_section, [self._tag_id],
+            tags_section,
+            [self._tag_id],
         )
         if tag_list:
             self._tag_element = tag_list[0]
@@ -318,7 +327,8 @@ class ValidateTagUpdateByIds:
             report_list.append(
                 ReportItem.error(
                     reports.messages.TagAdjacentReferenceIdNotInTheTag(
-                        self._adjacent_idref, self._tag_id,
+                        self._adjacent_idref,
+                        self._tag_id,
                     )
                 )
             )
@@ -342,7 +352,8 @@ class ValidateTagUpdateByIds:
         return report_list
 
     def _validate_ids_can_be_added_or_moved(
-        self, resources_section: _Element,
+        self,
+        resources_section: _Element,
     ) -> ReportItemList:
         """
         Validate that ids can be added or moved:
@@ -366,7 +377,8 @@ class ValidateTagUpdateByIds:
             # report if references not found or belongs to unexpected types
             report_list.extend(
                 _validate_reference_ids_are_resources(
-                    resources_section, unique_add_ids,
+                    resources_section,
+                    unique_add_ids,
                 )
             )
         if self._tag_element is not None and self._add_idref_list:
@@ -385,7 +397,8 @@ class ValidateTagUpdateByIds:
                     ReportItem.error(
                         # pylint: disable=line-too-long
                         reports.messages.TagCannotAddReferenceIdsAlreadyInTheTag(
-                            self._tag_id, sorted(existing_element_id_list),
+                            self._tag_id,
+                            sorted(existing_element_id_list),
                         )
                     )
                 )
@@ -404,7 +417,8 @@ class ValidateTagUpdateByIds:
             return report_list
         report_list.extend(
             _validate_add_remove_duplicate_reference_ids(
-                self._remove_idref_list, add_or_not_remove=False,
+                self._remove_idref_list,
+                add_or_not_remove=False,
             ),
         )
         missing_id_list = []
@@ -418,7 +432,8 @@ class ValidateTagUpdateByIds:
             report_list.append(
                 ReportItem.error(
                     reports.messages.TagIdsNotInTheTag(
-                        self._tag_id, sorted(missing_id_list),
+                        self._tag_id,
+                        sorted(missing_id_list),
                     )
                 )
             )
@@ -447,13 +462,16 @@ class ValidateTagUpdateByIds:
             return None
         xpath_result = cast(
             List[_Element],
-            self._tag_element.xpath(f'./{TAG_OBJREF}[@id="{obj_ref_id}"]',),
+            self._tag_element.xpath(
+                f'./{TAG_OBJREF}[@id="{obj_ref_id}"]',
+            ),
         )
         return xpath_result[0] if xpath_result else None
 
 
 def find_constraints_referencing_tag(
-    constraints_section: _Element, tag_id: str,
+    constraints_section: _Element,
+    tag_id: str,
 ) -> List[_Element]:
     """
     Find constraint elements which are referencing specified tag.
@@ -498,7 +516,8 @@ def find_constraints_referencing_tag(
 
 
 def find_tag_elements_by_ids(
-    tags_section: _Element, tag_id_list: Iterable[str],
+    tags_section: _Element,
+    tag_id_list: Iterable[str],
 ) -> Tuple[List[_Element], ReportItemList]:
     """
     Try to find tag elements by ids and return them with non-empty report
@@ -520,7 +539,9 @@ def find_tag_elements_by_ids(
 
 
 def create_tag(
-    tags_section: _Element, tag_id: str, idref_list: Iterable[str],
+    tags_section: _Element,
+    tag_id: str,
+    idref_list: Iterable[str],
 ) -> _Element:
     """
     Create new tag element and add it to cib.
@@ -536,7 +557,9 @@ def create_tag(
     return tag_el
 
 
-def remove_tag(tag_elements: Iterable[_Element],) -> None:
+def remove_tag(
+    tag_elements: Iterable[_Element],
+) -> None:
     """
     Remove given tag elements from a cib.
 

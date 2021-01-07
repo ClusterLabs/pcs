@@ -76,7 +76,9 @@ class ValidateHostConflicts(TestCase):
                 (
                     severities.ERROR,
                     report_codes.ID_ALREADY_EXISTS,
-                    {"id": conflict_name,},
+                    {
+                        "id": conflict_name,
+                    },
                     None,
                 ),
             ],
@@ -90,18 +92,25 @@ class ValidateHostConflicts(TestCase):
 
     def test_report_conflict_guest_addr(self):
         self.assert_already_exists_error(
-            "GUEST_ADDR_CONFLICT", "GUEST_ADDR_CONFLICT",
+            "GUEST_ADDR_CONFLICT",
+            "GUEST_ADDR_CONFLICT",
         )
 
     def test_report_conflict_guest_addr_by_addr(self):
         self.assert_already_exists_error(
-            "GUEST_ADDR_CONFLICT", "GUEST_ADDR_CONFLICT",
+            "GUEST_ADDR_CONFLICT",
+            "GUEST_ADDR_CONFLICT",
         )
 
     def test_no_conflict_guest_node_whe_addr_is_different(self):
         self.assertEqual(
             [],
-            self.validate("GUEST_ADDR_CONFLICT", {"remote-addr": "different",}),
+            self.validate(
+                "GUEST_ADDR_CONFLICT",
+                {
+                    "remote-addr": "different",
+                },
+            ),
         )
 
     def test_report_conflict_remote_node(self):
@@ -109,12 +118,22 @@ class ValidateHostConflicts(TestCase):
 
     def test_no_conflict_remote_node_whe_addr_is_different(self):
         self.assertEqual(
-            [], self.validate("REMOTE_CONFLICT", {"remote-addr": "different",})
+            [],
+            self.validate(
+                "REMOTE_CONFLICT",
+                {
+                    "remote-addr": "different",
+                },
+            ),
         )
 
     def test_report_conflict_remote_node_by_addr(self):
         self.assert_already_exists_error(
-            "REMOTE_CONFLICT", "different", {"remote-addr": "REMOTE_CONFLICT",}
+            "REMOTE_CONFLICT",
+            "different",
+            {
+                "remote-addr": "REMOTE_CONFLICT",
+            },
         )
 
 
@@ -178,7 +197,9 @@ class ValidateOptions(TestCase):
                 (
                     severities.ERROR,
                     report_codes.ID_ALREADY_EXISTS,
-                    {"id": "EXISTING-HOST-NAME",},
+                    {
+                        "id": "EXISTING-HOST-NAME",
+                    },
                     None,
                 ),
             ],
@@ -210,7 +231,9 @@ class ValidateIsNotGuest(TestCase):
                 (
                     severities.ERROR,
                     report_codes.RESOURCE_IS_GUEST_NODE_ALREADY,
-                    {"resource_id": "resource_id",},
+                    {
+                        "resource_id": "resource_id",
+                    },
                     None,
                 ),
             ],
@@ -334,7 +357,10 @@ class FindNodeList(TestCase, SetupPatchMixin):
                 </primitive>
             </resources>
             """,
-            [PacemakerNode("G1", "G1addr"), PacemakerNode("G2", "G2"),],
+            [
+                PacemakerNode("G1", "G1addr"),
+                PacemakerNode("G2", "G2"),
+            ],
         )
 
 

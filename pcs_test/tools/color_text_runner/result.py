@@ -31,7 +31,10 @@ def get_text_test_result_class(
             self.verbosity = 2 if traditional_verbose else verbosity
 
             self.reportWriter = self.__chooseWriter()(
-                self.stream, self.descriptions, traceback_highlight, fast_info,
+                self.stream,
+                self.descriptions,
+                traceback_highlight,
+                fast_info,
             )
             self.skip_map = {}
 
@@ -68,9 +71,15 @@ def get_text_test_result_class(
 
         def printErrors(self):
             line_list = format_error_list(
-                "ERROR", self.errors, self.descriptions, traceback_highlight,
+                "ERROR",
+                self.errors,
+                self.descriptions,
+                traceback_highlight,
             ) + format_error_list(
-                "FAIL", self.failures, self.descriptions, traceback_highlight,
+                "FAIL",
+                self.failures,
+                self.descriptions,
+                traceback_highlight,
             )
 
             if (self.errors + self.failures) or self.skip_map:

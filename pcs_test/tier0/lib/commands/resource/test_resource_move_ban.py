@@ -53,7 +53,9 @@ class MoveBanClearBaseMixin:
             lambda: self.lib_action(self.env_assist.get_env(), "B")
         )
         self.env_assist.assert_reports(
-            [fixture.report_not_found("B", context_type="resources"),]
+            [
+                fixture.report_not_found("B", context_type="resources"),
+            ]
         )
 
     def test_master_of_nonpromotable_resource(self):
@@ -122,7 +124,8 @@ class MoveBanBaseMixin(MoveBanClearBaseMixin):
             lambda: self.lib_action(self.env_assist.get_env(), "A"),
             [
                 fixture.error(
-                    self.report_code_resource_stopped, resource_id="A",
+                    self.report_code_resource_stopped,
+                    resource_id="A",
                 ),
             ],
             expected_in_processor=False,
@@ -131,7 +134,10 @@ class MoveBanBaseMixin(MoveBanClearBaseMixin):
     def test_all_options(self):
         self.config.runner.cib.load(resources=resources_promotable)
         self.config_pcmk_action(
-            resource="A-clone", master=True, node="node", lifetime="1h",
+            resource="A-clone",
+            master=True,
+            node="node",
+            lifetime="1h",
         )
         self.lib_action(
             self.env_assist.get_env(),
@@ -297,7 +303,11 @@ class MoveBanWaitMixin:
         self.config.runner.pcmk.load_state(stdout="state stdout")
         self.env_assist.assert_raise_library_error(
             lambda: self.lib_action(self.env_assist.get_env(), "A", wait="10"),
-            [fixture.error(report_codes.BAD_CLUSTER_STATE_FORMAT,),],
+            [
+                fixture.error(
+                    report_codes.BAD_CLUSTER_STATE_FORMAT,
+                ),
+            ],
             expected_in_processor=False,
         )
 
@@ -334,7 +344,8 @@ class MoveBanWaitMixin:
             lambda: self.lib_action(self.env_assist.get_env(), "A", wait="10"),
             [
                 fixture.error(
-                    report_codes.WAIT_FOR_IDLE_ERROR, reason="wait error",
+                    report_codes.WAIT_FOR_IDLE_ERROR,
+                    reason="wait error",
                 ),
             ],
             expected_in_processor=False,
@@ -396,7 +407,11 @@ class MoveBanWaitMixin:
         )
         self.env_assist.assert_raise_library_error(
             lambda: self.lib_action(self.env_assist.get_env(), "A", wait="10"),
-            [fixture.error(report_codes.BAD_CLUSTER_STATE_FORMAT,),],
+            [
+                fixture.error(
+                    report_codes.BAD_CLUSTER_STATE_FORMAT,
+                ),
+            ],
             expected_in_processor=False,
         )
         self.env_assist.assert_reports(
@@ -440,7 +455,9 @@ class MoveBanWaitMixin:
                     stdout="pcmk std out",
                     stderr="pcmk std err",
                 ),
-                fixture.report_resource_not_running("A",),
+                fixture.report_resource_not_running(
+                    "A",
+                ),
             ]
         )
 
@@ -474,7 +491,10 @@ class MoveBanWaitMixin:
                     stdout="pcmk std out",
                     stderr="pcmk std err",
                 ),
-                fixture.report_resource_running("A", {"Started": ["node2"]},),
+                fixture.report_resource_running(
+                    "A",
+                    {"Started": ["node2"]},
+                ),
             ]
         )
 
@@ -513,7 +533,10 @@ class MoveWait(MoveMixin, MoveBanWaitMixin, TestCase):
                     stdout="pcmk std out",
                     stderr="pcmk std err",
                 ),
-                fixture.report_resource_running("A", {"Started": ["node2"]},),
+                fixture.report_resource_running(
+                    "A",
+                    {"Started": ["node2"]},
+                ),
             ]
         )
 
@@ -585,7 +608,10 @@ class BanWait(BanMixin, MoveBanWaitMixin, TestCase):
                     stdout="pcmk std out",
                     stderr="pcmk std err",
                 ),
-                fixture.report_resource_running("A", {"Started": ["node2"]},),
+                fixture.report_resource_running(
+                    "A",
+                    {"Started": ["node2"]},
+                ),
             ]
         )
 
@@ -658,7 +684,11 @@ class UnmoveUnbanWait(UnmoveUnbanMixin, TestCase):
         self.config.runner.pcmk.load_state(stdout="state stdout")
         self.env_assist.assert_raise_library_error(
             lambda: self.lib_action(self.env_assist.get_env(), "A", wait="10"),
-            [fixture.error(report_codes.BAD_CLUSTER_STATE_FORMAT,),],
+            [
+                fixture.error(
+                    report_codes.BAD_CLUSTER_STATE_FORMAT,
+                ),
+            ],
             expected_in_processor=False,
         )
         self.env_assist.assert_reports(
@@ -681,7 +711,8 @@ class UnmoveUnbanWait(UnmoveUnbanMixin, TestCase):
             lambda: self.lib_action(self.env_assist.get_env(), "A", wait="10"),
             [
                 fixture.error(
-                    report_codes.WAIT_FOR_IDLE_ERROR, reason="wait error",
+                    report_codes.WAIT_FOR_IDLE_ERROR,
+                    reason="wait error",
                 ),
             ],
             expected_in_processor=False,

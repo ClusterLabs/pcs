@@ -24,7 +24,10 @@ class JsonParser(TestCase):
                 """
                 )
             ),
-            {"simple": "value", "list": ["item1", "item2"],},
+            {
+                "simple": "value",
+                "list": ["item1", "item2"],
+            },
         )
 
     def _parse_error(self, force_code, is_forced):
@@ -97,7 +100,10 @@ class JsonExporter(TestCase):
     def test_success(self):
         self.assertEqual(
             toolbox.JsonExporter.export(
-                {"simple": "value", "list": ["item1", "item2"],}
+                {
+                    "simple": "value",
+                    "list": ["item1", "item2"],
+                }
             ),
             dedent(
                 """\

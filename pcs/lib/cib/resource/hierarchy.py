@@ -267,7 +267,8 @@ class ValidateMoveResourcesToGroupByIds(ValidateMoveResourcesToGroup):
                     report_list.append(
                         ReportItem.error(
                             reports.messages.CannotGroupResourceAdjacentResourceNotInGroup(
-                                self._adjacent_resource_id, self._group_id,
+                                self._adjacent_resource_id,
+                                self._group_id,
                             )
                         )
                     )
@@ -277,7 +278,8 @@ class ValidateMoveResourcesToGroupByIds(ValidateMoveResourcesToGroup):
                 report_list.append(
                     ReportItem.error(
                         reports.messages.CannotGroupResourceAdjacentResourceForNewGroup(
-                            self._adjacent_resource_id, self._group_id,
+                            self._adjacent_resource_id,
+                            self._group_id,
                         )
                     )
                 )

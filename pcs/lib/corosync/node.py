@@ -33,7 +33,9 @@ class CorosyncNodeAddress(namedtuple("CorosyncNodeAddress", "addr link")):
 
     def to_dto(self) -> CorosyncNodeAddressDto:
         return CorosyncNodeAddressDto(
-            addr=self.addr, link=self.link, type=self.type,
+            addr=self.addr,
+            link=self.link,
+            type=self.type,
         )
 
 

@@ -43,7 +43,10 @@ class CompleteAllIntervals(TestCase):
                 {"name": "start", "interval": "10s"},
             ],
             lib_ra.complete_all_intervals(
-                [{"name": "monitor", "interval": "20s"}, {"name": "start"},]
+                [
+                    {"name": "monitor", "interval": "20s"},
+                    {"name": "start"},
+                ]
             ),
         )
 
@@ -134,7 +137,13 @@ class ListResourceAgentsStandardsTest(TestCase):
 
         self.assertEqual(
             lib_ra.list_resource_agents_standards(mock_runner),
-            ["lsb", "nagios", "ocf", "service", "systemd",],
+            [
+                "lsb",
+                "nagios",
+                "ocf",
+                "service",
+                "systemd",
+            ],
         )
 
         mock_runner.run.assert_called_once_with(
@@ -163,7 +172,13 @@ class ListResourceAgentsStandardsTest(TestCase):
 
         self.assertEqual(
             lib_ra.list_resource_agents_standards(mock_runner),
-            ["lsb", "nagios", "ocf", "service", "systemd",],
+            [
+                "lsb",
+                "nagios",
+                "ocf",
+                "service",
+                "systemd",
+            ],
         )
 
         mock_runner.run.assert_called_once_with(
@@ -211,7 +226,12 @@ class ListResourceAgentsOcfProvidersTest(TestCase):
 
         self.assertEqual(
             lib_ra.list_resource_agents_ocf_providers(mock_runner),
-            ["booth", "heartbeat", "openstack", "pacemaker",],
+            [
+                "booth",
+                "heartbeat",
+                "openstack",
+                "pacemaker",
+            ],
         )
 
         mock_runner.run.assert_called_once_with(
@@ -236,7 +256,12 @@ class ListResourceAgentsOcfProvidersTest(TestCase):
 
         self.assertEqual(
             lib_ra.list_resource_agents_ocf_providers(mock_runner),
-            ["booth", "heartbeat", "openstack", "pacemaker",],
+            [
+                "booth",
+                "heartbeat",
+                "openstack",
+                "pacemaker",
+            ],
         )
 
         mock_runner.run.assert_called_once_with(
@@ -289,7 +314,13 @@ class ListResourceAgentsStandardsAndProvidersTest(TestCase):
             ),
             (
                 "\n".join(
-                    ["heartbeat", "openstack", "pacemaker", "booth", "",]
+                    [
+                        "heartbeat",
+                        "openstack",
+                        "pacemaker",
+                        "booth",
+                        "",
+                    ]
                 ),
                 "",
                 0,
@@ -323,14 +354,29 @@ class ListResourceAgentsTest(TestCase):
     def test_success_standard(self):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
         mock_runner.run.return_value = (
-            "\n".join(["docker", "Dummy", "dhcpd", "Dummy", "ethmonitor", "",]),
+            "\n".join(
+                [
+                    "docker",
+                    "Dummy",
+                    "dhcpd",
+                    "Dummy",
+                    "ethmonitor",
+                    "",
+                ]
+            ),
             "",
             0,
         )
 
         self.assertEqual(
             lib_ra.list_resource_agents(mock_runner, "ocf"),
-            ["dhcpd", "docker", "Dummy", "Dummy", "ethmonitor",],
+            [
+                "dhcpd",
+                "docker",
+                "Dummy",
+                "Dummy",
+                "ethmonitor",
+            ],
         )
 
         mock_runner.run.assert_called_once_with(
@@ -341,7 +387,14 @@ class ListResourceAgentsTest(TestCase):
         mock_runner = mock.MagicMock(spec_set=CommandRunner)
         mock_runner.run.return_value = (
             "\n".join(
-                ["ping", "SystemHealth", "SysInfo", "HealthCPU", "Dummy", "",]
+                [
+                    "ping",
+                    "SystemHealth",
+                    "SysInfo",
+                    "HealthCPU",
+                    "Dummy",
+                    "",
+                ]
             ),
             "",
             0,
@@ -349,7 +402,13 @@ class ListResourceAgentsTest(TestCase):
 
         self.assertEqual(
             lib_ra.list_resource_agents(mock_runner, "ocf:pacemaker"),
-            ["Dummy", "HealthCPU", "ping", "SysInfo", "SystemHealth",],
+            [
+                "Dummy",
+                "HealthCPU",
+                "ping",
+                "SysInfo",
+                "SystemHealth",
+            ],
         )
 
         mock_runner.run.assert_called_once_with(
@@ -583,7 +642,9 @@ class GuessResourceAgentFullNameTest(TestCase):
             (
                 severity.ERROR,
                 report_codes.AGENT_NAME_GUESS_FOUND_NONE,
-                {"agent": "missing",},
+                {
+                    "agent": "missing",
+                },
             ),
         )
 
@@ -899,7 +960,10 @@ class AgentMetadataGetActionsTest(TestCase):
         """
         mock_metadata.return_value = etree.XML(xml)
         self.assertEqual(
-            self.agent.get_actions(), [{"name": "monitor", "timeout": "20"},]
+            self.agent.get_actions(),
+            [
+                {"name": "monitor", "timeout": "20"},
+            ],
         )
 
     def test_transfor_depth_to_OCF_CHECK_LEVEL(self, mock_metadata):
@@ -914,7 +978,13 @@ class AgentMetadataGetActionsTest(TestCase):
         mock_metadata.return_value = etree.XML(xml)
         self.assertEqual(
             self.agent.get_actions(),
-            [{"name": "monitor", "timeout": "20", "OCF_CHECK_LEVEL": "1",},],
+            [
+                {
+                    "name": "monitor",
+                    "timeout": "20",
+                    "OCF_CHECK_LEVEL": "1",
+                },
+            ],
         )
 
 
@@ -1091,7 +1161,10 @@ class AgentMetadataGetInfoTest(TestCase):
                         "unique": False,
                     },
                 ],
-                "actions": [{"name": "on", "automatic": "0"}, {"name": "off"},],
+                "actions": [
+                    {"name": "on", "automatic": "0"},
+                    {"name": "off"},
+                ],
                 "default_actions": [{"name": "monitor", "interval": "60s"}],
             },
         )
@@ -1140,7 +1213,10 @@ class AgentMetadataValidateParamsCreate(TestCase):
         # set two required attrs, one deprecated and one obsoleting
         assert_report_item_list_equal(
             self.agent.validate_parameters_create(
-                {"req1_new": "A", "req2_old": "B",}
+                {
+                    "req1_new": "A",
+                    "req2_old": "B",
+                }
             ),
             [],
         )
@@ -1280,8 +1356,15 @@ class AgentMetadataValidateParamsUpdate(TestCase):
     def test_set_invalid(self):
         assert_report_item_list_equal(
             self.agent.validate_parameters_update(
-                {"req1_new": "A", "req2_old": "B", "unknown1": "c",},
-                {"unknown1": "C", "unknown2": "D",},
+                {
+                    "req1_new": "A",
+                    "req2_old": "B",
+                    "unknown1": "c",
+                },
+                {
+                    "unknown1": "C",
+                    "unknown2": "D",
+                },
             ),
             [
                 fixture.error(
@@ -1307,8 +1390,15 @@ class AgentMetadataValidateParamsUpdate(TestCase):
     def test_remove_invalid(self):
         assert_report_item_list_equal(
             self.agent.validate_parameters_update(
-                {"req1_new": "A", "req2_old": "B", "unknown1": "C",},
-                {"unknown1": "", "unknown2": "",},
+                {
+                    "req1_new": "A",
+                    "req2_old": "B",
+                    "unknown1": "C",
+                },
+                {
+                    "unknown1": "",
+                    "unknown2": "",
+                },
             ),
             [
                 fixture.error(
@@ -1334,7 +1424,13 @@ class AgentMetadataValidateParamsUpdate(TestCase):
     def test_remove_required_obsoleting(self):
         assert_report_item_list_equal(
             self.agent.validate_parameters_update(
-                {"req1_new": "A", "req2_old": "B",}, {"req1_new": "",}
+                {
+                    "req1_new": "A",
+                    "req2_old": "B",
+                },
+                {
+                    "req1_new": "",
+                },
             ),
             [
                 fixture.error(
@@ -1349,7 +1445,13 @@ class AgentMetadataValidateParamsUpdate(TestCase):
     def test_remove_required_deprecated(self):
         assert_report_item_list_equal(
             self.agent.validate_parameters_update(
-                {"req1_new": "A", "req2_old": "B",}, {"req2_old": "",}
+                {
+                    "req1_new": "A",
+                    "req2_old": "B",
+                },
+                {
+                    "req2_old": "",
+                },
             ),
             [
                 fixture.error(
@@ -1364,8 +1466,14 @@ class AgentMetadataValidateParamsUpdate(TestCase):
     def test_remove_required_deprecated_set_obsoleting(self):
         assert_report_item_list_equal(
             self.agent.validate_parameters_update(
-                {"req1_new": "A", "req2_old": "B",},
-                {"req2_old": "", "req2_new": "B",},
+                {
+                    "req1_new": "A",
+                    "req2_old": "B",
+                },
+                {
+                    "req2_old": "",
+                    "req2_new": "B",
+                },
             ),
             [],
         )
@@ -1373,8 +1481,14 @@ class AgentMetadataValidateParamsUpdate(TestCase):
     def test_remove_required_obsoleting_set_deprecated(self):
         assert_report_item_list_equal(
             self.agent.validate_parameters_update(
-                {"req1_new": "A", "req2_old": "B",},
-                {"req1_old": "A", "req1_new": "",},
+                {
+                    "req1_new": "A",
+                    "req2_old": "B",
+                },
+                {
+                    "req1_old": "A",
+                    "req1_new": "",
+                },
             ),
             [],
         )
@@ -1382,7 +1496,13 @@ class AgentMetadataValidateParamsUpdate(TestCase):
     def test_set_optional(self):
         assert_report_item_list_equal(
             self.agent.validate_parameters_update(
-                {"req1_new": "A", "req2_old": "B",}, {"opt1_new": "A",}
+                {
+                    "req1_new": "A",
+                    "req2_old": "B",
+                },
+                {
+                    "opt1_new": "A",
+                },
             ),
             [],
         )
@@ -1390,7 +1510,13 @@ class AgentMetadataValidateParamsUpdate(TestCase):
     def test_remove_optional(self):
         assert_report_item_list_equal(
             self.agent.validate_parameters_update(
-                {"req1_new": "A", "req2_old": "B",}, {"opt1_new": "",}
+                {
+                    "req1_new": "A",
+                    "req2_old": "B",
+                },
+                {
+                    "opt1_new": "",
+                },
             ),
             [],
         )
@@ -1470,7 +1596,10 @@ class FencedMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
         self.assert_raises(
             lib_ra.UnableToGetAgentMetadata,
             self.agent._get_metadata,
-            {"agent": "pacemaker-fenced", "message": "some error",},
+            {
+                "agent": "pacemaker-fenced",
+                "message": "some error",
+            },
         )
 
         self.mock_runner.run.assert_called_once_with(
@@ -1483,7 +1612,10 @@ class FencedMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
         self.assert_raises(
             lib_ra.UnableToGetAgentMetadata,
             self.agent._get_metadata,
-            {"agent": "pacemaker-fenced", "message": start_tag_error_text(),},
+            {
+                "agent": "pacemaker-fenced",
+                "message": start_tag_error_text(),
+            },
         )
 
         self.mock_runner.run.assert_called_once_with(
@@ -1583,7 +1715,9 @@ class CrmAgentMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
                 "--show-metadata",
                 self.agent._get_full_name(),
             ],
-            env_extend={"PATH": "/usr/sbin/:/bin/:/usr/bin/",},
+            env_extend={
+                "PATH": "/usr/sbin/:/bin/:/usr/bin/",
+            },
         )
 
     def test_failed_to_get_xml(self):
@@ -1592,7 +1726,10 @@ class CrmAgentMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
         self.assert_raises(
             lib_ra.UnableToGetAgentMetadata,
             self.agent._get_metadata,
-            {"agent": self.agent.get_name(), "message": "some error",},
+            {
+                "agent": self.agent.get_name(),
+                "message": "some error",
+            },
         )
 
         self.mock_runner.run.assert_called_once_with(
@@ -1601,7 +1738,9 @@ class CrmAgentMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
                 "--show-metadata",
                 self.agent._get_full_name(),
             ],
-            env_extend={"PATH": "/usr/sbin/:/bin/:/usr/bin/",},
+            env_extend={
+                "PATH": "/usr/sbin/:/bin/:/usr/bin/",
+            },
         )
 
     def test_invalid_xml(self):
@@ -1622,7 +1761,9 @@ class CrmAgentMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
                 "--show-metadata",
                 self.agent._get_full_name(),
             ],
-            env_extend={"PATH": "/usr/sbin/:/bin/:/usr/bin/",},
+            env_extend={
+                "PATH": "/usr/sbin/:/bin/:/usr/bin/",
+            },
         )
 
 
@@ -1685,7 +1826,9 @@ class StonithAgentMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
                 "--show-metadata",
                 "stonith:{0}".format(self.agent_name),
             ],
-            env_extend={"PATH": "/usr/sbin/:/bin/:/usr/bin/",},
+            env_extend={
+                "PATH": "/usr/sbin/:/bin/:/usr/bin/",
+            },
         )
 
 
@@ -1829,7 +1972,9 @@ class StonithAgentMetadataGetParametersTest(TestCase):
                         "--show-metadata",
                         "stonith:{0}".format(self.agent_name),
                     ],
-                    env_extend={"PATH": "/usr/sbin/:/bin/:/usr/bin/",},
+                    env_extend={
+                        "PATH": "/usr/sbin/:/bin/:/usr/bin/",
+                    },
                 ),
                 mock.call(
                     ["/usr/libexec/pacemaker/pacemaker-fenced", "metadata"]
@@ -2143,11 +2288,21 @@ class AbsentResourceAgentTest(TestCase):
         self.assertEqual(agent.get_parameters(), absent.get_parameters())
         self.assertEqual(agent.get_actions(), absent.get_actions())
         self.assertEqual(
-            [], absent.validate_parameters_create({"whatever": "anything",})
+            [],
+            absent.validate_parameters_create(
+                {
+                    "whatever": "anything",
+                }
+            ),
         )
         self.assertEqual(
             [],
             absent.validate_parameters_update(
-                {"whatever": "anything",}, {"whatever": "anything",}
+                {
+                    "whatever": "anything",
+                },
+                {
+                    "whatever": "anything",
+                },
             ),
         )

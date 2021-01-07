@@ -102,8 +102,8 @@ def get_fixture_two_primitives_cib(
 
 
 fixture_two_primitives_cib_enabled = get_fixture_two_primitives_cib()
-fixture_two_primitives_cib_enabled_with_meta_both = get_fixture_two_primitives_cib(
-    primitive1_meta=True, primitive2_meta=True
+fixture_two_primitives_cib_enabled_with_meta_both = (
+    get_fixture_two_primitives_cib(primitive1_meta=True, primitive2_meta=True)
 )
 fixture_two_primitives_cib_disabled = get_fixture_two_primitives_cib(
     primitive1_disabled=True
@@ -451,8 +451,8 @@ fixture_clone_group_cib_enabled_with_meta_clone = get_fixture_clone_group_cib(
 fixture_clone_group_cib_enabled_with_meta_group = get_fixture_clone_group_cib(
     group_meta=True
 )
-fixture_clone_group_cib_enabled_with_meta_primitive = get_fixture_clone_group_cib(
-    primitive1_meta=True
+fixture_clone_group_cib_enabled_with_meta_primitive = (
+    get_fixture_clone_group_cib(primitive1_meta=True)
 )
 fixture_clone_group_cib_disabled_clone = get_fixture_clone_group_cib(
     clone_disabled=True
@@ -463,11 +463,15 @@ fixture_clone_group_cib_disabled_group = get_fixture_clone_group_cib(
 fixture_clone_group_cib_disabled_primitive = get_fixture_clone_group_cib(
     primitive1_disabled=True
 )
-fixture_clone_group_cib_disabled_primitive_with_meta_clone_group = get_fixture_clone_group_cib(
-    clone_meta=True, group_meta=True, primitive1_disabled=True
+fixture_clone_group_cib_disabled_primitive_with_meta_clone_group = (
+    get_fixture_clone_group_cib(
+        clone_meta=True, group_meta=True, primitive1_disabled=True
+    )
 )
-fixture_clone_group_cib_disabled_clone_group_with_meta_primitive = get_fixture_clone_group_cib(
-    clone_disabled=True, group_disabled=True, primitive1_meta=True
+fixture_clone_group_cib_disabled_clone_group_with_meta_primitive = (
+    get_fixture_clone_group_cib(
+        clone_disabled=True, group_disabled=True, primitive1_meta=True
+    )
 )
 fixture_clone_group_cib_disabled_all = get_fixture_clone_group_cib(
     clone_disabled=True, group_disabled=True, primitive1_disabled=True
@@ -496,8 +500,8 @@ fixture_clone_group_status_template = """
 fixture_clone_group_status_managed = fixture_clone_group_status_template.format(
     managed="true"
 )
-fixture_clone_group_status_unmanaged = fixture_clone_group_status_template.format(
-    managed="false"
+fixture_clone_group_status_unmanaged = (
+    fixture_clone_group_status_template.format(managed="false")
 )
 
 
@@ -588,7 +592,9 @@ def fixture_report_unmanaged(resource_id):
     return (
         severities.WARNING,
         report_codes.RESOURCE_IS_UNMANAGED,
-        {"resource_id": resource_id,},
+        {
+            "resource_id": resource_id,
+        },
         None,
     )
 
@@ -622,7 +628,9 @@ class DisablePrimitive(TestCase):
             lambda: resource.disable(self.env_assist.get_env(), ["B"], False)
         )
         self.env_assist.assert_reports(
-            [fixture.report_not_found("B"),]
+            [
+                fixture.report_not_found("B"),
+            ]
         )
 
     def test_correct_resource(self):
@@ -792,7 +800,10 @@ class MoreResources(TestCase):
         )
         resource.enable(self.env_assist.get_env(), ["A", "B", "D"], False)
         self.env_assist.assert_reports(
-            [fixture_report_unmanaged("B"), fixture_report_unmanaged("D"),]
+            [
+                fixture_report_unmanaged("B"),
+                fixture_report_unmanaged("D"),
+            ]
         )
 
     def test_success_disable(self):
@@ -827,7 +838,10 @@ class MoreResources(TestCase):
         )
         resource.disable(self.env_assist.get_env(), ["A", "B", "D"], False)
         self.env_assist.assert_reports(
-            [fixture_report_unmanaged("B"), fixture_report_unmanaged("D"),]
+            [
+                fixture_report_unmanaged("B"),
+                fixture_report_unmanaged("D"),
+            ]
         )
 
     def test_bad_resource_enable(self):
@@ -937,7 +951,8 @@ class Wait(TestCase):
                 wait=TIMEOUT,
             )
             .runner.pcmk.load_state(
-                name="", resources=self.fixture_status_stopped,
+                name="",
+                resources=self.fixture_status_stopped,
             )
         )
 
@@ -963,7 +978,8 @@ class Wait(TestCase):
                 resources=fixture_two_primitives_cib_disabled_both, wait=TIMEOUT
             )
             .runner.pcmk.load_state(
-                name="", resources=self.fixture_status_stopped,
+                name="",
+                resources=self.fixture_status_stopped,
             )
         )
 
@@ -986,7 +1002,8 @@ class Wait(TestCase):
                 wait=TIMEOUT,
             )
             .runner.pcmk.load_state(
-                name="", resources=self.fixture_status_running,
+                name="",
+                resources=self.fixture_status_running,
             )
         )
 
@@ -1009,7 +1026,8 @@ class Wait(TestCase):
                 resources=fixture_two_primitives_cib_disabled_both, wait=TIMEOUT
             )
             .runner.pcmk.load_state(
-                name="", resources=self.fixture_status_running,
+                name="",
+                resources=self.fixture_status_running,
             )
         )
 
@@ -1122,7 +1140,8 @@ class WaitClone(TestCase):
                 resources=fixture_clone_cib_disabled_clone, wait=TIMEOUT
             )
             .runner.pcmk.load_state(
-                name="", resources=self.fixture_status_stopped,
+                name="",
+                resources=self.fixture_status_stopped,
             )
         )
 
@@ -1132,7 +1151,9 @@ class WaitClone(TestCase):
                 (
                     severities.INFO,
                     report_codes.RESOURCE_DOES_NOT_RUN,
-                    {"resource_id": "A-clone",},
+                    {
+                        "resource_id": "A-clone",
+                    },
                     None,
                 )
             ]
@@ -1149,7 +1170,8 @@ class WaitClone(TestCase):
                 wait=TIMEOUT,
             )
             .runner.pcmk.load_state(
-                name="", resources=self.fixture_status_running,
+                name="",
+                resources=self.fixture_status_running,
             )
         )
 
@@ -1199,7 +1221,9 @@ class DisableGroup(TestCase):
         )
         resource.disable(self.env_assist.get_env(), ["A1"], wait=False)
         self.env_assist.assert_reports(
-            [fixture_report_unmanaged("A1"),]
+            [
+                fixture_report_unmanaged("A1"),
+            ]
         )
 
     def test_group_unmanaged(self):
@@ -1210,7 +1234,9 @@ class DisableGroup(TestCase):
         )
         resource.disable(self.env_assist.get_env(), ["A"], wait=False)
         self.env_assist.assert_reports(
-            [fixture_report_unmanaged("A"),]
+            [
+                fixture_report_unmanaged("A"),
+            ]
         )
 
 
@@ -1277,7 +1303,9 @@ class EnableGroup(TestCase):
         )
         resource.enable(self.env_assist.get_env(), ["A1"], wait=False)
         self.env_assist.assert_reports(
-            [fixture_report_unmanaged("A1"),]
+            [
+                fixture_report_unmanaged("A1"),
+            ]
         )
 
     def test_group_unmanaged(self):
@@ -1290,7 +1318,9 @@ class EnableGroup(TestCase):
         )
         resource.enable(self.env_assist.get_env(), ["A"], wait=False)
         self.env_assist.assert_reports(
-            [fixture_report_unmanaged("A"),]
+            [
+                fixture_report_unmanaged("A"),
+            ]
         )
 
 
@@ -1324,7 +1354,9 @@ class DisableClone(TestCase):
         )
         resource.disable(self.env_assist.get_env(), ["A"], wait=False)
         self.env_assist.assert_reports(
-            [fixture_report_unmanaged("A"),]
+            [
+                fixture_report_unmanaged("A"),
+            ]
         )
 
     def test_clone_unmanaged(self):
@@ -1335,7 +1367,9 @@ class DisableClone(TestCase):
         )
         resource.disable(self.env_assist.get_env(), ["A-clone"], wait=False)
         self.env_assist.assert_reports(
-            [fixture_report_unmanaged("A-clone"),]
+            [
+                fixture_report_unmanaged("A-clone"),
+            ]
         )
 
 
@@ -1545,7 +1579,9 @@ class DisableClonedGroup(TestCase):
         )
         resource.disable(self.env_assist.get_env(), ["A-clone"], False)
         self.env_assist.assert_reports(
-            [fixture_report_unmanaged("A-clone"),]
+            [
+                fixture_report_unmanaged("A-clone"),
+            ]
         )
 
     def test_group_unmanaged(self):
@@ -1560,7 +1596,9 @@ class DisableClonedGroup(TestCase):
         )
         resource.disable(self.env_assist.get_env(), ["A"], False)
         self.env_assist.assert_reports(
-            [fixture_report_unmanaged("A"),]
+            [
+                fixture_report_unmanaged("A"),
+            ]
         )
 
     def test_primitive_unmanaged(self):
@@ -1575,7 +1613,9 @@ class DisableClonedGroup(TestCase):
         )
         resource.disable(self.env_assist.get_env(), ["A1"], False)
         self.env_assist.assert_reports(
-            [fixture_report_unmanaged("A1"),]
+            [
+                fixture_report_unmanaged("A1"),
+            ]
         )
 
 
@@ -1722,7 +1762,9 @@ class EnableClonedGroup(TestCase):
         )
         resource.enable(self.env_assist.get_env(), ["A1"], False)
         self.env_assist.assert_reports(
-            [fixture_report_unmanaged("A1"),]
+            [
+                fixture_report_unmanaged("A1"),
+            ]
         )
 
 
@@ -1755,7 +1797,9 @@ class DisableBundle(TestCase):
         )
         resource.disable(self.env_assist.get_env(), ["A"], False)
         self.env_assist.assert_reports(
-            [fixture_report_unmanaged("A"),]
+            [
+                fixture_report_unmanaged("A"),
+            ]
         )
 
     def test_bundle_unmanaged(self):
@@ -1766,7 +1810,9 @@ class DisableBundle(TestCase):
         )
         resource.disable(self.env_assist.get_env(), ["A-bundle"], False)
         self.env_assist.assert_reports(
-            [fixture_report_unmanaged("A-bundle"),]
+            [
+                fixture_report_unmanaged("A-bundle"),
+            ]
         )
 
 
@@ -2168,7 +2214,8 @@ class DisableSimulate(DisableSafeFixturesMixin, TestCase):
         ]
         (
             self.config.runner.cib.load(
-                resources=fixture_two_primitives_cib_enabled, tags=fixture_tag,
+                resources=fixture_two_primitives_cib_enabled,
+                tags=fixture_tag,
             )
             .runner.pcmk.load_state(
                 resources=fixture_two_primitives_status_managed
@@ -2217,7 +2264,8 @@ class DisableSimulate(DisableSafeFixturesMixin, TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.CIB_SIMULATE_ERROR, reason="some stderr",
+                    report_codes.CIB_SIMULATE_ERROR,
+                    reason="some stderr",
                 ),
             ],
             expected_in_processor=False,
@@ -2270,11 +2318,15 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
         )
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable_safe(
-                self.env_assist.get_env(), ["A", "B"], self.strict, False,
+                self.env_assist.get_env(),
+                ["A", "B"],
+                self.strict,
+                False,
             ),
             [
                 fixture.error(
-                    report_codes.CIB_SIMULATE_ERROR, reason="some stderr",
+                    report_codes.CIB_SIMULATE_ERROR,
+                    reason="some stderr",
                 ),
             ],
             expected_in_processor=False,
@@ -2292,7 +2344,10 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
             resources=fixture_two_primitives_cib_disabled_both
         )
         resource.disable_safe(
-            self.env_assist.get_env(), ["A", "B"], self.strict, False,
+            self.env_assist.get_env(),
+            ["A", "B"],
+            self.strict,
+            False,
         )
 
     def test_resources_in_tag_stopped(self, mock_write_tmpfile):
@@ -2321,7 +2376,10 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
             .env.push_cib(resources=fixture_two_primitives_cib_disabled_both)
         )
         resource.disable_safe(
-            self.env_assist.get_env(), ["T1"], self.strict, False,
+            self.env_assist.get_env(),
+            ["T1"],
+            self.strict,
+            False,
         )
 
     def test_other_resources_stopped(self, mock_write_tmpfile):
@@ -2334,7 +2392,10 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
         )
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable_safe(
-                self.env_assist.get_env(), ["A"], self.strict, False,
+                self.env_assist.get_env(),
+                ["A"],
+                self.strict,
+                False,
             ),
             [
                 fixture.error(
@@ -2370,7 +2431,10 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
         )
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable_safe(
-                self.env_assist.get_env(), ["A"], self.strict, False,
+                self.env_assist.get_env(),
+                ["A"],
+                self.strict,
+                False,
             ),
             [
                 fixture.error(
@@ -2673,7 +2737,10 @@ class DisableSafe(DisableSafeMixin, TestCase):
         )
         self.config.env.push_cib(resources=fixture_two_primitives_cib_disabled)
         resource.disable_safe(
-            self.env_assist.get_env(), ["A"], self.strict, False,
+            self.env_assist.get_env(),
+            ["A"],
+            self.strict,
+            False,
         )
 
     def test_master_migrated(self, mock_write_tmpfile):
@@ -2701,7 +2768,10 @@ class DisableSafe(DisableSafeMixin, TestCase):
             )
         )
         resource.disable_safe(
-            self.env_assist.get_env(), ["A"], self.strict, False,
+            self.env_assist.get_env(),
+            ["A"],
+            self.strict,
+            False,
         )
 
 
@@ -2720,7 +2790,10 @@ class DisableSafeStrict(DisableSafeMixin, TestCase):
         )
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable_safe(
-                self.env_assist.get_env(), ["A"], self.strict, False,
+                self.env_assist.get_env(),
+                ["A"],
+                self.strict,
+                False,
             ),
             [
                 fixture.error(
@@ -2756,7 +2829,10 @@ class DisableSafeStrict(DisableSafeMixin, TestCase):
         )
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable_safe(
-                self.env_assist.get_env(), ["A"], self.strict, False,
+                self.env_assist.get_env(),
+                ["A"],
+                self.strict,
+                False,
             ),
             [
                 fixture.error(
@@ -2778,7 +2854,8 @@ class DisableTags(TestCase):
     def test_tag_id(self):
         (
             self.config.runner.cib.load(
-                resources=fixture_two_primitives_cib_enabled, tags=fixture_tag,
+                resources=fixture_two_primitives_cib_enabled,
+                tags=fixture_tag,
             )
             .runner.pcmk.load_state(
                 resources=fixture_two_primitives_status_managed,

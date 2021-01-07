@@ -97,7 +97,14 @@ class CreateAlertTest(TestCase):
             "my description",
         )
         self.env_assist.assert_reports(
-            [(Severities.INFO, report_codes.CIB_UPGRADE_SUCCESSFUL, {}, None),]
+            [
+                (
+                    Severities.INFO,
+                    report_codes.CIB_UPGRADE_SUCCESSFUL,
+                    {},
+                    None,
+                ),
+            ]
         )
 
 

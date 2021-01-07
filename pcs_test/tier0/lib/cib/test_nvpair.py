@@ -52,7 +52,13 @@ class UpdateNvsetTest(TestCase):
         )
         id_provider = IdProvider(nvset_element)
         nvpair.update_nvset(
-            nvset_element, {"a": "B", "c": "", "g": "h",}, id_provider
+            nvset_element,
+            {
+                "a": "B",
+                "c": "",
+                "g": "h",
+            },
+            id_provider,
         )
         assert_xml_equal(
             """
@@ -172,7 +178,10 @@ class AppendNewNvsetTest(TestCase):
         nvpair.append_new_nvset(
             "instance_attributes",
             context_element,
-            {"a": "b", "c": "d",},
+            {
+                "a": "b",
+                "c": "d",
+            },
             id_provider,
         )
         assert_xml_equal(
@@ -198,7 +207,10 @@ class AppendNewNvsetTest(TestCase):
         nvpair.append_new_nvset(
             "instance_attributes",
             context_element,
-            {"a": "b", "c": "d",},
+            {
+                "a": "b",
+                "c": "d",
+            },
             provider,
         )
         assert_xml_equal(
@@ -417,7 +429,10 @@ class GetNvsetAsDictTest(TestCase):
         """
         )
         self.assertEqual(
-            dict(attr_name="value", other_name="other-value",),
+            dict(
+                attr_name="value",
+                other_name="other-value",
+            ),
             nvpair.get_nvset_as_dict("meta_attributes", resource_element),
         )
 
@@ -437,7 +452,10 @@ class GetNvsetAsDictTest(TestCase):
         """
         )
         self.assertEqual(
-            dict(attr_name="value", other_name="other-value",),
+            dict(
+                attr_name="value",
+                other_name="other-value",
+            ),
             nvpair.get_nvset_as_dict("meta_attributes", resource_element),
         )
 

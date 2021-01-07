@@ -10,7 +10,9 @@ from pcs.lib.cib.node import PacemakerNode
 from pcs.lib.corosync import config_validators, constants, node
 
 forbidden_characters_kwargs = dict(
-    allowed_values=None, cannot_be_empty=False, forbidden_characters=r"{}\n\r",
+    allowed_values=None,
+    cannot_be_empty=False,
+    forbidden_characters=r"{}\n\r",
 )
 
 
@@ -106,7 +108,10 @@ class AddLink(TestCase):
         assert_report_item_list_equal(
             config_validators.add_link(
                 self.new_addrs,
-                {"linknumber": "2", "ping_interval": "100",},
+                {
+                    "linknumber": "2",
+                    "ping_interval": "100",
+                },
                 self.coro_nodes,
                 self.pcmk_nodes,
                 self.existing_link_list,
@@ -128,7 +133,10 @@ class AddLink(TestCase):
         assert_report_item_list_equal(
             config_validators.add_link(
                 self.new_addrs,
-                {"linknumber": "2", "ping_timeout": "50",},
+                {
+                    "linknumber": "2",
+                    "ping_timeout": "50",
+                },
                 self.coro_nodes,
                 self.pcmk_nodes,
                 self.existing_link_list,
@@ -977,7 +985,9 @@ class UpdateLinkAddressesMixin:
         assert_report_item_list_equal(
             config_validators.update_link(
                 self.linknumber,
-                {self.coro_nodes[0].name: "",},
+                {
+                    self.coro_nodes[0].name: "",
+                },
                 {},
                 {},
                 self.coro_nodes,
@@ -1027,7 +1037,9 @@ class UpdateLinkAddressesMixin:
                 assert_report_item_list_equal(
                     config_validators.update_link(
                         self.linknumber,
-                        {self.coro_nodes[0].name: new_ip,},
+                        {
+                            self.coro_nodes[0].name: new_ip,
+                        },
                         {},
                         {},
                         self.coro_nodes,
@@ -1067,7 +1079,9 @@ class UpdateLinkAddressesMixin:
         assert_report_item_list_equal(
             config_validators.update_link(
                 self.linknumber,
-                {self.coro_nodes[0].name: "addr-new",},
+                {
+                    self.coro_nodes[0].name: "addr-new",
+                },
                 {},
                 {},
                 self.coro_nodes,
@@ -1089,7 +1103,9 @@ class UpdateLinkAddressesMixin:
         assert_report_item_list_equal(
             config_validators.update_link(
                 self.linknumber,
-                {self.coro_nodes[0].name: "addr-new",},
+                {
+                    self.coro_nodes[0].name: "addr-new",
+                },
                 {},
                 {},
                 self.coro_nodes,
@@ -1111,7 +1127,9 @@ class UpdateLinkAddressesMixin:
         assert_report_item_list_equal(
             config_validators.update_link(
                 self.linknumber,
-                {"nodeX": "10.0.0.1",},
+                {
+                    "nodeX": "10.0.0.1",
+                },
                 {},
                 {},
                 self.coro_nodes,
@@ -1221,7 +1239,9 @@ class UpdateLinkAddressesUdp(UpdateLinkAddressesMixin, TestCase):
         assert_report_item_list_equal(
             config_validators.update_link(
                 self.linknumber,
-                {self.coro_nodes[0].name: "10.0.1.1",},
+                {
+                    self.coro_nodes[0].name: "10.0.1.1",
+                },
                 {},
                 {},
                 coro_nodes,
@@ -1248,7 +1268,9 @@ class UpdateLinkAddressesUdp(UpdateLinkAddressesMixin, TestCase):
         assert_report_item_list_equal(
             config_validators.update_link(
                 self.linknumber,
-                {self.coro_nodes[0].name: "::ffff:10:0:3:1",},
+                {
+                    self.coro_nodes[0].name: "::ffff:10:0:3:1",
+                },
                 {},
                 {},
                 coro_nodes,
@@ -1332,7 +1354,9 @@ class UpdateLinkAddressesKnet(UpdateLinkAddressesMixin, TestCase):
         assert_report_item_list_equal(
             config_validators.update_link(
                 self.linknumber,
-                {self.coro_nodes[0].name: "10.0.1.1",},
+                {
+                    self.coro_nodes[0].name: "10.0.1.1",
+                },
                 {},
                 {},
                 coro_nodes,
@@ -1365,7 +1389,9 @@ class UpdateLinkAddressesKnet(UpdateLinkAddressesMixin, TestCase):
         assert_report_item_list_equal(
             config_validators.update_link(
                 self.linknumber,
-                {self.coro_nodes[0].name: "::ffff:10:0:3:1",},
+                {
+                    self.coro_nodes[0].name: "::ffff:10:0:3:1",
+                },
                 {},
                 {},
                 coro_nodes,
@@ -1404,7 +1430,9 @@ class UpdateLinkKnet(TestCase):
                 {},
                 [],
                 [],
-                ["2",],
+                [
+                    "2",
+                ],
                 constants.TRANSPORTS_KNET[0],
                 constants.IP_VERSION_64,
             ),
@@ -1503,7 +1531,9 @@ class UpdateLinkKnet(TestCase):
                 {},
                 [],
                 [],
-                ["2",],
+                [
+                    "2",
+                ],
                 constants.TRANSPORTS_KNET[0],
                 constants.IP_VERSION_64,
             ),
@@ -1606,7 +1636,9 @@ class UpdateLinkKnet(TestCase):
                             initial_options,
                             [],
                             [],
-                            ["2",],
+                            [
+                                "2",
+                            ],
                             constants.TRANSPORTS_KNET[0],
                             constants.IP_VERSION_64,
                         ),
@@ -1620,10 +1652,15 @@ class UpdateLinkKnet(TestCase):
                 "2",
                 {},
                 {},
-                {"linknumber": "2", "ping_timeout": "10",},
+                {
+                    "linknumber": "2",
+                    "ping_timeout": "10",
+                },
                 [],
                 [],
-                ["2",],
+                [
+                    "2",
+                ],
                 constants.TRANSPORTS_KNET[0],
                 constants.IP_VERSION_64,
             ),
@@ -1649,7 +1686,9 @@ class UpdateLinkKnet(TestCase):
                 {},
                 [],
                 [],
-                ["2",],
+                [
+                    "2",
+                ],
                 constants.TRANSPORTS_KNET[0],
                 constants.IP_VERSION_64,
             ),
@@ -1820,7 +1859,9 @@ class UpdateLinkUdp(TestCase):
                 {},
                 [],
                 [],
-                ["0",],
+                [
+                    "0",
+                ],
                 constants.TRANSPORTS_UDP[0],
                 constants.IP_VERSION_4,
             ),
@@ -1898,7 +1939,9 @@ class UpdateLinkUdp(TestCase):
                 {},
                 [],
                 [],
-                ["0",],
+                [
+                    "0",
+                ],
                 constants.TRANSPORTS_UDP[0],
                 constants.IP_VERSION_4,
             ),
@@ -1939,7 +1982,9 @@ class UpdateLinkUdp(TestCase):
                             initial_options,
                             [],
                             [],
-                            ["0",],
+                            [
+                                "0",
+                            ],
                             constants.TRANSPORTS_UDP[0],
                             constants.IP_VERSION_4,
                         ),
@@ -2001,7 +2046,9 @@ class UpdateLinkUdp(TestCase):
                 {},
                 [],
                 [],
-                ["0",],
+                [
+                    "0",
+                ],
                 constants.TRANSPORTS_UDP[0],
                 constants.IP_VERSION_4,
             ),

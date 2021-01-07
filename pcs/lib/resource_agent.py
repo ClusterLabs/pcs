@@ -358,7 +358,8 @@ def _find_valid_agent_by_name(
 
         report_processor.report(
             resource_agent_error_to_report_item(
-                e, severity=ReportItemSeverity.WARNING,
+                e,
+                severity=ReportItemSeverity.WARNING,
             )
         )
 
@@ -604,7 +605,8 @@ class Agent:
                 ReportItem(
                     severity=self._validate_report_severity(force),
                     message=reports.messages.RequiredOptionsAreMissing(
-                        sorted(missing_parameters), self._agent_type_label,
+                        sorted(missing_parameters),
+                        self._agent_type_label,
                     ),
                 )
             )
@@ -664,7 +666,8 @@ class Agent:
                 ReportItem(
                     severity=self._validate_report_severity(force),
                     message=reports.messages.RequiredOptionsAreMissing(
-                        sorted(missing_parameters), self._agent_type_label,
+                        sorted(missing_parameters),
+                        self._agent_type_label,
                     ),
                 )
             )
@@ -902,7 +905,9 @@ class CrmAgent(Agent):
                 "--show-metadata",
                 self._get_full_name(),
             ],
-            env_extend={"PATH": env_path,},
+            env_extend={
+                "PATH": env_path,
+            },
         )
         if retval != 0:
             raise UnableToGetAgentMetadata(self.get_name(), stderr.strip())
@@ -1099,7 +1104,12 @@ class StonithAgent(CrmAgent):
         """
         # We don't allow the user to change these options which are only
         # intended to be used interactively on command line.
-        remove_parameters = frozenset(["help", "version",])
+        remove_parameters = frozenset(
+            [
+                "help",
+                "version",
+            ]
+        )
         filtered = []
         for param in parameters:
             if param["name"] in remove_parameters:

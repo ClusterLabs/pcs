@@ -107,7 +107,7 @@ def _get_full_target_dict(target_list, node_value_dict, default_value):
     list node_list -- list of cluster nodes (RequestTarget object)
     node_value_dict -- dictionary, keys: node names, values: some velue
     default_value -- some default value
-     """
+    """
     return {
         target.label: node_value_dict.get(target.label, default_value)
         for target in target_list
@@ -165,7 +165,8 @@ def enable_sbd(
             ReportItem.error(reports.messages.CorosyncConfigNoNodesDefined())
         )
     target_list = lib_env.get_node_target_factory().get_target_list(
-        node_list, skip_non_existing=ignore_offline_nodes,
+        node_list,
+        skip_non_existing=ignore_offline_nodes,
     )
 
     full_watchdog_dict = _get_full_target_dict(
@@ -197,7 +198,8 @@ def enable_sbd(
         raise LibraryError()
 
     com_cmd = GetOnlineTargets(
-        lib_env.report_processor, ignore_offline_targets=ignore_offline_nodes,
+        lib_env.report_processor,
+        ignore_offline_targets=ignore_offline_nodes,
     )
     com_cmd.set_targets(target_list)
     online_targets = run_and_raise(lib_env.get_node_communicator(), com_cmd)
@@ -285,11 +287,13 @@ def disable_sbd(lib_env, ignore_offline_nodes=False):
         raise LibraryError()
 
     com_cmd = GetOnlineTargets(
-        lib_env.report_processor, ignore_offline_targets=ignore_offline_nodes,
+        lib_env.report_processor,
+        ignore_offline_targets=ignore_offline_nodes,
     )
     com_cmd.set_targets(
         lib_env.get_node_target_factory().get_target_list(
-            node_list, skip_non_existing=ignore_offline_nodes,
+            node_list,
+            skip_non_existing=ignore_offline_nodes,
         )
     )
     online_nodes = run_and_raise(lib_env.get_node_communicator(), com_cmd)

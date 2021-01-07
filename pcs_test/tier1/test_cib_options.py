@@ -247,7 +247,8 @@ class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
 
 
 class RscDefaultsConfig(
-    DefaultsConfigMixin, TestCase,
+    DefaultsConfigMixin,
+    TestCase,
 ):
     cli_command = ["resource", "defaults"]
     prefix = "rsc"
@@ -282,7 +283,8 @@ class RscDefaultsConfig(
 
 
 class OpDefaultsConfig(
-    DefaultsConfigMixin, TestCase,
+    DefaultsConfigMixin,
+    TestCase,
 ):
     cli_command = ["resource", "op", "defaults"]
     prefix = "op"
@@ -736,13 +738,15 @@ class DefaultsSetUsageMixin(TestDefaultsMixin, AssertPcsMixin):
 
 
 class RscDefaultsSetUsage(
-    DefaultsSetUsageMixin, TestCase,
+    DefaultsSetUsageMixin,
+    TestCase,
 ):
     cli_command = ["resource", "defaults"]
 
 
 class OpDefaultsSetUsage(
-    DefaultsSetUsageMixin, TestCase,
+    DefaultsSetUsageMixin,
+    TestCase,
 ):
     cli_command = ["resource", "op", "defaults"]
 

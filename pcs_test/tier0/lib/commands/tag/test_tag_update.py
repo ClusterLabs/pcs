@@ -34,7 +34,11 @@ class TestTagUpdate(TestCase):
             tags=fixture_tags_xml([("t", ["a", "b", "e1", "e2", "e3"])]),
         )
         cmd_tag.update(
-            self.env_assist.get_env(), "t", ["a", "b"], [], adjacent_idref="e1",
+            self.env_assist.get_env(),
+            "t",
+            ["a", "b"],
+            [],
+            adjacent_idref="e1",
         )
 
     def test_add_ids_after(self):
@@ -51,7 +55,9 @@ class TestTagUpdate(TestCase):
         )
 
     def test_remove_ids(self):
-        self.config.env.push_cib(tags=fixture_tags_xml([("t", ["e2"])]),)
+        self.config.env.push_cib(
+            tags=fixture_tags_xml([("t", ["e2"])]),
+        )
         cmd_tag.update(self.env_assist.get_env(), "t", [], ["e1", "e3"])
 
     def test_combination_add_remove(self):
@@ -161,16 +167,24 @@ class TestTagUpdate(TestCase):
         )
 
     def test_remove_all_existing_but_add_new_ones(self):
-        self.config.env.push_cib(tags=fixture_tags_xml([("t", ["a", "b"])]),)
+        self.config.env.push_cib(
+            tags=fixture_tags_xml([("t", ["a", "b"])]),
+        )
         cmd_tag.update(
-            self.env_assist.get_env(), "t", ["a", "b"], ["e1", "e2", "e3"],
+            self.env_assist.get_env(),
+            "t",
+            ["a", "b"],
+            ["e1", "e2", "e3"],
         )
         self.env_assist.assert_reports([])
 
     def test_raises_exeption_in_case_of_report(self):
         self.env_assist.assert_raise_library_error(
             lambda: cmd_tag.update(
-                self.env_assist.get_env(), "t", [], ["e1", "e2", "e3"],
+                self.env_assist.get_env(),
+                "t",
+                [],
+                ["e1", "e2", "e3"],
             )
         )
         self.env_assist.assert_reports(

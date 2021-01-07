@@ -140,7 +140,12 @@ class ParseRawLinesTest(TestCase):
             # testing a function which should not be used outside of the module
             # pylint: disable=protected-access
             config_parser._parse_to_raw_lines(
-                "\n".join([" # some comment", "site = 1.1.1.1",])
+                "\n".join(
+                    [
+                        " # some comment",
+                        "site = 1.1.1.1",
+                    ]
+                )
             ),
         )
 
@@ -150,7 +155,12 @@ class ParseRawLinesTest(TestCase):
             # testing a function which should not be used outside of the module
             # pylint: disable=protected-access
             config_parser._parse_to_raw_lines(
-                "\n".join([" ", "site = 1.1.1.1",])
+                "\n".join(
+                    [
+                        " ",
+                        "site = 1.1.1.1",
+                    ]
+                )
             ),
         )
 
@@ -173,7 +183,11 @@ class ParseRawLinesTest(TestCase):
             # testing a function which should not be used outside of the module
             # pylint: disable=protected-access
             config_parser._parse_to_raw_lines(
-                "\n".join(["site = '1.1.1.1' #comment",])
+                "\n".join(
+                    [
+                        "site = '1.1.1.1' #comment",
+                    ]
+                )
             ),
         )
 

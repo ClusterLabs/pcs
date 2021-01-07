@@ -28,7 +28,11 @@ def fixture_primitive_xml(_id):
 
 
 def fixture_node(entity, members=None, leaf=False):
-    return dict(relation_entity=entity, is_leaf=leaf, members=members or [],)
+    return dict(
+        relation_entity=entity,
+        is_leaf=leaf,
+        members=members or [],
+    )
 
 
 def fixture_order(res1, res2, kind="Mandatory", score=None):
@@ -60,7 +64,8 @@ class GetResourceRelationsTree(TestCase):
         resource_id = "not_existing"
         self.env_assist.assert_raise_library_error(
             lambda: resource.get_resource_relations_tree(
-                self.env_assist.get_env(), resource_id,
+                self.env_assist.get_env(),
+                resource_id,
             )
         )
         self.env_assist.assert_reports(

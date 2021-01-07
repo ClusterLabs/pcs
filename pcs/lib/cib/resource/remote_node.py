@@ -13,7 +13,9 @@ AGENT_NAME = ResourceAgentName("ocf", "pacemaker", "remote")
 
 def get_agent(report_processor, cmd_runner):
     return find_valid_resource_agent_by_name(
-        report_processor, cmd_runner, AGENT_NAME.full_name,
+        report_processor,
+        cmd_runner,
+        AGENT_NAME.full_name,
     )
 
 

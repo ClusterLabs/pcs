@@ -28,7 +28,11 @@ class ServiceCommandFormat(TestCase):
     def test_create_expected_dict(self):
         self.assertEqual(
             node_communication_format.service_cmd_format("pcsd", "start"),
-            {"type": "service_command", "service": "pcsd", "command": "start",},
+            {
+                "type": "service_command",
+                "service": "pcsd",
+                "command": "start",
+            },
         )
 
 
@@ -50,7 +54,10 @@ class ResponseToNodeActionResults(TestCase):
     def assert_result_causes_invalid_format(self, result):
         assert_raise_library_error(
             lambda: node_communication_format.response_to_result(
-                result, self.main_key, self.expected_keys, self.node_label,
+                result,
+                self.main_key,
+                self.expected_keys,
+                self.node_label,
             ),
             fixture_invalid_response_format(self.node_label),
         )
@@ -84,7 +91,10 @@ class ResponseToNodeActionResults(TestCase):
         self.assert_result_causes_invalid_format(
             {
                 "files": {
-                    "file": {"code": "some_code", "message": "some_message",},
+                    "file": {
+                        "code": "some_code",
+                        "message": "some_message",
+                    },
                     "extra": {
                         "code": "some_extra_code",
                         "message": "some_extra_message",

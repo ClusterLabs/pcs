@@ -56,7 +56,8 @@ def stonith_list_available(lib, argv, modifiers):
 
     search = argv[0] if argv else None
     agent_list = lib.stonith_agent.list_agents(
-        describe=not modifiers.get("--nodesc"), search=search,
+        describe=not modifiers.get("--nodesc"),
+        search=search,
     )
 
     if not agent_list:

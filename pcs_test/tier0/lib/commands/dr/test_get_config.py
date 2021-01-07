@@ -19,7 +19,8 @@ class Config(TestCase):
     def test_success(self):
         (
             self.config.raw_file.exists(
-                file_type_codes.PCS_DR_CONFIG, settings.pcsd_dr_config_location,
+                file_type_codes.PCS_DR_CONFIG,
+                settings.pcsd_dr_config_location,
             ).raw_file.read(
                 file_type_codes.PCS_DR_CONFIG,
                 settings.pcsd_dr_config_location,
@@ -45,10 +46,15 @@ class Config(TestCase):
         self.assertEqual(
             dr.get_config(self.env_assist.get_env()),
             {
-                "local_site": {"node_list": [], "site_role": "PRIMARY",},
+                "local_site": {
+                    "node_list": [],
+                    "site_role": "PRIMARY",
+                },
                 "remote_site_list": [
                     {
-                        "node_list": [{"name": "recovery-node"},],
+                        "node_list": [
+                            {"name": "recovery-node"},
+                        ],
                         "site_role": "RECOVERY",
                     },
                 ],
@@ -67,13 +73,18 @@ class Config(TestCase):
             lambda: dr.get_config(self.env_assist.get_env()),
         )
         self.env_assist.assert_reports(
-            [fixture.error(report_codes.DR_CONFIG_DOES_NOT_EXIST,),]
+            [
+                fixture.error(
+                    report_codes.DR_CONFIG_DOES_NOT_EXIST,
+                ),
+            ]
         )
 
     def test_config_read_error(self):
         (
             self.config.raw_file.exists(
-                file_type_codes.PCS_DR_CONFIG, settings.pcsd_dr_config_location,
+                file_type_codes.PCS_DR_CONFIG,
+                settings.pcsd_dr_config_location,
             ).raw_file.read(
                 file_type_codes.PCS_DR_CONFIG,
                 settings.pcsd_dr_config_location,
@@ -98,7 +109,8 @@ class Config(TestCase):
     def test_config_parse_error(self):
         (
             self.config.raw_file.exists(
-                file_type_codes.PCS_DR_CONFIG, settings.pcsd_dr_config_location,
+                file_type_codes.PCS_DR_CONFIG,
+                settings.pcsd_dr_config_location,
             ).raw_file.read(
                 file_type_codes.PCS_DR_CONFIG,
                 settings.pcsd_dr_config_location,

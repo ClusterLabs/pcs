@@ -47,14 +47,18 @@ class CheckLive(TestCase):
         self.config.env.set_corosync_conf_data("corosync conf data")
         self.config.env.set_cib_data("<cib />")
         self.assert_live_required(
-            [file_type_codes.CIB, file_type_codes.COROSYNC_CONF,]
+            [
+                file_type_codes.CIB,
+                file_type_codes.COROSYNC_CONF,
+            ]
         )
 
 
 class FixtureMixin:
     def _fixture_load_configs(self):
         self.config.raw_file.exists(
-            file_type_codes.PCS_DR_CONFIG, settings.pcsd_dr_config_location,
+            file_type_codes.PCS_DR_CONFIG,
+            settings.pcsd_dr_config_location,
         )
         self.config.raw_file.read(
             file_type_codes.PCS_DR_CONFIG,
@@ -130,12 +134,17 @@ class FatalConfigIssue(FixtureMixin, TestCase):
             lambda: dr.destroy(self.env_assist.get_env()),
         )
         self.env_assist.assert_reports(
-            [fixture.error(report_codes.DR_CONFIG_DOES_NOT_EXIST,),]
+            [
+                fixture.error(
+                    report_codes.DR_CONFIG_DOES_NOT_EXIST,
+                ),
+            ]
         )
 
     def test_config_read_error(self):
         self.config.raw_file.exists(
-            file_type_codes.PCS_DR_CONFIG, settings.pcsd_dr_config_location,
+            file_type_codes.PCS_DR_CONFIG,
+            settings.pcsd_dr_config_location,
         )
         self.config.raw_file.read(
             file_type_codes.PCS_DR_CONFIG,
@@ -160,7 +169,8 @@ class FatalConfigIssue(FixtureMixin, TestCase):
 
     def test_config_parse_error(self):
         self.config.raw_file.exists(
-            file_type_codes.PCS_DR_CONFIG, settings.pcsd_dr_config_location,
+            file_type_codes.PCS_DR_CONFIG,
+            settings.pcsd_dr_config_location,
         )
         self.config.raw_file.read(
             file_type_codes.PCS_DR_CONFIG,
@@ -249,7 +259,8 @@ class CommunicationIssue(FixtureMixin, TestCase):
         self.config.env.set_known_nodes(existing_nodes)
         self._fixture_load_configs()
         self.config.http.files.remove_files(
-            node_labels=existing_nodes, pcs_disaster_recovery_conf=True,
+            node_labels=existing_nodes,
+            pcs_disaster_recovery_conf=True,
         )
         dr.destroy(
             self.env_assist.get_env(),
@@ -291,14 +302,18 @@ class CommunicationIssue(FixtureMixin, TestCase):
                     was_connected=False,
                     error_msg=REASON,
                 ),
-                dict(label=self.local_nodes[1], output="invalid data",),
+                dict(
+                    label=self.local_nodes[1],
+                    output="invalid data",
+                ),
                 dict(
                     label=self.local_nodes[2],
                     output=json.dumps(
                         dict(
                             files={
                                 DR_CONF: dict(
-                                    code="unexpected", message=REASON,
+                                    code="unexpected",
+                                    message=REASON,
                                 ),
                             }
                         )

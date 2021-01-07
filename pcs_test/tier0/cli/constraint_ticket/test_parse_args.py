@@ -10,7 +10,15 @@ class ParseAddTest(TestCase):
             parse_args.parse_add(
                 ["T", "resource1", "ticket=T", "loss-policy=fence"]
             ),
-            ("T", "resource1", "", {"ticket": "T", "loss-policy": "fence",}),
+            (
+                "T",
+                "resource1",
+                "",
+                {
+                    "ticket": "T",
+                    "loss-policy": "fence",
+                },
+            ),
         )
 
     def test_parse_add_args_with_resource_role(self):
@@ -22,7 +30,10 @@ class ParseAddTest(TestCase):
                 "T",
                 "resource1",
                 "master",
-                {"ticket": "T", "loss-policy": "fence",},
+                {
+                    "ticket": "T",
+                    "loss-policy": "fence",
+                },
             ),
         )
 

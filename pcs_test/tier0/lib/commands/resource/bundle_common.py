@@ -142,11 +142,21 @@ class ParametrizedContainerMixin(SetUpMixin):
         )
 
         self.run_bundle_cmd(
-            container_options={"image": self.image, "promoted-max": "0",}
+            container_options={
+                "image": self.image,
+                "promoted-max": "0",
+            }
         )
 
         self.env_assist.assert_reports(
-            [(severities.INFO, report_codes.CIB_UPGRADE_SUCCESSFUL, {}, None),]
+            [
+                (
+                    severities.INFO,
+                    report_codes.CIB_UPGRADE_SUCCESSFUL,
+                    {},
+                    None,
+                ),
+            ]
         )
 
     def test_deprecated_options(self):
@@ -167,7 +177,10 @@ class ParametrizedContainerMixin(SetUpMixin):
             ),
         )
         self.run_bundle_cmd(
-            container_options={"image": self.image, "masters": "1",},
+            container_options={
+                "image": self.image,
+                "masters": "1",
+            },
         )
         self.env_assist.assert_reports(
             [
@@ -211,7 +224,12 @@ class ParametrizedContainerMixin(SetUpMixin):
                 (
                     severities.ERROR,
                     report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                    {"option_type": "container", "option_names": ["image",],},
+                    {
+                        "option_type": "container",
+                        "option_names": [
+                            "image",
+                        ],
+                    },
                     None,
                 ),
                 fixture.error(
@@ -234,7 +252,10 @@ class ParametrizedContainerMixin(SetUpMixin):
                     severities.ERROR,
                     report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
                     {
-                        "option_names": ["masters", "promoted-max",],
+                        "option_names": [
+                            "masters",
+                            "promoted-max",
+                        ],
                         "option_type": "container",
                     },
                     None,
@@ -261,7 +282,10 @@ class ParametrizedContainerMixin(SetUpMixin):
     def test_empty_image(self):
         self.env_assist.assert_raise_library_error(
             lambda: self.run_bundle_cmd(
-                container_options={"image": "",}, force_options=True
+                container_options={
+                    "image": "",
+                },
+                force_options=True,
             )
         )
         self.env_assist.assert_reports(
@@ -280,7 +304,10 @@ class ParametrizedContainerMixin(SetUpMixin):
     def test_unknow_container_option(self):
         self.env_assist.assert_raise_library_error(
             lambda: self.run_bundle_cmd(
-                container_options={"image": self.image, "extra": "option",}
+                container_options={
+                    "image": self.image,
+                    "extra": "option",
+                }
             )
         )
         self.env_assist.assert_reports(
@@ -289,7 +316,9 @@ class ParametrizedContainerMixin(SetUpMixin):
                     severities.ERROR,
                     report_codes.INVALID_OPTIONS,
                     {
-                        "option_names": ["extra",],
+                        "option_names": [
+                            "extra",
+                        ],
                         "option_type": "container",
                         "allowed": sorted(list(GENERIC_CONTAINER_OPTIONS)),
                         "allowed_patterns": [],
@@ -314,7 +343,10 @@ class ParametrizedContainerMixin(SetUpMixin):
             ),
         )
         self.run_bundle_cmd(
-            container_options={"image": self.image, "extra": "option",},
+            container_options={
+                "image": self.image,
+                "extra": "option",
+            },
             force_options=True,
         )
         self.env_assist.assert_reports(
@@ -323,7 +355,9 @@ class ParametrizedContainerMixin(SetUpMixin):
                     severities.WARNING,
                     report_codes.INVALID_OPTIONS,
                     {
-                        "option_names": ["extra",],
+                        "option_names": [
+                            "extra",
+                        ],
                         "option_type": "container",
                         "allowed": sorted(list(GENERIC_CONTAINER_OPTIONS)),
                         "allowed_patterns": [],
@@ -424,7 +458,10 @@ class NetworkMixin(SetUpMixin):
             ),
         )
         self.run_bundle_cmd(
-            network_options={"host-netmask": "abc", "extra": "option",},
+            network_options={
+                "host-netmask": "abc",
+                "extra": "option",
+            },
             force_options=True,
         )
 
@@ -442,7 +479,9 @@ class NetworkMixin(SetUpMixin):
                     severities.WARNING,
                     report_codes.INVALID_OPTIONS,
                     {
-                        "option_names": ["extra",],
+                        "option_names": [
+                            "extra",
+                        ],
                         "option_type": "network",
                         "allowed": sorted(list(NETWORK_OPTIONS)),
                         "allowed_patterns": [],
@@ -489,7 +528,9 @@ class PortMapMixin(SetUpMixin):
         )
         self.run_bundle_cmd(
             port_map=[
-                {"port": "1001",},
+                {
+                    "port": "1001",
+                },
                 {
                     # use an autogenerated id of the previous item
                     "id": "{bundle_id}-port-map-1001".format(
@@ -498,7 +539,9 @@ class PortMapMixin(SetUpMixin):
                     "port": "2000",
                     "internal-port": "2002",
                 },
-                {"range": "3000-3300",},
+                {
+                    "range": "3000-3300",
+                },
             ]
         )
 
@@ -507,9 +550,15 @@ class PortMapMixin(SetUpMixin):
             lambda: self.run_bundle_cmd(
                 port_map=[
                     {},
-                    {"id": "not#valid",},
-                    {"internal-port": "1000",},
-                    {"port": "abc",},
+                    {
+                        "id": "not#valid",
+                    },
+                    {
+                        "internal-port": "1000",
+                    },
+                    {
+                        "port": "abc",
+                    },
                     {
                         "port": "2000",
                         "range": "3000-4000",
@@ -587,7 +636,10 @@ class PortMapMixin(SetUpMixin):
                     severities.ERROR,
                     report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
                     {
-                        "option_names": ["port", "range",],
+                        "option_names": [
+                            "port",
+                            "range",
+                        ],
                         "option_type": "port-map",
                     },
                     None,
@@ -606,7 +658,12 @@ class PortMapMixin(SetUpMixin):
     def test_forceable_options_errors(self):
         self.env_assist.assert_raise_library_error(
             lambda: self.run_bundle_cmd(
-                port_map=[{"range": "3000", "extra": "option",},]
+                port_map=[
+                    {
+                        "range": "3000",
+                        "extra": "option",
+                    },
+                ]
             )
         )
         self.env_assist.assert_reports(
@@ -615,7 +672,9 @@ class PortMapMixin(SetUpMixin):
                     severities.ERROR,
                     report_codes.INVALID_OPTIONS,
                     {
-                        "option_names": ["extra",],
+                        "option_names": [
+                            "extra",
+                        ],
                         "option_type": "port-map",
                         "allowed": sorted(list(PORT_MAP_OPTIONS)),
                         "allowed_patterns": [],
@@ -657,7 +716,12 @@ class PortMapMixin(SetUpMixin):
         )
 
         self.run_bundle_cmd(
-            port_map=[{"range": "3000", "extra": "option",},],
+            port_map=[
+                {
+                    "range": "3000",
+                    "extra": "option",
+                },
+            ],
             force_options=True,
         )
 
@@ -667,7 +731,9 @@ class PortMapMixin(SetUpMixin):
                     severities.WARNING,
                     report_codes.INVALID_OPTIONS,
                     {
-                        "option_names": ["extra",],
+                        "option_names": [
+                            "extra",
+                        ],
                         "option_type": "port-map",
                         "allowed": sorted(list(PORT_MAP_OPTIONS)),
                         "allowed_patterns": [],
@@ -732,7 +798,10 @@ class StorageMapMixin(SetUpMixin):
 
         self.run_bundle_cmd(
             storage_map=[
-                {"source-dir": "/tmp/bundle1a", "target-dir": "/tmp/bundle1b",},
+                {
+                    "source-dir": "/tmp/bundle1a",
+                    "target-dir": "/tmp/bundle1b",
+                },
                 {
                     # use an autogenerated id of the previous item
                     "id": "{bundle_id}-storage-map".format(
@@ -790,7 +859,9 @@ class StorageMapMixin(SetUpMixin):
                     report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                     {
                         "option_type": "storage-map",
-                        "option_names": ["target-dir",],
+                        "option_names": [
+                            "target-dir",
+                        ],
                     },
                     None,
                 ),
@@ -836,7 +907,9 @@ class StorageMapMixin(SetUpMixin):
                     severities.ERROR,
                     report_codes.INVALID_OPTIONS,
                     {
-                        "option_names": ["extra",],
+                        "option_names": [
+                            "extra",
+                        ],
                         "option_type": "storage-map",
                         "allowed": sorted(list(STORAGE_MAP_OPTIONS)),
                         "allowed_patterns": [],
@@ -886,7 +959,9 @@ class StorageMapMixin(SetUpMixin):
                     severities.WARNING,
                     report_codes.INVALID_OPTIONS,
                     {
-                        "option_names": ["extra",],
+                        "option_names": [
+                            "extra",
+                        ],
                         "option_type": "storage-map",
                         "allowed": sorted(list(STORAGE_MAP_OPTIONS)),
                         "allowed_patterns": [],
@@ -923,7 +998,10 @@ class MetaMixin(SetUpMixin):
             )
         )
         self.run_bundle_cmd(
-            meta_attributes={"target-role": "Stopped", "is-managed": "false",}
+            meta_attributes={
+                "target-role": "Stopped",
+                "is-managed": "false",
+            }
         )
 
     def test_disabled(self):
@@ -1035,7 +1113,9 @@ class AllOptionsMixin(SetUpMixin):
                 "ip-range-start": "192.168.100.200",
             },
             port_map=[
-                {"port": "1001",},
+                {
+                    "port": "1001",
+                },
                 {
                     # use an autogenerated id of the previous item
                     "id": "{bundle_id}-port-map-1001".format(
@@ -1044,10 +1124,15 @@ class AllOptionsMixin(SetUpMixin):
                     "port": "2000",
                     "internal-port": "2002",
                 },
-                {"range": "3000-3300",},
+                {
+                    "range": "3000-3300",
+                },
             ],
             storage_map=[
-                {"source-dir": "/tmp/bundle1a", "target-dir": "/tmp/bundle1b",},
+                {
+                    "source-dir": "/tmp/bundle1a",
+                    "target-dir": "/tmp/bundle1b",
+                },
                 {
                     # use an autogenerated id of the previous item
                     "id": "{bundle_id}-storage-map".format(
@@ -1228,7 +1313,9 @@ class WaitMixin(FixturesMixin, SetUpMixin):
                 (
                     severities.INFO,
                     report_codes.RESOURCE_DOES_NOT_RUN,
-                    {"resource_id": self.bundle_id,},
+                    {
+                        "resource_id": self.bundle_id,
+                    },
                     None,
                 )
             ]

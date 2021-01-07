@@ -4892,7 +4892,10 @@ class ResourceRemoveWithTicket(TestCase, AssertPcsMixin):
         )
         self.assert_pcs_success(
             "constraint ticket show".split(),
-            ["Ticket Constraints:", "  Master A loss-policy=fence ticket=T",],
+            [
+                "Ticket Constraints:",
+                "  Master A loss-policy=fence ticket=T",
+            ],
         )
         self.assert_pcs_success(
             "resource delete A".split(),

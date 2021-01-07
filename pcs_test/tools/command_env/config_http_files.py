@@ -36,7 +36,10 @@ class FilesShortcuts:
         """
         input_data = {}
         output_data = {}
-        written_output_dict = dict(code="written", message="",)
+        written_output_dict = dict(
+            code="written",
+            message="",
+        )
 
         if pcmk_authkey:
             file_id = "pacemaker_remote authkey"
@@ -59,7 +62,8 @@ class FilesShortcuts:
         if corosync_conf:
             file_id = "corosync.conf"
             input_data[file_id] = dict(
-                data=corosync_conf, type="corosync_conf",
+                data=corosync_conf,
+                type="corosync_conf",
             )
             output_data[file_id] = written_output_dict
 
@@ -116,12 +120,18 @@ class FilesShortcuts:
         if pcsd_settings:
             file_id = "pcsd settings"
             input_data[file_id] = dict(type="pcsd_settings")
-            output_data[file_id] = dict(code="deleted", message="",)
+            output_data[file_id] = dict(
+                code="deleted",
+                message="",
+            )
 
         if pcs_disaster_recovery_conf:
             file_id = "pcs disaster-recovery config"
             input_data[file_id] = dict(type="pcs_disaster_recovery_conf")
-            output_data[file_id] = dict(code="deleted", message="",)
+            output_data[file_id] = dict(
+                code="deleted",
+                message="",
+            )
 
         place_multinode_call(
             self.__calls,

@@ -1532,7 +1532,12 @@ class UtilsTest(TestCase):
         """
         ).documentElement
         utils.dom_update_utilization(
-            el, {"name": "", "key": "-1", "keys": "90",}
+            el,
+            {
+                "name": "",
+                "key": "-1",
+                "keys": "90",
+            },
         )
 
         self.assertEqual(len(dom_get_child_elements(el)), 1)
@@ -1573,7 +1578,13 @@ class UtilsTest(TestCase):
         </resource>
         """
         ).documentElement
-        utils.dom_update_utilization(el, {"key": "100", "keys": "",})
+        utils.dom_update_utilization(
+            el,
+            {
+                "key": "100",
+                "keys": "",
+            },
+        )
 
         u = dom_get_child_elements(el)[0]
         self.assertEqual(len(dom_get_child_elements(u)), 1)

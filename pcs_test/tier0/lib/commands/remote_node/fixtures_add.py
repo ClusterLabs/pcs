@@ -8,7 +8,10 @@ from pcs.common.reports import codes as report_codes
 
 OFFLINE_ERROR_MSG = "Could not resolve host"
 FAIL_HTTP_KWARGS = dict(
-    output="", was_connected=False, errno="6", error_msg=OFFLINE_ERROR_MSG,
+    output="",
+    was_connected=False,
+    errno="6",
+    error_msg=OFFLINE_ERROR_MSG,
 )
 
 
@@ -27,7 +30,10 @@ class EnvConfigMixin:
             result = (
                 result
                 if result is not None
-                else {"code": "written", "message": "",}
+                else {
+                    "code": "written",
+                    "message": "",
+                }
             )
 
             kwargs["results"] = {"pacemaker_remote authkey": result}
@@ -60,7 +66,12 @@ class EnvConfigMixin:
                 cluster_configuration_exists=False,
             )
         self.config.http.host.get_host_info(
-            communication_list=[{"label": label, "dest_list": dest_list,},],
+            communication_list=[
+                {
+                    "label": label,
+                    "dest_list": dest_list,
+                },
+            ],
             output_data=output,
         )
 
@@ -98,7 +109,10 @@ class EnvConfigMixin:
             result = (
                 result
                 if result is not None
-                else {"code": "success", "message": "",}
+                else {
+                    "code": "success",
+                    "message": "",
+                }
             )
 
             kwargs["results"] = {
@@ -143,7 +157,10 @@ REPORTS = (
     .info(
         "pcmk_remote_start_enable_started",
         report_codes.SERVICE_COMMANDS_ON_NODES_STARTED,
-        action_list=["pacemaker_remote start", "pacemaker_remote enable",],
+        action_list=[
+            "pacemaker_remote start",
+            "pacemaker_remote enable",
+        ],
     )
     .info(
         "pcmk_remote_enable_success",
@@ -184,7 +201,10 @@ EXTRA_REPORTS = (
         "put_file_connection_failed",
         command="remote/put_file",
     )
-    .as_warn("put_file_connection_failed", "put_file_connection_failed_warn",)
+    .as_warn(
+        "put_file_connection_failed",
+        "put_file_connection_failed_warn",
+    )
     .error(
         "pcmk_remote_enable_failed",
         report_codes.SERVICE_COMMAND_ON_NODE_ERROR,
@@ -225,7 +245,10 @@ def fixture_reports_not_live_cib(node_name):
         fixture.info(
             report_codes.SERVICE_COMMANDS_ON_NODES_SKIPPED,
             reason_type="not_live_cib",
-            action_list=["pacemaker_remote start", "pacemaker_remote enable",],
+            action_list=[
+                "pacemaker_remote start",
+                "pacemaker_remote enable",
+            ],
             node_list=[node_name],
         ),
     ]
@@ -234,11 +257,17 @@ def fixture_reports_not_live_cib(node_name):
 def fixture_reports_new_node_unreachable(node_name, omitting=False):
     if omitting:
         report = [
-            fixture.warn(report_codes.OMITTING_NODE, node=node_name,),
+            fixture.warn(
+                report_codes.OMITTING_NODE,
+                node=node_name,
+            ),
         ]
     else:
         report = [
-            fixture.warn(report_codes.HOST_NOT_FOUND, host_list=[node_name],),
+            fixture.warn(
+                report_codes.HOST_NOT_FOUND,
+                host_list=[node_name],
+            ),
         ]
     return report + [
         fixture.info(

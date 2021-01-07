@@ -119,7 +119,10 @@ class RemoveFromClusterTest(TestCase):
         mock_resource_remove = self.call(self.find_booth_resources(group))
         self.assertEqual(
             mock_resource_remove.mock_calls,
-            [mock.call("ip"), mock.call("booth"),],
+            [
+                mock.call("ip"),
+                mock.call("booth"),
+            ],
         )
 
     def test_remove_ip_when_group_is_disabled_1(self):
@@ -142,7 +145,10 @@ class RemoveFromClusterTest(TestCase):
         mock_resource_remove = self.call(self.find_booth_resources(group))
         self.assertEqual(
             mock_resource_remove.mock_calls,
-            [mock.call("ip"), mock.call("booth"),],
+            [
+                mock.call("ip"),
+                mock.call("booth"),
+            ],
         )
 
     def test_remove_ip_when_group_is_disabled_2(self):
@@ -165,7 +171,10 @@ class RemoveFromClusterTest(TestCase):
         mock_resource_remove = self.call(self.find_booth_resources(group))
         self.assertEqual(
             mock_resource_remove.mock_calls,
-            [mock.call("ip"), mock.call("booth"),],
+            [
+                mock.call("ip"),
+                mock.call("booth"),
+            ],
         )
 
     def test_dont_remove_ip_when_group_has_other_resources(self):
@@ -184,7 +193,12 @@ class RemoveFromClusterTest(TestCase):
         )
 
         mock_resource_remove = self.call(self.find_booth_resources(group))
-        self.assertEqual(mock_resource_remove.mock_calls, [mock.call("booth"),])
+        self.assertEqual(
+            mock_resource_remove.mock_calls,
+            [
+                mock.call("booth"),
+            ],
+        )
 
 
 class FindBoundIpTest(TestCase):
@@ -201,7 +215,8 @@ class FindBoundIpTest(TestCase):
         self.assertEqual(
             [],
             booth_resource.find_bound_ip(
-                self.fixture_resource_section([]), "/PATH/TO/CONF",
+                self.fixture_resource_section([]),
+                "/PATH/TO/CONF",
             ),
         )
 
@@ -210,7 +225,9 @@ class FindBoundIpTest(TestCase):
             ["192.168.122.31"],
             booth_resource.find_bound_ip(
                 self.fixture_resource_section(
-                    [fixture_ip_element("ip1", "192.168.122.31"),]
+                    [
+                        fixture_ip_element("ip1", "192.168.122.31"),
+                    ]
                 ),
                 "/PATH/TO/CONF",
             ),

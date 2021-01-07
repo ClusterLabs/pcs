@@ -97,7 +97,12 @@ def parse_rule(rule_string: str) -> BoolExpr:
         parsed = __get_rule_parser().parseString(rule_string, parseAll=True)[0]
     except pyparsing.ParseException as e:
         raise RuleParseError(
-            rule_string, e.line, e.lineno, e.col, e.loc, e.args[2],
+            rule_string,
+            e.line,
+            e.lineno,
+            e.col,
+            e.loc,
+            e.args[2],
         ) from e
 
     if not isinstance(parsed, BoolExpr):

@@ -7,7 +7,8 @@ from pcs.cli.common.errors import CmdLineInputError
 class ParseCloneArgs(TestCase):
     def assert_produce(self, arg_list, result, promotable=False):
         self.assertEqual(
-            parse_args.parse_clone(arg_list, promotable=promotable), result,
+            parse_args.parse_clone(arg_list, promotable=promotable),
+            result,
         )
 
     def assert_raises_cmdline(self, args, expected_msg, promotable=False):
@@ -20,12 +21,14 @@ class ParseCloneArgs(TestCase):
 
     def test_clone_id(self):
         self.assert_produce(
-            ["CustomCloneId"], {"clone_id": "CustomCloneId", "meta": {}},
+            ["CustomCloneId"],
+            {"clone_id": "CustomCloneId", "meta": {}},
         )
 
     def test_clone_options(self):
         self.assert_produce(
-            ["a=b", "c=d"], {"clone_id": None, "meta": {"a": "b", "c": "d"}},
+            ["a=b", "c=d"],
+            {"clone_id": None, "meta": {"a": "b", "c": "d"}},
         )
 
     def test_meta_options(self):
@@ -86,18 +89,39 @@ class ParseCreateArgs(TestCase):
         self.assertEqual(parse_args.parse_create(arg_list), result)
 
     def test_no_args(self):
-        self.assert_produce([], {"meta": {}, "options": {}, "op": [],})
+        self.assert_produce(
+            [],
+            {
+                "meta": {},
+                "options": {},
+                "op": [],
+            },
+        )
 
     def test_only_instance_attributes(self):
         self.assert_produce(
             ["a=b", "c=d"],
-            {"meta": {}, "options": {"a": "b", "c": "d",}, "op": [],},
+            {
+                "meta": {},
+                "options": {
+                    "a": "b",
+                    "c": "d",
+                },
+                "op": [],
+            },
         )
 
     def test_only_meta(self):
         self.assert_produce(
             ["meta", "a=b", "c=d"],
-            {"options": {}, "op": [], "meta": {"a": "b", "c": "d",},},
+            {
+                "options": {},
+                "op": [],
+                "meta": {
+                    "a": "b",
+                    "c": "d",
+                },
+            },
         )
 
     def test_only_clone(self):
@@ -107,7 +131,10 @@ class ParseCreateArgs(TestCase):
                 "meta": {},
                 "options": {},
                 "op": [],
-                "clone": {"a": "b", "c": "d",},
+                "clone": {
+                    "a": "b",
+                    "c": "d",
+                },
             },
         )
 
@@ -118,7 +145,10 @@ class ParseCreateArgs(TestCase):
                 "meta": {},
                 "options": {},
                 "op": [],
-                "clone": {"a": "b", "c": "d",},
+                "clone": {
+                    "a": "b",
+                    "c": "d",
+                },
                 "clone_id": "CustomCloneId",
             },
         )
@@ -130,7 +160,10 @@ class ParseCreateArgs(TestCase):
                 "meta": {},
                 "options": {},
                 "op": [],
-                "promotable": {"a": "b", "c": "d",},
+                "promotable": {
+                    "a": "b",
+                    "c": "d",
+                },
             },
         )
 
@@ -141,14 +174,24 @@ class ParseCreateArgs(TestCase):
                 "meta": {},
                 "options": {},
                 "op": [],
-                "promotable": {"a": "b", "c": "d",},
+                "promotable": {
+                    "a": "b",
+                    "c": "d",
+                },
                 "clone_id": "CustomCloneId",
             },
         )
 
     def test_only_operations(self):
         self.assert_produce(
-            ["op", "monitor", "a=b", "c=d", "start", "e=f",],
+            [
+                "op",
+                "monitor",
+                "a=b",
+                "c=d",
+                "start",
+                "e=f",
+            ],
             {
                 "meta": {},
                 "options": {},
@@ -178,13 +221,22 @@ class ParseCreateArgs(TestCase):
                 "q=r",
             ],
             {
-                "options": {"a": "b", "c": "d",},
+                "options": {
+                    "a": "b",
+                    "c": "d",
+                },
                 "op": [
                     {"name": "monitor", "i": "j", "k": "l"},
                     {"name": "start", "m": "n"},
                 ],
-                "meta": {"e": "f", "g": "h",},
-                "clone": {"o": "p", "q": "r",},
+                "meta": {
+                    "e": "f",
+                    "g": "h",
+                },
+                "clone": {
+                    "o": "p",
+                    "q": "r",
+                },
             },
         )
 
@@ -207,7 +259,15 @@ class ParseCreateArgs(TestCase):
 
     def test_allow_to_repeat_op(self):
         self.assert_produce(
-            ["op", "monitor", "a=b", "c=d", "op", "start", "e=f",],
+            [
+                "op",
+                "monitor",
+                "a=b",
+                "c=d",
+                "op",
+                "start",
+                "e=f",
+            ],
             {
                 "meta": {},
                 "options": {},
@@ -227,23 +287,51 @@ class ParseCreateSimple(TestCase):
         self.assertEqual(parse_args.parse_create_simple(arg_list), result)
 
     def test_without_args(self):
-        self.assert_produce([], {"meta": {}, "options": {}, "op": [],})
+        self.assert_produce(
+            [],
+            {
+                "meta": {},
+                "options": {},
+                "op": [],
+            },
+        )
 
     def test_only_instance_attributes(self):
         self.assert_produce(
             ["a=b", "c=d"],
-            {"meta": {}, "options": {"a": "b", "c": "d",}, "op": [],},
+            {
+                "meta": {},
+                "options": {
+                    "a": "b",
+                    "c": "d",
+                },
+                "op": [],
+            },
         )
 
     def test_only_meta(self):
         self.assert_produce(
             ["meta", "a=b", "c=d"],
-            {"options": {}, "op": [], "meta": {"a": "b", "c": "d",},},
+            {
+                "options": {},
+                "op": [],
+                "meta": {
+                    "a": "b",
+                    "c": "d",
+                },
+            },
         )
 
     def test_only_operations(self):
         self.assert_produce(
-            ["op", "monitor", "a=b", "c=d", "start", "e=f",],
+            [
+                "op",
+                "monitor",
+                "a=b",
+                "c=d",
+                "start",
+                "e=f",
+            ],
             {
                 "meta": {},
                 "options": {},
@@ -273,7 +361,15 @@ class ParseCreateSimple(TestCase):
 
     def test_allow_to_repeat_op(self):
         self.assert_produce(
-            ["op", "monitor", "a=b", "c=d", "op", "start", "e=f",],
+            [
+                "op",
+                "monitor",
+                "a=b",
+                "c=d",
+                "op",
+                "start",
+                "e=f",
+            ],
             {
                 "meta": {},
                 "options": {},
@@ -678,7 +774,15 @@ class ParseBundleUpdateOptions(TestCase):
             {
                 "container": {},
                 "network": {},
-                "port_map_add": [{"a": "b",}, {"e": "f", "g": "h",},],
+                "port_map_add": [
+                    {
+                        "a": "b",
+                    },
+                    {
+                        "e": "f",
+                        "g": "h",
+                    },
+                ],
                 "port_map_remove": ["c", "d", "i"],
                 "storage_map_add": [],
                 "storage_map_remove": [],
@@ -731,7 +835,15 @@ class ParseBundleUpdateOptions(TestCase):
                 "network": {},
                 "port_map_add": [],
                 "port_map_remove": [],
-                "storage_map_add": [{"a": "b",}, {"e": "f", "g": "h",},],
+                "storage_map_add": [
+                    {
+                        "a": "b",
+                    },
+                    {
+                        "e": "f",
+                        "g": "h",
+                    },
+                ],
                 "storage_map_remove": ["c", "d", "i"],
                 "meta": {},
             },
@@ -804,9 +916,15 @@ class ParseBundleUpdateOptions(TestCase):
             {
                 "container": {"a": "b", "c": "d"},
                 "network": {"e": "f", "g": "h"},
-                "port_map_add": [{"i": "j", "k": "l"}, {"m": "n"},],
+                "port_map_add": [
+                    {"i": "j", "k": "l"},
+                    {"m": "n"},
+                ],
                 "port_map_remove": ["o", "p", "q"],
-                "storage_map_add": [{"r": "s", "t": "u"}, {"v": "w"},],
+                "storage_map_add": [
+                    {"r": "s", "t": "u"},
+                    {"v": "w"},
+                ],
                 "storage_map_remove": ["x", "y", "z"],
                 "meta": {"A": "B", "C": "D"},
             },
@@ -857,9 +975,15 @@ class ParseBundleUpdateOptions(TestCase):
             {
                 "container": {"a": "b", "c": "d"},
                 "network": {"e": "f", "g": "h"},
-                "port_map_add": [{"i": "j", "k": "l"}, {"m": "n"},],
+                "port_map_add": [
+                    {"i": "j", "k": "l"},
+                    {"m": "n"},
+                ],
                 "port_map_remove": ["o", "p", "q"],
-                "storage_map_add": [{"r": "s", "t": "u"}, {"v": "w"},],
+                "storage_map_add": [
+                    {"r": "s", "t": "u"},
+                    {"v": "w"},
+                ],
                 "storage_map_remove": ["x", "y", "z"],
                 "meta": {"A": "B", "C": "D"},
             },
@@ -881,13 +1005,22 @@ class BuildOperations(TestCase):
     def test_return_all_operations_specified_in_the_same_group(self):
         self.assert_produce(
             [["monitor", "interval=10s", "start", "timeout=20s"]],
-            [["name=monitor", "interval=10s"], ["name=start", "timeout=20s"],],
+            [
+                ["name=monitor", "interval=10s"],
+                ["name=start", "timeout=20s"],
+            ],
         )
 
     def test_return_all_operations_specified_in_different_groups(self):
         self.assert_produce(
-            [["monitor", "interval=10s"], ["start", "timeout=20s"],],
-            [["name=monitor", "interval=10s"], ["name=start", "timeout=20s"],],
+            [
+                ["monitor", "interval=10s"],
+                ["start", "timeout=20s"],
+            ],
+            [
+                ["name=monitor", "interval=10s"],
+                ["name=start", "timeout=20s"],
+            ],
         )
 
     def test_refuse_empty_operation(self):

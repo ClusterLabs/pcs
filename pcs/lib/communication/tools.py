@@ -332,7 +332,9 @@ class SkipOfflineMixin:
     _report_pcsd_too_old_on_404: bool
 
     def _set_skip_offline(
-        self, skip_offline_targets, force_code=reports.codes.SKIP_OFFLINE_NODES,
+        self,
+        skip_offline_targets,
+        force_code=reports.codes.SKIP_OFFLINE_NODES,
     ):
         """
         Set value of skip_offline_targets flag.

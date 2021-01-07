@@ -34,7 +34,10 @@ class HostAuth(TestCase):
         for name, addr, port in name_addr_port_tuple_list:
             port = ":{}".format(port) if port is not None else ""
             arg_list.extend(
-                [name, "addr={}{}".format(addr, port),]
+                [
+                    name,
+                    "addr={}{}".format(addr, port),
+                ]
             )
         return arg_list
 
@@ -105,7 +108,8 @@ class HostAuth(TestCase):
 
     def test_invalid_port_notanumber_multinode(self):
         self.run_port_subtests(
-            self._assert_invalid_port, [1, "notanumber"],
+            self._assert_invalid_port,
+            [1, "notanumber"],
         )
 
     def test_invalid_port_lower_bound_multinode(self):

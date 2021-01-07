@@ -41,12 +41,21 @@ class TreeToLines(TestCase):
 
     def test_detail_simple(self):
         self.assertEqual(
-            ["l0-title", "   l0-detail0",], lib.tree_to_lines(node("l0", 1)),
+            [
+                "l0-title",
+                "   l0-detail0",
+            ],
+            lib.tree_to_lines(node("l0", 1)),
         )
 
     def test_detail(self):
         self.assertEqual(
-            ["l0-title", "   l0-detail0", "   l0-detail1", "   l0-detail2",],
+            [
+                "l0-title",
+                "   l0-detail0",
+                "   l0-detail1",
+                "   l0-detail2",
+            ],
             lib.tree_to_lines(node("l0", 3)),
         )
 
@@ -58,7 +67,10 @@ class TreeToLines(TestCase):
 
     def test_one_member(self):
         self.assertEqual(
-            ["l0-title", "`- l1-title",],
+            [
+                "l0-title",
+                "`- l1-title",
+            ],
             lib.tree_to_lines(node("l0", members=[node("l1")])),
         )
 
@@ -70,7 +82,12 @@ class TreeToLines(TestCase):
 
     def test_multiple_members(self):
         self.assertEqual(
-            ["l0-title", "|- l1-title", "|- l2-title", "`- l3-title",],
+            [
+                "l0-title",
+                "|- l1-title",
+                "|- l2-title",
+                "`- l3-title",
+            ],
             lib.tree_to_lines(
                 node("l0", members=[node("l1"), node("l2"), node("l3")])
             ),
@@ -164,7 +181,8 @@ class TreeToLines(TestCase):
                             ],
                         ),
                         node(
-                            "03", members=[node("030", members=[node("0300")])],
+                            "03",
+                            members=[node("030", members=[node("0300")])],
                         ),
                         node("04", leaf=True),
                         node("05", 1),

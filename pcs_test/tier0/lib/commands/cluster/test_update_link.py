@@ -143,7 +143,8 @@ class UpdateLink(TestCase):
             self.config.corosync_conf.load_content(
                 self.before
             ).env.push_corosync_conf(
-                corosync_conf_text=self.after, need_stopped_cluster=True,
+                corosync_conf_text=self.after,
+                need_stopped_cluster=True,
             )
         )
         cluster.update_link(
@@ -252,7 +253,11 @@ class UpdateLinkKnet(TestCase):
             lambda: cluster.update_link(
                 self.env_assist.get_env(),
                 "2",
-                {"nodeX": "addr-new", "node2": "", "node1": "node2-addr0",},
+                {
+                    "nodeX": "addr-new",
+                    "node2": "",
+                    "node1": "node2-addr0",
+                },
                 {
                     "wrong": "option",
                     "transport": "unknown",
@@ -404,8 +409,16 @@ class UpdateLinkUdp(TestCase):
             lambda: cluster.update_link(
                 self.env_assist.get_env(),
                 "0",
-                {"nodeX": "addr-new", "node2": "", "node1": "node3-addr0",},
-                {"wrong": "option", "broadcast": "1", "mcastaddr": "address",},
+                {
+                    "nodeX": "addr-new",
+                    "node2": "",
+                    "node1": "node3-addr0",
+                },
+                {
+                    "wrong": "option",
+                    "broadcast": "1",
+                    "mcastaddr": "address",
+                },
             ),
             [],
         )

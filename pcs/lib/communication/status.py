@@ -62,7 +62,9 @@ class GetFullClusterStatusPlaintext(
                 self._report(
                     ReportItem.error(
                         reports.messages.NodeCommunicationCommandUnsuccessful(
-                            node, response.request.action, output["status_msg"],
+                            node,
+                            response.request.action,
+                            output["status_msg"],
                         )
                     )
                 )

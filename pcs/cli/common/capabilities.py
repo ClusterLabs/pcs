@@ -38,7 +38,10 @@ def get_pcs_capabilities():
     Get pcs capabilities form the capabilities file
     """
     return [
-        {"id": feat["id"], "description": feat["description"],}
+        {
+            "id": feat["id"],
+            "description": feat["description"],
+        }
         for feat in get_capabilities_definition()
         if feat["in-pcs"] == "1"
     ]

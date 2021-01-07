@@ -74,7 +74,9 @@ def find_one_resource(
     resource_tags -- types of resources to look for, default all types
     """
     resource_el_list, report_list = find_resources(
-        context_element, [resource_id], resource_tags=resource_tags,
+        context_element,
+        [resource_id],
+        resource_tags=resource_tags,
     )
     resource = resource_el_list[0] if resource_el_list else None
     return resource, report_list
@@ -215,7 +217,11 @@ def enable(resource_el, id_provider):
     etree resource_el -- resource element
     """
     nvpair.arrange_first_meta_attributes(
-        resource_el, {"target-role": "",}, id_provider
+        resource_el,
+        {
+            "target-role": "",
+        },
+        id_provider,
     )
 
 
@@ -225,7 +231,11 @@ def disable(resource_el, id_provider):
     etree resource_el -- resource element
     """
     nvpair.arrange_first_meta_attributes(
-        resource_el, {"target-role": "Stopped",}, id_provider
+        resource_el,
+        {
+            "target-role": "Stopped",
+        },
+        id_provider,
     )
 
 
@@ -331,7 +341,11 @@ def manage(resource_el, id_provider):
     etree resource_el -- resource element
     """
     nvpair.arrange_first_meta_attributes(
-        resource_el, {"is-managed": "",}, id_provider
+        resource_el,
+        {
+            "is-managed": "",
+        },
+        id_provider,
     )
 
 
@@ -341,7 +355,11 @@ def unmanage(resource_el, id_provider):
     etree resource_el -- resource element
     """
     nvpair.arrange_first_meta_attributes(
-        resource_el, {"is-managed": "false",}, id_provider
+        resource_el,
+        {
+            "is-managed": "false",
+        },
+        id_provider,
     )
 
 
@@ -425,7 +443,8 @@ def validate_move(resource_element, master):
         report_list.append(
             ReportItem.error(
                 reports.messages.CannotMoveResourcePromotableInner(
-                    resource_element.get("id"), analysis.promotable_clone_id,
+                    resource_element.get("id"),
+                    analysis.promotable_clone_id,
                 )
             )
         )

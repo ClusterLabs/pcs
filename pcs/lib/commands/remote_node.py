@@ -130,7 +130,8 @@ def _host_check_remote_node(host_info_dict):
                 report_list.append(
                     ReportItem.error(
                         reports.messages.HostAlreadyInClusterServices(
-                            host_name, sorted(cannot_be_running_service_list),
+                            host_name,
+                            sorted(cannot_be_running_service_list),
                         )
                     )
                 )
@@ -161,7 +162,8 @@ def _prepare_pacemaker_remote_environment(
 ):
     if new_node_target:
         com_cmd = GetOnlineTargets(
-            report_processor, ignore_offline_targets=skip_offline_nodes,
+            report_processor,
+            ignore_offline_targets=skip_offline_nodes,
         )
         com_cmd.set_targets([new_node_target])
         online_new_target_list = run_com(env.get_node_communicator(), com_cmd)
@@ -219,7 +221,10 @@ def _prepare_pacemaker_remote_environment(
         com_cmd = ServiceAction(
             report_processor,
             node_communication_format.create_pcmk_remote_actions(
-                ["start", "enable",]
+                [
+                    "start",
+                    "enable",
+                ]
             ),
             allow_fails=allow_fails,
         )
@@ -631,13 +636,17 @@ def _destroy_pcmk_remote_env(
     env, node_names_list, skip_offline_nodes, allow_fails
 ):
     actions = node_communication_format.create_pcmk_remote_actions(
-        ["stop", "disable",]
+        [
+            "stop",
+            "disable",
+        ]
     )
     files = {
         "pacemaker_remote authkey": {"type": "pcmk_remote_authkey"},
     }
     target_list = env.get_node_target_factory().get_target_list(
-        node_names_list, skip_non_existing=skip_offline_nodes,
+        node_names_list,
+        skip_non_existing=skip_offline_nodes,
     )
 
     com_cmd = ServiceAction(
@@ -733,7 +742,8 @@ def node_remove_remote(
     # function
     for resource_element in resource_element_list:
         remove_resource(
-            resource_element.attrib["id"], is_remove_remote_context=True,
+            resource_element.attrib["id"],
+            is_remove_remote_context=True,
         )
 
 

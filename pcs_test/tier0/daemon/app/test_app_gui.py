@@ -34,7 +34,9 @@ class AppTest(
 
     def get_routes(self):
         return sinatra_ui.get_routes(
-            self.session_storage, self.wrapper, self.public_dir.name,
+            self.session_storage,
+            self.wrapper,
+            self.public_dir.name,
         )
 
     def assert_is_redirect(self, response, location, status_code=302):

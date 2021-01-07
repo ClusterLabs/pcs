@@ -172,7 +172,9 @@ class FullClusterStatusPlaintext(TestCase):
     def test_fail_getting_cluster_status(self):
         (
             self.config.runner.pcmk.load_state_plaintext(
-                stdout="some stdout", stderr="some stderr", returncode=1,
+                stdout="some stdout",
+                stderr="some stderr",
+                returncode=1,
             )
         )
         self.env_assist.assert_raise_library_error(
@@ -226,7 +228,8 @@ class FullClusterStatusPlaintext(TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.CIB_LOAD_ERROR, reason="cib load error",
+                    report_codes.CIB_LOAD_ERROR,
+                    reason="cib load error",
                 ),
             ],
             expected_in_processor=False,
@@ -254,7 +257,8 @@ class FullClusterStatusPlaintext(TestCase):
             self.config.env.set_known_nodes(self.node_name_list)
             .runner.pcmk.can_fence_history_status(stderr="not supported")
             .runner.pcmk.load_state_plaintext(
-                verbose=True, stdout="crm_mon cluster status",
+                verbose=True,
+                stdout="crm_mon cluster status",
             )
             .fs.exists(settings.corosync_conf_file, return_value=True)
             .corosync_conf.load(node_name_list=self.node_name_list)
@@ -332,7 +336,8 @@ class FullClusterStatusPlaintext(TestCase):
                 stderr="not supported"
             )
             .runner.pcmk.load_state_plaintext(
-                verbose=True, stdout="crm_mon cluster status",
+                verbose=True,
+                stdout="crm_mon cluster status",
             )
             .fs.exists(settings.corosync_conf_file, return_value=False)
             .runner.cib.load(
@@ -381,7 +386,9 @@ class FullClusterStatusPlaintext(TestCase):
         (
             self.config.env.set_corosync_conf_data(rc_read("corosync.conf"))
             .env.set_cib_data("<cib/>")
-            .runner.pcmk.load_state_plaintext(stdout="crm_mon cluster status",)
+            .runner.pcmk.load_state_plaintext(
+                stdout="crm_mon cluster status",
+            )
             .runner.cib.load(
                 resources="""
                 <resources>
@@ -405,7 +412,8 @@ class FullClusterStatusPlaintext(TestCase):
             .env.set_cib_data("<cib/>")
             .runner.pcmk.can_fence_history_status(stderr="not supported")
             .runner.pcmk.load_state_plaintext(
-                verbose=True, stdout="crm_mon cluster status",
+                verbose=True,
+                stdout="crm_mon cluster status",
             )
             .runner.cib.load(
                 resources="""
@@ -492,7 +500,8 @@ class FullClusterStatusPlaintext(TestCase):
             self.config.env.set_known_nodes(self.node_name_list)
             .runner.pcmk.can_fence_history_status(stderr="not supported")
             .runner.pcmk.load_state_plaintext(
-                verbose=True, stdout="crm_mon cluster status",
+                verbose=True,
+                stdout="crm_mon cluster status",
             )
             .fs.exists(settings.corosync_conf_file, return_value=True)
             .corosync_conf.load(node_name_list=self.node_name_list)
@@ -673,7 +682,8 @@ class FullClusterStatusPlaintext(TestCase):
             self.config.env.set_known_nodes(self.node_name_list[1:])
             .runner.pcmk.can_fence_history_status(stderr="not supported")
             .runner.pcmk.load_state_plaintext(
-                verbose=True, stdout="crm_mon cluster status",
+                verbose=True,
+                stdout="crm_mon cluster status",
             )
             .fs.exists(settings.corosync_conf_file, return_value=True)
             .corosync_conf.load(node_name_list=self.node_name_list)
@@ -701,12 +711,18 @@ class FullClusterStatusPlaintext(TestCase):
                         error_msg="node2 error",
                     ),
                     dict(
-                        label="node3", response_code=401, output="node3 output",
+                        label="node3",
+                        response_code=401,
+                        output="node3 output",
                     ),
                     dict(
-                        label="node4", response_code=500, output="node4 output",
+                        label="node4",
+                        response_code=500,
+                        output="node4 output",
                     ),
-                    dict(label="node5",),
+                    dict(
+                        label="node5",
+                    ),
                 ]
             )
         )

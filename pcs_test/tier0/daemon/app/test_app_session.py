@@ -202,7 +202,9 @@ class FailedLoginAttemptWithoutSessionSign(MixinTest):
 
     async def on_handle(self, handler):
         await handler.session_auth_user(
-            USER, PASSWORD, sign_rejection=False,
+            USER,
+            PASSWORD,
+            sign_rejection=False,
         )
         self.assert_vanila_session(handler.session)
 

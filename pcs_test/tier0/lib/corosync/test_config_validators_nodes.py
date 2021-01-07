@@ -15,7 +15,9 @@ from pcs.lib.corosync.node import (
 # pylint: disable=no-self-use
 
 forbidden_characters_kwargs = dict(
-    allowed_values=None, cannot_be_empty=False, forbidden_characters=r"{}\n\r",
+    allowed_values=None,
+    cannot_be_empty=False,
+    forbidden_characters=r"{}\n\r",
 )
 
 
@@ -42,7 +44,9 @@ class AddNodes(TestCase):
     def test_all_valid_one_node_one_link(self):
         assert_report_item_list_equal(
             config_validators.add_nodes(
-                [{"name": "node3", "addrs": ["addr03"]},],
+                [
+                    {"name": "node3", "addrs": ["addr03"]},
+                ],
                 self.fixture_coronodes_1_link,
                 [],
             ),
@@ -99,7 +103,9 @@ class AddNodes(TestCase):
     def test_node_options_invalid(self):
         assert_report_item_list_equal(
             config_validators.add_nodes(
-                [{"name": "node3", "addrs": ["addr03"], "nonsense": "abc"},],
+                [
+                    {"name": "node3", "addrs": ["addr03"], "nonsense": "abc"},
+                ],
                 self.fixture_coronodes_1_link,
                 [],
             ),
@@ -117,7 +123,10 @@ class AddNodes(TestCase):
     def test_nodename_invalid(self):
         assert_report_item_list_equal(
             config_validators.add_nodes(
-                [{"name": "", "addrs": ["addr03"]}, {"addrs": ["addr04"]},],
+                [
+                    {"name": "", "addrs": ["addr03"]},
+                    {"addrs": ["addr04"]},
+                ],
                 self.fixture_coronodes_1_link,
                 [],
             ),
@@ -617,7 +626,9 @@ class AddNodes(TestCase):
     def test_forbidden_characters(self):
         assert_report_item_list_equal(
             config_validators.add_nodes(
-                [{"name": "node{3}", "addrs": ["\raddr03\n"]},],
+                [
+                    {"name": "node{3}", "addrs": ["\raddr03\n"]},
+                ],
                 self.fixture_coronodes_1_link,
                 [],
             ),

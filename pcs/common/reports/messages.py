@@ -56,7 +56,9 @@ def _resource_move_ban_clear_master_resource_not_promotable(
 ) -> str:
     return (
         "when specifying master you must use the promotable clone id{_id}"
-    ).format(_id=format_optional(promotable_id, " ({})"),)
+    ).format(
+        _id=format_optional(promotable_id, " ({})"),
+    )
 
 
 def _resource_move_ban_pcmk_success(stdout: str, stderr: str) -> str:
@@ -228,7 +230,9 @@ class LegacyCommonMessage(ReportItemMessage):
 
     def to_dto(self) -> ReportItemMessageDto:
         return ReportItemMessageDto(
-            code=self.code, message=self.message, payload=dict(self.info),
+            code=self.code,
+            message=self.message,
+            payload=dict(self.info),
         )
 
 
@@ -3586,7 +3590,10 @@ class UnableToGetSbdConfig(ReportItemMessage):
     def message(self) -> str:
         return (
             "Unable to get SBD configuration from node '{node}'{reason}"
-        ).format(node=self.node, reason=format_optional(self.reason, ": {}"),)
+        ).format(
+            node=self.node,
+            reason=format_optional(self.reason, ": {}"),
+        )
 
 
 @dataclass(frozen=True)
@@ -4005,7 +4012,10 @@ class SbdNotUsedCannotSetSbdOptions(ReportItemMessage):
         return (
             "Cluster is not configured to use SBD, cannot specify SBD "
             "option(s) {options} for node '{node}'"
-        ).format(options=format_list(self.options), node=self.node,)
+        ).format(
+            options=format_list(self.options),
+            node=self.node,
+        )
 
 
 @dataclass(frozen=True)
@@ -4192,7 +4202,8 @@ class UnableToGetSbdStatus(ReportItemMessage):
     @property
     def message(self) -> str:
         return "Unable to get status of SBD from node '{node}'{reason}".format(
-            node=self.node, reason=format_optional(self.reason, ": {}"),
+            node=self.node,
+            reason=format_optional(self.reason, ": {}"),
         )
 
 
@@ -6024,7 +6035,8 @@ class BoothConfigAcceptedByNode(ReportItemMessage):
                 _list=format_list(self.name_list),
             )
         return "{node}Booth config{desc} saved".format(
-            node=format_optional(self.node, "{}: "), desc=desc,
+            node=format_optional(self.node, "{}: "),
+            desc=desc,
         )
 
 

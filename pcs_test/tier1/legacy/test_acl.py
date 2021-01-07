@@ -101,7 +101,8 @@ class ACLTest(unittest.TestCase, AssertPcsMixin):
         self.assertEqual(1, r)
 
         o, r = pcs(
-            self.temp_cib.name, "acl user create user1 role1 roleX".split(),
+            self.temp_cib.name,
+            "acl user create user1 role1 roleX".split(),
         )
         ac(o, "Error: ACL role 'roleX' does not exist\n")
         self.assertEqual(1, r)
@@ -111,7 +112,8 @@ class ACLTest(unittest.TestCase, AssertPcsMixin):
         self.assertEqual(1, r)
 
         o, r = pcs(
-            self.temp_cib.name, "acl group create group1 role1 roleX".split(),
+            self.temp_cib.name,
+            "acl group create group1 role1 roleX".split(),
         )
         ac(o, "Error: ACL role 'roleX' does not exist\n")
         self.assertEqual(1, r)
@@ -136,13 +138,15 @@ Role: role3
         self.assertEqual(0, r)
 
         o, r = pcs(
-            self.temp_cib.name, "acl user create user1 role1 role2".split(),
+            self.temp_cib.name,
+            "acl user create user1 role1 role2".split(),
         )
         assert r == 0
         ac(o, "")
 
         o, r = pcs(
-            self.temp_cib.name, "acl group create group1 role1 role3".split(),
+            self.temp_cib.name,
+            "acl group create group1 role1 role3".split(),
         )
         assert r == 0
         ac(o, "")
@@ -191,19 +195,22 @@ Role: role3
         ac(o, "Error: 'role1' already exists\n")
 
         o, r = pcs(
-            self.temp_cib.name, "acl role assign role1 to noexist".split(),
+            self.temp_cib.name,
+            "acl role assign role1 to noexist".split(),
         )
         assert r == 1
         ac(o, "Error: ACL group/ACL user 'noexist' does not exist\n")
 
         o, r = pcs(
-            self.temp_cib.name, "acl role assign noexist to user1".split(),
+            self.temp_cib.name,
+            "acl role assign noexist to user1".split(),
         )
         assert r == 1
         ac(o, "Error: ACL role 'noexist' does not exist\n")
 
         o, r = pcs(
-            self.temp_cib.name, "acl role assign role3 to user1".split(),
+            self.temp_cib.name,
+            "acl role assign role3 to user1".split(),
         )
         assert r == 0
         ac(o, "")
@@ -232,19 +239,22 @@ Role: role3
         )
 
         o, r = pcs(
-            self.temp_cib.name, "acl role unassign noexist from user1".split(),
+            self.temp_cib.name,
+            "acl role unassign noexist from user1".split(),
         )
         assert r == 1
         ac(o, "Error: Role 'noexist' is not assigned to 'user1'\n")
 
         o, r = pcs(
-            self.temp_cib.name, "acl role unassign role3 from noexist".split(),
+            self.temp_cib.name,
+            "acl role unassign role3 from noexist".split(),
         )
         assert r == 1
         ac(o, "Error: ACL group/ACL user 'noexist' does not exist\n")
 
         o, r = pcs(
-            self.temp_cib.name, "acl role unassign role3 from user1".split(),
+            self.temp_cib.name,
+            "acl role unassign role3 from user1".split(),
         )
         assert r == 0
         ac(o, "")
@@ -273,13 +283,15 @@ Role: role3
         )
 
         o, r = pcs(
-            self.temp_cib.name, "acl role unassign role2 from user1".split(),
+            self.temp_cib.name,
+            "acl role unassign role2 from user1".split(),
         )
         assert r == 0
         ac(o, "")
 
         o, r = pcs(
-            self.temp_cib.name, "acl role unassign role1 from user1".split(),
+            self.temp_cib.name,
+            "acl role unassign role1 from user1".split(),
         )
         assert r == 0
         ac(o, "")
@@ -332,7 +344,8 @@ Role: role2
         assert r == 0
 
         o, r = pcs(
-            self.temp_cib.name, "acl role assign role2 to user1".split(),
+            self.temp_cib.name,
+            "acl role assign role2 to user1".split(),
         )
         assert r == 0
         ac(o, "")
@@ -434,7 +447,8 @@ Role: role2
         assert r == 0
 
         o, r = pcs(
-            self.temp_cib.name, "acl user create user1 role1 role2".split(),
+            self.temp_cib.name,
+            "acl user create user1 role1 role2".split(),
         )
         ac(o, "")
         assert r == 0
@@ -460,7 +474,8 @@ Role: role2
         assert r == 0
 
         o, r = pcs(
-            self.temp_cib.name, "acl role delete role1 --autodelete".split(),
+            self.temp_cib.name,
+            "acl role delete role1 --autodelete".split(),
         )
         ac(o, "")
         assert r == 0
@@ -640,7 +655,8 @@ User: user2
         self.assertEqual(1, r)
 
         o, r = pcs(
-            self.temp_cib.name, "acl role create role0 read xpath".split(),
+            self.temp_cib.name,
+            "acl role create role0 read xpath".split(),
         )
         self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
         self.assertEqual(1, r)
@@ -706,7 +722,8 @@ User: user2
         self.assertEqual(1, r)
 
         o, r = pcs(
-            self.temp_cib.name, "acl role create role0 desc=test read".split(),
+            self.temp_cib.name,
+            "acl role create role0 desc=test read".split(),
         )
         self.assertTrue(o.startswith("\nUsage: pcs acl role create..."))
         self.assertEqual(1, r)
@@ -1070,13 +1087,15 @@ Role: role4
         self.assertEqual(1, r)
 
         o, r = pcs(
-            self.temp_cib.name, "acl permission add role1 read xpath".split(),
+            self.temp_cib.name,
+            "acl permission add role1 read xpath".split(),
         )
         self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
         self.assertEqual(1, r)
 
         o, r = pcs(
-            self.temp_cib.name, "acl permission add role1 read id".split(),
+            self.temp_cib.name,
+            "acl permission add role1 read id".split(),
         )
         self.assertTrue(o.startswith("\nUsage: pcs acl permission add..."))
         self.assertEqual(1, r)

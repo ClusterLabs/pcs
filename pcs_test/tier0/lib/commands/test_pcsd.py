@@ -49,7 +49,8 @@ class SynchronizeSslCertificates(TestCase):
             ]
             + [
                 fixture.info(
-                    report_codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS, node=node,
+                    report_codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS,
+                    node=node,
                 )
                 for node in self.node_names
             ]
@@ -93,7 +94,8 @@ class SynchronizeSslCertificates(TestCase):
             ]
             + [
                 fixture.info(
-                    report_codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS, node=node,
+                    report_codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS,
+                    node=node,
                 )
                 for node in nodes
             ]
@@ -127,7 +129,9 @@ class SynchronizeSslCertificates(TestCase):
                     report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
                     fatal=False,
                 ),
-                fixture.error(report_codes.COROSYNC_CONFIG_NO_NODES_DEFINED,),
+                fixture.error(
+                    report_codes.COROSYNC_CONFIG_NO_NODES_DEFINED,
+                ),
             ]
         )
 
@@ -171,7 +175,8 @@ class SynchronizeSslCertificates(TestCase):
             ]
             + [
                 fixture.info(
-                    report_codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS, node=node,
+                    report_codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS,
+                    node=node,
                 )
                 for node in self.node_names[1:]
             ]
@@ -281,7 +286,8 @@ class SynchronizeSslCertificates(TestCase):
             ]
             + [
                 fixture.info(
-                    report_codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS, node=node,
+                    report_codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS,
+                    node=node,
                 )
                 for node in self.node_names[1:]
             ]

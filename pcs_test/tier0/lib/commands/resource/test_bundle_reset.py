@@ -68,7 +68,9 @@ class MinimalMixin(BaseMixin, SetUpMixin):
                 ),
             }
         )
-        self.bundle_reset(container_options={"image": new_image},)
+        self.bundle_reset(
+            container_options={"image": new_image},
+        )
 
     def test_noexistent_id(self):
         self.env_assist.assert_raise_library_error(
@@ -186,7 +188,9 @@ class FullMixin(SetUpMixin, BaseMixin):
             }
         )
 
-        self.bundle_reset(container_options={"image": new_image},)
+        self.bundle_reset(
+            container_options={"image": new_image},
+        )
 
     def test_success_full(self):
         new_image = "{0}:new".format(self.image)
@@ -266,7 +270,9 @@ class FullMixin(SetUpMixin, BaseMixin):
                     "target-dir": f"/tmp/{self.container_type}2bb",
                 },
             ],
-            meta_attributes={"target-role": "Started",},
+            meta_attributes={
+                "target-role": "Started",
+            },
         )
 
     def test_success_keep_map_ids(self):
@@ -336,7 +342,9 @@ class FullMixin(SetUpMixin, BaseMixin):
                     "target-dir": f"/tmp/{self.container_type}2bb",
                 },
             ],
-            meta_attributes={"target-role": "Stopped",},
+            meta_attributes={
+                "target-role": "Stopped",
+            },
         )
 
 
@@ -424,7 +432,10 @@ class ResetWithMetaMap(BaseMixin, MetaMixin, TestCase):
             )
         )
         self.run_bundle_cmd(
-            meta_attributes={"target-role": "Stopped", "is-managed": "false",}
+            meta_attributes={
+                "target-role": "Stopped",
+                "is-managed": "false",
+            }
         )
 
 
@@ -502,7 +513,9 @@ class NoMetaIdRegenerationMixin(BaseMixin, SetUpMixin):
                 "replicas": "1",
                 "replicas-per-host": "1",
             },
-            meta_attributes={"target-role": "Stopped",},
+            meta_attributes={
+                "target-role": "Stopped",
+            },
         )
 
 

@@ -389,7 +389,9 @@ def load_module(env, middleware_factory, name):
     if name == "cib_options":
         return bind_all(
             env,
-            middleware.build(middleware_factory.cib,),
+            middleware.build(
+                middleware_factory.cib,
+            ),
             {
                 "operation_defaults_config": cib_options.operation_defaults_config,
                 "operation_defaults_create": cib_options.operation_defaults_create,

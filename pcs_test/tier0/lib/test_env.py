@@ -86,7 +86,8 @@ class GhostFileCodes(TestCase):
     def test_all(self):
         self.assertEqual(
             self._fixture_get_env(
-                cib_data="x", corosync_conf_data="x",
+                cib_data="x",
+                corosync_conf_data="x",
             ).ghost_file_codes,
             sorted([file_type_codes.COROSYNC_CONF, file_type_codes.CIB]),
         )
@@ -105,7 +106,11 @@ class CmdRunner(TestCase):
         runner = env.cmd_runner()
         self.assertEqual(expected_runner, runner)
         mock_runner.assert_called_once_with(
-            self.mock_logger, self.mock_reporter, {"LC_ALL": "C",}
+            self.mock_logger,
+            self.mock_reporter,
+            {
+                "LC_ALL": "C",
+            },
         )
 
     def test_user(self, mock_runner):
@@ -120,7 +125,10 @@ class CmdRunner(TestCase):
         mock_runner.assert_called_once_with(
             self.mock_logger,
             self.mock_reporter,
-            {"CIB_user": user, "LC_ALL": "C",},
+            {
+                "CIB_user": user,
+                "LC_ALL": "C",
+            },
         )
 
     @patch_env("write_tmpfile")
@@ -138,7 +146,10 @@ class CmdRunner(TestCase):
         mock_runner.assert_called_once_with(
             self.mock_logger,
             self.mock_reporter,
-            {"LC_ALL": "C", "CIB_file": rc("file.tmp"),},
+            {
+                "LC_ALL": "C",
+                "CIB_file": rc("file.tmp"),
+            },
         )
         mock_tmpfile.assert_called_once_with("<cib />")
 

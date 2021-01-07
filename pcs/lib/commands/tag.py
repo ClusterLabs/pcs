@@ -32,7 +32,9 @@ def cib_tags_section(env: LibraryEnvironment) -> Iterator[_Element]:
 
 
 def create(
-    env: LibraryEnvironment, tag_id: str, idref_list: Sequence[str],
+    env: LibraryEnvironment,
+    tag_id: str,
+    idref_list: Sequence[str],
 ) -> None:
     """
     Create a tag in a cib.
@@ -56,7 +58,8 @@ def create(
 
 
 def config(
-    env: LibraryEnvironment, tag_filter: Sequence[str],
+    env: LibraryEnvironment,
+    tag_filter: Sequence[str],
 ) -> Iterable[Dict[str, Iterable[str]]]:
     """
     Get tags specified in tag_filter or if empty, then get all the tags
@@ -68,7 +71,8 @@ def config(
     tags_section: _Element = get_tags(env.get_cib(REQUIRED_CIB_VERSION))
     if tag_filter:
         tag_element_list, report_list = tag.find_tag_elements_by_ids(
-            tags_section, tag_filter,
+            tags_section,
+            tag_filter,
         )
         if env.report_processor.report_list(report_list).has_errors:
             raise LibraryError()
@@ -89,11 +93,13 @@ def remove(env: LibraryEnvironment, tag_list: Iterable[str]) -> None:
     with cib_tags_section(env) as tags_section:
         env.report_processor.report_list(
             tag.validate_remove_tag(
-                get_constraints(get_root(tags_section)), tag_list,
+                get_constraints(get_root(tags_section)),
+                tag_list,
             )
         )
         tag_elements, report_list = tag.find_tag_elements_by_ids(
-            tags_section, tag_list,
+            tags_section,
+            tag_list,
         )
         if env.report_processor.report_list(report_list).has_errors:
             raise LibraryError()
@@ -122,11 +128,15 @@ def update(
     """
     with cib_tags_section(env) as tags_section:
         validator = tag.ValidateTagUpdateByIds(
-            tag_id, idref_add, idref_remove, adjacent_idref,
+            tag_id,
+            idref_add,
+            idref_remove,
+            adjacent_idref,
         )
         if env.report_processor.report_list(
             validator.validate(
-                get_resources(get_root(tags_section)), tags_section,
+                get_resources(get_root(tags_section)),
+                tags_section,
             )
         ).has_errors:
             raise LibraryError()

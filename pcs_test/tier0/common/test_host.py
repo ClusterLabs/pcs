@@ -35,7 +35,9 @@ class PcsKnownHostFromKnownHost(TestCase):
     def test_missing_token(self):
         known_host_call = lambda: host.PcsKnownHost.from_known_host_file_dict(
             self.name,
-            dict(dest_list=[_dest("addr1", "port1"), _dest("addr2", "port2")],),
+            dict(
+                dest_list=[_dest("addr1", "port1"), _dest("addr2", "port2")],
+            ),
         )
         self.assertRaises(KeyError, known_host_call)
 

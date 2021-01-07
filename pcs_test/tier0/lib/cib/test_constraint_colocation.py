@@ -16,7 +16,9 @@ class PrepareOptionsWithSetTest(TestCase):
         self.cib = "cib"
         self.resource_set_list = "resource_set_list"
         self.prepare = lambda options: colocation.prepare_options_with_set(
-            self.cib, options, self.resource_set_list,
+            self.cib,
+            options,
+            self.resource_set_list,
         )
 
     @mock.patch("pcs.lib.cib.constraint.colocation.constraint.create_id")
@@ -34,7 +36,13 @@ class PrepareOptionsWithSetTest(TestCase):
         mock_check_new_id_applicable.side_effect = Exception()
         invalid_id = "invalid_id"
         self.assertRaises(
-            Exception, lambda: self.prepare({"score": "1", "id": invalid_id,})
+            Exception,
+            lambda: self.prepare(
+                {
+                    "score": "1",
+                    "id": invalid_id,
+                }
+            ),
         )
         mock_check_new_id_applicable.assert_called_once_with(
             self.cib, colocation.DESCRIPTION, invalid_id
@@ -42,14 +50,23 @@ class PrepareOptionsWithSetTest(TestCase):
 
     def test_refuse_bad_score(self, _):
         assert_raise_library_error(
-            lambda: self.prepare({"score": "bad", "id": "id",}),
+            lambda: self.prepare(
+                {
+                    "score": "bad",
+                    "id": "id",
+                }
+            ),
             (severities.ERROR, report_codes.INVALID_SCORE, {"score": "bad"}),
         )
 
     def test_refuse_more_scores(self, _):
         assert_raise_library_error(
             lambda: self.prepare(
-                {"score": "1", "score-attribute": "2", "id": "id",}
+                {
+                    "score": "1",
+                    "score-attribute": "2",
+                    "id": "id",
+                }
             ),
             (severities.ERROR, report_codes.MULTIPLE_SCORE_OPTIONS, {}),
         )
@@ -57,7 +74,11 @@ class PrepareOptionsWithSetTest(TestCase):
     def test_refuse_unknown_attributes(self, _):
         assert_raise_library_error(
             lambda: self.prepare(
-                {"score": "1", "unknown": "value", "id": "id",}
+                {
+                    "score": "1",
+                    "unknown": "value",
+                    "id": "id",
+                }
             ),
             (
                 severities.ERROR,

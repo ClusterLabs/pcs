@@ -22,10 +22,13 @@ BAD_FENCING_TOPOLOGY = """
 
 BAD_FENCING_TOPOLOGY_REPORTS = [
     fixture.error(
-        report_codes.STONITH_RESOURCES_DO_NOT_EXIST, stonith_ids=["FX"],
+        report_codes.STONITH_RESOURCES_DO_NOT_EXIST,
+        stonith_ids=["FX"],
     ),
     fixture.error(
-        report_codes.NODE_NOT_FOUND, node="node1", searched_types=[],
+        report_codes.NODE_NOT_FOUND,
+        node="node1",
+        searched_types=[],
     ),
 ]
 
@@ -154,7 +157,8 @@ class VerboseMode(TestCase, AssertInvalidCibMixin):
     def test_fail_on_invalid_cib(self):
         (
             self.config.runner.pcmk.verify(
-                stderr=CRM_VERIFY_ERROR_REPORT_LINES[0], verbose=True,
+                stderr=CRM_VERIFY_ERROR_REPORT_LINES[0],
+                verbose=True,
             )
             .runner.cib.load()
             .runner.pcmk.load_state()

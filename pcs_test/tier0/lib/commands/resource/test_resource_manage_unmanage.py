@@ -178,8 +178,8 @@ fixture_group_cib_managed_with_resources_meta = get_fixture_group_cib(
 fixture_group_cib_unmanaged_resource = get_fixture_group_cib(
     primitive1_unmanaged=True
 )
-fixture_group_cib_unmanaged_resource_with_other_resource_meta = get_fixture_group_cib(
-    primitive1_unmanaged=True, primitive2_meta=True
+fixture_group_cib_unmanaged_resource_with_other_resource_meta = (
+    get_fixture_group_cib(primitive1_unmanaged=True, primitive2_meta=True)
 )
 fixture_group_cib_unmanaged_resource_and_group = get_fixture_group_cib(
     group_unmanaged=True, primitive1_unmanaged=True
@@ -458,20 +458,20 @@ fixture_clone_group_cib_managed = get_fixture_clone_group_cib()
 fixture_clone_group_cib_managed_with_all_meta = get_fixture_clone_group_cib(
     all_meta=True
 )
-fixture_clone_group_cib_managed_with_all_primitive_meta = get_fixture_clone_group_cib(
-    primitive1_meta=True, primitive2_meta=True
+fixture_clone_group_cib_managed_with_all_primitive_meta = (
+    get_fixture_clone_group_cib(primitive1_meta=True, primitive2_meta=True)
 )
 fixture_clone_group_cib_managed_with_clone_meta = get_fixture_clone_group_cib(
     clone_meta=True
 )
-fixture_clone_group_cib_managed_with_primitive_meta = get_fixture_clone_group_cib(
-    primitive1_meta=True
+fixture_clone_group_cib_managed_with_primitive_meta = (
+    get_fixture_clone_group_cib(primitive1_meta=True)
 )
 fixture_clone_group_cib_unmanaged_primitive = get_fixture_clone_group_cib(
     primitive1_unmanaged=True
 )
-fixture_clone_group_cib_unmanaged_primitive_with_all_meta = get_fixture_clone_group_cib(
-    primitive1_unmanaged=True, all_meta=True
+fixture_clone_group_cib_unmanaged_primitive_with_all_meta = (
+    get_fixture_clone_group_cib(primitive1_unmanaged=True, all_meta=True)
 )
 fixture_clone_group_cib_unmanaged_all_primitives = get_fixture_clone_group_cib(
     primitive1_unmanaged=True, primitive2_unmanaged=True
@@ -725,7 +725,9 @@ def fixture_report_no_monitors(resource_id):
     return (
         severities.WARNING,
         report_codes.RESOURCE_MANAGED_NO_MONITOR_ENABLED,
-        {"resource_id": resource_id,},
+        {
+            "resource_id": resource_id,
+        },
         None,
     )
 
@@ -1416,7 +1418,9 @@ class WithMonitor(TestCase):
         )
         resource.manage(self.env_assist.get_env(), ["A"], False)
         self.env_assist.assert_reports(
-            [fixture_report_no_monitors("A"),]
+            [
+                fixture_report_no_monitors("A"),
+            ]
         )
 
     def test_unmanage_clone(self):

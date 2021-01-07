@@ -92,7 +92,13 @@ class GetSubElementTest(TestCase):
 
 class UpdateAttributeRemoveEmpty(TestCase):
     def setUp(self):
-        self.el = etree.Element("test_element", {"a": "A", "b": "B",})
+        self.el = etree.Element(
+            "test_element",
+            {
+                "a": "A",
+                "b": "B",
+            },
+        )
 
     def assert_xml_equal(self, expected):
         assert_xml_equal(expected, etree_to_str(self.el))
@@ -119,7 +125,13 @@ class UpdateAttributeRemoveEmpty(TestCase):
 
     def test_more(self):
         lib.update_attributes_remove_empty(
-            self.el, {"a": "X", "b": "", "c": "C", "d": "",}
+            self.el,
+            {
+                "a": "X",
+                "b": "",
+                "c": "C",
+                "d": "",
+            },
         )
         self.assert_xml_equal('<test_element a="X" c="C" />')
 
@@ -137,13 +149,19 @@ class EtreeElementAttributesToDictTest(TestCase):
 
     def test_only_existing(self):
         self.assertEqual(
-            {"id": "test_id", "attribute": "value",},
+            {
+                "id": "test_id",
+                "attribute": "value",
+            },
             lib.etree_element_attibutes_to_dict(self.el, ["id", "attribute"]),
         )
 
     def test_only_not_existing(self):
         self.assertEqual(
-            {"_id": None, "not_existing": None,},
+            {
+                "_id": None,
+                "not_existing": None,
+            },
             lib.etree_element_attibutes_to_dict(
                 self.el, ["_id", "not_existing"]
             ),
@@ -151,7 +169,11 @@ class EtreeElementAttributesToDictTest(TestCase):
 
     def test_mix(self):
         self.assertEqual(
-            {"id": "test_id", "attribute": "value", "not_existing": None,},
+            {
+                "id": "test_id",
+                "attribute": "value",
+                "not_existing": None,
+            },
             lib.etree_element_attibutes_to_dict(
                 self.el, ["id", "not_existing", "attribute"]
             ),
@@ -299,7 +321,9 @@ class MoveElements(TestCase):
 
     def test_move_inside_after(self):
         lib.move_elements(
-            [self.third, self.first], self.second, put_after_adjacent=True,
+            [self.third, self.first],
+            self.second,
+            put_after_adjacent=True,
         )
         assert_xml_equal(
             """
@@ -359,7 +383,9 @@ class MoveElements(TestCase):
 
     def test_move_combined_after(self):
         lib.move_elements(
-            [self.new2, self.second], self.third, put_after_adjacent=True,
+            [self.new2, self.second],
+            self.third,
+            put_after_adjacent=True,
         )
         assert_xml_equal(
             """

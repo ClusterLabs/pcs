@@ -77,7 +77,9 @@ def assign_role_to_target(lib_env, role_id, target_id):
     """
     with cib_acl_section(lib_env) as acl_section:
         acl.assign_role(
-            acl_section, role_id, acl.find_target(acl_section, target_id),
+            acl_section,
+            role_id,
+            acl.find_target(acl_section, target_id),
         )
 
 
@@ -92,7 +94,9 @@ def assign_role_to_group(lib_env, role_id, group_id):
     """
     with cib_acl_section(lib_env) as acl_section:
         acl.assign_role(
-            acl_section, role_id, acl.find_group(acl_section, group_id),
+            acl_section,
+            role_id,
+            acl.find_group(acl_section, group_id),
         )
 
 

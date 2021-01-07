@@ -74,7 +74,10 @@ class RubyDaemonRequest(
     )
 ):
     def __new__(
-        cls, request_type, http_request: HTTPServerRequest = None, payload=None,
+        cls,
+        request_type,
+        http_request: HTTPServerRequest = None,
+        payload=None,
     ):
         headers = http_request.headers if http_request else HTTPHeaders()
         headers.add("X-Pcsd-Type", request_type)
@@ -179,7 +182,8 @@ class Wrapper:
 
         def log_request():
             log_ruby_daemon_request(
-                f"Ruby daemon request (id: {request_id})", request,
+                f"Ruby daemon request (id: {request_id})",
+                request,
             )
 
         if self.__debug:

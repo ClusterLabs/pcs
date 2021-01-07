@@ -139,7 +139,10 @@ class DefaultsCreateMixin:
         self.config.env.push_cib(optional_in_conf=defaults_xml)
 
         self.command(
-            self.env_assist.get_env(), {}, {}, nvset_rule="attr eq integer 5",
+            self.env_assist.get_env(),
+            {},
+            {},
+            nvset_rule="attr eq integer 5",
         )
 
         self.env_assist.assert_reports(
@@ -175,7 +178,10 @@ class DefaultsCreateMixin:
         self.config.env.push_cib(optional_in_conf=defaults_xml)
 
         self.command(
-            self.env_assist.get_env(), {}, {}, nvset_rule="attr eq integer 5",
+            self.env_assist.get_env(),
+            {},
+            {},
+            nvset_rule="attr eq integer 5",
         )
 
         self.env_assist.assert_reports(
@@ -417,7 +423,10 @@ class DefaultsConfigMixin:
                         "my-id-rule-expr",
                         CibRuleExpressionType.EXPRESSION,
                         CibRuleInEffectStatus.UNKNOWN,
-                        {"operation": "defined", "attribute": "attr1",},
+                        {
+                            "operation": "defined",
+                            "attribute": "attr1",
+                        },
                         None,
                         None,
                         [],
@@ -741,7 +750,8 @@ class DefaultsConfigMixin:
     def test_expired(self):
         self._setup_rule_in_effect()
         self.config.runner.pcmk.get_rule_in_effect_status(
-            "my-id-rule", RULE_EXPIRED_RETURNCODE,
+            "my-id-rule",
+            RULE_EXPIRED_RETURNCODE,
         )
         self.assertEqual(
             [self.fixture_expired_dto(CibRuleInEffectStatus.EXPIRED)],
@@ -751,7 +761,8 @@ class DefaultsConfigMixin:
     def test_not_yet_in_effect(self):
         self._setup_rule_in_effect()
         self.config.runner.pcmk.get_rule_in_effect_status(
-            "my-id-rule", RULE_NOT_YET_IN_EFFECT_RETURNCODE,
+            "my-id-rule",
+            RULE_NOT_YET_IN_EFFECT_RETURNCODE,
         )
         self.assertEqual(
             [self.fixture_expired_dto(CibRuleInEffectStatus.NOT_YET_IN_EFFECT)],
@@ -761,7 +772,8 @@ class DefaultsConfigMixin:
     def test_in_effect(self):
         self._setup_rule_in_effect()
         self.config.runner.pcmk.get_rule_in_effect_status(
-            "my-id-rule", RULE_IN_EFFECT_RETURNCODE,
+            "my-id-rule",
+            RULE_IN_EFFECT_RETURNCODE,
         )
         self.assertEqual(
             [self.fixture_expired_dto(CibRuleInEffectStatus.IN_EFFECT)],
@@ -771,7 +783,8 @@ class DefaultsConfigMixin:
     def test_expired_error(self):
         self._setup_rule_in_effect()
         self.config.runner.pcmk.get_rule_in_effect_status(
-            "my-id-rule", 2,  # unexpected return code
+            "my-id-rule",
+            2,  # unexpected return code
         )
         self.assertEqual(
             [self.fixture_expired_dto(CibRuleInEffectStatus.UNKNOWN)],
@@ -1077,7 +1090,9 @@ class DefaultsUpdateMixin:
         )
         self.env_assist.assert_raise_library_error(
             lambda: self.command(
-                self.env_assist.get_env(), "wrong-nvset-id", {},
+                self.env_assist.get_env(),
+                "wrong-nvset-id",
+                {},
             )
         )
         self.env_assist.assert_reports(

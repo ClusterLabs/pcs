@@ -103,7 +103,9 @@ class DisableSbd(TestCase):
                     report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
                     fatal=False,
                 ),
-                fixture.error(report_codes.COROSYNC_CONFIG_NO_NODES_DEFINED,),
+                fixture.error(
+                    report_codes.COROSYNC_CONFIG_NO_NODES_DEFINED,
+                ),
             ]
         )
 
@@ -201,7 +203,13 @@ class DisableSbd(TestCase):
                         "error_msg": err_msg,
                     }
                 ],
-                [{"label": "rh7-2", "response_code": 400, "output": "FAILED",}],
+                [
+                    {
+                        "label": "rh7-2",
+                        "response_code": 400,
+                        "output": "FAILED",
+                    }
+                ],
                 [{"label": "rh7-3"}],
             ]
         )
@@ -258,7 +266,8 @@ class DisableSbd(TestCase):
             ]
         )
         self.env_assist.assert_raise_library_error(
-            lambda: disable_sbd(self.env_assist.get_env()), [],
+            lambda: disable_sbd(self.env_assist.get_env()),
+            [],
         )
         self.env_assist.assert_reports(
             [
@@ -292,7 +301,8 @@ class DisableSbd(TestCase):
             ]
         )
         self.env_assist.assert_raise_library_error(
-            lambda: disable_sbd(self.env_assist.get_env()), [],
+            lambda: disable_sbd(self.env_assist.get_env()),
+            [],
         )
         self.env_assist.assert_reports(
             [

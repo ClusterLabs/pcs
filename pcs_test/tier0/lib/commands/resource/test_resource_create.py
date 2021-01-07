@@ -256,13 +256,15 @@ fixture_cib_resources_xml_clone_simplest_template = """<resources>
 </resources>"""
 
 
-fixture_cib_resources_xml_clone_simplest = fixture_cib_resources_xml_clone_simplest_template.format(
-    clone_id="A-clone"
+fixture_cib_resources_xml_clone_simplest = (
+    fixture_cib_resources_xml_clone_simplest_template.format(clone_id="A-clone")
 )
 
 
-fixture_cib_resources_xml_clone_custom_id = fixture_cib_resources_xml_clone_simplest_template.format(
-    clone_id="CustomCloneId"
+fixture_cib_resources_xml_clone_custom_id = (
+    fixture_cib_resources_xml_clone_simplest_template.format(
+        clone_id="CustomCloneId"
+    )
 )
 
 
@@ -699,7 +701,8 @@ class CreateWait(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.RESOURCE_DOES_NOT_RUN, resource_id="A",
+                    report_codes.RESOURCE_DOES_NOT_RUN,
+                    resource_id="A",
                 )
             ]
         )
@@ -756,7 +759,12 @@ class CreateWait(TestCase):
 
         create(self.env_assist.get_env(), wait=TIMEOUT, disabled=True)
         self.env_assist.assert_reports(
-            [fixture.info(report_codes.RESOURCE_DOES_NOT_RUN, resource_id="A",)]
+            [
+                fixture.info(
+                    report_codes.RESOURCE_DOES_NOT_RUN,
+                    resource_id="A",
+                )
+            ]
         )
 
     def test_wait_ok_disable_ok_by_target_role(self):
@@ -776,7 +784,12 @@ class CreateWait(TestCase):
         )
 
         self.env_assist.assert_reports(
-            [fixture.info(report_codes.RESOURCE_DOES_NOT_RUN, resource_id="A",)]
+            [
+                fixture.info(
+                    report_codes.RESOURCE_DOES_NOT_RUN,
+                    resource_id="A",
+                )
+            ]
         )
 
 
@@ -974,7 +987,12 @@ class CreateInGroup(TestCase):
         )
         create_group(self.env_assist.get_env(), disabled=True)
         self.env_assist.assert_reports(
-            [fixture.info(report_codes.RESOURCE_DOES_NOT_RUN, resource_id="A",)]
+            [
+                fixture.info(
+                    report_codes.RESOURCE_DOES_NOT_RUN,
+                    resource_id="A",
+                )
+            ]
         )
 
     @mock.patch.object(
@@ -992,7 +1010,12 @@ class CreateInGroup(TestCase):
             meta_attributes={"target-role": "Stopped"},
         )
         self.env_assist.assert_reports(
-            [fixture.info(report_codes.RESOURCE_DOES_NOT_RUN, resource_id="A",)]
+            [
+                fixture.info(
+                    report_codes.RESOURCE_DOES_NOT_RUN,
+                    resource_id="A",
+                )
+            ]
         )
 
 
@@ -1196,7 +1219,12 @@ class CreateAsClone(TestCase):
         )
         create_clone(self.env_assist.get_env(), disabled=True)
         self.env_assist.assert_reports(
-            [fixture.info(report_codes.RESOURCE_DOES_NOT_RUN, resource_id="A",)]
+            [
+                fixture.info(
+                    report_codes.RESOURCE_DOES_NOT_RUN,
+                    resource_id="A",
+                )
+            ]
         )
 
     @mock.patch.object(
@@ -1251,7 +1279,12 @@ class CreateAsClone(TestCase):
             meta_attributes={"target-role": "Stopped"},
         )
         self.env_assist.assert_reports(
-            [fixture.info(report_codes.RESOURCE_DOES_NOT_RUN, resource_id="A",)]
+            [
+                fixture.info(
+                    report_codes.RESOURCE_DOES_NOT_RUN,
+                    resource_id="A",
+                )
+            ]
         )
 
     @mock.patch.object(
@@ -1304,7 +1337,12 @@ class CreateAsClone(TestCase):
             self.env_assist.get_env(), clone_options={"target-role": "Stopped"}
         )
         self.env_assist.assert_reports(
-            [fixture.info(report_codes.RESOURCE_DOES_NOT_RUN, resource_id="A",)]
+            [
+                fixture.info(
+                    report_codes.RESOURCE_DOES_NOT_RUN,
+                    resource_id="A",
+                )
+            ]
         )
 
     @mock.patch.object(
@@ -1357,7 +1395,12 @@ class CreateAsClone(TestCase):
             self.env_assist.get_env(), clone_options={"clone-max": "0"}
         )
         self.env_assist.assert_reports(
-            [fixture.info(report_codes.RESOURCE_DOES_NOT_RUN, resource_id="A",)]
+            [
+                fixture.info(
+                    report_codes.RESOURCE_DOES_NOT_RUN,
+                    resource_id="A",
+                )
+            ]
         )
 
     @mock.patch.object(
@@ -1411,7 +1454,12 @@ class CreateAsClone(TestCase):
             self.env_assist.get_env(), clone_options={"clone-node-max": "0"}
         )
         self.env_assist.assert_reports(
-            [fixture.info(report_codes.RESOURCE_DOES_NOT_RUN, resource_id="A",)]
+            [
+                fixture.info(
+                    report_codes.RESOURCE_DOES_NOT_RUN,
+                    resource_id="A",
+                )
+            ]
         )
 
 
@@ -1546,7 +1594,8 @@ class CreateInToBundle(TestCase):
 
     def setUp(self):
         self.env_assist, self.config = get_env_tools(
-            test_case=self, base_cib_filename="cib-empty-2.8.xml",
+            test_case=self,
+            base_cib_filename="cib-empty-2.8.xml",
         )
 
     def test_upgrade_cib(self):
@@ -1567,7 +1616,8 @@ class CreateInToBundle(TestCase):
     def test_cib_upgrade_on_onfail_demote(self):
         self.config.runner.pcmk.load_agent()
         self.config.runner.cib.load(
-            filename="cib-empty-3.3.xml", name="load_cib_old_version",
+            filename="cib-empty-3.3.xml",
+            name="load_cib_old_version",
         )
         self.config.runner.cib.upgrade()
         self.config.runner.cib.load(
@@ -1693,7 +1743,9 @@ class CreateInToBundle(TestCase):
         )
         self.env_assist.assert_raise_library_error(
             lambda: create_bundle(self.env_assist.get_env()),
-            [fixture.report_wait_for_idle_timed_out(wait_error_message),],
+            [
+                fixture.report_wait_for_idle_timed_out(wait_error_message),
+            ],
             expected_in_processor=False,
         )
 
@@ -1713,7 +1765,9 @@ class CreateInToBundle(TestCase):
         )
         create_bundle(self.env_assist.get_env())
         self.env_assist.assert_reports(
-            [fixture.report_resource_running("A", {"Started": ["node1"]}),]
+            [
+                fixture.report_resource_running("A", {"Started": ["node1"]}),
+            ]
         )
 
     @mock.patch.object(

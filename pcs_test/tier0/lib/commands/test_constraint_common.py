@@ -84,7 +84,9 @@ class CreateWithSetTest(TestCase):
                 (
                     severities.ERROR,
                     report_codes.DUPLICATE_CONSTRAINTS_EXIST,
-                    {"constraint_ids": ["some_id"],},
+                    {
+                        "constraint_ids": ["some_id"],
+                    },
                     report_codes.FORCE_CONSTRAINT_DUPLICATE,
                 ),
                 (
@@ -187,10 +189,16 @@ class ShowTest(TestCase):
     def test_returns_export_of_found_elements(self):
         tag_name = "rsc_some"
         self.create(
-            tag_name, [{"ids": ["A", "B"], "options": {"role": "Master"}},]
+            tag_name,
+            [
+                {"ids": ["A", "B"], "options": {"role": "Master"}},
+            ],
         )
         self.create(
-            tag_name, [{"ids": ["E", "F"], "options": {"action": "start"}},]
+            tag_name,
+            [
+                {"ids": ["E", "F"], "options": {"action": "start"}},
+            ],
         )
         etree.SubElement(self.constraint_section, tag_name).attrib.update(
             {"id": "plain1", "is_plain": "true"}

@@ -78,12 +78,16 @@ class StaticFileMayBe(StaticFile):
 
 
 def get_routes(
-    url_prefix, app_dir, fallback_page_path, session_storage: session.Storage,
+    url_prefix,
+    app_dir,
+    fallback_page_path,
+    session_storage: session.Storage,
 ):
     sessions = dict(session_storage=session_storage)
     static_path = lambda dir="": dict(path=os.path.join(app_dir, dir))
     pages = dict(
-        index=os.path.join(app_dir, "index.html"), fallback=fallback_page_path,
+        index=os.path.join(app_dir, "index.html"),
+        fallback=fallback_page_path,
     )
 
     # One possibility is to check if SPA index exists and if does not exists

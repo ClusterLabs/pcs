@@ -160,10 +160,14 @@ class GetCorosyncConfStruct(TestCase):
                         nodeid="1",
                         addrs=[
                             CorosyncNodeAddressDto(
-                                addr="node1-addr", link="0", type="FQDN",
+                                addr="node1-addr",
+                                link="0",
+                                type="FQDN",
                             ),
                             CorosyncNodeAddressDto(
-                                addr="10.0.0.1", link="1", type="IPv4",
+                                addr="10.0.0.1",
+                                link="1",
+                                type="IPv4",
                             ),
                         ],
                     ),
@@ -172,10 +176,14 @@ class GetCorosyncConfStruct(TestCase):
                         nodeid="2",
                         addrs=[
                             CorosyncNodeAddressDto(
-                                addr="node2-addr", link="0", type="FQDN",
+                                addr="node2-addr",
+                                link="0",
+                                type="FQDN",
                             ),
                             CorosyncNodeAddressDto(
-                                addr="10.0.0.2", link="1", type="IPv4",
+                                addr="10.0.0.2",
+                                link="1",
+                                type="IPv4",
                             ),
                         ],
                     ),

@@ -23,10 +23,12 @@ class RuleDtoToLinesMixin:
 
     def assert_lines(self, dto, lines):
         self.assertEqual(
-            self._export(dto, True), lines,
+            self._export(dto, True),
+            lines,
         )
         self.assertEqual(
-            self._export(dto, False), re.sub(r" +\(id:.*\)", "", lines),
+            self._export(dto, False),
+            re.sub(r" +\(id:.*\)", "", lines),
         )
 
 
@@ -273,7 +275,10 @@ class DateExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
                     "rule-expr",
                     CibRuleExpressionType.DATE_EXPRESSION,
                     CibRuleInEffectStatus.UNKNOWN,
-                    {"operation": "in_range", "start": "2014-06-26",},
+                    {
+                        "operation": "in_range",
+                        "start": "2014-06-26",
+                    },
                     None,
                     CibRuleDateCommonDto("rule-expr-duration", {"years": "1"}),
                     [],
@@ -480,10 +485,14 @@ class RuleDtoToLines(RuleDtoToLinesMixin, TestCase):
                             "complex-rule-1-expr-1",
                             CibRuleExpressionType.DATE_EXPRESSION,
                             CibRuleInEffectStatus.UNKNOWN,
-                            {"operation": "in_range", "start": "2014-07-26",},
+                            {
+                                "operation": "in_range",
+                                "start": "2014-07-26",
+                            },
                             None,
                             CibRuleDateCommonDto(
-                                "complex-rule-1-expr-1-durat", {"months": "1"},
+                                "complex-rule-1-expr-1-durat",
+                                {"months": "1"},
                             ),
                             [],
                             "date in_range 2014-07-26 to duration months=1",

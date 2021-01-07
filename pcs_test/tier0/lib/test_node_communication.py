@@ -93,7 +93,8 @@ class NodeTargetLibFactory(TestCase):
         )
         assert_raise_library_error(
             lambda: self.factory.get_target_list(
-                [host] + unknown_hosts, allow_skip=False,
+                [host] + unknown_hosts,
+                allow_skip=False,
             )
         )
         self.report_processor.assert_reports([report])
@@ -291,7 +292,14 @@ class ResponseToReportItemTest(TestCase):
 
 class IsProxySetTest(TestCase):
     def test_without_proxy(self):
-        self.assertFalse(lib.is_proxy_set({"var1": "value", "var2": "val",}))
+        self.assertFalse(
+            lib.is_proxy_set(
+                {
+                    "var1": "value",
+                    "var2": "val",
+                }
+            )
+        )
 
     def test_multiple(self):
         self.assertTrue(
@@ -307,32 +315,79 @@ class IsProxySetTest(TestCase):
         )
 
     def test_empty_string(self):
-        self.assertFalse(lib.is_proxy_set({"all_proxy": "",}))
+        self.assertFalse(
+            lib.is_proxy_set(
+                {
+                    "all_proxy": "",
+                }
+            )
+        )
 
     def test_http_proxy(self):
-        self.assertFalse(lib.is_proxy_set({"http_proxy": "test.proxy",}))
+        self.assertFalse(
+            lib.is_proxy_set(
+                {
+                    "http_proxy": "test.proxy",
+                }
+            )
+        )
 
     def test_HTTP_PROXY(self):
         # pylint: disable=invalid-name
-        self.assertFalse(lib.is_proxy_set({"HTTP_PROXY": "test.proxy",}))
+        self.assertFalse(
+            lib.is_proxy_set(
+                {
+                    "HTTP_PROXY": "test.proxy",
+                }
+            )
+        )
 
     def test_https_proxy(self):
-        self.assertTrue(lib.is_proxy_set({"https_proxy": "test.proxy",}))
+        self.assertTrue(
+            lib.is_proxy_set(
+                {
+                    "https_proxy": "test.proxy",
+                }
+            )
+        )
 
     def test_HTTPS_PROXY(self):
         # pylint: disable=invalid-name
-        self.assertTrue(lib.is_proxy_set({"HTTPS_PROXY": "test.proxy",}))
+        self.assertTrue(
+            lib.is_proxy_set(
+                {
+                    "HTTPS_PROXY": "test.proxy",
+                }
+            )
+        )
 
     def test_all_proxy(self):
-        self.assertTrue(lib.is_proxy_set({"all_proxy": "test.proxy",}))
+        self.assertTrue(
+            lib.is_proxy_set(
+                {
+                    "all_proxy": "test.proxy",
+                }
+            )
+        )
 
     def test_ALL_PROXY(self):
         # pylint: disable=invalid-name
-        self.assertTrue(lib.is_proxy_set({"ALL_PROXY": "test.proxy",}))
+        self.assertTrue(
+            lib.is_proxy_set(
+                {
+                    "ALL_PROXY": "test.proxy",
+                }
+            )
+        )
 
     def test_no_proxy(self):
         self.assertTrue(
-            lib.is_proxy_set({"no_proxy": "*", "all_proxy": "test.proxy",})
+            lib.is_proxy_set(
+                {
+                    "no_proxy": "*",
+                    "all_proxy": "test.proxy",
+                }
+            )
         )
 
 
@@ -387,7 +442,10 @@ def fixture_report_item_list_send(url, data):
         (
             severity.DEBUG,
             report_codes.NODE_COMMUNICATION_STARTED,
-            {"target": url, "data": data,},
+            {
+                "target": url,
+                "data": data,
+            },
         )
     ]
 
@@ -397,7 +455,10 @@ def fixture_report_item_list_debug(url, data):
         (
             severity.DEBUG,
             report_codes.NODE_COMMUNICATION_DEBUG_INFO,
-            {"target": url, "data": data,},
+            {
+                "target": url,
+                "data": data,
+            },
         )
     ]
 
@@ -421,7 +482,10 @@ def fixture_report_item_list_not_connected(node, reason):
         (
             severity.DEBUG,
             report_codes.NODE_COMMUNICATION_NOT_CONNECTED,
-            {"node": node, "reason": reason,},
+            {
+                "node": node,
+                "reason": reason,
+            },
             None,
         )
     ]
@@ -432,7 +496,10 @@ def fixture_report_item_list_proxy_set(node, address):
         (
             severity.WARNING,
             report_codes.NODE_COMMUNICATION_PROXY_IS_SET,
-            {"node": node, "address": address,},
+            {
+                "node": node,
+                "address": address,
+            },
             None,
         )
     ]
@@ -629,7 +696,8 @@ class CommunicatorLoggerTest(TestCase):
         )
         logger_call = mock.call.warning(
             "No more addresses for node {label} to run '{req}'".format(
-                label=response.request.host_label, req=response.request.url,
+                label=response.request.host_label,
+                req=response.request.url,
             )
         )
         self.assertEqual([logger_call], self.logger.mock_calls)

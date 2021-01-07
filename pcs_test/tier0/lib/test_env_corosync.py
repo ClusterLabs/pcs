@@ -120,7 +120,9 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
             self.config.http.corosync.set_corosync_conf(
                 self.corosync_conf_text,
                 communication_list=[
-                    {"label": "node-1",},
+                    {
+                        "label": "node-1",
+                    },
                     {
                         "label": "node-2",
                         "response_code": 400,
@@ -165,7 +167,9 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
                         "response_code": 400,
                         "output": "Failed",
                     },
-                    {"label": "node-2",},
+                    {
+                        "label": "node-2",
+                    },
                 ],
             ).http.corosync.reload_corosync_conf(
                 communication_list=[
@@ -176,7 +180,11 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
                             "output": "Failed",
                         },
                     ],
-                    [{"label": self.node_labels[1],},],
+                    [
+                        {
+                            "label": self.node_labels[1],
+                        },
+                    ],
                 ]
             )
         )
@@ -227,7 +235,11 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
                             ),
                         },
                     ],
-                    [{"label": self.node_labels[1],},],
+                    [
+                        {
+                            "label": self.node_labels[1],
+                        },
+                    ],
                 ]
             )
         )
@@ -370,10 +382,12 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
             [
                 fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
                 fixture.info(
-                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE, node="node-1",
+                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
+                    node="node-1",
                 ),
                 fixture.info(
-                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE, node="node-2",
+                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
+                    node="node-2",
                 ),
                 fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
                 fixture.info(
@@ -397,7 +411,12 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
                         "output": '{"corosync":true}',
                     }
                 ]
-                + [{"label": node,} for node in self.node_labels[1:]]
+                + [
+                    {
+                        "label": node,
+                    }
+                    for node in self.node_labels[1:]
+                ]
             )
         )
         env = self.env_assistant.get_env()
@@ -408,10 +427,12 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
             [
                 fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
                 fixture.error(
-                    report_codes.COROSYNC_RUNNING_ON_NODE, node="node-1",
+                    report_codes.COROSYNC_RUNNING_ON_NODE,
+                    node="node-1",
                 ),
                 fixture.info(
-                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE, node="node-2",
+                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
+                    node="node-2",
                 ),
             ]
         )
@@ -423,8 +444,13 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
         (
             self.config.http.corosync.check_corosync_offline(
                 communication_list=[
-                    dict(label="node-1", output='{"corosync":true}',),
-                    dict(label="node-2",),
+                    dict(
+                        label="node-1",
+                        output='{"corosync":true}',
+                    ),
+                    dict(
+                        label="node-2",
+                    ),
                 ]
             )
         )
@@ -439,10 +465,12 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
             [
                 fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
                 fixture.error(
-                    report_codes.COROSYNC_RUNNING_ON_NODE, node="node-1",
+                    report_codes.COROSYNC_RUNNING_ON_NODE,
+                    node="node-1",
                 ),
                 fixture.info(
-                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE, node="node-2",
+                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
+                    node="node-2",
                 ),
             ]
         )
@@ -488,7 +516,9 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
         (
             self.config.http.corosync.check_corosync_offline(
                 communication_list=[
-                    dict(label="node-1",),
+                    dict(
+                        label="node-1",
+                    ),
                     dict(
                         label="node-2",
                         response_code=401,
@@ -505,7 +535,8 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
             [
                 fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
                 fixture.info(
-                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE, node="node-1",
+                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
+                    node="node-1",
                 ),
                 fixture.error(
                     report_codes.NODE_COMMUNICATION_ERROR_NOT_AUTHORIZED,
@@ -543,7 +574,9 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
                         response_code=401,
                         output="""{"notauthorized":"true"}""",
                     ),
-                    dict(label="node-2",),
+                    dict(
+                        label="node-2",
+                    ),
                 ],
             )
         )
@@ -789,8 +822,14 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
             )
             .http.corosync.qdevice_client_stop(
                 communication_list=[
-                    dict(label="node-1",),
-                    dict(label="node-2", response_code=400, output="error",),
+                    dict(
+                        label="node-1",
+                    ),
+                    dict(
+                        label="node-2",
+                        response_code=400,
+                        output="error",
+                    ),
                 ]
             )
             .http.corosync.qdevice_client_start(
@@ -801,7 +840,9 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
                         error_msg="failure",
                         was_connected=False,
                     ),
-                    dict(label="node-2",),
+                    dict(
+                        label="node-2",
+                    ),
                 ]
             )
         )
@@ -863,7 +904,9 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
             self.config.http.corosync.set_corosync_conf(
                 self.corosync_conf_text,
                 communication_list=[
-                    dict(label="node-1",),
+                    dict(
+                        label="node-1",
+                    ),
                     dict(
                         label="node-2",
                         errno=8,
@@ -881,13 +924,23 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
                             "output": "Failed",
                         },
                     ],
-                    [{"label": self.node_labels[1],},],
+                    [
+                        {
+                            "label": self.node_labels[1],
+                        },
+                    ],
                 ]
             )
             .http.corosync.qdevice_client_stop(
                 communication_list=[
-                    dict(label="node-1",),
-                    dict(label="node-2", response_code=400, output="error",),
+                    dict(
+                        label="node-1",
+                    ),
+                    dict(
+                        label="node-2",
+                        response_code=400,
+                        output="error",
+                    ),
                 ]
             )
             .http.corosync.qdevice_client_start(
@@ -898,7 +951,9 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
                         error_msg="failure",
                         was_connected=False,
                     ),
-                    dict(label="node-2",),
+                    dict(
+                        label="node-2",
+                    ),
                 ]
             )
         )

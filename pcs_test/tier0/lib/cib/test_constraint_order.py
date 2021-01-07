@@ -16,7 +16,9 @@ class PrepareOptionsWithSetTest(TestCase):
         self.cib = "cib"
         self.resource_set_list = "resource_set_list"
         self.prepare = lambda options: order.prepare_options_with_set(
-            self.cib, options, self.resource_set_list,
+            self.cib,
+            options,
+            self.resource_set_list,
         )
 
     @mock.patch("pcs.lib.cib.constraint.order.constraint.create_id")
@@ -36,7 +38,11 @@ class PrepareOptionsWithSetTest(TestCase):
         self.assertRaises(
             Exception,
             lambda: self.prepare(
-                {"symmetrical": "true", "kind": "Optional", "id": invalid_id,}
+                {
+                    "symmetrical": "true",
+                    "kind": "Optional",
+                    "id": invalid_id,
+                }
             ),
         )
         mock_check_new_id_applicable.assert_called_once_with(
@@ -46,7 +52,11 @@ class PrepareOptionsWithSetTest(TestCase):
     def test_refuse_unknown_kind(self, _):
         assert_raise_library_error(
             lambda: self.prepare(
-                {"symmetrical": "true", "kind": "unknown", "id": "id",}
+                {
+                    "symmetrical": "true",
+                    "kind": "unknown",
+                    "id": "id",
+                }
             ),
             (
                 severities.ERROR,
@@ -64,7 +74,11 @@ class PrepareOptionsWithSetTest(TestCase):
     def test_refuse_unknown_symmetrical(self, _):
         assert_raise_library_error(
             lambda: self.prepare(
-                {"symmetrical": "unknown", "kind": "Optional", "id": "id",}
+                {
+                    "symmetrical": "unknown",
+                    "kind": "Optional",
+                    "id": "id",
+                }
             ),
             (
                 severities.ERROR,

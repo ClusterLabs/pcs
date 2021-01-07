@@ -520,13 +520,15 @@ class BundleUpdate(BundleCreateCommon):
     def test_success_delete(self):
         self.fixture_bundle_complex("B")
         self.assert_effect(
-            self.success_command(remove_command="delete"), self.success_xml,
+            self.success_command(remove_command="delete"),
+            self.success_xml,
         )
 
     def test_success_remove(self):
         self.fixture_bundle_complex("B")
         self.assert_effect(
-            self.success_command(remove_command="remove"), self.success_xml,
+            self.success_command(remove_command="remove"),
+            self.success_xml,
         )
 
     def test_deprecated_masters_set(self):

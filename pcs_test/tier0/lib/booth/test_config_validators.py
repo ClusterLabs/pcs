@@ -42,7 +42,8 @@ class Create(TestCase):
             config_validators.create(["1.1.1.1"], ["3.3.3.3", "4.4.4.4"]),
             [
                 fixture.error(
-                    report_codes.BOOTH_LACK_OF_SITES, sites=["1.1.1.1"],
+                    report_codes.BOOTH_LACK_OF_SITES,
+                    sites=["1.1.1.1"],
                 ),
             ],
         )
@@ -50,7 +51,12 @@ class Create(TestCase):
     def test_refuse_even_number_peers(self):
         assert_report_item_list_equal(
             config_validators.create(["1.1.1.1", "2.2.2.2"], []),
-            [fixture.error(report_codes.BOOTH_EVEN_PEERS_NUM, number=2,),],
+            [
+                fixture.error(
+                    report_codes.BOOTH_EVEN_PEERS_NUM,
+                    number=2,
+                ),
+            ],
         )
 
     def test_refuse_address_duplication(self):
@@ -71,9 +77,13 @@ class Create(TestCase):
             config_validators.create(["1.1.1.1"], ["1.1.1.1"]),
             [
                 fixture.error(
-                    report_codes.BOOTH_LACK_OF_SITES, sites=["1.1.1.1"],
+                    report_codes.BOOTH_LACK_OF_SITES,
+                    sites=["1.1.1.1"],
                 ),
-                fixture.error(report_codes.BOOTH_EVEN_PEERS_NUM, number=2,),
+                fixture.error(
+                    report_codes.BOOTH_EVEN_PEERS_NUM,
+                    number=2,
+                ),
                 fixture.error(
                     report_codes.BOOTH_ADDRESS_DUPLICATION,
                     duplicate_addresses=["1.1.1.1"],
@@ -137,7 +147,8 @@ class AddTicket(TestCase):
             config_validators.add_ticket(self.conf, "ticketA", {}),
             [
                 fixture.error(
-                    report_codes.BOOTH_TICKET_DUPLICATE, ticket_name="ticketA",
+                    report_codes.BOOTH_TICKET_DUPLICATE,
+                    ticket_name="ticketA",
                 ),
             ],
         )
@@ -147,7 +158,12 @@ class AddTicket(TestCase):
             config_validators.add_ticket(
                 self.conf,
                 "ticketB",
-                {"site": "a", "port": "b", "timeout": " ", "unknown": " ",},
+                {
+                    "site": "a",
+                    "port": "b",
+                    "timeout": " ",
+                    "unknown": " ",
+                },
             ),
             [
                 fixture.error(
@@ -185,7 +201,10 @@ class AddTicket(TestCase):
             config_validators.add_ticket(
                 self.conf,
                 "ticketB",
-                {"site": "a", "unknown": "c",},
+                {
+                    "site": "a",
+                    "unknown": "c",
+                },
                 allow_unknown_options=True,
             ),
             [

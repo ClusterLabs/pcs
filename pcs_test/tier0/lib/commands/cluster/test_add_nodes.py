@@ -241,7 +241,8 @@ class LocalConfig:
             [fixture.info(reports.codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED)]
             + [
                 fixture.info(
-                    reports.codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE, node=node,
+                    reports.codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                    node=node,
                 )
                 for node in existing_nodes + new_nodes
             ]
@@ -261,7 +262,8 @@ class LocalConfig:
                 name=f"{local_prefix}runner.systemctl.list_unit_files.sbd",
             )
             .runner.systemctl.is_enabled(
-                "sbd", name=f"{local_prefix}runner.systemctl.is_enabled.sbd",
+                "sbd",
+                name=f"{local_prefix}runner.systemctl.is_enabled.sbd",
             )
             .local.read_sbd_config(name_sufix="-atb_needed")
             .http.corosync.check_corosync_offline(
@@ -301,7 +303,8 @@ class LocalConfig:
     def check_sbd(self, node_labels, with_devices=True):
         self.config.http.sbd.check_sbd(
             communication_list=_get_check_sbd_communication_list(
-                node_labels, with_devices=with_devices,
+                node_labels,
+                with_devices=with_devices,
             ),
             name="local.check_sbd.http.sbd_check_sbd",
         )
@@ -358,7 +361,8 @@ class LocalConfig:
             [fixture.info(reports.codes.SBD_CONFIG_DISTRIBUTION_STARTED)]
             + [
                 fixture.info(
-                    reports.codes.SBD_CONFIG_ACCEPTED_BY_NODE, node=node,
+                    reports.codes.SBD_CONFIG_ACCEPTED_BY_NODE,
+                    node=node,
                 )
                 for node in node_labels
             ]
@@ -402,7 +406,8 @@ class LocalConfig:
                 name=f"{local_prefix}fs.listdir.booth_config_dir",
             )
             .fs.isfile(
-                config_path, name=f"{local_prefix}fs.isfile.booth_config_file",
+                config_path,
+                name=f"{local_prefix}fs.isfile.booth_config_file",
             )
             .raw_file.read(
                 file_type_codes.BOOTH_CONFIG,
@@ -630,7 +635,8 @@ class LocalConfig:
             ]
             + [
                 fixture.info(
-                    reports.codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS, node=node,
+                    reports.codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS,
+                    node=node,
                 )
                 for node in node_labels
             ]
@@ -799,7 +805,9 @@ class AddNodesSuccessMinimal(TestCase):
 
     def _test_enable(self, existing, new):
         self.set_up(existing, new)
-        self.config.http.host.enable_cluster(node_labels=self.new_nodes,)
+        self.config.http.host.enable_cluster(
+            node_labels=self.new_nodes,
+        )
 
         cluster.add_nodes(
             self.env_assist.get_env(),
@@ -925,7 +933,10 @@ class AddNodesSuccessMinimal(TestCase):
                 ),
             ]
             + [
-                fixture.info(reports.codes.CLUSTER_START_SUCCESS, node=node,)
+                fixture.info(
+                    reports.codes.CLUSTER_START_SUCCESS,
+                    node=node,
+                )
                 for node in self.new_nodes
             ]
         )
@@ -1058,7 +1069,10 @@ class AddNodesSuccessMinimal(TestCase):
                 ),
             ]
             + [
-                fixture.info(reports.codes.CLUSTER_START_SUCCESS, node=node,)
+                fixture.info(
+                    reports.codes.CLUSTER_START_SUCCESS,
+                    node=node,
+                )
                 for node in self.new_nodes
             ]
         )
@@ -1137,7 +1151,10 @@ def sbd_config_generator(node, with_devices=True):
     {devices}SBD_OPTS="-n {node_name}"
     SBD_WATCHDOG_DEV=/dev/watchdog-{node_name}
     """
-    ).format(devices=devices, node_name=node,)
+    ).format(
+        devices=devices,
+        node_name=node,
+    )
 
 
 class SslCertSync(TestCase):
@@ -1274,7 +1291,8 @@ class AddNodeFull(TestCase):
         (
             self.config.corosync_conf.load_content(
                 corosync_conf_fixture(
-                    self.existing_corosync_nodes, qdevice_net=True,
+                    self.existing_corosync_nodes,
+                    qdevice_net=True,
                 )
             )
             .runner.cib.load()
@@ -1340,7 +1358,9 @@ class AddNodeFull(TestCase):
                         label=node,
                         output=json.dumps(
                             {
-                                "sbd": {"installed": True,},
+                                "sbd": {
+                                    "installed": True,
+                                },
                                 "watchdog": {
                                     "exist": True,
                                     "path": _get_watchdog(node),
@@ -1410,7 +1430,9 @@ class AddNodeFull(TestCase):
                         label=node,
                         output=json.dumps(
                             {
-                                "sbd": {"installed": True,},
+                                "sbd": {
+                                    "installed": True,
+                                },
                                 "device_list": [
                                     dict(
                                         path=dev, exist=True, block_device=True
@@ -1552,7 +1574,9 @@ class FailureReloadCorosyncConf(TestCase):
                 corosync_conf_fixture(existing_corosync_nodes)
             )
             .runner.cib.load()
-            .http.host.check_auth(node_labels=self.existing_nodes,)
+            .http.host.check_auth(
+                node_labels=self.existing_nodes,
+            )
             # SBD not installed
             .runner.systemctl.list_unit_files({})
             .local.get_host_info(self.new_nodes)
@@ -1619,7 +1643,11 @@ class FailureReloadCorosyncConf(TestCase):
                         ),
                     )
                 ],
-                [dict(label="node3",)],
+                [
+                    dict(
+                        label="node3",
+                    )
+                ],
             ]
         )
 
@@ -1643,7 +1671,8 @@ class FailureReloadCorosyncConf(TestCase):
                     reason=self.err_msg,
                 ),
                 fixture.info(
-                    reports.codes.COROSYNC_CONFIG_RELOADED, node="node3",
+                    reports.codes.COROSYNC_CONFIG_RELOADED,
+                    node="node3",
                 ),
             ]
         )
@@ -1666,7 +1695,11 @@ class FailureReloadCorosyncConf(TestCase):
                         ),
                     )
                 ],
-                [dict(label="node3",)],
+                [
+                    dict(
+                        label="node3",
+                    )
+                ],
             ]
         )
 
@@ -1688,7 +1721,8 @@ class FailureReloadCorosyncConf(TestCase):
                     reason=self.err_msg,
                 ),
                 fixture.info(
-                    reports.codes.COROSYNC_CONFIG_RELOADED, node="node3",
+                    reports.codes.COROSYNC_CONFIG_RELOADED,
+                    node="node3",
                 ),
             ]
         )
@@ -1742,8 +1776,19 @@ class FailureReloadCorosyncConf(TestCase):
                         ),
                     )
                 ],
-                [dict(label="node3", output="not a json",)],
-                [dict(label="node4", response_code=400, output=self.err_msg,)],
+                [
+                    dict(
+                        label="node3",
+                        output="not a json",
+                    )
+                ],
+                [
+                    dict(
+                        label="node4",
+                        response_code=400,
+                        output=self.err_msg,
+                    )
+                ],
             ]
         )
 
@@ -1769,7 +1814,8 @@ class FailureReloadCorosyncConf(TestCase):
                     reason=self.err_msg,
                 ),
                 fixture.warn(
-                    reports.codes.INVALID_RESPONSE_FORMAT, node="node3",
+                    reports.codes.INVALID_RESPONSE_FORMAT,
+                    node="node3",
                 ),
                 fixture.warn(
                     reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
@@ -1804,7 +1850,9 @@ class FailureCorosyncConfDistribution(TestCase):
                 corosync_conf_fixture(existing_corosync_nodes)
             )
             .runner.cib.load()
-            .http.host.check_auth(node_labels=self.existing_nodes,)
+            .http.host.check_auth(
+                node_labels=self.existing_nodes,
+            )
             # SBD not installed
             .runner.systemctl.list_unit_files({})
             .local.get_host_info(self.new_nodes)
@@ -2005,7 +2053,9 @@ class FailurePcsdSslCertSync(TestCase):
                 corosync_conf_fixture(existing_corosync_nodes)
             )
             .runner.cib.load()
-            .http.host.check_auth(node_labels=self.existing_nodes,)
+            .http.host.check_auth(
+                node_labels=self.existing_nodes,
+            )
             # SBD not installed
             .runner.systemctl.list_unit_files({})
             .local.get_host_info(self.new_nodes)
@@ -2086,7 +2136,11 @@ class FailurePcsdSslCertSync(TestCase):
                 cert=self.pcsd_ssl_cert,
                 key=self.pcsd_ssl_key,
                 communication_list=[
-                    {"label": node, "response_code": 400, "output": self.error,}
+                    {
+                        "label": node,
+                        "response_code": 400,
+                        "output": self.error,
+                    }
                     for node in self.unsuccessful_nodes
                 ]
                 + [dict(label=node) for node in self.successful_nodes],
@@ -2099,7 +2153,8 @@ class FailurePcsdSslCertSync(TestCase):
             self.expected_reports
             + [
                 fixture.info(
-                    reports.codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS, node=node,
+                    reports.codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS,
+                    node=node,
                 )
                 for node in self.successful_nodes
             ]
@@ -2146,7 +2201,9 @@ class FailureFilesDistribution(TestCase):
                 corosync_conf_fixture(self.existing_corosync_nodes)
             )
             .runner.cib.load()
-            .http.host.check_auth(node_labels=self.existing_nodes,)
+            .http.host.check_auth(
+                node_labels=self.existing_nodes,
+            )
             # SBD not installed
             .runner.systemctl.list_unit_files({})
             .local.get_host_info(self.new_nodes)
@@ -2517,7 +2574,11 @@ class FailureFilesDistribution(TestCase):
                 corosync_authkey=self.corosync_authkey_content,
                 pcs_disaster_recovery_conf=self.pcsd_dr_config_content,
                 communication_list=[
-                    dict(label=node, output=self.err_msg, response_code=400,)
+                    dict(
+                        label=node,
+                        output=self.err_msg,
+                        response_code=400,
+                    )
                     for node in self.unsuccessful_nodes
                 ]
                 + [dict(label=node) for node in self.successful_nodes],
@@ -2575,7 +2636,10 @@ class FailureFilesDistribution(TestCase):
                 corosync_authkey=self.corosync_authkey_content,
                 pcs_disaster_recovery_conf=self.pcsd_dr_config_content,
                 communication_list=[
-                    dict(label=node, output="not json",)
+                    dict(
+                        label=node,
+                        output="not json",
+                    )
                     for node in self.unsuccessful_nodes
                 ]
                 + [dict(label=node) for node in self.successful_nodes],
@@ -2589,7 +2653,10 @@ class FailureFilesDistribution(TestCase):
             + self.distribution_started_reports
             + self.successful_reports
             + [
-                fixture.error(reports.codes.INVALID_RESPONSE_FORMAT, node=node,)
+                fixture.error(
+                    reports.codes.INVALID_RESPONSE_FORMAT,
+                    node=node,
+                )
                 for node in self.unsuccessful_nodes
             ]
         )
@@ -2697,7 +2764,9 @@ class FailureBoothConfigsDistribution(TestCase):
                 corosync_conf_fixture(self.existing_corosync_nodes)
             )
             .runner.cib.load()
-            .http.host.check_auth(node_labels=self.existing_nodes,)
+            .http.host.check_auth(
+                node_labels=self.existing_nodes,
+            )
             # SBD not installed
             .runner.systemctl.list_unit_files({})
             .local.get_host_info(self.new_nodes)
@@ -3125,7 +3194,9 @@ class FailureBoothConfigsDistribution(TestCase):
                             dict(
                                 saved=[self.authfile],
                                 existing=[],
-                                failed={self.config_file: self.err_msg,},
+                                failed={
+                                    self.config_file: self.err_msg,
+                                },
                             )
                         ),
                     )
@@ -3191,7 +3262,11 @@ class FailureBoothConfigsDistribution(TestCase):
                 ],
                 saved=[self.config_file, self.authfile],
                 communication_list=[
-                    dict(label=node, output=self.err_msg, response_code=400,)
+                    dict(
+                        label=node,
+                        output=self.err_msg,
+                        response_code=400,
+                    )
                     for node in self.unsuccessful_nodes
                 ]
                 + [dict(label=node) for node in self.successful_nodes],
@@ -3246,7 +3321,10 @@ class FailureBoothConfigsDistribution(TestCase):
                 ],
                 saved=[self.config_file, self.authfile],
                 communication_list=[
-                    dict(label=node, output="not json",)
+                    dict(
+                        label=node,
+                        output="not json",
+                    )
                     for node in self.unsuccessful_nodes
                 ]
                 + [dict(label=node) for node in self.successful_nodes],
@@ -3260,7 +3338,10 @@ class FailureBoothConfigsDistribution(TestCase):
             + self.distribution_started_reports
             + self.successful_reports
             + [
-                fixture.error(reports.codes.INVALID_RESPONSE_FORMAT, node=node,)
+                fixture.error(
+                    reports.codes.INVALID_RESPONSE_FORMAT,
+                    node=node,
+                )
                 for node in self.unsuccessful_nodes
             ]
         )
@@ -3407,7 +3488,11 @@ class FailureDisableSbd(TestCase):
     def test_communication_failure(self):
         self.config.http.sbd.disable_sbd(
             communication_list=[
-                dict(label=node, output=self.err_msg, response_code=400,)
+                dict(
+                    label=node,
+                    output=self.err_msg,
+                    response_code=400,
+                )
                 for node in self.unsuccessful_nodes
             ]
             + [dict(label=node) for node in self.successful_nodes]
@@ -3536,7 +3621,11 @@ class FailureEnableSbd(TestCase):
             )
             .http.sbd.enable_sbd(
                 communication_list=[
-                    dict(label=node, output=self.err_msg, response_code=400,)
+                    dict(
+                        label=node,
+                        output=self.err_msg,
+                        response_code=400,
+                    )
                     for node in self.unsuccessful_nodes
                 ]
                 + [dict(label=node) for node in self.successful_nodes]
@@ -3550,7 +3639,8 @@ class FailureEnableSbd(TestCase):
             + [fixture.info(reports.codes.SBD_CONFIG_DISTRIBUTION_STARTED)]
             + [
                 fixture.info(
-                    reports.codes.SBD_CONFIG_ACCEPTED_BY_NODE, node=node,
+                    reports.codes.SBD_CONFIG_ACCEPTED_BY_NODE,
+                    node=node,
                 )
                 for node in self.new_nodes
             ]
@@ -3626,7 +3716,8 @@ class FailureEnableSbd(TestCase):
             + [fixture.info(reports.codes.SBD_CONFIG_DISTRIBUTION_STARTED)]
             + [
                 fixture.info(
-                    reports.codes.SBD_CONFIG_ACCEPTED_BY_NODE, node=node,
+                    reports.codes.SBD_CONFIG_ACCEPTED_BY_NODE,
+                    node=node,
                 )
                 for node in self.successful_nodes
             ]
@@ -3688,7 +3779,8 @@ class FailureQdevice(TestCase):
             self.config.runner.systemctl.is_enabled("sbd", is_enabled=False)
             .corosync_conf.load_content(
                 corosync_conf_fixture(
-                    self.existing_corosync_nodes, qdevice_net=True,
+                    self.existing_corosync_nodes,
+                    qdevice_net=True,
                 )
             )
             .runner.cib.load()
@@ -3750,7 +3842,8 @@ class FailureQdevice(TestCase):
                 name="fs.exists.corosync_certs_db2",
             )
             .runner.corosync.qdevice_get_pk12(
-                cert_path=tmp_file_path, output_path=pk12_cert_path,
+                cert_path=tmp_file_path,
+                output_path=pk12_cert_path,
             )
             .fs.open(
                 pk12_cert_path,
@@ -3761,10 +3854,19 @@ class FailureQdevice(TestCase):
             .http.corosync.qdevice_net_client_import_cert_and_key(
                 cert=pk12_cert,
                 communication_list=[
-                    dict(label=node, output=self.err_msg, response_code=400,)
+                    dict(
+                        label=node,
+                        output=self.err_msg,
+                        response_code=400,
+                    )
                     for node in self.unsuccessful_nodes
                 ]
-                + [dict(label=node,) for node in self.successful_nodes],
+                + [
+                    dict(
+                        label=node,
+                    )
+                    for node in self.successful_nodes
+                ],
             )
         )
 
@@ -3813,11 +3915,16 @@ class FailureQdevice(TestCase):
                 name="fs.exists.corosync_certs_db2",
             )
             .runner.corosync.qdevice_get_pk12(
-                cert_path=tmp_file_path, output_path=pk12_cert_path,
+                cert_path=tmp_file_path,
+                output_path=pk12_cert_path,
             )
             .fs.open(
                 pk12_cert_path,
-                side_effect=EnvironmentError(1, self.err_msg, pk12_cert_path,),
+                side_effect=EnvironmentError(
+                    1,
+                    self.err_msg,
+                    pk12_cert_path,
+                ),
                 mode="rb",
                 name="fs.open.pk12_cert_read",
             )
@@ -3899,7 +4006,8 @@ class FailureQdevice(TestCase):
             self.expected_reports
             + [
                 fixture.error(
-                    reports.codes.INVALID_RESPONSE_FORMAT, node=QDEVICE_HOST,
+                    reports.codes.INVALID_RESPONSE_FORMAT,
+                    node=QDEVICE_HOST,
                 )
             ]
         )
@@ -3909,10 +4017,12 @@ class FailureQdevice(TestCase):
         cert_req_path = "cert_req_path"
         (
             self.config.http.corosync.qdevice_net_get_ca_cert(
-                ca_cert=ca_cert, node_labels=[QDEVICE_HOST],
+                ca_cert=ca_cert,
+                node_labels=[QDEVICE_HOST],
             )
             .http.corosync.qdevice_net_client_setup(
-                ca_cert=ca_cert, node_labels=self.new_nodes,
+                ca_cert=ca_cert,
+                node_labels=self.new_nodes,
             )
             .fs.exists(
                 os.path.join(
@@ -3922,7 +4032,8 @@ class FailureQdevice(TestCase):
                 name="fs.exists.corosync_certs_db",
             )
             .runner.corosync.qdevice_generate_cert(
-                CLUSTER_NAME, cert_req_path=cert_req_path,
+                CLUSTER_NAME,
+                cert_req_path=cert_req_path,
             )
             .fs.open(
                 cert_req_path,
@@ -3955,10 +4066,12 @@ class FailureQdevice(TestCase):
         ca_cert = b"ca_cert"
         (
             self.config.http.corosync.qdevice_net_get_ca_cert(
-                ca_cert=ca_cert, node_labels=[QDEVICE_HOST],
+                ca_cert=ca_cert,
+                node_labels=[QDEVICE_HOST],
             )
             .http.corosync.qdevice_net_client_setup(
-                ca_cert=ca_cert, node_labels=self.new_nodes,
+                ca_cert=ca_cert,
+                node_labels=self.new_nodes,
             )
             .fs.exists(
                 os.path.join(
@@ -3999,14 +4112,24 @@ class FailureQdevice(TestCase):
         ca_cert = b"ca_cert"
         (
             self.config.http.corosync.qdevice_net_get_ca_cert(
-                ca_cert=ca_cert, node_labels=[QDEVICE_HOST],
+                ca_cert=ca_cert,
+                node_labels=[QDEVICE_HOST],
             ).http.corosync.qdevice_net_client_setup(
                 ca_cert=ca_cert,
                 communication_list=[
-                    dict(label=node, output=self.err_msg, response_code=400,)
+                    dict(
+                        label=node,
+                        output=self.err_msg,
+                        response_code=400,
+                    )
                     for node in self.unsuccessful_nodes
                 ]
-                + [dict(label=node,) for node in self.successful_nodes],
+                + [
+                    dict(
+                        label=node,
+                    )
+                    for node in self.successful_nodes
+                ],
             )
         )
 
@@ -4053,7 +4176,8 @@ class FailureQdevice(TestCase):
                     reports.codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
                 ),
                 fixture.error(
-                    reports.codes.INVALID_RESPONSE_FORMAT, node=QDEVICE_HOST,
+                    reports.codes.INVALID_RESPONSE_FORMAT,
+                    node=QDEVICE_HOST,
                 ),
             ]
         )
@@ -4117,7 +4241,11 @@ class FailureKnownHostsUpdate(TestCase):
         self.config.http.host.update_known_hosts(
             to_add_hosts=self.existing_nodes + self.new_nodes,
             communication_list=[
-                dict(label=node, output=self.err_msg, response_code=400,)
+                dict(
+                    label=node,
+                    output=self.err_msg,
+                    response_code=400,
+                )
                 for node in self.unsuccessful_nodes
             ]
             + [dict(label=node) for node in self.successful_nodes],

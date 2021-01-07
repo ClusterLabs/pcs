@@ -60,7 +60,13 @@ class Capabilities(TestCase):
                         "This capability is available in both pcs and pcsd."
                     ),
                 },
-                {"id": "test.empty-description", "description": "",},
-                {"id": "test.no-description", "description": "",},
+                {
+                    "id": "test.empty-description",
+                    "description": "",
+                },
+                {
+                    "id": "test.no-description",
+                    "description": "",
+                },
             ],
         )

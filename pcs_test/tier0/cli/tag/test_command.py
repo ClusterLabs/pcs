@@ -44,8 +44,14 @@ class TagCreate(TestCase):
 @mock.patch("pcs.cli.tag.command.print")
 class TagConfig(TestCase):
     tag_dicts = [
-        {"tag_id": "tag1", "idref_list": ["i1", "i2", "i3"],},
-        {"tag_id": "tag2", "idref_list": ["j1", "j2", "j3"],},
+        {
+            "tag_id": "tag1",
+            "idref_list": ["i1", "i2", "i3"],
+        },
+        {
+            "tag_id": "tag2",
+            "idref_list": ["j1", "j2", "j3"],
+        },
     ]
 
     def setUp(self):
@@ -205,7 +211,8 @@ class TagUpdate(TestCase):
     def test_both_after_and_before(self):
         with self.assertRaises(CmdLineInputError) as cm:
             self._call_cmd(
-                ["tag_id", "add", "id1"], dict(after="A", before="B"),
+                ["tag_id", "add", "id1"],
+                dict(after="A", before="B"),
             )
         self.assertEqual(
             cm.exception.message, "Cannot specify both --before and --after"
@@ -215,13 +222,21 @@ class TagUpdate(TestCase):
     def test_only_add(self):
         self._call_cmd(["tag_id", "add", "id1"])
         self.tag.update.assert_called_once_with(
-            "tag_id", ["id1"], [], adjacent_idref=None, put_after_adjacent=True,
+            "tag_id",
+            ["id1"],
+            [],
+            adjacent_idref=None,
+            put_after_adjacent=True,
         )
 
     def test_only_remove(self):
         self._call_cmd(["tag_id", "remove", "id1"])
         self.tag.update.assert_called_once_with(
-            "tag_id", [], ["id1"], adjacent_idref=None, put_after_adjacent=True,
+            "tag_id",
+            [],
+            ["id1"],
+            adjacent_idref=None,
+            put_after_adjacent=True,
         )
 
     def test_both_add_remove(self):
@@ -237,13 +252,21 @@ class TagUpdate(TestCase):
     def test_only_add_after(self):
         self._call_cmd(["tag_id", "add", "id1"], dict(after="A"))
         self.tag.update.assert_called_once_with(
-            "tag_id", ["id1"], [], adjacent_idref="A", put_after_adjacent=True,
+            "tag_id",
+            ["id1"],
+            [],
+            adjacent_idref="A",
+            put_after_adjacent=True,
         )
 
     def test_only_add_before(self):
         self._call_cmd(["tag_id", "add", "id1"], dict(before="B"))
         self.tag.update.assert_called_once_with(
-            "tag_id", ["id1"], [], adjacent_idref="B", put_after_adjacent=False,
+            "tag_id",
+            ["id1"],
+            [],
+            adjacent_idref="B",
+            put_after_adjacent=False,
         )
 
     def test_add_after_and_remove(self):

@@ -123,7 +123,8 @@ class OddNumOfNodesSuccess(TestCase):
             ]
         )
         self.config.http.sbd.set_sbd_config(
-            config_generator=config_generator, node_labels=self.node_list,
+            config_generator=config_generator,
+            node_labels=self.node_list,
         )
         self.config.http.pcmk.remove_stonith_watchdog_timeout(
             node_labels=[self.node_list[0]]
@@ -143,7 +144,9 @@ class OddNumOfNodesSuccess(TestCase):
 
     def test_no_device(self):
         config_generator = lambda node: self.sbd_config_template.format(
-            node_name=node, watchdog=self.watchdog_dict[node], devices="",
+            node_name=node,
+            watchdog=self.watchdog_dict[node],
+            devices="",
         )
         self.config.http.sbd.check_sbd(
             communication_list=[
@@ -154,7 +157,8 @@ class OddNumOfNodesSuccess(TestCase):
             ]
         )
         self.config.http.sbd.set_sbd_config(
-            config_generator=config_generator, node_labels=self.node_list,
+            config_generator=config_generator,
+            node_labels=self.node_list,
         )
         self.config.http.pcmk.remove_stonith_watchdog_timeout(
             node_labels=[self.node_list[0]]
@@ -207,7 +211,8 @@ class OddNumOfNodesDefaultsSuccess(TestCase):
             ]
         )
         self.config.http.sbd.set_sbd_config(
-            config_generator=config_generator, node_labels=self.node_list,
+            config_generator=config_generator,
+            node_labels=self.node_list,
         )
         self.config.http.pcmk.remove_stonith_watchdog_timeout(
             node_labels=[self.node_list[0]]
@@ -226,7 +231,8 @@ class OddNumOfNodesDefaultsSuccess(TestCase):
 
     def test_no_device(self):
         config_generator = lambda node: self.sbd_config_template.format(
-            node_name=node, devices="",
+            node_name=node,
+            devices="",
         )
         self.config.http.sbd.check_sbd(
             communication_list=[
@@ -235,7 +241,8 @@ class OddNumOfNodesDefaultsSuccess(TestCase):
             ]
         )
         self.config.http.sbd.set_sbd_config(
-            config_generator=config_generator, node_labels=self.node_list,
+            config_generator=config_generator,
+            node_labels=self.node_list,
         )
         self.config.http.pcmk.remove_stonith_watchdog_timeout(
             node_labels=[self.node_list[0]]
@@ -284,7 +291,9 @@ class WatchdogValidations(TestCase):
                     label=self.node_list[2],
                     output=json.dumps(
                         {
-                            "sbd": {"installed": True,},
+                            "sbd": {
+                                "installed": True,
+                            },
                             "watchdog": {
                                 "exist": True,
                                 "path": self.watchdog,
@@ -335,7 +344,8 @@ class WatchdogValidations(TestCase):
             ]
         )
         self.config.http.sbd.set_sbd_config(
-            config_generator=config_generator, node_labels=self.node_list,
+            config_generator=config_generator,
+            node_labels=self.node_list,
         )
         self.config.http.pcmk.remove_stonith_watchdog_timeout(
             node_labels=[self.node_list[0]]
@@ -390,7 +400,8 @@ class EvenNumOfNodes(TestCase):
             ]
         )
         self.config.http.sbd.set_sbd_config(
-            config_generator=config_generator, node_labels=self.node_list,
+            config_generator=config_generator,
+            node_labels=self.node_list,
         )
         self.config.http.pcmk.remove_stonith_watchdog_timeout(
             node_labels=[self.node_list[0]]
@@ -410,7 +421,8 @@ class EvenNumOfNodes(TestCase):
     @mock.patch("pcs.lib.external.is_systemctl", lambda: True)
     def test_no_device(self):
         config_generator = lambda node: self.sbd_config_template.format(
-            node_name=node, devices="",
+            node_name=node,
+            devices="",
         )
         self.config.http.sbd.check_sbd(
             communication_list=[
@@ -425,7 +437,8 @@ class EvenNumOfNodes(TestCase):
             need_stopped_cluster=True,
         )
         self.config.http.sbd.set_sbd_config(
-            config_generator=config_generator, node_labels=self.node_list,
+            config_generator=config_generator,
+            node_labels=self.node_list,
         )
         self.config.http.pcmk.remove_stonith_watchdog_timeout(
             node_labels=[self.node_list[0]]
@@ -439,13 +452,15 @@ class EvenNumOfNodes(TestCase):
         )
         self.env_assist.assert_reports(
             _sbd_enable_successful_report_list_fixture(
-                self.node_list, atb_set=True,
+                self.node_list,
+                atb_set=True,
             )
         )
 
     def test_no_device_auto_tie_breaker_enabled(self):
         config_generator = lambda node: self.sbd_config_template.format(
-            node_name=node, devices="",
+            node_name=node,
+            devices="",
         )
         self.config.corosync_conf.load(
             filename=self.corosync_conf_name,
@@ -459,7 +474,8 @@ class EvenNumOfNodes(TestCase):
             ]
         )
         self.config.http.sbd.set_sbd_config(
-            config_generator=config_generator, node_labels=self.node_list,
+            config_generator=config_generator,
+            node_labels=self.node_list,
         )
         self.config.http.pcmk.remove_stonith_watchdog_timeout(
             node_labels=[self.node_list[0]]
@@ -477,10 +493,12 @@ class EvenNumOfNodes(TestCase):
 
     def test_no_device_with_qdevice(self):
         config_generator = lambda node: self.sbd_config_template.format(
-            node_name=node, devices="",
+            node_name=node,
+            devices="",
         )
         self.config.corosync_conf.load(
-            filename="corosync-qdevice.conf", instead="corosync_conf.load",
+            filename="corosync-qdevice.conf",
+            instead="corosync_conf.load",
         )
         self.config.http.sbd.check_sbd(
             communication_list=[
@@ -489,7 +507,8 @@ class EvenNumOfNodes(TestCase):
             ]
         )
         self.config.http.sbd.set_sbd_config(
-            config_generator=config_generator, node_labels=self.node_list,
+            config_generator=config_generator,
+            node_labels=self.node_list,
         )
         self.config.http.pcmk.remove_stonith_watchdog_timeout(
             node_labels=[self.node_list[0]]
@@ -569,7 +588,8 @@ class OfflineNodes(TestCase):
 
     def test_ignore_offline_nodes(self):
         self.config.corosync_conf.load(
-            filename="corosync-qdevice.conf", instead="corosync_conf.load",
+            filename="corosync-qdevice.conf",
+            instead="corosync_conf.load",
         )
         self.config.http.sbd.check_sbd(
             communication_list=[
@@ -594,7 +614,10 @@ class OfflineNodes(TestCase):
         )
         self.env_assist.assert_reports(
             [
-                fixture.warn(report_codes.OMITTING_NODE, node=node,)
+                fixture.warn(
+                    report_codes.OMITTING_NODE,
+                    node=node,
+                )
                 for node in self.offline_node_list
             ]
             + _sbd_enable_successful_report_list_fixture(self.online_node_list)
@@ -772,7 +795,9 @@ class Validations(TestCase):
                 self.env_assist.get_env(),
                 default_watchdog="/dev/watchdog",
                 watchdog_dict={},
-                sbd_options={"SBD_TIMEOUT_ACTION": "noflush,flush",},
+                sbd_options={
+                    "SBD_TIMEOUT_ACTION": "noflush,flush",
+                },
             )
         )
         self.env_assist.assert_reports(
@@ -903,12 +928,20 @@ class Validations(TestCase):
                     label=self.node_list[1],
                     output=json.dumps(
                         {
-                            "sbd": {"installed": False,},
-                            "watchdog": {"exist": True, "path": watchdog,},
+                            "sbd": {
+                                "installed": False,
+                            },
+                            "watchdog": {
+                                "exist": True,
+                                "path": watchdog,
+                            },
                             "device_list": [],
                         }
                     ),
-                    param_list=[("watchdog", watchdog), ("device_list", "[]"),],
+                    param_list=[
+                        ("watchdog", watchdog),
+                        ("device_list", "[]"),
+                    ],
                 ),
             ]
         )
@@ -947,12 +980,20 @@ class Validations(TestCase):
                     label=self.node_list[1],
                     output=json.dumps(
                         {
-                            "sbd": {"installed": True,},
-                            "watchdog": {"exist": False, "path": watchdog,},
+                            "sbd": {
+                                "installed": True,
+                            },
+                            "watchdog": {
+                                "exist": False,
+                                "path": watchdog,
+                            },
                             "device_list": [],
                         }
                     ),
-                    param_list=[("watchdog", watchdog), ("device_list", "[]"),],
+                    param_list=[
+                        ("watchdog", watchdog),
+                        ("device_list", "[]"),
+                    ],
                 ),
             ]
         )
@@ -994,8 +1035,13 @@ class Validations(TestCase):
                     label=self.node_list[1],
                     output=json.dumps(
                         {
-                            "sbd": {"installed": True,},
-                            "watchdog": {"exist": True, "path": watchdog,},
+                            "sbd": {
+                                "installed": True,
+                            },
+                            "watchdog": {
+                                "exist": True,
+                                "path": watchdog,
+                            },
                             "device_list": [
                                 dict(
                                     path=device_list[0],
@@ -1076,7 +1122,9 @@ class Validations(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.NODE_NOT_FOUND, node=node, searched_types=[],
+                    report_codes.NODE_NOT_FOUND,
+                    node=node,
+                    searched_types=[],
                 )
                 for node in unknown_node_list
             ]
@@ -1138,9 +1186,13 @@ class FailureHandling(TestCase):
         self.reason = "failure reason"
         self.communication_list_failure = [
             dict(
-                label=self.node_list[0], response_code=400, output=self.reason,
+                label=self.node_list[0],
+                response_code=400,
+                output=self.reason,
             ),
-            dict(label=self.node_list[1],),
+            dict(
+                label=self.node_list[1],
+            ),
         ]
         self.communication_list_not_connected = [
             dict(
@@ -1149,7 +1201,9 @@ class FailureHandling(TestCase):
                 error_msg=self.reason,
                 was_connected=False,
             ),
-            dict(label=self.node_list[1],),
+            dict(
+                label=self.node_list[1],
+            ),
         ]
         self.config.env.set_known_nodes(self.node_list)
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
@@ -1677,7 +1731,8 @@ class UnknownHosts(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.warn(
-                    report_codes.HOST_NOT_FOUND, host_list=self.unknown_hosts,
+                    report_codes.HOST_NOT_FOUND,
+                    host_list=self.unknown_hosts,
                 )
             ]
             + _sbd_enable_successful_report_list_fixture(self.known_hosts)
@@ -1744,7 +1799,8 @@ class MissingNodeNamesInCorosync(TestCase):
         """
         )
         config_generator = lambda node: sbd_config_template.format(
-            node_name=node, devices="",
+            node_name=node,
+            devices="",
         )
 
         (
@@ -1763,7 +1819,8 @@ class MissingNodeNamesInCorosync(TestCase):
                 ]
             )
             .http.sbd.set_sbd_config(
-                config_generator=config_generator, node_labels=node_list,
+                config_generator=config_generator,
+                node_labels=node_list,
             )
             .http.pcmk.remove_stonith_watchdog_timeout(node_labels=node_list)
             .http.sbd.enable_sbd(node_labels=node_list)
@@ -1845,7 +1902,10 @@ class MissingNodeNamesInCorosync(TestCase):
             lambda: enable_sbd(
                 self.env_assist.get_env(),
                 default_watchdog=self.watchdog,
-                watchdog_dict={"rh7-1": "/dev/wd1", "rh7-2": "/dev/wd2",},
+                watchdog_dict={
+                    "rh7-1": "/dev/wd1",
+                    "rh7-2": "/dev/wd2",
+                },
                 sbd_options={},
                 node_device_dict={
                     "rh7-1": ["/dev/dev1"],
@@ -1885,6 +1945,8 @@ class MissingNodeNamesInCorosync(TestCase):
                     report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
                     fatal=False,
                 ),
-                fixture.error(report_codes.COROSYNC_CONFIG_NO_NODES_DEFINED,),
+                fixture.error(
+                    report_codes.COROSYNC_CONFIG_NO_NODES_DEFINED,
+                ),
             ]
         )

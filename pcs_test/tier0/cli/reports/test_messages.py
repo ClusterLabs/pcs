@@ -338,7 +338,8 @@ class LiveEnvironmentNotConsistent(CliReportMessageTestBase):
     def test_one_one(self):
         self.assert_message(
             messages.LiveEnvironmentNotConsistent(
-                [file_type_codes.BOOTH_CONFIG], [file_type_codes.BOOTH_KEY],
+                [file_type_codes.BOOTH_CONFIG],
+                [file_type_codes.BOOTH_KEY],
             ),
             (
                 "When '--booth-conf' is specified, "

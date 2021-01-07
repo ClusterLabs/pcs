@@ -43,7 +43,11 @@ def complete_state_resources(resource_status):
         )
     for group in resource_status.xpath(".//group"):
         _default_element_attributes(
-            group, {"disabled": "false", "managed": "true",}
+            group,
+            {
+                "disabled": "false",
+                "managed": "true",
+            },
         )
     for clone in resource_status.xpath(".//clone"):
         _default_element_attributes(
@@ -243,7 +247,9 @@ def report_id_already_exist(_id):
     return (
         severities.ERROR,
         report_codes.ID_ALREADY_EXISTS,
-        {"id": _id,},
+        {
+            "id": _id,
+        },
     )
 
 
@@ -251,7 +257,9 @@ def report_resource_not_running(resource, severity=severities.INFO):
     return (
         severity,
         report_codes.RESOURCE_DOES_NOT_RUN,
-        {"resource_id": resource,},
+        {
+            "resource_id": resource,
+        },
         None,
     )
 
@@ -260,7 +268,10 @@ def report_resource_running(resource, roles, severity=severities.INFO):
     return (
         severity,
         report_codes.RESOURCE_RUNNING_ON_NODES,
-        {"resource_id": resource, "roles_with_nodes": roles,},
+        {
+            "resource_id": resource,
+            "roles_with_nodes": roles,
+        },
         None,
     )
 
@@ -288,7 +299,9 @@ def report_wait_for_idle_timed_out(reason):
     return (
         severities.ERROR,
         report_codes.WAIT_FOR_IDLE_TIMED_OUT,
-        {"reason": reason.strip(),},
+        {
+            "reason": reason.strip(),
+        },
         None,
     )
 
@@ -298,7 +311,9 @@ def check_sbd_comm_success_fixture(node, watchdog, device_list):
         label=node,
         output=json.dumps(
             {
-                "sbd": {"installed": True,},
+                "sbd": {
+                    "installed": True,
+                },
                 "watchdog": {
                     "exist": True,
                     "path": watchdog,

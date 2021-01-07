@@ -121,7 +121,14 @@ class Basics(TestCase):
         )
         resource.bundle_update(self.env_assist.get_env(), "B1")
         self.env_assist.assert_reports(
-            [(severities.INFO, report_codes.CIB_UPGRADE_SUCCESSFUL, {}, None),]
+            [
+                (
+                    severities.INFO,
+                    report_codes.CIB_UPGRADE_SUCCESSFUL,
+                    {},
+                    None,
+                ),
+            ]
         )
 
 
@@ -233,7 +240,10 @@ class ContainerParametrized(TestCase):
             lambda: resource.bundle_update(
                 self.env_assist.get_env(),
                 "B1",
-                container_options={"image": "", "options": "test",},
+                container_options={
+                    "image": "",
+                    "options": "test",
+                },
                 force_options=True,
             )
         )
@@ -258,7 +268,9 @@ class ContainerParametrized(TestCase):
             lambda: resource.bundle_update(
                 self.env_assist.get_env(),
                 "B1",
-                container_options={"extra": "option",},
+                container_options={
+                    "extra": "option",
+                },
             )
         )
         self.env_assist.assert_reports(
@@ -267,7 +279,9 @@ class ContainerParametrized(TestCase):
                     severities.ERROR,
                     report_codes.INVALID_OPTIONS,
                     {
-                        "option_names": ["extra",],
+                        "option_names": [
+                            "extra",
+                        ],
                         "option_type": "container",
                         "allowed": self.allowed_options,
                         "allowed_patterns": [],
@@ -286,7 +300,9 @@ class ContainerParametrized(TestCase):
         resource.bundle_update(
             self.env_assist.get_env(),
             "B1",
-            container_options={"extra": "option",},
+            container_options={
+                "extra": "option",
+            },
             force_options=True,
         )
 
@@ -296,7 +312,9 @@ class ContainerParametrized(TestCase):
                     severities.WARNING,
                     report_codes.INVALID_OPTIONS,
                     {
-                        "option_names": ["extra",],
+                        "option_names": [
+                            "extra",
+                        ],
                         "option_type": "container",
                         "allowed": self.allowed_options,
                         "allowed_patterns": [],
@@ -317,7 +335,9 @@ class ContainerParametrized(TestCase):
         resource.bundle_update(
             self.env_assist.get_env(),
             "B1",
-            container_options={"extra": "",},
+            container_options={
+                "extra": "",
+            },
             force_options=True,
         )
 
@@ -353,10 +373,19 @@ class ContainerParametrized(TestCase):
         resource.bundle_update(
             self.env_assist.get_env(),
             "B1",
-            container_options={"promoted-max": "1",},
+            container_options={
+                "promoted-max": "1",
+            },
         )
         self.env_assist.assert_reports(
-            [(severities.INFO, report_codes.CIB_UPGRADE_SUCCESSFUL, {}, None),]
+            [
+                (
+                    severities.INFO,
+                    report_codes.CIB_UPGRADE_SUCCESSFUL,
+                    {},
+                    None,
+                ),
+            ]
         )
 
     def _test_options_error(self):
@@ -398,7 +427,10 @@ class ContainerParametrized(TestCase):
                     severities.ERROR,
                     report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
                     {
-                        "option_names": ["masters", "promoted-max",],
+                        "option_names": [
+                            "masters",
+                            "promoted-max",
+                        ],
                         "option_type": "container",
                     },
                     None,
@@ -432,7 +464,11 @@ class ContainerParametrized(TestCase):
             ).env.push_cib(resources=self.fixture_cib_masters)
         )
         resource.bundle_update(
-            self.env_assist.get_env(), "B1", container_options={"masters": "2",}
+            self.env_assist.get_env(),
+            "B1",
+            container_options={
+                "masters": "2",
+            },
         )
         self.env_assist.assert_reports([self.fixture_report_deprecated_masters])
 
@@ -445,7 +481,11 @@ class ContainerParametrized(TestCase):
             )
         )
         resource.bundle_update(
-            self.env_assist.get_env(), "B1", container_options={"masters": "",}
+            self.env_assist.get_env(),
+            "B1",
+            container_options={
+                "masters": "",
+            },
         )
 
     def _test_delete_masters_and_promoted_max(self):
@@ -459,7 +499,10 @@ class ContainerParametrized(TestCase):
         resource.bundle_update(
             self.env_assist.get_env(),
             "B1",
-            container_options={"masters": "", "promoted-max": "",},
+            container_options={
+                "masters": "",
+                "promoted-max": "",
+            },
         )
 
     def _test_masters_set_after_promoted_max(self):
@@ -468,7 +511,9 @@ class ContainerParametrized(TestCase):
             lambda: resource.bundle_update(
                 self.env_assist.get_env(),
                 "B1",
-                container_options={"masters": "2",},
+                container_options={
+                    "masters": "2",
+                },
             )
         )
         self.env_assist.assert_reports(
@@ -497,7 +542,10 @@ class ContainerParametrized(TestCase):
         resource.bundle_update(
             self.env_assist.get_env(),
             "B1",
-            container_options={"masters": "2", "promoted-max": "",},
+            container_options={
+                "masters": "2",
+                "promoted-max": "",
+            },
         )
         self.env_assist.assert_reports([self.fixture_report_deprecated_masters])
 
@@ -507,7 +555,9 @@ class ContainerParametrized(TestCase):
             lambda: resource.bundle_update(
                 self.env_assist.get_env(),
                 "B1",
-                container_options={"promoted-max": "3",},
+                container_options={
+                    "promoted-max": "3",
+                },
             )
         )
         self.env_assist.assert_reports(
@@ -535,7 +585,10 @@ class ContainerParametrized(TestCase):
         resource.bundle_update(
             self.env_assist.get_env(),
             "B1",
-            container_options={"masters": "", "promoted-max": "3",},
+            container_options={
+                "masters": "",
+                "promoted-max": "3",
+            },
         )
 
 
@@ -609,7 +662,11 @@ class ContainerUnknown(TestCase):
             """
         )
         resource.bundle_update(
-            self.env_assist.get_env(), "B1", meta_attributes={"attr": "val",}
+            self.env_assist.get_env(),
+            "B1",
+            meta_attributes={
+                "attr": "val",
+            },
         )
 
     def test_no_container_options(self):
@@ -645,11 +702,20 @@ class ContainerUnknown(TestCase):
             self.env_assist.get_env(),
             "B1",
             storage_map_add=[
-                {"source-dir": "/tmp/cont2a", "target-dir": "/tmp/cont2b",}
+                {
+                    "source-dir": "/tmp/cont2a",
+                    "target-dir": "/tmp/cont2b",
+                }
             ],
-            port_map_remove=["B1-port-map-80",],
-            meta_attributes={"attr": "val",},
-            network_options={"host-netmask": "24",},
+            port_map_remove=[
+                "B1-port-map-80",
+            ],
+            meta_attributes={
+                "attr": "val",
+            },
+            network_options={
+                "host-netmask": "24",
+            },
         )
 
     def test_with_container_options(self):
@@ -657,7 +723,9 @@ class ContainerUnknown(TestCase):
             lambda: resource.bundle_update(
                 self.env_assist.get_env(),
                 "B1",
-                container_options={"promoted-max": "1",},
+                container_options={
+                    "promoted-max": "1",
+                },
             )
         )
         self.env_assist.assert_reports(
@@ -720,7 +788,9 @@ class Network(TestCase):
         resource.bundle_update(
             self.env_assist.get_env(),
             "B1",
-            network_options={"host-interface": "eth0",},
+            network_options={
+                "host-interface": "eth0",
+            },
         )
 
     def test_remove_network_keep_empty(self):
@@ -733,7 +803,9 @@ class Network(TestCase):
         resource.bundle_update(
             self.env_assist.get_env(),
             "B1",
-            network_options={"host-interface": "",},
+            network_options={
+                "host-interface": "",
+            },
         )
 
     def test_keep_network_when_port_map_set(self):
@@ -766,7 +838,9 @@ class Network(TestCase):
         resource.bundle_update(
             self.env_assist.get_env(),
             "B1",
-            network_options={"host-interface": "",},
+            network_options={
+                "host-interface": "",
+            },
         )
 
     def test_success(self):
@@ -795,7 +869,10 @@ class Network(TestCase):
         resource.bundle_update(
             self.env_assist.get_env(),
             "B1",
-            network_options={"control-port": "", "host-netmask": "24",},
+            network_options={
+                "control-port": "",
+                "host-netmask": "24",
+            },
         )
 
     def test_unknow_option(self):
@@ -804,7 +881,9 @@ class Network(TestCase):
             lambda: resource.bundle_update(
                 self.env_assist.get_env(),
                 "B1",
-                network_options={"extra": "option",},
+                network_options={
+                    "extra": "option",
+                },
             )
         )
         self.env_assist.assert_reports(
@@ -813,7 +892,9 @@ class Network(TestCase):
                     severities.ERROR,
                     report_codes.INVALID_OPTIONS,
                     {
-                        "option_names": ["extra",],
+                        "option_names": [
+                            "extra",
+                        ],
                         "option_type": "network",
                         "allowed": self.allowed_options,
                         "allowed_patterns": [],
@@ -832,7 +913,9 @@ class Network(TestCase):
         resource.bundle_update(
             self.env_assist.get_env(),
             "B1",
-            network_options={"extra": "option",},
+            network_options={
+                "extra": "option",
+            },
             force_options=True,
         )
         self.env_assist.assert_reports(
@@ -841,7 +924,9 @@ class Network(TestCase):
                     severities.WARNING,
                     report_codes.INVALID_OPTIONS,
                     {
-                        "option_names": ["extra",],
+                        "option_names": [
+                            "extra",
+                        ],
                         "option_type": "network",
                         "allowed": self.allowed_options,
                         "allowed_patterns": [],
@@ -858,7 +943,11 @@ class Network(TestCase):
             ).env.push_cib(resources=self.fixture_cib_interface)
         )
         resource.bundle_update(
-            self.env_assist.get_env(), "B1", network_options={"extra": "",}
+            self.env_assist.get_env(),
+            "B1",
+            network_options={
+                "extra": "",
+            },
         )
 
 
@@ -912,7 +1001,13 @@ class PortMap(TestCase):
             ).env.push_cib(resources=self.fixture_cib_port_80)
         )
         resource.bundle_update(
-            self.env_assist.get_env(), "B1", port_map_add=[{"port": "80",}]
+            self.env_assist.get_env(),
+            "B1",
+            port_map_add=[
+                {
+                    "port": "80",
+                }
+            ],
         )
 
     def test_remove_network_keep_empty(self):
@@ -922,7 +1017,11 @@ class PortMap(TestCase):
             ).env.push_cib(resources=self.fixture_cib_network_empty)
         )
         resource.bundle_update(
-            self.env_assist.get_env(), "B1", port_map_remove=["B1-port-map-80",]
+            self.env_assist.get_env(),
+            "B1",
+            port_map_remove=[
+                "B1-port-map-80",
+            ],
         )
 
     def test_keep_network_when_options_set(self):
@@ -950,7 +1049,11 @@ class PortMap(TestCase):
             )
         )
         resource.bundle_update(
-            self.env_assist.get_env(), "B1", port_map_remove=["B1-port-map-80",]
+            self.env_assist.get_env(),
+            "B1",
+            port_map_remove=[
+                "B1-port-map-80",
+            ],
         )
 
     def test_add(self):
@@ -960,7 +1063,13 @@ class PortMap(TestCase):
             ).env.push_cib(resources=self.fixture_cib_port_80_8080)
         )
         resource.bundle_update(
-            self.env_assist.get_env(), "B1", port_map_add=[{"port": "8080",}]
+            self.env_assist.get_env(),
+            "B1",
+            port_map_add=[
+                {
+                    "port": "8080",
+                }
+            ],
         )
 
     def test_remove(self):
@@ -972,7 +1081,9 @@ class PortMap(TestCase):
         resource.bundle_update(
             self.env_assist.get_env(),
             "B1",
-            port_map_remove=["B1-port-map-8080",],
+            port_map_remove=[
+                "B1-port-map-8080",
+            ],
         )
 
     def test_remove_missing(self):
@@ -982,7 +1093,9 @@ class PortMap(TestCase):
             lambda: resource.bundle_update(
                 self.env_assist.get_env(),
                 "B1",
-                port_map_remove=["B1-port-map-8080",],
+                port_map_remove=[
+                    "B1-port-map-8080",
+                ],
             )
         )
         self.env_assist.assert_reports(
@@ -1068,7 +1181,10 @@ class StorageMap(TestCase):
             self.env_assist.get_env(),
             "B1",
             storage_map_add=[
-                {"source-dir": "/tmp/docker1a", "target-dir": "/tmp/docker1b",}
+                {
+                    "source-dir": "/tmp/docker1a",
+                    "target-dir": "/tmp/docker1b",
+                }
             ],
         )
 
@@ -1081,7 +1197,9 @@ class StorageMap(TestCase):
         resource.bundle_update(
             self.env_assist.get_env(),
             "B1",
-            storage_map_remove=["B1-storage-map",],
+            storage_map_remove=[
+                "B1-storage-map",
+            ],
         )
 
     def test_add(self):
@@ -1094,7 +1212,10 @@ class StorageMap(TestCase):
             self.env_assist.get_env(),
             "B1",
             storage_map_add=[
-                {"source-dir": "/tmp/docker2a", "target-dir": "/tmp/docker2b",}
+                {
+                    "source-dir": "/tmp/docker2a",
+                    "target-dir": "/tmp/docker2b",
+                }
             ],
         )
 
@@ -1108,7 +1229,9 @@ class StorageMap(TestCase):
         resource.bundle_update(
             self.env_assist.get_env(),
             "B1",
-            storage_map_remove=["B1-storage-map-1",],
+            storage_map_remove=[
+                "B1-storage-map-1",
+            ],
         )
 
     def test_remove_missing(self):
@@ -1117,7 +1240,9 @@ class StorageMap(TestCase):
             lambda: resource.bundle_update(
                 self.env_assist.get_env(),
                 "B1",
-                storage_map_remove=["B1-storage-map-1",],
+                storage_map_remove=[
+                    "B1-storage-map-1",
+                ],
             )
         )
         self.env_assist.assert_reports(
@@ -1179,7 +1304,9 @@ class Meta(TestCase):
         resource.bundle_update(
             self.env_assist.get_env(),
             "B1",
-            meta_attributes={"target-role": "Stopped",},
+            meta_attributes={
+                "target-role": "Stopped",
+            },
         )
 
     def test_keep_meta_element(self):
@@ -1191,7 +1318,9 @@ class Meta(TestCase):
         resource.bundle_update(
             self.env_assist.get_env(),
             "B1",
-            meta_attributes={"target-role": "",},
+            meta_attributes={
+                "target-role": "",
+            },
         )
 
     def test_change_meta(self):
@@ -1352,7 +1481,9 @@ class Wait(TestCase):
         )
         simple_bundle_update(self.env_assist.get_env())
         self.env_assist.assert_reports(
-            [fixture.report_resource_not_running("B1", severities.INFO),]
+            [
+                fixture.report_resource_not_running("B1", severities.INFO),
+            ]
         )
 
 
@@ -1383,7 +1514,9 @@ class WithPrimitive(TestCase):
         resource.bundle_update(
             self.env_assist.get_env(),
             "B1",
-            network_options={"host-interface": "int",},
+            network_options={
+                "host-interface": "int",
+            },
         )
 
     def test_add_ip_remove_port(self):
@@ -1422,7 +1555,10 @@ class WithPrimitive(TestCase):
         resource.bundle_update(
             self.env_assist.get_env(),
             "B1",
-            network_options={"ip-range-start": "", "control-port": "1234",},
+            network_options={
+                "ip-range-start": "",
+                "control-port": "1234",
+            },
         )
 
     def test_remove_ip_remove_port(self):
@@ -1442,7 +1578,10 @@ class WithPrimitive(TestCase):
             lambda: resource.bundle_update(
                 self.env_assist.get_env(),
                 "B1",
-                network_options={"ip-range-start": "", "control-port": "",},
+                network_options={
+                    "ip-range-start": "",
+                    "control-port": "",
+                },
             )
         )
         self.env_assist.assert_reports(
@@ -1476,7 +1615,10 @@ class WithPrimitive(TestCase):
         resource.bundle_update(
             self.env_assist.get_env(),
             "B1",
-            network_options={"ip-range-start": "", "control-port": "",},
+            network_options={
+                "ip-range-start": "",
+                "control-port": "",
+            },
             force_options=True,
         )
         self.env_assist.assert_reports(
@@ -1509,7 +1651,9 @@ class WithPrimitive(TestCase):
         resource.bundle_update(
             self.env_assist.get_env(),
             "B1",
-            network_options={"ip-range-start": "",},
+            network_options={
+                "ip-range-start": "",
+            },
         )
 
     def test_left_ip_remove_port(self):
@@ -1532,7 +1676,9 @@ class WithPrimitive(TestCase):
         resource.bundle_update(
             self.env_assist.get_env(),
             "B1",
-            network_options={"control-port": "",},
+            network_options={
+                "control-port": "",
+            },
         )
 
     def test_remove_ip(self):
@@ -1547,7 +1693,9 @@ class WithPrimitive(TestCase):
             lambda: resource.bundle_update(
                 self.env_assist.get_env(),
                 "B1",
-                network_options={"ip-range-start": "",},
+                network_options={
+                    "ip-range-start": "",
+                },
             )
         )
         self.env_assist.assert_reports(
@@ -1576,7 +1724,9 @@ class WithPrimitive(TestCase):
         resource.bundle_update(
             self.env_assist.get_env(),
             "B1",
-            network_options={"ip-range-start": "",},
+            network_options={
+                "ip-range-start": "",
+            },
             force_options=True,
         )
         self.env_assist.assert_reports(
@@ -1601,7 +1751,9 @@ class WithPrimitive(TestCase):
             lambda: resource.bundle_update(
                 self.env_assist.get_env(),
                 "B1",
-                network_options={"control-port": "",},
+                network_options={
+                    "control-port": "",
+                },
             )
         )
         self.env_assist.assert_reports(
@@ -1630,7 +1782,9 @@ class WithPrimitive(TestCase):
         resource.bundle_update(
             self.env_assist.get_env(),
             "B1",
-            network_options={"control-port": "",},
+            network_options={
+                "control-port": "",
+            },
             force_options=True,
         )
         self.env_assist.assert_reports(

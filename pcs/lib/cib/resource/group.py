@@ -70,7 +70,9 @@ def place_resource(
         return
 
     adjacent_resource = find_element_by_tag_and_id(
-        "primitive", group_element, adjacent_resource_id,
+        "primitive",
+        group_element,
+        adjacent_resource_id,
     )
 
     if put_after_adjacent and adjacent_resource.getnext() is None:

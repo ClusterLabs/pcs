@@ -5,7 +5,9 @@ from pcs.common.reports import codes as report_codes
 
 
 forbidden_characters_kwargs = dict(
-    allowed_values=None, cannot_be_empty=False, forbidden_characters=r"{}\n\r",
+    allowed_values=None,
+    cannot_be_empty=False,
+    forbidden_characters=r"{}\n\r",
 )
 
 
@@ -38,8 +40,16 @@ class TransportKnetBase:
                     "knet_pmtud_interval": "1234",
                     "link_mode": "active",
                 },
-                {"level": "5", "model": "zlib", "threshold": "1234",},
-                {"cipher": "aes256", "hash": "sha256", "model": "nss",},
+                {
+                    "level": "5",
+                    "model": "zlib",
+                    "threshold": "1234",
+                },
+                {
+                    "cipher": "aes256",
+                    "hash": "sha256",
+                    "model": "nss",
+                },
             ),
             [],
         )
@@ -52,8 +62,15 @@ class TransportKnetBase:
                     "knet_pmtud_interval": "a minute",
                     "link_mode": "random",
                 },
-                {"level": "maximum", "threshold": "reasonable",},
-                {"cipher": "strongest", "hash": "fastest", "model": "best",},
+                {
+                    "level": "maximum",
+                    "threshold": "reasonable",
+                },
+                {
+                    "cipher": "strongest",
+                    "hash": "fastest",
+                    "model": "best",
+                },
             ),
             [
                 fixture.error(
@@ -133,9 +150,18 @@ class TransportKnetBase:
     def test_invalid_options(self):
         assert_report_item_list_equal(
             self.call_function(
-                {"level": "5", "netmtu": "1500",},
-                {"cipher": "aes256", "hash": "sha256",},
-                {"ip_version": "ipv4", "link_mode": "active",},
+                {
+                    "level": "5",
+                    "netmtu": "1500",
+                },
+                {
+                    "cipher": "aes256",
+                    "hash": "sha256",
+                },
+                {
+                    "ip_version": "ipv4",
+                    "link_mode": "active",
+                },
             ),
             [
                 fixture.error(
@@ -372,40 +398,89 @@ class TransportKnetBase:
 
     def test_crypto_disabled(self):
         assert_report_item_list_equal(
-            self.call_function({}, {}, {"cipher": "none", "hash": "none",}), [],
+            self.call_function(
+                {},
+                {},
+                {
+                    "cipher": "none",
+                    "hash": "none",
+                },
+            ),
+            [],
         )
 
     def test_crypto_enabled_cipher_disabled_hash(self):
         assert_report_item_list_equal(
-            self.call_function({}, {}, {"cipher": "aes256", "hash": "none",}),
+            self.call_function(
+                {},
+                {},
+                {
+                    "cipher": "aes256",
+                    "hash": "none",
+                },
+            ),
             [self.fixture_error_prerequisite],
         )
 
     def test_crypto_enabled_cipher_default_hash(self):
         assert_report_item_list_equal(
-            self.call_function({}, {}, {"cipher": "aes256",}),
+            self.call_function(
+                {},
+                {},
+                {
+                    "cipher": "aes256",
+                },
+            ),
             [self.fixture_error_prerequisite],
         )
 
     def test_crypto_disabled_cipher_default_hash(self):
         assert_report_item_list_equal(
-            self.call_function({}, {}, {"cipher": "none",}), [],
+            self.call_function(
+                {},
+                {},
+                {
+                    "cipher": "none",
+                },
+            ),
+            [],
         )
 
     def test_crypto_enabled_hash_disabled_cipher(self):
         assert_report_item_list_equal(
-            self.call_function({}, {}, {"cipher": "none", "hash": "sha256",}),
+            self.call_function(
+                {},
+                {},
+                {
+                    "cipher": "none",
+                    "hash": "sha256",
+                },
+            ),
             [],
         )
 
     def test_crypto_enabled_hash_default_cipher(self):
         assert_report_item_list_equal(
-            self.call_function({}, {}, {"hash": "sha256",}), [],
+            self.call_function(
+                {},
+                {},
+                {
+                    "hash": "sha256",
+                },
+            ),
+            [],
         )
 
     def test_crypto_disabled_hash_default_cipher(self):
         assert_report_item_list_equal(
-            self.call_function({}, {}, {"hash": "none",}), [],
+            self.call_function(
+                {},
+                {},
+                {
+                    "hash": "none",
+                },
+            ),
+            [],
         )
 
 
@@ -421,14 +496,26 @@ class TransportUdpBase:
     def test_all_valid(self):
         assert_report_item_list_equal(
             self.call_function(
-                {"ip_version": "ipv4", "netmtu": "1234",}, {}, {}
+                {
+                    "ip_version": "ipv4",
+                    "netmtu": "1234",
+                },
+                {},
+                {},
             ),
             [],
         )
 
     def test_invalid_all_values(self):
         assert_report_item_list_equal(
-            self.call_function({"ip_version": "ipv5", "netmtu": "-5",}, {}, {}),
+            self.call_function(
+                {
+                    "ip_version": "ipv5",
+                    "netmtu": "-5",
+                },
+                {},
+                {},
+            ),
             [
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
@@ -452,9 +539,20 @@ class TransportUdpBase:
     def test_invalid_option(self):
         assert_report_item_list_equal(
             self.call_function(
-                {"knet_pmtud_interval": "1234", "link_mode": "active",},
-                {"level": "5", "model": "zlib", "threshold": "1234",},
-                {"cipher": "aes256", "hash": "sha256", "model": "nss",},
+                {
+                    "knet_pmtud_interval": "1234",
+                    "link_mode": "active",
+                },
+                {
+                    "level": "5",
+                    "model": "zlib",
+                    "threshold": "1234",
+                },
+                {
+                    "cipher": "aes256",
+                    "hash": "sha256",
+                    "model": "nss",
+                },
             ),
             [
                 fixture.error(
@@ -597,7 +695,10 @@ class TotemBase:
     def test_invalid_options(self):
         assert_report_item_list_equal(
             self.call_function(
-                {"nonsense1": "0", "nonsense2": "doesnt matter",}
+                {
+                    "nonsense1": "0",
+                    "nonsense2": "doesnt matter",
+                }
             ),
             [
                 fixture.error(

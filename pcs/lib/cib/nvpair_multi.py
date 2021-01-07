@@ -266,7 +266,9 @@ def nvset_remove(nvset_el_list: Iterable[_Element]) -> None:
 
 
 def nvset_update(
-    nvset_el: _Element, id_provider: IdProvider, nvpair_dict: Mapping[str, str],
+    nvset_el: _Element,
+    id_provider: IdProvider,
+    nvpair_dict: Mapping[str, str],
 ) -> None:
     """
     Update an existing nvset

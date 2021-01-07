@@ -57,7 +57,8 @@ def get_push_corosync_conf(call_queue):
                     "skip_offline flag is not as expected:\nexpected '{0}' != "
                     "actual '{1}'"
                 ).format(
-                    expected_call.skip_offline_targets, skip_offline_nodes,
+                    expected_call.skip_offline_targets,
+                    skip_offline_nodes,
                 )
             )
         if (

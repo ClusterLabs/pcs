@@ -67,7 +67,8 @@ class DisableSbdService(ServiceAction):
     def _get_before_report(self):
         return ReportItem.info(
             reports.messages.ServiceActionStarted(
-                reports.const.SERVICE_ACTION_DISABLE, "sbd",
+                reports.const.SERVICE_ACTION_DISABLE,
+                "sbd",
             )
         )
 
@@ -191,7 +192,10 @@ class GetSbdStatus(AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase):
             "remote/check_sbd",
             # here we just need info about sbd service, therefore watchdog and
             # device list is empty
-            [("watchdog", ""), ("device_list", "[]"),],
+            [
+                ("watchdog", ""),
+                ("device_list", "[]"),
+            ],
         )
 
     def _process_response(self, response):

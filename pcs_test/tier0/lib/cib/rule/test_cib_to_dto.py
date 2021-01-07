@@ -359,10 +359,14 @@ class DateExpressionToDto(TestCase):
                         "rule-expr",
                         CibRuleExpressionType.DATE_EXPRESSION,
                         CibRuleInEffectStatus.UNKNOWN,
-                        {"operation": "in_range", "start": "2014-06-26",},
+                        {
+                            "operation": "in_range",
+                            "start": "2014-06-26",
+                        },
                         None,
                         CibRuleDateCommonDto(
-                            "rule-expr-duration", {"years": "1"},
+                            "rule-expr-duration",
+                            {"years": "1"},
                         ),
                         [],
                         "date in_range 2014-06-26 to duration years=1",

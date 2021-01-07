@@ -53,7 +53,10 @@ class FsConfig:
     ):
         call = FsCall(
             "os.chmod",
-            call_kwargs=dict(fd=path, mode=mode,),
+            call_kwargs=dict(
+                fd=path,
+                mode=mode,
+            ),
             side_effect=side_effect,
         )
         self.__calls.place(name, call, before, instead)
@@ -70,7 +73,11 @@ class FsConfig:
     ):
         call = FsCall(
             "os.chown",
-            call_kwargs=dict(fd=path, uid=uid, gid=gid,),
+            call_kwargs=dict(
+                fd=path,
+                uid=uid,
+                gid=gid,
+            ),
             side_effect=side_effect,
         )
         self.__calls.place(name, call, before, instead)

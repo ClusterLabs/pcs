@@ -166,7 +166,8 @@ Node Utilization:
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "node utilization --name test1 rh7-2".split(),
+            self.temp_cib.name,
+            "node utilization --name test1 rh7-2".split(),
         )
         expected_out = """\
 Node Utilization:
@@ -243,7 +244,9 @@ class NodeUtilizationPrint(TestCase, AssertPcsMixin):
     def test_refuse_when_node_not_in_mocked_cib(self):
         self.assert_pcs_fail(
             "node utilization some_nonexistent_node".split(),
-            ["Error: Unable to find a node: some_nonexistent_node",],
+            [
+                "Error: Unable to find a node: some_nonexistent_node",
+            ],
         )
 
 
@@ -634,7 +637,14 @@ class NodeAttributeTest(
     def test_show_nonempty(self):
         self.fixture_attrs(
             ["rh7-1", "rh7-2"],
-            {"rh7-1": {"IP": "192.168.1.1",}, "rh7-2": {"IP": "192.168.1.2",},},
+            {
+                "rh7-1": {
+                    "IP": "192.168.1.1",
+                },
+                "rh7-2": {
+                    "IP": "192.168.1.2",
+                },
+            },
         )
         self.assert_pcs_success(
             "node attribute".split(),
@@ -649,8 +659,14 @@ Node Attributes:
         self.fixture_attrs(
             ["rh7-1", "rh7-2"],
             {
-                "rh7-1": {"IP": "192.168.1.1", "alias": "node1",},
-                "rh7-2": {"IP": "192.168.1.2", "alias": "node2",},
+                "rh7-1": {
+                    "IP": "192.168.1.1",
+                    "alias": "node1",
+                },
+                "rh7-2": {
+                    "IP": "192.168.1.2",
+                    "alias": "node2",
+                },
             },
         )
         self.assert_pcs_success(
@@ -666,8 +682,14 @@ Node Attributes:
         self.fixture_attrs(
             ["rh7-1", "rh7-2"],
             {
-                "rh7-1": {"IP": "192.168.1.1", "alias": "node1",},
-                "rh7-2": {"IP": "192.168.1.2", "alias": "node2",},
+                "rh7-1": {
+                    "IP": "192.168.1.1",
+                    "alias": "node1",
+                },
+                "rh7-2": {
+                    "IP": "192.168.1.2",
+                    "alias": "node2",
+                },
             },
         )
         self.assert_pcs_success(
@@ -682,8 +704,14 @@ Node Attributes:
         self.fixture_attrs(
             ["rh7-1", "rh7-2"],
             {
-                "rh7-1": {"IP": "192.168.1.1", "alias": "node1",},
-                "rh7-2": {"IP": "192.168.1.2", "alias": "node2",},
+                "rh7-1": {
+                    "IP": "192.168.1.1",
+                    "alias": "node1",
+                },
+                "rh7-2": {
+                    "IP": "192.168.1.2",
+                    "alias": "node2",
+                },
             },
         )
         self.assert_pcs_success(
@@ -697,8 +725,14 @@ Node Attributes:
         self.fixture_attrs(
             ["rh7-1", "rh7-2"],
             {
-                "rh7-1": {"IP": "192.168.1.1", "alias": "node1",},
-                "rh7-2": {"IP": "192.168.1.2", "alias": "node2",},
+                "rh7-1": {
+                    "IP": "192.168.1.1",
+                    "alias": "node1",
+                },
+                "rh7-2": {
+                    "IP": "192.168.1.2",
+                    "alias": "node2",
+                },
             },
         )
         self.assert_pcs_success(
@@ -714,8 +748,14 @@ Node Attributes:
         self.fixture_attrs(
             ["rh7-1", "rh7-2"],
             {
-                "rh7-1": {"IP": "192.168.1.1", "alias": "node1",},
-                "rh7-2": {"IP": "192.168.1.2", "alias": "node2",},
+                "rh7-1": {
+                    "IP": "192.168.1.1",
+                    "alias": "node1",
+                },
+                "rh7-2": {
+                    "IP": "192.168.1.2",
+                    "alias": "node2",
+                },
             },
         )
         self.assert_pcs_success(
@@ -729,8 +769,14 @@ Node Attributes:
         self.fixture_attrs(
             ["rh7-1", "rh7-2"],
             {
-                "rh7-1": {"IP": "192.168.1.1", "alias": "node1",},
-                "rh7-2": {"IP": "192.168.1.2", "alias": "node2",},
+                "rh7-1": {
+                    "IP": "192.168.1.1",
+                    "alias": "node1",
+                },
+                "rh7-2": {
+                    "IP": "192.168.1.2",
+                    "alias": "node2",
+                },
             },
         )
         self.assert_pcs_success(
@@ -764,7 +810,14 @@ Node Attributes:
     def test_set_existing(self):
         self.fixture_attrs(
             ["rh7-1", "rh7-2"],
-            {"rh7-1": {"IP": "192.168.1.1",}, "rh7-2": {"IP": "192.168.1.2",},},
+            {
+                "rh7-1": {
+                    "IP": "192.168.1.1",
+                },
+                "rh7-2": {
+                    "IP": "192.168.1.2",
+                },
+            },
         )
         self.assert_pcs_success("node attribute rh7-2 IP=192.168.2.2".split())
         self.assert_pcs_success(
@@ -779,7 +832,14 @@ Node Attributes:
     def test_unset(self):
         self.fixture_attrs(
             ["rh7-1", "rh7-2"],
-            {"rh7-1": {"IP": "192.168.1.1",}, "rh7-2": {"IP": "192.168.1.2",},},
+            {
+                "rh7-1": {
+                    "IP": "192.168.1.1",
+                },
+                "rh7-2": {
+                    "IP": "192.168.1.2",
+                },
+            },
         )
         self.assert_pcs_success("node attribute rh7-2 IP=".split())
         self.assert_pcs_success(
@@ -793,7 +853,14 @@ Node Attributes:
     def test_unset_nonexisting(self):
         self.fixture_attrs(
             ["rh7-1", "rh7-2"],
-            {"rh7-1": {"IP": "192.168.1.1",}, "rh7-2": {"IP": "192.168.1.2",},},
+            {
+                "rh7-1": {
+                    "IP": "192.168.1.1",
+                },
+                "rh7-2": {
+                    "IP": "192.168.1.2",
+                },
+            },
         )
         self.assert_pcs_result(
             "node attribute rh7-1 missing=".split(),
@@ -804,7 +871,14 @@ Node Attributes:
     def test_unset_nonexisting_forced(self):
         self.fixture_attrs(
             ["rh7-1", "rh7-2"],
-            {"rh7-1": {"IP": "192.168.1.1",}, "rh7-2": {"IP": "192.168.1.2",},},
+            {
+                "rh7-1": {
+                    "IP": "192.168.1.1",
+                },
+                "rh7-2": {
+                    "IP": "192.168.1.2",
+                },
+            },
         )
         self.assert_pcs_success(
             "node attribute rh7-1 missing= --force".split(), ""

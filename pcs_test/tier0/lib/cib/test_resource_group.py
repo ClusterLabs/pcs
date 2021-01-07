@@ -101,7 +101,9 @@ class PlaceResource(TestCase):
             (
                 severities.ERROR,
                 report_codes.CANNOT_GROUP_RESOURCE_NEXT_TO_ITSELF,
-                {"resource_id": "c",},
+                {
+                    "resource_id": "c",
+                },
             ),
         )
 

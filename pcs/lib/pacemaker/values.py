@@ -132,7 +132,10 @@ def validate_id(
     if _ID_FIRST_CHAR_NOT_RE.match(id_candidate[0]):
         report_item = ReportItem.error(
             reports.messages.InvalidIdBadChar(
-                id_candidate, description, id_candidate[0], True,
+                id_candidate,
+                description,
+                id_candidate[0],
+                True,
             )
         )
         if reporter is not None:
@@ -143,7 +146,10 @@ def validate_id(
         if _ID_REST_CHARS_NOT_RE.match(char):
             report_item = ReportItem.error(
                 reports.messages.InvalidIdBadChar(
-                    id_candidate, description, char, False,
+                    id_candidate,
+                    description,
+                    char,
+                    False,
                 )
             )
             if reporter is not None:

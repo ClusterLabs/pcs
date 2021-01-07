@@ -89,7 +89,10 @@ class Prepare(TestCase):
             default_operation_list,
         )
         report_processor.report_list.assert_called_once_with(
-            ["options_report", "different_interval_report",]
+            [
+                "options_report",
+                "different_interval_report",
+            ]
         )
 
 
@@ -124,7 +127,10 @@ class ValidateDifferentIntervals(TestCase):
                     report_codes.RESOURCE_OPERATION_INTERVAL_DUPLICATION,
                     {
                         "duplications": {
-                            "monitor": [["3600s", "60m", "1h"], ["60s", "1m"],],
+                            "monitor": [
+                                ["3600s", "60m", "1h"],
+                                ["60s", "1m"],
+                            ],
                         },
                     },
                 )
@@ -143,7 +149,9 @@ class MakeUniqueIntervals(TestCase):
         operation_list = [
             {"name": "monitor", "interval": "10s"},
             {"name": "monitor", "interval": "5s"},
-            {"name": "monitor",},
+            {
+                "name": "monitor",
+            },
             {"name": "monitor", "interval": ""},
             {"name": "start", "interval": "5s"},
         ]
@@ -253,7 +261,10 @@ class Normalize(TestCase):
 class ValidateOperation(TestCase):
     def assert_operation_produces_report(self, operation, report_list):
         assert_report_item_list_equal(
-            operations.validate_operation_list([operation], ["monitor"],),
+            operations.validate_operation_list(
+                [operation],
+                ["monitor"],
+            ),
             report_list,
         )
 
@@ -356,7 +367,10 @@ class ValidateOperation(TestCase):
 
     def test_return_error_when_unknown_operation_attribute(self):
         self.assert_operation_produces_report(
-            {"name": "monitor", "unknown": "invalid",},
+            {
+                "name": "monitor",
+                "unknown": "invalid",
+            },
             [
                 (
                     severities.ERROR,
@@ -390,7 +404,11 @@ class ValidateOperation(TestCase):
 
     def test_return_error_when_both_interval_origin_and_start_delay(self):
         self.assert_operation_produces_report(
-            {"name": "monitor", "interval-origin": "a", "start-delay": "b",},
+            {
+                "name": "monitor",
+                "interval-origin": "a",
+                "start-delay": "b",
+            },
             [
                 (
                     severities.ERROR,
@@ -406,7 +424,10 @@ class ValidateOperation(TestCase):
 
     def test_return_error_on_invalid_id(self):
         self.assert_operation_produces_report(
-            {"name": "monitor", "id": "a#b",},
+            {
+                "name": "monitor",
+                "id": "a#b",
+            },
             [
                 (
                     severities.ERROR,

@@ -69,7 +69,8 @@ def _check_if_atb_can_be_disabled(
         report_processor.report(
             ReportItem(
                 severity=reports.item.get_severity(
-                    reports.codes.FORCE_OPTIONS, force,
+                    reports.codes.FORCE_OPTIONS,
+                    force,
                 ),
                 message=(
                     reports.messages.CorosyncQuorumAtbCannotBeDisabledDueToSbd()
@@ -81,7 +82,10 @@ def _check_if_atb_can_be_disabled(
 
 
 def set_options(
-    lib_env: LibraryEnvironment, options, skip_offline_nodes=False, force=False,
+    lib_env: LibraryEnvironment,
+    options,
+    skip_offline_nodes=False,
+    force=False,
 ):
     """
     Set corosync quorum options, distribute and reload corosync.conf if live
@@ -187,7 +191,10 @@ def add_device(
         raise LibraryError()
 
     cfg.add_quorum_device(
-        model, model_options, generic_options, heuristics_options,
+        model,
+        model_options,
+        generic_options,
+        heuristics_options,
     )
     if cfg.is_quorum_device_heuristics_enabled_with_no_exec():
         lib_env.report_processor.report(
@@ -202,7 +209,8 @@ def add_device(
     if lib_env.is_corosync_conf_live:
         target_factory = lib_env.get_node_target_factory()
         target_list = target_factory.get_target_list(
-            cluster_nodes_names, skip_non_existing=skip_offline_nodes,
+            cluster_nodes_names,
+            skip_non_existing=skip_offline_nodes,
         )
         # Do model specific configuration.
         # If the model is not known to pcs and was forced, do not configure
@@ -337,7 +345,8 @@ def remove_device(lib_env: LibraryEnvironment, skip_offline_nodes=False):
         if report_processor.report_list(report_list).has_errors:
             raise LibraryError()
         target_list = lib_env.get_node_target_factory().get_target_list(
-            cluster_nodes_names, skip_non_existing=skip_offline_nodes,
+            cluster_nodes_names,
+            skip_non_existing=skip_offline_nodes,
         )
         # fix quorum options for SBD to work properly
         if sbd.atb_has_to_be_enabled(lib_env.cmd_runner(), cfg):

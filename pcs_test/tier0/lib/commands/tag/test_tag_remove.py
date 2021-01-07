@@ -30,8 +30,12 @@ class TestTagRemove(TestCase):
         cmd_tag.remove(self.env_assist.get_env(), ["tag1"])
 
     def test_remove_tags_others_are_kept(self):
-        self.config.runner.cib.load(tags=fixture_tags_xml(TAG_DEFINITIONS),)
-        self.config.env.push_cib(tags=fixture_tags_xml(TAG_DEFINITIONS[2:3]),)
+        self.config.runner.cib.load(
+            tags=fixture_tags_xml(TAG_DEFINITIONS),
+        )
+        self.config.env.push_cib(
+            tags=fixture_tags_xml(TAG_DEFINITIONS[2:3]),
+        )
         cmd_tag.remove(self.env_assist.get_env(), ["tag1", "tag2"])
 
     def test_remove_all_tags(self):
@@ -67,7 +71,9 @@ class TestTagRemove(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.report_unexpected_element(
-                    _id, "primitive", expected_types=["tag"],
+                    _id,
+                    "primitive",
+                    expected_types=["tag"],
                 )
                 for _id in ["id1", "id2"]
             ]
@@ -80,7 +86,8 @@ class TestTagRemove(TestCase):
         )
         self.env_assist.assert_raise_library_error(
             lambda: cmd_tag.remove(
-                self.env_assist.get_env(), ["tag1", "nonexistent_tag1", "id1"],
+                self.env_assist.get_env(),
+                ["tag1", "nonexistent_tag1", "id1"],
             )
         )
         self.env_assist.assert_reports(
@@ -91,7 +98,9 @@ class TestTagRemove(TestCase):
                     context_type="tags",
                 ),
                 fixture.report_unexpected_element(
-                    "id1", "primitive", expected_types=["tag"],
+                    "id1",
+                    "primitive",
+                    expected_types=["tag"],
                 ),
             ]
         )
@@ -104,7 +113,10 @@ class TestTagRemove(TestCase):
             tags=fixture_tags_xml(TAG_DEFINITIONS),
         )
         self.env_assist.assert_raise_library_error(
-            lambda: cmd_tag.remove(self.env_assist.get_env(), ["tag1"],)
+            lambda: cmd_tag.remove(
+                self.env_assist.get_env(),
+                ["tag1"],
+            )
         )
         self.env_assist.assert_reports(
             [
@@ -125,7 +137,10 @@ class TestTagRemove(TestCase):
             tags=fixture_tags_xml(TAG_DEFINITIONS),
         )
         self.env_assist.assert_raise_library_error(
-            lambda: cmd_tag.remove(self.env_assist.get_env(), ["tag1", "tag2"],)
+            lambda: cmd_tag.remove(
+                self.env_assist.get_env(),
+                ["tag1", "tag2"],
+            )
         )
         self.env_assist.assert_reports(
             [

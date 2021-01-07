@@ -193,7 +193,8 @@ class DefaultsSetCreateMixin(DefaultsBaseMixin):
         with self.assertRaises(CmdLineInputError) as cm:
             self._call_cmd(["aaa"])
         self.assertEqual(
-            cm.exception.message, "missing value of 'aaa' option",
+            cm.exception.message,
+            "missing value of 'aaa' option",
         )
         self.lib_command.assert_not_called()
 
@@ -201,7 +202,8 @@ class DefaultsSetCreateMixin(DefaultsBaseMixin):
         with self.assertRaises(CmdLineInputError) as cm:
             self._call_cmd(["meta", "aaa"])
         self.assertEqual(
-            cm.exception.message, "missing value of 'aaa' option",
+            cm.exception.message,
+            "missing value of 'aaa' option",
         )
         self.lib_command.assert_not_called()
 

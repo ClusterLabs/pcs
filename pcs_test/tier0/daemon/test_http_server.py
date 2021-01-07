@@ -34,7 +34,10 @@ class ManageTest(TestCase, create_setup_patch_mixin(http_server)):
 
         self.app = MagicMock()
         self.https_server_manage = http_server.HttpsServerManage(
-            Mock(return_value=self.app), PORT, BIND_ADDRESSES, self.pcsd_ssl,
+            Mock(return_value=self.app),
+            PORT,
+            BIND_ADDRESSES,
+            self.pcsd_ssl,
         )
         self.assertEqual(0, len(self.server_list))
         self.assertFalse(self.https_server_manage.server_is_running)

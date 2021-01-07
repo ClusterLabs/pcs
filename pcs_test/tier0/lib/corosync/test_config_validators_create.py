@@ -16,7 +16,9 @@ from pcs.lib.corosync import config_validators
 # pylint: disable=no-self-use
 
 forbidden_characters_kwargs = dict(
-    allowed_values=None, cannot_be_empty=False, forbidden_characters=r"{}\n\r",
+    allowed_values=None,
+    cannot_be_empty=False,
+    forbidden_characters=r"{}\n\r",
 )
 
 
@@ -34,7 +36,9 @@ class Create(TestCase):
         assert_report_item_list_equal(
             config_validators.create(
                 "test-cluster",
-                [{"name": "node1", "addrs": ["addr01"]},],
+                [
+                    {"name": "node1", "addrs": ["addr01"]},
+                ],
                 "udp",
                 "ipv4",
             ),
@@ -110,7 +114,9 @@ class Create(TestCase):
         assert_report_item_list_equal(
             config_validators.create(
                 33 * "a",
-                [{"name": "node1", "addrs": ["addr01"]},],
+                [
+                    {"name": "node1", "addrs": ["addr01"]},
+                ],
                 "udp",
                 "ipv4",
             ),
@@ -129,7 +135,9 @@ class Create(TestCase):
         assert_report_item_list_equal(
             config_validators.create(
                 "cluster.name",
-                [{"name": "node1", "addrs": ["addr01"]},],
+                [
+                    {"name": "node1", "addrs": ["addr01"]},
+                ],
                 "udp",
                 "ipv4",
             ),
@@ -149,7 +157,9 @@ class Create(TestCase):
         assert_report_item_list_equal(
             config_validators.create(
                 cluster_name,
-                [{"name": "node1", "addrs": ["addr01"]},],
+                [
+                    {"name": "node1", "addrs": ["addr01"]},
+                ],
                 "udp",
                 "ipv4",
                 force_cluster_name=True,
@@ -174,7 +184,10 @@ class Create(TestCase):
         assert_report_item_list_equal(
             config_validators.create(
                 "test-cluster",
-                [{"name": "node1", "addrs": ["addr01"]}, {},],
+                [
+                    {"name": "node1", "addrs": ["addr01"]},
+                    {},
+                ],
                 "udp",
                 "ipv4",
             ),
@@ -221,7 +234,10 @@ class Create(TestCase):
         assert_report_item_list_equal(
             config_validators.create(
                 "test-cluster",
-                [{"name": "", "addrs": ["addr01"]}, {"addrs": ["addr02"]},],
+                [
+                    {"name": "", "addrs": ["addr01"]},
+                    {"addrs": ["addr02"]},
+                ],
                 "udp",
                 "ipv4",
             ),
@@ -761,7 +777,11 @@ class Create(TestCase):
             [
                 fixture.error(
                     report_codes.COROSYNC_NODE_ADDRESS_COUNT_MISMATCH,
-                    node_addr_count={"node1": 8, "node2": 8, "node3": 7,},
+                    node_addr_count={
+                        "node1": 8,
+                        "node2": 8,
+                        "node3": 7,
+                    },
                 ),
                 fixture.error(
                     report_codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS,
@@ -774,7 +794,9 @@ class Create(TestCase):
         assert_report_item_list_equal(
             config_validators.create(
                 "test-{cluster",
-                [{"name": "node1}", "addrs": ["addr\r01"]},],
+                [
+                    {"name": "node1}", "addrs": ["addr\r01"]},
+                ],
                 "udp\n",
                 "ipv4",
             ),
@@ -842,18 +864,36 @@ class CreateLinkListCommonMixin:
         # If number of links options <= number of addresses, then everything is
         # ok. Number of addresses is checked in another validator.
         assert_report_item_list_equal(
-            self._validate([{"mcastport": "5405"}, {"mcastport": "5405"},], 3),
+            self._validate(
+                [
+                    {"mcastport": "5405"},
+                    {"mcastport": "5405"},
+                ],
+                3,
+            ),
             [],
         )
 
     def test_link_options_count_equals_links_count(self):
         assert_report_item_list_equal(
-            self._validate([{"mcastport": "5405"},], 1), []
+            self._validate(
+                [
+                    {"mcastport": "5405"},
+                ],
+                1,
+            ),
+            [],
         )
 
     def test_more_link_options_than_links(self):
         assert_report_item_list_equal(
-            self._validate([{"mcastport": "5405"}, {"mcastport": "5405"},], 1),
+            self._validate(
+                [
+                    {"mcastport": "5405"},
+                    {"mcastport": "5405"},
+                ],
+                1,
+            ),
             [
                 fixture.error(
                     report_codes.COROSYNC_TOO_MANY_LINKS_OPTIONS,
@@ -865,7 +905,12 @@ class CreateLinkListCommonMixin:
 
     def test_max_links_count_too_low(self):
         assert_report_item_list_equal(
-            self._validate([{"mcastport": "5405"},], -1),
+            self._validate(
+                [
+                    {"mcastport": "5405"},
+                ],
+                -1,
+            ),
             [
                 fixture.error(
                     report_codes.COROSYNC_TOO_MANY_LINKS_OPTIONS,
@@ -974,7 +1019,13 @@ class CreateLinkListUdp(CreateLinkListCommonMixin, TestCase):
         ]
         assert_report_item_list_equal(
             config_validators.create_link_list_udp(
-                [{"linknumber": "0", "nonsense": "doesnt matter",}], 1
+                [
+                    {
+                        "linknumber": "0",
+                        "nonsense": "doesnt matter",
+                    }
+                ],
+                1,
             ),
             [
                 fixture.error(
@@ -1266,8 +1317,13 @@ class CreateLinkListKnet(CreateLinkListCommonMixin, TestCase):
         assert_report_item_list_equal(
             config_validators.create_link_list_knet(
                 [
-                    {"nonsense1": "0", "nonsense2": "doesnt matter",},
-                    {"nonsense3": "who cares",},
+                    {
+                        "nonsense1": "0",
+                        "nonsense2": "doesnt matter",
+                    },
+                    {
+                        "nonsense3": "who cares",
+                    },
                 ],
                 3,
             ),
@@ -1302,7 +1358,12 @@ class CreateLinkListKnet(CreateLinkListCommonMixin, TestCase):
         ]
         assert_report_item_list_equal(
             config_validators.create_link_list_knet(
-                [{"ip_version": "ipv4",},], 2
+                [
+                    {
+                        "ip_version": "ipv4",
+                    },
+                ],
+                2,
             ),
             [
                 fixture.error(
@@ -1319,11 +1380,24 @@ class CreateLinkListKnet(CreateLinkListCommonMixin, TestCase):
         assert_report_item_list_equal(
             config_validators.create_link_list_knet(
                 [
-                    {"ping_interval": "250", "ping_timeout": "750",},
-                    {"ping_interval": "250",},
-                    {"ping_timeout": "750",},
-                    {"ping_interval": "", "ping_timeout": "750",},
-                    {"ping_interval": "250", "ping_timeout": "",},
+                    {
+                        "ping_interval": "250",
+                        "ping_timeout": "750",
+                    },
+                    {
+                        "ping_interval": "250",
+                    },
+                    {
+                        "ping_timeout": "750",
+                    },
+                    {
+                        "ping_interval": "",
+                        "ping_timeout": "750",
+                    },
+                    {
+                        "ping_interval": "250",
+                        "ping_timeout": "",
+                    },
                 ],
                 5,
             ),
@@ -1634,9 +1708,21 @@ class CreateTransportKnet(TransportKnetBase, TestCase):
         )
         assert_report_item_list_equal(
             self.call_function(
-                {"ip_version": "", "knet_pmtud_interval": "", "link_mode": "",},
-                {"level": "", "model": "", "threshold": "",},
-                {"cipher": "", "hash": "", "model": "",},
+                {
+                    "ip_version": "",
+                    "knet_pmtud_interval": "",
+                    "link_mode": "",
+                },
+                {
+                    "level": "",
+                    "model": "",
+                    "threshold": "",
+                },
+                {
+                    "cipher": "",
+                    "hash": "",
+                    "model": "",
+                },
             ),
             [
                 fixture.error(

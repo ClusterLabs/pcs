@@ -348,7 +348,8 @@ class CreateRequestHandleTest(TestCase):
 
 def fixture_request(host_id=1, action="action"):
     return lib.Request(
-        lib.RequestTarget("host{0}".format(host_id)), lib.RequestData(action),
+        lib.RequestTarget("host{0}".format(host_id)),
+        lib.RequestData(action),
     )
 
 
@@ -524,7 +525,8 @@ class MultiaddressCommunicatorTest(CommunicatorBaseTest):
                 MockCurl(request=request)
                 if counter["counter"] > 2
                 else MockCurl(
-                    error=(pycurl.E_SEND_ERROR, "reason"), request=request,
+                    error=(pycurl.E_SEND_ERROR, "reason"),
+                    request=request,
                 )
             )
 
@@ -585,7 +587,8 @@ class MultiaddressCommunicatorTest(CommunicatorBaseTest):
         mock_con_failure.side_effect = _con_failure
         com = self.get_multiaddress_communicator()
         mock_create_handle.side_effect = lambda request, _, __: MockCurl(
-            error=(pycurl.E_SEND_ERROR, "reason"), request=request,
+            error=(pycurl.E_SEND_ERROR, "reason"),
+            request=request,
         )
         request = lib.Request(
             lib.RequestTarget(

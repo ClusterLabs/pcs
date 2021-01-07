@@ -66,7 +66,8 @@ def get_config(env: LibraryEnvironment) -> Mapping[str, Any]:
     return dto.to_dict(
         DrConfigDto(
             local_site=DrConfigSiteDto(
-                site_role=dr_config.local_role, node_list=[],
+                site_role=dr_config.local_role,
+                node_list=[],
             ),
             remote_site_list=[
                 DrConfigSiteDto(
@@ -225,7 +226,8 @@ def status_all_sites_plaintext(
     local_nodes, report_list = get_existing_nodes_names(env.get_corosync_conf())
     report_processor.report_list(report_list)
     report_list, local_targets = target_factory.get_target_list_with_reports(
-        local_nodes, skip_non_existing=True,
+        local_nodes,
+        skip_non_existing=True,
     )
     report_processor.report_list(report_list)
     site_data_list.append(SiteData(True, dr_config.local_role, local_targets))
@@ -236,7 +238,8 @@ def status_all_sites_plaintext(
             report_list,
             remote_targets,
         ) = target_factory.get_target_list_with_reports(
-            conf_remote_site.node_name_list, skip_non_existing=True,
+            conf_remote_site.node_name_list,
+            skip_non_existing=True,
         )
         report_processor.report_list(report_list)
         site_data_list.append(
@@ -275,7 +278,9 @@ def _load_dr_config(
 ) -> Tuple[ReportItemList, DrConfigFacade]:
     if not config_file.raw_file.exists():
         return (
-            [ReportItem.error(reports.messages.DrConfigDoesNotExist()),],
+            [
+                ReportItem.error(reports.messages.DrConfigDoesNotExist()),
+            ],
             DrConfigFacade.empty(),
         )
     try:
@@ -321,7 +326,8 @@ def destroy(env: LibraryEnvironment, force_flags: Container[str] = ()) -> None:
 
     target_factory = env.get_node_target_factory()
     report_list, targets = target_factory.get_target_list_with_reports(
-        remote_nodes + local_nodes, skip_non_existing=skip_offline,
+        remote_nodes + local_nodes,
+        skip_non_existing=skip_offline,
     )
     report_processor.report_list(report_list)
     if report_processor.has_errors:

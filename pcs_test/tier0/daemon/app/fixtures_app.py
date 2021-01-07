@@ -22,7 +22,10 @@ class RubyPcsdWrapper(ruby_pcsd.Wrapper):
         self.body = b"Success action"
 
     async def run_ruby(
-        self, request_type, http_request=None, payload=None,
+        self,
+        request_type,
+        http_request=None,
+        payload=None,
     ):
         if request_type != self.request_type:
             raise AssertionError(
@@ -60,7 +63,10 @@ class AppTest(AsyncHTTPTestCase):
 
     def post(self, path, body, **kwargs):
         kwargs.update(
-            {"method": "POST", "body": urlencode(body),}
+            {
+                "method": "POST",
+                "body": urlencode(body),
+            }
         )
         return self.fetch(path, **kwargs)
 

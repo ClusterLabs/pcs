@@ -79,7 +79,9 @@ class RemoveTest(TestCase):
         self.assertRaises(
             CmdLineInputError,
             lambda: command.remove(
-                mock.MagicMock(), ["TICKET"], _modifiers(False),
+                mock.MagicMock(),
+                ["TICKET"],
+                _modifiers(False),
             ),
         )
         self.assertRaises(
@@ -98,5 +100,6 @@ class RemoveTest(TestCase):
         )
         command.remove(lib, ["TICKET", "RESOURCE"], _modifiers(False))
         lib.constraint_ticket.remove.assert_called_once_with(
-            "TICKET", "RESOURCE",
+            "TICKET",
+            "RESOURCE",
         )

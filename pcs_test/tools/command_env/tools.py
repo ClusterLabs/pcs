@@ -43,7 +43,8 @@ def get_env_tools(
         # pylint: disable=invalid-name
         for name, ExtensionClass in local_extensions.items():
             env_assistant.config.add_extension(
-                name, ExtensionClass,
+                name,
+                ExtensionClass,
             )
 
     return env_assistant, env_assistant.config

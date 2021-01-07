@@ -35,7 +35,10 @@ class FindNodeList(TestCase):
                 </primitive>
             </resources>
             """,
-            [PacemakerNode("R1", "H1"), PacemakerNode("R2", "H2"),],
+            [
+                PacemakerNode("R1", "H1"),
+                PacemakerNode("R2", "H2"),
+            ],
         )
 
     def test_find_no_nodes(self):
@@ -62,7 +65,9 @@ class FindNodeList(TestCase):
                 </primitive>
             </resources>
             """,
-            [PacemakerNode("R1", "R1"),],
+            [
+                PacemakerNode("R1", "R1"),
+            ],
         )
 
     def test_find_nodes_with_empty_server(self):
@@ -80,7 +85,9 @@ class FindNodeList(TestCase):
                 </primitive>
             </resources>
             """,
-            [PacemakerNode("R1", "R1"),],
+            [
+                PacemakerNode("R1", "R1"),
+            ],
         )
 
 
@@ -216,12 +223,17 @@ class Validate(TestCase):
 
     def test_report_conflict_node_name(self):
         assert_report_item_list_equal(
-            self.validate(node_name="R", host="host",),
+            self.validate(
+                node_name="R",
+                host="host",
+            ),
             [
                 (
                     severities.ERROR,
                     report_codes.ID_ALREADY_EXISTS,
-                    {"id": "R",},
+                    {
+                        "id": "R",
+                    },
                     None,
                 )
             ],
@@ -229,12 +241,16 @@ class Validate(TestCase):
 
     def test_report_conflict_node_host(self):
         assert_report_item_list_equal(
-            self.validate(host="RING0",),
+            self.validate(
+                host="RING0",
+            ),
             [
                 (
                     severities.ERROR,
                     report_codes.ID_ALREADY_EXISTS,
-                    {"id": "RING0",},
+                    {
+                        "id": "RING0",
+                    },
                     None,
                 )
             ],
@@ -242,12 +258,16 @@ class Validate(TestCase):
 
     def test_report_conflict_node_host_ring1(self):
         assert_report_item_list_equal(
-            self.validate(host="RING1",),
+            self.validate(
+                host="RING1",
+            ),
             [
                 (
                     severities.ERROR,
                     report_codes.ID_ALREADY_EXISTS,
-                    {"id": "RING1",},
+                    {
+                        "id": "RING1",
+                    },
                     None,
                 )
             ],

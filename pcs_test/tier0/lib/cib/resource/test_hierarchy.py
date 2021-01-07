@@ -54,7 +54,9 @@ class ValidateMoveResourcesToGroupMixin:
     def test_no_resources_specified(self):
         assert_report_item_list_equal(
             self._validate("G", []),
-            [fixture.error(report_codes.CANNOT_GROUP_RESOURCE_NO_RESOURCES),],
+            [
+                fixture.error(report_codes.CANNOT_GROUP_RESOURCE_NO_RESOURCES),
+            ],
         )
 
     def test_group_is_not_group(self):
@@ -454,7 +456,8 @@ class MoveResourcesToGroup(TestCase):
         """
         cib = etree.fromstring(cib_before)
         hierarchy.move_resources_to_group(
-            _resource(cib, "G"), _resources(cib, "R2"),
+            _resource(cib, "G"),
+            _resources(cib, "R2"),
         )
         assert_xml_equal(cib_after, etree_to_str(cib))
 
@@ -486,7 +489,8 @@ class MoveResourcesToGroup(TestCase):
         """
         cib = etree.fromstring(cib_before)
         hierarchy.move_resources_to_group(
-            _resource(cib, "G"), _resources(cib, "R1"),
+            _resource(cib, "G"),
+            _resources(cib, "R1"),
         )
         assert_xml_equal(cib_after, etree_to_str(cib))
 
@@ -520,7 +524,8 @@ class MoveResourcesToGroup(TestCase):
         """
         cib = etree.fromstring(cib_before)
         hierarchy.move_resources_to_group(
-            _resource(cib, "G"), _resources(cib, "R1"),
+            _resource(cib, "G"),
+            _resources(cib, "R1"),
         )
         assert_xml_equal(cib_after, etree_to_str(cib))
 

@@ -2641,8 +2641,14 @@ def get_cluster_properties_definition():
             "name": "pacemaker-schedulerd",
             "path": settings.pacemaker_schedulerd,
         },
-        {"name": "pacemaker-controld", "path": settings.pacemaker_controld,},
-        {"name": "pacemaker-based", "path": settings.pacemaker_based,},
+        {
+            "name": "pacemaker-controld",
+            "path": settings.pacemaker_controld,
+        },
+        {
+            "name": "pacemaker-based",
+            "path": settings.pacemaker_based,
+        },
     ]
     definition = {}
     for source in sources:
@@ -2823,7 +2829,9 @@ def get_library_wrapper():
 
 
 def exit_on_cmdline_input_errror(
-    error: CmdLineInputError, main_name: str, usage_name: Sequence[str],
+    error: CmdLineInputError,
+    main_name: str,
+    usage_name: Sequence[str],
 ) -> None:
     if not error or (not error.message or error.show_both_usage_and_message):
         usage.show(main_name, usage_name)

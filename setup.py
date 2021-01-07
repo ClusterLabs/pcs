@@ -108,7 +108,13 @@ setup(
     author_email="cfeist@redhat.com",
     url="https://github.com/ClusterLabs/pcs",
     packages=find_packages(exclude=["pcs_test", "pcs_test.*"]),
-    package_data={"pcs": ["bash_completion", "pcs.8", "pcs",]},
+    package_data={
+        "pcs": [
+            "bash_completion",
+            "pcs.8",
+            "pcs",
+        ]
+    },
     zip_safe=False,
     entry_points={
         "console_scripts": [

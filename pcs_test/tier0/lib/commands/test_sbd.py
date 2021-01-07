@@ -416,7 +416,10 @@ SBD_WATCHDOG_TIMEOUT=0
             (
                 Severities.ERROR,
                 reports.codes.UNABLE_TO_GET_SBD_CONFIG,
-                {"node": node, "reason": reason,},
+                {
+                    "node": node,
+                    "reason": reason,
+                },
             ),
         )
 
@@ -476,7 +479,12 @@ class InitializeBlockDevicesTest(CommonTest):
         runner.set_runs(
             self.fixture_sbd_init(
                 device_list,
-                [("-2", "3"), ("-3", "10"), ("-4", "2"), ("-1", "1"),],
+                [
+                    ("-2", "3"),
+                    ("-3", "10"),
+                    ("-4", "2"),
+                    ("-1", "1"),
+                ],
             )
         )
         cmd_sbd.initialize_block_devices(self.env, device_list, option_dict)
@@ -540,7 +548,10 @@ class InitializeBlockDevicesTest(CommonTest):
                 (
                     Severities.ERROR,
                     reports.codes.REQUIRED_OPTIONS_ARE_MISSING,
-                    {"option_names": ["device"], "option_type": None,},
+                    {
+                        "option_names": ["device"],
+                        "option_type": None,
+                    },
                 ),
                 (
                     Severities.ERROR,
@@ -590,8 +601,16 @@ SBD_DEVICE="/dev1;/dev2"
             + self.fixture_sbd_info("/dev2", "2")
         )
         expected_output = [
-            {"device": "/dev1", "list": "1", "dump": None,},
-            {"device": "/dev2", "list": "2", "dump": None,},
+            {
+                "device": "/dev1",
+                "list": "1",
+                "dump": None,
+            },
+            {
+                "device": "/dev2",
+                "list": "2",
+                "dump": None,
+            },
         ]
         self.assertEqual(
             expected_output, cmd_sbd.get_local_devices_info(self.env)
@@ -613,8 +632,16 @@ SBD_DEVICE="/dev1;/dev2"
             + self.fixture_sbd_dump("/dev2", "4")
         )
         expected_output = [
-            {"device": "/dev1", "list": "1", "dump": "3",},
-            {"device": "/dev2", "list": "2", "dump": "4",},
+            {
+                "device": "/dev1",
+                "list": "1",
+                "dump": "3",
+            },
+            {
+                "device": "/dev2",
+                "list": "2",
+                "dump": "4",
+            },
         ]
         self.assertEqual(
             expected_output, cmd_sbd.get_local_devices_info(self.env, dump=True)
@@ -653,9 +680,21 @@ SBD_DEVICE="/dev1;/dev2;/dev3"
             + self.fixture_sbd_dump("/dev3", "6")
         )
         expected_output = [
-            {"device": "/dev1", "list": None, "dump": None,},
-            {"device": "/dev2", "list": "2", "dump": None,},
-            {"device": "/dev3", "list": "5", "dump": "6",},
+            {
+                "device": "/dev1",
+                "list": None,
+                "dump": None,
+            },
+            {
+                "device": "/dev2",
+                "list": "2",
+                "dump": None,
+            },
+            {
+                "device": "/dev3",
+                "list": "5",
+                "dump": "6",
+            },
         ]
         self.assertEqual(
             expected_output, cmd_sbd.get_local_devices_info(self.env, dump=True)
@@ -702,7 +741,10 @@ class SetMessageTest(CommonTest):
                 (
                     Severities.ERROR,
                     reports.codes.REQUIRED_OPTIONS_ARE_MISSING,
-                    {"option_names": ["device", "node"], "option_type": None,},
+                    {
+                        "option_names": ["device", "node"],
+                        "option_type": None,
+                    },
                 ),
                 fixture.error(
                     reports.codes.INVALID_OPTION_VALUE,

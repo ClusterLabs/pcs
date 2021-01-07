@@ -97,7 +97,8 @@ class RunRuby(AsyncTestCase):
         )
         http_request = create_http_request()
         self.request = ruby_pcsd.RubyDaemonRequest(
-            ruby_pcsd.SINATRA_REMOTE, http_request,
+            ruby_pcsd.SINATRA_REMOTE,
+            http_request,
         )
         result = yield self.wrapper.request_remote(http_request)
         self.assert_sinatra_result(result, headers, status, body)

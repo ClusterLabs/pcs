@@ -821,7 +821,9 @@ def config_import_cman(lib, argv, modifiers):
     del lib
     warn("This command is deprecated and will be removed.")
     modifiers.ensure_only_supported(
-        "--force", "interactive", "--request-timeout",
+        "--force",
+        "interactive",
+        "--request-timeout",
     )
     if no_clufter:
         utils.err(

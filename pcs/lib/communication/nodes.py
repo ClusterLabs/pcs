@@ -217,7 +217,8 @@ class RunActionBase(
             if self._is_success(item_response):
                 # only success process individually
                 report = self._success_report(
-                    target.label, self._action_key_to_report(key),
+                    target.label,
+                    self._action_key_to_report(key),
                 )
             else:
                 report = self._failure_report(
@@ -490,7 +491,9 @@ class UpdateKnownHosts(
 
 
 class RemoveNodesFromCib(
-    AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase,
+    AllSameDataMixin,
+    AllAtOnceStrategyMixin,
+    RunRemotelyBase,
 ):
     def __init__(self, report_processor, nodes_to_remove):
         super().__init__(report_processor)
@@ -553,5 +556,11 @@ class SendPcsdSslCertAndKey(
 
 def _force(force_code, is_forced):
     if is_forced:
-        return dict(severity=ReportItemSeverity.WARNING, forceable=None,)
-    return dict(severity=ReportItemSeverity.ERROR, forceable=force_code,)
+        return dict(
+            severity=ReportItemSeverity.WARNING,
+            forceable=None,
+        )
+    return dict(
+        severity=ReportItemSeverity.ERROR,
+        forceable=force_code,
+    )

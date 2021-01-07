@@ -15,7 +15,9 @@ def qdevice_status_cmd(lib, argv, modifiers):
     cluster = None if len(argv) < 2 else argv[1]
     print(
         lib.qdevice.status(
-            model, verbose=modifiers.get("--full"), cluster=cluster,
+            model,
+            verbose=modifiers.get("--full"),
+            cluster=cluster,
         )
     )
 

@@ -23,7 +23,9 @@ fixture_report_exec_names = fixture.error(
     allowed_characters="a-z A-Z 0-9 /_-",
 )
 forbidden_characters_kwargs = dict(
-    allowed_values=None, cannot_be_empty=False, forbidden_characters=r"{}\n\r",
+    allowed_values=None,
+    cannot_be_empty=False,
+    forbidden_characters=r"{}\n\r",
 )
 
 
@@ -150,13 +152,24 @@ class BaseQuorumOptions:
     def test_qdevice_compatible_options(self):
         has_qdevice = True
         assert_report_item_list_equal(
-            self.validator({"wait_for_all": "1",}, has_qdevice), []
+            self.validator(
+                {
+                    "wait_for_all": "1",
+                },
+                has_qdevice,
+            ),
+            [],
         )
 
     def test_last_man_standing_required(self):
         has_qdevice = False
         assert_report_item_list_equal(
-            self.validator({"last_man_standing_window": "1000",}, has_qdevice),
+            self.validator(
+                {
+                    "last_man_standing_window": "1000",
+                },
+                has_qdevice,
+            ),
             [
                 fixture.error(
                     report_codes.PREREQUISITE_OPTION_MUST_BE_ENABLED_AS_WELL,
@@ -172,7 +185,10 @@ class BaseQuorumOptions:
         has_qdevice = False
         assert_report_item_list_equal(
             self.validator(
-                {"last_man_standing": "0", "last_man_standing_window": "1000",},
+                {
+                    "last_man_standing": "0",
+                    "last_man_standing_window": "1000",
+                },
                 has_qdevice,
             ),
             [
@@ -300,9 +316,13 @@ class QuorumOptionsUpdate(BaseQuorumOptions, TestCase):
         has_qdevice = False
         assert_report_item_list_equal(
             config_validators.update_quorum_options(
-                {"last_man_standing_window": "1000",},
+                {
+                    "last_man_standing_window": "1000",
+                },
                 has_qdevice,
-                {"last_man_standing": "0",},
+                {
+                    "last_man_standing": "0",
+                },
             ),
             [
                 fixture.error(
@@ -319,9 +339,13 @@ class QuorumOptionsUpdate(BaseQuorumOptions, TestCase):
         has_qdevice = False
         assert_report_item_list_equal(
             config_validators.update_quorum_options(
-                {"last_man_standing_window": "1000",},
+                {
+                    "last_man_standing_window": "1000",
+                },
                 has_qdevice,
-                {"last_man_standing": "1",},
+                {
+                    "last_man_standing": "1",
+                },
             ),
             [],
         )
@@ -494,7 +518,10 @@ class AddQuorumDevice(TestCase):
                     "force_ip_version": "",
                     "tie_breaker": "",
                 },
-                {"timeout": "", "sync_timeout": "",},
+                {
+                    "timeout": "",
+                    "sync_timeout": "",
+                },
                 {
                     "mode": "",
                     "timeout": "",
@@ -1081,7 +1108,10 @@ class AddQuorumDevice(TestCase):
         assert_report_item_list_equal(
             config_validators.add_quorum_device(
                 "net",
-                {"host": "qnetd-host", "algorithm": "ffsplit",},
+                {
+                    "host": "qnetd-host",
+                    "algorithm": "ffsplit",
+                },
                 {},
                 {
                     "mode": "on",
@@ -1096,7 +1126,9 @@ class AddQuorumDevice(TestCase):
                 self.node_ids,
                 force_options=True,
             ),
-            [fixture_report_exec_names,],
+            [
+                fixture_report_exec_names,
+            ],
         )
 
 
@@ -1157,7 +1189,13 @@ class UpdateQuorumDevice(TestCase):
     def test_net_doesnt_require_host_and_algorithm(self):
         assert_report_item_list_equal(
             config_validators.update_quorum_device(
-                "net", {"port": "12345",}, {}, {}, self.node_ids
+                "net",
+                {
+                    "port": "12345",
+                },
+                {},
+                {},
+                self.node_ids,
             ),
             [],
         )
@@ -1165,7 +1203,14 @@ class UpdateQuorumDevice(TestCase):
     def test_net_host_and_algorithm_cannot_be_removed(self):
         assert_report_item_list_equal(
             config_validators.update_quorum_device(
-                "net", {"host": "", "algorithm": "",}, {}, {}, self.node_ids
+                "net",
+                {
+                    "host": "",
+                    "algorithm": "",
+                },
+                {},
+                {},
+                self.node_ids,
             ),
             [
                 fixture.error(
@@ -1191,7 +1236,10 @@ class UpdateQuorumDevice(TestCase):
         assert_report_item_list_equal(
             config_validators.update_quorum_device(
                 "net",
-                {"host": "", "algorithm": "",},
+                {
+                    "host": "",
+                    "algorithm": "",
+                },
                 {},
                 {},
                 self.node_ids,
@@ -1428,7 +1476,9 @@ class UpdateQuorumDevice(TestCase):
             config_validators.update_quorum_device(
                 "net",
                 {},
-                {"model": "some model",},
+                {
+                    "model": "some model",
+                },
                 {},
                 self.node_ids,
                 force_options=True,
@@ -1752,5 +1802,7 @@ class UpdateQuorumDevice(TestCase):
                 self.node_ids,
                 force_options=True,
             ),
-            [fixture_report_exec_names,],
+            [
+                fixture_report_exec_names,
+            ],
         )

@@ -8,7 +8,9 @@ from pcs.common.str_tools import indent
 
 
 def tag_create(
-    lib: Any, argv: Sequence[str], modifiers: InputModifiers,
+    lib: Any,
+    argv: Sequence[str],
+    modifiers: InputModifiers,
 ) -> None:
     """
     Options:
@@ -22,7 +24,9 @@ def tag_create(
 
 
 def tag_config(
-    lib: Any, argv: Sequence[str], modifiers: InputModifiers,
+    lib: Any,
+    argv: Sequence[str],
+    modifiers: InputModifiers,
 ) -> None:
     """
     Options:
@@ -41,7 +45,9 @@ def tag_config(
 
 
 def tag_remove(
-    lib: Any, argv: Sequence[str], modifiers: InputModifiers,
+    lib: Any,
+    argv: Sequence[str],
+    modifiers: InputModifiers,
 ) -> None:
     """
     Options:
@@ -54,7 +60,9 @@ def tag_remove(
 
 
 def tag_update(
-    lib: Any, argv: Sequence[str], modifiers: InputModifiers,
+    lib: Any,
+    argv: Sequence[str],
+    modifiers: InputModifiers,
 ) -> None:
     """
     Options:

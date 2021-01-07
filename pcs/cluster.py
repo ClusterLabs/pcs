@@ -808,7 +808,8 @@ def cluster_push(lib, argv, modifiers):
                     "the 'crm_feature_set' version is '{0}'"
                     " but at least version '{1}' is required"
                 ).format(
-                    crm_feature_set_version, MIN_FEATURE_SET_VERSION_FOR_DIFF,
+                    crm_feature_set_version,
+                    MIN_FEATURE_SET_VERSION_FOR_DIFF,
                 )
             )
 
@@ -1010,7 +1011,8 @@ class RemoteAddNodes(RunRemotelyBase):
                 self._report(
                     reports.ReportItem(
                         severity=reports.ReportItemSeverity(
-                            report_dict["severity"], report_dict["forceable"],
+                            report_dict["severity"],
+                            report_dict["forceable"],
                         ),
                         message=reports.messages.LegacyCommonMessage(
                             report_dict["code"],
@@ -1087,7 +1089,9 @@ def node_add_outside_cluster(lib, argv, modifiers):
     report_processor = lib_env.report_processor
     target_factory = lib_env.get_node_target_factory()
     report_list, target_list = target_factory.get_target_list_with_reports(
-        [cluster_node], skip_non_existing=False, allow_skip=False,
+        [cluster_node],
+        skip_non_existing=False,
+        allow_skip=False,
     )
     report_processor.report_list(report_list)
     if report_processor.has_errors:
@@ -1108,7 +1112,9 @@ def node_remove(lib, argv, modifiers):
       * --request-timeout - HTTP request timeout
     """
     modifiers.ensure_only_supported(
-        "--force", "--skip-offline", "--request-timeout",
+        "--force",
+        "--skip-offline",
+        "--request-timeout",
     )
     if not argv:
         raise CmdLineInputError()
@@ -1194,7 +1200,8 @@ def cluster_uidgid(lib, argv, modifiers, silent_list=False):
         raise CmdLineInputError(
             hint=(
                 msg_command_replaced(
-                    "pcs cluster uidgid delete", "pcs cluster uidgid remove",
+                    "pcs cluster uidgid delete",
+                    "pcs cluster uidgid remove",
                 )
                 if command == "rm"
                 else None
@@ -1680,7 +1687,8 @@ def cluster_setup(lib, argv, modifiers):
     nodes = [
         _parse_node_options(node, options)
         for node, options in parse_args.split_list_by_any_keywords(
-            parsed_args["nodes"], "node name",
+            parsed_args["nodes"],
+            "node name",
         ).items()
     ]
 
@@ -1749,7 +1757,8 @@ def cluster_setup(lib, argv, modifiers):
         raise LibraryError(
             reports.ReportItem.error(
                 message=reports.messages.FileAlreadyExists(
-                    e.metadata.file_type_code, e.metadata.path,
+                    e.metadata.file_type_code,
+                    e.metadata.path,
                 ),
                 force_code=reports.codes.FORCE_OVERWRITE,
             )
@@ -1776,7 +1785,8 @@ def config_update(
     """
     modifiers.ensure_only_supported("--corosync_conf")
     parsed_args = parse_args.group_by_keywords(
-        argv, ["transport", "compression", "crypto", "totem"],
+        argv,
+        ["transport", "compression", "crypto", "totem"],
     )
     if not modifiers.is_specified("--corosync_conf"):
         lib.cluster.config_update(
@@ -1918,7 +1928,8 @@ def _config_get_text(corosync_conf: CorosyncConfDto) -> List[str]:
         lines.extend(
             indent(
                 _format_options(
-                    "Model Options", corosync_conf.quorum_device.model_options,
+                    "Model Options",
+                    corosync_conf.quorum_device.model_options,
                 )
             )
         )

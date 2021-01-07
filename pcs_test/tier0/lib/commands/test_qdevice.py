@@ -95,7 +95,9 @@ class QdeviceNetSetupTest(QdeviceTestCase):
                 (
                     severity.INFO,
                     report_codes.QDEVICE_INITIALIZATION_SUCCESS,
-                    {"model": "net",},
+                    {
+                        "model": "net",
+                    },
                 )
             ],
         )
@@ -114,7 +116,9 @@ class QdeviceNetSetupTest(QdeviceTestCase):
                 (
                     severity.INFO,
                     report_codes.QDEVICE_INITIALIZATION_SUCCESS,
-                    {"model": "net",},
+                    {
+                        "model": "net",
+                    },
                 ),
                 (
                     severity.INFO,
@@ -190,7 +194,9 @@ class QdeviceNetSetupTest(QdeviceTestCase):
                 (
                     severity.INFO,
                     report_codes.QDEVICE_INITIALIZATION_SUCCESS,
-                    {"model": "net",},
+                    {
+                        "model": "net",
+                    },
                 )
             ],
         )
@@ -226,7 +232,9 @@ class QdeviceNetSetupTest(QdeviceTestCase):
                 (
                     severity.INFO,
                     report_codes.QDEVICE_INITIALIZATION_SUCCESS,
-                    {"model": "net",},
+                    {
+                        "model": "net",
+                    },
                 ),
                 (
                     severity.INFO,
@@ -304,7 +312,9 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                 (
                     severity.INFO,
                     report_codes.QDEVICE_DESTROY_SUCCESS,
-                    {"model": "net",},
+                    {
+                        "model": "net",
+                    },
                 ),
             ],
         )
@@ -327,7 +337,9 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                 (
                     severity.WARNING,
                     report_codes.QDEVICE_USED_BY_CLUSTERS,
-                    {"clusters": ["a_cluster"],},
+                    {
+                        "clusters": ["a_cluster"],
+                    },
                 ),
                 (
                     severity.INFO,
@@ -361,7 +373,9 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                 (
                     severity.INFO,
                     report_codes.QDEVICE_DESTROY_SUCCESS,
-                    {"model": "net",},
+                    {
+                        "model": "net",
+                    },
                 ),
             ],
         )
@@ -380,7 +394,9 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                 (
                     severity.ERROR,
                     report_codes.QDEVICE_USED_BY_CLUSTERS,
-                    {"clusters": ["a_cluster"],},
+                    {
+                        "clusters": ["a_cluster"],
+                    },
                     report_codes.FORCE_QDEVICE_USED,
                 ),
             ],
@@ -777,7 +793,9 @@ class QdeviceNetStartTest(QdeviceTestCase):
             (
                 severity.ERROR,
                 report_codes.QDEVICE_NOT_INITIALIZED,
-                {"model": "net",},
+                {
+                    "model": "net",
+                },
             ),
         )
         mock_net_start.assert_not_called()
@@ -831,7 +849,9 @@ class QdeviceNetStopTest(QdeviceTestCase):
                 (
                     severity.WARNING,
                     report_codes.QDEVICE_USED_BY_CLUSTERS,
-                    {"clusters": ["a_cluster"],},
+                    {
+                        "clusters": ["a_cluster"],
+                    },
                 ),
                 (
                     severity.INFO,
@@ -867,7 +887,9 @@ class QdeviceNetStopTest(QdeviceTestCase):
                 (
                     severity.ERROR,
                     report_codes.QDEVICE_USED_BY_CLUSTERS,
-                    {"clusters": ["a_cluster"],},
+                    {
+                        "clusters": ["a_cluster"],
+                    },
                     report_codes.FORCE_QDEVICE_USED,
                 ),
             ],

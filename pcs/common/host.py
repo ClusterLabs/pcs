@@ -23,7 +23,10 @@ class PcsKnownHost(namedtuple("KnownHost", ["name", "token", "dest_list"])):
             dict(
                 token=self.token,
                 dest_list=[
-                    dict(addr=dest.addr, port=dest.port,)
+                    dict(
+                        addr=dest.addr,
+                        port=dest.port,
+                    )
                     for dest in self.dest_list
                 ],
             ),

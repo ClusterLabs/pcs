@@ -104,7 +104,10 @@ class PrepareOptionsPlainTest(TestCase):
             (
                 severities.ERROR,
                 report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                {"option_names": ["ticket"], "option_type": None,},
+                {
+                    "option_names": ["ticket"],
+                    "option_type": None,
+                },
             ),
         )
 
@@ -116,7 +119,10 @@ class PrepareOptionsPlainTest(TestCase):
             (
                 severities.ERROR,
                 report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                {"option_names": ["rsc"], "option_type": None,},
+                {
+                    "option_names": ["rsc"],
+                    "option_type": None,
+                },
             ),
         )
 
@@ -157,10 +163,18 @@ class PrepareOptionsPlainTest(TestCase):
             }
         )
         self.assertEqual(
-            expected_options, self.prepare(options, ticket_key, resource_id,)
+            expected_options,
+            self.prepare(
+                options,
+                ticket_key,
+                resource_id,
+            ),
         )
         mock_create_id.assert_called_once_with(
-            self.cib, ticket_key, resource_id, "Master",
+            self.cib,
+            ticket_key,
+            resource_id,
+            "Master",
         )
 
 
@@ -173,7 +187,9 @@ class PrepareOptionsWithSetTest(TestCase):
         self.cib = "cib"
         self.resource_set_list = "resource_set_list"
         self.prepare = lambda options: ticket.prepare_options_with_set(
-            self.cib, options, self.resource_set_list,
+            self.cib,
+            options,
+            self.resource_set_list,
         )
 
     @mock.patch("pcs.lib.cib.constraint.ticket.constraint.create_id")
@@ -196,7 +212,11 @@ class PrepareOptionsWithSetTest(TestCase):
         self.assertRaises(
             SomeException,
             lambda: self.prepare(
-                {"loss-policy": "freeze", "ticket": "T", "id": invalid_id,}
+                {
+                    "loss-policy": "freeze",
+                    "ticket": "T",
+                    "id": invalid_id,
+                }
             ),
         )
         mock_check_new_id_applicable.assert_called_once_with(
@@ -206,7 +226,11 @@ class PrepareOptionsWithSetTest(TestCase):
     def test_refuse_unknown_lost_policy(self, _):
         assert_raise_library_error(
             lambda: self.prepare(
-                {"loss-policy": "unknown", "ticket": "T", "id": "id",}
+                {
+                    "loss-policy": "unknown",
+                    "ticket": "T",
+                    "id": "id",
+                }
             ),
             (
                 severities.ERROR,
@@ -313,7 +337,8 @@ class AreDuplicateWithResourceSet(TestCase):
         mock_have_duplicate_resource_sets.return_value = True
         self.assertFalse(
             ticket.are_duplicate_with_resource_set(
-                Element({"ticket": "ticket_key"}), Element({"ticket": "X"}),
+                Element({"ticket": "ticket_key"}),
+                Element({"ticket": "X"}),
             )
         )
 
@@ -334,7 +359,9 @@ class RemovePlainTest(TestCase):
 
         self.assertTrue(
             ticket.remove_plain(
-                constraint_section, ticket_key="tA", resource_id="rA",
+                constraint_section,
+                ticket_key="tA",
+                resource_id="rA",
             )
         )
 
@@ -362,7 +389,9 @@ class RemovePlainTest(TestCase):
 
         self.assertFalse(
             ticket.remove_plain(
-                constraint_section, ticket_key="tA", resource_id="rA",
+                constraint_section,
+                ticket_key="tA",
+                resource_id="rA",
             )
         )
 

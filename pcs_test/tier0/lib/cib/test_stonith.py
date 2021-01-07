@@ -99,7 +99,11 @@ class GetMisconfiguredResources(TestCase):
         )
         self.assertEqual(
             stonith.get_misconfigured_resources(resources),
-            (resources.findall("primitive[@id='S1']"), [], [],),
+            (
+                resources.findall("primitive[@id='S1']"),
+                [],
+                [],
+            ),
         )
 
     def test_issues(self):

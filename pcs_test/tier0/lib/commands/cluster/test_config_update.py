@@ -177,7 +177,8 @@ class UpdateConfig(TestCase):
             )
         )
         self.config.env.push_corosync_conf(
-            corosync_conf_text=fixture_totem(), need_stopped_cluster=True,
+            corosync_conf_text=fixture_totem(),
+            need_stopped_cluster=True,
         )
         cluster.config_update(
             self.env_assist.get_env(),

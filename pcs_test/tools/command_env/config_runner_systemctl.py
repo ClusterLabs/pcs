@@ -84,9 +84,15 @@ class SystemctlShortcuts:
     def is_active(
         self, service, name="runner_systemctl.is_active", is_active=True
     ):
-        args = dict(stdout="unknown\n", returncode=3,)
+        args = dict(
+            stdout="unknown\n",
+            returncode=3,
+        )
         if is_active:
-            args = dict(stdout="active\n", returncode=0,)
+            args = dict(
+                stdout="active\n",
+                returncode=0,
+            )
         self.__calls.place(
             name,
             RunnerCall(
@@ -103,9 +109,15 @@ class SystemctlShortcuts:
         before=None,
         instead=None,
     ):
-        args = dict(stdout="disabled\n", returncode=1,)
+        args = dict(
+            stdout="disabled\n",
+            returncode=1,
+        )
         if is_enabled:
-            args = dict(stdout="enabled\n", returncode=0,)
+            args = dict(
+                stdout="enabled\n",
+                returncode=0,
+            )
         self.__calls.place(
             name,
             RunnerCall(

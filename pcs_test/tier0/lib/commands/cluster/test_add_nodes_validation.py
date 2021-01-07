@@ -478,7 +478,8 @@ class Inputs(TestCase):
         self.conflict_existing_nodes_cib_load_error()
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_nodes(
-                self.env_assist.get_env(), [{"name": "new1"}],
+                self.env_assist.get_env(),
+                [{"name": "new1"}],
             )
         )
         self.env_assist.assert_reports(
@@ -1020,7 +1021,10 @@ class ClusterStatus(TestCase):
                 for node in new_nodes
             ]
             + [
-                fixture.warn(reports.codes.OMITTING_NODE, node="node1",),
+                fixture.warn(
+                    reports.codes.OMITTING_NODE,
+                    node="node1",
+                ),
                 fixture.error(
                     reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     node="node2",
@@ -1056,7 +1060,8 @@ class ClusterStatus(TestCase):
 
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_nodes(
-                self.env_assist.get_env(), [{"name": "new1"}],
+                self.env_assist.get_env(),
+                [{"name": "new1"}],
             )
         )
 
@@ -1196,7 +1201,8 @@ class ClusterStatus(TestCase):
 
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_nodes(
-                self.env_assist.get_env(), [{"name": "new1"}],
+                self.env_assist.get_env(),
+                [{"name": "new1"}],
             )
         )
 
@@ -1375,7 +1381,8 @@ class ClusterStatus(TestCase):
                     force_code=reports.codes.FORCE_ALREADY_IN_CLUSTER,
                 ),
                 fixture.error(
-                    reports.codes.INVALID_RESPONSE_FORMAT, node="new4",
+                    reports.codes.INVALID_RESPONSE_FORMAT,
+                    node="new4",
                 ),
                 fixture.error(
                     reports.codes.CLUSTER_WILL_BE_DESTROYED,
@@ -1441,7 +1448,8 @@ class ClusterStatus(TestCase):
                     host_name="new3",
                 ),
                 fixture.error(
-                    reports.codes.INVALID_RESPONSE_FORMAT, node="new4",
+                    reports.codes.INVALID_RESPONSE_FORMAT,
+                    node="new4",
                 ),
             ]
         )
@@ -1464,7 +1472,9 @@ class ClusterStatus(TestCase):
         has_wd=True,
     ):
         result = {
-            "sbd": {"installed": sbd_installed,},
+            "sbd": {
+                "installed": sbd_installed,
+            },
             "watchdog": {
                 "exist": wd_exists,
                 "path": f"/dev/watchdog{suffix}",
@@ -1517,7 +1527,9 @@ class ClusterStatus(TestCase):
                     {
                         "label": "new2",
                         "output": self.fixture_sbd_check_output(
-                            2, wd_exists=False, wd_is_supported=False,
+                            2,
+                            wd_exists=False,
+                            wd_is_supported=False,
                         ),
                         "param_list": self.fixture_sbd_check_input(2),
                     },
@@ -1561,7 +1573,8 @@ class ClusterStatus(TestCase):
                     {
                         "label": "new9",
                         "output": self.fixture_sbd_check_output(
-                            9, wd_is_supported=False,
+                            9,
+                            wd_is_supported=False,
                         ),
                         "param_list": self.fixture_sbd_check_input(9),
                     },
@@ -1615,7 +1628,8 @@ class ClusterStatus(TestCase):
                     device="/dev/sda4",
                 ),
                 fixture.error(
-                    reports.codes.INVALID_RESPONSE_FORMAT, node="new5",
+                    reports.codes.INVALID_RESPONSE_FORMAT,
+                    node="new5",
                 ),
                 fixture.error(
                     reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
@@ -1662,28 +1676,35 @@ class ClusterStatus(TestCase):
                     {
                         "label": "new1",
                         "output": self.fixture_sbd_check_output(
-                            1, sbd_installed=False, has_wd=False,
+                            1,
+                            sbd_installed=False,
+                            has_wd=False,
                         ),
                         "param_list": self.fixture_sbd_check_input(
-                            1, has_wd=False,
+                            1,
+                            has_wd=False,
                         ),
                     },
                     {
                         "label": "new2",
                         "output": self.fixture_sbd_check_output(
-                            2, has_wd=False,
+                            2,
+                            has_wd=False,
                         ),
                         "param_list": self.fixture_sbd_check_input(
-                            2, has_wd=False,
+                            2,
+                            has_wd=False,
                         ),
                     },
                     {
                         "label": "new3",
                         "output": self.fixture_sbd_check_output(
-                            3, has_wd=False,
+                            3,
+                            has_wd=False,
                         ),
                         "param_list": self.fixture_sbd_check_input(
-                            3, has_wd=False,
+                            3,
+                            has_wd=False,
                         ),
                     },
                 ]

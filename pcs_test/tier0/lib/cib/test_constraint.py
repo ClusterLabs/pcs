@@ -122,7 +122,9 @@ class FindValidResourceId(TestCase):
         )
         assert_report_item_list_equal(
             self.report_processor.report_item_list,
-            [self.fixture_warning_multiinstance("clone", "clone_id"),],
+            [
+                self.fixture_warning_multiinstance("clone", "clone_id"),
+            ],
         )
 
     def test_return_resource_id_when_in_master_allowed(
@@ -136,7 +138,9 @@ class FindValidResourceId(TestCase):
         )
         assert_report_item_list_equal(
             self.report_processor.report_item_list,
-            [self.fixture_warning_multiinstance("clone", "master_id"),],
+            [
+                self.fixture_warning_multiinstance("clone", "master_id"),
+            ],
         )
 
     def test_return_resource_id_when_in_bundle_allowed(
@@ -150,7 +154,9 @@ class FindValidResourceId(TestCase):
         )
         assert_report_item_list_equal(
             self.report_processor.report_item_list,
-            [self.fixture_warning_multiinstance("bundle", "bundle_id"),],
+            [
+                self.fixture_warning_multiinstance("bundle", "bundle_id"),
+            ],
         )
 
 
@@ -215,7 +221,8 @@ class CreateIdTest(TestCase):
         resource_set_list = [{"ids": ["A", "B"]}, {"ids": ["C"]}]
         mock_find_id.return_value = "some_id"
         self.assertEqual(
-            "some_id", constraint.create_id("cib", "PREFIX", resource_set_list),
+            "some_id",
+            constraint.create_id("cib", "PREFIX", resource_set_list),
         )
         mock_find_id.assert_called_once_with("cib", "PREFIX_set_AABBCC")
 
@@ -263,7 +270,9 @@ class CheckIsWithoutDuplicationTest(TestCase):
                 (
                     severities.ERROR,
                     report_codes.DUPLICATE_CONSTRAINTS_EXIST,
-                    {"constraint_ids": ["duplicate_element"],},
+                    {
+                        "constraint_ids": ["duplicate_element"],
+                    },
                     report_codes.FORCE_CONSTRAINT_DUPLICATE,
                 ),
             ],
@@ -318,7 +327,9 @@ class CheckIsWithoutDuplicationTest(TestCase):
                 (
                     severities.WARNING,
                     report_codes.DUPLICATE_CONSTRAINTS_EXIST,
-                    {"constraint_ids": ["duplicate_element"],},
+                    {
+                        "constraint_ids": ["duplicate_element"],
+                    },
                 ),
             ],
         )

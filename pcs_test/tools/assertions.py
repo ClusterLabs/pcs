@@ -343,7 +343,10 @@ def _unexpected_report_given(
             else "No other report is expected!",
             len(expected_report_info_list),
             "\n    ".join(
-                map(_expected_report_item_format, expected_report_info_list,)
+                map(
+                    _expected_report_item_format,
+                    expected_report_info_list,
+                )
             )
             if expected_report_info_list
             else "No report is expected!",

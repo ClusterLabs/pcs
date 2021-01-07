@@ -78,7 +78,10 @@ class RequestTarget(
         if not dest_list:
             dest_list = [Destination(label, settings.pcsd_default_port)]
         return super(RequestTarget, cls).__new__(
-            cls, label, token=token, dest_list=list(dest_list),
+            cls,
+            label,
+            token=token,
+            dest_list=list(dest_list),
         )
 
     @classmethod
@@ -309,7 +312,9 @@ class Communicator:
         """
         for request in request_list:
             handle = _create_request_handle(
-                request, self._auth_cookies, self._request_timeout,
+                request,
+                self._auth_cookies,
+                self._request_timeout,
             )
             self._easy_handle_list.append(handle)
             self._multi_handle.add_handle(handle)

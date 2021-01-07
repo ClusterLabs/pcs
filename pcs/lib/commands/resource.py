@@ -658,7 +658,8 @@ def create_into_bundle(
                         allow_not_accessible_resource,
                     ),
                     message=reports.messages.ResourceInBundleNotAccessible(
-                        bundle_id, resource_id,
+                        bundle_id,
+                        resource_id,
                     ),
                 )
             ).has_errors:
@@ -710,7 +711,8 @@ def bundle_create(
             or resource.common.are_meta_disabled(meta_attributes)
         ),
         required_cib_version=_get_required_cib_version_for_container(
-            container_options, container_type,
+            container_options,
+            container_type,
         ),
     ) as resources_section:
         # no need to run validations related to remote and guest nodes as those
@@ -906,7 +908,9 @@ def bundle_update(
 
 
 def _disable_validate_and_edit_cib(
-    env: LibraryEnvironment, cib: _Element, resource_or_tag_ids: Iterable[str],
+    env: LibraryEnvironment,
+    cib: _Element,
+    resource_or_tag_ids: Iterable[str],
 ) -> List[_Element]:
     resource_el_list, report_list = _find_resources_expand_tags(
         cib, resource_or_tag_ids
@@ -1503,7 +1507,9 @@ class _Move(_MoveBanTemplate):
     def _report_action_pcmk_success(self, resource_id, stdout, stderr):
         return ReportItem.info(
             reports.messages.ResourceMovePcmkSuccess(
-                resource_id, stdout, stderr,
+                resource_id,
+                stdout,
+                stderr,
             )
         )
 
@@ -1526,12 +1532,14 @@ class _Move(_MoveBanTemplate):
             severity = reports.item.ReportItemSeverity.error()
         if not resource_running_on_after:
             return ReportItem(
-                severity, reports.messages.ResourceDoesNotRun(resource_id),
+                severity,
+                reports.messages.ResourceDoesNotRun(resource_id),
             )
         return ReportItem(
             severity,
             reports.messages.ResourceRunningOnNodes(
-                resource_id, resource_running_on_after,
+                resource_id,
+                resource_running_on_after,
             ),
         )
 
@@ -1558,7 +1566,10 @@ class _Ban(_MoveBanTemplate):
         )
 
     def _report_action_pcmk_success(
-        self, resource_id: str, stdout: str, stderr: str,
+        self,
+        resource_id: str,
+        stdout: str,
+        stderr: str,
     ) -> ReportItem:
         return ReportItem.info(
             reports.messages.ResourceBanPcmkSuccess(resource_id, stdout, stderr)
@@ -1584,12 +1595,14 @@ class _Ban(_MoveBanTemplate):
             severity = reports.item.ReportItemSeverity.error()
         if not resource_running_on_after:
             return ReportItem(
-                severity, reports.messages.ResourceDoesNotRun(resource_id),
+                severity,
+                reports.messages.ResourceDoesNotRun(resource_id),
             )
         return ReportItem(
             severity,
             reports.messages.ResourceRunningOnNodes(
-                resource_id, resource_running_on_after,
+                resource_id,
+                resource_running_on_after,
             ),
         )
 
@@ -1658,7 +1671,8 @@ def unmove_unban(
 
 
 def get_resource_relations_tree(
-    env: LibraryEnvironment, resource_id: str,
+    env: LibraryEnvironment,
+    resource_id: str,
 ) -> Mapping[str, Any]:
     """
     Return a dict representing tree-like structure of resources and their

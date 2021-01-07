@@ -233,7 +233,9 @@ def get_raw_file_mock(call_queue):
                 exception_msg = "No such file or directory"
             if exception_msg:
                 raise RawFileError(
-                    self.metadata, RawFileError.ACTION_REMOVE, exception_msg,
+                    self.metadata,
+                    RawFileError.ACTION_REMOVE,
+                    exception_msg,
                 )
 
         def backup(self):

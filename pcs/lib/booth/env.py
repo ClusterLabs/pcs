@@ -67,8 +67,14 @@ class BoothEnv:
     def _init_file_data(booth_files_data, file_key):
         # ghost file not specified
         if not file_key in booth_files_data:
-            return dict(ghost_file=False, ghost_data=None,)
-        return dict(ghost_file=True, ghost_data=booth_files_data[file_key],)
+            return dict(
+                ghost_file=False,
+                ghost_data=None,
+            )
+        return dict(
+            ghost_file=True,
+            ghost_data=booth_files_data[file_key],
+        )
 
     @property
     def instance_name(self):

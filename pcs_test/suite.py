@@ -79,7 +79,9 @@ def autodiscover_tests(tier=None):
     if tier is not None:
         test_dir = os.path.join(test_dir, f"tier{tier}")
     return unittest.TestLoader().discover(
-        start_dir=test_dir, pattern="test_*.py", top_level_dir=PACKAGE_DIR,
+        start_dir=test_dir,
+        pattern="test_*.py",
+        top_level_dir=PACKAGE_DIR,
     )
 
 
@@ -139,7 +141,8 @@ if "--list" in sys.argv:
 tests_to_run = discovered_tests
 if run_concurrently:
     tests_to_run = ConcurrentTestSuite(
-        discovered_tests, concurrencytest.fork_for_tests(),
+        discovered_tests,
+        concurrencytest.fork_for_tests(),
     )
 
 

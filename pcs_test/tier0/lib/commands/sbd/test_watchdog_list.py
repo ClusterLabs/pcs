@@ -118,7 +118,8 @@ class GetLocalAvailableWatchdogs(TestCase):
             lambda: get_local_available_watchdogs(self.env_assist.get_env()),
             [
                 fixture.error(
-                    report_codes.SBD_LIST_WATCHDOG_ERROR, reason=reason,
+                    report_codes.SBD_LIST_WATCHDOG_ERROR,
+                    reason=reason,
                 )
             ],
             expected_in_processor=False,

@@ -16,7 +16,14 @@ class DrSite(NamedTuple):
 class Facade(FacadeInterface):
     @classmethod
     def create(cls, local_role: DrRole) -> "Facade":
-        return cls(dict(local=dict(role=local_role.value,), remote_sites=[],))
+        return cls(
+            dict(
+                local=dict(
+                    role=local_role.value,
+                ),
+                remote_sites=[],
+            )
+        )
 
     @classmethod
     def empty(cls) -> "Facade":
@@ -29,7 +36,8 @@ class Facade(FacadeInterface):
     def add_site(self, role: DrRole, node_list: Iterable[str]) -> None:
         self._config["remote_sites"].append(
             dict(
-                role=role.value, nodes=[dict(name=node) for node in node_list],
+                role=role.value,
+                nodes=[dict(name=node) for node in node_list],
             )
         )
 

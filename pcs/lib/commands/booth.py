@@ -85,10 +85,12 @@ def config_setup(
         report_processor.report(
             ReportItem(
                 severity=reports.item.get_severity(
-                    reports.codes.FORCE_FILE_OVERWRITE, overwrite_existing,
+                    reports.codes.FORCE_FILE_OVERWRITE,
+                    overwrite_existing,
                 ),
                 message=reports.messages.FileAlreadyExists(
-                    e.metadata.file_type_code, e.metadata.path,
+                    e.metadata.file_type_code,
+                    e.metadata.path,
                 ),
             )
         )
@@ -118,7 +120,8 @@ def config_destroy(
     _ensure_live_env(env, booth_env)
 
     booth_resource_list = resource.find_for_config(
-        get_resources(env.get_cib()), booth_env.config_path,
+        get_resources(env.get_cib()),
+        booth_env.config_path,
     )
     if booth_resource_list:
         report_processor.report(
@@ -304,7 +307,9 @@ def config_ticket_add(
 
 
 def config_ticket_remove(
-    env: LibraryEnvironment, ticket_name, instance_name=None,
+    env: LibraryEnvironment,
+    ticket_name,
+    instance_name=None,
 ):
     """
     remove a ticket from booth configuration
@@ -470,7 +475,10 @@ def restart(
 
 
 def ticket_grant(
-    env: LibraryEnvironment, ticket_name, site_ip=None, instance_name=None,
+    env: LibraryEnvironment,
+    ticket_name,
+    site_ip=None,
+    instance_name=None,
 ):
     """
     Grant a ticket to the site specified by site_ip
@@ -481,12 +489,19 @@ def ticket_grant(
     string instance_name -- booth instance name
     """
     return _ticket_operation(
-        "grant", env, ticket_name, site_ip=site_ip, instance_name=instance_name,
+        "grant",
+        env,
+        ticket_name,
+        site_ip=site_ip,
+        instance_name=instance_name,
     )
 
 
 def ticket_revoke(
-    env: LibraryEnvironment, ticket_name, site_ip=None, instance_name=None,
+    env: LibraryEnvironment,
+    ticket_name,
+    site_ip=None,
+    instance_name=None,
 ):
     """
     Revoke a ticket from the site specified by site_ip
@@ -541,7 +556,9 @@ def _ticket_operation(
 
 
 def config_sync(
-    env: LibraryEnvironment, instance_name=None, skip_offline_nodes=False,
+    env: LibraryEnvironment,
+    instance_name=None,
+    skip_offline_nodes=False,
 ):
     """
     Send specified local booth configuration to all nodes in the local cluster.
@@ -603,7 +620,8 @@ def config_sync(
     )
     com_cmd.set_targets(
         env.get_node_target_factory().get_target_list(
-            cluster_nodes_names, skip_non_existing=skip_offline_nodes,
+            cluster_nodes_names,
+            skip_non_existing=skip_offline_nodes,
         )
     )
     run_and_raise(env.get_node_communicator(), com_cmd)
@@ -772,7 +790,8 @@ def pull_config(env: LibraryEnvironment, node_name, instance_name=None):
     env.report_processor.report(
         ReportItem.info(
             reports.messages.BoothFetchingConfigFromNode(
-                node_name, config=instance_name,
+                node_name,
+                config=instance_name,
             )
         )
     )
@@ -843,7 +862,8 @@ def _find_resource_elements_for_operation(
     allow_multiple,
 ):
     booth_element_list = resource.find_for_config(
-        resources_section, booth_env.config_path,
+        resources_section,
+        booth_env.config_path,
     )
 
     if not booth_element_list:
@@ -856,7 +876,8 @@ def _find_resource_elements_for_operation(
         report_processor.report(
             ReportItem(
                 severity=get_severity(
-                    report_codes.FORCE_BOOTH_REMOVE_FROM_CIB, allow_multiple,
+                    report_codes.FORCE_BOOTH_REMOVE_FROM_CIB,
+                    allow_multiple,
                 ),
                 message=reports.messages.BoothMultipleTimesInCib(
                     booth_env.instance_name,

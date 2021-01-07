@@ -41,7 +41,10 @@ class ComplexExpressions(TestCase):
                             ],
                         ),
                         BoolExpr(
-                            BOOL_AND, [DateUnaryExpr(DATE_OP_GT, "a date"),]
+                            BOOL_AND,
+                            [
+                                DateUnaryExpr(DATE_OP_GT, "a date"),
+                            ],
                         ),
                     ],
                 ),
@@ -106,7 +109,9 @@ class DisallowedRscOpExpressions(TestCase):
     def test_disallow_missing_op(self):
         assert_report_item_list_equal(
             Validator(
-                self.rule_rsc, allow_rsc_expr=True, allow_op_expr=False,
+                self.rule_rsc,
+                allow_rsc_expr=True,
+                allow_op_expr=False,
             ).get_reports(),
             [],
         )
@@ -114,7 +119,9 @@ class DisallowedRscOpExpressions(TestCase):
     def test_disallow_missing_rsc(self):
         assert_report_item_list_equal(
             Validator(
-                self.rule_op, allow_rsc_expr=False, allow_op_expr=True,
+                self.rule_op,
+                allow_rsc_expr=False,
+                allow_op_expr=True,
             ).get_reports(),
             [],
         )

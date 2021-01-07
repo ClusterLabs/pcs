@@ -33,7 +33,8 @@ def _parsed_to_str(parsed):
 class Parser(TestCase):
     def _assert_success(self, rule_string, rule_tree):
         self.assertEqual(
-            rule_tree, _parsed_to_str(rule.parse_rule(rule_string)),
+            rule_tree,
+            _parsed_to_str(rule.parse_rule(rule_string)),
         )
 
     def test_success_trivial(self):

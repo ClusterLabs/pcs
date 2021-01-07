@@ -130,7 +130,9 @@ class ValidateIdTest(TestCase):
             (
                 severity.ERROR,
                 report_codes.INVALID_ID_IS_EMPTY,
-                {"id_description": "test id",},
+                {
+                    "id_description": "test id",
+                },
             ),
         )
 

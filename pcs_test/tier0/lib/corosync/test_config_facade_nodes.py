@@ -229,8 +229,14 @@ class AddNodesTest(TestCase):
         facade = lib.ConfigFacade.from_string(config)
         facade.add_nodes(
             [
-                dict(name="node3", addrs=["node3-addr1", "node3-addr2"],),
-                dict(name="node2", addrs=["node2-addr1", "node2-addr2"],),
+                dict(
+                    name="node3",
+                    addrs=["node3-addr1", "node3-addr2"],
+                ),
+                dict(
+                    name="node2",
+                    addrs=["node2-addr1", "node2-addr2"],
+                ),
             ]
         )
 
@@ -385,7 +391,9 @@ class AddNodesTest(TestCase):
         )
         facade = lib.ConfigFacade.from_string(config)
         facade.add_nodes(
-            [dict(name="node2", addrs=["node2-addr1"]),]
+            [
+                dict(name="node2", addrs=["node2-addr1"]),
+            ]
         )
         expected_config = dedent(
             """\
@@ -437,7 +445,9 @@ class AddNodesTest(TestCase):
         )
         facade = lib.ConfigFacade.from_string(config)
         facade.add_nodes(
-            [dict(name="node3", addrs=["node3-addr1"]),]
+            [
+                dict(name="node3", addrs=["node3-addr1"]),
+            ]
         )
         expected_config = dedent(
             """\

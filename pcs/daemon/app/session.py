@@ -102,6 +102,7 @@ class Mixin:
             self.sid_to_cookies()
         elif sign_rejection:
             self.__session = self.__storage.rejected_user(
-                self.__session.sid, user_auth_info.name,
+                self.__session.sid,
+                user_auth_info.name,
             )
             self.sid_to_cookies()

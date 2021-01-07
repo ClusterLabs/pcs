@@ -163,7 +163,8 @@ def append_when_useful(parent, element, attribs_important=True, index=None):
 
 
 def remove_when_pointless(
-    element: _Element, attribs_important: bool = True,
+    element: _Element,
+    attribs_important: bool = True,
 ) -> None:
     """
     Remove an element when it is not worth keeping (see is_element_useful for

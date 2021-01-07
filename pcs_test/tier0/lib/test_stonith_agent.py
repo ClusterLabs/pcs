@@ -77,23 +77,37 @@ class ValidateParametersCreate(ValidateParameters):
     def test_action_is_deprecated(self):
         assert_report_item_list_equal(
             self.agent.validate_parameters_create(
-                {"action": "reboot", "required_param": "value",}
+                {
+                    "action": "reboot",
+                    "required_param": "value",
+                }
             ),
-            [self.report_error,],
+            [
+                self.report_error,
+            ],
         )
 
     def test_action_is_deprecated_forced(self):
         assert_report_item_list_equal(
             self.agent.validate_parameters_create(
-                {"action": "reboot", "required_param": "value",}, force=True
+                {
+                    "action": "reboot",
+                    "required_param": "value",
+                },
+                force=True,
             ),
-            [self.report_warning,],
+            [
+                self.report_warning,
+            ],
         )
 
     def test_action_not_reported_deprecated_when_empty(self):
         assert_report_item_list_equal(
             self.agent.validate_parameters_create(
-                {"action": "", "required_param": "value",}
+                {
+                    "action": "",
+                    "required_param": "value",
+                }
             ),
             [],
         )
@@ -103,16 +117,28 @@ class ValidateParametersUpdate(ValidateParameters):
     def test_action_is_deprecated(self):
         assert_report_item_list_equal(
             self.agent.validate_parameters_update(
-                {"required_param": "value",}, {"action": "reboot",}
+                {
+                    "required_param": "value",
+                },
+                {
+                    "action": "reboot",
+                },
             ),
-            [self.report_error,],
+            [
+                self.report_error,
+            ],
         )
 
     def test_action_not_reported_when_not_updated(self):
         assert_report_item_list_equal(
             self.agent.validate_parameters_update(
-                {"required_param": "value", "action": "reboot",},
-                {"required_param": "value2",},
+                {
+                    "required_param": "value",
+                    "action": "reboot",
+                },
+                {
+                    "required_param": "value2",
+                },
             ),
             [],
         )
@@ -120,25 +146,45 @@ class ValidateParametersUpdate(ValidateParameters):
     def test_action_is_deprecated_when_set_already(self):
         assert_report_item_list_equal(
             self.agent.validate_parameters_update(
-                {"required_param": "value", "action": "off",},
-                {"action": "reboot",},
+                {
+                    "required_param": "value",
+                    "action": "off",
+                },
+                {
+                    "action": "reboot",
+                },
             ),
-            [self.report_error,],
+            [
+                self.report_error,
+            ],
         )
 
     def test_action_is_deprecated_forced(self):
         assert_report_item_list_equal(
             self.agent.validate_parameters_update(
-                {"required_param": "value",}, {"action": "reboot",}, force=True
+                {
+                    "required_param": "value",
+                },
+                {
+                    "action": "reboot",
+                },
+                force=True,
             ),
-            [self.report_warning,],
+            [
+                self.report_warning,
+            ],
         )
 
     def test_action_not_reported_deprecated_when_empty(self):
         assert_report_item_list_equal(
             self.agent.validate_parameters_update(
-                {"required_param": "value", "action": "reboot",},
-                {"action": "",},
+                {
+                    "required_param": "value",
+                    "action": "reboot",
+                },
+                {
+                    "action": "",
+                },
             ),
             [],
         )

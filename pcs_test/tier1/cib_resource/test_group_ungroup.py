@@ -40,7 +40,8 @@ def fixture_group_xml(group_id, primitive_xml_list):
             {group_resources}
         </group>
     """.format(
-        group_id=group_id, group_resources="\n".join(primitive_xml_list),
+        group_id=group_id,
+        group_resources="\n".join(primitive_xml_list),
     )
 
 
@@ -50,7 +51,8 @@ def fixture_clone_xml(clone_id, clone_resource_xml):
             {clone_resource}
         </clone>
     """.format(
-        clone_id=clone_id, clone_resource=clone_resource_xml,
+        clone_id=clone_id,
+        clone_resource=clone_resource_xml,
     )
 
 
@@ -130,7 +132,8 @@ class TestGroupMixin:
         xml_manip = XmlManipulation.from_file(self.empty_cib)
         xml_manip.append_to_first_tag_name("resources", FIXTURE_AGROUP_XML)
         xml_manip.append_to_first_tag_name(
-            "configuration", FIXTURE_TAGS_CONFIG_XML,
+            "configuration",
+            FIXTURE_TAGS_CONFIG_XML,
         )
         xml_manip.append_to_first_tag_name(
             "constraints",
@@ -223,7 +226,10 @@ class GroupDeleteRemoveUngroupBase(
             fixture_resources_xml(
                 [
                     fixture_group_xml(
-                        "AGroup", [fixture_primitive_xml("A2"),],
+                        "AGroup",
+                        [
+                            fixture_primitive_xml("A2"),
+                        ],
                     ),
                     fixture_primitive_xml("A1"),
                     fixture_primitive_xml("A3"),
@@ -287,7 +293,8 @@ class GroupDeleteRemoveUngroupBase(
             fixture_resources_xml(
                 [
                     fixture_clone_xml(
-                        "AGroup-clone", fixture_primitive_xml("A3"),
+                        "AGroup-clone",
+                        fixture_primitive_xml("A3"),
                     ),
                     fixture_primitive_xml("A1"),
                     fixture_primitive_xml("A2"),

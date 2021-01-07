@@ -64,12 +64,16 @@ class RawFileRead(TestCase):
 
     def test_success_text(self, mock_flock):
         self.assert_read_in_correct_mode(
-            mock_flock, RawFile(fixture_metadata()), "r",
+            mock_flock,
+            RawFile(fixture_metadata()),
+            "r",
         )
 
     def test_success_binary(self, mock_flock):
         self.assert_read_in_correct_mode(
-            mock_flock, RawFile(fixture_metadata(binary=True)), "rb",
+            mock_flock,
+            RawFile(fixture_metadata(binary=True)),
+            "rb",
         )
 
     def test_cannot_open(self, mock_flock):

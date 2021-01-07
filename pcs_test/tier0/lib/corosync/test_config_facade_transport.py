@@ -98,8 +98,16 @@ class SetTransportOptionsKnetMixin:
                 "knet_pmtud_interval": "1234",
                 "ip_version": "ipv4",
             },
-            {"threshold": "1234", "model": "zlib", "level": "5",},
-            {"model": "nss", "hash": "sha256", "cipher": "aes256",},
+            {
+                "threshold": "1234",
+                "model": "zlib",
+                "level": "5",
+            },
+            {
+                "model": "nss",
+                "hash": "sha256",
+                "cipher": "aes256",
+            },
         )
         self.assertTrue(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
@@ -140,9 +148,21 @@ class SetTransportOptionsKnetMixin:
         ).format(self.knet_transport)
         facade = lib.ConfigFacade.from_string(config)
         facade.set_transport_options(
-            {"link_mode": "", "knet_pmtud_interval": "", "ip_version": "",},
-            {"threshold": "", "model": "", "level": "",},
-            {"model": "", "hash": "", "cipher": "",},
+            {
+                "link_mode": "",
+                "knet_pmtud_interval": "",
+                "ip_version": "",
+            },
+            {
+                "threshold": "",
+                "model": "",
+                "level": "",
+            },
+            {
+                "model": "",
+                "hash": "",
+                "cipher": "",
+            },
         )
         self.assertTrue(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
@@ -174,8 +194,16 @@ class SetTransportOptionsKnetMixin:
                 "knet_pmtud_interval": "1000",
                 "ip_version": "ipv6",
             },
-            {"threshold": "1000", "model": "lz4", "level": "9",},
-            {"model": "openssl", "hash": "md5", "cipher": "aes128",},
+            {
+                "threshold": "1000",
+                "model": "lz4",
+                "level": "9",
+            },
+            {
+                "model": "openssl",
+                "hash": "md5",
+                "cipher": "aes128",
+            },
         )
         self.assertTrue(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
@@ -216,7 +244,10 @@ class SetTransportOptionsKnetMixin:
         ).format(self.knet_transport)
         facade = lib.ConfigFacade.from_string(config)
         facade.set_transport_options(
-            {"link_mode": "active", "ip_version": "ipv6",},
+            {
+                "link_mode": "active",
+                "ip_version": "ipv6",
+            },
             {"level": "5"},
             {"model": "openssl"},
         )
@@ -273,7 +304,10 @@ class SetTransportOptionsKnetMixin:
         ).format(self.knet_transport)
         facade = lib.ConfigFacade.from_string(config)
         facade.set_transport_options(
-            {"ip_version": "", "link_mode": "",},
+            {
+                "ip_version": "",
+                "link_mode": "",
+            },
             {"model": ""},
             {"cipher": "", "hash": ""},
         )
@@ -329,7 +363,10 @@ class SetTransportOptionsKnetMixin:
         ).format(self.knet_transport)
         facade = lib.ConfigFacade.from_string(config)
         facade.set_transport_options(
-            {"ip_version": "ipv4-6", "link_mode": "passive",},
+            {
+                "ip_version": "ipv4-6",
+                "link_mode": "passive",
+            },
             {"model": "zlib", "threshold": "100"},
             {"cipher": "aes128", "hash": "md5"},
         )
@@ -394,7 +431,10 @@ class SetTransportOptionsKnetMixin:
         ).format(self.knet_transport)
         facade = lib.ConfigFacade.from_string(config)
         facade.set_transport_options(
-            {"ip_version": "ipv4-6", "link_mode": "passive",},
+            {
+                "ip_version": "ipv4-6",
+                "link_mode": "passive",
+            },
             {"model": "zlib", "threshold": "100"},
             {"cipher": "aes128", "hash": "md5"},
         )
@@ -455,8 +495,16 @@ class SetTransportOptionsUdpMixin:
         facade = lib.ConfigFacade.from_string(config)
         facade.set_transport_options(
             {"ip_version": "ipv4", "netmtu": "1500"},
-            {"threshold": "1234", "model": "zlib", "level": "5",},
-            {"model": "nss", "hash": "sha256", "cipher": "aes256",},
+            {
+                "threshold": "1234",
+                "model": "zlib",
+                "level": "5",
+            },
+            {
+                "model": "nss",
+                "hash": "sha256",
+                "cipher": "aes256",
+            },
         )
         self.assertTrue(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
@@ -489,9 +537,16 @@ class SetTransportOptionsUdpMixin:
         )
         facade = lib.ConfigFacade.from_string(config)
         facade.set_transport_options(
-            {"ip_version": "", "netmtu": "", "knet_pmtud_interval": "",},
+            {
+                "ip_version": "",
+                "netmtu": "",
+                "knet_pmtud_interval": "",
+            },
             {"model": ""},
-            {"": "", "cipher": "",},
+            {
+                "": "",
+                "cipher": "",
+            },
         )
         self.assertTrue(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
@@ -571,7 +626,10 @@ class SetTransportOptionsUdpMixin:
         )
         facade = lib.ConfigFacade.from_string(config)
         facade.set_transport_options(
-            {"ip_version": "ipv6", "netmtu": "1000",},
+            {
+                "ip_version": "ipv6",
+                "netmtu": "1000",
+            },
             {"level": "5"},
             {"model": "openssl"},
         )
@@ -840,7 +898,9 @@ class SetTransportOptionsGeneralTest(TestCase):
 
     def test_do_not_add_missing_section(self):
         self._assert_set_transport_options(
-            self._remove_option_params_list, "", "",
+            self._remove_option_params_list,
+            "",
+            "",
         )
 
     def test_remove_empty_section(self):
@@ -1187,7 +1247,9 @@ class SetTotemOptionsTest(TestCase):
 
     def test_add_totem_options(self):
         self._assert_set_totem_options(
-            FIXTURE_TOTEM_TOKEN_OPTIONS, "", self._fixture_totem_token_config,
+            FIXTURE_TOTEM_TOKEN_OPTIONS,
+            "",
+            self._fixture_totem_token_config,
         )
 
     def test_remove_totem_options(self):

@@ -75,7 +75,10 @@ class Runner:
         if binary_output:
             print_line("binary_output: {0}".format(binary_output))
         stdout, stderr, returncode = self.__runner.run(
-            args, stdin_string, env_extend, binary_output,
+            args,
+            stdin_string,
+            env_extend,
+            binary_output,
         )
         print_long_text("stdout", stdout)
         print_long_text("stderr", stderr)

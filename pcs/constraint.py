@@ -706,7 +706,10 @@ def location_lines(
     rsclist = sorted(
         set(list(rschashon.keys()) + list(rschashoff.keys())),
         key=lambda item: (
-            {RESOURCE_TYPE_RESOURCE: 1, RESOURCE_TYPE_REGEXP: 0,}[item[0]],
+            {
+                RESOURCE_TYPE_RESOURCE: 1,
+                RESOURCE_TYPE_REGEXP: 0,
+            }[item[0]],
             item[1],
         ),
     )
@@ -811,7 +814,10 @@ def _show_location_rules(
     for rsc in sorted(
         ruleshash.keys(),
         key=lambda item: (
-            {RESOURCE_TYPE_RESOURCE: 1, RESOURCE_TYPE_REGEXP: 0,}[item[0]],
+            {
+                RESOURCE_TYPE_RESOURCE: 1,
+                RESOURCE_TYPE_REGEXP: 0,
+            }[item[0]],
             item[1],
         ),
     ):
@@ -936,7 +942,8 @@ def location_prefer(lib, argv, modifiers):
     else:
         lib_env = utils.get_lib_env()
         existing_nodes, report_list = get_existing_nodes_names(
-            corosync_conf=lib_env.get_corosync_conf(), cib=lib_env.get_cib(),
+            corosync_conf=lib_env.get_corosync_conf(),
+            cib=lib_env.get_cib(),
         )
         if report_list:
             process_library_reports(report_list)
@@ -1146,7 +1153,11 @@ def location_rule(lib, argv, modifiers):
     )
     argv.pop(0)  # pop "rule"
     options, rule_argv = rule_utils.parse_argv(
-        argv, {"constraint-id": None, "resource-discovery": None,}
+        argv,
+        {
+            "constraint-id": None,
+            "resource-discovery": None,
+        },
     )
     resource_discovery = (
         "resource-discovery" in options and options["resource-discovery"]

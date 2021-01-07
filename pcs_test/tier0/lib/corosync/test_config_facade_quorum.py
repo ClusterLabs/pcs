@@ -85,7 +85,12 @@ class GetQuorumOptionsTest(TestCase):
         )
         facade = lib.ConfigFacade.from_string(config)
         options = facade.get_quorum_options()
-        self.assertEqual({"wait_for_all": "1",}, options)
+        self.assertEqual(
+            {
+                "wait_for_all": "1",
+            },
+            options,
+        )
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
 

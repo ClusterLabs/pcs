@@ -71,7 +71,9 @@ class PcsAgent(pyagentx.Agent):
         update_interval = get_update_interval()
         logger.info("Update interval set to: %s", str(update_interval))
         self.register(
-            settings.PCS_OID + ".1", ClusterPcsV1Updater, freq=update_interval,
+            settings.PCS_OID + ".1",
+            ClusterPcsV1Updater,
+            freq=update_interval,
         )
 
 

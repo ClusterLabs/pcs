@@ -66,7 +66,9 @@ class GetClusterStatusXmlTest(LibraryPacemakerTest):
             (
                 Severity.ERROR,
                 report_codes.CRM_MON_ERROR,
-                {"reason": expected_stderr + "\n" + expected_stdout,},
+                {
+                    "reason": expected_stderr + "\n" + expected_stdout,
+                },
             ),
         )
 
@@ -265,7 +267,9 @@ class GetCibXmlTest(LibraryPacemakerTest):
             (
                 Severity.ERROR,
                 report_codes.CIB_LOAD_ERROR,
-                {"reason": expected_stderr + "\n" + expected_stdout,},
+                {
+                    "reason": expected_stderr + "\n" + expected_stdout,
+                },
             ),
         )
 
@@ -424,7 +428,10 @@ class Verify(LibraryPacemakerTest):
         return zip(in_out_data, in_out_data)
 
     def subtest_filter_stderr_and_can_be_more_verbose(
-        self, in_out_tuple_list, can_be_more_verbose, verbose=False,
+        self,
+        in_out_tuple_list,
+        can_be_more_verbose,
+        verbose=False,
     ):
         fake_tmp_file = "/fake/tmp/file"
         runner = get_runner(env_vars={"CIB_file": fake_tmp_file})
@@ -447,12 +454,14 @@ class Verify(LibraryPacemakerTest):
 
     def test_error_can_be_more_verbose(self):
         self.subtest_filter_stderr_and_can_be_more_verbose(
-            self.get_in_out_filtered_stderr(), True,
+            self.get_in_out_filtered_stderr(),
+            True,
         )
 
     def test_error_cannot_be_more_verbose(self):
         self.subtest_filter_stderr_and_can_be_more_verbose(
-            self.get_in_out_unfiltered_data(), False,
+            self.get_in_out_unfiltered_data(),
+            False,
         )
 
     def test_error_cannot_be_more_verbose_in_verbose_mode(self):
@@ -508,7 +517,10 @@ class ReplaceCibConfigurationTest(LibraryPacemakerTest):
             (
                 Severity.ERROR,
                 report_codes.CIB_PUSH_ERROR,
-                {"reason": expected_stderr, "pushed_cib": expected_stdout,},
+                {
+                    "reason": expected_stderr,
+                    "pushed_cib": expected_stdout,
+                },
             ),
         )
 
@@ -546,7 +558,9 @@ class UpgradeCibTest(TestCase):
             (
                 Severity.ERROR,
                 report_codes.CIB_UPGRADE_FAILED,
-                {"reason": expected_stderr + "\n" + expected_stdout,},
+                {
+                    "reason": expected_stderr + "\n" + expected_stdout,
+                },
             ),
         )
         mock_runner.run.assert_called_once_with(
@@ -639,7 +653,9 @@ class EnsureCibVersionTest(TestCase):
             (
                 Severity.ERROR,
                 report_codes.CIB_UPGRADE_FAILED,
-                {"reason": start_tag_error_text(),},
+                {
+                    "reason": start_tag_error_text(),
+                },
             ),
         )
         mock_upgrade.assert_called_once_with(self.mock_runner)
@@ -688,7 +704,8 @@ class SimulateCibXml(LibraryPacemakerTest):
         assert_raise_library_error(
             lambda: lib.simulate_cib_xml(mock_runner, "<cib />"),
             fixture.error(
-                report_codes.CIB_SIMULATE_ERROR, reason="some error",
+                report_codes.CIB_SIMULATE_ERROR,
+                reason="some error",
             ),
         )
         mock_runner.run.assert_not_called()
@@ -703,7 +720,8 @@ class SimulateCibXml(LibraryPacemakerTest):
         assert_raise_library_error(
             lambda: lib.simulate_cib_xml(mock_runner, "<cib />"),
             fixture.error(
-                report_codes.CIB_SIMULATE_ERROR, reason="some error",
+                report_codes.CIB_SIMULATE_ERROR,
+                reason="some error",
             ),
         )
         mock_runner.run.assert_not_called()
@@ -725,7 +743,8 @@ class SimulateCibXml(LibraryPacemakerTest):
         assert_raise_library_error(
             lambda: lib.simulate_cib_xml(mock_runner, "<cib />"),
             fixture.error(
-                report_codes.CIB_SIMULATE_ERROR, reason="some error",
+                report_codes.CIB_SIMULATE_ERROR,
+                reason="some error",
             ),
         )
 
@@ -747,7 +766,8 @@ class SimulateCibXml(LibraryPacemakerTest):
         assert_raise_library_error(
             lambda: lib.simulate_cib_xml(mock_runner, "<cib />"),
             fixture.error(
-                report_codes.CIB_SIMULATE_ERROR, reason="some error",
+                report_codes.CIB_SIMULATE_ERROR,
+                reason="some error",
             ),
         )
 
@@ -770,7 +790,8 @@ class SimulateCibXml(LibraryPacemakerTest):
         assert_raise_library_error(
             lambda: lib.simulate_cib_xml(mock_runner, "<cib />"),
             fixture.error(
-                report_codes.CIB_SIMULATE_ERROR, reason="some error",
+                report_codes.CIB_SIMULATE_ERROR,
+                reason="some error",
             ),
         )
 
@@ -926,7 +947,12 @@ class RemoveNode(LibraryPacemakerTest):
         mock_runner = get_runner("", "", 0)
         lib.remove_node(mock_runner, "NODE_NAME")
         mock_runner.run.assert_called_once_with(
-            [self.path("crm_node"), "--force", "--remove", "NODE_NAME",]
+            [
+                self.path("crm_node"),
+                "--force",
+                "--remove",
+                "NODE_NAME",
+            ]
         )
 
     def test_error(self):
@@ -1181,7 +1207,9 @@ class ResourceRefreshTest(LibraryPacemakerTest):
             (
                 Severity.ERROR,
                 report_codes.CRM_MON_ERROR,
-                {"reason": expected_stderr + "\n" + expected_stdout,},
+                {
+                    "reason": expected_stderr + "\n" + expected_stdout,
+                },
             ),
         )
 
@@ -1270,7 +1298,9 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
             (
                 Severity.ERROR,
                 report_codes.WAIT_FOR_IDLE_ERROR,
-                {"reason": expected_stderr + "\n" + expected_stdout,},
+                {
+                    "reason": expected_stderr + "\n" + expected_stdout,
+                },
             ),
         )
 
@@ -1291,7 +1321,9 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
             (
                 Severity.ERROR,
                 report_codes.WAIT_FOR_IDLE_TIMED_OUT,
-                {"reason": expected_stderr + "\n" + expected_stdout,},
+                {
+                    "reason": expected_stderr + "\n" + expected_stdout,
+                },
             ),
         )
 

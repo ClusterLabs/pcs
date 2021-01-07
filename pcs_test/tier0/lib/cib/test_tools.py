@@ -45,7 +45,9 @@ class IdProviderTest(CibToolsTest):
         return (
             severities.ERROR,
             report_codes.ID_ALREADY_EXISTS,
-            {"id": _id,},
+            {
+                "id": _id,
+            },
             None,
         )
 
@@ -57,13 +59,19 @@ class IdProviderBook(IdProviderTest):
     def test_existing_id(self):
         self.fixture_add_primitive_with_id("myId")
         assert_report_item_list_equal(
-            self.provider.book_ids("myId"), [self.fixture_report("myId"),]
+            self.provider.book_ids("myId"),
+            [
+                self.fixture_report("myId"),
+            ],
         )
 
     def test_double_book(self):
         assert_report_item_list_equal(self.provider.book_ids("myId"), [])
         assert_report_item_list_equal(
-            self.provider.book_ids("myId"), [self.fixture_report("myId"),]
+            self.provider.book_ids("myId"),
+            [
+                self.fixture_report("myId"),
+            ],
         )
 
     def test_more_ids(self):
@@ -72,7 +80,10 @@ class IdProviderBook(IdProviderTest):
         )
         assert_report_item_list_equal(
             self.provider.book_ids("myId1", "myId2"),
-            [self.fixture_report("myId1"), self.fixture_report("myId2"),],
+            [
+                self.fixture_report("myId1"),
+                self.fixture_report("myId2"),
+            ],
         )
 
     def test_complex(self):
@@ -276,7 +287,9 @@ class GetConfigurationTest(CibToolsTest):
             (
                 severities.ERROR,
                 report_codes.CIB_CANNOT_FIND_MANDATORY_SECTION,
-                {"section": "configuration",},
+                {
+                    "section": "configuration",
+                },
             ),
         )
 
@@ -293,7 +306,9 @@ class GetConstraintsTest(CibToolsTest):
             (
                 severities.ERROR,
                 report_codes.CIB_CANNOT_FIND_MANDATORY_SECTION,
-                {"section": "configuration/constraints",},
+                {
+                    "section": "configuration/constraints",
+                },
             ),
         )
 
@@ -326,7 +341,9 @@ class GetResourcesTest(CibToolsTest):
             (
                 severities.ERROR,
                 report_codes.CIB_CANNOT_FIND_MANDATORY_SECTION,
-                {"section": "configuration/resources",},
+                {
+                    "section": "configuration/resources",
+                },
             ),
         )
 
@@ -343,7 +360,9 @@ class GetNodes(CibToolsTest):
             (
                 severities.ERROR,
                 report_codes.CIB_CANNOT_FIND_MANDATORY_SECTION,
-                {"section": "configuration/nodes",},
+                {
+                    "section": "configuration/nodes",
+                },
                 None,
             ),
         )
@@ -718,7 +737,9 @@ class ElementSearcher(TestCase):
         """
         )
         searcher = lib.ElementSearcher(
-            "primitive", "a", tree.find('.//resources/group[@id="g2"]'),
+            "primitive",
+            "a",
+            tree.find('.//resources/group[@id="g2"]'),
         )
         self.assertFalse(searcher.element_found())
         self.assertIsNone(searcher.get_element())
@@ -802,7 +823,12 @@ class ElementSearcher(TestCase):
         self.assertFalse(searcher.validate_book_id(id_provider))
         assert_report_item_list_equal(
             searcher.get_errors(),
-            [fixture.error(report_codes.ID_ALREADY_EXISTS, id="a",),],
+            [
+                fixture.error(
+                    report_codes.ID_ALREADY_EXISTS,
+                    id="a",
+                ),
+            ],
         )
 
     def test_book_not_valid_id(self):

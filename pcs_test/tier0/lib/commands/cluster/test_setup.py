@@ -171,7 +171,9 @@ def corosync_conf_fixture(
         node_list="\n".join(
             [
                 NODE_TEMPLATE.format(
-                    name=node, id=i, ring_list=ring_list_fixture(addr_list),
+                    name=node,
+                    id=i,
+                    ring_list=ring_list_fixture(addr_list),
                 )
                 for i, (node, addr_list) in enumerate(
                     node_addrs.items(), start=1
@@ -213,7 +215,10 @@ def config_succes_minimal_fixture(
         }
     services_status = {
         service: dict(
-            installed=True, enabled=False, running=False, version="1.0",
+            installed=True,
+            enabled=False,
+            running=False,
+            version="1.0",
         )
         for service in SERVICE_LIST
     }
@@ -221,7 +226,8 @@ def config_succes_minimal_fixture(
         config.http.host.get_host_info(
             node_labels=node_labels,
             output_data=dict(
-                services=services_status, cluster_configuration_exists=False,
+                services=services_status,
+                cluster_configuration_exists=False,
             ),
             communication_list=communication_list,
         )
@@ -233,7 +239,8 @@ def config_succes_minimal_fixture(
             name="fs.open.pcsd_config",
         )
         .http.host.cluster_destroy(
-            node_labels=node_labels, communication_list=communication_list,
+            node_labels=node_labels,
+            communication_list=communication_list,
         )
         .http.host.update_known_hosts(
             node_labels=node_labels,
@@ -261,7 +268,9 @@ def config_succes_minimal_fixture(
 
 
 def reports_success_minimal_fixture(
-    node_list=None, using_known_hosts_addresses=True, keys_sync=True,
+    node_list=None,
+    using_known_hosts_addresses=True,
+    keys_sync=True,
 ):
     node_list = node_list or NODE_LIST
     auth_file_list = ["corosync authkey", "pacemaker authkey"]
@@ -280,7 +289,8 @@ def reports_success_minimal_fixture(
         ]
         + [
             fixture.info(
-                reports.codes.CLUSTER_DESTROY_STARTED, host_name_list=node_list,
+                reports.codes.CLUSTER_DESTROY_STARTED,
+                host_name_list=node_list,
             ),
         ]
         + [
@@ -405,7 +415,9 @@ class SetupSuccessMinimal(TestCase):
 
     def test_minimal(self):
         cluster.setup(
-            self.env_assist.get_env(), CLUSTER_NAME, COMMAND_NODE_LIST,
+            self.env_assist.get_env(),
+            CLUSTER_NAME,
+            COMMAND_NODE_LIST,
         )
         self.env_assist.assert_reports(reports_success_minimal_fixture())
 
@@ -476,7 +488,10 @@ class SetupSuccessMinimal(TestCase):
                 ),
             ]
             + [
-                fixture.info(reports.codes.CLUSTER_START_SUCCESS, node=node,)
+                fixture.info(
+                    reports.codes.CLUSTER_START_SUCCESS,
+                    node=node,
+                )
                 for node in NODE_LIST
             ]
         )
@@ -552,7 +567,10 @@ class SetupSuccessMinimal(TestCase):
                 ),
             ]
             + [
-                fixture.info(reports.codes.CLUSTER_START_SUCCESS, node=node,)
+                fixture.info(
+                    reports.codes.CLUSTER_START_SUCCESS,
+                    node=node,
+                )
                 for node in NODE_LIST
             ]
         )
@@ -654,7 +672,10 @@ class Setup2NodeSuccessMinimal(TestCase):
         patch_getaddrinfo(self, self.node_list)
         services_status = {
             service: dict(
-                installed=True, enabled=False, running=False, version="1.0",
+                installed=True,
+                enabled=False,
+                running=False,
+                version="1.0",
             )
             for service in SERVICE_LIST
         }
@@ -897,7 +918,8 @@ class Validation(TestCase):
         cluster_name = "bad cluster.name for gfs2"
         (
             self.config.http.host.get_host_info(
-                NODE_LIST, output_data=self.get_host_info_ok,
+                NODE_LIST,
+                output_data=self.get_host_info_ok,
             )
             .fs.isfile(settings.pcsd_config)
             .fs.open(
@@ -911,7 +933,9 @@ class Validation(TestCase):
 
         self.env_assist.assert_raise_library_error(
             lambda: cluster.setup(
-                self.env_assist.get_env(), cluster_name, self.command_node_list,
+                self.env_assist.get_env(),
+                cluster_name,
+                self.command_node_list,
             )
         )
         self.env_assist.assert_reports(
@@ -932,7 +956,8 @@ class Validation(TestCase):
         config_succes_minimal_fixture(
             self.config,
             corosync_conf=corosync_conf_fixture(
-                self.corosync_node_list, cluster_name=cluster_name,
+                self.corosync_node_list,
+                cluster_name=cluster_name,
             ),
         )
 
@@ -1442,7 +1467,11 @@ class Validation(TestCase):
             )
         )
         self.env_assist.assert_reports(
-            [fixture.error(reports.codes.HOST_NOT_FOUND, host_list=["node2"]),]
+            [
+                fixture.error(
+                    reports.codes.HOST_NOT_FOUND, host_list=["node2"]
+                ),
+            ]
         )
 
     def test_node_ready_check(self):
@@ -1797,7 +1826,11 @@ class Validation(TestCase):
             )
         )
         self.env_assist.assert_reports(
-            [fixture.error(reports.codes.WAIT_FOR_NODE_STARTUP_WITHOUT_START,)]
+            [
+                fixture.error(
+                    reports.codes.WAIT_FOR_NODE_STARTUP_WITHOUT_START,
+                )
+            ]
         )
 
     def test_errors_from_all_validators(self):
@@ -1886,7 +1919,10 @@ TOTEM_OPTIONS = dict(
     window_size="16",
 )
 
-QUORUM_OPTIONS = dict(last_man_standing="1", last_man_standing_window="10",)
+QUORUM_OPTIONS = dict(
+    last_man_standing="1",
+    last_man_standing_window="10",
+)
 
 
 @mock.patch(
@@ -1922,7 +1958,10 @@ class TransportKnetSuccess(TestCase):
             self.env_assist.get_env(),
             CLUSTER_NAME,
             [
-                dict(name=node, addrs=addrs,)
+                dict(
+                    name=node,
+                    addrs=addrs,
+                )
                 for node, addrs in node_addrs.items()
             ],
             transport_type=self.transport_type,
@@ -1949,8 +1988,14 @@ class TransportKnetSuccess(TestCase):
                 transport="sctp",
             ),
             dict(mcastport="23456"),
-            dict(linknumber="7", transport="udp",),
-            dict(linknumber="3", link_priority="20",),
+            dict(
+                linknumber="7",
+                transport="udp",
+            ),
+            dict(
+                linknumber="3",
+                link_priority="20",
+            ),
             dict(mcastport="34567"),
             dict(transport="sctp"),
         ]
@@ -1958,8 +2003,16 @@ class TransportKnetSuccess(TestCase):
         transport_options = dict(
             ip_version="ipv4", knet_pmtud_interval="0", link_mode="passive"
         )
-        compression_options = dict(level="2", model="zlib", threshold="10",)
-        crypto_options = dict(cipher="aes256", hash="sha512", model="openssl",)
+        compression_options = dict(
+            level="2",
+            model="zlib",
+            threshold="10",
+        )
+        crypto_options = dict(
+            cipher="aes256",
+            hash="sha512",
+            model="openssl",
+        )
         config_succes_minimal_fixture(
             self.config,
             corosync_conf=corosync_conf_fixture(
@@ -1979,7 +2032,10 @@ class TransportKnetSuccess(TestCase):
             self.env_assist.get_env(),
             CLUSTER_NAME,
             [
-                dict(name=node, addrs=addrs,)
+                dict(
+                    name=node,
+                    addrs=addrs,
+                )
                 for node, addrs in node_addrs.items()
             ],
             transport_type=self.transport_type,
@@ -1997,7 +2053,10 @@ class TransportKnetSuccess(TestCase):
     def test_disable_crypto(self):
         node_addrs = {node: [f"{node}.addr"] for node in NODE_LIST}
         self.resolvable_hosts.extend(set(flat_list(node_addrs.values())))
-        crypto_options = dict(cipher="none", hash="none",)
+        crypto_options = dict(
+            cipher="none",
+            hash="none",
+        )
         config_succes_minimal_fixture(
             self.config,
             corosync_conf=corosync_conf_fixture(
@@ -2011,7 +2070,10 @@ class TransportKnetSuccess(TestCase):
             self.env_assist.get_env(),
             CLUSTER_NAME,
             [
-                dict(name=node, addrs=addrs,)
+                dict(
+                    name=node,
+                    addrs=addrs,
+                )
                 for node, addrs in node_addrs.items()
             ],
             transport_type=self.transport_type,
@@ -2052,7 +2114,10 @@ class TransportUdpSuccess(TestCase):
             self.env_assist.get_env(),
             CLUSTER_NAME,
             [
-                dict(name=node, addrs=addrs,)
+                dict(
+                    name=node,
+                    addrs=addrs,
+                )
                 for node, addrs in node_addrs.items()
             ],
             transport_type=self.transport_type,
@@ -2089,7 +2154,10 @@ class TransportUdpSuccess(TestCase):
             self.env_assist.get_env(),
             CLUSTER_NAME,
             [
-                dict(name=node, addrs=addrs,)
+                dict(
+                    name=node,
+                    addrs=addrs,
+                )
                 for node, addrs in node_addrs.items()
             ],
             transport_type=self.transport_type,
@@ -2130,7 +2198,10 @@ class SetupWithWait(TestCase):
         patch_getaddrinfo(self, NODE_LIST)
         services_status = {
             service: dict(
-                installed=True, enabled=False, running=False, version="1.0",
+                installed=True,
+                enabled=False,
+                running=False,
+                version="1.0",
             )
             for service in SERVICE_LIST
         }
@@ -2154,7 +2225,9 @@ class SetupWithWait(TestCase):
             .http.host.update_known_hosts(NODE_LIST, to_add_hosts=NODE_LIST)
             .http.files.remove_files(NODE_LIST, pcsd_settings=True)
             .http.files.put_files(
-                NODE_LIST, pcmk_authkey=RANDOM_KEY, corosync_authkey=RANDOM_KEY,
+                NODE_LIST,
+                pcmk_authkey=RANDOM_KEY,
+                corosync_authkey=RANDOM_KEY,
             )
             .http.files.put_files(
                 NODE_LIST,
@@ -2195,7 +2268,10 @@ class SetupWithWait(TestCase):
                 ),
             ]
             + [
-                fixture.info(reports.codes.CLUSTER_START_SUCCESS, node=node,)
+                fixture.info(
+                    reports.codes.CLUSTER_START_SUCCESS,
+                    node=node,
+                )
                 for node in NODE_LIST[:1]
             ]
             + [
@@ -2274,7 +2350,10 @@ class SetupWithWait(TestCase):
                 ),
             ]
             + [
-                fixture.info(reports.codes.CLUSTER_START_SUCCESS, node=node,)
+                fixture.info(
+                    reports.codes.CLUSTER_START_SUCCESS,
+                    node=node,
+                )
                 for node in NODE_LIST
             ]
         )
@@ -2284,7 +2363,12 @@ class SetupWithWait(TestCase):
     def test_fails(self):
         node_not_started = dict(
             label=NODE_LIST[2],
-            output=json.dumps(dict(pending=True, online=False,)),
+            output=json.dumps(
+                dict(
+                    pending=True,
+                    online=False,
+                )
+            ),
         )
         (
             self.config.http.host.check_pacemaker_started(
@@ -2300,7 +2384,10 @@ class SetupWithWait(TestCase):
             )
             .http.host.check_pacemaker_started(
                 communication_list=[
-                    dict(label=NODE_LIST[0], response_code=400,),
+                    dict(
+                        label=NODE_LIST[0],
+                        response_code=400,
+                    ),
                     node_not_started,
                 ],
                 name="pcmk_status_check_2",
@@ -2338,7 +2425,10 @@ class SetupWithWait(TestCase):
                 ),
             ]
             + [
-                fixture.info(reports.codes.CLUSTER_START_SUCCESS, node=node,)
+                fixture.info(
+                    reports.codes.CLUSTER_START_SUCCESS,
+                    node=node,
+                )
                 for node in NODE_LIST[2:3]
             ]
             + [
@@ -2369,7 +2459,12 @@ class SetupWithWait(TestCase):
                     dict(label=NODE_LIST[1], output="not json"),
                     dict(
                         label=NODE_LIST[2],
-                        output=json.dumps(dict(pending=True, online=False,)),
+                        output=json.dumps(
+                            dict(
+                                pending=True,
+                                online=False,
+                            )
+                        ),
                     ),
                 ],
             ).http.host.check_pacemaker_started(
@@ -2405,11 +2500,15 @@ class SetupWithWait(TestCase):
                     reason="error",
                 ),
                 fixture.error(
-                    reports.codes.INVALID_RESPONSE_FORMAT, node=NODE_LIST[1],
+                    reports.codes.INVALID_RESPONSE_FORMAT,
+                    node=NODE_LIST[1],
                 ),
             ]
             + [
-                fixture.info(reports.codes.CLUSTER_START_SUCCESS, node=node,)
+                fixture.info(
+                    reports.codes.CLUSTER_START_SUCCESS,
+                    node=node,
+                )
                 for node in NODE_LIST[:1]
             ]
             + [
@@ -2440,11 +2539,19 @@ class Failures(RemoveCallsMixin, TestCase):
         self.nodes_success = NODE_LIST[2:]
         self.communication_list = (
             [
-                dict(label=node, response_code=400, output=REASON,)
+                dict(
+                    label=node,
+                    response_code=400,
+                    output=REASON,
+                )
                 for node in self.nodes_failed
             ]
             + [
-                dict(label=node, was_connected=False, error_msg=REASON,)
+                dict(
+                    label=node,
+                    was_connected=False,
+                    error_msg=REASON,
+                )
                 for node in self.nodes_offline
             ]
             + [dict(label=node) for node in self.nodes_success]
@@ -2627,7 +2734,10 @@ class Failures(RemoveCallsMixin, TestCase):
         self._remove_calls(2)
         self.config.http.files.put_files(
             communication_list=[
-                dict(label=NODE_LIST[0], output="invalid json",)
+                dict(
+                    label=NODE_LIST[0],
+                    output="invalid json",
+                )
             ]
             + [dict(label=node) for node in NODE_LIST[1:]],
             corosync_conf=corosync_conf_fixture(COROSYNC_NODE_LIST),
@@ -2655,7 +2765,8 @@ class Failures(RemoveCallsMixin, TestCase):
             ]
             + [
                 fixture.error(
-                    reports.codes.INVALID_RESPONSE_FORMAT, node=NODE_LIST[0],
+                    reports.codes.INVALID_RESPONSE_FORMAT,
+                    node=NODE_LIST[0],
                 )
             ]
         )
@@ -2663,7 +2774,8 @@ class Failures(RemoveCallsMixin, TestCase):
     def test_removing_files_communication_failure(self):
         self._remove_calls(6)
         self.config.http.files.remove_files(
-            communication_list=self.communication_list, pcsd_settings=True,
+            communication_list=self.communication_list,
+            pcsd_settings=True,
         )
         self.env_assist.assert_raise_library_error(
             lambda: cluster.setup(
@@ -2742,7 +2854,10 @@ class Failures(RemoveCallsMixin, TestCase):
         self._remove_calls(6)
         self.config.http.files.remove_files(
             communication_list=[
-                dict(label=NODE_LIST[0], output="invalid json",)
+                dict(
+                    label=NODE_LIST[0],
+                    output="invalid json",
+                )
             ]
             + [dict(label=node) for node in NODE_LIST[1:]],
             pcsd_settings=True,
@@ -2769,7 +2884,8 @@ class Failures(RemoveCallsMixin, TestCase):
             ]
             + [
                 fixture.error(
-                    reports.codes.INVALID_RESPONSE_FORMAT, node=NODE_LIST[0],
+                    reports.codes.INVALID_RESPONSE_FORMAT,
+                    node=NODE_LIST[0],
                 )
             ]
         )
@@ -2864,7 +2980,10 @@ class Failures(RemoveCallsMixin, TestCase):
         self._remove_calls(4)
         self.config.http.files.put_files(
             communication_list=[
-                dict(label=NODE_LIST[0], output="invalid json",),
+                dict(
+                    label=NODE_LIST[0],
+                    output="invalid json",
+                ),
             ]
             + [dict(label=node) for node in NODE_LIST[1:]],
             pcmk_authkey=RANDOM_KEY,
@@ -2893,7 +3012,8 @@ class Failures(RemoveCallsMixin, TestCase):
             ]
             + [
                 fixture.error(
-                    reports.codes.INVALID_RESPONSE_FORMAT, node=NODE_LIST[0],
+                    reports.codes.INVALID_RESPONSE_FORMAT,
+                    node=NODE_LIST[0],
                 ),
             ]
         )
@@ -2997,7 +3117,9 @@ class SslCertSync(RemoveCallsMixin, TestCase):
         )
 
         cluster.setup(
-            self.env_assist.get_env(), CLUSTER_NAME, COMMAND_NODE_LIST,
+            self.env_assist.get_env(),
+            CLUSTER_NAME,
+            COMMAND_NODE_LIST,
         )
         self.env_assist.assert_reports(reports_success_minimal_fixture())
 
@@ -3010,7 +3132,9 @@ class SslCertSync(RemoveCallsMixin, TestCase):
         )
 
         cluster.setup(
-            self.env_assist.get_env(), CLUSTER_NAME, COMMAND_NODE_LIST,
+            self.env_assist.get_env(),
+            CLUSTER_NAME,
+            COMMAND_NODE_LIST,
         )
         self.env_assist.assert_reports(reports_success_minimal_fixture())
 
@@ -3023,7 +3147,9 @@ class SslCertSync(RemoveCallsMixin, TestCase):
         )
 
         cluster.setup(
-            self.env_assist.get_env(), CLUSTER_NAME, COMMAND_NODE_LIST,
+            self.env_assist.get_env(),
+            CLUSTER_NAME,
+            COMMAND_NODE_LIST,
         )
         self.env_assist.assert_reports(reports_success_minimal_fixture())
 
@@ -3037,7 +3163,9 @@ class SslCertSync(RemoveCallsMixin, TestCase):
         self.config.calls.remove("fs.open.pcsd_config")
 
         cluster.setup(
-            self.env_assist.get_env(), CLUSTER_NAME, COMMAND_NODE_LIST,
+            self.env_assist.get_env(),
+            CLUSTER_NAME,
+            COMMAND_NODE_LIST,
         )
         self.env_assist.assert_reports(reports_success_minimal_fixture())
 
@@ -3052,7 +3180,9 @@ class SslCertSync(RemoveCallsMixin, TestCase):
 
         self.env_assist.assert_raise_library_error(
             lambda: cluster.setup(
-                self.env_assist.get_env(), CLUSTER_NAME, COMMAND_NODE_LIST,
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                COMMAND_NODE_LIST,
             ),
             [],
         )
@@ -3101,7 +3231,9 @@ class SslCertSync(RemoveCallsMixin, TestCase):
         )
 
         cluster.setup(
-            self.env_assist.get_env(), CLUSTER_NAME, COMMAND_NODE_LIST,
+            self.env_assist.get_env(),
+            CLUSTER_NAME,
+            COMMAND_NODE_LIST,
         )
         self.env_assist.assert_reports(
             reports_success_minimal_fixture()
@@ -3113,7 +3245,8 @@ class SslCertSync(RemoveCallsMixin, TestCase):
             ]
             + [
                 fixture.info(
-                    reports.codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS, node=node,
+                    reports.codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS,
+                    node=node,
                 )
                 for node in NODE_LIST
             ]
@@ -3138,7 +3271,11 @@ class SslCertSync(RemoveCallsMixin, TestCase):
             cert=PCSD_SSL_CERT_DUMP,
             key=PCSD_SSL_KEY_DUMP,
             communication_list=[
-                {"label": NODE_LIST[0], "response_code": 400, "output": REASON,}
+                {
+                    "label": NODE_LIST[0],
+                    "response_code": 400,
+                    "output": REASON,
+                }
             ]
             + [dict(label=node) for node in NODE_LIST[1:]],
         )
@@ -3160,7 +3297,8 @@ class SslCertSync(RemoveCallsMixin, TestCase):
             ]
             + [
                 fixture.info(
-                    reports.codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS, node=node,
+                    reports.codes.PCSD_SSL_CERT_AND_KEY_SET_SUCCESS,
+                    node=node,
                 )
                 for node in NODE_LIST[1:]
             ]

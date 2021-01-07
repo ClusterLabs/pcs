@@ -17,7 +17,8 @@ class UpdateLocal(AssertPcsMixin, TestCase):
             "tier1_cluster_config_update_corosync.conf"
         )
         self.pcs_runner = PcsRunner(
-            cib_file=None, corosync_conf_opt=self.corosync_conf_file.name,
+            cib_file=None,
+            corosync_conf_opt=self.corosync_conf_file.name,
         )
 
     def tearDown(self):
@@ -177,5 +178,6 @@ class UpdateLocal(AssertPcsMixin, TestCase):
             ),
         )
         self.assertEqual(
-            self.corosync_conf_file.read(), fixture_corosync_conf_minimal(),
+            self.corosync_conf_file.read(),
+            fixture_corosync_conf_minimal(),
         )

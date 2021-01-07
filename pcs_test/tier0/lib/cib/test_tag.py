@@ -79,7 +79,9 @@ FIXTURE_OBJ_REFS = """
 def get_elements_by_ids(parent, id_list):
     element_list = []
     for _id in id_list:
-        found_elements_list = parent.findall(f'.//*[@id="{_id}"]',)
+        found_elements_list = parent.findall(
+            f'.//*[@id="{_id}"]',
+        )
         if found_elements_list:
             element_list.extend(found_elements_list)
     return element_list
@@ -90,7 +92,13 @@ def fixture_unexpected_element_reports(id_list, expected_types=None):
         fixture.report_unexpected_element(
             _id,
             ValidateCommonTestData.id_to_context_type_map[_id],
-            expected_types=["bundle", "clone", "group", "master", "primitive",]
+            expected_types=[
+                "bundle",
+                "clone",
+                "group",
+                "master",
+                "primitive",
+            ]
             if expected_types is None
             else expected_types,
         )
@@ -120,7 +128,9 @@ class LibraryTagTest(TestCase):
 
     def call_create_tag(self, tag_with_refs):
         lib.create_tag(
-            get_tags(self.cib), tag_with_refs.tag_id, tag_with_refs.idref_list,
+            get_tags(self.cib),
+            tag_with_refs.tag_id,
+            tag_with_refs.idref_list,
         )
 
     def assert_cib_equal(self, expected_cib):
@@ -209,7 +219,10 @@ class AllTagElementsToDict(ValidateCommonTestData):
         self.assertEqual(
             [lib.tag_element_to_dict(element) for element in element_list],
             [
-                {"tag_id": "first_tag", "idref_list": ["idref1", "idref2"],},
+                {
+                    "tag_id": "first_tag",
+                    "idref_list": ["idref1", "idref2"],
+                },
                 {
                     "tag_id": "second_tag",
                     "idref_list": ["ref1", "ref2", "ref3"],
@@ -261,7 +274,8 @@ class ValidateCreateTag(ValidateCommonTestData):
 class ValidateTagIdTest(ValidateCommonTestData):
     def test_tag_id_is_valid(self):
         assert_report_item_list_equal(
-            lib._validate_tag_id("new-tag-id", self.id_provider), [],
+            lib._validate_tag_id("new-tag-id", self.id_provider),
+            [],
         )
 
     def test_tag_id_is_empty(self):
@@ -269,7 +283,8 @@ class ValidateTagIdTest(ValidateCommonTestData):
             lib._validate_tag_id("", self.id_provider),
             [
                 fixture.error(
-                    reports.codes.INVALID_ID_IS_EMPTY, id_description="id",
+                    reports.codes.INVALID_ID_IS_EMPTY,
+                    id_description="id",
                 )
             ],
         )
@@ -317,7 +332,8 @@ class ValidateTagIdNotInIdrefList(TestCase):
     def test_tag_contains_itself(self):
         assert_report_item_list_equal(
             lib._validate_tag_id_not_in_idref_list(
-                self.idref_list[0], self.idref_list,
+                self.idref_list[0],
+                self.idref_list,
             ),
             [fixture.error(reports.codes.TAG_CANNOT_CONTAIN_ITSELF)],
         )
@@ -325,7 +341,8 @@ class ValidateTagIdNotInIdrefList(TestCase):
     def test_tag_does_not_contain_itself(self):
         assert_report_item_list_equal(
             lib._validate_tag_id_not_in_idref_list(
-                "tag-not-in-list", self.idref_list,
+                "tag-not-in-list",
+                self.idref_list,
             ),
             [],
         )
@@ -333,9 +350,18 @@ class ValidateTagIdNotInIdrefList(TestCase):
 
 class ValidateDuplicateReferenceIds(ValidateCommonTestData):
     duplicated_ids_input_output = (
-        (["id1", "id1"], ["id1"],),
-        (["id1", "id2", "id2"], ["id2"],),
-        (["id1", "id2", "id3", "id1", "id4", "id4"], ["id1", "id4"],),
+        (
+            ["id1", "id1"],
+            ["id1"],
+        ),
+        (
+            ["id1", "id2", "id2"],
+            ["id2"],
+        ),
+        (
+            ["id1", "id2", "id3", "id1", "id4", "id4"],
+            ["id1", "id4"],
+        ),
     )
 
     def test_no_duplicates(self):
@@ -375,7 +401,8 @@ class ValidateTagCreateIdrefListNotEmpty(TestCase):
     def test_not_empty_list(self):
         # pylint: disable=no-self-use
         assert_report_item_list_equal(
-            lib._validate_tag_create_idref_list_not_empty(["id"]), [],
+            lib._validate_tag_create_idref_list_not_empty(["id"]),
+            [],
         )
 
 
@@ -383,7 +410,8 @@ class ValidateReferenceIdsAreResources(ValidateCommonTestData):
     def test_ids_exist(self):
         assert_report_item_list_equal(
             lib._validate_reference_ids_are_resources(
-                get_resources(self.test_tree), self.resource_ids,
+                get_resources(self.test_tree),
+                self.resource_ids,
             ),
             [],
         )
@@ -391,7 +419,8 @@ class ValidateReferenceIdsAreResources(ValidateCommonTestData):
     def test_no_ids_empty_list(self):
         assert_report_item_list_equal(
             lib._validate_reference_ids_are_resources(
-                get_resources(self.test_tree), [],
+                get_resources(self.test_tree),
+                [],
             ),
             [],
         )
@@ -399,7 +428,8 @@ class ValidateReferenceIdsAreResources(ValidateCommonTestData):
     def test_id_does_not_exist(self):
         assert_report_item_list_equal(
             lib._validate_reference_ids_are_resources(
-                get_resources(self.test_tree), self.nonexistent_ids[0:1],
+                get_resources(self.test_tree),
+                self.nonexistent_ids[0:1],
             ),
             fixture_id_not_found_reports(self.nonexistent_ids[0:1]),
         )
@@ -407,7 +437,8 @@ class ValidateReferenceIdsAreResources(ValidateCommonTestData):
     def test_multiple_id_does_not_exist(self):
         assert_report_item_list_equal(
             lib._validate_reference_ids_are_resources(
-                get_resources(self.test_tree), self.nonexistent_ids,
+                get_resources(self.test_tree),
+                self.nonexistent_ids,
             ),
             fixture_id_not_found_reports(self.nonexistent_ids),
         )
@@ -415,7 +446,8 @@ class ValidateReferenceIdsAreResources(ValidateCommonTestData):
     def test_id_is_not_a_resource(self):
         assert_report_item_list_equal(
             lib._validate_reference_ids_are_resources(
-                get_resources(self.test_tree), self.nonresource_ids[0:1],
+                get_resources(self.test_tree),
+                self.nonresource_ids[0:1],
             ),
             fixture_unexpected_element_reports(self.nonresource_ids[0:1]),
         )
@@ -423,7 +455,8 @@ class ValidateReferenceIdsAreResources(ValidateCommonTestData):
     def test_ids_are_not_resources(self):
         assert_report_item_list_equal(
             lib._validate_reference_ids_are_resources(
-                get_resources(self.test_tree), self.nonresource_ids,
+                get_resources(self.test_tree),
+                self.nonresource_ids,
             ),
             fixture_unexpected_element_reports(self.nonresource_ids[:1])
             + fixture_id_not_found_reports(self.nonresource_ids[1:]),
@@ -443,17 +476,22 @@ class ValidateReferenceIdsAreResources(ValidateCommonTestData):
 
 class FindTagElementsByIdsTest(ValidateCommonTestData):
     def call_find_elements_by_ids(self, id_list):
-        return lib.find_tag_elements_by_ids(self.tags_section, id_list,)
+        return lib.find_tag_elements_by_ids(
+            self.tags_section,
+            id_list,
+        )
 
     def test_ids_exist(self):
         element_list, report_list = self.call_find_elements_by_ids(
             self.existent_tags,
         )
         assert_report_item_list_equal(
-            report_list, [],
+            report_list,
+            [],
         )
         self.assertEqual(
-            element_list, self.get_tag_elements(self.existent_tags),
+            element_list,
+            self.get_tag_elements(self.existent_tags),
         )
 
     def test_ids_does_not_exist(self):
@@ -463,7 +501,8 @@ class FindTagElementsByIdsTest(ValidateCommonTestData):
         assert_report_item_list_equal(
             report_list,
             fixture_id_not_found_reports(
-                self.nonexistent_tags, expected_types=["tag"],
+                self.nonexistent_tags,
+                expected_types=["tag"],
             ),
         )
         self.assertEqual(element_list, [])
@@ -475,11 +514,13 @@ class FindTagElementsByIdsTest(ValidateCommonTestData):
         assert_report_item_list_equal(
             report_list,
             fixture_id_not_found_reports(
-                self.nonexistent_tags, expected_types=["tag"],
+                self.nonexistent_tags,
+                expected_types=["tag"],
             ),
         )
         self.assertEqual(
-            element_list, self.get_tag_elements(self.existent_tags[0:1]),
+            element_list,
+            self.get_tag_elements(self.existent_tags[0:1]),
         )
 
     def test_not_tag_ids(self):
@@ -617,7 +658,8 @@ class ValidateRemoveTag(ValidateCommonConstraintsTestData):
         # pylint: disable=no-self-use
         assert_report_item_list_equal(
             lib.validate_remove_tag(
-                get_constraints(self.tree_each_tag_has_one_constraint), [],
+                get_constraints(self.tree_each_tag_has_one_constraint),
+                [],
             ),
             [
                 fixture.error(
@@ -667,25 +709,30 @@ class FindConstraintsReferencingTag(ValidateCommonConstraintsTestData):
     @staticmethod
     def call_find_constraints_referencing_tag(tree, tag_id):
         return lib.find_constraints_referencing_tag(
-            get_constraints(tree), tag_id,
+            get_constraints(tree),
+            tag_id,
         )
 
     def assert_constraint_id(self, tag_id):
         one_constraint_list = self.call_find_constraints_referencing_tag(
-            self.tree_each_tag_has_one_constraint, tag_id,
+            self.tree_each_tag_has_one_constraint,
+            tag_id,
         )
         self.assertEqual(len(one_constraint_list), 1)
         self.assertEqual(
-            one_constraint_list[0].get("id"), self.tag2constraint_id[tag_id],
+            one_constraint_list[0].get("id"),
+            self.tag2constraint_id[tag_id],
         )
 
     def test_multiple_constraints(self):
         constraint_list = self.call_find_constraints_referencing_tag(
-            self.tree_tag_has_multiple_constraints, "multitag",
+            self.tree_tag_has_multiple_constraints,
+            "multitag",
         )
         constraint_id_set = set(self.tag2constraint_id.values())
         self.assertEqual(
-            len(constraint_list), len(constraint_id_set),
+            len(constraint_list),
+            len(constraint_id_set),
         )
         for constraint in constraint_list:
             self.assertIn(constraint.get("id"), constraint_id_set)
@@ -723,9 +770,18 @@ class FindConstraintsReferencingTag(ValidateCommonConstraintsTestData):
 
 class ValidateAddRemoveDuplicateReferenceIds(ValidateCommonTestData):
     duplicated_ids_input_output = (
-        (["id1", "id1"], ["id1"],),
-        (["id1", "id2", "id2"], ["id2"],),
-        (["id1", "id2", "id3", "id1", "id4", "id4"], ["id1", "id4"],),
+        (
+            ["id1", "id1"],
+            ["id1"],
+        ),
+        (
+            ["id1", "id2", "id2"],
+            ["id2"],
+        ),
+        (
+            ["id1", "id2", "id3", "id1", "id4", "id4"],
+            ["id1", "id4"],
+        ),
     )
 
     def test_add_no_duplicates(self):
@@ -739,7 +795,8 @@ class ValidateAddRemoveDuplicateReferenceIds(ValidateCommonTestData):
         # pylint: disable=no-self-use
         assert_report_item_list_equal(
             lib._validate_add_remove_duplicate_reference_ids(
-                ["id1", "id2"], False,
+                ["id1", "id2"],
+                False,
             ),
             [],
         )
@@ -763,7 +820,8 @@ class ValidateAddRemoveDuplicateReferenceIds(ValidateCommonTestData):
             with self.subTest(input_ids=input_ids, output_ids=output_ids):
                 assert_report_item_list_equal(
                     lib._validate_add_remove_duplicate_reference_ids(
-                        input_ids, False,
+                        input_ids,
+                        False,
                     ),
                     [
                         fixture.error(
@@ -879,12 +937,15 @@ class LibraryAddObjRef(TestCase):
         )
         self.new_list = [etree.Element("obj_ref", id=_id) for _id in "ab"]
         self.existing_list = get_elements_by_ids(
-            self.tag_el, ["e1", "e2", "e3"],
+            self.tag_el,
+            ["e1", "e2", "e3"],
         )
 
     def test_add_new_ids(self):
         lib.add_obj_ref(
-            self.tag_el, self.new_list, None,
+            self.tag_el,
+            self.new_list,
+            None,
         )
         assert_xml_equal(
             """
@@ -901,7 +962,9 @@ class LibraryAddObjRef(TestCase):
 
     def test_add_new_ids_before_adjacent(self):
         lib.add_obj_ref(
-            self.tag_el, self.new_list, self.existing_list[0],
+            self.tag_el,
+            self.new_list,
+            self.existing_list[0],
         )
         assert_xml_equal(
             """
@@ -938,7 +1001,9 @@ class LibraryAddObjRef(TestCase):
 
     def test_move_existing_ids_before(self):
         lib.add_obj_ref(
-            self.tag_el, self.existing_list[2:0:-1], self.existing_list[0],
+            self.tag_el,
+            self.existing_list[2:0:-1],
+            self.existing_list[0],
         )
         assert_xml_equal(
             """
@@ -1049,7 +1114,10 @@ class ValidateTagUpdateByIds(TestCase):
 
     def _validate(self, tag, to_add, to_remove, adjacent=None):
         return lib.ValidateTagUpdateByIds(
-            tag, to_add, to_remove, adjacent_idref=adjacent,
+            tag,
+            to_add,
+            to_remove,
+            adjacent_idref=adjacent,
         ).validate(get_resources(self.test_cib), get_tags(self.test_cib))
 
     def test_tag_id_not_a_tag(self):
@@ -1063,7 +1131,9 @@ class ValidateTagUpdateByIds(TestCase):
             self._validate("none_tag", ["e1"], []),
             [
                 fixture.report_not_found(
-                    "none_tag", context_type="tags", expected_types=["tag"],
+                    "none_tag",
+                    context_type="tags",
+                    expected_types=["tag"],
                 ),
             ],
         )
@@ -1073,7 +1143,9 @@ class ValidateTagUpdateByIds(TestCase):
             self._validate("none_tag", [], []),
             [
                 fixture.report_not_found(
-                    "none_tag", context_type="tags", expected_types=["tag"],
+                    "none_tag",
+                    context_type="tags",
+                    expected_types=["tag"],
                 ),
                 fixture.error(
                     reports.codes.TAG_CANNOT_UPDATE_TAG_NO_IDS_SPECIFIED,
@@ -1086,7 +1158,9 @@ class ValidateTagUpdateByIds(TestCase):
             self._validate("none_tag", ["none", "status_id", "other_id"], []),
             [
                 fixture.report_not_found(
-                    "none_tag", context_type="tags", expected_types=["tag"],
+                    "none_tag",
+                    context_type="tags",
+                    expected_types=["tag"],
                 ),
                 fixture.report_not_found(
                     "none",
@@ -1255,7 +1329,16 @@ class ValidateTagUpdateByIds(TestCase):
             self._validate(
                 "tag",
                 [],
-                ["e1", "e1", "e2", "e2", "none", "none", "none1", "none1",],
+                [
+                    "e1",
+                    "e1",
+                    "e2",
+                    "e2",
+                    "none",
+                    "none",
+                    "none1",
+                    "none1",
+                ],
             ),
             [
                 fixture.error(
@@ -1285,7 +1368,8 @@ class ValidateTagUpdateByIds(TestCase):
 
     def test_remove_all_and_add_new_one(self):
         assert_report_item_list_equal(
-            self._validate("tag", ["new1"], ["e1", "e2", "e3"]), [],
+            self._validate("tag", ["new1"], ["e1", "e2", "e3"]),
+            [],
         )
 
     def test_remove_all_and_add_missing_id(self):

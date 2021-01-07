@@ -315,7 +315,11 @@ def append_new_operation(operations_element, id_provider, options):
                 )
             }
         )
-    op_element = etree.SubElement(operations_element, "op", attribute_map,)
+    op_element = etree.SubElement(
+        operations_element,
+        "op",
+        attribute_map,
+    )
     nvpair_attribute_map = dict(
         (key, value)
         for key, value in options.items()

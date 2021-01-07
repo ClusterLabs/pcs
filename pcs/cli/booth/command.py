@@ -13,7 +13,10 @@ def config_setup(lib, arg_list, modifiers):
       * --name - name of a booth instance
     """
     modifiers.ensure_only_supported(
-        "--force", "--booth-conf", "--booth-key", "--name",
+        "--force",
+        "--booth-conf",
+        "--booth-key",
+        "--name",
     )
     peers = group_by_keywords(
         arg_list, set(["sites", "arbitrators"]), keyword_repeat_allowed=False
@@ -104,7 +107,8 @@ def config_ticket_remove(lib, arg_list, modifiers):
     if len(arg_list) != 1:
         raise CmdLineInputError
     lib.booth.config_ticket_remove(
-        arg_list[0], instance_name=modifiers.get("--name"),
+        arg_list[0],
+        instance_name=modifiers.get("--name"),
     )
 
 
@@ -286,7 +290,8 @@ def pull(lib, arg_list, modifiers):
     if len(arg_list) != 1:
         raise CmdLineInputError()
     lib.booth.pull_config(
-        arg_list[0], instance_name=modifiers.get("--name"),
+        arg_list[0],
+        instance_name=modifiers.get("--name"),
     )
 
 

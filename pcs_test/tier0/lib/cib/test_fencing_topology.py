@@ -507,7 +507,9 @@ class RemoveLevelsByParams(TestCase, CibMixin):
                     severity.ERROR,
                     report_codes.CIB_FENCING_LEVEL_DOES_NOT_EXIST,
                     {
-                        "devices": ["d3",],
+                        "devices": [
+                            "d3",
+                        ],
                         "target_type": TARGET_TYPE_NODE,
                         "target_value": "nodeB",
                         "level": 9,
@@ -737,13 +739,19 @@ class Verify(TestCase, CibMixin, StatusNodesMixin):
             (
                 severity.ERROR,
                 report_codes.NODE_NOT_FOUND,
-                {"node": "nodeA", "searched_types": [],},
+                {
+                    "node": "nodeA",
+                    "searched_types": [],
+                },
                 None,
             ),
             (
                 severity.ERROR,
                 report_codes.NODE_NOT_FOUND,
-                {"node": "nodeB", "searched_types": [],},
+                {
+                    "node": "nodeB",
+                    "searched_types": [],
+                },
                 None,
             ),
         ]
@@ -862,7 +870,10 @@ class ValidateTargetValuewise(TestCase, StatusNodesMixin):
             (
                 severity.ERROR,
                 report_codes.NODE_NOT_FOUND,
-                {"node": "", "searched_types": [],},
+                {
+                    "node": "",
+                    "searched_types": [],
+                },
                 report_codes.FORCE_NODE_DOES_NOT_EXIST,
             )
         ]
@@ -877,7 +888,10 @@ class ValidateTargetValuewise(TestCase, StatusNodesMixin):
             (
                 severity.ERROR,
                 report_codes.NODE_NOT_FOUND,
-                {"node": "rh7-x", "searched_types": [],},
+                {
+                    "node": "rh7-x",
+                    "searched_types": [],
+                },
                 report_codes.FORCE_NODE_DOES_NOT_EXIST,
             )
         ]
@@ -892,7 +906,10 @@ class ValidateTargetValuewise(TestCase, StatusNodesMixin):
             (
                 severity.WARNING,
                 report_codes.NODE_NOT_FOUND,
-                {"node": "rh7-x", "searched_types": [],},
+                {
+                    "node": "rh7-x",
+                    "searched_types": [],
+                },
                 None,
             )
         ]
@@ -907,7 +924,10 @@ class ValidateTargetValuewise(TestCase, StatusNodesMixin):
             (
                 severity.ERROR,
                 report_codes.NODE_NOT_FOUND,
-                {"node": "rh7-x", "searched_types": [],},
+                {
+                    "node": "rh7-x",
+                    "searched_types": [],
+                },
                 None,
             )
         ]
@@ -944,7 +964,10 @@ class ValidateDevices(TestCase):
             (
                 severity.ERROR,
                 report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                {"option_type": None, "option_names": ["stonith devices"],},
+                {
+                    "option_type": None,
+                    "option_names": ["stonith devices"],
+                },
                 None,
             )
         ]
@@ -958,7 +981,9 @@ class ValidateDevices(TestCase):
             (
                 severity.ERROR,
                 report_codes.STONITH_RESOURCES_DO_NOT_EXIST,
-                {"stonith_ids": ["dummy", "fenceX"],},
+                {
+                    "stonith_ids": ["dummy", "fenceX"],
+                },
                 report_codes.FORCE_STONITH_RESOURCE_DOES_NOT_EXIST,
             )
         ]
@@ -972,7 +997,9 @@ class ValidateDevices(TestCase):
             (
                 severity.WARNING,
                 report_codes.STONITH_RESOURCES_DO_NOT_EXIST,
-                {"stonith_ids": ["dummy", "fenceX"],},
+                {
+                    "stonith_ids": ["dummy", "fenceX"],
+                },
                 None,
             )
         ]
@@ -986,7 +1013,9 @@ class ValidateDevices(TestCase):
             (
                 severity.ERROR,
                 report_codes.STONITH_RESOURCES_DO_NOT_EXIST,
-                {"stonith_ids": ["dummy", "fenceX"],},
+                {
+                    "stonith_ids": ["dummy", "fenceX"],
+                },
                 None,
             )
         ]
@@ -1071,7 +1100,11 @@ class AppendLevelElement(TestCase):
 
     def test_node_attribute(self):
         lib._append_level_element(
-            self.tree, 3, TARGET_TYPE_ATTRIBUTE, ("name%@x", "val%@x"), ["d1"],
+            self.tree,
+            3,
+            TARGET_TYPE_ATTRIBUTE,
+            ("name%@x", "val%@x"),
+            ["d1"],
         )
         assert_xml_equal(
             """

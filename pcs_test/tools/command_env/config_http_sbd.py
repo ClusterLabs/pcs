@@ -69,7 +69,8 @@ class SbdShortcuts:
         if communication_list is None:
             communication_list = [
                 dict(
-                    param_list=[("config", config_generator(node))], label=node,
+                    param_list=[("config", config_generator(node))],
+                    label=node,
                 )
                 for node in node_labels
             ]

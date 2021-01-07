@@ -59,7 +59,9 @@ def get_cluster_status_xml(runner):
 
 
 def get_cluster_status_text(
-    runner: CommandRunner, hide_inactive_resources: bool, verbose: bool,
+    runner: CommandRunner,
+    hide_inactive_resources: bool,
+    verbose: bool,
 ) -> Tuple[str, List[str]]:
     cmd = [__exec("crm_mon"), "--one-shot"]
     if not hide_inactive_resources:
@@ -208,7 +210,10 @@ def push_cib_diff_xml(runner, cib_diff_xml):
 
 
 def diff_cibs_xml(
-    runner: CommandRunner, reporter: ReportProcessor, cib_old_xml, cib_new_xml,
+    runner: CommandRunner,
+    reporter: ReportProcessor,
+    cib_old_xml,
+    cib_new_xml,
 ):
     """
     Return xml diff of two CIBs
@@ -495,7 +500,12 @@ def get_local_node_status(runner):
 
 def remove_node(runner, node_name):
     stdout, stderr, retval = runner.run(
-        [__exec("crm_node"), "--force", "--remove", node_name,]
+        [
+            __exec("crm_node"),
+            "--force",
+            "--remove",
+            node_name,
+        ]
     )
     if retval != 0:
         raise LibraryError(

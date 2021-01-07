@@ -51,7 +51,8 @@ def process_library_reports(report_item_list: ReportItemList) -> None:
 
         error(
             "{msg}{force}".format(
-                msg=msg, force=prepare_force_text(report_item),
+                msg=msg,
+                force=prepare_force_text(report_item),
             )
         )
         critical_error = True

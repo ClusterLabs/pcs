@@ -108,10 +108,14 @@ def append_new_nvset(
 
 
 append_new_instance_attributes = partial(
-    append_new_nvset, INSTANCE_ATTRIBUTES_TAG,
+    append_new_nvset,
+    INSTANCE_ATTRIBUTES_TAG,
 )
 
-append_new_meta_attributes = partial(append_new_nvset, META_ATTRIBUTES_TAG,)
+append_new_meta_attributes = partial(
+    append_new_nvset,
+    META_ATTRIBUTES_TAG,
+)
 
 
 def update_nvset(nvset_element, nvpair_dict, id_provider):
@@ -219,11 +223,13 @@ def has_meta_attribute(resource_el, name):
 
 
 arrange_first_meta_attributes = partial(
-    arrange_first_nvset, META_ATTRIBUTES_TAG,
+    arrange_first_nvset,
+    META_ATTRIBUTES_TAG,
 )
 
 arrange_first_instance_attributes = partial(
-    arrange_first_nvset, INSTANCE_ATTRIBUTES_TAG,
+    arrange_first_nvset,
+    INSTANCE_ATTRIBUTES_TAG,
 )
 
 get_meta_attribute_value = partial(get_value, META_ATTRIBUTES_TAG)

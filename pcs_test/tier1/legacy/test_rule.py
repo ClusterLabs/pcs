@@ -1733,7 +1733,14 @@ class TokenPreprocessorTest(TestCase):
         self.assertEqual(
             ["date-spec", "hours=14", "or", "#uname", "eq", "node1"],
             self.preprocessor.run(
-                ["date-spec", "hours=14", "or", "#uname", "eq", "node1",]
+                [
+                    "date-spec",
+                    "hours=14",
+                    "or",
+                    "#uname",
+                    "eq",
+                    "node1",
+                ]
             ),
         )
 
@@ -1787,7 +1794,14 @@ class TokenPreprocessorTest(TestCase):
         self.assertEqual(
             ["duration", "hours=14", "or", "#uname", "eq", "node1"],
             self.preprocessor.run(
-                ["duration", "hours=14", "or", "#uname", "eq", "node1",]
+                [
+                    "duration",
+                    "hours=14",
+                    "or",
+                    "#uname",
+                    "eq",
+                    "node1",
+                ]
             ),
         )
 

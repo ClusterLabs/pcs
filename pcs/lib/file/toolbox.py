@@ -77,7 +77,8 @@ class JsonParser(ParserInterface):
                 return [
                     ReportItem(
                         severity=reports.item.get_severity(
-                            force_code, is_forced_or_warning,
+                            force_code,
+                            is_forced_or_warning,
                         ),
                         message=reports.messages.ParseErrorJsonFile(
                             file_type_code,
@@ -100,9 +101,11 @@ class JsonExporter(ExporterInterface):
 
     @staticmethod
     def export(config_structure: Dict[str, Any]) -> bytes:
-        return json.dumps(config_structure, indent=4, sort_keys=True,).encode(
-            "utf-8"
-        )
+        return json.dumps(
+            config_structure,
+            indent=4,
+            sort_keys=True,
+        ).encode("utf-8")
 
 
 class NoopParser(ParserInterface):

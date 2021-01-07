@@ -190,10 +190,13 @@ class Unclone(
         self.pcs_runner = PcsRunner(self.temp_cib.name)
         xml_manip = XmlManipulation.from_file(self.empty_cib)
         xml_manip.append_to_first_tag_name(
-            "resources", FIXTURE_CLONE, FIXTURE_DUMMY,
+            "resources",
+            FIXTURE_CLONE,
+            FIXTURE_DUMMY,
         )
         xml_manip.append_to_first_tag_name(
-            "configuration", FIXTURE_TAGS_CONFIG_XML,
+            "configuration",
+            FIXTURE_TAGS_CONFIG_XML,
         )
         xml_manip.append_to_first_tag_name(
             "constraints",
@@ -281,7 +284,8 @@ class Clone(
 
     def test_clone_id_increment(self):
         self.set_cib_file(
-            fixture_clone("C-clone", "Dummy"), FIXTURE_PRIMITIVE_FOR_CLONE,
+            fixture_clone("C-clone", "Dummy"),
+            FIXTURE_PRIMITIVE_FOR_CLONE,
         )
         self.assert_effect(
             "resource clone C".split(),
@@ -355,7 +359,8 @@ class Clone(
 
     def test_clone_id_already_exist(self):
         self.assert_pcs_fail(
-            "resource clone C C".split(), "Error: id 'C' already exists\n",
+            "resource clone C C".split(),
+            "Error: id 'C' already exists\n",
         )
         self.assert_resources_xml_in_cib(
             fixture_resources_xml(FIXTURE_PRIMITIVE_FOR_CLONE)

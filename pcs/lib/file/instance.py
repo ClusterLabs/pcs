@@ -79,7 +79,8 @@ class FileInstance:
 
     @classmethod
     def _for_common(
-        cls, file_type_code: file_type_codes.FileTypeCode,
+        cls,
+        file_type_code: file_type_codes.FileTypeCode,
     ) -> "FileInstance":
         return cls(
             raw_file.RealFile(metadata.for_file_type(file_type_code)),

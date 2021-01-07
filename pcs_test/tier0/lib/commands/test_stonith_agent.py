@@ -18,7 +18,11 @@ from pcs.lib.commands import stonith_agent as lib
 
 @mock.patch(
     "pcs.lib.resource_agent.list_stonith_agents",
-    lambda runner: ["fence_apc", "fence_dummy", "fence_xvm",],
+    lambda runner: [
+        "fence_apc",
+        "fence_dummy",
+        "fence_xvm",
+    ],
 )
 @mock.patch.object(LibraryEnvironment, "cmd_runner", lambda self: "mock_runner")
 class TestListAgents(TestCase):
@@ -183,7 +187,10 @@ class TestDescribeAgent(TestCase):
             (
                 severity.ERROR,
                 report_codes.UNABLE_TO_GET_AGENT_METADATA,
-                {"agent": "fence_dummy", "reason": start_tag_error_text(),},
+                {
+                    "agent": "fence_dummy",
+                    "reason": start_tag_error_text(),
+                },
             ),
         )
 

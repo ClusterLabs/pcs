@@ -27,7 +27,8 @@ def make_suggestions(environment, suggestion_tree):
 
     try:
         typed_word_list = _split_words(
-            environment["COMP_WORDS"], environment["COMP_LENGTHS"].split(" "),
+            environment["COMP_WORDS"],
+            environment["COMP_LENGTHS"].split(" "),
         )
     except EnvironmentError:
         return ""

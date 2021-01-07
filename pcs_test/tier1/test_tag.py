@@ -79,10 +79,12 @@ class TagCreate(TestTagMixin, TestCase):
 
     def test_create_not_enough_arguments(self):
         self.assert_pcs_fail(
-            "tag create".split(), stdout_start="\nUsage: pcs tag <command>",
+            "tag create".split(),
+            stdout_start="\nUsage: pcs tag <command>",
         )
         self.assert_pcs_fail(
-            "tag create tag".split(), stdout_start="\nUsage: pcs tag <command>",
+            "tag create tag".split(),
+            stdout_start="\nUsage: pcs tag <command>",
         )
         self.assert_resources_xml_in_cib(self.fixture_tags_xml())
 
@@ -165,11 +167,13 @@ class TagConfigListBase(TestTagMixin):
         write_file_to_tmpfile(empty_cib, self.temp_cib)
 
         self.assert_pcs_success(
-            ["tag"], " No tags defined\n",
+            ["tag"],
+            " No tags defined\n",
         )
 
         self.assert_pcs_success(
-            ["tag", self.command], " No tags defined\n",
+            ["tag", self.command],
+            " No tags defined\n",
         )
 
     def test_config_tag_does_not_exist(self):
@@ -220,13 +224,15 @@ class TagConfigListBase(TestTagMixin):
 
 
 class TagConfig(
-    TagConfigListBase, TestCase,
+    TagConfigListBase,
+    TestCase,
 ):
     command = "config"
 
 
 class TagList(
-    TagConfigListBase, TestCase,
+    TagConfigListBase,
+    TestCase,
 ):
     command = "list"
 
@@ -332,7 +338,9 @@ class PcsConfigTagsTest(TestTagMixin, TestCase):
         tags=empty_tags,
     ):
         return self.config_template.format(
-            constraints=constraints, resources=resources, tags=tags,
+            constraints=constraints,
+            resources=resources,
+            tags=tags,
         )
 
     def test_config_no_tags(self):
@@ -359,7 +367,8 @@ class TagRemoveDeleteBase(TestTagMixin):
 
     def test_remove_not_enough_arguments(self):
         self.assert_pcs_fail(
-            ["tag", self.command], stdout_start="\nUsage: pcs tag <command>",
+            ["tag", self.command],
+            stdout_start="\nUsage: pcs tag <command>",
         )
         self.assert_resources_xml_in_cib(self.fixture_tags_xml())
 
@@ -377,7 +386,8 @@ class TagRemoveDeleteBase(TestTagMixin):
 
     def test_remove_one_tag(self):
         self.assert_effect(
-            ["tag", self.command, "tag1"], self.fixture_tags_xml(tag1=""),
+            ["tag", self.command, "tag1"],
+            self.fixture_tags_xml(tag1=""),
         )
 
     def test_remove_all_tags(self):
@@ -390,13 +400,15 @@ class TagRemoveDeleteBase(TestTagMixin):
 
 
 class TagRemove(
-    TagRemoveDeleteBase, TestCase,
+    TagRemoveDeleteBase,
+    TestCase,
 ):
     command = "remove"
 
 
 class TagDelete(
-    TagRemoveDeleteBase, TestCase,
+    TagRemoveDeleteBase,
+    TestCase,
 ):
     command = "delete"
 
@@ -445,13 +457,15 @@ class ResourceRemoveDeleteBase(TestTagMixin):
 
 
 class ResourceRemove(
-    ResourceRemoveDeleteBase, TestCase,
+    ResourceRemoveDeleteBase,
+    TestCase,
 ):
     command = "remove"
 
 
 class ResourceDelete(
-    ResourceRemoveDeleteBase, TestCase,
+    ResourceRemoveDeleteBase,
+    TestCase,
 ):
     command = "delete"
 
@@ -493,7 +507,8 @@ class TagUpdate(TestTagMixin, TestCase):
 
     def test_fail_not_enough_arguments(self):
         self.assert_pcs_fail(
-            "tag update".split(), stdout_start="\nUsage: pcs tag <command>",
+            "tag update".split(),
+            stdout_start="\nUsage: pcs tag <command>",
         )
         self.assert_resources_xml_in_cib(self.fixture_tags_xml())
 

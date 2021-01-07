@@ -341,7 +341,10 @@ class AssignRoleTest(LibraryAclTest):
             (
                 severities.ERROR,
                 report_codes.CIB_ACL_ROLE_IS_ALREADY_ASSIGNED_TO_TARGET,
-                {"role_id": "role2", "target_id": "target1",},
+                {
+                    "role_id": "role2",
+                    "target_id": "target1",
+                },
             ),
         )
 
@@ -466,7 +469,10 @@ class UnassignRoleTest(LibraryAclTest):
             (
                 severities.ERROR,
                 report_codes.CIB_ACL_ROLE_IS_NOT_ASSIGNED_TO_TARGET,
-                {"role_id": "role1", "target_id": "target1",},
+                {
+                    "role_id": "role1",
+                    "target_id": "target1",
+                },
             ),
         )
 
@@ -847,7 +853,11 @@ class GetRoleListTest(LibraryAclTest):
                     },
                 ],
             },
-            {"id": "role2", "description": None, "permission_list": [],},
+            {
+                "id": "role2",
+                "description": None,
+                "permission_list": [],
+            },
         ]
         self.assertEqual(expected, lib.get_role_list(self.acls))
 
@@ -858,7 +868,11 @@ class GetPermissionListTest(LibraryAclTest):
         etree.SubElement(
             role_el,
             "acl_permission",
-            {"id": "role1-perm1", "kind": "read", "xpath": "XPATH",},
+            {
+                "id": "role1-perm1",
+                "kind": "read",
+                "xpath": "XPATH",
+            },
         )
         etree.SubElement(
             role_el,
@@ -953,8 +967,14 @@ class GetTargetLikeListWithTagTest(LibraryAclTest):
     def test_success_targets(self):
         self.assertEqual(
             [
-                {"id": "target1", "role_list": [],},
-                {"id": "target2", "role_list": ["role1", "role2", "role3"],},
+                {
+                    "id": "target1",
+                    "role_list": [],
+                },
+                {
+                    "id": "target2",
+                    "role_list": ["role1", "role2", "role3"],
+                },
             ],
             lib.get_target_like_list(self.acls, "acl_target"),
         )
@@ -962,8 +982,14 @@ class GetTargetLikeListWithTagTest(LibraryAclTest):
     def test_success_groups(self):
         self.assertEqual(
             [
-                {"id": "group1", "role_list": ["role1"],},
-                {"id": "group2", "role_list": [],},
+                {
+                    "id": "group1",
+                    "role_list": ["role1"],
+                },
+                {
+                    "id": "group2",
+                    "role_list": [],
+                },
             ],
             lib.get_target_like_list(self.acls, "acl_group"),
         )

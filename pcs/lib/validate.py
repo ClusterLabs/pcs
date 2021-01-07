@@ -304,7 +304,8 @@ class IsRequiredAll(KeyValidator):
             return [
                 ReportItem.error(
                     reports.messages.RequiredOptionsAreMissing(
-                        sorted(missing), self._option_type,
+                        sorted(missing),
+                        self._option_type,
                     )
                 )
             ]
@@ -323,7 +324,8 @@ class IsRequiredSome(KeyValidator):
             return [
                 ReportItem.error(
                     reports.messages.RequiredOptionOfAlternativesIsMissing(
-                        sorted(self._option_name_list), self._option_type,
+                        sorted(self._option_name_list),
+                        self._option_type,
                     )
                 )
             ]
@@ -342,7 +344,8 @@ class MutuallyExclusive(KeyValidator):
             return [
                 ReportItem.error(
                     reports.messages.MutuallyExclusiveOptions(
-                        sorted(found), self._option_type,
+                        sorted(found),
+                        self._option_type,
                     )
                 )
             ]
@@ -835,7 +838,9 @@ def is_empty_string(value: TypeOptionValue) -> bool:
     return isinstance(value, str) and not value
 
 
-def is_float(value: Union[str, int, float],) -> bool:
+def is_float(
+    value: Union[str, int, float],
+) -> bool:
     """
     Check if the specified value is a float number
 
@@ -916,7 +921,9 @@ def is_ipv6_address(value: TypeOptionValue) -> bool:
 
 
 def is_pcmk_datespec_part(
-    value: str, at_least: Optional[int] = None, at_most: Optional[int] = None,
+    value: str,
+    at_least: Optional[int] = None,
+    at_most: Optional[int] = None,
 ) -> bool:
     """
     Check if the value is a valid Pacemaker Datespec part:

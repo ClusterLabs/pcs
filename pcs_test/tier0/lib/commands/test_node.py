@@ -242,7 +242,10 @@ class SetInstaceAttrsList(SetInstaceAttrsBase):
             (
                 severity.ERROR,
                 report_codes.NODE_NOT_FOUND,
-                {"node": "node-9", "searched_types": [],},
+                {
+                    "node": "node-9",
+                    "searched_types": [],
+                },
             ),
         )
         mock_attrs.assert_not_called()

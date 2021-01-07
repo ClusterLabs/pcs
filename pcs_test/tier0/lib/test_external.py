@@ -58,7 +58,12 @@ class CommandRunnerTest(TestCase):
         self.assertEqual(real_retval, expected_retval)
         mock_process.communicate.assert_called_once_with(None)
         self.assert_popen_called_with(
-            mock_popen, command, {"env": {}, "stdin": DEVNULL,}
+            mock_popen,
+            command,
+            {
+                "env": {},
+                "stdin": DEVNULL,
+            },
         )
         logger_calls = [
             mock.call("Running: {0}\nEnvironment:".format(command_str)),
@@ -141,7 +146,10 @@ class CommandRunnerTest(TestCase):
         self.assert_popen_called_with(
             mock_popen,
             command,
-            {"env": {"a": "a", "b": "B", "c": "{C}"}, "stdin": DEVNULL,},
+            {
+                "env": {"a": "a", "b": "B", "c": "{C}"},
+                "stdin": DEVNULL,
+            },
         )
         logger_calls = [
             mock.call(
@@ -299,13 +307,21 @@ class CommandRunnerTest(TestCase):
             (
                 severity.ERROR,
                 report_codes.RUN_EXTERNAL_PROCESS_ERROR,
-                {"command": command_str, "reason": expected_error,},
+                {
+                    "command": command_str,
+                    "reason": expected_error,
+                },
             ),
         )
 
         mock_process.communicate.assert_not_called()
         self.assert_popen_called_with(
-            mock_popen, command, {"env": {}, "stdin": DEVNULL,}
+            mock_popen,
+            command,
+            {
+                "env": {},
+                "stdin": DEVNULL,
+            },
         )
         logger_calls = [
             mock.call("Running: {0}\nEnvironment:".format(command_str)),
@@ -343,13 +359,21 @@ class CommandRunnerTest(TestCase):
             (
                 severity.ERROR,
                 report_codes.RUN_EXTERNAL_PROCESS_ERROR,
-                {"command": command_str, "reason": expected_error,},
+                {
+                    "command": command_str,
+                    "reason": expected_error,
+                },
             ),
         )
 
         mock_process.communicate.assert_called_once_with(None)
         self.assert_popen_called_with(
-            mock_popen, command, {"env": {}, "stdin": DEVNULL,}
+            mock_popen,
+            command,
+            {
+                "env": {},
+                "stdin": DEVNULL,
+            },
         )
         logger_calls = [
             mock.call("Running: {0}\nEnvironment:".format(command_str)),
@@ -980,7 +1004,14 @@ class EnsureIsSystemctlTest(TestCase):
 
 class IsProxySetTest(TestCase):
     def test_without_proxy(self):
-        self.assertFalse(lib.is_proxy_set({"var1": "value", "var2": "val",}))
+        self.assertFalse(
+            lib.is_proxy_set(
+                {
+                    "var1": "value",
+                    "var2": "val",
+                }
+            )
+        )
 
     def test_multiple(self):
         self.assertTrue(
@@ -996,30 +1027,77 @@ class IsProxySetTest(TestCase):
         )
 
     def test_empty_string(self):
-        self.assertFalse(lib.is_proxy_set({"all_proxy": "",}))
+        self.assertFalse(
+            lib.is_proxy_set(
+                {
+                    "all_proxy": "",
+                }
+            )
+        )
 
     def test_http_proxy(self):
-        self.assertFalse(lib.is_proxy_set({"http_proxy": "test.proxy",}))
+        self.assertFalse(
+            lib.is_proxy_set(
+                {
+                    "http_proxy": "test.proxy",
+                }
+            )
+        )
 
     def test_HTTP_PROXY(self):
         # pylint: disable=invalid-name
-        self.assertFalse(lib.is_proxy_set({"HTTP_PROXY": "test.proxy",}))
+        self.assertFalse(
+            lib.is_proxy_set(
+                {
+                    "HTTP_PROXY": "test.proxy",
+                }
+            )
+        )
 
     def test_https_proxy(self):
-        self.assertTrue(lib.is_proxy_set({"https_proxy": "test.proxy",}))
+        self.assertTrue(
+            lib.is_proxy_set(
+                {
+                    "https_proxy": "test.proxy",
+                }
+            )
+        )
 
     def test_HTTPS_PROXY(self):
         # pylint: disable=invalid-name
-        self.assertTrue(lib.is_proxy_set({"HTTPS_PROXY": "test.proxy",}))
+        self.assertTrue(
+            lib.is_proxy_set(
+                {
+                    "HTTPS_PROXY": "test.proxy",
+                }
+            )
+        )
 
     def test_all_proxy(self):
-        self.assertTrue(lib.is_proxy_set({"all_proxy": "test.proxy",}))
+        self.assertTrue(
+            lib.is_proxy_set(
+                {
+                    "all_proxy": "test.proxy",
+                }
+            )
+        )
 
     def test_ALL_PROXY(self):
         # pylint: disable=invalid-name
-        self.assertTrue(lib.is_proxy_set({"ALL_PROXY": "test.proxy",}))
+        self.assertTrue(
+            lib.is_proxy_set(
+                {
+                    "ALL_PROXY": "test.proxy",
+                }
+            )
+        )
 
     def test_no_proxy(self):
         self.assertTrue(
-            lib.is_proxy_set({"no_proxy": "*", "all_proxy": "test.proxy",})
+            lib.is_proxy_set(
+                {
+                    "no_proxy": "*",
+                    "all_proxy": "test.proxy",
+                }
+            )
         )

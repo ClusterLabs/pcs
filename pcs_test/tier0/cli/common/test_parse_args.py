@@ -153,45 +153,67 @@ class SplitByKeywords(TestCase):
                 set(["first", "second"]),
                 implicit_first_group_key="zero",
             ),
-            {"zero": [0], "first": [1, 2], "second": [3],},
+            {
+                "zero": [0],
+                "first": [1, 2],
+                "second": [3],
+            },
         )
 
     def test_splict_without_implict_keyword(self):
         self.assertEqual(
             group_by_keywords(
-                ["first", 1, 2, "second", 3], set(["first", "second"]),
+                ["first", 1, 2, "second", 3],
+                set(["first", "second"]),
             ),
-            {"first": [1, 2], "second": [3],},
+            {
+                "first": [1, 2],
+                "second": [3],
+            },
         )
 
     def test_raises_when_args_do_not_start_with_keyword_nor_implicit(self):
         self.assertRaises(
             CmdLineInputError,
             lambda: group_by_keywords(
-                [0, "first", 1, 2, "second", 3], set(["first", "second"]),
+                [0, "first", 1, 2, "second", 3],
+                set(["first", "second"]),
             ),
         )
 
     def test_returns_dict_with_empty_lists_for_no_args(self):
         self.assertEqual(
             group_by_keywords([], set(["first", "second"])),
-            {"first": [], "second": [],},
+            {
+                "first": [],
+                "second": [],
+            },
         )
 
     def test_returns_dict_with_empty_lists_for_no_args_implicit_case(self):
         self.assertEqual(
             group_by_keywords(
-                [], set(["first", "second"]), implicit_first_group_key="zero",
+                [],
+                set(["first", "second"]),
+                implicit_first_group_key="zero",
             ),
-            {"zero": [], "first": [], "second": [],},
+            {
+                "zero": [],
+                "first": [],
+                "second": [],
+            },
         )
 
     def test_returns_dict_with_empty_lists_for_no_opts_and_only_found_kws(self):
         self.assertEqual(
             group_by_keywords(
-                ["first"], set(["first", "second"]), only_found_keywords=True,
+                ["first"],
+                set(["first", "second"]),
+                only_found_keywords=True,
             ),
-            {"first": [],},
+            {
+                "first": [],
+            },
         )
 
     def test_returns_empty_lists_no_opts_and_only_found_kws_with_grouping(self):
@@ -202,7 +224,13 @@ class SplitByKeywords(TestCase):
                 group_repeated_keywords=["second"],
                 only_found_keywords=True,
             ),
-            {"second": [[1], [], [2, 3],],},
+            {
+                "second": [
+                    [1],
+                    [],
+                    [2, 3],
+                ],
+            },
         )
 
     def test_empty_repeatable(self):
@@ -213,7 +241,11 @@ class SplitByKeywords(TestCase):
                 group_repeated_keywords=["second"],
                 only_found_keywords=True,
             ),
-            {"second": [[],],},
+            {
+                "second": [
+                    [],
+                ],
+            },
         )
 
     def test_allow_keywords_repeating(self):
@@ -222,7 +254,10 @@ class SplitByKeywords(TestCase):
                 ["first", 1, 2, "second", 3, "first", 4],
                 set(["first", "second"]),
             ),
-            {"first": [1, 2, 4], "second": [3],},
+            {
+                "first": [1, 2, 4],
+                "second": [3],
+            },
         )
 
     def test_can_disallow_keywords_repeating(self):
@@ -242,7 +277,10 @@ class SplitByKeywords(TestCase):
                 set(["first", "second"]),
                 group_repeated_keywords=["first"],
             ),
-            {"first": [[1, 2], [4]], "second": [3],},
+            {
+                "first": [[1, 2], [4]],
+                "second": [3],
+            },
         )
 
     def test_raises_on_group_repeated_keywords_inconsistency(self):
@@ -263,7 +301,10 @@ class SplitByKeywords(TestCase):
                 set(["first"]),
                 implicit_first_group_key="zero",
             ),
-            {"zero": [1, 2], "first": [3, "zero", 4],},
+            {
+                "zero": [1, 2],
+                "first": [3, "zero", 4],
+            },
         )
 
     def test_implicit_first_kw_applyed_in_the_middle_when_is_in_kwds(self):
@@ -273,7 +314,10 @@ class SplitByKeywords(TestCase):
                 set(["first", "zero"]),
                 implicit_first_group_key="zero",
             ),
-            {"zero": [1, 2, 4], "first": [3],},
+            {
+                "zero": [1, 2, 4],
+                "first": [3],
+            },
         )
 
 

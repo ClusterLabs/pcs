@@ -31,7 +31,9 @@ def xml_format(xml_string):
 def get_assert_pcs_effect_mixin(get_cib_part):
     class AssertPcsEffectMixin(AssertPcsMixin):
         def assert_resources_xml_in_cib(
-            self, expected_xml_resources, get_cib_part_func=None,
+            self,
+            expected_xml_resources,
+            get_cib_part_func=None,
         ):
             self.temp_cib.seek(0)
             if get_cib_part_func is not None:

@@ -163,5 +163,6 @@ class GetAddrType(TestCase):
     def test_fqdn_unresolvable(self, mock_getaddrinfo):
         mock_getaddrinfo.side_effect = gaierror()
         self.assertEqual(
-            "unresolvable", get_address_type("node1.domain", resolve=True),
+            "unresolvable",
+            get_address_type("node1.domain", resolve=True),
         )

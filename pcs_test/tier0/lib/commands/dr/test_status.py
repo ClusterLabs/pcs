@@ -44,7 +44,10 @@ class CheckLive(TestCase):
         self.config.env.set_corosync_conf_data("corosync conf")
         self.config.env.set_cib_data("<cib />")
         self.assert_live_required(
-            [file_type_codes.CIB, file_type_codes.COROSYNC_CONF,]
+            [
+                file_type_codes.CIB,
+                file_type_codes.COROSYNC_CONF,
+            ]
         )
 
 
@@ -63,7 +66,8 @@ class FixtureMixin:
     def _fixture_load_configs(self):
         (
             self.config.raw_file.exists(
-                file_type_codes.PCS_DR_CONFIG, settings.pcsd_dr_config_location,
+                file_type_codes.PCS_DR_CONFIG,
+                settings.pcsd_dr_config_location,
             )
             .raw_file.read(
                 file_type_codes.PCS_DR_CONFIG,
@@ -168,7 +172,9 @@ class Success(FixtureMixin, TestCase):
                                         {
                                             "severity": "ERROR",
                                             "code": "CRM_MON_ERROR",
-                                            "info": {"reason": REASON,},
+                                            "info": {
+                                                "reason": REASON,
+                                            },
                                             "forceable": None,
                                             "report_text": "translated report",
                                         }
@@ -177,7 +183,11 @@ class Success(FixtureMixin, TestCase):
                             ),
                         )
                     ],
-                    [dict(label=self.local_node_name_list[1],)],
+                    [
+                        dict(
+                            label=self.local_node_name_list[1],
+                        )
+                    ],
                 ],
             ).http.status.get_full_cluster_status_plaintext(
                 name="http.status.get_full_cluster_status_plaintext.remote",
@@ -210,14 +220,24 @@ class Success(FixtureMixin, TestCase):
                     {
                         "severity": "ERROR",
                         "code": "CRM_MON_ERROR",
-                        "info": {"reason": REASON,},
+                        "info": {
+                            "reason": REASON,
+                        },
                         "forceable": None,
                         "report_text": "translated report",
                     }
                 ],
                 communication_list=[
-                    [dict(label=self.local_node_name_list[0],)],
-                    [dict(label=self.local_node_name_list[1],)],
+                    [
+                        dict(
+                            label=self.local_node_name_list[0],
+                        )
+                    ],
+                    [
+                        dict(
+                            label=self.local_node_name_list[1],
+                        )
+                    ],
                 ],
             ).http.status.get_full_cluster_status_plaintext(
                 name="http.status.get_full_cluster_status_plaintext.remote",
@@ -256,7 +276,9 @@ class Success(FixtureMixin, TestCase):
                     {
                         "severity": "ERROR",
                         "code": "CRM_MON_ERROR",
-                        "info": {"reason": REASON,},
+                        "info": {
+                            "reason": REASON,
+                        },
                         "forceable": None,
                         "report_text": "translated report",
                     }
@@ -289,14 +311,24 @@ class Success(FixtureMixin, TestCase):
                     {
                         "severity": "ERROR",
                         "code": "CRM_MON_ERROR",
-                        "info": {"reason": REASON,},
+                        "info": {
+                            "reason": REASON,
+                        },
                         "forceable": None,
                         "report_text": "translated report",
                     }
                 ],
                 communication_list=[
-                    [dict(label=self.local_node_name_list[0],)],
-                    [dict(label=self.local_node_name_list[1],)],
+                    [
+                        dict(
+                            label=self.local_node_name_list[0],
+                        )
+                    ],
+                    [
+                        dict(
+                            label=self.local_node_name_list[1],
+                        )
+                    ],
                 ],
             ).http.status.get_full_cluster_status_plaintext(
                 name="http.status.get_full_cluster_status_plaintext.remote",
@@ -308,7 +340,9 @@ class Success(FixtureMixin, TestCase):
                     {
                         "severity": "ERROR",
                         "code": "CRM_MON_ERROR",
-                        "info": {"reason": REASON,},
+                        "info": {
+                            "reason": REASON,
+                        },
                         "forceable": None,
                         "report_text": "translated report",
                     }
@@ -359,7 +393,12 @@ class CommunicationIssue(FixtureMixin, TestCase):
         result = dr.status_all_sites_plaintext(self.env_assist.get_env())
         self.assertEqual(result, self._fixture_result())
         self.env_assist.assert_reports(
-            [fixture.warn(report_codes.HOST_NOT_FOUND, host_list=["node1"],),]
+            [
+                fixture.warn(
+                    report_codes.HOST_NOT_FOUND,
+                    host_list=["node1"],
+                ),
+            ]
         )
 
     def test_unknown_all_nodes_in_site(self):
@@ -374,7 +413,9 @@ class CommunicationIssue(FixtureMixin, TestCase):
                     report_codes.HOST_NOT_FOUND,
                     host_list=self.remote_node_name_list,
                 ),
-                fixture.error(report_codes.NONE_HOST_FOUND,),
+                fixture.error(
+                    report_codes.NONE_HOST_FOUND,
+                ),
             ]
         )
 
@@ -447,7 +488,11 @@ class CommunicationIssue(FixtureMixin, TestCase):
                             output=json.dumps(dict(status="success")),
                         )
                     ],
-                    [dict(label=self.local_node_name_list[6],)],
+                    [
+                        dict(
+                            label=self.local_node_name_list[6],
+                        )
+                    ],
                 ],
             ).http.status.get_full_cluster_status_plaintext(
                 name="http.status.get_full_cluster_status_plaintext.remote",
@@ -484,10 +529,12 @@ class CommunicationIssue(FixtureMixin, TestCase):
                     reason="HTTP error: 404",
                 ),
                 fixture.warn(
-                    report_codes.INVALID_RESPONSE_FORMAT, node="node5",
+                    report_codes.INVALID_RESPONSE_FORMAT,
+                    node="node5",
                 ),
                 fixture.warn(
-                    report_codes.INVALID_RESPONSE_FORMAT, node="node6",
+                    report_codes.INVALID_RESPONSE_FORMAT,
+                    node="node6",
                 ),
             ]
         )
@@ -648,13 +695,18 @@ class FatalConfigIssue(TestCase):
             lambda: dr.status_all_sites_plaintext(self.env_assist.get_env()),
         )
         self.env_assist.assert_reports(
-            [fixture.error(report_codes.DR_CONFIG_DOES_NOT_EXIST,),]
+            [
+                fixture.error(
+                    report_codes.DR_CONFIG_DOES_NOT_EXIST,
+                ),
+            ]
         )
 
     def test_config_read_error(self):
         (
             self.config.raw_file.exists(
-                file_type_codes.PCS_DR_CONFIG, settings.pcsd_dr_config_location,
+                file_type_codes.PCS_DR_CONFIG,
+                settings.pcsd_dr_config_location,
             ).raw_file.read(
                 file_type_codes.PCS_DR_CONFIG,
                 settings.pcsd_dr_config_location,
@@ -679,7 +731,8 @@ class FatalConfigIssue(TestCase):
     def test_config_parse_error(self):
         (
             self.config.raw_file.exists(
-                file_type_codes.PCS_DR_CONFIG, settings.pcsd_dr_config_location,
+                file_type_codes.PCS_DR_CONFIG,
+                settings.pcsd_dr_config_location,
             ).raw_file.read(
                 file_type_codes.PCS_DR_CONFIG,
                 settings.pcsd_dr_config_location,
@@ -707,7 +760,8 @@ class FatalConfigIssue(TestCase):
     def test_corosync_conf_read_error(self):
         (
             self.config.raw_file.exists(
-                file_type_codes.PCS_DR_CONFIG, settings.pcsd_dr_config_location,
+                file_type_codes.PCS_DR_CONFIG,
+                settings.pcsd_dr_config_location,
             )
             .raw_file.read(
                 file_type_codes.PCS_DR_CONFIG,
@@ -731,7 +785,8 @@ class FatalConfigIssue(TestCase):
     def test_corosync_conf_parse_error(self):
         (
             self.config.raw_file.exists(
-                file_type_codes.PCS_DR_CONFIG, settings.pcsd_dr_config_location,
+                file_type_codes.PCS_DR_CONFIG,
+                settings.pcsd_dr_config_location,
             )
             .raw_file.read(
                 file_type_codes.PCS_DR_CONFIG,

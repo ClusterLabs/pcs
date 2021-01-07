@@ -30,10 +30,12 @@ class NvsetDtoToLines(TestCase):
 
     def assert_lines(self, dto, lines):
         self.assertEqual(
-            self._export(dto, True), lines,
+            self._export(dto, True),
+            lines,
         )
         self.assertEqual(
-            self._export(dto, False), re.sub(r" +\(id:.*\)", "", lines),
+            self._export(dto, False),
+            re.sub(r" +\(id:.*\)", "", lines),
         )
 
     def test_minimal(self):
@@ -108,7 +110,8 @@ class NvsetDtoListToLines(TestCase):
 
     def assert_lines(self, dto, include_expired, lines):
         self.assertEqual(
-            self._export(dto, True, include_expired), lines,
+            self._export(dto, True, include_expired),
+            lines,
         )
         self.assertEqual(
             self._export(dto, False, include_expired),

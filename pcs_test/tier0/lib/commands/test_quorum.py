@@ -54,7 +54,11 @@ class GetQuorumConfigTest(TestCase):
         )
 
         self.assertEqual(
-            {"options": {}, "device": None,}, lib.get_config(lib_env)
+            {
+                "options": {},
+                "device": None,
+            },
+            lib.get_config(lib_env),
         )
         self.assertEqual([], self.mock_reporter.report_item_list)
 
@@ -64,7 +68,11 @@ class GetQuorumConfigTest(TestCase):
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
         self.assertEqual(
-            {"options": {}, "device": None,}, lib.get_config(lib_env)
+            {
+                "options": {},
+                "device": None,
+            },
+            lib.get_config(lib_env),
         )
         self.assertEqual([], self.mock_reporter.report_item_list)
 
@@ -74,7 +82,12 @@ class GetQuorumConfigTest(TestCase):
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
         self.assertEqual(
-            {"options": {"wait_for_all": "1",}, "device": None,},
+            {
+                "options": {
+                    "wait_for_all": "1",
+                },
+                "device": None,
+            },
             lib.get_config(lib_env),
         )
         self.assertEqual([], self.mock_reporter.report_item_list)
@@ -99,11 +112,18 @@ class GetQuorumConfigTest(TestCase):
 
         self.assertEqual(
             {
-                "options": {"wait_for_all": "1",},
+                "options": {
+                    "wait_for_all": "1",
+                },
                 "device": {
                     "model": "net",
-                    "model_options": {"host": "127.0.0.1", "port": "4433",},
-                    "generic_options": {"option": "value",},
+                    "model_options": {
+                        "host": "127.0.0.1",
+                        "port": "4433",
+                    },
+                    "generic_options": {
+                        "option": "value",
+                    },
                     "heuristics_options": {},
                 },
             },
@@ -135,11 +155,18 @@ class GetQuorumConfigTest(TestCase):
 
         self.assertEqual(
             {
-                "options": {"wait_for_all": "1",},
+                "options": {
+                    "wait_for_all": "1",
+                },
                 "device": {
                     "model": "net",
-                    "model_options": {"host": "127.0.0.1", "port": "4433",},
-                    "generic_options": {"option": "value",},
+                    "model_options": {
+                        "host": "127.0.0.1",
+                        "port": "4433",
+                    },
+                    "generic_options": {
+                        "option": "value",
+                    },
                     "heuristics_options": {
                         "exec_ls": "test -f /tmp/test",
                         "mode": "on",
@@ -483,14 +510,18 @@ class AddDeviceNetTest(TestCase):
         # nodes are defined in the corosync-3nodes.conf file
         self.cluster_nodes = ["rh7-1", "rh7-2", "rh7-3"]
         self.certs = {
-            "cacert": {"path": rc("qdevice-certs/qnetd-cacert.crt"),},
+            "cacert": {
+                "path": rc("qdevice-certs/qnetd-cacert.crt"),
+            },
             "cert_request": {
                 "path": rc("qdevice-certs/qdevice-cert-request.crq"),
             },
             "signed_request": {
                 "path": rc("qdevice-certs/signed-certificate.crt"),
             },
-            "final_cert": {"path": rc("qdevice-certs/final-certificate.pk12"),},
+            "final_cert": {
+                "path": rc("qdevice-certs/final-certificate.pk12"),
+            },
         }
         self.config.env.set_known_nodes(self.cluster_nodes + [self.qnetd_host])
         for cert_info in self.certs.values():
@@ -514,7 +545,8 @@ class AddDeviceNetTest(TestCase):
 
     def fixture_config_http_client_init(self):
         self.config.http.corosync.qdevice_net_client_setup(
-            self.certs["cacert"]["data"], self.cluster_nodes,
+            self.certs["cacert"]["data"],
+            self.cluster_nodes,
         )
 
     def fixture_config_runner_get_cert_request(self):
@@ -785,7 +817,9 @@ class AddDeviceNetTest(TestCase):
             lambda: lib.add_device(
                 self.env_assist.get_env(), "net", {"host": "qnetd-host"}, {}, {}
             ),
-            [fixture.error(report_codes.QDEVICE_ALREADY_DEFINED),],
+            [
+                fixture.error(report_codes.QDEVICE_ALREADY_DEFINED),
+            ],
             expected_in_processor=False,
         )
 
@@ -915,7 +949,10 @@ class AddDeviceNetTest(TestCase):
         self.fixture_config_http_import_final_cert()
         self.config.http.corosync.qdevice_client_enable(
             communication_list=[
-                {"label": label, "output": "corosync is not enabled, skipping",}
+                {
+                    "label": label,
+                    "output": "corosync is not enabled, skipping",
+                }
                 for label in self.cluster_nodes
             ]
         )
@@ -924,7 +961,10 @@ class AddDeviceNetTest(TestCase):
         )
         self.config.http.corosync.qdevice_client_start(
             communication_list=[
-                {"label": label, "output": "corosync is not running, skipping",}
+                {
+                    "label": label,
+                    "output": "corosync is not running, skipping",
+                }
                 for label in self.cluster_nodes
             ]
         )
@@ -1446,7 +1486,10 @@ class AddDeviceNetTest(TestCase):
             "net",
             {"host": "qnetd-host", "algorithm": "ffsplit"},
             {"bad_option": "bad_value"},
-            {"mode": "bad-mode", "bad_heur": "abc",},
+            {
+                "mode": "bad-mode",
+                "bad_heur": "abc",
+            },
             force_options=True,
         )
 
@@ -1983,7 +2026,9 @@ class RemoveDeviceHeuristics(TestCase):
         )
         self.env_assist.assert_raise_library_error(
             lambda: lib.remove_device_heuristics(self.env_assist.get_env()),
-            [fixture.error(report_codes.QDEVICE_NOT_DEFINED),],
+            [
+                fixture.error(report_codes.QDEVICE_NOT_DEFINED),
+            ],
             expected_in_processor=False,
         )
 
@@ -2024,7 +2069,9 @@ class RemoveDeviceHeuristics(TestCase):
         )
         self.env_assist.assert_raise_library_error(
             lambda: lib.remove_device_heuristics(self.env_assist.get_env()),
-            [fixture.error(report_codes.QDEVICE_NOT_DEFINED),],
+            [
+                fixture.error(report_codes.QDEVICE_NOT_DEFINED),
+            ],
             expected_in_processor=False,
         )
 
@@ -2116,7 +2163,8 @@ class RemoveDeviceNetTest(TestCase):
         if sbd_installed:
             units["sbd"] = "enabled"  # enabled/disabled doesn't matter
         self.config.runner.systemctl.list_unit_files(
-            units, before="http.corosync.qdevice_client_disable_requests",
+            units,
+            before="http.corosync.qdevice_client_disable_requests",
         )
 
     def fixture_config_runner_sbd_enabled(self, sbd_enabled):
@@ -2195,7 +2243,9 @@ class RemoveDeviceNetTest(TestCase):
                 )
                 for node in cluster_nodes
             ]
-            + [fixture.info(report_codes.QDEVICE_CERTIFICATE_REMOVAL_STARTED),]
+            + [
+                fixture.info(report_codes.QDEVICE_CERTIFICATE_REMOVAL_STARTED),
+            ]
             + [
                 fixture.info(
                     report_codes.QDEVICE_CERTIFICATE_REMOVED_FROM_NODE,
@@ -2229,7 +2279,9 @@ class RemoveDeviceNetTest(TestCase):
         )
         self.env_assist.assert_raise_library_error(
             lambda: lib.remove_device(self.env_assist.get_env()),
-            [fixture.error(report_codes.QDEVICE_NOT_DEFINED),],
+            [
+                fixture.error(report_codes.QDEVICE_NOT_DEFINED),
+            ],
             expected_in_processor=False,
         )
 
@@ -2257,7 +2309,9 @@ class RemoveDeviceNetTest(TestCase):
         )
         self.env_assist.assert_raise_library_error(
             lambda: lib.remove_device(self.env_assist.get_env()),
-            [fixture.error(report_codes.QDEVICE_NOT_DEFINED),],
+            [
+                fixture.error(report_codes.QDEVICE_NOT_DEFINED),
+            ],
             expected_in_processor=False,
         )
 
@@ -2379,7 +2433,8 @@ class RemoveDeviceNetTest(TestCase):
             cluster_nodes, node_2_offline_responses
         )
         self.config.env.push_corosync_conf(
-            corosync_conf_text=expected_conf, skip_offline_targets=True,
+            corosync_conf_text=expected_conf,
+            skip_offline_targets=True,
         )
 
         lib.remove_device(self.env_assist.get_env(), skip_offline_nodes=True)
@@ -2911,7 +2966,10 @@ class UpdateDeviceTest(TestCase):
         self.assertEqual(1, len(mock_push_corosync.mock_calls))
         ac(
             mock_push_corosync.mock_calls[0][1][0].config.export(),
-            original_conf.replace("mode: on", "mode: sync",),
+            original_conf.replace(
+                "mode: on",
+                "mode: sync",
+            ),
         )
         assert_report_item_list_equal(self.mock_reporter.report_item_list, [])
 
@@ -2924,7 +2982,9 @@ class UpdateDeviceTest(TestCase):
             lambda: lib.update_device(
                 lib_env,
                 {},
-                {"bad_option": "bad_value",},
+                {
+                    "bad_option": "bad_value",
+                },
                 {"mode": "bad mode", "exec_bad.name": ""},
             )
         )
@@ -2973,7 +3033,9 @@ class UpdateDeviceTest(TestCase):
         lib.update_device(
             lib_env,
             {},
-            {"bad_option": "bad_value",},
+            {
+                "bad_option": "bad_value",
+            },
             {"mode": "bad mode"},
             force_options=True,
         )

@@ -59,7 +59,10 @@ def corosync_conf_fixture(
                     }}
                 }}
             """
-        ).format(QDEVICE_HOST=QDEVICE_HOST, qd_tie_breaker=qd_tie_breaker,)
+        ).format(
+            QDEVICE_HOST=QDEVICE_HOST,
+            qd_tie_breaker=qd_tie_breaker,
+        )
     return dedent(
         """\
         totem {{
@@ -128,13 +131,15 @@ class LocalConfig:
             [fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED)]
             + [
                 fixture.info(
-                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE, node=node,
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                    node=node,
                 )
                 for node in node_list
             ]
             + [
                 fixture.info(
-                    report_codes.COROSYNC_CONFIG_RELOADED, node=node_list[0],
+                    report_codes.COROSYNC_CONFIG_RELOADED,
+                    node=node_list[0],
                 )
             ]
         )
@@ -153,7 +158,10 @@ class LocalConfig:
                 )
             ]
             + [
-                fixture.info(report_codes.CLUSTER_DESTROY_SUCCESS, node=node,)
+                fixture.info(
+                    report_codes.CLUSTER_DESTROY_SUCCESS,
+                    node=node,
+                )
                 for node in node_list
             ]
         )
@@ -194,7 +202,8 @@ class SuccessMinimal(TestCase):
             # SBD not installed
             .runner.systemctl.list_unit_files({}, name=sbd_installed_check)
             .http.host.get_quorum_status(
-                self.existing_nodes, node_labels=self.nodes_to_remove[:1],
+                self.existing_nodes,
+                node_labels=self.nodes_to_remove[:1],
             )
             .local.destroy_cluster(self.nodes_to_remove)
             .local.distribute_and_reload_corosync_conf(
@@ -205,7 +214,8 @@ class SuccessMinimal(TestCase):
                 self.nodes_to_stay,
             )
             .http.pcmk.remove_nodes_from_cib(
-                self.nodes_to_remove, node_labels=self.nodes_to_stay,
+                self.nodes_to_remove,
+                node_labels=self.nodes_to_stay,
             )
         )
         if len(self.nodes_to_stay) % 2 != 0:
@@ -334,7 +344,8 @@ class NodeNamesMissing(TestCase):
         ]
         self.config.env.set_known_nodes(self.existing_nodes)
         self.original_conf = corosync_conf_fixture(
-            existing_corosync_nodes, _get_two_node(len(self.existing_nodes)),
+            existing_corosync_nodes,
+            _get_two_node(len(self.existing_nodes)),
         )
         self.expected_conf = corosync_conf_fixture(
             existing_corosync_nodes[:-removing_num], _get_two_node(staying_num)
@@ -445,7 +456,8 @@ class SuccessAtbRequired(TestCase):
                 ]
             )
             .http.pcmk.remove_nodes_from_cib(
-                self.nodes_to_remove, node_labels=self.nodes_to_stay,
+                self.nodes_to_remove,
+                node_labels=self.nodes_to_stay,
             )
         )
         self.expected_reports.extend(
@@ -457,20 +469,23 @@ class SuccessAtbRequired(TestCase):
             ]
             + [
                 fixture.info(
-                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE, node=node,
+                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
+                    node=node,
                 )
                 for node in self.nodes_to_stay
             ]
             + [fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED)]
             + [
                 fixture.info(
-                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE, node=node,
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                    node=node,
                 )
                 for node in self.nodes_to_stay
             ]
             + [
                 fixture.warn(
-                    report_codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE, node=node,
+                    report_codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE,
+                    node=node,
                 )
                 for node in self.nodes_to_stay
             ]
@@ -566,13 +581,17 @@ class FailureAtbRequired(TestCase):
                     "error_msg": err_output,
                 },
                 {"label": self.nodes_to_stay[2]},
-                {"label": self.nodes_to_stay[3], "output": "not json",},
+                {
+                    "label": self.nodes_to_stay[3],
+                    "output": "not json",
+                },
             ]
         )
 
         self.env_assist.assert_raise_library_error(
             lambda: cluster.remove_nodes(
-                self.env_assist.get_env(), self.nodes_to_remove,
+                self.env_assist.get_env(),
+                self.nodes_to_remove,
             )
         )
 
@@ -580,7 +599,8 @@ class FailureAtbRequired(TestCase):
             self.expected_reports
             + [
                 fixture.info(
-                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE, node=node,
+                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
+                    node=node,
                 )
                 for node in [self.nodes_to_stay[0], self.nodes_to_stay[2]]
             ]
@@ -620,7 +640,8 @@ class FailureAtbRequired(TestCase):
 
         self.env_assist.assert_raise_library_error(
             lambda: cluster.remove_nodes(
-                self.env_assist.get_env(), self.nodes_to_remove,
+                self.env_assist.get_env(),
+                self.nodes_to_remove,
             )
         )
 
@@ -702,15 +723,21 @@ class QuorumCheck(TestCase):
                             output="Cannot initialize CMAP service",
                         )
                     ],
-                    [dict(label=self.nodes_to_remove[3],)],
+                    [
+                        dict(
+                            label=self.nodes_to_remove[3],
+                        )
+                    ],
                 ],
             )
             .local.destroy_cluster(self.nodes_to_remove)
             .local.distribute_and_reload_corosync_conf(
-                self.updated_corosync_conf_text, self.nodes_to_stay,
+                self.updated_corosync_conf_text,
+                self.nodes_to_stay,
             )
             .http.pcmk.remove_nodes_from_cib(
-                self.nodes_to_remove, node_labels=self.nodes_to_stay,
+                self.nodes_to_remove,
+                node_labels=self.nodes_to_stay,
             )
         )
 
@@ -755,7 +782,8 @@ class QuorumCheck(TestCase):
 
         self.env_assist.assert_raise_library_error(
             lambda: cluster.remove_nodes(
-                self.env_assist.get_env(), self.nodes_to_remove,
+                self.env_assist.get_env(),
+                self.nodes_to_remove,
             )
         )
 
@@ -797,10 +825,12 @@ class QuorumCheck(TestCase):
             )
             .local.destroy_cluster(self.nodes_to_remove)
             .local.distribute_and_reload_corosync_conf(
-                self.updated_corosync_conf_text, self.nodes_to_stay,
+                self.updated_corosync_conf_text,
+                self.nodes_to_stay,
             )
             .http.pcmk.remove_nodes_from_cib(
-                self.nodes_to_remove, node_labels=self.nodes_to_stay,
+                self.nodes_to_remove,
+                node_labels=self.nodes_to_stay,
             )
         )
 
@@ -829,16 +859,23 @@ class QuorumCheck(TestCase):
             self.config.http.host.get_quorum_status(
                 self.existing_nodes,
                 communication_list=[
-                    [dict(label=node, output="Cannot initialize CMAP service",)]
+                    [
+                        dict(
+                            label=node,
+                            output="Cannot initialize CMAP service",
+                        )
+                    ]
                     for node in self.nodes_to_remove
                 ],
             )
             .local.destroy_cluster(self.nodes_to_remove)
             .local.distribute_and_reload_corosync_conf(
-                self.updated_corosync_conf_text, self.nodes_to_stay,
+                self.updated_corosync_conf_text,
+                self.nodes_to_stay,
             )
             .http.pcmk.remove_nodes_from_cib(
-                self.nodes_to_remove, node_labels=self.nodes_to_stay,
+                self.nodes_to_remove,
+                node_labels=self.nodes_to_stay,
             )
         )
 
@@ -908,7 +945,8 @@ class FailureQuorumLoss(TestCase):
 
         self.env_assist.assert_raise_library_error(
             lambda: cluster.remove_nodes(
-                self.env_assist.get_env(), self.nodes_to_remove,
+                self.env_assist.get_env(),
+                self.nodes_to_remove,
             )
         )
 
@@ -973,10 +1011,12 @@ class FailureQuorumLoss(TestCase):
             )
             .local.destroy_cluster(self.nodes_to_remove)
             .local.distribute_and_reload_corosync_conf(
-                self.updated_corosync_conf_text, self.nodes_to_stay,
+                self.updated_corosync_conf_text,
+                self.nodes_to_stay,
             )
             .http.pcmk.remove_nodes_from_cib(
-                self.nodes_to_remove, node_labels=self.nodes_to_stay,
+                self.nodes_to_remove,
+                node_labels=self.nodes_to_stay,
             )
         )
 
@@ -1017,14 +1057,20 @@ class FailureQuorumLoss(TestCase):
         self.config.http.host.get_quorum_status(
             self.existing_nodes,
             communication_list=[
-                [dict(label=node, output="not parsable output",)]
+                [
+                    dict(
+                        label=node,
+                        output="not parsable output",
+                    )
+                ]
                 for node in self.nodes_to_remove
             ],
         )
 
         self.env_assist.assert_raise_library_error(
             lambda: cluster.remove_nodes(
-                self.env_assist.get_env(), self.nodes_to_remove,
+                self.env_assist.get_env(),
+                self.nodes_to_remove,
             )
         )
 
@@ -1054,16 +1100,23 @@ class FailureQuorumLoss(TestCase):
             self.config.http.host.get_quorum_status(
                 self.existing_nodes,
                 communication_list=[
-                    [dict(label=node, output="not parsable output",)]
+                    [
+                        dict(
+                            label=node,
+                            output="not parsable output",
+                        )
+                    ]
                     for node in self.nodes_to_remove
                 ],
             )
             .local.destroy_cluster(self.nodes_to_remove)
             .local.distribute_and_reload_corosync_conf(
-                self.updated_corosync_conf_text, self.nodes_to_stay,
+                self.updated_corosync_conf_text,
+                self.nodes_to_stay,
             )
             .http.pcmk.remove_nodes_from_cib(
-                self.nodes_to_remove, node_labels=self.nodes_to_stay,
+                self.nodes_to_remove,
+                node_labels=self.nodes_to_stay,
             )
         )
 
@@ -1096,10 +1149,12 @@ class FailureQuorumLoss(TestCase):
             )
             .local.destroy_cluster(self.nodes_to_remove)
             .local.distribute_and_reload_corosync_conf(
-                self.updated_corosync_conf_text, self.nodes_to_stay,
+                self.updated_corosync_conf_text,
+                self.nodes_to_stay,
             )
             .http.pcmk.remove_nodes_from_cib(
-                self.nodes_to_remove, node_labels=self.nodes_to_stay,
+                self.nodes_to_remove,
+                node_labels=self.nodes_to_stay,
             )
         )
 
@@ -1121,7 +1176,8 @@ class FailureQuorumLoss(TestCase):
 
         self.env_assist.assert_raise_library_error(
             lambda: cluster.remove_nodes(
-                self.env_assist.get_env(), self.nodes_to_remove,
+                self.env_assist.get_env(),
+                self.nodes_to_remove,
             )
         )
 
@@ -1163,7 +1219,8 @@ class FailureRemoveFromCib(TestCase):
             )
             .http.host.check_auth(node_labels=self.existing_nodes)
             .http.host.get_quorum_status(
-                self.existing_nodes, node_labels=self.nodes_to_remove[:1],
+                self.existing_nodes,
+                node_labels=self.nodes_to_remove[:1],
             )
             .local.destroy_cluster(self.nodes_to_remove)
             .local.distribute_and_reload_corosync_conf(
@@ -1191,13 +1248,16 @@ class FailureRemoveFromCib(TestCase):
                         response_code=400,
                         output=self.reason,
                     ),
-                    dict(label=self.nodes_to_stay[2],),
+                    dict(
+                        label=self.nodes_to_stay[2],
+                    ),
                 ],
             )
         )
         self.env_assist.assert_raise_library_error(
             lambda: cluster.remove_nodes(
-                self.env_assist.get_env(), self.nodes_to_remove,
+                self.env_assist.get_env(),
+                self.nodes_to_remove,
             )
         )
         self.env_assist.assert_reports(
@@ -1226,17 +1286,26 @@ class FailureRemoveFromCib(TestCase):
                     dict(
                         label=self.nodes_to_stay[0],
                         output=json.dumps(
-                            dict(code="failed", message=self.reason,)
+                            dict(
+                                code="failed",
+                                message=self.reason,
+                            )
                         ),
                     ),
-                    dict(label=self.nodes_to_stay[1], output="not json",),
-                    dict(label=self.nodes_to_stay[2],),
+                    dict(
+                        label=self.nodes_to_stay[1],
+                        output="not json",
+                    ),
+                    dict(
+                        label=self.nodes_to_stay[2],
+                    ),
                 ],
             )
         )
         self.env_assist.assert_raise_library_error(
             lambda: cluster.remove_nodes(
-                self.env_assist.get_env(), self.nodes_to_remove,
+                self.env_assist.get_env(),
+                self.nodes_to_remove,
             )
         )
         self.env_assist.assert_reports(
@@ -1263,7 +1332,10 @@ class FailureRemoveFromCib(TestCase):
                     dict(
                         label=node,
                         output=json.dumps(
-                            dict(code="failed", message=self.reason,)
+                            dict(
+                                code="failed",
+                                message=self.reason,
+                            )
                         ),
                     )
                     for node in self.nodes_to_stay
@@ -1272,7 +1344,8 @@ class FailureRemoveFromCib(TestCase):
         )
         self.env_assist.assert_raise_library_error(
             lambda: cluster.remove_nodes(
-                self.env_assist.get_env(), self.nodes_to_remove,
+                self.env_assist.get_env(),
+                self.nodes_to_remove,
             )
         )
         self.env_assist.assert_reports(
@@ -1318,7 +1391,8 @@ class FailureCorosyncReload(TestCase):
             )
             .http.host.check_auth(node_labels=self.existing_nodes)
             .http.host.get_quorum_status(
-                self.existing_nodes, node_labels=self.nodes_to_remove[:1],
+                self.existing_nodes,
+                node_labels=self.nodes_to_remove[:1],
             )
             .local.destroy_cluster(self.nodes_to_remove)
             .http.corosync.set_corosync_conf(
@@ -1333,7 +1407,8 @@ class FailureCorosyncReload(TestCase):
             [fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED)]
             + [
                 fixture.info(
-                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE, node=node,
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                    node=node,
                 )
                 for node in self.nodes_to_stay
             ]
@@ -1355,14 +1430,22 @@ class FailureCorosyncReload(TestCase):
                         dict(
                             label=self.nodes_to_stay[1],
                             output=json.dumps(
-                                dict(code="failed", message=self.err_msg,)
+                                dict(
+                                    code="failed",
+                                    message=self.err_msg,
+                                )
                             ),
                         )
                     ],
-                    [dict(label=self.nodes_to_stay[2],)],
+                    [
+                        dict(
+                            label=self.nodes_to_stay[2],
+                        )
+                    ],
                 ]
             ).http.pcmk.remove_nodes_from_cib(
-                self.nodes_to_remove, node_labels=self.nodes_to_stay,
+                self.nodes_to_remove,
+                node_labels=self.nodes_to_stay,
             )
         )
 
@@ -1410,10 +1493,15 @@ class FailureCorosyncReload(TestCase):
                             ),
                         )
                     ],
-                    [dict(label=self.nodes_to_stay[2],)],
+                    [
+                        dict(
+                            label=self.nodes_to_stay[2],
+                        )
+                    ],
                 ]
             ).http.pcmk.remove_nodes_from_cib(
-                self.nodes_to_remove, node_labels=self.nodes_to_stay,
+                self.nodes_to_remove,
+                node_labels=self.nodes_to_stay,
             )
         )
 
@@ -1454,7 +1542,8 @@ class FailureCorosyncReload(TestCase):
                     for node in self.nodes_to_stay
                 ]
             ).http.pcmk.remove_nodes_from_cib(
-                self.nodes_to_remove, node_labels=self.nodes_to_stay,
+                self.nodes_to_remove,
+                node_labels=self.nodes_to_stay,
             )
         )
 
@@ -1464,7 +1553,8 @@ class FailureCorosyncReload(TestCase):
             self.expected_reports
             + [
                 fixture.warn(
-                    report_codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE, node=node,
+                    report_codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE,
+                    node=node,
                 )
                 for node in self.nodes_to_stay
             ]
@@ -1481,7 +1571,12 @@ class FailureCorosyncReload(TestCase):
                         ),
                     )
                 ],
-                [dict(label=self.nodes_to_stay[1], output="not a json",)],
+                [
+                    dict(
+                        label=self.nodes_to_stay[1],
+                        output="not a json",
+                    )
+                ],
                 [
                     dict(
                         label=self.nodes_to_stay[2],
@@ -1494,7 +1589,8 @@ class FailureCorosyncReload(TestCase):
 
         self.env_assist.assert_raise_library_error(
             lambda: cluster.remove_nodes(
-                self.env_assist.get_env(), self.nodes_to_remove,
+                self.env_assist.get_env(),
+                self.nodes_to_remove,
             )
         )
 
@@ -1551,7 +1647,8 @@ class FailureCorosyncConfDistribution(TestCase):
             )
             .http.host.check_auth(node_labels=self.existing_nodes)
             .http.host.get_quorum_status(
-                self.existing_nodes, node_labels=self.nodes_to_remove[:1],
+                self.existing_nodes,
+                node_labels=self.nodes_to_remove[:1],
             )
             .local.destroy_cluster(self.nodes_to_remove)
         )
@@ -1580,7 +1677,8 @@ class FailureCorosyncConfDistribution(TestCase):
 
         self.env_assist.assert_raise_library_error(
             lambda: cluster.remove_nodes(
-                self.env_assist.get_env(), self.nodes_to_remove,
+                self.env_assist.get_env(),
+                self.nodes_to_remove,
             )
         )
 
@@ -1623,7 +1721,8 @@ class FailureCorosyncConfDistribution(TestCase):
 
         self.env_assist.assert_raise_library_error(
             lambda: cluster.remove_nodes(
-                self.env_assist.get_env(), self.nodes_to_remove,
+                self.env_assist.get_env(),
+                self.nodes_to_remove,
             )
         )
 
@@ -1674,7 +1773,8 @@ class FailureClusterDestroy(TestCase):
             )
             .http.host.check_auth(node_labels=self.existing_nodes)
             .http.host.get_quorum_status(
-                self.existing_nodes, node_labels=self.nodes_to_remove[:1],
+                self.existing_nodes,
+                node_labels=self.nodes_to_remove[:1],
             )
         )
         self.updated_corosync_conf_text = corosync_conf_fixture(
@@ -1705,10 +1805,12 @@ class FailureClusterDestroy(TestCase):
                 ]
             )
             .local.distribute_and_reload_corosync_conf(
-                self.updated_corosync_conf_text, self.nodes_to_stay,
+                self.updated_corosync_conf_text,
+                self.nodes_to_stay,
             )
             .http.pcmk.remove_nodes_from_cib(
-                self.nodes_to_remove, node_labels=self.nodes_to_stay,
+                self.nodes_to_remove,
+                node_labels=self.nodes_to_stay,
             )
         )
 
@@ -1749,10 +1851,12 @@ class FailureClusterDestroy(TestCase):
                 ]
             )
             .local.distribute_and_reload_corosync_conf(
-                self.updated_corosync_conf_text, self.nodes_to_stay,
+                self.updated_corosync_conf_text,
+                self.nodes_to_stay,
             )
             .http.pcmk.remove_nodes_from_cib(
-                self.nodes_to_remove, node_labels=self.nodes_to_stay,
+                self.nodes_to_remove,
+                node_labels=self.nodes_to_stay,
             )
         )
 
@@ -1863,8 +1967,12 @@ class OfflineNodes(TestCase):
                         "response_code": 400,
                         "output": "an error",
                     },
-                    {"label": self.nodes_to_remove[0],},
-                    {"label": self.nodes_to_remove[1],},
+                    {
+                        "label": self.nodes_to_remove[0],
+                    },
+                    {
+                        "label": self.nodes_to_remove[1],
+                    },
                 ]
             )
         )
@@ -1913,8 +2021,12 @@ class OfflineNodes(TestCase):
                         "response_code": 400,
                         "output": "an error",
                     },
-                    {"label": self.nodes_to_remove[0],},
-                    {"label": self.nodes_to_remove[1],},
+                    {
+                        "label": self.nodes_to_remove[0],
+                    },
+                    {
+                        "label": self.nodes_to_remove[1],
+                    },
                 ]
             )
         )
@@ -1930,7 +2042,8 @@ class OfflineNodes(TestCase):
             self.expected_reports
             + [
                 fixture.warn(
-                    report_codes.OMITTING_NODE, node=self.nodes_to_stay[0],
+                    report_codes.OMITTING_NODE,
+                    node=self.nodes_to_stay[0],
                 ),
                 fixture.error(
                     report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
@@ -1955,15 +2068,22 @@ class OfflineNodes(TestCase):
                         "errno": 7,
                         "error_msg": "an error",
                     },
-                    {"label": self.nodes_to_stay[1],},
-                    {"label": self.nodes_to_remove[0],},
-                    {"label": self.nodes_to_remove[1],},
+                    {
+                        "label": self.nodes_to_stay[1],
+                    },
+                    {
+                        "label": self.nodes_to_remove[0],
+                    },
+                    {
+                        "label": self.nodes_to_remove[1],
+                    },
                 ]
             )
             # SBD not installed
             .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
             .http.host.get_quorum_status(
-                self.existing_nodes, node_labels=self.nodes_to_remove[:1],
+                self.existing_nodes,
+                node_labels=self.nodes_to_remove[:1],
             )
         )
         self.env_assist.assert_raise_library_error(
@@ -1999,15 +2119,22 @@ class OfflineNodes(TestCase):
                         "errno": 7,
                         "error_msg": "an error",
                     },
-                    {"label": self.nodes_to_stay[1],},
-                    {"label": self.nodes_to_remove[0],},
-                    {"label": self.nodes_to_remove[1],},
+                    {
+                        "label": self.nodes_to_stay[1],
+                    },
+                    {
+                        "label": self.nodes_to_remove[0],
+                    },
+                    {
+                        "label": self.nodes_to_remove[1],
+                    },
                 ]
             )
             # SBD not installed
             .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
             .http.host.get_quorum_status(
-                self.existing_nodes, node_labels=self.nodes_to_remove[:1],
+                self.existing_nodes,
+                node_labels=self.nodes_to_remove[:1],
             )
             .local.destroy_cluster(self.nodes_to_remove)
             .local.distribute_and_reload_corosync_conf(
@@ -2018,7 +2145,8 @@ class OfflineNodes(TestCase):
                 [self.nodes_to_stay[1]],
             )
             .http.pcmk.remove_nodes_from_cib(
-                self.nodes_to_remove, node_labels=[self.nodes_to_stay[1]],
+                self.nodes_to_remove,
+                node_labels=[self.nodes_to_stay[1]],
             )
         )
         cluster.remove_nodes(
@@ -2030,7 +2158,8 @@ class OfflineNodes(TestCase):
             self.expected_reports
             + [
                 fixture.warn(
-                    report_codes.OMITTING_NODE, node=self.nodes_to_stay[0],
+                    report_codes.OMITTING_NODE,
+                    node=self.nodes_to_stay[0],
                 ),
                 fixture.warn(
                     report_codes.UNABLE_TO_CONNECT_TO_ALL_REMAINING_NODE,
@@ -2045,8 +2174,12 @@ class OfflineNodes(TestCase):
             self.config.env.set_known_nodes(self.existing_nodes)
             .http.host.check_auth(
                 communication_list=[
-                    {"label": self.nodes_to_stay[0],},
-                    {"label": self.nodes_to_stay[1],},
+                    {
+                        "label": self.nodes_to_stay[0],
+                    },
+                    {
+                        "label": self.nodes_to_stay[1],
+                    },
                     {
                         "label": self.nodes_to_remove[0],
                         "was_connected": False,
@@ -2128,9 +2261,15 @@ class OfflineNodes(TestCase):
             self.config.env.set_known_nodes(self.existing_nodes)
             .http.host.check_auth(
                 communication_list=[
-                    {"label": self.nodes_to_stay[0],},
-                    {"label": self.nodes_to_stay[1],},
-                    {"label": self.nodes_to_remove[0],},
+                    {
+                        "label": self.nodes_to_stay[0],
+                    },
+                    {
+                        "label": self.nodes_to_stay[1],
+                    },
+                    {
+                        "label": self.nodes_to_remove[0],
+                    },
                     {
                         "label": self.nodes_to_remove[1],
                         "response_code": 400,
@@ -2141,7 +2280,8 @@ class OfflineNodes(TestCase):
             # SBD not installed
             .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
             .http.host.get_quorum_status(
-                self.existing_nodes, node_labels=self.nodes_to_remove[:1],
+                self.existing_nodes,
+                node_labels=self.nodes_to_remove[:1],
             )
         )
         self.env_assist.assert_raise_library_error(
@@ -2173,15 +2313,21 @@ class OfflineNodes(TestCase):
             self.config.env.set_known_nodes(self.existing_nodes)
             .http.host.check_auth(
                 communication_list=[
-                    {"label": self.nodes_to_stay[0],},
-                    {"label": self.nodes_to_stay[1],},
+                    {
+                        "label": self.nodes_to_stay[0],
+                    },
+                    {
+                        "label": self.nodes_to_stay[1],
+                    },
                     {
                         "label": self.nodes_to_remove[0],
                         "was_connected": False,
                         "errno": 7,
                         "error_msg": "an error",
                     },
-                    {"label": self.nodes_to_remove[1],},
+                    {
+                        "label": self.nodes_to_remove[1],
+                    },
                 ]
             )
             # SBD not installed
@@ -2197,7 +2343,11 @@ class OfflineNodes(TestCase):
                             "error_msg": "an error",
                         }
                     ],
-                    [{"label": self.nodes_to_remove[1],}],
+                    [
+                        {
+                            "label": self.nodes_to_remove[1],
+                        }
+                    ],
                 ],
             )
             .http.host.cluster_destroy(
@@ -2208,7 +2358,9 @@ class OfflineNodes(TestCase):
                         "errno": 7,
                         "error_msg": "an error",
                     },
-                    {"label": self.nodes_to_remove[1],},
+                    {
+                        "label": self.nodes_to_remove[1],
+                    },
                 ]
             )
             .local.distribute_and_reload_corosync_conf(
@@ -2219,7 +2371,8 @@ class OfflineNodes(TestCase):
                 self.nodes_to_stay,
             )
             .http.pcmk.remove_nodes_from_cib(
-                self.nodes_to_remove, node_labels=self.nodes_to_stay,
+                self.nodes_to_remove,
+                node_labels=self.nodes_to_stay,
             )
         )
         cluster.remove_nodes(
@@ -2231,7 +2384,8 @@ class OfflineNodes(TestCase):
             self.expected_reports
             + [
                 fixture.warn(
-                    report_codes.OMITTING_NODE, node=self.nodes_to_remove[0],
+                    report_codes.OMITTING_NODE,
+                    node=self.nodes_to_remove[0],
                 ),
                 fixture.warn(
                     report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
@@ -2324,7 +2478,8 @@ class OfflineNodes(TestCase):
             # SBD not installed
             .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
             .http.host.get_quorum_status(
-                self.existing_nodes, node_labels=self.nodes_to_remove[:1],
+                self.existing_nodes,
+                node_labels=self.nodes_to_remove[:1],
             )
         )
         self.env_assist.assert_raise_library_error(
@@ -2358,7 +2513,8 @@ class OfflineNodes(TestCase):
             # SBD not installed
             .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
             .http.host.get_quorum_status(
-                self.existing_nodes, node_labels=self.nodes_to_remove[:1],
+                self.existing_nodes,
+                node_labels=self.nodes_to_remove[:1],
             )
             .local.destroy_cluster(self.nodes_to_remove)
             .local.distribute_and_reload_corosync_conf(
@@ -2369,7 +2525,8 @@ class OfflineNodes(TestCase):
                 [self.nodes_to_stay[0]],
             )
             .http.pcmk.remove_nodes_from_cib(
-                self.nodes_to_remove, node_labels=[self.nodes_to_stay[0]],
+                self.nodes_to_remove,
+                node_labels=[self.nodes_to_stay[0]],
             )
         )
         cluster.remove_nodes(
@@ -2398,7 +2555,10 @@ class OfflineNodes(TestCase):
             .http.host.check_auth(node_labels=(self.nodes_to_stay))
             # SBD not installed
             .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
-            .http.host.get_quorum_status(self.existing_nodes, node_labels=[],)
+            .http.host.get_quorum_status(
+                self.existing_nodes,
+                node_labels=[],
+            )
         )
         self.env_assist.assert_raise_library_error(
             lambda: cluster.remove_nodes(
@@ -2426,7 +2586,10 @@ class OfflineNodes(TestCase):
             .http.host.check_auth(node_labels=(self.nodes_to_stay))
             # SBD not installed
             .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
-            .http.host.get_quorum_status(self.existing_nodes, node_labels=[],)
+            .http.host.get_quorum_status(
+                self.existing_nodes,
+                node_labels=[],
+            )
             .local.distribute_and_reload_corosync_conf(
                 corosync_conf_fixture(
                     self.existing_corosync_nodes[: -self.removing_num],
@@ -2468,7 +2631,8 @@ class OfflineNodes(TestCase):
             # SBD not installed
             .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
             .http.host.get_quorum_status(
-                self.existing_nodes, node_labels=[self.nodes_to_remove[1]],
+                self.existing_nodes,
+                node_labels=[self.nodes_to_remove[1]],
             )
         )
         self.env_assist.assert_raise_library_error(
@@ -2502,7 +2666,8 @@ class OfflineNodes(TestCase):
             # SBD not installed
             .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
             .http.host.get_quorum_status(
-                self.existing_nodes, node_labels=self.nodes_to_remove[:1],
+                self.existing_nodes,
+                node_labels=self.nodes_to_remove[:1],
             )
             .local.destroy_cluster([self.nodes_to_remove[0]])
             .local.distribute_and_reload_corosync_conf(

@@ -40,7 +40,8 @@ class Parser(ParserInterface):
                 ReportItem(
                     severity=get_severity(force_code, is_forced_or_warning),
                     message=reports.messages.BoothConfigUnexpectedLines(
-                        exception.args[0], file_path,
+                        exception.args[0],
+                        file_path,
                     ),
                 )
             ]

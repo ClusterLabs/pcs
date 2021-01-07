@@ -307,7 +307,9 @@ class LibraryEnvironment:
             raise LibraryError(
                 ReportItem.error(
                     reports.messages.CorosyncConfigCannotSaveInvalidNamesValues(
-                        bad_sections, bad_attr_names, bad_attr_values,
+                        bad_sections,
+                        bad_attr_names,
+                        bad_attr_values,
                     )
                 )
             )
@@ -325,7 +327,8 @@ class LibraryEnvironment:
 
             self._push_corosync_conf_live(
                 self.get_node_target_factory().get_target_list(
-                    node_name_list, skip_non_existing=skip_offline_nodes,
+                    node_name_list,
+                    skip_non_existing=skip_offline_nodes,
                 ),
                 corosync_conf_data,
                 corosync_conf_facade.need_stopped_cluster,
@@ -430,7 +433,8 @@ class LibraryEnvironment:
         return self._communicator_factory
 
     def get_node_communicator(
-        self, request_timeout: Optional[int] = None,
+        self,
+        request_timeout: Optional[int] = None,
     ) -> Communicator:
         return self.communicator_factory.get_communicator(
             request_timeout=request_timeout

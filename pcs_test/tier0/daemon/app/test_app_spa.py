@@ -48,7 +48,8 @@ class AppTest(
 class Static(AppTest):
     def test_index(self):
         self.assert_success_response(
-            self.get(f"{PREFIX}"), self.index_content,
+            self.get(f"{PREFIX}"),
+            self.index_content,
         )
 
 
@@ -62,7 +63,8 @@ class Fallback(AppTest):
 
     def test_index(self):
         self.assert_success_response(
-            self.get(f"{PREFIX}"), self.fallback_content,
+            self.get(f"{PREFIX}"),
+            self.fallback_content,
         )
 
 

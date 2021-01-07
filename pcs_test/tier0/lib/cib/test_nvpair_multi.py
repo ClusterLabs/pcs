@@ -396,7 +396,8 @@ class FindNvsetsByIds(TestCase):
             xml, ["set1", "set2", "set3", "setX"]
         )
         self.assertEqual(
-            ["set1", "set2"], [el.get("id") for el in element_list],
+            ["set1", "set2"],
+            [el.get("id") for el in element_list],
         )
         assert_report_item_list_equal(
             report_list,
@@ -438,7 +439,8 @@ class ValidateNvsetAppendNew(TestCase):
             rule_allows_op_expr=True,
         )
         assert_report_item_list_equal(
-            validator.validate(), [],
+            validator.validate(),
+            [],
         )
         self.assertEqual(
             repr(validator.get_parsed_rule()),

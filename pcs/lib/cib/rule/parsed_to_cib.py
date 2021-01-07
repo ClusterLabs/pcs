@@ -43,7 +43,9 @@ def export(
 
 class _Exporter:
     def __init__(
-        self, id_provider: IdProvider, cib_schema_version: Version,
+        self,
+        id_provider: IdProvider,
+        cib_schema_version: Version,
     ):
         self.part_export_map = {
             BoolExpr: self._export_bool,

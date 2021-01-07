@@ -17,7 +17,8 @@ class UpdateTotem(TotemBase, TestCase):
 
     def test_empty_values_allowed(self):
         assert_report_item_list_equal(
-            self.call_function({name: "" for name in self.allowed_options}), [],
+            self.call_function({name: "" for name in self.allowed_options}),
+            [],
         )
 
 
@@ -41,9 +42,21 @@ class UpdateTransportKnet(TransportKnetBase, TestCase):
     def test_empty_values_allowed(self):
         assert_report_item_list_equal(
             self.call_function(
-                {"ip_version": "", "knet_pmtud_interval": "", "link_mode": "",},
-                {"level": "", "model": "", "threshold": "",},
-                {"cipher": "", "hash": "", "model": "",},
+                {
+                    "ip_version": "",
+                    "knet_pmtud_interval": "",
+                    "link_mode": "",
+                },
+                {
+                    "level": "",
+                    "model": "",
+                    "threshold": "",
+                },
+                {
+                    "cipher": "",
+                    "hash": "",
+                    "model": "",
+                },
             ),
             [],
         )
@@ -108,7 +121,10 @@ class UpdateTransportKnet(TransportKnetBase, TestCase):
     def test_crypto_config_hash_enabled_enable_cipher(self):
         assert_report_item_list_equal(
             self.call_function(
-                {}, {}, {"cipher": "aes128"}, {"hash": "sha256"},
+                {},
+                {},
+                {"cipher": "aes128"},
+                {"hash": "sha256"},
             ),
             [],
         )
@@ -127,7 +143,10 @@ class UpdateTransportKnet(TransportKnetBase, TestCase):
     def test_crypto_config_hash_enabled_enable_cipher_default_hash(self):
         assert_report_item_list_equal(
             self.call_function(
-                {}, {}, {"cipher": "aes128", "hash": ""}, {"hash": "sha256"},
+                {},
+                {},
+                {"cipher": "aes128", "hash": ""},
+                {"hash": "sha256"},
             ),
             [self.fixture_error_prerequisite],
         )
@@ -143,5 +162,6 @@ class UpdateTransportUdp(TransportUdpBase, TestCase):
 
     def test_empty_values_allowed(self):
         assert_report_item_list_equal(
-            self.call_function({"ip_version": "", "netmtu": ""}, {}, {}), [],
+            self.call_function({"ip_version": "", "netmtu": ""}, {}, {}),
+            [],
         )

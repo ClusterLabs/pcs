@@ -18,7 +18,10 @@ class EnvConfigMixin:
             result = (
                 result
                 if result is not None
-                else {"code": "success", "message": "",}
+                else {
+                    "code": "success",
+                    "message": "",
+                }
             )
 
             kwargs["results"] = {
@@ -61,7 +64,10 @@ class EnvConfigMixin:
             result = (
                 result
                 if result is not None
-                else {"code": "deleted", "message": "",}
+                else {
+                    "code": "deleted",
+                    "message": "",
+                }
             )
 
             kwargs["results"] = {"pacemaker_remote authkey": result}
@@ -72,7 +78,9 @@ class EnvConfigMixin:
         self.config.http.remove_file(
             communication_list=communication_list,
             files={
-                "pacemaker_remote authkey": {"type": "pcmk_remote_authkey",}
+                "pacemaker_remote authkey": {
+                    "type": "pcmk_remote_authkey",
+                }
             },
             **kwargs,
         )
@@ -83,7 +91,10 @@ REPORTS = (
     .info(
         "pcmk_remote_disable_stop_started",
         report_codes.SERVICE_COMMANDS_ON_NODES_STARTED,
-        action_list=["pacemaker_remote stop", "pacemaker_remote disable",],
+        action_list=[
+            "pacemaker_remote stop",
+            "pacemaker_remote disable",
+        ],
     )
     .info(
         "pcmk_remote_disable_success",
@@ -126,7 +137,8 @@ EXTRA_REPORTS = (
         command="remote/remove_file",
     )
     .as_warn(
-        "remove_file_connection_failed", "remove_file_connection_failed_warn",
+        "remove_file_connection_failed",
+        "remove_file_connection_failed_warn",
     )
     .error(
         "authkey_remove_failed",
@@ -135,7 +147,10 @@ EXTRA_REPORTS = (
         file_description="pacemaker authkey",
         force_code=report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
     )
-    .as_warn("authkey_remove_failed", "authkey_remove_failed_warn",)
+    .as_warn(
+        "authkey_remove_failed",
+        "authkey_remove_failed_warn",
+    )
     .error(
         "pcmk_remote_disable_failed",
         report_codes.SERVICE_COMMAND_ON_NODE_ERROR,
@@ -143,11 +158,17 @@ EXTRA_REPORTS = (
         service_command_description="pacemaker_remote disable",
         force_code=report_codes.SKIP_ACTION_ON_NODES_ERRORS,
     )
-    .as_warn("pcmk_remote_disable_failed", "pcmk_remote_disable_failed_warn",)
+    .as_warn(
+        "pcmk_remote_disable_failed",
+        "pcmk_remote_disable_failed_warn",
+    )
     .copy(
         "pcmk_remote_disable_failed",
         "pcmk_remote_stop_failed",
         service_command_description="pacemaker_remote stop",
     )
-    .as_warn("pcmk_remote_stop_failed", "pcmk_remote_stop_failed_warn",)
+    .as_warn(
+        "pcmk_remote_stop_failed",
+        "pcmk_remote_stop_failed_warn",
+    )
 )

@@ -17,7 +17,8 @@ class GetClusterSbdConfig(TestCase):
         (
             self.config.env.set_known_nodes(node_name_list)
             .corosync_conf.load(
-                node_name_list=node_name_list, auto_tie_breaker=True,
+                node_name_list=node_name_list,
+                auto_tie_breaker=True,
             )
             .http.add_communication(
                 "get_sbd_config",
@@ -77,10 +78,24 @@ class GetClusterSbdConfig(TestCase):
                         "SBD_DELAY_START": "no",
                     },
                 },
-                {"node": "node-3", "config": {"OPTION": "value",}},
-                {"node": "node-4", "config": {},},
-                {"node": "node-5", "config": {},},
-                {"node": "node-2", "config": None,},
+                {
+                    "node": "node-3",
+                    "config": {
+                        "OPTION": "value",
+                    },
+                },
+                {
+                    "node": "node-4",
+                    "config": {},
+                },
+                {
+                    "node": "node-5",
+                    "config": {},
+                },
+                {
+                    "node": "node-2",
+                    "config": None,
+                },
             ],
         )
 
@@ -108,7 +123,9 @@ class GetClusterSbdConfig(TestCase):
                 "get_sbd_config",
                 [
                     dict(
-                        label="rh7-2", output="OPTION=value", response_code=200,
+                        label="rh7-2",
+                        output="OPTION=value",
+                        response_code=200,
                     ),
                 ],
                 action="remote/get_sbd_config",
@@ -117,7 +134,10 @@ class GetClusterSbdConfig(TestCase):
 
         result = get_cluster_sbd_config(self.env_assist.get_env())
         self.assertEqual(
-            result, [{"node": "rh7-2", "config": {"OPTION": "value"}},]
+            result,
+            [
+                {"node": "rh7-2", "config": {"OPTION": "value"}},
+            ],
         )
 
         self.env_assist.assert_reports(
@@ -141,6 +161,8 @@ class GetClusterSbdConfig(TestCase):
                     report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
                     fatal=False,
                 ),
-                fixture.error(report_codes.COROSYNC_CONFIG_NO_NODES_DEFINED,),
+                fixture.error(
+                    report_codes.COROSYNC_CONFIG_NO_NODES_DEFINED,
+                ),
             ]
         )

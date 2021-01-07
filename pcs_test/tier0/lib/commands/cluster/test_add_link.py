@@ -93,7 +93,9 @@ class AddLink(TestCase):
             .env.push_corosync_conf(corosync_conf_text=self.after)
         )
         cluster.add_link(
-            self.env_assist.get_env(), self.node_addr_map, self.link_options,
+            self.env_assist.get_env(),
+            self.node_addr_map,
+            self.link_options,
         )
         # Reports from pushing corosync.conf are produced in env. That code is
         # hidden in self.config.env.push_corosync_conf.
@@ -122,8 +124,14 @@ class AddLink(TestCase):
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_link(
                 self.env_assist.get_env(),
-                {"node2": "node2-addr0", "node3": "node2-addr0",},
-                {"wrong": "option", "linknumber": "2",},
+                {
+                    "node2": "node2-addr0",
+                    "node3": "node2-addr0",
+                },
+                {
+                    "wrong": "option",
+                    "linknumber": "2",
+                },
             ),
             [],
         )
@@ -365,7 +373,8 @@ class AddLink(TestCase):
             self.config.corosync_conf.load_content(self.before)
             .runner.cib.load()
             .env.push_corosync_conf(
-                corosync_conf_text=self.after, skip_offline_targets=True,
+                corosync_conf_text=self.after,
+                skip_offline_targets=True,
             )
         )
         cluster.add_link(

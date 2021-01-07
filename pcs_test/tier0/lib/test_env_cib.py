@@ -342,7 +342,8 @@ class PushLoadedCib(TestCase, ManageCibAssertionMixin):
             env.push_cib,
             [
                 fixture.error(
-                    report_codes.CIB_SAVE_TMP_ERROR, reason="test error",
+                    report_codes.CIB_SAVE_TMP_ERROR,
+                    reason="test error",
                 )
             ],
             expected_in_processor=False,
@@ -468,7 +469,11 @@ class PushLoadedCib(TestCase, ManageCibAssertionMixin):
         env.get_cib()
         self.env_assist.assert_raise_library_error(
             lambda: env.push_cib(wait="abc"),
-            [fixture.error(report_codes.INVALID_TIMEOUT_VALUE, timeout="abc"),],
+            [
+                fixture.error(
+                    report_codes.INVALID_TIMEOUT_VALUE, timeout="abc"
+                ),
+            ],
             expected_in_processor=False,
         )
 
@@ -508,7 +513,11 @@ class PushCustomCib(TestCase, ManageCibAssertionMixin):
 
         self.env_assist.assert_raise_library_error(
             lambda: env.push_cib(etree.XML(self.custom_cib), wait="abc"),
-            [fixture.error(report_codes.INVALID_TIMEOUT_VALUE, timeout="abc"),],
+            [
+                fixture.error(
+                    report_codes.INVALID_TIMEOUT_VALUE, timeout="abc"
+                ),
+            ],
             expected_in_processor=False,
         )
 
@@ -524,6 +533,8 @@ class PushCibMockedWithWait(TestCase):
         env.get_cib()
         self.env_assist.assert_raise_library_error(
             lambda: env.push_cib(wait=10),
-            [fixture.error(report_codes.WAIT_FOR_IDLE_NOT_LIVE_CLUSTER),],
+            [
+                fixture.error(report_codes.WAIT_FOR_IDLE_NOT_LIVE_CLUSTER),
+            ],
             expected_in_processor=False,
         )

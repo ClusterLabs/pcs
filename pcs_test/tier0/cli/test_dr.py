@@ -26,13 +26,24 @@ class Config(TestCase):
 
     def test_success(self, mock_print):
         self.lib.dr.get_config.return_value = {
-            "local_site": {"node_list": [], "site_role": "RECOVERY",},
+            "local_site": {
+                "node_list": [],
+                "site_role": "RECOVERY",
+            },
             "remote_site_list": [
                 {
-                    "node_list": [{"name": "nodeA2"}, {"name": "nodeA1"},],
+                    "node_list": [
+                        {"name": "nodeA2"},
+                        {"name": "nodeA1"},
+                    ],
                     "site_role": "PRIMARY",
                 },
-                {"node_list": [{"name": "nodeB1"},], "site_role": "RECOVERY",},
+                {
+                    "node_list": [
+                        {"name": "nodeB1"},
+                    ],
+                    "site_role": "RECOVERY",
+                },
             ],
         }
         self._call_cmd([])

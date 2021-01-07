@@ -37,13 +37,31 @@ GENERIC_CONTAINER_OPTIONS = frozenset(
 )
 
 NETWORK_OPTIONS = frozenset(
-    ("control-port", "host-interface", "host-netmask", "ip-range-start",)
+    (
+        "control-port",
+        "host-interface",
+        "host-netmask",
+        "ip-range-start",
+    )
 )
 
-PORT_MAP_OPTIONS = frozenset(("id", "port", "internal-port", "range",))
+PORT_MAP_OPTIONS = frozenset(
+    (
+        "id",
+        "port",
+        "internal-port",
+        "range",
+    )
+)
 
 STORAGE_MAP_OPTIONS = frozenset(
-    ("id", "options", "source-dir", "source-dir-root", "target-dir",)
+    (
+        "id",
+        "options",
+        "source-dir",
+        "source-dir-root",
+        "target-dir",
+    )
 )
 
 
@@ -116,7 +134,11 @@ def append_new(
     _append_container(bundle_element, container_type, container_options)
     if network_options or port_map:
         _append_network(
-            bundle_element, id_provider, bundle_id, network_options, port_map,
+            bundle_element,
+            id_provider,
+            bundle_id,
+            network_options,
+            port_map,
         )
     if storage_map:
         _append_storage(bundle_element, id_provider, bundle_id, storage_map)
@@ -193,7 +215,8 @@ def reset_to_minimal(bundle_element):
 def _get_report_unsupported_container(bundle_el):
     return ReportItem.error(
         reports.messages.ResourceBundleUnsupportedContainerType(
-            bundle_el.get("id"), sorted(GENERIC_CONTAINER_TYPES),
+            bundle_el.get("id"),
+            sorted(GENERIC_CONTAINER_TYPES),
         )
     )
 
@@ -351,7 +374,8 @@ def add_resource(bundle_element, primitive_element):
         raise LibraryError(
             ReportItem.error(
                 reports.messages.ResourceBundleAlreadyContainsAResource(
-                    bundle_element.get("id"), inner_primitive.get("id"),
+                    bundle_element.get("id"),
+                    inner_primitive.get("id"),
                 )
             )
         )
@@ -376,7 +400,9 @@ def _validate_container(container_type, container_options, force_options=False):
         return [
             ReportItem.error(
                 reports.messages.InvalidOptionValue(
-                    "container type", container_type, GENERIC_CONTAINER_TYPES,
+                    "container type",
+                    container_type,
+                    GENERIC_CONTAINER_TYPES,
                 )
             )
         ]
@@ -397,7 +423,8 @@ def _validate_generic_container_options(container_options, force_options=False):
         validate.ValueNonnegativeInteger("masters"),
         validate.ValueNonnegativeInteger("promoted-max"),
         validate.MutuallyExclusive(
-            ["masters", "promoted-max"], option_type="container",
+            ["masters", "promoted-max"],
+            option_type="container",
         ),
         validate.ValuePositiveInteger("replicas"),
         validate.ValuePositiveInteger("replicas-per-host"),
@@ -408,7 +435,9 @@ def _validate_generic_container_options(container_options, force_options=False):
         deprecation_reports.append(
             ReportItem.warning(
                 reports.messages.DeprecatedOption(
-                    "masters", ["promoted-max"], "container",
+                    "masters",
+                    ["promoted-max"],
+                    "container",
                 )
             )
         )
@@ -476,7 +505,8 @@ def _validate_generic_container_options_update(
     ):
         validators.append(
             validate.MutuallyExclusive(
-                ["masters", "promoted-max"], option_type="container",
+                ["masters", "promoted-max"],
+                option_type="container",
             )
         )
 
@@ -488,7 +518,9 @@ def _validate_generic_container_options_update(
         deprecation_reports.append(
             ReportItem.warning(
                 reports.messages.DeprecatedOption(
-                    "masters", ["promoted-max"], "container",
+                    "masters",
+                    ["promoted-max"],
+                    "container",
                 )
             )
         )
@@ -583,10 +615,12 @@ def _validate_network_options_update(
         report_list.append(
             ReportItem(
                 severity=reports.item.get_severity(
-                    reports.codes.FORCE_OPTIONS, force_options,
+                    reports.codes.FORCE_OPTIONS,
+                    force_options,
                 ),
                 message=reports.messages.ResourceInBundleNotAccessible(
-                    bundle_el.get("id"), inner_primitive.get("id"),
+                    bundle_el.get("id"),
+                    inner_primitive.get("id"),
                 ),
             )
         )
@@ -662,10 +696,12 @@ def _validate_storage_map_list(options_list, id_provider, force_options):
             id_provider=id_provider,
         ),
         validate.IsRequiredSome(
-            ["source-dir", "source-dir-root"], option_type=option_type,
+            ["source-dir", "source-dir-root"],
+            option_type=option_type,
         ),
         validate.MutuallyExclusive(
-            ["source-dir", "source-dir-root"], option_type=option_type,
+            ["source-dir", "source-dir-root"],
+            option_type=option_type,
         ),
         validate.IsRequiredAll(["target-dir"], option_type=option_type),
     ]
@@ -700,7 +736,8 @@ def _append_container(bundle_element, container_type, container_options):
     # Do not add options with empty values. When updating, an empty value means
     # remove the option.
     update_attributes_remove_empty(
-        etree.SubElement(bundle_element, container_type), container_options,
+        etree.SubElement(bundle_element, container_type),
+        container_options,
     )
 
 
@@ -739,7 +776,10 @@ def _append_storage(bundle_element, id_provider, id_base, storage_map):
     storage_element = etree.SubElement(bundle_element, "storage")
     for storage_map_options in storage_map:
         _append_storage_map(
-            storage_element, id_provider, id_base, storage_map_options,
+            storage_element,
+            id_provider,
+            id_base,
+            storage_map_options,
         )
 
 

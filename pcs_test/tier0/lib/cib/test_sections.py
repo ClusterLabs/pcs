@@ -65,6 +65,8 @@ class Get(TestCase):
             (
                 severities.ERROR,
                 report_codes.CIB_CANNOT_FIND_MANDATORY_SECTION,
-                {"section": "configuration/nodes",},
+                {
+                    "section": "configuration/nodes",
+                },
             ),
         )

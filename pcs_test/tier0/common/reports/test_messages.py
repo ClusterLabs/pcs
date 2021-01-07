@@ -114,7 +114,8 @@ class DuplicateConstraintsExist(NameBuildTest):
 class EmptyResourceSetList(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
-            "Resource set list is empty", reports.EmptyResourceSetList(),
+            "Resource set list is empty",
+            reports.EmptyResourceSetList(),
         )
 
 
@@ -188,7 +189,10 @@ class PrerequisiteOptionMustNotBeSet(NameBuildTest):
     def test_without_type(self):
         self.assert_message_from_report(
             "Cannot set option 'a' because option 'b' is already set",
-            reports.PrerequisiteOptionMustNotBeSet("a", "b",),
+            reports.PrerequisiteOptionMustNotBeSet(
+                "a",
+                "b",
+            ),
         )
 
     def test_with_type(self):
@@ -196,7 +200,10 @@ class PrerequisiteOptionMustNotBeSet(NameBuildTest):
             "Cannot set some option 'a' because other option 'b' is "
             "already set",
             reports.PrerequisiteOptionMustNotBeSet(
-                "a", "b", option_type="some", prerequisite_type="other",
+                "a",
+                "b",
+                option_type="some",
+                prerequisite_type="other",
             ),
         )
 
@@ -491,7 +498,12 @@ class RunExternalProcessStarted(NameBuildTest):
         self.assert_message_from_report(
             ("Running: COMMAND\nEnvironment:\n" "  env_a=A\n" "  env_b=B\n"),
             reports.RunExternalProcessStarted(
-                "COMMAND", "", {"env_a": "A", "env_b": "B",}
+                "COMMAND",
+                "",
+                {
+                    "env_a": "A",
+                    "env_b": "B",
+                },
             ),
         )
 
@@ -506,7 +518,12 @@ class RunExternalProcessStarted(NameBuildTest):
                 "--Debug Input End--\n"
             ),
             reports.RunExternalProcessStarted(
-                "COMMAND", "STDIN", {"env_a": "A", "env_b": "B",}
+                "COMMAND",
+                "STDIN",
+                {
+                    "env_a": "A",
+                    "env_b": "B",
+                },
             ),
         )
 
@@ -520,7 +537,11 @@ class RunExternalProcessStarted(NameBuildTest):
                 "--Debug Input End--\n"
             ),
             reports.RunExternalProcessStarted(
-                "COMMAND", "STDIN", {"test": "a:{green},b:{red}",}
+                "COMMAND",
+                "STDIN",
+                {
+                    "test": "a:{green},b:{red}",
+                },
             ),
         )
 
@@ -611,7 +632,8 @@ class NodeCommunicationNoMoreAddresses(NameBuildTest):
         self.assert_message_from_report(
             "Unable to connect to 'node_name' via any of its addresses",
             reports.NodeCommunicationNoMoreAddresses(
-                "node_name", "my/request",
+                "node_name",
+                "my/request",
             ),
         )
 
@@ -842,7 +864,8 @@ class CorosyncConfigReloaded(NameBuildTest):
 
     def test_without_node(self):
         self.assert_message_from_report(
-            "Corosync configuration reloaded", reports.CorosyncConfigReloaded(),
+            "Corosync configuration reloaded",
+            reports.CorosyncConfigReloaded(),
         )
 
 
@@ -1177,7 +1200,8 @@ class CorosyncAddressIpVersionWrongForLink(NameBuildTest):
             "Address '192.168.100.42' cannot be used in the link because "
             "the link uses IPv6 addresses",
             reports.CorosyncAddressIpVersionWrongForLink(
-                "192.168.100.42", "IPv6",
+                "192.168.100.42",
+                "IPv6",
             ),
         )
 
@@ -1186,7 +1210,9 @@ class CorosyncAddressIpVersionWrongForLink(NameBuildTest):
             "Address '192.168.100.42' cannot be used in link '3' because "
             "the link uses IPv6 addresses",
             reports.CorosyncAddressIpVersionWrongForLink(
-                "192.168.100.42", "IPv6", 3,
+                "192.168.100.42",
+                "IPv6",
+                3,
             ),
         )
 
@@ -1638,7 +1664,9 @@ class IdBelongsToUnexpectedType(NameBuildTest):
         self.assert_message_from_report(
             "'ID' is not an ACL group/ACL user",
             reports.IdBelongsToUnexpectedType(
-                "ID", ["acl_target", "acl_group"], "op",
+                "ID",
+                ["acl_target", "acl_group"],
+                "op",
             ),
         )
 
@@ -1807,7 +1835,11 @@ class ResourceRunningOnNodes(NameBuildTest):
             "resource 'R' is master on node 'node3'"
             "; running on nodes 'node1', 'node2'",
             reports.ResourceRunningOnNodes(
-                "R", {"Started": ["node1", "node2"], "Master": ["node3"],}
+                "R",
+                {
+                    "Started": ["node1", "node2"],
+                    "Master": ["node3"],
+                },
             ),
         )
 
@@ -1918,7 +1950,8 @@ class CibSimulateError(NameBuildTest):
 
     def test_empty_reason(self):
         self.assert_message_from_report(
-            "Unable to simulate changes in CIB", reports.CibSimulateError(""),
+            "Unable to simulate changes in CIB",
+            reports.CibSimulateError(""),
         )
 
 
@@ -2020,7 +2053,10 @@ class ResourceRefreshError(NameBuildTest):
     def test_node(self):
         self.assert_message_from_report(
             "Unable to delete history of resources\nsomething wrong",
-            reports.ResourceRefreshError("something wrong", node="N1",),
+            reports.ResourceRefreshError(
+                "something wrong",
+                node="N1",
+            ),
         )
 
     def test_resource(self):
@@ -2055,7 +2091,12 @@ class ResourceOperationIntervalDuplication(NameBuildTest):
             "\nmonitor with intervals 3600s, 60m, 1h"
             "\nmonitor with intervals 60s, 1m",
             reports.ResourceOperationIntervalDuplication(
-                {"monitor": [["3600s", "60m", "1h"], ["60s", "1m"],],}
+                {
+                    "monitor": [
+                        ["3600s", "60m", "1h"],
+                        ["60s", "1m"],
+                    ],
+                }
             ),
         )
 
@@ -2786,7 +2827,8 @@ class FilesRemoveFromNodesStarted(NameBuildTest):
         self.assert_message_from_report(
             "Requesting remove 'first', 'second' from 'node1', 'node2'",
             reports.FilesRemoveFromNodesStarted(
-                ["first", "second"], ["node1", "node2"],
+                ["first", "second"],
+                ["node1", "node2"],
             ),
         )
 
@@ -2851,14 +2893,18 @@ class ServiceCommandsOnNodesStarted(NameBuildTest):
     def test_build_messages_with_single_node(self):
         self.assert_message_from_report(
             "Requesting 'action1' on 'node1'",
-            reports.ServiceCommandsOnNodesStarted(["action1"], ["node1"],),
+            reports.ServiceCommandsOnNodesStarted(
+                ["action1"],
+                ["node1"],
+            ),
         )
 
     def test_build_messages_with_nodes(self):
         self.assert_message_from_report(
             "Requesting 'action1', 'action2' on 'node1', 'node2'",
             reports.ServiceCommandsOnNodesStarted(
-                ["action1", "action2"], ["node1", "node2"],
+                ["action1", "action2"],
+                ["node1", "node2"],
             ),
         )
 
@@ -3208,7 +3254,8 @@ class LiveEnvironmentRequired(NameBuildTest):
     def test_build_messages_transformable_codes(self):
         self.assert_message_from_report(
             "This command does not support '{}', '{}'".format(
-                str(file_type_codes.CIB), str(file_type_codes.COROSYNC_CONF),
+                str(file_type_codes.CIB),
+                str(file_type_codes.COROSYNC_CONF),
             ),
             reports.LiveEnvironmentRequired(
                 [file_type_codes.COROSYNC_CONF, file_type_codes.CIB]
@@ -3232,7 +3279,8 @@ class LiveEnvironmentNotConsistent(NameBuildTest):
                 str(file_type_codes.BOOTH_KEY),
             ),
             reports.LiveEnvironmentNotConsistent(
-                [file_type_codes.BOOTH_CONFIG], [file_type_codes.BOOTH_KEY],
+                [file_type_codes.BOOTH_CONFIG],
+                [file_type_codes.BOOTH_KEY],
             ),
         )
 
@@ -4177,7 +4225,9 @@ class ResourceDisableAffectsOtherResources(NameBuildTest):
                 "resources\n\ncrm_simulate output"
             ),
             reports.ResourceDisableAffectsOtherResources(
-                ["D2", "D1"], ["O2", "O1"], "crm_simulate output",
+                ["D2", "D1"],
+                ["O2", "O1"],
+                "crm_simulate output",
             ),
         )
 
@@ -4386,7 +4436,8 @@ class BoothConfigDistributionStarted(NameBuildTest):
 class BoothConfigAcceptedByNode(NameBuildTest):
     def test_defaults(self):
         self.assert_message_from_report(
-            "Booth config saved", reports.BoothConfigAcceptedByNode(),
+            "Booth config saved",
+            reports.BoothConfigAcceptedByNode(),
         )
 
     def test_empty_name_list(self):
@@ -4411,7 +4462,8 @@ class BoothConfigAcceptedByNode(NameBuildTest):
         self.assert_message_from_report(
             "node1: Booth config saved",
             reports.BoothConfigAcceptedByNode(
-                node="node1", name_list=["booth"],
+                node="node1",
+                name_list=["booth"],
             ),
         )
 
@@ -4431,7 +4483,8 @@ class BoothConfigAcceptedByNode(NameBuildTest):
         self.assert_message_from_report(
             "node1: Booth configs 'another', 'some' saved",
             reports.BoothConfigAcceptedByNode(
-                node="node1", name_list=["some", "another"],
+                node="node1",
+                name_list=["some", "another"],
             ),
         )
 
@@ -4447,7 +4500,9 @@ class BoothConfigDistributionNodeError(NameBuildTest):
         self.assert_message_from_report(
             "Unable to save booth config on node 'node1': reason1",
             reports.BoothConfigDistributionNodeError(
-                "node1", "reason1", name="booth",
+                "node1",
+                "reason1",
+                name="booth",
             ),
         )
 
@@ -4455,7 +4510,9 @@ class BoothConfigDistributionNodeError(NameBuildTest):
         self.assert_message_from_report(
             "Unable to save booth config 'another' on node 'node1': reason1",
             reports.BoothConfigDistributionNodeError(
-                "node1", "reason1", name="another",
+                "node1",
+                "reason1",
+                name="another",
             ),
         )
 
@@ -4488,7 +4545,9 @@ class BoothUnsupportedFileLocation(NameBuildTest):
                 "booth config directory '/etc/booth/', ignoring the file"
             ),
             reports.BoothUnsupportedFileLocation(
-                "/some/file", "/etc/booth/", file_type_codes.BOOTH_CONFIG,
+                "/some/file",
+                "/etc/booth/",
+                file_type_codes.BOOTH_CONFIG,
             ),
         )
 
@@ -4563,7 +4622,8 @@ class TagAddRemoveIdsDuplication(NameBuildTest):
         self.assert_message_from_report(
             "Ids to remove must be unique, duplicate ids: 'dup1', 'dup2'",
             reports.TagAddRemoveIdsDuplication(
-                duplicate_ids_list=["dup2", "dup1"], add_or_not_remove=False,
+                duplicate_ids_list=["dup2", "dup1"],
+                add_or_not_remove=False,
             ),
         )
 
@@ -4602,14 +4662,18 @@ class TagCannotAddReferenceIdsAlreadyInTheTag(NameBuildTest):
     def test_message_singular(self):
         self.assert_message_from_report(
             "Cannot add reference id already in the tag 'tag_id': 'id1'",
-            reports.TagCannotAddReferenceIdsAlreadyInTheTag("tag_id", ["id1"],),
+            reports.TagCannotAddReferenceIdsAlreadyInTheTag(
+                "tag_id",
+                ["id1"],
+            ),
         )
 
     def test_message_plural(self):
         self.assert_message_from_report(
             "Cannot add reference ids already in the tag 'TAG': 'id1', 'id2'",
             reports.TagCannotAddReferenceIdsAlreadyInTheTag(
-                "TAG", ["id2", "id1"],
+                "TAG",
+                ["id2", "id1"],
             ),
         )
 
@@ -4659,7 +4723,8 @@ class TagCannotRemoveTagReferencedInConstraints(NameBuildTest):
             "Tag 'tag1' cannot be removed because it is referenced in "
             "constraint 'constraint-id-1'",
             reports.TagCannotRemoveTagReferencedInConstraints(
-                "tag1", ["constraint-id-1"],
+                "tag1",
+                ["constraint-id-1"],
             ),
         )
 
@@ -4668,7 +4733,8 @@ class TagCannotRemoveTagReferencedInConstraints(NameBuildTest):
             "Tag 'tag2' cannot be removed because it is referenced in "
             "constraints 'constraint-id-1', 'constraint-id-2'",
             reports.TagCannotRemoveTagReferencedInConstraints(
-                "tag2", ["constraint-id-2", "constraint-id-1"],
+                "tag2",
+                ["constraint-id-2", "constraint-id-1"],
             ),
         )
 

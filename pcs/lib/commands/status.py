@@ -69,7 +69,8 @@ def full_cluster_status_plaintext(
         raise LibraryError(
             ReportItem.error(
                 reports.messages.LiveEnvironmentNotConsistent(
-                    [file_type_codes.CIB], [file_type_codes.COROSYNC_CONF],
+                    [file_type_codes.CIB],
+                    [file_type_codes.COROSYNC_CONF],
                 )
             )
         )
@@ -77,7 +78,8 @@ def full_cluster_status_plaintext(
         raise LibraryError(
             ReportItem.error(
                 reports.messages.LiveEnvironmentNotConsistent(
-                    [file_type_codes.COROSYNC_CONF], [file_type_codes.CIB],
+                    [file_type_codes.COROSYNC_CONF],
+                    [file_type_codes.CIB],
                 )
             )
         )

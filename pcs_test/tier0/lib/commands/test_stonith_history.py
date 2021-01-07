@@ -132,7 +132,9 @@ class HistoryUpdate(TestCase):
         stdout = "some output\n"
         stderr = "some error\n"
         self.config.runner.pcmk.fence_history_update(
-            stdout=stdout, stderr=stderr, returncode=1,
+            stdout=stdout,
+            stderr=stderr,
+            returncode=1,
         )
         self.env_assist.assert_raise_library_error(
             lambda: stonith.history_update(self.env_assist.get_env()),

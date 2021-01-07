@@ -39,7 +39,8 @@ class CheckCorosyncOffline(
                     report_item,
                     ReportItem(
                         severity=ReportItemSeverity(
-                            self._failure_severity, self._failure_forceable,
+                            self._failure_severity,
+                            self._failure_forceable,
                         ),
                         message=(
                             reports.messages.CorosyncNotRunningCheckNodeError(
@@ -63,7 +64,8 @@ class CheckCorosyncOffline(
         except (KeyError, json.JSONDecodeError):
             report_item = ReportItem(
                 severity=ReportItemSeverity(
-                    self._failure_severity, self._failure_forceable,
+                    self._failure_severity,
+                    self._failure_forceable,
                 ),
                 message=reports.messages.CorosyncNotRunningCheckNodeError(
                     node_label,
@@ -112,7 +114,8 @@ class DistributeCorosyncConf(
                     report_item,
                     ReportItem(
                         severity=ReportItemSeverity(
-                            self._failure_severity, self._failure_forceable,
+                            self._failure_severity,
+                            self._failure_forceable,
                         ),
                         # pylint: disable=line-too-long
                         message=reports.messages.CorosyncConfigDistributionNodeError(
@@ -170,7 +173,8 @@ class ReloadCorosyncConf(
                 self._report(
                     ReportItem.warning(
                         reports.messages.CorosyncConfigReloadError(
-                            output["message"], node=node,
+                            output["message"],
+                            node=node,
                         )
                     )
                 )

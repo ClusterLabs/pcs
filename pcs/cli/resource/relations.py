@@ -23,7 +23,9 @@ from pcs.cli.common.printable_tree import (
 
 
 def show_resource_relations_cmd(
-    lib: Any, argv: Sequence[str], modifiers: InputModifiers,
+    lib: Any,
+    argv: Sequence[str],
+    modifiers: InputModifiers,
 ) -> None:
     """
     Options:

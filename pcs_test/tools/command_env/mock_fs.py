@@ -19,7 +19,9 @@ def _ensure_consistent_args(func_name, call_args, call_kwargs):
     if len(call_args) > len(_FUNC_ARGS[func_name]):
         raise AssertionError(
             "{0}() too many positional arguments ({1} > {2})".format(
-                func_name, len(call_args), len(_FUNC_ARGS[func_name]),
+                func_name,
+                len(call_args),
+                len(_FUNC_ARGS[func_name]),
             )
         )
 
@@ -75,7 +77,8 @@ class Call:
 
     def __repr__(self):
         return str("<Fs '{0}' kwargs={1}>").format(
-            self.func_name, self.call_kwargs,
+            self.func_name,
+            self.call_kwargs,
         )
 
     def __ne__(self, other):

@@ -145,7 +145,12 @@ class GetLinkOptions(TestCase):
                 }
             """
             ),
-            {"1": {"linknumber": "1", "link_priority": "2",},},
+            {
+                "1": {
+                    "linknumber": "1",
+                    "link_priority": "2",
+                },
+            },
         )
 
     def test_more_sections_and_conflicting_options(self):
@@ -184,7 +189,10 @@ class GetLinkOptions(TestCase):
                     "ping_interval": "2",
                     "transport": "udp",
                 },
-                "1": {"linknumber": "1", "transport": "udp",},
+                "1": {
+                    "linknumber": "1",
+                    "transport": "udp",
+                },
             },
         )
 

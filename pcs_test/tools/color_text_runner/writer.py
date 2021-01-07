@@ -13,7 +13,11 @@ from pcs_test.tools.color_text_runner.format import (
 class Writer:
     # pylint: disable=invalid-name
     def __init__(
-        self, stream, descriptions, traceback_highlight=False, fast_info=False,
+        self,
+        stream,
+        descriptions,
+        traceback_highlight=False,
+        fast_info=False,
     ):
         self.stream = stream
         self.descriptions = descriptions
@@ -108,7 +112,11 @@ class StandardVerboseWriter(Writer):
 
 class ImprovedVerboseWriter(StandardVerboseWriter):
     def __init__(
-        self, stream, descriptions, traceback_highlight=False, fast_info=False,
+        self,
+        stream,
+        descriptions,
+        traceback_highlight=False,
+        fast_info=False,
     ):
         super().__init__(stream, descriptions, traceback_highlight, fast_info)
         self.last_test = None

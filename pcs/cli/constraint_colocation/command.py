@@ -18,7 +18,9 @@ def create_with_set(lib, argv, modifiers):
     """
     modifiers.ensure_only_supported("-f", "--force")
     command.create_with_set(
-        lib.constraint_colocation.set, argv, modifiers,
+        lib.constraint_colocation.set,
+        argv,
+        modifiers,
     )
 
 

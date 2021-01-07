@@ -53,7 +53,10 @@ class AddTicket(TestCase):
         self.conf.add_ticket("ticketB", {})
         self.assertEqual(
             self.conf.config,
-            self.conf_struct + [ConfigItem("ticket", "ticketB", []),],
+            self.conf_struct
+            + [
+                ConfigItem("ticket", "ticketB", []),
+            ],
         )
 
     def test_add_with_options(self):

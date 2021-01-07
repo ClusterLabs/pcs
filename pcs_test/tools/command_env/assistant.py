@@ -65,7 +65,9 @@ def patch_env(call_queue, config, init_env, patch_is_systemd=True):
                 call_queue,
                 env_vars={}
                 if not config.env.cib_tempfile
-                else {"CIB_file": config.env.cib_tempfile,},
+                else {
+                    "CIB_file": config.env.cib_tempfile,
+                },
             ),
         ),
         mock.patch(

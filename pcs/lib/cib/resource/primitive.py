@@ -217,7 +217,8 @@ def validate_unique_instance_attributes(
             report_list.append(
                 ReportItem(
                     severity=reports.item.get_severity(
-                        report_codes.FORCE_OPTIONS, force,
+                        report_codes.FORCE_OPTIONS,
+                        force,
                     ),
                     message=reports.messages.ResourceInstanceAttrValueNotUnique(
                         attr,

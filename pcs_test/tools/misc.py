@@ -137,7 +137,10 @@ def is_minimum_pacemaker_version(major, minor, rev):
 @lru_cache()
 def _get_current_pacemaker_version():
     output, dummy_stderr, dummy_retval = runner.run(
-        [os.path.join(settings.pacemaker_binaries, "crm_mon"), "--version",]
+        [
+            os.path.join(settings.pacemaker_binaries, "crm_mon"),
+            "--version",
+        ]
     )
     pacemaker_version = output.split("\n")[0]
     r = re.compile(r"Pacemaker (\d+)\.(\d+)\.(\d+)")
@@ -184,7 +187,10 @@ def is_minimum_pacemaker_features(cmajor, cminor, crev):
 @lru_cache()
 def _get_current_pacemaker_features():
     output, dummy_stderr, dummy_retval = runner.run(
-        [os.path.join(settings.pacemaker_binaries, "pacemakerd"), "--features",]
+        [
+            os.path.join(settings.pacemaker_binaries, "pacemakerd"),
+            "--features",
+        ]
     )
     features_version = output.split("\n")[1]
     r = re.compile(r"Supporting v(\d+)\.(\d+)\.(\d+):")

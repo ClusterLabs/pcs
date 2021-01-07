@@ -147,7 +147,10 @@ class CibShortcuts:
         )
 
     def push_independent(
-        self, cib, name="runner.cib.push_independent", instead=None,
+        self,
+        cib,
+        name="runner.cib.push_independent",
+        instead=None,
     ):
         """
         Create call for pushing cib.

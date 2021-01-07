@@ -334,7 +334,8 @@ class ValidateCloneId(TestCase):
 
     def test_invalid_id_character(self):
         self.assert_validate_clone_id(
-            "0CloneId", [fixture.report_invalid_id("0CloneId", "0")],
+            "0CloneId",
+            [fixture.report_invalid_id("0CloneId", "0")],
         )
 
     def test_clone_id_exist(self):
