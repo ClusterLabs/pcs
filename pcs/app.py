@@ -111,7 +111,6 @@ def _non_root_run(argv_cmd):
             sys.exit(exitcode)
 
 
-logging.basicConfig()
 usefile = False
 filename = ""
 
@@ -247,9 +246,8 @@ def main(argv=None):
                     ).format(val)
                 )
 
-    logger = logging.getLogger("pcs")
-    logger.propagate = 0
-    logger.handlers = []
+    # initialize logger
+    logging.getLogger("pcs")
 
     if (os.getuid() != 0) and (argv and argv[0] != "help") and not usefile:
         _non_root_run(argv)

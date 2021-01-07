@@ -14,6 +14,7 @@
 - Explicitly close libcurl connections to prevent stalled TCP connections in
   CLOSE-WAIT state ([ghissue#261], [rhbz#1885841])
 - Fixed parsing negative float numbers on command line ([rhbz#1869399])
+- Removed unwanted logging to system log (/var/log/messages)
 
 ### Deprecated
 - Commands `pcs config import-cman` and `pcs config export
