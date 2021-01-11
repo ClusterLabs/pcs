@@ -16,6 +16,7 @@
 - Fixed parsing negative float numbers on command line ([rhbz#1869399])
 - Removed unwanted logging to system log (/var/log/messages)
 - Fixed rare race condition in `pcs cluster start --wait` ([rhbz#1794062])
+- Better error message when unable to connect to pcsd ([rhbz#1619818])
 
 ### Deprecated
 - Commands `pcs config import-cman` and `pcs config export
@@ -27,6 +28,7 @@
 [ghissue#260]: https://github.com/ClusterLabs/pcs/issues/260
 [ghissue#261]: https://github.com/ClusterLabs/pcs/issues/261
 [rhbz#1457314]: https://bugzilla.redhat.com/show_bug.cgi?id=1457314
+[rhbz#1619818]: https://bugzilla.redhat.com/show_bug.cgi?id=1619818
 [rhbz#1667061]: https://bugzilla.redhat.com/show_bug.cgi?id=1667061
 [rhbz#1667066]: https://bugzilla.redhat.com/show_bug.cgi?id=1667066
 [rhbz#1774143]: https://bugzilla.redhat.com/show_bug.cgi?id=1774143

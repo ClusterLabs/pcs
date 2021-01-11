@@ -635,8 +635,8 @@ def sendHTTPRequest(
         if "--debug" in pcs_options:
             print("Response Reason: {0}".format(reason))
         msg = (
-            "Unable to connect to {host}, try setting higher timeout in "
-            "--request-timeout option ({reason})"
+            "Unable to connect to {host}, check if pcsd is running there or try "
+            "setting higher timeout with --request-timeout option ({reason})"
         ).format(host=host, reason=reason)
         if printResult:
             print(msg)

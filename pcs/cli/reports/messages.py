@@ -116,8 +116,9 @@ class NodeCommunicationErrorTimedOut(CliReportMessageCustom):
     @property
     def message(self) -> str:
         return (
-            f"{self._obj.node}: Connection timeout, try setting higher timeout "
-            f"in --request-timeout option ({self._obj.reason})"
+            f"{self._obj.node}: Connection timeout, check if pcsd is running "
+            "there or try setting higher timeout with --request-timeout option "
+            f"({self._obj.reason})"
         )
 
 

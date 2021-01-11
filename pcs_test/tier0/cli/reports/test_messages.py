@@ -160,9 +160,9 @@ class NodeCommunicationErrorTimedOut(CliReportMessageTestBase):
                 "Connection timed out after 60049 milliseconds",
             ),
             (
-                "node-1: Connection timeout, try setting higher timeout in "
-                "--request-timeout option (Connection timed out after 60049 "
-                "milliseconds)"
+                "node-1: Connection timeout, check if pcsd is running there or "
+                "try setting higher timeout with --request-timeout option "
+                "(Connection timed out after 60049 milliseconds)"
             ),
         )
 
