@@ -1404,6 +1404,22 @@ class ConfigShow(TestCase):
             crypto_options={"cipher": "aes256", "hash": "sha256"},
             nodes=[
                 CorosyncNodeDto(
+                    name="node2",
+                    nodeid="2",
+                    addrs=[
+                        CorosyncNodeAddressDto(
+                            addr="10.0.0.2",
+                            link="2",
+                            type="IPv4",
+                        ),
+                        CorosyncNodeAddressDto(
+                            addr="node2",
+                            link="0",
+                            type="FQDN",
+                        ),
+                    ],
+                ),
+                CorosyncNodeDto(
                     name="node1",
                     nodeid="1",
                     addrs=[
@@ -1414,23 +1430,7 @@ class ConfigShow(TestCase):
                         ),
                         CorosyncNodeAddressDto(
                             addr="10.0.0.1",
-                            link="1",
-                            type="IPv4",
-                        ),
-                    ],
-                ),
-                CorosyncNodeDto(
-                    name="node2",
-                    nodeid="2",
-                    addrs=[
-                        CorosyncNodeAddressDto(
-                            addr="node2",
-                            link="0",
-                            type="FQDN",
-                        ),
-                        CorosyncNodeAddressDto(
-                            addr="10.0.0.2",
-                            link="1",
+                            link="2",
                             type="IPv4",
                         ),
                     ],
@@ -1471,12 +1471,14 @@ class ConfigShow(TestCase):
             Cluster Name: HACluster
             Transport: knet
             Nodes:
-              node1 (nodeid: 1)
-                node1 (link: 0)
-                10.0.0.1 (link: 1)
-              node2 (nodeid: 2)
-                node2 (link: 0)
-                10.0.0.2 (link: 1)
+              node1:
+                Link 0 address: node1
+                Link 2 address: 10.0.0.1
+                nodeid: 1
+              node2:
+                Link 0 address: node2
+                Link 2 address: 10.0.0.2
+                nodeid: 2
             Links:
               Link 0:
                 link_priority: 100

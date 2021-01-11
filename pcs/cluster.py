@@ -1839,15 +1839,12 @@ def _format_options(label: str, options: Mapping[str, str]) -> List[str]:
 
 def _format_nodes(nodes: Iterable[CorosyncNodeDto]) -> List[str]:
     output = ["Nodes:"]
-    for node in nodes:
-        output.extend(
-            indent(
-                [f"{node.name} (nodeid: {node.nodeid})"]
-                + indent(
-                    f"{addr.addr} (link: {addr.link})" for addr in node.addrs
-                )
-            )
-        )
+    for node in sorted(nodes, key=lambda node: node.name):
+        node_attrs = [
+            f"Link {addr.link} address: {addr.addr}"
+            for addr in sorted(node.addrs, key=lambda addr: addr.link)
+        ] + [f"nodeid: {node.nodeid}"]
+        output.extend(indent([f"{node.name}:"] + indent(node_attrs)))
     return output
 
 

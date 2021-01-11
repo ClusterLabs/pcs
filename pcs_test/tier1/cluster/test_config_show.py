@@ -24,10 +24,12 @@ class ClusterConfigMixin(AssertPcsMixin):
             Cluster Name: cluster_name
             Transport: knet
             Nodes:
-              node1 (nodeid: 1)
-                node1_addr (link: 0)
-              node2 (nodeid: 2)
-                node2_addr (link: 0)
+              node1:
+                Link 0 address: node1_addr
+                nodeid: 1
+              node2:
+                Link 0 address: node2_addr
+                nodeid: 2
             Transport Options:
               ip_version: ipv6
             Crypto Options:
