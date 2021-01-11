@@ -15,6 +15,7 @@
   CLOSE-WAIT state ([ghissue#261], [rhbz#1885841])
 - Fixed parsing negative float numbers on command line ([rhbz#1869399])
 - Removed unwanted logging to system log (/var/log/messages)
+- Fixed rare race condition in `pcs cluster start --wait` ([rhbz#1794062])
 
 ### Deprecated
 - Commands `pcs config import-cman` and `pcs config export
@@ -29,6 +30,7 @@
 [rhbz#1667061]: https://bugzilla.redhat.com/show_bug.cgi?id=1667061
 [rhbz#1667066]: https://bugzilla.redhat.com/show_bug.cgi?id=1667066
 [rhbz#1774143]: https://bugzilla.redhat.com/show_bug.cgi?id=1774143
+[rhbz#1794062]: https://bugzilla.redhat.com/show_bug.cgi?id=1794062
 [rhbz#1851335]: https://bugzilla.redhat.com/show_bug.cgi?id=1851335
 [rhbz#1856397]: https://bugzilla.redhat.com/show_bug.cgi?id=1856397
 [rhbz#1869399]: https://bugzilla.redhat.com/show_bug.cgi?id=1869399

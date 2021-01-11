@@ -29,12 +29,13 @@ from pcs.lib.tools import write_tmpfile
 from pcs.lib.xml_tools import etree_to_str
 
 
-__EXITCODE_WAIT_TIMEOUT = 124
+__EXITCODE_NOT_CONNECTED = 102
 __EXITCODE_CIB_SCOPE_VALID_BUT_NOT_PRESENT = 105
+__EXITCODE_WAIT_TIMEOUT = 124
 __RESOURCE_REFRESH_OPERATION_COUNT_THRESHOLD = 100
 
 
-class CrmMonErrorException(LibraryError):
+class PacemakerNotConnectedException(LibraryError):
     pass
 
 
@@ -50,7 +51,12 @@ def get_cluster_status_xml(runner):
         [__exec("crm_mon"), "--one-shot", "--as-xml", "--inactive"]
     )
     if retval != 0:
-        raise CrmMonErrorException(
+        klass = (
+            PacemakerNotConnectedException
+            if retval == __EXITCODE_NOT_CONNECTED
+            else LibraryError
+        )
+        raise klass(
             ReportItem.error(
                 reports.messages.CrmMonError(join_multilines([stderr, stdout]))
             )
@@ -75,7 +81,7 @@ def get_cluster_status_text(
     stdout, stderr, retval = runner.run(cmd)
 
     if retval != 0:
-        raise CrmMonErrorException(
+        raise LibraryError(
             ReportItem.error(
                 reports.messages.CrmMonError(join_multilines([stderr, stdout]))
             )
@@ -455,7 +461,12 @@ def wait_for_idle(runner, timeout=None):
 def get_local_node_name(runner):
     stdout, stderr, retval = runner.run([__exec("crm_node"), "--name"])
     if retval != 0:
-        raise LibraryError(
+        klass = (
+            PacemakerNotConnectedException
+            if retval == __EXITCODE_NOT_CONNECTED
+            else LibraryError
+        )
+        raise klass(
             ReportItem.error(
                 reports.messages.PacemakerLocalNodeNameNotFound(
                     join_multilines([stderr, stdout])
@@ -468,9 +479,9 @@ def get_local_node_name(runner):
 def get_local_node_status(runner):
     try:
         cluster_status = ClusterState(get_cluster_status_xml(runner))
-    except CrmMonErrorException:
+        node_name = get_local_node_name(runner)
+    except PacemakerNotConnectedException:
         return {"offline": True}
-    node_name = get_local_node_name(runner)
     for node_status in cluster_status.node_section.nodes:
         if node_status.attrs.name == node_name:
             result = {

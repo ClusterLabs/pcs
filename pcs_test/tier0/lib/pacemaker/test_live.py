@@ -4,6 +4,7 @@ from lxml import etree
 
 from pcs_test.tools.assertions import (
     assert_raise_library_error,
+    assert_report_item_list_equal,
     assert_xml_equal,
     start_tag_error_text,
 )
@@ -21,6 +22,8 @@ import pcs.lib.pacemaker.live as lib
 from pcs.lib.external import CommandRunner
 
 # pylint: disable=no-self-use
+
+_EXITCODE_NOT_CONNECTED = 102
 
 
 def get_runner(stdout="", stderr="", returncode=0, env_vars=None):
@@ -72,6 +75,34 @@ class GetClusterStatusXmlTest(LibraryPacemakerTest):
             ),
         )
 
+        mock_runner.run.assert_called_once_with(self.crm_mon_cmd())
+
+    def test_error_not_connected(self):
+        expected_stdout = '<crm_mon version="2.0.5"/>\n'
+        expected_stderr = (
+            "Not connected\n"
+            "Could not connect to the CIB: Transport endpoint is not connected\n"
+            "crm_mon: Error: cluster is not available on this node\n"
+        )
+        expected_retval = _EXITCODE_NOT_CONNECTED
+        mock_runner = get_runner(
+            expected_stdout, expected_stderr, expected_retval
+        )
+
+        with self.assertRaises(lib.PacemakerNotConnectedException) as cm:
+            lib.get_cluster_status_xml(mock_runner)
+        assert_report_item_list_equal(
+            cm.exception.args,
+            [
+                (
+                    Severity.ERROR,
+                    report_codes.CRM_MON_ERROR,
+                    {
+                        "reason": expected_stderr + expected_stdout.strip(),
+                    },
+                ),
+            ],
+        )
         mock_runner.run.assert_called_once_with(self.crm_mon_cmd())
 
 
@@ -853,17 +884,85 @@ class SimulateCib(TestCase):
         )
 
 
+class GetLocalNodeName(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
+    def test_success(self):
+        expected_name = "node-name"
+        self.config.runner.pcmk.local_node_name(node_name=expected_name)
+        env = self.env_assist.get_env()
+        real_name = lib.get_local_node_name(env.cmd_runner())
+        self.assertEqual(expected_name, real_name)
+
+    def test_error(self):
+        self.config.runner.pcmk.local_node_name(
+            stdout="some info", stderr="some error", returncode=1
+        )
+        env = self.env_assist.get_env()
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.get_local_node_name(env.cmd_runner()),
+            [
+                fixture.error(
+                    report_codes.PACEMAKER_LOCAL_NODE_NAME_NOT_FOUND,
+                    force_code=None,
+                    reason="some error\nsome info",
+                )
+            ],
+            expected_in_processor=False,
+        )
+
+    def test_error_not_connected(self):
+        stderr = (
+            "error: Could not connect to controller: Transport endpoint is "
+            "not connected\n"
+        )
+        self.config.runner.pcmk.local_node_name(
+            stderr=stderr,
+            returncode=_EXITCODE_NOT_CONNECTED,
+        )
+        env = self.env_assist.get_env()
+        with self.assertRaises(lib.PacemakerNotConnectedException) as cm:
+            lib.get_local_node_name(env.cmd_runner())
+        assert_report_item_list_equal(
+            cm.exception.args,
+            [
+                (
+                    Severity.ERROR,
+                    report_codes.PACEMAKER_LOCAL_NODE_NAME_NOT_FOUND,
+                    {
+                        "reason": stderr.strip(),
+                    },
+                ),
+            ],
+        )
+
+
 @mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
 class GetLocalNodeStatusTest(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
-    def test_offline(self):
-        (
-            self.config.runner.pcmk.load_state(
-                stderr="error: Could not connect to cluster (is it running?)",
-                returncode=102,
-            )
+    def test_offline_status(self):
+        self.config.runner.pcmk.load_state(
+            stderr="error: Could not connect to cluster (is it running?)",
+            returncode=_EXITCODE_NOT_CONNECTED,
+        )
+
+        env = self.env_assist.get_env()
+        real_status = lib.get_local_node_status(env.cmd_runner())
+        self.assertEqual(dict(offline=True), real_status)
+
+    def test_offline_node_name(self):
+        self.config.runner.pcmk.load_state(
+            nodes=[fixture.state_node(i, f"name_{i}") for i in range(1, 4)]
+        )
+        self.config.runner.pcmk.local_node_name(
+            stderr=(
+                "error: Could not connect to controller: Transport endpoint is "
+                "not connected\n"
+            ),
+            returncode=_EXITCODE_NOT_CONNECTED,
         )
 
         env = self.env_assist.get_env()
@@ -871,7 +970,7 @@ class GetLocalNodeStatusTest(TestCase):
         self.assertEqual(dict(offline=True), real_status)
 
     def test_invalid_status(self):
-        (self.config.runner.pcmk.load_state(stdout="invalid xml"))
+        self.config.runner.pcmk.load_state(stdout="invalid xml")
 
         env = self.env_assist.get_env()
         self.env_assist.assert_raise_library_error(
