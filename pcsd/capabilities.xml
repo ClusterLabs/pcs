@@ -315,8 +315,9 @@
         Provide the certificate of the qdevice instance's certificate authority
         and sign certificate requests.
 
-        daemon urls: qdevice_net_get_ca_certificate,
-          qdevice_net_sign_node_certificate
+        daemon urls:
+          qdevice_net_get_ca_certificate
+          /api/v1/qdevice-qdevice-net-sign-certificate-request/v1
       </description>
     </capability>
     <capability id="corosync.quorum" in-pcs="1" in-pcsd="0">
@@ -371,8 +372,10 @@
       <description>
         Set up and destroy certificates in qdevice model net client.
 
-        daemon urls: qdevice_net_client_init_certificate_storage,
-          qdevice_net_client_import_certificate, qdevice_net_client_destroy
+        daemon urls:
+          qdevice_net_client_init_certificate_storage
+          /api/v1/qdevice-client-net-import-certificate/v1
+          qdevice_net_client_destroy
       </description>
     </capability>
     <capability id="corosync.quorum.set-expected-votes-runtime" in-pcs="1" in-pcsd="0">
@@ -462,11 +465,13 @@
         daemon urls: /api/v1/cluster-remove-nodes/v1
       </description>
     </capability>
-    <capability id="node.remove-from-caches" in-pcs="1" in-pcsd="0">
+    <capability id="node.remove-from-caches" in-pcs="1" in-pcsd="1">
       <description>
         Remove specified node from various cluster caches.
 
         pcs commands: cluster node clear
+        daemon urls:
+          /api/v1/cluster-node-clear/v1
       </description>
     </capability>
     <capability id="node.guest" in-pcs="1" in-pcsd="0">
@@ -571,21 +576,25 @@
         pcs commands: node attribute
       </description>
     </capability>
-    <capability id="node.maintenance" in-pcs="1" in-pcsd="0">
+    <capability id="node.maintenance" in-pcs="1" in-pcsd="1">
       <description>
         Put one node or the local host if no node specified to and from
         maintenance mode. If this functionality is not available,
         node.attributes can be used instead to set the maintenance attribute.
 
         pcs commands: node ( maintenance | unmaintenance )
+        daemon urls:
+          /api/v1/node-maintenance-unmaintenance/v1
       </description>
     </capability>
-    <capability id="node.maintenance.all" in-pcs="1" in-pcsd="0">
+    <capability id="node.maintenance.all" in-pcs="1" in-pcsd="1">
       <description>
         Put all cluster nodes defined in a cluster which the local host belongs
         to to and from maintenance mode.
 
         pcs commands: node ( maintenance | unmaintenance ) --all
+        daemon urls:
+          /api/v1/node-maintenance-unmaintenance-all/v1
       </description>
     </capability>
     <capability id="node.maintenance.list" in-pcs="1" in-pcsd="1">
@@ -611,15 +620,18 @@
         can be used instead to set the standby attribute.
 
         pcs commands: node ( standby | unstandby )
-        daemon urls: node_standby, node_unstandby
+        daemon urls:
+          /api/v1/node-standby-unstandby/v1
       </description>
     </capability>
-    <capability id="node.standby.all" in-pcs="1" in-pcsd="0">
+    <capability id="node.standby.all" in-pcs="1" in-pcsd="1">
       <description>
         Put all cluster nodes defined in a cluster which the local host belongs
         to to and from standby mode.
 
         pcs commands: node ( standby | unstandby ) --all
+        daemon urls:
+          /api/v1/node-standby-unstandby-all/v1
       </description>
     </capability>
     <capability id="node.standby.list" in-pcs="1" in-pcsd="1">
@@ -683,12 +695,15 @@
         pcs commands: acl ( enable | disable )
       </description>
     </capability>
-    <capability id="pcmk.acl.group" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.acl.group" in-pcs="1" in-pcsd="1">
       <description>
         Create (with or without role ids) and delete ACL groups one at a time.
         Show ACL groups.
 
         pcs commands: acl group ( create | delete | remove ), acl show
+        daemon urls:
+          /api/v1/acl-create-group/v1
+          /api/v1/acl-remove-group/v1
       </description>
     </capability>
     <capability id="pcmk.acl.role" in-pcs="1" in-pcsd="1">
@@ -698,21 +713,34 @@
 
         pcs commands: acl role ( create | delete | remove | assign | unassign ),
           acl permission ( add | delete | remove )
-        daemon urls: add_acl_role, remove_acl_role
+        daemon urls:
+          /api/v1/acl-create-role/v1
+          /api/v1/acl-remove-role/v1
+          /api/v1/acl-add-permission/v1
+          /api/v1/acl-remove-permission/v1
+          /api/v1/acl-assign-role-to-group/v1
+          /api/v1/acl-unassign-role-from-group/v1
+          /api/v1/acl-assign-role-to-target/v1
+          /api/v1/acl-unassign-role-from-target/v1
       </description>
     </capability>
-    <capability id="pcmk.acl.role.create-with-permissions" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.acl.role.create-with-permissions" in-pcs="1" in-pcsd="1">
       <description>
         Create an ACL role and its permissions in one command.
 
         pcs commands: acl role create
+        daemon urls:
+          /api/v1/acl-create-role/v1
       </description>
     </capability>
-    <capability id="pcmk.acl.role.delete-with-users-groups" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.acl.role.delete-with-users-groups" in-pcs="1" in-pcsd="1">
       <description>
-        When deleting a role, optinally delete users and groups to which the
+        When deleting a role, optionally delete users and groups to which the
         role is assigned, if those users and groups do not have any other roles
         assigned.
+
+        daemon urls:
+          /api/v1/acl-remove-role/v1
       </description>
     </capability>
     <capability id="pcmk.acl.role.delete-with-users-groups-implicit" in-pcs="0" in-pcsd="1">
@@ -722,12 +750,15 @@
         assigned.
       </description>
     </capability>
-    <capability id="pcmk.acl.user" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.acl.user" in-pcs="1" in-pcsd="1">
       <description>
         Create (with or without role ids) and delete ACL users one at a time.
         Show ACL groups.
 
         pcs commands: acl user ( create | delete | remove ), acl show
+        daemon urls:
+          /api/v1/acl-create-target/v1
+          /api/v1/acl-remove-target/v1
       </description>
     </capability>
 
@@ -745,6 +776,14 @@
         * delete a list of recipients specified by theit ids
         * update an alert recipient including its description, options and meta
           attributes
+
+        daemon urls:
+          /api/v1/alert-add-recipient/v1
+          /api/v1/alert-create-alert/v1
+          /api/v1/alert-remove-alert/v1
+          /api/v1/alert-remove-recipient/v1
+          /api/v1/alert-update-alert/v1
+          /api/v1/alert-update-recipient/v1
       </description>
     </capability>
 
@@ -896,15 +935,18 @@
         Create and delete a colocation constraint for sets of resources.
 
         pcs commands: constraint colocation set, constraint ( delete | remove )
-        daemon urls: add_constraint_set_remote (param: c_type=col),
+        daemon urls:
+          /api/v1/constraint-colocation-create-with-set/v1
           remove_constraint_remote
       </description>
     </capability>
-    <capability id="pcmk.constraint.colocation.set.options" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.constraint.colocation.set.options" in-pcs="1" in-pcsd="1">
       <description>
         Can set resource set options and constraint options.
 
         pcs commands: constraint colocation set
+        daemon urls:
+          /api/v1/constraint-colocation-create-with-set/v1
       </description>
     </capability>
     <capability id="pcmk.constraint.order.simple" in-pcs="1" in-pcsd="1">
@@ -930,15 +972,18 @@
         Create and delete an order constraint for sets of resources.
 
         pcs commands: constraint order set, constraint remove
-        daemon urls: add_constraint_set_remote (param: c_type=ord),
+        daemon urls:
+          /api/v1/constraint-order-create-with-set/v1
           remove_constraint_remote
       </description>
     </capability>
-    <capability id="pcmk.constraint.order.set.options" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.constraint.order.set.options" in-pcs="1" in-pcsd="1">
       <description>
         Can set resource set options and constraint options.
 
         pcs commands: constraint order set
+        daemon urls:
+          /api/v1/constraint-order-create-with-set/v1
       </description>
     </capability>
     <capability id="pcmk.constraint.ticket.simple" in-pcs="1" in-pcsd="1">
@@ -948,15 +993,18 @@
 
         pcs commands: constraint ticket add,
           constraint ticket ( delete | remove ), constraint ( delete | remove )
-        daemon urls: add_constraint_remote (param: c_type=ticket),
-          remove_constraint_remote
+        daemon urls:
+          /api/v1/constraint-ticket-create/v1
+          /api/v1/constraint-ticket-remove/v1
       </description>
     </capability>
-    <capability id="pcmk.constraint.ticket.simple.constraint-id" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.constraint.ticket.simple.constraint-id" in-pcs="1" in-pcsd="1">
       <description>
         Can set constraint id when creating a ticket constraint.
 
         pcs commands: constraint ticket add
+        daemon urls:
+          /api/v1/constraint-ticket-create-with-set/v1
       </description>
     </capability>
     <capability id="pcmk.constraint.ticket.set" in-pcs="1" in-pcsd="1">
@@ -965,16 +1013,19 @@
         specifying loss policy.
 
         pcs commands: constraint ticket set, constraint ( delete | remove )
-        daemon urls: add_constraint_set_remote (param: c_type=ticket),
+        daemon urls:
+          /api/v1/constraint-ticket-create-with-set/v1
           remove_constraint_remote
       </description>
     </capability>
-    <capability id="pcmk.constraint.ticket.set.options" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.constraint.ticket.set.options" in-pcs="1" in-pcsd="1">
       <description>
         Can set resource set options and constraint options (resources role, a
         constraint id).
 
         pcs commands: constraint ticket set
+        daemon urls:
+          /api/v1/constraint-ticket-create-with-set/v1
       </description>
     </capability>
 
@@ -1103,16 +1154,19 @@
         creation.
 
         pcs commands: resource create
-        daemon urls: /api/v1/resource-create/v1
-                     /api/v1/resource-create-as-clone/v1
-                     /api/v1/resource-create-in-group/v1
+        daemon urls:
+          /api/v1/resource-create/v1
+          /api/v1/resource-create-as-clone/v1
+          /api/v1/resource-create-in-group/v1
       </description>
     </capability>
-    <capability id="pcmk.resource.create.clone.custom-id" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.resource.create.clone.custom-id" in-pcs="1" in-pcsd="1">
       <description>
         It is possible to set custom id for a clone.
 
         pcs commands: resource create ... clone
+        daemon urls:
+          /api/v1/resource-create-as-clone/v1
       </description>
     </capability>
     <capability id="pcmk.resource.create.in-existing-bundle" in-pcs="1" in-pcsd="0">
@@ -1127,9 +1181,10 @@
         It is not possible to create master resources.
 
         pcs commands: resource create
-        daemon urls: /api/v1/resource-create/v1
-                     /api/v1/resource-create-as-clone/v1
-                     /api/v1/resource-create-in-group/v1
+        daemon urls:
+          /api/v1/resource-create/v1
+          /api/v1/resource-create-as-clone/v1
+          /api/v1/resource-create-in-group/v1
       </description>
     </capability>
     <capability id="pcmk.resource.create.promotable" in-pcs="1" in-pcsd="1">
@@ -1140,11 +1195,13 @@
         daemon urls: /api/v1/resource-create-as-clone/v1
       </description>
     </capability>
-    <capability id="pcmk.resource.create.promotable.custom-id" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.resource.create.promotable.custom-id" in-pcs="1" in-pcsd="1">
       <description>
         It is possible to set custom id for a promotable clone.
 
         pcs commands: resource create ... promotable
+        daemon urls:
+          /api/v1/resource-create-as-clone/v1
       </description>
     </capability>
     <capability id="pcmk.resource.create.meta" in-pcs="1" in-pcsd="1">
@@ -1297,7 +1354,10 @@
 
         pcs commands: resource group ( add | delete | remove ),
           resource ungroup
-        daemon urls: add_group, resource_ungroup, resource_change_group,
+        daemon urls:
+          /api/v1/resource-group-add/v1
+          resource_ungroup
+          resource_change_group
           update_resource
       </description>
     </capability>
@@ -1449,8 +1509,9 @@
         Disable and enable a resource.
 
         pcs commands: resource disable, resource enable
-        daemon urls: /api/v1/resource-disable/v1
-                     /api/v1/resource-enable/v1
+        daemon urls:
+          /api/v1/resource-disable/v1
+          /api/v1/resource-enable/v1
       </description>
     </capability>
     <capability id="pcmk.resource.enable-disable.list" in-pcs="1" in-pcsd="1">
@@ -1458,8 +1519,9 @@
         Disable or enable several resources at once.
 
         pcs commands: resource disable, resource enable
-        daemon urls: /api/v1/resource-disable/v1
-                     /api/v1/resource-enable/v1
+        daemon urls:
+          /api/v1/resource-disable/v1
+          /api/v1/resource-enable/v1
       </description>
     </capability>
     <capability id="pcmk.resource.enable-disable.tag" in-pcs="1" in-pcsd="1">
@@ -1467,8 +1529,9 @@
         Disable or enable resources in specified tags at once.
 
         pcs commands: resource disable, resource enable
-        daemon urls: /api/v1/resource-disable/v1
-                     /api/v1/resource-enable/v1
+        daemon urls:
+          /api/v1/resource-disable/v1
+          /api/v1/resource-enable/v1
       </description>
     </capability>
     <capability id="pcmk.resource.enable-disable.wait" in-pcs="1" in-pcsd="1">
@@ -1476,49 +1539,60 @@
         Wait for resources to start or stop.
 
         pcs commands: resource disable --wait, resource enable --wait
-        daemon urls: /api/v1/resource-disable/v1
-                     /api/v1/resource-enable/v1
+        daemon urls:
+          /api/v1/resource-disable/v1
+          /api/v1/resource-enable/v1
       </description>
     </capability>
-    <capability id="pcmk.resource.disable.safe" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.resource.disable.safe" in-pcs="1" in-pcsd="1">
       <description>
         Do not disable resources if other resources would be affected.
 
         pcs commands: resource disable --safe [--no-strict],
           resource safe-disable
+        daemon urls:
+          /api/v1/resource-disable-safe/v1
       </description>
     </capability>
-    <capability id="pcmk.resource.disable.safe.tag" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.resource.disable.safe.tag" in-pcs="1" in-pcsd="1">
       <description>
         Do not disable resources in specified tags if other resources would be
         affected.
 
         pcs commands: resource disable --safe [--no-strict],
           resource safe-disable
+        daemon urls:
+          /api/v1/resource-disable-safe/v1
       </description>
     </capability>
-    <capability id="pcmk.resource.disable.simulate" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.resource.disable.simulate" in-pcs="1" in-pcsd="1">
       <description>
         Show effects caused by disabling resources.
 
         pcs commands: resource disable --simulate,
           resource safe-disable --simulate
+        daemon urls:
+          /api/v1/resource-disable-simulate/v1
       </description>
     </capability>
-    <capability id="pcmk.resource.disable.simulate.brief" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.resource.disable.simulate.brief" in-pcs="1" in-pcsd="1">
       <description>
         Show only a list of affected resources instead of the whole listing of
         effects caused by disabling resources.
 
         pcs commands: resource disable --simulate --brief,
           resource safe-disable --simulate --brief
+        daemon urls:
+          /api/v1/resource-disable-simulate/v1
       </description>
     </capability>
-    <capability id="pcmk.resource.disable.simulate.tag" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.resource.disable.simulate.tag" in-pcs="1" in-pcsd="1">
       <description>
         Show effects caused by disabling resources in specified tags.
 
         pcs commands: resource disable --simulate
+        daemon urls:
+          /api/v1/resource-disable-simulate/v1
       </description>
     </capability>
     <capability id="pcmk.resource.manage-unmanage" in-pcs="1" in-pcsd="1">
@@ -1576,7 +1650,7 @@
       </description>
     </capability>
 
-    <capability id="pcmk.resource.ban-move-clear" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.resource.ban-move-clear" in-pcs="1" in-pcsd="1">
       <description>
         Ban a resource on a specified node and move a resource to a specified
         node by creating constraints. Provide means to remove the constraints.
@@ -1585,13 +1659,19 @@
         constraints to take effect.
 
         pcs commands: pcs resource ( ban | clear | move )
+        daemon urls:
+          /api/v1/resource-ban/v1
+          /api/v1/resource-move/v1
+          /api/v1/resource-unmove-unban/v1
       </description>
     </capability>
-    <capability id="pcmk.resource.ban-move-clear.clear-expired" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.resource.ban-move-clear.clear-expired" in-pcs="1" in-pcsd="1">
       <description>
         An option to clear only constraints with expired lifetime.
 
         pcs commands: pcs resource clear --expired
+        daemon urls:
+          /api/v1/resource-unmove-unban/v1
       </description>
     </capability>
     <capability id="pcmk.resource.debug" in-pcs="1" in-pcsd="0">
@@ -1698,15 +1778,19 @@
         disable the resource upon its creation.
 
         pcs commands: stonith create
-        daemon urls: /api/v1/stonith-create/v1
+        daemon urls:
+          /api/v1/stonith-create/v1
+          /api/v1/stonith-create-in-group/v1
       </description>
     </capability>
-    <capability id="pcmk.stonith.create.in-group" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.stonith.create.in-group" in-pcs="1" in-pcsd="1">
       <description>
         Put a new stonith resource into an existing or new group upon its
         creation. Optionally specify the resource's position in the group.
 
         pcs commands: stonith create ... group
+        daemon urls:
+          /api/v1/stonith-create-in-group/v1
       </description>
     </capability>
     <capability id="pcmk.stonith.create.meta" in-pcs="1" in-pcsd="1">
@@ -1714,7 +1798,9 @@
         Set resource meta attributes when creating a stonith resource.
 
         pcs commands: stonith create ... meta
-        daemon urls: /api/v1/stonith-create/v1
+        daemon urls:
+          /api/v1/stonith-create/v1
+          /api/v1/stonith-create-in-group/v1
       </description>
     </capability>
     <capability id="pcmk.stonith.create.operations" in-pcs="1" in-pcsd="1">
@@ -1722,7 +1808,9 @@
         Set resource operations when creating a stonith resource.
 
         pcs commands: stonith create ... op
-        daemon urls: /api/v1/stonith-create/v1
+        daemon urls:
+          /api/v1/stonith-create/v1
+          /api/v1/stonith-create-in-group/v1
       </description>
     </capability>
     <capability id="pcmk.stonith.create.operations.onfail-demote" in-pcs="1" in-pcsd="1">
@@ -1730,7 +1818,9 @@
         Support for "demote" value of resource operation's "on-fail" option
 
         pcs commands: stonith create ... op
-        daemon urls: /api/v1/stonith-create/v1
+        daemon urls:
+          /api/v1/stonith-create/v1
+          /api/v1/stonith-create-in-group/v1
       </description>
     </capability>
     <capability id="pcmk.stonith.create.wait" in-pcs="1" in-pcsd="1">
@@ -1738,7 +1828,9 @@
         Wait for the created resource to start.
 
         pcs commands: stonith create ... --wait
-        daemon urls: /api/v1/stonith-create/v1
+        daemon urls:
+          /api/v1/stonith-create/v1
+          /api/v1/stonith-create-in-group/v1
       </description>
     </capability>
     <capability id="pcmk.stonith.delete" in-pcs="1" in-pcsd="0">
@@ -1758,25 +1850,34 @@
         daemon urls: update_fence_device (param: resource_id is set)
       </description>
     </capability>
-    <capability id="pcmk.stonith.enable-disable" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.stonith.enable-disable" in-pcs="1" in-pcsd="1">
       <description>
         Disable and enable a stonith resource.
 
         pcs commands: stonith disable, stonith enable
+        daemon urls:
+          /api/v1/resource-disable/v1
+          /api/v1/resource-enable/v1
       </description>
     </capability>
-    <capability id="pcmk.stonith.enable-disable.list" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.stonith.enable-disable.list" in-pcs="1" in-pcsd="1">
       <description>
         Disable or enable several stonith resources at once.
 
         pcs commands: stonith disable, stonith enable
+        daemon urls:
+          /api/v1/resource-disable/v1
+          /api/v1/resource-enable/v1
       </description>
     </capability>
-    <capability id="pcmk.stonith.enable-disable.wait" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.stonith.enable-disable.wait" in-pcs="1" in-pcsd="1">
       <description>
         Wait for resources to start or stop.
 
         pcs commands: stonith disable --wait, stonith enable --wait
+        daemon urls:
+          /api/v1/resource-disable/v1
+          /api/v1/resource-enable/v1
       </description>
     </capability>
     <capability id="pcmk.stonith.cleanup" in-pcs="1" in-pcsd="0">
@@ -1840,29 +1941,56 @@
         * remove a stonith level with specified level, node and stonith device
 
         pcs commands: stonith level [ add | delete | remove ]
-        daemon urls: add_fence_level_remote
+        daemon urls:
+         /api/v1/fencing-topology-add-level/v1
+         /api/v1/fencing-topology-remove-all-levels/v1
+         /api/v1/fencing-topology-remove-levels-by-params/v1
       </description>
     </capability>
-    <capability id="pcmk.stonith.levels.add-remove-devices-list" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.stonith.levels.add-remove-devices-list" in-pcs="1" in-pcsd="1">
       <description>
         Add or remove a list of stonith to a fencing level.
 
         pcs commands: stonith level ( add | delete | remove )
+        daemon urls:
+         /api/v1/fencing-topology-add-level/v1
       </description>
     </capability>
-    <capability id="pcmk.stonith.levels.node-attr" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.stonith.levels.node-attr" in-pcs="1" in-pcsd="1">
       <description>
         Support specifying a target by a node attribute.
 
         pcs commands: attrib%name=value
+        daemon urls:
+         /api/v1/fencing-topology-add-level/v1
       </description>
     </capability>
-    <capability id="pcmk.stonith.levels.node-regexp" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.stonith.levels.node-regexp" in-pcs="1" in-pcsd="1">
       <description>
         Support specifying a target by a regular expression applied to node
         name.
 
         pcs commands: regexp%pattern
+        daemon urls:
+         /api/v1/fencing-topology-add-level/v1
+      </description>
+    </capability>
+    <capability id="pcmk.stonith.levels.clear" in-pcs="1" in-pcsd="1">
+      <description>
+        Remove all fencing levels.
+
+        pcs commands: stonith level clear
+        daemon urls:
+          /api/v1/fencing-topology-remove-all-levels/v1
+      </description>
+    </capability>
+    <capability id="pcmk.stonith.levels.verify" in-pcs="1" in-pcsd="1">
+      <description>
+        Check if all cluster nodes and stonith devices used in fencing levels exist
+
+        pcs commands: stonith level verify
+        daemon urls:
+          /api/v1/fencing-topology-verify/v1
       </description>
     </capability>
 
@@ -2042,7 +2170,8 @@
         Describe a resource agent - present its metadata.
 
         pcs commands: resource describe
-        daemon urls: get_resource_agent_metadata
+        daemon urls:
+          /api/v1/resource-agent-describe-agent/v1
       </description>
     </capability>
     <capability id="resource-agents.list" in-pcs="1" in-pcsd="1">
@@ -2050,10 +2179,12 @@
         List resource agents available on the local host.
 
         pcs commands: resource list
-        daemon urls: get_avail_resource_agents
+        daemon urls:
+          /api/v1/resource-agent-list-agents/v1
+      </description>
       </description>
     </capability>
-    <capability id="resource-agents.list.detailed" in-pcs="1" in-pcsd="0">
+    <capability id="resource-agents.list.detailed" in-pcs="1" in-pcsd="1">
       <description>
         List resource agents available on the local host including their
         description, list available standards and providers, filter agents by
@@ -2061,6 +2192,11 @@
 
         pcs commands: resource list, resource standards, resource providers,
           resource agents
+        daemon urls:
+          /api/v1/resource-agent-list-agents/v1
+          /api/v1/resource-agent-list-agents-for-standard-and-provider/v1
+          /api/v1/resource-agent-list-ocf-providers/v1
+          /api/v1/resource-agent-list-standards/v1
       </description>
     </capability>
     <capability id="stonith-agents.describe" in-pcs="1" in-pcsd="1">
@@ -2068,7 +2204,8 @@
         Describe a stonith agent - present its metadata.
 
         pcs commands: stonith describe
-        daemon urls: get_fence_agent_metadata
+        daemon urls:
+          /api/v1/stonith-agent-describe-agent/v1
       </description>
     </capability>
     <capability id="stonith-agents.list" in-pcs="1" in-pcsd="1">
@@ -2076,15 +2213,18 @@
         List stonith agents available on the local host.
 
         pcs commands: stonith list
-        daemon urls: get_avail_fence_agents
+        daemon urls:
+          /api/v1/stonith-agent-list-agents/v1
       </description>
     </capability>
-    <capability id="stonith-agents.list.detailed" in-pcs="1" in-pcsd="0">
+    <capability id="stonith-agents.list.detailed" in-pcs="1" in-pcsd="1">
       <description>
         List stonith agents available on the local host including their
         description, filter agents by name.
 
         pcs commands: stonith list
+        daemon urls:
+          /api/v1/stonith-agent-list-agents/v1
       </description>
     </capability>
 
@@ -2097,7 +2237,9 @@
 
         pcs commands: stonith sbd ( enable | disable ), stonith sbd status,
           stonith sbd config
-        daemon urls: remote_enable_sbd, remote_disable_sbd
+        daemon urls:
+          /api/v1/sbd-disable-sbd/v1
+          /api/v1/sbd-enable-sbd/v1
       </description>
     </capability>
     <capability id="sbd.option-timeout-action" in-pcs="1" in-pcsd="1">
@@ -2172,6 +2314,54 @@
         Display pacemaker status in XML format.
 
         pcs commands: status xml
+      </description>
+    </capability>
+
+    <capability id="pcs.rest-api.v1.1" in-pcs="0" in-pcsd="1">
+      <description>
+        The following library commands has been exposed as urls (/api/v1/*/v1)
+        of pcsd and exchanged pre-library commands:
+          acl.add_permission
+          acl.assign_role_to_group
+          acl.assign_role_to_target
+          acl.create_role
+          acl.remove_permission
+          acl.remove_role
+          acl.unassign_role_from_group
+          acl.unassign_role_from_target
+          alert.add_recipient
+          alert.create_alert
+          alert.remove_alert
+          alert.remove_recipient
+          alert.update_alert
+          alert.update_recipient
+          constraint_colocation.create_with_set
+          constraint_order.create_with_set
+          constraint_ticket.create
+          constraint_ticket.create_with_set
+          constraint_ticket.remove
+          fencing_topology.add_level
+          fencing_topology.remove_all_levels
+          fencing_topology.remove_levels_by_params
+          node.standby_unstandby_list
+          qdevice.client_net_import_certificate
+          qdevice.qdevice_net_sign_certificate_request
+          resource_agent.describe_agent
+          resource_agent.list_agents
+          resource.create
+          resource.create_as_clone
+          resource.create_in_group
+          resource.disable
+          resource.enable
+          resource.group_add
+          resource.manage
+          resource.unmanage
+          sbd.disable_sbd
+          sbd.enable_sbd
+          stonith_agent.describe_agent
+          stonith_agent.list_agents
+          stonith.create
+          stonith.create_in_group
       </description>
     </capability>
   </capability-list>

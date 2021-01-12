@@ -47,7 +47,11 @@ def remote(params, request, auth_user)
       :config_backup => method(:config_backup),
       :config_restore => method(:config_restore),
       :node_restart => method(:node_restart),
+      # lib api:
+      # /api/v1/node-standby-unstandby/v1
       :node_standby => method(:node_standby),
+      # lib api:
+      # /api/v1/node-standby-unstandby/v1
       :node_unstandby => method(:node_unstandby),
       :cluster_enable => method(:cluster_enable),
       :cluster_disable => method(:cluster_disable),
@@ -68,11 +72,19 @@ def remote(params, request, auth_user)
       :sbd_enable => method(:sbd_enable),
       :remove_stonith_watchdog_timeout=> method(:remove_stonith_watchdog_timeout),
       :set_stonith_watchdog_timeout_to_zero => method(:set_stonith_watchdog_timeout_to_zero),
+      # lib api:
+      # /api/v1/sbd-enable-sbd/v1
       :remote_enable_sbd => method(:remote_enable_sbd),
+      # lib api:
+      # /api/v1/sbd-disable-sbd/v1
       :remote_disable_sbd => method(:remote_disable_sbd),
       :qdevice_net_get_ca_certificate => method(:qdevice_net_get_ca_certificate),
+      # lib api:
+      # /api/v1/qdevice-qdevice-net-sign-certificate-request/v1
       :qdevice_net_sign_node_certificate => method(:qdevice_net_sign_node_certificate),
       :qdevice_net_client_init_certificate_storage => method(:qdevice_net_client_init_certificate_storage),
+      # lib api:
+      # /api/v1/qdevice-client-net-import-certificate/v1
       :qdevice_net_client_import_certificate => method(:qdevice_net_client_import_certificate),
       :qdevice_net_client_destroy => method(:qdevice_net_client_destroy),
       :qdevice_client_enable => method(:qdevice_client_enable),
@@ -97,20 +109,41 @@ def remote(params, request, auth_user)
       :resource_refresh => method(:resource_refresh),
       :update_resource => method(:update_resource),
       :update_fence_device => method(:update_fence_device),
+      # lib api:
+      # /api/v1/resource-agent-list-agents/v1
       :get_avail_resource_agents => method(:get_avail_resource_agents),
+      # lib api:
+      # /api/v1/stonith-agent-list-agents/v1
       :get_avail_fence_agents => method(:get_avail_fence_agents),
       :remove_resource => method(:remove_resource),
+      # lib api:
+      # /api/v1/constraint-ticket-create/v1
       :add_constraint_remote => method(:add_constraint_remote),
       :add_constraint_rule_remote => method(:add_constraint_rule_remote),
+      # lib api:
+      # /api/v1/constraint-colocation-create-with-set/v1
+      # /api/v1/constraint-order-create-with-set/v1
+      # /api/v1/constraint-ticket-create-with-set/v1
+      # location is not supported => lib commands fully replaces this url
       :add_constraint_set_remote => method(:add_constraint_set_remote),
+      # lib api:
+      # /api/v1/constraint-ticket-remove/v1
       :remove_constraint_remote => method(:remove_constraint_remote),
       :remove_constraint_rule_remote => method(:remove_constraint_rule_remote),
       :add_meta_attr_remote => method(:add_meta_attr_remote),
+      # lib api:
+      # /api/v1/resource-group-add/v1
       :add_group => method(:add_group),
       :update_cluster_settings => method(:update_cluster_settings),
+      # lib api:
+      # /api/v1/fencing-topology-add-level/v1
       :add_fence_level_remote => method(:add_fence_level_remote),
       :add_node_attr_remote => method(:add_node_attr_remote),
+      # lib api:
+      # /api/v1/acl-create-role/v1
       :add_acl_role => method(:add_acl_role_remote),
+      # lib api:
+      # /api/v1/acl-remove-role/v1
       :remove_acl_roles => method(:remove_acl_roles_remote),
       :add_acl => method(:add_acl_remote),
       :remove_acl => method(:remove_acl_remote),
@@ -121,14 +154,25 @@ def remote(params, request, auth_user)
       :resource_ungroup => method(:resource_ungroup),
       :set_resource_utilization => method(:set_resource_utilization),
       :set_node_utilization => method(:set_node_utilization),
+      # lib api:
+      # /api/v1/resource-agent-describe-agent/v1
       :get_resource_agent_metadata => method(:get_resource_agent_metadata),
+      # lib api:
+      # /api/v1/stonith-agent-describe-agent/v1
       :get_fence_agent_metadata => method(:get_fence_agent_metadata),
       :manage_resource => method(:manage_resource),
       :unmanage_resource => method(:unmanage_resource),
+      # lib api:
+      # /api/v1/alert-create-alert/v1
       :create_alert => method(:create_alert),
+      # lib api:
+      # /api/v1/alert-update-alert/v1
       :update_alert => method(:update_alert),
       :create_recipient => method(:create_recipient),
       :update_recipient => method(:update_recipient),
+      # lib api:
+      # /api/v1/alert-remove-alert/v1
+      # /api/v1/alert-remove-recipient/v1
       :remove_alerts_and_recipients => method("remove_alerts_and_recipients"),
   }
 
