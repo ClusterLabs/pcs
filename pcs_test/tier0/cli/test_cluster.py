@@ -1630,3 +1630,89 @@ class ConfigShow(TestCase):
         self.lib_call.assert_called_once_with()
         mock_print.assert_called_once_with(self.cmd_output)
         mock_warn.assert_not_called()
+
+
+class ClusterAuthkeyCorosync(TestCase):
+    def setUp(self):
+        self.lib_call = mock.Mock()
+        self.lib = mock.Mock(spec_set=["cluster"])
+        self.lib.cluster = mock.Mock(spec_set=["corosync_authkey_change"])
+        self.lib.cluster.corosync_authkey_change = self.lib_call
+
+    def call_cmd(self, argv, modifiers=None):
+        cluster.authkey_corosync(
+            self.lib, argv, dict_to_modifiers(modifiers or {})
+        )
+
+    def test_noargs(self):
+        self.call_cmd([])
+        self.lib_call.assert_called_once_with(
+            corosync_authkey=None, force_flags=[]
+        )
+
+    @mock.patch(
+        "pcs.cluster.open", new_callable=mock.mock_open, read_data=b"authkey"
+    )
+    def test_key_path(self, mock_open):
+        self.call_cmd(["/tmp/authkey"])
+        self.lib_call.assert_called_once_with(
+            corosync_authkey=b"authkey", force_flags=[]
+        )
+        mock_open.assert_called_once_with("/tmp/authkey", "rb")
+
+    @mock.patch(
+        "pcs.cluster.open", new_callable=mock.mock_open, read_data=b"authkey"
+    )
+    @mock.patch("pcs.utils.err")
+    def test_key_path_nonexistent_file(self, mock_err, mock_open):
+        mock_open.side_effect = EnvironmentError()
+        self.call_cmd(["/tmp/nonexistent"])
+        mock_err.assert_called_once_with(
+            "Unable to read file '/tmp/nonexistent': None"
+        )
+        mock_open.assert_called_once_with("/tmp/nonexistent", "rb")
+
+    def test_more_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.call_cmd(["arg1", "arg2"])
+        self.assertIsNone(cm.exception.message)
+        self.lib_call.assert_not_called()
+
+    def test_force(self):
+        self.call_cmd([], {"force": True})
+        self.lib_call.assert_called_once_with(
+            corosync_authkey=None, force_flags=[report_codes.FORCE]
+        )
+
+    @mock.patch(
+        "pcs.cluster.open", new_callable=mock.mock_open, read_data=b"authkey"
+    )
+    def test_key_path_force(self, mock_open):
+        self.call_cmd(["path"], {"force": True})
+        self.lib_call.assert_called_once_with(
+            corosync_authkey=b"authkey", force_flags=[report_codes.FORCE]
+        )
+        mock_open.assert_called_once_with("path", "rb")
+
+    @mock.patch(
+        "pcs.cluster.open", new_callable=mock.mock_open, read_data=b"authkey"
+    )
+    def test_all_options(self, mock_open):
+        self.call_cmd(
+            ["path"],
+            {"force": True, "skip-offline": True, "request-timeout": "10"},
+        )
+        self.lib_call.assert_called_once_with(
+            corosync_authkey=b"authkey",
+            force_flags=[report_codes.FORCE, report_codes.SKIP_OFFLINE_NODES],
+        )
+        mock_open.assert_called_once_with("path", "rb")
+
+    def test_unsupported_option(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.call_cmd([], {"wait": 10})
+        self.assertEqual(
+            "Specified option '--wait' is not supported in this command",
+            cm.exception.message,
+        )
+        self.lib_call.assert_not_called()

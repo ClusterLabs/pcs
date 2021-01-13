@@ -216,6 +216,13 @@
 
 
 
+    <capability id="corosync.authkey.update" in-pcs="1" in-pcsd="0">
+      <description>
+        Update corosync authkey.
+
+        pcs commands: cluster authkey corosync
+      </description>
+    </capability>
     <capability id="corosync.config.get" in-pcs="1" in-pcsd="1">
       <description>
         Provide the local corosync.conf file.

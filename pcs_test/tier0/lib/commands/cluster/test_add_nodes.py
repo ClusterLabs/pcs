@@ -8,7 +8,6 @@ from textwrap import dedent
 from unittest import mock, TestCase
 
 from pcs_test.tools import fixture
-from pcs_test.tools.misc import outdent
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.custom_mock import patch_getaddrinfo
 
@@ -20,21 +19,14 @@ from pcs.common import (
 from pcs.common.file import RawFileError
 from pcs.lib.commands import cluster
 
-QDEVICE_HOST = "qdevice.host"
-CLUSTER_NAME = "myCluster"
-
-
-def _corosync_options_fixture(option_list, indent_level=2):
-    indent = indent_level * 4 * " "
-    return "".join(
-        [f"{indent}{option}: {value}\n" for option, value in option_list]
-    )
-
-
-def _get_two_node(nodes_num):
-    if nodes_num == 2:
-        return [("two_node", "1")]
-    return []
+from .common import (
+    CLUSTER_NAME,
+    QDEVICE_HOST,
+    get_two_node,
+    corosync_conf_fixture,
+    corosync_node_fixture,
+    node_fixture,
+)
 
 
 def generate_nodes(existing_nodes_num, new_nodes_num):
@@ -47,63 +39,6 @@ def generate_nodes(existing_nodes_num, new_nodes_num):
             )
         ],
     )
-
-
-def corosync_conf_fixture(node_list=(), quorum_options=(), qdevice_net=False):
-    nodes = []
-    for node in node_list:
-        nodes.append(
-            dedent(
-                """\
-                node {{
-            {options}    }}
-            """
-            ).format(options=_corosync_options_fixture(node))
-        )
-    device = ""
-    if qdevice_net:
-        device = outdent(
-            f"""
-                device {{
-                    model: net
-
-                    net {{
-                        host: {QDEVICE_HOST}
-                    }}
-                }}
-            """
-        )
-    return dedent(
-        """\
-        totem {{
-            version: 2
-            cluster_name: {cluster_name}
-            transport: knet
-        }}
-
-        nodelist {{
-        {nodes}}}
-
-        quorum {{
-            provider: corosync_votequorum
-        {quorum}{device}}}
-
-        logging {{
-            to_logfile: yes
-            logfile: /var/log/cluster/corosync.log
-            to_syslog: yes
-        }}
-        """
-    ).format(
-        cluster_name=CLUSTER_NAME,
-        nodes="\n".join(nodes),
-        quorum=_corosync_options_fixture(quorum_options, indent_level=1),
-        device=device,
-    )
-
-
-def node_fixture(node, node_id, addr_sufix=""):
-    return corosync_node_fixture(node_id, node, [f"{node}{addr_sufix}"])
 
 
 class LocalConfig:
@@ -674,7 +609,7 @@ class CheckLive(TestCase):
         self.config.env.set_corosync_conf_data(
             corosync_conf_fixture(
                 self.existing_corosync_nodes,
-                _get_two_node(len(self.existing_corosync_nodes)),
+                get_two_node(len(self.existing_corosync_nodes)),
             )
         )
         self.assert_live_required(["COROSYNC_CONF"])
@@ -687,7 +622,7 @@ class CheckLive(TestCase):
         self.config.env.set_corosync_conf_data(
             corosync_conf_fixture(
                 self.existing_corosync_nodes,
-                _get_two_node(len(self.existing_corosync_nodes)),
+                get_two_node(len(self.existing_corosync_nodes)),
             )
         )
         self.config.env.set_cib_data("<cib />")
@@ -718,7 +653,7 @@ class AddNodesSuccessMinimal(TestCase):
             self.config.runner.systemctl.is_enabled("sbd", is_enabled=False)
             .corosync_conf.load_content(
                 corosync_conf_fixture(
-                    existing_corosync_nodes, _get_two_node(existing_nodes_num)
+                    existing_corosync_nodes, get_two_node(existing_nodes_num)
                 )
             )
             .runner.cib.load()
@@ -743,7 +678,7 @@ class AddNodesSuccessMinimal(TestCase):
                             self.new_nodes, existing_nodes_num + 1
                         )
                     ],
-                    _get_two_node(existing_nodes_num + new_nodes_num),
+                    get_two_node(existing_nodes_num + new_nodes_num),
                 ),
                 self.existing_nodes,
                 self.new_nodes,
@@ -1119,13 +1054,6 @@ def _get_addrs(node, count=8):
 
 def _flat_list(list_of_lists):
     return [item for _list in list_of_lists for item in _list]
-
-
-def corosync_node_fixture(node_id, node, addrs):
-    return [(f"ring{i}_addr", addr) for i, addr in enumerate(addrs)] + [
-        ("name", node),
-        ("nodeid", str(node_id)),
-    ]
 
 
 def _get_check_sbd_communication_list(node_list, with_devices=True):
@@ -3046,7 +2974,7 @@ class FailureBoothConfigsDistribution(TestCase):
                             self.new_nodes, len(self.existing_nodes) + 1
                         )
                     ],
-                    _get_two_node(
+                    get_two_node(
                         len(self.existing_nodes) + len(self.new_nodes)
                     ),
                 ),

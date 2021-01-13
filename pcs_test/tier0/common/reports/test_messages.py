@@ -767,6 +767,44 @@ class DefaultsCanBeOverriden(NameBuildTest):
         )
 
 
+class CorosyncAuthkeyWrongLength(NameBuildTest):
+    def test_at_most_allowed_singular_provided_plural(self):
+        self.assert_message_from_report(
+            (
+                "At least 0 and at most 1 byte key must be provided for "
+                "a corosync authkey, 2 bytes key provided"
+            ),
+            reports.CorosyncAuthkeyWrongLength(2, 0, 1),
+        )
+
+    def test_at_most_allowed_plural_provided_singular(self):
+        self.assert_message_from_report(
+            (
+                "At least 2 and at most 3 bytes key must be provided for "
+                "a corosync authkey, 1 byte key provided"
+            ),
+            reports.CorosyncAuthkeyWrongLength(1, 2, 3),
+        )
+
+    def test_exactly_allowed_singular_provided_plural(self):
+        self.assert_message_from_report(
+            (
+                "1 byte key must be provided for a corosync authkey, 2 bytes "
+                "key provided"
+            ),
+            reports.CorosyncAuthkeyWrongLength(2, 1, 1),
+        )
+
+    def test_exactly_allowed_plural_provided_singular(self):
+        self.assert_message_from_report(
+            (
+                "2 bytes key must be provided for a corosync authkey, 1 byte "
+                "key provided"
+            ),
+            reports.CorosyncAuthkeyWrongLength(1, 2, 2),
+        )
+
+
 class CorosyncConfigDistributionStarted(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(

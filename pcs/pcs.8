@@ -491,6 +491,9 @@ Crypto options are: cipher, hash, model
 .br
 Totem options are: consensus, downcheck, fail_recv_const, heartbeat_failures_allowed, hold, join, max_messages, max_network_delay, merge, miss_count_const, send_join, seqno_unchanged_const, token, token_coefficient, token_retransmit, token_retransmits_before_loss_const, window_size
 .TP
+authkey corosync [<path>]
+Generate a new corosync authkey and distribute it to all cluster nodes. If <path> is specified, do not generate a key and use key from the file.
+.TP
 start [\fB\-\-all\fR | <node>... ] [\fB\-\-wait\fR[=<n>]] [\fB\-\-request\-timeout\fR=<seconds>]
 Start a cluster on specified node(s). If no nodes are specified then start a cluster on the local node. If \fB\-\-all\fR is specified then start a cluster on all nodes. If the cluster has many nodes then the start request may time out. In that case you should consider setting \fB\-\-request\-timeout\fR to a suitable value. If \fB\-\-wait\fR is specified, pcs waits up to 'n' seconds for the cluster to get ready to provide services after the cluster has successfully started.
 .TP

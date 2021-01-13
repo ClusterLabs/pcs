@@ -2100,3 +2100,83 @@ def update_link(
 
     corosync_conf.update_link(linknumber, node_addr_map, link_options)
     env.push_corosync_conf(corosync_conf, skip_offline)
+
+
+def corosync_authkey_change(
+    env: LibraryEnvironment,
+    corosync_authkey: Optional[bytes] = None,
+    force_flags: Container[reports.types.ForceCode] = (),
+) -> None:
+    """
+    Distribute new corosync authkey to all cluster nodes.
+
+    env -- LibraryEnvironment
+    corosync_authkey -- new authkey; if None, generate a random one
+    force_flags -- list of flags codes
+    """
+    report_processor = env.report_processor
+    target_factory = env.get_node_target_factory()
+
+    cluster_nodes_names, nodes_report_list = get_existing_nodes_names(
+        env.get_corosync_conf(),
+        error_on_missing_name=True,
+    )
+    report_processor.report_list(nodes_report_list)
+    (
+        target_report_list,
+        cluster_nodes_target_list,
+    ) = target_factory.get_target_list_with_reports(
+        cluster_nodes_names,
+        allow_skip=False,
+    )
+    report_processor.report_list(target_report_list)
+    if corosync_authkey is not None:
+        if len(corosync_authkey) != settings.corosync_authkey_bytes:
+            report_processor.report(
+                ReportItem(
+                    severity=reports.item.get_severity(
+                        report_codes.FORCE,
+                        report_codes.FORCE in force_flags,
+                    ),
+                    message=reports.messages.CorosyncAuthkeyWrongLength(
+                        len(corosync_authkey),
+                        settings.corosync_authkey_bytes,
+                        settings.corosync_authkey_bytes,
+                    ),
+                )
+            )
+    else:
+        corosync_authkey = generate_binary_key(
+            random_bytes_count=settings.corosync_authkey_bytes
+        )
+
+    if report_processor.has_errors:
+        raise LibraryError()
+
+    com_cmd: AllSameDataMixin = GetOnlineTargets(
+        report_processor,
+        ignore_offline_targets=report_codes.SKIP_OFFLINE_NODES in force_flags,
+    )
+    com_cmd.set_targets(cluster_nodes_target_list)
+    online_cluster_target_list = run_and_raise(
+        env.get_node_communicator(), com_cmd
+    )
+
+    if not online_cluster_target_list:
+        if report_processor.report(
+            ReportItem.error(
+                reports.messages.UnableToPerformOperationOnAnyNode()
+            )
+        ).has_errors:
+            raise LibraryError()
+
+    com_cmd = DistributeFilesWithoutForces(
+        env.report_processor,
+        node_communication_format.corosync_authkey_file(corosync_authkey),
+    )
+    com_cmd.set_targets(online_cluster_target_list)
+    run_and_raise(env.get_node_communicator(), com_cmd)
+
+    com_cmd = ReloadCorosyncConf(env.report_processor)
+    com_cmd.set_targets(online_cluster_target_list)
+    run_and_raise(env.get_node_communicator(), com_cmd)

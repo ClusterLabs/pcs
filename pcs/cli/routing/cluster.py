@@ -22,6 +22,10 @@ cluster_cmd = create_router(
             ["cluster", "config"],
             default_cmd="show",
         ),
+        "authkey": create_router(
+            {"corosync": cluster.authkey_corosync},
+            ["cluster", "authkey"],
+        ),
         "sync": create_router(
             {
                 "corosync": cluster.sync_nodes,

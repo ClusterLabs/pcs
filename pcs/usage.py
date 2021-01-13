@@ -967,6 +967,10 @@ Commands:
             token_coefficient, token_retransmit,
             token_retransmits_before_loss_const, window_size
 
+    authkey corosync [<path>]
+       Generate a new corosync authkey and distribute it to all cluster nodes.
+       If <path> is specified, do not generate a key and use key from the file.
+
     start [--all | <node>... ] [--wait[=<n>]] [--request-timeout=<seconds>]
         Start a cluster on specified node(s). If no nodes are specified then
         start a cluster on the local node. If --all is specified then start

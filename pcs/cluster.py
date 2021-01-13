@@ -52,7 +52,10 @@ from pcs.common.str_tools import (
     format_list,
     indent,
 )
-from pcs.common.tools import Version
+from pcs.common.tools import (
+    Version,
+    format_os_error,
+)
 from pcs.lib import sbd as lib_sbd
 from pcs.lib.cib.tools import VERSION_FORMAT
 from pcs.lib.commands.remote_node import _destroy_pcmk_remote_env
@@ -169,6 +172,40 @@ def cluster_start_cmd(lib, argv, modifiers):
         start_cluster_all()
     else:
         start_cluster(argv)
+
+
+def authkey_corosync(lib, argv, modifiers):
+    """
+    Options:
+      * --force - skip check for authkey length
+      * --request-timeout - timeout for HTTP requests
+      * --skip-offline - skip unreachable nodes
+    """
+    modifiers.ensure_only_supported(
+        "--force", "--skip-offline", "--request-timeout"
+    )
+    if len(argv) > 1:
+        raise CmdLineInputError()
+    force_flags = []
+    if modifiers.get("--force"):
+        force_flags.append(reports.codes.FORCE)
+    if modifiers.get("--skip-offline"):
+        force_flags.append(reports.codes.SKIP_OFFLINE_NODES)
+    corosync_authkey = None
+    if argv:
+        try:
+            with open(argv[0], "rb") as file:
+                corosync_authkey = file.read()
+        except OSError as e:
+            utils.err(
+                "Unable to read file '{0}': {1}".format(
+                    argv[0], format_os_error(e)
+                )
+            )
+    lib.cluster.corosync_authkey_change(
+        corosync_authkey=corosync_authkey,
+        force_flags=force_flags,
+    )
 
 
 def sync_nodes(lib, argv, modifiers):

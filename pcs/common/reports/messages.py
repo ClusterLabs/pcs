@@ -1178,6 +1178,40 @@ class DefaultsCanBeOverriden(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class CorosyncAuthkeyWrongLength(ReportItemMessage):
+    """
+    Wrong corosync authkey length.
+    """
+
+    _code = codes.COROSYNC_AUTHKEY_WRONG_LENGTH
+    actual_length: int
+    min_length: int
+    max_length: int
+
+    @property
+    def message(self) -> str:
+        if self.min_length == self.max_length:
+            template = (
+                "{max_length} {bytes_allowed} key must be provided for a "
+                "corosync authkey, {actual_length} {bytes_provided} key "
+                "provided"
+            )
+        else:
+            template = (
+                "At least {min_length} and at most {max_length} "
+                "{bytes_allowed} key must be provided for a corosync "
+                "authkey, {actual_length} {bytes_provided} key provided"
+            )
+        return template.format(
+            min_length=self.min_length,
+            max_length=self.max_length,
+            actual_length=self.actual_length,
+            bytes_allowed=format_plural(self.max_length, "byte"),
+            bytes_provided=format_plural(self.actual_length, "byte"),
+        )
+
+
+@dataclass(frozen=True)
 class CorosyncConfigDistributionStarted(ReportItemMessage):
     """
     Corosync configuration is about to be sent to nodes

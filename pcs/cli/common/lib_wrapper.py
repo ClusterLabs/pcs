@@ -182,6 +182,7 @@ def load_module(env, middleware_factory, name):
             {
                 "add_link": cluster.add_link,
                 "add_nodes": cluster.add_nodes,
+                "corosync_authkey_change": cluster.corosync_authkey_change,
                 "config_update": cluster.config_update,
                 "config_update_local": cluster.config_update_local,
                 "get_corosync_conf_struct": cluster.get_corosync_conf_struct,
