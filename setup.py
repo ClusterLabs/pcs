@@ -118,10 +118,10 @@ setup(
     zip_safe=False,
     entry_points={
         "console_scripts": [
-            "pcs = pcs.run:cli",
-            "pcsd = pcs.run:daemon",
-            "pcs_snmp_agent = pcs.run:pcs_snmp_agent",
-            "pcs_internal = pcs.run:pcs_internal",
+            "pcs = pcs.entry_points.cli:main",
+            "pcsd = pcs.entry_points.daemon:main",
+            "pcs_snmp_agent = pcs.entry_points.snmp_agent:main",
+            "pcs_internal = pcs.entry_points.internal:main",
         ],
     },
     cmdclass={
