@@ -313,7 +313,7 @@ class LibraryEnvironment:
             raise LibraryError(
                 *corosync_instance.toolbox.parser.exception_to_report_list(
                     e,
-                    file_type_codes.COROSYNC_CONF,
+                    corosync_instance.toolbox.file_type_code,
                     (
                         corosync_instance.raw_file.metadata.path
                         if self.is_corosync_conf_live

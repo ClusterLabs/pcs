@@ -83,6 +83,7 @@ from pcs.lib.file.instance import FileInstance
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import is_service_running
+from pcs.lib.interface.config import ParserErrorException
 from pcs.lib.pacemaker.live import (
     get_cib,
     get_cib_xml,
@@ -748,9 +749,20 @@ def config_update_local(
     # allow/need CIB to be handled by LibraryEnvironment.
     _ensure_live_env(env)
     corosync_conf_instance = FileInstance.for_corosync_conf()
-    corosync_conf: config_facade.ConfigFacade = (
-        corosync_conf_instance.raw_to_facade(corosync_conf_content)
-    )
+    try:
+        corosync_conf: config_facade.ConfigFacade = (
+            corosync_conf_instance.raw_to_facade(corosync_conf_content)
+        )
+    except ParserErrorException as e:
+        raise LibraryError(
+            *corosync_conf_instance.toolbox.parser.exception_to_report_list(
+                e,
+                corosync_conf_instance.toolbox.file_type_code,
+                None,
+                force_code=None,
+                is_forced_or_warning=False,
+            )
+        ) from e
     _config_update(
         env.report_processor,
         corosync_conf,
