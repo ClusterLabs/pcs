@@ -48,6 +48,10 @@ from pcs.common.reports import (
     ReportItemList,
     ReportItemSeverity,
 )
+from pcs.common.validate import (
+    is_integer,
+    is_port_number,
+)
 from pcs.lib.corosync import constants as corosync_constants
 from pcs.lib.pacemaker.values import (
     is_score,
@@ -57,7 +61,6 @@ from pcs.lib.pacemaker.values import (
 from pcs.lib.cib.tools import IdProvider
 
 _FLOAT_RE = re.compile(r"^[-+]?(\d+|(\d*\.\d+)|(\d+\.\d*))([eE][+-]?\d+)?$")
-_INTEGER_RE = re.compile(r"^[+-]?[0-9]+$")
 _PCMK_DATESPEC_PART_RE = re.compile(r"^(?P<since>[0-9]+)(-(?P<until>[0-9]+))?$")
 
 TypeOptionName = str
@@ -857,33 +860,6 @@ def is_float(
     return True
 
 
-def is_integer(
-    value: Union[str, int, float],
-    at_least: Optional[int] = None,
-    at_most: Optional[int] = None,
-) -> bool:
-    """
-    Check if the specified value is an integer, optionally check a range
-
-    value -- value to check
-    at_least -- minimal allowed value
-    at_most -- maximal allowed value
-    """
-    try:
-        if value is None or isinstance(value, float):
-            return False
-        if isinstance(value, str) and not _INTEGER_RE.fullmatch(value):
-            return False
-        value_int = int(value)
-        if at_least is not None and value_int < at_least:
-            return False
-        if at_most is not None and value_int > at_most:
-            return False
-    except ValueError:
-        return False
-    return True
-
-
 def is_ipv4_address(value: TypeOptionValue) -> bool:
     """
     Check if the specified value is an IPv4 address
@@ -942,15 +918,6 @@ def is_pcmk_datespec_part(
         if int(match["since"]) >= int(match["until"]):
             return False
     return True
-
-
-def is_port_number(value: TypeOptionValue) -> bool:
-    """
-    Check if the specified value is a TCP or UDP port number
-
-    value -- value to check
-    """
-    return is_integer(value, 1, 65535)
 
 
 def matches_regexp(value: TypeOptionValue, regexp: Union[str, Pattern]) -> bool:

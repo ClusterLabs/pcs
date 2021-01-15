@@ -10,7 +10,7 @@ from os.path import (
 )
 
 from pcs import settings
-from pcs.lib.validate import is_port_number
+from pcs.common.validate import is_port_number
 
 # Relative location instead of system location is used for development purposes.
 PCSD_LOCAL_DIR = realpath(dirname(abspath(__file__)) + "/../../pcsd")
