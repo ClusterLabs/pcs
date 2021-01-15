@@ -1415,24 +1415,6 @@ class CorosyncConfigUnsupportedTransport(ReportItemMessage):
         )
 
 
-# TODO: remove in favour of reports in new file framework
-@dataclass(frozen=True)
-class UnableToReadCorosyncConfig(ReportItemMessage):
-    """
-    An error occured when reading corosync configuration file from disk
-
-    reason -- an error message
-    """
-
-    path: str
-    reason: str
-    _code = codes.UNABLE_TO_READ_COROSYNC_CONFIG
-
-    @property
-    def message(self) -> str:
-        return f"Unable to read {self.path}: {self.reason}"
-
-
 @dataclass(frozen=True)
 class ParseErrorCorosyncConfMissingClosingBrace(ReportItemMessage):
     """

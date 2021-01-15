@@ -4,6 +4,7 @@ from unittest import TestCase
 from pcs_test.tools.misc import get_test_resource as rc
 
 import pcs.lib.corosync.config_facade as lib
+from pcs.lib.corosync.config_parser import Parser
 
 
 def _read_file(name):
@@ -11,10 +12,14 @@ def _read_file(name):
         return a_file.read()
 
 
+def _get_facade(config_text):
+    return lib.ConfigFacade(Parser.parse(config_text.encode("utf-8")))
+
+
 class GetQuorumOptionsTest(TestCase):
     def test_no_quorum(self):
         config = ""
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         options = facade.get_quorum_options()
         self.assertEqual({}, options)
         self.assertFalse(facade.need_stopped_cluster)
@@ -27,7 +32,7 @@ class GetQuorumOptionsTest(TestCase):
             }
         """
         )
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         options = facade.get_quorum_options()
         self.assertEqual({}, options)
         self.assertFalse(facade.need_stopped_cluster)
@@ -41,7 +46,7 @@ class GetQuorumOptionsTest(TestCase):
             }
         """
         )
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         options = facade.get_quorum_options()
         self.assertEqual({}, options)
         self.assertFalse(facade.need_stopped_cluster)
@@ -60,7 +65,7 @@ class GetQuorumOptionsTest(TestCase):
             }
         """
         )
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         options = facade.get_quorum_options()
         self.assertEqual(
             {
@@ -83,7 +88,7 @@ class GetQuorumOptionsTest(TestCase):
             }
         """
         )
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         options = facade.get_quorum_options()
         self.assertEqual(
             {
@@ -107,7 +112,7 @@ class GetQuorumOptionsTest(TestCase):
             }
         """
         )
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         options = facade.get_quorum_options()
         self.assertEqual(
             {
@@ -130,7 +135,7 @@ class IsEnabledAutoTieBreaker(TestCase):
             }
         """
         )
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         self.assertTrue(facade.is_enabled_auto_tie_breaker())
 
     def test_disabled(self):
@@ -141,7 +146,7 @@ class IsEnabledAutoTieBreaker(TestCase):
             }
         """
         )
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         self.assertFalse(facade.is_enabled_auto_tie_breaker())
 
     def test_no_value(self):
@@ -151,7 +156,7 @@ class IsEnabledAutoTieBreaker(TestCase):
             }
         """
         )
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         self.assertFalse(facade.is_enabled_auto_tie_breaker())
 
 
@@ -166,7 +171,7 @@ class SetQuorumOptionsTest(TestCase):
 
     def test_add_missing_section(self):
         config = ""
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         facade.set_quorum_options({"wait_for_all": "0"})
         self.assertTrue(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
@@ -183,7 +188,7 @@ class SetQuorumOptionsTest(TestCase):
 
     def test_del_missing_section(self):
         config = ""
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         facade.set_quorum_options({"wait_for_all": ""})
         self.assertTrue(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
@@ -191,7 +196,7 @@ class SetQuorumOptionsTest(TestCase):
 
     def test_add_all_options(self):
         config = _read_file("corosync.conf")
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         expected_options = {
             "auto_tie_breaker": "1",
             "last_man_standing": "0",
@@ -202,7 +207,7 @@ class SetQuorumOptionsTest(TestCase):
 
         self.assertTrue(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
-        test_facade = lib.ConfigFacade.from_string(facade.config.export())
+        test_facade = _get_facade(facade.config.export())
         self.assertEqual(expected_options, test_facade.get_quorum_options())
 
     def test_complex(self):
@@ -218,7 +223,7 @@ class SetQuorumOptionsTest(TestCase):
             }
         """
         )
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         facade.set_quorum_options(
             {
                 "auto_tie_breaker": "1",
@@ -229,7 +234,7 @@ class SetQuorumOptionsTest(TestCase):
 
         self.assertTrue(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
-        test_facade = lib.ConfigFacade.from_string(facade.config.export())
+        test_facade = _get_facade(facade.config.export())
         self.assertEqual(
             {
                 "auto_tie_breaker": "1",
@@ -241,7 +246,7 @@ class SetQuorumOptionsTest(TestCase):
 
     def test_2nodes_atb_on(self):
         config = _read_file("corosync.conf")
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         self.assertEqual(2, len(facade.get_nodes()))
 
         facade.set_quorum_options({"auto_tie_breaker": "1"})
@@ -257,7 +262,7 @@ class SetQuorumOptionsTest(TestCase):
 
     def test_2nodes_atb_off(self):
         config = _read_file("corosync.conf")
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         self.assertEqual(2, len(facade.get_nodes()))
 
         facade.set_quorum_options({"auto_tie_breaker": "0"})
@@ -273,7 +278,7 @@ class SetQuorumOptionsTest(TestCase):
 
     def test_3nodes_atb_on(self):
         config = _read_file("corosync-3nodes.conf")
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         self.assertEqual(3, len(facade.get_nodes()))
 
         facade.set_quorum_options({"auto_tie_breaker": "1"})
@@ -289,7 +294,7 @@ class SetQuorumOptionsTest(TestCase):
 
     def test_3nodes_atb_off(self):
         config = _read_file("corosync-3nodes.conf")
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         self.assertEqual(3, len(facade.get_nodes()))
 
         facade.set_quorum_options({"auto_tie_breaker": "0"})

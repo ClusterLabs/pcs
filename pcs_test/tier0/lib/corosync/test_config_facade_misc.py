@@ -1,53 +1,13 @@
 from unittest import TestCase
 
-from pcs_test.tools.assertions import assert_raise_library_error
-from pcs_test.tools.misc import get_test_resource as rc
-
-from pcs.common.reports import ReportItemSeverity as severity
-from pcs.common.reports import codes as report_codes
-
 import pcs.lib.corosync.config_facade as lib
 from pcs.lib.corosync import constants
-
-
-class FromStringTest(TestCase):
-    def test_success(self):
-        with open(rc("corosync.conf")) as a_file:
-            config = a_file.read()
-        facade = lib.ConfigFacade.from_string(config)
-        self.assertEqual(facade.__class__, lib.ConfigFacade)
-        self.assertEqual(facade.config.export(), config)
-        self.assertFalse(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
-
-    def test_parse_error_missing_brace(self):
-        # pylint: disable=no-self-use
-        config = "section {"
-        assert_raise_library_error(
-            lambda: lib.ConfigFacade.from_string(config),
-            (
-                severity.ERROR,
-                report_codes.PARSE_ERROR_COROSYNC_CONF_MISSING_CLOSING_BRACE,
-                {},
-            ),
-        )
-
-    def test_parse_error_unexpected_brace(self):
-        # pylint: disable=no-self-use
-        config = "}"
-        assert_raise_library_error(
-            lambda: lib.ConfigFacade.from_string(config),
-            (
-                severity.ERROR,
-                report_codes.PARSE_ERROR_COROSYNC_CONF_UNEXPECTED_CLOSING_BRACE,
-                {},
-            ),
-        )
+from pcs.lib.corosync.config_parser import Parser
 
 
 class GetSimpleValueMixin:
     def assert_value(self, value, config):
-        facade = lib.ConfigFacade.from_string(config)
+        facade = lib.ConfigFacade(Parser.parse(config.encode("utf-8")))
         self.assertEqual(value, self.getter(facade))
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)

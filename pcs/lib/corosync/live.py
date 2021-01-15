@@ -3,24 +3,24 @@ import re
 
 from pcs import settings
 from pcs.common import reports
+from pcs.common.file import RawFileError
 from pcs.common.reports.item import ReportItem
 from pcs.lib.errors import LibraryError
+from pcs.lib.file.instance import FileInstance
+from pcs.lib.file.raw_file import raw_file_error_report
 
 
 def get_local_corosync_conf():
     """
     Read corosync.conf file from local machine
     """
-    path = settings.corosync_conf_file
+    # TODO The architecture of working with corosync.conf needs to be
+    # overhauled to match the new file framework.
+    instance = FileInstance.for_corosync_conf()
     try:
-        with open(path, "r", encoding="utf-8") as a_file:
-            return a_file.read()
-    except EnvironmentError as e:
-        raise LibraryError(
-            ReportItem.error(
-                reports.messages.UnableToReadCorosyncConfig(path, e.strerror)
-            )
-        ) from e
+        return instance.read_raw().decode("utf-8")
+    except RawFileError as e:
+        raise LibraryError(raw_file_error_report(e)) from e
 
 
 def get_quorum_status_text(runner):

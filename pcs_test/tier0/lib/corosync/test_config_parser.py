@@ -854,7 +854,9 @@ class SectionTest(TestCase):
 class ParserTest(TestCase):
     # pylint: disable=too-many-public-methods
     def test_empty(self):
-        self.assertEqual(str(config_parser.parse_string("")), "")
+        self.assertEqual(
+            str(config_parser.Parser.parse("".encode("utf-8"))), ""
+        )
 
     def test_attributes_one_attribute(self):
         string = outdent(
@@ -867,7 +869,9 @@ class ParserTest(TestCase):
             name: value
             """
         )
-        self.assertEqual(str(config_parser.parse_string(string)), parsed)
+        self.assertEqual(
+            str(config_parser.Parser.parse(string.encode("utf-8"))), parsed
+        )
 
     def test_attributes_two_attributes_same_name(self):
         string = outdent(
@@ -882,7 +886,9 @@ class ParserTest(TestCase):
             name: value
             """
         )
-        self.assertEqual(str(config_parser.parse_string(string)), parsed)
+        self.assertEqual(
+            str(config_parser.Parser.parse(string.encode("utf-8"))), parsed
+        )
 
     def test_attributes_more_attributes_whitespace(self):
         # pylint: disable=trailing-whitespace
@@ -902,7 +908,9 @@ class ParserTest(TestCase):
             name4: value4
             """
         )
-        self.assertEqual(str(config_parser.parse_string(string)), parsed)
+        self.assertEqual(
+            str(config_parser.Parser.parse(string.encode("utf-8"))), parsed
+        )
 
     def test_attributes_colon_in_value(self):
         string = outdent(
@@ -915,7 +923,7 @@ class ParserTest(TestCase):
             name: foo:value
             """
         )
-        root = config_parser.parse_string(string)
+        root = config_parser.Parser.parse(string.encode("utf-8"))
         self.assertEqual(root.get_attributes(), [["name", "foo:value"]])
         self.assertEqual(str(root), parsed)
 
@@ -931,7 +939,7 @@ class ParserTest(TestCase):
             name: 
             """
         )
-        root = config_parser.parse_string(string)
+        root = config_parser.Parser.parse(string.encode("utf-8"))
         self.assertEqual(root.get_attributes(), [["name", ""]])
         self.assertEqual(str(root), parsed)
 
@@ -948,7 +956,9 @@ class ParserTest(TestCase):
             }
             """
         )
-        self.assertEqual(str(config_parser.parse_string(string)), parsed)
+        self.assertEqual(
+            str(config_parser.Parser.parse(string.encode("utf-8"))), parsed
+        )
 
     def test_sections_empty_section_in_section_whitespace(self):
         # pylint: disable=trailing-whitespace
@@ -973,7 +983,9 @@ class ParserTest(TestCase):
             }
             """
         )
-        self.assertEqual(str(config_parser.parse_string(string)), parsed)
+        self.assertEqual(
+            str(config_parser.Parser.parse(string.encode("utf-8"))), parsed
+        )
 
     def test_sections_no_name_before_opening(self):
         string = outdent(
@@ -992,8 +1004,8 @@ class ParserTest(TestCase):
         )
         self.assertRaises(
             config_parser.MissingSectionNameBeforeOpeningBraceException,
-            config_parser.parse_string,
-            string,
+            config_parser.Parser.parse,
+            string.encode("utf-8"),
         )
 
     def test_sections_junk_after_opening(self):
@@ -1013,8 +1025,8 @@ class ParserTest(TestCase):
         )
         self.assertRaises(
             config_parser.ExtraCharactersAfterOpeningBraceException,
-            config_parser.parse_string,
-            string,
+            config_parser.Parser.parse,
+            string.encode("utf-8"),
         )
 
     def test_sections_comment_junk_after_opening(self):
@@ -1034,8 +1046,8 @@ class ParserTest(TestCase):
         )
         self.assertRaises(
             config_parser.ExtraCharactersAfterOpeningBraceException,
-            config_parser.parse_string,
-            string,
+            config_parser.Parser.parse,
+            string.encode("utf-8"),
         )
 
     def test_sections_junk_before_closing(self):
@@ -1055,8 +1067,8 @@ class ParserTest(TestCase):
         )
         self.assertRaises(
             config_parser.ExtraCharactersBeforeOrAfterClosingBraceException,
-            config_parser.parse_string,
-            string,
+            config_parser.Parser.parse,
+            string.encode("utf-8"),
         )
 
     def test_sections_junk_after_closing(self):
@@ -1076,8 +1088,8 @@ class ParserTest(TestCase):
         )
         self.assertRaises(
             config_parser.ExtraCharactersBeforeOrAfterClosingBraceException,
-            config_parser.parse_string,
-            string,
+            config_parser.Parser.parse,
+            string.encode("utf-8"),
         )
 
     def test_sections_comment_junk_after_closing(self):
@@ -1097,8 +1109,8 @@ class ParserTest(TestCase):
         )
         self.assertRaises(
             config_parser.ExtraCharactersBeforeOrAfterClosingBraceException,
-            config_parser.parse_string,
-            string,
+            config_parser.Parser.parse,
+            string.encode("utf-8"),
         )
 
     def test_sections_unexpected_closing_brace(self):
@@ -1109,8 +1121,8 @@ class ParserTest(TestCase):
         )
         self.assertRaises(
             config_parser.UnexpectedClosingBraceException,
-            config_parser.parse_string,
-            string,
+            config_parser.Parser.parse,
+            string.encode("utf-8"),
         )
 
     def test_sections_unexpected_closing_brace_inner_section(self):
@@ -1128,8 +1140,8 @@ class ParserTest(TestCase):
         )
         self.assertRaises(
             config_parser.UnexpectedClosingBraceException,
-            config_parser.parse_string,
-            string,
+            config_parser.Parser.parse,
+            string.encode("utf-8"),
         )
 
     def test_sections_missing_closing_brace(self):
@@ -1140,8 +1152,8 @@ class ParserTest(TestCase):
         )
         self.assertRaises(
             config_parser.MissingClosingBraceException,
-            config_parser.parse_string,
-            string,
+            config_parser.Parser.parse,
+            string.encode("utf-8"),
         )
 
     def test_sections_missing_closing_brace_inner_section(self):
@@ -1157,8 +1169,8 @@ class ParserTest(TestCase):
         )
         self.assertRaises(
             config_parser.MissingClosingBraceException,
-            config_parser.parse_string,
-            string,
+            config_parser.Parser.parse,
+            string.encode("utf-8"),
         )
 
     def test_junk_line(self):
@@ -1177,8 +1189,8 @@ class ParserTest(TestCase):
         )
         self.assertRaises(
             config_parser.LineIsNotSectionNorKeyValueException,
-            config_parser.parse_string,
-            string,
+            config_parser.Parser.parse,
+            string.encode("utf-8"),
         )
 
     def test_comments_attributes(self):
@@ -1202,7 +1214,9 @@ class ParserTest(TestCase):
             name4 # junk5: value4
             """
         )
-        self.assertEqual(str(config_parser.parse_string(string)), parsed)
+        self.assertEqual(
+            str(config_parser.Parser.parse(string.encode("utf-8"))), parsed
+        )
 
     def test_comments_sections_closing_brace(self):
         string = outdent(
@@ -1213,8 +1227,8 @@ class ParserTest(TestCase):
         )
         self.assertRaises(
             config_parser.MissingClosingBraceException,
-            config_parser.parse_string,
-            string,
+            config_parser.Parser.parse,
+            string.encode("utf-8"),
         )
 
     def test_comments_sections_opening_brace(self):
@@ -1226,8 +1240,8 @@ class ParserTest(TestCase):
         )
         self.assertRaises(
             config_parser.UnexpectedClosingBraceException,
-            config_parser.parse_string,
-            string,
+            config_parser.Parser.parse,
+            string.encode("utf-8"),
         )
 
     def test_full_1(self):
@@ -1352,7 +1366,9 @@ class ParserTest(TestCase):
             }
             """
         )
-        self.assertEqual(str(config_parser.parse_string(string)), parsed)
+        self.assertEqual(
+            str(config_parser.Parser.parse(string.encode("utf-8"))), parsed
+        )
 
     def test_full_2(self):
         string = outdent(
@@ -1475,7 +1491,9 @@ class ParserTest(TestCase):
             }
             """
         )
-        self.assertEqual(str(config_parser.parse_string(string)), parsed)
+        self.assertEqual(
+            str(config_parser.Parser.parse(string.encode("utf-8"))), parsed
+        )
 
 
 class VerifySection(TestCase):
@@ -1509,7 +1527,7 @@ class VerifySection(TestCase):
             }
             """
         )
-        section = config_parser.parse_string(text)
+        section = config_parser.Parser.parse(text.encode("utf-8"))
         self.assertEqual(config_parser.verify_section(section), ([], [], []))
 
     def test_bad_section(self):
@@ -1562,7 +1580,7 @@ class VerifySection(TestCase):
             }
             """
         )
-        section = config_parser.parse_string(text)
+        section = config_parser.Parser.parse(text.encode("utf-8"))
         # this would be rejected by the parser
         section.add_attribute("name1_3", "va{l}ue")
         self.assertEqual(

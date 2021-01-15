@@ -6,7 +6,10 @@ from unittest import mock, TestCase
 from pcs.common import reports
 from pcs.common.reports import codes as report_codes
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
-from pcs.lib.corosync.config_parser import Section as CorosyncSection
+from pcs.lib.corosync.config_parser import (
+    Parser as CorosyncParser,
+    Section as CorosyncSection,
+)
 
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_raise_library_error
@@ -46,7 +49,9 @@ class PushCorosyncConfLiveBase(TestCase):
         if not node2_name:
             config = re.sub(r"\s+name: node-2\n", "\n", config)
         self.corosync_conf_text = config
-        self.corosync_conf_facade = CorosyncConfigFacade.from_string(config)
+        self.corosync_conf_facade = CorosyncConfigFacade(
+            CorosyncParser.parse(config.encode("utf-8"))
+        )
         CorosyncConfigFacade.need_stopped_cluster = False
         CorosyncConfigFacade.need_qdevice_reload = False
 
@@ -1088,7 +1093,9 @@ class PushCorosyncConfFile(TestCase):
         )
         env = self.env_assistant.get_env()
         env.push_corosync_conf(
-            CorosyncConfigFacade.from_string(new_corosync_conf_data)
+            CorosyncConfigFacade(
+                CorosyncParser.parse(new_corosync_conf_data.encode("utf-8"))
+            )
         )
 
 

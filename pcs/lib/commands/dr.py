@@ -5,6 +5,7 @@ from typing import (
     List,
     Mapping,
     Tuple,
+    cast,
 )
 
 from pcs.common import (
@@ -90,6 +91,7 @@ def set_recovery_site(env: LibraryEnvironment, node_name: str) -> None:
     env
     node_name -- a known host from the recovery site
     """
+    # pylint: disable=too-many-locals
     if env.ghost_file_codes:
         raise LibraryError(
             ReportItem.error(
@@ -127,14 +129,35 @@ def set_recovery_site(env: LibraryEnvironment, node_name: str) -> None:
     if report_processor.has_errors:
         raise LibraryError()
 
+    # TODO The new file framework doesn't support network communication yet.
     com_cmd = GetCorosyncConf(env.report_processor)
     com_cmd.set_targets(remote_targets)
-    remote_cluster_nodes, report_list = get_existing_nodes_names(
-        CorosyncConfigFacade.from_string(
-            run_and_raise(env.get_node_communicator(), com_cmd)
-        ),
-        error_on_missing_name=True,
-    )
+    corosync_toolbox = get_file_toolbox(file_type_codes.COROSYNC_CONF)
+    try:
+        remote_cluster_nodes, report_list = get_existing_nodes_names(
+            cast(
+                CorosyncConfigFacade,
+                corosync_toolbox.facade(
+                    corosync_toolbox.parser.parse(
+                        run_and_raise(
+                            env.get_node_communicator(), com_cmd
+                        ).encode("utf-8")
+                    )
+                ),
+            ),
+            error_on_missing_name=True,
+        )
+    except ParserErrorException as e:
+        report_processor.report_list(
+            corosync_toolbox.parser.exception_to_report_list(
+                e,
+                file_type_codes.COROSYNC_CONF,
+                None,
+                force_code=None,
+                is_forced_or_warning=False,
+            )
+        )
+
     if report_processor.report_list(report_list).has_errors:
         raise LibraryError()
 

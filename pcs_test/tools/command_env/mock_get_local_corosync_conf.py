@@ -1,5 +1,9 @@
 from pcs import settings
-from pcs.common import reports
+from pcs.common import (
+    file_type_codes,
+    reports,
+)
+from pcs.common.file import RawFileError
 from pcs.common.reports.item import ReportItem
 from pcs.lib.errors import LibraryError
 
@@ -23,9 +27,11 @@ def get_get_local_corosync_conf(call_queue):
         if expected_call.exception_msg:
             raise LibraryError(
                 ReportItem.error(
-                    reports.messages.UnableToReadCorosyncConfig(
-                        settings.corosync_conf_file,
+                    reports.messages.FileIoError(
+                        file_type_codes.COROSYNC_CONF,
+                        RawFileError.ACTION_READ,
                         expected_call.exception_msg,
+                        settings.corosync_conf_file,
                     )
                 )
             )

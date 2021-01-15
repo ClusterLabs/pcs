@@ -145,7 +145,9 @@ class Section:
 class Parser(ParserInterface):
     @staticmethod
     def parse(raw_file_data: bytes) -> Section:
-        return parse_string(raw_file_data.decode("utf-8"))
+        root = Section("")
+        Parser._parse_section(raw_file_data.decode("utf-8").split("\n"), root)
+        return root
 
     @staticmethod
     def exception_to_report_list(
@@ -155,56 +157,83 @@ class Parser(ParserInterface):
         force_code: reports.types.ForceCode,
         is_forced_or_warning: bool,
     ) -> reports.ReportItemList:
+        # TODO switch to new exceptions / reports and do not ignore input
+        # arguments of the function
         return [
-            reports.ReportItem.error(parser_exception_to_report_msg(exception))
+            reports.ReportItem.error(
+                Parser.parser_exception_to_report_msg(exception)
+            )
         ]
+
+    @staticmethod
+    def _parse_section(lines, section):
+        # parser should work the same way as the original parser in corosync
+        while lines:
+            current_line = lines.pop(0).strip()
+            if not current_line or current_line[0] == "#":
+                continue
+            if "{" in current_line:
+                section_name_candidate, after_brace_junk = current_line.rsplit(
+                    "{", 1
+                )
+                if after_brace_junk.strip():
+                    raise ExtraCharactersAfterOpeningBraceException()
+                section_name = section_name_candidate.strip()
+                if not section_name:
+                    raise MissingSectionNameBeforeOpeningBraceException()
+                new_section = Section(section_name.strip())
+                section.add_section(new_section)
+                Parser._parse_section(lines, new_section)
+            elif "}" in current_line:
+                if current_line.strip() != "}":
+                    raise ExtraCharactersBeforeOrAfterClosingBraceException()
+                if not section.parent:
+                    raise UnexpectedClosingBraceException()
+                return
+            elif ":" in current_line:
+                section.add_attribute(
+                    *[x.strip() for x in current_line.split(":", 1)]
+                )
+            else:
+                raise LineIsNotSectionNorKeyValueException()
+        if section.parent:
+            raise MissingClosingBraceException()
+
+    @staticmethod
+    def parser_exception_to_report_msg(
+        exception: ParserErrorException,
+    ) -> reports.item.ReportItemMessage:
+        exc_to_msg: Mapping[
+            Type[ParserErrorException], Type[reports.item.ReportItemMessage]
+        ] = {
+            MissingClosingBraceException: (
+                reports.messages.ParseErrorCorosyncConfMissingClosingBrace
+            ),
+            UnexpectedClosingBraceException: (
+                reports.messages.ParseErrorCorosyncConfUnexpectedClosingBrace
+            ),
+            MissingSectionNameBeforeOpeningBraceException: (
+                reports.messages.ParseErrorCorosyncConfMissingSectionNameBeforeOpeningBrace
+            ),
+            ExtraCharactersAfterOpeningBraceException: (
+                reports.messages.ParseErrorCorosyncConfExtraCharactersAfterOpeningBrace
+            ),
+            ExtraCharactersBeforeOrAfterClosingBraceException: (
+                reports.messages.ParseErrorCorosyncConfExtraCharactersBeforeOrAfterClosingBrace
+            ),
+            LineIsNotSectionNorKeyValueException: (
+                reports.messages.ParseErrorCorosyncConfLineIsNotSectionNorKeyValue
+            ),
+        }
+        return exc_to_msg.get(
+            type(exception), reports.messages.ParseErrorCorosyncConf
+        )()
 
 
 class Exporter(ExporterInterface):
     @staticmethod
     def export(config_structure: Section) -> bytes:
         return config_structure.export().encode("utf-8")
-
-
-# Deprecated. Use Parser instead
-def parse_string(conf_text):
-    root = Section("")
-    _parse_section(conf_text.split("\n"), root)
-    return root
-
-
-def _parse_section(lines, section):
-    # parser should work the same way as the original parser in corosync
-    while lines:
-        current_line = lines.pop(0).strip()
-        if not current_line or current_line[0] == "#":
-            continue
-        if "{" in current_line:
-            section_name_candidate, after_brace_junk = current_line.rsplit(
-                "{", 1
-            )
-            if after_brace_junk.strip():
-                raise ExtraCharactersAfterOpeningBraceException()
-            section_name = section_name_candidate.strip()
-            if not section_name:
-                raise MissingSectionNameBeforeOpeningBraceException()
-            new_section = Section(section_name.strip())
-            section.add_section(new_section)
-            _parse_section(lines, new_section)
-        elif "}" in current_line:
-            if current_line.strip() != "}":
-                raise ExtraCharactersBeforeOrAfterClosingBraceException()
-            if not section.parent:
-                raise UnexpectedClosingBraceException()
-            return
-        elif ":" in current_line:
-            section.add_attribute(
-                *[x.strip() for x in current_line.split(":", 1)]
-            )
-        else:
-            raise LineIsNotSectionNorKeyValueException()
-    if section.parent:
-        raise MissingClosingBraceException()
 
 
 def verify_section(section, path_prefix=""):
@@ -284,33 +313,3 @@ class ExtraCharactersBeforeOrAfterClosingBraceException(ParsingErrorException):
 
 class LineIsNotSectionNorKeyValueException(ParsingErrorException):
     pass
-
-
-def parser_exception_to_report_msg(
-    exception: ParserErrorException,
-) -> reports.item.ReportItemMessage:
-    exc_to_msg: Mapping[
-        Type[ParserErrorException], Type[reports.item.ReportItemMessage]
-    ] = {
-        MissingClosingBraceException: (
-            reports.messages.ParseErrorCorosyncConfMissingClosingBrace
-        ),
-        UnexpectedClosingBraceException: (
-            reports.messages.ParseErrorCorosyncConfUnexpectedClosingBrace
-        ),
-        MissingSectionNameBeforeOpeningBraceException: (
-            reports.messages.ParseErrorCorosyncConfMissingSectionNameBeforeOpeningBrace
-        ),
-        ExtraCharactersAfterOpeningBraceException: (
-            reports.messages.ParseErrorCorosyncConfExtraCharactersAfterOpeningBrace
-        ),
-        ExtraCharactersBeforeOrAfterClosingBraceException: (
-            reports.messages.ParseErrorCorosyncConfExtraCharactersBeforeOrAfterClosingBrace
-        ),
-        LineIsNotSectionNorKeyValueException: (
-            reports.messages.ParseErrorCorosyncConfLineIsNotSectionNorKeyValue
-        ),
-    }
-    return exc_to_msg.get(
-        type(exception), reports.messages.ParseErrorCorosyncConf
-    )()

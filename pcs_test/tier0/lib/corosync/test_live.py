@@ -6,6 +6,8 @@ from pcs_test.tools.assertions import assert_raise_library_error
 from pcs_test.tools.misc import get_test_resource as rc
 
 from pcs import settings
+from pcs.common import file_type_codes
+from pcs.common.file import RawFileError
 from pcs.common.reports import ReportItemSeverity as severity
 from pcs.common.reports import codes as report_codes
 from pcs.lib.external import CommandRunner
@@ -29,10 +31,12 @@ class GetLocalCorosyncConfTest(TestCase):
             lib.get_local_corosync_conf,
             (
                 severity.ERROR,
-                report_codes.UNABLE_TO_READ_COROSYNC_CONFIG,
+                report_codes.FILE_IO_ERROR,
                 {
-                    "path": path,
-                    "reason": "No such file or directory",
+                    "file_type_code": file_type_codes.COROSYNC_CONF,
+                    "operation": RawFileError.ACTION_READ,
+                    "reason": f"No such file or directory: '{path}'",
+                    "file_path": path,
                 },
             ),
         )

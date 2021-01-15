@@ -4,6 +4,11 @@ from unittest import TestCase
 from pcs_test.tools.assertions import ac
 
 import pcs.lib.corosync.config_facade as lib
+from pcs.lib.corosync.config_parser import Parser
+
+
+def _get_facade(config_text):
+    return lib.ConfigFacade(Parser.parse(config_text.encode("utf-8")))
 
 
 class GetNodesTest(TestCase):
@@ -19,7 +24,7 @@ class GetNodesTest(TestCase):
         self.assertEqual(expected, real_nodes)
 
     def nodes_from_config(self, config):
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         nodes = facade.get_nodes()
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
@@ -226,7 +231,7 @@ class AddNodesTest(TestCase):
             }
         """
         )
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         facade.add_nodes(
             [
                 dict(
@@ -299,7 +304,7 @@ class AddNodesTest(TestCase):
             }
         """
         )
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         facade.add_nodes(
             [
                 dict(
@@ -389,7 +394,7 @@ class AddNodesTest(TestCase):
             }
         """
         )
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         facade.add_nodes(
             [
                 dict(name="node2", addrs=["node2-addr1"]),
@@ -443,7 +448,7 @@ class AddNodesTest(TestCase):
             }
         """
         )
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         facade.add_nodes(
             [
                 dict(name="node3", addrs=["node3-addr1"]),
@@ -531,7 +536,7 @@ class RemoveNodes(TestCase):
             }
         """
         )
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         facade.remove_nodes(["node3", "node4", "nodeX"])
         expected_config = dedent(
             """\
@@ -591,7 +596,7 @@ class RemoveNodes(TestCase):
             }
         """
         )
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         facade.remove_nodes(["node3"])
         expected_config = dedent(
             """\
@@ -641,7 +646,7 @@ class RemoveNodes(TestCase):
             }
         """
         )
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         facade.remove_nodes(["node2"])
         expected_config = dedent(
             """\

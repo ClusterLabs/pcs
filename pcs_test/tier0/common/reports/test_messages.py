@@ -908,14 +908,6 @@ class CorosyncConfigUnsupportedTransport(NameBuildTest):
         )
 
 
-class UnableToReadCorosyncConfig(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "Unable to read /dev/path: this is reason",
-            reports.UnableToReadCorosyncConfig("/dev/path", "this is reason"),
-        )
-
-
 class ParseErrorCorosyncConfMissingClosingBrace(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(
