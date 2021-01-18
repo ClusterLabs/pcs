@@ -14,7 +14,7 @@
 - Explicitly close libcurl connections to prevent stalled TCP connections in
   CLOSE-WAIT state ([ghissue#261], [rhbz#1885841])
 - Fixed parsing negative float numbers on command line ([rhbz#1869399])
-- Removed unwanted logging to system log (/var/log/messages)
+- Removed unwanted logging to system log (/var/log/messages) ([rhbz#1917286])
 - Fixed rare race condition in `pcs cluster start --wait` ([rhbz#1794062])
 - Better error message when unable to connect to pcsd ([rhbz#1619818])
 
@@ -37,6 +37,7 @@
 [rhbz#1856397]: https://bugzilla.redhat.com/show_bug.cgi?id=1856397
 [rhbz#1869399]: https://bugzilla.redhat.com/show_bug.cgi?id=1869399
 [rhbz#1885841]: https://bugzilla.redhat.com/show_bug.cgi?id=1885841
+[rhbz#1917286]: https://bugzilla.redhat.com/show_bug.cgi?id=1917286
 
 
 ## [0.10.7] - 2020-09-30
