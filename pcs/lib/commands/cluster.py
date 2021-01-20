@@ -754,15 +754,16 @@ def config_update_local(
             corosync_conf_instance.raw_to_facade(corosync_conf_content)
         )
     except ParserErrorException as e:
-        raise LibraryError(
-            *corosync_conf_instance.toolbox.parser.exception_to_report_list(
+        if env.report_processor.report_list(
+            corosync_conf_instance.toolbox.parser.exception_to_report_list(
                 e,
                 corosync_conf_instance.toolbox.file_type_code,
                 None,
                 force_code=None,
                 is_forced_or_warning=False,
             )
-        ) from e
+        ).has_errors:
+            raise LibraryError() from e
     _config_update(
         env.report_processor,
         corosync_conf,

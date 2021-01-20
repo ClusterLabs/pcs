@@ -398,13 +398,14 @@ class UpdateConfigLocal(TestCase):
                 {},
                 {},
                 {},
-            ),
+            )
+        )
+        self.env_assist.assert_reports(
             [
                 fixture.error(
                     report_codes.PARSE_ERROR_COROSYNC_CONF_LINE_IS_NOT_SECTION_NOR_KEY_VALUE
                 )
             ],
-            expected_in_processor=False,
         )
 
     def test_add_modify_remove_options(self):

@@ -798,12 +798,12 @@ class FatalConfigIssue(TestCase):
             .corosync_conf.load_content("wrong {\n  corosync")
         )
         self.env_assist.assert_raise_library_error(
-            lambda: dr.status_all_sites_plaintext(self.env_assist.get_env()),
+            lambda: dr.status_all_sites_plaintext(self.env_assist.get_env())
+        )
+        self.env_assist.assert_reports(
             [
                 fixture.error(
-                    # pylint: disable=line-too-long
                     report_codes.PARSE_ERROR_COROSYNC_CONF_LINE_IS_NOT_SECTION_NOR_KEY_VALUE
                 ),
-            ],
-            expected_in_processor=False,
+            ]
         )

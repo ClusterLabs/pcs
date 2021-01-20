@@ -156,6 +156,7 @@ class UpdateLocal(AssertPcsMixin, TestCase):
             stdout_full=(
                 "Error: Unable to parse corosync config: a line is not opening "
                 "or closing a section or key: value\n"
+                "Error: Errors have occurred, therefore pcs is unable to continue\n"
             ),
         )
 

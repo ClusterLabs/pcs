@@ -87,7 +87,11 @@ class FileInstance:
             toolbox.for_file_type(file_type_code),
         )
 
-    def __init__(self, raw_file_interface, file_toolbox):
+    def __init__(
+        self,
+        raw_file_interface: raw_file.RawFileInterface,
+        file_toolbox: toolbox.FileToolbox,
+    ):
         """
         Factories should be used instead
 
@@ -98,14 +102,14 @@ class FileInstance:
         self._toolbox = file_toolbox
 
     @property
-    def raw_file(self):
+    def raw_file(self) -> raw_file.RawFileInterface:
         """
         Get the underlying RawFileInterface instance
         """
         return self._raw_file
 
     @property
-    def toolbox(self):
+    def toolbox(self) -> toolbox.FileToolbox:
         """
         Get the underlying FileToolbox instance
         """

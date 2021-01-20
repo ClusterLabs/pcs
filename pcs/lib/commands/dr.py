@@ -132,16 +132,14 @@ def set_recovery_site(env: LibraryEnvironment, node_name: str) -> None:
     # TODO The new file framework doesn't support network communication yet.
     com_cmd = GetCorosyncConf(env.report_processor)
     com_cmd.set_targets(remote_targets)
-    corosync_toolbox = get_file_toolbox(file_type_codes.COROSYNC_CONF)
+    corosync_conf_instance = FileInstance.for_corosync_conf()
     try:
         remote_cluster_nodes, report_list = get_existing_nodes_names(
             cast(
                 CorosyncConfigFacade,
-                corosync_toolbox.facade(
-                    corosync_toolbox.parser.parse(
-                        run_and_raise(
-                            env.get_node_communicator(), com_cmd
-                        ).encode("utf-8")
+                corosync_conf_instance.raw_to_facade(
+                    run_and_raise(env.get_node_communicator(), com_cmd).encode(
+                        "utf-8"
                     )
                 ),
             ),
@@ -149,7 +147,7 @@ def set_recovery_site(env: LibraryEnvironment, node_name: str) -> None:
         )
     except ParserErrorException as e:
         report_processor.report_list(
-            corosync_toolbox.parser.exception_to_report_list(
+            corosync_conf_instance.toolbox.parser.exception_to_report_list(
                 e,
                 file_type_codes.COROSYNC_CONF,
                 None,

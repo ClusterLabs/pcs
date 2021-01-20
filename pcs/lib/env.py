@@ -1,4 +1,7 @@
-from typing import Optional
+from typing import (
+    Optional,
+    cast,
+)
 
 from lxml.etree import _Element
 
@@ -304,14 +307,15 @@ class LibraryEnvironment:
         # put them back into the framework.
         corosync_instance = FileInstance.for_corosync_conf()
         try:
-            return corosync_instance.toolbox.facade(
-                corosync_instance.toolbox.parser.parse(
+            facade = cast(
+                CorosyncConfigFacade,
+                corosync_instance.raw_to_facade(
                     self.get_corosync_conf_data().encode("utf-8")
-                )
+                ),
             )
         except ParserErrorException as e:
-            raise LibraryError(
-                *corosync_instance.toolbox.parser.exception_to_report_list(
+            if self.report_processor.report_list(
+                corosync_instance.toolbox.parser.exception_to_report_list(
                     e,
                     corosync_instance.toolbox.file_type_code,
                     (
@@ -322,7 +326,9 @@ class LibraryEnvironment:
                     force_code=None,
                     is_forced_or_warning=False,
                 )
-            ) from e
+            ).has_errors:
+                raise LibraryError() from e
+        return facade
 
     def push_corosync_conf(
         self, corosync_conf_facade, skip_offline_nodes=False
