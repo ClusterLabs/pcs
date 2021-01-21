@@ -147,6 +147,19 @@ class UpdateLocal(AssertPcsMixin, TestCase):
             ),
         )
 
+    def test_file_parse_error(self):
+        write_data_to_tmpfile(
+            "this is not\na valid corosync.conf file\n", self.corosync_conf_file
+        )
+        self.assert_pcs_fail(
+            "cluster config update transport ip_version=ipv4 totem token=12".split(),
+            stdout_full=(
+                "Error: Unable to parse corosync config: a line is not opening "
+                "or closing a section or key: value\n"
+                "Error: Errors have occurred, therefore pcs is unable to continue\n"
+            ),
+        )
+
     def test_validation_errors(self):
         write_data_to_tmpfile(
             fixture_corosync_conf_minimal(), self.corosync_conf_file

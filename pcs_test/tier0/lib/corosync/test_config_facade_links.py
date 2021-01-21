@@ -5,11 +5,16 @@ from unittest import TestCase
 from pcs_test.tools.assertions import ac
 
 import pcs.lib.corosync.config_facade as lib
+from pcs.lib.corosync.config_parser import Parser
+
+
+def _get_facade(config_text):
+    return lib.ConfigFacade(Parser.parse(config_text.encode("utf-8")))
 
 
 class GetLinkOptions(TestCase):
     def _assert_options(self, config, options):
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         self.assertEqual(options, facade.get_links_options())
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
@@ -229,7 +234,7 @@ class AddLink(TestCase):
 
     @staticmethod
     def _assert_add(node_addr_map, options, before, after):
-        facade = lib.ConfigFacade.from_string(before)
+        facade = _get_facade(before)
         facade.add_link(node_addr_map, options)
         ac(after, facade.config.export())
 
@@ -666,7 +671,7 @@ class AddLink(TestCase):
 class RemoveLinks(TestCase):
     @staticmethod
     def assert_remove(links, before, after):
-        facade = lib.ConfigFacade.from_string(before)
+        facade = _get_facade(before)
         facade.remove_links(links)
         ac(after, facade.config.export())
 
@@ -1112,7 +1117,7 @@ class RemoveLinks(TestCase):
 
 class UpdateLink(TestCase):
     def _assert_update(self, before, after, linknumber, options, node_addr_map):
-        facade = lib.ConfigFacade.from_string(before)
+        facade = _get_facade(before)
         facade.update_link(linknumber, node_addr_map, options)
         ac(after, facade.config.export())
         self.assertTrue(facade.need_stopped_cluster)

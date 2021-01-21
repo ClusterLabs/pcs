@@ -389,6 +389,25 @@ class UpdateConfigLocal(TestCase):
             expected_in_processor=False,
         )
 
+    def test_corosyncconf_parse_error(self):
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.config_update_local(
+                self.env_assist.get_env(),
+                b"this is not\na valid corosync.conf file\n",
+                {},
+                {},
+                {},
+                {},
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.PARSE_ERROR_COROSYNC_CONF_LINE_IS_NOT_SECTION_NOR_KEY_VALUE
+                )
+            ],
+        )
+
     def test_add_modify_remove_options(self):
         before = fixture_totem(
             transport_options={

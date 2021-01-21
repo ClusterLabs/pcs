@@ -26,21 +26,6 @@ class ConfigFacade(FacadeInterface):
     """
 
     @classmethod
-    def from_string(cls, config_string):
-        """
-        Parse corosync config and create a facade around it
-        config_string corosync config text
-        """
-        try:
-            return cls(config_parser.parse_string(config_string))
-        except config_parser.CorosyncConfParserException as e:
-            raise LibraryError(
-                ReportItem.error(
-                    config_parser.parser_exception_to_report_msg(e)
-                )
-            ) from e
-
-    @classmethod
     def create(cls, cluster_name, node_list, transport):
         """
         Create a minimal config

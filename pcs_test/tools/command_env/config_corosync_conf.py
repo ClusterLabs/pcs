@@ -2,7 +2,7 @@ from pcs_test.tools.command_env.mock_get_local_corosync_conf import Call
 from pcs_test.tools.misc import get_test_resource as rc
 
 from pcs.lib.corosync.config_facade import ConfigFacade
-from pcs.lib.corosync.config_parser import Section
+from pcs.lib.corosync.config_parser import Parser, Section
 
 
 class CorosyncConf:
@@ -33,7 +33,9 @@ class CorosyncConf:
             content = a_file.read()
         corosync_conf = None
         if node_name_list:
-            corosync_conf = ConfigFacade.from_string(content).config
+            corosync_conf = ConfigFacade(
+                Parser.parse(content.encode("utf-8"))
+            ).config
             for nodelist in corosync_conf.get_sections(name="nodelist"):
                 corosync_conf.del_section(nodelist)
 
@@ -50,7 +52,7 @@ class CorosyncConf:
             corosync_conf = (
                 corosync_conf
                 if corosync_conf
-                else ConfigFacade.from_string(content).config
+                else ConfigFacade(Parser.parse(content.encode("utf-8"))).config
             )
             for quorum in corosync_conf.get_sections(name="quorum"):
                 quorum.set_attribute(

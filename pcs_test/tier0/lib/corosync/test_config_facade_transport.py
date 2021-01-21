@@ -2,6 +2,11 @@ from textwrap import dedent
 from unittest import TestCase
 
 import pcs.lib.corosync.config_facade as lib
+from pcs.lib.corosync.config_parser import Parser
+
+
+def _get_facade(config_text):
+    return lib.ConfigFacade(Parser.parse(config_text.encode("utf-8")))
 
 
 class NeedsStoppedClusterTest(TestCase):
@@ -21,7 +26,7 @@ class NeedsStoppedClusterTest(TestCase):
     def _assert_needs_stoped_cluster(self, config, need_stopped, option_list):
         for options in option_list:
             with self.subTest(options):
-                facade = lib.ConfigFacade.from_string(config)
+                facade = _get_facade(config)
                 facade.set_transport_options(options, {}, {})
                 self.assertEqual(facade.need_stopped_cluster, need_stopped)
 
@@ -91,7 +96,7 @@ class SetTransportOptionsKnetMixin:
             }}
         """
         ).format(self.knet_transport)
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         facade.set_transport_options(
             {
                 "link_mode": "active",
@@ -146,7 +151,7 @@ class SetTransportOptionsKnetMixin:
             }}
         """,
         ).format(self.knet_transport)
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         facade.set_transport_options(
             {
                 "link_mode": "",
@@ -187,7 +192,7 @@ class SetTransportOptionsKnetMixin:
             }}
         """,
         ).format(self.knet_transport)
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         facade.set_transport_options(
             {
                 "link_mode": "passive",
@@ -242,7 +247,7 @@ class SetTransportOptionsKnetMixin:
             }}
         """
         ).format(self.knet_transport)
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         facade.set_transport_options(
             {
                 "link_mode": "active",
@@ -302,7 +307,7 @@ class SetTransportOptionsKnetMixin:
             }}
         """
         ).format(self.knet_transport)
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         facade.set_transport_options(
             {
                 "ip_version": "",
@@ -361,7 +366,7 @@ class SetTransportOptionsKnetMixin:
             }}
         """
         ).format(self.knet_transport)
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         facade.set_transport_options(
             {
                 "ip_version": "ipv4-6",
@@ -429,7 +434,7 @@ class SetTransportOptionsKnetMixin:
             }}
         """
         ).format(self.knet_transport)
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         facade.set_transport_options(
             {
                 "ip_version": "ipv4-6",
@@ -492,7 +497,7 @@ class SetTransportOptionsUdpMixin:
             }}
         """
         )
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         facade.set_transport_options(
             {"ip_version": "ipv4", "netmtu": "1500"},
             {
@@ -535,7 +540,7 @@ class SetTransportOptionsUdpMixin:
             }}
         """
         )
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         facade.set_transport_options(
             {
                 "ip_version": "",
@@ -578,7 +583,7 @@ class SetTransportOptionsUdpMixin:
             }}
         """
         )
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         facade.set_transport_options(
             {
                 "ip_version": "ipv6",
@@ -624,7 +629,7 @@ class SetTransportOptionsUdpMixin:
             }}
         """
         )
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         facade.set_transport_options(
             {
                 "ip_version": "ipv6",
@@ -682,7 +687,7 @@ class SetTransportOptionsUdpMixin:
             }}
         """
         )
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         facade.set_transport_options(
             {"ip_version": "", "netmtu": "", "knet_pmtud_interval": ""},
             {"model": ""},
@@ -734,7 +739,7 @@ class SetTransportOptionsUdpMixin:
             }}
         """
         )
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         facade.set_transport_options(
             {
                 "ip_version": "ipv4-6",
@@ -794,7 +799,7 @@ class SetTransportOptionsUdpMixin:
             }}
         """
         )
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         facade.set_transport_options(
             {
                 "ip_version": "ipv4-6",
@@ -869,8 +874,8 @@ class SetTransportOptionsGeneralTest(TestCase):
     def _assert_set_transport_options(self, params_list, before, after):
         for idx, params in enumerate(params_list):
             with self.subTest(params=params):
-                facade = lib.ConfigFacade.from_string(
-                    before.format(_prefix=self._option_prefix_list[idx]),
+                facade = _get_facade(
+                    before.format(_prefix=self._option_prefix_list[idx])
                 )
                 facade.set_transport_options(*params)
                 self.assertFalse(facade.need_qdevice_reload)
@@ -1052,7 +1057,7 @@ class GetOptionsDictMixin:
     )
 
     def _assert_option_dict(self, expected_dict, config):
-        facade = lib.ConfigFacade.from_string(config)
+        facade = _get_facade(config)
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
         self.assertEqual(expected_dict, self.getter(facade))
@@ -1239,7 +1244,7 @@ class SetTotemOptionsTest(TestCase):
     )
 
     def _assert_set_totem_options(self, options, before, after):
-        facade = lib.ConfigFacade.from_string(before)
+        facade = _get_facade(before)
         facade.set_totem_options(options)
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)

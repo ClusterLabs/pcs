@@ -449,12 +449,17 @@ class SetQuorumOptionsTest(TestCase):
 
         new_options = {"wait_for_all": "1"}
         assert_raise_library_error(
-            lambda: lib.set_options(lib_env, new_options),
-            (
-                severity.ERROR,
-                report_codes.PARSE_ERROR_COROSYNC_CONF_MISSING_CLOSING_BRACE,
-                {},
-            ),
+            lambda: lib.set_options(lib_env, new_options)
+        )
+        assert_report_item_list_equal(
+            self.mock_reporter.report_item_list,
+            [
+                (
+                    severity.ERROR,
+                    report_codes.PARSE_ERROR_COROSYNC_CONF_MISSING_CLOSING_BRACE,
+                    {},
+                ),
+            ],
         )
 
         mock_push_corosync.assert_not_called()

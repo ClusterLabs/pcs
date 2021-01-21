@@ -774,9 +774,11 @@ class FatalConfigIssue(TestCase):
             lambda: dr.status_all_sites_plaintext(self.env_assist.get_env()),
             [
                 fixture.error(
-                    report_codes.UNABLE_TO_READ_COROSYNC_CONFIG,
-                    path=settings.corosync_conf_file,
+                    report_codes.FILE_IO_ERROR,
+                    file_type_code=file_type_codes.COROSYNC_CONF,
+                    operation=RawFileError.ACTION_READ,
                     reason=REASON,
+                    file_path=settings.corosync_conf_file,
                 ),
             ],
             expected_in_processor=False,
@@ -796,12 +798,12 @@ class FatalConfigIssue(TestCase):
             .corosync_conf.load_content("wrong {\n  corosync")
         )
         self.env_assist.assert_raise_library_error(
-            lambda: dr.status_all_sites_plaintext(self.env_assist.get_env()),
+            lambda: dr.status_all_sites_plaintext(self.env_assist.get_env())
+        )
+        self.env_assist.assert_reports(
             [
                 fixture.error(
-                    # pylint: disable=line-too-long
                     report_codes.PARSE_ERROR_COROSYNC_CONF_LINE_IS_NOT_SECTION_NOR_KEY_VALUE
                 ),
-            ],
-            expected_in_processor=False,
+            ]
         )

@@ -201,14 +201,14 @@ class FullClusterStatusPlaintext(TestCase):
         self.env_assist.assert_raise_library_error(
             lambda: status.full_cluster_status_plaintext(
                 self.env_assist.get_env()
-            ),
+            )
+        )
+        self.env_assist.assert_reports(
             [
                 fixture.error(
-                    # pylint: disable=line-too-long
                     report_codes.PARSE_ERROR_COROSYNC_CONF_LINE_IS_NOT_SECTION_NOR_KEY_VALUE,
                 ),
-            ],
-            expected_in_processor=False,
+            ]
         )
 
     def test_fail_getting_cib(self):

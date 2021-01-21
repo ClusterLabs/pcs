@@ -1,4 +1,7 @@
-from typing import Optional
+from typing import (
+    Optional,
+    cast,
+)
 
 from lxml.etree import _Element
 
@@ -29,6 +32,8 @@ from pcs.lib.corosync.config_parser import (
 from pcs.lib.corosync.live import get_local_corosync_conf
 from pcs.lib.external import CommandRunner
 from pcs.lib.errors import LibraryError
+from pcs.lib.file.instance import FileInstance
+from pcs.lib.interface.config import ParserErrorException
 from pcs.lib.node_communication import (
     LibCommunicatorLogger,
     NodeTargetLibFactory,
@@ -295,7 +300,35 @@ class LibraryEnvironment:
         return self._corosync_conf_data
 
     def get_corosync_conf(self) -> CorosyncConfigFacade:
-        return CorosyncConfigFacade.from_string(self.get_corosync_conf_data())
+        # TODO The architecture of working with corosync.conf needs to be
+        # overhauled to match the new file framework. The code below is
+        # complicated, because we read corosync.conf data at one place outside
+        # of the file framework or get it from outside (from CLI) and then we
+        # put them back into the framework.
+        corosync_instance = FileInstance.for_corosync_conf()
+        try:
+            facade = cast(
+                CorosyncConfigFacade,
+                corosync_instance.raw_to_facade(
+                    self.get_corosync_conf_data().encode("utf-8")
+                ),
+            )
+        except ParserErrorException as e:
+            if self.report_processor.report_list(
+                corosync_instance.toolbox.parser.exception_to_report_list(
+                    e,
+                    corosync_instance.toolbox.file_type_code,
+                    (
+                        corosync_instance.raw_file.metadata.path
+                        if self.is_corosync_conf_live
+                        else None
+                    ),
+                    force_code=None,
+                    is_forced_or_warning=False,
+                )
+            ).has_errors:
+                raise LibraryError() from e
+        return facade
 
     def push_corosync_conf(
         self, corosync_conf_facade, skip_offline_nodes=False

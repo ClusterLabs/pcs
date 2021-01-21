@@ -675,8 +675,12 @@ def get_corosync_conf_facade(conf_text=None):
         settings
     """
     try:
-        return corosync_conf_facade.from_string(
-            getCorosyncConf() if conf_text is None else conf_text
+        return corosync_conf_facade(
+            corosync_conf_parser.Parser.parse(
+                (getCorosyncConf() if conf_text is None else conf_text).encode(
+                    "utf-8"
+                )
+            )
         )
     except corosync_conf_parser.CorosyncConfParserException as e:
         err("Unable to parse corosync.conf: %s" % e)
@@ -772,8 +776,10 @@ def need_to_handle_qdevice_service():
         is used
     """
     try:
-        cfg = corosync_conf_facade.from_string(
-            open(settings.corosync_conf_file, "r", encoding="utf-8").read()
+        cfg = corosync_conf_facade(
+            corosync_conf_parser.Parser.parse(
+                open(settings.corosync_conf_file, "rb").read()
+            )
         )
         return cfg.has_quorum_device()
     except (EnvironmentError, corosync_conf_parser.CorosyncConfParserException):
@@ -1986,6 +1992,9 @@ def getClusterStateXml():
     return xml_string
 
 
+# DEPRECATED
+# This should be all handle in pcs.lib. Currently, only pcs.config.config_show
+# uses this, as it it still legacy architecture code.
 def getClusterName():
     """
     Commandline options:
@@ -1994,8 +2003,8 @@ def getClusterName():
         settings
     """
     try:
-        f = open(settings.corosync_conf_file, "r")
-        conf = corosync_conf_facade(corosync_conf_parser.parse_string(f.read()))
+        f = open(settings.corosync_conf_file, "rb")
+        conf = corosync_conf_facade(corosync_conf_parser.Parser.parse(f.read()))
         f.close()
         cluster_name = conf.get_cluster_name()
         if cluster_name:

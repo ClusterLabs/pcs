@@ -14,12 +14,12 @@ from pcs.lib.commands.sbd import (
     TIMEOUT_ACTION_ALLOWED_VALUE_LIST,
     enable_sbd,
 )
-from pcs.lib.corosync.config_parser import parse_string
+from pcs.lib.corosync.config_parser import Parser
 
 
 def _get_corosync_conf_text_with_atb(orig_cfg_file):
-    with open(get_test_resource(orig_cfg_file)) as a_file:
-        corosync_conf = parse_string(a_file.read())
+    with open(get_test_resource(orig_cfg_file), "rb") as a_file:
+        corosync_conf = Parser.parse(a_file.read())
     for quorum in corosync_conf.get_sections(name="quorum"):
         quorum.del_attributes_by_name("two_node")
         quorum.set_attribute("auto_tie_breaker", 1)
