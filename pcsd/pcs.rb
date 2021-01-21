@@ -953,6 +953,32 @@ def is_auth_against_nodes(auth_user, node_names, timeout=10)
   return online_nodes, offline_nodes, not_authorized_nodes
 end
 
+def pcs_auth_token(nodes)
+  # nodes is a hash of hashes:
+  # {
+  #   'node name' => {
+  #     'token' => auth token
+  #     'dest_list' => [ # currently only the first item is used
+  #       {'addr' => addr, 'port' => port} # how to connect to a node
+  #     ]
+  #   }
+  # }
+
+  new_hosts = []
+  nodes.each { |node_name, node_data|
+    new_hosts << PcsKnownHost.new(
+      node_name,
+      node_data['token'],
+      [node_data['dest_list'][0]]
+    )
+  }
+
+  # We want to avoid send updated known hosts to all cluster nodes therefore we
+  # are using 'nil' for cluster_name argument. Actually, automatic known hosts
+  # synchronization should be disabled in cluster when setting a custom token.
+  Cfgsync::save_sync_new_known_hosts(new_hosts, [], [], nil)
+end
+
 def pcs_auth(auth_user, nodes)
   # nodes is a hash of hashes:
   # {

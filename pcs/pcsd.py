@@ -151,3 +151,11 @@ def pcsd_deauth(lib, argv, modifiers):
         utils.err(
             "Unable to edit data in {file}: {err}".format(file=filepath, err=e)
         )
+
+
+def accept_token_cmd(lib, argv, modifiers):
+    del lib
+    modifiers.ensure_only_supported()
+    if len(argv) != 1:
+        raise CmdLineInputError("1 argument required")
+    utils.set_token_to_accept(utils.get_token_from_file(argv[0]))

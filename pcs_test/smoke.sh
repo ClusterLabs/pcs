@@ -18,3 +18,11 @@ token=$(python3 -c "import json; print(json.load(open('/var/lib/pcsd/known-hosts
 curl -kb "token=${token}" https://localhost:2224/remote/cluster_status_plaintext -d 'data_json={}' > output.json
 cat output.json; echo ""
 python3 -c "import json; import sys; json.load(open('output.json'))['status'] == 'exception' and (sys.exit(1))";
+
+token_file=$(mktemp)
+openssl rand -base64 32 > $token_file
+custom_localhost_node_name="custom-node-name"
+
+pcs host auth $custom_localhost_node_name addr=localhost --token $token_file
+pcs pcsd accept_token $token_file
+pcs cluster pcsd-status $custom_localhost_node_name | grep "$custom_localhost_node_name: Online"

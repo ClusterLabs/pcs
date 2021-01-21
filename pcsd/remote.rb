@@ -1197,7 +1197,10 @@ def clusters_overview(params, request, auth_user)
 end
 
 def auth(params, request, auth_user)
-  return PCSAuth.validUser(params['username'], params['password'])
+  # User authentication using username and password is done in python part of
+  # pcsd. We will get here only if credentials are correct, so we just need to
+  # create a token for the user.
+  return PCSAuth.createToken(params['username'])
 end
 
 def check_auth(params, request, auth_user)

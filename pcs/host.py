@@ -52,9 +52,10 @@ def auth_cmd(lib, argv, modifiers):
     Options:
       * -u - username
       * -p - password
+      * --token - auth token
       * --request-timeout - timeout for HTTP requests
     """
-    modifiers.ensure_only_supported("-u", "-p", "--request-timeout")
+    modifiers.ensure_only_supported("-u", "-p", "--request-timeout", "--token")
     if not argv:
         raise CmdLineInputError("No host specified")
     host_dict = {
@@ -63,6 +64,13 @@ def auth_cmd(lib, argv, modifiers):
             argv, "host name"
         ).items()
     }
+    token = modifiers.get("--token")
+    if token:
+        token_value = utils.get_token_from_file(token)
+        for host_info in host_dict.values():
+            host_info.update(dict(token=token_value))
+        utils.auth_hosts_token(host_dict)
+        return
     username, password = utils.get_user_and_pass()
     for host_info in host_dict.values():
         host_info.update(dict(username=username, password=password))

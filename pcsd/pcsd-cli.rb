@@ -98,6 +98,22 @@ allowed_commands = {
       }
     },
   },
+  'auth_with_token' => {
+    'only_superuser' => false,
+    'permissions' => nil,
+    'call' => lambda { |params, auth_user_|
+      pcs_auth_token(params.fetch('nodes'))
+      return {}
+    },
+  },
+  'set_token_to_accept' => {
+    'only_superuser' => true,
+    'permissions' => nil,
+    'call' => lambda { |params, auth_user_|
+      PCSAuth.addToken(SUPERUSER, params.fetch('token'))
+      return {}
+    },
+  },
   'send_local_configs' => {
     'only_superuser' => false,
     'permissions' => Permissions::FULL,

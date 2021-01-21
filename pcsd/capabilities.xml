@@ -1899,12 +1899,26 @@
         pcs commands: pcs cluster auth
       </description>
     </capability>
+    <capability id="pcs.auth.client.token" in-pcs="1" in-pcsd="0">
+      <description>
+        Can authenticate to other hosts by specifying a token for the hosts.
+
+        pcs commands: pcs host auth --token
+      </description>
+    </capability>
     <capability id="pcs.auth.server" in-pcs="0" in-pcsd="1">
       <description>
         Other hosts can authenticate against the local host to be able to
         connect to the local host.
 
         daemon urls: auth, check_auth
+      </description>
+    </capability>
+    <capability id="pcs.auth.server.token" in-pcs="1" in-pcsd="0">
+      <description>
+        Add token to be accepted as a valid authentication token.
+
+        pcs commands: pcs host accept_token
       </description>
     </capability>
     <capability id="pcs.auth.deauth-client" in-pcs="1" in-pcsd="0">

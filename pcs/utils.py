@@ -945,6 +945,28 @@ def run_pcsdcli(command, data=None):
     return output_json, retval
 
 
+def set_token_to_accept(token):
+    output, retval = run_pcsdcli("set_token_to_accept", dict(token=token))
+    if retval == 0:
+        if output["status"] == "access_denied":
+            err("Access denied")
+        if output["status"] != "ok":
+            err("Unable to communicate with pcsd")
+    else:
+        err("Unable to communicate with pcsd")
+
+
+def auth_hosts_token(host_dict):
+    output, retval = run_pcsdcli("auth_with_token", dict(nodes=host_dict))
+    if retval == 0:
+        if output["status"] == "access_denied":
+            err("Access denied")
+        if output["status"] != "ok":
+            err("Unable to communicate with pcsd")
+    else:
+        err("Unable to communicate with pcsd")
+
+
 def auth_hosts(host_dict):
     """
     Commandline options:
@@ -2892,3 +2914,18 @@ def get_user_and_pass():
 
 def get_input_modifiers():
     return InputModifiers(pcs_options)
+
+
+def get_token_from_file(file_name: str) -> str:
+    try:
+        with open(file_name, "rb") as file:
+            max_size = settings.pcsd_token_max_bytes  # type: ignore
+            value_bytes = file.read(max_size + 1)
+            if len(value_bytes) > max_size:
+                err(f"Maximal token size of {max_size} bytes exceeded")
+            if not value_bytes:
+                err(f"File '{file_name}' is empty")
+            return base64.b64encode(value_bytes).decode("utf-8")
+    except OSError as e:
+        err(f"Unable to read file '{file_name}': {e}", exit_after_error=False)
+        raise SystemExit(1) from e

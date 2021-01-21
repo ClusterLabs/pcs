@@ -80,6 +80,8 @@ PCS_LONG_OPTIONS = [
     "overwrite",
     # output format of commands, e.g: json, cmd, text, ...
     "output-format=",
+    # auth token
+    "token=",
 ]
 
 
@@ -495,6 +497,7 @@ class InputModifiers:
                 "--output-format": options.get("--output-format", "text"),
                 "--request-timeout": options.get("--request-timeout", None),
                 "--to": options.get("--to", None),
+                "--token": options.get("--token", None),
                 "--wait": options.get("--wait", False),
                 "-f": options.get("-f", None),
                 "-p": options.get("-p", None),

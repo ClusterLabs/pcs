@@ -19,8 +19,7 @@ class PCSAuth
     end
   end
 
-  def self.validUser(username, password)
-    token = PCSAuth.uuid
+  def self.addToken(username, token)
     begin
       password_file = File.open(PCSD_USERS_PATH, File::RDWR|File::CREAT)
       password_file.flock(File::LOCK_EX)
@@ -30,12 +29,21 @@ class PCSAuth
       $logger.info "Empty file '#{PCSD_USERS_PATH}', creating new file"
       users = []
     end
-    users << {"username" => username, "token" => token, "creation_date" => Time.now}
+    user = getUser(users, token)
+    if user.nil?
+      users << {"username" => username, "token" => token, "creation_date" => Time.now}
+    else
+      user['username'] = username
+    end
     password_file.truncate(0)
     password_file.rewind
     password_file.write(JSON.pretty_generate(users))
     password_file.close()
     return token
+  end
+
+  def self.createToken(username)
+    return addToken(username, PCSAuth.uuid)
   end
 
   def self.getUsersGroups(username)
@@ -71,6 +79,15 @@ class PCSAuth
     return true
   end
 
+  def self.getUser(users, token)
+    users.each {|u|
+      if u["token"] == token
+        return u
+      end
+    }
+    return nil
+  end
+
   def self.validToken(token)
     begin
       json = File.read(PCSD_USERS_PATH)
@@ -79,11 +96,10 @@ class PCSAuth
       users = []
     end
 
-    users.each {|u|
-      if u["token"] == token
-        return u["username"]
-      end
-    }
+    user = getUser(users, token)
+    unless user.nil?
+      return user['username']
+    end
     return false
   end
 

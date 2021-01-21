@@ -24,6 +24,7 @@ corosync_log_file = "/var/log/cluster/corosync.log"
 pacemaker_authkey_file = "/etc/pacemaker/authkey"
 # Using the same value as for corosync. Higher values MAY work in FIPS.
 pacemaker_authkey_bytes = 256
+pcsd_token_max_bytes = 256
 booth_authkey_file_mode = 0o600
 # Booth does not support keys longer than 64 bytes.
 booth_authkey_bytes = 64
