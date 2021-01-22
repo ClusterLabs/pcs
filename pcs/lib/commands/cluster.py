@@ -70,6 +70,7 @@ from pcs.lib.communication.sbd import (
 from pcs.lib.communication.tools import (
     run as run_com,
     run_and_raise,
+    AllSameDataMixin,
 )
 from pcs.lib.corosync import (
     config_facade,
@@ -312,7 +313,7 @@ def setup(
     wait_timeout = _get_validated_wait_timeout(report_processor, wait, start)
 
     # Validate the nodes
-    com_cmd = GetHostInfo(report_processor)
+    com_cmd: AllSameDataMixin = GetHostInfo(report_processor)
     com_cmd.set_targets(target_list)
     report_processor.report_list(
         _host_check_cluster_setup(
@@ -961,7 +962,7 @@ def add_nodes(
             {
                 # Get a dict containing options of all nodes. Values don't
                 # matter for validate.NamesIn validator.
-                option_name: None
+                option_name: ""
                 for node_option_names in [node.keys() for node in new_nodes]
                 for option_name in node_option_names
             }
@@ -1033,7 +1034,7 @@ def add_nodes(
     # succeed.
     online_cluster_target_list = []
     if cluster_nodes_target_list:
-        com_cmd = GetOnlineTargets(
+        com_cmd: AllSameDataMixin = GetOnlineTargets(
             report_processor,
             ignore_offline_targets=skip_offline_nodes,
         )
@@ -1096,19 +1097,19 @@ def add_nodes(
                     reports.messages.SbdWatchdogValidationInactive()
                 )
             )
-        com_cmd = CheckSbd(report_processor)
+        com_cmd_sbd = CheckSbd(report_processor)
         for new_node_target in new_nodes_target_list:
             new_node = new_nodes_dict[new_node_target.label]
             # Do not send watchdog if validation is turned off. Listing of
             # available watchdogs in pcsd may restart the machine in some
             # corner cases.
             # pylint: disable=unexpected-keyword-arg
-            com_cmd.add_request(
+            com_cmd_sbd.add_request(
                 new_node_target,
                 watchdog="" if no_watchdog_validation else new_node["watchdog"],
                 device_list=new_node["devices"],
             )
-        run_com(env.get_node_communicator(), com_cmd)
+        run_com(env.get_node_communicator(), com_cmd_sbd)
 
     # If there is an error reading the file, this will report it and exit
     # safely before any change is made to the nodes.
@@ -1156,11 +1157,11 @@ def add_nodes(
     if is_sbd_enabled:
         sbd_cfg = environment_file_to_dict(sbd.get_local_sbd_config())
 
-        com_cmd = SetSbdConfig(env.report_processor)
+        com_cmd_sbd_cfg = SetSbdConfig(env.report_processor)
         for new_node_target in new_nodes_target_list:
             new_node = new_nodes_dict[new_node_target.label]
             # pylint: disable=too-many-function-args
-            com_cmd.add_request(
+            com_cmd_sbd_cfg.add_request(
                 new_node_target,
                 sbd.create_sbd_config(
                     sbd_cfg,
@@ -1169,7 +1170,7 @@ def add_nodes(
                     device_list=new_node["devices"],
                 ),
             )
-        run_and_raise(env.get_node_communicator(), com_cmd)
+        run_and_raise(env.get_node_communicator(), com_cmd_sbd_cfg)
 
         com_cmd = EnableSbdService(env.report_processor)
         com_cmd.set_targets(new_nodes_target_list)
@@ -1741,7 +1742,7 @@ def remove_nodes(
     }
     report_processor.report_list(target_report_list)
 
-    com_cmd = GetOnlineTargets(
+    com_cmd: AllSameDataMixin = GetOnlineTargets(
         report_processor,
         ignore_offline_targets=skip_offline,
     )
