@@ -38,7 +38,7 @@ def resource_defaults_create(
     nvpairs: Mapping[str, str],
     nvset_options: Mapping[str, str],
     nvset_rule: Optional[str] = None,
-    force_flags: Optional[Container] = None,
+    force_flags: Container[reports.types.ForceCode] = (),
 ) -> None:
     """
     Create new resource defaults nvset
@@ -65,7 +65,7 @@ def operation_defaults_create(
     nvpairs: Mapping[str, str],
     nvset_options: Mapping[str, str],
     nvset_rule: Optional[str] = None,
-    force_flags: Optional[Container] = None,
+    force_flags: Container[reports.types.ForceCode] = (),
 ) -> None:
     """
     Create new operation defaults nvset
@@ -94,10 +94,8 @@ def _defaults_create(
     nvpairs: Mapping[str, str],
     nvset_options: Mapping[str, str],
     nvset_rule: Optional[str] = None,
-    force_flags: Optional[Container] = None,
+    force_flags: Container[reports.types.ForceCode] = (),
 ) -> None:
-    if force_flags is None:
-        force_flags = set()
     force = (reports.codes.FORCE in force_flags) or (
         reports.codes.FORCE_OPTIONS in force_flags
     )

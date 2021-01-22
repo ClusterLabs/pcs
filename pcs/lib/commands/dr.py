@@ -315,7 +315,10 @@ def _load_dr_config(
         )
 
 
-def destroy(env: LibraryEnvironment, force_flags: Container[str] = ()) -> None:
+def destroy(
+    env: LibraryEnvironment,
+    force_flags: Container[reports.types.ForceCode] = (),
+) -> None:
     """
     Destroy disaster-recovery configuration on all sites
     """

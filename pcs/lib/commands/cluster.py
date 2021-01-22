@@ -196,7 +196,7 @@ def setup(
     start=False,
     enable=False,
     no_keys_sync=False,
-    force_flags=None,
+    force_flags: Container[reports.types.ForceCode] = (),
 ):
     # pylint: disable=too-many-arguments
     # pylint: disable=too-many-locals
@@ -246,8 +246,6 @@ def setup(
     ]
     """
     _ensure_live_env(env)  # raises if env is not live
-    if force_flags is None:
-        force_flags = []
     force = report_codes.FORCE in force_flags
 
     transport_type = transport_type or "knet"
@@ -452,7 +450,7 @@ def setup_local(
     crypto_options: Mapping[str, str],
     totem_options: Mapping[str, str],
     quorum_options: Mapping[str, str],
-    force_flags: Container[reports.types.ForceCode],
+    force_flags: Container[reports.types.ForceCode] = (),
 ) -> bytes:
     """
     Return corosync.conf text based on specified parameters.
@@ -826,7 +824,7 @@ def add_nodes(
     start=False,
     enable=False,
     no_watchdog_validation=False,
-    force_flags=None,
+    force_flags: Container[reports.types.ForceCode] = (),
 ):
     # pylint: disable=too-many-locals, too-many-statements, too-many-branches
     """
@@ -861,8 +859,6 @@ def add_nodes(
     """
     _ensure_live_env(env)  # raises if env is not live
 
-    if force_flags is None:
-        force_flags = []
     force = report_codes.FORCE in force_flags
     skip_offline_nodes = report_codes.SKIP_OFFLINE_NODES in force_flags
 
@@ -1685,7 +1681,9 @@ def _verify_corosync_conf(corosync_conf_facade):
         )
 
 
-def remove_nodes(env, node_list, force_flags=None):
+def remove_nodes(
+    env, node_list, force_flags: Container[reports.types.ForceCode] = ()
+):
     # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     """
     Remove nodes from a cluster.
@@ -1696,8 +1694,6 @@ def remove_nodes(env, node_list, force_flags=None):
     """
     _ensure_live_env(env)  # raises if env is not live
 
-    if force_flags is None:
-        force_flags = []
     force_quorum_loss = report_codes.FORCE in force_flags
     skip_offline = report_codes.SKIP_OFFLINE_NODES in force_flags
 
@@ -1932,7 +1928,7 @@ def add_link(
     env: LibraryEnvironment,
     node_addr_map,
     link_options=None,
-    force_flags=None,
+    force_flags: Container[reports.types.ForceCode] = (),
 ):
     """
     Add a corosync link to a cluster
@@ -1945,7 +1941,6 @@ def add_link(
     _ensure_live_env(env)  # raises if env is not live
 
     link_options = link_options or dict()
-    force_flags = force_flags or set()
     force = report_codes.FORCE in force_flags
     skip_offline = report_codes.SKIP_OFFLINE_NODES in force_flags
 
@@ -1999,7 +1994,11 @@ def add_link(
     env.push_corosync_conf(corosync_conf, skip_offline)
 
 
-def remove_links(env: LibraryEnvironment, linknumber_list, force_flags=None):
+def remove_links(
+    env: LibraryEnvironment,
+    linknumber_list,
+    force_flags: Container[reports.types.ForceCode] = (),
+):
     """
     Remove corosync links from a cluster
 
@@ -2011,7 +2010,6 @@ def remove_links(env: LibraryEnvironment, linknumber_list, force_flags=None):
     # strings. The layer in which the check should be done does not exist yet.
     _ensure_live_env(env)  # raises if env is not live
 
-    force_flags = force_flags or set()
     skip_offline = report_codes.SKIP_OFFLINE_NODES in force_flags
 
     report_processor = env.report_processor
@@ -2042,7 +2040,7 @@ def update_link(
     linknumber,
     node_addr_map=None,
     link_options=None,
-    force_flags=None,
+    force_flags: Container[reports.types.ForceCode] = (),
 ):
     """
     Change an existing corosync link
@@ -2057,7 +2055,6 @@ def update_link(
 
     node_addr_map = node_addr_map or dict()
     link_options = link_options or dict()
-    force_flags = force_flags or set()
     force = report_codes.FORCE in force_flags
     skip_offline = report_codes.SKIP_OFFLINE_NODES in force_flags
 
