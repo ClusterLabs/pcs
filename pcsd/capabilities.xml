@@ -1833,13 +1833,20 @@
           /api/v1/stonith-create-in-group/v1
       </description>
     </capability>
-    <capability id="pcmk.stonith.delete" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.stonith.delete" in-pcs="1" in-pcsd="1">
       <description>
         Delete a stonith resource.
 
         pcs commands: stonith ( delete | remove )
         daemon urls: currently missing, remove_resource is used instead which
           works for now
+      </description>
+    </capability>
+    <capability id="pcmk.stonith.delete.list" in-pcs="0" in-pcsd="1">
+      <description>
+        Delete several stonith resources at once.
+
+        daemon urls: remove_resource
       </description>
     </capability>
     <capability id="pcmk.stonith.update" in-pcs="1" in-pcsd="1">
@@ -1888,13 +1895,22 @@
         pcs commands: stonith cleanup
       </description>
     </capability>
-    <capability id="pcmk.stonith.cleanup.strict" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.stonith.cleanup.one-resource" in-pcs="1" in-pcsd="1">
+      <description>
+        Delete failed operations from history of a specified stonith resource on
+        all nodes and redetect its current state.
+
+        pcs commands: stonith cleanup
+        daemon urls: resource_cleanup
+      </description>
+    <capability id="pcmk.stonith.cleanup.strict" in-pcs="1" in-pcsd="1">
       <description>
         Deleting failed operations from history of stonith resources can be
         limited to inner resources only in case of bundled/cloned/grouped
         resources.
 
         pcs commands: stonith cleanup --strict
+        daemon urls: resource_cleanup (param: strict=1)
       </description>
     </capability>
     <capability id="pcmk.stonith.refresh" in-pcs="1" in-pcsd="0">
@@ -1905,12 +1921,22 @@
         pcs commands: stonith refresh
       </description>
     </capability>
-    <capability id="pcmk.stonith.refresh.strict" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.stonith.refresh.one-resource" in-pcs="1" in-pcsd="1">
+      <description>
+        Forget history of a specified stonith resource on all nodes and redetect
+        its current state.
+
+        pcs commands: stonith refresh
+        daemon urls: resource_refresh
+      </description>
+    </capability>
+    <capability id="pcmk.stonith.refresh.strict" in-pcs="1" in-pcsd="1">
       <description>
         Deleting history of stonith resources can be limited to inner resources
         only in case of bundled/cloned/grouped resources.
 
         pcs commands: stonith refresh --strict
+        daemon urls: resource_refresh (param: strict=1)
       </description>
     </capability>
     <capability id="pcmk.stonith.history.cleanup" in-pcs="1" in-pcsd="0">
