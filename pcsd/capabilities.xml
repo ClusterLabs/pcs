@@ -1524,14 +1524,11 @@
           /api/v1/resource-enable/v1
       </description>
     </capability>
-    <capability id="pcmk.resource.enable-disable.tag" in-pcs="1" in-pcsd="1">
+    <capability id="pcmk.resource.enable-disable.tag" in-pcs="1" in-pcsd="0">
       <description>
         Disable or enable resources in specified tags at once.
 
         pcs commands: resource disable, resource enable
-        daemon urls:
-          /api/v1/resource-disable/v1
-          /api/v1/resource-enable/v1
       </description>
     </capability>
     <capability id="pcmk.resource.enable-disable.wait" in-pcs="1" in-pcsd="1">
@@ -1554,15 +1551,13 @@
           /api/v1/resource-disable-safe/v1
       </description>
     </capability>
-    <capability id="pcmk.resource.disable.safe.tag" in-pcs="1" in-pcsd="1">
+    <capability id="pcmk.resource.disable.safe.tag" in-pcs="1" in-pcsd="0">
       <description>
         Do not disable resources in specified tags if other resources would be
         affected.
 
         pcs commands: resource disable --safe [--no-strict],
           resource safe-disable
-        daemon urls:
-          /api/v1/resource-disable-safe/v1
       </description>
     </capability>
     <capability id="pcmk.resource.disable.simulate" in-pcs="1" in-pcsd="1">
