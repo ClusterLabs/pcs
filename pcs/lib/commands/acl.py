@@ -217,7 +217,7 @@ def remove_group(lib_env, group_id):
 
 def add_permission(lib_env, role_id, permission_info_list):
     """
-    Add permissions do role with id role_id. If role doesn't exist it will be
+    Add permissions to a role with id role_id. If role doesn't exist it will be
     created.
     Raises LibraryError on any failure.
 
