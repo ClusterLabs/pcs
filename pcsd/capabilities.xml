@@ -1898,6 +1898,7 @@
         pcs commands: stonith cleanup
         daemon urls: resource_cleanup
       </description>
+    </capability>
     <capability id="pcmk.stonith.cleanup.strict" in-pcs="1" in-pcsd="1">
       <description>
         Deleting failed operations from history of stonith resources can be
@@ -2202,7 +2203,6 @@
         pcs commands: resource list
         daemon urls:
           /api/v1/resource-agent-list-agents/v1
-      </description>
       </description>
     </capability>
     <capability id="resource-agents.list.detailed" in-pcs="1" in-pcsd="1">
