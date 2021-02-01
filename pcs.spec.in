@@ -34,8 +34,8 @@ Summary: Pacemaker Configuration System
 
 %global pyagentx_version   0.4.pcs.2
 %global tornado_version    6.1.0
-%global dataclasses_version 0.6
-%global dacite_version 1.5.1
+%global dataclasses_version 0.8
+%global dacite_version 1.6.0
 %global dateutil_version 2.8.1
 %global version_rubygem_backports  3.17.2
 %global version_rubygem_daemons  1.3.1
