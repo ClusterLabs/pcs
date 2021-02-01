@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.10.8] - 2021-02-01
 
 ### Added
 - Support for changing corosync configuration in an existing cluster
