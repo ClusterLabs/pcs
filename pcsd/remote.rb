@@ -100,6 +100,12 @@ def remote(params, request, auth_user)
       :check_host => method(:check_host),
       :reload_corosync_conf => method(:reload_corosync_conf),
       :remove_nodes_from_cib => method(:remove_nodes_from_cib),
+      # lib api:
+      # /api/v1/resource-agent-list-agents/v1
+      :get_avail_resource_agents => method(:get_avail_resource_agents),
+      # lib api:
+      # /api/v1/stonith-agent-list-agents/v1
+      :get_avail_fence_agents => method(:get_avail_fence_agents),
   }
   remote_cmd_with_pacemaker = {
       :pacemaker_node_status => method(:remote_pacemaker_node_status),
@@ -109,12 +115,6 @@ def remote(params, request, auth_user)
       :resource_refresh => method(:resource_refresh),
       :update_resource => method(:update_resource),
       :update_fence_device => method(:update_fence_device),
-      # lib api:
-      # /api/v1/resource-agent-list-agents/v1
-      :get_avail_resource_agents => method(:get_avail_resource_agents),
-      # lib api:
-      # /api/v1/stonith-agent-list-agents/v1
-      :get_avail_fence_agents => method(:get_avail_fence_agents),
       :remove_resource => method(:remove_resource),
       # lib api:
       # /api/v1/constraint-ticket-create/v1
@@ -251,7 +251,7 @@ end
 
 def _update_pcsd_settings(config, cluster_name, new_nodes)
   old_nodes = config.get_nodes(cluster_name)
-  
+
   # removing log is embeded in config.update_cluster
   $logger.info(
     "Updating node list for: #{cluster_name} #{old_nodes}->#{new_nodes}"
