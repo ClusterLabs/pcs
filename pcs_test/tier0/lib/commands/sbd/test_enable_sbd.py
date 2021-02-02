@@ -188,7 +188,6 @@ class OddNumOfNodesDefaultsSuccess(TestCase):
         SBD_PACEMAKER=yes
         SBD_STARTMODE=always
         SBD_WATCHDOG_DEV=/dev/watchdog
-        SBD_WATCHDOG_TIMEOUT=5
         """
         )
         self.watchdog = "/dev/watchdog"
@@ -272,7 +271,6 @@ class WatchdogValidations(TestCase):
         SBD_PACEMAKER=yes
         SBD_STARTMODE=always
         SBD_WATCHDOG_DEV=/dev/watchdog
-        SBD_WATCHDOG_TIMEOUT=5
         """
         )
         self.watchdog = "/dev/watchdog"
@@ -377,7 +375,6 @@ class EvenNumOfNodes(TestCase):
         SBD_PACEMAKER=yes
         SBD_STARTMODE=always
         SBD_WATCHDOG_DEV=/dev/watchdog
-        SBD_WATCHDOG_TIMEOUT=5
         """
         )
         self.watchdog = "/dev/watchdog"
@@ -543,7 +540,6 @@ class OfflineNodes(TestCase):
         SBD_PACEMAKER=yes
         SBD_STARTMODE=always
         SBD_WATCHDOG_DEV=/dev/watchdog
-        SBD_WATCHDOG_TIMEOUT=5
         """
         ).format
         self.offline_communication_list = [
@@ -1179,7 +1175,6 @@ class FailureHandling(TestCase):
         SBD_PACEMAKER=yes
         SBD_STARTMODE=always
         SBD_WATCHDOG_DEV=/dev/watchdog
-        SBD_WATCHDOG_TIMEOUT=5
         """
         ).format
         self.watchdog = "/dev/watchdog"
@@ -1693,7 +1688,6 @@ class UnknownHosts(TestCase):
         SBD_PACEMAKER=yes
         SBD_STARTMODE=always
         SBD_WATCHDOG_DEV=/dev/watchdog
-        SBD_WATCHDOG_TIMEOUT=5
         """
         ).format
         (
@@ -1795,7 +1789,6 @@ class MissingNodeNamesInCorosync(TestCase):
         SBD_PACEMAKER=yes
         SBD_STARTMODE=always
         SBD_WATCHDOG_DEV=/dev/watchdog
-        SBD_WATCHDOG_TIMEOUT=5
         """
         )
         config_generator = lambda node: sbd_config_template.format(
