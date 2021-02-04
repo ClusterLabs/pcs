@@ -70,7 +70,6 @@ allowed_commands = {
   'remove_known_hosts' => {
     # changes hosts of the user who runs pcsd-cli, thus no permission check
     'only_superuser' => false,
-    'permissions' => nil,
     'call' => lambda { |params, auth_user_|
       sync_successful, sync_nodes_err, sync_responses, hosts_not_found = pcs_deauth(
         auth_user_, params.fetch('host_names')
@@ -85,7 +84,6 @@ allowed_commands = {
   },
   'auth' => {
     'only_superuser' => false,
-    'permissions' => nil,
     'call' => lambda { |params, auth_user_|
       auth_responses, sync_successful, sync_nodes_err, sync_responses = pcs_auth(
         auth_user_, params.fetch('nodes')
@@ -100,7 +98,6 @@ allowed_commands = {
   },
   'auth_with_token' => {
     'only_superuser' => false,
-    'permissions' => nil,
     'call' => lambda { |params, auth_user_|
       pcs_auth_token(params.fetch('nodes'))
       return {}
@@ -108,7 +105,6 @@ allowed_commands = {
   },
   'set_token_to_accept' => {
     'only_superuser' => true,
-    'permissions' => nil,
     'call' => lambda { |params, auth_user_|
       PCSAuth.addToken(SUPERUSER, params.fetch('token'))
       return {}
@@ -116,7 +112,6 @@ allowed_commands = {
   },
   'send_local_configs' => {
     'only_superuser' => false,
-    'permissions' => Permissions::FULL,
     'call' => lambda { |params, auth_user_|
       send_local_configs_to_nodes(
         # for a case when sending to a node which is being added to a cluster
@@ -130,7 +125,6 @@ allowed_commands = {
   },
   'node_status' => {
     'only_superuser' => true,
-    'permissions' => Permissions::FULL,
     'call' => lambda { |params, auth_user_|
       return JSON.parse(node_status(
         {
@@ -150,17 +144,13 @@ if allowed_commands.key?(command)
   rescue JSON::ParserError => e
     cli_exit('bad_json_input', e.to_s)
   end
-  if allowed_commands['only_superuser']
+  cmd = allowed_commands[command]
+  if cmd['only_superuser']
     if not allowed_for_superuser(auth_user)
       cli_exit('permission_denied')
     end
   end
-  if allowed_commands['permissions']
-    if not allowed_for_local_cluster(auth_user, command_settings['permissions'])
-      cli_exit('permission_denied')
-    end
-  end
-  result = allowed_commands[command]['call'].call(params, auth_user)
+  result = cmd['call'].call(params, auth_user)
   cli_exit('ok', nil, result)
 else
   cli_exit('bad_command')
