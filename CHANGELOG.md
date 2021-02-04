@@ -1,14 +1,5 @@
 # Change Log
 
-## [Unreleased]
-
-### Changed
-- No default value for `SBD_WATCHDOG_TIMEOUT` when enabling sbd.
-  ([rhbz#1923255])
-
-[rhbz#1923255]: https://bugzilla.redhat.com/show_bug.cgi?id=1923255
-
-
 ## [0.10.8] - 2021-02-01
 
 ### Added

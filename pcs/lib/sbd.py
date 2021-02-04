@@ -182,6 +182,7 @@ def get_default_sbd_config():
         "SBD_PACEMAKER": "yes",
         "SBD_STARTMODE": "always",
         "SBD_WATCHDOG_DEV": settings.sbd_watchdog_default,
+        "SBD_WATCHDOG_TIMEOUT": "5",
     }
 
 
