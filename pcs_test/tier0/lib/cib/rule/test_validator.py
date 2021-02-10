@@ -9,7 +9,14 @@ from pcs.lib.cib.rule.expression_part import (
     BOOL_AND,
     BOOL_OR,
     DATE_OP_GT,
+    NODE_ATTR_OP_DEFINED,
+    NODE_ATTR_OP_NOT_DEFINED,
     NODE_ATTR_OP_EQ,
+    NODE_ATTR_OP_NE,
+    NODE_ATTR_OP_GTE,
+    NODE_ATTR_OP_GT,
+    NODE_ATTR_OP_LTE,
+    NODE_ATTR_OP_LT,
     NODE_ATTR_TYPE_INTEGER,
     NODE_ATTR_TYPE_NUMBER,
     NODE_ATTR_TYPE_STRING,
@@ -44,6 +51,12 @@ class ComplexExpressions(TestCase):
                             BOOL_AND,
                             [
                                 DateUnaryExpr(DATE_OP_GT, "a date"),
+                                NodeAttrExpr(
+                                    NODE_ATTR_OP_EQ,
+                                    "attr",
+                                    "10",
+                                    NODE_ATTR_TYPE_INTEGER,
+                                ),
                             ],
                         ),
                     ],
@@ -65,6 +78,10 @@ class ComplexExpressions(TestCase):
                 fixture.error(
                     reports.codes.RULE_EXPRESSION_NOT_ALLOWED,
                     expression_type=CibRuleExpressionType.RSC_EXPRESSION,
+                ),
+                fixture.error(
+                    reports.codes.RULE_EXPRESSION_NOT_ALLOWED,
+                    expression_type=CibRuleExpressionType.EXPRESSION,
                 ),
             ],
         )
@@ -125,6 +142,81 @@ class DisallowedRscOpExpressions(TestCase):
             ).get_reports(),
             [],
         )
+
+
+class DisallowedNodeAttrExpressions(TestCase):
+    @staticmethod
+    def fixture_expr_binary(operator):
+        return BoolExpr(
+            BOOL_AND,
+            [
+                RscExpr(None, None, "Dummy"),
+                NodeAttrExpr(operator, "name", "10", NODE_ATTR_TYPE_INTEGER),
+                OpExpr("stop", None),
+            ],
+        )
+
+    @staticmethod
+    def fixture_expr_unary(operator):
+        return BoolExpr(
+            BOOL_AND,
+            [
+                RscExpr(None, None, "Dummy"),
+                NodeAttrExpr(operator, "name", None, None),
+                OpExpr("stop", None),
+            ],
+        )
+
+    @staticmethod
+    def get_validator(rule):
+        return Validator(
+            rule,
+            allow_rsc_expr=True,
+            allow_op_expr=True,
+            allow_node_attr_expr=False,
+        )
+
+    def test_binary_expr(self):
+        operator_list = [
+            NODE_ATTR_OP_EQ,
+            NODE_ATTR_OP_NE,
+            NODE_ATTR_OP_GTE,
+            NODE_ATTR_OP_GT,
+            NODE_ATTR_OP_LTE,
+            NODE_ATTR_OP_LT,
+        ]
+        for operator in operator_list:
+            with self.subTest(operator=operator):
+                assert_report_item_list_equal(
+                    self.get_validator(
+                        self.fixture_expr_binary(operator)
+                    ).get_reports(),
+                    [
+                        fixture.error(
+                            reports.codes.RULE_EXPRESSION_NOT_ALLOWED,
+                            expression_type=CibRuleExpressionType.EXPRESSION,
+                        ),
+                    ],
+                )
+
+    def test_unary_expr(self):
+        operator_list = [
+            NODE_ATTR_OP_DEFINED,
+            NODE_ATTR_OP_NOT_DEFINED,
+        ]
+        for operator in operator_list:
+            with self.subTest(operator=operator):
+                assert_report_item_list_equal(
+                    self.get_validator(
+                        self.fixture_expr_unary(operator)
+                    ).get_reports(),
+                    [
+                        fixture.error(
+                            reports.codes.RULE_EXPRESSION_NOT_ALLOWED,
+                            expression_type=CibRuleExpressionType.EXPRESSION,
+                        ),
+                    ],
+                )
 
 
 class DateUnaryExpression(TestCase):
@@ -526,6 +618,7 @@ class NodeAttrExpression(TestCase):
         assert_report_item_list_equal(
             Validator(
                 self.fixture_expr(NODE_ATTR_TYPE_INTEGER, "16464"),
+                allow_node_attr_expr=True,
             ).get_reports(),
             [],
         )
@@ -534,6 +627,7 @@ class NodeAttrExpression(TestCase):
         assert_report_item_list_equal(
             Validator(
                 self.fixture_expr(NODE_ATTR_TYPE_INTEGER, "16464aa"),
+                allow_node_attr_expr=True,
             ).get_reports(),
             [
                 fixture.error(
@@ -551,6 +645,7 @@ class NodeAttrExpression(TestCase):
         assert_report_item_list_equal(
             Validator(
                 self.fixture_expr(NODE_ATTR_TYPE_NUMBER, "164.64"),
+                allow_node_attr_expr=True,
             ).get_reports(),
             [],
         )
@@ -559,6 +654,7 @@ class NodeAttrExpression(TestCase):
         assert_report_item_list_equal(
             Validator(
                 self.fixture_expr(NODE_ATTR_TYPE_NUMBER, "164.64aa"),
+                allow_node_attr_expr=True,
             ).get_reports(),
             [
                 fixture.error(
@@ -576,6 +672,7 @@ class NodeAttrExpression(TestCase):
         assert_report_item_list_equal(
             Validator(
                 self.fixture_expr(NODE_ATTR_TYPE_VERSION, "0.10.11"),
+                allow_node_attr_expr=True,
             ).get_reports(),
             [],
         )
@@ -584,6 +681,7 @@ class NodeAttrExpression(TestCase):
         assert_report_item_list_equal(
             Validator(
                 self.fixture_expr(NODE_ATTR_TYPE_VERSION, "0.10.11c"),
+                allow_node_attr_expr=True,
             ).get_reports(),
             [
                 fixture.error(
@@ -601,12 +699,16 @@ class NodeAttrExpression(TestCase):
         assert_report_item_list_equal(
             Validator(
                 self.fixture_expr(NODE_ATTR_TYPE_STRING, "a string 461.78"),
+                allow_node_attr_expr=True,
             ).get_reports(),
             [],
         )
 
     def test_no_type(self):
         assert_report_item_list_equal(
-            Validator(self.fixture_expr(None, "a string 461.78")).get_reports(),
+            Validator(
+                self.fixture_expr(None, "a string 461.78"),
+                allow_node_attr_expr=True,
+            ).get_reports(),
             [],
         )

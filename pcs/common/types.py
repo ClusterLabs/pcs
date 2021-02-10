@@ -10,7 +10,7 @@ class CibNvsetType(AutoNameEnum):
 
 class CibRuleExpressionType(AutoNameEnum):
     RULE = auto()
-    EXPRESSION = auto()
+    EXPRESSION = auto()  # node attribute expression, named 'expression' in CIB
     DATE_EXPRESSION = auto()
     OP_EXPRESSION = auto()
     RSC_EXPRESSION = auto()

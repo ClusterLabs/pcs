@@ -6541,11 +6541,15 @@ class RuleExpressionNotAllowed(ReportItemMessage):
     @property
     def message(self) -> str:
         type_map = {
-            CibRuleExpressionType.OP_EXPRESSION: "op",
-            CibRuleExpressionType.RSC_EXPRESSION: "resource",
+            CibRuleExpressionType.EXPRESSION: (
+                "Keywords 'defined', 'not_defined', 'eq', 'ne', 'gte', 'gt', "
+                "'lte' and 'lt'"
+            ),
+            CibRuleExpressionType.OP_EXPRESSION: "Keyword 'op'",
+            CibRuleExpressionType.RSC_EXPRESSION: "Keyword 'resource'",
         }
         return (
-            f"Keyword '{type_map[self.expression_type]}' cannot be used "
+            f"{type_map[self.expression_type]} cannot be used "
             "in a rule in this command"
         )
 

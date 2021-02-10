@@ -73,7 +73,7 @@ class DefaultsCreateMixin:
             [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDEN)]
         )
 
-    def test_success_cib_upgrade_rsc_op_rules(self):
+    def test_success_cib_upgrade_rsc_rules(self):
         defaults_xml = f"""
             <{self.tag}>
                 <meta_attributes id="{self.tag}-meta_attributes">
@@ -111,6 +111,260 @@ class DefaultsCreateMixin:
                 fixture.info(reports.codes.CIB_UPGRADE_SUCCESSFUL),
                 fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDEN),
             ]
+        )
+
+    def test_validation(self):
+        self.config.runner.cib.load(
+            filename="cib-empty-3.4.xml", instead="runner.cib.load"
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: self.command(
+                self.env_assist.get_env(),
+                {},
+                {"unknown-option": "value"},
+                "bad rule",
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTIONS,
+                    force_code=reports.codes.FORCE_OPTIONS,
+                    option_names=["unknown-option"],
+                    allowed=["id", "score"],
+                    option_type=None,
+                    allowed_patterns=[],
+                ),
+                fixture.error(
+                    reports.codes.RULE_EXPRESSION_PARSE_ERROR,
+                    rule_string="bad rule",
+                    reason='Expected "eq"',
+                    rule_line="bad rule",
+                    line_number=1,
+                    column_number=5,
+                    position=4,
+                ),
+            ]
+        )
+
+    def test_validation_forced(self):
+        defaults_xml = f"""
+            <{self.tag}>
+                <meta_attributes id="{self.tag}-meta_attributes"
+                    unknown-option="value"
+                />
+            </{self.tag}>
+        """
+        self.config.env.push_cib(optional_in_conf=defaults_xml)
+
+        self.command(
+            self.env_assist.get_env(),
+            {},
+            {"unknown-option": "value"},
+            force_flags={reports.codes.FORCE_OPTIONS},
+        )
+
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.INVALID_OPTIONS,
+                    option_names=["unknown-option"],
+                    allowed=["id", "score"],
+                    option_type=None,
+                    allowed_patterns=[],
+                ),
+                fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDEN),
+            ]
+        )
+
+
+class ResourceDefaultsCreate(DefaultsCreateMixin, TestCase):
+    command = staticmethod(cib_options.resource_defaults_create)
+    tag = "rsc_defaults"
+
+    def test_rule_op_expression_not_allowed(self):
+        self.config.runner.cib.load(
+            filename="cib-empty-3.4.xml", instead="runner.cib.load"
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: self.command(
+                self.env_assist.get_env(),
+                {},
+                {},
+                "op monitor",
+                force_flags={reports.codes.FORCE_OPTIONS},
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.RULE_EXPRESSION_NOT_ALLOWED,
+                    expression_type=CibRuleExpressionType.OP_EXPRESSION,
+                ),
+            ]
+        )
+
+    def test_rule_node_attr_expression_not_allowed(self):
+        self.config.runner.cib.load(
+            filename="cib-empty-3.4.xml", instead="runner.cib.load"
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: self.command(
+                self.env_assist.get_env(),
+                {},
+                {},
+                "defined attr",
+                force_flags={reports.codes.FORCE_OPTIONS},
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.RULE_EXPRESSION_NOT_ALLOWED,
+                    expression_type=CibRuleExpressionType.EXPRESSION,
+                ),
+            ]
+        )
+
+    def test_success_full(self):
+        defaults_xml = f"""
+            <{self.tag}>
+                <meta_attributes id="my-id" score="10">
+                    <rule id="my-id-rule" boolean-op="and" score="INFINITY">
+                        <rsc_expression id="my-id-rule-rsc-ocf-pacemaker-Dummy"
+                            class="ocf" provider="pacemaker" type="Dummy"
+                        />
+                        <rule id="my-id-rule-rule" boolean-op="or" score="0">
+                            <date_expression id="my-id-rule-rule-expr"
+                                operation="lt" end="2020-08-07"
+                            />
+                            <date_expression id="my-id-rule-rule-expr-1"
+                                operation="in_range"
+                                start="2020-09-01" end="2020-09-11"
+                            />
+                            <date_expression id="my-id-rule-rule-expr-2"
+                                operation="in_range" start="2020-10-01"
+                            >
+                                <duration id="my-id-rule-rule-expr-2-duration"
+                                    months="1"
+                                />
+                            </date_expression>
+                            <date_expression id="my-id-rule-rule-expr-3"
+                                operation="date_spec"
+                            >
+                                <date_spec id="my-id-rule-rule-expr-3-datespec"
+                                    years="2021-2022"
+                                />
+                            </date_expression>
+                            <date_expression id="my-id-rule-rule-expr-4"
+                                operation="in_range" end="2020-12-11"
+                            />
+                        </rule>
+                    </rule>
+                    <nvpair id="my-id-name1" name="name1" value="value1" />
+                    <nvpair id="my-id-2name" name="2na#me" value="value2" />
+                </meta_attributes>
+            </{self.tag}>
+        """
+        self.config.runner.cib.load(
+            filename="cib-empty-3.4.xml", instead="runner.cib.load"
+        )
+        self.config.env.push_cib(optional_in_conf=defaults_xml)
+
+        self.command(
+            self.env_assist.get_env(),
+            {"name1": "value1", "2na#me": "value2"},
+            {"id": "my-id", "score": "10"},
+            nvset_rule=(
+                "resource ocf:pacemaker:Dummy and "
+                "(date lt 2020-08-07 or "
+                "date in_range 2020-09-01 to 2020-09-11 or "
+                "date in_range 2020-10-01 to duration months=1 or "
+                "date-spec years=2021-2022 or "
+                "date in_range to 2020-12-11)"
+            ),
+        )
+
+        self.env_assist.assert_reports(
+            [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDEN)]
+        )
+
+
+class OperationDefaultsCreate(DefaultsCreateMixin, TestCase):
+    command = staticmethod(cib_options.operation_defaults_create)
+    tag = "op_defaults"
+
+    def test_success_full(self):
+        defaults_xml = f"""
+            <{self.tag}>
+                <meta_attributes id="my-id" score="10">
+                    <rule id="my-id-rule" boolean-op="and" score="INFINITY">
+                        <rsc_expression id="my-id-rule-rsc-ocf-pacemaker-Dummy"
+                            class="ocf" provider="pacemaker" type="Dummy"
+                        />
+                        <op_expression id="my-id-rule-op-monitor" name="monitor"
+                            interval="30"
+                        />
+                        <rule id="my-id-rule-rule" boolean-op="or" score="0">
+                            <expression id="my-id-rule-rule-expr"
+                                operation="defined" attribute="attr1"
+                            />
+                            <expression id="my-id-rule-rule-expr-1"
+                                attribute="attr2" operation="gt"
+                                type="number" value="5"
+                            />
+                            <date_expression id="my-id-rule-rule-expr-2"
+                                operation="lt" end="2020-08-07"
+                            />
+                            <date_expression id="my-id-rule-rule-expr-3"
+                                operation="in_range"
+                                start="2020-09-01" end="2020-09-11"
+                            />
+                            <date_expression id="my-id-rule-rule-expr-4"
+                                operation="in_range" start="2020-10-01"
+                            >
+                                <duration id="my-id-rule-rule-expr-4-duration"
+                                    months="1"
+                                />
+                            </date_expression>
+                            <date_expression id="my-id-rule-rule-expr-5"
+                                operation="date_spec"
+                            >
+                                <date_spec id="my-id-rule-rule-expr-5-datespec"
+                                    years="2021-2022"
+                                />
+                            </date_expression>
+                            <date_expression id="my-id-rule-rule-expr-6"
+                                operation="in_range" end="2020-12-11"
+                            />
+                        </rule>
+                    </rule>
+                    <nvpair id="my-id-name1" name="name1" value="value1" />
+                    <nvpair id="my-id-2name" name="2na#me" value="value2" />
+                </meta_attributes>
+            </{self.tag}>
+        """
+        self.config.runner.cib.load(
+            filename="cib-empty-3.4.xml", instead="runner.cib.load"
+        )
+        self.config.env.push_cib(optional_in_conf=defaults_xml)
+
+        self.command(
+            self.env_assist.get_env(),
+            {"name1": "value1", "2na#me": "value2"},
+            {"id": "my-id", "score": "10"},
+            nvset_rule=(
+                "resource ocf:pacemaker:Dummy and op monitor interval=30 and "
+                "(defined attr1 or attr2 gt number 5 or date lt 2020-08-07 or "
+                "date in_range 2020-09-01 to 2020-09-11 or "
+                "date in_range 2020-10-01 to duration months=1 or "
+                "date-spec years=2021-2022 or "
+                "date in_range to 2020-12-11)"
+            ),
+        )
+
+        self.env_assist.assert_reports(
+            [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDEN)]
         )
 
     def test_success_cib_upgrade_node_attr_type_int(self):
@@ -198,12 +452,13 @@ class DefaultsCreateMixin:
                     <rule id="{self.tag}-meta_attributes-rule"
                         boolean-op="and" score="INFINITY"
                     >
-                        <rsc_expression
-                            id="{self.tag}-meta_attributes-rule-rsc-ocf-pacemaker-Dummy"
-                            class="ocf" provider="pacemaker" type="Dummy"
+                        <op_expression
+                            id="{self.tag}-meta_attributes-rule-op-monitor"
+                            name="monitor"
                         />
                         <expression id="{self.tag}-meta_attributes-rule-expr"
-                            attribute="attr" operation="eq" type="integer" value="5"
+                            attribute="attr" operation="eq" type="integer"
+                            value="5"
                         />
                     </rule>
                 </meta_attributes>
@@ -224,7 +479,7 @@ class DefaultsCreateMixin:
             self.env_assist.get_env(),
             {},
             {},
-            nvset_rule="resource ocf:pacemaker:Dummy and attr eq integer 5",
+            nvset_rule="op monitor and attr eq integer 5",
         )
 
         self.env_assist.assert_reports(
@@ -233,168 +488,6 @@ class DefaultsCreateMixin:
                 fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDEN),
             ]
         )
-
-    def test_success_full(self):
-        defaults_xml = f"""
-            <{self.tag}>
-                <meta_attributes id="my-id" score="10">
-                    <rule id="my-id-rule" boolean-op="and" score="INFINITY">
-                        <rsc_expression id="my-id-rule-rsc-ocf-pacemaker-Dummy"
-                            class="ocf" provider="pacemaker" type="Dummy"
-                        />
-                        <rule id="my-id-rule-rule" boolean-op="or" score="0">
-                            <expression id="my-id-rule-rule-expr"
-                                operation="defined" attribute="attr1"
-                            />
-                            <expression id="my-id-rule-rule-expr-1"
-                                attribute="attr2" operation="gt"
-                                type="number" value="5"
-                            />
-                            <date_expression id="my-id-rule-rule-expr-2"
-                                operation="lt" end="2020-08-07"
-                            />
-                            <date_expression id="my-id-rule-rule-expr-3"
-                                operation="in_range"
-                                start="2020-09-01" end="2020-09-11"
-                            />
-                            <date_expression id="my-id-rule-rule-expr-4"
-                                operation="in_range" start="2020-10-01"
-                            >
-                                <duration id="my-id-rule-rule-expr-4-duration"
-                                    months="1"
-                                />
-                            </date_expression>
-                            <date_expression id="my-id-rule-rule-expr-5"
-                                operation="date_spec"
-                            >
-                                <date_spec id="my-id-rule-rule-expr-5-datespec"
-                                    years="2021-2022"
-                                />
-                            </date_expression>
-                            <date_expression id="my-id-rule-rule-expr-6"
-                                operation="in_range" end="2020-12-11"
-                            />
-                        </rule>
-                    </rule>
-                    <nvpair id="my-id-name1" name="name1" value="value1" />
-                    <nvpair id="my-id-2name" name="2na#me" value="value2" />
-                </meta_attributes>
-            </{self.tag}>
-        """
-        self.config.runner.cib.load(
-            filename="cib-empty-3.4.xml", instead="runner.cib.load"
-        )
-        self.config.env.push_cib(optional_in_conf=defaults_xml)
-
-        self.command(
-            self.env_assist.get_env(),
-            {"name1": "value1", "2na#me": "value2"},
-            {"id": "my-id", "score": "10"},
-            nvset_rule=(
-                "resource ocf:pacemaker:Dummy and "
-                "(defined attr1 or attr2 gt number 5 or date lt 2020-08-07 or "
-                "date in_range 2020-09-01 to 2020-09-11 or "
-                "date in_range 2020-10-01 to duration months=1 or "
-                "date-spec years=2021-2022 or "
-                "date in_range to 2020-12-11)"
-            ),
-        )
-
-        self.env_assist.assert_reports(
-            [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDEN)]
-        )
-
-    def test_validation(self):
-        self.config.runner.cib.load(
-            filename="cib-empty-3.4.xml", instead="runner.cib.load"
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: self.command(
-                self.env_assist.get_env(),
-                {},
-                {"unknown-option": "value"},
-                "bad rule",
-            )
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.INVALID_OPTIONS,
-                    force_code=reports.codes.FORCE_OPTIONS,
-                    option_names=["unknown-option"],
-                    allowed=["id", "score"],
-                    option_type=None,
-                    allowed_patterns=[],
-                ),
-                fixture.error(
-                    reports.codes.RULE_EXPRESSION_PARSE_ERROR,
-                    rule_string="bad rule",
-                    reason='Expected "eq"',
-                    rule_line="bad rule",
-                    line_number=1,
-                    column_number=5,
-                    position=4,
-                ),
-            ]
-        )
-
-    def test_validation_forced(self):
-        defaults_xml = f"""
-            <{self.tag}>
-                <meta_attributes id="{self.tag}-meta_attributes"
-                    unknown-option="value"
-                />
-            </{self.tag}>
-        """
-        self.config.env.push_cib(optional_in_conf=defaults_xml)
-
-        self.command(
-            self.env_assist.get_env(),
-            {},
-            {"unknown-option": "value"},
-            force_flags={reports.codes.FORCE_OPTIONS},
-        )
-
-        self.env_assist.assert_reports(
-            [
-                fixture.warn(
-                    reports.codes.INVALID_OPTIONS,
-                    option_names=["unknown-option"],
-                    allowed=["id", "score"],
-                    option_type=None,
-                    allowed_patterns=[],
-                ),
-                fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDEN),
-            ]
-        )
-
-
-class ResourceDefaultsCreate(DefaultsCreateMixin, TestCase):
-    command = staticmethod(cib_options.resource_defaults_create)
-    tag = "rsc_defaults"
-
-    def test_rule_op_expression_not_allowed(self):
-        self.config.runner.cib.load(
-            filename="cib-empty-3.4.xml", instead="runner.cib.load"
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: self.command(
-                self.env_assist.get_env(), {}, {}, "op monitor"
-            )
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.RULE_EXPRESSION_NOT_ALLOWED,
-                    expression_type=CibRuleExpressionType.OP_EXPRESSION,
-                ),
-            ]
-        )
-
-
-class OperationDefaultsCreate(DefaultsCreateMixin, TestCase):
-    command = staticmethod(cib_options.operation_defaults_create)
-    tag = "op_defaults"
 
 
 class DefaultsConfigMixin:
@@ -459,6 +552,10 @@ class DefaultsConfigMixin:
                         <rsc_expression
                             id="{self.tag}-meta_attributes-rule-rsc-Dummy"
                             class="ocf" provider="pacemaker" type="Dummy"
+                        />
+                        <op_expression
+                            id="{self.tag}-meta_attributes-rule-op-monitor"
+                            name="monitor" interval="30"
                         />
                         <rule id="{self.tag}-meta_attributes-rule-rule"
                             boolean-op="or"
@@ -550,6 +647,19 @@ class DefaultsConfigMixin:
                                 None,
                                 [],
                                 "resource ocf:pacemaker:Dummy",
+                            ),
+                            CibRuleExpressionDto(
+                                f"{self.tag}-meta_attributes-rule-op-monitor",
+                                CibRuleExpressionType.OP_EXPRESSION,
+                                CibRuleInEffectStatus.UNKNOWN,
+                                {
+                                    "name": "monitor",
+                                    "interval": "30",
+                                },
+                                None,
+                                None,
+                                [],
+                                "op monitor interval=30",
                             ),
                             CibRuleExpressionDto(
                                 f"{self.tag}-meta_attributes-rule-rule",
@@ -666,6 +776,7 @@ class DefaultsConfigMixin:
                             ),
                         ],
                         "resource ocf:pacemaker:Dummy and "
+                        "op monitor interval=30 and "
                         "(defined attr1 or attr2 gt integer 5 or "
                         "date lt 2020-08-07 or "
                         "date in_range 2020-09-01 to 2020-09-11 or "

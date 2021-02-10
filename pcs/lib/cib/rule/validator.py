@@ -34,15 +34,18 @@ class Validator:
         parsed_rule: BoolExpr,
         allow_rsc_expr: bool = False,
         allow_op_expr: bool = False,
+        allow_node_attr_expr: bool = False,
     ):
         """
         parsed_rule -- a rule to be validated
         allow_op_expr -- are op expressions allowed in the rule?
         allow_rsc_expr -- are resource expressions allowed in the rule?
+        allow_node_attr_expr -- are node attribute expressions allowed in rule?
         """
         self._rule = parsed_rule
         self._allow_op_expr = allow_op_expr
         self._allow_rsc_expr = allow_rsc_expr
+        self._allow_node_attr_expr = allow_node_attr_expr
         self._disallowed_expr_list: Set[CibRuleExpressionType] = set()
 
     def get_reports(self) -> reports.ReportItemList:
@@ -229,8 +232,13 @@ class Validator:
             )
         return report_list
 
-    @staticmethod
-    def _validate_node_attr_expr(expr: NodeAttrExpr) -> reports.ReportItemList:
+    def _validate_node_attr_expr(
+        self, expr: NodeAttrExpr
+    ) -> reports.ReportItemList:
+        if not self._allow_node_attr_expr:
+            self._disallowed_expr_list.add(CibRuleExpressionType.EXPRESSION)
+            return []
+
         validator_list: List[validate.ValidatorInterface] = []
         if expr.attr_type == NODE_ATTR_TYPE_INTEGER:
             validator_list.append(

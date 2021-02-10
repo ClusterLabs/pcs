@@ -4867,6 +4867,13 @@ class RuleExpressionNotAllowed(NameBuildTest):
             ),
         )
 
+    def test_node_attr(self):
+        self.assert_message_from_report(
+            "Keywords 'defined', 'not_defined', 'eq', 'ne', 'gte', 'gt', "
+            "'lte' and 'lt' cannot be used in a rule in this command",
+            reports.RuleExpressionNotAllowed(CibRuleExpressionType.EXPRESSION),
+        )
+
 
 class CibNvsetAmbiguousProvideNvsetId(NameBuildTest):
     def test_success(self):

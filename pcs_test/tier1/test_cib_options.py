@@ -369,9 +369,7 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
             self.cli_command
             + (
                 "-- set create id=mine score=10 meta nam1=val1 nam2=val2 "
-                "rule (defined attr1 or attr2 gte number -1.2 or "
-                "attr3 lt version 3.2.1 or attr4 ne string test or attr5 lt 3) "
-                "and (date gt 2018-05-17T13:28:19 or "
+                "rule (date gt 2018-05-17T13:28:19 or "
                 "date in_range 2019-01-01 to 2019-03-15 or "
                 "date in_range 2019-05-01 to duration months=2 or "
                 "date-spec years=2019 months=7-8 weekdays=6-7 or "
@@ -381,54 +379,32 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
                 f"""\
                 <{self.cib_tag}>
                     <meta_attributes id="mine" score="10">
-                        <rule id="mine-rule" boolean-op="and" score="INFINITY">
-                            <rule id="mine-rule-rule" boolean-op="or" score="0">
-                                <expression id="mine-rule-rule-expr"
-                                    operation="defined" attribute="attr1"
+                        <rule id="mine-rule" boolean-op="or" score="INFINITY">
+                            <date_expression id="mine-rule-expr"
+                                operation="gt" start="2018-05-17T13:28:19"
+                            />
+                            <date_expression id="mine-rule-expr-1"
+                                operation="in_range"
+                                start="2019-01-01" end="2019-03-15"
+                            />
+                            <date_expression id="mine-rule-expr-2"
+                                operation="in_range" start="2019-05-01"
+                            >
+                                <duration id="mine-rule-expr-2-duration"
+                                    months="2"
                                 />
-                                <expression id="mine-rule-rule-expr-1"
-                                    attribute="attr2" operation="gte"
-                                    type="number" value="-1.2"
+                            </date_expression>
+                            <date_expression id="mine-rule-expr-3"
+                                operation="date_spec"
+                            >
+                                <date_spec
+                                    id="mine-rule-expr-3-datespec"
+                                    months="7-8" weekdays="6-7" years="2019"
                                 />
-                                <expression id="mine-rule-rule-expr-2"
-                                    attribute="attr3" operation="lt"
-                                    type="version" value="3.2.1"
-                                />
-                                <expression id="mine-rule-rule-expr-3"
-                                    attribute="attr4" operation="ne"
-                                    type="string" value="test"
-                                />
-                                <expression id="mine-rule-rule-expr-4"
-                                    attribute="attr5" operation="lt" value="3"
-                                />
-                            </rule>
-                            <rule id="mine-rule-rule-1" boolean-op="or" score="0">
-                                <date_expression id="mine-rule-rule-1-expr"
-                                    operation="gt" start="2018-05-17T13:28:19"
-                                />
-                                <date_expression id="mine-rule-rule-1-expr-1"
-                                    operation="in_range"
-                                    start="2019-01-01" end="2019-03-15"
-                                />
-                                <date_expression id="mine-rule-rule-1-expr-2"
-                                    operation="in_range" start="2019-05-01"
-                                >
-                                    <duration id="mine-rule-rule-1-expr-2-duration"
-                                        months="2"
-                                    />
-                                </date_expression>
-                                <date_expression id="mine-rule-rule-1-expr-3"
-                                    operation="date_spec"
-                                >
-                                    <date_spec
-                                        id="mine-rule-rule-1-expr-3-datespec"
-                                        months="7-8" weekdays="6-7" years="2019"
-                                    />
-                                </date_expression>
-                                <date_expression id="mine-rule-rule-1-expr-4"
-                                      operation="in_range" end="2019-12-15"
-                                />
-                            </rule>
+                            </date_expression>
+                            <date_expression id="mine-rule-expr-4"
+                                  operation="in_range" end="2019-12-15"
+                            />
                         </rule>
                         <nvpair id="mine-nam1" name="nam1" value="val1"/>
                         <nvpair id="mine-nam2" name="nam2" value="val2"/>
@@ -447,18 +423,12 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
             self.cli_command
             + (
                 "set create id=mine score=10 meta nam1=val1 nam2=val2 "
-                "rule (defined attr1 or attr2 gte number 12a or "
-                "attr3 lt version 3.2.1a or attr4 ne string test or attr5 lt 3) "
-                "and (date gt 2018-05-1X or "
+                "rule (date gt 2018-05-1X or "
                 "date in_range 2019-03-05 to 2019-01-11 or "
                 "date in_range 2019-05-0X to duration months=2 months=3a x=y or "
                 "date-spec years=2019 months=7-X weekdays=7-6 years=202a x=y)"
             ).split(),
             (
-                "Error: '12a' is not a valid number attribute value, "
-                "use a floating-point number\n"
-                "Error: '3.2.1a' is not a valid version attribute value, "
-                "use a version number (e.g. 1, 1.2, 1.23.45, ...)\n"
                 "Error: '2018-05-1X' is not a valid date value, use ISO 8601 date\n"
                 "Error: Since '2019-03-05' is not sooner than until '2019-01-11'\n"
                 "Error: '2019-05-0X' is not a valid date value, use ISO 8601 date\n"
@@ -515,6 +485,16 @@ class RscDefaultsSetCreate(
             ),
         )
 
+    def test_node_attr_expressions(self):
+        self.assert_pcs_fail(
+            self.cli_command + ("set create rule defined attr").split(),
+            (
+                "Error: Keywords 'defined', 'not_defined', 'eq', 'ne', 'gte', "
+                "'gt', 'lte' and 'lt' cannot be used in a rule in this command\n"
+                "Error: Errors have occurred, therefore pcs is unable to continue\n"
+            ),
+        )
+
 
 class OpDefaultsSetCreate(
     get_assert_pcs_effect_mixin(
@@ -529,13 +509,31 @@ class OpDefaultsSetCreate(
     cli_command = ["resource", "op", "defaults"]
     cib_tag = "op_defaults"
 
+    def test_rule_error_messages(self):
+        self.assert_pcs_fail(
+            self.cli_command
+            + (
+                "set create rule defined attr1 or attr2 gte number 12a or "
+                "attr3 lt version 3.2.1a or attr4 ne string test or attr5 lt 3 "
+            ).split(),
+            (
+                "Error: '12a' is not a valid number attribute value, use a "
+                "floating-point number\n"
+                "Error: '3.2.1a' is not a valid version attribute value, use "
+                "a version number (e.g. 1, 1.2, 1.23.45, ...)\n"
+                "Error: Errors have occurred, therefore pcs is unable to continue\n"
+            ),
+        )
+
     @skip_unless_pacemaker_supports_rsc_and_op_rules()
     def test_success_rules_rsc_op(self):
         self.assert_effect(
             self.cli_command
             + (
-                "set create id=X meta nam1=val1 "
-                "rule resource ::Dummy and (op start or op stop)"
+                "-- set create id=X meta nam1=val1 "
+                "rule resource ::Dummy and (op start or op stop) and "
+                "(defined attr1 or attr2 gte number -1.2 or "
+                "attr3 lt version 3.2.1 or attr4 ne string test or attr5 lt 3) "
             ).split(),
             f"""\
             <{self.cib_tag}>
@@ -548,6 +546,26 @@ class OpDefaultsSetCreate(
                             />
                             <op_expression id="X-rule-rule-op-stop"
                                 name="stop"
+                            />
+                        </rule>
+                        <rule id="X-rule-rule-1" boolean-op="or" score="0">
+                            <expression id="X-rule-rule-1-expr"
+                                operation="defined" attribute="attr1"
+                            />
+                            <expression id="X-rule-rule-1-expr-1"
+                                attribute="attr2" operation="gte"
+                                type="number" value="-1.2"
+                            />
+                            <expression id="X-rule-rule-1-expr-2"
+                                attribute="attr3" operation="lt"
+                                type="version" value="3.2.1"
+                            />
+                            <expression id="X-rule-rule-1-expr-3"
+                                attribute="attr4" operation="ne"
+                                type="string" value="test"
+                            />
+                            <expression id="X-rule-rule-1-expr-4"
+                                attribute="attr5" operation="lt" value="3"
                             />
                         </rule>
                     </rule>

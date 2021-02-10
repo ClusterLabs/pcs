@@ -145,6 +145,7 @@ class ValidateNvsetAppendNew:
         nvset_rule: Optional[str] = None,
         rule_allows_rsc_expr: bool = False,
         rule_allows_op_expr: bool = False,
+        rule_allows_node_attr_expr: bool = False,
     ):
         """
         id_provider -- elements' ids generator
@@ -153,6 +154,7 @@ class ValidateNvsetAppendNew:
         nvset_rule -- optional rule describing when the created nvset applies
         rule_allows_rsc_expr -- is rsc_expression element allowed in nvset_rule?
         rule_allows_op_expr -- is op_expression element allowed in nvset_rule?
+        rule_allows_node_attr_expr -- is expression elem allowed in nvset_rule?
         """
         self._id_provider = id_provider
         self._nvpair_dict = nvpair_dict
@@ -160,6 +162,7 @@ class ValidateNvsetAppendNew:
         self._nvset_rule = nvset_rule
         self._allow_rsc_expr = rule_allows_rsc_expr
         self._allow_op_expr = rule_allows_op_expr
+        self._allow_node_attr_expr = rule_allows_node_attr_expr
         self._nvset_rule_parsed: Optional[RuleRoot] = None
 
     def validate(self, force_options: bool = False) -> reports.ReportItemList:
@@ -196,6 +199,7 @@ class ValidateNvsetAppendNew:
                         self._nvset_rule_parsed,
                         allow_rsc_expr=self._allow_rsc_expr,
                         allow_op_expr=self._allow_op_expr,
+                        allow_node_attr_expr=self._allow_node_attr_expr,
                     ).get_reports()
                 )
             except RuleParseError as e:

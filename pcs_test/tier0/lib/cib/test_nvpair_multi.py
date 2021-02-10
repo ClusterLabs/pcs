@@ -437,6 +437,7 @@ class ValidateNvsetAppendNew(TestCase):
             nvset_rule="resource ::stateful",
             rule_allows_rsc_expr=True,
             rule_allows_op_expr=True,
+            rule_allows_node_attr_expr=True,
         )
         assert_report_item_list_equal(
             validator.validate(),
@@ -524,6 +525,7 @@ class ValidateNvsetAppendNew(TestCase):
             "bad rule",
             rule_allows_rsc_expr=True,
             rule_allows_op_expr=True,
+            rule_allows_node_attr_expr=True,
         )
         assert_report_item_list_equal(
             validator.validate(force_options=True),

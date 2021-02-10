@@ -52,7 +52,11 @@ def resource_defaults_create(
     return _defaults_create(
         env,
         sections.RSC_DEFAULTS,
-        dict(rule_allows_rsc_expr=True, rule_allows_op_expr=False),
+        dict(
+            rule_allows_rsc_expr=True,
+            rule_allows_op_expr=False,
+            rule_allows_node_attr_expr=False,
+        ),
         nvpairs,
         nvset_options,
         nvset_rule=nvset_rule,
@@ -79,7 +83,11 @@ def operation_defaults_create(
     return _defaults_create(
         env,
         sections.OP_DEFAULTS,
-        dict(rule_allows_rsc_expr=True, rule_allows_op_expr=True),
+        dict(
+            rule_allows_rsc_expr=True,
+            rule_allows_op_expr=True,
+            rule_allows_node_attr_expr=True,
+        ),
         nvpairs,
         nvset_options,
         nvset_rule=nvset_rule,
