@@ -50,7 +50,7 @@ if arg == "--show-metadata":
     )
     # known_agents_map = {item.lower()}
     if arg in known_agents:
-        write_local_file_to_stdout("{}_metadata.xml".format(arg))
+        write_local_file_to_stdout("{}_metadata.xml".format(arg.replace(":", "__")))
     elif arg == "ocf:pacemaker:nonexistent":
         sys.stderr.write(
             "Metadata query for ocf:pacemaker:nonexistent failed: Input/output "
@@ -76,7 +76,7 @@ elif arg == "--list-agents":
     arg = argv[0]
     known_providers = ("ocf:heartbeat", "ocf:pacemaker", "stonith")
     if arg in known_providers:
-        write_local_file_to_stdout("list_agents_{}".format(arg))
+        write_local_file_to_stdout("list_agents_{}".format(arg.replace(":", "__")))
     else:
         raise AssertionError()
 else:

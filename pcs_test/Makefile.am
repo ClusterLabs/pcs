@@ -1,25 +1,6 @@
 MAINTAINERCLEANFILES	= Makefile.in
 
-AGENTS			= \
-			  tools/bin_mock/pcmk/crm_resource.d/list_agents_ocf__heartbeat \
-			  tools/bin_mock/pcmk/crm_resource.d/list_agents_ocf__pacemaker \
-			  tools/bin_mock/pcmk/crm_resource.d/ocf__pacemaker__SystemHealth_metadata.xml \
-			  tools/bin_mock/pcmk/crm_resource.d/systemd__test@a__b_metadata.xml \
-			  tools/bin_mock/pcmk/crm_resource.d/ocf__pacemaker__Stateful_metadata.xml \
-			  tools/bin_mock/pcmk/crm_resource.d/ocf__pacemaker__HealthCPU_metadata.xml \
-			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_ilo_metadata.xml \
-			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_xvm_metadata.xml \
-			  tools/bin_mock/pcmk/crm_resource.d/ocf__heartbeat__Filesystem_metadata.xml \
-			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_scsi_metadata.xml \
-			  tools/bin_mock/pcmk/crm_resource.d/ocf__pacemaker__remote_metadata.xml \
-			  tools/bin_mock/pcmk/crm_resource.d/ocf__heartbeat__IPaddr2_metadata.xml \
-			  tools/bin_mock/pcmk/crm_resource.d/lsb__network_metadata.xml \
-			  tools/bin_mock/pcmk/crm_resource.d/ocf__pacemaker__Dummy_metadata.xml \
-			  tools/bin_mock/pcmk/crm_resource.d/ocf__heartbeat__Dummy_metadata.xml \
-			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_apc_metadata.xml
-
 EXTRA_DIST		= \
-			  $(AGENTS) \
 			  tier0/test_host.py \
 			  tier0/daemon/test_ssl.py \
 			  tier0/daemon/test_env.py \
@@ -310,9 +291,25 @@ EXTRA_DIST		= \
 			  tools/fixture.py \
 			  tools/xml.py \
 			  tools/fixture_cib.py \
-			  tools/bin_mock/pcmk/crm_resource.d/list_ocf_providers \
+			  tools/bin_mock/pcmk/crm_resource.d/list_agents_ocf__heartbeat \
+			  tools/bin_mock/pcmk/crm_resource.d/list_agents_ocf__pacemaker \
 			  tools/bin_mock/pcmk/crm_resource.d/list_agents_stonith \
+			  tools/bin_mock/pcmk/crm_resource.d/list_ocf_providers \
 			  tools/bin_mock/pcmk/crm_resource.d/list_standards \
+			  tools/bin_mock/pcmk/crm_resource.d/lsb__network_metadata.xml \
+			  tools/bin_mock/pcmk/crm_resource.d/ocf__heartbeat__Dummy_metadata.xml \
+			  tools/bin_mock/pcmk/crm_resource.d/ocf__heartbeat__Filesystem_metadata.xml \
+			  tools/bin_mock/pcmk/crm_resource.d/ocf__heartbeat__IPaddr2_metadata.xml \
+			  tools/bin_mock/pcmk/crm_resource.d/ocf__pacemaker__Dummy_metadata.xml \
+			  tools/bin_mock/pcmk/crm_resource.d/ocf__pacemaker__HealthCPU_metadata.xml \
+			  tools/bin_mock/pcmk/crm_resource.d/ocf__pacemaker__remote_metadata.xml \
+			  tools/bin_mock/pcmk/crm_resource.d/ocf__pacemaker__Stateful_metadata.xml \
+			  tools/bin_mock/pcmk/crm_resource.d/ocf__pacemaker__SystemHealth_metadata.xml \
+			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_apc_metadata.xml
+			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_ilo_metadata.xml \
+			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_scsi_metadata.xml \
+			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_xvm_metadata.xml \
+			  tools/bin_mock/pcmk/crm_resource.d/systemd__test@a__b_metadata.xml \
 			  tools/bin_mock/__init__.py \
 			  tools/__init__.py \
 			  tools/pcs_runner.py \
@@ -367,20 +364,3 @@ EXTRA_DIST		= \
 			  resources/cib-empty-3.1.xml \
 			  resources/transitions01.xml \
 			  __init__.py
-
-noinst_DATA		= tier1_symlinks
-
-tier1_symlinks:
-	for i in $(AGENTS); do \
-		src=`basename $${i}` && \
-		dst=`echo $${i} | sed -e 's#__#:#g'` && \
-		$(MKDIR_P) ${builddir}/tools/bin_mock/pcmk/crm_resource.d && \
-		rm -f $${dst} && \
-		$(LN_S) $${src} $${dst}; \
-	done
-
-clean-local:
-	for i in $(AGENTS); do \
-		dst=`echo $${i} | sed -e 's#__#:#g'` && \
-		rm -f $${dst}; \
-	done
