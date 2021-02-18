@@ -25,6 +25,7 @@ ACLOCAL_AMFLAGS		= -I m4
 
 SUBDIRS			= pcs pcsd pcs_test
 
+PCS_PYTHON_PACKAGES = pcs/ pcs_test/
 # depedency management
 
 # 1 - sources directory - with python package sources
@@ -145,25 +146,26 @@ dist_doc_DATA	= README.md CHANGELOG.md
 pylint:
 if DEV_TESTS
 	export PYTHONPATH=${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/packages && \
-		$(TIME) $(PYTHON) -m pylint --rcfile pylintrc --persistent=n --reports=n --score=n --disable similarities pcs pcs_test
+		$(TIME) $(PYTHON) -m pylint --rcfile pylintrc --persistent=n --reports=n --score=n --disable similarities ${PCS_PYTHON_PACKAGES}
 endif
+
 
 black_check: pyproject.toml
 if DEV_TESTS
 	export PYTHONPATH=${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/packages && \
-		$(TIME) $(PYTHON) -m black --config pyproject.toml --check .
+		$(TIME) $(PYTHON) -m black --config pyproject.toml --check ${PCS_PYTHON_PACKAGES}
 endif
 
 black: pyproject.toml
 if DEV_TESTS
 	export PYTHONPATH=${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/packages && \
-		$(PYTHON) -m black --config pyproject.toml .
+		$(PYTHON) -m black --config pyproject.toml ${PCS_PYTHON_PACKAGES}
 endif
 
 mypy:
 if DEV_TESTS
 	export PYTHONPATH=${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/packages && \
-		$(TIME) $(PYTHON) -m mypy -p pcs
+		$(TIME) $(PYTHON) -m mypy --config-file mypy.ini --package pcs
 endif
 
 tests_tier0:

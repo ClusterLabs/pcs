@@ -233,10 +233,10 @@ AC_ARG_WITH([snmp-mibs-dir],
 AC_SUBST([SNMP_MIB_DIR])
 
 # python detection section
-PCS_BUNDLED_DIR_LOCAL="pcs/bundled"
+PCS_BUNDLED_DIR_LOCAL="pcs_bundled"
 AC_SUBST([PCS_BUNDLED_DIR_LOCAL])
 if test "x$local_build" = "xyes"; then
-	PCS_BUNDLED_DIR="pcs/bundled"
+	PCS_BUNDLED_DIR="pcs_bundled"
 else
 	PCS_BUNDLED_DIR="$LIB_DIR/pcs/bundled"
 fi
