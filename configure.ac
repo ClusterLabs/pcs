@@ -338,7 +338,7 @@ if test "x$dev_tests" != "x"; then
 	PCS_CHECK_PYMOD([astroid], [== 2.4.2], [yes], [yes])
 	PCS_CHECK_PYMOD([mypy], [== 0.790], [yes], [yes])
 	PCS_CHECK_PYMOD([mypy_extensions], [], [yes], [yes])
-	PCS_CHECK_PYMOD([black], [== 19.10b0], [yes], [yes])
+	PCS_CHECK_PYMOD([black], [== 20.8b1], [yes], [yes])
 fi
 
 AC_SUBST([PYTHON_DEVEL])
