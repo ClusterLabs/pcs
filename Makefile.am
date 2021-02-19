@@ -2,6 +2,7 @@ EXTRA_DIST		= autogen.sh \
 			  .version make/release.mk \
 			  dev_requirements.txt \
 			  make/git-version-gen make/gitlog-to-changelog \
+			  scripts/pcsd.sh.in \
 			  .eslintrc .gitlab-ci.yml \
 			  MANIFEST.in .travis.yml rpm/pcs.spec.in \
 			  mypy.ini pyproject.toml pylintrc \

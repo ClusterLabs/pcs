@@ -236,7 +236,7 @@ AC_SUBST([SNMP_MIB_DIR])
 PCS_BUNDLED_DIR_LOCAL="pcs_bundled"
 AC_SUBST([PCS_BUNDLED_DIR_LOCAL])
 if test "x$local_build" = "xyes"; then
-	PCS_BUNDLED_DIR="pcs_bundled"
+	PCS_BUNDLED_DIR="$PCS_BUNDLED_DIR_LOCAL"
 else
 	PCS_BUNDLED_DIR="$LIB_DIR/pcs/bundled"
 fi
@@ -341,7 +341,7 @@ if test "x$local_build" = "xyes"; then
 	fi
 fi
 
-PCSD_BUNDLED_DIR_ROOT_LOCAL="pcsd/vendor/bundled/"
+PCSD_BUNDLED_DIR_ROOT_LOCAL="pcsd/vendor/bundle/"
 PCSD_BUNDLED_DIR_LOCAL="$PCSD_BUNDLED_DIR_ROOT_LOCAL/ruby/$RUBY_VER/"
 AC_SUBST([PCSD_BUNDLED_DIR_ROOT_LOCAL])
 AC_SUBST([PCSD_BUNDLED_DIR_LOCAL])
@@ -387,12 +387,8 @@ PCS_CHECK_GEM([webrick])
 if test "x$local_build" = "xyes"; then
 	GEM_HOME="$LIB_DIR/$PCSD_BUNDLED_DIR_LOCAL"
 	SYSTEMD_GEM_HOME="Environment=GEM_HOME=$GEM_HOME"
-	PCS_GEM_HOME="pcsd_gem_path = '$GEM_HOME'"
-else
-	PCS_GEM_HOME="pcsd_gem_path = None" 
 fi
 AC_SUBST([GEM_HOME])
-AC_SUBST([PCS_GEM_HOME])
 AC_SUBST([SYSTEMD_GEM_HOME])
 AM_CONDITIONAL([INSTALL_EMBEDDED_GEMS], [test -n "$GEM_HOME"])
 
@@ -552,7 +548,6 @@ AC_CONFIG_FILES([Makefile
 		 pcsd/Makefile
 		 pcsd/pcsd.8
 		 pcsd/pcs.rb
-		 pcsd/pcsd
 		 pcsd/pcsd-cli.rb
 		 pcsd/pcsd-ruby.service
 		 pcsd/pcsd.service
@@ -569,5 +564,7 @@ AC_CONFIG_FILES([pcs_test/smoke.sh], [chmod +x pcs_test/smoke.sh])
 AC_CONFIG_FILES([pcs_test/pcs_for_tests], [chmod +x pcs_test/pcs_for_tests])
 AC_CONFIG_FILES([pcs_test/suite.py], [chmod +x pcs_test/suite.py])
 AC_CONFIG_FILES([pcs_test/tools/bin_mock/pcmk/crm_resource], [chmod +x pcs_test/tools/bin_mock/pcmk/crm_resource])
+AC_CONFIG_FILES([pcsd/pcsd], [chmod +x pcsd/pcsd])
+AC_CONFIG_FILES([scripts/pcsd.sh], [chmod +x scripts/pcsd.sh])
 
 AC_OUTPUT

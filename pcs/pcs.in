@@ -10,6 +10,8 @@ sys.path.remove(CURRENT_DIR)
 
 # Add pcs package.
 PACKAGE_DIR = os.path.dirname(CURRENT_DIR)
+BUNDLED_PACKAGES_DIR = os.path.join(PACKAGE_DIR, "@PCS_BUNDLED_DIR_LOCAL@", "packages")
+sys.path.insert(0, BUNDLED_PACKAGES_DIR)
 sys.path.insert(0, PACKAGE_DIR)
 
 
@@ -23,4 +25,5 @@ else:
     )
 
     settings.pcsd_exec_location = os.path.join(PACKAGE_DIR, "pcsd")
+    settings.pcsd_gem_path = os.path.join(PACKAGE_DIR, "@PCSD_BUNDLED_DIR_LOCAL@")
     app.main(sys.argv[1:])

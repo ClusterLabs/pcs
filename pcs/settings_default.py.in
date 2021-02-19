@@ -98,7 +98,7 @@ default_ssl_options = ",".join(
 )
 # Set pcsd_gem_path to None if there are no bundled ruby gems and the path does
 # not exists.
-@PCS_GEM_HOME@
+pcsd_gem_path = "@GEM_HOME@" or None
 ruby_executable = "@RUBY@"
 
 gui_session_lifetime_seconds = 60 * 60
