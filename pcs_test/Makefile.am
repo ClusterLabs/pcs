@@ -305,7 +305,7 @@ EXTRA_DIST		= \
 			  tools/bin_mock/pcmk/crm_resource.d/ocf__pacemaker__remote_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource.d/ocf__pacemaker__Stateful_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource.d/ocf__pacemaker__SystemHealth_metadata.xml \
-			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_apc_metadata.xml
+			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_apc_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_ilo_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_scsi_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_xvm_metadata.xml \
