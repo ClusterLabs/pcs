@@ -322,25 +322,6 @@ else
 fi
 AM_CONDITIONAL([NOT_BUILD_DISTRO], [test "$builddistro" = "no"])
 
-if test "x$dev_tests" != "x"; then
-	# those one needs to be available in BaseOS
-	PCS_CHECK_PYMOD([lazy-object-proxy])
-	PCS_CHECK_PYMOD([isort])
-	PCS_CHECK_PYMOD([regex])
-	PCS_CHECK_PYMOD([attrs])
-	PCS_CHECK_PYMOD([typed-ast])
-	PCS_CHECK_PYMOD([pathspec])
-	PCS_CHECK_PYMOD([typing-extensions])
-	# those ones can be embedded
-	PCS_CHECK_PYMOD([lxml-stubs], [], [yes], [yes])
-	PCS_CHECK_PYMOD([toml], [], [yes], [yes])
-	PCS_CHECK_PYMOD([pylint], [== 2.6.0], [yes], [yes])
-	PCS_CHECK_PYMOD([astroid], [== 2.4.2], [yes], [yes])
-	PCS_CHECK_PYMOD([mypy], [== 0.790], [yes], [yes])
-	PCS_CHECK_PYMOD([mypy_extensions], [], [yes], [yes])
-	PCS_CHECK_PYMOD([black], [== 20.8b1], [yes], [yes])
-fi
-
 AC_SUBST([PYTHON_DEVEL])
 
 # special case, because we need to download from github
