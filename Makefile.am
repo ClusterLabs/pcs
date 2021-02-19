@@ -54,13 +54,13 @@ endif
 
 stamps/download_python_deps: rpm/requirements.txt stamps/download_pyagentx dev_src/requirements.txt
 if ENABLE_DOWNLOAD
-	$(PIP) download --disable-pip-version-check --no-deps $(pipopts) --dest rpm/ --no-binary :all: -r rpm/requirements.txt
+	PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring $(PIP) download --disable-pip-version-check --no-deps $(pipopts) --dest rpm/ --no-binary :all: -r rpm/requirements.txt
 endif
 	touch $@
 
 stamps/download_python_devel_deps: dev_src/requirements.txt
 if DEV_TESTS
-	$(PIP) download --disable-pip-version-check --no-deps $(pipopts) --dest dev_src/ --no-binary :all: -r dev_src/requirements.txt
+	PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring $(PIP) download --disable-pip-version-check --no-deps $(pipopts) --dest dev_src/ --no-binary :all: -r dev_src/requirements.txt
 endif
 	touch $@
 
