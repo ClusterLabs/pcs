@@ -226,6 +226,7 @@ EXTRA_DIST		= \
 			  tier0/cli/test_rule.py \
 			  tier0/cli/booth/test_env.py \
 			  tier0/cli/booth/__init__.py \
+			  tier0/test_capabilities.py \
 			  curl_test.py \
 			  tier1/test_booth.py \
 			  tier1/test_misc.py \
