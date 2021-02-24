@@ -14,7 +14,7 @@ from pcs.settings import (
 from pcs.common.async_tasks.dto import CommandDto
 from pcs.common.reports import ReportItemDto
 
-TASK_IDENT = "00000000000000000123456789abcdef"
+TASK_IDENT = "id0"
 DATETIME_NOW = datetime(2020, 2, 20, 20, 20, 20, 20)
 TEST_TIMEOUT_S = 10
 DATETIME_BEFORE_TIMEOUT = DATETIME_NOW - timedelta(seconds=TEST_TIMEOUT_S / 2)

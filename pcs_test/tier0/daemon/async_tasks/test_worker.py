@@ -10,7 +10,7 @@ from pcs.common.reports import ReportItem, ReportItemDto
 from pcs.common.reports.messages import CibUpgradeSuccessful
 from pcs.lib.errors import LibraryError
 
-TASK_IDENT = "00000000000000000123456789abcdef"
+TASK_IDENT = "id0"
 WORKER_PID = 2222
 RESULT = "I'm done."
 
