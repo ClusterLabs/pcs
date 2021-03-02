@@ -120,8 +120,8 @@ class BaseAPIHandler(RequestHandler):
             "http_error": responses.get(status_code, "Unknown"),
             "error_message": None,
         }
-        if kwargs is not None and "exc_info" in kwargs:
-            _, exc, _ = kwargs.get("exc_info")
+        if "exc_info" in kwargs:
+            _, exc, _ = kwargs["exc_info"]
             if isinstance(exc, HTTPError) and exc.reason:
                 # Rewrite http reason autoconverted from http status code
                 response["http_error"] = exc.reason
