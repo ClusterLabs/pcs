@@ -222,9 +222,11 @@ Usage: pcs resource [commands]...
 Manage pacemaker resources
 
 Commands:
-    [status [--hide-inactive]]
+    [status [<resource id | tag id>] [--hide-inactive]]
         Show status of all currently configured resources. If --hide-inactive
-        is specified, only show active resources.
+        is specified, only show active resources. If a resource or tag id is
+        specified, only show status of the specified resource or resources in
+        the specified tag.
 
     config [<resource id>]...
         Show options of all currently configured resources or if resource ids
@@ -1229,9 +1231,11 @@ Usage: pcs stonith [commands]...
 Configure fence devices for use with pacemaker
 
 Commands:
-    [status [--hide-inactive]]
+    [status [<resource id | tag id>] [--hide-inactive]]
         Show status of all currently configured stonith devices. If
-        --hide-inactive is specified, only show active stonith devices.
+        --hide-inactive is specified, only show active stonith devices. If a
+        resource or tag id is specified, only show status of the specified
+        resource or resources in the specified tag.
 
     config [<stonith id>]...
         Show options of all currently configured stonith devices or if stonith
@@ -1814,9 +1818,11 @@ def status(args=(), pout=True):
 Usage: pcs status [commands]...
 View current cluster and resource status
 Commands:
-    [status] [--full] [--hide-inactive]
+    [status] [<resource id | tag id>] [--full] [--hide-inactive]
         View all information about the cluster and resources (--full provides
-        more details, --hide-inactive hides inactive resources).
+        more details, --hide-inactive hides inactive resources). If a resource
+        or tag id is specified, only show status of the specified resource or
+        resources in the specified tag.
 
     resources [--hide-inactive]
         Show status of all currently configured resources. If --hide-inactive

@@ -83,8 +83,8 @@ tag
  Manage pacemaker tags.
 .SS "resource"
 .TP
-[status [\fB\-\-hide\-inactive\fR]]
-Show status of all currently configured resources. If \fB\-\-hide\-inactive\fR is specified, only show active resources.
+[status [<resource id | tag id>] [\fB\-\-hide\-inactive\fR]]
+Show status of all currently configured resources. If \fB\-\-hide\-inactive\fR is specified, only show active resources. If a resource or tag id is specified, only show status of the specified resource or resources in the specified tag.
 .TP
 config [<resource id>]...
 Show options of all currently configured resources or if resource ids are specified show the options for the specified resource ids.
@@ -634,8 +634,8 @@ report [\fB\-\-from\fR "YYYY\-M\-D H:M:S" [\fB\-\-to\fR "YYYY\-M\-D H:M:S"]] <de
 Create a tarball containing everything needed when reporting cluster problems.  If \fB\-\-from\fR and \fB\-\-to\fR are not used, the report will include the past 24 hours.
 .SS "stonith"
 .TP
-[status [\fB\-\-hide\-inactive\fR]]
-Show status of all currently configured stonith devices. If \fB\-\-hide\-inactive\fR is specified, only show active stonith devices.
+[status [<resource id | tag id>] [\fB\-\-hide\-inactive\fR]]
+Show status of all currently configured stonith devices. If \fB\-\-hide\-inactive\fR is specified, only show active stonith devices. If a resource or tag id is specified, only show status of the specified resource or resources in the specified tag.
 .TP
 config [<stonith id>]...
 Show options of all currently configured stonith devices or if stonith ids are specified show the options for the specified stonith device ids.
@@ -1100,8 +1100,8 @@ Stop booth arbitrator service.
 [status] [\fB\-\-full\fR] [\fB\-\-hide\-inactive\fR]
 View all information about the cluster and resources (\fB\-\-full\fR provides more details, \fB\-\-hide\-inactive\fR hides inactive resources).
 .TP
-resources [\fB\-\-hide\-inactive\fR]
-Show status of all currently configured resources. If \fB\-\-hide\-inactive\fR is specified, only show active resources.
+resources [<resource id | tag id>] [\fB\-\-hide\-inactive\fR]
+Show status of all currently configured resources. If \fB\-\-hide\-inactive\fR is specified, only show active resources. If a resource or tag id is specified, only show status of the specified resource or resources in the specified tag.
 .TP
 cluster
 View current cluster status.

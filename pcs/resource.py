@@ -2229,17 +2229,27 @@ def resource_status(lib, argv, modifiers, stonith=False):
     """
     del lib
     modifiers.ensure_only_supported("-f", "--hide-inactive")
-    if argv:
+    if len(argv) > 1:
         raise CmdLineInputError()
 
     monitor_command = ["crm_mon", "--one-shot"]
     if not modifiers.get("--hide-inactive"):
         monitor_command.append("--inactive")
+    if argv:
+        resource_or_tag_id = argv[0]
+        crm_mon_err_msg = (
+            f"unable to get status of '{resource_or_tag_id}' from crm_mon\n"
+        )
+        monitor_command.extend(
+            ["--include", "none,resources", "--resource", resource_or_tag_id]
+        )
+    else:
+        resource_or_tag_id = None
+        crm_mon_err_msg = "unable to get cluster status from crm_mon\n"
+
     output, retval = utils.run(monitor_command)
     if retval != 0:
-        utils.err(
-            "unable to get cluster status from crm_mon\n" + output.rstrip()
-        )
+        utils.err(crm_mon_err_msg + output.rstrip())
     preg = re.compile(r".*(stonith:.*)")
     resources_header = False
     in_resources = False
@@ -2257,6 +2267,10 @@ def resource_status(lib, argv, modifiers, stonith=False):
             "  * No resources",  # pacemaker >= 2.0.3
             "No resources",  # pacemaker < 2.0.3
         ):
+            if resource_or_tag_id:
+                utils.err(
+                    f"resource or tag id '{resource_or_tag_id}' not found"
+                )
             print(no_resources_line)
             return
         if line == "Full List of Resources:":  # pacemaker >= 2.0.3
@@ -2278,6 +2292,10 @@ def resource_status(lib, argv, modifiers, stonith=False):
                 return
             continue
         if in_resources:
+            if resource_or_tag_id:
+                has_resources = True
+                print(line)
+                continue
             if not preg.match(line) and not stonith:
                 has_resources = True
                 print(line)
