@@ -56,6 +56,12 @@ class TestTagMixin(
                 <tag id="tag3">
                     <obj_ref id="y2-clone"/>
                 </tag>
+                <tag id="tag-mixed-stonith-devices-and-resources">
+                    <obj_ref id="fence-rh-2"/>
+                    <obj_ref id="y1"/>
+                    <obj_ref id="fence-rh-1"/>
+                    <obj_ref id="x3"/>
+                </tag>
                 {append}
             </tags>
         """
@@ -202,6 +208,11 @@ class TagConfigListBase(TestTagMixin):
                   x2
                 tag3
                   y2-clone
+                tag-mixed-stonith-devices-and-resources
+                  fence-rh-2
+                  y1
+                  fence-rh-1
+                  x3
                 """
             ),
         )
@@ -243,11 +254,9 @@ class PcsConfigTagsTest(TestTagMixin, TestCase):
         Cluster Name: test99
         Corosync Nodes:
          rh7-1 rh7-2
-        Pacemaker Nodes:
+        {pacemaker_nodes}
         {resources}
-        Stonith Devices:
-        Fencing Levels:
-        {constraints}
+        {stonith_devices}{fencing_levels}{constraints}
         Alerts:
          No alerts defined
 
@@ -262,7 +271,10 @@ class PcsConfigTagsTest(TestTagMixin, TestCase):
           Options:
         """
     )
+    empty_pacemaker_nodes = "Pacemaker Nodes:"
     empty_resources = "\nResources:\n"
+    empty_stonith_devices = "Stonith Devices:\n"
+    empty_fencing_levels = "Fencing Levels:\n"
     empty_constraints = outdent(
         """
         Location Constraints:
@@ -277,9 +289,15 @@ class PcsConfigTagsTest(TestTagMixin, TestCase):
          No tags defined
         """
     )
+    expected_pacemaker_nodes = outdent(
+        """\
+        Pacemaker Nodes:
+         rh-1 rh-2
+        """
+    )
     expected_resources = outdent(
         # pylint: disable=line-too-long
-        """
+        """\
         Resources:
          Resource: not-in-tags (class=ocf provider=pacemaker type=Dummy)
           Operations: monitor interval=10s timeout=20s (not-in-tags-monitor-interval-10s)
@@ -296,6 +314,29 @@ class PcsConfigTagsTest(TestTagMixin, TestCase):
            Operations: monitor interval=10s timeout=20s (y2-monitor-interval-10s)
         """
     )
+    expected_stonith_devices = outdent(
+        """\
+        Stonith Devices:
+         Resource: fence-rh-1 (class=stonith type=fence_xvm)
+          Operations: monitor interval=60s (fence-rh-1-monitor-interval-60s)
+         Resource: fence-rh-2 (class=stonith type=fence_xvm)
+          Operations: monitor interval=60s (fence-rh-2-monitor-interval-60s)
+         Resource: fence-kdump (class=stonith type=fence_kdump)
+          Attributes: pcmk_host_list="rh-1 rh-2"
+          Operations: monitor interval=60s (fence-kdump-monitor-interval-60s)
+        """
+    )
+    expected_fencing_levels = outdent(
+        """\
+        Fencing Levels:
+          Target: rh-1
+            Level 1 - fence-kdump
+            Level 2 - fence-rh-1
+          Target: rh-2
+            Level 1 - fence-kdump
+            Level 2 - fence-rh-2
+        """
+    )
     expected_tags = outdent(
         """
         Tags:
@@ -308,6 +349,11 @@ class PcsConfigTagsTest(TestTagMixin, TestCase):
            x2
          tag3
            y2-clone
+         tag-mixed-stonith-devices-and-resources
+           fence-rh-2
+           y1
+           fence-rh-1
+           x3
         """
     )
     expected_constraints = outdent(
@@ -334,12 +380,18 @@ class PcsConfigTagsTest(TestTagMixin, TestCase):
     def fixture_expected_config(
         self,
         constraints=empty_constraints,
+        pacemaker_nodes=empty_pacemaker_nodes,
         resources=empty_resources,
+        stonith_devices=empty_stonith_devices,
+        fencing_levels=empty_fencing_levels,
         tags=empty_tags,
     ):
         return self.config_template.format(
             constraints=constraints,
+            pacemaker_nodes=pacemaker_nodes,
             resources=resources,
+            stonith_devices=stonith_devices,
+            fencing_levels=fencing_levels,
             tags=tags,
         )
 
@@ -356,7 +408,10 @@ class PcsConfigTagsTest(TestTagMixin, TestCase):
             ["config"],
             self.fixture_expected_config(
                 constraints=self.expected_constraints,
+                pacemaker_nodes=self.expected_pacemaker_nodes,
                 resources=self.expected_resources,
+                stonith_devices=self.expected_stonith_devices,
+                fencing_levels=self.expected_fencing_levels,
                 tags=self.expected_tags,
             ),
         )
@@ -392,7 +447,14 @@ class TagRemoveDeleteBase(TestTagMixin):
 
     def test_remove_all_tags(self):
         self.assert_effect(
-            ["tag", self.command, "tag1", "tag2", "tag3"],
+            [
+                "tag",
+                self.command,
+                "tag1",
+                "tag2",
+                "tag3",
+                "tag-mixed-stonith-devices-and-resources",
+            ],
             """
             <tags/>
             """,
