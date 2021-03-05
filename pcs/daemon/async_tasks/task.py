@@ -85,8 +85,9 @@ class Task(ImplementsToDto):
         """
         last_message_at = self._get_last_updated_timestamp()
         if last_message_at:
-            return datetime.datetime.now() - last_message_at > datetime.timedelta(
-                seconds=timeout_s
+            return (
+                datetime.datetime.now() - last_message_at
+                > datetime.timedelta(seconds=timeout_s)
             )
         return False
 

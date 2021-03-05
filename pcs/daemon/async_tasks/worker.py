@@ -63,11 +63,17 @@ def task_executor(task: WorkerCommand) -> None:
     logger = getLogger("pcs_worker")
 
     global worker_com
-    worker_com.put(Message(task.task_ident, TaskExecuted(os.getpid()),))
+    worker_com.put(
+        Message(
+            task.task_ident,
+            TaskExecuted(os.getpid()),
+        )
+    )
     logger.info("Task %s executed.", task.task_ident)
 
     env = LibraryEnvironment(  # type: ignore
-        logger, WorkerReportProcessor(worker_com, task.task_ident),
+        logger,
+        WorkerReportProcessor(worker_com, task.task_ident),
     )
 
     task_retval = None
@@ -82,7 +88,10 @@ def task_executor(task: WorkerCommand) -> None:
         for report in e.args:
             worker_com.put(Message(task.task_ident, report.to_dto()))
         worker_com.put(
-            Message(task.task_ident, TaskFinished(TaskFinishType.FAIL, None),)
+            Message(
+                task.task_ident,
+                TaskFinished(TaskFinishType.FAIL, None),
+            )
         )
         logger.exception("Task %s raised a LibraryException.", task.task_ident)
         return
@@ -100,7 +109,8 @@ def task_executor(task: WorkerCommand) -> None:
         return
     worker_com.put(
         Message(
-            task.task_ident, TaskFinished(TaskFinishType.SUCCESS, task_retval),
+            task.task_ident,
+            TaskFinished(TaskFinishType.SUCCESS, task_retval),
         )
     )
     logger.info("Task %s finished.", task.task_ident)

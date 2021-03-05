@@ -116,18 +116,20 @@ class Scheduler:
             if task.is_kill_requested():
                 task.kill()
 
-    async def perform_actions(self) -> None:
+    async def perform_actions(self) -> int:
         """
         Calls all actions that are done by the scheduler in one pass
         """
         # self._logger.debug("Scheduler tick.")
         await self._schedule_tasks()
-        await self._receive_messages()
+        # We need to guarantee that all messages have been received in tests
+        received_total = await self._receive_messages()
         # Garbage collection needs to run right after receiving messages to
         # kill executed tasks most quickly
         await self._garbage_collection()
         # TODO: (optimization) Run hunting less frequently
         await self._garbage_hunting()
+        return received_total
 
     async def _receive_messages(self) -> int:
         """
@@ -185,11 +187,13 @@ class Scheduler:
                 continue
             try:
                 self._proc_pool.apply_async(
-                    func=task_executor, args=[next_task.to_worker_command()],
+                    func=task_executor,
+                    args=[next_task.to_worker_command()],
                 )
             except ValueError:
                 self._logger.critical(
-                    "Unable to send task %s to worker pool.", next_task_ident,
+                    "Unable to send task %s to worker pool.",
+                    next_task_ident,
                 )
                 sys.exit(1)
             next_task.state = TaskState.QUEUED

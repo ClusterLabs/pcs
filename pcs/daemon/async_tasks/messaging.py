@@ -23,5 +23,7 @@ class TaskFinished:
 class Message:
     task_ident: str
     payload: Union[
-        ReportItemDto, TaskExecuted, TaskFinished,
+        ReportItemDto,
+        TaskExecuted,
+        TaskFinished,
     ]
