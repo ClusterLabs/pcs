@@ -4,6 +4,7 @@ from unittest import mock, skipUnless, TestCase
 
 from pcs.cli.booth import command as booth_cmd
 
+from pcs_test import settings
 from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.misc import (
     get_test_resource as rc,
@@ -18,7 +19,7 @@ from pcs_test.tools.pcs_runner import PcsRunner
 EMPTY_CIB = rc("cib-empty.xml")
 
 BOOTH_RESOURCE_AGENT_INSTALLED = os.path.exists(
-    "@OCFROOT@/pacemaker/booth-site"
+    os.path.join(settings.ocf_root, "pacemaker/booth-site")
 )
 need_booth_resource_agent = skipUnless(
     BOOTH_RESOURCE_AGENT_INSTALLED,

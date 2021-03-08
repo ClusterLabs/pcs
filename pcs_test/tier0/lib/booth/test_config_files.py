@@ -90,10 +90,10 @@ class GetAuthfileNameAndData(TestCase):
         )
 
     def test_invalid_path(self):
-        self.assert_path_check("/not@BOOTHCONFDIR@/booth.key")
+        self.assert_path_check(f"/not{settings.booth_config_dir}/booth.key")
 
     def test_not_abs_path(self):
-        self.assert_path_check("@BOOTHCONFDIR@/../booth.key")
+        self.assert_path_check(f"{settings.booth_config_dir}/../booth.key")
 
     @mock.patch("pcs.common.file.RawFile.read")
     def test_success(self, mock_read):

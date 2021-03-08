@@ -29,7 +29,7 @@ def fixture_report_invalid_name(name):
 
 
 class FixtureMixin:
-    booth_dir = "@BOOTHCONFDIR@"
+    booth_dir = settings.booth_config_dir
     site_ip = "192.168.122.254"
 
     def fixture_cfg_path(self, name="booth"):
@@ -2548,7 +2548,7 @@ class ConfigSyncTest(TestCase, FixtureMixin):
 
     def fixture_config_success_not_live(self, instance_name="booth"):
         key_data = RANDOM_KEY
-        key_path = "@BOOTHCONFDIR@/some.key"
+        key_path = os.path.join(settings.booth_config_dir, "some.key")
         config_data = self.fixture_cfg_content(key_path=key_path)
         self.config.env.set_booth(
             {

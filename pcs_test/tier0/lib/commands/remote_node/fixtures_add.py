@@ -2,6 +2,7 @@ import base64
 
 from pcs_test.tools import fixture
 
+from pcs import settings
 from pcs.common import file_type_codes
 from pcs.common.reports import codes as report_codes
 
@@ -16,8 +17,6 @@ FAIL_HTTP_KWARGS = dict(
 
 
 class EnvConfigMixin:
-    PCMK_AUTHKEY_PATH = "@PCMKCONFDIR@/pacemaker/authkey"
-
     def __init__(self, call_collection, wrap_helper, config):
         # pylint: disable=unused-argument
         self.__calls = call_collection
@@ -78,14 +77,14 @@ class EnvConfigMixin:
     def authkey_exists(self, return_value):
         self.config.raw_file.exists(
             file_type_codes.PACEMAKER_AUTHKEY,
-            self.PCMK_AUTHKEY_PATH,
+            settings.pacemaker_authkey_file,
             exists=return_value,
         )
 
     def open_authkey(self, pcmk_authkey_content="", fail=False):
         self.config.raw_file.read(
             file_type_codes.PACEMAKER_AUTHKEY,
-            self.PCMK_AUTHKEY_PATH,
+            settings.pacemaker_authkey_file,
             content=(pcmk_authkey_content if not fail else None),
             exception_msg=("open failed" if fail else None),
         )

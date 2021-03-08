@@ -1,6 +1,7 @@
 import os.path
 
 systemctl_binary = "@SYSTEMCTL@"
+systemd_unit_path = "@SYSTEMD_UNIT_PATH@".split(":")
 chkconfig_binary = "/sbin/chkconfig"
 service_binary = "@SERVICE@"
 # Used only in utils.py in deprecated funcion
@@ -34,12 +35,15 @@ booth_authkey_bytes = 64
 # hence it can stay hardcoded
 cluster_conf_file = "/etc/cluster/cluster.conf"
 fence_agent_binaries = "@FASEXECPREFIX@/sbin/"
-pacemaker_schedulerd = "@PCMK_DAEMON_DIR@/pacemaker-schedulerd"
-pacemaker_controld = "@PCMK_DAEMON_DIR@/pacemaker-controld"
-pacemaker_based = "@PCMK_DAEMON_DIR@/pacemaker-based"
-pacemaker_fenced = "@PCMK_DAEMON_DIR@/pacemaker-fenced"
+pacemaker_local_state_dir = os.path.join("@PCMKLOCALSTATEDIR@", "/lib/pacemaker")
+pacemaker_daemon_dir = "@PCMK_DAEMON_DIR@"
+pacemaker_schedulerd = os.path.join(pacemaker_daemon_dir, "pacemaker-schedulerd")
+pacemaker_controld = os.path.join(pacemaker_daemon_dir, "pacemaker-controld")
+pacemaker_based = os.path.join(pacemaker_daemon_dir, "pacemaker-based")
+pacemaker_fenced = os.path.join(pacemaker_daemon_dir, "pacemaker-fenced")
 pcs_version = "@VERSION@"
 crm_resource_binary = "@PCMKEXECPREFIX@/sbin/crm_resource"
+crm_mon = "@PCMKEXECPREFIX@/sbin/crm_mon"
 crm_report = "@PCMKEXECPREFIX@/sbin/crm_report"
 crm_rule = "@PCMKEXECPREFIX@/sbin/crm_rule"
 crm_verify = "@PCMKEXECPREFIX@/sbin/crm_verify"
@@ -100,5 +104,10 @@ default_ssl_options = ",".join(
 # not exists.
 pcsd_gem_path = "@GEM_HOME@" or None
 ruby_executable = "@RUBY@"
+
+openssl_executable = "@OPENSSL@"
+killall_executable = "@KILLALL@"
+rm_executable = "@RM@"
+find_executable = "@FIND@"
 
 gui_session_lifetime_seconds = 60 * 60

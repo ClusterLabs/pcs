@@ -1309,7 +1309,7 @@ class ParserTest(TestCase):
             	# Log to a log file. When set to "no", the "logfile" option
             	# must not be set.
             	to_logfile: yes
-                logfile: @COROLOGDIR@/corosync.log
+                logfile: /var/log/cluster/corosync.log
             	# Log to the system log daemon. When in doubt, set to yes.
             	to_syslog: yes
             	# Log debug messages (very verbose). When in doubt, leave off.
@@ -1351,7 +1351,7 @@ class ParserTest(TestCase):
                 fileline: off
                 to_stderr: no
                 to_logfile: yes
-                logfile: @COROLOGDIR@/corosync.log
+                logfile: /var/log/cluster/corosync.log
                 to_syslog: yes
                 debug: off
                 timestamp: on
@@ -1393,7 +1393,7 @@ class ParserTest(TestCase):
             	fileline: off
             	to_logfile: yes
             	to_syslog: yes
-                logfile: @COROLOGDIR@/corosync.log
+                logfile: /var/log/cluster/corosync.log
             	debug: off
             	timestamp: on
             	logger_subsys {
@@ -1453,7 +1453,7 @@ class ParserTest(TestCase):
                 fileline: off
                 to_logfile: yes
                 to_syslog: yes
-                logfile: @COROLOGDIR@/corosync.log
+                logfile: /var/log/cluster/corosync.log
                 debug: off
                 timestamp: on
 

@@ -25,6 +25,7 @@ EXTRA_DIST		= \
 			  tier0/common/reports/constraints/__init__.py \
 			  tier0/common/reports/constraints/test_init.py \
 			  tier0/common/reports/test_item.py \
+			  tier0/common/reports/test_messages.py \
 			  tier0/common/reports/__init__.py \
 			  tier0/common/test_node_communicator.py \
 			  tier0/common/interface/test_dto.py \
@@ -33,6 +34,8 @@ EXTRA_DIST		= \
 			  tier0/common/__init__.py \
 			  tier0/lib/test_env_corosync.py \
 			  tier0/lib/test_node_communication_format.py \
+			  tier0/lib/test_resource_agent.py \
+			  tier0/lib/test_external.py \
 			  tier0/lib/communication/test_qdevice.py \
 			  tier0/lib/communication/test_booth.py \
 			  tier0/lib/communication/test_nodes.py \
@@ -52,6 +55,7 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/test_pcsd.py \
 			  tier0/lib/commands/test_stonith_agent.py \
 			  tier0/lib/commands/test_acl.py \
+			  tier0/lib/commands/test_booth.py \
 			  tier0/lib/commands/tag/test_tag_create.py \
 			  tier0/lib/commands/tag/tag_common.py \
 			  tier0/lib/commands/tag/test_tag_config.py \
@@ -87,6 +91,7 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/test_alert.py \
 			  tier0/lib/commands/remote_node/test_node_remove_remote.py \
 			  tier0/lib/commands/remote_node/test_node_add_remote.py \
+			  tier0/lib/commands/remote_node/fixtures_add.py \
 			  tier0/lib/commands/remote_node/fixtures_remove.py \
 			  tier0/lib/commands/remote_node/__init__.py \
 			  tier0/lib/commands/remote_node/test_node_remove_guest.py \
@@ -95,6 +100,7 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/test_cib_options.py \
 			  tier0/lib/commands/cluster/common.py \
 			  tier0/lib/commands/cluster/test_add_link.py \
+			  tier0/lib/commands/cluster/test_add_nodes.py \
 			  tier0/lib/commands/cluster/test_authkey_corosync.py \
 			  tier0/lib/commands/cluster/test_verify.py \
 			  tier0/lib/commands/cluster/test_node_clear.py \
@@ -102,6 +108,7 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/cluster/test_update_link.py \
 			  tier0/lib/commands/cluster/test_add_nodes_validation.py \
 			  tier0/lib/commands/cluster/test_remove_links.py \
+			  tier0/lib/commands/cluster/test_remove_nodes.py \
 			  tier0/lib/commands/cluster/test_remove_nodes_from_cib.py \
 			  tier0/lib/commands/cluster/__init__.py \
 			  tier0/lib/commands/__init__.py \
@@ -159,14 +166,19 @@ EXTRA_DIST		= \
 			  tier0/lib/corosync/test_config_validators_quorum.py \
 			  tier0/lib/corosync/test_config_facade_quorum.py \
 			  tier0/lib/corosync/test_config_validators_links.py \
+			  tier0/lib/corosync/test_live.py \
 			  tier0/lib/corosync/test_node.py \
+			  tier0/lib/corosync/test_config_parser.py \
 			  tier0/lib/corosync/test_config_validators_create.py \
 			  tier0/lib/corosync/test_config_validators_nodes.py \
 			  tier0/lib/corosync/test_config_validators_common.py \
+			  tier0/lib/corosync/test_qdevice_net.py \
+			  tier0/lib/corosync/test_qdevice_client.py \
 			  tier0/lib/corosync/__init__.py \
 			  tier0/lib/test_env_cib.py \
 			  tier0/lib/test_node_communication.py \
 			  tier0/lib/pacemaker/test_simulate.py \
+			  tier0/lib/pacemaker/test_live.py \
 			  tier0/lib/pacemaker/test_state.py \
 			  tier0/lib/pacemaker/test_values.py \
 			  tier0/lib/pacemaker/__init__.py \
@@ -174,6 +186,7 @@ EXTRA_DIST		= \
 			  tier0/lib/booth/test_env.py \
 			  tier0/lib/booth/test_config_parser.py \
 			  tier0/lib/booth/test_config_facade.py \
+			  tier0/lib/booth/test_config_files.py \
 			  tier0/lib/booth/test_config_validators.py \
 			  tier0/lib/booth/test_status.py \
 			  tier0/lib/booth/test_resource.py \
@@ -214,6 +227,7 @@ EXTRA_DIST		= \
 			  tier0/cli/booth/test_env.py \
 			  tier0/cli/booth/__init__.py \
 			  curl_test.py \
+			  tier1/test_booth.py \
 			  tier1/test_misc.py \
 			  tier1/test_quorum.py \
 			  tier1/test_tag.py \
@@ -232,6 +246,7 @@ EXTRA_DIST		= \
 			  tier1/test_cluster_pcmk_remote.py \
 			  tier1/test_cib_options.py \
 			  tier1/cluster/test_cib_push.py \
+			  tier1/cluster/test_setup_local.py \
 			  tier1/cluster/__init__.py \
 			  tier1/cib_resource/test_clone_unclone.py \
 			  tier1/cib_resource/stonith_common.py \

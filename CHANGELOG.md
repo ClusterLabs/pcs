@@ -1,6 +1,6 @@
 # Change Log
 
-## [@VERSION@] - @UTC_DATE@
+## [Unreleased]
 
 ### Fixed
 - Node attribute expressions are now correctly reported as not allowed in

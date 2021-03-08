@@ -1,5 +1,6 @@
 require 'test/unit'
 
+require 'settings.rb'
 require 'pcsd_test_utils.rb'
 require 'corosyncconf.rb'
 
@@ -1124,7 +1125,7 @@ logging {
 	# Log to a log file. When set to 'no', the 'logfile' option
 	# must not be set.
 	to_logfile: yes
-	logfile: @COROLOGDIR@/corosync.log
+	logfile: #{COROSYNC_LOG_FILE}
 	# Log to the system log daemon. When in doubt, set to yes.
 	to_syslog: yes
 	# Log debug messages (very verbose). When in doubt, leave off.
@@ -1164,7 +1165,7 @@ logging {
     fileline: off
     to_stderr: no
     to_logfile: yes
-    logfile: @COROLOGDIR@/corosync.log
+    logfile: #{COROSYNC_LOG_FILE}
     to_syslog: yes
     debug: off
     timestamp: on
@@ -1201,7 +1202,7 @@ logging {
 	fileline: off
 	to_logfile: yes
 	to_syslog: yes
-	logfile: @COROLOGDIR@/corosync.log
+	logfile: #{COROSYNC_LOG_FILE}
 	debug: off
 	timestamp: on
 	logger_subsys {
@@ -1259,7 +1260,7 @@ logging {
     fileline: off
     to_logfile: yes
     to_syslog: yes
-    logfile: @COROLOGDIR@/corosync.log
+    logfile: #{COROSYNC_LOG_FILE}
     debug: off
     timestamp: on
 

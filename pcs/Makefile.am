@@ -37,6 +37,7 @@ EXTRA_DIST		= \
 			  daemon/session.py \
 			  daemon/__init__.py \
 			  daemon/systemd.py \
+			  utils.py \
 			  usage.py \
 			  constraint.py \
 			  common/corosync_conf.py \
@@ -71,6 +72,7 @@ EXTRA_DIST		= \
 			  common/pacemaker/__init__.py \
 			  common/pacemaker/rule.py \
 			  common/__init__.py \
+			  common/system.py \
 			  common/types.py \
 			  common/validate.py \
 			  entry_points/__init__.py \
@@ -85,6 +87,7 @@ EXTRA_DIST		= \
 			  lib/sbd.py \
 			  lib/node.py \
 			  lib/env.py \
+			  lib/external.py \
 			  lib/communication/corosync.py \
 			  lib/communication/sbd.py \
 			  lib/communication/nodes.py \
@@ -206,7 +209,6 @@ EXTRA_DIST		= \
 			  host.py \
 			  config.py \
 			  qdevice.py \
-			  settings.py \
 			  pcsd.py \
 			  alert.py \
 			  status.py \
@@ -286,4 +288,5 @@ EXTRA_DIST		= \
 			  cli/booth/command.py \
 			  cli/booth/__init__.py \
 			  resource.py \
+			  cluster.py \
 			  acl.py

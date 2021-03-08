@@ -1,7 +1,9 @@
+import os.path
 from unittest import mock, TestCase
 
 from pcs_test.tools.assertions import assert_raise_library_error
 
+from pcs import settings
 from pcs.common.reports import ReportItemSeverity as severity
 from pcs.common.reports import codes as report_codes
 from pcs.lib.external import CommandRunner
@@ -12,7 +14,9 @@ import pcs.lib.corosync.qdevice_client as lib
 class GetStatusTextTest(TestCase):
     def setUp(self):
         self.mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        self.qdevice_tool = "@COROQDEVEXECPREFIX@/sbin/corosync-qdevice-tool"
+        self.qdevice_tool = os.path.join(
+            settings.corosync_qdevice_binaries, "corosync-qdevice-tool"
+        )
 
     def test_success(self):
         self.mock_runner.run.return_value = ("status info", "", 0)

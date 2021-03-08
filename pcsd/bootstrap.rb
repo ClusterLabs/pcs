@@ -6,10 +6,7 @@ require 'settings.rb'
 
 
 def is_systemctl()
-  systemctl_paths = [
-      @SYSTEMD_UNIT_PATH_RUBY@
-  ]
-  systemctl_paths.each { |path|
+  SYSTEMD_UNIT_PATHS.each { |path|
     return true if File.directory?(path)
   }
   return false
@@ -39,7 +36,6 @@ def get_pcs_internal_path()
   end
 end
 
-PCS_VERSION = '@VERSION@'
 # unique instance signature, allows detection of dameon restarts
 COROSYNC = COROSYNC_BINARIES + "corosync"
 ISSYSTEMCTL = is_systemctl

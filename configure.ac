@@ -102,10 +102,7 @@ fi
 AC_SUBST([SYSTEMD_UNIT_DIR])
 PCS_PKG_CHECK_VAR([SYSTEMD_UNIT_PATH], [systemd], [systemdsystemunitpath],
 		  [/etc/systemd/system:/etc/systemd/system:/run/systemd/system:/usr/local/lib/systemd/system:/usr/lib/systemd/system:/usr/lib/systemd/system:/lib/systemd/system])
-SYSTEMD_UNIT_PATH_PYTHON="$(echo \"$SYSTEMD_UNIT_PATH\", | sed -e 's#:#\", \"#g')"
-AC_SUBST([SYSTEMD_UNIT_PATH_PYTHON])
-SYSTEMD_UNIT_PATH_RUBY="$(echo \'$SYSTEMD_UNIT_PATH\', | sed -e 's#:#\", \"#g' -e "s#\"#\'#g")"
-AC_SUBST([SYSTEMD_UNIT_PATH_RUBY])
+AC_SUBST([SYSTEMD_UNIT_PATH])
 
 # check for ruby
 AC_PATH_PROG([RUBY], [ruby])
@@ -517,44 +514,20 @@ AC_SUBST([UTC_DATE])
 AC_CONFIG_FILES([Makefile
 		 setup.py
 		 setup.cfg
-		 CHANGELOG.md
 		 pcs/Makefile
-		 pcs/settings_default.py
-		 pcs/utils.py
-		 pcs/cluster.py
-		 pcs/lib/external.py
-		 pcs/common/system.py
+		 pcs/settings.py
 		 pcs/snmp/pcs_snmp_agent.service
 		 pcs/snmp/settings.py
 		 pcs/snmp/pcs_snmp_agent.8
 		 pcs/pcs.8
 		 pcs_test/Makefile
-		 pcs_test/tools/misc.py
-		 pcs_test/tier0/common/reports/test_messages.py
-		 pcs_test/tier0/lib/test_resource_agent.py
-		 pcs_test/tier0/lib/test_external.py
-		 pcs_test/tier0/lib/booth/test_config_files.py
-		 pcs_test/tier0/lib/commands/remote_node/fixtures_add.py
-		 pcs_test/tier0/lib/commands/test_booth.py
-		 pcs_test/tier0/lib/commands/cluster/test_add_nodes.py
-		 pcs_test/tier0/lib/commands/cluster/test_remove_nodes.py
-		 pcs_test/tier0/lib/corosync/test_live.py
-		 pcs_test/tier0/lib/corosync/test_config_parser.py
-		 pcs_test/tier0/lib/pacemaker/test_live.py
-		 pcs_test/tier0/lib/corosync/test_qdevice_net.py
-		 pcs_test/tier0/lib/corosync/test_qdevice_client.py
-		 pcs_test/tier1/test_booth.py
-		 pcs_test/tier1/cluster/test_setup_local.py
+		 pcs_test/settings.py
 		 pcsd/Makefile
 		 pcsd/pcsd.8
-		 pcsd/pcs.rb
 		 pcsd/pcsd-cli.rb
 		 pcsd/pcsd-ruby.service
 		 pcsd/pcsd.service
-		 pcsd/bootstrap.rb
 		 pcsd/settings.rb
-		 pcsd/remote.rb
-		 pcsd/test/test_corosyncconf.rb
 		 pcsd/logrotate/pcsd])
 
 AC_CONFIG_FILES([pcs/pcs], [chmod +x pcs/pcs])

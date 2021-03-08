@@ -2113,7 +2113,7 @@ def verify_cert_key_pair(cert, key):
     key_modulus = ""
 
     output, retval = run(
-        ["@OPENSSL@", "x509", "-modulus", "-noout"],
+        [settings.openssl_executable, "x509", "-modulus", "-noout"],
         string_for_stdin=cert,
     )
     if retval != 0:
@@ -2122,7 +2122,8 @@ def verify_cert_key_pair(cert, key):
         cert_modulus = output.strip()
 
     output, retval = run(
-        ["@OPENSSL@", "rsa", "-modulus", "-noout"], string_for_stdin=key
+        [settings.openssl_executable, "rsa", "-modulus", "-noout"],
+        string_for_stdin=key,
     )
     if retval != 0:
         errors.append("Invalid key: {0}".format(output.strip()))

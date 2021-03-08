@@ -4,6 +4,7 @@ EXTRA_DIST		= \
 			  test/corosync.conf test/pcsd_test_utils.rb test/test_cfgsync.rb \
 			  test/test_all_suite.rb test/known-hosts \
 			  test/test_cluster.rb test/cib1.xml test/crm1.xml test/test_config.rb \
+			  test/test_corosyncconf.rb \
 			  test/test_permissions.rb test/test_auth.rb pam/pcsd.fedora pam/pcsd.debian
 
 MAINTAINERCLEANFILES	= Makefile.in
@@ -44,10 +45,11 @@ dist_pcsd_DATA		= \
 			  bootstrap.rb \
 			  pcsd_action_command.rb \
 			  config.rb \
-			  pcsd.rb
+			  pcs.rb \
+			  pcsd.rb \
+			  pcsd-cli-main.rb
 
 pcsd_DATA		= \
-			  pcs.rb \
 			  settings.rb
 
 pcsdviewsdir		= ${pcsddir}/views
