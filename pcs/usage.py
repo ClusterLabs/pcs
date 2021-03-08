@@ -858,10 +858,10 @@ Commands:
 
         Totem and quorum can be configured regardless of used transport.
         Totem options are:
-            consensus, downcheck, fail_recv_const, heartbeat_failures_allowed,
-            hold, join, max_messages, max_network_delay, merge,
-            miss_count_const, send_join, seqno_unchanged_const, token,
-            token_coefficient, token_retransmit,
+            block_unlisted_ips, consensus, downcheck, fail_recv_const,
+            heartbeat_failures_allowed, hold, join, max_messages,
+            max_network_delay, merge, miss_count_const, send_join,
+            seqno_unchanged_const, token, token_coefficient, token_retransmit,
             token_retransmits_before_loss_const, window_size
         Quorum options are:
             auto_tie_breaker, last_man_standing, last_man_standing_window,
@@ -958,10 +958,10 @@ Commands:
         Crypto options are:
             cipher, hash, model
         Totem options are:
-            consensus, downcheck, fail_recv_const, heartbeat_failures_allowed,
-            hold, join, max_messages, max_network_delay, merge,
-            miss_count_const, send_join, seqno_unchanged_const, token,
-            token_coefficient, token_retransmit,
+            block_unlisted_ips, consensus, downcheck, fail_recv_const,
+            heartbeat_failures_allowed, hold, join, max_messages,
+            max_network_delay, merge, miss_count_const, send_join,
+            seqno_unchanged_const, token, token_coefficient, token_retransmit,
             token_retransmits_before_loss_const, window_size
 
     authkey corosync [<path>]

@@ -174,7 +174,7 @@ class UpdateLocal(AssertPcsMixin, TestCase):
             ).split(),
             stdout_full=(
                 "Error: invalid totem option 'down_check', allowed options "
-                "are: 'consensus', 'downcheck', 'fail_recv_const', "
+                "are: 'block_unlisted_ips', 'consensus', 'downcheck', 'fail_recv_const', "
                 "'heartbeat_failures_allowed', 'hold', 'join', 'max_messages', "
                 "'max_network_delay', 'merge', 'miss_count_const', "
                 "'send_join', 'seqno_unchanged_const', 'token', "

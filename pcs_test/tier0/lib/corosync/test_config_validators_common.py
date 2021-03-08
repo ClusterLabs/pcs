@@ -642,6 +642,7 @@ class TransportUdpBase:
 
 class TotemBase:
     allowed_options = [
+        "block_unlisted_ips",
         "consensus",
         "downcheck",
         "fail_recv_const",
@@ -671,7 +672,10 @@ class TotemBase:
     def test_all_valid(self):
         assert_report_item_list_equal(
             self.call_function(
-                {name: value for value, name in enumerate(self.allowed_options)}
+                {
+                    name: ("yes" if name == "block_unlisted_ips" else value)
+                    for value, name in enumerate(self.allowed_options)
+                }
             ),
             [],
         )
@@ -684,7 +688,11 @@ class TotemBase:
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="x",
                     option_name=name,
-                    allowed_values="a non-negative integer",
+                    allowed_values=(
+                        ["yes", "no"]
+                        if name == "block_unlisted_ips"
+                        else "a non-negative integer"
+                    ),
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 )
@@ -736,7 +744,11 @@ class TotemBase:
                     report_codes.INVALID_OPTION_VALUE,
                     option_value=value,
                     option_name=name,
-                    allowed_values="a non-negative integer",
+                    allowed_values=(
+                        ["yes", "no"]
+                        if name == "block_unlisted_ips"
+                        else "a non-negative integer"
+                    ),
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 )

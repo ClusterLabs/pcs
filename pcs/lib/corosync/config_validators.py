@@ -1547,6 +1547,7 @@ def _get_totem_options_validators(
     #   setting they should not to
     # * changes to names and values in corosync are very rare
     validators = [
+        validate.ValueIn("block_unlisted_ips", ["yes", "no"]),
         validate.ValueNonnegativeInteger("consensus"),
         validate.ValueNonnegativeInteger("downcheck"),
         validate.ValueNonnegativeInteger("fail_recv_const"),

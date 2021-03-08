@@ -392,6 +392,16 @@
         pcs commands: quorum unblock
       </description>
     </capability>
+    <capability id="corosync.totem.block_unlisted_ips" in-pcs="1" in-pcsd="1">
+      <description>
+        It is possible to set and change corosync's totem.block_unlisted_ips
+        option. The option is also present when corosync.conf is
+        listed / displayed.
+
+        pcs commands: cluster setup, cluster config update, cluster config show
+        daemon urls: /api/v1/cluster-setup/v1
+      </description>
+    </capability>
     <capability id="corosync.uidgid" in-pcs="1" in-pcsd="0">
       <description>
         Show and change configured uids and gids allowed to connect to corosync.

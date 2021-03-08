@@ -1750,7 +1750,11 @@ class CreateTotem(TotemBase, TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_name=name,
                     option_value="",
-                    allowed_values="a non-negative integer",
+                    allowed_values=(
+                        ["yes", "no"]
+                        if name == "block_unlisted_ips"
+                        else "a non-negative integer"
+                    ),
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 )

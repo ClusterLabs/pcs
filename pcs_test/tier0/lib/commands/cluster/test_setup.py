@@ -782,6 +782,7 @@ class Validation(TestCase):
             "cluster_configuration_exists": False,
         }
         self.totem_allowed_options = [
+            "block_unlisted_ips",
             "consensus",
             "downcheck",
             "fail_recv_const",
@@ -1900,6 +1901,7 @@ class Validation(TestCase):
 
 
 TOTEM_OPTIONS = dict(
+    block_unlisted_ips="yes",
     consensus="0",
     downcheck="1",
     fail_recv_const="2",

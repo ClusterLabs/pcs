@@ -34,6 +34,7 @@ TRANSPORT_RUNTIME_CHANGE_BANNED_OPTIONS = (
 )
 
 TOTEM_OPTIONS = (
+    "block_unlisted_ips",
     "consensus",
     "downcheck",
     "fail_recv_const",

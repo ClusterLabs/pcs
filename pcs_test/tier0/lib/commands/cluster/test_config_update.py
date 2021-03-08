@@ -28,7 +28,10 @@ TRANSPORT_OPTIONS = {
 }
 COMPRESSION_OPTIONS = {"level": "5", "model": "zlib", "threshold": "1234"}
 CRYPTO_OPTIONS = {"cipher": "aes256", "hash": "sha256", "model": "nss"}
-TOTEM_OPTIONS = {opt: str(num) for num, opt in enumerate(ALLOWED_TOTEM_OPTIONS)}
+TOTEM_OPTIONS = {
+    opt: ("yes" if opt == "block_unlisted_ips" else str(num))
+    for num, opt in enumerate(ALLOWED_TOTEM_OPTIONS)
+}
 
 
 class CheckLiveMixin:
@@ -131,7 +134,8 @@ class UpdateConfig(TestCase):
             "model": "openssl",
         }
         modified_totem_options = {
-            opt: val + "0" for opt, val in TOTEM_OPTIONS.items()
+            opt: ("no" if opt == "block_unlisted_ips" else val + "0")
+            for opt, val in TOTEM_OPTIONS.items()
         }
         self.config.env.push_corosync_conf(
             corosync_conf_text=fixture_totem(

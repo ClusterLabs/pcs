@@ -998,6 +998,7 @@ class GetOptionsDictMixin:
             crypto_cipher:
             crypto_hash:
             crypto_model:
+            block_unlisted_ips:
             consensus:
             downcheck:
             fail_recv_const:
@@ -1035,6 +1036,7 @@ class GetOptionsDictMixin:
             crypto_cipher: aes256
             crypto_hash: sha256
             crypto_model: nss
+            block_unlisted_ips: yes
             consensus: 3600
             downcheck: 1000
             fail_recv_const: 2500
@@ -1157,6 +1159,7 @@ class GetCryptoOptions(GetOptionsDictMixin, TestCase):
 
 
 FIXTURE_TOTEM_TOKEN_OPTIONS = {
+    "block_unlisted_ips": "yes",
     "consensus": "3600",
     "downcheck": "1000",
     "fail_recv_const": "2500",
@@ -1178,6 +1181,7 @@ FIXTURE_TOTEM_TOKEN_OPTIONS = {
 
 
 FIXTURE_EMPTY_TOTEM_TOKEN_OPTIONS = {
+    "block_unlisted_ips": "",
     "consensus": "",
     "downcheck": "",
     "fail_recv_const": "",
@@ -1222,6 +1226,7 @@ class SetTotemOptionsTest(TestCase):
     _fixture_totem_token_config = dedent(
         """\
         totem {
+            block_unlisted_ips: yes
             consensus: 3600
             downcheck: 1000
             fail_recv_const: 2500
@@ -1267,6 +1272,7 @@ class SetTotemOptionsTest(TestCase):
     def test_modify_totem_options(self):
         self._assert_set_totem_options(
             {
+                "block_unlisted_ips": "no",
                 "consensus": "7200",
                 "downcheck": "2000",
                 "fail_recv_const": "5000",
@@ -1289,6 +1295,7 @@ class SetTotemOptionsTest(TestCase):
             dedent(
                 """\
                 totem {
+                    block_unlisted_ips: no
                     consensus: 7200
                     downcheck: 2000
                     fail_recv_const: 5000
