@@ -34,20 +34,19 @@ patch_command = create_patcher("pcs.lib.commands.fencing_topology")
 @patch_command("get_fencing_topology")
 @patch_env("push_cib")
 @patch_command("ClusterState")
-@patch_command("get_cluster_status_xml")
+@patch_env("get_cluster_state")
 @patch_env("get_cib")
-@patch_env("cmd_runner", lambda self: "mocked cmd_runner")
 class AddLevel(TestCase):
     def prepare_mocks(
         self,
         mock_get_cib,
-        mock_status_xml,
+        mock_status_dom,
         mock_status,
         mock_get_topology,
         mock_get_resources,
     ):
         mock_get_cib.return_value = "mocked cib"
-        mock_status_xml.return_value = "mock get_cluster_status_xml"
+        mock_status_dom.return_value = "mock get_cluster_status_dom"
         mock_status.return_value = mock.MagicMock(
             node_section=mock.MagicMock(nodes="nodes")
         )
@@ -56,14 +55,14 @@ class AddLevel(TestCase):
 
     def assert_mocks(
         self,
-        mock_status_xml,
+        mock_status_dom,
         mock_status,
         mock_get_topology,
         mock_get_resources,
         mock_push_cib,
     ):
-        mock_status_xml.assert_called_once_with("mocked cmd_runner")
-        mock_status.assert_called_once_with("mock get_cluster_status_xml")
+        mock_status_dom.assert_called_once_with()
+        mock_status.assert_called_once_with("mock get_cluster_status_dom")
         mock_get_topology.assert_called_once_with("mocked cib")
         mock_get_resources.assert_called_once_with("mocked cib")
         mock_push_cib.assert_called_once_with()
@@ -71,7 +70,7 @@ class AddLevel(TestCase):
     def test_success(
         self,
         mock_get_cib,
-        mock_status_xml,
+        mock_status_dom,
         mock_status,
         mock_push_cib,
         mock_get_topology,
@@ -80,7 +79,7 @@ class AddLevel(TestCase):
     ):
         self.prepare_mocks(
             mock_get_cib,
-            mock_status_xml,
+            mock_status_dom,
             mock_status,
             mock_get_topology,
             mock_get_resources,
@@ -111,7 +110,7 @@ class AddLevel(TestCase):
         )
         mock_get_cib.assert_called_once_with(None)
         self.assert_mocks(
-            mock_status_xml,
+            mock_status_dom,
             mock_status,
             mock_get_topology,
             mock_get_resources,
@@ -121,7 +120,7 @@ class AddLevel(TestCase):
     def test_target_attribute_updates_cib(
         self,
         mock_get_cib,
-        mock_status_xml,
+        mock_status_dom,
         mock_status,
         mock_push_cib,
         mock_get_topology,
@@ -130,7 +129,7 @@ class AddLevel(TestCase):
     ):
         self.prepare_mocks(
             mock_get_cib,
-            mock_status_xml,
+            mock_status_dom,
             mock_status,
             mock_get_topology,
             mock_get_resources,
@@ -161,7 +160,7 @@ class AddLevel(TestCase):
         )
         mock_get_cib.assert_called_once_with(Version(2, 4, 0))
         self.assert_mocks(
-            mock_status_xml,
+            mock_status_dom,
             mock_status,
             mock_get_topology,
             mock_get_resources,
@@ -171,7 +170,7 @@ class AddLevel(TestCase):
     def test_target_regexp_updates_cib(
         self,
         mock_get_cib,
-        mock_status_xml,
+        mock_status_dom,
         mock_status,
         mock_push_cib,
         mock_get_topology,
@@ -180,7 +179,7 @@ class AddLevel(TestCase):
     ):
         self.prepare_mocks(
             mock_get_cib,
-            mock_status_xml,
+            mock_status_dom,
             mock_status,
             mock_get_topology,
             mock_get_resources,
@@ -211,7 +210,7 @@ class AddLevel(TestCase):
         )
         mock_get_cib.assert_called_once_with(Version(2, 3, 0))
         self.assert_mocks(
-            mock_status_xml,
+            mock_status_dom,
             mock_status,
             mock_get_topology,
             mock_get_resources,
@@ -457,20 +456,19 @@ class RemoveLevelsByParams(TestCase):
 @patch_command("get_fencing_topology")
 @patch_env("push_cib")
 @patch_command("ClusterState")
-@patch_command("get_cluster_status_xml")
+@patch_env("get_cluster_state")
 @patch_env("get_cib", lambda self: "mocked cib")
-@patch_env("cmd_runner", lambda self: "mocked cmd_runner")
 class Verify(TestCase):
     def test_success(
         self,
-        mock_status_xml,
+        mock_status_dom,
         mock_status,
         mock_push_cib,
         mock_get_topology,
         mock_get_resources,
         mock_verify,
     ):
-        mock_status_xml.return_value = "mock get_cluster_status_xml"
+        mock_status_dom.return_value = "mock get_cluster_status_dom"
         mock_status.return_value = mock.MagicMock(
             node_section=mock.MagicMock(nodes="nodes")
         )
@@ -483,8 +481,8 @@ class Verify(TestCase):
         mock_verify.assert_called_once_with(
             "topology el", "resources_el", "nodes"
         )
-        mock_status_xml.assert_called_once_with("mocked cmd_runner")
-        mock_status.assert_called_once_with("mock get_cluster_status_xml")
+        mock_status_dom.assert_called_once_with()
+        mock_status.assert_called_once_with("mock get_cluster_status_dom")
         mock_get_topology.assert_called_once_with("mocked cib")
         mock_get_resources.assert_called_once_with("mocked cib")
         mock_push_cib.assert_not_called()

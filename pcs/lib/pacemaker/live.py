@@ -1,6 +1,7 @@
 import os.path
 import re
 from typing import (
+    cast,
     Iterable,
     List,
     Optional,
@@ -12,6 +13,7 @@ from lxml.etree import _Element
 
 from pcs import settings
 from pcs.common import reports
+from pcs.common.pacemaker import api_result
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
 from pcs.common.str_tools import join_multilines
@@ -46,22 +48,78 @@ class FenceHistoryCommandErrorException(Exception):
 ### status
 
 
-def get_cluster_status_xml(runner):
-    stdout, stderr, retval = runner.run(
-        [__exec("crm_mon"), "--one-shot", "--as-xml", "--inactive"]
+def get_cluster_status_dom(runner: CommandRunner) -> _Element:
+    def validate_dom(dom, rng):
+        try:
+            if os.path.isfile(rng):
+                etree.RelaxNG(file=rng).assertValid(dom)
+            return dom
+        except etree.DocumentInvalid as e:
+            raise LibraryError(
+                ReportItem.error(reports.messages.BadClusterStateFormat())
+            ) from e
+
+    def get_dom(xml, rng):
+        try:
+            return validate_dom(xml_fromstring(xml), rng)
+        except etree.XMLSyntaxError as e:
+            raise LibraryError(
+                ReportItem.error(reports.messages.BadClusterStateFormat())
+            ) from e
+
+    pcmk_supports_new_format = _is_in_pcmk_tool_help(
+        runner, "crm_mon", "--output-as="
     )
+    format_option = (
+        ["--output-as", "xml"] if pcmk_supports_new_format else ["--as-xml"]
+    )
+
+    stdout, stderr, retval = runner.run(
+        [__exec("crm_mon"), "--one-shot", "--inactive"] + format_option
+    )
+
     if retval != 0:
         klass = (
             PacemakerNotConnectedException
             if retval == __EXITCODE_NOT_CONNECTED
             else LibraryError
         )
-        raise klass(
-            ReportItem.error(
-                reports.messages.CrmMonError(join_multilines([stderr, stdout]))
-            )
-        )
-    return stdout
+        if pcmk_supports_new_format:
+            # Try to process the output as an XML. If it cannot be parsed, then
+            # process it as a plaintext. If it is an XML but it doesn't conform
+            # to the schema, raise an error (don't catch etree.DocumentInvalid
+            # exception).
+            try:
+                status = get_status_from_api_result(
+                    validate_dom(
+                        xml_fromstring(stdout),
+                        settings.pacemaker_api_result_schema,
+                    )
+                )
+                message = join_multilines(
+                    [status.message] + list(status.errors)
+                )
+            except etree.XMLSyntaxError:
+                message = join_multilines([stderr, stdout])
+        else:
+            message = join_multilines([stderr, stdout])
+        raise klass(ReportItem.error(reports.messages.CrmMonError(message)))
+
+    if pcmk_supports_new_format:
+        return get_dom(stdout, settings.pacemaker_api_result_schema)
+
+    dom = get_dom(stdout, settings.crm_mon_schema)
+    new_format_dom = etree.Element(
+        "pacemaker-result",
+        {
+            "api-version": "2.3",
+            "request": "crm_mon --as-xml",
+        },
+    )
+    for child in dom.getchildren():
+        new_format_dom.append(child)
+    etree.SubElement(new_format_dom, "status", {"code": "0", "message": "OK"})
+    return validate_dom(new_format_dom, settings.pacemaker_api_result_schema)
 
 
 def get_cluster_status_text(
@@ -478,7 +536,7 @@ def get_local_node_name(runner):
 
 def get_local_node_status(runner):
     try:
-        cluster_status = ClusterState(get_cluster_status_xml(runner))
+        cluster_status = ClusterState(get_cluster_status_dom(runner))
         node_name = get_local_node_name(runner)
     except PacemakerNotConnectedException:
         return {"offline": True}
@@ -574,7 +632,7 @@ def resource_refresh(
     force: bool = False,
 ):
     if not force and not node and not resource:
-        summary = ClusterState(get_cluster_status_xml(runner)).summary
+        summary = ClusterState(get_cluster_status_dom(runner)).summary
         operations = summary.nodes.attrs.count * summary.resources.attrs.count
         if operations > __RESOURCE_REFRESH_OPERATION_COUNT_THRESHOLD:
             raise LibraryError(
@@ -747,6 +805,22 @@ def get_rule_in_effect_status(
         stdin_string=cib_xml,
     )
     return translation_map.get(retval, CibRuleInEffectStatus.UNKNOWN)
+
+
+def get_status_from_api_result(dom: _Element) -> api_result.StatusDto:
+    errors = []
+    status_el = cast(_Element, dom.find("./status"))
+    errors_el = status_el.find("errors")
+    if errors_el is not None:
+        errors = [
+            str((error_el.text or "")).strip()
+            for error_el in errors_el.iterfind("error")
+        ]
+    return api_result.StatusDto(
+        code=int(str(status_el.get("code"))),
+        message=str(status_el.get("message")),
+        errors=errors,
+    )
 
 
 # shortcut for getting a full path to a pacemaker executable

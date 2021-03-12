@@ -8,7 +8,6 @@ require 'pcsd_test_utils.rb'
 require 'cluster_entity.rb'
 
 CIB_FILE = 'cib1.xml'
-CRM_FILE = 'crm1.xml'
 
 def assert_equal_NvSet(set1, set2)
   set1.each { |pair|
@@ -61,6 +60,7 @@ def get_master(entity)
   end
   return nil
 end
+
 
 class TestNvSet < Test::Unit::TestCase
   def setup
@@ -259,12 +259,8 @@ class TestNvSet < Test::Unit::TestCase
   end
 end
 
-class TestResourceStatus < Test::Unit::TestCase
-  def setup
-    @cib = REXML::Document.new(File.read(File.join(CURRENT_DIR, CIB_FILE)))
-    @crm_mon = REXML::Document.new(File.read(File.join(CURRENT_DIR, CRM_FILE)))
-  end
 
+module TestResourceStatusMixin
   def test_init
     s = ClusterEntity::CRMResourceStatus.new(@crm_mon.elements["//resource[@id='dummy1']"])
     assert_equal('dummy1', s.id)
@@ -321,10 +317,30 @@ class TestResourceStatus < Test::Unit::TestCase
   end
 end
 
+class TestResourceStatusCrmMon1 < Test::Unit::TestCase
+
+  include TestResourceStatusMixin
+
+  def setup
+    @cib = REXML::Document.new(File.read(File.join(CURRENT_DIR, CIB_FILE)))
+    @crm_mon = REXML::Document.new(File.read(File.join(CURRENT_DIR, 'crm1.xml')))
+  end
+end
+
+class TestResourceStatusCrmMon2 < Test::Unit::TestCase
+
+  include TestResourceStatusMixin
+
+  def setup
+    @cib = REXML::Document.new(File.read(File.join(CURRENT_DIR, CIB_FILE)))
+    @crm_mon = REXML::Document.new(File.read(File.join(CURRENT_DIR, 'crm2.xml')))
+  end
+end
+
+
 class TestResourceOperation < Test::Unit::TestCase
   def setup
     @cib = REXML::Document.new(File.read(File.join(CURRENT_DIR, CIB_FILE)))
-    @crm_mon = REXML::Document.new(File.read(File.join(CURRENT_DIR, CRM_FILE)))
   end
 
   def test_init
@@ -352,12 +368,8 @@ class TestResourceOperation < Test::Unit::TestCase
   end
 end
 
-class TestPrimitive < Test::Unit::TestCase
-  def setup
-    @cib = REXML::Document.new(File.read(File.join(CURRENT_DIR, CIB_FILE)))
-    @crm_mon = REXML::Document.new(File.read(File.join(CURRENT_DIR, CRM_FILE)))
-  end
 
+module TestPrimitiveMixin
   def test_init
     obj = ClusterEntity::Primitive.new(@cib.elements["//primitive[@id='dummy1']"])
     assert_nil(obj.parent)
@@ -1091,12 +1103,28 @@ class TestPrimitive < Test::Unit::TestCase
   end
 end
 
-class TestGroup < Test::Unit::TestCase
+class TestPrimitiveCrmMon1 < Test::Unit::TestCase
+
+  include TestPrimitiveMixin
+
   def setup
     @cib = REXML::Document.new(File.read(File.join(CURRENT_DIR, CIB_FILE)))
-    @crm_mon = REXML::Document.new(File.read(File.join(CURRENT_DIR, CRM_FILE)))
+    @crm_mon = REXML::Document.new(File.read(File.join(CURRENT_DIR, 'crm1.xml')))
   end
+end
 
+class TestPrimitiveCrmMon2 < Test::Unit::TestCase
+
+  include TestPrimitiveMixin
+
+  def setup
+    @cib = REXML::Document.new(File.read(File.join(CURRENT_DIR, CIB_FILE)))
+    @crm_mon = REXML::Document.new(File.read(File.join(CURRENT_DIR, 'crm2.xml')))
+  end
+end
+
+
+module TestGroupMixin
   def test_init
     obj = ClusterEntity::Group.new(@cib.elements["//group[@id='group1']"])
     assert_equal('group1', obj.id)
@@ -1425,10 +1453,31 @@ class TestGroup < Test::Unit::TestCase
   end
 end
 
+class TestGroupCrmMon1 < Test::Unit::TestCase
+
+  include TestGroupMixin
+
+  def setup
+    @cib = REXML::Document.new(File.read(File.join(CURRENT_DIR, CIB_FILE)))
+    @crm_mon = REXML::Document.new(File.read(File.join(CURRENT_DIR, 'crm1.xml')))
+  end
+end
+
+class TestGroupCrmMon2 < Test::Unit::TestCase
+
+  include TestGroupMixin
+
+  def setup
+    @cib = REXML::Document.new(File.read(File.join(CURRENT_DIR, CIB_FILE)))
+    @crm_mon = REXML::Document.new(File.read(File.join(CURRENT_DIR, 'crm2.xml')))
+  end
+end
+
+
 class TestClonePcmk1 < Test::Unit::TestCase
   def setup
     @cib = REXML::Document.new(File.read(File.join(CURRENT_DIR, CIB_FILE)))
-    @crm_mon = REXML::Document.new(File.read(File.join(CURRENT_DIR, CRM_FILE)))
+    @crm_mon = REXML::Document.new(File.read(File.join(CURRENT_DIR, 'crm1.xml')))
   end
 
   def test_init_invalid_element
@@ -2446,7 +2495,7 @@ end
 class TestMasterSlavePcmk1 < Test::Unit::TestCase
   def setup
     @cib = REXML::Document.new(File.read(File.join(CURRENT_DIR, CIB_FILE)))
-    @crm_mon = REXML::Document.new(File.read(File.join(CURRENT_DIR, CRM_FILE)))
+    @crm_mon = REXML::Document.new(File.read(File.join(CURRENT_DIR, 'crm1.xml')))
   end
 
   def test_init_invalid_element
@@ -3425,12 +3474,8 @@ class TestMasterSlavePcmk1 < Test::Unit::TestCase
   end
 end
 
-class TestClone < Test::Unit::TestCase
-  def setup
-    @cib = REXML::Document.new(File.read(File.join(CURRENT_DIR, CIB_FILE)))
-    @crm_mon = REXML::Document.new(File.read(File.join(CURRENT_DIR, CRM_FILE)))
-  end
 
+module TestCloneMixin
   def test_init_invalid_element
     xml = '<primitve id="dummy"/>'
     obj = ClusterEntity::Clone.new(REXML::Document.new(xml).elements['*'])
@@ -4449,13 +4494,28 @@ class TestClone < Test::Unit::TestCase
   end
 end
 
+class TestCloneCrmMon1 < Test::Unit::TestCase
 
-class TestCloneFromPromotableElement < Test::Unit::TestCase
+  include TestCloneMixin
+
   def setup
     @cib = REXML::Document.new(File.read(File.join(CURRENT_DIR, CIB_FILE)))
-    @crm_mon = REXML::Document.new(File.read(File.join(CURRENT_DIR, CRM_FILE)))
+    @crm_mon = REXML::Document.new(File.read(File.join(CURRENT_DIR, 'crm1.xml')))
   end
+end
 
+class TestCloneCrmMon2 < Test::Unit::TestCase
+
+  include TestCloneMixin
+
+  def setup
+    @cib = REXML::Document.new(File.read(File.join(CURRENT_DIR, CIB_FILE)))
+    @crm_mon = REXML::Document.new(File.read(File.join(CURRENT_DIR, 'crm2.xml')))
+  end
+end
+
+
+module TestCloneFromPromotableElementMixin
   def test_init_primitive
     obj = ClusterEntity::Clone.new(@cib.elements["//clone[@id='stateful-promotable']"])
     assert_equal('stateful-promotable', obj.id)
@@ -4622,13 +4682,28 @@ class TestCloneFromPromotableElement < Test::Unit::TestCase
   end
 end
 
+class TestCloneFromPromotableElementCrmMon1 < Test::Unit::TestCase
 
-class TestCloneFromMasterElement < Test::Unit::TestCase
+  include TestCloneFromPromotableElementMixin
+
   def setup
     @cib = REXML::Document.new(File.read(File.join(CURRENT_DIR, CIB_FILE)))
-    @crm_mon = REXML::Document.new(File.read(File.join(CURRENT_DIR, CRM_FILE)))
+    @crm_mon = REXML::Document.new(File.read(File.join(CURRENT_DIR, 'crm1.xml')))
   end
+end
 
+class TestCloneFromPromotableElementCrmMon2 < Test::Unit::TestCase
+
+  include TestCloneFromPromotableElementMixin
+
+  def setup
+    @cib = REXML::Document.new(File.read(File.join(CURRENT_DIR, CIB_FILE)))
+    @crm_mon = REXML::Document.new(File.read(File.join(CURRENT_DIR, 'crm2.xml')))
+  end
+end
+
+
+module TestCloneFromMasterElementMixin
   def test_init_primitive_with_crm
     obj = ClusterEntity::Clone.new(
       @cib.elements["//master[@id='ms-master']"],
@@ -5578,5 +5653,25 @@ class TestCloneFromMasterElement < Test::Unit::TestCase
     }'
     hash = JSON.parse(json, {:symbolize_names => true})
     assert_equal(hash, obj.to_status('2'))
+  end
+end
+
+class TestCloneFromMasterElementCrmMon1 < Test::Unit::TestCase
+
+  include TestCloneFromMasterElementMixin
+
+  def setup
+    @cib = REXML::Document.new(File.read(File.join(CURRENT_DIR, CIB_FILE)))
+    @crm_mon = REXML::Document.new(File.read(File.join(CURRENT_DIR, 'crm1.xml')))
+  end
+end
+
+class TestCloneFromMasterElementCrmMon2 < Test::Unit::TestCase
+
+  include TestCloneFromMasterElementMixin
+
+  def setup
+    @cib = REXML::Document.new(File.read(File.join(CURRENT_DIR, CIB_FILE)))
+    @crm_mon = REXML::Document.new(File.read(File.join(CURRENT_DIR, 'crm2.xml')))
   end
 end

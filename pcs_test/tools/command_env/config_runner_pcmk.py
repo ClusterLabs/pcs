@@ -1,13 +1,11 @@
 import os
 
-from lxml import etree
-
 from pcs_test.tools.command_env.mock_runner import (
     Call as RunnerCall,
     CheckStdinEqualXml,
 )
-from pcs_test.tools.fixture import complete_state_resources
 from pcs_test.tools.fixture_cib import modify_cib
+from pcs_test.tools.fixture_crm_mon import complete_state
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.xml import etree_to_str
 
@@ -27,65 +25,6 @@ AGENT_FILENAME_MAP = {
 RULE_IN_EFFECT_RETURNCODE = 0
 RULE_EXPIRED_RETURNCODE = 110
 RULE_NOT_YET_IN_EFFECT_RETURNCODE = 111
-
-
-def _fixture_state_resources_xml(
-    resource_id="A",
-    resource_agent="ocf::heartbeat:Dummy",
-    role="Started",
-    failed="false",
-    node_name="node1",
-):
-    return """
-        <resources>
-            <resource
-                id="{resource_id}"
-                resource_agent="{resource_agent}"
-                role="{role}"
-                failed="{failed}"
-            >
-                <node name="{node_name}" id="1" cached="false"/>
-            </resource>
-        </resources>
-        """.format(
-        resource_id=resource_id,
-        resource_agent=resource_agent,
-        role=role,
-        failed=failed,
-        node_name=node_name,
-    )
-
-
-def _fixture_state_node_xml(
-    id,
-    name,
-    type="member",
-    online=True,
-    standby=False,
-    standby_onfail=False,
-    maintenance=False,
-    pending=False,
-    unclean=False,
-    shutdown=False,
-    expected_up=True,
-    is_dc=False,
-    resources_running=0,
-):
-    # This function uses a "clever" way of defaulting an input **dict containing
-    # attributes of an xml element.
-    # pylint: disable=unused-argument
-    # pylint: disable=invalid-name
-    # pylint: disable=redefined-builtin
-    # pylint: disable=too-many-locals
-    attrs = locals()
-    xml_attrs = []
-    for attr_name, attr_value in attrs.items():
-        if attr_value is True:
-            attr_value = "true"
-        elif attr_value is False:
-            attr_value = "false"
-        xml_attrs.append('{0}="{1}"'.format(attr_name, attr_value))
-    return "<node {0}/>".format(" ".join(xml_attrs))
 
 
 class PcmkShortcuts:
@@ -219,7 +158,6 @@ class PcmkShortcuts:
         name="runner.pcmk.load_state",
         filename="crm_mon.minimal.xml",
         resources=None,
-        raw_resources=None,
         nodes=None,
         stdout="",
         stderr="",
@@ -231,29 +169,34 @@ class PcmkShortcuts:
         string name -- key of the call
         string filename -- points to file with the status in the content
         string resources -- xml - resources section, will be put to state
-        string nodes -- iterable of node dicts
+        string nodes -- xml - nodes section, will be put to state
         string stdout -- crm_mon's stdout
         string stderr -- crm_mon's stderr
         int returncode -- crm_mon's returncode
         """
-        # pylint: disable=too-many-boolean-expressions
-        if (resources or raw_resources is not None or nodes) and (
-            stdout or stderr or returncode
-        ):
+        if (resources or nodes) and (stdout or stderr or returncode):
             raise AssertionError(
                 "Cannot specify resources or nodes when stdout, stderr or "
                 "returncode is specified"
             )
-        if resources and raw_resources is not None:
-            raise AssertionError(
-                "Cannot use 'resources' and 'raw_resources' together"
-            )
+
+        self.__calls.place(
+            f"{name}.help-all",
+            RunnerCall(
+                ["crm_mon", "--help-all"],
+                stdout="this version supports --output-as=FORMAT option",
+                stderr="",
+                returncode=0,
+            ),
+        )
+
+        command = ["crm_mon", "--one-shot", "--inactive", "--output-as", "xml"]
 
         if stdout or stderr or returncode:
             self.__calls.place(
                 name,
                 RunnerCall(
-                    ["crm_mon", "--one-shot", "--as-xml", "--inactive"],
+                    command,
                     stdout=stdout,
                     stderr=stderr,
                     returncode=returncode,
@@ -262,44 +205,15 @@ class PcmkShortcuts:
             return
 
         with open(rc(filename)) as a_file:
-            state = etree.fromstring(a_file.read())
-
-        if raw_resources is not None:
-            resources = _fixture_state_resources_xml(**raw_resources)
-        if resources:
-            state.append(complete_state_resources(etree.fromstring(resources)))
-
-        if nodes:
-            nodes_element = state.find("./nodes")
-            for node in nodes:
-                nodes_element.append(
-                    etree.fromstring(_fixture_state_node_xml(**node))
-                )
-
-        # set correct number of nodes and resources into the status
-        resources_count = len(
-            state.xpath(
-                " | ".join(
-                    [
-                        "./resources/bundle",
-                        "./resources/clone",
-                        "./resources/group",
-                        "./resources/resource",
-                    ]
-                )
-            )
-        )
-        nodes_count = len(state.findall("./nodes/node"))
-        state.find("./summary/nodes_configured").set("number", str(nodes_count))
-        state.find("./summary/resources_configured").set(
-            "number", str(resources_count)
-        )
+            state_xml = a_file.read()
 
         self.__calls.place(
             name,
             RunnerCall(
-                ["crm_mon", "--one-shot", "--as-xml", "--inactive"],
-                stdout=etree_to_str(state),
+                command,
+                stdout=etree_to_str(
+                    complete_state(state_xml, resources, nodes)
+                ),
             ),
         )
 
@@ -541,6 +455,52 @@ class PcmkShortcuts:
         int returncode -- crm_resource's returncode
         """
         cmd = ["crm_resource", "--cleanup"]
+        if resource:
+            cmd.extend(["--resource", resource])
+        if node:
+            cmd.extend(["--node", node])
+        if strict:
+            cmd.extend(["--force"])
+        self.__calls.place(
+            name,
+            RunnerCall(
+                cmd,
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode,
+            ),
+            before=before,
+            instead=instead,
+        )
+
+    def resource_refresh(
+        self,
+        name="runner.pcmk.refresh",
+        instead=None,
+        before=None,
+        resource=None,
+        node=None,
+        strict=False,
+        stdout="",
+        stderr="",
+        returncode=0,
+    ):
+        """
+        Create a call for crm_resource --refresh
+
+        string name -- the key of this call
+        string instead -- the key of a call instead of which this new call is to
+            be placed
+        string before -- the key of a call before which this new call is to be
+            placed
+        string resource -- the id of a resource to be cleaned
+        string node -- the name of the node where resources should be cleaned
+        bool strict -- strict mode of 'crm_resource refresh' enabled?
+        string stdout -- crm_resource's stdout
+        string stderr -- crm_resource's stderr
+        int returncode -- crm_resource's returncode
+        """
+        cmd = ["crm_resource", "--refresh"]
         if resource:
             cmd.extend(["--resource", resource])
         if node:

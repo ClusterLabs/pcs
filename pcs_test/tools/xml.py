@@ -12,10 +12,8 @@ def dom_get_child_elements(element):
 
 def etree_to_str(tree):
     # etree returns string in bytes: b'xml'
-    # python 3 removed .encode() from byte strings
-    # run(...) calls subprocess.Popen.communicate which calls encode...
     # so there is bytes to str conversion
-    return etree.tostring(tree).decode()
+    return etree.tostring(tree, pretty_print=True).decode()
 
 
 class XmlManipulation:

@@ -1,11 +1,8 @@
 from unittest import mock, TestCase
 
-from lxml import etree
-
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.misc import get_test_resource as rc
-from pcs_test.tools.xml import etree_to_str
 
 from pcs import settings
 from pcs.common.reports import codes as report_codes
@@ -250,7 +247,9 @@ class GroupAdd(TestCase):
         )
 
 
-@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+)
 class GroupAddWait(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
@@ -276,9 +275,7 @@ class GroupAddWait(TestCase):
         )
 
     def test_group_running(self):
-        resources_state = fixture.complete_state_resources(
-            etree.fromstring(
-                """
+        resources_state = """
             <resources>
                 <group id="G" number_resources="2">
                     <resource id="R1" role="Started" nodes_running_on="1">
@@ -290,11 +287,7 @@ class GroupAddWait(TestCase):
                 </group>
             </resources>
         """
-            )
-        )
-        self.config.runner.pcmk.load_state(
-            resources=etree_to_str(resources_state)
-        )
+        self.config.runner.pcmk.load_state(resources=resources_state)
         resource.group_add(
             self.env_assist.get_env(),
             "G",
@@ -308,9 +301,7 @@ class GroupAddWait(TestCase):
         )
 
     def test_group_not_running(self):
-        resources_state = fixture.complete_state_resources(
-            etree.fromstring(
-                """
+        resources_state = """
             <resources>
                 <group id="G" number_resources="2">
                     <resource id="R1" role="Started" nodes_running_on="1">
@@ -321,11 +312,7 @@ class GroupAddWait(TestCase):
                 </group>
             </resources>
         """
-            )
-        )
-        self.config.runner.pcmk.load_state(
-            resources=etree_to_str(resources_state)
-        )
+        self.config.runner.pcmk.load_state(resources=resources_state)
         resource.group_add(
             self.env_assist.get_env(),
             "G",

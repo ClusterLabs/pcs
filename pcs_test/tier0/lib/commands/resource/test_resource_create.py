@@ -302,6 +302,25 @@ fixture_cib_resources_xml_clone_simplest_disabled = """<resources>
 </resources>"""
 
 
+def fixture_state_resources_xml(
+    role="Started", failed="false", node_name="node1"
+):
+    return """
+        <resources>
+            <resource
+                id="A" resource_agent="ocf::heartbeat:Dummy"
+                role="{role}" failed="{failed}"
+            >
+                <node name="{node_name}" id="1" cached="false"/>
+            </resource>
+        </resources>
+        """.format(
+        role=role,
+        failed=failed,
+        node_name=node_name,
+    )
+
+
 class Create(TestCase):
     fixture_sanitized_operation = """
         <resources>
@@ -662,7 +681,9 @@ class Create(TestCase):
         )
 
 
-@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+)
 class CreateWait(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -693,7 +714,9 @@ class CreateWait(TestCase):
         )
 
     def test_wait_ok_run_fail(self):
-        (self.config.runner.pcmk.load_state(raw_resources=dict(failed="true")))
+        self.config.runner.pcmk.load_state(
+            resources=fixture_state_resources_xml(failed="true")
+        )
 
         self.env_assist.assert_raise_library_error(
             lambda: create(self.env_assist.get_env(), wait=TIMEOUT)
@@ -708,7 +731,9 @@ class CreateWait(TestCase):
         )
 
     def test_wait_ok_run_ok(self):
-        self.config.runner.pcmk.load_state(raw_resources=dict())
+        self.config.runner.pcmk.load_state(
+            resources=fixture_state_resources_xml()
+        )
         create(self.env_assist.get_env(), wait=TIMEOUT)
         self.env_assist.assert_reports(
             [
@@ -723,7 +748,7 @@ class CreateWait(TestCase):
     def test_wait_ok_disable_fail(self):
         (
             self.config.runner.pcmk.load_state(
-                raw_resources=dict()
+                resources=fixture_state_resources_xml()
             ).env.push_cib(
                 resources=fixture_cib_resources_xml_simplest_disabled,
                 wait=TIMEOUT,
@@ -749,7 +774,7 @@ class CreateWait(TestCase):
     def test_wait_ok_disable_ok(self):
         (
             self.config.runner.pcmk.load_state(
-                raw_resources=dict(role="Stopped")
+                resources=fixture_state_resources_xml(role="Stopped")
             ).env.push_cib(
                 resources=fixture_cib_resources_xml_simplest_disabled,
                 wait=TIMEOUT,
@@ -770,7 +795,7 @@ class CreateWait(TestCase):
     def test_wait_ok_disable_ok_by_target_role(self):
         (
             self.config.runner.pcmk.load_state(
-                raw_resources=dict(role="Stopped")
+                resources=fixture_state_resources_xml(role="Stopped")
             ).env.push_cib(
                 resources=fixture_cib_resources_xml_simplest_disabled,
                 wait=TIMEOUT,
@@ -916,13 +941,17 @@ class CreateInGroup(TestCase):
         )
 
     @mock.patch.object(
-        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+        settings,
+        "pacemaker_api_result_schema",
+        rc("pcmk_api_rng/api-result.rng"),
     )
     def test_wait_ok_run_fail(self):
         (
             self.config.env.push_cib(
                 resources=fixture_cib_resources_xml_group_simplest, wait=TIMEOUT
-            ).runner.pcmk.load_state(raw_resources=dict(failed="true"))
+            ).runner.pcmk.load_state(
+                resources=fixture_state_resources_xml(failed="true")
+            )
         )
         self.env_assist.assert_raise_library_error(
             lambda: create_group(self.env_assist.get_env())
@@ -932,13 +961,15 @@ class CreateInGroup(TestCase):
         )
 
     @mock.patch.object(
-        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+        settings,
+        "pacemaker_api_result_schema",
+        rc("pcmk_api_rng/api-result.rng"),
     )
     def test_wait_ok_run_ok(self):
         (
             self.config.env.push_cib(
                 resources=fixture_cib_resources_xml_group_simplest, wait=TIMEOUT
-            ).runner.pcmk.load_state(raw_resources=dict())
+            ).runner.pcmk.load_state(resources=fixture_state_resources_xml())
         )
         create_group(self.env_assist.get_env())
         self.env_assist.assert_reports(
@@ -952,14 +983,16 @@ class CreateInGroup(TestCase):
         )
 
     @mock.patch.object(
-        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+        settings,
+        "pacemaker_api_result_schema",
+        rc("pcmk_api_rng/api-result.rng"),
     )
     def test_wait_ok_disable_fail(self):
         (
             self.config.env.push_cib(
                 resources=fixture_cib_resources_xml_group_simplest_disabled,
                 wait=TIMEOUT,
-            ).runner.pcmk.load_state(raw_resources=dict())
+            ).runner.pcmk.load_state(resources=fixture_state_resources_xml())
         )
 
         self.env_assist.assert_raise_library_error(
@@ -976,14 +1009,18 @@ class CreateInGroup(TestCase):
         )
 
     @mock.patch.object(
-        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+        settings,
+        "pacemaker_api_result_schema",
+        rc("pcmk_api_rng/api-result.rng"),
     )
     def test_wait_ok_disable_ok(self):
         (
             self.config.env.push_cib(
                 resources=fixture_cib_resources_xml_group_simplest_disabled,
                 wait=TIMEOUT,
-            ).runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
+            ).runner.pcmk.load_state(
+                resources=fixture_state_resources_xml(role="Stopped")
+            )
         )
         create_group(self.env_assist.get_env(), disabled=True)
         self.env_assist.assert_reports(
@@ -996,14 +1033,18 @@ class CreateInGroup(TestCase):
         )
 
     @mock.patch.object(
-        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+        settings,
+        "pacemaker_api_result_schema",
+        rc("pcmk_api_rng/api-result.rng"),
     )
     def test_wait_ok_disable_ok_by_target_role(self):
         (
             self.config.env.push_cib(
                 resources=fixture_cib_resources_xml_group_simplest_disabled,
                 wait=TIMEOUT,
-            ).runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
+            ).runner.pcmk.load_state(
+                resources=fixture_state_resources_xml(role="Stopped")
+            )
         )
         create_group(
             self.env_assist.get_env(),
@@ -1148,13 +1189,17 @@ class CreateAsClone(TestCase):
         )
 
     @mock.patch.object(
-        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+        settings,
+        "pacemaker_api_result_schema",
+        rc("pcmk_api_rng/api-result.rng"),
     )
     def test_wait_ok_run_fail(self):
         (
             self.config.env.push_cib(
                 resources=fixture_cib_resources_xml_clone_simplest, wait=TIMEOUT
-            ).runner.pcmk.load_state(raw_resources=dict(failed="true"))
+            ).runner.pcmk.load_state(
+                resources=fixture_state_resources_xml(failed="true")
+            )
         )
         self.env_assist.assert_raise_library_error(
             lambda: create_clone(self.env_assist.get_env())
@@ -1164,13 +1209,15 @@ class CreateAsClone(TestCase):
         )
 
     @mock.patch.object(
-        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+        settings,
+        "pacemaker_api_result_schema",
+        rc("pcmk_api_rng/api-result.rng"),
     )
     def test_wait_ok_run_ok(self):
         (
             self.config.env.push_cib(
                 resources=fixture_cib_resources_xml_clone_simplest, wait=TIMEOUT
-            ).runner.pcmk.load_state(raw_resources=dict())
+            ).runner.pcmk.load_state(resources=fixture_state_resources_xml())
         )
         create_clone(self.env_assist.get_env())
         self.env_assist.assert_reports(
@@ -1184,14 +1231,16 @@ class CreateAsClone(TestCase):
         )
 
     @mock.patch.object(
-        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+        settings,
+        "pacemaker_api_result_schema",
+        rc("pcmk_api_rng/api-result.rng"),
     )
     def test_wait_ok_disable_fail(self):
         (
             self.config.env.push_cib(
                 resources=fixture_cib_resources_xml_clone_simplest_disabled,
                 wait=TIMEOUT,
-            ).runner.pcmk.load_state(raw_resources=dict())
+            ).runner.pcmk.load_state(resources=fixture_state_resources_xml())
         )
 
         self.env_assist.assert_raise_library_error(
@@ -1208,14 +1257,18 @@ class CreateAsClone(TestCase):
         )
 
     @mock.patch.object(
-        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+        settings,
+        "pacemaker_api_result_schema",
+        rc("pcmk_api_rng/api-result.rng"),
     )
     def test_wait_ok_disable_ok(self):
         (
             self.config.env.push_cib(
                 resources=fixture_cib_resources_xml_clone_simplest_disabled,
                 wait=TIMEOUT,
-            ).runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
+            ).runner.pcmk.load_state(
+                resources=fixture_state_resources_xml(role="Stopped")
+            )
         )
         create_clone(self.env_assist.get_env(), disabled=True)
         self.env_assist.assert_reports(
@@ -1228,7 +1281,9 @@ class CreateAsClone(TestCase):
         )
 
     @mock.patch.object(
-        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+        settings,
+        "pacemaker_api_result_schema",
+        rc("pcmk_api_rng/api-result.rng"),
     )
     def test_wait_ok_disable_ok_by_target_role(self):
         (
@@ -1272,7 +1327,9 @@ class CreateAsClone(TestCase):
                     </resources>
                 """,
                 wait=TIMEOUT,
-            ).runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
+            ).runner.pcmk.load_state(
+                resources=fixture_state_resources_xml(role="Stopped")
+            )
         )
         create_clone(
             self.env_assist.get_env(),
@@ -1288,7 +1345,9 @@ class CreateAsClone(TestCase):
         )
 
     @mock.patch.object(
-        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+        settings,
+        "pacemaker_api_result_schema",
+        rc("pcmk_api_rng/api-result.rng"),
     )
     def test_wait_ok_disable_ok_by_target_role_in_clone(self):
         (
@@ -1331,7 +1390,9 @@ class CreateAsClone(TestCase):
                     </resources>
                 """,
                 wait=TIMEOUT,
-            ).runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
+            ).runner.pcmk.load_state(
+                resources=fixture_state_resources_xml(role="Stopped")
+            )
         )
         create_clone(
             self.env_assist.get_env(), clone_options={"target-role": "Stopped"}
@@ -1346,7 +1407,9 @@ class CreateAsClone(TestCase):
         )
 
     @mock.patch.object(
-        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+        settings,
+        "pacemaker_api_result_schema",
+        rc("pcmk_api_rng/api-result.rng"),
     )
     def test_wait_ok_disable_ok_by_clone_max(self):
         (
@@ -1389,7 +1452,9 @@ class CreateAsClone(TestCase):
                     </resources>
                 """,
                 wait=TIMEOUT,
-            ).runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
+            ).runner.pcmk.load_state(
+                resources=fixture_state_resources_xml(role="Stopped")
+            )
         )
         create_clone(
             self.env_assist.get_env(), clone_options={"clone-max": "0"}
@@ -1404,7 +1469,9 @@ class CreateAsClone(TestCase):
         )
 
     @mock.patch.object(
-        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+        settings,
+        "pacemaker_api_result_schema",
+        rc("pcmk_api_rng/api-result.rng"),
     )
     def test_wait_ok_disable_ok_by_clone_node_max(self):
         (
@@ -1448,7 +1515,9 @@ class CreateAsClone(TestCase):
                     </resources>
                 """,
                 wait=TIMEOUT,
-            ).runner.pcmk.load_state(raw_resources=dict(role="Stopped"))
+            ).runner.pcmk.load_state(
+                resources=fixture_state_resources_xml(role="Stopped")
+            )
         )
         create_clone(
             self.env_assist.get_env(), clone_options={"clone-node-max": "0"}
@@ -1750,7 +1819,9 @@ class CreateInToBundle(TestCase):
         )
 
     @mock.patch.object(
-        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+        settings,
+        "pacemaker_api_result_schema",
+        rc("pcmk_api_rng/api-result.rng"),
     )
     def test_wait_ok_run_ok(self):
         (
@@ -1771,7 +1842,9 @@ class CreateInToBundle(TestCase):
         )
 
     @mock.patch.object(
-        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+        settings,
+        "pacemaker_api_result_schema",
+        rc("pcmk_api_rng/api-result.rng"),
     )
     def test_wait_ok_run_fail(self):
         (
@@ -1792,7 +1865,9 @@ class CreateInToBundle(TestCase):
         )
 
     @mock.patch.object(
-        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+        settings,
+        "pacemaker_api_result_schema",
+        rc("pcmk_api_rng/api-result.rng"),
     )
     def test_disabled_wait_ok_not_running(self):
         (
@@ -1811,7 +1886,9 @@ class CreateInToBundle(TestCase):
         )
 
     @mock.patch.object(
-        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+        settings,
+        "pacemaker_api_result_schema",
+        rc("pcmk_api_rng/api-result.rng"),
     )
     def test_disabled_wait_ok_running(self):
         (

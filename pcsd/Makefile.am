@@ -5,6 +5,7 @@ EXTRA_DIST		= \
 			  test/cluster.conf \
 			  test/corosync.conf \
 			  test/crm1.xml \
+			  test/crm2.xml \
 			  test/known-hosts \
 			  test/pcsd_test_utils.rb \
 			  test/pcs_settings.conf \

@@ -194,7 +194,7 @@ class CallListBuilder:
 
     def __error_with_context(self, message):
         return AssertionError(
-            "{0}\nIn the confituration call collection are calls:\n{1}".format(
+            "{0}\nCalls in the configuration call collection are:\n{1}".format(
                 message,
                 show_calls(self.__name_list, self.__call_list),
             )

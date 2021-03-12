@@ -1453,7 +1453,9 @@ class Wait(TestCase):
         )
 
     @mock.patch.object(
-        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+        settings,
+        "pacemaker_api_result_schema",
+        rc("pcmk_api_rng/api-result.rng"),
     )
     def test_wait_ok_running(self):
         (
@@ -1471,7 +1473,9 @@ class Wait(TestCase):
         )
 
     @mock.patch.object(
-        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+        settings,
+        "pacemaker_api_result_schema",
+        rc("pcmk_api_rng/api-result.rng"),
     )
     def test_wait_ok_not_running(self):
         (

@@ -1,35 +1,47 @@
 require 'pathname'
 
+def run_crm_mon_xml(auth_user)
+  stdout, stderr, _ = run_cmd(auth_user, CRM_MON, '--help-all')
+  new_format = (
+    stdout.join("\n").include?('--output-as=') or
+    stderr.join("\n").include?('--output-as=')
+  )
+  cmd = [CRM_MON, '--one-shot', '--inactive']
+  if new_format
+    cmd << '--output-as=xml'
+  else
+    cmd << '--as-xml'
+  end
+  stdout, stderr, retval = run_cmd(auth_user, *cmd)
+  return stdout, stderr, retval
+end
+
 def getResourcesGroups(auth_user, get_fence_devices = false, get_all_options = false,
   get_operations=false
 )
-  stdout, stderror, retval = run_cmd(
-    auth_user, CRM_MON, "--one-shot", "-r", "--as-xml"
-  )
+  crm_output, stderr, retval = run_crm_mon_xml(auth_user)
   if retval != 0
     return [],[], retval
   end
 
-  crm_output = stdout
-
   doc = REXML::Document.new(crm_output.join("\n"))
   resource_list = []
   group_list = []
-  doc.elements.each('crm_mon/resources/resource') do |e|
+  doc.elements.each('/crm_mon/resources/resource | /pacemaker-result/resources/resource') do |e|
     if e.attributes["resource_agent"] && e.attributes["resource_agent"].index('stonith:') == 0
       get_fence_devices && resource_list.push(Resource.new(e))
     else
       !get_fence_devices && resource_list.push(Resource.new(e))
     end
   end
-  doc.elements.each('crm_mon/resources/group/resource') do |e|
+  doc.elements.each('/crm_mon/resources/group/resource | /pacemaker-result/resources/group/resource') do |e|
     if e.attributes["resource_agent"] && e.attributes["resource_agent"].index('stonith:') == 0
       get_fence_devices && resource_list.push(Resource.new(e,e.parent.attributes["id"]))
     else
       !get_fence_devices && resource_list.push(Resource.new(e,e.parent.attributes["id"]))
     end
   end
-  doc.elements.each('crm_mon/resources/clone/resource') do |e|
+  doc.elements.each('/crm_mon/resources/clone/resource | /pacemaker-result/resources/clone/resource') do |e|
     if e.attributes["resource_agent"] && e.attributes["resource_agent"].index('stonith:') == 0
       get_fence_devices && resource_list.push(Resource.new(e))
     else
@@ -40,7 +52,7 @@ def getResourcesGroups(auth_user, get_fence_devices = false, get_all_options = f
       !get_fence_devices && resource_list.push(Resource.new(e, nil, !ms, ms))
     end
   end
-  doc.elements.each('crm_mon/resources/clone/group/resource') do |e|
+  doc.elements.each('/crm_mon/resources/clone/group/resource | /pacemaker-result/resources/clone/group/resource') do |e|
     if e.attributes["resource_agent"] && e.attributes["resource_agent"].index('stonith:') == 0
       get_fence_devices && resource_list.push(Resource.new(e,e.parent.parent.attributes["id"] + "/" + e.parent.attributes["id"]))
     else
@@ -52,7 +64,7 @@ def getResourcesGroups(auth_user, get_fence_devices = false, get_all_options = f
     end
   end
 
-  doc.elements.each('crm_mon/resources/group') do |e|
+  doc.elements.each('/crm_mon/resources/group | /pacemaker-result/resources/group') do |e|
     group_list.push(e.attributes["id"])
   end
 

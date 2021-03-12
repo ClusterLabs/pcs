@@ -1260,7 +1260,9 @@ class WaitMixin(FixturesMixin, SetUpMixin):
         )
 
     @mock.patch.object(
-        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+        settings,
+        "pacemaker_api_result_schema",
+        rc("pcmk_api_rng/api-result.rng"),
     )
     def test_wait_ok_run_ok(self):
         (
@@ -1278,7 +1280,9 @@ class WaitMixin(FixturesMixin, SetUpMixin):
         )
 
     @mock.patch.object(
-        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+        settings,
+        "pacemaker_api_result_schema",
+        rc("pcmk_api_rng/api-result.rng"),
     )
     def test_wait_ok_run_fail(self):
         (
@@ -1298,7 +1302,9 @@ class WaitMixin(FixturesMixin, SetUpMixin):
         )
 
     @mock.patch.object(
-        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+        settings,
+        "pacemaker_api_result_schema",
+        rc("pcmk_api_rng/api-result.rng"),
     )
     def test_disabled_wait_ok_run_ok(self):
         (
@@ -1322,7 +1328,9 @@ class WaitMixin(FixturesMixin, SetUpMixin):
         )
 
     @mock.patch.object(
-        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+        settings,
+        "pacemaker_api_result_schema",
+        rc("pcmk_api_rng/api-result.rng"),
     )
     def test_disabled_wait_ok_run_fail(self):
         (

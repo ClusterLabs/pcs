@@ -8,6 +8,7 @@ from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.reports import process_library_reports
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.errors import LibraryError
+from pcs.lib.pacemaker.live import get_cluster_status_dom
 from pcs.lib.pacemaker.state import ClusterState
 
 # pylint: disable=too-many-branches, too-many-locals, too-many-statements
@@ -64,7 +65,7 @@ def nodes_status(lib, argv, modifiers):
                 [
                     node.attrs.name
                     for node in ClusterState(
-                        utils.getClusterStateXml()
+                        get_cluster_status_dom(utils.cmd_runner())
                     ).node_section.nodes
                     if node.attrs.type != "remote"
                 ]

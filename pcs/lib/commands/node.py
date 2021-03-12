@@ -4,24 +4,20 @@ from pcs.common import reports
 from pcs.common.reports.item import ReportItem
 from pcs.lib.cib.node import update_node_instance_attrs
 from pcs.lib.cib.tools import IdProvider
+from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
-from pcs.lib.pacemaker.live import (
-    get_cluster_status_xml,
-    get_local_node_name,
-)
+from pcs.lib.pacemaker.live import get_local_node_name
 from pcs.lib.pacemaker.state import ClusterState
 
 
 @contextmanager
-def cib_runner_nodes(lib_env, wait):
+def cib_runner_nodes(lib_env: LibraryEnvironment, wait):
     lib_env.ensure_wait_satisfiable(wait)
-    runner = lib_env.cmd_runner()
-
-    state_nodes = ClusterState(
-        get_cluster_status_xml(runner)
-    ).node_section.nodes
-
-    yield (lib_env.get_cib(), runner, state_nodes)
+    yield (
+        lib_env.get_cib(),
+        lib_env.cmd_runner(),
+        ClusterState(lib_env.get_cluster_state()).node_section.nodes,
+    )
     lib_env.push_cib(wait=wait)
 
 

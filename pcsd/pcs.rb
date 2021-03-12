@@ -1589,9 +1589,7 @@ end
 
 def get_crm_mon_dom(auth_user)
   begin
-    stdout, _, retval = run_cmd(
-      auth_user, CRM_MON, '--one-shot', '-r', '--as-xml'
-    )
+    stdout, _, retval = run_crm_mon_xml(auth_user)
     if retval == 0
       return REXML::Document.new(stdout.join("\n"))
     end

@@ -1,7 +1,7 @@
 from unittest import mock, TestCase
 from lxml import etree
 
-from pcs_test.tools import fixture
+from pcs_test.tools import fixture, fixture_crm_mon
 from pcs_test.tools.assertions import (
     assert_report_item_list_equal,
     assert_xml_equal,
@@ -84,39 +84,18 @@ class CibMixin:
 
 class StatusNodesMixin:
     def get_status(self):
+        with open(rc("crm_mon.minimal.xml")) as crm_mon_file:
+            crm_mon_xml = crm_mon_file.read()
         return ClusterState(
-            """
-            <crm_mon version="2.0.5">
-                <summary>
-                    <stack type="corosync" />
-                    <current_dc present="true" />
-                    <last_update time="Wed Nov  6 13:45:41 2019" />
-                    <last_change time="Wed Nov  6 10:42:54 2019"
-                        user="hacluster" client="crmd" origin="node1"
-                    />
-                    <nodes_configured number="2" />
-                    <resources_configured number="0" disabled="0" blocked="0" />
-                    <cluster_options stonith-enabled="true"
-                        symmetric-cluster="true" no-quorum-policy="stop"
-                        maintenance-mode="false" stop-all-resources="false"
-                    />
-                </summary>
+            fixture_crm_mon.complete_state(
+                crm_mon_xml,
+                nodes_xml="""
                 <nodes>
-                    <node name="nodeA" id="1" online="true" standby="false"
-                        standby_onfail="false" maintenance="false"
-                        pending="false" unclean="false" shutdown="false"
-                        expected_up="true" is_dc="true" resources_running="0"
-                        type="member"
-                    />
-                    <node name="nodeB" id="2" online="true" standby="false"
-                        standby_onfail="false" maintenance="false"
-                        pending="false" unclean="false" shutdown="false"
-                        expected_up="true" is_dc="false" resources_running="0"
-                        type="member"
-                    />
+                    <node name="nodeA" id="1" is_dc="true" />
+                    <node name="nodeB" id="2" />
                 </nodes>
-            </crm_mon>
-        """
+            """,
+            )
         ).node_section.nodes
 
 
@@ -692,7 +671,9 @@ class Verify(TestCase, CibMixin, StatusNodesMixin):
         el.set("class", "stonith")
 
     @mock.patch.object(
-        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+        settings,
+        "pacemaker_api_result_schema",
+        rc("pcmk_api_rng/api-result.rng"),
     )
     def test_empty(self):
         resources = etree.fromstring("<resources />")
@@ -703,7 +684,9 @@ class Verify(TestCase, CibMixin, StatusNodesMixin):
         assert_report_item_list_equal(report_list, [])
 
     @mock.patch.object(
-        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+        settings,
+        "pacemaker_api_result_schema",
+        rc("pcmk_api_rng/api-result.rng"),
     )
     def test_success(self):
         resources = etree.fromstring("<resources />")
@@ -852,7 +835,9 @@ class ValidateTargetTypewise(TestCase):
         assert_report_item_list_equal(report_list, report)
 
 
-@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+)
 class ValidateTargetValuewise(TestCase, StatusNodesMixin):
     def test_node_valid(self):
         state = self.get_status()

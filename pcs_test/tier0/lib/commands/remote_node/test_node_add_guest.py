@@ -1,4 +1,3 @@
-# pylint: disable=no-member
 from functools import partial
 from unittest import mock, TestCase
 
@@ -125,6 +124,8 @@ class AddGuest(TestCase):
         self.config.env.set_known_hosts_dests(KNOWN_HOSTS_DESTS)
 
     def _config_success_base(self):
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
         (
             self.config.local.load_cib()
             .corosync_conf.load(node_name_list=[NODE_1, NODE_2])
@@ -146,6 +147,8 @@ class AddGuest(TestCase):
 
     @mock.patch("pcs.lib.commands.remote_node.generate_binary_key")
     def test_success_generated_authkey(self, generate_binary_key):
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
         generate_binary_key.return_value = b"password"
         (
             self.config.local.load_cib()
@@ -188,6 +191,8 @@ class AddGuest(TestCase):
         )
 
     def test_new_offline(self):
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
         (
             self.config.local.load_cib()
             .corosync_conf.load(node_name_list=[NODE_1, NODE_2])
@@ -217,6 +222,8 @@ class AddGuest(TestCase):
         )
 
     def test_can_skip_new_offline(self):
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
         pcmk_authkey_content = b"password"
         (
             self.config.local.load_cib()
@@ -241,6 +248,8 @@ class AddGuest(TestCase):
 
     @mock.patch("pcs.lib.commands.remote_node.generate_binary_key")
     def test_can_skip_all_offline(self, generate_binary_key):
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
         generate_binary_key.return_value = b"password"
         (
             self.config.local.load_cib()
@@ -297,6 +306,8 @@ class AddGuest(TestCase):
         )
 
     def test_fails_when_remote_node_is_not_prepared(self):
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
         (
             self.config.local.load_cib()
             .corosync_conf.load(node_name_list=[NODE_1, NODE_2])
@@ -347,6 +358,8 @@ class AddGuest(TestCase):
         )
 
     def test_fails_when_remote_node_returns_invalid_output(self):
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
         (
             self.config.local.load_cib()
             .corosync_conf.load(node_name_list=[NODE_1, NODE_2])
@@ -372,6 +385,8 @@ class AddGuest(TestCase):
         )
 
     def test_changed_options(self):
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
         meta_attributes = """
             <meta_attributes id="virtual_machine_id-meta_attributes">
                 <nvpair id="virtual_machine_id-meta_attributes-remote-addr"
@@ -425,10 +440,10 @@ class AddGuest(TestCase):
         )
 
     def test_noexistent_resource(self):
-        (
-            self.config.local.load_cib().corosync_conf.load(
-                node_name_list=[NODE_1, NODE_2]
-            )
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
+        self.config.local.load_cib().corosync_conf.load(
+            node_name_list=[NODE_1, NODE_2]
         )
         self.env_assist.assert_raise_library_error(
             lambda: node_add_guest(
@@ -449,10 +464,10 @@ class AddGuest(TestCase):
         )
 
     def test_validate_values(self):
-        (
-            self.config.local.load_cib().corosync_conf.load(
-                node_name_list=[NODE_1, NODE_2]
-            )
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
+        self.config.local.load_cib().corosync_conf.load(
+            node_name_list=[NODE_1, NODE_2]
         )
         self.env_assist.assert_raise_library_error(
             lambda: node_add_guest(
@@ -487,16 +502,16 @@ class AddGuest(TestCase):
         )
 
     def test_unknown_host(self):
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
         self.config.env.set_known_hosts_dests(
             {
                 NODE_1: NODE_1_DEST_LIST,
                 NODE_2: NODE_2_DEST_LIST,
             }
         )
-        (
-            self.config.local.load_cib().corosync_conf.load(
-                node_name_list=[NODE_1, NODE_2]
-            )
+        self.config.local.load_cib().corosync_conf.load(
+            node_name_list=[NODE_1, NODE_2]
         )
         self.env_assist.assert_raise_library_error(
             lambda: node_add_guest(self.env_assist.get_env()), []
@@ -512,6 +527,8 @@ class AddGuest(TestCase):
         )
 
     def test_unknown_host_skip_offline(self):
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
         pcmk_authkey_content = b"password"
         self.config.env.set_known_hosts_dests(
             {
@@ -535,6 +552,8 @@ class AddGuest(TestCase):
     def test_unknown_host_skip_offline_authkey_distribution(
         self, generate_binary_key
     ):
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
         generate_binary_key.return_value = b"password"
         self.config.env.set_known_hosts_dests(
             {
@@ -635,11 +654,15 @@ class NotLive(TestCase):
         self.config.env.set_cib_data(str(cib_xml_man))
 
     def test_addr_specified(self):
-        (self.config.local.load_cib().local.push_cib())
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
+        self.config.local.load_cib().local.push_cib()
         node_add_guest(self.env_assist.get_env())
         self.env_assist.assert_reports(fixture_reports_not_live_cib(NODE_NAME))
 
     def test_addr_not_specified(self):
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
         meta_attributes = """
             <meta_attributes id="virtual_machine_id-meta_attributes">
                 <nvpair id="virtual_machine_id-meta_attributes-remote-addr"
@@ -655,10 +678,8 @@ class NotLive(TestCase):
                 />
             </meta_attributes>
         """
-        (
-            self.config.local.load_cib().local.push_cib(
-                meta_attributes=meta_attributes
-            )
+        self.config.local.load_cib().local.push_cib(
+            meta_attributes=meta_attributes
         )
         node_add_guest(self.env_assist.get_env(), options={"remote-port": "99"})
         self.env_assist.assert_reports(
@@ -676,6 +697,8 @@ class NotLive(TestCase):
         )
 
     def test_unknown_host_addr_not_specified(self):
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
         meta_attributes = """
             <meta_attributes id="virtual_machine_id-meta_attributes">
                 <nvpair id="virtual_machine_id-meta_attributes-remote-addr"
@@ -692,10 +715,8 @@ class NotLive(TestCase):
             </meta_attributes>
         """
         self.config.env.set_known_hosts_dests(dict())
-        (
-            self.config.local.load_cib().local.push_cib(
-                meta_attributes=meta_attributes
-            )
+        self.config.local.load_cib().local.push_cib(
+            meta_attributes=meta_attributes
         )
         node_add_guest(self.env_assist.get_env(), options={"remote-port": "99"})
         self.env_assist.assert_reports(
@@ -713,6 +734,8 @@ class NotLive(TestCase):
         )
 
     def test_unknown_host_addr_specified(self):
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
         meta_attributes = """
             <meta_attributes id="virtual_machine_id-meta_attributes">
                 <nvpair id="virtual_machine_id-meta_attributes-remote-addr"
@@ -725,16 +748,16 @@ class NotLive(TestCase):
             </meta_attributes>
         """
         self.config.env.set_known_hosts_dests(dict())
-        (
-            self.config.local.load_cib().local.push_cib(
-                meta_attributes=meta_attributes
-            )
+        self.config.local.load_cib().local.push_cib(
+            meta_attributes=meta_attributes
         )
         node_add_guest(self.env_assist.get_env(), options={"remote-addr": "aa"})
         self.env_assist.assert_reports(fixture_reports_not_live_cib(NODE_NAME))
 
     def test_validate_values(self):
-        (self.config.local.load_cib())
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
+        self.config.local.load_cib()
         self.env_assist.assert_raise_library_error(
             lambda: node_add_guest(
                 self.env_assist.get_env(),
@@ -783,6 +806,9 @@ class NotLive(TestCase):
         )
 
 
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+)
 class WithWait(TestCase):
     def setUp(self):
         self.wait = 1
@@ -803,21 +829,17 @@ class WithWait(TestCase):
         )
 
     def test_success_when_resource_started(self):
-        (
-            self.config.runner.pcmk.load_state(
-                raw_resources=dict(
-                    resource_id=VIRTUAL_MACHINE_ID,
-                    resource_agent="ocf::pacemaker:remote",
-                    node_name=NODE_1,
-                )
-            )
-            # self.config.fs is used to mock authkey file existence. Therefore,
-            # filesystem mocking is active and we need to cover it. We tell the
-            # file doesn't exist, because we aren't currently mocking the
-            # function which reads it:
-            #   if os.path.isfile(settings.crm_mon_schema):
-            #       etree.RelaxNG(file=settings.crm_mon_schema).assertValid(dom)
-            .fs.isfile(settings.crm_mon_schema, return_value=False)
+        self.config.runner.pcmk.load_state(
+            resources=f"""
+                <resources>
+                    <resource
+                        id="{VIRTUAL_MACHINE_ID}"
+                        resource_agent="ocf::pacemaker:remote"
+                    >
+                        <node name="{NODE_1}" id="1" cached="false"/>
+                    </resource>
+                </resources>
+            """
         )
         node_add_guest(self.env_assist.get_env(), wait=self.wait)
         self.env_assist.assert_reports(
@@ -830,22 +852,18 @@ class WithWait(TestCase):
         )
 
     def test_fail_when_resource_not_started(self):
-        (
-            self.config.runner.pcmk.load_state(
-                raw_resources=dict(
-                    resource_id=VIRTUAL_MACHINE_ID,
-                    resource_agent="ocf::pacemaker:remote",
-                    node_name=NODE_1,
-                    failed="true",
-                )
-            )
-            # self.config.fs is used to mock authkey file existence. Therefore,
-            # filesystem mocking is active and we need to cover it. We tell the
-            # file doesn't exist, because we aren't currently mocking the
-            # function which reads it:
-            #   if os.path.isfile(settings.crm_mon_schema):
-            #       etree.RelaxNG(file=settings.crm_mon_schema).assertValid(dom)
-            .fs.isfile(settings.crm_mon_schema, return_value=False)
+        self.config.runner.pcmk.load_state(
+            resources=f"""
+                <resources>
+                    <resource
+                        id="{VIRTUAL_MACHINE_ID}"
+                        resource_agent="ocf::pacemaker:remote"
+                        failed="true"
+                    >
+                        <node name="{NODE_1}" id="1" cached="false"/>
+                    </resource>
+                </resources>
+            """
         )
         self.env_assist.assert_raise_library_error(
             lambda: node_add_guest(self.env_assist.get_env(), wait=self.wait)
@@ -878,10 +896,10 @@ class RemoteService(TestCase):
         )
 
     def test_fails_when_offline(self):
-        (
-            self.config.local.run_pacemaker_remote(
-                NODE_NAME, NODE_DEST_LIST, **FAIL_HTTP_KWARGS
-            )
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
+        self.config.local.run_pacemaker_remote(
+            NODE_NAME, NODE_DEST_LIST, **FAIL_HTTP_KWARGS
         )
         self.env_assist.assert_raise_library_error(
             lambda: node_add_guest(self.env_assist.get_env()),
@@ -893,15 +911,15 @@ class RemoteService(TestCase):
         )
 
     def test_fail_when_remotely_fail(self):
-        (
-            self.config.local.run_pacemaker_remote(
-                NODE_NAME,
-                NODE_DEST_LIST,
-                result={
-                    "code": "fail",
-                    "message": "Action failed",
-                },
-            )
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
+        self.config.local.run_pacemaker_remote(
+            NODE_NAME,
+            NODE_DEST_LIST,
+            result={
+                "code": "fail",
+                "message": "Action failed",
+            },
         )
         self.env_assist.assert_raise_library_error(
             lambda: node_add_guest(self.env_assist.get_env()),
@@ -915,16 +933,16 @@ class RemoteService(TestCase):
         )
 
     def test_forceable_when_remotely_fail(self):
-        (
-            self.config.local.run_pacemaker_remote(
-                NODE_NAME,
-                NODE_DEST_LIST,
-                result={
-                    "code": "fail",
-                    "message": "Action failed",
-                },
-            ).local.push_cib()
-        )
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
+        self.config.local.run_pacemaker_remote(
+            NODE_NAME,
+            NODE_DEST_LIST,
+            result={
+                "code": "fail",
+                "message": "Action failed",
+            },
+        ).local.push_cib()
         node_add_guest(
             self.env_assist.get_env(), allow_pacemaker_remote_service_fail=True
         )
@@ -954,6 +972,8 @@ class AuthkeyDistribution(TestCase):
         )
 
     def test_fails_when_offline(self):
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
         pcmk_authkey_content = b"password"
         (
             self.config.local.authkey_exists(return_value=True)
@@ -978,15 +998,15 @@ class AuthkeyDistribution(TestCase):
         )
 
     def test_fail_when_remotely_fail(self):
-        (
-            self.config.local.push_existing_authkey_to_remote(
-                NODE_NAME,
-                NODE_DEST_LIST,
-                distribution_result={
-                    "code": "conflict",
-                    "message": "",
-                },
-            )
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
+        self.config.local.push_existing_authkey_to_remote(
+            NODE_NAME,
+            NODE_DEST_LIST,
+            distribution_result={
+                "code": "conflict",
+                "message": "",
+            },
         )
 
         self.env_assist.assert_raise_library_error(
@@ -999,6 +1019,8 @@ class AuthkeyDistribution(TestCase):
         )
 
     def test_forceable_when_remotely_fail(self):
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
         (
             self.config.local.push_existing_authkey_to_remote(
                 NODE_NAME,

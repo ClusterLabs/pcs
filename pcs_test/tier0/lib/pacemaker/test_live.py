@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import os.path
 from unittest import mock, TestCase
 from lxml import etree
@@ -8,20 +9,20 @@ from pcs_test.tools.assertions import (
     assert_xml_equal,
     start_tag_error_text,
 )
-from pcs_test.tools import fixture
+from pcs_test.tools import fixture, fixture_crm_mon
 from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.command_env.mock_runner import Call as RunnerCall
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.xml import etree_to_str, XmlManipulation
 
 from pcs import settings
+from pcs.common.pacemaker.api_result import StatusDto
 from pcs.common.reports import ReportItemSeverity as Severity
 from pcs.common.reports import codes as report_codes
 from pcs.common.tools import Version
 from pcs.common.types import CibRuleInEffectStatus
 import pcs.lib.pacemaker.live as lib
 from pcs.lib.external import CommandRunner
-
-# pylint: disable=no-self-use
 
 _EXITCODE_NOT_CONNECTED = 102
 
@@ -33,77 +34,203 @@ def get_runner(stdout="", stderr="", returncode=0, env_vars=None):
     return runner
 
 
-class LibraryPacemakerTest(TestCase):
-    @staticmethod
-    def path(name):
-        return os.path.join(settings.pacemaker_binaries, name)
-
-    def crm_mon_cmd(self):
-        return [self.path("crm_mon"), "--one-shot", "--as-xml", "--inactive"]
+def path(name):
+    return os.path.join(settings.pacemaker_binaries, name)
 
 
-class GetClusterStatusXmlTest(LibraryPacemakerTest):
-    def test_success(self):
-        expected_stdout = "<xml />"
-        expected_stderr = ""
-        expected_retval = 0
-        mock_runner = get_runner(
-            expected_stdout, expected_stderr, expected_retval
+class GetStatusFromApiResult(TestCase):
+    def test_errors(self):
+        self.assertEqual(
+            lib.get_status_from_api_result(
+                etree.fromstring(
+                    fixture_crm_mon.error_xml(
+                        123, "short message", ["error1", "error2"]
+                    )
+                )
+            ),
+            StatusDto(123, "short message", ["error1", "error2"]),
         )
 
-        real_xml = lib.get_cluster_status_xml(mock_runner)
-
-        mock_runner.run.assert_called_once_with(self.crm_mon_cmd())
-        self.assertEqual(expected_stdout, real_xml)
-
-    def test_error(self):
-        expected_stdout = "some info"
-        expected_stderr = "some error"
-        expected_retval = 1
-        mock_runner = get_runner(
-            expected_stdout, expected_stderr, expected_retval
+    def test_no_errors(self):
+        self.assertEqual(
+            lib.get_status_from_api_result(
+                etree.fromstring(
+                    fixture_crm_mon.error_xml(123, "short message")
+                )
+            ),
+            StatusDto(123, "short message", []),
         )
 
-        assert_raise_library_error(
-            lambda: lib.get_cluster_status_xml(mock_runner),
-            (
-                Severity.ERROR,
-                report_codes.CRM_MON_ERROR,
-                {
-                    "reason": expected_stderr + "\n" + expected_stdout,
-                },
+
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+)
+@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
+class GetClusterStatusXmlTest(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+        self._xml_summary = etree_to_str(
+            etree.parse(rc("crm_mon.minimal.xml")).find("/summary")
+        )
+
+    def fixture_xml(self, transformed=False):
+        as_xml = "--as-xml" if transformed else "--output-as xml"
+        return f"""
+            <pacemaker-result api-version="2.3" request="crm_mon {as_xml}">
+              {self._xml_summary}
+              <nodes />
+              <resources />
+              <status code="0" message="OK" />
+            </pacemaker-result>
+        """
+
+    def fixture_xml_old(self):
+        return f"""
+            <crm_mon version="2.0.5">
+              {self._xml_summary}
+              <nodes />
+              <resources />
+            </crm_mon>
+        """
+
+    def place_call_old_format_help(self):
+        self.config.calls.place(
+            "local.crm_mon.help-all",
+            RunnerCall(
+                ["crm_mon", "--help-all"],
+                stdout="this version only supports --as-xml option",
             ),
         )
 
-        mock_runner.run.assert_called_once_with(self.crm_mon_cmd())
+    def place_call_old_format_xml(self, stdout="", stderr="", returncode=0):
+        self.config.calls.place(
+            "local.crm_mon.as-xml",
+            RunnerCall(
+                ["crm_mon", "--one-shot", "--inactive", "--as-xml"],
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode,
+            ),
+        )
+
+    def test_success(self):
+        self.config.runner.pcmk.load_state(stdout=self.fixture_xml())
+        env = self.env_assist.get_env()
+        assert_xml_equal(
+            self.fixture_xml(),
+            etree_to_str(lib.get_cluster_status_dom(env.cmd_runner())),
+        )
+
+    def test_error(self):
+        self.config.runner.pcmk.load_state(
+            stdout=fixture_crm_mon.error_xml(
+                1, "an error", ["This is an error message"]
+            ),
+            returncode=1,
+        )
+        env = self.env_assist.get_env()
+        assert_raise_library_error(
+            lambda: lib.get_cluster_status_dom(env.cmd_runner()),
+            fixture.error(
+                report_codes.CRM_MON_ERROR,
+                reason="an error\nThis is an error message",
+            ),
+        )
 
     def test_error_not_connected(self):
-        expected_stdout = '<crm_mon version="2.0.5"/>\n'
-        expected_stderr = (
-            "Not connected\n"
-            "Could not connect to the CIB: Transport endpoint is not connected\n"
-            "crm_mon: Error: cluster is not available on this node\n"
+        self.config.runner.pcmk.load_state(
+            stdout=fixture_crm_mon.error_xml_not_connected(),
+            returncode=_EXITCODE_NOT_CONNECTED,
         )
-        expected_retval = _EXITCODE_NOT_CONNECTED
-        mock_runner = get_runner(
-            expected_stdout, expected_stderr, expected_retval
-        )
-
+        env = self.env_assist.get_env()
         with self.assertRaises(lib.PacemakerNotConnectedException) as cm:
-            lib.get_cluster_status_xml(mock_runner)
+            lib.get_cluster_status_dom(env.cmd_runner())
         assert_report_item_list_equal(
             cm.exception.args,
             [
-                (
-                    Severity.ERROR,
+                fixture.error(
                     report_codes.CRM_MON_ERROR,
-                    {
-                        "reason": expected_stderr + expected_stdout.strip(),
-                    },
+                    reason=(
+                        "Not connected\n"
+                        "crm_mon: Error: cluster is not available on this node"
+                    ),
                 ),
             ],
         )
-        mock_runner.run.assert_called_once_with(self.crm_mon_cmd())
+
+    def test_error_not_xml(self):
+        self.config.runner.pcmk.load_state(
+            stdout="stdout text",
+            stderr="stderr text",
+            returncode=1,
+        )
+        env = self.env_assist.get_env()
+        assert_raise_library_error(
+            lambda: lib.get_cluster_status_dom(env.cmd_runner()),
+            fixture.error(
+                report_codes.CRM_MON_ERROR,
+                reason="stderr text\nstdout text",
+            ),
+        )
+
+    def test_invalid_xml(self):
+        self.config.runner.pcmk.load_state(stdout="this is not an xml")
+        env = self.env_assist.get_env()
+        assert_raise_library_error(
+            lambda: lib.get_cluster_status_dom(env.cmd_runner()),
+            fixture.error(report_codes.BAD_CLUSTER_STATE_FORMAT),
+        )
+
+    def test_xml_doesnt_match_rng(self):
+        self.config.runner.pcmk.load_state(stdout=self.fixture_xml_old())
+        env = self.env_assist.get_env()
+        assert_raise_library_error(
+            lambda: lib.get_cluster_status_dom(env.cmd_runner()),
+            fixture.error(report_codes.BAD_CLUSTER_STATE_FORMAT),
+        )
+
+    def test_success_old_format(self):
+        self.place_call_old_format_help()
+        self.place_call_old_format_xml(stdout=self.fixture_xml_old())
+        env = self.env_assist.get_env()
+        assert_xml_equal(
+            self.fixture_xml(transformed=True),
+            etree_to_str(lib.get_cluster_status_dom(env.cmd_runner())),
+        )
+
+    def test_error_old_format(self):
+        self.place_call_old_format_help()
+        self.place_call_old_format_xml(
+            stdout="stdout text",
+            stderr="stderr text",
+            returncode=1,
+        )
+        env = self.env_assist.get_env()
+        assert_raise_library_error(
+            lambda: lib.get_cluster_status_dom(env.cmd_runner()),
+            fixture.error(
+                report_codes.CRM_MON_ERROR,
+                reason="stderr text\nstdout text",
+            ),
+        )
+
+    def test_invalid_xml_old_format(self):
+        self.place_call_old_format_help()
+        self.place_call_old_format_xml(stdout="this is not an xml")
+        env = self.env_assist.get_env()
+        assert_raise_library_error(
+            lambda: lib.get_cluster_status_dom(env.cmd_runner()),
+            fixture.error(report_codes.BAD_CLUSTER_STATE_FORMAT),
+        )
+
+    def test_xml_doesnt_match_rng_old_format(self):
+        self.place_call_old_format_help()
+        self.place_call_old_format_xml(stdout=self.fixture_xml())
+        env = self.env_assist.get_env()
+        assert_raise_library_error(
+            lambda: lib.get_cluster_status_dom(env.cmd_runner()),
+            fixture.error(report_codes.BAD_CLUSTER_STATE_FORMAT),
+        )
 
 
 class GetClusterStatusText(TestCase):
@@ -269,7 +396,8 @@ class GetClusterStatusText(TestCase):
         )
 
 
-class GetCibXmlTest(LibraryPacemakerTest):
+class GetCibXmlTest(TestCase):
+    # pylint: disable=no-self-use
     def test_success(self):
         expected_stdout = "<xml />"
         expected_stderr = ""
@@ -281,7 +409,7 @@ class GetCibXmlTest(LibraryPacemakerTest):
         real_xml = lib.get_cib_xml(mock_runner)
 
         mock_runner.run.assert_called_once_with(
-            [self.path("cibadmin"), "--local", "--query"]
+            [path("cibadmin"), "--local", "--query"]
         )
         self.assertEqual(expected_stdout, real_xml)
 
@@ -305,7 +433,7 @@ class GetCibXmlTest(LibraryPacemakerTest):
         )
 
         mock_runner.run.assert_called_once_with(
-            [self.path("cibadmin"), "--local", "--query"]
+            [path("cibadmin"), "--local", "--query"]
         )
 
     def test_success_scope(self):
@@ -321,7 +449,7 @@ class GetCibXmlTest(LibraryPacemakerTest):
 
         mock_runner.run.assert_called_once_with(
             [
-                self.path("cibadmin"),
+                path("cibadmin"),
                 "--local",
                 "--query",
                 "--scope={0}".format(scope),
@@ -356,7 +484,7 @@ class GetCibXmlTest(LibraryPacemakerTest):
 
         mock_runner.run.assert_called_once_with(
             [
-                self.path("cibadmin"),
+                path("cibadmin"),
                 "--local",
                 "--query",
                 "--scope={0}".format(scope),
@@ -364,7 +492,8 @@ class GetCibXmlTest(LibraryPacemakerTest):
         )
 
 
-class GetCibTest(LibraryPacemakerTest):
+class GetCibTest(TestCase):
+    # pylint: disable=no-self-use
     def test_success(self):
         xml = "<xml />"
         assert_xml_equal(xml, str(XmlManipulation((lib.get_cib(xml)))))
@@ -384,12 +513,12 @@ class GetCibTest(LibraryPacemakerTest):
         xml_fromstring_mock.assert_called_once_with(xml)
 
 
-class Verify(LibraryPacemakerTest):
+class Verify(TestCase):
     def test_run_on_live_cib(self):
         runner = get_runner()
         self.assertEqual(lib.verify(runner), ("", "", 0, False))
         runner.run.assert_called_once_with(
-            [self.path("crm_verify"), "--live-check"],
+            [path("crm_verify"), "--live-check"],
         )
 
     def test_run_on_mocked_cib(self):
@@ -398,14 +527,14 @@ class Verify(LibraryPacemakerTest):
 
         self.assertEqual(lib.verify(runner), ("", "", 0, False))
         runner.run.assert_called_once_with(
-            [self.path("crm_verify"), "--xml-file", fake_tmp_file],
+            [path("crm_verify"), "--xml-file", fake_tmp_file],
         )
 
     def test_run_verbose(self):
         runner = get_runner()
         self.assertEqual(lib.verify(runner, verbose=True), ("", "", 0, False))
         runner.run.assert_called_once_with(
-            [self.path("crm_verify"), "-V", "-V", "--live-check"],
+            [path("crm_verify"), "-V", "-V", "--live-check"],
         )
 
     def test_run_verbose_on_mocked_cib(self):
@@ -414,7 +543,7 @@ class Verify(LibraryPacemakerTest):
 
         self.assertEqual(lib.verify(runner, verbose=True), ("", "", 0, False))
         runner.run.assert_called_once_with(
-            [self.path("crm_verify"), "-V", "-V", "--xml-file", fake_tmp_file],
+            [path("crm_verify"), "-V", "-V", "--xml-file", fake_tmp_file],
         )
 
     @staticmethod
@@ -477,7 +606,7 @@ class Verify(LibraryPacemakerTest):
                     lib.verify(runner, verbose=verbose),
                     ("", "".join(out_stderr), 78, can_be_more_verbose),
                 )
-                args = [self.path("crm_verify")]
+                args = [path("crm_verify")]
                 if verbose:
                     args.extend(["-V", "-V"])
                 args.extend(["--xml-file", fake_tmp_file])
@@ -506,7 +635,8 @@ class Verify(LibraryPacemakerTest):
         )
 
 
-class ReplaceCibConfigurationTest(LibraryPacemakerTest):
+class ReplaceCibConfigurationTest(TestCase):
+    # pylint: disable=no-self-use
     def test_success(self):
         xml = "<xml/>"
         expected_stdout = "expected output"
@@ -522,7 +652,7 @@ class ReplaceCibConfigurationTest(LibraryPacemakerTest):
 
         mock_runner.run.assert_called_once_with(
             [
-                self.path("cibadmin"),
+                path("cibadmin"),
                 "--replace",
                 "--verbose",
                 "--xml-pipe",
@@ -557,7 +687,7 @@ class ReplaceCibConfigurationTest(LibraryPacemakerTest):
 
         mock_runner.run.assert_called_once_with(
             [
-                self.path("cibadmin"),
+                path("cibadmin"),
                 "--replace",
                 "--verbose",
                 "--xml-pipe",
@@ -570,6 +700,7 @@ class ReplaceCibConfigurationTest(LibraryPacemakerTest):
 
 class UpgradeCibTest(TestCase):
     # pylint: disable=protected-access
+    # pylint: disable=no-self-use
     def test_success(self):
         mock_runner = get_runner("", "", 0)
         lib._upgrade_cib(mock_runner)
@@ -694,7 +825,8 @@ class EnsureCibVersionTest(TestCase):
 
 
 @mock.patch("pcs.lib.pacemaker.live.write_tmpfile")
-class SimulateCibXml(LibraryPacemakerTest):
+class SimulateCibXml(TestCase):
+    # pylint: disable=no-self-use
     def test_success(self, mock_write_tmpfile):
         tmpfile_new_cib = mock.MagicMock()
         tmpfile_new_cib.name = rc("new_cib.tmp")
@@ -718,7 +850,7 @@ class SimulateCibXml(LibraryPacemakerTest):
 
         mock_runner.run.assert_called_once_with(
             [
-                self.path("crm_simulate"),
+                path("crm_simulate"),
                 "--simulate",
                 "--save-output",
                 tmpfile_new_cib.name,
@@ -845,8 +977,8 @@ class SimulateCib(TestCase):
         )
         result = lib.simulate_cib(self.runner, self.cib)
         self.assertEqual(result[0], "some output")
-        self.assertEqual(etree_to_str(result[1]), self.transitions)
-        self.assertEqual(etree_to_str(result[2]), self.new_cib)
+        assert_xml_equal(self.transitions, etree_to_str(result[1]))
+        assert_xml_equal(self.new_cib, etree_to_str(result[2]))
         mock_simulate.assert_called_once_with(self.runner, self.cib_xml)
 
     def test_invalid_cib(self, mock_simulate):
@@ -938,14 +1070,24 @@ class GetLocalNodeName(TestCase):
         )
 
 
-@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+)
 class GetLocalNodeStatusTest(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
+        self.nodes_xml = """
+            <nodes>
+                <node id="1" name="name_1" />
+                <node id="2" name="name_2" />
+                <node id="3" name="name_3" />
+                <node id="4" name="name_4" />
+            </nodes>
+        """
 
     def test_offline_status(self):
         self.config.runner.pcmk.load_state(
-            stderr="error: Could not connect to cluster (is it running?)",
+            stdout=fixture_crm_mon.error_xml_not_connected(),
             returncode=_EXITCODE_NOT_CONNECTED,
         )
 
@@ -954,9 +1096,7 @@ class GetLocalNodeStatusTest(TestCase):
         self.assertEqual(dict(offline=True), real_status)
 
     def test_offline_node_name(self):
-        self.config.runner.pcmk.load_state(
-            nodes=[fixture.state_node(i, f"name_{i}") for i in range(1, 4)]
-        )
+        self.config.runner.pcmk.load_state(nodes=self.nodes_xml)
         self.config.runner.pcmk.local_node_name(
             stderr=(
                 "error: Could not connect to controller: Transport endpoint is "
@@ -984,25 +1124,18 @@ class GetLocalNodeStatusTest(TestCase):
         )
 
     def test_success(self):
-        (
-            self.config.runner.pcmk.load_state(
-                nodes=[fixture.state_node(i, f"name_{i}") for i in range(1, 4)]
-            ).runner.pcmk.local_node_name(node_name="name_2")
-        )
+        self.config.runner.pcmk.load_state(
+            nodes=self.nodes_xml
+        ).runner.pcmk.local_node_name(node_name="name_2")
 
         env = self.env_assist.get_env()
         real_status = lib.get_local_node_status(env.cmd_runner())
-        self.assertEqual(
-            dict(offline=False, **fixture.state_node("2", "name_2")),
-            real_status,
-        )
+        self.assertEqual("2", real_status.get("id"))
 
     def test_node_not_in_status(self):
-        (
-            self.config.runner.pcmk.load_state(
-                nodes=[fixture.state_node(i, f"name_{i}") for i in range(1, 4)]
-            ).runner.pcmk.local_node_name(node_name="name_X")
-        )
+        self.config.runner.pcmk.load_state(
+            nodes=self.nodes_xml
+        ).runner.pcmk.local_node_name(node_name="name_X")
 
         env = self.env_assist.get_env()
         self.env_assist.assert_raise_library_error(
@@ -1019,12 +1152,10 @@ class GetLocalNodeStatusTest(TestCase):
         )
 
     def test_error_getting_node_name(self):
-        (
-            self.config.runner.pcmk.load_state(
-                nodes=[fixture.state_node(i, f"name_{i}") for i in range(1, 4)]
-            ).runner.pcmk.local_node_name(
-                stdout="some info", stderr="some error", returncode=1
-            )
+        self.config.runner.pcmk.load_state(
+            nodes=self.nodes_xml
+        ).runner.pcmk.local_node_name(
+            stdout="some info", stderr="some error", returncode=1
         )
 
         env = self.env_assist.get_env()
@@ -1041,17 +1172,13 @@ class GetLocalNodeStatusTest(TestCase):
         )
 
 
-class RemoveNode(LibraryPacemakerTest):
+class RemoveNode(TestCase):
+    # pylint: disable=no-self-use
     def test_success(self):
         mock_runner = get_runner("", "", 0)
         lib.remove_node(mock_runner, "NODE_NAME")
         mock_runner.run.assert_called_once_with(
-            [
-                self.path("crm_node"),
-                "--force",
-                "--remove",
-                "NODE_NAME",
-            ]
+            [path("crm_node"), "--force", "--remove", "NODE_NAME"]
         )
 
     def test_error(self):
@@ -1117,7 +1244,6 @@ class ResourceCleanupTest(TestCase):
         self.config.runner.pcmk.resource_cleanup(
             stdout=self.stdout, stderr=self.stderr, node=self.node
         )
-
         env = self.env_assist.get_env()
         real_output = lib.resource_cleanup(env.cmd_runner(), node=self.node)
         self.assert_output(real_output)
@@ -1130,7 +1256,6 @@ class ResourceCleanupTest(TestCase):
             node=self.node,
             strict=True,
         )
-
         env = self.env_assist.get_env()
         real_output = lib.resource_cleanup(
             env.cmd_runner(),
@@ -1144,7 +1269,6 @@ class ResourceCleanupTest(TestCase):
         self.config.runner.pcmk.resource_cleanup(
             stdout=self.stdout, stderr=self.stderr, returncode=1
         )
-
         env = self.env_assist.get_env()
         self.env_assist.assert_raise_library_error(
             lambda: lib.resource_cleanup(env.cmd_runner()),
@@ -1160,197 +1284,149 @@ class ResourceCleanupTest(TestCase):
         )
 
 
-class ResourceRefreshTest(LibraryPacemakerTest):
-    def fixture_status_xml(self, nodes, resources):
-        xml_man = XmlManipulation.from_file(rc("crm_mon.minimal.xml"))
-        doc = xml_man.tree.getroottree()
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+)
+class ResourceRefreshTest(TestCase):
+    def setUp(self):
+        self.stdout = "expected output"
+        self.stderr = "expected stderr"
+        self.resource = "my_resource"
+        self.node = "my_node"
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
+    def assert_output(self, real_output):
+        self.assertEqual(self.stdout + "\n" + self.stderr, real_output)
+
+    @staticmethod
+    def fixture_status_xml(nodes, resources):
+        doc = etree.parse(rc("crm_mon.minimal.xml"))
         doc.find("/summary/nodes_configured").set("number", str(nodes))
         doc.find("/summary/resources_configured").set("number", str(resources))
-        return str(XmlManipulation(doc))
+        return etree_to_str(doc)
 
-    @mock.patch.object(
-        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
-    )
     def test_basic(self):
-        expected_stdout = "expected output"
-        expected_stderr = "expected stderr"
-        mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        call_list = [
-            mock.call(self.crm_mon_cmd()),
-            mock.call([self.path("crm_resource"), "--refresh"]),
-        ]
-        return_value_list = [
-            (self.fixture_status_xml(1, 1), "", 0),
-            (expected_stdout, expected_stderr, 0),
-        ]
-        mock_runner.run.side_effect = return_value_list
-
-        real_output = lib.resource_refresh(mock_runner)
-
-        self.assertEqual(len(return_value_list), len(call_list))
-        self.assertEqual(len(return_value_list), mock_runner.run.call_count)
-        mock_runner.run.assert_has_calls(call_list)
-        self.assertEqual(expected_stdout + "\n" + expected_stderr, real_output)
-
-    @mock.patch.object(
-        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
-    )
-    def test_threshold_exceeded(self):
-        mock_runner = get_runner(self.fixture_status_xml(1000, 1000), "", 0)
-
-        assert_raise_library_error(
-            lambda: lib.resource_refresh(mock_runner),
-            (
-                Severity.ERROR,
-                report_codes.RESOURCE_REFRESH_TOO_TIME_CONSUMING,
-                {"threshold": 100},
-                report_codes.FORCE_LOAD_THRESHOLD,
-            ),
+        self.config.runner.pcmk.load_state(stdout=self.fixture_status_xml(1, 1))
+        self.config.runner.pcmk.resource_refresh(
+            stdout=self.stdout, stderr=self.stderr
         )
+        env = self.env_assist.get_env()
+        real_output = lib.resource_refresh(env.cmd_runner())
+        self.assert_output(real_output)
 
-        mock_runner.run.assert_called_once_with(self.crm_mon_cmd())
+    def test_threshold_exceeded(self):
+        self.config.runner.pcmk.load_state(
+            stdout=self.fixture_status_xml(1000, 1000)
+        )
+        env = self.env_assist.get_env()
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.resource_refresh(env.cmd_runner()),
+            [
+                fixture.error(
+                    report_codes.RESOURCE_REFRESH_TOO_TIME_CONSUMING,
+                    force_code=report_codes.FORCE_LOAD_THRESHOLD,
+                    threshold=100,
+                )
+            ],
+            expected_in_processor=False,
+        )
 
     def test_threshold_exceeded_forced(self):
-        expected_stdout = "expected output"
-        expected_stderr = "expected stderr"
-        mock_runner = get_runner(expected_stdout, expected_stderr, 0)
-
-        real_output = lib.resource_refresh(mock_runner, force=True)
-
-        mock_runner.run.assert_called_once_with(
-            [self.path("crm_resource"), "--refresh"]
+        self.config.runner.pcmk.resource_refresh(
+            stdout=self.stdout, stderr=self.stderr
         )
-        self.assertEqual(expected_stdout + "\n" + expected_stderr, real_output)
+        env = self.env_assist.get_env()
+        real_output = lib.resource_refresh(env.cmd_runner(), force=True)
+        self.assert_output(real_output)
 
     def test_resource(self):
-        resource = "test_resource"
-        expected_stdout = "expected output"
-        expected_stderr = "expected stderr"
-        mock_runner = get_runner(expected_stdout, expected_stderr, 0)
-
-        real_output = lib.resource_refresh(mock_runner, resource=resource)
-
-        mock_runner.run.assert_called_once_with(
-            [self.path("crm_resource"), "--refresh", "--resource", resource]
+        self.config.runner.pcmk.resource_refresh(
+            stdout=self.stdout, stderr=self.stderr, resource=self.resource
         )
-        self.assertEqual(expected_stdout + "\n" + expected_stderr, real_output)
+        env = self.env_assist.get_env()
+        real_output = lib.resource_refresh(
+            env.cmd_runner(), resource=self.resource
+        )
+        self.assert_output(real_output)
 
     def test_resource_strict(self):
-        resource = "test_resource"
-        expected_stdout = "expected output"
-        expected_stderr = "expected stderr"
-        mock_runner = get_runner(expected_stdout, expected_stderr, 0)
-
+        self.config.runner.pcmk.resource_refresh(
+            stdout=self.stdout,
+            stderr=self.stderr,
+            resource=self.resource,
+            strict=True,
+        )
+        env = self.env_assist.get_env()
         real_output = lib.resource_refresh(
-            mock_runner, resource=resource, strict=True
+            env.cmd_runner(), resource=self.resource, strict=True
         )
-
-        mock_runner.run.assert_called_once_with(
-            [
-                self.path("crm_resource"),
-                "--refresh",
-                "--resource",
-                resource,
-                "--force",
-            ]
-        )
-        self.assertEqual(expected_stdout + "\n" + expected_stderr, real_output)
+        self.assert_output(real_output)
 
     def test_node(self):
-        node = "test_node"
-        expected_stdout = "expected output"
-        expected_stderr = "expected stderr"
-        mock_runner = get_runner(expected_stdout, expected_stderr, 0)
-
-        real_output = lib.resource_refresh(mock_runner, node=node)
-
-        mock_runner.run.assert_called_once_with(
-            [self.path("crm_resource"), "--refresh", "--node", node]
+        self.config.runner.pcmk.resource_refresh(
+            stdout=self.stdout, stderr=self.stderr, node=self.node
         )
-        self.assertEqual(expected_stdout + "\n" + expected_stderr, real_output)
+        env = self.env_assist.get_env()
+        real_output = lib.resource_refresh(env.cmd_runner(), node=self.node)
+        self.assert_output(real_output)
 
     def test_all_options(self):
-        node = "test_node"
-        resource = "test_resource"
-        expected_stdout = "expected output"
-        expected_stderr = "expected stderr"
-        mock_runner = get_runner(expected_stdout, expected_stderr, 0)
+        self.config.runner.pcmk.resource_refresh(
+            stdout=self.stdout,
+            stderr=self.stderr,
+            resource=self.resource,
+            node=self.node,
+            strict=True,
+        )
 
+        env = self.env_assist.get_env()
         real_output = lib.resource_refresh(
-            mock_runner, resource=resource, node=node, strict=True
+            env.cmd_runner(),
+            resource=self.resource,
+            node=self.node,
+            strict=True,
         )
-
-        mock_runner.run.assert_called_once_with(
-            [
-                self.path("crm_resource"),
-                "--refresh",
-                "--resource",
-                resource,
-                "--node",
-                node,
-                "--force",
-            ]
-        )
-        self.assertEqual(expected_stdout + "\n" + expected_stderr, real_output)
+        self.assert_output(real_output)
 
     def test_error_state(self):
-        expected_stdout = "some info"
-        expected_stderr = "some error"
-        expected_retval = 1
-        mock_runner = get_runner(
-            expected_stdout, expected_stderr, expected_retval
+        self.config.runner.pcmk.load_state(
+            stdout=self.stdout, stderr=self.stderr, returncode=1
+        )
+        env = self.env_assist.get_env()
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.resource_refresh(env.cmd_runner()),
+            [
+                fixture.error(
+                    report_codes.CRM_MON_ERROR,
+                    reason=(self.stderr + "\n" + self.stdout),
+                )
+            ],
+            expected_in_processor=False,
         )
 
-        assert_raise_library_error(
-            lambda: lib.resource_refresh(mock_runner),
-            (
-                Severity.ERROR,
-                report_codes.CRM_MON_ERROR,
-                {
-                    "reason": expected_stderr + "\n" + expected_stdout,
-                },
-            ),
-        )
-
-        mock_runner.run.assert_called_once_with(self.crm_mon_cmd())
-
-    @mock.patch.object(
-        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
-    )
     def test_error_refresh(self):
-        expected_stdout = "some info"
-        expected_stderr = "some error"
-        expected_retval = 1
-        mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        call_list = [
-            mock.call(self.crm_mon_cmd()),
-            mock.call([self.path("crm_resource"), "--refresh"]),
-        ]
-        return_value_list = [
-            (self.fixture_status_xml(1, 1), "", 0),
-            (expected_stdout, expected_stderr, expected_retval),
-        ]
-        mock_runner.run.side_effect = return_value_list
-
-        assert_raise_library_error(
-            lambda: lib.resource_refresh(mock_runner),
-            (
-                Severity.ERROR,
-                report_codes.RESOURCE_REFRESH_ERROR,
-                {
-                    "reason": expected_stderr + "\n" + expected_stdout,
-                    "resource": None,
-                    "node": None,
-                },
-            ),
+        self.config.runner.pcmk.load_state(stdout=self.fixture_status_xml(1, 1))
+        self.config.runner.pcmk.resource_refresh(
+            stdout=self.stdout, stderr=self.stderr, returncode=1
         )
 
-        self.assertEqual(len(return_value_list), len(call_list))
-        self.assertEqual(len(return_value_list), mock_runner.run.call_count)
-        mock_runner.run.assert_has_calls(call_list)
+        env = self.env_assist.get_env()
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.resource_refresh(env.cmd_runner()),
+            [
+                fixture.error(
+                    report_codes.RESOURCE_REFRESH_ERROR,
+                    reason=(self.stderr + "\n" + self.stdout),
+                    resource=None,
+                    node=None,
+                )
+            ],
+            expected_in_processor=False,
+        )
 
 
-class ResourcesWaitingTest(LibraryPacemakerTest):
+class ResourcesWaitingTest(TestCase):
+    # pylint: disable=no-self-use
     def test_wait_success(self):
         expected_stdout = "expected output"
         expected_stderr = "expected stderr"
@@ -1362,7 +1438,7 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
         self.assertEqual(None, lib.wait_for_idle(mock_runner))
 
         mock_runner.run.assert_called_once_with(
-            [self.path("crm_resource"), "--wait"]
+            [path("crm_resource"), "--wait"]
         )
 
     def test_wait_timeout_success(self):
@@ -1377,11 +1453,7 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
         self.assertEqual(None, lib.wait_for_idle(mock_runner, timeout))
 
         mock_runner.run.assert_called_once_with(
-            [
-                self.path("crm_resource"),
-                "--wait",
-                "--timeout={0}".format(timeout),
-            ]
+            [path("crm_resource"), "--wait", "--timeout={0}".format(timeout)]
         )
 
     def test_wait_error(self):
@@ -1404,7 +1476,7 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
         )
 
         mock_runner.run.assert_called_once_with(
-            [self.path("crm_resource"), "--wait"]
+            [path("crm_resource"), "--wait"]
         )
 
     def test_wait_error_timeout(self):
@@ -1427,7 +1499,7 @@ class ResourcesWaitingTest(LibraryPacemakerTest):
         )
 
         mock_runner.run.assert_called_once_with(
-            [self.path("crm_resource"), "--wait"]
+            [path("crm_resource"), "--wait"]
         )
 
 
@@ -1458,7 +1530,7 @@ class IsInPcmkToolHelp(TestCase):
         )
 
 
-class GetRulesInEffectStatus(LibraryPacemakerTest):
+class GetRulesInEffectStatus(TestCase):
     def test_success(self):
         test_data = [
             (1, CibRuleInEffectStatus.UNKNOWN),

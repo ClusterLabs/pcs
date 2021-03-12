@@ -36,6 +36,11 @@ EXTRA_DIST		= \
 			  resources/crm_mon_rng/crm_mon.rng \
 			  resources/crm_mon_rng/fence-event-2.0.rng \
 			  resources/fenced_metadata.xml \
+			  resources/pcmk_api_rng/api-result.rng \
+			  resources/pcmk_api_rng/crm_mon-2.4.rng \
+			  resources/pcmk_api_rng/fence-event-2.0.rng \
+			  resources/pcmk_api_rng/resources-2.4.rng \
+			  resources/pcmk_api_rng/status-2.0.rng \
 			  resources/qdevice-certs/final-certificate.pk12 \
 			  resources/qdevice-certs/qdevice-cert-request.crq \
 			  resources/qdevice-certs/qnetd-cacert.crt \
@@ -383,6 +388,7 @@ EXTRA_DIST		= \
 			  tools/command_env/tools.py \
 			  tools/custom_mock.py \
 			  tools/fixture_cib.py \
+			  tools/fixture_crm_mon.py \
 			  tools/fixture.py \
 			  tools/__init__.py \
 			  tools/integration_lib.py \

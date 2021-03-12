@@ -43,12 +43,11 @@ from pcs.lib.pacemaker.live import (
     ensure_cib_version,
     get_cib,
     get_cib_xml,
-    get_cluster_status_xml,
+    get_cluster_status_dom,
     push_cib_diff_xml,
     replace_cib_configuration,
     wait_for_idle,
 )
-from pcs.lib.pacemaker.state import get_cluster_state_dom
 from pcs.lib.pacemaker.values import get_valid_timeout_seconds
 from pcs.lib.tools import write_tmpfile
 from pcs.lib.xml_tools import etree_to_str
@@ -178,7 +177,7 @@ class LibraryEnvironment:
         return self.__loaded_cib_to_modify
 
     def get_cluster_state(self):
-        return get_cluster_state_dom(get_cluster_status_xml(self.cmd_runner()))
+        return get_cluster_status_dom(self.cmd_runner())
 
     def get_wait_timeout(self, wait):
         if wait is False:

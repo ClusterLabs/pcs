@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns="http://relaxng.org/ns/structure/1.0" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+  <start>
+    <element name="pacemaker-result">
+      <attribute name="api-version"> <text /> </attribute>
+      <attribute name="request"> <text /> </attribute>
+      <optional>
+        <choice>
+          <externalRef href="crm_mon-2.4.rng"/>
+        </choice>
+      </optional>
+      <externalRef href="status-2.0.rng"/>
+    </element>
+  </start>
+</grammar>

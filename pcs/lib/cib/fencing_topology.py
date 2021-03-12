@@ -1,10 +1,12 @@
 from typing import (
     Optional,
+    Sequence,
     Set,
     Tuple,
 )
 
 from lxml import etree
+from lxml.etree import _Element
 
 from pcs.common import reports
 from pcs.common.fencing_topology import (
@@ -23,18 +25,19 @@ from pcs.common.reports.item import ReportItem
 from pcs.lib.cib.stonith import is_stonith_resource
 from pcs.lib.cib.tools import find_unique_id
 from pcs.lib.errors import LibraryError
+from pcs.lib.pacemaker.state import _Element as StateElement
 from pcs.lib.pacemaker.values import sanitize_id, validate_id
 
 
 def add_level(
     reporter: ReportProcessor,
-    topology_el,
-    resources_el,
+    topology_el: _Element,
+    resources_el: _Element,
     level,
     target_type,
     target_value,
     devices,
-    cluster_status_nodes,
+    cluster_status_nodes: Sequence[StateElement],
     force_device=False,
     force_node=False,
 ):
@@ -92,7 +95,7 @@ def remove_all_levels(topology_el):
 
 
 def remove_levels_by_params(
-    topology_el,
+    topology_el: _Element,
     level=None,
     target_type=None,
     target_value=None,
@@ -205,22 +208,26 @@ def export(topology_el):
     return export_levels
 
 
-def verify(topology_el, resources_el, cluster_status_nodes) -> ReportItemList:
+def verify(
+    topology_el: _Element,
+    resources_el: _Element,
+    cluster_status_nodes: Sequence[StateElement],
+) -> ReportItemList:
     """
     Check if all cluster nodes and stonith devices used in fencing levels exist.
 
-    etree topology_el -- etree element with fencing levels to check
-    etree resources_el -- etree element with resources definitions
-    Iterable cluster_status_nodes -- list of status of existing cluster nodes
+    topology_el -- fencing levels to check
+    resources_el -- resources definitions
+    cluster_status_nodes -- list of status of existing cluster nodes
     """
     report_list: ReportItemList = []
-    used_nodes = set()
+    used_nodes: Set[str] = set()
     used_devices: Set[str] = set()
 
     for level_el in topology_el.iterfind("fencing-level"):
-        used_devices.update(level_el.get("devices").split(","))
+        used_devices.update(str(level_el.get("devices", "")).split(","))
         if "target" in level_el.attrib:
-            used_nodes.add(level_el.get("target"))
+            used_nodes.add(str(level_el.get("target", "")))
 
     if used_devices:
         report_list.extend(
@@ -257,7 +264,10 @@ def _validate_level(level) -> Tuple[ReportItemList, Optional[int]]:
 
 
 def _validate_target(
-    cluster_status_nodes, target_type, target_value, force_node=False
+    cluster_status_nodes: Sequence[StateElement],
+    target_type,
+    target_value,
+    force_node=False,
 ) -> ReportItemList:
     return _validate_target_typewise(target_type) + _validate_target_valuewise(
         cluster_status_nodes, target_type, target_value, force_node
@@ -283,7 +293,7 @@ def _validate_target_typewise(target_type) -> ReportItemList:
 
 
 def _validate_target_valuewise(
-    cluster_status_nodes,
+    cluster_status_nodes: Sequence[StateElement],
     target_type,
     target_value,
     force_node=False,
@@ -318,7 +328,7 @@ def _validate_target_valuewise(
 
 
 def _validate_devices(
-    resources_el, devices, force_device=False, allow_force=True
+    resources_el: _Element, devices, force_device=False, allow_force=True
 ) -> ReportItemList:
     report_list: ReportItemList = []
     if not devices:

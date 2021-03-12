@@ -260,10 +260,10 @@ class CibRunnerNodes(TestCase):
     @patch_env("cmd_runner", lambda self: "mocked cmd_runner")
     @patch_env("ensure_wait_satisfiable")
     @patch_command("ClusterState")
-    @patch_command("get_cluster_status_xml")
+    @patch_env("get_cluster_state")
     def test_wire_together_all_expected_dependecies(
         self,
-        get_cluster_status_xml,
+        get_cluster_state,
         cluster_state,
         ensure_wait_satisfiable,
         push_cib,
@@ -271,7 +271,7 @@ class CibRunnerNodes(TestCase):
         cluster_state.return_value = mock.MagicMock(
             node_section=mock.MagicMock(nodes="nodes")
         )
-        get_cluster_status_xml.return_value = "mock get_cluster_status_xml"
+        get_cluster_state.return_value = "mock get_cluster_state"
         wait = 10
 
         with lib.cib_runner_nodes(self.env, wait) as (cib, runner, nodes):
@@ -279,8 +279,8 @@ class CibRunnerNodes(TestCase):
             self.assertEqual(runner, "mocked cmd_runner")
             self.assertEqual(nodes, "nodes")
             ensure_wait_satisfiable.assert_called_once_with(wait)
-            get_cluster_status_xml.assert_called_once_with("mocked cmd_runner")
-            cluster_state.assert_called_once_with("mock get_cluster_status_xml")
+            get_cluster_state.assert_called_once_with()
+            cluster_state.assert_called_once_with("mock get_cluster_state")
 
         push_cib.assert_called_once_with(wait=wait)
 

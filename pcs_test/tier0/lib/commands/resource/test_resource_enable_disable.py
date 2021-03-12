@@ -599,7 +599,9 @@ def fixture_report_unmanaged(resource_id):
     )
 
 
-@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+)
 class DisablePrimitive(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -660,7 +662,9 @@ class DisablePrimitive(TestCase):
         self.env_assist.assert_reports([fixture_report_unmanaged("A")])
 
 
-@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+)
 class EnablePrimitive(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -719,7 +723,9 @@ class EnablePrimitive(TestCase):
         self.env_assist.assert_reports([fixture_report_unmanaged("A")])
 
 
-@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+)
 class MoreResources(TestCase):
     fixture_cib_enabled = """
         <resources>
@@ -879,7 +885,9 @@ class MoreResources(TestCase):
         )
 
 
-@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+)
 class Wait(TestCase):
     fixture_status_running = """
         <resources>
@@ -1104,7 +1112,9 @@ class Wait(TestCase):
         )
 
 
-@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+)
 class WaitClone(TestCase):
     fixture_status_running = """
         <resources>
@@ -1191,7 +1201,9 @@ class WaitClone(TestCase):
         )
 
 
-@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+)
 class DisableGroup(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -1240,7 +1252,9 @@ class DisableGroup(TestCase):
         )
 
 
-@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+)
 class EnableGroup(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -1324,7 +1338,9 @@ class EnableGroup(TestCase):
         )
 
 
-@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+)
 class DisableClone(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -1373,7 +1389,9 @@ class DisableClone(TestCase):
         )
 
 
-@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+)
 class EnableClone(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -1455,7 +1473,9 @@ class EnableClone(TestCase):
         )
 
 
-@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+)
 class DisableMaster(TestCase):
     # same as clone, minimum tests in here
     def setUp(self):
@@ -1477,7 +1497,9 @@ class DisableMaster(TestCase):
         resource.disable(self.env_assist.get_env(), ["A-master"], False)
 
 
-@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+)
 class EnableMaster(TestCase):
     # same as clone, minimum tests in here
     def setUp(self):
@@ -1526,7 +1548,9 @@ class EnableMaster(TestCase):
         resource.enable(self.env_assist.get_env(), ["A-master"], False)
 
 
-@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+)
 class DisableClonedGroup(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -1619,7 +1643,9 @@ class DisableClonedGroup(TestCase):
         )
 
 
-@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+)
 class EnableClonedGroup(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -1768,7 +1794,9 @@ class EnableClonedGroup(TestCase):
         )
 
 
-@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+)
 class DisableBundle(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -1816,7 +1844,9 @@ class DisableBundle(TestCase):
         )
 
 
-@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+)
 class EnableBundle(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -2093,7 +2123,9 @@ class DisableSafeFixturesMixin:
 
 
 @mock.patch("pcs.lib.pacemaker.live.write_tmpfile")
-@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+)
 class DisableSimulate(DisableSafeFixturesMixin, TestCase):
     def test_not_live(self, mock_write_tmpfile):
         mock_write_tmpfile.side_effect = [
@@ -2723,7 +2755,9 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
 
 
 @mock.patch("pcs.lib.pacemaker.live.write_tmpfile")
-@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+)
 class DisableSafe(DisableSafeMixin, TestCase):
     strict = False
 
@@ -2776,7 +2810,9 @@ class DisableSafe(DisableSafeMixin, TestCase):
 
 
 @mock.patch("pcs.lib.pacemaker.live.write_tmpfile")
-@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+)
 class DisableSafeStrict(DisableSafeMixin, TestCase):
     strict = True
 
@@ -2846,7 +2882,9 @@ class DisableSafeStrict(DisableSafeMixin, TestCase):
         )
 
 
-@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+)
 class DisableTags(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -2865,7 +2903,9 @@ class DisableTags(TestCase):
         resource.disable(self.env_assist.get_env(), ["T"], False)
 
 
-@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+)
 class EnableTags(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)

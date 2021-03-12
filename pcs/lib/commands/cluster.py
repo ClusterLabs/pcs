@@ -89,7 +89,6 @@ from pcs.lib.pacemaker.live import (
     get_cib,
     get_cib_xml,
     get_cib_xml_cmd_results,
-    get_cluster_status_xml,
     remove_node,
     verify as verify_cmd,
 )
@@ -175,7 +174,7 @@ def verify(env: LibraryEnvironment, verbose=False):
         fencing_topology.verify(
             get_fencing_topology(cib),
             get_resources(cib),
-            ClusterState(get_cluster_status_xml(runner)).node_section.nodes,
+            ClusterState(env.get_cluster_state()).node_section.nodes,
         )
     )
     if env.report_processor.has_errors:

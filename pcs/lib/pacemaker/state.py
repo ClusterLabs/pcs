@@ -2,17 +2,13 @@
 The intention is put there knowledge about cluster state structure.
 Hide information about underlaying xml is desired too.
 """
-import os.path
 from collections import defaultdict
 from typing import Dict, Any
 
 from lxml import etree
 
-from pcs import settings
 from pcs.common import reports
-from pcs.common.tools import xml_fromstring
 from pcs.common.reports.item import ReportItem
-from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import (
     is_false,
     is_true,
@@ -90,7 +86,7 @@ class _Element:
     # Note: not properly typed
     sections: Dict[Any, Any] = {}
 
-    def __init__(self, dom_part):
+    def __init__(self, dom_part: etree._Element):
         self.dom_part = dom_part
         self.attrs = _Attrs(
             self.__class__.__name__, self.dom_part.attrib, self.required_attrs
@@ -149,31 +145,11 @@ class _NodeSection(_Element):
     }
 
 
-def _validate_cluster_state_dom(dom):
-    if os.path.isfile(settings.crm_mon_schema):
-        etree.RelaxNG(file=settings.crm_mon_schema).assertValid(dom)
-
-
-def get_cluster_state_dom(xml):
-    try:
-        dom = xml_fromstring(xml)
-        _validate_cluster_state_dom(dom)
-        return dom
-    except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
-        raise LibraryError(
-            ReportItem.error(reports.messages.BadClusterStateFormat())
-        ) from e
-
-
 class ClusterState(_Element):
     sections = {
         "summary": ("summary", _SummarySection),
         "node_section": ("nodes", _NodeSection),
     }
-
-    def __init__(self, xml):
-        self.dom = get_cluster_state_dom(xml)
-        super().__init__(self.dom)
 
 
 def _id_xpath_predicate(resource_id):

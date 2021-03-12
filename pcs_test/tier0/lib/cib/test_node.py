@@ -1,6 +1,7 @@
 from unittest import mock, TestCase
 from lxml import etree
 
+from pcs_test.tools import fixture_crm_mon
 from pcs_test.tools.assertions import (
     assert_raise_library_error,
     assert_xml_equal,
@@ -209,39 +210,18 @@ class EnsureNodeExists(TestCase):
 
     @staticmethod
     def fixture_state():
+        with open(rc("crm_mon.minimal.xml")) as crm_mon_file:
+            crm_mon_xml = crm_mon_file.read()
         return ClusterState(
-            """
-            <crm_mon version="2.0.5">
-                <summary>
-                    <stack type="corosync" />
-                    <current_dc present="true" />
-                    <last_update time="Wed Nov  6 13:45:41 2019" />
-                    <last_change time="Wed Nov  6 10:42:54 2019"
-                        user="hacluster" client="crmd" origin="node1"
-                    />
-                    <nodes_configured number="2" />
-                    <resources_configured number="0" disabled="0" blocked="0" />
-                    <cluster_options stonith-enabled="true"
-                        symmetric-cluster="true" no-quorum-policy="stop"
-                        maintenance-mode="false" stop-all-resources="false"
-                    />
-                </summary>
+            fixture_crm_mon.complete_state(
+                crm_mon_xml,
+                nodes_xml="""
                 <nodes>
-                    <node name="name-test1" id="1" online="true" standby="false"
-                        standby_onfail="false" maintenance="false"
-                        pending="false" unclean="false" shutdown="false"
-                        expected_up="true" is_dc="true" resources_running="0"
-                        type="member"
-                    />
-                    <node name="name-test2" id="2" online="true" standby="false"
-                        standby_onfail="false" maintenance="false"
-                        pending="false" unclean="false" shutdown="false"
-                        expected_up="true" is_dc="false" resources_running="0"
-                        type="member"
-                    />
+                    <node name="name-test1" id="1" is_dc="true" />
+                    <node name="name-test2" id="2" />
                 </nodes>
-            </crm_mon>
-        """
+            """,
+            )
         ).node_section.nodes
 
     def test_node_already_exists(self):
@@ -262,7 +242,9 @@ class EnsureNodeExists(TestCase):
         )
 
     @mock.patch.object(
-        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+        settings,
+        "pacemaker_api_result_schema",
+        rc("pcmk_api_rng/api-result.rng"),
     )
     def test_node_missing_not_in_state(self):
         assert_raise_library_error(
@@ -278,7 +260,9 @@ class EnsureNodeExists(TestCase):
         )
 
     @mock.patch.object(
-        settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng")
+        settings,
+        "pacemaker_api_result_schema",
+        rc("pcmk_api_rng/api-result.rng"),
     )
     def test_node_missing_and_gets_created(self):
         assert_xml_equal(

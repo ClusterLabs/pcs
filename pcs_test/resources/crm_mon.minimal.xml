@@ -1,4 +1,4 @@
-<crm_mon version="2.0.5">
+<pacemaker-result api-version="2.3" request="crm_mon --output-as xml">
   <summary>
     <stack type="corosync" />
     <current_dc present="false" />
@@ -8,6 +8,7 @@
     <resources_configured number="0" disabled="0" blocked="0" />
     <cluster_options stonith-enabled="true" symmetric-cluster="true" no-quorum-policy="stop" maintenance-mode="false" stop-all-resources="false" />
   </summary>
-  <nodes>
-  </nodes>
-</crm_mon>
+  <nodes />
+  <resources />
+  <status code="0" message="OK" />
+</pacemaker-result>

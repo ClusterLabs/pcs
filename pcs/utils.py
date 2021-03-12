@@ -68,6 +68,7 @@ from pcs.lib.external import (
 )
 from pcs.lib.file.instance import FileInstance as LibFileInstance
 from pcs.lib.interface.config import ParserErrorException
+from pcs.lib.pacemaker.live import get_cluster_status_dom
 from pcs.lib.pacemaker.state import ClusterState
 from pcs.lib.pacemaker.values import (
     is_boolean,
@@ -693,7 +694,9 @@ def getNodeAttributesFromPacemaker():
     try:
         return [
             node.attrs
-            for node in ClusterState(getClusterStateXml()).node_section.nodes
+            for node in ClusterState(
+                get_cluster_status_dom(cmd_runner())
+            ).node_section.nodes
         ]
     except LibraryError as e:
         return process_library_reports(e.args)
@@ -1990,27 +1993,24 @@ def get_terminal_password(message="Password: "):
 
 
 # Returns an xml dom containing the current status of the cluster
-# DEPRECATED, please use ClusterState(getClusterStateXml()) instead
+# DEPRECATED, please use
+# ClusterState(lib.pacemaker.live.get_cluster_status_dom()) instead
 def getClusterState():
     """
     Commandline options:
       * -f - CIB file
     """
-    return parseString(getClusterStateXml())
-
-
-# DEPRECATED, please use lib.pacemaker.live.get_cluster_status_xml in new code
-def getClusterStateXml():
-    """
-    Commandline options:
-      * -f - CIB file
-    """
+    output, returncode = run(["crm_mon", "--help-all"])
+    format_option = (
+        "--output-as=xml" if "--output-as=" in output else "--as-xml"
+    )
     xml_string, returncode = run(
-        ["crm_mon", "--one-shot", "--as-xml", "--inactive"], ignore_stderr=True
+        ["crm_mon", "--one-shot", format_option, "--inactive"],
+        ignore_stderr=True,
     )
     if returncode != 0:
         err("error running crm_mon, is pacemaker running?")
-    return xml_string
+    return parseString(xml_string)
 
 
 # DEPRECATED

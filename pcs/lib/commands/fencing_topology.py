@@ -12,7 +12,6 @@ from pcs.lib.cib.tools import (
 )
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
-from pcs.lib.pacemaker.live import get_cluster_status_xml
 from pcs.lib.pacemaker.state import ClusterState
 
 
@@ -51,9 +50,7 @@ def add_level(
         target_type,
         target_value,
         devices,
-        ClusterState(
-            get_cluster_status_xml(lib_env.cmd_runner())
-        ).node_section.nodes,
+        ClusterState(lib_env.get_cluster_state()).node_section.nodes,
         force_device,
         force_node,
     )
@@ -177,9 +174,7 @@ def verify(lib_env: LibraryEnvironment):
         cib_fencing_topology.verify(
             get_fencing_topology(cib),
             get_resources(cib),
-            ClusterState(
-                get_cluster_status_xml(lib_env.cmd_runner())
-            ).node_section.nodes,
+            ClusterState(lib_env.get_cluster_state()).node_section.nodes,
         )
     )
     if lib_env.report_processor.has_errors:

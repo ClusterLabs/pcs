@@ -92,6 +92,7 @@ EXTRA_DIST		= \
 			  common/interface/dto.py \
 			  common/interface/__init__.py \
 			  common/node_communicator.py \
+			  common/pacemaker/api_result.py \
 			  common/pacemaker/__init__.py \
 			  common/pacemaker/nvset.py \
 			  common/pacemaker/resource/__init__.py \

@@ -8,7 +8,7 @@ module ClusterEntity
       return {}
     end
     status = {}
-    crm_dom.elements.each('/crm_mon/resources//resource') { |e|
+    crm_dom.elements.each('/crm_mon/resources//resource | /pacemaker-result/resources//resource') { |e|
       rsc_id = e.attributes['id'].split(':')[0]
       status[rsc_id] ||= []
       status[rsc_id] << ClusterEntity::CRMResourceStatus.new(e)
@@ -816,7 +816,7 @@ module ClusterEntity
         end
 
         if crm_dom
-          status = crm_dom.elements["/crm_mon/resources//clone[@id='#{@id}']"]
+          status = crm_dom.elements["/crm_mon/resources//clone[@id='#{@id}'] | /pacemaker-result/resources//clone[@id='#{@id}']"]
           if status
             @unique = status.attributes['unique'] == 'true'
             @managed = status.attributes['managed'] == 'true'
@@ -937,7 +937,7 @@ module ClusterEntity
         end
         update_status
         if crm_dom
-          status = crm_dom.elements["/crm_mon/resources//clone[@id='#{@id}']"]
+          status = crm_dom.elements["/crm_mon/resources//clone[@id='#{@id}'] | /pacemaker-result/resources//clone[@id='#{@id}']"]
           if status
             @unique = status.attributes['unique'] == 'true'
             @managed = status.attributes['managed'] == 'true'

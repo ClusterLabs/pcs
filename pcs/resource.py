@@ -62,10 +62,8 @@ from pcs.lib.commands.resource import (
 )
 from pcs.lib.errors import LibraryError
 import pcs.lib.pacemaker.live as lib_pacemaker
-from pcs.lib.pacemaker.state import (
-    get_cluster_state_dom,
-    get_resource_state,
-)
+from pcs.lib.pacemaker.state import get_resource_state
+
 from pcs.lib.pacemaker.values import validate_id, timeout_to_seconds
 import pcs.lib.resource_agent as lib_ra
 
@@ -1722,9 +1720,7 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
 
     def is_bundle_running(bundle_id):
         roles_with_nodes = get_resource_state(
-            get_cluster_state_dom(
-                lib_pacemaker.get_cluster_status_xml(utils.cmd_runner())
-            ),
+            lib_pacemaker.get_cluster_status_dom(utils.cmd_runner()),
             bundle_id,
         )
         return bool(roles_with_nodes)
