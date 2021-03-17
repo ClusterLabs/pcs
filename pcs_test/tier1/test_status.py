@@ -217,10 +217,16 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
 
 
 class ResourceStonithStatusBase(AssertPcsMixin):
+    # pylint: disable=too-many-public-methods
     command = None
     no_resources_msg = None
     all_resources_output = None
+    active_resources_output = None
+    active_resources_output_node = None
+    node_output = None
     cib_file = rc("cib-tags.xml")
+    corosync_conf = rc("corosync.conf")
+    no_active_resources_msg = "No active resources\n"
 
     def setUp(self):
         # pylint: disable=invalid-name
@@ -244,16 +250,109 @@ class ResourceStonithStatusBase(AssertPcsMixin):
             stdout_full="Error: resource or tag id 'nonexistent' not found\n",
         )
 
+    def test_missing_node_value(self):
+        self.assert_pcs_fail(
+            self.command + ["node="],
+            stdout_full="Error: missing value of 'node' option\n",
+        )
+
+    def test_missing_node_key(self):
+        self.assert_pcs_fail(
+            self.command + ["=node"],
+            stdout_full="Error: missing key in '=node' option\n",
+        )
+
+    def test_more_node_options(self):
+        self.assert_pcs_fail(
+            self.command + ["node=rh-1", "node=rh-2"],
+            stdout_full=(
+                "Error: duplicate option 'node' with different values 'rh-1' "
+                "and 'rh-2'\n"
+            ),
+        )
+
+    def test_more_no_node_option(self):
+        self.assert_pcs_fail(
+            self.command + ["r1", "r2"],
+            stdout_full="Error: missing value of 'r2' option\n",
+        )
+
     def test_resource_id(self):
         self.assert_pcs_success(
             self.command + ["x1"],
-            stdout_full="  * x1	(ocf::pacemaker:Dummy):	 Stopped\n",
+            stdout_full="  * x1	(ocf::pacemaker:Dummy):	 Started rh-1\n",
+        )
+
+    def test_resource_id_hide_inactive(self):
+        self.assert_pcs_success(
+            self.command + ["x2", "--hide-inactive"],
+            stdout_full=self.no_active_resources_msg,
+        )
+
+    def test_resource_id_with_node_hide_inactive(self):
+        self.assert_pcs_success(
+            self.command + ["x2", "node=rh-1", "--hide-inactive"],
+            stdout_full=self.no_active_resources_msg,
+        )
+
+    def test_resource_id_with_node_started(self):
+        self.assert_pcs_success(
+            self.command + ["x1", "node=rh-1"],
+            stdout_full="  * x1	(ocf::pacemaker:Dummy):	 Started rh-1\n",
+        )
+
+    def test_resource_id_with_node_stopped(self):
+        self.assert_pcs_success(
+            self.command + ["x2", "node=rh-1"],
+            stdout_full="  * x2	(ocf::pacemaker:Dummy):	 Stopped\n",
+        )
+
+    def test_resource_id_with_node_without_status(self):
+        self.assert_pcs_success(
+            self.command + ["x1", "node=rh-2"],
+            stdout_full=self.no_active_resources_msg,
+        )
+
+    def test_resource_id_with_node_changed_arg_order(self):
+        self.assert_pcs_success(
+            self.command + ["node=rh-1", "x1"],
+            stdout_full="  * x1	(ocf::pacemaker:Dummy):	 Started rh-1\n",
         )
 
     def test_stonith_id(self):
         self.assert_pcs_success(
             self.command + ["fence-rh-1"],
-            stdout_full="  * fence-rh-1	(stonith:fence_xvm):	 Stopped\n",
+            stdout_full="  * fence-rh-1	(stonith:fence_xvm):	 Started rh-1\n",
+        )
+
+    def test_stonith_id_hide_inactive(self):
+        self.assert_pcs_success(
+            self.command + ["fence-rh-2", "--hide-inactive"],
+            stdout_full=self.no_active_resources_msg,
+        )
+
+    def test_stonith_id_with_node_hide_inactive(self):
+        self.assert_pcs_success(
+            self.command + ["fence-rh-2", "node=rh-2", "--hide-inactive"],
+            stdout_full=self.no_active_resources_msg,
+        )
+
+    def test_stonith_id_with_node_started(self):
+        self.assert_pcs_success(
+            self.command + ["fence-rh-1", "node=rh-1"],
+            stdout_full="  * fence-rh-1	(stonith:fence_xvm):	 Started rh-1\n",
+        )
+
+    def test_stonith_id_with_node_stopped(self):
+        self.assert_pcs_success(
+            self.command + ["fence-rh-2", "node=rh-2"],
+            stdout_full="  * fence-rh-2	(stonith:fence_xvm):	 Stopped\n",
+        )
+
+    def test_stonith_id_with_node_without_status(self):
+        self.assert_pcs_success(
+            self.command + ["fence-rh-1", "node=rh-2"],
+            stdout_full=self.no_active_resources_msg,
         )
 
     def test_tag_id(self):
@@ -261,10 +360,49 @@ class ResourceStonithStatusBase(AssertPcsMixin):
             self.command + ["tag-mixed-stonith-devices-and-resources"],
             stdout_full=outdent(
                 """\
-                  * fence-rh-1	(stonith:fence_xvm):	 Stopped
+                  * fence-rh-1	(stonith:fence_xvm):	 Started rh-1
                   * fence-rh-2	(stonith:fence_xvm):	 Stopped
                   * x3	(ocf::pacemaker:Dummy):	 Stopped
                   * y1	(ocf::pacemaker:Dummy):	 Stopped
+                """
+            ),
+        )
+
+    def test_tag_id_hide_inactive(self):
+        self.assert_pcs_success(
+            self.command
+            + ["tag-mixed-stonith-devices-and-resources", "--hide-inactive"],
+            stdout_full=outdent(
+                """\
+                  * fence-rh-1	(stonith:fence_xvm):	 Started rh-1
+                """
+            ),
+        )
+
+    def test_tag_id_with_node(self):
+        self.assert_pcs_success(
+            self.command
+            + ["tag-mixed-stonith-devices-and-resources", "node=rh-2"],
+            stdout_full=outdent(
+                """\
+                  * fence-rh-2	(stonith:fence_xvm):	 Stopped
+                  * x3	(ocf::pacemaker:Dummy):	 Stopped
+                  * y1	(ocf::pacemaker:Dummy):	 Stopped
+                """
+            ),
+        )
+
+    def test_tag_id_with_node_hide_inactive(self):
+        self.assert_pcs_success(
+            self.command
+            + [
+                "tag-mixed-stonith-devices-and-resources",
+                "node=rh-1",
+                "--hide-inactive",
+            ],
+            stdout_full=outdent(
+                """\
+                  * fence-rh-1	(stonith:fence_xvm):	 Started rh-1
                 """
             ),
         )
@@ -274,19 +412,70 @@ class ResourceStonithStatusBase(AssertPcsMixin):
             self.command, stdout_full=self.all_resources_output
         )
 
+    def test_resource_status_without_id_hide_inactive(self):
+        self.assert_pcs_success(
+            self.command + ["--hide-inactive"],
+            stdout_full=self.active_resources_output,
+        )
+
+    def test_resource_status_without_id_with_node(self):
+        self.assert_pcs_success(
+            self.command + ["node=rh-1"], stdout_full=self.node_output
+        )
+
+    def test_resource_status_without_id_with_node_hide_inactive(self):
+        self.assert_pcs_success(
+            self.command + ["node=rh-1", "--hide-inactive"],
+            stdout_full=self.active_resources_output_node,
+        )
+
     def test_resource_status_without_id_default_command(self):
         self.assert_pcs_success(
             self.command[:-1], stdout_full=self.all_resources_output
+        )
+
+    def test_resource_status_without_id_default_command_hide_inactive(self):
+        self.assert_pcs_success(
+            self.command[:-1] + ["--hide-inactive"],
+            stdout_full=self.active_resources_output,
         )
 
     def test_status_no_resources(self):
         write_file_to_tmpfile(rc("cib-empty.xml"), self.temp_cib)
         self.assert_pcs_success(self.command, stdout_full=self.no_resources_msg)
 
+    def test_status_no_resources_hide_inactive(self):
+        write_file_to_tmpfile(rc("cib-empty.xml"), self.temp_cib)
+        self.assert_pcs_success(
+            self.command + ["--hide-inactive"],
+            stdout_full=self.no_active_resources_msg,
+        )
+
+    def test_status_no_resources_with_node(self):
+        write_file_to_tmpfile(rc("cib-empty.xml"), self.temp_cib)
+        self.assert_pcs_success(
+            self.command + ["node=rh-1"],
+            stdout_full=self.no_active_resources_msg,
+        )
+
+    def test_status_no_resources_with_node_hide_inactive(self):
+        write_file_to_tmpfile(rc("cib-empty.xml"), self.temp_cib)
+        self.assert_pcs_success(
+            self.command + ["node=rh-1", "--hide-inactive"],
+            stdout_full=self.no_active_resources_msg,
+        )
+
     def test_status_no_resources_default_command(self):
         write_file_to_tmpfile(rc("cib-empty.xml"), self.temp_cib)
         self.assert_pcs_success(
             self.command[:-1], stdout_full=self.no_resources_msg
+        )
+
+    def test_status_no_resources_default_command_hide_inactive(self):
+        write_file_to_tmpfile(rc("cib-empty.xml"), self.temp_cib)
+        self.assert_pcs_success(
+            self.command[:-1] + ["--hide-inactive"],
+            stdout_full=self.no_active_resources_msg,
         )
 
 
@@ -295,7 +484,7 @@ class StonithStatus(ResourceStonithStatusBase, TestCase):
     no_resources_msg = "NO stonith devices configured\n"
     all_resources_output = outdent(
         """\
-          * fence-rh-1	(stonith:fence_xvm):	 Stopped
+          * fence-rh-1	(stonith:fence_xvm):	 Started rh-1
           * fence-rh-2	(stonith:fence_xvm):	 Stopped
           * fence-kdump	(stonith:fence_kdump):	 Stopped
          Target: rh-1
@@ -306,34 +495,108 @@ class StonithStatus(ResourceStonithStatusBase, TestCase):
            Level 2 - fence-rh-2
         """
     )
+    active_resources_output = outdent(
+        """\
+          * fence-rh-1	(stonith:fence_xvm):	 Started rh-1
+         Target: rh-1
+           Level 1 - fence-kdump
+           Level 2 - fence-rh-1
+         Target: rh-2
+           Level 1 - fence-kdump
+           Level 2 - fence-rh-2
+        """
+    )
+    active_resources_output_node = outdent(
+        """\
+          * fence-rh-1	(stonith:fence_xvm):	 Started rh-1
+        """
+    )
+    node_output = outdent(
+        """\
+          * fence-rh-1	(stonith:fence_xvm):	 Started rh-1
+          * fence-rh-2	(stonith:fence_xvm):	 Stopped
+          * fence-kdump	(stonith:fence_kdump):	 Stopped
+        """
+    )
 
 
-FIXTURE_RESOURCES_STATUS_OUTPUT = outdent(
-    """\
-      * not-in-tags	(ocf::pacemaker:Dummy):	 Stopped
-      * x1	(ocf::pacemaker:Dummy):	 Stopped
-      * x2	(ocf::pacemaker:Dummy):	 Stopped
-      * x3	(ocf::pacemaker:Dummy):	 Stopped
-      * y1	(ocf::pacemaker:Dummy):	 Stopped
-      * Clone Set: y2-clone [y2]:
-        * Stopped: [ rh-1 rh-2 ]
-    """
-)
+def fixture_resources_status_output(nodes="rh-1 rh-2", inactive=True):
+    if not inactive:
+        return outdent(
+            """\
+              * x1	(ocf::pacemaker:Dummy):	 Started rh-1
+            """
+        )
+    return outdent(
+        f"""\
+          * not-in-tags	(ocf::pacemaker:Dummy):	 Stopped
+          * x1	(ocf::pacemaker:Dummy):	 Started rh-1
+          * x2	(ocf::pacemaker:Dummy):	 Stopped
+          * x3	(ocf::pacemaker:Dummy):	 Stopped
+          * y1	(ocf::pacemaker:Dummy):	 Stopped
+          * Clone Set: y2-clone [y2]:
+            * Stopped: [ {nodes} ]
+        """
+    )
 
 
 class ResourceStatus(ResourceStonithStatusBase, TestCase):
     command = ["resource", "status"]
     no_resources_msg = "NO resources configured\n"
-    all_resources_output = FIXTURE_RESOURCES_STATUS_OUTPUT
+    all_resources_output = fixture_resources_status_output()
+    active_resources_output = fixture_resources_status_output(inactive=False)
+    active_resources_output_node = active_resources_output
+    node_output = fixture_resources_status_output(nodes="rh-1")
 
 
 class StatusResources(ResourceStonithStatusBase, TestCase):
     command = ["status", "resources"]
     no_resources_msg = "NO resources configured\n"
-    all_resources_output = FIXTURE_RESOURCES_STATUS_OUTPUT
+    all_resources_output = fixture_resources_status_output()
+    active_resources_output = fixture_resources_status_output(inactive=False)
+    active_resources_output_node = active_resources_output
+    node_output = fixture_resources_status_output(nodes="rh-1")
+    no_resources_status = outdent(
+        """\
+        Cluster name: test99
+
+        WARNINGS:
+        No stonith devices and stonith-enabled is not false
+
+        Cluster Summary:
+          * Stack: unknown
+          * Current DC: NONE
+        """
+    )
+    resources_status = outdent(
+        """\
+        Cluster name: test99
+        Cluster Summary:
+          * Stack: unknown
+          * Current DC: rh-2 (version unknown) - partition WITHOUT quorum
+        """
+    )
 
     def test_resource_status_without_id_default_command(self):
-        pass
+        self.pcs_runner.corosync_conf_opt = self.corosync_conf
+        self.assert_pcs_success(["status"], stdout_start=self.resources_status)
 
     def test_status_no_resources_default_command(self):
-        pass
+        self.pcs_runner.corosync_conf_opt = self.corosync_conf
+        write_file_to_tmpfile(rc("cib-empty.xml"), self.temp_cib)
+        self.assert_pcs_success(
+            ["status"], stdout_start=self.no_resources_status
+        )
+
+    def test_resource_status_without_id_default_command_hide_inactive(self):
+        self.pcs_runner.corosync_conf_opt = self.corosync_conf
+        self.assert_pcs_success(
+            ["status", "--hide-inactive"], stdout_start=self.resources_status
+        )
+
+    def test_status_no_resources_default_command_hide_inactive(self):
+        self.pcs_runner.corosync_conf_opt = self.corosync_conf
+        write_file_to_tmpfile(rc("cib-empty.xml"), self.temp_cib)
+        self.assert_pcs_success(
+            ["status", "--hide-inactive"], stdout_start=self.no_resources_status
+        )

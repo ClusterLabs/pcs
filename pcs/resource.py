@@ -2229,23 +2229,39 @@ def resource_status(lib, argv, modifiers, stonith=False):
     """
     del lib
     modifiers.ensure_only_supported("-f", "--hide-inactive")
-    if len(argv) > 1:
+    if len(argv) > 2:
         raise CmdLineInputError()
 
     monitor_command = ["crm_mon", "--one-shot"]
     if not modifiers.get("--hide-inactive"):
         monitor_command.append("--inactive")
+
+    resource_or_tag_id = None
+    node = None
+    crm_mon_err_msg = "unable to get cluster status from crm_mon\n"
     if argv:
-        resource_or_tag_id = argv[0]
-        crm_mon_err_msg = (
-            f"unable to get status of '{resource_or_tag_id}' from crm_mon\n"
-        )
-        monitor_command.extend(
-            ["--include", "none,resources", "--resource", resource_or_tag_id]
-        )
-    else:
-        resource_or_tag_id = None
-        crm_mon_err_msg = "unable to get cluster status from crm_mon\n"
+        for arg in argv[:]:
+            if "=" not in arg:
+                resource_or_tag_id = arg
+                crm_mon_err_msg = (
+                    f"unable to get status of '{resource_or_tag_id}' from crm_"
+                    "mon\n"
+                )
+                monitor_command.extend(
+                    [
+                        "--include",
+                        "none,resources",
+                        "--resource",
+                        resource_or_tag_id,
+                    ]
+                )
+                argv.remove(arg)
+                break
+        node = prepare_options_allowed(argv, {"node"}).get("node")
+        if node == "":
+            utils.err("missing value of 'node' option")
+        if node:
+            monitor_command.extend(["--node", node])
 
     output, retval = utils.run(monitor_command)
     if retval != 0:
@@ -2259,26 +2275,36 @@ def resource_status(lib, argv, modifiers, stonith=False):
         if stonith
         else "NO resources configured"
     )
+    no_active_resources_msg = "No active resources"
     for line in output.split("\n"):
-        if line == "No active resources":  # some old pacemaker
-            print(line)
+        if line in (
+            "  * No active resources",  # pacemaker >= 2.0.3 with --hide-inactive
+            "No active resources",  # pacemaker < 2.0.3 with --hide-inactive
+        ):
+            print(no_active_resources_msg)
             return
         if line in (
             "  * No resources",  # pacemaker >= 2.0.3
             "No resources",  # pacemaker < 2.0.3
         ):
-            if resource_or_tag_id:
+            if resource_or_tag_id and not node:
                 utils.err(
                     f"resource or tag id '{resource_or_tag_id}' not found"
                 )
-            print(no_resources_line)
+            if not node:
+                print(no_resources_line)
+            else:
+                print(no_active_resources_msg)
             return
-        if line == "Full List of Resources:":  # pacemaker >= 2.0.3
+        if line in (
+            "Full List of Resources:",  # pacemaker >= 2.0.3
+            "Active Resources:",  # pacemaker >= 2.0.3 with  --hide-inactive
+        ):
             in_resources = True
             continue
         if line in (
             "Full list of resources:",  # pacemaker < 2.0.3
-            "Active resources:",  # some old pacemaker
+            "Active resources:",  # pacemaker < 2.0.3 with --hide-inactive
         ):
             resources_header = True
             continue

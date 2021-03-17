@@ -222,11 +222,12 @@ Usage: pcs resource [commands]...
 Manage pacemaker resources
 
 Commands:
-    [status [<resource id | tag id>] [--hide-inactive]]
+    [status [<resource id | tag id>] [node=<node>] [--hide-inactive]]
         Show status of all currently configured resources. If --hide-inactive
         is specified, only show active resources. If a resource or tag id is
         specified, only show status of the specified resource or resources in
-        the specified tag.
+        the specified tag. If node is specified, only show status of resources
+        configured for the specified node.
 
     config [<resource id>]...
         Show options of all currently configured resources or if resource ids
@@ -1231,11 +1232,12 @@ Usage: pcs stonith [commands]...
 Configure fence devices for use with pacemaker
 
 Commands:
-    [status [<resource id | tag id>] [--hide-inactive]]
+    [status [<resource id | tag id>] [node=<node>] [--hide-inactive]]
         Show status of all currently configured stonith devices. If
         --hide-inactive is specified, only show active stonith devices. If a
         resource or tag id is specified, only show status of the specified
-        resource or resources in the specified tag.
+        resource or resources in the specified tag. If node is specified, only
+        show status of resources configured for the specified node.
 
     config [<stonith id>]...
         Show options of all currently configured stonith devices or if stonith
@@ -1818,11 +1820,12 @@ def status(args=(), pout=True):
 Usage: pcs status [commands]...
 View current cluster and resource status
 Commands:
-    [status] [<resource id | tag id>] [--full] [--hide-inactive]
+    [status] [<resource id | tag id>] [node=<node>] [--full] [--hide-inactive]
         View all information about the cluster and resources (--full provides
         more details, --hide-inactive hides inactive resources). If a resource
         or tag id is specified, only show status of the specified resource or
-        resources in the specified tag.
+        resources in the specified tag. If node is specified, only show status
+        of resources configured for the specified node.
 
     resources [--hide-inactive]
         Show status of all currently configured resources. If --hide-inactive

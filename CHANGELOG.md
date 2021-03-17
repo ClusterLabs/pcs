@@ -6,6 +6,8 @@
 - Elliptic curve TLS certificates are now supported in pcsd ([ghissue#123])
 - Support for corosync option `totem.block_unlisted_ips` ([rhbz#1720221])
 - Support for displaying status of a single resource or tag ([rhbz#1290830])
+- Support for displaying status of resources on a specified node
+  ([rhbz#1285269])
 
 ### Fixed
 - Node attribute expressions are now correctly reported as not allowed in
@@ -16,6 +18,7 @@
 - python3-openssl was replaced with python3-cryptography ([rhbz#1927404])
 
 [ghissue#123]: https://github.com/ClusterLabs/pcs/issues/123
+[rhbz#1285269]: https://bugzilla.redhat.com/show_bug.cgi?id=1285269
 [rhbz#1290830]: https://bugzilla.redhat.com/show_bug.cgi?id=1290830
 [rhbz#1720221]: https://bugzilla.redhat.com/show_bug.cgi?id=1720221
 [rhbz#1882291]: https://bugzilla.redhat.com/show_bug.cgi?id=1882291

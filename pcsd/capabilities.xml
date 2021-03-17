@@ -2342,6 +2342,15 @@
           stonith status [resource id | tag id]
       </description>
     </capability>
+    <capability id="status.pcmk.resources.node" in-pcs="1" in-pcsd="0">
+      <description>
+        Display status of resources on a specified node.
+
+        pcs commands: status resources node=node
+          resource status node=node
+          stonith status node=node
+      </description>
+    </capability>
     <capability id="status.pcmk.resources.orphaned" in-pcs="1" in-pcsd="0">
       <description>
         Display orphaned resources when showing resource status.
