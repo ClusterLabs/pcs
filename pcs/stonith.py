@@ -30,7 +30,7 @@ def stonith_show_cmd(lib, argv, modifiers):
 
 
 def stonith_status_cmd(lib, argv, modifiers):
-    resource.resource_status(lib, argv, modifiers, stonith=True)
+    resource.resource_status(lib, argv[:], modifiers, stonith=True)
     if not argv:
         print_stonith_levels(lib)
 
