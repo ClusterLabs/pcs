@@ -66,10 +66,6 @@ PKG_PROG_PKG_CONFIG
 
 # check for python
 AM_PATH_PYTHON([3.6])
-AC_CHECK_PROGS([PYTHON_ENV], [python3 python])
-if test "x$PYTHON_ENV" = "x"; then
-	AC_MSG_ERROR([Unable to detect python/python3 binary automatically])
-fi
 eval PYTHON_SITELIB="`eval echo ${pythondir}`"
 AC_SUBST([PYTHON_SITELIB])
 # required to detect / install python modules

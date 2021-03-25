@@ -306,6 +306,7 @@ EXTRA_DIST		= \
 			  tools/fixture.py \
 			  tools/xml.py \
 			  tools/fixture_cib.py \
+			  tools/bin_mock/pcmk/crm_resource.py \
 			  tools/bin_mock/pcmk/crm_resource.d/list_agents_ocf__heartbeat \
 			  tools/bin_mock/pcmk/crm_resource.d/list_agents_ocf__pacemaker \
 			  tools/bin_mock/pcmk/crm_resource.d/list_agents_stonith \
@@ -378,4 +379,5 @@ EXTRA_DIST		= \
 			  resources/cib-empty-2.5-withnodes.xml \
 			  resources/cib-empty-3.1.xml \
 			  resources/transitions01.xml \
-			  __init__.py
+			  __init__.py \
+			  suite.py

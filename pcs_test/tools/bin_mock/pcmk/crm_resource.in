@@ -1,4 +1,4 @@
-#!/usr/bin/env @PYTHON_ENV@
+#!@PYTHON@
 
 from crm_resource import main
 
