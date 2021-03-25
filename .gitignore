@@ -25,7 +25,7 @@ pcs/pcs_internal
 pcs/settings.py
 pcs_test/pcs_for_tests
 pcs_test/settings.py
-pcs_test/suite.py
+pcs_test/suite
 pcs_test/smoke.sh
 pcs_test/tools/bin_mock/pcmk/crm_resource
 pcs_test/resources/*.tmp
