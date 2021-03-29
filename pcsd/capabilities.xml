@@ -266,14 +266,6 @@
         pcs commands: cluster sync
       </description>
     </capability>
-    <capability id="corosync.qdevice" in-pcs="1" in-pcsd="0">
-      <description>
-        Set up, manage and show status of a corosync qdevice. Specific
-        functionality depends on supported model.
-
-        pcs commands: pcs qdevice
-      </description>
-    </capability>
     <capability id="corosync.link.add" in-pcs="1" in-pcsd="0">
       <description>
         Add a new corosync link.
@@ -300,6 +292,14 @@
         Change addresses and/or options of an existing corosync link.
 
         pcs commands: pcs cluster link update
+      </description>
+    </capability>
+    <capability id="corosync.qdevice" in-pcs="1" in-pcsd="0">
+      <description>
+        Set up, manage and show status of a corosync qdevice. Specific
+        functionality depends on supported model.
+
+        pcs commands: pcs qdevice
       </description>
     </capability>
     <capability id="corosync.qdevice.model.net" in-pcs="1" in-pcsd="0">
@@ -2149,7 +2149,7 @@
     </capability>
     <capability id="pcs.request-timeout" in-pcs="1" in-pcsd="0">
       <description>
-        It is possible to se a request timeout applied in node to node
+        It is possible to set a request timeout applied in node to node
         communication at pcs level.
 
         pcs commands: --request-timeout
