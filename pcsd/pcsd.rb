@@ -1167,6 +1167,9 @@ post '/managec/:cluster/fix_auth_of_cluster' do
 end
 
 post '/managec/:cluster/send-known-hosts' do
+  # send
+  #   data (token, dest_list) of nodes in params[:node_names]
+  #   to nodes that belongs to a cluster with name params[:cluster]
   auth_user = getAuthUser()
   if not allowed_for_superuser(auth_user)
     return 403, 'Permission denied.'

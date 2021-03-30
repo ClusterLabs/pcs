@@ -292,6 +292,7 @@ def create(
     resource_id -- is identifier of resource
     resource_agent_name -- contains name for the identification of agent
     operation_list -- contains attributes for each entered operation
+        e.g. [{"name": "monitor", "timeout": "10s"}]
     meta_attributes -- contains attributes for primitive/meta_attributes
     instance_attributes -- contains attributes for primitive/instance_attributes
     allow_absent_agent -- is a flag for allowing agent that is not installed
@@ -307,6 +308,14 @@ def create(
     ensure_disabled -- is flag that keeps resource in target-role "Stopped"
     wait -- is flag for controlling waiting for pacemaker idle mechanism
     allow_not_suitable_command -- flag for FORCE_NOT_SUITABLE_COMMAND
+        a resource representing
+        - pacemaker remote node (resource agent is ocf:pacemaker:remote)
+        - or pacemaker guest node (contains meta attribute remote-node)
+        should not be created by this function since the creation of such
+        resource should be accompanied by further actions (see
+        pcs.lib.commands.remote_node);
+        in the case of remote/guest node forcible error is produced when this
+        flag is set to False and warning is produced otherwise
     """
     resource_agent = get_agent(
         env.report_processor,
