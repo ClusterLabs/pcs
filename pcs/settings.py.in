@@ -79,7 +79,7 @@ pacemaker_wait_timeout_status = 124
 booth_config_dir = "@BOOTHCONFDIR@"
 booth_binary = "@BOOTHEXECPREFIX@/sbin/booth"
 default_request_timeout = 60
-pcs_bundled_dir = "@LIB_DIR@/pcs/bundled/"
+pcs_bundled_dir = "@PCS_BUNDLED_DIR@"
 pcs_bundled_packages_dir = os.path.join(pcs_bundled_dir, "packages")
 
 default_ssl_ciphers = "DEFAULT:!RC4:!3DES:@STRENGTH"

@@ -24,6 +24,8 @@ Summary: Pacemaker Configuration System
 
 %global pyagentx_version   @pyagentx_version@
 
+%global pcs_bundled_dir @pcs_bundled_dir@
+
 # javascript bundled libraries for old web-ui
 %global ember_version 1.4.0
 %global handlebars_version 1.2.1
@@ -213,7 +215,7 @@ done
 mkdir -p dynamic_files
 
 # pcs/pcsd
-rm -rf dynamic_files/pcs
+cat /dev/null > dynamic_files/pcs
 
 # gem license files
 for i in license gnu copying; do
@@ -227,7 +229,7 @@ done
 
 # python modules licenses
 for i in license; do
- for x in `find pcs -type f -iname "${i}*" | grep -v pyagentx`; do
+ for x in `find %{pcs_bundled_dir} -type f -iname "${i}*" | grep -v pyagentx`; do
   srcfile=`echo $x | sed -e 's#.*\/##g'`
   srcpkg=`echo $x | sed -e 's#.*src/##g' -e 's/\(.*\)-\(.*\)/\1/'`
   mv $x dynamic_files/${srcpkg}_${srcfile}
@@ -238,7 +240,7 @@ done
 # python modules docs
 # tornado has some extra README in the demos section
 for i in readme contributors; do
- for x in `find pcs -type f -iname "${i}*" | grep -v pyagentx |grep -v demos`; do
+ for x in `find %{pcs_bundled_dir} -type f -iname "${i}*" | grep -v pyagentx |grep -v demos`; do
   srcfile=`echo $x | sed -e 's#.*\/##g'`
   srcpkg=`echo $x | sed -e 's#.*src/##g' -e 's/\(.*\)-\(.*\)/\1/'`
   mv $x dynamic_files/${srcpkg}_${srcfile}
@@ -250,11 +252,11 @@ done
 sed -i -e 's#^@#%#g' dynamic_files/pcs
 
 # pcs-snmp
+cat /dev/null > dynamic_files/pcs-snmp
 
-rm -rf dynamic_files/pcs-snms
 # python modules licenses
 for i in license; do
- for x in `find pcs -type f -iname "${i}*" | grep pyagentx`; do
+ for x in `find %{pcs_bundled_dir} -type f -iname "${i}*" | grep pyagentx`; do
   srcfile=`echo $x | sed -e 's#.*\/##g'`
   srcpkg=`echo $x | sed -e 's#.*src/##g' -e 's/\(.*\)-\(.*\)/\1/'`
   mv $x dynamic_files/${srcpkg}_${srcfile}
@@ -264,7 +266,7 @@ done
 
 # python modules docs
 for i in readme contributors; do
- for x in `find pcs -type f -iname "${i}*" | grep pyagentx`; do
+ for x in `find %{pcs_bundled_dir} -type f -iname "${i}*" | grep pyagentx`; do
   srcfile=`echo $x | sed -e 's#.*\/##g'`
   srcpkg=`echo $x | sed -e 's#.*src/##g' -e 's/\(.*\)-\(.*\)/\1/'`
   mv $x dynamic_files/${srcpkg}_${srcfile}
@@ -314,8 +316,8 @@ sed -i -e 's#^@#%#g' dynamic_files/pcs-snmp
 %exclude %{python3_sitelib}/pcs/pcs
 %{_libdir}/pcs/*
 %exclude %{_libdir}/pcs/pcs_snmp_agent
-%exclude %{_libdir}/pcs/bundled/u*
-%exclude %{_libdir}/pcs/bundled/packages/pyagentx*
+%exclude %{_libdir}/pcs/%{pcs_bundled_dir}/u*
+%exclude %{_libdir}/pcs/%{pcs_bundled_dir}/packages/pyagentx*
 
 # bash completion
 %{_datadir}/bash-completion/completions/pcs
@@ -354,7 +356,7 @@ sed -i -e 's#^@#%#g' dynamic_files/pcs-snmp
 
 %files -n %{pcs_snmp_pkg_name} -f dynamic_files/pcs-snmp
 %{_libdir}/pcs/pcs_snmp_agent
-%{_libdir}/pcs/bundled/packages/pyagentx*
+%{_libdir}/pcs/%{pcs_bundled_dir}/packages/pyagentx*
 %{_unitdir}/pcs_snmp_agent.service
 %{_datadir}/snmp/mibs/PCMK-PCS*-MIB.txt
 %{_mandir}/man8/pcs_snmp_agent.*

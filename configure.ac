@@ -228,11 +228,7 @@ AC_SUBST([SNMP_MIB_DIR])
 # python detection section
 PCS_BUNDLED_DIR_LOCAL="pcs_bundled"
 AC_SUBST([PCS_BUNDLED_DIR_LOCAL])
-if test "x$local_build" = "xyes"; then
-	PCS_BUNDLED_DIR="$PCS_BUNDLED_DIR_LOCAL"
-else
-	PCS_BUNDLED_DIR="$LIB_DIR/pcs/bundled"
-fi
+PCS_BUNDLED_DIR="$LIB_DIR/pcs/$PCS_BUNDLED_DIR_LOCAL"
 AC_SUBST([PCS_BUNDLED_DIR])
 
 mkdir -p $ac_pwd/stamps
@@ -394,11 +390,10 @@ if test "x$BASH" = "x"; then
 fi
 AC_PATH_PROG([SYSTEMCTL], [systemctl])
 if test "x$SYSTEMCTL" = "x"; then
-	AC_MSG_ERROR([Unable to find systemctl in $PATH])
-fi
-AC_PATH_PROG([SERVICE], [service])
-if test "x$SERVICE" = "x"; then
-	AC_MSG_ERROR([Unable to find service in $PATH])
+	AC_PATH_PROG([SERVICE], [service])
+	if test "x$SERVICE" = "x"; then
+		AC_MSG_ERROR([Unable to find systemctl or service in $PATH])
+	fi
 fi
 AC_PATH_PROG([OPENSSL], [openssl])
 if test "x$OPENSSL" = "x"; then

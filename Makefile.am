@@ -95,7 +95,7 @@ endif
 install_python_embedded_mods:
 if LOCAL_BUILD
 	for i in ${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL)/src/*; do \
-		$(call build_python_bundle,$$i,$(or ${DESTDIR}, /)/$(LIB_DIR)/$(PCS_BUNDLED_DIR)); \
+		$(call build_python_bundle,$$i,$(or ${DESTDIR}, /)/$(PCS_BUNDLED_DIR)); \
 	done;
 endif
 
@@ -133,7 +133,7 @@ install-exec-local: install_python_embedded_mods stamps/install_ruby_deps_local
 	$(PYTHON) -m compileall -fl $(or ${DESTDIR}, /)/$(PYTHON_SITELIB)/pcs/settings.py
 
 uninstall-local:
-	rm -rf $(or ${DESTDIR}, /)/$(LIB_DIR)/$(PCS_BUNDLED_DIR)
+	rm -rf $(or ${DESTDIR}, /)/$(PCS_BUNDLED_DIR)
 	mv ${DESTDIR}/$(LIB_DIR)/pcs/pcs_internal ${DESTDIR}/$(SBINDIR)/pcs_internal || :
 	mv ${DESTDIR}/$(LIB_DIR)/pcs/pcs_snmp_agent ${DESTDIR}/$(SBINDIR)/pcs_snmp_agent || :
 	for i in $(shell cat $(or ${DESTDIR}, /)/$(PYTHON_SITELIB)/pcs/deinstall.txt); do \
@@ -317,6 +317,7 @@ $(SPEC): $(SPEC).in .version config.status stamps/download_python_deps stamps/do
 			-e "s#%glo.*numcomm.*##g" \
 			-e "s#@dirty@#$$dirty#g" \
 			-e "s#@date@#$$date#g" \
+			-e "s#@pcs_bundled_dir@#${PCS_BUNDLED_DIR_LOCAL}#g" \
 		$(abs_srcdir)/$@.in > $@-t; \
 	else \
 		sed \
@@ -325,6 +326,7 @@ $(SPEC): $(SPEC).in .version config.status stamps/download_python_deps stamps/do
 			-e "s#@numcomm@#$$numcomm#g" \
 			-e "s#@dirty@#$$dirty#g" \
 			-e "s#@date@#$$date#g" \
+			-e "s#@pcs_bundled_dir@#${PCS_BUNDLED_DIR_LOCAL}#g" \
 		$(abs_srcdir)/$@.in > $@-t; \
 	fi; \
 	if [ -z "$$dirty" ]; then sed -i -e "s#%glo.*dirty.*##g" $@-t; fi && \
