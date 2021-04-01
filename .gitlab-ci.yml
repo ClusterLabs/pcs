@@ -1,5 +1,70 @@
 image: fedora${CI_PCS_FC_IMG_TAG}
 
+variables:
+  PYTHON_DEPENDENCIES: "
+    python3-dateutil
+    python3-devel
+    python3-distro
+    python3-lxml
+    python3-pip
+    python3-pyOpenSSL
+    python3-pycurl
+    python3-pyparsing
+    python3-setuptools
+    python3-setuptools_scm
+    python3-wheel
+  "
+  RUBY_GEMS: "
+    rubygem-backports
+    rubygem-ethon
+    rubygem-ffi
+    rubygem-io-console
+    rubygem-json
+    rubygem-open4
+    rubygem-rack
+    rubygem-rack-protection
+    rubygem-rack-test
+    rubygem-sinatra
+    rubygem-tilt
+    rubygem-thin
+    rubygem-test-unit
+  "
+  RUBY_DEPENDENCIES: "
+    ruby
+    ruby-devel
+    rubygem-bundler
+  "
+  COMMON_DEPENDENCIES: "
+    autoconf
+    automake
+    coreutils
+    curl
+    findutils
+    fontconfig
+    gcc
+    gcc-c++
+    git
+    make
+    openssl
+    psmisc
+    redhat-rpm-config
+    sed
+    tar
+    time
+    wget
+    ${PYTHON_DEPENDENCIES}
+    ${RUBY_DEPENDENCIES}
+  "
+  RUBY_VERSION: "2.7.0"
+  APP_VERSION: "0.0.1.ci"
+  DIST_VERSION: "${APP_VERSION}.${CI_PROJECT_NAMESPACE}-${CI_COMMIT_SHORT_SHA}"
+  RPM_VERSION: "${APP_VERSION}-1.${CI_PROJECT_NAMESPACE}.$CI_COMMIT_SHORT_SHA"
+
+default:
+  before_script:
+    - "echo ${DIST_VERSION} > .tarball-version"
+    - cat .tarball-version
+
 stages:
   - stage1
   - stage2
@@ -8,121 +73,93 @@ rpm_build:
   stage: stage1
   script:
     - "dnf install -y
+        ${COMMON_DEPENDENCIES}
         dnf-plugins-core
-        git
-        make
         rpm-build
         rpmdevtools
-        sed
-        tar
-        wget
-        which
       "
-    - make pcs.spec GIT_TAG=ci
-    - dnf builddep -y pcs.spec
-    - make rpm GIT_TAG=ci
-    - mkdir -p rpms
-    - cp $(find rpm_build  -type f -name '*.rpm' -not -name '*.src.rpm') rpms
+    - ./autogen.sh
+    - ./configure --enable-local-build
+    - make rpm/pcs.spec
+    - dnf builddep -y rpm/pcs.spec
+    - make rpm
+    - mkdir -p rpms && cp -v $(find rpm  -type f -name '*.rpm' -not -name '*.src.rpm') rpms
   artifacts:
     expire_in: 1 week
     paths:
       - rpms
 
-black:
+distcheck:
   stage: stage1
   script:
     - "dnf install -y
-        python3
-        python3-pip
-        make
-        time
-        which
+        ${COMMON_DEPENDENCIES}
+        ${RUBY_GEMS}
+        bzip2
+        xz
       "
-    - make install_pip
+    - "pip3 install
+        dacite
+        tornado
+        pyagentx
+      "
+    - ./autogen.sh
+    - ./configure
+    - make distcheck
+    - mkdir -p dist && cp -v pcs*.tar.* dist/
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - dist
+
+
+black:
+  stage: stage1
+  script:
+    - dnf install -y ${COMMON_DEPENDENCIES}
+    - python3 -m pip install --upgrade -r dev_requirements.txt
+    - ./autogen.sh
+    - ./configure --enable-local-build --enable-dev-tests
     - make black_check
 
 pylint:
   stage: stage1
   script:
-    - "dnf install -y
-        python3
-        python3-dateutil
-        python3-distro
-        python3-lxml
-        python3-pip
-        python3-pycurl
-        python3-pyOpenSSL
-        python3-pyparsing
-        findutils
-        make
-        time
-        which
-      "
-    - make pylint_requirements
+    - dnf install -y ${COMMON_DEPENDENCIES}
+    - python3 -m pip install --upgrade -r dev_requirements.txt
+    - ./autogen.sh
+    - ./configure --enable-local-build --enable-dev-tests
+    - make
     - make pylint
 
 mypy:
   stage: stage1
   script:
-    - "dnf install -y
-        python3
-        python3-dateutil
-        python3-distro
-        python3-lxml
-        python3-pip
-        python3-pycurl
-        python3-pyOpenSSL
-        python3-pyparsing
-        git
-        make
-        tar
-        time
-        wget
-        which
-      "
-    - make mypy_requirements
+    - dnf install -y ${COMMON_DEPENDENCIES}
+    - python3 -m pip install --upgrade -r dev_requirements.txt
+    - ./autogen.sh
+    - ./configure --enable-local-build --enable-dev-tests
+    - make
     - make mypy
 
 ruby_tests:
   stage: stage1
   script:
-    - "dnf install -y
-        ruby
-        ruby-devel
-        rubygem-bundler
-        rubygem-backports
-        rubygem-ethon
-        rubygem-ffi
-        rubygem-io-console
-        rubygem-json
-        rubygem-open4
-        rubygem-rack
-        rubygem-rack-protection
-        rubygem-rack-test
-        rubygem-sinatra
-        rubygem-tilt
-        rubygem-test-unit
-        "
-    - /usr/bin/ruby -I ./pcsd -I ./pcsd/test pcsd/test/test_all_suite.rb
+    - dnf install -y ${COMMON_DEPENDENCIES}
+    - ./autogen.sh
+    - ./configure --enable-local-build
+    - make
+    - make pcsd-tests
 
 python_tier0_tests:
   stage: stage1
   script:
-    - "dnf install -y
-        make
-        python3
-        python3-dateutil
-        python3-distro
-        python3-lxml
-        python3-pip
-        python3-pycurl
-        python3-pyOpenSSL
-        python3-pyparsing
-        which
-        "
-    - make install_pip
+    - dnf install -y ${COMMON_DEPENDENCIES}
     - python3 -m pip install concurrencytest
-    - pcs_test/suite.py -v --tier0
+    - ./autogen.sh
+    - ./configure --enable-local-build
+    - make
+    - make tests_tier0
 
 python_tier1_tests:
   stage: stage2
@@ -130,18 +167,20 @@ python_tier1_tests:
     - rpm_build
   script:
     - "dnf install -y
+        ${COMMON_DEPENDENCIES}
         python3-mock
-        python3-pip
         fence-agents-scsi
         fence-agents-apc
         fence-agents-ipmilan
         fence-virt
         booth-site
-        rpms/pcs-ci-*.rpm
-        "
+        rpms/pcs-*.rpm
+      "
     - python3 -m pip install concurrencytest
-    - rm -rf pcs pcsd # make sure we are testing installed package
-    - pcs_test/suite.py -v --installed --tier1
+    - ./autogen.sh
+    - ./configure --enable-local-build --enable-destructive-tests
+    - rm -rf pcs pcsd pcs_bundled # make sure we are testing installed package
+    - pcs_test/suite -v --installed --tier1
 
 python_smoke_tests:
   stage: stage2
@@ -149,17 +188,19 @@ python_smoke_tests:
     - rpm_build
   script:
     - "dnf install -y
+        ${COMMON_DEPENDENCIES}
         cracklib-dicts
         passwd
         procps-ng
-        curl
-        rpms/pcs-ci-*.rpm
+        rpms/pcs-*.rpm
       "
-    - export GEM_HOME=/usr/lib/pcsd/vendor/bundle/ruby
-    - /usr/lib/pcsd/pcsd & # start pcsd (ruby - thin)
+    - export GEM_HOME=/usr/lib64/pcsd/vendor/bundle/ruby/${RUBY_VERSION}/
+    - /usr/lib64/pcsd/pcsd & # start pcsd (ruby - thin)
     - sleep 10 # wait for pcsd (ruby - thin) to start up properly
     - /usr/sbin/pcsd & # start pcsd (python - tornado)
     - sleep 10 # wait for pcsd (python - tornado) to start up properly
+    - ./autogen.sh
+    - ./configure --enable-local-build
     - pcs_test/smoke.sh
   artifacts:
     paths:
