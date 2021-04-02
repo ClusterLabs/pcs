@@ -2,7 +2,6 @@ import datetime
 import os
 
 from typing import (
-    cast,
     Any,
     List,
     Optional,
@@ -47,9 +46,14 @@ class Task(ImplementsToDto):
         self._result: Any = None
         self._state: TaskState = TaskState.CREATED
         self._task_finish_type: TaskFinishType = TaskFinishType.UNFINISHED
-        self._kill_requested: Optional[TaskKillReason] = None
+        self._kill_reason: Optional[TaskKillReason] = None
         self._last_message_at: Optional[datetime.datetime] = None
         self._worker_pid: int = -1
+
+    def __repr__(self) -> str:
+        retval = ""
+        retval += f"Task {self._task_ident}, state: {self._state.name}, kill reason: {self._kill_reason}"
+        return retval
 
     @property
     def state(self) -> TaskState:
@@ -126,14 +130,14 @@ class Task(ImplementsToDto):
         self._last_message_at = datetime.datetime.now()
 
     def is_kill_requested(self) -> bool:
-        return self._kill_requested is not None
+        return self._kill_reason is not None
 
     def request_kill(self, reason: TaskKillReason) -> None:
         """
         Marks the task for cleanup to the garbage collector
         :param reason: Reason for killing the task
         """
-        self._kill_requested = reason
+        self._kill_reason = reason
 
     def kill(self) -> None:
         """
@@ -210,6 +214,6 @@ class Task(ImplementsToDto):
             self._reports,
             self._state,
             self._task_finish_type,
-            self._kill_requested,
+            self._kill_reason,
             self._result,
         )

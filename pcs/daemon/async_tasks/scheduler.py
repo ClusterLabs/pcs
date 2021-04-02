@@ -95,7 +95,7 @@ class Scheduler:
         )
         return task_ident
 
-    async def _task_register_operations(self, run_hunting=True) -> None:
+    async def _task_register_operations(self, run_hunting: bool = True) -> None:
         if run_hunting:
             for task in self._task_register.values():
                 await self._garbage_hunting(task)

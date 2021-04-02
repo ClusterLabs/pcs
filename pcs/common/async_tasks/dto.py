@@ -29,5 +29,5 @@ class TaskResultDto(DataTransferObject):
     reports: List[ReportItemDto]
     state: TaskState
     task_finish_type: TaskFinishType
-    kill_requested: Optional[TaskKillReason]
+    kill_reason: Optional[TaskKillReason]
     result: Any

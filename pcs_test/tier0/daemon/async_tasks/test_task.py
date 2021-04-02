@@ -1,5 +1,5 @@
 # pylint: disable=protected-access
-from datetime import datetime, timedelta
+from datetime import timedelta
 from unittest import mock, TestCase
 
 import pcs.common.async_tasks.types as types
@@ -14,19 +14,13 @@ from pcs.settings import (
 from pcs.common.async_tasks.dto import CommandDto
 from pcs.common.reports import ReportItemDto
 
+from .helpers import DATETIME_NOW, MockDateTimeNowMixin, MockOsKillMixin
+
 TASK_IDENT = "id0"
-DATETIME_NOW = datetime(2020, 2, 20, 20, 20, 20, 20)
 TEST_TIMEOUT_S = 10
 DATETIME_BEFORE_TIMEOUT = DATETIME_NOW - timedelta(seconds=TEST_TIMEOUT_S / 2)
 DATETIME_AFTER_TIMEOUT = DATETIME_NOW - timedelta(seconds=TEST_TIMEOUT_S + 1)
 WORKER_PID = 2222
-
-
-class MockDateTimeNowMixin:
-    @staticmethod
-    def _prepare_mock_datetime_now(mock_datetime):
-        mock_datetime.now = mock.Mock()
-        mock_datetime.now.return_value = DATETIME_NOW
 
 
 class TaskBaseTestCase(TestCase):
@@ -34,19 +28,20 @@ class TaskBaseTestCase(TestCase):
         self.task = tasks.Task(TASK_IDENT, CommandDto("command", {}))
 
 
-@mock.patch("datetime.datetime")
-class TestReceiveMessage(TaskBaseTestCase, MockDateTimeNowMixin):
-    def test_report(self, mock_datetime):
-        self._prepare_mock_datetime_now(mock_datetime)
+class TestReceiveMessage(MockDateTimeNowMixin, TaskBaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.mock_datetime_now = self._init_mock_datetime_now()
+
+    def test_report(self):
         payload = mock.MagicMock(ReportItemDto)
         message = messaging.Message(TASK_IDENT, payload)
         self.task.receive_message(message)
         self.assertEqual([payload], self.task.to_dto().reports)
         self.assertEqual(DATETIME_NOW, self.task._last_message_at)
-        mock_datetime.now.assert_called_once()
+        self.mock_datetime_now.assert_called_once()
 
-    def test_task_executed(self, mock_datetime):
-        self._prepare_mock_datetime_now(mock_datetime)
+    def test_task_executed(self):
         message = messaging.Message(
             TASK_IDENT, messaging.TaskExecuted(WORKER_PID)
         )
@@ -54,10 +49,9 @@ class TestReceiveMessage(TaskBaseTestCase, MockDateTimeNowMixin):
         self.assertEqual(types.TaskState.EXECUTED, self.task.state)
         self.assertEqual(WORKER_PID, self.task._worker_pid)
         self.assertEqual(DATETIME_NOW, self.task._last_message_at)
-        mock_datetime.now.assert_called_once()
+        self.mock_datetime_now.assert_called_once()
 
-    def test_task_finished(self, mock_datetime):
-        self._prepare_mock_datetime_now(mock_datetime)
+    def test_task_finished(self):
         message = messaging.Message(
             TASK_IDENT,
             messaging.TaskFinished(types.TaskFinishType.SUCCESS, "result"),
@@ -70,22 +64,21 @@ class TestReceiveMessage(TaskBaseTestCase, MockDateTimeNowMixin):
         )
         self.assertEqual("result", task_dto.result)
         self.assertEqual(DATETIME_NOW, self.task._last_message_at)
-        mock_datetime.now.assert_called_once()
+        self.mock_datetime_now.assert_called_once()
 
-    def test_unsupported_message_type(self, mock_datetime):
-        self._prepare_mock_datetime_now(mock_datetime)
+    def test_unsupported_message_type(self):
         message = messaging.Message(TASK_IDENT, 3)
         with self.assertRaises(tasks.UnknownMessageError) as thrown_exc:
             self.task.receive_message(message)
         self.assertEqual(type(3).__name__, thrown_exc.exception.payload_type)
-        mock_datetime.assert_not_called()
+        self.mock_datetime_now.assert_not_called()
 
 
 class TestRequestKill(TaskBaseTestCase):
     def test_kill_requested(self):
         self.task.request_kill(types.TaskKillReason.USER)
         self.assertEqual(
-            types.TaskKillReason.USER, self.task.to_dto().kill_requested
+            types.TaskKillReason.USER, self.task.to_dto().kill_reason
         )
         self.assertTrue(self.task.is_kill_requested())
 
@@ -93,50 +86,53 @@ class TestRequestKill(TaskBaseTestCase):
         self.assertFalse(self.task.is_kill_requested())
 
 
-@mock.patch("os.kill")
-class TestKill(TaskBaseTestCase):
-    def _assert_killed(self, mock_os_kill, start_state):
+class TestKill(MockOsKillMixin, TaskBaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.mock_os_kill = self._init_mock_os_kill()
+
+    def _assert_killed(self, start_state):
         self.task.state = start_state
         self.task.kill()
         task_dto = self.task.to_dto()
-        mock_os_kill.assert_not_called()
+        self.mock_os_kill.assert_not_called()
         self.assertEqual(types.TaskState.FINISHED, task_dto.state)
         self.assertEqual(types.TaskFinishType.KILL, task_dto.task_finish_type)
 
-    def test_kill_created(self, mock_os_kill):
-        self._assert_killed(mock_os_kill, types.TaskState.CREATED)
+    def test_kill_created(self):
+        self._assert_killed(types.TaskState.CREATED)
 
-    def test_kill_queued(self, mock_os_kill):
-        self._assert_killed(mock_os_kill, types.TaskState.QUEUED)
+    def test_kill_queued(self):
+        self._assert_killed(types.TaskState.QUEUED)
 
-    def test_kill_executed_worker_alive(self, mock_os_kill):
+    def test_kill_executed_worker_alive(self):
         message = messaging.Message(
             TASK_IDENT, messaging.TaskExecuted(WORKER_PID)
         )
         self.task.receive_message(message)
         self.task.kill()
         task_dto = self.task.to_dto()
-        mock_os_kill.assert_called_once_with(WORKER_PID, 15)
+        self.mock_os_kill.assert_called_once_with(WORKER_PID, 15)
         self.assertEqual(types.TaskState.FINISHED, task_dto.state)
         self.assertEqual(types.TaskFinishType.KILL, task_dto.task_finish_type)
 
-    def test_kill_executed_worker_dead(self, mock_os_kill):
+    def test_kill_executed_worker_dead(self):
         message = messaging.Message(
             TASK_IDENT, messaging.TaskExecuted(WORKER_PID)
         )
         self.task.receive_message(message)
-        mock_os_kill.raiseError.side_effect = ProcessLookupError()
+        self.mock_os_kill.raiseError.side_effect = ProcessLookupError()
         self.task.kill()
         task_dto = self.task.to_dto()
-        mock_os_kill.assert_called_once_with(WORKER_PID, 15)
+        self.mock_os_kill.assert_called_once_with(WORKER_PID, 15)
         self.assertEqual(types.TaskState.FINISHED, task_dto.state)
         self.assertEqual(types.TaskFinishType.KILL, task_dto.task_finish_type)
 
-    def test_kill_finished(self, mock_os_kill):
-        self._assert_killed(mock_os_kill, types.TaskState.FINISHED)
+    def test_kill_finished(self):
+        self._assert_killed(types.TaskState.FINISHED)
 
 
-class TestGetLastTimestamp(TaskBaseTestCase, MockDateTimeNowMixin):
+class TestGetLastTimestamp(MockDateTimeNowMixin, TaskBaseTestCase):
     def test_no_messages_created(self):
         self.assertIsNone(self.task._get_last_updated_timestamp())
 
@@ -149,11 +145,10 @@ class TestGetLastTimestamp(TaskBaseTestCase, MockDateTimeNowMixin):
         # a TaskExecuted message
         pass
 
-    @mock.patch("datetime.datetime")
-    def test_no_messages_finished(self, mock_datetime):
+    def test_no_messages_finished(self):
         # This can happen when Task is killed in created state
         self.task.state = types.TaskState.FINISHED
-        self._prepare_mock_datetime_now(mock_datetime)
+        self._init_mock_datetime_now()
         self.assertEqual(DATETIME_NOW, self.task._get_last_updated_timestamp())
         self.assertEqual(DATETIME_NOW, self.task._last_message_at)
 
@@ -165,18 +160,16 @@ class TestGetLastTimestamp(TaskBaseTestCase, MockDateTimeNowMixin):
     def test_queued(self):
         pass
 
-    @mock.patch("datetime.datetime")
-    def test_executed(self, mock_datetime):
-        self._prepare_mock_datetime_now(mock_datetime)
+    def test_executed(self):
+        self._init_mock_datetime_now()
         message = messaging.Message(
             TASK_IDENT, messaging.TaskExecuted(WORKER_PID)
         )
         self.task.receive_message(message)
         self.assertEqual(DATETIME_NOW, self.task._get_last_updated_timestamp())
 
-    @mock.patch("datetime.datetime")
-    def test_finished(self, mock_datetime):
-        self._prepare_mock_datetime_now(mock_datetime)
+    def test_finished(self):
+        self._init_mock_datetime_now()
         message = messaging.Message(
             TASK_IDENT, messaging.TaskFinished(types.TaskFinishType.FAIL, None)
         )
@@ -184,17 +177,18 @@ class TestGetLastTimestamp(TaskBaseTestCase, MockDateTimeNowMixin):
         self.assertEqual(DATETIME_NOW, self.task._get_last_updated_timestamp())
 
 
-@mock.patch("datetime.datetime")
 @mock.patch.object(tasks.Task, "_get_last_updated_timestamp")
-class TestIsTimedOut(TaskBaseTestCase, MockDateTimeNowMixin):
-    def test_not_timed_out(self, mock_last_timestamp, mock_datetime):
-        self._prepare_mock_datetime_now(mock_datetime)
+class TestIsTimedOut(MockDateTimeNowMixin, TaskBaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self._init_mock_datetime_now()  # assertions not needed
+
+    def test_not_timed_out(self, mock_last_timestamp):
         mock_last_timestamp.return_value = DATETIME_BEFORE_TIMEOUT
         self.assertFalse(self.task._is_timed_out(TEST_TIMEOUT_S))
         mock_last_timestamp.assert_called_once()
 
-    def test_timed_out(self, mock_last_timestamp, mock_datetime):
-        self._prepare_mock_datetime_now(mock_datetime)
+    def test_timed_out(self, mock_last_timestamp):
         mock_last_timestamp.return_value = DATETIME_AFTER_TIMEOUT
         self.assertTrue(self.task._is_timed_out(TEST_TIMEOUT_S))
         mock_last_timestamp.assert_called_once()
