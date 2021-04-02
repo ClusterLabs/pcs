@@ -6,40 +6,15 @@ import pcs.daemon.async_tasks.messaging as messaging
 import pcs.daemon.async_tasks.worker as worker
 
 from pcs.common.async_tasks.dto import CommandDto
-from pcs.common.reports import ReportItem, ReportItemDto
-from pcs.common.reports.messages import CibUpgradeSuccessful
-from pcs.lib.errors import LibraryError
+from pcs.common.reports import ReportItemDto
+
+from .dummy_commands import RESULT, test_command_map
 
 TASK_IDENT = "id0"
 WORKER_PID = 2222
-RESULT = "I'm done."
-
-worker.worker_com = Queue()  # patched later
-
-# These functions use _ to discard environment that is hardcoded in
-# task_executor because all library functions use it
-def dummy_workload(_) -> str:
-    return RESULT
 
 
-def dummy_workload_unhandled_exception(_) -> None:
-    raise Exception("Whoa, something happened to this task!")
-
-
-def dummy_workload_lib_exception(_) -> None:
-    raise LibraryError()
-
-
-def dummy_workload_lib_exception_reports(_) -> None:
-    raise LibraryError(ReportItem.error(CibUpgradeSuccessful()))
-
-
-test_command_map = {
-    "success": dummy_workload,
-    "unhandled_exc": dummy_workload_unhandled_exception,
-    "lib_exc": dummy_workload_lib_exception,
-    "lib_exc_reports": dummy_workload_lib_exception_reports,
-}
+worker.worker_com = Queue()  # patched at runtime
 
 
 @mock.patch("pcs.daemon.async_tasks.worker.command_map", test_command_map)
@@ -89,7 +64,7 @@ class TestExecutor(TestCase):
         payload = self._get_payload_from_worker_com(worker.worker_com)
         self.assertIsInstance(payload, messaging.TaskFinished)
         self.assertEqual(types.TaskFinishType.FAIL, payload.task_finish_type)
-        self.assertEqual(None, payload.result)
+        self.assertIsNone(payload.result)
 
     @mock.patch("pcs.daemon.async_tasks.worker.worker_com", Queue())
     def test_unsuccessful_run_additional_reports(self, mock_getpid):
@@ -106,7 +81,7 @@ class TestExecutor(TestCase):
         payload = self._get_payload_from_worker_com(worker.worker_com)
         self.assertIsInstance(payload, messaging.TaskFinished)
         self.assertEqual(types.TaskFinishType.FAIL, payload.task_finish_type)
-        self.assertEqual(None, payload.result)
+        self.assertIsNone(payload.result)
 
     @mock.patch("pcs.daemon.async_tasks.worker.worker_com", Queue())
     def test_unhandled_exception(self, mock_getpid):
@@ -122,4 +97,4 @@ class TestExecutor(TestCase):
         self.assertEqual(
             types.TaskFinishType.UNHANDLED_EXCEPTION, payload.task_finish_type
         )
-        self.assertEqual(None, payload.result)
+        self.assertIsNone(payload.result)
