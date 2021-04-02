@@ -95,30 +95,41 @@ class Scheduler:
         )
         return task_ident
 
-    async def _garbage_hunting(self) -> None:
+    async def _task_register_operations(self, run_hunting=True) -> None:
+        if run_hunting:
+            for task in self._task_register.values():
+                await self._garbage_hunting(task)
+                await self._garbage_collection(task)
+        else:
+            for task in self._task_register.values():
+                await self._garbage_collection(task)
+
+    @staticmethod
+    async def _garbage_hunting(task: Task) -> None:
         """
         Marks tasks for garbage collection
         """
-        # TODO: (optimization) Run less frequently (kill timeout/4?)
         # self._logger.debug("Running garbage hunting.")
-        for task in self._task_register.values():
-            if task.is_defunct():
-                task.request_kill(TaskKillReason.COMPLETION_TIMEOUT)
-            elif task.is_abandoned():
-                task.request_kill(TaskKillReason.ABANDONED)
+        if task.is_defunct():
+            task.request_kill(TaskKillReason.COMPLETION_TIMEOUT)
+        elif task.is_abandoned():
+            task.request_kill(TaskKillReason.ABANDONED)
 
-    async def _garbage_collection(self) -> None:
+    @staticmethod
+    async def _garbage_collection(task: Task) -> None:
         """
-        Deletes tasks after certain timeouts from the task register
+        Deletes tasks marked for garbage collection
         """
         # self._logger.debug("Running garbage collection.")
-        for task in self._task_register.values():
-            if task.is_kill_requested():
-                task.kill()
+        if task.is_kill_requested():
+            task.kill()
 
     async def perform_actions(self) -> int:
         """
         Calls all actions that are done by the scheduler in one pass
+
+        DO NOT USE IN TIER0 TESTS! Look for a function of the same name
+        in scheduler's integration tests
         """
         # self._logger.debug("Scheduler tick.")
         await self._schedule_tasks()
@@ -126,9 +137,7 @@ class Scheduler:
         received_total = await self._receive_messages()
         # Garbage collection needs to run right after receiving messages to
         # kill executed tasks most quickly
-        await self._garbage_collection()
-        # TODO: (optimization) Run hunting less frequently
-        await self._garbage_hunting()
+        await self._task_register_operations()
         return received_total
 
     async def _receive_messages(self) -> int:

@@ -1,12 +1,9 @@
 # pylint: disable=protected-access
-import logging
-import multiprocessing as mp
-
 from collections import deque
 from unittest import TestCase, mock
 from queue import Empty
-from tornado.testing import AsyncTestCase, gen_test
-
+from tornado.testing import gen_test
+from pcs.daemon.async_tasks import scheduler
 from pcs.common.async_tasks.dto import CommandDto, TaskResultDto
 from pcs.common.async_tasks.types import (
     TaskState,
@@ -15,62 +12,13 @@ from pcs.common.async_tasks.types import (
 )
 from pcs.common.reports import ReportItem
 from pcs.common.reports.messages import CibUpgradeSuccessful
-from pcs.daemon.async_tasks import scheduler
 from pcs.daemon.async_tasks.messaging import Message, TaskExecuted
 from pcs.daemon.async_tasks.worker import task_executor
 
+from .helpers import SchedulerBaseTestCase, SchedulerBaseAsyncTestCase
+
 WORKER1_PID = 2222
 WORKER2_PID = 3333
-
-
-class FakeSchedulerMixin:
-    scheduler = None
-    worker_com = None
-    mp_pool_mock = None
-    logger_mock = None
-
-    def prepare_scheduler(self):
-        mock.patch(
-            "pcs.daemon.async_tasks.logging.setup_scheduler_logger"
-        ).start()
-        # We can patch Queue here because it is NOT shared between tests
-        self.worker_com = mp.Queue()
-        # Manager has to be mocked because it creates a new process
-        mock.patch(
-            "multiprocessing.Manager"
-        ).start().return_value.Queue.return_value = self.worker_com
-        self.mp_pool_mock = (
-            mock.patch("multiprocessing.Pool", spec=mp.Pool)
-            .start()
-            .return_value
-        ) = mock.Mock()
-        self.logger_mock = (
-            mock.patch("logging.getLogger", spec=logging.Logger)
-            .start()
-            .return_value
-        )
-        self.scheduler = scheduler.Scheduler()
-
-    def _create_tasks(self, count):
-        """Creates tasks with task_ident from id0 to idN"""
-        for i in range(count):
-            with mock.patch("uuid.uuid4") as mock_uuid:
-                mock_uuid().hex = f"id{i}"
-                self.scheduler.new_task(CommandDto(f"command {i}", {}))
-
-
-class SchedulerBaseTestCase(TestCase, FakeSchedulerMixin):
-    def setUp(self):
-        FakeSchedulerMixin.prepare_scheduler(self)
-        super().setUp()
-        self.addCleanup(mock.patch.stopall)
-
-
-class SchedulerBaseAsyncTestCase(AsyncTestCase, FakeSchedulerMixin):
-    def setUp(self):
-        FakeSchedulerMixin.prepare_scheduler(self)
-        super().setUp()
-        self.addCleanup(mock.patch.stopall)
 
 
 class GetTaskTest(SchedulerBaseTestCase):
@@ -98,11 +46,11 @@ class KillTaskTest(SchedulerBaseTestCase):
         self.scheduler.kill_task("id0")
         task1_dto = self.scheduler.get_task("id0")
         task2_dto = self.scheduler.get_task("id1")
-        # State and task_finish_type is not changing, only kill_requested
-        self.assertEqual(TaskKillReason.USER, task1_dto.kill_requested)
+        # State and task_finish_type is not changing, only kill_reason
+        self.assertEqual(TaskKillReason.USER, task1_dto.kill_reason)
         self.assertEqual(TaskState.CREATED, task1_dto.state)
         self.assertEqual(TaskFinishType.UNFINISHED, task1_dto.task_finish_type)
-        self.assertIsNone(task2_dto.kill_requested)
+        self.assertIsNone(task2_dto.kill_reason)
         self.assertEqual(TaskState.CREATED, task2_dto.state)
         self.assertEqual(TaskFinishType.UNFINISHED, task2_dto.task_finish_type)
 
@@ -116,7 +64,8 @@ class NewTaskTest(SchedulerBaseTestCase):
     def test_new_task(self):
         self._create_tasks(1)
         self.assertEqual(
-            deque(["id0"]), self.scheduler._created_tasks_index,
+            deque(["id0"]),
+            self.scheduler._created_tasks_index,
         )
         self.assertEqual(
             TaskResultDto(
@@ -131,7 +80,8 @@ class NewTaskTest(SchedulerBaseTestCase):
             self.scheduler.get_task("id0"),
         )
         self.assertListEqual(
-            ["id0"], list(self.scheduler._task_register.keys()),
+            ["id0"],
+            list(self.scheduler._task_register.keys()),
         )
 
     class UuidStub:
@@ -146,7 +96,8 @@ class NewTaskTest(SchedulerBaseTestCase):
     def test_duplicate_task_ident(self):
         self._create_tasks(2)
         self.assertListEqual(
-            ["id0", "id1"], list(self.scheduler._task_register.keys()),
+            ["id0", "id1"],
+            list(self.scheduler._task_register.keys()),
         )
 
 
@@ -154,10 +105,11 @@ class GarbageHuntingTest(SchedulerBaseAsyncTestCase):
     @gen_test
     async def test_no_defunct_or_abandoned(self):
         self._create_tasks(3)
-        await self.scheduler._garbage_hunting()
-        self.assertIsNone(self.scheduler.get_task("id0").kill_requested)
-        self.assertIsNone(self.scheduler.get_task("id1").kill_requested)
-        self.assertIsNone(self.scheduler.get_task("id2").kill_requested)
+        for task in self.scheduler._task_register.values():
+            await self.scheduler._garbage_hunting(task)
+        self.assertIsNone(self.scheduler.get_task("id0").kill_reason)
+        self.assertIsNone(self.scheduler.get_task("id1").kill_reason)
+        self.assertIsNone(self.scheduler.get_task("id2").kill_reason)
 
     @mock.patch(
         "pcs.daemon.async_tasks.task.Task.is_defunct",
@@ -166,13 +118,14 @@ class GarbageHuntingTest(SchedulerBaseAsyncTestCase):
     @gen_test
     async def test_defunct(self, _):
         self._create_tasks(3)
-        await self.scheduler._garbage_hunting()
-        self.assertIsNone(self.scheduler.get_task("id0").kill_requested)
+        for task in self.scheduler._task_register.values():
+            await self.scheduler._garbage_hunting(task)
+        self.assertIsNone(self.scheduler.get_task("id0").kill_reason)
         self.assertEqual(
             TaskKillReason.COMPLETION_TIMEOUT,
-            self.scheduler.get_task("id1").kill_requested,
+            self.scheduler.get_task("id1").kill_reason,
         )
-        self.assertIsNone(self.scheduler.get_task("id2").kill_requested)
+        self.assertIsNone(self.scheduler.get_task("id2").kill_reason)
 
     @mock.patch(
         "pcs.daemon.async_tasks.task.Task.is_abandoned",
@@ -181,15 +134,16 @@ class GarbageHuntingTest(SchedulerBaseAsyncTestCase):
     @gen_test
     async def test_abandoned(self, _):
         self._create_tasks(3)
-        await self.scheduler._garbage_hunting()
-        self.assertIsNone(self.scheduler.get_task("id0").kill_requested)
+        for task in self.scheduler._task_register.values():
+            await self.scheduler._garbage_hunting(task)
+        self.assertIsNone(self.scheduler.get_task("id0").kill_reason)
         self.assertEqual(
             TaskKillReason.ABANDONED,
-            self.scheduler.get_task("id1").kill_requested,
+            self.scheduler.get_task("id1").kill_reason,
         )
         self.assertEqual(
             TaskKillReason.ABANDONED,
-            self.scheduler.get_task("id2").kill_requested,
+            self.scheduler.get_task("id2").kill_reason,
         )
 
 
@@ -206,9 +160,9 @@ class ReceiveMessagesTest(SchedulerBaseAsyncTestCase):
         task1_dto = self.scheduler.get_task("id0")
         task2_dto = self.scheduler.get_task("id1")
         self.assertEqual(
-            TaskKillReason.INTERNAL_MESSAGING_ERROR, task1_dto.kill_requested
+            TaskKillReason.INTERNAL_MESSAGING_ERROR, task1_dto.kill_reason
         )
-        self.assertIsNone(task2_dto.kill_requested)
+        self.assertIsNone(task2_dto.kill_reason)
 
     @gen_test
     async def test_wrong_message_type(self):
@@ -267,10 +221,12 @@ class ScheduleTasksTest(SchedulerBaseAsyncTestCase):
         self.mp_pool_mock.apply_async.assert_has_calls(
             [
                 mock.call(
-                    func=task_executor, args=[tasks[1].to_worker_command()],
+                    func=task_executor,
+                    args=[tasks[1].to_worker_command()],
                 ),
                 mock.call(
-                    func=task_executor, args=[tasks[2].to_worker_command()],
+                    func=task_executor,
+                    args=[tasks[2].to_worker_command()],
                 ),
             ]
         )
@@ -287,18 +243,22 @@ class ScheduleTasksTest(SchedulerBaseAsyncTestCase):
         )
         self.assertEqual(TaskState.CREATED, deleted_task.state)
         self.assertEqual(
-            TaskState.QUEUED, self.scheduler.get_task("id0").state,
+            TaskState.QUEUED,
+            self.scheduler.get_task("id0").state,
         )
         self.assertEqual(
-            TaskState.QUEUED, self.scheduler.get_task("id2").state,
+            TaskState.QUEUED,
+            self.scheduler.get_task("id2").state,
         )
         self.mp_pool_mock.apply_async.assert_has_calls(
             [
                 mock.call(
-                    func=task_executor, args=[tasks[0].to_worker_command()],
+                    func=task_executor,
+                    args=[tasks[0].to_worker_command()],
                 ),
                 mock.call(
-                    func=task_executor, args=[tasks[2].to_worker_command()],
+                    func=task_executor,
+                    args=[tasks[2].to_worker_command()],
                 ),
             ]
         )
