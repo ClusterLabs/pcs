@@ -4,6 +4,7 @@ import logging
 from typing import (
     cast,
     Any,
+    Awaitable,
     Dict,
     List,
     Optional,
@@ -129,6 +130,10 @@ class BaseAPIHandler(RequestHandler):
                 response["error_message"] = exc.error_msg
 
         self.finish(json.dumps(response))
+
+    def data_received(self, chunk: bytes) -> Optional[Awaitable[None]]:
+        # We do not support HTTP chunk mode, reimplementing abstract
+        pass
 
 
 class NewTaskHandler(BaseAPIHandler):
