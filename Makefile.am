@@ -4,9 +4,8 @@ EXTRA_DIST		= autogen.sh \
 			  make/git-version-gen make/gitlog-to-changelog \
 			  scripts/pcsd.sh.in CHANGELOG.md \
 			  .eslintrc .gitlab-ci.yml \
-			  MANIFEST.in .travis.yml rpm/pcs.spec.in \
-			  mypy.ini pyproject.toml pylintrc \
-			  test/fedora31/Dockerfile test/fedora32/Dockerfile test/centos8/Dockerfile
+			  MANIFEST.in rpm/pcs.spec.in \
+			  mypy.ini pyproject.toml pylintrc
 
 AUTOMAKE_OPTIONS	= foreign
 
