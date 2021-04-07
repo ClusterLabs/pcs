@@ -61,12 +61,6 @@ class SchedulerFake:
             .return_value
         ) = mock.Mock()
         # This might be needed when logger is called by get_logger, but is it?
-        """
-        self.logger_mock = (
-            mock.patch("logging.getLogger", spec=logging.Logger)
-            .start()
-            .return_value
-        )"""
         self.scheduler = scheduler.Scheduler()
 
     def _create_tasks(self, count, start_from=0):

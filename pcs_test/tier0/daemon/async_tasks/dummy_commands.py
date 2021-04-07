@@ -8,7 +8,6 @@ RESULT = "I'm done."
 # task_executor because all library functions use it
 def dummy_workload_no_result_with_reports(lib_env) -> None:
     lib_env.report_processor.report(ReportItem.info(CibUpgradeSuccessful()))
-    return
 
 
 def dummy_workload_with_result(_) -> str:

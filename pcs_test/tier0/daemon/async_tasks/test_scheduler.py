@@ -1,6 +1,6 @@
 # pylint: disable=protected-access
 from collections import deque
-from unittest import TestCase, mock
+from unittest import mock
 from queue import Empty
 from tornado.testing import gen_test
 from pcs.daemon.async_tasks import scheduler

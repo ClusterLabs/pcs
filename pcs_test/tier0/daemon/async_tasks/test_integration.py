@@ -89,11 +89,6 @@ class StateChangeTest(AssertTaskStatesMixin, IntegrationBaseTestCase):
     async def test_created_on_top_of_existing(self):
         self._create_tasks(5)
         await self.perform_actions(0)
-        """ NOTE: code replaced by execute_tasks, would be more complicated for 
-        non-contiguos task_ident sets
-        for i in range(worker_count):
-            self.worker_com.put_nowait(Message(f"id{i}", TaskExecuted(i)))
-        """
         self.execute_tasks(["id0", "id1", "id2"])
         await self.perform_actions(3)
         self._create_tasks(2, start_from=5)
@@ -124,94 +119,6 @@ class StateChangeTest(AssertTaskStatesMixin, IntegrationBaseTestCase):
         self.finish_tasks(["id0"])
         await self.perform_actions(1)
         self.assert_task_state_counts_equal(0, 0, 0, 1)
-
-    # NOTE: This was the original test which is now split up into other tests
-    """
-    @gen_test
-    async def test_complex_scenario1(self):
-        # Create more tasks that can be executed at once
-        worker_count = 4
-        task_count = 5
-
-        assert worker_count >= 2  # minimum of 2 workers for this test
-        assert task_count == 5  # changing this will break the test
-
-        self._create_tasks(task_count)
-        self.assert_task_state_counts_equal(task_count, 0, 0, 0)
-
-        # First set of tasks is going to execute
-        self.execute_tasks(["id0", "id1", "id2", "id3"])
-        await self.perform_actions(worker_count)
-        self.assertEqual(task_count, self.mp_pool_mock.apply_async.call_count)
-
-        # One more task arrives
-        task_count += 1
-        with mock.patch("uuid.uuid4") as mock_uuid:
-            mock_uuid().hex = "id5"
-            self.scheduler.new_task(CommandDto("command 5", {}))
-        """ """state_counts = count_task_states(self.scheduler)
-        self.assertEqual(1, state_counts["created"])
-        self.assertEqual(task_count - worker_count - 1, state_counts["queued"])
-        self.assertEqual(worker_count, state_counts["executed"])
-        self.assertEqual(0, state_counts["finished"])""" """
-
-        # First two tasks finish, two are still running, the new task is queued
-        # and scheduled
-        """ """self.worker_com.put_nowait(
-            Message("id0", TaskFinished(TaskFinishType.SUCCESS, None))
-        )
-        self.worker_com.put_nowait(
-            Message("id1", TaskFinished(TaskFinishType.SUCCESS, None))
-        )""" """
-        self.finish_tasks(["id0", "id1"])
-        await self.perform_actions(2)
-        self.assertEqual(task_count, self.mp_pool_mock.apply_async.call_count)
-        """ """state_counts = count_task_states(self.scheduler)
-        self.assertEqual(0, state_counts["created"])
-        self.assertEqual(task_count - worker_count, state_counts["queued"])
-        # 2 finished, 2 running, workers are unused until next perform_actions
-        self.assertEqual(worker_count - 2, state_counts["executed"])
-        self.assertEqual(2, state_counts["finished"])""" """
-        self.assert_task_state_counts_equal(
-            0, task_count - worker_count, worker_count - 2, 2
-        )
- 
-        # Other two tasks finish, all workers are idling until perform_actions
-        """ """self.worker_com.put_nowait(
-            Message("id2", TaskFinished(TaskFinishType.SUCCESS, None))
-        )
-        self.worker_com.put_nowait(
-            Message("id3", TaskFinished(TaskFinishType.SUCCESS, None))
-        )""" """
-        self.finish_tasks(["id2", "id3"])
-        """ """self.worker_com.put_nowait(Message("id4", TaskExecuted(4)))
-        self.worker_com.put_nowait(Message("id5", TaskExecuted(5)))""" """
-        self.execute_tasks(["id4", "id5"])
-        # Only two workers pick up new tasks, messages are handled after
-        # scheduling so the other two workers will only start
-        await self.perform_actions(4)
-        """ """state_counts = count_task_states(self.scheduler)
-        self.assertEqual(0, state_counts["created"])
-        self.assertEqual(0, state_counts["queued"])
-        self.assertEqual(2, state_counts["executed"])
-        self.assertEqual(4, state_counts["finished"])""" """
-        self.assert_task_state_counts_equal(0, 0, 2, 4)
-
-        # Finish all running tasks
-        """ """self.worker_com.put_nowait(
-            Message("id4", TaskFinished(TaskFinishType.SUCCESS, None))
-        )
-        self.worker_com.put_nowait(
-            Message("id5", TaskFinished(TaskFinishType.SUCCESS, None))
-        )""" """
-        self.finish_tasks(["id4", "id5"])
-        await self.perform_actions(2)
-        """ """state_counts = count_task_states(self.scheduler)
-        self.assertEqual(0, state_counts["created"])
-        self.assertEqual(0, state_counts["queued"])
-        self.assertEqual(0, state_counts["executed"])
-        self.assertEqual(6, state_counts["finished"])""" """
-        self.assert_task_state_counts_equal(0, 0, 0, 6)"""
 
 
 class GarbageCollectionTests(
@@ -358,6 +265,8 @@ class TaskResultsTests(IntegrationBaseTestCase):
     These test go one level deeper to include task_executor and test its
     behavior. All possible task outcomes are tested.
     """
+
+    # pylint: disable=protected-access
 
     def setUp(self):
         super().setUp()

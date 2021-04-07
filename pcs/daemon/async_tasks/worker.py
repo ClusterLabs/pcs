@@ -37,7 +37,7 @@ def worker_init(message_q: mp.Queue) -> None:
     logger.info("Worker initialized.")
 
     # Let task_executor use worker_com for sending messages to the scheduler
-    global worker_com
+    global worker_com  # pylint: disable=global-statement
     worker_com = message_q
 
     def ignore_signals(sig_num, frame):  # type: ignore
@@ -62,7 +62,7 @@ def task_executor(task: WorkerCommand) -> None:
     # pylint: disable=broad-except
     logger = getLogger("pcs_worker")
 
-    global worker_com
+    global worker_com  # pylint: disable=global-statement
     worker_com.put(
         Message(
             task.task_ident,
@@ -86,6 +86,7 @@ def task_executor(task: WorkerCommand) -> None:
         # processor here
 
         for report in e.args:
+            # pylint: disable=no-member
             worker_com.put(Message(task.task_ident, report.to_dto()))
         worker_com.put(
             Message(
