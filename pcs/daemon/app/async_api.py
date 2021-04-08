@@ -72,8 +72,10 @@ class BaseAPIHandler(RequestHandler):
         ):
             try:
                 self.json = json.loads(self.request.body)
-            except json.JSONDecodeError:
-                raise APIError(http_code=400, error_msg="Malformed JSON data.")
+            except json.JSONDecodeError as exc:
+                raise APIError(
+                    http_code=400, error_msg="Malformed JSON data."
+                ) from exc
 
     @staticmethod
     def _from_dict_exc_handled(
@@ -114,7 +116,7 @@ class BaseAPIHandler(RequestHandler):
         already set by tornado.
         :param status_code: HTTP status code
         """
-        self.logger.exception("API error occured.")
+        self.logger.exception("API error occurred.")
 
         response = {
             "http_code": status_code,
