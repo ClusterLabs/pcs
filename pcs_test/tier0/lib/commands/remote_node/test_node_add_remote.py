@@ -500,7 +500,7 @@ class AddRemote(TestCase):
                 fixture.error(
                     reports.codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.PACEMAKER_AUTHKEY,
-                    file_path=LocalConfig.PCMK_AUTHKEY_PATH,
+                    file_path=settings.pacemaker_authkey_file,
                     operation=RawFileError.ACTION_READ,
                     reason="open failed",
                 )

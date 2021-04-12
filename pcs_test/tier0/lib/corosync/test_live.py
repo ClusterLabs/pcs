@@ -45,7 +45,9 @@ class GetLocalCorosyncConfTest(TestCase):
 class GetQuorumStatusTextTest(TestCase):
     def setUp(self):
         self.mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        self.quorum_tool = "/usr/sbin/corosync-quorumtool"
+        self.quorum_tool = os.path.join(
+            settings.corosync_binaries, "corosync-quorumtool"
+        )
 
     def test_success(self):
         self.mock_runner.run.return_value = ("status info", "", 0)

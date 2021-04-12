@@ -3174,15 +3174,17 @@ class CibUpgradeFailedToMinimalRequiredVersion(NameBuildTest):
 class FileAlreadyExists(NameBuildTest):
     def test_minimal(self):
         self.assert_message_from_report(
-            "Corosync authkey file '/etc/corosync/key' already exists",
-            reports.FileAlreadyExists("COROSYNC_AUTHKEY", "/etc/corosync/key"),
+            "Corosync authkey file '/corosync_conf/path' already exists",
+            reports.FileAlreadyExists(
+                "COROSYNC_AUTHKEY", "/corosync_conf/path"
+            ),
         )
 
     def test_with_node(self):
         self.assert_message_from_report(
-            "node1: pcs configuration file '/var/lib/pcsd/conf' already exists",
+            "node1: pcs configuration file '/pcs/conf/file' already exists",
             reports.FileAlreadyExists(
-                "PCS_SETTINGS_CONF", "/var/lib/pcsd/conf", node="node1"
+                "PCS_SETTINGS_CONF", "/pcs/conf/file", node="node1"
             ),
         )
 
@@ -3198,23 +3200,23 @@ class FileIoError(NameBuildTest):
 
     def test_all(self):
         self.assert_message_from_report(
-            "Unable to read pcsd SSL certificate '/var/lib/pcsd.crt': Failed",
+            "Unable to read pcsd SSL certificate '/ssl/cert/path': Failed",
             reports.FileIoError(
                 file_type_codes.PCSD_SSL_CERT,
                 RawFileError.ACTION_READ,
                 "Failed",
-                file_path="/var/lib/pcsd.crt",
+                file_path="/ssl/cert/path",
             ),
         )
 
     def test_role_translation_a(self):
         self.assert_message_from_report(
-            "Unable to write pcsd SSL key '/var/lib/pcsd.key': Failed",
+            "Unable to write pcsd SSL key '/ssl/key/path': Failed",
             reports.FileIoError(
                 file_type_codes.PCSD_SSL_KEY,
                 RawFileError.ACTION_WRITE,
                 "Failed",
-                file_path="/var/lib/pcsd.key",
+                file_path="/ssl/key/path",
             ),
         )
 
@@ -3222,13 +3224,13 @@ class FileIoError(NameBuildTest):
         self.assert_message_from_report(
             (
                 "Unable to change ownership of pcsd configuration "
-                "'/etc/sysconfig/pcsd': Failed"
+                "'/pcsd/conf/path': Failed"
             ),
             reports.FileIoError(
                 file_type_codes.PCSD_ENVIRONMENT_CONFIG,
                 RawFileError.ACTION_CHOWN,
                 "Failed",
-                file_path="/etc/sysconfig/pcsd",
+                file_path="/pcsd/conf/path",
             ),
         )
 
@@ -4572,11 +4574,11 @@ class BoothUnsupportedFileLocation(NameBuildTest):
         self.assert_message_from_report(
             (
                 "Booth configuration '/some/file' is outside of supported "
-                "booth config directory '/etc/booth/', ignoring the file"
+                "booth config directory '/booth/conf/dir/', ignoring the file"
             ),
             reports.BoothUnsupportedFileLocation(
                 "/some/file",
-                "/etc/booth/",
+                "/booth/conf/dir/",
                 file_type_codes.BOOTH_CONFIG,
             ),
         )

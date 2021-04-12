@@ -14,6 +14,7 @@ from pcs_test.tools import fixture
 from pcs_test.tools.misc import create_patcher
 from pcs_test.tools.xml import XmlManipulation
 
+from pcs import settings
 from pcs.common.reports import ReportItemSeverity as severity
 from pcs.common.reports import codes as report_codes
 from pcs.lib import resource_agent as lib_ra
@@ -147,7 +148,7 @@ class ListResourceAgentsStandardsTest(TestCase):
         )
 
         mock_runner.run.assert_called_once_with(
-            ["/usr/sbin/crm_resource", "--list-standards"]
+            [settings.crm_resource_binary, "--list-standards"]
         )
 
     def test_success_filter_whitespace(self):
@@ -182,7 +183,7 @@ class ListResourceAgentsStandardsTest(TestCase):
         )
 
         mock_runner.run.assert_called_once_with(
-            ["/usr/sbin/crm_resource", "--list-standards"]
+            [settings.crm_resource_binary, "--list-standards"]
         )
 
     def test_empty(self):
@@ -192,7 +193,7 @@ class ListResourceAgentsStandardsTest(TestCase):
         self.assertEqual(lib_ra.list_resource_agents_standards(mock_runner), [])
 
         mock_runner.run.assert_called_once_with(
-            ["/usr/sbin/crm_resource", "--list-standards"]
+            [settings.crm_resource_binary, "--list-standards"]
         )
 
     def test_error(self):
@@ -204,7 +205,7 @@ class ListResourceAgentsStandardsTest(TestCase):
         )
 
         mock_runner.run.assert_called_once_with(
-            ["/usr/sbin/crm_resource", "--list-standards"]
+            [settings.crm_resource_binary, "--list-standards"]
         )
 
 
@@ -235,7 +236,7 @@ class ListResourceAgentsOcfProvidersTest(TestCase):
         )
 
         mock_runner.run.assert_called_once_with(
-            ["/usr/sbin/crm_resource", "--list-ocf-providers"]
+            [settings.crm_resource_binary, "--list-ocf-providers"]
         )
 
     def test_success_filter_whitespace(self):
@@ -265,7 +266,7 @@ class ListResourceAgentsOcfProvidersTest(TestCase):
         )
 
         mock_runner.run.assert_called_once_with(
-            ["/usr/sbin/crm_resource", "--list-ocf-providers"]
+            [settings.crm_resource_binary, "--list-ocf-providers"]
         )
 
     def test_empty(self):
@@ -277,7 +278,7 @@ class ListResourceAgentsOcfProvidersTest(TestCase):
         )
 
         mock_runner.run.assert_called_once_with(
-            ["/usr/sbin/crm_resource", "--list-ocf-providers"]
+            [settings.crm_resource_binary, "--list-ocf-providers"]
         )
 
     def test_error(self):
@@ -289,7 +290,7 @@ class ListResourceAgentsOcfProvidersTest(TestCase):
         )
 
         mock_runner.run.assert_called_once_with(
-            ["/usr/sbin/crm_resource", "--list-ocf-providers"]
+            [settings.crm_resource_binary, "--list-ocf-providers"]
         )
 
 
@@ -344,8 +345,13 @@ class ListResourceAgentsStandardsAndProvidersTest(TestCase):
         self.assertEqual(2, len(mock_runner.run.mock_calls))
         mock_runner.run.assert_has_calls(
             [
-                mock.call(["/usr/sbin/crm_resource", "--list-standards"]),
-                mock.call(["/usr/sbin/crm_resource", "--list-ocf-providers"]),
+                mock.call([settings.crm_resource_binary, "--list-standards"]),
+                mock.call(
+                    [
+                        settings.crm_resource_binary,
+                        "--list-ocf-providers",
+                    ]
+                ),
             ]
         )
 
@@ -380,7 +386,7 @@ class ListResourceAgentsTest(TestCase):
         )
 
         mock_runner.run.assert_called_once_with(
-            ["/usr/sbin/crm_resource", "--list-agents", "ocf"]
+            [settings.crm_resource_binary, "--list-agents", "ocf"]
         )
 
     def test_success_standard_provider(self):
@@ -412,7 +418,11 @@ class ListResourceAgentsTest(TestCase):
         )
 
         mock_runner.run.assert_called_once_with(
-            ["/usr/sbin/crm_resource", "--list-agents", "ocf:pacemaker"]
+            [
+                settings.crm_resource_binary,
+                "--list-agents",
+                "ocf:pacemaker",
+            ]
         )
 
     def test_bad_standard(self):
@@ -428,7 +438,7 @@ class ListResourceAgentsTest(TestCase):
         )
 
         mock_runner.run.assert_called_once_with(
-            ["/usr/sbin/crm_resource", "--list-agents", "nonsense"]
+            [settings.crm_resource_binary, "--list-agents", "nonsense"]
         )
 
 
@@ -462,7 +472,7 @@ class ListStonithAgentsTest(TestCase):
         )
 
         mock_runner.run.assert_called_once_with(
-            ["/usr/sbin/crm_resource", "--list-agents", "stonith"]
+            [settings.crm_resource_binary, "--list-agents", "stonith"]
         )
 
     def test_no_agents(self):
@@ -476,7 +486,7 @@ class ListStonithAgentsTest(TestCase):
         self.assertEqual(lib_ra.list_stonith_agents(mock_runner), [])
 
         mock_runner.run.assert_called_once_with(
-            ["/usr/sbin/crm_resource", "--list-agents", "stonith"]
+            [settings.crm_resource_binary, "--list-agents", "stonith"]
         )
 
     def test_filter_hidden_agents(self):
@@ -520,7 +530,7 @@ class ListStonithAgentsTest(TestCase):
         )
 
         mock_runner.run.assert_called_once_with(
-            ["/usr/sbin/crm_resource", "--list-agents", "stonith"]
+            [settings.crm_resource_binary, "--list-agents", "stonith"]
         )
 
 
@@ -1587,7 +1597,7 @@ class FencedMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
         )
 
         self.mock_runner.run.assert_called_once_with(
-            ["/usr/libexec/pacemaker/pacemaker-fenced", "metadata"]
+            [settings.pacemaker_fenced, "metadata"]
         )
 
     def test_failed_to_get_xml(self):
@@ -1603,7 +1613,7 @@ class FencedMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
         )
 
         self.mock_runner.run.assert_called_once_with(
-            ["/usr/libexec/pacemaker/pacemaker-fenced", "metadata"]
+            [settings.pacemaker_fenced, "metadata"]
         )
 
     def test_invalid_xml(self):
@@ -1619,7 +1629,7 @@ class FencedMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
         )
 
         self.mock_runner.run.assert_called_once_with(
-            ["/usr/libexec/pacemaker/pacemaker-fenced", "metadata"]
+            [settings.pacemaker_fenced, "metadata"]
         )
 
 
@@ -1711,12 +1721,12 @@ class CrmAgentMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
 
         self.mock_runner.run.assert_called_once_with(
             [
-                "/usr/sbin/crm_resource",
+                settings.crm_resource_binary,
                 "--show-metadata",
                 self.agent._get_full_name(),
             ],
             env_extend={
-                "PATH": "/usr/sbin/:/bin/:/usr/bin/",
+                "PATH": f"{settings.fence_agent_binaries}:/bin/:/usr/bin/",
             },
         )
 
@@ -1734,12 +1744,12 @@ class CrmAgentMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
 
         self.mock_runner.run.assert_called_once_with(
             [
-                "/usr/sbin/crm_resource",
+                settings.crm_resource_binary,
                 "--show-metadata",
                 self.agent._get_full_name(),
             ],
             env_extend={
-                "PATH": "/usr/sbin/:/bin/:/usr/bin/",
+                "PATH": f"{settings.fence_agent_binaries}:/bin/:/usr/bin/",
             },
         )
 
@@ -1757,12 +1767,12 @@ class CrmAgentMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
 
         self.mock_runner.run.assert_called_once_with(
             [
-                "/usr/sbin/crm_resource",
+                settings.crm_resource_binary,
                 "--show-metadata",
                 self.agent._get_full_name(),
             ],
             env_extend={
-                "PATH": "/usr/sbin/:/bin/:/usr/bin/",
+                "PATH": f"{settings.fence_agent_binaries}:/bin/:/usr/bin/",
             },
         )
 
@@ -1822,12 +1832,12 @@ class StonithAgentMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
 
         self.mock_runner.run.assert_called_once_with(
             [
-                "/usr/sbin/crm_resource",
+                settings.crm_resource_binary,
                 "--show-metadata",
                 "stonith:{0}".format(self.agent_name),
             ],
             env_extend={
-                "PATH": "/usr/sbin/:/bin/:/usr/bin/",
+                "PATH": f"{settings.fence_agent_binaries}:/bin/:/usr/bin/",
             },
         )
 
@@ -1968,17 +1978,15 @@ class StonithAgentMetadataGetParametersTest(TestCase):
             [
                 mock.call(
                     [
-                        "/usr/sbin/crm_resource",
+                        settings.crm_resource_binary,
                         "--show-metadata",
                         "stonith:{0}".format(self.agent_name),
                     ],
                     env_extend={
-                        "PATH": "/usr/sbin/:/bin/:/usr/bin/",
+                        "PATH": f"{settings.fence_agent_binaries}:/bin/:/usr/bin/",
                     },
                 ),
-                mock.call(
-                    ["/usr/libexec/pacemaker/pacemaker-fenced", "metadata"]
-                ),
+                mock.call([settings.pacemaker_fenced, "metadata"]),
             ]
         )
 

@@ -7,6 +7,7 @@ from unittest import mock, skipUnless
 
 from lxml import etree
 
+from pcs_test import settings as tests_settings
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
 from pcs import settings
@@ -155,7 +156,7 @@ def _get_current_pacemaker_version():
 def _get_current_cib_schema_version():
     regexp = re.compile(r"pacemaker-((\d+)\.(\d+))")
     all_versions = set()
-    xml = etree.parse("/usr/share/pacemaker/versions.rng").getroot()
+    xml = etree.parse(tests_settings.pacemaker_version_rng).getroot()
     for value_el in xml.xpath(
         ".//x:attribute[@name='validate-with']//x:value",
         namespaces={"x": "http://relaxng.org/ns/structure/1.0"},

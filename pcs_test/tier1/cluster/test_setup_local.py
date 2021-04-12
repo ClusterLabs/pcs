@@ -2,6 +2,7 @@ import json
 from textwrap import dedent
 from unittest import TestCase
 
+from pcs import settings
 from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.misc import (
     get_tmp_file,
@@ -79,7 +80,7 @@ class SetupLocal(AssertPcsMixin, TestCase):
 
             logging {{
                 to_logfile: yes
-                logfile: /var/log/cluster/corosync.log
+                logfile: {settings.corosync_log_file}
                 to_syslog: yes
                 timestamp: on
             }}
@@ -241,8 +242,10 @@ class SetupLocal(AssertPcsMixin, TestCase):
                 }
 
                 logging {
-                    to_logfile: yes
-                    logfile: /var/log/cluster/corosync.log
+                    to_logfile: yes"""
+                f"""
+                    logfile: {settings.corosync_log_file}"""
+                """
                     to_syslog: yes
                     timestamp: on
                 }

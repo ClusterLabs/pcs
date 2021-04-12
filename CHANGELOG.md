@@ -8,7 +8,6 @@
 
 [rhbz#1896458]: https://bugzilla.redhat.com/show_bug.cgi?id=1896458
 
-
 ## [0.10.8] - 2021-02-01
 
 ### Added

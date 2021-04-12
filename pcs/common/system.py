@@ -1,12 +1,9 @@
 import os.path
 from functools import lru_cache
 
-SYSTEMD_PATHS = [
-    "/run/systemd/system",
-    "/var/run/systemd/system",
-]
+from pcs import settings
 
 
 @lru_cache()
 def is_systemd():
-    return any([os.path.isdir(path) for path in SYSTEMD_PATHS])
+    return any([os.path.isdir(path) for path in settings.systemd_unit_path])

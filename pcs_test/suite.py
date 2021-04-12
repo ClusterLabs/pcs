@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import importlib
 import os
 import sys
@@ -13,27 +12,13 @@ except ImportError:
     can_concurrency = False
 
 
+PACKAGE_DIR = os.path.realpath(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)
+
+
 # pylint: disable=redefined-outer-name, unused-argument, invalid-name
-# pylint: disable=ungrouped-imports
-
-if "BUNDLED_LIB_LOCATION" in os.environ:
-    sys.path.insert(0, os.environ["BUNDLED_LIB_LOCATION"])
-
-PACKAGE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-if "--installed" in sys.argv:
-    sys.path.append(PACKAGE_DIR)
-
-    from pcs import settings
-
-    if settings.pcs_bundled_pacakges_dir not in sys.path:
-        sys.path.insert(0, settings.pcs_bundled_pacakges_dir)
-
-    from pcs_test.tools import pcs_runner
-
-    pcs_runner.test_installed = True
-else:
-    sys.path.insert(0, PACKAGE_DIR)
+# pylint: disable=ungrouped-imports, import-outside-toplevel
 
 
 def prepare_test_name(test_name):
@@ -74,7 +59,6 @@ def autodiscover_tests(tier=None):
     # ...All test modules must be importable from the top level of the project.
     # If the start directory is not the top level directory then the top level
     # directory must be specified separately...
-    # So test are loaded from PACKAGE_DIR/pcs but their names starts with "pcs."
     test_dir = os.path.join(PACKAGE_DIR, "pcs_test")
     if tier is not None:
         test_dir = os.path.join(test_dir, f"tier{tier}")
@@ -101,78 +85,102 @@ def discover_tests(
     return unittest.TestLoader().loadTestsFromNames(explicitly_enumerated_tests)
 
 
-run_concurrently = can_concurrency and "--no-parallel" not in sys.argv
+def main():
+    if "BUNDLED_LIB_LOCATION" in os.environ:
+        sys.path.insert(0, os.environ["BUNDLED_LIB_LOCATION"])
 
-explicitly_enumerated_tests = [
-    prepare_test_name(arg)
-    for arg in sys.argv[1:]
-    if arg
-    not in (
-        "-v",
-        "--all-but",
-        "--fast-info",  # show a traceback immediatelly after the test fails
-        "--last-slash",
-        "--list",
-        "--no-parallel",
-        "--traceback-highlight",
-        "--traditional-verbose",
-        "--vanilla",
-        "--installed",
-        "--tier0",
-        "--tier1",
+    if "--installed" in sys.argv:
+        sys.path.append(PACKAGE_DIR)
+
+        from pcs import settings
+
+        if settings.pcs_bundled_packages_dir not in sys.path:
+            sys.path.insert(0, settings.pcs_bundled_packages_dir)
+
+        from pcs_test.tools import pcs_runner
+
+        pcs_runner.test_installed = True
+    else:
+        sys.path.insert(0, PACKAGE_DIR)
+
+    run_concurrently = can_concurrency and "--no-parallel" not in sys.argv
+
+    explicitly_enumerated_tests = [
+        prepare_test_name(arg)
+        for arg in sys.argv[1:]
+        if arg
+        not in (
+            "-v",
+            "--all-but",
+            "--fast-info",  # show a traceback immediatelly after the test fails
+            "--last-slash",
+            "--list",
+            "--no-parallel",
+            "--traceback-highlight",
+            "--traditional-verbose",
+            "--vanilla",
+            "--installed",
+            "--tier0",
+            "--tier1",
+        )
+    ]
+
+    tier = None
+    if "--tier0" in sys.argv:
+        tier = 0
+    elif "--tier1" in sys.argv:
+        tier = 1
+
+    discovered_tests = discover_tests(
+        explicitly_enumerated_tests, "--all-but" in sys.argv, tier=tier
     )
-]
+    if "--list" in sys.argv:
+        test_list = tests_from_suite(discovered_tests)
+        print("\n".join(sorted(test_list)))
+        print("{0} tests found".format(len(test_list)))
+        sys.exit()
 
-tier = None
-if "--tier0" in sys.argv:
-    tier = 0
-elif "--tier1" in sys.argv:
-    tier = 1
+    tests_to_run = discovered_tests
+    if run_concurrently:
+        tests_to_run = ConcurrentTestSuite(
+            discovered_tests,
+            concurrencytest.fork_for_tests(),
+        )
 
-discovered_tests = discover_tests(
-    explicitly_enumerated_tests, "--all-but" in sys.argv, tier=tier
-)
-if "--list" in sys.argv:
-    test_list = tests_from_suite(discovered_tests)
-    print("\n".join(sorted(test_list)))
-    print("{0} tests found".format(len(test_list)))
-    sys.exit()
-
-tests_to_run = discovered_tests
-if run_concurrently:
-    tests_to_run = ConcurrentTestSuite(
-        discovered_tests,
-        concurrencytest.fork_for_tests(),
+    use_improved_result_class = (
+        sys.stdout.isatty()
+        and sys.stderr.isatty()
+        and "--vanilla" not in sys.argv
     )
 
+    resultclass = unittest.TextTestResult
+    if use_improved_result_class:
+        from pcs_test.tools.color_text_runner import get_text_test_result_class
 
-use_improved_result_class = (
-    sys.stdout.isatty() and sys.stderr.isatty() and "--vanilla" not in sys.argv
-)
+        resultclass = get_text_test_result_class(
+            slash_last_fail_in_overview=("--last-slash" in sys.argv),
+            traditional_verbose=(
+                "--traditional-verbose" in sys.argv
+                or
+                # temporary workaround - our verbose writer is not compatible with
+                # running tests in parallel, use our traditional writer
+                (run_concurrently and "-v" in sys.argv)
+            ),
+            traceback_highlight=("--traceback-highlight" in sys.argv),
+            fast_info=("--fast-info" in sys.argv),
+        )
 
-resultclass = unittest.TextTestResult
-if use_improved_result_class:
-    from pcs_test.tools.color_text_runner import get_text_test_result_class
-
-    resultclass = get_text_test_result_class(
-        slash_last_fail_in_overview=("--last-slash" in sys.argv),
-        traditional_verbose=(
-            "--traditional-verbose" in sys.argv
-            or
-            # temporary workaround - our verbose writer is not compatible with
-            # running tests in parallel, use our traditional writer
-            (run_concurrently and "-v" in sys.argv)
-        ),
-        traceback_highlight=("--traceback-highlight" in sys.argv),
-        fast_info=("--fast-info" in sys.argv),
+    testRunner = unittest.TextTestRunner(
+        verbosity=2 if "-v" in sys.argv else 1, resultclass=resultclass
     )
+    test_result = testRunner.run(tests_to_run)
+    if not test_result.wasSuccessful():
+        sys.exit(1)
 
-testRunner = unittest.TextTestRunner(
-    verbosity=2 if "-v" in sys.argv else 1, resultclass=resultclass
-)
-test_result = testRunner.run(tests_to_run)
-if not test_result.wasSuccessful():
-    sys.exit(1)
+
+if __name__ == "__main__":
+    main()
+
 
 # assume that we are in pcs root dir
 #

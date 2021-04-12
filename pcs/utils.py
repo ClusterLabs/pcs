@@ -913,8 +913,7 @@ def run_pcsdcli(command, data=None):
     pcsd_dir_path = settings.pcsd_exec_location
     pcsdcli_path = os.path.join(pcsd_dir_path, "pcsd-cli.rb")
     if settings.pcsd_gem_path is not None:
-        gem_home = os.path.join(pcsd_dir_path, settings.pcsd_gem_path)
-        env_var["GEM_HOME"] = gem_home
+        env_var["GEM_HOME"] = settings.pcsd_gem_path
     stdout, dummy_stderr, retval = cmd_runner().run(
         [settings.ruby_executable, "-I" + pcsd_dir_path, pcsdcli_path, command],
         json.dumps(data),
@@ -2114,7 +2113,7 @@ def verify_cert_key_pair(cert, key):
     key_modulus = ""
 
     output, retval = run(
-        ["/usr/bin/openssl", "x509", "-modulus", "-noout"],
+        [settings.openssl_executable, "x509", "-modulus", "-noout"],
         string_for_stdin=cert,
     )
     if retval != 0:
@@ -2123,7 +2122,8 @@ def verify_cert_key_pair(cert, key):
         cert_modulus = output.strip()
 
     output, retval = run(
-        ["/usr/bin/openssl", "rsa", "-modulus", "-noout"], string_for_stdin=key
+        [settings.openssl_executable, "rsa", "-modulus", "-noout"],
+        string_for_stdin=key,
     )
     if retval != 0:
         errors.append("Invalid key: {0}".format(output.strip()))

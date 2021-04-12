@@ -748,7 +748,7 @@ def kill_local_cluster_services():
         "corosync-qdevice",
         "corosync",
     ]
-    return utils.run(["/usr/bin/killall", "-9"] + all_cluster_daemons)
+    return utils.run([settings.killall_executable, "-9"] + all_cluster_daemons)
 
 
 def cluster_push(lib, argv, modifiers):
@@ -852,7 +852,7 @@ def cluster_push(lib, argv, modifiers):
 
         runner = utils.cmd_runner()
         command = [
-            os.path.join(settings.pacemaker_binaries, "crm_diff"),
+            settings.crm_diff,
             "--original",
             diff_against,
             "--new",
@@ -873,7 +873,7 @@ def cluster_push(lib, argv, modifiers):
             sys.exit(0)
 
         command = [
-            os.path.join(settings.pacemaker_binaries, "cibadmin"),
+            settings.cibadmin,
             "--patch",
             "--xml-pipe",
         ]
@@ -1363,7 +1363,7 @@ def cluster_destroy(lib, argv, modifiers):
         print("Removing all cluster configuration files...")
         dummy_output, dummy_retval = utils.run(
             [
-                "/bin/rm",
+                settings.rm_executable,
                 "-f",
                 settings.corosync_conf_file,
                 settings.corosync_authkey_file,
@@ -1383,12 +1383,12 @@ def cluster_destroy(lib, argv, modifiers):
         for name in state_files:
             dummy_output, dummy_retval = utils.run(
                 [
-                    "/usr/bin/find",
-                    "/var/lib/pacemaker",
+                    settings.find_executable,
+                    settings.pacemaker_local_state_dir,
                     "-name",
                     name,
                     "-exec",
-                    "/bin/rm",
+                    settings.rm_executable,
                     "-f",
                     "{}",
                     ";",

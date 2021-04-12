@@ -19,6 +19,7 @@ require 'corosyncconf.rb'
 require 'resource.rb'
 require 'cluster_entity.rb'
 require 'auth.rb'
+require 'settings.rb'
 
 class NotImplementedException < NotImplementedError
 end
@@ -1180,7 +1181,7 @@ def verify_cert_key_pair(cert, key)
     {
       'stdin' => cert,
     },
-    '/usr/bin/openssl', 'x509', '-modulus', '-noout'
+    OPENSSL_EXEC, 'x509', '-modulus', '-noout'
   )
   if retval != 0
     errors << "Invalid certificate: #{stderr.join}"
@@ -1193,7 +1194,7 @@ def verify_cert_key_pair(cert, key)
     {
       'stdin' => key,
     },
-    '/usr/bin/openssl', 'rsa', '-modulus', '-noout'
+    OPENSSL_EXEC, 'rsa', '-modulus', '-noout'
   )
   if retval != 0
     errors << "Invalid key: #{stderr.join}"

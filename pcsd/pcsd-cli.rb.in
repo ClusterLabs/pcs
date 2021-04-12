@@ -1,0 +1,5 @@
+#!@RUBY@
+
+require 'pcsd-cli-main.rb'
+
+pcsd_cli_main()

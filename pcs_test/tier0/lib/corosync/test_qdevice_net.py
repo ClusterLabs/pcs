@@ -17,11 +17,15 @@ import pcs.lib.corosync.qdevice_net as lib
 
 # pylint: disable=no-self-use
 
-_qnetd_cert_dir = "/etc/corosync/qnetd/nssdb"
-_qnetd_cert_tool = "/usr/bin/corosync-qnetd-certutil"
-_qnetd_tool = "/usr/bin/corosync-qnetd-tool"
-_client_cert_dir = "/etc/corosync/qdevice/net/nssdb"
-_client_cert_tool = "/usr/sbin/corosync-qdevice-net-certutil"
+_qnetd_cert_tool = os.path.join(
+    settings.corosync_qnet_binaries, "corosync-qnetd-certutil"
+)
+_qnetd_tool = os.path.join(
+    settings.corosync_qnet_binaries, "corosync-qnetd-tool"
+)
+_client_cert_tool = os.path.join(
+    settings.corosync_qdevice_binaries, "corosync-qdevice-net-certutil"
+)
 
 
 def cert_to_url(cert):
@@ -90,7 +94,9 @@ class QdeviceDestroyTest(TestCase):
     def test_success(self, mock_initialized, mock_rmtree):
         mock_initialized.return_value = True
         lib.qdevice_destroy()
-        mock_rmtree.assert_called_once_with(_qnetd_cert_dir)
+        mock_rmtree.assert_called_once_with(
+            settings.corosync_qdevice_net_server_certs_dir
+        )
 
     def test_not_initialized(self, mock_initialized, mock_rmtree):
         mock_initialized.return_value = False
@@ -111,7 +117,9 @@ class QdeviceDestroyTest(TestCase):
                 },
             ),
         )
-        mock_rmtree.assert_called_once_with(_qnetd_cert_dir)
+        mock_rmtree.assert_called_once_with(
+            settings.corosync_qdevice_net_server_certs_dir
+        )
 
 
 class QdeviceStatusGenericTest(TestCase):
@@ -400,7 +408,9 @@ class ClientDestroyTest(TestCase):
     def test_success(self, mock_initialized, mock_rmtree):
         mock_initialized.return_value = True
         lib.client_destroy()
-        mock_rmtree.assert_called_once_with(_client_cert_dir)
+        mock_rmtree.assert_called_once_with(
+            settings.corosync_qdevice_net_client_certs_dir
+        )
 
     def test_not_initialized(self, mock_initialized, mock_rmtree):
         mock_initialized.return_value = False
@@ -421,7 +431,9 @@ class ClientDestroyTest(TestCase):
                 },
             ),
         )
-        mock_rmtree.assert_called_once_with(_client_cert_dir)
+        mock_rmtree.assert_called_once_with(
+            settings.corosync_qdevice_net_client_certs_dir
+        )
 
 
 class ClientSetupTest(TestCase):

@@ -10,6 +10,7 @@ from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.misc import outdent
 
+from pcs import settings
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import cluster
 
@@ -80,7 +81,7 @@ def corosync_conf_fixture(
 
         logging {{
             to_logfile: yes
-            logfile: /var/log/cluster/corosync.log
+            logfile: {logfile}
             to_syslog: yes
         }}
         """
@@ -89,6 +90,7 @@ def corosync_conf_fixture(
         nodes="\n".join(nodes),
         quorum=_corosync_options_fixture(quorum_options, indent_level=1),
         device=device,
+        logfile=settings.corosync_log_file,
     )
 
 

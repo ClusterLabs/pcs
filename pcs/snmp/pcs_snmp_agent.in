@@ -1,0 +1,16 @@
+#!@PYTHON@
+import os.path
+import sys
+
+PACKAGE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(
+    os.path.abspath(__file__)
+)))
+sys.path.insert(0, PACKAGE_DIR)
+
+import pcs
+
+pcs.settings.pcs_bundled_packages_dir = os.path.join(
+    PACKAGE_DIR, "pcs/bundled/packages"
+)
+pcs.settings.pcsd_exec_location = os.path.join(PACKAGE_DIR, "pcsd")
+pcs.snmp.pcs_snmp_agent.main(sys.argv)

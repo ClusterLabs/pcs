@@ -832,7 +832,7 @@ end
 def remote_node_available(params, request, auth_user)
   if (
     File.exist?(Cfgsync::CorosyncConf.file_path) or \
-    File.exist?("/var/lib/pacemaker/cib/cib.xml")
+    File.exist?(CIB_PATH)
   )
     return JSON.generate({:node_available => false})
   end
