@@ -4,6 +4,8 @@ Pcs is a Corosync and Pacemaker configuration tool. It permits users to
 easily view, modify and create Pacemaker based clusters. Pcs contains pcsd, a
 pcs daemon, which operates as a remote server for pcs and provides a web UI.
 
+KNET ROCKS!
+
 ---
 
 ### Pcs Versions
