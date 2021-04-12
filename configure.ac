@@ -146,6 +146,11 @@ AC_ARG_ENABLE([destructive-tests],
 	      [destructive_tests="yes"])
 AM_CONDITIONAL([EXECUTE_TIER1_TESTS], [test "x$destructive_tests" = "xyes"])
 
+AC_ARG_ENABLE([concise-tests],
+	      [AS_HELP_STRING([--enable-concise-tests], [Make tests output brief by not printing a name of each test (default: no)])],
+	      [concise_tests="yes"])
+AM_CONDITIONAL([CONCISE_TESTS], [test "x$concise_tests" = "xyes"])
+
 AC_ARG_ENABLE([local-build],
 	      [AS_HELP_STRING([--enable-local-build], [Download and install all dependencies as user / bundles])],
 	      [local_build="yes"])

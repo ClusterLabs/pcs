@@ -144,6 +144,13 @@ uninstall-local:
 dist_doc_DATA	= README.md CHANGELOG.md
 
 # testing
+
+if CONCISE_TESTS
+python_test_options =
+else
+python_test_options = -v --vanilla
+endif
+
 pylint:
 if DEV_TESTS
 	export PYTHONPATH=${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/packages && \
@@ -171,12 +178,12 @@ endif
 
 tests_tier0:
 	export PYTHONPATH=${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/packages && \
-		$(PYTHON) ${abs_builddir}/pcs_test/suite.py -v --vanilla --tier0
+		$(PYTHON) ${abs_builddir}/pcs_test/suite.py $(python_test_options) --tier0
 
 tests_tier1:
 if EXECUTE_TIER1_TESTS
 	export PYTHONPATH=${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/packages && \
-		$(PYTHON) ${abs_builddir}/pcs_test/suite.py -v --vanilla --tier1
+		$(PYTHON) ${abs_builddir}/pcs_test/suite.py $(python_test_options) --tier1
 endif
 
 pcsd-tests:
