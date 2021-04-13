@@ -151,6 +151,11 @@ AC_ARG_ENABLE([concise-tests],
 	      [concise_tests="yes"])
 AM_CONDITIONAL([CONCISE_TESTS], [test "x$concise_tests" = "xyes"])
 
+AC_ARG_ENABLE([parallel-tests],
+	      [AS_HELP_STRING([--enable-parallel-tests], [Python parallel testing requires pip modules that are not packaged anywhere (default: no)])],
+	      [parallel_tests="yes"])
+AM_CONDITIONAL([PARALLEL_TESTS], [test "x$parallel_tests" = "xyes"])
+
 AC_ARG_ENABLE([local-build],
 	      [AS_HELP_STRING([--enable-local-build], [Download and install all dependencies as user / bundles])],
 	      [local_build="yes"])
