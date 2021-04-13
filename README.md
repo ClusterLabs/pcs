@@ -55,10 +55,12 @@ It is also recommended to have these:
 Apart from the dependencies listed above, these are also required for
 installation:
 
-* python development files (package python3-devel)
+* python development files (packages python3-devel, python3-setuptools,
+  python3-setuptools\_scm, python3-wheel)
 * ruby development files (package ruby-devel)
 * rubygems
 * rubygem bundler (package rubygem-bundler or ruby-bundler or bundler)
+* autoconf, automake
 * gcc
 * gcc-c++
 * FFI development files (package libffi-devel or libffi-dev)
