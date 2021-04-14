@@ -298,7 +298,7 @@ PCS_CHECK_PYMOD([pyOpenSSL])
 # those are kind of problematic.
 # use them all from the BaseOS or embedded them all as necessary (--enable-local-build)
 PCS_CHECK_PYMOD([dacite], [], [yes])
-PCS_CHECK_PYMOD([tornado], [>= 6.0.0], [yes])
+PCS_CHECK_PYMOD([tornado], [>= 6.1], [yes])
 PCS_CHECK_PYMOD([python-dateutil], [>= 2.7.0], [yes])
 
 # python 3.6 needs dataclasses as well (added in 3.7)
