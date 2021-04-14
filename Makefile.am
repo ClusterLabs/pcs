@@ -296,7 +296,7 @@ gen_start_date = 2000-01-01
 .PHONY: gen-ChangeLog
 gen-ChangeLog:
 	if test -d $(abs_srcdir)/.git; then				\
-		LC_ALL=C $(top_srcdir)/build-aux/gitlog-to-changelog	\
+		LC_ALL=C $(top_srcdir)/make/gitlog-to-changelog		\
 			--since=$(gen_start_date) > $(distdir)/cl-t;	\
 		rm -f $(distdir)/ChangeLog;				\
 		mv $(distdir)/cl-t $(distdir)/ChangeLog;		\
