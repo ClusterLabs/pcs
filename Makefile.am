@@ -1,6 +1,6 @@
 EXTRA_DIST		= autogen.sh \
 			  .version make/release.mk \
-			  dev_requirements.txt \
+			  dev_requirements.txt parallel_tests_requirements.txt \
 			  make/git-version-gen make/gitlog-to-changelog \
 			  scripts/pcsd.sh.in CHANGELOG.md \
 			  .eslintrc .gitlab-ci.yml \
@@ -65,8 +65,14 @@ if DEV_TESTS
 endif
 	touch $@
 
+stamps/download_python_parallel_tests_deps: parallel_tests_requirements.txt
+if PARALLEL_TESTS
+	PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring $(PIP) install --upgrade -r $<
+endif
+	touch $@
+
 if ENABLE_DOWNLOAD
-stamps/untar_python_src: stamps/download_python_deps stamps/download_python_devel_deps
+stamps/untar_python_src: stamps/download_python_deps stamps/download_python_devel_deps stamps/download_python_parallel_tests_deps
 else
 stamps/untar_python_src:
 endif
@@ -125,7 +131,8 @@ endif
 
 install-exec-local: install_python_embedded_mods stamps/install_ruby_deps_local
 	$(MKDIR_P) $(or ${DESTDIR}, /)/$(PYTHON_SITELIB)/pcs/
-	$(PYTHON) setup.py install --root=$(or ${DESTDIR}, /) ${EXTRA_SETUP_OPTS} --record $(or ${DESTDIR}, /)/$(PYTHON_SITELIB)/pcs/deinstall.txt
+	$(PYTHON) setup.py install --root=$(or ${DESTDIR}, /) ${EXTRA_SETUP_OPTS} --record $(or ${DESTDIR}, /)/$(PYTHON_SITELIB)/pcs/deinstall.txt \
+		--install-scripts $(SBINDIR) --install-purelib $(PYTHON_SITELIB) --install-platlib $(PYTHON_SITELIB)
 	$(MKDIR_P) ${DESTDIR}/$(LIB_DIR)/pcs
 	mv ${DESTDIR}/$(SBINDIR)/pcs_internal ${DESTDIR}/$(LIB_DIR)/pcs/pcs_internal
 	mv ${DESTDIR}/$(SBINDIR)/pcs_snmp_agent ${DESTDIR}/$(LIB_DIR)/pcs/pcs_snmp_agent
@@ -289,7 +296,7 @@ gen_start_date = 2000-01-01
 .PHONY: gen-ChangeLog
 gen-ChangeLog:
 	if test -d $(abs_srcdir)/.git; then				\
-		LC_ALL=C $(top_srcdir)/build-aux/gitlog-to-changelog	\
+		LC_ALL=C $(top_srcdir)/make/gitlog-to-changelog		\
 			--since=$(gen_start_date) > $(distdir)/cl-t;	\
 		rm -f $(distdir)/ChangeLog;				\
 		mv $(distdir)/cl-t $(distdir)/ChangeLog;		\
