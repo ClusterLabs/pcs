@@ -1,4 +1,5 @@
 from collections import namedtuple
+import fcntl
 from functools import partial
 
 from pcs.cli.reports.output import error
@@ -28,6 +29,9 @@ def cib(filename, touch_cib_file):
             touch_cib_file(filename)
             try:
                 with open(filename, mode="r") as cib_file:
+                    # the lock is released when the file gets closed on leaving
+                    # the with statement
+                    fcntl.flock(cib_file.fileno(), fcntl.LOCK_SH)
                     original_content = cib_file.read()
             except EnvironmentError as e:
                 raise error(
@@ -40,6 +44,9 @@ def cib(filename, touch_cib_file):
         if filename and env.cib_data != original_content:
             try:
                 with open(filename, mode="w") as cib_file:
+                    # the lock is released when the file gets closed on leaving
+                    # the with statement
+                    fcntl.flock(cib_file.fileno(), fcntl.LOCK_EX)
                     cib_file.write(env.cib_data)
             except EnvironmentError as e:
                 raise error(
@@ -57,7 +64,11 @@ def corosync_conf_existing(local_file_path):
     def apply(next_in_line, env, *args, **kwargs):
         if local_file_path:
             try:
-                env.corosync_conf_data = open(local_file_path).read()
+                with open(local_file_path, "r") as local_file:
+                    # the lock is released when the file gets closed on leaving
+                    # the with statement
+                    fcntl.flock(local_file.fileno(), fcntl.LOCK_SH)
+                    env.corosync_conf_data = local_file.read()
             except EnvironmentError as e:
                 raise error(
                     "Unable to read {0}: {1}".format(
@@ -69,9 +80,11 @@ def corosync_conf_existing(local_file_path):
 
         if local_file_path:
             try:
-                file = open(local_file_path, "w")
-                file.write(env.corosync_conf_data)
-                file.close()
+                with open(local_file_path, "w") as local_file:
+                    # the lock is released when the file gets closed on leaving
+                    # the with statement
+                    fcntl.flock(local_file.fileno(), fcntl.LOCK_EX)
+                    local_file.write(env.corosync_conf_data)
             except EnvironmentError as e:
                 raise error(
                     "Unable to write {0}: {1}".format(
