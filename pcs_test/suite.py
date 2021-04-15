@@ -17,8 +17,7 @@ PACKAGE_DIR = os.path.realpath(
 )
 
 
-# pylint: disable=redefined-outer-name, unused-argument, invalid-name
-# pylint: disable=ungrouped-imports, import-outside-toplevel
+# pylint: disable=redefined-outer-name
 
 
 def prepare_test_name(test_name):
@@ -86,6 +85,7 @@ def discover_tests(
 
 
 def main():
+    # pylint: disable=import-outside-toplevel
     if "BUNDLED_LIB_LOCATION" in os.environ:
         sys.path.insert(0, os.environ["BUNDLED_LIB_LOCATION"])
 
@@ -153,11 +153,11 @@ def main():
         and "--vanilla" not in sys.argv
     )
 
-    resultclass = unittest.TextTestResult
+    ResultClass = unittest.TextTestResult
     if use_improved_result_class:
         from pcs_test.tools.color_text_runner import get_text_test_result_class
 
-        resultclass = get_text_test_result_class(
+        ResultClass = get_text_test_result_class(
             slash_last_fail_in_overview=("--last-slash" in sys.argv),
             traditional_verbose=(
                 "--traditional-verbose" in sys.argv
@@ -170,10 +170,10 @@ def main():
             fast_info=("--fast-info" in sys.argv),
         )
 
-    testRunner = unittest.TextTestRunner(
-        verbosity=2 if "-v" in sys.argv else 1, resultclass=resultclass
+    test_runner = unittest.TextTestRunner(
+        verbosity=2 if "-v" in sys.argv else 1, resultclass=ResultClass
     )
-    test_result = testRunner.run(tests_to_run)
+    test_result = test_runner.run(tests_to_run)
     if not test_result.wasSuccessful():
         sys.exit(1)
 
