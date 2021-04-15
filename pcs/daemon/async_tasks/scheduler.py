@@ -193,6 +193,9 @@ class Scheduler:
                 )
                 continue
             if next_task.is_kill_requested():
+                # The task state and finish types are set during garbage
+                # collection, we only prevent tasks here from queuing if
+                # they are killed in CREATED state
                 continue
             try:
                 self._proc_pool.apply_async(

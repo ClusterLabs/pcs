@@ -60,7 +60,7 @@ def config_sync(sync_config_lock: Lock, ruby_pcsd_wrapper: ruby_pcsd.Wrapper):
     return config_synchronization
 
 
-async def run_scheduler(scheduler):
+async def run_scheduler(scheduler: Scheduler) -> None:
     while True:
         await scheduler.perform_actions()
         await async_sleep(settings.async_api_scheduler_interval_ms / 1000)
