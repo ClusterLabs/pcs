@@ -103,11 +103,13 @@ class StonithTest(TestCase, AssertPcsMixin):
     def setUp(self):
         self.temp_cib = get_tmp_file("tier1_test_stonith")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
+        self.temp_corosync_conf = get_tmp_file("tier1_test_stonith")
+        write_file_to_tmpfile(rc("corosync.conf"), self.temp_corosync_conf)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
-        self.pcs_runner.mock_settings["corosync_conf_file"] = rc(
-            "corosync.conf"
-        )
+        self.pcs_runner.mock_settings[
+            "corosync_conf_file"
+        ] = self.temp_corosync_conf.name
 
     def tearDown(self):
         self.temp_cib.close()
@@ -819,7 +821,7 @@ class StonithTest(TestCase, AssertPcsMixin):
 
     def testNoStonithWarning(self):
         # pylint: disable=unused-variable
-        corosync_conf = rc("corosync.conf")
+        corosync_conf = self.temp_corosync_conf.name
         o, r = pcs(
             self.temp_cib.name, ["status"], corosync_conf_opt=corosync_conf
         )
