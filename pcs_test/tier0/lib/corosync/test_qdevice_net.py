@@ -4,7 +4,7 @@ from textwrap import dedent
 from unittest import mock, TestCase
 
 from pcs_test.tools.assertions import assert_raise_library_error
-from pcs_test.tools.misc import get_test_resource
+from pcs_test.tools.misc import get_test_resource, get_tmp_dir
 
 from pcs import settings
 from pcs.common import reports
@@ -440,16 +440,18 @@ class ClientSetupTest(TestCase):
     def setUp(self):
         self.mock_runner = mock.MagicMock(spec_set=CommandRunner)
         self.original_path = settings.corosync_qdevice_net_client_certs_dir
-        settings.corosync_qdevice_net_client_certs_dir = get_test_resource(
-            "qdevice-certs"
-        )
+        self.cert_dir = get_tmp_dir("tier0_lib_corosync_qdevice_net")
+        settings.corosync_qdevice_net_client_certs_dir = self.cert_dir.name
         self.ca_file_path = os.path.join(
             settings.corosync_qdevice_net_client_certs_dir,
             settings.corosync_qdevice_net_client_ca_file_name,
         )
+        with open(self.ca_file_path, "w") as my_file:
+            my_file.write("to be overwritten")
 
     def tearDown(self):
         settings.corosync_qdevice_net_client_certs_dir = self.original_path
+        self.cert_dir.cleanup()
 
     @mock.patch("pcs.lib.corosync.qdevice_net.client_destroy")
     def test_success(self, mock_destroy):
