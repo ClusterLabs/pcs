@@ -50,11 +50,6 @@ class Task(ImplementsToDto):
         self._last_message_at: Optional[datetime.datetime] = None
         self._worker_pid: int = -1
 
-    def __repr__(self) -> str:
-        retval = ""
-        retval += f"Task {self._task_ident}, state: {self._state.name}, kill reason: {self._kill_reason}"
-        return retval
-
     @property
     def state(self) -> TaskState:
         return self._state
@@ -66,6 +61,10 @@ class Task(ImplementsToDto):
         :param state: New task state
         """
         self._state = state
+
+    @property
+    def task_ident(self) -> str:
+        return self._task_ident
 
     def _get_last_updated_timestamp(self) -> Optional[datetime.datetime]:
         """
@@ -130,7 +129,34 @@ class Task(ImplementsToDto):
         self._last_message_at = datetime.datetime.now()
 
     def is_kill_requested(self) -> bool:
-        return self._kill_reason is not None
+        """
+        Reports if the task needs to be killed
+
+        Only CREATED and EXECUTED tasks can be killed. SCHEDULED tasks can be
+        killed only after they were executed.
+
+        :return: True for tasks marked for killing that are not QUEUED
+        or FINISHED, False otherwise
+        """
+        return self._kill_reason is not None and self.state not in [
+            TaskState.QUEUED,
+            TaskState.FINISHED,
+        ]
+
+    def is_deletion_requested(self) -> bool:
+        """
+        Reports if the task object can be safely removed from the scheduler
+
+        When the client dies, tasks need to be deleted from the scheduler since
+        no one will pick them up with get_task which deletes FINISHED tasks.
+
+        :return: True for abandoned tasks that are not QUEUED or EXECUTED, False
+        otherwise
+        """
+        return (
+            self._kill_reason is TaskKillReason.ABANDONED
+            and self._state not in [TaskState.QUEUED, TaskState.EXECUTED]
+        )
 
     def request_kill(self, reason: TaskKillReason) -> None:
         """
@@ -141,19 +167,21 @@ class Task(ImplementsToDto):
 
     def kill(self) -> None:
         """
-        Terminates the task
+        Terminates the task and/or changes its state
 
-        This method terminates the task by sending SIGTERM to a worker process.
-        It can be called on any task that needs to be terminated, even if the
-        worker is not running, then it only sets the right status.
+        CREATED tasks are already prevented from being scheduled by requesting
+        to kill them, only their state gets corrected here.
+        EXECUTED tasks are terminated by by sending SIGTERM to their worker
+        process and their state is changed here.
         """
         if self._state == TaskState.EXECUTED:
             try:
                 os.kill(self._worker_pid, 15)
             except ProcessLookupError:
                 # PID doesn't exist, process might have died on its own or
-                # finished even in the time since task state was checked
-                pass
+                # finished even in the time since task state was checked. Since
+                # the killing wasn't successful, don't change the state
+                return
 
         self._state = TaskState.FINISHED
         self._task_finish_type = TaskFinishType.KILL

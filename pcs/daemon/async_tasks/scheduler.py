@@ -11,13 +11,10 @@ from queue import Empty
 
 from pcs import settings
 from pcs.common.async_tasks.dto import CommandDto, TaskResultDto
-from pcs.common.async_tasks.types import (
-    TaskState,
-    TaskKillReason,
-)
+from pcs.common.async_tasks.types import TaskKillReason
 from .logging import setup_scheduler_logger
 from .messaging import Message
-from .task import Task, UnknownMessageError
+from .task import Task, TaskState, UnknownMessageError
 from .worker import worker_init, task_executor
 
 
@@ -109,18 +106,26 @@ class Scheduler:
 
     async def _garbage_collection(self) -> None:
         """
-        Deletes tasks marked for garbage collection
+        Terminates and/or deletes tasks marked for garbage collection
+
+        Task.kill method is responsible for changing state and deciding what
+        actions needs to be taken to properly remove the task from the scheduler
         """
         # self._logger.debug("Running garbage collection.")
+        task_idents_to_delete = []
         for task in self._task_register.values():
             if task.is_kill_requested():
                 task.kill()
+            if task.is_deletion_requested():
+                task_idents_to_delete.append(task.task_ident)
+        for task_ident in task_idents_to_delete:
+            del self._task_register[task_ident]
 
     async def perform_actions(self) -> int:
         """
         Calls all actions that are done by the scheduler in one pass
 
-        DO NOT USE IN TIER0 TESTS! Look for a function of the same name
+        DO NOT USE IN TIER0 TESTS! Look for a function with the same name
         in scheduler's integration tests
         """
         # self._logger.debug("Scheduler tick.")
