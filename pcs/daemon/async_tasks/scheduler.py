@@ -95,34 +95,26 @@ class Scheduler:
         )
         return task_ident
 
-    async def _task_register_operations(self, run_hunting: bool = True) -> None:
-        if run_hunting:
-            for task in self._task_register.values():
-                await self._garbage_hunting(task)
-                await self._garbage_collection(task)
-        else:
-            for task in self._task_register.values():
-                await self._garbage_collection(task)
-
-    @staticmethod
-    async def _garbage_hunting(task: Task) -> None:
+    async def _garbage_hunting(self) -> None:
         """
         Marks tasks for garbage collection
         """
+        # TODO: (optimization) Run less frequently (kill timeout/4?)
         # self._logger.debug("Running garbage hunting.")
-        if task.is_defunct():
-            task.request_kill(TaskKillReason.COMPLETION_TIMEOUT)
-        elif task.is_abandoned():
-            task.request_kill(TaskKillReason.ABANDONED)
+        for task in self._task_register.values():
+            if task.is_defunct():
+                task.request_kill(TaskKillReason.COMPLETION_TIMEOUT)
+            elif task.is_abandoned():
+                task.request_kill(TaskKillReason.ABANDONED)
 
-    @staticmethod
-    async def _garbage_collection(task: Task) -> None:
+    async def _garbage_collection(self) -> None:
         """
         Deletes tasks marked for garbage collection
         """
         # self._logger.debug("Running garbage collection.")
-        if task.is_kill_requested():
-            task.kill()
+        for task in self._task_register.values():
+            if task.is_kill_requested():
+                task.kill()
 
     async def perform_actions(self) -> int:
         """
@@ -137,7 +129,9 @@ class Scheduler:
         received_total = await self._receive_messages()
         # Garbage collection needs to run right after receiving messages to
         # kill executed tasks most quickly
-        await self._task_register_operations()
+        await self._garbage_collection()
+        # TODO: (optimization) Run hunting less frequently
+        await self._garbage_hunting()
         return received_total
 
     async def _receive_messages(self) -> int:

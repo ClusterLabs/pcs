@@ -105,8 +105,7 @@ class GarbageHuntingTest(SchedulerBaseAsyncTestCase):
     @gen_test
     async def test_no_defunct_or_abandoned(self):
         self._create_tasks(3)
-        for task in self.scheduler._task_register.values():
-            await self.scheduler._garbage_hunting(task)
+        await self.scheduler._garbage_hunting()
         self.assertIsNone(self.scheduler.get_task("id0").kill_reason)
         self.assertIsNone(self.scheduler.get_task("id1").kill_reason)
         self.assertIsNone(self.scheduler.get_task("id2").kill_reason)
@@ -118,8 +117,7 @@ class GarbageHuntingTest(SchedulerBaseAsyncTestCase):
     @gen_test
     async def test_defunct(self, _):
         self._create_tasks(3)
-        for task in self.scheduler._task_register.values():
-            await self.scheduler._garbage_hunting(task)
+        await self.scheduler._garbage_hunting()
         self.assertIsNone(self.scheduler.get_task("id0").kill_reason)
         self.assertEqual(
             TaskKillReason.COMPLETION_TIMEOUT,
@@ -134,8 +132,7 @@ class GarbageHuntingTest(SchedulerBaseAsyncTestCase):
     @gen_test
     async def test_abandoned(self, _):
         self._create_tasks(3)
-        for task in self.scheduler._task_register.values():
-            await self.scheduler._garbage_hunting(task)
+        await self.scheduler._garbage_hunting()
         self.assertIsNone(self.scheduler.get_task("id0").kill_reason)
         self.assertEqual(
             TaskKillReason.ABANDONED,
