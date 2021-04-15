@@ -7,7 +7,10 @@ from unittest import mock, skipUnless
 
 from lxml import etree
 
-from pcs_test import settings as tests_settings
+from pcs_test import (
+    TEST_ROOT,
+    settings as tests_settings,
+)
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
 from pcs import settings
@@ -15,8 +18,6 @@ from pcs.cli.common.parse_args import InputModifiers
 from pcs.lib.external import CommandRunner, is_service_enabled
 
 # pylint: disable=invalid-name
-
-testdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 runner = CommandRunner(
     mock.MagicMock(logging.Logger), MockLibraryReportProcessor(), os.environ
@@ -71,7 +72,7 @@ def dict_to_modifiers(options):
 
 def get_test_resource(name):
     """Return full path to a test resource file specified by name"""
-    return os.path.join(testdir, "resources", name)
+    return os.path.join(TEST_ROOT, "resources", name)
 
 
 def get_tmp_dir(name=None):

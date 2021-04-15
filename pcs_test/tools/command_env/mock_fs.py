@@ -1,5 +1,6 @@
-import os.path
 import site
+
+from pcs_test import PROJECT_ROOT
 
 
 CALL_TYPE_FS = "CALL_TYPE_FS"
@@ -90,11 +91,7 @@ class Call:
 
 def get_fs_mock(call_queue):
     package_dir_list = site.getsitepackages()
-    package_dir_list.append(
-        os.path.realpath(
-            os.path.dirname(os.path.abspath(__file__)) + "/../../.."
-        )
-    )
+    package_dir_list.append(PROJECT_ROOT)
 
     def get_fs_call(func_name, original_call):
         def call_fs(*args, **kwargs):

@@ -1,10 +1,10 @@
 import os.path
 
+from pcs_test import TEST_ROOT
+
 from pcs import utils
 
-__pcs_location = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "pcs_for_tests"
-)
+__pcs_location = os.path.join(TEST_ROOT, "pcs_for_tests")
 # this can be changed from suite.py
 test_installed = False
 
