@@ -24,12 +24,12 @@ There are two pcs branches currently:
 
 These are the runtime dependencies of pcs and pcsd:
 * python 3.6+
+* python3-cryptography
 * python3-dateutil 2.7.0+
 * python3-distro (for python 3.8+)
 * python3-lxml
 * python3-pycurl
 * python3-setuptools
-* python3-pyOpenSSL (python3-openssl)
 * python3-pyparsing
 * python3-tornado 6.1.0+
 * python dataclasses (`pip install dataclasses`; required only for python 3.6,

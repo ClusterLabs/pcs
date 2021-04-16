@@ -290,10 +290,10 @@ PCS_CHECK_PYMOD([setuptools-scm])
 if test "x$local_build" = "xyes"; then
 	PCS_CHECK_PYMOD([wheel])
 fi
+PCS_CHECK_PYMOD([cryptography])
 PCS_CHECK_PYMOD([lxml])
 PCS_CHECK_PYMOD([pycurl])
 PCS_CHECK_PYMOD([pyparsing])
-PCS_CHECK_PYMOD([pyOpenSSL])
 
 # those are kind of problematic.
 # use them all from the BaseOS or embedded them all as necessary (--enable-local-build)
