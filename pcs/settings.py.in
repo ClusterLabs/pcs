@@ -105,7 +105,6 @@ default_ssl_options = ",".join(
 pcsd_gem_path = "@GEM_HOME@" or None
 ruby_executable = "@RUBY@"
 
-openssl_executable = "@OPENSSL@"
 killall_executable = "@KILLALL@"
 rm_executable = "@RM@"
 find_executable = "@FIND@"

@@ -1,10 +1,24 @@
 import datetime
+import ssl
+from typing import List
 
 from cryptography import x509
 from cryptography.x509.oid import NameOID
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
+
+
+def check_cert_key(cert_path: str, key_path: str) -> List[str]:
+    errors = []
+    try:
+        ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        ssl_context.load_cert_chain(cert_path, key_path)
+    except ssl.SSLError as e:
+        errors.append(f"SSL certificate does not match the key: {e}")
+    except EnvironmentError as e:
+        errors.append(f"Unable to load SSL certificate and/or key: {e}")
+    return errors
 
 
 def generate_key(length: int = 3072) -> rsa.RSAPrivateKeyWithSerialization:

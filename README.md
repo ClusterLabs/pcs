@@ -37,7 +37,6 @@ These are the runtime dependencies of pcs and pcsd:
 * [dacite](https://github.com/konradhalas/dacite)
 * ruby 2.2.0+
 * killall (package psmisc)
-* openssl
 * corosync 3.x
 * pacemaker 2.x
 

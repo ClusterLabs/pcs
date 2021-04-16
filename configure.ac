@@ -405,10 +405,6 @@ if test "x$SYSTEMCTL" = "x"; then
 		AC_MSG_ERROR([Unable to find systemctl or service in $PATH])
 	fi
 fi
-AC_PATH_PROG([OPENSSL], [openssl])
-if test "x$OPENSSL" = "x"; then
-	AC_MSG_ERROR([Unable to find openssl in $PATH])
-fi
 AC_PATH_PROG([KILLALL], [killall])
 if test "x$KILLALL" = "x"; then
 	AC_MSG_ERROR([Unable to find killall in $PATH])

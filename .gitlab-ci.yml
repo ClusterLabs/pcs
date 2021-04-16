@@ -45,7 +45,6 @@ variables:
     gcc-c++
     git
     make
-    openssl
     psmisc
     redhat-rpm-config
     sed

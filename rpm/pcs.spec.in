@@ -117,8 +117,6 @@ Requires: ruby >= 2.2.0
 Requires: rubygems
 # for killall
 Requires: psmisc
-# for working with certificates (validation etc.)
-Requires: openssl
 # cluster stack and related packages
 Requires: pacemaker >= 2.0.0
 Requires: corosync >= 3.0

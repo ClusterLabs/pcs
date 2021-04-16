@@ -1,25 +1,13 @@
 import os
 import ssl
-from typing import List
 
 from pcs.common.ssl import (
+    check_cert_key,
     dump_cert,
     dump_key,
     generate_cert,
     generate_key,
 )
-
-
-def check_cert_key(cert_path: str, key_path: str) -> List[str]:
-    errors = []
-    try:
-        ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-        ssl_context.load_cert_chain(cert_path, key_path)
-    except ssl.SSLError as e:
-        errors.append(f"SSL certificate does not match the key: {e}")
-    except EnvironmentError as e:
-        errors.append(f"Unable to load SSL certificate and/or key: {e}")
-    return errors
 
 
 def _open_ssl_file_to_rewrite(path):

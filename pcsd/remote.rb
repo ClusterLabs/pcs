@@ -694,7 +694,7 @@ def set_certs(params, request, auth_user)
   if !ssl_cert.empty? and !ssl_key.empty?
     ssl_errors = verify_cert_key_pair(ssl_cert, ssl_key)
     if ssl_errors and !ssl_errors.empty?
-      return [400, ssl_errors.join]
+      return [400, ssl_errors.join('; ')]
     end
     begin
       write_file_lock(CRT_FILE, 0600, ssl_cert)
