@@ -954,3 +954,11 @@ table.args-table td.reg {
 {
   display: none;
 }
+
+/*
+  a light shadow in the new version on jquery-ui doesn't look nice with the
+  dark theme, so we fix it here to look the same way as in the previous version 
+ */
+.ui-tooltip {
+  box-shadow: 0 0 5px #aaa !important;
+}
