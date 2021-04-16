@@ -29,6 +29,7 @@ pcsd_SCRIPTS		= \
 dist_pcsd_DATA		= \
 			  corosyncconf.rb \
 			  pcsd_exchange_format.rb \
+			  capabilities.rng \
 			  capabilities.xml \
 			  pcsd_remove_file.rb \
 			  cfgsync.rb \

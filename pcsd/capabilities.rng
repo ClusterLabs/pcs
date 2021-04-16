@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar
+  xmlns="http://relaxng.org/ns/structure/1.0"
+  datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes"
+>
+  <start>
+    <ref name="element-pcs-capabilities"/>
+  </start>
+
+  <define name="element-pcs-capabilities">
+    <element name="pcs-capabilities">
+      <element name="capability-list">
+        <zeroOrMore>
+          <ref name="element-capability"/>
+        </zeroOrMore>
+      </element>
+    </element>
+  </define>
+
+  <define name="element-capability">
+    <element name="capability">
+      <attribute name="id">
+        <data type="ID"/>
+      </attribute>
+      <attribute name="in-pcs">
+        <ref name="one-or-zero"/>
+      </attribute>
+      <attribute name="in-pcsd">
+        <ref name="one-or-zero"/>
+      </attribute>
+      <element name="description">
+        <text/>
+      </element>
+    </element>
+  </define>
+
+  <define name="one-or-zero">
+    <choice>
+      <value>0</value>
+      <value>1</value>
+    </choice>
+  </define>
+
+</grammar>

@@ -7,16 +7,16 @@ from unittest import mock, skipUnless
 
 from lxml import etree
 
-from pcs_test import settings as tests_settings
+from pcs_test import (
+    TEST_ROOT,
+    settings as tests_settings,
+)
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
 from pcs import settings
 from pcs.cli.common.parse_args import InputModifiers
 from pcs.lib.external import CommandRunner, is_service_enabled
 
-# pylint: disable=invalid-name
-
-testdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 runner = CommandRunner(
     mock.MagicMock(logging.Logger), MockLibraryReportProcessor(), os.environ
@@ -71,7 +71,7 @@ def dict_to_modifiers(options):
 
 def get_test_resource(name):
     """Return full path to a test resource file specified by name"""
-    return os.path.join(testdir, "resources", name)
+    return os.path.join(TEST_ROOT, "resources", name)
 
 
 def get_tmp_dir(name=None):
@@ -116,12 +116,15 @@ def read_test_resource(name):
 
 
 def cmp3(a, b):
+    # pylint: disable=invalid-name
+
     # python3 doesn't have the cmp function, this is an official workaround
     # https://docs.python.org/3.0/whatsnew/3.0.html#ordering-comparisons
     return (a > b) - (a < b)
 
 
 def compare_version(a, b):
+    # pylint: disable=invalid-name
     if a[0] == b[0]:
         if a[1] == b[1]:
             return cmp3(a[2], b[2])
@@ -144,11 +147,11 @@ def _get_current_pacemaker_version():
         ]
     )
     pacemaker_version = output.split("\n")[0]
-    r = re.compile(r"Pacemaker (\d+)\.(\d+)\.(\d+)")
-    m = r.match(pacemaker_version)
-    major = int(m.group(1))
-    minor = int(m.group(2))
-    rev = int(m.group(3))
+    regexp = re.compile(r"Pacemaker (\d+)\.(\d+)\.(\d+)")
+    match = regexp.match(pacemaker_version)
+    major = int(match.group(1))
+    minor = int(match.group(2))
+    rev = int(match.group(3))
     return major, minor, rev
 
 
@@ -194,11 +197,11 @@ def _get_current_pacemaker_features():
         ]
     )
     features_version = output.split("\n")[1]
-    r = re.compile(r"Supporting v(\d+)\.(\d+)\.(\d+):")
-    m = r.search(features_version)
-    major = int(m.group(1))
-    minor = int(m.group(2))
-    rev = int(m.group(3))
+    regexp = re.compile(r"Supporting v(\d+)\.(\d+)\.(\d+):")
+    match = regexp.search(features_version)
+    major = int(match.group(1))
+    minor = int(match.group(2))
+    rev = int(match.group(3))
     return major, minor, rev
 
 
