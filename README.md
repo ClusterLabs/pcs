@@ -16,8 +16,7 @@ There are two pcs branches currently:
 * pcs-0.9
   * Clusters running Pacemaker 1.x on top of Corosync 2.x or Corosync 1.x with
     CMAN are supported.
-  * This branch is in maintenance mode - bugs are being fixed but only a subset
-    of new features lands here.
+  * This branch is in no longer maintained.
 
 ---
 
