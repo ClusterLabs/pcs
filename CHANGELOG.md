@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.9.170] - 2021-04-16
 
 ### Security
 - Web UI sends HTTP header Content-Security-Policy as an alternative to
