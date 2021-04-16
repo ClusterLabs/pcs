@@ -9,11 +9,11 @@ pcs daemon, which operates as a remote server for pcs and provides a web UI.
 ### Pcs Versions
 
 There are two pcs branches currently:
-* master [![Build Status](https://travis-ci.com/ClusterLabs/pcs.svg?branch=master)](https://travis-ci.com/ClusterLabs/pcs)
+* master
   * This is where pcs-0.10 lives.
   * Clusters running Pacemaker 2.x on top of Corosync 3.x are supported.
   * The main development happens here.
-* pcs-0.9 [![Build Status](https://travis-ci.com/ClusterLabs/pcs.svg?branch=pcs-0.9)](https://travis-ci.com/ClusterLabs/pcs)
+* pcs-0.9
   * Clusters running Pacemaker 1.x on top of Corosync 2.x or Corosync 1.x with 
     CMAN are supported.
   * This branch is in maintenance mode - bugs are being fixed but only a subset
