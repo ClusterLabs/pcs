@@ -21,5 +21,4 @@ class TaskState(AutoNameEnum):
 class TaskKillReason(AutoNameEnum):
     USER = auto()
     COMPLETION_TIMEOUT = auto()
-    ABANDONED = auto()
     INTERNAL_MESSAGING_ERROR = auto()

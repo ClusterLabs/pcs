@@ -196,6 +196,7 @@ class GarbageCollectionTests(
             TaskKillReason.COMPLETION_TIMEOUT,
         )
 
+    """
     @gen_test
     async def test_finished_defunct_timeout(self):
         # Interesting point of order - since the abandoned timeout is smaller
@@ -212,6 +213,7 @@ class GarbageCollectionTests(
             TaskFinishType.KILL,
             TaskKillReason.ABANDONED,
         )
+    """
 
     @gen_test
     async def test_created_abandoned_timeout(self):
@@ -244,6 +246,7 @@ class GarbageCollectionTests(
             task_kill_reason=None,
         )
 
+    """
     @gen_test
     async def test_finished_abandoned_timeout(self):
         self._create_tasks(1)
@@ -257,9 +260,10 @@ class GarbageCollectionTests(
             TaskFinishType.KILL,
             TaskKillReason.ABANDONED,
         )
+    """
 
 
-class TaskResultsTests(IntegrationBaseTestCase):
+class TaskResultsTests(MockOsKillMixin, IntegrationBaseTestCase):
     """These tests check all task outcomes with real task_executor
 
     These test go one level deeper to include task_executor and test its
@@ -289,6 +293,8 @@ class TaskResultsTests(IntegrationBaseTestCase):
         lib_env_mock.report_processor = WorkerReportProcessor(
             self.worker_com, "id0"
         )
+        # Os.kill is used to pause the worker and we do not want to pause tests
+        self._init_mock_os_kill()
 
     def _send_report_mocks(self, task_ident, count):
         """Emulate sending reports from the worker

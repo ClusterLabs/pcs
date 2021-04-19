@@ -9,6 +9,7 @@ from pcs.common.async_tasks.dto import CommandDto
 from pcs.common.reports import ReportItemDto
 
 from .dummy_commands import RESULT, test_command_map
+from .helpers import MockOsKillMixin
 
 TASK_IDENT = "id0"
 WORKER_PID = 2222
@@ -20,13 +21,18 @@ worker.worker_com = Queue()  # patched at runtime
 @mock.patch("pcs.daemon.async_tasks.worker.command_map", test_command_map)
 @mock.patch("pcs.daemon.async_tasks.worker.getLogger", mock.MagicMock())
 @mock.patch("os.getpid")
-class TestExecutor(TestCase):
+class TestExecutor(MockOsKillMixin, TestCase):
     """
     Tests the test_executor function
 
     Every test needs its own queue to avoid mixing messages from other tests
     because tests are running concurrently
     """
+
+    def setUp(self) -> None:
+        super().setUp()
+        # Os.kill is used to pause the worker and we do not want to pause tests
+        self._init_mock_os_kill()
 
     def _get_payload_from_worker_com(self, worker_com):
         message = worker_com.get()

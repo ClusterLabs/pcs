@@ -30,7 +30,7 @@ class TaskNotFoundError(Exception):
 
 class Scheduler:
     """
-    Task management core intended as an interface to the REST API
+    Task management core with an interface for the REST API
     """
 
     def __init__(self) -> None:
@@ -45,7 +45,13 @@ class Scheduler:
         self._created_tasks_index: Deque[str] = deque()
         self._task_register: Dict[str, Task] = dict()
         self._logger = setup_scheduler_logger()
-        self._logger.info("Scheduler was successfully initialized.")
+        self._logger.info(f"Scheduler was successfully initialized.")
+        self._logger.debug(
+            "Process pool initialized with %d workers that reset "
+            "after %d tasks",
+            settings.worker_count,
+            settings.worker_task_limit,
+        )
 
     def get_task(self, task_ident: str) -> TaskResultDto:
         """
@@ -92,32 +98,25 @@ class Scheduler:
         )
         return task_ident
 
-    async def _garbage_hunting(self) -> None:
-        """
-        Marks tasks for garbage collection
-        """
-        # TODO: (optimization) Run less frequently (kill timeout/4?)
-        # self._logger.debug("Running garbage hunting.")
-        for task in self._task_register.values():
-            if task.is_defunct():
-                task.request_kill(TaskKillReason.COMPLETION_TIMEOUT)
-            elif task.is_abandoned():
-                task.request_kill(TaskKillReason.ABANDONED)
-
     async def _garbage_collection(self) -> None:
         """
         Terminates and/or deletes tasks marked for garbage collection
 
+        All tasks need to use kill requests to be killed which set the right
+        kill reason.
         Task.kill method is responsible for changing state and deciding what
         actions needs to be taken to properly remove the task from the scheduler
         """
         # self._logger.debug("Running garbage collection.")
         task_idents_to_delete = []
         for task in self._task_register.values():
+            if task.is_defunct():
+                task.request_kill(TaskKillReason.COMPLETION_TIMEOUT)
+            elif task.is_abandoned():
+                task_idents_to_delete.append(task.task_ident)
             if task.is_kill_requested():
                 task.kill()
-            if task.is_deletion_requested():
-                task_idents_to_delete.append(task.task_ident)
+        # Dictionary can't change size during iteration
         for task_ident in task_idents_to_delete:
             del self._task_register[task_ident]
 
@@ -127,6 +126,7 @@ class Scheduler:
 
         DO NOT USE IN TIER0 TESTS! Look for a function with the same name
         in scheduler's integration tests
+        :return: Number of received messages (useful for testing)
         """
         # self._logger.debug("Scheduler tick.")
         await self._schedule_tasks()
@@ -135,14 +135,12 @@ class Scheduler:
         # Garbage collection needs to run right after receiving messages to
         # kill executed tasks most quickly
         await self._garbage_collection()
-        # TODO: (optimization) Run hunting less frequently
-        await self._garbage_hunting()
         return received_total
 
     async def _receive_messages(self) -> int:
         """
         Processes all incoming messages from workers
-        :return: Number of received messages
+        :return: Number of received messages (useful for testing)
         """
         # Unreliable message count, since this is the only consumer, there
         # should not be less messages
@@ -162,12 +160,19 @@ class Scheduler:
                 )
                 received_total += 1
                 continue
-            task: Task = self._task_register[message.task_ident]
+            try:
+                task: Task = self._task_register[message.task_ident]
+            except KeyError:
+                self._logger.error(
+                    "Message was delivered for task %s which is not located in "
+                    "the task register.",
+                    message.task_ident,
+                )
             try:
                 task.receive_message(message)
             except UnknownMessageError as exc:
                 self._logger.critical(
-                    'Message with unknown message type "%s" was received by '
+                    'Message with unknown payload type "%s" was received by '
                     "the scheduler.",
                     exc.payload_type,
                 )
@@ -185,9 +190,9 @@ class Scheduler:
                 next_task: Task = self._task_register[next_task_ident]
             except KeyError:
                 self._logger.error(
-                    "Task %s is not located in task register and it should "
-                    "because its task_ident was located in created tasks "
-                    "index.",
+                    "Schedule attempt for task %s located in created tasks "
+                    "index failed because no such task exists in the task "
+                    "register.",
                     next_task_ident,
                 )
                 continue

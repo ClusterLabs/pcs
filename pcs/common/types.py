@@ -59,19 +59,3 @@ class CorosyncTransportType(AutoNameEnum):
             return cls(transport.upper())
         except ValueError:
             raise UnknownCorosyncTransportTypeException(transport) from None
-
-
-class TaskFinishType(AutoNameEnum):
-    UNFINISHED = auto()
-    UNHANDLED_EXCEPTION = auto()
-    FAIL = auto()
-    SUCCESS = auto()
-    SCHEDULER_KILL = auto()
-    USER_KILL = auto()
-
-
-class TaskState(AutoNameEnum):
-    CREATED = auto()
-    QUEUED = auto()
-    EXECUTED = auto()
-    FINISHED = auto()

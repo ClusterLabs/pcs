@@ -54,6 +54,13 @@ def worker_init(message_q: mp.Queue) -> None:
     signal.signal(signal.SIGTERM, flush_logs)
 
 
+def pause_worker() -> None:
+    getLogger("pcs_worker").debug(
+        "Pausing worker until the scheduler updates status of this task."
+    )
+    os.kill(os.getpid(), signal.SIGSTOP)
+
+
 def task_executor(task: WorkerCommand) -> None:
     """
     Launches the task inside the worker
@@ -95,6 +102,7 @@ def task_executor(task: WorkerCommand) -> None:
             )
         )
         logger.exception("Task %s raised a LibraryException.", task.task_ident)
+        pause_worker()
         return
     except Exception:
         # For unhandled exceptions during execution
@@ -107,6 +115,7 @@ def task_executor(task: WorkerCommand) -> None:
         logger.exception(
             "Task %s raised an unhandled exception.", task.task_ident
         )
+        pause_worker()
         return
     worker_com.put(
         Message(
@@ -115,3 +124,4 @@ def task_executor(task: WorkerCommand) -> None:
         )
     )
     logger.info("Task %s finished.", task.task_ident)
+    pause_worker()

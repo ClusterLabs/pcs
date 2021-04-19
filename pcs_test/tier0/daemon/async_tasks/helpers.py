@@ -9,6 +9,7 @@ from tornado.testing import AsyncTestCase
 
 from pcs.daemon.async_tasks import scheduler
 from pcs.common.async_tasks.dto import CommandDto
+from pcs.common.async_tasks.types import TaskState
 from pcs.common.reports.item import ReportItemMessage
 from pcs.common.reports.types import MessageCode
 
@@ -26,7 +27,7 @@ class StubReportItem(ReportItemMessage):
         return "This is a report item used for testing."
 
 
-class SchedulerFake:
+class SchedulerTestWrapper:
     """
     Scheduler for testing
 
@@ -71,16 +72,16 @@ class SchedulerFake:
                 self.scheduler.new_task(CommandDto(f"command {i}", {}))
 
 
-class SchedulerBaseTestCase(SchedulerFake, TestCase):
+class SchedulerBaseTestCase(SchedulerTestWrapper, TestCase):
     def setUp(self):
-        SchedulerFake.prepare_scheduler(self)
+        SchedulerTestWrapper.prepare_scheduler(self)
         super().setUp()
         self.addCleanup(mock.patch.stopall)
 
 
-class SchedulerBaseAsyncTestCase(SchedulerFake, AsyncTestCase):
+class SchedulerBaseAsyncTestCase(SchedulerTestWrapper, AsyncTestCase):
     def setUp(self):
-        SchedulerFake.prepare_scheduler(self)
+        SchedulerTestWrapper.prepare_scheduler(self)
         super().setUp()
         self.addCleanup(mock.patch.stopall)
 
@@ -92,13 +93,13 @@ class AssertTaskStatesMixin:
         # pylint: disable=protected-access
         # Cannot use public method get_task because it deletes finished tasks
         state_counts = Counter(
-            [task.state.name for task in self.scheduler._task_register.values()]
+            [task.state for task in self.scheduler._task_register.values()]
         )
         self.assertEqual(created, len(self.scheduler._created_tasks_index))
-        self.assertEqual(created, state_counts["CREATED"])
-        self.assertEqual(queued, state_counts["QUEUED"])
-        self.assertEqual(executed, state_counts["EXECUTED"])
-        self.assertEqual(finished, state_counts["FINISHED"])
+        self.assertEqual(created, state_counts[TaskState.CREATED])
+        self.assertEqual(queued, state_counts[TaskState.QUEUED])
+        self.assertEqual(executed, state_counts[TaskState.EXECUTED])
+        self.assertEqual(finished, state_counts[TaskState.FINISHED])
 
 
 class MockDateTimeNowMixin:

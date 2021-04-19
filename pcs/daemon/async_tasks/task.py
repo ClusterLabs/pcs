@@ -1,5 +1,6 @@
 import datetime
 import os
+import signal
 
 from typing import (
     Any,
@@ -143,21 +144,6 @@ class Task(ImplementsToDto):
             TaskState.FINISHED,
         ]
 
-    def is_deletion_requested(self) -> bool:
-        """
-        Reports if the task object can be safely removed from the scheduler
-
-        When the client dies, tasks need to be deleted from the scheduler since
-        no one will pick them up with get_task which deletes FINISHED tasks.
-
-        :return: True for abandoned tasks that are not QUEUED or EXECUTED, False
-        otherwise
-        """
-        return (
-            self._kill_reason is TaskKillReason.ABANDONED
-            and self._state not in [TaskState.QUEUED, TaskState.EXECUTED]
-        )
-
     def request_kill(self, reason: TaskKillReason) -> None:
         """
         Marks the task for cleanup to the garbage collector
@@ -216,6 +202,7 @@ class Task(ImplementsToDto):
         self._result = message_payload.result
         self._state = TaskState.FINISHED
         self._task_finish_type = message_payload.task_finish_type
+        os.kill(self._worker_pid, signal.SIGCONT)
 
     def _store_reports(self, message_payload: ReportItemDto) -> None:
         """
