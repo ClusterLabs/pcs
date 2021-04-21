@@ -227,6 +227,10 @@ EXTRA_DIST		= \
 			  tier0/cli/booth/test_env.py \
 			  tier0/cli/booth/__init__.py \
 			  tier0/test_capabilities.py \
+			  tier0/lib/commands/cluster/test_config_update.py \
+			  tier0/lib/commands/cluster/test_get_corosync_conf_struc.py \
+			  tier0/lib/corosync/test_config_facade_transport.py \
+			  tier0/lib/corosync/test_config_validators_update.py \
 			  curl_test.py \
 			  tier1/test_booth.py \
 			  tier1/test_misc.py \
@@ -262,6 +266,9 @@ EXTRA_DIST		= \
 			  tier1/cib_resource/test_enable_disable.py \
 			  tier1/cib_resource/__init__.py \
 			  tier1/__init__.py \
+			  tier1/cluster/common.py \
+			  tier1/cluster/test_config_show.py \
+			  tier1/cluster/test_config_update.py \
 			  tools/command_env/config_runner_cib.py \
 			  tools/command_env/config_runner_systemctl.py \
 			  tools/command_env/config_raw_file.py \
