@@ -5,6 +5,7 @@ import sys
 from pcs import settings
 from pcs import utils
 from pcs.cli.common.errors import CmdLineInputError
+import pcs.common.ssl
 
 
 def pcsd_certkey(lib, argv, modifiers):
@@ -21,13 +22,13 @@ def pcsd_certkey(lib, argv, modifiers):
     keyfile = argv[1]
 
     try:
-        with open(certfile, "r") as myfile:
+        with open(certfile, "rb") as myfile:
             cert = myfile.read()
-        with open(keyfile, "r") as myfile:
+        with open(keyfile, "rb") as myfile:
             key = myfile.read()
     except IOError as e:
         utils.err(e)
-    errors = utils.verify_cert_key_pair(cert, key)
+    errors = pcs.common.ssl.check_cert_key(certfile, keyfile)
     if errors:
         for err in errors:
             utils.err(err, False)
@@ -43,12 +44,12 @@ def pcsd_certkey(lib, argv, modifiers):
 
     try:
         try:
-            os.chmod(settings.pcsd_cert_location, 0o700)
+            os.chmod(settings.pcsd_cert_location, 0o600)
         except OSError:  # If the file doesn't exist, we don't care
             pass
 
         try:
-            os.chmod(settings.pcsd_key_location, 0o700)
+            os.chmod(settings.pcsd_key_location, 0o600)
         except OSError:  # If the file doesn't exist, we don't care
             pass
 
@@ -56,9 +57,9 @@ def pcsd_certkey(lib, argv, modifiers):
             os.open(
                 settings.pcsd_cert_location,
                 os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
-                0o700,
+                0o600,
             ),
-            "w",
+            "wb",
         ) as myfile:
             myfile.write(cert)
 
@@ -66,9 +67,9 @@ def pcsd_certkey(lib, argv, modifiers):
             os.open(
                 settings.pcsd_key_location,
                 os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
-                0o700,
+                0o600,
             ),
-            "w",
+            "wb",
         ) as myfile:
             myfile.write(key)
 

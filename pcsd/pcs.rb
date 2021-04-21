@@ -12,6 +12,7 @@ require 'fileutils'
 require 'backports/latest'
 require 'base64'
 require 'ethon'
+require 'openssl'
 
 require 'config.rb'
 require 'cfgsync.rb'
@@ -1171,39 +1172,23 @@ def read_file_lock(path, binary=false)
   end
 end
 
-def verify_cert_key_pair(cert, key)
+def verify_cert_key_pair(cert_data, key_data)
   errors = []
-  cert_modulus = nil
-  key_modulus = nil
 
-  stdout, stderr, retval = run_cmd_options(
-    PCSAuth.getSuperuserAuth(),
-    {
-      'stdin' => cert,
-    },
-    OPENSSL_EXEC, 'x509', '-modulus', '-noout'
-  )
-  if retval != 0
-    errors << "Invalid certificate: #{stderr.join}"
-  else
-    cert_modulus = stdout.join.strip
+  begin
+    cert = OpenSSL::X509::Certificate.new(cert_data)
+  rescue OpenSSL::X509::CertificateError => e
+    errors << "Invalid certificate: #{e}"
   end
 
-  stdout, stderr, retval = run_cmd_options(
-    PCSAuth.getSuperuserAuth(),
-    {
-      'stdin' => key,
-    },
-    OPENSSL_EXEC, 'rsa', '-modulus', '-noout'
-  )
-  if retval != 0
-    errors << "Invalid key: #{stderr.join}"
-  else
-    key_modulus = stdout.join.strip
+  begin
+    key = OpenSSL::PKey.read(key_data)
+  rescue OpenSSL::PKey::PKeyError => e
+    errors << "Invalid key: #{e}"
   end
 
-  if errors.empty? and cert_modulus and key_modulus
-    if cert_modulus != key_modulus
+  if errors.empty?
+    if not cert.check_private_key(key)
       errors << 'Certificate does not match the key'
     end
   end

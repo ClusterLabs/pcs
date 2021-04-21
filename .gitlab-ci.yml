@@ -2,12 +2,12 @@ image: fedora${CI_PCS_FC_IMG_TAG}
 
 variables:
   PYTHON_DEPENDENCIES: "
+    python3-cryptography
     python3-dateutil
     python3-devel
     python3-distro
     python3-lxml
     python3-pip
-    python3-pyOpenSSL
     python3-pycurl
     python3-pyparsing
     python3-setuptools
@@ -45,7 +45,6 @@ variables:
     gcc-c++
     git
     make
-    openssl
     psmisc
     redhat-rpm-config
     sed
@@ -190,6 +189,7 @@ python_smoke_tests:
     - "dnf install -y
         ${COMMON_DEPENDENCIES}
         cracklib-dicts
+        openssl
         passwd
         procps-ng
         rpms/pcs-*.rpm

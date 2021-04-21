@@ -2104,39 +2104,6 @@ def is_iso8601_date(var):
     return retVal == 0
 
 
-def verify_cert_key_pair(cert, key):
-    """
-    Commandline options: no options
-    """
-    errors = []
-    cert_modulus = ""
-    key_modulus = ""
-
-    output, retval = run(
-        [settings.openssl_executable, "x509", "-modulus", "-noout"],
-        string_for_stdin=cert,
-    )
-    if retval != 0:
-        errors.append("Invalid certificate: {0}".format(output.strip()))
-    else:
-        cert_modulus = output.strip()
-
-    output, retval = run(
-        [settings.openssl_executable, "rsa", "-modulus", "-noout"],
-        string_for_stdin=key,
-    )
-    if retval != 0:
-        errors.append("Invalid key: {0}".format(output.strip()))
-    else:
-        key_modulus = output.strip()
-
-    if not errors and cert_modulus and key_modulus:
-        if cert_modulus != key_modulus:
-            errors.append("Certificate does not match the key")
-
-    return errors
-
-
 def err(errorText, exit_after_error=True):
     sys.stderr.write("Error: %s\n" % errorText)
     if exit_after_error:

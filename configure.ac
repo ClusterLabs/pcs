@@ -290,10 +290,10 @@ PCS_CHECK_PYMOD([setuptools-scm])
 if test "x$local_build" = "xyes"; then
 	PCS_CHECK_PYMOD([wheel])
 fi
+PCS_CHECK_PYMOD([cryptography])
 PCS_CHECK_PYMOD([lxml])
 PCS_CHECK_PYMOD([pycurl])
 PCS_CHECK_PYMOD([pyparsing])
-PCS_CHECK_PYMOD([pyOpenSSL])
 
 # those are kind of problematic.
 # use them all from the BaseOS or embedded them all as necessary (--enable-local-build)
@@ -404,10 +404,6 @@ if test "x$SYSTEMCTL" = "x"; then
 	if test "x$SERVICE" = "x"; then
 		AC_MSG_ERROR([Unable to find systemctl or service in $PATH])
 	fi
-fi
-AC_PATH_PROG([OPENSSL], [openssl])
-if test "x$OPENSSL" = "x"; then
-	AC_MSG_ERROR([Unable to find openssl in $PATH])
 fi
 AC_PATH_PROG([KILLALL], [killall])
 if test "x$KILLALL" = "x"; then

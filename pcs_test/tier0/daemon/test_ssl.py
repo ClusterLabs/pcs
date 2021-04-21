@@ -1,7 +1,6 @@
 import os
+import ssl
 from unittest import mock, TestCase
-
-from OpenSSL import SSL
 
 from pcs_test.tools.misc import get_tmp_dir
 
@@ -19,19 +18,6 @@ class SslFilesMixin:
         self.ssl_dir = get_tmp_dir("tier0_daemon_ssl")
         self.cert_path = os.path.join(self.ssl_dir.name, "daemon.cert")
         self.key_path = os.path.join(self.ssl_dir.name, "daemon.key")
-        # various versions of OpenSSL / PyOpenSSL emit different messages
-        self.DAMAGED_SSL_FILES_ERRORS_1 = (
-            f"Invalid SSL certificate '{self.cert_path}':"
-            " 'PEM routines:PEM_read_bio:no start line'",
-            f"Invalid SSL key '{self.key_path}':"
-            " 'PEM routines:PEM_read_bio:no start line'",
-        )
-        self.DAMAGED_SSL_FILES_ERRORS_2 = (
-            f"Invalid SSL certificate '{self.cert_path}':"
-            " 'PEM routines:get_name:no start line'",
-            f"Invalid SSL key '{self.key_path}':"
-            " 'PEM routines:get_name:no start line'",
-        )
 
     def tearDown(self):
         # pylint cannot possibly know this is being mixed into TestCase classes
@@ -56,21 +42,31 @@ class Pair(SslFilesMixin, TestCase):
 
     def test_error_if_files_with_bad_content(self):
         self.damage_ssl_files()
-        self.assertTrue(
-            self.pair.check()
-            in [
-                list(self.DAMAGED_SSL_FILES_ERRORS_1),
-                list(self.DAMAGED_SSL_FILES_ERRORS_2),
-            ]
+        errors = self.pair.check()
+        self.assertEqual(len(errors), 1)
+        self.assertRegex(
+            errors[0],
+            r"^SSL certificate does not match the key: "
+            r"\[SSL\] PEM lib \(_ssl\.c:\d+\)",
         )
 
-    @mock.patch("pcs.daemon.ssl.SSL.Context.use_privatekey")
-    def test_error_if_short_key(self, mock_use_key):
-        mock_use_key.side_effect = SSL.Error("reason")
+    @mock.patch("pcs.daemon.ssl.ssl.SSLContext.load_cert_chain")
+    def test_error_if_short_key(self, mock_load_cert_chain):
+        mock_load_cert_chain.side_effect = ssl.SSLError(
+            # These are the real args of the exception.
+            336245135,
+            "[SSL: EE_KEY_TOO_SMALL] ee key too small (_ssl.c:3542)",
+        )
+        # 512 cannot be used as we would get an error from FIPS and 1024 is
+        # long enough. So a mock must be used.
         self.pair.regenerate(SERVER_NAME, 1024)
         errors = self.pair.check()
         self.assertEqual(
-            errors, ["Unable to load SSL certificate and/or key: reason"]
+            errors,
+            [
+                "SSL certificate does not match the key: "
+                "[SSL: EE_KEY_TOO_SMALL] ee key too small (_ssl.c:3542)",
+            ],
         )
 
     def test_error_if_cert_does_not_match_key(self):
@@ -83,8 +79,10 @@ class Pair(SslFilesMixin, TestCase):
 
         errors = self.pair.check()
         self.assertEqual(len(errors), 1)
-        self.assertTrue(
-            errors[0].startswith("SSL certificate does not match the key:")
+        self.assertRegex(
+            errors[0],
+            r"SSL certificate does not match the key: "
+            r"\[X509: KEY_VALUES_MISMATCH\] key values mismatch \(_ssl\.c:\d+\)",
         )
 
 
@@ -102,12 +100,12 @@ class PcsdSSLTest(SslFilesMixin, TestCase):
         self.damage_ssl_files()
         with self.assertRaises(SSLCertKeyException) as ctx_manager:
             self.pcsd_ssl.guarantee_valid_certs()
-        self.assertTrue(
-            ctx_manager.exception.args
-            in [
-                self.DAMAGED_SSL_FILES_ERRORS_1,
-                self.DAMAGED_SSL_FILES_ERRORS_2,
-            ]
+        errors = ctx_manager.exception.args
+        self.assertEqual(len(errors), 1)
+        self.assertRegex(
+            errors[0],
+            r"SSL certificate does not match the key: "
+            r"\[SSL\] PEM lib \(_ssl\.c:\d+\)",
         )
 
     def test_context_uses_given_options(self):

@@ -2,11 +2,19 @@
 
 ## [Unreleased]
 
+### Added
+- Elliptic curve TLS certificates are now supported in pcsd ([ghissue#123])
+
 ### Fixed
 - Node attribute expressions are now correctly reported as not allowed in
   resource defaults rules ([rhbz#1896458])
 
+### Changed
+- python3-openssl was replaced with python3-cryptography ([rhbz#1927404])
+
+[ghissue#123]: https://github.com/ClusterLabs/pcs/issues/123
 [rhbz#1896458]: https://bugzilla.redhat.com/show_bug.cgi?id=1896458
+[rhbz#1927404]: https://bugzilla.redhat.com/show_bug.cgi?id=1927404
 
 ## [0.10.8] - 2021-02-01
 

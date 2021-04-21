@@ -1,9 +1,8 @@
 import os
 import ssl
 
-from OpenSSL import crypto, SSL
-
 from pcs.common.ssl import (
+    check_cert_key,
     dump_cert,
     dump_key,
     generate_cert,
@@ -11,53 +10,15 @@ from pcs.common.ssl import (
 )
 
 
-def check_cert_key(cert_path, key_path):
-    errors = []
-
-    def load(load_ssl_file, label, path):
-        try:
-            with open(path) as ssl_file:
-                return load_ssl_file(crypto.FILETYPE_PEM, ssl_file.read())
-        except EnvironmentError as e:
-            errors.append(f"Unable to read SSL {label} '{path}': '{e}'")
-        except crypto.Error as e:
-            msg = ""
-            if e.args and e.args[0] and e.args[0][0]:
-                msg = f": '{':'.join(e.args[0][0])}'"
-            errors.append(f"Invalid SSL {label} '{path}'{msg}")
-
-    cert = load(crypto.load_certificate, "certificate", cert_path)
-    key = load(crypto.load_privatekey, "key", key_path)
-
-    if errors:
-        return errors
-
-    try:
-        context = SSL.Context(SSL.TLSv1_METHOD)
-        context.use_privatekey(key)
-        context.use_certificate(cert)
-    except SSL.Error as e:
-        errors.append(f"Unable to load SSL certificate and/or key: {e}")
-        # If we cannot load the files, do not confuse users with other error
-        # messages.
-        return errors
-    try:
-        context.check_privatekey()
-    except (crypto.Error, SSL.Error) as e:
-        errors.append(f"SSL certificate does not match the key: {e}")
-
-    return errors
-
-
-def open_ssl_file_to_rewrite(path):
+def _open_ssl_file_to_rewrite(path):
     return os.fdopen(os.open(path, os.O_CREAT | os.O_WRONLY, 0o600), "wb")
 
 
 def regenerate_cert_key(server_name, cert_path, key_path, key_length=None):
     key = generate_key(key_length) if key_length else generate_key()
-    with open_ssl_file_to_rewrite(cert_path) as cert_file:
+    with _open_ssl_file_to_rewrite(cert_path) as cert_file:
         cert_file.write(dump_cert(generate_cert(key, server_name)))
-    with open_ssl_file_to_rewrite(key_path) as key_file:
+    with _open_ssl_file_to_rewrite(key_path) as key_file:
         key_file.write(dump_key(key))
 
 
@@ -102,7 +63,6 @@ class PcsdSSL:
         self.__ck_pair = CertKeyPair(cert_location, key_location)
 
     def create_context(self) -> ssl.SSLContext:
-        # pylint: disable=no-member
         ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         ssl_context.set_ciphers(self.__ssl_ciphers)
         ssl_context.options = self.__ssl_options
