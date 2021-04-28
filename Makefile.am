@@ -1,19 +1,44 @@
-EXTRA_DIST		= autogen.sh \
-			  .version make/release.mk \
-			  dev_requirements.txt parallel_tests_requirements.txt \
-			  make/git-version-gen make/gitlog-to-changelog \
-			  scripts/pcsd.sh.in CHANGELOG.md CONTRIBUTING.md \
-			  .eslintrc .gitlab-ci.yml \
-			  MANIFEST.in rpm/pcs.spec.in \
-			  mypy.ini pyproject.toml pylintrc
+EXTRA_DIST		= \
+			  autogen.sh \
+			  CHANGELOG.md \
+			  CONTRIBUTING.md \
+			  dev_requirements.txt \
+			  .eslintrc \
+			  .gitlab-ci.yml \
+			  make/gitlog-to-changelog \
+			  make/git-version-gen \
+			  make/release.mk \
+			  MANIFEST.in \
+			  mypy.ini \
+			  parallel_tests_requirements.txt \
+			  pylintrc \
+			  pyproject.toml \
+			  rpm/pcs.spec.in \
+			  scripts/pcsd.sh.in \
+			  .version
 
 AUTOMAKE_OPTIONS	= foreign
 
-MAINTAINERCLEANFILES	= Makefile.in aclocal.m4 configure depcomp \
-			  config.guess config.sub missing install-sh \
-			  autoheader automake autoconf libtool libtoolize \
-			  ltmain.sh compile autoscan.log \
-			  configure.scan Gemfile Gemfile.lock
+MAINTAINERCLEANFILES	= \
+			  aclocal.m4 \
+			  autoconf \
+			  autoheader \
+			  automake \
+			  autoscan.log \
+			  compile \
+			  config.guess \
+			  config.sub \
+			  configure \
+			  configure.scan \
+			  depcomp \
+			  Gemfile \
+			  Gemfile.lock \
+			  install-sh \
+			  libtool \
+			  libtoolize \
+			  ltmain.sh \
+			  Makefile.in \
+			  missing \
 			  rpm/requirements.txt
 
 SPEC			= rpm/$(PACKAGE_NAME).spec
