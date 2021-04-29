@@ -318,20 +318,26 @@ class TestConfigSyncControll < Test::Unit::TestCase
     assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
     assert(Cfgsync::ConfigSyncControl.sync_thread_allowed?())
 
-    assert(Cfgsync::ConfigSyncControl.sync_thread_pause(2))
+    start = Time::now().to_i
+    assert(Cfgsync::ConfigSyncControl.sync_thread_pause(10))
     assert(Cfgsync::ConfigSyncControl.sync_thread_paused?())
     assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
     assert(!Cfgsync::ConfigSyncControl.sync_thread_allowed?())
-    sleep(4)
+    now = Time::now().to_i
+    # sleep for the rest of the pause time and a bit more
+    sleep(10 - (start - now) + 3)
     assert(!Cfgsync::ConfigSyncControl.sync_thread_paused?())
     assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
     assert(Cfgsync::ConfigSyncControl.sync_thread_allowed?())
 
-    assert(Cfgsync::ConfigSyncControl.sync_thread_pause('2'))
+    start = Time::now().to_i
+    assert(Cfgsync::ConfigSyncControl.sync_thread_pause('10'))
     assert(Cfgsync::ConfigSyncControl.sync_thread_paused?())
     assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
     assert(!Cfgsync::ConfigSyncControl.sync_thread_allowed?())
-    sleep(4)
+    now = Time::now().to_i
+    # sleep for the rest of the pause time and a bit more
+    sleep(10 - (start - now) + 3)
     assert(!Cfgsync::ConfigSyncControl.sync_thread_paused?())
     assert(!Cfgsync::ConfigSyncControl.sync_thread_disabled?())
     assert(Cfgsync::ConfigSyncControl.sync_thread_allowed?())
