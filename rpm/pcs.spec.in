@@ -87,6 +87,7 @@ BuildRequires: python3-pycurl
 # gcc for compiling custom rubygems
 BuildRequires: gcc
 BuildRequires: gcc-c++
+BuildRequires: libffi-devel
 # ruby and gems for pcsd
 BuildRequires: ruby >= 2.5
 BuildRequires: ruby-devel
