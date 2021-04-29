@@ -280,6 +280,26 @@ def skip_unless_root():
     return skipUnless(os.getuid() == 0, "Root user required")
 
 
+@lru_cache()
+def _is_booth_resource_agent_installed():
+    output, dummy_stderr, dummy_retval = runner.run(
+        [
+            os.path.join(settings.pacemaker_binaries, "crm_resource"),
+            "--list-agents",
+            "ocf:pacemaker",
+        ]
+    )
+    return "booth-site" in output
+
+
+def skip_unless_booth_resource_agent_installed():
+    return skipUnless(
+        _is_booth_resource_agent_installed(),
+        "test requires resource agent ocf:pacemaker:booth-site"
+        " which is not installed",
+    )
+
+
 def create_patcher(target_prefix_or_module):
     """
     Return function for patching tests with preconfigured target prefix

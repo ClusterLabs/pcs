@@ -457,7 +457,6 @@ PCS_PKG_CHECK_VAR([SBDEXECPREFIX], [sbd], [exec_prefix], [/usr])
 
 PCS_PKG_CHECK_VAR([FASEXECPREFIX], [fence-agents], [exec_prefix], [/usr])
 
-PCS_PKG_CHECK_VAR([OCFROOT], [resource-agents], [ocfrootdir], [/usr/lib/ocf])
 PCS_PKG_CHECK_VAR([RA_API_DTD], [resource-agents], [ra_api_dtd], [/usr/share/resource-agents/ra-api-1.dtd])
 PCS_PKG_CHECK_VAR([RA_TMP_DIR], [resource-agents], [ra_tmp_dir], [/run/resource-agents])
 

@@ -1,2 +1,1 @@
 pacemaker_version_rng = "@PCMK_SCHEMA_DIR@/versions.rng"
-ocf_root = "@OCFROOT@"

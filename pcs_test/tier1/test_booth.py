@@ -1,31 +1,22 @@
 import os
 from textwrap import dedent
-from unittest import mock, skipUnless, TestCase
+from unittest import mock, TestCase
 
 from pcs.cli.booth import command as booth_cmd
 
-from pcs_test import settings
 from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.misc import (
     get_test_resource as rc,
     get_tmp_dir,
     get_tmp_file,
     outdent,
+    skip_unless_booth_resource_agent_installed,
     write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import PcsRunner
 
 
 EMPTY_CIB = rc("cib-empty.xml")
-
-BOOTH_RESOURCE_AGENT_INSTALLED = os.path.exists(
-    os.path.join(settings.ocf_root, "pacemaker/booth-site")
-)
-need_booth_resource_agent = skipUnless(
-    BOOTH_RESOURCE_AGENT_INSTALLED,
-    "test requires resource agent ocf:pacemaker:booth-site"
-    " which is not installed",
-)
 
 
 class BoothMixinNoFiles(AssertPcsMixin):
@@ -350,7 +341,7 @@ class RemoveTicketTest(DeleteRemoveTicketMixin, BoothTest):
     command = "remove"
 
 
-@need_booth_resource_agent
+@skip_unless_booth_resource_agent_installed()
 class CreateTest(BoothMixinNoFiles, TestCase):
     def test_not_enough_args(self):
         self.assert_pcs_fail(
@@ -421,12 +412,12 @@ class DeleteRemoveTestMixin(AssertPcsMixin):
         )
 
 
-@need_booth_resource_agent
+@skip_unless_booth_resource_agent_installed()
 class DeleteTest(DeleteRemoveTestMixin, TestCase):
     command = "delete"
 
 
-@need_booth_resource_agent
+@skip_unless_booth_resource_agent_installed()
 class RemoveTest(DeleteRemoveTestMixin, TestCase):
     command = "remove"
 
