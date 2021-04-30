@@ -24,10 +24,12 @@ variables:
     rubygem-rack
     rubygem-rack-protection
     rubygem-rack-test
+    rubygem-rexml
     rubygem-sinatra
-    rubygem-tilt
-    rubygem-thin
     rubygem-test-unit
+    rubygem-thin
+    rubygem-tilt
+    rubygem-webrick
   "
   RUBY_DEPENDENCIES: "
     ruby
@@ -48,13 +50,13 @@ variables:
     psmisc
     redhat-rpm-config
     sed
+    systemd
     tar
     time
     wget
     ${PYTHON_DEPENDENCIES}
     ${RUBY_DEPENDENCIES}
   "
-  RUBY_VERSION: "2.7.0"
   APP_VERSION: "0.0.1.ci"
   DIST_VERSION: "${APP_VERSION}.${CI_PROJECT_NAMESPACE}-${CI_COMMIT_SHORT_SHA}"
   RPM_VERSION: "${APP_VERSION}-1.${CI_PROJECT_NAMESPACE}.$CI_COMMIT_SHORT_SHA"
