@@ -88,6 +88,14 @@ BuildRequires: libffi-devel
 BuildRequires: ruby >= 2.5
 BuildRequires: ruby-devel
 BuildRequires: rubygems
+# cluster stack packages for pkg-config
+BuildRequires: booth
+BuildRequires: corosync-qdevice-devel
+BuildRequires: corosynclib-devel >= 3.0
+BuildRequires: fence-agents-common
+BuildRequires: pacemaker-libs-devel >= 2.0.0
+BuildRequires: resource-agents
+BuildRequires: sbd
 # for post, preun and postun macros
 BuildRequires: systemd
 
