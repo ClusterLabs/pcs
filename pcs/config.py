@@ -261,16 +261,15 @@ def config_backup_local():
     tar_data = BytesIO()
 
     try:
-        tarball = tarfile.open(fileobj=tar_data, mode="w|bz2")
-        config_backup_add_version_to_tarball(tarball)
-        for tar_path, path_info in file_list.items():
-            if (
-                not os.path.exists(path_info["path"])
-                and not path_info["required"]
-            ):
-                continue
-            tarball.add(path_info["path"], tar_path)
-        tarball.close()
+        with tarfile.open(fileobj=tar_data, mode="w|bz2") as tarball:
+            config_backup_add_version_to_tarball(tarball)
+            for tar_path, path_info in file_list.items():
+                if (
+                    not os.path.exists(path_info["path"])
+                    and not path_info["required"]
+                ):
+                    continue
+                tarball.add(path_info["path"], tar_path)
     except (tarfile.TarError, EnvironmentError) as e:
         utils.err("unable to create tarball: %s" % e)
 
@@ -335,17 +334,16 @@ def config_restore_remote(infile_name, infile_obj):
         "corosync.conf": "",
     }
     try:
-        tarball = tarfile.open(infile_name, "r|*", infile_obj)
-        while True:
-            # next(tarball) does not work in python2.6
-            tar_member_info = tarball.next()
-            if tar_member_info is None:
-                break
-            if tar_member_info.name in extracted:
-                tar_member = tarball.extractfile(tar_member_info)
-                extracted[tar_member_info.name] = tar_member.read()
-                tar_member.close()
-        tarball.close()
+        with tarfile.open(infile_name, "r|*", infile_obj) as tarball:
+            while True:
+                # next(tarball) does not work in python2.6
+                tar_member_info = tarball.next()
+                if tar_member_info is None:
+                    break
+                if tar_member_info.name in extracted:
+                    tar_member = tarball.extractfile(tar_member_info)
+                    extracted[tar_member_info.name] = tar_member.read()
+                    tar_member.close()
     except (tarfile.TarError, EnvironmentError) as e:
         utils.err("unable to read the tarball: %s" % e)
 
@@ -431,19 +429,18 @@ def config_restore_local(infile_name, infile_obj):
     version = None
     tmp_dir = None
     try:
-        tarball = tarfile.open(infile_name, "r|*", infile_obj)
-        while True:
-            # next(tarball) does not work in python2.6
-            tar_member_info = tarball.next()
-            if tar_member_info is None:
-                break
-            if tar_member_info.name == "version.txt":
-                version_data = tarball.extractfile(tar_member_info)
-                version = version_data.read()
-                version_data.close()
-                continue
-            tarball_file_list.append(tar_member_info.name)
-        tarball.close()
+        with tarfile.open(infile_name, "r|*", infile_obj) as tarball:
+            while True:
+                # next(tarball) does not work in python2.6
+                tar_member_info = tarball.next()
+                if tar_member_info is None:
+                    break
+                if tar_member_info.name == "version.txt":
+                    version_data = tarball.extractfile(tar_member_info)
+                    version = version_data.read()
+                    version_data.close()
+                    continue
+                tarball_file_list.append(tar_member_info.name)
 
         required_file_list = [
             tar_path
@@ -461,40 +458,39 @@ def config_restore_local(infile_name, infile_obj):
 
         if infile_obj:
             infile_obj.seek(0)
-        tarball = tarfile.open(infile_name, "r|*", infile_obj)
-        while True:
-            # next(tarball) does not work in python2.6
-            tar_member_info = tarball.next()
-            if tar_member_info is None:
-                break
-            extract_info = None
-            path = tar_member_info.name
-            while path:
-                if path in file_list:
-                    extract_info = file_list[path]
+        with tarfile.open(infile_name, "r|*", infile_obj) as tarball:
+            while True:
+                # next(tarball) does not work in python2.6
+                tar_member_info = tarball.next()
+                if tar_member_info is None:
                     break
-                path = os.path.dirname(path)
-            if not extract_info:
-                continue
-            path_full = None
-            if hasattr(extract_info.get("pre_store_call"), "__call__"):
-                extract_info["pre_store_call"]()
-            if "rename" in extract_info and extract_info["rename"]:
-                if tmp_dir is None:
-                    tmp_dir = tempfile.mkdtemp()
-                tarball.extractall(tmp_dir, [tar_member_info])
-                path_full = extract_info["path"]
-                shutil.move(
-                    os.path.join(tmp_dir, tar_member_info.name), path_full
-                )
-            else:
-                dir_path = os.path.dirname(extract_info["path"])
-                tarball.extractall(dir_path, [tar_member_info])
-                path_full = os.path.join(dir_path, tar_member_info.name)
-            file_attrs = extract_info["attrs"]
-            os.chmod(path_full, file_attrs["mode"])
-            os.chown(path_full, file_attrs["uid"], file_attrs["gid"])
-        tarball.close()
+                extract_info = None
+                path = tar_member_info.name
+                while path:
+                    if path in file_list:
+                        extract_info = file_list[path]
+                        break
+                    path = os.path.dirname(path)
+                if not extract_info:
+                    continue
+                path_full = None
+                if hasattr(extract_info.get("pre_store_call"), "__call__"):
+                    extract_info["pre_store_call"]()
+                if "rename" in extract_info and extract_info["rename"]:
+                    if tmp_dir is None:
+                        tmp_dir = tempfile.mkdtemp()
+                    tarball.extractall(tmp_dir, [tar_member_info])
+                    path_full = extract_info["path"]
+                    shutil.move(
+                        os.path.join(tmp_dir, tar_member_info.name), path_full
+                    )
+                else:
+                    dir_path = os.path.dirname(extract_info["path"])
+                    tarball.extractall(dir_path, [tar_member_info])
+                    path_full = os.path.join(dir_path, tar_member_info.name)
+                file_attrs = extract_info["attrs"]
+                os.chmod(path_full, file_attrs["mode"])
+                os.chown(path_full, file_attrs["uid"], file_attrs["gid"])
     except (tarfile.TarError, EnvironmentError, OSError) as e:
         utils.err("unable to restore the cluster: %s" % e)
     finally:
@@ -590,7 +586,9 @@ def _get_uid(user_name):
     try:
         return pwd.getpwnam(user_name).pw_uid
     except KeyError:
-        utils.err("Unable to determine uid of user '{0}'".format(user_name))
+        return utils.err(
+            "Unable to determine uid of user '{0}'".format(user_name)
+        )
 
 
 def _get_gid(group_name):
@@ -600,7 +598,9 @@ def _get_gid(group_name):
     try:
         return grp.getgrnam(group_name).gr_gid
     except KeyError:
-        utils.err("Unable to determine gid of group '{0}'".format(group_name))
+        return utils.err(
+            "Unable to determine gid of group '{0}'".format(group_name)
+        )
 
 
 def _ensure_etc_pacemaker_exists():
@@ -958,53 +958,52 @@ def config_import_cman(lib, argv, modifiers):
         file_item["attrs"]["mode"] = 0o600
     tar_data = BytesIO()
     try:
-        tarball = tarfile.open(fileobj=tar_data, mode="w|bz2")
-        config_backup_add_version_to_tarball(tarball)
-        utils.tar_add_file_data(
-            tarball,
-            clufter_args_obj.cib["passout"],
-            "cib.xml",
-            **file_list["cib.xml"]["attrs"],
-        )
-        # put uidgid into separate files
-        fmt_simpleconfig = clufter.format_manager.FormatManager.init_lookup(
-            "simpleconfig"
-        ).plugins["simpleconfig"]
-        corosync_struct = []
-        uidgid_list = []
-        for section in clufter_args_obj.coro["passout"][2]:
-            if section[0] == "uidgid":
-                uidgid_list.append(section[1])
-            else:
-                corosync_struct.append(section)
-        corosync_conf_data = fmt_simpleconfig(
-            "struct", ("corosync", (), corosync_struct)
-        )("bytestring")
-        utils.tar_add_file_data(
-            tarball,
-            corosync_conf_data,
-            "corosync.conf",
-            **file_list["corosync.conf"]["attrs"],
-        )
-        for uidgid in uidgid_list:
-            uid = ""
-            gid = ""
-            for item in uidgid:
-                if item[0] == "uid":
-                    uid = item[1]
-                if item[0] == "gid":
-                    gid = item[1]
-            filename = utils.get_uid_gid_file_name(uid, gid)
-            uidgid_data = fmt_simpleconfig(
-                "struct", ("corosync", (), [("uidgid", uidgid, None)])
+        with tarfile.open(fileobj=tar_data, mode="w|bz2") as tarball:
+            config_backup_add_version_to_tarball(tarball)
+            utils.tar_add_file_data(
+                tarball,
+                clufter_args_obj.cib["passout"],
+                "cib.xml",
+                **file_list["cib.xml"]["attrs"],
+            )
+            # put uidgid into separate files
+            fmt_simpleconfig = clufter.format_manager.FormatManager.init_lookup(
+                "simpleconfig"
+            ).plugins["simpleconfig"]
+            corosync_struct = []
+            uidgid_list = []
+            for section in clufter_args_obj.coro["passout"][2]:
+                if section[0] == "uidgid":
+                    uidgid_list.append(section[1])
+                else:
+                    corosync_struct.append(section)
+            corosync_conf_data = fmt_simpleconfig(
+                "struct", ("corosync", (), corosync_struct)
             )("bytestring")
             utils.tar_add_file_data(
                 tarball,
-                uidgid_data,
-                "uidgid.d/" + filename,
-                **file_list["uidgid.d"]["attrs"],
+                corosync_conf_data,
+                "corosync.conf",
+                **file_list["corosync.conf"]["attrs"],
             )
-        tarball.close()
+            for uidgid in uidgid_list:
+                uid = ""
+                gid = ""
+                for item in uidgid:
+                    if item[0] == "uid":
+                        uid = item[1]
+                    if item[0] == "gid":
+                        gid = item[1]
+                filename = utils.get_uid_gid_file_name(uid, gid)
+                uidgid_data = fmt_simpleconfig(
+                    "struct", ("corosync", (), [("uidgid", uidgid, None)])
+                )("bytestring")
+                utils.tar_add_file_data(
+                    tarball,
+                    uidgid_data,
+                    "uidgid.d/" + filename,
+                    **file_list["uidgid.d"]["attrs"],
+                )
     except (tarfile.TarError, EnvironmentError) as e:
         utils.err("unable to create tarball: %s" % e)
     tar_data.seek(0)

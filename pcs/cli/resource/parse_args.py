@@ -261,7 +261,7 @@ def build_operations(op_group_list):
     # every operation needs at least name and one option
     # there can be more than one operation in op_group: check is after
     # processing
-    if any([len(operation) < 2 for operation in operation_list]):
+    if any(len(operation) < 2 for operation in operation_list):
         raise __not_enough_parts_in_operation()
 
     return operation_list

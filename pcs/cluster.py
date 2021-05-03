@@ -949,25 +949,25 @@ def cluster_edit(lib, argv, modifiers):
             scope_arg = ""
 
         editor = os.environ["EDITOR"]
-        tempcib = tempfile.NamedTemporaryFile(mode="w+", suffix=".pcs")
         cib = utils.get_cib(scope)
-        tempcib.write(cib)
-        tempcib.flush()
-        try:
-            subprocess.call([editor, tempcib.name])
-        except OSError:
-            utils.err("unable to open file with $EDITOR: " + editor)
+        with tempfile.NamedTemporaryFile(mode="w+", suffix=".pcs") as tempcib:
+            tempcib.write(cib)
+            tempcib.flush()
+            try:
+                subprocess.call([editor, tempcib.name])
+            except OSError:
+                utils.err("unable to open file with $EDITOR: " + editor)
 
-        tempcib.seek(0)
-        newcib = "".join(tempcib.readlines())
-        if newcib == cib:
-            print("CIB not updated, no changes detected")
-        else:
-            cluster_push(
-                lib,
-                [arg for arg in [tempcib.name, scope_arg] if arg],
-                modifiers.get_subset("--wait", "--config", "-f"),
-            )
+            tempcib.seek(0)
+            newcib = "".join(tempcib.readlines())
+            if newcib == cib:
+                print("CIB not updated, no changes detected")
+            else:
+                cluster_push(
+                    lib,
+                    [arg for arg in [tempcib.name, scope_arg] if arg],
+                    modifiers.get_subset("--wait", "--config", "-f"),
+                )
 
     else:
         utils.err("$EDITOR environment variable is not set")
@@ -1004,14 +1004,13 @@ def get_cib(lib, argv, modifiers):
     if not filename:
         print(utils.get_cib(scope).rstrip())
     else:
+        output = utils.get_cib(scope)
+        if not output:
+            utils.err("No data in the CIB")
         try:
-            cib_file = open(filename, "w")
-            output = utils.get_cib(scope)
-            if output != "":
+            with open(filename, "w") as cib_file:
                 cib_file.write(output)
-            else:
-                utils.err("No data in the CIB")
-        except IOError as e:
+        except EnvironmentError as e:
             utils.err(
                 "Unable to write to file '%s', %s" % (filename, e.strerror)
             )

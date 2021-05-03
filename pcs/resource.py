@@ -612,9 +612,7 @@ def _format_desc(indentation, desc):
     """
     desc = " ".join(desc.split())
     dummy_rows, columns = utils.getTerminalSize()
-    columns = int(columns)
-    if columns < 40:
-        columns = 40
+    columns = max(int(columns), 40)
     afterindent = columns - indentation
     if afterindent < 1:
         afterindent = columns

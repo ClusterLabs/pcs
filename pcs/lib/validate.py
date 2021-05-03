@@ -772,7 +772,7 @@ class ValuePortRange(ValuePredicateBase):
 
     def _is_valid(self, value: TypeOptionValue) -> bool:
         return matches_regexp(value, "^[0-9]+-[0-9]+$") and all(
-            [is_port_number(part) for part in value.split("-", 1)]
+            is_port_number(part) for part in value.split("-", 1)
         )
 
     def _get_allowed_values(self) -> Any:

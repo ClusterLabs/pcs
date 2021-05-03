@@ -183,9 +183,8 @@ def authorize_user_sync(username, password) -> UserAuthInfo:
 # http://www.tornadoweb.org/en/stable/guide/coroutines.html#python-3-5-async-and-await
 @coroutine
 def run_in_process(sync_fn, *args):
-    pool = ProcessPoolExecutor(max_workers=1)
-    result = yield pool.submit(sync_fn, *args)
-    pool.shutdown()
+    with ProcessPoolExecutor(max_workers=1) as pool:
+        result = yield pool.submit(sync_fn, *args)
     return result
 
 

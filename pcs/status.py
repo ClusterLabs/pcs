@@ -288,7 +288,7 @@ def check_nodes(node_list, prefix=""):
         utils.create_task_list(report, utils.checkAuthorization, node_list)
     )
 
-    return any([status != online_code for status in status_list])
+    return any(status != online_code for status in status_list)
 
 
 # If no arguments get current cluster node status, otherwise get listed

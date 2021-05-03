@@ -108,7 +108,7 @@ class CommandRunner:
         )
 
         try:
-            # pylint: disable=subprocess-popen-preexec-fn
+            # pylint: disable=subprocess-popen-preexec-fn, consider-using-with
             # this is OK as pcs is only single-threaded application
             process = subprocess.Popen(
                 args,
