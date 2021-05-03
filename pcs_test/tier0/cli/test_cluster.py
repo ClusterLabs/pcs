@@ -23,7 +23,7 @@ from pcs.common.types import CorosyncTransportType
 
 
 def _node(name, **kwargs):
-    """ node dictionary fixture """
+    """node dictionary fixture"""
     return dict(name=name, **kwargs)
 
 

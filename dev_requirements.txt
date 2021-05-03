@@ -2,4 +2,4 @@ lxml-stubs
 pylint==2.6.0
 astroid==2.4.2
 mypy==0.812
-black==20.8b1
+black==21.4b2
