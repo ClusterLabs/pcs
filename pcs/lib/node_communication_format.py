@@ -100,7 +100,7 @@ def service_cmd_format(service, command):
 
 
 class Result(namedtuple("Result", "code message")):
-    """ Wrapper over some call results """
+    """Wrapper over some call results"""
 
 
 def unpack_items_from_response(main_response, main_key, node_label):
