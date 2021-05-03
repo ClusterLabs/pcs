@@ -54,10 +54,8 @@ def _can_be_evaluated_as_positive_num(value):
 
 def is_clone_deactivated_by_meta(meta_attributes):
     return are_meta_disabled(meta_attributes) or any(
-        [
-            not _can_be_evaluated_as_positive_num(meta_attributes.get(key, "1"))
-            for key in ["clone-max", "clone-node-max"]
-        ]
+        not _can_be_evaluated_as_positive_num(meta_attributes.get(key, "1"))
+        for key in ["clone-max", "clone-node-max"]
     )
 
 

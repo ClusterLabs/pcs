@@ -106,8 +106,8 @@ class MockCurl:
     def getinfo(self, opt):
         try:
             return self._info[opt]
-        except KeyError:
-            AssertionError("info '#{0}' not defined".format(opt))
+        except KeyError as e:
+            raise AssertionError("info '#{0}' not defined".format(opt)) from e
 
     def perform(self):
         if self._error:
@@ -140,8 +140,8 @@ class MockCurlSimple:
     def getinfo(self, opt):
         try:
             return self._info[opt]
-        except KeyError:
-            AssertionError("info '#{0}' not defined".format(opt))
+        except KeyError as e:
+            raise AssertionError("info '#{0}' not defined".format(opt)) from e
 
 
 class MockCurlMulti:

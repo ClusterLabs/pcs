@@ -104,9 +104,8 @@ def pcsd_deauth(lib, argv, modifiers):
     filepath = settings.pcsd_users_conf_location
     if not argv:
         try:
-            users_file = open(filepath, "w")
-            users_file.write(json.dumps([]))
-            users_file.close()
+            with open(filepath, "w") as users_file:
+                users_file.write(json.dumps([]))
         except EnvironmentError as e:
             utils.err(
                 "Unable to edit data in {file}: {err}".format(
@@ -117,27 +116,26 @@ def pcsd_deauth(lib, argv, modifiers):
 
     try:
         tokens_to_remove = set(argv)
-        users_file = open(filepath, "r+")
-        old_data = json.loads(users_file.read())
         new_data = []
-        removed_tokens = set()
-        for old_item in old_data:
-            if old_item["token"] in tokens_to_remove:
-                removed_tokens.add(old_item["token"])
-            else:
-                new_data.append(old_item)
-        tokens_not_found = sorted(tokens_to_remove - removed_tokens)
-        if tokens_not_found:
-            utils.err(
-                "Following tokens were not found: '{tokens}'".format(
-                    tokens="', '".join(tokens_not_found)
+        with open(filepath, "r+") as users_file:
+            old_data = json.loads(users_file.read())
+            removed_tokens = set()
+            for old_item in old_data:
+                if old_item["token"] in tokens_to_remove:
+                    removed_tokens.add(old_item["token"])
+                else:
+                    new_data.append(old_item)
+            tokens_not_found = sorted(tokens_to_remove - removed_tokens)
+            if tokens_not_found:
+                utils.err(
+                    "Following tokens were not found: '{tokens}'".format(
+                        tokens="', '".join(tokens_not_found)
+                    )
                 )
-            )
-        if removed_tokens:
-            users_file.seek(0)
-            users_file.truncate()
-            users_file.write(json.dumps(new_data, indent=2))
-        users_file.close()
+            if removed_tokens:
+                users_file.seek(0)
+                users_file.truncate()
+                users_file.write(json.dumps(new_data, indent=2))
     except KeyError as e:
         utils.err(
             "Unable to parse data in {file}: missing key {key}".format(

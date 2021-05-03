@@ -56,6 +56,9 @@ def write_tmpfile(data, binary=False):
     string or bytes data -- data to write to the file
     bool binary -- treat data as binary?
     """
+    # TODO: This function should be converted to a context manager. It should
+    # be responsible for closing the tmp file.
+    # pylint: disable=consider-using-with
     mode = "w+b" if binary else "w+"
     tmpfile = tempfile.NamedTemporaryFile(mode=mode, suffix=".pcs")
     if data is not None:

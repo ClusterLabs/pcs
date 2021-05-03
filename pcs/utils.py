@@ -683,7 +683,7 @@ def get_corosync_conf_facade(conf_text=None):
             )
         )
     except corosync_conf_parser.CorosyncConfParserException as e:
-        err("Unable to parse corosync.conf: %s" % e)
+        return err("Unable to parse corosync.conf: %s" % e)
 
 
 def getNodeAttributesFromPacemaker():
@@ -696,7 +696,7 @@ def getNodeAttributesFromPacemaker():
             for node in ClusterState(getClusterStateXml()).node_section.nodes
         ]
     except LibraryError as e:
-        process_library_reports(e.args)
+        return process_library_reports(e.args)
 
 
 def hasCorosyncConf():
@@ -850,7 +850,7 @@ def run(
         else:
             stdin_pipe = subprocess.DEVNULL
 
-        # pylint: disable=subprocess-popen-preexec-fn
+        # pylint: disable=subprocess-popen-preexec-fn, consider-using-with
         p = subprocess.Popen(
             args,
             stdin=stdin_pipe,
@@ -1633,7 +1633,7 @@ def get_cib_dom(cib_xml=None):
         dom = parseString(cib_xml)
         return dom
     except:
-        err("unable to get cib")
+        return err("unable to get cib")
 
 
 def get_cib_etree(cib_xml=None):
@@ -1648,7 +1648,7 @@ def get_cib_etree(cib_xml=None):
         root = ET.fromstring(cib_xml)
         return root
     except:
-        err("unable to get cib")
+        return err("unable to get cib")
 
 
 def is_etree(var):
@@ -2024,12 +2024,13 @@ def getClusterName():
         settings
     """
     try:
-        f = open(settings.corosync_conf_file, "rb")
-        conf = corosync_conf_facade(corosync_conf_parser.Parser.parse(f.read()))
-        f.close()
-        cluster_name = conf.get_cluster_name()
-        if cluster_name:
-            return cluster_name
+        with open(settings.corosync_conf_file, "rb") as f:
+            conf = corosync_conf_facade(
+                corosync_conf_parser.Parser.parse(f.read())
+            )
+            cluster_name = conf.get_cluster_name()
+            if cluster_name:
+                return cluster_name
     except (IOError, corosync_conf_parser.CorosyncConfParserException):
         pass
 
@@ -2059,9 +2060,8 @@ def write_empty_cib(cibfile):
   </configuration>
   <status/>
 </cib>"""
-    f = open(cibfile, "w")
-    f.write(empty_xml)
-    f.close()
+    with open(cibfile, "w") as f:
+        f.write(empty_xml)
 
 
 # Test if 'var' is a score or option (contains an '=')
@@ -2256,34 +2256,37 @@ def simulate_cib(cib_dom):
     """
     Commandline options: no options
     """
-    new_cib_file = tempfile.NamedTemporaryFile(mode="w+", suffix=".pcs")
-    transitions_file = tempfile.NamedTemporaryFile(mode="w+", suffix=".pcs")
-    output, retval = run(
-        [
-            "crm_simulate",
-            "--simulate",
-            "--save-output",
-            new_cib_file.name,
-            "--save-graph",
-            transitions_file.name,
-            "--xml-pipe",
-        ],
-        string_for_stdin=cib_dom.toxml(),
-    )
-    if retval != 0:
-        err("Unable to run crm_simulate:\n%s" % output)
     try:
-        new_cib_file.seek(0)
-        transitions_file.seek(0)
-        return (
-            output,
-            parseString(transitions_file.read()),
-            parseString(new_cib_file.read()),
-        )
+        with tempfile.NamedTemporaryFile(
+            mode="w+", suffix=".pcs"
+        ) as new_cib_file, tempfile.NamedTemporaryFile(
+            mode="w+", suffix=".pcs"
+        ) as transitions_file:
+            output, retval = run(
+                [
+                    "crm_simulate",
+                    "--simulate",
+                    "--save-output",
+                    new_cib_file.name,
+                    "--save-graph",
+                    transitions_file.name,
+                    "--xml-pipe",
+                ],
+                string_for_stdin=cib_dom.toxml(),
+            )
+            if retval != 0:
+                return err("Unable to run crm_simulate:\n%s" % output)
+            new_cib_file.seek(0)
+            transitions_file.seek(0)
+            return (
+                output,
+                parseString(transitions_file.read()),
+                parseString(new_cib_file.read()),
+            )
     except (EnvironmentError, xml.parsers.expat.ExpatError) as e:
-        err("Unable to run crm_simulate:\n%s" % e)
+        return err("Unable to run crm_simulate:\n%s" % e)
     except xml.etree.ElementTree.ParseError as e:
-        err("Unable to run crm_simulate:\n%s" % e)
+        return err("Unable to run crm_simulate:\n%s" % e)
 
 
 # DEPRECATED
