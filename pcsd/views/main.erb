@@ -5,13 +5,13 @@
   <link rel="stylesheet" type="text/css" href="/css/style.css" />
   <link rel="stylesheet" type="text/css" href="/css/overpass.css" />
   <link rel="stylesheet" type="text/css" href="/css/liberation.css" />
-  <link rel="stylesheet" type="text/css" href="/css/jquery-ui-1.10.1.custom.css" />
+  <link rel="stylesheet" type="text/css" href="/css/jquery-ui-1.12.1.custom.css" />
   <script type="text/javascript">
 	ENV = { "RAISE_ON_DEPRECATION": true, "VIEW_PRESERVES_CONTEXT": true,
 	  "CP_DEFAULT_CACHEABLE": true};
   </script>
-  <script src="/js/jquery-1.9.1.min.js"></script>
-  <script src="/js/jquery-ui-1.10.1.custom.min.js"></script>
+  <script src="/js/jquery-3.6.0.min.js"></script>
+  <script src="/js/jquery-ui-1.12.1.custom.min.js"></script>
   <script src="/js/handlebars-v1.2.1.js"></script>
   <script src="/js/ember-1.4.0.js"></script>
   <script src="/js/tools.js"></script>
@@ -50,34 +50,42 @@
       $('#new_resource_agent').dialog('option','position','center');
     }
     function resizeTable(refresh) {
+      // In jquery 1.9.1, function height() returns null for nonexistent
+      // elements and the null is converted to 0 when calculating value.
+      // In jquery 3.6.0, function height() returns undefined for nonexistent
+      // elements and the result of calculation is NaN. For that reason, default
+      // value 0 is used for every height call.
       if (refresh == true) {
-	origMainTRHeight = $('#main > tbody > tr:nth-child(3)').height();
+        origMainTRHeight = $('#main > tbody > tr:nth-child(3)').height() || 0;
       }
-      var wheight = $(window).height();
-      var header = $('#header').height();
-      var footer = $('#footer').height();
-      var tr1 = $('#main > tbody > tr:nth-child(1)').height();
-      var tr2 = $('#main > tbody > tr:nth-child(2)').height();
-      var tr3 = $('#main > tbody > tr:nth-child(4)').height();
-      var push = $('#push').height();
+      var wheight = $(window).height() || 0;
+      var header = $('#header').height() || 0;
+      var footer = $('#footer').height() || 0;
+      var tr1 = $('#main > tbody > tr:nth-child(1)').height() || 0;
+      var tr2 = $('#main > tbody > tr:nth-child(2)').height() || 0;
+      // Element #main > tbody > tr:nth-child(4) does not exist on load (neither
+      // in table in manage.erb) for unknown reason. But I'm not sure if it is
+      // always the case and an extra row is not added dynamically.
+      var tr3 = $('#main > tbody > tr:nth-child(4)').height() || 0;
+      var push = $('#push').height() || 0;
       var newheight = wheight - header - footer - tr1 - tr2 - tr3 - 25;
       if (origMainTRHeight <= newheight) {
-	$('#main > tbody > tr:nth-child(3)').height(newheight);
-	$('#content').height($('#main').height());
+        $('#main > tbody > tr:nth-child(3)').height(newheight);
+        $('#content').height($('#main').height() || 0);
       }
     }
     $(window).resize(function() {
-	resizeTable();
-	});
-    $(window).load(function() {
-	resizeTable(true);
-	$('#add_ra_type').trigger('change');
-	$('#add_stonith_type').trigger('change');
-	$('#new_resource_agent').ajaxStop(function() {
-	  resizeDialog();
-	  });
-	});
-
+      // when resize browser window...
+      resizeTable();
+    });
+    $(window).on("load", function() {
+      resizeTable(true);
+      $('#add_ra_type').trigger('change');
+      $('#add_stonith_type').trigger('change');
+      $('#new_resource_agent').ajaxStop(function() {
+      resizeDialog();
+      });
+    });
   </script>
 </head>
 <html>

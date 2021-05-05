@@ -92,8 +92,8 @@ dist_pcsdpubjs_DATA	= \
 			  public/js/cluster-setup.js \
 			  public/js/ember-1.4.0.js \
 			  public/js/handlebars-v1.2.1.js \
-			  public/js/jquery-1.9.1.min.js \
-			  public/js/jquery-ui-1.10.1.custom.min.js \
+			  public/js/jquery-3.6.0.min.js \
+			  public/js/jquery-ui-1.12.1.custom.min.js \
 			  public/js/node-add.js \
 			  public/js/node-remove.js \
 			  public/js/nodes-ember.js \
@@ -120,7 +120,7 @@ dist_pcsdpubimages_DATA	= \
 
 pcsdpubcssdir		= ${pcsddir}/public/css
 dist_pcsdpubcss_DATA	= \
-			  public/css/jquery-ui-1.10.1.custom.css \
+			  public/css/jquery-ui-1.12.1.custom.css \
 			  public/css/liberation.css \
 			  public/css/overpass.css \
 			  public/css/style.css
