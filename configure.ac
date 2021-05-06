@@ -248,20 +248,16 @@ rm -rf $ac_pwd/rpm/requirements.txt $ac_pwd/dev_src/requirements.txt
 touch $ac_pwd/rpm/requirements.txt
 touch $ac_pwd/dev_src/requirements.txt
 
-# PCS_CHECK_PYMOD([module], [version], [embedded=yes], [devel_module])
+# PCS_CHECK_PYMOD([module], [version], [embedded=yes])
 
 AC_DEFUN([PCS_CHECK_PYMOD], [
-	 if test "x$local_build" = "xyes"; then
-		if test "x$3" = "xyes"; then
-			# don´t pass the version since the module will be embedded
-			AC_PIP_MODULE([$1])
-		else
-			AC_PIP_MODULE([$1], [$2], [], [AC_MSG_ERROR([Python module $1 not found])])
-		fi
+	 if test "x$local_build" = "xyes" && test "x$3" = "xyes"; then
+		# don´t pass the version since the module will be embedded
+		AC_PIP_MODULE([$1])
 	 else
 		AC_PIP_MODULE([$1], [$2], [], [AC_MSG_ERROR([Python module $1 not found])])
 	 fi
-	 if test "x$3" = "xyes" && test "x$4" = "x"; then
+	 if test "x$3" = "xyes"; then
 		 echo "$1 $2" | sed -e 's# ##g' >> $ac_pwd/rpm/requirements.txt
 		 if test "x$cache_only" = "xyes"; then
 			src=`ls rpm/$1-*`
@@ -269,9 +265,6 @@ AC_DEFUN([PCS_CHECK_PYMOD], [
 				 AC_MSG_ERROR([cache only build required but no source detected in rpm/])
 			fi
 		 fi
-	 fi
-	 if test "x$4" = "xyes"; then
-		 echo "$1 $2" | sed -e 's# ##g' >> $ac_pwd/dev_src/requirements.txt
 	 fi
 ])
 
