@@ -106,9 +106,6 @@ endif
 	for i in $$src; do \
 		$(TAR) xvz -C ${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/src -f $$i; \
 	done;
-if NOT_BUILD_DATACLASSES
-	rm -rf ${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/src/dataclasses-*
-endif
 if NOT_BUILD_DISTRO
 	rm -rf ${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/src/distro-*
 endif
