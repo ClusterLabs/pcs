@@ -1,4 +1,4 @@
-dnl @synopsis AC_PIP_MODULE(modname[, version][, action-if-found][, action-if-not-found][, pythonpath])
+dnl @synopsis AC_PIP_MODULE(modname[, version][, action-if-found][, action-if-not-found][, action-if-version-mismatch][, pythonpath])
 dnl
 dnl Checks for pip module.
 dnl
@@ -15,8 +15,8 @@ AC_DEFUN([AC_PIP_MODULE],[
 	reqversion="$2"
 	AC_MSG_CHECKING([pip module: $module $reqversion])
 	pipcommonopts="list --format freeze --disable-pip-version-check"
-	if test -n "$5"; then
-		pipoutput=$(PYTHONPATH=$5 $PIP $pipcommonopts | grep ^${module}==)
+	if test -n "$6"; then
+		pipoutput=$(PYTHONPATH=$6 $PIP $pipcommonopts | grep ^${module}==)
 	else
 		pipoutput=$($PIP $pipcommonopts | grep ^${module}==)
 	fi
@@ -34,11 +34,11 @@ AC_DEFUN([AC_PIP_MODULE],[
 			eval AS_TR_CPP(HAVE_PIPMOD_$module_version)=$curversion
 			$3
 		else
-			if test -n "$4"; then
+			if test -n "$5"; then
 				AC_MSG_RESULT([no (detected: $curversion)])
 				eval AS_TR_CPP(HAVE_PIPMOD_$module)=no
 				eval AS_TR_CPP(HAVE_PIPMOD_$module_version)=$curversion
-				$4
+				$5
 			else
 				AC_MSG_ERROR([python $module version $curversion detected. Requested "$comp $tmpversion"])
 			fi
