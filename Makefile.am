@@ -106,9 +106,6 @@ endif
 	for i in $$src; do \
 		$(TAR) xvz -C ${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/src -f $$i; \
 	done;
-if NOT_BUILD_DISTRO
-	rm -rf ${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/src/distro-*
-endif
 	touch $@
 
 stamps/install_python_embedded_mods_local: stamps/untar_python_src

@@ -305,12 +305,7 @@ fi
 # python 3.8+ needs distro as well (removed from upstream lib)
 if printf '%s\n%s\n' "3.8" "$PYTHON_VERSION" | sort -V -C; then
 	PCS_CHECK_PYMOD([distro], [], [yes])
-	builddistro=yes
-else
-	echo distro >> $ac_pwd/rpm/requirements.txt
-	builddistro=no
 fi
-AM_CONDITIONAL([NOT_BUILD_DISTRO], [test "$builddistro" = "no"])
 
 AC_SUBST([PYTHON_DEVEL])
 
