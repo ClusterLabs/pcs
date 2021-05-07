@@ -1820,16 +1820,16 @@ def status(args=(), pout=True):
 Usage: pcs status [commands]...
 View current cluster and resource status
 Commands:
-    [status] [<resource id | tag id>] [node=<node>] [--full] [--hide-inactive]
+    [status] [--full] [--hide-inactive]
         View all information about the cluster and resources (--full provides
-        more details, --hide-inactive hides inactive resources). If a resource
-        or tag id is specified, only show status of the specified resource or
-        resources in the specified tag. If node is specified, only show status
-        of resources configured for the specified node.
+        more details, --hide-inactive hides inactive resources).
 
-    resources [--hide-inactive]
+    resources [<resource id | tag id>] [node=<node>] [--hide-inactive]
         Show status of all currently configured resources. If --hide-inactive
-        is specified, only show active resources.
+        is specified, only show active resources.  If a resource or tag id is
+        specified, only show status of the specified resource or resources in
+        the specified tag. If node is specified, only show status of resources
+        configured for the specified node.
 
     cluster
         View current cluster status.
