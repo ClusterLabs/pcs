@@ -69,10 +69,11 @@ AM_PATH_PYTHON([3.6])
 eval PYTHON_SITELIB="`eval echo ${pythondir}`"
 AC_SUBST([PYTHON_SITELIB])
 # required to detect / install python modules
-AC_CHECK_PROGS([PIP], [pip3 pip])
-if test "x$PIP" = "x"; then
-	AC_MSG_ERROR([Unable to find pip binary])
+if ! $PYTHON -m pip > /dev/null 2>&1; then
+	AC_MSG_ERROR([Python module pip not found])
 fi
+PIP="$PYTHON -m pip"
+AC_SUBST([PIP])
 
 # use a wrapper to call into PKG_CHECK_VAR to allow to set a default
 AC_DEFUN([PCS_PKG_CHECK_VAR], [
@@ -304,8 +305,6 @@ fi
 if printf '%s\n%s\n' "3.8" "$PYTHON_VERSION" | sort -V -C; then
 	PCS_CHECK_PYMOD([distro], [], [yes])
 fi
-
-AC_SUBST([PYTHON_DEVEL])
 
 # special case, because we need to download from github
 AC_PIP_MODULE([pyagentx])
