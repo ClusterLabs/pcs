@@ -244,6 +244,6 @@ class Scheduler:
         Cleanly terminates the scheduler
         """
         self._worker_log_listener.stop()
-        self._logging_q.close()
+        self._proc_pool_manager.join()
         self._proc_pool.terminate()
         self._logger.info("Scheduler is correctly terminated.")

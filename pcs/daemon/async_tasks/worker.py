@@ -30,7 +30,8 @@ class WorkerCommand:
 def worker_init(message_q: mp.Queue, logging_q: mp.Queue) -> None:
     """
     Runs in every new worker process after its creation
-    :param message_q: Queue instance for sending messages to scheduler
+    :param message_q: Queue instance for sending messages to the scheduler
+    :param logging_q: Queue instance for sending log records to the scheduler
     """
     # Create and configure new logger
     logger = setup_worker_logger(logging_q)
