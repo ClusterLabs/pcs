@@ -243,10 +243,8 @@ AC_SUBST([PCS_BUNDLED_DIR])
 
 mkdir -p $ac_pwd/stamps
 mkdir -p $ac_pwd/rpm/
-mkdir -p $ac_pwd/dev_src
-rm -rf $ac_pwd/rpm/requirements.txt $ac_pwd/dev_src/requirements.txt
+rm -rf $ac_pwd/rpm/requirements.txt
 touch $ac_pwd/rpm/requirements.txt
-touch $ac_pwd/dev_src/requirements.txt
 
 # PCS_BUNDLE_PYMOD([module], [version])
 AC_DEFUN([PCS_BUNDLE_PYMOD], [
