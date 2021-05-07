@@ -300,12 +300,7 @@ PCS_CHECK_PYMOD([python-dateutil], [>= 2.7.0], [yes])
 # python 3.6 needs dataclasses as well (added in 3.7)
 if test "$PYTHON_VERSION" = "3.6"; then
 	PCS_CHECK_PYMOD([dataclasses], [], [yes])
-	builddataclasses=yes
-else
-	echo dataclasses >> $ac_pwd/rpm/requirements.txt
-	builddataclasses=no
 fi
-AM_CONDITIONAL([NOT_BUILD_DATACLASSES], [test "$builddataclasses" = "no"])
 
 # python 3.8+ needs distro as well (removed from upstream lib)
 if printf '%s\n%s\n' "3.8" "$PYTHON_VERSION" | sort -V -C; then
