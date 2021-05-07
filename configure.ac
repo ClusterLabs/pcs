@@ -248,24 +248,27 @@ rm -rf $ac_pwd/rpm/requirements.txt $ac_pwd/dev_src/requirements.txt
 touch $ac_pwd/rpm/requirements.txt
 touch $ac_pwd/dev_src/requirements.txt
 
-# PCS_CHECK_PYMOD([module], [version], [embedded=yes])
+# PCS_BUNDLE_PYMOD([module], [version])
+AC_DEFUN([PCS_BUNDLE_PYMOD], [
+	echo "$1 $2" | sed -e 's# ##g' >> $ac_pwd/rpm/requirements.txt
+	if test "x$cache_only" = "xyes"; then
+		src=`ls rpm/$1-*`
+		if test "x$src" = "x"; then
+			 AC_MSG_ERROR([cache only build required but no source detected in rpm/])
+		fi
+	fi
+])
 
+# PCS_CHECK_PYMOD([module], [version], [embedded=yes])
 AC_DEFUN([PCS_CHECK_PYMOD], [
-	 if test "x$local_build" = "xyes" && test "x$3" = "xyes"; then
-		# don´t pass the version since the module will be embedded
-		AC_PIP_MODULE([$1])
-	 else
+	if test "x$local_build" = "xyes" && test "x$3" = "xyes"; then
+		AC_PIP_MODULE([$1], [$2], [bundle_module=no], [bundle_module=yes], [bundle_module=yes])
+		if test "x$bundle_module" = "xyes"; then
+			PCS_BUNDLE_PYMOD([$1], [$2])
+		fi
+	else
 		AC_PIP_MODULE([$1], [$2], [], [AC_MSG_ERROR([Python module $1 not found])])
-	 fi
-	 if test "x$3" = "xyes"; then
-		 echo "$1 $2" | sed -e 's# ##g' >> $ac_pwd/rpm/requirements.txt
-		 if test "x$cache_only" = "xyes"; then
-			src=`ls rpm/$1-*`
-			if test "x$src" = "x"; then
-				 AC_MSG_ERROR([cache only build required but no source detected in rpm/])
-			fi
-		 fi
-	 fi
+	fi
 ])
 
 # required by rpm build
@@ -275,7 +278,7 @@ AC_SUBST([PYAGENTX_VERSION])
 # those MUST be available in BaseOS
 
 # required for --no-build-isolation
-AC_PIP_MODULE([pip], [>= 10.0.0], [have_isolation=yes], [have_isolation=no])
+AC_PIP_MODULE([pip], [>= 10.0.0], [have_isolation=yes], [have_isolation=no], [have_isolation=no])
 AM_CONDITIONAL([PIP_HAS_ISOLATION], [test "x$have_isolation" = xyes])
 
 PCS_CHECK_PYMOD([setuptools])
