@@ -84,25 +84,25 @@ if ENABLE_DOWNLOAD
 endif
 	touch $@
 
-stamps/download_python_devel_deps: dev_requirements.txt
+stamps/install_python_devel_deps: dev_requirements.txt
 if DEV_TESTS
 	PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring $(PIP) install --upgrade -r $<
 endif
 	touch $@
 
-stamps/download_python_parallel_tests_deps: parallel_tests_requirements.txt
+stamps/install_python_parallel_tests_deps: parallel_tests_requirements.txt
 if PARALLEL_TESTS
 	PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring $(PIP) install --upgrade -r $<
 endif
 	touch $@
 
 if ENABLE_DOWNLOAD
-stamps/untar_python_src: stamps/download_python_deps stamps/download_python_devel_deps stamps/download_python_parallel_tests_deps
+stamps/untar_python_src: stamps/download_python_deps
 else
 stamps/untar_python_src:
 endif
 	$(MKDIR_P) ${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL)/src/
-	src=`ls -1 ${abs_top_builddir}/rpm/*.tar.gz ${abs_top_srcdir}/rpm/*.tar.gz ${abs_top_builddir}/dev_src/*.tar.gz ${abs_top_srcdir}/dev_src/*.tar.gz 2>/dev/null || true | sort -u | grep -v pcs- || true` && \
+	src=`ls -1 ${abs_top_builddir}/rpm/*.tar.gz ${abs_top_srcdir}/rpm/*.tar.gz 2>/dev/null || true | sort -u | grep -v pcs- || true` && \
 	for i in $$src; do \
 		$(TAR) xvz -C ${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/src -f $$i; \
 	done;
@@ -220,7 +220,7 @@ pcsd-tests:
 		${abs_top_builddir}/pcsd/test/test_all_suite.rb
 
 if LOCAL_BUILD
-check-local-deps: stamps/install_python_embedded_mods_local stamps/install_ruby_deps_local
+check-local-deps: stamps/install_python_embedded_mods_local stamps/install_ruby_deps_local stamps/install_python_devel_deps stamps/install_python_parallel_tests_deps
 else
 check-local-deps:
 endif
@@ -293,7 +293,7 @@ distclean-local:
 	rm -rf Gemfile
 	rm -rf .mypy_cache
 	rm -rf rpm/requirements.txt rpm/Gemfile rpm/pcs-*
-	rm -rf dev_src stamps
+	rm -rf stamps
 	rm -rf ${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL} ${abs_top_builddir}/${PCSD_BUNDLED_DIR_ROOT_LOCAL}
 	rm -rf $(filter-out \
 	         $(top_builddir)/m4/ac_compare_versions.m4 \
