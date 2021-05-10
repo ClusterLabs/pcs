@@ -833,9 +833,9 @@ def run(
         "iso8601",
         "stonith_admin",
     ]:
-        args[0] = settings.pacemaker_binaries + command
+        args[0] = os.path.join(settings.pacemaker_binaries, command)
     elif command[0:8] == "corosync":
-        args[0] = settings.corosync_binaries + command
+        args[0] = os.path.join(settings.corosync_binaries, command)
 
     try:
         if "--debug" in pcs_options:
