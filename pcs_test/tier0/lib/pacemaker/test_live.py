@@ -16,11 +16,11 @@ from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.xml import etree_to_str, XmlManipulation
 
 from pcs import settings
-from pcs.common.pacemaker.api_result import StatusDto
 from pcs.common.reports import ReportItemSeverity as Severity
 from pcs.common.reports import codes as report_codes
 from pcs.common.tools import Version
 from pcs.common.types import CibRuleInEffectStatus
+from pcs.lib.pacemaker import api_result
 import pcs.lib.pacemaker.live as lib
 from pcs.lib.external import CommandRunner
 
@@ -48,7 +48,7 @@ class GetStatusFromApiResult(TestCase):
                     )
                 )
             ),
-            StatusDto(123, "short message", ["error1", "error2"]),
+            api_result.Status(123, "short message", ["error1", "error2"]),
         )
 
     def test_no_errors(self):
@@ -58,7 +58,7 @@ class GetStatusFromApiResult(TestCase):
                     fixture_crm_mon.error_xml(123, "short message")
                 )
             ),
-            StatusDto(123, "short message", []),
+            api_result.Status(123, "short message", []),
         )
 
 

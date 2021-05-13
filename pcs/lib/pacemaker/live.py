@@ -13,7 +13,6 @@ from lxml.etree import _Element
 
 from pcs import settings
 from pcs.common import reports
-from pcs.common.pacemaker import api_result
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
 from pcs.common.str_tools import join_multilines
@@ -26,6 +25,7 @@ from pcs.common.types import CibRuleInEffectStatus
 from pcs.lib.cib.tools import get_pacemaker_version_by_which_cib_was_validated
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
+from pcs.lib.pacemaker import api_result
 from pcs.lib.pacemaker.state import ClusterState
 from pcs.lib.tools import write_tmpfile
 from pcs.lib.xml_tools import etree_to_str
@@ -807,7 +807,7 @@ def get_rule_in_effect_status(
     return translation_map.get(retval, CibRuleInEffectStatus.UNKNOWN)
 
 
-def get_status_from_api_result(dom: _Element) -> api_result.StatusDto:
+def get_status_from_api_result(dom: _Element) -> api_result.Status:
     errors = []
     status_el = cast(_Element, dom.find("./status"))
     errors_el = status_el.find("errors")
@@ -816,7 +816,7 @@ def get_status_from_api_result(dom: _Element) -> api_result.StatusDto:
             str((error_el.text or "")).strip()
             for error_el in errors_el.iterfind("error")
         ]
-    return api_result.StatusDto(
+    return api_result.Status(
         code=int(str(status_el.get("code"))),
         message=str(status_el.get("message")),
         errors=errors,
