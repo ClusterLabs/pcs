@@ -884,8 +884,6 @@ Commands:
             provide your own certificates and keys.
 
         Local only mode:
-        NOTE: This feature is still being worked on and thus may be changed in
-        future.
         By default, pcs connects to all specified nodes to verify they can be
         used in the new cluster and to send cluster configuration files to them.
         If this is not what you want, specify --corosync_conf option followed by

@@ -438,8 +438,6 @@ Transports and their options, link, compression, crypto and totem options are al
 
 Local only mode:
 .br
-\fBNOTE:\fR This feature is still being worked on and thus may be changed in future.
-.br
 By default, pcs connects to all specified nodes to verify they can be used in the new cluster and to send cluster configuration files to them. If this is not what you want, specify \fB\-\-corosync_conf\fR option followed by a file path. Pcs will save corosync.conf to the specified file and will not connect to cluster nodes. These are the task pcs skips in that case:
 .br
 * make sure the nodes are not running or configured to run a cluster already
