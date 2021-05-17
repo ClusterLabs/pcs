@@ -472,9 +472,14 @@ function setup_node_links() {
     node_stop(node, false);
   });
   $("#node_restart").click(function() {
-    node_link_action(
-      "#node_restart", get_cluster_remote_url() + "node_restart", "restart"
-    );
+    var node = $.trim($("#node_info_header_title_name").text());
+    if (confirm(
+      "This will reboot node '" + node + "'.\nDo you want to continue?"
+    )) {
+      node_link_action(
+        "#node_restart", get_cluster_remote_url() + "node_restart", "restart"
+      );
+    }
   });
   $("#node_standby").click(function() {
     node_link_action(
