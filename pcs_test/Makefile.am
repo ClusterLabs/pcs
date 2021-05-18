@@ -396,7 +396,6 @@ EXTRA_DIST		= \
 			  tools/fixture_crm_mon.py \
 			  tools/fixture.py \
 			  tools/__init__.py \
-			  tools/integration_lib.py \
 			  tools/misc.py \
 			  tools/pcs_runner.py \
 			  tools/xml.py
