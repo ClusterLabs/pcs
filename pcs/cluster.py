@@ -71,7 +71,6 @@ from pcs.lib.corosync import (
 )
 from pcs.cli.reports.output import error, warn
 from pcs.lib.errors import LibraryError
-from pcs.lib.external import disable_service
 from pcs.lib.env import MIN_FEATURE_SET_VERSION_FOR_DIFF
 from pcs.lib.node import get_existing_nodes_names
 import pcs.lib.pacemaker.live as lib_pacemaker
@@ -264,10 +263,7 @@ def start_cluster(argv):
         service_list.append("corosync-qdevice")
     service_list.append("pacemaker")
     for service in service_list:
-        output, retval = utils.start_service(service)
-        if retval != 0:
-            print(output)
-            utils.err("unable to start {0}".format(service))
+        utils.start_service(service)
     if wait:
         wait_for_nodes_started([], wait_timeout)
 
@@ -689,10 +685,7 @@ def stop_cluster_pacemaker():
     Commandline options: no options
     """
     print("Stopping Cluster (pacemaker)...")
-    output, retval = utils.stop_service("pacemaker")
-    if retval != 0:
-        print(output)
-        utils.err("unable to stop pacemaker")
+    utils.stop_service("pacemaker")
 
 
 def stop_cluster_corosync():
@@ -705,10 +698,7 @@ def stop_cluster_corosync():
         service_list.append("corosync-qdevice")
     service_list.append("corosync")
     for service in service_list:
-        output, retval = utils.stop_service(service)
-        if retval != 0:
-            print(output)
-            utils.err("unable to stop {0}".format(service))
+        utils.stop_service(service)
 
 
 def kill_cluster(lib, argv, modifiers):
@@ -1342,9 +1332,12 @@ def cluster_destroy(lib, argv, modifiers):
     else:
         print("Shutting down pacemaker/corosync services...")
         for service in ["pacemaker", "corosync-qdevice", "corosync"]:
-            # Returns an error if a service is not running. It is safe to
-            # ignore it since we want it not to be running anyways.
-            utils.stop_service(service)
+            try:
+                utils.stop_service(service)
+            except LibraryError:
+                # It is safe to ignore error since we want it not to be running
+                # anyways.
+                pass
         print("Killing any remaining services...")
         kill_local_cluster_services()
         try:
@@ -1354,7 +1347,10 @@ def cluster_destroy(lib, argv, modifiers):
             # for now
             pass
         try:
-            disable_service(utils.cmd_runner(), lib_sbd.get_sbd_service_name())
+            service_manager = utils.get_service_manager()
+            service_manager.disable(
+                lib_sbd.get_sbd_service_name(service_manager)
+            )
         except:
             # it's not a big deal if sbd disable fails
             pass

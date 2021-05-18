@@ -3,6 +3,8 @@ from functools import partial
 import os.path
 from typing import Optional
 
+from pcs.common.services.errors import ManageServiceError
+
 from pcs import settings
 from pcs.common import file_type_codes
 from pcs.common import reports
@@ -14,7 +16,7 @@ from pcs.common.reports.item import (
     ReportItem,
 )
 from pcs.common.str_tools import join_multilines
-from pcs.lib import external, tools
+from pcs.lib import tools
 from pcs.lib.cib.resource import primitive, group
 from pcs.lib.booth import (
     config_files,
@@ -36,6 +38,11 @@ from pcs.lib.file.raw_file import GhostFile, raw_file_error_report
 from pcs.lib.interface.config import ParserErrorException
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.resource_agent import find_valid_resource_agent_by_name
+from pcs.lib.services import (
+    ensure_is_systemd,
+    is_systemd,
+    service_exception_to_report,
+)
 
 
 def config_setup(
@@ -135,10 +142,8 @@ def config_destroy(
         )
     # Only systemd is currently supported. Initd does not supports multiple
     # instances (here specified by name)
-    if external.is_systemctl():
-        if external.is_service_running(
-            env.cmd_runner(), "booth", found_instance_name
-        ):
+    if is_systemd(env.service_manager):
+        if env.service_manager.is_running("booth", found_instance_name):
             report_processor.report(
                 ReportItem.error(
                     reports.messages.BoothConfigIsUsed(
@@ -148,9 +153,7 @@ def config_destroy(
                 )
             )
 
-        if external.is_service_enabled(
-            env.cmd_runner(), "booth", found_instance_name
-        ):
+        if env.service_manager.is_enabled("booth", found_instance_name):
             report_processor.report(
                 ReportItem.error(
                     reports.messages.BoothConfigIsUsed(
@@ -634,24 +637,15 @@ def enable_booth(env: LibraryEnvironment, instance_name=None):
     env
     string instance_name -- booth instance name
     """
-    external.ensure_is_systemd()
+    ensure_is_systemd(env.service_manager)
     booth_env = env.get_booth_env(instance_name)
     _ensure_live_env(env, booth_env)
     instance_name = booth_env.instance_name
 
     try:
-        external.enable_service(env.cmd_runner(), "booth", instance_name)
-    except external.EnableServiceError as e:
-        raise LibraryError(
-            ReportItem.error(
-                reports.messages.ServiceActionFailed(
-                    reports.const.SERVICE_ACTION_ENABLE,
-                    "booth",
-                    e.message,
-                    instance=instance_name,
-                )
-            )
-        ) from e
+        env.service_manager.enable("booth", instance=instance_name)
+    except ManageServiceError as e:
+        raise LibraryError(service_exception_to_report(e)) from e
     env.report_processor.report(
         ReportItem.info(
             reports.messages.ServiceActionSucceeded(
@@ -670,24 +664,15 @@ def disable_booth(env: LibraryEnvironment, instance_name=None):
     env
     string instance_name -- booth instance name
     """
-    external.ensure_is_systemd()
+    ensure_is_systemd(env.service_manager)
     booth_env = env.get_booth_env(instance_name)
     _ensure_live_env(env, booth_env)
     instance_name = booth_env.instance_name
 
     try:
-        external.disable_service(env.cmd_runner(), "booth", instance_name)
-    except external.DisableServiceError as e:
-        raise LibraryError(
-            ReportItem.error(
-                reports.messages.ServiceActionFailed(
-                    reports.const.SERVICE_ACTION_DISABLE,
-                    "booth",
-                    e.message,
-                    instance=instance_name,
-                )
-            )
-        ) from e
+        env.service_manager.disable("booth", instance=instance_name)
+    except ManageServiceError as e:
+        raise LibraryError(service_exception_to_report(e)) from e
     env.report_processor.report(
         ReportItem.info(
             reports.messages.ServiceActionSucceeded(
@@ -708,24 +693,15 @@ def start_booth(env: LibraryEnvironment, instance_name=None):
     env
     string instance_name -- booth instance name
     """
-    external.ensure_is_systemd()
+    ensure_is_systemd(env.service_manager)
     booth_env = env.get_booth_env(instance_name)
     _ensure_live_env(env, booth_env)
     instance_name = booth_env.instance_name
 
     try:
-        external.start_service(env.cmd_runner(), "booth", instance_name)
-    except external.StartServiceError as e:
-        raise LibraryError(
-            ReportItem.error(
-                reports.messages.ServiceActionFailed(
-                    reports.const.SERVICE_ACTION_START,
-                    "booth",
-                    e.message,
-                    instance=instance_name,
-                )
-            )
-        ) from e
+        env.service_manager.start("booth", instance=instance_name)
+    except ManageServiceError as e:
+        raise LibraryError(service_exception_to_report(e)) from e
     env.report_processor.report(
         ReportItem.info(
             reports.messages.ServiceActionSucceeded(
@@ -744,24 +720,15 @@ def stop_booth(env: LibraryEnvironment, instance_name=None):
     env
     string instance_name -- booth instance name
     """
-    external.ensure_is_systemd()
+    ensure_is_systemd(env.service_manager)
     booth_env = env.get_booth_env(instance_name)
     _ensure_live_env(env, booth_env)
     instance_name = booth_env.instance_name
 
     try:
-        external.stop_service(env.cmd_runner(), "booth", instance_name)
-    except external.StopServiceError as e:
-        raise LibraryError(
-            ReportItem.error(
-                reports.messages.ServiceActionFailed(
-                    reports.const.SERVICE_ACTION_STOP,
-                    "booth",
-                    e.message,
-                    instance=instance_name,
-                )
-            )
-        ) from e
+        env.service_manager.stop("booth", instance=instance_name)
+    except ManageServiceError as e:
+        raise LibraryError(service_exception_to_report(e)) from e
     env.report_processor.report(
         ReportItem.info(
             reports.messages.ServiceActionSucceeded(

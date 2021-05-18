@@ -111,6 +111,17 @@ EXTRA_DIST		= \
 			  common/reports/messages.py \
 			  common/reports/processor.py \
 			  common/reports/types.py \
+			  common/services/common.py \
+			  common/services/drivers/__init__.py \
+			  common/services/drivers/systemd.py \
+			  common/services/drivers/sysvinit_rhel.py \
+			  common/services_dto.py \
+			  common/services/errors.py \
+			  common/services/__init__.py \
+			  common/services/interfaces/executor.py \
+			  common/services/interfaces/__init__.py \
+			  common/services/interfaces/manager.py \
+			  common/services/types.py \
 			  common/ssl.py \
 			  common/str_tools.py \
 			  common/system.py \
@@ -215,6 +226,7 @@ EXTRA_DIST		= \
 			  lib/commands/resource_agent.py \
 			  lib/commands/resource.py \
 			  lib/commands/sbd.py \
+			  lib/commands/services.py \
 			  lib/commands/status.py \
 			  lib/commands/stonith_agent.py \
 			  lib/commands/stonith.py \
@@ -265,6 +277,7 @@ EXTRA_DIST		= \
 			  lib/pacemaker/values.py \
 			  lib/resource_agent.py \
 			  lib/sbd.py \
+			  lib/services.py \
 			  lib/tools.py \
 			  lib/validate.py \
 			  lib/xml_tools.py \

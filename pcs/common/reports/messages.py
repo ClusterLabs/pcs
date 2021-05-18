@@ -3386,6 +3386,23 @@ class ServiceActionSkipped(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class ServiceUnableToDetectInitSystem(ReportItemMessage):
+    """
+    Autodetection of currently used init system was not successful, therefore
+    system service management is not be available.
+    """
+
+    _code = codes.SERVICE_UNABLE_TO_DETECT_INIT_SYSTEM
+
+    @property
+    def message(self) -> str:
+        return (
+            "Unable to detect init system. All actions related to system "
+            "services will be skipped."
+        )
+
+
+@dataclass(frozen=True)
 class UnableToGetAgentMetadata(ReportItemMessage):
     """
     There were some issues trying to get metadata of agent

@@ -19,6 +19,7 @@ from pcs.lib.commands import (
     resource,
     resource_agent,
     sbd,
+    services,
     status,
     stonith,
     stonith_agent,
@@ -452,6 +453,19 @@ def load_module(env, middleware_factory, name):
                     sbd.get_local_available_watchdogs
                 ),
                 "test_local_watchdog": sbd.test_local_watchdog,
+            },
+        )
+
+    if name == "services":
+        return bind_all(
+            env,
+            middleware.build(),
+            {
+                "start_service": services.start_service,
+                "stop_service": services.stop_service,
+                "enable_service": services.enable_service,
+                "disable_service": services.disable_service,
+                "get_services_info": services.get_services_info,
             },
         )
 

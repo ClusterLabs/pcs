@@ -1,6 +1,7 @@
 from pcs.common import reports
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
+from pcs.common.services.interfaces import ServiceManagerInterface
 from pcs.lib import sbd
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
@@ -15,6 +16,7 @@ from pcs.lib.corosync import (
     qdevice_net,
     qdevice_client,
 )
+from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfFacade
 from pcs.lib.node import get_existing_nodes_names
 
 
@@ -45,17 +47,17 @@ def get_config(lib_env):
 
 
 def _check_if_atb_can_be_disabled(
-    runner,
+    service_manager: ServiceManagerInterface,
     report_processor: ReportProcessor,
-    corosync_conf,
-    was_enabled,
-    force=False,
-):
+    corosync_conf: CorosyncConfFacade,
+    was_enabled: bool,
+    force: bool = False,
+) -> None:
     """
     Check whenever auto_tie_breaker can be changed without affecting SBD.
     Raises LibraryError if change of ATB will affect SBD functionality.
 
-    runner -- CommandRunner
+    service_manager --
     report_processor -- report processor
     corosync_conf -- corosync conf facade
     was_enabled -- True if ATB was enabled, False otherwise
@@ -64,7 +66,7 @@ def _check_if_atb_can_be_disabled(
     if (
         was_enabled
         and not corosync_conf.is_enabled_auto_tie_breaker()
-        and sbd.is_auto_tie_breaker_needed(runner, corosync_conf)
+        and sbd.is_auto_tie_breaker_needed(service_manager, corosync_conf)
     ):
         report_processor.report(
             ReportItem(
@@ -105,7 +107,7 @@ def set_options(
     cfg.set_quorum_options(options)
     if lib_env.is_corosync_conf_live:
         _check_if_atb_can_be_disabled(
-            lib_env.cmd_runner(),
+            lib_env.service_manager,
             lib_env.report_processor,
             cfg,
             cfg.is_enabled_auto_tie_breaker(),
@@ -349,7 +351,7 @@ def remove_device(lib_env: LibraryEnvironment, skip_offline_nodes=False):
             skip_non_existing=skip_offline_nodes,
         )
         # fix quorum options for SBD to work properly
-        if sbd.atb_has_to_be_enabled(lib_env.cmd_runner(), cfg):
+        if sbd.atb_has_to_be_enabled(lib_env.service_manager, cfg):
             lib_env.report_processor.report(
                 ReportItem.warning(
                     reports.messages.CorosyncQuorumAtbWillBeEnabledDueToSbd()

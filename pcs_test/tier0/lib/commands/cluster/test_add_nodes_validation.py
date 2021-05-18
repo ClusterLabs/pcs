@@ -38,7 +38,7 @@ class GetTargets(TestCase):
         ]
         (
             self.config.local.set_expected_reports_list(self.expected_reports)
-            .runner.systemctl.is_enabled("sbd", is_enabled=False)
+            .services.is_enabled("sbd", return_value=False)
             .corosync_conf.load_content(
                 corosync_conf_fixture(self.existing_corosync_nodes)
             )
@@ -66,7 +66,7 @@ class GetTargets(TestCase):
                 self.existing_nodes[1:] + self.new_nodes
             )
             .http.host.check_auth(node_labels=self.existing_nodes[1:])
-            .runner.systemctl.list_unit_files({})  # SBD not installed
+            .services.is_installed("sbd", return_value=False)
             .local.get_host_info(self.new_nodes)
             .local.pcsd_ssl_cert_sync_disabled()
         )
@@ -90,7 +90,7 @@ class GetTargets(TestCase):
                 self.existing_nodes[1:] + self.new_nodes
             )
             .http.host.check_auth(node_labels=self.existing_nodes[1:])
-            .runner.systemctl.list_unit_files({})  # SBD not installed
+            .services.is_installed("sbd", return_value=False)
             .local.get_host_info(self.new_nodes)
             .local.pcsd_ssl_cert_sync_disabled()
             .http.host.update_known_hosts(
@@ -130,7 +130,7 @@ class GetTargets(TestCase):
     def test_all_existing_nodes_unknown(self):
         (
             self.config.env.set_known_nodes(self.new_nodes)
-            .runner.systemctl.list_unit_files({})  # SBD not installed
+            .services.is_installed("sbd", return_value=False)
             .local.get_host_info(self.new_nodes)
             .local.pcsd_ssl_cert_sync_disabled()
         )
@@ -152,7 +152,7 @@ class GetTargets(TestCase):
     def test_all_existing_nodes_unknown_skipped(self):
         (
             self.config.env.set_known_nodes(self.new_nodes)
-            .runner.systemctl.list_unit_files({})  # SBD not installed
+            .services.is_installed("sbd", return_value=False)
             .local.get_host_info(self.new_nodes)
             .local.pcsd_ssl_cert_sync_disabled()
         )
@@ -208,7 +208,7 @@ class GetTargets(TestCase):
                 self.existing_nodes + self.new_nodes[1:]
             )
             .http.host.check_auth(node_labels=self.existing_nodes)
-            .runner.systemctl.list_unit_files({})  # SBD not installed
+            .services.is_installed("sbd", return_value=False)
             .local.get_host_info(self.new_nodes[1:])
             .local.pcsd_ssl_cert_sync_disabled()
         )
@@ -251,7 +251,7 @@ class NoneNamesMissing(TestCase):
             self.config.env.set_known_nodes(
                 self.existing_nodes + self.new_nodes
             )
-            .runner.systemctl.is_enabled("sbd", is_enabled=False)
+            .services.is_enabled("sbd", return_value=False)
             .corosync_conf.load_content(corosync_conf)
             .runner.cib.load()
         )
@@ -259,13 +259,10 @@ class NoneNamesMissing(TestCase):
             self.config.http.host.check_auth(
                 node_labels=self.existing_nodes_with_name
             )
-        (
-            self.config.runner.systemctl.list_unit_files(
-                {}
-            )  # SBD not installed
-            .local.get_host_info(self.new_nodes)
-            .local.pcsd_ssl_cert_sync_disabled()
-        )
+
+        self.config.services.is_installed("sbd", return_value=False)
+        self.config.local.get_host_info(self.new_nodes)
+        self.config.local.pcsd_ssl_cert_sync_disabled()
 
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_nodes(
@@ -307,7 +304,7 @@ class Inputs(TestCase):
         new_nodes = ["new1", "remote-name", "node3", "guest-name"]
         (
             self.config.env.set_known_nodes(existing_nodes + new_nodes)
-            .runner.systemctl.is_enabled("sbd", is_enabled=False)
+            .services.is_enabled("sbd", return_value=False)
             .corosync_conf.load_content(
                 corosync_conf_fixture(
                     [
@@ -457,7 +454,7 @@ class Inputs(TestCase):
         new_nodes = ["new1"]
         (
             self.config.env.set_known_nodes(existing_nodes + new_nodes)
-            .runner.systemctl.is_enabled("sbd", is_enabled=False)
+            .services.is_enabled("sbd", return_value=False)
             .corosync_conf.load_content(
                 corosync_conf_fixture(
                     [
@@ -534,7 +531,7 @@ class Inputs(TestCase):
         new_nodes = ["new1"]
         (
             self.config.env.set_known_nodes(existing_nodes + new_nodes)
-            .runner.systemctl.is_enabled("sbd", is_enabled=False)
+            .services.is_enabled("sbd", return_value=False)
             .corosync_conf.load_content(
                 corosync_conf_fixture(
                     [
@@ -581,7 +578,7 @@ class Inputs(TestCase):
         patch_getaddrinfo(self, new_nodes)
         (
             self.config.env.set_known_nodes(existing_nodes + new_nodes)
-            .runner.systemctl.is_enabled("sbd", is_enabled=False)
+            .services.is_enabled("sbd", return_value=False)
             .corosync_conf.load_content(
                 corosync_conf_fixture(
                     [
@@ -592,7 +589,7 @@ class Inputs(TestCase):
             )
             .runner.cib.load()
             .http.host.check_auth(node_labels=existing_nodes)
-            .runner.systemctl.list_unit_files({})  # SBD not installed
+            .services.is_installed("sbd", return_value=False)
             .local.get_host_info(new_nodes)
             .local.pcsd_ssl_cert_sync_disabled()
         )
@@ -657,7 +654,7 @@ class Inputs(TestCase):
         patch_getaddrinfo(self, new_nodes)
         (
             self.config.env.set_known_nodes(existing_nodes + new_nodes)
-            .runner.systemctl.is_enabled("sbd", is_enabled=True)
+            .services.is_enabled("sbd", return_value=True)
             .corosync_conf.load_content(
                 corosync_conf_fixture(
                     [
@@ -754,7 +751,7 @@ class Inputs(TestCase):
         devices2 = ["/dev/sxe", "dev/sxf"]
         (
             self.config.env.set_known_nodes(existing_nodes + new_nodes)
-            .runner.systemctl.is_enabled("sbd", is_enabled=True)
+            .services.is_enabled("sbd", return_value=True)
             .corosync_conf.load_content(
                 corosync_conf_fixture(
                     [
@@ -858,7 +855,7 @@ class Inputs(TestCase):
         patch_getaddrinfo(self, new_nodes)
         (
             self.config.env.set_known_nodes(existing_nodes + new_nodes)
-            .runner.systemctl.is_enabled("sbd", is_enabled=False)
+            .services.is_enabled("sbd", return_value=False)
             .corosync_conf.load_content(
                 corosync_conf_fixture(
                     [
@@ -900,7 +897,7 @@ class Inputs(TestCase):
         patch_getaddrinfo(self, new_nodes)
         (
             self.config.env.set_known_nodes(existing_nodes + new_nodes)
-            .runner.systemctl.is_enabled("sbd", is_enabled=False)
+            .services.is_enabled("sbd", return_value=False)
             .corosync_conf.load_content(
                 corosync_conf_fixture(
                     [
@@ -958,7 +955,7 @@ class ClusterStatus(TestCase):
         patch_getaddrinfo(self, new_nodes)
         (
             self.config.env.set_known_nodes(existing_nodes + new_nodes)
-            .runner.systemctl.is_enabled("sbd", is_enabled=False)
+            .services.is_enabled("sbd", return_value=False)
             .corosync_conf.load_content(
                 corosync_conf_fixture(
                     [
@@ -1152,8 +1149,8 @@ class ClusterStatus(TestCase):
         patch_getaddrinfo(self, new_nodes)
         (
             self.config.env.set_known_nodes(existing_nodes + new_nodes)
-            .runner.systemctl.is_enabled(
-                "sbd", is_enabled=True, name="is_enabled_sbd_1"
+            .services.is_enabled(
+                "sbd", return_value=True, name="is_enabled_sbd_1"
             )
             .corosync_conf.load_content(
                 corosync_conf_fixture(
@@ -1166,9 +1163,9 @@ class ClusterStatus(TestCase):
             .runner.cib.load()
             .local.read_sbd_config(name_sufix="_1")
             .http.host.check_auth(node_labels=existing_nodes)
-            .runner.systemctl.list_unit_files({"sbd": "enabled"})
-            .runner.systemctl.is_enabled(
-                "sbd", is_enabled=True, name="is_enabled_sbd_2"
+            .services.is_installed("sbd", return_value=True)
+            .services.is_enabled(
+                "sbd", return_value=True, name="is_enabled_sbd_2"
             )
             .local.read_sbd_config(name_sufix="_2")
             .http.corosync.check_corosync_offline(
@@ -1502,7 +1499,7 @@ class ClusterStatus(TestCase):
         patch_getaddrinfo(self, new_nodes)
         (
             self.config.env.set_known_nodes(existing_nodes + new_nodes)
-            .runner.systemctl.is_enabled("sbd", is_enabled=True)
+            .services.is_enabled("sbd", return_value=True)
             .corosync_conf.load_content(
                 corosync_conf_fixture(
                     [
@@ -1658,7 +1655,7 @@ class ClusterStatus(TestCase):
         patch_getaddrinfo(self, new_nodes)
         (
             self.config.env.set_known_nodes(existing_nodes + new_nodes)
-            .runner.systemctl.is_enabled("sbd", is_enabled=True)
+            .services.is_enabled("sbd", return_value=True)
             .corosync_conf.load_content(
                 corosync_conf_fixture(
                     [

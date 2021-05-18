@@ -202,14 +202,16 @@ class IsAutoTieBreakerNeededTest(TestCase):
 @mock.patch("pcs.lib.sbd.is_auto_tie_breaker_needed")
 class AtbHasToBeEnabledTest(TestCase):
     def setUp(self):
-        self.mock_runner = "runner"
+        self.mock_service_manager = "service manager mock"
         self.mock_conf = mock.MagicMock(spec_set=CorosyncConfigFacade)
 
     def test_atb_needed_is_enabled(self, mock_is_needed):
         mock_is_needed.return_value = True
         self.mock_conf.is_enabled_auto_tie_breaker.return_value = True
         self.assertFalse(
-            lib_sbd.atb_has_to_be_enabled(self.mock_runner, self.mock_conf, 1)
+            lib_sbd.atb_has_to_be_enabled(
+                self.mock_service_manager, self.mock_conf, 1
+            )
         )
         self.mock_conf.is_enabled_auto_tie_breaker.assert_called_once_with()
         mock_is_needed.assert_not_called()
@@ -218,18 +220,22 @@ class AtbHasToBeEnabledTest(TestCase):
         mock_is_needed.return_value = True
         self.mock_conf.is_enabled_auto_tie_breaker.return_value = False
         self.assertTrue(
-            lib_sbd.atb_has_to_be_enabled(self.mock_runner, self.mock_conf, -1)
+            lib_sbd.atb_has_to_be_enabled(
+                self.mock_service_manager, self.mock_conf, -1
+            )
         )
         self.mock_conf.is_enabled_auto_tie_breaker.assert_called_once_with()
         mock_is_needed.assert_called_once_with(
-            self.mock_runner, self.mock_conf, -1
+            self.mock_service_manager, self.mock_conf, -1
         )
 
     def test_atb_not_needed_is_enabled(self, mock_is_needed):
         mock_is_needed.return_value = False
         self.mock_conf.is_enabled_auto_tie_breaker.return_value = True
         self.assertFalse(
-            lib_sbd.atb_has_to_be_enabled(self.mock_runner, self.mock_conf, 2)
+            lib_sbd.atb_has_to_be_enabled(
+                self.mock_service_manager, self.mock_conf, 2
+            )
         )
         self.mock_conf.is_enabled_auto_tie_breaker.assert_called_once_with()
         mock_is_needed.assert_not_called()
@@ -238,57 +244,68 @@ class AtbHasToBeEnabledTest(TestCase):
         mock_is_needed.return_value = False
         self.mock_conf.is_enabled_auto_tie_breaker.return_value = False
         self.assertFalse(
-            lib_sbd.atb_has_to_be_enabled(self.mock_runner, self.mock_conf, -2)
+            lib_sbd.atb_has_to_be_enabled(
+                self.mock_service_manager, self.mock_conf, -2
+            )
         )
         self.mock_conf.is_enabled_auto_tie_breaker.assert_called_once_with()
         mock_is_needed.assert_called_once_with(
-            self.mock_runner, self.mock_conf, -2
+            self.mock_service_manager, self.mock_conf, -2
         )
 
 
-@mock.patch("pcs.lib.external.is_systemctl")
+@mock.patch("pcs.lib.sbd.is_systemd")
 class GetSbdServiceNameTest(TestCase):
-    def test_systemctl(self, mock_is_systemctl):
-        mock_is_systemctl.return_value = True
-        self.assertEqual("sbd", lib_sbd.get_sbd_service_name())
-        mock_is_systemctl.assert_called_once_with()
+    def setUp(self):
+        self.service_manager = mock.MagicMock()
 
-    def test_not_systemctl(self, mock_is_systemctl):
-        mock_is_systemctl.return_value = False
-        self.assertEqual("sbd_helper", lib_sbd.get_sbd_service_name())
-        mock_is_systemctl.assert_called_once_with()
+    def test_systemctl(self, mock_is_systemd):
+        mock_is_systemd.return_value = True
+        self.assertEqual(
+            "sbd", lib_sbd.get_sbd_service_name(self.service_manager)
+        )
+        mock_is_systemd.assert_called_once_with(self.service_manager)
+
+    def test_not_systemctl(self, mock_is_systemd):
+        mock_is_systemd.return_value = False
+        self.assertEqual(
+            "sbd_helper", lib_sbd.get_sbd_service_name(self.service_manager)
+        )
+        mock_is_systemd.assert_called_once_with(self.service_manager)
 
 
 @mock.patch("pcs.lib.sbd.get_sbd_service_name")
-@mock.patch("pcs.lib.external.is_service_enabled")
 class IsSbdEnabledTest(TestCase):
-    def test_success(self, mock_is_service_enabled, mock_sbd_name):
+    def test_success(self, mock_sbd_name):
         mock_obj = mock.MagicMock()
-        mock_is_service_enabled.return_value = True
-        mock_sbd_name.return_value = "sbd"
+        mock_obj.is_enabled.return_value = True
+        service = "sbd"
+        mock_sbd_name.return_value = service
         self.assertTrue(lib_sbd.is_sbd_enabled(mock_obj))
-        mock_is_service_enabled.assert_called_once_with(mock_obj, "sbd")
-        mock_sbd_name.assert_called_once_with()
+        mock_obj.is_enabled.assert_called_once_with(service)
+        mock_sbd_name.assert_called_once_with(mock_obj)
 
 
 @mock.patch("pcs.lib.sbd.get_sbd_service_name")
-@mock.patch("pcs.lib.external.is_service_installed")
 class IsSbdInstalledTest(TestCase):
-    def test_installed(self, mock_is_service_installed, mock_sbd_name):
-        mock_obj = mock.MagicMock()
-        mock_is_service_installed.return_value = True
-        mock_sbd_name.return_value = "sbd"
-        self.assertTrue(lib_sbd.is_sbd_installed(mock_obj))
-        mock_is_service_installed.assert_called_once_with(mock_obj, "sbd")
-        mock_sbd_name.assert_called_once_with()
+    def setUp(self):
+        self.service = "sbd"
 
-    def test_not_installed(self, mock_is_service_installed, mock_sbd_name):
+    def test_installed(self, mock_sbd_name):
         mock_obj = mock.MagicMock()
-        mock_is_service_installed.return_value = False
-        mock_sbd_name.return_value = "sbd"
+        mock_obj.is_installed.return_value = True
+        mock_sbd_name.return_value = self.service
+        self.assertTrue(lib_sbd.is_sbd_installed(mock_obj))
+        mock_obj.is_installed.assert_called_once_with(self.service)
+        mock_sbd_name.assert_called_once_with(mock_obj)
+
+    def test_not_installed(self, mock_sbd_name):
+        mock_obj = mock.MagicMock()
+        mock_obj.is_installed.return_value = False
+        mock_sbd_name.return_value = self.service
         self.assertFalse(lib_sbd.is_sbd_installed(mock_obj))
-        mock_is_service_installed.assert_called_once_with(mock_obj, "sbd")
-        mock_sbd_name.assert_called_once_with()
+        mock_obj.is_installed.assert_called_once_with(self.service)
+        mock_sbd_name.assert_called_once_with(mock_obj)
 
 
 class InitializeBlockDeviceTest(TestCase):

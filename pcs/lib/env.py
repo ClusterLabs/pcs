@@ -4,6 +4,7 @@ from typing import (
 )
 
 from lxml.etree import _Element
+from pcs.common.services.interfaces import ServiceManagerInterface
 
 from pcs.common import file_type_codes
 from pcs.common import reports
@@ -49,6 +50,7 @@ from pcs.lib.pacemaker.live import (
     wait_for_idle,
 )
 from pcs.lib.pacemaker.values import get_valid_timeout_seconds
+from pcs.lib.services import get_service_manager
 from pcs.lib.tools import write_tmpfile
 from pcs.lib.xml_tools import etree_to_str
 
@@ -97,6 +99,7 @@ class LibraryEnvironment:
         )
         self.__loaded_booth_env = None
         self.__loaded_dr_env = None
+        self.__service_manager: Optional[ServiceManagerInterface] = None
 
         self.__timeout_cache = {}
 
@@ -502,3 +505,14 @@ class LibraryEnvironment:
         if self.__loaded_dr_env is None:
             self.__loaded_dr_env = DrEnv()
         return self.__loaded_dr_env
+
+    def _get_service_manager(self) -> ServiceManagerInterface:
+        if self.__service_manager is None:
+            self.__service_manager = get_service_manager(
+                self.cmd_runner(), self.report_processor
+            )
+        return self.__service_manager
+
+    @property
+    def service_manager(self) -> ServiceManagerInterface:
+        return self._get_service_manager()

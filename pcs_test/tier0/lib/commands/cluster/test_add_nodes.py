@@ -192,13 +192,15 @@ class LocalConfig:
     def atb_needed(self, node_labels):
         local_prefix = "local.atb_needed."
         (
-            self.config.runner.systemctl.list_unit_files(
-                {"sbd": "enabled"},
-                name=f"{local_prefix}runner.systemctl.list_unit_files.sbd",
-            )
-            .runner.systemctl.is_enabled(
+            self.config.services.is_installed(
                 "sbd",
-                name=f"{local_prefix}runner.systemctl.is_enabled.sbd",
+                return_value=True,
+                name=f"{local_prefix}services.is_installed.sbd",
+            )
+            .services.is_enabled(
+                "sbd",
+                return_value=True,
+                name=f"{local_prefix}services.is_enabled.sbd",
             )
             .local.read_sbd_config(name_sufix="-atb_needed")
             .http.corosync.check_corosync_offline(
@@ -648,9 +650,9 @@ class AddNodesSuccessMinimal(TestCase):
         ]
         self.config.env.set_known_nodes(self.new_nodes + self.existing_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
-        get_unit_files_name = "_runner.systemctl.list_unit_files"
+        is_sbd_installed_name = "_services.is_installed.sbd.False"
         (
-            self.config.runner.systemctl.is_enabled("sbd", is_enabled=False)
+            self.config.services.is_enabled("sbd", return_value=False)
             .corosync_conf.load_content(
                 corosync_conf_fixture(
                     existing_corosync_nodes, get_two_node(existing_nodes_num)
@@ -658,8 +660,9 @@ class AddNodesSuccessMinimal(TestCase):
             )
             .runner.cib.load()
             .http.host.check_auth(node_labels=self.existing_nodes)
-            # SBD not installed
-            .runner.systemctl.list_unit_files({}, name=get_unit_files_name)
+            .services.is_installed(
+                "sbd", return_value=False, name=is_sbd_installed_name
+            )
             .local.get_host_info(self.new_nodes)
             .local.pcsd_ssl_cert_sync_disabled()
             .http.host.update_known_hosts(
@@ -686,7 +689,7 @@ class AddNodesSuccessMinimal(TestCase):
         )
 
         if (existing_nodes_num + new_nodes_num) % 2 != 0:
-            self.config.calls.remove(get_unit_files_name)
+            self.config.calls.remove(is_sbd_installed_name)
 
         self.expected_reports.extend(
             [
@@ -1101,14 +1104,13 @@ class SslCertSync(TestCase):
             .env.set_known_nodes(
                 self.existing_nodes + self.new_nodes + [QDEVICE_HOST]
             )
-            .runner.systemctl.is_enabled("sbd", is_enabled=False)
+            .services.is_enabled("sbd", return_value=False)
             .corosync_conf.load_content(
                 corosync_conf_fixture(self.existing_corosync_nodes)
             )
             .runner.cib.load()
             .http.host.check_auth(node_labels=self.existing_nodes)
-            # SBD not installed
-            .runner.systemctl.list_unit_files({})
+            .services.is_installed("sbd", return_value=False)
             .local.get_host_info(self.new_nodes)
         )
 
@@ -1210,7 +1212,7 @@ class AddNodeFull(TestCase):
             .env.set_known_nodes(
                 self.existing_nodes + self.new_nodes + [QDEVICE_HOST]
             )
-            .runner.systemctl.is_enabled("sbd", is_enabled=True)
+            .services.is_enabled("sbd", return_value=True)
         )
 
     @mock.patch("pcs.lib.corosync.qdevice_net._store_to_tmpfile")
@@ -1497,7 +1499,7 @@ class FailureReloadCorosyncConf(TestCase):
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
         (
-            self.config.runner.systemctl.is_enabled("sbd", is_enabled=False)
+            self.config.services.is_enabled("sbd", return_value=False)
             .corosync_conf.load_content(
                 corosync_conf_fixture(existing_corosync_nodes)
             )
@@ -1505,8 +1507,7 @@ class FailureReloadCorosyncConf(TestCase):
             .http.host.check_auth(
                 node_labels=self.existing_nodes,
             )
-            # SBD not installed
-            .runner.systemctl.list_unit_files({})
+            .services.is_installed("sbd", return_value=False)
             .local.get_host_info(self.new_nodes)
             .local.pcsd_ssl_cert_sync_disabled()
             .http.host.update_known_hosts(
@@ -1773,7 +1774,7 @@ class FailureCorosyncConfDistribution(TestCase):
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
         (
-            self.config.runner.systemctl.is_enabled("sbd", is_enabled=False)
+            self.config.services.is_enabled("sbd", return_value=False)
             .corosync_conf.load_content(
                 corosync_conf_fixture(existing_corosync_nodes)
             )
@@ -1781,8 +1782,7 @@ class FailureCorosyncConfDistribution(TestCase):
             .http.host.check_auth(
                 node_labels=self.existing_nodes,
             )
-            # SBD not installed
-            .runner.systemctl.list_unit_files({})
+            .services.is_installed("sbd", return_value=False)
             .local.get_host_info(self.new_nodes)
             .local.pcsd_ssl_cert_sync_disabled()
             .http.host.update_known_hosts(
@@ -1976,7 +1976,7 @@ class FailurePcsdSslCertSync(TestCase):
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
         (
-            self.config.runner.systemctl.is_enabled("sbd", is_enabled=False)
+            self.config.services.is_enabled("sbd", return_value=False)
             .corosync_conf.load_content(
                 corosync_conf_fixture(existing_corosync_nodes)
             )
@@ -1984,8 +1984,7 @@ class FailurePcsdSslCertSync(TestCase):
             .http.host.check_auth(
                 node_labels=self.existing_nodes,
             )
-            # SBD not installed
-            .runner.systemctl.list_unit_files({})
+            .services.is_installed("sbd", return_value=False)
             .local.get_host_info(self.new_nodes)
             .local.pcsd_ssl_cert_sync_enabled()
             .http.host.update_known_hosts(
@@ -2124,7 +2123,7 @@ class FailureFilesDistribution(TestCase):
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
         (
-            self.config.runner.systemctl.is_enabled("sbd", is_enabled=False)
+            self.config.services.is_enabled("sbd", return_value=False)
             .corosync_conf.load_content(
                 corosync_conf_fixture(self.existing_corosync_nodes)
             )
@@ -2132,8 +2131,7 @@ class FailureFilesDistribution(TestCase):
             .http.host.check_auth(
                 node_labels=self.existing_nodes,
             )
-            # SBD not installed
-            .runner.systemctl.list_unit_files({})
+            .services.is_installed("sbd", return_value=False)
             .local.get_host_info(self.new_nodes)
             .local.pcsd_ssl_cert_sync_disabled()
             .http.host.update_known_hosts(
@@ -2687,7 +2685,7 @@ class FailureBoothConfigsDistribution(TestCase):
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
         (
-            self.config.runner.systemctl.is_enabled("sbd", is_enabled=False)
+            self.config.services.is_enabled("sbd", return_value=False)
             .corosync_conf.load_content(
                 corosync_conf_fixture(self.existing_corosync_nodes)
             )
@@ -2695,8 +2693,7 @@ class FailureBoothConfigsDistribution(TestCase):
             .http.host.check_auth(
                 node_labels=self.existing_nodes,
             )
-            # SBD not installed
-            .runner.systemctl.list_unit_files({})
+            .services.is_installed("sbd", return_value=False)
             .local.get_host_info(self.new_nodes)
             .local.pcsd_ssl_cert_sync_disabled()
             .http.host.update_known_hosts(
@@ -3354,14 +3351,13 @@ class FailureDisableSbd(TestCase):
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
         (
-            self.config.runner.systemctl.is_enabled("sbd", is_enabled=False)
+            self.config.services.is_enabled("sbd", return_value=False)
             .corosync_conf.load_content(
                 corosync_conf_fixture(self.existing_corosync_nodes)
             )
             .runner.cib.load()
             .http.host.check_auth(node_labels=self.existing_nodes)
-            # SBD not installed
-            .runner.systemctl.list_unit_files({})
+            .services.is_installed("sbd", return_value=False)
             .local.get_host_info(self.new_nodes)
             .local.pcsd_ssl_cert_sync_disabled()
             .http.host.update_known_hosts(
@@ -3490,7 +3486,7 @@ class FailureEnableSbd(TestCase):
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
         (
-            self.config.runner.systemctl.is_enabled("sbd", is_enabled=True)
+            self.config.services.is_enabled("sbd", return_value=True)
             .corosync_conf.load_content(
                 corosync_conf_fixture(self.existing_corosync_nodes)
             )
@@ -3704,7 +3700,7 @@ class FailureQdevice(TestCase):
         )
         self.config.local.set_expected_reports_list(self.expected_reports)
         (
-            self.config.runner.systemctl.is_enabled("sbd", is_enabled=False)
+            self.config.services.is_enabled("sbd", return_value=False)
             .corosync_conf.load_content(
                 corosync_conf_fixture(
                     self.existing_corosync_nodes,
@@ -4128,14 +4124,13 @@ class FailureKnownHostsUpdate(TestCase):
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
         (
-            self.config.runner.systemctl.is_enabled("sbd", is_enabled=False)
+            self.config.services.is_enabled("sbd", return_value=False)
             .corosync_conf.load_content(
                 corosync_conf_fixture(self.existing_corosync_nodes)
             )
             .runner.cib.load()
             .http.host.check_auth(node_labels=self.existing_nodes)
-            # SBD not installed
-            .runner.systemctl.list_unit_files({})
+            .services.is_installed("sbd", return_value=False)
             .local.get_host_info(self.new_nodes)
             .local.pcsd_ssl_cert_sync_disabled()
         )

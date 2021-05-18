@@ -2582,6 +2582,17 @@ class ServiceActionSkipped(NameBuildTest):
         )
 
 
+class ServiceUnableToDetectInitSystem(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Unable to detect init system. All actions related to system "
+                "services will be skipped."
+            ),
+            reports.ServiceUnableToDetectInitSystem(),
+        )
+
+
 class UnableToGetAgentMetadata(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(

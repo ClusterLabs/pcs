@@ -10,16 +10,17 @@ from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
 from pcs.common import reports
 from pcs.common.reports import ReportItemSeverity as severity
-from pcs.common.reports import codes as report_codes
-from pcs.lib.env import LibraryEnvironment
-from pcs.lib.errors import LibraryError
-from pcs.lib.external import (
+from pcs.common.services.interfaces import ServiceManagerInterface
+from pcs.common.services.errors import (
     DisableServiceError,
     EnableServiceError,
     StartServiceError,
     StopServiceError,
-    KillServicesError,
 )
+from pcs.common.reports import codes as report_codes
+from pcs.lib.env import LibraryEnvironment
+from pcs.lib.errors import LibraryError
+from pcs.lib.external import KillServicesError
 
 import pcs.lib.commands.qdevice as lib
 
@@ -28,6 +29,10 @@ class QdeviceTestCase(TestCase):
     def setUp(self):
         self.mock_logger = mock.MagicMock(logging.Logger)
         self.mock_reporter = MockLibraryReportProcessor()
+        mock.patch(
+            "pcs.lib.env.get_service_manager", spec=ServiceManagerInterface
+        ).start()
+        self.addCleanup(mock.patch.stopall)
         self.lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
 
@@ -78,17 +83,15 @@ class QdeviceBadModelTest(QdeviceTestCase):
         self.base_test(lambda: lib.qdevice_kill(self.lib_env, "bad model"))
 
 
-@mock.patch("pcs.lib.external.start_service")
-@mock.patch("pcs.lib.external.enable_service")
 @mock.patch("pcs.lib.commands.qdevice.qdevice_net.qdevice_setup")
 @mock.patch.object(LibraryEnvironment, "cmd_runner", lambda self: "mock_runner")
 class QdeviceNetSetupTest(QdeviceTestCase):
-    def test_success(self, mock_net_setup, mock_net_enable, mock_net_start):
+    # pylint: disable=no-member
+    def test_success(self, mock_net_setup):
         lib.qdevice_setup(self.lib_env, "net", False, False)
 
         mock_net_setup.assert_called_once_with("mock_runner")
-        mock_net_enable.assert_not_called()
-        mock_net_start.assert_not_called()
+        self.assertEqual(self.lib_env.service_manager.method_calls, [])
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,
             [
@@ -102,14 +105,17 @@ class QdeviceNetSetupTest(QdeviceTestCase):
             ],
         )
 
-    def test_start_enable_success(
-        self, mock_net_setup, mock_net_enable, mock_net_start
-    ):
+    def test_start_enable_success(self, mock_net_setup):
         lib.qdevice_setup(self.lib_env, "net", True, True)
 
         mock_net_setup.assert_called_once_with("mock_runner")
-        mock_net_enable.assert_called_once_with("mock_runner", "corosync-qnetd")
-        mock_net_start.assert_called_once_with("mock_runner", "corosync-qnetd")
+        self.assertEqual(
+            self.lib_env.service_manager.method_calls,
+            [
+                mock.call.enable("corosync-qnetd"),
+                mock.call.start("corosync-qnetd"),
+            ],
+        )
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,
             [
@@ -152,21 +158,18 @@ class QdeviceNetSetupTest(QdeviceTestCase):
             ],
         )
 
-    def test_init_failed(self, mock_net_setup, mock_net_enable, mock_net_start):
+    def test_init_failed(self, mock_net_setup):
         mock_net_setup.side_effect = LibraryError("mock_report_item")
         self.assertRaises(
             LibraryError,
             lambda: lib.qdevice_setup(self.lib_env, "net", False, False),
         )
         mock_net_setup.assert_called_once_with("mock_runner")
-        mock_net_enable.assert_not_called()
-        mock_net_start.assert_not_called()
+        self.assertEqual(self.lib_env.service_manager.method_calls, [])
         assert_report_item_list_equal(self.mock_reporter.report_item_list, [])
 
-    def test_enable_failed(
-        self, mock_net_setup, mock_net_enable, mock_net_start
-    ):
-        mock_net_enable.side_effect = EnableServiceError(
+    def test_enable_failed(self, mock_net_setup):
+        self.lib_env.service_manager.enable.side_effect = EnableServiceError(
             "test service", "test error"
         )
 
@@ -186,8 +189,10 @@ class QdeviceNetSetupTest(QdeviceTestCase):
         )
 
         mock_net_setup.assert_called_once_with("mock_runner")
-        mock_net_enable.assert_called_once_with("mock_runner", "corosync-qnetd")
-        mock_net_start.assert_not_called()
+        self.assertEqual(
+            self.lib_env.service_manager.method_calls,
+            [mock.call.enable("corosync-qnetd")],
+        )
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,
             [
@@ -201,10 +206,8 @@ class QdeviceNetSetupTest(QdeviceTestCase):
             ],
         )
 
-    def test_start_failed(
-        self, mock_net_setup, mock_net_enable, mock_net_start
-    ):
-        mock_net_start.side_effect = StartServiceError(
+    def test_start_failed(self, mock_net_setup):
+        self.lib_env.service_manager.start.side_effect = StartServiceError(
             "test service", "test error"
         )
 
@@ -224,8 +227,13 @@ class QdeviceNetSetupTest(QdeviceTestCase):
         )
 
         mock_net_setup.assert_called_once_with("mock_runner")
-        mock_net_enable.assert_called_once_with("mock_runner", "corosync-qnetd")
-        mock_net_start.assert_called_once_with("mock_runner", "corosync-qnetd")
+        self.assertEqual(
+            self.lib_env.service_manager.method_calls,
+            [
+                mock.call.enable("corosync-qnetd"),
+                mock.call.start("corosync-qnetd"),
+            ],
+        )
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,
             [
@@ -260,21 +268,21 @@ class QdeviceNetSetupTest(QdeviceTestCase):
 
 
 @mock.patch("pcs.lib.corosync.qdevice_net.qdevice_status_cluster_text")
-@mock.patch("pcs.lib.external.stop_service")
-@mock.patch("pcs.lib.external.disable_service")
 @mock.patch("pcs.lib.commands.qdevice.qdevice_net.qdevice_destroy")
 @mock.patch.object(LibraryEnvironment, "cmd_runner", lambda self: "mock_runner")
 class QdeviceNetDestroyTest(QdeviceTestCase):
-    def test_success_not_used(
-        self, mock_net_destroy, mock_net_disable, mock_net_stop, mock_status
-    ):
+    # pylint: disable=no-member
+    def test_success_not_used(self, mock_net_destroy, mock_status):
         mock_status.return_value = ""
 
         lib.qdevice_destroy(self.lib_env, "net")
 
-        mock_net_stop.assert_called_once_with("mock_runner", "corosync-qnetd")
-        mock_net_disable.assert_called_once_with(
-            "mock_runner", "corosync-qnetd"
+        self.assertEqual(
+            self.lib_env.service_manager.method_calls,
+            [
+                mock.call.stop("corosync-qnetd"),
+                mock.call.disable("corosync-qnetd"),
+            ],
         )
         mock_net_destroy.assert_called_once_with()
         assert_report_item_list_equal(
@@ -319,16 +327,17 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
             ],
         )
 
-    def test_success_used_forced(
-        self, mock_net_destroy, mock_net_disable, mock_net_stop, mock_status
-    ):
+    def test_success_used_forced(self, mock_net_destroy, mock_status):
         mock_status.return_value = 'Cluster "a_cluster":\n'
 
         lib.qdevice_destroy(self.lib_env, "net", proceed_if_used=True)
 
-        mock_net_stop.assert_called_once_with("mock_runner", "corosync-qnetd")
-        mock_net_disable.assert_called_once_with(
-            "mock_runner", "corosync-qnetd"
+        self.assertEqual(
+            self.lib_env.service_manager.method_calls,
+            [
+                mock.call.stop("corosync-qnetd"),
+                mock.call.disable("corosync-qnetd"),
+            ],
         )
         mock_net_destroy.assert_called_once_with()
         assert_report_item_list_equal(
@@ -380,9 +389,7 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
             ],
         )
 
-    def test_used_not_forced(
-        self, mock_net_destroy, mock_net_disable, mock_net_stop, mock_status
-    ):
+    def test_used_not_forced(self, mock_net_destroy, mock_status):
         mock_status.return_value = 'Cluster "a_cluster":\n'
 
         assert_raise_library_error(
@@ -402,15 +409,15 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
             ],
         )
 
-        mock_net_stop.assert_not_called()
-        mock_net_disable.assert_not_called()
+        self.assertEqual(
+            self.lib_env.service_manager.method_calls,
+            [],
+        )
         mock_net_destroy.assert_not_called()
 
-    def test_stop_failed(
-        self, mock_net_destroy, mock_net_disable, mock_net_stop, mock_status
-    ):
+    def test_stop_failed(self, mock_net_destroy, mock_status):
         mock_status.return_value = ""
-        mock_net_stop.side_effect = StopServiceError(
+        self.lib_env.service_manager.stop.side_effect = StopServiceError(
             "test service", "test error"
         )
 
@@ -429,8 +436,10 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
             ),
         )
 
-        mock_net_stop.assert_called_once_with("mock_runner", "corosync-qnetd")
-        mock_net_disable.assert_not_called()
+        self.assertEqual(
+            self.lib_env.service_manager.method_calls,
+            [mock.call.stop("corosync-qnetd")],
+        )
         mock_net_destroy.assert_not_called()
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,
@@ -447,11 +456,9 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
             ],
         )
 
-    def test_disable_failed(
-        self, mock_net_destroy, mock_net_disable, mock_net_stop, mock_status
-    ):
+    def test_disable_failed(self, mock_net_destroy, mock_status):
         mock_status.return_value = ""
-        mock_net_disable.side_effect = DisableServiceError(
+        self.lib_env.service_manager.disable.side_effect = DisableServiceError(
             "test service", "test error"
         )
 
@@ -470,9 +477,12 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
             ),
         )
 
-        mock_net_stop.assert_called_once_with("mock_runner", "corosync-qnetd")
-        mock_net_disable.assert_called_once_with(
-            "mock_runner", "corosync-qnetd"
+        self.assertEqual(
+            self.lib_env.service_manager.method_calls,
+            [
+                mock.call.stop("corosync-qnetd"),
+                mock.call.disable("corosync-qnetd"),
+            ],
         )
         mock_net_destroy.assert_not_called()
         assert_report_item_list_equal(
@@ -500,9 +510,7 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
             ],
         )
 
-    def test_destroy_failed(
-        self, mock_net_destroy, mock_net_disable, mock_net_stop, mock_status
-    ):
+    def test_destroy_failed(self, mock_net_destroy, mock_status):
         mock_status.return_value = ""
         mock_net_destroy.side_effect = LibraryError("mock_report_item")
 
@@ -510,9 +518,12 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
             LibraryError, lambda: lib.qdevice_destroy(self.lib_env, "net")
         )
 
-        mock_net_stop.assert_called_once_with("mock_runner", "corosync-qnetd")
-        mock_net_disable.assert_called_once_with(
-            "mock_runner", "corosync-qnetd"
+        self.assertEqual(
+            self.lib_env.service_manager.method_calls,
+            [
+                mock.call.stop("corosync-qnetd"),
+                mock.call.disable("corosync-qnetd"),
+            ],
         )
         mock_net_destroy.assert_called_once_with()
         assert_report_item_list_equal(
@@ -620,12 +631,14 @@ class TestQdeviceNetStatusTextTest(QdeviceTestCase):
         mock_status_cluster.assert_called_once_with("mock_runner", None, False)
 
 
-@mock.patch("pcs.lib.external.enable_service")
-@mock.patch.object(LibraryEnvironment, "cmd_runner", lambda self: "mock_runner")
 class QdeviceNetEnableTest(QdeviceTestCase):
-    def test_success(self, mock_net_enable):
+    # pylint: disable=no-member
+    def test_success(self):
         lib.qdevice_enable(self.lib_env, "net")
-        mock_net_enable.assert_called_once_with("mock_runner", "corosync-qnetd")
+        self.assertEqual(
+            self.lib_env.service_manager.method_calls,
+            [mock.call.enable("corosync-qnetd")],
+        )
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,
             [
@@ -642,8 +655,8 @@ class QdeviceNetEnableTest(QdeviceTestCase):
             ],
         )
 
-    def test_failed(self, mock_net_enable):
-        mock_net_enable.side_effect = EnableServiceError(
+    def test_failed(self):
+        self.lib_env.service_manager.enable.side_effect = EnableServiceError(
             "test service", "test error"
         )
 
@@ -661,16 +674,19 @@ class QdeviceNetEnableTest(QdeviceTestCase):
                 },
             ),
         )
-        mock_net_enable.assert_called_once_with("mock_runner", "corosync-qnetd")
+        self.assertEqual(
+            self.lib_env.service_manager.method_calls,
+            [mock.call.enable("corosync-qnetd")],
+        )
 
 
-@mock.patch("pcs.lib.external.disable_service")
-@mock.patch.object(LibraryEnvironment, "cmd_runner", lambda self: "mock_runner")
 class QdeviceNetDisableTest(QdeviceTestCase):
-    def test_success(self, mock_net_disable):
+    # pylint: disable=no-member
+    def test_success(self):
         lib.qdevice_disable(self.lib_env, "net")
-        mock_net_disable.assert_called_once_with(
-            "mock_runner", "corosync-qnetd"
+        self.assertEqual(
+            self.lib_env.service_manager.method_calls,
+            [mock.call.disable("corosync-qnetd")],
         )
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,
@@ -688,8 +704,8 @@ class QdeviceNetDisableTest(QdeviceTestCase):
             ],
         )
 
-    def test_failed(self, mock_net_disable):
-        mock_net_disable.side_effect = DisableServiceError(
+    def test_failed(self):
+        self.lib_env.service_manager.disable.side_effect = DisableServiceError(
             "test service", "test error"
         )
 
@@ -707,19 +723,22 @@ class QdeviceNetDisableTest(QdeviceTestCase):
                 },
             ),
         )
-        mock_net_disable.assert_called_once_with(
-            "mock_runner", "corosync-qnetd"
+        self.assertEqual(
+            self.lib_env.service_manager.method_calls,
+            [mock.call.disable("corosync-qnetd")],
         )
 
 
 @mock.patch("pcs.lib.corosync.qdevice_net.qdevice_initialized")
-@mock.patch("pcs.lib.external.start_service")
-@mock.patch.object(LibraryEnvironment, "cmd_runner", lambda self: "mock_runner")
 class QdeviceNetStartTest(QdeviceTestCase):
-    def test_success(self, mock_net_start, mock_qdevice_initialized):
+    # pylint: disable=no-member
+    def test_success(self, mock_qdevice_initialized):
         mock_qdevice_initialized.return_value = True
         lib.qdevice_start(self.lib_env, "net")
-        mock_net_start.assert_called_once_with("mock_runner", "corosync-qnetd")
+        self.assertEqual(
+            self.lib_env.service_manager.method_calls,
+            [mock.call.start("corosync-qnetd")],
+        )
         mock_qdevice_initialized.assert_called_once_with()
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,
@@ -746,8 +765,8 @@ class QdeviceNetStartTest(QdeviceTestCase):
             ],
         )
 
-    def test_failed(self, mock_net_start, mock_qdevice_initialized):
-        mock_net_start.side_effect = StartServiceError(
+    def test_failed(self, mock_qdevice_initialized):
+        self.lib_env.service_manager.start.side_effect = StartServiceError(
             "test service", "test error"
         )
         mock_qdevice_initialized.return_value = True
@@ -766,7 +785,10 @@ class QdeviceNetStartTest(QdeviceTestCase):
                 },
             ),
         )
-        mock_net_start.assert_called_once_with("mock_runner", "corosync-qnetd")
+        self.assertEqual(
+            self.lib_env.service_manager.method_calls,
+            [mock.call.start("corosync-qnetd")],
+        )
         mock_qdevice_initialized.assert_called_once_with()
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,
@@ -783,9 +805,7 @@ class QdeviceNetStartTest(QdeviceTestCase):
             ],
         )
 
-    def test_qdevice_not_initialized(
-        self, mock_net_start, mock_qdevice_initialized
-    ):
+    def test_qdevice_not_initialized(self, mock_qdevice_initialized):
         mock_qdevice_initialized.return_value = False
 
         assert_raise_library_error(
@@ -798,20 +818,25 @@ class QdeviceNetStartTest(QdeviceTestCase):
                 },
             ),
         )
-        mock_net_start.assert_not_called()
+        self.assertEqual(
+            self.lib_env.service_manager.method_calls,
+            [],
+        )
         mock_qdevice_initialized.assert_called_once_with()
 
 
 @mock.patch("pcs.lib.corosync.qdevice_net.qdevice_status_cluster_text")
-@mock.patch("pcs.lib.external.stop_service")
-@mock.patch.object(LibraryEnvironment, "cmd_runner", lambda self: "mock_runner")
 class QdeviceNetStopTest(QdeviceTestCase):
-    def test_success_not_used(self, mock_net_stop, mock_status):
+    # pylint: disable=no-member
+    def test_success_not_used(self, mock_status):
         mock_status.return_value = ""
 
         lib.qdevice_stop(self.lib_env, "net", proceed_if_used=False)
 
-        mock_net_stop.assert_called_once_with("mock_runner", "corosync-qnetd")
+        self.assertEqual(
+            self.lib_env.service_manager.method_calls,
+            [mock.call.stop("corosync-qnetd")],
+        )
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,
             [
@@ -837,12 +862,15 @@ class QdeviceNetStopTest(QdeviceTestCase):
             ],
         )
 
-    def test_success_used_forced(self, mock_net_stop, mock_status):
+    def test_success_used_forced(self, mock_status):
         mock_status.return_value = 'Cluster "a_cluster":\n'
 
         lib.qdevice_stop(self.lib_env, "net", proceed_if_used=True)
 
-        mock_net_stop.assert_called_once_with("mock_runner", "corosync-qnetd")
+        self.assertEqual(
+            self.lib_env.service_manager.method_calls,
+            [mock.call.stop("corosync-qnetd")],
+        )
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,
             [
@@ -875,7 +903,7 @@ class QdeviceNetStopTest(QdeviceTestCase):
             ],
         )
 
-    def test_used_not_forced(self, mock_net_stop, mock_status):
+    def test_used_not_forced(self, mock_status):
         mock_status.return_value = 'Cluster "a_cluster":\n'
 
         assert_raise_library_error(
@@ -894,11 +922,14 @@ class QdeviceNetStopTest(QdeviceTestCase):
                 ),
             ],
         )
-        mock_net_stop.assert_not_called()
+        self.assertEqual(
+            self.lib_env.service_manager.method_calls,
+            [],
+        )
 
-    def test_failed(self, mock_net_stop, mock_status):
+    def test_failed(self, mock_status):
         mock_status.return_value = ""
-        mock_net_stop.side_effect = StopServiceError(
+        self.lib_env.service_manager.stop.side_effect = StopServiceError(
             "test service", "test error"
         )
 
@@ -916,7 +947,10 @@ class QdeviceNetStopTest(QdeviceTestCase):
                 },
             ),
         )
-        mock_net_stop.assert_called_once_with("mock_runner", "corosync-qnetd")
+        self.assertEqual(
+            self.lib_env.service_manager.method_calls,
+            [mock.call.stop("corosync-qnetd")],
+        )
         assert_report_item_list_equal(
             self.mock_reporter.report_item_list,
             [

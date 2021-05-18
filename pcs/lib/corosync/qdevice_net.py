@@ -7,15 +7,14 @@ from pcs import settings
 from pcs.common import reports
 from pcs.common.str_tools import join_multilines
 from pcs.common.reports.item import ReportItem
-from pcs.lib import external
 from pcs.lib.communication import qdevice_net as qdevice_net_com
 from pcs.lib.communication.tools import run_and_raise
 from pcs.lib.errors import LibraryError
 from pcs.lib.tools import write_tmpfile
 
+SERVICE_NAME = "corosync-qnetd"
 
 __model = "net"
-__service_name = "corosync-qnetd"
 __qnetd_certutil = os.path.join(
     settings.corosync_qnet_binaries, "corosync-qnetd-certutil"
 )
@@ -213,41 +212,6 @@ def _qdevice_run_tool(runner, args):
     if retval == 3 and "is qnetd running?" in stderr.lower():
         raise QnetdNotRunningException()
     return stdout, stderr, retval
-
-
-def qdevice_enable(runner):
-    """
-    make qdevice start automatically on boot on local host
-    """
-    external.enable_service(runner, __service_name)
-
-
-def qdevice_disable(runner):
-    """
-    make qdevice not start automatically on boot on local host
-    """
-    external.disable_service(runner, __service_name)
-
-
-def qdevice_start(runner):
-    """
-    start qdevice now on local host
-    """
-    external.start_service(runner, __service_name)
-
-
-def qdevice_stop(runner):
-    """
-    stop qdevice now on local host
-    """
-    external.stop_service(runner, __service_name)
-
-
-def qdevice_kill(runner):
-    """
-    kill qdevice now on local host
-    """
-    external.kill_services(runner, [__service_name])
 
 
 def qdevice_sign_certificate_request(runner, cert_request, cluster_name):

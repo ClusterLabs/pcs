@@ -1,7 +1,7 @@
 import json
 import re
 from textwrap import dedent
-from unittest import mock, TestCase
+from unittest import TestCase
 
 from pcs.common import reports
 from pcs.common.reports import codes as report_codes
@@ -56,7 +56,6 @@ class PushCorosyncConfLiveBase(TestCase):
         CorosyncConfigFacade.need_qdevice_reload = False
 
 
-@mock.patch("pcs.lib.external.is_systemctl", lambda: True)
 class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
     def test_some_node_names_missing(self):
         self.fixture_corosync_conf(node1_name=False)
@@ -624,7 +623,6 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
         )
 
 
-@mock.patch("pcs.lib.external.is_systemctl", lambda: True)
 class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
     def test_some_node_names_missing(self):
         self.fixture_corosync_conf(node1_name=False)

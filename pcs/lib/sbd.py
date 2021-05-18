@@ -5,7 +5,9 @@ from pcs import settings
 from pcs.common import reports
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
-from pcs.lib import external
+from pcs.common.services.interfaces import ServiceManagerInterface
+from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfFacade
+from pcs.lib.services import is_systemd
 from pcs.lib.tools import dict_to_environment_file, environment_file_to_dict
 from pcs.lib.errors import LibraryError
 
@@ -38,13 +40,15 @@ def _even_number_of_nodes_and_no_qdevice(
 
 
 def is_auto_tie_breaker_needed(
-    runner, corosync_conf_facade, node_number_modifier=0
-):
+    service_manager: ServiceManagerInterface,
+    corosync_conf_facade: CorosyncConfFacade,
+    node_number_modifier: int = 0,
+) -> bool:
     """
     Returns True whenever quorum option auto tie breaker is needed to be enabled
     for proper working of SBD fencing. False if it is not needed.
 
-    runner -- command runner
+    service_manager --
     corosync_conf_facade --
     node_number_modifier -- this value vill be added to current number of nodes.
         This can be useful to test whenever is ATB needed when adding/removeing
@@ -54,8 +58,8 @@ def is_auto_tie_breaker_needed(
         _even_number_of_nodes_and_no_qdevice(
             corosync_conf_facade, node_number_modifier
         )
-        and is_sbd_installed(runner)
-        and is_sbd_enabled(runner)
+        and is_sbd_installed(service_manager)
+        and is_sbd_enabled(service_manager)
         and not is_device_set_local()
     )
 
@@ -75,27 +79,28 @@ def atb_has_to_be_enabled_pre_enable_check(corosync_conf_facade):
     # fmt: on
 
 
-def atb_has_to_be_enabled(runner, corosync_conf_facade, node_number_modifier=0):
+def atb_has_to_be_enabled(
+    service_manager: ServiceManagerInterface,
+    corosync_conf_facade: CorosyncConfFacade,
+    node_number_modifier: int = 0,
+) -> bool:
     """
     Return True whenever quorum option auto tie breaker has to be enabled for
     proper working of SBD fencing. False if it's not needed or it is already
     enabled.
 
-    runner -- command runner
+    service_manager --
     corosync_conf_facade --
     node_number_modifier -- this value vill be added to current number of nodes.
         This can be useful to test whenever is ATB needed when adding/removeing
         node.
     """
-    # fmt: off
     return (
         not corosync_conf_facade.is_enabled_auto_tie_breaker()
-        and
-        is_auto_tie_breaker_needed(
-            runner, corosync_conf_facade, node_number_modifier
+        and is_auto_tie_breaker_needed(
+            service_manager, corosync_conf_facade, node_number_modifier
         )
     )
-    # fmt: on
 
 
 def validate_new_nodes_devices(nodes_devices):
@@ -203,28 +208,24 @@ def get_local_sbd_config():
         ) from e
 
 
-def get_sbd_service_name() -> str:
-    return "sbd" if external.is_systemctl() else "sbd_helper"
+def get_sbd_service_name(service_manager: ServiceManagerInterface) -> str:
+    return "sbd" if is_systemd(service_manager) else "sbd_helper"
 
 
-def is_sbd_enabled(runner):
+def is_sbd_enabled(service_manager: ServiceManagerInterface) -> bool:
     """
     Check if SBD service is enabled in local system.
     Return True if SBD service is enabled, False otherwise.
-
-    runner -- CommandRunner
     """
-    return external.is_service_enabled(runner, get_sbd_service_name())
+    return service_manager.is_enabled(get_sbd_service_name(service_manager))
 
 
-def is_sbd_installed(runner):
+def is_sbd_installed(service_manager: ServiceManagerInterface) -> bool:
     """
     Check if SBD service is installed in local system.
     Reurns True id SBD service is installed. False otherwise.
-
-    runner -- CommandRunner
     """
-    return external.is_service_installed(runner, get_sbd_service_name())
+    return service_manager.is_installed(get_sbd_service_name(service_manager))
 
 
 def initialize_block_devices(

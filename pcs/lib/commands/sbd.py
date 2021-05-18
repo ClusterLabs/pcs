@@ -437,7 +437,7 @@ def get_local_devices_info(lib_env, dump=False):
     lib_env -- LibraryEnvironment
     dump -- if True returns also output of command 'sbd dump'
     """
-    if not sbd.is_sbd_enabled(lib_env.cmd_runner()):
+    if not sbd.is_sbd_enabled(lib_env.service_manager):
         return []
     device_list = sbd.get_local_sbd_device_list()
     report_item_list = []

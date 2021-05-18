@@ -2210,12 +2210,12 @@ def check_sbd(param, request, auth_user)
   unless allowed_for_local_cluster(auth_user, Permissions::READ)
     return 403, 'Permission denied'
   end
+  sbd_name = get_sbd_service_name()
+  service_checker = ServiceChecker.new(
+    [sbd_name], installed: true, enabled: true, running: true
+  )
   out = {
-    :sbd => {
-      :installed => is_service_installed?(get_sbd_service_name()),
-      :enabled => is_service_enabled?(get_sbd_service_name()),
-      :running => is_service_running?(get_sbd_service_name())
-    }
+    :sbd => service_checker.get_info(sbd_name),
   }
   watchdog = param[:watchdog]
   if not watchdog.to_s.empty?
@@ -2510,7 +2510,7 @@ def qdevice_client_enable(param, request, auth_user)
   unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
     return 403, 'Permission denied'
   end
-  if not is_service_enabled?('corosync')
+  if not ServiceChecker.new('corosync', enabled: true).is_enabled?('corosync')
     return pcsd_success('corosync is not enabled, skipping')
   elsif enable_service('corosync-qdevice')
     return pcsd_success('corosync-qdevice enabled')
@@ -2534,7 +2534,7 @@ def qdevice_client_start(param, request, auth_user)
   unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
     return 403, 'Permission denied'
   end
-  if not is_service_running?('corosync')
+  if not ServiceChecker.new(['corosync'], running: true).is_running?('corosync')
     return pcsd_success('corosync is not running, skipping')
   elsif start_service('corosync-qdevice')
     return pcsd_success('corosync-qdevice started')
@@ -3012,9 +3012,16 @@ def check_host(params, request, auth_user)
     )
   }
 
-  service_checker = get_service_installed_checker
+  service_checker = ServiceChecker.new(
+    service_list.map {|item| item.to_s},
+    installed: true,
+    enabled: true,
+    running: true,
+  )
   service_list.each do |service|
-    output[:services][service] = get_service_info(service.to_s, service_checker)
+    output[:services][service] = service_checker.get_info(service.to_s).merge(
+      {:version => nil}
+    )
   end
   service_version_getter.each do |service, version_getter|
     version = version_getter.call()
@@ -3030,7 +3037,7 @@ def reload_corosync_conf(params, request, auth_user)
     return 403, 'Permission denied'
   end
 
-  if is_service_running?('corosync')
+  if ServiceChecker.new(['corosync'], running: true).is_running?('corosync')
     output, stderr, retval = run_cmd(
       auth_user, File.join(COROSYNC_BINARIES, "corosync-cfgtool"), "-R"
     )

@@ -377,6 +377,7 @@ class SetQuorumOptionsTest(TestCase):
         self.mock_logger = mock.MagicMock(logging.Logger)
         self.mock_reporter = MockLibraryReportProcessor()
 
+    @mock.patch.object(LibraryEnvironment, "service_manager", "service manager")
     def test_success(
         self, mock_runner, mock_get_corosync, mock_push_corosync, mock_check
     ):
@@ -398,7 +399,7 @@ class SetQuorumOptionsTest(TestCase):
         )
         self.assertEqual([], self.mock_reporter.report_item_list)
         self.assertEqual(1, mock_check.call_count)
-        self.assertEqual("cmd_runner", mock_check.call_args[0][0])
+        self.assertEqual("service manager", mock_check.call_args[0][0])
         self.assertEqual(self.mock_reporter, mock_check.call_args[0][1])
         self.assertFalse(mock_check.call_args[0][3])
         self.assertFalse(mock_check.call_args[0][4])
@@ -2081,7 +2082,6 @@ class RemoveDeviceHeuristics(TestCase):
         )
 
 
-@mock.patch("pcs.lib.external.is_systemctl", lambda: True)
 class RemoveDeviceNetTest(TestCase):
     # pylint: disable=too-many-public-methods
     def setUp(self):
@@ -2161,24 +2161,6 @@ class RemoveDeviceNetTest(TestCase):
             response_code=200,
         )
 
-    def fixture_config_runner_sbd_installed(self, sbd_installed):
-        units = {
-            "non_sbd": "enabled",
-        }
-        if sbd_installed:
-            units["sbd"] = "enabled"  # enabled/disabled doesn't matter
-        self.config.runner.systemctl.list_unit_files(
-            units,
-            before="http.corosync.qdevice_client_disable_requests",
-        )
-
-    def fixture_config_runner_sbd_enabled(self, sbd_enabled):
-        self.config.runner.systemctl.is_enabled(
-            "sbd",
-            sbd_enabled,
-            before="http.corosync.qdevice_client_disable_requests",
-        )
-
     def fixture_config_success(
         self,
         cluster_nodes,
@@ -2198,9 +2180,17 @@ class RemoveDeviceNetTest(TestCase):
         )
 
     def fixture_config_success_sbd_part(self, sbd_installed, sbd_enabled):
-        self.fixture_config_runner_sbd_installed(sbd_installed)
+        self.config.services.is_installed(
+            "sbd",
+            return_value=sbd_installed,
+            before="http.corosync.qdevice_client_disable_requests",
+        )
         if sbd_installed:
-            self.fixture_config_runner_sbd_enabled(sbd_enabled)
+            self.config.services.is_enabled(
+                "sbd",
+                return_value=sbd_enabled,
+                before="http.corosync.qdevice_client_disable_requests",
+            )
 
     @staticmethod
     def fixture_reports_success(cluster_nodes, atb_enabled=False):

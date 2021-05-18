@@ -824,11 +824,15 @@ def get_corosync_version()
 end
 
 def pacemaker_running?()
-  is_service_running?('pacemaker')
+  return ServiceChecker.new(
+    ['pacemaker'], running: true
+  ).is_running?('pacemaker')
 end
 
 def pacemaker_remote_running?()
-  is_service_running?('pacemaker_remote')
+  return ServiceChecker.new(
+    ['pacemaker_remote'], running: true
+  ).is_running?('pacemaker_remote')
 end
 
 def get_pacemaker_version()
@@ -1718,145 +1722,100 @@ def get_default_overview_node_list(clustername)
   return node_list
 end
 
-def is_service_enabled?(service)
-  if ISSYSTEMCTL
-    cmd = ['systemctl', 'is-enabled', "#{service}.service"]
-  else
-    cmd = ['chkconfig', service]
-  end
-  _, _, retcode = run_cmd(PCSAuth.getSuperuserAuth(), *cmd)
-  return (retcode == 0)
-end
-
-def is_service_running?(service)
-  if ISSYSTEMCTL
-    # --lines=0 disables listing last N lines from journal related to the
-    # service. The lines may contain non-ASCII characters which cause various
-    # encoding/decoding errors. We are not interested in the lines anyway.
-    cmd = ['systemctl', 'status', '--lines=0', "#{service}.service"]
-  else
-    cmd = ['service', service, 'status']
-  end
-  _, _, retcode = run_cmd(PCSAuth.getSuperuserAuth(), *cmd)
-  return (retcode == 0)
-end
-
-class ServiceInstalledChecker
-  def initialize()
-    @list_unit_files_output = self.load_unit_files_list()
-  end
-
-  def is_installed?(service)
-    if @list_unit_files_output.nil?
-      return nil
-    end
-
-    @list_unit_files_output.each { |line|
-      if self.contains_line_service?(line, service)
-        return true
-      end
-    }
-    return false
-  end
-
-  protected
-  def load_unit_files_list()
-    stdout, _, retcode = self.run_command()
-    if retcode != 0
-      return nil
-    end
-    return stdout
-  end
-end
-
-class ServiceInstalledCheckerSystemctl < ServiceInstalledChecker
-  protected
-  def run_command
-    # currently we are not using systemd instances (service_name@instance) in pcsd
-    # for proper implementation of is_service_installed see
-    # pcs/lib/external.py:is_service_installed
-    return run_cmd(
-      PCSAuth.getSuperuserAuth(), 'systemctl', 'list-unit-files', '--full'
-    )
-  end
-
-  def contains_line_service?(line, service)
-    return line.strip().start_with?("#{service}.service")
-  end
-end
-
-class ServiceInstalledCheckerChkconfig < ServiceInstalledChecker
-  protected
-  def run_command
-    return run_cmd(PCSAuth.getSuperuserAuth(), 'chkconfig')
-  end
-
-  def contains_line_service?(line, service)
-    return line.split(' ')[0] == service
-  end
-end
-
-def get_service_installed_checker
-  if ISSYSTEMCTL
-    return ServiceInstalledCheckerSystemctl.new
-  else
-    return ServiceInstalledCheckerChkconfig.new
-  end
-end
-
-
-def is_service_installed?(service)
-  return get_service_installed_checker().is_installed?(service)
-end
-
 def enable_service(service)
-  if ISSYSTEMCTL
-    # fails when the service is not installed
-    cmd = ['systemctl', 'enable', "#{service}.service"]
-  else
-    # fails when the service is not installed
-    cmd = ['chkconfig', service, 'on']
-  end
-  _, _, retcode = run_cmd(PCSAuth.getSuperuserAuth(), *cmd)
-  return (retcode == 0)
+  result = run_pcs_internal(
+    PCSAuth.getSuperuserAuth(),
+    "services.enable_service",
+    {:service => service, :instance => nil},
+  )
+  return result[:status] == 'success'
 end
 
 def disable_service(service)
-  # fails when the service is not installed, so we need to check it beforehand
-  if not is_service_installed?(service)
-    return true
-  end
-
-  if ISSYSTEMCTL
-    cmd = ['systemctl', 'disable', "#{service}.service"]
-  else
-    cmd = ['chkconfig', service, 'off']
-  end
-  _, _, retcode = run_cmd(PCSAuth.getSuperuserAuth(), *cmd)
-  return (retcode == 0)
+  result = run_pcs_internal(
+    PCSAuth.getSuperuserAuth(),
+    "services.disable_service",
+    {:service => service, :instance => nil},
+  )
+  return result[:status] == 'success'
 end
 
 def start_service(service)
-  if ISSYSTEMCTL
-    cmd = ['systemctl', 'start', "#{service}.service"]
-  else
-    cmd = ['service', service, 'start']
-  end
-  _, _, retcode = run_cmd(PCSAuth.getSuperuserAuth(), *cmd)
-  return (retcode == 0)
+  result = run_pcs_internal(
+    PCSAuth.getSuperuserAuth(),
+    "services.start_service",
+    {:service => service, :instance => nil},
+  )
+  return result[:status] == 'success'
 end
 
 def stop_service(service)
-  if not is_service_installed?(service)
+  if not ServiceChecker.new([service], installed: true).is_installed?(service)
     return true
   end
-  if ISSYSTEMCTL
-    cmd = ['systemctl', 'stop', "#{service}.service"]
-  else
-    cmd = ['service', service, 'stop']
+  result = run_pcs_internal(
+    PCSAuth.getSuperuserAuth(),
+    "services.stop_service",
+    {:service => service, :instance => nil},
+  )
+  return result[:status] == 'success'
+end
+
+class ServiceChecker
+  def initialize(services, flags={})
+    result = run_pcs_internal(
+      PCSAuth.getSuperuserAuth(),
+      "services.get_services_info",
+      {
+        :services => services,
+        :installed => flags.fetch(:installed, true),
+        :enabled => flags.fetch(:enabled, false),
+        :running => flags.fetch(:running, false),
+      },
+    )
+    @services_info = {}
+    if result[:status] == 'success'
+      data = result[:data]
+      unless data.nil?
+        @services_info = Hash[
+          data[:services].collect{ |service| [service[:service], service]}
+        ]
+      end
+    end
   end
-  _, _, retcode = run_cmd(PCSAuth.getSuperuserAuth(), *cmd)
-  return (retcode == 0)
+
+  def get_service(service)
+    info = @services_info[service]
+    if info.nil?
+      return {
+        :service => service,
+        :installed => nil,
+        :enabled => nil,
+        :running => nil,
+      }
+    end
+    return info
+  end
+
+  def get_info(service)
+    return {
+      :installed => self.is_installed?(service),
+      :enabled => self.is_enabled?(service),
+      :running => self.is_running?(service),
+    }
+  end
+
+  def is_installed?(service)
+    return !!self.get_service(service)[:installed]
+  end
+
+  def is_enabled?(service)
+    return !!self.get_service(service)[:enabled]
+  end
+
+  def is_running?(service)
+    return !!self.get_service(service)[:running]
+  end
 end
 
 def set_cluster_prop_force(auth_user, prop, val)
@@ -1938,15 +1897,6 @@ def get_alerts(auth_user)
   end
 end
 
-def get_service_info(service_name, service_checker)
-  return {
-    :installed => service_checker.is_installed?(service_name),
-    :enabled => is_service_enabled?(service_name),
-    :running => is_service_running?(service_name),
-    :version => nil,
-  }
-end
-
 def get_pcs_internal_output_format(status, status_msg=nil)
   return {
     :status => status,
@@ -1977,17 +1927,17 @@ def pcs_internal_proxy_old(auth_user, data, cmd)
   # version 0.10.6. Report data structure has been changed.
   output = _pcs_internal_proxy(auth_user, data, cmd)
   if (
-    output.include?('report_list') \
+    output.include?(:report_list) \
     and \
-    output['report_list'].kind_of?(Array) \
+    output[:report_list].kind_of?(Array) \
   )
-    output['report_list'].map! { |report|
+    output[:report_list].map! { |report|
       {
-        'severity' => report['severity']['level'],
-        'code' => report['message']['code'],
-        'info' => report['message']['payload'],
-        'forceable' => report['severity']['force_code'],
-        'report_text' => report['message']['message'],
+        'severity' => report[:severity][:level],
+        'code' => report[:message][:code],
+        'info' => report[:message][:payload],
+        'forceable' => report[:severity][:force_code],
+        'report_text' => report[:message][:message],
       }
     }
   end
@@ -2013,15 +1963,15 @@ def run_pcs_internal(auth_user, cmd, data, request_timeout=nil)
     )
   end
   begin
-    parsed_output = JSON.parse(stdout.join("\n"))
+    parsed_output = JSON.parse(stdout.join("\n"), {:symbolize_names => true})
     if (
-      parsed_output.include?('report_list') \
+      parsed_output.include?(:report_list) \
       and \
-      parsed_output['report_list'].kind_of?(Array) \
+      parsed_output[:report_list].kind_of?(Array) \
     )
       # Remove all debug messages as they may containt sensitive info.
-      parsed_output['report_list'].delete_if { |report_item|
-        report_item['severity']['level'] == 'DEBUG'
+      parsed_output[:report_list].delete_if { |report_item|
+        report_item[:severity][:level] == 'DEBUG'
       }
     end
     return parsed_output

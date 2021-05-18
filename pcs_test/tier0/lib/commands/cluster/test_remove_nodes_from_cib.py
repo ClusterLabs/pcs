@@ -30,7 +30,7 @@ class SuccessMinimal(TestCase):
         )
 
     def test_sucess_pcmk_running(self):
-        self.config.runner.systemctl.is_active("pacemaker")
+        self.config.services.is_running("pacemaker")
         for node in self.nodes:
             self.config.runner.pcmk.remove_node(
                 node,
@@ -40,7 +40,7 @@ class SuccessMinimal(TestCase):
 
     def test_failure_pcmk_running(self):
         err_msg = "an error"
-        self.config.runner.systemctl.is_active("pacemaker")
+        self.config.services.is_running("pacemaker")
         self.config.runner.pcmk.remove_node(
             self.nodes[0],
         )
@@ -67,7 +67,7 @@ class SuccessMinimal(TestCase):
         )
 
     def test_sucess_pcmk_not_running(self):
-        self.config.runner.systemctl.is_active("pacemaker", is_active=False)
+        self.config.services.is_running("pacemaker", return_value=False)
         # TODO: we do not test environment variables in runner
         for node in self.nodes:
             self.config.runner.place(
@@ -85,7 +85,7 @@ class SuccessMinimal(TestCase):
         err_msg = "an error"
         cmd = [settings.cibadmin, "--delete-all", "--force"]
         cmd_xpath = "--xpath=/cib/configuration/nodes/node[@uname='{}']"
-        self.config.runner.systemctl.is_active("pacemaker", is_active=False)
+        self.config.services.is_running("pacemaker", return_value=False)
         # TODO: we do not test environment variables in runner
         self.config.runner.place(
             cmd + [cmd_xpath.format(self.nodes[0])],

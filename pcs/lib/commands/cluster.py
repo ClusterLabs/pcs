@@ -83,7 +83,6 @@ from pcs.lib.env import LibraryEnvironment
 from pcs.lib.file.instance import FileInstance
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.errors import LibraryError
-from pcs.lib.external import is_service_running
 from pcs.lib.interface.config import ParserErrorException
 from pcs.lib.pacemaker.live import (
     get_cib,
@@ -818,7 +817,7 @@ def get_corosync_conf_struct(env: LibraryEnvironment) -> CorosyncConfDto:
 
 
 def add_nodes(
-    env,
+    env: LibraryEnvironment,
     nodes,
     wait=False,
     start=False,
@@ -864,7 +863,7 @@ def add_nodes(
 
     report_processor = env.report_processor
     target_factory = env.get_node_target_factory()
-    is_sbd_enabled = sbd.is_sbd_enabled(env.cmd_runner())
+    is_sbd_enabled = sbd.is_sbd_enabled(env.service_manager)
     corosync_conf = env.get_corosync_conf()
     corosync_node_options = {"name", "addrs"}
     sbd_node_options = {"devices", "watchdog"}
@@ -1059,7 +1058,7 @@ def add_nodes(
 
     # Validate existing cluster nodes status
     atb_has_to_be_enabled = sbd.atb_has_to_be_enabled(
-        env.cmd_runner(), corosync_conf, len(new_nodes)
+        env.service_manager, corosync_conf, len(new_nodes)
     )
     if atb_has_to_be_enabled:
         report_processor.report(
@@ -1682,7 +1681,9 @@ def _verify_corosync_conf(corosync_conf_facade):
 
 
 def remove_nodes(
-    env, node_list, force_flags: Container[reports.types.ForceCode] = ()
+    env: LibraryEnvironment,
+    node_list,
+    force_flags: Container[reports.types.ForceCode] = (),
 ):
     # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     """
@@ -1786,7 +1787,7 @@ def remove_nodes(
             )
 
     atb_has_to_be_enabled = sbd.atb_has_to_be_enabled(
-        env.cmd_runner(), corosync_conf, -len(node_list)
+        env.service_manager, corosync_conf, -len(node_list)
     )
     if atb_has_to_be_enabled:
         report_processor.report(
@@ -1893,7 +1894,7 @@ def remove_nodes_from_cib(env: LibraryEnvironment, node_list):
             )
         )
 
-    if is_service_running(env.cmd_runner(), "pacemaker"):
+    if env.service_manager.is_running("pacemaker"):
         for node in node_list:
             # this may raise a LibraryError
             # NOTE: crm_node cannot remove multiple nodes at once

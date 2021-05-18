@@ -56,7 +56,6 @@ from pcs.common.reports import constraints as constraints_reports
 from pcs.common.str_tools import indent
 from pcs.lib.commands import quorum as lib_quorum
 from pcs.lib.errors import LibraryError
-from pcs.lib.external import is_service_running
 from pcs.lib.node import get_existing_nodes_names
 
 # pylint: disable=too-many-branches, too-many-locals, too-many-statements
@@ -414,10 +413,11 @@ def config_restore_local(infile_name, infile_obj):
     """
     Commandline options: no options
     """
+    service_manager = utils.get_service_manager()
     if (
-        is_service_running(utils.cmd_runner(), "corosync")
-        or is_service_running(utils.cmd_runner(), "pacemaker")
-        or is_service_running(utils.cmd_runner(), "pacemaker_remote")
+        service_manager.is_running("corosync")
+        or service_manager.is_running("pacemaker")
+        or service_manager.is_running("pacemaker_remote")
     ):
         utils.err(
             "Cluster is currently running on this node. You need to stop "

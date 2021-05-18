@@ -1,6 +1,6 @@
 # pylint: disable=too-many-lines
 import json
-from unittest import mock, TestCase
+from unittest import TestCase
 
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
@@ -418,7 +418,6 @@ class EvenNumOfNodes(TestCase):
             _sbd_enable_successful_report_list_fixture(self.node_list)
         )
 
-    @mock.patch("pcs.lib.external.is_systemctl", lambda: True)
     def test_no_device(self):
         config_generator = lambda node: self.sbd_config_template.format(
             node_name=node,
@@ -623,7 +622,6 @@ class OfflineNodes(TestCase):
             + _sbd_enable_successful_report_list_fixture(self.online_node_list)
         )
 
-    @mock.patch("pcs.lib.external.is_systemctl", lambda: True)
     def test_ignore_offline_nodes_atb_needed(self):
         self.config.http.sbd.check_sbd(
             communication_list=[
@@ -1232,7 +1230,6 @@ class FailureHandling(TestCase):
         for name in self.config.calls.names[-count:]:
             self.config.calls.remove(name)
 
-    @mock.patch("pcs.lib.external.is_systemctl", lambda: True)
     def test_enable_failed(self):
         self.config.http.sbd.enable_sbd(
             communication_list=self.communication_list_failure
@@ -1267,7 +1264,6 @@ class FailureHandling(TestCase):
             ]
         )
 
-    @mock.patch("pcs.lib.external.is_systemctl", lambda: True)
     def test_enable_not_connected(self):
         self.config.http.sbd.enable_sbd(
             communication_list=self.communication_list_not_connected
@@ -1302,7 +1298,6 @@ class FailureHandling(TestCase):
             ]
         )
 
-    @mock.patch("pcs.lib.external.is_systemctl", lambda: True)
     def test_removing_stonith_wd_timeout_failure(self):
         self._remove_calls(2)
         self.config.http.pcmk.remove_stonith_watchdog_timeout(
@@ -1332,7 +1327,6 @@ class FailureHandling(TestCase):
             ]
         )
 
-    @mock.patch("pcs.lib.external.is_systemctl", lambda: True)
     def test_removing_stonith_wd_timeout_not_connected(self):
         self._remove_calls(2)
         self.config.http.pcmk.remove_stonith_watchdog_timeout(
@@ -1362,7 +1356,6 @@ class FailureHandling(TestCase):
             ]
         )
 
-    @mock.patch("pcs.lib.external.is_systemctl", lambda: True)
     def test_removing_stonith_wd_timeout_complete_failure(self):
         self._remove_calls(2)
         self.config.http.pcmk.remove_stonith_watchdog_timeout(
@@ -1409,7 +1402,6 @@ class FailureHandling(TestCase):
             ]
         )
 
-    @mock.patch("pcs.lib.external.is_systemctl", lambda: True)
     def test_set_sbd_config_failure(self):
         self._remove_calls(4)
         self.config.http.sbd.set_sbd_config(

@@ -462,11 +462,11 @@ class ConfigDestroy(TestCase, FixtureMixin):
     def fixture_config_booth_not_used(self, instance_name="booth"):
         (
             self.config.runner.cib.load()
-            .runner.systemctl.is_active(
-                f"booth@{instance_name}", is_active=False
+            .services.is_running(
+                "booth", instance=instance_name, return_value=False
             )
-            .runner.systemctl.is_enabled(
-                f"booth@{instance_name}", is_enabled=False
+            .services.is_enabled(
+                "booth", instance=instance_name, return_value=False
             )
         )
 
@@ -611,11 +611,11 @@ class ConfigDestroy(TestCase, FixtureMixin):
 
         (
             self.config.runner.cib.load(resources=self.fixture_cib_resources())
-            .runner.systemctl.is_active(
-                f"booth@{instance_name}", is_active=True
+            .services.is_running(
+                "booth", instance=instance_name, return_value=True
             )
-            .runner.systemctl.is_enabled(
-                f"booth@{instance_name}", is_enabled=True
+            .services.is_enabled(
+                "booth", instance=instance_name, return_value=True
             )
         )
 
@@ -3024,12 +3024,6 @@ class EnableDisableStartStopMixin(FixtureMixin):
         # pylint: disable=invalid-name
         self.env_assist, self.config = get_env_tools(self)
 
-    def fixture_config_pre_action_call(self, service):
-        # self and service is used in subclasses
-        # pylint: disable=no-self-use
-        # pylint: disable=unused-argument
-        return
-
     def test_invalid_instance(self):
         instance_name = "/tmp/booth/booth"
         self.env_assist.assert_raise_library_error(
@@ -3042,12 +3036,9 @@ class EnableDisableStartStopMixin(FixtureMixin):
             expected_in_processor=False,
         )
 
-    @mock.patch("pcs.lib.external.is_systemctl", lambda: False)
     def test_not_systemd(self):
         self.env_assist.assert_raise_library_error(
-            lambda: self.command(
-                self.env_assist.get_env(patch_is_systemd=False)
-            ),
+            lambda: self.command(self.env_assist.get_env(is_systemd=False)),
             [
                 fixture.error(
                     reports.codes.UNSUPPORTED_OPERATION_ON_NON_SYSTEMD_SYSTEMS,
@@ -3083,8 +3074,7 @@ class EnableDisableStartStopMixin(FixtureMixin):
         )
 
     def test_success_default_instance(self):
-        self.fixture_config_pre_action_call("booth@")
-        self.get_external_call()("booth@booth")
+        self.get_external_call()("booth", instance="booth")
         self.command(
             self.env_assist.get_env(),
         )
@@ -3102,8 +3092,7 @@ class EnableDisableStartStopMixin(FixtureMixin):
 
     def test_success_custom_instance(self):
         instance_name = "my_booth"
-        self.fixture_config_pre_action_call("booth@")
-        self.get_external_call()("booth@my_booth")
+        self.get_external_call()("booth", instance="my_booth")
         self.command(self.env_assist.get_env(), instance_name=instance_name)
         self.env_assist.assert_reports(
             [
@@ -3118,13 +3107,8 @@ class EnableDisableStartStopMixin(FixtureMixin):
         )
 
     def test_fail(self):
-        self.fixture_config_pre_action_call("booth@")
-        self.get_external_call()(
-            "booth@booth",
-            stdout="some stdout",
-            stderr="some stderr",
-            returncode=1,
-        )
+        err_msg = "some stderr\nsome stdout"
+        self.get_external_call()("booth", instance="booth", failure_msg=err_msg)
         self.env_assist.assert_raise_library_error(
             lambda: self.command(
                 self.env_assist.get_env(),
@@ -3134,7 +3118,7 @@ class EnableDisableStartStopMixin(FixtureMixin):
                     reports.codes.SERVICE_ACTION_FAILED,
                     action=self.report_service_action,
                     service="booth",
-                    reason="some stderr\nsome stdout",
+                    reason=err_msg,
                     node="",
                     instance="booth",
                 ),
@@ -3149,7 +3133,7 @@ class Enable(EnableDisableStartStopMixin, TestCase):
     report_service_action = reports.const.SERVICE_ACTION_ENABLE
 
     def get_external_call(self):
-        return self.config.runner.systemctl.enable
+        return self.config.services.enable
 
 
 class Disable(EnableDisableStartStopMixin, TestCase):
@@ -3158,10 +3142,7 @@ class Disable(EnableDisableStartStopMixin, TestCase):
     report_service_action = reports.const.SERVICE_ACTION_DISABLE
 
     def get_external_call(self):
-        return self.config.runner.systemctl.disable
-
-    def fixture_config_pre_action_call(self, service):
-        self.config.runner.systemctl.list_unit_files({service: "enabled"})
+        return self.config.services.disable
 
 
 class Start(EnableDisableStartStopMixin, TestCase):
@@ -3170,7 +3151,7 @@ class Start(EnableDisableStartStopMixin, TestCase):
     report_service_action = reports.const.SERVICE_ACTION_START
 
     def get_external_call(self):
-        return self.config.runner.systemctl.start
+        return self.config.services.start
 
 
 class Stop(EnableDisableStartStopMixin, TestCase):
@@ -3179,7 +3160,7 @@ class Stop(EnableDisableStartStopMixin, TestCase):
     report_service_action = reports.const.SERVICE_ACTION_STOP
 
     def get_external_call(self):
-        return self.config.runner.systemctl.stop
+        return self.config.services.stop
 
 
 class PullConfigBase(TestCase, FixtureMixin):

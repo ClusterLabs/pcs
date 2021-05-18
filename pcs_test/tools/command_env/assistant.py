@@ -31,6 +31,7 @@ from pcs_test.tools.command_env.mock_push_corosync_conf import (
 )
 from pcs_test.tools.command_env.mock_raw_file import get_raw_file_mock
 from pcs_test.tools.command_env.mock_runner import Runner
+from pcs_test.tools.command_env.mock_service_manager import ServiceManagerMock
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
 from pcs.common.file import RawFile
@@ -40,7 +41,7 @@ from pcs.lib.env import LibraryEnvironment
 patch_lib_env = partial(mock.patch.object, LibraryEnvironment)
 
 
-def patch_env(call_queue, config, init_env, patch_is_systemd=True):
+def patch_env(call_queue, config, init_env, is_systemd=True):
     # It is mandatory to patch some env objects/methods. It is ok when command
     # does not use this objects/methods and specify no call for it. But it would
     # be a problem when the test succeded because the live call respond
@@ -77,14 +78,24 @@ def patch_env(call_queue, config, init_env, patch_is_systemd=True):
             else spy.get_local_corosync_conf,
         ),
         patch_lib_env("communicator_factory", mock_communicator_factory),
+        # Use our custom ServiceManager in tests
+        # TODO: add support for Spy
+        patch_lib_env(
+            "_get_service_manager", lambda _: ServiceManagerMock(call_queue)
+        ),
     ]
-    if patch_is_systemd:
-        # In all the tests we assume that we are running on top of a systemd
-        # running system. If needed, this may be turned off for some particular
-        # tests. Note that the patched function is cached therefore is patched
-        # here and not in every tests.
+    if is_systemd:
+        # In most test cases we don't care about underlaying init system. But
+        # some tests actually test different behavior based on init
+        # system. This will cause pcs.lib.services.is_systemd(<instance of
+        # ServiceManagerMock>) to return True because we replace SystemdDriver
+        # in isinstance() call inside is_systemd function with
+        # ServiceManagerMock. Otherwise is_systemd will return False.
         patcher_list.append(
-            mock.patch("pcs.lib.external.is_systemctl", lambda: True)
+            mock.patch(
+                "pcs.lib.services.services.drivers.SystemdDriver",
+                ServiceManagerMock,
+            )
         )
 
     if is_fs_call_in(call_queue):
@@ -231,7 +242,7 @@ class EnvAssistant:
                     )
                 )
 
-    def get_env(self, patch_is_systemd=True):
+    def get_env(self, is_systemd=True):
         self.__call_queue = CallQueue(self.__config.calls)
         # pylint: disable=attribute-defined-outside-init
         self._env = LibraryEnvironment(
@@ -250,7 +261,7 @@ class EnvAssistant:
             self.__call_queue,
             self.__config,
             self._env,
-            patch_is_systemd=patch_is_systemd,
+            is_systemd=is_systemd,
         )
         # If pushing corosync.conf has not been patched in the
         # LibraryEnvironment, store any corosync.conf passed to the

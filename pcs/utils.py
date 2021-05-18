@@ -32,13 +32,13 @@ from pcs.common import (
     file as pcs_file,
     file_type_codes,
     pcs_pycurl as pycurl,
-    reports,
 )
 from pcs.common.host import PcsKnownHost
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItemList
 from pcs.common.reports.messages import CibUpgradeFailedToMinimalRequiredVersion
-from pcs.common.str_tools import join_multilines
+from pcs.common.services.interfaces import ServiceManagerInterface
+from pcs.common.services.errors import ManageServiceError
 
 from pcs.cli.common import middleware
 from pcs.cli.common.env_cli import Env
@@ -59,12 +59,7 @@ from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import (
     CommandRunner,
-    disable_service,
-    DisableServiceError,
-    enable_service,
-    EnableServiceError,
     is_proxy_set,
-    is_systemctl,
 )
 from pcs.lib.file.instance import FileInstance as LibFileInstance
 from pcs.lib.interface.config import ParserErrorException
@@ -75,6 +70,10 @@ from pcs.lib.pacemaker.values import (
     is_score as is_score_value,
     timeout_to_seconds as get_timeout_seconds,
     validate_id,
+)
+from pcs.lib.services import (
+    get_service_manager as _get_service_manager,
+    service_exception_to_report,
 )
 
 # pylint: disable=invalid-name
@@ -2110,6 +2109,11 @@ def err(errorText, exit_after_error=True):
         sys.exit(1)
 
 
+@lru_cache(typed=True)
+def get_service_manager() -> ServiceManagerInterface:
+    return _get_service_manager(cmd_runner(), get_report_processor())
+
+
 def enableServices():
     """
     Commandline options: no options
@@ -2118,21 +2122,14 @@ def enableServices():
     service_list = ["corosync", "pacemaker"]
     if need_to_handle_qdevice_service():
         service_list.append("corosync-qdevice")
+    service_manager = get_service_manager()
 
     report_item_list = []
     for service in service_list:
         try:
-            enable_service(cmd_runner(), service)
-        except EnableServiceError as e:
-            report_item_list.append(
-                reports.item.ReportItem.error(
-                    reports.messages.ServiceActionFailed(
-                        reports.const.SERVICE_ACTION_ENABLE,
-                        e.service,
-                        e.message,
-                    )
-                )
-            )
+            service_manager.enable(service)
+        except ManageServiceError as e:
+            report_item_list.append(service_exception_to_report(e))
     if report_item_list:
         raise LibraryError(*report_item_list)
 
@@ -2145,21 +2142,14 @@ def disableServices():
     service_list = ["corosync", "pacemaker"]
     if need_to_handle_qdevice_service():
         service_list.append("corosync-qdevice")
+    service_manager = get_service_manager()
 
     report_item_list = []
     for service in service_list:
         try:
-            disable_service(cmd_runner(), service)
-        except DisableServiceError as e:
-            report_item_list.append(
-                reports.item.ReportItem.error(
-                    reports.messages.ServiceActionFailed(
-                        reports.const.SERVICE_ACTION_DISABLE,
-                        e.service,
-                        e.message,
-                    )
-                )
-            )
+            service_manager.disable(service)
+        except ManageServiceError as e:
+            report_item_list.append(service_exception_to_report(e))
     if report_item_list:
         raise LibraryError(*report_item_list)
 
@@ -2168,30 +2158,24 @@ def start_service(service):
     """
     Commandline options: no options
     """
-    if is_systemctl():
-        stdout, stderr, retval = cmd_runner().run(
-            [settings.systemctl_binary, "start", service]
-        )
-    else:
-        stdout, stderr, retval = cmd_runner().run(
-            [settings.service_binary, service, "start"]
-        )
-    return join_multilines([stderr, stdout]), retval
+    service_manager = get_service_manager()
+
+    try:
+        service_manager.start(service)
+    except ManageServiceError as e:
+        raise LibraryError(service_exception_to_report(e)) from e
 
 
 def stop_service(service):
     """
     Commandline options: no options
     """
-    if is_systemctl():
-        stdout, stderr, retval = cmd_runner().run(
-            [settings.systemctl_binary, "stop", service]
-        )
-    else:
-        stdout, stderr, retval = cmd_runner().run(
-            [settings.service_binary, service, "stop"]
-        )
-    return join_multilines([stderr, stdout]), retval
+    service_manager = get_service_manager()
+
+    try:
+        service_manager.stop(service)
+    except ManageServiceError as e:
+        raise LibraryError(service_exception_to_report(e)) from e
 
 
 def write_file(path, data, permissions=0o644, binary=False):

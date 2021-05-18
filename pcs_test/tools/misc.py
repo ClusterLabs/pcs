@@ -15,7 +15,7 @@ from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
 from pcs import settings
 from pcs.cli.common.parse_args import InputModifiers
-from pcs.lib.external import CommandRunner, is_service_enabled
+from pcs.lib.external import CommandRunner
 
 
 runner = CommandRunner(
@@ -268,13 +268,6 @@ def skip_unless_pacemaker_supports_rsc_and_op_rules():
 def skip_unless_pacemaker_supports_op_onfail_demote():
     return skip_unless_cib_schema_version(
         (3, 4, 0), "resource operations with 'on-fail' option set to 'demote'"
-    )
-
-
-def skip_if_service_enabled(service_name):
-    return skipUnless(
-        not is_service_enabled(runner, service_name),
-        "Service {0} must be disabled".format(service_name),
     )
 
 

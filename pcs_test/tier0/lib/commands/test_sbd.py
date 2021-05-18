@@ -573,7 +573,6 @@ class InitializeBlockDevicesTest(CommonTest):
 
 @mock.patch("os.path.exists")
 @mock.patch("pcs.lib.sbd.get_local_sbd_config")
-@mock.patch("pcs.lib.external.is_systemctl", lambda: True)
 class GetLocalDevicesInfoTest(CommonTest):
     @staticmethod
     def fixture_sbd_enabled(enabled):

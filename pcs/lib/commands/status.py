@@ -16,6 +16,7 @@ from pcs.common import (
 from pcs.common.node_communicator import Communicator
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
+from pcs.common.services.interfaces import ServiceManagerInterface
 from pcs.common.str_tools import (
     format_list,
     indent,
@@ -26,11 +27,6 @@ from pcs.lib.communication.nodes import CheckReachability
 from pcs.lib.communication.tools import run as run_communication
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
-from pcs.lib.external import (
-    CommandRunner,
-    is_service_enabled,
-    is_service_running,
-)
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.node_communication import NodeTargetLibFactory
 from pcs.lib.pacemaker.live import (
@@ -108,11 +104,14 @@ def full_cluster_status_plaintext(
         ) = get_ticket_status_text(runner)
     # get extra info if live
     if live:
+        service_manager = env.service_manager
         try:
-            is_sbd_running = is_service_running(runner, get_sbd_service_name())
+            is_sbd_running = service_manager.is_running(
+                get_sbd_service_name(service_manager)
+            )
         except LibraryError:
             pass
-        local_services_status = _get_local_services_status(runner)
+        local_services_status = _get_local_services_status(service_manager)
         if verbose and corosync_conf:
             node_name_list, node_names_report_list = get_existing_nodes_names(
                 corosync_conf
@@ -215,14 +214,16 @@ def _stonith_warnings(cib: _Element, is_sbd_running: bool) -> List[str]:
     return warning_list
 
 
-def _get_local_services_status(runner: CommandRunner) -> List[_ServiceStatus]:
+def _get_local_services_status(
+    service_manager: ServiceManagerInterface,
+) -> List[_ServiceStatus]:
     service_def = [
         # (service name, display even if not enabled nor running)
         ("corosync", True),
         ("pacemaker", True),
         ("pacemaker_remote", False),
         ("pcsd", True),
-        (get_sbd_service_name(), False),
+        (get_sbd_service_name(service_manager), False),
     ]
     service_status_list = []
     for service, display_always in service_def:
@@ -231,8 +232,8 @@ def _get_local_services_status(runner: CommandRunner) -> List[_ServiceStatus]:
                 _ServiceStatus(
                     service,
                     display_always,
-                    is_service_enabled(runner, service),
-                    is_service_running(runner, service),
+                    service_manager.is_enabled(service),
+                    service_manager.is_running(service),
                 )
             )
         except LibraryError:

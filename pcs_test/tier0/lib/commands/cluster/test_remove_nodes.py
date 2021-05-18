@@ -202,7 +202,9 @@ class SuccessMinimal(TestCase):
             )
             .http.host.check_auth(node_labels=self.existing_nodes)
             # SBD not installed
-            .runner.systemctl.list_unit_files({}, name=sbd_installed_check)
+            .services.is_installed(
+                "sbd", return_value=False, name=sbd_installed_check
+            )
             .http.host.get_quorum_status(
                 self.existing_nodes,
                 node_labels=self.nodes_to_remove[:1],
@@ -430,8 +432,8 @@ class SuccessAtbRequired(TestCase):
                 )
             )
             .http.host.check_auth(node_labels=self.existing_nodes)
-            .runner.systemctl.list_unit_files({"sbd": "enabled"})
-            .runner.systemctl.is_enabled("sbd", is_enabled=True)
+            .services.is_installed("sbd", return_value=True)
+            .services.is_enabled("sbd", return_value=True)
             .http.corosync.check_corosync_offline(
                 node_labels=self.nodes_to_stay,
             )
@@ -559,8 +561,8 @@ class FailureAtbRequired(TestCase):
                 )
             )
             .http.host.check_auth(node_labels=self.existing_nodes)
-            .runner.systemctl.list_unit_files({"sbd": "enabled"})
-            .runner.systemctl.is_enabled("sbd", is_enabled=True)
+            .services.is_installed("sbd", return_value=True)
+            .services.is_enabled("sbd", return_value=True)
         )
         self.expected_reports.extend(
             [
@@ -2082,7 +2084,9 @@ class OfflineNodes(TestCase):
                 ]
             )
             # SBD not installed
-            .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
+            .services.is_installed(
+                "sbd", return_value=False, name="is_sbd_installed"
+            )
             .http.host.get_quorum_status(
                 self.existing_nodes,
                 node_labels=self.nodes_to_remove[:1],
@@ -2133,7 +2137,9 @@ class OfflineNodes(TestCase):
                 ]
             )
             # SBD not installed
-            .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
+            .services.is_installed(
+                "sbd", return_value=False, name="is_sbd_installed"
+            )
             .http.host.get_quorum_status(
                 self.existing_nodes,
                 node_labels=self.nodes_to_remove[:1],
@@ -2196,7 +2202,9 @@ class OfflineNodes(TestCase):
                 ]
             )
             # SBD not installed
-            .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
+            .services.is_installed(
+                "sbd", return_value=False, name="is_sbd_installed"
+            )
             .http.host.get_quorum_status(
                 self.existing_nodes,
                 communication_list=[
@@ -2280,7 +2288,9 @@ class OfflineNodes(TestCase):
                 ]
             )
             # SBD not installed
-            .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
+            .services.is_installed(
+                "sbd", return_value=False, name="is_sbd_installed"
+            )
             .http.host.get_quorum_status(
                 self.existing_nodes,
                 node_labels=self.nodes_to_remove[:1],
@@ -2333,7 +2343,11 @@ class OfflineNodes(TestCase):
                 ]
             )
             # SBD not installed
-            .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
+            .services.is_installed(
+                "sbd",
+                return_value=False,
+                name="services.is_installed.sbd.False",
+            )
             .http.host.get_quorum_status(
                 self.existing_nodes,
                 communication_list=[
@@ -2478,7 +2492,11 @@ class OfflineNodes(TestCase):
                 node_labels=([self.nodes_to_stay[0]] + self.nodes_to_remove)
             )
             # SBD not installed
-            .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
+            .services.is_installed(
+                "sbd",
+                return_value=False,
+                name="services.is_installed.sbd.False",
+            )
             .http.host.get_quorum_status(
                 self.existing_nodes,
                 node_labels=self.nodes_to_remove[:1],
@@ -2513,7 +2531,11 @@ class OfflineNodes(TestCase):
                 node_labels=([self.nodes_to_stay[0]] + self.nodes_to_remove)
             )
             # SBD not installed
-            .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
+            .services.is_installed(
+                "sbd",
+                return_value=False,
+                name="services.is_installed.sbd.False",
+            )
             .http.host.get_quorum_status(
                 self.existing_nodes,
                 node_labels=self.nodes_to_remove[:1],
@@ -2556,7 +2578,11 @@ class OfflineNodes(TestCase):
             self.config.env.set_known_nodes(self.nodes_to_stay)
             .http.host.check_auth(node_labels=(self.nodes_to_stay))
             # SBD not installed
-            .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
+            .services.is_installed(
+                "sbd",
+                return_value=False,
+                name="services.is_installed.sbd.False",
+            )
             .http.host.get_quorum_status(
                 self.existing_nodes,
                 node_labels=[],
@@ -2587,7 +2613,11 @@ class OfflineNodes(TestCase):
             self.config.env.set_known_nodes(self.nodes_to_stay)
             .http.host.check_auth(node_labels=(self.nodes_to_stay))
             # SBD not installed
-            .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
+            .services.is_installed(
+                "sbd",
+                return_value=False,
+                name="services.is_installed.sbd.False",
+            )
             .http.host.get_quorum_status(
                 self.existing_nodes,
                 node_labels=[],
@@ -2631,7 +2661,11 @@ class OfflineNodes(TestCase):
                 node_labels=(self.nodes_to_stay + [self.nodes_to_remove[1]])
             )
             # SBD not installed
-            .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
+            .services.is_installed(
+                "sbd",
+                return_value=False,
+                name="services.is_installed.sbd.False",
+            )
             .http.host.get_quorum_status(
                 self.existing_nodes,
                 node_labels=[self.nodes_to_remove[1]],
@@ -2666,7 +2700,11 @@ class OfflineNodes(TestCase):
                 node_labels=(self.nodes_to_stay + [self.nodes_to_remove[0]])
             )
             # SBD not installed
-            .runner.systemctl.list_unit_files({}, name="is_sbd_installed")
+            .services.is_installed(
+                "sbd",
+                return_value=False,
+                name="services.is_installed.sbd.False",
+            )
             .http.host.get_quorum_status(
                 self.existing_nodes,
                 node_labels=self.nodes_to_remove[:1],

@@ -104,6 +104,10 @@ EXTRA_DIST		= \
 			  tier0/common/test_host.py \
 			  tier0/common/test_node_communicator.py \
 			  tier0/common/test_str_tools.py \
+			  tier0/common/services/__init__.py \
+			  tier0/common/services/drivers/__init__.py \
+			  tier0/common/services/drivers/test_systemd.py \
+			  tier0/common/services/drivers/test_sysvinit_rhel.py \
 			  tier0/common/test_tools.py \
 			  tier0/common/test_tools_xml_fromstring.py \
 			  tier0/daemon/app/fixtures_app.py \
@@ -375,7 +379,7 @@ EXTRA_DIST		= \
 			  tools/command_env/config_runner_pcmk.py \
 			  tools/command_env/config_runner.py \
 			  tools/command_env/config_runner_sbd.py \
-			  tools/command_env/config_runner_systemctl.py \
+			  tools/command_env/config_services.py \
 			  tools/command_env/__init__.py \
 			  tools/command_env/mock_fs.py \
 			  tools/command_env/mock_get_local_corosync_conf.py \
@@ -384,6 +388,7 @@ EXTRA_DIST		= \
 			  tools/command_env/mock_push_corosync_conf.py \
 			  tools/command_env/mock_raw_file.py \
 			  tools/command_env/mock_runner.py \
+			  tools/command_env/mock_service_manager.py \
 			  tools/command_env/spy.py \
 			  tools/command_env/tools.py \
 			  tools/custom_mock.py \

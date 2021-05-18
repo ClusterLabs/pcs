@@ -46,8 +46,8 @@ class FullClusterStatusPlaintext(TestCase):
                 </resources>
             """
             )
-            .runner.systemctl.is_active(
-                "sbd", is_active=False, name="runner.systemctl.is_active.sbd"
+            .services.is_running(
+                "sbd", return_value=False, name="services.is_running.sbd"
             )
         )
 
@@ -65,8 +65,8 @@ class FullClusterStatusPlaintext(TestCase):
                 </resources>
             """,
             )
-            .runner.systemctl.is_active(
-                "sbd", is_active=False, name="runner.systemctl.is_active.sbd"
+            .services.is_running(
+                "sbd", return_value=False, name="services.is_running.sbd"
             )
         )
 
@@ -85,55 +85,55 @@ class FullClusterStatusPlaintext(TestCase):
     ):
         # pylint: disable=too-many-arguments
         (
-            self.config.runner.systemctl.is_enabled(
+            self.config.services.is_enabled(
                 "corosync",
-                name="runner.systemctl.is_enabled.corosync",
-                is_enabled=corosync_enabled,
+                name="services.is_enabled.corosync",
+                return_value=corosync_enabled,
             )
-            .runner.systemctl.is_active(
+            .services.is_running(
                 "corosync",
-                name="runner.systemctl.is_active.corosync",
-                is_active=corosync_active,
+                name="services.is_running.corosync",
+                return_value=corosync_active,
             )
-            .runner.systemctl.is_enabled(
+            .services.is_enabled(
                 "pacemaker",
-                name="runner.systemctl.is_enabled.pacemaker",
-                is_enabled=pacemaker_enabled,
+                name="services.is_enabled.pacemaker",
+                return_value=pacemaker_enabled,
             )
-            .runner.systemctl.is_active(
+            .services.is_running(
                 "pacemaker",
-                name="runner.systemctl.is_active.pacemaker",
-                is_active=pacemaker_active,
+                name="services.is_running.pacemaker",
+                return_value=pacemaker_active,
             )
-            .runner.systemctl.is_enabled(
+            .services.is_enabled(
                 "pacemaker_remote",
-                name="runner.systemctl.is_enabled.pacemaker_remote",
-                is_enabled=pacemaker_remote_enabled,
+                name="services.is_enabled.pacemaker_remote",
+                return_value=pacemaker_remote_enabled,
             )
-            .runner.systemctl.is_active(
+            .services.is_running(
                 "pacemaker_remote",
-                name="runner.systemctl.is_active.pacemaker_remote",
-                is_active=pacemaker_remote_active,
+                name="services.is_running.pacemaker_remote",
+                return_value=pacemaker_remote_active,
             )
-            .runner.systemctl.is_enabled(
+            .services.is_enabled(
                 "pcsd",
-                name="runner.systemctl.is_enabled.pcsd",
-                is_enabled=pcsd_enabled,
+                name="services.is_enabled.pcsd",
+                return_value=pcsd_enabled,
             )
-            .runner.systemctl.is_active(
+            .services.is_running(
                 "pcsd",
-                name="runner.systemctl.is_active.pcsd",
-                is_active=pcsd_active,
+                name="services.is_running.pcsd",
+                return_value=pcsd_active,
             )
-            .runner.systemctl.is_enabled(
+            .services.is_enabled(
                 "sbd",
-                name="runner.systemctl.is_enabled.sbd_2",
-                is_enabled=sbd_enabled,
+                name="services.is_enabled.sbd_2",
+                return_value=sbd_enabled,
             )
-            .runner.systemctl.is_active(
+            .services.is_running(
                 "sbd",
-                name="runner.systemctl.is_active.sbd_2",
-                is_active=sbd_active,
+                name="services.is_running.sbd_2",
+                return_value=sbd_active,
             )
         )
 
@@ -270,8 +270,8 @@ class FullClusterStatusPlaintext(TestCase):
             """
             )
             .runner.pcmk.load_ticket_state_plaintext(stdout="ticket status")
-            .runner.systemctl.is_active(
-                "sbd", is_active=False, name="runner.systemctl.is_active.sbd"
+            .services.is_running(
+                "sbd", return_value=False, name="services.is_running.sbd"
             )
         )
         self._fixture_config_local_daemons()
@@ -349,8 +349,8 @@ class FullClusterStatusPlaintext(TestCase):
             """,
             )
             .runner.pcmk.load_ticket_state_plaintext(stdout="ticket status")
-            .runner.systemctl.is_active(
-                "sbd", is_active=False, name="runner.systemctl.is_active.sbd"
+            .services.is_running(
+                "sbd", return_value=False, name="services.is_running.sbd"
             )
         )
         self._fixture_config_local_daemons(
@@ -458,8 +458,8 @@ class FullClusterStatusPlaintext(TestCase):
             """
             )
             .runner.pcmk.load_ticket_state_plaintext(stdout="ticket status")
-            .runner.systemctl.is_active(
-                "sbd", is_active=False, name="runner.systemctl.is_active.sbd"
+            .services.is_running(
+                "sbd", return_value=False, name="services.is_running.sbd"
             )
         )
         self._fixture_config_local_daemons()
@@ -515,8 +515,8 @@ class FullClusterStatusPlaintext(TestCase):
             .runner.pcmk.load_ticket_state_plaintext(
                 stdout="ticket stdout", stderr=stderr, returncode=1
             )
-            .runner.systemctl.is_active(
-                "sbd", is_active=False, name="runner.systemctl.is_active.sbd"
+            .services.is_running(
+                "sbd", return_value=False, name="services.is_running.sbd"
             )
         )
         self._fixture_config_local_daemons()
@@ -567,8 +567,8 @@ class FullClusterStatusPlaintext(TestCase):
             .fs.exists(settings.corosync_conf_file, return_value=True)
             .corosync_conf.load()
             .runner.cib.load()
-            .runner.systemctl.is_active(
-                "sbd", is_active=False, name="runner.systemctl.is_active.sbd"
+            .services.is_running(
+                "sbd", return_value=False, name="services.is_running.sbd"
             )
         )
         self._fixture_config_local_daemons()
@@ -599,8 +599,8 @@ class FullClusterStatusPlaintext(TestCase):
             .fs.exists(settings.corosync_conf_file, return_value=True)
             .corosync_conf.load()
             .runner.cib.load()
-            .runner.systemctl.is_active(
-                "sbd", is_active=True, name="runner.systemctl.is_active.sbd"
+            .services.is_running(
+                "sbd", return_value=True, name="services.is_running.sbd"
             )
         )
         self._fixture_config_local_daemons()
@@ -649,8 +649,8 @@ class FullClusterStatusPlaintext(TestCase):
                 </resources>
             """
             )
-            .runner.systemctl.is_active(
-                "sbd", is_active=False, name="runner.systemctl.is_active.sbd"
+            .services.is_running(
+                "sbd", return_value=False, name="services.is_running.sbd"
             )
         )
         self._fixture_config_local_daemons()
@@ -695,8 +695,8 @@ class FullClusterStatusPlaintext(TestCase):
             """
             )
             .runner.pcmk.load_ticket_state_plaintext(stdout="ticket status")
-            .runner.systemctl.is_active(
-                "sbd", is_active=False, name="runner.systemctl.is_active.sbd"
+            .services.is_running(
+                "sbd", return_value=False, name="services.is_running.sbd"
             )
         )
         self._fixture_config_local_daemons()

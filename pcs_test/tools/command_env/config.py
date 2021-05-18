@@ -7,6 +7,7 @@ from pcs_test.tools.command_env.config_fs import FsConfig
 from pcs_test.tools.command_env.config_http import HttpConfig
 from pcs_test.tools.command_env.config_raw_file import RawFileConfig
 from pcs_test.tools.command_env.config_runner import RunnerConfig
+from pcs_test.tools.command_env.config_services import ServiceManagerConfig
 
 
 class Spy:
@@ -29,6 +30,7 @@ class Config:
         self.corosync_conf = self.__wrap_helper(CorosyncConf(self.__calls))
         self.fs = self.__wrap_helper(FsConfig(self.__calls))
         self.raw_file = self.__wrap_helper(RawFileConfig(self.__calls))
+        self.services = self.__wrap_helper(ServiceManagerConfig(self.__calls))
 
         self.spy = None
 
