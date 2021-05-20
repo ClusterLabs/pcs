@@ -196,7 +196,7 @@ python_smoke_tests:
         procps-ng
         rpms/pcs-*.rpm
       "
-    - export GEM_HOME=/usr/lib64/pcsd/vendor/bundle/ruby/${RUBY_VERSION}/
+    - export GEM_HOME=/usr/lib64/pcsd/vendor/bundle/
     - /usr/lib64/pcsd/pcsd & # start pcsd (ruby - thin)
     - sleep 10 # wait for pcsd (ruby - thin) to start up properly
     - /usr/sbin/pcsd & # start pcsd (python - tornado)

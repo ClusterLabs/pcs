@@ -168,7 +168,7 @@ install-data-local:
 	)
 if INSTALL_EMBEDDED_GEMS
 	$(MKDIR_P) $(DESTDIR)${GEM_HOME}
-	cp -rp ../${PCSD_BUNDLED_DIR_LOCAL}/* $(DESTDIR)${GEM_HOME}
+	cp -rp ../${PCSD_BUNDLED_DIR_ROOT_LOCAL}/* $(DESTDIR)${GEM_HOME}
 	rm -rf $(DESTDIR)${GEM_HOME}/cache
 endif
 	$(MKDIR_P) -m 0700 $(DESTDIR)$(localstatedir)/log/pcsd

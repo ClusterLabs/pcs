@@ -131,12 +131,16 @@ if INSTALL_EMBEDDED_GEMS
 	echo '---' > .bundle/config
 	echo 'BUNDLE_DISABLE_SHARED_GEMS: "true"' >> .bundle/config
 	echo 'BUNDLE_PATH: "${PCSD_BUNDLED_DIR_ROOT_LOCAL}"' >> .bundle/config
+	echo 'BUNDLE_CACHE_PATH: "${PCSD_BUNDLED_CACHE_DIR}"' >> .bundle/config
 	echo 'BUNDLE_BUILD: \"$(ruby_LIBS)\"' >> .bundle/config
 if ENABLE_DOWNLOAD
+	$(BUNDLE)
 else
 	echo 'BUNDLE_ALLOW_OFFLINE_INSTALL: "true"' >> .bundle/config
+	$(BUNDLE) --local
 endif
-	$(BUNDLE)
+	cp -rp $(PCSD_BUNDLED_DIR_LOCAL)/* $(PCSD_BUNDLED_DIR_ROOT_LOCAL)/
+	rm -rf $$(realpath $(PCSD_BUNDLED_DIR_LOCAL)/../)
 	rm -rf .bundle Gemfile.lock
 endif
 	touch $@
@@ -144,7 +148,7 @@ endif
 
 stamps/download_rpm_ruby_deps: stamps/install_ruby_deps_local
 if ENABLE_DOWNLOAD
-	cp ${PCSD_BUNDLED_DIR_LOCAL}/cache/*.gem rpm/ || true
+	cp ${PCSD_BUNDLED_CACHE_DIR}/*.gem rpm/ || true
 endif
 	touch $@
 
@@ -213,7 +217,7 @@ if EXECUTE_TIER1_TESTS
 endif
 
 pcsd-tests:
-	GEM_HOME=${abs_top_builddir}/${PCSD_BUNDLED_DIR_LOCAL} \
+	GEM_HOME=${abs_top_builddir}/${PCSD_BUNDLED_DIR_ROOT_LOCAL} \
 		$(RUBY) \
 		-I${abs_top_builddir}/pcsd \
 		-I${abs_top_builddir}/pcsd/test \
@@ -374,12 +378,12 @@ $(SPEC): $(SPEC).in .version config.status stamps/download_python_deps stamps/do
 	$(AWK) -i inplace -v r="$$pydistrobundle" '{gsub(/@pydistrobundle@/,r)}1' $@-t; \
 	pycache="`echo $(MKDIR_P) $(PCS_BUNDLED_DIR_LOCAL)/src; base=41; for i in $$pylist pyagentx; do echo 'cp -f %SOURCE'$$base' rpm/' && let "base=base+1"; done`" && \
 	$(AWK) -i inplace -v r="$$pycache" '{gsub(/@pycache@/,r)}1' $@-t; \
-	gemlist="`for i in rpm/*.gem; do echo $$i | sed -e 's#rpm/##g' -e 's#.gem##g'; done`" && \
+	gemlist="`for i in $$($(FIND) rpm/ -type f -name '*.gem'); do echo $$i | sed -e 's#rpm/##g' -e 's#.gem##g'; done`" && \
 	gemsrc="`base=80; for i in $$gemlist; do echo 'Source'$$base': '$$i'.gem' && let "base=base+1"; done`" && \
 	$(AWK) -i inplace -v r="$$gemsrc" '{gsub(/@gemsrc@/,r)}1' $@-t; \
 	gembundle="`for i in $$gemlist; do echo $$i | sed 's/\(.*\)-\(.*\)/Provides: bundled(\1) = \2/'; done`" && \
 	$(AWK) -i inplace -v r="$$gembundle" '{gsub(/@gembundle@/,r)}1' $@-t; \
-	gemcache="`echo $(MKDIR_P) $(PCSD_BUNDLED_DIR_ROOT_LOCAL)/ruby/"\\\$$rubyver"/cache; base=80; for i in $$gemlist; do echo 'cp -f %SOURCE'$$base' $(PCSD_BUNDLED_DIR_ROOT_LOCAL)/ruby/\\\$$rubyver/cache' && let "base=base+1"; done`" && \
+	gemcache="`echo $(MKDIR_P) $(PCSD_BUNDLED_CACHE_DIR); base=80; for i in $$gemlist; do echo 'cp -f %SOURCE'$$base' $(PCSD_BUNDLED_CACHE_DIR)' && let "base=base+1"; done`" && \
 	$(AWK) -i inplace -v r="$$gemcache" '{gsub(/@gemcache@/,r)}1' $@-t;
 	chmod a-w $@-t
 	mv $@-t $@
