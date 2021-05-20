@@ -325,26 +325,33 @@ fi
 
 PCSD_BUNDLED_DIR_ROOT_LOCAL="pcsd/vendor/bundle/"
 PCSD_BUNDLED_DIR_LOCAL="$PCSD_BUNDLED_DIR_ROOT_LOCAL/ruby/$RUBY_VER/"
+PCSD_BUNDLED_CACHE_DIR="$PCSD_BUNDLED_DIR_ROOT_LOCAL/cache"
 AC_SUBST([PCSD_BUNDLED_DIR_ROOT_LOCAL])
 AC_SUBST([PCSD_BUNDLED_DIR_LOCAL])
+AC_SUBST([PCSD_BUNDLED_CACHE_DIR])
 
 rm -rf Gemfile Gemfile.lock
 echo "source 'https://rubygems.org'" > Gemfile
 echo "" >> Gemfile
 
-AC_DEFUN([PCS_CHECK_GEM], [
-	 if test "x$local_build" = "xyes"; then
-		AC_RUBY_GEM([$1], [$2], [$3])
-		if test "x$cache_only" = "xyes"; then
-			src=`ls $PCSD_BUNDLED_DIR_LOCAL/cache/$1-*`
-			if test "x$src" = "x"; then
-				AC_MSG_ERROR([cache only build required but no source detected in rpm/])
-			fi
+# PCS_BUNDLE_GEM([module])
+AC_DEFUN([PCS_BUNDLE_GEM], [
+	echo "gem '$1'" >> Gemfile
+	if test "x$cache_only" = "xyes"; then
+		src=`ls $PCSD_BUNDLED_CACHE_DIR/$1-*`
+		if test "x$src" = "x"; then
+			AC_MSG_ERROR([cache only build required but no source detected in $PCSD_BUNDLED_CACHE_DIR])
 		fi
-	 else
-		AC_RUBY_GEM([$1], [$2], [$3], [AC_MSG_ERROR([ruby gem $1 not found])])
-	 fi
-	 echo "gem '$1'" >> Gemfile
+	fi
+])
+
+# PCS_CHECK_GEM([module], [version])
+AC_DEFUN([PCS_CHECK_GEM], [
+	if test "x$local_build" = "xyes"; then
+		AC_RUBY_GEM([$1], [$2], [], [PCS_BUNDLE_GEM([$1])])
+	else
+		AC_RUBY_GEM([$1], [$2], [], [AC_MSG_ERROR([ruby gem $1 not found])])
+	fi
 ])
 
 PCS_CHECK_GEM([backports])

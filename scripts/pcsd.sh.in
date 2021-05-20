@@ -11,7 +11,7 @@ systemctl stop pcsd
 export PCSD_DISABLE_GUI=${PCSD_DISABLE_GUI:=false}
 export PCSD_DEBUG=${PCSD_DEBUG:=true}
 export PCSD_DEV=${PCSD_DEV:=true}
-export GEM_HOME="$REPO_PATH/@PCSD_BUNDLED_DIR_LOCAL@"
+export GEM_HOME="$REPO_PATH/@PCSD_BUNDLED_DIR_ROOT_LOCAL@"
 # export GEM_PATH="$GEM_HOME:"`gem env gempath`
 
 # RACK_ENV=production ruby -I${REPO_PATH}/pcsd ${REPO_PATH}/pcsd/pcsd.service-runner &

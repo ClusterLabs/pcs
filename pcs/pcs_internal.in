@@ -21,5 +21,5 @@ from pcs import (
 )
 
 settings.pcsd_exec_location = os.path.join(PACKAGE_DIR, "pcsd")
-settings.pcsd_gem_path = os.path.join(PACKAGE_DIR, "@PCSD_BUNDLED_DIR_LOCAL@")
+settings.pcsd_gem_path = os.path.join(PACKAGE_DIR, "@PCSD_BUNDLED_DIR_ROOT_LOCAL@")
 pcs_internal.main()
