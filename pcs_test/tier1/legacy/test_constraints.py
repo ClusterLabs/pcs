@@ -1902,10 +1902,11 @@ Ticket Constraints:
         assert r == 1
 
     def testMasterSlaveConstraint(self):
+        cibadmin = os.path.join(settings.pacemaker_binaries, "cibadmin")
         os.system(
             "CIB_file="
             + self.temp_cib.name
-            + f' {settings.pacemaker_binaries}/cibadmin -R --scope nodes --xml-text \'<nodes><node id="1" uname="rh7-1"/><node id="2" uname="rh7-2"/></nodes>\''
+            + f' {cibadmin} -R --scope nodes --xml-text \'<nodes><node id="1" uname="rh7-1"/><node id="2" uname="rh7-2"/></nodes>\''
         )
 
         o, r = pcs(
@@ -2143,10 +2144,11 @@ Ticket Constraints:
         assert r == 0
 
     def testCloneConstraint(self):
+        cibadmin = os.path.join(settings.pacemaker_binaries, "cibadmin")
         os.system(
             "CIB_file="
             + self.temp_cib.name
-            + f' {settings.pacemaker_binaries}/cibadmin -R --scope nodes --xml-text \'<nodes><node id="1" uname="rh7-1"/><node id="2" uname="rh7-2"/></nodes>\''
+            + f' {cibadmin} -R --scope nodes --xml-text \'<nodes><node id="1" uname="rh7-1"/><node id="2" uname="rh7-2"/></nodes>\''
         )
 
         o, r = pcs(
@@ -2380,10 +2382,11 @@ Ticket Constraints:
         assert r == 0
 
     def testMissingRole(self):
+        cibadmin = os.path.join(settings.pacemaker_binaries, "cibadmin")
         os.system(
             "CIB_file="
             + self.temp_cib.name
-            + f' {settings.pacemaker_binaries}/cibadmin -R --scope nodes --xml-text \'<nodes><node id="1" uname="rh7-1"/><node id="2" uname="rh7-2"/></nodes>\''
+            + f' {cibadmin} -R --scope nodes --xml-text \'<nodes><node id="1" uname="rh7-1"/><node id="2" uname="rh7-2"/></nodes>\''
         )
 
         # pcs no longer allows creating masters but supports existing ones. In
@@ -2393,7 +2396,7 @@ Ticket Constraints:
         os.system(
             "CIB_file="
             + self.temp_cib.name
-            + f' {settings.pacemaker_binaries}/cibadmin -R --scope constraints --xml-text \'<constraints><rsc_location id="cli-prefer-stateful0-master" role="Master" rsc="stateful0-master" node="rh7-1" score="INFINITY"/><rsc_location id="cli-ban-stateful0-master-on-rh7-1" rsc="stateful0-master" role="Slave" node="rh7-1" score="-INFINITY"/></constraints>\''
+            + f' {cibadmin} -R --scope constraints --xml-text \'<constraints><rsc_location id="cli-prefer-stateful0-master" role="Master" rsc="stateful0-master" node="rh7-1" score="INFINITY"/><rsc_location id="cli-ban-stateful0-master-on-rh7-1" rsc="stateful0-master" role="Slave" node="rh7-1" score="-INFINITY"/></constraints>\''
         )
 
         o, r = pcs(self.temp_cib.name, ["constraint"])

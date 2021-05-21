@@ -894,9 +894,9 @@ class CrmAgent(Agent):
                 # metadata
                 settings.fence_agent_binaries,
                 # otherwise heartbeat and cluster-glue agents don't work
-                "/bin/",
+                "/bin",
                 # otherwise heartbeat and cluster-glue agents don't work
-                "/usr/bin/",
+                "/usr/bin",
             ]
         )
         stdout, stderr, retval = self._runner.run(

@@ -559,7 +559,7 @@ def config_backup_path_list(with_uid_gid=False):
             "attrs": dict(corosync_attrs),
         },
         "uidgid.d": {
-            "path": settings.corosync_uidgid_dir.rstrip("/"),
+            "path": settings.corosync_uidgid_dir,
             "required": False,
             "attrs": dict(corosync_attrs),
         },

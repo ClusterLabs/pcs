@@ -1726,7 +1726,7 @@ class CrmAgentMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
                 self.agent._get_full_name(),
             ],
             env_extend={
-                "PATH": f"{settings.fence_agent_binaries}:/bin/:/usr/bin/",
+                "PATH": f"{settings.fence_agent_binaries}:/bin:/usr/bin",
             },
         )
 
@@ -1749,7 +1749,7 @@ class CrmAgentMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
                 self.agent._get_full_name(),
             ],
             env_extend={
-                "PATH": f"{settings.fence_agent_binaries}:/bin/:/usr/bin/",
+                "PATH": f"{settings.fence_agent_binaries}:/bin:/usr/bin",
             },
         )
 
@@ -1772,7 +1772,7 @@ class CrmAgentMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
                 self.agent._get_full_name(),
             ],
             env_extend={
-                "PATH": f"{settings.fence_agent_binaries}:/bin/:/usr/bin/",
+                "PATH": f"{settings.fence_agent_binaries}:/bin:/usr/bin",
             },
         )
 
@@ -1837,7 +1837,7 @@ class StonithAgentMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
                 "stonith:{0}".format(self.agent_name),
             ],
             env_extend={
-                "PATH": f"{settings.fence_agent_binaries}:/bin/:/usr/bin/",
+                "PATH": f"{settings.fence_agent_binaries}:/bin:/usr/bin",
             },
         )
 
@@ -1983,7 +1983,7 @@ class StonithAgentMetadataGetParametersTest(TestCase):
                         "stonith:{0}".format(self.agent_name),
                     ],
                     env_extend={
-                        "PATH": f"{settings.fence_agent_binaries}:/bin/:/usr/bin/",
+                        "PATH": f"{settings.fence_agent_binaries}:/bin:/usr/bin",
                     },
                 ),
                 mock.call([settings.pacemaker_fenced, "metadata"]),

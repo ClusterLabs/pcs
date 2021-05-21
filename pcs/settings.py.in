@@ -5,13 +5,13 @@ systemd_unit_path = "@SYSTEMD_UNIT_PATH@".split(":")
 chkconfig_binary = "/sbin/chkconfig"
 service_binary = "@SERVICE@"
 # Used only in utils.py in deprecated funcion
-pacemaker_binaries = "@PCMKEXECPREFIX@/sbin/"
+pacemaker_binaries = "@PCMKEXECPREFIX@/sbin"
 corosync_binaries = "@COROEXECPREFIX@/sbin"
-corosync_qnet_binaries = "@COROQDEVEXECPREFIX@/bin/"
-corosync_qdevice_binaries = "@COROQDEVEXECPREFIX@/sbin/"
-corosync_conf_dir = "@COROCONFDIR@/corosync/"
+corosync_qnet_binaries = "@COROQDEVEXECPREFIX@/bin"
+corosync_qdevice_binaries = "@COROQDEVEXECPREFIX@/sbin"
+corosync_conf_dir = "@COROCONFDIR@/corosync"
 corosync_conf_file = os.path.join(corosync_conf_dir, "corosync.conf")
-corosync_uidgid_dir = os.path.join(corosync_conf_dir, "uidgid.d/")
+corosync_uidgid_dir = os.path.join(corosync_conf_dir, "uidgid.d")
 corosync_qdevice_conf_dir = "@COROQDEVCONFDIR@"
 corosync_qdevice_net_server_certs_dir = os.path.join(
     corosync_qdevice_conf_dir, "qnetd/nssdb"
@@ -34,10 +34,14 @@ booth_authkey_bytes = 64
 # cluster conf is obsoleted and didn't support out-of-tree installation / run
 # hence it can stay hardcoded
 cluster_conf_file = "/etc/cluster/cluster.conf"
-fence_agent_binaries = "@FASEXECPREFIX@/sbin/"
-pacemaker_local_state_dir = os.path.join("@PCMKLOCALSTATEDIR@", "/lib/pacemaker")
+fence_agent_binaries = "@FASEXECPREFIX@/sbin"
+pacemaker_local_state_dir = os.path.join(
+    "@PCMKLOCALSTATEDIR@", "/lib/pacemaker"
+)
 pacemaker_daemon_dir = "@PCMK_DAEMON_DIR@"
-pacemaker_schedulerd = os.path.join(pacemaker_daemon_dir, "pacemaker-schedulerd")
+pacemaker_schedulerd = os.path.join(
+    pacemaker_daemon_dir, "pacemaker-schedulerd"
+)
 pacemaker_controld = os.path.join(pacemaker_daemon_dir, "pacemaker-controld")
 pacemaker_based = os.path.join(pacemaker_daemon_dir, "pacemaker-based")
 pacemaker_fenced = os.path.join(pacemaker_daemon_dir, "pacemaker-fenced")
@@ -52,7 +56,7 @@ cibadmin = "@PCMKEXECPREFIX@/sbin/cibadmin"
 crm_mon_schema = "@PCMK_SCHEMA_DIR@/crm_mon.rng"
 pacemaker_api_result_schema = "@PCMK_SCHEMA_DIR@/api/api-result.rng"
 agent_metadata_schema = "@RA_API_DTD@"
-pcsd_var_location = "@LOCALSTATEDIR@/lib/pcsd/"
+pcsd_var_location = "@LOCALSTATEDIR@/lib/pcsd"
 pcsd_ruby_socket = "@LOCALSTATEDIR@/run/pcsd-ruby.socket"
 pcsd_cert_location = os.path.join(pcsd_var_location, "pcsd.crt")
 pcsd_key_location = os.path.join(pcsd_var_location, "pcsd.key")
@@ -62,7 +66,7 @@ pcsd_settings_conf_location = os.path.join(
     pcsd_var_location, "pcs_settings.conf"
 )
 pcsd_dr_config_location = os.path.join(pcsd_var_location, "disaster-recovery")
-pcsd_exec_location = "@LIB_DIR@/pcsd/"
+pcsd_exec_location = "@LIB_DIR@/pcsd"
 pcsd_log_location = "@LOCALSTATEDIR@/log/pcsd/pcsd.log"
 pcsd_default_port = 2224
 pcsd_config = "@CONF_DIR@/pcsd"

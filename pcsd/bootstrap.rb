@@ -12,35 +12,38 @@ def is_systemctl()
   return false
 end
 
-def get_pcsd_path()
+def get_current_pcsd_path()
   return Pathname.new(
       File.expand_path(File.dirname(__FILE__))
     ).realpath
 end
 
-def get_pcs_path()
-  pcsd_path = get_pcsd_path().to_s
-  if PCSD_EXEC_LOCATION == pcsd_path or PCSD_EXEC_LOCATION == (pcsd_path + '/')
-    return PCS_EXEC
+def get_system_or_local_path(system_path, local_path)
+  current_pcsd_path = get_current_pcsd_path().to_s
+  if current_pcsd_path == File.expand_path(PCSD_EXEC_LOCATION)
+    # i.e. this file is inside the system pcsd directory => the system
+    # executable is used
+    return system_path
   else
-    return pcsd_path + '/../pcs/pcs'
+    # i.e. this file is outside the system pcsd directory => the local
+    # (develpment) executable is used
+    return File.join(current_pcsd_path, local_path)
   end
+end
+
+def get_pcs_path()
+  return get_system_or_local_path(PCS_EXEC, "../pcs/pcs")
 end
 
 def get_pcs_internal_path()
-  pcsd_path = get_pcsd_path().to_s
-  if PCSD_EXEC_LOCATION == pcsd_path or PCSD_EXEC_LOCATION == (pcsd_path + '/')
-    return PCS_INTERNAL_EXEC
-  else
-    return pcsd_path + '/../pcs/pcs_internal'
-  end
+  return get_system_or_local_path(PCS_INTERNAL_EXEC, "../pcs/pcs_internal")
 end
 
 # unique instance signature, allows detection of dameon restarts
-COROSYNC = COROSYNC_BINARIES + "corosync"
+COROSYNC = File.join(COROSYNC_BINARIES, "corosync")
 ISSYSTEMCTL = is_systemctl
-COROSYNC_CMAPCTL = COROSYNC_BINARIES + "corosync-cmapctl"
-COROSYNC_QUORUMTOOL = COROSYNC_BINARIES + "corosync-quorumtool"
+COROSYNC_CMAPCTL = File.join(COROSYNC_BINARIES, "corosync-cmapctl")
+COROSYNC_QUORUMTOOL = File.join(COROSYNC_BINARIES, "corosync-quorumtool")
 
 if not defined? $cur_node_name
   $cur_node_name = `/bin/hostname`.chomp
@@ -81,7 +84,7 @@ def get_capabilities(logger)
   capabilities = []
   capabilities_pcsd = []
   begin
-    filename = (get_pcsd_path() + Pathname.new('capabilities.xml')).to_s
+    filename = (get_current_pcsd_path() + Pathname.new('capabilities.xml')).to_s
     capabilities_xml = REXML::Document.new(File.new(filename))
     capabilities_xml.elements.each('.//capability') { |feat_xml|
       feat = {}
