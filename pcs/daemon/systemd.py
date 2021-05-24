@@ -1,7 +1,11 @@
 import socket
+import os.path
+
+from functools import lru_cache
 
 from tornado.iostream import IOStream
 
+from pcs import settings
 from pcs.daemon import log
 
 
@@ -19,3 +23,8 @@ async def notify(socket_name):
         # pylint: disable=broad-except
     except Exception as e:
         log.pcsd.error("Unable to notify systemd on '%s': %s", socket_name, e)
+
+
+@lru_cache()
+def is_systemd():
+    return any(os.path.isdir(path) for path in settings.systemd_unit_path)

@@ -124,7 +124,6 @@ EXTRA_DIST		= \
 			  common/services/types.py \
 			  common/ssl.py \
 			  common/str_tools.py \
-			  common/system.py \
 			  common/tools.py \
 			  common/types.py \
 			  common/validate.py \

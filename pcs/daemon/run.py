@@ -8,7 +8,6 @@ from tornado.locks import Lock
 from tornado.web import Application
 
 from pcs import settings
-from pcs.common.system import is_systemd
 from pcs.daemon import log, ruby_pcsd, session, ssl, systemd
 from pcs.daemon.app import sinatra_ui, sinatra_remote, ui
 from pcs.daemon.app.common import RedirectHandler
@@ -146,7 +145,7 @@ def main():
 
     ioloop = IOLoop.current()
     ioloop.add_callback(sign_ioloop_started)
-    if is_systemd() and env.NOTIFY_SOCKET:
+    if systemd.is_systemd() and env.NOTIFY_SOCKET:
         ioloop.add_callback(systemd.notify, env.NOTIFY_SOCKET)
     ioloop.add_callback(config_sync(sync_config_lock, ruby_pcsd_wrapper))
     ioloop.start()
