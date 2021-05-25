@@ -585,12 +585,13 @@ Commands:
         Set up the specified resource or group as a promotable clone. This is
         an alias for 'pcs resource clone <resource id> promotable=true'.
 
-    unclone <resource id | group id> [--wait[=n]]
-        Remove the clone which contains the specified group or resource (the
-        resource or group will not be removed).  If --wait is specified, pcs
-        will wait up to 'n' seconds for the operation to finish (including
-        stopping clone instances if appropriate) and then return 0 on success
-        or 1 on error.  If 'n' is not specified it defaults to 60 minutes.
+    unclone <clone id | resource id | group id> [--wait[=n]]
+        Remove the specified clone or the clone which contains the specified
+        group or resource (the resource or group will not be removed). If
+        --wait is specified, pcs will wait up to 'n' seconds for the operation
+        to finish (including stopping clone instances if appropriate) and then
+        return 0 on success or 1 on error. If 'n' is not specified it defaults
+        to 60 minutes.
 
     bundle create <bundle id> container <container type> [<container options>]
             [network <network options>] [port-map <port options>]...
