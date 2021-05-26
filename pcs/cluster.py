@@ -262,6 +262,8 @@ def start_cluster(argv):
     service_list = ["corosync"]
     if utils.need_to_handle_qdevice_service():
         service_list.append("corosync-qdevice")
+    if utils.get_enable_corosync_notifyd() == "yes":
+        service_list.append("corosync-notifyd")
     service_list.append("pacemaker")
     for service in service_list:
         output, retval = utils.start_service(service)
@@ -703,6 +705,8 @@ def stop_cluster_corosync():
     service_list = []
     if utils.need_to_handle_qdevice_service():
         service_list.append("corosync-qdevice")
+    if utils.get_enable_corosync_notifyd() == "yes":
+        service_list.append("corosync-notifyd")
     service_list.append("corosync")
     for service in service_list:
         output, retval = utils.stop_service(service)
@@ -746,6 +750,7 @@ def kill_local_cluster_services():
         "gfs_controld",
         # Corosync daemons
         "corosync-qdevice",
+        "corosync-notifyd",
         "corosync",
     ]
     return utils.run([settings.killall_executable, "-9"] + all_cluster_daemons)
@@ -1341,7 +1346,7 @@ def cluster_destroy(lib, argv, modifiers):
         destroy_cluster(corosync_nodes)
     else:
         print("Shutting down pacemaker/corosync services...")
-        for service in ["pacemaker", "corosync-qdevice", "corosync"]:
+        for service in ["pacemaker", "corosync-qdevice", "corosync-notifyd", "corosync"]:
             # Returns an error if a service is not running. It is safe to
             # ignore it since we want it not to be running anyways.
             utils.stop_service(service)
@@ -2181,3 +2186,11 @@ def link_update(lib, argv, modifiers):
         parse_args.prepare_options(parsed["options"]),
         force_flags=force_flags,
     )
+
+
+def corosync_notifyd_disable_cmd(lib, argv, modifiers):
+    lib.cluster.disable_corosync_notifyd(argv)
+
+
+def corosync_notifyd_enable_cmd(lib, argv, modifiers):
+    lib.cluster.enable_corosync_notifyd(argv)

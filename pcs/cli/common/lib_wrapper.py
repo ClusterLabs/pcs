@@ -194,6 +194,8 @@ def load_module(env, middleware_factory, name):
                 "setup_local": cluster.setup_local,
                 "update_link": cluster.update_link,
                 "verify": cluster.verify,
+                "enable_corosync_notifyd": cluster.enable_corosync_notifyd,
+                "disable_corosync_notifyd": cluster.disable_corosync_notifyd,
             },
         )
 

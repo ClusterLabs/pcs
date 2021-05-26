@@ -219,6 +219,7 @@ def _get_local_services_status(runner: CommandRunner) -> List[_ServiceStatus]:
     service_def = [
         # (service name, display even if not enabled nor running)
         ("corosync", True),
+        ("corosync-notifyd", True),
         ("pacemaker", True),
         ("pacemaker_remote", False),
         ("pcsd", True),

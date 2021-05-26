@@ -6582,3 +6582,32 @@ class CibNvsetAmbiguousProvideNvsetId(ReportItemMessage):
     @property
     def message(self) -> str:
         return "Several options sets exist, please specify an option set ID"
+
+
+@dataclass(frozen=True)
+class PcsConfigDistributionStarted(ReportItemMessage):
+    """
+    Distribution of PCS configuration started
+    """
+
+    _code = codes.PCS_CONFIG_DISTRIBUTION_STARTED
+
+    @property
+    def message(self) -> str:
+        return "Distributing PCS config..."
+
+
+@dataclass(frozen=True)
+class PcsConfigAcceptedByNode(ReportItemMessage):
+    """
+    info that PCS configuration has been saved successfully on specified node
+
+    node -- node name
+    """
+
+    node: str
+    _code = codes.PCS_CONFIG_ACCEPTED_BY_NODE
+
+    @property
+    def message(self) -> str:
+        return f"{self.node}: PCS config saved"

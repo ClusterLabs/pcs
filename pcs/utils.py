@@ -76,6 +76,8 @@ from pcs.lib.pacemaker.values import (
     timeout_to_seconds as get_timeout_seconds,
     validate_id,
 )
+from pcs.lib.communication.nodes import GetOnlineTargets
+import configparser
 
 # pylint: disable=invalid-name
 # pylint: disable=too-many-branches
@@ -2899,3 +2901,13 @@ def get_token_from_file(file_name: str) -> str:
     except OSError as e:
         err(f"Unable to read file '{file_name}': {e}", exit_after_error=False)
         raise SystemExit(1) from e
+
+def get_enable_corosync_notifyd():
+    try:
+        with open(settings.pcs_config, "r", encoding="utf-8") as f:
+            config_str = "[dummy]\n" + f.read()
+        config = configparser.ConfigParser()
+        config.read_string(config_str)
+    except IOError as e:
+        err("Unable to read %s: %s" % (settings.pcs_config, e.strerror))
+    return config["dummy"]["ENABLE_COROSYNC_NOTIFYD"]

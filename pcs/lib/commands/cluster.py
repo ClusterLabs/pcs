@@ -44,6 +44,11 @@ from pcs.lib.cib.tools import (
     get_resources,
 )
 from pcs.lib.communication import cluster
+from pcs.lib.communication.cluster import (
+    SetPcsConfig,
+    GetPcsConfig,
+)
+from pcs.lib.tools import dict_to_environment_file
 from pcs.lib.communication.corosync import (
     CheckCorosyncOffline,
     DistributeCorosyncConf,
@@ -2178,4 +2183,62 @@ def corosync_authkey_change(
 
     com_cmd = ReloadCorosyncConf(env.report_processor)
     com_cmd.set_targets(online_cluster_target_list)
+    run_and_raise(env.get_node_communicator(), com_cmd)
+
+
+def enable_corosync_notifyd(env, node=None):
+    corosync_conf = env.get_corosync_conf()
+    node_list, get_nodes_report_list = get_existing_nodes_names(corosync_conf)
+    if not node_list:
+        get_nodes_report_list.append(
+            ReportItem.error(reports.messages.CorosyncConfigNoNodesDefined())
+        )
+    target_list = env.get_node_target_factory().get_target_list(
+        node if node else node_list,
+    )
+
+    com_cmd = GetOnlineTargets(
+        env.report_processor,
+    )
+    com_cmd.set_targets(target_list)
+    online_targets = run_and_raise(env.get_node_communicator(), com_cmd)
+
+    config = {
+        "ENABLE_COROSYNC_NOTIFYD": "yes",
+    }
+    com_cmd = SetPcsConfig(env.report_processor)
+    for target in online_targets:
+        com_cmd.add_request(
+            target,
+            dict_to_environment_file(config),
+        )
+    run_and_raise(env.get_node_communicator(), com_cmd)
+
+
+def disable_corosync_notifyd(env, node=None):
+    corosync_conf = env.get_corosync_conf()
+    node_list, get_nodes_report_list = get_existing_nodes_names(corosync_conf)
+    if not node_list:
+        get_nodes_report_list.append(
+            ReportItem.error(reports.messages.CorosyncConfigNoNodesDefined())
+        )
+    target_list = env.get_node_target_factory().get_target_list(
+        node if node else node_list,
+    )
+
+    com_cmd = GetOnlineTargets(
+        env.report_processor,
+    )
+    com_cmd.set_targets(target_list)
+    online_targets = run_and_raise(env.get_node_communicator(), com_cmd)
+
+    config = {
+        "ENABLE_COROSYNC_NOTIFYD": "no",
+    }
+    com_cmd = SetPcsConfig(env.report_processor)
+    for target in online_targets:
+        com_cmd.add_request(
+            target,
+            dict_to_environment_file(config),
+        )
     run_and_raise(env.get_node_communicator(), com_cmd)

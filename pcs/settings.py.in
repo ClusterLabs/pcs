@@ -66,6 +66,7 @@ pcsd_exec_location = "@LIB_DIR@/pcsd/"
 pcsd_log_location = "@LOCALSTATEDIR@/log/pcsd/pcsd.log"
 pcsd_default_port = 2224
 pcsd_config = "@CONF_DIR@/pcsd"
+pcs_config = "@CONF_DIR@/pcs"
 cib_dir = "@PCMK_CIB_DIR@"
 pacemaker_uname = "@PCMK_USER@"
 pacemaker_gname = "@PCMK_GROUP@"

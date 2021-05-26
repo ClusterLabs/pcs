@@ -107,6 +107,8 @@ cluster_cmd = create_router(
         "unstandby": lambda lib, argv, modifiers: raise_command_replaced(
             "pcs node unstandby"
         ),
+        "enable-corosync-notifyd": cluster.corosync_notifyd_enable_cmd,
+        "disable-corosync-notifyd": cluster.corosync_notifyd_disable_cmd,
     },
     ["cluster"],
 )

@@ -72,6 +72,8 @@ def remote(params, request, auth_user)
       :sbd_enable => method(:sbd_enable),
       :remove_stonith_watchdog_timeout=> method(:remove_stonith_watchdog_timeout),
       :set_stonith_watchdog_timeout_to_zero => method(:set_stonith_watchdog_timeout_to_zero),
+      :set_pcs_config => method(:set_pcs_config),
+      :get_pcs_config => method(:get_pcs_config),
       # lib api:
       # /api/v1/sbd-enable-sbd/v1
       :remote_enable_sbd => method(:remote_enable_sbd),
@@ -3076,4 +3078,50 @@ def remove_nodes_from_cib(params, request, auth_user)
   rescue PcsdExchangeFormat::Error => e
     return 400, "Invalid input data format: #{e.message}"
   end
+end
+
+def set_pcs_config(param, request, auth_user)
+  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
+    return 403, 'Permission denied'
+  end
+  config = param[:config]
+  unless config
+    return [400, 'Parameter "config" required']
+  end
+
+  file = nil
+  begin
+    file = File.open(PCS_CONFIG, 'w')
+    file.flock(File::LOCK_EX)
+    file.write(config)
+  rescue => e
+    return pcsd_error("Unable to save PCS configuration: #{e}")
+  ensure
+    if file
+      file.flock(File::LOCK_UN)
+      file.close()
+    end
+  end
+  return pcsd_success('PCS configuration saved.')
+end
+
+def get_pcs_config(param, request, auth_user)
+  unless allowed_for_local_cluster(auth_user, Permissions::READ)
+    return 403, 'Permission denied'
+  end
+  out = []
+  file = nil
+  begin
+    file = File.open(PCS_CONFIG, 'r')
+    file.flock(File::LOCK_SH)
+    out = file.readlines()
+  rescue => e
+    return pcsd_error("Unable to get PCS configuration: #{e}")
+  ensure
+    if file
+      file.flock(File::LOCK_UN)
+      file.close()
+    end
+  end
+  return [200, out.join('')]
 end
