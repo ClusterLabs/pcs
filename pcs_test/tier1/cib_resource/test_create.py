@@ -931,26 +931,35 @@ class FailOrWarn(ResourceTest):
         )
 
     def test_fail_when_nonexisting_agent(self):
+        # pacemaker 2.0.5 adds 'crm_resource:'
+        # The exact message returned form pacemaker differs from version to
+        # version (sometimes from commit to commit), so we don't check for the
+        # whole of it.
+        stdout_regexp = re.compile(
+            "^"
+            "Error: Agent 'ocf:heartbeat:NoExisting' is not installed or "
+            "does not provide valid metadata:( crm_resource:)? Metadata "
+            "query for ocf:heartbeat:NoExisting failed:.+"
+            ", use --force to override\n$",
+            re.MULTILINE,
+        )
         self.assert_pcs_fail(
             "resource create R ocf:heartbeat:NoExisting".split(),
-            # pacemaker 2.0.5 adds 'crm_resource:' and
-            #   'Error performing operation: Input/output error'
-            # pacemaker 2.1.0 changes "Input/output error" to "Invalid argument"
-            stdout_regexp=re.compile(
-                "^"
-                "Error: Agent 'ocf:heartbeat:NoExisting' is not installed or "
-                "does not provide valid metadata:( crm_resource:)? Metadata "
-                "query for ocf:heartbeat:NoExisting failed: "
-                "(Input/output error|Invalid argument)"
-                "(, Error performing operation: "
-                "(Input/output error|Invalid argument))?"
-                ", use --force to override\n"
-                "$",
-                re.MULTILINE,
-            ),
+            stdout_regexp=stdout_regexp,
         )
 
     def test_warn_when_forcing_noexistent_agent(self):
+        # pacemaker 2.0.5 adds 'crm_resource:'
+        # The exact message returned form pacemaker differs from version to
+        # version (sometimes from commit to commit), so we don't check for the
+        # whole of it.
+        output_regexp = re.compile(
+            "^"
+            "Warning: Agent 'ocf:heartbeat:NoExisting' is not installed or "
+            "does not provide valid metadata:( crm_resource:)? Metadata "
+            "query for ocf:heartbeat:NoExisting failed:.+",
+            re.MULTILINE,
+        )
         self.assert_effect(
             "resource create R ocf:heartbeat:NoExisting --force".split(),
             """<resources>
@@ -964,20 +973,7 @@ class FailOrWarn(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
-            # pacemaker 2.0.5 adds 'crm_resource:' and
-            #   'Error performing operation: Input/output error'
-            # pacemaker 2.1.0 changes "Input/output error" to "Invalid argument"
-            output_regexp=re.compile(
-                "^"
-                "Warning: Agent 'ocf:heartbeat:NoExisting' is not installed or "
-                "does not provide valid metadata:( crm_resource:)? Metadata "
-                "query for ocf:heartbeat:NoExisting failed: "
-                "(Input/output error|Invalid argument)"
-                "(, Error performing operation: "
-                "(Input/output error|Invalid argument))?\n"
-                "$",
-                re.MULTILINE,
-            ),
+            output_regexp=output_regexp,
         )
 
     def test_fail_on_invalid_resource_agent_name(self):

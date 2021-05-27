@@ -1,3 +1,5 @@
+import re
+
 from pcs_test.tier1.cib_resource.common import ResourceTest
 from pcs_test.tier1.cib_resource.stonith_common import need_load_xvm_fence_agent
 from pcs_test.tools.misc import is_minimum_pacemaker_version
@@ -54,18 +56,19 @@ class PlainStonith(ResourceTest):
         )
 
     def test_error_when_not_valid_agent(self):
-        if PCMK_2_0_5_PLUS:
-            error = (
+        error = error_re = None
+        if PCMK_2_0_3_PLUS:
+            # pacemaker 2.0.5 adds 'crm_resource:'
+            # The exact message returned form pacemaker differs from version to
+            # version (sometimes from commit to commit), so we don't check for
+            # the whole of it.
+            error_re = re.compile(
+                "^"
                 "Error: Agent 'absent' is not installed or does not provide "
-                "valid metadata: crm_resource: Metadata query for "
-                "stonith:absent failed: No such device, Error performing "
-                "operation: No such device, use --force to override\n"
-            )
-        elif PCMK_2_0_3_PLUS:
-            error = (
-                "Error: Agent 'absent' is not installed or does not provide "
-                "valid metadata: Metadata query for stonith:absent failed: "
-                "No such device, use --force to override\n"
+                "valid metadata:( crm_resource:)? Metadata query for "
+                "stonith:absent failed:.+"
+                "use --force to override\n$",
+                re.MULTILINE,
             )
         else:
             error = (
@@ -76,22 +79,24 @@ class PlainStonith(ResourceTest):
                 "use --force to override\n"
             )
         self.assert_pcs_fail(
-            "stonith create S absent".split(), stdout_full=error
+            "stonith create S absent".split(),
+            stdout_full=error,
+            stdout_regexp=error_re,
         )
 
     def test_warning_when_not_valid_agent(self):
-        if PCMK_2_0_5_PLUS:
-            error = (
+        error = error_re = None
+        if PCMK_2_0_3_PLUS:
+            # pacemaker 2.0.5 adds 'crm_resource:'
+            # The exact message returned form pacemaker differs from version to
+            # version (sometimes from commit to commit), so we don't check for
+            # the whole of it.
+            error_re = re.compile(
+                "^"
                 "Warning: Agent 'absent' is not installed or does not provide "
-                "valid metadata: crm_resource: Metadata query for "
-                "stonith:absent failed: No such device, Error performing "
-                "operation: No such device\n"
-            )
-        elif PCMK_2_0_3_PLUS:
-            error = (
-                "Warning: Agent 'absent' is not installed or does not provide "
-                "valid metadata: Metadata query for stonith:absent failed: "
-                "No such device\n"
+                "valid metadata:( crm_resource:)? Metadata query for "
+                "stonith:absent failed:.+",
+                re.MULTILINE,
             )
         else:
             error = (
@@ -112,6 +117,7 @@ class PlainStonith(ResourceTest):
                 </primitive>
             </resources>""",
             output=error,
+            output_regexp=error_re,
         )
 
     @need_load_xvm_fence_agent
