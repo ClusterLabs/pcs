@@ -113,6 +113,7 @@ class StonithTest(TestCase, AssertPcsMixin):
 
     def tearDown(self):
         self.temp_cib.close()
+        self.temp_corosync_conf.close()
 
     @skip_unless_crm_rule()
     def testStonithCreation(self):

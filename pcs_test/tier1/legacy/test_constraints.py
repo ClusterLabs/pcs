@@ -66,9 +66,12 @@ class ConstraintTest(unittest.TestCase):
     def setUp(self):
         self.temp_cib = get_tmp_file("tier1_constraints")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
+        self.temp_corosync_conf = None
 
     def tearDown(self):
         self.temp_cib.close()
+        if self.temp_corosync_conf:
+            self.temp_corosync_conf.close()
 
     def fixture_resources(self):
         write_data_to_tmpfile(self.fixture_cib_cache(), self.temp_cib)
@@ -2636,6 +2639,8 @@ Ticket Constraints:
         assert returnVal == 0
 
     def testRemoteNodeConstraintsRemove(self):
+        self.temp_corosync_conf = get_tmp_file("tier1_test_constraints")
+        write_file_to_tmpfile(rc("corosync.conf"), self.temp_corosync_conf)
         self.fixture_resources()
         # constraints referencing the remote node's name,
         # deleting the remote node resource
@@ -2789,7 +2794,7 @@ Ticket Constraints:
         output, returnVal = pcs(
             self.temp_cib.name,
             "cluster node remove-guest guest1".split(),
-            corosync_conf_opt=rc("corosync.conf"),
+            corosync_conf_opt=self.temp_corosync_conf.name,
         )
         ac(
             output,
