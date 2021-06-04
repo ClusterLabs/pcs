@@ -68,17 +68,18 @@ def corosync_conf_existing(local_file_path):
                     # the lock is released when the file gets closed on leaving
                     # the with statement
                     fcntl.flock(local_file.fileno(), fcntl.LOCK_SH)
-                    env.corosync_conf_data = local_file.read()
+                    original_content = local_file.read()
             except EnvironmentError as e:
                 raise error(
                     "Unable to read {0}: {1}".format(
                         local_file_path, e.strerror
                     )
                 ) from e
+            env.corosync_conf_data = original_content
 
         result_of_next = next_in_line(env, *args, **kwargs)
 
-        if local_file_path:
+        if local_file_path and env.corosync_conf_data != original_content:
             try:
                 with open(local_file_path, "w") as local_file:
                     # the lock is released when the file gets closed on leaving
