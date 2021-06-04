@@ -121,13 +121,12 @@ class StateChangeTest(AssertTaskStatesMixin, IntegrationBaseTestCase):
         self.assert_task_state_counts_equal(0, 0, 0, 1)
 
 
-class GarbageCollectionTests(
+class GarbageCollectionTimeoutTests(
     MockOsKillMixin, MockDateTimeNowMixin, IntegrationBaseTestCase
 ):
-    """Testing garbage collection and timeout behavior
+    """Testing garbage collection after timeouts
 
-    These tests focus on the correct function of the garbage collector and
-    garbage hunting functions.
+    Testing garbage collection for events caused by the scheduler like timeouts.
     """
 
     def setUp(self):
@@ -196,24 +195,24 @@ class GarbageCollectionTests(
             TaskKillReason.COMPLETION_TIMEOUT,
         )
 
-    """
     @gen_test
     async def test_finished_defunct_timeout(self):
-        # Interesting point of order - since the abandoned timeout is smaller
-        # than defunct timeout and task is being examined in FINISHED state,
-        # this test will mark the task as abandoned but not defunct
-        self._create_tasks(1)
+        # Only tasks in EXECUTED state can become defunct. In this case,
+        # task is going to become ABANDONED and is deleted
+        self._create_tasks(2)
         await self.perform_actions(0)
         self.execute_tasks(["id0"])
-        await self.perform_actions(1)
-        self.finish_tasks(["id0"])
         await self.perform_actions(1)
         await self._run_gc_and_assert_state(
             settings.task_unresponsive_timeout_seconds,
             TaskFinishType.KILL,
-            TaskKillReason.ABANDONED,
+            TaskKillReason.COMPLETION_TIMEOUT,
         )
-    """
+        await self.perform_actions(0)
+        with self.assertRaises(TaskNotFoundError):
+            self.scheduler.get_task("id0")
+        # If the guard task was removed, this fails the test case
+        self.scheduler.get_task("id1")
 
     @gen_test
     async def test_created_abandoned_timeout(self):
@@ -246,7 +245,7 @@ class GarbageCollectionTests(
             task_kill_reason=None,
         )
 
-    """
+
     @gen_test
     async def test_finished_abandoned_timeout(self):
         self._create_tasks(1)
@@ -255,12 +254,106 @@ class GarbageCollectionTests(
         await self.perform_actions(1)
         self.finish_tasks(["id0"])
         await self.perform_actions(1)
-        await self._run_gc_and_assert_state(
-            settings.task_abandoned_timeout_seconds,
-            TaskFinishType.KILL,
-            TaskKillReason.ABANDONED,
+        self.mock_datetime_now.return_value = DATETIME_NOW + timedelta(
+            seconds=settings.task_abandoned_timeout_seconds + 1
         )
+        # Garbage collector deletes an abandoned task right away
+        await self.perform_actions(0)
+        with self.assertRaises(TaskNotFoundError):
+            self.scheduler.get_task("id0")
+
+
+class GarbageCollectionUserKillTests(
+    MockOsKillMixin, AssertTaskStatesMixin, IntegrationBaseTestCase
+):
+    """Testing garbage collection after user kills a task
+
+    Tests the garbage collection after user intervention to running tasks.
     """
+
+    def setUp(self):
+        super().setUp()
+        self.mock_os_kill = self._init_mock_os_kill()
+
+    def assert_end_state(self):
+        task_info_killed = self.scheduler.get_task("id0")
+        self.assertEqual(TaskFinishType.KILL, task_info_killed.task_finish_type)
+        self.assertEqual(TaskKillReason.USER, task_info_killed.kill_reason)
+
+        task_info_alive = self.scheduler.get_task("id1")
+        self.assertEqual(
+            TaskFinishType.UNFINISHED, task_info_alive.task_finish_type
+        )
+        self.assertIsNone(task_info_alive.kill_reason)
+
+    @gen_test
+    async def test_kill_created(self):
+        self._create_tasks(2)
+        self.scheduler.kill_task("id0")
+        # Kill_task doesn't produce any messages since the worker is killed by
+        # the system
+        await self.perform_actions(0)
+        self.assert_task_state_counts_equal(0, 1, 0, 1)
+
+        self.mock_os_kill.assert_not_called()
+        self.assert_end_state()
+
+    @gen_test
+    async def test_kill_scheduled(self):
+        self._create_tasks(2)
+        await self.perform_actions(0)
+        self.scheduler.kill_task("id0")
+        # Garbage collection waits until the task is executed and then kills
+        # the worker
+        self.execute_tasks(["id0"])
+        await self.perform_actions(1)
+        await self.perform_actions(0)
+        self.assert_task_state_counts_equal(0, 1, 0, 1)
+
+        self.mock_os_kill.assert_called_once()
+        self.assert_end_state()
+
+    @gen_test
+    async def test_kill_executed(self):
+        self._create_tasks(2)
+        await self.perform_actions(0)
+        self.execute_tasks(["id0", "id1"])
+        await self.perform_actions(2)
+        self.scheduler.kill_task("id0")
+        await self.perform_actions(0)
+        self.assert_task_state_counts_equal(0, 0, 1, 1)
+
+        self.mock_os_kill.assert_called_once()
+        self.assert_end_state()
+
+    @gen_test
+    async def test_kill_finished(self):
+        self._create_tasks(2)
+        await self.perform_actions(0)
+        self.execute_tasks(["id0", "id1"])
+        await self.perform_actions(2)
+        self.finish_tasks(["id0"])
+        await self.perform_actions(1)
+        # When scheduler picks up finished tasks, it sends a signal to worker
+        # to resume via os.kill
+        self.mock_os_kill.reset_mock()
+        self.scheduler.kill_task("id0")
+        await self.perform_actions(0)
+        self.assert_task_state_counts_equal(0, 0, 1, 1)
+
+        self.mock_os_kill.assert_not_called()
+
+        task_info_not_killed = self.scheduler.get_task("id0")
+        self.assertEqual(
+            TaskFinishType.SUCCESS, task_info_not_killed.task_finish_type
+        )
+        self.assertEqual(TaskKillReason.USER, task_info_not_killed.kill_reason)
+
+        task_info_alive = self.scheduler.get_task("id1")
+        self.assertEqual(
+            TaskFinishType.UNFINISHED, task_info_alive.task_finish_type
+        )
+        self.assertIsNone(task_info_alive.kill_reason)
 
 
 class TaskResultsTests(MockOsKillMixin, IntegrationBaseTestCase):
@@ -295,18 +388,6 @@ class TaskResultsTests(MockOsKillMixin, IntegrationBaseTestCase):
         )
         # Os.kill is used to pause the worker and we do not want to pause tests
         self._init_mock_os_kill()
-
-    def _send_report_mocks(self, task_ident, count):
-        """Emulate sending reports from the worker
-
-        Returns a list of mock references for inspecting usage and mock reports
-        are sent into the worker_com queue
-        """
-        mock_list = []
-        for i in range(count):
-            mock_list[i] = mock.Mock(spec=ReportItemDto)
-            self.worker_com.put_nowait(Message(task_ident, mock_list[i]))
-        return mock_list
 
     @gen_test
     async def test_task_successful_no_result_with_reports(self):
@@ -365,8 +446,8 @@ class TaskResultsTests(MockOsKillMixin, IntegrationBaseTestCase):
             mock_uuid().hex = "id0"
             self.scheduler.new_task(CommandDto("unhandled_exc", {}))
         await self.perform_actions(0)
-        # This task immediately raises a a plain Exception and executor catches
-        # and logs it accordingly
+        # This task immediately raises an Exception which the executor catches
+        # and logs accordingly
         task_executor(self.scheduler._task_register["id0"].to_worker_command())
         await self.perform_actions(2)
 
@@ -376,80 +457,3 @@ class TaskResultsTests(MockOsKillMixin, IntegrationBaseTestCase):
             TaskFinishType.UNHANDLED_EXCEPTION, task_info.task_finish_type
         )
         self.assertIsNone(task_info.result)
-
-
-class KillTaskTests(
-    MockOsKillMixin, AssertTaskStatesMixin, IntegrationBaseTestCase
-):
-    """Tests killing tasks at various stages
-
-    Testing the killing functionality exposed through the public API to the user
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.mock_os_kill = self._init_mock_os_kill()
-
-    def assert_end_state(self):
-        task_info_killed = self.scheduler.get_task("id0")
-        self.assertEqual(TaskState.FINISHED, task_info_killed.state)
-        self.assertEqual(TaskFinishType.KILL, task_info_killed.task_finish_type)
-        self.assertEqual(TaskKillReason.USER, task_info_killed.kill_reason)
-
-        task_info_alive = self.scheduler.get_task("id1")
-        self.assertEqual(
-            TaskFinishType.UNFINISHED, task_info_alive.task_finish_type
-        )
-        self.assertIsNone(task_info_alive.kill_reason)
-
-    @gen_test
-    async def test_kill_created(self):
-        self._create_tasks(2)
-        self.scheduler.kill_task("id0")
-        # Kill_task doesn't produce any messages since the worker is killed by
-        # the system
-        await self.perform_actions(0)
-        self.assert_task_state_counts_equal(0, 1, 0, 1)
-
-        self.mock_os_kill.assert_not_called()
-        self.assert_end_state()
-
-    @gen_test
-    async def test_kill_scheduled(self):
-        self._create_tasks(2)
-        await self.perform_actions(0)
-        self.scheduler.kill_task("id0")
-        self.execute_tasks(["id1"])
-        await self.perform_actions(1)
-        self.assert_task_state_counts_equal(0, 0, 1, 1)
-
-        self.mock_os_kill.assert_not_called()
-        self.assert_end_state()
-
-    @gen_test
-    async def test_kill_executed(self):
-        self._create_tasks(2)
-        await self.perform_actions(0)
-        self.execute_tasks(["id0", "id1"])
-        await self.perform_actions(2)
-        self.scheduler.kill_task("id0")
-        await self.perform_actions(0)
-        self.assert_task_state_counts_equal(0, 0, 1, 1)
-
-        self.mock_os_kill.assert_called_once()
-        self.assert_end_state()
-
-    @gen_test
-    async def test_kill_finished(self):
-        self._create_tasks(2)
-        await self.perform_actions(0)
-        self.execute_tasks(["id0", "id1"])
-        await self.perform_actions(2)
-        self.finish_tasks(["id0"])
-        await self.perform_actions(1)
-        self.scheduler.kill_task("id0")
-        await self.perform_actions(0)
-        self.assert_task_state_counts_equal(0, 0, 1, 1)
-
-        self.mock_os_kill.assert_not_called()
-        self.assert_end_state()

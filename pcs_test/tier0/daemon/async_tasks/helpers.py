@@ -95,11 +95,39 @@ class AssertTaskStatesMixin:
         state_counts = Counter(
             [task.state for task in self.scheduler._task_register.values()]
         )
-        self.assertEqual(created, len(self.scheduler._created_tasks_index))
-        self.assertEqual(created, state_counts[TaskState.CREATED])
-        self.assertEqual(queued, state_counts[TaskState.QUEUED])
-        self.assertEqual(executed, state_counts[TaskState.EXECUTED])
-        self.assertEqual(finished, state_counts[TaskState.FINISHED])
+        self.assertEqual(
+            created,
+            len(self.scheduler._created_tasks_index),
+            "Expected {0} tasks in created tasks index.".format(
+                len(self.scheduler._created_tasks_index)
+            ),
+        )
+        self.assertEqual(
+            created,
+            state_counts[TaskState.CREATED],
+            "Expected {0} CREATED tasks.".format(
+                state_counts[TaskState.CREATED]
+            ),
+        )
+        self.assertEqual(
+            queued,
+            state_counts[TaskState.QUEUED],
+            "Expected {0} QUEUED tasks.".format(state_counts[TaskState.QUEUED]),
+        )
+        self.assertEqual(
+            executed,
+            state_counts[TaskState.EXECUTED],
+            "Expected {0} EXECUTED tasks.".format(
+                state_counts[TaskState.EXECUTED]
+            ),
+        )
+        self.assertEqual(
+            finished,
+            state_counts[TaskState.FINISHED],
+            "Expected {0} FINISHED tasks.".format(
+                state_counts[TaskState.FINISHED]
+            ),
+        )
 
 
 class MockDateTimeNowMixin:
