@@ -127,10 +127,6 @@ fi
 AC_CHECK_PROGS([TIME], [time])
 
 # required to build rpm and pyagentx
-AC_CHECK_PROGS([WGET], [wget])
-if test "x$WGET" = "x"; then
-	AC_MSG_ERROR([Unable to find wget binary.])
-fi
 AC_CHECK_PROGS([TAR], [tar])
 if test "x$TAR" = "x"; then
 	AC_MSG_ERROR([Unable to find tar binary.])
@@ -170,6 +166,13 @@ AC_ARG_ENABLE([use-local-cache-only],
 AC_ARG_WITH([distro],
 	    [AS_HELP_STRING([--with-distro=DIR], [Set defaults to specified distro. Default: autodetected])],
 	    [DISTRO="$withval"])
+
+if test "x$cache_only" != "xyes"; then
+	AC_CHECK_PROGS([WGET], [wget])
+	if test "x$WGET" = "x"; then
+		AC_MSG_ERROR([Unable to find wget binary.])
+	fi
+fi
 
 if test "x$DISTRO" = "x"; then
 	AC_MSG_CHECKING([linux distribution])
@@ -316,12 +319,6 @@ fi
 AM_CONDITIONAL([BUILD_PIPMOD_PYAGENTX], [test "x$HAVE_PIPMOD_PYAGENTX" = "xno"])
 
 # ruby gem section
-AC_CHECK_PROGS([BUNDLE], [bundle])
-if test "x$local_build" = "xyes"; then
-	if test "x$BUNDLE" = "x"; then
-		AC_MSG_ERROR([Unable to find bundle binary required to install missing ruby gems])
-	fi
-fi
 
 PCSD_BUNDLED_DIR_ROOT_LOCAL="pcsd/vendor/bundle/"
 PCSD_BUNDLED_DIR_LOCAL="$PCSD_BUNDLED_DIR_ROOT_LOCAL/ruby/$RUBY_VER/"
@@ -373,10 +370,15 @@ PCS_CHECK_GEM([thin])
 PCS_CHECK_GEM([rexml])
 PCS_CHECK_GEM([webrick])
 
-if test "x$local_build" = "xyes"; then
-	GEM_HOME="$LIB_DIR/$PCSD_BUNDLED_DIR_LOCAL"
+if test "x$local_build" = "xyes" && test $(wc -l < Gemfile) -gt 2; then
+	GEM_HOME="$LIB_DIR/$PCSD_BUNDLED_DIR_ROOT_LOCAL"
 	SYSTEMD_GEM_HOME="Environment=GEM_HOME=$GEM_HOME"
+	AC_CHECK_PROGS([BUNDLE], [bundle])
+	if test "x$BUNDLE" = "x"; then
+		AC_MSG_ERROR([Unable to find bundle binary required to install missing ruby gems])
+	fi
 fi
+AC_SUBST([BUNDLE])
 AC_SUBST([GEM_HOME])
 AC_SUBST([SYSTEMD_GEM_HOME])
 AM_CONDITIONAL([INSTALL_EMBEDDED_GEMS], [test -n "$GEM_HOME"])
