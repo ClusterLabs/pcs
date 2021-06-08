@@ -313,7 +313,6 @@ sed -i -e 's#^@#%#g' dynamic_files/pcs-snmp
 # pcs
 %{_sbindir}/pcs
 %{python3_sitelib}/*
-%exclude %{python3_sitelib}/pcs/pcs
 %{_libdir}/pcs/*
 %exclude %{_libdir}/pcs/pcs_snmp_agent
 %exclude %{_libdir}/pcs/%{pcs_bundled_dir}/u*
