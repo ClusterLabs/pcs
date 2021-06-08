@@ -159,7 +159,6 @@ install-exec-local: install_python_embedded_mods stamps/install_ruby_deps_local
 	$(MKDIR_P) ${DESTDIR}/$(LIB_DIR)/pcs
 	mv ${DESTDIR}/$(SBINDIR)/pcs_internal ${DESTDIR}/$(LIB_DIR)/pcs/pcs_internal
 	mv ${DESTDIR}/$(SBINDIR)/pcs_snmp_agent ${DESTDIR}/$(LIB_DIR)/pcs/pcs_snmp_agent
-	$(PYTHON) -m compileall -fl $(or ${DESTDIR}, /)/$(PYTHON_SITELIB)/pcs/settings.py
 
 uninstall-local:
 	rm -rf $(or ${DESTDIR}, /)/$(PCS_BUNDLED_DIR)
