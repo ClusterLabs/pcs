@@ -24,12 +24,12 @@ class AddTest(TestCase):
         )
         lib = mock.MagicMock()
         lib.constraint_ticket = mock.MagicMock()
-        lib.constraint_ticket.add = mock.MagicMock()
+        lib.constraint_ticket.create = mock.MagicMock()
 
         command.add(lib, ["argv"], _modifiers())
 
         mock_parse_add.assert_called_once_with(["argv"])
-        lib.constraint_ticket.add.assert_called_once_with(
+        lib.constraint_ticket.create.assert_called_once_with(
             "ticket",
             "resource_id",
             {"loss-policy": "fence"},
@@ -60,12 +60,12 @@ class AddTest(TestCase):
         )
         lib = mock.MagicMock()
         lib.constraint_ticket = mock.MagicMock()
-        lib.constraint_ticket.add = mock.MagicMock()
+        lib.constraint_ticket.create = mock.MagicMock()
 
         command.add(lib, ["argv"], _modifiers())
 
         mock_parse_add.assert_called_once_with(["argv"])
-        lib.constraint_ticket.add.assert_called_once_with(
+        lib.constraint_ticket.create.assert_called_once_with(
             "ticket",
             "resource_id",
             {"loss-policy": "fence", "rsc-role": "resource_role"},

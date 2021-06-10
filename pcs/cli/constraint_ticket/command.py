@@ -20,7 +20,7 @@ def create_with_set(lib, argv, modifiers):
     """
     modifiers.ensure_only_supported("--force", "-f")
     command.create_with_set(
-        lib.constraint_ticket.set,
+        lib.constraint_ticket.create_with_set,
         argv,
         modifiers,
     )
@@ -50,7 +50,7 @@ def add(lib, argv, modifiers):
     if resource_role:
         options["rsc-role"] = resource_role
 
-    lib.constraint_ticket.add(
+    lib.constraint_ticket.create(
         ticket,
         resource_id,
         options,

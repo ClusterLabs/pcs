@@ -99,7 +99,7 @@ def quorum_status_cmd(lib, argv, modifiers):
     modifiers.ensure_only_supported()
     if argv:
         raise CmdLineInputError()
-    print(lib.quorum.status())
+    print(lib.quorum.status_text())
 
 
 def quorum_update_cmd(lib, argv, modifiers):
@@ -206,7 +206,7 @@ def quorum_device_status_cmd(lib, argv, modifiers):
     modifiers.ensure_only_supported("--full")
     if argv:
         raise CmdLineInputError()
-    print(lib.quorum.status_device(modifiers.get("--full")))
+    print(lib.quorum.status_device_text(modifiers.get("--full")))
 
 
 def quorum_device_update_cmd(lib, argv, modifiers):

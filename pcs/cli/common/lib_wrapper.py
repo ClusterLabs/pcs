@@ -230,7 +230,7 @@ def load_module(env, middleware_factory, name):
             env,
             middleware.build(middleware_factory.cib),
             {
-                "set": constraint_colocation.create_with_set,
+                "create_with_set": constraint_colocation.create_with_set,
                 "config": constraint_colocation.config,
             },
         )
@@ -240,7 +240,7 @@ def load_module(env, middleware_factory, name):
             env,
             middleware.build(middleware_factory.cib),
             {
-                "set": constraint_order.create_with_set,
+                "create_with_set": constraint_order.create_with_set,
                 "config": constraint_order.config,
             },
         )
@@ -250,9 +250,9 @@ def load_module(env, middleware_factory, name):
             env,
             middleware.build(middleware_factory.cib),
             {
-                "set": constraint_ticket.create_with_set,
+                "create_with_set": constraint_ticket.create_with_set,
                 "config": constraint_ticket.config,
-                "add": constraint_ticket.create,
+                "create": constraint_ticket.create,
                 "remove": constraint_ticket.remove,
             },
         )
@@ -304,21 +304,21 @@ def load_module(env, middleware_factory, name):
             env,
             middleware.build(),
             {
-                "status": qdevice.qdevice_status_text,
-                "setup": qdevice.qdevice_setup,
-                "destroy": qdevice.qdevice_destroy,
-                "start": qdevice.qdevice_start,
-                "stop": qdevice.qdevice_stop,
-                "kill": qdevice.qdevice_kill,
-                "enable": qdevice.qdevice_enable,
-                "disable": qdevice.qdevice_disable,
+                "qdevice_status_text": qdevice.qdevice_status_text,
+                "qdevice_setup": qdevice.qdevice_setup,
+                "qdevice_destroy": qdevice.qdevice_destroy,
+                "qdevice_start": qdevice.qdevice_start,
+                "qdevice_stop": qdevice.qdevice_stop,
+                "qdevice_kill": qdevice.qdevice_kill,
+                "qdevice_enable": qdevice.qdevice_enable,
+                "qdevice_disable": qdevice.qdevice_disable,
                 # following commands are internal use only, called from pcsd
                 "client_net_setup": qdevice.client_net_setup,
                 "client_net_import_certificate": (
                     qdevice.client_net_import_certificate
                 ),
                 "client_net_destroy": qdevice.client_net_destroy,
-                "sign_net_cert_request": (
+                "qdevice_net_sign_certificate_request": (
                     qdevice.qdevice_net_sign_certificate_request
                 ),
             },
@@ -335,8 +335,8 @@ def load_module(env, middleware_factory, name):
                 "remove_device_heuristics": quorum.remove_device_heuristics,
                 "set_expected_votes_live": quorum.set_expected_votes_live,
                 "set_options": quorum.set_options,
-                "status": quorum.status_text,
-                "status_device": quorum.status_device_text,
+                "status_text": quorum.status_text,
+                "status_device_text": quorum.status_device_text,
                 "update_device": quorum.update_device,
             },
         )
@@ -486,7 +486,6 @@ def load_module(env, middleware_factory, name):
             {
                 "config": tag.config,
                 "create": tag.create,
-                "delete": tag.remove,
                 "remove": tag.remove,
                 "update": tag.update,
             },

@@ -14,7 +14,7 @@ def qdevice_status_cmd(lib, argv, modifiers):
     model = argv[0]
     cluster = None if len(argv) < 2 else argv[1]
     print(
-        lib.qdevice.status(
+        lib.qdevice.qdevice_status_text(
             model,
             verbose=modifiers.get("--full"),
             cluster=cluster,
@@ -34,7 +34,7 @@ def qdevice_setup_cmd(lib, argv, modifiers):
     if argv[0] != "model":
         raise CmdLineInputError()
     model = argv[1]
-    lib.qdevice.setup(
+    lib.qdevice.qdevice_setup(
         model, modifiers.get("--enable"), modifiers.get("--start")
     )
 
@@ -48,7 +48,7 @@ def qdevice_destroy_cmd(lib, argv, modifiers):
     if len(argv) != 1:
         raise CmdLineInputError()
     model = argv[0]
-    lib.qdevice.destroy(model, proceed_if_used=modifiers.get("--force"))
+    lib.qdevice.qdevice_destroy(model, proceed_if_used=modifiers.get("--force"))
 
 
 def qdevice_start_cmd(lib, argv, modifiers):
@@ -59,7 +59,7 @@ def qdevice_start_cmd(lib, argv, modifiers):
     if len(argv) != 1:
         raise CmdLineInputError()
     model = argv[0]
-    lib.qdevice.start(model)
+    lib.qdevice.qdevice_start(model)
 
 
 def qdevice_stop_cmd(lib, argv, modifiers):
@@ -71,7 +71,7 @@ def qdevice_stop_cmd(lib, argv, modifiers):
     if len(argv) != 1:
         raise CmdLineInputError()
     model = argv[0]
-    lib.qdevice.stop(model, proceed_if_used=modifiers.get("--force"))
+    lib.qdevice.qdevice_stop(model, proceed_if_used=modifiers.get("--force"))
 
 
 def qdevice_kill_cmd(lib, argv, modifiers):
@@ -82,7 +82,7 @@ def qdevice_kill_cmd(lib, argv, modifiers):
     if len(argv) != 1:
         raise CmdLineInputError()
     model = argv[0]
-    lib.qdevice.kill(model)
+    lib.qdevice.qdevice_kill(model)
 
 
 def qdevice_enable_cmd(lib, argv, modifiers):
@@ -93,7 +93,7 @@ def qdevice_enable_cmd(lib, argv, modifiers):
     if len(argv) != 1:
         raise CmdLineInputError()
     model = argv[0]
-    lib.qdevice.enable(model)
+    lib.qdevice.qdevice_enable(model)
 
 
 def qdevice_disable_cmd(lib, argv, modifiers):
@@ -104,7 +104,7 @@ def qdevice_disable_cmd(lib, argv, modifiers):
     if len(argv) != 1:
         raise CmdLineInputError()
     model = argv[0]
-    lib.qdevice.disable(model)
+    lib.qdevice.qdevice_disable(model)
 
 
 # following commands are internal use only, called from pcsd
@@ -151,7 +151,7 @@ def qdevice_sign_net_cert_request_cmd(lib, argv, modifiers):
     if argv:
         raise CmdLineInputError()
     certificate_request = _read_stdin()
-    signed = lib.qdevice.sign_net_cert_request(
+    signed = lib.qdevice.qdevice_net_sign_certificate_request(
         certificate_request, modifiers.get("--name")
     )
     # In python3 base64.b64encode returns bytes.

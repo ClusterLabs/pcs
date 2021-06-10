@@ -18,7 +18,9 @@ def create_with_set(lib, argv, modifiers):
       * -f - CIB file
     """
     modifiers.ensure_only_supported("--force", "-f")
-    command.create_with_set(lib.constraint_order.set, argv, modifiers)
+    command.create_with_set(
+        lib.constraint_order.create_with_set, argv, modifiers
+    )
 
 
 def show(lib, argv, modifiers):

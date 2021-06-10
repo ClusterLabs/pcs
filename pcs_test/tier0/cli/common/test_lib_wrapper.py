@@ -25,8 +25,8 @@ class LibraryWrapperTest(TestCase):
         mock_middleware_factory.cib = dummy_middleware
         mock_middleware_factory.corosync_conf_existing = dummy_middleware
         mock_env = mock.MagicMock()
-        Library(mock_env, mock_middleware_factory).constraint_order.set(
-            "first", second="third"
-        )
+        Library(
+            mock_env, mock_middleware_factory
+        ).constraint_order.create_with_set("first", second="third")
 
         mock_order_set.assert_called_once_with(lib_env, "first", second="third")
