@@ -36,7 +36,7 @@ booth_authkey_bytes = 64
 cluster_conf_file = "/etc/cluster/cluster.conf"
 fence_agent_binaries = "@FASEXECPREFIX@/sbin"
 pacemaker_local_state_dir = os.path.join(
-    "@PCMKLOCALSTATEDIR@", "/lib/pacemaker"
+    "/", "@PCMKLOCALSTATEDIR@", "lib/pacemaker"
 )
 pacemaker_daemon_dir = "@PCMK_DAEMON_DIR@"
 pacemaker_schedulerd = os.path.join(
