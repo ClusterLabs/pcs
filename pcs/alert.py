@@ -3,6 +3,7 @@ from functools import partial
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import prepare_options, group_by_keywords
+from pcs.cli.reports.output import warn
 from pcs.common.str_tools import indent
 
 parse_cmd_sections = partial(group_by_keywords, implicit_first_group_key="main")
@@ -196,6 +197,15 @@ def _recipient_to_str(recipient):
             value=recipient["value"], id=recipient["id"]
         )
     ] + indent(__description_attributes_to_str(recipient), 1)
+
+
+def print_alert_show(lib, argv, modifiers):
+    warn(
+        "This command is deprecated and will be removed. "
+        "Please use 'pcs alert config' instead.",
+        stderr=True,
+    )
+    return print_alert_config(lib, argv, modifiers)
 
 
 def print_alert_config(lib, argv, modifiers):

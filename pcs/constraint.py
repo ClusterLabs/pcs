@@ -71,7 +71,7 @@ class CrmRuleReturnCode(Enum):
 
 def constraint_location_cmd(lib, argv, modifiers):
     if not argv:
-        sub_cmd = "show"
+        sub_cmd = "config"
     else:
         sub_cmd = argv.pop(0)
 
@@ -82,6 +82,8 @@ def constraint_location_cmd(lib, argv, modifiers):
             location_remove(lib, argv, modifiers)
         elif sub_cmd == "show":
             location_show(lib, argv, modifiers)
+        elif sub_cmd == "config":
+            location_config_cmd(lib, argv, modifiers)
         elif len(argv) >= 2:
             if argv[0] == "rule":
                 location_rule(lib, [sub_cmd] + argv, modifiers)
@@ -97,7 +99,7 @@ def constraint_location_cmd(lib, argv, modifiers):
 
 def constraint_order_cmd(lib, argv, modifiers):
     if not argv:
-        sub_cmd = "show"
+        sub_cmd = "config"
     else:
         sub_cmd = argv.pop(0)
 
@@ -108,6 +110,8 @@ def constraint_order_cmd(lib, argv, modifiers):
             order_rm(lib, argv, modifiers)
         elif sub_cmd == "show":
             order_command.show(lib, argv, modifiers)
+        elif sub_cmd == "config":
+            order_command.config_cmd(lib, argv, modifiers)
         else:
             order_start(lib, [sub_cmd] + argv, modifiers)
     except CmdLineInputError as e:
@@ -115,16 +119,27 @@ def constraint_order_cmd(lib, argv, modifiers):
 
 
 def constraint_show(lib, argv, modifiers):
+    warn(
+        "This command is deprecated and will be removed. "
+        "Please use 'pcs constraint config' instead.",
+        stderr=True,
+    )
+    return constraint_config_cmd(lib, argv, modifiers)
+
+
+def constraint_config_cmd(lib, argv, modifiers):
     """
     Options:
       * --all - print expired constraints
       * -f - CIB file
       * --full
     """
-    location_show(lib, argv, modifiers)
-    order_command.show(lib, argv, modifiers.get_subset("--full", "-f"))
-    colocation_command.show(lib, argv, modifiers.get_subset("--full", "-f"))
-    ticket_command.show(lib, argv, modifiers.get_subset("--full", "-f"))
+    location_config_cmd(lib, argv, modifiers)
+    order_command.config_cmd(lib, argv, modifiers.get_subset("--full", "-f"))
+    colocation_command.config_cmd(
+        lib, argv, modifiers.get_subset("--full", "-f")
+    )
+    ticket_command.config_cmd(lib, argv, modifiers.get_subset("--full", "-f"))
 
 
 def colocation_rm(lib, argv, modifiers):
@@ -551,7 +566,6 @@ def order_find_duplicates(dom, constraint_el):
     """
 
     def normalize(constraint_el):
-        # pylint: disable=line-too-long
         return (
             constraint_el.getAttribute("first"),
             constraint_el.getAttribute("then"),
@@ -570,8 +584,17 @@ def order_find_duplicates(dom, constraint_el):
     ]
 
 
-# Show the currently configured location constraints by node or resource
 def location_show(lib, argv, modifiers):
+    warn(
+        "This command is deprecated and will be removed. "
+        "Please use 'pcs constraint location config' instead.",
+        stderr=True,
+    )
+    return location_config_cmd(lib, argv, modifiers)
+
+
+# Show the currently configured location constraints by node or resource
+def location_config_cmd(lib, argv, modifiers):
     """
     Options:
       * --all - print expired constraints

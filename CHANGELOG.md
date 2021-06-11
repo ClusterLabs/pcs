@@ -26,6 +26,13 @@
 ### Changed
 - python3-openssl was replaced with python3-cryptography ([rhbz#1927404])
 
+### Deprecated
+- `pcs acl show` replaced with `pcs acl config`
+- `pcs alert show` replaced with `pcs alert config`
+- `pcs constraint [location | colocation | order | ticket] show | list` replaced
+  with `pcs constraint [location | colocation | order | ticket] config`
+- `pcs property show`, `pcs property list` replaced with `pcs property config`
+
 [ghissue#123]: https://github.com/ClusterLabs/pcs/issues/123
 [rhbz#1285269]: https://bugzilla.redhat.com/show_bug.cgi?id=1285269
 [rhbz#1290830]: https://bugzilla.redhat.com/show_bug.cgi?id=1290830

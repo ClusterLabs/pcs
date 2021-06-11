@@ -2265,7 +2265,7 @@ class DomRuleAddTest(TestCase):
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location show --full".split()
+            self.temp_cib.name, "constraint location config --full".split()
         )
         ac(
             output,
@@ -2293,7 +2293,7 @@ Location Constraints:
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location show".split()
+            self.temp_cib.name, "constraint location config".split()
         )
         ac(
             output,
@@ -2334,7 +2334,7 @@ Location Constraints:
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location show --full".split()
+            self.temp_cib.name, "constraint location config --full".split()
         )
         ac(
             output,
@@ -2406,7 +2406,7 @@ Location Constraints:
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location show --full".split()
+            self.temp_cib.name, "constraint location config --full".split()
         )
         ac(output, "Location Constraints:\n")
         self.assertEqual(0, returnVal)
@@ -2419,7 +2419,7 @@ Location Constraints:
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location show --full".split()
+            self.temp_cib.name, "constraint location config --full".split()
         )
         ac(
             output,

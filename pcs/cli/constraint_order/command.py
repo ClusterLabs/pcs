@@ -1,5 +1,6 @@
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.constraint import command
+from pcs.cli.reports.output import warn
 from pcs.common.reports import constraints
 
 
@@ -21,6 +22,15 @@ def create_with_set(lib, argv, modifiers):
 
 
 def show(lib, argv, modifiers):
+    warn(
+        "This command is deprecated and will be removed. "
+        "Please use 'pcs constraint order config' instead.",
+        stderr=True,
+    )
+    return config_cmd(lib, argv, modifiers)
+
+
+def config_cmd(lib, argv, modifiers):
     """
     show all order constraints
     object lib exposes library

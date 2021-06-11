@@ -38,7 +38,7 @@ class ACLTest(unittest.TestCase, AssertPcsMixin):
         write_file_to_tmpfile(old_cib, self.temp_cib)
 
         self.assert_pcs_success(
-            "acl show".split(),
+            "acl config".split(),
             "ACLs are disabled, run 'pcs acl enable' to enable"
             "\n\nCIB has been upgraded to the latest schema version.\n",
         )
@@ -906,7 +906,7 @@ Role: role3
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(self.temp_cib.name, "acl show".split())
+        o, r = pcs(self.temp_cib.name, "acl config".split())
         assert r == 0
         ac(
             o,
@@ -939,7 +939,7 @@ Role: role3
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(self.temp_cib.name, "acl show".split())
+        o, r = pcs(self.temp_cib.name, "acl config".split())
         assert r == 0
         ac(
             o,
@@ -979,7 +979,7 @@ Role: role4
         ac(o, "Error: ACL permission 'role4-deny' does not exist\n")
         assert r == 1
 
-        o, r = pcs(self.temp_cib.name, "acl show".split())
+        o, r = pcs(self.temp_cib.name, "acl config".split())
         assert r == 0
         ac(
             o,

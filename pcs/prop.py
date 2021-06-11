@@ -4,6 +4,7 @@ import json
 from pcs import utils
 
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.reports.output import warn
 
 
 def set_property(lib, argv, modifiers):
@@ -90,6 +91,15 @@ def unset_property(lib, argv, modifiers):
     for arg in argv:
         utils.set_cib_property(arg, "", cib_dom)
     utils.replace_cib_configuration(cib_dom)
+
+
+def list_property_deprecated(lib, argv, modifiers):
+    warn(
+        "This command is deprecated and will be removed. "
+        "Please use 'pcs property config' instead.",
+        stderr=True,
+    )
+    return list_property(lib, argv, modifiers)
 
 
 def list_property(lib, argv, modifiers):

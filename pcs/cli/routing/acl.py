@@ -8,7 +8,10 @@ from pcs.cli.common.routing import create_router
 acl_cmd = create_router(
     {
         "help": lambda lib, argv, modifiers: usage.acl(argv),
+        # TODO remove, deprecated command
+        # replaced with 'config'
         "show": acl.show_acl_config,
+        "config": acl.acl_config,
         "enable": acl.acl_enable,
         "disable": acl.acl_disable,
         "role": create_router(
@@ -47,5 +50,5 @@ acl_cmd = create_router(
         ),
     },
     ["acl"],
-    default_cmd="show",
+    default_cmd="config",
 )

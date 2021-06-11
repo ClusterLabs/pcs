@@ -1477,7 +1477,7 @@ Usage: pcs property [commands]...
 Configure pacemaker properties
 
 Commands:
-    [list|show [<property> | --all | --defaults]] | [--all | --defaults]
+    [config|list|show [<property> | --all | --defaults]] | [--all | --defaults]
         List property settings (default: lists configured properties).
         If --defaults is specified will show all property defaults, if --all
         is specified, current configured properties will be shown with unset
@@ -1513,7 +1513,7 @@ Usage: pcs constraint [constraints]...
 Manage resource constraints
 
 Commands:
-    [list|show] [--all] [--full]
+    [config | list | show] [--all] [--full]
         List all current constraints that are not expired. If --all
         is specified also show expired constraints. If --full is specified
         also list the constraint ids.
@@ -1552,8 +1552,8 @@ Commands:
         If id is omitted one is generated from the resource id. If
         resource-discovery is omitted it defaults to 'always'.
 
-    location [show [resources [<resource>...]] | [nodes [<node>...]]] [--all]
-            [--full]
+    location [config | show [resources [<resource>...]] | [nodes [<node>...]]]
+            [--all] [--full]
         List all the current location constraints that are not expired. If
         'resources' is specified, location constraints are displayed per
         resource (default). If 'nodes' is specified, location constraints are
@@ -1576,7 +1576,7 @@ Commands:
     location remove <id>
         Remove a location constraint with the appropriate id.
 
-    order [show] [--full]
+    order [config | show] [--full]
         List all current ordering constraints (if --full is specified show
         the internal constraint id's as well).
 
@@ -1602,7 +1602,7 @@ Commands:
     order remove <resource1> [resourceN]...
         Remove resource from any ordering constraint
 
-    colocation [show] [--full]
+    colocation [config | show] [--full]
         List all current colocation constraints (if --full is specified show
         the internal constraint id's as well).
 
@@ -1631,7 +1631,7 @@ Commands:
     colocation remove <source resource id> <target resource id>
         Remove colocation constraints with specified resources.
 
-    ticket [show] [--full]
+    ticket [config | show] [--full]
         List all current ticket constraints (if --full is specified show
         the internal constraint id's as well).
 
@@ -1702,7 +1702,7 @@ Usage: pcs acl [commands]...
 View and modify current cluster access control lists
 Commands:
 
-    [show]
+    [config | show]
         List all current access control lists.
 
     enable

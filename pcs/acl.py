@@ -3,6 +3,7 @@ from pcs import (
     utils,
 )
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.reports.output import warn
 from pcs.common.str_tools import indent
 from pcs.lib.pacemaker.values import is_true
 
@@ -16,6 +17,15 @@ def _print_list_of_objects(obj_list, transformation_fn):
 
 
 def show_acl_config(lib, argv, modifiers):
+    warn(
+        "This command is deprecated and will be removed. "
+        "Please use 'pcs acl config' instead.",
+        stderr=True,
+    )
+    return acl_config(lib, argv, modifiers)
+
+
+def acl_config(lib, argv, modifiers):
     """
     Options:
       * -f - CIB file
