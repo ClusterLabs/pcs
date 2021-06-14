@@ -31,9 +31,6 @@ pcsd_token_max_bytes = 256
 booth_authkey_file_mode = 0o600
 # Booth does not support keys longer than 64 bytes.
 booth_authkey_bytes = 64
-# cluster conf is obsoleted and didn't support out-of-tree installation / run
-# hence it can stay hardcoded
-cluster_conf_file = "/etc/cluster/cluster.conf"
 fence_agent_binaries = "@FASEXECPREFIX@/sbin"
 pacemaker_local_state_dir = os.path.join(
     "/", "@PCMKLOCALSTATEDIR@", "lib/pacemaker"

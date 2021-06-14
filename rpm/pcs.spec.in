@@ -36,10 +36,6 @@ Summary: Pacemaker Configuration System
 %define dataclasses_required 1
 %endif
 
-%if "%{python3_version}" >= "3.8"
-%define distro_required 1
-%endif
-
 # mangling shebang in /usr/lib/pcsd/vendor/bundle/ruby/gems/rack-2.0.5/test/cgi/test from /usr/bin/env ruby to #!/usr/bin/ruby
 #*** ERROR: ./usr/lib/pcsd/vendor/bundle/ruby/gems/rack-2.0.5/test/cgi/test.ru has shebang which doesn't start with '/' (../../bin/rackup)
 #mangling shebang in /usr/lib/pcsd/vendor/bundle/ruby/gems/rack-2.0.5/test/cgi/rackup_stub.rb from /usr/bin/env ruby to #!/usr/bin/ruby
@@ -105,14 +101,6 @@ Requires: python3-cryptography
 Requires: python3-lxml
 Requires: python3-pycurl
 Requires: python3-pyparsing
-%if 0%{?fedora} <= 32
-# clufter and its dependencies
-Requires: python3-clufter => 0.70.0
-%endif
-%if 0%{?rhel} < 9
-# clufter and its dependencies
-Requires: python3-clufter => 0.70.0
-%endif
 # ruby and gems for pcsd
 Requires: ruby >= 2.2.0
 Requires: rubygems
@@ -139,9 +127,6 @@ Recommends: overpass-fonts
 @pybundle@
 %if %{defined dataclasses_required}
 @pydataclassesbundle@
-%endif
-%if %{defined distro_required}
-@pydistrobundle@
 %endif
 
 @gembundle@

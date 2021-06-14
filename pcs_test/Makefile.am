@@ -17,7 +17,6 @@ EXTRA_DIST		= \
 			  resources/cib-largefile.xml \
 			  resources/cib-large.xml \
 			  resources/cib-tags.xml \
-			  resources/cluster.conf \
 			  resources/corosync-3nodes.conf \
 			  resources/corosync-3nodes-qdevice.conf \
 			  resources/corosync-3nodes-qdevice-heuristics.conf \

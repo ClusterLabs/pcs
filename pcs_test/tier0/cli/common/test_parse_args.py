@@ -603,8 +603,6 @@ class InputModifiersTest(TestCase):
             # used only in deprecated 'pcs resource|stonith show'
             "--groups",
             "--hide-inactive",
-            # TODO remove, deprecated command 'pcs config import-cman'
-            "--interactive",
             "--local",
             "--master",
             "--monitor",

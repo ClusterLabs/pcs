@@ -2,7 +2,6 @@ EXTRA_DIST		= \
 			  pam/pcsd.debian \
 			  pam/pcsd.fedora \
 			  test/cib1.xml \
-			  test/cluster.conf \
 			  test/corosync.conf \
 			  test/crm1.xml \
 			  test/crm2.xml \

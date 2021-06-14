@@ -21,20 +21,6 @@ config_cmd = create_router(
             ["config", "checkpoint"],
             default_cmd="list",
         ),
-        # TODO remove, deprecated command
-        "import-cman": config.config_import_cman,
-        # TODO remove, deprecated command
-        "export": create_router(
-            {
-                "pcs-commands": config.config_export_pcs_commands,
-                "pcs-commands-verbose": lambda lib, argv, modifiers: (
-                    config.config_export_pcs_commands(
-                        lib, argv, modifiers, verbose=True
-                    )
-                ),
-            },
-            ["config", "export"],
-        ),
     },
     ["config"],
     default_cmd="show",
