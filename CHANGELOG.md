@@ -34,6 +34,8 @@
 - `pcs constraint [location | colocation | order | ticket] show | list` replaced
   with `pcs constraint [location | colocation | order | ticket] config`
 - `pcs property show`, `pcs property list` replaced with `pcs property config`
+- pcsd urls: `/remote/config_backup`, `/remote/node_available`,
+  `/remote/node_restart`, `/remote/resource_status`
 
 [ghissue#123]: https://github.com/ClusterLabs/pcs/issues/123
 [rhbz#1285269]: https://bugzilla.redhat.com/show_bug.cgi?id=1285269

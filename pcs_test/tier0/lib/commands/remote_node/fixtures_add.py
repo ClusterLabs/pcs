@@ -188,15 +188,6 @@ EXTRA_REPORTS = (
     )
     .copy(
         "manage_services_connection_failed",
-        "check_availability_connection_failed",
-        command="remote/node_available",
-    )
-    .as_warn(
-        "check_availability_connection_failed",
-        "check_availability_connection_failed_warn",
-    )
-    .copy(
-        "manage_services_connection_failed",
         "put_file_connection_failed",
         command="remote/put_file",
     )

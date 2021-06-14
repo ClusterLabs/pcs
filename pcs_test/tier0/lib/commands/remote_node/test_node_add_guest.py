@@ -103,8 +103,6 @@ EXTRA_REPORTS = FIXTURE_EXTRA_REPORTS.adapt_multi(
     [
         "manage_services_connection_failed",
         "manage_services_connection_failed_warn",
-        "check_availability_connection_failed",
-        "check_availability_connection_failed_warn",
         "put_file_connection_failed",
         "put_file_connection_failed_warn",
         "pcmk_remote_enable_failed",
