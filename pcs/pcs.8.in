@@ -513,9 +513,6 @@ Authenticate pcs/pcsd to pcsd on nodes configured in the local cluster.
 status
 View current cluster status (an alias of 'pcs status cluster').
 .TP
-pcsd\-status [<node>]...
-Show current status of pcsd on nodes specified, or on all nodes configured in the local cluster if no nodes are specified.
-.TP
 sync
 Sync cluster configuration (files which are supported by all subcommands of this command) to all cluster nodes.
 .TP
@@ -1155,6 +1152,9 @@ Restore cluster configuration to specified checkpoint.
 certkey <certificate file> <key file>
 Load custom certificate and key files for use in pcsd.
 .TP
+status [<node>]...
+Show current status of pcsd on nodes specified, or on all nodes configured in the local cluster if no nodes are specified.
+.TP
 sync\-certificates
 Sync pcsd certificates to all nodes in the local cluster.
 .TP
@@ -1300,6 +1300,9 @@ node add
 Custom node names and Corosync 3.x with knet are fully supported now, therefore the syntax has been completely changed.
 .br
 The \fB\-\-device\fR and \fB\-\-watchdog\fR options have been replaced with 'device' and 'watchdog' options, respectively.
+.TP
+pcsd\-status
+The 'pcs cluster pcsd\-status' command has been deprecated and will be removed. Please use 'pcs pcsd status' or 'pcs status pcsd' instead. Applicable in pcs-0.10.9 and newer.
 .TP
 quorum
 This command has been replaced with 'pcs quorum'.

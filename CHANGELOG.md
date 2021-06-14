@@ -29,6 +29,8 @@
 ### Deprecated
 - `pcs acl show` replaced with `pcs acl config`
 - `pcs alert show` replaced with `pcs alert config`
+- Undocumented command `pcs cluster certkey` replaced with `pcs pcsd certkey`
+- `pcs cluster pcsd-status` replaced with `pcs status pcsd` or `pcs pcsd status`
 - `pcs constraint [location | colocation | order | ticket] show | list` replaced
   with `pcs constraint [location | colocation | order | ticket] config`
 - `pcs property show`, `pcs property list` replaced with `pcs property config`

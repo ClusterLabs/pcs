@@ -5,6 +5,7 @@ from pcs import (
 from pcs.cli.common.errors import raise_command_replaced
 from pcs.cli.common.routing import create_router
 
+from pcs.pcsd import pcsd_status_cmd
 from pcs.qdevice import qdevice_status_cmd
 from pcs.quorum import quorum_status_cmd
 from pcs.resource import resource_status
@@ -17,7 +18,7 @@ status_cmd = create_router(
         "corosync": status.corosync_status,
         "cluster": status.cluster_status,
         "nodes": status.nodes_status,
-        "pcsd": status.cluster_pcsd_status,
+        "pcsd": pcsd_status_cmd,
         "qdevice": qdevice_status_cmd,
         "quorum": quorum_status_cmd,
         "resources": resource_status,

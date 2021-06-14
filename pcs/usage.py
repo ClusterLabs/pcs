@@ -1017,10 +1017,6 @@ Commands:
     status
         View current cluster status (an alias of 'pcs status cluster').
 
-    pcsd-status [<node>]...
-        Show current status of pcsd on nodes specified, or on all nodes
-        configured in the local cluster if no nodes are specified.
-
     sync
         Sync cluster configuration (files which are supported by all
         subcommands of this command) to all cluster nodes.
@@ -1921,6 +1917,10 @@ Manage pcs daemon
 Commands:
     certkey <certificate file> <key file>
         Load custom certificate and key files for use in pcsd.
+
+    status [<node>]...
+        Show current status of pcsd on nodes specified, or on all nodes
+        configured in the local cluster if no nodes are specified.
 
     sync-certificates
         Sync pcsd certificates to all nodes in the local cluster.

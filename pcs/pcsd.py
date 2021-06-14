@@ -1,14 +1,22 @@
 import json
 import os
 import sys
+from typing import (
+    Any,
+    Sequence,
+)
 
-from pcs import settings
-from pcs import utils
+from pcs import settings, utils
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.parse_args import InputModifiers
+from pcs.cli.reports import process_library_reports
+from pcs.common import reports
+from pcs.common.reports.item import ReportItem
 import pcs.common.ssl
+from pcs.lib.node import get_existing_nodes_names
 
 
-def pcsd_certkey(lib, argv, modifiers):
+def pcsd_certkey_cmd(lib, argv, modifiers):
     """
     Options:
       * --force - overwrite existing file
@@ -158,3 +166,65 @@ def accept_token_cmd(lib, argv, modifiers):
     if len(argv) != 1:
         raise CmdLineInputError("1 argument required")
     utils.set_token_to_accept(utils.get_token_from_file(argv[0]))
+
+
+def _check_nodes(node_list, prefix=""):
+    """
+    Print pcsd status on node_list, return if there is any pcsd not online
+
+    Commandline options:
+      * --request-timeout - HTTP timeout for node authorization check
+    """
+    online_code = 0
+    status_desc_map = {online_code: "Online", 3: "Unable to authenticate"}
+    status_list = []
+
+    def report(node, returncode, output):
+        del output
+        print(
+            "{0}{1}: {2}".format(
+                prefix, node, status_desc_map.get(returncode, "Offline")
+            )
+        )
+        status_list.append(returncode)
+
+    utils.read_known_hosts_file()  # cache known hosts
+    utils.run_parallel(
+        utils.create_task_list(report, utils.checkAuthorization, node_list)
+    )
+
+    return any(status != online_code for status in status_list)
+
+
+def pcsd_status_cmd(
+    lib: Any,
+    argv: Sequence[str],
+    modifiers: InputModifiers,
+    dont_exit: bool = False,
+) -> None:
+    """
+    Options:
+      * --request-timeout - HTTP timeout for node authorization check
+    """
+    # If no arguments get current cluster node status, otherwise get listed
+    # nodes status
+    del lib
+    modifiers.ensure_only_supported("--request-timeout")
+    bad_nodes = False
+    if not argv:
+        nodes, report_list = get_existing_nodes_names(
+            utils.get_corosync_conf_facade()
+        )
+        if not nodes and not dont_exit:
+            report_list.append(
+                ReportItem.error(
+                    reports.messages.CorosyncConfigNoNodesDefined()
+                )
+            )
+        if report_list:
+            process_library_reports(report_list)
+        bad_nodes = _check_nodes(nodes, "  ")
+    else:
+        bad_nodes = _check_nodes(argv, "  ")
+    if bad_nodes and not dont_exit:
+        sys.exit(2)
