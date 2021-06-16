@@ -153,9 +153,9 @@ class ConstraintTest(unittest.TestCase):
             "constraint location C1-group rule score=pingd defined pingd".split(),
         )
         assert returnVal == 0
-        assert (
-            output
-            == "Warning: invalid score 'pingd', setting score-attribute=pingd instead\n"
+        assert output == (
+            "Warning: Converting invalid score to score-attribute=pingd is deprecated and will be removed.\n"
+            "Warning: invalid score 'pingd', setting score-attribute=pingd instead\n"
         ), [output]
 
         output, returnVal = pcs(
@@ -163,9 +163,9 @@ class ConstraintTest(unittest.TestCase):
             "constraint location D3 rule score=pingd defined pingd --force".split(),
         )
         assert returnVal == 0
-        assert (
-            output
-            == "Warning: invalid score 'pingd', setting score-attribute=pingd instead\n"
+        assert output == (
+            "Warning: Converting invalid score to score-attribute=pingd is deprecated and will be removed.\n"
+            "Warning: invalid score 'pingd', setting score-attribute=pingd instead\n"
         ), [output]
 
         output, returnVal = pcs(
@@ -176,7 +176,10 @@ class ConstraintTest(unittest.TestCase):
             ).split(),
         )
         assert returnVal == 0
-        assert output == "", [output]
+        assert output == (
+            "Warning: Syntax 'date start=<date> gt' is deprecated "
+            "and will be removed. Please use 'date gt <date>'.\n"
+        ), [output]
 
         output, returnVal = pcs(
             self.temp_cib.name,
@@ -186,7 +189,11 @@ class ConstraintTest(unittest.TestCase):
             ).split(),
         )
         assert returnVal == 0
-        assert output == "", [output]
+        assert output == (
+            "Warning: Syntax 'date start=<date> end=<date> in_range' is "
+            "deprecated and will be removed. Please use 'date in_range <date> "
+            "to <date>'.\n"
+        ), [output]
 
         output, returnVal = pcs(
             self.temp_cib.name,
@@ -195,7 +202,10 @@ class ConstraintTest(unittest.TestCase):
                 "date-spec operation=date_spec years=3005"
             ).split(),
         )
-        assert output == "", [output]
+        assert output == (
+            "Warning: Syntax 'operation=date_spec' is deprecated and will be "
+            "removed. Please use 'date-spec <date-spec options>'.\n"
+        ), [output]
         assert returnVal == 0
 
         output, returnVal = pcs(

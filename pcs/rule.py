@@ -4,6 +4,7 @@ import xml.dom.minidom
 from typing import List, Any, Optional
 
 from pcs import utils
+from pcs.cli.reports.output import warn
 from pcs.common.tools import Version
 
 # pylint: disable=not-callable
@@ -48,6 +49,11 @@ def dom_rule_add(dom_element, options, rule_argv, cib_schema_version):
             "Warning: invalid score '%s', setting score-attribute=pingd instead"
             % options["score"]
         )
+        warn(
+            "Converting invalid score to score-attribute=pingd is deprecated "
+            "and will be removed.",
+            stderr=True,
+        )
         options["score-attribute"] = "pingd"
         options["score"] = None
     if options.get("role") and options["role"] not in ["master", "slave"]:
@@ -68,9 +74,10 @@ def dom_rule_add(dom_element, options, rule_argv, cib_schema_version):
     if not rule_argv:
         utils.err("no rule expression was specified")
     try:
+        preprocessor = TokenPreprocessor()
         dom_rule = CibBuilder(cib_schema_version).build(
             dom_element,
-            RuleParser().parse(TokenPreprocessor().run(rule_argv)),
+            RuleParser().parse(preprocessor.run(rule_argv)),
             options.get("id"),
         )
     except SyntaxError as e:
@@ -84,6 +91,9 @@ def dom_rule_add(dom_element, options, rule_argv, cib_schema_version):
         )
     except (ParserException, CibBuilderException) as e:
         utils.err("'%s' is not a valid rule expression" % " ".join(rule_argv))
+
+    for msg in preprocessor.warning_list:
+        warn(msg, stderr=True)
 
     # add options into rule xml
     if not options.get("score") and not options.get("score-attribute"):
@@ -1019,10 +1029,18 @@ class InvalidSyntacticTree(CibBuilderException):
 
 
 class TokenPreprocessor:
+    def __init__(self):
+        self._warning_list = []
+
     def run(self, token_list):
+        self._warning_list = []
         return self.convert_legacy_date(
             self.join_date_common(self.separate_parenthesis(token_list))
         )
+
+    @property
+    def warning_list(self):
+        return self._warning_list
 
     @staticmethod
     def separate_parenthesis(input_list):
@@ -1050,8 +1068,7 @@ class TokenPreprocessor:
                     output_list.append("".join(part))
         return output_list
 
-    @staticmethod
-    def join_date_common(input_list):
+    def join_date_common(self, input_list):
         output_list = []
         token_parts = []
         in_datecommon = False
@@ -1063,7 +1080,11 @@ class TokenPreprocessor:
                     token == "operation=date_spec"
                     and token_parts[0] == DateSpecValue.KEYWORD
                 ):
-                    pass  # gracefully ignoring for backwards compatibility
+                    self._warning_list.append(
+                        "Syntax 'operation=date_spec' "
+                        "is deprecated and will be removed. Please use "
+                        "'date-spec <date-spec options>'."
+                    )
                 else:
                     in_datecommon = False
                     output_list.append(token_parts[0])
@@ -1082,8 +1103,7 @@ class TokenPreprocessor:
                 output_list.append(" ".join(token_parts[1:]))
         return output_list
 
-    @staticmethod
-    def convert_legacy_date(input_list):
+    def convert_legacy_date(self, input_list):
         output_list = []
         in_date = False
         date_start = ""
@@ -1099,11 +1119,26 @@ class TokenPreprocessor:
                 else:
                     if token == "gt" and date_start and not date_end:
                         output_list.extend(["date", "gt", date_start])
+                        self._warning_list.append(
+                            "Syntax 'date start=<date> gt' "
+                            "is deprecated and will be removed. Please use "
+                            "'date gt <date>'."
+                        )
                     elif token == "lt" and not date_start and date_end:
                         output_list.extend(["date", "lt", date_end])
+                        self._warning_list.append(
+                            "Syntax 'date end=<date> lt' "
+                            "is deprecated and will be removed. Please use "
+                            "'date lt <date>'."
+                        )
                     elif token == "in_range" and date_start and date_end:
                         output_list.extend(
                             ["date", "in_range", date_start, "to", date_end]
+                        )
+                        self._warning_list.append(
+                            "Syntax 'date start=<date> end=<date> in_range' "
+                            "is deprecated and will be removed. Please use "
+                            "'date in_range <date> to <date>'."
                         )
                     else:
                         output_list.extend(token_parts)

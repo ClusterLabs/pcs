@@ -36,6 +36,13 @@
 - `pcs property show`, `pcs property list` replaced with `pcs property config`
 - pcsd urls: `/remote/config_backup`, `/remote/node_available`,
   `/remote/node_restart`, `/remote/resource_status`
+- Undocumented syntax for constraint location rules:
+  - `date start=<date> gt` replaced with `date gt <date>`
+  - `date end=<date> lt` replaced with `date lt <date>`
+  - `date start=<date> end=<date> in_range` replaced with `date in_range <date>
+    to <date>`
+  - `operation=date_spec` replaced with `date-spec <date-spec options>`
+  - converting invalid score to score-attribute=pingd
 
 [ghissue#123]: https://github.com/ClusterLabs/pcs/issues/123
 [rhbz#1285269]: https://bugzilla.redhat.com/show_bug.cgi?id=1285269
