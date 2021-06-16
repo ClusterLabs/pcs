@@ -3,11 +3,8 @@ image: fedora${CI_PCS_FC_IMG_TAG}
 variables:
   PYTHON_DEPENDENCIES: "
     python3-cryptography
-    python3-dateutil
     python3-devel
-    python3-distro
     python3-lxml
-    python3-pip
     python3-pycurl
     python3-pyparsing
     python3-setuptools
@@ -31,31 +28,33 @@ variables:
     rubygem-tilt
     rubygem-webrick
   "
-  RUBY_DEPENDENCIES: "
-    ruby
-    ruby-devel
-    rubygem-bundler
-  "
   COMMON_DEPENDENCIES: "
     autoconf
     automake
     coreutils
     curl
     findutils
-    fontconfig
-    gcc
-    gcc-c++
     git
     make
-    psmisc
-    redhat-rpm-config
     sed
     systemd
     tar
     time
     wget
+    python3-pip
+    pkgconf-pkg-config
+    ruby
+    ruby-devel
+    rubygem-bundler
+  "
+  COMMON_BUILD_DEPENDENCIES: "
+    fontconfig
+    gcc
+    gcc-c++
+    psmisc
+    redhat-rpm-config
+    ${COMMON_DEPENDENCIES}
     ${PYTHON_DEPENDENCIES}
-    ${RUBY_DEPENDENCIES}
   "
   APP_VERSION: "0.0.1.ci"
   DIST_VERSION: "${APP_VERSION}.${CI_PROJECT_NAMESPACE}-${CI_COMMIT_SHORT_SHA}"
@@ -74,7 +73,7 @@ rpm_build:
   stage: stage1
   script:
     - "dnf install -y
-        ${COMMON_DEPENDENCIES}
+        ${COMMON_BUILD_DEPENDENCIES}
         dnf-plugins-core
         rpm-build
         rpmdevtools
@@ -94,7 +93,7 @@ distcheck:
   stage: stage1
   script:
     - "dnf install -y
-        ${COMMON_DEPENDENCIES}
+        ${COMMON_BUILD_DEPENDENCIES}
         ${RUBY_GEMS}
         bzip2
         xz
@@ -105,8 +104,8 @@ distcheck:
         pyagentx
       "
     - ./autogen.sh
-    - ./configure
-    - make distcheck
+    - ./configure --enable-local-build
+    - make distcheck DISTCHECK_CONFIGURE_FLAGS='--enable-local-build'
     - mkdir -p dist && cp -v pcs*.tar.* dist/
   artifacts:
     expire_in: 1 week
@@ -120,13 +119,13 @@ black:
     - dnf install -y ${COMMON_DEPENDENCIES}
     - python3 -m pip install --upgrade -r dev_requirements.txt
     - ./autogen.sh
-    - ./configure --enable-local-build --enable-dev-tests
+    - ./configure --enable-local-build --enable-dev-tests --enable-tests-only
     - make black_check
 
 pylint:
   stage: stage1
   script:
-    - dnf install -y ${COMMON_DEPENDENCIES}
+    - dnf install -y ${COMMON_BUILD_DEPENDENCIES}
     - python3 -m pip install --upgrade -r dev_requirements.txt
     - ./autogen.sh
     - ./configure --enable-local-build --enable-dev-tests
@@ -136,7 +135,7 @@ pylint:
 mypy:
   stage: stage1
   script:
-    - dnf install -y ${COMMON_DEPENDENCIES}
+    - dnf install -y ${COMMON_BUILD_DEPENDENCIES}
     - python3 -m pip install --upgrade -r dev_requirements.txt
     - ./autogen.sh
     - ./configure --enable-local-build --enable-dev-tests
@@ -146,7 +145,7 @@ mypy:
 ruby_tests:
   stage: stage1
   script:
-    - dnf install -y ${COMMON_DEPENDENCIES}
+    - dnf install -y ${COMMON_BUILD_DEPENDENCIES}
     - ./autogen.sh
     - ./configure --enable-local-build
     - make
@@ -155,7 +154,7 @@ ruby_tests:
 python_tier0_tests:
   stage: stage1
   script:
-    - dnf install -y ${COMMON_DEPENDENCIES}
+    - dnf install -y ${COMMON_BUILD_DEPENDENCIES}
     - python3 -m pip install concurrencytest
     - ./autogen.sh
     - ./configure --enable-local-build
@@ -179,7 +178,7 @@ python_tier1_tests:
       "
     - python3 -m pip install concurrencytest
     - ./autogen.sh
-    - ./configure --enable-local-build --enable-destructive-tests
+    - ./configure --enable-local-build --enable-destructive-tests --enable-tests-only
     - rm -rf pcs pcsd pcs_bundled # make sure we are testing installed package
     - pcs_test/suite -v --installed --tier1
 
@@ -202,7 +201,7 @@ python_smoke_tests:
     - /usr/sbin/pcsd & # start pcsd (python - tornado)
     - sleep 10 # wait for pcsd (python - tornado) to start up properly
     - ./autogen.sh
-    - ./configure --enable-local-build
+    - ./configure --enable-local-build --enable-tests-only
     - pcs_test/smoke.sh
   artifacts:
     paths:

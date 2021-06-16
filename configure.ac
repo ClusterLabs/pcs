@@ -118,11 +118,6 @@ AC_CHECK_PROGS([GEM], [gem])
 if test "x$GEM" = "x"; then
 	AC_MSG_ERROR([Unable to find gem binary])
 fi
-# required by pcsd build/install to symlink BaseOS fonts
-AC_CHECK_PROGS([FCMATCH], [fc-match])
-if test "x$FCMATCH" = "x"; then
-	AC_MSG_ERROR([Unable to find fc-match binary])
-fi
 # used to measure time for some tests, not critical if not available
 AC_CHECK_PROGS([TIME], [time])
 
@@ -158,6 +153,14 @@ AC_ARG_ENABLE([local-build],
 	      [local_build="yes"])
 AM_CONDITIONAL([LOCAL_BUILD], [test "x$local_build" = "xyes"])
 
+AC_ARG_ENABLE([tests-only],
+	      [AS_HELP_STRING([--enable-tests-only], [Check only for tests dependencies])],
+	      [tests_only="yes"])
+
+AC_ARG_ENABLE([invidual-bundling],
+	      [AS_HELP_STRING([--enable-individual-bundling], [Bundle only missing python packages /ruby gems instead of all of them])],
+	      [individual_bundling="yes"])
+
 AC_ARG_ENABLE([use-local-cache-only],
 	      [AS_HELP_STRING([--enable-use-local-cache-only], [Use only local cache to build bundles and disable downloads])],
 	      [cache_only="yes"])
@@ -171,6 +174,14 @@ if test "x$cache_only" != "xyes"; then
 	AC_CHECK_PROGS([WGET], [wget])
 	if test "x$WGET" = "x"; then
 		AC_MSG_ERROR([Unable to find wget binary.])
+	fi
+fi
+
+# required by pcsd build/install to symlink BaseOS fonts
+if test "x$tests_only" != "xyes"; then
+	AC_CHECK_PROGS([FCMATCH], [fc-match])
+	if test "x$FCMATCH" = "x"; then
+		AC_MSG_ERROR([Unable to find fc-match binary])
 	fi
 fi
 
@@ -265,7 +276,7 @@ AC_DEFUN([PCS_BUNDLE_PYMOD], [
 AC_DEFUN([PCS_CHECK_PYMOD], [
 	if test "x$local_build" = "xyes" && test "x$3" = "xyes"; then
 		AC_PIP_MODULE([$1], [$2], [bundle_module=no], [bundle_module=yes], [bundle_module=yes])
-		if test "x$bundle_module" = "xyes"; then
+		if test "x$bundle_module" = "xyes" || test "x$individual_bundling" != "xyes"; then
 			PCS_BUNDLE_PYMOD([$1], [$2])
 		fi
 	else
@@ -283,40 +294,40 @@ AC_SUBST([PYAGENTX_VERSION])
 AC_PIP_MODULE([pip], [>= 10.0.0], [have_isolation=yes], [have_isolation=no], [have_isolation=no])
 AM_CONDITIONAL([PIP_HAS_ISOLATION], [test "x$have_isolation" = xyes])
 
-PCS_CHECK_PYMOD([setuptools])
-PCS_CHECK_PYMOD([setuptools-scm])
-if test "x$local_build" = "xyes"; then
-	PCS_CHECK_PYMOD([wheel])
+if test "x$tests_only" != "xyes"; then
+	PCS_CHECK_PYMOD([setuptools])
+	PCS_CHECK_PYMOD([setuptools-scm])
+	if test "x$local_build" = "xyes"; then
+		PCS_CHECK_PYMOD([wheel])
+	fi
+	PCS_CHECK_PYMOD([cryptography])
+	PCS_CHECK_PYMOD([lxml])
+	PCS_CHECK_PYMOD([pycurl])
+	PCS_CHECK_PYMOD([pyparsing])
+
+	# those are kind of problematic.
+	# use them all from the BaseOS or embedded them all as necessary (--enable-local-build)
+	PCS_CHECK_PYMOD([dacite], [], [yes])
+	PCS_CHECK_PYMOD([tornado], [>= 6.0.0], [yes])
+	PCS_CHECK_PYMOD([python-dateutil], [>= 2.7.0], [yes])
+
+	# python 3.6 needs dataclasses as well (added in 3.7)
+	if test "$PYTHON_VERSION" = "3.6"; then
+		PCS_CHECK_PYMOD([dataclasses], [], [yes])
+	fi
+
+	# python 3.8+ needs distro as well (removed from upstream lib)
+	if printf '%s\n%s\n' "3.8" "$PYTHON_VERSION" | sort -V -C; then
+		PCS_CHECK_PYMOD([distro], [], [yes])
+	fi
+
+	# special case, because we need to download from github
+	AC_PIP_MODULE([pyagentx])
+
+	if test "x$HAVE_PIPMOD_PYAGENTX" = "xno" && test "x$local_build" != "xyes"; then
+		AC_MSG_ERROR([Python module pyagentx not found])
+	fi
 fi
-PCS_CHECK_PYMOD([cryptography])
-PCS_CHECK_PYMOD([lxml])
-PCS_CHECK_PYMOD([pycurl])
-PCS_CHECK_PYMOD([pyparsing])
-
-# those are kind of problematic.
-# use them all from the BaseOS or embedded them all as necessary (--enable-local-build)
-PCS_CHECK_PYMOD([dacite], [], [yes])
-PCS_CHECK_PYMOD([tornado], [>= 6.0.0], [yes])
-PCS_CHECK_PYMOD([python-dateutil], [>= 2.7.0], [yes])
-
-# python 3.6 needs dataclasses as well (added in 3.7)
-if test "$PYTHON_VERSION" = "3.6"; then
-	PCS_CHECK_PYMOD([dataclasses], [], [yes])
-fi
-
-# python 3.8+ needs distro as well (removed from upstream lib)
-if printf '%s\n%s\n' "3.8" "$PYTHON_VERSION" | sort -V -C; then
-	PCS_CHECK_PYMOD([distro], [], [yes])
-fi
-
-# special case, because we need to download from github
-AC_PIP_MODULE([pyagentx])
-
-if test "x$HAVE_PIPMOD_PYAGENTX" = "xno" && test "x$local_build" != "xyes"; then
-	AC_MSG_ERROR([Python module pyagentx not found])
-fi
-
-AM_CONDITIONAL([BUILD_PIPMOD_PYAGENTX], [test "x$HAVE_PIPMOD_PYAGENTX" = "xno"])
 
 # ruby gem section
 
@@ -351,24 +362,27 @@ AC_DEFUN([PCS_CHECK_GEM], [
 	fi
 ])
 
-PCS_CHECK_GEM([backports])
-PCS_CHECK_GEM([daemons])
-PCS_CHECK_GEM([ethon])
-PCS_CHECK_GEM([ffi])
-PCS_CHECK_GEM([eventmachine])
-PCS_CHECK_GEM([json])
-PCS_CHECK_GEM([mustermann])
-PCS_CHECK_GEM([open4])
 PCS_CHECK_GEM([power_assert])
-PCS_CHECK_GEM([rack])
-PCS_CHECK_GEM([rack-protection])
-PCS_CHECK_GEM([rack-test])
-PCS_CHECK_GEM([sinatra])
-PCS_CHECK_GEM([tilt])
 PCS_CHECK_GEM([test-unit])
-PCS_CHECK_GEM([thin])
-PCS_CHECK_GEM([rexml])
-PCS_CHECK_GEM([webrick])
+
+if test "x$tests_only" != "xyes"; then
+	PCS_CHECK_GEM([backports])
+	PCS_CHECK_GEM([daemons])
+	PCS_CHECK_GEM([ethon])
+	PCS_CHECK_GEM([ffi])
+	PCS_CHECK_GEM([eventmachine])
+	PCS_CHECK_GEM([json])
+	PCS_CHECK_GEM([mustermann])
+	PCS_CHECK_GEM([open4])
+	PCS_CHECK_GEM([rack])
+	PCS_CHECK_GEM([rack-protection])
+	PCS_CHECK_GEM([rack-test])
+	PCS_CHECK_GEM([sinatra])
+	PCS_CHECK_GEM([tilt])
+	PCS_CHECK_GEM([thin])
+	PCS_CHECK_GEM([rexml])
+	PCS_CHECK_GEM([webrick])
+fi
 
 if test "x$local_build" = "xyes" && test $(wc -l < Gemfile) -gt 2; then
 	GEM_HOME="$LIB_DIR/$PCSD_BUNDLED_DIR_ROOT_LOCAL"
@@ -397,9 +411,12 @@ if test "x$SYSTEMCTL" = "x"; then
 		AC_MSG_ERROR([Unable to find systemctl or service in $PATH])
 	fi
 fi
-AC_PATH_PROG([KILLALL], [killall])
-if test "x$KILLALL" = "x"; then
-	AC_MSG_ERROR([Unable to find killall in $PATH])
+
+if test "x$tests_only" != "xyes"; then
+	AC_PATH_PROG([KILLALL], [killall])
+	if test "x$KILLALL" = "x"; then
+		AC_MSG_ERROR([Unable to find killall in $PATH])
+	fi
 fi
 # yes this is absurd but we need full path for some
 # python calls
