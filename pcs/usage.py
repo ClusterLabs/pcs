@@ -1336,29 +1336,27 @@ Commands:
         node%<node_name>, a node name regular expression regexp%<node_pattern>
         or a node attribute value attrib%<name>=<value>.
 
-    level delete <level> [target] [stonith id]...
+    level delete <level> [target <target>] [stonith <stonith id>...]
         Removes the fence level for the level, target and/or devices specified.
         If no target or devices are specified then the fence level is removed.
         Target may be a node name <node_name> or %<node_name> or
         node%<node_name>, a node name regular expression regexp%<node_pattern>
         or a node attribute value attrib%<name>=<value>.
 
-    level remove <level> [target] [stonith id]...
+    level remove <level> [target <target>] [stonith <stonith id>...]
         Removes the fence level for the level, target and/or devices specified.
         If no target or devices are specified then the fence level is removed.
         Target may be a node name <node_name> or %<node_name> or
         node%<node_name>, a node name regular expression regexp%<node_pattern>
         or a node attribute value attrib%<name>=<value>.
 
-    level clear [target|stonith id(s)]
+    level clear [target <target> | stonith <stonith id>...]
         Clears the fence levels on the target (or stonith id) specified or
-        clears all fence levels if a target/stonith id is not specified. If
-        more than one stonith id is specified they must be separated by a comma
-        and no spaces.
+        clears all fence levels if a target/stonith id is not specified.
         Target may be a node name <node_name> or %<node_name> or
         node%<node_name>, a node name regular expression regexp%<node_pattern>
         or a node attribute value attrib%<name>=<value>.
-        Example: pcs stonith level clear dev_a,dev_b
+        Example: pcs stonith level clear stonith dev_a dev_b
 
     level verify
         Verifies all fence devices and nodes specified in fence levels exist.

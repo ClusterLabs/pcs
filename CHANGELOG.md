@@ -43,6 +43,12 @@
     to <date>`
   - `operation=date_spec` replaced with `date-spec <date-spec options>`
   - converting invalid score to score-attribute=pingd
+- Delimiting stonith devices with a comma in `pcs stonith level add | clear |
+  delete | remove` commands, use a space instead
+- `pcs stonith level delete | remove [<target>] [<stonith id>]...` replaced with
+  `pcs stonith level delete | remove [target <target>] [stonith <stonith id>]...`
+- `pcs stonith level clear [<target> | <stonith ids>]` replaced with
+  `pcs stonith level clear [target <target> | stonith <stonith id>...]`
 
 [ghissue#123]: https://github.com/ClusterLabs/pcs/issues/123
 [rhbz#1285269]: https://bugzilla.redhat.com/show_bug.cgi?id=1285269
