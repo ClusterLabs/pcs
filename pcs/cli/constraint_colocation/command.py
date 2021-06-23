@@ -50,9 +50,9 @@ def config_cmd(lib, argv, modifiers):
         raise CmdLineInputError()
     print(
         "\n".join(
-            command.show(
+            command.config_cmd(
                 "Colocation Constraints:",
-                lib.constraint_colocation.show,
+                lib.constraint_colocation.config,
                 constraints.colocation_plain,
                 modifiers,
             )

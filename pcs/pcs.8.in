@@ -1395,6 +1395,10 @@ The \fB\-\-device\fR and \fB\-\-watchdog\fR options have been replaced with 'dev
 .TP
 show
 Previously, this command displayed either status or configuration of stonith resources depending on the parameters specified. This was confusing, therefore the command was replaced by several new commands. To display stonith resources status, run 'pcs stonith' or 'pcs stonith status'. To display stonith resources configuration, run 'pcs stonith config' or 'pcs stonith config <stonith name>'.
+.SS "tag"
+.TP
+list
+The 'pcs tag list' command has been deprecated and will be removed. Please use 'pcs tag config' instead. Applicable in pcs-0.10.9 and newer.
 .SH SEE ALSO
 http://clusterlabs.org/doc/
 

@@ -49,6 +49,7 @@
   `pcs stonith level delete | remove [target <target>] [stonith <stonith id>]...`
 - `pcs stonith level clear [<target> | <stonith ids>]` replaced with
   `pcs stonith level clear [target <target> | stonith <stonith id>...]`
+- `pcs tag list` replaced with `pcs tag config`
 
 [ghissue#123]: https://github.com/ClusterLabs/pcs/issues/123
 [rhbz#1285269]: https://bugzilla.redhat.com/show_bug.cgi?id=1285269

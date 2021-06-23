@@ -2036,8 +2036,7 @@
         * remove specified tags
         * show cluster tag configuration
 
-        pcs commands: tag (config | list), tag create, tag (delete | remove),
-          tag update
+        pcs commands: tag config, tag create, tag (delete | remove), tag update
       </description>
     </capability>
     <capability id="pcmk.tag.resources" in-pcs="1" in-pcsd="0">

@@ -46,9 +46,9 @@ def config_cmd(lib, argv, modifiers):
         raise CmdLineInputError()
     print(
         "\n".join(
-            command.show(
+            command.config_cmd(
                 "Ordering Constraints:",
-                lib.constraint_order.show,
+                lib.constraint_order.config,
                 constraints.order_plain,
                 modifiers,
             )

@@ -168,6 +168,7 @@ class TagCreate(TestTagMixin, TestCase):
 
 class TagConfigListBase(TestTagMixin):
     command = None
+    deprecation_msg = ""
 
     def test_config_empty(self):
         write_file_to_tmpfile(empty_cib, self.temp_cib)
@@ -179,14 +180,14 @@ class TagConfigListBase(TestTagMixin):
 
         self.assert_pcs_success(
             ["tag", self.command],
-            " No tags defined\n",
+            self.deprecation_msg + " No tags defined\n",
         )
 
     def test_config_tag_does_not_exist(self):
         self.assert_pcs_fail(
             ["tag", self.command, "notag2", "notag1"],
             (
-                "Error: tag 'notag2' does not exist\n"
+                self.deprecation_msg + "Error: tag 'notag2' does not exist\n"
                 "Error: tag 'notag1' does not exist\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
                 "continue\n"
@@ -197,7 +198,8 @@ class TagConfigListBase(TestTagMixin):
     def test_config_tags_defined(self):
         self.assert_pcs_success(
             ["tag", self.command],
-            dedent(
+            self.deprecation_msg
+            + dedent(
                 """\
                 tag1
                   x1
@@ -220,7 +222,8 @@ class TagConfigListBase(TestTagMixin):
     def test_config_specified_tags(self):
         self.assert_pcs_success(
             ["tag", self.command, "tag2", "tag1"],
-            dedent(
+            self.deprecation_msg
+            + dedent(
                 """\
                 tag2
                   y1
@@ -246,6 +249,10 @@ class TagList(
     TestCase,
 ):
     command = "list"
+    deprecation_msg = (
+        "Warning: This command is deprecated and will be removed. Please use "
+        "'pcs tag config' instead.\n"
+    )
 
 
 class PcsConfigTagsTest(TestTagMixin, TestCase):

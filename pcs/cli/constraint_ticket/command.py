@@ -97,9 +97,9 @@ def config_cmd(lib, argv, modifiers):
         raise CmdLineInputError()
     print(
         "\n".join(
-            command.show(
+            command.config_cmd(
                 "Ticket Constraints:",
-                lib.constraint_ticket.show,
+                lib.constraint_ticket.config,
                 constraints.ticket_plain,
                 modifiers,
             )

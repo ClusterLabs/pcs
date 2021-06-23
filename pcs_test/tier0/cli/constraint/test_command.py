@@ -21,13 +21,14 @@ def fixture_constraint_console():
 
 
 class ShowConstraintsWithSetTest(TestCase):
+    # pylint: disable=protected-access
     def test_return_line_list(self):
         self.assertEqual(
             [
                 "Resource Sets:",
                 "  set a b c=d e=f set g h i=j k=l setoptions m=n o=p",
             ],
-            command.show_constraints_with_set(
+            command._config_constraints_with_set(
                 [fixture_constraint()], show_detail=False
             ),
         )
@@ -38,7 +39,7 @@ class ShowConstraintsWithSetTest(TestCase):
                 "Resource Sets:",
                 fixture_constraint_console(),
             ],
-            command.show_constraints_with_set(
+            command._config_constraints_with_set(
                 [fixture_constraint()], show_detail=True
             ),
         )
@@ -48,7 +49,7 @@ class ShowTest(TestCase):
     def test_show_only_caption_when_no_constraint_loaded(self):
         self.assertEqual(
             ["caption"],
-            command.show(
+            command.config_cmd(
                 "caption",
                 load_constraints=lambda: {
                     "plain": [],
@@ -74,7 +75,7 @@ class ShowTest(TestCase):
                 "  Resource Sets:",
                 "  " + fixture_constraint_console(),
             ],
-            command.show(
+            command.config_cmd(
                 "caption",
                 load_constraints,
                 format_options,

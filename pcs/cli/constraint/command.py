@@ -25,7 +25,7 @@ def create_with_set(create_with_set_library_call, argv, modifiers):
     )
 
 
-def show_constraints_with_set(constraint_list, show_detail, indent_step=2):
+def _config_constraints_with_set(constraint_list, show_detail, indent_step=2):
     """
     return list of console lines with info about constraints
     list of dict constraint_list see constraint in pcs/lib/exchange_formats.md
@@ -43,7 +43,7 @@ def show_constraints_with_set(constraint_list, show_detail, indent_step=2):
     )
 
 
-def show(caption, load_constraints, format_options, modifiers):
+def config_cmd(caption, load_constraints, format_options, modifiers):
     """
     load constraints and return console lines list with info about constraints
     string caption for example "Ticket Constraints:"
@@ -71,7 +71,7 @@ def show(caption, load_constraints, format_options, modifiers):
     if constraints["with_resource_sets"]:
         line_list.extend(
             indent(
-                show_constraints_with_set(
+                _config_constraints_with_set(
                     constraints["with_resource_sets"], show_detail
                 )
             )
