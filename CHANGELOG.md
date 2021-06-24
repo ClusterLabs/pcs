@@ -15,6 +15,8 @@
 - Upgreded to jquery 3.6.0 ([rhbz#1882291, rhbz#1886342])
 - Man page and help: note that 'pcs resource unclone' accepts clone resources
   as well ([rhbz#1930886])
+- Improved error messages when a host is found to be a part of a cluster already
+  ([rhbz#1690419])
 
 ### Changed
 - python3-openssl was replaced with python3-cryptography ([rhbz#1927404])
@@ -22,12 +24,14 @@
 [ghissue#123]: https://github.com/ClusterLabs/pcs/issues/123
 [rhbz#1285269]: https://bugzilla.redhat.com/show_bug.cgi?id=1285269
 [rhbz#1290830]: https://bugzilla.redhat.com/show_bug.cgi?id=1290830
+[rhbz#1690419]: https://bugzilla.redhat.com/show_bug.cgi?id=1690419
 [rhbz#1720221]: https://bugzilla.redhat.com/show_bug.cgi?id=1720221
 [rhbz#1882291]: https://bugzilla.redhat.com/show_bug.cgi?id=1882291
 [rhbz#1886342]: https://bugzilla.redhat.com/show_bug.cgi?id=1886342
 [rhbz#1896458]: https://bugzilla.redhat.com/show_bug.cgi?id=1896458
 [rhbz#1927404]: https://bugzilla.redhat.com/show_bug.cgi?id=1927404
 [rhbz#1930886]: https://bugzilla.redhat.com/show_bug.cgi?id=1930886
+
 
 ## [0.10.8] - 2021-02-01
 

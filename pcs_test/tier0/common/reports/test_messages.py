@@ -3642,8 +3642,8 @@ class ServiceNotInstalled(NameBuildTest):
 class HostAlreadyInClusterConfig(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
-            "host: Cluster configuration files found, the host seems to be in "
-            "a cluster already",
+            "host: The host seems to be in a cluster already as cluster "
+            "configuration files have been found on the host",
             reports.HostAlreadyInClusterConfig("host"),
         )
 
@@ -3651,10 +3651,10 @@ class HostAlreadyInClusterConfig(NameBuildTest):
 class HostAlreadyInClusterServices(NameBuildTest):
     def test_multiple_services(self):
         self.assert_message_from_report(
-            (
-                "node1: Running cluster services: 'service1', 'service2', "
-                "'service3', the host seems to be in a cluster already"
-            ),
+            "node1: The host seems to be in a cluster already as the following "
+            "services are found to be running: 'service1', 'service2', "
+            "'service3'. If the host is not part of a cluster, stop the "
+            "services and retry",
             reports.HostAlreadyInClusterServices(
                 "node1", ["service1", "service3", "service2"]
             ),
@@ -3662,8 +3662,9 @@ class HostAlreadyInClusterServices(NameBuildTest):
 
     def test_single_service(self):
         self.assert_message_from_report(
-            "node1: Running cluster services: 'service', the host seems to be "
-            "in a cluster already",
+            "node1: The host seems to be in a cluster already as the following "
+            "service is found to be running: 'service'. If the host is not "
+            "part of a cluster, stop the service and retry",
             reports.HostAlreadyInClusterServices("node1", ["service"]),
         )
 

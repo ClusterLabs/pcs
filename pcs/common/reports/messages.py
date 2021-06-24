@@ -4859,8 +4859,8 @@ class HostAlreadyInClusterConfig(ReportItemMessage):
     @property
     def message(self) -> str:
         return (
-            f"{self.host_name}: Cluster configuration files found, the host "
-            "seems to be in a cluster already"
+            f"{self.host_name}: The host seems to be in a cluster already as "
+            "cluster configuration files have been found on the host"
         )
 
 
@@ -4880,9 +4880,13 @@ class HostAlreadyInClusterServices(ReportItemMessage):
     @property
     def message(self) -> str:
         services = format_list(self.service_list)
+        services_plural = format_plural(self.service_list, "service")
+        are_plural = format_plural(self.service_list, "is")
         return (
-            f"{self.host_name}: Running cluster services: {services}, the host "
-            "seems to be in a cluster already"
+            f"{self.host_name}: The host seems to be in a cluster already as "
+            f"the following {services_plural} {are_plural} found to be "
+            f"running: {services}. If the host is not part of a cluster, stop "
+            f"the {services_plural} and retry"
         )
 
 

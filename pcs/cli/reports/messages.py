@@ -444,6 +444,19 @@ class UnableToGetAgentMetadata(CliReportMessageCustom):
         )
 
 
+class HostAlreadyInClusterConfig(CliReportMessageCustom):
+    _obj: messages.HostAlreadyInClusterConfig
+
+    @property
+    def message(self) -> str:
+        return (
+            f"{self._obj.host_name}: The host seems to be in a cluster already "
+            "as cluster configuration files have been found on the host. If "
+            "the host is not part of a cluster, run 'pcs cluster destroy' on "
+            f"host '{self._obj.host_name}' to remove those configuration files"
+        )
+
+
 def _create_report_msg_map() -> Dict[str, type]:
     result: Dict[str, type] = {}
     for report_msg_cls in get_all_subclasses(CliReportMessageCustom):

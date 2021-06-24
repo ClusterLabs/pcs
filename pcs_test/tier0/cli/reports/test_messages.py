@@ -538,3 +538,14 @@ class UnableToGetAgentMetadata(CliReportMessageTestBase):
             "Agent 'agent-name' is not installed or does not provide valid "
             "metadata: reason, on multiple lines",
         )
+
+
+class HostAlreadyInClusterConfig(CliReportMessageTestBase):
+    def test_message(self):
+        self.assert_message(
+            messages.HostAlreadyInClusterConfig("nodeX"),
+            "nodeX: The host seems to be in a cluster already as cluster "
+            "configuration files have been found on the host. If the host is "
+            "not part of a cluster, run 'pcs cluster destroy' on host 'nodeX' "
+            "to remove those configuration files",
+        )
