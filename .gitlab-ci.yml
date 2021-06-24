@@ -190,7 +190,6 @@ python_smoke_tests:
     - "dnf install -y
         ${COMMON_DEPENDENCIES}
         cracklib-dicts
-        openssl
         passwd
         procps-ng
         rpms/pcs-*.rpm
