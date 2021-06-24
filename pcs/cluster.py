@@ -233,6 +233,11 @@ def sync_nodes(lib, argv, modifiers):
     for node in nodes:
         utils.setCorosyncConfig(node, config)
 
+    print(
+        "Corosync configuration has been synchronized, please reload corosync "
+        "daemon using 'pcs cluster reload corosync' command."
+    )
+
 
 def start_cluster(argv):
     """

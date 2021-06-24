@@ -17,6 +17,8 @@
   as well ([rhbz#1930886])
 - Improved error messages when a host is found to be a part of a cluster already
   ([rhbz#1690419])
+- `pcs cluster sync` command now warns reloading corosync config is necessary
+  for changes to take effect ([rhbz#1750240])
 
 ### Changed
 - python3-openssl was replaced with python3-cryptography ([rhbz#1927404])
@@ -26,6 +28,7 @@
 [rhbz#1290830]: https://bugzilla.redhat.com/show_bug.cgi?id=1290830
 [rhbz#1690419]: https://bugzilla.redhat.com/show_bug.cgi?id=1690419
 [rhbz#1720221]: https://bugzilla.redhat.com/show_bug.cgi?id=1720221
+[rhbz#1750240]: https://bugzilla.redhat.com/show_bug.cgi?id=1750240
 [rhbz#1882291]: https://bugzilla.redhat.com/show_bug.cgi?id=1882291
 [rhbz#1886342]: https://bugzilla.redhat.com/show_bug.cgi?id=1886342
 [rhbz#1896458]: https://bugzilla.redhat.com/show_bug.cgi?id=1896458
