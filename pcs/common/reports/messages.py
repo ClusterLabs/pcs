@@ -5398,6 +5398,32 @@ class ResourceInstanceAttrValueNotUnique(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class CannotLeaveGroupEmptyAfterMove(ReportItemMessage):
+    """
+    User is trying to add resources to another group and their old group would
+    be left empty and need to be deleted. Deletion is not yet migrated to lib.
+
+    str group_id -- ID of original group that would be deleted
+    list inner_resource_ids -- List of group members
+    """
+
+    group_id: str
+    inner_resource_ids: List[str]
+    _code = codes.CANNOT_LEAVE_GROUP_EMPTY_AFTER_MOVE
+
+    @property
+    def message(self) -> str:
+        return (
+            "Unable to move {resource_pl} {resource_list} as it would leave "
+            "group '{group_id}' empty."
+        ).format(
+            resource_pl=format_plural(self.inner_resource_ids, "resource"),
+            resource_list=format_list(self.inner_resource_ids),
+            group_id=self.group_id,
+        )
+
+
+@dataclass(frozen=True)
 class CannotMoveResourceBundle(ReportItemMessage):
     """
     User is trying to move a bundle resource which is not possible

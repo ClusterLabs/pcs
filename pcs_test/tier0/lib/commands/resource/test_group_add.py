@@ -5,7 +5,12 @@ from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.misc import get_test_resource as rc
 
 from pcs import settings
-from pcs.common.reports import codes as report_codes
+from pcs.common.reports import (
+    codes as report_codes,
+    messages as report_messages,
+)
+from pcs.common.reports.item import ReportItem
+from pcs.lib.errors import LibraryError
 from pcs.lib.commands import resource
 
 # This class does not focusing on validation testing, there are validator tests
@@ -66,6 +71,64 @@ class GroupAdd(TestCase):
         )
         resource.group_add(self.env_assist.get_env(), "G", ["R3", "R1"])
 
+    def test_move_from_existing_to_new(self):
+        resources_before = """
+                    <resources>
+                        <group id="G1">
+                            <primitive id="RG1" />
+                            <primitive id="RG2" />
+                            <primitive id="RG3" />
+                        </group>
+                        <primitive id="R4" />
+                    </resources>
+                """
+        resources_after = """
+                    <resources>
+                        <group id="G1">
+                            <primitive id="RG1" />
+                            <primitive id="RG2" />
+                        </group>
+                        <group id="G2">
+                            <primitive id="RG3" />
+                            <primitive id="R4" />
+                        </group>
+                    </resources>
+                """
+        (
+            self.config.runner.cib.load(
+                resources=resources_before
+            ).env.push_cib(resources=resources_after)
+        )
+        resource.group_add(self.env_assist.get_env(), "G2", ["RG3", "R4"])
+
+    def test_move_from_existing_to_existing(self):
+        resources_before = """
+                    <resources>
+                        <group id="G">
+                            <primitive id="RG1" />
+                        </group>
+                        <primitive id="R1" />
+                        <primitive id="R2" />
+                        <primitive id="R3" />
+                    </resources>
+                """
+        resources_after = """
+                    <resources>
+                        <group id="G">
+                            <primitive id="RG1" />
+                            <primitive id="R3" />
+                            <primitive id="R1" />
+                            <primitive id="R2" />
+                        </group>
+                    </resources>
+                """
+        (
+            self.config.runner.cib.load(
+                resources=resources_before
+            ).env.push_cib(resources=resources_after)
+        )
+        resource.group_add(self.env_assist.get_env(), "G", ["R3", "R1", "R2"])
+
     def _assert_with_adjacent(self, adjacent_id, after_adjacent):
         resources_before = """
             <resources>
@@ -110,9 +173,10 @@ class GroupAdd(TestCase):
     def test_before_adjacent(self):
         self._assert_with_adjacent("RG2", False)
 
-    def test_remove_empty_containers(self):
+    def test_remove_empty_group(self):
         resources_before = """
             <resources>
+                
                 <group id="X">
                     <primitive id="RX1" />
                 </group>
@@ -120,6 +184,90 @@ class GroupAdd(TestCase):
                     <primitive id="RY1" />
                     <primitive id="RY2" />
                 </group>
+            </resources>
+        """
+        resources_after = """
+            <resources>
+                <group id="Y">
+                    <primitive id="RY1" />
+                </group>
+                <group id="G">
+                    <primitive id="RX1" />
+                    <primitive id="RY2" />
+                </group>
+            </resources>
+        """
+        (
+            self.config.runner.cib.load(
+                resources=resources_before
+            ).env.push_cib(resources=resources_after)
+        )
+        resource.group_add(self.env_assist.get_env(), "G", ["RX1", "RY2"])
+
+    def test_remove_empty_group_fail(self):
+        constraints_before = """
+            <constraints>
+                <rsc_order first="X" first-action="start" 
+                id="order-X-R1-mandatory" then="R1" 
+                then-action="start"/>
+            </constraints>
+        """
+        resources_before = """
+            <resources>
+                <primitive id="R1" />
+                <group id="X">
+                    <primitive id="RX1" />
+                </group>
+                <group id="Y">
+                    <primitive id="RY1" />
+                    <primitive id="RY2" />
+                </group>
+            </resources>
+        """
+        resources_after = """
+            <resources>
+                <primitive id="R1" />
+                <group id="Y">
+                    <primitive id="RY1" />
+                </group>
+                <group id="G">
+                    <primitive id="RX1" />
+                    <primitive id="RY2" />
+                </group>
+            </resources>
+        """
+
+        self.config.runner.cib.load(
+            resources=resources_before, constraints=constraints_before
+        ).env.push_cib(
+            exception=LibraryError(
+                ReportItem.error(
+                    report_messages.CibPushError("stderr", "stdout")
+                )
+            ),
+            resources=resources_after,
+            constraints=constraints_before,
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: resource.group_add(
+                self.env_assist.get_env(),
+                "G",
+                ["RX1", "RY2"],
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.CANNOT_LEAVE_GROUP_EMPTY_AFTER_MOVE,
+                    group_id="X",
+                    inner_resource_ids=["RX1"],
+                ),
+            ]
+        )
+
+    def test_remove_empty_clone(self):
+        resources_before = """
+            <resources>
                 <clone id="RC1-group-clone">
                     <group id="RC1-group">
                         <primitive id="RC1" />
@@ -134,12 +282,7 @@ class GroupAdd(TestCase):
         """
         resources_after = """
             <resources>
-                <group id="Y">
-                    <primitive id="RY1" />
-                </group>
                 <group id="G">
-                    <primitive id="RX1" />
-                    <primitive id="RY2" />
                     <primitive id="RC1" />
                     <primitive id="RM1" />
                 </group>
@@ -150,8 +293,77 @@ class GroupAdd(TestCase):
                 resources=resources_before
             ).env.push_cib(resources=resources_after)
         )
-        resource.group_add(
-            self.env_assist.get_env(), "G", ["RX1", "RY2", "RC1", "RM1"]
+        resource.group_add(self.env_assist.get_env(), "G", ["RC1", "RM1"])
+
+    def test_remove_empty_clone_fail(self):
+        constraints_before = """
+            <constraints>
+                <rsc_order first="RM1-group-master" first-action="start" 
+                id="order-RM1-group-master-R1-mandatory" then="R1" 
+                then-action="start"/>
+                <rsc_order first="RC1-group-clone" first-action="start" 
+                id="order-RC1-group-clone-R1-mandatory" then="R2" 
+                then-action="start"/>
+            </constraints>
+        """
+        resources_before = """
+            <resources>
+                <primitive id="R1" />
+                <primitive id="R2" />
+                <clone id="RC1-group-clone">
+                    <group id="RC1-group">
+                        <primitive id="RC1" />
+                    </group>
+                </clone>
+                <master id="RM1-group-master">
+                    <group id="RM1-group">
+                        <primitive id="RM1" />
+                    </group>
+                </master>
+            </resources>
+        """
+        resources_after = """
+            <resources>
+                <primitive id="R1"></primitive>
+                <primitive id="R2"></primitive>
+                <group id="G">
+                    <primitive id="RC1"></primitive>
+                    <primitive id="RM1"></primitive>
+                </group>
+            </resources>
+        """
+
+        self.config.runner.cib.load(
+            resources=resources_before, constraints=constraints_before
+        ).env.push_cib(
+            exception=LibraryError(
+                ReportItem.error(
+                    report_messages.CibPushError("stderr", "stdout")
+                )
+            ),
+            resources=resources_after,
+            constraints=constraints_before,
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: resource.group_add(
+                self.env_assist.get_env(),
+                "G",
+                ["RC1", "RM1"],
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.CANNOT_LEAVE_GROUP_EMPTY_AFTER_MOVE,
+                    group_id="RC1-group",
+                    inner_resource_ids=["RC1"],
+                ),
+                fixture.error(
+                    report_codes.CANNOT_LEAVE_GROUP_EMPTY_AFTER_MOVE,
+                    group_id="RM1-group",
+                    inner_resource_ids=["RM1"],
+                ),
+            ]
         )
 
     def test_validation(self):

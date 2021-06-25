@@ -457,6 +457,17 @@ class HostAlreadyInClusterConfig(CliReportMessageCustom):
         )
 
 
+class CannotLeaveGroupEmptyAfterMove(CliReportMessageCustom):
+    _obj: messages.CannotLeaveGroupEmptyAfterMove
+
+    @property
+    def message(self) -> str:
+        return (
+            f"{self._obj.message} Please, use the 'pcs resource "
+            f"ungroup {self._obj.group_id}' command first."
+        )
+
+
 def _create_report_msg_map() -> Dict[str, type]:
     result: Dict[str, type] = {}
     for report_msg_cls in get_all_subclasses(CliReportMessageCustom):

@@ -4032,6 +4032,21 @@ class ResourceInstanceAttrValueNotUnique(NameBuildTest):
         )
 
 
+class CannotLeaveGroupEmptyAfterMove(NameBuildTest):
+    def test_single_resource(self):
+        self.assert_message_from_report(
+            "Unable to move resource 'R' as it would leave group 'gr1' empty.",
+            reports.CannotLeaveGroupEmptyAfterMove("gr1", ["R"]),
+        )
+
+    def test_multiple_resources(self):
+        self.assert_message_from_report(
+            "Unable to move resources 'R1', 'R2', 'R3' as it would leave "
+            "group 'gr1' empty.",
+            reports.CannotLeaveGroupEmptyAfterMove("gr1", ["R3", "R1", "R2"]),
+        )
+
+
 class CannotMoveResourceBundle(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(

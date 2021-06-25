@@ -549,3 +549,20 @@ class HostAlreadyInClusterConfig(CliReportMessageTestBase):
             "not part of a cluster, run 'pcs cluster destroy' on host 'nodeX' "
             "to remove those configuration files",
         )
+
+
+class CannotLeaveGroupEmptyAfterMove(CliReportMessageTestBase):
+    def test_single_resource(self):
+        self.assert_message(
+            messages.CannotLeaveGroupEmptyAfterMove("gr1", ["R"]),
+            "Unable to move resource 'R' as it would leave group 'gr1' empty. "
+            "Please, use the 'pcs resource ungroup gr1' command first.",
+        )
+
+    def test_multiple_resources(self):
+        self.assert_message(
+            messages.CannotLeaveGroupEmptyAfterMove("gr1", ["R3", "R1", "R2"]),
+            "Unable to move resources 'R1', 'R2', 'R3' as it would leave "
+            "group 'gr1' empty. Please, use the 'pcs resource ungroup gr1' "
+            "command first.",
+        )

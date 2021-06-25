@@ -320,6 +320,16 @@ def move_resources_to_group(
     """
     Put resources into a group or move them within their group
 
+    There is a corner case which is not covered in this function. If the CIB
+    contains references to a group or clone which this function deletes,
+    they are not deleted and an invalid CIB is generated. These references
+    can be constraints, fencing levels etc. - anything that contains group id of
+    the deleted group. It is on the caller to detect this corner case and handle
+    it appropriately (see group_add in lib/commands/resource.py). For future
+    rewrites of this function, it would be better to ask for --force before
+    deleting anything that user didn't explicitly ask for - like deleting the
+    clone and its associated constraints.
+
     etree.Element group_element -- the group to put resources into
     iterable primitives_to_place -- resource elements to put into the group
     etree.Element adjacent_resource -- put resources beside this one if set

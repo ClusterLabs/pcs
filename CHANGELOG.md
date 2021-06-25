@@ -19,6 +19,9 @@
   ([rhbz#1690419])
 - `pcs cluster sync` command now warns reloading corosync config is necessary
   for changes to take effect ([rhbz#1750240])
+- Show user friendly error if unable to delete a group (due to the group being
+  referenced within configuration) when moving resources out of the the group.
+  ([rhbz#1678273])
 
 ### Changed
 - python3-openssl was replaced with python3-cryptography ([rhbz#1927404])
@@ -26,6 +29,7 @@
 [ghissue#123]: https://github.com/ClusterLabs/pcs/issues/123
 [rhbz#1285269]: https://bugzilla.redhat.com/show_bug.cgi?id=1285269
 [rhbz#1290830]: https://bugzilla.redhat.com/show_bug.cgi?id=1290830
+[rhbz#1678273]: https://bugzilla.redhat.com/show_bug.cgi?id=1678273
 [rhbz#1690419]: https://bugzilla.redhat.com/show_bug.cgi?id=1690419
 [rhbz#1720221]: https://bugzilla.redhat.com/show_bug.cgi?id=1720221
 [rhbz#1750240]: https://bugzilla.redhat.com/show_bug.cgi?id=1750240

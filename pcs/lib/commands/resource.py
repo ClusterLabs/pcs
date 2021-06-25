@@ -82,15 +82,14 @@ def resource_environment(
     _push_cib_wait(env, wait, wait_for_resource_ids, resource_state_reporter)
 
 
-def _push_cib_wait(
+def _get_resource_state_wait(
     env: LibraryEnvironment,
     wait: WaitType = False,
     wait_for_resource_ids: Optional[Iterable[str]] = None,
     resource_state_reporter: Callable[
         [_Element, str], ReportItem
     ] = info_resource_state,
-) -> None:
-    env.push_cib(wait=wait)
+):
     if wait is not False and wait_for_resource_ids:
         state = env.get_cluster_state()
         if env.report_processor.report_list(
@@ -100,6 +99,20 @@ def _push_cib_wait(
             ]
         ).has_errors:
             raise LibraryError()
+
+
+def _push_cib_wait(
+    env: LibraryEnvironment,
+    wait: WaitType = False,
+    wait_for_resource_ids: Optional[Iterable[str]] = None,
+    resource_state_reporter: Callable[
+        [_Element, str], ReportItem
+    ] = info_resource_state,
+) -> None:
+    env.push_cib(wait=wait)
+    _get_resource_state_wait(
+        env, wait, wait_for_resource_ids, resource_state_reporter
+    )
 
 
 def _ensure_disabled_after_wait(disabled_after_wait):
@@ -1286,33 +1299,88 @@ def group_add(
     bool put_after_adjacent -- put resources after or before the adjacent one
     mixed wait -- flag for controlling waiting for pacemaker idle mechanism
     """
-    with resource_environment(env, wait, [group_id]) as resources_section:
-        id_provider = IdProvider(resources_section)
+    # pylint: disable = too-many-locals
+    env.ensure_wait_satisfiable(wait)
+    resources_section = get_resources(env.get_cib(None))
+    id_provider = IdProvider(resources_section)
 
-        validator = resource.hierarchy.ValidateMoveResourcesToGroupByIds(
-            group_id,
-            resource_id_list,
-            adjacent_resource_id=adjacent_resource_id,
-        )
-        if env.report_processor.report_list(
-            validator.validate(resources_section, id_provider)
-        ).has_errors:
-            raise LibraryError()
+    validator = resource.hierarchy.ValidateMoveResourcesToGroupByIds(
+        group_id,
+        resource_id_list,
+        adjacent_resource_id=adjacent_resource_id,
+    )
+    if env.report_processor.report_list(
+        validator.validate(resources_section, id_provider)
+    ).has_errors:
+        raise LibraryError()
 
-        # If we get no group element from the validator and there were no
-        # errors, then the element does not exist and we can create it.
-        group_element = validator.group_element()
-        if group_element is None:
-            group_element = resource.group.append_new(
-                resources_section, group_id
+    # If we get no group element from the validator and there were no
+    # errors, then the element does not exist and we can create it.
+    group_element = validator.group_element()
+    if group_element is None:
+        group_element = resource.group.append_new(resources_section, group_id)
+
+    # Check that elements to move won't leave their group empty. In that case,
+    # the group must be removed. Current lib implementation doesn't check
+    # for references to the removed group and may produce invalid CIB. For the
+    # time being, this is caught and produces an error that asks the user
+    # to run ungroup first which is implemented in old code and cleans up
+    # references (like constraints) to the old group in CIB. For backwards
+    # compatibility, we only show this error if the CIB push is unsuccessful.
+    empty_group_report_list = []
+
+    # Group discovery step: create a dict of sets with all resources of affected
+    # groups
+    all_resources = {}
+    for resource_element in validator.resource_element_list():
+        old_parent = resource.common.get_parent_resource(resource_element)
+        if (
+            old_parent is not None
+            and resource.group.is_group(old_parent)
+            and old_parent.attrib.get("id") not in all_resources
+        ):
+            all_resources[old_parent.attrib.get("id")] = set(
+                res.attrib.get("id")
+                for res in resource.common.get_inner_resources(old_parent)
+            )
+    affected_resources = set(resource_id_list)
+
+    # Set comparison step to determine if groups will be emptied by move
+    for old_parent_id, inner_resource_ids in all_resources.items():
+        if inner_resource_ids <= affected_resources:
+            empty_group_report_list.append(
+                ReportItem.error(
+                    reports.messages.CannotLeaveGroupEmptyAfterMove(
+                        old_parent_id, list(inner_resource_ids)
+                    )
+                )
             )
 
-        resource.hierarchy.move_resources_to_group(
-            group_element,
-            validator.resource_element_list(),
-            adjacent_resource=validator.adjacent_resource_element(),
-            put_after_adjacent=put_after_adjacent,
-        )
+    resource.hierarchy.move_resources_to_group(
+        group_element,
+        validator.resource_element_list(),
+        adjacent_resource=validator.adjacent_resource_element(),
+        put_after_adjacent=put_after_adjacent,
+    )
+
+    # We only want to show error about emptying groups if CIB push fails
+    try:
+        env.push_cib(wait=wait)
+    except LibraryError as e:
+        try:
+            if e.args and any(
+                isinstance(report.message, reports.messages.CibPushError)
+                for report in e.args
+            ):
+                if env.report_processor.report_list(
+                    empty_group_report_list
+                ).has_errors:
+                    raise LibraryError() from None
+        except AttributeError:
+            # For accessing message inside something that's not a report
+            pass
+        raise
+    _get_resource_state_wait(env, wait, [group_id], info_resource_state)
 
 
 def get_failcounts(

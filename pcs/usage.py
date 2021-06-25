@@ -538,16 +538,24 @@ Commands:
 
     group add <group id> <resource id> [resource id] ... [resource id]
               [--before <resource id> | --after <resource id>] [--wait[=n]]
-        Add the specified resource to the group, creating the group if it does
-        not exist. If the resource is present in another group it is moved to
-        the new group. You can use --before or --after to specify the position
-        of the added resources relatively to some resource already existing in
-        the group. By adding resources to a group they are already in and
+        Add the specified resource to the group, creating the group
+        if it does not exist. If the resource is present in another group 
+        it is moved to the new group. If the group remains empty after move,
+        it is deleted (for cloned groups, the clone is deleted as well). 
+        The delete operation may fail in case the group is referenced
+        within the configuration, e.g. by constraints. In that case, use 
+        'pcs resource ungroup' command prior to moving all resources 
+        out of the group. 
+        
+        You can use --before or --after to specify the position
+        of the added resources relatively to some resource already existing
+        in the group. By adding resources to a group they are already in and
         specifying --after or --before you can move the resources in the group.
+        
         If --wait is specified, pcs will wait up to 'n' seconds for the
         operation to finish (including moving resources if appropriate) and
-        then return 0 on success or 1 on error. If 'n' is not specified it
-        defaults to 60 minutes.
+        then return 0 on success or 1 on error. If 'n' is not specified 
+        it defaults to 60 minutes.
 
     group delete <group id> [resource id]... [--wait[=n]]
         Remove the group (note: this does not remove any resources from the
