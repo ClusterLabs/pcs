@@ -387,16 +387,17 @@ def resource_op_add_cmd(lib, argv, modifiers):
     # architecture.
 
     # argv[0] is an operation name
+    dom = None
     op_properties = utils.convert_args_to_tuples(argv[1:])
     for key, value in op_properties:
         if key == "on-fail" and value == "demote":
-            utils.checkAndUpgradeCIB(3, 4, 0)
+            dom = utils.cluster_upgrade_to_version((3, 4, 0))
             break
+    if dom is None:
+        dom = utils.get_cib_dom()
 
     # add the requested operation
-    utils.replace_cib_configuration(
-        resource_operation_add(utils.get_cib_dom(), res_id, argv)
-    )
+    utils.replace_cib_configuration(resource_operation_add(dom, res_id, argv))
 
 
 def resource_op_delete_cmd(lib, argv, modifiers):
@@ -960,7 +961,7 @@ def resource_update(lib, args, modifiers, deal_with_guest_change=True):
         op_vars = utils.convert_args_to_tuples(op_argv[1:])
         for k, v in op_vars:
             if k == "on-fail" and v == "demote":
-                utils.checkAndUpgradeCIB(3, 4, 0)
+                utils.cluster_upgrade_to_version((3, 4, 0))
                 cib_upgraded = True
                 break
 

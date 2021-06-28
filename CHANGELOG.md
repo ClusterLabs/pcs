@@ -22,6 +22,8 @@
 - Show user friendly error if unable to delete a group (due to the group being
   referenced within configuration) when moving resources out of the the group.
   ([rhbz#1678273])
+- Exit with an error if `on-fail=demote` is specified for a resource operation
+  and pacemaker doesn't support it
 
 ### Changed
 - python3-openssl was replaced with python3-cryptography ([rhbz#1927404])
