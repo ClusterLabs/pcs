@@ -117,14 +117,11 @@ def add_order_constraint(
     auth_user, resourceA, resourceB, actionA, actionB, score, symmetrical=true,
     force=false
 )
-  sym = symmetrical ? "symmetrical" : "nonsymmetrical"
-  if score != ""
-    score = "score=" + score
-  end
   command = [
-    PCS, "constraint", "order", actionA, resourceA, "then", actionB, resourceB,
-    score, sym
+    PCS, "constraint", "order", actionA, resourceA, "then", actionB, resourceB
   ]
+  command << "score=" + score if score != ""
+  command << (symmetrical ? "symmetrical" : "nonsymmetrical")
   command << '--force' if force
   stdout, stderr, retval = run_cmd(auth_user, *command)
   return retval, stderr.join(' ')
