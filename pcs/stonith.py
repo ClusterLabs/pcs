@@ -8,7 +8,7 @@ from pcs.cli.common import parse_args
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.fencing_topology import target_type_map_cli_to_lib
 from pcs.cli.reports import process_library_reports
-from pcs.cli.reports.output import error
+from pcs.cli.reports.output import error, warn
 from pcs.cli.resource.parse_args import parse_create_simple as parse_create_args
 from pcs.common.fencing_topology import (
     TARGET_TYPE_NODE,
@@ -193,7 +193,7 @@ def stonith_create(lib, argv, modifiers):
         )
 
 
-def stonith_level_parse_node(arg):
+def _stonith_level_parse_node(arg):
     """
     Commandline options: no options
     """
@@ -208,12 +208,52 @@ def stonith_level_parse_node(arg):
     return target_type, target_value
 
 
-def stonith_level_normalize_devices(argv):
+def _stonith_level_parse_target_and_stonith(argv):
+    target_type, target_value, devices = None, None, None
+    allowed_keywords = {"target", "stonith"}
+    missing_target_value, missing_stonith_value = False, False
+    groups = parse_args.group_by_keywords(
+        argv,
+        allowed_keywords,
+        only_found_keywords=True,
+    )
+    if "target" in groups:
+        if len(groups["target"]) > 1:
+            raise CmdLineInputError("At most one target can be specified")
+        if groups["target"]:
+            target_type, target_value = _stonith_level_parse_node(
+                groups["target"][0]
+            )
+        else:
+            missing_target_value = True
+    if "stonith" in groups:
+        if groups["stonith"]:
+            devices = groups["stonith"]
+        else:
+            missing_stonith_value = True
+
+    if missing_target_value and missing_stonith_value:
+        raise CmdLineInputError("Missing value after 'target' and 'stonith'")
+    if missing_target_value:
+        raise CmdLineInputError("Missing value after 'target'")
+    if missing_stonith_value:
+        raise CmdLineInputError("Missing value after 'stonith'")
+
+    return target_type, target_value, devices
+
+
+def _stonith_level_normalize_devices(argv):
     """
     Commandline options: no options
     """
     # normalize devices - previously it was possible to delimit devices by both
     # a comma and a space
+    if any("," in arg for arg in argv):
+        warn(
+            "Delimiting stonith devices with ',' is deprecated and will be "
+            "removed. Please use a space to delimit stonith devices.",
+            stderr=True,
+        )
     return ",".join(argv).split(",")
 
 
@@ -227,12 +267,12 @@ def stonith_level_add_cmd(lib, argv, modifiers):
     modifiers.ensure_only_supported("-f", "--force")
     if len(argv) < 3:
         raise CmdLineInputError()
-    target_type, target_value = stonith_level_parse_node(argv[1])
+    target_type, target_value = _stonith_level_parse_node(argv[1])
     lib.fencing_topology.add_level(
         argv[0],
         target_type,
         target_value,
-        stonith_level_normalize_devices(argv[2:]),
+        _stonith_level_normalize_devices(argv[2:]),
         force_device=modifiers.get("--force"),
         force_node=modifiers.get("--force"),
     )
@@ -244,15 +284,31 @@ def stonith_level_clear_cmd(lib, argv, modifiers):
       * -f - CIB file
     """
     modifiers.ensure_only_supported("-f")
-    if len(argv) > 1:
-        raise CmdLineInputError()
 
     if not argv:
         lib.fencing_topology.remove_all_levels()
         return
 
-    target_type, target_value = stonith_level_parse_node(argv[0])
-    # backward compatibility mode
+    allowed_keywords = {"target", "stonith"}
+    if len(argv) > 1 or (len(argv) == 1 and argv[0] in allowed_keywords):
+        (
+            target_type,
+            target_value,
+            devices,
+        ) = _stonith_level_parse_target_and_stonith(argv)
+        if devices is not None and target_value is not None:
+            raise CmdLineInputError(
+                "Only one of 'target' and 'stonith' can be used"
+            )
+        lib.fencing_topology.remove_levels_by_params(
+            None,
+            target_type,
+            target_value,
+            devices,
+        )
+        return
+
+    # TODO remove, deprecated backward compatibility mode for old syntax
     # Command parameters are: node, stonith-list
     # Both the node and the stonith list are optional. If the node is ommited
     # and the stonith list is present, there is no way to figure it out, since
@@ -260,6 +316,13 @@ def stonith_level_clear_cmd(lib, argv, modifiers):
     # code tried both. It deleted all levels having the first parameter as
     # either a node or a device list. Since it was only possible to specify
     # node as a target back then, this is enabled only in that case.
+    warn(
+        "Syntax 'pcs stonith level clear [<target> | <stonith id(s)>] is "
+        "deprecated and will be removed. Please use 'pcs stonith level clear "
+        "[target <target>] | [stonith <stonith id>...]'.",
+        stderr=True,
+    )
+    target_type, target_value = _stonith_level_parse_node(argv[0])
     was_error = False
     try:
         lib.fencing_topology.remove_levels_by_params(
@@ -355,10 +418,36 @@ def stonith_level_remove_cmd(lib, argv, modifiers):
         raise CmdLineInputError()
     target_type, target_value, devices = None, None, None
     level = argv[0]
-    if len(argv) > 1:
-        target_type, target_value = stonith_level_parse_node(argv[1])
-    if len(argv) > 2:
-        devices = stonith_level_normalize_devices(argv[2:])
+
+    allowed_keywords = {"target", "stonith"}
+    if len(argv) > 1 and argv[1] in allowed_keywords:
+        (
+            target_type,
+            target_value,
+            devices,
+        ) = _stonith_level_parse_target_and_stonith(argv[1:])
+        target_may_be_a_device = False
+    else:
+        # TODO remove, deprecated backward compatibility layer for old syntax
+        if len(argv) > 1:
+            warn(
+                "Syntax 'pcs stonith level delete | remove <level> [<target>] "
+                "[<stonith id>...]' is deprecated and will be removed. Please "
+                "use 'pcs stonith level delete | remove <level> "
+                "[target <target>] [stonith <stonith id>...]'.",
+                stderr=True,
+            )
+            if not parse_args.ARG_TYPE_DELIMITER in argv[1] and "," in argv[1]:
+                warn(
+                    "Delimiting stonith devices with ',' is deprecated and "
+                    "will be removed. Please use a space to delimit stonith "
+                    "devices.",
+                    stderr=True,
+                )
+            target_type, target_value = _stonith_level_parse_node(argv[1])
+        if len(argv) > 2:
+            devices = _stonith_level_normalize_devices(argv[2:])
+        target_may_be_a_device = True
 
     lib.fencing_topology.remove_levels_by_params(
         level,
@@ -366,7 +455,7 @@ def stonith_level_remove_cmd(lib, argv, modifiers):
         target_value,
         devices,
         # backward compatibility mode, see lib command for details
-        target_may_be_a_device=True,
+        target_may_be_a_device=target_may_be_a_device,
     )
 
 

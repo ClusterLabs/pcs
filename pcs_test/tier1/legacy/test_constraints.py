@@ -153,9 +153,9 @@ class ConstraintTest(unittest.TestCase):
             "constraint location C1-group rule score=pingd defined pingd".split(),
         )
         assert returnVal == 0
-        assert (
-            output
-            == "Warning: invalid score 'pingd', setting score-attribute=pingd instead\n"
+        assert output == (
+            "Warning: Converting invalid score to score-attribute=pingd is deprecated and will be removed.\n"
+            "Warning: invalid score 'pingd', setting score-attribute=pingd instead\n"
         ), [output]
 
         output, returnVal = pcs(
@@ -163,9 +163,9 @@ class ConstraintTest(unittest.TestCase):
             "constraint location D3 rule score=pingd defined pingd --force".split(),
         )
         assert returnVal == 0
-        assert (
-            output
-            == "Warning: invalid score 'pingd', setting score-attribute=pingd instead\n"
+        assert output == (
+            "Warning: Converting invalid score to score-attribute=pingd is deprecated and will be removed.\n"
+            "Warning: invalid score 'pingd', setting score-attribute=pingd instead\n"
         ), [output]
 
         output, returnVal = pcs(
@@ -176,7 +176,10 @@ class ConstraintTest(unittest.TestCase):
             ).split(),
         )
         assert returnVal == 0
-        assert output == "", [output]
+        assert output == (
+            "Warning: Syntax 'date start=<date> gt' is deprecated "
+            "and will be removed. Please use 'date gt <date>'.\n"
+        ), [output]
 
         output, returnVal = pcs(
             self.temp_cib.name,
@@ -186,7 +189,11 @@ class ConstraintTest(unittest.TestCase):
             ).split(),
         )
         assert returnVal == 0
-        assert output == "", [output]
+        assert output == (
+            "Warning: Syntax 'date start=<date> end=<date> in_range' is "
+            "deprecated and will be removed. Please use 'date in_range <date> "
+            "to <date>'.\n"
+        ), [output]
 
         output, returnVal = pcs(
             self.temp_cib.name,
@@ -195,7 +202,10 @@ class ConstraintTest(unittest.TestCase):
                 "date-spec operation=date_spec years=3005"
             ).split(),
         )
-        assert output == "", [output]
+        assert output == (
+            "Warning: Syntax 'operation=date_spec' is deprecated and will be "
+            "removed. Please use 'date-spec <date-spec options>'.\n"
+        ), [output]
         assert returnVal == 0
 
         output, returnVal = pcs(
@@ -539,7 +549,7 @@ Ticket Constraints:
         )
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint show --full".split()
+            self.temp_cib.name, "constraint config --full".split()
         )
         assert returnVal == 0
         ac(
@@ -679,7 +689,7 @@ Ticket Constraints:
         ), output
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location show --full".split()
+            self.temp_cib.name, "constraint location config --full".split()
         )
         ac(
             output,
@@ -705,7 +715,7 @@ Ticket Constraints:
         assert returnVal == 0
 
         output, returnVal = pcs(
-            self.temp_cib.name, "constraint location show --full".split()
+            self.temp_cib.name, "constraint location config --full".split()
         )
         ac(output, "Location Constraints:\n")
         assert returnVal == 0
@@ -2430,7 +2440,7 @@ Ticket Constraints:
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location show resources dummy --full".split(),
+            "constraint location config resources dummy --full".split(),
         )
         ac(
             output,
@@ -2491,7 +2501,7 @@ Ticket Constraints:
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location show resources dummy --full".split(),
+            "constraint location config resources dummy --full".split(),
         )
         ac(
             output,
@@ -3694,7 +3704,7 @@ class TicketCreateWithSet(ConstraintBaseTest):
             "constraint ticket set A B setoptions ticket=T".split()
         )
         self.assert_pcs_success(
-            "constraint ticket show".split(),
+            "constraint ticket config".split(),
             stdout_full=[
                 "Ticket Constraints:",
                 "  Resource Sets:",
@@ -3730,7 +3740,7 @@ class TicketAdd(ConstraintBaseTest):
             "constraint ticket add T master A loss-policy=fence".split()
         )
         self.assert_pcs_success(
-            "constraint ticket show".split(),
+            "constraint ticket config".split(),
             stdout_full=[
                 "Ticket Constraints:",
                 "  Master A loss-policy=fence ticket=T",
@@ -3778,7 +3788,7 @@ class TicketAdd(ConstraintBaseTest):
             ],
         )
         self.assert_pcs_success(
-            "constraint ticket show".split(),
+            "constraint ticket config".split(),
             stdout_full=[
                 "Ticket Constraints:",
                 "  Master A loss-policy=fence ticket=T",
@@ -3818,7 +3828,7 @@ class TicketDeleteRemoveTest(ConstraintBaseTest):
             "constraint ticket set A setoptions ticket=T".split()
         )
         self.assert_pcs_success(
-            "constraint ticket show".split(),
+            "constraint ticket config".split(),
             stdout_full=[
                 "Ticket Constraints:",
                 "  A ticket=T",
@@ -3835,7 +3845,7 @@ class TicketDeleteRemoveTest(ConstraintBaseTest):
         )
 
         self.assert_pcs_success(
-            "constraint ticket show".split(),
+            "constraint ticket config".split(),
             stdout_full=[
                 "Ticket Constraints:",
                 "  Resource Sets:",
@@ -3845,7 +3855,7 @@ class TicketDeleteRemoveTest(ConstraintBaseTest):
 
     def _test_fail_when_no_matching_ticket_constraint_here(self):
         self.assert_pcs_success(
-            "constraint ticket show".split(),
+            "constraint ticket config".split(),
             stdout_full=["Ticket Constraints:"],
         )
         self.assert_pcs_fail(
@@ -3875,7 +3885,7 @@ class TicketShow(ConstraintBaseTest):
             "constraint ticket add T master A loss-policy=fence".split()
         )
         self.assert_pcs_success(
-            "constraint ticket show".split(),
+            "constraint ticket config".split(),
             [
                 "Ticket Constraints:",
                 "  Master A loss-policy=fence ticket=T",
@@ -4086,7 +4096,7 @@ class LocationShowWithPattern(ConstraintBaseTest):
     def test_show(self):
         self.fixture()
         self.assert_pcs_success(
-            "constraint location show --all --full".split(),
+            "constraint location config --all --full".split(),
             outdent(
                 """\
             Location Constraints:
@@ -4138,7 +4148,7 @@ class LocationShowWithPattern(ConstraintBaseTest):
         )
 
         self.assert_pcs_success(
-            "constraint location show".split(),
+            "constraint location config".split(),
             outdent(
                 """\
             Location Constraints:
@@ -4190,7 +4200,7 @@ class LocationShowWithPattern(ConstraintBaseTest):
         )
 
         self.assert_pcs_success(
-            "constraint location show nodes --full".split(),
+            "constraint location config nodes --full".split(),
             outdent(
                 # pylint:disable=trailing-whitespace
                 """\
@@ -4250,7 +4260,7 @@ class LocationShowWithPattern(ConstraintBaseTest):
         )
 
         self.assert_pcs_success(
-            "constraint location show nodes node2".split(),
+            "constraint location config nodes node2".split(),
             outdent(
                 """\
             Location Constraints:
@@ -4283,7 +4293,7 @@ class LocationShowWithPattern(ConstraintBaseTest):
         )
 
         self.assert_pcs_success(
-            "constraint location show resources regexp%R_[0-9]+".split(),
+            "constraint location config resources regexp%R_[0-9]+".split(),
             outdent(
                 """\
             Location Constraints:

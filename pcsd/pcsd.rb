@@ -230,6 +230,7 @@ post '/run_pcs' do
       'only_superuser' => false,
       'permissions' => Permissions::FULL,
     },
+    # TODO deprecated, remove command
     ['cluster', 'pcsd-status', '...'] => {
       'only_superuser' => false,
       'permissions' => nil,
@@ -271,6 +272,10 @@ post '/run_pcs' do
       'permissions' => nil,
     },
     ['pcsd', 'deauth', '...'] => {
+      'only_superuser' => false,
+      'permissions' => nil,
+    },
+    ['pcsd', 'status', '...'] => {
       'only_superuser' => false,
       'permissions' => nil,
     },

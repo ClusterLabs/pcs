@@ -18,10 +18,13 @@ constraint_cmd = create_router(
                 "add": ticket_command.add,
                 "delete": ticket_command.remove,
                 "remove": ticket_command.remove,
+                # TODO remove, deprecated command
+                # replaced with 'config'
                 "show": ticket_command.show,
+                "config": ticket_command.config_cmd,
             },
             ["constraint", "ticket"],
-            default_cmd="show",
+            default_cmd="config",
         ),
         "colocation": create_router(
             {
@@ -29,18 +32,26 @@ constraint_cmd = create_router(
                 "remove": constraint.colocation_rm,
                 "delete": constraint.colocation_rm,
                 "set": colocation_command.create_with_set,
+                # TODO remove, deprecated command
+                # replaced with 'config'
                 "show": colocation_command.show,
+                "config": colocation_command.config_cmd,
             },
             ["constraint", "colocation"],
-            default_cmd="show",
+            default_cmd="config",
         ),
         "remove": constraint.constraint_rm,
         "delete": constraint.constraint_rm,
+        # TODO remove, deprecated command
+        # replaced with 'config'
         "show": constraint.constraint_show,
+        # TODO remove, deprecated command
+        # replaced with 'config'
         "list": constraint.constraint_show,
+        "config": constraint.constraint_config_cmd,
         "ref": constraint.constraint_ref,
         "rule": constraint.constraint_rule,
     },
     ["constraint"],
-    default_cmd="list",
+    default_cmd="config",
 )

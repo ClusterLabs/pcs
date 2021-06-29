@@ -8,7 +8,9 @@ tag_cmd = create_router(
         "create": tag.tag_create,
         "delete": tag.tag_remove,
         "help": lambda lib, argv, modifiers: usage.tag(argv),
-        "list": tag.tag_config,
+        # TODO remove, deprecated command
+        # replaced with 'config'
+        "list": tag.tag_list_cmd,
         "remove": tag.tag_remove,
         "update": tag.tag_update,
     },

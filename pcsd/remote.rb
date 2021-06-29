@@ -44,8 +44,10 @@ def remote(params, request, auth_user)
       :set_permissions => method(:set_permissions_remote),
       :cluster_start => method(:cluster_start),
       :cluster_stop => method(:cluster_stop),
+      # TODO deprecated, remove, not used anymore
       :config_backup => method(:config_backup),
       :config_restore => method(:config_restore),
+      # TODO deprecated, remove, not used anymore
       :node_restart => method(:node_restart),
       # lib api:
       # /api/v1/node-standby-unstandby/v1
@@ -55,9 +57,10 @@ def remote(params, request, auth_user)
       :node_unstandby => method(:node_unstandby),
       :cluster_enable => method(:cluster_enable),
       :cluster_disable => method(:cluster_disable),
+      # TODO deprecated, remove, not used anymore
       :resource_status => method(:resource_status),
       :get_sw_versions => method(:get_sw_versions),
-      # TODO Not used anymore in pcs-0.10. Should we keep it for older versions?
+      # TODO deprecated, remove, not used anymore in pcs-0.10
       :node_available => method(:remote_node_available),
       :cluster_add_nodes => method(:cluster_add_nodes),
       :cluster_remove_nodes => method(:cluster_remove_nodes),
@@ -362,6 +365,7 @@ def cluster_stop(params, request, auth_user)
   end
 end
 
+# TODO deprecated, remove, not used anymore
 def config_backup(params, request, auth_user)
   if params[:name]
     code, response = send_request_with_token(
@@ -417,6 +421,7 @@ def config_restore(params, request, auth_user)
   end
 end
 
+# TODO deprecated, remove, not used anymore
 def node_restart(params, request, auth_user)
   if params[:name]
     code, response = send_request_with_token(
@@ -828,7 +833,7 @@ def get_sw_versions(params, request, auth_user)
   return JSON.generate(versions)
 end
 
-# TODO Not used anymore in pcs-0.10. Should we keep it for older versions?
+# TODO deprecated, remove, not used anymore in pcs-0.10
 def remote_node_available(params, request, auth_user)
   if (
     File.exist?(Cfgsync::CorosyncConf.file_path) or \
@@ -1252,7 +1257,7 @@ def check_auth(params, request, auth_user)
   return [200, '{"success":true}']
 end
 
-# not used anymore, left here for backward compatability reasons
+# TODO deprecated, remove, not used anymore
 def resource_status(params, request, auth_user)
   if not allowed_for_local_cluster(auth_user, Permissions::READ)
     return 403, 'Permission denied'

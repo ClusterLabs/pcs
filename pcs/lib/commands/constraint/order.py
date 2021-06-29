@@ -3,8 +3,8 @@ from pcs.lib.cib.constraint import order
 import pcs.lib.commands.constraint.common
 
 # configure common constraint command
-show = partial(
-    pcs.lib.commands.constraint.common.show,
+config = partial(
+    pcs.lib.commands.constraint.common.config,
     order.TAG_NAME,
     lambda element: element.attrib.has_key("first"),
 )

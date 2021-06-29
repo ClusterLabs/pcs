@@ -4,6 +4,7 @@ from typing import (
 )
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import group_by_keywords, InputModifiers
+from pcs.cli.reports.output import warn
 from pcs.common.str_tools import indent
 
 
@@ -21,6 +22,23 @@ def tag_create(
         raise CmdLineInputError()
     tag_id, idref_list = argv[0], argv[1:]
     lib.tag.create(tag_id, idref_list)
+
+
+def tag_list_cmd(
+    lib: Any,
+    argv: Sequence[str],
+    modifiers: InputModifiers,
+) -> None:
+    """
+    Options:
+      * -f - CIB file
+    """
+    warn(
+        "This command is deprecated and will be removed. "
+        "Please use 'pcs tag config' instead.",
+        stderr=True,
+    )
+    return tag_config(lib, argv, modifiers)
 
 
 def tag_config(

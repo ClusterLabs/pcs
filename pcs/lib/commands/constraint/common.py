@@ -69,7 +69,7 @@ def create_with_set(
     env.push_cib()
 
 
-def show(tag_name, is_plain, env):
+def config(tag_name, is_plain, env):
     """
     string tag_name is constraint tag name
     callable is_plain takes constraint element and returns if is plain (i.e.

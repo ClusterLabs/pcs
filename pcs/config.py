@@ -145,25 +145,25 @@ def _config_show_cib_lines(lib):
         )
     )
     all_lines.extend(
-        constraint_command.show(
+        constraint_command.config_cmd(
             "Ordering Constraints:",
-            lib.constraint_order.show,
+            lib.constraint_order.config,
             constraints_reports.order_plain,
             modifiers.get_subset("-f", "--full"),
         )
     )
     all_lines.extend(
-        constraint_command.show(
+        constraint_command.config_cmd(
             "Colocation Constraints:",
-            lib.constraint_colocation.show,
+            lib.constraint_colocation.config,
             constraints_reports.colocation_plain,
             modifiers.get_subset("-f", "--full"),
         )
     )
     all_lines.extend(
-        constraint_command.show(
+        constraint_command.config_cmd(
             "Ticket Constraints:",
-            lib.constraint_ticket.show,
+            lib.constraint_ticket.config,
             constraints_reports.ticket_plain,
             modifiers.get_subset("-f", "--full"),
         )

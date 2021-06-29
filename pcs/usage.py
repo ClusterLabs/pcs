@@ -1017,10 +1017,6 @@ Commands:
     status
         View current cluster status (an alias of 'pcs status cluster').
 
-    pcsd-status [<node>]...
-        Show current status of pcsd on nodes specified, or on all nodes
-        configured in the local cluster if no nodes are specified.
-
     sync
         Sync cluster configuration (files which are supported by all
         subcommands of this command) to all cluster nodes.
@@ -1340,29 +1336,27 @@ Commands:
         node%<node_name>, a node name regular expression regexp%<node_pattern>
         or a node attribute value attrib%<name>=<value>.
 
-    level delete <level> [target] [stonith id]...
+    level delete <level> [target <target>] [stonith <stonith id>...]
         Removes the fence level for the level, target and/or devices specified.
         If no target or devices are specified then the fence level is removed.
         Target may be a node name <node_name> or %<node_name> or
         node%<node_name>, a node name regular expression regexp%<node_pattern>
         or a node attribute value attrib%<name>=<value>.
 
-    level remove <level> [target] [stonith id]...
+    level remove <level> [target <target>] [stonith <stonith id>...]
         Removes the fence level for the level, target and/or devices specified.
         If no target or devices are specified then the fence level is removed.
         Target may be a node name <node_name> or %<node_name> or
         node%<node_name>, a node name regular expression regexp%<node_pattern>
         or a node attribute value attrib%<name>=<value>.
 
-    level clear [target|stonith id(s)]
+    level clear [target <target> | stonith <stonith id>...]
         Clears the fence levels on the target (or stonith id) specified or
-        clears all fence levels if a target/stonith id is not specified. If
-        more than one stonith id is specified they must be separated by a comma
-        and no spaces.
+        clears all fence levels if a target/stonith id is not specified.
         Target may be a node name <node_name> or %<node_name> or
         node%<node_name>, a node name regular expression regexp%<node_pattern>
         or a node attribute value attrib%<name>=<value>.
-        Example: pcs stonith level clear dev_a,dev_b
+        Example: pcs stonith level clear stonith dev_a dev_b
 
     level verify
         Verifies all fence devices and nodes specified in fence levels exist.
@@ -1477,7 +1471,7 @@ Usage: pcs property [commands]...
 Configure pacemaker properties
 
 Commands:
-    [list|show [<property> | --all | --defaults]] | [--all | --defaults]
+    [config|list|show [<property> | --all | --defaults]] | [--all | --defaults]
         List property settings (default: lists configured properties).
         If --defaults is specified will show all property defaults, if --all
         is specified, current configured properties will be shown with unset
@@ -1513,7 +1507,7 @@ Usage: pcs constraint [constraints]...
 Manage resource constraints
 
 Commands:
-    [list|show] [--all] [--full]
+    [config | list | show] [--all] [--full]
         List all current constraints that are not expired. If --all
         is specified also show expired constraints. If --full is specified
         also list the constraint ids.
@@ -1552,8 +1546,8 @@ Commands:
         If id is omitted one is generated from the resource id. If
         resource-discovery is omitted it defaults to 'always'.
 
-    location [show [resources [<resource>...]] | [nodes [<node>...]]] [--all]
-            [--full]
+    location [config | show [resources [<resource>...]] | [nodes [<node>...]]]
+            [--all] [--full]
         List all the current location constraints that are not expired. If
         'resources' is specified, location constraints are displayed per
         resource (default). If 'nodes' is specified, location constraints are
@@ -1576,7 +1570,7 @@ Commands:
     location remove <id>
         Remove a location constraint with the appropriate id.
 
-    order [show] [--full]
+    order [config | show] [--full]
         List all current ordering constraints (if --full is specified show
         the internal constraint id's as well).
 
@@ -1602,7 +1596,7 @@ Commands:
     order remove <resource1> [resourceN]...
         Remove resource from any ordering constraint
 
-    colocation [show] [--full]
+    colocation [config | show] [--full]
         List all current colocation constraints (if --full is specified show
         the internal constraint id's as well).
 
@@ -1631,7 +1625,7 @@ Commands:
     colocation remove <source resource id> <target resource id>
         Remove colocation constraints with specified resources.
 
-    ticket [show] [--full]
+    ticket [config | show] [--full]
         List all current ticket constraints (if --full is specified show
         the internal constraint id's as well).
 
@@ -1702,7 +1696,7 @@ Usage: pcs acl [commands]...
 View and modify current cluster access control lists
 Commands:
 
-    [show]
+    [config | show]
         List all current access control lists.
 
     enable
@@ -1921,6 +1915,10 @@ Manage pcs daemon
 Commands:
     certkey <certificate file> <key file>
         Load custom certificate and key files for use in pcsd.
+
+    status [<node>]...
+        Show current status of pcsd on nodes specified, or on all nodes
+        configured in the local cluster if no nodes are specified.
 
     sync-certificates
         Sync pcsd certificates to all nodes in the local cluster.

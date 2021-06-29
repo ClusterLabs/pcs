@@ -9,8 +9,9 @@ from pcs.common.reports import (
 from .messages import report_item_msg_from_dto
 
 
-def warn(message: str) -> None:
-    sys.stdout.write(f"Warning: {message}\n")
+def warn(message: str, stderr: bool = False) -> None:
+    stream = sys.stderr if stderr else sys.stdout
+    stream.write(f"Warning: {message}\n")
 
 
 def error(message: str) -> SystemExit:

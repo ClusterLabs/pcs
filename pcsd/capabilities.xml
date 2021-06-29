@@ -710,7 +710,7 @@
         Create (with or without role ids) and delete ACL groups one at a time.
         Show ACL groups.
 
-        pcs commands: acl group ( create | delete | remove ), acl show
+        pcs commands: acl group ( create | delete | remove ), acl config
         daemon urls:
           /api/v1/acl-create-group/v1
           /api/v1/acl-remove-group/v1
@@ -765,7 +765,7 @@
         Create (with or without role ids) and delete ACL users one at a time.
         Show ACL groups.
 
-        pcs commands: acl user ( create | delete | remove ), acl show
+        pcs commands: acl user ( create | delete | remove ), acl config
         daemon urls:
           /api/v1/acl-create-target/v1
           /api/v1/acl-remove-target/v1
@@ -859,8 +859,8 @@
         Expired constraints are not listed by default. When --all option is
         specified, expired constraints and rules are denoted with "(expired)".
 
-        pcs commands: constraint [ show | list ] --all
-          constraint location [ show ] --all
+        pcs commands: constraint [ config ] --all
+          constraint location [ config ] --all
       </description>
     </capability>
     <capability id="pcmk.constraint.location.simple" in-pcs="1" in-pcsd="1">
@@ -2036,8 +2036,7 @@
         * remove specified tags
         * show cluster tag configuration
 
-        pcs commands: tag (config | list), tag create, tag (delete | remove),
-          tag update
+        pcs commands: tag config, tag create, tag (delete | remove), tag update
       </description>
     </capability>
     <capability id="pcmk.tag.resources" in-pcs="1" in-pcsd="0">

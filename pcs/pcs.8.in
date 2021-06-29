@@ -513,9 +513,6 @@ Authenticate pcs/pcsd to pcsd on nodes configured in the local cluster.
 status
 View current cluster status (an alias of 'pcs status cluster').
 .TP
-pcsd\-status [<node>]...
-Show current status of pcsd on nodes specified, or on all nodes configured in the local cluster if no nodes are specified.
-.TP
 sync
 Sync cluster configuration (files which are supported by all subcommands of this command) to all cluster nodes.
 .TP
@@ -698,14 +695,14 @@ Lists all of the fencing levels currently configured.
 level add <level> <target> <stonith id> [stonith id]...
 Add the fencing level for the specified target with the list of stonith devices to attempt for that target at that level. Fence levels are attempted in numerical order (starting with 1). If a level succeeds (meaning all devices are successfully fenced in that level) then no other levels are tried, and the target is considered fenced. Target may be a node name <node_name> or %<node_name> or node%<node_name>, a node name regular expression regexp%<node_pattern> or a node attribute value attrib%<name>=<value>.
 .TP
-level delete <level> [target] [stonith id]...
+level delete <level> [target <target>] [stonith <stonith id>...]
 Removes the fence level for the level, target and/or devices specified. If no target or devices are specified then the fence level is removed. Target may be a node name <node_name> or %<node_name> or node%<node_name>, a node name regular expression regexp%<node_pattern> or a node attribute value attrib%<name>=<value>.
 .TP
-level remove <level> [target] [stonith id]...
+level remove <level> [target <target>] [stonith <stonith id>...]
 Removes the fence level for the level, target and/or devices specified. If no target or devices are specified then the fence level is removed. Target may be a node name <node_name> or %<node_name> or node%<node_name>, a node name regular expression regexp%<node_pattern> or a node attribute value attrib%<name>=<value>.
 .TP
-level clear [target|stonith id(s)]
-Clears the fence levels on the target (or stonith id) specified or clears all fence levels if a target/stonith id is not specified. If more than one stonith id is specified they must be separated by a comma and no spaces. Target may be a node name <node_name> or %<node_name> or node%<node_name>, a node name regular expression regexp%<node_pattern> or a node attribute value attrib%<name>=<value>. Example: pcs stonith level clear dev_a,dev_b
+level clear [target <target> | stonith <stonith id>...]
+Clears the fence levels on the target (or stonith id) specified or clears all fence levels if a target/stonith id is not specified. Target may be a node name <node_name> or %<node_name> or node%<node_name>, a node name regular expression regexp%<node_pattern> or a node attribute value attrib%<name>=<value>. Example: pcs stonith level clear stonith dev_a dev_b
 .TP
 level verify
 Verifies all fence devices and nodes specified in fence levels exist.
@@ -772,7 +769,7 @@ This operation is expected to force\-reboot the local system without following a
 
 .SS "acl"
 .TP
-[show]
+[config | show]
 List all current access control lists.
 .TP
 enable
@@ -832,7 +829,7 @@ permission remove <permission id>
 Remove the permission id specified (permission id's are listed in parenthesis after permissions in 'pcs acl' output).
 .SS "property"
 .TP
-[list|show [<property> | \fB\-\-all\fR | \fB\-\-defaults\fR]] | [\fB\-\-all\fR | \fB\-\-defaults\fR]
+[config | list | show [<property> | \fB\-\-all\fR | \fB\-\-defaults\fR]] | [\fB\-\-all\fR | \fB\-\-defaults\fR]
 List property settings (default: lists configured properties).  If \fB\-\-defaults\fR is specified will show all property defaults, if \fB\-\-all\fR is specified, current configured properties will be shown with unset properties and their defaults.
 See \fBpacemaker-controld\fR(7) and \fBpacemaker-schedulerd\fR(7) man pages for a description of the properties.
 .TP
@@ -845,7 +842,7 @@ Remove property from configuration.
 See \fBpacemaker-controld\fR(7) and \fBpacemaker-schedulerd\fR(7) man pages for a description of the properties.
 .SS "constraint"
 .TP
-[list|show] [\fB\-\-full\fR] [\fB\-\-all\fR]
+[config | list | show] [\fB\-\-full\fR] [\fB\-\-all\fR]
 List all current constraints that are not expired. If \fB\-\-all\fR is specified also show expired constraints. If \fB\-\-full\fR is specified also list the constraint ids.
 .TP
 location <resource> prefers <node>[=<score>] [<node>[=<score>]]...
@@ -875,7 +872,7 @@ Creates a location constraint with a rule on the specified resource where expres
 .br
 where duration options and date spec options are: hours, monthdays, weekdays, yeardays, months, weeks, years, weekyears, moon. Resource may be either a resource id <resource_id> or %<resource_id> or resource%<resource_id>, or a resource name regular expression regexp%<resource_pattern>. If score is omitted it defaults to INFINITY. If id is omitted one is generated from the resource id. If resource\-discovery is omitted it defaults to 'always'.
 .TP
-location [show [resources [<resource>...]] | [nodes [<node>...]]] [\fB\-\-full\fR] [\fB\-\-all\fR]
+location [config | show [resources [<resource>...]] | [nodes [<node>...]]] [\fB\-\-full\fR] [\fB\-\-all\fR]
 List all the current location constraints that are not expired. If 'resources' is specified, location constraints are displayed per resource (default). If 'nodes' is specified, location constraints are displayed per node. If specific nodes or resources are specified then we only show information about them. Resource may be either a resource id <resource_id> or %<resource_id> or resource%<resource_id>, or a resource name regular expression regexp%<resource_pattern>. If \fB\-\-full\fR is specified show the internal constraint id's as well. If \fB\-\-all\fR is specified show the expired constraints.
 .TP
 location add <id> <resource> <node> <score> [resource\-discovery=<option>]
@@ -887,7 +884,7 @@ Remove a location constraint with the appropriate id.
 location remove <id>
 Remove a location constraint with the appropriate id.
 .TP
-order [show] [\fB\-\-full\fR]
+order [config | show] [\fB\-\-full\fR]
 List all current ordering constraints (if \fB\-\-full\fR is specified show the internal constraint id's as well).
 .TP
 order [action] <resource id> then [action] <resource id> [options]
@@ -902,7 +899,7 @@ Remove resource from any ordering constraint
 order remove <resource1> [resourceN]...
 Remove resource from any ordering constraint
 .TP
-colocation [show] [\fB\-\-full\fR]
+colocation [config | show] [\fB\-\-full\fR]
 List all current colocation constraints (if \fB\-\-full\fR is specified show the internal constraint id's as well).
 .TP
 colocation add [<role>] <source resource id> with [<role>] <target resource id> [score] [options] [id=constraint\-id]
@@ -917,7 +914,7 @@ Remove colocation constraints with specified resources.
 colocation remove <source resource id> <target resource id>
 Remove colocation constraints with specified resources.
 .TP
-ticket [show] [\fB\-\-full\fR]
+ticket [config | show] [\fB\-\-full\fR]
 List all current ticket constraints (if \fB\-\-full\fR is specified show the internal constraint id's as well).
 .TP
 ticket add <ticket> [<role>] <resource id> [<options>] [id=<constraint\-id>]
@@ -1155,6 +1152,9 @@ Restore cluster configuration to specified checkpoint.
 certkey <certificate file> <key file>
 Load custom certificate and key files for use in pcsd.
 .TP
+status [<node>]...
+Show current status of pcsd on nodes specified, or on all nodes configured in the local cluster if no nodes are specified.
+.TP
 sync\-certificates
 Sync pcsd certificates to all nodes in the local cluster.
 .TP
@@ -1283,6 +1283,14 @@ no_proxy, https_proxy, all_proxy, NO_PROXY, HTTPS_PROXY, ALL_PROXY
  These environment variables (listed according to their priorities) control how pcs handles proxy servers when connecting to cluster nodes. See curl(1) man page for details.
 .SH CHANGES IN PCS-0.10
 This section summarizes the most important changes in commands done in pcs-0.10.x compared to pcs-0.9.x. For detailed description of current commands see above.
+.SS "acl"
+.TP
+show
+The 'pcs acl show' command has been deprecated and will be removed. Please use 'pcs acl config' instead. Applicable in pcs-0.10.9 and newer.
+.SS "alert"
+.TP
+show
+The 'pcs alert show' command has been deprecated and will be removed. Please use 'pcs alert config' instead. Applicable in pcs-0.10.9 and newer.
 .SS "cluster"
 .TP
 auth
@@ -1292,6 +1300,9 @@ node add
 Custom node names and Corosync 3.x with knet are fully supported now, therefore the syntax has been completely changed.
 .br
 The \fB\-\-device\fR and \fB\-\-watchdog\fR options have been replaced with 'device' and 'watchdog' options, respectively.
+.TP
+pcsd\-status
+The 'pcs cluster pcsd\-status' command has been deprecated and will be removed. Please use 'pcs pcsd status' or 'pcs status pcsd' instead. Applicable in pcs-0.10.9 and newer.
 .TP
 quorum
 This command has been replaced with 'pcs quorum'.
@@ -1322,17 +1333,29 @@ verify
 The \fB\-V\fR option has been replaced with \fB\-\-full\fR.
 .br
 To specify a filename, use the \fB\-f\fR option.
+.SS "constraint"
+.TP
+list
+The 'pcs constraint list' command, as well as its variants 'pcs constraint [location | colocation | order | ticket] list', has been deprecated and will be removed. Please use 'pcs constraint [location | colocation | order | ticket] config' instead. Applicable in pcs-0.10.9 and newer.
+.TP
+show
+The 'pcs constraint show' command, as well as its variants 'pcs constraint [location | colocation | order | ticket] show', has been deprecated and will be removed. Please use 'pcs constraint [location | colocation | order | ticket] config' instead. Applicable in pcs-0.10.9 and newer.
 .SS "pcsd"
 .TP
 clear\-auth
 This command has been replaced with 'pcs host deauth' and 'pcs pcsd deauth'.
 .SS "property"
 .TP
+list
+The 'pcs property list' command has been deprecated and will be removed. Please use 'pcs property config' instead. Applicable in pcs-0.10.9 and newer.
+.TP
 set
 The \fB\-\-node\fR option is no longer supported. Use the 'pcs node attribute' command to set node attributes.
 .TP
 show
 The \fB\-\-node\fR option is no longer supported. Use the 'pcs node attribute' command to view node attributes.
+.br
+The 'pcs property show' command has been deprecated and will be removed. Please use 'pcs property config' instead. Applicable in pcs-0.10.9 and newer.
 .TP
 unset
 The \fB\-\-node\fR option is no longer supported. Use the 'pcs node attribute' command to unset node attributes.
@@ -1355,6 +1378,15 @@ groups
 This command has been replaced with 'pcs resource group list'.
 .SS "stonith"
 .TP
+level add | clear | delete | remove
+Delimiting stonith devices with a comma is deprecated, use a space instead. Applicable in pcs-0.10.9 and newer.
+.TP
+level clear
+Syntax of the command has been fixed so that it is not ambiguous any more. New syntax is 'pcs stonith level clear [target <target> | stonith <stonith id>...]'. Old syntax 'pcs stonith level clear [<target> | <stonith ids>]' is deprecated but still functional in pcs-0.10.x. Applicable in pcs-0.10.9 and newer.
+.TP
+level delete | remove
+Syntax of the command has been fixed so that it is not ambiguous any more. New syntax is 'pcs stonith level delete | remove [target <target>] [stonith <stonith id>]...'. Old syntax 'pcs stonith level delete | remove [<target>] [<stonith id>]...' is deprecated but still functional in pcs-0.10.x. Applicable in pcs-0.10.9 and newer.
+.TP
 sbd device setup
 The \fB\-\-device\fR option has been replaced with the 'device' option.
 .TP
@@ -1363,6 +1395,10 @@ The \fB\-\-device\fR and \fB\-\-watchdog\fR options have been replaced with 'dev
 .TP
 show
 Previously, this command displayed either status or configuration of stonith resources depending on the parameters specified. This was confusing, therefore the command was replaced by several new commands. To display stonith resources status, run 'pcs stonith' or 'pcs stonith status'. To display stonith resources configuration, run 'pcs stonith config' or 'pcs stonith config <stonith name>'.
+.SS "tag"
+.TP
+list
+The 'pcs tag list' command has been deprecated and will be removed. Please use 'pcs tag config' instead. Applicable in pcs-0.10.9 and newer.
 .SH SEE ALSO
 http://clusterlabs.org/doc/
 

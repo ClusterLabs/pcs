@@ -1,3 +1,8 @@
+from typing import (
+    Any,
+    Sequence,
+)
+
 from pcs import (
     cluster,
     pcsd,
@@ -6,8 +11,40 @@ from pcs import (
     usage,
 )
 import pcs.cli.cluster.command as cluster_command
-from pcs.cli.common.errors import raise_command_replaced
+from pcs.cli.common.errors import (
+    CmdLineInputError,
+    raise_command_replaced,
+)
+from pcs.cli.common.parse_args import InputModifiers
 from pcs.cli.common.routing import create_router
+from pcs.cli.reports.output import warn
+from pcs.utils import exit_on_cmdline_input_errror
+
+
+def certkey(lib: Any, argv: Sequence[str], modifiers: InputModifiers) -> None:
+    warn(
+        "This command is deprecated and will be removed. "
+        "Please use 'pcs pcsd certkey' instead.",
+        stderr=True,
+    )
+    try:
+        return pcsd.pcsd_certkey_cmd(lib, argv, modifiers)
+    except CmdLineInputError as e:
+        return exit_on_cmdline_input_errror(e, "pcsd", ["certkey"])
+
+
+def pcsd_status(
+    lib: Any, argv: Sequence[str], modifiers: InputModifiers
+) -> None:
+    warn(
+        "This command is deprecated and will be removed. "
+        "Please use 'pcs pcsd status' or 'pcs status pcsd' instead.",
+        stderr=True,
+    )
+    try:
+        return pcsd.pcsd_status_cmd(lib, argv, modifiers)
+    except CmdLineInputError as e:
+        return exit_on_cmdline_input_errror(e, "pcsd", ["status"])
 
 
 cluster_cmd = create_router(
@@ -34,8 +71,12 @@ cluster_cmd = create_router(
             default_cmd="corosync",
         ),
         "status": status.cluster_status,
-        "pcsd-status": status.cluster_pcsd_status,
-        "certkey": pcsd.pcsd_certkey,
+        # TODO remove, deprecated command
+        # replaced with 'pcs pcsd status' and 'pcs status pcsd'
+        "pcsd-status": pcsd_status,
+        # TODO remove, deprecated command
+        # replaced with 'pcs pcsd certkey'
+        "certkey": certkey,
         "auth": cluster.cluster_auth_cmd,
         "start": cluster.cluster_start_cmd,
         "stop": cluster.cluster_stop_cmd,

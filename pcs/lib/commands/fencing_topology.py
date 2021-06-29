@@ -1,3 +1,8 @@
+from typing import (
+    Iterable,
+    Optional,
+)
+
 from pcs.common.fencing_topology import (
     TARGET_TYPE_ATTRIBUTE,
     TARGET_TYPE_NODE,
@@ -86,21 +91,24 @@ def remove_all_levels(lib_env: LibraryEnvironment):
 def remove_levels_by_params(
     lib_env: LibraryEnvironment,
     level=None,
-    target_type=None,
+    # TODO create a special type, so that it cannot accept any string
+    target_type: Optional[str] = None,
     target_value=None,
-    devices=None,
-    ignore_if_missing=False,
-    target_may_be_a_device=False,
+    devices: Optional[Iterable[str]] = None,
+    # TODO remove, deprecated backward compatibility layer
+    ignore_if_missing: bool = False,
+    # TODO remove, deprecated backward compatibility layer
+    target_may_be_a_device: bool = False,
 ):
     """
     Remove specified fencing level(s).
 
     LibraryEnvironment lib_env -- environment
     int|string level -- level (index) of the fencing level to remove
-    constant target_type -- the removed fencing level target value type
+    target_type -- the removed fencing level target value type
     mixed target_value -- the removed fencing level target value
-    Iterable devices -- list of stonith devices of the removed fencing level
-    bool ignore_if_missing -- when True, do not report if level not found
+    devices -- list of stonith devices of the removed fencing level
+    ignore_if_missing -- when True, do not report if level not found
     target_may_be_a_device -- enables backward compatibility mode for old CLI
     """
     topology_el = get_fencing_topology(lib_env.get_cib())
@@ -111,6 +119,7 @@ def remove_levels_by_params(
         target_value,
         devices,
         ignore_if_missing,
+        validate_device_ids=(not target_may_be_a_device),
     )
 
     if not target_may_be_a_device or target_type != TARGET_TYPE_NODE:
@@ -119,7 +128,7 @@ def remove_levels_by_params(
         lib_env.push_cib()
         return
 
-    # backward compatibility mode
+    # TODO remove, deprecated backward compatibility mode
     # CLI command parameters are: level, node, stonith, stonith... Both the
     # node and the stonith list are optional. If the node is ommited and the
     # stonith list is present, there is no way to figure it out, since there is
@@ -151,7 +160,13 @@ def remove_levels_by_params(
     if devices:
         target_and_devices.extend(devices)
     report_list_second = cib_fencing_topology.remove_levels_by_params(
-        topology_el, level, None, None, target_and_devices, ignore_if_missing
+        topology_el,
+        level,
+        None,
+        None,
+        target_and_devices,
+        ignore_if_missing,
+        validate_device_ids=(not target_may_be_a_device),
     )
     if not report.has_errors(report_list_second):
         lib_env.report_processor.report_list(report_list_second)

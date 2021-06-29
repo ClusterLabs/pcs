@@ -49,7 +49,7 @@ def add_fence_level(auth_user, level, devices, node, remove = false)
     return retval,stdout, stderr
   else
     stdout, stderr, retval = run_cmd(
-      auth_user, PCS, "stonith", "level", "remove", level, node, devices
+      auth_user, PCS, "stonith", "level", "remove", level, "target", node, "stonith", devices
     )
     return retval,stdout, stderr
   end

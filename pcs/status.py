@@ -2,14 +2,13 @@ import sys
 import os
 
 from pcs import utils
-from pcs.common import reports
-from pcs.common.reports.item import ReportItem
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.reports import process_library_reports
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.live import get_cluster_status_dom
 from pcs.lib.pacemaker.state import ClusterState
+from pcs.pcsd import pcsd_status_cmd
 
 # pylint: disable=too-many-branches, too-many-locals, too-many-statements
 
@@ -248,7 +247,7 @@ def print_pcsd_daemon_status(lib, modifiers):
     """
     print("PCSD Status:")
     if os.getuid() == 0:
-        cluster_pcsd_status(
+        pcsd_status_cmd(
             lib, [], modifiers.get_subset("--request-timeout"), dont_exit=True
         )
     else:
@@ -262,60 +261,3 @@ def print_pcsd_daemon_status(lib, modifiers):
             print(std_out)
         else:
             print("Unable to get PCSD status")
-
-
-def check_nodes(node_list, prefix=""):
-    """
-    Print pcsd status on node_list, return if there is any pcsd not online
-
-    Commandline options:
-      * --request-timeout - HTTP timeout for node authorization check
-    """
-    online_code = 0
-    status_desc_map = {online_code: "Online", 3: "Unable to authenticate"}
-    status_list = []
-
-    def report(node, returncode, output):
-        del output
-        print(
-            "{0}{1}: {2}".format(
-                prefix, node, status_desc_map.get(returncode, "Offline")
-            )
-        )
-        status_list.append(returncode)
-
-    utils.read_known_hosts_file()  # cache known hosts
-    utils.run_parallel(
-        utils.create_task_list(report, utils.checkAuthorization, node_list)
-    )
-
-    return any(status != online_code for status in status_list)
-
-
-# If no arguments get current cluster node status, otherwise get listed
-# nodes status
-def cluster_pcsd_status(lib, argv, modifiers, dont_exit=False):
-    """
-    Options:
-      * --request-timeout - HTTP timeout for node authorization check
-    """
-    del lib
-    modifiers.ensure_only_supported("--request-timeout")
-    bad_nodes = False
-    if not argv:
-        nodes, report_list = get_existing_nodes_names(
-            utils.get_corosync_conf_facade()
-        )
-        if not nodes and not dont_exit:
-            report_list.append(
-                ReportItem.error(
-                    reports.messages.CorosyncConfigNoNodesDefined()
-                )
-            )
-        if report_list:
-            process_library_reports(report_list)
-        bad_nodes = check_nodes(nodes, "  ")
-    else:
-        bad_nodes = check_nodes(argv, "  ")
-    if bad_nodes and not dont_exit:
-        sys.exit(2)

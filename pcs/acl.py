@@ -3,6 +3,7 @@ from pcs import (
     utils,
 )
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.reports.output import warn
 from pcs.common.str_tools import indent
 from pcs.lib.pacemaker.values import is_true
 
@@ -16,6 +17,15 @@ def _print_list_of_objects(obj_list, transformation_fn):
 
 
 def show_acl_config(lib, argv, modifiers):
+    warn(
+        "This command is deprecated and will be removed. "
+        "Please use 'pcs acl config' instead.",
+        stderr=True,
+    )
+    return acl_config(lib, argv, modifiers)
+
+
+def acl_config(lib, argv, modifiers):
     """
     Options:
       * -f - CIB file
@@ -178,6 +188,13 @@ def _role_assign_unassign(argv, keyword, not_specific_fn, user_fn, group_fn):
     """
     Commandline options: no options
     """
+    # TODO deprecate ambiguous syntax:
+    # - pcs role assign <role id> [to] [user|group] <username/group>
+    # - pcs role unassign <role id> [from] [user|group] <username/group>
+    # The problem is, that 'user|group' is optional, therefore pcs guesses
+    # which one it is.
+    # We haven't deprecated it yet, as groups don't work in pacemaker,
+    # therefore there would be no benefit from deprecating it.
     argv_len = len(argv)
     if argv_len < 2:
         raise CmdLineInputError()
@@ -213,6 +230,10 @@ def role_assign(lib, argv, modifiers):
     _role_assign_unassign(
         argv,
         "to",
+        # TODO deprecate
+        # Use assign_role_to_target or assign_role_to_group instead.
+        # We haven't deprecated it yet, as groups don't work in pacemaker,
+        # therefore there would be no benefit from deprecating it.
         lib.acl.assign_role_not_specific,
         lib.acl.assign_role_to_target,
         lib.acl.assign_role_to_group,
@@ -229,6 +250,10 @@ def role_unassign(lib, argv, modifiers):
     _role_assign_unassign(
         argv,
         "from",
+        # TODO deprecate
+        # Use unassign_role_from_target or unassign_role_from_group instead.
+        # We haven't deprecated it yet, as groups don't work in pacemaker,
+        # therefore there would be no benefit from deprecating it.
         lambda role_id, ug_id: lib.acl.unassign_role_not_specific(
             role_id, ug_id, modifiers.get("--autodelete")
         ),

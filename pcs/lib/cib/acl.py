@@ -75,6 +75,9 @@ find_role = partial(_find, TAG_ROLE)
 find_target = partial(_find, TAG_TARGET)
 
 
+# TODO deprecate
+# We haven't deprecated it yet, as groups don't work in pacemaker, therefore
+# there would be no benefit from deprecating it.
 def find_target_or_group(acl_section, target_or_group_id):
     """
     Returns acl_target or acl_group element with id target_or_group_id. Target

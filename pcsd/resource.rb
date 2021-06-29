@@ -16,6 +16,7 @@ def run_crm_mon_xml(auth_user)
   return stdout, stderr, retval
 end
 
+# TODO deprecated, remove, not used anymore
 def getResourcesGroups(auth_user, get_fence_devices = false, get_all_options = false,
   get_operations=false
 )

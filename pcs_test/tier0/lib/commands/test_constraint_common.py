@@ -172,7 +172,7 @@ class CreateWithSetTest(TestCase):
         )
 
 
-class ShowTest(TestCase):
+class ConfigTest(TestCase):
     def setUp(self):
         self.cib, self.constraint_section = fixture_cib_and_constraints()
         self.env = fixture_env(self.cib)
@@ -207,7 +207,7 @@ class ShowTest(TestCase):
         is_plain = lambda element: element.attrib.has_key("is_plain")
 
         self.assertEqual(
-            constraint.show(tag_name, is_plain, self.env),
+            constraint.config(tag_name, is_plain, self.env),
             {
                 "plain": [{"options": {"id": "plain1", "is_plain": "true"}}],
                 "with_resource_sets": [

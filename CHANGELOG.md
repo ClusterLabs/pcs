@@ -26,6 +26,31 @@
 ### Changed
 - python3-openssl was replaced with python3-cryptography ([rhbz#1927404])
 
+### Deprecated
+- `pcs acl show` replaced with `pcs acl config`
+- `pcs alert show` replaced with `pcs alert config`
+- Undocumented command `pcs cluster certkey` replaced with `pcs pcsd certkey`
+- `pcs cluster pcsd-status` replaced with `pcs status pcsd` or `pcs pcsd status`
+- `pcs constraint [location | colocation | order | ticket] show | list` replaced
+  with `pcs constraint [location | colocation | order | ticket] config`
+- `pcs property show`, `pcs property list` replaced with `pcs property config`
+- pcsd urls: `/remote/config_backup`, `/remote/node_available`,
+  `/remote/node_restart`, `/remote/resource_status`
+- Undocumented syntax for constraint location rules:
+  - `date start=<date> gt` replaced with `date gt <date>`
+  - `date end=<date> lt` replaced with `date lt <date>`
+  - `date start=<date> end=<date> in_range` replaced with `date in_range <date>
+    to <date>`
+  - `operation=date_spec` replaced with `date-spec <date-spec options>`
+  - converting invalid score to score-attribute=pingd
+- Delimiting stonith devices with a comma in `pcs stonith level add | clear |
+  delete | remove` commands, use a space instead
+- `pcs stonith level delete | remove [<target>] [<stonith id>]...` replaced with
+  `pcs stonith level delete | remove [target <target>] [stonith <stonith id>]...`
+- `pcs stonith level clear [<target> | <stonith ids>]` replaced with
+  `pcs stonith level clear [target <target> | stonith <stonith id>...]`
+- `pcs tag list` replaced with `pcs tag config`
+
 [ghissue#123]: https://github.com/ClusterLabs/pcs/issues/123
 [rhbz#1285269]: https://bugzilla.redhat.com/show_bug.cgi?id=1285269
 [rhbz#1290830]: https://bugzilla.redhat.com/show_bug.cgi?id=1290830

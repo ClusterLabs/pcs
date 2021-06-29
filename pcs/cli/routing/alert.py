@@ -13,7 +13,9 @@ alert_cmd = create_router(
         "delete": alert.alert_remove,
         "remove": alert.alert_remove,
         "config": alert.print_alert_config,
-        "show": alert.print_alert_config,
+        # TODO remove, deprecated command
+        # replaced with 'config'
+        "show": alert.print_alert_show,
         "recipient": create_router(
             {
                 "help": lambda lib, argv, modifiers: usage.alert(["recipient"]),

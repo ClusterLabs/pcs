@@ -79,7 +79,9 @@ def _resource_move_ban_pcmk_success(stdout: str, stderr: str) -> str:
     return "\n".join(new_lines)
 
 
-def _format_fencing_level_target(target_type: str, target_value: Any) -> str:
+def _format_fencing_level_target(
+    target_type: Optional[str], target_value: Any
+) -> str:
     if target_type == TARGET_TYPE_ATTRIBUTE:
         return "{0}={1}".format(target_value[0], target_value[1])
     return target_value
@@ -4606,7 +4608,7 @@ class CibFencingLevelDoesNotExist(ReportItemMessage):
     """
 
     level: str = ""
-    target_type: str = ""
+    target_type: Optional[str] = None
     target_value: Optional[Tuple[str, str]] = None
     devices: List[str] = field(default_factory=list)
     _code = codes.CIB_FENCING_LEVEL_DOES_NOT_EXIST

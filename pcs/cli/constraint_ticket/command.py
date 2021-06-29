@@ -1,7 +1,7 @@
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.constraint import command
 from pcs.cli.constraint_ticket import parse_args
-from pcs.cli.reports.output import error
+from pcs.cli.reports.output import error, warn
 from pcs.common.reports import constraints
 
 
@@ -73,6 +73,15 @@ def remove(lib, argv, modifiers):
 
 
 def show(lib, argv, modifiers):
+    warn(
+        "This command is deprecated and will be removed. "
+        "Please use 'pcs constraint ticket config' instead.",
+        stderr=True,
+    )
+    return config_cmd(lib, argv, modifiers)
+
+
+def config_cmd(lib, argv, modifiers):
     """
     show all ticket constraints
     object lib exposes library
@@ -88,9 +97,9 @@ def show(lib, argv, modifiers):
         raise CmdLineInputError()
     print(
         "\n".join(
-            command.show(
+            command.config_cmd(
                 "Ticket Constraints:",
-                lib.constraint_ticket.show,
+                lib.constraint_ticket.config,
                 constraints.ticket_plain,
                 modifiers,
             )
