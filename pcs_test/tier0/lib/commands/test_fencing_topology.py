@@ -13,7 +13,6 @@ from pcs.common.fencing_topology import (
     TARGET_TYPE_NODE,
     TARGET_TYPE_REGEXP,
 )
-from pcs.common.tools import Version
 from pcs.lib.env import LibraryEnvironment
 
 from pcs.lib.commands import fencing_topology as lib
@@ -108,7 +107,7 @@ class AddLevel(TestCase):
             "force device",
             "force node",
         )
-        mock_get_cib.assert_called_once_with(None)
+        mock_get_cib.assert_called_once_with()
         self.assert_mocks(
             mock_status_dom,
             mock_status,
@@ -158,7 +157,7 @@ class AddLevel(TestCase):
             "force device",
             "force node",
         )
-        mock_get_cib.assert_called_once_with(Version(2, 4, 0))
+        mock_get_cib.assert_called_once_with()
         self.assert_mocks(
             mock_status_dom,
             mock_status,
@@ -208,7 +207,7 @@ class AddLevel(TestCase):
             "force device",
             "force node",
         )
-        mock_get_cib.assert_called_once_with(Version(2, 3, 0))
+        mock_get_cib.assert_called_once_with()
         self.assert_mocks(
             mock_status_dom,
             mock_status,

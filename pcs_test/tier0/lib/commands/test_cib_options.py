@@ -34,7 +34,7 @@ class DefaultsCreateMixin:
     def setUp(self):
         # pylint: disable=invalid-name
         self.env_assist, self.config = get_env_tools(self)
-        self.config.runner.cib.load(filename="cib-empty-1.2.xml")
+        self.config.runner.cib.load()
 
     def test_success_minimal(self):
         defaults_xml = f"""
@@ -925,7 +925,7 @@ class DefaultsRemoveMixin:
         self.command(self.env_assist.get_env(), [])
 
     def test_defaults_section_missing(self):
-        self.config.runner.cib.load(filename="cib-empty-1.2.xml")
+        self.config.runner.cib.load()
         self.env_assist.assert_raise_library_error(
             lambda: self.command(self.env_assist.get_env(), ["set1"])
         )
@@ -941,7 +941,6 @@ class DefaultsRemoveMixin:
 
     def test_success(self):
         self.config.runner.cib.load(
-            filename="cib-empty-1.2.xml",
             optional_in_conf=f"""
                 <{self.tag}>
                     <meta_attributes id="set1" />
@@ -965,7 +964,6 @@ class DefaultsRemoveMixin:
 
     def test_delete_all_keep_the_section(self):
         self.config.runner.cib.load(
-            filename="cib-empty-1.2.xml",
             optional_in_conf=f"""
                 <{self.tag}>
                     <meta_attributes id="set1" />
@@ -977,7 +975,6 @@ class DefaultsRemoveMixin:
 
     def test_nvset_not_found(self):
         self.config.runner.cib.load(
-            filename="cib-empty-1.2.xml",
             optional_in_conf=f"""
                 <{self.tag}>
                     <meta_attributes id="set1" />

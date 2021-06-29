@@ -3,7 +3,6 @@ import datetime
 import json
 import math
 import os
-import re
 import subprocess
 import sys
 import tempfile
@@ -52,12 +51,8 @@ from pcs.common.str_tools import (
     format_list,
     indent,
 )
-from pcs.common.tools import (
-    Version,
-    format_os_error,
-)
+from pcs.common.tools import format_os_error
 from pcs.lib import sbd as lib_sbd
-from pcs.lib.cib.tools import VERSION_FORMAT
 from pcs.lib.commands.remote_node import _destroy_pcmk_remote_env
 from pcs.lib.communication.nodes import CheckAuth
 from pcs.lib.communication.tools import (
@@ -69,9 +64,8 @@ from pcs.lib.corosync import (
     live as corosync_live,
     qdevice_net,
 )
-from pcs.cli.reports.output import error, warn
+from pcs.cli.reports.output import warn
 from pcs.lib.errors import LibraryError
-from pcs.lib.env import MIN_FEATURE_SET_VERSION_FOR_DIFF
 from pcs.lib.node import get_existing_nodes_names
 import pcs.lib.pacemaker.live as lib_pacemaker
 
@@ -799,52 +793,6 @@ def cluster_push(lib, argv, modifiers):
         utils.err("unable to parse new cib: %s" % e)
 
     if diff_against:
-        try:
-            original_cib = xml.dom.minidom.parse(diff_against)
-        except (EnvironmentError, xml.parsers.expat.ExpatError) as e:
-            utils.err("unable to parse original cib: %s" % e)
-
-        def unable_to_diff(reason):
-            return error(
-                "unable to diff against original cib '{0}': {1}".format(
-                    diff_against, reason
-                )
-            )
-
-        cib_element_list = original_cib.getElementsByTagName("cib")
-
-        if len(cib_element_list) != 1:
-            raise unable_to_diff("there is not exactly one 'cib' element")
-
-        crm_feature_set = cib_element_list[0].getAttribute("crm_feature_set")
-        if not crm_feature_set:
-            raise unable_to_diff(
-                "the 'cib' element is missing 'crm_feature_set' value"
-            )
-
-        match = re.match(VERSION_FORMAT, crm_feature_set)
-        if not match:
-            raise unable_to_diff(
-                "the attribute 'crm_feature_set' of the element 'cib' has an"
-                " invalid value: '{0}'".format(crm_feature_set)
-            )
-        crm_feature_set_version = Version(
-            int(match.group("major")),
-            int(match.group("minor")),
-            int(match.group("rev")) if match.group("rev") else None,
-        )
-
-        if crm_feature_set_version < MIN_FEATURE_SET_VERSION_FOR_DIFF:
-            raise unable_to_diff(
-                (
-                    "the 'crm_feature_set' version is '{0}'"
-                    " but at least version '{1}' is required"
-                ).format(
-                    crm_feature_set_version,
-                    MIN_FEATURE_SET_VERSION_FOR_DIFF,
-                )
-            )
-
         runner = utils.cmd_runner()
         command = [
             settings.crm_diff,

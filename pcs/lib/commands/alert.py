@@ -1,7 +1,6 @@
 from pcs.common import reports
 from pcs.common.reports import ReportItemList
 from pcs.common.reports.item import ReportItem
-from pcs.common.tools import Version
 from pcs.lib.cib import alert
 from pcs.lib.cib.nvpair import (
     arrange_first_instance_attributes,
@@ -10,9 +9,6 @@ from pcs.lib.cib.nvpair import (
 from pcs.lib.cib.tools import IdProvider
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
-
-
-REQUIRED_CIB_VERSION = Version(2, 5, 0)
 
 
 def create_alert(
@@ -41,7 +37,7 @@ def create_alert(
             )
         )
 
-    cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
+    cib = lib_env.get_cib()
     id_provider = IdProvider(cib)
     alert_el = alert.create_alert(cib, alert_id, path, description)
     arrange_first_instance_attributes(
@@ -72,7 +68,7 @@ def update_alert(
         deleted, if None old value will stay unchanged
     """
 
-    cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
+    cib = lib_env.get_cib()
     id_provider = IdProvider(cib)
     alert_el = alert.update_alert(cib, alert_id, path, description)
     arrange_first_instance_attributes(
@@ -90,7 +86,7 @@ def remove_alert(lib_env: LibraryEnvironment, alert_id_list):
     lib_env -- LibraryEnvironment
     alert_id_list -- list of alerts ids which should be removed
     """
-    cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
+    cib = lib_env.get_cib()
     report_list: ReportItemList = []
     for alert_id in alert_id_list:
         try:
@@ -132,7 +128,7 @@ def add_recipient(
             )
         )
 
-    cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
+    cib = lib_env.get_cib()
     id_provider = IdProvider(cib)
     recipient = alert.add_recipient(
         lib_env.report_processor,
@@ -179,7 +175,7 @@ def update_recipient(
                 reports.messages.CibAlertRecipientValueInvalid(recipient_value)
             )
         )
-    cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
+    cib = lib_env.get_cib()
     id_provider = IdProvider(cib)
     recipient = alert.update_recipient(
         lib_env.report_processor,
@@ -204,7 +200,7 @@ def remove_recipient(lib_env: LibraryEnvironment, recipient_id_list):
     lib_env -- LibraryEnvironment
     recipient_id_list -- list of recipients ids to be removed
     """
-    cib = lib_env.get_cib(REQUIRED_CIB_VERSION)
+    cib = lib_env.get_cib()
     report_list: ReportItemList = []
     for recipient_id in recipient_id_list:
         try:

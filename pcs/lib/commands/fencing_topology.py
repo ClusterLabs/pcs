@@ -3,13 +3,8 @@ from typing import (
     Optional,
 )
 
-from pcs.common.fencing_topology import (
-    TARGET_TYPE_ATTRIBUTE,
-    TARGET_TYPE_NODE,
-    TARGET_TYPE_REGEXP,
-)
+from pcs.common.fencing_topology import TARGET_TYPE_NODE
 from pcs.common import reports as report
-from pcs.common.tools import Version
 from pcs.lib.cib import fencing_topology as cib_fencing_topology
 from pcs.lib.cib.tools import (
     get_fencing_topology,
@@ -40,13 +35,7 @@ def add_level(
     bool force_device -- continue even if a stonith device does not exist
     bool force_node -- continue even if a node (target) does not exist
     """
-    version_check = None
-    if target_type == TARGET_TYPE_REGEXP:
-        version_check = Version(2, 3, 0)
-    elif target_type == TARGET_TYPE_ATTRIBUTE:
-        version_check = Version(2, 4, 0)
-
-    cib = lib_env.get_cib(version_check)
+    cib = lib_env.get_cib()
     cib_fencing_topology.add_level(
         lib_env.report_processor,
         get_fencing_topology(cib),

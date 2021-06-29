@@ -102,35 +102,6 @@ class Basics(TestCase):
         )
         resource.bundle_update(self.env_assist.get_env(), "B1")
 
-    def test_cib_upgrade(self):
-        (
-            self.config.runner.cib.load(
-                filename="cib-empty-2.0.xml", name="load_cib_old_version"
-            )
-            .runner.cib.upgrade()
-            .runner.cib.load(
-                resources="""
-                    <resources>
-                        <bundle id="B1">
-                            <docker image="pcs:test" />
-                        </bundle>
-                    </resources>
-                """
-            )
-            .env.push_cib()
-        )
-        resource.bundle_update(self.env_assist.get_env(), "B1")
-        self.env_assist.assert_reports(
-            [
-                (
-                    severities.INFO,
-                    report_codes.CIB_UPGRADE_SUCCESSFUL,
-                    {},
-                    None,
-                ),
-            ]
-        )
-
 
 class ContainerParametrized(TestCase):
     allowed_options = [
@@ -339,53 +310,6 @@ class ContainerParametrized(TestCase):
                 "extra": "",
             },
             force_options=True,
-        )
-
-    def _test_cib_upgrade_on_promoted_max(self):
-        (
-            self.config.runner.cib.load(
-                filename="cib-empty-2.8.xml", name="load_cib_old_version"
-            )
-            .runner.cib.upgrade()
-            .runner.cib.load(
-                resources="""
-                    <resources>
-                        <bundle id="B1">
-                            <{container_type} image="pcs:test" />
-                        </bundle>
-                    </resources>
-                """.format(
-                    container_type=self.container_type
-                )
-            )
-            .env.push_cib(
-                resources="""
-                    <resources>
-                        <bundle id="B1">
-                            <{container_type} image="pcs:test" promoted-max="1" />
-                        </bundle>
-                    </resources>
-                """.format(
-                    container_type=self.container_type
-                )
-            )
-        )
-        resource.bundle_update(
-            self.env_assist.get_env(),
-            "B1",
-            container_options={
-                "promoted-max": "1",
-            },
-        )
-        self.env_assist.assert_reports(
-            [
-                (
-                    severities.INFO,
-                    report_codes.CIB_UPGRADE_SUCCESSFUL,
-                    {},
-                    None,
-                ),
-            ]
         )
 
     def _test_options_error(self):

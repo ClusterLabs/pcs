@@ -7,7 +7,6 @@ from pcs_test.tools.assertions import (
 from pcs_test.tools.misc import (
     get_test_resource as rc,
     get_tmp_file,
-    skip_unless_pacemaker_version,
     write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import (
@@ -20,7 +19,6 @@ from pcs_test.tools.pcs_runner import (
 # pylint: disable=too-many-public-methods
 # pylint: disable=too-many-statements
 
-old_cib = rc("cib-empty-1.2.xml")
 empty_cib = rc("cib-empty.xml")
 
 
@@ -32,22 +30,6 @@ class ACLTest(unittest.TestCase, AssertPcsMixin):
 
     def tearDown(self):
         self.temp_cib.close()
-
-    @skip_unless_pacemaker_version((2, 0, 0), "CIB schema upgrade")
-    def testAutoUpgradeofCIB(self):
-        write_file_to_tmpfile(old_cib, self.temp_cib)
-
-        self.assert_pcs_success(
-            "acl config".split(),
-            "ACLs are disabled, run 'pcs acl enable' to enable"
-            "\n\nCIB has been upgraded to the latest schema version.\n",
-        )
-
-        data = self.temp_cib.seek(0)
-        data = self.temp_cib.read()
-        assert data.find("pacemaker-1.2") == -1
-        assert data.find("pacemaker-2.") == -1
-        assert data.find("pacemaker-3.") != -1
 
     def testEnableDisable(self):
         o, r = pcs(self.temp_cib.name, "acl disable".split())

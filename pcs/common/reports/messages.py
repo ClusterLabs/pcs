@@ -2940,30 +2940,6 @@ class CibSimulateError(ReportItemMessage):
 
 
 @dataclass(frozen=True)
-class CibPushForcedFullDueToCrmFeatureSet(ReportItemMessage):
-    """
-    Pcs uses the "push full CIB" approach so race conditions may occur.
-
-    required_set -- crm_feature_set required for diff
-    current_set -- actual CIB crm_feature_set
-    """
-
-    required_set: str
-    current_set: str
-    _code = codes.CIB_PUSH_FORCED_FULL_DUE_TO_CRM_FEATURE_SET
-
-    @property
-    def message(self) -> str:
-        return (
-            "Replacing the whole CIB instead of applying a diff, a race "
-            "condition may happen if the CIB is pushed more than once "
-            "simultaneously. To fix this, upgrade pacemaker to get "
-            f"crm_feature_set at least {self.required_set}, current is "
-            f"{self.current_set}."
-        )
-
-
-@dataclass(frozen=True)
 class CrmMonError(ReportItemMessage):
     """
     Cannot load cluster status from crm_mon, crm_mon exited with non-zero code

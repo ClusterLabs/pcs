@@ -59,18 +59,6 @@ class PrepareOptionsWithSetTest(TestCase):
             (severities.ERROR, report_codes.INVALID_SCORE, {"score": "bad"}),
         )
 
-    def test_refuse_more_scores(self, _):
-        assert_raise_library_error(
-            lambda: self.prepare(
-                {
-                    "score": "1",
-                    "score-attribute": "2",
-                    "id": "id",
-                }
-            ),
-            (severities.ERROR, report_codes.MULTIPLE_SCORE_OPTIONS, {}),
-        )
-
     def test_refuse_unknown_attributes(self, _):
         assert_raise_library_error(
             lambda: self.prepare(
@@ -86,12 +74,7 @@ class PrepareOptionsWithSetTest(TestCase):
                 {
                     "option_names": ["unknown"],
                     "option_type": None,
-                    "allowed": [
-                        "id",
-                        "score",
-                        "score-attribute",
-                        "score-attribute-mangle",
-                    ],
+                    "allowed": ["id", "score"],
                     "allowed_patterns": [],
                 },
             ),

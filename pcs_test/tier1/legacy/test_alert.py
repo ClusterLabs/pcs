@@ -3,7 +3,6 @@ import unittest
 from pcs_test.tools.misc import (
     get_test_resource as rc,
     get_tmp_file,
-    skip_unless_pacemaker_version,
     outdent,
     ParametrizedTestMetaClass,
     write_file_to_tmpfile,
@@ -12,12 +11,8 @@ from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.pcs_runner import PcsRunner
 
 
-old_cib = rc("cib-empty-2.0.xml")
-empty_cib = rc("cib-empty-2.5.xml")
+empty_cib = rc("cib-empty.xml")
 
-skip_unless_alerts_supported = skip_unless_pacemaker_version(
-    (1, 1, 15), "alerts"
-)
 ERRORS_HAVE_OCURRED = (
     "Error: Errors have occurred, therefore pcs is unable to continue\n"
 )
@@ -33,40 +28,6 @@ class PcsAlertTest(unittest.TestCase, AssertPcsMixin):
         self.temp_cib.close()
 
 
-@skip_unless_alerts_supported
-class AlertCibUpgradeTest(unittest.TestCase, AssertPcsMixin):
-    def setUp(self):
-        self.temp_cib = get_tmp_file("tier1_alert_cib_upgrade")
-        write_file_to_tmpfile(old_cib, self.temp_cib)
-        self.pcs_runner = PcsRunner(self.temp_cib.name)
-
-    def tearDown(self):
-        self.temp_cib.close()
-
-    def test_cib_upgrade(self):
-        self.assert_pcs_success(
-            "alert config".split(),
-            """\
-Alerts:
- No alerts defined
-""",
-        )
-
-        self.assert_pcs_success(
-            "alert create path=test".split(),
-            "CIB has been upgraded to the latest schema version.\n",
-        )
-
-        self.assert_pcs_success(
-            "alert config".split(),
-            """\
-Alerts:
- Alert: alert (path=test)
-""",
-        )
-
-
-@skip_unless_alerts_supported
 class CreateAlertTest(PcsAlertTest):
     def test_create_multiple_without_id(self):
         self.assert_pcs_success(
@@ -156,7 +117,6 @@ Alerts:
         )
 
 
-@skip_unless_alerts_supported
 class UpdateAlertTest(PcsAlertTest):
     def test_update_everything(self):
         self.assert_pcs_success(
@@ -290,21 +250,18 @@ class DeleteRemoveAlertTest(PcsAlertTest):
         )
 
 
-@skip_unless_alerts_supported
 class DeleteAlertTest(
     DeleteRemoveAlertTest, metaclass=ParametrizedTestMetaClass
 ):
     command = "delete"
 
 
-@skip_unless_alerts_supported
 class RemoveAlertTest(
     DeleteRemoveAlertTest, metaclass=ParametrizedTestMetaClass
 ):
     command = "remove"
 
 
-@skip_unless_alerts_supported
 class AddRecipientTest(PcsAlertTest):
     def test_success(self):
         self.assert_pcs_success("alert create path=test".split())
@@ -405,7 +362,6 @@ Alerts:
         )
 
 
-@skip_unless_alerts_supported
 class UpdateRecipientAlert(PcsAlertTest):
     def test_success(self):
         self.assert_pcs_success("alert create path=test".split())

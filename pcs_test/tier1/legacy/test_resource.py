@@ -21,7 +21,6 @@ from pcs_test.tools.misc import (
     get_tmp_file,
     is_minimum_pacemaker_version,
     outdent,
-    skip_unless_pacemaker_supports_bundle,
     skip_unless_pacemaker_supports_op_onfail_demote,
     skip_unless_crm_rule,
     write_data_to_tmpfile,
@@ -4915,11 +4914,9 @@ class BundleCommon(
         )
     ),
 ):
-    empty_cib = rc("cib-empty-2.8.xml")
-
     def setUp(self):
         self.temp_cib = get_tmp_file("tier1_resource_bundle")
-        write_file_to_tmpfile(self.empty_cib, self.temp_cib)
+        write_file_to_tmpfile(empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
 
     def tearDown(self):
@@ -4953,7 +4950,6 @@ class BundleCommon(
         )
 
 
-@skip_unless_pacemaker_supports_bundle()
 class BundleShow(BundleCommon):
     # TODO: add test for podman (requires pcmk features 3.2)
     empty_cib = rc("cib-empty.xml")
@@ -4985,7 +4981,6 @@ class BundleShow(BundleCommon):
         )
 
 
-@skip_unless_pacemaker_supports_bundle()
 class BundleDelete(BundleCommon):
     def test_without_primitive(self):
         self.fixture_bundle("B")
@@ -5024,7 +5019,6 @@ class BundleDelete(BundleCommon):
         )
 
 
-@skip_unless_pacemaker_supports_bundle()
 class BundleGroup(BundleCommon):
     def test_group_delete_primitive(self):
         self.fixture_bundle("B")
@@ -5049,7 +5043,6 @@ class BundleGroup(BundleCommon):
         )
 
 
-@skip_unless_pacemaker_supports_bundle()
 class BundleClone(BundleCommon):
     def test_clone_bundle(self):
         self.fixture_bundle("B")
@@ -5072,7 +5065,6 @@ class BundleClone(BundleCommon):
         )
 
 
-@skip_unless_pacemaker_supports_bundle()
 class BundleMiscCommands(BundleCommon):
     def test_resource_enable_bundle(self):
         self.fixture_bundle("B")

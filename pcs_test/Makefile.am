@@ -5,13 +5,6 @@ EXTRA_DIST		= \
 			  __init__.py \
 			  resources/capabilities.xml \
 			  resources/cib-empty-1.2.xml \
-			  resources/cib-empty-2.0.xml \
-			  resources/cib-empty-2.3-withnodes.xml \
-			  resources/cib-empty-2.5-withnodes.xml \
-			  resources/cib-empty-2.5.xml \
-			  resources/cib-empty-2.6.xml \
-			  resources/cib-empty-2.8.xml \
-			  resources/cib-empty-2.9.xml \
 			  resources/cib-empty-3.1.xml \
 			  resources/cib-empty-3.2.xml \
 			  resources/cib-empty-3.3.xml \

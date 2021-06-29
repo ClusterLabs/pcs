@@ -1063,16 +1063,7 @@ def location_add(lib, argv, modifiers, skip_score_and_node_check=False):
     if not id_valid:
         utils.err(id_error)
 
-    required_version = None
-    if [x for x in options if x[0] == "resource-discovery"]:
-        required_version = 2, 2, 0
-    if rsc_type == RESOURCE_TYPE_REGEXP:
-        required_version = 2, 6, 0
-
-    if required_version:
-        dom = utils.cluster_upgrade_to_version(required_version)
-    else:
-        dom = utils.get_cib_dom()
+    dom = utils.get_cib_dom()
 
     if rsc_type == RESOURCE_TYPE_RESOURCE:
         (
@@ -1198,16 +1189,7 @@ def location_rule(lib, argv, modifiers):
     except (rule_utils.ParserException, rule_utils.CibBuilderException):
         pass
 
-    required_version = None
-    if resource_discovery:
-        required_version = 2, 2, 0
-    if rsc_type == RESOURCE_TYPE_REGEXP:
-        required_version = 2, 6, 0
-
-    if required_version:
-        dom = utils.cluster_upgrade_to_version(required_version)
-    else:
-        dom = utils.get_cib_dom()
+    dom = utils.get_cib_dom()
 
     if rsc_type == RESOURCE_TYPE_RESOURCE:
         (

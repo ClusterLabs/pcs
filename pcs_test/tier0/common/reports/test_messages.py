@@ -1985,19 +1985,6 @@ class CibSimulateError(NameBuildTest):
         )
 
 
-class CibPushForcedFullDueToCrmFeatureSet(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            (
-                "Replacing the whole CIB instead of applying a diff, a race "
-                "condition may happen if the CIB is pushed more than once "
-                "simultaneously. To fix this, upgrade pacemaker to get "
-                "crm_feature_set at least 3.0.9, current is 3.0.6."
-            ),
-            reports.CibPushForcedFullDueToCrmFeatureSet("3.0.9", "3.0.6"),
-        )
-
-
 class CrmMonError(NameBuildTest):
     def test_without_reason(self):
         self.assert_message_from_report(

@@ -114,51 +114,6 @@ class ParametrizedContainerMixin(SetUpMixin):
             }
         )
 
-    def test_cib_upgrade_promoted_max(self):
-        (
-            self.config.runner.cib.load(
-                name="load_cib_old_version",
-                filename="cib-empty-2.8.xml",
-                resources=self.initial_resources,
-                before="runner.cib.load",
-            )
-            .runner.cib.upgrade(before="runner.cib.load")
-            .env.push_cib(
-                resources="""
-                    <resources>
-                        <bundle id="{bundle_id}">
-                            <{container_type}
-                                image="{image}"
-                                promoted-max="0"
-                            />
-                        </bundle>
-                    </resources>
-                """.format(
-                    container_type=self.container_type,
-                    bundle_id=self.bundle_id,
-                    image=self.image,
-                )
-            )
-        )
-
-        self.run_bundle_cmd(
-            container_options={
-                "image": self.image,
-                "promoted-max": "0",
-            }
-        )
-
-        self.env_assist.assert_reports(
-            [
-                (
-                    severities.INFO,
-                    report_codes.CIB_UPGRADE_SUCCESSFUL,
-                    {},
-                    None,
-                ),
-            ]
-        )
-
     def test_deprecated_options(self):
         # Setting both deprecated options and their new variants is tested in
         # self.test_options_errors. This shows deprecated options emit warning

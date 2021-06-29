@@ -135,7 +135,7 @@ def compare_version(a, b):
 
 
 def is_minimum_pacemaker_version(major, minor, rev):
-    return is_version_sufficient(
+    return _is_version_sufficient(
         _get_current_pacemaker_version(), (major, minor, rev)
     )
 
@@ -177,11 +177,11 @@ def _is_minimum_cib_schema_version(cmajor, cminor, crev):
     return compare_version((major, minor, 0), (cmajor, cminor, crev)) > -1
 
 
-def is_version_sufficient(current_version, minimal_version):
+def _is_version_sufficient(current_version, minimal_version):
     return compare_version(current_version, minimal_version) > -1
 
 
-def format_version(version_tuple):
+def _format_version(version_tuple):
     return ".".join([str(x) for x in version_tuple])
 
 
@@ -210,13 +210,13 @@ def _get_current_pacemaker_features():
 def skip_unless_pacemaker_version(version_tuple, feature):
     current_version = _get_current_pacemaker_version()
     return skipUnless(
-        is_version_sufficient(current_version, version_tuple),
+        _is_version_sufficient(current_version, version_tuple),
         (
             "Pacemaker version is too old (current: {current_version},"
             " must be >= {minimal_version}) to test {feature}"
         ).format(
-            current_version=format_version(current_version),
-            minimal_version=format_version(version_tuple),
+            current_version=_format_version(current_version),
+            minimal_version=_format_version(version_tuple),
             feature=feature,
         ),
     )
@@ -228,7 +228,7 @@ def skip_unless_pacemaker_features(version_tuple, feature):
         (
             "Pacemaker must support feature set version {version} to test "
             "{feature}"
-        ).format(version=format_version(version_tuple), feature=feature),
+        ).format(version=_format_version(version_tuple), feature=feature),
     )
 
 
@@ -240,8 +240,8 @@ def skip_unless_cib_schema_version(version_tuple, feature):
             "Pacemaker supported CIB schema version is too low (current: "
             "{current_version}, must be >= {minimal_version}) to test {feature}"
         ).format(
-            current_version=format_version(current_version),
-            minimal_version=format_version(version_tuple),
+            current_version=_format_version(current_version),
+            minimal_version=_format_version(version_tuple),
             feature=feature,
         ),
     )
@@ -250,12 +250,6 @@ def skip_unless_cib_schema_version(version_tuple, feature):
 def skip_unless_crm_rule():
     return skip_unless_pacemaker_version(
         (2, 0, 2), "listing of constraints that might be expired"
-    )
-
-
-def skip_unless_pacemaker_supports_bundle():
-    return skip_unless_pacemaker_features(
-        (3, 1, 0), "bundle resources with promoted-max attribute"
     )
 
 

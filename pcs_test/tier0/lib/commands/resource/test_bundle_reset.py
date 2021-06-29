@@ -3,7 +3,6 @@ from unittest import TestCase
 from pcs_test.tier0.lib.commands.resource.bundle_common import (
     FixturesMixin,
     SetUpMixin,
-    UpgradeMixin,
     ParametrizedContainerMixin,
     NetworkMixin,
     PortMapMixin,
@@ -348,9 +347,7 @@ class FullMixin(SetUpMixin, BaseMixin):
         )
 
 
-class ResetParametrizedContainerMixin(
-    BaseMixin, ParametrizedContainerMixin, UpgradeMixin
-):
+class ResetParametrizedContainerMixin(BaseMixin, ParametrizedContainerMixin):
     pass
 
 
@@ -380,17 +377,14 @@ class FullDocker(FullMixin, TestCase):
 
 class ResetParametrizedPodman(ResetParametrizedContainerMixin, TestCase):
     container_type = "podman"
-    old_version_cib_filename = "cib-empty-2.6.xml"
 
 
 class ResetParametrizedDocker(ResetParametrizedContainerMixin, TestCase):
     container_type = "docker"
-    old_version_cib_filename = "cib-empty-2.0.xml"
 
 
 class ResetParametrizedRkt(ResetParametrizedContainerMixin, TestCase):
     container_type = "rkt"
-    old_version_cib_filename = "cib-empty-2.6.xml"
 
 
 class ResetWithNetwork(BaseMixin, NetworkMixin, TestCase):

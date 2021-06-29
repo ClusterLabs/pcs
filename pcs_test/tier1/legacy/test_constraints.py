@@ -20,8 +20,6 @@ from pcs_test.tools.fixture_cib import (
 from pcs_test.tools.misc import (
     get_test_resource as rc,
     get_tmp_file,
-    skip_unless_pacemaker_supports_bundle,
-    skip_unless_pacemaker_version,
     skip_unless_crm_rule,
     outdent,
     ParametrizedTestMetaClass,
@@ -50,15 +48,8 @@ ERRORS_HAVE_OCURRED = (
     "Error: Errors have occurred, therefore pcs is unable to continue\n"
 )
 
-empty_cib = rc("cib-empty-2.0.xml")
+empty_cib = rc("cib-empty.xml")
 large_cib = rc("cib-large.xml")
-
-skip_unless_location_resource_discovery = skip_unless_pacemaker_version(
-    (1, 1, 12), "constraints with the resource-discovery option"
-)
-skip_unless_location_rsc_pattern = skip_unless_pacemaker_version(
-    (1, 1, 16), "location constraints with resource patterns"
-)
 
 
 @skip_unless_crm_rule()
@@ -472,9 +463,6 @@ Ticket Constraints:
         self.assertIn(msg, o)
         self.assertEqual(r, 1)
 
-    @skip_unless_pacemaker_version(
-        (1, 1, 12), "constraints with the require-all option"
-    )
     def testOrderConstraintRequireAll(self):
         self.fixture_resources()
         o, r = pcs(self.temp_cib.name, "cluster cib-upgrade".split())
@@ -1251,7 +1239,7 @@ Colocation Constraints:
         )
         ac(
             output,
-            "Error: invalid option 'foo', allowed options are: 'id', 'score', 'score-attribute', 'score-attribute-mangle'\n",
+            "Error: invalid option 'foo', allowed options are: 'id', 'score'\n",
         )
         self.assertEqual(1, retValue)
 
@@ -1265,21 +1253,6 @@ Colocation Constraints:
         )
         self.assertEqual(1, retValue)
 
-        output, retValue = pcs(
-            self.temp_cib.name,
-            "constraint colocation set D1 D2 setoptions score=100 score-attribute=foo".split(),
-        )
-        ac(output, "Error: multiple score options cannot be specified\n")
-        self.assertEqual(1, retValue)
-
-        output, retValue = pcs(
-            self.temp_cib.name,
-            "constraint colocation set D1 D2 setoptions score-attribute=foo".split(),
-        )
-        ac(output, "")
-        self.assertEqual(0, retValue)
-
-    @skip_unless_location_resource_discovery
     def testConstraintResourceDiscoveryRules(self):
         o, r = pcs(
             self.temp_cib.name,
@@ -1302,7 +1275,7 @@ Colocation Constraints:
                 "score=-INFINITY opsrole ne controller0 and opsrole ne controller1"
             ).split(),
         )
-        ac(o, "Cluster CIB has been upgraded to latest version\n")
+        ac(o, "")
         assert r == 0
 
         o, r = pcs(
@@ -1339,7 +1312,6 @@ Colocation Constraints:
         )
         assert r == 0
 
-    @skip_unless_location_resource_discovery
     def testConstraintResourceDiscovery(self):
         o, r = pcs(
             self.temp_cib.name,
@@ -1359,11 +1331,7 @@ Colocation Constraints:
             self.temp_cib.name,
             "-- constraint location add my_constraint_id crd my_node -INFINITY resource-discovery=always".split(),
         )
-        ac(
-            o,
-            LOCATION_NODE_VALIDATION_SKIP_WARNING
-            + "Cluster CIB has been upgraded to latest version\n",
-        )
+        ac(o, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         assert r == 0
 
         o, r = pcs(
@@ -3991,20 +3959,12 @@ class LocationTypeId(ConstraintEffect):
         )
 
 
-@skip_unless_location_rsc_pattern
 class LocationTypePattern(ConstraintEffect):
     # This was written while implementing rsc-pattern to location constraints.
     # Thus it focuses only the new feature (rsc-pattern) and it is NOT a
     # complete test of location constraints. Instead it relies on legacy tests
     # to test location constraints with plain resource name.
-    empty_cib = rc("cib-empty-2.6.xml")
-    _stdout = ""
-
-    def stdout(self):
-        return self._stdout
-
     def test_prefers(self):
-        self._stdout = LOCATION_NODE_VALIDATION_SKIP_WARNING + self._stdout
         self.assert_effect(
             "constraint location regexp%res_[0-9] prefers node1".split(),
             """<constraints>
@@ -4012,11 +3972,10 @@ class LocationTypePattern(ConstraintEffect):
                     rsc-pattern="res_[0-9]" score="INFINITY"
                 />
             </constraints>""",
-            self.stdout(),
+            LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
     def test_avoids(self):
-        self._stdout = LOCATION_NODE_VALIDATION_SKIP_WARNING + self._stdout
         self.assert_effect(
             "constraint location regexp%res_[0-9] avoids node1".split(),
             """<constraints>
@@ -4024,11 +3983,10 @@ class LocationTypePattern(ConstraintEffect):
                     rsc-pattern="res_[0-9]" score="-INFINITY"
                 />
             </constraints>""",
-            self.stdout(),
+            LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
     def test_add(self):
-        self._stdout = LOCATION_NODE_VALIDATION_SKIP_WARNING + self._stdout
         self.assert_effect(
             "constraint location add my-id regexp%res_[0-9] node1 INFINITY".split(),
             """<constraints>
@@ -4036,7 +3994,7 @@ class LocationTypePattern(ConstraintEffect):
                     score="INFINITY"
                 />
             </constraints>""",
-            self.stdout(),
+            LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
     def test_rule(self):
@@ -4051,25 +4009,15 @@ class LocationTypePattern(ConstraintEffect):
                     </rule>
                 </rsc_location>
             </constraints>""",
-            self.stdout(),
         )
 
 
-@skip_unless_location_rsc_pattern
-class LocationTypePatternWithCibUpgrade(LocationTypePattern):
-    empty_cib = rc("cib-empty-2.0.xml")
-    _stdout = "Cluster CIB has been upgraded to latest version\n"
-
-
-@skip_unless_location_rsc_pattern
 @skip_unless_crm_rule()
 class LocationShowWithPattern(ConstraintBaseTest):
     # This was written while implementing rsc-pattern to location constraints.
     # Thus it focuses only the new feature (rsc-pattern) and it is NOT a
     # complete test of location constraints. Instead it relies on legacy tests
     # to test location constraints with plain resource name.
-    empty_cib = rc("cib-empty-2.6.xml")
-
     def fixture(self):
         self.assert_pcs_success_all(
             [
@@ -4317,8 +4265,6 @@ class LocationShowWithPattern(ConstraintBaseTest):
 
 
 class Bundle(ConstraintEffect):
-    empty_cib = rc("cib-empty-2.8.xml")
-
     def setUp(self):
         super().setUp()
         self.fixture_bundle("B")
@@ -4355,7 +4301,6 @@ class Bundle(ConstraintEffect):
         )
 
 
-@skip_unless_pacemaker_supports_bundle()
 class BundleLocation(Bundle):
     def test_bundle_prefers(self):
         self.assert_effect(
@@ -4468,7 +4413,6 @@ class BundleLocation(Bundle):
         )
 
 
-@skip_unless_pacemaker_supports_bundle()
 class BundleColocation(Bundle):
     def setUp(self):
         super().setUp()
@@ -4546,7 +4490,6 @@ class BundleColocation(Bundle):
         )
 
 
-@skip_unless_pacemaker_supports_bundle()
 class BundleOrder(Bundle):
     def setUp(self):
         super().setUp()
@@ -4631,7 +4574,6 @@ class BundleOrder(Bundle):
         )
 
 
-@skip_unless_pacemaker_supports_bundle()
 class BundleTicket(Bundle):
     def test_bundle(self):
         self.assert_effect(

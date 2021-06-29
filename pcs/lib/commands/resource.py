@@ -267,21 +267,6 @@ def _check_special_cases(
 _find_bundle = partial(find_element_by_tag_and_id, resource.bundle.TAG)
 
 
-def _get_required_cib_version_for_container(
-    container_options, container_type=None
-):
-    if container_type == "podman":
-        return Version(3, 2, 0)
-
-    if "promoted-max" in container_options:
-        return Version(3, 0, 0)
-
-    if container_type == "rkt":
-        return Version(2, 10, 0)
-
-    return Version(2, 8, 0)
-
-
 def create(
     env: LibraryEnvironment,
     resource_id: str,
@@ -632,8 +617,6 @@ def create_into_bundle(
     required_cib_version = get_required_cib_version_for_primitive(
         operation_list
     )
-    if not required_cib_version:
-        required_cib_version = Version(2, 8, 0)
     with resource_environment(
         env,
         wait,
@@ -732,9 +715,8 @@ def bundle_create(
             ensure_disabled
             or resource.common.are_meta_disabled(meta_attributes)
         ),
-        required_cib_version=_get_required_cib_version_for_container(
-            container_options,
-            container_type,
+        required_cib_version=(
+            Version(3, 2, 0) if container_type == "podman" else None
         ),
     ) as resources_section:
         # no need to run validations related to remote and guest nodes as those
@@ -810,9 +792,10 @@ def bundle_reset(
             ensure_disabled
             or resource.common.are_meta_disabled(meta_attributes)
         ),
-        required_cib_version=_get_required_cib_version_for_container(
-            container_options
-        ),
+        # The only requirement for CIB schema version currently is:
+        #   if container_type == "podman" then required_version = '3.2.0'
+        # Since bundle_reset command doesn't change container type, there is no
+        # need to check and upgrade CIB schema version.
     ) as resources_section:
         bundle_element = _find_bundle(resources_section, bundle_id)
         if env.report_processor.report_list(
@@ -889,14 +872,11 @@ def bundle_update(
     storage_map_remove = storage_map_remove or []
     meta_attributes = meta_attributes or {}
 
-    with resource_environment(
-        env,
-        wait,
-        [bundle_id],
-        required_cib_version=_get_required_cib_version_for_container(
-            container_options
-        ),
-    ) as resources_section:
+    # The only requirement for CIB schema version currently is:
+    #   if container_type == "podman" then required_version = '3.2.0'
+    # Since bundle_update command doesn't change container type, there is no
+    # need to check and upgrade CIB schema version.
+    with resource_environment(env, wait, [bundle_id]) as resources_section:
         # no need to run validations related to remote and guest nodes as those
         # nodes can only be created from primitive resources
         id_provider = IdProvider(resources_section)

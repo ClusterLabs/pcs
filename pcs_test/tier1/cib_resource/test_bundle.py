@@ -8,7 +8,6 @@ from pcs_test.tools.misc import (
     get_test_resource as rc,
     get_tmp_file,
     outdent,
-    skip_unless_pacemaker_supports_bundle,
     write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import PcsRunner
@@ -42,41 +41,6 @@ class BundleCreateCommon(
         self.temp_cib.close()
 
 
-@skip_unless_pacemaker_supports_bundle()
-class BundleCreateUpgradeCib(BundleCreateCommon):
-    def test_success(self):
-        write_file_to_tmpfile(rc("cib-empty-2.0.xml"), self.temp_cib)
-        self.assert_effect(
-            "resource bundle create B1 container docker image=pcs:test".split(),
-            """
-                <resources>
-                    <bundle id="B1">
-                        <docker image="pcs:test" />
-                    </bundle>
-                </resources>
-            """,
-            "CIB has been upgraded to the latest schema version.\n",
-        )
-
-    def test_upgrade_for_promoted_max(self):
-        write_file_to_tmpfile(rc("cib-empty-2.8.xml"), self.temp_cib)
-        self.assert_effect(
-            (
-                "resource bundle create B1 container docker image=pcs:test "
-                "promoted-max=2"
-            ).split(),
-            """
-                <resources>
-                    <bundle id="B1">
-                        <docker image="pcs:test" promoted-max="2" />
-                    </bundle>
-                </resources>
-            """,
-            "CIB has been upgraded to the latest schema version.\n",
-        )
-
-
-@skip_unless_pacemaker_supports_bundle()
 class BundleReset(BundleCreateCommon):
     empty_cib = rc("cib-empty.xml")
 
@@ -102,7 +66,6 @@ class BundleReset(BundleCreateCommon):
         )
 
 
-@skip_unless_pacemaker_supports_bundle()
 class BundleCreate(BundleCreateCommon):
     empty_cib = rc("cib-empty.xml")
 
@@ -325,20 +288,6 @@ class BundleCreate(BundleCreateCommon):
         self.assert_no_options("meta")
 
 
-@skip_unless_pacemaker_supports_bundle()
-class BundleUpdateUpgradeCib(BundleCreateCommon):
-    def test_upgrade_for_promoted_max(self):
-        write_file_to_tmpfile(rc("cib-empty-2.8.xml"), self.temp_cib)
-        self.assert_pcs_success(
-            "resource bundle create B container docker image=pcs:test".split()
-        )
-        self.assert_pcs_success(
-            "resource bundle update B container promoted-max=3".split(),
-            "CIB has been upgraded to the latest schema version.\n",
-        )
-
-
-@skip_unless_pacemaker_supports_bundle()
 class BundleUpdate(BundleCreateCommon):
     empty_cib = rc("cib-empty.xml")
 
@@ -690,7 +639,6 @@ class BundleUpdate(BundleCreateCommon):
         self.assert_no_options("meta")
 
 
-@skip_unless_pacemaker_supports_bundle()
 class BundleShow(TestCase, AssertPcsMixin):
     empty_cib = rc("cib-empty.xml")
 

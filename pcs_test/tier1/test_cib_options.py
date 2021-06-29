@@ -17,7 +17,7 @@ from pcs_test.tools.pcs_runner import PcsRunner
 from pcs_test.tools.xml import XmlManipulation
 
 
-empty_cib = rc("cib-empty-2.0.xml")
+empty_cib = rc("cib-empty.xml")
 empty_cib_rules = rc("cib-empty-3.4.xml")
 
 

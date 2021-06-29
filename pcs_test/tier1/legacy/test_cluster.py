@@ -9,7 +9,6 @@ from pcs_test.tools.misc import (
     get_test_resource as rc,
     get_tmp_dir,
     get_tmp_file,
-    skip_unless_pacemaker_version,
     skip_unless_root,
     write_file_to_tmpfile,
 )
@@ -138,7 +137,6 @@ class ClusterUpgradeTest(TestCase, AssertPcsMixin):
     def tearDown(self):
         self.temp_cib.close()
 
-    @skip_unless_pacemaker_version((2, 0, 0), "CIB schema upgrade")
     def test_cluster_upgrade(self):
         # pylint: disable=invalid-name
         self.temp_cib.seek(0)

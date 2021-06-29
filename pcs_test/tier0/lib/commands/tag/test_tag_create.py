@@ -25,22 +25,6 @@ class TestTagCreate(TestCase):
         self.config.env.push_cib(tags=TAG1_ID1_ID2)
         cmd_tag.create(self.env_assist.get_env(), "tag1", ["id1", "id2"])
 
-    def test_success_create_cib_upgrade(self):
-        self.config.runner.cib.load(
-            name="load_cib_old_version",
-            filename="cib-empty-1.2.xml",
-            resources=fixture_resources_for_ids(),
-            before="runner.cib.load",
-        )
-        self.config.runner.cib.upgrade(before="runner.cib.load")
-        self.config.env.push_cib(tags=TAG1_ID1_ID2)
-        cmd_tag.create(self.env_assist.get_env(), "tag1", ["id1", "id2"])
-        self.env_assist.assert_reports(
-            [
-                fixture.info(reports.codes.CIB_UPGRADE_SUCCESSFUL),
-            ]
-        )
-
     def test_invalid_tag_id(self):
         self.env_assist.assert_raise_library_error(
             lambda: cmd_tag.create(

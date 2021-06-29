@@ -116,37 +116,6 @@ class CibPush(AssertPcsMixin, TestCase):
             self.cib_push_cmd, stdout_start="Error: unable to parse new cib:"
         )
 
-    def test_unable_to_parse_original_cib(self):
-        write_data_to_tmpfile("", self.temp_cib)
-        self.assert_pcs_fail(
-            self.cib_push_diff_cmd,
-            stdout_start="Error: unable to parse original cib:",
-        )
-
-    def test_unable_to_diff_not_one_cib(self):
-        write_data_to_tmpfile("<cib><cib/></cib>", self.temp_cib)
-        self.assert_unable_to_diff("there is not exactly one 'cib' element")
-
-    def test_unable_to_diff_missing_crm_feature_set(self):
-        write_data_to_tmpfile("<cib/>", self.temp_cib)
-        self.assert_unable_to_diff(
-            "the 'cib' element is missing 'crm_feature_set' value"
-        )
-
-    def test_unable_to_diff_invalid_crm_feature_set(self):
-        write_data_to_tmpfile("<cib crm_feature_set='invalid'/>", self.temp_cib)
-        self.assert_unable_to_diff(
-            "the attribute 'crm_feature_set' of the element 'cib' has an "
-            "invalid value: 'invalid'"
-        )
-
-    def test_unable_to_diff_old_crm_feature_set_version(self):
-        write_data_to_tmpfile("<cib crm_feature_set='3.0.8'/>", self.temp_cib)
-        self.assert_unable_to_diff(
-            "the 'crm_feature_set' version is '3.0.8' but at least version "
-            "'3.0.9' is required"
-        )
-
     def test_diff_no_diffrence(self):
         write_data_to_tmpfile(CIB_EPOCH, self.updated_cib)
         self.assert_pcs_success(

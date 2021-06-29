@@ -9,7 +9,6 @@ from typing import (
 
 from lxml.etree import _Element
 
-from pcs.common.tools import Version
 from pcs.lib.cib import tag
 from pcs.lib.cib.tools import (
     get_constraints,
@@ -22,12 +21,9 @@ from pcs.lib.errors import LibraryError
 from pcs.lib.xml_tools import get_root
 
 
-REQUIRED_CIB_VERSION = Version(1, 3, 0)
-
-
 @contextmanager
 def cib_tags_section(env: LibraryEnvironment) -> Iterator[_Element]:
-    yield get_tags(env.get_cib(REQUIRED_CIB_VERSION))
+    yield get_tags(env.get_cib())
     env.push_cib()
 
 
@@ -68,7 +64,7 @@ def config(
     env -- provides all for communication with externals
     tag_filter -- list of tags we want to get
     """
-    tags_section: _Element = get_tags(env.get_cib(REQUIRED_CIB_VERSION))
+    tags_section: _Element = get_tags(env.get_cib())
     if tag_filter:
         tag_element_list, report_list = tag.find_tag_elements_by_ids(
             tags_section,

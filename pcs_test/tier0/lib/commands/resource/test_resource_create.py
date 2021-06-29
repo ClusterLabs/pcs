@@ -1664,22 +1664,7 @@ class CreateInToBundle(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(
             test_case=self,
-            base_cib_filename="cib-empty-2.8.xml",
-        )
-
-    def test_upgrade_cib(self):
-        (
-            self.config.runner.pcmk.load_agent()
-            .runner.cib.load(
-                filename="cib-empty-2.0.xml", name="load_cib_old_version"
-            )
-            .runner.cib.upgrade()
-            .runner.cib.load(resources=self.fixture_resources_pre)
-            .env.push_cib(resources=self.fixture_resources_post_simple)
-        )
-        create_bundle(self.env_assist.get_env(), wait=False)
-        self.env_assist.assert_reports(
-            [fixture.info(report_codes.CIB_UPGRADE_SUCCESSFUL)]
+            base_cib_filename="cib-empty.xml",
         )
 
     def test_cib_upgrade_on_onfail_demote(self):

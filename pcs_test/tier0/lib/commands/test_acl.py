@@ -4,11 +4,7 @@ from pcs_test.tools.assertions import ExtendedAssertionsMixin
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
 import pcs.lib.commands.acl as cmd_acl
-from pcs.common.tools import Version
 from pcs.lib.env import LibraryEnvironment
-
-
-REQUIRED_CIB_VERSION = Version(2, 0, 0)
 
 
 class AclCommandsTest(TestCase, ExtendedAssertionsMixin):
@@ -20,7 +16,7 @@ class AclCommandsTest(TestCase, ExtendedAssertionsMixin):
         self.mock_env.get_cib.return_value = self.cib
 
     def assert_get_cib_called(self):
-        self.mock_env.get_cib.assert_called_once_with(REQUIRED_CIB_VERSION)
+        self.mock_env.get_cib.assert_called_once_with()
 
     def assert_same_cib_pushed(self):
         self.mock_env.push_cib.assert_called_once_with()
@@ -37,7 +33,7 @@ class CibAclSection(TestCase):
         env.get_cib = mock.Mock(return_value="cib")
         with cmd_acl.cib_acl_section(env):
             pass
-        env.get_cib.assert_called_once_with(cmd_acl.REQUIRED_CIB_VERSION)
+        env.get_cib.assert_called_once_with()
         env.push_cib.assert_called_once_with()
 
     def test_does_not_push_cib_on_exception(self):
@@ -48,7 +44,7 @@ class CibAclSection(TestCase):
                 raise AssertionError()
 
         self.assertRaises(AssertionError, run)
-        env.get_cib.assert_called_once_with(cmd_acl.REQUIRED_CIB_VERSION)
+        env.get_cib.assert_called_once_with()
         env.push_cib.assert_not_called()
 
 

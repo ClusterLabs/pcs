@@ -14,7 +14,6 @@ import pcs.lib.commands.alert as cmd_alert
 
 get_env_tools = partial(
     get_env_tools,
-    base_cib_filename="cib-empty-2.5.xml",
     exception_reports_in_processor_by_default=False,
 )
 
@@ -77,34 +76,6 @@ class CreateAlertTest(TestCase):
             {"instance": "value", "another": "val"},
             {"meta1": "val1"},
             "my description",
-        )
-
-    def test_create_upgrade(self):
-        (
-            self.config.runner.cib.load(
-                filename="cib-empty-2.0.xml", name="load_cib_old_version"
-            )
-            .runner.cib.upgrade()
-            .runner.cib.load()
-            .env.push_cib(optional_in_conf=self.fixture_final_alerts)
-        )
-        cmd_alert.create_alert(
-            self.env_assist.get_env(),
-            "my-alert",
-            "/my/path",
-            {"instance": "value", "another": "val"},
-            {"meta1": "val1"},
-            "my description",
-        )
-        self.env_assist.assert_reports(
-            [
-                (
-                    Severities.INFO,
-                    report_codes.CIB_UPGRADE_SUCCESSFUL,
-                    {},
-                    None,
-                ),
-            ]
         )
 
 

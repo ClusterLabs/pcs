@@ -86,19 +86,9 @@ class CreateParametrizedContainerMixin(
     pass
 
 
-class CreateDocker(CreateParametrizedContainerMixin, TestCase):
-    container_type = "docker"
-    old_version_cib_filename = "cib-empty-2.0.xml"
-
-
 class CreatePodman(CreateParametrizedContainerMixin, TestCase):
     container_type = "podman"
     old_version_cib_filename = "cib-empty-3.1.xml"
-
-
-class CreateRkt(CreateParametrizedContainerMixin, TestCase):
-    container_type = "rkt"
-    old_version_cib_filename = "cib-empty-2.9.xml"
 
 
 class CreateWithNetwork(CreateCommandMixin, NetworkMixin, TestCase):

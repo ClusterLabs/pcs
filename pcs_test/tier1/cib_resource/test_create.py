@@ -4,10 +4,6 @@ from unittest import mock, TestCase
 from pcs_test.tier1.cib_resource.common import ResourceTest
 from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.bin_mock import get_mock_settings
-from pcs_test.tools.misc import (
-    get_test_resource as rc,
-    skip_unless_pacemaker_supports_bundle,
-)
 from pcs_test.tools.pcs_runner import PcsRunner
 
 from pcs import resource
@@ -803,10 +799,7 @@ class Promotable(TestCase, AssertPcsMixin):
         )
 
 
-@skip_unless_pacemaker_supports_bundle()
 class Bundle(ResourceTest):
-    empty_cib = rc("cib-empty-2.8.xml")
-
     def fixture_primitive(self, name, bundle=None):
         if bundle:
             self.assert_pcs_success(

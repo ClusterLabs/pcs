@@ -1,16 +1,12 @@
 from contextlib import contextmanager
 
-from pcs.common.tools import Version
 from pcs.lib.cib import acl
 from pcs.lib.cib.tools import get_acls
 
 
-REQUIRED_CIB_VERSION = Version(2, 0, 0)
-
-
 @contextmanager
 def cib_acl_section(env):
-    yield get_acls(env.get_cib(REQUIRED_CIB_VERSION))
+    yield get_acls(env.get_cib())
     env.push_cib()
 
 
@@ -264,7 +260,7 @@ def get_config(lib_env):
 
     lib_env -- LibraryEnvironment
     """
-    acl_section = get_acls(lib_env.get_cib(REQUIRED_CIB_VERSION))
+    acl_section = get_acls(lib_env.get_cib())
     return {
         "target_list": acl.get_target_list(acl_section),
         "group_list": acl.get_group_list(acl_section),

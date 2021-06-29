@@ -12,7 +12,6 @@ from pcs_test.tools.misc import (
     get_test_resource as rc,
     get_tmp_file,
     is_minimum_pacemaker_version,
-    skip_unless_pacemaker_version,
     skip_unless_crm_rule,
     outdent,
     ParametrizedTestMetaClass,
@@ -33,21 +32,6 @@ ERRORS_HAVE_OCURRED = (
 )
 
 empty_cib = rc("cib-empty.xml")
-
-# target-pattern attribute was added in pacemaker 1.1.13 with validate-with 2.3.
-# However in pcs this was implemented much later together with target-attribute
-# support. In that time pacemaker 1.1.12 was quite old. To keep tests simple we
-# do not run fencing topology tests on pacemaker older that 1.1.13 even if it
-# supports targeting by node names.
-skip_unless_fencing_level_supported = skip_unless_pacemaker_version(
-    (1, 1, 13), "fencing levels"
-)
-# target-attribute and target-value attributes were added in pacemaker 1.1.14
-# with validate-with 2.4.
-fencing_level_attribute_supported = is_minimum_pacemaker_version(1, 1, 14)
-skip_unless_fencing_level_attribute_supported = skip_unless_pacemaker_version(
-    (1, 1, 14), "fencing levels with attribute targets"
-)
 
 
 class StonithDescribeTest(TestCase, AssertPcsMixin):
@@ -859,14 +843,7 @@ _fixture_stonith_level_cache_lock = Lock()
 class LevelTestsBase(TestCase, AssertPcsMixin):
     def setUp(self):
         self.temp_cib = get_tmp_file("tier1_test_stonith_level")
-        if fencing_level_attribute_supported:
-            write_file_to_tmpfile(
-                rc("cib-empty-2.5-withnodes.xml"), self.temp_cib
-            )
-        else:
-            write_file_to_tmpfile(
-                rc("cib-empty-2.3-withnodes.xml"), self.temp_cib
-            )
+        write_file_to_tmpfile(rc("cib-empty-withnodes.xml"), self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.config = ""
@@ -913,6 +890,12 @@ class LevelTestsBase(TestCase, AssertPcsMixin):
         self.assert_pcs_success(
             "stonith level add 3 regexp%rh7-\\d F2 F1".split()
         )
+        self.assert_pcs_success(
+            "stonith level add 5 attrib%fencewith=levels1 F3 F2".split()
+        )
+        self.assert_pcs_success(
+            "stonith level add 6 attrib%fencewith=levels2 F3 F1".split()
+        )
 
         config = outdent(
             """\
@@ -925,24 +908,12 @@ class LevelTestsBase(TestCase, AssertPcsMixin):
             Target: rh7-\\d
               Level 3 - F2,F1
               Level 4 - F3
+            Target: fencewith=levels1
+              Level 5 - F3,F2
+            Target: fencewith=levels2
+              Level 6 - F3,F1
             """
         )
-
-        if fencing_level_attribute_supported:
-            self.assert_pcs_success(
-                "stonith level add 5 attrib%fencewith=levels1 F3 F2".split()
-            )
-            self.assert_pcs_success(
-                "stonith level add 6 attrib%fencewith=levels2 F3 F1".split()
-            )
-            config += outdent(
-                """\
-                Target: fencewith=levels1
-                  Level 5 - F3,F2
-                Target: fencewith=levels2
-                  Level 6 - F3,F1
-                """
-            )
 
         config_lines = config.splitlines()
         self.temp_cib.flush()
@@ -952,7 +923,6 @@ class LevelTestsBase(TestCase, AssertPcsMixin):
         return cib_content, config, config_lines
 
 
-@skip_unless_fencing_level_supported
 class LevelBadCommand(LevelTestsBase):
     def test_success(self):
         self.assert_pcs_fail(
@@ -961,51 +931,6 @@ class LevelBadCommand(LevelTestsBase):
         )
 
 
-@skip_unless_fencing_level_supported
-class LevelAddTargetUpgradesCib(LevelTestsBase):
-    def setUp(self):
-        self.temp_cib = get_tmp_file("tier1_test_stonith_level")
-        write_file_to_tmpfile(rc("cib-empty-withnodes.xml"), self.temp_cib)
-        self.pcs_runner = PcsRunner(self.temp_cib.name)
-
-    def tearDown(self):
-        self.temp_cib.close()
-
-    @skip_unless_fencing_level_attribute_supported
-    def test_attribute(self):
-        self.fixture_stonith_resource("F1")
-        self.assert_pcs_success(
-            "stonith level add 1 attrib%fencewith=levels F1".split(),
-            "CIB has been upgraded to the latest schema version.\n",
-        )
-        self.assert_pcs_success(
-            "stonith level".split(),
-            outdent(
-                """\
-                Target: fencewith=levels
-                  Level 1 - F1
-                """
-            ),
-        )
-
-    def test_regexp(self):
-        self.fixture_stonith_resource("F1")
-        self.assert_pcs_success(
-            "stonith level add 1 regexp%node-\\d+ F1".split(),
-            "CIB has been upgraded to the latest schema version.\n",
-        )
-        self.assert_pcs_success(
-            "stonith level".split(),
-            outdent(
-                """\
-                Target: node-\\d+
-                  Level 1 - F1
-                """
-            ),
-        )
-
-
-@skip_unless_fencing_level_supported
 class LevelAdd(LevelTestsBase):
     def test_not_enough_params(self):
         self.assert_pcs_fail(
@@ -1177,7 +1102,6 @@ class LevelAdd(LevelTestsBase):
             ),
         )
 
-    @skip_unless_fencing_level_attribute_supported
     def test_add_node_attribute(self):
         self.fixture_stonith_resource("F1")
         self.assert_pcs_success(
@@ -1346,7 +1270,6 @@ class LevelAdd(LevelTestsBase):
         )
 
 
-@skip_unless_fencing_level_supported
 @skip_unless_crm_rule()
 class LevelConfig(LevelTestsBase):
     full_config = outdent(
@@ -1443,7 +1366,6 @@ class LevelConfig(LevelTestsBase):
         )
 
 
-@skip_unless_fencing_level_supported
 class LevelClearDeprecatedSyntax(LevelTestsBase):
     deprecated_syntax = (
         "Warning: Syntax 'pcs stonith level clear [<target> | <stonith id(s)>] "
@@ -1495,7 +1417,6 @@ class LevelClearDeprecatedSyntax(LevelTestsBase):
             "\n".join(self.config_lines[:6] + self.config_lines[9:]) + "\n",
         )
 
-    @skip_unless_fencing_level_attribute_supported
     def test_clear_attribute(self):
         self.assert_pcs_success(
             "stonith level clear attrib%fencewith=levels2".split(),
@@ -1530,7 +1451,6 @@ class LevelClearDeprecatedSyntax(LevelTestsBase):
         )
 
 
-@skip_unless_fencing_level_supported
 class LevelClear(LevelTestsBase):
     def setUp(self):
         super().setUp()
@@ -1590,7 +1510,6 @@ class LevelClear(LevelTestsBase):
             "\n".join(self.config_lines[:6] + self.config_lines[9:]) + "\n",
         )
 
-    @skip_unless_fencing_level_attribute_supported
     def test_clear_attribute(self):
         self.assert_pcs_success(
             "stonith level clear target attrib%fencewith=levels2".split()
@@ -1732,7 +1651,6 @@ class LevelDeleteRemoveDeprecatedSyntax(LevelTestsBase):
             "\n".join(self.config_lines[:7] + self.config_lines[8:]) + "\n",
         )
 
-    @skip_unless_fencing_level_attribute_supported
     def _test_remove_level_attrib(self):
         self.assert_pcs_success(
             ["stonith", "level", self.command, "6", "attrib%fencewith=levels2"],
@@ -1804,7 +1722,6 @@ class LevelDeleteRemoveDeprecatedSyntax(LevelTestsBase):
             "\n".join(self.config_lines[:7] + self.config_lines[8:]) + "\n",
         )
 
-    @skip_unless_fencing_level_attribute_supported
     def _test_remove_level_attrib_device(self):
         self.assert_pcs_success(
             [
@@ -1824,14 +1741,12 @@ class LevelDeleteRemoveDeprecatedSyntax(LevelTestsBase):
         )
 
 
-@skip_unless_fencing_level_supported
 class LevelDeleteDeprecatedSyntax(
     LevelDeleteRemoveDeprecatedSyntax, metaclass=ParametrizedTestMetaClass
 ):
     command = "delete"
 
 
-@skip_unless_fencing_level_supported
 class LevelRemoveDeprecatedSyntax(
     LevelDeleteRemoveDeprecatedSyntax, metaclass=ParametrizedTestMetaClass
 ):
@@ -1954,7 +1869,6 @@ class LevelDeleteRemove(LevelTestsBase):
             "\n".join(self.config_lines[:7] + self.config_lines[8:]) + "\n",
         )
 
-    @skip_unless_fencing_level_attribute_supported
     def _test_remove_level_attrib(self):
         self.assert_pcs_success(
             [
@@ -2051,7 +1965,6 @@ class LevelDeleteRemove(LevelTestsBase):
             "\n".join(self.config_lines[:7] + self.config_lines[8:]) + "\n",
         )
 
-    @skip_unless_fencing_level_attribute_supported
     def _test_remove_level_attrib_device(self):
         self.assert_pcs_success(
             [
@@ -2092,17 +2005,14 @@ class LevelDeleteRemove(LevelTestsBase):
         )
 
 
-@skip_unless_fencing_level_supported
 class LevelDelete(LevelDeleteRemove, metaclass=ParametrizedTestMetaClass):
     command = "delete"
 
 
-@skip_unless_fencing_level_supported
 class LevelRemove(LevelDeleteRemove, metaclass=ParametrizedTestMetaClass):
     command = "remove"
 
 
-@skip_unless_fencing_level_supported
 class LevelVerify(LevelTestsBase):
     def test_success(self):
         self.fixture_full_configuration()
