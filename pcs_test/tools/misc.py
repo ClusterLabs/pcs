@@ -186,8 +186,14 @@ def _format_version(version_tuple):
 
 
 def is_minimum_pacemaker_features(cmajor, cminor, crev):
-    major, minor, rev = _get_current_pacemaker_features()
+    major, minor, rev = _get_current_pacemaker_features()[0]
     return compare_version((major, minor, rev), (cmajor, cminor, crev)) > -1
+
+
+def _has_pacemaker_features(requested_features):
+    requested = frozenset(requested_features)
+    actual = _get_current_pacemaker_features()[1]
+    return actual >= requested
 
 
 @lru_cache()
@@ -198,13 +204,21 @@ def _get_current_pacemaker_features():
             "--features",
         ]
     )
-    features_version = output.split("\n")[1]
-    regexp = re.compile(r"Supporting v(\d+)\.(\d+)\.(\d+):")
-    match = regexp.search(features_version)
+    features_string = output.split("\n")[1]
+    regexp = re.compile(r"Supporting v(\d+)\.(\d+)\.(\d+):\s*(.*)")
+    match = regexp.search(features_string)
     major = int(match.group(1))
     minor = int(match.group(2))
     rev = int(match.group(3))
-    return major, minor, rev
+    features_list = frozenset(match.group(4).split())
+    return (major, minor, rev), features_list
+
+
+@lru_cache()
+def is_pacemaker_21_without_20_compatibility():
+    return is_minimum_pacemaker_version(
+        2, 1, 0
+    ) and not _has_pacemaker_features(["compat-2.0"])
 
 
 def skip_unless_pacemaker_version(version_tuple, feature):

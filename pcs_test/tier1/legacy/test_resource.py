@@ -20,6 +20,7 @@ from pcs_test.tools.misc import (
     get_test_resource as rc,
     get_tmp_file,
     is_minimum_pacemaker_version,
+    is_pacemaker_21_without_20_compatibility,
     outdent,
     skip_unless_pacemaker_supports_op_onfail_demote,
     skip_unless_crm_rule,
@@ -1219,7 +1220,19 @@ monitor interval=20 (A-monitor-interval-20)
 
         o, r = pcs(self.temp_cib.name, "resource status".split())
         assert r == 0
-        if PCMK_2_0_3_PLUS:
+        if is_pacemaker_21_without_20_compatibility():
+            ac(
+                o,
+                outdent(
+                    """\
+                      * Resource Group: AGroup:
+                        * A1\t(ocf:heartbeat:Dummy):\t Stopped
+                        * A2\t(ocf:heartbeat:Dummy):\t Stopped
+                        * A3\t(ocf:heartbeat:Dummy):\t Stopped
+                    """
+                ),
+            )
+        elif PCMK_2_0_3_PLUS:
             assert_pcs_status(
                 o,
                 """\
@@ -1414,7 +1427,27 @@ monitor interval=20 (A-monitor-interval-20)
 
         output, returnVal = pcs(self.temp_cib.name, ["resource"])
         assert returnVal == 0
-        if PCMK_2_0_3_PLUS:
+        if is_pacemaker_21_without_20_compatibility():
+            ac(
+                output,
+                outdent(
+                    """\
+                      * F\t(ocf:heartbeat:Dummy):\t Stopped
+                      * G\t(ocf:heartbeat:Dummy):\t Stopped
+                      * H\t(ocf:heartbeat:Dummy):\t Stopped
+                      * Resource Group: RGA:
+                        * A\t(ocf:heartbeat:Dummy):\t Stopped
+                        * B\t(ocf:heartbeat:Dummy):\t Stopped
+                        * C\t(ocf:heartbeat:Dummy):\t Stopped
+                        * E\t(ocf:heartbeat:Dummy):\t Stopped
+                        * D\t(ocf:heartbeat:Dummy):\t Stopped
+                        * K\t(ocf:heartbeat:Dummy):\t Stopped
+                        * J\t(ocf:heartbeat:Dummy):\t Stopped
+                        * I\t(ocf:heartbeat:Dummy):\t Stopped
+                    """
+                ),
+            )
+        elif PCMK_2_0_3_PLUS:
             assert_pcs_status(
                 output,
                 """\
@@ -2319,7 +2352,18 @@ monitor interval=20 (A-monitor-interval-20)
         assert r == 0
 
         o, r = pcs(self.temp_cib.name, ["resource"])
-        if PCMK_2_0_3_PLUS:
+        if is_pacemaker_21_without_20_compatibility():
+            ac(
+                o,
+                outdent(
+                    """\
+                      * Resource Group: AG:
+                        * D1\t(ocf:heartbeat:Dummy):\t Stopped
+                      * Clone Set: D0-clone [D0]:
+                    """
+                ),
+            )
+        elif PCMK_2_0_3_PLUS:
             assert_pcs_status(
                 o,
                 """\
@@ -2712,7 +2756,18 @@ monitor interval=20 (A-monitor-interval-20)
 
         o, r = pcs(self.temp_cib.name, "resource status".split())
         assert r == 0
-        if PCMK_2_0_3_PLUS:
+        if is_pacemaker_21_without_20_compatibility():
+            ac(
+                o,
+                outdent(
+                    """\
+                      * Resource Group: DGroup:
+                        * D1\t(ocf:heartbeat:Dummy):\t Stopped
+                        * D2\t(ocf:heartbeat:Dummy):\t Stopped
+                    """
+                ),
+            )
+        elif PCMK_2_0_3_PLUS:
             assert_pcs_status(
                 o,
                 """\
@@ -3405,7 +3460,19 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         ac(output, "")
         assert retVal == 0
         output, retVal = pcs(self.temp_cib.name, "resource status".split())
-        if PCMK_2_0_3_PLUS:
+        if is_pacemaker_21_without_20_compatibility():
+            ac(
+                output,
+                outdent(
+                    """\
+                      * Resource Group: dummies:
+                        * dummy1\t(ocf:heartbeat:Dummy):\t Stopped
+                        * dummy2\t(ocf:heartbeat:Dummy):\t Stopped
+                        * dummy3\t(ocf:heartbeat:Dummy):\t Stopped
+                    """
+                ),
+            )
+        elif PCMK_2_0_3_PLUS:
             assert_pcs_status(
                 output,
                 outdent(
@@ -3516,7 +3583,19 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         ac(output, "")
         assert retVal == 0
         output, retVal = pcs(self.temp_cib.name, "resource status".split())
-        if PCMK_2_0_3_PLUS:
+        if is_pacemaker_21_without_20_compatibility():
+            ac(
+                output,
+                outdent(
+                    """\
+                      * Resource Group: dummies:
+                        * dummy1\t(ocf:heartbeat:Dummy):\t Stopped
+                        * dummy2\t(ocf:heartbeat:Dummy):\t Stopped
+                        * dummy3\t(ocf:heartbeat:Dummy):\t Stopped
+                    """
+                ),
+            )
+        elif PCMK_2_0_3_PLUS:
             assert_pcs_status(
                 output,
                 outdent(

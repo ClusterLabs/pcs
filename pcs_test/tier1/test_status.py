@@ -7,6 +7,7 @@ from pcs_test.tools.misc import (
     get_test_resource as rc,
     get_tmp_file,
     is_minimum_pacemaker_version,
+    is_pacemaker_21_without_20_compatibility,
     outdent,
     write_file_to_tmpfile,
 )
@@ -278,9 +279,13 @@ class ResourceStonithStatusBase(AssertPcsMixin):
         )
 
     def test_resource_id(self):
+        if is_pacemaker_21_without_20_compatibility():
+            stdout_full = "  * x1	(ocf:pacemaker:Dummy):	 Started rh-1\n"
+        else:
+            stdout_full = "  * x1	(ocf::pacemaker:Dummy):	 Started rh-1\n"
         self.assert_pcs_success(
             self.command + ["x1"],
-            stdout_full="  * x1	(ocf::pacemaker:Dummy):	 Started rh-1\n",
+            stdout_full=stdout_full,
         )
 
     def test_resource_id_hide_inactive(self):
@@ -296,15 +301,23 @@ class ResourceStonithStatusBase(AssertPcsMixin):
         )
 
     def test_resource_id_with_node_started(self):
+        if is_pacemaker_21_without_20_compatibility():
+            stdout_full = "  * x1	(ocf:pacemaker:Dummy):	 Started rh-1\n"
+        else:
+            stdout_full = "  * x1	(ocf::pacemaker:Dummy):	 Started rh-1\n"
         self.assert_pcs_success(
             self.command + ["x1", "node=rh-1"],
-            stdout_full="  * x1	(ocf::pacemaker:Dummy):	 Started rh-1\n",
+            stdout_full=stdout_full,
         )
 
     def test_resource_id_with_node_stopped(self):
+        if is_pacemaker_21_without_20_compatibility():
+            stdout_full = "  * x2	(ocf:pacemaker:Dummy):	 Stopped\n"
+        else:
+            stdout_full = "  * x2	(ocf::pacemaker:Dummy):	 Stopped\n"
         self.assert_pcs_success(
             self.command + ["x2", "node=rh-1"],
-            stdout_full="  * x2	(ocf::pacemaker:Dummy):	 Stopped\n",
+            stdout_full=stdout_full,
         )
 
     def test_resource_id_with_node_without_status(self):
@@ -314,9 +327,13 @@ class ResourceStonithStatusBase(AssertPcsMixin):
         )
 
     def test_resource_id_with_node_changed_arg_order(self):
+        if is_pacemaker_21_without_20_compatibility():
+            stdout_full = "  * x1	(ocf:pacemaker:Dummy):	 Started rh-1\n"
+        else:
+            stdout_full = "  * x1	(ocf::pacemaker:Dummy):	 Started rh-1\n"
         self.assert_pcs_success(
             self.command + ["node=rh-1", "x1"],
-            stdout_full="  * x1	(ocf::pacemaker:Dummy):	 Started rh-1\n",
+            stdout_full=stdout_full,
         )
 
     def test_stonith_id(self):
@@ -356,16 +373,27 @@ class ResourceStonithStatusBase(AssertPcsMixin):
         )
 
     def test_tag_id(self):
-        self.assert_pcs_success(
-            self.command + ["tag-mixed-stonith-devices-and-resources"],
-            stdout_full=outdent(
+        if is_pacemaker_21_without_20_compatibility():
+            stdout_full = outdent(
+                """\
+                  * fence-rh-1	(stonith:fence_xvm):	 Started rh-1
+                  * fence-rh-2	(stonith:fence_xvm):	 Stopped
+                  * x3	(ocf:pacemaker:Dummy):	 Stopped
+                  * y1	(ocf:pacemaker:Dummy):	 Stopped
+                """
+            )
+        else:
+            stdout_full = outdent(
                 """\
                   * fence-rh-1	(stonith:fence_xvm):	 Started rh-1
                   * fence-rh-2	(stonith:fence_xvm):	 Stopped
                   * x3	(ocf::pacemaker:Dummy):	 Stopped
                   * y1	(ocf::pacemaker:Dummy):	 Stopped
                 """
-            ),
+            )
+        self.assert_pcs_success(
+            self.command + ["tag-mixed-stonith-devices-and-resources"],
+            stdout_full=stdout_full,
         )
 
     def test_tag_id_hide_inactive(self):
@@ -380,16 +408,26 @@ class ResourceStonithStatusBase(AssertPcsMixin):
         )
 
     def test_tag_id_with_node(self):
-        self.assert_pcs_success(
-            self.command
-            + ["tag-mixed-stonith-devices-and-resources", "node=rh-2"],
-            stdout_full=outdent(
+        if is_pacemaker_21_without_20_compatibility():
+            stdout_full = outdent(
+                """\
+                  * fence-rh-2	(stonith:fence_xvm):	 Stopped
+                  * x3	(ocf:pacemaker:Dummy):	 Stopped
+                  * y1	(ocf:pacemaker:Dummy):	 Stopped
+                """
+            )
+        else:
+            stdout_full = outdent(
                 """\
                   * fence-rh-2	(stonith:fence_xvm):	 Stopped
                   * x3	(ocf::pacemaker:Dummy):	 Stopped
                   * y1	(ocf::pacemaker:Dummy):	 Stopped
                 """
-            ),
+            )
+        self.assert_pcs_success(
+            self.command
+            + ["tag-mixed-stonith-devices-and-resources", "node=rh-2"],
+            stdout_full=stdout_full,
         )
 
     def test_tag_id_with_node_hide_inactive(self):
@@ -522,9 +560,28 @@ class StonithStatus(ResourceStonithStatusBase, TestCase):
 
 def fixture_resources_status_output(nodes="rh-1 rh-2", inactive=True):
     if not inactive:
+        if is_pacemaker_21_without_20_compatibility():
+            return outdent(
+                """\
+                  * x1	(ocf:pacemaker:Dummy):	 Started rh-1
+                """
+            )
         return outdent(
             """\
               * x1	(ocf::pacemaker:Dummy):	 Started rh-1
+            """
+        )
+
+    if is_pacemaker_21_without_20_compatibility():
+        return outdent(
+            f"""\
+              * not-in-tags	(ocf:pacemaker:Dummy):	 Stopped
+              * x1	(ocf:pacemaker:Dummy):	 Started rh-1
+              * x2	(ocf:pacemaker:Dummy):	 Stopped
+              * x3	(ocf:pacemaker:Dummy):	 Stopped
+              * y1	(ocf:pacemaker:Dummy):	 Stopped
+              * Clone Set: y2-clone [y2]:
+                * Stopped: [ {nodes} ]
             """
         )
     return outdent(
