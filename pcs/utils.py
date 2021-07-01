@@ -2122,6 +2122,8 @@ def enableServices():
     service_list = ["corosync", "pacemaker"]
     if need_to_handle_qdevice_service():
         service_list.append("corosync-qdevice")
+    if need_to_handle_corosync_notifyd():
+        service_list.append("corosync-notifyd")
     service_manager = get_service_manager()
 
     report_item_list = []
@@ -2142,6 +2144,8 @@ def disableServices():
     service_list = ["corosync", "pacemaker"]
     if need_to_handle_qdevice_service():
         service_list.append("corosync-qdevice")
+    if need_to_handle_corosync_notifyd():
+        service_list.append("corosync-notifyd")
     service_manager = get_service_manager()
 
     report_item_list = []
@@ -2883,3 +2887,19 @@ def get_token_from_file(file_name: str) -> str:
     except OSError as e:
         err(f"Unable to read file '{file_name}': {e}", exit_after_error=False)
         raise SystemExit(1) from e
+
+
+def need_to_handle_corosync_notifyd():
+    if not os.path.exists(settings.pcsd_settings_conf_location):
+        return False
+    try:
+        out = json.loads(open(settings.pcsd_settings_conf_location, "r", encoding="utf-8").read())
+    except IOError as e:
+        err("Unable to read %s: %s" % (settings.pcsd_settings_conf_location, e.strerror))
+        return False
+    return out["corosync_notifyd_enabled"] == "true"
+
+
+def set_corosync_notifyd_enabled(node, value):
+    data = urlencode({"corosync_notifyd_enabled": value})
+    return sendHTTPRequest(node, "remote/set_corosync_notifyd_enabled", data, False, False)

@@ -83,6 +83,8 @@ cluster_cmd = create_router(
         "kill": cluster.kill_cluster,
         "enable": cluster.cluster_enable_cmd,
         "disable": cluster.cluster_disable_cmd,
+        "enable-corosync-notifyd": cluster.corosync_notifyd_enable_cmd,
+        "disable-corosync-notifyd": cluster.corosync_notifyd_disable_cmd,
         "cib": cluster.get_cib,
         "cib-push": cluster.cluster_push,
         "cib-upgrade": cluster.cluster_cib_upgrade_cmd,

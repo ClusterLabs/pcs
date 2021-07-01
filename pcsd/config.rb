@@ -5,11 +5,12 @@ require 'permissions.rb'
 
 class PCSConfig
   CURRENT_FORMAT = 2
-  attr_accessor :clusters, :permissions_local, :format_version, :data_version
+  attr_accessor :clusters, :permissions_local, :format_version, :data_version, :corosync_notifyd_enabled
 
   def initialize(cfg_text)
     @format_version = 0
     @data_version = 0
+    @corosync_notifyd_enabled = 'false'
     @clusters = []
     @permissions_local = Permissions::PermissionsSet.new([])
 
@@ -75,6 +76,7 @@ class PCSConfig
 
       if @format_version >= 2
         @data_version = json["data_version"] || 0
+        @corosync_notifyd_enabled = json["corosync_notifyd_enabled"] || 'false'
         input_clusters = json["clusters"] || []
         input_permissions = json['permissions'] || {}
       elsif @format_version == 1
@@ -126,6 +128,7 @@ class PCSConfig
     out_hash = Hash.new
     out_hash['format_version'] = CURRENT_FORMAT
     out_hash['data_version'] = @data_version
+    out_hash['corosync_notifyd_enabled'] = @corosync_notifyd_enabled
     out_hash['clusters'] = []
     out_hash['permissions'] = Hash.new
     out_hash['permissions']['local_cluster'] = []
