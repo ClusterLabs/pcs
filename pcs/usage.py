@@ -285,14 +285,15 @@ Commands:
         started, or 1 if the resources have not yet started. If 'n' is not
         specified it defaults to 60 minutes.
 
-    disable <resource id | tag id>... [--safe [--no-strict]]
+    disable <resource id | tag id>... [--safe [--brief] [--no-strict]]
             [--simulate [--brief]] [--wait[=n]]
         Attempt to stop the resources if they are running and forbid the
         cluster from starting them again. Depending on the rest of the
         configuration (constraints, options, failures, etc), the resources may
         remain started.
         If --safe is specified, no changes to the cluster configuration will be
-        made if other than specified resources would be affected in any way.
+        made if other than specified resources would be affected in any way. If
+        --brief is also specified, only errors are printed.
         If --no-strict is specified, no changes to the cluster configuration
         will be made if other than specified resources would get stopped or
         demoted. Moving resources between nodes is allowed.
@@ -305,13 +306,14 @@ Commands:
         if the resources have not stopped. If 'n' is not specified it defaults
         to 60 minutes.
 
-    safe-disable <resource id | tag id>... [--no-strict] [--simulate [--brief]]
-            [--wait[=n]] [--force]
+    safe-disable <resource id | tag id>... [--brief] [--no-strict] 
+            [--simulate [--brief]] [--wait[=n]] [--force]
         Attempt to stop the resources if they are running and forbid the
         cluster from starting them again. Depending on the rest of the
         configuration (constraints, options, failures, etc), the resources may
         remain started. No changes to the cluster configuration will be
         made if other than specified resources would be affected in any way.
+        If --brief is specified, only errors are printed.
         If --no-strict is specified, no changes to the cluster configuration
         will be made if other than specified resources would get stopped or
         demoted. Moving resources between nodes is allowed.

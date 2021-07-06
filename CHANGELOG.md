@@ -8,6 +8,8 @@
 - Support for displaying status of a single resource or tag ([rhbz#1290830])
 - Support for displaying status of resources on a specified node
   ([rhbz#1285269])
+- New option `--brief` for `pcs resource disable --safe` or its alias `pcs
+  resource safe-disable` that only prints errors ([rhbz#1909901])
 
 ### Fixed
 - Node attribute expressions are now correctly reported as not allowed in
@@ -63,6 +65,7 @@
 [rhbz#1882291]: https://bugzilla.redhat.com/show_bug.cgi?id=1882291
 [rhbz#1886342]: https://bugzilla.redhat.com/show_bug.cgi?id=1886342
 [rhbz#1896458]: https://bugzilla.redhat.com/show_bug.cgi?id=1896458
+[rhbz#1909901]: https://bugzilla.redhat.com/show_bug.cgi?id=1909901
 [rhbz#1927404]: https://bugzilla.redhat.com/show_bug.cgi?id=1927404
 [rhbz#1930886]: https://bugzilla.redhat.com/show_bug.cgi?id=1930886
 

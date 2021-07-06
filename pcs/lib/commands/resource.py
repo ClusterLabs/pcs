@@ -1054,15 +1054,25 @@ def disable_safe(
         strict,
     )
     if other_affected:
-        raise LibraryError(
-            ReportItem.error(
-                reports.messages.ResourceDisableAffectsOtherResources(
-                    sorted(disabled_resource_id_set),
-                    sorted(other_affected),
-                    plaintext_status,
-                )
-            )
+        env.report_processor.report_list(
+            [
+                ReportItem.error(
+                    reports.messages.ResourceDisableAffectsOtherResources(
+                        sorted(disabled_resource_id_set),
+                        sorted(other_affected),
+                    ),
+                ),
+                ReportItem.info(
+                    reports.messages.PacemakerSimulationResult(
+                        plaintext_status,
+                    ),
+                ),
+            ]
         )
+
+        if env.report_processor.has_errors:
+            raise LibraryError()
+
     _push_cib_wait(
         env, wait, disabled_resource_id_set, _ensure_disabled_after_wait(True)
     )

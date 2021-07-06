@@ -2382,7 +2382,7 @@ def resource_disable_cmd(lib, argv, modifiers):
     )
     modifiers.ensure_not_mutually_exclusive("-f", "--simulate", "--wait")
     modifiers.ensure_not_incompatible("--simulate", {"-f", "--safe", "--wait"})
-    modifiers.ensure_not_incompatible("--safe", {"-f", "--simulate", "--brief"})
+    modifiers.ensure_not_incompatible("--safe", {"-f", "--simulate"})
     modifiers.ensure_not_incompatible("--no-strict", {"-f"})
 
     if not argv:
@@ -2401,6 +2401,13 @@ def resource_disable_cmd(lib, argv, modifiers):
         print(result["plaintext_simulated_status"])
         return
     if modifiers.get("--safe") or modifiers.get("--no-strict"):
+        if modifiers.get("--brief"):
+            # Brief mode skips simulation output by setting the report processor
+            # to ingore info reports which contain crm_simulate output and
+            # resource status in this command
+            lib.env.report_processor.suppress_reports_of_severity(
+                [reports.ReportItemSeverity.INFO]
+            )
         lib.resource.disable_safe(
             argv,
             not modifiers.get("--no-strict"),

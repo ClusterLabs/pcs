@@ -10,6 +10,7 @@ from pcs_test.tools.misc import dict_to_modifiers
 
 from pcs import resource
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.reports.processor import ReportItemSeverity
 
 
 class FailcountShow(TestCase):
@@ -535,11 +536,18 @@ class ResourceClear(TestCase):
 
 class ResourceDisable(TestCase):
     def setUp(self):
-        self.lib = mock.Mock(spec_set=["resource"])
+        self.lib = mock.Mock(spec_set=["resource", "env"])
         self.resource = mock.Mock(
             spec_set=["disable", "disable_safe", "disable_simulate"]
         )
         self.lib.resource = self.resource
+
+        self.report_processor = mock.Mock(
+            spec_set=["suppress_reports_of_severity"]
+        )
+        self.env = mock.Mock(spec_set=["report_processor"])
+        self.lib.env = self.env
+        self.env.report_processor = self.report_processor
 
     @staticmethod
     def _fixture_output(plaintext=None, resources=None):
@@ -558,6 +566,7 @@ class ResourceDisable(TestCase):
         self.assertEqual(
             cm.exception.message, "You must specify resource(s) to disable"
         )
+        self.report_processor.suppress_reports_of_severity.assert_not_called()
         self.resource.disable.assert_not_called()
         self.resource.disable_safe.assert_not_called()
         self.resource.disable_simulate.assert_not_called()
@@ -567,6 +576,7 @@ class ResourceDisable(TestCase):
             self.lib, ["R1"], dict_to_modifiers(dict())
         )
         self.resource.disable.assert_called_once_with(["R1"], False)
+        self.report_processor.suppress_reports_of_severity.assert_not_called()
         self.resource.disable_safe.assert_not_called()
         self.resource.disable_simulate.assert_not_called()
 
@@ -575,6 +585,7 @@ class ResourceDisable(TestCase):
             self.lib, ["R1", "R2"], dict_to_modifiers(dict())
         )
         self.resource.disable.assert_called_once_with(["R1", "R2"], False)
+        self.report_processor.suppress_reports_of_severity.assert_not_called()
         self.resource.disable_safe.assert_not_called()
         self.resource.disable_simulate.assert_not_called()
 
@@ -584,6 +595,22 @@ class ResourceDisable(TestCase):
         )
         self.resource.disable_safe.assert_called_once_with(
             ["R1", "R2"], True, False
+        )
+        self.report_processor.suppress_reports_of_severity.assert_not_called()
+        self.resource.disable.assert_not_called()
+        self.resource.disable_simulate.assert_not_called()
+
+    def test_safe_brief(self):
+        resource.resource_disable_cmd(
+            self.lib,
+            ["R1", "R2"],
+            dict_to_modifiers(dict(safe=True, brief=True)),
+        )
+        self.resource.disable_safe.assert_called_once_with(
+            ["R1", "R2"], True, False
+        )
+        self.report_processor.suppress_reports_of_severity.assert_called_once_with(
+            [ReportItemSeverity.INFO]
         )
         self.resource.disable.assert_not_called()
         self.resource.disable_simulate.assert_not_called()
@@ -597,6 +624,7 @@ class ResourceDisable(TestCase):
         self.resource.disable_safe.assert_called_once_with(
             ["R1", "R2"], True, "10"
         )
+        self.report_processor.suppress_reports_of_severity.assert_not_called()
         self.resource.disable.assert_not_called()
         self.resource.disable_simulate.assert_not_called()
 
@@ -607,6 +635,7 @@ class ResourceDisable(TestCase):
         self.resource.disable_safe.assert_called_once_with(
             ["R1", "R2"], False, False
         )
+        self.report_processor.suppress_reports_of_severity.assert_not_called()
         self.resource.disable.assert_not_called()
         self.resource.disable_simulate.assert_not_called()
 
@@ -619,6 +648,7 @@ class ResourceDisable(TestCase):
         self.resource.disable_safe.assert_called_once_with(
             ["R1", "R2"], False, "10"
         )
+        self.report_processor.suppress_reports_of_severity.assert_not_called()
         self.resource.disable.assert_not_called()
         self.resource.disable_simulate.assert_not_called()
 
@@ -631,6 +661,7 @@ class ResourceDisable(TestCase):
         self.resource.disable_simulate.assert_called_once_with(
             ["R1", "R2"], True
         )
+        self.report_processor.suppress_reports_of_severity.assert_not_called()
         self.resource.disable.assert_not_called()
         self.resource.disable_safe.assert_not_called()
         mock_print.assert_called_once_with("simulate output")
@@ -646,6 +677,7 @@ class ResourceDisable(TestCase):
         self.resource.disable_simulate.assert_called_once_with(
             ["R1", "R2"], True
         )
+        self.report_processor.suppress_reports_of_severity.assert_not_called()
         self.resource.disable.assert_not_called()
         self.resource.disable_safe.assert_not_called()
         mock_print.assert_called_once_with("Rx\nRy")
@@ -663,6 +695,7 @@ class ResourceDisable(TestCase):
         self.resource.disable_simulate.assert_called_once_with(
             ["R1", "R2"], False
         )
+        self.report_processor.suppress_reports_of_severity.assert_not_called()
         self.resource.disable.assert_not_called()
         self.resource.disable_safe.assert_not_called()
         mock_print.assert_called_once_with("Rx\nRy")
@@ -680,6 +713,7 @@ class ResourceDisable(TestCase):
         self.resource.disable_simulate.assert_called_once_with(
             ["R1", "R2"], True
         )
+        self.report_processor.suppress_reports_of_severity.assert_not_called()
         self.resource.disable.assert_not_called()
         self.resource.disable_safe.assert_not_called()
         mock_print.assert_not_called()
@@ -695,6 +729,7 @@ class ResourceDisable(TestCase):
             cm.exception.message,
             "Only one of '--simulate', '--wait' can be used",
         )
+        self.report_processor.suppress_reports_of_severity.assert_not_called()
         self.resource.disable.assert_not_called()
         self.resource.disable_safe.assert_not_called()
         self.resource.disable_simulate.assert_not_called()
@@ -711,6 +746,7 @@ class ResourceDisable(TestCase):
         self.assertEqual(
             cm.exception.message, "'--simulate' cannot be used with '--safe'"
         )
+        self.report_processor.suppress_reports_of_severity.assert_not_called()
         self.resource.disable.assert_not_called()
         self.resource.disable_safe.assert_not_called()
         self.resource.disable_simulate.assert_not_called()
@@ -719,6 +755,7 @@ class ResourceDisable(TestCase):
         resource.resource_disable_cmd(
             self.lib, ["R1", "R2"], dict_to_modifiers(dict(wait="10"))
         )
+        self.report_processor.suppress_reports_of_severity.assert_not_called()
         self.resource.disable.assert_called_once_with(["R1", "R2"], "10")
         self.resource.disable_safe.assert_not_called()
         self.resource.disable_simulate.assert_not_called()

@@ -2199,6 +2199,14 @@ class MultipleResultsFound(NameBuildTest):
         )
 
 
+class PacemakerSimulationResult(NameBuildTest):
+    def test_default(self):
+        self.assert_message_from_report(
+            "\nSimulation result:\ncrm_simulate output",
+            reports.PacemakerSimulationResult("crm_simulate output"),
+        )
+
+
 class PacemakerLocalNodeNameNotFound(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(
@@ -4264,16 +4272,27 @@ class ParseErrorJsonFile(NameBuildTest):
 
 
 class ResourceDisableAffectsOtherResources(NameBuildTest):
-    def test_success(self):
+    def test_multiple_disabled(self):
         self.assert_message_from_report(
             (
-                "Disabling specified resources would have an effect on other "
-                "resources\n\ncrm_simulate output"
+                "Disabling specified resource would have an effect on these "
+                "resources: 'O1', 'O2'"
+            ),
+            reports.ResourceDisableAffectsOtherResources(
+                ["D1"],
+                ["O2", "O1"],
+            ),
+        )
+
+    def test_multiple_affected(self):
+        self.assert_message_from_report(
+            (
+                "Disabling specified resources would have an effect on this "
+                "resource: 'O1'"
             ),
             reports.ResourceDisableAffectsOtherResources(
                 ["D2", "D1"],
-                ["O2", "O1"],
-                "crm_simulate output",
+                ["O1"],
             ),
         )
 

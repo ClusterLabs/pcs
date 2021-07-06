@@ -2429,15 +2429,20 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
                 self.strict,
                 False,
             ),
+            expected_in_processor=False,
+        )
+        self.env_assist.assert_reports(
             [
                 fixture.error(
                     report_codes.RESOURCE_DISABLE_AFFECTS_OTHER_RESOURCES,
                     disabled_resource_list=["A"],
                     affected_resource_list=["B"],
-                    crm_simulate_plaintext_output="simulate output",
+                ),
+                fixture.info(
+                    report_codes.PACEMAKER_SIMULATION_RESULT,
+                    plaintext_output="simulate output",
                 ),
             ],
-            expected_in_processor=False,
         )
 
     def test_master_demoted(self, mock_write_tmpfile):
@@ -2468,15 +2473,20 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
                 self.strict,
                 False,
             ),
+            expected_in_processor=False,
+        )
+        self.env_assist.assert_reports(
             [
                 fixture.error(
                     report_codes.RESOURCE_DISABLE_AFFECTS_OTHER_RESOURCES,
                     disabled_resource_list=["A"],
                     affected_resource_list=["B"],
-                    crm_simulate_plaintext_output="simulate output",
                 ),
-            ],
-            expected_in_processor=False,
+                fixture.info(
+                    report_codes.PACEMAKER_SIMULATION_RESULT,
+                    plaintext_output="simulate output",
+                ),
+            ]
         )
 
     def test_wait_success(self, mock_write_tmpfile):
@@ -2735,6 +2745,9 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
                 self.strict,
                 False,
             ),
+            expected_in_processor=False,
+        )
+        self.env_assist.assert_reports(
             [
                 fixture.error(
                     report_codes.RESOURCE_DISABLE_AFFECTS_OTHER_RESOURCES,
@@ -2747,10 +2760,12 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
                         "H-bundle",
                     ],
                     affected_resource_list=["A"],
-                    crm_simulate_plaintext_output="simulate output",
+                ),
+                fixture.info(
+                    report_codes.PACEMAKER_SIMULATION_RESULT,
+                    plaintext_output="simulate output",
                 ),
             ],
-            expected_in_processor=False,
         )
 
 
@@ -2831,15 +2846,20 @@ class DisableSafeStrict(DisableSafeMixin, TestCase):
                 self.strict,
                 False,
             ),
+            expected_in_processor=False,
+        )
+        self.env_assist.assert_reports(
             [
                 fixture.error(
                     report_codes.RESOURCE_DISABLE_AFFECTS_OTHER_RESOURCES,
                     disabled_resource_list=["A"],
                     affected_resource_list=["B"],
-                    crm_simulate_plaintext_output="simulate output",
                 ),
-            ],
-            expected_in_processor=False,
+                fixture.info(
+                    report_codes.PACEMAKER_SIMULATION_RESULT,
+                    plaintext_output="simulate output",
+                ),
+            ]
         )
 
     def test_master_migrated(self, mock_write_tmpfile):
@@ -2870,15 +2890,20 @@ class DisableSafeStrict(DisableSafeMixin, TestCase):
                 self.strict,
                 False,
             ),
+            expected_in_processor=False,
+        )
+        self.env_assist.assert_reports(
             [
                 fixture.error(
                     report_codes.RESOURCE_DISABLE_AFFECTS_OTHER_RESOURCES,
                     disabled_resource_list=["A"],
                     affected_resource_list=["B"],
-                    crm_simulate_plaintext_output="simulate output",
                 ),
-            ],
-            expected_in_processor=False,
+                fixture.info(
+                    report_codes.PACEMAKER_SIMULATION_RESULT,
+                    plaintext_output="simulate output",
+                ),
+            ]
         )
 
 

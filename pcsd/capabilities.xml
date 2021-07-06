@@ -1570,6 +1570,15 @@
           resource safe-disable
       </description>
     </capability>
+    <capability id="pcmk.resource.disable.safe.brief" in-pcs="1" in-pcsd="0">
+      <description>
+        Do not disable resources if other resources would be affected without
+        printing pacemaker simulation output.
+
+        pcs commands: resource disable --safe --brief,
+          resource safe-disable --brief
+      </description>
+    </capability>
     <capability id="pcmk.resource.disable.simulate" in-pcs="1" in-pcsd="1">
       <description>
         Show effects caused by disabling resources.

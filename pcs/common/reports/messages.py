@@ -3234,6 +3234,22 @@ class MultipleResultsFound(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class PacemakerSimulationResult(ReportItemMessage):
+    """
+    This report contains crm_simulate output.
+
+    str plaintext_output -- plaintext output from crm_simulate
+    """
+
+    plaintext_output: str
+    _code = codes.PACEMAKER_SIMULATION_RESULT
+
+    @property
+    def message(self) -> str:
+        return f"\nSimulation result:\n{self.plaintext_output}"
+
+
+@dataclass(frozen=True)
 class PacemakerLocalNodeNameNotFound(ReportItemMessage):
     """
     We are unable to figure out pacemaker's local node's name
@@ -5741,19 +5757,29 @@ class ResourceDisableAffectsOtherResources(ReportItemMessage):
 
     disabled_resource_list -- list of resources to disable
     affected_resource_list -- other affected resources
-    crm_simulate_plaintext_output -- plaintext output from pacemaker
     """
 
     disabled_resource_list: List[str]
     affected_resource_list: List[str]
-    crm_simulate_plaintext_output: str
     _code = codes.RESOURCE_DISABLE_AFFECTS_OTHER_RESOURCES
 
     @property
     def message(self) -> str:
         return (
-            "Disabling specified resources would have an effect on other "
-            f"resources\n\n{self.crm_simulate_plaintext_output}"
+            "Disabling specified {disabled_resource_pl} would have an effect "
+            "on {this_pl} {affected_resource_pl}: "
+            "{affected_resource_list}".format(
+                disabled_resource_pl=format_plural(
+                    self.disabled_resource_list, "resource"
+                ),
+                this_pl=format_plural(
+                    self.affected_resource_list, "this", "these"
+                ),
+                affected_resource_pl=format_plural(
+                    self.affected_resource_list, "resource"
+                ),
+                affected_resource_list=format_list(self.affected_resource_list),
+            )
         )
 
 
