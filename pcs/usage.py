@@ -1280,6 +1280,13 @@ Commands:
     update <stonith id> [stonith device options]
         Add/Change options to specified stonith id.
 
+    update-scsi-devices <stonith id> set <device-path> [<device-path>...]
+        Update scsi fencing devices without affecting other resources. Stonith
+        resource must be running on one cluster node. Each device will be
+        unfenced on each cluster node. Cluster must be running on all the
+        cluster nodes in order to successfully proceed unfencing. Supported
+        fence agents: fence_scsi.
+
     delete <stonith id>
         Remove stonith id from configuration.
 

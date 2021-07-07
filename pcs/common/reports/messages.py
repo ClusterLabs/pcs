@@ -222,7 +222,7 @@ class LegacyCommonMessage(ReportItemMessage):
     def __init__(
         self, code: types.MessageCode, info: Mapping[str, Any], message: str
     ) -> None:
-        self._code = code
+        self.__code = code
         self.info = info
         self._message = message
 
@@ -232,7 +232,7 @@ class LegacyCommonMessage(ReportItemMessage):
 
     def to_dto(self) -> ReportItemMessageDto:
         return ReportItemMessageDto(
-            code=self.code,
+            code=self.__code,
             message=self.message,
             payload=dict(self.info),
         )
@@ -2665,6 +2665,22 @@ class CannotGroupResourceWrongType(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class UnableToGetResourceOperationDigests(ReportItemMessage):
+    """
+    Unable to get resource digests from pacemaker crm_resource tool.
+
+    output -- stdout and stderr from crm_resource
+    """
+
+    output: str
+    _code = codes.UNABLE_TO_GET_RESOURCE_OPERATION_DIGESTS
+
+    @property
+    def message(self) -> str:
+        return f"unable to get resource operation digets:\n{self.output}"
+
+
+@dataclass(frozen=True)
 class StonithResourcesDoNotExist(ReportItemMessage):
     """
     specified stonith resource doesn't exist (e.g. when creating in constraints)
@@ -2678,6 +2694,80 @@ class StonithResourcesDoNotExist(ReportItemMessage):
     def message(self) -> str:
         stoniths = format_list(self.stonith_ids)
         return f"Stonith resource(s) {stoniths} do not exist"
+
+
+@dataclass(frozen=True)
+class StonithRestartlessUpdateOfScsiDevicesNotSupported(ReportItemMessage):
+    """
+    Pacemaker does not support the digests option for calculation of digests
+    needed for restartless update of scsi devices.
+    """
+
+    _code = codes.STONITH_RESTARTLESS_UPDATE_OF_SCSI_DEVICES_NOT_SUPPORTED
+
+    @property
+    def message(self) -> str:
+        return (
+            "Restartless update of scsi devices is not supported, please "
+            "upgrade pacemaker"
+        )
+
+
+@dataclass(frozen=True)
+class StonithResourceTypeNotSupportedForDevicesUpdate(ReportItemMessage):
+    """
+    Specified resource is not supported for scsi devices update.
+
+    resource_id -- resource id
+    """
+
+    resource_id: str
+    supported_stonith_types: List[str]
+    _code = codes.STONITH_RESOURCE_TYPE_NOT_SUPPORTED_FOR_UPDATE
+
+    @property
+    def message(self) -> str:
+        return (
+            "Resource '{resource_id}' is not a stonith resource or its type is "
+            "not supported for devices update. Supported {_type}: "
+            "{supported_types}"
+        ).format(
+            resource_id=self.resource_id,
+            _type=format_plural(self.supported_stonith_types, "type"),
+            supported_types=format_list(self.supported_stonith_types),
+        )
+
+
+@dataclass(frozen=True)
+class StonithUnfencingFailed(ReportItemMessage):
+    """
+    Unfencing failed on a cluster node.
+    """
+
+    reason: str
+
+    _code = codes.STONITH_UNFENCING_FAILED
+
+    @property
+    def message(self) -> str:
+        return f"Unfencing failed:\n{self.reason}"
+
+
+@dataclass(frozen=True)
+class StonithUnableToUpdateScsiDevices(ReportItemMessage):
+    """
+    Unable to update scsi devices without restart for various reason
+    """
+
+    reason: str
+    reason_type: types.StonithUnableToUpdateScsiDevicesReason = (
+        const.STONITH_UNABLE_TO_UPDATE_SCSI_DEVICES_REASON_OTHER
+    )
+    _code = codes.STONITH_UNABLE_TO_UPDATE_SCSI_DEVICES
+
+    @property
+    def message(self) -> str:
+        return f"Unable to update scsi devices: {self.reason}"
 
 
 @dataclass(frozen=True)

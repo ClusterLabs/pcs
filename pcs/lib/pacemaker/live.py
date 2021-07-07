@@ -2,6 +2,7 @@ import os.path
 import re
 from typing import (
     cast,
+    Dict,
     Iterable,
     List,
     Optional,
@@ -837,3 +838,69 @@ def _is_in_pcmk_tool_help(
     return all(text in stderr for text in text_list) or all(
         text in stdout for text in text_list
     )
+
+
+def is_getting_resource_digest_supported(runner):
+    return _is_in_pcmk_tool_help(runner, "crm_resource", "--digests")
+
+
+def get_resource_digests(
+    runner: CommandRunner,
+    resource_id: str,
+    node_name: str,
+    resource_options: Dict[str, str],
+    crm_meta_attributes: Optional[Dict[str, Optional[str]]] = None,
+) -> Dict[str, Optional[str]]:
+    # pylint: disable=too-many-locals
+    if crm_meta_attributes is None:
+        crm_meta_attributes = dict()
+    command = [
+        __exec("crm_resource"),
+        "--digests",
+        "--resource",
+        resource_id,
+        "--node",
+        node_name,
+        "--output-as",
+        "xml",
+        *[f"{key}={value}" for key, value in resource_options.items()],
+        *[
+            f"CRM_meta_{key}={value}"
+            for key, value in crm_meta_attributes.items()
+            if value is not None
+        ],
+    ]
+    stdout, stderr, retval = runner.run(command)
+
+    def error_exception(message):
+        return LibraryError(
+            ReportItem.error(
+                reports.messages.UnableToGetResourceOperationDigests(message)
+            )
+        )
+
+    try:
+        dom = xml_fromstring(stdout)
+        if os.path.isfile(settings.pacemaker_api_result_schema):
+            etree.RelaxNG(
+                file=settings.pacemaker_api_result_schema
+            ).assertValid(dom)
+    except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
+        raise error_exception(join_multilines([stderr, stdout])) from e
+
+    if retval != 0:
+        status = get_status_from_api_result(dom)
+        raise error_exception(
+            join_multilines([status.message] + list(status.errors))
+        )
+
+    digests = {}
+    for digest_type in ["all", "nonprivate", "nonreloadable"]:
+        xpath_result = cast(
+            List[str],
+            dom.xpath(f'./digests/digest[@type="{digest_type}"]/@hash'),
+        )
+        digests[digest_type] = xpath_result[0] if xpath_result else None
+    if not any(digests.values()):
+        raise error_exception(join_multilines([stderr, stdout]))
+    return digests

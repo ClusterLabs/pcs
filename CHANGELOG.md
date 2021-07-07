@@ -10,6 +10,9 @@
   ([rhbz#1285269])
 - New option `--brief` for `pcs resource disable --safe` or its alias `pcs
   resource safe-disable` that only prints errors ([rhbz#1909901])
+- Support for updating scsi fencing devices without affecting other resources
+  added in the new command `pcs stonith update-scsi-devices` ([rhbz#1759995],
+  [rhbz#1872378])
 
 ### Fixed
 - Node attribute expressions are now correctly reported as not allowed in
@@ -62,6 +65,8 @@
 [rhbz#1690419]: https://bugzilla.redhat.com/show_bug.cgi?id=1690419
 [rhbz#1720221]: https://bugzilla.redhat.com/show_bug.cgi?id=1720221
 [rhbz#1750240]: https://bugzilla.redhat.com/show_bug.cgi?id=1750240
+[rhbz#1759995]: https://bugzilla.redhat.com/show_bug.cgi?id=1759995
+[rhbz#1872378]: https://bugzilla.redhat.com/show_bug.cgi?id=1872378
 [rhbz#1882291]: https://bugzilla.redhat.com/show_bug.cgi?id=1882291
 [rhbz#1886342]: https://bugzilla.redhat.com/show_bug.cgi?id=1886342
 [rhbz#1896458]: https://bugzilla.redhat.com/show_bug.cgi?id=1896458

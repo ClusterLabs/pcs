@@ -89,6 +89,10 @@ EXTRA_DIST		= \
 			  common/file_type_codes.py \
 			  common/host.py \
 			  common/__init__.py \
+			  common/communication/__init__.py \
+			  common/communication/const.py \
+			  common/communication/dto.py \
+			  common/communication/types.py \
 			  common/interface/dto.py \
 			  common/interface/__init__.py \
 			  common/node_communicator.py \
@@ -99,6 +103,7 @@ EXTRA_DIST		= \
 			  common/pacemaker/rule.py \
 			  common/pcs_pycurl.py \
 			  common/reports/codes.py \
+			  common/reports/conversions.py \
 			  common/reports/const.py \
 			  common/reports/constraints/colocation.py \
 			  common/reports/constraints/common.py \
@@ -225,6 +230,7 @@ EXTRA_DIST		= \
 			  lib/commands/resource_agent.py \
 			  lib/commands/resource.py \
 			  lib/commands/sbd.py \
+			  lib/commands/scsi.py \
 			  lib/commands/services.py \
 			  lib/commands/status.py \
 			  lib/commands/stonith_agent.py \
@@ -238,6 +244,7 @@ EXTRA_DIST		= \
 			  lib/communication/qdevice_net.py \
 			  lib/communication/qdevice.py \
 			  lib/communication/sbd.py \
+			  lib/communication/scsi.py \
 			  lib/communication/status.py \
 			  lib/communication/tools.py \
 			  lib/corosync/config_facade.py \

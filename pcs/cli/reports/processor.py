@@ -23,6 +23,8 @@ class ReportProcessorToConsole(ReportProcessor):
     def _do_report(self, report_item: ReportItem) -> None:
         report_dto = report_item.to_dto()
         msg = report_item_msg_from_dto(report_dto.message).message
+        if report_dto.context:
+            msg = f"{report_dto.context.node}: {msg}"
         severity = report_dto.severity.level
 
         if severity in self._ignore_severities:

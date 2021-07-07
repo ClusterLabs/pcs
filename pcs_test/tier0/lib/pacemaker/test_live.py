@@ -1546,3 +1546,151 @@ class GetRulesInEffectStatus(TestCase):
                     lib.get_rule_in_effect_status(runner, "mock cib", "ruleid"),
                     response,
                 )
+
+
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+)
+class GetResourceDigests(TestCase):
+    DIGESTS = {
+        "all": "0" * 31 + "1",
+        "nonprivate": "0" * 31 + "2",
+        "nonreloadable": "0" * 31 + "3",
+    }
+    CALL_ARGS = [
+        path("crm_resource"),
+        "--digests",
+        "--resource",
+        "resource-id",
+        "--node",
+        "node1",
+        "--output-as",
+        "xml",
+        "opt_name1=opt_value1",
+        "opt_name2=opt_value2",
+        "CRM_meta_interval=30000",
+        "CRM_meta_timeout=10000",
+    ]
+    CRM_ATTRS = {"interval": "30000", "timeout": "10000"}
+    RESOURCE_OPTIONS = {"opt_name1": "opt_value1", "opt_name2": "opt_value2"}
+    FIXTURE_PACEMAKER_ERROR_XML = """
+        <pacemaker-result api-version="2.9" request="crm_resource">
+          <status code="102" message="Not connected">
+            <errors>
+              <error>crm_resource: Could not connect to the CIB: Transport endpoint is not connected
+        Error performing operation: Not connected</error>
+            </errors>
+          </status>
+        </pacemaker-result>
+
+    """
+    FIXTURE_PACEMAKER_ERROR = (
+        "Not connected\ncrm_resource: Could not connect to the CIB: Transport "
+        "endpoint is not connected\n        Error performing operation: Not "
+        "connected"
+    )
+
+    def assert_command_failure(
+        self, stdout="", returncode=0, report_output=None
+    ):
+        if report_output is None:
+            report_output = stdout
+        runner = get_runner(stdout=stdout, returncode=returncode)
+        assert_raise_library_error(
+            lambda: lib.get_resource_digests(
+                runner,
+                "resource-id",
+                "node1",
+                self.RESOURCE_OPTIONS,
+                self.CRM_ATTRS,
+            ),
+            (
+                Severity.ERROR,
+                report_codes.UNABLE_TO_GET_RESOURCE_OPERATION_DIGESTS,
+                {"output": report_output},
+            ),
+        )
+        runner.run.assert_called_once_with(self.CALL_ARGS)
+
+    def assert_command_sucess(
+        self,
+        digest_types=("all",),
+        resource_options=None,
+        crm_attrs=None,
+        call_args=None,
+    ):
+        if resource_options is None:
+            resource_options = self.RESOURCE_OPTIONS
+        if crm_attrs is None:
+            crm_attrs = self.CRM_ATTRS
+        if call_args is None:
+            call_args = self.CALL_ARGS
+        runner = get_runner(stdout=self.fixture_digests_xml(digest_types))
+        self.assertEqual(
+            lib.get_resource_digests(
+                runner,
+                "resource-id",
+                "node1",
+                resource_options,
+                crm_meta_attributes=crm_attrs,
+            ),
+            self.fixture_result_dict(digest_types),
+        )
+        runner.run.assert_called_once_with(call_args)
+
+    def fixture_result_dict(self, digest_types=()):
+        result_dict = {k: None for k in self.DIGESTS}
+        for digest_type in digest_types:
+            result_dict[digest_type] = self.DIGESTS[digest_type]
+        return result_dict
+
+    def fixture_digests_xml(self, digest_types=()):
+        return """
+            <pacemaker-result api-version="2.9" request="crm_resource">
+                <digests resource="resource-id" node="node1" task="monitor" interval="0ms">
+                    {digests}
+                </digests>
+                <status code="0" message="OK"/>
+            </pacemaker-result>
+
+        """.format(
+            digests="\n".join(
+                f"""
+                <digest type="{digest_type}" hash="{self.DIGESTS[digest_type]}">
+                    <parameters/>
+                </digest>
+                """
+                for digest_type in digest_types
+            )
+        ).strip()
+
+    def test_success(self):
+        digest_types = list(self.DIGESTS.keys())
+        test_list = [digest_types[0:1], digest_types[0:2], digest_types]
+        for tested_digest_types in test_list:
+            with self.subTest(tested_digest_types=tested_digest_types):
+                self.assert_command_sucess(digest_types=tested_digest_types)
+
+    def test_success_no_crm_attrs(self):
+        self.assert_command_sucess(crm_attrs={}, call_args=self.CALL_ARGS[:-2])
+
+    def test_success_empty_resource_options(self):
+        self.assert_command_sucess(
+            resource_options={}, crm_attrs={}, call_args=self.CALL_ARGS[:-4]
+        )
+
+    def test_invalid_xml(self):
+        self.assert_command_failure(stdout="invalid_xml")
+
+    def test_not_valid_with_schema(self):
+        self.assert_command_failure(stdout="<xml/>")
+
+    def test_pacemaker_error(self):
+        self.assert_command_failure(
+            stdout=self.FIXTURE_PACEMAKER_ERROR_XML,
+            returncode=101,
+            report_output=self.FIXTURE_PACEMAKER_ERROR,
+        )
+
+    def test_no_digest_found(self):
+        self.assert_command_failure(stdout=self.fixture_digests_xml())

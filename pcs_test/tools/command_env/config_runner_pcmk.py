@@ -1,5 +1,7 @@
 import os
 
+from typing import List, Optional
+
 from pcs_test.tools.command_env.mock_runner import (
     Call as RunnerCall,
     CheckStdinEqualXml,
@@ -705,6 +707,99 @@ class PcmkShortcuts:
                         else self.default_wait_timeout
                     ),
                 ],
+                stderr=stderr,
+                returncode=returncode,
+            ),
+        )
+
+    def is_resource_digests_supported(
+        self,
+        name: str = "runner.pcmk.is_resource_digests_supported",
+        is_supported: bool = True,
+    ):
+        """
+        Create call for `crm_resource --help-all`. If support_digest is True, option
+        --digest is included in command output.
+        """
+        self.__calls.place(
+            name,
+            RunnerCall(
+                ["crm_resource", "--help-all"],
+                stdout="--digests" if is_supported else "",
+                stderr="",
+                returncode=0,
+            ),
+        )
+
+    def resource_digests(
+        self,
+        resource_id: str,
+        node_name: str,
+        name: str = "runner.pcmk.resource_digests",
+        args: Optional[List[str]] = None,
+        stdout="",
+        stderr="",
+        returncode=0,
+    ):
+        """
+        Create call for crm_resource digests
+
+        name -- key of the call
+        stdout -- crm_resource's stdout
+        stderr -- crm_resource's stderr
+        returncode -- crm_resource's returncode
+        """
+        if args is None:
+            args = []
+
+        self.__calls.place(
+            name,
+            RunnerCall(
+                [
+                    "crm_resource",
+                    "--digests",
+                    "--resource",
+                    resource_id,
+                    "--node",
+                    node_name,
+                    "--output-as",
+                    "xml",
+                    *args,
+                ],
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode,
+            ),
+        )
+
+    def resource_locate(
+        self,
+        resource_id: str,
+        name: str = "runner.pcmk.resource_locate",
+        stdout="",
+        stderr="",
+        returncode=0,
+    ):
+        """
+        Create call for crm_resource locate
+
+        name -- key of the call
+        stdout -- crm_resource's stdout
+        stderr -- crm_resource's stderr
+        returncode -- crm_resource's returncode
+        """
+        self.__calls.place(
+            name,
+            RunnerCall(
+                [
+                    "crm_resource",
+                    "--locate",
+                    "--resource",
+                    resource_id,
+                    "--output-as",
+                    "xml",
+                ],
+                stdout=stdout,
                 stderr=stderr,
                 returncode=returncode,
             ),

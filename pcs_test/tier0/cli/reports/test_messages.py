@@ -566,3 +566,22 @@ class CannotLeaveGroupEmptyAfterMove(CliReportMessageTestBase):
             "group 'gr1' empty. Please, use the 'pcs resource ungroup gr1' "
             "command first.",
         )
+
+
+class StonithUnableToUpdateScsiDevices(CliReportMessageTestBase):
+    def test_other_reason(self):
+        report_msg = messages.StonithUnableToUpdateScsiDevices("reason")
+        self.assert_message(
+            report_msg,
+            report_msg.message,
+        )
+
+    def test_not_running_reason(self):
+        report_msg = messages.StonithUnableToUpdateScsiDevices(
+            "reason",
+            const.STONITH_UNABLE_TO_UPDATE_SCSI_DEVICES_REASON_NOT_RUNNING,
+        )
+        self.assert_message(
+            report_msg,
+            f"{report_msg.message}, please use command 'pcs stonith update' instead",
+        )

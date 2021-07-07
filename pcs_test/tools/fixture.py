@@ -13,20 +13,20 @@ def report_variation(report, **_info):
     return report[0], report[1], updated_info, report[3]
 
 
-def debug(code, **kwargs):
-    return severities.DEBUG, code, kwargs, None
+def debug(code, context=None, **kwargs):
+    return severities.DEBUG, code, kwargs, None, context
 
 
-def warn(code, **kwargs):
-    return severities.WARNING, code, kwargs, None
+def warn(code, context=None, **kwargs):
+    return severities.WARNING, code, kwargs, None, context
 
 
-def error(code, force_code=None, **kwargs):
-    return severities.ERROR, code, kwargs, force_code
+def error(code, force_code=None, context=None, **kwargs):
+    return severities.ERROR, code, kwargs, force_code, context
 
 
-def info(code, **kwargs):
-    return severities.INFO, code, kwargs, None
+def info(code, context=None, **kwargs):
+    return severities.INFO, code, kwargs, None, context
 
 
 class ReportStore:

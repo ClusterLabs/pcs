@@ -1,22 +1,27 @@
-from typing import Optional
+from typing import Iterable, Optional
 
 from pcs.common import reports
 from pcs.common.reports.item import ReportItem
 from pcs.lib.cib import resource
+from pcs.lib.cib import stonith
 from pcs.lib.cib.resource.common import are_meta_disabled
 from pcs.lib.cib.tools import IdProvider
 from pcs.lib.commands.resource import (
     _ensure_disabled_after_wait,
     resource_environment,
 )
+from pcs.lib.communication.scsi import Unfence
+from pcs.lib.communication.tools import run_and_raise
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
+from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.pacemaker.live import (
     FenceHistoryCommandErrorException,
     fence_history_cleanup,
     fence_history_text,
     fence_history_update,
     is_fence_history_supported_management,
+    is_getting_resource_digest_supported,
 )
 from pcs.lib.pacemaker.values import validate_id
 from pcs.lib.resource_agent import find_valid_stonith_agent_by_name as get_agent
@@ -255,3 +260,64 @@ def history_update(env: LibraryEnvironment):
                 )
             )
         ) from e
+
+
+def update_scsi_devices(
+    env: LibraryEnvironment,
+    stonith_id: str,
+    set_device_list: Iterable[str],
+) -> None:
+    if not is_getting_resource_digest_supported(env.cmd_runner()):
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.StonithRestartlessUpdateOfScsiDevicesNotSupported()
+            )
+        )
+    cib = env.get_cib()
+    if not set_device_list:
+        env.report_processor.report(
+            ReportItem.error(
+                reports.messages.InvalidOptionValue(
+                    "devices", "", None, cannot_be_empty=True
+                )
+            )
+        )
+    (
+        stonith_el,
+        report_list,
+    ) = stonith.validate_stonith_device_exists_and_supported(cib, stonith_id)
+    if env.report_processor.report_list(report_list).has_errors:
+        raise LibraryError()
+    # for mypy, this should not happen because exeption would be raised
+    if stonith_el is None:
+        raise AssertionError("stonith element is None")
+
+    stonith.update_scsi_devices_without_restart(
+        env.cmd_runner(),
+        env.get_cluster_state(),
+        stonith_el,
+        IdProvider(cib),
+        set_device_list,
+    )
+
+    # Unfencing
+    cluster_nodes_names, nodes_report_list = get_existing_nodes_names(
+        env.get_corosync_conf(),
+        error_on_missing_name=True,
+    )
+    env.report_processor.report_list(nodes_report_list)
+    (
+        target_report_list,
+        cluster_nodes_target_list,
+    ) = env.get_node_target_factory().get_target_list_with_reports(
+        cluster_nodes_names,
+        allow_skip=False,
+    )
+    env.report_processor.report_list(target_report_list)
+    if env.report_processor.has_errors:
+        raise LibraryError()
+    com_cmd = Unfence(env.report_processor, sorted(set_device_list))
+    com_cmd.set_targets(cluster_nodes_target_list)
+    run_and_raise(env.get_node_communicator(), com_cmd)
+
+    env.push_cib()

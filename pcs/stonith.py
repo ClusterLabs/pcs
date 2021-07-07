@@ -883,3 +883,27 @@ def stonith_history_update_cmd(lib, argv, modifiers):
         raise CmdLineInputError()
 
     print(lib.stonith.history_update())
+
+
+def stonith_update_scsi_devices(lib, argv, modifiers):
+    """
+    Options:
+      * --request-timeout - timeout for HTTP requests
+    """
+    modifiers.ensure_only_supported("--request-timeout")
+    if len(argv) < 2:
+        raise CmdLineInputError()
+    stonith_id = argv[0]
+    parsed_args = parse_args.group_by_keywords(
+        argv[1:],
+        ["set"],
+        keyword_repeat_allowed=False,
+        only_found_keywords=True,
+    )
+    set_args = parsed_args["set"] if "set" in parsed_args else []
+    if not set_args:
+        raise CmdLineInputError(
+            show_both_usage_and_message=True,
+            hint=("You must specify set devices to be updated"),
+        )
+    lib.stonith.update_scsi_devices(stonith_id, set_args)

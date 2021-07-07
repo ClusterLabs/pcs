@@ -468,6 +468,20 @@ class CannotLeaveGroupEmptyAfterMove(CliReportMessageCustom):
         )
 
 
+class StonithUnableToUpdateScsiDevices(CliReportMessageCustom):
+    _obj: messages.StonithUnableToUpdateScsiDevices
+
+    @property
+    def message(self) -> str:
+        msg = self._obj.message
+        if (
+            self._obj.reason_type
+            == const.STONITH_UNABLE_TO_UPDATE_SCSI_DEVICES_REASON_NOT_RUNNING
+        ):
+            msg += ", please use command 'pcs stonith update' instead"
+        return msg
+
+
 def _create_report_msg_map() -> Dict[str, type]:
     result: Dict[str, type] = {}
     for report_msg_cls in get_all_subclasses(CliReportMessageCustom):

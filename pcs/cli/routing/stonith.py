@@ -13,6 +13,7 @@ stonith_cmd = create_router(
         "describe": stonith.stonith_list_options,
         "create": stonith.stonith_create,
         "update": resource.resource_update,
+        "update-scsi-devices": stonith.stonith_update_scsi_devices,
         "delete": resource.resource_remove_cmd,
         "remove": resource.resource_remove_cmd,
         # TODO remove, deprecated command

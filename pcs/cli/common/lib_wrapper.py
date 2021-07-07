@@ -20,6 +20,7 @@ from pcs.lib.commands import (
     resource_agent,
     sbd,
     services,
+    scsi,
     status,
     stonith,
     stonith_agent,
@@ -433,6 +434,7 @@ def load_module(env, middleware_factory, name):
                 "history_get_text": stonith.history_get_text,
                 "history_cleanup": stonith.history_cleanup,
                 "history_update": stonith.history_update,
+                "update_scsi_devices": stonith.update_scsi_devices,
             },
         )
 
@@ -466,6 +468,14 @@ def load_module(env, middleware_factory, name):
                 "enable_service": services.enable_service,
                 "disable_service": services.disable_service,
                 "get_services_info": services.get_services_info,
+            },
+        )
+    if name == "scsi":
+        return bind_all(
+            env,
+            middleware.build(),
+            {
+                "unfence_node": scsi.unfence_node,
             },
         )
 

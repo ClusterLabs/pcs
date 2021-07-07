@@ -147,3 +147,10 @@ class GetMisconfiguredResources(TestCase):
                 [stonith3, stonith4],
             ),
         )
+
+
+class ValidateStonithDeviceExistsAndSupported(TestCase):
+    """
+    tested in:
+      pcs_test.tier0.lib.commands.test_stonith_update_scsi_devices.TestUpdateScsiDevicesFailures
+    """

@@ -56,14 +56,18 @@ class RequestData(
     send in request
     """
 
-    def __new__(cls, action, structured_data=()):
+    def __new__(cls, action, structured_data=(), data=None):
         """
         string action -- action to perform
         list structured_data -- list of tuples, data to send with specified
             action
+        string data -- raw data to send in request's body
         """
         return super(RequestData, cls).__new__(
-            cls, action, structured_data, urlencode(structured_data)
+            cls,
+            action,
+            data if data else structured_data,
+            data if data else urlencode(structured_data),
         )
 
 

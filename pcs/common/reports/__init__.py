@@ -10,9 +10,11 @@ from .item import (
     ReportItem,
     ReportItemList,
     ReportItemSeverity,
+    ReportItemContext,
 )
 from .dto import ReportItemDto
 from .processor import (
     has_errors,
     ReportProcessor,
 )
+from .conversions import report_dto_to_item

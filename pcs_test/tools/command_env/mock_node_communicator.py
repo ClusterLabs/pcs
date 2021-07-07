@@ -122,6 +122,7 @@ def _communication_to_response(
     was_connected,
     errno,
     error_msg,
+    raw_data,
 ):
     return Response(
         MockCurlSimple(
@@ -137,7 +138,7 @@ def _communication_to_response(
                 #    by pcsd, we will do so by setting an appropriate response.
                 #    The actual token value doesn't matter.
                 RequestTarget(label, dest_list=dest_list, token=None),
-                RequestData(action, param_list),
+                RequestData(action, param_list, raw_data),
             ),
         ),
         was_connected=was_connected,
@@ -156,6 +157,7 @@ def create_communication(
     was_connected=True,
     errno=0,
     error_msg=None,
+    raw_data=None,
 ):
     """
     list of dict communication_list -- each dict describes one request-response
@@ -171,6 +173,7 @@ def create_communication(
             bool was_connected -- see Response
             int errno -- see Response
             string error_msg -- see Response
+            string raw_data -- see data attrib in RequestData
         if some key is not present, it is put here from common values - rest
         args of this fuction(except name, communication_list,
         error_msg_template)
@@ -182,6 +185,7 @@ def create_communication(
     bool was_connected -- see Response
     int errno -- see Response
     string error_msg -- see Response
+    string raw_data -- see data attrib in RequestData
     """
     # We don't care about tokens, see _communication_to_response.
     common = dict(
@@ -193,6 +197,7 @@ def create_communication(
         was_connected=was_connected,
         errno=errno,
         error_msg=error_msg,
+        raw_data=raw_data,
     )
 
     response_list = []

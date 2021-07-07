@@ -272,7 +272,7 @@ def _format_report_item_info(info):
 
 
 def _expected_report_item_format(report_item_expectation):
-    return "{0} {1} {{{2}}} ! {3}".format(
+    return "{0} {1} {{{2}}} ! {3} {4}".format(
         SEVERITY_SHORTCUTS.get(
             report_item_expectation[0], report_item_expectation[0]
         ),
@@ -280,6 +280,9 @@ def _expected_report_item_format(report_item_expectation):
         _format_report_item_info(report_item_expectation[2]),
         report_item_expectation[3]
         if len(report_item_expectation) > 3
+        else None,
+        report_item_expectation[4]
+        if len(report_item_expectation) > 4
         else None,
     )
 
@@ -307,6 +310,9 @@ def assert_report_item_equal(real_report_item, report_item_info):
                         None
                         if len(report_item_info) < 4
                         else report_item_info[3],
+                        None
+                        if len(report_item_info) < 5
+                        else report_item_info[4],
                     )
                 ),
                 _format_report_item(real_report_item),
@@ -418,9 +424,8 @@ def __report_item_equal(real_report_item, report_item_info):
             report_dto.severity.force_code
             == (None if len(report_item_info) < 4 else report_item_info[3])
         )
-        and
-        # TODO: add proper check for context once it will be used
-        report_dto.context is None
+        and report_dto.context
+        == (report_item_info[4] if len(report_item_info) >= 5 else None)
     )
 
 

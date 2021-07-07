@@ -10,3 +10,4 @@ class Env:
         self.known_hosts_getter = None
         self.debug = False
         self.request_timeout = None
+        self.report_processor = None

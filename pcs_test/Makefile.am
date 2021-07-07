@@ -31,6 +31,7 @@ EXTRA_DIST		= \
 			  resources/fenced_metadata.xml \
 			  resources/pcmk_api_rng/api-result.rng \
 			  resources/pcmk_api_rng/crm_mon-2.4.rng \
+			  resources/pcmk_api_rng/digests-2.9.rng \
 			  resources/pcmk_api_rng/fence-event-2.0.rng \
 			  resources/pcmk_api_rng/resources-2.4.rng \
 			  resources/pcmk_api_rng/status-2.0.rng \
@@ -222,6 +223,7 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/test_fencing_topology.py \
 			  tier0/lib/commands/test_node.py \
 			  tier0/lib/commands/test_pcsd.py \
+			  tier0/lib/commands/test_scsi.py \
 			  tier0/lib/commands/test_qdevice.py \
 			  tier0/lib/commands/test_quorum.py \
 			  tier0/lib/commands/test_resource_agent.py \
@@ -239,6 +241,7 @@ EXTRA_DIST		= \
 			  tier0/lib/communication/test_qdevice_net.py \
 			  tier0/lib/communication/test_qdevice.py \
 			  tier0/lib/communication/test_sbd.py \
+			  tier0/lib/communication/test_scsi.py \
 			  tier0/lib/communication/test_status.py \
 			  tier0/lib/corosync/__init__.py \
 			  tier0/lib/corosync/test_config_facade_links.py \
@@ -361,6 +364,7 @@ EXTRA_DIST		= \
 			  tools/command_env/config_http_files.py \
 			  tools/command_env/config_http_host.py \
 			  tools/command_env/config_http_pcmk.py \
+			  tools/command_env/config_http_scsi.py \
 			  tools/command_env/config_http.py \
 			  tools/command_env/config_http_sbd.py \
 			  tools/command_env/config_http_status.py \
@@ -370,6 +374,7 @@ EXTRA_DIST		= \
 			  tools/command_env/config_runner_cib.py \
 			  tools/command_env/config_runner_corosync.py \
 			  tools/command_env/config_runner_pcmk.py \
+			  tools/command_env/config_runner_scsi.py \
 			  tools/command_env/config_runner.py \
 			  tools/command_env/config_runner_sbd.py \
 			  tools/command_env/config_services.py \

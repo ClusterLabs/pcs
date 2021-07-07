@@ -6,6 +6,7 @@ from pcs_test.tools.command_env.config_http_corosync import CorosyncShortcuts
 from pcs_test.tools.command_env.config_http_files import FilesShortcuts
 from pcs_test.tools.command_env.config_http_host import HostShortcuts
 from pcs_test.tools.command_env.config_http_pcmk import PcmkShortcuts
+from pcs_test.tools.command_env.config_http_scsi import ScsiShortcuts
 from pcs_test.tools.command_env.config_http_sbd import SbdShortcuts
 from pcs_test.tools.command_env.config_http_status import StatusShortcuts
 from pcs_test.tools.command_env.mock_node_communicator import (
@@ -46,6 +47,7 @@ class HttpConfig:
         self.host = wrap_helper(HostShortcuts(self.__calls))
         self.pcmk = wrap_helper(PcmkShortcuts(self.__calls))
         self.sbd = wrap_helper(SbdShortcuts(self.__calls))
+        self.scsi = wrap_helper(ScsiShortcuts(self.__calls))
         self.status = wrap_helper(StatusShortcuts(self.__calls))
 
     def add_communication(self, name, communication_list, **kwargs):

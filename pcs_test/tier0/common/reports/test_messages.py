@@ -1837,11 +1837,81 @@ class CannotGroupResourceWrongType(NameBuildTest):
         )
 
 
+class UnableToGetResourceOperationDigests(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "unable to get resource operation digets:\ncrm_resource output",
+            reports.UnableToGetResourceOperationDigests("crm_resource output"),
+        )
+
+
 class StonithResourcesDoNotExist(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
             "Stonith resource(s) 'device1', 'device2' do not exist",
             reports.StonithResourcesDoNotExist(["device2", "device1"]),
+        )
+
+
+class StonithRestartlessUpdateOfScsiDevicesNotSupported(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Restartless update of scsi devices is not supported, please "
+                "upgrade pacemaker"
+            ),
+            reports.StonithRestartlessUpdateOfScsiDevicesNotSupported(),
+        )
+
+
+class StonithResourceTypeNotSupportedForDevicesUpdate(NameBuildTest):
+    def test_plural(self):
+        self.assert_message_from_report(
+            (
+                "Resource 'fence_sbd' is not a stonith resource or its type is"
+                " not supported for devices update. Supported types: "
+                "'fence_mpath', 'fence_scsi'"
+            ),
+            reports.StonithResourceTypeNotSupportedForDevicesUpdate(
+                "fence_sbd", ["fence_scsi", "fence_mpath"]
+            ),
+        )
+
+    def test_singular(self):
+        self.assert_message_from_report(
+            (
+                "Resource 'fence_sbd' is not a stonith resource or its type is"
+                " not supported for devices update. Supported type: "
+                "'fence_scsi'"
+            ),
+            reports.StonithResourceTypeNotSupportedForDevicesUpdate(
+                "fence_sbd", ["fence_scsi"]
+            ),
+        )
+
+
+class StonithUnfencingFailed(NameBuildTest):
+    def test_build_message(self):
+        self.assert_message_from_report(
+            ("Unfencing failed:\nreason"),
+            reports.StonithUnfencingFailed("reason"),
+        )
+
+
+class StonithUnableToUpdateScsiDevices(NameBuildTest):
+    def test_build_message(self):
+        self.assert_message_from_report(
+            "Unable to update scsi devices: reason",
+            reports.StonithUnableToUpdateScsiDevices("reason"),
+        )
+
+    def test_build_message_reason_type_specified(self):
+        self.assert_message_from_report(
+            "Unable to update scsi devices: reason",
+            reports.StonithUnableToUpdateScsiDevices(
+                "reason",
+                const.STONITH_UNABLE_TO_UPDATE_SCSI_DEVICES_REASON_NOT_RUNNING,
+            ),
         )
 
 

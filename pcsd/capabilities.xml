@@ -1871,6 +1871,20 @@
         daemon urls: update_fence_device (param: resource_id is set)
       </description>
     </capability>
+    <capability id="pcmk.stonith.update.scsi-devices" in-pcs="1" in-pcsd="0">
+      <description>
+        Update scsi fencing devices without affecting other resources.
+
+        pcs commands: stonith update-scsi-devices
+      </description>
+    </capability>
+    <capability id="pcmk.stonith.scsi-unfence-node" in-pcs="0" in-pcsd="1">
+      <description>
+        Unfence scsi devices on a cluster node.
+
+        daemon urls: /api/v1/scsi-unfence-node/v1
+      </description>
+    </capability>
     <capability id="pcmk.stonith.enable-disable" in-pcs="1" in-pcsd="1">
       <description>
         Disable and enable a stonith resource.
