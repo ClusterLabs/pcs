@@ -825,7 +825,7 @@ class TestUpdateScsiDevicesFailures(TestCase):
             ]
         )
 
-    def test_unfence_failure(self):
+    def _unfence_failure_common_calls(self):
         devices = ",".join(DEVICES_2)
         self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.cib.load(
@@ -863,8 +863,11 @@ class TestUpdateScsiDevicesFailures(TestCase):
         self.config.corosync_conf.load_content(
             corosync_conf_fixture(self.existing_corosync_nodes)
         )
+
+    def test_unfence_failure_unable_to_connect(self):
+        self._unfence_failure_common_calls()
         self.config.http.scsi.unfence_node(
-            devices,
+            DEVICES_2,
             communication_list=[
                 dict(
                     label=self.existing_nodes[0],
@@ -917,6 +920,64 @@ class TestUpdateScsiDevicesFailures(TestCase):
                     command="api/v1/scsi-unfence-node/v1",
                     reason="errA",
                 ),
+                fixture.error(
+                    reports.codes.STONITH_UNFENCING_FAILED,
+                    reason="errB",
+                    context=reports.dto.ReportItemContextDto(
+                        node=self.existing_nodes[1],
+                    ),
+                ),
+            ]
+        )
+
+    def test_unfence_failure_agent_script_failed(self):
+        self._unfence_failure_common_calls()
+        self.config.http.scsi.unfence_node(
+            DEVICES_2,
+            communication_list=[
+                dict(
+                    label=self.existing_nodes[0],
+                    raw_data=json.dumps(
+                        dict(devices=DEVICES_2, node=self.existing_nodes[0])
+                    ),
+                ),
+                dict(
+                    label=self.existing_nodes[1],
+                    raw_data=json.dumps(
+                        dict(devices=DEVICES_2, node=self.existing_nodes[1])
+                    ),
+                    output=json.dumps(
+                        dto.to_dict(
+                            communication.dto.InternalCommunicationResultDto(
+                                status=communication.const.COM_STATUS_ERROR,
+                                status_msg="error",
+                                report_list=[
+                                    reports.ReportItem.error(
+                                        reports.messages.StonithUnfencingFailed(
+                                            "errB"
+                                        )
+                                    ).to_dto()
+                                ],
+                                data=None,
+                            )
+                        )
+                    ),
+                ),
+                dict(
+                    label=self.existing_nodes[2],
+                    raw_data=json.dumps(
+                        dict(devices=DEVICES_2, node=self.existing_nodes[2])
+                    ),
+                ),
+            ],
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: stonith.update_scsi_devices(
+                self.env_assist.get_env(), SCSI_STONITH_ID, DEVICES_2
+            ),
+        )
+        self.env_assist.assert_reports(
+            [
                 fixture.error(
                     reports.codes.STONITH_UNFENCING_FAILED,
                     reason="errB",
