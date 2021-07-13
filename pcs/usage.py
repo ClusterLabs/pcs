@@ -548,12 +548,12 @@ Commands:
         within the configuration, e.g. by constraints. In that case, use 
         'pcs resource ungroup' command prior to moving all resources 
         out of the group. 
-        
+
         You can use --before or --after to specify the position
         of the added resources relatively to some resource already existing
         in the group. By adding resources to a group they are already in and
         specifying --after or --before you can move the resources in the group.
-        
+
         If --wait is specified, pcs will wait up to 'n' seconds for the
         operation to finish (including moving resources if appropriate) and
         then return 0 on success or 1 on error. If 'n' is not specified 
@@ -1283,9 +1283,8 @@ Commands:
     update-scsi-devices <stonith id> set <device-path> [<device-path>...]
         Update scsi fencing devices without affecting other resources. Stonith
         resource must be running on one cluster node. Each device will be
-        unfenced on each cluster node. Cluster must be running on all the
-        cluster nodes in order to successfully proceed unfencing. Supported
-        fence agents: fence_scsi.
+        unfenced on each cluster node running cluster. Supported fence agents:
+        fence_scsi.
 
     delete <stonith id>
         Remove stonith id from configuration.

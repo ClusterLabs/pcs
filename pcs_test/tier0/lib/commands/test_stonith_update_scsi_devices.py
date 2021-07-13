@@ -274,6 +274,9 @@ class UpdateScsiDevices(TestCase):
                 get_two_node(len(self.existing_corosync_nodes)),
             )
         )
+        self.config.http.corosync.get_corosync_online_targets(
+            node_labels=self.existing_nodes
+        )
         self.config.http.scsi.unfence_node(
             devices_updated, node_labels=self.existing_nodes
         )
@@ -866,6 +869,9 @@ class TestUpdateScsiDevicesFailures(TestCase):
 
     def test_unfence_failure_unable_to_connect(self):
         self._unfence_failure_common_calls()
+        self.config.http.corosync.get_corosync_online_targets(
+            node_labels=self.existing_nodes
+        )
         self.config.http.scsi.unfence_node(
             DEVICES_2,
             communication_list=[
@@ -932,6 +938,9 @@ class TestUpdateScsiDevicesFailures(TestCase):
 
     def test_unfence_failure_agent_script_failed(self):
         self._unfence_failure_common_calls()
+        self.config.http.corosync.get_corosync_online_targets(
+            node_labels=self.existing_nodes
+        )
         self.config.http.scsi.unfence_node(
             DEVICES_2,
             communication_list=[
@@ -984,6 +993,151 @@ class TestUpdateScsiDevicesFailures(TestCase):
                     context=reports.dto.ReportItemContextDto(
                         node=self.existing_nodes[1],
                     ),
+                ),
+            ]
+        )
+
+    def test_corosync_targets_unable_to_connect(self):
+        self._unfence_failure_common_calls()
+        self.config.http.corosync.get_corosync_online_targets(
+            communication_list=[
+                dict(
+                    label=self.existing_nodes[0],
+                    output='{"corosync":true}',
+                ),
+            ]
+            + [
+                dict(
+                    label=node,
+                    was_connected=False,
+                    errno=7,
+                    error_msg="an error",
+                )
+                for node in self.existing_nodes[1:]
+            ]
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: stonith.update_scsi_devices(
+                self.env_assist.get_env(), SCSI_STONITH_ID, DEVICES_2
+            ),
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    force_code=reports.codes.SKIP_OFFLINE_NODES,
+                    node=node,
+                    command="remote/status",
+                    reason="an error",
+                )
+                for node in self.existing_nodes[1:]
+            ]
+        )
+
+    def test_corosync_targets_skip_offline_unfence_node_running_corosync(
+        self,
+    ):
+        self._unfence_failure_common_calls()
+        self.config.http.corosync.get_corosync_online_targets(
+            communication_list=[
+                dict(
+                    label=self.existing_nodes[0],
+                    output='{"corosync":true}',
+                ),
+                dict(
+                    label=self.existing_nodes[1],
+                    output='{"corosync":false}',
+                ),
+                dict(
+                    label=self.existing_nodes[2],
+                    was_connected=False,
+                    errno=7,
+                    error_msg="an error",
+                ),
+            ]
+        )
+        self.config.http.scsi.unfence_node(
+            DEVICES_2,
+            communication_list=[
+                dict(
+                    label=self.existing_nodes[0],
+                    raw_data=json.dumps(
+                        dict(devices=DEVICES_2, node=self.existing_nodes[0])
+                    ),
+                ),
+            ],
+        )
+        self.config.env.push_cib(
+            resources=fixture_scsi(devices=DEVICES_2),
+            status=_fixture_status_lrm_ops(
+                SCSI_STONITH_ID,
+                lrm_start_ops=DEFAULT_LRM_START_OPS_UPDATED,
+                lrm_monitor_ops=DEFAULT_LRM_MONITOR_OPS_UPDATED,
+            ),
+        )
+        stonith.update_scsi_devices(
+            self.env_assist.get_env(),
+            SCSI_STONITH_ID,
+            DEVICES_2,
+            force_flags=[reports.codes.SKIP_OFFLINE_NODES],
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    node=self.existing_nodes[2],
+                    command="remote/status",
+                    reason="an error",
+                ),
+            ]
+        )
+
+    def test_corosync_targets_unable_to_perform_unfencing_operation(
+        self,
+    ):
+        self._unfence_failure_common_calls()
+        self.config.http.corosync.get_corosync_online_targets(
+            communication_list=[
+                dict(
+                    label=self.existing_nodes[0],
+                    was_connected=False,
+                    errno=7,
+                    error_msg="an error",
+                ),
+                dict(
+                    label=self.existing_nodes[1],
+                    was_connected=False,
+                    errno=7,
+                    error_msg="an error",
+                ),
+                dict(
+                    label=self.existing_nodes[2],
+                    output='{"corosync":false}',
+                ),
+            ]
+        )
+        self.config.http.scsi.unfence_node(DEVICES_2, communication_list=[])
+        self.env_assist.assert_raise_library_error(
+            lambda: stonith.update_scsi_devices(
+                self.env_assist.get_env(),
+                SCSI_STONITH_ID,
+                DEVICES_2,
+                force_flags=[reports.codes.SKIP_OFFLINE_NODES],
+            ),
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    node=node,
+                    command="remote/status",
+                    reason="an error",
+                )
+                for node in self.existing_nodes[0:2]
+            ]
+            + [
+                fixture.error(
+                    reports.codes.UNABLE_TO_PERFORM_OPERATION_ON_ANY_NODE,
                 ),
             ]
         )
