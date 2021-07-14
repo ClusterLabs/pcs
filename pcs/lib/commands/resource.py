@@ -974,16 +974,16 @@ def _disable_run_simulate(
     if strict:
         other_affected = set(
             simulate_tools.get_resources_from_operations(
-                simulated_operations, exclude=disabled_resource_ids
+                simulated_operations, exclude_resources=disabled_resource_ids
             )
         )
     else:
         other_affected = set(
             simulate_tools.get_resources_left_stopped(
-                simulated_operations, exclude=disabled_resource_ids
+                simulated_operations, exclude_resources=disabled_resource_ids
             )
             + simulate_tools.get_resources_left_demoted(
-                simulated_operations, exclude=disabled_resource_ids
+                simulated_operations, exclude_resources=disabled_resource_ids
             )
         )
 

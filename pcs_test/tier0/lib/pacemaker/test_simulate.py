@@ -12,42 +12,48 @@ class GetOperationsFromTransitions(TestCase):
         transitions = etree.parse(rc("transitions01.xml"))
         self.assertEqual(
             [
-                {
-                    "primitive_id": "dummy",
-                    "primitive_long_id": "dummy",
-                    "operation": "stop",
-                    "on_node": "rh7-3",
-                },
-                {
-                    "primitive_id": "dummy",
-                    "primitive_long_id": "dummy",
-                    "operation": "start",
-                    "on_node": "rh7-2",
-                },
-                {
-                    "primitive_id": "d0",
-                    "primitive_long_id": "d0:1",
-                    "operation": "stop",
-                    "on_node": "rh7-1",
-                },
-                {
-                    "primitive_id": "d0",
-                    "primitive_long_id": "d0:1",
-                    "operation": "start",
-                    "on_node": "rh7-2",
-                },
-                {
-                    "primitive_id": "state",
-                    "primitive_long_id": "state:0",
-                    "operation": "stop",
-                    "on_node": "rh7-3",
-                },
-                {
-                    "primitive_id": "state",
-                    "primitive_long_id": "state:0",
-                    "operation": "start",
-                    "on_node": "rh7-2",
-                },
+                simulate.SimulationOperation(
+                    operation_id=17,
+                    primitive_id="dummy",
+                    primitive_long_id="dummy",
+                    operation_type=simulate.OPERATION_STOP,
+                    on_node="rh7-3",
+                ),
+                simulate.SimulationOperation(
+                    operation_id=18,
+                    primitive_id="dummy",
+                    primitive_long_id="dummy",
+                    operation_type=simulate.OPERATION_START,
+                    on_node="rh7-2",
+                ),
+                simulate.SimulationOperation(
+                    operation_id=22,
+                    primitive_id="d0",
+                    primitive_long_id="d0:1",
+                    operation_type=simulate.OPERATION_STOP,
+                    on_node="rh7-1",
+                ),
+                simulate.SimulationOperation(
+                    operation_id=23,
+                    primitive_id="d0",
+                    primitive_long_id="d0:1",
+                    operation_type=simulate.OPERATION_START,
+                    on_node="rh7-2",
+                ),
+                simulate.SimulationOperation(
+                    operation_id=29,
+                    primitive_id="state",
+                    primitive_long_id="state:0",
+                    operation_type=simulate.OPERATION_STOP,
+                    on_node="rh7-3",
+                ),
+                simulate.SimulationOperation(
+                    operation_id=30,
+                    primitive_id="state",
+                    primitive_long_id="state:0",
+                    operation_type=simulate.OPERATION_START,
+                    on_node="rh7-2",
+                ),
             ],
             simulate.get_operations_from_transitions(transitions),
         )
@@ -56,36 +62,41 @@ class GetOperationsFromTransitions(TestCase):
         transitions = etree.parse(rc("transitions02.xml"))
         self.assertEqual(
             [
-                {
-                    "primitive_id": "RemoteNode",
-                    "primitive_long_id": "RemoteNode",
-                    "operation": "stop",
-                    "on_node": "virt-143",
-                },
-                {
-                    "primitive_id": "RemoteNode",
-                    "primitive_long_id": "RemoteNode",
-                    "operation": "migrate_to",
-                    "on_node": "virt-143",
-                },
-                {
-                    "primitive_id": "RemoteNode",
-                    "primitive_long_id": "RemoteNode",
-                    "operation": "migrate_from",
-                    "on_node": "virt-142",
-                },
-                {
-                    "primitive_id": "dummy8",
-                    "primitive_long_id": "dummy8",
-                    "operation": "stop",
-                    "on_node": "virt-143",
-                },
-                {
-                    "primitive_id": "dummy8",
-                    "primitive_long_id": "dummy8",
-                    "operation": "start",
-                    "on_node": "virt-142",
-                },
+                simulate.SimulationOperation(
+                    operation_id=26,
+                    primitive_id="RemoteNode",
+                    primitive_long_id="RemoteNode",
+                    operation_type=simulate.OPERATION_STOP,
+                    on_node="virt-143",
+                ),
+                simulate.SimulationOperation(
+                    operation_id=29,
+                    primitive_id="RemoteNode",
+                    primitive_long_id="RemoteNode",
+                    operation_type=simulate.OPERATION_MIGRATE_TO,
+                    on_node="virt-143",
+                ),
+                simulate.SimulationOperation(
+                    operation_id=30,
+                    primitive_id="RemoteNode",
+                    primitive_long_id="RemoteNode",
+                    operation_type=simulate.OPERATION_MIGRATE_FROM,
+                    on_node="virt-142",
+                ),
+                simulate.SimulationOperation(
+                    operation_id=45,
+                    primitive_id="dummy8",
+                    primitive_long_id="dummy8",
+                    operation_type=simulate.OPERATION_STOP,
+                    on_node="virt-143",
+                ),
+                simulate.SimulationOperation(
+                    operation_id=46,
+                    primitive_id="dummy8",
+                    primitive_long_id="dummy8",
+                    operation_type=simulate.OPERATION_START,
+                    on_node="virt-142",
+                ),
             ],
             simulate.get_operations_from_transitions(transitions),
         )
@@ -93,24 +104,27 @@ class GetOperationsFromTransitions(TestCase):
 
 class GetResourcesFromOperations(TestCase):
     operations = [
-        {
-            "primitive_id": "dummy2",
-            "primitive_long_id": "dummy2:1",
-            "operation": "stop",
-            "on_node": "node1",
-        },
-        {
-            "primitive_id": "dummy1",
-            "primitive_long_id": "dummy1",
-            "operation": "stop",
-            "on_node": "node3",
-        },
-        {
-            "primitive_id": "dummy1",
-            "primitive_long_id": "dummy1",
-            "operation": "start",
-            "on_node": "node2",
-        },
+        simulate.SimulationOperation(
+            operation_id=0,
+            primitive_id="dummy2",
+            primitive_long_id="dummy2:1",
+            operation_type=simulate.OPERATION_STOP,
+            on_node="node1",
+        ),
+        simulate.SimulationOperation(
+            operation_id=1,
+            primitive_id="dummy1",
+            primitive_long_id="dummy1",
+            operation_type=simulate.OPERATION_STOP,
+            on_node="node3",
+        ),
+        simulate.SimulationOperation(
+            operation_id=2,
+            primitive_id="dummy1",
+            primitive_long_id="dummy1",
+            operation_type=simulate.OPERATION_START,
+            on_node="node2",
+        ),
     ]
 
     def test_no_operations(self):
@@ -118,7 +132,10 @@ class GetResourcesFromOperations(TestCase):
 
     def test_no_operations_exclude(self):
         self.assertEqual(
-            [], simulate.get_resources_from_operations([], exclude={"dummy1"})
+            [],
+            simulate.get_resources_from_operations(
+                [], exclude_resources={"dummy1"}
+            ),
         )
 
     def test_some_operations(self):
@@ -131,7 +148,8 @@ class GetResourcesFromOperations(TestCase):
         self.assertEqual(
             ["dummy2"],
             simulate.get_resources_from_operations(
-                self.operations, exclude={"dummy1", "dummy2:1", "dummyX"}
+                self.operations,
+                exclude_resources={"dummy1", "dummy2:1", "dummyX"},
             ),
         )
 
@@ -145,12 +163,13 @@ class GetResourcesLeftStoppedDemotedMixin:
             ["dummy"],
             self.call(
                 [
-                    {
-                        "primitive_id": "dummy",
-                        "primitive_long_id": "dummy",
-                        "operation": self.action_down,
-                        "on_node": "node3",
-                    },
+                    simulate.SimulationOperation(
+                        operation_id=0,
+                        primitive_id="dummy",
+                        primitive_long_id="dummy",
+                        operation_type=self.action_down,
+                        on_node="node3",
+                    ),
                 ]
             ),
         )
@@ -160,12 +179,13 @@ class GetResourcesLeftStoppedDemotedMixin:
             [],
             self.call(
                 [
-                    {
-                        "primitive_id": "dummy",
-                        "primitive_long_id": "dummy",
-                        "operation": self.action_up,
-                        "on_node": "node3",
-                    },
+                    simulate.SimulationOperation(
+                        operation_id=0,
+                        primitive_id="dummy",
+                        primitive_long_id="dummy",
+                        operation_type=self.action_up,
+                        on_node="node3",
+                    ),
                 ]
             ),
         )
@@ -175,18 +195,20 @@ class GetResourcesLeftStoppedDemotedMixin:
             [],
             self.call(
                 [
-                    {
-                        "primitive_id": "dummy",
-                        "primitive_long_id": "dummy",
-                        "operation": self.action_down,
-                        "on_node": "node2",
-                    },
-                    {
-                        "primitive_id": "dummy",
-                        "primitive_long_id": "dummy",
-                        "operation": self.action_up,
-                        "on_node": "node3",
-                    },
+                    simulate.SimulationOperation(
+                        operation_id=0,
+                        primitive_id="dummy",
+                        primitive_long_id="dummy",
+                        operation_type=self.action_down,
+                        on_node="node2",
+                    ),
+                    simulate.SimulationOperation(
+                        operation_id=1,
+                        primitive_id="dummy",
+                        primitive_long_id="dummy",
+                        operation_type=self.action_up,
+                        on_node="node3",
+                    ),
                 ]
             ),
         )
@@ -196,18 +218,20 @@ class GetResourcesLeftStoppedDemotedMixin:
             [],
             self.call(
                 [
-                    {
-                        "primitive_id": "dummy",
-                        "primitive_long_id": "dummy",
-                        "operation": self.action_up,
-                        "on_node": "node2",
-                    },
-                    {
-                        "primitive_id": "dummy",
-                        "primitive_long_id": "dummy",
-                        "operation": self.action_down,
-                        "on_node": "node3",
-                    },
+                    simulate.SimulationOperation(
+                        operation_id=0,
+                        primitive_id="dummy",
+                        primitive_long_id="dummy",
+                        operation_type=self.action_up,
+                        on_node="node2",
+                    ),
+                    simulate.SimulationOperation(
+                        operation_id=1,
+                        primitive_id="dummy",
+                        primitive_long_id="dummy",
+                        operation_type=self.action_down,
+                        on_node="node3",
+                    ),
                 ]
             ),
         )
@@ -217,30 +241,34 @@ class GetResourcesLeftStoppedDemotedMixin:
             ["dummy1", "dummy2"],
             self.call(
                 [
-                    {
-                        "primitive_id": "dummy1",
-                        "primitive_long_id": "dummy1",
-                        "operation": self.action_down,
-                        "on_node": "node3",
-                    },
-                    {
-                        "primitive_id": "dummy2",
-                        "primitive_long_id": "dummy2",
-                        "operation": self.action_down,
-                        "on_node": "node3",
-                    },
-                    {
-                        "primitive_id": "dummy3",
-                        "primitive_long_id": "dummy3",
-                        "operation": self.action_down,
-                        "on_node": "node3",
-                    },
-                    {
-                        "primitive_id": "dummy3",
-                        "primitive_long_id": "dummy3",
-                        "operation": self.action_up,
-                        "on_node": "node2",
-                    },
+                    simulate.SimulationOperation(
+                        operation_id=0,
+                        primitive_id="dummy1",
+                        primitive_long_id="dummy1",
+                        operation_type=self.action_down,
+                        on_node="node3",
+                    ),
+                    simulate.SimulationOperation(
+                        operation_id=1,
+                        primitive_id="dummy2",
+                        primitive_long_id="dummy2",
+                        operation_type=self.action_down,
+                        on_node="node3",
+                    ),
+                    simulate.SimulationOperation(
+                        operation_id=2,
+                        primitive_id="dummy3",
+                        primitive_long_id="dummy3",
+                        operation_type=self.action_down,
+                        on_node="node3",
+                    ),
+                    simulate.SimulationOperation(
+                        operation_id=3,
+                        primitive_id="dummy3",
+                        primitive_long_id="dummy3",
+                        operation_type=self.action_up,
+                        on_node="node2",
+                    ),
                 ]
             ),
         )
@@ -250,27 +278,29 @@ class GetResourcesLeftStoppedDemotedMixin:
             ["dummy2"],
             self.call(
                 [
-                    {
-                        "primitive_id": "dummy1",
-                        "primitive_long_id": "dummy1",
-                        "operation": self.action_down,
-                        "on_node": "node3",
-                    },
-                    {
-                        "primitive_id": "dummy2",
-                        "primitive_long_id": "dummy2",
-                        "operation": self.action_down,
-                        "on_node": "node3",
-                    },
+                    simulate.SimulationOperation(
+                        operation_id=0,
+                        primitive_id="dummy1",
+                        primitive_long_id="dummy1",
+                        operation_type=self.action_down,
+                        on_node="node3",
+                    ),
+                    simulate.SimulationOperation(
+                        operation_id=1,
+                        primitive_id="dummy2",
+                        primitive_long_id="dummy2",
+                        operation_type=self.action_down,
+                        on_node="node3",
+                    ),
                 ],
-                exclude={"dummy1", "dummyX"},
+                exclude_resources={"dummy1", "dummyX"},
             ),
         )
 
 
 class GetResourcesLeftStopped(GetResourcesLeftStoppedDemotedMixin, TestCase):
-    action_up = "start"
-    action_down = "stop"
+    action_up = simulate.OPERATION_START
+    action_down = simulate.OPERATION_STOP
     call = staticmethod(simulate.get_resources_left_stopped)
 
     def test_clone_move(self):
@@ -278,30 +308,34 @@ class GetResourcesLeftStopped(GetResourcesLeftStoppedDemotedMixin, TestCase):
             [],
             self.call(
                 [
-                    {
-                        "primitive_id": "dummy1",
-                        "primitive_long_id": "dummy1:0",
-                        "operation": self.action_down,
-                        "on_node": "node3",
-                    },
-                    {
-                        "primitive_id": "dummy1",
-                        "primitive_long_id": "dummy1:1",
-                        "operation": self.action_down,
-                        "on_node": "node1",
-                    },
-                    {
-                        "primitive_id": "dummy1",
-                        "primitive_long_id": "dummy1:0",
-                        "operation": self.action_up,
-                        "on_node": "node2",
-                    },
-                    {
-                        "primitive_id": "dummy1",
-                        "primitive_long_id": "dummy1:1",
-                        "operation": self.action_up,
-                        "on_node": "node4",
-                    },
+                    simulate.SimulationOperation(
+                        operation_id=0,
+                        primitive_id="dummy1",
+                        primitive_long_id="dummy1:0",
+                        operation_type=self.action_down,
+                        on_node="node3",
+                    ),
+                    simulate.SimulationOperation(
+                        operation_id=1,
+                        primitive_id="dummy1",
+                        primitive_long_id="dummy1:1",
+                        operation_type=self.action_down,
+                        on_node="node1",
+                    ),
+                    simulate.SimulationOperation(
+                        operation_id=2,
+                        primitive_id="dummy1",
+                        primitive_long_id="dummy1:0",
+                        operation_type=self.action_up,
+                        on_node="node2",
+                    ),
+                    simulate.SimulationOperation(
+                        operation_id=3,
+                        primitive_id="dummy1",
+                        primitive_long_id="dummy1:1",
+                        operation_type=self.action_up,
+                        on_node="node4",
+                    ),
                 ]
             ),
         )
@@ -311,32 +345,35 @@ class GetResourcesLeftStopped(GetResourcesLeftStoppedDemotedMixin, TestCase):
             ["dummy1"],
             self.call(
                 [
-                    {
-                        "primitive_id": "dummy1",
-                        "primitive_long_id": "dummy1:0",
-                        "operation": self.action_down,
-                        "on_node": "node3",
-                    },
-                    {
-                        "primitive_id": "dummy1",
-                        "primitive_long_id": "dummy1:1",
-                        "operation": self.action_down,
-                        "on_node": "node1",
-                    },
-                    {
-                        "primitive_id": "dummy1",
-                        "primitive_long_id": "dummy1:1",
-                        "operation": self.action_up,
-                        "on_node": "node4",
-                    },
+                    simulate.SimulationOperation(
+                        operation_id=0,
+                        primitive_id="dummy1",
+                        primitive_long_id="dummy1:0",
+                        operation_type=self.action_down,
+                        on_node="node3",
+                    ),
+                    simulate.SimulationOperation(
+                        operation_id=1,
+                        primitive_id="dummy1",
+                        primitive_long_id="dummy1:1",
+                        operation_type=self.action_down,
+                        on_node="node1",
+                    ),
+                    simulate.SimulationOperation(
+                        operation_id=3,
+                        primitive_id="dummy1",
+                        primitive_long_id="dummy1:1",
+                        operation_type=self.action_up,
+                        on_node="node4",
+                    ),
                 ]
             ),
         )
 
 
 class GetResourcesLeftDemoted(GetResourcesLeftStoppedDemotedMixin, TestCase):
-    action_up = "promote"
-    action_down = "demote"
+    action_up = simulate.OPERATION_PROMOTE
+    action_down = simulate.OPERATION_DEMOTE
     call = staticmethod(simulate.get_resources_left_demoted)
 
     def test_master_move(self):
@@ -344,18 +381,20 @@ class GetResourcesLeftDemoted(GetResourcesLeftStoppedDemotedMixin, TestCase):
             [],
             self.call(
                 [
-                    {
-                        "primitive_id": "dummy1",
-                        "primitive_long_id": "dummy1:0",
-                        "operation": self.action_down,
-                        "on_node": "node3",
-                    },
-                    {
-                        "primitive_id": "dummy1",
-                        "primitive_long_id": "dummy1:1",
-                        "operation": self.action_up,
-                        "on_node": "node4",
-                    },
+                    simulate.SimulationOperation(
+                        operation_id=0,
+                        primitive_id="dummy1",
+                        primitive_long_id="dummy1:0",
+                        operation_type=self.action_down,
+                        on_node="node3",
+                    ),
+                    simulate.SimulationOperation(
+                        operation_id=3,
+                        primitive_id="dummy1",
+                        primitive_long_id="dummy1:1",
+                        operation_type=self.action_up,
+                        on_node="node4",
+                    ),
                 ]
             ),
         )
@@ -365,24 +404,27 @@ class GetResourcesLeftDemoted(GetResourcesLeftStoppedDemotedMixin, TestCase):
             ["dummy1"],
             self.call(
                 [
-                    {
-                        "primitive_id": "dummy1",
-                        "primitive_long_id": "dummy1:0",
-                        "operation": self.action_down,
-                        "on_node": "node3",
-                    },
-                    {
-                        "primitive_id": "dummy1",
-                        "primitive_long_id": "dummy1:1",
-                        "operation": self.action_up,
-                        "on_node": "node4",
-                    },
-                    {
-                        "primitive_id": "dummy1",
-                        "primitive_long_id": "dummy1:2",
-                        "operation": self.action_down,
-                        "on_node": "node1",
-                    },
+                    simulate.SimulationOperation(
+                        operation_id=0,
+                        primitive_id="dummy1",
+                        primitive_long_id="dummy1:0",
+                        operation_type=self.action_down,
+                        on_node="node3",
+                    ),
+                    simulate.SimulationOperation(
+                        operation_id=3,
+                        primitive_id="dummy1",
+                        primitive_long_id="dummy1:1",
+                        operation_type=self.action_up,
+                        on_node="node4",
+                    ),
+                    simulate.SimulationOperation(
+                        operation_id=1,
+                        primitive_id="dummy1",
+                        primitive_long_id="dummy1:2",
+                        operation_type=self.action_down,
+                        on_node="node1",
+                    ),
                 ]
             ),
         )
