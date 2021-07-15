@@ -1,7 +1,5 @@
 import os
 
-from typing import List, Optional
-
 from pcs_test.tools.command_env.mock_runner import (
     Call as RunnerCall,
     CheckStdinEqualXml,
@@ -714,12 +712,15 @@ class PcmkShortcuts:
 
     def is_resource_digests_supported(
         self,
-        name: str = "runner.pcmk.is_resource_digests_supported",
-        is_supported: bool = True,
+        name="runner.pcmk.is_resource_digests_supported",
+        is_supported=True,
     ):
         """
         Create call for `crm_resource --help-all`. If support_digest is True, option
         --digest is included in command output.
+
+        name -- key of the call
+        is_supported -- flags which decides if digests are supported
         """
         self.__calls.place(
             name,
@@ -733,10 +734,10 @@ class PcmkShortcuts:
 
     def resource_digests(
         self,
-        resource_id: str,
-        node_name: str,
-        name: str = "runner.pcmk.resource_digests",
-        args: Optional[List[str]] = None,
+        resource_id,
+        node_name,
+        name="runner.pcmk.resource_digests",
+        args=None,
         stdout="",
         stderr="",
         returncode=0,
@@ -744,7 +745,10 @@ class PcmkShortcuts:
         """
         Create call for crm_resource digests
 
+        resource_id -- id of a resource
+        node_name -- name of the node where the resource is running
         name -- key of the call
+        args -- additional arguments for crm_resource
         stdout -- crm_resource's stdout
         stderr -- crm_resource's stderr
         returncode -- crm_resource's returncode

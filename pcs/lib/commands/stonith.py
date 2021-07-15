@@ -274,6 +274,15 @@ def update_scsi_devices(
     set_device_list: Iterable[str],
     force_flags: Container[reports.types.ForceCode] = (),
 ) -> None:
+    """
+    Update scsi fencing devices without restart and affecting other resources.
+
+    env -- provides all for communication with externals
+    stonith_id -- id of stonith resource
+    set_device_list -- paths to the scsi devices that would be set for stonith
+        resource
+    force_flags -- list of flags codes
+    """
     if not is_getting_resource_digest_supported(env.cmd_runner()):
         raise LibraryError(
             ReportItem.error(

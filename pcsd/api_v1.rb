@@ -295,7 +295,6 @@ def route_api_v1(auth_user, params, request)
       :cmd => 'scsi.unfence_node',
       :only_superuser => false,
       :permissions => Permissions::WRITE,
-      # TODO: make sure permissons are set properly
     },
     'stonith-agent-describe-agent/v1' => {
       :cmd => 'stonith_agent.describe_agent',

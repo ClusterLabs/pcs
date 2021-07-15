@@ -18,6 +18,16 @@ class ScsiShortcuts:
         return_code=0,
         name="runner.scsi.unfence_node",
     ):
+        """
+        Create a calls for node scsi unfencing
+
+        string node -- a node from which is unfencing performed
+        list devices -- list of devices to unfence
+        string stdout -- stdout from fence_scsi agent script
+        string stderr -- stderr from fence_scsi agent script
+        int return_code -- return code of the fence_scsi agent script
+        string name -- the key of this call
+        """
         self.__calls.place(
             name,
             RunnerCall(

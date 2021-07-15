@@ -851,6 +851,17 @@ def get_resource_digests(
     resource_options: Dict[str, str],
     crm_meta_attributes: Optional[Dict[str, Optional[str]]] = None,
 ) -> Dict[str, Optional[str]]:
+    """
+    Get set of digests for a resource using crm_resource utility. There are 3
+    types of digests: all, nonreloadable and nonprivate. Resource can have one
+    or more digests types depending on the resource parameters.
+
+    runner -- command runner instance
+    resource_id -- resource id
+    node_name -- name of the node where resource is running
+    resource_options -- resource options with updated values
+    crm_meta_attributes -- parameters of a monitor operation
+    """
     # pylint: disable=too-many-locals
     if crm_meta_attributes is None:
         crm_meta_attributes = dict()

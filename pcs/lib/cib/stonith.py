@@ -255,6 +255,15 @@ def update_scsi_devices_without_restart(
     id_provider: IdProvider,
     devices_list: Iterable[str],
 ) -> None:
+    """
+    Update scsi devices without restart of stonith resource or other resources.
+
+    runner -- command runner instance
+    cluster_state -- status of the cluster
+    resource_el -- resource element being updated
+    id_provider -- elements' ids generator
+    device_list -- list of updated scsi devices
+    """
     resource_id = resource_el.get("id", "")
     roles_with_nodes = get_resource_state(cluster_state, resource_id)
     if "Started" not in roles_with_nodes:
