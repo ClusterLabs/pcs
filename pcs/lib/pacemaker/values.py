@@ -87,16 +87,6 @@ def timeout_to_seconds(
     return timeout if return_unknown else None
 
 
-def timeout_to_milliseconds(timeout: Union[int, str]) -> Optional[str]:
-    """
-    Transform pacemaker style timeout to number of milliseconds
-
-    timeout -- timeout string
-    """
-    sec = timeout_to_seconds(timeout)
-    return None if sec is None or isinstance(sec, str) else str(sec * 1000)
-
-
 def get_valid_timeout_seconds(timeout_candidate):
     """
     Transform pacemaker style timeout to number of seconds, raise LibraryError

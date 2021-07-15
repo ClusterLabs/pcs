@@ -23,7 +23,7 @@ from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 from pcs.lib.pacemaker.live import get_resource_digests
 from pcs.lib.pacemaker.state import get_resource_state
-from pcs.lib.pacemaker.values import is_false, timeout_to_milliseconds
+from pcs.lib.pacemaker.values import is_false, timeout_to_seconds
 from pcs.lib.xml_tools import get_root
 
 # TODO replace by the new finding function
@@ -173,28 +173,33 @@ def _get_monitor_attrs(
     Only interval and timeout attributes are needed for digests
     calculations. Interval attribute is mandatory attribute and timeout
     attribute is optional and it must be converted to milliseconds when
-    passing to crm_resource utility. Operation attributes with missing
-    interval attribute or with timeout attribute unable to convert to
-    milliseconds will be skipped and digests won't be calculated so there
-    will be an error during digest validation. In most cases there will be
-    only one monitor operation or two for promotable resource, but the code
-    should handle more than one or zero monitor operations.
+    passing to crm_resource utility. Operation with missing
+    interval attribute or with attributes unable to convert to
+    milliseconds will be skipped. Misconfigured operations do not have to
+    necessarily prevent restartless update because pacemaker can ignore such
+    misconfigured operations. If there is some mismatch between op elements
+    from the resource definition and lrm_rsc_op elements from the cluster
+    status, it will be found later.
     """
     monitor_attrs_list: List[Dict[str, Optional[str]]] = []
     for operation_el in resource.operations.get_resource_operations(
         resource_el, names=["monitor"]
     ):
-        interval = timeout_to_milliseconds(operation_el.get("interval", ""))
-        timeout = operation_el.get("timeout")
+        sec = timeout_to_seconds(operation_el.get("interval", ""))
+        interval = (
+            None if sec is None or isinstance(sec, str) else str(sec * 1000)
+        )
         if interval is None:
-            # this should never happen but when it will than we ignore it
             continue
+        timeout = operation_el.get("timeout")
         if timeout is None:
             monitor_attrs_list.append(dict(interval=interval, timeout=timeout))
             continue
-        timeout = timeout_to_milliseconds(timeout)
+        sec = timeout_to_seconds(timeout)
+        timeout = (
+            None if sec is None or isinstance(sec, str) else str(sec * 1000)
+        )
         if timeout is None:
-            # unable to convert skip such an operation
             continue
         monitor_attrs_list.append(dict(interval=interval, timeout=timeout))
     return monitor_attrs_list

@@ -8,7 +8,7 @@ from pcs_test.tools.misc import get_test_resource as rc
 
 from pcs import settings
 from pcs.lib.commands import stonith
-from pcs.lib.pacemaker.values import timeout_to_milliseconds as to_ms
+from pcs.lib.pacemaker.values import timeout_to_seconds
 from pcs.common import (
     communication,
     reports,
@@ -254,9 +254,17 @@ class UpdateScsiDevices(TestCase):
             if name != "monitor":
                 continue
             args = [devices_opt]
-            args.append("CRM_meta_interval={}".format(to_ms(interval)))
+            args.append(
+                "CRM_meta_interval={}".format(
+                    1000 * timeout_to_seconds(interval)
+                )
+            )
             if timeout:
-                args.append("CRM_meta_timeout={}".format(to_ms(timeout)))
+                args.append(
+                    "CRM_meta_timeout={}".format(
+                        1000 * timeout_to_seconds(timeout)
+                    )
+                )
             self.config.runner.pcmk.resource_digests(
                 SCSI_STONITH_ID,
                 SCSI_NODE,
@@ -396,6 +404,7 @@ class UpdateScsiDevices(TestCase):
     rc("pcmk_api_rng/api-result.rng"),
 )
 class TestUpdateScsiDevicesFailures(TestCase):
+    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
 

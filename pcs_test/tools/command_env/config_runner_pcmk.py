@@ -772,39 +772,6 @@ class PcmkShortcuts:
             ),
         )
 
-    def resource_locate(
-        self,
-        resource_id: str,
-        name: str = "runner.pcmk.resource_locate",
-        stdout="",
-        stderr="",
-        returncode=0,
-    ):
-        """
-        Create call for crm_resource locate
-
-        name -- key of the call
-        stdout -- crm_resource's stdout
-        stderr -- crm_resource's stderr
-        returncode -- crm_resource's returncode
-        """
-        self.__calls.place(
-            name,
-            RunnerCall(
-                [
-                    "crm_resource",
-                    "--locate",
-                    "--resource",
-                    resource_id,
-                    "--output-as",
-                    "xml",
-                ],
-                stdout=stdout,
-                stderr=stderr,
-                returncode=returncode,
-            ),
-        )
-
     def verify(
         self,
         name="runner.pcmk.verify",
