@@ -9,6 +9,6 @@ PcsCommand = NewType("PcsCommand", str)
 ReasonType = NewType("ReasonType", str)
 ServiceAction = NewType("ServiceAction", str)
 SeverityLevel = NewType("SeverityLevel", str)
-StonithUnableToUpdateScsiDevicesReason = NewType(
-    "StonithUnableToUpdateScsiDevicesReason", str
+StonithRestartlessUpdateUnableToPerformReason = NewType(
+    "StonithRestartlessUpdateUnableToPerformReason", str
 )

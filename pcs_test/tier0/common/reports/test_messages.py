@@ -1864,28 +1864,28 @@ class StonithRestartlessUpdateOfScsiDevicesNotSupported(NameBuildTest):
         )
 
 
-class StonithResourceTypeNotSupportedForDevicesUpdate(NameBuildTest):
+class StonithRestartlessUpdateUnsupportedAgent(NameBuildTest):
     def test_plural(self):
         self.assert_message_from_report(
             (
-                "Resource 'fence_sbd' is not a stonith resource or its type is"
-                " not supported for devices update. Supported types: "
-                "'fence_mpath', 'fence_scsi'"
+                "Resource 'fence_sbd' is not a stonith resource or its type "
+                "'wrong_type' is not supported for devices update. Supported "
+                "types: 'fence_mpath', 'fence_scsi'"
             ),
-            reports.StonithResourceTypeNotSupportedForDevicesUpdate(
-                "fence_sbd", ["fence_scsi", "fence_mpath"]
+            reports.StonithRestartlessUpdateUnsupportedAgent(
+                "fence_sbd", "wrong_type", ["fence_scsi", "fence_mpath"]
             ),
         )
 
     def test_singular(self):
         self.assert_message_from_report(
             (
-                "Resource 'fence_sbd' is not a stonith resource or its type is"
-                " not supported for devices update. Supported type: "
-                "'fence_scsi'"
+                "Resource 'fence_sbd' is not a stonith resource or its type "
+                "'wrong_type' is not supported for devices update. Supported "
+                "type: 'fence_scsi'"
             ),
-            reports.StonithResourceTypeNotSupportedForDevicesUpdate(
-                "fence_sbd", ["fence_scsi"]
+            reports.StonithRestartlessUpdateUnsupportedAgent(
+                "fence_sbd", "wrong_type", ["fence_scsi"]
             ),
         )
 
@@ -1898,19 +1898,19 @@ class StonithUnfencingFailed(NameBuildTest):
         )
 
 
-class StonithUnableToUpdateScsiDevices(NameBuildTest):
+class StonithRestartlessUpdateUnableToPerform(NameBuildTest):
     def test_build_message(self):
         self.assert_message_from_report(
-            "Unable to update scsi devices: reason",
-            reports.StonithUnableToUpdateScsiDevices("reason"),
+            "Unable to perform restartless update of scsi devices: reason",
+            reports.StonithRestartlessUpdateUnableToPerform("reason"),
         )
 
     def test_build_message_reason_type_specified(self):
         self.assert_message_from_report(
-            "Unable to update scsi devices: reason",
-            reports.StonithUnableToUpdateScsiDevices(
+            "Unable to perform restartless update of scsi devices: reason",
+            reports.StonithRestartlessUpdateUnableToPerform(
                 "reason",
-                const.STONITH_UNABLE_TO_UPDATE_SCSI_DEVICES_REASON_NOT_RUNNING,
+                const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_NOT_RUNNING,
             ),
         )
 

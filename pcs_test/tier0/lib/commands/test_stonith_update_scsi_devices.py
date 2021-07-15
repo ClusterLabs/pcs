@@ -504,8 +504,9 @@ class TestUpdateScsiDevicesFailures(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    reports.codes.STONITH_RESOURCE_TYPE_NOT_SUPPORTED_FOR_UPDATE,
+                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNSUPPORTED_AGENT,
                     resource_id="dummy",
+                    resource_type="Dummy",
                     supported_stonith_types=["fence_scsi"],
                 )
             ]
@@ -522,12 +523,12 @@ class TestUpdateScsiDevicesFailures(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    reports.codes.STONITH_UNABLE_TO_UPDATE_SCSI_DEVICES,
+                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM,
                     reason=(
                         "no devices option configured for stonith device "
                         f"'{SCSI_STONITH_ID}'"
                     ),
-                    reason_type=reports.const.STONITH_UNABLE_TO_UPDATE_SCSI_DEVICES_REASON_OTHER,
+                    reason_type=reports.const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_OTHER,
                 )
             ]
         )
@@ -543,12 +544,12 @@ class TestUpdateScsiDevicesFailures(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    reports.codes.STONITH_UNABLE_TO_UPDATE_SCSI_DEVICES,
+                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM,
                     reason=(
                         "no devices option configured for stonith device "
                         f"'{SCSI_STONITH_ID}'"
                     ),
-                    reason_type=reports.const.STONITH_UNABLE_TO_UPDATE_SCSI_DEVICES_REASON_OTHER,
+                    reason_type=reports.const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_OTHER,
                 )
             ]
         )
@@ -565,9 +566,9 @@ class TestUpdateScsiDevicesFailures(TestCase):
             ),
             [
                 fixture.error(
-                    reports.codes.STONITH_UNABLE_TO_UPDATE_SCSI_DEVICES,
+                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM,
                     reason=f"resource '{SCSI_STONITH_ID}' is not running on any node",
-                    reason_type=reports.const.STONITH_UNABLE_TO_UPDATE_SCSI_DEVICES_REASON_NOT_RUNNING,
+                    reason_type=reports.const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_NOT_RUNNING,
                 )
             ],
             expected_in_processor=False,
@@ -585,12 +586,12 @@ class TestUpdateScsiDevicesFailures(TestCase):
             ),
             [
                 fixture.error(
-                    reports.codes.STONITH_UNABLE_TO_UPDATE_SCSI_DEVICES,
+                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM,
                     reason=(
                         f"resource '{SCSI_STONITH_ID}' is running on more than "
                         "1 node"
                     ),
-                    reason_type=reports.const.STONITH_UNABLE_TO_UPDATE_SCSI_DEVICES_REASON_OTHER,
+                    reason_type=reports.const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_OTHER,
                 )
             ],
             expected_in_processor=False,
@@ -626,9 +627,9 @@ class TestUpdateScsiDevicesFailures(TestCase):
             ),
             [
                 fixture.error(
-                    reports.codes.STONITH_UNABLE_TO_UPDATE_SCSI_DEVICES,
+                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM,
                     reason="no digests attributes in lrm_rsc_op element",
-                    reason_type=reports.const.STONITH_UNABLE_TO_UPDATE_SCSI_DEVICES_REASON_OTHER,
+                    reason_type=reports.const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_OTHER,
                 )
             ],
             expected_in_processor=False,
@@ -667,12 +668,12 @@ class TestUpdateScsiDevicesFailures(TestCase):
             ),
             [
                 fixture.error(
-                    reports.codes.STONITH_UNABLE_TO_UPDATE_SCSI_DEVICES,
+                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM,
                     reason=(
                         "necessary digest for 'op-restart-digest' attribute is "
                         "missing"
                     ),
-                    reason_type=reports.const.STONITH_UNABLE_TO_UPDATE_SCSI_DEVICES_REASON_OTHER,
+                    reason_type=reports.const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_OTHER,
                 )
             ],
             expected_in_processor=False,
@@ -693,11 +694,11 @@ class TestUpdateScsiDevicesFailures(TestCase):
             ),
             [
                 fixture.error(
-                    reports.codes.STONITH_UNABLE_TO_UPDATE_SCSI_DEVICES,
+                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM,
                     reason=(
                         "lrm_rsc_op element for start operation was not found"
                     ),
-                    reason_type=reports.const.STONITH_UNABLE_TO_UPDATE_SCSI_DEVICES_REASON_OTHER,
+                    reason_type=reports.const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_OTHER,
                 )
             ],
             expected_in_processor=False,
@@ -733,12 +734,12 @@ class TestUpdateScsiDevicesFailures(TestCase):
             ),
             [
                 fixture.error(
-                    reports.codes.STONITH_UNABLE_TO_UPDATE_SCSI_DEVICES,
+                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM,
                     reason=(
                         "number of lrm_rsc_op and op elements for monitor "
                         "operation differs"
                     ),
-                    reason_type=reports.const.STONITH_UNABLE_TO_UPDATE_SCSI_DEVICES_REASON_OTHER,
+                    reason_type=reports.const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_OTHER,
                 )
             ],
             expected_in_processor=False,
@@ -770,13 +771,13 @@ class TestUpdateScsiDevicesFailures(TestCase):
             ),
             [
                 fixture.error(
-                    reports.codes.STONITH_UNABLE_TO_UPDATE_SCSI_DEVICES,
+                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM,
                     reason=(
                         "monitor lrm_rsc_op element for resource "
                         f"'{SCSI_STONITH_ID}', node '{SCSI_NODE}' and interval "
                         "'30000' not found"
                     ),
-                    reason_type=reports.const.STONITH_UNABLE_TO_UPDATE_SCSI_DEVICES_REASON_OTHER,
+                    reason_type=reports.const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_OTHER,
                 )
             ],
             expected_in_processor=False,

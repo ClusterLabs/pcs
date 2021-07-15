@@ -301,7 +301,7 @@ def update_scsi_devices(
     (
         stonith_el,
         report_list,
-    ) = stonith.validate_stonith_device_exists_and_supported(cib, stonith_id)
+    ) = stonith.validate_stonith_restartless_update(cib, stonith_id)
     if env.report_processor.report_list(report_list).has_errors:
         raise LibraryError()
     # for mypy, this should not happen because exeption would be raised

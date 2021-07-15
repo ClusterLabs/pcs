@@ -5,7 +5,7 @@ from .types import (
     PcsCommand,
     ReasonType,
     ServiceAction,
-    StonithUnableToUpdateScsiDevicesReason,
+    StonithRestartlessUpdateUnableToPerformReason,
 )
 
 
@@ -40,9 +40,9 @@ REASON_NOT_LIVE_CIB = ReasonType("not_live_cib")
 DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS = DefaultAddressSource("known_hosts")
 DEFAULT_ADDRESS_SOURCE_HOST_NAME = DefaultAddressSource("host_name")
 
-STONITH_UNABLE_TO_UPDATE_SCSI_DEVICES_REASON_NOT_RUNNING = (
-    StonithUnableToUpdateScsiDevicesReason("not_running")
+STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_NOT_RUNNING = (
+    StonithRestartlessUpdateUnableToPerformReason("not_running")
 )
-STONITH_UNABLE_TO_UPDATE_SCSI_DEVICES_REASON_OTHER = (
-    StonithUnableToUpdateScsiDevicesReason("other")
+STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_OTHER = (
+    StonithRestartlessUpdateUnableToPerformReason("other")
 )

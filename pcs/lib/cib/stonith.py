@@ -77,12 +77,12 @@ def get_misconfigured_resources(
 SUPPORTED_RESOURCE_TYPES_FOR_RESTARLESS_UPDATE = ["fence_scsi"]
 
 
-def validate_stonith_device_exists_and_supported(
+def validate_stonith_restartless_update(
     cib: _Element,
     stonith_id: str,
 ) -> Tuple[Optional[_Element], ReportItemList]:
     """
-    Validate that stonith device exists and it its type is supported for
+    Validate that stonith device exists and its type is supported for
     restartless update of scsi devices and has defined option 'devices'.
 
     cib -- cib element
@@ -94,16 +94,17 @@ def validate_stonith_device_exists_and_supported(
     if stonith_el is None:
         return stonith_el, report_list
 
+    stonith_type = stonith_el.get("type", "")
     if (
         stonith_el.get("class", "") != "stonith"
         or stonith_el.get("provider", "") != ""
-        or stonith_el.get("type", "")
-        not in SUPPORTED_RESOURCE_TYPES_FOR_RESTARLESS_UPDATE
+        or stonith_type not in SUPPORTED_RESOURCE_TYPES_FOR_RESTARLESS_UPDATE
     ):
         report_list.append(
             ReportItem.error(
-                reports.messages.StonithResourceTypeNotSupportedForDevicesUpdate(
+                reports.messages.StonithRestartlessUpdateUnsupportedAgent(
                     stonith_id,
+                    stonith_type,
                     SUPPORTED_RESOURCE_TYPES_FOR_RESTARLESS_UPDATE,
                 )
             )
@@ -113,7 +114,7 @@ def validate_stonith_device_exists_and_supported(
     if not get_value(INSTANCE_ATTRIBUTES_TAG, stonith_el, "devices"):
         report_list.append(
             ReportItem.error(
-                reports.messages.StonithUnableToUpdateScsiDevices(
+                reports.messages.StonithRestartlessUpdateUnableToPerform(
                     "no devices option configured for stonith device "
                     f"'{stonith_id}'"
                 )
@@ -225,7 +226,7 @@ def _update_digest_attrs_in_lrm_rsc_op(
         # this should not happen and when it does it is pacemaker fault
         raise LibraryError(
             ReportItem.error(
-                reports.messages.StonithUnableToUpdateScsiDevices(
+                reports.messages.StonithRestartlessUpdateUnableToPerform(
                     "no digests attributes in lrm_rsc_op element",
                 )
             )
@@ -236,7 +237,7 @@ def _update_digest_attrs_in_lrm_rsc_op(
             # this should not happen and when it does it is pacemaker fault
             raise LibraryError(
                 ReportItem.error(
-                    reports.messages.StonithUnableToUpdateScsiDevices(
+                    reports.messages.StonithRestartlessUpdateUnableToPerform(
                         (
                             f"necessary digest for '{attr}' attribute is "
                             "missing"
@@ -269,9 +270,9 @@ def update_scsi_devices_without_restart(
     if "Started" not in roles_with_nodes:
         raise LibraryError(
             ReportItem.error(
-                reports.messages.StonithUnableToUpdateScsiDevices(
+                reports.messages.StonithRestartlessUpdateUnableToPerform(
                     f"resource '{resource_id}' is not running on any node",
-                    reason_type=reports.const.STONITH_UNABLE_TO_UPDATE_SCSI_DEVICES_REASON_NOT_RUNNING,
+                    reason_type=reports.const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_NOT_RUNNING,
                 )
             )
         )
@@ -281,7 +282,7 @@ def update_scsi_devices_without_restart(
         # update more lrm_rsc_op elements
         raise LibraryError(
             ReportItem.error(
-                reports.messages.StonithUnableToUpdateScsiDevices(
+                reports.messages.StonithRestartlessUpdateUnableToPerform(
                     f"resource '{resource_id}' is running on more than 1 node"
                 )
             )
@@ -309,7 +310,7 @@ def update_scsi_devices_without_restart(
     else:
         raise LibraryError(
             ReportItem.error(
-                reports.messages.StonithUnableToUpdateScsiDevices(
+                reports.messages.StonithRestartlessUpdateUnableToPerform(
                     "lrm_rsc_op element for start operation was not found"
                 )
             )
@@ -322,7 +323,7 @@ def update_scsi_devices_without_restart(
     if len(lrm_rsc_op_monitor_list) != len(monitor_attrs_list):
         raise LibraryError(
             ReportItem.error(
-                reports.messages.StonithUnableToUpdateScsiDevices(
+                reports.messages.StonithRestartlessUpdateUnableToPerform(
                     (
                         "number of lrm_rsc_op and op elements for monitor "
                         "operation differs"
@@ -353,7 +354,7 @@ def update_scsi_devices_without_restart(
         else:
             raise LibraryError(
                 ReportItem.error(
-                    reports.messages.StonithUnableToUpdateScsiDevices(
+                    reports.messages.StonithRestartlessUpdateUnableToPerform(
                         (
                             "monitor lrm_rsc_op element for resource "
                             f"'{resource_id}', node '{node_name}' and interval "
