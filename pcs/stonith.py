@@ -906,7 +906,7 @@ def stonith_update_scsi_devices(lib, argv, modifiers):
     if not set_args:
         raise CmdLineInputError(
             show_both_usage_and_message=True,
-            hint=("You must specify set devices to be updated"),
+            hint="You must specify set devices to be updated",
         )
     force_flags = []
     if modifiers.get("--skip-offline"):

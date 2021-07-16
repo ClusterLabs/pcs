@@ -4,6 +4,8 @@ from pcs import stonith
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import InputModifiers
 
+from pcs_test.tools.misc import dict_to_modifiers
+
 
 def _dict_to_modifiers(options):
     def _convert_val(val):
@@ -143,3 +145,70 @@ class SbdDeviceSetup(TestCase):
         with self.assertRaises(CmdLineInputError) as cm:
             self.call_cmd(["a=A"])
         self.assertEqual(cm.exception.message, "No device defined")
+
+
+class StonithUpdateScsiDevices(TestCase):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["stonith"])
+        self.stonith = mock.Mock(spec_set=["update_scsi_devices"])
+        self.lib.stonith = self.stonith
+
+    def assert_called_with(self, stonith_id, set_devices, force_flags):
+        self.stonith.update_scsi_devices.assert_called_once_with(
+            stonith_id, set_devices, force_flags=force_flags
+        )
+
+    def call_cmd(self, argv, modifiers=None):
+        stonith.stonith_update_scsi_devices(
+            self.lib, argv, dict_to_modifiers(modifiers or {})
+        )
+
+    def test_no_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.call_cmd([])
+        self.assertEqual(cm.exception.message, None)
+
+    def test_only_stonith_id(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.call_cmd(["stonith-id"])
+        self.assertEqual(cm.exception.message, None)
+
+    def test_not_set_keyword(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.call_cmd(["stonith-id", "unset"])
+        self.assertEqual(cm.exception.message, None)
+
+    def test_only_set_keyword(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.call_cmd(["stonith-id", "set"])
+        self.assertEqual(cm.exception.message, None)
+        self.assertEqual(
+            cm.exception.hint, "You must specify set devices to be updated"
+        )
+
+    def test_one_device(self):
+        self.call_cmd(["stonith-id", "set", "device1"])
+        self.assert_called_with("stonith-id", ["device1"], [])
+
+    def test_more_devices(self):
+        self.call_cmd(["stonith-id", "set", "device1", "device2"])
+        self.assert_called_with("stonith-id", ["device1", "device2"], [])
+
+    def test_supported_options(self):
+        self.call_cmd(
+            ["stonith-id", "set", "device1", "device2"],
+            {"skip-offline": True, "request-timeout": 60},
+        )
+        self.assert_called_with(
+            "stonith-id", ["device1", "device2"], ["SKIP_OFFLINE_NODES"]
+        )
+
+    def test_unsupported_options(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.call_cmd(
+                ["stonith-id", "set", "device1", "device2"], {"force": True}
+            )
+        self.assertEqual(
+            cm.exception.message,
+            "Specified option '--force' is not supported in this command",
+        )
