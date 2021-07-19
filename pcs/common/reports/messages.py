@@ -3075,6 +3075,33 @@ class BadClusterStateFormat(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class WaitForIdleStarted(ReportItemMessage):
+    """
+    Waiting for cluster to apply updated configuration and to settle down
+
+    timeout -- wait timeout in seconds
+    """
+
+    timeout: int
+    _code = codes.WAIT_FOR_IDLE_STARTED
+
+    @property
+    def message(self) -> str:
+        timeout_str = (
+            " (timeout: {timeout} {second_pl})".format(
+                timeout=self.timeout,
+                second_pl=format_plural(self.timeout, "second"),
+            )
+            if self.timeout > 0
+            else ""
+        )
+        return (
+            "Waiting for the cluster to apply configuration changes"
+            f"{timeout_str}..."
+        )
+
+
+@dataclass(frozen=True)
 class WaitForIdleTimedOut(ReportItemMessage):
     """
     Waiting for resources (crm_resource --wait) failed, timeout expired

@@ -482,7 +482,7 @@ def simulate_cib(runner, cib):
 ### wait for idle
 
 
-def wait_for_idle(runner, timeout=None):
+def wait_for_idle(runner: CommandRunner, timeout: Optional[int] = None) -> None:
     """
     Run waiting command. Raise LibraryError if command failed.
 

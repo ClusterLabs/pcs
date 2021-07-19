@@ -189,6 +189,22 @@ class LibraryEnvironment:
             self.__timeout_cache[wait] = get_valid_timeout_seconds(wait)
         return self.__timeout_cache[wait]
 
+    def wait_for_idle(self, timeout: int = 0) -> None:
+        """
+        Wait for the cluster to settle down.
+
+        timeout -- timeout in seconds, if less than 0 wait will be skipped, if 0
+            wait indefinitely
+        """
+        if timeout < 0:
+            # timeout is turned off
+            return
+        wait_timeout = timeout if timeout > 0 else None
+        self.report_processor.report(
+            ReportItem.info(reports.messages.WaitForIdleStarted(timeout))
+        )
+        wait_for_idle(self.cmd_runner(), wait_timeout)
+
     def ensure_wait_satisfiable(self, wait):
         """
         Raise when wait is not supported or when wait is not valid wait value.
@@ -218,17 +234,14 @@ class LibraryEnvironment:
         return self.__push_cib_diff(wait=wait)
 
     def __push_cib_full(self, cib_to_push, wait=False):
-        cmd_runner = self.cmd_runner()
         self.__do_push_cib(
-            cmd_runner,
-            lambda: replace_cib_configuration(cmd_runner, cib_to_push),
+            lambda: replace_cib_configuration(self.cmd_runner(), cib_to_push),
             wait,
         )
 
     def __push_cib_diff(self, wait=False):
-        cmd_runner = self.cmd_runner()
         self.__do_push_cib(
-            cmd_runner, lambda: self.__main_push_cib_diff(cmd_runner), wait
+            lambda: self.__main_push_cib_diff(self.cmd_runner()), wait
         )
 
     def __main_push_cib_diff(self, cmd_runner):
@@ -241,14 +254,14 @@ class LibraryEnvironment:
         if cib_diff_xml:
             push_cib_diff_xml(cmd_runner, cib_diff_xml)
 
-    def __do_push_cib(self, cmd_runner, push_strategy, wait):
+    def __do_push_cib(self, push_strategy, wait):
         timeout = self.get_wait_timeout(wait)
         push_strategy()
         self._cib_upgrade_reported = False
         self.__loaded_cib_diff_source = None
         self.__loaded_cib_to_modify = None
         if self.is_cib_live and timeout is not False:
-            wait_for_idle(cmd_runner, timeout)
+            self.wait_for_idle(timeout)
 
     @property
     def is_cib_live(self):

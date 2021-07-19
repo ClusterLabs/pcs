@@ -2080,6 +2080,40 @@ class BadClusterStateFormat(NameBuildTest):
         )
 
 
+class WaitForIdleStarted(NameBuildTest):
+    def test_timeout(self):
+        timeout = 20
+        self.assert_message_from_report(
+            (
+                "Waiting for the cluster to apply configuration changes "
+                f"(timeout: {timeout} seconds)..."
+            ),
+            reports.WaitForIdleStarted(timeout),
+        )
+
+    def test_timeout_singular(self):
+        timeout = 1
+        self.assert_message_from_report(
+            (
+                "Waiting for the cluster to apply configuration changes "
+                f"(timeout: {timeout} second)..."
+            ),
+            reports.WaitForIdleStarted(timeout),
+        )
+
+    def test_timeout_0(self):
+        self.assert_message_from_report(
+            "Waiting for the cluster to apply configuration changes...",
+            reports.WaitForIdleStarted(0),
+        )
+
+    def test_timeout_negative(self):
+        self.assert_message_from_report(
+            "Waiting for the cluster to apply configuration changes...",
+            reports.WaitForIdleStarted(-1),
+        )
+
+
 class WaitForIdleTimedOut(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(

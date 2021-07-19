@@ -352,7 +352,15 @@ class PushLoadedCib(TestCase, ManageCibAssertionMixin):
 
         env.get_cib()
         env.push_cib(wait=self.wait_timeout)
-        self.env_assist.assert_reports(self.push_reports())
+        self.env_assist.assert_reports(
+            self.push_reports()
+            + [
+                fixture.info(
+                    report_codes.WAIT_FOR_IDLE_STARTED,
+                    timeout=self.wait_timeout,
+                )
+            ]
+        )
 
     def test_wait_raises_on_invalid_value(self):
         self.config.runner.cib.load()
@@ -399,6 +407,14 @@ class PushCustomCib(TestCase, ManageCibAssertionMixin):
         env = self.env_assist.get_env()
 
         env.push_cib(etree.XML(self.custom_cib), wait=self.wait_timeout)
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    report_codes.WAIT_FOR_IDLE_STARTED,
+                    timeout=self.wait_timeout,
+                )
+            ]
+        )
 
     def test_wait_raises_on_invalid_value(self):
         env = self.env_assist.get_env()
