@@ -12,6 +12,7 @@ from pcs.common.str_tools import (
     format_list,
     format_plural,
 )
+from pcs.common.tools import timeout_to_seconds
 
 ModifierValueType = Union[None, bool, str]
 
@@ -439,6 +440,17 @@ def filter_out_options(arg_list):
         ):
             args_without_options.append(arg)
     return args_without_options
+
+
+def wait_to_timeout(wait: Union[bool, str, None]) -> int:
+    if wait is False:
+        return -1
+    if wait is None:
+        return 0
+    timeout = timeout_to_seconds(wait)
+    if timeout is None:
+        raise CmdLineInputError(f"'{wait}' is not a valid interval value")
+    return timeout
 
 
 class InputModifiers:

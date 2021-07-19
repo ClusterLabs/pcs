@@ -39,12 +39,14 @@ from pcs.common.reports.item import ReportItemList
 from pcs.common.reports.messages import CibUpgradeFailedToMinimalRequiredVersion
 from pcs.common.services.interfaces import ServiceManagerInterface
 from pcs.common.services.errors import ManageServiceError
+from pcs.common.tools import timeout_to_seconds
 
 from pcs.cli.common import middleware
 from pcs.cli.common.env_cli import Env
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.lib_wrapper import Library
 from pcs.cli.common.parse_args import InputModifiers
+from pcs.cli.common.tools import timeout_to_seconds_legacy
 from pcs.cli.reports import (
     output as reports_output,
     process_library_reports,
@@ -68,7 +70,6 @@ from pcs.lib.pacemaker.state import ClusterState
 from pcs.lib.pacemaker.values import (
     is_boolean,
     is_score as is_score_value,
-    timeout_to_seconds as get_timeout_seconds,
     validate_id,
 )
 from pcs.lib.services import (
@@ -1584,7 +1585,7 @@ def validate_wait_get_timeout(need_cib_support=True):
     wait_timeout = pcs_options["--wait"]
     if wait_timeout is None:
         return wait_timeout
-    wait_timeout = get_timeout_seconds(wait_timeout)
+    wait_timeout = timeout_to_seconds(wait_timeout)
     if wait_timeout is None:
         err(
             "%s is not a valid number of seconds to wait"
@@ -1763,11 +1764,11 @@ def operation_exists(operations_el, op_el):
     """
     existing = []
     op_name = op_el.getAttribute("name")
-    op_interval = get_timeout_seconds(op_el.getAttribute("interval"), True)
+    op_interval = timeout_to_seconds_legacy(op_el.getAttribute("interval"))
     for op in operations_el.getElementsByTagName("op"):
         if (
             op.getAttribute("name") == op_name
-            and get_timeout_seconds(op.getAttribute("interval"), True)
+            and timeout_to_seconds_legacy(op.getAttribute("interval"))
             == op_interval
         ):
             existing.append(op)
@@ -2581,7 +2582,7 @@ def is_valid_cib_value(value_type, value, enum_options=()):
     if value_type == "integer":
         return is_score(value)
     if value_type == "time":
-        return get_timeout_seconds(value) is not None
+        return timeout_to_seconds(value) is not None
     return True
 
 

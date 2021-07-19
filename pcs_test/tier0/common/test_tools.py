@@ -134,3 +134,23 @@ class VersionTest(TestCase):
         self.assert_lt_tuple((2, 0), (3, 5, 1))
         self.assert_lt_tuple((2, 5), (3, 5, 1))
         self.assert_lt_tuple((3, 5), (3, 5, 1))
+
+
+class TimeoutToSecondsTest(TestCase):
+    def test_valid(self):
+        self.assertEqual(10, tools.timeout_to_seconds(10))
+        self.assertEqual(10, tools.timeout_to_seconds("10"))
+        self.assertEqual(10, tools.timeout_to_seconds("10s"))
+        self.assertEqual(10, tools.timeout_to_seconds("10sec"))
+        self.assertEqual(600, tools.timeout_to_seconds("10m"))
+        self.assertEqual(600, tools.timeout_to_seconds("10min"))
+        self.assertEqual(36000, tools.timeout_to_seconds("10h"))
+        self.assertEqual(36000, tools.timeout_to_seconds("10hr"))
+
+    def test_invalid(self):
+        self.assertEqual(None, tools.timeout_to_seconds(-10))
+        self.assertEqual(None, tools.timeout_to_seconds("1a1s"))
+        self.assertEqual(None, tools.timeout_to_seconds("10mm"))
+        self.assertEqual(None, tools.timeout_to_seconds("10mim"))
+        self.assertEqual(None, tools.timeout_to_seconds("aaa"))
+        self.assertEqual(None, tools.timeout_to_seconds(""))

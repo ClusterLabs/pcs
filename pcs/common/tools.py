@@ -5,6 +5,7 @@ from typing import (
     MutableSet,
     Optional,
     TypeVar,
+    Union,
 )
 
 from lxml import etree
@@ -62,6 +63,37 @@ class AutoNameEnum(str, Enum):
         # pylint: disable=no-self-argument
         del start, count, last_values
         return name
+
+
+def timeout_to_seconds(timeout: Union[int, str]) -> Optional[int]:
+    """
+    Transform pacemaker style timeout to number of seconds. If `timeout` is not
+    a valid timeout, `None` is returned.
+
+    timeout -- timeout string
+    """
+    try:
+        candidate = int(timeout)
+        if candidate >= 0:
+            return candidate
+        return None
+    except ValueError:
+        pass
+    # Now we know the timeout is not an integer nor an integer string.
+    # Let's make sure mypy knows the timeout is a string as well.
+    timeout = str(timeout)
+    suffix_multiplier = {
+        "s": 1,
+        "sec": 1,
+        "m": 60,
+        "min": 60,
+        "h": 3600,
+        "hr": 3600,
+    }
+    for suffix, multiplier in suffix_multiplier.items():
+        if timeout.endswith(suffix) and timeout[: -len(suffix)].isdigit():
+            return int(timeout[: -len(suffix)]) * multiplier
+    return None
 
 
 class Version(namedtuple("Version", ["major", "minor", "revision"])):

@@ -11,6 +11,7 @@ from lxml.etree import _Element
 
 from pcs.common import reports
 from pcs.common.reports import ReportItem, ReportItemList
+from pcs.common.tools import timeout_to_seconds
 from pcs.lib.cib import resource
 from pcs.lib.cib.nvpair import (
     INSTANCE_ATTRIBUTES_TAG,
@@ -23,7 +24,7 @@ from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 from pcs.lib.pacemaker.live import get_resource_digests
 from pcs.lib.pacemaker.state import get_resource_state
-from pcs.lib.pacemaker.values import is_false, timeout_to_seconds
+from pcs.lib.pacemaker.values import is_false
 from pcs.lib.xml_tools import get_root
 
 # TODO replace by the new finding function

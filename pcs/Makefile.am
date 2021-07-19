@@ -35,6 +35,7 @@ EXTRA_DIST		= \
 			  cli/common/parse_args.py \
 			  cli/common/printable_tree.py \
 			  cli/common/routing.py \
+			  cli/common/tools.py \
 			  cli/constraint_colocation/command.py \
 			  cli/constraint_colocation/__init__.py \
 			  cli/constraint/command.py \

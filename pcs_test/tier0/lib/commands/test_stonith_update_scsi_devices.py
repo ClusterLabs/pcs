@@ -8,12 +8,12 @@ from pcs_test.tools.misc import get_test_resource as rc
 
 from pcs import settings
 from pcs.lib.commands import stonith
-from pcs.lib.pacemaker.values import timeout_to_seconds
 from pcs.common import (
     communication,
     reports,
 )
 from pcs.common.interface import dto
+from pcs.common.tools import timeout_to_seconds
 
 from .cluster.common import (
     corosync_conf_fixture,

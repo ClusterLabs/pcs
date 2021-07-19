@@ -30,6 +30,7 @@ from pcs.cli.common.parse_args import (
     prepare_options_allowed,
     InputModifiers,
 )
+from pcs.cli.common.tools import timeout_to_seconds_legacy
 from pcs.cli.nvset import nvset_dto_list_to_lines
 from pcs.cli.reports import process_library_reports
 from pcs.cli.reports.output import error, warn
@@ -64,7 +65,7 @@ from pcs.lib.errors import LibraryError
 import pcs.lib.pacemaker.live as lib_pacemaker
 from pcs.lib.pacemaker.state import get_resource_state
 
-from pcs.lib.pacemaker.values import validate_id, timeout_to_seconds
+from pcs.lib.pacemaker.values import validate_id
 import pcs.lib.resource_agent as lib_ra
 
 # pylint: disable=invalid-name
@@ -1288,7 +1289,7 @@ def resource_operation_add(
                 "operation %s with interval %ss already specified for %s:\n%s"
                 % (
                     op_el.getAttribute("name"),
-                    timeout_to_seconds(op_el.getAttribute("interval"), True),
+                    timeout_to_seconds_legacy(op_el.getAttribute("interval")),
                     res_id,
                     "\n".join(
                         [operation_to_string(op) for op in duplicate_op_list]

@@ -62,6 +62,7 @@ EXTRA_DIST		= \
 			  tier0/cli/common/test_middleware.py \
 			  tier0/cli/common/test_parse_args.py \
 			  tier0/cli/common/test_printable_tree.py \
+			  tier0/cli/common/test_tools.py \
 			  tier0/cli/constraint/__init__.py \
 			  tier0/cli/constraint/test_command.py \
 			  tier0/cli/constraint/test_parse_args.py \

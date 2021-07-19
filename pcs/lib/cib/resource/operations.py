@@ -8,6 +8,7 @@ from pcs.common.reports import (
     ReportProcessor,
 )
 from pcs.common.reports.item import ReportItem
+from pcs.common.tools import timeout_to_seconds
 from pcs.lib import validate
 from pcs.lib.resource_agent import get_default_interval, complete_all_intervals
 from pcs.lib.cib.nvpair import append_new_instance_attributes
@@ -16,7 +17,7 @@ from pcs.lib.cib.tools import (
     does_id_exist,
 )
 from pcs.lib.errors import LibraryError
-from pcs.lib.pacemaker.values import is_true, timeout_to_seconds, RESOURCE_ROLES
+from pcs.lib.pacemaker.values import is_true, RESOURCE_ROLES
 
 OPERATION_NVPAIR_ATTRIBUTES = [
     "OCF_CHECK_LEVEL",

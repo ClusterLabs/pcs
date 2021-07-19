@@ -21,7 +21,10 @@ from pcs.common.interface import dto
 from pcs.common import reports
 from pcs.common.reports import ReportItemList
 from pcs.common.reports.item import ReportItem
-from pcs.common.tools import Version
+from pcs.common.tools import (
+    timeout_to_seconds,
+    Version,
+)
 from pcs.lib.cib import (
     resource,
     status as cib_status,
@@ -56,10 +59,7 @@ from pcs.lib.pacemaker.state import (
     is_resource_managed,
     ResourceNotFound,
 )
-from pcs.lib.pacemaker.values import (
-    timeout_to_seconds,
-    validate_id,
-)
+from pcs.lib.pacemaker.values import validate_id
 from pcs.lib.resource_agent import (
     find_valid_resource_agent_by_name as get_agent,
 )

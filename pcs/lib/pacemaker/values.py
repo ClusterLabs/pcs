@@ -7,6 +7,7 @@ from typing import (
 
 from pcs.common import reports
 from pcs.common.reports.item import ReportItem, ReportItemList
+from pcs.common.tools import timeout_to_seconds
 from pcs.lib.errors import LibraryError
 
 
@@ -51,40 +52,6 @@ def is_score(value: str) -> bool:
         return False
     unsigned_value = value[1:] if value[0] in ("+", "-") else value
     return unsigned_value == SCORE_INFINITY or unsigned_value.isdigit()
-
-
-def timeout_to_seconds(
-    timeout: Union[int, str], return_unknown: bool = False
-) -> Union[int, str, None]:
-    """
-    Transform pacemaker style timeout to number of seconds
-
-    timeout -- timeout string
-    return_unknown -- if timeout is not valid then return None on False or
-        timeout on True (default False)
-    """
-    try:
-        candidate = int(timeout)
-        if candidate >= 0:
-            return candidate
-        return timeout if return_unknown else None
-    except ValueError:
-        pass
-    # Now we know the timeout is not an integer nor an integer string.
-    # Let's make sure mypy knows the timeout is a string as well.
-    timeout = str(timeout)
-    suffix_multiplier = {
-        "s": 1,
-        "sec": 1,
-        "m": 60,
-        "min": 60,
-        "h": 3600,
-        "hr": 3600,
-    }
-    for suffix, multiplier in suffix_multiplier.items():
-        if timeout.endswith(suffix) and timeout[: -len(suffix)].isdigit():
-            return int(timeout[: -len(suffix)]) * multiplier
-    return timeout if return_unknown else None
 
 
 def get_valid_timeout_seconds(timeout_candidate):

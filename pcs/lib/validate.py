@@ -48,6 +48,7 @@ from pcs.common.reports import (
     ReportItemList,
     ReportItemSeverity,
 )
+from pcs.common.tools import timeout_to_seconds
 from pcs.common.validate import (
     is_integer,
     is_port_number,
@@ -55,7 +56,6 @@ from pcs.common.validate import (
 from pcs.lib.corosync import constants as corosync_constants
 from pcs.lib.pacemaker.values import (
     is_score,
-    timeout_to_seconds,
     validate_id,
 )
 from pcs.lib.cib.tools import IdProvider
