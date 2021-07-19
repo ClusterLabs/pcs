@@ -1,6 +1,7 @@
 from unittest import mock, TestCase
 
 from pcs import stonith
+from pcs.common import reports
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import InputModifiers
 
@@ -200,7 +201,9 @@ class StonithUpdateScsiDevices(TestCase):
             {"skip-offline": True, "request-timeout": 60},
         )
         self.assert_called_with(
-            "stonith-id", ["device1", "device2"], ["SKIP_OFFLINE_NODES"]
+            "stonith-id",
+            ["device1", "device2"],
+            [reports.codes.SKIP_OFFLINE_NODES],
         )
 
     def test_unsupported_options(self):
