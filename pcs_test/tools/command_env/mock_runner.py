@@ -92,7 +92,13 @@ class Call:
     type = CALL_TYPE_RUNNER
 
     def __init__(
-        self, command, stdout="", stderr="", returncode=0, check_stdin=None
+        self,
+        command,
+        stdout="",
+        stderr="",
+        returncode=0,
+        check_stdin=None,
+        env=None,
     ):
         """
         callable check_stdin raises AssertionError when given stdin doesn't
@@ -104,10 +110,11 @@ class Call:
         self.stderr = stderr
         self.returncode = returncode
         self.check_stdin = check_stdin if check_stdin else check_no_stdin
+        self.env = env or dict()
 
     def __repr__(self):
-        return str("<Runner '{0}' returncode='{1}'>").format(
-            self.command, self.returncode
+        return str("<Runner '{0}' returncode='{1}' env='{2}'>").format(
+            self.command, self.returncode, self.env
         )
 
 
@@ -131,4 +138,11 @@ class Runner:
             )
 
         call.check_stdin(stdin_string, args, i)
+        env = dict(self.env_vars)
+        if env_extend:
+            env.update(env_extend)
+        if env != call.env:
+            raise self.__call_queue.error_with_context(
+                f"ENV doesn't match. Expected: {call.env}; Real: {env}"
+            )
         return call.stdout, call.stderr, call.returncode

@@ -59,6 +59,7 @@ class PcmkShortcuts:
         name="runner.pcmk.can_fence_history_status",
         stderr="--fence-history",
         instead=None,
+        env=None,
     ):
         """
         Create a call to check if fence_history is supported by crm_mon
@@ -67,10 +68,11 @@ class PcmkShortcuts:
         string stderr -- crm_mon help text
         string instead -- key of call instead of which this new call is to be
             placed
+        dict env -- CommandRunner environment variables
         """
         self.__calls.place(
             name,
-            RunnerCall(["crm_mon", "--help-all"], stderr=stderr),
+            RunnerCall(["crm_mon", "--help-all"], stderr=stderr, env=env),
             instead=instead,
         )
 
@@ -162,6 +164,7 @@ class PcmkShortcuts:
         stdout="",
         stderr="",
         returncode=0,
+        env=None,
     ):
         """
         Create call for loading pacemaker state.
@@ -173,6 +176,7 @@ class PcmkShortcuts:
         string stdout -- crm_mon's stdout
         string stderr -- crm_mon's stderr
         int returncode -- crm_mon's returncode
+        dict env -- CommandRunner environment variables
         """
         if (resources or nodes) and (stdout or stderr or returncode):
             raise AssertionError(
@@ -187,6 +191,7 @@ class PcmkShortcuts:
                 stdout="this version supports --output-as=FORMAT option",
                 stderr="",
                 returncode=0,
+                env=env,
             ),
         )
 
@@ -200,6 +205,7 @@ class PcmkShortcuts:
                     stdout=stdout,
                     stderr=stderr,
                     returncode=returncode,
+                    env=env,
                 ),
             )
             return
@@ -214,6 +220,7 @@ class PcmkShortcuts:
                 stdout=etree_to_str(
                     complete_state(state_xml, resources, nodes)
                 ),
+                env=env,
             ),
         )
 
@@ -226,6 +233,7 @@ class PcmkShortcuts:
         stdout="",
         stderr="",
         returncode=0,
+        env=None,
     ):
         """
         Create a call for loading plaintext pacemaker status
@@ -237,6 +245,7 @@ class PcmkShortcuts:
         str stdout -- crm_mon's stdout
         str stderr -- crm_mon's stderr
         int returncode -- crm_mon's returncode
+        dict env -- CommandRunner environment variables
         """
         flags = ["--one-shot"]
         if inactive:
@@ -254,6 +263,7 @@ class PcmkShortcuts:
                 stdout=stdout,
                 stderr=stderr,
                 returncode=returncode,
+                env=env,
             ),
         )
 
@@ -263,6 +273,7 @@ class PcmkShortcuts:
         stdout="",
         stderr="",
         returncode=0,
+        env=None,
     ):
         """
         Create a call for loading plaintext tickets status
@@ -271,6 +282,7 @@ class PcmkShortcuts:
         str stdout -- crm_ticket's stdout
         str stderr -- crm_ticket's stderr
         int returncode -- crm_ticket's returncode
+        dict env -- CommandRunner environment variables
         """
         self.__calls.place(
             name,
@@ -279,6 +291,7 @@ class PcmkShortcuts:
                 stdout=stdout,
                 stderr=stderr,
                 returncode=returncode,
+                env=env,
             ),
         )
 
@@ -290,6 +303,7 @@ class PcmkShortcuts:
         agent_is_missing=False,
         stderr=None,
         instead=None,
+        env=None,
     ):
         """
         Create call for loading resource agent metadata.
@@ -300,7 +314,19 @@ class PcmkShortcuts:
             content
         string instead -- key of call instead of which this new call is to be
             placed
+        dict env -- CommandRunner environment variables
         """
+        if env:
+            env = dict(env)
+        else:
+            env = dict()
+        env["PATH"] = ":".join(
+            [
+                settings.fence_agent_binaries,
+                "/bin",
+                "/usr/bin",
+            ]
+        )
 
         if agent_filename:
             agent_metadata_filename = agent_filename
@@ -335,6 +361,7 @@ class PcmkShortcuts:
                     stdout="",
                     stderr=stderr,
                     returncode=74,
+                    env=env,
                 ),
                 instead=instead,
             )
@@ -347,6 +374,7 @@ class PcmkShortcuts:
                     ["crm_resource", "--show-metadata", agent_name],
                     stdout=a_file.read(),
                     stderr=stderr,
+                    env=env,
                 ),
                 instead=instead,
             )
@@ -782,12 +810,14 @@ class PcmkShortcuts:
         cib_tempfile=None,
         stderr=None,
         verbose=False,
+        env=None,
     ):
         """
         Create call that checks that wait for idle is supported
 
         string name -- key of the call
         string before -- key of call before which this new call is to be placed
+        dict env -- CommandRunner environment variables
         """
         cmd = ["crm_verify"]
         if verbose:
@@ -802,6 +832,7 @@ class PcmkShortcuts:
                 cmd,
                 stderr=("" if stderr is None else stderr),
                 returncode=(0 if stderr is None else 55),
+                env=env,
             ),
         )
 
@@ -811,6 +842,7 @@ class PcmkShortcuts:
         stderr="",
         returncode=0,
         name="runner.pcmk.remove_node",
+        env=None,
     ):
         self.__calls.place(
             name,
@@ -818,6 +850,7 @@ class PcmkShortcuts:
                 ["crm_node", "--force", "--remove", node_name],
                 stderr=stderr,
                 returncode=returncode,
+                env=env,
             ),
         )
 

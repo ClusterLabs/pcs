@@ -383,18 +383,22 @@ class FullClusterStatusPlaintext(TestCase):
         )
 
     def test_succes_mocked(self):
+        tmp_file = "/fake/tmp_file"
+        env = dict(CIB_file=tmp_file)
         (
             self.config.env.set_corosync_conf_data(rc_read("corosync.conf"))
-            .env.set_cib_data("<cib/>")
+            .env.set_cib_data("<cib/>", cib_tempfile=tmp_file)
             .runner.pcmk.load_state_plaintext(
                 stdout="crm_mon cluster status",
+                env=env,
             )
             .runner.cib.load(
                 resources="""
                 <resources>
                     <primitive id="S" class="stonith" type="fence_dummy" />
                 </resources>
-            """
+            """,
+                env=env,
             )
         )
         self.assertEqual(
@@ -407,22 +411,31 @@ class FullClusterStatusPlaintext(TestCase):
         )
 
     def test_succes_mocked_verbose(self):
+        tmp_file = "/fake/tmp_file"
+        env = dict(CIB_file=tmp_file)
         (
             self.config.env.set_corosync_conf_data(rc_read("corosync.conf"))
-            .env.set_cib_data("<cib/>")
-            .runner.pcmk.can_fence_history_status(stderr="not supported")
+            .env.set_cib_data("<cib/>", cib_tempfile=tmp_file)
+            .runner.pcmk.can_fence_history_status(
+                stderr="not supported",
+                env=env,
+            )
             .runner.pcmk.load_state_plaintext(
                 verbose=True,
                 stdout="crm_mon cluster status",
+                env=env,
             )
             .runner.cib.load(
                 resources="""
                 <resources>
                     <primitive id="S" class="stonith" type="fence_dummy" />
                 </resources>
-            """
+            """,
+                env=env,
             )
-            .runner.pcmk.load_ticket_state_plaintext(stdout="ticket status")
+            .runner.pcmk.load_ticket_state_plaintext(
+                stdout="ticket status", env=env
+            )
         )
         self.assertEqual(
             status.full_cluster_status_plaintext(

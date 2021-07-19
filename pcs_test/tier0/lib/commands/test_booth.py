@@ -1796,9 +1796,13 @@ class CreateInCluster(TestCase, FixtureMixin):
         )
 
     def test_success_not_live_cib(self):
+        tmp_file = "/fake/tmp_file"
+        env = dict(CIB_file=tmp_file)
         (
-            self.config.env.set_cib_data(open(rc("cib-empty.xml")).read())
-            .runner.cib.load()
+            self.config.env.set_cib_data(
+                open(rc("cib-empty.xml")).read(), cib_tempfile=tmp_file
+            )
+            .runner.cib.load(env=env)
             .raw_file.read(
                 file_type_codes.BOOTH_CONFIG,
                 self.fixture_cfg_path(),
@@ -1807,10 +1811,12 @@ class CreateInCluster(TestCase, FixtureMixin):
             .runner.pcmk.load_agent(
                 agent_name="ocf:heartbeat:IPaddr2",
                 name="runner.pcmk.load_agent.ipaddr2",
+                env=env,
             )
             .runner.pcmk.load_agent(
                 agent_name="ocf:pacemaker:booth-site",
                 name="runner.pcmk.load_agent.booth-site",
+                env=env,
             )
             .env.push_cib(resources=self.fixture_cib_booth_group())
         )
@@ -2056,6 +2062,8 @@ class RemoveFromCluster(TestCase, FixtureMixin):
         )
 
     def test_success_not_live_cib(self):
+        tmp_file = "/fake/tmp_file"
+        env = dict(CIB_file=tmp_file)
         cib_xml_man = XmlManipulation.from_file(rc("cib-empty.xml"))
         cib_xml_man.append_to_first_tag_name(
             "resources", self.fixture_cib_booth_group(wrap_in_resources=False)
@@ -2063,9 +2071,9 @@ class RemoveFromCluster(TestCase, FixtureMixin):
         (
             self.config
             # This makes env.is_cib_live return False
-            .env.set_cib_data(str(cib_xml_man))
+            .env.set_cib_data(str(cib_xml_man), cib_tempfile=tmp_file)
             # This instructs the runner to actually return our mocked cib
-            .runner.cib.load_content(str(cib_xml_man))
+            .runner.cib.load_content(str(cib_xml_man), env=env)
         )
         commands.remove_from_cluster(
             self.env_assist.get_env(),

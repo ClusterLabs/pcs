@@ -26,6 +26,7 @@ class CibShortcuts:
         returncode=0,
         stderr=None,
         instead=None,
+        env=None,
         **modifier_shortcuts,
     ):
         """
@@ -40,6 +41,7 @@ class CibShortcuts:
         string stderr
         string instead -- key of call instead of which this new call is to be
             placed
+        dict env -- CommandRunner environment variables
         dict modifier_shortcuts -- a new modifier is generated from each
             modifier shortcut.
             As key there can be keys of MODIFIER_GENERATORS.
@@ -48,6 +50,7 @@ class CibShortcuts:
             MODIFIER_GENERATORS - please refer it when you are adding params
             here)
         """
+        # pylint: disable=too-many-arguments
         if (returncode != 0 or stderr is not None) and (
             modifiers is not None or filename is not None or modifier_shortcuts
         ):
@@ -58,7 +61,9 @@ class CibShortcuts:
 
         command = ["cibadmin", "--local", "--query"]
         if returncode != 0:
-            call = RunnerCall(command, stderr=stderr, returncode=returncode)
+            call = RunnerCall(
+                command, stderr=stderr, returncode=returncode, env=env
+            )
         else:
             with open(
                 rc(filename if filename else self.cib_filename)
@@ -66,7 +71,7 @@ class CibShortcuts:
                 cib = modify_cib(
                     cib_file.read(), modifiers, **modifier_shortcuts
                 )
-                call = RunnerCall(command, stdout=cib)
+                call = RunnerCall(command, stdout=cib, env=env)
 
         self.__calls.place(name, call, before=before, instead=instead)
 
@@ -78,6 +83,7 @@ class CibShortcuts:
         name="runner.cib.load_content",
         instead=None,
         before=None,
+        env=None,
     ):
         """
         Create call for loading CIB specified by its full content
@@ -89,12 +95,15 @@ class CibShortcuts:
         string instead -- key of call instead of which this new call is to be
             placed
         string before -- key of call before which this new call is to be placed
+        dict env -- CommandRunner environment variables
         """
         command = ["cibadmin", "--local", "--query"]
         if returncode != 0:
-            call = RunnerCall(command, stderr=stderr, returncode=returncode)
+            call = RunnerCall(
+                command, stderr=stderr, returncode=returncode, env=env
+            )
         else:
-            call = RunnerCall(command, stdout=cib)
+            call = RunnerCall(command, stdout=cib, env=env)
         self.__calls.place(name, call, before=before, instead=instead)
 
     def push(

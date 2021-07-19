@@ -70,8 +70,8 @@ FIXTURE_META_ATTRIBUTES = """
 
 
 class LocalConfig(EnvConfigMixin):
-    def load_cib(self):
-        self.config.runner.cib.load(resources=FIXTURE_RESOURCES)
+    def load_cib(self, env=None):
+        self.config.runner.cib.load(resources=FIXTURE_RESOURCES, env=env)
 
     def push_cib(self, wait=False, meta_attributes=FIXTURE_META_ATTRIBUTES):
         self.config.env.push_cib(
@@ -636,6 +636,8 @@ class AddGuest(TestCase):
 
 class NotLive(TestCase):
     def setUp(self):
+        self.tmp_file = "/fake/tmp_file"
+        self.cmd_env = dict(CIB_file=self.tmp_file)
         self.env_assist, self.config = get_env_tools(self)
         self.config.env.set_known_hosts_dests(KNOWN_HOSTS_DESTS)
         cib_xml_man = XmlManipulation.from_file(rc("cib-empty.xml"))
@@ -649,12 +651,15 @@ class NotLive(TestCase):
                 VIRTUAL_MACHINE_ID
             ),
         )
-        self.config.env.set_cib_data(str(cib_xml_man))
+        self.config.env.set_cib_data(
+            str(cib_xml_man), cib_tempfile=self.tmp_file
+        )
 
     def test_addr_specified(self):
         # Instance of 'Config' has no 'local' member
         # pylint: disable=no-member
-        self.config.local.load_cib().local.push_cib()
+        self.config.local.load_cib(env=self.cmd_env)
+        self.config.local.push_cib()
         node_add_guest(self.env_assist.get_env())
         self.env_assist.assert_reports(fixture_reports_not_live_cib(NODE_NAME))
 
@@ -676,9 +681,8 @@ class NotLive(TestCase):
                 />
             </meta_attributes>
         """
-        self.config.local.load_cib().local.push_cib(
-            meta_attributes=meta_attributes
-        )
+        self.config.local.load_cib(env=self.cmd_env)
+        self.config.local.push_cib(meta_attributes=meta_attributes)
         node_add_guest(self.env_assist.get_env(), options={"remote-port": "99"})
         self.env_assist.assert_reports(
             [
@@ -713,9 +717,8 @@ class NotLive(TestCase):
             </meta_attributes>
         """
         self.config.env.set_known_hosts_dests(dict())
-        self.config.local.load_cib().local.push_cib(
-            meta_attributes=meta_attributes
-        )
+        self.config.local.load_cib(env=self.cmd_env)
+        self.config.local.push_cib(meta_attributes=meta_attributes)
         node_add_guest(self.env_assist.get_env(), options={"remote-port": "99"})
         self.env_assist.assert_reports(
             [
@@ -746,16 +749,15 @@ class NotLive(TestCase):
             </meta_attributes>
         """
         self.config.env.set_known_hosts_dests(dict())
-        self.config.local.load_cib().local.push_cib(
-            meta_attributes=meta_attributes
-        )
+        self.config.local.load_cib(env=self.cmd_env)
+        self.config.local.push_cib(meta_attributes=meta_attributes)
         node_add_guest(self.env_assist.get_env(), options={"remote-addr": "aa"})
         self.env_assist.assert_reports(fixture_reports_not_live_cib(NODE_NAME))
 
     def test_validate_values(self):
         # Instance of 'Config' has no 'local' member
         # pylint: disable=no-member
-        self.config.local.load_cib()
+        self.config.local.load_cib(env=self.cmd_env)
         self.env_assist.assert_raise_library_error(
             lambda: node_add_guest(
                 self.env_assist.get_env(),

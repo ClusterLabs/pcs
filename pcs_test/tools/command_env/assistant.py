@@ -42,13 +42,14 @@ patch_lib_env = partial(mock.patch.object, LibraryEnvironment)
 
 
 def patch_env(call_queue, config, init_env, is_systemd=True):
+    # pylint: disable=too-many-locals
     # It is mandatory to patch some env objects/methods. It is ok when command
     # does not use this objects/methods and specify no call for it. But it would
     # be a problem when the test succeded because the live call respond
     # correctly by accident. Such test would fails on different machine (with
     # another live environment)
 
-    get_cmd_runner = init_env.cmd_runner
+    orig_cmd_runner = init_env.cmd_runner
     get_node_communicator = init_env.get_node_communicator
     mock_communicator_factory = mock.Mock(spec_set=NodeCommunicatorFactory)
     mock_communicator_factory.get_communicator = (
@@ -57,20 +58,20 @@ def patch_env(call_queue, config, init_env, is_systemd=True):
         if not config.spy
         else spy.NodeCommunicator(get_node_communicator())
     )
+
+    def get_cmd_runner(self, env=None):
+        del self
+        if config.spy:
+            return spy.Runner(orig_cmd_runner())
+        env_vars = {}
+        if config.env.cib_tempfile:
+            env_vars["CIB_file"] = config.env.cib_tempfile
+        if env:
+            env_vars.update(env)
+        return Runner(call_queue, env_vars=env_vars)
+
     patcher_list = [
-        patch_lib_env(
-            "cmd_runner",
-            lambda env: spy.Runner(get_cmd_runner())
-            if config.spy
-            else Runner(
-                call_queue,
-                env_vars={}
-                if not config.env.cib_tempfile
-                else {
-                    "CIB_file": config.env.cib_tempfile,
-                },
-            ),
-        ),
+        patch_lib_env("cmd_runner", get_cmd_runner),
         mock.patch(
             "pcs.lib.env.get_local_corosync_conf",
             get_get_local_corosync_conf(call_queue)

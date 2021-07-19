@@ -127,13 +127,16 @@ class CibIsMocked(TestCase, AssertInvalidCibMixin):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
         self.cib_tempfile = "/fake/tmp/file"
+        self.cmd_env = dict(CIB_file=self.cib_tempfile)
         self.config.env.set_cib_data("<cib/>", cib_tempfile=self.cib_tempfile)
 
     def test_success_on_valid_cib(self):
         (
-            self.config.runner.pcmk.verify(cib_tempfile=self.cib_tempfile)
-            .runner.cib.load()
-            .runner.pcmk.load_state()
+            self.config.runner.pcmk.verify(
+                cib_tempfile=self.cib_tempfile, env=self.cmd_env
+            )
+            .runner.cib.load(env=self.cmd_env)
+            .runner.pcmk.load_state(env=self.cmd_env)
         )
         verify(self.env_assist.get_env())
 
@@ -142,9 +145,10 @@ class CibIsMocked(TestCase, AssertInvalidCibMixin):
             self.config.runner.pcmk.verify(
                 stderr="".join(CRM_VERIFY_ERROR_REPORT_LINES),
                 cib_tempfile=self.cib_tempfile,
+                env=self.cmd_env,
             )
-            .runner.cib.load()
-            .runner.pcmk.load_state()
+            .runner.cib.load(env=self.cmd_env)
+            .runner.pcmk.load_state(env=self.cmd_env)
         )
         self.assert_raises_invalid_cib_content(CRM_VERIFY_ERROR_REPORT_LINES[0])
 

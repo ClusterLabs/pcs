@@ -1,3 +1,4 @@
+import os.path
 from unittest import TestCase
 
 from pcs_test.tools import fixture
@@ -67,8 +68,8 @@ class SuccessMinimal(TestCase):
         )
 
     def test_sucess_pcmk_not_running(self):
+        cmd_env = dict(CIB_file=os.path.join(settings.cib_dir, "cib.xml"))
         self.config.services.is_running("pacemaker", return_value=False)
-        # TODO: we do not test environment variables in runner
         for node in self.nodes:
             self.config.runner.place(
                 [
@@ -78,24 +79,27 @@ class SuccessMinimal(TestCase):
                     f"--xpath=/cib/configuration/nodes/node[@uname='{node}']",
                 ],
                 name=f"remove_node.{node}",
+                env=cmd_env,
             )
         cluster.remove_nodes_from_cib(self.env_assist.get_env(), self.nodes)
 
     def test_failure_pcmk_not_running(self):
         err_msg = "an error"
+        cmd_env = dict(CIB_file=os.path.join(settings.cib_dir, "cib.xml"))
         cmd = [settings.cibadmin, "--delete-all", "--force"]
         cmd_xpath = "--xpath=/cib/configuration/nodes/node[@uname='{}']"
         self.config.services.is_running("pacemaker", return_value=False)
-        # TODO: we do not test environment variables in runner
         self.config.runner.place(
             cmd + [cmd_xpath.format(self.nodes[0])],
             name="remove_node_success",
+            env=cmd_env,
         )
         self.config.runner.place(
             cmd + [cmd_xpath.format(self.nodes[1])],
             returncode=1,
             stderr=err_msg,
             name="remove_node_failure",
+            env=cmd_env,
         )
         self.env_assist.assert_raise_library_error(
             lambda: cluster.remove_nodes_from_cib(

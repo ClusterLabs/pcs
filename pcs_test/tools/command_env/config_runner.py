@@ -29,6 +29,7 @@ class RunnerConfig:
         check_stdin=None,
         before=None,
         instead=None,
+        env=None,
     ):
         # pylint: disable=too-many-arguments
         """
@@ -43,7 +44,10 @@ class RunnerConfig:
         callable check_stdin -- callable that can check if stdin is as expected
         string before -- name of another call to insert this call before it
         string instead -- name of another call to replace it by this call
+        dict env -- CommandRunner environment variables
         """
-        call = RunnerCall(command, stdout, stderr, returncode, check_stdin)
+        call = RunnerCall(
+            command, stdout, stderr, returncode, check_stdin, env=env
+        )
         self.__calls.place(name, call, before, instead)
         return self

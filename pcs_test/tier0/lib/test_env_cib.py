@@ -147,6 +147,7 @@ class UpgradeCib(TestCase):
 class GetCib(TestCase, ManageCibAssertionMixin):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
+        self.tmp_file = "/fake/tmp/file"
 
     def test_raise_library_error_when_cibadmin_failed(self):
         stderr = "cibadmin: Connection to local file failed..."
@@ -156,8 +157,10 @@ class GetCib(TestCase, ManageCibAssertionMixin):
             # into tempfile when the runner is not mocked. And content is then
             # loaded from tempfile by `cibadmin --local --query`. Runner is
             # mocked in tests so the value of cib_data is not in the fact used.
-            .env.set_cib_data("whatever").runner.cib.load(
-                returncode=203, stderr=stderr
+            .env.set_cib_data(
+                "whatever", cib_tempfile=self.tmp_file
+            ).runner.cib.load(
+                returncode=203, stderr=stderr, env=dict(CIB_file=self.tmp_file)
             )
         )
 
@@ -172,7 +175,11 @@ class GetCib(TestCase, ManageCibAssertionMixin):
         (
             self.config
             # Value of cib_data is unimportant here. See details in sibling test
-            .env.set_cib_data("whatever").runner.cib.load(filename=cib_filename)
+            .env.set_cib_data(
+                "whatever", cib_tempfile=self.tmp_file
+            ).runner.cib.load(
+                filename=cib_filename, env=dict(CIB_file=self.tmp_file)
+            )
         )
         with open(rc(cib_filename)) as cib_file:
             assert_xml_equal(
@@ -435,7 +442,12 @@ class PushCibMockedWithWait(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_wait_not_suported_for_mocked_cib(self):
-        (self.config.env.set_cib_data("<cib/>").runner.cib.load())
+        tmp_file = "/fake/tmp/file"
+        (
+            self.config.env.set_cib_data(
+                "<cib/>", cib_tempfile=tmp_file
+            ).runner.cib.load(env=dict(CIB_file=tmp_file))
+        )
 
         env = self.env_assist.get_env()
         env.get_cib()
