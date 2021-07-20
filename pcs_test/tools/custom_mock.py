@@ -1,6 +1,13 @@
 import io
 import socket
+from dataclasses import dataclass
 from unittest import mock
+from typing import (
+    Callable,
+    Iterable,
+    Optional,
+    Union,
+)
 
 from pcs_test.tools.assertions import assert_report_item_list_equal
 
@@ -32,6 +39,104 @@ def patch_getaddrinfo(test_case, addr_list):
     patcher.start()
     test_case.addCleanup(patcher.stop)
     return addr_list
+
+
+FileContentType = Union[str, bytes, None, Exception]
+
+
+@dataclass(frozen=True)
+class TmpFileCall:
+    name: str
+    is_binary: bool = False
+    orig_content: FileContentType = None
+    new_content: FileContentType = None
+
+
+class TmpFileMock:
+    def __init__(
+        self,
+        calls: Iterable[TmpFileCall] = (),
+        file_content_checker: Optional[
+            Callable[[FileContentType, FileContentType], bool]
+        ] = None,
+    ):
+        self.set_calls(calls)
+        self._file_content_checker = file_content_checker
+
+    def _assert_file_content_equal(self, name, expected, real):
+        eq_callback = lambda file1, file2: file1 != file2
+        if self._file_content_checker is not None:
+            eq_callback = self._file_content_checker
+        if eq_callback(expected, real):
+            raise AssertionError(
+                f"Temporary file '{name}' content mismatch.\nExpected:\n"
+                f"{expected}\n\nReal:\n{real}"
+            )
+
+    def set_calls(self, calls):
+        self._calls = calls
+        self._calls_iter = iter(self._calls)
+
+    def get_mock_side_effect(self):
+        return self._mock_side_effect
+
+    def assert_all_done(self):
+        try:
+            next_unused = next(self._calls_iter)
+            raise AssertionError(
+                f"Not all temporary files were used; Next unused: {next_unused}"
+            )
+        except StopIteration:
+            pass
+
+    def _mock_side_effect(self, data=None, binary=False):
+        def _seek_callback(offset):
+            if offset != 0:
+                raise AssertionError(
+                    "Calling seek on a temporary file in tests with a paremeter "
+                    "other than 0 is not supported"
+                )
+
+        try:
+            call = next(self._calls_iter)
+            if isinstance(call.orig_content, Exception):
+                raise call.orig_content
+            if binary != call.is_binary:
+                raise AssertionError(
+                    (
+                        "File mode mismatch; Expected: binary={expected}; "
+                        "Real: binary={real}"
+                    ).format(
+                        expected=call.is_binary,
+                        real=binary,
+                    )
+                )
+            self._assert_file_content_equal(call.name, call.orig_content, data)
+            tmp_file_mock = mock.NonCallableMock(
+                spec_set=["read", "seek", "name"]
+            )
+            tmp_file_mock.name = call.name
+            tmp_file_mock.seek.side_effect = _seek_callback
+            if call.new_content is None:
+                tmp_file_mock.seek.side_effect = AssertionError(
+                    "Seek call not expected"
+                )
+                tmp_file_mock.read.side_effect = AssertionError(
+                    "Read call not expected"
+                )
+            elif isinstance(call.new_content, Exception):
+                tmp_file_mock.read.side_effect = call.new_content
+            else:
+                tmp_file_mock.read.return_value = call.new_content
+            tmp_file_context_manager_mock = mock.NonCallableMagicMock(
+                spec_set=["__enter__", "__exit__"]
+            )
+            tmp_file_context_manager_mock.__enter__.return_value = tmp_file_mock
+            return tmp_file_context_manager_mock
+        except StopIteration:
+            raise AssertionError(
+                f"No more temporary files expected but got:\n{data}"
+            ) from None
 
 
 class MockLibraryReportProcessor(ReportProcessor):

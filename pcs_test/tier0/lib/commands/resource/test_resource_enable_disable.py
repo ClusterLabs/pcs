@@ -5,6 +5,10 @@ from unittest import mock, TestCase
 from pcs_test.tier0.lib.commands.tag.tag_common import fixture_tags_xml
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.custom_mock import (
+    TmpFileMock,
+    TmpFileCall,
+)
 from pcs_test.tools.misc import (
     get_test_resource as rc,
     outdent,
@@ -2080,57 +2084,67 @@ class DisableSafeFixturesMixin:
         # pylint does not know this will be mixed into TestCase classes
         # pylint: disable=invalid-name
         self.env_assist, self.config = get_env_tools(test_case=self)
-        self.tmpfile_new_cib = mock.MagicMock()
-        self.tmpfile_new_cib.name = rc("new_cib.tmp")
-        self.tmpfile_new_cib.read.return_value = "<new-cib/>"
-        self.tmpfile_transitions = mock.MagicMock()
-        self.tmpfile_transitions.name = rc("transitions.tmp")
-        self.tmpfile_transitions.read.return_value = "<transitions/>"
+        tmp_file_patcher = mock.patch("pcs.lib.pacemaker.live.get_tmp_file")
+        self.addCleanup(tmp_file_patcher.stop)
 
-    def fixture_disable_both_resources(self, mock_write_tmpfile):
-        self.tmpfile_transitions.read.return_value = (
-            self.fixture_transitions_both_stopped
-        )
-        mock_write_tmpfile.side_effect = [
-            self.tmpfile_new_cib,
-            self.tmpfile_transitions,
-            AssertionError("No other write_tmpfile call expected"),
-        ]
-        (
-            self.config.runner.cib.load(
-                resources=fixture_two_primitives_cib_enabled
-            ).runner.pcmk.load_state(
-                resources=fixture_two_primitives_status_managed
-            )
+        self.new_cib_file_name = "new_cib.tmp"
+        self.new_cib_content = "<new-cib/>"
+        self.transitions_file_name = "transitions.tmp"
+        self.transitions_content = "<transitions/>"
+
+        self.tmp_file_mock_obj = TmpFileMock()
+        self.addCleanup(self.tmp_file_mock_obj.assert_all_done)
+        tmp_file_mock = tmp_file_patcher.start()
+        tmp_file_mock.side_effect = (
+            self.tmp_file_mock_obj.get_mock_side_effect()
         )
 
-    def fixture_migrate_one_resource(self, mock_write_tmpfile):
-        self.tmpfile_transitions.read.return_value = (
-            self.fixture_transitions_one_migrated
+    def fixture_disable_both_resources(self):
+        self.tmp_file_mock_obj.set_calls(
+            [
+                TmpFileCall(
+                    self.new_cib_file_name,
+                    new_content=self.new_cib_content,
+                ),
+                TmpFileCall(
+                    self.transitions_file_name,
+                    new_content=self.fixture_transitions_both_stopped,
+                ),
+            ]
         )
-        mock_write_tmpfile.side_effect = [
-            self.tmpfile_new_cib,
-            self.tmpfile_transitions,
-            AssertionError("No other write_tmpfile call expected"),
-        ]
-        (
-            self.config.runner.cib.load(
-                resources=fixture_two_primitives_cib_enabled
-            ).runner.pcmk.load_state(
-                resources=fixture_two_primitives_status_managed
-            )
+        self.config.runner.cib.load(
+            resources=fixture_two_primitives_cib_enabled
+        )
+        self.config.runner.pcmk.load_state(
+            resources=fixture_two_primitives_status_managed
+        )
+
+    def fixture_migrate_one_resource(self):
+        self.tmp_file_mock_obj.set_calls(
+            [
+                TmpFileCall(
+                    self.new_cib_file_name,
+                    new_content=self.new_cib_content,
+                ),
+                TmpFileCall(
+                    self.transitions_file_name,
+                    new_content=self.fixture_transitions_one_migrated,
+                ),
+            ]
+        )
+        self.config.runner.cib.load(
+            resources=fixture_two_primitives_cib_enabled
+        )
+        self.config.runner.pcmk.load_state(
+            resources=fixture_two_primitives_status_managed
         )
 
 
-@mock.patch("pcs.lib.pacemaker.live.write_tmpfile")
 @mock.patch.object(
     settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
 )
 class DisableSimulate(DisableSafeFixturesMixin, TestCase):
-    def test_not_live(self, mock_write_tmpfile):
-        mock_write_tmpfile.side_effect = [
-            AssertionError("No other write_tmpfile call expected")
-        ]
+    def test_not_live(self):
         self.config.env.set_cib_data("<cib />")
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable_simulate(
@@ -2145,10 +2159,7 @@ class DisableSimulate(DisableSafeFixturesMixin, TestCase):
             expected_in_processor=False,
         )
 
-    def test_nonexistent_resource(self, mock_write_tmpfile):
-        mock_write_tmpfile.side_effect = [
-            AssertionError("No other write_tmpfile call expected")
-        ]
+    def test_nonexistent_resource(self):
         self.config.runner.cib.load()
         self.config.runner.pcmk.load_state()
         self.env_assist.assert_raise_library_error(
@@ -2160,11 +2171,11 @@ class DisableSimulate(DisableSafeFixturesMixin, TestCase):
             [fixture.report_not_resource_or_tag("A")],
         )
 
-    def test_success_no_others_stopped(self, mock_write_tmpfile):
-        self.fixture_disable_both_resources(mock_write_tmpfile)
+    def test_success_no_others_stopped(self):
+        self.fixture_disable_both_resources()
         self.config.runner.pcmk.simulate_cib(
-            self.tmpfile_new_cib.name,
-            self.tmpfile_transitions.name,
+            self.new_cib_file_name,
+            self.transitions_file_name,
             stdout="simulate output",
             resources=fixture_two_primitives_cib_disabled_both,
         )
@@ -2180,11 +2191,11 @@ class DisableSimulate(DisableSafeFixturesMixin, TestCase):
             ),
         )
 
-    def test_success_others_stopped(self, mock_write_tmpfile):
-        self.fixture_disable_both_resources(mock_write_tmpfile)
+    def test_success_others_stopped(self):
+        self.fixture_disable_both_resources()
         self.config.runner.pcmk.simulate_cib(
-            self.tmpfile_new_cib.name,
-            self.tmpfile_transitions.name,
+            self.new_cib_file_name,
+            self.transitions_file_name,
             stdout="simulate output",
             resources=fixture_two_primitives_cib_disabled,
         )
@@ -2200,11 +2211,11 @@ class DisableSimulate(DisableSafeFixturesMixin, TestCase):
             ),
         )
 
-    def test_success_others_migrated_strict(self, mock_write_tmpfile):
-        self.fixture_migrate_one_resource(mock_write_tmpfile)
+    def test_success_others_migrated_strict(self):
+        self.fixture_migrate_one_resource()
         self.config.runner.pcmk.simulate_cib(
-            self.tmpfile_new_cib.name,
-            self.tmpfile_transitions.name,
+            self.new_cib_file_name,
+            self.transitions_file_name,
             stdout="simulate output",
             resources=fixture_two_primitives_cib_disabled,
         )
@@ -2219,11 +2230,11 @@ class DisableSimulate(DisableSafeFixturesMixin, TestCase):
             ),
         )
 
-    def test_success_others_migrated_no_strict(self, mock_write_tmpfile):
-        self.fixture_migrate_one_resource(mock_write_tmpfile)
+    def test_success_others_migrated_no_strict(self):
+        self.fixture_migrate_one_resource()
         self.config.runner.pcmk.simulate_cib(
-            self.tmpfile_new_cib.name,
-            self.tmpfile_transitions.name,
+            self.new_cib_file_name,
+            self.transitions_file_name,
             stdout="simulate output",
             resources=fixture_two_primitives_cib_disabled,
         )
@@ -2238,26 +2249,31 @@ class DisableSimulate(DisableSafeFixturesMixin, TestCase):
             ),
         )
 
-    def test_success_with_tag_id(self, mock_write_tmpfile):
-        mock_write_tmpfile.side_effect = [
-            self.tmpfile_new_cib,
-            self.tmpfile_transitions,
-            AssertionError("No other write_tmpfile call expected"),
-        ]
-        (
-            self.config.runner.cib.load(
-                resources=fixture_two_primitives_cib_enabled,
-                tags=fixture_tag,
-            )
-            .runner.pcmk.load_state(
-                resources=fixture_two_primitives_status_managed
-            )
-            .runner.pcmk.simulate_cib(
-                self.tmpfile_new_cib.name,
-                self.tmpfile_transitions.name,
-                stdout="simulate output",
-                resources=fixture_two_primitives_cib_disabled_both,
-            )
+    def test_success_with_tag_id(self):
+        self.tmp_file_mock_obj.set_calls(
+            [
+                TmpFileCall(
+                    self.new_cib_file_name,
+                    new_content=self.new_cib_content,
+                ),
+                TmpFileCall(
+                    self.transitions_file_name,
+                    new_content=self.transitions_content,
+                ),
+            ]
+        )
+        self.config.runner.cib.load(
+            resources=fixture_two_primitives_cib_enabled,
+            tags=fixture_tag,
+        )
+        self.config.runner.pcmk.load_state(
+            resources=fixture_two_primitives_status_managed
+        )
+        self.config.runner.pcmk.simulate_cib(
+            self.new_cib_file_name,
+            self.transitions_file_name,
+            stdout="simulate output",
+            resources=fixture_two_primitives_cib_disabled_both,
         )
 
         result = resource.disable_simulate(
@@ -2271,23 +2287,30 @@ class DisableSimulate(DisableSafeFixturesMixin, TestCase):
             ),
         )
 
-    def test_simulate_error(self, mock_write_tmpfile):
-        mock_write_tmpfile.side_effect = [
-            self.tmpfile_new_cib,
-            self.tmpfile_transitions,
-            AssertionError("No other write_tmpfile call expected"),
-        ]
-        (
-            self.config.runner.cib.load(resources=fixture_primitive_cib_enabled)
-            .runner.pcmk.load_state(resources=fixture_primitive_status_managed)
-            .runner.pcmk.simulate_cib(
-                self.tmpfile_new_cib.name,
-                self.tmpfile_transitions.name,
-                stdout="some stdout",
-                stderr="some stderr",
-                returncode=1,
-                resources=fixture_primitive_cib_disabled,
-            )
+    def test_simulate_error(self):
+        self.tmp_file_mock_obj.set_calls(
+            [
+                TmpFileCall(
+                    self.new_cib_file_name,
+                    new_content=self.new_cib_content,
+                ),
+                TmpFileCall(
+                    self.transitions_file_name,
+                    new_content=self.transitions_content,
+                ),
+            ]
+        )
+        self.config.runner.cib.load(resources=fixture_primitive_cib_enabled)
+        self.config.runner.pcmk.load_state(
+            resources=fixture_primitive_status_managed
+        )
+        self.config.runner.pcmk.simulate_cib(
+            self.new_cib_file_name,
+            self.transitions_file_name,
+            stdout="some stdout",
+            stderr="some stderr",
+            returncode=1,
+            resources=fixture_primitive_cib_disabled,
         )
 
         self.env_assist.assert_raise_library_error(
@@ -2305,10 +2328,7 @@ class DisableSimulate(DisableSafeFixturesMixin, TestCase):
 
 
 class DisableSafeMixin(DisableSafeFixturesMixin):
-    def test_not_live(self, mock_write_tmpfile):
-        mock_write_tmpfile.side_effect = [
-            AssertionError("No other write_tmpfile call expected")
-        ]
+    def test_not_live(self):
         self.config.env.set_cib_data("<cib />")
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable_safe(
@@ -2323,10 +2343,7 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
             expected_in_processor=False,
         )
 
-    def test_nonexistent_resource(self, mock_write_tmpfile):
-        mock_write_tmpfile.side_effect = [
-            AssertionError("No other write_tmpfile call expected")
-        ]
+    def test_nonexistent_resource(self):
         self.config.runner.cib.load()
         self.config.runner.pcmk.load_state()
         self.env_assist.assert_raise_library_error(
@@ -2338,11 +2355,11 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
             [fixture.report_not_resource_or_tag("A")]
         )
 
-    def test_simulate_error(self, mock_write_tmpfile):
-        self.fixture_disable_both_resources(mock_write_tmpfile)
+    def test_simulate_error(self):
+        self.fixture_disable_both_resources()
         self.config.runner.pcmk.simulate_cib(
-            self.tmpfile_new_cib.name,
-            self.tmpfile_transitions.name,
+            self.new_cib_file_name,
+            self.transitions_file_name,
             stdout="some stdout",
             stderr="some stderr",
             returncode=1,
@@ -2364,11 +2381,11 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
             expected_in_processor=False,
         )
 
-    def test_only_specified_resources_stopped(self, mock_write_tmpfile):
-        self.fixture_disable_both_resources(mock_write_tmpfile)
+    def test_only_specified_resources_stopped(self):
+        self.fixture_disable_both_resources()
         self.config.runner.pcmk.simulate_cib(
-            self.tmpfile_new_cib.name,
-            self.tmpfile_transitions.name,
+            self.new_cib_file_name,
+            self.transitions_file_name,
             stdout="simulate output",
             resources=fixture_two_primitives_cib_disabled_both,
         )
@@ -2382,30 +2399,34 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
             False,
         )
 
-    def test_resources_in_tag_stopped(self, mock_write_tmpfile):
-        self.tmpfile_transitions.read.return_value = (
-            self.fixture_transitions_both_stopped
+    def test_resources_in_tag_stopped(self):
+        self.tmp_file_mock_obj.set_calls(
+            [
+                TmpFileCall(
+                    self.new_cib_file_name,
+                    new_content=self.new_cib_content,
+                ),
+                TmpFileCall(
+                    self.transitions_file_name,
+                    new_content=self.fixture_transitions_both_stopped,
+                ),
+            ]
         )
-        mock_write_tmpfile.side_effect = [
-            self.tmpfile_new_cib,
-            self.tmpfile_transitions,
-            AssertionError("No other write_tmpfile call expected"),
-        ]
-        (
-            self.config.runner.cib.load(
-                resources=fixture_two_primitives_cib_enabled,
-                tags=fixture_tags_xml([("T1", ("A", "B"))]),
-            )
-            .runner.pcmk.load_state(
-                resources=fixture_two_primitives_status_managed
-            )
-            .runner.pcmk.simulate_cib(
-                self.tmpfile_new_cib.name,
-                self.tmpfile_transitions.name,
-                stdout="simulate output",
-                resources=fixture_two_primitives_cib_disabled_both,
-            )
-            .env.push_cib(resources=fixture_two_primitives_cib_disabled_both)
+        self.config.runner.cib.load(
+            resources=fixture_two_primitives_cib_enabled,
+            tags=fixture_tags_xml([("T1", ("A", "B"))]),
+        )
+        self.config.runner.pcmk.load_state(
+            resources=fixture_two_primitives_status_managed
+        )
+        self.config.runner.pcmk.simulate_cib(
+            self.new_cib_file_name,
+            self.transitions_file_name,
+            stdout="simulate output",
+            resources=fixture_two_primitives_cib_disabled_both,
+        )
+        self.config.env.push_cib(
+            resources=fixture_two_primitives_cib_disabled_both
         )
         resource.disable_safe(
             self.env_assist.get_env(),
@@ -2414,11 +2435,11 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
             False,
         )
 
-    def test_other_resources_stopped(self, mock_write_tmpfile):
-        self.fixture_disable_both_resources(mock_write_tmpfile)
+    def test_other_resources_stopped(self):
+        self.fixture_disable_both_resources()
         self.config.runner.pcmk.simulate_cib(
-            self.tmpfile_new_cib.name,
-            self.tmpfile_transitions.name,
+            self.new_cib_file_name,
+            self.transitions_file_name,
             stdout="simulate output",
             resources=fixture_two_primitives_cib_disabled,
         )
@@ -2445,26 +2466,28 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
             ],
         )
 
-    def test_master_demoted(self, mock_write_tmpfile):
-        self.tmpfile_transitions.read.return_value = (
-            self.fixture_transitions_master_demoted
+    def test_master_demoted(self):
+        self.tmp_file_mock_obj.set_calls(
+            [
+                TmpFileCall(
+                    self.new_cib_file_name,
+                    new_content=self.new_cib_content,
+                ),
+                TmpFileCall(
+                    self.transitions_file_name,
+                    new_content=self.fixture_transitions_master_demoted,
+                ),
+            ]
         )
-        mock_write_tmpfile.side_effect = [
-            self.tmpfile_new_cib,
-            self.tmpfile_transitions,
-            AssertionError("No other write_tmpfile call expected"),
-        ]
-        (
-            self.config.runner.cib.load(resources=self.fixture_cib_with_master)
-            .runner.pcmk.load_state(
-                resources=self.fixture_status_with_master_managed
-            )
-            .runner.pcmk.simulate_cib(
-                self.tmpfile_new_cib.name,
-                self.tmpfile_transitions.name,
-                stdout="simulate output",
-                resources=self.fixture_cib_with_master_primitive_disabled,
-            )
+        self.config.runner.cib.load(resources=self.fixture_cib_with_master)
+        self.config.runner.pcmk.load_state(
+            resources=self.fixture_status_with_master_managed
+        )
+        self.config.runner.pcmk.simulate_cib(
+            self.new_cib_file_name,
+            self.transitions_file_name,
+            stdout="simulate output",
+            resources=self.fixture_cib_with_master_primitive_disabled,
         )
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable_safe(
@@ -2489,21 +2512,20 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
             ]
         )
 
-    def test_wait_success(self, mock_write_tmpfile):
-        self.fixture_disable_both_resources(mock_write_tmpfile)
-        (
-            self.config.runner.pcmk.simulate_cib(
-                self.tmpfile_new_cib.name,
-                self.tmpfile_transitions.name,
-                stdout="simulate output",
-                resources=fixture_two_primitives_cib_disabled_both,
-            )
-            .env.push_cib(
-                resources=fixture_two_primitives_cib_disabled_both, wait=TIMEOUT
-            )
-            .runner.pcmk.load_state(
-                name="runner.pcmk.load_state_2",
-                resources="""
+    def test_wait_success(self):
+        self.fixture_disable_both_resources()
+        self.config.runner.pcmk.simulate_cib(
+            self.new_cib_file_name,
+            self.transitions_file_name,
+            stdout="simulate output",
+            resources=fixture_two_primitives_cib_disabled_both,
+        )
+        self.config.env.push_cib(
+            resources=fixture_two_primitives_cib_disabled_both, wait=TIMEOUT
+        )
+        self.config.runner.pcmk.load_state(
+            name="runner.pcmk.load_state_2",
+            resources="""
                     <resources>
                         <resource id="A" managed="true" role="Stopped">
                         </resource>
@@ -2511,7 +2533,6 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
                         </resource>
                     </resources>
                 """,
-            )
         )
         resource.disable_safe(
             self.env_assist.get_env(), ["A", "B"], self.strict, TIMEOUT
@@ -2523,7 +2544,7 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
             ]
         )
 
-    def test_inner_resources(self, mock_write_tmpfile):
+    def test_inner_resources(self):
         cib_xml = """
             <resources>
                 <primitive id="A" />
@@ -2661,20 +2682,23 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
             "<transition_graph>" + "\n".join(synapses) + "</transition_graph>"
         )
 
-        self.tmpfile_transitions.read.return_value = transitions_xml
-        mock_write_tmpfile.side_effect = [
-            self.tmpfile_new_cib,
-            self.tmpfile_transitions,
-            AssertionError("No other write_tmpfile call expected"),
-        ]
-        (
-            self.config.runner.cib.load(
-                resources=cib_xml
-            ).runner.pcmk.load_state(resources=status_xml)
+        self.tmp_file_mock_obj.set_calls(
+            [
+                TmpFileCall(
+                    self.new_cib_file_name,
+                    new_content=self.new_cib_content,
+                ),
+                TmpFileCall(
+                    self.transitions_file_name,
+                    new_content=transitions_xml,
+                ),
+            ]
         )
+        self.config.runner.cib.load(resources=cib_xml)
+        self.config.runner.pcmk.load_state(resources=status_xml)
         self.config.runner.pcmk.simulate_cib(
-            self.tmpfile_new_cib.name,
-            self.tmpfile_transitions.name,
+            self.new_cib_file_name,
+            self.transitions_file_name,
             stdout="simulate output",
             resources="""
                 <resources>
@@ -2769,18 +2793,17 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
         )
 
 
-@mock.patch("pcs.lib.pacemaker.live.write_tmpfile")
 @mock.patch.object(
     settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
 )
 class DisableSafe(DisableSafeMixin, TestCase):
     strict = False
 
-    def test_resources_migrated(self, mock_write_tmpfile):
-        self.fixture_migrate_one_resource(mock_write_tmpfile)
+    def test_resources_migrated(self):
+        self.fixture_migrate_one_resource()
         self.config.runner.pcmk.simulate_cib(
-            self.tmpfile_new_cib.name,
-            self.tmpfile_transitions.name,
+            self.new_cib_file_name,
+            self.transitions_file_name,
             stdout="simulate output",
             resources=fixture_two_primitives_cib_disabled,
         )
@@ -2792,29 +2815,31 @@ class DisableSafe(DisableSafeMixin, TestCase):
             False,
         )
 
-    def test_master_migrated(self, mock_write_tmpfile):
-        self.tmpfile_transitions.read.return_value = (
-            self.fixture_transitions_master_migrated
+    def test_master_migrated(self):
+        self.tmp_file_mock_obj.set_calls(
+            [
+                TmpFileCall(
+                    self.new_cib_file_name,
+                    new_content=self.new_cib_content,
+                ),
+                TmpFileCall(
+                    self.transitions_file_name,
+                    new_content=self.fixture_transitions_master_migrated,
+                ),
+            ]
         )
-        mock_write_tmpfile.side_effect = [
-            self.tmpfile_new_cib,
-            self.tmpfile_transitions,
-            AssertionError("No other write_tmpfile call expected"),
-        ]
-        (
-            self.config.runner.cib.load(resources=self.fixture_cib_with_master)
-            .runner.pcmk.load_state(
-                resources=self.fixture_status_with_master_managed
-            )
-            .runner.pcmk.simulate_cib(
-                self.tmpfile_new_cib.name,
-                self.tmpfile_transitions.name,
-                stdout="simulate output",
-                resources=self.fixture_cib_with_master_primitive_disabled,
-            )
-            .env.push_cib(
-                resources=self.fixture_cib_with_master_primitive_disabled
-            )
+        self.config.runner.cib.load(resources=self.fixture_cib_with_master)
+        self.config.runner.pcmk.load_state(
+            resources=self.fixture_status_with_master_managed
+        )
+        self.config.runner.pcmk.simulate_cib(
+            self.new_cib_file_name,
+            self.transitions_file_name,
+            stdout="simulate output",
+            resources=self.fixture_cib_with_master_primitive_disabled,
+        )
+        self.config.env.push_cib(
+            resources=self.fixture_cib_with_master_primitive_disabled
         )
         resource.disable_safe(
             self.env_assist.get_env(),
@@ -2824,18 +2849,17 @@ class DisableSafe(DisableSafeMixin, TestCase):
         )
 
 
-@mock.patch("pcs.lib.pacemaker.live.write_tmpfile")
 @mock.patch.object(
     settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
 )
 class DisableSafeStrict(DisableSafeMixin, TestCase):
     strict = True
 
-    def test_resources_migrated(self, mock_write_tmpfile):
-        self.fixture_migrate_one_resource(mock_write_tmpfile)
+    def test_resources_migrated(self):
+        self.fixture_migrate_one_resource()
         self.config.runner.pcmk.simulate_cib(
-            self.tmpfile_new_cib.name,
-            self.tmpfile_transitions.name,
+            self.new_cib_file_name,
+            self.transitions_file_name,
             stdout="simulate output",
             resources=fixture_two_primitives_cib_disabled,
         )
@@ -2862,26 +2886,28 @@ class DisableSafeStrict(DisableSafeMixin, TestCase):
             ]
         )
 
-    def test_master_migrated(self, mock_write_tmpfile):
-        self.tmpfile_transitions.read.return_value = (
-            self.fixture_transitions_master_migrated
+    def test_master_migrated(self):
+        self.tmp_file_mock_obj.set_calls(
+            [
+                TmpFileCall(
+                    self.new_cib_file_name,
+                    new_content=self.new_cib_content,
+                ),
+                TmpFileCall(
+                    self.transitions_file_name,
+                    new_content=self.fixture_transitions_master_migrated,
+                ),
+            ]
         )
-        mock_write_tmpfile.side_effect = [
-            self.tmpfile_new_cib,
-            self.tmpfile_transitions,
-            AssertionError("No other write_tmpfile call expected"),
-        ]
-        (
-            self.config.runner.cib.load(resources=self.fixture_cib_with_master)
-            .runner.pcmk.load_state(
-                resources=self.fixture_status_with_master_managed
-            )
-            .runner.pcmk.simulate_cib(
-                self.tmpfile_new_cib.name,
-                self.tmpfile_transitions.name,
-                stdout="simulate output",
-                resources=self.fixture_cib_with_master_primitive_disabled,
-            )
+        self.config.runner.cib.load(resources=self.fixture_cib_with_master)
+        self.config.runner.pcmk.load_state(
+            resources=self.fixture_status_with_master_managed
+        )
+        self.config.runner.pcmk.simulate_cib(
+            self.new_cib_file_name,
+            self.transitions_file_name,
+            stdout="simulate output",
+            resources=self.fixture_cib_with_master_primitive_disabled,
         )
         self.env_assist.assert_raise_library_error(
             lambda: resource.disable_safe(

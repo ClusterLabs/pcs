@@ -4,10 +4,7 @@ from unittest import mock, TestCase
 
 from pcs_test.tools.assertions import assert_raise_library_error
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
-from pcs_test.tools.misc import (
-    create_patcher,
-    get_test_resource as rc,
-)
+from pcs_test.tools.misc import create_patcher
 
 from pcs.common import file_type_codes
 from pcs.common.reports import ReportItemSeverity as severity
@@ -131,12 +128,13 @@ class CmdRunner(TestCase):
             },
         )
 
-    @patch_env("write_tmpfile")
+    @patch_env("create_tmp_cib")
     def test_dump_cib_file(self, mock_tmpfile, mock_runner):
+        tmp_file_name = "a file"
         expected_runner = mock.MagicMock()
         mock_runner.return_value = expected_runner
         mock_instance = mock.MagicMock()
-        mock_instance.name = rc("file.tmp")
+        mock_instance.name = tmp_file_name
         mock_tmpfile.return_value = mock_instance
         env = LibraryEnvironment(
             self.mock_logger, self.mock_reporter, cib_data="<cib />"
@@ -148,10 +146,10 @@ class CmdRunner(TestCase):
             self.mock_reporter,
             {
                 "LC_ALL": "C",
-                "CIB_file": rc("file.tmp"),
+                "CIB_file": tmp_file_name,
             },
         )
-        mock_tmpfile.assert_called_once_with("<cib />")
+        mock_tmpfile.assert_called_once_with(self.mock_reporter, "<cib />")
 
 
 @patch_env_object("cmd_runner", lambda self: "runner")

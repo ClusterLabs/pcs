@@ -50,7 +50,7 @@ from pcs.lib.pacemaker.live import (
 )
 from pcs.lib.pacemaker.values import get_valid_timeout_seconds
 from pcs.lib.services import get_service_manager
-from pcs.lib.tools import write_tmpfile
+from pcs.lib.tools import create_tmp_cib
 from pcs.lib.xml_tools import etree_to_str
 
 
@@ -427,22 +427,9 @@ class LibraryEnvironment:
             # This way every called pacemaker tool can access the CIB and we
             # don't need to take care of it every time the runner is called.
             if not self._cib_data_tmp_file:
-                try:
-                    cib_data = self._cib_data
-                    self._cib_data_tmp_file = write_tmpfile(cib_data)
-                    self.report_processor.report(
-                        ReportItem.debug(
-                            reports.messages.TmpFileWrite(
-                                self._cib_data_tmp_file.name, cib_data
-                            )
-                        )
-                    )
-                except EnvironmentError as e:
-                    raise LibraryError(
-                        ReportItem.error(
-                            reports.messages.CibSaveTmpError(str(e))
-                        )
-                    ) from e
+                self._cib_data_tmp_file = create_tmp_cib(
+                    self.report_processor, self._cib_data
+                )
             runner_env["CIB_file"] = self._cib_data_tmp_file.name
 
         return CommandRunner(self.logger, self.report_processor, runner_env)

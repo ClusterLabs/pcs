@@ -1,6 +1,15 @@
 import os
 import tempfile
 
+from contextlib import contextmanager
+from typing import (
+    Any,
+    Union,
+)
+
+from pcs.common import reports
+from pcs.lib.errors import LibraryError
+
 
 def generate_binary_key(random_bytes_count):
     return os.urandom(random_bytes_count)
@@ -52,12 +61,11 @@ def dict_to_environment_file(config_dict):
 def write_tmpfile(data, binary=False):
     """
     Write data to a new tmp file and return the file; raises EnvironmentError.
+    DEPRECATED: use get_tmp_file context manager
 
     string or bytes data -- data to write to the file
     bool binary -- treat data as binary?
     """
-    # TODO: This function should be converted to a context manager. It should
-    # be responsible for closing the tmp file.
     # pylint: disable=consider-using-with
     mode = "w+b" if binary else "w+"
     tmpfile = tempfile.NamedTemporaryFile(mode=mode, suffix=".pcs")
@@ -65,3 +73,52 @@ def write_tmpfile(data, binary=False):
         tmpfile.write(data)
         tmpfile.flush()
     return tmpfile
+
+
+@contextmanager
+def get_tmp_file(
+    data: Union[None, bytes, str] = None,
+    binary: bool = False,
+) -> Any:
+    mode = "w+b" if binary else "w+"
+    tmpfile = None
+    try:
+        with tempfile.NamedTemporaryFile(mode=mode, suffix=".pcs") as tmpfile:
+            if data is not None:
+                tmpfile.write(data)
+                tmpfile.flush()
+            yield tmpfile
+    finally:
+        if tmpfile:
+            tmpfile.close()
+
+
+@contextmanager
+def get_tmp_cib(report_processor: reports.ReportProcessor, data: str) -> Any:
+    try:
+        with get_tmp_file(data) as tmp_cib_file:
+            report_processor.report(
+                reports.ReportItem.debug(
+                    reports.messages.TmpFileWrite(tmp_cib_file.name, data)
+                )
+            )
+            yield tmp_cib_file
+    except EnvironmentError as e:
+        raise LibraryError(
+            reports.ReportItem.error(reports.messages.CibSaveTmpError(str(e)))
+        ) from e
+
+
+def create_tmp_cib(report_processor: reports.ReportProcessor, data: str) -> Any:
+    try:
+        tmp_file = write_tmpfile(data)
+        report_processor.report(
+            reports.ReportItem.debug(
+                reports.messages.TmpFileWrite(tmp_file.name, data)
+            )
+        )
+        return tmp_file
+    except EnvironmentError as e:
+        raise LibraryError(
+            reports.ReportItem.error(reports.messages.CibSaveTmpError(str(e)))
+        ) from e

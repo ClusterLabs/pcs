@@ -12,6 +12,10 @@ from pcs_test.tools.assertions import (
 from pcs_test.tools import fixture, fixture_crm_mon
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.command_env.mock_runner import Call as RunnerCall
+from pcs_test.tools.custom_mock import (
+    TmpFileMock,
+    TmpFileCall,
+)
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.xml import etree_to_str, XmlManipulation
 
@@ -824,17 +828,32 @@ class EnsureCibVersionTest(TestCase):
         mock_get_cib.assert_called_once_with(self.mock_runner)
 
 
-@mock.patch("pcs.lib.pacemaker.live.write_tmpfile")
 class SimulateCibXml(TestCase):
+    def setUp(self):
+        tmp_file_patcher = mock.patch("pcs.lib.pacemaker.live.get_tmp_file")
+        self.addCleanup(tmp_file_patcher.stop)
+        self.tmp_file_mock_obj = TmpFileMock()
+        self.addCleanup(self.tmp_file_mock_obj.assert_all_done)
+        tmp_file_mock = tmp_file_patcher.start()
+        tmp_file_mock.side_effect = (
+            self.tmp_file_mock_obj.get_mock_side_effect()
+        )
+
     # pylint: disable=no-self-use
-    def test_success(self, mock_write_tmpfile):
-        tmpfile_new_cib = mock.MagicMock()
-        tmpfile_new_cib.name = rc("new_cib.tmp")
-        tmpfile_new_cib.read.return_value = "new cib data"
-        tmpfile_transitions = mock.MagicMock()
-        tmpfile_transitions.name = rc("transitions.tmp")
-        tmpfile_transitions.read.return_value = "transitions data"
-        mock_write_tmpfile.side_effect = [tmpfile_new_cib, tmpfile_transitions]
+    def test_success(self):
+        orig_cib_data = "orig cib"
+        cib_file_name = "new_cib_file.tmp"
+        transitions_file_name = "transitions.tmp"
+        new_cib_data = "new cib data"
+        transitions_data = "transitions data"
+        self.tmp_file_mock_obj.set_calls(
+            [
+                TmpFileCall(cib_file_name, new_content=new_cib_data),
+                TmpFileCall(
+                    transitions_file_name, new_content=transitions_data
+                ),
+            ]
+        )
 
         expected_stdout = "simulate output"
         expected_stderr = ""
@@ -843,59 +862,64 @@ class SimulateCibXml(TestCase):
             expected_stdout, expected_stderr, expected_retval
         )
 
-        result = lib.simulate_cib_xml(mock_runner, "<cib />")
+        result = lib.simulate_cib_xml(mock_runner, orig_cib_data)
         self.assertEqual(result[0], expected_stdout)
-        self.assertEqual(result[1], "transitions data")
-        self.assertEqual(result[2], "new cib data")
+        self.assertEqual(result[1], transitions_data)
+        self.assertEqual(result[2], new_cib_data)
 
         mock_runner.run.assert_called_once_with(
             [
                 path("crm_simulate"),
                 "--simulate",
                 "--save-output",
-                tmpfile_new_cib.name,
+                cib_file_name,
                 "--save-graph",
-                tmpfile_transitions.name,
+                transitions_file_name,
                 "--xml-pipe",
             ],
-            stdin_string="<cib />",
+            stdin_string=orig_cib_data,
         )
 
-    def test_error_creating_cib(self, mock_write_tmpfile):
-        mock_write_tmpfile.side_effect = OSError(1, "some error")
+    def test_error_creating_cib(self):
+        err_msg = "some error"
+        self.tmp_file_mock_obj.set_calls(
+            [TmpFileCall("a file", orig_content=OSError(1, err_msg))]
+        )
         mock_runner = get_runner()
         assert_raise_library_error(
             lambda: lib.simulate_cib_xml(mock_runner, "<cib />"),
             fixture.error(
                 report_codes.CIB_SIMULATE_ERROR,
-                reason="some error",
+                reason=err_msg,
             ),
         )
         mock_runner.run.assert_not_called()
 
-    def test_error_creating_transitions(self, mock_write_tmpfile):
-        tmpfile_new_cib = mock.MagicMock()
-        mock_write_tmpfile.side_effect = [
-            tmpfile_new_cib,
-            OSError(1, "some error"),
-        ]
+    def test_error_creating_transitions(self):
+        err_msg = "some error"
+        self.tmp_file_mock_obj.set_calls(
+            [
+                TmpFileCall("cib_file"),
+                TmpFileCall("transitions", orig_content=OSError(1, err_msg)),
+            ]
+        )
         mock_runner = get_runner()
         assert_raise_library_error(
             lambda: lib.simulate_cib_xml(mock_runner, "<cib />"),
             fixture.error(
                 report_codes.CIB_SIMULATE_ERROR,
-                reason="some error",
+                reason=err_msg,
             ),
         )
         mock_runner.run.assert_not_called()
 
-    def test_error_running_simulate(self, mock_write_tmpfile):
-        tmpfile_new_cib = mock.MagicMock()
-        tmpfile_new_cib.name = rc("new_cib.tmp")
-        tmpfile_transitions = mock.MagicMock()
-        tmpfile_transitions.name = rc("transitions.tmp")
-        mock_write_tmpfile.side_effect = [tmpfile_new_cib, tmpfile_transitions]
-
+    def test_error_running_simulate(self):
+        self.tmp_file_mock_obj.set_calls(
+            [
+                TmpFileCall("cib_file"),
+                TmpFileCall("transitions_file"),
+            ]
+        )
         expected_stdout = "some stdout"
         expected_stderr = "some error"
         expected_retval = 1
@@ -911,13 +935,14 @@ class SimulateCibXml(TestCase):
             ),
         )
 
-    def test_error_reading_cib(self, mock_write_tmpfile):
-        tmpfile_new_cib = mock.MagicMock()
-        tmpfile_new_cib.name = rc("new_cib.tmp")
-        tmpfile_new_cib.read.side_effect = OSError(1, "some error")
-        tmpfile_transitions = mock.MagicMock()
-        tmpfile_transitions.name = rc("transitions.tmp")
-        mock_write_tmpfile.side_effect = [tmpfile_new_cib, tmpfile_transitions]
+    def test_error_reading_cib(self):
+        err_msg = "some error"
+        self.tmp_file_mock_obj.set_calls(
+            [
+                TmpFileCall("cib_file", new_content=OSError(1, err_msg)),
+                TmpFileCall("transitions", new_content=""),
+            ]
+        )
 
         expected_stdout = "simulate output"
         expected_stderr = ""
@@ -930,18 +955,18 @@ class SimulateCibXml(TestCase):
             lambda: lib.simulate_cib_xml(mock_runner, "<cib />"),
             fixture.error(
                 report_codes.CIB_SIMULATE_ERROR,
-                reason="some error",
+                reason=err_msg,
             ),
         )
 
-    def test_error_reading_transitions(self, mock_write_tmpfile):
-        tmpfile_new_cib = mock.MagicMock()
-        tmpfile_new_cib.name = rc("new_cib.tmp")
-        tmpfile_new_cib.read.return_value = "new cib data"
-        tmpfile_transitions = mock.MagicMock()
-        tmpfile_transitions.name = rc("transitions.tmp")
-        tmpfile_transitions.read.side_effect = OSError(1, "some error")
-        mock_write_tmpfile.side_effect = [tmpfile_new_cib, tmpfile_transitions]
+    def test_error_reading_transitions(self):
+        err_msg = "some error"
+        self.tmp_file_mock_obj.set_calls(
+            [
+                TmpFileCall("cib_file", new_content=""),
+                TmpFileCall("transitions", new_content=OSError(1, err_msg)),
+            ]
+        )
 
         expected_stdout = "simulate output"
         expected_stderr = ""
@@ -954,7 +979,7 @@ class SimulateCibXml(TestCase):
             lambda: lib.simulate_cib_xml(mock_runner, "<cib />"),
             fixture.error(
                 report_codes.CIB_SIMULATE_ERROR,
-                reason="some error",
+                reason=err_msg,
             ),
         )
 

@@ -5,7 +5,10 @@ from lxml import etree
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_xml_equal
 from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.command_env.config_runner_cib import CIB_FILENAME
+from pcs_test.tools.custom_mock import (
+    TmpFileMock,
+    TmpFileCall,
+)
 from pcs_test.tools.misc import (
     get_test_resource as rc,
     create_setup_patch_mixin,
@@ -209,37 +212,49 @@ class PushLoadedCib(TestCase, ManageCibAssertionMixin):
     wait_timeout = 10
 
     def setUp(self):
-        tmpfile_patcher = mock.patch("pcs.lib.pacemaker.live.write_tmpfile")
-        self.addCleanup(tmpfile_patcher.stop)
-        self.mock_write_tmpfile = tmpfile_patcher.start()
-        self.tmpfile_old = mock_tmpfile("old.cib")
-        self.tmpfile_new = mock_tmpfile("new.cib")
-        self.mock_write_tmpfile.side_effect = [
-            self.tmpfile_old,
-            self.tmpfile_new,
-        ]
+        self.tmpfile_old = "old.cib"
+        self.tmpfile_new = "new.cib"
+        self.load_cib_name = "load_cib"
+        self.tmp_file_mock_obj = TmpFileMock(
+            file_content_checker=assert_xml_equal,
+        )
+        self.addCleanup(self.tmp_file_mock_obj.assert_all_done)
+        tmp_file_patcher = mock.patch("pcs.lib.tools.get_tmp_file")
+        self.addCleanup(tmp_file_patcher.stop)
+        tmp_file_mock = tmp_file_patcher.start()
+        tmp_file_mock.side_effect = (
+            self.tmp_file_mock_obj.get_mock_side_effect()
+        )
         self.env_assist, self.config = get_env_tools(test_case=self)
 
-    def config_load_and_push_diff(self):
-        (
-            self.config.runner.cib.load()
-            .runner.cib.diff(self.tmpfile_old.name, self.tmpfile_new.name)
-            .runner.cib.push_diff()
+    def config_load_cib_files(self):
+        self.config.runner.cib.load(name=self.load_cib_name)
+        loaded_cib = self.config.calls.get(self.load_cib_name).stdout
+        self.tmp_file_mock_obj.set_calls(
+            [
+                TmpFileCall(self.tmpfile_old, orig_content=loaded_cib),
+                TmpFileCall(self.tmpfile_new, orig_content=loaded_cib),
+            ]
         )
+
+    def config_load_and_push_diff(self):
+        self.config_load_cib_files()
+        self.config.runner.cib.diff(self.tmpfile_old, self.tmpfile_new)
+        self.config.runner.cib.push_diff()
 
     def push_reports(self, cib_old=None, cib_new=None):
         # No test changes the CIB between load and push. The point is to test
         # loading and pushing, not editing the CIB.
-        loaded_cib = self.config.calls.get("runner.cib.load").stdout
+        loaded_cib = self.config.calls.get(self.load_cib_name).stdout
         return [
             fixture.debug(
                 report_codes.TMP_FILE_WRITE,
-                file_path=self.tmpfile_old.name,
+                file_path=self.tmpfile_old,
                 content=(cib_old if cib_old is not None else loaded_cib),
             ),
             fixture.debug(
                 report_codes.TMP_FILE_WRITE,
-                file_path=self.tmpfile_new.name,
+                file_path=self.tmpfile_new,
                 content=(
                     cib_new if cib_new is not None else loaded_cib
                 ).strip(),
@@ -272,7 +287,14 @@ class PushLoadedCib(TestCase, ManageCibAssertionMixin):
 
     def test_tmpfile_fails(self):
         self.config.runner.cib.load()
-        self.mock_write_tmpfile.side_effect = EnvironmentError("test error")
+        self.tmp_file_mock_obj.set_calls(
+            [
+                TmpFileCall(
+                    self.tmpfile_old,
+                    orig_content=EnvironmentError("test error"),
+                ),
+            ]
+        )
         env = self.env_assist.get_env()
 
         env.get_cib()
@@ -288,10 +310,10 @@ class PushLoadedCib(TestCase, ManageCibAssertionMixin):
         )
 
     def test_diff_is_empty(self):
-        self.config.runner.cib.load()
+        self.config_load_cib_files()
         self.config.runner.cib.diff(
-            self.tmpfile_old.name,
-            self.tmpfile_new.name,
+            self.tmpfile_old,
+            self.tmpfile_new,
             stdout="",
             stderr="",
             returncode=1,
@@ -302,15 +324,14 @@ class PushLoadedCib(TestCase, ManageCibAssertionMixin):
         self.env_assist.assert_reports(self.push_reports())
 
     def test_diff_fails(self):
-        self.config.runner.cib.load()
+        self.config_load_cib_files()
         self.config.runner.cib.diff(
-            self.tmpfile_old.name,
-            self.tmpfile_new.name,
+            self.tmpfile_old,
+            self.tmpfile_new,
             stderr="invalid cib",
             returncode=65,
         )
-        with open(rc(CIB_FILENAME)) as a_file:
-            cib_data = a_file.read()
+        loaded_cib = self.config.calls.get(self.load_cib_name).stdout
         env = self.env_assist.get_env()
         env.get_cib()
         self.env_assist.assert_raise_library_error(
@@ -319,8 +340,8 @@ class PushLoadedCib(TestCase, ManageCibAssertionMixin):
                 fixture.error(
                     report_codes.CIB_DIFF_ERROR,
                     reason="invalid cib",
-                    cib_old=cib_data,
-                    cib_new=cib_data.strip(),
+                    cib_old=loaded_cib,
+                    cib_new=loaded_cib.strip(),
                 )
             ],
             expected_in_processor=False,
@@ -328,11 +349,9 @@ class PushLoadedCib(TestCase, ManageCibAssertionMixin):
         self.env_assist.assert_reports(self.push_reports())
 
     def test_push_diff_fails(self):
-        (
-            self.config.runner.cib.load()
-            .runner.cib.diff(self.tmpfile_old.name, self.tmpfile_new.name)
-            .runner.cib.push_diff(stderr="invalid cib", returncode=1)
-        )
+        self.config_load_cib_files()
+        self.config.runner.cib.diff(self.tmpfile_old, self.tmpfile_new)
+        self.config.runner.cib.push_diff(stderr="invalid cib", returncode=1)
         env = self.env_assist.get_env()
         env.get_cib()
         self.env_assist.assert_raise_library_error(
@@ -349,12 +368,8 @@ class PushLoadedCib(TestCase, ManageCibAssertionMixin):
         self.env_assist.assert_reports(self.push_reports())
 
     def test_wait(self):
-        (
-            self.config.runner.cib.load()
-            .runner.cib.diff(self.tmpfile_old.name, self.tmpfile_new.name)
-            .runner.cib.push_diff()
-            .runner.pcmk.wait(timeout=self.wait_timeout)
-        )
+        self.config_load_and_push_diff()
+        self.config.runner.pcmk.wait(timeout=self.wait_timeout)
         env = self.env_assist.get_env()
 
         env.get_cib()

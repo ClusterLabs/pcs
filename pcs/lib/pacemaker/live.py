@@ -28,7 +28,10 @@ from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 from pcs.lib.pacemaker import api_result
 from pcs.lib.pacemaker.state import ClusterState
-from pcs.lib.tools import write_tmpfile
+from pcs.lib.tools import (
+    get_tmp_cib,
+    get_tmp_file,
+)
 from pcs.lib.xml_tools import etree_to_str
 
 
@@ -277,51 +280,34 @@ def push_cib_diff_xml(runner, cib_diff_xml):
 def diff_cibs_xml(
     runner: CommandRunner,
     reporter: ReportProcessor,
-    cib_old_xml,
-    cib_new_xml,
-):
+    cib_old_xml: str,
+    cib_new_xml: str,
+) -> str:
     """
     Return xml diff of two CIBs
 
     runner
     reporter
-    string cib_old_xml -- original CIB
-    string cib_new_xml -- modified CIB
+    cib_old_xml -- original CIB
+    cib_new_xml -- modified CIB
     """
-    try:
-        cib_old_tmp_file = write_tmpfile(cib_old_xml)
-        reporter.report(
-            ReportItem.debug(
-                reports.messages.TmpFileWrite(
-                    cib_old_tmp_file.name, cib_old_xml
-                )
-            )
+    with get_tmp_cib(reporter, cib_old_xml) as cib_old_tmp_file, get_tmp_cib(
+        reporter, cib_new_xml
+    ) as cib_new_tmp_file:
+        stdout, stderr, retval = runner.run(
+            [
+                __exec("crm_diff"),
+                "--original",
+                cib_old_tmp_file.name,
+                "--new",
+                cib_new_tmp_file.name,
+                "--no-version",
+            ]
         )
-        cib_new_tmp_file = write_tmpfile(cib_new_xml)
-        reporter.report(
-            ReportItem.debug(
-                reports.messages.TmpFileWrite(
-                    cib_new_tmp_file.name, cib_new_xml
-                )
-            )
-        )
-    except EnvironmentError as e:
-        raise LibraryError(
-            ReportItem.error(reports.messages.CibSaveTmpError(str(e)))
-        ) from e
-    command = [
-        __exec("crm_diff"),
-        "--original",
-        cib_old_tmp_file.name,
-        "--new",
-        cib_new_tmp_file.name,
-        "--no-version",
-    ]
     #  0 (CRM_EX_OK) - success with no difference
     #  1 (CRM_EX_ERROR) - success with difference
     # 64 (CRM_EX_USAGE) - usage error
     # 65 (CRM_EX_DATAERR) - XML fragments not parseable
-    stdout, stderr, retval = runner.run(command)
     if retval == 0:
         return ""
     if retval > 1:
@@ -416,38 +402,28 @@ def simulate_cib_xml(runner, cib_xml):
     string cib_xml -- CIB XML to simulate
     """
     try:
-        new_cib_file = write_tmpfile(None)
-        transitions_file = write_tmpfile(None)
-    except OSError as e:
-        raise LibraryError(
-            ReportItem.error(
-                reports.messages.CibSimulateError(format_os_error(e))
-            )
-        ) from e
-
-    cmd = [
-        __exec("crm_simulate"),
-        "--simulate",
-        "--save-output",
-        new_cib_file.name,
-        "--save-graph",
-        transitions_file.name,
-        "--xml-pipe",
-    ]
-    stdout, stderr, retval = runner.run(cmd, stdin_string=cib_xml)
-    if retval != 0:
-        raise LibraryError(
-            ReportItem.error(reports.messages.CibSimulateError(stderr.strip()))
-        )
-
-    try:
-        new_cib_file.seek(0)
-        transitions_file.seek(0)
-        new_cib_xml = new_cib_file.read()
-        transitions_xml = transitions_file.read()
-        new_cib_file.close()
-        transitions_file.close()
-        return stdout, transitions_xml, new_cib_xml
+        with get_tmp_file() as new_cib_file, get_tmp_file() as transitions_file:
+            cmd = [
+                __exec("crm_simulate"),
+                "--simulate",
+                "--save-output",
+                new_cib_file.name,
+                "--save-graph",
+                transitions_file.name,
+                "--xml-pipe",
+            ]
+            stdout, stderr, retval = runner.run(cmd, stdin_string=cib_xml)
+            if retval != 0:
+                raise LibraryError(
+                    ReportItem.error(
+                        reports.messages.CibSimulateError(stderr.strip())
+                    )
+                )
+            new_cib_file.seek(0)
+            transitions_file.seek(0)
+            transitions = transitions_file.read()
+            new_cib = new_cib_file.read()
+            return stdout, transitions, new_cib
     except OSError as e:
         raise LibraryError(
             ReportItem.error(
