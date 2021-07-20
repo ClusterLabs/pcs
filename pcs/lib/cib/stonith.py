@@ -23,7 +23,7 @@ from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 from pcs.lib.pacemaker.live import get_resource_digests
 from pcs.lib.pacemaker.state import get_resource_state
-from pcs.lib.pacemaker.values import is_false, timeout_to_milliseconds
+from pcs.lib.pacemaker.values import is_false, timeout_to_seconds
 from pcs.lib.xml_tools import get_root
 
 # TODO replace by the new finding function
@@ -77,12 +77,12 @@ def get_misconfigured_resources(
 SUPPORTED_RESOURCE_TYPES_FOR_RESTARLESS_UPDATE = ["fence_scsi"]
 
 
-def validate_stonith_device_exists_and_supported(
+def validate_stonith_restartless_update(
     cib: _Element,
     stonith_id: str,
 ) -> Tuple[Optional[_Element], ReportItemList]:
     """
-    Validate that stonith device exists and it its type is supported for
+    Validate that stonith device exists and its type is supported for
     restartless update of scsi devices and has defined option 'devices'.
 
     cib -- cib element
@@ -94,16 +94,17 @@ def validate_stonith_device_exists_and_supported(
     if stonith_el is None:
         return stonith_el, report_list
 
+    stonith_type = stonith_el.get("type", "")
     if (
         stonith_el.get("class", "") != "stonith"
         or stonith_el.get("provider", "") != ""
-        or stonith_el.get("type", "")
-        not in SUPPORTED_RESOURCE_TYPES_FOR_RESTARLESS_UPDATE
+        or stonith_type not in SUPPORTED_RESOURCE_TYPES_FOR_RESTARLESS_UPDATE
     ):
         report_list.append(
             ReportItem.error(
-                reports.messages.StonithResourceTypeNotSupportedForDevicesUpdate(
+                reports.messages.StonithRestartlessUpdateUnsupportedAgent(
                     stonith_id,
+                    stonith_type,
                     SUPPORTED_RESOURCE_TYPES_FOR_RESTARLESS_UPDATE,
                 )
             )
@@ -113,7 +114,7 @@ def validate_stonith_device_exists_and_supported(
     if not get_value(INSTANCE_ATTRIBUTES_TAG, stonith_el, "devices"):
         report_list.append(
             ReportItem.error(
-                reports.messages.StonithUnableToUpdateScsiDevices(
+                reports.messages.StonithRestartlessUpdateUnableToPerform(
                     "no devices option configured for stonith device "
                     f"'{stonith_id}'"
                 )
@@ -173,28 +174,33 @@ def _get_monitor_attrs(
     Only interval and timeout attributes are needed for digests
     calculations. Interval attribute is mandatory attribute and timeout
     attribute is optional and it must be converted to milliseconds when
-    passing to crm_resource utility. Operation attributes with missing
-    interval attribute or with timeout attribute unable to convert to
-    milliseconds will be skipped and digests won't be calculated so there
-    will be an error during digest validation. In most cases there will be
-    only one monitor operation or two for promotable resource, but the code
-    should handle more than one or zero monitor operations.
+    passing to crm_resource utility. Operation with missing
+    interval attribute or with attributes unable to convert to
+    milliseconds will be skipped. Misconfigured operations do not have to
+    necessarily prevent restartless update because pacemaker can ignore such
+    misconfigured operations. If there is some mismatch between op elements
+    from the resource definition and lrm_rsc_op elements from the cluster
+    status, it will be found later.
     """
     monitor_attrs_list: List[Dict[str, Optional[str]]] = []
     for operation_el in resource.operations.get_resource_operations(
         resource_el, names=["monitor"]
     ):
-        interval = timeout_to_milliseconds(operation_el.get("interval", ""))
-        timeout = operation_el.get("timeout")
+        sec = timeout_to_seconds(operation_el.get("interval", ""))
+        interval = (
+            None if sec is None or isinstance(sec, str) else str(sec * 1000)
+        )
         if interval is None:
-            # this should never happen but when it will than we ignore it
             continue
+        timeout = operation_el.get("timeout")
         if timeout is None:
             monitor_attrs_list.append(dict(interval=interval, timeout=timeout))
             continue
-        timeout = timeout_to_milliseconds(timeout)
+        sec = timeout_to_seconds(timeout)
+        timeout = (
+            None if sec is None or isinstance(sec, str) else str(sec * 1000)
+        )
         if timeout is None:
-            # unable to convert skip such an operation
             continue
         monitor_attrs_list.append(dict(interval=interval, timeout=timeout))
     return monitor_attrs_list
@@ -220,7 +226,7 @@ def _update_digest_attrs_in_lrm_rsc_op(
         # this should not happen and when it does it is pacemaker fault
         raise LibraryError(
             ReportItem.error(
-                reports.messages.StonithUnableToUpdateScsiDevices(
+                reports.messages.StonithRestartlessUpdateUnableToPerform(
                     "no digests attributes in lrm_rsc_op element",
                 )
             )
@@ -231,7 +237,7 @@ def _update_digest_attrs_in_lrm_rsc_op(
             # this should not happen and when it does it is pacemaker fault
             raise LibraryError(
                 ReportItem.error(
-                    reports.messages.StonithUnableToUpdateScsiDevices(
+                    reports.messages.StonithRestartlessUpdateUnableToPerform(
                         (
                             f"necessary digest for '{attr}' attribute is "
                             "missing"
@@ -250,14 +256,23 @@ def update_scsi_devices_without_restart(
     id_provider: IdProvider,
     devices_list: Iterable[str],
 ) -> None:
+    """
+    Update scsi devices without restart of stonith resource or other resources.
+
+    runner -- command runner instance
+    cluster_state -- status of the cluster
+    resource_el -- resource element being updated
+    id_provider -- elements' ids generator
+    device_list -- list of updated scsi devices
+    """
     resource_id = resource_el.get("id", "")
     roles_with_nodes = get_resource_state(cluster_state, resource_id)
     if "Started" not in roles_with_nodes:
         raise LibraryError(
             ReportItem.error(
-                reports.messages.StonithUnableToUpdateScsiDevices(
+                reports.messages.StonithRestartlessUpdateUnableToPerform(
                     f"resource '{resource_id}' is not running on any node",
-                    reason_type=reports.const.STONITH_UNABLE_TO_UPDATE_SCSI_DEVICES_REASON_NOT_RUNNING,
+                    reason_type=reports.const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_NOT_RUNNING,
                 )
             )
         )
@@ -267,7 +282,7 @@ def update_scsi_devices_without_restart(
         # update more lrm_rsc_op elements
         raise LibraryError(
             ReportItem.error(
-                reports.messages.StonithUnableToUpdateScsiDevices(
+                reports.messages.StonithRestartlessUpdateUnableToPerform(
                     f"resource '{resource_id}' is running on more than 1 node"
                 )
             )
@@ -295,7 +310,7 @@ def update_scsi_devices_without_restart(
     else:
         raise LibraryError(
             ReportItem.error(
-                reports.messages.StonithUnableToUpdateScsiDevices(
+                reports.messages.StonithRestartlessUpdateUnableToPerform(
                     "lrm_rsc_op element for start operation was not found"
                 )
             )
@@ -308,7 +323,7 @@ def update_scsi_devices_without_restart(
     if len(lrm_rsc_op_monitor_list) != len(monitor_attrs_list):
         raise LibraryError(
             ReportItem.error(
-                reports.messages.StonithUnableToUpdateScsiDevices(
+                reports.messages.StonithRestartlessUpdateUnableToPerform(
                     (
                         "number of lrm_rsc_op and op elements for monitor "
                         "operation differs"
@@ -339,7 +354,7 @@ def update_scsi_devices_without_restart(
         else:
             raise LibraryError(
                 ReportItem.error(
-                    reports.messages.StonithUnableToUpdateScsiDevices(
+                    reports.messages.StonithRestartlessUpdateUnableToPerform(
                         (
                             "monitor lrm_rsc_op element for resource "
                             f"'{resource_id}', node '{node_name}' and interval "

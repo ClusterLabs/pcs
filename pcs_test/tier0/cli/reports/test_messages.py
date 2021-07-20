@@ -568,18 +568,18 @@ class CannotLeaveGroupEmptyAfterMove(CliReportMessageTestBase):
         )
 
 
-class StonithUnableToUpdateScsiDevices(CliReportMessageTestBase):
+class StonithRestartlessUpdateUnableToPerform(CliReportMessageTestBase):
     def test_other_reason(self):
-        report_msg = messages.StonithUnableToUpdateScsiDevices("reason")
+        report_msg = messages.StonithRestartlessUpdateUnableToPerform("reason")
         self.assert_message(
             report_msg,
             report_msg.message,
         )
 
     def test_not_running_reason(self):
-        report_msg = messages.StonithUnableToUpdateScsiDevices(
+        report_msg = messages.StonithRestartlessUpdateUnableToPerform(
             "reason",
-            const.STONITH_UNABLE_TO_UPDATE_SCSI_DEVICES_REASON_NOT_RUNNING,
+            const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_NOT_RUNNING,
         )
         self.assert_message(
             report_msg,

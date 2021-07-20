@@ -10,6 +10,7 @@ from pcs.cli.fencing_topology import target_type_map_cli_to_lib
 from pcs.cli.reports import process_library_reports
 from pcs.cli.reports.output import error, warn
 from pcs.cli.resource.parse_args import parse_create_simple as parse_create_args
+from pcs.common import reports
 from pcs.common.fencing_topology import (
     TARGET_TYPE_NODE,
     TARGET_TYPE_REGEXP,
@@ -889,8 +890,9 @@ def stonith_update_scsi_devices(lib, argv, modifiers):
     """
     Options:
       * --request-timeout - timeout for HTTP requests
+      * --skip-offline - skip unreachable nodes
     """
-    modifiers.ensure_only_supported("--request-timeout")
+    modifiers.ensure_only_supported("--request-timeout", "--skip-offline")
     if len(argv) < 2:
         raise CmdLineInputError()
     stonith_id = argv[0]
@@ -904,6 +906,11 @@ def stonith_update_scsi_devices(lib, argv, modifiers):
     if not set_args:
         raise CmdLineInputError(
             show_both_usage_and_message=True,
-            hint=("You must specify set devices to be updated"),
+            hint="You must specify set devices to be updated",
         )
-    lib.stonith.update_scsi_devices(stonith_id, set_args)
+    force_flags = []
+    if modifiers.get("--skip-offline"):
+        force_flags.append(reports.codes.SKIP_OFFLINE_NODES)
+    lib.stonith.update_scsi_devices(
+        stonith_id, set_args, force_flags=force_flags
+    )

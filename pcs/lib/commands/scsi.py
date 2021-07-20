@@ -9,6 +9,13 @@ from pcs.lib.errors import LibraryError
 
 
 def unfence_node(env: LibraryEnvironment, node: str, devices: Iterable[str]):
+    """
+    Unfence scsi devices on a node by calling fence_scsi agent script.
+
+    env -- provides communication with externals
+    node -- node name on wich is unfencing performed
+    devices -- scsi devices to be unfenced
+    """
     stdout, stderr, return_code = env.cmd_runner().run(
         [
             os.path.join(settings.fence_agent_binaries, "fence_scsi"),

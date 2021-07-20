@@ -60,8 +60,10 @@ class Unfence(
             if result.status != const.COM_STATUS_SUCCESS:
                 context = reports.ReportItemContext(node_label)
                 self._report_list(
-                    reports.report_dto_to_item(report, context)
-                    for report in result.report_list
+                    [
+                        reports.report_dto_to_item(report, context)
+                        for report in result.report_list
+                    ]
                 )
             else:
                 self._on_success()

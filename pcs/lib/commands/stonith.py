@@ -1,4 +1,4 @@
-from typing import Iterable, Optional
+from typing import Container, Iterable, Optional
 
 from pcs.common import reports
 from pcs.common.reports.item import ReportItem
@@ -10,8 +10,14 @@ from pcs.lib.commands.resource import (
     _ensure_disabled_after_wait,
     resource_environment,
 )
+from pcs.lib.communication.corosync import GetCorosyncOnlineTargets
+
+# from pcs.lib.communication.nodes import GetOnlineTargets
 from pcs.lib.communication.scsi import Unfence
-from pcs.lib.communication.tools import run_and_raise
+from pcs.lib.communication.tools import (
+    AllSameDataMixin,
+    run_and_raise,
+)
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.node import get_existing_nodes_names
@@ -266,7 +272,17 @@ def update_scsi_devices(
     env: LibraryEnvironment,
     stonith_id: str,
     set_device_list: Iterable[str],
+    force_flags: Container[reports.types.ForceCode] = (),
 ) -> None:
+    """
+    Update scsi fencing devices without restart and affecting other resources.
+
+    env -- provides all for communication with externals
+    stonith_id -- id of stonith resource
+    set_device_list -- paths to the scsi devices that would be set for stonith
+        resource
+    force_flags -- list of flags codes
+    """
     if not is_getting_resource_digest_supported(env.cmd_runner()):
         raise LibraryError(
             ReportItem.error(
@@ -285,7 +301,7 @@ def update_scsi_devices(
     (
         stonith_el,
         report_list,
-    ) = stonith.validate_stonith_device_exists_and_supported(cib, stonith_id)
+    ) = stonith.validate_stonith_restartless_update(cib, stonith_id)
     if env.report_processor.report_list(report_list).has_errors:
         raise LibraryError()
     # for mypy, this should not happen because exeption would be raised
@@ -316,8 +332,16 @@ def update_scsi_devices(
     env.report_processor.report_list(target_report_list)
     if env.report_processor.has_errors:
         raise LibraryError()
-    com_cmd = Unfence(env.report_processor, sorted(set_device_list))
+    com_cmd: AllSameDataMixin = GetCorosyncOnlineTargets(
+        env.report_processor,
+        skip_offline_targets=reports.codes.SKIP_OFFLINE_NODES in force_flags,
+    )
     com_cmd.set_targets(cluster_nodes_target_list)
+    online_corosync_target_list = run_and_raise(
+        env.get_node_communicator(), com_cmd
+    )
+    com_cmd = Unfence(env.report_processor, sorted(set_device_list))
+    com_cmd.set_targets(online_corosync_target_list)
     run_and_raise(env.get_node_communicator(), com_cmd)
 
     env.push_cib()

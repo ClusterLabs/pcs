@@ -2714,25 +2714,29 @@ class StonithRestartlessUpdateOfScsiDevicesNotSupported(ReportItemMessage):
 
 
 @dataclass(frozen=True)
-class StonithResourceTypeNotSupportedForDevicesUpdate(ReportItemMessage):
+class StonithRestartlessUpdateUnsupportedAgent(ReportItemMessage):
     """
     Specified resource is not supported for scsi devices update.
 
     resource_id -- resource id
+    resource_type -- resource type
+    supported_stonith_types -- list of supported stonith types
     """
 
     resource_id: str
+    resource_type: str
     supported_stonith_types: List[str]
-    _code = codes.STONITH_RESOURCE_TYPE_NOT_SUPPORTED_FOR_UPDATE
+    _code = codes.STONITH_RESTARTLESS_UPDATE_UNSUPPORTED_AGENT
 
     @property
     def message(self) -> str:
         return (
-            "Resource '{resource_id}' is not a stonith resource or its type is "
-            "not supported for devices update. Supported {_type}: "
-            "{supported_types}"
+            "Resource '{resource_id}' is not a stonith resource or its type "
+            "'{resource_type}' is not supported for devices update. Supported "
+            "{_type}: {supported_types}"
         ).format(
             resource_id=self.resource_id,
+            resource_type=self.resource_type,
             _type=format_plural(self.supported_stonith_types, "type"),
             supported_types=format_list(self.supported_stonith_types),
         )
@@ -2754,20 +2758,26 @@ class StonithUnfencingFailed(ReportItemMessage):
 
 
 @dataclass(frozen=True)
-class StonithUnableToUpdateScsiDevices(ReportItemMessage):
+class StonithRestartlessUpdateUnableToPerform(ReportItemMessage):
     """
     Unable to update scsi devices without restart for various reason
+
+    reason -- reason
+    reason_type -- type for reason differentiation
     """
 
     reason: str
-    reason_type: types.StonithUnableToUpdateScsiDevicesReason = (
-        const.STONITH_UNABLE_TO_UPDATE_SCSI_DEVICES_REASON_OTHER
+    reason_type: types.StonithRestartlessUpdateUnableToPerformReason = (
+        const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_OTHER
     )
-    _code = codes.STONITH_UNABLE_TO_UPDATE_SCSI_DEVICES
+    _code = codes.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM
 
     @property
     def message(self) -> str:
-        return f"Unable to update scsi devices: {self.reason}"
+        return (
+            "Unable to perform restartless update of scsi devices: "
+            f"{self.reason}"
+        )
 
 
 @dataclass(frozen=True)

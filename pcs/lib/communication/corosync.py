@@ -79,6 +79,47 @@ class CheckCorosyncOffline(
         )
 
 
+class GetCorosyncOnlineTargets(
+    SkipOfflineMixin, AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase
+):
+    def __init__(
+        self,
+        report_processor,
+        skip_offline_targets=False,
+        allow_skip_offline=True,
+    ):
+        super().__init__(report_processor)
+        if allow_skip_offline:
+            self._set_skip_offline(skip_offline_targets)
+        self._corosync_online_target_list = []
+
+    def _get_request_data(self):
+        return RequestData("remote/status")
+
+    def _process_response(self, response):
+        report_item = self._get_response_report(response)
+        if report_item:
+            self._report(report_item)
+            return
+        try:
+            status = response.data
+            if json.loads(status)["corosync"]:
+                self._corosync_online_target_list.append(
+                    response.request.target
+                )
+        except (KeyError, json.JSONDecodeError):
+            self._report(
+                reports.ReportItem.error(
+                    reports.messages.InvalidResponseFormat(
+                        response.request.target.label
+                    )
+                )
+            )
+
+    def on_complete(self):
+        return self._corosync_online_target_list
+
+
 class DistributeCorosyncConf(
     SkipOfflineMixin, AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase
 ):
