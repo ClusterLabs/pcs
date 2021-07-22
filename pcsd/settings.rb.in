@@ -17,7 +17,7 @@ CRM_MON = "@PCMKEXECPREFIX@/sbin/crm_mon"
 CRM_NODE = "@PCMKEXECPREFIX@/sbin/crm_node"
 CIBADMIN = "@PCMKEXECPREFIX@/sbin/cibadmin"
 PACEMAKERD = "@PCMKEXECPREFIX@/sbin/pacemakerd"
-CIB_PATH = '@PKG_CIB_DIR@/cib.xml'
+CIB_PATH = '@PCMK_CIB_DIR@/cib.xml'
 PACEMAKER_AUTHKEY='@PCMKCONFDIR@/pacemaker/authkey'
 
 COROSYNC_BINARIES = "@COROEXECPREFIX@/sbin"
