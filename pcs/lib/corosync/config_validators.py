@@ -110,7 +110,7 @@ def create(
             "name",
             option_name_for_report="cluster name",
             severity=reports.item.get_severity(
-                reports.codes.FORCE_OPTIONS, force_cluster_name
+                reports.codes.FORCE, force_cluster_name
             ),
         ),
         validate.ValueCorosyncValue(
@@ -368,7 +368,7 @@ def _report_unresolvable_addresses_if_any(
     return [
         ReportItem(
             severity=get_severity(
-                reports.codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                reports.codes.FORCE,
                 force_unresolvable,
             ),
             message=reports.messages.NodeAddressesUnresolvable(
@@ -1763,7 +1763,7 @@ def add_quorum_device(
                     "model",
                     list(model_validators.keys()),
                     severity=reports.item.get_severity(
-                        reports.codes.FORCE_QDEVICE_MODEL, force_model
+                        reports.codes.FORCE, force_model
                     ),
                 ),
                 validate.ValueCorosyncValue("model"),
@@ -1916,9 +1916,7 @@ def _qdevice_update_model_net_options(options, node_ids, force_options=False):
 def _get_qdevice_generic_options_validators(
     options, allow_empty_values=False, force_options=False
 ):
-    severity = reports.item.get_severity(
-        reports.codes.FORCE_OPTIONS, force_options
-    )
+    severity = reports.item.get_severity(reports.codes.FORCE, force_options)
 
     validators = [
         validate.ValuePositiveInteger("sync_timeout", severity=severity),
@@ -1956,9 +1954,7 @@ def _split_heuristics_exec_options(options):
 def _get_qdevice_heuristics_nonexec_options_validators(
     allow_empty_values=False, force_options=False
 ):
-    severity = reports.item.get_severity(
-        reports.codes.FORCE_OPTIONS, force_options
-    )
+    severity = reports.item.get_severity(reports.codes.FORCE, force_options)
 
     allowed_options = [
         "interval",
@@ -1989,9 +1985,7 @@ def _get_qdevice_heuristics_nonexec_options_validators(
 def _get_qdevice_model_net_options_validators(
     node_ids, allow_empty_values=False, force_options=False
 ):
-    severity = reports.item.get_severity(
-        reports.codes.FORCE_OPTIONS, force_options
-    )
+    severity = reports.item.get_severity(reports.codes.FORCE, force_options)
     allowed_algorithms = ("ffsplit", "lms")
 
     validators_required_options = [

@@ -271,7 +271,7 @@ class ConfigSetup(TestCase, FixtureMixin):
             [
                 fixture.error(
                     reports.codes.FILE_ALREADY_EXISTS,
-                    force_code=reports.codes.FORCE_FILE_OVERWRITE,
+                    force_code=reports.codes.FORCE,
                     file_type_code=file_type_codes.BOOTH_CONFIG,
                     file_path=self.fixture_cfg_path(),
                     node="",
@@ -301,7 +301,7 @@ class ConfigSetup(TestCase, FixtureMixin):
             [
                 fixture.error(
                     reports.codes.FILE_ALREADY_EXISTS,
-                    force_code=reports.codes.FORCE_FILE_OVERWRITE,
+                    force_code=reports.codes.FORCE,
                     file_type_code=file_type_codes.BOOTH_KEY,
                     file_path=self.fixture_key_path(),
                     node="",
@@ -668,7 +668,7 @@ class ConfigDestroy(TestCase, FixtureMixin):
             [
                 fixture.error(
                     reports.codes.FILE_IO_ERROR,
-                    force_code=reports.codes.FORCE_BOOTH_DESTROY,
+                    force_code=reports.codes.FORCE,
                     file_type_code=file_type_codes.BOOTH_CONFIG,
                     file_path=self.fixture_cfg_path(),
                     reason=error,
@@ -728,7 +728,7 @@ class ConfigDestroy(TestCase, FixtureMixin):
             [
                 fixture.error(
                     reports.codes.BOOTH_CONFIG_UNEXPECTED_LINES,
-                    force_code=reports.codes.FORCE_BOOTH_DESTROY,
+                    force_code=reports.codes.FORCE,
                     line_list=["invalid config"],
                     file_path=self.fixture_cfg_path(),
                 ),
@@ -817,7 +817,7 @@ class ConfigDestroy(TestCase, FixtureMixin):
             [
                 fixture.error(
                     reports.codes.FILE_IO_ERROR,
-                    force_code=reports.codes.FORCE_BOOTH_DESTROY,
+                    force_code=reports.codes.FORCE,
                     file_type_code=file_type_codes.BOOTH_KEY,
                     file_path=self.fixture_key_path(),
                     reason=error,
@@ -1305,7 +1305,7 @@ class ConfigTicketAdd(TestCase, FixtureMixin):
                 ),
                 fixture.error(
                     reports.codes.INVALID_OPTIONS,
-                    force_code=reports.codes.FORCE_OPTIONS,
+                    force_code=reports.codes.FORCE,
                     option_names=["a"],
                     option_type="booth ticket",
                     allowed=[
@@ -1914,7 +1914,7 @@ class CreateInCluster(TestCase, FixtureMixin):
             [
                 fixture.error(
                     reports.codes.UNABLE_TO_GET_AGENT_METADATA,
-                    force_code=reports.codes.FORCE_METADATA_ISSUE,
+                    force_code=reports.codes.FORCE,
                     agent="ocf:heartbeat:IPaddr2",
                     reason=REASON,
                 ),
@@ -1949,7 +1949,7 @@ class CreateInCluster(TestCase, FixtureMixin):
             [
                 fixture.error(
                     reports.codes.UNABLE_TO_GET_AGENT_METADATA,
-                    force_code=reports.codes.FORCE_METADATA_ISSUE,
+                    force_code=reports.codes.FORCE,
                     agent="ocf:pacemaker:booth-site",
                     reason=REASON,
                 ),
@@ -2138,7 +2138,7 @@ class RemoveFromCluster(TestCase, FixtureMixin):
             [
                 fixture.error(
                     reports.codes.BOOTH_MULTIPLE_TIMES_IN_CIB,
-                    force_code=reports.codes.FORCE_BOOTH_REMOVE_FROM_CIB,
+                    force_code=reports.codes.FORCE,
                     name="booth",
                 ),
             ]
@@ -2286,7 +2286,7 @@ class Restart(TestCase, FixtureMixin):
             [
                 fixture.error(
                     reports.codes.BOOTH_MULTIPLE_TIMES_IN_CIB,
-                    force_code=reports.codes.FORCE_BOOTH_REMOVE_FROM_CIB,
+                    force_code=reports.codes.FORCE,
                     name="booth",
                 ),
             ]

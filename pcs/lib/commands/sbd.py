@@ -69,7 +69,7 @@ def _validate_sbd_options(
             ALLOWED_SBD_OPTION_LIST,
             banned_name_list=UNSUPPORTED_SBD_OPTION_LIST,
             severity=reports.item.get_severity(
-                reports.codes.FORCE_OPTIONS, allow_unknown_opts
+                reports.codes.FORCE, allow_unknown_opts
             ),
         ),
         validate.ValueNonnegativeInteger("SBD_WATCHDOG_TIMEOUT"),
@@ -77,7 +77,7 @@ def _validate_sbd_options(
             "SBD_TIMEOUT_ACTION",
             TIMEOUT_ACTION_ALLOWED_VALUE_LIST,
             severity=reports.item.get_severity(
-                reports.codes.FORCE_OPTIONS, allow_invalid_option_values
+                reports.codes.FORCE, allow_invalid_option_values
             ),
         ),
     ]

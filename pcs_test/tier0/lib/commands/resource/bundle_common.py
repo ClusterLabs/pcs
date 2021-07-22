@@ -278,7 +278,7 @@ class ParametrizedContainerMixin(SetUpMixin):
                         "allowed": sorted(list(GENERIC_CONTAINER_OPTIONS)),
                         "allowed_patterns": [],
                     },
-                    report_codes.FORCE_OPTIONS,
+                    report_codes.FORCE,
                 ),
             ]
         )
@@ -379,7 +379,7 @@ class NetworkMixin(SetUpMixin):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_name="host-netmask",
                     option_value="abc",
                     allowed_values="a number of bits of the mask (1..32)",
@@ -388,7 +388,7 @@ class NetworkMixin(SetUpMixin):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTIONS,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_names=["extra"],
                     option_type="network",
                     allowed=sorted(NETWORK_OPTIONS),
@@ -634,11 +634,11 @@ class PortMapMixin(SetUpMixin):
                         "allowed": sorted(list(PORT_MAP_OPTIONS)),
                         "allowed_patterns": [],
                     },
-                    report_codes.FORCE_OPTIONS,
+                    report_codes.FORCE,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_name="range",
                     option_value="3000",
                     allowed_values="port-port",
@@ -869,7 +869,7 @@ class StorageMapMixin(SetUpMixin):
                         "allowed": sorted(list(STORAGE_MAP_OPTIONS)),
                         "allowed_patterns": [],
                     },
-                    report_codes.FORCE_OPTIONS,
+                    report_codes.FORCE,
                 ),
             ]
         )

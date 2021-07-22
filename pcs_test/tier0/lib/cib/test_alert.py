@@ -66,7 +66,7 @@ class EnsureRecipientValueIsUniqueTest(TestCase):
             severities.ERROR,
             report_codes.CIB_ALERT_RECIPIENT_ALREADY_EXISTS,
             {"alert": "alert-1", "recipient": "value1"},
-            report_codes.FORCE_ALERT_RECIPIENT_VALUE_NOT_UNIQUE,
+            report_codes.FORCE,
         )
         assert_raise_library_error(
             lambda: alert.ensure_recipient_value_is_unique(
@@ -488,7 +488,7 @@ class AddRecipientTest(TestCase):
             severities.ERROR,
             report_codes.CIB_ALERT_RECIPIENT_ALREADY_EXISTS,
             {"alert": "alert", "recipient": "test_val"},
-            report_codes.FORCE_ALERT_RECIPIENT_VALUE_NOT_UNIQUE,
+            report_codes.FORCE,
         )
         assert_raise_library_error(
             lambda: alert.add_recipient(
@@ -726,7 +726,7 @@ class UpdateRecipientTest(TestCase):
             severities.ERROR,
             report_codes.CIB_ALERT_RECIPIENT_ALREADY_EXISTS,
             {"alert": "alert", "recipient": "value1"},
-            report_codes.FORCE_ALERT_RECIPIENT_VALUE_NOT_UNIQUE,
+            report_codes.FORCE,
         )
         assert_raise_library_error(
             lambda: alert.update_recipient(

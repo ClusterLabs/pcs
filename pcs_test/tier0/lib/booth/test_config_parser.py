@@ -220,13 +220,13 @@ class ParseTest(TestCase):
                 cm.exception,
                 "does not matter",
                 "path",
-                report_codes.FORCE_BOOTH_DESTROY,
+                report_codes.FORCE,
                 False,
             ),
             [
                 fixture.error(
                     report_codes.BOOTH_CONFIG_UNEXPECTED_LINES,
-                    force_code=report_codes.FORCE_BOOTH_DESTROY,
+                    force_code=report_codes.FORCE,
                     line_list=invalid_line_list,
                     file_path="path",
                 ),
@@ -237,7 +237,7 @@ class ParseTest(TestCase):
                 cm.exception,
                 "does not matter",
                 "path",
-                report_codes.FORCE_BOOTH_DESTROY,
+                report_codes.FORCE,
                 True,
             ),
             [

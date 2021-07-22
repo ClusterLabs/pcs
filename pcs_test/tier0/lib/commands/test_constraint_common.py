@@ -87,7 +87,7 @@ class CreateWithSetTest(TestCase):
                     {
                         "constraint_ids": ["some_id"],
                     },
-                    report_codes.FORCE_CONSTRAINT_DUPLICATE,
+                    report_codes.FORCE,
                 ),
                 (
                     severities.INFO,

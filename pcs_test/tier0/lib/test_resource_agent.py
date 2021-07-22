@@ -1279,7 +1279,7 @@ class AgentMetadataValidateParamsCreate(TestCase):
             [
                 fixture.error(
                     report_codes.INVALID_OPTIONS,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_names=["unknown1", "unknown2"],
                     allowed=[
                         "opt1_new",
@@ -1337,7 +1337,7 @@ class AgentMetadataValidateParamsCreate(TestCase):
             [
                 fixture.error(
                     report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_names=["req1_new", "req2_new"],
                     option_type="agent",
                 ),
@@ -1379,7 +1379,7 @@ class AgentMetadataValidateParamsUpdate(TestCase):
             [
                 fixture.error(
                     report_codes.INVALID_OPTIONS,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_names=["unknown2"],
                     allowed=[
                         "opt1_new",
@@ -1413,7 +1413,7 @@ class AgentMetadataValidateParamsUpdate(TestCase):
             [
                 fixture.error(
                     report_codes.INVALID_OPTIONS,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_names=["unknown2"],
                     allowed=[
                         "opt1_new",
@@ -1445,7 +1445,7 @@ class AgentMetadataValidateParamsUpdate(TestCase):
             [
                 fixture.error(
                     report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_names=["req1_new"],
                     option_type="agent",
                 ),
@@ -1466,7 +1466,7 @@ class AgentMetadataValidateParamsUpdate(TestCase):
             [
                 fixture.error(
                     report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_names=["req2_new"],
                     option_type="agent",
                 ),

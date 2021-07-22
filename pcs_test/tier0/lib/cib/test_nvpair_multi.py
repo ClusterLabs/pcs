@@ -489,7 +489,7 @@ class ValidateNvsetAppendNew(TestCase):
             [
                 fixture.error(
                     reports.codes.INVALID_OPTIONS,
-                    force_code=reports.codes.FORCE_OPTIONS,
+                    force_code=reports.codes.FORCE,
                     option_names=["not_valid"],
                     allowed=["id", "score"],
                     option_type=None,

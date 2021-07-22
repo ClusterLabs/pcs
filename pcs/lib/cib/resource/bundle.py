@@ -415,7 +415,7 @@ def _validate_generic_container_options(container_options, force_options=False):
             GENERIC_CONTAINER_OPTIONS,
             option_type="container",
             severity=reports.item.get_severity(
-                reports.codes.FORCE_OPTIONS, force_options
+                reports.codes.FORCE, force_options
             ),
         ),
         validate.IsRequiredAll(["image"], option_type="container"),
@@ -489,7 +489,7 @@ def _validate_generic_container_options_update(
             GENERIC_CONTAINER_OPTIONS | _options_to_remove(options),
             option_type="container",
             severity=reports.item.get_severity(
-                reports.codes.FORCE_OPTIONS, force_options
+                reports.codes.FORCE, force_options
             ),
         ),
         # image is a mandatory attribute and cannot be removed
@@ -559,9 +559,7 @@ def _validate_generic_container_options_update(
 
 
 def _validate_network_options_new(options, force_options):
-    severity = reports.item.get_severity(
-        reports.codes.FORCE_OPTIONS, force_options
-    )
+    severity = reports.item.get_severity(reports.codes.FORCE, force_options)
     validators = [
         # TODO add validators for other keys (ip-range-start - IPv4)
         validate.NamesIn(
@@ -615,7 +613,7 @@ def _validate_network_options_update(
         report_list.append(
             ReportItem(
                 severity=reports.item.get_severity(
-                    reports.codes.FORCE_OPTIONS,
+                    reports.codes.FORCE,
                     force_options,
                 ),
                 message=reports.messages.ResourceInBundleNotAccessible(
@@ -625,9 +623,7 @@ def _validate_network_options_update(
             )
         )
 
-    severity = reports.item.get_severity(
-        reports.codes.FORCE_OPTIONS, force_options
-    )
+    severity = reports.item.get_severity(reports.codes.FORCE, force_options)
     validators_optional_options = [
         # TODO add validators for other keys (ip-range-start - IPv4)
         validate.ValuePortNumber("control-port"),
@@ -650,9 +646,7 @@ def _validate_network_options_update(
 
 
 def _validate_port_map_list(options_list, id_provider, force_options):
-    severity = reports.item.get_severity(
-        reports.codes.FORCE_OPTIONS, force_options
-    )
+    severity = reports.item.get_severity(reports.codes.FORCE, force_options)
     option_type = "port-map"
     validators = [
         validate.NamesIn(
@@ -682,9 +676,7 @@ def _validate_port_map_list(options_list, id_provider, force_options):
 
 
 def _validate_storage_map_list(options_list, id_provider, force_options):
-    severity = reports.item.get_severity(
-        reports.codes.FORCE_OPTIONS, force_options
-    )
+    severity = reports.item.get_severity(reports.codes.FORCE, force_options)
     option_type = "storage-map"
     validators = [
         validate.NamesIn(

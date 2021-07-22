@@ -805,7 +805,7 @@ class QuorumCheck(TestCase):
             + [
                 fixture.error(
                     report_codes.COROSYNC_QUORUM_LOSS_UNABLE_TO_CHECK,
-                    force_code=report_codes.FORCE_QUORUM_LOSS,
+                    force_code=report_codes.FORCE,
                 )
             ]
         )
@@ -979,7 +979,7 @@ class FailureQuorumLoss(TestCase):
                 ),
                 fixture.error(
                     report_codes.COROSYNC_QUORUM_LOSS_UNABLE_TO_CHECK,
-                    force_code=report_codes.FORCE_QUORUM_LOSS,
+                    force_code=report_codes.FORCE,
                 ),
             ]
         )
@@ -1094,7 +1094,7 @@ class FailureQuorumLoss(TestCase):
             + [
                 fixture.error(
                     report_codes.COROSYNC_QUORUM_LOSS_UNABLE_TO_CHECK,
-                    force_code=report_codes.FORCE_QUORUM_LOSS,
+                    force_code=report_codes.FORCE,
                 ),
             ]
         )
@@ -1190,7 +1190,7 @@ class FailureQuorumLoss(TestCase):
             + [
                 fixture.error(
                     report_codes.COROSYNC_QUORUM_WILL_BE_LOST,
-                    force_code=report_codes.FORCE_QUORUM_LOSS,
+                    force_code=report_codes.FORCE,
                 ),
             ]
         )

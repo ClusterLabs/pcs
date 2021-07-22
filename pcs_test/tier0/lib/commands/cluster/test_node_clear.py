@@ -104,7 +104,7 @@ class NodeClear(TestCase):
             [
                 fixture.error(
                     report_codes.NODE_TO_CLEAR_IS_STILL_IN_CLUSTER,
-                    force_code=report_codes.FORCE_CLEAR_CLUSTER_NODE,
+                    force_code=report_codes.FORCE,
                     node="node-R",
                 ),
             ]
@@ -123,7 +123,7 @@ class NodeClear(TestCase):
             [
                 fixture.error(
                     report_codes.NODE_TO_CLEAR_IS_STILL_IN_CLUSTER,
-                    force_code=report_codes.FORCE_CLEAR_CLUSTER_NODE,
+                    force_code=report_codes.FORCE,
                     node="rh7-2",
                 ),
             ]

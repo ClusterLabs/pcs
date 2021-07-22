@@ -258,7 +258,7 @@ def _check_qdevice_not_used(
     if connected_clusters:
         reporter.report(
             ReportItem(
-                severity=get_severity(report_codes.FORCE_QDEVICE_USED, force),
+                severity=get_severity(report_codes.FORCE, force),
                 message=reports.messages.QdeviceUsedByClusters(
                     connected_clusters,
                 ),

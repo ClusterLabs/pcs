@@ -257,7 +257,7 @@ class ContainerParametrized(TestCase):
                         "allowed": self.allowed_options,
                         "allowed_patterns": [],
                     },
-                    report_codes.FORCE_OPTIONS,
+                    report_codes.FORCE,
                 ),
             ]
         )
@@ -823,7 +823,7 @@ class Network(TestCase):
                         "allowed": self.allowed_options,
                         "allowed_patterns": [],
                     },
-                    report_codes.FORCE_OPTIONS,
+                    report_codes.FORCE,
                 ),
             ]
         )
@@ -1518,7 +1518,7 @@ class WithPrimitive(TestCase):
                     report_codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
                     bundle_id="B1",
                     inner_resource_id="P",
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                 )
             ]
         )
@@ -1632,7 +1632,7 @@ class WithPrimitive(TestCase):
                     report_codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
                     bundle_id="B1",
                     inner_resource_id="P",
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                 )
             ]
         )
@@ -1690,7 +1690,7 @@ class WithPrimitive(TestCase):
                     report_codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
                     bundle_id="B1",
                     inner_resource_id="P",
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                 )
             ]
         )

@@ -149,7 +149,7 @@ class BoothSaveFiles(
                 self._report(
                     ReportItem(
                         severity=reports.item.get_severity(
-                            reports.codes.FORCE_FILE_OVERWRITE,
+                            reports.codes.FORCE,
                             self._rewrite_existing,
                         ),
                         message=reports.messages.FileAlreadyExists(

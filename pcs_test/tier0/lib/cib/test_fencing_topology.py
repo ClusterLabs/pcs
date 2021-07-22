@@ -859,7 +859,7 @@ class ValidateTargetValuewise(TestCase, StatusNodesMixin):
                     "node": "",
                     "searched_types": [],
                 },
-                report_codes.FORCE_NODE_DOES_NOT_EXIST,
+                report_codes.FORCE,
             )
         ]
         assert_report_item_list_equal(report_list, report)
@@ -877,7 +877,7 @@ class ValidateTargetValuewise(TestCase, StatusNodesMixin):
                     "node": "rh7-x",
                     "searched_types": [],
                 },
-                report_codes.FORCE_NODE_DOES_NOT_EXIST,
+                report_codes.FORCE,
             )
         ]
         assert_report_item_list_equal(report_list, report)
@@ -969,7 +969,7 @@ class ValidateDevices(TestCase):
                 {
                     "stonith_ids": ["dummy", "fenceX"],
                 },
-                report_codes.FORCE_STONITH_RESOURCE_DOES_NOT_EXIST,
+                report_codes.FORCE,
             )
         ]
         assert_report_item_list_equal(report_list, report)

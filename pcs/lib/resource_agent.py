@@ -570,9 +570,7 @@ class Agent:
             validate.NamesIn(
                 {param["name"] for param in self.get_parameters()},
                 option_type=self._agent_type_label,
-                severity=reports.item.get_severity(
-                    reports.codes.FORCE_OPTIONS, force
-                ),
+                severity=reports.item.get_severity(reports.codes.FORCE, force),
             ).validate(parameters)
         )
         # TODO remove this "if", see pcs.lib.cib.commands.remote_node.create
@@ -643,9 +641,7 @@ class Agent:
             validate.NamesIn(
                 {param["name"] for param in self.get_parameters()},
                 option_type=self._agent_type_label,
-                severity=reports.item.get_severity(
-                    reports.codes.FORCE_OPTIONS, force
-                ),
+                severity=reports.item.get_severity(reports.codes.FORCE, force),
             ).validate(
                 # Do not report unknown parameters already set in the CIB. They
                 # have been reported already when the were added to the CIB.
@@ -684,7 +680,7 @@ class Agent:
                 if force
                 else ReportItemSeverity.ERROR
             ),
-            force_code=reports.codes.FORCE_OPTIONS if not force else None,
+            force_code=reports.codes.FORCE if not force else None,
         )
 
     def _find_missing_required_parameters(self, parameters):
@@ -1191,7 +1187,7 @@ def resource_agent_error_to_report_item(
     force = None
     if e.__class__ == UnableToGetAgentMetadata:
         if severity == ReportItemSeverity.ERROR and forceable:
-            force = reports.codes.FORCE_METADATA_ISSUE
+            force = reports.codes.FORCE
         return ReportItem(
             severity=reports.item.ReportItemSeverity(severity, force),
             message=reports.messages.UnableToGetAgentMetadata(

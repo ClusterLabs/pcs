@@ -389,7 +389,7 @@ class AddQuorumDevice(TestCase):
             [
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_QDEVICE_MODEL,
+                    force_code=report_codes.FORCE,
                     option_name="model",
                     option_value="invalid",
                     allowed_values=["net"],
@@ -550,7 +550,7 @@ class AddQuorumDevice(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_name="connect_timeout",
                     option_value="",
                     allowed_values="1000..120000",
@@ -559,7 +559,7 @@ class AddQuorumDevice(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_name="force_ip_version",
                     option_value="",
                     allowed_values=("0", "4", "6"),
@@ -568,7 +568,7 @@ class AddQuorumDevice(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_name="port",
                     option_value="",
                     allowed_values="a port number (1..65535)",
@@ -577,7 +577,7 @@ class AddQuorumDevice(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_name="tie_breaker",
                     option_value="",
                     allowed_values=["lowest", "highest"] + self.node_ids,
@@ -586,7 +586,7 @@ class AddQuorumDevice(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_name="sync_timeout",
                     option_value="",
                     allowed_values="a positive integer",
@@ -595,7 +595,7 @@ class AddQuorumDevice(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_name="timeout",
                     option_value="",
                     allowed_values="a positive integer",
@@ -604,7 +604,7 @@ class AddQuorumDevice(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_name="mode",
                     option_value="",
                     allowed_values=("off", "on", "sync"),
@@ -613,7 +613,7 @@ class AddQuorumDevice(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_name="interval",
                     option_value="",
                     allowed_values="a positive integer",
@@ -622,7 +622,7 @@ class AddQuorumDevice(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_name="sync_timeout",
                     option_value="",
                     allowed_values="a positive integer",
@@ -631,7 +631,7 @@ class AddQuorumDevice(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_name="timeout",
                     option_value="",
                     allowed_values="a positive integer",
@@ -695,7 +695,7 @@ class AddQuorumDevice(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_name="algorithm",
                     option_value="bad algorithm",
                     allowed_values=("ffsplit", "lms"),
@@ -704,7 +704,7 @@ class AddQuorumDevice(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTIONS,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_names=["bad_model_option"],
                     option_type="quorum device model",
                     allowed=[
@@ -719,7 +719,7 @@ class AddQuorumDevice(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_name="connect_timeout",
                     option_value="-1",
                     allowed_values="1000..120000",
@@ -728,7 +728,7 @@ class AddQuorumDevice(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_name="force_ip_version",
                     option_value="3",
                     allowed_values=("0", "4", "6"),
@@ -737,7 +737,7 @@ class AddQuorumDevice(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_name="port",
                     option_value="65537",
                     allowed_values="a port number (1..65535)",
@@ -746,7 +746,7 @@ class AddQuorumDevice(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_name="tie_breaker",
                     option_value="125",
                     allowed_values=["lowest", "highest"] + self.node_ids,
@@ -755,7 +755,7 @@ class AddQuorumDevice(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTIONS,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_names=["bad_generic_option"],
                     option_type="quorum device",
                     allowed=["sync_timeout", "timeout"],
@@ -770,7 +770,7 @@ class AddQuorumDevice(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_name="sync_timeout",
                     option_value="-3",
                     allowed_values="a positive integer",
@@ -779,7 +779,7 @@ class AddQuorumDevice(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_name="timeout",
                     option_value="-2",
                     allowed_values="a positive integer",
@@ -788,7 +788,7 @@ class AddQuorumDevice(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_name="mode",
                     option_value="bad mode",
                     allowed_values=("off", "on", "sync"),
@@ -797,7 +797,7 @@ class AddQuorumDevice(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_name="interval",
                     option_value="-30",
                     allowed_values="a positive integer",
@@ -806,7 +806,7 @@ class AddQuorumDevice(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_name="sync_timeout",
                     option_value="-15",
                     allowed_values="a positive integer",
@@ -815,7 +815,7 @@ class AddQuorumDevice(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_name="timeout",
                     option_value="-5",
                     allowed_values="a positive integer",
@@ -1284,7 +1284,7 @@ class UpdateQuorumDevice(TestCase):
             [
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    report_codes.FORCE_OPTIONS,
+                    report_codes.FORCE,
                     option_name="algorithm",
                     option_value="bad algorithm",
                     allowed_values=("ffsplit", "lms"),
@@ -1293,7 +1293,7 @@ class UpdateQuorumDevice(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTIONS,
-                    report_codes.FORCE_OPTIONS,
+                    report_codes.FORCE,
                     option_names=["bad_model_option"],
                     option_type="quorum device model",
                     allowed=[
@@ -1308,7 +1308,7 @@ class UpdateQuorumDevice(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    report_codes.FORCE_OPTIONS,
+                    report_codes.FORCE,
                     option_name="connect_timeout",
                     option_value="-1",
                     allowed_values="1000..120000",
@@ -1317,7 +1317,7 @@ class UpdateQuorumDevice(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    report_codes.FORCE_OPTIONS,
+                    report_codes.FORCE,
                     option_name="force_ip_version",
                     option_value="3",
                     allowed_values=("0", "4", "6"),
@@ -1326,7 +1326,7 @@ class UpdateQuorumDevice(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    report_codes.FORCE_OPTIONS,
+                    report_codes.FORCE,
                     option_name="port",
                     option_value="65537",
                     allowed_values="a port number (1..65535)",
@@ -1335,7 +1335,7 @@ class UpdateQuorumDevice(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    report_codes.FORCE_OPTIONS,
+                    report_codes.FORCE,
                     option_name="tie_breaker",
                     option_value="125",
                     allowed_values=["lowest", "highest"] + self.node_ids,
@@ -1437,7 +1437,7 @@ class UpdateQuorumDevice(TestCase):
             [
                 fixture.error(
                     report_codes.INVALID_OPTIONS,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_names=["bad_generic_option"],
                     option_type="quorum device",
                     allowed=["sync_timeout", "timeout"],
@@ -1452,7 +1452,7 @@ class UpdateQuorumDevice(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    report_codes.FORCE_OPTIONS,
+                    report_codes.FORCE,
                     option_name="sync_timeout",
                     option_value="-3",
                     allowed_values="a positive integer",
@@ -1461,7 +1461,7 @@ class UpdateQuorumDevice(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    report_codes.FORCE_OPTIONS,
+                    report_codes.FORCE,
                     option_name="timeout",
                     option_value="-2",
                     allowed_values="a positive integer",
@@ -1559,7 +1559,7 @@ class UpdateQuorumDevice(TestCase):
             [
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_name="mode",
                     option_value="bad mode",
                     allowed_values=("off", "on", "sync"),
@@ -1568,7 +1568,7 @@ class UpdateQuorumDevice(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_name="interval",
                     option_value="-30",
                     allowed_values="a positive integer",
@@ -1577,7 +1577,7 @@ class UpdateQuorumDevice(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_name="sync_timeout",
                     option_value="-15",
                     allowed_values="a positive integer",
@@ -1586,7 +1586,7 @@ class UpdateQuorumDevice(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_name="timeout",
                     option_value="-5",
                     allowed_values="a positive integer",

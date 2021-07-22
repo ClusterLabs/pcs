@@ -124,7 +124,7 @@ def node_clear(
         if env.report_processor.report(
             ReportItem(
                 severity=reports.item.get_severity(
-                    report_codes.FORCE_CLEAR_CLUSTER_NODE,
+                    report_codes.FORCE,
                     allow_clear_cluster_node,
                 ),
                 message=reports.messages.NodeToClearIsStillInCluster(node_name),
@@ -975,9 +975,7 @@ def add_nodes(
         cib_nodes = []
         report_processor.report(
             ReportItem(
-                reports.item.get_severity(
-                    report_codes.FORCE_LOAD_NODES_FROM_CIB, force
-                ),
+                reports.item.get_severity(report_codes.FORCE, force),
                 reports.messages.CibLoadErrorGetNodesForValidation(),
             )
         )
@@ -1189,9 +1187,7 @@ def add_nodes(
 
     # distribute corosync and pacemaker authkeys and other config files
     files_action = {}
-    severity = reports.item.get_severity(
-        reports.codes.SKIP_FILE_DISTRIBUTION_ERRORS, force
-    )
+    severity = reports.item.get_severity(reports.codes.FORCE, force)
     if os.path.isfile(settings.corosync_authkey_file):
         try:
             files_action.update(
@@ -1470,9 +1466,7 @@ def _host_check_cluster_setup(
     required_as_stopped_service_list = required_service_list + [
         "pacemaker_remote"
     ]
-    severity = reports.item.get_severity(
-        report_codes.FORCE_ALREADY_IN_CLUSTER, force
-    )
+    severity = reports.item.get_severity(report_codes.FORCE, force)
     cluster_exists_on_nodes = False
     for host_name, host_info in host_info_dict.items():
         try:
@@ -1537,7 +1531,7 @@ def _host_check_cluster_setup(
         report_list.append(
             ReportItem(
                 severity=reports.item.ReportItemSeverity.error(
-                    report_codes.FORCE_ALREADY_IN_CLUSTER
+                    report_codes.FORCE
                 ),
                 message=reports.messages.ClusterWillBeDestroyed(),
             )
@@ -1818,7 +1812,7 @@ def remove_nodes(
                 report_processor.report(
                     ReportItem(
                         severity=reports.item.get_severity(
-                            report_codes.FORCE_QUORUM_LOSS,
+                            report_codes.FORCE,
                             force_quorum_loss,
                         ),
                         message=reports.messages.CorosyncQuorumWillBeLost(),
@@ -1828,7 +1822,7 @@ def remove_nodes(
             report_processor.report(
                 ReportItem(
                     severity=reports.item.get_severity(
-                        report_codes.FORCE_QUORUM_LOSS,
+                        report_codes.FORCE,
                         force_quorum_loss,
                     ),
                     message=reports.messages.CorosyncQuorumLossUnableToCheck(),
@@ -1966,9 +1960,7 @@ def add_link(
         cib_nodes = []
         report_processor.report(
             ReportItem(
-                reports.item.get_severity(
-                    report_codes.FORCE_LOAD_NODES_FROM_CIB, force
-                ),
+                reports.item.get_severity(report_codes.FORCE, force),
                 reports.messages.CibLoadErrorGetNodesForValidation(),
             )
         )

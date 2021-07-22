@@ -71,7 +71,7 @@ def _check_if_atb_can_be_disabled(
         report_processor.report(
             ReportItem(
                 severity=reports.item.get_severity(
-                    reports.codes.FORCE_OPTIONS,
+                    reports.codes.FORCE,
                     force,
                 ),
                 message=(

@@ -638,9 +638,7 @@ def resource_refresh(
         if operations > __RESOURCE_REFRESH_OPERATION_COUNT_THRESHOLD:
             raise LibraryError(
                 ReportItem(
-                    reports.item.ReportItemSeverity.error(
-                        reports.codes.FORCE_LOAD_THRESHOLD
-                    ),
+                    reports.item.ReportItemSeverity.error(reports.codes.FORCE),
                     reports.messages.ResourceRefreshTooTimeConsuming(
                         __RESOURCE_REFRESH_OPERATION_COUNT_THRESHOLD
                     ),

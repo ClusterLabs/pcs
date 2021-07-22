@@ -332,7 +332,7 @@ def _validate_target_valuewise(
                         force_code=(
                             None
                             if force_node or not allow_force
-                            else report_codes.FORCE_NODE_DOES_NOT_EXIST
+                            else report_codes.FORCE
                         ),
                     ),
                     message=reports.messages.NodeNotFound(target_value),
@@ -375,7 +375,7 @@ def _validate_devices(
                     force_code=(
                         None
                         if force_device or not allow_force
-                        else report_codes.FORCE_STONITH_RESOURCE_DOES_NOT_EXIST
+                        else report_codes.FORCE
                     ),
                 ),
                 message=reports.messages.StonithResourcesDoNotExist(

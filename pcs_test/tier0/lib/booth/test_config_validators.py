@@ -168,7 +168,7 @@ class AddTicket(TestCase):
             [
                 fixture.error(
                     report_codes.INVALID_OPTIONS,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_names=["unknown"],
                     **self.invalid_option_report_args,
                 ),

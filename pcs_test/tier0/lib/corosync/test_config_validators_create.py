@@ -123,7 +123,7 @@ class Create(TestCase):
             [
                 fixture.error(
                     report_codes.COROSYNC_CLUSTER_NAME_INVALID_FOR_GFS2,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     cluster_name=(33 * "a"),
                     max_length=32,
                     allowed_characters="a-z A-Z 0-9 _-",
@@ -144,7 +144,7 @@ class Create(TestCase):
             [
                 fixture.error(
                     report_codes.COROSYNC_CLUSTER_NAME_INVALID_FOR_GFS2,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     cluster_name="cluster.name",
                     max_length=32,
                     allowed_characters="a-z A-Z 0-9 _-",
@@ -462,7 +462,7 @@ class Create(TestCase):
             [
                 fixture.error(
                     report_codes.NODE_ADDRESSES_UNRESOLVABLE,
-                    force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                    force_code=report_codes.FORCE,
                     address_list=["addrX1", "addrX2"],
                 ),
                 fixture.error(
@@ -803,7 +803,7 @@ class Create(TestCase):
             [
                 fixture.error(
                     report_codes.COROSYNC_CLUSTER_NAME_INVALID_FOR_GFS2,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     cluster_name="test-{cluster",
                     max_length=32,
                     allowed_characters="a-z A-Z 0-9 _-",
@@ -842,7 +842,7 @@ class Create(TestCase):
                 ),
                 fixture.error(
                     report_codes.NODE_ADDRESSES_UNRESOLVABLE,
-                    force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                    force_code=report_codes.FORCE,
                     address_list=["addr\r01"],
                 ),
             ],

@@ -243,7 +243,7 @@ class MultipleResults(TestCase):
                 ],
                 result_type="resource",
                 search_description=REMOTE_HOST,
-                force_code=report_codes.FORCE_REMOVE_MULTIPLE_NODES,
+                force_code=report_codes.FORCE,
             )
             .as_warn(
                 "multiple_result_found",

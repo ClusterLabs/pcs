@@ -251,7 +251,7 @@ class ServiceAction(RunActionBase):
     def _init_properties(self):
         self._request_url = "remote/manage_services"
         self._response_key = "actions"
-        self._force_code = report_codes.SKIP_ACTION_ON_NODES_ERRORS
+        self._force_code = report_codes.FORCE
         self._code_message_map = {"fail": "Operation failed."}
 
     def _failure_report(
@@ -284,7 +284,7 @@ class FileActionBase(RunActionBase):
     # pylint: disable=abstract-method, too-many-ancestors
     def _init_properties(self):
         self._response_key = "files"
-        self._force_code = report_codes.SKIP_FILE_DISTRIBUTION_ERRORS
+        self._force_code = report_codes.FORCE
 
 
 class DistributeFiles(FileActionBase):

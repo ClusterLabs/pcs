@@ -1324,7 +1324,7 @@ class ResourceRefreshTest(TestCase):
             [
                 fixture.error(
                     report_codes.RESOURCE_REFRESH_TOO_TIME_CONSUMING,
-                    force_code=report_codes.FORCE_LOAD_THRESHOLD,
+                    force_code=report_codes.FORCE,
                     threshold=100,
                 )
             ],

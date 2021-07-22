@@ -22,9 +22,6 @@ def error(message: str) -> SystemExit:
 def prepare_force_text(report_item: ReportItem) -> str:
     force_text_map = {
         codes.SKIP_OFFLINE_NODES: ", use --skip-offline to override",
-        codes.FORCE_OVERWRITE: (
-            ", use --overwrite to overwrite existing file(s)"
-        ),
     }
     force_code = report_item.severity.force_code
     if force_code:

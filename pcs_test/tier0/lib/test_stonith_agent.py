@@ -59,7 +59,7 @@ class ValidateParameters(TestCase):
                 "option_type": "stonith",
                 "replaced_by": ["pcmk_off_action", "pcmk_reboot_action"],
             },
-            report_codes.FORCE_OPTIONS,
+            report_codes.FORCE,
         )
         self.report_warning = (
             severity.WARNING,

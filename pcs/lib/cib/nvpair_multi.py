@@ -177,7 +177,7 @@ class ValidateNvsetAppendNew:
             validate.NamesIn(
                 ("id", "score"),
                 severity=reports.item.get_severity(
-                    reports.codes.FORCE_OPTIONS, force_options
+                    reports.codes.FORCE, force_options
                 ),
             ),
             # with id_provider it validates that the id is available as well

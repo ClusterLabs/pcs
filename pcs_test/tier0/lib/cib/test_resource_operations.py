@@ -307,7 +307,7 @@ class ValidateOperation(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_value="monitro",
                     option_name="operation name",
                     allowed_values=["monitor"],

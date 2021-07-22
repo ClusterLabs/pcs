@@ -856,7 +856,7 @@ class Validation(TestCase):
                 ),
                 fixture.error(
                     reports.codes.NODE_ADDRESSES_UNRESOLVABLE,
-                    force_code=reports.codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                    force_code=reports.codes.FORCE,
                     address_list=["addr1", "node3", "node4"],
                 ),
                 fixture.error(
@@ -943,7 +943,7 @@ class Validation(TestCase):
             [
                 fixture.error(
                     reports.codes.COROSYNC_CLUSTER_NAME_INVALID_FOR_GFS2,
-                    force_code=reports.codes.FORCE_OPTIONS,
+                    force_code=reports.codes.FORCE,
                     cluster_name=cluster_name,
                     max_length=32,
                     allowed_characters="a-z A-Z 0-9 _-",
@@ -1016,7 +1016,7 @@ class Validation(TestCase):
             [
                 fixture.error(
                     reports.codes.NODE_ADDRESSES_UNRESOLVABLE,
-                    force_code=reports.codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                    force_code=reports.codes.FORCE,
                     address_list=["addr2"],
                 )
             ]
@@ -1572,7 +1572,7 @@ class Validation(TestCase):
                 fixture.error(
                     reports.codes.HOST_ALREADY_IN_CLUSTER_CONFIG,
                     host_name="node3",
-                    force_code=reports.codes.FORCE_ALREADY_IN_CLUSTER,
+                    force_code=reports.codes.FORCE,
                 ),
                 fixture.error(
                     reports.codes.SERVICE_NOT_INSTALLED,
@@ -1583,13 +1583,13 @@ class Validation(TestCase):
                     reports.codes.HOST_ALREADY_IN_CLUSTER_SERVICES,
                     host_name="node5",
                     service_list=["corosync", "pacemaker"],
-                    force_code=reports.codes.FORCE_ALREADY_IN_CLUSTER,
+                    force_code=reports.codes.FORCE,
                 ),
                 fixture.error(
                     reports.codes.HOST_ALREADY_IN_CLUSTER_SERVICES,
                     host_name="node6",
                     service_list=["pacemaker_remote"],
-                    force_code=reports.codes.FORCE_ALREADY_IN_CLUSTER,
+                    force_code=reports.codes.FORCE,
                 ),
                 fixture.error(
                     reports.codes.SERVICE_VERSION_MISMATCH,
@@ -1608,7 +1608,7 @@ class Validation(TestCase):
                 ),
                 fixture.error(
                     reports.codes.CLUSTER_WILL_BE_DESTROYED,
-                    force_code=reports.codes.FORCE_ALREADY_IN_CLUSTER,
+                    force_code=reports.codes.FORCE,
                 ),
             ]
         )
@@ -1890,11 +1890,11 @@ class Validation(TestCase):
                 fixture.error(
                     reports.codes.HOST_ALREADY_IN_CLUSTER_CONFIG,
                     host_name="node3",
-                    force_code=reports.codes.FORCE_ALREADY_IN_CLUSTER,
+                    force_code=reports.codes.FORCE,
                 ),
                 fixture.error(
                     reports.codes.CLUSTER_WILL_BE_DESTROYED,
-                    force_code=reports.codes.FORCE_ALREADY_IN_CLUSTER,
+                    force_code=reports.codes.FORCE,
                 ),
             ]
         )

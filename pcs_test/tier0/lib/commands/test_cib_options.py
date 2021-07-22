@@ -129,7 +129,7 @@ class DefaultsCreateMixin:
             [
                 fixture.error(
                     reports.codes.INVALID_OPTIONS,
-                    force_code=reports.codes.FORCE_OPTIONS,
+                    force_code=reports.codes.FORCE,
                     option_names=["unknown-option"],
                     allowed=["id", "score"],
                     option_type=None,
@@ -161,7 +161,7 @@ class DefaultsCreateMixin:
             self.env_assist.get_env(),
             {},
             {"unknown-option": "value"},
-            force_flags={reports.codes.FORCE_OPTIONS},
+            force_flags={reports.codes.FORCE},
         )
 
         self.env_assist.assert_reports(
@@ -192,7 +192,7 @@ class ResourceDefaultsCreate(DefaultsCreateMixin, TestCase):
                 {},
                 {},
                 "op monitor",
-                force_flags={reports.codes.FORCE_OPTIONS},
+                force_flags={reports.codes.FORCE},
             )
         )
         self.env_assist.assert_reports(
@@ -214,7 +214,7 @@ class ResourceDefaultsCreate(DefaultsCreateMixin, TestCase):
                 {},
                 {},
                 "defined attr",
-                force_flags={reports.codes.FORCE_OPTIONS},
+                force_flags={reports.codes.FORCE},
             )
         )
         self.env_assist.assert_reports(

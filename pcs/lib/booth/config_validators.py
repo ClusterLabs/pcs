@@ -126,7 +126,7 @@ def _validate_ticket_options(options, allow_unknown_options):
             option_type="booth ticket",
             banned_name_list=constants.GLOBAL_KEYS,
             severity=report.item.get_severity(
-                report_codes.FORCE_OPTIONS, allow_unknown_options
+                report_codes.FORCE, allow_unknown_options
             ),
         ),
     ] + [validate.ValueNotEmpty(option, None) for option in options]

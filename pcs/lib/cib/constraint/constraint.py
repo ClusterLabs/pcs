@@ -60,9 +60,7 @@ def find_valid_resource_id(
     raise LibraryError(
         ReportItem.error(
             report_msg,
-            # repair to clone is workaround for web ui, so we put only
-            # information about one forceable possibility
-            force_code=reports.codes.FORCE_CONSTRAINT_MULTIINSTANCE_RESOURCE,
+            force_code=reports.codes.FORCE,
         )
     )
 
@@ -147,7 +145,7 @@ def check_is_without_duplication(
             ),
             ReportItem(
                 severity=reports.item.get_severity(
-                    reports.codes.FORCE_CONSTRAINT_DUPLICATE,
+                    reports.codes.FORCE,
                     duplication_alowed,
                 ),
                 message=reports.messages.DuplicateConstraintsExist(

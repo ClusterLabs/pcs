@@ -614,7 +614,7 @@ def _find_resources_to_remove(
         if report_processor.report(
             ReportItem(
                 severity=reports.item.get_severity(
-                    reports.codes.FORCE_REMOVE_MULTIPLE_NODES,
+                    reports.codes.FORCE,
                     allow_remove_multiple_nodes,
                 ),
                 message=reports.messages.MultipleResultsFound(

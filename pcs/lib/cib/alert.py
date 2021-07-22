@@ -65,7 +65,7 @@ def ensure_recipient_value_is_unique(
         reporter.report(
             ReportItem(
                 severity=reports.item.get_severity(
-                    reports.codes.FORCE_ALERT_RECIPIENT_VALUE_NOT_UNIQUE,
+                    reports.codes.FORCE,
                     allow_duplicity,
                 ),
                 message=reports.messages.CibAlertRecipientAlreadyExists(

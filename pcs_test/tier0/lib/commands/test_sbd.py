@@ -80,7 +80,7 @@ class ValidateSbdOptionsTest(TestCase):
             [
                 fixture.error(
                     reports.codes.INVALID_OPTION_VALUE,
-                    force_code=reports.codes.FORCE_OPTIONS,
+                    force_code=reports.codes.FORCE,
                     option_name="SBD_TIMEOUT_ACTION",
                     option_value="flush,noflush",
                     allowed_values=self.timeout_action_allowed_values,
@@ -129,7 +129,7 @@ class ValidateSbdOptionsTest(TestCase):
                     option_type=None,
                     allowed=self.allowed_sbd_options,
                     allowed_patterns=[],
-                    force_code=reports.codes.FORCE_OPTIONS,
+                    force_code=reports.codes.FORCE,
                 ),
             ],
         )
@@ -209,7 +209,7 @@ class ValidateSbdOptionsTest(TestCase):
                     option_type=None,
                     allowed=self.allowed_sbd_options,
                     allowed_patterns=[],
-                    force_code=reports.codes.FORCE_OPTIONS,
+                    force_code=reports.codes.FORCE,
                 ),
             ],
         )

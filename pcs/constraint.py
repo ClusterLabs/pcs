@@ -909,7 +909,7 @@ def _verify_node_name(node, existing_nodes):
         report_list.append(
             ReportItem.error(
                 reports.messages.NodeNotFound(node),
-                force_code=reports.codes.FORCE_NODE_DOES_NOT_EXIST,
+                force_code=reports.codes.FORCE,
             )
         )
     return report_list

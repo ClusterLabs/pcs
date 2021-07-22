@@ -307,7 +307,7 @@ class AddNodes(TestCase):
                 ),
                 fixture.error(
                     report_codes.NODE_ADDRESSES_UNRESOLVABLE,
-                    force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                    force_code=report_codes.FORCE,
                     address_list=["addrX1", "addrX2", "addrX3"],
                 ),
                 fixture.error(
@@ -613,7 +613,7 @@ class AddNodes(TestCase):
                 ),
                 fixture.error(
                     report_codes.NODE_ADDRESSES_UNRESOLVABLE,
-                    force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                    force_code=report_codes.FORCE,
                     address_list=["addrX1"],
                 ),
                 fixture.error(
@@ -647,7 +647,7 @@ class AddNodes(TestCase):
                 ),
                 fixture.error(
                     report_codes.NODE_ADDRESSES_UNRESOLVABLE,
-                    force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                    force_code=report_codes.FORCE,
                     address_list=["\raddr03\n"],
                 ),
             ],

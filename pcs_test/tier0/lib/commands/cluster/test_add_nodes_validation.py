@@ -428,7 +428,7 @@ class Inputs(TestCase):
                 ),
                 fixture.error(
                     reports.codes.NODE_ADDRESSES_UNRESOLVABLE,
-                    force_code=reports.codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                    force_code=reports.codes.FORCE,
                     address_list=[
                         "addr1-2",
                         "guest-host",
@@ -491,11 +491,11 @@ class Inputs(TestCase):
                 ),
                 fixture.error(
                     reports.codes.CIB_LOAD_ERROR_GET_NODES_FOR_VALIDATION,
-                    force_code=reports.codes.FORCE_LOAD_NODES_FROM_CIB,
+                    force_code=reports.codes.FORCE,
                 ),
                 fixture.error(
                     reports.codes.NODE_ADDRESSES_UNRESOLVABLE,
-                    force_code=reports.codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                    force_code=reports.codes.FORCE,
                     address_list=["new1"],
                 ),
             ]
@@ -1365,7 +1365,7 @@ class ClusterStatus(TestCase):
                     reports.codes.HOST_ALREADY_IN_CLUSTER_SERVICES,
                     host_name="new1",
                     service_list=["corosync", "pacemaker"],
-                    force_code=reports.codes.FORCE_ALREADY_IN_CLUSTER,
+                    force_code=reports.codes.FORCE,
                 ),
                 fixture.error(
                     reports.codes.SERVICE_NOT_INSTALLED,
@@ -1375,7 +1375,7 @@ class ClusterStatus(TestCase):
                 fixture.error(
                     reports.codes.HOST_ALREADY_IN_CLUSTER_CONFIG,
                     host_name="new3",
-                    force_code=reports.codes.FORCE_ALREADY_IN_CLUSTER,
+                    force_code=reports.codes.FORCE,
                 ),
                 fixture.error(
                     reports.codes.INVALID_RESPONSE_FORMAT,
@@ -1383,7 +1383,7 @@ class ClusterStatus(TestCase):
                 ),
                 fixture.error(
                     reports.codes.CLUSTER_WILL_BE_DESTROYED,
-                    force_code=reports.codes.FORCE_ALREADY_IN_CLUSTER,
+                    force_code=reports.codes.FORCE,
                 ),
             ]
         )

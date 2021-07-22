@@ -503,7 +503,7 @@ class Create(TestCase):
                     instance_attr_value="1",
                     agent_name="ocf:heartbeat:Dummy",
                     resource_id_list=["B", "X"],
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                 )
             ]
         )
@@ -1920,7 +1920,7 @@ class CreateInToBundle(TestCase):
                     report_codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
                     bundle_id="B",
                     inner_resource_id="A",
-                    force_code=report_codes.FORCE_RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
+                    force_code=report_codes.FORCE,
                 )
             ]
         )

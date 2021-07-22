@@ -1737,28 +1737,23 @@ def cluster_setup(lib, argv, modifiers):
     overwrite = modifiers.is_specified("--overwrite")
     try:
         corosync_conf_file.write(corosync_conf_data, can_overwrite=overwrite)
-    # TODO do not use LibraryError
     except pcs_file.FileAlreadyExists as e:
-        raise LibraryError(
-            reports.ReportItem.error(
-                message=reports.messages.FileAlreadyExists(
-                    e.metadata.file_type_code,
-                    e.metadata.path,
-                ),
-                force_code=reports.codes.FORCE_OVERWRITE,
-            )
-        ) from e
+        utils.err(
+            reports.messages.FileAlreadyExists(
+                e.metadata.file_type_code,
+                e.metadata.path,
+            ).message
+            + ", use --overwrite to overwrite existing file(s)"
+        )
     except pcs_file.RawFileError as e:
-        raise LibraryError(
-            reports.ReportItem.error(
-                reports.messages.FileIoError(
-                    e.metadata.file_type_code,
-                    e.action,
-                    e.reason,
-                    file_path=e.metadata.path,
-                )
-            )
-        ) from e
+        utils.err(
+            reports.messages.FileIoError(
+                e.metadata.file_type_code,
+                e.action,
+                e.reason,
+                file_path=e.metadata.path,
+            ).message
+        )
 
 
 def config_update(

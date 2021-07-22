@@ -343,7 +343,7 @@ class AddLink(TestCase):
             [
                 fixture.error(
                     report_codes.CIB_LOAD_ERROR_GET_NODES_FOR_VALIDATION,
-                    force_code=report_codes.FORCE_LOAD_NODES_FROM_CIB,
+                    force_code=report_codes.FORCE,
                 ),
             ]
         )
@@ -399,7 +399,7 @@ class AddLink(TestCase):
             [
                 fixture.error(
                     report_codes.NODE_ADDRESSES_UNRESOLVABLE,
-                    force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                    force_code=report_codes.FORCE,
                     address_list=list(self.node_addr_map.values()),
                 )
             ]

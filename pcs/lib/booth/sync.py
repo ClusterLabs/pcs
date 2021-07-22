@@ -65,7 +65,7 @@ def send_all_config_to_node(
             reporter.report(
                 raw_file_error_report(
                     e,
-                    force_code=report_codes.SKIP_UNREADABLE_CONFIG,
+                    force_code=report_codes.FORCE,
                     is_forced_or_warning=skip_wrong_config,
                 )
             )
@@ -73,7 +73,7 @@ def send_all_config_to_node(
             reporter.report_list(
                 config_file.parser_exception_to_report_list(
                     e,
-                    force_code=report_codes.SKIP_UNREADABLE_CONFIG,
+                    force_code=report_codes.FORCE,
                     is_forced_or_warning=skip_wrong_config,
                 )
             )

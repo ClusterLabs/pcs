@@ -138,7 +138,7 @@ def _validate_remote_connection(
     report_list.append(
         ReportItem(
             severity=reports.item.get_severity(
-                reports.codes.FORCE_NOT_SUITABLE_COMMAND,
+                reports.codes.FORCE,
                 allow_not_suitable_command,
             ),
             message=reports.messages.UseCommandNodeAddRemote(),
@@ -177,7 +177,7 @@ def _validate_guest_change(
     report_list.append(
         ReportItem(
             severity=reports.item.get_severity(
-                reports.codes.FORCE_NOT_SUITABLE_COMMAND,
+                reports.codes.FORCE,
                 allow_not_suitable_command,
             ),
             message=report_msg,
@@ -305,7 +305,7 @@ def create(
         default cib operations (specified in a resource agent)
     ensure_disabled -- is flag that keeps resource in target-role "Stopped"
     wait -- is flag for controlling waiting for pacemaker idle mechanism
-    allow_not_suitable_command -- flag for FORCE_NOT_SUITABLE_COMMAND
+    allow_not_suitable_command -- turn forceable errors into warnings
         a resource representing
         - pacemaker remote node (resource agent is ocf:pacemaker:remote)
         - or pacemaker guest node (contains meta attribute remote-node)
@@ -403,7 +403,7 @@ def create_as_clone(
         default cib operations (specified in a resource agent)
     ensure_disabled -- is flag that keeps resource in target-role "Stopped"
     wait -- is flag for controlling waiting for pacemaker idle mechanism
-    allow_not_suitable_command -- flag for FORCE_NOT_SUITABLE_COMMAND
+    allow_not_suitable_command -- turn forceable errors into warnings
     """
     resource_agent = get_agent(
         env.report_processor,
@@ -508,7 +508,7 @@ def create_in_group(
     put_after_adjacent -- is flag to put a newly create resource befor/after
         adjacent resource
     wait -- is flag for controlling waiting for pacemaker idle mechanism
-    allow_not_suitable_command -- flag for FORCE_NOT_SUITABLE_COMMAND
+    allow_not_suitable_command -- turn forceable errors into warnings
     """
     resource_agent = get_agent(
         env.report_processor,
@@ -604,9 +604,8 @@ def create_into_bundle(
         default cib operations (specified in a resource agent)
     ensure_disabled -- is flag that keeps resource in target-role "Stopped"
     wait -- is flag for controlling waiting for pacemaker idle mechanism
-    allow_not_suitable_command -- flag for FORCE_NOT_SUITABLE_COMMAND
-    allow_not_accessible_resource -- flag for
-        FORCE_RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE
+    allow_not_suitable_command -- turn forceable errors into warnings
+    allow_not_accessible_resource -- turn forceable errors into warnings
     """
     resource_agent = get_agent(
         env.report_processor,
@@ -659,7 +658,7 @@ def create_into_bundle(
             if env.report_processor.report(
                 ReportItem(
                     severity=reports.item.get_severity(
-                        reports.codes.FORCE_RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
+                        reports.codes.FORCE,
                         allow_not_accessible_resource,
                     ),
                     message=reports.messages.ResourceInBundleNotAccessible(

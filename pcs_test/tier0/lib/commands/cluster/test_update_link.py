@@ -132,7 +132,7 @@ class UpdateLink(TestCase):
             [
                 fixture.error(
                     report_codes.NODE_ADDRESSES_UNRESOLVABLE,
-                    force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                    force_code=report_codes.FORCE,
                     address_list=list(self.node_addr_map.values()),
                 )
             ]
@@ -302,7 +302,7 @@ class UpdateLinkKnet(TestCase):
                 ),
                 fixture.error(
                     report_codes.NODE_ADDRESSES_UNRESOLVABLE,
-                    force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                    force_code=report_codes.FORCE,
                     address_list=["addr-new"],
                 ),
                 fixture.error(
@@ -463,7 +463,7 @@ class UpdateLinkUdp(TestCase):
                 ),
                 fixture.error(
                     report_codes.NODE_ADDRESSES_UNRESOLVABLE,
-                    force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                    force_code=report_codes.FORCE,
                     address_list=["addr-new"],
                 ),
                 fixture.error(

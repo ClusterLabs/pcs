@@ -46,7 +46,7 @@ class FindValidResourceId(TestCase):
                 "parent_type": parent_type,
                 "parent_id": parent_id,
             },
-            report_codes.FORCE_CONSTRAINT_MULTIINSTANCE_RESOURCE,
+            report_codes.FORCE,
         )
 
     @staticmethod
@@ -273,7 +273,7 @@ class CheckIsWithoutDuplicationTest(TestCase):
                     {
                         "constraint_ids": ["duplicate_element"],
                     },
-                    report_codes.FORCE_CONSTRAINT_DUPLICATE,
+                    report_codes.FORCE,
                 ),
             ],
         )

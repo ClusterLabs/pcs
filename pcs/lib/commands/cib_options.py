@@ -104,10 +104,6 @@ def _defaults_create(
     nvset_rule: Optional[str] = None,
     force_flags: Container[reports.types.ForceCode] = (),
 ) -> None:
-    force = (reports.codes.FORCE in force_flags) or (
-        reports.codes.FORCE_OPTIONS in force_flags
-    )
-
     required_cib_version = None
     nice_to_have_cib_version = None
     if nvset_rule:
@@ -137,7 +133,7 @@ def _defaults_create(
         **validator_options,
     )
     if env.report_processor.report_list(
-        validator.validate(force_options=force)
+        validator.validate(force_options=reports.codes.FORCE in force_flags)
     ).has_errors:
         raise LibraryError()
 

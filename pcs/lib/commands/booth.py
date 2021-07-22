@@ -92,7 +92,7 @@ def config_setup(
         report_processor.report(
             ReportItem(
                 severity=reports.item.get_severity(
-                    reports.codes.FORCE_FILE_OVERWRITE,
+                    reports.codes.FORCE,
                     overwrite_existing,
                 ),
                 message=reports.messages.FileAlreadyExists(
@@ -173,7 +173,7 @@ def config_destroy(
         report_processor.report(
             raw_file_error_report(
                 e,
-                force_code=report_codes.FORCE_BOOTH_DESTROY,
+                force_code=report_codes.FORCE,
                 is_forced_or_warning=ignore_config_load_problems,
             )
         )
@@ -181,7 +181,7 @@ def config_destroy(
         report_processor.report_list(
             booth_env.config.parser_exception_to_report_list(
                 e,
-                force_code=report_codes.FORCE_BOOTH_DESTROY,
+                force_code=report_codes.FORCE,
                 is_forced_or_warning=ignore_config_load_problems,
             )
         )
@@ -198,7 +198,7 @@ def config_destroy(
                 report_processor.report(
                     raw_file_error_report(
                         e,
-                        force_code=report_codes.FORCE_BOOTH_DESTROY,
+                        force_code=report_codes.FORCE,
                         is_forced_or_warning=ignore_config_load_problems,
                     )
                 )
@@ -843,7 +843,7 @@ def _find_resource_elements_for_operation(
         report_processor.report(
             ReportItem(
                 severity=get_severity(
-                    report_codes.FORCE_BOOTH_REMOVE_FROM_CIB,
+                    report_codes.FORCE,
                     allow_multiple,
                 ),
                 message=reports.messages.BoothMultipleTimesInCib(

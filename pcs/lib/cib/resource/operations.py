@@ -118,9 +118,7 @@ def normalized_to_operations(normalized_pairs):
 def validate_operation_list(
     operation_list, allowed_operation_name_list, allow_invalid=False
 ):
-    severity = reports.item.get_severity(
-        reports.codes.FORCE_OPTIONS, allow_invalid
-    )
+    severity = reports.item.get_severity(reports.codes.FORCE, allow_invalid)
     option_type = "resource operation"
 
     validators = [

@@ -145,7 +145,7 @@ EXTRA_REPORTS = (
         report_codes.FILE_REMOVE_FROM_NODE_ERROR,
         reason="Access denied",
         file_description="pacemaker authkey",
-        force_code=report_codes.SKIP_FILE_DISTRIBUTION_ERRORS,
+        force_code=report_codes.FORCE,
     )
     .as_warn(
         "authkey_remove_failed",
@@ -156,7 +156,7 @@ EXTRA_REPORTS = (
         report_codes.SERVICE_COMMAND_ON_NODE_ERROR,
         reason="Operation failed.",
         service_command_description="pacemaker_remote disable",
-        force_code=report_codes.SKIP_ACTION_ON_NODES_ERRORS,
+        force_code=report_codes.FORCE,
     )
     .as_warn(
         "pcmk_remote_disable_failed",

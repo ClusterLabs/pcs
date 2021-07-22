@@ -374,7 +374,7 @@ class AddLink(TestCase):
             [
                 fixture.error(
                     report_codes.NODE_ADDRESSES_UNRESOLVABLE,
-                    force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                    force_code=report_codes.FORCE,
                     address_list=list(self.new_addrs.values())[:2],
                 )
             ],
@@ -615,7 +615,7 @@ class AddLink(TestCase):
                 ),
                 fixture.error(
                     report_codes.NODE_ADDRESSES_UNRESOLVABLE,
-                    force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                    force_code=report_codes.FORCE,
                     address_list=["addr1-new\n", "addr2{-}new"],
                 ),
                 fixture.error(
@@ -1093,7 +1093,7 @@ class UpdateLinkAddressesMixin:
             [
                 fixture.error(
                     report_codes.NODE_ADDRESSES_UNRESOLVABLE,
-                    force_code=report_codes.FORCE_NODE_ADDRESSES_UNRESOLVABLE,
+                    force_code=report_codes.FORCE,
                     address_list=["addr-new"],
                 ),
             ],

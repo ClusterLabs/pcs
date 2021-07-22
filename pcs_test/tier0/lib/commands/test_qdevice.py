@@ -404,7 +404,7 @@ class QdeviceNetDestroyTest(QdeviceTestCase):
                     {
                         "clusters": ["a_cluster"],
                     },
-                    report_codes.FORCE_QDEVICE_USED,
+                    report_codes.FORCE,
                 ),
             ],
         )
@@ -918,7 +918,7 @@ class QdeviceNetStopTest(QdeviceTestCase):
                     {
                         "clusters": ["a_cluster"],
                     },
-                    report_codes.FORCE_QDEVICE_USED,
+                    report_codes.FORCE,
                 ),
             ],
         )

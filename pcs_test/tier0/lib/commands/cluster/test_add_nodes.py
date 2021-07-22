@@ -2259,7 +2259,7 @@ class FailureFilesDistribution(TestCase):
             + [
                 fixture.error(
                     reports.codes.FILE_IO_ERROR,
-                    force_code=reports.codes.SKIP_FILE_DISTRIBUTION_ERRORS,
+                    force_code=reports.codes.FORCE,
                     file_type_code=file_type_codes.COROSYNC_AUTHKEY,
                     file_path=settings.corosync_authkey_file,
                     reason=(
@@ -2269,7 +2269,7 @@ class FailureFilesDistribution(TestCase):
                 ),
                 fixture.error(
                     reports.codes.FILE_IO_ERROR,
-                    force_code=reports.codes.SKIP_FILE_DISTRIBUTION_ERRORS,
+                    force_code=reports.codes.FORCE,
                     file_type_code=file_type_codes.PACEMAKER_AUTHKEY,
                     file_path=settings.pacemaker_authkey_file,
                     reason=(
@@ -2279,7 +2279,7 @@ class FailureFilesDistribution(TestCase):
                 ),
                 fixture.error(
                     reports.codes.FILE_IO_ERROR,
-                    force_code=reports.codes.SKIP_FILE_DISTRIBUTION_ERRORS,
+                    force_code=reports.codes.FORCE,
                     file_type_code=file_type_codes.PCS_DR_CONFIG,
                     file_path=settings.pcsd_dr_config_location,
                     reason=(
@@ -2787,7 +2787,7 @@ class FailureBoothConfigsDistribution(TestCase):
             + [
                 fixture.error(
                     reports.codes.FILE_IO_ERROR,
-                    force_code=reports.codes.SKIP_UNREADABLE_CONFIG,
+                    force_code=reports.codes.FORCE,
                     file_type_code=file_type_codes.BOOTH_CONFIG,
                     file_path=self.config_path,
                     reason=self.err_msg,
@@ -2938,7 +2938,7 @@ class FailureBoothConfigsDistribution(TestCase):
             + [
                 fixture.error(
                     reports.codes.FILE_IO_ERROR,
-                    force_code=reports.codes.SKIP_UNREADABLE_CONFIG,
+                    force_code=reports.codes.FORCE,
                     file_type_code=file_type_codes.BOOTH_KEY,
                     file_path=self.authfile_path,
                     reason=self.err_msg,

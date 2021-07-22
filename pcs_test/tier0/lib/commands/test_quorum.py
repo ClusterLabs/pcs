@@ -238,7 +238,7 @@ class CheckIfAtbCanBeDisabledTest(TestCase):
         self.mock_corosync_conf.is_enabled_auto_tie_breaker.return_value = False
         report_item = fixture.error(
             report_codes.COROSYNC_QUORUM_ATB_CANNOT_BE_DISABLED_DUE_TO_SBD,
-            force_code=report_codes.FORCE_OPTIONS,
+            force_code=report_codes.FORCE,
         )
         assert_raise_library_error(
             lambda: lib._check_if_atb_can_be_disabled(
@@ -760,7 +760,7 @@ class AddDeviceNetTest(TestCase):
             [
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_QDEVICE_MODEL,
+                    force_code=report_codes.FORCE,
                     option_name="model",
                     option_value="bad model",
                     allowed_values=["net"],
@@ -788,7 +788,7 @@ class AddDeviceNetTest(TestCase):
             [
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_QDEVICE_MODEL,
+                    force_code=report_codes.FORCE,
                     option_name="model",
                     option_value="bad model",
                     allowed_values=["net"],
@@ -1396,7 +1396,7 @@ class AddDeviceNetTest(TestCase):
             [
                 fixture.error(
                     report_codes.INVALID_OPTIONS,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_names=["bad_option"],
                     option_type="quorum device",
                     allowed=["sync_timeout", "timeout"],
@@ -1404,7 +1404,7 @@ class AddDeviceNetTest(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_name="mode",
                     option_value="bad-mode",
                     allowed_values=("off", "on", "sync"),
@@ -1413,7 +1413,7 @@ class AddDeviceNetTest(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTIONS,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_names=["bad_heur"],
                     option_type="heuristics",
                     allowed=["interval", "mode", "sync_timeout", "timeout"],
@@ -1584,7 +1584,7 @@ class AddDeviceNetTest(TestCase):
             [
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_QDEVICE_MODEL,
+                    force_code=report_codes.FORCE,
                     option_name="model",
                     option_value="bad_model",
                     allowed_values=["net"],
@@ -2995,11 +2995,11 @@ class UpdateDeviceTest(TestCase):
                         "allowed": ["sync_timeout", "timeout"],
                         "allowed_patterns": [],
                     },
-                    report_codes.FORCE_OPTIONS,
+                    report_codes.FORCE,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE_OPTIONS,
+                    force_code=report_codes.FORCE,
                     option_name="mode",
                     option_value="bad mode",
                     allowed_values=("off", "on", "sync"),
