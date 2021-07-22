@@ -136,12 +136,15 @@ def nodes_status(lib, argv, modifiers):
                         standbynodes_with_resources.append(node_name)
                     else:
                         standbynodes.append(node_name)
-            elif node.getAttribute("maintenance") == "true":
+            if node.getAttribute("maintenance") == "true":
                 if node_remote:
                     remote_maintenancenodes.append(node_name)
                 else:
                     maintenancenodes.append(node_name)
-            else:
+            if (
+                node.getAttribute("standby") == "false"
+                and node.getAttribute("maintenance") == "false"
+            ):
                 if node_remote:
                     remote_onlinenodes.append(node_name)
                 else:

@@ -29,6 +29,8 @@
   ([rhbz#1678273])
 - Exit with an error if `on-fail=demote` is specified for a resource operation
   and pacemaker doesn't support it
+- The `pcs status nodes` command now correctly shows status of nodes that are
+  both in maintenance and standby modes ([rhbz#1432097])
 
 ### Changed
 - python3-openssl was replaced with python3-cryptography ([rhbz#1927404])
@@ -61,6 +63,7 @@
 [ghissue#123]: https://github.com/ClusterLabs/pcs/issues/123
 [rhbz#1285269]: https://bugzilla.redhat.com/show_bug.cgi?id=1285269
 [rhbz#1290830]: https://bugzilla.redhat.com/show_bug.cgi?id=1290830
+[rhbz#1432097]: https://bugzilla.redhat.com/show_bug.cgi?id=1432097
 [rhbz#1678273]: https://bugzilla.redhat.com/show_bug.cgi?id=1678273
 [rhbz#1690419]: https://bugzilla.redhat.com/show_bug.cgi?id=1690419
 [rhbz#1720221]: https://bugzilla.redhat.com/show_bug.cgi?id=1720221
