@@ -57,6 +57,7 @@ def remote(params, request, auth_user)
       :node_unstandby => method(:node_unstandby),
       :cluster_enable => method(:cluster_enable),
       :cluster_disable => method(:cluster_disable),
+      :set_corosync_notifyd_enabled => method(:set_corosync_notifyd_enabled),
       # TODO deprecated, remove, not used anymore
       :resource_status => method(:resource_status),
       :get_sw_versions => method(:get_sw_versions),
@@ -500,6 +501,26 @@ def cluster_disable(params, request, auth_user)
     end
     return "Cluster Disabled"
   end
+end
+
+def set_corosync_notifyd_enabled(params, request, auth_user)
+  if not allowed_for_local_cluster(auth_user, Permissions::GRANT)
+    return 403, 'Permission denied'
+  end
+  if params[:corosync_notifyd_enabled] != nil and params[:corosync_notifyd_enabled].strip != ""
+    data = params[:corosync_notifyd_enabled]
+  else
+    $logger.info "Invalid corosync_notifyd_enabled"
+    return 400, "Failed"
+  end
+  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
+  pcs_config.corosync_notifyd_enabled = data
+  sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
+  pushed, _ = Cfgsync::save_sync_new_version(
+    sync_config, get_corosync_nodes_names(), $cluster_name, true
+  )
+  return [200, 'corosync_notifyd_enabled saved'] if pushed
+  return 400, 'Unable to save corosync_notifyd_enabled'
 end
 
 def get_quorum_info(params, request, auth_user)

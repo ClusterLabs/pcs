@@ -118,6 +118,50 @@ def cluster_enable_cmd(lib, argv, modifiers):
         enable_cluster(argv)
 
 
+def corosync_notifyd_disable_cmd(lib, argv, modifiers):
+    del lib
+    all_nodes, report_list = get_existing_nodes_names(
+        utils.get_corosync_conf_facade()
+    )
+    if not all_nodes:
+        report_list.append(
+            reports.ReportItem.error(
+                reports.messages.CorosyncConfigNoNodesDefined()
+            )
+        )
+    if report_list:
+        process_library_reports(report_list)
+    for node in all_nodes:
+        retval, output = utils.set_corosync_notifyd_enabled(node, "false")
+        if retval != 0:
+            utils.err(output)
+        else:
+            print(output.rstrip())
+            return
+
+
+def corosync_notifyd_enable_cmd(lib, argv, modifiers):
+    del lib
+    all_nodes, report_list = get_existing_nodes_names(
+        utils.get_corosync_conf_facade()
+    )
+    if not all_nodes:
+        report_list.append(
+            reports.ReportItem.error(
+                reports.messages.CorosyncConfigNoNodesDefined()
+            )
+        )
+    if report_list:
+        process_library_reports(report_list)
+    for node in all_nodes:
+        retval, output = utils.set_corosync_notifyd_enabled(node, "true")
+        if retval != 0:
+            utils.err(output)
+        else:
+            print(output.rstrip())
+            return
+
+
 def cluster_stop_cmd(lib, argv, modifiers):
     """
     Options:
@@ -260,6 +304,8 @@ def start_cluster(argv):
     service_list = ["corosync"]
     if utils.need_to_handle_qdevice_service():
         service_list.append("corosync-qdevice")
+    if utils.need_to_handle_corosync_notifyd():
+        service_list.append("corosync-notifyd")
     service_list.append("pacemaker")
     for service in service_list:
         utils.start_service(service)
@@ -695,6 +741,8 @@ def stop_cluster_corosync():
     service_list = []
     if utils.need_to_handle_qdevice_service():
         service_list.append("corosync-qdevice")
+    if utils.need_to_handle_corosync_notifyd():
+        service_list.append("corosync-notifyd")
     service_list.append("corosync")
     for service in service_list:
         utils.stop_service(service)
@@ -735,6 +783,7 @@ def kill_local_cluster_services():
         "gfs_controld",
         # Corosync daemons
         "corosync-qdevice",
+        "corosync-notifyd",
         "corosync",
     ]
     return utils.run([settings.killall_executable, "-9"] + all_cluster_daemons)
@@ -1284,7 +1333,7 @@ def cluster_destroy(lib, argv, modifiers):
         destroy_cluster(corosync_nodes)
     else:
         print("Shutting down pacemaker/corosync services...")
-        for service in ["pacemaker", "corosync-qdevice", "corosync"]:
+        for service in ["pacemaker", "corosync-qdevice", "corosync-notifyd", "corosync"]:
             try:
                 utils.stop_service(service)
             except LibraryError:

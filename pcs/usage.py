@@ -1013,6 +1013,14 @@ Commands:
         is not specified then cluster is disabled on the local node. If --all
         is specified then cluster is disabled on all nodes.
 
+    enable-corosync-notifyd
+        Configure corosync-notifyd to also start when cluster starts.
+
+    disable-corosync-notifyd
+        Configure corosync-notifyd not to start when cluster starts.
+        By default (unless you run 'pcs cluster enable-corosync-notifyd'),
+        corosync-notifyd will not be start when cluster starts.
+
     auth [-u <username>] [-p <password>]
         Authenticate pcs/pcsd to pcsd on nodes configured in the local cluster.
 
