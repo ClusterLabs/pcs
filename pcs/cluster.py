@@ -1239,9 +1239,19 @@ def cluster_destroy(lib, argv, modifiers):
     """
     # pylint: disable=bare-except
     del lib
-    modifiers.ensure_only_supported("--all", "--request-timeout")
+    modifiers.ensure_only_supported("--all", "--request-timeout", "--force")
     if argv:
         raise CmdLineInputError()
+    if utils.is_run_interactive() and not modifiers.get("--force"):
+        warn(
+            "It is recommended to run 'pcs cluster stop' before "
+            "destroying the cluster."
+        )
+        if not utils.get_continue_confirmation(
+            "This would kill all cluster processes and then PERMANENTLY remove "
+            "cluster state and configuration"
+        ):
+            return
     if modifiers.get("--all"):
         # load data
         cib = None

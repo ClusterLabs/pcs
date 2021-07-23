@@ -504,16 +504,13 @@ def stonith_confirm(lib, argv, modifiers):
 
     node = argv.pop(0)
     if not modifiers.get("--force"):
-        answer = utils.get_terminal_input(
+        if not utils.get_continue_confirmation_or_force(
             (
-                "WARNING: If node {node} is not powered off or it does"
-                + " have access to shared resources, data corruption and/or"
-                + " cluster failure may occur. Are you sure you want to"
-                + " continue? [y/N] "
+                "If node {node} is not powered off or it does have access "
+                "to shared resources, data corruption and/or cluster failure "
+                "may occur"
             ).format(node=node)
-        )
-        if answer.lower() not in ["y", "yes"]:
-            print("Canceled")
+        ):
             return
     args = ["stonith_admin", "-C", node]
     output, retval = utils.run(args)
@@ -586,11 +583,10 @@ def sbd_watchdog_test(lib, argv, modifiers):
     modifiers.ensure_only_supported()
     if len(argv) > 1:
         raise CmdLineInputError()
-    print(
-        "Warning: This operation is expected to force-reboot this system "
-        "without following any shutdown procedures."
-    )
-    if utils.get_terminal_input("Proceed? [no/yes]: ") != "yes":
+    if not utils.get_continue_confirmation(
+        "This operation is expected to force-reboot this system without "
+        "following any shutdown procedures"
+    ):
         return
     watchdog = None
     if len(argv) == 1:
@@ -820,14 +816,12 @@ def sbd_setup_block_device(lib, argv, modifiers):
         raise CmdLineInputError("No device defined")
 
     if not modifiers.get("--force"):
-        answer = utils.get_terminal_input(
+        if not utils.get_continue_confirmation_or_force(
             (
-                "WARNING: All current content on device(s) '{device}' will be"
-                + " overwritten. Are you sure you want to continue? [y/N] "
+                "All current content on device(s) '{device}' will be "
+                "overwritten."
             ).format(device="', '".join(device_list))
-        )
-        if answer.lower() not in ["y", "yes"]:
-            print("Canceled")
+        ):
             return
 
     lib.sbd.initialize_block_devices(

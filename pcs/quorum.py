@@ -290,16 +290,13 @@ def quorum_unblock_cmd(lib, argv, modifiers):
     if not unjoined_nodes:
         utils.err("no unjoined nodes found")
     if not modifiers.get("--force"):
-        answer = utils.get_terminal_input(
+        if not utils.get_continue_confirmation_or_force(
             (
-                "WARNING: If node(s) {nodes} are not powered off or they do"
-                + " have access to shared resources, data corruption and/or"
-                + " cluster failure may occur. Are you sure you want to"
-                + " continue? [y/N] "
+                "If node(s) {nodes} are not powered off or they do have access "
+                "to shared resources, data corruption and/or cluster failure "
+                "may occur"
             ).format(nodes=", ".join(unjoined_nodes))
-        )
-        if answer.lower() not in ["y", "yes"]:
-            print_to_stderr("Canceled")
+        ):
             return
     for node in unjoined_nodes:
         # pass --force so no warning will be displayed
