@@ -800,7 +800,7 @@ class RunExternalProcessStarted(ReportItemMessage):
     """
 
     command: str
-    stdin: str
+    stdin: Optional[str]
     environment: Mapping[str, str]
     _code = codes.RUN_EXTERNAL_PROCESS_STARTED
 

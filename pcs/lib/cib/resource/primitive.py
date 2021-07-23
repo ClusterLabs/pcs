@@ -1,3 +1,5 @@
+from typing import Iterable, Mapping, Optional
+
 from lxml import etree
 
 from pcs.common import reports
@@ -53,7 +55,7 @@ def create(
     id_provider,
     resource_id,
     resource_agent,
-    raw_operation_list=None,
+    raw_operation_list: Optional[Iterable[Mapping[str, str]]] = None,
     meta_attributes=None,
     instance_attributes=None,
     allow_invalid_operation=False,
@@ -103,7 +105,7 @@ def create(
         resource_agent.get_cib_default_actions(
             necessary_only=not use_default_operations
         ),
-        [operation["name"] for operation in resource_agent.get_actions()],
+        [operation.name for operation in resource_agent.get_actions()],
         allow_invalid=allow_invalid_operation,
     )
 
@@ -194,9 +196,9 @@ def validate_unique_instance_attributes(
 ):
     report_list = []
     ra_unique_attributes = [
-        param["name"]
-        for param in resource_agent.get_parameters()
-        if param["unique"]
+        param.name
+        for param in resource_agent.get_full_info().parameters
+        if param.unique
     ]
     same_agent_resources = find_primitives_by_agent(
         resources_section, resource_agent
@@ -223,7 +225,7 @@ def validate_unique_instance_attributes(
                     message=reports.messages.ResourceInstanceAttrValueNotUnique(
                         attr,
                         instance_attributes[attr],
-                        resource_agent.get_name(),
+                        resource_agent.get_name_info().name,
                         sorted(conflicting_resources),
                     ),
                 )

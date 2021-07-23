@@ -193,13 +193,27 @@ class ValidateParametersUpdate(ValidateParameters):
 @mock.patch.object(lib_ra.StonithAgent, "get_actions")
 class StonithAgentMetadataGetCibDefaultActions(TestCase):
     fixture_actions = [
-        {"name": "custom1", "timeout": "40s"},
-        {"name": "custom2", "interval": "25s", "timeout": "60s"},
-        {"name": "meta-data"},
-        {"name": "monitor", "interval": "10s", "timeout": "30s"},
-        {"name": "start", "interval": "40s"},
-        {"name": "status", "interval": "15s", "timeout": "20s"},
-        {"name": "validate-all"},
+        lib_ra.AgentActionDto(
+            "custom1", "40s", None, None, None, None, None, None, None
+        ),
+        lib_ra.AgentActionDto(
+            "custom2", "60s", "25s", None, None, None, None, None, None
+        ),
+        lib_ra.AgentActionDto(
+            "meta-data", None, None, None, None, None, None, None, None
+        ),
+        lib_ra.AgentActionDto(
+            "monitor", "30s", "10s", None, None, None, None, None, None
+        ),
+        lib_ra.AgentActionDto(
+            "start", None, "40s", None, None, None, None, None, None
+        ),
+        lib_ra.AgentActionDto(
+            "status", "20s", "15s", None, None, None, None, None, None
+        ),
+        lib_ra.AgentActionDto(
+            "validate-all", None, None, None, None, None, None, None, None
+        ),
     ]
 
     def setUp(self):
@@ -210,13 +224,21 @@ class StonithAgentMetadataGetCibDefaultActions(TestCase):
     def test_select_only_actions_for_cib(self, get_actions):
         get_actions.return_value = self.fixture_actions
         self.assertEqual(
-            [{"name": "monitor", "interval": "10s", "timeout": "30s"}],
+            [
+                lib_ra.AgentActionDto(
+                    "monitor", "30s", "10s", None, None, None, None, None, None
+                )
+            ],
             self.agent.get_cib_default_actions(),
         )
 
     def test_select_only_necessary_actions_for_cib(self, get_actions):
         get_actions.return_value = self.fixture_actions
         self.assertEqual(
-            [{"name": "monitor", "interval": "10s", "timeout": "30s"}],
+            [
+                lib_ra.AgentActionDto(
+                    "monitor", "30s", "10s", None, None, None, None, None, None
+                )
+            ],
             self.agent.get_cib_default_actions(necessary_only=True),
         )

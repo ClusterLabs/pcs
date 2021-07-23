@@ -7,9 +7,12 @@ from pcs_test.tools.assertions import assert_report_item_list_equal
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 from pcs_test.tools.misc import create_patcher
 
-from pcs.common.reports import codes as report_codes
+from pcs.common.reports import (
+    codes as report_codes,
+    ReportItemSeverity as severities,
+)
 from pcs.lib.cib.resource import operations
-from pcs.common.reports import ReportItemSeverity as severities
+from pcs.lib.resource_agent import AgentActionDto
 from pcs.lib.validate import ValuePair
 
 # pylint: disable=no-self-use
@@ -17,8 +20,8 @@ from pcs.lib.validate import ValuePair
 patch_operations = create_patcher("pcs.lib.cib.resource.operations")
 
 
-@patch_operations("get_remaining_defaults")
-@patch_operations("complete_all_intervals")
+@patch_operations("_get_remaining_defaults")
+@patch_operations("_complete_all_intervals")
 @patch_operations("validate_different_intervals")
 @patch_operations("validate_operation_list")
 @patch_operations("normalized_to_operations")
@@ -140,9 +143,10 @@ class ValidateDifferentIntervals(TestCase):
 
 class MakeUniqueIntervals(TestCase):
     def setUp(self):
+        # pylint: disable=protected-access
         self.report_processor = MockLibraryReportProcessor()
         self.run = partial(
-            operations.make_unique_intervals, self.report_processor
+            operations._make_unique_intervals, self.report_processor
         )
 
     def test_return_copy_input_when_no_interval_duplication(self):
@@ -445,16 +449,40 @@ class ValidateOperation(TestCase):
 
 
 class GetRemainingDefaults(TestCase):
-    @mock.patch("pcs.lib.cib.resource.operations.make_unique_intervals")
-    def test_returns_remining_operations(self, make_unique_intervals):
+    @mock.patch("pcs.lib.cib.resource.operations._make_unique_intervals")
+    def test_returns_remaining_operations(self, make_unique_intervals):
+        # pylint: disable=protected-access
         make_unique_intervals.side_effect = (
             lambda report_processor, operations: operations
         )
         self.assertEqual(
-            operations.get_remaining_defaults(
+            operations._get_remaining_defaults(
                 report_processor=None,
                 operation_list=[{"name": "monitor"}],
-                default_operation_list=[{"name": "monitor"}, {"name": "start"}],
+                default_operation_list=[
+                    AgentActionDto(
+                        "monitor",
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                    ),
+                    AgentActionDto(
+                        "start",
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                    ),
+                ],
             ),
             [{"name": "start"}],
         )

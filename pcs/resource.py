@@ -594,7 +594,7 @@ def _format_agent_description(description, stonith=False, show_all=False):
                 [
                     "{0}={1}".format(name, value)
                     for name, value in sorted(action.items())
-                    if name != "name"
+                    if name != "name" and value is not None
                 ]
             )
             output_actions.append(" ".join(parts))
@@ -3449,7 +3449,7 @@ def get_resource_agent_info(lib, argv, modifiers):
 
     try:
         metadata = lib_ra.ResourceAgent(runner, agent)
-        print(json.dumps(metadata.get_full_info()))
+        print(json.dumps(lib_ra.metadata_dto_to_dict(metadata.get_full_info())))
     except lib_ra.ResourceAgentError as e:
         process_library_reports([lib_ra.resource_agent_error_to_report_item(e)])
 

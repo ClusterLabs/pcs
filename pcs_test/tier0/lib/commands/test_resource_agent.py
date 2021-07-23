@@ -153,6 +153,7 @@ class TestListAgents(TestCase):
                     "longdesc": "",
                     "parameters": [],
                     "actions": [],
+                    "default_actions": [],
                 },
                 {
                     "name": "ocf:test:Stateful",
@@ -160,6 +161,7 @@ class TestListAgents(TestCase):
                     "longdesc": "",
                     "parameters": [],
                     "actions": [],
+                    "default_actions": [],
                 },
                 {
                     "name": "service:corosync",
@@ -167,6 +169,7 @@ class TestListAgents(TestCase):
                     "longdesc": "",
                     "parameters": [],
                     "actions": [],
+                    "default_actions": [],
                 },
                 {
                     "name": "service:pacemaker_remote",
@@ -174,6 +177,7 @@ class TestListAgents(TestCase):
                     "longdesc": "",
                     "parameters": [],
                     "actions": [],
+                    "default_actions": [],
                 },
             ],
         )
@@ -188,6 +192,7 @@ class TestListAgents(TestCase):
                     "longdesc": "",
                     "parameters": [],
                     "actions": [],
+                    "default_actions": [],
                 },
                 {
                     "name": "ocf:test:Stateful",
@@ -195,6 +200,7 @@ class TestListAgents(TestCase):
                     "longdesc": "",
                     "parameters": [],
                     "actions": [],
+                    "default_actions": [],
                 },
                 {
                     "name": "service:pacemaker_remote",
@@ -202,16 +208,19 @@ class TestListAgents(TestCase):
                     "longdesc": "",
                     "parameters": [],
                     "actions": [],
+                    "default_actions": [],
                 },
             ],
         )
 
     @mock.patch.object(lib_ra.Agent, "_get_metadata", autospec=True)
     def test_describe(self, mock_metadata):
+        self.maxDiff = None
+
         def mock_metadata_func(self):
-            if self.get_name() == "ocf:test:Stateful":
+            if self._get_name() == "ocf:test:Stateful":
                 raise lib_ra.UnableToGetAgentMetadata(
-                    self.get_name(), "test exception"
+                    self._get_name(), "test exception"
                 )
             return etree.XML(
                 """
@@ -224,7 +233,7 @@ class TestListAgents(TestCase):
                     </actions>
                 </resource-agent>
             """.format(
-                    name=self.get_name()
+                    name=self._get_name()
                 )
             )
 
@@ -240,6 +249,7 @@ class TestListAgents(TestCase):
                     "longdesc": "long ocf:test:Delay",
                     "parameters": [],
                     "actions": [],
+                    "default_actions": [{"interval": "60s", "name": "monitor"}],
                 },
                 {
                     "name": "service:corosync",
@@ -247,6 +257,7 @@ class TestListAgents(TestCase):
                     "longdesc": "long service:corosync",
                     "parameters": [],
                     "actions": [],
+                    "default_actions": [{"interval": "60s", "name": "monitor"}],
                 },
                 {
                     "name": "service:pacemaker_remote",
@@ -254,13 +265,14 @@ class TestListAgents(TestCase):
                     "longdesc": "long service:pacemaker_remote",
                     "parameters": [],
                     "actions": [],
+                    "default_actions": [{"interval": "60s", "name": "monitor"}],
                 },
             ],
         )
 
 
 class CompleteAgentList(TestCase):
-    def test_skip_agent_name_when_invalid_resource_agent_ame_raised(self):
+    def test_skip_agent_name_when_invalid_resource_agent_name_raised(self):
         # pylint: disable=too-few-public-methods, unused-argument, protected-access
         invalid_agent_name = (
             "systemd:lvm2-pvscan@252:2"  # suppose it is invalid
@@ -273,10 +285,19 @@ class CompleteAgentList(TestCase):
                 self.name = name
 
             def get_name_info(self):
-                return self.name
+                return lib_ra.AgentMetadataDto(self.name, "", "", [], [], [])
 
         self.assertEqual(
-            ["ocf:heartbeat:Dummy"],
+            [
+                {
+                    "name": "ocf:heartbeat:Dummy",
+                    "shortdesc": "",
+                    "longdesc": "",
+                    "parameters": [],
+                    "actions": [],
+                    "default_actions": [],
+                }
+            ],
             lib._complete_agent_list(
                 mock.MagicMock(),
                 ["ocf:heartbeat:Dummy", invalid_agent_name],
@@ -288,7 +309,9 @@ class CompleteAgentList(TestCase):
 
 
 @mock.patch.object(lib_ra.ResourceAgent, "_load_metadata", autospec=True)
-@mock.patch("pcs.lib.resource_agent.guess_exactly_one_resource_agent_full_name")
+@mock.patch(
+    "pcs.lib.resource_agent._guess_exactly_one_resource_agent_full_name"
+)
 @mock.patch.object(LibraryEnvironment, "cmd_runner", lambda self: "mock_runner")
 class TestDescribeAgent(TestCase):
     def setUp(self):
@@ -383,7 +406,7 @@ class DescribeAgentUtf8(TestCase):
                         ),
                         "name": "state-®",
                         "obsoletes": None,
-                        "pcs_deprecated_warning": "",
+                        "pcs_deprecated_warning": None,
                         "required": False,
                         "shortdesc": "State file: ®",
                         "type": "string",
@@ -391,7 +414,7 @@ class DescribeAgentUtf8(TestCase):
                     },
                     {
                         "advanced": True,
-                        "default": 0,
+                        "default": "0",
                         "deprecated": False,
                         "deprecated_by": [],
                         "longdesc": "Set to 1 to turn on resource agent tracing"
@@ -402,7 +425,7 @@ class DescribeAgentUtf8(TestCase):
                         "start.2012-11-27.08:37:08",
                         "name": "trace_ra",
                         "obsoletes": None,
-                        "pcs_deprecated_warning": "",
+                        "pcs_deprecated_warning": None,
                         "required": False,
                         "shortdesc": "Set to 1 to turn on resource agent "
                         "tracing (expect large output)",
@@ -418,7 +441,7 @@ class DescribeAgentUtf8(TestCase):
                         "tracing log",
                         "name": "trace_file",
                         "obsoletes": None,
-                        "pcs_deprecated_warning": "",
+                        "pcs_deprecated_warning": None,
                         "required": False,
                         "shortdesc": "Path to a file to store resource agent "
                         "tracing log",

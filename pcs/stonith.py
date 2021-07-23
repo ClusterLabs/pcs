@@ -545,7 +545,7 @@ def get_fence_agent_info(lib, argv, modifiers):
 
     try:
         metadata = lib_ra.StonithAgent(runner, agent[len("stonith:") :])
-        info = metadata.get_full_info()
+        info = lib_ra.metadata_dto_to_dict(metadata.get_full_info())
         info["name"] = "stonith:{0}".format(info["name"])
         print(json.dumps(info))
     except lib_ra.ResourceAgentError as e:

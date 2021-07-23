@@ -45,6 +45,7 @@ class TestListAgents(TestCase):
                     "longdesc": "",
                     "parameters": [],
                     "actions": [],
+                    "default_actions": [],
                 },
                 {
                     "name": "fence_dummy",
@@ -52,6 +53,7 @@ class TestListAgents(TestCase):
                     "longdesc": "",
                     "parameters": [],
                     "actions": [],
+                    "default_actions": [],
                 },
                 {
                     "name": "fence_xvm",
@@ -59,6 +61,7 @@ class TestListAgents(TestCase):
                     "longdesc": "",
                     "parameters": [],
                     "actions": [],
+                    "default_actions": [],
                 },
             ],
         )
@@ -73,6 +76,7 @@ class TestListAgents(TestCase):
                     "longdesc": "",
                     "parameters": [],
                     "actions": [],
+                    "default_actions": [],
                 },
                 {
                     "name": "fence_xvm",
@@ -80,6 +84,7 @@ class TestListAgents(TestCase):
                     "longdesc": "",
                     "parameters": [],
                     "actions": [],
+                    "default_actions": [],
                 },
             ],
         )
@@ -89,9 +94,9 @@ class TestListAgents(TestCase):
         self.maxDiff = None
 
         def mock_metadata_func(self):
-            if self.get_name() == "ocf:test:Stateful":
+            if self._get_name() == "ocf:test:Stateful":
                 raise lib_ra.UnableToGetAgentMetadata(
-                    self.get_name(), "test exception"
+                    self._get_name(), "test exception"
                 )
             return etree.XML(
                 """
@@ -104,7 +109,7 @@ class TestListAgents(TestCase):
                     </actions>
                 </resource-agent>
             """.format(
-                    name=self.get_name()
+                    name=self._get_name()
                 )
             )
 
@@ -120,6 +125,7 @@ class TestListAgents(TestCase):
                     "longdesc": "long fence_apc",
                     "parameters": [],
                     "actions": [],
+                    "default_actions": [{"interval": "60s", "name": "monitor"}],
                 },
                 {
                     "name": "fence_dummy",
@@ -127,6 +133,7 @@ class TestListAgents(TestCase):
                     "longdesc": "long fence_dummy",
                     "parameters": [],
                     "actions": [],
+                    "default_actions": [{"interval": "60s", "name": "monitor"}],
                 },
                 {
                     "name": "fence_xvm",
@@ -134,13 +141,14 @@ class TestListAgents(TestCase):
                     "longdesc": "long fence_xvm",
                     "parameters": [],
                     "actions": [],
+                    "default_actions": [{"interval": "60s", "name": "monitor"}],
                 },
             ],
         )
 
 
 @mock.patch.object(lib_ra.StonithAgent, "_load_metadata", autospec=True)
-@mock.patch.object(lib_ra.FencedMetadata, "get_parameters", lambda self: [])
+@mock.patch.object(lib_ra.FencedMetadata, "_get_parameters", lambda self: [])
 @mock.patch.object(LibraryEnvironment, "cmd_runner", lambda self: "mock_runner")
 class TestDescribeAgent(TestCase):
     def setUp(self):
