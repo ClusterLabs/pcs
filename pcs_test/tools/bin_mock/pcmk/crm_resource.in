@@ -1,5 +1,0 @@
-#!@PYTHON@
-
-from crm_resource import main
-
-main()
