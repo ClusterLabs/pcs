@@ -1,9 +1,0 @@
-lxml-stubs
-pylint==2.8.2
-astroid==2.6.0
-mypy==0.910
-black==21.6b0
-types-cryptography
-types-dataclasses
-types-pycurl
-types-python-dateutil
