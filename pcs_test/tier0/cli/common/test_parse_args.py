@@ -799,3 +799,29 @@ class InputModifiersTest(TestCase):
                 {"a": 1, "b": 2, "c": 3, "d": 4}
             ).ensure_not_incompatible("a", ["d", "b"])
         self.assertEqual(str(cm.exception), "'a' cannot be used with 'b', 'd'")
+
+    def test_dependencies_main_defined(self):
+        InputModifiers({"a": 1, "b": 2, "c": 3}).ensure_dependency_satisfied(
+            "a", ["x", "y"]
+        )
+
+    def test_dependencies_main_defined_with_deps(self):
+        InputModifiers(
+            {"a": 1, "b": 2, "c": 3, "d": 4}
+        ).ensure_dependency_satisfied("a", ["b", "c"])
+
+    def test_dependencies_missing_one(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            InputModifiers(
+                {"a": 1, "b": 2, "c": 3}
+            ).ensure_dependency_satisfied("x", ["c"])
+        self.assertEqual(str(cm.exception), "'c' cannot be used without 'x'")
+
+    def test_dependencies_missing_multiple(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            InputModifiers(
+                {"a": 1, "b": 2, "c": 3}
+            ).ensure_dependency_satisfied("x", ["c", "b", "d"])
+        self.assertEqual(
+            str(cm.exception), "'b', 'c' cannot be used without 'x'"
+        )

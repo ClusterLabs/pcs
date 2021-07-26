@@ -568,6 +568,29 @@ class InputModifiers:
                 )
             )
 
+    def ensure_dependency_satisfied(
+        self,
+        main_option: str,
+        dependent_options: Iterable[str],
+    ) -> None:
+        """
+        Raise a `CmdLineInputError` exception if any of `dependent_options` is
+        present without `main_option` being present.
+
+        main_option -- option on which `dependent_options` depend
+        dependent_options -- none of these options can be specified if
+            `main_option` was not
+        """
+        if main_option in self._defined_options:
+            return
+        disallowed = self._defined_options & set(dependent_options)
+        if disallowed:
+            raise CmdLineInputError(
+                "{} cannot be used without '{}'".format(
+                    format_list(sorted(disallowed)), main_option
+                )
+            )
+
     def is_specified(self, option: str) -> bool:
         return option in self._defined_options
 

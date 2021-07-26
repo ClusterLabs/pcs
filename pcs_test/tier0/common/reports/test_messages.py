@@ -4358,6 +4358,65 @@ class ResourceUnmoveUnbanPcmkSuccess(NameBuildTest):
         )
 
 
+class ResourceMoveConstraintCreated(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Location constraint to move resource 'R1' has been created",
+            reports.ResourceMoveConstraintCreated("R1"),
+        )
+
+
+class ResourceMoveConstraintRemoved(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Location constraint created to move resource 'R1' has "
+                "been removed"
+            ),
+            reports.ResourceMoveConstraintRemoved("R1"),
+        )
+
+
+class ResourceMoveAffectsOtherResources(NameBuildTest):
+    def test_multiple(self):
+        self.assert_message_from_report(
+            "Moving resource 'R1' affects resources: 'p0', 'p1', 'p2'",
+            reports.ResourceMoveAffectsOtherResources("R1", ["p2", "p0", "p1"]),
+        )
+
+    def test_single(self):
+        self.assert_message_from_report(
+            "Moving resource 'R1' affects resource: 'R2'",
+            reports.ResourceMoveAffectsOtherResources("R1", ["R2"]),
+        )
+
+
+class ResourceMoveAutocleanSimulationFailure(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Unable to ensure that moved resource 'R1' will stay located "
+                "on the same node after removing the constrained used for "
+                "moving the resource."
+            ),
+            reports.ResourceMoveAutocleanSimulationFailure(
+                "R1", others_affected=False
+            ),
+        )
+
+    def test_others_affected(self):
+        self.assert_message_from_report(
+            (
+                "Unable to ensure that moved resource 'R1' or other resources "
+                "will stay located on the same node after removing the "
+                "constrained used for moving the resource."
+            ),
+            reports.ResourceMoveAutocleanSimulationFailure(
+                "R1", others_affected=True
+            ),
+        )
+
+
 class ParseErrorJsonFile(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(

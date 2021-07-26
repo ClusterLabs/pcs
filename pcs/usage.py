@@ -364,8 +364,8 @@ Commands:
         monitoring the resource.  Using --full will give more detailed output.
         This is mainly used for debugging resources that fail to be monitored.
 
-    move <resource id> [destination node] [--master] [lifetime=<lifetime>]
-         [--wait[=n]]
+    move <resource id> [destination node] [--master]
+            [[lifetime=<lifetime>] | [--autodelete [--strict]]] [--wait[=n]]
         Move the resource off the node it is currently running on by creating
         a -INFINITY location constraint to ban the node. If destination node is
         specified the resource will be moved to that node by creating
@@ -378,6 +378,15 @@ Commands:
         cleared manually with 'pcs resource clear' or 'pcs constraint delete'.
         Lifetime is expected to be specified as ISO 8601 duration (see
         https://en.wikipedia.org/wiki/ISO_8601#Durations).
+
+        If --autodelete is specified, a constraint needed for moving the
+        resource will be automatically removed once the resource is running on
+        it's new location. The command will fail in case it is not possible to
+        verify that the resource will not be moved after deleting the
+        constraint. If --strict is specified, the command will also fail if
+        other resources would be affected.
+        NOTE: This feature is still being worked on and thus may be changed in
+        future.
 
         If --wait is specified, pcs will wait up to 'n' seconds for the
         resource to move and then return 0 on success or 1 on error. If 'n' is

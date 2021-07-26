@@ -1,6 +1,7 @@
 from typing import (
-    Optional,
     cast,
+    Mapping,
+    Optional,
 )
 
 from lxml.etree import _Element
@@ -413,7 +414,9 @@ class LibraryEnvironment:
     def is_corosync_conf_live(self):
         return self._corosync_conf_data is None
 
-    def cmd_runner(self) -> CommandRunner:
+    def cmd_runner(
+        self, env: Optional[Mapping[str, str]] = None
+    ) -> CommandRunner:
         runner_env = {
             # make sure to get output of external processes in English and ASCII
             "LC_ALL": "C",
@@ -431,6 +434,9 @@ class LibraryEnvironment:
                     self.report_processor, self._cib_data
                 )
             runner_env["CIB_file"] = self._cib_data_tmp_file.name
+
+        if env:
+            runner_env.update(env)
 
         return CommandRunner(self.logger, self.report_processor, runner_env)
 

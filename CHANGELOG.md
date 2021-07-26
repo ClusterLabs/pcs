@@ -13,6 +13,10 @@
 - Support for updating scsi fencing devices without affecting other resources
   added in the new command `pcs stonith update-scsi-devices` ([rhbz#1759995],
   [rhbz#1872378])
+- Option `--autodelete` for `pcs resource move` command which removes a location
+  constraint used for moving a resource, once the resource has been moved. This
+  feature is in tech-preview state and thus may be changed in the future
+  ([rhbz#1847102])
 
 ### Fixed
 - Node attribute expressions are now correctly reported as not allowed in
@@ -69,6 +73,7 @@
 [rhbz#1720221]: https://bugzilla.redhat.com/show_bug.cgi?id=1720221
 [rhbz#1750240]: https://bugzilla.redhat.com/show_bug.cgi?id=1750240
 [rhbz#1759995]: https://bugzilla.redhat.com/show_bug.cgi?id=1759995
+[rhbz#1847102]: https://bugzilla.redhat.com/show_bug.cgi?id=1847102
 [rhbz#1872378]: https://bugzilla.redhat.com/show_bug.cgi?id=1872378
 [rhbz#1882291]: https://bugzilla.redhat.com/show_bug.cgi?id=1882291
 [rhbz#1886342]: https://bugzilla.redhat.com/show_bug.cgi?id=1886342

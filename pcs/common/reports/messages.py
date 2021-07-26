@@ -5842,6 +5842,96 @@ class ResourceUnmoveUnbanPcmkSuccess(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class ResourceMoveConstraintCreated(ReportItemMessage):
+    """
+    A constraint to move resource has been created.
+
+    resource_id -- id of the resource to be moved
+    """
+
+    resource_id: str
+    _code = codes.RESOURCE_MOVE_CONSTRAINT_CREATED
+
+    @property
+    def message(self) -> str:
+        return (
+            f"Location constraint to move resource '{self.resource_id}' has "
+            "been created"
+        )
+
+
+@dataclass(frozen=True)
+class ResourceMoveConstraintRemoved(ReportItemMessage):
+    """
+    A constraint to move resource has been removed.
+
+    resource_id -- id of the resource to be moved
+    """
+
+    resource_id: str
+    _code = codes.RESOURCE_MOVE_CONSTRAINT_REMOVED
+
+    @property
+    def message(self) -> str:
+        return (
+            f"Location constraint created to move resource "
+            f"'{self.resource_id}' has been removed"
+        )
+
+
+@dataclass(frozen=True)
+class ResourceMoveAffectsOtherResources(ReportItemMessage):
+    """
+    Moving a resource will also affect other resources.
+
+    resource_id -- id of the resource to be moved
+    affected_resources -- resources affected by the move operation
+    """
+
+    resource_id: str
+    affected_resources: List[str]
+    _code = codes.RESOURCE_MOVE_AFFECTS_OTRHER_RESOURCES
+
+    @property
+    def message(self) -> str:
+        return (
+            "Moving resource '{resource_id}' affects {resource_pl}: "
+            "{affected_resources}"
+        ).format(
+            resource_id=self.resource_id,
+            resource_pl=format_plural(self.affected_resources, "resource"),
+            affected_resources=format_list(self.affected_resources),
+        )
+
+
+@dataclass(frozen=True)
+class ResourceMoveAutocleanSimulationFailure(ReportItemMessage):
+    """
+    Autocleaning a constraint used for moving the resource would cause moving
+    the resource itself or other resources.
+
+    resource_id -- id of the resource to be moved
+    others_affected -- True if also other resource would be affected, False
+        otherwise
+    """
+
+    resource_id: str
+    others_affected: bool
+    _code = codes.RESOURCE_MOVE_AUTOCLEAN_SIMULATION_FAILURE
+
+    @property
+    def message(self) -> str:
+        return (
+            "Unable to ensure that moved resource '{resource_id}'{others} will "
+            "stay located on the same node after removing the constrained used "
+            "for moving the resource."
+        ).format(
+            resource_id=self.resource_id,
+            others=" or other resources" if self.others_affected else "",
+        )
+
+
+@dataclass(frozen=True)
 class ParseErrorJsonFile(ReportItemMessage):
     # pylint: disable=too-many-instance-attributes
     """

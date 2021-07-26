@@ -381,6 +381,7 @@ def load_module(env, middleware_factory, name):
                 "group_add": resource.group_add,
                 "manage": resource.manage,
                 "move": resource.move,
+                "move_autoclean": resource.move_autoclean,
                 "get_resource_relations_tree": (
                     resource.get_resource_relations_tree
                 ),

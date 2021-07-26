@@ -28,6 +28,7 @@ from pcs.cli.common.parse_args import (
     group_by_keywords,
     prepare_options,
     prepare_options_allowed,
+    wait_to_timeout,
     InputModifiers,
 )
 from pcs.cli.common.tools import timeout_to_seconds_legacy
@@ -795,14 +796,19 @@ def _parse_resource_move_ban(argv):
     return resource_id, node, lifetime
 
 
-def resource_move(lib, argv, modifiers):
+def resource_move(lib: Any, argv: List[str], modifiers: InputModifiers):
     """
     Options:
       * -f - CIB file
       * --master
       * --wait
+      * --autodelete
+      * --strict
     """
-    modifiers.ensure_only_supported("-f", "--master", "--wait")
+    modifiers.ensure_only_supported(
+        "-f", "--master", "--wait", "--autodelete", "--strict"
+    )
+    modifiers.ensure_dependency_satisfied("--autodelete", ["--strict"])
 
     if not argv:
         raise CmdLineInputError("must specify a resource to move")
@@ -810,6 +816,19 @@ def resource_move(lib, argv, modifiers):
         raise CmdLineInputError()
     resource_id, node, lifetime = _parse_resource_move_ban(argv)
 
+    if modifiers.get("--autodelete"):
+        if lifetime is not None:
+            raise CmdLineInputError(
+                "Cannot set lifetime together with '--autodelete'"
+            )
+        lib.resource.move_autoclean(
+            resource_id,
+            node=node,
+            master=modifiers.is_specified("--master"),
+            wait_timeout=wait_to_timeout(modifiers.get("--wait")),
+            strict=modifiers.get("--strict"),
+        )
+        return
     lib.resource.move(
         resource_id,
         node=node,
