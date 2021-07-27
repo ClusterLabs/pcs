@@ -2,7 +2,11 @@ from unittest import TestCase
 
 from lxml import etree
 
+from pcs.common import reports
 from pcs.lib.cib import stonith
+
+from pcs_test.tools import fixture
+from pcs_test.tools.assertions import assert_report_item_list_equal
 
 
 class IsStonithEnabled(TestCase):
@@ -149,8 +153,127 @@ class GetMisconfiguredResources(TestCase):
         )
 
 
-class ValidateStonithDeviceExistsAndSupported(TestCase):
-    """
-    tested in:
-      pcs_test.tier0.lib.commands.test_stonith_update_scsi_devices.TestUpdateScsiDevicesFailures
-    """
+class ValidateStonithRestartlessUpdate(TestCase):
+    RESOURCES = etree.fromstring(
+        """
+        <resources>
+            <primitive id="supported" class="stonith" type="fence_scsi">
+                <instance_attributes>
+                    <nvpair name="devices" value="/dev/sda" />
+                </instance_attributes>
+            </primitive>
+            <primitive id="empty" class="stonith" type="fence_scsi">
+                <instance_attributes>
+                    <nvpair id="empty-instance_attributes-devices" name="devices" value="" />
+                </instance_attributes>
+            </primitive>
+            <primitive id="no-devices" class="stonith" type="fence_scsi"/>
+            <primitive id="unsupported_provider" class="stonith" provider="provider" type="fence_scsi"/>
+            <primitive id="unsupported_type" class="stonith" type="fence_xvm"/>
+            <primitive class="ocf" id="cp-01" provider="pacemaker" type="Dummy"/>
+        </resources>
+        """
+    )
+
+    def assert_unsupported_stonith_agent(self, resource_id, resource_type):
+        stonith_el, report_list = stonith.validate_stonith_restartless_update(
+            self.RESOURCES, resource_id
+        )
+        self.assertEqual(
+            stonith_el,
+            self.RESOURCES.find(f".//primitive[@id='{resource_id}']"),
+        )
+        assert_report_item_list_equal(
+            report_list,
+            [
+                fixture.error(
+                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNSUPPORTED_AGENT,
+                    resource_id=resource_id,
+                    resource_type=resource_type,
+                    supported_stonith_types=["fence_scsi"],
+                )
+            ],
+        )
+
+    def assert_no_devices(self, resource_id):
+        stonith_el, report_list = stonith.validate_stonith_restartless_update(
+            self.RESOURCES, resource_id
+        )
+        self.assertEqual(
+            stonith_el,
+            self.RESOURCES.find(f".//primitive[@id='{resource_id}']"),
+        )
+        assert_report_item_list_equal(
+            report_list,
+            [
+                fixture.error(
+                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM,
+                    reason=(
+                        "no devices option configured for stonith device "
+                        f"'{resource_id}'"
+                    ),
+                    reason_type="other",
+                )
+            ],
+        )
+
+    def test_supported(self):
+        stonith_el, report_list = stonith.validate_stonith_restartless_update(
+            self.RESOURCES, "supported"
+        )
+        self.assertEqual(
+            stonith_el, self.RESOURCES.find(".//primitive[@id='supported']")
+        )
+        assert_report_item_list_equal(report_list, [])
+
+    def test_nonexistent_id(self):
+        stonith_el, report_list = stonith.validate_stonith_restartless_update(
+            self.RESOURCES, "non-existent"
+        )
+        self.assertEqual(stonith_el, None)
+        assert_report_item_list_equal(
+            report_list,
+            [
+                fixture.error(
+                    reports.codes.ID_NOT_FOUND,
+                    id="non-existent",
+                    expected_types=["primitive"],
+                    context_type="resources",
+                    context_id="",
+                )
+            ],
+        )
+
+    def test_not_a_resource_id(self):
+        stonith_el, report_list = stonith.validate_stonith_restartless_update(
+            self.RESOURCES, "empty-instance_attributes-devices"
+        )
+        self.assertEqual(stonith_el, None)
+        assert_report_item_list_equal(
+            report_list,
+            [
+                fixture.error(
+                    reports.codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
+                    id="empty-instance_attributes-devices",
+                    expected_types=["primitive"],
+                    current_type="nvpair",
+                )
+            ],
+        )
+
+    def test_devices_empty(self):
+        self.assert_no_devices("empty")
+
+    def test_missing_devices_attr(self):
+        self.assert_no_devices("no-devices")
+
+    def test_unsupported_class(self):
+        self.assert_unsupported_stonith_agent("cp-01", "Dummy")
+
+    def test_unsupported_provider(self):
+        self.assert_unsupported_stonith_agent(
+            "unsupported_provider", "fence_scsi"
+        )
+
+    def test_unsupported_type(self):
+        self.assert_unsupported_stonith_agent("unsupported_type", "fence_xvm")
