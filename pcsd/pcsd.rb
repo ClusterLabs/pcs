@@ -589,38 +589,6 @@ get '/manage/check_auth_against_nodes' do
   return JSON.generate(node_results)
 end
 
-# TODO Remove - dead code
-# This function was called from the old cluster setup dialog used in pcs-0.9 for
-# CMAN and Corosync 2 clusters. We keep it here for now until the dialog
-# overhaul is done.
-get '/manage/get_nodes_sw_versions' do
-  auth_user = getAuthUser()
-  final_response = {}
-  threads = []
-  nodes = []
-  if params[:node_list].is_a?(Array)
-    nodes = params[:node_list]
-  end
-  nodes.each {|node|
-    threads << Thread.new(Thread.current[:pcsd_logger_container]) { |logger|
-      Thread.current[:pcsd_logger_container] = logger
-      code, response = send_request_with_token(
-        auth_user, node, 'get_sw_versions'
-      )
-      begin
-        node_response = JSON.parse(response)
-        if node_response and node_response['notoken'] == true
-          $logger.error("ERROR: bad token for #{node}")
-        end
-        final_response[node] = node_response
-      rescue JSON::ParserError
-      end
-    }
-  }
-  threads.each { |t| t.join }
-  return JSON.generate(final_response)
-end
-
 post '/manage/auth_gui_against_nodes' do
   auth_user = getAuthUser()
   threads = []

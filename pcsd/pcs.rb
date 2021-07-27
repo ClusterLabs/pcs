@@ -529,16 +529,6 @@ def is_proxy_set(env_var_hash)
   return false
 end
 
-def get_current_node_name()
-  stdout, stderror, retval = run_cmd(
-    PCSAuth.getSuperuserAuth(), CRM_NODE, "-n"
-  )
-  if retval == 0 and stdout.length > 0
-    return stdout[0].chomp()
-  end
-  return ""
-end
-
 def get_local_node_id()
   out, errout, retval = run_cmd(
     PCSAuth.getSuperuserAuth(),
@@ -1519,37 +1509,6 @@ def get_resources(cib_dom, crm_dom=nil, get_operations=false)
     )
   end
   return resource_list
-end
-
-def get_resource_by_id(id, cib_dom, crm_dom=nil, rsc_status=nil, operations=false)
-  unless cib_dom
-    return nil
-  end
-
-  e = cib_dom.elements["/cib/configuration/resources//*[@id='#{id}']"]
-  unless e
-    return nil
-  end
-
-  if e.parent.name != 'resources' # if resource is in group, clone or master/slave
-    p = get_resource_by_id(
-      e.parent.attributes['id'], cib_dom, crm_dom, rsc_status, operations
-    )
-    return p.get_map[id.to_sym]
-  end
-
-  case e.name
-    when 'primitive'
-      return ClusterEntity::Primitive.new(e, rsc_status, nil, operations)
-    when 'group'
-      return ClusterEntity::Group.new(e, rsc_status, nil, operations)
-    when 'clone'
-      return ClusterEntity::Clone.new(e, crm_dom, rsc_status, nil, operations)
-    when 'master'
-      return ClusterEntity::Clone.new(e, crm_dom, rsc_status, nil, operations)
-    else
-      return nil
-  end
 end
 
 def get_crm_mon_dom(auth_user)
