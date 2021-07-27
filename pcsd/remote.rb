@@ -57,8 +57,6 @@ def remote(params, request, auth_user)
       :node_unstandby => method(:node_unstandby),
       :cluster_enable => method(:cluster_enable),
       :cluster_disable => method(:cluster_disable),
-      # TODO deprecated, remove, not used anymore
-      :resource_status => method(:resource_status),
       :get_sw_versions => method(:get_sw_versions),
       # TODO deprecated, remove, not used anymore in pcs-0.10
       :node_available => method(:remote_node_available),
@@ -1255,34 +1253,6 @@ end
 def check_auth(params, request, auth_user)
   # If we get here, we're already authorized
   return [200, '{"success":true}']
-end
-
-# TODO deprecated, remove, not used anymore
-def resource_status(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::READ)
-    return 403, 'Permission denied'
-  end
-  resource_id = params[:resource]
-  @resources,@groups = getResourcesGroups(auth_user)
-  location = ""
-  res_status = ""
-  @resources.each {|r|
-    if r.id == resource_id
-      if r.failed
-        res_status =  "Failed"
-      elsif !r.active
-        res_status = "Inactive"
-      else
-        res_status = "Running"
-      end
-      if r.nodes.length != 0
-        location = r.nodes[0].name
-        break
-      end
-    end
-  }
-  status = {"location" => location, "status" => res_status}
-  return JSON.generate(status)
 end
 
 def resource_stop(params, request, auth_user)

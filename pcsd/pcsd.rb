@@ -1581,14 +1581,6 @@ get '*' do
   call(env.merge("PATH_INFO" => '/nodes'))
 end
 
-class Node
-  attr_accessor :active, :id, :name, :hostname
-
-  def initialize(id=nil, name=nil, hostname=nil, active=nil)
-    @id, @name, @hostname, @active = id, name, hostname, active
-  end
-end
-
 def html2plain(text)
   return CGI.unescapeHTML(text).gsub(/<br[^>]*>/, "\n")
 end

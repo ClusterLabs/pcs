@@ -17,6 +17,7 @@
 ### Removed
 - Deprecated obsolete commands `pcs config import-cman` and `pcs config export
   pcs-commands|pcs-commands-verbose` have been removed ([rhbz#1881064])
+- pcsd urls: `/remote/resource_status`
 
 [rhbz#1283805]: https://bugzilla.redhat.com/show_bug.cgi?id=1283805
 [rhbz#1881064]: https://bugzilla.redhat.com/show_bug.cgi?id=1881064
