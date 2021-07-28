@@ -44,8 +44,6 @@ def remote(params, request, auth_user)
       :set_permissions => method(:set_permissions_remote),
       :cluster_start => method(:cluster_start),
       :cluster_stop => method(:cluster_stop),
-      # TODO deprecated, remove, not used anymore
-      :config_backup => method(:config_backup),
       :config_restore => method(:config_restore),
       # TODO deprecated, remove, not used anymore
       :node_restart => method(:node_restart),
@@ -58,8 +56,6 @@ def remote(params, request, auth_user)
       :cluster_enable => method(:cluster_enable),
       :cluster_disable => method(:cluster_disable),
       :get_sw_versions => method(:get_sw_versions),
-      # TODO deprecated, remove, not used anymore in pcs-0.10
-      :node_available => method(:remote_node_available),
       :cluster_add_nodes => method(:cluster_add_nodes),
       :cluster_remove_nodes => method(:cluster_remove_nodes),
       :cluster_destroy => method(:cluster_destroy),
@@ -360,27 +356,6 @@ def cluster_stop(params, request, auth_user)
     else
       return stderr.join
     end
-  end
-end
-
-# TODO deprecated, remove, not used anymore
-def config_backup(params, request, auth_user)
-  if params[:name]
-    code, response = send_request_with_token(
-      auth_user, params[:name], 'config_backup', true
-    )
-  else
-    if not allowed_for_local_cluster(auth_user, Permissions::FULL)
-      return 403, 'Permission denied'
-    end
-    $logger.info "Backup node configuration"
-    stdout, stderr, retval = run_cmd(auth_user, PCS, "config", "backup")
-    if retval == 0
-        $logger.info "Backup successful"
-        return [200, stdout]
-    end
-    $logger.info "Error during backup: #{stderr.join(' ').strip()}"
-    return [400, "Unable to backup node: #{stderr.join(' ')}"]
   end
 end
 
@@ -829,29 +804,6 @@ def get_sw_versions(params, request, auth_user)
     "corosync" => get_corosync_version(),
   }
   return JSON.generate(versions)
-end
-
-# TODO deprecated, remove, not used anymore in pcs-0.10
-def remote_node_available(params, request, auth_user)
-  if (
-    File.exist?(Cfgsync::CorosyncConf.file_path) or \
-    File.exist?(CIB_PATH)
-  )
-    return JSON.generate({:node_available => false})
-  end
-  if pacemaker_remote_running?()
-    return JSON.generate({
-      :node_available => false,
-      :pacemaker_remote => true,
-    })
-  end
-  if pacemaker_running?()
-    return JSON.generate({
-      :node_available => false,
-      :pacemaker_running => true,
-    })
-  end
-  return JSON.generate({:node_available => true})
 end
 
 def cluster_add_nodes(params, request, auth_user)
