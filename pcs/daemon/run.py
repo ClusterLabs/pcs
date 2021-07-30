@@ -66,9 +66,7 @@ def configure_app(
 
         if not disable_gui:
             routes.extend(
-                # old web ui by default
-                [(r"/", RedirectHandler, dict(url="/manage"))]
-                + [(r"/ui", RedirectHandler, dict(url="/ui/"))]
+                [(r"/(ui)?", RedirectHandler, dict(url="/ui/"))]
                 + ui.get_routes(
                     url_prefix="/ui/",
                     app_dir=os.path.join(public_dir, "ui"),
@@ -78,9 +76,7 @@ def configure_app(
                     ),
                     session_storage=session_storage,
                 )
-                + sinatra_ui.get_routes(
-                    session_storage, ruby_pcsd_wrapper, public_dir
-                )
+                + sinatra_ui.get_routes(session_storage, ruby_pcsd_wrapper)
             )
 
         return Application(routes, debug=debug)

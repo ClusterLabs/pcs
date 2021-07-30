@@ -359,8 +359,6 @@ post '/run_pcs' do
   return JSON.pretty_generate(result)
 end
 
-get('/login'){ erb :login, :layout => :main }
-
 post '/manage/existingcluster' do
   pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
   node = params['node-name']
@@ -709,82 +707,12 @@ post '/manage/auth_gui_against_nodes' do
   ]
 end
 
-get '/manage/?' do
-  @manage = true
-  erb :manage, :layout => :main
-end
-
 get '/clusters_overview' do
   clusters_overview(params, request, getAuthUser())
 end
 
 get '/imported-cluster-list' do
   imported_cluster_list(params, request, getAuthUser())
-end
-
-get '/permissions/?' do
-  @manage = true
-  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
-  @clusters = pcs_config.clusters.sort { |a, b| a.name <=> b.name }
-  erb :permissions, :layout => :main
-end
-
-get '/permissions_cluster_form/:cluster/?' do
-  auth_user = getAuthUser()
-  @cluster_name = params[:cluster]
-  @error = nil
-  @permission_types = []
-  @permissions_dependencies = {}
-  @user_types = []
-  @users_permissions = []
-
-  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
-
-  if not pcs_config.is_cluster_name_in_use(@cluster_name)
-    @error = 'Cluster not found'
-  else
-    code, data = send_cluster_request_with_token(
-      auth_user, @cluster_name, 'get_permissions'
-    )
-    if 404 == code
-      @error = 'Cluster is running an old version of pcsd which does not support permissions'
-    elsif 403 == code
-      @error = 'Permission denied'
-    elsif 200 != code
-      @error = 'Unable to load permissions of the cluster'
-    else
-      begin
-        permissions = JSON.parse(data)
-        if permissions['notoken'] or permissions['noresponse']
-          @error = 'Unable to load permissions of the cluster'
-        else
-          @permission_types = permissions['permission_types'] || []
-          @permissions_dependencies = permissions['permissions_dependencies'] || {}
-          @user_types = permissions['user_types'] || []
-          @users_permissions = permissions['users_permissions'] || []
-        end
-      rescue JSON::ParserError
-        @error = 'Unable to read permissions of the cluster'
-      end
-    end
-  end
-  erb :_permissions_cluster
-end
-
-get '/managec/:cluster/main' do
-  auth_user = getAuthUser()
-  @cluster_name = params[:cluster]
-  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
-  @clusters = pcs_config.clusters
-  @nodes = get_cluster_nodes(params[:cluster])
-  if @nodes == []
-    redirect '/manage/'
-  end
-  @resource_agent_structures = get_resource_agents_avail(auth_user, params) \
-    .map{|agent_name| get_resource_agent_name_structure(agent_name)} \
-    .select{|structure| structure != nil}
-  @stonith_agents = get_stonith_agents_avail(auth_user, params)
-  erb :nodes, :layout => :main
 end
 
 post '/managec/:cluster/permissions_save/?' do
@@ -1642,11 +1570,6 @@ get '/managec/:cluster/?*' do
     # backward compatibility layer END
     return code, out
   end
-end
-
-get '/' do
-  $logger.info "Redirecting '/'...\n"
-  redirect '/manage'
 end
 
 get '*' do
