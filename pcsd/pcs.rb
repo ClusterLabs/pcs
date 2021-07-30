@@ -1162,9 +1162,6 @@ def cluster_status_from_nodes(auth_user, cluster_nodes, cluster_name)
     :status => 'unknown',
     :node_list => [],
     :resource_list => [],
-    # deprecated, kept for backward compatibility
-    # use pcsd_capabilities instead
-    :available_features => [],
     :pcsd_capabilities => [],
   }
 
@@ -1195,7 +1192,6 @@ def cluster_status_from_nodes(auth_user, cluster_nodes, cluster_name)
       }
       begin
         parsed_response = JSON.parse(response, {:symbolize_names => true})
-        parsed_response[:available_features] ||= []
         parsed_response[:pcsd_capabilities] ||= []
         if parsed_response[:noresponse]
           node_map[node][:node] = {}
@@ -1275,11 +1271,7 @@ def cluster_status_from_nodes(auth_user, cluster_nodes, cluster_name)
     node_status = cluster_status[:node][:status]
     node_name = cluster_status[:node][:name]
     # Create a set of available features on all nodes as an intersection of
-    # available features from all nodes. Do it for both the old deprecated list
-    # (available_features) and the new one (pcsd_capabilities)
-    if node_status != 'unknown' and cluster_status[:available_features]
-      status[:available_features] &= cluster_status[:available_features]
-    end
+    # available features from all nodes.
     if node_status != 'unknown' and cluster_status[:pcsd_capabilities]
       status[:pcsd_capabilities] &= cluster_status[:pcsd_capabilities]
     end
@@ -1415,17 +1407,6 @@ def get_node_status(auth_user, cib_dom)
       :nodes_utilization => get_nodes_utilization(cib_dom),
       :alerts => get_alerts(auth_user),
       :known_nodes => [],
-      # deprecated, kept for backward compatibility
-      # use pcsd_capabilities instead
-      :available_features => [
-        'constraint_colocation_set',
-        'sbd',
-        'ticket_constraints',
-        'moving_resource_in_group',
-        'unmanaged_resource',
-        'alerts',
-        'hardened_cluster',
-      ],
       :pcsd_capabilities => CAPABILITIES_PCSD
   }
 
