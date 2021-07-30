@@ -909,54 +909,7 @@ def node_status(params, request, auth_user)
     return JSON.generate(status)
   end
 
-  resource_list = []
-  resources.each do |r|
-    resource_list.concat(r.to_status('1'))
-  end
-
-  cluster_settings = (status[:cluster_settings].empty?) ?
-    {'error' => 'Unable to get configuration settings'} :
-    status[:cluster_settings]
-
-  node_attr = {}
-  status[:node_attr].each { |node, attrs|
-    node_attr[node] = []
-    attrs.each { |attr|
-      node_attr[node] << {
-        :key => attr[:name],
-        :value => attr[:value]
-      }
-    }
-  }
-
-  old_status = {
-    :uptime => node.uptime,
-    :corosync => node.corosync,
-    :pacemaker => node.pacemaker,
-    :corosync_enabled => node.corosync_enabled,
-    :pacemaker_enabled => node.pacemaker_enabled,
-    :pacemaker_remote => node.services[:pacemaker_remote][:running],
-    :pacemaker_remote_enabled => node.services[:pacemaker_remote][:enabled],
-    :pcsd_enabled => node.pcsd_enabled,
-    :corosync_online => status[:corosync_online],
-    :corosync_offline => status[:corosync_offline],
-    :pacemaker_online => status[:pacemaker_online],
-    :pacemaker_offline => status[:pacemaker_offline],
-    :pacemaker_standby => status[:pacemaker_standby],
-    :cluster_name => status[:cluster_name],
-    :resources => resource_list,
-    :groups => status[:groups],
-    :constraints => status[:constraints],
-    :cluster_settings => cluster_settings,
-    :node_id => node.id,
-    :node_attr => node_attr,
-    :fence_levels => status[:fence_levels],
-    :need_ring1_address => status[:need_ring1_address],
-    :acls => status[:acls],
-    :username => status[:username]
-  }
-
-  return JSON.generate(old_status)
+  return [400, "Unsupported version '#{version}' of status requested"]
 end
 
 def status_all(params, request, auth_user, nodes=[], dont_update_config=false)

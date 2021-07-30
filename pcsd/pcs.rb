@@ -646,11 +646,11 @@ def get_node_attributes(auth_user, cib_dom=nil)
     node_attrs[node] ||= []
     node_attrs[node] << {
       :id => e.attributes['id'],
-      :key => e.attributes['name'],
+      :name => e.attributes['name'],
       :value => e.attributes['value']
     }
   }
-  node_attrs.each { |_, val| val.sort_by! { |obj| obj[:key] }}
+  node_attrs.each { |_, val| val.sort_by! { |obj| obj[:name] }}
   return node_attrs
 end
 
@@ -1208,10 +1208,11 @@ def cluster_status_from_nodes(auth_user, cluster_nodes, cluster_name)
           if parsed_response[:node]
             parsed_response[:status_version] = '2'
             parsed_response[:node][:status_version] = '2'
+            node_map[node] = parsed_response
           else
-            parsed_response = status_v1_to_v2(parsed_response)
+            node_map[node][:node] = {}
+            node_map[node][:node].update(node_status_unknown)
           end
-          node_map[node] = parsed_response
         end
         node_map[node][:node][:name] = node
       rescue JSON::ParserError
@@ -1226,7 +1227,6 @@ def cluster_status_from_nodes(auth_user, cluster_nodes, cluster_name)
   node_status_list = []
   quorate_nodes = []
   not_authorized_nodes = []
-  old_status = false
   node_map.each { |node_name, cluster_status|
     # If we were able to get node's cluster name and it's different than
     # requested cluster name, the node belongs to some other cluster and its
@@ -1236,7 +1236,6 @@ def cluster_status_from_nodes(auth_user, cluster_nodes, cluster_name)
     next if cluster_status[:cluster_name] != cluster_name
     cluster_nodes_map[node_name] = cluster_status
     node_status_list << cluster_status[:node]
-    old_status = true if '1' == cluster_status[:status_version]
     quorate_nodes << node_name if cluster_status[:node][:quorum]
     not_authorized_nodes << node_name if cluster_status[:node][:notauthorized]
   }
@@ -1256,7 +1255,7 @@ def cluster_status_from_nodes(auth_user, cluster_nodes, cluster_name)
   # if we don't have quorum, use data from any online node,
   # otherwise use data from any node no node has quorum, so no node has any
   # info about the cluster
-  elsif not old_status
+  else
     node_to_use = cluster_nodes_map.values[0]
     cluster_nodes_map.each { |_, node_data|
       if node_data[:node] and node_data[:node][:status] == 'online'
@@ -1267,18 +1266,6 @@ def cluster_status_from_nodes(auth_user, cluster_nodes, cluster_name)
     status = overview.update(node_to_use)
     status[:quorate] = false
     status[:node_list] = node_status_list
-  # old pcsd doesn't provide info about quorum, use data from any node
-  else
-    status = overview
-    status[:quorate] = nil
-    status[:node_list] = node_status_list
-    cluster_nodes_map.each { |_, node|
-      if node[:status_version] and node[:status_version] == '1' and
-          !node[:cluster_settings][:error]
-        status = overview.update(node)
-        break
-      end
-    }
   end
   status.delete(:node)
   sbd_enabled = []
@@ -1366,17 +1353,9 @@ def cluster_status_from_nodes(auth_user, cluster_nodes, cluster_name)
   end
 
   if status[:quorate].nil?
-    if old_status
-      status[:warning_list] << {
-        :message => 'Cluster is running an old version of pcs/pcsd which '\
-          + "doesn't provide data for the dashboard.",
-        :type => 'old_pcsd'
-      }
-    else
-      status[:error_list] << {
-        :message => 'Unable to connect to the cluster.'
-      }
-    end
+    status[:error_list] << {
+      :message => 'Unable to connect to the cluster.'
+    }
     status[:status] = 'unknown'
     return status
   end
@@ -1432,7 +1411,7 @@ def get_node_status(auth_user, cib_dom)
       :acls => get_acls(auth_user, cib_dom),
       :username => auth_user[:username],
       :fence_levels => get_fence_levels(auth_user, cib_dom),
-      :node_attr => node_attrs_to_v2(get_node_attributes(auth_user, cib_dom)),
+      :node_attr => get_node_attributes(auth_user, cib_dom),
       :nodes_utilization => get_nodes_utilization(cib_dom),
       :alerts => get_alerts(auth_user),
       :known_nodes => [],
@@ -1533,79 +1512,6 @@ def get_cib_dom(auth_user)
     $logger.error 'Failed to parse cib.'
   end
   return nil
-end
-
-def node_attrs_to_v2(node_attrs)
-  all_nodes_attr = {}
-  node_attrs.each { |node, attrs|
-    all_nodes_attr[node] = []
-    attrs.each { |attr|
-      all_nodes_attr[node] << {
-        :id => attr[:id],
-        :name => attr[:key],
-        :value => attr[:value]
-      }
-    }
-  }
-  return all_nodes_attr
-end
-
-def status_v1_to_v2(status)
-  new_status = status.select { |k,_|
-    [:cluster_name, :username,
-     :need_ring1_address, :cluster_settings, :constraints,
-     :corosync_online, :corosync_offline, :pacemaker_online, :pacemaker_standby,
-     :pacemaker_offline, :acls, :fence_levels
-    ].include?(k)
-  }
-  new_status[:node_attr] = node_attrs_to_v2(status[:node_attr])
-
-  resources = ClusterEntity::make_resources_tree(
-    ClusterEntity::get_primitives_from_status_v1(status[:resources])
-  )
-  resources_hash = []
-  resources.each { |r|
-    resources_hash << r.to_status('2')
-  }
-  new_status[:resource_list] = resources_hash
-  new_status[:node] = status.select { |k,_|
-    [:uptime, :corosync, :pacemaker, :corosync_enabled,
-     :pacemaker_enabled, :pcsd_enabled
-    ].include?(k)
-  }
-
-  new_status[:groups] = get_group_list_from_tree_of_resources(resources)
-
-  new_status[:node].update(
-    {
-      :id => status[:node_id],
-      :quorum => nil,
-      :warning_list => [],
-      :error_list => [],
-      :status => (new_status[:node][:corosync] and
-        new_status[:node][:pacemaker]) ? "online" : "offline",
-      :status_version => '1'
-    }
-  )
-  new_status[:status_version] = '1'
-
-  return new_status
-end
-
-def get_group_list_from_tree_of_resources(tree)
-  group_list = []
-  tree.each { |resource|
-    if resource.instance_of?(ClusterEntity::Group)
-      group_list << resource.id
-    end
-    if (
-      resource.kind_of?(ClusterEntity::MultiInstancePcmk1) and
-      resource.member.instance_of?(ClusterEntity::Group)
-    )
-      group_list << resource.member.id
-    end
-  }
-  return group_list
 end
 
 def allowed_for_local_cluster(auth_user, action)
