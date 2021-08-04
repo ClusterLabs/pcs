@@ -416,6 +416,7 @@ def load_module(env, middleware_factory, name):
                 middleware_factory.corosync_conf_existing,
             ),
             {
+                "pacemaker_status_xml": status.pacemaker_status_xml,
                 "full_cluster_status_plaintext": (
                     status.full_cluster_status_plaintext
                 ),

@@ -1,4 +1,5 @@
 # pylint: disable=line-too-long
+import re
 from textwrap import dedent
 from unittest import TestCase
 
@@ -12,6 +13,8 @@ from pcs_test.tools.misc import (
     write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import PcsRunner
+
+from pcs import settings
 
 PCMK_2_0_3_PLUS = is_minimum_pacemaker_version(2, 0, 3)
 
@@ -656,4 +659,37 @@ class StatusResources(ResourceStonithStatusBase, TestCase):
         write_file_to_tmpfile(rc("cib-empty.xml"), self.temp_cib)
         self.assert_pcs_success(
             ["status", "--hide-inactive"], stdout_start=self.no_resources_status
+        )
+
+
+class XmlStatus(AssertPcsMixin, TestCase):
+    def setUp(self):
+        self.temp_cib = get_tmp_file("tier1_status_xml_status")
+        write_file_to_tmpfile(rc("cib-empty.xml"), self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
+
+    def tearDown(self):
+        self.temp_cib.close()
+
+    def test_success(self):
+        xml = r"""
+            <pacemaker-result api-version="[^"]*" request="{crm_mon} --one-shot --inactive --output-as xml">
+              <summary>
+                <stack type="unknown"/>
+                <current_dc present="false"/>
+                <last_update time="[^"]*"/>
+                <last_change time="Thu Aug 23 16:49:17 2012" user="" client="crmd" origin="rh7-3"/>
+                <nodes_configured number="0"/>
+                <resources_configured number="0" disabled="0" blocked="0"/>
+                <cluster_options[^/>]*/>
+              </summary>
+              <nodes/>
+              <status code="0" message="OK"/>
+            </pacemaker-result>
+        """.format(
+            crm_mon=settings.crm_mon
+        )
+        self.assert_pcs_success(
+            ["status", "xml"],
+            stdout_regexp=re.compile(dedent(xml).strip(), re.MULTILINE),
         )

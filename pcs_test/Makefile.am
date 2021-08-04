@@ -86,6 +86,7 @@ EXTRA_DIST		= \
 			  tier0/cli/test_nvset.py \
 			  tier0/cli/test_resource.py \
 			  tier0/cli/test_rule.py \
+			  tier0/cli/test_status.py \
 			  tier0/cli/test_stonith.py \
 			  tier0/common/__init__.py \
 			  tier0/common/interface/__init__.py \

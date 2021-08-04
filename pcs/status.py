@@ -229,17 +229,10 @@ def xml_status(lib, argv, modifiers):
     Options:
       * -f - CIB file
     """
-    del lib
     modifiers.ensure_only_supported("-f")
     if argv:
         raise CmdLineInputError()
-    (output, retval) = utils.run(
-        ["crm_mon", "-1", "-r", "-X"], ignore_stderr=True
-    )
-
-    if retval != 0:
-        utils.err("running crm_mon, is pacemaker running?")
-    print(output.rstrip())
+    print(lib.status.pacemaker_status_xml().strip())
 
 
 def print_pcsd_daemon_status(lib, modifiers):

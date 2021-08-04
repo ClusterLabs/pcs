@@ -5,9 +5,49 @@ from pcs import settings
 from pcs.common import file_type_codes
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import status
-from pcs_test.tools import fixture
+from pcs.lib.errors import LibraryError
+from pcs_test.tools import fixture, fixture_crm_mon
+from pcs_test.tools.assertions import assert_xml_equal
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.misc import read_test_resource as rc_read
+
+
+class PacemakerStatusXml(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+
+    def test_success(self):
+        self.config.runner.pcmk.load_state(filename="crm_mon.minimal.xml")
+        assert_xml_equal(
+            status.pacemaker_status_xml(self.env_assist.get_env()),
+            rc_read("crm_mon.minimal.xml"),
+        )
+
+    def test_not_xml(self):
+        # Loading pacemaker state succeeded, we expect to get an xml and we
+        # just return it. If it is not a valid xml, it is a bug in pacemaker.
+        self.config.runner.pcmk.load_state(stdout="not an xml")
+        self.assertEqual(
+            status.pacemaker_status_xml(self.env_assist.get_env()), "not an xml"
+        )
+
+    def test_error(self):
+        error_xml = fixture_crm_mon.error_xml(
+            1, "an error", ["This is an error message", "And one more"]
+        )
+        self.config.runner.pcmk.load_state(stdout=error_xml, returncode=1)
+        with self.assertRaises(LibraryError) as cm:
+            status.pacemaker_status_xml(self.env_assist.get_env())
+        assert_xml_equal(cm.exception.output, error_xml)
+
+    def test_error_not_xml(self):
+        # Loading pacemaker state failed, but we expect to get an xml anyway
+        # and we return it. If it is not a valid xml, it is a bug or a critical
+        # error in pacemaker we can do nothing about.
+        self.config.runner.pcmk.load_state(stdout="an error", returncode=1)
+        with self.assertRaises(LibraryError) as cm:
+            status.pacemaker_status_xml(self.env_assist.get_env())
+        self.assertEqual(cm.exception.output, "an error")
 
 
 class FullClusterStatusPlaintext(TestCase):

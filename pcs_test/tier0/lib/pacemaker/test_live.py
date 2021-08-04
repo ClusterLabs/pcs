@@ -11,7 +11,6 @@ from pcs_test.tools.assertions import (
 )
 from pcs_test.tools import fixture, fixture_crm_mon
 from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.command_env.mock_runner import Call as RunnerCall
 from pcs_test.tools.custom_mock import (
     TmpFileMock,
     TmpFileCall,
@@ -43,9 +42,10 @@ def path(name):
 
 
 class GetStatusFromApiResult(TestCase):
+    # pylint: disable=protected-access
     def test_errors(self):
         self.assertEqual(
-            lib.get_status_from_api_result(
+            lib._get_status_from_api_result(
                 etree.fromstring(
                     fixture_crm_mon.error_xml(
                         123, "short message", ["error1", "error2"]
@@ -57,7 +57,7 @@ class GetStatusFromApiResult(TestCase):
 
     def test_no_errors(self):
         self.assertEqual(
-            lib.get_status_from_api_result(
+            lib._get_status_from_api_result(
                 etree.fromstring(
                     fixture_crm_mon.error_xml(123, "short message")
                 )
@@ -66,12 +66,10 @@ class GetStatusFromApiResult(TestCase):
         )
 
 
-@mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
-)
-@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
-class GetClusterStatusXmlTest(TestCase):
+class GetClusterStatusMixin(TestCase):
     def setUp(self):
+        # 'setUp' not defined in TestCase class
+        # pylint: disable=invalid-name
         self.env_assist, self.config = get_env_tools(test_case=self)
         self._xml_summary = etree_to_str(
             etree.parse(rc("crm_mon.minimal.xml")).find("/summary")
@@ -88,57 +86,56 @@ class GetClusterStatusXmlTest(TestCase):
             </pacemaker-result>
         """
 
-    def fixture_xml_old(self):
-        return f"""
-            <crm_mon version="2.0.5">
-              {self._xml_summary}
-              <nodes />
-              <resources />
-            </crm_mon>
-        """
 
-    def place_call_old_format_help(self):
-        self.config.calls.place(
-            "local.crm_mon.help-all",
-            RunnerCall(
-                ["crm_mon", "--help-all"],
-                stdout="this version only supports --as-xml option",
-            ),
-        )
-
-    def place_call_old_format_xml(self, stdout="", stderr="", returncode=0):
-        self.config.calls.place(
-            "local.crm_mon.as-xml",
-            RunnerCall(
-                ["crm_mon", "--one-shot", "--inactive", "--as-xml"],
-                stdout=stdout,
-                stderr=stderr,
-                returncode=returncode,
-            ),
-        )
-
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+)
+class GetClusterStatusXml(GetClusterStatusMixin, TestCase):
+    # pylint: disable=protected-access
     def test_success(self):
         self.config.runner.pcmk.load_state(stdout=self.fixture_xml())
         env = self.env_assist.get_env()
         assert_xml_equal(
-            self.fixture_xml(),
-            etree_to_str(lib.get_cluster_status_dom(env.cmd_runner())),
+            self.fixture_xml(), lib._get_cluster_status_xml(env.cmd_runner())
         )
 
     def test_error(self):
         self.config.runner.pcmk.load_state(
             stdout=fixture_crm_mon.error_xml(
-                1, "an error", ["This is an error message"]
+                1, "an error", ["This is an error message", "And one more"]
             ),
             returncode=1,
         )
         env = self.env_assist.get_env()
         assert_raise_library_error(
-            lambda: lib.get_cluster_status_dom(env.cmd_runner()),
+            lambda: lib._get_cluster_status_xml(env.cmd_runner()),
             fixture.error(
                 report_codes.CRM_MON_ERROR,
-                reason="an error\nThis is an error message",
+                reason="an error\nThis is an error message\nAnd one more",
             ),
+        )
+
+    def test_error_not_xml(self):
+        self.config.runner.pcmk.load_state(
+            stdout="stdout text",
+            stderr="stderr text",
+            returncode=1,
+        )
+        env = self.env_assist.get_env()
+        assert_raise_library_error(
+            lambda: lib._get_cluster_status_xml(env.cmd_runner()),
+            fixture.error(
+                report_codes.CRM_MON_ERROR,
+                reason="stderr text\nstdout text",
+            ),
+        )
+
+    def test_error_invalid_xml(self):
+        self.config.runner.pcmk.load_state(stdout="<xml/>", returncode=1)
+        env = self.env_assist.get_env()
+        assert_raise_library_error(
+            lambda: lib._get_cluster_status_xml(env.cmd_runner()),
+            fixture.error(report_codes.BAD_CLUSTER_STATE_FORMAT),
         )
 
     def test_error_not_connected(self):
@@ -148,7 +145,7 @@ class GetClusterStatusXmlTest(TestCase):
         )
         env = self.env_assist.get_env()
         with self.assertRaises(lib.PacemakerNotConnectedException) as cm:
-            lib.get_cluster_status_dom(env.cmd_runner())
+            lib._get_cluster_status_xml(env.cmd_runner())
         assert_report_item_list_equal(
             cm.exception.args,
             [
@@ -162,74 +159,32 @@ class GetClusterStatusXmlTest(TestCase):
             ],
         )
 
-    def test_error_not_xml(self):
-        self.config.runner.pcmk.load_state(
-            stdout="stdout text",
-            stderr="stderr text",
-            returncode=1,
-        )
-        env = self.env_assist.get_env()
-        assert_raise_library_error(
-            lambda: lib.get_cluster_status_dom(env.cmd_runner()),
-            fixture.error(
-                report_codes.CRM_MON_ERROR,
-                reason="stderr text\nstdout text",
-            ),
-        )
 
-    def test_invalid_xml(self):
-        self.config.runner.pcmk.load_state(stdout="this is not an xml")
-        env = self.env_assist.get_env()
-        assert_raise_library_error(
-            lambda: lib.get_cluster_status_dom(env.cmd_runner()),
-            fixture.error(report_codes.BAD_CLUSTER_STATE_FORMAT),
-        )
-
-    def test_xml_doesnt_match_rng(self):
-        self.config.runner.pcmk.load_state(stdout=self.fixture_xml_old())
-        env = self.env_assist.get_env()
-        assert_raise_library_error(
-            lambda: lib.get_cluster_status_dom(env.cmd_runner()),
-            fixture.error(report_codes.BAD_CLUSTER_STATE_FORMAT),
-        )
-
-    def test_success_old_format(self):
-        self.place_call_old_format_help()
-        self.place_call_old_format_xml(stdout=self.fixture_xml_old())
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+)
+@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
+class GetClusterStatusDom(GetClusterStatusMixin, TestCase):
+    def test_success(self):
+        self.config.runner.pcmk.load_state(stdout=self.fixture_xml())
         env = self.env_assist.get_env()
         assert_xml_equal(
-            self.fixture_xml(transformed=True),
+            self.fixture_xml(),
             etree_to_str(lib.get_cluster_status_dom(env.cmd_runner())),
         )
 
-    def test_error_old_format(self):
-        self.place_call_old_format_help()
-        self.place_call_old_format_xml(
-            stdout="stdout text",
-            stderr="stderr text",
-            returncode=1,
+    def test_not_xml(self):
+        self.config.runner.pcmk.load_state(
+            stdout="<pacemaker-result> not an xml"
         )
-        env = self.env_assist.get_env()
-        assert_raise_library_error(
-            lambda: lib.get_cluster_status_dom(env.cmd_runner()),
-            fixture.error(
-                report_codes.CRM_MON_ERROR,
-                reason="stderr text\nstdout text",
-            ),
-        )
-
-    def test_invalid_xml_old_format(self):
-        self.place_call_old_format_help()
-        self.place_call_old_format_xml(stdout="this is not an xml")
         env = self.env_assist.get_env()
         assert_raise_library_error(
             lambda: lib.get_cluster_status_dom(env.cmd_runner()),
             fixture.error(report_codes.BAD_CLUSTER_STATE_FORMAT),
         )
 
-    def test_xml_doesnt_match_rng_old_format(self):
-        self.place_call_old_format_help()
-        self.place_call_old_format_xml(stdout=self.fixture_xml())
+    def test_invalid_xml(self):
+        self.config.runner.pcmk.load_state(stdout="<pacemaker-result/>")
         env = self.env_assist.get_env()
         assert_raise_library_error(
             lambda: lib.get_cluster_status_dom(env.cmd_runner()),

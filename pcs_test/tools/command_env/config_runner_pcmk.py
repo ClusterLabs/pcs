@@ -185,17 +185,6 @@ class PcmkShortcuts:
                 "returncode is specified"
             )
 
-        self.__calls.place(
-            f"{name}.help-all",
-            RunnerCall(
-                ["crm_mon", "--help-all"],
-                stdout="this version supports --output-as=FORMAT option",
-                stderr="",
-                returncode=0,
-                env=env,
-            ),
-        )
-
         command = ["crm_mon", "--one-shot", "--inactive", "--output-as", "xml"]
 
         if stdout or stderr or returncode:

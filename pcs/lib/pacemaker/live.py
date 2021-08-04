@@ -52,78 +52,55 @@ class FenceHistoryCommandErrorException(Exception):
 ### status
 
 
+def get_cluster_status_xml_raw(runner: CommandRunner) -> Tuple[str, str, int]:
+    """
+    Run pacemaker tool to get XML status. This function doesn't do any
+    processing. Usually, using get_cluster_status_dom is preferred instead.
+
+    runner -- a class for running external processes
+    """
+    return runner.run(
+        [__exec("crm_mon"), "--one-shot", "--inactive", "--output-as", "xml"]
+    )
+
+
+def _get_cluster_status_xml(runner: CommandRunner) -> str:
+    """
+    Get pacemaker XML status. Using get_cluster_status_dom is preferred instead.
+
+    runner -- a class for running external processes
+    """
+    stdout, stderr, retval = get_cluster_status_xml_raw(runner)
+    if retval == 0:
+        return stdout
+
+    # We parse error messages from XML. If we didn't get an XML, we pass it to
+    # the exception as a plaintext. If we got an XML but it doesn't conform to
+    # the schema, we raise an error.
+    try:
+        status = _get_status_from_api_result(_get_api_result_dom(stdout))
+        message = join_multilines([status.message] + list(status.errors))
+    except etree.XMLSyntaxError:
+        message = join_multilines([stderr, stdout])
+    except etree.DocumentInvalid as e:
+        raise LibraryError(
+            ReportItem.error(reports.messages.BadClusterStateFormat())
+        ) from e
+    klass = (
+        PacemakerNotConnectedException
+        if retval == __EXITCODE_NOT_CONNECTED
+        else LibraryError
+    )
+    raise klass(ReportItem.error(reports.messages.CrmMonError(message)))
+
+
 def get_cluster_status_dom(runner: CommandRunner) -> _Element:
-    def validate_dom(dom, rng):
-        try:
-            if os.path.isfile(rng):
-                etree.RelaxNG(file=rng).assertValid(dom)
-            return dom
-        except etree.DocumentInvalid as e:
-            raise LibraryError(
-                ReportItem.error(reports.messages.BadClusterStateFormat())
-            ) from e
-
-    def get_dom(xml, rng):
-        try:
-            return validate_dom(xml_fromstring(xml), rng)
-        except etree.XMLSyntaxError as e:
-            raise LibraryError(
-                ReportItem.error(reports.messages.BadClusterStateFormat())
-            ) from e
-
-    pcmk_supports_new_format = _is_in_pcmk_tool_help(
-        runner, "crm_mon", "--output-as="
-    )
-    format_option = (
-        ["--output-as", "xml"] if pcmk_supports_new_format else ["--as-xml"]
-    )
-
-    stdout, stderr, retval = runner.run(
-        [__exec("crm_mon"), "--one-shot", "--inactive"] + format_option
-    )
-
-    if retval != 0:
-        klass = (
-            PacemakerNotConnectedException
-            if retval == __EXITCODE_NOT_CONNECTED
-            else LibraryError
-        )
-        if pcmk_supports_new_format:
-            # Try to process the output as an XML. If it cannot be parsed, then
-            # process it as a plaintext. If it is an XML but it doesn't conform
-            # to the schema, raise an error (don't catch etree.DocumentInvalid
-            # exception).
-            try:
-                status = get_status_from_api_result(
-                    validate_dom(
-                        xml_fromstring(stdout),
-                        settings.pacemaker_api_result_schema,
-                    )
-                )
-                message = join_multilines(
-                    [status.message] + list(status.errors)
-                )
-            except etree.XMLSyntaxError:
-                message = join_multilines([stderr, stdout])
-        else:
-            message = join_multilines([stderr, stdout])
-        raise klass(ReportItem.error(reports.messages.CrmMonError(message)))
-
-    if pcmk_supports_new_format:
-        return get_dom(stdout, settings.pacemaker_api_result_schema)
-
-    dom = get_dom(stdout, settings.crm_mon_schema)
-    new_format_dom = etree.Element(
-        "pacemaker-result",
-        {
-            "api-version": "2.3",
-            "request": "crm_mon --as-xml",
-        },
-    )
-    for child in dom.getchildren():
-        new_format_dom.append(child)
-    etree.SubElement(new_format_dom, "status", {"code": "0", "message": "OK"})
-    return validate_dom(new_format_dom, settings.pacemaker_api_result_schema)
+    try:
+        return _get_api_result_dom(_get_cluster_status_xml(runner))
+    except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
+        raise LibraryError(
+            ReportItem.error(reports.messages.BadClusterStateFormat())
+        ) from e
 
 
 def get_cluster_status_text(
@@ -783,7 +760,16 @@ def get_rule_in_effect_status(
     return translation_map.get(retval, CibRuleInEffectStatus.UNKNOWN)
 
 
-def get_status_from_api_result(dom: _Element) -> api_result.Status:
+def _get_api_result_dom(xml: str) -> _Element:
+    # raises etree.XMLSyntaxError and etree.DocumentInvalid
+    rng = settings.pacemaker_api_result_schema
+    dom = xml_fromstring(xml)
+    if os.path.isfile(rng):
+        etree.RelaxNG(file=rng).assertValid(dom)
+    return dom
+
+
+def _get_status_from_api_result(dom: _Element) -> api_result.Status:
     errors = []
     status_el = cast(_Element, dom.find("./status"))
     errors_el = status_el.find("errors")
@@ -866,16 +852,12 @@ def get_resource_digests(
         )
 
     try:
-        dom = xml_fromstring(stdout)
-        if os.path.isfile(settings.pacemaker_api_result_schema):
-            etree.RelaxNG(
-                file=settings.pacemaker_api_result_schema
-            ).assertValid(dom)
+        dom = _get_api_result_dom(stdout)
     except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
         raise error_exception(join_multilines([stderr, stdout])) from e
 
     if retval != 0:
-        status = get_status_from_api_result(dom)
+        status = _get_status_from_api_result(dom)
         raise error_exception(
             join_multilines([status.message] + list(status.errors))
         )

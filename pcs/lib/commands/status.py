@@ -31,6 +31,7 @@ from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.node_communication import NodeTargetLibFactory
 from pcs.lib.pacemaker.live import (
     get_cluster_status_text,
+    get_cluster_status_xml_raw,
     get_ticket_status_text,
 )
 from pcs.lib.resource_agent import STONITH_ACTION_REPLACED_BY
@@ -42,6 +43,16 @@ class _ServiceStatus(NamedTuple):
     display_always: bool
     enabled: bool
     running: bool
+
+
+def pacemaker_status_xml(env: LibraryEnvironment) -> str:
+    """
+    Return pacemaker status in pacemaker-native XML string
+    """
+    stdout, _, retval = get_cluster_status_xml_raw(env.cmd_runner())
+    if retval == 0:
+        return stdout
+    raise LibraryError(output=stdout)
 
 
 def full_cluster_status_plaintext(

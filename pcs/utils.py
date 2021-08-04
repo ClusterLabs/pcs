@@ -2017,12 +2017,8 @@ def getClusterState():
     Commandline options:
       * -f - CIB file
     """
-    output, returncode = run(["crm_mon", "--help-all"])
-    format_option = (
-        "--output-as=xml" if "--output-as=" in output else "--as-xml"
-    )
     xml_string, returncode = run(
-        ["crm_mon", "--one-shot", format_option, "--inactive"],
+        ["crm_mon", "--one-shot", "--output-as=xml", "--inactive"],
         ignore_stderr=True,
     )
     if returncode != 0:
