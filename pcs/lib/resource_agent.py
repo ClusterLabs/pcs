@@ -1,8 +1,7 @@
-from dataclasses import dataclass, replace as dc_replace
+from dataclasses import dataclass, field, replace as dc_replace
 import re
 from typing import (
     cast,
-    Any,
     Container,
     Dict,
     Iterable,
@@ -18,10 +17,7 @@ from lxml import etree
 from lxml.etree import _Element
 
 from pcs import settings
-from pcs.common.interface.dto import (
-    DataTransferObject,
-    to_dict as dto_to_dict,
-)
+from pcs.common.interface.dto import DataTransferObject, meta
 from pcs.common import reports
 from pcs.common.reports.types import SeverityLevel
 from pcs.common.str_tools import format_list
@@ -42,7 +38,7 @@ _NECESSARY_CIB_ACTION_NAMES = {"monitor"}
 
 # These are all standards valid in cib. To get a list of standards supported by
 # pacemaker in local environment, use result of "crm_resource --list-standards".
-_STANDARD_LIST = {
+_ALLOWED_STANDARDS = {
     "ocf",
     "lsb",
     "heartbeat",
@@ -116,7 +112,7 @@ class AgentParameterDto(DataTransferObject):
     # True if the parameter is deprecated, False otherwise
     deprecated: bool
     # list of parameters deprecating this one
-    deprecated_by: Iterable[str]
+    deprecated_by: List[str]
     # name of a deprecated parameter obsoleted by this one
     obsoletes: Optional[str]
     # should the parameter's value be unique across same agent resources?
@@ -141,7 +137,7 @@ class AgentActionDto(DataTransferObject):
     # not allowed by OCF 1.0, defined in OCF 1.0 agents anyway
     role: Optional[str]
     # OCF name: 'start-delay', optional by both OCF 1.0 and 1.1
-    start_delay: Optional[str]
+    start_delay: Optional[str] = field(metadata=meta(name="start-delay"))
     # optional by both OCF 1.0 and 1.1
     depth: Optional[str]
     # not allowed by any OCF, defined in OCF 1.0 agents anyway
@@ -158,41 +154,10 @@ class AgentMetadataDto(DataTransferObject):
     name: str
     shortdesc: str
     longdesc: str
-    parameters: Iterable[AgentParameterDto]
-    actions: Iterable[AgentActionDto]
+    parameters: List[AgentParameterDto]
+    actions: List[AgentActionDto]
     # TODO move to resource create
-    default_actions: Iterable[AgentActionDto]
-
-
-# TODO remove, is kept for backward compatibility with other pcs code
-def action_dto_to_dict(
-    dto: AgentActionDto, for_cib: bool = False
-) -> Dict[str, str]:
-    # Remove keys with empty and unspecified values (None) as they were
-    # previously not present and they don't work well with rest of the code as
-    # it was originally written for dicts.
-    #
-    # Handle naming differences between agents and CIB.
-    operation = {
-        key: val
-        for key, val in dto_to_dict(dto).items()
-        if val not in (None, "")
-    }
-    if "start_delay" in operation:
-        operation["start-delay"] = operation.pop("start_delay")
-    if for_cib and "depth" in operation:
-        del operation["depth"]
-    return operation
-
-
-# TODO remove, is kept for backward compatibility with other pcs code
-def metadata_dto_to_dict(dto: AgentMetadataDto) -> Dict[str, Any]:
-    result = dto_to_dict(dto)
-    result["actions"] = [action_dto_to_dict(action) for action in dto.actions]
-    result["default_actions"] = [
-        action_dto_to_dict(action) for action in dto.default_actions
-    ]
-    return result
+    default_actions: List[AgentActionDto]
 
 
 ### complete intervals in operations
@@ -335,20 +300,20 @@ class Agent:
             default_value = content_element.get("default", default_value)
 
         return AgentParameterDto(
-            parameter_element.get("name", ""),  # "" is for mypy
+            str(parameter_element.attrib["name"]),
             self._get_text_from_dom_element(
                 parameter_element.find("shortdesc")
             ),
             self._get_text_from_dom_element(parameter_element.find("longdesc")),
             value_type,
             default_value,
-            is_true(parameter_element.get("required", "0")),
-            False,  # advanced
-            is_true(parameter_element.get("deprecated", "0")),
-            [],  # deprecated_by
-            parameter_element.get("obsoletes", None),
-            is_true(parameter_element.get("unique", "0")),
-            None,  # pcs_deprecated_warning
+            required=is_true(parameter_element.get("required", "0")),
+            advanced=False,
+            deprecated=is_true(parameter_element.get("deprecated", "0")),
+            deprecated_by=[],
+            obsoletes=parameter_element.get("obsoletes", None),
+            unique=is_true(parameter_element.get("unique", "0")),
+            pcs_deprecated_warning=None,
         )
 
     def _get_parameter_obsoleting_chains(self) -> Dict[str, List[str]]:
@@ -567,7 +532,7 @@ class Agent:
             return []
         return [
             AgentActionDto(
-                action.get("name", ""),  # provide a default value for mypy
+                str(action.attrib["name"]),
                 action.get("timeout"),
                 action.get("interval"),
                 action.get("role"),
@@ -1093,7 +1058,7 @@ def _split_resource_agent_name(full_agent_name: str) -> ResourceAgentName:
     provider = match.group("provider") if match.group("provider") else None
     agent_type = match.group("type")
 
-    if standard not in _STANDARD_LIST:
+    if standard not in _ALLOWED_STANDARDS:
         raise InvalidResourceAgentName(full_agent_name)
 
     if standard == "ocf" and not provider:

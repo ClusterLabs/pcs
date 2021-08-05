@@ -19,6 +19,7 @@ from pcs import (
     utils,
     constraint,
 )
+from pcs.common.interface.dto import to_dict
 from pcs.common.str_tools import format_list
 from pcs.settings import (
     pacemaker_wait_timeout_status as PACEMAKER_WAIT_TIMEOUT_STATUS,
@@ -3449,7 +3450,7 @@ def get_resource_agent_info(lib, argv, modifiers):
 
     try:
         metadata = lib_ra.ResourceAgent(runner, agent)
-        print(json.dumps(lib_ra.metadata_dto_to_dict(metadata.get_full_info())))
+        print(json.dumps(to_dict(metadata.get_full_info())))
     except lib_ra.ResourceAgentError as e:
         process_library_reports([lib_ra.resource_agent_error_to_report_item(e)])
 

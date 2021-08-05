@@ -16,6 +16,7 @@ from pcs.common.fencing_topology import (
     TARGET_TYPE_REGEXP,
     TARGET_TYPE_ATTRIBUTE,
 )
+from pcs.common.interface.dto import to_dict
 from pcs.common.str_tools import indent
 from pcs.lib.errors import LibraryError
 import pcs.lib.resource_agent as lib_ra
@@ -545,7 +546,7 @@ def get_fence_agent_info(lib, argv, modifiers):
 
     try:
         metadata = lib_ra.StonithAgent(runner, agent[len("stonith:") :])
-        info = lib_ra.metadata_dto_to_dict(metadata.get_full_info())
+        info = to_dict(metadata.get_full_info())
         info["name"] = "stonith:{0}".format(info["name"])
         print(json.dumps(info))
     except lib_ra.ResourceAgentError as e:

@@ -1,9 +1,15 @@
+from dataclasses import dataclass, field, is_dataclass
 import pkgutil
-from dataclasses import is_dataclass
+from typing import List
 from unittest import TestCase
 
 import pcs
-from pcs.common.interface.dto import DataTransferObject
+from pcs.common.interface.dto import (
+    DataTransferObject,
+    from_dict,
+    meta,
+    to_dict,
+)
 
 
 def _import_all(_path):
@@ -27,3 +33,70 @@ class DatatransferObjectTest(TestCase):
         _import_all(pcs.__path__)
         for cls in _all_subclasses(DataTransferObject):
             self.assertTrue(is_dataclass(cls), f"{cls} is not a dataclass")
+
+
+@dataclass
+class MyDto1(DataTransferObject):
+    field_a: int
+    field_b: int = field(metadata=meta(name="field-b"))
+    field_c: int
+
+
+@dataclass
+class MyDto2(DataTransferObject):
+    field_d: int
+    field_e: MyDto1 = field(metadata=meta(name="field-e"))
+    field_f: int
+
+
+@dataclass
+class MyDto3(DataTransferObject):
+    field_g: MyDto2 = field(metadata=meta(name="field-g"))
+    field_h: List[MyDto2]
+    field_i: int = field(metadata=meta(name="field-i"))
+
+
+class DictName(TestCase):
+    simple_dto = MyDto1(1, 2, 3)
+    simple_dict = {"field_a": 1, "field-b": 2, "field_c": 3}
+    nested_dto = MyDto3(
+        MyDto2(0, MyDto1(1, 2, 3), 4),
+        [MyDto2(5, MyDto1(6, 7, 8), 9), MyDto2(10, MyDto1(11, 12, 13), 14)],
+        15,
+    )
+    nested_dict = {
+        "field-g": {
+            "field_d": 0,
+            "field-e": {"field_a": 1, "field-b": 2, "field_c": 3},
+            "field_f": 4,
+        },
+        "field_h": [
+            {
+                "field_d": 5,
+                "field-e": {"field_a": 6, "field-b": 7, "field_c": 8},
+                "field_f": 9,
+            },
+            {
+                "field_d": 10,
+                "field-e": {
+                    "field_a": 11,
+                    "field-b": 12,
+                    "field_c": 13,
+                },
+                "field_f": 14,
+            },
+        ],
+        "field-i": 15,
+    }
+
+    def test_simple_to_dict(self):
+        self.assertEqual(to_dict(self.simple_dto), self.simple_dict)
+
+    def test_simple_from_dict(self):
+        self.assertEqual(self.simple_dto, from_dict(MyDto1, self.simple_dict))
+
+    def test_nested_to_dict(self):
+        self.assertEqual(to_dict(self.nested_dto), self.nested_dict)
+
+    def test_nested_from_dict(self):
+        self.assertEqual(self.nested_dto, from_dict(MyDto3, self.nested_dict))

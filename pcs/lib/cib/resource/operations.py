@@ -3,6 +3,7 @@ from typing import Dict, Iterable, List, Mapping
 
 from lxml import etree
 
+from pcs.common.interface.dto import to_dict
 from pcs.common import reports
 from pcs.common.reports import (
     ReportItemList,
@@ -11,7 +12,7 @@ from pcs.common.reports import (
 from pcs.common.reports.item import ReportItem
 from pcs.common.tools import timeout_to_seconds
 from pcs.lib import validate
-from pcs.lib.resource_agent import AgentActionDto, action_dto_to_dict
+from pcs.lib.resource_agent import AgentActionDto
 from pcs.lib.cib.nvpair import append_new_instance_attributes
 from pcs.lib.cib.tools import (
     create_subelement_id,
@@ -175,6 +176,14 @@ def validate_operation_list(
     return report_list
 
 
+def _action_dto_to_dict(dto: AgentActionDto) -> Dict[str, str]:
+    return {
+        key: value
+        for key, value in to_dict(dto).items()
+        if key != "depth" and value not in (None, "")
+    }
+
+
 def _get_remaining_defaults(
     report_processor: ReportProcessor,
     operation_list: Iterable[Mapping[str, str]],
@@ -195,7 +204,7 @@ def _get_remaining_defaults(
     return _make_unique_intervals(
         report_processor,
         [
-            action_dto_to_dict(default_operation, for_cib=True)
+            _action_dto_to_dict(default_operation)
             for default_operation in default_operation_list
             if default_operation.name not in defined_operation_names
         ],

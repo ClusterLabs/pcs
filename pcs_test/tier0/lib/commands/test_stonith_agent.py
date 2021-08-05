@@ -125,7 +125,19 @@ class TestListAgents(TestCase):
                     "longdesc": "long fence_apc",
                     "parameters": [],
                     "actions": [],
-                    "default_actions": [{"interval": "60s", "name": "monitor"}],
+                    "default_actions": [
+                        {
+                            "interval": "60s",
+                            "name": "monitor",
+                            "OCF_CHECK_LEVEL": None,
+                            "automatic": None,
+                            "depth": None,
+                            "on_target": None,
+                            "role": None,
+                            "start-delay": None,
+                            "timeout": None,
+                        }
+                    ],
                 },
                 {
                     "name": "fence_dummy",
@@ -133,7 +145,19 @@ class TestListAgents(TestCase):
                     "longdesc": "long fence_dummy",
                     "parameters": [],
                     "actions": [],
-                    "default_actions": [{"interval": "60s", "name": "monitor"}],
+                    "default_actions": [
+                        {
+                            "interval": "60s",
+                            "name": "monitor",
+                            "OCF_CHECK_LEVEL": None,
+                            "automatic": None,
+                            "depth": None,
+                            "on_target": None,
+                            "role": None,
+                            "start-delay": None,
+                            "timeout": None,
+                        }
+                    ],
                 },
                 {
                     "name": "fence_xvm",
@@ -141,7 +165,19 @@ class TestListAgents(TestCase):
                     "longdesc": "long fence_xvm",
                     "parameters": [],
                     "actions": [],
-                    "default_actions": [{"interval": "60s", "name": "monitor"}],
+                    "default_actions": [
+                        {
+                            "interval": "60s",
+                            "name": "monitor",
+                            "OCF_CHECK_LEVEL": None,
+                            "automatic": None,
+                            "depth": None,
+                            "on_target": None,
+                            "role": None,
+                            "start-delay": None,
+                            "timeout": None,
+                        }
+                    ],
                 },
             ],
         )
@@ -171,7 +207,19 @@ class TestDescribeAgent(TestCase):
             "longdesc": "long desc",
             "parameters": [],
             "actions": [],
-            "default_actions": [{"name": "monitor", "interval": "60s"}],
+            "default_actions": [
+                {
+                    "name": "monitor",
+                    "interval": "60s",
+                    "OCF_CHECK_LEVEL": None,
+                    "automatic": None,
+                    "depth": None,
+                    "on_target": None,
+                    "role": None,
+                    "start-delay": None,
+                    "timeout": None,
+                }
+            ],
         }
 
     def tearDown(self):

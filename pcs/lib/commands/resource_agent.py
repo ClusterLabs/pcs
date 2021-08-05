@@ -1,5 +1,6 @@
 from typing import Any, Dict, Iterable, List, Optional, Type
 
+from pcs.common.interface.dto import to_dict
 from pcs.lib import resource_agent
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.external import CommandRunner
@@ -99,7 +100,7 @@ def _complete_agent_list(
                 if describe
                 else agent_metadata.get_name_info()
             )
-            agent_list.append(resource_agent.metadata_dto_to_dict(metadata_dto))
+            agent_list.append(to_dict(metadata_dto))
         except resource_agent.ResourceAgentError:
             # we don't return it in the list:
             #
@@ -134,4 +135,4 @@ def describe_agent(
         agent_name,
         absent_agent_supported=False,
     )
-    return resource_agent.metadata_dto_to_dict(agent.get_full_info())
+    return to_dict(agent.get_full_info())

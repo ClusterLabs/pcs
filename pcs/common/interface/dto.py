@@ -1,12 +1,14 @@
 from typing import (
     Any,
-    Iterable,
     Dict,
+    Iterable,
+    NewType,
     Type,
     TypeVar,
     Union,
 )
-from dataclasses import asdict, is_dataclass
+from dataclasses import asdict, fields, is_dataclass
+
 import dacite
 
 from pcs.common import types
@@ -22,24 +24,73 @@ SerializableType = Union[  # type: ignore
 
 T = TypeVar("T")
 
+ToDictMetaKey = NewType("ToDictMetaKey", str)
+META_NAME = ToDictMetaKey("META_NAME")
+
 
 class DataTransferObject:
     pass
 
 
+def meta(name: str) -> Dict[str, str]:
+    metadata: Dict[str, str] = dict()
+    if name:
+        metadata[META_NAME] = name
+    return metadata
+
+
+def _convert_dict(
+    klass: Type[DataTransferObject], obj_dict: DtoPayload
+) -> DtoPayload:
+    new_dict = dict()
+    for _field in fields(klass):
+        value = obj_dict[_field.name]
+        if is_dataclass(_field.type):
+            value = _convert_dict(_field.type, value)
+        elif isinstance(value, list) and is_dataclass(_field.type.__args__[0]):
+            value = [
+                _convert_dict(_field.type.__args__[0], item) for item in value
+            ]
+        elif isinstance(value, dict) and is_dataclass(_field.type.__args__[1]):
+            value = {
+                item_key: _convert_dict(_field.type.__args__[1], item_val)
+                for item_key, item_val in value.items()
+            }
+        new_dict[_field.metadata.get(META_NAME, _field.name)] = value
+    return new_dict
+
+
 def to_dict(obj: DataTransferObject) -> DtoPayload:
-    if not is_dataclass(obj):
-        AssertionError()
-    return asdict(obj)
+    return _convert_dict(obj.__class__, asdict(obj))
 
 
 DtoType = TypeVar("DtoType", bound=DataTransferObject)
 
 
+def _convert_payload(klass: Type[DtoType], data: DtoPayload) -> DtoPayload:
+    new_dict = dict()
+    for _field in fields(klass):
+        value = data[_field.metadata.get(META_NAME, _field.name)]
+        if is_dataclass(_field.type):
+            value = _convert_payload(_field.type, value)
+        elif isinstance(value, list) and is_dataclass(_field.type.__args__[0]):
+            value = [
+                _convert_payload(_field.type.__args__[0], item)
+                for item in value
+            ]
+        elif isinstance(value, dict) and is_dataclass(_field.type.__args__[1]):
+            value = {
+                item_key: _convert_payload(_field.type.__args__[1], item_val)
+                for item_key, item_val in value.items()
+            }
+        new_dict[_field.name] = value
+    return new_dict
+
+
 def from_dict(cls: Type[DtoType], data: DtoPayload) -> DtoType:
     return dacite.from_dict(
         data_class=cls,
-        data=data,
+        data=_convert_payload(cls, data),
         # NOTE: all enum types has to be listed here in key cast
         # see: https://github.com/konradhalas/dacite#casting
         config=dacite.Config(
