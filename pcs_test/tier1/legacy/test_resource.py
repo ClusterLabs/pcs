@@ -2351,50 +2351,36 @@ monitor interval=20 (A-monitor-interval-20)
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(self.temp_cib.name, ["resource"])
-        if is_pacemaker_21_without_20_compatibility():
-            ac(
-                o,
-                outdent(
-                    """\
-                      * Resource Group: AG:
-                        * D1\t(ocf:heartbeat:Dummy):\t Stopped
-                      * Clone Set: D0-clone [D0]:
-                    """
-                ),
-            )
-        elif PCMK_2_0_3_PLUS:
-            assert_pcs_status(
-                o,
-                """\
-  * Resource Group: AG:
-    * D1\t(ocf::heartbeat:Dummy):\tStopped
-  * Clone Set: D0-clone [D0]:
+        o, r = pcs(self.temp_cib.name, ["resource", "config"])
+        ac(
+            o,
+            """\
+ Group: AG
+  Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
+ Clone: D0-clone
+  Resource: D0 (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=10s timeout=20s (D0-monitor-interval-10s)
 """,
-            )
-        else:
-            ac(
-                o,
-                """\
- Resource Group: AG
-     D1\t(ocf::heartbeat:Dummy):\tStopped
- Clone Set: D0-clone [D0]
-""",
-            )
+        )
         assert r == 0
 
         o, r = pcs(self.temp_cib.name, "resource clone D1".split())
         ac(o, "")
         assert r == 0
 
-        o, r = pcs(self.temp_cib.name, ["resource"])
-        if PCMK_2_0_3_PLUS:
-            ac(
-                o,
-                "  * Clone Set: D0-clone [D0]:\n  * Clone Set: D1-clone [D1]:\n",
-            )
-        else:
-            ac(o, " Clone Set: D0-clone [D0]\n Clone Set: D1-clone [D1]\n")
+        o, r = pcs(self.temp_cib.name, ["resource", "config"])
+        ac(
+            o,
+            """\
+ Clone: D0-clone
+  Resource: D0 (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=10s timeout=20s (D0-monitor-interval-10s)
+ Clone: D1-clone
+  Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+   Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
+""",
+        )
         assert r == 0
 
     def testPromotableGroupMember(self):
@@ -2686,12 +2672,17 @@ monitor interval=20 (A-monitor-interval-20)
         assert r == 0
         assert o == ""
 
-        o, r = pcs(self.temp_cib.name, "resource status".split())
+        o, r = pcs(self.temp_cib.name, "resource config".split())
+        ac(
+            o,
+            """\
+ Clone: DGroup-clone
+  Group: DGroup
+   Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+    Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
+""",
+        )
         assert r == 0
-        if PCMK_2_0_3_PLUS:
-            ac(o, "  * Clone Set: DGroup-clone [DGroup]:\n")
-        else:
-            ac(o, " Clone Set: DGroup-clone [DGroup]\n")
 
         o, r = pcs(self.temp_cib.name, "resource clone DGroup".split())
         ac(o, "Error: cannot clone a group that has already been cloned\n")
