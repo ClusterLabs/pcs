@@ -1021,12 +1021,12 @@ class LevelAdd(LevelTestsBase):
             outdent(
                 """\
                 Error: 'x' is not a valid level value, use a positive integer
-                Error: invalid device id 'dev@ce', '@' is not a valid character for a device id
-                Error: Errors have occurred, therefore pcs is unable to continue
                 Warning: Node 'rh7-X' does not appear to exist in configuration
+                Error: invalid device id 'dev@ce', '@' is not a valid character for a device id
                 Warning: Stonith resource(s) 'F0' do not exist
                 """
-            ),
+            )
+            + ERRORS_HAVE_OCURRED,
         )
 
     def test_add_level_leading_zero(self):

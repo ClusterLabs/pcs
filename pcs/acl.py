@@ -19,8 +19,7 @@ def _print_list_of_objects(obj_list, transformation_fn):
 def show_acl_config(lib, argv, modifiers):
     warn(
         "This command is deprecated and will be removed. "
-        "Please use 'pcs acl config' instead.",
-        stderr=True,
+        "Please use 'pcs acl config' instead."
     )
     return acl_config(lib, argv, modifiers)
 

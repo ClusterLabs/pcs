@@ -26,8 +26,7 @@ def create_with_set(lib, argv, modifiers):
 def show(lib, argv, modifiers):
     warn(
         "This command is deprecated and will be removed. "
-        "Please use 'pcs constraint order config' instead.",
-        stderr=True,
+        "Please use 'pcs constraint order config' instead."
     )
     return config_cmd(lib, argv, modifiers)
 

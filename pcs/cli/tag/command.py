@@ -35,8 +35,7 @@ def tag_list_cmd(
     """
     warn(
         "This command is deprecated and will be removed. "
-        "Please use 'pcs tag config' instead.",
-        stderr=True,
+        "Please use 'pcs tag config' instead."
     )
     return tag_config(lib, argv, modifiers)
 

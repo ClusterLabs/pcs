@@ -36,7 +36,10 @@ from pcs.cli.common.parse_args import (
     wait_to_timeout,
     InputModifiers,
 )
-from pcs.cli.common.tools import timeout_to_seconds_legacy
+from pcs.cli.common.tools import (
+    print_to_stderr,
+    timeout_to_seconds_legacy,
+)
 from pcs.cli.nvset import nvset_dto_list_to_lines
 from pcs.cli.reports import process_library_reports
 from pcs.cli.reports.output import error, warn
@@ -1156,7 +1159,7 @@ def resource_update(lib, args, modifiers, deal_with_guest_change=True):
         output, retval = utils.run(args)
         running_on = utils.resource_running_on(res_id)
         if retval == 0:
-            print(running_on["message"])
+            print_to_stderr(running_on["message"])
         else:
             msg = []
             if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
@@ -1186,7 +1189,7 @@ def resource_update_clone(dom, clone, res_id, args, wait, wait_timeout):
         output, retval = utils.run(args)
         running_on = utils.resource_running_on(clone.getAttribute("id"))
         if retval == 0:
-            print(running_on["message"])
+            print_to_stderr(running_on["message"])
         else:
             msg = []
             if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
@@ -1492,7 +1495,7 @@ def resource_meta(lib, argv, modifiers):
         output, retval = utils.run(args)
         running_on = utils.resource_running_on(res_id)
         if retval == 0:
-            print(running_on["message"])
+            print_to_stderr(running_on["message"])
         else:
             msg = []
             if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
@@ -1603,7 +1606,7 @@ def resource_clone(lib, argv, modifiers, promotable=False):
         output, retval = utils.run(args)
         running_on = utils.resource_running_on(clone_id)
         if retval == 0:
-            print(running_on["message"])
+            print_to_stderr(running_on["message"])
         else:
             msg = []
             if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
@@ -1735,7 +1738,7 @@ def resource_clone_master_remove(lib, argv, modifiers):
         output, retval = utils.run(args)
         running_on = utils.resource_running_on(resource_id)
         if retval == 0:
-            print(running_on["message"])
+            print_to_stderr(running_on["message"])
         else:
             msg = []
             if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
@@ -1759,13 +1762,29 @@ def resource_remove_cmd(lib, argv, modifiers):
     resource_remove(argv[0])
 
 
+# TODO move to lib (complete rewrite)
 def resource_remove(resource_id, output=True, is_remove_remote_context=False):
     """
+    Removes a resource from cluster configuration
+
     Commandline options:
       * -f - CIB file
       * --force - don't stop a resource before its deletion
       * --wait - is supported by resource_disable but waiting for resource to
         stop is handled also in this function
+
+    This function contains at least three bugs:
+    1) Input parameter 'output' gets overwritten with output of utilities which
+    can cause loose equality checks to suppress output of this function
+    2) Callers don't check the return value of this function and in conjunction
+    with the previous bug, the command can complete successfully even though the
+    resource was not removed
+    3) Parameter 'output' is not always correctly propagated to functions that
+    support it
+
+    str resource_id -- id of resource to be removed
+    bool output -- suppresses output of this and subsequent commands (buggy)
+    bool is_remove_remote_context -- is this running on a remote node
     """
 
     def is_bundle_running(bundle_id):
@@ -1815,9 +1834,9 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
     if bundle_el is not None:
         primitive_el = utils.dom_get_resource_bundle(bundle_el)
         if primitive_el is None:
-            print("Deleting bundle '{0}'".format(resource_id))
+            print_to_stderr("Deleting bundle '{0}'".format(resource_id))
         else:
-            print(
+            print_to_stderr(
                 "Deleting bundle '{0}' and its inner resource '{1}'".format(
                     resource_id, primitive_el.getAttribute("id")
                 )
@@ -1828,8 +1847,9 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
             and not utils.usefile
             and is_bundle_running(resource_id)
         ):
-            sys.stdout.write("Stopping bundle '{0}'... ".format(resource_id))
-            sys.stdout.flush()
+            print_to_stderr(
+                "Stopping bundle '{0}'... ".format(resource_id), end=""
+            )
             lib = utils.get_library_wrapper()
             lib.resource.disable([resource_id], False)
             output, retval = utils.run(["crm_resource", "--wait"])
@@ -1842,7 +1862,7 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
                 if retval != 0 and output:
                     msg.append("\n" + output)
                 utils.err("\n".join(msg).strip())
-            print("Stopped")
+            print_to_stderr("Stopped")
 
         if primitive_el is not None:
             resource_remove(primitive_el.getAttribute("id"))
@@ -1863,10 +1883,12 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
         return True
 
     if utils.does_exist('//group[@id="' + resource_id + '"]'):
-        print(f"Removing group: {resource_id} (and all resources within group)")
+        print_to_stderr(
+            f"Removing group: {resource_id} (and all resources within group)"
+        )
         group = utils.get_cib_xpath('//group[@id="' + resource_id + '"]')
         group_dom = parseString(group)
-        print("Stopping all resources in group: %s..." % resource_id)
+        print_to_stderr(f"Stopping all resources in group: {resource_id}...")
         resource_disable([resource_id])
         if "--force" not in utils.pcs_options and not utils.usefile:
             output, retval = utils.run(["crm_resource", "--wait"])
@@ -1927,8 +1949,7 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
         and not utils.usefile
         and utils.resource_running_on(resource_id)["is_running"]
     ):
-        sys.stdout.write("Attempting to stop: " + resource_id + "... ")
-        sys.stdout.flush()
+        print_to_stderr("Attempting to stop: " + resource_id + "... ", end="")
         lib = utils.get_library_wrapper()
         # we are not using wait from disable command, because if wait is not
         # supported in pacemaker, we don't want error message but we try to
@@ -1950,7 +1971,7 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
             if retval != 0 and output:
                 msg.append("\n" + output)
             utils.err("\n".join(msg).strip())
-        print("Stopped")
+        print_to_stderr("Stopped")
 
     utils.replace_cib_configuration(
         remove_resource_references(utils.get_cib_dom(), resource_id, output)
@@ -1991,7 +2012,7 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
                 f"//primitive[@id='{resource_id}']",
             ]
         if output is True:
-            print("Deleting Resource - " + resource_id)
+            print_to_stderr("Deleting Resource - " + resource_id)
         output, retVal = utils.run(args)
         if retVal != 0:
             utils.err(
@@ -2047,7 +2068,7 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
 
         args = ["cibadmin", "-o", "resources", "-D", "--xpath", to_remove_xpath]
         if output is True:
-            print("Deleting Resource (" + msg + ") - " + resource_id)
+            print_to_stderr("Deleting Resource (" + msg + ") - " + resource_id)
         dummy_cmdoutput, retVal = utils.run(args)
         if retVal != 0:
             if output is True:
@@ -2523,7 +2544,7 @@ def resource_disable(argv):
 
     resource = argv[0]
     if not is_managed(resource):
-        print("Warning: '%s' is unmanaged" % resource)
+        warn(f"'{resource}' is unmanaged")
 
     if "--wait" in utils.pcs_options:
         wait_timeout = utils.validate_wait_get_timeout()
@@ -2549,7 +2570,7 @@ def resource_disable(argv):
         output, retval = utils.run(args)
         running_on = utils.resource_running_on(resource)
         if retval == 0 and not running_on["is_running"]:
-            print(running_on["message"])
+            print_to_stderr(running_on["message"])
             return True
         msg = []
         if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
@@ -2584,12 +2605,11 @@ def resource_restart(lib, argv, modifiers):
         dom, resource
     ) or utils.dom_get_resource_bundle_parent(dom, resource)
     if real_res:
-        print(
+        warn(
             (
-                "Warning: using %s... (if a resource is a clone or bundle you "
-                "must use the clone or bundle name)"
-            )
-            % real_res.getAttribute("id")
+                "using {resource_id}... (if a resource is a clone or bundle "
+                "you must use the clone or bundle name)"
+            ).format(resource_id=real_res.getAttribute("id"))
         )
         resource = real_res.getAttribute("id")
 
@@ -2617,7 +2637,7 @@ def resource_restart(lib, argv, modifiers):
     if retval != 0:
         utils.err(output)
 
-    print("%s successfully restarted" % resource)
+    print_to_stderr(f"{resource} successfully restarted")
 
 
 def resource_force_action(lib, argv, modifiers, action=None):
@@ -3129,7 +3149,7 @@ def resource_cleanup(lib, argv, modifiers):
     parsed_options = prepare_options_allowed(
         argv, {"node", "operation", "interval"}
     )
-    print(
+    print_to_stderr(
         lib_pacemaker.resource_cleanup(
             utils.cmd_runner(),
             resource=resource,
@@ -3156,10 +3176,10 @@ def resource_refresh(lib, argv, modifiers):
     # crm_resource actualy did.
     modifiers.ensure_only_supported("--force", "--full", "--strict")
     if modifiers.is_specified("--full"):
-        sys.stderr.write("Warning: '--full' has been deprecated\n")
+        warn("'--full' has been deprecated")
     resource = argv.pop(0) if argv and "=" not in argv[0] else None
     parsed_options = prepare_options_allowed(argv, {"node"})
-    print(
+    print_to_stderr(
         lib_pacemaker.resource_refresh(
             utils.cmd_runner(),
             resource=resource,
@@ -3362,7 +3382,7 @@ def resource_relocate_run(cib_dom, resources=None, dry=True):
         if not ("start_on_node" in location or "promote_on_node" in location):
             continue
         anything_changed = True
-        print(resource_relocate_location_to_str(location))
+        print_to_stderr(resource_relocate_location_to_str(location))
         constraint_id = utils.find_unique_id(
             cib_dom,
             RESOURCE_RELOCATE_CONSTRAINT_PREFIX + location["id_for_constraint"],
@@ -3391,9 +3411,7 @@ def resource_relocate_run(cib_dom, resources=None, dry=True):
         utils.replace_cib_configuration(cib_dom)
 
     # wait for resources to move
-    print()
-    print("Waiting for resources to move...")
-    print()
+    print_to_stderr("\nWaiting for resources to move...\n")
     if not dry:
         output, retval = utils.run(["crm_resource", "--wait"])
         if retval != 0:
@@ -3420,7 +3438,7 @@ def resource_relocate_clear(cib_dom):
         for location_el in constraint_el.getElementsByTagName("rsc_location"):
             location_id = location_el.getAttribute("id")
             if location_id.startswith(RESOURCE_RELOCATE_CONSTRAINT_PREFIX):
-                print("Removing constraint {0}".format(location_id))
+                print_to_stderr("Removing constraint {0}".format(location_id))
                 location_el.parentNode.removeChild(location_el)
     return cib_dom
 

@@ -96,8 +96,7 @@ def unset_property(lib, argv, modifiers):
 def list_property_deprecated(lib, argv, modifiers):
     warn(
         "This command is deprecated and will be removed. "
-        "Please use 'pcs property config' instead.",
-        stderr=True,
+        "Please use 'pcs property config' instead."
     )
     return list_property(lib, argv, modifiers)
 

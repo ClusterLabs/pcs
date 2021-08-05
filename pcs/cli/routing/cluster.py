@@ -24,8 +24,7 @@ from pcs.utils import exit_on_cmdline_input_errror
 def certkey(lib: Any, argv: Sequence[str], modifiers: InputModifiers) -> None:
     warn(
         "This command is deprecated and will be removed. "
-        "Please use 'pcs pcsd certkey' instead.",
-        stderr=True,
+        "Please use 'pcs pcsd certkey' instead."
     )
     try:
         return pcsd.pcsd_certkey_cmd(lib, argv, modifiers)
@@ -38,8 +37,7 @@ def pcsd_status(
 ) -> None:
     warn(
         "This command is deprecated and will be removed. "
-        "Please use 'pcs pcsd status' or 'pcs status pcsd' instead.",
-        stderr=True,
+        "Please use 'pcs pcsd status' or 'pcs status pcsd' instead."
     )
     try:
         return pcsd.pcsd_status_cmd(lib, argv, modifiers)

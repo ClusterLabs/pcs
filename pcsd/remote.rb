@@ -326,7 +326,7 @@ def cluster_start(params, request, auth_user)
     if retval != 0
       return [400, (output + stderr).join]
     else
-      return output
+      return stderr
     end
   end
 end
@@ -360,7 +360,7 @@ def cluster_stop(params, request, auth_user)
     if retval != 0
       return [400, stderr.join]
     else
-      return stdout.join
+      return stderr.join
     end
   end
 end

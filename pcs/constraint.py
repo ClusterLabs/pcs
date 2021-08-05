@@ -124,8 +124,7 @@ def constraint_order_cmd(lib, argv, modifiers):
 def constraint_show(lib, argv, modifiers):
     warn(
         "This command is deprecated and will be removed. "
-        "Please use 'pcs constraint config' instead.",
-        stderr=True,
+        "Please use 'pcs constraint config' instead."
     )
     return constraint_config_cmd(lib, argv, modifiers)
 
@@ -606,8 +605,7 @@ def order_find_duplicates(dom, constraint_el):
 def location_show(lib, argv, modifiers):
     warn(
         "This command is deprecated and will be removed. "
-        "Please use 'pcs constraint location config' instead.",
-        stderr=True,
+        "Please use 'pcs constraint location config' instead."
     )
     return location_config_cmd(lib, argv, modifiers)
 

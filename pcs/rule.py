@@ -55,8 +55,7 @@ def dom_rule_add(dom_element, options, rule_argv, cib_schema_version):
         )
         warn(
             "Converting invalid score to score-attribute=pingd is deprecated "
-            "and will be removed.",
-            stderr=True,
+            "and will be removed."
         )
         options["score-attribute"] = "pingd"
         options["score"] = None
@@ -111,7 +110,7 @@ def dom_rule_add(dom_element, options, rule_argv, cib_schema_version):
         utils.err("'%s' is not a valid rule expression" % " ".join(rule_argv))
 
     for msg in preprocessor.warning_list:
-        warn(msg, stderr=True)
+        warn(msg)
 
     # add options into rule xml
     if not options.get("score") and not options.get("score-attribute"):

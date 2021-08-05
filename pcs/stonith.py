@@ -253,8 +253,7 @@ def _stonith_level_normalize_devices(argv):
     if any("," in arg for arg in argv):
         warn(
             "Delimiting stonith devices with ',' is deprecated and will be "
-            "removed. Please use a space to delimit stonith devices.",
-            stderr=True,
+            "removed. Please use a space to delimit stonith devices."
         )
     return ",".join(argv).split(",")
 
@@ -321,8 +320,7 @@ def stonith_level_clear_cmd(lib, argv, modifiers):
     warn(
         "Syntax 'pcs stonith level clear [<target> | <stonith id(s)>] is "
         "deprecated and will be removed. Please use 'pcs stonith level clear "
-        "[target <target>] | [stonith <stonith id>...]'.",
-        stderr=True,
+        "[target <target>] | [stonith <stonith id>...]'."
     )
     target_type, target_value = _stonith_level_parse_node(argv[0])
     was_error = False
@@ -436,15 +434,13 @@ def stonith_level_remove_cmd(lib, argv, modifiers):
                 "Syntax 'pcs stonith level delete | remove <level> [<target>] "
                 "[<stonith id>...]' is deprecated and will be removed. Please "
                 "use 'pcs stonith level delete | remove <level> "
-                "[target <target>] [stonith <stonith id>...]'.",
-                stderr=True,
+                "[target <target>] [stonith <stonith id>...]'."
             )
             if not parse_args.ARG_TYPE_DELIMITER in argv[1] and "," in argv[1]:
                 warn(
                     "Delimiting stonith devices with ',' is deprecated and "
                     "will be removed. Please use a space to delimit stonith "
-                    "devices.",
-                    stderr=True,
+                    "devices."
                 )
             target_type, target_value = _stonith_level_parse_node(argv[1])
         if len(argv) > 2:

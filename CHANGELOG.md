@@ -6,6 +6,8 @@
 - Pcs no longer depends on python3-distro package
 - 'pcs status xml' now prints cluster status in the new format provided by
   Pacemaker 2.1 ([rhbz#1985981])
+- All errors, warning and progress related output is now printed to stderr
+  instead of stdout
 
 ### Removed
 - Deprecated obsolete commands `pcs config import-cman` and `pcs config export

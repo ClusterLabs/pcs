@@ -47,24 +47,23 @@ class NodeAddRemote(RemoteTest):
     def test_fail_on_duplicit_address_specification(self):
         self.assert_pcs_fail(
             "cluster node add-remote remote-node ADDRESS server=DIFFERENT".split(),
-            "Error: invalid resource option 'server', allowed options"
-            " are: 'port', 'reconnect_interval', 'trace_file', 'trace_ra'\n"
-            "Error: Errors have occurred, therefore pcs is unable to continue\n"
             "Unable to check if there is a conflict with nodes set in corosync "
             "because the command does not run on a live cluster (e.g. -f "
-            "was used)\n",
+            "was used)\n"
+            "Error: invalid resource option 'server', allowed options"
+            " are: 'port', 'reconnect_interval', 'trace_file', 'trace_ra'\n"
+            + ERRORS_HAVE_OCURRED,
         )
 
     def test_fail_on_unknown_instance_attribute_not_offer_server(self):
         self.assert_pcs_fail(
             "cluster node add-remote remote-node ADDRESS abcd=efgh".split(),
-            "Error: invalid resource option 'abcd', allowed options"
-            " are: 'port', 'reconnect_interval', 'trace_file', 'trace_ra', "
-            "use --force to override\n"
-            "Error: Errors have occurred, therefore pcs is unable to continue\n"
             "Unable to check if there is a conflict with nodes set in corosync "
             "because the command does not run on a live cluster (e.g. -f "
-            "was used)\n",
+            "was used)\n"
+            "Error: invalid resource option 'abcd', allowed options"
+            " are: 'port', 'reconnect_interval', 'trace_file', 'trace_ra', "
+            "use --force to override\n" + ERRORS_HAVE_OCURRED,
         )
 
     def test_fail_on_bad_commandline_usage(self):
@@ -155,11 +154,10 @@ class NodeAddRemote(RemoteTest):
         )
         self.assert_pcs_fail(
             "cluster node add-remote B node-addr".split(),
-            "Error: 'node-addr' already exists\n"
-            "Error: Errors have occurred, therefore pcs is unable to continue\n"
             "Unable to check if there is a conflict with nodes set in corosync "
             "because the command does not run on a live cluster (e.g. -f "
-            "was used)\n",
+            "was used)\n"
+            "Error: 'node-addr' already exists\n" + ERRORS_HAVE_OCURRED,
         )
 
     def test_fail_when_server_already_used_as_guest(self):
@@ -174,12 +172,10 @@ class NodeAddRemote(RemoteTest):
         )
         self.assert_pcs_fail(
             "cluster node add-remote B node-addr".split(),
-            "Error: 'node-addr' already exists\n"
-            "Error: Errors have occurred, therefore pcs is unable to "
-            "continue\n"
             "Unable to check if there is a conflict with nodes set in corosync "
             "because the command does not run on a live cluster (e.g. -f "
-            "was used)\n",
+            "was used)\n"
+            "Error: 'node-addr' already exists\n" + ERRORS_HAVE_OCURRED,
         )
 
 
@@ -210,9 +206,10 @@ class NodeAddGuest(RemoteTest):
         self.create_resource()
         self.assert_pcs_fail(
             "cluster node add-guest node-name G remote-node=node-name".split(),
-            stdout_start="Error: invalid guest option 'remote-node',"
-            " allowed options are: 'remote-addr', 'remote-connect-timeout',"
-            " 'remote-port'\n",
+            stdout_regexp=(
+                ".*Error: invalid guest option 'remote-node', allowed options "
+                "are: 'remote-addr', 'remote-connect-timeout', 'remote-port'.*"
+            ),
         )
 
     def test_fail_when_resource_has_already_remote_node_meta(self):
@@ -227,36 +224,36 @@ class NodeAddGuest(RemoteTest):
         )
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_fail(
-            "cluster node add-guest node-name already-guest-node remote-addr=a".split(),
-            "Error: the resource 'already-guest-node' is already a guest node\n"
-            "Error: Errors have occurred, therefore pcs is unable to continue\n"
+            "cluster node add-guest node-name already-guest-node "
+            "remote-addr=a".split(),
             "Unable to check if there is a conflict with nodes set in corosync "
             "because the command does not run on a live cluster (e.g. -f "
-            "was used)\n",
+            "was used)\n"
+            "Error: the resource 'already-guest-node' is already a guest node\n"
+            + ERRORS_HAVE_OCURRED,
         )
 
     def test_fail_on_combined_reasons(self):
         self.assert_pcs_fail(
             "cluster node add-guest node-name G a=b remote-addr=a".split(),
-            "Error: invalid guest option 'a', allowed options are:"
-            " 'remote-addr', 'remote-connect-timeout', 'remote-port'\n"
-            "Error: resource 'G' does not exist\n"
-            "Error: Errors have occurred, therefore pcs is unable to continue\n"
             "Unable to check if there is a conflict with nodes set in corosync "
             "because the command does not run on a live cluster (e.g. -f "
-            "was used)\n",
+            "was used)\n"
+            "Error: invalid guest option 'a', allowed options are:"
+            " 'remote-addr', 'remote-connect-timeout', 'remote-port'\n"
+            "Error: resource 'G' does not exist\n" + ERRORS_HAVE_OCURRED,
         )
 
     def test_fail_when_disallowed_option_appear(self):
         self.create_resource()
         self.assert_pcs_fail(
             "cluster node add-guest node-name G a=b remote-addr=a".split(),
-            "Error: invalid guest option 'a', allowed options are:"
-            " 'remote-addr', 'remote-connect-timeout', 'remote-port'\n"
-            "Error: Errors have occurred, therefore pcs is unable to continue\n"
             "Unable to check if there is a conflict with nodes set in corosync "
             "because the command does not run on a live cluster (e.g. -f "
-            "was used)\n",
+            "was used)\n"
+            "Error: invalid guest option 'a', allowed options are:"
+            " 'remote-addr', 'remote-connect-timeout', 'remote-port'\n"
+            + ERRORS_HAVE_OCURRED,
         )
 
     def test_fail_when_invalid_interval_appear(self):
@@ -266,12 +263,11 @@ class NodeAddGuest(RemoteTest):
                 "cluster node add-guest node-name G remote-connect-timeout=A "
                 "remote-addr=a"
             ).split(),
-            "Error: 'A' is not a valid remote-connect-timeout value, use time"
-            " interval (e.g. 1, 2s, 3m, 4h, ...)\n"
-            "Error: Errors have occurred, therefore pcs is unable to continue\n"
             "Unable to check if there is a conflict with nodes set in corosync "
             "because the command does not run on a live cluster (e.g. -f "
-            "was used)\n",
+            "was used)\n"
+            "Error: 'A' is not a valid remote-connect-timeout value, use time"
+            " interval (e.g. 1, 2s, 3m, 4h, ...)\n" + ERRORS_HAVE_OCURRED,
         )
 
     def test_fail_when_invalid_port_appear(self):
@@ -281,12 +277,11 @@ class NodeAddGuest(RemoteTest):
                 "cluster node add-guest node-name G remote-port=70000 "
                 "remote-addr=a"
             ).split(),
-            "Error: '70000' is not a valid remote-port value, use a port number"
-            " (1..65535)\n"
-            "Error: Errors have occurred, therefore pcs is unable to continue\n"
             "Unable to check if there is a conflict with nodes set in corosync "
             "because the command does not run on a live cluster (e.g. -f "
-            "was used)\n",
+            "was used)\n"
+            "Error: '70000' is not a valid remote-port value, use a port number"
+            " (1..65535)\n" + ERRORS_HAVE_OCURRED,
         )
 
     def test_fail_when_guest_node_conflicts_with_existing_id(self):
@@ -298,11 +293,10 @@ class NodeAddGuest(RemoteTest):
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_fail(
             "cluster node add-guest CONFLICT G remote-addr=a".split(),
-            "Error: 'CONFLICT' already exists\n"
-            "Error: Errors have occurred, therefore pcs is unable to continue\n"
             "Unable to check if there is a conflict with nodes set in corosync "
             "because the command does not run on a live cluster (e.g. -f "
-            "was used)\n",
+            "was used)\n"
+            "Error: 'CONFLICT' already exists\n" + ERRORS_HAVE_OCURRED,
         )
 
     def test_fail_when_guest_node_conflicts_with_existing_guest(self):
@@ -316,11 +310,10 @@ class NodeAddGuest(RemoteTest):
         )
         self.assert_pcs_fail(
             "cluster node add-guest node-name H remote-addr=b".split(),
-            "Error: 'node-name' already exists\n"
-            "Error: Errors have occurred, therefore pcs is unable to continue\n"
             "Unable to check if there is a conflict with nodes set in corosync "
             "because the command does not run on a live cluster (e.g. -f "
-            "was used)\n",
+            "was used)\n"
+            "Error: 'node-name' already exists\n" + ERRORS_HAVE_OCURRED,
         )
 
     def test_fail_when_guest_node_conflicts_with_existing_remote(self):
@@ -334,11 +327,10 @@ class NodeAddGuest(RemoteTest):
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_fail(
             "cluster node add-guest node-name G remote-addr=node-addr".split(),
-            "Error: 'node-addr' already exists\n"
-            "Error: Errors have occurred, therefore pcs is unable to continue\n"
             "Unable to check if there is a conflict with nodes set in corosync "
             "because the command does not run on a live cluster (e.g. -f "
-            "was used)\n",
+            "was used)\n"
+            "Error: 'node-addr' already exists\n" + ERRORS_HAVE_OCURRED,
         )
 
     def test_fail_when_guest_node_name_conflicts_with_existing_remote(self):
@@ -352,11 +344,10 @@ class NodeAddGuest(RemoteTest):
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_fail(
             "cluster node add-guest R G remote-addr=a".split(),
-            "Error: 'R' already exists\n"
-            "Error: Errors have occurred, therefore pcs is unable to continue\n"
             "Unable to check if there is a conflict with nodes set in corosync "
             "because the command does not run on a live cluster (e.g. -f "
-            "was used)\n",
+            "was used)\n"
+            "Error: 'R' already exists\n" + ERRORS_HAVE_OCURRED,
         )
 
     def test_success(self):

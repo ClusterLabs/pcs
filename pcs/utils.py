@@ -54,7 +54,10 @@ from pcs.cli.common.env_cli import Env
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.lib_wrapper import Library
 from pcs.cli.common.parse_args import InputModifiers
-from pcs.cli.common.tools import timeout_to_seconds_legacy
+from pcs.cli.common.tools import (
+    print_to_stderr,
+    timeout_to_seconds_legacy,
+)
 from pcs.cli.reports import (
     output as reports_output,
     process_library_reports,
@@ -156,7 +159,7 @@ def cluster_upgrade():
         == "Upgrade unnecessary: Schema is already the latest available"
     ):
         return
-    print("Cluster CIB has been upgraded to latest version")
+    print_to_stderr("Cluster CIB has been upgraded to latest version")
 
 
 def cluster_upgrade_to_version(required_version: Version) -> Any:
@@ -369,7 +372,7 @@ def repeat_if_timeout(send_http_request_function, repeat_count=15):
                 return retval, output
             repeats_left = repeats_left - 1
             if "--debug" in pcs_options:
-                print("{0}: {1}, trying again...".format(node, output))
+                print_to_stderr(f"{node}: {output}, trying again...")
 
     return repeater
 
@@ -550,8 +553,7 @@ def sendHTTPRequest(
         port=port,
     )
     if "--debug" in pcs_options:
-        print("Sending HTTP Request to: " + url)
-        print("Data: {0}".format(data))
+        print_to_stderr(f"Sending HTTP Request to: {url}\nData: {data}")
 
     def __debug_callback(data_type, debug_data):
         prefixes = {
@@ -595,16 +597,25 @@ def sendHTTPRequest(
         response_data = output.getvalue().decode("utf-8")
         response_code = handler.getinfo(pycurl.RESPONSE_CODE)
         if printResult or printSuccess:
-            print(host + ": " + response_data.strip())
+            print_to_stderr(host + ": " + response_data.strip())
         if "--debug" in pcs_options:
-            print("Response Code: {0}".format(response_code))
-            print("--Debug Response Start--\n{0}".format(response_data))
-            print("--Debug Response End--")
-            print("Communication debug info for calling: {0}".format(url))
-            print("--Debug Communication Output Start--")
-            print(debug_output.getvalue().decode("utf-8", "ignore"))
-            print("--Debug Communication Output End--")
-            print()
+            print_to_stderr(
+                "Response Code: {response_code}\n"
+                "--Debug Response Start--\n"
+                "{response_data}\n"
+                "--Debug Response End--\n"
+                "Communication debug info for calling: {url}\n"
+                "--Debug Communication Output Start--\n"
+                "{debug_comm_output}\n"
+                "--Debug Communication Output End--".format(
+                    response_code=response_code,
+                    response_data=response_data,
+                    url=url,
+                    debug_comm_output=debug_output.getvalue().decode(
+                        "utf-8", "ignore"
+                    ),
+                )
+            )
 
         if response_code == 401:
             output = (
@@ -632,25 +643,24 @@ def sendHTTPRequest(
             output = (0, response_data)
 
         if printResult and output[0] != 0:
-            print(output[1])
+            print_to_stderr(output[1])
 
         return output
     except pycurl.error as e:
         if is_proxy_set(os.environ):
-            print(
-                "Warning: Proxy is set in environment variables, try "
-                "disabling it"
+            reports_output.warn(
+                "Proxy is set in environment variables, try disabling it"
             )
         # pylint: disable=unbalanced-tuple-unpacking
         dummy_errno, reason = e.args
         if "--debug" in pcs_options:
-            print("Response Reason: {0}".format(reason))
+            print_to_stderr(f"Response Reason: {reason}")
         msg = (
             "Unable to connect to {host}, check if pcsd is running there or try "
             "setting higher timeout with --request-timeout option ({reason})"
         ).format(host=host, reason=reason)
         if printResult:
-            print(msg)
+            print_to_stderr(msg)
         return (2, msg)
 
 
@@ -774,7 +784,7 @@ def getCorosyncActiveNodes():
             if nodeid in id_to_status:
                 node_status[node_name] = id_to_status[nodeid]
         else:
-            print("Error mapping %s" % node_name)
+            print_to_stderr(f"Error mapping {node_name}")
 
     nodes_active = []
     for node, status in node_status.items():
@@ -854,10 +864,13 @@ def run(
 
     try:
         if "--debug" in pcs_options:
-            print("Running: " + " ".join(args))
+            print_to_stderr("Running: " + " ".join(args))
             if string_for_stdin:
-                print("--Debug Input Start--\n" + string_for_stdin)
-                print("--Debug Input End--")
+                print_to_stderr(
+                    f"--Debug Input Start--\n"
+                    f"{string_for_stdin}\n"
+                    f"--Debug Input End--"
+                )
 
         # Some commands react differently if you give them anything via stdin
         if string_for_stdin is not None:
@@ -878,17 +891,22 @@ def run(
             universal_newlines=(not binary_output),
         )
         output, dummy_stderror = p.communicate(string_for_stdin)
-        returnVal = p.returncode
+        retval = p.returncode
         if "--debug" in pcs_options:
-            print("Return Value: {0}".format(returnVal))
-            print(("--Debug Output Start--\n{0}".format(output)).rstrip())
-            print("--Debug Output End--")
-            print()
+            print_to_stderr(
+                "Return Value: {retval}\n"
+                "--Debug Output Start--\n"
+                "{debug_output}\n"
+                "--Debug Output End--".format(
+                    retval=retval,
+                    debug_output=output.rstrip(),
+                )
+            )
     except OSError as e:
-        print(e.strerror)
+        print_to_stderr(e.strerror)
         err("unable to locate command: " + args[0])
 
-    return output, returnVal
+    return output, retval
 
 
 @lru_cache()
@@ -943,12 +961,12 @@ def run_pcsdcli(command, data=None):
         output = "".join(output_json["log"])
         # check if some requests timed out, if so print message about it
         if "error: operation_timedout" in output:
-            print("Error: Operation timed out")
+            print_to_stderr("Error: Operation timed out")
         # check if there are any connection failures due to proxy in pcsd and
         # print warning if so
         proxy_msg = "Proxy is set in environment variables, try disabling it"
         if proxy_msg in output:
-            print("Warning: {0}".format(proxy_msg))
+            reports_output.warn(proxy_msg)
 
     except ValueError:
         output_json = {
@@ -1000,7 +1018,7 @@ def auth_hosts(host_dict):
                 )
             for node, result in output["data"]["auth_responses"].items():
                 if result["status"] == "ok":
-                    print("{0}: Authorized".format(node))
+                    print_to_stderr(f"{node}: Authorized")
                 elif result["status"] == "bad_password":
                     err(f"{node}: Username and/or password is incorrect", False)
                     failed = True
@@ -1144,7 +1162,7 @@ def parallel_for_nodes(action, node_list, *args, **kwargs):
 
     def report(node, returncode, output):
         message = "{0}: {1}".format(node, output.strip())
-        print(message)
+        print_to_stderr(message)
         if returncode != 0:
             node_errors[node] = message
 
@@ -2118,9 +2136,9 @@ def is_iso8601_date(var):
 
 
 def err(errorText, exit_after_error=True):
-    sys.stderr.write("Error: %s\n" % errorText)
+    retval = reports_output.error(errorText)
     if exit_after_error:
-        sys.exit(1)
+        raise retval
 
 
 @lru_cache(typed=True)
@@ -2838,7 +2856,7 @@ def exit_on_cmdline_input_errror(
     if error and error.message:
         err(error.message, exit_after_error=False)
     if error and error.hint:
-        sys.stderr.write("Hint: {0}\n".format(error.hint))
+        print_to_stderr(f"Hint: {error.hint}")
     sys.exit(1)
 
 

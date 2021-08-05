@@ -202,8 +202,7 @@ def _recipient_to_str(recipient):
 def print_alert_show(lib, argv, modifiers):
     warn(
         "This command is deprecated and will be removed. "
-        "Please use 'pcs alert config' instead.",
-        stderr=True,
+        "Please use 'pcs alert config' instead."
     )
     return print_alert_config(lib, argv, modifiers)
 

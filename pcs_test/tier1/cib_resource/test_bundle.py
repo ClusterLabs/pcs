@@ -195,11 +195,10 @@ class BundleCreate(BundleCreateCommon):
                 resource bundle create B1
                 container docker image=pcs:test masters=0 promoted-max=0
             """.split(),
-            "Error: Only one of container options 'masters' and 'promoted-max' "
-            "can be used\n"
-            + ERRORS_HAVE_OCURRED
-            + "Warning: container option 'masters' is deprecated and should "
-            "not be used, use 'promoted-max' instead\n",
+            "Error: Only one of container options 'masters' and "
+            "'promoted-max' can be used\n"
+            "Warning: container option 'masters' is deprecated and should "
+            "not be used, use 'promoted-max' instead\n" + ERRORS_HAVE_OCURRED,
         )
 
     def test_fail_when_missing_args_1(self):
@@ -250,7 +249,12 @@ class BundleCreate(BundleCreateCommon):
                 resource bundle create B1 container docker image=pcs:test
                 extra=option --force
             """.split(),
-            stdout_start="Error: Unable to update cib\n",
+            stdout_start=(
+                "Warning: invalid container option 'extra', allowed options "
+                "are: 'image', 'masters', 'network', 'options', 'promoted-max',"
+                " 'replicas', 'replicas-per-host', 'run-command'\n"
+                "Error: Unable to update cib\n"
+            ),
         )
 
     def test_more_errors(self):
@@ -529,11 +533,10 @@ class BundleUpdate(BundleCreateCommon):
         )
         self.assert_pcs_fail(
             "resource bundle update B container masters=2".split(),
+            "Warning: container option 'masters' is deprecated and should "
+            "not be used, use 'promoted-max' instead\n"
             "Error: Cannot set container option 'masters' because container "
-            "option 'promoted-max' is already set\n"
-            + ERRORS_HAVE_OCURRED
-            + "Warning: container option 'masters' is deprecated and should "
-            "not be used, use 'promoted-max' instead\n",
+            "option 'promoted-max' is already set\n" + ERRORS_HAVE_OCURRED,
         )
 
     def test_masters_set_after_promoted_max_with_remove(self):
@@ -601,7 +604,12 @@ class BundleUpdate(BundleCreateCommon):
         # supported by pacemaker and so the command fails.
         self.assert_pcs_fail(
             "resource bundle update B container extra=option --force".split(),
-            stdout_start="Error: Unable to update cib\n",
+            stdout_start=(
+                "Warning: invalid container option 'extra', allowed options "
+                "are: 'image', 'masters', 'network', 'options', 'promoted-max',"
+                " 'replicas', 'replicas-per-host', 'run-command'\n"
+                "Error: Unable to update cib\n",
+            ),
         )
 
         # no force needed when removing an unknown option

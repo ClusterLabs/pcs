@@ -5,6 +5,7 @@ from pcs.common.reports import (
     ReportItemSeverity,
     ReportProcessor,
 )
+from pcs.cli.common.tools import print_to_stderr
 
 from .output import (
     error,
@@ -30,7 +31,7 @@ class ReportProcessorToConsole(ReportProcessor):
         if severity in self._ignore_severities:
             # DEBUG overrides ignoring severities for debug reports
             if msg and self.debug and severity == ReportItemSeverity.DEBUG:
-                print(msg)
+                print_to_stderr(msg)
             return
 
         if severity == ReportItemSeverity.ERROR:
@@ -43,7 +44,7 @@ class ReportProcessorToConsole(ReportProcessor):
         elif severity == ReportItemSeverity.WARNING:
             warn(msg)
         elif msg and (self.debug or severity != ReportItemSeverity.DEBUG):
-            print(msg)
+            print_to_stderr(msg)
 
     def suppress_reports_of_severity(
         self, severity_list: List[ReportItemSeverity]

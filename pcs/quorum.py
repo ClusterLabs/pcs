@@ -4,6 +4,7 @@ from pcs import (
 )
 from pcs.cli.common import parse_args
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.tools import print_to_stderr
 from pcs.cli.reports import process_library_reports
 from pcs.common.str_tools import indent
 from pcs.lib.node import get_existing_nodes_names
@@ -298,7 +299,7 @@ def quorum_unblock_cmd(lib, argv, modifiers):
             ).format(nodes=", ".join(unjoined_nodes))
         )
         if answer.lower() not in ["y", "yes"]:
-            print("Canceled")
+            print_to_stderr("Canceled")
             return
     for node in unjoined_nodes:
         # pass --force so no warning will be displayed
@@ -311,7 +312,7 @@ def quorum_unblock_cmd(lib, argv, modifiers):
     )
     if retval != 0:
         utils.err("unable to cancel waiting for nodes")
-    print("Quorum unblocked")
+    print_to_stderr("Quorum unblocked")
 
     startup_fencing = utils.get_set_properties().get("startup-fencing", "")
     utils.set_cib_property(
@@ -319,4 +320,4 @@ def quorum_unblock_cmd(lib, argv, modifiers):
         "false" if startup_fencing.lower() != "false" else "true",
     )
     utils.set_cib_property("startup-fencing", startup_fencing)
-    print("Waiting for nodes canceled")
+    print_to_stderr("Waiting for nodes canceled")

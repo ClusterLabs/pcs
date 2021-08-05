@@ -6,16 +6,16 @@ from pcs.common.reports import (
     ReportItemList,
     ReportItemSeverity,
 )
+from pcs.cli.common.tools import print_to_stderr
 from .messages import report_item_msg_from_dto
 
 
-def warn(message: str, stderr: bool = False) -> None:
-    stream = sys.stderr if stderr else sys.stdout
-    stream.write(f"Warning: {message}\n")
+def warn(message: str) -> None:
+    print_to_stderr(f"Warning: {message}")
 
 
 def error(message: str) -> SystemExit:
-    sys.stderr.write(f"Error: {message}\n")
+    print_to_stderr(f"Error: {message}")
     return SystemExit(1)
 
 

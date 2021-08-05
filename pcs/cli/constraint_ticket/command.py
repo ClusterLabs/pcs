@@ -75,8 +75,7 @@ def remove(lib, argv, modifiers):
 def show(lib, argv, modifiers):
     warn(
         "This command is deprecated and will be removed. "
-        "Please use 'pcs constraint ticket config' instead.",
-        stderr=True,
+        "Please use 'pcs constraint ticket config' instead."
     )
     return config_cmd(lib, argv, modifiers)
 

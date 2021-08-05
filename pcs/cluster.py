@@ -29,6 +29,7 @@ from pcs.cli.common.errors import (
     HINT_SYNTAX_CHANGE,
     msg_command_replaced,
 )
+from pcs.cli.common.tools import print_to_stderr
 from pcs.cli.file import metadata as file_metadata
 from pcs.cli.reports import process_library_reports
 from pcs.cli.reports.messages import report_item_msg_from_dto
@@ -227,7 +228,7 @@ def sync_nodes(lib, argv, modifiers):
     for node in nodes:
         utils.setCorosyncConfig(node, config)
 
-    print(
+    warn(
         "Corosync configuration has been synchronized, please reload corosync "
         "daemon using 'pcs cluster reload corosync' command."
     )
@@ -256,7 +257,7 @@ def start_cluster(argv):
     if not utils.hasCorosyncConf():
         utils.err("cluster is not currently configured on this node")
 
-    print("Starting Cluster...")
+    print_to_stderr("Starting Cluster...")
     service_list = ["corosync"]
     if utils.need_to_handle_qdevice_service():
         service_list.append("corosync-qdevice")
@@ -396,13 +397,13 @@ def wait_for_nodes_started(node_list, timeout=None):
     timeout = 60 * 15 if timeout is None else timeout
     interval = 2
     stop_at = datetime.datetime.now() + datetime.timedelta(seconds=timeout)
-    print("Waiting for node(s) to start...")
+    print_to_stderr("Waiting for node(s) to start...")
     if not node_list:
         code, output = wait_for_local_node_started(stop_at, interval)
         if code != 0:
             utils.err(output)
         else:
-            print(output)
+            print_to_stderr(output)
     else:
         utils.read_known_hosts_file()  # cache known hosts
         node_errors = parallel_for_nodes(
@@ -503,7 +504,9 @@ def stop_cluster_nodes(nodes):
         was_error = True
 
     for node in node_errors:
-        print("{0}: Not stopping cluster - node is unreachable".format(node))
+        print_to_stderr(
+            "{0}: Not stopping cluster - node is unreachable".format(node)
+        )
 
     node_errors = parallel_for_nodes(
         utils.stopCorosync, accessible_nodes, quiet=True
@@ -683,7 +686,7 @@ def stop_cluster_pacemaker():
     """
     Commandline options: no options
     """
-    print("Stopping Cluster (pacemaker)...")
+    print_to_stderr("Stopping Cluster (pacemaker)...")
     utils.stop_service("pacemaker")
 
 
@@ -691,7 +694,7 @@ def stop_cluster_corosync():
     """
     Commandline options: no options
     """
-    print("Stopping Cluster (corosync)...")
+    print_to_stderr("Stopping Cluster (corosync)...")
     service_list = []
     if utils.need_to_handle_qdevice_service():
         service_list.append("corosync-qdevice")
@@ -810,7 +813,7 @@ def cluster_push(lib, argv, modifiers):
         if retval > 1:
             utils.err("unable to diff the CIBs:\n" + stderr)
         if retval == 0:
-            print(
+            print_to_stderr(
                 "The new CIB is the same as the original CIB, nothing to push."
             )
             sys.exit(0)
@@ -842,7 +845,7 @@ def cluster_push(lib, argv, modifiers):
         elif retval != 0:
             utils.err("unable to push cib\n" + output)
 
-    print("CIB updated")
+    print_to_stderr("CIB updated")
 
     if not modifiers.is_specified("--wait"):
         return
@@ -904,7 +907,7 @@ def cluster_edit(lib, argv, modifiers):
             tempcib.seek(0)
             newcib = "".join(tempcib.readlines())
             if newcib == cib:
-                print("CIB not updated, no changes detected")
+                print_to_stderr("CIB not updated, no changes detected")
             else:
                 cluster_push(
                     lib,
@@ -1003,7 +1006,7 @@ class RemoteAddNodes(RunRemotelyBase):
             if output["status"] == "success":
                 self._success = True
             elif output["status"] != "error":
-                print("Error: {}".format(output["status_msg"]))
+                print_to_stderr("Error: {}".format(output["status_msg"]))
 
         except (KeyError, json.JSONDecodeError):
             self._report(
@@ -1130,7 +1133,7 @@ def cluster_uidgid(lib, argv, modifiers, silent_list=False):
                 print(line)
                 found = True
         if not found and not silent_list:
-            print("No uidgids configured")
+            print_to_stderr("No uidgids configured")
         return
 
     command = argv.pop(0)
@@ -1161,10 +1164,10 @@ def cluster_uidgid(lib, argv, modifiers, silent_list=False):
             utils.write_uid_gid_file(uid, gid)
         elif command in {"delete", "remove", "rm"}:
             if command == "rm":
-                sys.stderr.write(
+                warn(
                     "'pcs cluster uidgid rm' has been deprecated, use 'pcs "
                     "cluster uidgid delete' or 'pcs cluster uidgid remove' "
-                    "instead\n"
+                    "instead"
                 )
             file_removed = utils.remove_uid_gid_file(uid, gid)
             if not file_removed:
@@ -1223,7 +1226,7 @@ def cluster_reload(lib, argv, modifiers):
     output, retval = utils.reloadCorosync()
     if retval != 0 or "invalid option" in output:
         utils.err(output.rstrip())
-    print("Corosync reloaded")
+    print_to_stderr("Corosync reloaded")
 
 
 # Completely tear down the cluster & remove config files
@@ -1283,7 +1286,7 @@ def cluster_destroy(lib, argv, modifiers):
         # destroy full-stack nodes
         destroy_cluster(corosync_nodes)
     else:
-        print("Shutting down pacemaker/corosync services...")
+        print_to_stderr("Shutting down pacemaker/corosync services...")
         for service in ["pacemaker", "corosync-qdevice", "corosync"]:
             try:
                 utils.stop_service(service)
@@ -1291,7 +1294,7 @@ def cluster_destroy(lib, argv, modifiers):
                 # It is safe to ignore error since we want it not to be running
                 # anyways.
                 pass
-        print("Killing any remaining services...")
+        print_to_stderr("Killing any remaining services...")
         kill_local_cluster_services()
         try:
             utils.disableServices()
@@ -1308,7 +1311,7 @@ def cluster_destroy(lib, argv, modifiers):
             # it's not a big deal if sbd disable fails
             pass
 
-        print("Removing all cluster configuration files...")
+        print_to_stderr("Removing all cluster configuration files...")
         dummy_output, dummy_retval = utils.run(
             [
                 settings.rm_executable,
@@ -1429,7 +1432,7 @@ def cluster_report(lib, argv, modifiers):
         newoutput = newoutput + line + "\n"
     if retval != 0:
         utils.err(newoutput)
-    print(newoutput)
+    print_to_stderr(newoutput)
 
 
 def send_local_configs(
@@ -1498,8 +1501,8 @@ def cluster_auth_cmd(lib, argv, modifiers):
         else:
             missing_name = True
     if missing_name:
-        print(
-            "Warning: Skipping nodes which do not have their name defined in "
+        warn(
+            "Skipping nodes which do not have their name defined in "
             "corosync.conf, use the 'pcs host auth' command to authenticate "
             "them"
         )
@@ -1509,7 +1512,7 @@ def cluster_auth_cmd(lib, argv, modifiers):
         try:
             target_list.append(target_factory.get_target(node_name))
         except HostNotFound:
-            print("{}: Not authorized".format(node_name))
+            print_to_stderr("{}: Not authorized".format(node_name))
             not_authorized_node_name_list.append(node_name)
     com_cmd = CheckAuth(lib_env.report_processor)
     com_cmd.set_targets(target_list)
@@ -1530,7 +1533,7 @@ def cluster_auth_cmd(lib, argv, modifiers):
                     if node.addrs_plain():
                         not_auth_node_list.append(node)
                     else:
-                        print(
+                        print_to_stderr(
                             f"{node.name}: No addresses defined in "
                             "corosync.conf, use the 'pcs host auth' command to "
                             "authenticate the node"
@@ -1550,10 +1553,10 @@ def cluster_auth_cmd(lib, argv, modifiers):
         }
         utils.auth_hosts(nodes_to_auth_data)
     else:
-        print("Sending cluster config files to the nodes...")
+        print_to_stderr("Sending cluster config files to the nodes...")
         msgs = send_local_configs(cluster_node_names, force=True)
         for msg in msgs:
-            print("Warning: {0}".format(msg))
+            warn(msg)
 
 
 def _parse_node_options(
