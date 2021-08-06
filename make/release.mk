@@ -7,6 +7,7 @@ deliverables = $(project)-$(version).sha256 \
                $(project)-$(version).tar.gz \
                $(project)-$(version).tar.xz
 
+changelogfile = CHANGELOG.md
 
 .PHONY: all
 all: tag tarballs
@@ -75,6 +76,13 @@ else
 	@echo Hey you!  Yeah you, looking somewhere else!
 	@echo Remember to notify cluster-devel/RH and users/ClusterLabs MLs.
 endif
+
+
+.PHONY: bump-changelog
+bump-changelog: checks
+	sed -i 's/\#\# \[Unreleased\]/\#\# \[$(version)\] - $(shell date +%Y-%m-%d)/' \
+		$(changelogfile)
+	git commit -a -m "Bumped to $(version)"
 
 
 .PHONY: clean
