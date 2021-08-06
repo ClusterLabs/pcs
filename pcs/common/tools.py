@@ -9,6 +9,7 @@ from typing import (
 )
 
 from lxml import etree
+from lxml.etree import _Element
 
 
 T = TypeVar("T", bound=type)
@@ -43,7 +44,7 @@ def format_os_error(e):
     return e.strerror
 
 
-def xml_fromstring(xml):
+def xml_fromstring(xml: str) -> _Element:
     # If the xml contains encoding declaration such as:
     # <?xml version="1.0" encoding="UTF-8"?>
     # we get an exception in python3:

@@ -1,6 +1,8 @@
+from logging import Logger
 from shlex import quote as shell_quote
 import signal
 import subprocess
+from typing import Dict, Mapping, Optional, Sequence, Tuple
 
 from pcs import settings
 from pcs.common import reports
@@ -20,7 +22,12 @@ class KillServicesError(Exception):
 
 
 class CommandRunner:
-    def __init__(self, logger, reporter: ReportProcessor, env_vars=None):
+    def __init__(
+        self,
+        logger: Logger,
+        reporter: ReportProcessor,
+        env_vars: Optional[Mapping[str, str]] = None,
+    ):
         self._logger = logger
         self._reporter = reporter
         # Reset environment variables by empty dict is desired here.  We need
@@ -31,17 +38,21 @@ class CommandRunner:
         self._env_vars = env_vars if env_vars else dict()
 
     @property
-    def env_vars(self):
-        return self._env_vars.copy()
+    def env_vars(self) -> Dict[str, str]:
+        return dict(self._env_vars)
 
     def run(
-        self, args, stdin_string=None, env_extend=None, binary_output=False
-    ):
+        self,
+        args: Sequence[str],
+        stdin_string: Optional[str] = None,
+        env_extend: Optional[Mapping[str, str]] = None,
+        binary_output: bool = False,
+    ) -> Tuple[str, str, int]:
         # Allow overriding default settings. If a piece of code really wants to
         # set own PATH or CIB_file, we must allow it. I.e. it wants to run
         # a pacemaker tool on a CIB in a file but cannot afford the risk of
         # changing the CIB in the file specified by the user.
-        env_vars = self._env_vars.copy()
+        env_vars = dict(self._env_vars)
         env_vars.update(dict(env_extend) if env_extend else dict())
 
         log_args = " ".join([shell_quote(x) for x in args])

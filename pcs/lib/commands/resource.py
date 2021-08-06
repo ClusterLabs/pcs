@@ -138,7 +138,10 @@ def _validate_remote_connection(
     instance_attributes,
     allow_not_suitable_command,
 ):
-    if resource_agent.get_name() != resource.remote_node.AGENT_NAME.full_name:
+    if (
+        resource_agent.get_name_info().name
+        != resource.remote_node.AGENT_NAME.full_name
+    ):
         return []
 
     report_list = []
@@ -233,7 +236,7 @@ def _check_special_cases(
 ):
     # fmt: off
     if (
-        resource_agent.get_name() != resource.remote_node.AGENT_NAME.full_name
+        resource_agent.get_name_info().name != resource.remote_node.AGENT_NAME.full_name
         and
         not resource.guest_node.is_node_name_in_options(meta_attributes)
     ):

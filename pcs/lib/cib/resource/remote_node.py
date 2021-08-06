@@ -117,9 +117,9 @@ def _validate_server_not_used(agent, option_dict):
                     ["server"],
                     sorted(
                         [
-                            attr["name"]
-                            for attr in agent.get_parameters()
-                            if attr["name"] != "server"
+                            attr.name
+                            for attr in agent.get_full_info().parameters
+                            if attr.name != "server"
                         ]
                     ),
                     "resource",

@@ -1,7 +1,9 @@
 from collections import defaultdict
+from typing import Dict, Iterable, List, Mapping
 
 from lxml import etree
 
+from pcs.common.interface.dto import to_dict
 from pcs.common import reports
 from pcs.common.reports import (
     ReportItemList,
@@ -10,7 +12,7 @@ from pcs.common.reports import (
 from pcs.common.reports.item import ReportItem
 from pcs.common.tools import timeout_to_seconds
 from pcs.lib import validate
-from pcs.lib.resource_agent import get_default_interval, complete_all_intervals
+from pcs.lib.resource_agent import AgentActionDto
 from pcs.lib.cib.nvpair import append_new_instance_attributes
 from pcs.lib.cib.tools import (
     create_subelement_id,
@@ -56,6 +58,8 @@ BOOLEAN_VALUES = [
     "false",
 ]
 
+_DEFAULT_INTERVALS = {"monitor": "60s"}
+
 # normalize(key, value) -> normalized_value
 normalize = validate.option_value_normalization(
     {
@@ -67,23 +71,47 @@ normalize = validate.option_value_normalization(
 )
 
 
+def _get_default_interval(operation_name: str) -> str:
+    """
+    Return default interval for given operation_name
+    """
+    return _DEFAULT_INTERVALS.get(operation_name, "0s")
+
+
+def _complete_all_intervals(
+    raw_operation_list: Iterable[Mapping[str, str]]
+) -> List[Dict[str, str]]:
+    """
+    Return a new list of operations with "interval" defined for all of them
+
+    operation_list -- can include items without key "interval"
+    """
+    operation_list = []
+    for raw_operation in raw_operation_list:
+        operation = dict(raw_operation)
+        if "interval" not in operation:
+            operation["interval"] = _get_default_interval(operation["name"])
+        operation_list.append(operation)
+    return operation_list
+
+
 def prepare(
     report_processor: ReportProcessor,
-    raw_operation_list,
-    default_operation_list,
-    allowed_operation_name_list,
-    allow_invalid=False,
+    raw_operation_list: Iterable[Mapping[str, str]],
+    default_operation_list: Iterable[AgentActionDto],
+    allowed_operation_name_list: Iterable[str],
+    allow_invalid: bool = False,
 ):
     """
     Return operation_list prepared from raw_operation_list and
     default_operation_list.
 
-    report_processor is tool for warning/info/error reporting
-    list of dicts raw_operation_list are entered operations that require
-        follow-up care
-    list of dicts default_operation_list are operations defined as default by
-        (most probably) resource agent
-    bool allow_invalid is flag for validation skipping
+    report_processor -- tool for warning/info/error reporting
+    raw_operation_list -- user entered operations that require follow-up care
+    default_operation_list -- operations defined as default by (most probably)
+        a resource agent
+    allowed_operation_name_list -- operation names defined by a resource agent
+    allow_invalid -- flag for validation skipping
     """
     operations_to_validate = operations_to_normalized(raw_operation_list)
 
@@ -101,7 +129,7 @@ def prepare(
     if report_processor.report_list(report_list).has_errors:
         raise LibraryError()
 
-    return complete_all_intervals(operation_list) + get_remaining_defaults(
+    return _complete_all_intervals(operation_list) + _get_remaining_defaults(
         report_processor, operation_list, default_operation_list
     )
 
@@ -148,24 +176,37 @@ def validate_operation_list(
     return report_list
 
 
-def get_remaining_defaults(
-    report_processor, operation_list, default_operation_list
-):
+def _action_dto_to_dict(dto: AgentActionDto) -> Dict[str, str]:
+    return {
+        key: value
+        for key, value in to_dict(dto).items()
+        if key != "depth" and value not in (None, "")
+    }
+
+
+def _get_remaining_defaults(
+    report_processor: ReportProcessor,
+    operation_list: Iterable[Mapping[str, str]],
+    default_operation_list: Iterable[AgentActionDto],
+) -> List[Dict[str, str]]:
     """
     Return operations not mentioned in operation_list but contained in
         default_operation_list.
-    report_processor is tool for warning/info/error reporting
-    list operation_list contains dictionaries with attributes of operation
-    list default_operation_list contains dictionaries with attributes of the
-        operation
+
+    report_processor -- tool for warning/info/error reporting
+    operation_list -- user entered operations that require follow-up care
+    default_operation_list -- operations defined as default by (most probably)
+        a resource agent
     """
-    return make_unique_intervals(
+    defined_operation_names = frozenset(
+        operation["name"] for operation in operation_list
+    )
+    return _make_unique_intervals(
         report_processor,
         [
-            default_operation
+            _action_dto_to_dict(default_operation)
             for default_operation in default_operation_list
-            if default_operation["name"]
-            not in [operation["name"] for operation in operation_list]
+            if default_operation.name not in defined_operation_names
         ],
     )
 
@@ -198,17 +239,21 @@ def get_interval_uniquer():
     return get_uniq_interval
 
 
-def make_unique_intervals(report_processor: ReportProcessor, operation_list):
+def _make_unique_intervals(
+    report_processor: ReportProcessor,
+    operation_list: Iterable[Mapping[str, str]],
+) -> List[Dict[str, str]]:
     """
     Return operation list similar to operation_list where intervals for the same
         operation are unique
-    report_processor is tool for warning/info/error reporting
-    list operation_list contains dictionaries with attributes of operation
+
+    report_processor -- tool for warning/info/error reporting
+    operation_list -- contains operation definitions
     """
     get_unique_interval = get_interval_uniquer()
     adapted_operation_list = []
     for operation in operation_list:
-        adapted = operation.copy()
+        adapted = dict(operation)
         if "interval" in adapted:
             adapted["interval"] = get_unique_interval(
                 operation["name"], operation["interval"]
@@ -236,7 +281,7 @@ def validate_different_intervals(operation_list):
     duplication_map = defaultdict(lambda: defaultdict(list))
     for operation in operation_list:
         interval = operation.get(
-            "interval", get_default_interval(operation["name"])
+            "interval", _get_default_interval(operation["name"])
         )
         seconds = timeout_to_seconds(interval)
         duplication_map[operation["name"]][seconds].append(interval)

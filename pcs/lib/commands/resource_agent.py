@@ -1,14 +1,19 @@
+from typing import Any, Dict, Iterable, List, Optional, Type
+
+from pcs.common.interface.dto import to_dict
 from pcs.lib import resource_agent
+from pcs.lib.env import LibraryEnvironment
+from pcs.lib.external import CommandRunner
 
 
-def list_standards(lib_env):
+def list_standards(lib_env: LibraryEnvironment) -> List[str]:
     """
     List resource agents standards (ocf, lsb, ... ) on the local host
     """
     return resource_agent.list_resource_agents_standards(lib_env.cmd_runner())
 
 
-def list_ocf_providers(lib_env):
+def list_ocf_providers(lib_env: LibraryEnvironment) -> List[str]:
     """
     List resource agents ocf providers on the local host
     """
@@ -17,10 +22,13 @@ def list_ocf_providers(lib_env):
     )
 
 
-def list_agents_for_standard_and_provider(lib_env, standard_provider=None):
+def list_agents_for_standard_and_provider(
+    lib_env: LibraryEnvironment, standard_provider: Optional[str] = None
+) -> List[str]:
     """
     List resource agents for specified standard on the local host
-    string standard_provider standard[:provider], e.g. None, ocf, ocf:pacemaker
+
+    standard_provider -- standard[:provider], e.g. None, ocf, ocf:pacemaker
     """
     if standard_provider:
         standards = [standard_provider]
@@ -31,19 +39,22 @@ def list_agents_for_standard_and_provider(lib_env, standard_provider=None):
     agents = []
     for std in standards:
         agents += resource_agent.list_resource_agents(lib_env.cmd_runner(), std)
-    return sorted(
-        agents,
-        # works with both str and unicode in both python 2 and 3
-        key=lambda x: x.lower(),
-    )
+    return sorted(agents, key=str.lower)
 
 
-def list_agents(lib_env, describe=True, search=None):
+# TODO return a list of DTOs
+# for now, it is transformed to a list of dicts for backward compatibility
+def list_agents(
+    lib_env: LibraryEnvironment,
+    describe: bool = True,
+    search: Optional[str] = None,
+) -> List[Dict[str, Any]]:
     """
     List all resource agents on the local host, optionally filtered and
         described
-    bool describe load and return agents' description as well
-    string search return only agents which name contains this string
+
+    describe -- load and return agents' description as well
+    search -- return only agents which name contains this string
     """
     runner = lib_env.cmd_runner()
 
@@ -56,16 +67,22 @@ def list_agents(lib_env, describe=True, search=None):
             "{0}:{1}".format(std, agent)
             for agent in resource_agent.list_resource_agents(runner, std)
         ]
-    agent_names.sort(
-        # works with both str and unicode in both python 2 and 3
-        key=lambda x: x.lower()
-    )
     return _complete_agent_list(
-        runner, agent_names, describe, search, resource_agent.ResourceAgent
+        runner,
+        sorted(agent_names, key=str.lower),
+        describe,
+        search,
+        resource_agent.ResourceAgent,
     )
 
 
-def _complete_agent_list(runner, agent_names, describe, search, metadata_class):
+def _complete_agent_list(
+    runner: CommandRunner,
+    agent_names: Iterable[str],
+    describe: bool,
+    search: Optional[str],
+    metadata_class: Type[resource_agent.CrmAgent],
+) -> List[Dict[str, Any]]:
     # filter agents by name if requested
     if search:
         search_lower = search.lower()
@@ -78,10 +95,12 @@ def _complete_agent_list(runner, agent_names, describe, search, metadata_class):
     for name in agent_names:
         try:
             agent_metadata = metadata_class(runner, name)
-            if describe:
-                agent_list.append(agent_metadata.get_description_info())
-            else:
-                agent_list.append(agent_metadata.get_name_info())
+            metadata_dto = (
+                agent_metadata.get_full_info()
+                if describe
+                else agent_metadata.get_name_info()
+            )
+            agent_list.append(to_dict(metadata_dto))
         except resource_agent.ResourceAgentError:
             # we don't return it in the list:
             #
@@ -100,10 +119,15 @@ def _complete_agent_list(runner, agent_names, describe, search, metadata_class):
     return agent_list
 
 
-def describe_agent(lib_env, agent_name):
+# TODO return aDTO
+# for now, it is transformed to a dict for backward compatibility
+def describe_agent(
+    lib_env: LibraryEnvironment, agent_name: str
+) -> Dict[str, Any]:
     """
     Get agent's description (metadata) in a structure
-    string agent_name name of the agent
+
+    agent_name -- name of the agent
     """
     agent = resource_agent.find_valid_resource_agent_by_name(
         lib_env.report_processor,
@@ -111,4 +135,4 @@ def describe_agent(lib_env, agent_name):
         agent_name,
         absent_agent_supported=False,
     )
-    return agent.get_full_info()
+    return to_dict(agent.get_full_info())
