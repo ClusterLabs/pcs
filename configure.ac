@@ -157,7 +157,7 @@ AC_ARG_ENABLE([tests-only],
 	      [AS_HELP_STRING([--enable-tests-only], [Check only for tests dependencies])],
 	      [tests_only="yes"])
 
-AC_ARG_ENABLE([invidual-bundling],
+AC_ARG_ENABLE([individual-bundling],
 	      [AS_HELP_STRING([--enable-individual-bundling], [Bundle only missing python packages /ruby gems instead of all of them])],
 	      [individual_bundling="yes"])
 
