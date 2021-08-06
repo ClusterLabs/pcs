@@ -31,7 +31,7 @@ endif
 .PHONY: setup
 setup: checks
 	./autogen.sh
-	./configure
+	./configure $(configure_options)
 	$(MAKE) maintainer-clean
 
 
@@ -52,8 +52,8 @@ endif
 .PHONY: tarballs
 tarballs: tag
 	./autogen.sh
-	./configure
-	$(MAKE) distcheck
+	./configure $(configure_options)
+	$(MAKE) distcheck "DISTCHECK_CONFIGURE_FLAGS=$(configure_options)"
 
 
 .PHONY: sha256
