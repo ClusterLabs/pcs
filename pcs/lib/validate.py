@@ -29,6 +29,7 @@ entered one is reported as not valid.
 """
 import ipaddress
 import re
+from collections import Counter
 from typing import (
     Any,
     Callable,
@@ -40,6 +41,7 @@ from typing import (
     NamedTuple,
     Optional,
     Pattern,
+    Set,
     Union,
 )
 
@@ -48,6 +50,7 @@ from pcs.common.reports import (
     ReportItem,
     ReportItemList,
     ReportItemSeverity,
+    types,
 )
 from pcs.common.tools import timeout_to_seconds
 from pcs.common.validate import (
@@ -972,3 +975,111 @@ def matches_regexp(value: TypeOptionValue, regexp: Union[str, Pattern]) -> bool:
     if not hasattr(regexp, "match"):
         regexp = re.compile(regexp)
     return cast(Pattern, regexp).match(value) is not None
+
+
+def validate_add_remove_items(
+    add_item_list: Iterable[str],
+    remove_item_list: Iterable[str],
+    current_item_list: Iterable[str],
+    container_type: types.AddRemoveContainerType,
+    item_type: types.AddRemoveItemType,
+    container_id: str,
+    adjacent_item_id: Optional[str] = None,
+    can_be_empty: bool = False,
+) -> ReportItemList:
+    # pylint: disable=too-many-locals
+    report_list: ReportItemList = []
+    if not add_item_list and not remove_item_list:
+        report_list.append(
+            ReportItem.error(
+                reports.messages.AddRemoveItemsNotSpecified(
+                    container_type, item_type
+                )
+            )
+        )
+
+    def _get_duplicate_items(item_list: Iterable[str]) -> Set[str]:
+        return {item for item, count in Counter(item_list).items() if count > 1}
+
+    duplicate_items_list = _get_duplicate_items(
+        add_item_list
+    ) | _get_duplicate_items(remove_item_list)
+    if duplicate_items_list:
+        report_list.append(
+            ReportItem.error(
+                reports.messages.AddRemoveItemsDuplication(
+                    item_type, sorted(duplicate_items_list)
+                )
+            )
+        )
+    defined_items = set(add_item_list).intersection(current_item_list)
+    # report only if an adjacent id is not defined, because we want to allow
+    # move items when adjacent_item_id is specified
+    if adjacent_item_id is None and defined_items:
+        report_list.append(
+            ReportItem.error(
+                reports.messages.AddRemoveCannotAddItemsAlreadyInTheContainer(
+                    container_id, container_type, sorted(defined_items)
+                )
+            )
+        )
+    missing_items = set(remove_item_list).difference(current_item_list)
+    if missing_items:
+        report_list.append(
+            ReportItem.error(
+                reports.messages.AddRemoveCannotRemoveItemsNotInTheContainer(
+                    container_type,
+                    item_type,
+                    container_id,
+                    sorted(missing_items),
+                )
+            )
+        )
+    common_items = set(add_item_list) & set(remove_item_list)
+    if common_items:
+        report_list.append(
+            ReportItem.error(
+                reports.messages.AddRemoveCannotAddAndRemoveItemsAtTheSameTime(
+                    item_type, sorted(common_items)
+                )
+            )
+        )
+    if not can_be_empty and not add_item_list:
+        updated_items = set(current_item_list).difference(remove_item_list)
+        if not updated_items:
+            report_list.append(
+                ReportItem.error(
+                    reports.messages.AddRemoveCannotRemoveAllItemsFromTheContainer(
+                        container_type, item_type, container_id
+                    )
+                )
+            )
+    if adjacent_item_id:
+        if adjacent_item_id not in current_item_list:
+            report_list.append(
+                ReportItem.error(
+                    reports.messages.AddRemoveAdjacentItemNotInTheContainer(
+                        container_type,
+                        item_type,
+                        container_id,
+                        adjacent_item_id,
+                    )
+                )
+            )
+        if adjacent_item_id in add_item_list:
+            report_list.append(
+                ReportItem.error(
+                    reports.messages.AddRemoveCannotPutItemNextToItself(
+                        item_type, adjacent_item_id
+                    )
+                )
+            )
+        if not add_item_list:
+            report_list.append(
+                ReportItem.error(
+                    reports.messages.AddRemoveCannotSpecifyAdjacentItemWithoutItemsToAdd(
+                        item_type, adjacent_item_id
+                    )
+                )
+            )
+    return report_list

@@ -6,8 +6,13 @@ from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal
 
 from pcs.common import reports
+from pcs.common.reports.const import (
+    ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE,
+    ADD_REMOVE_ITEM_TYPE_DEVICE,
+)
 from pcs.lib import validate
 from pcs.lib.cib.tools import IdProvider
+from pcs.lib.validate import validate_add_remove_items
 
 # pylint: disable=no-self-use
 # pylint: disable=too-many-lines
@@ -1751,3 +1756,176 @@ class IsEmptyString(TestCase):
         self.assertFalse(validate.is_empty_string("a"))
         self.assertFalse(validate.is_empty_string("0"))
         self.assertFalse(validate.is_empty_string(0))
+
+
+class ValidateAddRemoveItems(TestCase):
+    CONTAINER_TYPE = ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE
+    ITEM_TYPE = ADD_REMOVE_ITEM_TYPE_DEVICE
+    CONTAINER_ID = "container_id"
+
+    def _validate(
+        self, add, remove, current=None, adjacent=None, can_be_empty=False
+    ):
+        return validate_add_remove_items(
+            add,
+            remove,
+            current,
+            self.CONTAINER_TYPE,
+            self.ITEM_TYPE,
+            self.CONTAINER_ID,
+            adjacent,
+            can_be_empty,
+        )
+
+    def test_success_add_and_remove(self):
+        assert_report_item_list_equal(
+            self._validate(["a1"], ["c3"], ["b2", "c3"]), []
+        )
+
+    def test_success_add_only(self):
+        assert_report_item_list_equal(self._validate(["b2"], [], ["a1"]), [])
+
+    def test_success_remove_only(self):
+        assert_report_item_list_equal(
+            self._validate([], ["b2"], ["a1", "b2"]), []
+        )
+
+    def test_add_remove_items_not_specified(self):
+        assert_report_item_list_equal(
+            self._validate([], [], ["a1", "b2", "c3"]),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_ITEMS_NOT_SPECIFIED,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                )
+            ],
+        )
+
+    def test_add_remove_items_duplications(self):
+        assert_report_item_list_equal(
+            self._validate(["b2", "b2"], ["a1", "a1"], ["a1", "c3"]),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_ITEMS_DUPLICATION,
+                    item_type=self.ITEM_TYPE,
+                    duplicate_items_list=["a1", "b2"],
+                )
+            ],
+        )
+
+    def test_add_items_already_in_container(self):
+        assert_report_item_list_equal(
+            self._validate(["a1", "b2"], [], ["a1", "b2", "c3"]),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_CANNOT_ADD_ITEMS_ALREADY_IN_THE_CONTAINER,
+                    container_id=self.CONTAINER_ID,
+                    container_type=self.CONTAINER_TYPE,
+                    item_list=["a1", "b2"],
+                ),
+            ],
+        )
+
+    def test_remove_items_not_in_container(self):
+        assert_report_item_list_equal(
+            self._validate([], ["a1", "b2"], ["c3"]),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    item_list=["a1", "b2"],
+                )
+            ],
+        )
+
+    def test_add_remove_items_at_the_same_time(self):
+        assert_report_item_list_equal(
+            self._validate(
+                ["a1", "a1", "b2", "b2"], ["b2", "b2", "a1", "a1"], ["c3"]
+            ),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_ITEMS_DUPLICATION,
+                    item_type=self.ITEM_TYPE,
+                    duplicate_items_list=["a1", "b2"],
+                ),
+                fixture.error(
+                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    item_list=["a1", "b2"],
+                ),
+                fixture.error(
+                    reports.codes.ADD_REMOVE_CANNOT_ADD_AND_REMOVE_ITEMS_AT_THE_SAME_TIME,
+                    item_type=self.ITEM_TYPE,
+                    item_list=["a1", "b2"],
+                ),
+            ],
+        )
+
+    def test_remove_all_items(self):
+        assert_report_item_list_equal(
+            self._validate([], ["a1", "b2"], ["a1", "b2"]),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ALL_ITEMS_FROM_THE_CONTAINER,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                ),
+            ],
+        )
+
+    def test_remove_all_items_can_be_empty(self):
+        assert_report_item_list_equal(
+            self._validate([], ["a1", "b2"], ["a1", "b2"], can_be_empty=True),
+            [],
+        )
+
+    def test_remove_all_items_and_add_new_one(self):
+        assert_report_item_list_equal(
+            self._validate(["c3"], ["a1", "b2"], ["a1", "b2"]),
+            [],
+        )
+
+    def test_missing_adjacent_item(self):
+        assert_report_item_list_equal(
+            self._validate(["a1", "b2"], [], ["c3"], adjacent="d4"),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_ADJACENT_ITEM_NOT_IN_THE_CONTAINER,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    adjacent_item_id="d4",
+                ),
+            ],
+        )
+
+    def test_adjacent_item_in_add_list(self):
+        assert_report_item_list_equal(
+            self._validate(["a1", "b2"], [], ["a1"], adjacent="a1"),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_CANNOT_PUT_ITEM_NEXT_TO_ITSELF,
+                    item_type=self.ITEM_TYPE,
+                    adjacent_item_id="a1",
+                ),
+            ],
+        )
+
+    def test_adjacent_item_without_add_list(self):
+        assert_report_item_list_equal(
+            self._validate([], ["b2"], ["a1", "b2"], adjacent="a1"),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_CANNOT_SPECIFY_ADJACENT_ITEM_WITHOUT_ITEMS_TO_ADD,
+                    item_type=self.ITEM_TYPE,
+                    adjacent_item_id="a1",
+                ),
+            ],
+        )
