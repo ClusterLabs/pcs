@@ -1,4 +1,6 @@
 from .types import (
+    AddRemoveContainerType,
+    AddRemoveItemType,
     BoothConfigUsedWhere,
     DefaultAddressSource,
     FenceHistoryCommandType,
@@ -9,6 +11,8 @@ from .types import (
 )
 
 
+ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE = AddRemoveContainerType("stonith")
+ADD_REMOVE_ITEM_TYPE_DEVICE = AddRemoveItemType("device")
 BOOTH_CONFIG_USED_IN_CLUSTER_RESOURCE = BoothConfigUsedWhere(
     "in a cluster resource"
 )
