@@ -39,6 +39,14 @@ def meta(name: str) -> Dict[str, str]:
     return metadata
 
 
+def _is_compatible_type(_type: Type, arg_index: int) -> bool:
+    return (
+        hasattr(_type, "__args__")
+        and len(_type.__args__) >= arg_index
+        and is_dataclass(_type.__args__[arg_index])
+    )
+
+
 def _convert_dict(
     klass: Type[DataTransferObject], obj_dict: DtoPayload
 ) -> DtoPayload:
@@ -47,11 +55,11 @@ def _convert_dict(
         value = obj_dict[_field.name]
         if is_dataclass(_field.type):
             value = _convert_dict(_field.type, value)
-        elif isinstance(value, list) and is_dataclass(_field.type.__args__[0]):
+        elif isinstance(value, list) and _is_compatible_type(_field.type, 0):
             value = [
                 _convert_dict(_field.type.__args__[0], item) for item in value
             ]
-        elif isinstance(value, dict) and is_dataclass(_field.type.__args__[1]):
+        elif isinstance(value, dict) and _is_compatible_type(_field.type, 1):
             value = {
                 item_key: _convert_dict(_field.type.__args__[1], item_val)
                 for item_key, item_val in value.items()
@@ -73,12 +81,12 @@ def _convert_payload(klass: Type[DtoType], data: DtoPayload) -> DtoPayload:
         value = data[_field.metadata.get(META_NAME, _field.name)]
         if is_dataclass(_field.type):
             value = _convert_payload(_field.type, value)
-        elif isinstance(value, list) and is_dataclass(_field.type.__args__[0]):
+        elif isinstance(value, list) and _is_compatible_type(_field.type, 0):
             value = [
                 _convert_payload(_field.type.__args__[0], item)
                 for item in value
             ]
-        elif isinstance(value, dict) and is_dataclass(_field.type.__args__[1]):
+        elif isinstance(value, dict) and _is_compatible_type(_field.type, 1):
             value = {
                 item_key: _convert_payload(_field.type.__args__[1], item_val)
                 for item_key, item_val in value.items()

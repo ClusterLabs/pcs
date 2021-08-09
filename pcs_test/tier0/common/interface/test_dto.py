@@ -1,6 +1,9 @@
 from dataclasses import dataclass, field, is_dataclass
 import pkgutil
-from typing import List
+from typing import (
+    Any,
+    List,
+)
 from unittest import TestCase
 
 import pcs
@@ -100,3 +103,21 @@ class DictName(TestCase):
 
     def test_nested_from_dict(self):
         self.assertEqual(self.nested_dto, from_dict(MyDto3, self.nested_dict))
+
+
+@dataclass
+class DtoWithAny(DataTransferObject):
+    field_a: str
+    field_b: Any
+
+
+class UnexpectedTypes(TestCase):
+    def test_any_is_list(self):
+        dto = DtoWithAny("a", [1, 2])
+        self.assertEqual(dict(field_a="a", field_b=[1, 2]), to_dict(dto))
+
+    def test_any_is_dict(self):
+        dto = DtoWithAny("a", {1: "1", 2: "2"})
+        self.assertEqual(
+            dict(field_a="a", field_b={1: "1", 2: "2"}), to_dict(dto)
+        )
