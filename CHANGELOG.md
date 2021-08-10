@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.10.9] - 2021-08-10
 
 ### Added
 - Elliptic curve TLS certificates are now supported in pcsd ([ghissue#123])
