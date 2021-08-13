@@ -29,6 +29,8 @@ from pcs_test.tools.misc import (
 from pcs_test.tools.pcs_runner import pcs, PcsRunner
 
 from pcs import settings
+from pcs.common import const
+from pcs.common.str_tools import format_list
 from pcs.constraint import (
     LOCATION_NODE_VALIDATION_SKIP_MSG,
     CRM_RULE_MISSING_MSG,
@@ -932,8 +934,9 @@ Ticket Constraints:
         )
         ac(
             o,
-            "Error: invalid role value 'abc', allowed values are: 'Master', "
-            "'Slave', 'Started', 'Stopped'\n",
+            "Error: invalid role value 'abc', allowed values are: {}\n".format(
+                format_list(const.PCMK_ROLES)
+            ),
         )
         self.assertEqual(r, 1)
 
@@ -943,8 +946,9 @@ Ticket Constraints:
         )
         ac(
             o,
-            "Error: invalid role value 'def', allowed values are: 'Master', "
-            "'Slave', 'Started', 'Stopped'\n",
+            "Error: invalid role value 'def', allowed values are: {}\n".format(
+                format_list(const.PCMK_ROLES)
+            ),
         )
         self.assertEqual(r, 1)
 
@@ -954,8 +958,9 @@ Ticket Constraints:
         )
         ac(
             o,
-            "Error: invalid role value 'abc', allowed values are: 'Master', "
-            "'Slave', 'Started', 'Stopped'\n",
+            "Error: invalid role value 'abc', allowed values are: {}\n".format(
+                format_list(const.PCMK_ROLES)
+            ),
         )
         self.assertEqual(r, 1)
 
@@ -1209,7 +1214,9 @@ Colocation Constraints:
         )
         ac(
             output,
-            "Error: 'foo' is not a valid role value, use 'Master', 'Slave', 'Started', 'Stopped'\n",
+            "Error: 'foo' is not a valid role value, use {}\n".format(
+                format_list(const.PCMK_ROLES)
+            ),
         )
         self.assertEqual(1, retValue)
 
@@ -1580,7 +1587,9 @@ Ordering Constraints:
         )
         ac(
             output,
-            "Error: 'foo' is not a valid role value, use 'Master', 'Slave', 'Started', 'Stopped'\n",
+            "Error: 'foo' is not a valid role value, use {}\n".format(
+                format_list(const.PCMK_ROLES)
+            ),
         )
         self.assertEqual(1, retValue)
 
@@ -1836,7 +1845,7 @@ Ticket Constraints:
 Location Constraints:
   Resource: stateful0
     Constraint: location-stateful0
-      Rule: role=master score=INFINITY (id:location-stateful0-rule)
+      Rule: role=Master score=INFINITY (id:location-stateful0-rule)
         Expression: #uname eq rh7-1 (id:location-stateful0-rule-expr)
 Ordering Constraints:
 Colocation Constraints:
@@ -3725,8 +3734,9 @@ class TicketAdd(ConstraintBaseTest):
         self.assert_pcs_fail(
             "constraint ticket add T bad-role A loss-policy=fence".split(),
             [
-                "Error: 'bad-role' is not a valid rsc-role value, use "
-                + "'Master', 'Slave', 'Started', 'Stopped'",
+                "Error: 'bad-role' is not a valid rsc-role value, use {}".format(
+                    format_list(const.PCMK_ROLES)
+                )
             ],
         )
 

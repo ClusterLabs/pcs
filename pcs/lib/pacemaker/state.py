@@ -7,7 +7,10 @@ from typing import Dict, Any
 
 from lxml import etree
 
-from pcs.common import reports
+from pcs.common import (
+    const,
+    reports,
+)
 from pcs.common.reports.item import ReportItem
 from pcs.lib.pacemaker.values import (
     is_false,
@@ -187,7 +190,7 @@ def _get_primitive_roles_with_nodes(primitive_el_list):
     # Clone resources are represented by multiple primitive elements.
     roles_with_nodes = defaultdict(set)
     for resource_element in primitive_el_list:
-        if resource_element.attrib["role"] in ["Started", "Master", "Slave"]:
+        if resource_element.attrib["role"] in const.PCMK_ROLES_RUNNING:
             roles_with_nodes[resource_element.attrib["role"]].update(
                 [
                     node.attrib["name"]

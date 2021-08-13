@@ -438,14 +438,14 @@ module ClusterEntity
         @resource_agent = crm.attributes['resource_agent']
         @managed = crm.attributes['managed'] == 'true'
         @failed = crm.attributes['failed'] == 'true'
-        @role = crm.attributes['role']
+        @role = get_normalized_role(crm.attributes['role'])
         @active = crm.attributes['active'] == 'true'
         @orphaned = crm.attributes['orphaned'] == 'true'
         @failure_ignored = crm.attributes['failure_ignored'] == 'true'
         @nodes_running_on = crm.attributes['nodes_running_on'].to_i
         @pending = crm.attributes['pending']
         @blocked = crm.attributes['blocked'] == 'true'
-        @target_role = crm.attributes['target_role']
+        @target_role = get_normalized_role(crm.attributes['target_role'])
         node = crm.elements['node']
         if node
           @node = {
@@ -893,7 +893,7 @@ module ClusterEntity
       primitive_list.each { |primitive|
         if primitive.instance_of?(ClusterEntity::Primitive)
           primitive.crm_status.each { |stat|
-            if stat.role == 'Master'
+            if ['Master', 'Promoted'].include?(stat.role)
               if stat.node
                 masters << stat.node[:name]
               end

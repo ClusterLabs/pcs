@@ -1,5 +1,13 @@
 # Change Log
 
+## [Unreleased]
+
+### Added
+- Support for new role names introduced in pacemaker 2.1 ([rhbz#1885293])
+
+[rhbz#1885293]: https://bugzilla.redhat.com/show_bug.cgi?id=1885293
+
+
 ## [0.10.9] - 2021-08-10
 
 ### Added

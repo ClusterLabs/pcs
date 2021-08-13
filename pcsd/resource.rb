@@ -1,5 +1,13 @@
 require 'pathname'
 
+def get_normalized_role(role)
+  role_map = {
+    'Promoted' => 'Master',
+    'Unpromoted' => 'Slave',
+  }
+  return role_map.fetch(role, role)
+end
+
 def run_crm_mon_xml(auth_user)
   stdout, stderr, _ = run_cmd(auth_user, CRM_MON, '--help-all')
   new_format = (
@@ -209,7 +217,7 @@ class Resource
     @active = e.attributes["active"] == "true" ? true : false
     @orphaned = e.attributes["orphaned"] == "true" ? true : false
     @failed = e.attributes["failed"] == "true" ? true : false
-    @role = e.attributes['role']
+    @role = get_normalized_role(e.attributes['role'])
     @nodes = []
     # Strip ':' from group name (for clones & master/slave created from a group)
     @group = group ? group.sub(/(.*):.*/, '\1') : group

@@ -84,6 +84,7 @@ EXTRA_DIST		= \
 			  cli/tag/__init__.py \
 			  cluster.py \
 			  common/corosync_conf.py \
+			  common/const.py \
 			  common/dr.py \
 			  common/fencing_topology.py \
 			  common/file.py \
@@ -101,6 +102,7 @@ EXTRA_DIST		= \
 			  common/pacemaker/nvset.py \
 			  common/pacemaker/resource/__init__.py \
 			  common/pacemaker/resource/relations.py \
+			  common/pacemaker/role.py \
 			  common/pacemaker/rule.py \
 			  common/pcs_pycurl.py \
 			  common/reports/codes.py \

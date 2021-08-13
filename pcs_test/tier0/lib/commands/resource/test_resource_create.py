@@ -9,7 +9,10 @@ from pcs_test.tools.misc import (
 )
 
 from pcs import settings
-from pcs.common import reports
+from pcs.common import (
+    const,
+    reports,
+)
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import resource
 from pcs.lib.errors import LibraryError
@@ -111,6 +114,52 @@ wait_error_message = outdent(
     Error performing operation: Timer expired
     """
 ).strip()
+
+
+def fixture_cib_primitive_stateful(
+    use_legacy_roles=False, include_reload=True, res_id="S1"
+):
+    promoted_role = const.PCMK_ROLE_PROMOTED_PRIMARY
+    unpromoted_role = const.PCMK_ROLE_UNPROMOTED_PRIMARY
+    if use_legacy_roles:
+        promoted_role = const.PCMK_ROLE_PROMOTED_LEGACY
+        unpromoted_role = const.PCMK_ROLE_UNPROMOTED_LEGACY
+    agent_reload = ""
+    if include_reload:
+        agent_reload = """
+                    <op id="S1-reload-agent-interval-0s" interval="0s"
+                        name="reload-agent" timeout="10s"/>
+        """
+    return f"""
+            <primitive class="ocf" id="{res_id}" provider="pacemaker" type="Stateful">
+                <operations>
+                    <op id="S1-demote-interval-0s" interval="0s" name="demote"
+                        timeout="10s"/>
+                    <op id="S1-monitor-interval-10s" interval="10s"
+                        name="monitor" role="{promoted_role}" timeout="20s"/>
+                    <op id="S1-monitor-interval-11s" interval="11s"
+                        name="monitor" role="{unpromoted_role}" timeout="20s"/>
+                    <op id="S1-notify-interval-0s" interval="0s" name="notify"
+                        timeout="5s"/>
+                    <op id="S1-promote-interval-0s" interval="0s"
+                        name="promote" timeout="10s"/>
+                    {agent_reload}
+                    <op id="S1-start-interval-0s" interval="0s" name="start"
+                        role="{promoted_role}"/>
+                    <op id="S1-stop-interval-0s" interval="0s" name="stop"
+                        role="{unpromoted_role}"/>
+                  </operations>
+            </primitive>
+        """
+
+
+def fixture_cib_resources_xml(resources):
+    return f"""
+        <resources>
+            {resources}
+        </resources>
+    """
+
 
 fixture_cib_resources_xml_primitive_simplest = """
     <resources>
@@ -321,6 +370,152 @@ def fixture_state_resources_xml(
     )
 
 
+class CreateRolesNormilization(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
+    def prepare(self, ocf_1_1=True, cib_support=True):
+        agent_file_name = None
+        if ocf_1_1:
+            agent_file_name = (
+                "resource_agent_ocf_pacemaker_stateful_ocf_1.0.xml"
+            )
+        cib_file = "cib-empty-3.5.xml"
+        if cib_support:
+            cib_file = "cib-empty-3.7.xml"
+        self.config.runner.pcmk.load_agent(
+            agent_name="ocf:pacemaker:Stateful",
+            agent_filename=agent_file_name,
+        )
+        self.config.runner.cib.load(filename=cib_file)
+
+    def create(self, operation_list=None):
+        resource.create(
+            self.env_assist.get_env(),
+            "S1",
+            "ocf:pacemaker:Stateful",
+            operation_list=operation_list if operation_list else [],
+            meta_attributes={},
+            instance_attributes={},
+        )
+
+    def test_roles_normalization_user_defined(self):
+        self.prepare(False, False)
+        self.config.env.push_cib(
+            resources=fixture_cib_resources_xml(
+                fixture_cib_primitive_stateful(use_legacy_roles=True)
+            )
+        )
+        self.create(
+            [
+                dict(name="start", role=const.PCMK_ROLE_PROMOTED_LEGACY),
+                dict(name="stop", role=const.PCMK_ROLE_UNPROMOTED_LEGACY),
+            ]
+        )
+
+    def test_roles_normalization_user_defined_new_roles(self):
+        self.prepare(False, False)
+        self.config.env.push_cib(
+            resources=fixture_cib_resources_xml(
+                fixture_cib_primitive_stateful(use_legacy_roles=True)
+            )
+        )
+        self.create(
+            [
+                dict(name="start", role=const.PCMK_ROLE_PROMOTED),
+                dict(name="stop", role=const.PCMK_ROLE_UNPROMOTED),
+            ]
+        )
+
+    def test_roles_normalization_user_defined_with_cib_support(self):
+        self.prepare(False, True)
+        self.config.env.push_cib(
+            resources=fixture_cib_resources_xml(
+                fixture_cib_primitive_stateful()
+            )
+        )
+        self.create(
+            [
+                dict(name="start", role=const.PCMK_ROLE_PROMOTED_LEGACY),
+                dict(name="stop", role=const.PCMK_ROLE_UNPROMOTED_LEGACY),
+            ]
+        )
+
+    def test_roles_normalization_user_defined_new_roles_with_cib_support(self):
+        self.prepare(False, True)
+        self.config.env.push_cib(
+            resources=fixture_cib_resources_xml(
+                fixture_cib_primitive_stateful()
+            )
+        )
+        self.create(
+            [
+                dict(name="start", role=const.PCMK_ROLE_PROMOTED),
+                dict(name="stop", role=const.PCMK_ROLE_UNPROMOTED),
+            ]
+        )
+
+    def test_roles_normalization_agent(self):
+        self.prepare(True, False)
+        self.config.env.push_cib(
+            resources=fixture_cib_resources_xml(
+                fixture_cib_primitive_stateful(
+                    use_legacy_roles=True, include_reload=False
+                )
+            )
+        )
+        self.create(
+            [
+                dict(name="start", role=const.PCMK_ROLE_PROMOTED_LEGACY),
+                dict(name="stop", role=const.PCMK_ROLE_UNPROMOTED_LEGACY),
+            ]
+        )
+
+    def test_roles_normalization_agent_new_roles(self):
+        self.prepare(True, False)
+        self.config.env.push_cib(
+            resources=fixture_cib_resources_xml(
+                fixture_cib_primitive_stateful(
+                    use_legacy_roles=True, include_reload=False
+                )
+            )
+        )
+        self.create(
+            [
+                dict(name="start", role=const.PCMK_ROLE_PROMOTED),
+                dict(name="stop", role=const.PCMK_ROLE_UNPROMOTED),
+            ]
+        )
+
+    def test_roles_normalization_agent_with_cib_support(self):
+        self.prepare(True, True)
+        self.config.env.push_cib(
+            resources=fixture_cib_resources_xml(
+                fixture_cib_primitive_stateful(include_reload=False)
+            )
+        )
+        self.create(
+            [
+                dict(name="start", role=const.PCMK_ROLE_PROMOTED_LEGACY),
+                dict(name="stop", role=const.PCMK_ROLE_UNPROMOTED_LEGACY),
+            ]
+        )
+
+    def test_roles_normalization_agent_new_roles_with_cib_support(self):
+        self.prepare(True, True)
+        self.config.env.push_cib(
+            resources=fixture_cib_resources_xml(
+                fixture_cib_primitive_stateful(include_reload=False)
+            )
+        )
+        self.create(
+            [
+                dict(name="start", role=const.PCMK_ROLE_PROMOTED),
+                dict(name="stop", role=const.PCMK_ROLE_UNPROMOTED),
+            ]
+        )
+
+
 class Create(TestCase):
     fixture_sanitized_operation = """
         <resources>
@@ -356,7 +551,8 @@ class Create(TestCase):
 
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
-        (self.config.runner.pcmk.load_agent().runner.cib.load())
+        self.config.runner.pcmk.load_agent()
+        self.config.runner.cib.load()
 
     def test_simplest_resource(self):
         self.config.env.push_cib(

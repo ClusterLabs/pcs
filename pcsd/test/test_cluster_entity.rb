@@ -300,6 +300,22 @@ module TestResourceStatusMixin
     assert_nil(s.node)
   end
 
+  def test_init_roles_promotable
+    s = ClusterEntity::CRMResourceStatus.new(@crm_mon.elements["//resource[@id='ms']"])
+    assert_equal('ms', s.id)
+    assert_equal('ocf::pacemaker:Stateful', s.resource_agent)
+    assert_equal('Master', s.role)
+    assert_nil(s.target_role)
+    assert_equal(
+      {
+        :name => 'node3',
+        :id => '3',
+        :cached => false
+      },
+      s.node
+    )
+  end
+
   def test_init_invalid_element
     xml = "<primitive id='dummy1'/>"
     s = ClusterEntity::CRMResourceStatus.new(REXML::Document.new(xml))
@@ -337,6 +353,15 @@ class TestResourceStatusCrmMon2 < Test::Unit::TestCase
   end
 end
 
+class TestResourceStatusCrmMon2NewRoles < Test::Unit::TestCase
+
+  include TestResourceStatusMixin
+
+  def setup
+    @cib = REXML::Document.new(File.read(File.join(CURRENT_DIR, CIB_FILE)))
+    @crm_mon = REXML::Document.new(File.read(File.join(CURRENT_DIR, 'crm2_new_roles.xml')))
+  end
+end
 
 class TestResourceOperation < Test::Unit::TestCase
   def setup

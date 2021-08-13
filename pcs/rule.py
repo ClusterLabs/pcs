@@ -5,7 +5,11 @@ from typing import List, Any, Optional
 
 from pcs import utils
 from pcs.cli.reports.output import warn
-from pcs.common.tools import Version
+from pcs.common import (
+    const,
+    pacemaker,
+)
+from pcs.common.str_tools import format_list_custom_last_separator
 
 # pylint: disable=not-callable
 
@@ -56,9 +60,23 @@ def dom_rule_add(dom_element, options, rule_argv, cib_schema_version):
         )
         options["score-attribute"] = "pingd"
         options["score"] = None
-    if options.get("role") and options["role"] not in ["master", "slave"]:
-        utils.err(
-            "invalid role '%s', use 'master' or 'slave'" % options["role"]
+    if options.get("role"):
+        role = options["role"].capitalize()
+        supported_roles = (
+            const.PCMK_ROLES_PROMOTED + const.PCMK_ROLES_UNPROMOTED
+        )
+        if role not in supported_roles:
+            utils.err(
+                "invalid role '{role}', use {supported_roles}".format(
+                    role=options["role"],
+                    supported_roles=format_list_custom_last_separator(
+                        list(supported_roles), " or "
+                    ),
+                )
+            )
+        options["role"] = pacemaker.role.get_value_for_cib(
+            role,
+            cib_schema_version >= const.PCMK_NEW_ROLES_CIB_VERSION,
         )
     if options.get("id"):
         id_valid, id_error = utils.validate_xml_id(options["id"], "rule id")
@@ -950,7 +968,8 @@ class CibBuilder:
                 # and 'number' are accepted by CIB. For older schemas, we turn
                 # 'integer' to 'number'.
                 if (
-                    self.cib_schema_version < Version(3, 5, 0)
+                    self.cib_schema_version
+                    < const.PCMK_RULES_NODE_ATTR_EXPR_WITH_INT_TYPE_CIB_VERSION
                     and child.symbol_id == "integer"
                 ):
                     dom_expression.setAttribute("type", "number")

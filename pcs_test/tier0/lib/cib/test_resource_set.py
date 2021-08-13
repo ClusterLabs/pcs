@@ -6,6 +6,7 @@ from pcs_test.tools.assertions import (
     assert_xml_equal,
 )
 
+from pcs.common import const
 from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
 from pcs.lib.cib.constraint import resource_set
@@ -53,7 +54,7 @@ class PrepareSetTest(TestCase):
                 report_codes.INVALID_OPTION_VALUE,
                 {
                     "option_name": "role",
-                    "allowed_values": ("Master", "Slave", "Started", "Stopped"),
+                    "allowed_values": const.PCMK_ROLES,
                     "option_value": "invalid",
                     "cannot_be_empty": False,
                     "forbidden_characters": None,

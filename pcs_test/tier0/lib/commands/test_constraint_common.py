@@ -7,13 +7,17 @@ from pcs_test.tools.assertions import (
 )
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
+from pcs.common import const
 from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands.constraint import common as constraint
 
 
 def fixture_cib_and_constraints():
-    cib = etree.Element("cib")
+    cib = etree.Element(
+        "cib",
+        {"validate-with": f"pacemaker-{const.PCMK_NEW_ROLES_CIB_VERSION}"},
+    )
     resources_section = etree.SubElement(cib, "resources")
     for _id in ("A", "B", "E", "F"):
         etree.SubElement(resources_section, "primitive").attrib["id"] = _id
@@ -56,9 +60,9 @@ class CreateWithSetTest(TestCase):
         self.env.push_cib.assert_called_once_with()
         self.independent_cib.find(".//constraints").append(
             etree.XML(
-                """
+                f"""
             <rsc_some id="some_id" symmetrical="true">
-                  <resource_set id="some_id_set" role="Master">
+                  <resource_set id="some_id_set" role="{const.PCMK_ROLE_PROMOTED_PRIMARY}">
                       <resource_ref id="A"></resource_ref>
                       <resource_ref id="B"></resource_ref>
                   </resource_set>
@@ -104,7 +108,7 @@ class CreateWithSetTest(TestCase):
                                     {
                                         "ids": ["A", "B"],
                                         "options": {
-                                            "role": "Master",
+                                            "role": const.PCMK_ROLE_PROMOTED_PRIMARY,
                                             "id": "some_id_set",
                                         },
                                     },
@@ -136,9 +140,9 @@ class CreateWithSetTest(TestCase):
         constraint_section = self.independent_cib.find(".//constraints")
         constraint_section.append(
             etree.XML(
-                """
+                f"""
             <rsc_some id="some_id" symmetrical="true">
-                <resource_set id="some_id_set" role="Master">
+                <resource_set id="some_id_set" role="{const.PCMK_ROLE_PROMOTED_PRIMARY}">
                     <resource_ref id="A"></resource_ref>
                     <resource_ref id="B"></resource_ref>
                 </resource_set>
@@ -152,9 +156,9 @@ class CreateWithSetTest(TestCase):
         )
         constraint_section.append(
             etree.XML(
-                """
+                f"""
             <rsc_some id="some_id" symmetrical="true">
-                <resource_set id="some_id_set-2" role="Master">
+                <resource_set id="some_id_set-2" role="{const.PCMK_ROLE_PROMOTED_PRIMARY}">
                     <resource_ref id="A"></resource_ref>
                     <resource_ref id="B"></resource_ref>
                 </resource_set>
@@ -216,7 +220,7 @@ class ConfigTest(TestCase):
                             {
                                 "ids": ["A", "B"],
                                 "options": {
-                                    "role": "Master",
+                                    "role": const.PCMK_ROLE_PROMOTED_PRIMARY,
                                     "id": "some_id_set",
                                 },
                             }

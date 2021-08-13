@@ -3,11 +3,18 @@ from typing import (
     cast,
     List,
     Set,
+    Pattern,
 )
 
-from lxml.etree import _Element
+from lxml.etree import (
+    _Element,
+    _ElementTree,
+)
 
-from pcs.common import reports
+from pcs.common import (
+    const,
+    reports,
+)
 from pcs.common.reports import codes as report_codes
 from pcs.common.reports.item import ReportItem, ReportItemList
 from pcs.common.tools import Version
@@ -420,11 +427,11 @@ def get_tags(tree: _Element) -> _Element:
     return sections.get(tree, sections.TAGS)
 
 
-def _get_cib_version(cib, attribute, regexp, none_if_missing=False):
-    version = cib.get(attribute)
+def _get_cib_version(
+    cib: _ElementTree, attribute: str, regexp: Pattern
+) -> Version:
+    version = cib.getroot().get(attribute)
     if version is None:
-        if none_if_missing:
-            return None
         raise LibraryError(
             ReportItem.error(
                 reports.messages.CibLoadErrorBadFormat(
@@ -450,7 +457,7 @@ def _get_cib_version(cib, attribute, regexp, none_if_missing=False):
     )
 
 
-def get_pacemaker_version_by_which_cib_was_validated(cib):
+def get_pacemaker_version_by_which_cib_was_validated(cib: _Element) -> Version:
     """
     Return version of pacemaker which validated specified cib as tree.
     Version is returned as an instance of pcs.common.tools.Version.
@@ -459,23 +466,25 @@ def get_pacemaker_version_by_which_cib_was_validated(cib):
     cib -- cib etree
     """
     return _get_cib_version(
-        cib,
+        cib.getroottree(),
         "validate-with",
         re.compile(r"pacemaker-{0}".format(_VERSION_FORMAT)),
     )
 
 
-def get_cib_crm_feature_set(cib, none_if_missing=False):
+def get_cib_crm_feature_set(cib: _Element) -> Version:
     """
     Return crm_feature_set as pcs.common.tools.Version or raise LibraryError
 
     etree cib -- cib etree
-    bool none_if_missing -- return None instead of raising when crm_feature_set
-        is missing
     """
     return _get_cib_version(
-        cib,
-        "crm_feature_set",
-        re.compile(_VERSION_FORMAT),
-        none_if_missing=none_if_missing,
+        cib.getroottree(), "crm_feature_set", re.compile(_VERSION_FORMAT)
+    )
+
+
+def are_new_role_names_supported(cib: _Element) -> bool:
+    return (
+        get_pacemaker_version_by_which_cib_was_validated(cib)
+        >= const.PCMK_NEW_ROLES_CIB_VERSION
     )

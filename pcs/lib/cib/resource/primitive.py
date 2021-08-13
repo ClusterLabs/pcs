@@ -18,7 +18,11 @@ from pcs.lib.cib.resource.operations import (
     prepare as prepare_operations,
     create_operations,
 )
-from pcs.lib.cib.tools import does_id_exist, find_element_by_tag_and_id
+from pcs.lib.cib.tools import (
+    does_id_exist,
+    find_element_by_tag_and_id,
+    are_new_role_names_supported,
+)
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import validate_id
 
@@ -106,6 +110,7 @@ def create(
             necessary_only=not use_default_operations
         ),
         [operation.name for operation in resource_agent.get_actions()],
+        are_new_role_names_supported(resources_section),
         allow_invalid=allow_invalid_operation,
     )
 

@@ -3,7 +3,9 @@ from unittest import TestCase
 import xml.dom.minidom
 
 from pcs import rule, utils
-from pcs.common.tools import Version
+from pcs.common import const
+from pcs.common.str_tools import format_list_custom_last_separator
+
 from pcs_test.tools.assertions import ac, assert_xml_equal
 from pcs_test.tools.misc import (
     get_test_resource as rc,
@@ -1665,7 +1667,7 @@ class CibBuilderTest(TestCase):
         )
         constraint_el.setAttribute("id", "location-dummy")
         assert_xml_equal(
-            rule.CibBuilder(Version(*utils.getValidateWithVersion(cib_dom)))
+            rule.CibBuilder(utils.getValidateWithVersion(cib_dom))
             .build(constraint_el, rule.RuleParser().parse(rule_expression))
             .parentNode.toprettyxml(indent="    "),
             rule_xml.lstrip().rstrip(" "),
@@ -2356,7 +2358,7 @@ class DomRuleAddXmlTest(TestCase):
             ["role=master", "#uname", "eq", "node1"],
             """
 <rsc_location id="location-dummy">
-    <rule id="location-dummy-rule" role="master" score="INFINITY">
+    <rule id="location-dummy-rule" role="Master" score="INFINITY">
         <expression attribute="#uname" id="location-dummy-rule-expr" operation="eq" value="node1"/>
     </rule>
 </rsc_location>
@@ -2366,7 +2368,7 @@ class DomRuleAddXmlTest(TestCase):
             ["role=slave", "#uname", "eq", "node1"],
             """
 <rsc_location id="location-dummy">
-    <rule id="location-dummy-rule" role="slave" score="INFINITY">
+    <rule id="location-dummy-rule" role="Slave" score="INFINITY">
         <expression attribute="#uname" id="location-dummy-rule-expr" operation="eq" value="node1"/>
     </rule>
 </rsc_location>
@@ -2376,7 +2378,7 @@ class DomRuleAddXmlTest(TestCase):
             ["score=100", "id=myRule", "role=master", "#uname", "eq", "node1"],
             """
 <rsc_location id="location-dummy">
-    <rule id="myRule" role="master" score="100">
+    <rule id="myRule" role="Master" score="100">
         <expression attribute="#uname" id="myRule-expr" operation="eq" value="node1"/>
     </rule>
 </rsc_location>
@@ -2419,7 +2421,7 @@ class DomRuleAddXmlTest(TestCase):
             constraint_el,
             options,
             rule_argv,
-            Version(*utils.getValidateWithVersion(cib_dom)),
+            utils.getValidateWithVersion(cib_dom),
         )
         assert_xml_equal(
             constraint_el.toprettyxml(indent="    "),
@@ -2476,7 +2478,7 @@ Location Constraints:
       Rule: score=INFINITY (id:location-dummy1-rule)
         Expression: #uname eq node1 (id:location-dummy1-rule-expr)
     Constraint: location-dummy1-1
-      Rule: role=master score=100 (id:MyRule)
+      Rule: role=Master score=100 (id:MyRule)
         Expression: #uname eq node2 (id:MyRule-expr)
     Constraint: location-dummy1-2
       Rule: boolean-op=or score=INFINITY (id:complexRule)
@@ -2504,7 +2506,7 @@ Location Constraints:
       Rule: score=INFINITY
         Expression: #uname eq node1
     Constraint: location-dummy1-1
-      Rule: role=master score=100
+      Rule: role=Master score=100
         Expression: #uname eq node2
     Constraint: location-dummy1-2
       Rule: boolean-op=or score=INFINITY
@@ -2586,7 +2588,15 @@ Location Constraints:
             self.temp_cib.name,
             "constraint location dummy1 rule role=foo #uname eq node1".split(),
         )
-        ac(output, "Error: invalid role 'foo', use 'master' or 'slave'\n")
+        ac(
+            output,
+            "Error: invalid role 'foo', use {}\n".format(
+                format_list_custom_last_separator(
+                    const.PCMK_ROLES_PROMOTED + const.PCMK_ROLES_UNPROMOTED,
+                    " or ",
+                )
+            ),
+        )
         self.assertEqual(1, returnVal)
 
         output, returnVal = pcs(

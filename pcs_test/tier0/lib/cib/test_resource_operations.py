@@ -7,6 +7,7 @@ from pcs_test.tools.assertions import assert_report_item_list_equal
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 from pcs_test.tools.misc import create_patcher
 
+from pcs.common import const
 from pcs.common.reports import (
     codes as report_codes,
     ReportItemSeverity as severities,
@@ -23,9 +24,9 @@ patch_operations = create_patcher("pcs.lib.cib.resource.operations")
 @patch_operations("_get_remaining_defaults")
 @patch_operations("_complete_all_intervals")
 @patch_operations("validate_different_intervals")
-@patch_operations("validate_operation_list")
-@patch_operations("normalized_to_operations")
-@patch_operations("operations_to_normalized")
+@patch_operations("_validate_operation_list")
+@patch_operations("_normalized_to_operations")
+@patch_operations("_operations_to_normalized")
 class Prepare(TestCase):
     def test_prepare(
         self,
@@ -36,6 +37,7 @@ class Prepare(TestCase):
         complete_all_intervals,
         get_remaining_defaults,
     ):
+        new_role_names_supported = False
         validate_operation_list.return_value = ["options_report"]
         validate_different_intervals.return_value = [
             "different_interval_report"
@@ -68,10 +70,13 @@ class Prepare(TestCase):
             raw_operation_list,
             default_operation_list,
             allowed_operation_name_list,
+            new_role_names_supported,
             allow_invalid,
         )
 
-        operations_to_normalized.assert_called_once_with(raw_operation_list)
+        operations_to_normalized.assert_called_once_with(
+            raw_operation_list, new_role_names_supported
+        )
         normalized_to_operations.assert_called_once_with(
             operations_to_normalized.return_value
         )
@@ -90,6 +95,7 @@ class Prepare(TestCase):
             report_processor,
             normalized_to_operations.return_value,
             default_operation_list,
+            new_role_names_supported,
         )
         report_processor.report_list.assert_called_once_with(
             [
@@ -223,17 +229,18 @@ class MakeUniqueIntervals(TestCase):
 
 
 class Normalize(TestCase):
+    # pylint: disable=protected-access
     def test_return_operation_with_the_same_values(self):
         operation = {
             "name": "monitor",
-            "role": "Master",
+            "role": const.PCMK_ROLE_PROMOTED_LEGACY,
             "timeout": "10",
         }
 
         self.assertEqual(
             operation,
             {
-                key: operations.normalize(key, value)
+                key: operations._normalize(False)(key, value)
                 for key, value in operation.items()
             },
         )
@@ -242,14 +249,14 @@ class Normalize(TestCase):
         self.assertEqual(
             {
                 "name": "monitor",
-                "role": "Master",
+                "role": const.PCMK_ROLE_PROMOTED_LEGACY,
                 "timeout": "10",
                 "on-fail": "ignore",
                 "record-pending": "true",
                 "enabled": "1",
             },
             {
-                key: operations.normalize(key, value)
+                key: operations._normalize(False)(key, value)
                 for key, value in {
                     "name": "monitor",
                     "role": "master",
@@ -261,11 +268,63 @@ class Normalize(TestCase):
             },
         )
 
+    def test_return_operation_with_normalized_values_new_role_to_legacy(self):
+        self.assertEqual(
+            {
+                "name": "monitor",
+                "role": const.PCMK_ROLE_UNPROMOTED_LEGACY,
+                "timeout": "10",
+            },
+            {
+                key: operations._normalize(False)(key, value)
+                for key, value in {
+                    "name": "monitor",
+                    "role": "unpromoted",
+                    "timeout": "10",
+                }.items()
+            },
+        )
+
+    def test_return_operation_with_normalized_values_new_role(self):
+        self.assertEqual(
+            {
+                "name": "monitor",
+                "role": const.PCMK_ROLE_PROMOTED_PRIMARY,
+                "timeout": "10",
+            },
+            {
+                key: operations._normalize(True)(key, value)
+                for key, value in {
+                    "name": "monitor",
+                    "role": const.PCMK_ROLE_PROMOTED,
+                    "timeout": "10",
+                }.items()
+            },
+        )
+
+    def test_return_operation_with_normalized_values_legacy_role_to_new(self):
+        self.assertEqual(
+            {
+                "name": "monitor",
+                "role": const.PCMK_ROLE_PROMOTED_PRIMARY,
+                "timeout": "10",
+            },
+            {
+                key: operations._normalize(True)(key, value)
+                for key, value in {
+                    "name": "monitor",
+                    "role": const.PCMK_ROLE_PROMOTED_LEGACY,
+                    "timeout": "10",
+                }.items()
+            },
+        )
+
 
 class ValidateOperation(TestCase):
     def assert_operation_produces_report(self, operation, report_list):
+        # pylint: disable=protected-access
         assert_report_item_list_equal(
-            operations.validate_operation_list(
+            operations._validate_operation_list(
                 [operation],
                 ["monitor"],
             ),
@@ -322,7 +381,7 @@ class ValidateOperation(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="a",
                     option_name="role",
-                    allowed_values=("Master", "Slave", "Started", "Stopped"),
+                    allowed_values=const.PCMK_ROLES,
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
@@ -448,13 +507,11 @@ class ValidateOperation(TestCase):
         )
 
 
+@mock.patch("pcs.lib.cib.resource.operations._make_unique_intervals")
 class GetRemainingDefaults(TestCase):
-    @mock.patch("pcs.lib.cib.resource.operations._make_unique_intervals")
     def test_returns_remaining_operations(self, make_unique_intervals):
         # pylint: disable=protected-access
-        make_unique_intervals.side_effect = (
-            lambda report_processor, operations: operations
-        )
+        make_unique_intervals.side_effect = lambda report_processor, ops: ops
         self.assertEqual(
             operations._get_remaining_defaults(
                 report_processor=None,
@@ -475,7 +532,18 @@ class GetRemainingDefaults(TestCase):
                         "start",
                         None,
                         None,
+                        const.PCMK_ROLE_PROMOTED,
                         None,
+                        None,
+                        None,
+                        None,
+                        None,
+                    ),
+                    AgentActionDto(
+                        "stop",
+                        None,
+                        None,
+                        const.PCMK_ROLE_UNPROMOTED_LEGACY,
                         None,
                         None,
                         None,
@@ -483,8 +551,64 @@ class GetRemainingDefaults(TestCase):
                         None,
                     ),
                 ],
+                new_role_names_supported=False,
             ),
-            [{"name": "start"}],
+            [
+                dict(name="start", role=const.PCMK_ROLE_PROMOTED_LEGACY),
+                dict(name="stop", role=const.PCMK_ROLE_UNPROMOTED_LEGACY),
+            ],
+        )
+
+    def test_returns_remaining_operations_new_roles(
+        self, make_unique_intervals
+    ):
+        # pylint: disable=protected-access
+        make_unique_intervals.side_effect = lambda report_processor, ops: ops
+        self.assertEqual(
+            operations._get_remaining_defaults(
+                report_processor=None,
+                operation_list=[{"name": "monitor"}],
+                default_operation_list=[
+                    AgentActionDto(
+                        "monitor",
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                    ),
+                    AgentActionDto(
+                        "start",
+                        None,
+                        None,
+                        const.PCMK_ROLE_PROMOTED,
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                    ),
+                    AgentActionDto(
+                        "stop",
+                        None,
+                        None,
+                        const.PCMK_ROLE_UNPROMOTED_LEGACY,
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                    ),
+                ],
+                new_role_names_supported=True,
+            ),
+            [
+                dict(name="start", role=const.PCMK_ROLE_PROMOTED_PRIMARY),
+                dict(name="stop", role=const.PCMK_ROLE_UNPROMOTED_PRIMARY),
+            ],
         )
 
 

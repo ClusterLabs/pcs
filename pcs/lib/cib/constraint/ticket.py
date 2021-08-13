@@ -1,13 +1,20 @@
 from functools import partial
+from typing import Callable
 
-from lxml import etree
+from lxml.etree import (
+    _Element,
+    SubElement,
+)
 
-from pcs.common import reports
+from pcs.common import (
+    const,
+    pacemaker,
+    reports,
+)
 from pcs.common.reports.item import ReportItem
 from pcs.lib.cib.constraint import constraint
 from pcs.lib.cib import tools
 from pcs.lib.errors import LibraryError
-from pcs.lib.pacemaker.values import RESOURCE_ROLES
 from pcs.lib.xml_tools import remove_when_pointless
 
 TAG_NAME = "rsc_ticket"
@@ -18,7 +25,7 @@ ATTRIB = {
 }
 ATTRIB_PLAIN = {
     "rsc": None,
-    "rsc-role": RESOURCE_ROLES,
+    "rsc-role": const.PCMK_ROLES,
 }
 
 
@@ -103,7 +110,10 @@ def prepare_options_plain(cib, options, ticket, resource_id):
                         )
                     )
                 )
-            options["rsc-role"] = resource_role
+            options["rsc-role"] = pacemaker.role.get_value_for_cib(
+                resource_role,
+                tools.are_new_role_names_supported(cib),
+            )
         else:
             del options["rsc-role"]
 
@@ -125,7 +135,7 @@ def prepare_options_plain(cib, options, ticket, resource_id):
 
 
 def create_plain(constraint_section, options):
-    element = etree.SubElement(constraint_section, TAG_NAME)
+    element = SubElement(constraint_section, TAG_NAME)
     element.attrib.update(options)
     return element
 
@@ -166,11 +176,21 @@ def remove_with_resource_set(constraint_section, ticket_key, resource_id):
     return len(ref_element_list) > 0
 
 
-def are_duplicate_plain(element, other_element):
-    return all(
-        element.attrib.get(name, "") == other_element.attrib.get(name, "")
-        for name in ("ticket", "rsc", "rsc-role")
-    )
+def get_duplicit_checker_callback(
+    new_roles_supported: bool,
+) -> Callable[[_Element, _Element], bool]:
+    def are_duplicate_plain(element: _Element, other_element: _Element) -> bool:
+        convert_role = lambda _el: pacemaker.role.get_value_for_cib(
+            _el.attrib.get("rsc-role", ""), new_roles_supported
+        )
+        if convert_role(element) != convert_role(other_element):
+            return False
+        return all(
+            element.attrib.get(name, "") == other_element.attrib.get(name, "")
+            for name in ("ticket", "rsc")
+        )
+
+    return are_duplicate_plain
 
 
 def are_duplicate_with_resource_set(element, other_element):

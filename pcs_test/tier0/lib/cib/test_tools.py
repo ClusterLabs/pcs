@@ -519,14 +519,6 @@ class GetCibCrmFeatureSet(TestCase):
             ),
         )
 
-    def test_missing_attribute_none(self):
-        self.assertEqual(
-            None,
-            lib.get_cib_crm_feature_set(
-                etree.XML("<cib />"), none_if_missing=True
-            ),
-        )
-
     def test_invalid_version(self):
         assert_raise_library_error(
             lambda: lib.get_cib_crm_feature_set(

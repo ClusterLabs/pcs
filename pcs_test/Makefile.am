@@ -10,6 +10,7 @@ EXTRA_DIST		= \
 			  resources/cib-empty-3.3.xml \
 			  resources/cib-empty-3.4.xml \
 			  resources/cib-empty-3.5.xml \
+			  resources/cib-empty-3.7.xml \
 			  resources/cib-empty-with3nodes.xml \
 			  resources/cib-empty-withnodes.xml \
 			  resources/cib-empty.xml \
@@ -45,6 +46,8 @@ EXTRA_DIST		= \
 			  resources/resource_agent_ocf_heartbeat_ipaddr2.xml \
 			  resources/resource_agent_ocf_pacemaker_booth-site.xml \
 			  resources/resource_agent_ocf_pacemaker_remote.xml \
+			  resources/resource_agent_ocf_pacemaker_stateful_ocf_1.0.xml \
+			  resources/resource_agent_ocf_pacemaker_stateful_ocf_1.1.xml \
 			  resources/stonith_agent_fence_custom_actions.xml \
 			  resources/stonith_agent_fence_simple.xml \
 			  resources/stonith_agent_fence_unfencing.xml \

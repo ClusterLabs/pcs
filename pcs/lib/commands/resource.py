@@ -17,9 +17,12 @@ from typing import (
 
 from lxml.etree import _Element
 
-from pcs.common import file_type_codes
+from pcs.common import (
+    const,
+    file_type_codes,
+    reports,
+)
 from pcs.common.interface import dto
-from pcs.common import reports
 from pcs.common.reports import ReportItemList
 from pcs.common.reports.item import ReportItem
 from pcs.common.tools import (
@@ -1664,7 +1667,9 @@ def ban(env, resource_id, node=None, master=False, lifetime=None, wait=False):
 def _resource_running_on_nodes(resource_state):
     if resource_state:
         return frozenset(
-            resource_state.get("Master", []) + resource_state.get("Started", [])
+            resource_state.get(const.PCMK_ROLE_PROMOTED, [])
+            + resource_state.get(const.PCMK_ROLE_PROMOTED_LEGACY, [])
+            + resource_state.get(const.PCMK_ROLE_STARTED, [])
         )
     return frozenset()
 

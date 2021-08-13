@@ -912,9 +912,6 @@ class UtilsTest(TestCase):
             {
                 "message": "Resource 'myResource' is running on node rh70-node1.",
                 "is_running": True,
-                "nodes_master": [],
-                "nodes_slave": [],
-                "nodes_started": ["rh70-node1"],
             },
         )
         self.assertEqual(
@@ -923,9 +920,6 @@ class UtilsTest(TestCase):
                 "message": "Resource 'myClonedResource' is running on nodes "
                 "rh70-node1, rh70-node2, rh70-node3.",
                 "is_running": True,
-                "nodes_master": [],
-                "nodes_slave": [],
-                "nodes_started": ["rh70-node1", "rh70-node2", "rh70-node3"],
             },
         )
         self.assertEqual(
@@ -934,9 +928,6 @@ class UtilsTest(TestCase):
                 "message": "Resource 'myClone' is running on nodes "
                 "rh70-node1, rh70-node2, rh70-node3.",
                 "is_running": True,
-                "nodes_master": [],
-                "nodes_slave": [],
-                "nodes_started": ["rh70-node1", "rh70-node2", "rh70-node3"],
             },
         )
         self.assertEqual(
@@ -945,9 +936,6 @@ class UtilsTest(TestCase):
                 "message": "Resource 'myMasteredResource' is master on node "
                 "rh70-node1; slave on nodes rh70-node2, rh70-node3.",
                 "is_running": True,
-                "nodes_master": ["rh70-node1"],
-                "nodes_slave": ["rh70-node2", "rh70-node3"],
-                "nodes_started": [],
             },
         )
         self.assertEqual(
@@ -956,9 +944,6 @@ class UtilsTest(TestCase):
                 "message": "Resource 'myMaster' is master on node "
                 "rh70-node1; slave on nodes rh70-node2, rh70-node3.",
                 "is_running": True,
-                "nodes_master": ["rh70-node1"],
-                "nodes_slave": ["rh70-node2", "rh70-node3"],
-                "nodes_started": [],
             },
         )
         self.assertEqual(
@@ -967,9 +952,6 @@ class UtilsTest(TestCase):
                 "message": "Resource 'myGroupedResource' is running on node "
                 "rh70-node2.",
                 "is_running": True,
-                "nodes_master": [],
-                "nodes_slave": [],
-                "nodes_started": ["rh70-node2"],
             },
         )
         self.assertEqual(
@@ -978,9 +960,6 @@ class UtilsTest(TestCase):
                 "message": "Resource 'myGroup' is running on node "
                 "rh70-node2.",
                 "is_running": True,
-                "nodes_master": [],
-                "nodes_slave": [],
-                "nodes_started": ["rh70-node2"],
             },
         )
         self.assertEqual(
@@ -989,14 +968,6 @@ class UtilsTest(TestCase):
                 "message": "Resource 'myClonedGroupedResource' is running on nodes "
                 "rh70-node1, rh70-node2, rh70-node3, rh70-node3.",
                 "is_running": True,
-                "nodes_master": [],
-                "nodes_slave": [],
-                "nodes_started": [
-                    "rh70-node1",
-                    "rh70-node2",
-                    "rh70-node3",
-                    "rh70-node3",
-                ],
             },
         )
         self.assertEqual(
@@ -1005,14 +976,6 @@ class UtilsTest(TestCase):
                 "message": "Resource 'myClonedGroup' is running on nodes "
                 "rh70-node1, rh70-node2, rh70-node3, rh70-node3.",
                 "is_running": True,
-                "nodes_master": [],
-                "nodes_slave": [],
-                "nodes_started": [
-                    "rh70-node1",
-                    "rh70-node2",
-                    "rh70-node3",
-                    "rh70-node3",
-                ],
             },
         )
         self.assertEqual(
@@ -1021,14 +984,6 @@ class UtilsTest(TestCase):
                 "message": "Resource 'myGroupClone' is running on nodes "
                 "rh70-node1, rh70-node2, rh70-node3, rh70-node3.",
                 "is_running": True,
-                "nodes_master": [],
-                "nodes_slave": [],
-                "nodes_started": [
-                    "rh70-node1",
-                    "rh70-node2",
-                    "rh70-node3",
-                    "rh70-node3",
-                ],
             },
         )
         self.assertEqual(
@@ -1037,9 +992,6 @@ class UtilsTest(TestCase):
                 "message": "Resource 'myMasteredGroupedResource' is master on node "
                 "rh70-node2; slave on nodes rh70-node1, rh70-node3.",
                 "is_running": True,
-                "nodes_master": ["rh70-node2"],
-                "nodes_slave": ["rh70-node1", "rh70-node3"],
-                "nodes_started": [],
             },
         )
         self.assertEqual(
@@ -1048,9 +1000,6 @@ class UtilsTest(TestCase):
                 "message": "Resource 'myMasteredGroup' is master on node "
                 "rh70-node2; slave on nodes rh70-node1, rh70-node3.",
                 "is_running": True,
-                "nodes_master": ["rh70-node2"],
-                "nodes_slave": ["rh70-node1", "rh70-node3"],
-                "nodes_started": [],
             },
         )
         self.assertEqual(
@@ -1059,9 +1008,6 @@ class UtilsTest(TestCase):
                 "message": "Resource 'myGroupMaster' is master on node "
                 "rh70-node2; slave on nodes rh70-node1, rh70-node3.",
                 "is_running": True,
-                "nodes_master": ["rh70-node2"],
-                "nodes_slave": ["rh70-node1", "rh70-node3"],
-                "nodes_started": [],
             },
         )
         self.assertEqual(
@@ -1069,9 +1015,6 @@ class UtilsTest(TestCase):
             {
                 "message": "Resource 'notMyResource' is not running on any node",
                 "is_running": False,
-                "nodes_master": [],
-                "nodes_slave": [],
-                "nodes_started": [],
             },
         )
         self.assertEqual(
@@ -1079,9 +1022,6 @@ class UtilsTest(TestCase):
             {
                 "message": "Resource 'myStoppedResource' is not running on any node",
                 "is_running": False,
-                "nodes_master": [],
-                "nodes_slave": [],
-                "nodes_started": [],
             },
         )
 

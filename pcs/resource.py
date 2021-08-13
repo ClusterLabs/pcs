@@ -20,6 +20,10 @@ from pcs import (
     constraint,
 )
 from pcs.common.interface.dto import to_dict
+from pcs.common import (
+    const,
+    pacemaker,
+)
 from pcs.common.str_tools import format_list
 from pcs.settings import (
     pacemaker_wait_timeout_status as PACEMAKER_WAIT_TIMEOUT_STATUS,
@@ -44,7 +48,10 @@ from pcs.cli.resource.parse_args import (
     parse_create as parse_create_args,
 )
 from pcs.common import reports
-from pcs.common.str_tools import indent
+from pcs.common.str_tools import (
+    indent,
+    format_list_custom_last_separator,
+)
 import pcs.lib.cib.acl as lib_acl
 from pcs.lib.cib.resource import (
     bundle,
@@ -394,7 +401,9 @@ def resource_op_add_cmd(lib, argv, modifiers):
     op_properties = utils.convert_args_to_tuples(argv[1:])
     for key, value in op_properties:
         if key == "on-fail" and value == "demote":
-            dom = utils.cluster_upgrade_to_version((3, 4, 0))
+            dom = utils.cluster_upgrade_to_version(
+                const.PCMK_ON_FAIL_DEMOTE_CIB_VERSION
+            )
             break
     if dom is None:
         dom = utils.get_cib_dom()
@@ -982,7 +991,9 @@ def resource_update(lib, args, modifiers, deal_with_guest_change=True):
         op_vars = utils.convert_args_to_tuples(op_argv[1:])
         for k, v in op_vars:
             if k == "on-fail" and v == "demote":
-                utils.cluster_upgrade_to_version((3, 4, 0))
+                utils.cluster_upgrade_to_version(
+                    const.PCMK_ON_FAIL_DEMOTE_CIB_VERSION
+                )
                 cib_upgraded = True
                 break
 
@@ -1093,9 +1104,14 @@ def resource_update(lib, args, modifiers, deal_with_guest_change=True):
         op_role = ""
         op_vars = utils.convert_args_to_tuples(op_argv[1:])
 
+        get_role = lambda _role: pacemaker.role.get_value_for_cib(
+            _role,
+            utils.isCibVersionSatisfied(dom, const.PCMK_NEW_ROLES_CIB_VERSION),
+        )
+
         for k, v in op_vars:
             if k == "role":
-                op_role = v
+                op_role = get_role(v)
                 break
 
         updating_op = None
@@ -1105,7 +1121,7 @@ def resource_update(lib, args, modifiers, deal_with_guest_change=True):
                 updating_op_before = existing_op
                 break
             existing_op_name = existing_op.getAttribute("name")
-            existing_op_role = existing_op.getAttribute("role")
+            existing_op_role = get_role(existing_op.getAttribute("role"))
             if existing_op_role == op_role and existing_op_name == op_name:
                 updating_op = existing_op
                 continue
@@ -1235,7 +1251,6 @@ def resource_operation_add(
             "on-fail",
             "OCF_CHECK_LEVEL",
         ]
-        valid_roles = ["Stopped", "Started", "Slave", "Master"]
         for key, value in op_properties:
             if key not in valid_attrs:
                 utils.err(
@@ -1243,10 +1258,13 @@ def resource_operation_add(
                     % key
                 )
             if key == "role":
-                if value not in valid_roles:
+                if value not in const.PCMK_ROLES:
                     utils.err(
-                        "role must be: %s or %s (use --force to override)"
-                        % (", ".join(valid_roles[:-1]), valid_roles[-1])
+                        "role must be: {} (use --force to override)".format(
+                            format_list_custom_last_separator(
+                                const.PCMK_ROLES, " or "
+                            )
+                        )
                     )
 
     interval = None
@@ -1294,6 +1312,16 @@ def resource_operation_add(
                 "id", utils.find_unique_id(dom, "-".join((op_id, key, val)))
             )
             attrib_el.appendChild(nvpair_el)
+        elif key == "role" and "--force" not in utils.pcs_options:
+            op_el.setAttribute(
+                key,
+                pacemaker.role.get_value_for_cib(
+                    val,
+                    utils.isCibVersionSatisfied(
+                        dom, const.PCMK_NEW_ROLES_CIB_VERSION
+                    ),
+                ),
+            )
         else:
             op_el.setAttribute(key, val)
 
@@ -3310,7 +3338,7 @@ def resource_relocate_location_to_str(location):
         return message.format(
             res=location["id_for_constraint"],
             node=location["promote_on_node"],
-            role=" role=Master",
+            role=f" role={const.PCMK_ROLE_PROMOTED_PRIMARY}",
         )
     return ""
 
@@ -3345,7 +3373,15 @@ def resource_relocate_run(cib_dom, resources=None, dry=True):
         new_constraint.setAttribute("score", "INFINITY")
         if "promote_on_node" in location:
             new_constraint.setAttribute("node", location["promote_on_node"])
-            new_constraint.setAttribute("role", "Master")
+            new_constraint.setAttribute(
+                "role",
+                pacemaker.role.get_value_for_cib(
+                    const.PCMK_ROLE_PROMOTED_PRIMARY,
+                    utils.isCibVersionSatisfied(
+                        cib_dom, const.PCMK_NEW_ROLES_CIB_VERSION
+                    ),
+                ),
+            )
         elif "start_on_node" in location:
             new_constraint.setAttribute("node", location["start_on_node"])
         constraint_el.appendChild(new_constraint)

@@ -7,11 +7,16 @@ from pcs_test.tools.assertions import (
     assert_xml_equal,
 )
 
+from pcs.common import const
 from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
 from pcs.lib.cib.constraint import ticket
 
 
+@mock.patch(
+    "pcs.lib.cib.constraint.ticket.tools.are_new_role_names_supported",
+    lambda _: True,
+)
 @mock.patch("pcs.lib.cib.constraint.ticket.tools.check_new_id_applicable")
 class PrepareOptionsPlainTest(TestCase):
     def setUp(self):
@@ -26,7 +31,7 @@ class PrepareOptionsPlainTest(TestCase):
                 "id": "generated_id",
                 "loss-policy": "fence",
                 "rsc": "resourceA",
-                "rsc-role": "Master",
+                "rsc-role": const.PCMK_ROLE_PROMOTED_PRIMARY,
                 "ticket": "ticket_key",
             },
             self.prepare(
@@ -87,7 +92,7 @@ class PrepareOptionsPlainTest(TestCase):
                 severities.ERROR,
                 report_codes.INVALID_OPTION_VALUE,
                 {
-                    "allowed_values": ("Master", "Slave", "Started", "Stopped"),
+                    "allowed_values": const.PCMK_ROLES,
                     "option_value": "bad_role",
                     "option_name": "rsc-role",
                     "cannot_be_empty": False,
@@ -150,7 +155,11 @@ class PrepareOptionsPlainTest(TestCase):
     @mock.patch("pcs.lib.cib.constraint.ticket._create_id")
     def test_complete_id(self, mock_create_id, _):
         mock_create_id.return_value = "generated_id"
-        options = {"loss-policy": "freeze", "ticket": "T", "rsc-role": "Master"}
+        options = {
+            "loss-policy": "freeze",
+            "ticket": "T",
+            "rsc-role": const.PCMK_ROLE_PROMOTED,
+        }
         ticket_key = "ticket_key"
         resource_id = "resourceA"
         expected_options = options.copy()
@@ -158,7 +167,7 @@ class PrepareOptionsPlainTest(TestCase):
             {
                 "id": "generated_id",
                 "rsc": resource_id,
-                "rsc-role": "Master",
+                "rsc-role": const.PCMK_ROLE_PROMOTED_PRIMARY,
                 "ticket": ticket_key,
             }
         )
@@ -174,7 +183,7 @@ class PrepareOptionsPlainTest(TestCase):
             self.cib,
             ticket_key,
             resource_id,
-            "Master",
+            const.PCMK_ROLE_PROMOTED_PRIMARY,
         )
 
 
@@ -281,39 +290,67 @@ class Element:
 class AreDuplicatePlain(TestCase):
     def setUp(self):
         self.first = Element(
-            {"ticket": "ticket_key", "rsc": "resourceA", "rsc-role": "Master"}
+            {
+                "ticket": "ticket_key",
+                "rsc": "resourceA",
+                "rsc-role": const.PCMK_ROLE_PROMOTED_LEGACY,
+            }
         )
         self.second = Element(
-            {"ticket": "ticket_key", "rsc": "resourceA", "rsc-role": "Master"}
+            {
+                "ticket": "ticket_key",
+                "rsc": "resourceA",
+                "rsc-role": const.PCMK_ROLE_PROMOTED_LEGACY,
+            }
         )
 
     def test_returns_true_for_duplicate_elements(self):
-        self.assertTrue(ticket.are_duplicate_plain(self.first, self.second))
+        self.assertTrue(
+            ticket.get_duplicit_checker_callback(False)(self.first, self.second)
+        )
 
     def test_returns_false_for_different_ticket(self):
         self.assertFalse(
-            ticket.are_duplicate_plain(
+            ticket.get_duplicit_checker_callback(False)(
                 self.first, self.second.update({"ticket": "X"})
             )
         )
 
     def test_returns_false_for_different_resource(self):
         self.assertFalse(
-            ticket.are_duplicate_plain(
+            ticket.get_duplicit_checker_callback(False)(
                 self.first, self.second.update({"rsc": "Y"})
             )
         )
 
     def test_returns_false_for_different_role(self):
         self.assertFalse(
-            ticket.are_duplicate_plain(
+            ticket.get_duplicit_checker_callback(False)(
                 self.first, self.second.update({"rsc-role": "Z"})
             )
         )
 
     def test_returns_false_for_different_elements(self):
         self.second.update({"ticket": "X", "rsc": "Y", "rsc-role": "Z"})
-        self.assertFalse(ticket.are_duplicate_plain(self.first, self.second))
+        self.assertFalse(
+            ticket.get_duplicit_checker_callback(False)(self.first, self.second)
+        )
+
+    def test_returns_true_for_equivalent_new_role(self):
+        self.assertTrue(
+            ticket.get_duplicit_checker_callback(False)(
+                self.first,
+                self.second.update({"rsc-role": const.PCMK_ROLE_PROMOTED}),
+            )
+        )
+
+    def test_returns_true_for_equivalent_new_role_new_roles_supported(self):
+        self.assertTrue(
+            ticket.get_duplicit_checker_callback(True)(
+                self.first,
+                self.second.update({"rsc-role": const.PCMK_ROLE_PROMOTED}),
+            )
+        )
 
 
 @mock.patch(

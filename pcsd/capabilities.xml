@@ -846,6 +846,12 @@
         pcs commands: cluster cib-push
       </description>
     </capability>
+    <capability id="pcmk.cib.roles.promoted-unpromoted" in-pcs="1" in-pcsd="1">
+      <description>
+        Support for new roles `Promoted` and `Unpromoted` introduced in
+        pacemaker 2.1.
+      </description>
+    </capability>
 
 
 

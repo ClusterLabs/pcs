@@ -34,6 +34,8 @@ from pcs_test.tools.pcs_runner import (
 
 from pcs import utils
 from pcs import resource
+from pcs.common import const
+from pcs.common.str_tools import format_list_custom_last_separator
 from pcs.constraint import LOCATION_NODE_VALIDATION_SKIP_MSG
 
 # pylint: disable=invalid-name
@@ -3221,9 +3223,9 @@ monitor interval=20 (A-monitor-interval-20)
         )
         ac(
             output,
-            """\
-Error: role must be: Stopped, Started, Slave or Master (use --force to override)
-""",
+            "Error: role must be: {} (use --force to override)\n".format(
+                format_list_custom_last_separator(const.PCMK_ROLES, " or ")
+            ),
         )
         assert returnVal == 1
 
@@ -3245,7 +3247,9 @@ Error: role must be: Stopped, Started, Slave or Master (use --force to override)
         )
         ac(
             o,
-            "Error: role must be: Stopped, Started, Slave or Master (use --force to override)\n",
+            "Error: role must be: {} (use --force to override)\n".format(
+                format_list_custom_last_separator(const.PCMK_ROLES, " or ")
+            ),
         )
         assert r == 1
 

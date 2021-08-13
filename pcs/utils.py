@@ -3,7 +3,10 @@ import os
 import sys
 import subprocess
 import xml.dom.minidom
-from xml.dom.minidom import parseString
+from xml.dom.minidom import (
+    parseString,
+    Document as DomDocument,
+)
 import xml.etree.ElementTree as ET
 import re
 import json
@@ -29,8 +32,10 @@ from typing import (
 from pcs import settings, usage
 
 from pcs.common import (
+    const,
     file as pcs_file,
     file_type_codes,
+    pacemaker as common_pacemaker,
     pcs_pycurl as pycurl,
 )
 from pcs.common.host import PcsKnownHost
@@ -39,7 +44,10 @@ from pcs.common.reports.item import ReportItemList
 from pcs.common.reports.messages import CibUpgradeFailedToMinimalRequiredVersion
 from pcs.common.services.interfaces import ServiceManagerInterface
 from pcs.common.services.errors import ManageServiceError
-from pcs.common.tools import timeout_to_seconds
+from pcs.common.tools import (
+    timeout_to_seconds,
+    Version,
+)
 
 from pcs.cli.common import middleware
 from pcs.cli.common.env_cli import Env
@@ -95,7 +103,7 @@ class UnknownPropertyException(Exception):
     pass
 
 
-def getValidateWithVersion(dom):
+def getValidateWithVersion(dom) -> Version:
     """
     Commandline options: no options
     """
@@ -108,26 +116,28 @@ def getValidateWithVersion(dom):
     version = cib.getAttribute("validate-with")
     r = re.compile(r"pacemaker-(\d+)\.(\d+)\.?(\d+)?")
     m = r.match(version)
+    if m is None:
+        raise AssertionError()
     major = int(m.group(1))
     minor = int(m.group(2))
     rev = int(m.group(3) or 0)
-    return (major, minor, rev)
+    return Version(major, minor, rev)
+
+
+def isCibVersionSatisfied(cib_dom, required_version: Version) -> bool:
+    if not isinstance(cib_dom, DomDocument):
+        cib_dom = cib_dom.ownerDocument
+    return getValidateWithVersion(cib_dom) >= required_version
 
 
 # Check the current pacemaker version in cib and upgrade it if necessary
 # Returns False if not upgraded and True if upgraded
-def checkAndUpgradeCIB(major, minor, rev):
+def checkAndUpgradeCIB(required_version: Version) -> bool:
     """
     Commandline options:
       * -f - CIB file
     """
-    cmajor, cminor, crev = getValidateWithVersion(get_cib_dom())
-    # pylint: disable=too-many-boolean-expressions
-    if (
-        cmajor > major
-        or (cmajor == major and cminor > minor)
-        or (cmajor == major and cminor == minor and crev >= rev)
-    ):
+    if isCibVersionSatisfied(get_cib_dom(), required_version):
         return False
     cluster_upgrade()
     return True
@@ -149,19 +159,19 @@ def cluster_upgrade():
     print("Cluster CIB has been upgraded to latest version")
 
 
-def cluster_upgrade_to_version(required_version):
+def cluster_upgrade_to_version(required_version: Version) -> Any:
     """
     Commandline options:
       * -f - CIB file
     """
-    checkAndUpgradeCIB(*required_version)
+    checkAndUpgradeCIB(required_version)
     dom = get_cib_dom()
     current_version = getValidateWithVersion(dom)
     if current_version < required_version:
         err(
             CibUpgradeFailedToMinimalRequiredVersion(
-                ".".join([str(x) for x in current_version]),
-                ".".join([str(x) for x in required_version]),
+                str(current_version),
+                str(required_version),
             ).message
         )
     return dom
@@ -1525,8 +1535,8 @@ def resource_running_on(resource, passed_state=None, stopped=False):
       * -f - has effect but doesn't make sense to check state of resource
     """
     nodes_started = []
-    nodes_master = []
-    nodes_slave = []
+    nodes_promoted = []
+    nodes_unpromoted = []
     state = passed_state if passed_state else getClusterState()
     resource_original = resource
     resource = get_resource_for_running_check(state, resource, stopped)
@@ -1540,20 +1550,21 @@ def resource_running_on(resource, passed_state=None, stopped=False):
         ) and res.getAttribute("failed") != "true":
             for node in res.getElementsByTagName("node"):
                 node_name = node.getAttribute("name")
-                if res.getAttribute("role") == "Started":
+                role = res.getAttribute("role")
+                if role == const.PCMK_ROLE_STARTED:
                     nodes_started.append(node_name)
-                elif res.getAttribute("role") == "Master":
-                    nodes_master.append(node_name)
-                elif res.getAttribute("role") == "Slave":
-                    nodes_slave.append(node_name)
-    if not nodes_started and not nodes_master and not nodes_slave:
+                elif role in const.PCMK_ROLES_PROMOTED:
+                    nodes_promoted.append(node_name)
+                elif role in const.PCMK_ROLES_UNPROMOTED:
+                    nodes_unpromoted.append(node_name)
+    if not nodes_started and not nodes_promoted and not nodes_unpromoted:
         message = "Resource '%s' is not running on any node" % resource_original
     else:
         message_parts = []
         for alist, label in (
             (nodes_started, "running"),
-            (nodes_master, "master"),
-            (nodes_slave, "slave"),
+            (nodes_promoted, "master"),
+            (nodes_unpromoted, "slave"),
         ):
             if alist:
                 alist.sort()
@@ -1567,10 +1578,7 @@ def resource_running_on(resource, passed_state=None, stopped=False):
         )
     return {
         "message": message,
-        "is_running": bool(nodes_started or nodes_master or nodes_slave),
-        "nodes_started": nodes_started,
-        "nodes_master": nodes_master,
-        "nodes_slave": nodes_slave,
+        "is_running": bool(nodes_started or nodes_promoted or nodes_unpromoted),
     }
 
 
@@ -1779,9 +1787,16 @@ def operation_exists_by_name(operations_el, op_el):
     """
     Commandline options: no options
     """
+    new_roles_supported = isCibVersionSatisfied(
+        operations_el, const.PCMK_NEW_ROLES_CIB_VERSION
+    )
     existing = []
     op_name = op_el.getAttribute("name")
-    op_role = op_el.getAttribute("role") or "Started"
+    get_role_fn = lambda _el: common_pacemaker.role.get_value_for_cib(
+        _el.getAttribute("role") or const.PCMK_ROLE_STARTED,
+        new_roles_supported,
+    )
+    op_role = get_role_fn(op_el)
     ocf_check_level = None
     if op_name == "monitor":
         ocf_check_level = get_operation_ocf_check_level(op_el)
@@ -1790,8 +1805,8 @@ def operation_exists_by_name(operations_el, op_el):
         if op.getAttribute("name") == op_name:
             if op_name != "monitor":
                 existing.append(op)
-            elif (
-                op.getAttribute("role") or "Started"
+            elif get_role_fn(
+                op
             ) == op_role and ocf_check_level == get_operation_ocf_check_level(
                 op
             ):

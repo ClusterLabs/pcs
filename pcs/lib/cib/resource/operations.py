@@ -4,7 +4,11 @@ from typing import Dict, Iterable, List, Mapping
 from lxml import etree
 
 from pcs.common.interface.dto import to_dict
-from pcs.common import reports
+from pcs.common import (
+    const,
+    pacemaker,
+    reports,
+)
 from pcs.common.reports import (
     ReportItemList,
     ReportProcessor,
@@ -19,7 +23,7 @@ from pcs.lib.cib.tools import (
     does_id_exist,
 )
 from pcs.lib.errors import LibraryError
-from pcs.lib.pacemaker.values import is_true, RESOURCE_ROLES
+from pcs.lib.pacemaker.values import is_true
 
 OPERATION_NVPAIR_ATTRIBUTES = [
     "OCF_CHECK_LEVEL",
@@ -60,15 +64,18 @@ BOOLEAN_VALUES = [
 
 _DEFAULT_INTERVALS = {"monitor": "60s"}
 
-# normalize(key, value) -> normalized_value
-normalize = validate.option_value_normalization(
-    {
-        "role": lambda value: value.lower().capitalize(),
-        "on-fail": lambda value: value.lower(),
-        "record-pending": lambda value: value.lower(),
-        "enabled": lambda value: value.lower(),
-    }
-)
+# _normalize(key, value) -> normalized_value
+def _normalize(new_role_names_supported):
+    return validate.option_value_normalization(
+        {
+            "role": lambda value: pacemaker.role.get_value_for_cib(
+                value.lower().capitalize(), new_role_names_supported
+            ),
+            "on-fail": lambda value: value.lower(),
+            "record-pending": lambda value: value.lower(),
+            "enabled": lambda value: value.lower(),
+        }
+    )
 
 
 def _get_default_interval(operation_name: str) -> str:
@@ -100,6 +107,7 @@ def prepare(
     raw_operation_list: Iterable[Mapping[str, str]],
     default_operation_list: Iterable[AgentActionDto],
     allowed_operation_name_list: Iterable[str],
+    new_role_names_supported: bool,
     allow_invalid: bool = False,
 ):
     """
@@ -113,16 +121,18 @@ def prepare(
     allowed_operation_name_list -- operation names defined by a resource agent
     allow_invalid -- flag for validation skipping
     """
-    operations_to_validate = operations_to_normalized(raw_operation_list)
+    operations_to_validate = _operations_to_normalized(
+        raw_operation_list, new_role_names_supported
+    )
 
     report_list: ReportItemList = []
     report_list.extend(
-        validate_operation_list(
+        _validate_operation_list(
             operations_to_validate, allowed_operation_name_list, allow_invalid
         )
     )
 
-    operation_list = normalized_to_operations(operations_to_validate)
+    operation_list = _normalized_to_operations(operations_to_validate)
 
     report_list.extend(validate_different_intervals(operation_list))
 
@@ -130,21 +140,26 @@ def prepare(
         raise LibraryError()
 
     return _complete_all_intervals(operation_list) + _get_remaining_defaults(
-        report_processor, operation_list, default_operation_list
+        report_processor,
+        operation_list,
+        default_operation_list,
+        new_role_names_supported,
     )
 
 
-def operations_to_normalized(raw_operation_list):
+def _operations_to_normalized(raw_operation_list, new_role_names_supported):
+    normalize_callback = _normalize(new_role_names_supported)
     return [
-        validate.values_to_pairs(op, normalize) for op in raw_operation_list
+        validate.values_to_pairs(op, normalize_callback)
+        for op in raw_operation_list
     ]
 
 
-def normalized_to_operations(normalized_pairs):
+def _normalized_to_operations(normalized_pairs):
     return [validate.pairs_to_values(op) for op in normalized_pairs]
 
 
-def validate_operation_list(
+def _validate_operation_list(
     operation_list, allowed_operation_name_list, allow_invalid=False
 ):
     severity = reports.item.get_severity(reports.codes.FORCE, allow_invalid)
@@ -159,7 +174,7 @@ def validate_operation_list(
             option_name_for_report="operation name",
             severity=severity,
         ),
-        validate.ValueIn("role", RESOURCE_ROLES),
+        validate.ValueIn("role", const.PCMK_ROLES),
         validate.ValueIn("on-fail", ON_FAIL_VALUES),
         validate.ValueIn("record-pending", BOOLEAN_VALUES),
         validate.ValueIn("enabled", BOOLEAN_VALUES),
@@ -176,18 +191,28 @@ def validate_operation_list(
     return report_list
 
 
-def _action_dto_to_dict(dto: AgentActionDto) -> Dict[str, str]:
-    return {
-        key: value
-        for key, value in to_dict(dto).items()
-        if key != "depth" and value not in (None, "")
-    }
+def _action_dto_to_dict(
+    dto: AgentActionDto,
+    new_role_names_supported: bool,
+) -> Dict[str, str]:
+    result = dict(
+        filter(
+            lambda item: item[0] != "deph" and item[1] not in (None, ""),
+            to_dict(dto).items(),
+        )
+    )
+    if "role" in result:
+        result["role"] = pacemaker.role.get_value_for_cib(
+            result["role"], new_role_names_supported
+        )
+    return result
 
 
 def _get_remaining_defaults(
     report_processor: ReportProcessor,
     operation_list: Iterable[Mapping[str, str]],
     default_operation_list: Iterable[AgentActionDto],
+    new_role_names_supported: bool,
 ) -> List[Dict[str, str]]:
     """
     Return operations not mentioned in operation_list but contained in
@@ -204,7 +229,7 @@ def _get_remaining_defaults(
     return _make_unique_intervals(
         report_processor,
         [
-            _action_dto_to_dict(default_operation)
+            _action_dto_to_dict(default_operation, new_role_names_supported)
             for default_operation in default_operation_list
             if default_operation.name not in defined_operation_names
         ],

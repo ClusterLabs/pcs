@@ -1,7 +1,10 @@
 from functools import partial
 
 from pcs.lib.cib.constraint import constraint, ticket
-from pcs.lib.cib.tools import get_constraints
+from pcs.lib.cib.tools import (
+    are_new_role_names_supported,
+    get_constraints,
+)
 import pcs.lib.commands.constraint.common
 
 
@@ -57,7 +60,9 @@ def create(
         env.report_processor,
         constraint_section,
         constraint_element,
-        are_duplicate=ticket.are_duplicate_plain,
+        are_duplicate=ticket.get_duplicit_checker_callback(
+            are_new_role_names_supported(constraint_section)
+        ),
         export_element=constraint.export_plain,
         duplication_alowed=duplication_alowed,
     )

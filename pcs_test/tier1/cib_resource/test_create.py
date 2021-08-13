@@ -8,6 +8,8 @@ from pcs_test.tools.pcs_runner import PcsRunner
 
 from pcs import resource
 from pcs.cli.common.parse_args import InputModifiers
+from pcs.common import const
+from pcs.common.str_tools import format_list
 
 # pylint: disable=invalid-name
 # pylint: disable=no-self-use
@@ -1243,8 +1245,10 @@ class FailOrWarnOp(ResourceTest):
                 "op monitor role=abc"
             ).split(),
             (
-                "Error: 'abc' is not a valid role value, use 'Master', 'Slave',"
-                " 'Started', 'Stopped'\n" + ERRORS_HAVE_OCURRED
+                "Error: 'abc' is not a valid role value, use {}\n".format(
+                    format_list(const.PCMK_ROLES)
+                )
+                + ERRORS_HAVE_OCURRED
             ),
         )
 
@@ -1255,8 +1259,10 @@ class FailOrWarnOp(ResourceTest):
                 "op monitor role=abc --force"
             ).split(),
             (
-                "Error: 'abc' is not a valid role value, use 'Master', 'Slave',"
-                " 'Started', 'Stopped'\n" + ERRORS_HAVE_OCURRED
+                "Error: 'abc' is not a valid role value, use {}\n".format(
+                    format_list(const.PCMK_ROLES)
+                )
+                + ERRORS_HAVE_OCURRED
             ),
         )
 

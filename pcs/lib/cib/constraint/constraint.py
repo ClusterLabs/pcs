@@ -1,4 +1,12 @@
-from lxml import etree
+from typing import (
+    Any,
+    Callable,
+    Dict,
+)
+from lxml.etree import (
+    _Element,
+    SubElement,
+)
 
 from pcs.common import reports
 from pcs.common.reports import ReportProcessor
@@ -76,7 +84,7 @@ def prepare_options(attrib_names, options, create_id_fn, validate_id):
     return options
 
 
-def export_with_set(element):
+def export_with_set(element: _Element) -> Dict[str, Any]:
     return {
         "resource_sets": [
             resource_set.export(resource_set_item)
@@ -86,7 +94,7 @@ def export_with_set(element):
     }
 
 
-def export_plain(element):
+def export_plain(element: _Element) -> Dict[str, Any]:
     return {"options": export_attributes(element)}
 
 
@@ -115,12 +123,12 @@ def have_duplicate_resource_sets(element, other_element):
 
 def check_is_without_duplication(
     report_processor: ReportProcessor,
-    constraint_section,
-    element,
-    are_duplicate,
-    export_element,
-    duplication_alowed=False,
-):
+    constraint_section: _Element,
+    element: _Element,
+    are_duplicate: Callable[[_Element, _Element], bool],
+    export_element: Callable[[_Element], Dict[str, Any]],
+    duplication_alowed: bool = False,
+) -> None:
     duplicate_element_list = [
         duplicate_element
         for duplicate_element in constraint_section.findall(".//" + element.tag)
@@ -150,7 +158,7 @@ def check_is_without_duplication(
                 ),
                 message=reports.messages.DuplicateConstraintsExist(
                     [
-                        duplicate.get("id")
+                        str(duplicate.attrib["id"])
                         for duplicate in duplicate_element_list
                     ]
                 ),
@@ -165,7 +173,7 @@ def create_with_set(constraint_section, tag_name, options, resource_set_list):
         raise LibraryError(
             ReportItem.error(reports.messages.EmptyResourceSetList())
         )
-    element = etree.SubElement(constraint_section, tag_name)
+    element = SubElement(constraint_section, tag_name)
     element.attrib.update(options)
     for resource_set_item in resource_set_list:
         resource_set.create(element, resource_set_item)

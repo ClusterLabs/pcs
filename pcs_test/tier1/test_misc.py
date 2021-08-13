@@ -9,6 +9,9 @@ from pcs_test.tools.misc import (
 )
 from pcs_test.tools.pcs_runner import PcsRunner
 
+from pcs.common import const
+from pcs.common.str_tools import format_list
+
 
 class ParseArgvDashDash(TestCase, AssertPcsMixin):
     # The command will fail, that's ok. We are interested only in the argv
@@ -19,6 +22,7 @@ class ParseArgvDashDash(TestCase, AssertPcsMixin):
         self.temp_cib = get_tmp_file("tier1_misc")
         write_file_to_tmpfile(rc("cib-empty.xml"), self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
+        self.allowed_roles = format_list(const.PCMK_ROLES)
 
     def tearDown(self):
         self.temp_cib.close()
@@ -38,8 +42,8 @@ class ParseArgvDashDash(TestCase, AssertPcsMixin):
         self.assert_pcs_fail(
             self.cmd + ["-12.3"],
             outdent(
-                """\
-                Error: invalid role value 'R2', allowed values are: 'Master', 'Slave', 'Started', 'Stopped'
+                f"""\
+                Error: invalid role value 'R2', allowed values are: {self.allowed_roles}
                 Warning: Using '-12.3' without '--' is deprecated, those parameters will be considered position independent options in future pcs versions
                 """
             ),
@@ -49,8 +53,8 @@ class ParseArgvDashDash(TestCase, AssertPcsMixin):
         self.assert_pcs_fail(
             self.cmd + ["-inFIniTY"],
             outdent(
-                """\
-                Error: invalid role value 'R2', allowed values are: 'Master', 'Slave', 'Started', 'Stopped'
+                f"""\
+                Error: invalid role value 'R2', allowed values are: {self.allowed_roles}
                 Warning: Using '-inFIniTY' without '--' is deprecated, those parameters will be considered position independent options in future pcs versions
                 """
             ),
@@ -70,8 +74,8 @@ class ParseArgvDashDash(TestCase, AssertPcsMixin):
         self.assert_pcs_fail(
             ["--"] + self.cmd + ["-12.3"],
             outdent(
-                """\
-                Error: invalid role value 'R2', allowed values are: 'Master', 'Slave', 'Started', 'Stopped'
+                f"""\
+                Error: invalid role value 'R2', allowed values are: {self.allowed_roles}
                 """
             ),
         )
@@ -80,8 +84,8 @@ class ParseArgvDashDash(TestCase, AssertPcsMixin):
         self.assert_pcs_fail(
             ["--"] + self.cmd + ["-inFIniTY"],
             outdent(
-                """\
-                Error: invalid role value 'R2', allowed values are: 'Master', 'Slave', 'Started', 'Stopped'
+                f"""\
+                Error: invalid role value 'R2', allowed values are: {self.allowed_roles}
                 """
             ),
         )

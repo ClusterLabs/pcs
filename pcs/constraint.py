@@ -18,18 +18,21 @@ import pcs.cli.constraint_order.command as order_command
 from pcs.cli.constraint_ticket import command as ticket_command
 from pcs.cli.reports import process_library_reports
 from pcs.cli.reports.output import warn
-from pcs.common import reports
+from pcs.common import (
+    const,
+    pacemaker,
+    reports,
+)
 from pcs.common.reports import ReportItem
 from pcs.common.reports.constraints import (
     colocation as colocation_format,
     order as order_format,
 )
-from pcs.common.tools import Version
+from pcs.common.str_tools import format_list
 from pcs.lib.cib.constraint import resource_set
 from pcs.lib.cib.constraint.order import ATTRIB as order_attrib
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.pacemaker.values import (
-    RESOURCE_ROLES,
     sanitize_id,
     SCORE_INFINITY,
 )
@@ -41,7 +44,7 @@ from pcs.lib.pacemaker.values import (
 OPTIONS_ACTION = resource_set.ATTRIB["action"]
 
 DEFAULT_ACTION = "start"
-DEFAULT_ROLE = "Started"
+DEFAULT_ROLE = const.PCMK_ROLE_STARTED
 
 OPTIONS_SYMMETRICAL = order_attrib["symmetrical"]
 OPTIONS_KIND = order_attrib["kind"]
@@ -218,16 +221,6 @@ def colocation_add(lib, argv, modifiers):
         ]
         return score, arg_array
 
-    def _validate_and_prepare_role(role):
-        role_cleaned = role.lower().capitalize()
-        if role_cleaned not in RESOURCE_ROLES:
-            utils.err(
-                "invalid role value '{0}', allowed values are: '{1}'".format(
-                    role, "', '".join(RESOURCE_ROLES)
-                )
-            )
-        return role_cleaned
-
     del lib
     modifiers.ensure_only_supported("-f", "--force")
     if len(argv) < 3:
@@ -235,6 +228,23 @@ def colocation_add(lib, argv, modifiers):
 
     role1 = ""
     role2 = ""
+
+    cib_dom = utils.get_cib_dom()
+    new_roles_supported = utils.isCibVersionSatisfied(
+        cib_dom, const.PCMK_NEW_ROLES_CIB_VERSION
+    )
+
+    def _validate_and_prepare_role(role):
+        role_cleaned = role.lower().capitalize()
+        if role_cleaned not in const.PCMK_ROLES:
+            utils.err(
+                "invalid role value '{0}', allowed values are: {1}".format(
+                    role, format_list(const.PCMK_ROLES)
+                )
+            )
+        return pacemaker.role.get_value_for_cib(
+            role_cleaned, new_roles_supported
+        )
 
     if argv[2] == "with":
         role1 = _validate_and_prepare_role(argv.pop(0))
@@ -269,7 +279,6 @@ def colocation_add(lib, argv, modifiers):
 
     score, nv_pairs = _parse_score_options(argv)
 
-    cib_dom = utils.get_cib_dom()
     _validate_constraint_resource(cib_dom, resource1)
     _validate_constraint_resource(cib_dom, resource2)
 
@@ -336,13 +345,23 @@ def colocation_find_duplicates(dom, constraint_el):
     """
     Commandline options: no options
     """
+    new_roles_supported = utils.isCibVersionSatisfied(
+        dom, const.PCMK_NEW_ROLES_CIB_VERSION
+    )
 
     def normalize(const_el):
         return (
             const_el.getAttribute("rsc"),
             const_el.getAttribute("with-rsc"),
-            const_el.getAttribute("rsc-role").capitalize() or DEFAULT_ROLE,
-            const_el.getAttribute("with-rsc-role").capitalize() or DEFAULT_ROLE,
+            pacemaker.role.get_value_for_cib(
+                const_el.getAttribute("rsc-role").capitalize() or DEFAULT_ROLE,
+                new_roles_supported,
+            ),
+            pacemaker.role.get_value_for_cib(
+                const_el.getAttribute("with-rsc-role").capitalize()
+                or DEFAULT_ROLE,
+                new_roles_supported,
+            ),
         )
 
     normalized_el = normalize(constraint_el)
@@ -1185,7 +1204,9 @@ def location_rule(lib, argv, modifiers):
             rule_utils.TokenPreprocessor().run(rule_argv)
         )
         if rule_utils.has_node_attr_expr_with_type_integer(parsed_rule):
-            utils.checkAndUpgradeCIB(3, 5, 0)
+            utils.checkAndUpgradeCIB(
+                const.PCMK_RULES_NODE_ATTR_EXPR_WITH_INT_TYPE_CIB_VERSION
+            )
     except (rule_utils.ParserException, rule_utils.CibBuilderException):
         pass
 
@@ -1233,7 +1254,7 @@ def location_rule(lib, argv, modifiers):
         lc.setAttribute("rsc-pattern", rsc_value)
 
     rule_utils.dom_rule_add(
-        lc, options, rule_argv, Version(*utils.getValidateWithVersion(cib))
+        lc, options, rule_argv, utils.getValidateWithVersion(cib)
     )
     location_rule_check_duplicates(constraints, lc, modifiers.get("--force"))
     utils.replace_cib_configuration(cib)
@@ -1586,7 +1607,9 @@ def constraint_rule(lib, argv, modifiers):
                 rule_utils.TokenPreprocessor().run(rule_argv)
             )
             if rule_utils.has_node_attr_expr_with_type_integer(parsed_rule):
-                utils.checkAndUpgradeCIB(3, 5, 0)
+                utils.checkAndUpgradeCIB(
+                    const.PCMK_RULES_NODE_ATTR_EXPR_WITH_INT_TYPE_CIB_VERSION
+                )
         except (rule_utils.ParserException, rule_utils.CibBuilderException):
             pass
         cib = utils.get_cib_dom()
@@ -1601,7 +1624,7 @@ def constraint_rule(lib, argv, modifiers):
             constraint,
             options,
             rule_argv,
-            Version(*utils.getValidateWithVersion(cib)),
+            utils.getValidateWithVersion(cib),
         )
         location_rule_check_duplicates(
             cib, constraint, modifiers.get("--force")

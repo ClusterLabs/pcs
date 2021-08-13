@@ -340,14 +340,13 @@ class CreateMixin:
 
     def test_unknown_agent_forced(self):
         agent_name = "test_unknown"
-
-        (
-            self.config.runner.pcmk.load_agent(
-                agent_name=f"stonith:{agent_name}",
-                agent_is_missing=True,
-            )
-            .runner.cib.load()
-            .env.push_cib(resources=self._expected_cib(expected_cib_unknown))
+        self.config.runner.pcmk.load_agent(
+            agent_name=f"stonith:{agent_name}",
+            agent_is_missing=True,
+        )
+        self.config.runner.cib.load()
+        self.config.env.push_cib(
+            resources=self._expected_cib(expected_cib_unknown)
         )
 
         self._create(
