@@ -458,15 +458,16 @@ def simulate_cib(runner, cib):
 ### wait for idle
 
 
-def wait_for_idle(runner: CommandRunner, timeout: Optional[int] = None) -> None:
+def wait_for_idle(runner: CommandRunner, timeout: int) -> None:
     """
     Run waiting command. Raise LibraryError if command failed.
 
-    runner is preconfigured object for running external programs
-    string timeout is waiting timeout
+    runner -- preconfigured object for running external programs
+    timeout -- waiting timeout in seconds, wait indefinitely if non-positive
+        integer
     """
     args = [__exec("crm_resource"), "--wait"]
-    if timeout is not None:
+    if timeout > 0:
         args.append("--timeout={0}".format(timeout))
     stdout, stderr, retval = runner.run(args)
     if retval != 0:

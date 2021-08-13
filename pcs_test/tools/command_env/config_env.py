@@ -82,7 +82,7 @@ class EnvConfig:
         modifiers=None,
         name="env.push_cib",
         load_key="runner.cib.load",
-        wait=False,
+        wait=-1,
         exception=None,
         instead=None,
         **modifier_shortcuts,
@@ -94,7 +94,7 @@ class EnvConfig:
         list of callable modifiers -- every callable takes etree.Element and
             returns new etree.Element with desired modification.
         string load_key -- key of a call from which stdout can be cib taken
-        string|False wait -- wait for pacemaker idle
+        int wait -- wait timeout for pacemaker idle
         Exception|None exception -- exception that should raise env.push_cib
         string instead -- key of call instead of which this new call is to be
             placed
@@ -111,7 +111,7 @@ class EnvConfig:
         )
         self.__calls.place(
             name,
-            PushCibCall(cib_xml, wait=wait, exception=exception),
+            PushCibCall(cib_xml, wait_timeout=wait, exception=exception),
             instead=instead,
         )
 
@@ -119,14 +119,17 @@ class EnvConfig:
         self,
         name="env.push_cib_custom",
         custom_cib=None,
-        wait=False,
+        wait=-1,
         exception=None,
         instead=None,
     ):
         self.__calls.place(
             name,
             PushCibCall(
-                custom_cib, custom_cib=True, wait=wait, exception=exception
+                custom_cib,
+                custom_cib=True,
+                wait_timeout=wait,
+                exception=exception,
             ),
             instead=instead,
         )

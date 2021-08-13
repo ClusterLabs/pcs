@@ -2,7 +2,6 @@ from typing import (
     Iterable,
     Mapping,
     Optional,
-    Union,
 )
 
 from pcs import settings
@@ -36,16 +35,13 @@ from pcs.lib.communication.tools import (
     run_and_raise,
 )
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
-from pcs.lib.env import LibraryEnvironment
+from pcs.lib.env import LibraryEnvironment, WaitType
 from pcs.lib.errors import LibraryError
 from pcs.lib.file.instance import FileInstance
 from pcs.lib.file.raw_file import raw_file_error_report
 from pcs.lib.node import get_existing_nodes_names_addrs
 from pcs.lib.pacemaker import state
 from pcs.lib.pacemaker.live import remove_node
-
-
-WaitType = Union[None, bool, int]
 
 
 def _reports_skip_new_node(new_node_name, reason_type):
@@ -282,7 +278,7 @@ def node_add_remote(
         a resource agent metadata to the resource
     wait -- a flag for controlling waiting for pacemaker idle mechanism
     """
-    env.ensure_wait_satisfiable(wait)
+    wait_timeout = env.ensure_wait_satisfiable(wait)
 
     report_processor = env.report_processor
     cib = env.get_cib(
@@ -437,20 +433,20 @@ def node_add_remote(
             _reports_skip_new_node(node_name, "not_live_cib")
         )
 
-    env.push_cib(wait=wait)
-    if wait:
+    env.push_cib(wait_timeout=wait_timeout)
+    if wait_timeout >= 0:
         _ensure_resource_running(env, remote_resource_element.attrib["id"])
 
 
 def node_add_guest(
-    env,
+    env: LibraryEnvironment,
     node_name,
     resource_id,
     options,
     skip_offline_nodes=False,
     allow_incomplete_distribution=False,
     allow_pacemaker_remote_service_fail=False,
-    wait=False,
+    wait: WaitType = False,
 ):
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-locals
@@ -471,11 +467,12 @@ def node_add_guest(
         succeed
     mixed wait -- a flag for controlling waiting for pacemaker idle mechanism
     """
-    env.ensure_wait_satisfiable(wait)
+    wait_timeout = env.ensure_wait_satisfiable(wait)
 
     report_processor = env.report_processor
     cib = env.get_cib()
     id_provider = IdProvider(cib)
+    corosync_conf: Optional[CorosyncConfigFacade]
     if env.is_cib_live:
         corosync_conf = env.get_corosync_conf()
     else:
@@ -588,8 +585,8 @@ def node_add_guest(
             _reports_skip_new_node(node_name, "not_live_cib")
         )
 
-    env.push_cib(wait=wait)
-    if wait:
+    env.push_cib(wait_timeout=wait_timeout)
+    if wait_timeout >= 0:
         _ensure_resource_running(env, resource_id)
 
 
@@ -748,12 +745,12 @@ def node_remove_remote(
 
 
 def node_remove_guest(
-    env,
+    env: LibraryEnvironment,
     node_identifier,
     skip_offline_nodes=False,
     allow_remove_multiple_nodes=False,
     allow_pacemaker_remote_service_fail=False,
-    wait=False,
+    wait: WaitType = False,
 ):
     """
     remove a resource representing remote node and destroy remote node
@@ -767,7 +764,7 @@ def node_remove_guest(
         successfully finish this command even if stoping/disabling
         pacemaker_remote not succeeded
     """
-    env.ensure_wait_satisfiable(wait)
+    wait_timeout = env.ensure_wait_satisfiable(wait)
     cib = env.get_cib()
 
     resource_element_list = _find_resources_to_remove(
@@ -801,7 +798,7 @@ def node_remove_guest(
     for resource_element in resource_element_list:
         guest_node.unset_guest(resource_element)
 
-    env.push_cib(wait=wait)
+    env.push_cib(wait_timeout=wait_timeout)
 
     # remove node from pcmk caches
     if env.is_cib_live:

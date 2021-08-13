@@ -187,6 +187,8 @@ class EnsureValidWait(TestCase):
 
     @patch_env("get_valid_timeout_seconds")
     def test_do_checks(self, get_valid_timeout):
+        timeout = 10
         env = self.env_live
-        env.ensure_wait_satisfiable(10)
-        get_valid_timeout.assert_called_once_with(10)
+        get_valid_timeout.return_value = timeout
+        env.ensure_wait_satisfiable(timeout)
+        get_valid_timeout.assert_called_once_with(timeout)

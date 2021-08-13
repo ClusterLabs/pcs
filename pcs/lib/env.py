@@ -2,6 +2,7 @@ from typing import (
     cast,
     Mapping,
     Optional,
+    Union,
 )
 
 from lxml.etree import _Element
@@ -54,6 +55,26 @@ from pcs.lib.services import get_service_manager
 from pcs.lib.tools import create_tmp_cib
 from pcs.lib.xml_tools import etree_to_str
 
+WaitType = Union[None, bool, int, str]
+
+
+def _wait_type_to_int(wait: WaitType) -> int:
+    """
+    Convert WaitType to int.
+
+    wait -- wait value. If False, it means wait is disabled, therefore -1
+        is returned. If None, wait is enabled without timeout, therefore 0
+        is returned. If string representing timeout or positive integer,
+        wait is enabled with timeout, therefore number of seconds is
+        retuned. Otherwise a LibraryError is raised.
+    """
+    if wait is False:
+        return -1
+    wait_timeout = get_valid_timeout_seconds(wait)
+    if wait_timeout is None:
+        return 0
+    return wait_timeout
+
 
 class LibraryEnvironment:
     # pylint: disable=too-many-instance-attributes, too-many-public-methods
@@ -97,8 +118,6 @@ class LibraryEnvironment:
         self.__loaded_booth_env = None
         self.__loaded_dr_env = None
         self.__service_manager: Optional[ServiceManagerInterface] = None
-
-        self.__timeout_cache = {}
 
     @property
     def logger(self):
@@ -176,20 +195,6 @@ class LibraryEnvironment:
     def get_cluster_state(self):
         return get_cluster_status_dom(self.cmd_runner())
 
-    def get_wait_timeout(self, wait):
-        if wait is False:
-            return False
-
-        if wait not in self.__timeout_cache:
-            if not self.is_cib_live:
-                raise LibraryError(
-                    ReportItem.error(
-                        reports.messages.WaitForIdleNotLiveCluster()
-                    )
-                )
-            self.__timeout_cache[wait] = get_valid_timeout_seconds(wait)
-        return self.__timeout_cache[wait]
-
     def wait_for_idle(self, timeout: int = 0) -> None:
         """
         Wait for the cluster to settle down.
@@ -200,49 +205,62 @@ class LibraryEnvironment:
         if timeout < 0:
             # timeout is turned off
             return
-        wait_timeout = timeout if timeout > 0 else None
         self.report_processor.report(
             ReportItem.info(reports.messages.WaitForIdleStarted(timeout))
         )
-        wait_for_idle(self.cmd_runner(), wait_timeout)
+        wait_for_idle(self.cmd_runner(), timeout)
 
-    def ensure_wait_satisfiable(self, wait):
+    def ensure_wait_satisfiable(self, wait: WaitType) -> int:
         """
+        Convert WaitType to int. Returns wait timeout in seconds.
         Raise when wait is not supported or when wait is not valid wait value.
 
-        mixed wait can be False when waiting is not required or valid timeout
+        wait -- wait value. If False, it means wait is disabled, therefore -1
+            is returned. If None, wait is enabled without timeout, therefore 0
+            is returned. If string representing timeout or positive integer,
+            wait is enabled with timeout, therefore number of seconds is
+            returned. Otherwise a LibraryError is raised.
         """
-        self.get_wait_timeout(wait)
+        timeout = _wait_type_to_int(wait)
+        self._ensure_wait_satisfiable(timeout)
+        return timeout
 
-    def push_cib(self, custom_cib=None, wait=False):
+    def _ensure_wait_satisfiable(self, wait_timeout: int) -> None:
+        if wait_timeout >= 0 and not self.is_cib_live:
+            raise LibraryError(
+                ReportItem.error(reports.messages.WaitForIdleNotLiveCluster())
+            )
+
+    def push_cib(self, custom_cib=None, wait_timeout: int = -1):
         """
         Push previously loaded instance of CIB or a custom CIB
 
         etree custom_cib -- push a custom CIB instead of a loaded instance
             (allows to push an externally provided CIB and replace the one in
             the cluster completely)
-        mixed wait -- how many seconds to wait for pacemaker to process new CIB
-            or False for not waiting at all
+        wait_timeout -- wait timeout in seconds, if less than 0 wait will be
+            skipped, if 0 wait indefinitely
         """
+        self._ensure_wait_satisfiable(wait_timeout)
         if custom_cib is not None:
             if self.__loaded_cib_diff_source is not None:
                 raise AssertionError(
                     "CIB has been loaded, cannot push custom CIB"
                 )
-            return self.__push_cib_full(custom_cib, wait)
+            return self.__push_cib_full(custom_cib, wait_timeout)
         if self.__loaded_cib_diff_source is None:
             raise AssertionError("CIB has not been loaded")
-        return self.__push_cib_diff(wait=wait)
+        return self.__push_cib_diff(wait_timeout)
 
-    def __push_cib_full(self, cib_to_push, wait=False):
+    def __push_cib_full(self, cib_to_push, wait_timeout: int):
         self.__do_push_cib(
             lambda: replace_cib_configuration(self.cmd_runner(), cib_to_push),
-            wait,
+            wait_timeout,
         )
 
-    def __push_cib_diff(self, wait=False):
+    def __push_cib_diff(self, wait_timeout: int):
         self.__do_push_cib(
-            lambda: self.__main_push_cib_diff(self.cmd_runner()), wait
+            lambda: self.__main_push_cib_diff(self.cmd_runner()), wait_timeout
         )
 
     def __main_push_cib_diff(self, cmd_runner):
@@ -255,14 +273,13 @@ class LibraryEnvironment:
         if cib_diff_xml:
             push_cib_diff_xml(cmd_runner, cib_diff_xml)
 
-    def __do_push_cib(self, push_strategy, wait):
-        timeout = self.get_wait_timeout(wait)
+    def __do_push_cib(self, push_strategy, wait_timeout: int):
         push_strategy()
         self._cib_upgrade_reported = False
         self.__loaded_cib_diff_source = None
         self.__loaded_cib_to_modify = None
-        if self.is_cib_live and timeout is not False:
-            self.wait_for_idle(timeout)
+        if self.is_cib_live:
+            self.wait_for_idle(wait_timeout)
 
     @property
     def is_cib_live(self):

@@ -382,7 +382,7 @@ class CreateMixin:
     def test_minimal_wait_ok_run_ok(self):
         agent_name = "test_simple"
         instance_name = "stonith-test"
-        timeout = "10"
+        timeout = 10
         expected_status = """
             <resources>
                 <resource
@@ -423,7 +423,7 @@ class CreateMixin:
                 "must-set": "value",
                 "must-set-new": "B",
             },
-            wait=timeout,
+            wait=str(timeout),
         )
         self.env_assist.assert_reports(
             [

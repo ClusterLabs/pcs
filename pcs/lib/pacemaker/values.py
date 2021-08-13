@@ -53,7 +53,9 @@ def is_score(value: str) -> bool:
     return unsigned_value == SCORE_INFINITY or unsigned_value.isdigit()
 
 
-def get_valid_timeout_seconds(timeout_candidate):
+def get_valid_timeout_seconds(
+    timeout_candidate: Union[str, int, None],
+) -> Optional[int]:
     """
     Transform pacemaker style timeout to number of seconds, raise LibraryError
         on invalid timeout
@@ -65,7 +67,7 @@ def get_valid_timeout_seconds(timeout_candidate):
     if wait_timeout is None:
         raise LibraryError(
             ReportItem.error(
-                reports.messages.InvalidTimeoutValue(timeout_candidate)
+                reports.messages.InvalidTimeoutValue(str(timeout_candidate))
             )
         )
     return wait_timeout

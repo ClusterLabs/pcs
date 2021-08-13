@@ -73,7 +73,7 @@ class LocalConfig(EnvConfigMixin):
     def load_cib(self, env=None):
         self.config.runner.cib.load(resources=FIXTURE_RESOURCES, env=env)
 
-    def push_cib(self, wait=False, meta_attributes=FIXTURE_META_ATTRIBUTES):
+    def push_cib(self, wait=-1, meta_attributes=FIXTURE_META_ATTRIBUTES):
         self.config.env.push_cib(
             append={
                 './/resources/primitive[@id="{0}"]'.format(

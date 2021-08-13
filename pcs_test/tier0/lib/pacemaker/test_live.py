@@ -1460,7 +1460,7 @@ class ResourcesWaitingTest(TestCase):
             expected_stdout, expected_stderr, expected_retval
         )
 
-        self.assertEqual(None, lib.wait_for_idle(mock_runner))
+        self.assertEqual(None, lib.wait_for_idle(mock_runner, 0))
 
         mock_runner.run.assert_called_once_with(
             [path("crm_resource"), "--wait"]
@@ -1490,7 +1490,7 @@ class ResourcesWaitingTest(TestCase):
         )
 
         assert_raise_library_error(
-            lambda: lib.wait_for_idle(mock_runner),
+            lambda: lib.wait_for_idle(mock_runner, 0),
             (
                 Severity.ERROR,
                 report_codes.WAIT_FOR_IDLE_ERROR,
@@ -1513,7 +1513,7 @@ class ResourcesWaitingTest(TestCase):
         )
 
         assert_raise_library_error(
-            lambda: lib.wait_for_idle(mock_runner),
+            lambda: lib.wait_for_idle(mock_runner, 0),
             (
                 Severity.ERROR,
                 report_codes.WAIT_FOR_IDLE_TIMED_OUT,

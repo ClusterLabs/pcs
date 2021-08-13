@@ -43,7 +43,7 @@ from pcs.lib.cib.tools import (
     get_status,
     IdProvider,
 )
-from pcs.lib.env import LibraryEnvironment
+from pcs.lib.env import LibraryEnvironment, WaitType
 from pcs.lib.external import CommandRunner
 from pcs.lib.node import get_existing_nodes_names_addrs
 from pcs.lib.errors import LibraryError
@@ -58,7 +58,6 @@ from pcs.lib.pacemaker.live import (
     resource_move,
     resource_unmove_unban,
     simulate_cib,
-    wait_for_idle,
 )
 from pcs.lib.pacemaker.state import (
     ensure_resource_state,
@@ -76,31 +75,30 @@ from pcs.lib.validate import ValueTimeInterval
 from pcs.lib.xml_tools import etree_to_str
 
 
-WaitType = Union[None, bool, int]
-
-
 @contextmanager
 def resource_environment(
     env,
-    wait=False,
+    wait: WaitType = False,
     wait_for_resource_ids=None,
     resource_state_reporter=info_resource_state,
     required_cib_version=None,
 ):
-    env.ensure_wait_satisfiable(wait)
+    wait_timeout = env.ensure_wait_satisfiable(wait)
     yield get_resources(env.get_cib(required_cib_version))
-    _push_cib_wait(env, wait, wait_for_resource_ids, resource_state_reporter)
+    _push_cib_wait(
+        env, wait_timeout, wait_for_resource_ids, resource_state_reporter
+    )
 
 
 def _get_resource_state_wait(
     env: LibraryEnvironment,
-    wait: WaitType = False,
+    wait_timeout: int = -1,
     wait_for_resource_ids: Optional[Iterable[str]] = None,
     resource_state_reporter: Callable[
         [_Element, str], ReportItem
     ] = info_resource_state,
 ):
-    if wait is not False and wait_for_resource_ids:
+    if wait_timeout >= 0 and wait_for_resource_ids:
         state = env.get_cluster_state()
         if env.report_processor.report_list(
             [
@@ -113,15 +111,15 @@ def _get_resource_state_wait(
 
 def _push_cib_wait(
     env: LibraryEnvironment,
-    wait: WaitType = False,
+    wait_timeout: int = -1,
     wait_for_resource_ids: Optional[Iterable[str]] = None,
     resource_state_reporter: Callable[
         [_Element, str], ReportItem
     ] = info_resource_state,
 ) -> None:
-    env.push_cib(wait=wait)
+    env.push_cib(wait_timeout=wait_timeout)
     _get_resource_state_wait(
-        env, wait, wait_for_resource_ids, resource_state_reporter
+        env, wait_timeout, wait_for_resource_ids, resource_state_reporter
     )
 
 
@@ -1019,10 +1017,13 @@ def disable(
         of tag ids, all resources in tags are to be disabled
     wait -- False: no wait, None: wait default timeout, int: wait timeout
     """
-    env.ensure_wait_satisfiable(wait)
+    wait_timeout = env.ensure_wait_satisfiable(wait)
     _disable_validate_and_edit_cib(env, env.get_cib(), resource_or_tag_ids)
     _push_cib_wait(
-        env, wait, resource_or_tag_ids, _ensure_disabled_after_wait(True)
+        env,
+        wait_timeout,
+        resource_or_tag_ids,
+        _ensure_disabled_after_wait(True),
     )
 
 
@@ -1050,7 +1051,7 @@ def disable_safe(
             )
         )
 
-    env.ensure_wait_satisfiable(wait)
+    wait_timeout = env.ensure_wait_satisfiable(wait)
     cib = env.get_cib()
     resource_el_list = _disable_validate_and_edit_cib(
         env, cib, resource_or_tag_ids
@@ -1086,7 +1087,10 @@ def disable_safe(
             raise LibraryError()
 
     _push_cib_wait(
-        env, wait, disabled_resource_id_set, _ensure_disabled_after_wait(True)
+        env,
+        wait_timeout,
+        disabled_resource_id_set,
+        _ensure_disabled_after_wait(True),
     )
 
 
@@ -1141,7 +1145,7 @@ def enable(
         of tag ids, all resources in tags are to be enabled
     wait -- False: no wait, None: wait default timeout, int: wait timeout
     """
-    env.ensure_wait_satisfiable(wait)
+    wait_timeout = env.ensure_wait_satisfiable(wait)
     cib = env.get_cib()
     resource_el_list, report_list = _find_resources_expand_tags(
         cib, resource_or_tag_ids
@@ -1163,7 +1167,7 @@ def enable(
         raise LibraryError()
     _push_cib_wait(
         env,
-        wait,
+        wait_timeout,
         [str(el.get("id", "")) for el in resource_el_list],
         _ensure_disabled_after_wait(False),
     )
@@ -1284,12 +1288,12 @@ def manage(
 
 
 def group_add(
-    env,
-    group_id,
-    resource_id_list,
-    adjacent_resource_id=None,
-    put_after_adjacent=True,
-    wait=False,
+    env: LibraryEnvironment,
+    group_id: str,
+    resource_id_list: Iterable[str],
+    adjacent_resource_id: Optional[str] = None,
+    put_after_adjacent: bool = True,
+    wait: WaitType = False,
 ):
     """
     Move specified resources into an existing or new group
@@ -1302,7 +1306,7 @@ def group_add(
     mixed wait -- flag for controlling waiting for pacemaker idle mechanism
     """
     # pylint: disable = too-many-locals
-    env.ensure_wait_satisfiable(wait)
+    wait_timeout = env.ensure_wait_satisfiable(wait)
     resources_section = get_resources(env.get_cib(None))
     id_provider = IdProvider(resources_section)
 
@@ -1339,10 +1343,10 @@ def group_add(
         if (
             old_parent is not None
             and resource.group.is_group(old_parent)
-            and old_parent.attrib.get("id") not in all_resources
+            and str(old_parent.attrib["id"]) not in all_resources
         ):
-            all_resources[old_parent.attrib.get("id")] = set(
-                res.attrib.get("id")
+            all_resources[str(old_parent.attrib["id"])] = set(
+                str(res.attrib["id"])
                 for res in resource.common.get_inner_resources(old_parent)
             )
     affected_resources = set(resource_id_list)
@@ -1367,7 +1371,7 @@ def group_add(
 
     # We only want to show error about emptying groups if CIB push fails
     try:
-        env.push_cib(wait=wait)
+        env.push_cib(wait_timeout=wait_timeout)
     except LibraryError as e:
         try:
             if e.args and any(
@@ -1382,7 +1386,7 @@ def group_add(
             # For accessing message inside something that's not a report
             pass
         raise
-    _get_resource_state_wait(env, wait, [group_id], info_resource_state)
+    _get_resource_state_wait(env, wait_timeout, [group_id], info_resource_state)
 
 
 def get_failcounts(
@@ -1731,15 +1735,15 @@ class _MoveBanTemplate:
 
     def run(
         self,
-        env,
+        env: LibraryEnvironment,
         resource_id,
         node=None,
         master=False,
         lifetime=None,
-        wait=False,
+        wait: WaitType = False,
     ):
         # validate
-        env.ensure_wait_satisfiable(wait)  # raises on error
+        wait_timeout = env.ensure_wait_satisfiable(wait)  # raises on error
 
         resource_el, report_list = resource.common.find_one_resource(
             get_resources(env.get_cib()), resource_id
@@ -1750,7 +1754,7 @@ class _MoveBanTemplate:
             raise LibraryError()
 
         # get current status for wait processing
-        if wait is not False:
+        if wait_timeout >= 0:
             resource_running_on_before = get_resource_state(
                 env.get_cluster_state(), resource_id
             )
@@ -1779,8 +1783,8 @@ class _MoveBanTemplate:
         )
 
         # process wait
-        if wait is not False:
-            wait_for_idle(env.cmd_runner(), env.get_wait_timeout(wait))
+        if wait_timeout >= 0:
+            env.wait_for_idle(wait_timeout)
             resource_running_on_after = get_resource_state(
                 env.get_cluster_state(), resource_id
             )
@@ -1919,7 +1923,7 @@ def unmove_unban(
     mixed wait -- flag for controlling waiting for pacemaker idle mechanism
     """
     # validate
-    env.ensure_wait_satisfiable(wait)  # raises on error
+    wait_timeout = env.ensure_wait_satisfiable(wait)  # raises on error
 
     resource_el, report_list = resource.common.find_one_resource(
         get_resources(env.get_cib()), resource_id
@@ -1960,8 +1964,8 @@ def unmove_unban(
     )
 
     # process wait
-    if wait is not False:
-        wait_for_idle(env.cmd_runner(), env.get_wait_timeout(wait))
+    if wait_timeout >= 0:
+        env.wait_for_idle(wait_timeout)
         if env.report_processor.report(
             info_resource_state(env.get_cluster_state(), resource_id)
         ).has_errors:

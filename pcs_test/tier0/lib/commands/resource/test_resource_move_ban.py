@@ -272,6 +272,7 @@ class MoveBanWaitMixin:
     # pylint does not and can not know setUp is a method of TestCase
     # pylint: disable=invalid-name
     def setUp(self):
+        self.timeout = 10
         self.env_assist, self.config = get_env_tools(self)
         self.config.runner.cib.load(resources=resources_primitive)
 
@@ -303,7 +304,9 @@ class MoveBanWaitMixin:
     def test_state_before_action_not_xml(self):
         self.config.runner.pcmk.load_state(stdout="state stdout")
         self.env_assist.assert_raise_library_error(
-            lambda: self.lib_action(self.env_assist.get_env(), "A", wait="10"),
+            lambda: self.lib_action(
+                self.env_assist.get_env(), "A", wait=str(self.timeout)
+            ),
             [
                 fixture.error(
                     report_codes.BAD_CLUSTER_STATE_FORMAT,
@@ -321,7 +324,9 @@ class MoveBanWaitMixin:
         self.config.runner.pcmk.load_state()
         self.config_pcmk_action(returncode=1)
         self.env_assist.assert_raise_library_error(
-            lambda: self.lib_action(self.env_assist.get_env(), "A", wait="10"),
+            lambda: self.lib_action(
+                self.env_assist.get_env(), "A", wait=str(self.timeout)
+            ),
             [
                 fixture.error(
                     self.report_code_pcmk_error,
@@ -342,11 +347,13 @@ class MoveBanWaitMixin:
         self.config.runner.pcmk.load_state()
         self.config_pcmk_action()
         self.config.runner.pcmk.wait(
-            timeout=10, stderr="wait error", returncode=1
+            timeout=self.timeout, stderr="wait error", returncode=1
         )
 
         self.env_assist.assert_raise_library_error(
-            lambda: self.lib_action(self.env_assist.get_env(), "A", wait="10"),
+            lambda: self.lib_action(
+                self.env_assist.get_env(), "A", wait=str(self.timeout)
+            ),
             [
                 fixture.error(
                     report_codes.WAIT_FOR_IDLE_ERROR,
@@ -363,6 +370,10 @@ class MoveBanWaitMixin:
                     stdout="pcmk std out",
                     stderr="pcmk std err",
                 ),
+                fixture.info(
+                    report_codes.WAIT_FOR_IDLE_STARTED,
+                    timeout=self.timeout,
+                ),
             ]
         )
 
@@ -374,7 +385,7 @@ class MoveBanWaitMixin:
     def test_state_after_action_fail(self):
         self.config.runner.pcmk.load_state()
         self.config_pcmk_action()
-        self.config.runner.pcmk.wait(timeout=10)
+        self.config.runner.pcmk.wait(timeout=self.timeout)
         self.config.runner.pcmk.load_state(
             name="runner.pcmk.load_state.after",
             stdout="state stdout",
@@ -382,7 +393,9 @@ class MoveBanWaitMixin:
             returncode=1,
         )
         self.env_assist.assert_raise_library_error(
-            lambda: self.lib_action(self.env_assist.get_env(), "A", wait="10"),
+            lambda: self.lib_action(
+                self.env_assist.get_env(), "A", wait=self.timeout
+            ),
             [
                 fixture.error(
                     report_codes.CRM_MON_ERROR,
@@ -399,6 +412,10 @@ class MoveBanWaitMixin:
                     stdout="pcmk std out",
                     stderr="pcmk std err",
                 ),
+                fixture.info(
+                    report_codes.WAIT_FOR_IDLE_STARTED,
+                    timeout=self.timeout,
+                ),
             ]
         )
 
@@ -410,12 +427,14 @@ class MoveBanWaitMixin:
     def test_state_after_action_not_xml(self):
         self.config.runner.pcmk.load_state()
         self.config_pcmk_action()
-        self.config.runner.pcmk.wait(timeout=10)
+        self.config.runner.pcmk.wait(timeout=self.timeout)
         self.config.runner.pcmk.load_state(
             name="runner.pcmk.load_state.after", stdout="state stdout"
         )
         self.env_assist.assert_raise_library_error(
-            lambda: self.lib_action(self.env_assist.get_env(), "A", wait="10"),
+            lambda: self.lib_action(
+                self.env_assist.get_env(), "A", wait=self.timeout
+            ),
             [
                 fixture.error(
                     report_codes.BAD_CLUSTER_STATE_FORMAT,
@@ -431,13 +450,19 @@ class MoveBanWaitMixin:
                     stdout="pcmk std out",
                     stderr="pcmk std err",
                 ),
+                fixture.info(
+                    report_codes.WAIT_FOR_IDLE_STARTED,
+                    timeout=self.timeout,
+                ),
             ]
         )
 
     def test_was_running_now_stopped(self):
         self.success_config(self.state_running_node1, self.state_not_running)
         self.env_assist.assert_raise_library_error(
-            lambda: self.lib_action(self.env_assist.get_env(), "A", wait="10")
+            lambda: self.lib_action(
+                self.env_assist.get_env(), "A", wait=self.timeout
+            )
         )
         self.env_assist.assert_reports(
             [
@@ -446,6 +471,10 @@ class MoveBanWaitMixin:
                     resource_id="A",
                     stdout="pcmk std out",
                     stderr="pcmk std err",
+                ),
+                fixture.info(
+                    report_codes.WAIT_FOR_IDLE_STARTED,
+                    timeout=self.timeout,
                 ),
                 fixture.report_resource_not_running(
                     "A", severity=severities.ERROR
@@ -455,7 +484,7 @@ class MoveBanWaitMixin:
 
     def test_was_stopped_now_stopped(self):
         self.success_config(self.state_not_running, self.state_not_running)
-        self.lib_action(self.env_assist.get_env(), "A", wait="10")
+        self.lib_action(self.env_assist.get_env(), "A", wait=self.timeout)
         self.env_assist.assert_reports(
             [
                 fixture.info(
@@ -463,6 +492,10 @@ class MoveBanWaitMixin:
                     resource_id="A",
                     stdout="pcmk std out",
                     stderr="pcmk std err",
+                ),
+                fixture.info(
+                    report_codes.WAIT_FOR_IDLE_STARTED,
+                    timeout=self.timeout,
                 ),
                 fixture.report_resource_not_running(
                     "A",
@@ -473,7 +506,9 @@ class MoveBanWaitMixin:
     def test_running_on_same_node_no_node_specified(self):
         self.success_config(self.state_running_node1, self.state_running_node1)
         self.env_assist.assert_raise_library_error(
-            lambda: self.lib_action(self.env_assist.get_env(), "A", wait="10")
+            lambda: self.lib_action(
+                self.env_assist.get_env(), "A", wait=self.timeout
+            )
         )
         self.env_assist.assert_reports(
             [
@@ -482,6 +517,10 @@ class MoveBanWaitMixin:
                     resource_id="A",
                     stdout="pcmk std out",
                     stderr="pcmk std err",
+                ),
+                fixture.info(
+                    report_codes.WAIT_FOR_IDLE_STARTED,
+                    timeout=self.timeout,
                 ),
                 fixture.report_resource_running(
                     "A", {"Started": ["node1"]}, severity=severities.ERROR
@@ -491,7 +530,7 @@ class MoveBanWaitMixin:
 
     def test_running_on_onther_node_no_node_specified(self):
         self.success_config(self.state_running_node1, self.state_running_node2)
-        self.lib_action(self.env_assist.get_env(), "A", wait="10")
+        self.lib_action(self.env_assist.get_env(), "A", wait=self.timeout)
         self.env_assist.assert_reports(
             [
                 fixture.info(
@@ -499,6 +538,10 @@ class MoveBanWaitMixin:
                     resource_id="A",
                     stdout="pcmk std out",
                     stderr="pcmk std err",
+                ),
+                fixture.info(
+                    report_codes.WAIT_FOR_IDLE_STARTED,
+                    timeout=self.timeout,
                 ),
                 fixture.report_resource_running(
                     "A",
@@ -510,7 +553,7 @@ class MoveBanWaitMixin:
     def success_config(self, state_before, state_after, action_node=None):
         self.config.runner.pcmk.load_state(resources=state_before)
         self.config_pcmk_action(node=action_node)
-        self.config.runner.pcmk.wait(timeout=10)
+        self.config.runner.pcmk.wait(timeout=self.timeout)
         self.config.runner.pcmk.load_state(
             name="runner.pcmk.load_state.after",
             resources=state_after,
@@ -527,7 +570,9 @@ class MoveWait(MoveMixin, MoveBanWaitMixin, TestCase):
             self.state_running_node2,
             action_node="node2",
         )
-        self.lib_action(self.env_assist.get_env(), "A", node="node2", wait="10")
+        self.lib_action(
+            self.env_assist.get_env(), "A", node="node2", wait=self.timeout
+        )
         self.env_assist.assert_reports(
             [
                 fixture.info(
@@ -535,6 +580,10 @@ class MoveWait(MoveMixin, MoveBanWaitMixin, TestCase):
                     resource_id="A",
                     stdout="pcmk std out",
                     stderr="pcmk std err",
+                ),
+                fixture.info(
+                    report_codes.WAIT_FOR_IDLE_STARTED,
+                    timeout=self.timeout,
                 ),
                 fixture.report_resource_running(
                     "A",
@@ -551,7 +600,7 @@ class MoveWait(MoveMixin, MoveBanWaitMixin, TestCase):
         )
         self.env_assist.assert_raise_library_error(
             lambda: self.lib_action(
-                self.env_assist.get_env(), "A", node="node2", wait="10"
+                self.env_assist.get_env(), "A", node="node2", wait=self.timeout
             )
         )
         self.env_assist.assert_reports(
@@ -561,6 +610,10 @@ class MoveWait(MoveMixin, MoveBanWaitMixin, TestCase):
                     resource_id="A",
                     stdout="pcmk std out",
                     stderr="pcmk std err",
+                ),
+                fixture.info(
+                    report_codes.WAIT_FOR_IDLE_STARTED,
+                    timeout=self.timeout,
                 ),
                 fixture.report_resource_running(
                     "A", {"Started": ["node1"]}, severity=severities.ERROR
@@ -581,7 +634,7 @@ class BanWait(BanMixin, MoveBanWaitMixin, TestCase):
         )
         self.env_assist.assert_raise_library_error(
             lambda: self.lib_action(
-                self.env_assist.get_env(), "A", node="node1", wait="10"
+                self.env_assist.get_env(), "A", node="node1", wait=self.timeout
             )
         )
         self.env_assist.assert_reports(
@@ -591,6 +644,10 @@ class BanWait(BanMixin, MoveBanWaitMixin, TestCase):
                     resource_id="A",
                     stdout="pcmk std out",
                     stderr="pcmk std err",
+                ),
+                fixture.info(
+                    report_codes.WAIT_FOR_IDLE_STARTED,
+                    timeout=self.timeout,
                 ),
                 fixture.report_resource_running(
                     "A", {"Started": ["node1"]}, severity=severities.ERROR
@@ -604,7 +661,9 @@ class BanWait(BanMixin, MoveBanWaitMixin, TestCase):
             self.state_running_node2,
             action_node="node1",
         )
-        self.lib_action(self.env_assist.get_env(), "A", node="node1", wait="10")
+        self.lib_action(
+            self.env_assist.get_env(), "A", node="node1", wait=self.timeout
+        )
         self.env_assist.assert_reports(
             [
                 fixture.info(
@@ -612,6 +671,10 @@ class BanWait(BanMixin, MoveBanWaitMixin, TestCase):
                     resource_id="A",
                     stdout="pcmk std out",
                     stderr="pcmk std err",
+                ),
+                fixture.info(
+                    report_codes.WAIT_FOR_IDLE_STARTED,
+                    timeout=self.timeout,
                 ),
                 fixture.report_resource_running(
                     "A",
@@ -626,6 +689,7 @@ class BanWait(BanMixin, MoveBanWaitMixin, TestCase):
 )
 class UnmoveUnbanWait(UnmoveUnbanMixin, TestCase):
     def setUp(self):
+        self.timeout = 10
         self.env_assist, self.config = get_env_tools(self)
         self.config.runner.cib.load(resources=resources_primitive)
         self.config_pcmk_action()
@@ -638,10 +702,10 @@ class UnmoveUnbanWait(UnmoveUnbanMixin, TestCase):
                  </resource>
             </resources>
         """
-        self.config.runner.pcmk.wait(timeout=10)
+        self.config.runner.pcmk.wait(timeout=self.timeout)
         self.config.runner.pcmk.load_state(resources=resources_state)
 
-        self.lib_action(self.env_assist.get_env(), "A", wait="10")
+        self.lib_action(self.env_assist.get_env(), "A", wait=self.timeout)
         self.env_assist.assert_reports(
             [
                 fixture.info(
@@ -650,17 +714,23 @@ class UnmoveUnbanWait(UnmoveUnbanMixin, TestCase):
                     stdout="pcmk std out",
                     stderr="pcmk std err",
                 ),
+                fixture.info(
+                    report_codes.WAIT_FOR_IDLE_STARTED,
+                    timeout=self.timeout,
+                ),
                 fixture.report_resource_running("A", {"Started": ["node1"]}),
             ]
         )
 
     def test_get_state_fail(self):
-        self.config.runner.pcmk.wait(timeout=10)
+        self.config.runner.pcmk.wait(timeout=self.timeout)
         self.config.runner.pcmk.load_state(
             stdout="state stdout", stderr="state stderr", returncode=1
         )
         self.env_assist.assert_raise_library_error(
-            lambda: self.lib_action(self.env_assist.get_env(), "A", wait="10"),
+            lambda: self.lib_action(
+                self.env_assist.get_env(), "A", wait=self.timeout
+            ),
             [
                 fixture.error(
                     report_codes.CRM_MON_ERROR,
@@ -677,14 +747,20 @@ class UnmoveUnbanWait(UnmoveUnbanMixin, TestCase):
                     stdout="pcmk std out",
                     stderr="pcmk std err",
                 ),
+                fixture.info(
+                    report_codes.WAIT_FOR_IDLE_STARTED,
+                    timeout=self.timeout,
+                ),
             ]
         )
 
     def test_get_state_not_xml(self):
-        self.config.runner.pcmk.wait(timeout=10)
+        self.config.runner.pcmk.wait(timeout=self.timeout)
         self.config.runner.pcmk.load_state(stdout="state stdout")
         self.env_assist.assert_raise_library_error(
-            lambda: self.lib_action(self.env_assist.get_env(), "A", wait="10"),
+            lambda: self.lib_action(
+                self.env_assist.get_env(), "A", wait=self.timeout
+            ),
             [
                 fixture.error(
                     report_codes.BAD_CLUSTER_STATE_FORMAT,
@@ -700,16 +776,22 @@ class UnmoveUnbanWait(UnmoveUnbanMixin, TestCase):
                     stdout="pcmk std out",
                     stderr="pcmk std err",
                 ),
+                fixture.info(
+                    report_codes.WAIT_FOR_IDLE_STARTED,
+                    timeout=self.timeout,
+                ),
             ]
         )
 
     def test_wait_fail(self):
         self.config.runner.pcmk.wait(
-            timeout=10, stderr="wait error", returncode=1
+            timeout=self.timeout, stderr="wait error", returncode=1
         )
 
         self.env_assist.assert_raise_library_error(
-            lambda: self.lib_action(self.env_assist.get_env(), "A", wait="10"),
+            lambda: self.lib_action(
+                self.env_assist.get_env(), "A", wait=self.timeout
+            ),
             [
                 fixture.error(
                     report_codes.WAIT_FOR_IDLE_ERROR,
@@ -725,6 +807,10 @@ class UnmoveUnbanWait(UnmoveUnbanMixin, TestCase):
                     resource_id="A",
                     stdout="pcmk std out",
                     stderr="pcmk std err",
+                ),
+                fixture.info(
+                    report_codes.WAIT_FOR_IDLE_STARTED,
+                    timeout=self.timeout,
                 ),
             ]
         )

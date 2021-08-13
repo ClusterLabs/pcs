@@ -373,7 +373,7 @@ class PushLoadedCib(TestCase, ManageCibAssertionMixin):
         env = self.env_assist.get_env()
 
         env.get_cib()
-        env.push_cib(wait=self.wait_timeout)
+        env.push_cib(wait_timeout=self.wait_timeout)
         self.env_assist.assert_reports(
             self.push_reports()
             + [
@@ -382,21 +382,6 @@ class PushLoadedCib(TestCase, ManageCibAssertionMixin):
                     timeout=self.wait_timeout,
                 )
             ]
-        )
-
-    def test_wait_raises_on_invalid_value(self):
-        self.config.runner.cib.load()
-        env = self.env_assist.get_env()
-
-        env.get_cib()
-        self.env_assist.assert_raise_library_error(
-            lambda: env.push_cib(wait="abc"),
-            [
-                fixture.error(
-                    report_codes.INVALID_TIMEOUT_VALUE, timeout="abc"
-                ),
-            ],
-            expected_in_processor=False,
         )
 
 
@@ -428,7 +413,7 @@ class PushCustomCib(TestCase, ManageCibAssertionMixin):
         )
         env = self.env_assist.get_env()
 
-        env.push_cib(etree.XML(self.custom_cib), wait=self.wait_timeout)
+        env.push_cib(etree.XML(self.custom_cib), wait_timeout=self.wait_timeout)
         self.env_assist.assert_reports(
             [
                 fixture.info(
@@ -436,19 +421,6 @@ class PushCustomCib(TestCase, ManageCibAssertionMixin):
                     timeout=self.wait_timeout,
                 )
             ]
-        )
-
-    def test_wait_raises_on_invalid_value(self):
-        env = self.env_assist.get_env()
-
-        self.env_assist.assert_raise_library_error(
-            lambda: env.push_cib(etree.XML(self.custom_cib), wait="abc"),
-            [
-                fixture.error(
-                    report_codes.INVALID_TIMEOUT_VALUE, timeout="abc"
-                ),
-            ],
-            expected_in_processor=False,
         )
 
 
@@ -467,7 +439,7 @@ class PushCibMockedWithWait(TestCase):
         env = self.env_assist.get_env()
         env.get_cib()
         self.env_assist.assert_raise_library_error(
-            lambda: env.push_cib(wait=10),
+            lambda: env.push_cib(wait_timeout=10),
             [
                 fixture.error(report_codes.WAIT_FOR_IDLE_NOT_LIVE_CLUSTER),
             ],

@@ -5,6 +5,9 @@
 ### Added
 - Support for new role names introduced in pacemaker 2.1 ([rhbz#1885293])
 
+### Fixed
+- Traceback in some cases when --wait without timeout is used
+
 [rhbz#1885293]: https://bugzilla.redhat.com/show_bug.cgi?id=1885293
 
 

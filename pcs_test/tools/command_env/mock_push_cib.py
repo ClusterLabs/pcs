@@ -7,18 +7,20 @@ CALL_TYPE_PUSH_CIB = "CALL_TYPE_PUSH_CIB"
 class Call:
     type = CALL_TYPE_PUSH_CIB
 
-    def __init__(self, cib_xml, custom_cib=False, wait=False, exception=None):
+    def __init__(
+        self, cib_xml, custom_cib=False, wait_timeout=-1, exception=None
+    ):
         self.cib_xml = cib_xml
         self.custom_cib = custom_cib
-        self.wait = wait
+        self.wait_timeout = wait_timeout
         self.exception = exception
 
     def __repr__(self):
-        return str("<CibPush wait='{0}'>").format(self.wait)
+        return str("<CibPush wait_timeout='{0}'>").format(self.wait_timeout)
 
 
 def get_push_cib(call_queue):
-    def push_cib(lib_env, custom_cib=None, wait=False):
+    def push_cib(lib_env, custom_cib=None, wait_timeout=-1):
         i, expected_call = call_queue.take(CALL_TYPE_PUSH_CIB)
 
         if custom_cib is None and expected_call.custom_cib:
@@ -45,12 +47,20 @@ def get_push_cib(call_queue):
             ).format(i),
         )
 
-        if wait != expected_call.wait:
+        if wait_timeout != expected_call.wait_timeout:
             raise AssertionError(
                 (
-                    "Trying to call env.push_cib (call no. {0}) with 'wait' == "
-                    "{1} but it was expected 'wait' == {2}"
-                ).format(i, wait, expected_call.wait)
+                    "Trying to call env.push_cib (call no. {index}) with "
+                    "'wait_timeout' == {real_value} ({real_type}) but it was "
+                    "expected 'wait_timeout' == {expected_value} "
+                    "({expected_type})"
+                ).format(
+                    index=i,
+                    real_value=wait_timeout,
+                    real_type=type(wait_timeout),
+                    expected_value=expected_call.wait_timeout,
+                    expected_type=type(expected_call.wait_timeout),
+                )
             )
 
         if expected_call.exception:
