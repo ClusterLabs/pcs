@@ -4395,9 +4395,8 @@ class ResourceMoveAutocleanSimulationFailure(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
             (
-                "Unable to ensure that moved resource 'R1' will stay located "
-                "on the same node after removing the constrained used for "
-                "moving the resource."
+                "Unable to ensure that moved resource 'R1' will stay on the "
+                "same node after a constraint used for moving it is removed."
             ),
             reports.ResourceMoveAutocleanSimulationFailure(
                 "R1", others_affected=False
@@ -4408,8 +4407,8 @@ class ResourceMoveAutocleanSimulationFailure(NameBuildTest):
         self.assert_message_from_report(
             (
                 "Unable to ensure that moved resource 'R1' or other resources "
-                "will stay located on the same node after removing the "
-                "constrained used for moving the resource."
+                "will stay on the same node after a constraint used for moving "
+                "it is removed."
             ),
             reports.ResourceMoveAutocleanSimulationFailure(
                 "R1", others_affected=True

@@ -5923,8 +5923,8 @@ class ResourceMoveAutocleanSimulationFailure(ReportItemMessage):
     def message(self) -> str:
         return (
             "Unable to ensure that moved resource '{resource_id}'{others} will "
-            "stay located on the same node after removing the constrained used "
-            "for moving the resource."
+            "stay on the same node after a constraint used for moving it is "
+            "removed."
         ).format(
             resource_id=self.resource_id,
             others=" or other resources" if self.others_affected else "",
