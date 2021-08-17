@@ -126,22 +126,29 @@ endif
 stamps/install_ruby_deps_local:
 if LOCAL_BUILD
 if INSTALL_EMBEDDED_GEMS
+if ENABLE_DOWNLOAD
 	rm -rf .bundle Gemfile.lock
 	$(MKDIR_P) .bundle
 	echo '---' > .bundle/config
 	echo 'BUNDLE_DISABLE_SHARED_GEMS: "true"' >> .bundle/config
-	echo 'BUNDLE_PATH: "${PCSD_BUNDLED_DIR_ROOT_LOCAL}"' >> .bundle/config
-	echo 'BUNDLE_CACHE_PATH: "${PCSD_BUNDLED_CACHE_DIR}"' >> .bundle/config
+	echo 'BUNDLE_PATH: "$(PCSD_BUNDLED_DIR_ROOT_LOCAL)"' >> .bundle/config
+	echo 'BUNDLE_CACHE_PATH: "$(PCSD_BUNDLED_CACHE_DIR)"' >> .bundle/config
 	echo 'BUNDLE_BUILD: \"$(ruby_LIBS)\"' >> .bundle/config
-if ENABLE_DOWNLOAD
 	$(BUNDLE)
-else
-	echo 'BUNDLE_ALLOW_OFFLINE_INSTALL: "true"' >> .bundle/config
-	$(BUNDLE) --local
-endif
 	cp -rp $(PCSD_BUNDLED_DIR_LOCAL)/* $(PCSD_BUNDLED_DIR_ROOT_LOCAL)/
 	rm -rf $$(realpath $(PCSD_BUNDLED_DIR_LOCAL)/../)
 	rm -rf .bundle Gemfile.lock
+else
+	gem_files=`$(FIND) "$(PCSD_BUNDLED_CACHE_DIR)" -type f -name '*.gem'` && \
+	if test "x$${gem_files}" != "x"; then \
+		$(GEM) install \
+			--force --verbose --no-document --local --no-user-install \
+			-i "$(PCSD_BUNDLED_DIR_ROOT_LOCAL)" \
+			$${gem_files} \
+			-- \
+			'--with-ldflags=$(ruby_LIBS)'; \
+	fi
+endif
 endif
 	touch $@
 endif

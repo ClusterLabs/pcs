@@ -387,12 +387,15 @@ fi
 if test "x$local_build" = "xyes" && test $(wc -l < Gemfile) -gt 2; then
 	GEM_HOME="$LIB_DIR/$PCSD_BUNDLED_DIR_ROOT_LOCAL"
 	SYSTEMD_GEM_HOME="Environment=GEM_HOME=$GEM_HOME"
-	AC_CHECK_PROGS([BUNDLE], [bundle])
-	if test "x$BUNDLE" = "x"; then
-		AC_MSG_ERROR([Unable to find bundle binary required to install missing ruby gems])
+	if test "x$cache_only" != "xyes"; then
+		AC_CHECK_PROGS([BUNDLE], [bundle])
+		if test "x$BUNDLE" = "x"; then
+			AC_MSG_ERROR([Unable to find bundle binary required to install missing ruby gems])
+		fi
 	fi
 fi
 AC_SUBST([BUNDLE])
+AC_SUBST([GEM])
 AC_SUBST([GEM_HOME])
 AC_SUBST([SYSTEMD_GEM_HOME])
 AM_CONDITIONAL([INSTALL_EMBEDDED_GEMS], [test -n "$GEM_HOME"])
