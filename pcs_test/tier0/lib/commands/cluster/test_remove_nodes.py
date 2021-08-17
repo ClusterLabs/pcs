@@ -107,8 +107,7 @@ def node_fixture(node, node_id, addr_sufix=""):
 
 class LocalConfig:
     def __init__(self, call_collection, wrap_helper, config):
-        # pylint: disable=unused-argument
-        self.__calls = call_collection
+        del wrap_helper, call_collection
         self.config = config
         self.expected_reports = []
 

@@ -1798,11 +1798,10 @@ class CreateInCluster(TestCase, FixtureMixin):
     def test_success_not_live_cib(self):
         tmp_file = "/fake/tmp_file"
         env = dict(CIB_file=tmp_file)
+        with open(rc("cib-empty.xml")) as cib_file:
+            self.config.env.set_cib_data(cib_file.read(), cib_tempfile=tmp_file)
         (
-            self.config.env.set_cib_data(
-                open(rc("cib-empty.xml")).read(), cib_tempfile=tmp_file
-            )
-            .runner.cib.load(env=env)
+            self.config.runner.cib.load(env=env)
             .raw_file.read(
                 file_type_codes.BOOTH_CONFIG,
                 self.fixture_cfg_path(),

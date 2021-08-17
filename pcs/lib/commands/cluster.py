@@ -1190,11 +1190,14 @@ def add_nodes(
     severity = reports.item.get_severity(reports.codes.FORCE, force)
     if os.path.isfile(settings.corosync_authkey_file):
         try:
-            files_action.update(
-                node_communication_format.corosync_authkey_file(
-                    open(settings.corosync_authkey_file, "rb").read()
+            with open(
+                settings.corosync_authkey_file, "rb"
+            ) as corosync_authkey_file:
+                files_action.update(
+                    node_communication_format.corosync_authkey_file(
+                        corosync_authkey_file.read()
+                    )
                 )
-            )
         except EnvironmentError as e:
             report_processor.report(
                 ReportItem(
@@ -1210,11 +1213,14 @@ def add_nodes(
 
     if os.path.isfile(settings.pacemaker_authkey_file):
         try:
-            files_action.update(
-                node_communication_format.pcmk_authkey_file(
-                    open(settings.pacemaker_authkey_file, "rb").read()
+            with open(
+                settings.pacemaker_authkey_file, "rb"
+            ) as pcmk_authkey_file:
+                files_action.update(
+                    node_communication_format.pcmk_authkey_file(
+                        pcmk_authkey_file.read()
+                    )
                 )
-            )
         except EnvironmentError as e:
             report_processor.report(
                 ReportItem(
@@ -1230,11 +1236,14 @@ def add_nodes(
 
     if os.path.isfile(settings.pcsd_dr_config_location):
         try:
-            files_action.update(
-                node_communication_format.pcs_dr_config_file(
-                    open(settings.pcsd_dr_config_location, "rb").read()
+            with open(
+                settings.pcsd_dr_config_location, "rb"
+            ) as pcs_dr_config_file:
+                files_action.update(
+                    node_communication_format.pcs_dr_config_file(
+                        pcs_dr_config_file.read()
+                    )
                 )
-            )
         except EnvironmentError as e:
             report_processor.report(
                 ReportItem(
@@ -1253,11 +1262,14 @@ def add_nodes(
     # syncronization of configs will be introduced.
     if os.path.isfile(settings.pcsd_settings_conf_location):
         try:
-            files_action.update(
-                node_communication_format.pcs_settings_conf_file(
-                    open(settings.pcsd_settings_conf_location, "r").read()
+            with open(
+                settings.pcsd_settings_conf_location, "r"
+            ) as pcs_settings_conf_file:
+                files_action.update(
+                    node_communication_format.pcs_settings_conf_file(
+                        pcs_settings_conf_file.read()
+                    )
                 )
-            )
         except EnvironmentError as e:
             report_processor.report(
                 ReportItem(

@@ -148,7 +148,7 @@ def _get_current_pacemaker_version():
             "--version",
         ]
     )
-    pacemaker_version = output.split("\n")[0]
+    pacemaker_version = output.split("\n", maxsplit=1)[0]
     regexp = re.compile(r"Pacemaker (\d+)\.(\d+)\.(\d+)")
     match = regexp.match(pacemaker_version)
     major = int(match.group(1))

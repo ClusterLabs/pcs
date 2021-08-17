@@ -7,8 +7,7 @@ OFFLINE_ERROR_MSG = "Could not resolve host"
 
 class EnvConfigMixin:
     def __init__(self, call_collection, wrap_helper, config):
-        # pylint: disable=unused-argument
-        self.__calls = call_collection
+        del wrap_helper, call_collection
         self.config = config
 
     def destroy_pacemaker_remote(

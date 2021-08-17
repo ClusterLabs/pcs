@@ -18,8 +18,7 @@ FAIL_HTTP_KWARGS = dict(
 
 class EnvConfigMixin:
     def __init__(self, call_collection, wrap_helper, config):
-        # pylint: disable=unused-argument
-        self.__calls = call_collection
+        del wrap_helper, call_collection
         self.config = config
 
     def distribute_authkey(

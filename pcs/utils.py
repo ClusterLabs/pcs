@@ -727,11 +727,15 @@ def getCorosyncConf():
       * --corosync_conf - path to a mocked corosync.conf is set directly to
         settings
     """
+    corosync_conf_content = None
     try:
-        out = open(settings.corosync_conf_file, "r", encoding="utf-8").read()
+        with open(
+            settings.corosync_conf_file, "r", encoding="utf-8"
+        ) as corosync_conf_file:
+            corosync_conf_content = corosync_conf_file.read()
     except IOError as e:
         err("Unable to read %s: %s" % (settings.corosync_conf_file, e.strerror))
-    return out
+    return corosync_conf_content
 
 
 def reloadCorosync():
@@ -789,12 +793,10 @@ def need_to_handle_qdevice_service():
         is used
     """
     try:
-        cfg = corosync_conf_facade(
-            corosync_conf_parser.Parser.parse(
-                open(settings.corosync_conf_file, "rb").read()
-            )
-        )
-        return cfg.has_quorum_device()
+        with open(settings.corosync_conf_file, "rb") as corosync_conf_file:
+            return corosync_conf_facade(
+                corosync_conf_parser.Parser.parse(corosync_conf_file.read())
+            ).has_quorum_device()
     except (EnvironmentError, corosync_conf_parser.CorosyncConfParserException):
         # corosync.conf not present or not valid => no qdevice specified
         return False
@@ -2746,7 +2748,8 @@ def get_lib_env() -> LibraryEnvironment:
     if "--corosync_conf" in pcs_options:
         conf = pcs_options["--corosync_conf"]
         try:
-            corosync_conf_data = open(conf).read()
+            with open(conf) as corosync_conf_file:
+                corosync_conf_data = corosync_conf_file.read()
         except IOError as e:
             err("Unable to read %s: %s" % (conf, e.strerror))
 

@@ -182,7 +182,6 @@ class OneByOneStrategyMixin(StrategyBase):
 
     # pylint: disable=abstract-method
     __iter = None
-    __successful = False
 
     def get_initial_request_list(self):
         """

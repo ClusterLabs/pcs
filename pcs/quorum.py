@@ -276,7 +276,7 @@ def quorum_unblock_cmd(lib, argv, modifiers):
     )
     if retval != 0:
         utils.err("unable to check quorum status")
-    if output.split("=")[-1].strip() != "1":
+    if output.rsplit("=", maxsplit=1)[-1].strip() != "1":
         utils.err("cluster is not waiting for nodes to establish quorum")
 
     all_nodes, report_list = get_existing_nodes_names(
