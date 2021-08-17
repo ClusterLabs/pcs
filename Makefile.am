@@ -3,7 +3,6 @@ EXTRA_DIST		= \
 			  CHANGELOG.md \
 			  CONTRIBUTING.md \
 			  dev_requirements.txt \
-			  .eslintrc \
 			  .gitlab-ci.yml \
 			  make/gitlog-to-changelog \
 			  make/git-version-gen \
