@@ -15,8 +15,11 @@ from pcs_test.tools.misc import create_patcher
 from pcs_test.tools.xml import XmlManipulation
 
 from pcs import settings
-from pcs.common.reports import ReportItemSeverity as severity
-from pcs.common.reports import codes as report_codes
+from pcs.common import const
+from pcs.common.reports import (
+    codes as report_codes,
+    ReportItemSeverity as severity,
+)
 from pcs.lib import resource_agent as lib_ra
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
@@ -899,6 +902,36 @@ class AgentMetadataGetParametersTest(TestCase):
 
 @patch_agent_object("_get_metadata")
 class AgentMetadataGetActionsTest(TestCase):
+    _fixture_metadata_old_role = etree.XML(
+        f"""
+        <resource-agent>
+            <actions>
+                <action name="monitor" timeout="20" interval="10"
+                    role="{const.PCMK_ROLE_PROMOTED_LEGACY}"
+                />
+                <action name="monitor" timeout="20" interval="11"
+                    role="{const.PCMK_ROLE_UNPROMOTED_LEGACY}"
+                />
+            </actions>
+        </resource-agent>
+    """
+    )
+
+    _fixture_metadata_new_role = etree.XML(
+        f"""
+        <resource-agent>
+            <actions>
+                <action name="monitor" timeout="20" interval="10"
+                    role="{const.PCMK_ROLE_PROMOTED}"
+                />
+                <action name="monitor" timeout="20" interval="11"
+                    role="{const.PCMK_ROLE_UNPROMOTED}"
+                />
+            </actions>
+        </resource-agent>
+    """
+    )
+
     def setUp(self):
         self.agent = lib_ra.Agent(mock.MagicMock(spec_set=CommandRunner))
 
@@ -978,7 +1011,7 @@ class AgentMetadataGetActionsTest(TestCase):
             ],
         )
 
-    def test_transfor_depth_to_OCF_CHECK_LEVEL(self, mock_metadata):
+    def test_transform_depth_to_OCF_CHECK_LEVEL(self, mock_metadata):
         # pylint: disable=invalid-name
         xml = """
             <resource-agent>
@@ -993,6 +1026,158 @@ class AgentMetadataGetActionsTest(TestCase):
             [
                 lib_ra.AgentActionDto(
                     "monitor", "20", None, None, None, "1", None, None, "1"
+                ),
+            ],
+        )
+
+    @mock.patch(
+        "pcs.lib.resource_agent.const.PCMK_ROLE_PROMOTED_PRIMARY",
+        const.PCMK_ROLE_PROMOTED_LEGACY,
+    )
+    @mock.patch(
+        "pcs.lib.resource_agent.const.PCMK_ROLE_UNPROMOTED_PRIMARY",
+        const.PCMK_ROLE_UNPROMOTED_LEGACY,
+    )
+    def test_role_old_agent_old_preferred(self, mock_metadata):
+        mock_metadata.return_value = self._fixture_metadata_old_role
+        self.assertEqual(
+            self.agent.get_actions(),
+            [
+                lib_ra.AgentActionDto(
+                    "monitor",
+                    "20",
+                    "10",
+                    const.PCMK_ROLE_PROMOTED_LEGACY,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                ),
+                lib_ra.AgentActionDto(
+                    "monitor",
+                    "20",
+                    "11",
+                    const.PCMK_ROLE_UNPROMOTED_LEGACY,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                ),
+            ],
+        )
+
+    @mock.patch(
+        "pcs.lib.resource_agent.const.PCMK_ROLE_PROMOTED_PRIMARY",
+        const.PCMK_ROLE_PROMOTED_LEGACY,
+    )
+    @mock.patch(
+        "pcs.lib.resource_agent.const.PCMK_ROLE_UNPROMOTED_PRIMARY",
+        const.PCMK_ROLE_UNPROMOTED_LEGACY,
+    )
+    def test_role_new_agent_old_preferred(self, mock_metadata):
+        mock_metadata.return_value = self._fixture_metadata_new_role
+        self.assertEqual(
+            self.agent.get_actions(),
+            [
+                lib_ra.AgentActionDto(
+                    "monitor",
+                    "20",
+                    "10",
+                    const.PCMK_ROLE_PROMOTED_LEGACY,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                ),
+                lib_ra.AgentActionDto(
+                    "monitor",
+                    "20",
+                    "11",
+                    const.PCMK_ROLE_UNPROMOTED_LEGACY,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                ),
+            ],
+        )
+
+    @mock.patch(
+        "pcs.lib.resource_agent.const.PCMK_ROLE_PROMOTED_PRIMARY",
+        const.PCMK_ROLE_PROMOTED,
+    )
+    @mock.patch(
+        "pcs.lib.resource_agent.const.PCMK_ROLE_UNPROMOTED_PRIMARY",
+        const.PCMK_ROLE_UNPROMOTED,
+    )
+    def test_role_old_agent_new_preferred(self, mock_metadata):
+        mock_metadata.return_value = self._fixture_metadata_old_role
+        self.assertEqual(
+            self.agent.get_actions(),
+            [
+                lib_ra.AgentActionDto(
+                    "monitor",
+                    "20",
+                    "10",
+                    const.PCMK_ROLE_PROMOTED,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                ),
+                lib_ra.AgentActionDto(
+                    "monitor",
+                    "20",
+                    "11",
+                    const.PCMK_ROLE_UNPROMOTED,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                ),
+            ],
+        )
+
+    @mock.patch(
+        "pcs.lib.resource_agent.const.PCMK_ROLE_PROMOTED_PRIMARY",
+        const.PCMK_ROLE_PROMOTED,
+    )
+    @mock.patch(
+        "pcs.lib.resource_agent.const.PCMK_ROLE_UNPROMOTED_PRIMARY",
+        const.PCMK_ROLE_UNPROMOTED,
+    )
+    def test_role_new_agent_new_preferred(self, mock_metadata):
+        mock_metadata.return_value = self._fixture_metadata_new_role
+        self.assertEqual(
+            self.agent.get_actions(),
+            [
+                lib_ra.AgentActionDto(
+                    "monitor",
+                    "20",
+                    "10",
+                    const.PCMK_ROLE_PROMOTED,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                ),
+                lib_ra.AgentActionDto(
+                    "monitor",
+                    "20",
+                    "11",
+                    const.PCMK_ROLE_UNPROMOTED,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
                 ),
             ],
         )

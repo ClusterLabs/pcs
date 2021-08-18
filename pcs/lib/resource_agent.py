@@ -17,8 +17,8 @@ from lxml import etree
 from lxml.etree import _Element
 
 from pcs import settings
+from pcs.common import const, pacemaker, reports
 from pcs.common.interface.dto import DataTransferObject, meta
-from pcs.common import reports
 from pcs.common.reports.types import SeverityLevel
 from pcs.common.str_tools import format_list
 from pcs.common.tools import xml_fromstring
@@ -535,7 +535,11 @@ class Agent:
                 str(action.attrib["name"]),
                 action.get("timeout"),
                 action.get("interval"),
-                action.get("role"),
+                pacemaker.role.get_value_primary(
+                    const.PcmkRoleType(str(action.attrib["role"]))
+                )
+                if action.get("role", None) is not None
+                else action.get("role"),
                 action.get("start-delay"),
                 action.get("depth"),
                 action.get("automatic"),

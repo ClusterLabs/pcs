@@ -1565,8 +1565,8 @@ def resource_running_on(resource, passed_state=None, stopped=False):
         message_parts = []
         for alist, label in (
             (nodes_started, "running"),
-            (nodes_promoted, "master"),
-            (nodes_unpromoted, "slave"),
+            (nodes_promoted, str(const.PCMK_ROLE_PROMOTED_PRIMARY).lower()),
+            (nodes_unpromoted, str(const.PCMK_ROLE_UNPROMOTED_PRIMARY).lower()),
         ):
             if alist:
                 alist.sort()

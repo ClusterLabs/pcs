@@ -370,13 +370,13 @@ def fixture_state_resources_xml(
     )
 
 
-class CreateRolesNormilization(TestCase):
+class CreateRolesNormalization(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
-    def prepare(self, ocf_1_1=True, cib_support=True):
+    def prepare(self, ocf_1_0=True, cib_support=True):
         agent_file_name = None
-        if ocf_1_1:
+        if ocf_1_0:
             agent_file_name = (
                 "resource_agent_ocf_pacemaker_stateful_ocf_1.0.xml"
             )
@@ -400,10 +400,12 @@ class CreateRolesNormilization(TestCase):
         )
 
     def test_roles_normalization_user_defined(self):
-        self.prepare(False, False)
+        self.prepare(True, False)
         self.config.env.push_cib(
             resources=fixture_cib_resources_xml(
-                fixture_cib_primitive_stateful(use_legacy_roles=True)
+                fixture_cib_primitive_stateful(
+                    use_legacy_roles=True, include_reload=False
+                )
             )
         )
         self.create(
@@ -414,6 +416,64 @@ class CreateRolesNormilization(TestCase):
         )
 
     def test_roles_normalization_user_defined_new_roles(self):
+        self.prepare(True, False)
+        self.config.env.push_cib(
+            resources=fixture_cib_resources_xml(
+                fixture_cib_primitive_stateful(
+                    use_legacy_roles=True, include_reload=False
+                )
+            )
+        )
+        self.create(
+            [
+                dict(name="start", role=const.PCMK_ROLE_PROMOTED),
+                dict(name="stop", role=const.PCMK_ROLE_UNPROMOTED),
+            ]
+        )
+
+    def test_roles_normalization_user_defined_with_cib_support(self):
+        self.prepare(True, True)
+        self.config.env.push_cib(
+            resources=fixture_cib_resources_xml(
+                fixture_cib_primitive_stateful(include_reload=False)
+            )
+        )
+        self.create(
+            [
+                dict(name="start", role=const.PCMK_ROLE_PROMOTED_LEGACY),
+                dict(name="stop", role=const.PCMK_ROLE_UNPROMOTED_LEGACY),
+            ]
+        )
+
+    def test_roles_normalization_user_defined_new_roles_with_cib_support(self):
+        self.prepare(True, True)
+        self.config.env.push_cib(
+            resources=fixture_cib_resources_xml(
+                fixture_cib_primitive_stateful(include_reload=False)
+            )
+        )
+        self.create(
+            [
+                dict(name="start", role=const.PCMK_ROLE_PROMOTED),
+                dict(name="stop", role=const.PCMK_ROLE_UNPROMOTED),
+            ]
+        )
+
+    def test_roles_normalization_agent(self):
+        self.prepare(False, False)
+        self.config.env.push_cib(
+            resources=fixture_cib_resources_xml(
+                fixture_cib_primitive_stateful(use_legacy_roles=True)
+            )
+        )
+        self.create(
+            [
+                dict(name="start", role=const.PCMK_ROLE_PROMOTED_LEGACY),
+                dict(name="stop", role=const.PCMK_ROLE_UNPROMOTED_LEGACY),
+            ]
+        )
+
+    def test_roles_normalization_agent_new_roles(self):
         self.prepare(False, False)
         self.config.env.push_cib(
             resources=fixture_cib_resources_xml(
@@ -427,71 +487,11 @@ class CreateRolesNormilization(TestCase):
             ]
         )
 
-    def test_roles_normalization_user_defined_with_cib_support(self):
-        self.prepare(False, True)
-        self.config.env.push_cib(
-            resources=fixture_cib_resources_xml(
-                fixture_cib_primitive_stateful()
-            )
-        )
-        self.create(
-            [
-                dict(name="start", role=const.PCMK_ROLE_PROMOTED_LEGACY),
-                dict(name="stop", role=const.PCMK_ROLE_UNPROMOTED_LEGACY),
-            ]
-        )
-
-    def test_roles_normalization_user_defined_new_roles_with_cib_support(self):
-        self.prepare(False, True)
-        self.config.env.push_cib(
-            resources=fixture_cib_resources_xml(
-                fixture_cib_primitive_stateful()
-            )
-        )
-        self.create(
-            [
-                dict(name="start", role=const.PCMK_ROLE_PROMOTED),
-                dict(name="stop", role=const.PCMK_ROLE_UNPROMOTED),
-            ]
-        )
-
-    def test_roles_normalization_agent(self):
-        self.prepare(True, False)
-        self.config.env.push_cib(
-            resources=fixture_cib_resources_xml(
-                fixture_cib_primitive_stateful(
-                    use_legacy_roles=True, include_reload=False
-                )
-            )
-        )
-        self.create(
-            [
-                dict(name="start", role=const.PCMK_ROLE_PROMOTED_LEGACY),
-                dict(name="stop", role=const.PCMK_ROLE_UNPROMOTED_LEGACY),
-            ]
-        )
-
-    def test_roles_normalization_agent_new_roles(self):
-        self.prepare(True, False)
-        self.config.env.push_cib(
-            resources=fixture_cib_resources_xml(
-                fixture_cib_primitive_stateful(
-                    use_legacy_roles=True, include_reload=False
-                )
-            )
-        )
-        self.create(
-            [
-                dict(name="start", role=const.PCMK_ROLE_PROMOTED),
-                dict(name="stop", role=const.PCMK_ROLE_UNPROMOTED),
-            ]
-        )
-
     def test_roles_normalization_agent_with_cib_support(self):
-        self.prepare(True, True)
+        self.prepare(False, True)
         self.config.env.push_cib(
             resources=fixture_cib_resources_xml(
-                fixture_cib_primitive_stateful(include_reload=False)
+                fixture_cib_primitive_stateful()
             )
         )
         self.create(
@@ -502,10 +502,10 @@ class CreateRolesNormilization(TestCase):
         )
 
     def test_roles_normalization_agent_new_roles_with_cib_support(self):
-        self.prepare(True, True)
+        self.prepare(False, True)
         self.config.env.push_cib(
             resources=fixture_cib_resources_xml(
-                fixture_cib_primitive_stateful(include_reload=False)
+                fixture_cib_primitive_stateful()
             )
         )
         self.create(
