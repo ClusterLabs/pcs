@@ -1242,14 +1242,15 @@ def cluster_destroy(lib, argv, modifiers):
     modifiers.ensure_only_supported("--all", "--request-timeout", "--force")
     if argv:
         raise CmdLineInputError()
-    if utils.is_run_interactive() and not modifiers.get("--force"):
+    if utils.is_run_interactive():
         warn(
             "It is recommended to run 'pcs cluster stop' before "
             "destroying the cluster."
         )
-        if not utils.get_continue_confirmation(
+        if not utils.get_continue_confirmation_or_force(
             "This would kill all cluster processes and then PERMANENTLY remove "
-            "cluster state and configuration"
+            "cluster state and configuration",
+            modifiers.get("--force"),
         ):
             return
     if modifiers.get("--all"):

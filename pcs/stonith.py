@@ -17,7 +17,7 @@ from pcs.common.fencing_topology import (
     TARGET_TYPE_ATTRIBUTE,
 )
 from pcs.common.interface.dto import to_dict
-from pcs.common.str_tools import indent
+from pcs.common.str_tools import format_list, indent
 from pcs.lib.errors import LibraryError
 import pcs.lib.resource_agent as lib_ra
 
@@ -503,15 +503,12 @@ def stonith_confirm(lib, argv, modifiers):
         utils.err("must specify one (and only one) node to confirm fenced")
 
     node = argv.pop(0)
-    if not modifiers.get("--force"):
-        if not utils.get_continue_confirmation_or_force(
-            (
-                "If node {node} is not powered off or it does have access "
-                "to shared resources, data corruption and/or cluster failure "
-                "may occur"
-            ).format(node=node)
-        ):
-            return
+    if not utils.get_continue_confirmation_or_force(
+        f"If node '{node}' is not powered off or it does have access to shared "
+        "resources, data corruption and/or cluster failure may occur",
+        modifiers.get("--force"),
+    ):
+        return
     args = ["stonith_admin", "-C", node]
     output, retval = utils.run(args)
 
@@ -580,12 +577,13 @@ def sbd_watchdog_test(lib, argv, modifiers):
     """
     Options: no options
     """
-    modifiers.ensure_only_supported()
+    modifiers.ensure_only_supported("--force")
     if len(argv) > 1:
         raise CmdLineInputError()
-    if not utils.get_continue_confirmation(
+    if not utils.get_continue_confirmation_or_force(
         "This operation is expected to force-reboot this system without "
-        "following any shutdown procedures"
+        "following any shutdown procedures",
+        modifiers.get("--force"),
     ):
         return
     watchdog = None
@@ -815,14 +813,12 @@ def sbd_setup_block_device(lib, argv, modifiers):
     if not device_list:
         raise CmdLineInputError("No device defined")
 
-    if not modifiers.get("--force"):
-        if not utils.get_continue_confirmation_or_force(
-            (
-                "All current content on device(s) '{device}' will be "
-                "overwritten."
-            ).format(device="', '".join(device_list))
-        ):
-            return
+    if not utils.get_continue_confirmation_or_force(
+        f"All current content on device(s) {format_list(device_list)} will be "
+        "overwritten",
+        modifiers.get("--force"),
+    ):
+        return
 
     lib.sbd.initialize_block_devices(
         device_list,

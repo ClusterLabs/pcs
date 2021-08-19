@@ -134,13 +134,22 @@ class SbdDeviceSetup(TestCase):
             self.call_cmd([])
         self.assertEqual(cm.exception.message, "No device defined")
 
-    def test_minimal(self):
+    @mock.patch("pcs.cli.reports.output.warn")
+    def test_minimal(self, mock_warn):
         self.call_cmd(["device=/dev/sda"])
         self.assert_called_with(["/dev/sda"], dict())
+        mock_warn.assert_called_once_with(
+            "All current content on device(s) '/dev/sda' will be overwritten"
+        )
 
-    def test_devices_and_options(self):
+    @mock.patch("pcs.cli.reports.output.warn")
+    def test_devices_and_options(self, mock_warn):
         self.call_cmd(["device=/dev/sda", "a=A", "device=/dev/sdb", "b=B"])
         self.assert_called_with(["/dev/sda", "/dev/sdb"], {"a": "A", "b": "B"})
+        mock_warn.assert_called_once_with(
+            "All current content on device(s) '/dev/sda', '/dev/sdb' will be "
+            "overwritten"
+        )
 
     def test_options(self):
         with self.assertRaises(CmdLineInputError) as cm:

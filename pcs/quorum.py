@@ -6,7 +6,7 @@ from pcs.cli.common import parse_args
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.tools import print_to_stderr
 from pcs.cli.reports import process_library_reports
-from pcs.common.str_tools import indent
+from pcs.common.str_tools import format_list, indent
 from pcs.lib.node import get_existing_nodes_names
 
 
@@ -289,15 +289,13 @@ def quorum_unblock_cmd(lib, argv, modifiers):
     unjoined_nodes = set(all_nodes) - set(utils.getCorosyncActiveNodes())
     if not unjoined_nodes:
         utils.err("no unjoined nodes found")
-    if not modifiers.get("--force"):
-        if not utils.get_continue_confirmation_or_force(
-            (
-                "If node(s) {nodes} are not powered off or they do have access "
-                "to shared resources, data corruption and/or cluster failure "
-                "may occur"
-            ).format(nodes=", ".join(unjoined_nodes))
-        ):
-            return
+    if not utils.get_continue_confirmation_or_force(
+        f"If node(s) {format_list(unjoined_nodes)} are not powered off or they "
+        "do have access to shared resources, data corruption and/or cluster "
+        "failure may occur",
+        modifiers.get("--force"),
+    ):
+        return
     for node in unjoined_nodes:
         # pass --force so no warning will be displayed
         stonith.stonith_confirm(

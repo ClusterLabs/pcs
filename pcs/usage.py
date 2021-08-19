@@ -1221,7 +1221,7 @@ Commands:
         cluster.
         WARNING: This command permanently removes any cluster configuration that
         has been created. It is recommended to run 'pcs cluster stop' before
-        destroying the cluster. To prevent accidental running of this command, 
+        destroying the cluster. To prevent accidental running of this command,
         --force or interactive user response is required in order to proceed.
 
     verify [--full] [-f <filename>]
