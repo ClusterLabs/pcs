@@ -10,6 +10,7 @@ from pcs_test.tools.xml import dom_get_child_elements
 from pcs_test.tools.misc import get_test_resource as rc
 
 from pcs import utils
+from pcs.common import const
 
 # pylint: disable=line-too-long
 # pylint: disable=invalid-name
@@ -826,7 +827,7 @@ class UtilsTest(TestCase):
 
     def test_resource_running_on(self):
         status = xml.dom.minidom.parseString(
-            """
+            f"""
 <crm_mon>
     <summary />
     <nodes />
@@ -846,13 +847,13 @@ class UtilsTest(TestCase):
             </resource>
         </clone>
         <clone id="myMaster">
-            <resource id="myMasteredResource:1" role="Slave">
+            <resource id="myMasteredResource:1" role="{const.PCMK_ROLE_UNPROMOTED_PRIMARY}">
                 <node name="rh70-node2" />
             </resource>
-            <resource id="myMasteredResource" role="Slave">
+            <resource id="myMasteredResource" role="{const.PCMK_ROLE_UNPROMOTED_PRIMARY}">
                 <node name="rh70-node3" />
             </resource>
-            <resource id="myMasteredResource" role="Master">
+            <resource id="myMasteredResource" role="{const.PCMK_ROLE_PROMOTED_PRIMARY}">
                 <node name="rh70-node1" />
             </resource>
         </clone>
@@ -885,17 +886,17 @@ class UtilsTest(TestCase):
         </clone>
         <clone id="myGroupMaster">
             <group id="myMasteredGroup:0">
-                 <resource id="myMasteredGroupedResource" role="Slave">
+                 <resource id="myMasteredGroupedResource" role="{const.PCMK_ROLE_UNPROMOTED_PRIMARY}">
                      <node name="rh70-node1" />
                  </resource>
             </group>
             <group id="myMasteredGroup:1">
-                 <resource id="myMasteredGroupedResource" role="Master">
+                 <resource id="myMasteredGroupedResource" role="{const.PCMK_ROLE_PROMOTED_PRIMARY}">
                      <node name="rh70-node2" />
                  </resource>
             </group>
             <group id="myMasteredGroup:2">
-                 <resource id="myMasteredGroupedResource" role="Slave">
+                 <resource id="myMasteredGroupedResource" role="{const.PCMK_ROLE_UNPROMOTED_PRIMARY}">
                      <node name="rh70-node3" />
                  </resource>
             </group>
@@ -933,16 +934,26 @@ class UtilsTest(TestCase):
         self.assertEqual(
             utils.resource_running_on("myMasteredResource", status),
             {
-                "message": "Resource 'myMasteredResource' is master on node "
-                "rh70-node1; slave on nodes rh70-node2, rh70-node3.",
+                "message": (
+                    "Resource 'myMasteredResource' is {promoted} on node "
+                    "rh70-node1; {unpromoted} on nodes rh70-node2, rh70-node3."
+                ).format(
+                    promoted=str(const.PCMK_ROLE_PROMOTED_PRIMARY).lower(),
+                    unpromoted=str(const.PCMK_ROLE_UNPROMOTED_PRIMARY).lower(),
+                ),
                 "is_running": True,
             },
         )
         self.assertEqual(
             utils.resource_running_on("myMaster", status),
             {
-                "message": "Resource 'myMaster' is master on node "
-                "rh70-node1; slave on nodes rh70-node2, rh70-node3.",
+                "message": (
+                    "Resource 'myMaster' is {promoted} on node "
+                    "rh70-node1; {unpromoted} on nodes rh70-node2, rh70-node3."
+                ).format(
+                    promoted=str(const.PCMK_ROLE_PROMOTED_PRIMARY).lower(),
+                    unpromoted=str(const.PCMK_ROLE_UNPROMOTED_PRIMARY).lower(),
+                ),
                 "is_running": True,
             },
         )
@@ -989,24 +1000,39 @@ class UtilsTest(TestCase):
         self.assertEqual(
             utils.resource_running_on("myMasteredGroupedResource", status),
             {
-                "message": "Resource 'myMasteredGroupedResource' is master on node "
-                "rh70-node2; slave on nodes rh70-node1, rh70-node3.",
+                "message": (
+                    "Resource 'myMasteredGroupedResource' is {promoted} on node "
+                    "rh70-node2; {unpromoted} on nodes rh70-node1, rh70-node3."
+                ).format(
+                    promoted=str(const.PCMK_ROLE_PROMOTED_PRIMARY).lower(),
+                    unpromoted=str(const.PCMK_ROLE_UNPROMOTED_PRIMARY).lower(),
+                ),
                 "is_running": True,
             },
         )
         self.assertEqual(
             utils.resource_running_on("myMasteredGroup", status),
             {
-                "message": "Resource 'myMasteredGroup' is master on node "
-                "rh70-node2; slave on nodes rh70-node1, rh70-node3.",
+                "message": (
+                    "Resource 'myMasteredGroup' is {promoted} on node "
+                    "rh70-node2; {unpromoted} on nodes rh70-node1, rh70-node3."
+                ).format(
+                    promoted=str(const.PCMK_ROLE_PROMOTED_PRIMARY).lower(),
+                    unpromoted=str(const.PCMK_ROLE_UNPROMOTED_PRIMARY).lower(),
+                ),
                 "is_running": True,
             },
         )
         self.assertEqual(
             utils.resource_running_on("myGroupMaster", status),
             {
-                "message": "Resource 'myGroupMaster' is master on node "
-                "rh70-node2; slave on nodes rh70-node1, rh70-node3.",
+                "message": (
+                    "Resource 'myGroupMaster' is {promoted} on node "
+                    "rh70-node2; {unpromoted} on nodes rh70-node1, rh70-node3."
+                ).format(
+                    promoted=str(const.PCMK_ROLE_PROMOTED_PRIMARY).lower(),
+                    unpromoted=str(const.PCMK_ROLE_UNPROMOTED_PRIMARY).lower(),
+                ),
                 "is_running": True,
             },
         )

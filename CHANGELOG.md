@@ -8,6 +8,7 @@
   Pacemaker 2.1 ([rhbz#1985981])
 - All errors, warning and progress related output is now printed to stderr
   instead of stdout
+- Make roles `Promoted` and `Unpromoted` default
 
 ### Removed
 - Deprecated obsolete commands `pcs config import-cman` and `pcs config export
