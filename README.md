@@ -60,7 +60,6 @@ installation:
 * gcc
 * gcc-c++
 * FFI development files (package libffi-devel or libffi-dev)
-* fontconfig
 * printf (package coreutils)
 * redhat-rpm-config (if you are using Fedora)
 * wget (to download bundled libraries)

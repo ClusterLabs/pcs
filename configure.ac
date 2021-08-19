@@ -177,14 +177,6 @@ if test "x$cache_only" != "xyes"; then
 	fi
 fi
 
-# required by pcsd build/install to symlink BaseOS fonts
-if test "x$tests_only" != "xyes"; then
-	AC_CHECK_PROGS([FCMATCH], [fc-match])
-	if test "x$FCMATCH" = "x"; then
-		AC_MSG_ERROR([Unable to find fc-match binary])
-	fi
-fi
-
 if test "x$DISTRO" = "x"; then
 	AC_MSG_CHECKING([linux distribution])
 	if test -f /etc/os-release; then

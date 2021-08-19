@@ -48,7 +48,6 @@ variables:
     rubygem-bundler
   "
   COMMON_BUILD_DEPENDENCIES: "
-    fontconfig
     gcc
     gcc-c++
     psmisc

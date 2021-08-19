@@ -90,12 +90,6 @@ BuildRequires: ruby-devel
 BuildRequires: rubygems
 # for post, preun and postun macros
 BuildRequires: systemd
-# pcsd fonts and font management tools for creating symlinks to fonts
-BuildRequires: fontconfig
-%if %{undefined suse_version}
-BuildRequires: liberation-sans-fonts
-BuildRequires: overpass-fonts
-%endif
 
 Requires: python3-cryptography
 Requires: python3-lxml
@@ -120,9 +114,6 @@ Requires(postun): systemd
 Requires: pam
 # needs logrotate for /etc/logrotate.d/pcsd
 Requires: logrotate
-# pcsd fonts
-Recommends: liberation-sans-fonts
-Recommends: overpass-fonts
 
 @pybundle@
 %if %{defined dataclasses_required}
