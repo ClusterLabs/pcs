@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.10.10] - 2021-08-19
 
 ### Added
 - Support for new role names introduced in pacemaker 2.1 ([rhbz#1885293])
