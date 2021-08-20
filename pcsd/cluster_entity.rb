@@ -42,180 +42,6 @@ module ClusterEntity
     hash
   end
 
-  def self.get_meta_attr_version1(obj)
-    meta_attr = []
-    obj.meta_attr.each { |pair|
-      meta_attr << {
-        :key => pair.name,
-        :value => pair.value,
-        :id => pair.id,
-        :parent => obj.id
-      }
-    }
-    return meta_attr
-  end
-
-  def self.merge_meta_attr_version1(meta1, meta2)
-    to_add = []
-    meta2_keys = meta2.map { |x| x[:key]}
-    meta1.each { |m1|
-      unless meta2_keys.include? m1[:key]
-        to_add << m1
-      end
-    }
-    return meta2 + to_add
-  end
-
-  def self.get_meta_attr_from_status_v1(resource_id, meta_attr)
-    new_ma = ClusterEntity::NvSet.new
-    meta_attr.each { |v|
-      if v[:parent] == resource_id
-        new_ma << ClusterEntity::NvPair.new(v[:id], v[:key], v[:value])
-      end
-    }
-    return new_ma
-  end
-
-  def self.get_primitives_from_status_v1(resource_list)
-    primitives = {}
-    resource_list.each { |resource|
-      unless primitives.include?(resource[:id].to_sym)
-        p = ClusterEntity::Primitive.new
-        p.id = resource[:id]
-        p.agentname = resource[:agentname]
-        p.stonith = resource[:stonith]
-        if p.stonith
-          p._class = 'stonith'
-          p.type = p.agentname.split(':', 2)[1]
-        else
-          s =  p.agentname.split('::', 2)
-          p._class = s[0]
-          s = s[1].split(':', 2)
-          p.provider = s[0]
-          p.type = s[1]
-        end
-
-        p.meta_attr = ClusterEntity::get_meta_attr_from_status_v1(
-          p.id,
-          resource[:meta_attr]
-        )
-
-        resource[:instance_attr].each { |k, v|
-          p.instance_attr << ClusterEntity::NvPair.new(nil, k, v)
-        }
-
-        primitives[p.id.to_sym] = [
-          p,
-          {
-            :group => resource[:group],
-            :clone => resource[:clone_id],
-            :master => resource[:ms_id],
-            :meta_attr => resource[:meta_attr]
-          }
-        ]
-      end
-
-      primitive_struct = primitives[resource[:id].to_sym]
-      primitive = primitive_struct[0]
-      status = ClusterEntity::CRMResourceStatus.new
-      status.id = primitive.id
-      status.resource_agent = primitive.agentname
-      status.managed = true
-      status.failed = resource[:failed]
-      status.role = nil
-      status.active = resource[:active]
-      status.orphaned = resource[:orphaned]
-      status.failure_ignored = false
-      status.nodes_running_on = resource[:nodes].length
-      status.pending = nil
-      if status.nodes_running_on > 0
-        node = {
-          :id => nil,
-          :name => resource[:nodes][0],
-          :cached => false
-        }
-      else
-        node = nil
-      end
-      status.node = node
-      primitive.crm_status << status
-    }
-    primitives.each {|_, resource|
-      resource[0].update_status
-    }
-    return primitives
-  end
-
-  def self.make_resources_tree(primitives)
-    not_primitives = {}
-    tree = []
-    primitives.each { |_, primitive_struct|
-      p = primitive_struct[0]
-      data = primitive_struct[1]
-      unless data[:group] or data[:clone] or data[:master]
-        tree << p
-        next
-      end
-      group = nil
-      if data[:group]
-        if data[:clone] or data[:master]
-          group_id = data[:group].split('/', 2)[1]
-        else
-          group_id = data[:group]
-        end
-        if not_primitives.include?(group_id.to_sym)
-          group = not_primitives[group_id.to_sym]
-        else
-          group = ClusterEntity::Group.new
-          group.id = group_id
-          group.meta_attr = ClusterEntity::get_meta_attr_from_status_v1(
-            group.id,
-            data[:meta_attr]
-          )
-          not_primitives[group_id.to_sym] = group
-          unless data[:clone] or data[:master]
-            tree << group
-          end
-        end
-        p.parent = group
-        group.members << p
-      end
-      if data[:clone] or data[:master]
-        if data[:group]
-          mi_id = data[:group].split('/', 2)[0]
-        else
-          mi_id = (data[:clone] or data[:master])
-        end
-        unless not_primitives.include?(mi_id.to_sym)
-          if data[:clone]
-            mi = ClusterEntity::ClonePcmk1.new
-          else
-            mi = ClusterEntity::MasterSlavePcmk1.new
-            mi.masters_unknown = true
-          end
-          mi.id = mi_id
-          mi.meta_attr = ClusterEntity::get_meta_attr_from_status_v1(
-            mi_id,
-            data[:meta_attr]
-          )
-          if group
-            group.parent = mi
-            mi.member = group
-          else
-            p.parent = mi
-            mi.member = p
-          end
-          not_primitives[mi_id.to_sym] = mi
-          tree << mi
-        end
-      end
-    }
-    tree.each {|resource|
-      resource.update_status
-    }
-    return tree
-  end
-
   class JSONable
     def to_status(version='1')
       ClusterEntity::obj_to_hash(self)
@@ -366,8 +192,6 @@ module ClusterEntity
         'ClusterEntity::Primitive'.to_sym => ['primitive'],
         'ClusterEntity::Group'.to_sym => ['group'],
         'ClusterEntity::Clone'.to_sym => ['clone', 'master'],
-        'ClusterEntity::ClonePcmk1'.to_sym => ['clone'],
-        'ClusterEntity::MasterSlavePcmk1'.to_sym => ['master']
       }
       if (resource_cib_element and
         element_names[self.class.name.to_sym].include?(resource_cib_element.name)
@@ -401,7 +225,7 @@ module ClusterEntity
           }
         )
       else
-        status = ClusterEntity::obj_to_hash(self, [:@id])
+        status = {}
       end
       return status
     end
@@ -625,51 +449,7 @@ module ClusterEntity
         }
         hash[:operations] = operations
       else
-        instance_attr = {}
-        @instance_attr.each { |v|
-          instance_attr[v.name.to_sym] = v.value
-        }
-        hash.update(
-          {
-            :agentname => @agentname,
-            :group => nil,
-            :clone => false,
-            :clone_id => nil,
-            :ms => false,
-            :ms_id => nil,
-            :operations => [],
-            :meta_attr => ClusterEntity::get_meta_attr_version1(self),
-            :instance_attr => instance_attr,
-            :options => instance_attr,
-            :stonith => @stonith,
-            :disabled => disabled?,
-            :active => false,
-            :failed => false,
-            :orphaned => false,
-            :nodes => [],
-          }
-        )
-        if @crm_status and @crm_status.length >= 1
-          rsc = hash
-          hash = []
-          @crm_status.each do |s|
-            actual = {}
-            actual.update(rsc)
-            actual.update(
-              ClusterEntity::obj_to_hash(s, [:@active, :@failed, :@orphaned])
-            )
-            actual[:nodes] = (s.node) ? [s.node[:name]] : []
-            hash << actual
-          end
-        else
-          hash.update(
-            ClusterEntity::obj_to_hash(
-              CRMResourceStatus.new,
-              [:@active, :@failed, :@orphaned]
-            )
-          )
-          hash = [hash]
-        end
+        hash = {}
       end
       return hash
     end
@@ -733,18 +513,6 @@ module ClusterEntity
         hash[:members] = members
       else
         hash = []
-        meta_attr = ClusterEntity::get_meta_attr_version1(self)
-        @members.each do |m|
-          hash.concat(m.to_status(version))
-        end
-        group_id = (@parent) ? "#{@parent.id}/#{@id}" : @id
-        hash.each do |m|
-          m[:group] = group_id
-          m[:meta_attr] = ClusterEntity::merge_meta_attr_version1(
-            m[:meta_attr],
-            meta_attr
-          )
-        end
       end
       return hash
     end
@@ -834,26 +602,7 @@ module ClusterEntity
         hash[:member] = @member.to_status(version)
         return hash
       else
-        member = @member ? @member.to_status(version) : []
-        meta_attr = []
-        unless @member.instance_of?(Group)
-          meta_attr = ClusterEntity::get_meta_attr_version1(self)
-        end
-        clone_ms_id = @member.instance_of?(Group) ? @member.id : @id
-        member.each do |m|
-          if @promotable
-            m[:ms] = true
-            m[:ms_id] = clone_ms_id
-          else
-            m[:clone] = true
-            m[:clone_id] = clone_ms_id
-          end
-          m[:meta_attr] = ClusterEntity::merge_meta_attr_version1(
-            m[:meta_attr],
-            meta_attr
-          )
-        end
-        return member
+        return []
       end
     end
 
@@ -894,202 +643,6 @@ module ClusterEntity
         if primitive.instance_of?(ClusterEntity::Primitive)
           primitive.crm_status.each { |stat|
             if ['Master', 'Promoted'].include?(stat.role)
-              if stat.node
-                masters << stat.node[:name]
-              end
-            else
-              if stat.node
-                slaves << stat.node[:name]
-              end
-            end
-          }
-        end
-      }
-      return [masters, slaves]
-    end
-  end
-
-
-  # base class for clone and master resources in pacemaker 1.x
-  class MultiInstancePcmk1 < Resource
-    attr_accessor :member, :unique, :managed, :failed, :failure_ignored
-
-    def initialize(resource_cib_element=nil, crm_dom=nil, rsc_status=nil,
-                   parent=nil, operations=nil)
-      super(resource_cib_element, nil, parent)
-      @member = nil
-      @unique = false
-      @managed = false
-      @failed = false
-      @failure_ignored = false
-      element_names = {
-        'ClusterEntity::ClonePcmk1'.to_sym => 'clone',
-        'ClusterEntity::MasterSlavePcmk1'.to_sym => 'master'
-      }
-      if (resource_cib_element and
-        resource_cib_element.name == element_names[self.class.name.to_sym]
-      )
-        member = resource_cib_element.elements['group | primitive']
-        if member and member.name == 'group'
-          @member = Group.new(member, rsc_status, self, operations)
-        elsif member and member.name == 'primitive'
-          @member = Primitive.new(member, rsc_status, self, operations)
-        end
-        update_status
-        if crm_dom
-          status = crm_dom.elements["/crm_mon/resources//clone[@id='#{@id}'] | /pacemaker-result/resources//clone[@id='#{@id}']"]
-          if status
-            @unique = status.attributes['unique'] == 'true'
-            @managed = status.attributes['managed'] == 'true'
-            @failed = status.attributes['failed'] == 'true'
-            @failure_ignored = status.attributes['failure_ignored'] == 'true'
-          end
-        end
-      end
-    end
-
-    def update_status
-      if @member
-        @member.update_status
-        @status = @member.status
-      end
-      if disabled?
-        @status = ClusterEntity::ResourceStatus.new(:disabled)
-      end
-    end
-
-    def to_status(version='1')
-      if version == '2'
-        hash = super(version)
-        hash[:member] = @member.to_status(version)
-        return hash
-      else
-        return @member ? @member.to_status(version) : []
-      end
-    end
-
-    def get_map
-      map = super
-      map.update(@member.get_map)
-      return map
-    end
-  end
-
-
-  class ClonePcmk1 < MultiInstancePcmk1
-
-    def initialize(
-      resource_cib_element=nil, crm_dom=nil, rsc_status=nil, parent=nil,
-      operations=nil
-    )
-      super(resource_cib_element, crm_dom, rsc_status, parent, operations)
-      @class_type = 'clone'
-    end
-
-    def to_status(version='1')
-      member = super(version)
-      if version == '2'
-        return member
-      else
-        meta_attr = []
-        unless @member.instance_of?(Group)
-          meta_attr = ClusterEntity::get_meta_attr_version1(self)
-        end
-        clone_id = @member.instance_of?(Group) ? @member.id : @id
-        member.each do |m|
-          m[:clone] = true
-          m[:clone_id] = clone_id
-          m[:meta_attr] = ClusterEntity::merge_meta_attr_version1(
-            m[:meta_attr],
-            meta_attr
-          )
-        end
-        return member
-      end
-    end
-  end
-
-
-  class MasterSlavePcmk1 < MultiInstancePcmk1
-    attr_accessor :masters, :slaves, :masters_unknown
-
-    def initialize(master_cib_element=nil, crm_dom=nil, rsc_status=nil, parent=nil, operations=nil)
-      super(master_cib_element, crm_dom, rsc_status, parent, operations)
-      @masters_unknown = false
-      @class_type = 'master'
-      @masters = []
-      @slaves = []
-      update_status
-      if @member
-        if @member.instance_of?(Primitive)
-          primitive_list = [@member]
-        else
-          primitive_list = @member.members
-        end
-        @masters, @slaves = get_masters_slaves(primitive_list)
-        if (@masters.empty? and !@masters_unknown and
-          @status != ClusterEntity::ResourceStatus.new(:disabled)
-        )
-          @warning_list << {
-            :message => 'Resource is master/slave but has not been promoted '\
-              + 'to master on any node.',
-            :type => 'no_master'
-          }
-        end
-      end
-    end
-
-    def to_status(version='1')
-      member = super(version)
-      if version == '2'
-        return member
-      else
-        meta_attr = []
-        unless @member.instance_of?(Group)
-          meta_attr = ClusterEntity::get_meta_attr_version1(self)
-        end
-        ms_id = @member.instance_of?(Group) ? @member.id : @id
-        member.each do |m|
-          m[:ms] = true
-          m[:ms_id] = ms_id
-          m[:meta_attr] = ClusterEntity::merge_meta_attr_version1(
-            m[:meta_attr],
-            meta_attr
-          )
-        end
-        return member
-      end
-    end
-
-    def update_status
-      if @member
-        @member.update_status
-        @status = @member.status
-        if @member.instance_of?(Primitive)
-          primitive_list = [@member]
-        else
-          primitive_list = @member.members
-        end
-        @masters, @slaves = get_masters_slaves(primitive_list)
-        if (@masters.empty? and !@masters_unknown and
-          @member.status == ClusterEntity::ResourceStatus.new(:running)
-        )
-          @status = ClusterEntity::ResourceStatus.new(:partially_running)
-        end
-      end
-      if disabled?
-        @status = ClusterEntity::ResourceStatus.new(:disabled)
-      end
-    end
-
-    private
-    def get_masters_slaves(primitive_list)
-      masters = []
-      slaves = []
-      primitive_list.each { |primitive|
-        if primitive.instance_of?(ClusterEntity::Primitive)
-          primitive.crm_status.each { |stat|
-            if stat.role == 'Master'
               if stat.node
                 masters << stat.node[:name]
               end

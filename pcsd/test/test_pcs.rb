@@ -77,7 +77,7 @@ class TestGetNodesAttributes < Test::Unit::TestCase
       '[
         {
           "id": "nodes-2-test",
-          "key": "test",
+          "name": "test",
           "value": "44"
         }
       ]', {:symbolize_names => true})
@@ -85,17 +85,17 @@ class TestGetNodesAttributes < Test::Unit::TestCase
       '[
         {
           "id": "nodes-3-test",
-          "key": "test",
+          "name": "test",
           "value": "testval2"
         },
         {
           "id": "nodes-3-test2",
-          "key": "test2",
+          "name": "test2",
           "value": "1"
         },
         {
           "id": "nodes-3-test321",
-          "key": "test321",
+          "name": "test321",
           "value": "321"
         }
       ]', {:symbolize_names => true})

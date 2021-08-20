@@ -44,8 +44,6 @@ def remote(params, request, auth_user)
       :set_permissions => method(:set_permissions_remote),
       :cluster_start => method(:cluster_start),
       :cluster_stop => method(:cluster_stop),
-      # TODO deprecated, remove, not used anymore
-      :config_backup => method(:config_backup),
       :config_restore => method(:config_restore),
       # TODO deprecated, remove, not used anymore
       :node_restart => method(:node_restart),
@@ -57,11 +55,7 @@ def remote(params, request, auth_user)
       :node_unstandby => method(:node_unstandby),
       :cluster_enable => method(:cluster_enable),
       :cluster_disable => method(:cluster_disable),
-      # TODO deprecated, remove, not used anymore
-      :resource_status => method(:resource_status),
       :get_sw_versions => method(:get_sw_versions),
-      # TODO deprecated, remove, not used anymore in pcs-0.10
-      :node_available => method(:remote_node_available),
       :cluster_add_nodes => method(:cluster_add_nodes),
       :cluster_remove_nodes => method(:cluster_remove_nodes),
       :cluster_destroy => method(:cluster_destroy),
@@ -362,27 +356,6 @@ def cluster_stop(params, request, auth_user)
     else
       return stderr.join
     end
-  end
-end
-
-# TODO deprecated, remove, not used anymore
-def config_backup(params, request, auth_user)
-  if params[:name]
-    code, response = send_request_with_token(
-      auth_user, params[:name], 'config_backup', true
-    )
-  else
-    if not allowed_for_local_cluster(auth_user, Permissions::FULL)
-      return 403, 'Permission denied'
-    end
-    $logger.info "Backup node configuration"
-    stdout, stderr, retval = run_cmd(auth_user, PCS, "config", "backup")
-    if retval == 0
-        $logger.info "Backup successful"
-        return [200, stdout]
-    end
-    $logger.info "Error during backup: #{stderr.join(' ').strip()}"
-    return [400, "Unable to backup node: #{stderr.join(' ')}"]
   end
 end
 
@@ -833,29 +806,6 @@ def get_sw_versions(params, request, auth_user)
   return JSON.generate(versions)
 end
 
-# TODO deprecated, remove, not used anymore in pcs-0.10
-def remote_node_available(params, request, auth_user)
-  if (
-    File.exist?(Cfgsync::CorosyncConf.file_path) or \
-    File.exist?(CIB_PATH)
-  )
-    return JSON.generate({:node_available => false})
-  end
-  if pacemaker_remote_running?()
-    return JSON.generate({
-      :node_available => false,
-      :pacemaker_remote => true,
-    })
-  end
-  if pacemaker_running?()
-    return JSON.generate({
-      :node_available => false,
-      :pacemaker_running => true,
-    })
-  end
-  return JSON.generate({:node_available => true})
-end
-
 def cluster_add_nodes(params, request, auth_user)
   if not allowed_for_local_cluster(auth_user, Permissions::FULL)
     return 403, 'Permission denied'
@@ -959,54 +909,7 @@ def node_status(params, request, auth_user)
     return JSON.generate(status)
   end
 
-  resource_list = []
-  resources.each do |r|
-    resource_list.concat(r.to_status('1'))
-  end
-
-  cluster_settings = (status[:cluster_settings].empty?) ?
-    {'error' => 'Unable to get configuration settings'} :
-    status[:cluster_settings]
-
-  node_attr = {}
-  status[:node_attr].each { |node, attrs|
-    node_attr[node] = []
-    attrs.each { |attr|
-      node_attr[node] << {
-        :key => attr[:name],
-        :value => attr[:value]
-      }
-    }
-  }
-
-  old_status = {
-    :uptime => node.uptime,
-    :corosync => node.corosync,
-    :pacemaker => node.pacemaker,
-    :corosync_enabled => node.corosync_enabled,
-    :pacemaker_enabled => node.pacemaker_enabled,
-    :pacemaker_remote => node.services[:pacemaker_remote][:running],
-    :pacemaker_remote_enabled => node.services[:pacemaker_remote][:enabled],
-    :pcsd_enabled => node.pcsd_enabled,
-    :corosync_online => status[:corosync_online],
-    :corosync_offline => status[:corosync_offline],
-    :pacemaker_online => status[:pacemaker_online],
-    :pacemaker_offline => status[:pacemaker_offline],
-    :pacemaker_standby => status[:pacemaker_standby],
-    :cluster_name => status[:cluster_name],
-    :resources => resource_list,
-    :groups => status[:groups],
-    :constraints => status[:constraints],
-    :cluster_settings => cluster_settings,
-    :node_id => node.id,
-    :node_attr => node_attr,
-    :fence_levels => status[:fence_levels],
-    :need_ring1_address => status[:need_ring1_address],
-    :acls => status[:acls],
-    :username => status[:username]
-  }
-
-  return JSON.generate(old_status)
+  return [400, "Unsupported version '#{version}' of status requested"]
 end
 
 def status_all(params, request, auth_user, nodes=[], dont_update_config=false)
@@ -1255,34 +1158,6 @@ end
 def check_auth(params, request, auth_user)
   # If we get here, we're already authorized
   return [200, '{"success":true}']
-end
-
-# TODO deprecated, remove, not used anymore
-def resource_status(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::READ)
-    return 403, 'Permission denied'
-  end
-  resource_id = params[:resource]
-  @resources,@groups = getResourcesGroups(auth_user)
-  location = ""
-  res_status = ""
-  @resources.each {|r|
-    if r.id == resource_id
-      if r.failed
-        res_status =  "Failed"
-      elsif !r.active
-        res_status = "Inactive"
-      else
-        res_status = "Running"
-      end
-      if r.nodes.length != 0
-        location = r.nodes[0].name
-        break
-      end
-    end
-  }
-  status = {"location" => location, "status" => res_status}
-  return JSON.generate(status)
 end
 
 def resource_stop(params, request, auth_user)

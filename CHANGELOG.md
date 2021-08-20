@@ -17,6 +17,9 @@
 ### Removed
 - Deprecated obsolete commands `pcs config import-cman` and `pcs config export
   pcs-commands|pcs-commands-verbose` have been removed ([rhbz#1881064])
+- Unused and unmaintained pcsd urls: `/remote/config_backup`,
+  `/remote/node_available`, `/remote/resource_status`
+- Pcsd no longer provides data in format used by web UI in pcs 0.9.142 and older
 
 [rhbz#1283805]: https://bugzilla.redhat.com/show_bug.cgi?id=1283805
 [rhbz#1881064]: https://bugzilla.redhat.com/show_bug.cgi?id=1881064
