@@ -61,6 +61,7 @@ def dom_rule_add(dom_element, options, rule_argv, cib_schema_version):
         options["score"] = None
     if options.get("role"):
         role = options["role"].capitalize()
+        utils.print_depracation_warning_for_legacy_roles(options["role"])
         supported_roles = (
             const.PCMK_ROLES_PROMOTED + const.PCMK_ROLES_UNPROMOTED
         )

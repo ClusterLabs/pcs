@@ -23,6 +23,9 @@
   `/remote/node_available`, `/remote/resource_status`
 - Pcsd no longer provides data in format used by web UI in pcs 0.9.142 and older
 
+### Deprecated
+- Legacy role names `Master` and `Slave`
+
 [rhbz#1283805]: https://bugzilla.redhat.com/show_bug.cgi?id=1283805
 [rhbz#1881064]: https://bugzilla.redhat.com/show_bug.cgi?id=1881064
 [rhbz#1985981]: https://bugzilla.redhat.com/show_bug.cgi?id=1985981

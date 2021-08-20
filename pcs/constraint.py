@@ -29,7 +29,6 @@ from pcs.common.reports.constraints import (
     order as order_format,
 )
 from pcs.common.str_tools import format_list
-from pcs.lib.cib.constraint import resource_set
 from pcs.lib.cib.constraint.order import ATTRIB as order_attrib
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.pacemaker.values import (
@@ -41,13 +40,10 @@ from pcs.lib.pacemaker.values import (
 # pylint: disable=invalid-name, too-many-nested-blocks
 # pylint: disable=too-many-locals, too-many-lines
 
-OPTIONS_ACTION = resource_set.ATTRIB["action"]
-
-DEFAULT_ACTION = "start"
+DEFAULT_ACTION = const.PCMK_ACTION_START
 DEFAULT_ROLE = const.PCMK_ROLE_STARTED
 
 OPTIONS_SYMMETRICAL = order_attrib["symmetrical"]
-OPTIONS_KIND = order_attrib["kind"]
 
 LOCATION_NODE_VALIDATION_SKIP_MSG = (
     "Validation for node existence in the cluster will be skipped"
@@ -241,6 +237,7 @@ def colocation_add(lib, argv, modifiers):
                     role, format_list(const.PCMK_ROLES)
                 )
             )
+        utils.print_depracation_warning_for_legacy_roles(role)
         return pacemaker.role.get_value_for_cib(
             role_cleaned, new_roles_supported
         )
@@ -431,7 +428,7 @@ def order_start(lib, argv, modifiers):
     first_action = DEFAULT_ACTION
     then_action = DEFAULT_ACTION
     action = argv[0]
-    if action in OPTIONS_ACTION:
+    if action in const.PCMK_ACTIONS:
         first_action = action
         argv.pop(0)
 
@@ -443,7 +440,7 @@ def order_start(lib, argv, modifiers):
         raise CmdLineInputError()
 
     action = argv[0]
-    if action in OPTIONS_ACTION:
+    if action in const.PCMK_ACTIONS:
         then_action = action
         argv.pop(0)
 
@@ -695,7 +692,9 @@ def location_lines(
         lc_id = rsc_loc.getAttribute("id")
         lc_node = rsc_loc.getAttribute("node")
         lc_score = rsc_loc.getAttribute("score")
-        lc_role = rsc_loc.getAttribute("role")
+        lc_role = pacemaker.role.get_value_primary(
+            rsc_loc.getAttribute("role").capitalize()
+        )
         lc_resource_discovery = rsc_loc.getAttribute("resource-discovery")
 
         for child in rsc_loc.childNodes:
@@ -822,7 +821,11 @@ def _hashtable_to_lines(hash_label, hash_type, hash_key, show_detail):
                 ]
                 line_parts.append(f"(score:{options['score']})")
                 if options["role"]:
-                    line_parts.append(f"(role:{options['role']})")
+                    line_parts.append(
+                        "(role:{})".format(
+                            pacemaker.role.get_value_primary(options["role"])
+                        )
+                    )
                 if options["resource-discovery"]:
                     line_parts.append(
                         "(resource-discovery={0})".format(

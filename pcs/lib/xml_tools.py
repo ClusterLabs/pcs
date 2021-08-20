@@ -3,6 +3,11 @@ from typing import Dict, Iterable
 from lxml import etree
 from lxml.etree import _Element
 
+from pcs.common import (
+    const,
+    pacemaker,
+)
+
 
 def get_root(tree):
     # ElementTree has getroot, Elemet has getroottree
@@ -61,6 +66,11 @@ def export_attributes(
     result = {str(key): str(value) for key, value in element.attrib.items()}
     if not with_id:
         result.pop("id", None)
+    for role_name in ("role", "rsc-role"):
+        if role_name in result:
+            result[role_name] = pacemaker.role.get_value_primary(
+                const.PcmkRoleType(result[role_name].capitalize())
+            )
     return result
 
 

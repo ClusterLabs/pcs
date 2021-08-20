@@ -12,6 +12,7 @@ from pcs.common import (
     reports,
 )
 from pcs.common.reports.item import ReportItem
+from pcs.lib import validate
 from pcs.lib.cib.constraint import constraint
 from pcs.lib.cib import tools
 from pcs.lib.errors import LibraryError
@@ -76,13 +77,19 @@ def prepare_options_with_set(cib, options, resource_set_list):
     return options
 
 
-def prepare_options_plain(cib, options, ticket, resource_id):
+def prepare_options_plain(
+    cib: _Element,
+    report_processor: reports.ReportProcessor,
+    options,
+    ticket,
+    resource_id,
+):
     options = options.copy()
 
-    report_list = _validate_options_common(options)
+    report_processor.report_list(_validate_options_common(options))
 
     if not ticket:
-        report_list.append(
+        report_processor.report(
             ReportItem.error(
                 reports.messages.RequiredOptionsAreMissing(["ticket"])
             )
@@ -90,35 +97,52 @@ def prepare_options_plain(cib, options, ticket, resource_id):
     options["ticket"] = ticket
 
     if not resource_id:
-        report_list.append(
+        report_processor.report(
             ReportItem.error(
                 reports.messages.RequiredOptionsAreMissing(["rsc"])
             )
         )
     options["rsc"] = resource_id
 
+    role_value_validator = validate.ValueIn(
+        "rsc-role", const.PCMK_ROLES, option_name_for_report="role"
+    )
+    role_value_validator.empty_string_valid = True
+
+    validators = [
+        role_value_validator,
+        validate.ValueDeprecated(
+            "rsc-role",
+            {
+                const.PCMK_ROLE_PROMOTED_LEGACY: const.PCMK_ROLE_PROMOTED,
+                const.PCMK_ROLE_UNPROMOTED_LEGACY: const.PCMK_ROLE_UNPROMOTED,
+            },
+            reports.ReportItemSeverity.warning(),
+            option_name_for_report="role",
+        ),
+    ]
+    report_processor.report_list(
+        validate.ValidatorAll(validators).validate(
+            validate.values_to_pairs(
+                options,
+                validate.option_value_normalization(
+                    {"rsc-role": lambda value: value.capitalize()}
+                ),
+            )
+        )
+    )
+
+    if report_processor.has_errors:
+        raise LibraryError()
+
     if "rsc-role" in options:
         if options["rsc-role"]:
-            resource_role = options["rsc-role"].lower().capitalize()
-            if resource_role not in ATTRIB_PLAIN["rsc-role"]:
-                report_list.append(
-                    ReportItem.error(
-                        reports.messages.InvalidOptionValue(
-                            "rsc-role",
-                            options["rsc-role"],
-                            ATTRIB_PLAIN["rsc-role"],
-                        )
-                    )
-                )
             options["rsc-role"] = pacemaker.role.get_value_for_cib(
-                resource_role,
+                options["rsc-role"].capitalize(),
                 tools.are_new_role_names_supported(cib),
             )
         else:
             del options["rsc-role"]
-
-    if report_list:
-        raise LibraryError(*report_list)
 
     return constraint.prepare_options(
         tuple(list(ATTRIB) + list(ATTRIB_PLAIN)),

@@ -1506,7 +1506,13 @@ def dom_attrs_to_list(dom_el, with_id=False):
     Commandline options: no options
     """
     attributes = [
-        "%s=%s" % (name, value)
+        "%s=%s"
+        % (
+            name,
+            value
+            if name != "role"
+            else common_pacemaker.role.get_value_primary(value.capitalize()),
+        )
         for name, value in sorted(dom_el.attributes.items())
         if name != "id"
     ]
@@ -2962,3 +2968,17 @@ def get_token_from_file(file_name: str) -> str:
     except OSError as e:
         err(f"Unable to read file '{file_name}': {e}", exit_after_error=False)
         raise SystemExit(1) from e
+
+
+def print_depracation_warning_for_legacy_roles(role: str) -> None:
+    deprecation_map: Dict[str, str] = {
+        const.PCMK_ROLE_PROMOTED_LEGACY: const.PCMK_ROLE_PROMOTED,
+        const.PCMK_ROLE_UNPROMOTED_LEGACY: const.PCMK_ROLE_UNPROMOTED,
+    }
+    role_normalized = role.capitalize()
+    if role_normalized in deprecation_map:
+        replaced_by = deprecation_map[role_normalized]
+        reports_output.warn(
+            f"Role value '{role}' is depraceted and should not be used, use "
+            f"'{replaced_by}' instead"
+        )

@@ -579,6 +579,47 @@ class ValueId(ValueValidator):
         return report_list
 
 
+class ValueDeprecated(ValueValidator):
+    """
+    Report DEPRECATED_OPTION_VALUE when a value has been deprecated and
+    replaced by new value
+    """
+
+    def __init__(
+        self,
+        option_name: TypeOptionName,
+        deprecation_map: Mapping[str, Optional[str]],
+        severity: ReportItemSeverity,
+        option_name_for_report: Optional[str] = None,
+    ):
+        """
+        deprecation_map -- keys are deprecated values and values are new
+            valeus. If values is None, depraceted value has no direct
+            replacement
+        """
+        super().__init__(
+            option_name,
+            option_name_for_report=option_name_for_report,
+        )
+        self._severity = severity
+        self._deprecation_map = deprecation_map
+
+    def _validate_value(self, value: ValuePair) -> ReportItemList:
+        if value.normalized in self._deprecation_map:
+            return [
+                ReportItem(
+                    severity=self._severity,
+                    message=reports.messages.DeprecatedOptionValue(
+                        option_name=self._get_option_name_for_report(),
+                        deprecated_value=value.original,
+                        replaced_by=self._deprecation_map[value.normalized],
+                    ),
+                )
+            ]
+
+        return []
+
+
 class ValueIn(ValuePredicateBase):
     """
     Report INVALID_OPTION_VALUE when a value is not in a set of allowed values

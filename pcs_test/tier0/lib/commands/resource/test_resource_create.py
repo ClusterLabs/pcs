@@ -399,6 +399,28 @@ class CreateRolesNormalization(TestCase):
             instance_attributes={},
         )
 
+    def assert_deprecated_reports(
+        self,
+        promoted_deprecated=const.PCMK_ROLE_PROMOTED_LEGACY,
+        unpromoted_deprecated=const.PCMK_ROLE_UNPROMOTED_LEGACY,
+    ):
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.DEPRECATED_OPTION_VALUE,
+                    option_name="role",
+                    deprecated_value=promoted_deprecated,
+                    replaced_by=const.PCMK_ROLE_PROMOTED,
+                ),
+                fixture.warn(
+                    reports.codes.DEPRECATED_OPTION_VALUE,
+                    option_name="role",
+                    deprecated_value=unpromoted_deprecated,
+                    replaced_by=const.PCMK_ROLE_UNPROMOTED,
+                ),
+            ]
+        )
+
     def test_roles_normalization_user_defined(self):
         self.prepare(True, False)
         self.config.env.push_cib(
@@ -408,12 +430,14 @@ class CreateRolesNormalization(TestCase):
                 )
             )
         )
+        promoted_role = str(const.PCMK_ROLE_PROMOTED_LEGACY).lower()
         self.create(
             [
-                dict(name="start", role=const.PCMK_ROLE_PROMOTED_LEGACY),
+                dict(name="start", role=promoted_role),
                 dict(name="stop", role=const.PCMK_ROLE_UNPROMOTED_LEGACY),
             ]
         )
+        self.assert_deprecated_reports(promoted_deprecated=promoted_role)
 
     def test_roles_normalization_user_defined_new_roles(self):
         self.prepare(True, False)
@@ -427,7 +451,7 @@ class CreateRolesNormalization(TestCase):
         self.create(
             [
                 dict(name="start", role=const.PCMK_ROLE_PROMOTED),
-                dict(name="stop", role=const.PCMK_ROLE_UNPROMOTED),
+                dict(name="stop", role=str(const.PCMK_ROLE_UNPROMOTED).lower()),
             ]
         )
 
@@ -438,12 +462,14 @@ class CreateRolesNormalization(TestCase):
                 fixture_cib_primitive_stateful(include_reload=False)
             )
         )
+        unpromoted_role = str(const.PCMK_ROLE_UNPROMOTED_LEGACY).lower()
         self.create(
             [
                 dict(name="start", role=const.PCMK_ROLE_PROMOTED_LEGACY),
-                dict(name="stop", role=const.PCMK_ROLE_UNPROMOTED_LEGACY),
+                dict(name="stop", role=unpromoted_role),
             ]
         )
+        self.assert_deprecated_reports(unpromoted_deprecated=unpromoted_role)
 
     def test_roles_normalization_user_defined_new_roles_with_cib_support(self):
         self.prepare(True, True)
@@ -454,7 +480,7 @@ class CreateRolesNormalization(TestCase):
         )
         self.create(
             [
-                dict(name="start", role=const.PCMK_ROLE_PROMOTED),
+                dict(name="start", role=str(const.PCMK_ROLE_PROMOTED).lower()),
                 dict(name="stop", role=const.PCMK_ROLE_UNPROMOTED),
             ]
         )
@@ -472,6 +498,7 @@ class CreateRolesNormalization(TestCase):
                 dict(name="stop", role=const.PCMK_ROLE_UNPROMOTED_LEGACY),
             ]
         )
+        self.assert_deprecated_reports()
 
     def test_roles_normalization_agent_new_roles(self):
         self.prepare(False, False)
@@ -500,6 +527,7 @@ class CreateRolesNormalization(TestCase):
                 dict(name="stop", role=const.PCMK_ROLE_UNPROMOTED_LEGACY),
             ]
         )
+        self.assert_deprecated_reports()
 
     def test_roles_normalization_agent_new_roles_with_cib_support(self):
         self.prepare(False, True)

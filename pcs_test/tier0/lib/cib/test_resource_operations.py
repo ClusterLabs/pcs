@@ -74,11 +74,9 @@ class Prepare(TestCase):
             allow_invalid,
         )
 
-        operations_to_normalized.assert_called_once_with(
-            raw_operation_list, new_role_names_supported
-        )
+        operations_to_normalized.assert_called_once_with(raw_operation_list)
         normalized_to_operations.assert_called_once_with(
-            operations_to_normalized.return_value
+            operations_to_normalized.return_value, new_role_names_supported
         )
         validate_operation_list.assert_called_once_with(
             operations_to_normalized.return_value,
@@ -240,7 +238,7 @@ class Normalize(TestCase):
         self.assertEqual(
             operation,
             {
-                key: operations._normalize(False)(key, value)
+                key: operations._normalize(key, value)
                 for key, value in operation.items()
             },
         )
@@ -256,7 +254,7 @@ class Normalize(TestCase):
                 "enabled": "1",
             },
             {
-                key: operations._normalize(False)(key, value)
+                key: operations._normalize(key, value)
                 for key, value in {
                     "name": "monitor",
                     "role": "master",
@@ -264,57 +262,6 @@ class Normalize(TestCase):
                     "on-fail": "Ignore",
                     "record-pending": "True",
                     "enabled": "1",
-                }.items()
-            },
-        )
-
-    def test_return_operation_with_normalized_values_new_role_to_legacy(self):
-        self.assertEqual(
-            {
-                "name": "monitor",
-                "role": const.PCMK_ROLE_UNPROMOTED_LEGACY,
-                "timeout": "10",
-            },
-            {
-                key: operations._normalize(False)(key, value)
-                for key, value in {
-                    "name": "monitor",
-                    "role": "unpromoted",
-                    "timeout": "10",
-                }.items()
-            },
-        )
-
-    def test_return_operation_with_normalized_values_new_role(self):
-        self.assertEqual(
-            {
-                "name": "monitor",
-                "role": const.PCMK_ROLE_PROMOTED_PRIMARY,
-                "timeout": "10",
-            },
-            {
-                key: operations._normalize(True)(key, value)
-                for key, value in {
-                    "name": "monitor",
-                    "role": const.PCMK_ROLE_PROMOTED,
-                    "timeout": "10",
-                }.items()
-            },
-        )
-
-    def test_return_operation_with_normalized_values_legacy_role_to_new(self):
-        self.assertEqual(
-            {
-                "name": "monitor",
-                "role": const.PCMK_ROLE_PROMOTED_PRIMARY,
-                "timeout": "10",
-            },
-            {
-                key: operations._normalize(True)(key, value)
-                for key, value in {
-                    "name": "monitor",
-                    "role": const.PCMK_ROLE_PROMOTED_LEGACY,
-                    "timeout": "10",
                 }.items()
             },
         )
@@ -333,7 +280,7 @@ class ValidateOperation(TestCase):
 
     def test_return_empty_report_on_valid_operation(self):
         self.assert_operation_produces_report(
-            {"name": "monitor", "role": "Master"}, []
+            {"name": "monitor", "role": const.PCMK_ROLE_UNPROMOTED}, []
         )
 
     def test_validate_all_individual_options(self):
@@ -451,7 +398,7 @@ class ValidateOperation(TestCase):
 
     def test_return_errror_when_missing_key_name(self):
         self.assert_operation_produces_report(
-            {"role": "Master"},
+            {"role": const.PCMK_ROLE_PROMOTED},
             [
                 (
                     severities.ERROR,
@@ -461,6 +408,22 @@ class ValidateOperation(TestCase):
                         "option_type": "resource operation",
                     },
                     None,
+                ),
+            ],
+        )
+
+    def test_return_legacy_role_deprecation(self):
+        self.assert_operation_produces_report(
+            {
+                "name": "monitor",
+                "role": const.PCMK_ROLE_PROMOTED_LEGACY,
+            },
+            [
+                fixture.warn(
+                    report_codes.DEPRECATED_OPTION_VALUE,
+                    option_name="role",
+                    deprecated_value=const.PCMK_ROLE_PROMOTED_LEGACY,
+                    replaced_by=const.PCMK_ROLE_PROMOTED,
                 ),
             ],
         )

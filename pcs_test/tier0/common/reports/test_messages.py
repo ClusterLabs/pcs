@@ -396,6 +396,28 @@ class DeprecatedOption(NameBuildTest):
         )
 
 
+class DeprecatedOptionValue(NameBuildTest):
+    def test_replaced_by(self):
+        self.assert_message_from_report(
+            (
+                "Value 'deprecatedValue' of option optionA is deprecated and "
+                "should not be used, use 'newValue' value instead."
+            ),
+            reports.DeprecatedOptionValue(
+                "optionA", "deprecatedValue", "newValue"
+            ),
+        )
+
+    def test_no_replacement(self):
+        self.assert_message_from_report(
+            (
+                "Value 'deprecatedValue' of option optionA is deprecated and "
+                "should not be used"
+            ),
+            reports.DeprecatedOptionValue("optionA", "deprecatedValue"),
+        )
+
+
 class MutuallyExclusiveOptions(NameBuildTest):
     def test_build_message(self):
         self.assert_message_from_report(

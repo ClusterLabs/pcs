@@ -65,17 +65,14 @@ BOOLEAN_VALUES = [
 _DEFAULT_INTERVALS = {"monitor": "60s"}
 
 # _normalize(key, value) -> normalized_value
-def _normalize(new_role_names_supported):
-    return validate.option_value_normalization(
-        {
-            "role": lambda value: pacemaker.role.get_value_for_cib(
-                value.lower().capitalize(), new_role_names_supported
-            ),
-            "on-fail": lambda value: value.lower(),
-            "record-pending": lambda value: value.lower(),
-            "enabled": lambda value: value.lower(),
-        }
-    )
+_normalize = validate.option_value_normalization(
+    {
+        "role": lambda value: value.capitalize(),
+        "on-fail": lambda value: value.lower(),
+        "record-pending": lambda value: value.lower(),
+        "enabled": lambda value: value.lower(),
+    }
+)
 
 
 def _get_default_interval(operation_name: str) -> str:
@@ -121,9 +118,7 @@ def prepare(
     allowed_operation_name_list -- operation names defined by a resource agent
     allow_invalid -- flag for validation skipping
     """
-    operations_to_validate = _operations_to_normalized(
-        raw_operation_list, new_role_names_supported
-    )
+    operations_to_validate = _operations_to_normalized(raw_operation_list)
 
     report_list: ReportItemList = []
     report_list.extend(
@@ -132,7 +127,9 @@ def prepare(
         )
     )
 
-    operation_list = _normalized_to_operations(operations_to_validate)
+    operation_list = _normalized_to_operations(
+        operations_to_validate, new_role_names_supported
+    )
 
     report_list.extend(validate_different_intervals(operation_list))
 
@@ -147,16 +144,23 @@ def prepare(
     )
 
 
-def _operations_to_normalized(raw_operation_list, new_role_names_supported):
-    normalize_callback = _normalize(new_role_names_supported)
+def _operations_to_normalized(raw_operation_list):
     return [
-        validate.values_to_pairs(op, normalize_callback)
-        for op in raw_operation_list
+        validate.values_to_pairs(op, _normalize) for op in raw_operation_list
     ]
 
 
-def _normalized_to_operations(normalized_pairs):
-    return [validate.pairs_to_values(op) for op in normalized_pairs]
+def _normalized_to_operations(normalized_pairs, new_role_names_supported):
+    def _replace_role(op_dict):
+        if "role" in op_dict:
+            op_dict["role"] = pacemaker.role.get_value_for_cib(
+                op_dict["role"], new_role_names_supported
+            )
+        return op_dict
+
+    return [
+        _replace_role(validate.pairs_to_values(op)) for op in normalized_pairs
+    ]
 
 
 def _validate_operation_list(
@@ -175,6 +179,14 @@ def _validate_operation_list(
             severity=severity,
         ),
         validate.ValueIn("role", const.PCMK_ROLES),
+        validate.ValueDeprecated(
+            "role",
+            {
+                const.PCMK_ROLE_PROMOTED_LEGACY: const.PCMK_ROLE_PROMOTED,
+                const.PCMK_ROLE_UNPROMOTED_LEGACY: const.PCMK_ROLE_UNPROMOTED,
+            },
+            reports.ReportItemSeverity.warning(),
+        ),
         validate.ValueIn("on-fail", ON_FAIL_VALUES),
         validate.ValueIn("record-pending", BOOLEAN_VALUES),
         validate.ValueIn("enabled", BOOLEAN_VALUES),

@@ -873,7 +873,7 @@ Create a location constraint on a resource to prefer the specified node with sco
 location <resource> avoids <node>[=<score>] [<node>[=<score>]]...
 Create a location constraint on a resource to avoid the specified node with score (default score: INFINITY). Resource may be either a resource id <resource_id> or %<resource_id> or resource%<resource_id>, or a resource name regular expression regexp%<resource_pattern>.
 .TP
-location <resource> rule [id=<rule id>] [resource\-discovery=<option>] [role=master|slave] [constraint\-id=<id>] [score=<score> | score\-attribute=<attribute>] <expression>
+location <resource> rule [id=<rule id>] [resource\-discovery=<option>] [role=Promoted|Unpromoted] [constraint\-id=<id>] [score=<score> | score\-attribute=<attribute>] <expression>
 Creates a location constraint with a rule on the specified resource where expression looks like one of the following:
 .br
   defined|not_defined <node attribute>
@@ -925,10 +925,10 @@ colocation [config | show] [\fB\-\-full\fR]
 List all current colocation constraints (if \fB\-\-full\fR is specified show the internal constraint id's as well).
 .TP
 colocation add [<role>] <source resource id> with [<role>] <target resource id> [score] [options] [id=constraint\-id]
-Request <source resource> to run on the same node where pacemaker has determined <target resource> should run.  Positive values of score mean the resources should be run on the same node, negative values mean the resources should not be run on the same node.  Specifying 'INFINITY' (or '\-INFINITY') for the score forces <source resource> to run (or not run) with <target resource> (score defaults to "INFINITY"). A role can be: 'Master', 'Slave', 'Started', 'Stopped' (if no role is specified, it defaults to 'Started').
+Request <source resource> to run on the same node where pacemaker has determined <target resource> should run.  Positive values of score mean the resources should be run on the same node, negative values mean the resources should not be run on the same node.  Specifying 'INFINITY' (or '\-INFINITY') for the score forces <source resource> to run (or not run) with <target resource> (score defaults to "INFINITY"). A role can be: 'Promoted', 'Unpromoted', 'Started', 'Stopped' (if no role is specified, it defaults to 'Started').
 .TP
 colocation set <resource1> [resourceN]... [options] [set <resourceX> ... [options]] [setoptions [constraint_options]]
-Create a colocation constraint with a resource set. Available options are sequential=true/false and role=Stopped/Started/Master/Slave. Available constraint_options are id and either of: score, score\-attribute, score\-attribute\-mangle.
+Create a colocation constraint with a resource set. Available options are sequential=true/false and role=Stopped/Started/Promoted/Unpromoted. Available constraint_options are id and either of: score, score\-attribute, score\-attribute\-mangle.
 .TP
 colocation delete <source resource id> <target resource id>
 Remove colocation constraints with specified resources.
@@ -940,10 +940,10 @@ ticket [config | show] [\fB\-\-full\fR]
 List all current ticket constraints (if \fB\-\-full\fR is specified show the internal constraint id's as well).
 .TP
 ticket add <ticket> [<role>] <resource id> [<options>] [id=<constraint\-id>]
-Create a ticket constraint for <resource id>. Available option is loss\-policy=fence/stop/freeze/demote. A role can be master, slave, started or stopped.
+Create a ticket constraint for <resource id>. Available option is loss\-policy=fence/stop/freeze/demote. A role can be Promoted, Unpromoted, Started or Stopped.
 .TP
 ticket set <resource1> [<resourceN>]... [<options>] [set <resourceX> ... [<options>]] setoptions <constraint_options>
-Create a ticket constraint with a resource set. Available options are role=Stopped/Started/Master/Slave. Required constraint option is ticket=<ticket>. Optional constraint options are id=<constraint\-id> and loss\-policy=fence/stop/freeze/demote.
+Create a ticket constraint with a resource set. Available options are role=Stopped/Started/Promoted/Unpromoted. Required constraint option is ticket=<ticket>. Optional constraint options are id=<constraint\-id> and loss\-policy=fence/stop/freeze/demote.
 .TP
 ticket delete <ticket> <resource id>
 Remove all ticket constraints with <ticket> from <resource id>.
@@ -960,7 +960,7 @@ Remove constraint(s) or constraint rules with the specified id(s).
 ref <resource>...
 List constraints referencing specified resource.
 .TP
-rule add <constraint id> [id=<rule id>] [role=master|slave] [score=<score>|score\-attribute=<attribute>] <expression>
+rule add <constraint id> [id=<rule id>] [role=Promoted|Unpromoted] [score=<score>|score\-attribute=<attribute>] <expression>
 Add a rule to a location constraint specified by 'constraint id' where the expression looks like one of the following:
 .br
   defined|not_defined <node attribute>
@@ -1305,6 +1305,9 @@ no_proxy, https_proxy, all_proxy, NO_PROXY, HTTPS_PROXY, ALL_PROXY
  These environment variables (listed according to their priorities) control how pcs handles proxy servers when connecting to cluster nodes. See curl(1) man page for details.
 .SH CHANGES IN PCS-0.11
 This section summarizes the most important changes in commands done in pcs-0.11.x compared to pcs-0.10.x. For detailed description of current commands see above.
+.SS "legacy role names"
+.TP
+Roles 'Master' and 'Slave' are deprecated and should not be used anymore. Instead use 'Promoted' and 'Unpromoted' respectively.
 .SS "resource"
 .TP
 move

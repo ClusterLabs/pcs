@@ -656,6 +656,35 @@ class DeprecatedOption(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class DeprecatedOptionValue(ReportItemMessage):
+    """
+    Specified option value is deprecated and has been replaced by other value
+
+    option_name -- option which value is deprecated
+    deprecated_value -- value which should not be used anymore
+    replaced_by -- new value to be used instead
+    """
+
+    option_name: str
+    deprecated_value: str
+    replaced_by: Optional[str] = None
+    _code = codes.DEPRECATED_OPTION_VALUE
+
+    @property
+    def message(self) -> str:
+        return (
+            "Value '{deprecated_value}' of option {option_name} is deprecated "
+            "and should not be used{replaced_by}"
+        ).format(
+            deprecated_value=self.deprecated_value,
+            option_name=self.option_name,
+            replaced_by=format_optional(
+                self.replaced_by, f", use '{self.replaced_by}' value instead."
+            ),
+        )
+
+
+@dataclass(frozen=True)
 class MutuallyExclusiveOptions(ReportItemMessage):
     """
     Entered options can not coexist
