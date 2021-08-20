@@ -2013,6 +2013,52 @@ def get_terminal_input(message=None):
         sys.exit(1)
 
 
+def _get_continue_confirmation(warning_text: str) -> bool:
+    """
+    Warns user and asks for permission to continue. Returns True if user wishes
+    to continue, False otherwise.
+
+    This function is mostly intended for prompting user to confirm destructive
+    operations - that's why WARNING is in all caps here and user is asked to
+    explicitly type 'yes' or 'y' to continue.
+
+    warning_text -- describes action that we want the user to confirm
+    """
+    print(f"WARNING: {warning_text}")
+    print("Type 'yes' or 'y' to proceed, anything else to cancel: ", end="")
+    response = get_terminal_input()
+    if response in ["yes", "y"]:
+        return True
+    print("Canceled")
+    return False
+
+
+def is_run_interactive() -> bool:
+    """
+    Return True if pcs is running in an interactive environment, False otherwise
+    """
+    return sys.stdin.isatty() and sys.stdout.isatty()
+
+
+def get_continue_confirmation_or_force(warning_text: str, force: bool) -> bool:
+    """
+    Either asks user to confirm continuation interactively or use --force to
+    override when running from a script. Returns True if user wants to continue.
+    Returns False if user cancels the action. If a non-interactive environment
+    is detected, pcs exits with an error formed from warning_text.
+
+    warning_text -- describes action that we want the user to confirm
+    force -- was force flag provided?
+    """
+    if force:
+        reports_output.warn(warning_text)
+        return True
+    if not is_run_interactive():
+        err(f"{warning_text}, use --force to override")
+        return False
+    return _get_continue_confirmation(warning_text)
+
+
 def get_terminal_password(message="Password: "):
     """
     Commandline options: no options

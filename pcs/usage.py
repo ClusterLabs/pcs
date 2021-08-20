@@ -1214,14 +1214,15 @@ Commands:
     reload corosync
         Reload the corosync configuration on the current node.
 
-    destroy [--all]
+    destroy [--all] [--force]
         Permanently destroy the cluster on the current node, killing all
         cluster processes and removing all cluster configuration files. Using
         --all will attempt to destroy the cluster on all nodes in the local
         cluster.
         WARNING: This command permanently removes any cluster configuration that
         has been created. It is recommended to run 'pcs cluster stop' before
-        destroying the cluster.
+        destroying the cluster. To prevent accidental running of this command,
+        --force or interactive user response is required in order to proceed.
 
     verify [--full] [-f <filename>]
         Checks the pacemaker configuration (CIB) for syntax and common

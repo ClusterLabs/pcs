@@ -626,10 +626,10 @@ Get the corosync.conf from the specified node or from the current node if node n
 reload corosync
 Reload the corosync configuration on the current node.
 .TP
-destroy [\fB\-\-all\fR]
+destroy [\fB\-\-all\fR] [\fB\-\-force\fR]
 Permanently destroy the cluster on the current node, killing all cluster processes and removing all cluster configuration files. Using \fB\-\-all\fR will attempt to destroy the cluster on all nodes in the local cluster.
 
-\fBWARNING:\fR This command permanently removes any cluster configuration that has been created. It is recommended to run 'pcs cluster stop' before destroying the cluster.
+\fBWARNING:\fR This command permanently removes any cluster configuration that has been created. It is recommended to run 'pcs cluster stop' before destroying the cluster. To prevent accidental running of this command, \fB\-\-force\fR or interactive user response is required in order to proceed.
 .TP
 verify [\fB\-\-full\fR] [\fB\-f\fR <filename>]
 Checks the pacemaker configuration (CIB) for syntax and common conceptual errors. If no filename is specified the check is performed on the currently running cluster. If \fB\-\-full\fR is used more verbose output will be printed.
