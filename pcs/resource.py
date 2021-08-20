@@ -809,19 +809,16 @@ def _parse_resource_move_ban(argv):
     return resource_id, node, lifetime
 
 
-def resource_move(lib: Any, argv: List[str], modifiers: InputModifiers):
+def resource_move_with_constraint(
+    lib: Any, argv: List[str], modifiers: InputModifiers
+):
     """
     Options:
       * -f - CIB file
       * --master
       * --wait
-      * --autodelete
-      * --strict
     """
-    modifiers.ensure_only_supported(
-        "-f", "--master", "--wait", "--autodelete", "--strict"
-    )
-    modifiers.ensure_dependency_satisfied("--autodelete", ["--strict"])
+    modifiers.ensure_only_supported("-f", "--master", "--wait")
 
     if not argv:
         raise CmdLineInputError("must specify a resource to move")
@@ -829,25 +826,48 @@ def resource_move(lib: Any, argv: List[str], modifiers: InputModifiers):
         raise CmdLineInputError()
     resource_id, node, lifetime = _parse_resource_move_ban(argv)
 
-    if modifiers.get("--autodelete"):
-        if lifetime is not None:
-            raise CmdLineInputError(
-                "Cannot set lifetime together with '--autodelete'"
-            )
-        lib.resource.move_autoclean(
-            resource_id,
-            node=node,
-            master=modifiers.is_specified("--master"),
-            wait_timeout=wait_to_timeout(modifiers.get("--wait")),
-            strict=modifiers.get("--strict"),
-        )
-        return
     lib.resource.move(
         resource_id,
         node=node,
         master=modifiers.is_specified("--master"),
         lifetime=lifetime,
         wait=modifiers.get("--wait"),
+    )
+
+
+def resource_move(lib: Any, argv: List[str], modifiers: InputModifiers):
+    """
+    Options:
+      * --master
+      * --wait
+      * --autodelete - deprecated, not needed anymore
+      * --strict
+    """
+    modifiers.ensure_only_supported(
+        "--master", "--wait", "--autodelete", "--strict"
+    )
+
+    if not argv:
+        raise CmdLineInputError("must specify a resource to move")
+    resource_id = argv.pop(0)
+    node = None
+    if argv:
+        node = argv.pop(0)
+    if argv:
+        raise CmdLineInputError()
+
+    if modifiers.is_specified("--autodelete"):
+        warn(
+            "Option '--autodelete' is deprecated. There is no need to use it "
+            "as its functionallity is default now."
+        )
+
+    lib.resource.move_autoclean(
+        resource_id,
+        node=node,
+        master=modifiers.is_specified("--master"),
+        wait_timeout=wait_to_timeout(modifiers.get("--wait")),
+        strict=modifiers.get("--strict"),
     )
 
 

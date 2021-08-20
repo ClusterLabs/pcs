@@ -13,6 +13,8 @@
 - All errors, warning and progress related output is now printed to stderr
   instead of stdout
 - Make roles `Promoted` and `Unpromoted` default
+- Make auto-deleting constraint default for `pcs resource move` command
+  ([rhbz#1996062])
 
 ### Removed
 - Deprecated obsolete commands `pcs config import-cman` and `pcs config export
@@ -24,6 +26,7 @@
 [rhbz#1283805]: https://bugzilla.redhat.com/show_bug.cgi?id=1283805
 [rhbz#1881064]: https://bugzilla.redhat.com/show_bug.cgi?id=1881064
 [rhbz#1985981]: https://bugzilla.redhat.com/show_bug.cgi?id=1985981
+[rhbz#1996062]: https://bugzilla.redhat.com/show_bug.cgi?id=1996062
 
 
 ## [0.10.10] - 2021-08-19

@@ -2779,7 +2779,10 @@ monitor interval=20 (A-monitor-interval-20)
 """,
             )
 
-        o, r = pcs(self.temp_cib.name, "resource move DGroup rh7-1".split())
+        o, r = pcs(
+            self.temp_cib.name,
+            "resource move-with-constraint DGroup rh7-1".split(),
+        )
         ac(o, "")
         assert r == 0
 

@@ -364,14 +364,44 @@ Commands:
         monitoring the resource.  Using --full will give more detailed output.
         This is mainly used for debugging resources that fail to be monitored.
 
-    move <resource id> [destination node] [--master]
-            [[lifetime=<lifetime>] | [--autodelete [--strict]]] [--wait[=n]]
+    move <resource id> [destination node] [--master] [--strict] [--wait[=n]]
+        Move the resource off the node it is currently running on. This is
+        achieved by creating a -INFINITY location constraint to ban the node.
+        If destination node is specified the resource will be moved to that
+        node by creating an INFINITY location constraint to prefer the
+        destination node. The constraint needed for moving the resource will be
+        automatically removed once the resource is running on it's new
+        location. The command will fail in case it is not possible to verify
+        that the resource will not be moved back after deleting the constraint.
+
+        If --strict is specified, the command will also fail if other resources
+        would be affected.
+
+        If --master is used the scope of the command is limited to the master
+        role and you must use the promotable clone id (instead of the resource
+        id).
+
+        If --wait is specified, pcs will wait up to 'n' seconds for the
+        resource to move and then return 0 on success or 1 on error. If 'n' is
+        not specified it defaults to 60 minutes.
+
+        NOTE: This feature is still being worked on and thus may be changed in
+        future.
+
+        NOTE: This command has been changed in pcs-0.11. It is equivalent to
+        command 'resource move <resource-id> --autodelete' from pcs-0.10.9.
+        Legacy functionality of the 'resource move' command is still available
+        as 'resource move-with-constraint <resource-id>'.
+
+        If you want the resource to preferably avoid running on some nodes but
+        be able to failover to them use 'pcs constraint location avoids'.
+
+    move-with-constraint <resource id> [destination node] [lifetime=<lifetime>]
+             [--master] [--wait[=n]]
         Move the resource off the node it is currently running on by creating
         a -INFINITY location constraint to ban the node. If destination node is
         specified the resource will be moved to that node by creating
-        an INFINITY location constraint to prefer the destination node. If
-        --master is used the scope of the command is limited to the master role
-        and you must use the promotable clone id (instead of the resource id).
+        an INFINITY location constraint to prefer the destination node.
 
         If lifetime is specified then the constraint will expire after that
         time, otherwise it defaults to infinity and the constraint can be
@@ -379,14 +409,9 @@ Commands:
         Lifetime is expected to be specified as ISO 8601 duration (see
         https://en.wikipedia.org/wiki/ISO_8601#Durations).
 
-        If --autodelete is specified, a constraint needed for moving the
-        resource will be automatically removed once the resource is running on
-        it's new location. The command will fail in case it is not possible to
-        verify that the resource will not be moved after deleting the
-        constraint. If --strict is specified, the command will also fail if
-        other resources would be affected.
-        NOTE: This feature is still being worked on and thus may be changed in
-        future.
+        If --master is used the scope of the command is limited to the master
+        role and you must use the promotable clone id (instead of the resource
+        id).
 
         If --wait is specified, pcs will wait up to 'n' seconds for the
         resource to move and then return 0 on success or 1 on error. If 'n' is

@@ -90,6 +90,7 @@ resource_cmd = create_router(
         "describe": resource.resource_list_options,
         "create": resource.resource_create,
         "move": resource.resource_move,
+        "move-with-constraint": resource.resource_move_with_constraint,
         "ban": resource.resource_ban,
         "clear": resource.resource_unmove_unban,
         "standards": resource.resource_standards,
