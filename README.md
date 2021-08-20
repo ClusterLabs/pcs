@@ -2,7 +2,7 @@
 
 Pcs is a Corosync and Pacemaker configuration tool. It permits users to
 easily view, modify and create Pacemaker based clusters. Pcs contains pcsd, a
-pcs daemon, which operates as a remote server for pcs and provides a web UI.
+pcs daemon, which operates as a remote server for pcs.
 
 ---
 
@@ -44,11 +44,6 @@ These are the runtime dependencies of pcs and pcsd:
 * corosync 3.x
 * pacemaker 2.1+
 
-It is also recommended to have these:
-* liberation fonts (package liberation-sans-fonts or fonts-liberation or
-  fonts-liberation2)
-* overpass fonts (package overpass-fonts)
-
 ---
 
 ### Installation from Source
@@ -65,7 +60,6 @@ installation:
 * gcc
 * gcc-c++
 * FFI development files (package libffi-devel or libffi-dev)
-* fontconfig
 * printf (package coreutils)
 * redhat-rpm-config (if you are using Fedora)
 * wget (to download bundled libraries)
@@ -151,18 +145,6 @@ derivates.
    ```shell
    pcs resource create --help
    ```
-
----
-
-### Accessing the Web UI
-
-Apart from command line interface you can use web user interface to view and
-configure your cluster. To access the web UI open a browser to the following
-URL (replace nodename with an address of your node):
-```
-https://nodename:2224
-```
-Login as the `hacluster` user.
 
 ---
 

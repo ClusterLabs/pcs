@@ -626,42 +626,6 @@ def get_nodes_status()
   }
 end
 
-# TODO remove, used only to load data into an old web UI template
-def get_resource_agents_avail(auth_user, params)
-  code, result = send_cluster_request_with_token(
-    auth_user, params[:cluster], 'get_avail_resource_agents'
-  )
-  return [] if 200 != code
-  begin
-    ra = JSON.parse(result)
-    if (ra["noresponse"] == true) or (ra["notauthorized"] == "true") or (ra["notoken"] == true) or (ra["pacemaker_not_running"] == true)
-      return []
-    else
-      return ra.keys
-    end
-  rescue JSON::ParserError
-    return []
-  end
-end
-
-# TODO remove, used only to load data into an old web UI template
-def get_stonith_agents_avail(auth_user, params)
-  code, result = send_cluster_request_with_token(
-    auth_user, params[:cluster], 'get_avail_fence_agents'
-  )
-  return {} if 200 != code
-  begin
-    sa = JSON.parse(result)
-    if (sa["noresponse"] == true) or (sa["notauthorized"] == "true") or (sa["notoken"] == true) or (sa["pacemaker_not_running"] == true)
-      return {}
-    else
-      return sa
-    end
-  rescue JSON::ParserError
-    return {}
-  end
-end
-
 def get_cluster_name()
   if has_corosync_conf()
     corosync_conf = CorosyncConf::parse_string(
