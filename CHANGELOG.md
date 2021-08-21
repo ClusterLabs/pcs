@@ -25,6 +25,7 @@
 
 ### Deprecated
 - Legacy role names `Master` and `Slave`
+- Option `--master` is deprecated and has been replaced by option `--promoted`
 
 [rhbz#1283805]: https://bugzilla.redhat.com/show_bug.cgi?id=1283805
 [rhbz#1881064]: https://bugzilla.redhat.com/show_bug.cgi?id=1881064

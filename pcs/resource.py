@@ -815,10 +815,10 @@ def resource_move_with_constraint(
     """
     Options:
       * -f - CIB file
-      * --master
+      * --promoted
       * --wait
     """
-    modifiers.ensure_only_supported("-f", "--master", "--wait")
+    modifiers.ensure_only_supported("-f", "--promoted", "--wait")
 
     if not argv:
         raise CmdLineInputError("must specify a resource to move")
@@ -829,7 +829,7 @@ def resource_move_with_constraint(
     lib.resource.move(
         resource_id,
         node=node,
-        master=modifiers.is_specified("--master"),
+        master=modifiers.is_specified("--promoted"),
         lifetime=lifetime,
         wait=modifiers.get("--wait"),
     )
@@ -838,13 +838,13 @@ def resource_move_with_constraint(
 def resource_move(lib: Any, argv: List[str], modifiers: InputModifiers):
     """
     Options:
-      * --master
+      * --promoted
       * --wait
       * --autodelete - deprecated, not needed anymore
       * --strict
     """
     modifiers.ensure_only_supported(
-        "--master", "--wait", "--autodelete", "--strict"
+        "--wait", "--autodelete", "--strict", "--promoted"
     )
 
     if not argv:
@@ -865,7 +865,7 @@ def resource_move(lib: Any, argv: List[str], modifiers: InputModifiers):
     lib.resource.move_autoclean(
         resource_id,
         node=node,
-        master=modifiers.is_specified("--master"),
+        master=modifiers.is_specified("--promoted"),
         wait_timeout=wait_to_timeout(modifiers.get("--wait")),
         strict=modifiers.get("--strict"),
     )
@@ -875,10 +875,10 @@ def resource_ban(lib, argv, modifiers):
     """
     Options:
       * -f - CIB file
-      * --master
+      * --promoted
       * --wait
     """
-    modifiers.ensure_only_supported("-f", "--master", "--wait")
+    modifiers.ensure_only_supported("-f", "--promoted", "--wait")
 
     if not argv:
         raise CmdLineInputError("must specify a resource to ban")
@@ -889,7 +889,7 @@ def resource_ban(lib, argv, modifiers):
     lib.resource.ban(
         resource_id,
         node=node,
-        master=modifiers.is_specified("--master"),
+        master=modifiers.is_specified("--promoted"),
         lifetime=lifetime,
         wait=modifiers.get("--wait"),
     )
@@ -899,10 +899,10 @@ def resource_unmove_unban(lib, argv, modifiers):
     """
     Options:
       * -f - CIB file
-      * --master
+      * --promoted
       * --wait
     """
-    modifiers.ensure_only_supported("-f", "--expired", "--master", "--wait")
+    modifiers.ensure_only_supported("-f", "--expired", "--promoted", "--wait")
 
     if not argv:
         raise CmdLineInputError("must specify a resource to clear")
@@ -914,7 +914,7 @@ def resource_unmove_unban(lib, argv, modifiers):
     lib.resource.unmove_unban(
         resource_id,
         node=node,
-        master=modifiers.is_specified("--master"),
+        master=modifiers.is_specified("--promoted"),
         expired=modifiers.is_specified("--expired"),
         wait=modifiers.get("--wait"),
     )

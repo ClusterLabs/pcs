@@ -604,7 +604,7 @@ class InputModifiersTest(TestCase):
             "--groups",
             "--hide-inactive",
             "--local",
-            "--master",
+            "--promoted",
             "--monitor",
             "--no-default-ops",
             "--no-expire-check",

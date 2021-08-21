@@ -51,7 +51,8 @@ PCS_LONG_OPTIONS = [
     "no-default-ops",
     "defaults",
     "nodesc",
-    "master",
+    "master",  # deprecated, replaced by --promoted
+    "promoted",
     "name=",
     "group=",
     "node=",
@@ -475,7 +476,7 @@ class InputModifiers:
                 "--groups": "--groups" in options,
                 "--hide-inactive": "--hide-inactive" in options,
                 "--local": "--local" in options,
-                "--master": "--master" in options,
+                "--promoted": "--promoted" in options,
                 "--monitor": "--monitor" in options,
                 "--no-default-ops": "--no-default-ops" in options,
                 "--nodesc": "--nodesc" in options,

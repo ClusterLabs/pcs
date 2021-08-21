@@ -364,7 +364,7 @@ Commands:
         monitoring the resource.  Using --full will give more detailed output.
         This is mainly used for debugging resources that fail to be monitored.
 
-    move <resource id> [destination node] [--master] [--strict] [--wait[=n]]
+    move <resource id> [destination node] [--promoted] [--strict] [--wait[=n]]
         Move the resource off the node it is currently running on. This is
         achieved by creating a -INFINITY location constraint to ban the node.
         If destination node is specified the resource will be moved to that
@@ -377,9 +377,9 @@ Commands:
         If --strict is specified, the command will also fail if other resources
         would be affected.
 
-        If --master is used the scope of the command is limited to the master
-        role and you must use the promotable clone id (instead of the resource
-        id).
+        If --promoted is used the scope of the command is limited to the
+        Promoted role and promotable clone id must be used (instead of the
+        resource id).
 
         If --wait is specified, pcs will wait up to 'n' seconds for the
         resource to move and then return 0 on success or 1 on error. If 'n' is
@@ -397,7 +397,7 @@ Commands:
         be able to failover to them use 'pcs constraint location avoids'.
 
     move-with-constraint <resource id> [destination node] [lifetime=<lifetime>]
-             [--master] [--wait[=n]]
+             [--promoted] [--wait[=n]]
         Move the resource off the node it is currently running on by creating
         a -INFINITY location constraint to ban the node. If destination node is
         specified the resource will be moved to that node by creating
@@ -409,9 +409,9 @@ Commands:
         Lifetime is expected to be specified as ISO 8601 duration (see
         https://en.wikipedia.org/wiki/ISO_8601#Durations).
 
-        If --master is used the scope of the command is limited to the master
-        role and you must use the promotable clone id (instead of the resource
-        id).
+        If --promoted is used the scope of the command is limited to the
+        Promoted role and promotable clone id must be used (instead of the
+        resource id).
 
         If --wait is specified, pcs will wait up to 'n' seconds for the
         resource to move and then return 0 on success or 1 on error. If 'n' is
@@ -420,12 +420,14 @@ Commands:
         If you want the resource to preferably avoid running on some nodes but
         be able to failover to them use 'pcs constraint location avoids'.
 
-    ban <resource id> [node] [--master] [lifetime=<lifetime>] [--wait[=n]]
+    ban <resource id> [node] [--promoted] [lifetime=<lifetime>] [--wait[=n]]
         Prevent the resource id specified from running on the node (or on the
         current node it is running on if no node is specified) by creating
-        a -INFINITY location constraint. If --master is used the scope of the
-        command is limited to the master role and you must use the promotable
-        clone id (instead of the resource id).
+        a -INFINITY location constraint.
+
+        If --promoted is used the scope of the command is limited to the
+        Promoted role and promotable clone id must be used (instead of the
+        resource id).
 
         If lifetime is specified then the constraint will expire after that
         time, otherwise it defaults to infinity and the constraint can be
@@ -440,13 +442,17 @@ Commands:
         If you want the resource to preferably avoid running on some nodes but
         be able to failover to them use 'pcs constraint location avoids'.
 
-    clear <resource id> [node] [--master] [--expired] [--wait[=n]]
+    clear <resource id> [node] [--promoted] [--expired] [--wait[=n]]
         Remove constraints created by move and/or ban on the specified
         resource (and node if specified).
-        If --master is used the scope of the command is limited to the master
-        role and you must use the master id (instead of the resource id).
+
+        If --promoted is used the scope of the command is limited to the
+        Promoted role and promotable clone id must be used (instead of the
+        resource id).
+
         If --expired is specified, only constraints with expired lifetimes will
         be removed.
+
         If --wait is specified, pcs will wait up to 'n' seconds for the
         operation to finish (including starting and/or moving resources if
         appropriate) and then return 0 on success or 1 on error. If 'n' is not
