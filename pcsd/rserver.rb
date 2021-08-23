@@ -26,7 +26,6 @@ class TornadoCommunicationMiddleware
           session = JSON.parse(Base64.strict_decode64(env["HTTP_X_PCSD_PAYLOAD"]))
           Thread.current[:tornado_username] = session["username"]
           Thread.current[:tornado_groups] = session["groups"]
-          Thread.current[:tornado_is_authenticated] = session["is_authenticated"]
         end
 
         status, headers, body = @app.call(env)

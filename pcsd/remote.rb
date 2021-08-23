@@ -193,6 +193,24 @@ def remote(params, request, auth_user)
   end
 end
 
+def _get_param_list(params)
+  param_line = []
+  meta_options = []
+  params.each { |param, val|
+    if param.start_with?("_res_paramne_") or (param.start_with?("_res_paramempty_") and val != "")
+      myparam = param.sub(/^_res_paramne_/,"").sub(/^_res_paramempty_/,"")
+      param_line << "#{myparam}=#{val}"
+    end
+    if param == "disabled"
+      meta_options << 'meta' << 'target-role=Stopped'
+    end
+    if param == "force" and val
+      param_line << "--force"
+    end
+  }
+  return param_line + meta_options
+end
+
 def capabilities(params, request, auth_user)
   return JSON.generate({
     :pcsd_capabilities => CAPABILITIES_PCSD,
@@ -1220,7 +1238,7 @@ def update_resource (params, request, auth_user)
     return 403, 'Permission denied'
   end
 
-  param_line = getParamList(params)
+  param_line = _get_param_list(params)
   if not params[:resource_id]
     cmd = [PCS, "resource", "create", params[:name], params[:resource_type]]
     cmd += param_line
@@ -1320,7 +1338,7 @@ def update_fence_device(params, request, auth_user)
 
   $logger.info "Updating fence device"
   $logger.info params
-  param_line = getParamList(params)
+  param_line = _get_param_list(params)
   $logger.info param_line
 
   if not params[:resource_id]

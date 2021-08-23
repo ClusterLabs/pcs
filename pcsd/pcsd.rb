@@ -54,14 +54,14 @@ end
 before do
   # nobody is logged in yet
   @auth_user = nil
-  @tornado_session_username = Thread.current[:tornado_username]
-  @tornado_session_groups = Thread.current[:tornado_groups]
-  @tornado_is_authenticated = Thread.current[:tornado_is_authenticated]
 
   if(request.path.start_with?('/remote/') and request.path != "/remote/auth") or request.path == '/run_pcs' or request.path.start_with?('/api/')
     # Sets @auth_user to a hash containing info about logged in user or halts
     # the request processing if login credentials are incorrect.
-    protect_by_token!
+    @auth_user = PCSAuth.loginByToken(request.cookies)
+    unless @auth_user
+      halt [401, '{"notauthorized":"true"}']
+    end
   else
     # Set a sane default: nobody is logged in, but we do not need to check both
     # for nil and empty username (if auth_user and auth_user[:username])
@@ -117,37 +117,6 @@ def run_cfgsync
     return Cfgsync::ConfigSyncControl.sync_thread_interval()
   else
     return Cfgsync::ConfigSyncControl.sync_thread_interval_previous_not_connected()
-  end
-end
-
-helpers do
-  def is_ajax?
-    return request.env['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest'
-  end
-
-  def protect_by_token!
-    @auth_user = PCSAuth.loginByToken(request.cookies)
-    unless @auth_user
-      halt [401, '{"notauthorized":"true"}']
-    end
-  end
-
-  def getParamList(params)
-    param_line = []
-    meta_options = []
-    params.each { |param, val|
-      if param.start_with?("_res_paramne_") or (param.start_with?("_res_paramempty_") and val != "")
-        myparam = param.sub(/^_res_paramne_/,"").sub(/^_res_paramempty_/,"")
-        param_line << "#{myparam}=#{val}"
-      end
-      if param == "disabled"
-        meta_options << 'meta' << 'target-role=Stopped'
-      end
-      if param == "force" and val
-        param_line << "--force"
-      end
-    }
-    return param_line + meta_options
   end
 end
 
@@ -1551,14 +1520,4 @@ end
 
 def html2plain(text)
   return CGI.unescapeHTML(text).gsub(/<br[^>]*>/, "\n")
-end
-
-helpers do
-  def h(text)
-    Rack::Utils.escape_html(text)
-  end
-
-  def nl2br(text)
-    text.gsub(/\n/, "<br>")
-  end
 end
