@@ -401,7 +401,7 @@ class DeprecatedOptionValue(NameBuildTest):
         self.assert_message_from_report(
             (
                 "Value 'deprecatedValue' of option optionA is deprecated and "
-                "should not be used, use 'newValue' value instead."
+                "should not be used, use 'newValue' value instead"
             ),
             reports.DeprecatedOptionValue(
                 "optionA", "deprecatedValue", "newValue"

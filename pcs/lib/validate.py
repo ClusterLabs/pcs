@@ -34,6 +34,7 @@ from typing import (
     Callable,
     Container,
     cast,
+    Dict,
     Iterable,
     Mapping,
     NamedTuple,
@@ -65,7 +66,7 @@ _PCMK_DATESPEC_PART_RE = re.compile(r"^(?P<since>[0-9]+)(-(?P<until>[0-9]+))?$")
 
 TypeOptionName = str
 TypeOptionValue = str
-TypeOptionRawMap = Mapping[TypeOptionName, TypeOptionValue]
+TypeOptionRawMap = Dict[TypeOptionName, TypeOptionValue]
 TypeNormalizeFunc = Callable[[TypeOptionName, TypeOptionValue], TypeOptionValue]
 
 ### normalization

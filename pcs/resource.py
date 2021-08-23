@@ -838,13 +838,13 @@ def resource_move_with_constraint(
 def resource_move(lib: Any, argv: List[str], modifiers: InputModifiers):
     """
     Options:
-      * --promoted
-      * --wait
       * --autodelete - deprecated, not needed anymore
+      * --promoted
       * --strict
+      * --wait
     """
     modifiers.ensure_only_supported(
-        "--wait", "--autodelete", "--strict", "--promoted"
+        "--autodelete", "--promoted", "--strict", "--wait"
     )
 
     if not argv:

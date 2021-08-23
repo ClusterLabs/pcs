@@ -679,7 +679,7 @@ class DeprecatedOptionValue(ReportItemMessage):
             deprecated_value=self.deprecated_value,
             option_name=self.option_name,
             replaced_by=format_optional(
-                self.replaced_by, f", use '{self.replaced_by}' value instead."
+                self.replaced_by, f", use '{self.replaced_by}' value instead"
             ),
         )
 

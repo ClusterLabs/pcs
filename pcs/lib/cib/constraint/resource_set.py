@@ -13,14 +13,9 @@ from pcs.lib import validate
 from pcs.lib.errors import LibraryError
 from pcs.lib.xml_tools import export_attributes
 
-BOOLEAN_VALUES = ("true", "false")
+_BOOLEAN_VALUES = ("true", "false")
 
-ATTRIBUTES = (
-    "action",
-    "require-all",
-    "role",
-    "sequential",
-)
+_ATTRIBUTES = ("action", "require-all", "role", "sequential")
 
 
 def prepare_set(
@@ -41,11 +36,11 @@ def _validate_options(options) -> reports.ReportItemList:
     # Pacemaker does not care currently about meaningfulness for concrete
     # constraint, so we use all attribs.
     validators = [
-        validate.NamesIn(ATTRIBUTES, option_type="set"),
-        validate.ValueIn("sequential", BOOLEAN_VALUES),
-        validate.ValueIn("require-all", BOOLEAN_VALUES),
+        validate.NamesIn(_ATTRIBUTES, option_type="set"),
         validate.ValueIn("action", const.PCMK_ACTIONS),
+        validate.ValueIn("require-all", _BOOLEAN_VALUES),
         validate.ValueIn("role", const.PCMK_ROLES),
+        validate.ValueIn("sequential", _BOOLEAN_VALUES),
         validate.ValueDeprecated(
             "role",
             {

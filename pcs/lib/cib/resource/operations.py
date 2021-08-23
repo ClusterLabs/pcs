@@ -55,7 +55,7 @@ ON_FAIL_VALUES = [
     "stop",
 ]
 
-BOOLEAN_VALUES = [
+_BOOLEAN_VALUES = [
     "0",
     "1",
     "true",
@@ -188,8 +188,8 @@ def _validate_operation_list(
             reports.ReportItemSeverity.warning(),
         ),
         validate.ValueIn("on-fail", ON_FAIL_VALUES),
-        validate.ValueIn("record-pending", BOOLEAN_VALUES),
-        validate.ValueIn("enabled", BOOLEAN_VALUES),
+        validate.ValueIn("record-pending", _BOOLEAN_VALUES),
+        validate.ValueIn("enabled", _BOOLEAN_VALUES),
         validate.MutuallyExclusive(
             ["interval-origin", "start-delay"], option_type=option_type
         ),

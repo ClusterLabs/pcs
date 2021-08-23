@@ -115,6 +115,9 @@ class ExportTest(TestCase):
             etree.SubElement(element, "resource_ref").attrib["id"] = _id
 
         self.assertEqual(
-            {"options": {"role": const.PCMK_ROLE_PROMOTED}, "ids": ["A", "B"]},
+            {
+                "options": {"role": const.PCMK_ROLE_PROMOTED_PRIMARY},
+                "ids": ["A", "B"],
+            },
             resource_set.export(element),
         )

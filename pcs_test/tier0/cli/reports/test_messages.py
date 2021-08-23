@@ -76,15 +76,15 @@ class CannotUnmoveUnbanResourceMasterResourceNotPromotable(
                 "R", "P"
             ),
             (
-                "when specifying --master you must use the promotable clone id "
-                "(P)"
+                "when specifying --promoted you must use the promotable clone "
+                "id (P)"
             ),
         )
 
     def test_without_promotable_id(self):
         self.assert_message(
             messages.CannotUnmoveUnbanResourceMasterResourceNotPromotable("R"),
-            "when specifying --master you must use the promotable clone id",
+            "when specifying --promoted you must use the promotable clone id",
         )
 
 
@@ -93,15 +93,15 @@ class CannotBanResourceMasterResourceNotPromotable(CliReportMessageTestBase):
         self.assert_message(
             messages.CannotBanResourceMasterResourceNotPromotable("R", "P"),
             (
-                "when specifying --master you must use the promotable clone id "
-                "(P)"
+                "when specifying --promoted you must use the promotable clone "
+                "id (P)"
             ),
         )
 
     def test_without_promotable_id(self):
         self.assert_message(
             messages.CannotBanResourceMasterResourceNotPromotable("R"),
-            "when specifying --master you must use the promotable clone id",
+            "when specifying --promoted you must use the promotable clone id",
         )
 
 
@@ -110,15 +110,15 @@ class CannotMoveResourceMasterResourceNotPromotable(CliReportMessageTestBase):
         self.assert_message(
             messages.CannotMoveResourceMasterResourceNotPromotable("R", "P"),
             (
-                "when specifying --master you must use the promotable clone id "
-                "(P)"
+                "when specifying --promoted you must use the promotable clone "
+                "id (P)"
             ),
         )
 
     def test_without_promotable_id(self):
         self.assert_message(
             messages.CannotMoveResourceMasterResourceNotPromotable("R"),
-            "when specifying --master you must use the promotable clone id",
+            "when specifying --promoted you must use the promotable clone id",
         )
 
 

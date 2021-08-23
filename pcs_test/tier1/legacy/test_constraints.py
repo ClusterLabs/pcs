@@ -795,11 +795,11 @@ Ticket Constraints:
               D1 with D2 (score:100)
               D1 with D2 (score:-100)
               Master with D5 (score:100)
-              M1-master with M2-master (score:INFINITY) (rsc-role:{const.PCMK_ROLE_PROMOTED}) (with-rsc-role:{const.PCMK_ROLE_PROMOTED})
+              M1-master with M2-master (score:INFINITY) (rsc-role:{const.PCMK_ROLE_PROMOTED_PRIMARY}) (with-rsc-role:{const.PCMK_ROLE_PROMOTED_PRIMARY})
               M3-master with M4-master (score:INFINITY)
-              M5-master with M6-master (score:500) (rsc-role:{const.PCMK_ROLE_UNPROMOTED}) (with-rsc-role:Started)
-              M7-master with M8-master (score:INFINITY) (rsc-role:Started) (with-rsc-role:{const.PCMK_ROLE_PROMOTED})
-              M9-master with M10-master (score:INFINITY) (rsc-role:{const.PCMK_ROLE_UNPROMOTED}) (with-rsc-role:Started)
+              M5-master with M6-master (score:500) (rsc-role:{const.PCMK_ROLE_UNPROMOTED_PRIMARY}) (with-rsc-role:Started)
+              M7-master with M8-master (score:INFINITY) (rsc-role:Started) (with-rsc-role:{const.PCMK_ROLE_PROMOTED_PRIMARY})
+              M9-master with M10-master (score:INFINITY) (rsc-role:{const.PCMK_ROLE_UNPROMOTED_PRIMARY}) (with-rsc-role:Started)
             Ticket Constraints:
             """
             ),
@@ -831,8 +831,8 @@ Ticket Constraints:
               D1 with D2 (score:-100)
               Master with D5 (score:100)
               M3-master with M4-master (score:INFINITY)
-              M7-master with M8-master (score:INFINITY) (rsc-role:Started) (with-rsc-role:{const.PCMK_ROLE_PROMOTED})
-              M9-master with M10-master (score:INFINITY) (rsc-role:{const.PCMK_ROLE_UNPROMOTED}) (with-rsc-role:Started)
+              M7-master with M8-master (score:INFINITY) (rsc-role:Started) (with-rsc-role:{const.PCMK_ROLE_PROMOTED_PRIMARY})
+              M9-master with M10-master (score:INFINITY) (rsc-role:{const.PCMK_ROLE_UNPROMOTED_PRIMARY}) (with-rsc-role:Started)
             Ticket Constraints:
             """
             ),
@@ -1104,8 +1104,8 @@ Ticket Constraints:
             self.temp_cib.name,
             (
                 "constraint colocation "
-                f"set D5 D6 action=stop role=Started set D7 D8 action=promote role={const.PCMK_ROLE_UNPROMOTED} "
-                f"set D8 D9 action=demote role={const.PCMK_ROLE_PROMOTED}"
+                f"set D5 D6 action=stop role=Started set D7 D8 action=promote role={const.PCMK_ROLE_UNPROMOTED_PRIMARY} "
+                f"set D8 D9 action=demote role={const.PCMK_ROLE_PROMOTED_PRIMARY}"
             ).split(),
         )
         assert r == 0
@@ -1119,7 +1119,7 @@ Colocation Constraints:
   Resource Sets:
     set D5 D6 D7 require-all=true sequential=false (id:colocation_set_D5D6D7_set) set D8 D9 action=start require-all=false role=Stopped sequential=true (id:colocation_set_D5D6D7_set-1) setoptions score=INFINITY (id:colocation_set_D5D6D7)
     set D5 D6 (id:colocation_set_D5D6_set) setoptions score=INFINITY (id:colocation_set_D5D6)
-    set D5 D6 action=stop role=Started (id:colocation_set_D5D6D7-1_set) set D7 D8 action=promote role={const.PCMK_ROLE_UNPROMOTED} (id:colocation_set_D5D6D7-1_set-1) set D8 D9 action=demote role={const.PCMK_ROLE_PROMOTED} (id:colocation_set_D5D6D7-1_set-2) setoptions score=INFINITY (id:colocation_set_D5D6D7-1)
+    set D5 D6 action=stop role=Started (id:colocation_set_D5D6D7-1_set) set D7 D8 action=promote role={const.PCMK_ROLE_UNPROMOTED_PRIMARY} (id:colocation_set_D5D6D7-1_set-1) set D8 D9 action=demote role={const.PCMK_ROLE_PROMOTED_PRIMARY} (id:colocation_set_D5D6D7-1_set-2) setoptions score=INFINITY (id:colocation_set_D5D6D7-1)
 """,
         )
         assert r == 0
@@ -1137,7 +1137,7 @@ Colocation Constraints:
 Colocation Constraints:
   Resource Sets:
     set D5 D6 D7 require-all=true sequential=false (id:colocation_set_D5D6D7_set) set D8 D9 action=start require-all=false role=Stopped sequential=true (id:colocation_set_D5D6D7_set-1) setoptions score=INFINITY (id:colocation_set_D5D6D7)
-    set D5 D6 action=stop role=Started (id:colocation_set_D5D6D7-1_set) set D7 D8 action=promote role={const.PCMK_ROLE_UNPROMOTED} (id:colocation_set_D5D6D7-1_set-1) set D8 D9 action=demote role={const.PCMK_ROLE_PROMOTED} (id:colocation_set_D5D6D7-1_set-2) setoptions score=INFINITY (id:colocation_set_D5D6D7-1)
+    set D5 D6 action=stop role=Started (id:colocation_set_D5D6D7-1_set) set D7 D8 action=promote role={const.PCMK_ROLE_UNPROMOTED_PRIMARY} (id:colocation_set_D5D6D7-1_set-1) set D8 D9 action=demote role={const.PCMK_ROLE_PROMOTED_PRIMARY} (id:colocation_set_D5D6D7-1_set-2) setoptions score=INFINITY (id:colocation_set_D5D6D7-1)
 """,
         )
         assert r == 0
@@ -1203,7 +1203,7 @@ Colocation Constraints:
             output,
             (
                 "Error: 'foo' is not a valid sequential value, use 'false', 'true'\n"
-                "Error: Errors have occurred, therefore pcs is unable to continue\n"
+                + ERRORS_HAVE_OCURRED
             ),
         )
         self.assertEqual(1, retValue)
@@ -1216,7 +1216,7 @@ Colocation Constraints:
             output,
             (
                 "Error: 'foo' is not a valid require-all value, use 'false', 'true'\n"
-                "Error: Errors have occurred, therefore pcs is unable to continue\n"
+                + ERRORS_HAVE_OCURRED
             ),
         )
         self.assertEqual(1, retValue)
@@ -1229,7 +1229,7 @@ Colocation Constraints:
             output,
             (
                 "Error: 'foo' is not a valid role value, use {}\n"
-                "Error: Errors have occurred, therefore pcs is unable to continue\n"
+                + ERRORS_HAVE_OCURRED
             ).format(format_list(const.PCMK_ROLES)),
         )
         self.assertEqual(1, retValue)
@@ -1242,7 +1242,7 @@ Colocation Constraints:
             output,
             (
                 "Error: 'foo' is not a valid action value, use 'demote', 'promote', 'start', 'stop'\n"
-                "Error: Errors have occurred, therefore pcs is unable to continue\n"
+                + ERRORS_HAVE_OCURRED
             ),
         )
         self.assertEqual(1, retValue)
@@ -1525,7 +1525,7 @@ Colocation Constraints:
             (
                 f"Warning: Value '{const.PCMK_ROLE_UNPROMOTED_LEGACY}' of option "
                 "role is deprecated and should not be used, use "
-                f"'{const.PCMK_ROLE_UNPROMOTED}' value instead.\n"
+                f"'{const.PCMK_ROLE_UNPROMOTED}' value instead\n"
             ),
         )
         assert r == 0
@@ -1539,7 +1539,7 @@ Ordering Constraints:
   Resource Sets:
     set D5 D6 D7 require-all=true sequential=false (id:order_set_D5D6D7_set) set D8 D9 action=start require-all=false role=Stopped sequential=true (id:order_set_D5D6D7_set-1) (id:order_set_D5D6D7)
     set D5 D6 (id:order_set_D5D6_set) (id:order_set_D5D6)
-    set D5 D6 action=stop role=Started (id:order_set_D5D6D7-1_set) set D7 D8 action=promote role={const.PCMK_ROLE_UNPROMOTED} (id:order_set_D5D6D7-1_set-1) set D8 D9 action=demote role={const.PCMK_ROLE_PROMOTED} (id:order_set_D5D6D7-1_set-2) (id:order_set_D5D6D7-1)
+    set D5 D6 action=stop role=Started (id:order_set_D5D6D7-1_set) set D7 D8 action=promote role={const.PCMK_ROLE_UNPROMOTED_PRIMARY} (id:order_set_D5D6D7-1_set-1) set D8 D9 action=demote role={const.PCMK_ROLE_PROMOTED_PRIMARY} (id:order_set_D5D6D7-1_set-2) (id:order_set_D5D6D7-1)
 """,
         )
 
@@ -1557,7 +1557,7 @@ Ordering Constraints:
 Ordering Constraints:
   Resource Sets:
     set D5 D6 D7 require-all=true sequential=false (id:order_set_D5D6D7_set) set D8 D9 action=start require-all=false role=Stopped sequential=true (id:order_set_D5D6D7_set-1) (id:order_set_D5D6D7)
-    set D5 D6 action=stop role=Started (id:order_set_D5D6D7-1_set) set D7 D8 action=promote role={const.PCMK_ROLE_UNPROMOTED} (id:order_set_D5D6D7-1_set-1) set D8 D9 action=demote role={const.PCMK_ROLE_PROMOTED} (id:order_set_D5D6D7-1_set-2) (id:order_set_D5D6D7-1)
+    set D5 D6 action=stop role=Started (id:order_set_D5D6D7-1_set) set D7 D8 action=promote role={const.PCMK_ROLE_UNPROMOTED_PRIMARY} (id:order_set_D5D6D7-1_set-1) set D8 D9 action=demote role={const.PCMK_ROLE_PROMOTED_PRIMARY} (id:order_set_D5D6D7-1_set-2) (id:order_set_D5D6D7-1)
 """,
         )
 
@@ -1596,7 +1596,7 @@ Ordering Constraints:
             output,
             (
                 "Error: 'foo' is not a valid sequential value, use 'false', 'true'\n"
-                "Error: Errors have occurred, therefore pcs is unable to continue\n"
+                + ERRORS_HAVE_OCURRED
             ),
         )
         self.assertEqual(1, retValue)
@@ -1609,7 +1609,7 @@ Ordering Constraints:
             output,
             (
                 "Error: 'foo' is not a valid require-all value, use 'false', 'true'\n"
-                "Error: Errors have occurred, therefore pcs is unable to continue\n"
+                + ERRORS_HAVE_OCURRED
             ),
         )
         self.assertEqual(1, retValue)
@@ -1622,7 +1622,7 @@ Ordering Constraints:
             output,
             (
                 "Error: 'foo' is not a valid role value, use {}\n"
-                "Error: Errors have occurred, therefore pcs is unable to continue\n"
+                + ERRORS_HAVE_OCURRED
             ).format(format_list(const.PCMK_ROLES)),
         )
         self.assertEqual(1, retValue)
@@ -1635,7 +1635,7 @@ Ordering Constraints:
             output,
             (
                 "Error: 'foo' is not a valid action value, use 'demote', 'promote', 'start', 'stop'\n"
-                "Error: Errors have occurred, therefore pcs is unable to continue\n"
+                + ERRORS_HAVE_OCURRED
             ),
         )
         self.assertEqual(1, retValue)
@@ -1648,7 +1648,7 @@ Ordering Constraints:
             output,
             (
                 "Error: invalid set option 'foo', allowed options are: 'action', 'require-all', 'role', 'sequential'\n"
-                "Error: Errors have occurred, therefore pcs is unable to continue\n"
+                + ERRORS_HAVE_OCURRED
             ),
         )
         self.assertEqual(1, retValue)
@@ -1700,7 +1700,7 @@ Location Constraints:
 Ordering Constraints:
   Resource Sets:
     set D7 require-all=true sequential=false (id:order_set_D5D6D7_set) set D8 D9 action=start require-all=false role=Stopped sequential=true (id:order_set_D5D6D7_set-1) (id:order_set_D5D6D7)
-    set D7 D8 action=promote role={const.PCMK_ROLE_UNPROMOTED} (id:order_set_D5D6D7-1_set-1) set D8 D9 action=demote role={const.PCMK_ROLE_PROMOTED} (id:order_set_D5D6D7-1_set-2) (id:order_set_D5D6D7-1)
+    set D7 D8 action=promote role={const.PCMK_ROLE_UNPROMOTED_PRIMARY} (id:order_set_D5D6D7-1_set-1) set D8 D9 action=demote role={const.PCMK_ROLE_PROMOTED_PRIMARY} (id:order_set_D5D6D7-1_set-2) (id:order_set_D5D6D7-1)
     set D1 D2 (id:order_set_D1D2_set) setoptions kind=Mandatory symmetrical=false (id:order_set_D1D2)
 Colocation Constraints:
 Ticket Constraints:
@@ -1890,7 +1890,7 @@ Ticket Constraints:
 Location Constraints:
   Resource: stateful0
     Constraint: location-stateful0
-      Rule: role={const.PCMK_ROLE_PROMOTED} score=INFINITY (id:location-stateful0-rule)
+      Rule: role={const.PCMK_ROLE_PROMOTED_PRIMARY} score=INFINITY (id:location-stateful0-rule)
         Expression: #uname eq rh7-1 (id:location-stateful0-rule-expr)
 Ordering Constraints:
 Colocation Constraints:
@@ -3772,7 +3772,7 @@ class TicketAdd(ConstraintBaseTest):
             "constraint ticket config".split(),
             stdout_full=[
                 "Ticket Constraints:",
-                f"  {const.PCMK_ROLE_PROMOTED} A loss-policy=fence ticket=T",
+                f"  {const.PCMK_ROLE_PROMOTED_PRIMARY} A loss-policy=fence ticket=T",
             ],
         )
 
@@ -3786,10 +3786,10 @@ class TicketAdd(ConstraintBaseTest):
         self.assert_pcs_fail(
             "constraint ticket add T bad-role A loss-policy=fence".split(),
             [
-                (
-                    "Error: 'bad-role' is not a valid role value, use {}\n"
-                    "Error: Errors have occurred, therefore pcs is unable to continue"
-                ).format(format_list(const.PCMK_ROLES))
+                ("Error: 'bad-role' is not a valid role value, use {}").format(
+                    format_list(const.PCMK_ROLES)
+                ),
+                ERRORS_HAVE_OCURRED[:-1],
             ],
         )
 
@@ -3806,7 +3806,7 @@ class TicketAdd(ConstraintBaseTest):
             [
                 f"Warning: Value '{role}' of option role is deprecated and "
                 f"should not be used, use '{const.PCMK_ROLE_UNPROMOTED}' value "
-                "instead.\n"
+                "instead\n"
                 "Duplicate constraints:",
                 f"  {const.PCMK_ROLE_UNPROMOTED} A loss-policy=fence ticket=T (id:ticket-T-A-{const.PCMK_ROLE_UNPROMOTED})",
                 "Error: duplicate constraint already exists, use --force to "
@@ -3822,10 +3822,10 @@ class TicketAdd(ConstraintBaseTest):
             stdout_full=(
                 f"Warning: Value '{role}' of option role is deprecated and "
                 f"should not be used, use '{const.PCMK_ROLE_PROMOTED}' value "
-                "instead.\n"
+                "instead\n"
             ),
         )
-        promoted_role = const.PCMK_ROLE_PROMOTED
+        promoted_role = const.PCMK_ROLE_PROMOTED_PRIMARY
         self.assert_pcs_success(
             (
                 f"constraint ticket add T {const.PCMK_ROLE_PROMOTED} A "
@@ -3937,7 +3937,7 @@ class TicketShow(ConstraintBaseTest):
             stdout_full=(
                 f"Warning: Value '{role}' of option role is deprecated and "
                 f"should not be used, use '{const.PCMK_ROLE_PROMOTED}' value "
-                "instead.\n"
+                "instead\n"
             ),
         )
         self.assert_pcs_success(
