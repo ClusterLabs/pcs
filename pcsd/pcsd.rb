@@ -363,7 +363,7 @@ post '/manage/existingcluster' do
   pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
   node = params['node-name']
   code, result = send_request_with_token(
-    PCSAuth.getSuperuserAuth(), node, 'status'
+    PCSAuth.getSuperuserAuth(), node, 'status', false, {:version=>'2'}
   )
   begin
     status = JSON.parse(result)
