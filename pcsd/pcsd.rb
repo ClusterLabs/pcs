@@ -657,11 +657,6 @@ post '/managec/:cluster/permissions_save/?' do
   )
 end
 
-get '/managec/:cluster/status_all' do
-  auth_user = getAuthUser()
-  status_all(params, request, auth_user, get_cluster_nodes(params[:cluster]))
-end
-
 get '/managec/:cluster/cluster_status' do
   auth_user = getAuthUser()
   cluster_status_gui(auth_user, params[:cluster])

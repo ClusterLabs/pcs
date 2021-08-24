@@ -25,7 +25,6 @@ def remote(params, request, auth_user)
   remote_cmd_without_pacemaker = {
       :capabilities => method(:capabilities),
       :status => method(:node_status),
-      :status_all => method(:status_all),
       :cluster_status => method(:cluster_status_remote),
       :cluster_status_plaintext => method(:cluster_status_plaintext),
       :auth => method(:auth),
@@ -864,66 +863,6 @@ def node_status(params, request, auth_user)
   end
 
   return [400, "Unsupported version '#{version}' of status requested"]
-end
-
-def status_all(params, request, auth_user, nodes=[], dont_update_config=false)
-  if nodes == nil
-    return JSON.generate({"error" => "true"})
-  end
-
-  final_response = {}
-  threads = []
-  forbidden_nodes = {}
-  nodes.each {|node|
-    threads << Thread.new(Thread.current[:pcsd_logger_container]) { |logger|
-      Thread.current[:pcsd_logger_container] = logger
-      code, response = send_request_with_token(auth_user, node, 'status')
-      if 403 == code
-        forbidden_nodes[node] = true
-      end
-      begin
-        final_response[node] = JSON.parse(response)
-      rescue JSON::ParserError => e
-        final_response[node] = {"bad_json" => true}
-        $logger.info("ERROR: Parse Error when parsing status JSON from #{node}")
-      end
-      if final_response[node] and final_response[node]["notoken"] == true
-        $logger.error("ERROR: bad token for #{node}")
-      end
-    }
-  }
-  threads.each { |t| t.join }
-  if forbidden_nodes.length > 0
-    return 403, 'Permission denied'
-  end
-
-  # Get full list of nodes and see if we need to update the configuration
-  node_list = []
-  final_response.each { |fr,n|
-    node_list += n["corosync_offline"] if n["corosync_offline"]
-    node_list += n["corosync_online"] if n["corosync_online"]
-    node_list += n["pacemaker_offline"] if n["pacemaker_offline"]
-    node_list += n["pacemaker_online"] if n["pacemaker_online"]
-  }
-
-  node_list.uniq!
-  if node_list.length > 0
-    config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
-    old_node_list = config.get_nodes(params[:cluster])
-    if !(dont_update_config or config.cluster_nodes_equal?(params[:cluster], node_list))
-      $logger.info("Updating node list for: #{params[:cluster]} #{old_node_list}->#{node_list}")
-      config.update_cluster(params[:cluster], node_list)
-      sync_config = Cfgsync::PcsdSettings.from_text(config.text())
-      # on version conflict just go on, config will be corrected eventually
-      # by displaying the cluster in the web UI
-      Cfgsync::save_sync_new_version(
-        sync_config, get_corosync_nodes_names(), $cluster_name, true
-      )
-      return status_all(params, request, auth_user, node_list, true)
-    end
-  end
-  $logger.debug("NODE LIST: " + node_list.inspect)
-  return JSON.generate(final_response)
 end
 
 def imported_cluster_list(params, request, auth_user)
