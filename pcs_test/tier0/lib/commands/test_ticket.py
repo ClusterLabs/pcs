@@ -1,8 +1,10 @@
 from unittest import mock, TestCase
 
+from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.misc import create_patcher
 
+from pcs.common import const
 from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands.constraint import ticket as ticket_command
@@ -15,31 +17,48 @@ class CreateTest(TestCase):
         env_assist, config = get_env_tools(test_case=self)
         (
             config.runner.cib.load(
+                filename="cib-empty-3.7.xml",
                 resources="""
                     <resources>
                         <primitive id="resourceA" class="service" type="exim"/>
                     </resources>
-                """
+                """,
             ).env.push_cib(
                 optional_in_conf="""
                     <constraints>
                         <rsc_ticket
-                            id="ticket-ticketA-resourceA-Master"
+                            id="ticket-ticketA-resourceA-{role}"
                             rsc="resourceA"
-                            rsc-role="Master"
+                            rsc-role="{role}"
                             ticket="ticketA"
                             loss-policy="fence"
                         />
                     </constraints>
-                """
+                """.format(
+                    role=const.PCMK_ROLE_PROMOTED_PRIMARY
+                )
             )
         )
+        role = str(const.PCMK_ROLE_PROMOTED_LEGACY).lower()
 
         ticket_command.create(
             env_assist.get_env(),
             "ticketA",
             "resourceA",
-            {"loss-policy": "fence", "rsc-role": "master"},
+            {
+                "loss-policy": "fence",
+                "rsc-role": role,
+            },
+        )
+        env_assist.assert_reports(
+            [
+                fixture.warn(
+                    report_codes.DEPRECATED_OPTION_VALUE,
+                    option_name="role",
+                    deprecated_value=role,
+                    replaced_by=const.PCMK_ROLE_PROMOTED,
+                )
+            ]
         )
 
     def test_refuse_for_nonexisting_resource(self):
@@ -50,7 +69,7 @@ class CreateTest(TestCase):
                 env_assist.get_env(),
                 "ticketA",
                 "resourceA",
-                "master",
+                str(const.PCMK_ROLE_UNPROMOTED_LEGACY).lower(),
                 {"loss-policy": "fence"},
             ),
             [

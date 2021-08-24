@@ -49,7 +49,9 @@ def create_with_set(
         tag_name,
         options=prepare_options(cib, constraint_options, resource_set_list),
         resource_set_list=[
-            resource_set.prepare_set(find_valid_resource_id, resource_set_item)
+            resource_set.prepare_set(
+                find_valid_resource_id, resource_set_item, env.report_processor
+            )
             for resource_set_item in resource_set_list
         ],
     )

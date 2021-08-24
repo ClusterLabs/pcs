@@ -1,6 +1,7 @@
 from unittest import mock, TestCase
 from lxml import etree
 
+from pcs_test.tools import fixture
 from pcs_test.tools.assertions import (
     assert_raise_library_error,
     assert_xml_equal,
@@ -40,6 +41,7 @@ class CreateWithSetTest(TestCase):
     def setUp(self):
         self.cib, self.constraint_section = fixture_cib_and_constraints()
         self.env = fixture_env(self.cib)
+        self.role = const.PCMK_ROLE_PROMOTED_LEGACY
         self.independent_cib = etree.XML(etree.tostring(self.cib))
 
     def create(self, duplication_alowed=False):
@@ -48,7 +50,7 @@ class CreateWithSetTest(TestCase):
             lambda cib, options, resource_set_list: options,
             self.env,
             [
-                {"ids": ["A", "B"], "options": {"role": "Master"}},
+                {"ids": ["A", "B"], "options": {"role": self.role}},
                 {"ids": ["E", "F"], "options": {"action": "start"}},
             ],
             {"id": "some_id", "symmetrical": "true"},
@@ -77,6 +79,16 @@ class CreateWithSetTest(TestCase):
         assert_xml_equal(
             etree.tostring(self.independent_cib).decode(),
             etree.tostring(self.cib).decode(),
+        )
+        self.env.report_processor.assert_reports(
+            [
+                fixture.warn(
+                    report_codes.DEPRECATED_OPTION_VALUE,
+                    option_name="role",
+                    deprecated_value=self.role,
+                    replaced_by=const.PCMK_ROLE_PROMOTED,
+                )
+            ]
         )
 
     def test_refuse_duplicate(self):
@@ -124,6 +136,15 @@ class CreateWithSetTest(TestCase):
                         ],
                     },
                 ),
+            ]
+            + [
+                fixture.warn(
+                    report_codes.DEPRECATED_OPTION_VALUE,
+                    option_name="role",
+                    deprecated_value=self.role,
+                    replaced_by=const.PCMK_ROLE_PROMOTED,
+                )
+                for _ in range(2)
             ]
         )
 
@@ -195,7 +216,10 @@ class ConfigTest(TestCase):
         self.create(
             tag_name,
             [
-                {"ids": ["A", "B"], "options": {"role": "Master"}},
+                {
+                    "ids": ["A", "B"],
+                    "options": {"role": const.PCMK_ROLE_UNPROMOTED_LEGACY},
+                },
             ],
         )
         self.create(
@@ -220,7 +244,7 @@ class ConfigTest(TestCase):
                             {
                                 "ids": ["A", "B"],
                                 "options": {
-                                    "role": const.PCMK_ROLE_PROMOTED_PRIMARY,
+                                    "role": const.PCMK_ROLE_UNPROMOTED_PRIMARY,
                                     "id": "some_id_set",
                                 },
                             }

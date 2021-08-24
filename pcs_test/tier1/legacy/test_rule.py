@@ -19,6 +19,7 @@ from pcs_test.tools.pcs_runner import pcs
 # pylint: disable=line-too-long
 
 empty_cib = rc("cib-empty-3.2.xml")
+empty_cib_new_roles_supported = rc("cib-empty-3.7.xml")
 
 
 class DateValueTest(TestCase):
@@ -2355,30 +2356,87 @@ class DomRuleAddXmlTest(TestCase):
             """,
         )
         self.assertExpressionXml(
-            ["role=master", "#uname", "eq", "node1"],
-            """
+            [f"role={const.PCMK_ROLE_PROMOTED}", "#uname", "eq", "node1"],
+            f"""
 <rsc_location id="location-dummy">
-    <rule id="location-dummy-rule" role="Master" score="INFINITY">
+    <rule id="location-dummy-rule" role="{const.PCMK_ROLE_PROMOTED}" score="INFINITY">
+        <expression attribute="#uname" id="location-dummy-rule-expr" operation="eq" value="node1"/>
+    </rule>
+</rsc_location>
+            """,
+            cib_file=empty_cib_new_roles_supported,
+        )
+        self.assertExpressionXml(
+            [f"role={const.PCMK_ROLE_PROMOTED}", "#uname", "eq", "node1"],
+            f"""
+<rsc_location id="location-dummy">
+    <rule id="location-dummy-rule" role="{const.PCMK_ROLE_PROMOTED_LEGACY}" score="INFINITY">
         <expression attribute="#uname" id="location-dummy-rule-expr" operation="eq" value="node1"/>
     </rule>
 </rsc_location>
             """,
         )
         self.assertExpressionXml(
-            ["role=slave", "#uname", "eq", "node1"],
-            """
+            [
+                f"role={str(const.PCMK_ROLE_UNPROMOTED).lower()}",
+                "#uname",
+                "eq",
+                "node1",
+            ],
+            f"""
 <rsc_location id="location-dummy">
-    <rule id="location-dummy-rule" role="Slave" score="INFINITY">
+    <rule id="location-dummy-rule" role="{const.PCMK_ROLE_UNPROMOTED_LEGACY}" score="INFINITY">
         <expression attribute="#uname" id="location-dummy-rule-expr" operation="eq" value="node1"/>
     </rule>
 </rsc_location>
             """,
         )
         self.assertExpressionXml(
-            ["score=100", "id=myRule", "role=master", "#uname", "eq", "node1"],
-            """
+            [
+                f"role={str(const.PCMK_ROLE_UNPROMOTED).lower()}",
+                "#uname",
+                "eq",
+                "node1",
+            ],
+            f"""
 <rsc_location id="location-dummy">
-    <rule id="myRule" role="Master" score="100">
+    <rule id="location-dummy-rule" role="{const.PCMK_ROLE_UNPROMOTED}" score="INFINITY">
+        <expression attribute="#uname" id="location-dummy-rule-expr" operation="eq" value="node1"/>
+    </rule>
+</rsc_location>
+            """,
+            cib_file=empty_cib_new_roles_supported,
+        )
+        self.assertExpressionXml(
+            [
+                "score=100",
+                "id=myRule",
+                f"role={str(const.PCMK_ROLE_PROMOTED).lower()}",
+                "#uname",
+                "eq",
+                "node1",
+            ],
+            f"""
+<rsc_location id="location-dummy">
+    <rule id="myRule" role="{const.PCMK_ROLE_PROMOTED}" score="100">
+        <expression attribute="#uname" id="myRule-expr" operation="eq" value="node1"/>
+    </rule>
+</rsc_location>
+            """,
+            cib_file=empty_cib_new_roles_supported,
+        )
+        self.assertExpressionXml(
+            [
+                "score=100",
+                "id=myRule",
+                f"role={str(const.PCMK_ROLE_PROMOTED).lower()}",
+                "#uname",
+                "eq",
+                "node1",
+            ],
+            f"""
+<rsc_location id="location-dummy">
+    <rule id="myRule" role="{const.PCMK_ROLE_PROMOTED_LEGACY}" score="100">
         <expression attribute="#uname" id="myRule-expr" operation="eq" value="node1"/>
     </rule>
 </rsc_location>
@@ -2454,7 +2512,12 @@ class DomRuleAddTest(TestCase):
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location dummy1 rule id=MyRule score=100 role=master #uname eq node2".split(),
+            (
+                "constraint location dummy1 rule id=MyRule score=100 role="
+                "{role} #uname eq node2"
+            )
+            .format(role=str(const.PCMK_ROLE_PROMOTED).lower())
+            .split(),
         )
         ac(output, "")
         self.assertEqual(0, returnVal)
@@ -2471,14 +2534,14 @@ class DomRuleAddTest(TestCase):
         )
         ac(
             output,
-            """\
+            f"""\
 Location Constraints:
   Resource: dummy1
     Constraint: location-dummy1
       Rule: score=INFINITY (id:location-dummy1-rule)
         Expression: #uname eq node1 (id:location-dummy1-rule-expr)
     Constraint: location-dummy1-1
-      Rule: role=Master score=100 (id:MyRule)
+      Rule: role={const.PCMK_ROLE_PROMOTED_PRIMARY} score=100 (id:MyRule)
         Expression: #uname eq node2 (id:MyRule-expr)
     Constraint: location-dummy1-2
       Rule: boolean-op=or score=INFINITY (id:complexRule)
@@ -2499,14 +2562,14 @@ Location Constraints:
         )
         ac(
             output,
-            """\
+            f"""\
 Location Constraints:
   Resource: dummy1
     Constraint: location-dummy1
       Rule: score=INFINITY
         Expression: #uname eq node1
     Constraint: location-dummy1-1
-      Rule: role=Master score=100
+      Rule: role={const.PCMK_ROLE_PROMOTED_PRIMARY} score=100
         Expression: #uname eq node2
     Constraint: location-dummy1-2
       Rule: boolean-op=or score=INFINITY

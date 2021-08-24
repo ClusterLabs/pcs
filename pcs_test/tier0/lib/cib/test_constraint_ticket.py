@@ -2,10 +2,12 @@ from functools import partial
 from unittest import mock, TestCase
 from lxml import etree
 
+from pcs_test.tools import fixture
 from pcs_test.tools.assertions import (
     assert_raise_library_error,
     assert_xml_equal,
 )
+from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
 from pcs.common import const
 from pcs.common.reports import ReportItemSeverity as severities
@@ -21,11 +23,15 @@ from pcs.lib.cib.constraint import ticket
 class PrepareOptionsPlainTest(TestCase):
     def setUp(self):
         self.cib = "cib"
-        self.prepare = partial(ticket.prepare_options_plain, self.cib)
+        self.report_processor = MockLibraryReportProcessor(debug=False)
+        self.prepare = partial(
+            ticket.prepare_options_plain, self.cib, self.report_processor
+        )
 
     @mock.patch("pcs.lib.cib.constraint.ticket._create_id")
     def test_prepare_correct_options(self, mock_create_id, _):
         mock_create_id.return_value = "generated_id"
+        role = str(const.PCMK_ROLE_PROMOTED_LEGACY).lower()
         self.assertEqual(
             {
                 "id": "generated_id",
@@ -35,10 +41,20 @@ class PrepareOptionsPlainTest(TestCase):
                 "ticket": "ticket_key",
             },
             self.prepare(
-                {"loss-policy": "fence", "rsc-role": "master"},
+                {"loss-policy": "fence", "rsc-role": role},
                 "ticket_key",
                 "resourceA",
             ),
+        )
+        self.report_processor.assert_reports(
+            [
+                fixture.warn(
+                    report_codes.DEPRECATED_OPTION_VALUE,
+                    option_name="role",
+                    deprecated_value=role,
+                    replaced_by=const.PCMK_ROLE_PROMOTED,
+                )
+            ]
         )
 
     @mock.patch("pcs.lib.cib.constraint.ticket._create_id")
@@ -57,6 +73,7 @@ class PrepareOptionsPlainTest(TestCase):
                 "resourceA",
             ),
         )
+        self.report_processor.assert_reports([])
 
     def test_refuse_unknown_attributes(self, _):
         assert_raise_library_error(
@@ -88,47 +105,59 @@ class PrepareOptionsPlainTest(TestCase):
             lambda: self.prepare(
                 {"id": "id", "rsc-role": "bad_role"}, "ticket_key", "resourceA"
             ),
-            (
-                severities.ERROR,
-                report_codes.INVALID_OPTION_VALUE,
-                {
-                    "allowed_values": const.PCMK_ROLES,
-                    "option_value": "bad_role",
-                    "option_name": "rsc-role",
-                    "cannot_be_empty": False,
-                    "forbidden_characters": None,
-                },
-            ),
+        )
+        self.report_processor.assert_reports(
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    allowed_values=const.PCMK_ROLES,
+                    option_value="bad_role",
+                    option_name="role",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ]
         )
 
     def test_refuse_missing_ticket(self, _):
+        role = str(const.PCMK_ROLE_UNPROMOTED_LEGACY).lower()
         assert_raise_library_error(
             lambda: self.prepare(
-                {"id": "id", "rsc-role": "master"}, "", "resourceA"
+                {"id": "id", "rsc-role": role}, "", "resourceA"
             ),
-            (
-                severities.ERROR,
-                report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                {
-                    "option_names": ["ticket"],
-                    "option_type": None,
-                },
-            ),
+        )
+        self.report_processor.assert_reports(
+            [
+                fixture.error(
+                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
+                    option_names=["ticket"],
+                    option_type=None,
+                ),
+                fixture.warn(
+                    report_codes.DEPRECATED_OPTION_VALUE,
+                    option_name="role",
+                    deprecated_value=role,
+                    replaced_by=const.PCMK_ROLE_UNPROMOTED,
+                ),
+            ]
         )
 
     def test_refuse_missing_resource_id(self, _):
         assert_raise_library_error(
             lambda: self.prepare(
-                {"id": "id", "rsc-role": "master"}, "ticket_key", ""
+                {"id": "id", "rsc-role": const.PCMK_ROLE_PROMOTED},
+                "ticket_key",
+                "",
             ),
-            (
-                severities.ERROR,
-                report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                {
-                    "option_names": ["rsc"],
-                    "option_type": None,
-                },
-            ),
+        )
+        self.report_processor.assert_reports(
+            [
+                fixture.error(
+                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
+                    option_names=["rsc"],
+                    option_type=None,
+                ),
+            ]
         )
 
     def test_refuse_unknown_lost_policy(self, mock_check_new_id_applicable):
@@ -139,17 +168,18 @@ class PrepareOptionsPlainTest(TestCase):
                 "ticket_key",
                 "resourceA",
             ),
-            (
-                severities.ERROR,
-                report_codes.INVALID_OPTION_VALUE,
-                {
-                    "allowed_values": ("fence", "stop", "freeze", "demote"),
-                    "option_value": "unknown",
-                    "option_name": "loss-policy",
-                    "cannot_be_empty": False,
-                    "forbidden_characters": None,
-                },
-            ),
+        )
+        self.report_processor.assert_reports(
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    allowed_values=("fence", "stop", "freeze", "demote"),
+                    option_value="unknown",
+                    option_name="loss-policy",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ]
         )
 
     @mock.patch("pcs.lib.cib.constraint.ticket._create_id")

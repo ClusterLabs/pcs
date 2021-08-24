@@ -5,51 +5,52 @@ from pcs.common import (
     pacemaker,
     reports,
 )
-from pcs.common.reports.item import ReportItem
 from pcs.lib.cib.tools import (
     are_new_role_names_supported,
     find_unique_id,
 )
+from pcs.lib import validate
 from pcs.lib.errors import LibraryError
 from pcs.lib.xml_tools import export_attributes
 
-ATTRIB = {
-    "sequential": ("true", "false"),
-    "require-all": ("true", "false"),
-    "action": ("start", "promote", "demote", "stop"),
-    "role": const.PCMK_ROLES,
-}
+_BOOLEAN_VALUES = ("true", "false")
+
+_ATTRIBUTES = ("action", "require-all", "role", "sequential")
 
 
-def prepare_set(find_valid_id, resource_set):
+def prepare_set(
+    find_valid_id, resource_set, report_processor: reports.ReportProcessor
+):
     """return resource_set with corrected ids"""
-    _validate_options(resource_set["options"])
+    if report_processor.report_list(
+        _validate_options(resource_set["options"])
+    ).has_errors:
+        raise LibraryError()
     return {
         "ids": [find_valid_id(id) for id in resource_set["ids"]],
         "options": resource_set["options"],
     }
 
 
-def _validate_options(options):
+def _validate_options(options) -> reports.ReportItemList:
     # Pacemaker does not care currently about meaningfulness for concrete
     # constraint, so we use all attribs.
-    for name, value in options.items():
-        if name not in ATTRIB:
-            raise LibraryError(
-                ReportItem.error(
-                    reports.messages.InvalidOptions(
-                        [name], sorted(ATTRIB.keys()), None
-                    )
-                )
-            )
-        if value not in ATTRIB[name]:
-            raise LibraryError(
-                ReportItem.error(
-                    reports.messages.InvalidOptionValue(
-                        name, value, ATTRIB[name]
-                    )
-                )
-            )
+    validators = [
+        validate.NamesIn(_ATTRIBUTES, option_type="set"),
+        validate.ValueIn("action", const.PCMK_ACTIONS),
+        validate.ValueIn("require-all", _BOOLEAN_VALUES),
+        validate.ValueIn("role", const.PCMK_ROLES),
+        validate.ValueIn("sequential", _BOOLEAN_VALUES),
+        validate.ValueDeprecated(
+            "role",
+            {
+                const.PCMK_ROLE_PROMOTED_LEGACY: const.PCMK_ROLE_PROMOTED,
+                const.PCMK_ROLE_UNPROMOTED_LEGACY: const.PCMK_ROLE_UNPROMOTED,
+            },
+            reports.ReportItemSeverity.warning(),
+        ),
+    ]
+    return validate.ValidatorAll(validators).validate(options)
 
 
 def create(parent, resource_set):

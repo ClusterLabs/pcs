@@ -454,7 +454,7 @@ class ResourceMoveBanMixin:
         self.cli_command(
             self.lib,
             ["resource", "lifetime=1h", "node"],
-            dict_to_modifiers(dict(master=True, wait="10")),
+            dict_to_modifiers(dict(promoted=True, wait="10")),
         )
         self.lib_command.assert_called_once_with(
             "resource", lifetime="P1h", master=True, node="node", wait="10"
@@ -553,7 +553,7 @@ class ResourceMove(TestCase):
         resource.resource_move(
             self.lib,
             ["resource", "node"],
-            dict_to_modifiers(dict(master=True, strict=True, wait="10")),
+            dict_to_modifiers(dict(promoted=True, strict=True, wait="10")),
         )
         self.resource.move_autoclean.assert_called_once_with(
             "resource", node="node", master=True, wait_timeout=10, strict=True
@@ -607,7 +607,7 @@ class ResourceClear(TestCase):
         resource.resource_unmove_unban(
             self.lib,
             ["resource", "node"],
-            dict_to_modifiers(dict(master=True, expired=True, wait="10")),
+            dict_to_modifiers(dict(promoted=True, expired=True, wait="10")),
         )
         self.resource.unmove_unban.assert_called_once_with(
             "resource", node="node", master=True, expired=True, wait="10"

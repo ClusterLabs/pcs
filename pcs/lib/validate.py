@@ -34,6 +34,7 @@ from typing import (
     Callable,
     Container,
     cast,
+    Dict,
     Iterable,
     Mapping,
     NamedTuple,
@@ -65,7 +66,7 @@ _PCMK_DATESPEC_PART_RE = re.compile(r"^(?P<since>[0-9]+)(-(?P<until>[0-9]+))?$")
 
 TypeOptionName = str
 TypeOptionValue = str
-TypeOptionRawMap = Mapping[TypeOptionName, TypeOptionValue]
+TypeOptionRawMap = Dict[TypeOptionName, TypeOptionValue]
 TypeNormalizeFunc = Callable[[TypeOptionName, TypeOptionValue], TypeOptionValue]
 
 ### normalization
@@ -577,6 +578,47 @@ class ValueId(ValueValidator):
         if self._id_provider is not None and not report_list:
             report_list.extend(self._id_provider.book_ids(value.normalized))
         return report_list
+
+
+class ValueDeprecated(ValueValidator):
+    """
+    Report DEPRECATED_OPTION_VALUE when a value has been deprecated and
+    replaced by new value
+    """
+
+    def __init__(
+        self,
+        option_name: TypeOptionName,
+        deprecation_map: Mapping[str, Optional[str]],
+        severity: ReportItemSeverity,
+        option_name_for_report: Optional[str] = None,
+    ):
+        """
+        deprecation_map -- keys are deprecated values and values are new
+            valeus. If values is None, depraceted value has no direct
+            replacement
+        """
+        super().__init__(
+            option_name,
+            option_name_for_report=option_name_for_report,
+        )
+        self._severity = severity
+        self._deprecation_map = deprecation_map
+
+    def _validate_value(self, value: ValuePair) -> ReportItemList:
+        if value.normalized in self._deprecation_map:
+            return [
+                ReportItem(
+                    severity=self._severity,
+                    message=reports.messages.DeprecatedOptionValue(
+                        option_name=self._get_option_name_for_report(),
+                        deprecated_value=value.original,
+                        replaced_by=self._deprecation_map[value.normalized],
+                    ),
+                )
+            ]
+
+        return []
 
 
 class ValueIn(ValuePredicateBase):

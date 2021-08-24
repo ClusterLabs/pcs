@@ -1,20 +1,26 @@
 from unittest import mock, TestCase
 from lxml import etree
 
+from pcs_test.tools import fixture
 from pcs_test.tools.assertions import (
     assert_raise_library_error,
     assert_xml_equal,
 )
+from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
-from pcs.common import const
-from pcs.common.reports import ReportItemSeverity as severities
-from pcs.common.reports import codes as report_codes
+from pcs.common import (
+    const,
+    reports,
+)
 from pcs.lib.cib.constraint import resource_set
 
 # pylint: disable=no-self-use
 
 
 class PrepareSetTest(TestCase):
+    def setUp(self):
+        self.report_processor = MockLibraryReportProcessor(debug=False)
+
     def test_return_corrected_resource_set(self):
         find_valid_id = mock.Mock()
         find_valid_id.side_effect = lambda id: {"A": "AA", "B": "BB"}[id]
@@ -23,43 +29,50 @@ class PrepareSetTest(TestCase):
             resource_set.prepare_set(
                 find_valid_id,
                 {"ids": ["A", "B"], "options": {"sequential": "true"}},
+                self.report_processor,
             ),
         )
+        self.report_processor.assert_reports([])
 
     def test_refuse_invalid_attribute_name(self):
         assert_raise_library_error(
             lambda: resource_set.prepare_set(
                 mock.Mock(),
                 {"ids": ["A", "B"], "options": {"invalid_name": "true"}},
+                self.report_processor,
             ),
-            (
-                severities.ERROR,
-                report_codes.INVALID_OPTIONS,
-                {
-                    "option_names": ["invalid_name"],
-                    "option_type": None,
-                    "allowed": ["action", "require-all", "role", "sequential"],
-                    "allowed_patterns": [],
-                },
-            ),
+        )
+        self.report_processor.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTIONS,
+                    option_names=["invalid_name"],
+                    option_type="set",
+                    allowed=["action", "require-all", "role", "sequential"],
+                    allowed_patterns=[],
+                ),
+            ]
         )
 
     def test_refuse_invalid_attribute_value(self):
         assert_raise_library_error(
             lambda: resource_set.prepare_set(
-                mock.Mock(), {"ids": ["A", "B"], "options": {"role": "invalid"}}
+                mock.Mock(),
+                {"ids": ["A", "B"], "options": {"role": "invalid"}},
+                self.report_processor,
             ),
-            (
-                severities.ERROR,
-                report_codes.INVALID_OPTION_VALUE,
-                {
-                    "option_name": "role",
-                    "allowed_values": const.PCMK_ROLES,
-                    "option_value": "invalid",
-                    "cannot_be_empty": False,
-                    "forbidden_characters": None,
-                },
-            ),
+        )
+        self.report_processor.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="role",
+                    allowed_values=const.PCMK_ROLES,
+                    option_value="invalid",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ]
         )
 
 
@@ -97,11 +110,14 @@ class GetResourceIdListTest(TestCase):
 class ExportTest(TestCase):
     def test_returns_element_in_dict_representation(self):
         element = etree.Element("resource_set")
-        element.attrib.update({"role": "Master"})
+        element.attrib.update({"role": const.PCMK_ROLE_PROMOTED_LEGACY})
         for _id in ("A", "B"):
             etree.SubElement(element, "resource_ref").attrib["id"] = _id
 
         self.assertEqual(
-            {"options": {"role": "Master"}, "ids": ["A", "B"]},
+            {
+                "options": {"role": const.PCMK_ROLE_PROMOTED_PRIMARY},
+                "ids": ["A", "B"],
+            },
             resource_set.export(element),
         )

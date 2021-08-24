@@ -364,7 +364,7 @@ Commands:
         monitoring the resource.  Using --full will give more detailed output.
         This is mainly used for debugging resources that fail to be monitored.
 
-    move <resource id> [destination node] [--master] [--strict] [--wait[=n]]
+    move <resource id> [destination node] [--promoted] [--strict] [--wait[=n]]
         Move the resource off the node it is currently running on. This is
         achieved by creating a -INFINITY location constraint to ban the node.
         If destination node is specified the resource will be moved to that
@@ -377,9 +377,9 @@ Commands:
         If --strict is specified, the command will also fail if other resources
         would be affected.
 
-        If --master is used the scope of the command is limited to the master
-        role and you must use the promotable clone id (instead of the resource
-        id).
+        If --promoted is used the scope of the command is limited to the
+        Promoted role and promotable clone id must be used (instead of the
+        resource id).
 
         If --wait is specified, pcs will wait up to 'n' seconds for the
         resource to move and then return 0 on success or 1 on error. If 'n' is
@@ -397,7 +397,7 @@ Commands:
         be able to failover to them use 'pcs constraint location avoids'.
 
     move-with-constraint <resource id> [destination node] [lifetime=<lifetime>]
-             [--master] [--wait[=n]]
+             [--promoted] [--wait[=n]]
         Move the resource off the node it is currently running on by creating
         a -INFINITY location constraint to ban the node. If destination node is
         specified the resource will be moved to that node by creating
@@ -409,9 +409,9 @@ Commands:
         Lifetime is expected to be specified as ISO 8601 duration (see
         https://en.wikipedia.org/wiki/ISO_8601#Durations).
 
-        If --master is used the scope of the command is limited to the master
-        role and you must use the promotable clone id (instead of the resource
-        id).
+        If --promoted is used the scope of the command is limited to the
+        Promoted role and promotable clone id must be used (instead of the
+        resource id).
 
         If --wait is specified, pcs will wait up to 'n' seconds for the
         resource to move and then return 0 on success or 1 on error. If 'n' is
@@ -420,12 +420,14 @@ Commands:
         If you want the resource to preferably avoid running on some nodes but
         be able to failover to them use 'pcs constraint location avoids'.
 
-    ban <resource id> [node] [--master] [lifetime=<lifetime>] [--wait[=n]]
+    ban <resource id> [node] [--promoted] [lifetime=<lifetime>] [--wait[=n]]
         Prevent the resource id specified from running on the node (or on the
         current node it is running on if no node is specified) by creating
-        a -INFINITY location constraint. If --master is used the scope of the
-        command is limited to the master role and you must use the promotable
-        clone id (instead of the resource id).
+        a -INFINITY location constraint.
+
+        If --promoted is used the scope of the command is limited to the
+        Promoted role and promotable clone id must be used (instead of the
+        resource id).
 
         If lifetime is specified then the constraint will expire after that
         time, otherwise it defaults to infinity and the constraint can be
@@ -440,13 +442,17 @@ Commands:
         If you want the resource to preferably avoid running on some nodes but
         be able to failover to them use 'pcs constraint location avoids'.
 
-    clear <resource id> [node] [--master] [--expired] [--wait[=n]]
+    clear <resource id> [node] [--promoted] [--expired] [--wait[=n]]
         Remove constraints created by move and/or ban on the specified
         resource (and node if specified).
-        If --master is used the scope of the command is limited to the master
-        role and you must use the master id (instead of the resource id).
+
+        If --promoted is used the scope of the command is limited to the
+        Promoted role and promotable clone id must be used (instead of the
+        resource id).
+
         If --expired is specified, only constraints with expired lifetimes will
         be removed.
+
         If --wait is specified, pcs will wait up to 'n' seconds for the
         operation to finish (including starting and/or moving resources if
         appropriate) and then return 0 on success or 1 on error. If 'n' is not
@@ -1568,7 +1574,7 @@ Commands:
         resource name regular expression regexp%<resource_pattern>.
 
     location <resource> rule [id=<rule id>] [resource-discovery=<option>]
-             [role=master|slave] [constraint-id=<id>]
+             [role=Promoted|Unpromoted] [constraint-id=<id>]
              [score=<score> | score-attribute=<attribute>] <expression>
         Creates a location constraint with a rule on the specified resource
         where expression looks like one of the following:
@@ -1651,16 +1657,16 @@ Commands:
         mean the resources should not be run on the same node.  Specifying
         'INFINITY' (or '-INFINITY') for the score forces <source resource> to
         run (or not run) with <target resource> (score defaults to "INFINITY").
-        A role can be: 'Master', 'Slave', 'Started', 'Stopped' (if no role is
-        specified, it defaults to 'Started').
+        A role can be: 'Promoted', 'Unpromoted', 'Started', 'Stopped' (if no
+        role is specified, it defaults to 'Started').
 
     colocation set <resource1> [resourceN]... [options]
                [set <resourceX> ... [options]]
                [setoptions [constraint_options]]
         Create a colocation constraint with a resource set.
         Available options are sequential=true/false and
-        role=Stopped/Started/Master/Slave. Available constraint_options are id
-        and either of: score, score-attribute, score-attribute-mangle.
+        role=Stopped/Started/Promoted/Unpromoted. Available constraint_options
+        are id and either of: score, score-attribute, score-attribute-mangle.
 
     colocation delete <source resource id> <target resource id>
         Remove colocation constraints with specified resources.
@@ -1676,13 +1682,13 @@ Commands:
                [id=<constraint-id>]
         Create a ticket constraint for <resource id>.
         Available option is loss-policy=fence/stop/freeze/demote.
-        A role can be master, slave, started or stopped.
+        A role can be Promoted, Unpromoted, Started or Stopped.
 
     ticket set <resource1> [<resourceN>]... [<options>]
                [set <resourceX> ... [<options>]]
                setoptions <constraint_options>
         Create a ticket constraint with a resource set.
-        Available options are role=Stopped/Started/Master/Slave. Required
+        Available options are role=Stopped/Started/Promoted/Unpromoted. Required
         constraint option is ticket=<ticket>. Optional constraint options are
         id=<constraint-id> and loss-policy=fence/stop/freeze/demote.
 
@@ -1701,7 +1707,7 @@ Commands:
     ref <resource>...
         List constraints referencing specified resource.
 
-    rule add <constraint id> [id=<rule id>] [role=master|slave]
+    rule add <constraint id> [id=<rule id>] [role=Promoted|Unpromoted]
              [score=<score>|score-attribute=<attribute>] <expression>
         Add a rule to a location constraint specified by 'constraint id' where
         the expression looks like one of the following:

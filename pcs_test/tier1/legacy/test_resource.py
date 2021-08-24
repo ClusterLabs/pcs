@@ -4963,14 +4963,20 @@ class ResourceRemoveWithTicket(TestCase, AssertPcsMixin):
 
     def test_remove_ticket(self):
         self.assert_pcs_success("resource create A ocf:heartbeat:Dummy".split())
+        role = str(const.PCMK_ROLE_PROMOTED_LEGACY).lower()
         self.assert_pcs_success(
-            "constraint ticket add T master A loss-policy=fence".split()
+            f"constraint ticket add T {role} A loss-policy=fence".split(),
+            stdout_full=(
+                f"Warning: Value '{role}' of option role is deprecated and "
+                f"should not be used, use '{const.PCMK_ROLE_PROMOTED}' value "
+                "instead\n"
+            ),
         )
         self.assert_pcs_success(
             "constraint ticket config".split(),
             [
                 "Ticket Constraints:",
-                "  Master A loss-policy=fence ticket=T",
+                f"  {const.PCMK_ROLE_PROMOTED_PRIMARY} A loss-policy=fence ticket=T",
             ],
         )
         self.assert_pcs_success(
