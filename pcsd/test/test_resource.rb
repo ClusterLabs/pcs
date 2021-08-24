@@ -8,7 +8,6 @@ class GetResourceAgentNameStructure < Test::Unit::TestCase
       get_resource_agent_name_structure('standard:provider:type'),
       {
         :full_name => 'standard:provider:type',
-        :class_provider => 'standard:provider',
         :class => 'standard',
         :provider => 'provider',
         :type => 'type',
@@ -21,7 +20,6 @@ class GetResourceAgentNameStructure < Test::Unit::TestCase
       get_resource_agent_name_structure('standard:type'),
       {
         :full_name => 'standard:type',
-        :class_provider => 'standard',
         :class => 'standard',
         :provider => nil,
         :type => 'type',
@@ -34,7 +32,6 @@ class GetResourceAgentNameStructure < Test::Unit::TestCase
       get_resource_agent_name_structure('systemd:service@instance:name'),
       {
         :full_name => 'systemd:service@instance:name',
-        :class_provider => 'systemd',
         :class => 'systemd',
         :provider => nil,
         :type => 'service@instance:name',
@@ -47,7 +44,6 @@ class GetResourceAgentNameStructure < Test::Unit::TestCase
       get_resource_agent_name_structure('service:service@instance:name'),
       {
         :full_name => 'service:service@instance:name',
-        :class_provider => 'service',
         :class => 'service',
         :provider => nil,
         :type => 'service@instance:name',

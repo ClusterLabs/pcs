@@ -103,11 +103,8 @@ def get_resource_agent_name_structure(agent_name)
     match = expression.match(agent_name)
     if match
       provider = match.names.include?('provider') ? match[:provider] : nil
-      class_provider = provider.nil? ? match[:standard] : "#{match[:standard]}:#{provider}"
       return {
         :full_name => agent_name,
-        # TODO remove, this is only used by the old web UI
-        :class_provider => class_provider,
         :class => match[:standard],
         :provider => provider,
         :type => match[:type],

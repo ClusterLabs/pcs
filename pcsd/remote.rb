@@ -45,14 +45,6 @@ def remote(params, request, auth_user)
       :cluster_start => method(:cluster_start),
       :cluster_stop => method(:cluster_stop),
       :config_restore => method(:config_restore),
-      # TODO deprecated, remove, not used anymore
-      :node_restart => method(:node_restart),
-      # lib api:
-      # /api/v1/node-standby-unstandby/v1
-      :node_standby => method(:node_standby),
-      # lib api:
-      # /api/v1/node-standby-unstandby/v1
-      :node_unstandby => method(:node_unstandby),
       :cluster_enable => method(:cluster_enable),
       :cluster_disable => method(:cluster_disable),
       :get_sw_versions => method(:get_sw_versions),
@@ -69,12 +61,6 @@ def remote(params, request, auth_user)
       :sbd_enable => method(:sbd_enable),
       :remove_stonith_watchdog_timeout=> method(:remove_stonith_watchdog_timeout),
       :set_stonith_watchdog_timeout_to_zero => method(:set_stonith_watchdog_timeout_to_zero),
-      # lib api:
-      # /api/v1/sbd-enable-sbd/v1
-      :remote_enable_sbd => method(:remote_enable_sbd),
-      # lib api:
-      # /api/v1/sbd-disable-sbd/v1
-      :remote_disable_sbd => method(:remote_disable_sbd),
       :qdevice_net_get_ca_certificate => method(:qdevice_net_get_ca_certificate),
       # lib api:
       # /api/v1/qdevice-qdevice-net-sign-certificate-request/v1
@@ -100,9 +86,6 @@ def remote(params, request, auth_user)
       # lib api:
       # /api/v1/resource-agent-list-agents/v1
       :get_avail_resource_agents => method(:get_avail_resource_agents),
-      # lib api:
-      # /api/v1/stonith-agent-list-agents/v1
-      :get_avail_fence_agents => method(:get_avail_fence_agents),
   }
   remote_cmd_with_pacemaker = {
       :pacemaker_node_status => method(:remote_pacemaker_node_status),
@@ -409,53 +392,6 @@ def config_restore(params, request, auth_user)
       $logger.info "Error: Invalid tarball"
       return "Error: Invalid tarball"
     end
-  end
-end
-
-# TODO deprecated, remove, not used anymore
-def node_restart(params, request, auth_user)
-  if params[:name]
-    code, response = send_request_with_token(
-      auth_user, params[:name], 'node_restart', true
-    )
-  else
-    if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
-      return 403, 'Permission denied'
-    end
-    $logger.info "Restarting Node"
-    output =  `/sbin/reboot`
-    $logger.debug output
-    return output
-  end
-end
-
-def node_standby(params, request, auth_user)
-  if params[:name]
-    code, response = send_request_with_token(
-      auth_user, params[:name], 'node_standby', true
-    )
-  else
-    if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
-      return 403, 'Permission denied'
-    end
-    $logger.info "Standby Node"
-    stdout, stderr, retval = run_cmd(auth_user, PCS, "node", "standby")
-    return stdout
-  end
-end
-
-def node_unstandby(params, request, auth_user)
-  if params[:name]
-    code, response = send_request_with_token(
-      auth_user, params[:name], 'node_unstandby', true
-    )
-  else
-    if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
-      return 403, 'Permission denied'
-    end
-    $logger.info "Unstandby Node"
-    stdout, stderr, retval = run_cmd(auth_user, PCS, "node", "unstandby")
-    return stdout
   end
 end
 
@@ -1371,14 +1307,6 @@ def get_avail_resource_agents(params, request, auth_user)
   return JSON.generate(getResourceAgents(auth_user).map{|a| [a, get_resource_agent_name_structure(a)]}.to_h)
 end
 
-def get_avail_fence_agents(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::READ)
-    return 403, 'Permission denied'
-  end
-  agents = getFenceAgents(auth_user)
-  return JSON.generate(agents)
-end
-
 def remove_resource(params, request, auth_user)
   if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
     return 403, 'Permission denied'
@@ -2252,62 +2180,6 @@ def set_stonith_watchdog_timeout_to_zero(param, request, auth_user)
     )
     return [400, 'ERROR']
   end
-end
-
-def remote_enable_sbd(params, request, auth_user)
-  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-
-  arg_list = []
-
-  if ['true', '1', 'on'].include?(params[:ignore_offline_nodes])
-    arg_list << '--skip-offline'
-  end
-
-  params[:watchdog].each do |node, watchdog|
-    unless watchdog.strip.empty?
-      arg_list << "watchdog=#{watchdog.strip}@#{node}"
-    end
-  end
-
-  params[:config].each do |option, value|
-    unless value.empty?
-      arg_list << "#{option}=#{value}"
-    end
-  end
-
-  _, stderr, retcode = run_cmd(
-    auth_user, PCS, 'stonith', 'sbd', 'enable', *arg_list
-  )
-
-  if retcode != 0
-    return [400, "Unable to enable sbd in cluster:\n#{stderr.join('')}"]
-  end
-
-  return [200, 'Sbd has been enabled.']
-end
-
-def remote_disable_sbd(params, request, auth_user)
-  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-
-  arg_list = []
-
-  if ['true', '1', 'on'].include?(params[:ignore_offline_nodes])
-    arg_list << '--skip-offline'
-  end
-
-  _, stderr, retcode = run_cmd(
-    auth_user, PCS, 'stonith', 'sbd', 'disable', *arg_list
-  )
-
-  if retcode != 0
-    return [400, "Unable to disable sbd in cluster:\n#{stderr.join('')}"]
-  end
-
-  return [200, 'Sbd has been disabled.']
 end
 
 def qdevice_net_get_ca_certificate(params, request, auth_user)

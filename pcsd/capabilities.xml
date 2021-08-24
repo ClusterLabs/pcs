@@ -561,13 +561,6 @@
         pcs commands: cluster kill
       </description>
     </capability>
-    <capability id="node.restart" in-pcs="0" in-pcsd="1">
-      <description>
-        Restart one host machine or the local host machine if no host specified.
-
-        daemon urls: node_restart
-      </description>
-    </capability>
 
 
 
