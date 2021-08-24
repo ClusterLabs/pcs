@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.11.0.alpha.1] - 2021-08-24
 
 ### Added
 - Explicit confirmation is now required to prevent accidental destroying
