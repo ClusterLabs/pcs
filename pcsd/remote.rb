@@ -29,8 +29,11 @@ def remote(params, request, auth_user)
       :cluster_status_plaintext => method(:cluster_status_plaintext),
       :auth => method(:auth),
       :check_auth => method(:check_auth),
+      # lib api:
+      # /api/v1/cluster-setup/v1
       :cluster_setup => method(:cluster_setup),
       :get_quorum_info => method(:get_quorum_info),
+      # used only from /managec/<cluster>/cluster_properties
       :get_cib => method(:get_cib),
       :get_corosync_conf => method(:get_corosync_conf_remote),
       :set_corosync_conf => method(:set_corosync_conf),
@@ -141,18 +144,6 @@ def remote(params, request, auth_user)
       :get_fence_agent_metadata => method(:get_fence_agent_metadata),
       :manage_resource => method(:manage_resource),
       :unmanage_resource => method(:unmanage_resource),
-      # lib api:
-      # /api/v1/alert-create-alert/v1
-      :create_alert => method(:create_alert),
-      # lib api:
-      # /api/v1/alert-update-alert/v1
-      :update_alert => method(:update_alert),
-      :create_recipient => method(:create_recipient),
-      :update_recipient => method(:update_recipient),
-      # lib api:
-      # /api/v1/alert-remove-alert/v1
-      # /api/v1/alert-remove-recipient/v1
-      :remove_alerts_and_recipients => method("remove_alerts_and_recipients"),
   }
 
   command = params[:command].to_sym
@@ -2357,145 +2348,6 @@ def manage_services(params, request, auth_user)
   rescue PcsdExchangeFormat::Error => e
     return 400, "Invalid input data format: #{e.message}"
   end
-end
-
-def _hash_to_argument_list(hash)
-  result = []
-  if hash.kind_of?(Hash)
-    hash.each {|key, value|
-      value = '' if value.nil?
-      result << "#{key}=#{value}"
-    }
-  end
-  return result
-end
-
-def create_alert(params, request, auth_user)
-  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-  path = params[:path]
-  unless path
-    return [400, 'Missing required parameter: path']
-  end
-  alert_id = params[:alert_id]
-  description = params[:description]
-  meta_attr_list = _hash_to_argument_list(params[:meta_attr])
-  instance_attr_list = _hash_to_argument_list(params[:instance_attr])
-  cmd = [PCS, 'alert', 'create', "path=#{path}"]
-  cmd << "id=#{alert_id}" if alert_id and alert_id != ''
-  cmd << "description=#{description}" if description and description != ''
-  cmd += ['options', *instance_attr_list] if instance_attr_list.any?
-  cmd += ['meta', *meta_attr_list] if meta_attr_list.any?
-  output, stderr, retval = run_cmd(auth_user, *cmd)
-  if retval != 0
-    return [400, "Unable to create alert: #{stderr.join("\n")}"]
-  end
-  return [200, 'Alert created']
-end
-
-def update_alert(params, request, auth_user)
-  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-  alert_id = params[:alert_id]
-  unless alert_id
-    return [400, 'Missing required parameter: alert_id']
-  end
-  path = params[:path]
-  description = params[:description]
-  meta_attr_list = _hash_to_argument_list(params[:meta_attr])
-  instance_attr_list = _hash_to_argument_list(params[:instance_attr])
-  cmd = [PCS, 'alert', 'update', alert_id]
-  cmd << "path=#{path}" if path
-  cmd << "description=#{description}" if description
-  cmd += ['options', *instance_attr_list] if instance_attr_list.any?
-  cmd += ['meta', *meta_attr_list] if meta_attr_list.any?
-  output, stderr, retval = run_cmd(auth_user, *cmd)
-  if retval != 0
-    return [400, "Unable to update alert: #{stderr.join("\n")}"]
-  end
-  return [200, 'Alert updated']
-end
-
-def remove_alerts_and_recipients(params, request, auth_user)
-  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-  alert_list = params[:alert_list]
-  recipient_list = params[:recipient_list]
-  if recipient_list.kind_of?(Array) and recipient_list.any?
-    output, stderr, retval = run_cmd(
-      auth_user, PCS, 'alert', 'recipient', 'remove', *recipient_list
-    )
-    if retval != 0
-      return [400, "Unable to remove recipients: #{stderr.join("\n")}"]
-    end
-  end
-  if alert_list.kind_of?(Array) and alert_list.any?
-    output, stderr, retval = run_cmd(
-      auth_user, PCS, 'alert', 'remove', *alert_list
-    )
-    if retval != 0
-      return [400, "Unable to remove alerts: #{stderr.join("\n")}"]
-    end
-  end
-  return [200, 'All removed']
-end
-
-def create_recipient(params, request, auth_user)
-  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-  alert_id = params[:alert_id]
-  if not alert_id or alert_id.strip! == ''
-    return [400, 'Missing required paramter: alert_id']
-  end
-  value = params[:value]
-  if not value or value == ''
-    return [400, 'Missing required paramter: value']
-  end
-  recipient_id = params[:recipient_id]
-  description = params[:description]
-  meta_attr_list = _hash_to_argument_list(params[:meta_attr])
-  instance_attr_list = _hash_to_argument_list(params[:instance_attr])
-  cmd = [PCS, 'alert', 'recipient', 'add', alert_id, "value=#{value}"]
-  cmd << "id=#{recipient_id}" if recipient_id and recipient_id != ''
-  cmd << "description=#{description}" if description and description != ''
-  cmd += ['options', *instance_attr_list] if instance_attr_list.any?
-  cmd += ['meta', *meta_attr_list] if meta_attr_list.any?
-  output, stderr, retval = run_cmd(auth_user, *cmd)
-  if retval != 0
-    return [400, "Unable to create recipient: #{stderr.join("\n")}"]
-  end
-  return [200, 'Recipient created']
-end
-
-def update_recipient(params, request, auth_user)
-  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-  recipient_id = params[:recipient_id]
-  if not recipient_id or recipient_id.strip! == ''
-    return [400, 'Missing required paramter: recipient_id']
-  end
-  value = params[:value]
-  if value and value.strip! == ''
-    return [400, 'Parameter value canot be empty string']
-  end
-  description = params[:description]
-  meta_attr_list = _hash_to_argument_list(params[:meta_attr])
-  instance_attr_list = _hash_to_argument_list(params[:instance_attr])
-  cmd = [PCS, 'alert', 'recipient', 'update', recipient_id]
-  cmd << "value=#{value}" if value
-  cmd << "description=#{description}" if description
-  cmd += ['options', *instance_attr_list] if instance_attr_list.any?
-  cmd += ['meta', *meta_attr_list] if meta_attr_list.any?
-  output, stderr, retval = run_cmd(auth_user, *cmd)
-  if retval != 0
-    return [400, "Unable to update recipient: #{stderr.join("\n")}"]
-  end
-  return [200, 'Recipient updated']
 end
 
 def pcsd_success(msg)
