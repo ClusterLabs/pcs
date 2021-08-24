@@ -643,10 +643,6 @@ post '/manage/auth_gui_against_nodes' do
   ]
 end
 
-get '/clusters_overview' do
-  clusters_overview(params, request, getAuthUser())
-end
-
 get '/imported-cluster-list' do
   imported_cluster_list(params, request, getAuthUser())
 end

@@ -1514,21 +1514,6 @@ def allowed_for_superuser(auth_user)
   return true
 end
 
-def get_default_overview_node_list(clustername)
-  nodes = get_cluster_nodes clustername
-  node_list = []
-  nodes.each { |node|
-    node_list << {
-      'error_list' => [],
-      'warning_list' => [],
-      'status' => 'unknown',
-      'quorum' => false,
-      'name' => node
-    }
-  }
-  return node_list
-end
-
 def enable_service(service)
   result = run_pcs_internal(
     PCSAuth.getSuperuserAuth(),
