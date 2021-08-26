@@ -1,9 +1,8 @@
 from collections import defaultdict
-from typing import Dict, Iterable, List, Mapping
+from typing import Dict, Iterable, List, Mapping, Optional
 
 from lxml import etree
 
-from pcs.common.interface.dto import to_dict
 from pcs.common import (
     const,
     pacemaker,
@@ -16,8 +15,11 @@ from pcs.common.reports import (
 from pcs.common.reports.item import ReportItem
 from pcs.common.tools import timeout_to_seconds
 from pcs.lib import validate
-from pcs.lib.resource_agent import AgentActionDto
 from pcs.lib.cib.nvpair import append_new_instance_attributes
+from pcs.lib.cib.resource.agent import (
+    complete_operations_options,
+    get_default_operation_interval,
+)
 from pcs.lib.cib.tools import (
     create_subelement_id,
     does_id_exist,
@@ -62,8 +64,6 @@ BOOLEAN_VALUES = [
     "false",
 ]
 
-_DEFAULT_INTERVALS = {"monitor": "60s"}
-
 # _normalize(key, value) -> normalized_value
 _normalize = validate.option_value_normalization(
     {
@@ -75,38 +75,14 @@ _normalize = validate.option_value_normalization(
 )
 
 
-def _get_default_interval(operation_name: str) -> str:
-    """
-    Return default interval for given operation_name
-    """
-    return _DEFAULT_INTERVALS.get(operation_name, "0s")
-
-
-def _complete_all_intervals(
-    raw_operation_list: Iterable[Mapping[str, str]]
-) -> List[Dict[str, str]]:
-    """
-    Return a new list of operations with "interval" defined for all of them
-
-    operation_list -- can include items without key "interval"
-    """
-    operation_list = []
-    for raw_operation in raw_operation_list:
-        operation = dict(raw_operation)
-        if "interval" not in operation:
-            operation["interval"] = _get_default_interval(operation["name"])
-        operation_list.append(operation)
-    return operation_list
-
-
 def prepare(
     report_processor: ReportProcessor,
     raw_operation_list: Iterable[Mapping[str, str]],
-    default_operation_list: Iterable[AgentActionDto],
+    default_operation_list: Iterable[Mapping[str, Optional[str]]],
     allowed_operation_name_list: Iterable[str],
     new_role_names_supported: bool,
     allow_invalid: bool = False,
-):
+) -> List[Dict[str, str]]:
     """
     Return operation_list prepared from raw_operation_list and
     default_operation_list.
@@ -136,21 +112,29 @@ def prepare(
     if report_processor.report_list(report_list).has_errors:
         raise LibraryError()
 
-    return _complete_all_intervals(operation_list) + _get_remaining_defaults(
+    return [
+        _filter_op_dict(op, new_role_names_supported)
+        for op in complete_operations_options(operation_list)
+    ] + _get_remaining_defaults(
         report_processor,
         operation_list,
-        default_operation_list,
+        complete_operations_options(default_operation_list),
         new_role_names_supported,
     )
 
 
-def _operations_to_normalized(raw_operation_list):
+def _operations_to_normalized(
+    raw_operation_list: Iterable[Mapping[str, str]]
+) -> List[validate.TypeOptionNormalizedMap]:
     return [
         validate.values_to_pairs(op, _normalize) for op in raw_operation_list
     ]
 
 
-def _normalized_to_operations(normalized_pairs, new_role_names_supported):
+def _normalized_to_operations(
+    normalized_pairs: Iterable[validate.TypeOptionNormalizedMap],
+    new_role_names_supported: bool,
+) -> List[Dict[str, str]]:
     def _replace_role(op_dict):
         if "role" in op_dict:
             op_dict["role"] = pacemaker.role.get_value_for_cib(
@@ -195,19 +179,19 @@ def _validate_operation_list(
     return report_list
 
 
-def _action_dto_to_dict(
-    dto: AgentActionDto,
-    new_role_names_supported: bool,
+def _filter_op_dict(
+    op: Mapping[str, Optional[str]], new_role_names_supported: bool
 ) -> Dict[str, str]:
-    result = dict(
-        filter(
-            lambda item: item[0] != "depth" and item[1] not in (None, ""),
-            to_dict(dto).items(),
-        )
-    )
+    # adjust new operation defenition (coming from agent metadata) to old code,
+    # TODO this should be handled in a different place - in saving operations to
+    # CIB
+    result = {
+        key: val for key, val in op.items() if val is not None and val != ""
+    }
+    # translate a role to a proper value
     if "role" in result:
         result["role"] = pacemaker.role.get_value_for_cib(
-            result["role"], new_role_names_supported
+            const.PcmkRoleType(result["role"]), new_role_names_supported
         )
     return result
 
@@ -215,7 +199,7 @@ def _action_dto_to_dict(
 def _get_remaining_defaults(
     report_processor: ReportProcessor,
     operation_list: Iterable[Mapping[str, str]],
-    default_operation_list: Iterable[AgentActionDto],
+    default_operation_list: Iterable[Mapping[str, Optional[str]]],
     new_role_names_supported: bool,
 ) -> List[Dict[str, str]]:
     """
@@ -233,9 +217,9 @@ def _get_remaining_defaults(
     return _make_unique_intervals(
         report_processor,
         [
-            _action_dto_to_dict(default_operation, new_role_names_supported)
+            _filter_op_dict(default_operation, new_role_names_supported)
             for default_operation in default_operation_list
-            if default_operation.name not in defined_operation_names
+            if default_operation["name"] not in defined_operation_names
         ],
     )
 
@@ -310,7 +294,7 @@ def validate_different_intervals(operation_list):
     duplication_map = defaultdict(lambda: defaultdict(list))
     for operation in operation_list:
         interval = operation.get(
-            "interval", _get_default_interval(operation["name"])
+            "interval", get_default_operation_interval(operation["name"])
         )
         seconds = timeout_to_seconds(interval)
         duplication_map[operation["name"]][seconds].append(interval)

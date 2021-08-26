@@ -1,8 +1,10 @@
 from typing import Any, Dict, List, Optional
 
-from pcs.common.interface.dto import to_dict
 from pcs.lib import resource_agent
-from pcs.lib.commands.resource_agent import _complete_agent_list
+from pcs.lib.commands.resource_agent import (
+    _agent_metadata_dto_to_dict,
+    _complete_agent_list,
+)
 from pcs.lib.env import LibraryEnvironment
 
 
@@ -42,4 +44,4 @@ def describe_agent(
         agent_name,
         absent_agent_supported=False,
     )
-    return to_dict(agent.get_full_info())
+    return _agent_metadata_dto_to_dict(agent.get_full_info(), describe=True)

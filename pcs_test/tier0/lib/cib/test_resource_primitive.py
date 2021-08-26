@@ -4,7 +4,7 @@ from lxml import etree
 
 from pcs_test.tools.assertions import assert_xml_equal
 
-from pcs.lib.resource_agent import CrmAgent
+from pcs.lib.resource_agent import AgentMetadataDto, CrmAgent
 from pcs.lib.cib.resource import primitive
 from pcs.lib.cib.tools import IdProvider
 
@@ -12,9 +12,6 @@ from pcs.lib.cib.tools import IdProvider
 class FindPrimitivesByAgent(TestCase):
     def setUp(self):
         self.agent = mock.MagicMock(spec_set=CrmAgent)
-        self.agent.get_standard.return_value = "standard"
-        self.agent.get_provider.return_value = "provider"
-        self.agent.get_type.return_value = "agent_type"
         self.resources_section = etree.fromstring(
             """
         <resources>
@@ -58,8 +55,16 @@ class FindPrimitivesByAgent(TestCase):
         )
 
     def test_stonith(self):
-        self.agent.get_standard.return_value = "stonith"
-        self.agent.get_provider.return_value = ""
+        self.agent.get_name_info.return_value = AgentMetadataDto(
+            "agent_type",
+            "stonith",
+            None,
+            "agent_type",
+            "",
+            "",
+            [],
+            [],
+        )
         results = primitive.find_primitives_by_agent(
             self.resources_section, self.agent
         )
@@ -72,6 +77,16 @@ class FindPrimitivesByAgent(TestCase):
             assert_xml_equal(expected_results[i], etree.tostring(res).decode())
 
     def test_with_provider(self):
+        self.agent.get_name_info.return_value = AgentMetadataDto(
+            "standard:provider:agent_type",
+            "standard",
+            "provider",
+            "agent_type",
+            "",
+            "",
+            [],
+            [],
+        )
         results = primitive.find_primitives_by_agent(
             self.resources_section, self.agent
         )

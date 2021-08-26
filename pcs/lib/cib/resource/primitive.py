@@ -14,6 +14,7 @@ from pcs.lib.cib.nvpair import (
     get_value,
     get_nvset_as_dict,
 )
+from pcs.lib.cib.resource.agent import get_default_operations
 from pcs.lib.cib.resource.operations import (
     prepare as prepare_operations,
     create_operations,
@@ -43,13 +44,15 @@ def find_primitives_by_agent(resources_section, resource_agent_obj):
     resource_agent_obj pcs.lib.resource_agent.CrmAgent -- agent of which
         resources should be returned
     """
-    provider = resource_agent_obj.get_provider()
+    agent_metadata = resource_agent_obj.get_name_info()
+    provider = agent_metadata.provider
     return resources_section.xpath(
-        ".//primitive[@class='{_class}' and @type='{_type}'{_provider}]".format(
-            _class=resource_agent_obj.get_standard(),
-            _type=resource_agent_obj.get_type(),
-            _provider=f" and @provider='{provider}'" if provider else "",
-        )
+        ".//primitive[@class=$class_ and @type=$type_ {provider_part}]".format(
+            provider_part=" and @provider=$provider_" if provider else "",
+        ),
+        class_=agent_metadata.standard,
+        provider_=agent_metadata.provider,
+        type_=agent_metadata.type,
     )
 
 
@@ -103,13 +106,15 @@ def create(
         )
     validate_id(resource_id, "{0} name".format(resource_type))
 
+    agent_metadata = resource_agent.get_full_info()
+
     operation_list = prepare_operations(
         report_processor,
         raw_operation_list,
-        resource_agent.get_cib_default_actions(
-            necessary_only=not use_default_operations
+        get_default_operations(
+            agent_metadata, necessary_only=not use_default_operations
         ),
-        [operation.name for operation in resource_agent.get_actions()],
+        [operation.name for operation in agent_metadata.actions],
         are_new_role_names_supported(resources_section),
         allow_invalid=allow_invalid_operation,
     )
@@ -131,9 +136,9 @@ def create(
         resources_section,
         id_provider,
         resource_id,
-        resource_agent.get_standard(),
-        resource_agent.get_provider(),
-        resource_agent.get_type(),
+        agent_metadata.standard,
+        agent_metadata.provider,
+        agent_metadata.type,
         instance_attributes=instance_attributes,
         meta_attributes=meta_attributes,
         operation_list=operation_list,

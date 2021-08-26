@@ -596,7 +596,7 @@ def _format_agent_description(description, stonith=False, show_all=False):
                 output.append("Resource options:")
             output.extend(output_params)
 
-    if description.get("actions"):
+    if description.get("default_actions"):
         output_actions = []
         for action in description["default_actions"]:
             parts = ["  {0}:".format(action.get("name", ""))]

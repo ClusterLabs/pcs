@@ -30,11 +30,6 @@ from pcs.lib.pacemaker.values import is_true
 # TODO: fix pylint issue
 # pylint: disable=no-self-use
 
-# TODO move to resource create / operation create
-# Operation monitor is required always! No matter if --no-default-ops was
-# entered or if agent does not specify it. See
-# https://clusterlabs.org/pacemaker/doc/2.1/Pacemaker_Explained/html/resources.html#monitoring-resources-for-failure
-_NECESSARY_CIB_ACTION_NAMES = {"monitor"}
 
 # These are all standards valid in cib. To get a list of standards supported by
 # pacemaker in local environment, use result of "crm_resource --list-standards".
@@ -48,9 +43,6 @@ _ALLOWED_STANDARDS = {
     "systemd",
     "nagios",
 }
-
-# TODO move to resource create / operation create
-_DEFAULT_INTERVALS = {"monitor": "60s"}
 
 STONITH_ACTION_REPLACED_BY = ["pcmk_off_action", "pcmk_reboot_action"]
 
@@ -144,53 +136,20 @@ class AgentActionDto(DataTransferObject):
     automatic: Optional[str]
     # not allowed by any OCF, defined in OCF 1.0 agents anyway
     on_target: Optional[str]
-    # TODO remove, mirror of 'depth' only for pcs internal usage
-    # pylint: disable=invalid-name
-    OCF_CHECK_LEVEL: Optional[str]
 
 
 @dataclass(frozen=True)
 class AgentMetadataDto(DataTransferObject):
-    name: str
+    # pylint: disable=too-many-instance-attributes
+
+    name: str  # full agent name: standard + provider + type
+    standard: str
+    provider: Optional[str]
+    type: str
     shortdesc: str
     longdesc: str
     parameters: List[AgentParameterDto]
     actions: List[AgentActionDto]
-    # TODO move to resource create
-    default_actions: List[AgentActionDto]
-
-
-### complete intervals in operations
-
-
-# TODO move to resource create / operation create
-def _get_default_interval(operation_name: str) -> str:
-    """
-    Return default interval for given operation_name
-    """
-    return _DEFAULT_INTERVALS.get(operation_name, "0s")
-
-
-# TODO move to resource create / operation create
-def _complete_all_intervals(
-    raw_operation_list: Iterable[AgentActionDto],
-) -> List[AgentActionDto]:
-    """
-    Return a new list of operations with "interval" defined for all of them
-
-    operation_list -- can include items with "interval" == None
-    """
-    operation_list = []
-    for operation in raw_operation_list:
-        if operation.interval is None:
-            operation_list.append(
-                dc_replace(
-                    operation, interval=_get_default_interval(operation.name)
-                )
-            )
-        else:
-            operation_list.append(operation)
-    return operation_list
 
 
 ### Agent wrapper / loader / facade classes
@@ -213,11 +172,32 @@ class Agent:
     def _get_name(self) -> str:
         raise NotImplementedError()
 
+    def _get_standard(self) -> str:
+        raise NotImplementedError()
+
+    def _get_provider(self) -> Optional[str]:
+        raise NotImplementedError()
+
+    def _get_type(self) -> str:
+        raise NotImplementedError()
+
+    def _prepare_name_parts(self, name: str) -> ResourceAgentName:
+        raise NotImplementedError()
+
     def get_name_info(self) -> AgentMetadataDto:
         """
         Get structured agent's info, only name is populated
         """
-        return AgentMetadataDto(self._get_name(), "", "", [], [], [])
+        return AgentMetadataDto(
+            self._get_name(),
+            self._get_standard(),
+            self._get_provider(),
+            self._get_type(),
+            "",
+            "",
+            [],
+            [],
+        )
 
     def get_full_info(self) -> AgentMetadataDto:
         """
@@ -225,14 +205,13 @@ class Agent:
         """
         return AgentMetadataDto(
             self._get_name(),
+            self._get_standard(),
+            self._get_provider(),
+            self._get_type(),
             self._get_shortdesc(),
             self._get_longdesc(),
             self._get_parameters(),
-            # TODO move to resource create / operation create
-            # and use _get_raw_actions instead (renamed to _get_actions)
-            self.get_actions(),
-            # TODO move to resource create / operation create
-            self.get_cib_default_actions(),
+            self._get_raw_actions(),
         )
 
     def _get_shortdesc(self) -> str:
@@ -544,67 +523,10 @@ class Agent:
                 action.get("depth"),
                 action.get("automatic"),
                 action.get("on_target"),
-                None,  # ocf_check_level, TODO remove
             )
             for action in actions_element.iter("action")
             if action.get("name", None) is not None
         ]
-
-    # TODO move to resource create / operation create
-    def get_actions(self) -> List[AgentActionDto]:
-        """
-        Get list of agent's actions (operations)
-        """
-        action_list = []
-        for action in self._get_raw_actions():
-            if action.depth is not None:
-                if action.depth == "0":
-                    action_list.append(dc_replace(action, depth=None))
-                else:
-                    action_list.append(
-                        dc_replace(action, OCF_CHECK_LEVEL=action.depth)
-                    )
-            else:
-                action_list.append(action)
-        return action_list
-
-    # TODO move to resource create
-    def _is_cib_default_action(self, action: AgentActionDto) -> bool:
-        del action
-        return False
-
-    # TODO move to resource create
-    def get_cib_default_actions(
-        self, necessary_only: bool = False
-    ) -> List[AgentActionDto]:
-        """
-        List actions that should be put to resource on its creation.
-        Note that every action has at least attribute name.
-        """
-        action_list = [
-            action
-            for action in self.get_actions()
-            if (necessary_only and action.name in _NECESSARY_CIB_ACTION_NAMES)
-            or (not necessary_only and self._is_cib_default_action(action))
-        ]
-
-        for action_name in _NECESSARY_CIB_ACTION_NAMES:
-            if action_name not in [action.name for action in action_list]:
-                action_list.append(
-                    AgentActionDto(
-                        action_name,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                    )
-                )
-
-        return _complete_all_intervals(action_list)
 
     def _get_metadata(self) -> _Element:
         """
@@ -647,6 +569,18 @@ class FakeAgentMetadata(Agent):
 
 
 class FencedMetadata(FakeAgentMetadata):
+    def _get_standard(self) -> str:
+        raise NotImplementedError()
+
+    def _get_provider(self) -> Optional[str]:
+        raise NotImplementedError()
+
+    def _get_type(self) -> str:
+        raise NotImplementedError()
+
+    def _prepare_name_parts(self, name: str) -> ResourceAgentName:
+        raise NotImplementedError()
+
     def _get_name(self) -> str:
         return "pacemaker-fenced"
 
@@ -685,16 +619,13 @@ class CrmAgent(Agent):
     def _get_full_name(self) -> str:
         return self._name_parts.full_name
 
-    # TODO remove, use DTO instead
-    def get_standard(self) -> str:
+    def _get_standard(self) -> str:
         return self._name_parts.standard
 
-    # TODO remove, use DTO instead
-    def get_provider(self) -> Optional[str]:
+    def _get_provider(self) -> Optional[str]:
         return self._name_parts.provider
 
-    # TODO remove, use DTO instead
-    def get_type(self) -> str:
+    def _get_type(self) -> str:
         return self._name_parts.type
 
     # TODO this is used only in this module, put it into right place and make
@@ -761,8 +692,8 @@ class ResourceAgent(CrmAgent):
 
     def _get_parameters(self) -> List[AgentParameterDto]:
         parameters = super()._get_parameters()
-        if self.get_standard() == "ocf" and (
-            self.get_provider() in ("heartbeat", "pacemaker")
+        if self._get_standard() == "ocf" and (
+            self._get_provider() in ("heartbeat", "pacemaker")
         ):
             trace_ra_found = False
             trace_file_found = False
@@ -823,21 +754,6 @@ class ResourceAgent(CrmAgent):
 
         return parameters
 
-    # TODO move to resource create
-    def _is_cib_default_action(self, action: AgentActionDto) -> bool:
-        # Copy all actions to the CIB even those not defined in the OCF standard
-        # or pacemaker. This way even custom actions defined in a resource agent
-        # will be copied to the CIB and run by pacemaker if they specify
-        # an interval. See https://github.com/ClusterLabs/pcs/issues/132
-        return action.name not in {
-            # one-time action, not meant to be processed by pacemaker
-            "meta-data",
-            # deprecated alias of monitor
-            "status",
-            # one-time action, not meant to be processed by pacemaker
-            "validate-all",
-        }
-
 
 class AbsentAgentMixin:
     def _load_metadata(self) -> str:
@@ -892,7 +808,7 @@ class StonithAgent(CrmAgent):
         return ResourceAgentName("stonith", None, name)
 
     def _get_name(self) -> str:
-        return self.get_type()
+        return self._get_type()
 
     def _get_parameters(self) -> List[AgentParameterDto]:
         # TODO: fix pylint issue
@@ -1014,7 +930,6 @@ class StonithAgent(CrmAgent):
         return self.__class__._fenced_metadata
 
     def get_provides_unfencing(self) -> bool:
-        # self.get_actions returns an empty list
         # TODO: fix pylint issue
         # pylint: disable=protected-access
         for action in self._get_raw_actions():
@@ -1025,10 +940,6 @@ class StonithAgent(CrmAgent):
             ):
                 return True
         return False
-
-    # TODO move to resource create
-    def _is_cib_default_action(self, action: AgentActionDto) -> bool:
-        return action.name == "monitor"
 
 
 class AbsentStonithAgent(AbsentAgentMixin, StonithAgent):
