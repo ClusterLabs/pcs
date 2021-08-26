@@ -30,47 +30,6 @@ patch_agent = create_patcher("pcs.lib.resource_agent")
 patch_agent_object = partial(mock.patch.object, lib_ra.Agent)
 
 
-class GetDefaultInterval(TestCase):
-    def test_return_0s_on_name_different_from_monitor(self):
-        self.assertEqual("0s", lib_ra._get_default_interval("start"))
-
-    def test_return_60s_on_monitor(self):
-        self.assertEqual("60s", lib_ra._get_default_interval("monitor"))
-
-
-@patch_agent("_get_default_interval", mock.Mock(return_value="10s"))
-class CompleteAllIntervals(TestCase):
-    def test_add_intervals_everywhere_is_missing(self):
-        self.assertEqual(
-            [
-                lib_ra.AgentActionDto(
-                    "monitor", None, "20s", None, None, None, None, None, None
-                ),
-                lib_ra.AgentActionDto(
-                    "start", None, "10s", None, None, None, None, None, None
-                ),
-            ],
-            lib_ra._complete_all_intervals(
-                [
-                    lib_ra.AgentActionDto(
-                        "monitor",
-                        None,
-                        "20s",
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                    ),
-                    lib_ra.AgentActionDto(
-                        "start", None, None, None, None, None, None, None, None
-                    ),
-                ]
-            ),
-        )
-
-
 class SplitResourceAgentName(TestCase):
     def test_returns_resource_agent_name_when_is_valid(self):
         self.assertEqual(
@@ -941,7 +900,7 @@ class AgentMetadataGetActionsTest(TestCase):
             </resource-agent>
         """
         mock_metadata.return_value = etree.XML(xml)
-        self.assertEqual(self.agent.get_actions(), [])
+        self.assertEqual(self.agent._get_raw_actions(), [])
 
     def test_empty_actions(self, mock_metadata):
         xml = """
@@ -950,7 +909,7 @@ class AgentMetadataGetActionsTest(TestCase):
             </resource-agent>
         """
         mock_metadata.return_value = etree.XML(xml)
-        self.assertEqual(self.agent.get_actions(), [])
+        self.assertEqual(self.agent._get_raw_actions(), [])
 
     def test_empty_action(self, mock_metadata):
         xml = """
@@ -961,7 +920,7 @@ class AgentMetadataGetActionsTest(TestCase):
             </resource-agent>
         """
         mock_metadata.return_value = etree.XML(xml)
-        self.assertEqual(self.agent.get_actions(), [])
+        self.assertEqual(self.agent._get_raw_actions(), [])
 
     def test_more_actions(self, mock_metadata):
         xml = """
@@ -976,56 +935,19 @@ class AgentMetadataGetActionsTest(TestCase):
         """
         mock_metadata.return_value = etree.XML(xml)
         self.assertEqual(
-            self.agent.get_actions(),
+            self.agent._get_raw_actions(),
             [
                 lib_ra.AgentActionDto(
-                    "on", None, None, None, None, None, "0", None, None
+                    "on", None, None, None, None, None, "0", None
                 ),
                 lib_ra.AgentActionDto(
-                    "off", None, None, None, None, None, None, None, None
+                    "off", None, None, None, None, None, None, None
                 ),
                 lib_ra.AgentActionDto(
-                    "reboot", None, None, None, None, None, None, None, None
+                    "reboot", None, None, None, None, None, None, None
                 ),
                 lib_ra.AgentActionDto(
-                    "status", None, None, None, None, None, None, None, None
-                ),
-            ],
-        )
-
-    def test_remove_depth_with_0(self, mock_metadata):
-        xml = """
-            <resource-agent>
-                <actions>
-                    <action name="monitor" timeout="20" depth="0"/>
-                </actions>
-            </resource-agent>
-        """
-        mock_metadata.return_value = etree.XML(xml)
-        self.assertEqual(
-            self.agent.get_actions(),
-            [
-                lib_ra.AgentActionDto(
-                    "monitor", "20", None, None, None, None, None, None, None
-                ),
-            ],
-        )
-
-    def test_transform_depth_to_OCF_CHECK_LEVEL(self, mock_metadata):
-        # pylint: disable=invalid-name
-        xml = """
-            <resource-agent>
-                <actions>
-                    <action name="monitor" timeout="20" depth="1"/>
-                </actions>
-            </resource-agent>
-        """
-        mock_metadata.return_value = etree.XML(xml)
-        self.assertEqual(
-            self.agent.get_actions(),
-            [
-                lib_ra.AgentActionDto(
-                    "monitor", "20", None, None, None, "1", None, None, "1"
+                    "status", None, None, None, None, None, None, None
                 ),
             ],
         )
@@ -1041,7 +963,7 @@ class AgentMetadataGetActionsTest(TestCase):
     def test_role_old_agent_old_preferred(self, mock_metadata):
         mock_metadata.return_value = self._fixture_metadata_old_role
         self.assertEqual(
-            self.agent.get_actions(),
+            self.agent._get_raw_actions(),
             [
                 lib_ra.AgentActionDto(
                     "monitor",
@@ -1052,14 +974,12 @@ class AgentMetadataGetActionsTest(TestCase):
                     None,
                     None,
                     None,
-                    None,
                 ),
                 lib_ra.AgentActionDto(
                     "monitor",
                     "20",
                     "11",
                     const.PCMK_ROLE_UNPROMOTED_LEGACY,
-                    None,
                     None,
                     None,
                     None,
@@ -1079,7 +999,7 @@ class AgentMetadataGetActionsTest(TestCase):
     def test_role_new_agent_old_preferred(self, mock_metadata):
         mock_metadata.return_value = self._fixture_metadata_new_role
         self.assertEqual(
-            self.agent.get_actions(),
+            self.agent._get_raw_actions(),
             [
                 lib_ra.AgentActionDto(
                     "monitor",
@@ -1090,14 +1010,12 @@ class AgentMetadataGetActionsTest(TestCase):
                     None,
                     None,
                     None,
-                    None,
                 ),
                 lib_ra.AgentActionDto(
                     "monitor",
                     "20",
                     "11",
                     const.PCMK_ROLE_UNPROMOTED_LEGACY,
-                    None,
                     None,
                     None,
                     None,
@@ -1117,7 +1035,7 @@ class AgentMetadataGetActionsTest(TestCase):
     def test_role_old_agent_new_preferred(self, mock_metadata):
         mock_metadata.return_value = self._fixture_metadata_old_role
         self.assertEqual(
-            self.agent.get_actions(),
+            self.agent._get_raw_actions(),
             [
                 lib_ra.AgentActionDto(
                     "monitor",
@@ -1128,14 +1046,12 @@ class AgentMetadataGetActionsTest(TestCase):
                     None,
                     None,
                     None,
-                    None,
                 ),
                 lib_ra.AgentActionDto(
                     "monitor",
                     "20",
                     "11",
                     const.PCMK_ROLE_UNPROMOTED,
-                    None,
                     None,
                     None,
                     None,
@@ -1155,14 +1071,13 @@ class AgentMetadataGetActionsTest(TestCase):
     def test_role_new_agent_new_preferred(self, mock_metadata):
         mock_metadata.return_value = self._fixture_metadata_new_role
         self.assertEqual(
-            self.agent.get_actions(),
+            self.agent._get_raw_actions(),
             [
                 lib_ra.AgentActionDto(
                     "monitor",
                     "20",
                     "10",
                     const.PCMK_ROLE_PROMOTED,
-                    None,
                     None,
                     None,
                     None,
@@ -1177,152 +1092,16 @@ class AgentMetadataGetActionsTest(TestCase):
                     None,
                     None,
                     None,
-                    None,
                 ),
             ],
-        )
-
-
-@patch_agent_object(
-    "_is_cib_default_action", lambda self, action: action.name == "monitor"
-)
-@patch_agent_object("get_actions")
-class AgentMetadataGetCibDefaultActions(TestCase):
-    def setUp(self):
-        self.agent = lib_ra.Agent(mock.MagicMock(spec_set=CommandRunner))
-
-    def test_complete_monitor(self, get_actions):
-        get_actions.return_value = [
-            lib_ra.AgentActionDto(
-                "meta-data", None, None, None, None, None, None, None, None
-            ),
-        ]
-        self.assertEqual(
-            [
-                lib_ra.AgentActionDto(
-                    "monitor", None, "60s", None, None, None, None, None, None
-                )
-            ],
-            self.agent.get_cib_default_actions(),
-        )
-
-    def test_complete_intervals(self, get_actions):
-        get_actions.return_value = [
-            lib_ra.AgentActionDto(
-                "meta-data", None, None, None, None, None, None, None, None
-            ),
-            lib_ra.AgentActionDto(
-                "monitor", "30s", None, None, None, None, None, None, None
-            ),
-        ]
-        self.assertEqual(
-            [
-                lib_ra.AgentActionDto(
-                    "monitor", "30s", "60s", None, None, None, None, None, None
-                ),
-            ],
-            self.agent.get_cib_default_actions(),
-        )
-
-
-@mock.patch.object(lib_ra.ResourceAgent, "get_actions")
-class ResourceAgentMetadataGetCibDefaultActions(TestCase):
-    fixture_actions = [
-        lib_ra.AgentActionDto(
-            "custom1", "40s", None, None, None, None, None, None, None
-        ),
-        lib_ra.AgentActionDto(
-            "custom2", "60s", "25s", None, None, None, None, None, None
-        ),
-        lib_ra.AgentActionDto(
-            "meta-data", None, None, None, None, None, None, None, None
-        ),
-        lib_ra.AgentActionDto(
-            "monitor", "30s", "10s", None, None, None, None, None, None
-        ),
-        lib_ra.AgentActionDto(
-            "start", "40s", None, None, None, None, None, None, None
-        ),
-        lib_ra.AgentActionDto(
-            "status", "20s", "15s", None, None, None, None, None, None
-        ),
-        lib_ra.AgentActionDto(
-            "validate-all", None, None, None, None, None, None, None, None
-        ),
-    ]
-
-    def setUp(self):
-        self.agent = lib_ra.ResourceAgent(
-            mock.MagicMock(spec_set=CommandRunner), "ocf:pacemaker:Dummy"
-        )
-
-    def test_select_only_actions_for_cib(self, get_actions):
-        get_actions.return_value = self.fixture_actions
-        self.assertEqual(
-            [
-                lib_ra.AgentActionDto(
-                    "custom1", "40s", "0s", None, None, None, None, None, None
-                ),
-                lib_ra.AgentActionDto(
-                    "custom2", "60s", "25s", None, None, None, None, None, None
-                ),
-                lib_ra.AgentActionDto(
-                    "monitor", "30s", "10s", None, None, None, None, None, None
-                ),
-                lib_ra.AgentActionDto(
-                    "start", "40s", "0s", None, None, None, None, None, None
-                ),
-            ],
-            self.agent.get_cib_default_actions(),
-        )
-
-    def test_complete_monitor(self, get_actions):
-        get_actions.return_value = [
-            lib_ra.AgentActionDto(
-                "meta-data", None, None, None, None, None, None, None, None
-            ),
-        ]
-        self.assertEqual(
-            [
-                lib_ra.AgentActionDto(
-                    "monitor", None, "60s", None, None, None, None, None, None
-                ),
-            ],
-            self.agent.get_cib_default_actions(),
-        )
-
-    def test_complete_intervals(self, get_actions):
-        get_actions.return_value = [
-            lib_ra.AgentActionDto(
-                "meta-data", None, None, None, None, None, None, None, None
-            ),
-            lib_ra.AgentActionDto(
-                "monitor", "30s", None, None, None, None, None, None, None
-            ),
-        ]
-        self.assertEqual(
-            [
-                lib_ra.AgentActionDto(
-                    "monitor", "30s", "60s", None, None, None, None, None, None
-                ),
-            ],
-            self.agent.get_cib_default_actions(),
-        )
-
-    def test_select_only_necessary_actions_for_cib(self, get_actions):
-        get_actions.return_value = self.fixture_actions
-        self.assertEqual(
-            [
-                lib_ra.AgentActionDto(
-                    "monitor", "30s", "10s", None, None, None, None, None, None
-                ),
-            ],
-            self.agent.get_cib_default_actions(necessary_only=True),
         )
 
 
 @patch_agent_object("_get_metadata")
 @patch_agent_object("_get_name", lambda self: "agent-name")
+@patch_agent_object("_get_standard", lambda self: "agent-standard")
+@patch_agent_object("_get_provider", lambda self: "agent-provider")
+@patch_agent_object("_get_type", lambda self: "agent-type")
 class AgentMetadataGetInfoTest(TestCase):
     def setUp(self):
         self.agent = lib_ra.Agent(mock.MagicMock(spec_set=CommandRunner))
@@ -1353,7 +1132,16 @@ class AgentMetadataGetInfoTest(TestCase):
         mock_metadata.return_value = self.metadata
         self.assertEqual(
             self.agent.get_name_info(),
-            lib_ra.AgentMetadataDto("agent-name", "", "", [], [], []),
+            lib_ra.AgentMetadataDto(
+                "agent-name",
+                "agent-standard",
+                "agent-provider",
+                "agent-type",
+                "",
+                "",
+                [],
+                [],
+            ),
         )
 
     def test_full_info(self, mock_metadata):
@@ -1362,6 +1150,9 @@ class AgentMetadataGetInfoTest(TestCase):
             self.agent.get_full_info(),
             lib_ra.AgentMetadataDto(
                 "agent-name",
+                "agent-standard",
+                "agent-provider",
+                "agent-type",
                 "short description",
                 "long description",
                 [
@@ -1396,23 +1187,10 @@ class AgentMetadataGetInfoTest(TestCase):
                 ],
                 [
                     lib_ra.AgentActionDto(
-                        "on", None, None, None, None, None, "0", None, None
+                        "on", None, None, None, None, None, "0", None
                     ),
                     lib_ra.AgentActionDto(
-                        "off", None, None, None, None, None, None, None, None
-                    ),
-                ],
-                [
-                    lib_ra.AgentActionDto(
-                        "monitor",
-                        None,
-                        "60s",
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
+                        "off", None, None, None, None, None, None, None
                     ),
                 ],
             ),
@@ -1937,7 +1715,7 @@ class CrmAgentDescendant(lib_ra.CrmAgent):
         return lib_ra.ResourceAgentName("STANDARD", None, name)
 
     def _get_name(self):
-        return self.get_type()
+        return self._get_type()
 
 
 class CrmAgentMetadataGetMetadataTest(TestCase, ExtendedAssertionsMixin):
@@ -2369,12 +2147,27 @@ class FindResourceAgentByNameTest(TestCase):
     @patch_agent("_guess_exactly_one_resource_agent_full_name")
     def test_returns_guessed_agent(self, mock_guess):
         # setup
-        name = "Delay"
-        guessed_name = "ocf:heartbeat:Delay"
+        standard = "ocf"
+        provider = "heartbeat"
+        type_ = "Delay"
+        name = type_
+        guessed_name = f"{standard}:{provider}:{type_}"
 
         class TestAgent(lib_ra.Agent):
+            def _get_standard(self):
+                return standard
+
+            def _get_provider(self):
+                return provider
+
+            def _get_type(self):
+                return type_
+
             def _get_name(self):
                 return guessed_name
+
+            def _prepare_name_parts(self, name):
+                return lib_ra.ResourceAgentName(standard, provider, type_)
 
             def _load_metadata(self):
                 return "<xml />"
@@ -2537,7 +2330,7 @@ class AbsentResourceAgentTest(TestCase):
         self.assertEqual(agent._get_shortdesc(), absent._get_shortdesc())
         self.assertEqual(agent._get_longdesc(), absent._get_longdesc())
         self.assertEqual(agent._get_parameters(), absent._get_parameters())
-        self.assertEqual(agent.get_actions(), absent.get_actions())
+        self.assertEqual(agent._get_raw_actions(), absent._get_raw_actions())
         self.assertEqual(
             [],
             absent.validate_parameters_create(

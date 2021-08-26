@@ -18,15 +18,12 @@ from pcs.lib.commands import stonith_agent as lib
 
 @mock.patch(
     "pcs.lib.resource_agent.list_stonith_agents",
-    lambda runner: [
-        "fence_apc",
-        "fence_dummy",
-        "fence_xvm",
-    ],
+    lambda runner: ["fence_apc", "fence_dummy", "fence_xvm"],
 )
 @mock.patch.object(LibraryEnvironment, "cmd_runner", lambda self: "mock_runner")
 class TestListAgents(TestCase):
     def setUp(self):
+        self.maxDiff = None
         self.mock_logger = mock.MagicMock(logging.Logger)
         self.mock_reporter = MockLibraryReportProcessor()
         self.lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
@@ -91,8 +88,6 @@ class TestListAgents(TestCase):
 
     @mock.patch.object(lib_ra.Agent, "_get_metadata", autospec=True)
     def test_describe(self, mock_metadata):
-        self.maxDiff = None
-
         def mock_metadata_func(self):
             if self._get_name() == "ocf:test:Stateful":
                 raise lib_ra.UnableToGetAgentMetadata(
@@ -131,7 +126,6 @@ class TestListAgents(TestCase):
                             "name": "monitor",
                             "OCF_CHECK_LEVEL": None,
                             "automatic": None,
-                            "depth": None,
                             "on_target": None,
                             "role": None,
                             "start-delay": None,
@@ -151,7 +145,6 @@ class TestListAgents(TestCase):
                             "name": "monitor",
                             "OCF_CHECK_LEVEL": None,
                             "automatic": None,
-                            "depth": None,
                             "on_target": None,
                             "role": None,
                             "start-delay": None,
@@ -171,7 +164,6 @@ class TestListAgents(TestCase):
                             "name": "monitor",
                             "OCF_CHECK_LEVEL": None,
                             "automatic": None,
-                            "depth": None,
                             "on_target": None,
                             "role": None,
                             "start-delay": None,
@@ -188,6 +180,7 @@ class TestListAgents(TestCase):
 @mock.patch.object(LibraryEnvironment, "cmd_runner", lambda self: "mock_runner")
 class TestDescribeAgent(TestCase):
     def setUp(self):
+        self.maxDiff = None
         self.mock_logger = mock.MagicMock(logging.Logger)
         self.mock_reporter = MockLibraryReportProcessor()
         self.lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
@@ -213,7 +206,6 @@ class TestDescribeAgent(TestCase):
                     "interval": "60s",
                     "OCF_CHECK_LEVEL": None,
                     "automatic": None,
-                    "depth": None,
                     "on_target": None,
                     "role": None,
                     "start-delay": None,

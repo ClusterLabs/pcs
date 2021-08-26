@@ -133,6 +133,7 @@ EXTRA_DIST		= \
 			  tier0/lib/booth/test_status.py \
 			  tier0/lib/booth/test_sync.py \
 			  tier0/lib/cib/__init__.py \
+			  tier0/lib/cib/resource/agent.py \
 			  tier0/lib/cib/resource/__init__.py \
 			  tier0/lib/cib/resource/test_hierarchy.py \
 			  tier0/lib/cib/resource/test_relations.py \
