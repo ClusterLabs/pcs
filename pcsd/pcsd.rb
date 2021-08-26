@@ -682,145 +682,6 @@ get '/managec/:cluster/cluster_properties' do
 
     if code == 403
       return [403, 'Permission denied']
-    elsif code == 404
-      definition = {
-        'batch-limit' => {
-          'name' => 'batch-limit',
-          'source' => 'pacemaker-schedulerd',
-          'default' => '0',
-          'type' => 'integer',
-          'shortdesc' => 'The number of jobs that pacemaker is allowed to execute in parallel.',
-          'longdesc' => 'The "correct" value will depend on the speed and load of your network and cluster nodes.',
-          'readable_name' => 'Batch Limit',
-          'advanced' => false
-        },
-        'no-quorum-policy' => {
-          'name' => 'no-quorum-policy',
-          'source' => 'pacemaker-schedulerd',
-          'default' => 'stop',
-          'type' => 'enum',
-          'enum' => ['stop', 'freeze', 'ignore', 'suicide'],
-          'shortdesc' => 'What to do when the cluster does not have quorum.',
-          'longdesc' => 'Allowed values:
-  * ignore - continue all resource management
-  * freeze - continue resource management, but don\'t recover resources from nodes not in the affected partition
-  * stop - stop all resources in the affected cluster partition
-  * suicide - fence all nodes in the affected cluster partition',
-          'readable_name' => 'No Quorum Policy',
-          'advanced' => false
-        },
-        'symmetric-cluster' => {
-          'name' => 'symmetric-cluster',
-          'source' => 'pacemaker-schedulerd',
-          'default' => 'true',
-          'type' => 'boolean',
-          'shortdesc' => 'All resources can run anywhere by default.',
-          'longdesc' => 'All resources can run anywhere by default.',
-          'readable_name' => 'Symmetric',
-          'advanced' => false
-        },
-        'stonith-enabled' => {
-          'name' => 'stonith-enabled',
-          'source' => 'pacemaker-schedulerd',
-          'default' => 'true',
-          'type' => 'boolean',
-          'shortdesc' => 'Failed nodes are STONITH\'d',
-          'longdesc' => 'Failed nodes are STONITH\'d',
-          'readable_name' => 'Stonith Enabled',
-          'advanced' => false
-        },
-        'stonith-action' => {
-          'name' => 'stonith-action',
-          'source' => 'pacemaker-schedulerd',
-          'default' => 'reboot',
-          'type' => 'enum',
-          'enum' => ['reboot', 'poweroff', 'off'],
-          'shortdesc' => 'Action to send to STONITH device',
-          'longdesc' => 'Action to send to STONITH device Allowed values: reboot, poweroff, off',
-          'readable_name' => 'Stonith Action',
-          'advanced' => false
-        },
-        'cluster-delay' => {
-          'name' => 'cluster-delay',
-          'source' => 'pacemaker-schedulerd',
-          'default' => '60s',
-          'type' => 'time',
-          'shortdesc' => 'Round trip delay over the network (excluding action execution)',
-          'longdesc' => 'The "correct" value will depend on the speed and load of your network and cluster nodes.',
-          'readable_name' => 'Cluster Delay',
-          'advanced' => false
-        },
-        'stop-orphan-resources' => {
-          'name' => 'stop-orphan-resources',
-          'source' => 'pacemaker-schedulerd',
-          'default' => 'true',
-          'type' => 'boolean',
-          'shortdesc' => 'Should deleted resources be stopped',
-          'longdesc' => 'Should deleted resources be stopped',
-          'readable_name' => 'Stop Orphan Resources',
-          'advanced' => false
-        },
-        'stop-orphan-actions' => {
-          'name' => 'stop-orphan-actions',
-          'source' => 'pacemaker-schedulerd',
-          'default' => 'true',
-          'type' => 'boolean',
-          'shortdesc' => 'Should deleted actions be cancelled',
-          'longdesc' => 'Should deleted actions be cancelled',
-          'readable_name' => 'Stop Orphan Actions',
-          'advanced' => false
-        },
-        'start-failure-is-fatal' => {
-          'name' => 'start-failure-is-fatal',
-          'source' => 'pacemaker-schedulerd',
-          'default' => 'true',
-          'type' => 'boolean',
-          'shortdesc' => 'Always treat start failures as fatal',
-          'longdesc' => 'This was the old default. However when set to FALSE, the cluster will instead use the resource\'s failcount and value for resource-failure-stickiness',
-          'readable_name' => 'Start Failure is Fatal',
-          'advanced' => false
-        },
-        'pe-error-series-max' => {
-          'name' => 'pe-error-series-max',
-          'source' => 'pacemaker-schedulerd',
-          'default' => '-1',
-          'type' => 'integer',
-          'shortdesc' => 'The number of PE inputs resulting in ERRORs to save',
-          'longdesc' => 'Zero to disable, -1 to store unlimited.',
-          'readable_name' => 'PE Error Storage',
-          'advanced' => false
-        },
-        'pe-warn-series-max' => {
-          'name' => 'pe-warn-series-max',
-          'source' => 'pacemaker-schedulerd',
-          'default' => '5000',
-          'type' => 'integer',
-          'shortdesc' => 'The number of PE inputs resulting in WARNINGs to save',
-          'longdesc' => 'Zero to disable, -1 to store unlimited.',
-          'readable_name' => 'PE Warning Storage',
-          'advanced' => false
-        },
-        'pe-input-series-max' => {
-          'name' => 'pe-input-series-max',
-          'source' => 'pacemaker-schedulerd',
-          'default' => '4000',
-          'type' => 'integer',
-          'shortdesc' => 'The number of other PE inputs to save',
-          'longdesc' => 'Zero to disable, -1 to store unlimited.',
-          'readable_name' => 'PE Input Storage',
-          'advanced' => false
-        },
-        'enable-acl' => {
-          'name' => 'enable-acl',
-          'source' => 'pacemaker-based',
-          'default' => 'false',
-          'type' => 'boolean',
-          'shortdesc' => 'Enable CIB ACL',
-          'longdesc' => 'Should pacemaker use ACLs to determine access to cluster',
-          'readable_name' => 'Enable ACLs',
-          'advanced' => false
-        },
-      }
     elsif code != 200
       return [400, 'getting properties definition failed']
     else
@@ -847,69 +708,7 @@ get '/managec/:cluster/get_resource_agent_metadata' do
     false,
     {:resource_agent => resource_agent}
   )
-  if code != 404
-    return [code, out]
-  end
-
-  code, out = send_cluster_request_with_token(
-    auth_user,
-    cluster,
-    'resource_metadata',
-    false,
-    {
-      :resourcename => resource_agent,
-      :new => true
-    }
-  )
-  if code != 200
-    return [400, 'Unable to get meta-data of specified resource agent.']
-  end
-  desc_regex = Regexp.new(
-    '<span class="reg[^>]*>(?<short>[^>]*)&nbsp;</span>[^<]*' +
-      '<span title="(?<long>[^"]*)"'
-  )
-  parameters_regex = Regexp.new(
-    '<input type="hidden" name="resource_type"[^>]*>(?<required>[\s\S]*)' +
-      '<div class="bold">Optional Arguments:</div>(?<optional>[\S\s]*)' +
-      '<tr class="stop">'
-  )
-  parameter_regex = Regexp.new(
-    '<tr title="(?<longdesc>[^"]*)"[^>]*>[\s]*<td class="reg">\s*' +
-      '(?<name>[^<\s]*)\s*</td>\s*<td>\s*' +
-      '<input placeholder="(?<shortdesc>[^"]*)"'
-  )
-
-  desc = desc_regex.match(out)
-  unless desc
-    return [400, 'Unable to get meta-data of specified resource agent.']
-  end
-  result = {
-    :name => resource_agent,
-    :shortdesc => html2plain(desc[:short]),
-    :longdesc => html2plain(desc[:long]),
-    :parameters => []
-  }
-
-  parameters = parameters_regex.match(out)
-  parameters[:required].scan(parameter_regex) { |match|
-    result[:parameters] << {
-      :name => html2plain(match[1]),
-      :longdesc => html2plain(match[0]),
-      :shortdesc => html2plain(match[2]),
-      :type => 'string',
-      :required => true
-    }
-  }
-  parameters[:optional].scan(parameter_regex) { |match|
-    result[:parameters] << {
-      :name => html2plain(match[1]),
-      :longdesc => html2plain(match[0]),
-      :shortdesc => html2plain(match[2]),
-      :type => 'string',
-      :required => false
-    }
-  }
-  return [200, JSON.generate(result)]
+  return [code, out]
 end
 
 get '/managec/:cluster/get_fence_agent_metadata' do
@@ -923,90 +722,7 @@ get '/managec/:cluster/get_fence_agent_metadata' do
     false,
     {:fence_agent => fence_agent}
   )
-  if code != 404
-    return [code, out]
-  end
-
-  code, out = send_cluster_request_with_token(
-    auth_user,
-    cluster,
-    'fence_device_metadata',
-    false,
-    {
-      :resourcename => fence_agent.sub('stonith:', ''),
-      :new => true
-    }
-  )
-  if code != 200
-    return [400, 'Unable to get meta-data of specified fence agent.']
-  end
-  desc_regex = Regexp.new(
-    '<span class="reg[^>]*>(?<short>[^>]*)&nbsp;</span>[^<]*' +
-      '<span title="(?<long>[^"]*)"'
-  )
-  parameters_regex = Regexp.new(
-    '<input type="hidden" name="resource_type"[^>]*>(?<required>[\s\S]*)' +
-      '<div class="bold">Optional Arguments:</div>(?<optional>[\S\s]*)' +
-      '<div class="bold">Advanced Arguments:</div>(?<advanced>[\S\s]*)' +
-      '<tr class="stop">'
-  )
-  required_parameter_regex = Regexp.new(
-    '<tr title="(?<longdesc>[^"]*)[^>]*>[\s]*' +
-      '<td class="reg">\s*&nbsp;(?<name>[^<\s]*)\s*</td>\s*<td>\s*' +
-      '<input placeholder="(?<shortdesc>[^"]*)"'
-  )
-  other_parameter_regex = Regexp.new(
-    '<td class="reg">\s*&nbsp;(?<name>[^<\s]*)\s*</td>\s*<td>\s*' +
-      '<input placeholder="(?<shortdesc>[^"]*)"'
-  )
-
-  result = {
-    :name => fence_agent,
-    :shortdesc => '',
-    :longdesc => '',
-    :parameters => []
-  }
-
-  # pcsd in version 0.9.137 (and older) does not provide description for
-  # fence agents
-  desc = desc_regex.match(out)
-  if desc
-    result[:shortdesc] = html2plain(desc[:short])
-    result[:longdesc] = html2plain(desc[:long])
-  end
-
-  parameters = parameters_regex.match(out)
-  parameters[:required].scan(required_parameter_regex) { |match|
-    result[:parameters] << {
-      :name => html2plain(match[1]),
-      :longdesc => html2plain(match[0]),
-      :shortdesc => html2plain(match[2]),
-      :type => 'string',
-      :required => true,
-      :advanced => false
-    }
-  }
-  parameters[:optional].scan(other_parameter_regex) { |match|
-    result[:parameters] << {
-      :name => html2plain(match[0]),
-      :longdesc => '',
-      :shortdesc => html2plain(match[1]),
-      :type => 'string',
-      :required => false,
-      :advanced => false
-    }
-  }
-  parameters[:advanced].scan(other_parameter_regex) { |match|
-    result[:parameters] << {
-      :name => html2plain(match[0]),
-      :longdesc => '',
-      :shortdesc => html2plain(match[1]),
-      :type => 'string',
-      :required => false,
-      :advanced => true
-    }
-  }
-  return [200, JSON.generate(result)]
+  return [code, out]
 end
 
 post '/managec/:cluster/fix_auth_of_cluster' do
@@ -1082,7 +798,6 @@ def pcs_compatibility_layer_known_hosts_add(
   known_hosts = get_known_hosts().select { |name, obj|
     host_list.include?(name)
   }
-  # try the new endpoint provided by pcs-0.10
   known_hosts_request_data = {}
   known_hosts.each { |host_name, host_obj|
     known_hosts_request_data[host_name] = {
@@ -1108,50 +823,14 @@ def pcs_compatibility_layer_known_hosts_add(
     )
   end
 
-  # a remote host supports the endpoint; success
   if retval == 200
     return 'success'
   end
 
-  # a remote host supports the endpoint; error
-  if retval != 404
-    return 'error'
+  if retval == 404
+    return 'not_supported'
   end
-
-  # a remote host does not support the endpoint
-  # fallback to the old endpoint provided by pcs-0.9 since 0.9.140
-  request_data = {}
-  known_hosts.each { |host_name, host_obj|
-    addr = host_obj.first_dest()['addr']
-    port = host_obj.first_dest()['port']
-    request_data["node:#{host_name}"] = host_obj.token
-    request_data["port:#{host_name}"] = port
-    request_data["node:#{addr}"] = host_obj.token
-    request_data["port:#{addr}"] = port
-  }
-  if is_cluster_request
-    retval, _out = send_cluster_request_with_token(
-      auth_user, target, '/save_tokens', true, request_data
-    )
-  else
-    retval, _out = send_request_with_token(
-      auth_user, target, '/save_tokens', true, request_data
-    )
-  end
-
-  # a remote host supports the endpoint; success
-  if retval == 200
-    return 'success'
-  end
-
-  # a remote host supports the endpoint; error
-  if retval != 404
-    return 'error'
-  end
-
-  # a remote host does not support any of the endpoints
-  # there's nothing we can do about it
-  return 'not_supported'
+  return 'error'
 end
 
 def pcs_compatibility_layer_get_cluster_known_hosts(cluster_name, target_node)
@@ -1159,11 +838,9 @@ def pcs_compatibility_layer_get_cluster_known_hosts(cluster_name, target_node)
   known_hosts = []
   auth_user = PCSAuth.getSuperuserAuth()
 
-  # try the new endpoint provided by pcs-0.10
   retval, out = send_request_with_token(
     auth_user, target_node, '/get_cluster_known_hosts'
   )
-  # a remote host supports /get_cluster_known_hosts; data downloaded
   if retval == 200
     begin
       JSON.parse(out).each { |name, data|
@@ -1181,157 +858,19 @@ def pcs_compatibility_layer_get_cluster_known_hosts(cluster_name, target_node)
         "cannot get authentication info from cluster '#{cluster_name}'"
       )
     end
-    return known_hosts, warning_messages
-  end
-
-  # a remote host supports /get_cluster_known_hosts; an error occured
-  if retval != 404
+  elsif retval == 404
+    warning_messages << (
+      "Unable to automatically authenticate against cluster nodes: " +
+      "cluster '#{cluster_name}' is running an old version of pcs/pcsd"
+    )
+  else
     warning_messages << (
       "Unable to automatically authenticate against cluster nodes: " +
       "cannot get authentication info from cluster '#{cluster_name}'"
     )
-    return known_hosts, warning_messages
   end
 
-  # a remote host does not support /get_cluster_known_hosts
-  # fallback to the old endpoint provided by pcs-0.9 since 0.9.140
-  retval, out = send_request_with_token(
-    auth_user, target_node, '/get_cluster_tokens', false, {'with_ports' => '1'}
-  )
-
-  # a remote host supports /get_cluster_tokens; data downloaded
-  if retval == 200
-    begin
-      data = JSON.parse(out)
-      expected_keys = ['tokens', 'ports']
-      if expected_keys.all? {|i| data.has_key?(i) and data[i].class == Hash}
-        # new format
-        new_tokens = data["tokens"] || {}
-        new_ports = data["ports"] || {}
-      else
-        # old format
-        new_tokens = data
-        new_ports = {}
-      end
-      new_tokens.each { |name_addr, token|
-        known_hosts << PcsKnownHost.new(
-          name_addr,
-          token,
-          [
-            {
-              'addr' => name_addr,
-              'port' => (new_ports[name_addr] || PCSD_DEFAULT_PORT),
-            }
-          ]
-        )
-      }
-    rescue => e
-      $logger.error "Unable to parse the response of /get_cluster_tokens: #{e}"
-      known_hosts = []
-      warning_messages << (
-        "Unable to automatically authenticate against cluster nodes: " +
-        "cannot get authentication info from cluster '#{cluster_name}'"
-      )
-    end
-    return known_hosts, warning_messages
-  end
-
-  # a remote host supports /get_cluster_tokens; an error occured
-  if retval != 404
-    warning_messages << (
-      "Unable to automatically authenticate against cluster nodes: " +
-      "cannot get authentication info from cluster '#{cluster_name}'"
-    )
-    return known_hosts, warning_messages
-  end
-
-  # a remote host does not support /get_cluster_tokens
-  # there's nothing we can do about it
-  warning_messages << (
-    "Unable to automatically authenticate against cluster nodes: " +
-    "cluster '#{cluster_name}' is running an old version of pcs/pcsd"
-  )
   return known_hosts, warning_messages
-end
-
-def pcs_0_9_142_resource_change_group(auth_user, params)
-  parameters = {
-    :resource_id => params[:resource_id],
-    :resource_group => '',
-    :_orig_resource_group => '',
-  }
-  parameters[:resource_group] = params[:group_id] if params[:group_id]
-  if params[:old_group_id]
-    parameters[:_orig_resource_group] = params[:old_group_id]
-  end
-  return send_cluster_request_with_token(
-    auth_user, params[:cluster], 'update_resource', true, parameters
-  )
-end
-
-def pcs_0_9_142_resource_clone(auth_user, params)
-  parameters = {
-    :resource_id => params[:resource_id],
-    :resource_clone => true,
-    :_orig_resource_clone => 'false',
-  }
-  return send_cluster_request_with_token(
-    auth_user, params[:cluster], 'update_resource', true, parameters
-  )
-end
-
-def pcs_0_9_142_resource_unclone(auth_user, params)
-  parameters = {
-    :resource_id => params[:resource_id],
-    :resource_clone => nil,
-    :_orig_resource_clone => 'true',
-  }
-  return send_cluster_request_with_token(
-    auth_user, params[:cluster], 'update_resource', true, parameters
-  )
-end
-
-def pcs_0_9_142_resource_master(auth_user, params)
-  parameters = {
-    :resource_id => params[:resource_id],
-    :resource_ms => true,
-    :_orig_resource_ms => 'false',
-  }
-  return send_cluster_request_with_token(
-    auth_user, params[:cluster], 'update_resource', true, parameters
-  )
-end
-
-# There is a bug in pcs-0.9.138 and older in processing the standby and
-# unstandby request. JS of that pcsd always sent nodename in "node"
-# parameter, which caused pcsd daemon to run the standby command locally with
-# param["node"] as node name. This worked fine if the local cluster was
-# managed from JS, as pacemaker simply put the requested node into standby.
-# However it didn't work for managing non-local clusters, as the command was
-# run on the local cluster everytime. Pcsd daemon would send the request to a
-# remote cluster if the param["name"] variable was set, and that never
-# happened. That however wouldn't work either, as then the required parameter
-# "node" wasn't sent in the request causing an exception on the receiving
-# node. This is fixed in commit 053f63ca109d9ef9e7f0416e90aab8e140480f5b
-#
-# In order to be able to put nodes running pcs-0.9.138 into standby, the
-# nodename must be sent in "node" param, and the "name" must not be sent.
-def pcs_0_9_138_node_standby(auth_user, params)
-  translated_params = {
-    'node' => params[:name],
-  }
-  return send_cluster_request_with_token(
-    auth_user, params[:cluster], 'node_standby', true, translated_params
-  )
-end
-
-def pcs_0_9_138_node_unstandby(auth_user, params)
-  translated_params = {
-    'node' => params[:name],
-  }
-  return send_cluster_request_with_token(
-    auth_user, params[:cluster], 'node_unstandby', true, translated_params
-  )
 end
 
 def pcs_0_10_6_get_avail_resource_agents(code, out)
@@ -1380,99 +919,9 @@ post '/managec/:cluster/?*' do
   if params[:cluster]
     request = "/" + params[:splat].join("/")
 
-    # backward compatibility layer BEGIN
-    translate_for_version = {
-      '/node_standby' => [
-        [[0, 9, 138], method(:pcs_0_9_138_node_standby)],
-      ],
-      '/node_unstandby' => [
-        [[0, 9, 138], method(:pcs_0_9_138_node_unstandby)],
-      ],
-    }
-    if translate_for_version.key?(request)
-      target_pcsd_version = [0, 0, 0]
-      version_code, version_out = send_cluster_request_with_token(
-        auth_user, params[:cluster], 'get_sw_versions'
-      )
-      if version_code == 200
-        begin
-          versions = JSON.parse(version_out)
-          target_pcsd_version = versions['pcs'] if versions['pcs']
-        rescue JSON::ParserError
-        end
-      end
-      translate_function = nil
-      translate_for_version[request].each { |pair|
-        if (target_pcsd_version <=> pair[0]) != 1 # target <= pair
-          translate_function = pair[1]
-          break
-        end
-      }
-    end
-    # backward compatibility layer END
-
-    if translate_function
-      code, out = translate_function.call(auth_user, params)
-    else
-      code, out = send_cluster_request_with_token(
-        auth_user, params[:cluster], request, true, params, true, raw_data
-      )
-    end
-
-    # backward compatibility layer BEGIN
-    if code == 404
-      case request
-        # supported since pcs-0.9.143 (tree view of resources)
-        when '/resource_change_group', 'resource_change_group'
-          code, out =  pcs_0_9_142_resource_change_group(auth_user, params)
-        # supported since pcs-0.9.143 (tree view of resources)
-        when '/resource_clone', 'resource_clone'
-          code, out = pcs_0_9_142_resource_clone(auth_user, params)
-        # supported since pcs-0.9.143 (tree view of resources)
-        when '/resource_unclone', 'resource_unclone'
-          code, out = pcs_0_9_142_resource_unclone(auth_user, params)
-        # supported since pcs-0.9.143 (tree view of resources)
-        when '/resource_master', 'resource_master'
-          # defaults to true for old pcsds without capabilities defined
-          supports_resource_master = true
-          capabilities_code, capabilities_out = send_cluster_request_with_token(
-            auth_user, params[:cluster], 'capabilities'
-          )
-          if capabilities_code == 200
-            begin
-              capabilities_json = JSON.parse(capabilities_out)
-              supports_resource_master = capabilities_json[:pcsd_capabilities].include?(
-                'pcmk.resource.master'
-              )
-            rescue JSON::ParserError
-            end
-          end
-          if supports_resource_master
-            code, out = pcs_0_9_142_resource_master(auth_user, params)
-          end
-        else
-          redirection = {
-            # constraints removal for pcs-0.9.137 and older
-            "/remove_constraint_remote" => "/resource_cmd/rm_constraint",
-            # constraints removal for pcs-0.9.137 and older
-            "/remove_constraint_rule_remote" => "/resource_cmd/rm_constraint_rule"
-          }
-          if redirection.key?(request)
-            code, out = send_cluster_request_with_token(
-              auth_user,
-              params[:cluster],
-              redirection[request],
-              true,
-              params,
-              false,
-              raw_data
-            )
-          end
-      end
-    end
-    # backward compatibility layer END
-
-    return code, out
+    return send_cluster_request_with_token(
+      auth_user, params[:cluster], request, true, params, true, raw_data
+    )
   end
 end
 
@@ -1506,8 +955,4 @@ get '*' do
   redirect '/manage'
   redirect "Bad URL"
   call(env.merge("PATH_INFO" => '/nodes'))
-end
-
-def html2plain(text)
-  return CGI.unescapeHTML(text).gsub(/<br[^>]*>/, "\n")
 end
