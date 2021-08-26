@@ -662,41 +662,6 @@ get '/managec/:cluster/cluster_status' do
   cluster_status_gui(auth_user, params[:cluster])
 end
 
-get '/managec/:cluster/cluster_properties' do
-  auth_user = getAuthUser()
-  cluster = params[:cluster]
-  unless cluster
-    return 200, {}
-  end
-  code, out = send_cluster_request_with_token(auth_user, cluster, 'get_cib')
-  if code == 403
-    return [403, 'Permission denied']
-  elsif code != 200
-    return [400, 'getting CIB failed']
-  end
-  begin
-    properties = getAllSettings(nil, REXML::Document.new(out))
-    code, out = send_cluster_request_with_token(
-      auth_user, cluster, 'get_cluster_properties_definition'
-    )
-
-    if code == 403
-      return [403, 'Permission denied']
-    elsif code != 200
-      return [400, 'getting properties definition failed']
-    else
-      definition = JSON.parse(out)
-    end
-
-    definition.each { |name, prop|
-      prop['value'] = properties[name]
-    }
-    return [200, JSON.generate(definition)]
-  rescue
-    return [400, 'unable to get cluster properties']
-  end
-end
-
 get '/managec/:cluster/get_resource_agent_metadata' do
   auth_user = getAuthUser()
   cluster = params[:cluster]

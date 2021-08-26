@@ -33,8 +33,6 @@ def remote(params, request, auth_user)
       # /api/v1/cluster-setup/v1
       :cluster_setup => method(:cluster_setup),
       :get_quorum_info => method(:get_quorum_info),
-      # used only from /managec/<cluster>/cluster_properties
-      :get_cib => method(:get_cib),
       :get_corosync_conf => method(:get_corosync_conf_remote),
       :set_corosync_conf => method(:set_corosync_conf),
       :get_sync_capabilities => method(:get_sync_capabilities),
@@ -432,21 +430,6 @@ def get_quorum_info(params, request, auth_user)
     return stderr.join
   else
     return stdout.join
-  end
-end
-
-def get_cib(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::READ)
-    return 403, 'Permission denied'
-  end
-  cib, stderr, retval = run_cmd(auth_user, CIBADMIN, "-Ql")
-  if retval != 0
-    if not pacemaker_running?
-      return [400, '{"pacemaker_not_running":true}']
-    end
-    return [500, "Unable to get CIB: " + cib.to_s + stderr.to_s]
-  else
-    return [200, cib]
   end
 end
 
