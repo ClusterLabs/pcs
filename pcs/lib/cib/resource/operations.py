@@ -197,7 +197,7 @@ def _action_dto_to_dict(
 ) -> Dict[str, str]:
     result = dict(
         filter(
-            lambda item: item[0] != "deph" and item[1] not in (None, ""),
+            lambda item: item[0] != "depth" and item[1] not in (None, ""),
             to_dict(dto).items(),
         )
     )
