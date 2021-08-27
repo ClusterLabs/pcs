@@ -148,6 +148,11 @@ AC_ARG_ENABLE([parallel-tests],
 	      [parallel_tests="yes"])
 AM_CONDITIONAL([PARALLEL_TESTS], [test "x$parallel_tests" = "xyes"])
 
+AC_ARG_ENABLE([parallel-pylint],
+	      [AS_HELP_STRING([--enable-parallel-pylint], [Enable running pylint in multiple threads (default: no)])],
+	      [parallel_pylint="yes"])
+AM_CONDITIONAL([PARALLEL_PYLINT], [test "x$parallel_pylint" = "xyes"])
+
 AC_ARG_ENABLE([local-build],
 	      [AS_HELP_STRING([--enable-local-build], [Download and install all dependencies as user / bundles])],
 	      [local_build="yes"])
