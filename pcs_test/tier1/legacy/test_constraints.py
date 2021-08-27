@@ -13,9 +13,11 @@ from pcs_test.tools.assertions import (
 from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.fixture_cib import (
+    CachedCibFixture,
     fixture_master_xml,
     fixture_to_cib,
     wrap_element_by_master,
+    wrap_element_by_master_file,
 )
 from pcs_test.tools.misc import (
     get_test_resource as rc,
@@ -23,7 +25,6 @@ from pcs_test.tools.misc import (
     skip_unless_crm_rule,
     outdent,
     ParametrizedTestMetaClass,
-    write_data_to_tmpfile,
     write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import pcs, PcsRunner
@@ -54,6 +55,52 @@ empty_cib = rc("cib-empty-3.7.xml")
 large_cib = rc("cib-large.xml")
 
 
+class ConstraintTestCibFixture(CachedCibFixture):
+    @staticmethod
+    def _cache_name():
+        return "fixture_tier1_constraints"
+
+    @staticmethod
+    def _empty_cib():
+        return empty_cib
+
+    def _setup_cib(self):
+        line = "resource create D1 ocf:heartbeat:Dummy".split()
+        output, returnVal = pcs(self.get_cache_path(), line)
+        assert returnVal == 0 and output == ""
+
+        line = "resource create D2 ocf:heartbeat:Dummy".split()
+        output, returnVal = pcs(self.get_cache_path(), line)
+        assert returnVal == 0 and output == ""
+
+        line = "resource create D3 ocf:heartbeat:Dummy".split()
+        output, returnVal = pcs(self.get_cache_path(), line)
+        assert returnVal == 0 and output == ""
+
+        line = "resource create D4 ocf:heartbeat:Dummy".split()
+        output, returnVal = pcs(self.get_cache_path(), line)
+        assert returnVal == 0 and output == ""
+
+        line = "resource create D5 ocf:heartbeat:Dummy".split()
+        output, returnVal = pcs(self.get_cache_path(), line)
+        assert returnVal == 0 and output == ""
+
+        line = "resource create D6 ocf:heartbeat:Dummy".split()
+        output, returnVal = pcs(self.get_cache_path(), line)
+        assert returnVal == 0 and output == ""
+
+        line = "resource clone D3".split()
+        output, returnVal = pcs(self.get_cache_path(), line)
+        assert returnVal == 0 and output == ""
+
+        # pcs no longer allows turning resources into masters but supports
+        # existing ones. In order to test it, we need to put a master in the
+        # CIB without pcs.
+        wrap_element_by_master_file(
+            self.get_cache_path(), "D4", master_id="Master"
+        )
+
+
 @skip_unless_crm_rule()
 class ConstraintTest(unittest.TestCase):
     def setUp(self):
@@ -67,57 +114,9 @@ class ConstraintTest(unittest.TestCase):
             self.temp_corosync_conf.close()
 
     def fixture_resources(self):
-        write_data_to_tmpfile(self.fixture_cib_cache(), self.temp_cib)
-
-    def fixture_cib_cache(self):
-        if not hasattr(self.__class__, "cib_cache"):
-            self.__class__.cib_cache = self.fixture_cib()
-        return self.__class__.cib_cache
-
-    def fixture_cib(self):
-        write_file_to_tmpfile(empty_cib, self.temp_cib)
-        self.setupClusterA()
-        self.temp_cib.flush()
-        self.temp_cib.seek(0)
-        cib_content = self.temp_cib.read()
-        self.temp_cib.seek(0)
-        write_file_to_tmpfile(empty_cib, self.temp_cib)
-        return cib_content
-
-    # Sets up a cluster with Resources, groups, master/slave resource and clones
-    def setupClusterA(self):
-        line = "resource create D1 ocf:heartbeat:Dummy".split()
-        output, returnVal = pcs(self.temp_cib.name, line)
-        assert returnVal == 0 and output == ""
-
-        line = "resource create D2 ocf:heartbeat:Dummy".split()
-        output, returnVal = pcs(self.temp_cib.name, line)
-        assert returnVal == 0 and output == ""
-
-        line = "resource create D3 ocf:heartbeat:Dummy".split()
-        output, returnVal = pcs(self.temp_cib.name, line)
-        assert returnVal == 0 and output == ""
-
-        line = "resource create D4 ocf:heartbeat:Dummy".split()
-        output, returnVal = pcs(self.temp_cib.name, line)
-        assert returnVal == 0 and output == ""
-
-        line = "resource create D5 ocf:heartbeat:Dummy".split()
-        output, returnVal = pcs(self.temp_cib.name, line)
-        assert returnVal == 0 and output == ""
-
-        line = "resource create D6 ocf:heartbeat:Dummy".split()
-        output, returnVal = pcs(self.temp_cib.name, line)
-        assert returnVal == 0 and output == ""
-
-        line = "resource clone D3".split()
-        output, returnVal = pcs(self.temp_cib.name, line)
-        assert returnVal == 0 and output == ""
-
-        # pcs no longer allows turning resources into masters but supports
-        # existing ones. In order to test it, we need to put a master in the
-        # CIB without pcs.
-        wrap_element_by_master(self.temp_cib, "D4", master_id="Master")
+        write_file_to_tmpfile(
+            ConstraintTestCibFixture.get_cache_path(), self.temp_cib
+        )
 
     def testConstraintRules(self):
         self.fixture_resources()
