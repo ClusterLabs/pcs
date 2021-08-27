@@ -8,6 +8,7 @@ from pcs.common.str_tools import indent
 from pcs_test.tier1.cib_resource.common import ResourceTest
 from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.bin_mock import get_mock_settings
+from pcs_test.tools.fixture_cib import CachedCibFixture
 from pcs_test.tools.misc import (
     get_test_resource as rc,
     get_tmp_file,
@@ -840,6 +841,49 @@ _fixture_stonith_level_cache = None
 _fixture_stonith_level_cache_lock = Lock()
 
 
+class StonithLevelTestCibFixture(CachedCibFixture, AssertPcsMixin):
+    @staticmethod
+    def _cache_name():
+        return "fixture_tier1_stonith_level_tests"
+
+    @staticmethod
+    def _empty_cib():
+        return rc("cib-empty-withnodes.xml")
+
+    def _fixture_stonith_resource(self, name):
+        self.assert_pcs_success(
+            [
+                "stonith",
+                "create",
+                name,
+                "fence_apc",
+                "pcmk_host_list=rh7-1 rh7-2",
+                "ip=i",
+                "username=u",
+            ]
+        )
+
+    def _setup_cib(self):
+        self._fixture_stonith_resource("F1")
+        self._fixture_stonith_resource("F2")
+        self._fixture_stonith_resource("F3")
+
+        self.assert_pcs_success("stonith level add 1 rh7-1 F1".split())
+        self.assert_pcs_success("stonith level add 2 rh7-1 F2".split())
+        self.assert_pcs_success("stonith level add 2 rh7-2 F1".split())
+        self.assert_pcs_success("stonith level add 1 rh7-2 F2".split())
+        self.assert_pcs_success("stonith level add 4 regexp%rh7-\\d F3".split())
+        self.assert_pcs_success(
+            "stonith level add 3 regexp%rh7-\\d F2 F1".split()
+        )
+        self.assert_pcs_success(
+            "stonith level add 5 attrib%fencewith=levels1 F3 F2".split()
+        )
+        self.assert_pcs_success(
+            "stonith level add 6 attrib%fencewith=levels2 F3 F1".split()
+        )
+
+
 class LevelTestsBase(TestCase, AssertPcsMixin):
     def setUp(self):
         self.temp_cib = get_tmp_file("tier1_test_stonith_level")
@@ -877,26 +921,11 @@ class LevelTestsBase(TestCase, AssertPcsMixin):
                 _fixture_stonith_level_cache = self.fixture_cib_config()
             return _fixture_stonith_level_cache
 
-    def fixture_cib_config(self):
-        self.fixture_stonith_resource("F1")
-        self.fixture_stonith_resource("F2")
-        self.fixture_stonith_resource("F3")
-
-        self.assert_pcs_success("stonith level add 1 rh7-1 F1".split())
-        self.assert_pcs_success("stonith level add 2 rh7-1 F2".split())
-        self.assert_pcs_success("stonith level add 2 rh7-2 F1".split())
-        self.assert_pcs_success("stonith level add 1 rh7-2 F2".split())
-        self.assert_pcs_success("stonith level add 4 regexp%rh7-\\d F3".split())
-        self.assert_pcs_success(
-            "stonith level add 3 regexp%rh7-\\d F2 F1".split()
-        )
-        self.assert_pcs_success(
-            "stonith level add 5 attrib%fencewith=levels1 F3 F2".split()
-        )
-        self.assert_pcs_success(
-            "stonith level add 6 attrib%fencewith=levels2 F3 F1".split()
-        )
-
+    @staticmethod
+    def fixture_cib_config():
+        cib_content = ""
+        with open(StonithLevelTestCibFixture.get_cache_path(), "r") as cib_file:
+            cib_content = cib_file.read()
         config = outdent(
             """\
             Target: rh7-1
@@ -914,12 +943,7 @@ class LevelTestsBase(TestCase, AssertPcsMixin):
               Level 6 - F3,F1
             """
         )
-
         config_lines = config.splitlines()
-        self.temp_cib.flush()
-        self.temp_cib.seek(0)
-        cib_content = self.temp_cib.read()
-        self.temp_cib.seek(0)
         return cib_content, config, config_lines
 
 

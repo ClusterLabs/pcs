@@ -12,8 +12,10 @@ from pcs_test.tools.assertions import (
 from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.fixture_cib import (
+    CachedCibFixture,
     fixture_master_xml,
     fixture_to_cib,
+    wrap_element_by_master_file,
     wrap_element_by_master,
 )
 from pcs_test.tools.misc import (
@@ -154,21 +156,16 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
         )
 
 
-class Resource(TestCase, AssertPcsMixin):
-    def setUp(self):
-        self.temp_cib = get_tmp_file("tier1_resource")
-        self.temp_large_cib = get_tmp_file("tier1_resource_large")
-        write_file_to_tmpfile(empty_cib, self.temp_cib)
-        write_file_to_tmpfile(large_cib, self.temp_large_cib)
-        self.pcs_runner = PcsRunner(self.temp_cib.name)
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+class ResourceTestCibFixture(CachedCibFixture, AssertPcsMixin):
+    @staticmethod
+    def _cache_name():
+        return "fixture_tier1_resource"
 
-    def tearDown(self):
-        self.temp_cib.close()
-        self.temp_large_cib.close()
+    @staticmethod
+    def _empty_cib():
+        return empty_cib
 
-    # Setups up a cluster with Resources, groups, master/slave resource & clones
-    def setupClusterA(self):
+    def _setup_cib(self):
         self.assert_pcs_success(
             (
                 "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
@@ -215,7 +212,29 @@ class Resource(TestCase, AssertPcsMixin):
         # pcs no longer allows turning resources into masters but supports
         # existing ones. In order to test it, we need to put a master in the
         # CIB without pcs.
-        wrap_element_by_master(self.temp_cib, "ClusterIP5", master_id="Master")
+        wrap_element_by_master_file(
+            self.get_cache_path(), "ClusterIP5", master_id="Master"
+        )
+
+
+class Resource(TestCase, AssertPcsMixin):
+    def setUp(self):
+        self.temp_cib = get_tmp_file("tier1_resource")
+        self.temp_large_cib = get_tmp_file("tier1_resource_large")
+        write_file_to_tmpfile(empty_cib, self.temp_cib)
+        write_file_to_tmpfile(large_cib, self.temp_large_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+
+    def tearDown(self):
+        self.temp_cib.close()
+        self.temp_large_cib.close()
+
+    # Setups up a cluster with Resources, groups, master/slave resource & clones
+    def setupClusterA(self):
+        write_file_to_tmpfile(
+            ResourceTestCibFixture.get_cache_path(), self.temp_cib
+        )
 
     def testCaseInsensitive(self):
         o, r = pcs(
