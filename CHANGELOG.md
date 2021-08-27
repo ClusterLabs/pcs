@@ -1,5 +1,14 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+- Fixed an error when creating a resource which defines 'depth' attribute for
+  its operations ([rhbz#1998454])
+
+[rhbz#1998454]: https://bugzilla.redhat.com/show_bug.cgi?id=1998454
+
+
 ## [0.10.10] - 2021-08-19
 
 ### Added
