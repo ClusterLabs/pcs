@@ -31,7 +31,6 @@ pcs_test/tools/bin_mock/pcmk/crm_resource
 pcs_test/resources/*.tmp
 pcs_test/resources/temp*.xml
 pcs_test/resources/temp*
-pcs_test/resources/fixtures/*
 *.8
 
 pcsd/pcsd

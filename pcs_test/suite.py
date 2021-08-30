@@ -95,14 +95,18 @@ def tier1_fixtures_needed(test_list):
 
 def run_tier1_fixtures(run_concurrently=True):
     # pylint: disable=import-outside-toplevel
-    from pcs_test.tier1.legacy.test_constraints import ConstraintTestCibFixture
-    from pcs_test.tier1.legacy.test_resource import ResourceTestCibFixture
-    from pcs_test.tier1.legacy.test_stonith import StonithLevelTestCibFixture
+    from pcs_test.tier1.legacy.test_constraints import (
+        CONSTRAINT_TEST_CIB_FIXTURE,
+    )
+    from pcs_test.tier1.legacy.test_resource import RESOURCE_TEST_CIB_FIXTURE
+    from pcs_test.tier1.legacy.test_stonith import (
+        STONITH_LEVEL_TEST_CIB_FIXTURE,
+    )
 
     fixture_instances = [
-        ConstraintTestCibFixture(),
-        ResourceTestCibFixture(),
-        StonithLevelTestCibFixture(),
+        CONSTRAINT_TEST_CIB_FIXTURE,
+        RESOURCE_TEST_CIB_FIXTURE,
+        STONITH_LEVEL_TEST_CIB_FIXTURE,
     ]
     print("Preparing tier1 fixtures...")
     time_start = time.time()

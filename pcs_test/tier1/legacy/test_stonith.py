@@ -841,15 +841,7 @@ _fixture_stonith_level_cache = None
 _fixture_stonith_level_cache_lock = Lock()
 
 
-class StonithLevelTestCibFixture(CachedCibFixture, AssertPcsMixin):
-    @staticmethod
-    def _cache_name():
-        return "fixture_tier1_stonith_level_tests"
-
-    @staticmethod
-    def _empty_cib():
-        return rc("cib-empty-withnodes.xml")
-
+class StonithLevelTestCibFixture(CachedCibFixture):
     def _fixture_stonith_resource(self, name):
         self.assert_pcs_success(
             [
@@ -882,6 +874,11 @@ class StonithLevelTestCibFixture(CachedCibFixture, AssertPcsMixin):
         self.assert_pcs_success(
             "stonith level add 6 attrib%fencewith=levels2 F3 F1".split()
         )
+
+
+STONITH_LEVEL_TEST_CIB_FIXTURE = StonithLevelTestCibFixture(
+    "fixture_tier1_stonith_level_tests", rc("cib-empty-withnodes.xml")
+)
 
 
 class LevelTestsBase(TestCase, AssertPcsMixin):
@@ -924,7 +921,7 @@ class LevelTestsBase(TestCase, AssertPcsMixin):
     @staticmethod
     def fixture_cib_config():
         cib_content = ""
-        with open(StonithLevelTestCibFixture.get_cache_path(), "r") as cib_file:
+        with open(STONITH_LEVEL_TEST_CIB_FIXTURE.cache_path, "r") as cib_file:
             cib_content = cib_file.read()
         config = outdent(
             """\

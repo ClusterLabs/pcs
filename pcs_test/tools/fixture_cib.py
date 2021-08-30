@@ -3,6 +3,7 @@ import os
 from unittest import mock
 from lxml import etree
 
+from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 from pcs_test.tools.misc import (
     get_test_resource,
@@ -18,48 +19,43 @@ from pcs.lib.external import CommandRunner
 # pylint: disable=line-too-long
 
 
-class CachedCibFixture:
-    @staticmethod
-    def _cache_name():
-        raise NotImplementedError()
-
-    @staticmethod
-    def _empty_cib():
-        raise NotImplementedError()
+class CachedCibFixture(AssertPcsMixin):
+    def __init__(self, cache_name, empty_cib_path):
+        self._empty_cib_path = empty_cib_path
+        self._cache_name = cache_name
+        self._cache_path = None
+        self._pcs_runner = None
 
     def _setup_cib(self):
         raise NotImplementedError()
 
-    _cache_path = None
-
-    @classmethod
-    def get_cache_path(cls):
-        if cls._cache_path is None:
-            raise AssertionError("Cache has not been inicialized")
-        return cls._cache_path
-
-    def __init__(self):
-        fixture_dir = get_test_resource("fixtures")
-        os.makedirs(fixture_dir, exist_ok=True)
-        self.__class__._cache_path = os.path.join(
-            fixture_dir, self._cache_name()
-        )
-        self._pcs_runner = PcsRunner(self.get_cache_path())
-
     def set_up(self):
-        with open(self._empty_cib(), "r") as template_file, open(
-            self.get_cache_path(), "w"
+        fixture_dir = get_test_resource("temp_fixtures")
+        os.makedirs(fixture_dir, exist_ok=True)
+        self._cache_path = os.path.join(fixture_dir, self._cache_name)
+        self._pcs_runner = PcsRunner(self._cache_path)
+
+        with open(self._empty_cib_path, "r") as template_file, open(
+            self.cache_path, "w"
         ) as cache_file:
             cache_file.write(template_file.read())
         self._setup_cib()
 
     def clean_up(self):
-        if os.path.isfile(self.get_cache_path()):
-            os.unlink(self.get_cache_path())
+        if os.path.isfile(self.cache_path):
+            os.unlink(self.cache_path)
+
+    @property
+    def cache_path(self):
+        if self._cache_path is None:
+            raise AssertionError("Cache has not been initiialized")
+        return self._cache_path
 
     # methods for supporting assert_pcs_success
     @property
     def pcs_runner(self):
+        if self._pcs_runner is None:
+            raise AssertionError("Cache has not been initialized")
         return self._pcs_runner
 
     def assertEqual(self, first, second, msg=None):
