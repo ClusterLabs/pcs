@@ -56,49 +56,44 @@ large_cib = rc("cib-large.xml")
 
 
 class ConstraintTestCibFixture(CachedCibFixture):
-    @staticmethod
-    def _cache_name():
-        return "fixture_tier1_constraints"
-
-    @staticmethod
-    def _empty_cib():
-        return empty_cib
-
     def _setup_cib(self):
         line = "resource create D1 ocf:heartbeat:Dummy".split()
-        output, returnVal = pcs(self.get_cache_path(), line)
+        output, returnVal = pcs(self.cache_path, line)
         assert returnVal == 0 and output == ""
 
         line = "resource create D2 ocf:heartbeat:Dummy".split()
-        output, returnVal = pcs(self.get_cache_path(), line)
+        output, returnVal = pcs(self.cache_path, line)
         assert returnVal == 0 and output == ""
 
         line = "resource create D3 ocf:heartbeat:Dummy".split()
-        output, returnVal = pcs(self.get_cache_path(), line)
+        output, returnVal = pcs(self.cache_path, line)
         assert returnVal == 0 and output == ""
 
         line = "resource create D4 ocf:heartbeat:Dummy".split()
-        output, returnVal = pcs(self.get_cache_path(), line)
+        output, returnVal = pcs(self.cache_path, line)
         assert returnVal == 0 and output == ""
 
         line = "resource create D5 ocf:heartbeat:Dummy".split()
-        output, returnVal = pcs(self.get_cache_path(), line)
+        output, returnVal = pcs(self.cache_path, line)
         assert returnVal == 0 and output == ""
 
         line = "resource create D6 ocf:heartbeat:Dummy".split()
-        output, returnVal = pcs(self.get_cache_path(), line)
+        output, returnVal = pcs(self.cache_path, line)
         assert returnVal == 0 and output == ""
 
         line = "resource clone D3".split()
-        output, returnVal = pcs(self.get_cache_path(), line)
+        output, returnVal = pcs(self.cache_path, line)
         assert returnVal == 0 and output == ""
 
         # pcs no longer allows turning resources into masters but supports
         # existing ones. In order to test it, we need to put a master in the
         # CIB without pcs.
-        wrap_element_by_master_file(
-            self.get_cache_path(), "D4", master_id="Master"
-        )
+        wrap_element_by_master_file(self.cache_path, "D4", master_id="Master")
+
+
+CONSTRAINT_TEST_CIB_FIXTURE = ConstraintTestCibFixture(
+    "fixture_tier1_constraints", empty_cib
+)
 
 
 @skip_unless_crm_rule()
@@ -115,7 +110,7 @@ class ConstraintTest(unittest.TestCase):
 
     def fixture_resources(self):
         write_file_to_tmpfile(
-            ConstraintTestCibFixture.get_cache_path(), self.temp_cib
+            CONSTRAINT_TEST_CIB_FIXTURE.cache_path, self.temp_cib
         )
 
     def testConstraintRules(self):

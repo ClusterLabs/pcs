@@ -156,15 +156,7 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
         )
 
 
-class ResourceTestCibFixture(CachedCibFixture, AssertPcsMixin):
-    @staticmethod
-    def _cache_name():
-        return "fixture_tier1_resource"
-
-    @staticmethod
-    def _empty_cib():
-        return empty_cib
-
+class ResourceTestCibFixture(CachedCibFixture):
     def _setup_cib(self):
         self.assert_pcs_success(
             (
@@ -213,8 +205,13 @@ class ResourceTestCibFixture(CachedCibFixture, AssertPcsMixin):
         # existing ones. In order to test it, we need to put a master in the
         # CIB without pcs.
         wrap_element_by_master_file(
-            self.get_cache_path(), "ClusterIP5", master_id="Master"
+            self.cache_path, "ClusterIP5", master_id="Master"
         )
+
+
+RESOURCE_TEST_CIB_FIXTURE = ResourceTestCibFixture(
+    "fixture_tier1_resource", empty_cib
+)
 
 
 class Resource(TestCase, AssertPcsMixin):
@@ -233,7 +230,7 @@ class Resource(TestCase, AssertPcsMixin):
     # Setups up a cluster with Resources, groups, master/slave resource & clones
     def setupClusterA(self):
         write_file_to_tmpfile(
-            ResourceTestCibFixture.get_cache_path(), self.temp_cib
+            RESOURCE_TEST_CIB_FIXTURE.cache_path, self.temp_cib
         )
 
     def testCaseInsensitive(self):

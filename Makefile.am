@@ -189,7 +189,7 @@ endif
 pylint:
 if DEV_TESTS
 if PARALLEL_PYLINT
-pylint_options = -j0
+pylint_options = --jobs=0
 else
 pylint_options = 
 endif
