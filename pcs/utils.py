@@ -186,7 +186,9 @@ def checkStatus(node):
     Commandline options:
       * --request-timeout - timeout for HTTP requests
     """
-    return sendHTTPRequest(node, "remote/status", None, False, False)
+    return sendHTTPRequest(
+        node, "remote/status", urlencode({"version": "2"}), False, False
+    )
 
 
 # Check and see if we're authorized (faster than a status check)

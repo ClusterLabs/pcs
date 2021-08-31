@@ -28,7 +28,7 @@ class CheckCorosyncOffline(
             self._set_skip_offline(skip_offline_targets)
 
     def _get_request_data(self):
-        return RequestData("remote/status")
+        return RequestData("remote/status", [("version", "2")])
 
     def _process_response(self, response):
         report_item = self._get_response_report(response)
@@ -53,7 +53,7 @@ class CheckCorosyncOffline(
             return
         try:
             status = response.data
-            if not json.loads(status)["corosync"]:
+            if not json.loads(status)["node"]["corosync"]:
                 report_item = ReportItem.info(
                     reports.messages.CorosyncNotRunningOnNode(node_label),
                 )
@@ -94,7 +94,7 @@ class GetCorosyncOnlineTargets(
         self._corosync_online_target_list = []
 
     def _get_request_data(self):
-        return RequestData("remote/status")
+        return RequestData("remote/status", [("version", "2")])
 
     def _process_response(self, response):
         report_item = self._get_response_report(response)
@@ -103,7 +103,7 @@ class GetCorosyncOnlineTargets(
             return
         try:
             status = response.data
-            if json.loads(status)["corosync"]:
+            if json.loads(status)["node"]["corosync"]:
                 self._corosync_online_target_list.append(
                     response.request.target
                 )

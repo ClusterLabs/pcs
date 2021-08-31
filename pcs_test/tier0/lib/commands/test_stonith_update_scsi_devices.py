@@ -4,6 +4,9 @@ from unittest import mock, TestCase
 
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.command_env.config_http_corosync import (
+    corosync_running_check_response,
+)
 from pcs_test.tools.misc import get_test_resource as rc
 
 from pcs import settings
@@ -1013,7 +1016,7 @@ class TestUpdateScsiDevicesFailures(TestCase):
             communication_list=[
                 dict(
                     label=self.existing_nodes[0],
-                    output='{"corosync":true}',
+                    output=corosync_running_check_response(True),
                 ),
             ]
             + [
@@ -1052,11 +1055,11 @@ class TestUpdateScsiDevicesFailures(TestCase):
             communication_list=[
                 dict(
                     label=self.existing_nodes[0],
-                    output='{"corosync":true}',
+                    output=corosync_running_check_response(True),
                 ),
                 dict(
                     label=self.existing_nodes[1],
-                    output='{"corosync":false}',
+                    output=corosync_running_check_response(False),
                 ),
                 dict(
                     label=self.existing_nodes[2],
@@ -1122,7 +1125,7 @@ class TestUpdateScsiDevicesFailures(TestCase):
                 ),
                 dict(
                     label=self.existing_nodes[2],
-                    output='{"corosync":false}',
+                    output=corosync_running_check_response(False),
                 ),
             ]
         )

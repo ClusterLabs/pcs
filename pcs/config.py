@@ -345,12 +345,13 @@ def config_restore_remote(infile_name, infile_obj):
                 err_msgs.append(output)
                 continue
             _status = json.loads(output)
-            if (
-                _status["corosync"]
-                or _status["pacemaker"]
-                or
-                # not supported by older pcsd, do not fail if not present
-                _status.get("pacemaker_remote", False)
+            if any(
+                _status["node"]["services"][service_name]["running"]
+                for service_name in (
+                    "corosync",
+                    "pacemaker",
+                    "pacemaker_remote",
+                )
             ):
                 err_msgs.append(
                     "Cluster is currently running on node %s. You need to stop "
