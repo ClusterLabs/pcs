@@ -3,13 +3,68 @@ import os
 from unittest import mock
 from lxml import etree
 
+from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
+from pcs_test.tools.misc import (
+    get_test_resource,
+    get_tmp_file,
+    write_file_to_tmpfile,
+)
+from pcs_test.tools.pcs_runner import PcsRunner
 from pcs_test.tools.xml import etree_to_str
 
 from pcs import settings
 from pcs.lib.external import CommandRunner
 
 # pylint: disable=line-too-long
+
+
+class CachedCibFixture(AssertPcsMixin):
+    def __init__(self, cache_name, empty_cib_path):
+        self._empty_cib_path = empty_cib_path
+        self._cache_name = cache_name
+        self._cache_path = None
+        self._pcs_runner = None
+
+    def _setup_cib(self):
+        raise NotImplementedError()
+
+    def set_up(self):
+        fixture_dir = get_test_resource("temp_fixtures")
+        os.makedirs(fixture_dir, exist_ok=True)
+        self._cache_path = os.path.join(fixture_dir, self._cache_name)
+        self._pcs_runner = PcsRunner(self._cache_path)
+
+        with open(self._empty_cib_path, "r") as template_file, open(
+            self.cache_path, "w"
+        ) as cache_file:
+            cache_file.write(template_file.read())
+        self._setup_cib()
+
+    def clean_up(self):
+        if os.path.isfile(self.cache_path):
+            os.unlink(self.cache_path)
+
+    @property
+    def cache_path(self):
+        if self._cache_path is None:
+            raise AssertionError("Cache has not been initiialized")
+        return self._cache_path
+
+    # methods for supporting assert_pcs_success
+    @property
+    def pcs_runner(self):
+        if self._pcs_runner is None:
+            raise AssertionError("Cache has not been initialized")
+        return self._pcs_runner
+
+    def assertEqual(self, first, second, msg=None):
+        # pylint: disable=invalid-name
+        # pylint: disable=no-self-use
+        if first != second:
+            raise AssertionError(
+                f"{msg}\n{first} != {second}" if msg else f"{first} != {second}"
+            )
 
 
 def wrap_element_by_master(cib_file, resource_id, master_id=None):
@@ -47,6 +102,16 @@ def wrap_element_by_master(cib_file, resource_id, master_id=None):
     assert retval == 0, (
         "Error running wrap_element_by_master:\n" + stderr + "\n" + stdout
     )
+
+
+def wrap_element_by_master_file(filepath, resource_id, master_id=None):
+    cib_tmp = get_tmp_file("wrap_by_master")
+    write_file_to_tmpfile(filepath, cib_tmp)
+    wrap_element_by_master(cib_tmp, resource_id, master_id=master_id)
+    cib_tmp.seek(0)
+    with open(filepath, "w") as target:
+        target.write(cib_tmp.read())
+    cib_tmp.close()
 
 
 def fixture_master_xml(name, all_ops=True, meta_dict=None):
