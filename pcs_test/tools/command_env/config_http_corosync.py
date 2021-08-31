@@ -6,6 +6,23 @@ from pcs_test.tools.command_env.mock_node_communicator import (
 )
 
 
+def corosync_running_check_response(running):
+    return json.dumps(
+        {
+            "node": {
+                "corosync": running,
+                "services": {
+                    "corosync": {
+                        "installed": True,
+                        "enabled": not running,
+                        "running": running,
+                    }
+                },
+            }
+        }
+    )
+
+
 class CorosyncShortcuts:
     def __init__(self, calls):
         self.__calls = calls
@@ -29,7 +46,8 @@ class CorosyncShortcuts:
             node_labels,
             communication_list,
             action="remote/status",
-            output='{"corosync":false}',
+            param_list=[("version", "2")],
+            output=corosync_running_check_response(False),
         )
 
     def get_corosync_online_targets(
@@ -51,7 +69,8 @@ class CorosyncShortcuts:
             node_labels,
             communication_list,
             action="remote/status",
-            output='{"corosync":true}',
+            param_list=[("version", "2")],
+            output=corosync_running_check_response(True),
         )
 
     def get_corosync_conf(

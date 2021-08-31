@@ -14,6 +14,9 @@ from pcs.lib.corosync.config_parser import (
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_raise_library_error
 from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.command_env.config_http_corosync import (
+    corosync_running_check_response,
+)
 
 
 class PushCorosyncConfLiveBase(TestCase):
@@ -120,20 +123,12 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
         )
 
     def test_dont_need_stopped_cluster_error(self):
-        (
-            self.config.http.corosync.set_corosync_conf(
-                self.corosync_conf_text,
-                communication_list=[
-                    {
-                        "label": "node-1",
-                    },
-                    {
-                        "label": "node-2",
-                        "response_code": 400,
-                        "output": "Failed",
-                    },
-                ],
-            )
+        self.config.http.corosync.set_corosync_conf(
+            self.corosync_conf_text,
+            communication_list=[
+                {"label": "node-1"},
+                {"label": "node-2", "response_code": 400, "output": "Failed"},
+            ],
         )
         env = self.env_assistant.get_env()
         self.env_assistant.assert_raise_library_error(
@@ -412,15 +407,10 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
                 communication_list=[
                     {
                         "label": self.node_labels[0],
-                        "output": '{"corosync":true}',
+                        "output": corosync_running_check_response(True),
                     }
                 ]
-                + [
-                    {
-                        "label": node,
-                    }
-                    for node in self.node_labels[1:]
-                ]
+                + [{"label": node} for node in self.node_labels[1:]]
             )
         )
         env = self.env_assistant.get_env()
@@ -445,18 +435,14 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
         # If we know for sure that corosync is running, skip_offline doesn't
         # matter.
         self.corosync_conf_facade.need_stopped_cluster = True
-        (
-            self.config.http.corosync.check_corosync_offline(
-                communication_list=[
-                    dict(
-                        label="node-1",
-                        output='{"corosync":true}',
-                    ),
-                    dict(
-                        label="node-2",
-                    ),
-                ]
-            )
+        self.config.http.corosync.check_corosync_offline(
+            communication_list=[
+                dict(
+                    label="node-1",
+                    output=corosync_running_check_response(True),
+                ),
+                dict(label="node-2"),
+            ]
         )
         env = self.env_assistant.get_env()
         self.env_assistant.assert_raise_library_error(

@@ -14,6 +14,9 @@ from pcs_test.tier0.lib.commands.cluster.test_add_nodes import (
 )
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.command_env.config_http_corosync import (
+    corosync_running_check_response,
+)
 from pcs_test.tools.custom_mock import patch_getaddrinfo
 
 from pcs import settings
@@ -1170,7 +1173,10 @@ class ClusterStatus(TestCase):
             .local.read_sbd_config(name_sufix="_2")
             .http.corosync.check_corosync_offline(
                 communication_list=[
-                    {"label": "node1", "output": '{"corosync":true}'},
+                    {
+                        "label": "node1",
+                        "output": corosync_running_check_response(True),
+                    },
                     {"label": "node2", "output": "an error"},
                     {
                         "label": "node3",
@@ -1178,8 +1184,14 @@ class ClusterStatus(TestCase):
                         "errno": 7,
                         "error_msg": "an error",
                     },
-                    {"label": "node4", "output": '{"corosync":true}'},
-                    {"label": "node5", "output": '{"corosync":false}'},
+                    {
+                        "label": "node4",
+                        "output": corosync_running_check_response(True),
+                    },
+                    {
+                        "label": "node5",
+                        "output": corosync_running_check_response(False),
+                    },
                 ]
             )
             .local.get_host_info(new_nodes)
