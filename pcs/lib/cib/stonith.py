@@ -52,6 +52,20 @@ def is_stonith_enabled(crm_config_el: _Element) -> bool:
             break
     return stonith_enabled
 
+def _get_primitive_stonith_resource(
+    res_el: _Element, all: _Element, action: _Element, cycle: _Element):
+
+    for stonith in res_el.iterfind("primitive[@class='stonith']"):
+        all.append(stonith)
+        for nvpair in stonith.iterfind("instance_attributes/nvpair"):
+            if nvpair.get("name") == "action" and nvpair.get("value"):
+                action.append(stonith)
+            if (
+                nvpair.get("name") == "method"
+                and nvpair.get("value") == "cycle"
+            ):
+                cycle.append(stonith)
+    return all, action, cycle
 
 def get_misconfigured_resources(
     resources_el: _Element,
@@ -62,18 +76,12 @@ def get_misconfigured_resources(
     stonith_all = []
     stonith_with_action = []
     stonith_with_method_cycle = []
-    for stonith in resources_el.iterfind("primitive[@class='stonith']"):
-        stonith_all.append(stonith)
-        for nvpair in stonith.iterfind("instance_attributes/nvpair"):
-            if nvpair.get("name") == "action" and nvpair.get("value"):
-                stonith_with_action.append(stonith)
-            if (
-                nvpair.get("name") == "method"
-                and nvpair.get("value") == "cycle"
-            ):
-                stonith_with_method_cycle.append(stonith)
-    return stonith_all, stonith_with_action, stonith_with_method_cycle
 
+    for group in resources_el.iterfind("group"):
+        _get_primitive_stonith_resource(group, stonith_all, stonith_with_action, stonith_with_method_cycle) 
+
+    _get_primitive_stonith_resource(resources_el, stonith_all, stonith_with_action, stonith_with_method_cycle) 
+    return stonith_all, stonith_with_action, stonith_with_method_cycle
 
 SUPPORTED_RESOURCE_TYPES_FOR_RESTARLESS_UPDATE = ["fence_scsi"]
 
