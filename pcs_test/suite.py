@@ -1,6 +1,8 @@
 import importlib
 import os
 import sys
+from threading import Thread
+import time
 import unittest
 
 try:
@@ -84,6 +86,67 @@ def discover_tests(
     return unittest.TestLoader().loadTestsFromNames(explicitly_enumerated_tests)
 
 
+def tier1_fixtures_needed(test_list):
+    for test_name in tests_from_suite(test_list):
+        if test_name.startswith("pcs_test.tier1.legacy."):
+            return True
+    return False
+
+
+def run_tier1_fixtures(run_concurrently=True):
+    # pylint: disable=import-outside-toplevel
+    from pcs_test.tier1.legacy.test_constraints import (
+        CONSTRAINT_TEST_CIB_FIXTURE,
+    )
+    from pcs_test.tier1.legacy.test_resource import RESOURCE_TEST_CIB_FIXTURE
+    from pcs_test.tier1.legacy.test_stonith import (
+        STONITH_LEVEL_TEST_CIB_FIXTURE,
+    )
+
+    fixture_instances = [
+        CONSTRAINT_TEST_CIB_FIXTURE,
+        RESOURCE_TEST_CIB_FIXTURE,
+        STONITH_LEVEL_TEST_CIB_FIXTURE,
+    ]
+    print("Preparing tier1 fixtures...")
+    time_start = time.time()
+    if run_concurrently:
+        thread_list = []
+        for instance in fixture_instances:
+            thread = Thread(target=instance.set_up)
+            thread.daemon = True
+            thread.start()
+            thread_list.append(thread)
+        timeout_counter = 30  # 30 * 10s = 5min
+        while thread_list:
+            if timeout_counter < 0:
+                raise AssertionError("Fixture threads seem to be stuck :(")
+            for thread in thread_list:
+                thread.join(timeout=10)
+                sys.stdout.write(".")
+                sys.stdout.flush()
+                timeout_counter -= 1
+                if not thread.is_alive():
+                    thread_list.remove(thread)
+                    continue
+
+    else:
+        for instance in fixture_instances:
+            instance.set_up()
+    time_stop = time.time()
+    time_taken = time_stop - time_start
+    sys.stdout.write("Tier1 fixtures prepared in %.3fs\n" % (time_taken))
+    sys.stdout.flush()
+
+    def cleanup():
+        print("Cleaning tier1 fixtures...", end=" ")
+        for instance in fixture_instances:
+            instance.clean_up()
+        print("done")
+
+    return cleanup
+
+
 def main():
     # pylint: disable=import-outside-toplevel
     if "BUNDLED_LIB_LOCATION" in os.environ:
@@ -141,6 +204,11 @@ def main():
         sys.exit()
 
     tests_to_run = discovered_tests
+    tier1_fixtures_cleanup = None
+    if tier1_fixtures_needed(tests_to_run):
+        tier1_fixtures_cleanup = run_tier1_fixtures(
+            run_concurrently=run_concurrently
+        )
     if run_concurrently:
         tests_to_run = ConcurrentTestSuite(
             discovered_tests,
@@ -174,6 +242,8 @@ def main():
         verbosity=2 if "-v" in sys.argv else 1, resultclass=ResultClass
     )
     test_result = test_runner.run(tests_to_run)
+    if tier1_fixtures_cleanup:
+        tier1_fixtures_cleanup()
     if not test_result.wasSuccessful():
         sys.exit(1)
 
