@@ -761,7 +761,7 @@ Ticket Constraints:
         )
         ac(
             o,
-            f"Warning: Role value '{role}' is depraceted and should not be used, use '{const.PCMK_ROLE_UNPROMOTED}' instead\n",
+            f"Warning: Role value '{role}' is deprecated and should not be used, use '{const.PCMK_ROLE_UNPROMOTED}' instead\n",
         )
         assert r == 0
 

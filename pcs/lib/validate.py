@@ -595,7 +595,7 @@ class ValueDeprecated(ValueValidator):
     ):
         """
         deprecation_map -- keys are deprecated values and values are new
-            valeus. If values is None, depraceted value has no direct
+            valeus. If values is None, deprecated value has no direct
             replacement
         """
         super().__init__(

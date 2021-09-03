@@ -2987,6 +2987,6 @@ def print_depracation_warning_for_legacy_roles(role: str) -> None:
     if role_normalized in deprecation_map:
         replaced_by = deprecation_map[role_normalized]
         reports_output.warn(
-            f"Role value '{role}' is depraceted and should not be used, use "
+            f"Role value '{role}' is deprecated and should not be used, use "
             f"'{replaced_by}' instead"
         )
