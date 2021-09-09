@@ -141,11 +141,11 @@ _type_articles = {
 def _add_remove_container_str(
     container: types.AddRemoveContainerType,
 ) -> str:
-    return _add_remove_container_translation[container]
+    return _add_remove_container_translation.get(container, container)
 
 
 def _add_remove_item_str(item: types.AddRemoveItemType) -> str:
-    return _add_remove_item_translation[item]
+    return _add_remove_item_translation.get(item, item)
 
 
 def _format_file_role(role: file_type_codes.FileTypeCode) -> str:
@@ -6921,13 +6921,14 @@ class AddRemoveItemsNotSpecified(ReportItemMessage):
     """
     Cannot modify container, no add or remove items specified.
 
-    container_type -- type of item container (e.g. group, tag, stonith resource)
-    item_type -- type of item in a container (e.g. resource, reference id,
-        device)
+    container_type -- type of item container
+    item_type -- type of item in a container
+    container_id -- id of a container
     """
 
     container_type: types.AddRemoveContainerType
     item_type: types.AddRemoveItemType
+    container_id: str
     _code = codes.ADD_REMOVE_ITEMS_NOT_SPECIFIED
 
     @property
@@ -6935,8 +6936,8 @@ class AddRemoveItemsNotSpecified(ReportItemMessage):
         container = _add_remove_container_str(self.container_type)
         items = get_plural(_add_remove_item_str(self.item_type))
         return (
-            f"Cannot modify {container}, no {items} to add or remove "
-            "specified"
+            f"Cannot modify {container} '{self.container_id}', no {items} to "
+            "add or remove specified"
         )
 
 
@@ -6945,12 +6946,15 @@ class AddRemoveItemsDuplication(ReportItemMessage):
     """
     Duplicate items were found in add/remove item lists.
 
-    item_type -- type of item in a container (e.g. resource, reference id,
-        device)
+    container_type -- type of item container
+    item_type -- type of item in a container
+    container_id -- id of a container
     duplicate_items_list -- list of duplicate items
     """
 
+    container_type: types.AddRemoveContainerType
     item_type: types.AddRemoveItemType
+    container_id: str
     duplicate_items_list: List[str]
     _code = codes.ADD_REMOVE_ITEMS_DUPLICATION
 
@@ -6969,22 +6973,30 @@ class AddRemoveCannotAddItemsAlreadyInTheContainer(ReportItemMessage):
     """
     Cannot add items already existing in the container.
 
+    container_type -- type of item container
+    item_type -- type of item in a container
     container_id -- id of a container
     item_list -- list of items already in the container
     """
 
-    container_id: str
     container_type: types.AddRemoveContainerType
+    item_type: types.AddRemoveItemType
+    container_id: str
     item_list: List[str]
     _code = codes.ADD_REMOVE_CANNOT_ADD_ITEMS_ALREADY_IN_THE_CONTAINER
 
     @property
     def message(self) -> str:
-        container = _add_remove_container_str(self.container_type)
+        items = format_plural(
+            self.item_list, _add_remove_item_str(self.item_type)
+        )
         item_list = format_list(self.item_list)
-        exist = format_plural(self.item_list, "exists", "exist")
+        they = format_plural(self.item_list, "it")
+        are = format_plural(self.item_list, "is")
+        container = _add_remove_container_str(self.container_type)
         return (
-            f"{item_list} already {exist} in {container} '{self.container_id}'"
+            f"Cannot add {items} {item_list}, {they} {are} already present in "
+            f"{container} '{self.container_id}'"
         )
 
 
@@ -6993,9 +7005,8 @@ class AddRemoveCannotRemoveItemsNotInTheContainer(ReportItemMessage):
     """
     Cannot remove items not existing in the container.
 
-    container_type -- type of item container (e.g. group, tag, stonith resource)
-    item_type -- type of item in a container (e.g. resource, reference id,
-        device)
+    container_type -- type of item container
+    item_type -- type of item in a container
     container_id -- id of a container
     item_list -- list of items not in the container
     """
@@ -7008,14 +7019,19 @@ class AddRemoveCannotRemoveItemsNotInTheContainer(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        container = _add_remove_container_str(self.container_type)
+        items = format_plural(
+            self.item_list, _add_remove_item_str(self.item_type)
+        )
         item_list = format_list(self.item_list)
+        they = format_plural(self.item_list, "it")
+        are = format_plural(self.item_list, "is")
+        container = _add_remove_container_str(self.container_type)
         items = format_plural(
             self.item_list, _add_remove_item_str(self.item_type)
         )
         return (
-            f"{container.capitalize()} '{self.container_id}' does not contain "
-            f"{items}: {item_list}"
+            f"Cannot remove {items} {item_list}, {they} {are} not present in "
+            f"{container} '{self.container_id}'"
         )
 
 
@@ -7025,10 +7041,15 @@ class AddRemoveCannotAddAndRemoveItemsAtTheSameTime(ReportItemMessage):
     Cannot add and remove items at the same time. Avoid operation without an
     effect.
 
+    container_type -- type of item container
+    item_type -- type of item in a container
+    container_id -- id of a container
     item_list -- common items from add and remove item lists
     """
 
+    container_type: types.AddRemoveContainerType
     item_type: types.AddRemoveItemType
+    container_id: str
     item_list: List[str]
     _code = codes.ADD_REMOVE_CANNOT_ADD_AND_REMOVE_ITEMS_AT_THE_SAME_TIME
 
@@ -7049,15 +7070,16 @@ class AddRemoveCannotRemoveAllItemsFromTheContainer(ReportItemMessage):
     """
     Cannot remove all items from a container.
 
-    container_type -- type of item container (e.g. group, tag, stonith resource)
-    item_type -- type of item in a container (e.g. resource, reference id,
-        device)
+    container_type -- type of item container
+    item_type -- type of item in a container
     container_id -- id of a container
+    item_list -- common items from add and remove item lists
     """
 
     container_type: types.AddRemoveContainerType
     item_type: types.AddRemoveItemType
     container_id: str
+    item_list: List[str]
     _code = codes.ADD_REMOVE_CANNOT_REMOVE_ALL_ITEMS_FROM_THE_CONTAINER
 
     @property
@@ -7072,12 +7094,11 @@ class AddRemoveCannotRemoveAllItemsFromTheContainer(ReportItemMessage):
 @dataclass(frozen=True)
 class AddRemoveAdjacentItemNotInTheContainer(ReportItemMessage):
     """
-    Cannot put items next to an adjacent item the container, because the
+    Cannot put items next to an adjacent item in the container, because the
     adjacent item does not exist in the container.
 
-    container_type -- type of item container (e.g. group, tag, stonith resource)
-    item_type -- type of item in a container (e.g. resource, reference id,
-        device)
+    container_type -- type of item container
+    item_type -- type of item in a container
     container_id -- id of a container
     adjacent_item_id -- id of an adjacent item
     """
@@ -7092,9 +7113,10 @@ class AddRemoveAdjacentItemNotInTheContainer(ReportItemMessage):
     def message(self) -> str:
         container = _add_remove_container_str(self.container_type)
         item = _add_remove_item_str(self.item_type)
+        items = get_plural(item)
         return (
             f"There is no {item} '{self.adjacent_item_id}' in the "
-            f"{container} '{self.container_id}'"
+            f"{container} '{self.container_id}', cannot add {items} next to it"
         )
 
 
@@ -7103,12 +7125,15 @@ class AddRemoveCannotPutItemNextToItself(ReportItemMessage):
     """
     Cannot put an item into a container next to itself.
 
-    item_type -- type of item in a container (e.g. resource, reference id,
-        device)
+    container_type -- type of item container
+    item_type -- type of item in a container
+    container_id -- id of a container
     adjacent_item_id -- id of an adjacent item
     """
 
+    container_type: types.AddRemoveContainerType
     item_type: types.AddRemoveItemType
+    container_id: str
     adjacent_item_id: str
     _code = codes.ADD_REMOVE_CANNOT_PUT_ITEM_NEXT_TO_ITSELF
 
@@ -7123,12 +7148,15 @@ class AddRemoveCannotSpecifyAdjacentItemWithoutItemsToAdd(ReportItemMessage):
     """
     Cannot specify adjacent item without items to add.
 
-    item_type -- type of item in a container (e.g. resource, reference id,
-        device)
+    container_type -- type of item container
+    item_type -- type of item in a container
+    container_id -- id of a container
     adjacent_item_id -- id of an adjacent item
     """
 
+    container_type: types.AddRemoveContainerType
     item_type: types.AddRemoveItemType
+    container_id: str
     adjacent_item_id: str
     _code = codes.ADD_REMOVE_CANNOT_SPECIFY_ADJACENT_ITEM_WITHOUT_ITEMS_TO_ADD
 

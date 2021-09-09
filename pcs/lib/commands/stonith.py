@@ -1,8 +1,11 @@
-from typing import Container, Iterable, List, Optional, Tuple
+from collections import Counter
+from typing import Container, Iterable, List, Optional, Set, Tuple
 
 from lxml.etree import _Element
 
 from pcs.common import reports
+from pcs.common.reports import ReportItemList
+from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
 from pcs.lib.cib import resource
 from pcs.lib.cib import stonith
@@ -23,6 +26,7 @@ from pcs.lib.communication.tools import (
 )
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
+from pcs.lib.external import CommandRunner
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.pacemaker.live import (
     FenceHistoryCommandErrorException,
@@ -33,7 +37,6 @@ from pcs.lib.pacemaker.live import (
     is_getting_resource_digest_supported,
 )
 from pcs.lib.pacemaker.values import validate_id
-from pcs.lib.validate import validate_add_remove_items
 from pcs.lib.resource_agent import find_valid_stonith_agent_by_name as get_agent
 
 
@@ -272,17 +275,160 @@ def history_update(env: LibraryEnvironment):
         ) from e
 
 
+def _validate_add_remove_items(
+    add_item_list: Iterable[str],
+    remove_item_list: Iterable[str],
+    current_item_list: Iterable[str],
+    container_type: reports.types.AddRemoveContainerType,
+    item_type: reports.types.AddRemoveItemType,
+    container_id: str,
+    adjacent_item_id: Optional[str] = None,
+    container_can_be_empty: bool = False,
+) -> ReportItemList:
+    """
+    Validate if items can be added or removed to or from a container.
+
+    add_item_list -- items to be added
+    remove_item_list -- items to be removed
+    current_item_list -- items currently in the container
+    container_type -- container type
+    item_type -- item type
+    container_id -- id of the container
+    adjacent_item_id -- an adjacent item in the container
+    container_can_be_empty -- flag to decide if container can be left empty
+    """
+    # pylint: disable=too-many-locals
+    report_list: ReportItemList = []
+    if not add_item_list and not remove_item_list:
+        report_list.append(
+            ReportItem.error(
+                reports.messages.AddRemoveItemsNotSpecified(
+                    container_type, item_type, container_id
+                )
+            )
+        )
+
+    def _get_duplicate_items(item_list: Iterable[str]) -> Set[str]:
+        return {item for item, count in Counter(item_list).items() if count > 1}
+
+    duplicate_items_list = _get_duplicate_items(
+        add_item_list
+    ) | _get_duplicate_items(remove_item_list)
+    if duplicate_items_list:
+        report_list.append(
+            ReportItem.error(
+                reports.messages.AddRemoveItemsDuplication(
+                    container_type,
+                    item_type,
+                    container_id,
+                    sorted(duplicate_items_list),
+                )
+            )
+        )
+    already_present = set(add_item_list).intersection(current_item_list)
+    # report only if an adjacent id is not defined, because we want to allow
+    # to move items when adjacent_item_id is specified
+    if adjacent_item_id is None and already_present:
+        report_list.append(
+            ReportItem.error(
+                reports.messages.AddRemoveCannotAddItemsAlreadyInTheContainer(
+                    container_type,
+                    item_type,
+                    container_id,
+                    sorted(already_present),
+                )
+            )
+        )
+    missing_items = set(remove_item_list).difference(current_item_list)
+    if missing_items:
+        report_list.append(
+            ReportItem.error(
+                reports.messages.AddRemoveCannotRemoveItemsNotInTheContainer(
+                    container_type,
+                    item_type,
+                    container_id,
+                    sorted(missing_items),
+                )
+            )
+        )
+    common_items = set(add_item_list) & set(remove_item_list)
+    if common_items:
+        report_list.append(
+            ReportItem.error(
+                reports.messages.AddRemoveCannotAddAndRemoveItemsAtTheSameTime(
+                    container_type,
+                    item_type,
+                    container_id,
+                    sorted(common_items),
+                )
+            )
+        )
+    if not container_can_be_empty and not add_item_list:
+        remaining_items = set(current_item_list).difference(remove_item_list)
+        if not remaining_items:
+            report_list.append(
+                ReportItem.error(
+                    reports.messages.AddRemoveCannotRemoveAllItemsFromTheContainer(
+                        container_type,
+                        item_type,
+                        container_id,
+                        list(current_item_list),
+                    )
+                )
+            )
+    if adjacent_item_id:
+        if adjacent_item_id not in current_item_list:
+            report_list.append(
+                ReportItem.error(
+                    reports.messages.AddRemoveAdjacentItemNotInTheContainer(
+                        container_type,
+                        item_type,
+                        container_id,
+                        adjacent_item_id,
+                    )
+                )
+            )
+        if adjacent_item_id in add_item_list:
+            report_list.append(
+                ReportItem.error(
+                    reports.messages.AddRemoveCannotPutItemNextToItself(
+                        container_type,
+                        item_type,
+                        container_id,
+                        adjacent_item_id,
+                    )
+                )
+            )
+        if not add_item_list:
+            report_list.append(
+                ReportItem.error(
+                    reports.messages.AddRemoveCannotSpecifyAdjacentItemWithoutItemsToAdd(
+                        container_type,
+                        item_type,
+                        container_id,
+                        adjacent_item_id,
+                    )
+                )
+            )
+    return report_list
+
+
 def _update_scsi_devices_get_element_and_devices(
-    env: LibraryEnvironment, stonith_id: str
+    runner: CommandRunner,
+    report_processor: ReportProcessor,
+    cib: _Element,
+    stonith_id: str,
 ) -> Tuple[_Element, List[str]]:
     """
     Do checks and return stonith element and list of current scsi devices.
     Raise LibraryError if checks fail.
 
-    env -- provides all for communication with externals
+    runner -- command runner instance
+    report_processor -- tool for warning/info/error reporting
+    cib -- cib element
     stonith_id -- id of stonith resource
     """
-    if not is_getting_resource_digest_supported(env.cmd_runner()):
+    if not is_getting_resource_digest_supported(runner):
         raise LibraryError(
             ReportItem.error(
                 reports.messages.StonithRestartlessUpdateOfScsiDevicesNotSupported()
@@ -291,15 +437,15 @@ def _update_scsi_devices_get_element_and_devices(
     (
         stonith_el,
         report_list,
-    ) = stonith.validate_stonith_restartless_update(env.get_cib(), stonith_id)
-    if env.report_processor.report_list(report_list).has_errors:
+    ) = stonith.validate_stonith_restartless_update(cib, stonith_id)
+    if report_processor.report_list(report_list).has_errors:
         raise LibraryError()
-    current_device_list = get_value(
-        INSTANCE_ATTRIBUTES_TAG, stonith_el, "devices"
-    )
     # for mypy, this should not happen because exception would be raised
     if stonith_el is None:
         raise AssertionError("stonith element is None")
+    current_device_list = get_value(
+        INSTANCE_ATTRIBUTES_TAG, stonith_el, "devices"
+    )
     if current_device_list is None:
         raise AssertionError("current_device_list is None")
     return stonith_el, current_device_list.split(",")
@@ -318,8 +464,6 @@ def _unfencing_scsi_devices(
     device_list -- devices to be unfenced
     force_flags -- list of flags codes
     """
-    if not list(device_list):
-        return
     cluster_nodes_names, nodes_report_list = get_existing_nodes_names(
         env.get_corosync_conf(),
         error_on_missing_name=True,
@@ -363,10 +507,6 @@ def update_scsi_devices(
         resource
     force_flags -- list of flags codes
     """
-    (
-        stonith_el,
-        current_device_list,
-    ) = _update_scsi_devices_get_element_and_devices(env, stonith_id)
     if not set_device_list:
         env.report_processor.report(
             ReportItem.error(
@@ -375,18 +515,25 @@ def update_scsi_devices(
                 )
             )
         )
+    runner = env.cmd_runner()
+    (
+        stonith_el,
+        current_device_list,
+    ) = _update_scsi_devices_get_element_and_devices(
+        runner, env.report_processor, env.get_cib(), stonith_id
+    )
     if env.report_processor.has_errors:
         raise LibraryError()
     stonith.update_scsi_devices_without_restart(
-        env.cmd_runner(),
+        runner,
         env.get_cluster_state(),
         stonith_el,
         IdProvider(stonith_el),
         set_device_list,
     )
-    devices_for_unfencing = set(set_device_list)
-    devices_for_unfencing.difference_update(current_device_list)
-    _unfencing_scsi_devices(env, devices_for_unfencing, force_flags)
+    devices_for_unfencing = set(set_device_list).difference(current_device_list)
+    if devices_for_unfencing:
+        _unfencing_scsi_devices(env, devices_for_unfencing, force_flags)
     env.push_cib()
 
 
@@ -408,12 +555,15 @@ def update_scsi_devices_add_remove(
         the stonith resource
     force_flags -- list of flags codes
     """
+    runner = env.cmd_runner()
     (
         stonith_el,
         current_device_list,
-    ) = _update_scsi_devices_get_element_and_devices(env, stonith_id)
+    ) = _update_scsi_devices_get_element_and_devices(
+        runner, env.report_processor, env.get_cib(), stonith_id
+    )
     if env.report_processor.report_list(
-        validate_add_remove_items(
+        _validate_add_remove_items(
             add_device_list,
             remove_device_list,
             current_device_list,
@@ -435,5 +585,6 @@ def update_scsi_devices_add_remove(
         IdProvider(stonith_el),
         updated_device_set,
     )
-    _unfencing_scsi_devices(env, add_device_list, force_flags)
+    if add_device_list:
+        _unfencing_scsi_devices(env, add_device_list, force_flags)
     env.push_cib()

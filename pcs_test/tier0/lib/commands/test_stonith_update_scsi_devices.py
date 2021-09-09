@@ -3,6 +3,7 @@ from unittest import mock, TestCase
 
 
 from pcs_test.tools import fixture
+from pcs_test.tools.assertions import assert_report_item_list_equal
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.command_env.config_http_corosync import (
     corosync_running_check_response,
@@ -16,6 +17,10 @@ from pcs.common import (
     reports,
 )
 from pcs.common.interface import dto
+from pcs.common.reports.const import (
+    ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE,
+    ADD_REMOVE_ITEM_TYPE_DEVICE,
+)
 from pcs.common.tools import timeout_to_seconds
 
 from .cluster.common import (
@@ -232,7 +237,6 @@ class UpdateScsiDevicesMixin:
         # pylint: disable=too-many-arguments
         # pylint: disable=too-many-locals
         devices_value = ",".join(sorted(devices_updated))
-        self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.cib.load(
             resources=fixture_scsi(
                 devices=devices_before, resource_ops=resource_ops
@@ -243,6 +247,7 @@ class UpdateScsiDevicesMixin:
                 lrm_monitor_ops=lrm_monitor_ops,
             ),
         )
+        self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.pcmk.load_state(
             resources=FIXTURE_CRM_MON_RES_RUNNING_1, nodes=FIXTURE_CRM_MON_NODES
         )
@@ -337,6 +342,7 @@ class UpdateScsiDevicesFailuresMixin:
         self.config.env.set_known_nodes(self.existing_nodes)
 
     def test_pcmk_doesnt_support_digests(self):
+        self.config.runner.cib.load(resources=fixture_scsi())
         self.config.runner.pcmk.is_resource_digests_supported(
             is_supported=False
         )
@@ -351,11 +357,11 @@ class UpdateScsiDevicesFailuresMixin:
         )
 
     def test_node_missing_name_and_missing_auth_token(self):
-        self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.cib.load(
             resources=fixture_scsi(),
             status=_fixture_status_lrm_ops(SCSI_STONITH_ID),
         )
+        self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.pcmk.load_state(
             resources=FIXTURE_CRM_MON_RES_RUNNING_1, nodes=FIXTURE_CRM_MON_NODES
         )
@@ -403,11 +409,11 @@ class UpdateScsiDevicesFailuresMixin:
 
     def _unfence_failure_common_calls(self):
         devices = ",".join(DEVICES_2)
-        self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.cib.load(
             resources=fixture_scsi(),
             status=_fixture_status_lrm_ops(SCSI_STONITH_ID),
         )
+        self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.pcmk.load_state(
             resources=FIXTURE_CRM_MON_RES_RUNNING_1, nodes=FIXTURE_CRM_MON_NODES
         )
@@ -852,8 +858,8 @@ class TestUpdateScsiDevicesFailures(UpdateScsiDevicesFailuresMixin, TestCase):
         )
 
     def test_devices_cannot_be_empty(self):
-        self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.cib.load(resources=fixture_scsi())
+        self.config.runner.pcmk.is_resource_digests_supported()
         self.env_assist.assert_raise_library_error(
             lambda: stonith.update_scsi_devices(
                 self.env_assist.get_env(), SCSI_STONITH_ID, ()
@@ -877,8 +883,8 @@ class TestUpdateScsiDevicesFailures(UpdateScsiDevicesFailuresMixin, TestCase):
         lower level tested in
         pcs_test.tier0.lib.cib.test_stonith.ValidateStonithRestartlessUpdate
         """
-        self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.cib.load(resources=fixture_scsi())
+        self.config.runner.pcmk.is_resource_digests_supported()
         self.env_assist.assert_raise_library_error(
             lambda: stonith.update_scsi_devices(
                 self.env_assist.get_env(), "non-existent-id", DEVICES_2
@@ -897,8 +903,8 @@ class TestUpdateScsiDevicesFailures(UpdateScsiDevicesFailuresMixin, TestCase):
         )
 
     def test_stonith_resource_is_not_running(self):
-        self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.cib.load(resources=fixture_scsi())
+        self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.pcmk.load_state(
             resources=FIXTURE_CRM_MON_RES_STOPPED, nodes=FIXTURE_CRM_MON_NODES
         )
@@ -917,8 +923,8 @@ class TestUpdateScsiDevicesFailures(UpdateScsiDevicesFailuresMixin, TestCase):
         )
 
     def test_stonith_resource_is_running_on_more_than_one_node(self):
-        self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.cib.load(resources=fixture_scsi())
+        self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.pcmk.load_state(
             resources=FIXTURE_CRM_MON_RES_RUNNING_2, nodes=FIXTURE_CRM_MON_NODES
         )
@@ -941,7 +947,6 @@ class TestUpdateScsiDevicesFailures(UpdateScsiDevicesFailuresMixin, TestCase):
 
     def test_lrm_op_missing_digest_attributes(self):
         devices = ",".join(DEVICES_2)
-        self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.cib.load(
             resources=fixture_scsi(),
             status=_fixture_status_lrm_ops_base(
@@ -949,6 +954,7 @@ class TestUpdateScsiDevicesFailures(UpdateScsiDevicesFailuresMixin, TestCase):
                 f'<lrm_rsc_op id="{SCSI_STONITH_ID}_last" operation="start"/>',
             ),
         )
+        self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.pcmk.load_state(
             resources=FIXTURE_CRM_MON_RES_RUNNING_1, nodes=FIXTURE_CRM_MON_NODES
         )
@@ -979,7 +985,6 @@ class TestUpdateScsiDevicesFailures(UpdateScsiDevicesFailuresMixin, TestCase):
 
     def test_crm_resource_digests_missing(self):
         devices = ",".join(DEVICES_2)
-        self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.cib.load(
             resources=fixture_scsi(),
             status=_fixture_status_lrm_ops_base(
@@ -990,6 +995,7 @@ class TestUpdateScsiDevicesFailures(UpdateScsiDevicesFailuresMixin, TestCase):
                 ),
             ),
         )
+        self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.pcmk.load_state(
             resources=FIXTURE_CRM_MON_RES_RUNNING_1, nodes=FIXTURE_CRM_MON_NODES
         )
@@ -1022,11 +1028,11 @@ class TestUpdateScsiDevicesFailures(UpdateScsiDevicesFailuresMixin, TestCase):
         )
 
     def test_no_lrm_start_op(self):
-        self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.cib.load(
             resources=fixture_scsi(),
             status=_fixture_status_lrm_ops(SCSI_STONITH_ID, lrm_start_ops=()),
         )
+        self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.pcmk.load_state(
             resources=FIXTURE_CRM_MON_RES_RUNNING_1, nodes=FIXTURE_CRM_MON_NODES
         )
@@ -1047,7 +1053,6 @@ class TestUpdateScsiDevicesFailures(UpdateScsiDevicesFailuresMixin, TestCase):
         )
 
     def test_monitor_ops_and_lrm_monitor_ops_do_not_match(self):
-        self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.cib.load(
             resources=fixture_scsi(
                 resource_ops=(
@@ -1058,6 +1063,7 @@ class TestUpdateScsiDevicesFailures(UpdateScsiDevicesFailuresMixin, TestCase):
             ),
             status=_fixture_status_lrm_ops(SCSI_STONITH_ID),
         )
+        self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.pcmk.load_state(
             resources=FIXTURE_CRM_MON_RES_RUNNING_1, nodes=FIXTURE_CRM_MON_NODES
         )
@@ -1088,13 +1094,13 @@ class TestUpdateScsiDevicesFailures(UpdateScsiDevicesFailuresMixin, TestCase):
         )
 
     def test_lrm_monitor_ops_not_found(self):
-        self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.cib.load(
             resources=fixture_scsi(
                 resource_ops=(("monitor", "30s", None, None),)
             ),
             status=_fixture_status_lrm_ops(SCSI_STONITH_ID),
         )
+        self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.pcmk.load_state(
             resources=FIXTURE_CRM_MON_RES_RUNNING_1, nodes=FIXTURE_CRM_MON_NODES
         )
@@ -1225,8 +1231,8 @@ class TestUpdateScsiDevicesAddRemoveFailures(
         lower level tested in
         pcs_test/tier0/lib/test_validate.ValidateAddRemoveItems
         """
-        self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.cib.load(resources=fixture_scsi())
+        self.config.runner.pcmk.is_resource_digests_supported()
         self.env_assist.assert_raise_library_error(
             lambda: stonith.update_scsi_devices_add_remove(
                 self.env_assist.get_env(), SCSI_STONITH_ID, (), ()
@@ -1238,6 +1244,7 @@ class TestUpdateScsiDevicesAddRemoveFailures(
                     reports.codes.ADD_REMOVE_ITEMS_NOT_SPECIFIED,
                     container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE,
                     item_type="device",
+                    container_id=SCSI_STONITH_ID,
                 )
             ]
         )
@@ -1247,8 +1254,8 @@ class TestUpdateScsiDevicesAddRemoveFailures(
         lower level tested in
         pcs_test.tier0.lib.cib.test_stonith.ValidateStonithRestartlessUpdate
         """
-        self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.cib.load(resources=fixture_scsi())
+        self.config.runner.pcmk.is_resource_digests_supported()
         self.env_assist.assert_raise_library_error(
             lambda: stonith.update_scsi_devices_add_remove(
                 self.env_assist.get_env(), "dummy", [DEV_2], [DEV_1]
@@ -1266,8 +1273,8 @@ class TestUpdateScsiDevicesAddRemoveFailures(
         )
 
     def test_stonith_resource_is_running_on_more_than_one_node(self):
-        self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.cib.load(resources=fixture_scsi())
+        self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.pcmk.load_state(
             resources=FIXTURE_CRM_MON_RES_RUNNING_2, nodes=FIXTURE_CRM_MON_NODES
         )
@@ -1286,4 +1293,191 @@ class TestUpdateScsiDevicesAddRemoveFailures(
                 )
             ],
             expected_in_processor=False,
+        )
+
+
+class ValidateAddRemoveItems(TestCase):
+    CONTAINER_TYPE = ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE
+    ITEM_TYPE = ADD_REMOVE_ITEM_TYPE_DEVICE
+    CONTAINER_ID = "container_id"
+
+    def _validate(
+        self, add, remove, current=None, adjacent=None, can_be_empty=False
+    ):
+        # pylint: disable=protected-access
+        return stonith._validate_add_remove_items(
+            add,
+            remove,
+            current,
+            self.CONTAINER_TYPE,
+            self.ITEM_TYPE,
+            self.CONTAINER_ID,
+            adjacent,
+            can_be_empty,
+        )
+
+    def test_success_add_and_remove(self):
+        assert_report_item_list_equal(
+            self._validate(["a1"], ["c3"], ["b2", "c3"]), []
+        )
+
+    def test_success_add_only(self):
+        assert_report_item_list_equal(self._validate(["b2"], [], ["a1"]), [])
+
+    def test_success_remove_only(self):
+        assert_report_item_list_equal(
+            self._validate([], ["b2"], ["a1", "b2"]), []
+        )
+
+    def test_add_remove_items_not_specified(self):
+        assert_report_item_list_equal(
+            self._validate([], [], ["a1", "b2", "c3"]),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_ITEMS_NOT_SPECIFIED,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                )
+            ],
+        )
+
+    def test_add_remove_items_duplications(self):
+        assert_report_item_list_equal(
+            self._validate(["b2", "b2"], ["a1", "a1"], ["a1", "c3"]),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_ITEMS_DUPLICATION,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    duplicate_items_list=["a1", "b2"],
+                )
+            ],
+        )
+
+    def test_add_items_already_in_container(self):
+        assert_report_item_list_equal(
+            self._validate(["a1", "b2"], [], ["a1", "b2", "c3"]),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_CANNOT_ADD_ITEMS_ALREADY_IN_THE_CONTAINER,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    item_list=["a1", "b2"],
+                ),
+            ],
+        )
+
+    def test_remove_items_not_in_container(self):
+        assert_report_item_list_equal(
+            self._validate([], ["a1", "b2"], ["c3"]),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    item_list=["a1", "b2"],
+                )
+            ],
+        )
+
+    def test_add_remove_items_at_the_same_time(self):
+        assert_report_item_list_equal(
+            self._validate(
+                ["a1", "a1", "b2", "b2"], ["b2", "b2", "a1", "a1"], ["c3"]
+            ),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_ITEMS_DUPLICATION,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    duplicate_items_list=["a1", "b2"],
+                ),
+                fixture.error(
+                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    item_list=["a1", "b2"],
+                ),
+                fixture.error(
+                    reports.codes.ADD_REMOVE_CANNOT_ADD_AND_REMOVE_ITEMS_AT_THE_SAME_TIME,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    item_list=["a1", "b2"],
+                ),
+            ],
+        )
+
+    def test_remove_all_items(self):
+        assert_report_item_list_equal(
+            self._validate([], ["a1", "b2"], ["a1", "b2"]),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ALL_ITEMS_FROM_THE_CONTAINER,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    item_list=["a1", "b2"],
+                ),
+            ],
+        )
+
+    def test_remove_all_items_can_be_empty(self):
+        assert_report_item_list_equal(
+            self._validate([], ["a1", "b2"], ["a1", "b2"], can_be_empty=True),
+            [],
+        )
+
+    def test_remove_all_items_and_add_new_one(self):
+        assert_report_item_list_equal(
+            self._validate(["c3"], ["a1", "b2"], ["a1", "b2"]),
+            [],
+        )
+
+    def test_missing_adjacent_item(self):
+        assert_report_item_list_equal(
+            self._validate(["a1", "b2"], [], ["c3"], adjacent="d4"),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_ADJACENT_ITEM_NOT_IN_THE_CONTAINER,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    adjacent_item_id="d4",
+                ),
+            ],
+        )
+
+    def test_adjacent_item_in_add_list(self):
+        assert_report_item_list_equal(
+            self._validate(["a1", "b2"], [], ["a1"], adjacent="a1"),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_CANNOT_PUT_ITEM_NEXT_TO_ITSELF,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    adjacent_item_id="a1",
+                ),
+            ],
+        )
+
+    def test_adjacent_item_without_add_list(self):
+        assert_report_item_list_equal(
+            self._validate([], ["b2"], ["a1", "b2"], adjacent="a1"),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_CANNOT_SPECIFY_ADJACENT_ITEM_WITHOUT_ITEMS_TO_ADD,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    adjacent_item_id="a1",
+                ),
+            ],
         )

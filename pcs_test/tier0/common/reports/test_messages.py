@@ -5124,12 +5124,13 @@ class AddRemoveItemsNotSpecified(NameBuildTest):
     def test_message(self):
         self.assert_message_from_report(
             (
-                "Cannot modify stonith resource, no devices to add or remove "
-                "specified"
+                "Cannot modify stonith resource 'container-id', no devices to "
+                "add or remove specified"
             ),
             reports.AddRemoveItemsNotSpecified(
                 const.ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE,
                 const.ADD_REMOVE_ITEM_TYPE_DEVICE,
+                "container-id",
             ),
         )
 
@@ -5142,7 +5143,10 @@ class AddRemoveItemsDuplication(NameBuildTest):
                 "'dup1', 'dup2'"
             ),
             reports.AddRemoveItemsDuplication(
-                const.ADD_REMOVE_ITEM_TYPE_DEVICE, ["dup2", "dup1"]
+                const.ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE,
+                const.ADD_REMOVE_ITEM_TYPE_DEVICE,
+                "container-id",
+                ["dup2", "dup1"],
             ),
         )
 
@@ -5150,20 +5154,24 @@ class AddRemoveItemsDuplication(NameBuildTest):
 class AddRemoveCannotAddItemsAlreadyInTheContainer(NameBuildTest):
     def test_message_plural(self):
         self.assert_message_from_report(
-            "'i1', 'i2' already exist in stonith resource 'container-id'",
+            "Cannot add devices 'i1', 'i2', they are already present in stonith"
+            " resource 'container-id'",
             reports.AddRemoveCannotAddItemsAlreadyInTheContainer(
-                "container-id",
                 const.ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE,
+                const.ADD_REMOVE_ITEM_TYPE_DEVICE,
+                "container-id",
                 ["i2", "i1"],
             ),
         )
 
     def test_message_singular(self):
         self.assert_message_from_report(
-            "'i1' already exists in stonith resource 'container-id'",
+            "Cannot add device 'i1', it is already present in stonith resource "
+            "'container-id'",
             reports.AddRemoveCannotAddItemsAlreadyInTheContainer(
-                "container-id",
                 const.ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE,
+                const.ADD_REMOVE_ITEM_TYPE_DEVICE,
+                "container-id",
                 ["i1"],
             ),
         )
@@ -5173,8 +5181,8 @@ class AddRemoveCannotRemoveItemsNotInTheContainer(NameBuildTest):
     def test_message_plural(self):
         self.assert_message_from_report(
             (
-                "Stonith resource 'container-id' does not contain devices: "
-                "'i1', 'i2'"
+                "Cannot remove devices 'i1', 'i2', they are not present in "
+                "stonith resource 'container-id'"
             ),
             reports.AddRemoveCannotRemoveItemsNotInTheContainer(
                 const.ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE,
@@ -5186,7 +5194,10 @@ class AddRemoveCannotRemoveItemsNotInTheContainer(NameBuildTest):
 
     def test_message_singular(self):
         self.assert_message_from_report(
-            "Stonith resource 'container-id' does not contain device: 'i1'",
+            (
+                "Cannot remove device 'i1', it is not present in "
+                "stonith resource 'container-id'"
+            ),
             reports.AddRemoveCannotRemoveItemsNotInTheContainer(
                 const.ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE,
                 const.ADD_REMOVE_ITEM_TYPE_DEVICE,
@@ -5201,7 +5212,10 @@ class AddRemoveCannotAddAndRemoveItemsAtTheSameTime(NameBuildTest):
         self.assert_message_from_report(
             "Devices cannot be added and removed at the same time: 'i1', 'i2'",
             reports.AddRemoveCannotAddAndRemoveItemsAtTheSameTime(
-                const.ADD_REMOVE_ITEM_TYPE_DEVICE, ["i2", "i1"]
+                const.ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE,
+                const.ADD_REMOVE_ITEM_TYPE_DEVICE,
+                "container-id",
+                ["i2", "i1"],
             ),
         )
 
@@ -5209,7 +5223,10 @@ class AddRemoveCannotAddAndRemoveItemsAtTheSameTime(NameBuildTest):
         self.assert_message_from_report(
             "Device cannot be added and removed at the same time: 'i1'",
             reports.AddRemoveCannotAddAndRemoveItemsAtTheSameTime(
-                const.ADD_REMOVE_ITEM_TYPE_DEVICE, ["i1"]
+                const.ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE,
+                const.ADD_REMOVE_ITEM_TYPE_DEVICE,
+                "container-id",
+                ["i1"],
             ),
         )
 
@@ -5222,6 +5239,7 @@ class AddRemoveCannotRemoveAllItemsFromTheContainer(NameBuildTest):
                 const.ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE,
                 const.ADD_REMOVE_ITEM_TYPE_DEVICE,
                 "container-id",
+                ["i1", "i2"],
             ),
         )
 
@@ -5231,7 +5249,7 @@ class AddRemoveAdjacentItemNotInTheContainer(NameBuildTest):
         self.assert_message_from_report(
             (
                 "There is no device 'adjacent-item-id' in the stonith resource "
-                "'container-id'"
+                "'container-id', cannot add devices next to it"
             ),
             reports.AddRemoveAdjacentItemNotInTheContainer(
                 const.ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE,
@@ -5247,7 +5265,10 @@ class AddRemoveCannotPutItemNextToItself(NameBuildTest):
         self.assert_message_from_report(
             "Cannot put device 'adjacent-item-id' next to itself",
             reports.AddRemoveCannotPutItemNextToItself(
-                const.ADD_REMOVE_ITEM_TYPE_DEVICE, "adjacent-item-id"
+                const.ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE,
+                const.ADD_REMOVE_ITEM_TYPE_DEVICE,
+                "container-id",
+                "adjacent-item-id",
             ),
         )
 
@@ -5260,6 +5281,9 @@ class AddRemoveCannotSpecifyAdjacentItemWithoutItemsToAdd(NameBuildTest):
                 "devices to add"
             ),
             reports.AddRemoveCannotSpecifyAdjacentItemWithoutItemsToAdd(
-                const.ADD_REMOVE_ITEM_TYPE_DEVICE, "adjacent-item-id"
+                const.ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE,
+                const.ADD_REMOVE_ITEM_TYPE_DEVICE,
+                "container-id",
+                "adjacent-item-id",
             ),
         )
