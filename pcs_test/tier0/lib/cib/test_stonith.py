@@ -164,11 +164,13 @@ class ValidateStonithRestartlessUpdate(TestCase):
             </primitive>
             <primitive id="empty" class="stonith" type="fence_scsi">
                 <instance_attributes>
-                    <nvpair id="empty-instance_attributes-devices" name="devices" value="" />
+                    <nvpair id="empty-instance_attributes-devices"
+                        name="devices" value="" />
                 </instance_attributes>
             </primitive>
             <primitive id="no-devices" class="stonith" type="fence_scsi"/>
-            <primitive id="unsupported_provider" class="stonith" provider="provider" type="fence_scsi"/>
+            <primitive id="unsupported_provider"
+                class="stonith" provider="provider" type="fence_scsi"/>
             <primitive id="unsupported_type" class="stonith" type="fence_xvm"/>
             <primitive class="ocf" id="cp-01" provider="pacemaker" type="Dummy"/>
         </resources>
