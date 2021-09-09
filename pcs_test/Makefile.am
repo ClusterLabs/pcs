@@ -236,6 +236,7 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/test_stonith_agent.py \
 			  tier0/lib/commands/test_stonith_history.py \
 			  tier0/lib/commands/test_stonith.py \
+			  tier0/lib/commands/test_stonith_update_scsi_devices.py \
 			  tier0/lib/commands/test_ticket.py \
 			  tier0/lib/communication/__init__.py \
 			  tier0/lib/communication/test_booth.py \
