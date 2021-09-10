@@ -1761,6 +1761,7 @@ class ResourceBundleAlreadyContainsAResource(NameBuildTest):
         )
 
 
+# TODO: remove, use ADD_REMOVE reports
 class CannotGroupResourceAdjacentResourceForNewGroup(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
@@ -1772,6 +1773,7 @@ class CannotGroupResourceAdjacentResourceForNewGroup(NameBuildTest):
         )
 
 
+# TODO: remove, use ADD_REMOVE reports
 class CannotGroupResourceAdjacentResourceNotInGroup(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
@@ -1783,6 +1785,7 @@ class CannotGroupResourceAdjacentResourceNotInGroup(NameBuildTest):
         )
 
 
+# TODO: remove, use ADD_REMOVE reports
 class CannotGroupResourceAlreadyInTheGroup(NameBuildTest):
     def test_single_resource(self):
         self.assert_message_from_report(
@@ -1797,6 +1800,7 @@ class CannotGroupResourceAlreadyInTheGroup(NameBuildTest):
         )
 
 
+# TODO: remove, use ADD_REMOVE reports
 class CannotGroupResourceMoreThanOnce(NameBuildTest):
     def test_single_resource(self):
         self.assert_message_from_report(
@@ -1811,6 +1815,7 @@ class CannotGroupResourceMoreThanOnce(NameBuildTest):
         )
 
 
+# TODO: remove, use ADD_REMOVE reports
 class CannotGroupResourceNoResources(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
@@ -1818,6 +1823,7 @@ class CannotGroupResourceNoResources(NameBuildTest):
         )
 
 
+# TODO: remove, use ADD_REMOVE reports
 class CannotGroupResourceNextToItself(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
@@ -4836,6 +4842,7 @@ class BoothTicketOperationFailed(NameBuildTest):
         )
 
 
+# TODO: remove, use ADD_REMOVE reports
 class TagAddRemoveIdsDuplication(NameBuildTest):
     def test_message_add(self):
         self.assert_message_from_report(
@@ -4855,6 +4862,7 @@ class TagAddRemoveIdsDuplication(NameBuildTest):
         )
 
 
+# TODO: remove, use ADD_REMOVE reports
 class TagAdjacentReferenceIdNotInTheTag(NameBuildTest):
     def test_messag(self):
         self.assert_message_from_report(
@@ -4866,6 +4874,7 @@ class TagAdjacentReferenceIdNotInTheTag(NameBuildTest):
         )
 
 
+# TODO: remove, use ADD_REMOVE reports
 class TagCannotAddAndRemoveIdsAtTheSameTime(NameBuildTest):
     def test_message_one_item(self):
         self.assert_message_from_report(
@@ -4885,6 +4894,7 @@ class TagCannotAddAndRemoveIdsAtTheSameTime(NameBuildTest):
         )
 
 
+# TODO: remove, use ADD_REMOVE reports
 class TagCannotAddReferenceIdsAlreadyInTheTag(NameBuildTest):
     def test_message_singular(self):
         self.assert_message_from_report(
@@ -4920,6 +4930,7 @@ class TagCannotCreateEmptyTagNoIdsSpecified(NameBuildTest):
         )
 
 
+# TODO: remove, use ADD_REMOVE reports
 class TagCannotPutIdNextToItself(NameBuildTest):
     def test_message(self):
         self.assert_message_from_report(
@@ -4928,6 +4939,7 @@ class TagCannotPutIdNextToItself(NameBuildTest):
         )
 
 
+# TODO: remove, use ADD_REMOVE reports
 class TagCannotRemoveAdjacentId(NameBuildTest):
     def test_message(self):
         self.assert_message_from_report(
@@ -4936,6 +4948,7 @@ class TagCannotRemoveAdjacentId(NameBuildTest):
         )
 
 
+# TODO: remove, use ADD_REMOVE reports
 class TagCannotRemoveReferencesWithoutRemovingTag(NameBuildTest):
     def test_message(self):
         self.assert_message_from_report(
@@ -4974,6 +4987,7 @@ class TagCannotRemoveTagsNoTagsSpecified(NameBuildTest):
         )
 
 
+# TODO: remove, use ADD_REMOVE reports
 class TagCannotSpecifyAdjacentIdWithoutIdsToAdd(NameBuildTest):
     def test_message(self):
         self.assert_message_from_report(
@@ -4982,6 +4996,7 @@ class TagCannotSpecifyAdjacentIdWithoutIdsToAdd(NameBuildTest):
         )
 
 
+# TODO: remove, use ADD_REMOVE reports
 class TagCannotUpdateTagNoIdsSpecified(NameBuildTest):
     def test_message(self):
         self.assert_message_from_report(
@@ -4990,6 +5005,7 @@ class TagCannotUpdateTagNoIdsSpecified(NameBuildTest):
         )
 
 
+# TODO: remove, use ADD_REMOVE reports
 class TagIdsNotInTheTag(NameBuildTest):
     def test_message_singular(self):
         self.assert_message_from_report(
@@ -5078,5 +5094,174 @@ class CibNvsetAmbiguousProvideNvsetId(NameBuildTest):
             "Several options sets exist, please specify an option set ID",
             reports.CibNvsetAmbiguousProvideNvsetId(
                 const.PCS_COMMAND_RESOURCE_DEFAULTS_UPDATE
+            ),
+        )
+
+
+class AddRemoveItemsNotSpecified(NameBuildTest):
+    def test_message(self):
+        self.assert_message_from_report(
+            (
+                "Cannot modify stonith resource 'container-id', no devices to "
+                "add or remove specified"
+            ),
+            reports.AddRemoveItemsNotSpecified(
+                const.ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE,
+                const.ADD_REMOVE_ITEM_TYPE_DEVICE,
+                "container-id",
+            ),
+        )
+
+
+class AddRemoveItemsDuplication(NameBuildTest):
+    def test_message(self):
+        self.assert_message_from_report(
+            (
+                "Devices to add or remove must be unique, duplicate devices: "
+                "'dup1', 'dup2'"
+            ),
+            reports.AddRemoveItemsDuplication(
+                const.ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE,
+                const.ADD_REMOVE_ITEM_TYPE_DEVICE,
+                "container-id",
+                ["dup2", "dup1"],
+            ),
+        )
+
+
+class AddRemoveCannotAddItemsAlreadyInTheContainer(NameBuildTest):
+    def test_message_plural(self):
+        self.assert_message_from_report(
+            "Cannot add devices 'i1', 'i2', they are already present in stonith"
+            " resource 'container-id'",
+            reports.AddRemoveCannotAddItemsAlreadyInTheContainer(
+                const.ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE,
+                const.ADD_REMOVE_ITEM_TYPE_DEVICE,
+                "container-id",
+                ["i2", "i1"],
+            ),
+        )
+
+    def test_message_singular(self):
+        self.assert_message_from_report(
+            "Cannot add device 'i1', it is already present in stonith resource "
+            "'container-id'",
+            reports.AddRemoveCannotAddItemsAlreadyInTheContainer(
+                const.ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE,
+                const.ADD_REMOVE_ITEM_TYPE_DEVICE,
+                "container-id",
+                ["i1"],
+            ),
+        )
+
+
+class AddRemoveCannotRemoveItemsNotInTheContainer(NameBuildTest):
+    def test_message_plural(self):
+        self.assert_message_from_report(
+            (
+                "Cannot remove devices 'i1', 'i2', they are not present in "
+                "stonith resource 'container-id'"
+            ),
+            reports.AddRemoveCannotRemoveItemsNotInTheContainer(
+                const.ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE,
+                const.ADD_REMOVE_ITEM_TYPE_DEVICE,
+                "container-id",
+                ["i2", "i1"],
+            ),
+        )
+
+    def test_message_singular(self):
+        self.assert_message_from_report(
+            (
+                "Cannot remove device 'i1', it is not present in "
+                "stonith resource 'container-id'"
+            ),
+            reports.AddRemoveCannotRemoveItemsNotInTheContainer(
+                const.ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE,
+                const.ADD_REMOVE_ITEM_TYPE_DEVICE,
+                "container-id",
+                ["i1"],
+            ),
+        )
+
+
+class AddRemoveCannotAddAndRemoveItemsAtTheSameTime(NameBuildTest):
+    def test_message_plural(self):
+        self.assert_message_from_report(
+            "Devices cannot be added and removed at the same time: 'i1', 'i2'",
+            reports.AddRemoveCannotAddAndRemoveItemsAtTheSameTime(
+                const.ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE,
+                const.ADD_REMOVE_ITEM_TYPE_DEVICE,
+                "container-id",
+                ["i2", "i1"],
+            ),
+        )
+
+    def test_message_singular(self):
+        self.assert_message_from_report(
+            "Device cannot be added and removed at the same time: 'i1'",
+            reports.AddRemoveCannotAddAndRemoveItemsAtTheSameTime(
+                const.ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE,
+                const.ADD_REMOVE_ITEM_TYPE_DEVICE,
+                "container-id",
+                ["i1"],
+            ),
+        )
+
+
+class AddRemoveCannotRemoveAllItemsFromTheContainer(NameBuildTest):
+    def test_message(self):
+        self.assert_message_from_report(
+            "Cannot remove all devices from stonith resource 'container-id'",
+            reports.AddRemoveCannotRemoveAllItemsFromTheContainer(
+                const.ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE,
+                const.ADD_REMOVE_ITEM_TYPE_DEVICE,
+                "container-id",
+                ["i1", "i2"],
+            ),
+        )
+
+
+class AddRemoveAdjacentItemNotInTheContainer(NameBuildTest):
+    def test_message(self):
+        self.assert_message_from_report(
+            (
+                "There is no device 'adjacent-item-id' in the stonith resource "
+                "'container-id', cannot add devices next to it"
+            ),
+            reports.AddRemoveAdjacentItemNotInTheContainer(
+                const.ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE,
+                const.ADD_REMOVE_ITEM_TYPE_DEVICE,
+                "container-id",
+                "adjacent-item-id",
+            ),
+        )
+
+
+class AddRemoveCannotPutItemNextToItself(NameBuildTest):
+    def test_message(self):
+        self.assert_message_from_report(
+            "Cannot put device 'adjacent-item-id' next to itself",
+            reports.AddRemoveCannotPutItemNextToItself(
+                const.ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE,
+                const.ADD_REMOVE_ITEM_TYPE_DEVICE,
+                "container-id",
+                "adjacent-item-id",
+            ),
+        )
+
+
+class AddRemoveCannotSpecifyAdjacentItemWithoutItemsToAdd(NameBuildTest):
+    def test_message(self):
+        self.assert_message_from_report(
+            (
+                "Cannot specify adjacent device 'adjacent-item-id' without "
+                "devices to add"
+            ),
+            reports.AddRemoveCannotSpecifyAdjacentItemWithoutItemsToAdd(
+                const.ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE,
+                const.ADD_REMOVE_ITEM_TYPE_DEVICE,
+                "container-id",
+                "adjacent-item-id",
             ),
         )

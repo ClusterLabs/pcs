@@ -24,6 +24,7 @@ from pcs.common.str_tools import (
     format_list_custom_last_separator,
     format_optional,
     format_plural,
+    get_plural,
     indent,
     is_iterable_not_str,
 )
@@ -95,6 +96,14 @@ def _key_numeric(item: str) -> Tuple[int, str]:
     return (int(item), item) if item.isdigit() else (-1, item)
 
 
+_add_remove_container_translation = {
+    const.ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE: "stonith resource",
+}
+
+_add_remove_item_translation = {
+    const.ADD_REMOVE_ITEM_TYPE_DEVICE: "device",
+}
+
 _file_role_translation = {
     file_type_codes.BOOTH_CONFIG: "Booth configuration",
     file_type_codes.BOOTH_KEY: "Booth key",
@@ -127,6 +136,16 @@ _type_articles = {
     "ACL permission": "an",
     "options set": "an",
 }
+
+
+def _add_remove_container_str(
+    container: types.AddRemoveContainerType,
+) -> str:
+    return _add_remove_container_translation.get(container, container)
+
+
+def _add_remove_item_str(item: types.AddRemoveItemType) -> str:
+    return _add_remove_item_translation.get(item, item)
 
 
 def _format_file_role(role: file_type_codes.FileTypeCode) -> str:
@@ -2528,6 +2547,7 @@ class ResourceBundleAlreadyContainsAResource(ReportItemMessage):
         )
 
 
+# TODO: remove, use ADD_REMOVE reports
 @dataclass(frozen=True)
 class CannotGroupResourceAdjacentResourceForNewGroup(ReportItemMessage):
     """
@@ -2551,6 +2571,7 @@ class CannotGroupResourceAdjacentResourceForNewGroup(ReportItemMessage):
         )
 
 
+# TODO: remove, use ADD_REMOVE reports
 @dataclass(frozen=True)
 class CannotGroupResourceAdjacentResourceNotInGroup(ReportItemMessage):
     """
@@ -2573,6 +2594,7 @@ class CannotGroupResourceAdjacentResourceNotInGroup(ReportItemMessage):
         )
 
 
+# TODO: remove, use ADD_REMOVE reports
 @dataclass(frozen=True)
 class CannotGroupResourceAlreadyInTheGroup(ReportItemMessage):
     """
@@ -2593,6 +2615,7 @@ class CannotGroupResourceAlreadyInTheGroup(ReportItemMessage):
         return f"{resources} already {exist} in '{self.group_id}'"
 
 
+# TODO: remove, use ADD_REMOVE reports
 @dataclass(frozen=True)
 class CannotGroupResourceMoreThanOnce(ReportItemMessage):
     """
@@ -2610,6 +2633,7 @@ class CannotGroupResourceMoreThanOnce(ReportItemMessage):
         return f"Resources specified more than once: {resources}"
 
 
+# TODO: remove, use ADD_REMOVE reports
 @dataclass(frozen=True)
 class CannotGroupResourceNoResources(ReportItemMessage):
     """
@@ -2623,6 +2647,7 @@ class CannotGroupResourceNoResources(ReportItemMessage):
         return "No resources to add"
 
 
+# TODO: remove, use ADD_REMOVE reports
 @dataclass(frozen=True)
 class CannotGroupResourceNextToItself(ReportItemMessage):
     """
@@ -6482,6 +6507,7 @@ class BoothTicketOperationFailed(ReportItemMessage):
         )
 
 
+# TODO: remove, use ADD_REMOVE reports
 @dataclass(frozen=True)
 class TagAddRemoveIdsDuplication(ReportItemMessage):
     """
@@ -6500,6 +6526,7 @@ class TagAddRemoveIdsDuplication(ReportItemMessage):
         return f"Ids to {action} must be unique, duplicate ids: {duplicate_ids}"
 
 
+# TODO: remove, use ADD_REMOVE reports
 @dataclass(frozen=True)
 class TagAdjacentReferenceIdNotInTheTag(ReportItemMessage):
     """
@@ -6522,6 +6549,7 @@ class TagAdjacentReferenceIdNotInTheTag(ReportItemMessage):
         )
 
 
+# TODO: remove, use ADD_REMOVE reports
 @dataclass(frozen=True)
 class TagCannotAddAndRemoveIdsAtTheSameTime(ReportItemMessage):
     """
@@ -6540,6 +6568,7 @@ class TagCannotAddAndRemoveIdsAtTheSameTime(ReportItemMessage):
         return f"Ids cannot be added and removed at the same time: {idref_list}"
 
 
+# TODO: remove, use ADD_REMOVE reports
 @dataclass(frozen=True)
 class TagCannotAddReferenceIdsAlreadyInTheTag(ReportItemMessage):
     """
@@ -6591,6 +6620,7 @@ class TagCannotCreateEmptyTagNoIdsSpecified(ReportItemMessage):
         return "Cannot create empty tag, no resource ids specified"
 
 
+# TODO: remove, use ADD_REMOVE reports
 @dataclass(frozen=True)
 class TagCannotPutIdNextToItself(ReportItemMessage):
     """
@@ -6607,6 +6637,7 @@ class TagCannotPutIdNextToItself(ReportItemMessage):
         return f"Cannot put id '{self.adjacent_id}' next to itself."
 
 
+# TODO: remove, use ADD_REMOVE reports
 @dataclass(frozen=True)
 class TagCannotRemoveAdjacentId(ReportItemMessage):
     """
@@ -6626,6 +6657,7 @@ class TagCannotRemoveAdjacentId(ReportItemMessage):
         )
 
 
+# TODO: remove, use ADD_REMOVE reports
 @dataclass(frozen=True)
 class TagCannotRemoveReferencesWithoutRemovingTag(ReportItemMessage):
     """
@@ -6678,6 +6710,7 @@ class TagCannotRemoveTagsNoTagsSpecified(ReportItemMessage):
         return "Cannot remove tags, no tags to remove specified"
 
 
+# TODO: remove, use ADD_REMOVE reports
 @dataclass(frozen=True)
 class TagCannotSpecifyAdjacentIdWithoutIdsToAdd(ReportItemMessage):
     """
@@ -6697,6 +6730,7 @@ class TagCannotSpecifyAdjacentIdWithoutIdsToAdd(ReportItemMessage):
         )
 
 
+# TODO: remove, use ADD_REMOVE reports
 @dataclass(frozen=True)
 class TagCannotUpdateTagNoIdsSpecified(ReportItemMessage):
     """
@@ -6710,6 +6744,7 @@ class TagCannotUpdateTagNoIdsSpecified(ReportItemMessage):
         return "Cannot update tag, no ids to be added or removed specified"
 
 
+# TODO: remove, use ADD_REMOVE reports
 @dataclass(frozen=True)
 class TagIdsNotInTheTag(ReportItemMessage):
     """
@@ -6850,3 +6885,257 @@ class CibNvsetAmbiguousProvideNvsetId(ReportItemMessage):
     @property
     def message(self) -> str:
         return "Several options sets exist, please specify an option set ID"
+
+
+@dataclass(frozen=True)
+class AddRemoveItemsNotSpecified(ReportItemMessage):
+    """
+    Cannot modify container, no add or remove items specified.
+
+    container_type -- type of item container
+    item_type -- type of item in a container
+    container_id -- id of a container
+    """
+
+    container_type: types.AddRemoveContainerType
+    item_type: types.AddRemoveItemType
+    container_id: str
+    _code = codes.ADD_REMOVE_ITEMS_NOT_SPECIFIED
+
+    @property
+    def message(self) -> str:
+        container = _add_remove_container_str(self.container_type)
+        items = get_plural(_add_remove_item_str(self.item_type))
+        return (
+            f"Cannot modify {container} '{self.container_id}', no {items} to "
+            "add or remove specified"
+        )
+
+
+@dataclass(frozen=True)
+class AddRemoveItemsDuplication(ReportItemMessage):
+    """
+    Duplicate items were found in add/remove item lists.
+
+    container_type -- type of item container
+    item_type -- type of item in a container
+    container_id -- id of a container
+    duplicate_items_list -- list of duplicate items
+    """
+
+    container_type: types.AddRemoveContainerType
+    item_type: types.AddRemoveItemType
+    container_id: str
+    duplicate_items_list: List[str]
+    _code = codes.ADD_REMOVE_ITEMS_DUPLICATION
+
+    @property
+    def message(self) -> str:
+        items = get_plural(_add_remove_item_str(self.item_type))
+        duplicate_items = format_list(self.duplicate_items_list)
+        return (
+            f"{items.capitalize()} to add or remove must be unique, duplicate "
+            f"{items}: {duplicate_items}"
+        )
+
+
+@dataclass(frozen=True)
+class AddRemoveCannotAddItemsAlreadyInTheContainer(ReportItemMessage):
+    """
+    Cannot add items already existing in the container.
+
+    container_type -- type of item container
+    item_type -- type of item in a container
+    container_id -- id of a container
+    item_list -- list of items already in the container
+    """
+
+    container_type: types.AddRemoveContainerType
+    item_type: types.AddRemoveItemType
+    container_id: str
+    item_list: List[str]
+    _code = codes.ADD_REMOVE_CANNOT_ADD_ITEMS_ALREADY_IN_THE_CONTAINER
+
+    @property
+    def message(self) -> str:
+        items = format_plural(
+            self.item_list, _add_remove_item_str(self.item_type)
+        )
+        item_list = format_list(self.item_list)
+        they = format_plural(self.item_list, "it")
+        are = format_plural(self.item_list, "is")
+        container = _add_remove_container_str(self.container_type)
+        return (
+            f"Cannot add {items} {item_list}, {they} {are} already present in "
+            f"{container} '{self.container_id}'"
+        )
+
+
+@dataclass(frozen=True)
+class AddRemoveCannotRemoveItemsNotInTheContainer(ReportItemMessage):
+    """
+    Cannot remove items not existing in the container.
+
+    container_type -- type of item container
+    item_type -- type of item in a container
+    container_id -- id of a container
+    item_list -- list of items not in the container
+    """
+
+    container_type: types.AddRemoveContainerType
+    item_type: types.AddRemoveItemType
+    container_id: str
+    item_list: List[str]
+    _code = codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER
+
+    @property
+    def message(self) -> str:
+        items = format_plural(
+            self.item_list, _add_remove_item_str(self.item_type)
+        )
+        item_list = format_list(self.item_list)
+        they = format_plural(self.item_list, "it")
+        are = format_plural(self.item_list, "is")
+        container = _add_remove_container_str(self.container_type)
+        items = format_plural(
+            self.item_list, _add_remove_item_str(self.item_type)
+        )
+        return (
+            f"Cannot remove {items} {item_list}, {they} {are} not present in "
+            f"{container} '{self.container_id}'"
+        )
+
+
+@dataclass(frozen=True)
+class AddRemoveCannotAddAndRemoveItemsAtTheSameTime(ReportItemMessage):
+    """
+    Cannot add and remove items at the same time. Avoid operation without an
+    effect.
+
+    container_type -- type of item container
+    item_type -- type of item in a container
+    container_id -- id of a container
+    item_list -- common items from add and remove item lists
+    """
+
+    container_type: types.AddRemoveContainerType
+    item_type: types.AddRemoveItemType
+    container_id: str
+    item_list: List[str]
+    _code = codes.ADD_REMOVE_CANNOT_ADD_AND_REMOVE_ITEMS_AT_THE_SAME_TIME
+
+    @property
+    def message(self) -> str:
+        items = format_plural(
+            self.item_list, _add_remove_item_str(self.item_type)
+        )
+        item_list = format_list(self.item_list)
+        return (
+            f"{items.capitalize()} cannot be added and removed at the same "
+            f"time: {item_list}"
+        )
+
+
+@dataclass(frozen=True)
+class AddRemoveCannotRemoveAllItemsFromTheContainer(ReportItemMessage):
+    """
+    Cannot remove all items from a container.
+
+    container_type -- type of item container
+    item_type -- type of item in a container
+    container_id -- id of a container
+    item_list -- common items from add and remove item lists
+    """
+
+    container_type: types.AddRemoveContainerType
+    item_type: types.AddRemoveItemType
+    container_id: str
+    item_list: List[str]
+    _code = codes.ADD_REMOVE_CANNOT_REMOVE_ALL_ITEMS_FROM_THE_CONTAINER
+
+    @property
+    def message(self) -> str:
+        container = _add_remove_container_str(self.container_type)
+        items = get_plural(_add_remove_item_str(self.item_type))
+        return (
+            f"Cannot remove all {items} from {container} '{self.container_id}'"
+        )
+
+
+@dataclass(frozen=True)
+class AddRemoveAdjacentItemNotInTheContainer(ReportItemMessage):
+    """
+    Cannot put items next to an adjacent item in the container, because the
+    adjacent item does not exist in the container.
+
+    container_type -- type of item container
+    item_type -- type of item in a container
+    container_id -- id of a container
+    adjacent_item_id -- id of an adjacent item
+    """
+
+    container_type: types.AddRemoveContainerType
+    item_type: types.AddRemoveItemType
+    container_id: str
+    adjacent_item_id: str
+    _code = codes.ADD_REMOVE_ADJACENT_ITEM_NOT_IN_THE_CONTAINER
+
+    @property
+    def message(self) -> str:
+        container = _add_remove_container_str(self.container_type)
+        item = _add_remove_item_str(self.item_type)
+        items = get_plural(item)
+        return (
+            f"There is no {item} '{self.adjacent_item_id}' in the "
+            f"{container} '{self.container_id}', cannot add {items} next to it"
+        )
+
+
+@dataclass(frozen=True)
+class AddRemoveCannotPutItemNextToItself(ReportItemMessage):
+    """
+    Cannot put an item into a container next to itself.
+
+    container_type -- type of item container
+    item_type -- type of item in a container
+    container_id -- id of a container
+    adjacent_item_id -- id of an adjacent item
+    """
+
+    container_type: types.AddRemoveContainerType
+    item_type: types.AddRemoveItemType
+    container_id: str
+    adjacent_item_id: str
+    _code = codes.ADD_REMOVE_CANNOT_PUT_ITEM_NEXT_TO_ITSELF
+
+    @property
+    def message(self) -> str:
+        item = _add_remove_item_str(self.item_type)
+        return f"Cannot put {item} '{self.adjacent_item_id}' next to itself"
+
+
+@dataclass(frozen=True)
+class AddRemoveCannotSpecifyAdjacentItemWithoutItemsToAdd(ReportItemMessage):
+    """
+    Cannot specify adjacent item without items to add.
+
+    container_type -- type of item container
+    item_type -- type of item in a container
+    container_id -- id of a container
+    adjacent_item_id -- id of an adjacent item
+    """
+
+    container_type: types.AddRemoveContainerType
+    item_type: types.AddRemoveItemType
+    container_id: str
+    adjacent_item_id: str
+    _code = codes.ADD_REMOVE_CANNOT_SPECIFY_ADJACENT_ITEM_WITHOUT_ITEMS_TO_ADD
+
+    @property
+    def message(self) -> str:
+        item = _add_remove_item_str(self.item_type)
+        items = get_plural(item)
+        return (
+            f"Cannot specify adjacent {item} '{self.adjacent_item_id}' without "
+            f"{items} to add"
+        )

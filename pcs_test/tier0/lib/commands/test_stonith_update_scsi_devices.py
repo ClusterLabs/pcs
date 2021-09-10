@@ -3,6 +3,7 @@ from unittest import mock, TestCase
 
 
 from pcs_test.tools import fixture
+from pcs_test.tools.assertions import assert_report_item_list_equal
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.misc import get_test_resource as rc
 
@@ -13,6 +14,10 @@ from pcs.common import (
     reports,
 )
 from pcs.common.interface import dto
+from pcs.common.reports.const import (
+    ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE,
+    ADD_REMOVE_ITEM_TYPE_DEVICE,
+)
 from pcs.common.tools import timeout_to_seconds
 
 from .cluster.common import (
@@ -28,6 +33,10 @@ DEFAULT_DIGEST = _DIGEST + "0"
 ALL_DIGEST = _DIGEST + "1"
 NONPRIVATE_DIGEST = _DIGEST + "2"
 NONRELOADABLE_DIGEST = _DIGEST + "3"
+DEV_1 = "/dev/sda"
+DEV_2 = "/dev/sdb"
+DEV_3 = "/dev/sdc"
+DEV_4 = "/dev/sdd"
 DEVICES_1 = ("/dev/sda",)
 DEVICES_2 = ("/dev/sda", "/dev/sdb")
 DEVICES_3 = ("/dev/sda", "/dev/sdb", "/dev/sdc")
@@ -197,13 +206,9 @@ FIXTURE_CRM_MON_RES_STOPPED = f"""
 """
 
 
-@mock.patch.object(
-    settings,
-    "pacemaker_api_result_schema",
-    rc("pcmk_api_rng/api-result.rng"),
-)
-class UpdateScsiDevices(TestCase):
+class UpdateScsiDevicesMixin:
     def setUp(self):
+        # pylint: disable=invalid-name
         self.env_assist, self.config = get_env_tools(self)
 
         self.existing_nodes = ["node1", "node2", "node3"]
@@ -217,14 +222,18 @@ class UpdateScsiDevices(TestCase):
         self,
         devices_before=DEVICES_1,
         devices_updated=DEVICES_2,
+        devices_add=(),
+        devices_remove=(),
+        unfence=None,
         resource_ops=DEFAULT_OPS,
         lrm_monitor_ops=DEFAULT_LRM_MONITOR_OPS,
         lrm_start_ops=DEFAULT_LRM_START_OPS,
         lrm_monitor_ops_updated=DEFAULT_LRM_MONITOR_OPS_UPDATED,
         lrm_start_ops_updated=DEFAULT_LRM_START_OPS_UPDATED,
     ):
+        # pylint: disable=too-many-arguments
         # pylint: disable=too-many-locals
-        self.config.runner.pcmk.is_resource_digests_supported()
+        devices_value = ",".join(sorted(devices_updated))
         self.config.runner.cib.load(
             resources=fixture_scsi(
                 devices=devices_before, resource_ops=resource_ops
@@ -235,16 +244,17 @@ class UpdateScsiDevices(TestCase):
                 lrm_monitor_ops=lrm_monitor_ops,
             ),
         )
+        self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.pcmk.load_state(
             resources=FIXTURE_CRM_MON_RES_RUNNING_1, nodes=FIXTURE_CRM_MON_NODES
         )
-        devices_opt = "devices={}".format(",".join(devices_updated))
+        devices_opt = "devices={}".format(devices_value)
         self.config.runner.pcmk.resource_digests(
             SCSI_STONITH_ID,
             SCSI_NODE,
             name="start.op.digests",
             stdout=fixture_digests_xml(
-                SCSI_STONITH_ID, SCSI_NODE, devices=",".join(devices_updated)
+                SCSI_STONITH_ID, SCSI_NODE, devices=devices_value
             ),
             args=[devices_opt],
         )
@@ -272,22 +282,23 @@ class UpdateScsiDevices(TestCase):
                 stdout=fixture_digests_xml(
                     SCSI_STONITH_ID,
                     SCSI_NODE,
-                    devices=",".join(devices_updated),
+                    devices=devices_value,
                 ),
                 args=args,
             )
-        self.config.corosync_conf.load_content(
-            corosync_conf_fixture(
-                self.existing_corosync_nodes,
-                get_two_node(len(self.existing_corosync_nodes)),
+        if unfence:
+            self.config.corosync_conf.load_content(
+                corosync_conf_fixture(
+                    self.existing_corosync_nodes,
+                    get_two_node(len(self.existing_corosync_nodes)),
+                )
             )
-        )
-        self.config.http.corosync.get_corosync_online_targets(
-            node_labels=self.existing_nodes
-        )
-        self.config.http.scsi.unfence_node(
-            devices_updated, node_labels=self.existing_nodes
-        )
+            self.config.http.corosync.get_corosync_online_targets(
+                node_labels=self.existing_nodes
+            )
+            self.config.http.scsi.unfence_node(
+                unfence, node_labels=self.existing_nodes
+            )
         self.config.env.push_cib(
             resources=fixture_scsi(
                 devices=devices_updated, resource_ops=resource_ops
@@ -298,113 +309,25 @@ class UpdateScsiDevices(TestCase):
                 lrm_monitor_ops=lrm_monitor_ops_updated,
             ),
         )
-        stonith.update_scsi_devices(
-            self.env_assist.get_env(), SCSI_STONITH_ID, devices_updated
-        )
+        if devices_add or devices_remove:
+            stonith.update_scsi_devices_add_remove(
+                self.env_assist.get_env(),
+                SCSI_STONITH_ID,
+                devices_add,
+                devices_remove,
+            )
+        else:
+            stonith.update_scsi_devices(
+                self.env_assist.get_env(), SCSI_STONITH_ID, devices_updated
+            )
         self.env_assist.assert_reports([])
 
-    def test_update_1_to_1_devices(self):
-        self.assert_command_success(
-            devices_before=DEVICES_1, devices_updated=DEVICES_1
-        )
 
-    def test_update_2_to_2_devices(self):
-        self.assert_command_success(
-            devices_before=DEVICES_1, devices_updated=DEVICES_1
-        )
+class UpdateScsiDevicesFailuresMixin:
+    def command(self, force_flags=()):
+        raise NotImplementedError
 
-    def test_update_1_to_2_devices(self):
-        self.assert_command_success()
-
-    def test_update_1_to_3_devices(self):
-        self.assert_command_success(
-            devices_before=DEVICES_1, devices_updated=DEVICES_3
-        )
-
-    def test_update_3_to_1_devices(self):
-        self.assert_command_success(
-            devices_before=DEVICES_3, devices_updated=DEVICES_1
-        )
-
-    def test_update_3_to_2_devices(self):
-        self.assert_command_success(
-            devices_before=DEVICES_3, devices_updated=DEVICES_2
-        )
-
-    def test_default_monitor(self):
-        self.assert_command_success()
-
-    def test_no_monitor_ops(self):
-        self.assert_command_success(
-            resource_ops=(), lrm_monitor_ops=(), lrm_monitor_ops_updated=()
-        )
-
-    def test_1_monitor_with_timeout(self):
-        self.assert_command_success(
-            resource_ops=(("monitor", "30s", "10s", None),),
-            lrm_monitor_ops=(("30000", DEFAULT_DIGEST, None, None),),
-            lrm_monitor_ops_updated=(("30000", ALL_DIGEST, None, None),),
-        )
-
-    def test_2_monitor_ops_with_timeouts(self):
-        self.assert_command_success(
-            resource_ops=(
-                ("monitor", "30s", "10s", None),
-                ("monitor", "40s", "20s", None),
-            ),
-            lrm_monitor_ops=(
-                ("30000", DEFAULT_DIGEST, None, None),
-                ("40000", DEFAULT_DIGEST, None, None),
-            ),
-            lrm_monitor_ops_updated=(
-                ("30000", ALL_DIGEST, None, None),
-                ("40000", ALL_DIGEST, None, None),
-            ),
-        )
-
-    def test_2_monitor_ops_with_one_timeout(self):
-        self.assert_command_success(
-            resource_ops=(
-                ("monitor", "30s", "10s", None),
-                ("monitor", "60s", None, None),
-            ),
-            lrm_monitor_ops=(
-                ("30000", DEFAULT_DIGEST, None, None),
-                ("60000", DEFAULT_DIGEST, None, None),
-            ),
-            lrm_monitor_ops_updated=(
-                ("30000", ALL_DIGEST, None, None),
-                ("60000", ALL_DIGEST, None, None),
-            ),
-        )
-
-    def test_various_start_ops_one_lrm_start_op(self):
-        self.assert_command_success(
-            resource_ops=(
-                ("monitor", "60s", None, None),
-                ("start", "0s", "40s", None),
-                ("start", "0s", "30s", "1"),
-                ("start", "10s", "5s", None),
-                ("start", "20s", None, None),
-            ),
-        )
-
-    def test_1_nonrecurring_start_op_with_timeout(self):
-        self.assert_command_success(
-            resource_ops=(
-                ("monitor", "60s", None, None),
-                ("start", "0s", "40s", None),
-            ),
-        )
-
-
-@mock.patch.object(
-    settings,
-    "pacemaker_api_result_schema",
-    rc("pcmk_api_rng/api-result.rng"),
-)
-class TestUpdateScsiDevicesFailures(TestCase):
-    # pylint: disable=too-many-public-methods
+    # pylint: disable=invalid-name
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
 
@@ -416,13 +339,12 @@ class TestUpdateScsiDevicesFailures(TestCase):
         self.config.env.set_known_nodes(self.existing_nodes)
 
     def test_pcmk_doesnt_support_digests(self):
+        self.config.runner.cib.load(resources=fixture_scsi())
         self.config.runner.pcmk.is_resource_digests_supported(
             is_supported=False
         )
         self.env_assist.assert_raise_library_error(
-            lambda: stonith.update_scsi_devices(
-                self.env_assist.get_env(), SCSI_STONITH_ID, ()
-            ),
+            self.command(),
             [
                 fixture.error(
                     reports.codes.STONITH_RESTARTLESS_UPDATE_OF_SCSI_DEVICES_NOT_SUPPORTED,
@@ -431,364 +353,12 @@ class TestUpdateScsiDevicesFailures(TestCase):
             expected_in_processor=False,
         )
 
-    def test_devices_cannot_be_empty(self):
-        self.config.runner.pcmk.is_resource_digests_supported()
-        self.config.runner.cib.load(resources=fixture_scsi())
-        self.env_assist.assert_raise_library_error(
-            lambda: stonith.update_scsi_devices(
-                self.env_assist.get_env(), SCSI_STONITH_ID, ()
-            )
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.INVALID_OPTION_VALUE,
-                    option_name="devices",
-                    option_value="",
-                    allowed_values=None,
-                    cannot_be_empty=True,
-                    forbidden_characters=None,
-                )
-            ]
-        )
-
-    def test_nonexistant_id(self):
-        self.config.runner.pcmk.is_resource_digests_supported()
-        self.config.runner.cib.load(resources=fixture_scsi())
-        self.env_assist.assert_raise_library_error(
-            lambda: stonith.update_scsi_devices(
-                self.env_assist.get_env(), "non-existent-id", DEVICES_2
-            )
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.ID_NOT_FOUND,
-                    id="non-existent-id",
-                    expected_types=["primitive"],
-                    context_type="cib",
-                    context_id="",
-                )
-            ]
-        )
-
-    def test_not_a_resource_id(self):
-        self.config.runner.pcmk.is_resource_digests_supported()
-        self.config.runner.cib.load(resources=fixture_scsi())
-        self.env_assist.assert_raise_library_error(
-            lambda: stonith.update_scsi_devices(
-                self.env_assist.get_env(),
-                f"{SCSI_STONITH_ID}-instance_attributes-devices",
-                DEVICES_2,
-            )
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
-                    id=f"{SCSI_STONITH_ID}-instance_attributes-devices",
-                    expected_types=["primitive"],
-                    current_type="nvpair",
-                )
-            ]
-        )
-
-    def test_not_supported_resource_type(self):
-        self.config.runner.pcmk.is_resource_digests_supported()
-        self.config.runner.cib.load(resources=fixture_scsi())
-        self.env_assist.assert_raise_library_error(
-            lambda: stonith.update_scsi_devices(
-                self.env_assist.get_env(), "dummy", DEVICES_2
-            )
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNSUPPORTED_AGENT,
-                    resource_id="dummy",
-                    resource_type="Dummy",
-                    supported_stonith_types=["fence_scsi"],
-                )
-            ]
-        )
-
-    def test_devices_option_missing(self):
-        self.config.runner.pcmk.is_resource_digests_supported()
-        self.config.runner.cib.load(resources=fixture_scsi(devices=None))
-        self.env_assist.assert_raise_library_error(
-            lambda: stonith.update_scsi_devices(
-                self.env_assist.get_env(), SCSI_STONITH_ID, DEVICES_2
-            )
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM,
-                    reason=(
-                        "no devices option configured for stonith device "
-                        f"'{SCSI_STONITH_ID}'"
-                    ),
-                    reason_type=reports.const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_OTHER,
-                )
-            ]
-        )
-
-    def test_devices_option_empty(self):
-        self.config.runner.pcmk.is_resource_digests_supported()
-        self.config.runner.cib.load(resources=fixture_scsi(devices=""))
-        self.env_assist.assert_raise_library_error(
-            lambda: stonith.update_scsi_devices(
-                self.env_assist.get_env(), SCSI_STONITH_ID, DEVICES_2
-            )
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM,
-                    reason=(
-                        "no devices option configured for stonith device "
-                        f"'{SCSI_STONITH_ID}'"
-                    ),
-                    reason_type=reports.const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_OTHER,
-                )
-            ]
-        )
-
-    def test_stonith_resource_is_not_running(self):
-        self.config.runner.pcmk.is_resource_digests_supported()
-        self.config.runner.cib.load(resources=fixture_scsi())
-        self.config.runner.pcmk.load_state(
-            resources=FIXTURE_CRM_MON_RES_STOPPED, nodes=FIXTURE_CRM_MON_NODES
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: stonith.update_scsi_devices(
-                self.env_assist.get_env(), SCSI_STONITH_ID, DEVICES_2
-            ),
-            [
-                fixture.error(
-                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM,
-                    reason=f"resource '{SCSI_STONITH_ID}' is not running on any node",
-                    reason_type=reports.const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_NOT_RUNNING,
-                )
-            ],
-            expected_in_processor=False,
-        )
-
-    def test_stonith_resource_is_running_on_more_than_one_node(self):
-        self.config.runner.pcmk.is_resource_digests_supported()
-        self.config.runner.cib.load(resources=fixture_scsi())
-        self.config.runner.pcmk.load_state(
-            resources=FIXTURE_CRM_MON_RES_RUNNING_2, nodes=FIXTURE_CRM_MON_NODES
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: stonith.update_scsi_devices(
-                self.env_assist.get_env(), SCSI_STONITH_ID, DEVICES_2
-            ),
-            [
-                fixture.error(
-                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM,
-                    reason=(
-                        f"resource '{SCSI_STONITH_ID}' is running on more than "
-                        "1 node"
-                    ),
-                    reason_type=reports.const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_OTHER,
-                )
-            ],
-            expected_in_processor=False,
-        )
-
-    def test_lrm_op_missing_digest_attributes(self):
-        devices = ",".join(DEVICES_2)
-        self.config.runner.pcmk.is_resource_digests_supported()
-        self.config.runner.cib.load(
-            resources=fixture_scsi(),
-            status=_fixture_status_lrm_ops_base(
-                SCSI_STONITH_ID,
-                f'<lrm_rsc_op id="{SCSI_STONITH_ID}_last" operation="start"/>',
-            ),
-        )
-        self.config.runner.pcmk.load_state(
-            resources=FIXTURE_CRM_MON_RES_RUNNING_1, nodes=FIXTURE_CRM_MON_NODES
-        )
-        self.config.runner.pcmk.resource_digests(
-            SCSI_STONITH_ID,
-            SCSI_NODE,
-            name="start.op.digests",
-            stdout=fixture_digests_xml(
-                SCSI_STONITH_ID,
-                SCSI_NODE,
-                devices=devices,
-            ),
-            args=[f"devices={devices}"],
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: stonith.update_scsi_devices(
-                self.env_assist.get_env(), SCSI_STONITH_ID, DEVICES_2
-            ),
-            [
-                fixture.error(
-                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM,
-                    reason="no digests attributes in lrm_rsc_op element",
-                    reason_type=reports.const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_OTHER,
-                )
-            ],
-            expected_in_processor=False,
-        )
-
-    def test_crm_resource_digests_missing(self):
-        devices = ",".join(DEVICES_2)
-        self.config.runner.pcmk.is_resource_digests_supported()
-        self.config.runner.cib.load(
-            resources=fixture_scsi(),
-            status=_fixture_status_lrm_ops_base(
-                SCSI_STONITH_ID,
-                (
-                    f'<lrm_rsc_op id="{SCSI_STONITH_ID}_last" '
-                    'operation="start" op-restart-digest="somedigest" />'
-                ),
-            ),
-        )
-        self.config.runner.pcmk.load_state(
-            resources=FIXTURE_CRM_MON_RES_RUNNING_1, nodes=FIXTURE_CRM_MON_NODES
-        )
-        self.config.runner.pcmk.resource_digests(
-            SCSI_STONITH_ID,
-            SCSI_NODE,
-            name="start.op.digests",
-            stdout=fixture_digests_xml(
-                SCSI_STONITH_ID,
-                SCSI_NODE,
-                devices=devices,
-            ),
-            args=[f"devices={devices}"],
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: stonith.update_scsi_devices(
-                self.env_assist.get_env(), SCSI_STONITH_ID, DEVICES_2
-            ),
-            [
-                fixture.error(
-                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM,
-                    reason=(
-                        "necessary digest for 'op-restart-digest' attribute is "
-                        "missing"
-                    ),
-                    reason_type=reports.const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_OTHER,
-                )
-            ],
-            expected_in_processor=False,
-        )
-
-    def test_no_lrm_start_op(self):
-        self.config.runner.pcmk.is_resource_digests_supported()
-        self.config.runner.cib.load(
-            resources=fixture_scsi(),
-            status=_fixture_status_lrm_ops(SCSI_STONITH_ID, lrm_start_ops=()),
-        )
-        self.config.runner.pcmk.load_state(
-            resources=FIXTURE_CRM_MON_RES_RUNNING_1, nodes=FIXTURE_CRM_MON_NODES
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: stonith.update_scsi_devices(
-                self.env_assist.get_env(), SCSI_STONITH_ID, DEVICES_2
-            ),
-            [
-                fixture.error(
-                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM,
-                    reason=(
-                        "lrm_rsc_op element for start operation was not found"
-                    ),
-                    reason_type=reports.const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_OTHER,
-                )
-            ],
-            expected_in_processor=False,
-        )
-
-    def test_monitor_ops_and_lrm_monitor_ops_do_not_match(self):
-        self.config.runner.pcmk.is_resource_digests_supported()
-        self.config.runner.cib.load(
-            resources=fixture_scsi(
-                resource_ops=(
-                    ("monitor", "30s", "10s", None),
-                    ("monitor", "30s", "20s", "31"),
-                    ("monitor", "60s", None, None),
-                )
-            ),
-            status=_fixture_status_lrm_ops(SCSI_STONITH_ID),
-        )
-        self.config.runner.pcmk.load_state(
-            resources=FIXTURE_CRM_MON_RES_RUNNING_1, nodes=FIXTURE_CRM_MON_NODES
-        )
-        self.config.runner.pcmk.resource_digests(
-            SCSI_STONITH_ID,
-            SCSI_NODE,
-            name="start.op.digests",
-            stdout=fixture_digests_xml(
-                SCSI_STONITH_ID, SCSI_NODE, devices=",".join(DEVICES_2)
-            ),
-            args=["devices={}".format(",".join(DEVICES_2))],
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: stonith.update_scsi_devices(
-                self.env_assist.get_env(), SCSI_STONITH_ID, DEVICES_2
-            ),
-            [
-                fixture.error(
-                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM,
-                    reason=(
-                        "number of lrm_rsc_op and op elements for monitor "
-                        "operation differs"
-                    ),
-                    reason_type=reports.const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_OTHER,
-                )
-            ],
-            expected_in_processor=False,
-        )
-
-    def test_lrm_monitor_ops_not_found(self):
-        self.config.runner.pcmk.is_resource_digests_supported()
-        self.config.runner.cib.load(
-            resources=fixture_scsi(
-                resource_ops=(("monitor", "30s", None, None),)
-            ),
-            status=_fixture_status_lrm_ops(SCSI_STONITH_ID),
-        )
-        self.config.runner.pcmk.load_state(
-            resources=FIXTURE_CRM_MON_RES_RUNNING_1, nodes=FIXTURE_CRM_MON_NODES
-        )
-        self.config.runner.pcmk.resource_digests(
-            SCSI_STONITH_ID,
-            SCSI_NODE,
-            name="start.op.digests",
-            stdout=fixture_digests_xml(
-                SCSI_STONITH_ID, SCSI_NODE, devices=",".join(DEVICES_2)
-            ),
-            args=["devices={}".format(",".join(DEVICES_2))],
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: stonith.update_scsi_devices(
-                self.env_assist.get_env(), SCSI_STONITH_ID, DEVICES_2
-            ),
-            [
-                fixture.error(
-                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM,
-                    reason=(
-                        "monitor lrm_rsc_op element for resource "
-                        f"'{SCSI_STONITH_ID}', node '{SCSI_NODE}' and interval "
-                        "'30000' not found"
-                    ),
-                    reason_type=reports.const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_OTHER,
-                )
-            ],
-            expected_in_processor=False,
-        )
-
     def test_node_missing_name_and_missing_auth_token(self):
-        self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.cib.load(
             resources=fixture_scsi(),
             status=_fixture_status_lrm_ops(SCSI_STONITH_ID),
         )
+        self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.pcmk.load_state(
             resources=FIXTURE_CRM_MON_RES_RUNNING_1, nodes=FIXTURE_CRM_MON_NODES
         )
@@ -820,11 +390,7 @@ class TestUpdateScsiDevicesFailures(TestCase):
             )
         )
         self.config.env.set_known_nodes(self.existing_nodes[:-1])
-        self.env_assist.assert_raise_library_error(
-            lambda: stonith.update_scsi_devices(
-                self.env_assist.get_env(), SCSI_STONITH_ID, DEVICES_2
-            ),
-        )
+        self.env_assist.assert_raise_library_error(self.command())
         self.env_assist.assert_reports(
             [
                 fixture.error(
@@ -840,11 +406,11 @@ class TestUpdateScsiDevicesFailures(TestCase):
 
     def _unfence_failure_common_calls(self):
         devices = ",".join(DEVICES_2)
-        self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.cib.load(
             resources=fixture_scsi(),
             status=_fixture_status_lrm_ops(SCSI_STONITH_ID),
         )
+        self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.pcmk.load_state(
             resources=FIXTURE_CRM_MON_RES_RUNNING_1, nodes=FIXTURE_CRM_MON_NODES
         )
@@ -888,7 +454,10 @@ class TestUpdateScsiDevicesFailures(TestCase):
                 dict(
                     label=self.existing_nodes[0],
                     raw_data=json.dumps(
-                        dict(devices=DEVICES_2, node=self.existing_nodes[0])
+                        dict(
+                            devices=[DEV_2],
+                            node=self.existing_nodes[0],
+                        )
                     ),
                     was_connected=False,
                     error_msg="errA",
@@ -896,7 +465,10 @@ class TestUpdateScsiDevicesFailures(TestCase):
                 dict(
                     label=self.existing_nodes[1],
                     raw_data=json.dumps(
-                        dict(devices=DEVICES_2, node=self.existing_nodes[1])
+                        dict(
+                            devices=[DEV_2],
+                            node=self.existing_nodes[1],
+                        )
                     ),
                     output=json.dumps(
                         dto.to_dict(
@@ -918,16 +490,15 @@ class TestUpdateScsiDevicesFailures(TestCase):
                 dict(
                     label=self.existing_nodes[2],
                     raw_data=json.dumps(
-                        dict(devices=DEVICES_2, node=self.existing_nodes[2])
+                        dict(
+                            devices=[DEV_2],
+                            node=self.existing_nodes[2],
+                        )
                     ),
                 ),
             ],
         )
-        self.env_assist.assert_raise_library_error(
-            lambda: stonith.update_scsi_devices(
-                self.env_assist.get_env(), SCSI_STONITH_ID, DEVICES_2
-            ),
-        )
+        self.env_assist.assert_raise_library_error(self.command())
         self.env_assist.assert_reports(
             [
                 fixture.error(
@@ -957,13 +528,19 @@ class TestUpdateScsiDevicesFailures(TestCase):
                 dict(
                     label=self.existing_nodes[0],
                     raw_data=json.dumps(
-                        dict(devices=DEVICES_2, node=self.existing_nodes[0])
+                        dict(
+                            devices=[DEV_2],
+                            node=self.existing_nodes[0],
+                        )
                     ),
                 ),
                 dict(
                     label=self.existing_nodes[1],
                     raw_data=json.dumps(
-                        dict(devices=DEVICES_2, node=self.existing_nodes[1])
+                        dict(
+                            devices=[DEV_2],
+                            node=self.existing_nodes[1],
+                        )
                     ),
                     output=json.dumps(
                         dto.to_dict(
@@ -985,16 +562,15 @@ class TestUpdateScsiDevicesFailures(TestCase):
                 dict(
                     label=self.existing_nodes[2],
                     raw_data=json.dumps(
-                        dict(devices=DEVICES_2, node=self.existing_nodes[2])
+                        dict(
+                            devices=[DEV_2],
+                            node=self.existing_nodes[2],
+                        )
                     ),
                 ),
             ],
         )
-        self.env_assist.assert_raise_library_error(
-            lambda: stonith.update_scsi_devices(
-                self.env_assist.get_env(), SCSI_STONITH_ID, DEVICES_2
-            ),
-        )
+        self.env_assist.assert_raise_library_error(self.command())
         self.env_assist.assert_reports(
             [
                 fixture.error(
@@ -1026,11 +602,7 @@ class TestUpdateScsiDevicesFailures(TestCase):
                 for node in self.existing_nodes[1:]
             ]
         )
-        self.env_assist.assert_raise_library_error(
-            lambda: stonith.update_scsi_devices(
-                self.env_assist.get_env(), SCSI_STONITH_ID, DEVICES_2
-            ),
-        )
+        self.env_assist.assert_raise_library_error(self.command())
         self.env_assist.assert_reports(
             [
                 fixture.error(
@@ -1072,7 +644,10 @@ class TestUpdateScsiDevicesFailures(TestCase):
                 dict(
                     label=self.existing_nodes[0],
                     raw_data=json.dumps(
-                        dict(devices=DEVICES_2, node=self.existing_nodes[0])
+                        dict(
+                            devices=[DEV_2],
+                            node=self.existing_nodes[0],
+                        )
                     ),
                 ),
             ],
@@ -1085,12 +660,7 @@ class TestUpdateScsiDevicesFailures(TestCase):
                 lrm_monitor_ops=DEFAULT_LRM_MONITOR_OPS_UPDATED,
             ),
         )
-        stonith.update_scsi_devices(
-            self.env_assist.get_env(),
-            SCSI_STONITH_ID,
-            DEVICES_2,
-            force_flags=[reports.codes.SKIP_OFFLINE_NODES],
-        )
+        self.command(force_flags=[reports.codes.SKIP_OFFLINE_NODES])()
         self.env_assist.assert_reports(
             [
                 fixture.warn(
@@ -1126,14 +696,9 @@ class TestUpdateScsiDevicesFailures(TestCase):
                 ),
             ]
         )
-        self.config.http.scsi.unfence_node(DEVICES_2, communication_list=[])
+        self.config.http.scsi.unfence_node([DEV_2], communication_list=[])
         self.env_assist.assert_raise_library_error(
-            lambda: stonith.update_scsi_devices(
-                self.env_assist.get_env(),
-                SCSI_STONITH_ID,
-                DEVICES_2,
-                force_flags=[reports.codes.SKIP_OFFLINE_NODES],
-            ),
+            self.command(force_flags=[reports.codes.SKIP_OFFLINE_NODES])
         )
         self.env_assist.assert_reports(
             [
@@ -1150,4 +715,766 @@ class TestUpdateScsiDevicesFailures(TestCase):
                     reports.codes.UNABLE_TO_PERFORM_OPERATION_ON_ANY_NODE,
                 ),
             ]
+        )
+
+
+@mock.patch.object(
+    settings,
+    "pacemaker_api_result_schema",
+    rc("pcmk_api_rng/api-result.rng"),
+)
+class UpdateScsiDevices(UpdateScsiDevicesMixin, TestCase):
+    def test_update_1_to_1_devices(self):
+        self.assert_command_success(
+            devices_before=DEVICES_1,
+            devices_updated=DEVICES_1,
+        )
+
+    def test_update_2_to_2_devices(self):
+        self.assert_command_success(
+            devices_before=DEVICES_2,
+            devices_updated=DEVICES_2,
+        )
+
+    def test_update_1_to_2_devices(self):
+        self.assert_command_success(unfence=[DEV_2])
+
+    def test_update_1_to_3_devices(self):
+        self.assert_command_success(
+            devices_before=DEVICES_1,
+            devices_updated=DEVICES_3,
+            unfence=[DEV_2, DEV_3],
+        )
+
+    def test_update_3_to_1_devices(self):
+        self.assert_command_success(
+            devices_before=DEVICES_3,
+            devices_updated=DEVICES_1,
+        )
+
+    def test_update_3_to_2_devices(self):
+        self.assert_command_success(
+            devices_before=DEVICES_3,
+            devices_updated=DEVICES_2,
+        )
+
+    def test_update_add_2_to_2_remove_1(self):
+        self.assert_command_success(
+            devices_before=[DEV_1, DEV_2],
+            devices_updated=[DEV_2, DEV_3, DEV_4],
+            unfence=[DEV_3, DEV_4],
+        )
+
+    def test_default_monitor(self):
+        self.assert_command_success(unfence=[DEV_2])
+
+    def test_no_monitor_ops(self):
+        self.assert_command_success(
+            unfence=[DEV_2],
+            resource_ops=(),
+            lrm_monitor_ops=(),
+            lrm_monitor_ops_updated=(),
+        )
+
+    def test_1_monitor_with_timeout(self):
+        self.assert_command_success(
+            unfence=[DEV_2],
+            resource_ops=(("monitor", "30s", "10s", None),),
+            lrm_monitor_ops=(("30000", DEFAULT_DIGEST, None, None),),
+            lrm_monitor_ops_updated=(("30000", ALL_DIGEST, None, None),),
+        )
+
+    def test_2_monitor_ops_with_timeouts(self):
+        self.assert_command_success(
+            unfence=[DEV_2],
+            resource_ops=(
+                ("monitor", "30s", "10s", None),
+                ("monitor", "40s", "20s", None),
+            ),
+            lrm_monitor_ops=(
+                ("30000", DEFAULT_DIGEST, None, None),
+                ("40000", DEFAULT_DIGEST, None, None),
+            ),
+            lrm_monitor_ops_updated=(
+                ("30000", ALL_DIGEST, None, None),
+                ("40000", ALL_DIGEST, None, None),
+            ),
+        )
+
+    def test_2_monitor_ops_with_one_timeout(self):
+        self.assert_command_success(
+            unfence=[DEV_2],
+            resource_ops=(
+                ("monitor", "30s", "10s", None),
+                ("monitor", "60s", None, None),
+            ),
+            lrm_monitor_ops=(
+                ("30000", DEFAULT_DIGEST, None, None),
+                ("60000", DEFAULT_DIGEST, None, None),
+            ),
+            lrm_monitor_ops_updated=(
+                ("30000", ALL_DIGEST, None, None),
+                ("60000", ALL_DIGEST, None, None),
+            ),
+        )
+
+    def test_various_start_ops_one_lrm_start_op(self):
+        self.assert_command_success(
+            unfence=[DEV_2],
+            resource_ops=(
+                ("monitor", "60s", None, None),
+                ("start", "0s", "40s", None),
+                ("start", "0s", "30s", "1"),
+                ("start", "10s", "5s", None),
+                ("start", "20s", None, None),
+            ),
+        )
+
+    def test_1_nonrecurring_start_op_with_timeout(self):
+        self.assert_command_success(
+            unfence=[DEV_2],
+            resource_ops=(
+                ("monitor", "60s", None, None),
+                ("start", "0s", "40s", None),
+            ),
+        )
+
+
+@mock.patch.object(
+    settings,
+    "pacemaker_api_result_schema",
+    rc("pcmk_api_rng/api-result.rng"),
+)
+class TestUpdateScsiDevicesFailures(UpdateScsiDevicesFailuresMixin, TestCase):
+    def command(self, force_flags=()):
+        return lambda: stonith.update_scsi_devices(
+            self.env_assist.get_env(),
+            SCSI_STONITH_ID,
+            DEVICES_2,
+            force_flags=force_flags,
+        )
+
+    def test_devices_cannot_be_empty(self):
+        self.config.runner.cib.load(resources=fixture_scsi())
+        self.config.runner.pcmk.is_resource_digests_supported()
+        self.env_assist.assert_raise_library_error(
+            lambda: stonith.update_scsi_devices(
+                self.env_assist.get_env(), SCSI_STONITH_ID, ()
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="devices",
+                    option_value="",
+                    allowed_values=None,
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
+                )
+            ]
+        )
+
+    def test_nonexistant_id(self):
+        """
+        lower level tested in
+        pcs_test.tier0.lib.cib.test_stonith.ValidateStonithRestartlessUpdate
+        """
+        self.config.runner.cib.load(resources=fixture_scsi())
+        self.config.runner.pcmk.is_resource_digests_supported()
+        self.env_assist.assert_raise_library_error(
+            lambda: stonith.update_scsi_devices(
+                self.env_assist.get_env(), "non-existent-id", DEVICES_2
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.ID_NOT_FOUND,
+                    id="non-existent-id",
+                    expected_types=["primitive"],
+                    context_type="cib",
+                    context_id="",
+                )
+            ]
+        )
+
+    def test_stonith_resource_is_not_running(self):
+        self.config.runner.cib.load(resources=fixture_scsi())
+        self.config.runner.pcmk.is_resource_digests_supported()
+        self.config.runner.pcmk.load_state(
+            resources=FIXTURE_CRM_MON_RES_STOPPED, nodes=FIXTURE_CRM_MON_NODES
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: stonith.update_scsi_devices(
+                self.env_assist.get_env(), SCSI_STONITH_ID, DEVICES_2
+            ),
+            [
+                fixture.error(
+                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM,
+                    reason=f"resource '{SCSI_STONITH_ID}' is not running on any node",
+                    reason_type=reports.const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_NOT_RUNNING,
+                )
+            ],
+            expected_in_processor=False,
+        )
+
+    def test_stonith_resource_is_running_on_more_than_one_node(self):
+        self.config.runner.cib.load(resources=fixture_scsi())
+        self.config.runner.pcmk.is_resource_digests_supported()
+        self.config.runner.pcmk.load_state(
+            resources=FIXTURE_CRM_MON_RES_RUNNING_2, nodes=FIXTURE_CRM_MON_NODES
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: stonith.update_scsi_devices(
+                self.env_assist.get_env(), SCSI_STONITH_ID, DEVICES_2
+            ),
+            [
+                fixture.error(
+                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM,
+                    reason=(
+                        f"resource '{SCSI_STONITH_ID}' is running on more than "
+                        "1 node"
+                    ),
+                    reason_type=reports.const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_OTHER,
+                )
+            ],
+            expected_in_processor=False,
+        )
+
+    def test_lrm_op_missing_digest_attributes(self):
+        devices = ",".join(DEVICES_2)
+        self.config.runner.cib.load(
+            resources=fixture_scsi(),
+            status=_fixture_status_lrm_ops_base(
+                SCSI_STONITH_ID,
+                f'<lrm_rsc_op id="{SCSI_STONITH_ID}_last" operation="start"/>',
+            ),
+        )
+        self.config.runner.pcmk.is_resource_digests_supported()
+        self.config.runner.pcmk.load_state(
+            resources=FIXTURE_CRM_MON_RES_RUNNING_1, nodes=FIXTURE_CRM_MON_NODES
+        )
+        self.config.runner.pcmk.resource_digests(
+            SCSI_STONITH_ID,
+            SCSI_NODE,
+            name="start.op.digests",
+            stdout=fixture_digests_xml(
+                SCSI_STONITH_ID,
+                SCSI_NODE,
+                devices=devices,
+            ),
+            args=[f"devices={devices}"],
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: stonith.update_scsi_devices(
+                self.env_assist.get_env(), SCSI_STONITH_ID, DEVICES_2
+            ),
+            [
+                fixture.error(
+                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM,
+                    reason="no digests attributes in lrm_rsc_op element",
+                    reason_type=reports.const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_OTHER,
+                )
+            ],
+            expected_in_processor=False,
+        )
+
+    def test_crm_resource_digests_missing(self):
+        devices = ",".join(DEVICES_2)
+        self.config.runner.cib.load(
+            resources=fixture_scsi(),
+            status=_fixture_status_lrm_ops_base(
+                SCSI_STONITH_ID,
+                (
+                    f'<lrm_rsc_op id="{SCSI_STONITH_ID}_last" '
+                    'operation="start" op-restart-digest="somedigest" />'
+                ),
+            ),
+        )
+        self.config.runner.pcmk.is_resource_digests_supported()
+        self.config.runner.pcmk.load_state(
+            resources=FIXTURE_CRM_MON_RES_RUNNING_1, nodes=FIXTURE_CRM_MON_NODES
+        )
+        self.config.runner.pcmk.resource_digests(
+            SCSI_STONITH_ID,
+            SCSI_NODE,
+            name="start.op.digests",
+            stdout=fixture_digests_xml(
+                SCSI_STONITH_ID,
+                SCSI_NODE,
+                devices=devices,
+            ),
+            args=[f"devices={devices}"],
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: stonith.update_scsi_devices(
+                self.env_assist.get_env(), SCSI_STONITH_ID, DEVICES_2
+            ),
+            [
+                fixture.error(
+                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM,
+                    reason=(
+                        "necessary digest for 'op-restart-digest' attribute is "
+                        "missing"
+                    ),
+                    reason_type=reports.const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_OTHER,
+                )
+            ],
+            expected_in_processor=False,
+        )
+
+    def test_no_lrm_start_op(self):
+        self.config.runner.cib.load(
+            resources=fixture_scsi(),
+            status=_fixture_status_lrm_ops(SCSI_STONITH_ID, lrm_start_ops=()),
+        )
+        self.config.runner.pcmk.is_resource_digests_supported()
+        self.config.runner.pcmk.load_state(
+            resources=FIXTURE_CRM_MON_RES_RUNNING_1, nodes=FIXTURE_CRM_MON_NODES
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: stonith.update_scsi_devices(
+                self.env_assist.get_env(), SCSI_STONITH_ID, DEVICES_2
+            ),
+            [
+                fixture.error(
+                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM,
+                    reason=(
+                        "lrm_rsc_op element for start operation was not found"
+                    ),
+                    reason_type=reports.const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_OTHER,
+                )
+            ],
+            expected_in_processor=False,
+        )
+
+    def test_monitor_ops_and_lrm_monitor_ops_do_not_match(self):
+        self.config.runner.cib.load(
+            resources=fixture_scsi(
+                resource_ops=(
+                    ("monitor", "30s", "10s", None),
+                    ("monitor", "30s", "20s", "31"),
+                    ("monitor", "60s", None, None),
+                )
+            ),
+            status=_fixture_status_lrm_ops(SCSI_STONITH_ID),
+        )
+        self.config.runner.pcmk.is_resource_digests_supported()
+        self.config.runner.pcmk.load_state(
+            resources=FIXTURE_CRM_MON_RES_RUNNING_1, nodes=FIXTURE_CRM_MON_NODES
+        )
+        self.config.runner.pcmk.resource_digests(
+            SCSI_STONITH_ID,
+            SCSI_NODE,
+            name="start.op.digests",
+            stdout=fixture_digests_xml(
+                SCSI_STONITH_ID, SCSI_NODE, devices=",".join(DEVICES_2)
+            ),
+            args=["devices={}".format(",".join(DEVICES_2))],
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: stonith.update_scsi_devices(
+                self.env_assist.get_env(), SCSI_STONITH_ID, DEVICES_2
+            ),
+            [
+                fixture.error(
+                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM,
+                    reason=(
+                        "number of lrm_rsc_op and op elements for monitor "
+                        "operation differs"
+                    ),
+                    reason_type=reports.const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_OTHER,
+                )
+            ],
+            expected_in_processor=False,
+        )
+
+    def test_lrm_monitor_ops_not_found(self):
+        self.config.runner.cib.load(
+            resources=fixture_scsi(
+                resource_ops=(("monitor", "30s", None, None),)
+            ),
+            status=_fixture_status_lrm_ops(SCSI_STONITH_ID),
+        )
+        self.config.runner.pcmk.is_resource_digests_supported()
+        self.config.runner.pcmk.load_state(
+            resources=FIXTURE_CRM_MON_RES_RUNNING_1, nodes=FIXTURE_CRM_MON_NODES
+        )
+        self.config.runner.pcmk.resource_digests(
+            SCSI_STONITH_ID,
+            SCSI_NODE,
+            name="start.op.digests",
+            stdout=fixture_digests_xml(
+                SCSI_STONITH_ID, SCSI_NODE, devices=",".join(DEVICES_2)
+            ),
+            args=["devices={}".format(",".join(DEVICES_2))],
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: stonith.update_scsi_devices(
+                self.env_assist.get_env(), SCSI_STONITH_ID, DEVICES_2
+            ),
+            [
+                fixture.error(
+                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM,
+                    reason=(
+                        "monitor lrm_rsc_op element for resource "
+                        f"'{SCSI_STONITH_ID}', node '{SCSI_NODE}' and interval "
+                        "'30000' not found"
+                    ),
+                    reason_type=reports.const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_OTHER,
+                )
+            ],
+            expected_in_processor=False,
+        )
+
+
+@mock.patch.object(
+    settings,
+    "pacemaker_api_result_schema",
+    rc("pcmk_api_rng/api-result.rng"),
+)
+class UpdateScsiDevicesAddRemove(UpdateScsiDevicesMixin, TestCase):
+    def test_add_1_to_1(self):
+        self.assert_command_success(
+            devices_before=[DEV_1],
+            devices_updated=[DEV_1, DEV_2],
+            devices_add=[DEV_2],
+            devices_remove=[],
+            unfence=[DEV_2],
+        )
+
+    def test_add_2_to_1(self):
+        self.assert_command_success(
+            devices_before=[DEV_1],
+            devices_updated=[DEV_1, DEV_2, DEV_3],
+            devices_add=[DEV_2, DEV_3],
+            devices_remove=[],
+            unfence=[DEV_2, DEV_3],
+        )
+
+    def test_add_2_to_2_and_remove_1(self):
+        self.assert_command_success(
+            devices_before=[DEV_1, DEV_2],
+            devices_updated=[DEV_2, DEV_3, DEV_4],
+            devices_add=[DEV_3, DEV_4],
+            devices_remove=[DEV_1],
+            unfence=[DEV_3, DEV_4],
+        )
+
+    def test_remove_1_from_2(self):
+        self.assert_command_success(
+            devices_before=[DEV_1, DEV_2],
+            devices_updated=[DEV_2],
+            devices_add=[],
+            devices_remove=[DEV_1],
+        )
+
+    def test_remove_2_from_3(self):
+        self.assert_command_success(
+            devices_before=[DEV_1, DEV_2, DEV_3],
+            devices_updated=[DEV_3],
+            devices_add=[],
+            devices_remove=[DEV_2, DEV_1],
+        )
+
+    def test_remove_2_from_3_add_1(self):
+        self.assert_command_success(
+            devices_before=[DEV_1, DEV_2, DEV_3],
+            devices_updated=[DEV_3, DEV_4],
+            devices_add=[DEV_4],
+            devices_remove=[DEV_2, DEV_1],
+            unfence=[DEV_4],
+        )
+
+    def test_add_1_remove_1(self):
+        self.assert_command_success(
+            devices_before=[DEV_1, DEV_2],
+            devices_updated=[DEV_2, DEV_3],
+            devices_add=[DEV_3],
+            devices_remove=[DEV_1],
+            unfence=[DEV_3],
+        )
+
+    def test_add_2_remove_2(self):
+        self.assert_command_success(
+            devices_before=[DEV_1, DEV_2],
+            devices_updated=[DEV_3, DEV_4],
+            devices_add=[DEV_3, DEV_4],
+            devices_remove=[DEV_1, DEV_2],
+            unfence=[DEV_3, DEV_4],
+        )
+
+
+@mock.patch.object(
+    settings,
+    "pacemaker_api_result_schema",
+    rc("pcmk_api_rng/api-result.rng"),
+)
+class TestUpdateScsiDevicesAddRemoveFailures(
+    UpdateScsiDevicesFailuresMixin, TestCase
+):
+    def command(self, force_flags=()):
+        return lambda: stonith.update_scsi_devices_add_remove(
+            self.env_assist.get_env(),
+            SCSI_STONITH_ID,
+            [DEV_2],
+            [],
+            force_flags=force_flags,
+        )
+
+    def test_add_remove_are_empty(self):
+        """
+        lower level tested in
+        pcs_test/tier0/lib/test_validate.ValidateAddRemoveItems
+        """
+        self.config.runner.cib.load(resources=fixture_scsi())
+        self.config.runner.pcmk.is_resource_digests_supported()
+        self.env_assist.assert_raise_library_error(
+            lambda: stonith.update_scsi_devices_add_remove(
+                self.env_assist.get_env(), SCSI_STONITH_ID, (), ()
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_ITEMS_NOT_SPECIFIED,
+                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE,
+                    item_type="device",
+                    container_id=SCSI_STONITH_ID,
+                )
+            ]
+        )
+
+    def test_not_supported_resource_type(self):
+        """
+        lower level tested in
+        pcs_test.tier0.lib.cib.test_stonith.ValidateStonithRestartlessUpdate
+        """
+        self.config.runner.cib.load(resources=fixture_scsi())
+        self.config.runner.pcmk.is_resource_digests_supported()
+        self.env_assist.assert_raise_library_error(
+            lambda: stonith.update_scsi_devices_add_remove(
+                self.env_assist.get_env(), "dummy", [DEV_2], [DEV_1]
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNSUPPORTED_AGENT,
+                    resource_id="dummy",
+                    resource_type="Dummy",
+                    supported_stonith_types=["fence_scsi"],
+                )
+            ]
+        )
+
+    def test_stonith_resource_is_running_on_more_than_one_node(self):
+        self.config.runner.cib.load(resources=fixture_scsi())
+        self.config.runner.pcmk.is_resource_digests_supported()
+        self.config.runner.pcmk.load_state(
+            resources=FIXTURE_CRM_MON_RES_RUNNING_2, nodes=FIXTURE_CRM_MON_NODES
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: stonith.update_scsi_devices_add_remove(
+                self.env_assist.get_env(), SCSI_STONITH_ID, [DEV_2], []
+            ),
+            [
+                fixture.error(
+                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM,
+                    reason=(
+                        f"resource '{SCSI_STONITH_ID}' is running on more than "
+                        "1 node"
+                    ),
+                    reason_type=reports.const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_OTHER,
+                )
+            ],
+            expected_in_processor=False,
+        )
+
+
+class ValidateAddRemoveItems(TestCase):
+    CONTAINER_TYPE = ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE
+    ITEM_TYPE = ADD_REMOVE_ITEM_TYPE_DEVICE
+    CONTAINER_ID = "container_id"
+
+    def _validate(
+        self, add, remove, current=None, adjacent=None, can_be_empty=False
+    ):
+        # pylint: disable=protected-access
+        return stonith._validate_add_remove_items(
+            add,
+            remove,
+            current,
+            self.CONTAINER_TYPE,
+            self.ITEM_TYPE,
+            self.CONTAINER_ID,
+            adjacent,
+            can_be_empty,
+        )
+
+    def test_success_add_and_remove(self):
+        assert_report_item_list_equal(
+            self._validate(["a1"], ["c3"], ["b2", "c3"]), []
+        )
+
+    def test_success_add_only(self):
+        assert_report_item_list_equal(self._validate(["b2"], [], ["a1"]), [])
+
+    def test_success_remove_only(self):
+        assert_report_item_list_equal(
+            self._validate([], ["b2"], ["a1", "b2"]), []
+        )
+
+    def test_add_remove_items_not_specified(self):
+        assert_report_item_list_equal(
+            self._validate([], [], ["a1", "b2", "c3"]),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_ITEMS_NOT_SPECIFIED,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                )
+            ],
+        )
+
+    def test_add_remove_items_duplications(self):
+        assert_report_item_list_equal(
+            self._validate(["b2", "b2"], ["a1", "a1"], ["a1", "c3"]),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_ITEMS_DUPLICATION,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    duplicate_items_list=["a1", "b2"],
+                )
+            ],
+        )
+
+    def test_add_items_already_in_container(self):
+        assert_report_item_list_equal(
+            self._validate(["a1", "b2"], [], ["a1", "b2", "c3"]),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_CANNOT_ADD_ITEMS_ALREADY_IN_THE_CONTAINER,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    item_list=["a1", "b2"],
+                ),
+            ],
+        )
+
+    def test_remove_items_not_in_container(self):
+        assert_report_item_list_equal(
+            self._validate([], ["a1", "b2"], ["c3"]),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    item_list=["a1", "b2"],
+                )
+            ],
+        )
+
+    def test_add_remove_items_at_the_same_time(self):
+        assert_report_item_list_equal(
+            self._validate(
+                ["a1", "a1", "b2", "b2"], ["b2", "b2", "a1", "a1"], ["c3"]
+            ),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_ITEMS_DUPLICATION,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    duplicate_items_list=["a1", "b2"],
+                ),
+                fixture.error(
+                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    item_list=["a1", "b2"],
+                ),
+                fixture.error(
+                    reports.codes.ADD_REMOVE_CANNOT_ADD_AND_REMOVE_ITEMS_AT_THE_SAME_TIME,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    item_list=["a1", "b2"],
+                ),
+            ],
+        )
+
+    def test_remove_all_items(self):
+        assert_report_item_list_equal(
+            self._validate([], ["a1", "b2"], ["a1", "b2"]),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ALL_ITEMS_FROM_THE_CONTAINER,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    item_list=["a1", "b2"],
+                ),
+            ],
+        )
+
+    def test_remove_all_items_can_be_empty(self):
+        assert_report_item_list_equal(
+            self._validate([], ["a1", "b2"], ["a1", "b2"], can_be_empty=True),
+            [],
+        )
+
+    def test_remove_all_items_and_add_new_one(self):
+        assert_report_item_list_equal(
+            self._validate(["c3"], ["a1", "b2"], ["a1", "b2"]),
+            [],
+        )
+
+    def test_missing_adjacent_item(self):
+        assert_report_item_list_equal(
+            self._validate(["a1", "b2"], [], ["c3"], adjacent="d4"),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_ADJACENT_ITEM_NOT_IN_THE_CONTAINER,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    adjacent_item_id="d4",
+                ),
+            ],
+        )
+
+    def test_adjacent_item_in_add_list(self):
+        assert_report_item_list_equal(
+            self._validate(["a1", "b2"], [], ["a1"], adjacent="a1"),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_CANNOT_PUT_ITEM_NEXT_TO_ITSELF,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    adjacent_item_id="a1",
+                ),
+            ],
+        )
+
+    def test_adjacent_item_without_add_list(self):
+        assert_report_item_list_equal(
+            self._validate([], ["b2"], ["a1", "b2"], adjacent="a1"),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_CANNOT_SPECIFY_ADJACENT_ITEM_WITHOUT_ITEMS_TO_ADD,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    adjacent_item_id="a1",
+                ),
+            ],
         )
