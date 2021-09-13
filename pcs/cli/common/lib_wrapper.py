@@ -437,6 +437,7 @@ def load_module(env, middleware_factory, name):
                 "history_cleanup": stonith.history_cleanup,
                 "history_update": stonith.history_update,
                 "update_scsi_devices": stonith.update_scsi_devices,
+                "update_scsi_devices_add_remove": stonith.update_scsi_devices_add_remove,
             },
         )
 

@@ -1,9 +1,12 @@
-from typing import Container, Iterable, Optional
+from typing import Container, Iterable, List, Optional, Tuple
+
+from lxml.etree import _Element
 
 from pcs.common import reports
 from pcs.common.reports.item import ReportItem
 from pcs.lib.cib import resource
 from pcs.lib.cib import stonith
+from pcs.lib.cib.nvpair import INSTANCE_ATTRIBUTES_TAG, get_value
 from pcs.lib.cib.resource.common import are_meta_disabled
 from pcs.lib.cib.tools import IdProvider
 from pcs.lib.commands.resource import (
@@ -30,6 +33,7 @@ from pcs.lib.pacemaker.live import (
     is_getting_resource_digest_supported,
 )
 from pcs.lib.pacemaker.values import validate_id
+from pcs.lib.validate import validate_add_remove_items
 from pcs.lib.resource_agent import find_valid_stonith_agent_by_name as get_agent
 
 
@@ -268,20 +272,15 @@ def history_update(env: LibraryEnvironment):
         ) from e
 
 
-def update_scsi_devices(
-    env: LibraryEnvironment,
-    stonith_id: str,
-    set_device_list: Iterable[str],
-    force_flags: Container[reports.types.ForceCode] = (),
-) -> None:
+def _update_scsi_devices_get_element_and_devices(
+    env: LibraryEnvironment, stonith_id: str
+) -> Tuple[_Element, List[str]]:
     """
-    Update scsi fencing devices without restart and affecting other resources.
+    Do checks and return stonith element and list of current scsi devices.
+    Raise LibraryError if checks fail.
 
     env -- provides all for communication with externals
     stonith_id -- id of stonith resource
-    set_device_list -- paths to the scsi devices that would be set for stonith
-        resource
-    force_flags -- list of flags codes
     """
     if not is_getting_resource_digest_supported(env.cmd_runner()):
         raise LibraryError(
@@ -289,34 +288,38 @@ def update_scsi_devices(
                 reports.messages.StonithRestartlessUpdateOfScsiDevicesNotSupported()
             )
         )
-    cib = env.get_cib()
-    if not set_device_list:
-        env.report_processor.report(
-            ReportItem.error(
-                reports.messages.InvalidOptionValue(
-                    "devices", "", None, cannot_be_empty=True
-                )
-            )
-        )
     (
         stonith_el,
         report_list,
-    ) = stonith.validate_stonith_restartless_update(cib, stonith_id)
+    ) = stonith.validate_stonith_restartless_update(env.get_cib(), stonith_id)
     if env.report_processor.report_list(report_list).has_errors:
         raise LibraryError()
-    # for mypy, this should not happen because exeption would be raised
+    current_device_list = get_value(
+        INSTANCE_ATTRIBUTES_TAG, stonith_el, "devices"
+    )
+    # for mypy, this should not happen because exception would be raised
     if stonith_el is None:
         raise AssertionError("stonith element is None")
+    if current_device_list is None:
+        raise AssertionError("current_device_list is None")
+    return stonith_el, current_device_list.split(",")
 
-    stonith.update_scsi_devices_without_restart(
-        env.cmd_runner(),
-        env.get_cluster_state(),
-        stonith_el,
-        IdProvider(cib),
-        set_device_list,
-    )
 
-    # Unfencing
+def _unfencing_scsi_devices(
+    env: LibraryEnvironment,
+    device_list: Iterable[str],
+    force_flags: Container[reports.types.ForceCode] = (),
+) -> None:
+    """
+    Unfence scsi devices provided in device_list if it is possible to connect
+    to pcsd and corosync is running.
+
+    env -- provides all for communication with externals
+    device_list -- devices to be unfenced
+    force_flags -- list of flags codes
+    """
+    if not list(device_list):
+        return
     cluster_nodes_names, nodes_report_list = get_existing_nodes_names(
         env.get_corosync_conf(),
         error_on_missing_name=True,
@@ -340,8 +343,97 @@ def update_scsi_devices(
     online_corosync_target_list = run_and_raise(
         env.get_node_communicator(), com_cmd
     )
-    com_cmd = Unfence(env.report_processor, sorted(set_device_list))
+    com_cmd = Unfence(env.report_processor, sorted(device_list))
     com_cmd.set_targets(online_corosync_target_list)
     run_and_raise(env.get_node_communicator(), com_cmd)
 
+
+def update_scsi_devices(
+    env: LibraryEnvironment,
+    stonith_id: str,
+    set_device_list: Iterable[str],
+    force_flags: Container[reports.types.ForceCode] = (),
+) -> None:
+    """
+    Update scsi fencing devices without restart and affecting other resources.
+
+    env -- provides all for communication with externals
+    stonith_id -- id of stonith resource
+    set_device_list -- paths to the scsi devices that would be set for stonith
+        resource
+    force_flags -- list of flags codes
+    """
+    (
+        stonith_el,
+        current_device_list,
+    ) = _update_scsi_devices_get_element_and_devices(env, stonith_id)
+    if not set_device_list:
+        env.report_processor.report(
+            ReportItem.error(
+                reports.messages.InvalidOptionValue(
+                    "devices", "", None, cannot_be_empty=True
+                )
+            )
+        )
+    if env.report_processor.has_errors:
+        raise LibraryError()
+    stonith.update_scsi_devices_without_restart(
+        env.cmd_runner(),
+        env.get_cluster_state(),
+        stonith_el,
+        IdProvider(stonith_el),
+        set_device_list,
+    )
+    devices_for_unfencing = set(set_device_list)
+    devices_for_unfencing.difference_update(current_device_list)
+    _unfencing_scsi_devices(env, devices_for_unfencing, force_flags)
+    env.push_cib()
+
+
+def update_scsi_devices_add_remove(
+    env: LibraryEnvironment,
+    stonith_id: str,
+    add_device_list: Iterable[str],
+    remove_device_list: Iterable[str],
+    force_flags: Container[reports.types.ForceCode] = (),
+) -> None:
+    """
+    Update scsi fencing devices without restart and affecting other resources.
+
+    env -- provides all for communication with externals
+    stonith_id -- id of stonith resource
+    add_device_list -- paths to the scsi devices that would be added to the
+        stonith resource
+    remove_device_list -- paths to the scsi devices that would be removed from
+        the stonith resource
+    force_flags -- list of flags codes
+    """
+    (
+        stonith_el,
+        current_device_list,
+    ) = _update_scsi_devices_get_element_and_devices(env, stonith_id)
+    if env.report_processor.report_list(
+        validate_add_remove_items(
+            add_device_list,
+            remove_device_list,
+            current_device_list,
+            reports.const.ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE,
+            reports.const.ADD_REMOVE_ITEM_TYPE_DEVICE,
+            stonith_el.get("id", ""),
+        )
+    ).has_errors:
+        raise LibraryError()
+    updated_device_set = (
+        set(current_device_list)
+        .union(add_device_list)
+        .difference(remove_device_list)
+    )
+    stonith.update_scsi_devices_without_restart(
+        env.cmd_runner(),
+        env.get_cluster_state(),
+        stonith_el,
+        IdProvider(stonith_el),
+        updated_device_set,
+    )
+    _unfencing_scsi_devices(env, add_device_list, force_flags)
     env.push_cib()

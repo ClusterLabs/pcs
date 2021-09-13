@@ -31,6 +31,10 @@ DEFAULT_DIGEST = _DIGEST + "0"
 ALL_DIGEST = _DIGEST + "1"
 NONPRIVATE_DIGEST = _DIGEST + "2"
 NONRELOADABLE_DIGEST = _DIGEST + "3"
+DEV_1 = "/dev/sda"
+DEV_2 = "/dev/sdb"
+DEV_3 = "/dev/sdc"
+DEV_4 = "/dev/sdd"
 DEVICES_1 = ("/dev/sda",)
 DEVICES_2 = ("/dev/sda", "/dev/sdb")
 DEVICES_3 = ("/dev/sda", "/dev/sdb", "/dev/sdc")
@@ -200,13 +204,9 @@ FIXTURE_CRM_MON_RES_STOPPED = f"""
 """
 
 
-@mock.patch.object(
-    settings,
-    "pacemaker_api_result_schema",
-    rc("pcmk_api_rng/api-result.rng"),
-)
-class UpdateScsiDevices(TestCase):
+class UpdateScsiDevicesMixin:
     def setUp(self):
+        # pylint: disable=invalid-name
         self.env_assist, self.config = get_env_tools(self)
 
         self.existing_nodes = ["node1", "node2", "node3"]
@@ -220,13 +220,18 @@ class UpdateScsiDevices(TestCase):
         self,
         devices_before=DEVICES_1,
         devices_updated=DEVICES_2,
+        devices_add=(),
+        devices_remove=(),
+        unfence=None,
         resource_ops=DEFAULT_OPS,
         lrm_monitor_ops=DEFAULT_LRM_MONITOR_OPS,
         lrm_start_ops=DEFAULT_LRM_START_OPS,
         lrm_monitor_ops_updated=DEFAULT_LRM_MONITOR_OPS_UPDATED,
         lrm_start_ops_updated=DEFAULT_LRM_START_OPS_UPDATED,
     ):
+        # pylint: disable=too-many-arguments
         # pylint: disable=too-many-locals
+        devices_value = ",".join(sorted(devices_updated))
         self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.cib.load(
             resources=fixture_scsi(
@@ -241,13 +246,13 @@ class UpdateScsiDevices(TestCase):
         self.config.runner.pcmk.load_state(
             resources=FIXTURE_CRM_MON_RES_RUNNING_1, nodes=FIXTURE_CRM_MON_NODES
         )
-        devices_opt = "devices={}".format(",".join(devices_updated))
+        devices_opt = "devices={}".format(devices_value)
         self.config.runner.pcmk.resource_digests(
             SCSI_STONITH_ID,
             SCSI_NODE,
             name="start.op.digests",
             stdout=fixture_digests_xml(
-                SCSI_STONITH_ID, SCSI_NODE, devices=",".join(devices_updated)
+                SCSI_STONITH_ID, SCSI_NODE, devices=devices_value
             ),
             args=[devices_opt],
         )
@@ -275,22 +280,23 @@ class UpdateScsiDevices(TestCase):
                 stdout=fixture_digests_xml(
                     SCSI_STONITH_ID,
                     SCSI_NODE,
-                    devices=",".join(devices_updated),
+                    devices=devices_value,
                 ),
                 args=args,
             )
-        self.config.corosync_conf.load_content(
-            corosync_conf_fixture(
-                self.existing_corosync_nodes,
-                get_two_node(len(self.existing_corosync_nodes)),
+        if unfence:
+            self.config.corosync_conf.load_content(
+                corosync_conf_fixture(
+                    self.existing_corosync_nodes,
+                    get_two_node(len(self.existing_corosync_nodes)),
+                )
             )
-        )
-        self.config.http.corosync.get_corosync_online_targets(
-            node_labels=self.existing_nodes
-        )
-        self.config.http.scsi.unfence_node(
-            devices_updated, node_labels=self.existing_nodes
-        )
+            self.config.http.corosync.get_corosync_online_targets(
+                node_labels=self.existing_nodes
+            )
+            self.config.http.scsi.unfence_node(
+                unfence, node_labels=self.existing_nodes
+            )
         self.config.env.push_cib(
             resources=fixture_scsi(
                 devices=devices_updated, resource_ops=resource_ops
@@ -301,49 +307,475 @@ class UpdateScsiDevices(TestCase):
                 lrm_monitor_ops=lrm_monitor_ops_updated,
             ),
         )
-        stonith.update_scsi_devices(
-            self.env_assist.get_env(), SCSI_STONITH_ID, devices_updated
-        )
+        if devices_add or devices_remove:
+            stonith.update_scsi_devices_add_remove(
+                self.env_assist.get_env(),
+                SCSI_STONITH_ID,
+                devices_add,
+                devices_remove,
+            )
+        else:
+            stonith.update_scsi_devices(
+                self.env_assist.get_env(), SCSI_STONITH_ID, devices_updated
+            )
         self.env_assist.assert_reports([])
 
+
+class UpdateScsiDevicesFailuresMixin:
+    def command(self, force_flags=()):
+        raise NotImplementedError
+
+    # pylint: disable=invalid-name
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+
+        self.existing_nodes = ["node1", "node2", "node3"]
+        self.existing_corosync_nodes = [
+            node_fixture(node, node_id)
+            for node_id, node in enumerate(self.existing_nodes, 1)
+        ]
+        self.config.env.set_known_nodes(self.existing_nodes)
+
+    def test_pcmk_doesnt_support_digests(self):
+        self.config.runner.pcmk.is_resource_digests_supported(
+            is_supported=False
+        )
+        self.env_assist.assert_raise_library_error(
+            self.command(),
+            [
+                fixture.error(
+                    reports.codes.STONITH_RESTARTLESS_UPDATE_OF_SCSI_DEVICES_NOT_SUPPORTED,
+                )
+            ],
+            expected_in_processor=False,
+        )
+
+    def test_node_missing_name_and_missing_auth_token(self):
+        self.config.runner.pcmk.is_resource_digests_supported()
+        self.config.runner.cib.load(
+            resources=fixture_scsi(),
+            status=_fixture_status_lrm_ops(SCSI_STONITH_ID),
+        )
+        self.config.runner.pcmk.load_state(
+            resources=FIXTURE_CRM_MON_RES_RUNNING_1, nodes=FIXTURE_CRM_MON_NODES
+        )
+        self.config.runner.pcmk.resource_digests(
+            SCSI_STONITH_ID,
+            SCSI_NODE,
+            name="start.op.digests",
+            stdout=fixture_digests_xml(
+                SCSI_STONITH_ID, SCSI_NODE, devices=",".join(DEVICES_2)
+            ),
+            args=["devices={}".format(",".join(DEVICES_2))],
+        )
+        self.config.runner.pcmk.resource_digests(
+            SCSI_STONITH_ID,
+            SCSI_NODE,
+            name="monitor.op.digests",
+            stdout=fixture_digests_xml(
+                SCSI_STONITH_ID, SCSI_NODE, devices=",".join(DEVICES_2)
+            ),
+            args=[
+                "devices={}".format(",".join(DEVICES_2)),
+                "CRM_meta_interval=60000",
+            ],
+        )
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(
+                self.existing_corosync_nodes
+                + [[("ring0_addr", "custom_node"), ("nodeid", "5")]],
+            )
+        )
+        self.config.env.set_known_nodes(self.existing_nodes[:-1])
+        self.env_assist.assert_raise_library_error(self.command())
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                    fatal=True,
+                ),
+                fixture.error(
+                    reports.codes.HOST_NOT_FOUND,
+                    host_list=[self.existing_nodes[-1]],
+                ),
+            ]
+        )
+
+    def _unfence_failure_common_calls(self):
+        devices = ",".join(DEVICES_2)
+        self.config.runner.pcmk.is_resource_digests_supported()
+        self.config.runner.cib.load(
+            resources=fixture_scsi(),
+            status=_fixture_status_lrm_ops(SCSI_STONITH_ID),
+        )
+        self.config.runner.pcmk.load_state(
+            resources=FIXTURE_CRM_MON_RES_RUNNING_1, nodes=FIXTURE_CRM_MON_NODES
+        )
+        self.config.runner.pcmk.resource_digests(
+            SCSI_STONITH_ID,
+            SCSI_NODE,
+            name="start.op.digests",
+            stdout=fixture_digests_xml(
+                SCSI_STONITH_ID,
+                SCSI_NODE,
+                devices=devices,
+            ),
+            args=[f"devices={devices}"],
+        )
+        self.config.runner.pcmk.resource_digests(
+            SCSI_STONITH_ID,
+            SCSI_NODE,
+            name="monitor.op.digests",
+            stdout=fixture_digests_xml(
+                SCSI_STONITH_ID,
+                SCSI_NODE,
+                devices=devices,
+            ),
+            args=[
+                f"devices={devices}",
+                "CRM_meta_interval=60000",
+            ],
+        )
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(self.existing_corosync_nodes)
+        )
+
+    def test_unfence_failure_unable_to_connect(self):
+        self._unfence_failure_common_calls()
+        self.config.http.corosync.get_corosync_online_targets(
+            node_labels=self.existing_nodes
+        )
+        self.config.http.scsi.unfence_node(
+            DEVICES_2,
+            communication_list=[
+                dict(
+                    label=self.existing_nodes[0],
+                    raw_data=json.dumps(
+                        dict(
+                            devices=[DEV_2],
+                            node=self.existing_nodes[0],
+                        )
+                    ),
+                    was_connected=False,
+                    error_msg="errA",
+                ),
+                dict(
+                    label=self.existing_nodes[1],
+                    raw_data=json.dumps(
+                        dict(
+                            devices=[DEV_2],
+                            node=self.existing_nodes[1],
+                        )
+                    ),
+                    output=json.dumps(
+                        dto.to_dict(
+                            communication.dto.InternalCommunicationResultDto(
+                                status=communication.const.COM_STATUS_ERROR,
+                                status_msg="error",
+                                report_list=[
+                                    reports.ReportItem.error(
+                                        reports.messages.StonithUnfencingFailed(
+                                            "errB"
+                                        )
+                                    ).to_dto()
+                                ],
+                                data=None,
+                            )
+                        )
+                    ),
+                ),
+                dict(
+                    label=self.existing_nodes[2],
+                    raw_data=json.dumps(
+                        dict(
+                            devices=[DEV_2],
+                            node=self.existing_nodes[2],
+                        )
+                    ),
+                ),
+            ],
+        )
+        self.env_assist.assert_raise_library_error(self.command())
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    node=self.existing_nodes[0],
+                    command="api/v1/scsi-unfence-node/v1",
+                    reason="errA",
+                ),
+                fixture.error(
+                    reports.codes.STONITH_UNFENCING_FAILED,
+                    reason="errB",
+                    context=reports.dto.ReportItemContextDto(
+                        node=self.existing_nodes[1],
+                    ),
+                ),
+            ]
+        )
+
+    def test_unfence_failure_agent_script_failed(self):
+        self._unfence_failure_common_calls()
+        self.config.http.corosync.get_corosync_online_targets(
+            node_labels=self.existing_nodes
+        )
+        self.config.http.scsi.unfence_node(
+            DEVICES_2,
+            communication_list=[
+                dict(
+                    label=self.existing_nodes[0],
+                    raw_data=json.dumps(
+                        dict(
+                            devices=[DEV_2],
+                            node=self.existing_nodes[0],
+                        )
+                    ),
+                ),
+                dict(
+                    label=self.existing_nodes[1],
+                    raw_data=json.dumps(
+                        dict(
+                            devices=[DEV_2],
+                            node=self.existing_nodes[1],
+                        )
+                    ),
+                    output=json.dumps(
+                        dto.to_dict(
+                            communication.dto.InternalCommunicationResultDto(
+                                status=communication.const.COM_STATUS_ERROR,
+                                status_msg="error",
+                                report_list=[
+                                    reports.ReportItem.error(
+                                        reports.messages.StonithUnfencingFailed(
+                                            "errB"
+                                        )
+                                    ).to_dto()
+                                ],
+                                data=None,
+                            )
+                        )
+                    ),
+                ),
+                dict(
+                    label=self.existing_nodes[2],
+                    raw_data=json.dumps(
+                        dict(
+                            devices=[DEV_2],
+                            node=self.existing_nodes[2],
+                        )
+                    ),
+                ),
+            ],
+        )
+        self.env_assist.assert_raise_library_error(self.command())
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.STONITH_UNFENCING_FAILED,
+                    reason="errB",
+                    context=reports.dto.ReportItemContextDto(
+                        node=self.existing_nodes[1],
+                    ),
+                ),
+            ]
+        )
+
+    def test_corosync_targets_unable_to_connect(self):
+        self._unfence_failure_common_calls()
+        self.config.http.corosync.get_corosync_online_targets(
+            communication_list=[
+                dict(
+                    label=self.existing_nodes[0],
+                    output=corosync_running_check_response(True),
+                ),
+            ]
+            + [
+                dict(
+                    label=node,
+                    was_connected=False,
+                    errno=7,
+                    error_msg="an error",
+                )
+                for node in self.existing_nodes[1:]
+            ]
+        )
+        self.env_assist.assert_raise_library_error(self.command())
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    force_code=reports.codes.SKIP_OFFLINE_NODES,
+                    node=node,
+                    command="remote/status",
+                    reason="an error",
+                )
+                for node in self.existing_nodes[1:]
+            ]
+        )
+
+    def test_corosync_targets_skip_offline_unfence_node_running_corosync(
+        self,
+    ):
+        self._unfence_failure_common_calls()
+        self.config.http.corosync.get_corosync_online_targets(
+            communication_list=[
+                dict(
+                    label=self.existing_nodes[0],
+                    output=corosync_running_check_response(True),
+                ),
+                dict(
+                    label=self.existing_nodes[1],
+                    output=corosync_running_check_response(False),
+                ),
+                dict(
+                    label=self.existing_nodes[2],
+                    was_connected=False,
+                    errno=7,
+                    error_msg="an error",
+                ),
+            ]
+        )
+        self.config.http.scsi.unfence_node(
+            DEVICES_2,
+            communication_list=[
+                dict(
+                    label=self.existing_nodes[0],
+                    raw_data=json.dumps(
+                        dict(
+                            devices=[DEV_2],
+                            node=self.existing_nodes[0],
+                        )
+                    ),
+                ),
+            ],
+        )
+        self.config.env.push_cib(
+            resources=fixture_scsi(devices=DEVICES_2),
+            status=_fixture_status_lrm_ops(
+                SCSI_STONITH_ID,
+                lrm_start_ops=DEFAULT_LRM_START_OPS_UPDATED,
+                lrm_monitor_ops=DEFAULT_LRM_MONITOR_OPS_UPDATED,
+            ),
+        )
+        self.command(force_flags=[reports.codes.SKIP_OFFLINE_NODES])()
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    node=self.existing_nodes[2],
+                    command="remote/status",
+                    reason="an error",
+                ),
+            ]
+        )
+
+    def test_corosync_targets_unable_to_perform_unfencing_operation(
+        self,
+    ):
+        self._unfence_failure_common_calls()
+        self.config.http.corosync.get_corosync_online_targets(
+            communication_list=[
+                dict(
+                    label=self.existing_nodes[0],
+                    was_connected=False,
+                    errno=7,
+                    error_msg="an error",
+                ),
+                dict(
+                    label=self.existing_nodes[1],
+                    was_connected=False,
+                    errno=7,
+                    error_msg="an error",
+                ),
+                dict(
+                    label=self.existing_nodes[2],
+                    output=corosync_running_check_response(False),
+                ),
+            ]
+        )
+        self.config.http.scsi.unfence_node([DEV_2], communication_list=[])
+        self.env_assist.assert_raise_library_error(
+            self.command(force_flags=[reports.codes.SKIP_OFFLINE_NODES])
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    node=node,
+                    command="remote/status",
+                    reason="an error",
+                )
+                for node in self.existing_nodes[0:2]
+            ]
+            + [
+                fixture.error(
+                    reports.codes.UNABLE_TO_PERFORM_OPERATION_ON_ANY_NODE,
+                ),
+            ]
+        )
+
+
+@mock.patch.object(
+    settings,
+    "pacemaker_api_result_schema",
+    rc("pcmk_api_rng/api-result.rng"),
+)
+class UpdateScsiDevices(UpdateScsiDevicesMixin, TestCase):
     def test_update_1_to_1_devices(self):
         self.assert_command_success(
-            devices_before=DEVICES_1, devices_updated=DEVICES_1
+            devices_before=DEVICES_1,
+            devices_updated=DEVICES_1,
         )
 
     def test_update_2_to_2_devices(self):
         self.assert_command_success(
-            devices_before=DEVICES_1, devices_updated=DEVICES_1
+            devices_before=DEVICES_2,
+            devices_updated=DEVICES_2,
         )
 
     def test_update_1_to_2_devices(self):
-        self.assert_command_success()
+        self.assert_command_success(unfence=[DEV_2])
 
     def test_update_1_to_3_devices(self):
         self.assert_command_success(
-            devices_before=DEVICES_1, devices_updated=DEVICES_3
+            devices_before=DEVICES_1,
+            devices_updated=DEVICES_3,
+            unfence=[DEV_2, DEV_3],
         )
 
     def test_update_3_to_1_devices(self):
         self.assert_command_success(
-            devices_before=DEVICES_3, devices_updated=DEVICES_1
+            devices_before=DEVICES_3,
+            devices_updated=DEVICES_1,
         )
 
     def test_update_3_to_2_devices(self):
         self.assert_command_success(
-            devices_before=DEVICES_3, devices_updated=DEVICES_2
+            devices_before=DEVICES_3,
+            devices_updated=DEVICES_2,
+        )
+
+    def test_update_add_2_to_2_remove_1(self):
+        self.assert_command_success(
+            devices_before=[DEV_1, DEV_2],
+            devices_updated=[DEV_2, DEV_3, DEV_4],
+            unfence=[DEV_3, DEV_4],
         )
 
     def test_default_monitor(self):
-        self.assert_command_success()
+        self.assert_command_success(unfence=[DEV_2])
 
     def test_no_monitor_ops(self):
         self.assert_command_success(
-            resource_ops=(), lrm_monitor_ops=(), lrm_monitor_ops_updated=()
+            unfence=[DEV_2],
+            resource_ops=(),
+            lrm_monitor_ops=(),
+            lrm_monitor_ops_updated=(),
         )
 
     def test_1_monitor_with_timeout(self):
         self.assert_command_success(
+            unfence=[DEV_2],
             resource_ops=(("monitor", "30s", "10s", None),),
             lrm_monitor_ops=(("30000", DEFAULT_DIGEST, None, None),),
             lrm_monitor_ops_updated=(("30000", ALL_DIGEST, None, None),),
@@ -351,6 +783,7 @@ class UpdateScsiDevices(TestCase):
 
     def test_2_monitor_ops_with_timeouts(self):
         self.assert_command_success(
+            unfence=[DEV_2],
             resource_ops=(
                 ("monitor", "30s", "10s", None),
                 ("monitor", "40s", "20s", None),
@@ -367,6 +800,7 @@ class UpdateScsiDevices(TestCase):
 
     def test_2_monitor_ops_with_one_timeout(self):
         self.assert_command_success(
+            unfence=[DEV_2],
             resource_ops=(
                 ("monitor", "30s", "10s", None),
                 ("monitor", "60s", None, None),
@@ -383,6 +817,7 @@ class UpdateScsiDevices(TestCase):
 
     def test_various_start_ops_one_lrm_start_op(self):
         self.assert_command_success(
+            unfence=[DEV_2],
             resource_ops=(
                 ("monitor", "60s", None, None),
                 ("start", "0s", "40s", None),
@@ -394,6 +829,7 @@ class UpdateScsiDevices(TestCase):
 
     def test_1_nonrecurring_start_op_with_timeout(self):
         self.assert_command_success(
+            unfence=[DEV_2],
             resource_ops=(
                 ("monitor", "60s", None, None),
                 ("start", "0s", "40s", None),
@@ -406,32 +842,13 @@ class UpdateScsiDevices(TestCase):
     "pacemaker_api_result_schema",
     rc("pcmk_api_rng/api-result.rng"),
 )
-class TestUpdateScsiDevicesFailures(TestCase):
-    # pylint: disable=too-many-public-methods
-    def setUp(self):
-        self.env_assist, self.config = get_env_tools(self)
-
-        self.existing_nodes = ["node1", "node2", "node3"]
-        self.existing_corosync_nodes = [
-            node_fixture(node, node_id)
-            for node_id, node in enumerate(self.existing_nodes, 1)
-        ]
-        self.config.env.set_known_nodes(self.existing_nodes)
-
-    def test_pcmk_doesnt_support_digests(self):
-        self.config.runner.pcmk.is_resource_digests_supported(
-            is_supported=False
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: stonith.update_scsi_devices(
-                self.env_assist.get_env(), SCSI_STONITH_ID, ()
-            ),
-            [
-                fixture.error(
-                    reports.codes.STONITH_RESTARTLESS_UPDATE_OF_SCSI_DEVICES_NOT_SUPPORTED,
-                )
-            ],
-            expected_in_processor=False,
+class TestUpdateScsiDevicesFailures(UpdateScsiDevicesFailuresMixin, TestCase):
+    def command(self, force_flags=()):
+        return lambda: stonith.update_scsi_devices(
+            self.env_assist.get_env(),
+            SCSI_STONITH_ID,
+            DEVICES_2,
+            force_flags=force_flags,
         )
 
     def test_devices_cannot_be_empty(self):
@@ -456,6 +873,10 @@ class TestUpdateScsiDevicesFailures(TestCase):
         )
 
     def test_nonexistant_id(self):
+        """
+        lower level tested in
+        pcs_test.tier0.lib.cib.test_stonith.ValidateStonithRestartlessUpdate
+        """
         self.config.runner.pcmk.is_resource_digests_supported()
         self.config.runner.cib.load(resources=fixture_scsi())
         self.env_assist.assert_raise_library_error(
@@ -471,88 +892,6 @@ class TestUpdateScsiDevicesFailures(TestCase):
                     expected_types=["primitive"],
                     context_type="cib",
                     context_id="",
-                )
-            ]
-        )
-
-    def test_not_a_resource_id(self):
-        self.config.runner.pcmk.is_resource_digests_supported()
-        self.config.runner.cib.load(resources=fixture_scsi())
-        self.env_assist.assert_raise_library_error(
-            lambda: stonith.update_scsi_devices(
-                self.env_assist.get_env(),
-                f"{SCSI_STONITH_ID}-instance_attributes-devices",
-                DEVICES_2,
-            )
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
-                    id=f"{SCSI_STONITH_ID}-instance_attributes-devices",
-                    expected_types=["primitive"],
-                    current_type="nvpair",
-                )
-            ]
-        )
-
-    def test_not_supported_resource_type(self):
-        self.config.runner.pcmk.is_resource_digests_supported()
-        self.config.runner.cib.load(resources=fixture_scsi())
-        self.env_assist.assert_raise_library_error(
-            lambda: stonith.update_scsi_devices(
-                self.env_assist.get_env(), "dummy", DEVICES_2
-            )
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNSUPPORTED_AGENT,
-                    resource_id="dummy",
-                    resource_type="Dummy",
-                    supported_stonith_types=["fence_scsi"],
-                )
-            ]
-        )
-
-    def test_devices_option_missing(self):
-        self.config.runner.pcmk.is_resource_digests_supported()
-        self.config.runner.cib.load(resources=fixture_scsi(devices=None))
-        self.env_assist.assert_raise_library_error(
-            lambda: stonith.update_scsi_devices(
-                self.env_assist.get_env(), SCSI_STONITH_ID, DEVICES_2
-            )
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM,
-                    reason=(
-                        "no devices option configured for stonith device "
-                        f"'{SCSI_STONITH_ID}'"
-                    ),
-                    reason_type=reports.const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_OTHER,
-                )
-            ]
-        )
-
-    def test_devices_option_empty(self):
-        self.config.runner.pcmk.is_resource_digests_supported()
-        self.config.runner.cib.load(resources=fixture_scsi(devices=""))
-        self.env_assist.assert_raise_library_error(
-            lambda: stonith.update_scsi_devices(
-                self.env_assist.get_env(), SCSI_STONITH_ID, DEVICES_2
-            )
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM,
-                    reason=(
-                        "no devices option configured for stonith device "
-                        f"'{SCSI_STONITH_ID}'"
-                    ),
-                    reason_type=reports.const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_OTHER,
                 )
             ]
         )
@@ -786,371 +1125,165 @@ class TestUpdateScsiDevicesFailures(TestCase):
             expected_in_processor=False,
         )
 
-    def test_node_missing_name_and_missing_auth_token(self):
-        self.config.runner.pcmk.is_resource_digests_supported()
-        self.config.runner.cib.load(
-            resources=fixture_scsi(),
-            status=_fixture_status_lrm_ops(SCSI_STONITH_ID),
-        )
-        self.config.runner.pcmk.load_state(
-            resources=FIXTURE_CRM_MON_RES_RUNNING_1, nodes=FIXTURE_CRM_MON_NODES
-        )
-        self.config.runner.pcmk.resource_digests(
-            SCSI_STONITH_ID,
-            SCSI_NODE,
-            name="start.op.digests",
-            stdout=fixture_digests_xml(
-                SCSI_STONITH_ID, SCSI_NODE, devices=",".join(DEVICES_2)
-            ),
-            args=["devices={}".format(",".join(DEVICES_2))],
-        )
-        self.config.runner.pcmk.resource_digests(
-            SCSI_STONITH_ID,
-            SCSI_NODE,
-            name="monitor.op.digests",
-            stdout=fixture_digests_xml(
-                SCSI_STONITH_ID, SCSI_NODE, devices=",".join(DEVICES_2)
-            ),
-            args=[
-                "devices={}".format(",".join(DEVICES_2)),
-                "CRM_meta_interval=60000",
-            ],
-        )
-        self.config.corosync_conf.load_content(
-            corosync_conf_fixture(
-                self.existing_corosync_nodes
-                + [[("ring0_addr", "custom_node"), ("nodeid", "5")]],
-            )
-        )
-        self.config.env.set_known_nodes(self.existing_nodes[:-1])
-        self.env_assist.assert_raise_library_error(
-            lambda: stonith.update_scsi_devices(
-                self.env_assist.get_env(), SCSI_STONITH_ID, DEVICES_2
-            ),
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
-                    fatal=True,
-                ),
-                fixture.error(
-                    reports.codes.HOST_NOT_FOUND,
-                    host_list=[self.existing_nodes[-1]],
-                ),
-            ]
+
+@mock.patch.object(
+    settings,
+    "pacemaker_api_result_schema",
+    rc("pcmk_api_rng/api-result.rng"),
+)
+class UpdateScsiDevicesAddRemove(UpdateScsiDevicesMixin, TestCase):
+    def test_add_1_to_1(self):
+        self.assert_command_success(
+            devices_before=[DEV_1],
+            devices_updated=[DEV_1, DEV_2],
+            devices_add=[DEV_2],
+            devices_remove=[],
+            unfence=[DEV_2],
         )
 
-    def _unfence_failure_common_calls(self):
-        devices = ",".join(DEVICES_2)
-        self.config.runner.pcmk.is_resource_digests_supported()
-        self.config.runner.cib.load(
-            resources=fixture_scsi(),
-            status=_fixture_status_lrm_ops(SCSI_STONITH_ID),
-        )
-        self.config.runner.pcmk.load_state(
-            resources=FIXTURE_CRM_MON_RES_RUNNING_1, nodes=FIXTURE_CRM_MON_NODES
-        )
-        self.config.runner.pcmk.resource_digests(
-            SCSI_STONITH_ID,
-            SCSI_NODE,
-            name="start.op.digests",
-            stdout=fixture_digests_xml(
-                SCSI_STONITH_ID,
-                SCSI_NODE,
-                devices=devices,
-            ),
-            args=[f"devices={devices}"],
-        )
-        self.config.runner.pcmk.resource_digests(
-            SCSI_STONITH_ID,
-            SCSI_NODE,
-            name="monitor.op.digests",
-            stdout=fixture_digests_xml(
-                SCSI_STONITH_ID,
-                SCSI_NODE,
-                devices=devices,
-            ),
-            args=[
-                f"devices={devices}",
-                "CRM_meta_interval=60000",
-            ],
-        )
-        self.config.corosync_conf.load_content(
-            corosync_conf_fixture(self.existing_corosync_nodes)
+    def test_add_2_to_1(self):
+        self.assert_command_success(
+            devices_before=[DEV_1],
+            devices_updated=[DEV_1, DEV_2, DEV_3],
+            devices_add=[DEV_2, DEV_3],
+            devices_remove=[],
+            unfence=[DEV_2, DEV_3],
         )
 
-    def test_unfence_failure_unable_to_connect(self):
-        self._unfence_failure_common_calls()
-        self.config.http.corosync.get_corosync_online_targets(
-            node_labels=self.existing_nodes
-        )
-        self.config.http.scsi.unfence_node(
-            DEVICES_2,
-            communication_list=[
-                dict(
-                    label=self.existing_nodes[0],
-                    raw_data=json.dumps(
-                        dict(devices=DEVICES_2, node=self.existing_nodes[0])
-                    ),
-                    was_connected=False,
-                    error_msg="errA",
-                ),
-                dict(
-                    label=self.existing_nodes[1],
-                    raw_data=json.dumps(
-                        dict(devices=DEVICES_2, node=self.existing_nodes[1])
-                    ),
-                    output=json.dumps(
-                        dto.to_dict(
-                            communication.dto.InternalCommunicationResultDto(
-                                status=communication.const.COM_STATUS_ERROR,
-                                status_msg="error",
-                                report_list=[
-                                    reports.ReportItem.error(
-                                        reports.messages.StonithUnfencingFailed(
-                                            "errB"
-                                        )
-                                    ).to_dto()
-                                ],
-                                data=None,
-                            )
-                        )
-                    ),
-                ),
-                dict(
-                    label=self.existing_nodes[2],
-                    raw_data=json.dumps(
-                        dict(devices=DEVICES_2, node=self.existing_nodes[2])
-                    ),
-                ),
-            ],
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: stonith.update_scsi_devices(
-                self.env_assist.get_env(), SCSI_STONITH_ID, DEVICES_2
-            ),
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
-                    node=self.existing_nodes[0],
-                    command="api/v1/scsi-unfence-node/v1",
-                    reason="errA",
-                ),
-                fixture.error(
-                    reports.codes.STONITH_UNFENCING_FAILED,
-                    reason="errB",
-                    context=reports.dto.ReportItemContextDto(
-                        node=self.existing_nodes[1],
-                    ),
-                ),
-            ]
+    def test_add_2_to_2_and_remove_1(self):
+        self.assert_command_success(
+            devices_before=[DEV_1, DEV_2],
+            devices_updated=[DEV_2, DEV_3, DEV_4],
+            devices_add=[DEV_3, DEV_4],
+            devices_remove=[DEV_1],
+            unfence=[DEV_3, DEV_4],
         )
 
-    def test_unfence_failure_agent_script_failed(self):
-        self._unfence_failure_common_calls()
-        self.config.http.corosync.get_corosync_online_targets(
-            node_labels=self.existing_nodes
-        )
-        self.config.http.scsi.unfence_node(
-            DEVICES_2,
-            communication_list=[
-                dict(
-                    label=self.existing_nodes[0],
-                    raw_data=json.dumps(
-                        dict(devices=DEVICES_2, node=self.existing_nodes[0])
-                    ),
-                ),
-                dict(
-                    label=self.existing_nodes[1],
-                    raw_data=json.dumps(
-                        dict(devices=DEVICES_2, node=self.existing_nodes[1])
-                    ),
-                    output=json.dumps(
-                        dto.to_dict(
-                            communication.dto.InternalCommunicationResultDto(
-                                status=communication.const.COM_STATUS_ERROR,
-                                status_msg="error",
-                                report_list=[
-                                    reports.ReportItem.error(
-                                        reports.messages.StonithUnfencingFailed(
-                                            "errB"
-                                        )
-                                    ).to_dto()
-                                ],
-                                data=None,
-                            )
-                        )
-                    ),
-                ),
-                dict(
-                    label=self.existing_nodes[2],
-                    raw_data=json.dumps(
-                        dict(devices=DEVICES_2, node=self.existing_nodes[2])
-                    ),
-                ),
-            ],
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: stonith.update_scsi_devices(
-                self.env_assist.get_env(), SCSI_STONITH_ID, DEVICES_2
-            ),
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.STONITH_UNFENCING_FAILED,
-                    reason="errB",
-                    context=reports.dto.ReportItemContextDto(
-                        node=self.existing_nodes[1],
-                    ),
-                ),
-            ]
+    def test_remove_1_from_2(self):
+        self.assert_command_success(
+            devices_before=[DEV_1, DEV_2],
+            devices_updated=[DEV_2],
+            devices_add=[],
+            devices_remove=[DEV_1],
         )
 
-    def test_corosync_targets_unable_to_connect(self):
-        self._unfence_failure_common_calls()
-        self.config.http.corosync.get_corosync_online_targets(
-            communication_list=[
-                dict(
-                    label=self.existing_nodes[0],
-                    output=corosync_running_check_response(True),
-                ),
-            ]
-            + [
-                dict(
-                    label=node,
-                    was_connected=False,
-                    errno=7,
-                    error_msg="an error",
-                )
-                for node in self.existing_nodes[1:]
-            ]
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: stonith.update_scsi_devices(
-                self.env_assist.get_env(), SCSI_STONITH_ID, DEVICES_2
-            ),
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
-                    force_code=reports.codes.SKIP_OFFLINE_NODES,
-                    node=node,
-                    command="remote/status",
-                    reason="an error",
-                )
-                for node in self.existing_nodes[1:]
-            ]
+    def test_remove_2_from_3(self):
+        self.assert_command_success(
+            devices_before=[DEV_1, DEV_2, DEV_3],
+            devices_updated=[DEV_3],
+            devices_add=[],
+            devices_remove=[DEV_2, DEV_1],
         )
 
-    def test_corosync_targets_skip_offline_unfence_node_running_corosync(
-        self,
-    ):
-        self._unfence_failure_common_calls()
-        self.config.http.corosync.get_corosync_online_targets(
-            communication_list=[
-                dict(
-                    label=self.existing_nodes[0],
-                    output=corosync_running_check_response(True),
-                ),
-                dict(
-                    label=self.existing_nodes[1],
-                    output=corosync_running_check_response(False),
-                ),
-                dict(
-                    label=self.existing_nodes[2],
-                    was_connected=False,
-                    errno=7,
-                    error_msg="an error",
-                ),
-            ]
+    def test_remove_2_from_3_add_1(self):
+        self.assert_command_success(
+            devices_before=[DEV_1, DEV_2, DEV_3],
+            devices_updated=[DEV_3, DEV_4],
+            devices_add=[DEV_4],
+            devices_remove=[DEV_2, DEV_1],
+            unfence=[DEV_4],
         )
-        self.config.http.scsi.unfence_node(
-            DEVICES_2,
-            communication_list=[
-                dict(
-                    label=self.existing_nodes[0],
-                    raw_data=json.dumps(
-                        dict(devices=DEVICES_2, node=self.existing_nodes[0])
-                    ),
-                ),
-            ],
+
+    def test_add_1_remove_1(self):
+        self.assert_command_success(
+            devices_before=[DEV_1, DEV_2],
+            devices_updated=[DEV_2, DEV_3],
+            devices_add=[DEV_3],
+            devices_remove=[DEV_1],
+            unfence=[DEV_3],
         )
-        self.config.env.push_cib(
-            resources=fixture_scsi(devices=DEVICES_2),
-            status=_fixture_status_lrm_ops(
-                SCSI_STONITH_ID,
-                lrm_start_ops=DEFAULT_LRM_START_OPS_UPDATED,
-                lrm_monitor_ops=DEFAULT_LRM_MONITOR_OPS_UPDATED,
-            ),
+
+    def test_add_2_remove_2(self):
+        self.assert_command_success(
+            devices_before=[DEV_1, DEV_2],
+            devices_updated=[DEV_3, DEV_4],
+            devices_add=[DEV_3, DEV_4],
+            devices_remove=[DEV_1, DEV_2],
+            unfence=[DEV_3, DEV_4],
         )
-        stonith.update_scsi_devices(
+
+
+@mock.patch.object(
+    settings,
+    "pacemaker_api_result_schema",
+    rc("pcmk_api_rng/api-result.rng"),
+)
+class TestUpdateScsiDevicesAddRemoveFailures(
+    UpdateScsiDevicesFailuresMixin, TestCase
+):
+    def command(self, force_flags=()):
+        return lambda: stonith.update_scsi_devices_add_remove(
             self.env_assist.get_env(),
             SCSI_STONITH_ID,
-            DEVICES_2,
-            force_flags=[reports.codes.SKIP_OFFLINE_NODES],
+            [DEV_2],
+            [],
+            force_flags=force_flags,
+        )
+
+    def test_add_remove_are_empty(self):
+        """
+        lower level tested in
+        pcs_test/tier0/lib/test_validate.ValidateAddRemoveItems
+        """
+        self.config.runner.pcmk.is_resource_digests_supported()
+        self.config.runner.cib.load(resources=fixture_scsi())
+        self.env_assist.assert_raise_library_error(
+            lambda: stonith.update_scsi_devices_add_remove(
+                self.env_assist.get_env(), SCSI_STONITH_ID, (), ()
+            )
         )
         self.env_assist.assert_reports(
             [
-                fixture.warn(
-                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
-                    node=self.existing_nodes[2],
-                    command="remote/status",
-                    reason="an error",
-                ),
+                fixture.error(
+                    reports.codes.ADD_REMOVE_ITEMS_NOT_SPECIFIED,
+                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE,
+                    item_type="device",
+                )
             ]
         )
 
-    def test_corosync_targets_unable_to_perform_unfencing_operation(
-        self,
-    ):
-        self._unfence_failure_common_calls()
-        self.config.http.corosync.get_corosync_online_targets(
-            communication_list=[
-                dict(
-                    label=self.existing_nodes[0],
-                    was_connected=False,
-                    errno=7,
-                    error_msg="an error",
-                ),
-                dict(
-                    label=self.existing_nodes[1],
-                    was_connected=False,
-                    errno=7,
-                    error_msg="an error",
-                ),
-                dict(
-                    label=self.existing_nodes[2],
-                    output=corosync_running_check_response(False),
-                ),
-            ]
-        )
-        self.config.http.scsi.unfence_node(DEVICES_2, communication_list=[])
+    def test_not_supported_resource_type(self):
+        """
+        lower level tested in
+        pcs_test.tier0.lib.cib.test_stonith.ValidateStonithRestartlessUpdate
+        """
+        self.config.runner.pcmk.is_resource_digests_supported()
+        self.config.runner.cib.load(resources=fixture_scsi())
         self.env_assist.assert_raise_library_error(
-            lambda: stonith.update_scsi_devices(
-                self.env_assist.get_env(),
-                SCSI_STONITH_ID,
-                DEVICES_2,
-                force_flags=[reports.codes.SKIP_OFFLINE_NODES],
-            ),
+            lambda: stonith.update_scsi_devices_add_remove(
+                self.env_assist.get_env(), "dummy", [DEV_2], [DEV_1]
+            )
         )
         self.env_assist.assert_reports(
             [
-                fixture.warn(
-                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
-                    node=node,
-                    command="remote/status",
-                    reason="an error",
-                )
-                for node in self.existing_nodes[0:2]
-            ]
-            + [
                 fixture.error(
-                    reports.codes.UNABLE_TO_PERFORM_OPERATION_ON_ANY_NODE,
-                ),
+                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNSUPPORTED_AGENT,
+                    resource_id="dummy",
+                    resource_type="Dummy",
+                    supported_stonith_types=["fence_scsi"],
+                )
             ]
+        )
+
+    def test_stonith_resource_is_running_on_more_than_one_node(self):
+        self.config.runner.pcmk.is_resource_digests_supported()
+        self.config.runner.cib.load(resources=fixture_scsi())
+        self.config.runner.pcmk.load_state(
+            resources=FIXTURE_CRM_MON_RES_RUNNING_2, nodes=FIXTURE_CRM_MON_NODES
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: stonith.update_scsi_devices_add_remove(
+                self.env_assist.get_env(), SCSI_STONITH_ID, [DEV_2], []
+            ),
+            [
+                fixture.error(
+                    reports.codes.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM,
+                    reason=(
+                        f"resource '{SCSI_STONITH_ID}' is running on more than "
+                        "1 node"
+                    ),
+                    reason_type=reports.const.STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_OTHER,
+                )
+            ],
+            expected_in_processor=False,
         )
