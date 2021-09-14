@@ -131,6 +131,23 @@ def _add_s(word):
     return word + "s"
 
 
+def get_plural(singular: str) -> str:
+    """
+    Take singular word form and return plural.
+
+    singular -- singular word (like: is, do, node)
+    """
+    common_plurals = {
+        "is": "are",
+        "has": "have",
+        "does": "do",
+        "it": "they",
+    }
+    if singular in common_plurals:
+        return common_plurals[singular]
+    return _add_s(singular)
+
+
 def format_plural(
     depends_on: Union[int, Iterable[Any]],
     singular: str,
@@ -145,18 +162,11 @@ def format_plural(
     singular -- singular word (like: is, do, node)
     plural -- optional irregular plural form
     """
-    common_plurals = {
-        "is": "are",
-        "has": "have",
-        "does": "do",
-    }
     if not _is_multiple(depends_on):
         return singular
     if plural:
         return plural
-    if singular in common_plurals:
-        return common_plurals[singular]
-    return _add_s(singular)
+    return get_plural(singular)
 
 
 T = TypeVar("T")

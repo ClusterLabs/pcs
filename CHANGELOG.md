@@ -1,5 +1,14 @@
 # Change Log
 
+## [Unreleased]
+
+### Added
+-  Add add/remove cli syntax for command `pcs stonith update-scsi-devices`
+   ([rhbz#1992668])
+
+[rhbz#1992668]: https://bugzilla.redhat.com/show_bug.cgi?id=1992668
+
+
 ## [0.11.1.alpha.1] - 2021-08-26
 
 ### Added

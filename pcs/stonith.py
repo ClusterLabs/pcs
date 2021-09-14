@@ -880,24 +880,43 @@ def stonith_update_scsi_devices(lib, argv, modifiers):
       * --skip-offline - skip unreachable nodes
     """
     modifiers.ensure_only_supported("--request-timeout", "--skip-offline")
+    force_flags = []
+    if modifiers.get("--skip-offline"):
+        force_flags.append(reports.codes.SKIP_OFFLINE_NODES)
+
     if len(argv) < 2:
         raise CmdLineInputError()
     stonith_id = argv[0]
     parsed_args = parse_args.group_by_keywords(
         argv[1:],
-        ["set"],
+        ["set", "add", "remove", "delete"],
         keyword_repeat_allowed=False,
         only_found_keywords=True,
     )
-    set_args = parsed_args["set"] if "set" in parsed_args else []
-    if not set_args:
-        raise CmdLineInputError(
-            show_both_usage_and_message=True,
-            hint="You must specify set devices to be updated",
-        )
-    force_flags = []
-    if modifiers.get("--skip-offline"):
-        force_flags.append(reports.codes.SKIP_OFFLINE_NODES)
-    lib.stonith.update_scsi_devices(
-        stonith_id, set_args, force_flags=force_flags
+    cmd_exception = CmdLineInputError(
+        show_both_usage_and_message=True,
+        hint=(
+            "You must specify either list of set devices or at least one device"
+            " for add or delete/remove devices"
+        ),
     )
+    if "set" in parsed_args and {"add", "remove", "delete"} & set(
+        parsed_args.keys()
+    ):
+        raise cmd_exception
+    if "set" in parsed_args:
+        if not parsed_args["set"]:
+            raise cmd_exception
+        lib.stonith.update_scsi_devices(
+            stonith_id, parsed_args["set"], force_flags=force_flags
+        )
+    else:
+        for key in ("add", "remove", "delete"):
+            if key in parsed_args and not parsed_args[key]:
+                raise cmd_exception
+        lib.stonith.update_scsi_devices_add_remove(
+            stonith_id,
+            parsed_args.get("add", []),
+            parsed_args.get("delete", []) + parsed_args.get("remove", []),
+            force_flags=force_flags,
+        )

@@ -158,15 +158,41 @@ class SbdDeviceSetup(TestCase):
 
 
 class StonithUpdateScsiDevices(TestCase):
+    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.lib = mock.Mock(spec_set=["stonith"])
-        self.stonith = mock.Mock(spec_set=["update_scsi_devices"])
+        self.stonith = mock.Mock(
+            spec_set=["update_scsi_devices", "update_scsi_devices_add_remove"]
+        )
         self.lib.stonith = self.stonith
 
     def assert_called_with(self, stonith_id, set_devices, force_flags):
         self.stonith.update_scsi_devices.assert_called_once_with(
             stonith_id, set_devices, force_flags=force_flags
         )
+        self.stonith.update_scsi_devices_add_remove.assert_not_called()
+
+    def assert_add_remove_called_with(
+        self, stonith_id, add_devices, remove_devices, force_flags
+    ):
+        self.stonith.update_scsi_devices_add_remove.assert_called_once_with(
+            stonith_id, add_devices, remove_devices, force_flags=force_flags
+        )
+        self.stonith.update_scsi_devices.assert_not_called()
+
+    def assert_bad_syntax_cli_exception(self, args):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.call_cmd(args)
+        self.assertEqual(cm.exception.message, None)
+        self.assertEqual(
+            cm.exception.hint,
+            (
+                "You must specify either list of set devices or at least one "
+                "device for add or delete/remove devices"
+            ),
+        )
+        self.stonith.update_scsi_devices.assert_not_called()
+        self.stonith.update_scsi_devices_add_remove.assert_not_called()
 
     def call_cmd(self, argv, modifiers=None):
         stonith.stonith_update_scsi_devices(
@@ -183,44 +209,141 @@ class StonithUpdateScsiDevices(TestCase):
             self.call_cmd(["stonith-id"])
         self.assertEqual(cm.exception.message, None)
 
-    def test_not_set_keyword(self):
+    def test_unknown_keyword(self):
         with self.assertRaises(CmdLineInputError) as cm:
             self.call_cmd(["stonith-id", "unset"])
         self.assertEqual(cm.exception.message, None)
 
-    def test_only_set_keyword(self):
-        with self.assertRaises(CmdLineInputError) as cm:
-            self.call_cmd(["stonith-id", "set"])
-        self.assertEqual(cm.exception.message, None)
-        self.assertEqual(
-            cm.exception.hint, "You must specify set devices to be updated"
-        )
-
-    def test_one_device(self):
-        self.call_cmd(["stonith-id", "set", "device1"])
-        self.assert_called_with("stonith-id", ["device1"], [])
-
-    def test_more_devices(self):
-        self.call_cmd(["stonith-id", "set", "device1", "device2"])
-        self.assert_called_with("stonith-id", ["device1", "device2"], [])
-
     def test_supported_options(self):
         self.call_cmd(
-            ["stonith-id", "set", "device1", "device2"],
+            ["stonith-id", "set", "d1", "d2"],
             {"skip-offline": True, "request-timeout": 60},
         )
         self.assert_called_with(
             "stonith-id",
-            ["device1", "device2"],
+            ["d1", "d2"],
             [reports.codes.SKIP_OFFLINE_NODES],
         )
 
     def test_unsupported_options(self):
         with self.assertRaises(CmdLineInputError) as cm:
-            self.call_cmd(
-                ["stonith-id", "set", "device1", "device2"], {"force": True}
-            )
+            self.call_cmd(["stonith-id", "set", "d1", "d2"], {"force": True})
         self.assertEqual(
             cm.exception.message,
             "Specified option '--force' is not supported in this command",
+        )
+
+    def test_only_set_keyword(self):
+        self.assert_bad_syntax_cli_exception(["stonith-id", "set"])
+
+    def test_only_add_keyword(self):
+        self.assert_bad_syntax_cli_exception(["stonith-id", "add"])
+
+    def test_only_remove_keyword(self):
+        self.assert_bad_syntax_cli_exception(["stonith-id", "remove"])
+
+    def test_only_delete_keyword(self):
+        self.assert_bad_syntax_cli_exception(["stonith-id", "delete"])
+
+    def test_add_and_empty_remove(self):
+        self.assert_bad_syntax_cli_exception(
+            ["stonith-id", "add", "d1", "remove"]
+        )
+
+    def test_add_and_empty_delete(self):
+        self.assert_bad_syntax_cli_exception(
+            ["stonith-id", "add", "d1", "delete"]
+        )
+
+    def test_empty_add_and_remove(self):
+        self.assert_bad_syntax_cli_exception(
+            ["stonith-id", "add", "remove", "d1"]
+        )
+
+    def test_empty_add_and_delete(self):
+        self.assert_bad_syntax_cli_exception(
+            ["stonith-id", "add", "delete", "d1"]
+        )
+
+    def test_empty_remove_and_delete(self):
+        self.assert_bad_syntax_cli_exception(
+            ["stonith-id", "remove", "delete", "d1"]
+        )
+
+    def test_empty_delete_and_remove(self):
+        self.assert_bad_syntax_cli_exception(
+            ["stonith-id", "delete", "remove", "d1"]
+        )
+
+    def test_empty_add_empty_remove_empty_delete(self):
+        self.assert_bad_syntax_cli_exception(
+            ["stonith-id", "add", "delete", "remove"]
+        )
+
+    def test_set_add_remove_delete_devices(self):
+        self.assert_bad_syntax_cli_exception(
+            [
+                "stonith-id",
+                "set",
+                "add",
+                "d2",
+                "remove",
+                "d3",
+                "delete",
+                "d4",
+            ]
+        )
+
+    def test_set_devices(self):
+        self.call_cmd(["stonith-id", "set", "d1", "d2"])
+        self.assert_called_with("stonith-id", ["d1", "d2"], [])
+
+    def test_add_devices(self):
+        self.call_cmd(["stonith-id", "add", "d1", "d2"])
+        self.assert_add_remove_called_with("stonith-id", ["d1", "d2"], [], [])
+
+    def test_remove_devices(self):
+        self.call_cmd(["stonith-id", "remove", "d1", "d2"])
+        self.assert_add_remove_called_with("stonith-id", [], ["d1", "d2"], [])
+
+    def test_delete_devices(self):
+        self.call_cmd(["stonith-id", "delete", "d1", "d2"])
+        self.assert_add_remove_called_with("stonith-id", [], ["d1", "d2"], [])
+
+    def test_add_remove_devices(self):
+        self.call_cmd(["stonith-id", "add", "d1", "d2", "remove", "d3", "d4"])
+        self.assert_add_remove_called_with(
+            "stonith-id", ["d1", "d2"], ["d3", "d4"], []
+        )
+
+    def test_add_delete_devices(self):
+        self.call_cmd(["stonith-id", "add", "d1", "d2", "delete", "d3", "d4"])
+        self.assert_add_remove_called_with(
+            "stonith-id", ["d1", "d2"], ["d3", "d4"], []
+        )
+
+    def test_add_delete_remove_devices(self):
+        self.call_cmd(
+            [
+                "stonith-id",
+                "add",
+                "d1",
+                "d2",
+                "delete",
+                "d3",
+                "d4",
+                "remove",
+                "d5",
+            ]
+        )
+        self.assert_add_remove_called_with(
+            "stonith-id", ["d1", "d2"], ["d3", "d4", "d5"], []
+        )
+
+    def test_remove_delete_devices(self):
+        self.call_cmd(
+            ["stonith-id", "remove", "d2", "d1", "delete", "d4", "d3"]
+        )
+        self.assert_add_remove_called_with(
+            "stonith-id", [], ["d4", "d3", "d2", "d1"], []
         )

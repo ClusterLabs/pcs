@@ -1,5 +1,7 @@
 from typing import NewType
 
+AddRemoveContainerType = NewType("AddRemoveContainerType", str)
+AddRemoveItemType = NewType("AddRemoveItemType", str)
 BoothConfigUsedWhere = NewType("BoothConfigUsedWhere", str)
 DefaultAddressSource = NewType("DefaultAddressSource", str)
 FenceHistoryCommandType = NewType("FenceHistoryCommandType", str)

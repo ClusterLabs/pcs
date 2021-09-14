@@ -1,5 +1,5 @@
 # pylint: disable=protected-access
-from unittest import TestCase, mock
+from unittest import TestCase
 
 from pcs.common import str_tools as tools
 
@@ -124,73 +124,48 @@ class AddSTest(TestCase):
         self.assertEqual(tools._add_s("church"), "churches")
 
 
-@mock.patch("pcs.common.str_tools._add_s")
-@mock.patch("pcs.common.str_tools._is_multiple")
+class GetPluralTest(TestCase):
+    def test_common_plural(self):
+        self.assertEqual("are", tools.get_plural("is"))
+
+    def test_add_s(self):
+        self.assertEqual("pieces", tools.get_plural("piece"))
+
+
 class FormatPluralTest(TestCase):
-    def test_is_sg(self, mock_is_multiple, mock_add_s):
-        mock_is_multiple.return_value = False
+    def test_is_sg(self):
         self.assertEqual("is", tools.format_plural(1, "is"))
-        mock_add_s.assert_not_called()
-        mock_is_multiple.assert_called_once_with(1)
 
-    def test_is_pl(self, mock_is_multiple, mock_add_s):
-        mock_is_multiple.return_value = True
+    def test_is_pl(self):
         self.assertEqual("are", tools.format_plural(2, "is"))
-        mock_add_s.assert_not_called()
-        mock_is_multiple.assert_called_once_with(2)
 
-    def test_do_sg(self, mock_is_multiple, mock_add_s):
-        mock_is_multiple.return_value = False
+    def test_do_sg(self):
         self.assertEqual("does", tools.format_plural("he", "does"))
-        mock_add_s.assert_not_called()
-        mock_is_multiple.assert_called_once_with("he")
 
-    def test_do_pl(self, mock_is_multiple, mock_add_s):
-        mock_is_multiple.return_value = True
+    def test_do_pl(self):
         self.assertEqual("do", tools.format_plural(["he", "she"], "does"))
-        mock_add_s.assert_not_called()
-        mock_is_multiple.assert_called_once_with(["he", "she"])
 
-    def test_have_sg(self, mock_is_multiple, mock_add_s):
-        mock_is_multiple.return_value = False
+    def test_have_sg(self):
         self.assertEqual("has", tools.format_plural("he", "has"))
-        mock_add_s.assert_not_called()
-        mock_is_multiple.assert_called_once_with("he")
 
-    def test_have_pl(self, mock_is_multiple, mock_add_s):
-        mock_is_multiple.return_value = True
+    def test_have_pl(self):
         self.assertEqual("have", tools.format_plural(["he", "she"], "has"))
-        mock_add_s.assert_not_called()
-        mock_is_multiple.assert_called_once_with(["he", "she"])
 
-    def test_plural_sg(self, mock_is_multiple, mock_add_s):
-        mock_is_multiple.return_value = False
+    def test_plural_sg(self):
         self.assertEqual(
             "singular", tools.format_plural(1, "singular", "plural")
         )
-        mock_add_s.assert_not_called()
-        mock_is_multiple.assert_called_once_with(1)
 
-    def test_plural_pl(self, mock_is_multiple, mock_add_s):
-        mock_is_multiple.return_value = True
+    def test_plural_pl(self):
         self.assertEqual(
             "plural", tools.format_plural(10, "singular", "plural")
         )
-        mock_add_s.assert_not_called()
-        mock_is_multiple.assert_called_once_with(10)
 
-    def test_regular_sg(self, mock_is_multiple, mock_add_s):
-        mock_is_multiple.return_value = False
+    def test_regular_sg(self):
         self.assertEqual("greeting", tools.format_plural(1, "greeting"))
-        mock_add_s.assert_not_called()
-        mock_is_multiple.assert_called_once_with(1)
 
-    def test_regular_pl(self, mock_is_multiple, mock_add_s):
-        mock_add_s.return_value = "greetings"
-        mock_is_multiple.return_value = True
+    def test_regular_pl(self):
         self.assertEqual("greetings", tools.format_plural(10, "greeting"))
-        mock_add_s.assert_called_once_with("greeting")
-        mock_is_multiple.assert_called_once_with(10)
 
 
 class FormatList(TestCase):
