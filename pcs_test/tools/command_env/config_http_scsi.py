@@ -14,7 +14,8 @@ class ScsiShortcuts:
 
     def unfence_node(
         self,
-        devices,
+        original_devices=(),
+        updated_devices=(),
         node_labels=None,
         communication_list=None,
         name="http.scsi.unfence_node",
@@ -22,7 +23,8 @@ class ScsiShortcuts:
         """
         Create a calls for node unfencing
 
-        list devices -- list of scsi devices
+        list original_devices -- list of scsi devices before an update
+        list updated_devices -- list of scsi devices after an update
         list node_labels -- create success responses from these nodes
         list communication_list -- use these custom responses
         string name -- the key of this call
@@ -39,7 +41,13 @@ class ScsiShortcuts:
             communication_list = [
                 dict(
                     label=node,
-                    raw_data=json.dumps(dict(devices=devices, node=node)),
+                    raw_data=json.dumps(
+                        dict(
+                            node=node,
+                            original_devices=original_devices,
+                            updated_devices=updated_devices,
+                        )
+                    ),
                 )
                 for node in node_labels
             ]
@@ -47,7 +55,7 @@ class ScsiShortcuts:
             self.__calls,
             name,
             communication_list,
-            action="api/v1/scsi-unfence-node/v1",
+            action="api/v1/scsi-unfence-node/v2",
             output=json.dumps(
                 to_dict(
                     communication.dto.InternalCommunicationResultDto(

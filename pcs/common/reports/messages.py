@@ -2783,6 +2783,47 @@ class StonithUnfencingFailed(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class StonithUnfencingDeviceStatusFailed(ReportItemMessage):
+    """
+    Unfencing failed on a cluster node.
+    """
+
+    device: str
+    reason: str
+
+    _code = codes.STONITH_UNFENCING_DEVICE_STATUS_FAILED
+
+    @property
+    def message(self) -> str:
+        return (
+            "Unfencing failed, unable to check status of device "
+            f"'{self.device}': {self.reason}"
+        )
+
+
+@dataclass(frozen=True)
+class StonithUnfencingSkippedDevicesFenced(ReportItemMessage):
+    """
+    Unfencing skipped on a cluster node, because fenced devices were found on
+    the node.
+    """
+
+    devices: List[str]
+
+    _code = codes.STONITH_UNFENCING_SKIPPED_DEVICES_FENCED
+
+    @property
+    def message(self) -> str:
+        return (
+            "Unfencing skipped, {device_pl} {devices} {is_pl} fenced"
+        ).format(
+            device_pl=format_plural(self.devices, "device"),
+            devices=format_list(self.devices),
+            is_pl=format_plural(self.devices, "is", "are"),
+        )
+
+
+@dataclass(frozen=True)
 class StonithRestartlessUpdateUnableToPerform(ReportItemMessage):
     """
     Unable to update scsi devices without restart for various reason

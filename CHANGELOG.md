@@ -6,11 +6,12 @@
 -  Add add/remove cli syntax for command `pcs stonith update-scsi-devices`
    ([rhbz#1992668])
 
-
 ### Fixed
 - Fixed an error when creating a resource which defines 'depth' attribute for
   its operations ([rhbz#1998454])
+- Do not unfence newly added devices on fenced cluster nodes ([rhbz#1991654])
 
+[rhbz#1991654]: https://bugzilla.redhat.com/show_bug.cgi?id=1991654
 [rhbz#1992668]: https://bugzilla.redhat.com/show_bug.cgi?id=1992668
 [rhbz#1998454]: https://bugzilla.redhat.com/show_bug.cgi?id=1998454
 

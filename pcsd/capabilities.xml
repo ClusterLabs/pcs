@@ -1892,11 +1892,13 @@
         pcs commands: stonith update-scsi-devices
       </description>
     </capability>
-    <capability id="pcmk.stonith.scsi-unfence-node" in-pcs="0" in-pcsd="1">
+    <capability id="pcmk.stonith.scsi-unfence-node-v2" in-pcs="0" in-pcsd="1">
       <description>
-        Unfence scsi devices on a cluster node.
+        Unfence scsi devices on a cluster node. In comparison with v1, only
+        newly added devices are unfenced. In case any existing device is
+        fenced, unfencing will be skipped.
 
-        daemon urls: /api/v1/scsi-unfence-node/v1
+        daemon urls: /api/v1/scsi-unfence-node/v2
       </description>
     </capability>
     <capability id="pcmk.stonith.enable-disable" in-pcs="1" in-pcsd="1">

@@ -1,4 +1,5 @@
 import json
+from typing import Iterable
 
 from dacite import DaciteError
 
@@ -26,9 +27,15 @@ class Unfence(
     MarkSuccessfulMixin,
     RunRemotelyBase,
 ):
-    def __init__(self, report_processor, devices):
+    def __init__(
+        self,
+        report_processor: reports.ReportProcessor,
+        original_devices: Iterable[str],
+        updated_devices: Iterable[str],
+    ) -> None:
         super().__init__(report_processor)
-        self._devices = devices
+        self._original_devices = original_devices
+        self._updated_devices = updated_devices
 
     def _get_request_data(self):
         return None
@@ -38,9 +45,13 @@ class Unfence(
             Request(
                 target,
                 RequestData(
-                    "api/v1/scsi-unfence-node/v1",
+                    "api/v1/scsi-unfence-node/v2",
                     data=json.dumps(
-                        {"devices": self._devices, "node": target.label}
+                        dict(
+                            node=target.label,
+                            original_devices=self._original_devices,
+                            updated_devices=self._updated_devices,
+                        )
                     ),
                 ),
             )
@@ -48,7 +59,9 @@ class Unfence(
         ]
 
     def _process_response(self, response):
-        report_item = response_to_report_item(response)
+        report_item = response_to_report_item(
+            response, report_pcsd_too_old_on_404=True
+        )
         if report_item:
             self._report(report_item)
             return
@@ -57,15 +70,14 @@ class Unfence(
             result = from_dict(
                 InternalCommunicationResultDto, json.loads(response.data)
             )
-            if result.status != const.COM_STATUS_SUCCESS:
-                context = reports.ReportItemContext(node_label)
-                self._report_list(
-                    [
-                        reports.report_dto_to_item(report, context)
-                        for report in result.report_list
-                    ]
-                )
-            else:
+            context = reports.ReportItemContext(node_label)
+            self._report_list(
+                [
+                    reports.report_dto_to_item(report, context)
+                    for report in result.report_list
+                ]
+            )
+            if result.status == const.COM_STATUS_SUCCESS:
                 self._on_success()
 
         except (json.JSONDecodeError, DaciteError):

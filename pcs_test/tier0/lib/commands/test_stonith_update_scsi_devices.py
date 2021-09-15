@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import json
 from unittest import mock, TestCase
 
@@ -297,7 +298,9 @@ class UpdateScsiDevicesMixin:
                 node_labels=self.existing_nodes
             )
             self.config.http.scsi.unfence_node(
-                unfence, node_labels=self.existing_nodes
+                original_devices=devices_before,
+                updated_devices=devices_updated,
+                node_labels=self.existing_nodes,
             )
         self.config.env.push_cib(
             resources=fixture_scsi(
@@ -449,14 +452,14 @@ class UpdateScsiDevicesFailuresMixin:
             node_labels=self.existing_nodes
         )
         self.config.http.scsi.unfence_node(
-            DEVICES_2,
             communication_list=[
                 dict(
                     label=self.existing_nodes[0],
                     raw_data=json.dumps(
                         dict(
-                            devices=[DEV_2],
                             node=self.existing_nodes[0],
+                            original_devices=DEVICES_1,
+                            updated_devices=DEVICES_2,
                         )
                     ),
                     was_connected=False,
@@ -466,8 +469,9 @@ class UpdateScsiDevicesFailuresMixin:
                     label=self.existing_nodes[1],
                     raw_data=json.dumps(
                         dict(
-                            devices=[DEV_2],
                             node=self.existing_nodes[1],
+                            original_devices=DEVICES_1,
+                            updated_devices=DEVICES_2,
                         )
                     ),
                     output=json.dumps(
@@ -491,8 +495,9 @@ class UpdateScsiDevicesFailuresMixin:
                     label=self.existing_nodes[2],
                     raw_data=json.dumps(
                         dict(
-                            devices=[DEV_2],
                             node=self.existing_nodes[2],
+                            original_devices=DEVICES_1,
+                            updated_devices=DEVICES_2,
                         )
                     ),
                 ),
@@ -504,7 +509,7 @@ class UpdateScsiDevicesFailuresMixin:
                 fixture.error(
                     reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                     node=self.existing_nodes[0],
-                    command="api/v1/scsi-unfence-node/v1",
+                    command="api/v1/scsi-unfence-node/v2",
                     reason="errA",
                 ),
                 fixture.error(
@@ -517,20 +522,76 @@ class UpdateScsiDevicesFailuresMixin:
             ]
         )
 
+    def test_unfence_failure_unknown_command(self):
+        self._unfence_failure_common_calls()
+        self.config.http.corosync.get_corosync_online_targets(
+            node_labels=self.existing_nodes
+        )
+        communication_list = [
+            dict(
+                label=node,
+                raw_data=json.dumps(
+                    dict(
+                        node=node,
+                        original_devices=DEVICES_1,
+                        updated_devices=DEVICES_2,
+                    )
+                ),
+            )
+            for node in self.existing_nodes[0:2]
+        ]
+        communication_list.append(
+            dict(
+                label=self.existing_nodes[2],
+                response_code=404,
+                raw_data=json.dumps(
+                    dict(
+                        node=self.existing_nodes[2],
+                        original_devices=DEVICES_1,
+                        updated_devices=DEVICES_2,
+                    )
+                ),
+                output=json.dumps(
+                    dto.to_dict(
+                        communication.dto.InternalCommunicationResultDto(
+                            status=communication.const.COM_STATUS_UNKNOWN_CMD,
+                            status_msg=(
+                                "Unknown command '/api/v1/scsi-unfence-node/v2'"
+                            ),
+                            report_list=[],
+                            data=None,
+                        )
+                    )
+                ),
+            ),
+        )
+        self.config.http.scsi.unfence_node(
+            communication_list=communication_list
+        )
+        self.env_assist.assert_raise_library_error(self.command())
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.PCSD_VERSION_TOO_OLD,
+                    node=self.existing_nodes[2],
+                ),
+            ]
+        )
+
     def test_unfence_failure_agent_script_failed(self):
         self._unfence_failure_common_calls()
         self.config.http.corosync.get_corosync_online_targets(
             node_labels=self.existing_nodes
         )
         self.config.http.scsi.unfence_node(
-            DEVICES_2,
             communication_list=[
                 dict(
                     label=self.existing_nodes[0],
                     raw_data=json.dumps(
                         dict(
-                            devices=[DEV_2],
                             node=self.existing_nodes[0],
+                            original_devices=DEVICES_1,
+                            updated_devices=DEVICES_2,
                         )
                     ),
                 ),
@@ -538,8 +599,9 @@ class UpdateScsiDevicesFailuresMixin:
                     label=self.existing_nodes[1],
                     raw_data=json.dumps(
                         dict(
-                            devices=[DEV_2],
                             node=self.existing_nodes[1],
+                            original_devices=DEVICES_1,
+                            updated_devices=DEVICES_2,
                         )
                     ),
                     output=json.dumps(
@@ -563,8 +625,9 @@ class UpdateScsiDevicesFailuresMixin:
                     label=self.existing_nodes[2],
                     raw_data=json.dumps(
                         dict(
-                            devices=[DEV_2],
                             node=self.existing_nodes[2],
+                            original_devices=DEVICES_1,
+                            updated_devices=DEVICES_2,
                         )
                     ),
                 ),
@@ -639,14 +702,14 @@ class UpdateScsiDevicesFailuresMixin:
             ]
         )
         self.config.http.scsi.unfence_node(
-            DEVICES_2,
             communication_list=[
                 dict(
                     label=self.existing_nodes[0],
                     raw_data=json.dumps(
                         dict(
-                            devices=[DEV_2],
                             node=self.existing_nodes[0],
+                            original_devices=DEVICES_1,
+                            updated_devices=DEVICES_2,
                         )
                     ),
                 ),
