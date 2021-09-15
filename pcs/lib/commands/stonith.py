@@ -453,7 +453,8 @@ def _update_scsi_devices_get_element_and_devices(
 
 def _unfencing_scsi_devices(
     env: LibraryEnvironment,
-    device_list: Iterable[str],
+    original_devices: Iterable[str],
+    updated_devices: Iterable[str],
     force_flags: Container[reports.types.ForceCode] = (),
 ) -> None:
     """
@@ -461,9 +462,13 @@ def _unfencing_scsi_devices(
     to pcsd and corosync is running.
 
     env -- provides all for communication with externals
-    device_list -- devices to be unfenced
+    original_devices -- devices before update
+    updated_devices -- devices after update
     force_flags -- list of flags codes
     """
+    devices_to_unfence = set(updated_devices) - set(original_devices)
+    if not devices_to_unfence:
+        return
     cluster_nodes_names, nodes_report_list = get_existing_nodes_names(
         env.get_corosync_conf(),
         error_on_missing_name=True,
@@ -487,7 +492,11 @@ def _unfencing_scsi_devices(
     online_corosync_target_list = run_and_raise(
         env.get_node_communicator(), com_cmd
     )
-    com_cmd = Unfence(env.report_processor, sorted(device_list))
+    com_cmd = Unfence(
+        env.report_processor,
+        original_devices=sorted(original_devices),
+        updated_devices=sorted(updated_devices),
+    )
     com_cmd.set_targets(online_corosync_target_list)
     run_and_raise(env.get_node_communicator(), com_cmd)
 
@@ -531,9 +540,9 @@ def update_scsi_devices(
         IdProvider(stonith_el),
         set_device_list,
     )
-    devices_for_unfencing = set(set_device_list).difference(current_device_list)
-    if devices_for_unfencing:
-        _unfencing_scsi_devices(env, devices_for_unfencing, force_flags)
+    _unfencing_scsi_devices(
+        env, current_device_list, set_device_list, force_flags
+    )
     env.push_cib()
 
 
@@ -585,6 +594,7 @@ def update_scsi_devices_add_remove(
         IdProvider(stonith_el),
         updated_device_set,
     )
-    if add_device_list:
-        _unfencing_scsi_devices(env, add_device_list, force_flags)
+    _unfencing_scsi_devices(
+        env, current_device_list, updated_device_set, force_flags
+    )
     env.push_cib()

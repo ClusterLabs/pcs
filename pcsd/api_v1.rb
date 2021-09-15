@@ -291,7 +291,7 @@ def route_api_v1(auth_user, params, request)
       :only_superuser => false,
       :permissions => Permissions::WRITE,
     },
-    'scsi-unfence-node/v1' => {
+    'scsi-unfence-node/v2' => {
       :cmd => 'scsi.unfence_node',
       :only_superuser => false,
       :permissions => Permissions::WRITE,

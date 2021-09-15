@@ -1926,6 +1926,30 @@ class StonithUnfencingFailed(NameBuildTest):
         )
 
 
+class StonithUnfencingDeviceStatusFailed(NameBuildTest):
+    def test_build_message(self):
+        self.assert_message_from_report(
+            "Unfencing failed, unable to check status of device 'dev1': reason",
+            reports.StonithUnfencingDeviceStatusFailed("dev1", "reason"),
+        )
+
+
+class StonithUnfencingSkippedDevicesFenced(NameBuildTest):
+    def test_one_device(self):
+        self.assert_message_from_report(
+            "Unfencing skipped, device 'dev1' is fenced",
+            reports.StonithUnfencingSkippedDevicesFenced(["dev1"]),
+        )
+
+    def test_multiple_devices(self):
+        self.assert_message_from_report(
+            "Unfencing skipped, devices 'dev1', 'dev2', 'dev3' are fenced",
+            reports.StonithUnfencingSkippedDevicesFenced(
+                ["dev2", "dev1", "dev3"]
+            ),
+        )
+
+
 class StonithRestartlessUpdateUnableToPerform(NameBuildTest):
     def test_build_message(self):
         self.assert_message_from_report(
