@@ -1073,7 +1073,7 @@ def location_add(lib, argv, modifiers, skip_score_and_node_check=False):
                 corosync_conf=lib_env.get_corosync_conf(),
                 cib=lib_env.get_cib(),
             )
-            report_list = _verify_node_name(node, existing_nodes)
+            report_list += _verify_node_name(node, existing_nodes)
             if report_list:
                 process_library_reports(report_list)
         _verify_score(score)
