@@ -2593,10 +2593,10 @@ Location Constraints:
         )
         ac(
             output,
-            "Warning: Converting invalid score to score-attribute=pingd is "
-            "deprecated and will be removed.\n"
             "Warning: invalid score 'pingd', setting score-attribute=pingd "
-            "instead\n",
+            "instead\n"
+            "Warning: Converting invalid score to score-attribute=pingd is "
+            "deprecated and will be removed.\n",
         )
         self.assertEqual(0, returnVal)
 

@@ -7,7 +7,7 @@ from pcs.cli.common.routing import create_router
 
 quorum_cmd = create_router(
     {
-        "help": lambda lib, argv, modifiers: usage.quorum(argv),
+        "help": lambda lib, argv, modifiers: print(usage.quorum(argv)),
         "config": quorum.quorum_config_cmd,
         "expected-votes": quorum.quorum_expected_votes_cmd,
         "status": quorum.quorum_status_cmd,

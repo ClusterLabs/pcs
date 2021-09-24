@@ -9,7 +9,7 @@ from pcs.cli.common.routing import create_router
 
 node_cmd = create_router(
     {
-        "help": lambda lib, argv, modifiers: usage.node(argv),
+        "help": lambda lib, argv, modifiers: print(usage.node(argv)),
         "maintenance": partial(node.node_maintenance_cmd, enable=True),
         "unmaintenance": partial(node.node_maintenance_cmd, enable=False),
         "standby": partial(node.node_standby_cmd, enable=True),

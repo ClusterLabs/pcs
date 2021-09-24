@@ -2900,17 +2900,17 @@ def get_library_wrapper():
     return Library(get_cli_env(), get_middleware_factory())
 
 
-def exit_on_cmdline_input_errror(
+def exit_on_cmdline_input_error(
     error: CmdLineInputError,
     main_name: str,
     usage_name: Sequence[str],
 ) -> None:
-    if not error or (not error.message or error.show_both_usage_and_message):
-        usage.show(main_name, usage_name)
     if error and error.message:
-        err(error.message, exit_after_error=False)
+        reports_output.error(error.message)
     if error and error.hint:
         print_to_stderr(f"Hint: {error.hint}")
+    if not error or (not error.message or error.show_both_usage_and_message):
+        usage.show(main_name, usage_name)
     sys.exit(1)
 
 

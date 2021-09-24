@@ -8,7 +8,6 @@ from enum import Enum
 from pcs import (
     rule as rule_utils,
     settings,
-    usage,
     utils,
 )
 from pcs.cli.common import parse_args
@@ -17,7 +16,7 @@ import pcs.cli.constraint_colocation.command as colocation_command
 import pcs.cli.constraint_order.command as order_command
 from pcs.cli.constraint_ticket import command as ticket_command
 from pcs.cli.reports import process_library_reports
-from pcs.cli.reports.output import warn
+from pcs.cli.reports.output import print_to_stderr, warn, error
 from pcs.common import (
     const,
     pacemaker,
@@ -49,8 +48,8 @@ LOCATION_NODE_VALIDATION_SKIP_MSG = (
     "Validation for node existence in the cluster will be skipped"
 )
 CRM_RULE_MISSING_MSG = (
-    "Warning: crm_rule is not available, therefore expired constraints may be "
-    "shown. Consider upgrading pacemaker.\n"
+    "crm_rule is not available, therefore expired constraints may be "
+    "shown. Consider upgrading pacemaker."
 )
 
 RESOURCE_TYPE_RESOURCE = "resource"
@@ -91,7 +90,7 @@ def constraint_location_cmd(lib, argv, modifiers):
         else:
             raise CmdLineInputError()
     except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(
+        utils.exit_on_cmdline_input_error(
             e, "constraint", ["location", sub_cmd]
         )
 
@@ -114,7 +113,7 @@ def constraint_order_cmd(lib, argv, modifiers):
         else:
             order_start(lib, [sub_cmd] + argv, modifiers)
     except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(e, "constraint", ["order", sub_cmd])
+        utils.exit_on_cmdline_input_error(e, "constraint", ["order", sub_cmd])
 
 
 def constraint_show(lib, argv, modifiers):
@@ -173,7 +172,7 @@ def colocation_rm(lib, argv, modifiers):
     if elementFound:
         utils.replace_cib_configuration(dom)
     else:
-        print("No matching resources found in ordering list")
+        raise error("No matching resources found in ordering list")
 
 
 def _validate_constraint_resource(cib_dom, resource_id):
@@ -561,17 +560,7 @@ def _order_add(resource1, resource2, options_list, modifiers):
                     ]
                 )
             )
-    print(
-        "Adding "
-        + resource1
-        + " "
-        + resource2
-        + " ("
-        + scorekind
-        + ")"
-        + options
-    )
-
+    print_to_stderr(f"Adding {resource1} {resource2} ({scorekind}){options}")
     utils.replace_cib_configuration(dom)
 
 
@@ -675,7 +664,7 @@ def location_lines(
 
     if not isfile(settings.crm_rule):
         if verify_expiration:
-            sys.stderr.write(CRM_RULE_MISSING_MSG)
+            warn(CRM_RULE_MISSING_MSG)
         verify_expiration = False
 
     all_lines.append("Location Constraints:")
@@ -1177,8 +1166,7 @@ def location_rule(lib, argv, modifiers):
     del lib
     modifiers.ensure_only_supported("-f", "--force")
     if len(argv) < 3:
-        usage.constraint(["location", "rule"])
-        sys.exit(1)
+        raise CmdLineInputError()
 
     rsc_type, rsc_value = parse_args.parse_typed_arg(
         argv.pop(0),
@@ -1440,7 +1428,7 @@ def remove_constraints_containing(
     )
     for c in constraints:
         if output:
-            print("Removing Constraint - " + c)
+            print_to_stderr(f"Removing Constraint - {c}")
         if constraints_element is not None:
             constraint_rm(
                 lib,
@@ -1463,17 +1451,24 @@ def remove_constraints_containing(
                 pn = c.parentNode
                 pn.removeChild(c)
                 if output:
-                    print(
-                        "Removing %s from set %s"
-                        % (resource_id, pn.getAttribute("id"))
+                    print_to_stderr(
+                        "Removing {} from set {}".format(
+                            resource_id, pn.getAttribute("id")
+                        )
                     )
                 if pn.getElementsByTagName("resource_ref").length == 0:
-                    print("Removing set %s" % pn.getAttribute("id"))
+                    print_to_stderr(
+                        "Removing set {}".format(pn.getAttribute("id"))
+                    )
                     pn2 = pn.parentNode
                     pn2.removeChild(pn)
                     if pn2.getElementsByTagName("resource_set").length == 0:
                         pn2.parentNode.removeChild(pn2)
-                        print("Removing constraint %s" % pn2.getAttribute("id"))
+                        print_to_stderr(
+                            "Removing constraint {}".format(
+                                pn2.getAttribute("id")
+                            )
+                        )
         if passed_dom:
             return dom
         utils.replace_cib_configuration(dom)
@@ -1540,7 +1535,9 @@ def remove_constraints_containing_node(dom, node, output=False):
     """
     for constraint in find_constraints_containing_node(dom, node):
         if output:
-            print("Removing Constraint - %s" % constraint.getAttribute("id"))
+            print_to_stderr(
+                "Removing Constraint - {}".format(constraint.getAttribute("id"))
+            )
         constraint.parentNode.removeChild(constraint)
     return dom
 
@@ -1643,11 +1640,13 @@ def constraint_rule(lib, argv, modifiers):
             for rule in loc_con:
                 if rule.get("id") == temp_id:
                     if len(loc_con) > 1:
-                        print("Removing Rule: {0}".format(rule.get("id")))
+                        print_to_stderr(
+                            "Removing Rule: {0}".format(rule.get("id"))
+                        )
                         loc_con.remove(rule)
                         found = True
                     else:
-                        print(
+                        print_to_stderr(
                             "Removing Constraint: {0}".format(loc_con.get("id"))
                         )
                         constraints.remove(loc_con)

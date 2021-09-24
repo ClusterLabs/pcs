@@ -1307,8 +1307,8 @@ monitor interval=20 (A-monitor-interval-20)
             "resource delete ClusterIP3".split(),
             outdent(
                 """\
-            Deleting Resource (and group) - ClusterIP3
             Removing Constraint - location-ClusterIP3-rh7-1-INFINITY
+            Deleting Resource (and group) - ClusterIP3
             """
             ),
         )
@@ -1613,9 +1613,9 @@ monitor interval=20 (A-monitor-interval-20)
             "resource delete D1-clone".split(),
             outdent(
                 """\
-            Deleting Resource - D1
             Removing Constraint - location-D1-clone-rh7-1-INFINITY
             Removing Constraint - location-D1-rh7-1-INFINITY
+            Deleting Resource - D1
             """
             ),
         )
@@ -1697,9 +1697,9 @@ monitor interval=20 (A-monitor-interval-20)
             "resource delete Master".split(),
             outdent(
                 """\
-            Deleting Resource - ClusterIP5
             Removing Constraint - location-Master-rh7-2-INFINITY
             Removing Constraint - location-ClusterIP5-rh7-1-INFINITY
+            Deleting Resource - ClusterIP5
             """
             ),
         )
@@ -1728,9 +1728,9 @@ monitor interval=20 (A-monitor-interval-20)
             "resource delete ClusterIP5".split(),
             outdent(
                 """\
-            Deleting Resource - ClusterIP5
             Removing Constraint - location-ClusterIP5-rh7-1-INFINITY
             Removing Constraint - location-ClusterIP5-rh7-2-INFINITY
+            Deleting Resource - ClusterIP5
             """
             ),
         )
@@ -2817,8 +2817,8 @@ monitor interval=20 (A-monitor-interval-20)
             "resource delete D2".split(),
             outdent(
                 """\
-            Deleting Resource (and group) - D2
             Removing Constraint - cli-prefer-DGroup
+            Deleting Resource (and group) - D2
             """
             ),
         )
@@ -3085,8 +3085,8 @@ monitor interval=20 (A-monitor-interval-20)
             "resource delete A2".split(),
             outdent(
                 """\
-            Deleting Resource (and group and M/S) - A2
             Removing Constraint - location-AA-master-rh7-1-INFINITY
+            Deleting Resource (and group and M/S) - A2
             """
             ),
         )
@@ -4998,8 +4998,8 @@ class ResourceRemoveWithTicket(TestCase, AssertPcsMixin):
         self.assert_pcs_success(
             "resource delete A".split(),
             [
-                "Deleting Resource - A",
                 "Removing Constraint - ticket-T-A-Master",
+                "Deleting Resource - A",
             ],
         )
 

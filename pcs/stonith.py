@@ -8,7 +8,7 @@ from pcs.cli.common import parse_args
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.fencing_topology import target_type_map_cli_to_lib
 from pcs.cli.reports import process_library_reports
-from pcs.cli.reports.output import error, warn
+from pcs.cli.reports.output import error, print_to_stderr, warn
 from pcs.cli.resource.parse_args import parse_create_simple as parse_create_args
 from pcs.common import reports
 from pcs.common.fencing_topology import (
@@ -489,7 +489,7 @@ def stonith_fence(lib, argv, modifiers):
     if retval != 0:
         utils.err("unable to fence '%s'\n" % node + output)
     else:
-        print("Node: %s fenced" % node)
+        print_to_stderr(f"Node: {node} fenced")
 
 
 def stonith_confirm(lib, argv, modifiers):
@@ -560,7 +560,7 @@ def sbd_watchdog_list(lib, argv, modifiers):
         for watchdog in sorted(available_watchdogs.keys()):
             print("  {}".format(watchdog))
     else:
-        print("No available watchdog")
+        print_to_stderr("No available watchdog")
 
 
 def sbd_watchdog_list_json(lib, argv, modifiers):
@@ -859,7 +859,7 @@ def stonith_history_cleanup_cmd(lib, argv, modifiers):
         raise CmdLineInputError()
 
     node = argv[0] if argv else None
-    print(lib.stonith.history_cleanup(node))
+    print_to_stderr(lib.stonith.history_cleanup(node))
 
 
 def stonith_history_update_cmd(lib, argv, modifiers):
@@ -870,7 +870,7 @@ def stonith_history_update_cmd(lib, argv, modifiers):
     if argv:
         raise CmdLineInputError()
 
-    print(lib.stonith.history_update())
+    print_to_stderr(lib.stonith.history_update())
 
 
 def stonith_update_scsi_devices(lib, argv, modifiers):

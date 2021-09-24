@@ -13,7 +13,7 @@ from pcs.cli.booth.command import status as booth_status_cmd
 
 status_cmd = create_router(
     {
-        "help": lambda lib, argv, modifiers: usage.status(argv),
+        "help": lambda lib, argv, modifiers: print(usage.status(argv)),
         "booth": booth_status_cmd,
         "corosync": status.corosync_status,
         "cluster": status.cluster_status,

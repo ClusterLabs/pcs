@@ -49,9 +49,10 @@ def dom_rule_add(dom_element, options, rule_argv, cib_schema_version):
         utils.err("can not specify both score and score-attribute")
     if options.get("score") and not utils.is_score(options["score"]):
         # preserving legacy behaviour
-        print(
-            "Warning: invalid score '%s', setting score-attribute=pingd instead"
-            % options["score"]
+        warn(
+            "invalid score '{}', setting score-attribute=pingd instead".format(
+                options["score"]
+            )
         )
         warn(
             "Converting invalid score to score-attribute=pingd is deprecated "

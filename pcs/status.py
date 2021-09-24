@@ -4,6 +4,7 @@ import os
 from pcs import utils
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.reports import process_library_reports
+from pcs.cli.reports.output import error
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.live import get_cluster_status_dom
@@ -256,4 +257,4 @@ def print_pcsd_daemon_status(lib, modifiers):
         if exitcode == 0:
             print(std_out)
         else:
-            print("Unable to get PCSD status")
+            raise error("Unable to get PCSD status")

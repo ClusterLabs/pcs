@@ -6,13 +6,15 @@ from pcs.resource import resource_remove, resource_restart
 
 booth_cmd = create_router(
     {
-        "help": lambda lib, argv, modifiers: usage.booth(argv),
+        "help": lambda lib, argv, modifiers: print(usage.booth(argv)),
         "config": command.config_show,
         "setup": command.config_setup,
         "destroy": command.config_destroy,
         "ticket": create_router(
             {
-                "help": lambda lib, argv, modifiers: usage.booth(["ticket"]),
+                "help": lambda lib, argv, modifiers: print(
+                    usage.booth(["ticket"])
+                ),
                 "add": command.config_ticket_add,
                 "delete": command.config_ticket_remove,
                 "remove": command.config_ticket_remove,

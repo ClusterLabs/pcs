@@ -9,7 +9,7 @@ from pcs.cli.constraint_ticket import command as ticket_command
 
 constraint_cmd = create_router(
     {
-        "help": lambda lib, argv, modifiers: usage.constraint(argv),
+        "help": lambda lib, argv, modifiers: print(usage.constraint(argv)),
         "location": constraint.constraint_location_cmd,
         "order": constraint.constraint_order_cmd,
         "ticket": create_router(

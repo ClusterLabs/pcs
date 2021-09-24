@@ -10,6 +10,7 @@ from pcs import settings, utils
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import InputModifiers
 from pcs.cli.reports import process_library_reports
+from pcs.cli.reports.output import print_to_stderr
 from pcs.common import reports
 from pcs.common.reports.item import ReportItem
 import pcs.common.ssl
@@ -84,7 +85,7 @@ def pcsd_certkey_cmd(lib, argv, modifiers):
     except IOError as e:
         utils.err(e)
 
-    print(
+    print_to_stderr(
         "Certificate and key updated, you may need to restart pcsd for new "
         "settings to take effect"
     )

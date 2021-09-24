@@ -14,11 +14,7 @@ from typing import (
     Sequence,
 )
 
-from pcs import (
-    usage,
-    utils,
-    constraint,
-)
+from pcs import constraint, utils
 from pcs.common.interface.dto import to_dict
 from pcs.common import (
     const,
@@ -1247,8 +1243,7 @@ def resource_operation_add(
       * --force
     """
     if not argv:
-        usage.resource(["op"])
-        sys.exit(1)
+        raise CmdLineInputError()
 
     res_el = utils.dom_get_resource(dom, res_id)
     if not res_el:

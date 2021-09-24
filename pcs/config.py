@@ -31,6 +31,7 @@ from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.constraint import command as constraint_command
 from pcs.cli.nvset import nvset_dto_list_to_lines
 from pcs.cli.reports import process_library_reports
+from pcs.cli.reports.output import print_to_stderr, warn
 from pcs.common.reports import constraints as constraints_reports
 from pcs.common.str_tools import indent
 from pcs.lib.commands import quorum as lib_quorum
@@ -210,8 +211,7 @@ def config_backup(lib, argv, modifiers):
     del lib
     modifiers.ensure_only_supported("--force")
     if len(argv) > 1:
-        usage.config(["backup"])
-        sys.exit(1)
+        raise CmdLineInputError()
 
     outfile_name = None
     if argv:
@@ -266,8 +266,7 @@ def config_restore(lib, argv, modifiers):
     del lib
     modifiers.ensure_only_supported("--local", "--request-timeout")
     if len(argv) > 1:
-        usage.config(["restore"])
-        sys.exit(1)
+        raise CmdLineInputError()
 
     infile_name = infile_obj = None
     if argv:
@@ -607,15 +606,13 @@ def config_backup_check_version(version):
         supported_version = config_backup_version()
         if version_number > supported_version:
             utils.err(
-                "Unsupported version of the backup, "
-                "supported version is %d, backup version is %d"
-                % (supported_version, version_number)
+                f"Unsupported version of the backup, supported version is "
+                f"{supported_version}, backup version is {version_number}"
             )
         if version_number < supported_version:
-            print(
-                "Warning: restoring from the backup version %d, "
-                "current supported version is %s"
-                % (version_number, supported_version)
+            warn(
+                f"Restoring from the backup version {version_number}, current "
+                f"supported version is {supported_version}"
             )
     except TypeError:
         utils.err("Cannot determine version of the backup")
@@ -664,7 +661,7 @@ def config_checkpoint_list(lib, argv, modifiers):
             pass
     cib_list.sort()
     if not cib_list:
-        print("No checkpoints available")
+        print_to_stderr("No checkpoints available")
         return
     for cib_info in cib_list:
         print(
@@ -704,7 +701,7 @@ def config_checkpoint_view(lib, argv, modifiers):
     """
     modifiers.ensure_only_supported()
     if len(argv) != 1:
-        usage.config(["checkpoint view"])
+        print_to_stderr(usage.config(["checkpoint view"]))
         sys.exit(1)
 
     loaded, lines = _checkpoint_to_lines(lib, argv[0])
@@ -720,7 +717,7 @@ def config_checkpoint_diff(lib, argv, modifiers):
     """
     modifiers.ensure_only_supported("-f")
     if len(argv) != 2:
-        usage.config(["checkpoint diff"])
+        print_to_stderr(usage.config(["checkpoint diff"]))
         sys.exit(1)
 
     if argv[0] == argv[1]:
@@ -778,7 +775,7 @@ def config_checkpoint_restore(lib, argv, modifiers):
     del lib
     modifiers.ensure_only_supported("-f")
     if len(argv) != 1:
-        usage.config(["checkpoint restore"])
+        print_to_stderr(usage.config(["checkpoint restore"]))
         sys.exit(1)
 
     cib_path = os.path.join(settings.cib_dir, "cib-%s.raw" % argv[0])

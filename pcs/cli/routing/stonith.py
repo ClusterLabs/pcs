@@ -8,7 +8,7 @@ from pcs.cli.common.routing import create_router
 
 stonith_cmd = create_router(
     {
-        "help": lambda lib, argv, modifiers: usage.stonith(argv),
+        "help": lambda lib, argv, modifiers: print(usage.stonith(argv)),
         "list": stonith.stonith_list_available,
         "describe": stonith.stonith_list_options,
         "create": stonith.stonith_create,

@@ -1,5 +1,7 @@
 import re
 
+from pcs.cli.reports.output import print_to_stderr
+
 # pylint: disable=too-many-lines, too-many-branches, global-statement
 
 examples = ""
@@ -7,25 +9,25 @@ examples = ""
 
 def full_usage():
     out = ""
-    out += main(False)
-    out += strip_extras(resource([], False))
-    out += strip_extras(cluster([], False))
-    out += strip_extras(stonith([], False))
-    out += strip_extras(property([], False))
-    out += strip_extras(constraint([], False))
-    out += strip_extras(node([], False))
-    out += strip_extras(acl([], False))
-    out += strip_extras(qdevice([], False))
-    out += strip_extras(quorum([], False))
-    out += strip_extras(booth([], False))
-    out += strip_extras(status([], False))
-    out += strip_extras(config([], False))
-    out += strip_extras(pcsd([], False))
-    out += strip_extras(host([], False))
-    out += strip_extras(alert([], False))
-    out += strip_extras(client([], False))
-    out += strip_extras(dr([], False))
-    out += strip_extras(tag([], False))
+    out += main()
+    out += strip_extras(resource([]))
+    out += strip_extras(cluster([]))
+    out += strip_extras(stonith([]))
+    out += strip_extras(property([]))
+    out += strip_extras(constraint([]))
+    out += strip_extras(node([]))
+    out += strip_extras(acl([]))
+    out += strip_extras(qdevice([]))
+    out += strip_extras(quorum([]))
+    out += strip_extras(booth([]))
+    out += strip_extras(status([]))
+    out += strip_extras(config([]))
+    out += strip_extras(pcsd([]))
+    out += strip_extras(host([]))
+    out += strip_extras(alert([]))
+    out += strip_extras(client([]))
+    out += strip_extras(dr([]))
+    out += strip_extras(tag([]))
     print(out.strip())
     print("Examples:\n" + examples.replace(r" \ ", ""))
 
@@ -115,24 +117,24 @@ def dict_depth(d, depth=0):
 
 def generate_completion_tree_from_usage():
     tree = {}
-    tree["resource"] = generate_tree(resource([], False))
-    tree["cluster"] = generate_tree(cluster([], False))
-    tree["stonith"] = generate_tree(stonith([], False))
-    tree["property"] = generate_tree(property([], False))
-    tree["acl"] = generate_tree(acl([], False))
-    tree["constraint"] = generate_tree(constraint([], False))
-    tree["qdevice"] = generate_tree(qdevice([], False))
-    tree["quorum"] = generate_tree(quorum([], False))
-    tree["status"] = generate_tree(status([], False))
-    tree["config"] = generate_tree(config([], False))
-    tree["pcsd"] = generate_tree(pcsd([], False))
-    tree["host"] = generate_tree(host([], False))
-    tree["node"] = generate_tree(node([], False))
-    tree["alert"] = generate_tree(alert([], False))
-    tree["booth"] = generate_tree(booth([], False))
-    tree["client"] = generate_tree(client([], False))
-    tree["dr"] = generate_tree(dr([], False))
-    tree["tag"] = generate_tree(tag([], False))
+    tree["resource"] = generate_tree(resource([]))
+    tree["cluster"] = generate_tree(cluster([]))
+    tree["stonith"] = generate_tree(stonith([]))
+    tree["property"] = generate_tree(property([]))
+    tree["acl"] = generate_tree(acl([]))
+    tree["constraint"] = generate_tree(constraint([]))
+    tree["qdevice"] = generate_tree(qdevice([]))
+    tree["quorum"] = generate_tree(quorum([]))
+    tree["status"] = generate_tree(status([]))
+    tree["config"] = generate_tree(config([]))
+    tree["pcsd"] = generate_tree(pcsd([]))
+    tree["host"] = generate_tree(host([]))
+    tree["node"] = generate_tree(node([]))
+    tree["alert"] = generate_tree(alert([]))
+    tree["booth"] = generate_tree(booth([]))
+    tree["client"] = generate_tree(client([]))
+    tree["dr"] = generate_tree(dr([]))
+    tree["tag"] = generate_tree(tag([]))
     return tree
 
 
@@ -165,7 +167,7 @@ def generate_tree(usage_txt):
     return ret_hash
 
 
-def main(pout=True):
+def main():
     output = """
 Usage: pcs [-f file] [-h] [commands]...
 Control and configure pacemaker and corosync.
@@ -210,13 +212,10 @@ Commands:
 """
     # Advanced usage to possibly add later
     #  --corosync_conf=<corosync file> Specify alternative corosync.conf file
-    if pout:
-        print(output)
-        return None
     return output
 
 
-def resource(args=(), pout=True):
+def resource(args=()):
     output = """
 Usage: pcs resource [commands]...
 Manage pacemaker resources
@@ -853,13 +852,10 @@ Notes:
     resources in a cluster.
 
 """
-    if pout:
-        print(sub_usage(args, output))
-        return None
-    return output
+    return sub_usage(args, output)
 
 
-def cluster(args=(), pout=True):
+def cluster(args=()):
     output = """
 Usage: pcs cluster [commands]...
 Configure cluster for use with pacemaker
@@ -1266,13 +1262,10 @@ Commands:
         problems.  If --from and --to are not used, the report will include
         the past 24 hours.
 """
-    if pout:
-        print(sub_usage(args, output))
-        return None
-    return output
+    return sub_usage(args, output)
 
 
-def stonith(args=(), pout=True):
+def stonith(args=()):
     output = """
 Usage: pcs stonith [commands]...
 Configure fence devices for use with pacemaker
@@ -1510,13 +1503,10 @@ Commands:
         specified, available watchdog will be used if only one watchdog device
         is available on the local system.
 """
-    if pout:
-        print(sub_usage(args, output))
-        return None
-    return output
+    return sub_usage(args, output)
 
 
-def property(args=(), pout=True):
+def property(args=()):
     # pylint: disable=redefined-builtin
     output = """
 Usage: pcs property [commands]...
@@ -1547,13 +1537,10 @@ Commands:
 Examples:
     pcs property set stonith-enabled=false
 """
-    if pout:
-        print(sub_usage(args, output))
-        return None
-    return output
+    return sub_usage(args, output)
 
 
-def constraint(args=(), pout=True):
+def constraint(args=()):
     output = """
 Usage: pcs constraint [constraints]...
 Manage resource constraints
@@ -1736,13 +1723,10 @@ Commands:
         Remove a rule from its location constraint and if it's the last rule,
         the constraint will also be removed.
 """
-    if pout:
-        print(sub_usage(args, output))
-        return None
-    return output
+    return sub_usage(args, output)
 
 
-def acl(args=(), pout=True):
+def acl(args=()):
     output = """
 Usage: pcs acl [commands]...
 View and modify current cluster access control lists
@@ -1862,13 +1846,10 @@ Commands:
         Remove the permission id specified (permission id's are listed in
         parenthesis after permissions in 'pcs acl' output).
 """
-    if pout:
-        print(sub_usage(args, output))
-        return None
-    return output
+    return sub_usage(args, output)
 
 
-def status(args=(), pout=True):
+def status(args=()):
     output = """
 Usage: pcs status [commands]...
 View current cluster and resource status
@@ -1915,13 +1896,10 @@ Commands:
     xml
         View xml version of status (output from crm_mon -r -1 -X).
 """
-    if pout:
-        print(sub_usage(args, output))
-        return None
-    return output
+    return sub_usage(args, output)
 
 
-def config(args=(), pout=True):
+def config(args=()):
     output = """
 Usage: pcs config [commands]...
 View and manage cluster configuration
@@ -1953,13 +1931,10 @@ Commands:
     checkpoint restore <checkpoint_number>
         Restore cluster configuration to specified checkpoint.
 """
-    if pout:
-        print(sub_usage(args, output))
-        return None
-    return output
+    return sub_usage(args, output)
 
 
-def pcsd(args=(), pout=True):
+def pcsd(args=()):
     output = """
 Usage: pcs pcsd [commands]...
 Manage pcs daemon
@@ -1981,13 +1956,10 @@ Commands:
        tokens will be deleted. After this command is run other nodes will need
        to re-authenticate against this node to be able to connect to it.
 """
-    if pout:
-        print(sub_usage(args, output))
-        return None
-    return output
+    return sub_usage(args, output)
 
 
-def host(args=(), pout=True):
+def host(args=()):
     output = """
 Usage: pcs host [commands]...
 Manage hosts known to pcs/pcsd
@@ -2008,13 +1980,10 @@ Commands:
        be deleted. After this command is run this node will need to
        re-authenticate against other nodes to be able to connect to them.
 """
-    if pout:
-        print(sub_usage(args, output))
-        return None
-    return output
+    return sub_usage(args, output)
 
 
-def node(args=(), pout=True):
+def node(args=()):
     output = """
 Usage: pcs node <command>
 Manage cluster nodes
@@ -2075,13 +2044,10 @@ Commands:
         may be removed by setting an option without a value.
         Example: pcs node utilization node1 cpu=4 ram=
 """
-    if pout:
-        print(sub_usage(args, output))
-        return None
-    return output
+    return sub_usage(args, output)
 
 
-def qdevice(args=(), pout=True):
+def qdevice(args=()):
     output = """
 Usage: pcs qdevice <command>
 Manage quorum device provider on the local host, currently only 'net' model is
@@ -2122,13 +2088,10 @@ Commands:
         Configure specified model of quorum device provider to not start
         on boot.
 """
-    if pout:
-        print(sub_usage(args, output))
-        return None
-    return output
+    return sub_usage(args, output)
 
 
-def quorum(args=(), pout=True):
+def quorum(args=()):
     output = """
 Usage: pcs quorum <command>
 Manage cluster quorum settings.
@@ -2207,13 +2170,10 @@ Commands:
         Options are documented in corosync's votequorum(5) man page.  Requires
         the cluster to be stopped.
 """
-    if pout:
-        print(sub_usage(args, output))
-        return None
-    return output
+    return sub_usage(args, output)
 
 
-def booth(args=(), pout=True):
+def booth(args=()):
     output = """
 Usage: pcs booth <command>
 Manage booth (cluster ticket manager)
@@ -2297,13 +2257,10 @@ Commands:
     stop
         Stop booth arbitrator service.
 """
-    if pout:
-        print(sub_usage(args, output))
-        return None
-    return output
+    return sub_usage(args, output)
 
 
-def alert(args=(), pout=True):
+def alert(args=()):
     output = """
 Usage: pcs alert <command>
 Set pacemaker alerts.
@@ -2343,13 +2300,10 @@ Commands:
     recipient remove <recipient-id> ...
         Remove specified recipients.
 """
-    if pout:
-        print(sub_usage(args, output))
-        return None
-    return output
+    return sub_usage(args, output)
 
 
-def client(args=(), pout=True):
+def client(args=()):
     output = """
 Usage: pcs client <command>
 Manage pcsd client configuration.
@@ -2360,13 +2314,10 @@ Commands:
         pcs commands which may require permissions of root user such as 'pcs
         cluster start'.
 """
-    if pout:
-        print(sub_usage(args, output))
-        return None
-    return output
+    return sub_usage(args, output)
 
 
-def tag(args=(), pout=True):
+def tag(args=()):
     output = """
 Usage: pcs tag <command>
 Manage pacemaker tags.
@@ -2392,13 +2343,10 @@ Commands:
         adding ids to a tag they are already in and specifying --after or
         --before you can move the ids in the tag.
 """
-    if pout:
-        print(sub_usage(args, output))
-        return None
-    return output
+    return sub_usage(args, output)
 
 
-def dr(args=(), pout=True):
+def dr(args=()):
     output = """
 Usage: pcs dr <command>
 Manage disaster recovery configuration.
@@ -2418,10 +2366,7 @@ Commands:
     destroy
         Permanently destroy disaster-recovery configuration on all sites.
 """
-    if pout:
-        print(sub_usage(args, output))
-        return None
-    return output
+    return sub_usage(args, output)
 
 
 def show(main_usage_name, rest_usage_names):
@@ -2451,4 +2396,4 @@ def show(main_usage_name, rest_usage_names):
                 main_usage_name, list(usage_map.keys())
             )
         )
-    usage_map[main_usage_name](rest_usage_names)
+    print_to_stderr(usage_map[main_usage_name](rest_usage_names))

@@ -16,7 +16,8 @@ from pcs.cli.common import (
     parse_args,
     routing,
 )
-from pcs.cli.reports import process_library_reports, output
+from pcs.cli.reports import process_library_reports
+from pcs.cli.reports.output import error, print_to_stderr, warn
 from pcs.cli.routing import (
     acl,
     alert,
@@ -162,7 +163,7 @@ def main(argv=None):
             ) = parse_args.filter_out_non_option_negative_numbers(argv)
             if args_filtered_out:
                 options_str = "', '".join(args_filtered_out)
-                output.warn(
+                warn(
                     f"Using '{options_str}' without '--' is deprecated, those "
                     "parameters will be considered position independent "
                     "options in future pcs versions"
@@ -174,14 +175,14 @@ def main(argv=None):
             )
             argv = parse_args.filter_out_options(argv)
     except getopt.GetoptError as err:
-        usage.main()
-        print(err)
+        error(str(err))
         if err.opt in {"V", "clone", "device", "watchdog"}:
             # Print error messages which point users to the changes section in
             # pcs manpage.
             # TODO remove
             # To be removed in the next significant version.
-            print(f"Hint: {errors.HINT_SYNTAX_CHANGE}")
+            print_to_stderr(f"Hint: {errors.HINT_SYNTAX_CHANGE}")
+        print_to_stderr(usage.main())
         sys.exit(1)
 
     full = False
@@ -200,7 +201,7 @@ def main(argv=None):
 
         if opt in ("-h", "--help"):
             if not argv:
-                usage.main()
+                print(usage.main())
                 sys.exit()
             else:
                 argv = [argv[0], "help"] + argv[1:]
@@ -271,7 +272,7 @@ def main(argv=None):
         "client": client.client_cmd,
         "dr": dr.dr_cmd,
         "tag": tag.tag_cmd,
-        "help": lambda lib, argv, modifiers: usage.main(),
+        "help": lambda lib, argv, modifiers: print(usage.main()),
     }
     try:
         routing.create_router(cmd_map, [])(
@@ -286,5 +287,5 @@ def main(argv=None):
         if argv and argv[0] in cmd_map:
             usage.show(argv[0], [])
         else:
-            usage.main()
+            print_to_stderr(usage.main())
         sys.exit(1)

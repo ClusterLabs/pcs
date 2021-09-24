@@ -62,11 +62,13 @@ class TagConfig(TestCase):
     def _call_cmd(self, argv):
         command.tag_config(self.lib, argv, dict_to_modifiers({}))
 
-    def test_no_args_no_tags(self, mock_print):
+    @mock.patch("pcs.cli.tag.command.print_to_stderr")
+    def test_no_args_no_tags(self, mock_stderr_print, mock_print):
         self.tag.config.return_value = []
         self._call_cmd([])
         self.tag.config.assert_called_once_with([])
-        mock_print.assert_called_once_with(" No tags defined")
+        mock_print.assert_not_called()
+        mock_stderr_print.assert_called_once_with(" No tags defined")
 
     def test_no_args_all_tags(self, mock_print):
         self.tag.config.return_value = self.tag_dicts

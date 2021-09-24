@@ -4,7 +4,7 @@ from typing import (
 )
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import group_by_keywords, InputModifiers
-from pcs.cli.reports.output import warn
+from pcs.cli.reports.output import warn, print_to_stderr
 from pcs.common.str_tools import indent
 
 
@@ -52,7 +52,7 @@ def tag_config(
     modifiers.ensure_only_supported("-f")
     tag_list = lib.tag.config(argv)
     if not tag_list:
-        print(" No tags defined")
+        print_to_stderr(" No tags defined")
         return
     lines = []
     for tag in tag_list:

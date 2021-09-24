@@ -44,7 +44,7 @@ def process_library_reports(report_item_list: ReportItemList) -> None:
             continue
 
         if severity != ReportItemSeverity.ERROR:
-            print(msg)
+            print_to_stderr(msg)
             continue
 
         error(

@@ -85,7 +85,7 @@ def resource_op_defaults_cmd(
 
 resource_cmd = create_router(
     {
-        "help": lambda lib, argv, modifiers: usage.resource(argv),
+        "help": lambda lib, argv, modifiers: print(usage.resource(argv)),
         "list": resource.resource_list_available,
         "describe": resource.resource_list_options,
         "create": resource.resource_create,

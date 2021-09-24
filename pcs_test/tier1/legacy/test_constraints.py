@@ -141,8 +141,8 @@ class ConstraintTest(unittest.TestCase):
         )
         assert returnVal == 0
         assert output == (
-            "Warning: Converting invalid score to score-attribute=pingd is deprecated and will be removed.\n"
             "Warning: invalid score 'pingd', setting score-attribute=pingd instead\n"
+            "Warning: Converting invalid score to score-attribute=pingd is deprecated and will be removed.\n"
         ), [output]
 
         output, returnVal = pcs(
@@ -151,8 +151,8 @@ class ConstraintTest(unittest.TestCase):
         )
         assert returnVal == 0
         assert output == (
-            "Warning: Converting invalid score to score-attribute=pingd is deprecated and will be removed.\n"
             "Warning: invalid score 'pingd', setting score-attribute=pingd instead\n"
+            "Warning: Converting invalid score to score-attribute=pingd is deprecated and will be removed.\n"
         ), [output]
 
         output, returnVal = pcs(
@@ -1141,9 +1141,9 @@ Colocation Constraints:
             o,
             outdent(
                 """\
-            Deleting Resource - D5
             Removing D5 from set colocation_set_D5D6D7_set
             Removing D5 from set colocation_set_D5D6D7-1_set
+            Deleting Resource - D5
             """
             ),
         )
@@ -1154,10 +1154,10 @@ Colocation Constraints:
             o,
             outdent(
                 """\
-            Deleting Resource - D6
             Removing D6 from set colocation_set_D5D6D7_set
             Removing D6 from set colocation_set_D5D6D7-1_set
             Removing set colocation_set_D5D6D7-1_set
+            Deleting Resource - D6
             """
             ),
         )
@@ -1560,9 +1560,9 @@ Ordering Constraints:
             o,
             outdent(
                 """\
-            Deleting Resource - D5
             Removing D5 from set order_set_D5D6D7_set
             Removing D5 from set order_set_D5D6D7-1_set
+            Deleting Resource - D5
             """
             ),
         )
@@ -1573,10 +1573,10 @@ Ordering Constraints:
             o,
             outdent(
                 """\
-            Deleting Resource - D6
             Removing D6 from set order_set_D5D6D7_set
             Removing D6 from set order_set_D5D6D7-1_set
             Removing set order_set_D5D6D7-1_set
+            Deleting Resource - D6
             """
             ),
         )
@@ -2743,9 +2743,9 @@ Ticket Constraints:
             output,
             outdent(
                 """\
-            Deleting Resource - vm-guest1
             Removing Constraint - location-D1-guest1-200
             Removing Constraint - location-D2-guest1--400
+            Deleting Resource - vm-guest1
             """
             ),
         )
@@ -2893,10 +2893,10 @@ Ticket Constraints:
             output,
             outdent(
                 """\
-            Deleting Resource - vm-guest1
             Removing Constraint - location-vm-guest1-node1-INFINITY
             Removing Constraint - location-D1-guest1-200
             Removing Constraint - location-D2-guest1--400
+            Deleting Resource - vm-guest1
             """
             ),
         )
@@ -4946,7 +4946,7 @@ class ExpiredConstraints(ConstraintBaseTest):
         )
         self.assert_pcs_result(
             ["constraint"],
-            CRM_RULE_MISSING_MSG
+            f"Warning: {CRM_RULE_MISSING_MSG}\n"
             + outdent(
                 """\
                 Location Constraints:
