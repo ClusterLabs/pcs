@@ -931,7 +931,7 @@ class LevelTestsBase(TestCase, AssertPcsMixin):
             Target: rh7-2
               Level 1 - F2
               Level 2 - F1
-            Target: rh7-\\d
+            Target (regexp): rh7-\\d
               Level 3 - F2,F1
               Level 4 - F3
             Target: fencewith=levels1
@@ -1100,7 +1100,7 @@ class LevelAdd(LevelTestsBase):
             "stonith level".split(),
             outdent(
                 """\
-                Target: rh7-\\d
+                Target (regexp): rh7-\\d
                   Level 1 - F1
                 """
             ),
@@ -1117,7 +1117,7 @@ class LevelAdd(LevelTestsBase):
             "stonith level".split(),
             outdent(
                 """\
-                Target: rh7-\\d
+                Target (regexp): rh7-\\d
                   Level 1 - F1
                 """
             ),
