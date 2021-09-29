@@ -373,10 +373,11 @@ def stonith_level_config_to_str(config):
             continue
         for target_value in sorted(config_data[target_type].keys()):
             lines.append(
-                "Target: {0}".format(
+                "Target{0}: {1}".format(
+                    " (regexp)" if target_type == TARGET_TYPE_REGEXP else "",
                     "=".join(target_value)
                     if target_type == TARGET_TYPE_ATTRIBUTE
-                    else target_value
+                    else target_value,
                 )
             )
             level_lines = []
