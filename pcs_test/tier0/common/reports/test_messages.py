@@ -5311,3 +5311,28 @@ class AddRemoveCannotSpecifyAdjacentItemWithoutItemsToAdd(NameBuildTest):
                 "adjacent-item-id",
             ),
         )
+
+
+class CloningStonithResourcesHasNoEffect(NameBuildTest):
+    def test_singular_without_group_id(self):
+        self.assert_message_from_report(
+            (
+                "No need to clone stonith resource 'fence1', any node can use "
+                "a stonith resource (unless specifically banned) regardless of "
+                "whether the stonith resource is running on that node or not"
+            ),
+            reports.CloningStonithResourcesHasNoEffect(["fence1"]),
+        )
+
+    def test_plural_with_group_id(self):
+        self.assert_message_from_report(
+            (
+                "Group 'StonithGroup' contains stonith resources. No need to "
+                "clone stonith resources 'fence1', 'fence2', any node can use "
+                "a stonith resource (unless specifically banned) regardless of "
+                "whether the stonith resource is running on that node or not"
+            ),
+            reports.CloningStonithResourcesHasNoEffect(
+                ["fence1", "fence2"], "StonithGroup"
+            ),
+        )

@@ -1596,9 +1596,10 @@ def resource_clone(lib, argv, modifiers, promotable=False):
     Options:
       * --wait
       * -f - CIB file
+      * --force - allow to clone stonith resource
     """
     del lib
-    modifiers.ensure_only_supported("-f", "--wait")
+    modifiers.ensure_only_supported("-f", "--force", "--wait")
     if not argv:
         raise CmdLineInputError()
 
@@ -1608,8 +1609,12 @@ def resource_clone(lib, argv, modifiers, promotable=False):
     if modifiers.is_specified("--wait"):
         wait_timeout = utils.validate_wait_get_timeout()
 
+    force_flags = set()
+    if modifiers.get("--force"):
+        force_flags.add(reports.codes.FORCE)
+
     cib_dom, clone_id = resource_clone_create(
-        cib_dom, argv, promotable=promotable
+        cib_dom, argv, promotable=promotable, force_flags=force_flags
     )
     cib_dom = constraint.constraint_resource_update(res, cib_dom)
     utils.replace_cib_configuration(cib_dom)
@@ -1633,10 +1638,11 @@ def resource_clone(lib, argv, modifiers, promotable=False):
 
 
 def resource_clone_create(
-    cib_dom, argv, update_existing=False, promotable=False
+    cib_dom, argv, update_existing=False, promotable=False, force_flags=()
 ):
     """
-    Commandline options: no options
+    Commandline options:
+      * --force - allow to clone stonith resource
     """
     name = argv.pop(0)
 
@@ -1672,6 +1678,33 @@ def resource_clone_create(
         and element.parentNode.getElementsByTagName("primitive").length <= 1
     ):
         element.parentNode.parentNode.removeChild(element.parentNode)
+
+    def _reject_stonith_clone_report(force_flags, stonith_ids, group_id=None):
+        process_library_reports(
+            [
+                reports.ReportItem(
+                    severity=reports.item.get_severity(
+                        reports.codes.FORCE,
+                        is_forced=reports.codes.FORCE in force_flags,
+                    ),
+                    message=reports.messages.CloningStonithResourcesHasNoEffect(
+                        stonith_ids, group_id=group_id
+                    ),
+                )
+            ]
+        )
+
+    if element.getAttribute("class") == "stonith":
+        _reject_stonith_clone_report(force_flags, [name])
+
+    if element.tagName == "group":
+        stonith_ids = [
+            resource.getAttribute("id")
+            for resource in element.getElementsByTagName("primitive")
+            if resource.getAttribute("class") == "stonith"
+        ]
+        if stonith_ids:
+            _reject_stonith_clone_report(force_flags, stonith_ids, name)
 
     parts = parse_clone_args(argv, promotable=promotable)
     if not update_existing:

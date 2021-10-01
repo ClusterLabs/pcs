@@ -9,8 +9,10 @@
 ### Fixed
 - Do not unfence newly added devices on fenced cluster nodes ([rhbz#1991654])
 - Fix displaying fencing levels with regular expression targets ([rhbz#1533090])
+- Reject cloning of stonith resources ([rhbz#1811072])
 
 [rhbz#1533090]: https://bugzilla.redhat.com/show_bug.cgi?id=1533090
+[rhbz#1811072]: https://bugzilla.redhat.com/show_bug.cgi?id=1811072
 [rhbz#1991654]: https://bugzilla.redhat.com/show_bug.cgi?id=1991654
 [rhbz#1992668]: https://bugzilla.redhat.com/show_bug.cgi?id=1992668
 

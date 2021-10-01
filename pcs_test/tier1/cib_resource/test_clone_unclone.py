@@ -31,6 +31,28 @@ FIXTURE_PRIMITIVE_FOR_CLONE = """
 
 FIXTURE_CLONE = f"""<clone id="C-clone">{FIXTURE_PRIMITIVE_FOR_CLONE}</clone>"""
 
+FIXTURE_STONITH_FOR_CLONE = """
+    <primitive class="stonith" id="fence-device" type="fence_xvm">
+        <operations>
+          <op id="fence-device-monitor-interval-60s" interval="60s"
+              name="monitor"/>
+        </operations>
+    </primitive>
+"""
+
+FIXTURE_STONITH_CLONE = f"""
+    <clone id="fence-device-clone">{FIXTURE_STONITH_FOR_CLONE}</clone>
+"""
+
+FIXTURE_STONITH_PROMOTABLE = f"""
+    <clone id="fence-device-clone">
+        {FIXTURE_STONITH_FOR_CLONE}
+        <meta_attributes id="fence-device-clone-meta_attributes">
+            <nvpair id="fence-device-clone-meta_attributes-promotable"
+                name="promotable" value="true"></nvpair>
+        </meta_attributes>
+    </clone>
+"""
 FIXTURE_CLONE_WITH_OPTIONS = f"""
     <clone id="CustomCloneId">
         {FIXTURE_PRIMITIVE_FOR_CLONE}
@@ -62,13 +84,17 @@ FIXTURE_CLONED_GROUP = """
     </clone>
 """
 
-FIXTURE_GROUP_LAST_MEMBER = """
-    <group id="Group">
-        {}
-    </group>
-""".format(
-    FIXTURE_PRIMITIVE_FOR_CLONE
-)
+FIXTURE_GROUP_WITH_STONITH = f"""
+    <group id="Group">{FIXTURE_STONITH_FOR_CLONE}</group>
+"""
+
+FIXTURE_CLONED_GROUP_WITH_STONITH = f"""
+    <clone id="Group-clone">{FIXTURE_GROUP_WITH_STONITH}</clone>
+"""
+
+FIXTURE_GROUP_LAST_MEMBER = f"""
+    <group id="Group">{FIXTURE_PRIMITIVE_FOR_CLONE}</group>
+"""
 
 FIXTURE_CONSTRAINTS_CONFIG_XML = """
     <constraints>
@@ -155,6 +181,18 @@ FIXTURE_CLONE_AND_RESOURCE = fixture_resources_xml(
 FIXTURE_RESOURCES = fixture_resources_xml(
     FIXTURE_DUMMY, FIXTURE_PRIMITIVE_FOR_CLONE
 )
+
+
+def fixture_clone_stonith_msg(forced=False, group=False):
+    return (
+        "{severity}: {group}No need to clone stonith resource 'fence-device', any node"
+        " can use a stonith resource (unless specifically banned) regardless of "
+        "whether the stonith resource is running on that node or not{use_force}"
+    ).format(
+        severity="Warning" if forced else "Error",
+        group="Group 'Group' contains stonith resource. " if group else "",
+        use_force="\n" if forced else ", use " "--force to override\n",
+    )
 
 
 class Unclone(
@@ -255,6 +293,7 @@ class Clone(
         )
     ),
 ):
+    # pylint: disable=too-many-public-methods
     empty_cib = rc("cib-empty.xml")
 
     def setUp(self):
@@ -295,6 +334,42 @@ class Clone(
             ),
         )
 
+    def test_clone_id_is_stonith(self):
+        self.set_cib_file(FIXTURE_STONITH_FOR_CLONE)
+        self.assert_pcs_fail(
+            "resource clone fence-device".split(),
+            fixture_clone_stonith_msg(),
+        )
+        self.assert_resources_xml_in_cib(
+            fixture_resources_xml(FIXTURE_STONITH_FOR_CLONE)
+        )
+
+    def test_clone_id_is_stonith_forced(self):
+        self.set_cib_file(FIXTURE_STONITH_FOR_CLONE)
+        self.assert_effect(
+            "resource clone fence-device --force".split(),
+            fixture_resources_xml(FIXTURE_STONITH_CLONE),
+            output=fixture_clone_stonith_msg(forced=True),
+        )
+
+    def test_clone_group_with_stonith(self):
+        self.set_cib_file(FIXTURE_GROUP_WITH_STONITH)
+        self.assert_pcs_fail(
+            "resource clone Group".split(),
+            fixture_clone_stonith_msg(group=True),
+        )
+        self.assert_resources_xml_in_cib(
+            fixture_resources_xml(FIXTURE_GROUP_WITH_STONITH)
+        )
+
+    def test_clone_group_with_stonith_forced(self):
+        self.set_cib_file(FIXTURE_GROUP_WITH_STONITH)
+        self.assert_effect(
+            "resource clone Group --force".split(),
+            fixture_resources_xml(FIXTURE_CLONED_GROUP_WITH_STONITH),
+            output=fixture_clone_stonith_msg(forced=True, group=True),
+        )
+
     def test_promotable_clone(self):
         self.assert_effect(
             "resource promotable C".split(),
@@ -309,6 +384,24 @@ class Clone(
             fixture_resources_xml(
                 fixture_clone("CustomPromotableId", "C", promotable=True)
             ),
+        )
+
+    def test_promotable_clone_id_is_stonith(self):
+        self.set_cib_file(FIXTURE_STONITH_FOR_CLONE)
+        self.assert_pcs_fail(
+            "resource promotable fence-device".split(),
+            fixture_clone_stonith_msg(),
+        )
+        self.assert_resources_xml_in_cib(
+            fixture_resources_xml(FIXTURE_STONITH_FOR_CLONE)
+        )
+
+    def test_promotable_clone_id_is_stonith_forced(self):
+        self.set_cib_file(FIXTURE_STONITH_FOR_CLONE)
+        self.assert_effect(
+            "resource promotable fence-device --force".split(),
+            fixture_resources_xml(FIXTURE_STONITH_PROMOTABLE),
+            output=fixture_clone_stonith_msg(forced=True),
         )
 
     def test_promotable_keyword_and_option(self):

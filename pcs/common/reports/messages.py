@@ -2735,6 +2735,36 @@ class UnableToGetResourceOperationDigests(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class CloningStonithResourcesHasNoEffect(ReportItemMessage):
+    """
+    Reject cloning of stonith resources with an explanation.
+
+    stonith_id_list -- ids of stonith resources
+    group_id -- optional id of a group containing stonith resources
+    """
+
+    stonith_id_list: List[str]
+    group_id: Optional[str] = None
+    _code = codes.CLONING_STONITH_RESOURCES_HAS_NO_EFFECT
+
+    @property
+    def message(self) -> str:
+        resources = format_plural(self.stonith_id_list, "resource")
+        group = (
+            f"Group '{self.group_id}' contains stonith {resources}. "
+            if self.group_id
+            else ""
+        )
+        stonith_list = format_list(self.stonith_id_list)
+        return (
+            f"{group}No need to clone stonith {resources} "
+            f"{stonith_list}, any node can use a stonith resource "
+            "(unless specifically banned) regardless of whether the stonith "
+            "resource is running on that node or not"
+        )
+
+
+@dataclass(frozen=True)
 class StonithResourcesDoNotExist(ReportItemMessage):
     """
     specified stonith resource doesn't exist (e.g. when creating in constraints)
