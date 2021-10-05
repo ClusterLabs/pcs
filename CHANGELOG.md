@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.10.11] - 2021-10-05
 
 ### Added
 -  Add add/remove cli syntax for command `pcs stonith update-scsi-devices`
