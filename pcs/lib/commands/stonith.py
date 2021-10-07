@@ -18,7 +18,6 @@ from pcs.lib.commands.resource import (
 )
 from pcs.lib.communication.corosync import GetCorosyncOnlineTargets
 
-# from pcs.lib.communication.nodes import GetOnlineTargets
 from pcs.lib.communication.scsi import Unfence
 from pcs.lib.communication.tools import (
     AllSameDataMixin,
