@@ -75,7 +75,7 @@ def get_misconfigured_resources(
     return stonith_all, stonith_with_action, stonith_with_method_cycle
 
 
-SUPPORTED_RESOURCE_TYPES_FOR_RESTARLESS_UPDATE = ["fence_scsi"]
+SUPPORTED_RESOURCE_TYPES_FOR_RESTARTLESS_UPDATE = ["fence_scsi"]
 
 
 def validate_stonith_restartless_update(
@@ -99,14 +99,14 @@ def validate_stonith_restartless_update(
     if (
         stonith_el.get("class", "") != "stonith"
         or stonith_el.get("provider", "") != ""
-        or stonith_type not in SUPPORTED_RESOURCE_TYPES_FOR_RESTARLESS_UPDATE
+        or stonith_type not in SUPPORTED_RESOURCE_TYPES_FOR_RESTARTLESS_UPDATE
     ):
         report_list.append(
             ReportItem.error(
                 reports.messages.StonithRestartlessUpdateUnsupportedAgent(
                     stonith_id,
                     stonith_type,
-                    SUPPORTED_RESOURCE_TYPES_FOR_RESTARLESS_UPDATE,
+                    SUPPORTED_RESOURCE_TYPES_FOR_RESTARTLESS_UPDATE,
                 )
             )
         )
