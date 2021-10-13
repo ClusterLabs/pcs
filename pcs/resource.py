@@ -855,7 +855,7 @@ def resource_move(lib: Any, argv: List[str], modifiers: InputModifiers):
     if modifiers.is_specified("--autodelete"):
         warn(
             "Option '--autodelete' is deprecated. There is no need to use it "
-            "as its functionallity is default now."
+            "as its functionality is default now."
         )
 
     lib.resource.move_autoclean(
