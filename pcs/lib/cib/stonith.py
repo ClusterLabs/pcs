@@ -59,11 +59,12 @@ def get_misconfigured_resources(
     """
     Return stonith: all, 'action' option set, 'method' option set to 'cycle'
     """
-    stonith_all = []
+    stonith_all = cast(
+        List[_Element], resources_el.xpath("//primitive[@class='stonith']")
+    )
     stonith_with_action = []
     stonith_with_method_cycle = []
-    for stonith in resources_el.iterfind("primitive[@class='stonith']"):
-        stonith_all.append(stonith)
+    for stonith in stonith_all:
         for nvpair in stonith.iterfind("instance_attributes/nvpair"):
             if nvpair.get("name") == "action" and nvpair.get("value"):
                 stonith_with_action.append(stonith)

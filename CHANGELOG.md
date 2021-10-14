@@ -10,7 +10,10 @@
 - Do not unfence newly added devices on fenced cluster nodes ([rhbz#1991654])
 - Fix displaying fencing levels with regular expression targets ([rhbz#1533090])
 - Reject cloning of stonith resources ([rhbz#1811072])
+- Do not show warning that no stonith device was detected and stonith-enabled
+  is not false when a stonith device is in a group ([ghpull#370])
 
+[ghpull#370]: https://github.com/ClusterLabs/pcs/pull/370
 [rhbz#1533090]: https://bugzilla.redhat.com/show_bug.cgi?id=1533090
 [rhbz#1811072]: https://bugzilla.redhat.com/show_bug.cgi?id=1811072
 [rhbz#1991654]: https://bugzilla.redhat.com/show_bug.cgi?id=1991654
