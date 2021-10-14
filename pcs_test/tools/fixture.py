@@ -21,6 +21,10 @@ def warn(code, context=None, **kwargs):
     return severities.WARNING, code, kwargs, None, context
 
 
+def deprecation(code, context=None, **kwargs):
+    return severities.DEPRECATION, code, kwargs, None, context
+
+
 def error(code, force_code=None, context=None, **kwargs):
     return severities.ERROR, code, kwargs, force_code, context
 
@@ -81,6 +85,9 @@ class ReportStore:
 
     def warn(self, name, code, **kwargs):
         return self.__append(name, warn(code, **kwargs))
+
+    def deprecation(self, name, code, **kwargs):
+        return self.__append(name, deprecation(code, **kwargs))
 
     def error(self, name, code, force_code=None, **kwargs):
         return self.__append(name, error(code, force_code=force_code, **kwargs))

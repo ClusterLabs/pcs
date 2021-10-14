@@ -16,7 +16,12 @@ import pcs.cli.constraint_colocation.command as colocation_command
 import pcs.cli.constraint_order.command as order_command
 from pcs.cli.constraint_ticket import command as ticket_command
 from pcs.cli.reports import process_library_reports
-from pcs.cli.reports.output import print_to_stderr, warn, error
+from pcs.cli.reports.output import (
+    deprecation_warning,
+    error,
+    print_to_stderr,
+    warn,
+)
 from pcs.common import (
     const,
     pacemaker,
@@ -117,7 +122,7 @@ def constraint_order_cmd(lib, argv, modifiers):
 
 
 def constraint_show(lib, argv, modifiers):
-    warn(
+    deprecation_warning(
         "This command is deprecated and will be removed. "
         "Please use 'pcs constraint config' instead."
     )
@@ -589,7 +594,7 @@ def order_find_duplicates(dom, constraint_el):
 
 
 def location_show(lib, argv, modifiers):
-    warn(
+    deprecation_warning(
         "This command is deprecated and will be removed. "
         "Please use 'pcs constraint location config' instead."
     )

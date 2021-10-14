@@ -65,7 +65,7 @@ from pcs.lib.corosync import (
     live as corosync_live,
     qdevice_net,
 )
-from pcs.cli.reports.output import warn
+from pcs.cli.reports.output import deprecation_warning, warn
 from pcs.lib.errors import LibraryError
 from pcs.lib.node import get_existing_nodes_names
 import pcs.lib.pacemaker.live as lib_pacemaker
@@ -1164,7 +1164,7 @@ def cluster_uidgid(lib, argv, modifiers, silent_list=False):
             utils.write_uid_gid_file(uid, gid)
         elif command in {"delete", "remove", "rm"}:
             if command == "rm":
-                warn(
+                deprecation_warning(
                     "'pcs cluster uidgid rm' has been deprecated, use 'pcs "
                     "cluster uidgid delete' or 'pcs cluster uidgid remove' "
                     "instead"

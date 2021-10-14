@@ -142,7 +142,8 @@ class ConstraintTest(unittest.TestCase):
         assert returnVal == 0
         assert output == (
             "Warning: invalid score 'pingd', setting score-attribute=pingd instead\n"
-            "Warning: Converting invalid score to score-attribute=pingd is deprecated and will be removed.\n"
+            "Deprecation Warning: Converting invalid score to "
+            "score-attribute=pingd is deprecated and will be removed.\n"
         ), [output]
 
         output, returnVal = pcs(
@@ -152,7 +153,8 @@ class ConstraintTest(unittest.TestCase):
         assert returnVal == 0
         assert output == (
             "Warning: invalid score 'pingd', setting score-attribute=pingd instead\n"
-            "Warning: Converting invalid score to score-attribute=pingd is deprecated and will be removed.\n"
+            "Deprecation Warning: Converting invalid score to "
+            "score-attribute=pingd is deprecated and will be removed.\n"
         ), [output]
 
         output, returnVal = pcs(
@@ -164,7 +166,7 @@ class ConstraintTest(unittest.TestCase):
         )
         assert returnVal == 0
         assert output == (
-            "Warning: Syntax 'date start=<date> gt' is deprecated "
+            "Deprecation Warning: Syntax 'date start=<date> gt' is deprecated "
             "and will be removed. Please use 'date gt <date>'.\n"
         ), [output]
 
@@ -177,9 +179,9 @@ class ConstraintTest(unittest.TestCase):
         )
         assert returnVal == 0
         assert output == (
-            "Warning: Syntax 'date start=<date> end=<date> in_range' is "
-            "deprecated and will be removed. Please use 'date in_range <date> "
-            "to <date>'.\n"
+            "Deprecation Warning: Syntax 'date start=<date> end=<date> "
+            "in_range' is deprecated and will be removed. Please use 'date "
+            "in_range <date> to <date>'.\n"
         ), [output]
 
         output, returnVal = pcs(
@@ -190,8 +192,8 @@ class ConstraintTest(unittest.TestCase):
             ).split(),
         )
         assert output == (
-            "Warning: Syntax 'operation=date_spec' is deprecated and will be "
-            "removed. Please use 'date-spec <date-spec options>'.\n"
+            "Deprecation Warning: Syntax 'operation=date_spec' is deprecated "
+            "and will be removed. Please use 'date-spec <date-spec options>'.\n"
         ), [output]
         assert returnVal == 0
 
@@ -761,7 +763,8 @@ Ticket Constraints:
         )
         ac(
             o,
-            f"Warning: Role value '{role}' is deprecated and should not be used, use '{const.PCMK_ROLE_UNPROMOTED}' instead\n",
+            f"Deprecation Warning: Role value '{role}' is deprecated and "
+            f"should not be used, use '{const.PCMK_ROLE_UNPROMOTED}' instead\n",
         )
         assert r == 0
 
@@ -1517,7 +1520,8 @@ Colocation Constraints:
         ac(
             o,
             (
-                f"Warning: Value '{const.PCMK_ROLE_UNPROMOTED_LEGACY}' of option "
+                f"Deprecation Warning: Value "
+                f"'{const.PCMK_ROLE_UNPROMOTED_LEGACY}' of option "
                 "role is deprecated and should not be used, use "
                 f"'{const.PCMK_ROLE_UNPROMOTED}' value instead\n"
             ),
@@ -3798,9 +3802,9 @@ class TicketAdd(ConstraintBaseTest):
         self.assert_pcs_fail(
             f"constraint ticket add T {role} A loss-policy=fence".split(),
             [
-                f"Warning: Value '{role}' of option role is deprecated and "
-                f"should not be used, use '{const.PCMK_ROLE_UNPROMOTED}' value "
-                "instead\n"
+                f"Deprecation Warning: Value '{role}' of option role is "
+                f"deprecated and should not be used, use "
+                f"'{const.PCMK_ROLE_UNPROMOTED}' value instead\n"
                 "Duplicate constraints:",
                 f"  {const.PCMK_ROLE_UNPROMOTED} A loss-policy=fence ticket=T (id:ticket-T-A-{const.PCMK_ROLE_UNPROMOTED})",
                 "Error: duplicate constraint already exists, use --force to "
@@ -3814,9 +3818,9 @@ class TicketAdd(ConstraintBaseTest):
         self.assert_pcs_success(
             f"constraint ticket add T {role} A loss-policy=fence".split(),
             stdout_full=(
-                f"Warning: Value '{role}' of option role is deprecated and "
-                f"should not be used, use '{const.PCMK_ROLE_PROMOTED}' value "
-                "instead\n"
+                f"Deprecation Warning: Value '{role}' of option role is "
+                f"deprecated and should not be used, use "
+                f"'{const.PCMK_ROLE_PROMOTED}' value instead\n"
             ),
         )
         promoted_role = const.PCMK_ROLE_PROMOTED_PRIMARY
@@ -3929,9 +3933,9 @@ class TicketShow(ConstraintBaseTest):
         self.assert_pcs_success(
             f"constraint ticket add T {role} A loss-policy=fence".split(),
             stdout_full=(
-                f"Warning: Value '{role}' of option role is deprecated and "
-                f"should not be used, use '{const.PCMK_ROLE_PROMOTED}' value "
-                "instead\n"
+                f"Deprecation Warning: Value '{role}' of option role is "
+                f"deprecated and should not be used, use "
+                f"'{const.PCMK_ROLE_PROMOTED}' value instead\n"
             ),
         )
         self.assert_pcs_success(

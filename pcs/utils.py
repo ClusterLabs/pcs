@@ -2955,7 +2955,7 @@ def get_user_and_pass():
 
 def get_input_modifiers() -> InputModifiers:
     if "--master" in pcs_options:
-        reports_output.warn(
+        reports_output.deprecation_warning(
             "Option '--master' is deprecated and has been replaced by option "
             "'--promoted' "
         )
@@ -2986,7 +2986,7 @@ def print_depracation_warning_for_legacy_roles(role: str) -> None:
     role_normalized = role.capitalize()
     if role_normalized in deprecation_map:
         replaced_by = deprecation_map[role_normalized]
-        reports_output.warn(
+        reports_output.deprecation_warning(
             f"Role value '{role}' is deprecated and should not be used, use "
             f"'{replaced_by}' instead"
         )

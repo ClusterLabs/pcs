@@ -1,7 +1,7 @@
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.constraint import command
 from pcs.cli.constraint_ticket import parse_args
-from pcs.cli.reports.output import error, warn
+from pcs.cli.reports.output import deprecation_warning, error
 from pcs.common.reports import constraints
 
 
@@ -73,7 +73,7 @@ def remove(lib, argv, modifiers):
 
 
 def show(lib, argv, modifiers):
-    warn(
+    deprecation_warning(
         "This command is deprecated and will be removed. "
         "Please use 'pcs constraint ticket config' instead."
     )

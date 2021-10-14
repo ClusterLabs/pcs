@@ -396,8 +396,8 @@ class StonithTest(TestCase, AssertPcsMixin):
 
         self.assert_pcs_success(
             "stonith create test fence_apc ip=i username=u action=a --force".split(),
-            "Warning: stonith option 'action' is deprecated and should not be"
-            " used, use 'pcmk_off_action', 'pcmk_reboot_action' instead\n",
+            "Warning: stonith option 'action' is deprecated and should not be "
+            "used, use 'pcmk_off_action', 'pcmk_reboot_action' instead\n",
         )
 
         self.assert_pcs_success(
@@ -453,8 +453,8 @@ class StonithTest(TestCase, AssertPcsMixin):
 
         self.assert_pcs_success(
             "stonith update test action=a --force".split(),
-            "Warning: stonith option 'action' is deprecated and should not be"
-            " used, use 'pcmk_off_action', 'pcmk_reboot_action' instead\n",
+            "Warning: stonith option 'action' is deprecated and should not be "
+            "used, use 'pcmk_off_action', 'pcmk_reboot_action' instead\n",
         )
 
         self.assert_pcs_success(
@@ -1176,8 +1176,9 @@ class LevelAdd(LevelTestsBase):
 
         self.assert_pcs_success(
             "stonith level add 1 rh7-1 F1,F2".split(),
-            "Warning: Delimiting stonith devices with ',' is deprecated and "
-            "will be removed. Please use a space to delimit stonith devices.\n",
+            "Deprecation Warning: Delimiting stonith devices with ',' is "
+            "deprecated and will be removed. Please use a space to delimit "
+            "stonith devices.\n",
         )
         self.assert_pcs_success(
             "stonith level".split(),
@@ -1191,8 +1192,9 @@ class LevelAdd(LevelTestsBase):
 
         self.assert_pcs_success(
             "stonith level add 2 rh7-1 F1,F2 F3".split(),
-            "Warning: Delimiting stonith devices with ',' is deprecated and "
-            "will be removed. Please use a space to delimit stonith devices.\n",
+            "Deprecation Warning: Delimiting stonith devices with ',' is "
+            "deprecated and will be removed. Please use a space to delimit "
+            "stonith devices.\n",
         )
         self.assert_pcs_success(
             "stonith level".split(),
@@ -1207,8 +1209,9 @@ class LevelAdd(LevelTestsBase):
 
         self.assert_pcs_success(
             "stonith level add 3 rh7-1 F1 F2,F3".split(),
-            "Warning: Delimiting stonith devices with ',' is deprecated and "
-            "will be removed. Please use a space to delimit stonith devices.\n",
+            "Deprecation Warning: Delimiting stonith devices with ',' is "
+            "deprecated and will be removed. Please use a space to delimit "
+            "stonith devices.\n",
         )
         self.assert_pcs_success(
             "stonith level".split(),
@@ -1389,9 +1392,9 @@ class LevelConfig(LevelTestsBase):
 
 class LevelClearDeprecatedSyntax(LevelTestsBase):
     deprecated_syntax = (
-        "Warning: Syntax 'pcs stonith level clear [<target> | <stonith id(s)>] "
-        "is deprecated and will be removed. Please use 'pcs stonith level "
-        "clear [target <target>] | [stonith <stonith id>...]'.\n"
+        "Deprecation Warning: Syntax 'pcs stonith level clear [<target> | "
+        "<stonith id(s)>] is deprecated and will be removed. Please use 'pcs "
+        "stonith level clear [target <target>] | [stonith <stonith id>...]'.\n"
     )
 
     def setUp(self):
@@ -1572,10 +1575,10 @@ class LevelClear(LevelTestsBase):
 class LevelDeleteRemoveDeprecatedSyntax(LevelTestsBase):
     command = None
     deprecation_warning = (
-        "Warning: Syntax 'pcs stonith level delete | remove <level> [<target>] "
-        "[<stonith id>...]' is deprecated and will be removed. Please use 'pcs "
-        "stonith level delete | remove <level> [target <target>] [stonith "
-        "<stonith id>...]'.\n"
+        "Deprecation Warning: Syntax 'pcs stonith level delete | remove "
+        "<level> [<target>] [<stonith id>...]' is deprecated and will be "
+        "removed. Please use 'pcs stonith level delete | remove <level> "
+        "[target <target>] [stonith <stonith id>...]'.\n"
     )
 
     def setUp(self):
@@ -1621,9 +1624,9 @@ class LevelDeleteRemoveDeprecatedSyntax(LevelTestsBase):
             ["stonith", "level", self.command, "3", r"regexp%rh7-\d", "F1,F2"],
             (
                 self.deprecation_warning
-                + "Warning: Delimiting stonith devices with ',' is deprecated "
-                "and will be removed. Please use a space to delimit stonith "
-                "devices.\n"
+                + "Deprecation Warning: Delimiting stonith devices with ',' is "
+                "deprecated and will be removed. Please use a space to delimit "
+                "stonith devices.\n"
                 "Error: Fencing level for 'rh7-\\d' at level '3' with "
                 "device(s) 'F1', 'F2' does not exist\n" + ERRORS_HAVE_OCURRED
             ),
@@ -1706,9 +1709,9 @@ class LevelDeleteRemoveDeprecatedSyntax(LevelTestsBase):
         self.assert_pcs_success(
             ["stonith", "level", self.command, "3", "F2,F1"],
             self.deprecation_warning
-            + "Warning: Delimiting stonith devices with ',' is deprecated "
-            "and will be removed. Please use a space to delimit stonith "
-            "devices.\n",
+            + "Deprecation Warning: Delimiting stonith devices with ',' is "
+            "deprecated and will be removed. Please use a space to delimit "
+            "stonith devices.\n",
         )
         self.assert_pcs_success(
             "stonith level config".split(),

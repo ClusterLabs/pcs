@@ -47,7 +47,7 @@ def _validate_options(options) -> reports.ReportItemList:
                 const.PCMK_ROLE_PROMOTED_LEGACY: const.PCMK_ROLE_PROMOTED,
                 const.PCMK_ROLE_UNPROMOTED_LEGACY: const.PCMK_ROLE_UNPROMOTED,
             },
-            reports.ReportItemSeverity.warning(),
+            reports.ReportItemSeverity.deprecation(),
         ),
     ]
     return validate.ValidatorAll(validators).validate(options)

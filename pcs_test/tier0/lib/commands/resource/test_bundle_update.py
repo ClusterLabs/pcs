@@ -153,7 +153,7 @@ class ContainerParametrized(TestCase):
         )
 
     fixture_report_deprecated_masters = (
-        severities.WARNING,
+        severities.DEPRECATION,
         report_codes.DEPRECATED_OPTION,
         {
             "option_name": "masters",

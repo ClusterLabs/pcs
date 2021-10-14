@@ -185,7 +185,7 @@ def _validate_operation_list(
                 const.PCMK_ROLE_PROMOTED_LEGACY: const.PCMK_ROLE_PROMOTED,
                 const.PCMK_ROLE_UNPROMOTED_LEGACY: const.PCMK_ROLE_UNPROMOTED,
             },
-            reports.ReportItemSeverity.warning(),
+            reports.ReportItemSeverity.deprecation(),
         ),
         validate.ValueIn("on-fail", ON_FAIL_VALUES),
         validate.ValueIn("record-pending", _BOOLEAN_VALUES),

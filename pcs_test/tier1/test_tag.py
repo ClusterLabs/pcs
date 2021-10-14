@@ -250,8 +250,8 @@ class TagList(
 ):
     command = "list"
     deprecation_msg = (
-        "Warning: This command is deprecated and will be removed. Please use "
-        "'pcs tag config' instead.\n"
+        "Deprecation Warning: This command is deprecated and will be removed. "
+        "Please use 'pcs tag config' instead.\n"
     )
 
 

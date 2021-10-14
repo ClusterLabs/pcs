@@ -195,8 +195,8 @@ class PlainStonith(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
-            "Warning: stonith option 'action' is deprecated and should not be"
-            " used, use 'pcmk_off_action', 'pcmk_reboot_action' instead\n",
+            "Warning: stonith option 'action' is deprecated and should not be "
+            "used, use 'pcmk_off_action', 'pcmk_reboot_action' instead\n",
         )
 
 

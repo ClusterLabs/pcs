@@ -29,6 +29,7 @@ class ReportItemSeverity(ImplementsToDto, ImplementsFromDto):
     # pylint: disable=invalid-name
     ERROR = SeverityLevel("ERROR")
     WARNING = SeverityLevel("WARNING")
+    DEPRECATION = SeverityLevel("DEPRECATION")
     INFO = SeverityLevel("INFO")
     DEBUG = SeverityLevel("DEBUG")
 
@@ -57,6 +58,10 @@ class ReportItemSeverity(ImplementsToDto, ImplementsFromDto):
     @classmethod
     def warning(cls) -> "ReportItemSeverity":
         return cls(level=cls.WARNING)
+
+    @classmethod
+    def deprecation(cls) -> "ReportItemSeverity":
+        return cls(level=cls.DEPRECATION)
 
     @classmethod
     def info(cls) -> "ReportItemSeverity":
@@ -149,6 +154,18 @@ class ReportItem(ImplementsToDto):
     ) -> "ReportItem":
         return cls(
             severity=ReportItemSeverity.warning(),
+            message=message,
+            context=context,
+        )
+
+    @classmethod
+    def deprecation(
+        cls,
+        message: ReportItemMessage,
+        context: Optional[ReportItemContext] = None,
+    ) -> "ReportItem":
+        return cls(
+            severity=ReportItemSeverity.deprecation(),
             message=message,
             context=context,
         )

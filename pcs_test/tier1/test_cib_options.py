@@ -779,8 +779,9 @@ class DefaultsUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
         warning_lines = []
         if not update_keyword:
             warning_lines.append(
-                "Warning: This command is deprecated and will be removed. "
-                f"Please use 'pcs {' '.join(self.cli_command)} update' instead.\n"
+                f"Deprecation Warning: This command is deprecated and will be "
+                f"removed. Please use 'pcs {' '.join(self.cli_command)} "
+                f"update' instead.\n"
             )
         warning_lines.append(
             "Warning: Defaults do not apply to resources which override "

@@ -4,7 +4,7 @@ import json
 from pcs import utils
 
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.reports.output import warn
+from pcs.cli.reports.output import deprecation_warning
 
 
 def set_property(lib, argv, modifiers):
@@ -94,7 +94,7 @@ def unset_property(lib, argv, modifiers):
 
 
 def list_property_deprecated(lib, argv, modifiers):
-    warn(
+    deprecation_warning(
         "This command is deprecated and will be removed. "
         "Please use 'pcs property config' instead."
     )

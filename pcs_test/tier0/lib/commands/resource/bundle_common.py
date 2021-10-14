@@ -140,7 +140,7 @@ class ParametrizedContainerMixin(SetUpMixin):
         self.env_assist.assert_reports(
             [
                 (
-                    severities.WARNING,
+                    severities.DEPRECATION,
                     report_codes.DEPRECATED_OPTION,
                     {
                         "option_name": "masters",
@@ -167,7 +167,7 @@ class ParametrizedContainerMixin(SetUpMixin):
         self.env_assist.assert_reports(
             [
                 (
-                    severities.WARNING,
+                    severities.DEPRECATION,
                     report_codes.DEPRECATED_OPTION,
                     {
                         "option_name": "masters",

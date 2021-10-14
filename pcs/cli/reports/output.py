@@ -14,6 +14,10 @@ def warn(message: str) -> None:
     print_to_stderr(f"Warning: {message}")
 
 
+def deprecation_warning(message: str) -> None:
+    print_to_stderr(f"Deprecation Warning: {message}")
+
+
 def error(message: str) -> SystemExit:
     print_to_stderr(f"Error: {message}")
     return SystemExit(1)
@@ -41,6 +45,10 @@ def process_library_reports(report_item_list: ReportItemList) -> None:
 
         if severity == ReportItemSeverity.WARNING:
             warn(msg)
+            continue
+
+        if severity == ReportItemSeverity.DEPRECATION:
+            deprecation_warning(msg)
             continue
 
         if severity != ReportItemSeverity.ERROR:

@@ -4,7 +4,7 @@ from typing import (
 )
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import group_by_keywords, InputModifiers
-from pcs.cli.reports.output import warn, print_to_stderr
+from pcs.cli.reports.output import deprecation_warning, print_to_stderr
 from pcs.common.str_tools import indent
 
 
@@ -33,7 +33,7 @@ def tag_list_cmd(
     Options:
       * -f - CIB file
     """
-    warn(
+    deprecation_warning(
         "This command is deprecated and will be removed. "
         "Please use 'pcs tag config' instead."
     )

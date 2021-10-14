@@ -999,7 +999,9 @@ class ValueDeprecated(TestCase):
     def test_no_deprecated(self):
         assert_report_item_list_equal(
             validate.ValueDeprecated(
-                "opt", dict(valB="valA"), reports.ReportItemSeverity.warning()
+                "opt",
+                dict(valB="valA"),
+                reports.ReportItemSeverity.deprecation(),
             ).validate(dict(other_opt="1")),
             [],
         )
@@ -1007,7 +1009,7 @@ class ValueDeprecated(TestCase):
     def test_empty_deprecation_map(self):
         assert_report_item_list_equal(
             validate.ValueDeprecated(
-                "opt", dict(), reports.ReportItemSeverity.warning()
+                "opt", dict(), reports.ReportItemSeverity.deprecation()
             ).validate(dict(opt="1")),
             [],
         )
@@ -1015,10 +1017,10 @@ class ValueDeprecated(TestCase):
     def test_deprecated_no_replacement(self):
         assert_report_item_list_equal(
             validate.ValueDeprecated(
-                "opt", dict(valA=None), reports.ReportItemSeverity.warning()
+                "opt", dict(valA=None), reports.ReportItemSeverity.deprecation()
             ).validate(dict(opt="valA")),
             [
-                fixture.warn(
+                fixture.deprecation(
                     reports.codes.DEPRECATED_OPTION_VALUE,
                     option_name="opt",
                     deprecated_value="valA",

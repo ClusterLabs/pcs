@@ -185,8 +185,8 @@ class BundleCreate(BundleCreateCommon):
                     </bundle>
                 </resources>
             """,
-            "Warning: container option 'masters' is deprecated and should not "
-            "be used, use 'promoted-max' instead\n",
+            "Deprecation Warning: container option 'masters' is deprecated and "
+            "should not be used, use 'promoted-max' instead\n",
         )
 
     def test_deprecated_masters_and_promoted_max(self):
@@ -197,8 +197,9 @@ class BundleCreate(BundleCreateCommon):
             """.split(),
             "Error: Only one of container options 'masters' and "
             "'promoted-max' can be used\n"
-            "Warning: container option 'masters' is deprecated and should "
-            "not be used, use 'promoted-max' instead\n" + ERRORS_HAVE_OCURRED,
+            "Deprecation Warning: container option 'masters' is deprecated and "
+            "should not be used, use 'promoted-max' instead\n"
+            + ERRORS_HAVE_OCURRED,
         )
 
     def test_fail_when_missing_args_1(self):
@@ -498,16 +499,16 @@ class BundleUpdate(BundleCreateCommon):
                     </bundle>
                 </resources>
             """,
-            "Warning: container option 'masters' is deprecated and should not "
-            "be used, use 'promoted-max' instead\n",
+            "Deprecation Warning: container option 'masters' is deprecated and "
+            "should not be used, use 'promoted-max' instead\n",
         )
 
     def test_delete_masters(self):
         self.fixture_bundle("B")
         self.assert_pcs_success(
             "resource bundle update B container masters=2".split(),
-            "Warning: container option 'masters' is deprecated and should not "
-            "be used, use 'promoted-max' instead\n",
+            "Deprecation Warning: container option 'masters' is deprecated and "
+            "should not be used, use 'promoted-max' instead\n",
         )
         self.assert_effect(
             "resource bundle update B container masters=".split(),
@@ -533,8 +534,8 @@ class BundleUpdate(BundleCreateCommon):
         )
         self.assert_pcs_fail(
             "resource bundle update B container masters=2".split(),
-            "Warning: container option 'masters' is deprecated and should "
-            "not be used, use 'promoted-max' instead\n"
+            "Deprecation Warning: container option 'masters' is deprecated "
+            "and should not be used, use 'promoted-max' instead\n"
             "Error: Cannot set container option 'masters' because container "
             "option 'promoted-max' is already set\n" + ERRORS_HAVE_OCURRED,
         )
@@ -553,16 +554,16 @@ class BundleUpdate(BundleCreateCommon):
                     </bundle>
                 </resources>
             """,
-            "Warning: container option 'masters' is deprecated and should not "
-            "be used, use 'promoted-max' instead\n",
+            "Deprecation Warning: container option 'masters' is deprecated and "
+            "should not be used, use 'promoted-max' instead\n",
         )
 
     def test_promoted_max_set_after_masters(self):
         self.fixture_bundle("B")
         self.assert_pcs_success(
             "resource bundle update B container masters=2".split(),
-            "Warning: container option 'masters' is deprecated and should not "
-            "be used, use 'promoted-max' instead\n",
+            "Deprecation Warning: container option 'masters' is deprecated and "
+            "should not be used, use 'promoted-max' instead\n",
         )
         self.assert_pcs_fail(
             "resource bundle update B container promoted-max=3".split(),
@@ -574,8 +575,8 @@ class BundleUpdate(BundleCreateCommon):
         self.fixture_bundle("B")
         self.assert_pcs_success(
             "resource bundle update B container masters=2".split(),
-            "Warning: container option 'masters' is deprecated and should not "
-            "be used, use 'promoted-max' instead\n",
+            "Deprecation Warning: container option 'masters' is deprecated and "
+            "should not be used, use 'promoted-max' instead\n",
         )
         self.assert_effect(
             "resource bundle update B container masters= promoted-max=3".split(),

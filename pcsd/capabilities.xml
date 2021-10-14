@@ -2228,6 +2228,16 @@
 
 
 
+    <capability id="pcs.reports.severity.deprecation" in-pcs="1" in-pcsd="0">
+      <description>
+        New report severity Deprecation is used for deprecation warnings.
+
+        pcs commands: all
+      </description>
+    </capability>
+
+
+
     <capability id="resource-agents.describe" in-pcs="1" in-pcsd="1">
       <description>
         Describe a resource agent - present its metadata.

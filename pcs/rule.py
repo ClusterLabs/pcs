@@ -4,7 +4,7 @@ import xml.dom.minidom
 from typing import List, Any, Optional
 
 from pcs import utils
-from pcs.cli.reports.output import warn
+from pcs.cli.reports.output import deprecation_warning, warn
 from pcs.common import (
     const,
     pacemaker,
@@ -54,7 +54,7 @@ def dom_rule_add(dom_element, options, rule_argv, cib_schema_version):
                 options["score"]
             )
         )
-        warn(
+        deprecation_warning(
             "Converting invalid score to score-attribute=pingd is deprecated "
             "and will be removed."
         )
@@ -111,8 +111,8 @@ def dom_rule_add(dom_element, options, rule_argv, cib_schema_version):
     except (ParserException, CibBuilderException) as e:
         utils.err("'%s' is not a valid rule expression" % " ".join(rule_argv))
 
-    for msg in preprocessor.warning_list:
-        warn(msg)
+    for msg in preprocessor.deprecation_warning_list:
+        deprecation_warning(msg)
 
     # add options into rule xml
     if not options.get("score") and not options.get("score-attribute"):
@@ -1050,17 +1050,17 @@ class InvalidSyntacticTree(CibBuilderException):
 
 class TokenPreprocessor:
     def __init__(self):
-        self._warning_list = []
+        self._deprecation_warning_list = []
 
     def run(self, token_list):
-        self._warning_list = []
+        self._deprecation_warning_list = []
         return self.convert_legacy_date(
             self.join_date_common(self.separate_parenthesis(token_list))
         )
 
     @property
-    def warning_list(self):
-        return self._warning_list
+    def deprecation_warning_list(self):
+        return self._deprecation_warning_list
 
     @staticmethod
     def separate_parenthesis(input_list):
@@ -1100,7 +1100,7 @@ class TokenPreprocessor:
                     token == "operation=date_spec"
                     and token_parts[0] == DateSpecValue.KEYWORD
                 ):
-                    self._warning_list.append(
+                    self._deprecation_warning_list.append(
                         "Syntax 'operation=date_spec' "
                         "is deprecated and will be removed. Please use "
                         "'date-spec <date-spec options>'."
@@ -1139,14 +1139,14 @@ class TokenPreprocessor:
                 else:
                     if token == "gt" and date_start and not date_end:
                         output_list.extend(["date", "gt", date_start])
-                        self._warning_list.append(
+                        self._deprecation_warning_list.append(
                             "Syntax 'date start=<date> gt' "
                             "is deprecated and will be removed. Please use "
                             "'date gt <date>'."
                         )
                     elif token == "lt" and not date_start and date_end:
                         output_list.extend(["date", "lt", date_end])
-                        self._warning_list.append(
+                        self._deprecation_warning_list.append(
                             "Syntax 'date end=<date> lt' "
                             "is deprecated and will be removed. Please use "
                             "'date lt <date>'."
@@ -1155,7 +1155,7 @@ class TokenPreprocessor:
                         output_list.extend(
                             ["date", "in_range", date_start, "to", date_end]
                         )
-                        self._warning_list.append(
+                        self._deprecation_warning_list.append(
                             "Syntax 'date start=<date> end=<date> in_range' "
                             "is deprecated and will be removed. Please use "
                             "'date in_range <date> to <date>'."

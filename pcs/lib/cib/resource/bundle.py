@@ -433,7 +433,7 @@ def _validate_generic_container_options(container_options, force_options=False):
     deprecation_reports = []
     if "masters" in container_options:
         deprecation_reports.append(
-            ReportItem.warning(
+            ReportItem.deprecation(
                 reports.messages.DeprecatedOption(
                     "masters",
                     ["promoted-max"],
@@ -516,7 +516,7 @@ def _validate_generic_container_options_update(
         # deprecated. They may be removing it because they just found out it is
         # deprecated.
         deprecation_reports.append(
-            ReportItem.warning(
+            ReportItem.deprecation(
                 reports.messages.DeprecatedOption(
                     "masters",
                     ["promoted-max"],

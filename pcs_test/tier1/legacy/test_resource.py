@@ -4983,9 +4983,9 @@ class ResourceRemoveWithTicket(TestCase, AssertPcsMixin):
         self.assert_pcs_success(
             f"constraint ticket add T {role} A loss-policy=fence".split(),
             stdout_full=(
-                f"Warning: Value '{role}' of option role is deprecated and "
-                f"should not be used, use '{const.PCMK_ROLE_PROMOTED}' value "
-                "instead\n"
+                f"Deprecation Warning: Value '{role}' of option role is "
+                f"deprecated and should not be used, use "
+                f"'{const.PCMK_ROLE_PROMOTED}' value instead\n"
             ),
         )
         self.assert_pcs_success(

@@ -260,6 +260,7 @@ def assert_xml_equal(expected_xml, got_xml, context_explanation=""):
 SEVERITY_SHORTCUTS = {
     reports.ReportItemSeverity.INFO: "I",
     reports.ReportItemSeverity.WARNING: "W",
+    reports.ReportItemSeverity.DEPRECATION: "DW",
     reports.ReportItemSeverity.ERROR: "E",
     reports.ReportItemSeverity.DEBUG: "D",
 }

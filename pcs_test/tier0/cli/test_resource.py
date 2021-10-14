@@ -481,23 +481,23 @@ class ResourceBan(ResourceMoveBanMixin, TestCase):
         self.no_args_error = "must specify a resource to ban"
 
 
-@mock.patch("pcs.resource.warn")
+@mock.patch("pcs.resource.deprecation_warning")
 class ResourceMove(TestCase):
     def setUp(self):
         self.lib = mock.Mock(spec_set=["resource"])
         self.resource = mock.Mock(spec_set=["move_autoclean"])
         self.lib.resource = self.resource
 
-    def test_no_args(self, mock_warn):
+    def test_no_args(self, mock_deprecation):
         with self.assertRaises(CmdLineInputError) as cm:
             resource.resource_move(self.lib, [], dict_to_modifiers(dict()))
         self.assertEqual(
             cm.exception.message, "must specify a resource to move"
         )
         self.resource.move_autoclean.assert_not_called()
-        mock_warn.assert_not_called()
+        mock_deprecation.assert_not_called()
 
-    def test_too_many_args(self, mock_warn):
+    def test_too_many_args(self, mock_deprecation):
         with self.assertRaises(CmdLineInputError) as cm:
             resource.resource_move(
                 self.lib,
@@ -506,25 +506,25 @@ class ResourceMove(TestCase):
             )
         self.assertIsNone(cm.exception.message)
         self.resource.move_autoclean.assert_not_called()
-        mock_warn.assert_not_called()
+        mock_deprecation.assert_not_called()
 
-    def test_succes(self, mock_warn):
+    def test_succes(self, mock_deprecation):
         resource.resource_move(
             self.lib, ["resource"], dict_to_modifiers(dict())
         )
         self.resource.move_autoclean.assert_called_once_with(
             "resource", node=None, master=False, wait_timeout=-1, strict=False
         )
-        mock_warn.assert_not_called()
+        mock_deprecation.assert_not_called()
 
-    def test_success_node(self, mock_warn):
+    def test_success_node(self, mock_deprecation):
         resource.resource_move(
             self.lib, ["resource", "node"], dict_to_modifiers(dict())
         )
         self.resource.move_autoclean.assert_called_once_with(
             "resource", node="node", master=False, wait_timeout=-1, strict=False
         )
-        mock_warn.assert_not_called()
+        mock_deprecation.assert_not_called()
 
     def test_success_wait(self, mock_warn):
         resource.resource_move(
@@ -535,7 +535,7 @@ class ResourceMove(TestCase):
         )
         mock_warn.assert_not_called()
 
-    def test_success_autodelete(self, mock_warn):
+    def test_success_autodelete(self, mock_deprecation):
         resource.resource_move(
             self.lib,
             ["resource", "node"],
@@ -544,7 +544,7 @@ class ResourceMove(TestCase):
         self.resource.move_autoclean.assert_called_once_with(
             "resource", node="node", master=False, wait_timeout=-1, strict=False
         )
-        mock_warn.assert_called_once_with(
+        mock_deprecation.assert_called_once_with(
             "Option '--autodelete' is deprecated. There is no need to use it "
             "as its functionality is default now."
         )

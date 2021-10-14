@@ -17,12 +17,12 @@ from pcs.cli.common.errors import (
 )
 from pcs.cli.common.parse_args import InputModifiers
 from pcs.cli.common.routing import create_router
-from pcs.cli.reports.output import warn
+from pcs.cli.reports.output import deprecation_warning
 from pcs.utils import exit_on_cmdline_input_error
 
 
 def certkey(lib: Any, argv: Sequence[str], modifiers: InputModifiers) -> None:
-    warn(
+    deprecation_warning(
         "This command is deprecated and will be removed. "
         "Please use 'pcs pcsd certkey' instead."
     )
@@ -35,7 +35,7 @@ def certkey(lib: Any, argv: Sequence[str], modifiers: InputModifiers) -> None:
 def pcsd_status(
     lib: Any, argv: Sequence[str], modifiers: InputModifiers
 ) -> None:
-    warn(
+    deprecation_warning(
         "This command is deprecated and will be removed. "
         "Please use 'pcs pcsd status' or 'pcs status pcsd' instead."
     )

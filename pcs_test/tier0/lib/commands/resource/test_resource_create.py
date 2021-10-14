@@ -406,13 +406,13 @@ class CreateRolesNormalization(TestCase):
     ):
         self.env_assist.assert_reports(
             [
-                fixture.warn(
+                fixture.deprecation(
                     reports.codes.DEPRECATED_OPTION_VALUE,
                     option_name="role",
                     deprecated_value=promoted_deprecated,
                     replaced_by=const.PCMK_ROLE_PROMOTED,
                 ),
-                fixture.warn(
+                fixture.deprecation(
                     reports.codes.DEPRECATED_OPTION_VALUE,
                     option_name="role",
                     deprecated_value=unpromoted_deprecated,

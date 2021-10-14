@@ -8,7 +8,11 @@ from pcs.cli.common import parse_args
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.fencing_topology import target_type_map_cli_to_lib
 from pcs.cli.reports import process_library_reports
-from pcs.cli.reports.output import error, print_to_stderr, warn
+from pcs.cli.reports.output import (
+    deprecation_warning,
+    error,
+    print_to_stderr,
+)
 from pcs.cli.resource.parse_args import parse_create_simple as parse_create_args
 from pcs.common import reports
 from pcs.common.fencing_topology import (
@@ -251,7 +255,7 @@ def _stonith_level_normalize_devices(argv):
     # normalize devices - previously it was possible to delimit devices by both
     # a comma and a space
     if any("," in arg for arg in argv):
-        warn(
+        deprecation_warning(
             "Delimiting stonith devices with ',' is deprecated and will be "
             "removed. Please use a space to delimit stonith devices."
         )
@@ -317,7 +321,7 @@ def stonith_level_clear_cmd(lib, argv, modifiers):
     # code tried both. It deleted all levels having the first parameter as
     # either a node or a device list. Since it was only possible to specify
     # node as a target back then, this is enabled only in that case.
-    warn(
+    deprecation_warning(
         "Syntax 'pcs stonith level clear [<target> | <stonith id(s)>] is "
         "deprecated and will be removed. Please use 'pcs stonith level clear "
         "[target <target>] | [stonith <stonith id>...]'."
@@ -431,14 +435,14 @@ def stonith_level_remove_cmd(lib, argv, modifiers):
     else:
         # TODO remove, deprecated backward compatibility layer for old syntax
         if len(argv) > 1:
-            warn(
+            deprecation_warning(
                 "Syntax 'pcs stonith level delete | remove <level> [<target>] "
                 "[<stonith id>...]' is deprecated and will be removed. Please "
                 "use 'pcs stonith level delete | remove <level> "
                 "[target <target>] [stonith <stonith id>...]'."
             )
             if not parse_args.ARG_TYPE_DELIMITER in argv[1] and "," in argv[1]:
-                warn(
+                deprecation_warning(
                     "Delimiting stonith devices with ',' is deprecated and "
                     "will be removed. Please use a space to delimit stonith "
                     "devices."

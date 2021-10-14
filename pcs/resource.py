@@ -38,7 +38,7 @@ from pcs.cli.common.tools import (
 )
 from pcs.cli.nvset import nvset_dto_list_to_lines
 from pcs.cli.reports import process_library_reports
-from pcs.cli.reports.output import error, warn
+from pcs.cli.reports.output import deprecation_warning, error, warn
 from pcs.cli.resource.parse_args import (
     parse_bundle_create_options,
     parse_bundle_reset_options,
@@ -349,7 +349,7 @@ def resource_defaults_legacy_cmd(
     """
     del modifiers
     if deprecated_syntax_used:
-        warn(
+        deprecation_warning(
             "This command is deprecated and will be removed. "
             "Please use 'pcs resource defaults update' instead."
         )
@@ -368,7 +368,7 @@ def resource_op_defaults_legacy_cmd(
     """
     del modifiers
     if deprecated_syntax_used:
-        warn(
+        deprecation_warning(
             "This command is deprecated and will be removed. "
             "Please use 'pcs resource op defaults update' instead."
         )
@@ -853,7 +853,7 @@ def resource_move(lib: Any, argv: List[str], modifiers: InputModifiers):
         raise CmdLineInputError()
 
     if modifiers.is_specified("--autodelete"):
-        warn(
+        deprecation_warning(
             "Option '--autodelete' is deprecated. There is no need to use it "
             "as its functionality is default now."
         )
@@ -2305,7 +2305,7 @@ def resource_show(lib, argv, modifiers, stonith=False):
         )
 
     if modifiers.get("--groups"):
-        warn(
+        deprecation_warning(
             "This command is deprecated and will be removed. "
             "Please use 'pcs resource group list' instead."
         )
@@ -2313,7 +2313,7 @@ def resource_show(lib, argv, modifiers, stonith=False):
         return
 
     if modifiers.get("--full") or argv:
-        warn(
+        deprecation_warning(
             "This command is deprecated and will be removed. "
             "Please use 'pcs {} config' instead.".format(
                 "stonith" if stonith else "resource"
@@ -2322,7 +2322,7 @@ def resource_show(lib, argv, modifiers, stonith=False):
         resource_config(lib, argv, modifiers.get_subset("-f"), stonith=stonith)
         return
 
-    warn(
+    deprecation_warning(
         "This command is deprecated and will be removed. "
         "Please use 'pcs {} status' instead.".format(
             "stonith" if stonith else "resource"
@@ -3224,7 +3224,7 @@ def resource_refresh(lib, argv, modifiers):
     # crm_resource actualy did.
     modifiers.ensure_only_supported("--force", "--full", "--strict")
     if modifiers.is_specified("--full"):
-        warn("'--full' has been deprecated")
+        deprecation_warning("'--full' has been deprecated")
     resource = argv.pop(0) if argv and "=" not in argv[0] else None
     parsed_options = prepare_options_allowed(argv, {"node"})
     print_to_stderr(

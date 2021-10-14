@@ -9,6 +9,7 @@ from pcs.cli.common.tools import print_to_stderr
 
 from .output import (
     error,
+    deprecation_warning,
     prepare_force_text,
     warn,
 )
@@ -43,6 +44,8 @@ class ReportProcessorToConsole(ReportProcessor):
             )
         elif severity == ReportItemSeverity.WARNING:
             warn(msg)
+        elif severity == ReportItemSeverity.DEPRECATION:
+            deprecation_warning(msg)
         elif msg and (self.debug or severity != ReportItemSeverity.DEBUG):
             print_to_stderr(msg)
 

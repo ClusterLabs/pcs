@@ -52,7 +52,7 @@ class CreateTest(TestCase):
         )
         env_assist.assert_reports(
             [
-                fixture.warn(
+                fixture.deprecation(
                     report_codes.DEPRECATED_OPTION_VALUE,
                     option_name="role",
                     deprecated_value=role,

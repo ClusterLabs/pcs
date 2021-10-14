@@ -1681,23 +1681,23 @@ class TokenPreprocessorTest(TestCase):
 
     def testNoChanges(self):
         self.assertEqual([], self.preprocessor.run([]))
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["#uname", "eq", "node1"],
             self.preprocessor.run(["#uname", "eq", "node1"]),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
     def testDateSpec(self):
         self.assertEqual(["date-spec"], self.preprocessor.run(["date-spec"]))
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["date-spec", "hours=14"],
             self.preprocessor.run(["date-spec", "hours=14"]),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["date-spec", "hours weeks=6 months= moon=1"],
@@ -1705,19 +1705,19 @@ class TokenPreprocessorTest(TestCase):
                 ["date-spec", "hours", "weeks=6", "months=", "moon=1"]
             ),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["date-spec", "foo", "hours=14"],
             self.preprocessor.run(["date-spec", "foo", "hours=14"]),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["date-spec", "hours=14", "foo", "hours=14"],
             self.preprocessor.run(["date-spec", "hours=14", "foo", "hours=14"]),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             [
@@ -1740,7 +1740,7 @@ class TokenPreprocessorTest(TestCase):
                 ]
             ),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["#uname", "eq", "node1", "or", "date-spec", "hours=14"],
@@ -1748,7 +1748,7 @@ class TokenPreprocessorTest(TestCase):
                 ["#uname", "eq", "node1", "or", "date-spec", "hours=14"]
             ),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["date-spec", "hours=14", "or", "#uname", "eq", "node1"],
@@ -1763,17 +1763,17 @@ class TokenPreprocessorTest(TestCase):
                 ]
             ),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
     def testDuration(self):
         self.assertEqual(["duration"], self.preprocessor.run(["duration"]))
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["duration", "hours=14"],
             self.preprocessor.run(["duration", "hours=14"]),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["duration", "hours weeks=6 months= moon=1"],
@@ -1781,19 +1781,19 @@ class TokenPreprocessorTest(TestCase):
                 ["duration", "hours", "weeks=6", "months=", "moon=1"]
             ),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["duration", "foo", "hours=14"],
             self.preprocessor.run(["duration", "foo", "hours=14"]),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["duration", "hours=14", "foo", "hours=14"],
             self.preprocessor.run(["duration", "hours=14", "foo", "hours=14"]),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             [
@@ -1816,7 +1816,7 @@ class TokenPreprocessorTest(TestCase):
                 ]
             ),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["#uname", "eq", "node1", "or", "duration", "hours=14"],
@@ -1824,7 +1824,7 @@ class TokenPreprocessorTest(TestCase):
                 ["#uname", "eq", "node1", "or", "duration", "hours=14"]
             ),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["duration", "hours=14", "or", "#uname", "eq", "node1"],
@@ -1839,7 +1839,7 @@ class TokenPreprocessorTest(TestCase):
                 ]
             ),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
     def testOperationDatespec(self):
         self.assertEqual(
@@ -1853,7 +1853,7 @@ class TokenPreprocessorTest(TestCase):
                 "Syntax 'operation=date_spec' is deprecated and will be "
                 "removed. Please use 'date-spec <date-spec options>'.",
             ],
-            self.preprocessor.warning_list,
+            self.preprocessor.deprecation_warning_list,
         )
 
         self.assertEqual(
@@ -1867,7 +1867,7 @@ class TokenPreprocessorTest(TestCase):
                 "Syntax 'operation=date_spec' is deprecated and will be "
                 "removed. Please use 'date-spec <date-spec options>'.",
             ],
-            self.preprocessor.warning_list,
+            self.preprocessor.deprecation_warning_list,
         )
 
         self.assertEqual(
@@ -1881,7 +1881,7 @@ class TokenPreprocessorTest(TestCase):
                 "Syntax 'operation=date_spec' is deprecated and will be "
                 "removed. Please use 'date-spec <date-spec options>'.",
             ],
-            self.preprocessor.warning_list,
+            self.preprocessor.deprecation_warning_list,
         )
 
         self.assertEqual(
@@ -1890,7 +1890,7 @@ class TokenPreprocessorTest(TestCase):
                 ["date-spec", "weeks=6", "foo", "operation=date_spec", "moon=1"]
             ),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["date-spec", "weeks=6 moon=1"],
@@ -1903,7 +1903,7 @@ class TokenPreprocessorTest(TestCase):
                 "Syntax 'operation=date_spec' is deprecated and will be "
                 "removed. Please use 'date-spec <date-spec options>'.",
             ],
-            self.preprocessor.warning_list,
+            self.preprocessor.deprecation_warning_list,
         )
 
         self.assertEqual(
@@ -1917,7 +1917,7 @@ class TokenPreprocessorTest(TestCase):
                 "Syntax 'operation=date_spec' is deprecated and will be "
                 "removed. Please use 'date-spec <date-spec options>'.",
             ],
-            self.preprocessor.warning_list,
+            self.preprocessor.deprecation_warning_list,
         )
 
         self.assertEqual(
@@ -1929,7 +1929,7 @@ class TokenPreprocessorTest(TestCase):
                 "Syntax 'operation=date_spec' is deprecated and will be "
                 "removed. Please use 'date-spec <date-spec options>'.",
             ],
-            self.preprocessor.warning_list,
+            self.preprocessor.deprecation_warning_list,
         )
 
         self.assertEqual(
@@ -1938,7 +1938,7 @@ class TokenPreprocessorTest(TestCase):
                 ["date-spec", "weeks=6", "operation=foo", "moon=1"]
             ),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
     def testDateLegacySyntax(self):
         # valid syntax
@@ -1951,7 +1951,7 @@ class TokenPreprocessorTest(TestCase):
                 "Syntax 'date start=<date> gt' is deprecated and will be "
                 "removed. Please use 'date gt <date>'.",
             ],
-            self.preprocessor.warning_list,
+            self.preprocessor.deprecation_warning_list,
         )
 
         self.assertEqual(
@@ -1963,7 +1963,7 @@ class TokenPreprocessorTest(TestCase):
                 "Syntax 'date end=<date> lt' is deprecated and will be "
                 "removed. Please use 'date lt <date>'.",
             ],
-            self.preprocessor.warning_list,
+            self.preprocessor.deprecation_warning_list,
         )
 
         self.assertEqual(
@@ -1978,7 +1978,7 @@ class TokenPreprocessorTest(TestCase):
                 "and will be removed. Please use 'date in_range <date> to "
                 "<date>'.",
             ],
-            self.preprocessor.warning_list,
+            self.preprocessor.deprecation_warning_list,
         )
 
         self.assertEqual(
@@ -1993,7 +1993,7 @@ class TokenPreprocessorTest(TestCase):
                 "and will be removed. Please use 'date in_range <date> to "
                 "<date>'.",
             ],
-            self.preprocessor.warning_list,
+            self.preprocessor.deprecation_warning_list,
         )
 
         self.assertEqual(
@@ -2005,7 +2005,7 @@ class TokenPreprocessorTest(TestCase):
                 "Syntax 'date start=<date> gt' is deprecated and will be "
                 "removed. Please use 'date gt <date>'.",
             ],
-            self.preprocessor.warning_list,
+            self.preprocessor.deprecation_warning_list,
         )
 
         self.assertEqual(
@@ -2017,7 +2017,7 @@ class TokenPreprocessorTest(TestCase):
                 "Syntax 'date end=<date> lt' is deprecated and will be "
                 "removed. Please use 'date lt <date>'.",
             ],
-            self.preprocessor.warning_list,
+            self.preprocessor.deprecation_warning_list,
         )
 
         self.assertEqual(
@@ -2038,7 +2038,7 @@ class TokenPreprocessorTest(TestCase):
                 "and will be removed. Please use 'date in_range <date> to "
                 "<date>'.",
             ],
-            self.preprocessor.warning_list,
+            self.preprocessor.deprecation_warning_list,
         )
 
         self.assertEqual(
@@ -2059,24 +2059,24 @@ class TokenPreprocessorTest(TestCase):
                 "and will be removed. Please use 'date in_range <date> to "
                 "<date>'.",
             ],
-            self.preprocessor.warning_list,
+            self.preprocessor.deprecation_warning_list,
         )
 
         # invalid syntax - no change
         self.assertEqual(["date"], self.preprocessor.run(["date"]))
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["date", "start=2014-06-26"],
             self.preprocessor.run(["date", "start=2014-06-26"]),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["date", "end=2014-06-26"],
             self.preprocessor.run(["date", "end=2014-06-26"]),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["date", "start=2014-06-26", "end=2014-07-26"],
@@ -2084,7 +2084,7 @@ class TokenPreprocessorTest(TestCase):
                 ["date", "start=2014-06-26", "end=2014-07-26"]
             ),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["date", "start=2014-06-26", "end=2014-07-26", "lt"],
@@ -2092,13 +2092,13 @@ class TokenPreprocessorTest(TestCase):
                 ["date", "start=2014-06-26", "end=2014-07-26", "lt"]
             ),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["date", "start=2014-06-26", "lt", "foo"],
             self.preprocessor.run(["date", "start=2014-06-26", "lt", "foo"]),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["date", "start=2014-06-26", "end=2014-07-26", "gt", "foo"],
@@ -2106,13 +2106,13 @@ class TokenPreprocessorTest(TestCase):
                 ["date", "start=2014-06-26", "end=2014-07-26", "gt", "foo"]
             ),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["date", "end=2014-06-26", "gt"],
             self.preprocessor.run(["date", "end=2014-06-26", "gt"]),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["date", "start=2014-06-26", "in_range", "foo"],
@@ -2120,96 +2120,96 @@ class TokenPreprocessorTest(TestCase):
                 ["date", "start=2014-06-26", "in_range", "foo"]
             ),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["date", "end=2014-07-26", "in_range"],
             self.preprocessor.run(["date", "end=2014-07-26", "in_range"]),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["foo", "start=2014-06-26", "gt"],
             self.preprocessor.run(["foo", "start=2014-06-26", "gt"]),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["foo", "end=2014-06-26", "lt"],
             self.preprocessor.run(["foo", "end=2014-06-26", "lt"]),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
     def testParenthesis(self):
         self.assertEqual(["("], self.preprocessor.run(["("]))
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual([")"], self.preprocessor.run([")"]))
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["(", "(", ")", ")"], self.preprocessor.run(["(", "(", ")", ")"])
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(["(", "(", ")", ")"], self.preprocessor.run(["(())"]))
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["a", "(", "b", ")", "c"],
             self.preprocessor.run(["a", "(", "b", ")", "c"]),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["a", "(", "b", "c", ")", "d"],
             self.preprocessor.run(["a", "(", "b", "c", ")", "d"]),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["a", ")", "b", "(", "c"],
             self.preprocessor.run(["a", ")", "b", "(", "c"]),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["a", "(", "b", ")", "c"], self.preprocessor.run(["a", "(b)", "c"])
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["a", "(", "b", ")", "c"], self.preprocessor.run(["a(", "b", ")c"])
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["a", "(", "b", ")", "c"], self.preprocessor.run(["a(b)c"])
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["aA", "(", "bB", ")", "cC"], self.preprocessor.run(["aA(bB)cC"])
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["(", "aA", "(", "bB", ")", "cC", ")"],
             self.preprocessor.run(["(aA(bB)cC)"]),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["(", "aA", "(", "(", "bB", ")", "cC", ")"],
             self.preprocessor.run(["(aA(", "(bB)cC)"]),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
         self.assertEqual(
             ["(", "aA", "(", "(", "(", "bB", ")", "cC", ")"],
             self.preprocessor.run(["(aA(", "(", "(bB)cC)"]),
         )
-        self.assertEqual([], self.preprocessor.warning_list)
+        self.assertEqual([], self.preprocessor.deprecation_warning_list)
 
 
 class ExportAsExpressionTest(TestCase):
@@ -2595,8 +2595,8 @@ Location Constraints:
             output,
             "Warning: invalid score 'pingd', setting score-attribute=pingd "
             "instead\n"
-            "Warning: Converting invalid score to score-attribute=pingd is "
-            "deprecated and will be removed.\n",
+            "Deprecation Warning: Converting invalid score to "
+            "score-attribute=pingd is deprecated and will be removed.\n",
         )
         self.assertEqual(0, returnVal)
 

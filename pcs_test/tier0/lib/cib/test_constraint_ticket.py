@@ -48,7 +48,7 @@ class PrepareOptionsPlainTest(TestCase):
         )
         self.report_processor.assert_reports(
             [
-                fixture.warn(
+                fixture.deprecation(
                     report_codes.DEPRECATED_OPTION_VALUE,
                     option_name="role",
                     deprecated_value=role,
@@ -133,7 +133,7 @@ class PrepareOptionsPlainTest(TestCase):
                     option_names=["ticket"],
                     option_type=None,
                 ),
-                fixture.warn(
+                fixture.deprecation(
                     report_codes.DEPRECATED_OPTION_VALUE,
                     option_name="role",
                     deprecated_value=role,

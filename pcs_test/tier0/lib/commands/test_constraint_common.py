@@ -82,7 +82,7 @@ class CreateWithSetTest(TestCase):
         )
         self.env.report_processor.assert_reports(
             [
-                fixture.warn(
+                fixture.deprecation(
                     report_codes.DEPRECATED_OPTION_VALUE,
                     option_name="role",
                     deprecated_value=self.role,
@@ -138,7 +138,7 @@ class CreateWithSetTest(TestCase):
                 ),
             ]
             + [
-                fixture.warn(
+                fixture.deprecation(
                     report_codes.DEPRECATED_OPTION_VALUE,
                     option_name="role",
                     deprecated_value=self.role,

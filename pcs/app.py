@@ -17,7 +17,7 @@ from pcs.cli.common import (
     routing,
 )
 from pcs.cli.reports import process_library_reports
-from pcs.cli.reports.output import error, print_to_stderr, warn
+from pcs.cli.reports.output import deprecation_warning, error, print_to_stderr
 from pcs.cli.routing import (
     acl,
     alert,
@@ -163,7 +163,7 @@ def main(argv=None):
             ) = parse_args.filter_out_non_option_negative_numbers(argv)
             if args_filtered_out:
                 options_str = "', '".join(args_filtered_out)
-                warn(
+                deprecation_warning(
                     f"Using '{options_str}' without '--' is deprecated, those "
                     "parameters will be considered position independent "
                     "options in future pcs versions"

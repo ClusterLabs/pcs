@@ -419,7 +419,7 @@ class ValidateOperation(TestCase):
                 "role": const.PCMK_ROLE_PROMOTED_LEGACY,
             },
             [
-                fixture.warn(
+                fixture.deprecation(
                     report_codes.DEPRECATED_OPTION_VALUE,
                     option_name="role",
                     deprecated_value=const.PCMK_ROLE_PROMOTED_LEGACY,

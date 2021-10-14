@@ -82,8 +82,9 @@ class UidGidTest(TestCase):
         assert r == 1
         ac(
             o,
-            "Warning: 'pcs cluster uidgid rm' has been deprecated, use 'pcs "
-            "cluster uidgid delete' or 'pcs cluster uidgid remove' instead\n"
+            "Deprecation Warning: 'pcs cluster uidgid rm' has been deprecated, "
+            "use 'pcs cluster uidgid delete' or 'pcs cluster uidgid remove' "
+            "instead\n"
             "Error: no uidgid files with uid=testuid2 and gid=testgid found\n",
         )
 
@@ -118,8 +119,9 @@ class UidGidTest(TestCase):
         o, r = _pcs("cluster uidgid rm uid=testuid gid=testgid".split())
         ac(
             o,
-            "Warning: 'pcs cluster uidgid rm' has been deprecated, use 'pcs "
-            "cluster uidgid delete' or 'pcs cluster uidgid remove' instead\n",
+            "Deprecation Warning: 'pcs cluster uidgid rm' has been deprecated, "
+            "use 'pcs cluster uidgid delete' or 'pcs cluster uidgid remove' "
+            "instead\n",
         )
         assert r == 0
 

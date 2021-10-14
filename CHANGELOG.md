@@ -6,6 +6,12 @@
 -  Add add/remove cli syntax for command `pcs stonith update-scsi-devices`
    ([rhbz#1992668])
 
+
+### Changed
+- Deprecation warnings use a "Deprecation Warning:" prefix instead of 
+  "Warning:" on the command line
+  
+
 ### Fixed
 - Do not unfence newly added devices on fenced cluster nodes ([rhbz#1991654])
 - Fix displaying fencing levels with regular expression targets ([rhbz#1533090])
