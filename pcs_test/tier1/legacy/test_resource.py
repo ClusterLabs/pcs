@@ -1,6 +1,8 @@
 # pylint: disable=too-many-lines
+import json
 from textwrap import dedent
 from unittest import skip, TestCase
+
 from lxml import etree
 
 from pcs_test.tier1.cib_resource.common import ResourceTest
@@ -122,7 +124,8 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
             "resource describe ocf:pacemaker:nonexistent".split(),
             "Error: Agent 'ocf:pacemaker:nonexistent' is not installed or does "
             "not provide valid metadata: Metadata query for "
-            "ocf:pacemaker:nonexistent failed: Input/output error\n",
+            "ocf:pacemaker:nonexistent failed: Input/output error\n"
+            + ERRORS_HAVE_OCURRED,
         )
 
     def test_nonextisting_agent_guess_name(self):
@@ -130,7 +133,7 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
             "resource describe nonexistent".split(),
             (
                 "Error: Unable to find agent 'nonexistent', try specifying"
-                " its full name\n"
+                " its full name\n" + ERRORS_HAVE_OCURRED
             ),
         )
 
@@ -139,7 +142,8 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
             "resource describe dummy".split(),
             (
                 "Error: Multiple agents match 'dummy', please specify full"
-                " name: 'ocf:heartbeat:Dummy', 'ocf:pacemaker:Dummy'\n"
+                " name: 'ocf:heartbeat:Dummy' or 'ocf:pacemaker:Dummy'\n"
+                + ERRORS_HAVE_OCURRED
             ),
         )
 
@@ -153,6 +157,288 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
         self.assert_pcs_fail(
             "resource describe agent1 agent2".split(),
             stdout_start="\nUsage: pcs resource describe...\n",
+        )
+
+    def test_pcsd_interface(self):
+        self.assert_pcs_success(
+            "resource get_resource_agent_info ocf:pacemaker:Dummy".split(),
+            json.dumps(
+                {
+                    "name": "ocf:pacemaker:Dummy",
+                    "standard": "ocf",
+                    "provider": "pacemaker",
+                    "type": "Dummy",
+                    "shortdesc": "Example stateless resource agent",
+                    "longdesc": "This is a Dummy Resource Agent. It does absolutely nothing except \nkeep track of whether its running or not.\nIts purpose in life is for testing and to serve as a template for RA writers.\n\nNB: Please pay attention to the timeouts specified in the actions\nsection below. They should be meaningful for the kind of resource\nthe agent manages. They should be the minimum advised timeouts,\nbut they shouldn't/cannot cover _all_ possible resource\ninstances. So, try to be neither overly generous nor too stingy,\nbut moderate. The minimum timeouts should never be below 10 seconds.",
+                    "parameters": [
+                        {
+                            "name": "state",
+                            "shortdesc": "State file",
+                            "longdesc": "Location to store the resource state in.",
+                            "type": "string",
+                            "default": "/var/run/Dummy-Dummy.state",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": "_pcs_unique_group_state",
+                            "reloadable": True,
+                        },
+                        {
+                            "name": "passwd",
+                            "shortdesc": "Password",
+                            "longdesc": "Fake password field",
+                            "type": "string",
+                            "default": "",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": "_pcs_unique_group_passwd",
+                            "reloadable": True,
+                        },
+                        {
+                            "name": "fake",
+                            "shortdesc": "Fake attribute that can be changed to cause a reload",
+                            "longdesc": "Fake attribute that can be changed to cause a reload",
+                            "type": "string",
+                            "default": "dummy",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "op_sleep",
+                            "shortdesc": "Operation sleep duration in seconds.",
+                            "longdesc": "Number of seconds to sleep during operations.  This can be used to test how\nthe cluster reacts to operation timeouts.",
+                            "type": "string",
+                            "default": "0",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": "_pcs_unique_group_op_sleep",
+                            "reloadable": True,
+                        },
+                        {
+                            "name": "fail_start_on",
+                            "shortdesc": "Report bogus start failure on specified host",
+                            "longdesc": "Start actions will return failure if running on the host specified here, but\nthe resource will start successfully anyway (future monitor calls will find it\nrunning). This can be used to test on-fail=ignore.",
+                            "type": "string",
+                            "default": "",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "envfile",
+                            "shortdesc": "Environment dump file",
+                            "longdesc": "If this is set, the environment will be dumped to this file for every call.",
+                            "type": "string",
+                            "default": "",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": "_pcs_unique_group_envfile",
+                            "reloadable": True,
+                        },
+                        {
+                            "name": "trace_ra",
+                            "shortdesc": "Set to 1 to turn on resource agent tracing (expect large output)",
+                            "longdesc": "Set to 1 to turn on resource agent tracing (expect large output) The trace output will be saved to trace_file, if set, or by default to $HA_VARRUN/ra_trace/<type>/<id>.<action>.<timestamp> e.g. $HA_VARRUN/ra_trace/oracle/db.start.2012-11-27.08:37:08",
+                            "type": "integer",
+                            "default": "0",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": True,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "trace_file",
+                            "shortdesc": "Path to a file to store resource agent tracing log",
+                            "longdesc": "Path to a file to store resource agent tracing log",
+                            "type": "string",
+                            "default": "",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": True,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                    ],
+                    "actions": [
+                        {
+                            "name": "start",
+                            "timeout": "20s",
+                            "interval": None,
+                            "role": None,
+                            "start-delay": None,
+                            "OCF_CHECK_LEVEL": None,
+                            "automatic": False,
+                            "on_target": False,
+                        },
+                        {
+                            "name": "stop",
+                            "timeout": "20s",
+                            "interval": None,
+                            "role": None,
+                            "start-delay": None,
+                            "OCF_CHECK_LEVEL": None,
+                            "automatic": False,
+                            "on_target": False,
+                        },
+                        {
+                            "name": "monitor",
+                            "timeout": "20s",
+                            "interval": "10s",
+                            "role": None,
+                            "start-delay": None,
+                            "OCF_CHECK_LEVEL": None,
+                            "automatic": False,
+                            "on_target": False,
+                        },
+                        {
+                            "name": "reload",
+                            "timeout": "20s",
+                            "interval": None,
+                            "role": None,
+                            "start-delay": None,
+                            "OCF_CHECK_LEVEL": None,
+                            "automatic": False,
+                            "on_target": False,
+                        },
+                        {
+                            "name": "migrate_to",
+                            "timeout": "20s",
+                            "interval": None,
+                            "role": None,
+                            "start-delay": None,
+                            "OCF_CHECK_LEVEL": None,
+                            "automatic": False,
+                            "on_target": False,
+                        },
+                        {
+                            "name": "migrate_from",
+                            "timeout": "20s",
+                            "interval": None,
+                            "role": None,
+                            "start-delay": None,
+                            "OCF_CHECK_LEVEL": None,
+                            "automatic": False,
+                            "on_target": False,
+                        },
+                        {
+                            "name": "validate-all",
+                            "timeout": "20s",
+                            "interval": None,
+                            "role": None,
+                            "start-delay": None,
+                            "OCF_CHECK_LEVEL": None,
+                            "automatic": False,
+                            "on_target": False,
+                        },
+                        {
+                            "name": "meta-data",
+                            "timeout": "5s",
+                            "interval": None,
+                            "role": None,
+                            "start-delay": None,
+                            "OCF_CHECK_LEVEL": None,
+                            "automatic": False,
+                            "on_target": False,
+                        },
+                    ],
+                    "default_actions": [
+                        {
+                            "name": "start",
+                            "timeout": "20s",
+                            "interval": "0s",
+                            "role": None,
+                            "start-delay": None,
+                            "OCF_CHECK_LEVEL": None,
+                            "automatic": False,
+                            "on_target": False,
+                        },
+                        {
+                            "name": "stop",
+                            "timeout": "20s",
+                            "interval": "0s",
+                            "role": None,
+                            "start-delay": None,
+                            "OCF_CHECK_LEVEL": None,
+                            "automatic": False,
+                            "on_target": False,
+                        },
+                        {
+                            "name": "monitor",
+                            "timeout": "20s",
+                            "interval": "10s",
+                            "role": None,
+                            "start-delay": None,
+                            "OCF_CHECK_LEVEL": None,
+                            "automatic": False,
+                            "on_target": False,
+                        },
+                        {
+                            "name": "reload",
+                            "timeout": "20s",
+                            "interval": "0s",
+                            "role": None,
+                            "start-delay": None,
+                            "OCF_CHECK_LEVEL": None,
+                            "automatic": False,
+                            "on_target": False,
+                        },
+                        {
+                            "name": "migrate_to",
+                            "timeout": "20s",
+                            "interval": "0s",
+                            "role": None,
+                            "start-delay": None,
+                            "OCF_CHECK_LEVEL": None,
+                            "automatic": False,
+                            "on_target": False,
+                        },
+                        {
+                            "name": "migrate_from",
+                            "timeout": "20s",
+                            "interval": "0s",
+                            "role": None,
+                            "start-delay": None,
+                            "OCF_CHECK_LEVEL": None,
+                            "automatic": False,
+                            "on_target": False,
+                        },
+                    ],
+                }
+            )
+            + "\n",
         )
 
 
@@ -240,7 +526,9 @@ class Resource(TestCase, AssertPcsMixin):
         )
         ac(
             o,
-            "Error: Multiple agents match 'dummy', please specify full name: 'ocf:heartbeat:Dummy', 'ocf:pacemaker:Dummy'\n",
+            "Error: Multiple agents match 'dummy', please specify full name: "
+            "'ocf:heartbeat:Dummy' or 'ocf:pacemaker:Dummy'\n"
+            + ERRORS_HAVE_OCURRED,
         )
         assert r == 1
 
@@ -268,7 +556,8 @@ class Resource(TestCase, AssertPcsMixin):
         )
         ac(
             o,
-            "Error: Unable to find agent 'ipaddr3', try specifying its full name\n",
+            "Error: Unable to find agent 'ipaddr3', try specifying its full name\n"
+            + ERRORS_HAVE_OCURRED,
         )
         assert r == 1
 

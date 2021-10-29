@@ -1,5 +1,8 @@
 from functools import partial
+from typing import cast, List, Optional
+
 from lxml import etree
+from lxml.etree import _Element
 
 from pcs.lib.cib.tools import create_subelement_id
 from pcs.lib.xml_tools import get_sub_element, append_when_useful
@@ -162,31 +165,35 @@ def get_nvset(nvset):
     return nvpair_list
 
 
-def get_value(tag_name, context_element, name, default=None):
+def get_value(
+    tag_name: str,
+    context_element: _Element,
+    name: str,
+    default: Optional[str] = None,
+) -> Optional[str]:
     """
-    Return value from nvpair.
+    Return a value from an nvpair
 
     WARNING: does not solve multiple nvsets (with the same tag_name) in the
     context_element nor multiple nvpair with the same name
 
-    string tag_name should be "instance_attributes" or "meta_attributes"
-    etree.Element context_element is searched element
-    string name specify nvpair name
+    tag_name -- "instance_attributes" or "meta_attributes"
+    context_element -- searched element
+    name -- nvpair name
+    default -- default return value
     """
     value_list = context_element.xpath(
         """
-        ./{0}
-        /nvpair[
-            @name="{1}"
-            and
-            string-length(@value) > 0
-        ]
-        /@value
-    """.format(
-            tag_name, name
-        )
+            ./*[local-name()=$tag_name]
+            /nvpair[
+                @name=$name and string-length(@value) > 0
+            ]
+            /@value
+        """,
+        tag_name=tag_name,
+        name=name,
     )
-    return value_list[0] if value_list else default
+    return cast(List[str], value_list)[0] if value_list else default
 
 
 def get_nvset_as_dict(tag_name, context_element):

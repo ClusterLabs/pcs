@@ -34,7 +34,8 @@ from pcs.lib.pacemaker.live import (
     get_cluster_status_xml_raw,
     get_ticket_status_text,
 )
-from pcs.lib.resource_agent import STONITH_ACTION_REPLACED_BY
+
+from pcs.lib.resource_agent.const import STONITH_ACTION_REPLACED_BY
 from pcs.lib.sbd import get_sbd_service_name
 
 

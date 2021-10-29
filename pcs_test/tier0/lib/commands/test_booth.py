@@ -1897,25 +1897,24 @@ class CreateInCluster(TestCase, FixtureMixin):
         )
 
     def test_ip_agent_missing(self):
-        (
-            self.config.runner.cib.load()
-            .raw_file.read(
-                file_type_codes.BOOTH_CONFIG,
-                self.fixture_cfg_path(),
-                content=self.fixture_cfg_content(),
-            )
-            .runner.pcmk.load_agent(
-                agent_name="ocf:heartbeat:IPaddr2",
-                agent_is_missing=True,
-                name="runner.pcmk.load_agent.ipaddr2",
-                stderr=REASON,
-            )
+        self.config.runner.cib.load()
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
+            self.fixture_cfg_path(),
+            content=self.fixture_cfg_content(),
+        )
+        self.config.runner.pcmk.load_agent(
+            agent_name="ocf:heartbeat:IPaddr2",
+            agent_is_missing=True,
+            name="runner.pcmk.load_agent.ipaddr2",
+            stderr=REASON,
         )
         self.env_assist.assert_raise_library_error(
             lambda: commands.create_in_cluster(
-                self.env_assist.get_env(),
-                self.site_ip,
-            ),
+                self.env_assist.get_env(), self.site_ip
+            )
+        )
+        self.env_assist.assert_reports(
             [
                 fixture.error(
                     reports.codes.UNABLE_TO_GET_AGENT_METADATA,
@@ -1923,8 +1922,7 @@ class CreateInCluster(TestCase, FixtureMixin):
                     agent="ocf:heartbeat:IPaddr2",
                     reason=REASON,
                 ),
-            ],
-            expected_in_processor=False,
+            ]
         )
 
     def test_booth_agent_missing(self):
@@ -1950,7 +1948,9 @@ class CreateInCluster(TestCase, FixtureMixin):
             lambda: commands.create_in_cluster(
                 self.env_assist.get_env(),
                 self.site_ip,
-            ),
+            )
+        )
+        self.env_assist.assert_reports(
             [
                 fixture.error(
                     reports.codes.UNABLE_TO_GET_AGENT_METADATA,
@@ -1958,8 +1958,7 @@ class CreateInCluster(TestCase, FixtureMixin):
                     agent="ocf:pacemaker:booth-site",
                     reason=REASON,
                 ),
-            ],
-            expected_in_processor=False,
+            ]
         )
 
     def test_agents_missing_forced(self):

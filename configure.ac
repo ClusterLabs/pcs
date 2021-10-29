@@ -514,6 +514,7 @@ AC_SUBST([UTC_DATE])
 AC_CONFIG_FILES([Makefile
 		 setup.py
 		 setup.cfg
+		 data/Makefile
 		 pcs/Makefile
 		 pcs/settings.py
 		 pcs/snmp/pcs_snmp_agent.service
@@ -537,6 +538,7 @@ AC_CONFIG_FILES([pcs_test/smoke.sh], [chmod +x pcs_test/smoke.sh])
 AC_CONFIG_FILES([pcs_test/pcs_for_tests], [chmod +x pcs_test/pcs_for_tests])
 AC_CONFIG_FILES([pcs_test/suite], [chmod +x pcs_test/suite])
 AC_CONFIG_FILES([pcs_test/tools/bin_mock/pcmk/crm_resource], [chmod +x pcs_test/tools/bin_mock/pcmk/crm_resource])
+AC_CONFIG_FILES([pcs_test/tools/bin_mock/pcmk/pacemaker_metadata], [chmod +x pcs_test/tools/bin_mock/pcmk/pacemaker_metadata])
 AC_CONFIG_FILES([pcsd/pcsd], [chmod +x pcsd/pcsd])
 AC_CONFIG_FILES([scripts/pcsd.sh], [chmod +x scripts/pcsd.sh])
 

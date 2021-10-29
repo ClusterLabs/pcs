@@ -50,6 +50,7 @@ class NameBuildTest(TestCase):
     """
 
     def assert_message_from_report(self, message, report):
+        self.maxDiff = None
         self.assertEqual(message, report.message)
 
 
@@ -209,9 +210,9 @@ class PrerequisiteOptionMustNotBeSet(NameBuildTest):
 
 
 class RequiredOptionOfAlternativesIsMissing(NameBuildTest):
-    def test_without_type(self):
+    def test_minimal(self):
         self.assert_message_from_report(
-            "option 'aAa' or 'bBb' or 'cCc' has to be specified",
+            "option 'aAa', 'bBb' or 'cCc' has to be specified",
             reports.RequiredOptionOfAlternativesIsMissing(
                 ["aAa", "cCc", "bBb"]
             ),
@@ -220,7 +221,20 @@ class RequiredOptionOfAlternativesIsMissing(NameBuildTest):
     def test_with_type(self):
         self.assert_message_from_report(
             "test option 'aAa' has to be specified",
-            reports.RequiredOptionOfAlternativesIsMissing(["aAa"], "test"),
+            reports.RequiredOptionOfAlternativesIsMissing(
+                ["aAa"], option_type="test"
+            ),
+        )
+
+    def test_with_deprected(self):
+        self.assert_message_from_report(
+            (
+                "option 'bBb', 'aAa' (deprecated) or 'cCc' (deprecated) has "
+                "to be specified"
+            ),
+            reports.RequiredOptionOfAlternativesIsMissing(
+                ["aAa", "cCc", "bBb"], deprecated_names=["cCc", "aAa"]
+            ),
         )
 
 
@@ -2766,11 +2780,8 @@ class UnableToGetAgentMetadata(NameBuildTest):
 class InvalidResourceAgentName(NameBuildTest):
     def test_build_message_with_data(self):
         self.assert_message_from_report(
-            "Invalid resource agent name ':name'."
-            " Use standard:provider:type when standard is 'ocf' or"
-            " standard:type otherwise. List of standards and providers can"
-            " be obtained by using commands 'pcs resource standards' and"
-            " 'pcs resource providers'",
+            "Invalid resource agent name ':name'. Use standard:provider:type "
+            "when standard is 'ocf' or standard:type otherwise.",
             reports.InvalidResourceAgentName(":name"),
         )
 
@@ -2778,10 +2789,8 @@ class InvalidResourceAgentName(NameBuildTest):
 class InvalidStonithAgentName(NameBuildTest):
     def test_build_message_with_data(self):
         self.assert_message_from_report(
-            "Invalid stonith agent name 'fence:name'. List of agents can be"
-            " obtained by using command 'pcs stonith list'. Do not use the"
-            " 'stonith:' prefix. Agent name cannot contain the ':'"
-            " character.",
+            "Invalid stonith agent name 'fence:name'. Agent name cannot contain "
+            "the ':' character, do not use the 'stonith:' prefix.",
             reports.InvalidStonithAgentName("fence:name"),
         )
 
@@ -2799,10 +2808,10 @@ class AgentNameGuessFoundMoreThanOne(NameBuildTest):
         self.assert_message_from_report(
             (
                 "Multiple agents match 'agent', please specify full name: "
-                "'agent1', 'agent2'"
+                "'agent1', 'agent2' or 'agent3'"
             ),
             reports.AgentNameGuessFoundMoreThanOne(
-                "agent", ["agent2", "agent1"]
+                "agent", ["agent2", "agent1", "agent3"]
             ),
         )
 
@@ -2812,6 +2821,34 @@ class AgentNameGuessFoundNone(NameBuildTest):
         self.assert_message_from_report(
             "Unable to find agent 'agent-name', try specifying its full name",
             reports.AgentNameGuessFoundNone("agent-name"),
+        )
+
+
+class AgentImplementsUnsupportedOcfVersion(NameBuildTest):
+    def test_singular(self):
+        self.assert_message_from_report(
+            "Unable to process agent 'agent-name' as it implements unsupported "
+            "OCF version 'ocf-2.3', supported version is: 'v1'",
+            reports.AgentImplementsUnsupportedOcfVersion(
+                "agent-name", "ocf-2.3", ["v1"]
+            ),
+        )
+
+    def test_plural(self):
+        self.assert_message_from_report(
+            "Unable to process agent 'agent-name' as it implements unsupported "
+            "OCF version 'ocf-2.3', supported versions are: 'v1', 'v2', 'v3'",
+            reports.AgentImplementsUnsupportedOcfVersion(
+                "agent-name", "ocf-2.3", ["v1", "v2", "v3"]
+            ),
+        )
+
+
+class AgentGenericError(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Unable to load agent 'agent-name'",
+            reports.AgentGenericError("agent-name"),
         )
 
 
@@ -4187,6 +4224,27 @@ class ResourceInstanceAttrValueNotUnique(NameBuildTest):
             ),
             reports.ResourceInstanceAttrValueNotUnique(
                 "attr", "val", "agent", ["B", "C", "A"]
+            ),
+        )
+
+
+class ResourceInstanceAttrGroupValueNotUnique(NameBuildTest):
+    def test_message(self):
+        self.assert_message_from_report(
+            (
+                "Value '127.0.0.1', '12345' of options 'ip', 'port' (group "
+                "'address') is not unique across 'agent' resources. Following "
+                "resources are configured with the same values of the instance "
+                "attributes: 'A', 'B'"
+            ),
+            reports.ResourceInstanceAttrGroupValueNotUnique(
+                "address",
+                {
+                    "port": "12345",
+                    "ip": "127.0.0.1",
+                },
+                "agent",
+                ["B", "A"],
             ),
         )
 

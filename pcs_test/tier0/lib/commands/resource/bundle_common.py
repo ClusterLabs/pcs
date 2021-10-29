@@ -532,6 +532,7 @@ class PortMapMixin(SetUpMixin):
                     {
                         "option_type": "port-map",
                         "option_names": ["port", "range"],
+                        "deprecated_names": [],
                     },
                     None,
                 ),
@@ -553,6 +554,7 @@ class PortMapMixin(SetUpMixin):
                     {
                         "option_type": "port-map",
                         "option_names": ["port", "range"],
+                        "deprecated_names": [],
                     },
                     None,
                 ),
@@ -574,6 +576,7 @@ class PortMapMixin(SetUpMixin):
                     {
                         "option_type": "port-map",
                         "option_names": ["port", "range"],
+                        "deprecated_names": [],
                     },
                     None,
                 ),
@@ -591,10 +594,7 @@ class PortMapMixin(SetUpMixin):
                     severities.ERROR,
                     report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
                     {
-                        "option_names": [
-                            "port",
-                            "range",
-                        ],
+                        "option_names": ["port", "range"],
                         "option_type": "port-map",
                     },
                     None,
@@ -627,9 +627,7 @@ class PortMapMixin(SetUpMixin):
                     severities.ERROR,
                     report_codes.INVALID_OPTIONS,
                     {
-                        "option_names": [
-                            "extra",
-                        ],
+                        "option_names": ["extra"],
                         "option_type": "port-map",
                         "allowed": sorted(list(PORT_MAP_OPTIONS)),
                         "allowed_patterns": [],
@@ -686,9 +684,7 @@ class PortMapMixin(SetUpMixin):
                     severities.WARNING,
                     report_codes.INVALID_OPTIONS,
                     {
-                        "option_names": [
-                            "extra",
-                        ],
+                        "option_names": ["extra"],
                         "option_type": "port-map",
                         "allowed": sorted(list(PORT_MAP_OPTIONS)),
                         "allowed_patterns": [],
@@ -806,6 +802,7 @@ class StorageMapMixin(SetUpMixin):
                     {
                         "option_type": "storage-map",
                         "option_names": ["source-dir", "source-dir-root"],
+                        "deprecated_names": [],
                     },
                     None,
                 ),
@@ -814,9 +811,7 @@ class StorageMapMixin(SetUpMixin):
                     report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                     {
                         "option_type": "storage-map",
-                        "option_names": [
-                            "target-dir",
-                        ],
+                        "option_names": ["target-dir"],
                     },
                     None,
                 ),

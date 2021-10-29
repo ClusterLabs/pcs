@@ -37,7 +37,14 @@ from pcs.lib.file.instance import FileInstance
 from pcs.lib.file.raw_file import GhostFile, raw_file_error_report
 from pcs.lib.interface.config import ParserErrorException
 from pcs.lib.node import get_existing_nodes_names
-from pcs.lib.resource_agent import find_valid_resource_agent_by_name
+from pcs.lib.resource_agent import (
+    resource_agent_error_to_report_item,
+    ResourceAgentError,
+    ResourceAgentFacade,
+    ResourceAgentFacadeFactory,
+    ResourceAgentName,
+    UnableToGetAgentMetadata,
+)
 from pcs.lib.services import (
     ensure_is_systemd,
     is_systemd,
@@ -344,17 +351,17 @@ def config_ticket_remove(
 
 def create_in_cluster(
     env: LibraryEnvironment,
-    ip,
-    instance_name=None,
-    allow_absent_resource_agent=False,
+    ip: str,
+    instance_name: Optional[str] = None,
+    allow_absent_resource_agent: bool = False,
 ):
     """
     Create group with ip resource and booth resource
 
     env -- provides all for communication with externals
-    string ip -- float ip address for the operation of the booth
-    string instance_name -- booth instance name
-    bool allow_absent_resource_agent -- allowing creating booth resource even
+    ip -- float ip address for the operation of the booth
+    instance_name -- booth instance name
+    allow_absent_resource_agent -- allowing creating booth resource even
         if its agent is not installed
     """
     report_processor = env.report_processor
@@ -386,12 +393,6 @@ def create_in_cluster(
     create_id = partial(
         resource.create_resource_id, resources_section, instance_name
     )
-    get_agent = partial(
-        find_valid_resource_agent_by_name,
-        env.report_processor,
-        env.cmd_runner(),
-        allowed_absent=allow_absent_resource_agent,
-    )
     create_primitive = partial(
         primitive.create, env.report_processor, resources_section, id_provider
     )
@@ -400,17 +401,30 @@ def create_in_cluster(
         group.provide_group(resources_section, create_id("group")),
     )
 
+    agent_factory = ResourceAgentFacadeFactory(
+        env.cmd_runner(), report_processor
+    )
     into_booth_group(
         create_primitive(
             create_id("ip"),
-            get_agent("ocf:heartbeat:IPaddr2"),
+            _get_agent_facade(
+                env.report_processor,
+                agent_factory,
+                allow_absent_resource_agent,
+                ResourceAgentName("ocf", "heartbeat", "IPaddr2"),
+            ),
             instance_attributes={"ip": ip},
         )
     )
     into_booth_group(
         create_primitive(
             create_id("service"),
-            get_agent("ocf:pacemaker:booth-site"),
+            _get_agent_facade(
+                env.report_processor,
+                agent_factory,
+                allow_absent_resource_agent,
+                ResourceAgentName("ocf", "pacemaker", "booth-site"),
+            ),
             instance_attributes={"config": booth_env.config_path},
         )
     )
@@ -880,3 +894,34 @@ def _ensure_live_env(env: LibraryEnvironment, booth_env):
         raise LibraryError(
             ReportItem.error(reports.messages.LiveEnvironmentRequired(not_live))
         )
+
+
+def _get_agent_facade(
+    report_processor: reports.ReportProcessor,
+    factory: ResourceAgentFacadeFactory,
+    allow_absent_agent: bool,
+    name: ResourceAgentName,
+) -> ResourceAgentFacade:
+    try:
+        return factory.facade_from_parsed_name(name)
+    except UnableToGetAgentMetadata as e:
+        if allow_absent_agent:
+            report_processor.report(
+                resource_agent_error_to_report_item(
+                    e, reports.ReportItemSeverity.warning()
+                )
+            )
+            return factory.void_facade_from_parsed_name(name)
+        report_processor.report(
+            resource_agent_error_to_report_item(
+                e, reports.ReportItemSeverity.error(reports.codes.FORCE)
+            )
+        )
+        raise LibraryError() from e
+    except ResourceAgentError as e:
+        report_processor.report(
+            resource_agent_error_to_report_item(
+                e, reports.ReportItemSeverity.error()
+            )
+        )
+        raise LibraryError() from e

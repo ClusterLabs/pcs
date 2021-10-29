@@ -15,7 +15,6 @@ from typing import (
 )
 
 from pcs import constraint, utils
-from pcs.common.interface.dto import to_dict
 from pcs.common import (
     const,
     pacemaker,
@@ -520,17 +519,25 @@ def _format_agent_description(description, stonith=False, show_all=False):
     """
     output = []
 
-    if description.get("name") and description.get("shortdesc"):
-        output.append(
-            "{0} - {1}".format(
-                description["name"],
-                _format_desc(
-                    len(description["name"] + " - "), description["shortdesc"]
-                ),
+    if description.get("name"):
+        name = description["name"]
+        # Previously, "stonith:" prefix was not returned from functions
+        # providing stonith agents description. When these functions got
+        # overhauled for implementing OCF 1.1 support, code for stonith agents
+        # got unified with code for resource agents. As a result, a full name
+        # of an agent is now returned in all cases. So we strip the "stonith:"
+        # prefix to get the same behavior as before.
+        if name.startswith("stonith:"):
+            name = name[len("stonith:") :]
+        if description.get("shortdesc"):
+            output.append(
+                "{0} - {1}".format(
+                    name,
+                    _format_desc(len(name + " - "), description["shortdesc"]),
+                )
             )
-        )
-    elif description.get("name"):
-        output.append(description["name"])
+        else:
+            output.append(name)
     elif description.get("shortdesc"):
         output.append(description["shortdesc"])
 
@@ -548,40 +555,40 @@ def _format_agent_description(description, stonith=False, show_all=False):
                 continue
             if not show_all and param.get("deprecated", False):
                 continue
-            param_obsoletes = param.get("obsoletes", None)
             param_deprecated = param.get("deprecated", False)
             param_deprecated_by = param.get("deprecated_by", [])
-            param_title = " ".join(
-                filter(
-                    None,
-                    [
-                        param.get("name"),
-                        # only show deprecated if not showing deprecated by
-                        "(deprecated)"
-                        if show_all
-                        and param_deprecated
-                        and not param_deprecated_by
-                        else None,
-                        "(deprecated by {0})".format(
-                            ", ".join(param_deprecated_by)
-                        )
-                        if show_all and param_deprecated_by
-                        else None,
-                        "(obsoletes {0})".format(param_obsoletes)
-                        if show_all and param_obsoletes
-                        else None,
-                        "(required)" if param.get("required", False) else None,
-                        "(unique)" if param.get("unique", False) else None,
-                    ],
+
+            param_title_parts = [param.get("name")]
+            if show_all and param_deprecated and not param_deprecated_by:
+                param_title_parts.append("(deprecated)")
+            if show_all and param_deprecated_by:
+                param_title_parts.append(
+                    "(deprecated by {0})".format(", ".join(param_deprecated_by))
                 )
-            )
-            param_desc = param.get("longdesc", "").replace("\n", " ")
+            if param.get("required"):
+                param_title_parts.append("(required)")
+            if param.get("unique_group") is not None:
+                param_title_parts.append(
+                    "(unique)"
+                    if param["unique_group"].startswith(
+                        lib_ra.const.DEFAULT_UNIQUE_GROUP_PREFIX
+                    )
+                    else "(unique group: {})".format(param["unique_group"])
+                )
+            param_title = " ".join(param_title_parts)
+
+            param_longdesc = param.get("longdesc", "")
+            param_shortdesc = param.get("shortdesc", "")
+            param_desc = None
+            if param_longdesc:
+                param_desc = param_longdesc.replace("\n", " ")
+            if not param_desc and param_shortdesc:
+                param_desc = param_shortdesc.replace("\n", " ")
             if not param_desc:
-                param_desc = param.get("shortdesc", "").replace("\n", " ")
-                if not param_desc:
-                    param_desc = "No description available"
-            if param.get("pcs_deprecated_warning"):
-                param_desc += " WARNING: " + param["pcs_deprecated_warning"]
+                param_desc = "No description available"
+            if param.get("deprecated_desc"):
+                param_desc += " DEPRECATED: " + param["deprecated_desc"]
+
             output_params.append(
                 "  {0}: {1}".format(
                     param_title, _format_desc(len(param_title) + 4, param_desc)
@@ -603,7 +610,16 @@ def _format_agent_description(description, stonith=False, show_all=False):
                 [
                     "{0}={1}".format(name, value)
                     for name, value in sorted(action.items())
-                    if name != "name" and value is not None
+                    # Previously, keys "automatic" and "on_target" were not
+                    # returned from functions providing agents description.
+                    # Sice these functions got overhauled for implementing OCF
+                    # 1.1 support, the complete structure of metadata is being
+                    # returned. So we remove the additional keys (which are not
+                    # part of a CIB operation anyway) to get the same behavior
+                    # as before. If there is a request to display those keys,
+                    # we can do so.
+                    if name not in {"name", "automatic", "on_target"}
+                    and value is not None
                 ]
             )
             output_actions.append(" ".join(parts))
@@ -1036,21 +1052,18 @@ def resource_update(lib, args, modifiers, deal_with_guest_change=True):
 
     params = utils.convert_args_to_tuples(ra_values)
 
-    resClass = resource.getAttribute("class")
-    resProvider = resource.getAttribute("provider")
-    resType = resource.getAttribute("type")
     try:
-        if resClass == "stonith":
-            metadata = lib_ra.StonithAgent(utils.cmd_runner(), resType)
-        else:
-            metadata = lib_ra.ResourceAgent(
-                utils.cmd_runner(),
-                lib_ra.ResourceAgentName(
-                    resClass, resProvider, resType
-                ).full_name,
+        agent_facade = lib_ra.ResourceAgentFacadeFactory(
+            utils.cmd_runner(), utils.get_report_processor()
+        ).facade_from_parsed_name(
+            lib_ra.ResourceAgentName(
+                resource.getAttribute("class"),
+                resource.getAttribute("provider"),
+                resource.getAttribute("type"),
             )
+        )
         report_list = primitive.validate_resource_instance_attributes_update(
-            metadata,
+            agent_facade,
             dict(params),
             res_id,
             get_resources(lib_pacemaker.get_cib(cib_xml)),
@@ -3541,20 +3554,10 @@ def get_resource_agent_info(lib, argv, modifiers):
     """
     Options: no options
     """
-    del lib
     modifiers.ensure_only_supported()
     if len(argv) != 1:
         utils.err("One parameter expected")
-
-    agent = argv[0]
-
-    runner = utils.cmd_runner()
-
-    try:
-        metadata = lib_ra.ResourceAgent(runner, agent)
-        print(json.dumps(to_dict(metadata.get_full_info())))
-    except lib_ra.ResourceAgentError as e:
-        process_library_reports([lib_ra.resource_agent_error_to_report_item(e)])
+    print(json.dumps(lib.resource_agent.describe_agent(argv[0])))
 
 
 def resource_bundle_create_cmd(lib, argv, modifiers):

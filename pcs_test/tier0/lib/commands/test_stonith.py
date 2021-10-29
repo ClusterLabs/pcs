@@ -6,9 +6,8 @@ from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.misc import get_test_resource as rc
 
 from pcs import settings
-from pcs.common.reports import codes as report_codes
+from pcs.common import reports
 from pcs.lib.commands import stonith
-from pcs.lib.resource_agent import StonithAgent
 
 expected_cib_simple = """
     <primitive class="stonith" id="stonith-test" type="test_simple">
@@ -93,23 +92,17 @@ class CreateMixin:
         # pylint: disable=invalid-name
         self.env_assist, self.config = get_env_tools(test_case=self)
 
-    def tearDown(self):
-        # pylint does not know this method is defined in TestCase
-        # pylint: disable=invalid-name
-        # pylint: disable=no-self-use
-        StonithAgent.clear_fenced_metadata_cache()
-
     def test_minimal_success(self):
         agent_name = "test_simple"
 
-        (
-            self.config.runner.pcmk.load_agent(
-                agent_name=f"stonith:{agent_name}",
-                agent_filename="stonith_agent_fence_simple.xml",
-            )
-            .runner.cib.load()
-            .runner.pcmk.load_fenced_metadata()
-            .env.push_cib(resources=self._expected_cib(expected_cib_simple))
+        self.config.runner.pcmk.load_agent(
+            agent_name=f"stonith:{agent_name}",
+            agent_filename="stonith_agent_fence_simple.xml",
+        )
+        self.config.runner.pcmk.load_fenced_metadata()
+        self.config.runner.cib.load()
+        self.config.env.push_cib(
+            resources=self._expected_cib(expected_cib_simple)
         )
 
         self._create(
@@ -127,14 +120,14 @@ class CreateMixin:
     def test_unfencing(self):
         agent_name = "test_unfencing"
 
-        (
-            self.config.runner.pcmk.load_agent(
-                agent_name=f"stonith:{agent_name}",
-                agent_filename="stonith_agent_fence_unfencing.xml",
-            )
-            .runner.cib.load()
-            .runner.pcmk.load_fenced_metadata()
-            .env.push_cib(resources=self._expected_cib(expected_cib_unfencing))
+        self.config.runner.pcmk.load_agent(
+            agent_name=f"stonith:{agent_name}",
+            agent_filename="stonith_agent_fence_unfencing.xml",
+        )
+        self.config.runner.pcmk.load_fenced_metadata()
+        self.config.runner.cib.load()
+        self.config.env.push_cib(
+            resources=self._expected_cib(expected_cib_unfencing)
         )
 
         self._create(
@@ -160,15 +153,13 @@ class CreateMixin:
             """,
         )
 
-        (
-            self.config.runner.pcmk.load_agent(
-                agent_name=f"stonith:{agent_name}",
-                agent_filename="stonith_agent_fence_simple.xml",
-            )
-            .runner.cib.load()
-            .runner.pcmk.load_fenced_metadata()
-            .env.push_cib(resources=self._expected_cib(expected_cib))
+        self.config.runner.pcmk.load_agent(
+            agent_name=f"stonith:{agent_name}",
+            agent_filename="stonith_agent_fence_simple.xml",
         )
+        self.config.runner.pcmk.load_fenced_metadata()
+        self.config.runner.cib.load()
+        self.config.env.push_cib(resources=self._expected_cib(expected_cib))
 
         self._create(
             self.env_assist.get_env(),
@@ -190,14 +181,14 @@ class CreateMixin:
         # updated to test new behaviour.
         agent_name = "test_custom_actions"
 
-        (
-            self.config.runner.pcmk.load_agent(
-                agent_name=f"stonith:{agent_name}",
-                agent_filename="stonith_agent_fence_custom_actions.xml",
-            )
-            .runner.cib.load()
-            .runner.pcmk.load_fenced_metadata()
-            .env.push_cib(resources=self._expected_cib(expected_cib_operations))
+        self.config.runner.pcmk.load_agent(
+            agent_name=f"stonith:{agent_name}",
+            agent_filename="stonith_agent_fence_custom_actions.xml",
+        )
+        self.config.runner.pcmk.load_fenced_metadata()
+        self.config.runner.cib.load()
+        self.config.env.push_cib(
+            resources=self._expected_cib(expected_cib_operations)
         )
 
         self._create(
@@ -219,11 +210,13 @@ class CreateMixin:
     def test_id_already_exists(self):
         agent_name = "test_simple"
 
-        (
-            self.config.runner.pcmk.load_agent(
-                agent_name=f"stonith:{agent_name}",
-                agent_filename="stonith_agent_fence_simple.xml",
-            ).runner.cib.load(resources=self._expected_cib(expected_cib_simple))
+        self.config.runner.pcmk.load_agent(
+            agent_name=f"stonith:{agent_name}",
+            agent_filename="stonith_agent_fence_simple.xml",
+        )
+        self.config.runner.pcmk.load_fenced_metadata()
+        self.config.runner.cib.load(
+            resources=self._expected_cib(expected_cib_simple)
         )
 
         self.env_assist.assert_raise_library_error(
@@ -238,35 +231,29 @@ class CreateMixin:
                     "must-set-new": "B",
                 },
             ),
-            [fixture.error(report_codes.ID_ALREADY_EXISTS, id="stonith-test")],
+            [fixture.error(reports.codes.ID_ALREADY_EXISTS, id="stonith-test")],
             expected_in_processor=False,
         )
 
     def test_instance_meta_and_operations(self):
         agent_name = "test_simple"
 
-        (
-            self.config.runner.pcmk.load_agent(
-                agent_name=f"stonith:{agent_name}",
-                agent_filename="stonith_agent_fence_simple.xml",
-            )
-            .runner.cib.load()
-            .runner.pcmk.load_fenced_metadata()
-            .env.push_cib(
-                resources=self._expected_cib(expected_cib_simple_forced)
-            )
+        self.config.runner.pcmk.load_agent(
+            agent_name=f"stonith:{agent_name}",
+            agent_filename="stonith_agent_fence_simple.xml",
+        )
+        self.config.runner.pcmk.load_fenced_metadata()
+        self.config.runner.cib.load()
+        self.config.env.push_cib(
+            resources=self._expected_cib(expected_cib_simple_forced)
         )
 
         self._create(
             self.env_assist.get_env(),
             "stonith-test",
             agent_name,
-            operations=[
-                {"name": "bad-action"},
-            ],
-            meta_attributes={
-                "metaname": "metavalue",
-            },
+            operations=[{"name": "bad-action"}],
+            meta_attributes={"metaname": "metavalue"},
             instance_attributes={"undefined": "attribute"},
             allow_invalid_operation=True,
             allow_invalid_instance_attributes=True,
@@ -275,7 +262,7 @@ class CreateMixin:
         self.env_assist.assert_reports(
             [
                 fixture.warn(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_value="bad-action",
                     option_name="operation name",
                     allowed_values=[
@@ -293,7 +280,7 @@ class CreateMixin:
                     forbidden_characters=None,
                 ),
                 fixture.warn(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     option_names=["undefined"],
                     option_type="stonith",
                     allowed=[
@@ -331,19 +318,79 @@ class CreateMixin:
                     allowed_patterns=[],
                 ),
                 fixture.warn(
-                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                    option_names=["must-set", "must-set-new"],
+                    reports.codes.REQUIRED_OPTIONS_ARE_MISSING,
+                    option_names=["must-set"],
+                    option_type="stonith",
+                ),
+                fixture.warn(
+                    reports.codes.REQUIRED_OPTION_OF_ALTERNATIVES_IS_MISSING,
+                    option_names=["must-set-new", "must-set-old"],
+                    deprecated_names=["must-set-old"],
                     option_type="stonith",
                 ),
             ]
         )
 
-    def test_unknown_agent_forced(self):
+    def test_invalid_agent_name(self):
+        self.env_assist.assert_raise_library_error(
+            lambda: self._create(
+                self.env_assist.get_env(),
+                "stonith-test",
+                "stonith:fence_xvm",
+                operations=[],
+                meta_attributes={},
+                instance_attributes={},
+                allow_absent_agent=True,
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.INVALID_STONITH_AGENT_NAME,
+                    name="stonith:fence_xvm",
+                ),
+            ]
+        )
+
+    def test_agent_load_failure(self):
         agent_name = "test_unknown"
         self.config.runner.pcmk.load_agent(
-            agent_name=f"stonith:{agent_name}",
-            agent_is_missing=True,
+            agent_name=f"stonith:{agent_name}", agent_is_missing=True
         )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: self._create(
+                self.env_assist.get_env(),
+                "stonith-test",
+                agent_name,
+                operations=[],
+                meta_attributes={},
+                instance_attributes={},
+            )
+        )
+
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.UNABLE_TO_GET_AGENT_METADATA,
+                    force_code=reports.codes.FORCE,
+                    agent="stonith:test_unknown",
+                    reason=(
+                        "Agent stonith:test_unknown not found or does not "
+                        "support meta-data: Invalid argument (22)\n"
+                        "Metadata query for stonith:test_unknown failed: "
+                        "Input/output error"
+                    ),
+                ),
+            ]
+        )
+
+    def test_agent_load_failure_forced(self):
+        agent_name = "test_unknown"
+        self.config.runner.pcmk.load_agent(
+            agent_name=f"stonith:{agent_name}", agent_is_missing=True
+        )
+        self.config.runner.pcmk.load_fenced_metadata()
         self.config.runner.cib.load()
         self.config.env.push_cib(
             resources=self._expected_cib(expected_cib_unknown)
@@ -362,8 +409,8 @@ class CreateMixin:
         self.env_assist.assert_reports(
             [
                 fixture.warn(
-                    report_codes.UNABLE_TO_GET_AGENT_METADATA,
-                    agent="test_unknown",
+                    reports.codes.UNABLE_TO_GET_AGENT_METADATA,
+                    agent="stonith:test_unknown",
                     reason=(
                         "Agent stonith:test_unknown not found or does not "
                         "support meta-data: Invalid argument (22)\n"
@@ -400,18 +447,16 @@ class CreateMixin:
             id=instance_name, agent=agent_name
         )
 
-        (
-            self.config.runner.pcmk.load_agent(
-                agent_name=f"stonith:{agent_name}",
-                agent_filename="stonith_agent_fence_simple.xml",
-            )
-            .runner.cib.load()
-            .runner.pcmk.load_fenced_metadata()
-            .env.push_cib(
-                resources=self._expected_cib(expected_cib_simple), wait=timeout
-            )
-            .runner.pcmk.load_state(resources=expected_status)
+        self.config.runner.pcmk.load_agent(
+            agent_name=f"stonith:{agent_name}",
+            agent_filename="stonith_agent_fence_simple.xml",
         )
+        self.config.runner.pcmk.load_fenced_metadata()
+        self.config.runner.cib.load()
+        self.config.env.push_cib(
+            resources=self._expected_cib(expected_cib_simple), wait=timeout
+        )
+        self.config.runner.pcmk.load_state(resources=expected_status)
 
         self._create(
             self.env_assist.get_env(),
@@ -428,7 +473,7 @@ class CreateMixin:
         self.env_assist.assert_reports(
             [
                 fixture.info(
-                    report_codes.RESOURCE_RUNNING_ON_NODES,
+                    reports.codes.RESOURCE_RUNNING_ON_NODES,
                     roles_with_nodes={"Started": ["node1"]},
                     resource_id=instance_name,
                 ),
@@ -463,14 +508,12 @@ class CreateInGroup(CreateMixin, TestCase):
     def test_group_not_valid(self):
         agent_name = "test_simple"
 
-        (
-            self.config.runner.pcmk.load_agent(
-                agent_name=f"stonith:{agent_name}",
-                agent_filename="stonith_agent_fence_simple.xml",
-            )
-            .runner.cib.load()
-            .runner.pcmk.load_fenced_metadata()
+        self.config.runner.pcmk.load_agent(
+            agent_name=f"stonith:{agent_name}",
+            agent_filename="stonith_agent_fence_simple.xml",
         )
+        self.config.runner.pcmk.load_fenced_metadata()
+        self.config.runner.cib.load()
 
         self.env_assist.assert_raise_library_error(
             lambda: stonith.create_in_group(
@@ -487,7 +530,7 @@ class CreateInGroup(CreateMixin, TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.INVALID_ID_BAD_CHAR,
+                    reports.codes.INVALID_ID_BAD_CHAR,
                     id="0-group",
                     id_description="group name",
                     is_first_char=True,
@@ -513,15 +556,13 @@ class CreateInGroup(CreateMixin, TestCase):
             + "</group></resources>"
         )
 
-        (
-            self.config.runner.pcmk.load_agent(
-                agent_name=f"stonith:{agent_name}",
-                agent_filename="stonith_agent_fence_simple.xml",
-            )
-            .runner.cib.load(resources=original_cib)
-            .runner.pcmk.load_fenced_metadata()
-            .env.push_cib(resources=expected_cib)
+        self.config.runner.pcmk.load_agent(
+            agent_name=f"stonith:{agent_name}",
+            agent_filename="stonith_agent_fence_simple.xml",
         )
+        self.config.runner.pcmk.load_fenced_metadata()
+        self.config.runner.cib.load(resources=original_cib)
+        self.config.env.push_cib(resources=expected_cib)
 
         stonith.create_in_group(
             self.env_assist.get_env(),
