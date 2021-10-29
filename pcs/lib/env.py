@@ -490,7 +490,7 @@ class LibraryEnvironment:
                 self._known_hosts = {}
         return self._known_hosts
 
-    def get_booth_env(self, name):
+    def get_booth_env(self, name: Optional[str]) -> BoothEnv:
         if self.__loaded_booth_env is None:
             self.__loaded_booth_env = BoothEnv(name, self._booth_files_data)
         return self.__loaded_booth_env

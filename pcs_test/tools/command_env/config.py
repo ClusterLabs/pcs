@@ -37,10 +37,7 @@ class Config:
     def add_extension(self, name, Extension):
         if hasattr(self, name):
             raise AssertionError(
-                (
-                    "Config (integration tests) has the extension '{0}' "
-                    "already."
-                ).format(name)
+                f"Config (integration tests) has the extension '{name}' already."
             )
         setattr(
             self,

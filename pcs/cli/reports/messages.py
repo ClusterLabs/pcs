@@ -482,6 +482,29 @@ class StonithRestartlessUpdateUnableToPerform(CliReportMessageCustom):
         return msg
 
 
+class InvalidResourceAgentName(CliReportMessageCustom):
+    _obj: messages.InvalidResourceAgentName
+
+    @property
+    def message(self) -> str:
+        return (
+            f"{self._obj.message} List of standards and providers can be "
+            "obtained by using commands 'pcs resource standards' and "
+            "'pcs resource providers'."
+        )
+
+
+class InvalidStonithAgentName(CliReportMessageCustom):
+    _obj: messages.InvalidStonithAgentName
+
+    @property
+    def message(self) -> str:
+        return (
+            f"{self._obj.message} List of agents can be obtained by using "
+            "command 'pcs stonith list'."
+        )
+
+
 def _create_report_msg_map() -> Dict[str, type]:
     result: Dict[str, type] = {}
     for report_msg_cls in get_all_subclasses(CliReportMessageCustom):

@@ -7,7 +7,6 @@ from pcs import (
 from pcs.cli.common import parse_args
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.fencing_topology import target_type_map_cli_to_lib
-from pcs.cli.reports import process_library_reports
 from pcs.cli.reports.output import error, warn
 from pcs.cli.resource.parse_args import parse_create_simple as parse_create_args
 from pcs.common import reports
@@ -16,10 +15,8 @@ from pcs.common.fencing_topology import (
     TARGET_TYPE_REGEXP,
     TARGET_TYPE_ATTRIBUTE,
 )
-from pcs.common.interface.dto import to_dict
 from pcs.common.str_tools import indent
 from pcs.lib.errors import LibraryError
-import pcs.lib.resource_agent as lib_ra
 
 # pylint: disable=too-many-branches, too-many-statements, protected-access
 
@@ -534,26 +531,18 @@ def get_fence_agent_info(lib, argv, modifiers):
     """
     Options: no options
     """
-    del lib
     modifiers.ensure_only_supported()
     if len(argv) != 1:
         utils.err("One parameter expected")
 
-    agent = argv[0]
-    if not agent.startswith("stonith:"):
+    agent_name = argv[0]
+    if not agent_name.startswith("stonith:"):
         utils.err("Invalid fence agent name")
-
-    runner = utils.cmd_runner()
-
-    try:
-        metadata = lib_ra.StonithAgent(runner, agent[len("stonith:") :])
-        info = to_dict(metadata.get_full_info())
-        info["name"] = "stonith:{0}".format(info["name"])
-        print(json.dumps(info))
-    except lib_ra.ResourceAgentError as e:
-        process_library_reports([lib_ra.resource_agent_error_to_report_item(e)])
-    except LibraryError as e:
-        process_library_reports(e.args)
+    print(
+        json.dumps(
+            lib.stonith_agent.describe_agent(agent_name[len("stonith:") :])
+        )
+    )
 
 
 def sbd_watchdog_list(lib, argv, modifiers):

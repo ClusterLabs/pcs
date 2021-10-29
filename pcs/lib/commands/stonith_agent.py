@@ -1,11 +1,19 @@
 from typing import Any, Dict, List, Optional
 
-from pcs.lib import resource_agent
 from pcs.lib.commands.resource_agent import (
-    _agent_metadata_dto_to_dict,
+    _agent_metadata_to_dict,
     _complete_agent_list,
 )
 from pcs.lib.env import LibraryEnvironment
+from pcs.lib.errors import LibraryError
+from pcs.lib.resource_agent import (
+    InvalidResourceAgentName,
+    list_resource_agents,
+    ResourceAgentError,
+    resource_agent_error_to_report_item,
+    ResourceAgentFacadeFactory,
+    ResourceAgentName,
+)
 
 
 # TODO return a list of DTOs
@@ -22,9 +30,13 @@ def list_agents(
     search -- return only agents which name contains this string
     """
     runner = lib_env.cmd_runner()
-    agent_names = resource_agent.list_stonith_agents(runner)
+    std_prov = "stonith"
+    agent_names = [
+        f"{std_prov}:{agent}"
+        for agent in list_resource_agents(runner, std_prov)
+    ]
     return _complete_agent_list(
-        runner, agent_names, describe, search, resource_agent.StonithAgent
+        runner, lib_env.report_processor, agent_names, describe, search
     )
 
 
@@ -38,10 +50,19 @@ def describe_agent(
 
     agent_name -- name of the agent (not containing "stonith:" prefix)
     """
-    agent = resource_agent.find_valid_stonith_agent_by_name(
-        lib_env.report_processor,
-        lib_env.cmd_runner(),
-        agent_name,
-        absent_agent_supported=False,
-    )
-    return _agent_metadata_dto_to_dict(agent.get_full_info(), describe=True)
+    runner = lib_env.cmd_runner()
+    agent_factory = ResourceAgentFacadeFactory(runner, lib_env.report_processor)
+    try:
+        if ":" in agent_name:
+            raise InvalidResourceAgentName(agent_name)
+        return _agent_metadata_to_dict(
+            agent_factory.facade_from_parsed_name(
+                ResourceAgentName("stonith", None, agent_name)
+            ).metadata,
+            describe=True,
+        )
+    except ResourceAgentError as e:
+        lib_env.report_processor.report(
+            resource_agent_error_to_report_item(e, is_stonith=True)
+        )
+        raise LibraryError() from e

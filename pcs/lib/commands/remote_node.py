@@ -12,7 +12,6 @@ from pcs.common.reports import (
     ReportProcessor,
 )
 from pcs.lib import node_communication_format
-from pcs.lib.tools import generate_binary_key
 from pcs.lib.cib.resource import guest_node, primitive, remote_node
 from pcs.lib.cib.tools import (
     IdProvider,
@@ -42,6 +41,12 @@ from pcs.lib.file.raw_file import raw_file_error_report
 from pcs.lib.node import get_existing_nodes_names_addrs
 from pcs.lib.pacemaker import state
 from pcs.lib.pacemaker.live import remove_node
+from pcs.lib.resource_agent import (
+    ResourceAgentError,
+    resource_agent_error_to_report_item,
+    ResourceAgentFacadeFactory,
+)
+from pcs.lib.tools import generate_binary_key
 
 
 def _reports_skip_new_node(new_node_name, reason_type):
@@ -306,9 +311,13 @@ def node_add_remote(
         # shouldn't complain about errors related to corosync nodes
         report_processor.report_list(report_list)
 
-    resource_agent = remote_node.get_agent(
-        env.report_processor, env.cmd_runner()
-    )
+    try:
+        resource_agent_facade = ResourceAgentFacadeFactory(
+            env.cmd_runner(), report_processor
+        ).facade_from_parsed_name(remote_node.AGENT_NAME)
+    except ResourceAgentError as e:
+        report_processor.report(resource_agent_error_to_report_item(e))
+        raise LibraryError() from e
 
     existing_target_list = []
     if env.is_cib_live:
@@ -366,7 +375,7 @@ def node_add_remote(
     report_list = remote_node.validate_create(
         existing_nodes_names,
         existing_nodes_addrs,
-        resource_agent,
+        resource_agent_facade.metadata,
         node_name,
         node_addr,
         instance_attributes,
@@ -378,7 +387,7 @@ def node_add_remote(
     try:
         remote_resource_element = remote_node.create(
             env.report_processor,
-            resource_agent,
+            resource_agent_facade,
             get_resources(cib),
             id_provider,
             node_addr,

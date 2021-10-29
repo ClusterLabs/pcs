@@ -1,0 +1,5 @@
+#!@PYTHON@
+
+from pacemaker_metadata import main
+
+main()

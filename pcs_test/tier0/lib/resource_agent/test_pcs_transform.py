@@ -1,0 +1,864 @@
+from unittest import mock, TestCase
+
+from pcs.common import const
+from pcs.lib import resource_agent as ra
+
+
+class GetAdditionalTraceParameters(TestCase):
+    def _assert_param_names(self, parameters, expected_names):
+        self.assertEqual([param.name for param in parameters], expected_names)
+
+    @staticmethod
+    def _fixture_parameter(name):
+        return ra.ResourceAgentParameter(
+            name,
+            shortdesc=None,
+            longdesc=None,
+            type="string",
+            default=None,
+            enum_values=None,
+            required=False,
+            advanced=False,
+            deprecated=False,
+            deprecated_by=[],
+            deprecated_desc=None,
+            unique_group=None,
+            reloadable=False,
+        )
+
+    def test_no_input_params(self):
+        self._assert_param_names(
+            ra.pcs_transform.get_additional_trace_parameters([]),
+            ["trace_ra", "trace_file"],
+        )
+
+    def test_return_both(self):
+        self._assert_param_names(
+            ra.pcs_transform.get_additional_trace_parameters(
+                [
+                    self._fixture_parameter("param1"),
+                    self._fixture_parameter("trace"),
+                ]
+            ),
+            ["trace_ra", "trace_file"],
+        )
+
+    def test_return_trace_file(self):
+        self._assert_param_names(
+            ra.pcs_transform.get_additional_trace_parameters(
+                [
+                    self._fixture_parameter("param1"),
+                    self._fixture_parameter("trace_ra"),
+                ]
+            ),
+            ["trace_file"],
+        )
+
+    def test_return_trace_ra(self):
+        self._assert_param_names(
+            ra.pcs_transform.get_additional_trace_parameters(
+                [
+                    self._fixture_parameter("param1"),
+                    self._fixture_parameter("trace_file"),
+                ]
+            ),
+            ["trace_ra"],
+        )
+
+    def test_return_none(self):
+        self._assert_param_names(
+            ra.pcs_transform.get_additional_trace_parameters(
+                [
+                    self._fixture_parameter("param1"),
+                    self._fixture_parameter("trace_file"),
+                    self._fixture_parameter("trace_ra"),
+                ]
+            ),
+            [],
+        )
+
+
+ra_pkg = "pcs.lib.resource_agent.pcs_transform"
+
+
+@mock.patch(f"{ra_pkg}._metadata_make_stonith_port_parameter_not_required")
+@mock.patch(f"{ra_pkg}._metadata_make_stonith_action_parameter_deprecated")
+@mock.patch(f"{ra_pkg}._metadata_remove_unwanted_stonith_parameters")
+@mock.patch(f"{ra_pkg}._metadata_parameter_extract_advanced_from_desc")
+@mock.patch(f"{ra_pkg}._metadata_parameter_join_short_long_desc")
+@mock.patch(f"{ra_pkg}._metadata_action_translate_role")
+class OcfUnifiedToPcs(TestCase):
+    @staticmethod
+    def _fixture_metadata(name):
+        return ra.ResourceAgentMetadata(
+            name,
+            agent_exists=True,
+            ocf_version=ra.const.OCF_1_0,
+            shortdesc=None,
+            longdesc=None,
+            parameters=[],
+            actions=[],
+        )
+
+    def test_resource(
+        self,
+        mock_action_role,
+        mock_parameter_desc,
+        mock_parameter_advanced,
+        mock_stonith_parameters,
+        mock_stonith_action,
+        mock_stonith_port,
+    ):
+        mock_action_role.return_value = "from action role"
+        mock_parameter_desc.return_value = "from parameter desc"
+        mock_parameter_advanced.return_value = "from parameter advanced"
+        mock_stonith_parameters.return_value = "from stonith parameters"
+        mock_stonith_action.return_value = "from stonith action"
+        mock_stonith_port.return_value = "from stonith port"
+
+        metadata = self._fixture_metadata(
+            ra.ResourceAgentName("ocf", "pacemaker", "Dummy")
+        )
+        self.assertEqual(
+            ra.pcs_transform.ocf_unified_to_pcs(metadata),
+            "from action role",
+        )
+
+        mock_action_role.assert_called_once_with(metadata)
+        mock_parameter_desc.assert_not_called()
+        mock_parameter_advanced.assert_not_called()
+        mock_stonith_parameters.assert_not_called()
+        mock_stonith_action.assert_not_called()
+        mock_stonith_port.assert_not_called()
+
+    def test_stonith(
+        self,
+        mock_action_role,
+        mock_parameter_desc,
+        mock_parameter_advanced,
+        mock_stonith_parameters,
+        mock_stonith_action,
+        mock_stonith_port,
+    ):
+        mock_action_role.return_value = "from action role"
+        mock_parameter_desc.return_value = "from parameter desc"
+        mock_parameter_advanced.return_value = "from parameter advanced"
+        mock_stonith_parameters.return_value = "from stonith parameters"
+        mock_stonith_action.return_value = "from stonith action"
+        mock_stonith_port.return_value = "from stonith port"
+
+        metadata = self._fixture_metadata(
+            ra.ResourceAgentName("stonith", None, "fence_xvm")
+        )
+        self.assertEqual(
+            ra.pcs_transform.ocf_unified_to_pcs(metadata),
+            "from stonith port",
+        )
+
+        mock_action_role.assert_called_once_with(metadata)
+        mock_parameter_desc.assert_not_called()
+        mock_parameter_advanced.assert_not_called()
+        mock_stonith_parameters.assert_called_once_with("from action role")
+        mock_stonith_action.assert_called_once_with("from stonith parameters")
+        mock_stonith_port.assert_called_once_with("from stonith action")
+
+    def test_pcmk_fake(
+        self,
+        mock_action_role,
+        mock_parameter_desc,
+        mock_parameter_advanced,
+        mock_stonith_parameters,
+        mock_stonith_action,
+        mock_stonith_port,
+    ):
+        mock_action_role.return_value = "from action role"
+        mock_parameter_desc.return_value = "from parameter desc"
+        mock_parameter_advanced.return_value = "from parameter advanced"
+        mock_stonith_parameters.return_value = "from stonith parameters"
+        mock_stonith_action.return_value = "from stonith action"
+        mock_stonith_port.return_value = "from stonith port"
+
+        metadata = self._fixture_metadata(
+            ra.ResourceAgentName(
+                ra.const.FAKE_AGENT_STANDARD, None, ra.const.PACEMAKER_FENCED
+            )
+        )
+        self.assertEqual(
+            ra.pcs_transform.ocf_unified_to_pcs(metadata),
+            "from parameter advanced",
+        )
+
+        mock_action_role.assert_called_once_with(metadata)
+        mock_parameter_desc.assert_called_once_with("from action role")
+        mock_parameter_advanced.assert_called_once_with("from parameter desc")
+        mock_stonith_parameters.assert_not_called()
+        mock_stonith_action.assert_not_called()
+        mock_stonith_port.assert_not_called()
+
+
+class MetadataActionTranslateRole(TestCase):
+    @staticmethod
+    def _fixture_metadata(actions):
+        return ra.ResourceAgentMetadata(
+            ra.ResourceAgentName("standard", "provider", "type"),
+            agent_exists=True,
+            ocf_version=ra.const.OCF_1_0,
+            shortdesc=None,
+            longdesc=None,
+            parameters=[],
+            actions=actions,
+        )
+
+    @staticmethod
+    def _fixture_action(role, interval):
+        return ra.ResourceAgentAction(
+            name="monitor",
+            timeout=None,
+            interval=interval,
+            role=role,
+            start_delay=None,
+            depth=None,
+            automatic=False,
+            on_target=False,
+        )
+
+    def test_no_actions(self):
+        metadata_in = self._fixture_metadata([])
+        metadata_out = self._fixture_metadata([])
+        self.assertEqual(
+            # pylint: disable=protected-access
+            ra.pcs_transform._metadata_action_translate_role(metadata_in),
+            metadata_out,
+        )
+
+    @mock.patch(
+        "pcs.common.const.PCMK_ROLE_PROMOTED_PRIMARY",
+        const.PCMK_ROLE_PROMOTED_LEGACY,
+    )
+    @mock.patch(
+        "pcs.common.const.PCMK_ROLE_UNPROMOTED_PRIMARY",
+        const.PCMK_ROLE_UNPROMOTED_LEGACY,
+    )
+    def test_role_old_agent_old_preferred(self):
+        metadata_in = self._fixture_metadata(
+            [
+                self._fixture_action(const.PCMK_ROLE_PROMOTED_LEGACY, "10"),
+                self._fixture_action(const.PCMK_ROLE_UNPROMOTED_LEGACY, "11"),
+            ]
+        )
+        metadata_out = self._fixture_metadata(
+            [
+                self._fixture_action(const.PCMK_ROLE_PROMOTED_LEGACY, "10"),
+                self._fixture_action(const.PCMK_ROLE_UNPROMOTED_LEGACY, "11"),
+            ]
+        )
+        self.assertEqual(
+            # pylint: disable=protected-access
+            ra.pcs_transform._metadata_action_translate_role(metadata_in),
+            metadata_out,
+        )
+
+    @mock.patch(
+        "pcs.common.const.PCMK_ROLE_PROMOTED_PRIMARY",
+        const.PCMK_ROLE_PROMOTED_LEGACY,
+    )
+    @mock.patch(
+        "pcs.common.const.PCMK_ROLE_UNPROMOTED_PRIMARY",
+        const.PCMK_ROLE_UNPROMOTED_LEGACY,
+    )
+    def test_role_new_agent_old_preferred(self):
+        metadata_in = self._fixture_metadata(
+            [
+                self._fixture_action(const.PCMK_ROLE_PROMOTED, "10"),
+                self._fixture_action(const.PCMK_ROLE_UNPROMOTED, "11"),
+            ]
+        )
+        metadata_out = self._fixture_metadata(
+            [
+                self._fixture_action(const.PCMK_ROLE_PROMOTED_LEGACY, "10"),
+                self._fixture_action(const.PCMK_ROLE_UNPROMOTED_LEGACY, "11"),
+            ]
+        )
+        self.assertEqual(
+            # pylint: disable=protected-access
+            ra.pcs_transform._metadata_action_translate_role(metadata_in),
+            metadata_out,
+        )
+
+    @mock.patch(
+        "pcs.common.const.PCMK_ROLE_PROMOTED_PRIMARY",
+        const.PCMK_ROLE_PROMOTED,
+    )
+    @mock.patch(
+        "pcs.common.const.PCMK_ROLE_UNPROMOTED_PRIMARY",
+        const.PCMK_ROLE_UNPROMOTED,
+    )
+    def test_role_old_agent_new_preferred(self):
+        metadata_in = self._fixture_metadata(
+            [
+                self._fixture_action(const.PCMK_ROLE_PROMOTED_LEGACY, "10"),
+                self._fixture_action(const.PCMK_ROLE_UNPROMOTED_LEGACY, "11"),
+            ]
+        )
+        metadata_out = self._fixture_metadata(
+            [
+                self._fixture_action(const.PCMK_ROLE_PROMOTED, "10"),
+                self._fixture_action(const.PCMK_ROLE_UNPROMOTED, "11"),
+            ]
+        )
+        self.assertEqual(
+            # pylint: disable=protected-access
+            ra.pcs_transform._metadata_action_translate_role(metadata_in),
+            metadata_out,
+        )
+
+    @mock.patch(
+        "pcs.common.const.PCMK_ROLE_PROMOTED_PRIMARY",
+        const.PCMK_ROLE_PROMOTED,
+    )
+    @mock.patch(
+        "pcs.common.const.PCMK_ROLE_UNPROMOTED_PRIMARY",
+        const.PCMK_ROLE_UNPROMOTED,
+    )
+    def test_role_new_agent_new_preferred(self):
+        metadata_in = self._fixture_metadata(
+            [
+                self._fixture_action(const.PCMK_ROLE_PROMOTED, "10"),
+                self._fixture_action(const.PCMK_ROLE_UNPROMOTED, "11"),
+            ]
+        )
+        metadata_out = self._fixture_metadata(
+            [
+                self._fixture_action(const.PCMK_ROLE_PROMOTED, "10"),
+                self._fixture_action(const.PCMK_ROLE_UNPROMOTED, "11"),
+            ]
+        )
+        self.assertEqual(
+            # pylint: disable=protected-access
+            ra.pcs_transform._metadata_action_translate_role(metadata_in),
+            metadata_out,
+        )
+
+
+class MetadataParameterExtractAdvancedFromDesc(TestCase):
+    advanced_str = "Advanced use only"
+
+    @staticmethod
+    def _fixture_metadata(parameters):
+        return ra.ResourceAgentMetadata(
+            ra.ResourceAgentName("standard", "provider", "type"),
+            agent_exists=True,
+            ocf_version=ra.const.OCF_1_0,
+            shortdesc=None,
+            longdesc=None,
+            parameters=parameters,
+            actions=[],
+        )
+
+    @staticmethod
+    def _fixture_parameter(shortdesc, longdesc, advanced):
+        return ra.ResourceAgentParameter(
+            name="test-parameter",
+            shortdesc=shortdesc,
+            longdesc=longdesc,
+            type="string",
+            default=None,
+            enum_values=None,
+            required=False,
+            advanced=advanced,
+            deprecated=False,
+            deprecated_by=[],
+            deprecated_desc=None,
+            unique_group=None,
+            reloadable=False,
+        )
+
+    def test_no_parameters(self):
+        metadata_in = self._fixture_metadata([])
+        metadata_out = self._fixture_metadata([])
+        self.assertEqual(
+            # pylint: disable=protected-access
+            ra.pcs_transform._metadata_parameter_extract_advanced_from_desc(
+                metadata_in
+            ),
+            metadata_out,
+        )
+
+    def test_no_shortdesc(self):
+        metadata_in = self._fixture_metadata(
+            [self._fixture_parameter(None, None, False)]
+        )
+        metadata_out = self._fixture_metadata(
+            [self._fixture_parameter(None, None, False)]
+        )
+        self.assertEqual(
+            # pylint: disable=protected-access
+            ra.pcs_transform._metadata_parameter_extract_advanced_from_desc(
+                metadata_in
+            ),
+            metadata_out,
+        )
+
+    def test_no_advanced_str(self):
+        metadata_in = self._fixture_metadata(
+            [self._fixture_parameter("some shortdesc", None, False)]
+        )
+        metadata_out = self._fixture_metadata(
+            [self._fixture_parameter("some shortdesc", None, False)]
+        )
+        self.assertEqual(
+            # pylint: disable=protected-access
+            ra.pcs_transform._metadata_parameter_extract_advanced_from_desc(
+                metadata_in
+            ),
+            metadata_out,
+        )
+
+    def test_advanced_str_in_shortedsc(self):
+        metadata_in = self._fixture_metadata(
+            [
+                self._fixture_parameter(
+                    f"{self.advanced_str}: some shortdesc", None, False
+                )
+            ]
+        )
+        metadata_out = self._fixture_metadata(
+            [
+                self._fixture_parameter(
+                    f"{self.advanced_str}: some shortdesc", None, True
+                )
+            ]
+        )
+        self.assertEqual(
+            # pylint: disable=protected-access
+            ra.pcs_transform._metadata_parameter_extract_advanced_from_desc(
+                metadata_in
+            ),
+            metadata_out,
+        )
+
+    def test_advanced_str_in_shortdesc_end(self):
+        metadata_in = self._fixture_metadata(
+            [
+                self._fixture_parameter(
+                    f"some shortdesc {self.advanced_str}", None, False
+                )
+            ]
+        )
+        metadata_out = self._fixture_metadata(
+            [
+                self._fixture_parameter(
+                    f"some shortdesc {self.advanced_str}", None, False
+                )
+            ]
+        )
+        self.assertEqual(
+            # pylint: disable=protected-access
+            ra.pcs_transform._metadata_parameter_extract_advanced_from_desc(
+                metadata_in
+            ),
+            metadata_out,
+        )
+
+    def test_advanced_str_in_longdesc(self):
+        metadata_in = self._fixture_metadata(
+            [
+                self._fixture_parameter(
+                    None, f"{self.advanced_str}: some longdesc", False
+                )
+            ]
+        )
+        metadata_out = self._fixture_metadata(
+            [
+                self._fixture_parameter(
+                    None, f"{self.advanced_str}: some longdesc", False
+                )
+            ]
+        )
+        self.assertEqual(
+            # pylint: disable=protected-access
+            ra.pcs_transform._metadata_parameter_extract_advanced_from_desc(
+                metadata_in
+            ),
+            metadata_out,
+        )
+
+
+class MetadataParameterJoinShortLongDesc(TestCase):
+    @staticmethod
+    def _fixture_metadata(parameters):
+        return ra.ResourceAgentMetadata(
+            ra.ResourceAgentName("standard", "provider", "type"),
+            agent_exists=True,
+            ocf_version=ra.const.OCF_1_0,
+            shortdesc=None,
+            longdesc=None,
+            parameters=parameters,
+            actions=[],
+        )
+
+    @staticmethod
+    def _fixture_parameter(shortdesc, longdesc):
+        return ra.ResourceAgentParameter(
+            name="test-parameter",
+            shortdesc=shortdesc,
+            longdesc=longdesc,
+            type="string",
+            default=None,
+            enum_values=None,
+            required=False,
+            advanced=False,
+            deprecated=False,
+            deprecated_by=[],
+            deprecated_desc=None,
+            unique_group=None,
+            reloadable=False,
+        )
+
+    def test_no_parameters(self):
+        metadata_in = self._fixture_metadata([])
+        metadata_out = self._fixture_metadata([])
+        self.assertEqual(
+            # pylint: disable=protected-access
+            ra.pcs_transform._metadata_parameter_join_short_long_desc(
+                metadata_in
+            ),
+            metadata_out,
+        )
+
+    def test_no_shortdesc_no_longdesc(self):
+        metadata_in = self._fixture_metadata(
+            [self._fixture_parameter(None, None)]
+        )
+        metadata_out = self._fixture_metadata(
+            [self._fixture_parameter(None, None)]
+        )
+        self.assertEqual(
+            # pylint: disable=protected-access
+            ra.pcs_transform._metadata_parameter_join_short_long_desc(
+                metadata_in
+            ),
+            metadata_out,
+        )
+
+    def test_shortdesc_only(self):
+        metadata_in = self._fixture_metadata(
+            [self._fixture_parameter("shortdesc", None)]
+        )
+        metadata_out = self._fixture_metadata(
+            [self._fixture_parameter("shortdesc", None)]
+        )
+        self.assertEqual(
+            # pylint: disable=protected-access
+            ra.pcs_transform._metadata_parameter_join_short_long_desc(
+                metadata_in
+            ),
+            metadata_out,
+        )
+
+    def test_longdesc_only(self):
+        metadata_in = self._fixture_metadata(
+            [self._fixture_parameter(None, "longdesc")]
+        )
+        metadata_out = self._fixture_metadata(
+            [self._fixture_parameter(None, "longdesc")]
+        )
+        self.assertEqual(
+            # pylint: disable=protected-access
+            ra.pcs_transform._metadata_parameter_join_short_long_desc(
+                metadata_in
+            ),
+            metadata_out,
+        )
+
+    def test_shortdesc_ang_longdesc(self):
+        metadata_in = self._fixture_metadata(
+            [self._fixture_parameter("shortdesc", "longdesc")]
+        )
+        metadata_out = self._fixture_metadata(
+            [self._fixture_parameter("shortdesc", "shortdesc\nlongdesc")]
+        )
+        self.assertEqual(
+            # pylint: disable=protected-access
+            ra.pcs_transform._metadata_parameter_join_short_long_desc(
+                metadata_in
+            ),
+            metadata_out,
+        )
+
+
+class MetadataRemoveUnwantedStonithParameters(TestCase):
+    @staticmethod
+    def _fixture_metadata(parameters):
+        return ra.ResourceAgentMetadata(
+            ra.ResourceAgentName("standard", "provider", "type"),
+            agent_exists=True,
+            ocf_version=ra.const.OCF_1_0,
+            shortdesc=None,
+            longdesc=None,
+            parameters=parameters,
+            actions=[],
+        )
+
+    @staticmethod
+    def _fixture_parameter(name):
+        return ra.ResourceAgentParameter(
+            name=name,
+            shortdesc=None,
+            longdesc=None,
+            type="string",
+            default=None,
+            enum_values=None,
+            required=False,
+            advanced=False,
+            deprecated=False,
+            deprecated_by=[],
+            deprecated_desc=None,
+            unique_group=None,
+            reloadable=False,
+        )
+
+    def test_no_parameters(self):
+        metadata_in = self._fixture_metadata([])
+        metadata_out = self._fixture_metadata([])
+        self.assertEqual(
+            # pylint: disable=protected-access
+            ra.pcs_transform._metadata_remove_unwanted_stonith_parameters(
+                metadata_in
+            ),
+            metadata_out,
+        )
+
+    def test_success(self):
+        metadata_in = self._fixture_metadata(
+            [
+                self._fixture_parameter("param1"),
+                self._fixture_parameter("help"),
+                self._fixture_parameter("param2"),
+                self._fixture_parameter("version"),
+            ]
+        )
+        metadata_out = self._fixture_metadata(
+            [
+                self._fixture_parameter("param1"),
+                self._fixture_parameter("param2"),
+            ]
+        )
+        self.assertEqual(
+            # pylint: disable=protected-access
+            ra.pcs_transform._metadata_remove_unwanted_stonith_parameters(
+                metadata_in
+            ),
+            metadata_out,
+        )
+
+
+class MetadataMakeStonithActionParameterDeprecated(TestCase):
+    @staticmethod
+    def _fixture_metadata(parameters):
+        return ra.ResourceAgentMetadata(
+            ra.ResourceAgentName("standard", "provider", "type"),
+            agent_exists=True,
+            ocf_version=ra.const.OCF_1_0,
+            shortdesc=None,
+            longdesc=None,
+            parameters=parameters,
+            actions=[],
+        )
+
+    @staticmethod
+    def _fixture_parameter(name, required, advanced, deprecated, deprecated_by):
+        return ra.ResourceAgentParameter(
+            name,
+            shortdesc=None,
+            longdesc=None,
+            type="string",
+            default=None,
+            enum_values=None,
+            required=required,
+            advanced=advanced,
+            deprecated=deprecated,
+            deprecated_by=deprecated_by,
+            deprecated_desc=None,
+            unique_group=None,
+            reloadable=False,
+        )
+
+    def test_no_parameters(self):
+        metadata_in = self._fixture_metadata([])
+        metadata_out = self._fixture_metadata([])
+        self.assertEqual(
+            # pylint: disable=protected-access
+            ra.pcs_transform._metadata_make_stonith_action_parameter_deprecated(
+                metadata_in
+            ),
+            metadata_out,
+        )
+
+    def test_no_action_parameter(self):
+        metadata_in = self._fixture_metadata(
+            [
+                self._fixture_parameter(
+                    "monitor",
+                    required=True,
+                    advanced=False,
+                    deprecated=False,
+                    deprecated_by=[],
+                )
+            ]
+        )
+        metadata_out = self._fixture_metadata(
+            [
+                self._fixture_parameter(
+                    "monitor",
+                    required=True,
+                    advanced=False,
+                    deprecated=False,
+                    deprecated_by=[],
+                )
+            ]
+        )
+        self.assertEqual(
+            # pylint: disable=protected-access
+            ra.pcs_transform._metadata_make_stonith_action_parameter_deprecated(
+                metadata_in
+            ),
+            metadata_out,
+        )
+
+    def test_action_parameter(self):
+        metadata_in = self._fixture_metadata(
+            [
+                self._fixture_parameter(
+                    "action",
+                    required=True,
+                    advanced=False,
+                    deprecated=False,
+                    deprecated_by=["new-action"],
+                )
+            ]
+        )
+        metadata_out = self._fixture_metadata(
+            [
+                self._fixture_parameter(
+                    "action",
+                    required=False,
+                    advanced=True,
+                    deprecated=True,
+                    deprecated_by=(
+                        ra.const.STONITH_ACTION_REPLACED_BY + ["new-action"]
+                    ),
+                )
+            ]
+        )
+        self.assertEqual(
+            # pylint: disable=protected-access
+            ra.pcs_transform._metadata_make_stonith_action_parameter_deprecated(
+                metadata_in
+            ),
+            metadata_out,
+        )
+
+
+class MetadataMakeStonithPortParameterNotRequired(TestCase):
+    @staticmethod
+    def _fixture_metadata(parameters):
+        return ra.ResourceAgentMetadata(
+            ra.ResourceAgentName("standard", "provider", "type"),
+            agent_exists=True,
+            ocf_version=ra.const.OCF_1_0,
+            shortdesc=None,
+            longdesc=None,
+            parameters=parameters,
+            actions=[],
+        )
+
+    @staticmethod
+    def _fixture_parameter(name, required, deprecated_by):
+        return ra.ResourceAgentParameter(
+            name,
+            shortdesc=None,
+            longdesc=None,
+            type="string",
+            default=None,
+            enum_values=None,
+            required=required,
+            advanced=False,
+            deprecated=bool(deprecated_by),
+            deprecated_by=deprecated_by,
+            deprecated_desc=None,
+            unique_group=None,
+            reloadable=False,
+        )
+
+    def test_no_parameters(self):
+        metadata_in = self._fixture_metadata([])
+        metadata_out = self._fixture_metadata([])
+        self.assertEqual(
+            # pylint: disable=protected-access
+            ra.pcs_transform._metadata_make_stonith_port_parameter_not_required(
+                metadata_in
+            ),
+            metadata_out,
+        )
+
+    def test_no_port_parameter(self):
+        metadata_in = self._fixture_metadata(
+            [self._fixture_parameter("param", True, [])]
+        )
+        metadata_out = self._fixture_metadata(
+            [self._fixture_parameter("param", True, [])]
+        )
+        self.assertEqual(
+            # pylint: disable=protected-access
+            ra.pcs_transform._metadata_make_stonith_port_parameter_not_required(
+                metadata_in
+            ),
+            metadata_out,
+        )
+
+    def test_modify_port_parameter(self):
+        metadata_in = self._fixture_metadata(
+            [self._fixture_parameter("port", True, [])]
+        )
+        metadata_out = self._fixture_metadata(
+            [self._fixture_parameter("port", False, [])]
+        )
+        self.assertEqual(
+            # pylint: disable=protected-access
+            ra.pcs_transform._metadata_make_stonith_port_parameter_not_required(
+                metadata_in
+            ),
+            metadata_out,
+        )
+
+    def test_modify_port_and_deprecations(self):
+        metadata_in = self._fixture_metadata(
+            [
+                self._fixture_parameter("old-port", True, ["port"]),
+                self._fixture_parameter("port", True, ["new-port"]),
+                self._fixture_parameter(
+                    "new-port", True, ["new-port2a", "new-port2b"]
+                ),
+                self._fixture_parameter("new-port2a", True, []),
+                self._fixture_parameter("new-port2b", True, []),
+            ]
+        )
+        metadata_out = self._fixture_metadata(
+            [
+                self._fixture_parameter("old-port", True, ["port"]),
+                self._fixture_parameter("port", False, ["new-port"]),
+                self._fixture_parameter(
+                    "new-port", False, ["new-port2a", "new-port2b"]
+                ),
+                self._fixture_parameter("new-port2a", False, []),
+                self._fixture_parameter("new-port2b", False, []),
+            ]
+        )
+        self.assertEqual(
+            # pylint: disable=protected-access
+            ra.pcs_transform._metadata_make_stonith_port_parameter_not_required(
+                metadata_in
+            ),
+            metadata_out,
+        )

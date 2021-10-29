@@ -213,13 +213,18 @@ class KeyValidator(ValidatorInterface):
         self,
         option_name_list: Iterable[TypeOptionName],
         option_type: Optional[str] = None,
+        severity: Optional[ReportItemSeverity] = None,
     ):
         """
         option_name_list -- names of the options to check
         option_type -- describes a type of the options for reporting
+        severity -- severity of produced reports, defaults to error
         """
         self._option_name_list = option_name_list
         self._option_type = option_type
+        self._severity = (
+            ReportItemSeverity.error() if severity is None else severity
+        )
 
     def validate(self, option_dict: TypeOptionMap) -> ReportItemList:
         raise NotImplementedError()
@@ -231,8 +236,12 @@ class CorosyncOption(KeyValidator):
     suitable for corosync.conf
     """
 
-    def __init__(self, option_type: Optional[str] = None):
-        super().__init__([], option_type=option_type)
+    def __init__(
+        self,
+        option_type: Optional[str] = None,
+        severity: Optional[ReportItemSeverity] = None,
+    ):
+        super().__init__([], option_type=option_type, severity=severity)
 
     def validate(self, option_dict: TypeOptionMap) -> ReportItemList:
         not_valid_options = [
@@ -245,12 +254,13 @@ class CorosyncOption(KeyValidator):
             # otherwise setting a cratfed option name could be misused for
             # setting arbitrary corosync.conf settings.
             return [
-                ReportItem.error(
+                ReportItem(
+                    self._severity,
                     reports.messages.InvalidUserdefinedOptions(
                         sorted(not_valid_options),
                         "a-z A-Z 0-9 /_-",
                         self._option_type,
-                    )
+                    ),
                 )
             ]
         return []
@@ -268,30 +278,76 @@ class DependsOnOption(KeyValidator):
         prerequisite_name: TypeOptionName,
         option_type: Optional[str] = None,
         prerequisite_type: Optional[str] = None,
+        severity: Optional[ReportItemSeverity] = None,
     ):
         """
         prerequisite_name -- name of the prerequisite options
         prerequisite_type -- describes the prerequisite for reporting
         """
-        super().__init__(option_name_list, option_type=option_type)
+        super().__init__(
+            option_name_list, option_type=option_type, severity=severity
+        )
         self._prerequisite_name = prerequisite_name
         self._prerequisite_type = prerequisite_type
 
     def validate(self, option_dict: TypeOptionMap) -> ReportItemList:
         return [
-            ReportItem.error(
+            ReportItem(
+                self._severity,
                 reports.messages.PrerequisiteOptionIsMissing(
                     option_name,
                     self._prerequisite_name,
                     self._option_type,
                     self._prerequisite_type,
-                )
+                ),
             )
             for option_name in self._option_name_list
             if (
                 option_name in option_dict
                 and self._prerequisite_name not in option_dict
             )
+        ]
+
+
+class DeprecatedOption(KeyValidator):
+    """
+    Report DEPRECATED_OPTION when the option_dict contains option_name_list
+    options
+    """
+
+    def __init__(
+        self,
+        option_name_list: Iterable[TypeOptionName],
+        deprecated_by: Iterable[TypeOptionName],
+        option_type: Optional[str] = None,
+        severity: Optional[ReportItemSeverity] = None,
+    ):
+        """
+        deprecated_by -- names of the options which should be used instead
+        """
+        super().__init__(
+            option_name_list,
+            option_type=option_type,
+            severity=(
+                ReportItemSeverity.deprecation()
+                if severity is None
+                else severity
+            ),
+        )
+        self._deprecated_by = sorted(deprecated_by)
+
+    def validate(self, option_dict: TypeOptionMap) -> ReportItemList:
+        return [
+            ReportItem(
+                severity=self._severity,
+                message=reports.messages.DeprecatedOption(
+                    option_name,
+                    self._deprecated_by,
+                    self._option_type,
+                ),
+            )
+            for option_name in self._option_name_list
+            if (option_name in option_dict)
         ]
 
 
@@ -305,11 +361,12 @@ class IsRequiredAll(KeyValidator):
         missing = set(self._option_name_list) - set(option_dict.keys())
         if missing:
             return [
-                ReportItem.error(
-                    reports.messages.RequiredOptionsAreMissing(
+                ReportItem(
+                    severity=self._severity,
+                    message=reports.messages.RequiredOptionsAreMissing(
                         sorted(missing),
                         self._option_type,
-                    )
+                    ),
                 )
             ]
         return []
@@ -321,15 +378,32 @@ class IsRequiredSome(KeyValidator):
     at least one item from the option_name_list
     """
 
+    def __init__(
+        self,
+        option_name_list: Iterable[TypeOptionName],
+        option_type: Optional[str] = None,
+        deprecated_option_name_list: Iterable[TypeOptionName] = frozenset(),
+        severity: Optional[ReportItemSeverity] = None,
+    ):
+        """
+        deprecated_option_name_list -- deprecated options from option_name_list
+        """
+        super().__init__(
+            option_name_list, option_type=option_type, severity=severity
+        )
+        self._deprecated_option_name_list = deprecated_option_name_list
+
     def validate(self, option_dict: TypeOptionMap) -> ReportItemList:
         found = set(self._option_name_list) & set(option_dict.keys())
         if not found:
             return [
-                ReportItem.error(
+                ReportItem(
+                    self._severity,
                     reports.messages.RequiredOptionOfAlternativesIsMissing(
                         sorted(self._option_name_list),
+                        sorted(self._deprecated_option_name_list),
                         self._option_type,
-                    )
+                    ),
                 )
             ]
         return []
@@ -345,11 +419,12 @@ class MutuallyExclusive(KeyValidator):
         found = set(self._option_name_list) & set(option_dict.keys())
         if len(found) > 1:
             return [
-                ReportItem.error(
+                ReportItem(
+                    self._severity,
                     reports.messages.MutuallyExclusiveOptions(
                         sorted(found),
                         self._option_type,
-                    )
+                    ),
                 )
             ]
         return []
@@ -371,14 +446,12 @@ class NamesIn(KeyValidator):
         """
         allowed_option_patterns -- option patterns to be added to a report
         banned_name_list -- list of options which cannot be forced
-        severity -- severity of produced reports, defaults to error
         """
-        super().__init__(option_name_list, option_type=option_type)
+        super().__init__(
+            option_name_list, option_type=option_type, severity=severity
+        )
         self._allowed_option_patterns = allowed_option_patterns or []
         self._banned_name_set = set(banned_name_list or [])
-        self._severity = (
-            ReportItemSeverity.error() if severity is None else severity
-        )
 
     def validate(self, option_dict: TypeOptionMap) -> ReportItemList:
         name_set = set(option_dict.keys())
@@ -577,6 +650,49 @@ class ValueId(ValueValidator):
         if self._id_provider is not None and not report_list:
             report_list.extend(self._id_provider.book_ids(value.normalized))
         return report_list
+
+
+class ValueDeprecated(ValueValidator):
+    """
+    Report DEPRECATED_OPTION_VALUE when a value has been deprecated and
+    replaced by new value
+    """
+
+    def __init__(
+        self,
+        option_name: TypeOptionName,
+        deprecation_map: Mapping[str, Optional[str]],
+        severity: Optional[ReportItemSeverity] = None,
+        option_name_for_report: Optional[str] = None,
+    ):
+        """
+        deprecation_map -- keys are deprecated values and values are new
+            values. If values is None, deprecated value has no direct
+            replacement
+        """
+        super().__init__(
+            option_name,
+            option_name_for_report=option_name_for_report,
+        )
+        self._severity = (
+            ReportItemSeverity.deprecation() if severity is None else severity
+        )
+        self._deprecation_map = deprecation_map
+
+    def _validate_value(self, value: ValuePair) -> ReportItemList:
+        if value.normalized in self._deprecation_map:
+            return [
+                ReportItem(
+                    severity=self._severity,
+                    message=reports.messages.DeprecatedOptionValue(
+                        option_name=self._get_option_name_for_report(),
+                        deprecated_value=value.original,
+                        replaced_by=self._deprecation_map[value.normalized],
+                    ),
+                )
+            ]
+
+        return []
 
 
 class ValueIn(ValuePredicateBase):

@@ -98,14 +98,14 @@ EXTRA_DIST		= \
 			  tier0/common/reports/__init__.py \
 			  tier0/common/reports/test_item.py \
 			  tier0/common/reports/test_messages.py \
+			  tier0/common/services/drivers/__init__.py \
+			  tier0/common/services/drivers/test_systemd.py \
+			  tier0/common/services/drivers/test_sysvinit_rhel.py \
+			  tier0/common/services/__init__.py \
 			  tier0/common/test_file.py \
 			  tier0/common/test_host.py \
 			  tier0/common/test_node_communicator.py \
 			  tier0/common/test_str_tools.py \
-			  tier0/common/services/__init__.py \
-			  tier0/common/services/drivers/__init__.py \
-			  tier0/common/services/drivers/test_systemd.py \
-			  tier0/common/services/drivers/test_sysvinit_rhel.py \
 			  tier0/common/test_tools.py \
 			  tier0/common/test_tools_xml_fromstring.py \
 			  tier0/daemon/app/fixtures_app.py \
@@ -133,9 +133,10 @@ EXTRA_DIST		= \
 			  tier0/lib/booth/test_status.py \
 			  tier0/lib/booth/test_sync.py \
 			  tier0/lib/cib/__init__.py \
-			  tier0/lib/cib/resource/agent.py \
 			  tier0/lib/cib/resource/__init__.py \
+			  tier0/lib/cib/resource/test_agent.py \
 			  tier0/lib/cib/resource/test_hierarchy.py \
+			  tier0/lib/cib/resource/test_primitive_validate.py \
 			  tier0/lib/cib/resource/test_relations.py \
 			  tier0/lib/cib/rule/__init__.py \
 			  tier0/lib/cib/rule/test_cib_to_dto.py \
@@ -229,11 +230,11 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/test_fencing_topology.py \
 			  tier0/lib/commands/test_node.py \
 			  tier0/lib/commands/test_pcsd.py \
-			  tier0/lib/commands/test_scsi.py \
 			  tier0/lib/commands/test_qdevice.py \
 			  tier0/lib/commands/test_quorum.py \
 			  tier0/lib/commands/test_resource_agent.py \
 			  tier0/lib/commands/test_sbd.py \
+			  tier0/lib/commands/test_scsi.py \
 			  tier0/lib/commands/test_status.py \
 			  tier0/lib/commands/test_stonith_agent.py \
 			  tier0/lib/commands/test_stonith_history.py \
@@ -280,15 +281,21 @@ EXTRA_DIST		= \
 			  tier0/lib/pacemaker/test_simulate.py \
 			  tier0/lib/pacemaker/test_state.py \
 			  tier0/lib/pacemaker/test_values.py \
+			  tier0/lib/resource_agent/__init__.py \
+			  tier0/lib/resource_agent/test_facade.py \
+			  tier0/lib/resource_agent/test_list.py \
+			  tier0/lib/resource_agent/test_name.py \
+			  tier0/lib/resource_agent/test_ocf_transform.py \
+			  tier0/lib/resource_agent/test_pcs_transform.py \
+			  tier0/lib/resource_agent/test_types.py \
+			  tier0/lib/resource_agent/test_xml.py \
 			  tier0/lib/test_env_cib.py \
 			  tier0/lib/test_env_corosync.py \
 			  tier0/lib/test_env.py \
 			  tier0/lib/test_external.py \
 			  tier0/lib/test_node_communication_format.py \
 			  tier0/lib/test_node_communication.py \
-			  tier0/lib/test_resource_agent.py \
 			  tier0/lib/test_sbd.py \
-			  tier0/lib/test_stonith_agent.py \
 			  tier0/lib/test_tools.py \
 			  tier0/lib/test_validate.py \
 			  tier0/lib/test_xml_tools.py \
@@ -296,7 +303,6 @@ EXTRA_DIST		= \
 			  tier0/test_host.py \
 			  tier1/cib_resource/common.py \
 			  tier1/cib_resource/__init__.py \
-			  tier1/cib_resource/stonith_common.py \
 			  tier1/cib_resource/test_bundle.py \
 			  tier1/cib_resource/test_clone_unclone.py \
 			  tier1/cib_resource/test_create.py \
@@ -353,6 +359,9 @@ EXTRA_DIST		= \
 			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_xvm_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource.d/systemd__test@a__b_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource.py \
+			  tools/bin_mock/pcmk/pacemaker-fenced \
+			  tools/bin_mock/pcmk/pacemaker_metadata.d/pacemaker_fenced.xml \
+			  tools/bin_mock/pcmk/pacemaker_metadata.py \
 			  tools/case_analysis.py \
 			  tools/check/__init__.py \
 			  tools/check/test_misc.py \
@@ -371,9 +380,9 @@ EXTRA_DIST		= \
 			  tools/command_env/config_http_files.py \
 			  tools/command_env/config_http_host.py \
 			  tools/command_env/config_http_pcmk.py \
-			  tools/command_env/config_http_scsi.py \
 			  tools/command_env/config_http.py \
 			  tools/command_env/config_http_sbd.py \
+			  tools/command_env/config_http_scsi.py \
 			  tools/command_env/config_http_status.py \
 			  tools/command_env/config.py \
 			  tools/command_env/config_raw_file.py \
@@ -381,9 +390,9 @@ EXTRA_DIST		= \
 			  tools/command_env/config_runner_cib.py \
 			  tools/command_env/config_runner_corosync.py \
 			  tools/command_env/config_runner_pcmk.py \
-			  tools/command_env/config_runner_scsi.py \
 			  tools/command_env/config_runner.py \
 			  tools/command_env/config_runner_sbd.py \
+			  tools/command_env/config_runner_scsi.py \
 			  tools/command_env/config_services.py \
 			  tools/command_env/__init__.py \
 			  tools/command_env/mock_fs.py \

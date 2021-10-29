@@ -106,19 +106,20 @@ EXTRA_DIST		= \
 			  common/pacemaker/rule.py \
 			  common/pcs_pycurl.py \
 			  common/reports/codes.py \
-			  common/reports/conversions.py \
 			  common/reports/const.py \
 			  common/reports/constraints/colocation.py \
 			  common/reports/constraints/common.py \
 			  common/reports/constraints/__init__.py \
 			  common/reports/constraints/order.py \
 			  common/reports/constraints/ticket.py \
+			  common/reports/conversions.py \
 			  common/reports/dto.py \
 			  common/reports/__init__.py \
 			  common/reports/item.py \
 			  common/reports/messages.py \
 			  common/reports/processor.py \
 			  common/reports/types.py \
+			  common/resource_agent_dto.py \
 			  common/services/common.py \
 			  common/services/drivers/__init__.py \
 			  common/services/drivers/systemd.py \
@@ -191,6 +192,7 @@ EXTRA_DIST		= \
 			  lib/cib/resource/bundle.py \
 			  lib/cib/resource/clone.py \
 			  lib/cib/resource/common.py \
+			  lib/cib/resource/const.py \
 			  lib/cib/resource/group.py \
 			  lib/cib/resource/guest_node.py \
 			  lib/cib/resource/hierarchy.py \
@@ -199,6 +201,7 @@ EXTRA_DIST		= \
 			  lib/cib/resource/primitive.py \
 			  lib/cib/resource/relations.py \
 			  lib/cib/resource/remote_node.py \
+			  lib/cib/resource/types.py \
 			  lib/cib/rule/cib_to_dto.py \
 			  lib/cib/rule/cib_to_str.py \
 			  lib/cib/rule/expression_part.py \
@@ -285,7 +288,16 @@ EXTRA_DIST		= \
 			  lib/pacemaker/simulate.py \
 			  lib/pacemaker/state.py \
 			  lib/pacemaker/values.py \
-			  lib/resource_agent.py \
+			  lib/resource_agent/const.py \
+			  lib/resource_agent/error.py \
+			  lib/resource_agent/facade.py \
+			  lib/resource_agent/__init__.py \
+			  lib/resource_agent/list.py \
+			  lib/resource_agent/name.py \
+			  lib/resource_agent/ocf_transform.py \
+			  lib/resource_agent/pcs_transform.py \
+			  lib/resource_agent/types.py \
+			  lib/resource_agent/xml.py \
 			  lib/sbd.py \
 			  lib/services.py \
 			  lib/tools.py \

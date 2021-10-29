@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Dict, Iterable, List, Mapping, Optional
+from typing import Iterable, List
 
 from lxml import etree
 
@@ -20,6 +20,12 @@ from pcs.lib.cib.resource.agent import (
     complete_operations_options,
     get_default_operation_interval,
 )
+from pcs.lib.cib.resource.const import OPERATION_ATTRIBUTES as ATTRIBUTES
+from pcs.lib.cib.resource.types import (
+    ResourceOperationIn,
+    ResourceOperationFilteredIn,
+    ResourceOperationFilteredOut,
+)
 from pcs.lib.cib.tools import (
     create_subelement_id,
     does_id_exist,
@@ -28,21 +34,6 @@ from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import is_true
 
 OPERATION_NVPAIR_ATTRIBUTES = [
-    "OCF_CHECK_LEVEL",
-]
-
-ATTRIBUTES = [
-    "id",
-    "description",
-    "enabled",
-    "interval",
-    "interval-origin",
-    "name",
-    "on-fail",
-    "record-pending",
-    "role",
-    "start-delay",
-    "timeout",
     "OCF_CHECK_LEVEL",
 ]
 
@@ -77,12 +68,12 @@ _normalize = validate.option_value_normalization(
 
 def prepare(
     report_processor: ReportProcessor,
-    raw_operation_list: Iterable[Mapping[str, str]],
-    default_operation_list: Iterable[Mapping[str, Optional[str]]],
+    raw_operation_list: Iterable[ResourceOperationFilteredIn],
+    default_operation_list: Iterable[ResourceOperationIn],
     allowed_operation_name_list: Iterable[str],
     new_role_names_supported: bool,
     allow_invalid: bool = False,
-) -> List[Dict[str, str]]:
+) -> List[ResourceOperationFilteredOut]:
     """
     Return operation_list prepared from raw_operation_list and
     default_operation_list.
@@ -124,7 +115,7 @@ def prepare(
 
 
 def _operations_to_normalized(
-    raw_operation_list: Iterable[Mapping[str, str]]
+    raw_operation_list: Iterable[ResourceOperationFilteredIn],
 ) -> List[validate.TypeOptionNormalizedMap]:
     return [
         validate.values_to_pairs(op, _normalize) for op in raw_operation_list
@@ -134,7 +125,7 @@ def _operations_to_normalized(
 def _normalized_to_operations(
     normalized_pairs: Iterable[validate.TypeOptionNormalizedMap],
     new_role_names_supported: bool,
-) -> List[Dict[str, str]]:
+) -> List[ResourceOperationFilteredOut]:
     def _replace_role(op_dict):
         if "role" in op_dict:
             op_dict["role"] = pacemaker.role.get_value_for_cib(
@@ -180,9 +171,9 @@ def _validate_operation_list(
 
 
 def _filter_op_dict(
-    op: Mapping[str, Optional[str]], new_role_names_supported: bool
-) -> Dict[str, str]:
-    # adjust new operation defenition (coming from agent metadata) to old code,
+    op: ResourceOperationIn, new_role_names_supported: bool
+) -> ResourceOperationFilteredOut:
+    # adjust new operation definition (coming from agent metadata) to old code,
     # TODO this should be handled in a different place - in saving operations to
     # CIB
     result = {
@@ -198,10 +189,10 @@ def _filter_op_dict(
 
 def _get_remaining_defaults(
     report_processor: ReportProcessor,
-    operation_list: Iterable[Mapping[str, str]],
-    default_operation_list: Iterable[Mapping[str, Optional[str]]],
+    operation_list: Iterable[ResourceOperationFilteredIn],
+    default_operation_list: Iterable[ResourceOperationIn],
     new_role_names_supported: bool,
-) -> List[Dict[str, str]]:
+) -> List[ResourceOperationFilteredOut]:
     """
     Return operations not mentioned in operation_list but contained in
         default_operation_list.
@@ -254,8 +245,8 @@ def get_interval_uniquer():
 
 def _make_unique_intervals(
     report_processor: ReportProcessor,
-    operation_list: Iterable[Mapping[str, str]],
-) -> List[Dict[str, str]]:
+    operation_list: Iterable[ResourceOperationFilteredIn],
+) -> List[ResourceOperationFilteredOut]:
     """
     Return operation list similar to operation_list where intervals for the same
         operation are unique

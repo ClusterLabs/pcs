@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8"?>
+<grammar xmlns="http://relaxng.org/ns/structure/1.0">
+<!--
+This is NOT an official OCF 1.0 definition
+
+It is rather a merge of OCF 1.0 and various non-standard additions implemented
+in and used by various OCF agents prior of standardizing OCF 1.1. The purpose
+of this file is for pcs to be able to check whether it is able to process
+metadata provided by OCF agents.
+
+In comparison to official OCF 1.0 RNG, this one is rather relaxed.
+
+When implementing an OCF agent, please, stick with the official OCF standard
+RNGs. Thank you.
+-->
+
+<start>
+  <element name="resource-agent">
+    <attribute name="name"/>
+    <!-- defined by OCF, ignored by pcs -->
+    <optional><attribute name="version"/></optional>
+    <!-- used by fence agents -->
+    <optional><attribute name="shortdesc"/></optional>
+
+    <interleave><!-- order of the elements does not matter -->
+      <!--
+        Since there was just one version of the OCF standard in OCF 1.0 era, not
+        all agents actually specify their OCF version. Agents not specifying OCF
+        version are treated as OCF 1.0 agents by pcs.
+      -->
+      <optional><element name="version"><text/></element></optional>
+
+      <zeroOrMore>
+        <element name="longdesc">
+          <optional><attribute name="lang"/></optional>
+          <text/>
+        </element>
+      </zeroOrMore>
+
+      <zeroOrMore>
+        <element name="shortdesc">
+          <optional><attribute name="lang"/></optional>
+          <text/>
+        </element>
+      </zeroOrMore>
+
+      <optional><element name="parameters">
+        <zeroOrMore><ref name="parameter"/></zeroOrMore>
+      </element></optional>
+
+      <optional><element name="actions">
+        <zeroOrMore><ref name="action"/></zeroOrMore>
+      </element></optional>
+
+      <!-- defined by OCF, ignored by pcs -->
+      <optional><element name="special">
+        <attribute name="tag"/>
+        <ref name="anyElement"/>
+      </element></optional>
+
+      <!-- used by fence agents, ignored by pcs -->
+      <optional><element name="vendor-url"><text/></element></optional>
+
+      <!-- used by fence agents, ignored by pcs -->
+      <zeroOrMore>
+        <element name="symlink">
+          <attribute name="name"/>
+          <attribute name="shortdesc"/>
+        </element>
+      </zeroOrMore>
+    </interleave>
+  </element>
+</start>
+
+<define name="any">
+  <zeroOrMore>
+    <choice>
+      <attribute>
+        <anyName/>
+      </attribute>
+      <text/>
+      <element>
+          <anyName/>
+          <ref name="any"/>
+      </element>
+    </choice>
+  </zeroOrMore>
+</define>
+
+<define name="anyElement">
+  <zeroOrMore>
+    <choice>
+      <text/>
+      <element>
+          <anyName/>
+          <ref name="any"/>
+      </element>
+    </choice>
+  </zeroOrMore>
+ </define>
+
+<define name="boolean-values">
+  <choice>
+    <value>0</value>
+    <value>1</value>
+  </choice>
+</define>
+
+<define name="role-values">
+  <choice>
+    <value>Master</value>
+    <value>Slave</value>
+    <!-- pcs supports both legacy and new role names introduced in OCF 1.1 -->
+    <value>Promoted</value>
+    <value>Unpromoted</value>
+  </choice>
+</define>
+
+<define name="action">
+  <element name="action">
+    <attribute name="name"/>
+    <optional><attribute name="timeout"/></optional>
+    <optional><attribute name="interval"/></optional>
+    <optional><attribute name="start-delay"/></optional>
+    <optional><attribute name="depth"/></optional>
+    <!-- used by agents despite not defined by OCF 1.0 -->
+    <optional>
+      <attribute name="role"><ref name="role-values"/></attribute>
+    </optional>
+    <!-- used by fence agents -->
+    <optional>
+      <attribute name="on_target"><ref name="boolean-values"/></attribute>
+    </optional>
+    <!-- used by fence agents -->
+    <optional>
+      <attribute name="automatic"><ref name="boolean-values"/></attribute>
+    </optional>
+  </element>
+</define>
+
+<define name="parameter">
+  <element name="parameter">
+    <attribute name="name"/>
+    <optional><attribute name="shortdesc"/></optional>
+    <optional>
+      <attribute name="unique"><ref name="boolean-values"/></attribute>
+    </optional>
+    <optional>
+      <attribute name="required"><ref name="boolean-values"/></attribute>
+    </optional>
+    <!-- deprecation mechanism used by fence agents -->
+    <optional>
+      <attribute name="deprecated"><ref name="boolean-values"/></attribute>
+    </optional>
+    <!-- deprecation mechanism used by fence agents -->
+    <optional><attribute name="obsoletes"/></optional>
+
+    <interleave>
+      <zeroOrMore><element name="longdesc">
+        <optional><attribute name="lang"/></optional>
+        <text/>
+      </element></zeroOrMore>
+
+      <zeroOrMore><element name="shortdesc">
+        <optional><attribute name="lang"/></optional>
+        <text/>
+      </element></zeroOrMore>
+
+      <optional>
+        <element name="content">
+          <choice>
+            <attribute name="type">
+              <choice>
+                <value>boolean</value>
+                <value>string</value>
+                <value>integer</value>
+                <value>second</value><!-- used by fence agents -->
+                <value>int</value><!-- used by fence agents intead of integer -->
+                <value>time</value><!-- used by pacemaker metadata -->
+              </choice>
+            </attribute>
+            <group>
+              <!--
+                used by fence agents and processed by pcs even though it is not
+                officially included in OCF until OCF 1.1
+              -->
+              <attribute name="type">
+                <value>select</value>
+              </attribute>
+              <zeroOrMore>
+                <element name="option"><attribute name="value"/></element>
+              </zeroOrMore>
+            </group>
+          </choice>
+          <optional>
+            <attribute name="default"><text/></attribute>
+          </optional>
+        </element>
+      </optional>
+
+      <!-- used by fence agents, ignored by pcs -->
+      <optional>
+        <element name="getopt"><attribute name="mixed"/></element>
+      </optional>
+    </interleave>
+  </element>
+</define>
+
+</grammar>

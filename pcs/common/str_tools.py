@@ -25,18 +25,18 @@ def indent(line_list: Iterable[str], indent_step: int = 2) -> List[str]:
     ]
 
 
+def format_list_dont_sort(
+    item_list: List[str],  # Intetionaly not Sequence so string is prohibited
+    separator: str = ", ",
+) -> str:
+    return separator.join(f"'{item}'" for item in item_list)
+
+
 def format_list(
     item_list: List[str],  # Intetionaly not Sequence so string is prohibited
     separator: str = ", ",
 ) -> str:
-    item_list = sorted(item_list)
-
-    to_value = lambda item: f"'{item}'"
-
-    if len(item_list) == 1:
-        return to_value(item_list[0])
-
-    return separator.join(sorted([to_value(item) for item in item_list]))
+    return format_list_dont_sort(sorted(item_list), separator)
 
 
 def format_list_custom_last_separator(
@@ -86,6 +86,12 @@ def quote(string: str, chars_to_quote: str) -> str:
 
 def join_multilines(strings: Iterable[str]) -> str:
     return "\n".join([a.strip() for a in strings if a.strip()])
+
+
+def split_multiline(string: str) -> List[str]:
+    return [
+        line for line in [line.strip() for line in string.splitlines()] if line
+    ]
 
 
 def format_optional(
