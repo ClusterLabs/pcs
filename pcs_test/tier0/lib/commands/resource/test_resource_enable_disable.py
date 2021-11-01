@@ -2084,7 +2084,7 @@ class DisableSafeFixturesMixin:
         # pylint does not know this will be mixed into TestCase classes
         # pylint: disable=invalid-name
         self.env_assist, self.config = get_env_tools(test_case=self)
-        tmp_file_patcher = mock.patch("pcs.lib.pacemaker.live.get_tmp_file")
+        tmp_file_patcher = mock.patch("pcs.lib.tools.get_tmp_file")
         self.addCleanup(tmp_file_patcher.stop)
 
         self.new_cib_file_name = "new_cib.tmp"

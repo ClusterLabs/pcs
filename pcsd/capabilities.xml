@@ -1671,7 +1671,7 @@
         to a master role, a constraint lifetime. Optionally wait for the
         constraints to take effect.
 
-        pcs commands: pcs resource ( ban | clear | move )
+        pcs commands: pcs resource ( ban | clear | move-with-constraint )
         daemon urls:
           /api/v1/resource-ban/v1
           /api/v1/resource-move/v1
@@ -1685,6 +1685,23 @@
         pcs commands: pcs resource clear --expired
         daemon urls:
           /api/v1/resource-unmove-unban/v1
+      </description>
+    </capability>
+    <capability id="pcmk.resource.move.autoclean" in-pcs="1" in-pcsd="1">
+      <description>
+        Constraint used for moving a resource is automatically removed once the
+        resource has been sucessfuly moved.
+
+        pcs commands: pcs resource move
+        daemon urls:
+          /api/v1/resource-move-autoclean/v1
+      </description>
+    </capability>
+    <capability id="pcmk.resource.move.autoclean.default" in-pcs="1" in-pcsd="0">
+      <description>
+        Command `pcs resource move` will autoclean constraints by default.
+
+        pcs commands: pcs resource move
       </description>
     </capability>
     <capability id="pcmk.resource.debug" in-pcs="1" in-pcsd="0">

@@ -160,8 +160,6 @@ If \fB\-\-promoted\fR is used the scope of the command is limited to the Promote
 
 If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the resource to move and then return 0 on success or 1 on error. If 'n' is not specified it defaults to 60 minutes.
 
-NOTE: This feature is still being worked on and thus may be changed in future.
-
 NOTE: This command has been changed in pcs\-0.11. It is equivalent to command 'resource move <resource id> \fB\-\-autodelete\fR' from pcs\-0.10.9. Legacy functionality of the 'resource move' command is still available as 'resource move\-with\-constraint <resource id>'.
 
 If you want the resource to preferably avoid running on some nodes but be able to failover to them use 'pcs constraint location avoids'.

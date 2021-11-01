@@ -785,7 +785,7 @@ class EnsureCibVersionTest(TestCase):
 
 class SimulateCibXml(TestCase):
     def setUp(self):
-        tmp_file_patcher = mock.patch("pcs.lib.pacemaker.live.get_tmp_file")
+        tmp_file_patcher = mock.patch("pcs.lib.tools.get_tmp_file")
         self.addCleanup(tmp_file_patcher.stop)
         self.tmp_file_mock_obj = TmpFileMock()
         self.addCleanup(self.tmp_file_mock_obj.assert_all_done)

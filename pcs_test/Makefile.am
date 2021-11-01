@@ -205,6 +205,7 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/resource/test_resource_create.py \
 			  tier0/lib/commands/resource/test_resource_enable_disable.py \
 			  tier0/lib/commands/resource/test_resource_manage_unmanage.py \
+			  tier0/lib/commands/resource/test_resource_move_autoclean.py \
 			  tier0/lib/commands/resource/test_resource_move_ban.py \
 			  tier0/lib/commands/resource/test_resource_relations.py \
 			  tier0/lib/commands/sbd/__init__.py \

@@ -384,9 +384,6 @@ Commands:
         resource to move and then return 0 on success or 1 on error. If 'n' is
         not specified it defaults to 60 minutes.
 
-        NOTE: This feature is still being worked on and thus may be changed in
-        future.
-
         NOTE: This command has been changed in pcs-0.11. It is equivalent to
         command 'resource move <resource-id> --autodelete' from pcs-0.10.9.
         Legacy functionality of the 'resource move' command is still available

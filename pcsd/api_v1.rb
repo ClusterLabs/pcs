@@ -271,6 +271,11 @@ def route_api_v1(auth_user, params, request)
       :only_superuser => false,
       :permissions => Permissions::WRITE,
     },
+    'resource-move-autoclean/v1' => {
+      :cmd => 'resource.move_autoclean',
+      :only_superuser => false,
+      :permissions => Permissions::WRITE,
+    },
     'resource-unmanage/v1' => {
       :cmd => 'resource.unmanage',
       :only_superuser => false,

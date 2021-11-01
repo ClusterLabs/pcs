@@ -5,12 +5,11 @@
 ### Added
 -  Add add/remove cli syntax for command `pcs stonith update-scsi-devices`
    ([rhbz#1992668])
-
+- Command `pcs resource move` is fully supported ([rhbz#1990787])
 
 ### Changed
 - Deprecation warnings use a "Deprecation Warning:" prefix instead of 
   "Warning:" on the command line
-  
 
 ### Fixed
 - Do not unfence newly added devices on fenced cluster nodes ([rhbz#1991654])
@@ -22,6 +21,7 @@
 [ghpull#370]: https://github.com/ClusterLabs/pcs/pull/370
 [rhbz#1533090]: https://bugzilla.redhat.com/show_bug.cgi?id=1533090
 [rhbz#1811072]: https://bugzilla.redhat.com/show_bug.cgi?id=1811072
+[rhbz#1990787]: https://bugzilla.redhat.com/show_bug.cgi?id=1990787
 [rhbz#1991654]: https://bugzilla.redhat.com/show_bug.cgi?id=1991654
 [rhbz#1992668]: https://bugzilla.redhat.com/show_bug.cgi?id=1992668
 

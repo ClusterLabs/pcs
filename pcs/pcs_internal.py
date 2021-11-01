@@ -73,6 +73,7 @@ SUPPORTED_COMMANDS = {
     "resource.group_add",
     "resource.manage",
     "resource.move",
+    "resource.move_autoclean",
     "resource.unmanage",
     "resource.unmove_unban",
     "sbd.disable_sbd",

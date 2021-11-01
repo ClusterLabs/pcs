@@ -28,10 +28,7 @@ from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 from pcs.lib.pacemaker import api_result
 from pcs.lib.pacemaker.state import ClusterState
-from pcs.lib.tools import (
-    get_tmp_cib,
-    get_tmp_file,
-)
+from pcs.lib import tools
 from pcs.lib.xml_tools import etree_to_str
 
 
@@ -268,7 +265,9 @@ def diff_cibs_xml(
     cib_old_xml -- original CIB
     cib_new_xml -- modified CIB
     """
-    with get_tmp_cib(reporter, cib_old_xml) as cib_old_tmp_file, get_tmp_cib(
+    with tools.get_tmp_cib(
+        reporter, cib_old_xml
+    ) as cib_old_tmp_file, tools.get_tmp_cib(
         reporter, cib_new_xml
     ) as cib_new_tmp_file:
         stdout, stderr, retval = runner.run(
@@ -379,7 +378,7 @@ def simulate_cib_xml(runner, cib_xml):
     string cib_xml -- CIB XML to simulate
     """
     try:
-        with get_tmp_file() as new_cib_file, get_tmp_file() as transitions_file:
+        with tools.get_tmp_file() as new_cib_file, tools.get_tmp_file() as transitions_file:
             cmd = [
                 __exec("crm_simulate"),
                 "--simulate",

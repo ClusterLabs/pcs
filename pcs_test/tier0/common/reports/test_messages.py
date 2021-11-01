@@ -595,6 +595,14 @@ class RunExternalProcessError(NameBuildTest):
         )
 
 
+class NoActionNecessary(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "No action necessary, requested change would have no effect",
+            reports.NoActionNecessary(),
+        )
+
+
 class NodeCommunicationStarted(NameBuildTest):
     def test_build_message_with_data(self):
         self.assert_message_from_report(

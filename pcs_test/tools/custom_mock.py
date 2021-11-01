@@ -64,10 +64,18 @@ class TmpFileMock:
         self._file_content_checker = file_content_checker
 
     def _assert_file_content_equal(self, name, expected, real):
+        if expected is None and real is None:
+            return
         eq_callback = lambda file1, file2: file1 != file2
         if self._file_content_checker is not None:
             eq_callback = self._file_content_checker
-        if eq_callback(expected, real):
+        try:
+            is_not_equal = eq_callback(expected, real)
+        except AssertionError as e:
+            raise AssertionError(
+                f"Temporary file '{name}' content mismatch."
+            ) from e
+        if is_not_equal:
             raise AssertionError(
                 f"Temporary file '{name}' content mismatch.\nExpected:\n"
                 f"{expected}\n\nReal:\n{real}"
