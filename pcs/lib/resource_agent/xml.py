@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Tuple, Union
 
 from lxml import etree
 from lxml.etree import _Element
@@ -12,9 +12,12 @@ from .error import UnableToGetAgentMetadata, UnsupportedOcfVersion
 from .types import (
     FakeAgentName,
     ResourceAgentActionOcf1_0,
+    ResourceAgentActionOcf1_1,
     ResourceAgentMetadataOcf1_0,
+    ResourceAgentMetadataOcf1_1,
     ResourceAgentName,
     ResourceAgentParameterOcf1_0,
+    ResourceAgentParameterOcf1_1,
 )
 
 
@@ -93,7 +96,8 @@ def _metadata_xml_to_dom(metadata: str) -> _Element:
     ocf_version = _get_ocf_version(dom)
     if ocf_version == const.OCF_1_0:
         etree.RelaxNG(file=settings.path.ocf_1_0_schema).assertValid(dom)
-    # TODO add OCF 1.1 validation
+    elif ocf_version == const.OCF_1_1:
+        etree.RelaxNG(file=settings.path.ocf_1_1_schema).assertValid(dom)
     return dom
 
 
@@ -132,10 +136,9 @@ def load_fake_agent_metadata(
 ### parse metadata
 
 
-# TODO this function should return Union[ResourceAgentMetadataOcf1_0 | ResourceAgentMetadataOcf1_1]
 def parse_metadata(
     name: ResourceAgentName, metadata: _Element
-) -> ResourceAgentMetadataOcf1_0:
+) -> Union[ResourceAgentMetadataOcf1_0, ResourceAgentMetadataOcf1_1]:
     """
     Parse XML metadata to a dataclass
 
@@ -146,8 +149,7 @@ def parse_metadata(
     if ocf_version == const.OCF_1_0:
         return _parse_agent_1_0(name, metadata)
     if ocf_version == const.OCF_1_1:
-        # TODO switch to 1.1
-        return _parse_agent_1_0(name, metadata)
+        return _parse_agent_1_1(name, metadata)
     raise UnsupportedOcfVersion(name.full_name, ocf_version)
 
 
@@ -164,7 +166,7 @@ def _parse_agent_1_0(
     actions_el = metadata.find("./actions")
     return ResourceAgentMetadataOcf1_0(
         name=name,
-        shortdesc=_get_shortdesc(metadata),
+        shortdesc=_get_shortdesc(metadata) or metadata.get("shortdesc"),
         longdesc=_get_longdesc(metadata),
         parameters=(
             []
@@ -175,24 +177,56 @@ def _parse_agent_1_0(
     )
 
 
+def _parse_agent_1_1(
+    name: ResourceAgentName, metadata: _Element
+) -> ResourceAgentMetadataOcf1_1:
+    """
+    Parse OCF 1.1 XML metadata to a dataclass
+
+    name -- name of an agent
+    metadata -- metadata XML document
+    """
+    parameters_el = metadata.find("./parameters")
+    actions_el = metadata.find("./actions")
+    return ResourceAgentMetadataOcf1_1(
+        name=name,
+        shortdesc=_get_shortdesc(metadata),
+        longdesc=_get_longdesc(metadata),
+        parameters=(
+            []
+            if parameters_el is None
+            else _parse_parameters_1_1(parameters_el)
+        ),
+        actions=([] if actions_el is None else _parse_actions_1_1(actions_el)),
+    )
+
+
+def _parse_parameter_content(
+    parameter_el: _Element,
+) -> Tuple[str, Optional[str], Optional[List[str]]]:
+    value_type = "string"
+    default_value = None
+    enum_values = None
+    content_el = parameter_el.find("content")
+    if content_el is not None:
+        value_type = content_el.get("type", value_type)
+        default_value = content_el.get("default", default_value)
+        if value_type == "select":
+            enum_values = [
+                str(option_el.attrib["value"])
+                for option_el in content_el.iterfind("./option")
+            ]
+    return value_type, default_value, enum_values
+
+
 def _parse_parameters_1_0(
     element: _Element,
 ) -> List[ResourceAgentParameterOcf1_0]:
     result = []
     for parameter_el in element.iter("parameter"):
-        value_type = "string"
-        default_value = None
-        enum_values = None
-        content_el = parameter_el.find("content")
-        if content_el is not None:
-            value_type = content_el.get("type", value_type)
-            default_value = content_el.get("default", default_value)
-            if value_type == "select":
-                enum_values = [
-                    str(option_el.attrib["value"])
-                    for option_el in content_el.iterfind("./option")
-                ]
-
+        value_type, default_value, enum_values = _parse_parameter_content(
+            parameter_el
+        )
         result.append(
             ResourceAgentParameterOcf1_0(
                 name=str(parameter_el.attrib["name"]),
@@ -205,6 +239,44 @@ def _parse_parameters_1_0(
                 deprecated=parameter_el.get("deprecated"),
                 obsoletes=parameter_el.get("obsoletes"),
                 unique=parameter_el.get("unique"),
+            )
+        )
+    return result
+
+
+def _parse_parameters_1_1(
+    element: _Element,
+) -> List[ResourceAgentParameterOcf1_1]:
+    result = []
+    for parameter_el in element.iter("parameter"):
+        value_type, default_value, enum_values = _parse_parameter_content(
+            parameter_el
+        )
+
+        deprecated, deprecated_by, deprecated_desc = False, [], None
+        deprecated_el = parameter_el.find("deprecated")
+        if deprecated_el is not None:
+            deprecated = True
+            deprecated_by = [
+                str(replaced_with_el.attrib["name"])
+                for replaced_with_el in deprecated_el.iterfind("replaced-with")
+            ]
+            deprecated_desc = _get_desc(deprecated_el)
+
+        result.append(
+            ResourceAgentParameterOcf1_1(
+                name=str(parameter_el.attrib["name"]),
+                shortdesc=_get_shortdesc(parameter_el),
+                longdesc=_get_longdesc(parameter_el),
+                type=value_type,
+                default=default_value,
+                enum_values=enum_values,
+                required=parameter_el.get("required"),
+                deprecated=deprecated,
+                deprecated_by=deprecated_by,
+                deprecated_desc=deprecated_desc,
+                unique_group=parameter_el.get("unique-group"),
+                reloadable=parameter_el.get("reloadable"),
             )
         )
     return result
@@ -226,10 +298,28 @@ def _parse_actions_1_0(element: _Element) -> List[ResourceAgentActionOcf1_0]:
     ]
 
 
+def _parse_actions_1_1(element: _Element) -> List[ResourceAgentActionOcf1_1]:
+    return [
+        ResourceAgentActionOcf1_1(
+            name=str(action.attrib["name"]),
+            timeout=action.get("timeout"),
+            interval=action.get("interval"),
+            role=action.get("role"),
+            start_delay=action.get("start-delay"),
+            depth=action.get("depth"),
+            automatic=action.get("automatic"),
+            on_target=action.get("on_target"),
+        )
+        for action in element.iter("action")
+    ]
+
+
+def _get_desc(element: _Element) -> Optional[str]:
+    return _get_text_from_dom_element(element.find("desc"))
+
+
 def _get_shortdesc(element: _Element) -> Optional[str]:
-    return _get_text_from_dom_element(element.find("shortdesc")) or element.get(
-        "shortdesc", None
-    )
+    return _get_text_from_dom_element(element.find("shortdesc"))
 
 
 def _get_longdesc(element: _Element) -> Optional[str]:

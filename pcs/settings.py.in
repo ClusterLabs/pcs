@@ -119,11 +119,16 @@ gui_session_lifetime_seconds = 60 * 60
 pcs_data_dir = "@LIB_DIR@/pcs/data/"
 
 _ocf_1_0_schema_filename = "ocf-1.0.rng"
+_ocf_1_1_schema_filename = "ocf-1.1.rng"
 
 class _PathManager:
     @property
     def ocf_1_0_schema(self):
         return os.path.join(pcs_data_dir, _ocf_1_0_schema_filename)
+
+    @property
+    def ocf_1_1_schema(self):
+        return os.path.join(pcs_data_dir, _ocf_1_1_schema_filename)
 
     @property
     def pcs_data_dir(self):

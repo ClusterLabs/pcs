@@ -10,8 +10,11 @@ from pcs.lib import resource_agent as ra
 from pcs.lib.external import CommandRunner
 from pcs.lib.resource_agent.types import (
     ResourceAgentActionOcf1_0,
+    ResourceAgentActionOcf1_1,
     ResourceAgentMetadataOcf1_0,
+    ResourceAgentMetadataOcf1_1,
     ResourceAgentParameterOcf1_0,
+    ResourceAgentParameterOcf1_1,
 )
 
 
@@ -195,6 +198,30 @@ class MetadataXmlToDom(TestCase):
             metadata, etree_to_str(ra.xml._metadata_xml_to_dom(metadata))
         )
 
+    def test_ocf_1_1_not_valid(self):
+        with self.assertRaises(etree.DocumentInvalid):
+            ra.xml._metadata_xml_to_dom(
+                """
+                    <resource-agent>
+                        <version>1.1</version>
+                    </resource-agent>
+                """
+            )
+
+    def test_ocf_1_1_valid(self):
+        # pylint: disable=no-self-use
+        metadata = """
+            <resource-agent name="agent">
+                <version>1.1</version>
+                <parameters>
+                    <parameter name="test" unique-group="ug1"/>
+                </parameters>
+            </resource-agent>
+        """
+        assert_xml_equal(
+            metadata, etree_to_str(ra.xml._metadata_xml_to_dom(metadata))
+        )
+
 
 class LoadMetadata(TestCase):
     def setUp(self):
@@ -367,7 +394,7 @@ class ParseOcfGeneric(ParseOcfToolsMixin, TestCase):
 
 class ParseOcf10BaseMixin(ParseOcfToolsMixin):
     def test_empty_agent(self):
-        self.assertEquals(
+        self.assertEqual(
             self.parse(self.xml("""<resource-agent/>""")),
             ResourceAgentMetadataOcf1_0(
                 self.agent_name,
@@ -379,7 +406,7 @@ class ParseOcf10BaseMixin(ParseOcfToolsMixin):
         )
 
     def test_desc_element(self):
-        self.assertEquals(
+        self.assertEqual(
             self.parse(
                 self.xml(
                     """
@@ -400,7 +427,7 @@ class ParseOcf10BaseMixin(ParseOcfToolsMixin):
         )
 
     def test_desc_element_empty(self):
-        self.assertEquals(
+        self.assertEqual(
             self.parse(
                 self.xml(
                     """
@@ -421,7 +448,7 @@ class ParseOcf10BaseMixin(ParseOcfToolsMixin):
         )
 
     def test_desc_attribute(self):
-        self.assertEquals(
+        self.assertEqual(
             self.parse(
                 self.xml(
                     """
@@ -441,7 +468,7 @@ class ParseOcf10BaseMixin(ParseOcfToolsMixin):
         )
 
     def test_desc_attribute_empty(self):
-        self.assertEquals(
+        self.assertEqual(
             self.parse(
                 self.xml(
                     """
@@ -459,7 +486,7 @@ class ParseOcf10BaseMixin(ParseOcfToolsMixin):
         )
 
     def test_desc_element_and_attribute(self):
-        self.assertEquals(
+        self.assertEqual(
             self.parse(
                 self.xml(
                     """
@@ -479,7 +506,7 @@ class ParseOcf10BaseMixin(ParseOcfToolsMixin):
         )
 
     def test_desc_element_empty_and_attribute(self):
-        self.assertEquals(
+        self.assertEqual(
             self.parse(
                 self.xml(
                     """
@@ -499,7 +526,7 @@ class ParseOcf10BaseMixin(ParseOcfToolsMixin):
         )
 
     def test_desc_element_empty_and_attribute_empty(self):
-        self.assertEquals(
+        self.assertEqual(
             self.parse(
                 self.xml(
                     """
@@ -519,7 +546,7 @@ class ParseOcf10BaseMixin(ParseOcfToolsMixin):
         )
 
     def test_parameters_empty_list(self):
-        self.assertEquals(
+        self.assertEqual(
             self.parse(
                 self.xml(
                     """
@@ -554,7 +581,7 @@ class ParseOcf10BaseMixin(ParseOcfToolsMixin):
             )
 
     def test_parameters_minimal(self):
-        self.assertEquals(
+        self.assertEqual(
             self.parse(
                 self.xml(
                     """
@@ -589,7 +616,7 @@ class ParseOcf10BaseMixin(ParseOcfToolsMixin):
         )
 
     def test_parameters_all_settings(self):
-        self.assertEquals(
+        self.assertEqual(
             self.parse(
                 self.xml(
                     """
@@ -630,7 +657,7 @@ class ParseOcf10BaseMixin(ParseOcfToolsMixin):
         )
 
     def test_parameters_content(self):
-        self.assertEquals(
+        self.assertEqual(
             self.parse(
                 self.xml(
                     """
@@ -686,7 +713,7 @@ class ParseOcf10BaseMixin(ParseOcfToolsMixin):
         )
 
     def test_actions_empty_list(self):
-        self.assertEquals(
+        self.assertEqual(
             self.parse(
                 self.xml(
                     """
@@ -721,7 +748,7 @@ class ParseOcf10BaseMixin(ParseOcfToolsMixin):
             )
 
     def test_actions_multiple(self):
-        self.assertEquals(
+        self.assertEqual(
             self.parse(
                 self.xml(
                     """
@@ -786,3 +813,417 @@ class ParseOcf10NoVersion(ParseOcf10BaseMixin, TestCase):
 
 class ParseOcf10ExplicitVersion(ParseOcf10BaseMixin, TestCase):
     ocf_version = "1.0"
+
+
+class ParseOcf11(ParseOcfToolsMixin, TestCase):
+    ocf_version = "1.1"
+
+    def test_empty_agent(self):
+        self.assertEqual(
+            self.parse(self.xml("""<resource-agent/>""")),
+            ResourceAgentMetadataOcf1_1(
+                self.agent_name,
+                shortdesc=None,
+                longdesc=None,
+                parameters=[],
+                actions=[],
+            ),
+        )
+
+    def test_desc_element(self):
+        self.assertEqual(
+            self.parse(
+                self.xml(
+                    """
+                        <resource-agent>
+                            <shortdesc>This is a shortdesc</shortdesc>
+                            <longdesc>This is a longdesc</longdesc>
+                        </resource-agent>
+                    """
+                )
+            ),
+            ResourceAgentMetadataOcf1_1(
+                self.agent_name,
+                shortdesc="This is a shortdesc",
+                longdesc="This is a longdesc",
+                parameters=[],
+                actions=[],
+            ),
+        )
+
+    def test_desc_element_empty(self):
+        self.assertEqual(
+            self.parse(
+                self.xml(
+                    """
+                        <resource-agent>
+                            <longdesc/>
+                            <shortdesc/>
+                        </resource-agent>
+                    """
+                )
+            ),
+            ResourceAgentMetadataOcf1_1(
+                self.agent_name,
+                shortdesc=None,
+                longdesc=None,
+                parameters=[],
+                actions=[],
+            ),
+        )
+
+    def test_parameters_empty_list(self):
+        self.assertEqual(
+            self.parse(
+                self.xml(
+                    """
+                        <resource-agent>
+                            <parameters/>
+                        </resource-agent>
+                    """
+                )
+            ),
+            ResourceAgentMetadataOcf1_1(
+                self.agent_name,
+                shortdesc=None,
+                longdesc=None,
+                parameters=[],
+                actions=[],
+            ),
+        )
+
+    def test_parameters_empty_parameter(self):
+        # parameters must have at least 'name' attribute
+        with self.assertRaises(ra.UnableToGetAgentMetadata):
+            self.parse(
+                self.xml(
+                    """
+                        <resource-agent>
+                            <parameters>
+                                <parameter/>
+                            </parameters>
+                        </resource-agent>
+                    """
+                )
+            )
+
+    def test_parameters_minimal(self):
+        self.assertEqual(
+            self.parse(
+                self.xml(
+                    """
+                        <resource-agent>
+                            <parameters>
+                                <parameter name="a_parameter"/>
+                            </parameters>
+                        </resource-agent>
+                    """
+                )
+            ),
+            ResourceAgentMetadataOcf1_1(
+                self.agent_name,
+                shortdesc=None,
+                longdesc=None,
+                parameters=[
+                    ResourceAgentParameterOcf1_1(
+                        name="a_parameter",
+                        shortdesc=None,
+                        longdesc=None,
+                        type="string",
+                        default=None,
+                        enum_values=None,
+                        required=None,
+                        deprecated=False,
+                        deprecated_by=[],
+                        deprecated_desc=None,
+                        unique_group=None,
+                        reloadable=None,
+                    )
+                ],
+                actions=[],
+            ),
+        )
+
+    def test_parameters_deprecated_minimal(self):
+        self.assertEqual(
+            self.parse(
+                self.xml(
+                    """
+                        <resource-agent>
+                            <parameters>
+                                <parameter name="a_parameter">
+                                    <deprecated/>
+                                </parameter>
+                            </parameters>
+                        </resource-agent>
+                    """
+                )
+            ),
+            ResourceAgentMetadataOcf1_1(
+                self.agent_name,
+                shortdesc=None,
+                longdesc=None,
+                parameters=[
+                    ResourceAgentParameterOcf1_1(
+                        name="a_parameter",
+                        shortdesc=None,
+                        longdesc=None,
+                        type="string",
+                        default=None,
+                        enum_values=None,
+                        required=None,
+                        deprecated=True,
+                        deprecated_by=[],
+                        deprecated_desc=None,
+                        unique_group=None,
+                        reloadable=None,
+                    )
+                ],
+                actions=[],
+            ),
+        )
+
+    def test_parameters_deprecated_replaced_with(self):
+        self.assertEqual(
+            self.parse(
+                self.xml(
+                    """
+                        <resource-agent>
+                            <parameters>
+                                <parameter name="a_parameter">
+                                    <deprecated>
+                                        <replaced-with name="new1"/>
+                                        <replaced-with name="new2"/>
+                                    </deprecated>
+                                </parameter>
+                            </parameters>
+                        </resource-agent>
+                    """
+                )
+            ),
+            ResourceAgentMetadataOcf1_1(
+                self.agent_name,
+                shortdesc=None,
+                longdesc=None,
+                parameters=[
+                    ResourceAgentParameterOcf1_1(
+                        name="a_parameter",
+                        shortdesc=None,
+                        longdesc=None,
+                        type="string",
+                        default=None,
+                        enum_values=None,
+                        required=None,
+                        deprecated=True,
+                        deprecated_by=["new1", "new2"],
+                        deprecated_desc=None,
+                        unique_group=None,
+                        reloadable=None,
+                    )
+                ],
+                actions=[],
+            ),
+        )
+
+    def test_parameters_all_settings(self):
+        self.assertEqual(
+            self.parse(
+                self.xml(
+                    """
+                        <resource-agent>
+                            <parameters>
+                                <parameter name="a_parameter"
+                                    unique-group="ug1" unique="0" required="1"
+                                    reloadable="0"
+                                >
+                                    <longdesc>Long description</longdesc>
+                                    <shortdesc>short description</shortdesc>
+                                    <deprecated>
+                                        <replaced-with name="new1"/>
+                                        <replaced-with name="new2"/>
+                                        <desc>deprecation explanation</desc>
+                                    </deprecated>
+                                    <content type="integer" default="123"/>
+                                </parameter>
+                            </parameters>
+                        </resource-agent>
+                    """
+                )
+            ),
+            ResourceAgentMetadataOcf1_1(
+                self.agent_name,
+                shortdesc=None,
+                longdesc=None,
+                parameters=[
+                    ResourceAgentParameterOcf1_1(
+                        name="a_parameter",
+                        shortdesc="short description",
+                        longdesc="Long description",
+                        type="integer",
+                        default="123",
+                        enum_values=None,
+                        required="1",
+                        deprecated=True,
+                        deprecated_by=["new1", "new2"],
+                        deprecated_desc="deprecation explanation",
+                        unique_group="ug1",
+                        reloadable="0",
+                    )
+                ],
+                actions=[],
+            ),
+        )
+
+    def test_parameters_content(self):
+        self.assertEqual(
+            self.parse(
+                self.xml(
+                    """
+                        <resource-agent>
+                            <parameters>
+                                <parameter name="with_type">
+                                    <content type="integer"/>
+                                </parameter>
+                                <parameter name="with_select">
+                                    <content type="select" default="b">
+                                        <option value="a"/>
+                                        <option value="b"/>
+                                        <option value="c"/>
+                                    </content>
+                                </parameter>
+                            </parameters>
+                        </resource-agent>
+                    """
+                )
+            ),
+            ResourceAgentMetadataOcf1_1(
+                self.agent_name,
+                shortdesc=None,
+                longdesc=None,
+                parameters=[
+                    ResourceAgentParameterOcf1_1(
+                        name="with_type",
+                        shortdesc=None,
+                        longdesc=None,
+                        type="integer",
+                        default=None,
+                        enum_values=None,
+                        required=None,
+                        deprecated=False,
+                        deprecated_by=[],
+                        deprecated_desc=None,
+                        unique_group=None,
+                        reloadable=None,
+                    ),
+                    ResourceAgentParameterOcf1_1(
+                        name="with_select",
+                        shortdesc=None,
+                        longdesc=None,
+                        type="select",
+                        default="b",
+                        enum_values=["a", "b", "c"],
+                        required=None,
+                        deprecated=False,
+                        deprecated_by=[],
+                        deprecated_desc=None,
+                        unique_group=None,
+                        reloadable=None,
+                    ),
+                ],
+                actions=[],
+            ),
+        )
+
+    def test_actions_empty_list(self):
+        self.assertEqual(
+            self.parse(
+                self.xml(
+                    """
+                        <resource-agent>
+                            <actions/>
+                        </resource-agent>
+                    """
+                )
+            ),
+            ResourceAgentMetadataOcf1_1(
+                self.agent_name,
+                shortdesc=None,
+                longdesc=None,
+                parameters=[],
+                actions=[],
+            ),
+        )
+
+    def test_actions_empty_action(self):
+        # actions must have at least 'name' attribute
+        with self.assertRaises(ra.UnableToGetAgentMetadata):
+            self.parse(
+                self.xml(
+                    """
+                        <resource-agent>
+                            <actions>
+                                <action/>
+                            </actions>
+                        </resource-agent>
+                    """
+                )
+            )
+
+    def test_actions_multiple(self):
+        self.assertEqual(
+            self.parse(
+                self.xml(
+                    """
+                        <resource-agent>
+                            <actions>
+                                <action name="minimal"/>
+                                <action name="maximal" timeout="1" interval="2"
+                                    start-delay="3" depth="4" role="whatever"
+                                />
+                                <action name="stonith_special"
+                                    automatic="0" on_target="1"
+                                />
+                            </actions>
+                        </resource-agent>
+                    """
+                )
+            ),
+            ResourceAgentMetadataOcf1_1(
+                self.agent_name,
+                shortdesc=None,
+                longdesc=None,
+                parameters=[],
+                actions=[
+                    ResourceAgentActionOcf1_1(
+                        name="minimal",
+                        timeout=None,
+                        interval=None,
+                        role=None,
+                        start_delay=None,
+                        depth=None,
+                        automatic=None,
+                        on_target=None,
+                    ),
+                    ResourceAgentActionOcf1_1(
+                        name="maximal",
+                        timeout="1",
+                        interval="2",
+                        role="whatever",
+                        start_delay="3",
+                        depth="4",
+                        automatic=None,
+                        on_target=None,
+                    ),
+                    ResourceAgentActionOcf1_1(
+                        name="stonith_special",
+                        timeout=None,
+                        interval=None,
+                        role=None,
+                        start_delay=None,
+                        depth=None,
+                        automatic="0",
+                        on_target="1",
+                    ),
+                ],
+            ),
+        )

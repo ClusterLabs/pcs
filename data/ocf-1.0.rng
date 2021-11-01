@@ -80,8 +80,8 @@ RNGs. Thank you.
       </attribute>
       <text/>
       <element>
-          <anyName/>
-          <ref name="any"/>
+        <anyName/>
+        <ref name="any"/>
       </element>
     </choice>
   </zeroOrMore>
@@ -92,12 +92,12 @@ RNGs. Thank you.
     <choice>
       <text/>
       <element>
-          <anyName/>
-          <ref name="any"/>
+        <anyName/>
+        <ref name="any"/>
       </element>
     </choice>
   </zeroOrMore>
- </define>
+</define>
 
 <define name="boolean-values">
   <choice>
