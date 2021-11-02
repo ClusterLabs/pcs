@@ -726,21 +726,18 @@ class PcmkShortcuts:
         if returncode is None:
             returncode = self.default_wait_error_returncode if stderr else 0
 
+        cmd = ["crm_resource", "--wait"]
+        if timeout != 0:
+            cmd.append(
+                "--timeout={0}".format(
+                    timeout
+                    if timeout is not None
+                    else self.default_wait_timeout
+                )
+            )
         self.__calls.place(
             name,
-            RunnerCall(
-                [
-                    "crm_resource",
-                    "--wait",
-                    "--timeout={0}".format(
-                        timeout
-                        if timeout is not None
-                        else self.default_wait_timeout
-                    ),
-                ],
-                stderr=stderr,
-                returncode=returncode,
-            ),
+            RunnerCall(cmd, stderr=stderr, returncode=returncode),
         )
 
     def is_resource_digests_supported(
@@ -863,12 +860,14 @@ class PcmkShortcuts:
         self,
         new_cib_filepath,
         transitions_filepath,
+        cib_xml=None,
         cib_modifiers=None,
         cib_load_name="runner.cib.load",
         stdout="",
         stderr="",
         returncode=0,
         name="runner.pcmk.simulate_cib",
+        env=None,
         **modifier_shortcuts,
     ):
         """
@@ -876,6 +875,7 @@ class PcmkShortcuts:
 
         string new_cib_filepath -- a temp file for storing a new cib
         string transitions_filepath -- a temp file for storing transitions
+        string cib_xml -- cib which will be used for a simulation
         list of callable modifiers -- every callable takes etree.Element and
             returns new etree.Element with desired modification
         string cib_load_name -- key of a call from whose stdout the cib is taken
@@ -883,6 +883,7 @@ class PcmkShortcuts:
         string stderr -- pacemaker's stderr
         int returncode -- pacemaker's returncode
         string name -- key of the call
+        dict env -- runner environment variables
         dict modifier_shortcuts -- a new modifier is generated from each
             modifier shortcut.
             As key there can be keys of MODIFIER_GENERATORS.
@@ -891,11 +892,12 @@ class PcmkShortcuts:
             MODIFIER_GENERATORS - please refer it when you are adding params
             here)
         """
-        cib_xml = modify_cib(
-            self.__calls.get(cib_load_name).stdout,
-            cib_modifiers,
-            **modifier_shortcuts,
-        )
+        if cib_xml is None:
+            cib_xml = modify_cib(
+                self.__calls.get(cib_load_name).stdout,
+                cib_modifiers,
+                **modifier_shortcuts,
+            )
         cmd = [
             "crm_simulate",
             "--simulate",
@@ -913,6 +915,7 @@ class PcmkShortcuts:
                 stderr=stderr,
                 returncode=returncode,
                 check_stdin=CheckStdinEqualXml(cib_xml),
+                env=env,
             ),
         )
 

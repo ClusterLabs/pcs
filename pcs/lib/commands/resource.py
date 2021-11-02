@@ -1535,8 +1535,13 @@ def move_autoclean(
     remove_constraint_cib_diff = diff_cibs_xml(
         env.cmd_runner(), env.report_processor, rsc_moved_cib_xml, cib_xml
     )
+
     if not (add_constraint_cib_diff and remove_constraint_cib_diff):
-        raise AssertionError()
+        env.report_processor.report(
+            reports.ReportItem.info(reports.messages.NoActionNecessary())
+        )
+        return
+
     _, move_transitions, after_move_simulated_cib = simulate_cib(
         env.cmd_runner(), get_cib(rsc_moved_cib_xml)
     )
@@ -1587,15 +1592,12 @@ def move_autoclean(
         )
     )
     env.wait_for_idle(wait_timeout)
-    resource_state_after = get_resource_state(
-        env.get_cluster_state(), resource_id
-    )
     if env.report_processor.report(
         _move_wait_report(
             resource_id,
             node,
             resource_state_before,
-            resource_state_after,
+            get_resource_state(env.get_cluster_state(), resource_id),
         )
     ).has_errors:
         raise LibraryError()

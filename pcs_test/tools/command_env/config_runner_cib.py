@@ -228,11 +228,13 @@ class CibShortcuts:
         stdout="",
         stderr="",
         returncode=0,
+        env=None,
     ):
         """
         Create a call for pushing a diff of CIBs
         string name -- key of the call
         string cib_diff -- the diff of CIBs
+        dict env -- CommandRunner environment variables
         """
         self.__calls.place(
             name,
@@ -242,6 +244,7 @@ class CibShortcuts:
                 stdout=stdout,
                 stderr=stderr,
                 returncode=returncode,
+                env=env,
             ),
         )
 

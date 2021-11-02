@@ -896,6 +896,20 @@ class RunExternalProcessError(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class NoActionNecessary(ReportItemMessage):
+    """
+    Configuration already satisfy change that was requested by the user,
+    therefore no action/change of configuration is necessary.
+    """
+
+    _code = codes.NO_ACTION_NECESSARY
+
+    @property
+    def message(self) -> str:
+        return "No action necessary, requested change would have no effect"
+
+
+@dataclass(frozen=True)
 class NodeCommunicationStarted(ReportItemMessage):
     """
     Request is about to be sent to a remote node, debug info

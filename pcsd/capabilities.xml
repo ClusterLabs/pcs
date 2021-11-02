@@ -1694,6 +1694,16 @@
           /api/v1/resource-unmove-unban/v1
       </description>
     </capability>
+    <capability id="pcmk.resource.move.autoclean" in-pcs="1" in-pcsd="1">
+      <description>
+        Constraint used for moving a resource is automatically removed once the
+        resource has been sucessfuly moved.
+
+        pcs commands: pcs resource move --autodelete
+        daemon urls:
+          /api/v1/resource-move-autoclean/v1
+      </description>
+    </capability>
     <capability id="pcmk.resource.debug" in-pcs="1" in-pcsd="0">
       <description>
         Force a resource operation to happen on the local node and show debug

@@ -385,8 +385,6 @@ Commands:
         verify that the resource will not be moved after deleting the
         constraint. If --strict is specified, the command will also fail if
         other resources would be affected.
-        NOTE: This feature is still being worked on and thus may be changed in
-        future.
 
         If --wait is specified, pcs will wait up to 'n' seconds for the
         resource to move and then return 0 on success or 1 on error. If 'n' is
