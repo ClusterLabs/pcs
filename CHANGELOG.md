@@ -18,10 +18,14 @@
 - Reject cloning of stonith resources ([rhbz#1811072])
 - Do not show warning that no stonith device was detected and stonith-enabled
   is not false when a stonith device is in a group ([ghpull#370])
+- Misleading error message from `pcs quorum unblock` when `wait_for_all=0`
+  ([rhbz#1968088])
+
 
 [ghpull#370]: https://github.com/ClusterLabs/pcs/pull/370
 [rhbz#1533090]: https://bugzilla.redhat.com/show_bug.cgi?id=1533090
 [rhbz#1811072]: https://bugzilla.redhat.com/show_bug.cgi?id=1811072
+[rhbz#1968088]: https://bugzilla.redhat.com/show_bug.cgi?id=1968088
 [rhbz#1990787]: https://bugzilla.redhat.com/show_bug.cgi?id=1990787
 [rhbz#1991654]: https://bugzilla.redhat.com/show_bug.cgi?id=1991654
 [rhbz#1992668]: https://bugzilla.redhat.com/show_bug.cgi?id=1992668
