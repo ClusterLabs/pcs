@@ -9,9 +9,12 @@
 ### Fixed
 - Do not show warning that no stonith device was detected and stonith-enabled
   is not false when a stonith device is in a group ([ghpull#370])
+- Misleading error message from `pcs quorum unblock` when `wait_for_all=0`
+  ([rhbz#1968088])
 
 [ghpull#370]: https://github.com/ClusterLabs/pcs/pull/370
 [rhbz#1990784]: https://bugzilla.redhat.com/show_bug.cgi?id=1990784
+[rhbz#1968088]: https://bugzilla.redhat.com/show_bug.cgi?id=1968088
 
 
 ## [0.10.11] - 2021-10-05

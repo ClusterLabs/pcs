@@ -274,10 +274,12 @@ def quorum_unblock_cmd(lib, argv, modifiers):
     output, retval = utils.run(
         ["corosync-cmapctl", "-g", "runtime.votequorum.wait_for_all_status"]
     )
+    if (retval == 1 and "Error CS_ERR_NOT_EXIST" in output) or (
+        retval == 0 and output.rsplit("=", maxsplit=1)[-1].strip() != "1"
+    ):
+        utils.err("cluster is not waiting for nodes to establish quorum")
     if retval != 0:
         utils.err("unable to check quorum status")
-    if output.rsplit("=", maxsplit=1)[-1].strip() != "1":
-        utils.err("cluster is not waiting for nodes to establish quorum")
 
     all_nodes, report_list = get_existing_nodes_names(
         utils.get_corosync_conf_facade()
