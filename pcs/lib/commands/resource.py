@@ -44,9 +44,9 @@ from pcs.lib.cib.tools import (
     IdProvider,
 )
 from pcs.lib.env import LibraryEnvironment, WaitType
+from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 from pcs.lib.node import get_existing_nodes_names_addrs
-from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker import simulate as simulate_tools
 from pcs.lib.pacemaker.live import (
     diff_cibs_xml,
@@ -68,7 +68,15 @@ from pcs.lib.pacemaker.state import (
 )
 from pcs.lib.pacemaker.values import validate_id
 from pcs.lib.resource_agent import (
-    find_valid_resource_agent_by_name as get_agent,
+    find_one_resource_agent_by_type,
+    ResourceAgentError,
+    resource_agent_error_to_report_item,
+    ResourceAgentFacade,
+    ResourceAgentFacadeFactory,
+    ResourceAgentName,
+    split_resource_agent_name,
+    UnableToGetAgentMetadata,
+    UnsupportedOcfVersion,
 )
 from pcs.lib.tools import get_tmp_cib
 from pcs.lib.validate import ValueTimeInterval
@@ -132,17 +140,51 @@ def _ensure_disabled_after_wait(disabled_after_wait):
     return inner
 
 
+def _get_agent_facade(
+    report_processor: reports.ReportProcessor,
+    runner: CommandRunner,
+    factory: ResourceAgentFacadeFactory,
+    name: str,
+    allow_absent_agent: bool,
+) -> ResourceAgentFacade:
+    try:
+        split_name = (
+            split_resource_agent_name(name)
+            if ":" in name
+            else find_one_resource_agent_by_type(runner, report_processor, name)
+        )
+        return factory.facade_from_parsed_name(split_name)
+    except (UnableToGetAgentMetadata, UnsupportedOcfVersion) as e:
+        if allow_absent_agent:
+            report_processor.report(
+                resource_agent_error_to_report_item(
+                    e, reports.ReportItemSeverity.warning()
+                )
+            )
+            return factory.void_facade_from_parsed_name(split_name)
+        report_processor.report(
+            resource_agent_error_to_report_item(
+                e, reports.ReportItemSeverity.error(reports.codes.FORCE)
+            )
+        )
+        raise LibraryError() from e
+    except ResourceAgentError as e:
+        report_processor.report(
+            resource_agent_error_to_report_item(
+                e, reports.ReportItemSeverity.error()
+            )
+        )
+        raise LibraryError() from e
+
+
 def _validate_remote_connection(
-    resource_agent,
-    existing_nodes_addrs,
-    resource_id,
-    instance_attributes,
-    allow_not_suitable_command,
-):
-    if (
-        resource_agent.get_name_info().name
-        != resource.remote_node.AGENT_NAME.full_name
-    ):
+    resource_agent_name: ResourceAgentName,
+    existing_nodes_addrs: Iterable[str],
+    resource_id: str,
+    instance_attributes: Mapping[str, str],
+    allow_not_suitable_command: bool,
+) -> reports.ReportItemList:
+    if resource_agent_name != resource.remote_node.AGENT_NAME:
         return []
 
     report_list = []
@@ -165,25 +207,28 @@ def _validate_remote_connection(
 
 
 def _validate_guest_change(
-    tree,
-    existing_nodes_names,
-    existing_nodes_addrs,
-    meta_attributes,
-    allow_not_suitable_command,
-    detect_remove=False,
-):
+    tree: _Element,
+    existing_nodes_names: Iterable[str],
+    existing_nodes_addrs: Iterable[str],
+    meta_attributes: Mapping[str, str],
+    allow_not_suitable_command: bool,
+    detect_remove: bool = False,
+) -> reports.ReportItemList:
     if not resource.guest_node.is_node_name_in_options(meta_attributes):
         return []
 
     node_name = resource.guest_node.get_node_name_from_options(meta_attributes)
 
     report_list = []
-    if detect_remove and not resource.guest_node.get_guest_option_value(
-        meta_attributes
-    ):
-        report_msg = reports.messages.UseCommandNodeRemoveGuest()
-    else:
-        report_msg = reports.messages.UseCommandNodeAddGuest()
+
+    report_msg = (
+        reports.messages.UseCommandNodeRemoveGuest()
+        if (
+            detect_remove
+            and not resource.guest_node.get_guest_option_value(meta_attributes)
+        )
+        else reports.messages.UseCommandNodeAddGuest()
+    )
 
     report_list.append(
         ReportItem(
@@ -208,7 +253,9 @@ def _validate_guest_change(
     return report_list
 
 
-def _get_nodes_to_validate_against(env, tree):
+def _get_nodes_to_validate_against(
+    env: LibraryEnvironment, tree: _Element
+) -> Tuple[List[str], List[str], reports.ReportItemList]:
     if not env.is_corosync_conf_live and env.is_cib_live:
         raise LibraryError(
             ReportItem.error(
@@ -227,24 +274,21 @@ def _get_nodes_to_validate_against(env, tree):
 
 
 def _check_special_cases(
-    env,
-    resource_agent,
-    resources_section,
-    resource_id,
-    meta_attributes,
-    instance_attributes,
-    allow_not_suitable_command,
-):
-    # fmt: off
+    env: LibraryEnvironment,
+    resource_agent_name: ResourceAgentName,
+    resources_section: _Element,
+    resource_id: str,
+    meta_attributes: Mapping[str, str],
+    instance_attributes: Mapping[str, str],
+    allow_not_suitable_command: bool,
+) -> None:
     if (
-        resource_agent.get_name_info().name != resource.remote_node.AGENT_NAME.full_name
-        and
-        not resource.guest_node.is_node_name_in_options(meta_attributes)
+        resource_agent_name != resource.remote_node.AGENT_NAME
+        and not resource.guest_node.is_node_name_in_options(meta_attributes)
     ):
         # if no special case happens we won't take care about corosync.conf that
         # is needed for getting nodes to validate against
         return
-    # fmt: on
 
     (
         existing_nodes_names,
@@ -254,7 +298,7 @@ def _check_special_cases(
 
     report_list.extend(
         _validate_remote_connection(
-            resource_agent,
+            resource_agent_name,
             existing_nodes_addrs,
             resource_id,
             instance_attributes,
@@ -326,9 +370,12 @@ def create(
         in the case of remote/guest node forcible error is produced when this
         flag is set to False and warning is produced otherwise
     """
-    resource_agent = get_agent(
+    runner = env.cmd_runner()
+    agent_factory = ResourceAgentFacadeFactory(runner, env.report_processor)
+    resource_agent = _get_agent_facade(
         env.report_processor,
-        env.cmd_runner(),
+        runner,
+        agent_factory,
         resource_agent_name,
         allow_absent_agent,
     )
@@ -347,7 +394,7 @@ def create(
         id_provider = IdProvider(resources_section)
         _check_special_cases(
             env,
-            resource_agent,
+            resource_agent.metadata.name,
             resources_section,
             resource_id,
             meta_attributes,
@@ -416,9 +463,12 @@ def create_as_clone(
     wait -- is flag for controlling waiting for pacemaker idle mechanism
     allow_not_suitable_command -- turn forceable errors into warnings
     """
-    resource_agent = get_agent(
+    runner = env.cmd_runner()
+    agent_factory = ResourceAgentFacadeFactory(runner, env.report_processor)
+    resource_agent = _get_agent_facade(
         env.report_processor,
-        env.cmd_runner(),
+        runner,
+        agent_factory,
         resource_agent_name,
         allow_absent_agent,
     )
@@ -438,7 +488,7 @@ def create_as_clone(
         id_provider = IdProvider(resources_section)
         _check_special_cases(
             env,
-            resource_agent,
+            resource_agent.metadata.name,
             resources_section,
             resource_id,
             meta_attributes,
@@ -521,9 +571,12 @@ def create_in_group(
     wait -- is flag for controlling waiting for pacemaker idle mechanism
     allow_not_suitable_command -- turn forceable errors into warnings
     """
-    resource_agent = get_agent(
+    runner = env.cmd_runner()
+    agent_factory = ResourceAgentFacadeFactory(runner, env.report_processor)
+    resource_agent = _get_agent_facade(
         env.report_processor,
-        env.cmd_runner(),
+        runner,
+        agent_factory,
         resource_agent_name,
         allow_absent_agent,
     )
@@ -542,7 +595,7 @@ def create_in_group(
         id_provider = IdProvider(resources_section)
         _check_special_cases(
             env,
-            resource_agent,
+            resource_agent.metadata.name,
             resources_section,
             resource_id,
             meta_attributes,
@@ -618,9 +671,12 @@ def create_into_bundle(
     allow_not_suitable_command -- turn forceable errors into warnings
     allow_not_accessible_resource -- turn forceable errors into warnings
     """
-    resource_agent = get_agent(
+    runner = env.cmd_runner()
+    agent_factory = ResourceAgentFacadeFactory(runner, env.report_processor)
+    resource_agent = _get_agent_facade(
         env.report_processor,
-        env.cmd_runner(),
+        runner,
+        agent_factory,
         resource_agent_name,
         allow_absent_agent,
     )
@@ -640,7 +696,7 @@ def create_into_bundle(
         id_provider = IdProvider(resources_section)
         _check_special_cases(
             env,
-            resource_agent,
+            resource_agent.metadata.name,
             resources_section,
             resource_id,
             meta_attributes,

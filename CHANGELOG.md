@@ -6,6 +6,7 @@
 -  Add add/remove cli syntax for command `pcs stonith update-scsi-devices`
    ([rhbz#1992668])
 - Command `pcs resource move` is fully supported ([rhbz#1990787])
+- Support for OCF 1.1 resource and stonith agents ([rhbz#2018969])
 
 ### Changed
 - Deprecation warnings use a "Deprecation Warning:" prefix instead of 
@@ -24,6 +25,7 @@
 [rhbz#1990787]: https://bugzilla.redhat.com/show_bug.cgi?id=1990787
 [rhbz#1991654]: https://bugzilla.redhat.com/show_bug.cgi?id=1991654
 [rhbz#1992668]: https://bugzilla.redhat.com/show_bug.cgi?id=1992668
+[rhbz#2018969]: https://bugzilla.redhat.com/show_bug.cgi?id=2018969
 
 
 ## [0.11.1.alpha.1] - 2021-08-26

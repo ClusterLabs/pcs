@@ -2288,6 +2288,16 @@
           /api/v1/resource-agent-list-standards/v1
       </description>
     </capability>
+    <capability id="resource-agents.ocf.version-1-0" in-pcs="1" in-pcsd="1">
+      <description>
+        Resource agents implementing OCF 1.0 are supported.
+      </description>
+    </capability>
+    <capability id="resource-agents.ocf.version-1-1" in-pcs="1" in-pcsd="1">
+      <description>
+        Resource agents implementing OCF 1.1 are supported.
+      </description>
+    </capability>
     <capability id="stonith-agents.describe" in-pcs="1" in-pcsd="1">
       <description>
         Describe a stonith agent - present its metadata.
@@ -2314,6 +2324,16 @@
         pcs commands: stonith list
         daemon urls:
           /api/v1/stonith-agent-list-agents/v1
+      </description>
+    </capability>
+    <capability id="stonith-agents.ocf.version-1-0" in-pcs="1" in-pcsd="1">
+      <description>
+        Stonith agents implementing OCF 1.0 are supported.
+      </description>
+    </capability>
+    <capability id="stonith-agents.ocf.version-1-1" in-pcs="1" in-pcsd="1">
+      <description>
+        Stonith agents implementing OCF 1.1 are supported.
       </description>
     </capability>
 

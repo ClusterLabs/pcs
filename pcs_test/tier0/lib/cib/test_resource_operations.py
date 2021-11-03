@@ -13,7 +13,6 @@ from pcs.common.reports import (
     ReportItemSeverity as severities,
 )
 from pcs.lib.cib.resource import operations
-from pcs.lib.resource_agent import AgentActionDto
 from pcs.lib.validate import ValuePair
 
 # pylint: disable=no-self-use
@@ -22,7 +21,7 @@ patch_operations = create_patcher("pcs.lib.cib.resource.operations")
 
 
 @patch_operations("_get_remaining_defaults")
-@patch_operations("_complete_all_intervals")
+@patch_operations("complete_operations_options")
 @patch_operations("validate_different_intervals")
 @patch_operations("_validate_operation_list")
 @patch_operations("_normalized_to_operations")
@@ -34,7 +33,7 @@ class Prepare(TestCase):
         normalized_to_operations,
         validate_operation_list,
         validate_different_intervals,
-        complete_all_intervals,
+        complete_operations_options,
         get_remaining_defaults,
     ):
         new_role_names_supported = False
@@ -59,11 +58,14 @@ class Prepare(TestCase):
             {"name": "Start"},
             {"name": "Monitor"},
         ]
-        default_operation_list = [
-            {"name": "stop"},
-        ]
+        default_operation_list = [{"name": "stop"}]
+        completed_default_operation_list = [{"name": "stop", "interval": "0s"}]
         allowed_operation_name_list = ["start", "stop", "monitor"]
         allow_invalid = True
+
+        complete_operations_options.return_value = (
+            completed_default_operation_list
+        )
 
         operations.prepare(
             report_processor,
@@ -86,20 +88,20 @@ class Prepare(TestCase):
         validate_different_intervals.assert_called_once_with(
             normalized_to_operations.return_value
         )
-        complete_all_intervals.assert_called_once_with(
-            normalized_to_operations.return_value
+        complete_operations_options.assert_has_calls(
+            [
+                mock.call(normalized_to_operations.return_value),
+                mock.call(default_operation_list),
+            ]
         )
         get_remaining_defaults.assert_called_once_with(
             report_processor,
             normalized_to_operations.return_value,
-            default_operation_list,
+            completed_default_operation_list,
             new_role_names_supported,
         )
         report_processor.report_list.assert_called_once_with(
-            [
-                "options_report",
-                "different_interval_report",
-            ]
+            ["options_report", "different_interval_report"]
         )
 
 
@@ -157,9 +159,7 @@ class MakeUniqueIntervals(TestCase):
         operation_list = [
             {"name": "monitor", "interval": "10s"},
             {"name": "monitor", "interval": "5s"},
-            {
-                "name": "monitor",
-            },
+            {"name": "monitor"},
             {"name": "monitor", "interval": ""},
             {"name": "start", "interval": "5s"},
         ]
@@ -480,39 +480,9 @@ class GetRemainingDefaults(TestCase):
                 report_processor=None,
                 operation_list=[{"name": "monitor"}],
                 default_operation_list=[
-                    AgentActionDto(
-                        "monitor",
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                    ),
-                    AgentActionDto(
-                        "start",
-                        None,
-                        None,
-                        const.PCMK_ROLE_PROMOTED,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                    ),
-                    AgentActionDto(
-                        "stop",
-                        None,
-                        None,
-                        const.PCMK_ROLE_UNPROMOTED_LEGACY,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                    ),
+                    {"name": "monitor"},
+                    {"name": "start", "role": const.PCMK_ROLE_PROMOTED},
+                    {"name": "stop", "role": const.PCMK_ROLE_UNPROMOTED_LEGACY},
                 ],
                 new_role_names_supported=False,
             ),
@@ -532,39 +502,9 @@ class GetRemainingDefaults(TestCase):
                 report_processor=None,
                 operation_list=[{"name": "monitor"}],
                 default_operation_list=[
-                    AgentActionDto(
-                        "monitor",
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                    ),
-                    AgentActionDto(
-                        "start",
-                        None,
-                        None,
-                        const.PCMK_ROLE_PROMOTED,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                    ),
-                    AgentActionDto(
-                        "stop",
-                        None,
-                        None,
-                        const.PCMK_ROLE_UNPROMOTED_LEGACY,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                    ),
+                    {"name": "monitor"},
+                    {"name": "start", "role": const.PCMK_ROLE_PROMOTED},
+                    {"name": "stop", "role": const.PCMK_ROLE_UNPROMOTED_LEGACY},
                 ],
                 new_role_names_supported=True,
             ),

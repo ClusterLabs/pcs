@@ -540,6 +540,27 @@ class UnableToGetAgentMetadata(CliReportMessageTestBase):
         )
 
 
+class InvalidResourceAgentName(CliReportMessageTestBase):
+    def test_success(self):
+        self.assert_message(
+            messages.InvalidResourceAgentName(":name"),
+            "Invalid resource agent name ':name'. Use standard:provider:type "
+            "when standard is 'ocf' or standard:type otherwise. List of standards "
+            "and providers can be obtained by using commands 'pcs resource "
+            "standards' and 'pcs resource providers'.",
+        )
+
+
+class InvalidStonithAgentName(CliReportMessageTestBase):
+    def test_success(self):
+        self.assert_message(
+            messages.InvalidStonithAgentName("fence:name"),
+            "Invalid stonith agent name 'fence:name'. Agent name cannot contain "
+            "the ':' character, do not use the 'stonith:' prefix. List of agents "
+            "can be obtained by using command 'pcs stonith list'.",
+        )
+
+
 class HostAlreadyInClusterConfig(CliReportMessageTestBase):
     def test_message(self):
         self.assert_message(

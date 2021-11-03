@@ -1,4 +1,5 @@
 # pylint: disable=too-many-lines
+import json
 import shutil
 from textwrap import dedent
 from threading import Lock
@@ -38,7 +39,9 @@ empty_cib = rc("cib-empty.xml")
 class StonithDescribeTest(TestCase, AssertPcsMixin):
     def setUp(self):
         self.pcs_runner = PcsRunner(cib_file=None)
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings(
+            "crm_resource_binary", "pacemaker_fenced"
+        )
 
     def test_success(self):
         self.assert_pcs_success(
@@ -65,11 +68,11 @@ class StonithDescribeTest(TestCase, AssertPcsMixin):
         self.assert_pcs_fail(
             "stonith describe fence_noexist".split(),
             stdout_full=(
-                "Error: Agent 'fence_noexist' is not installed or does not "
+                "Error: Agent 'stonith:fence_noexist' is not installed or does not "
                 "provide valid metadata: Agent fence_noexist not found or does "
                 "not support meta-data: Invalid argument (22), "
                 "Metadata query for stonith:fence_noexist failed: Input/output "
-                "error\n"
+                "error\n" + ERRORS_HAVE_OCURRED
             ),
         )
 
@@ -83,6 +86,1046 @@ class StonithDescribeTest(TestCase, AssertPcsMixin):
         self.assert_pcs_fail(
             "stonith describe agent1 agent2".split(),
             stdout_start="\nUsage: pcs stonith describe...\n",
+        )
+
+    def test_pcsd_interface(self):
+        self.assert_pcs_success(
+            "stonith get_fence_agent_info stonith:fence_apc".split(),
+            json.dumps(
+                {
+                    "name": "stonith:fence_apc",
+                    "standard": "stonith",
+                    "provider": None,
+                    "type": "fence_apc",
+                    "shortdesc": "Fence agent for APC over telnet/ssh",
+                    "longdesc": "fence_apc is an I/O Fencing agent which can be used with the APC network power switch. It logs into device via telnet/ssh  and reboots a specified outlet. Lengthy telnet/ssh connections should be avoided while a GFS cluster  is  running  because  the  connection will block any necessary fencing actions.",
+                    "parameters": [
+                        {
+                            "name": "action",
+                            "shortdesc": "Fencing action",
+                            "longdesc": None,
+                            "type": "string",
+                            "default": "reboot",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": True,
+                            "deprecated": True,
+                            "deprecated_by": [
+                                "pcmk_off_action",
+                                "pcmk_reboot_action",
+                            ],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "cmd_prompt",
+                            "shortdesc": "Force Python regex for command prompt",
+                            "longdesc": None,
+                            "type": "string",
+                            "default": "['\\n>', '\\napc>']",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": True,
+                            "deprecated_by": ["command_prompt"],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "command_prompt",
+                            "shortdesc": "Force Python regex for command prompt",
+                            "longdesc": None,
+                            "type": "string",
+                            "default": "['\\n>', '\\napc>']",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "identity_file",
+                            "shortdesc": "Identity file (private key) for SSH",
+                            "longdesc": None,
+                            "type": "string",
+                            "default": None,
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "inet4_only",
+                            "shortdesc": "Forces agent to use IPv4 addresses only",
+                            "longdesc": None,
+                            "type": "boolean",
+                            "default": None,
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "inet6_only",
+                            "shortdesc": "Forces agent to use IPv6 addresses only",
+                            "longdesc": None,
+                            "type": "boolean",
+                            "default": None,
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "ip",
+                            "shortdesc": "IP address or hostname of fencing device",
+                            "longdesc": None,
+                            "type": "string",
+                            "default": None,
+                            "enum_values": None,
+                            "required": True,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "ipaddr",
+                            "shortdesc": "IP address or hostname of fencing device",
+                            "longdesc": None,
+                            "type": "string",
+                            "default": None,
+                            "enum_values": None,
+                            "required": True,
+                            "advanced": False,
+                            "deprecated": True,
+                            "deprecated_by": ["ip"],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "ipport",
+                            "shortdesc": "TCP/UDP port to use for connection with device",
+                            "longdesc": None,
+                            "type": "integer",
+                            "default": "23",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "login",
+                            "shortdesc": "Login name",
+                            "longdesc": None,
+                            "type": "string",
+                            "default": None,
+                            "enum_values": None,
+                            "required": True,
+                            "advanced": False,
+                            "deprecated": True,
+                            "deprecated_by": ["username"],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "passwd",
+                            "shortdesc": "Login password or passphrase",
+                            "longdesc": None,
+                            "type": "string",
+                            "default": None,
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": True,
+                            "deprecated_by": ["password"],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "passwd_script",
+                            "shortdesc": "Script to run to retrieve password",
+                            "longdesc": None,
+                            "type": "string",
+                            "default": None,
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": True,
+                            "deprecated_by": ["password_script"],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "password",
+                            "shortdesc": "Login password or passphrase",
+                            "longdesc": None,
+                            "type": "string",
+                            "default": None,
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "password_script",
+                            "shortdesc": "Script to run to retrieve password",
+                            "longdesc": None,
+                            "type": "string",
+                            "default": None,
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "plug",
+                            "shortdesc": "Physical plug number on device, UUID or identification of machine",
+                            "longdesc": None,
+                            "type": "string",
+                            "default": None,
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "port",
+                            "shortdesc": "Physical plug number on device, UUID or identification of machine",
+                            "longdesc": None,
+                            "type": "string",
+                            "default": None,
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": True,
+                            "deprecated_by": ["plug"],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "secure",
+                            "shortdesc": "Use SSH connection",
+                            "longdesc": None,
+                            "type": "boolean",
+                            "default": None,
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": True,
+                            "deprecated_by": ["ssh"],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "ssh",
+                            "shortdesc": "Use SSH connection",
+                            "longdesc": None,
+                            "type": "boolean",
+                            "default": None,
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "ssh_options",
+                            "shortdesc": "SSH options to use",
+                            "longdesc": None,
+                            "type": "string",
+                            "default": "-1 -c blowfish",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "switch",
+                            "shortdesc": "Physical switch number on device",
+                            "longdesc": None,
+                            "type": "string",
+                            "default": None,
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "username",
+                            "shortdesc": "Login name",
+                            "longdesc": None,
+                            "type": "string",
+                            "default": None,
+                            "enum_values": None,
+                            "required": True,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "quiet",
+                            "shortdesc": "Disable logging to stderr. Does not affect --verbose or --debug-file or logging to syslog.",
+                            "longdesc": None,
+                            "type": "boolean",
+                            "default": None,
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "verbose",
+                            "shortdesc": "Verbose mode",
+                            "longdesc": None,
+                            "type": "boolean",
+                            "default": None,
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "debug",
+                            "shortdesc": "Write debug information to given file",
+                            "longdesc": None,
+                            "type": "string",
+                            "default": None,
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": True,
+                            "deprecated_by": ["debug_file"],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "debug_file",
+                            "shortdesc": "Write debug information to given file",
+                            "longdesc": None,
+                            "type": "string",
+                            "default": None,
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "separator",
+                            "shortdesc": "Separator for CSV created by 'list' operation",
+                            "longdesc": None,
+                            "type": "string",
+                            "default": ",",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "delay",
+                            "shortdesc": "Wait X seconds before fencing is started",
+                            "longdesc": None,
+                            "type": "second",
+                            "default": "0",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "login_timeout",
+                            "shortdesc": "Wait X seconds for cmd prompt after login",
+                            "longdesc": None,
+                            "type": "second",
+                            "default": "5",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "power_timeout",
+                            "shortdesc": "Test X seconds for status change after ON/OFF",
+                            "longdesc": None,
+                            "type": "second",
+                            "default": "20",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "power_wait",
+                            "shortdesc": "Wait X seconds after issuing ON/OFF",
+                            "longdesc": None,
+                            "type": "second",
+                            "default": "0",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "shell_timeout",
+                            "shortdesc": "Wait X seconds for cmd prompt after issuing command",
+                            "longdesc": None,
+                            "type": "second",
+                            "default": "3",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "retry_on",
+                            "shortdesc": "Count of attempts to retry power on",
+                            "longdesc": None,
+                            "type": "integer",
+                            "default": "1",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "ssh_path",
+                            "shortdesc": "Path to ssh binary",
+                            "longdesc": None,
+                            "type": "string",
+                            "default": "/usr/bin/ssh",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "telnet_path",
+                            "shortdesc": "Path to telnet binary",
+                            "longdesc": None,
+                            "type": "string",
+                            "default": "/usr/bin/telnet",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "pcmk_host_argument",
+                            "shortdesc": "Advanced use only: An alternate parameter to supply instead of 'port'",
+                            "longdesc": "Advanced use only: An alternate parameter to supply instead of 'port'\nSome devices do not support the standard 'port' parameter or may provide additional ones.\nUse this to specify an alternate, device-specific, parameter that should indicate the machine to be fenced.\nA value of 'none' can be used to tell the cluster not to supply any additional parameters.",
+                            "type": "string",
+                            "default": "port",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": True,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "pcmk_host_map",
+                            "shortdesc": "A mapping of host names to ports numbers for devices that do not support host names.",
+                            "longdesc": "A mapping of host names to ports numbers for devices that do not support host names.\nEg. node1:1;node2:2,3 would tell the cluster to use port 1 for node1 and ports 2 and 3 for node2",
+                            "type": "string",
+                            "default": "",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "pcmk_host_list",
+                            "shortdesc": "A list of machines controlled by this device (Optional unless pcmk_host_check=static-list).",
+                            "longdesc": None,
+                            "type": "string",
+                            "default": "",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "pcmk_host_check",
+                            "shortdesc": "How to determine which machines are controlled by the device.",
+                            "longdesc": "How to determine which machines are controlled by the device.\nAllowed values: dynamic-list (query the device via the 'list' command), static-list (check the pcmk_host_list attribute), status (query the device via the 'status' command), none (assume every device can fence every machine)",
+                            "type": "string",
+                            "default": "dynamic-list",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "pcmk_delay_max",
+                            "shortdesc": "Enable a delay of no more than the time specified before executing fencing actions. Pacemaker derives the overall delay by taking the value of pcmk_delay_base and adding a random delay value such that the sum is kept below this maximum.",
+                            "longdesc": "Enable a delay of no more than the time specified before executing fencing actions. Pacemaker derives the overall delay by taking the value of pcmk_delay_base and adding a random delay value such that the sum is kept below this maximum.\nThis prevents double fencing when using slow devices such as sbd.\nUse this to enable a random delay for fencing actions.\nThe overall delay is derived from this random delay value adding a static delay so that the sum is kept below the maximum delay.",
+                            "type": "time",
+                            "default": "0s",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "pcmk_delay_base",
+                            "shortdesc": "Enable a base delay for fencing actions and specify base delay value.",
+                            "longdesc": "Enable a base delay for fencing actions and specify base delay value.\nThis prevents double fencing when different delays are configured on the nodes.\nUse this to enable a static delay for fencing actions.\nThe overall delay is derived from a random delay value adding this static delay so that the sum is kept below the maximum delay.",
+                            "type": "time",
+                            "default": "0s",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "pcmk_action_limit",
+                            "shortdesc": "The maximum number of actions can be performed in parallel on this device",
+                            "longdesc": "The maximum number of actions can be performed in parallel on this device\nCluster property concurrent-fencing=true needs to be configured first.\nThen use this to specify the maximum number of actions can be performed in parallel on this device. -1 is unlimited.",
+                            "type": "integer",
+                            "default": "1",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": False,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "pcmk_reboot_action",
+                            "shortdesc": "Advanced use only: An alternate command to run instead of 'reboot'",
+                            "longdesc": "Advanced use only: An alternate command to run instead of 'reboot'\nSome devices do not support the standard commands or may provide additional ones.\nUse this to specify an alternate, device-specific, command that implements the 'reboot' action.",
+                            "type": "string",
+                            "default": "reboot",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": True,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "pcmk_reboot_timeout",
+                            "shortdesc": "Advanced use only: Specify an alternate timeout to use for reboot actions instead of stonith-timeout",
+                            "longdesc": "Advanced use only: Specify an alternate timeout to use for reboot actions instead of stonith-timeout\nSome devices need much more/less time to complete than normal.\nUse this to specify an alternate, device-specific, timeout for 'reboot' actions.",
+                            "type": "time",
+                            "default": "60s",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": True,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "pcmk_reboot_retries",
+                            "shortdesc": "Advanced use only: The maximum number of times to retry the 'reboot' command within the timeout period",
+                            "longdesc": "Advanced use only: The maximum number of times to retry the 'reboot' command within the timeout period\nSome devices do not support multiple connections. Operations may 'fail' if the device is busy with another task so Pacemaker will automatically retry the operation, if there is time remaining. Use this option to alter the number of times Pacemaker retries 'reboot' actions before giving up.",
+                            "type": "integer",
+                            "default": "2",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": True,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "pcmk_off_action",
+                            "shortdesc": "Advanced use only: An alternate command to run instead of 'off'",
+                            "longdesc": "Advanced use only: An alternate command to run instead of 'off'\nSome devices do not support the standard commands or may provide additional ones.\nUse this to specify an alternate, device-specific, command that implements the 'off' action.",
+                            "type": "string",
+                            "default": "off",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": True,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "pcmk_off_timeout",
+                            "shortdesc": "Advanced use only: Specify an alternate timeout to use for off actions instead of stonith-timeout",
+                            "longdesc": "Advanced use only: Specify an alternate timeout to use for off actions instead of stonith-timeout\nSome devices need much more/less time to complete than normal.\nUse this to specify an alternate, device-specific, timeout for 'off' actions.",
+                            "type": "time",
+                            "default": "60s",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": True,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "pcmk_off_retries",
+                            "shortdesc": "Advanced use only: The maximum number of times to retry the 'off' command within the timeout period",
+                            "longdesc": "Advanced use only: The maximum number of times to retry the 'off' command within the timeout period\nSome devices do not support multiple connections. Operations may 'fail' if the device is busy with another task so Pacemaker will automatically retry the operation, if there is time remaining. Use this option to alter the number of times Pacemaker retries 'off' actions before giving up.",
+                            "type": "integer",
+                            "default": "2",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": True,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "pcmk_on_action",
+                            "shortdesc": "Advanced use only: An alternate command to run instead of 'on'",
+                            "longdesc": "Advanced use only: An alternate command to run instead of 'on'\nSome devices do not support the standard commands or may provide additional ones.\nUse this to specify an alternate, device-specific, command that implements the 'on' action.",
+                            "type": "string",
+                            "default": "on",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": True,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "pcmk_on_timeout",
+                            "shortdesc": "Advanced use only: Specify an alternate timeout to use for on actions instead of stonith-timeout",
+                            "longdesc": "Advanced use only: Specify an alternate timeout to use for on actions instead of stonith-timeout\nSome devices need much more/less time to complete than normal.\nUse this to specify an alternate, device-specific, timeout for 'on' actions.",
+                            "type": "time",
+                            "default": "60s",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": True,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "pcmk_on_retries",
+                            "shortdesc": "Advanced use only: The maximum number of times to retry the 'on' command within the timeout period",
+                            "longdesc": "Advanced use only: The maximum number of times to retry the 'on' command within the timeout period\nSome devices do not support multiple connections. Operations may 'fail' if the device is busy with another task so Pacemaker will automatically retry the operation, if there is time remaining. Use this option to alter the number of times Pacemaker retries 'on' actions before giving up.",
+                            "type": "integer",
+                            "default": "2",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": True,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "pcmk_list_action",
+                            "shortdesc": "Advanced use only: An alternate command to run instead of 'list'",
+                            "longdesc": "Advanced use only: An alternate command to run instead of 'list'\nSome devices do not support the standard commands or may provide additional ones.\nUse this to specify an alternate, device-specific, command that implements the 'list' action.",
+                            "type": "string",
+                            "default": "list",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": True,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "pcmk_list_timeout",
+                            "shortdesc": "Advanced use only: Specify an alternate timeout to use for list actions instead of stonith-timeout",
+                            "longdesc": "Advanced use only: Specify an alternate timeout to use for list actions instead of stonith-timeout\nSome devices need much more/less time to complete than normal.\nUse this to specify an alternate, device-specific, timeout for 'list' actions.",
+                            "type": "time",
+                            "default": "60s",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": True,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "pcmk_list_retries",
+                            "shortdesc": "Advanced use only: The maximum number of times to retry the 'list' command within the timeout period",
+                            "longdesc": "Advanced use only: The maximum number of times to retry the 'list' command within the timeout period\nSome devices do not support multiple connections. Operations may 'fail' if the device is busy with another task so Pacemaker will automatically retry the operation, if there is time remaining. Use this option to alter the number of times Pacemaker retries 'list' actions before giving up.",
+                            "type": "integer",
+                            "default": "2",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": True,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "pcmk_monitor_action",
+                            "shortdesc": "Advanced use only: An alternate command to run instead of 'monitor'",
+                            "longdesc": "Advanced use only: An alternate command to run instead of 'monitor'\nSome devices do not support the standard commands or may provide additional ones.\nUse this to specify an alternate, device-specific, command that implements the 'monitor' action.",
+                            "type": "string",
+                            "default": "monitor",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": True,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "pcmk_monitor_timeout",
+                            "shortdesc": "Advanced use only: Specify an alternate timeout to use for monitor actions instead of stonith-timeout",
+                            "longdesc": "Advanced use only: Specify an alternate timeout to use for monitor actions instead of stonith-timeout\nSome devices need much more/less time to complete than normal.\nUse this to specify an alternate, device-specific, timeout for 'monitor' actions.",
+                            "type": "time",
+                            "default": "60s",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": True,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "pcmk_monitor_retries",
+                            "shortdesc": "Advanced use only: The maximum number of times to retry the 'monitor' command within the timeout period",
+                            "longdesc": "Advanced use only: The maximum number of times to retry the 'monitor' command within the timeout period\nSome devices do not support multiple connections. Operations may 'fail' if the device is busy with another task so Pacemaker will automatically retry the operation, if there is time remaining. Use this option to alter the number of times Pacemaker retries 'monitor' actions before giving up.",
+                            "type": "integer",
+                            "default": "2",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": True,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "pcmk_status_action",
+                            "shortdesc": "Advanced use only: An alternate command to run instead of 'status'",
+                            "longdesc": "Advanced use only: An alternate command to run instead of 'status'\nSome devices do not support the standard commands or may provide additional ones.\nUse this to specify an alternate, device-specific, command that implements the 'status' action.",
+                            "type": "string",
+                            "default": "status",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": True,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "pcmk_status_timeout",
+                            "shortdesc": "Advanced use only: Specify an alternate timeout to use for status actions instead of stonith-timeout",
+                            "longdesc": "Advanced use only: Specify an alternate timeout to use for status actions instead of stonith-timeout\nSome devices need much more/less time to complete than normal.\nUse this to specify an alternate, device-specific, timeout for 'status' actions.",
+                            "type": "time",
+                            "default": "60s",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": True,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                        {
+                            "name": "pcmk_status_retries",
+                            "shortdesc": "Advanced use only: The maximum number of times to retry the 'status' command within the timeout period",
+                            "longdesc": "Advanced use only: The maximum number of times to retry the 'status' command within the timeout period\nSome devices do not support multiple connections. Operations may 'fail' if the device is busy with another task so Pacemaker will automatically retry the operation, if there is time remaining. Use this option to alter the number of times Pacemaker retries 'status' actions before giving up.",
+                            "type": "integer",
+                            "default": "2",
+                            "enum_values": None,
+                            "required": False,
+                            "advanced": True,
+                            "deprecated": False,
+                            "deprecated_by": [],
+                            "deprecated_desc": None,
+                            "unique_group": None,
+                            "reloadable": False,
+                        },
+                    ],
+                    "actions": [
+                        {
+                            "name": "on",
+                            "timeout": None,
+                            "interval": None,
+                            "role": None,
+                            "start-delay": None,
+                            "OCF_CHECK_LEVEL": None,
+                            "automatic": False,
+                            "on_target": False,
+                        },
+                        {
+                            "name": "off",
+                            "timeout": None,
+                            "interval": None,
+                            "role": None,
+                            "start-delay": None,
+                            "OCF_CHECK_LEVEL": None,
+                            "automatic": False,
+                            "on_target": False,
+                        },
+                        {
+                            "name": "reboot",
+                            "timeout": None,
+                            "interval": None,
+                            "role": None,
+                            "start-delay": None,
+                            "OCF_CHECK_LEVEL": None,
+                            "automatic": False,
+                            "on_target": False,
+                        },
+                        {
+                            "name": "status",
+                            "timeout": None,
+                            "interval": None,
+                            "role": None,
+                            "start-delay": None,
+                            "OCF_CHECK_LEVEL": None,
+                            "automatic": False,
+                            "on_target": False,
+                        },
+                        {
+                            "name": "list",
+                            "timeout": None,
+                            "interval": None,
+                            "role": None,
+                            "start-delay": None,
+                            "OCF_CHECK_LEVEL": None,
+                            "automatic": False,
+                            "on_target": False,
+                        },
+                        {
+                            "name": "list-status",
+                            "timeout": None,
+                            "interval": None,
+                            "role": None,
+                            "start-delay": None,
+                            "OCF_CHECK_LEVEL": None,
+                            "automatic": False,
+                            "on_target": False,
+                        },
+                        {
+                            "name": "monitor",
+                            "timeout": None,
+                            "interval": None,
+                            "role": None,
+                            "start-delay": None,
+                            "OCF_CHECK_LEVEL": None,
+                            "automatic": False,
+                            "on_target": False,
+                        },
+                        {
+                            "name": "metadata",
+                            "timeout": None,
+                            "interval": None,
+                            "role": None,
+                            "start-delay": None,
+                            "OCF_CHECK_LEVEL": None,
+                            "automatic": False,
+                            "on_target": False,
+                        },
+                        {
+                            "name": "manpage",
+                            "timeout": None,
+                            "interval": None,
+                            "role": None,
+                            "start-delay": None,
+                            "OCF_CHECK_LEVEL": None,
+                            "automatic": False,
+                            "on_target": False,
+                        },
+                        {
+                            "name": "validate-all",
+                            "timeout": None,
+                            "interval": None,
+                            "role": None,
+                            "start-delay": None,
+                            "OCF_CHECK_LEVEL": None,
+                            "automatic": False,
+                            "on_target": False,
+                        },
+                        {
+                            "name": "stop",
+                            "timeout": "20s",
+                            "interval": None,
+                            "role": None,
+                            "start-delay": None,
+                            "OCF_CHECK_LEVEL": None,
+                            "automatic": False,
+                            "on_target": False,
+                        },
+                        {
+                            "name": "start",
+                            "timeout": "20s",
+                            "interval": None,
+                            "role": None,
+                            "start-delay": None,
+                            "OCF_CHECK_LEVEL": None,
+                            "automatic": False,
+                            "on_target": False,
+                        },
+                    ],
+                    "default_actions": [
+                        {
+                            "name": "monitor",
+                            "timeout": None,
+                            "interval": "60s",
+                            "role": None,
+                            "start-delay": None,
+                            "OCF_CHECK_LEVEL": None,
+                            "automatic": False,
+                            "on_target": False,
+                        }
+                    ],
+                }
+            )
+            + "\n",
         )
 
 
@@ -107,18 +1150,18 @@ class StonithTest(TestCase, AssertPcsMixin):
         self.assert_pcs_fail(
             "stonith create test1 fence_noexist".split(),
             stdout_full=(
-                "Error: Agent 'fence_noexist' is not installed or does not "
+                "Error: Agent 'stonith:fence_noexist' is not installed or does not "
                 "provide valid metadata: Agent fence_noexist not found or does "
                 "not support meta-data: Invalid argument (22), "
                 "Metadata query for stonith:fence_noexist failed: Input/output "
-                "error, use --force to override\n"
+                "error, use --force to override\n" + ERRORS_HAVE_OCURRED
             ),
         )
 
         self.assert_pcs_success(
             "stonith create test1 fence_noexist --force".split(),
             stdout_full=(
-                "Warning: Agent 'fence_noexist' is not installed or does not "
+                "Warning: Agent 'stonith:fence_noexist' is not installed or does not "
                 "provide valid metadata: Agent fence_noexist not found or does "
                 "not support meta-data: Invalid argument (22), "
                 "Metadata query for stonith:fence_noexist failed: Input/output "
@@ -129,14 +1172,20 @@ class StonithTest(TestCase, AssertPcsMixin):
         self.assert_pcs_fail(
             "stonith create test2 fence_apc".split(),
             (
-                "Error: required stonith options 'ip', 'username' are missing, "
-                "use --force to override\n" + ERRORS_HAVE_OCURRED
+                "Error: stonith option 'ip' or 'ipaddr' (deprecated) has to be "
+                "specified, use --force to override\n"
+                "Error: stonith option 'username' or 'login' (deprecated) has "
+                "to be specified, use --force to override\n"
+                + ERRORS_HAVE_OCURRED
             ),
         )
 
         self.assert_pcs_success(
             "stonith create test2 fence_apc --force".split(),
-            "Warning: required stonith options 'ip', 'username' are missing\n",
+            "Warning: stonith option 'ip' or 'ipaddr' (deprecated) has to be "
+            "specified\n"
+            "Warning: stonith option 'username' or 'login' (deprecated) has to "
+            "be specified\n",
         )
 
         self.assert_pcs_fail(
@@ -148,14 +1197,20 @@ class StonithTest(TestCase, AssertPcsMixin):
         self.assert_pcs_fail(
             "stonith create test9 fence_apc pcmk_status_action=xxx".split(),
             (
-                "Error: required stonith options 'ip', 'username' are missing, "
-                "use --force to override\n" + ERRORS_HAVE_OCURRED
+                "Error: stonith option 'ip' or 'ipaddr' (deprecated) has to be "
+                "specified, use --force to override\n"
+                "Error: stonith option 'username' or 'login' (deprecated) has "
+                "to be specified, use --force to override\n"
+                + ERRORS_HAVE_OCURRED
             ),
         )
 
         self.assert_pcs_success(
             "stonith create test9 fence_apc pcmk_status_action=xxx --force".split(),
-            "Warning: required stonith options 'ip', 'username' are missing\n",
+            "Warning: stonith option 'ip' or 'ipaddr' (deprecated) has to be "
+            "specified\n"
+            "Warning: stonith option 'username' or 'login' (deprecated) has to "
+            "be specified\n",
         )
 
         self.assert_pcs_success(
@@ -176,14 +1231,16 @@ class StonithTest(TestCase, AssertPcsMixin):
         self.assert_pcs_fail(
             "stonith create test3 fence_ilo ip=test".split(),
             (
-                "Error: required stonith option 'username' is missing, use "
-                "--force to override\n" + ERRORS_HAVE_OCURRED
+                "Error: stonith option 'username' or 'login' (deprecated) has "
+                "to be specified, use --force to override\n"
+                + ERRORS_HAVE_OCURRED
             ),
         )
 
         self.assert_pcs_success(
             "stonith create test3 fence_ilo ip=test --force".split(),
-            "Warning: required stonith option 'username' is missing\n",
+            "Warning: stonith option 'username' or 'login' (deprecated) has to "
+            "be specified\n",
         )
 
         # Testing that pcmk_host_check, pcmk_host_list & pcmk_host_map are
@@ -260,7 +1317,10 @@ class StonithTest(TestCase, AssertPcsMixin):
                 "interval=61s",
                 "--force",
             ],
-            "Warning: required stonith options 'ip', 'username' are missing\n",
+            "Warning: stonith option 'ip' or 'ipaddr' (deprecated) has to be "
+            "specified\n"
+            "Warning: stonith option 'username' or 'login' (deprecated) has to "
+            "be specified\n",
         )
 
         self.assert_pcs_success(
@@ -311,20 +1371,25 @@ class StonithTest(TestCase, AssertPcsMixin):
             ),
         )
 
-    def test_stonith_create_does_not_require_deprecated(self):
+    def test_stonith_create_requires_either_new_or_deprecated(self):
         # 'ipaddr' and 'login' are obsoleted by 'ip' and 'username'
         self.assert_pcs_fail(
             "stonith create test2 fence_apc".split(),
             (
-                "Error: required stonith options 'ip', 'username' are missing, "
-                "use --force to override\n" + ERRORS_HAVE_OCURRED
+                "Error: stonith option 'ip' or 'ipaddr' (deprecated) has to be "
+                "specified, use --force to override\n"
+                "Error: stonith option 'username' or 'login' (deprecated) has "
+                "to be specified, use --force to override\n"
+                + ERRORS_HAVE_OCURRED
             ),
         )
 
     def test_stonith_create_deprecated_and_obsoleting(self):
         # 'ipaddr' and 'login' are obsoleted by 'ip' and 'username'
         self.assert_pcs_success(
-            "stonith create S fence_apc ip=i login=l".split()
+            "stonith create S fence_apc ip=i login=l".split(),
+            "Warning: stonith option 'login' is deprecated and should not be "
+            "used, use 'username' instead\n",
         )
         self.assert_pcs_success(
             "stonith config S".split(),
@@ -340,7 +1405,11 @@ class StonithTest(TestCase, AssertPcsMixin):
     def test_stonith_create_both_deprecated_and_obsoleting(self):
         # 'ipaddr' and 'login' are obsoleted by 'ip' and 'username'
         self.assert_pcs_success(
-            "stonith create S fence_apc ip=i1 login=l ipaddr=i2 username=u".split()
+            "stonith create S fence_apc ip=i1 login=l ipaddr=i2 username=u".split(),
+            "Warning: stonith option 'ipaddr' is deprecated and should not be "
+            "used, use 'ip' instead\n"
+            "Warning: stonith option 'login' is deprecated and should not be "
+            "used, use 'username' instead\n",
         )
         self.assert_pcs_success(
             "stonith config S".split(),
@@ -412,20 +1481,9 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
     def test_stonith_create_action_empty(self):
-        self.assert_pcs_success(
-            "stonith create test fence_apc ip=i username=u action=".split()
-        )
-
-        self.assert_pcs_success(
-            "stonith config".split(),
-            # TODO fix code and test - there should be no action in the attribs
-            outdent(
-                """\
-                 Resource: test (class=stonith type=fence_apc)
-                  Attributes: action= ip=i username=u
-                  Operations: monitor interval=60s (test-monitor-interval-60s)
-                """
-            ),
+        self.assert_pcs_fail(
+            "stonith create test fence_apc ip=i username=u action=".split(),
+            "Error: action cannot be empty\n" + ERRORS_HAVE_OCURRED,
         )
 
     def test_stonith_update_action(self):
@@ -502,7 +1560,10 @@ class StonithTest(TestCase, AssertPcsMixin):
                 "pcmk_host_list=nodea nodeb",
                 "--force",
             ],
-            "Warning: required stonith options 'ip', 'username' are missing\n",
+            "Warning: stonith option 'ip' or 'ipaddr' (deprecated) has to be "
+            "specified\n"
+            "Warning: stonith option 'username' or 'login' (deprecated) has to "
+            "be specified\n",
         )
 
         self.assert_pcs_success(
@@ -519,33 +1580,39 @@ class StonithTest(TestCase, AssertPcsMixin):
     def testStonithDeleteRemovesLevel(self):
         shutil.copyfile(rc("cib-empty-with3nodes.xml"), self.temp_cib.name)
 
+        deprecated_warnings = (
+            "Warning: stonith option 'ip' or 'ipaddr' (deprecated) has to be "
+            "specified\n"
+            "Warning: stonith option 'username' or 'login' (deprecated) has to "
+            "be specified\n"
+        )
         self.assert_pcs_success(
             "stonith create n1-ipmi fence_apc --force".split(),
-            "Warning: required stonith options 'ip', 'username' are missing\n",
+            deprecated_warnings,
         )
         self.assert_pcs_success(
             "stonith create n2-ipmi fence_apc --force".split(),
-            "Warning: required stonith options 'ip', 'username' are missing\n",
+            deprecated_warnings,
         )
         self.assert_pcs_success(
             "stonith create n1-apc1 fence_apc --force".split(),
-            "Warning: required stonith options 'ip', 'username' are missing\n",
+            deprecated_warnings,
         )
         self.assert_pcs_success(
             "stonith create n1-apc2 fence_apc --force".split(),
-            "Warning: required stonith options 'ip', 'username' are missing\n",
+            deprecated_warnings,
         )
         self.assert_pcs_success(
             "stonith create n2-apc1 fence_apc --force".split(),
-            "Warning: required stonith options 'ip', 'username' are missing\n",
+            deprecated_warnings,
         )
         self.assert_pcs_success(
             "stonith create n2-apc2 fence_apc --force".split(),
-            "Warning: required stonith options 'ip', 'username' are missing\n",
+            deprecated_warnings,
         )
         self.assert_pcs_success(
             "stonith create n2-apc3 fence_apc --force".split(),
-            "Warning: required stonith options 'ip', 'username' are missing\n",
+            deprecated_warnings,
         )
         self.assert_pcs_success_all(
             [
@@ -2132,6 +3199,12 @@ class StonithUpdate(ResourceTest):
                 </primitive>
             </resources>
             """,
+            output=(
+                "Warning: stonith option 'login' is deprecated and should not "
+                "be used, use 'username' instead\n"
+                "Warning: stonith option 'debug' is deprecated and should not "
+                "be used, use 'debug_file' instead\n"
+            ),
         )
 
     def test_set_deprecated_param(self):
@@ -2162,6 +3235,10 @@ class StonithUpdate(ResourceTest):
                 </primitive>
             </resources>
             """,
+            output=(
+                "Warning: stonith option 'debug' is deprecated and should not "
+                "be used, use 'debug_file' instead\n"
+            ),
         )
 
     def test_unset_deprecated_param(self):
@@ -2194,8 +3271,8 @@ class StonithUpdate(ResourceTest):
     def test_unset_deprecated_required_param(self):
         self.assert_pcs_fail(
             "stonith update S login=".split(),
-            "Error: required stonith option 'username' is missing, use --force "
-            "to override\n",
+            "Error: stonith option 'username' or 'login' (deprecated) has to "
+            "be specified, use --force to override\n",
         )
 
     def test_set_obsoleting_param(self):
@@ -2258,8 +3335,8 @@ class StonithUpdate(ResourceTest):
     def test_unset_obsoleting_required_param(self):
         self.assert_pcs_fail(
             "stonith update S ip=".split(),
-            "Error: required stonith option 'ip' is missing, use --force "
-            "to override\n",
+            "Error: stonith option 'ip' or 'ipaddr' (deprecated) has to be "
+            "specified, use --force to override\n",
         )
 
     def test_unset_deprecated_required_set_obsoleting(self):
@@ -2320,6 +3397,10 @@ class StonithUpdate(ResourceTest):
                 </primitive>
             </resources>
             """,
+            output=(
+                "Warning: stonith option 'ipaddr' is deprecated and should not "
+                "be used, use 'ip' instead\n"
+            ),
         )
 
     def test_set_both_deprecated_and_obsoleting(self):
@@ -2353,4 +3434,8 @@ class StonithUpdate(ResourceTest):
                 </primitive>
             </resources>
             """,
+            output=(
+                "Warning: stonith option 'ipaddr' is deprecated and should not "
+                "be used, use 'ip' instead\n"
+            ),
         )

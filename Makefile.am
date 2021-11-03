@@ -48,7 +48,7 @@ TARFILES		= $(PACKAGE_NAME)-$(VERSION).tar.bz2 \
 
 ACLOCAL_AMFLAGS		= -I m4
 
-SUBDIRS			= pcs pcsd pcs_test
+SUBDIRS			= pcs pcsd pcs_test data
 
 PCS_PYTHON_PACKAGES = pcs/ pcs_test/
 # depedency management

@@ -1,7 +1,9 @@
-# pylint: disable=missing-docstring, invalid-name
+# pylint: disable=invalid-name
+# pylint: disable=missing-docstring
+# pylint: disable=too-many-branches
 
-import sys
 import os.path
+import sys
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(CURRENT_DIR, "{}.d".format(sys.argv[0]))

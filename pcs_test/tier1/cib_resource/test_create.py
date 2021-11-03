@@ -935,7 +935,7 @@ class FailOrWarn(ResourceTest):
             "Error: Agent 'ocf:heartbeat:NoExisting' is not installed or "
             "does not provide valid metadata:( crm_resource:)? Metadata "
             "query for ocf:heartbeat:NoExisting failed:.+"
-            ", use --force to override\n$",
+            f", use --force to override\n{ERRORS_HAVE_OCURRED}$",
             re.MULTILINE,
         )
         self.assert_pcs_fail(
@@ -975,14 +975,14 @@ class FailOrWarn(ResourceTest):
         self.assert_pcs_fail(
             "resource create R invalid_agent_name".split(),
             "Error: Unable to find agent 'invalid_agent_name', try specifying"
-            " its full name\n",
+            " its full name\n" + ERRORS_HAVE_OCURRED,
         )
 
     def test_fail_on_invalid_resource_agent_name_even_if_forced(self):
         self.assert_pcs_fail(
             "resource create R invalid_agent_name --force".split(),
             "Error: Unable to find agent 'invalid_agent_name', try specifying"
-            " its full name\n",
+            " its full name\n" + ERRORS_HAVE_OCURRED,
         )
 
     def test_fail_when_invalid_agent(self):
@@ -992,7 +992,7 @@ class FailOrWarn(ResourceTest):
             " standard:provider:type when standard is 'ocf' or"
             " standard:type otherwise. List of standards and providers can"
             " be obtained by using commands 'pcs resource standards' and"
-            " 'pcs resource providers'\n",
+            " 'pcs resource providers'.\n" + ERRORS_HAVE_OCURRED,
         )
 
     def test_vail_when_agent_class_is_not_allowed(self):
@@ -1002,7 +1002,7 @@ class FailOrWarn(ResourceTest):
             " standard:provider:type when standard is 'ocf' or"
             " standard:type otherwise. List of standards and providers can"
             " be obtained by using commands 'pcs resource standards' and"
-            " 'pcs resource providers'\n",
+            " 'pcs resource providers'.\n" + ERRORS_HAVE_OCURRED,
         )
 
     def test_fail_when_missing_provider_with_ocf_resource_agent(self):
@@ -1012,7 +1012,7 @@ class FailOrWarn(ResourceTest):
             " standard:provider:type when standard is 'ocf' or"
             " standard:type otherwise. List of standards and providers can"
             " be obtained by using commands 'pcs resource standards' and"
-            " 'pcs resource providers'\n",
+            " 'pcs resource providers'.\n" + ERRORS_HAVE_OCURRED,
         )
 
     def test_fail_when_provider_appear_with_non_ocf_resource_agent(self):
@@ -1022,7 +1022,7 @@ class FailOrWarn(ResourceTest):
             " standard:provider:type when standard is 'ocf' or"
             " standard:type otherwise. List of standards and providers can"
             " be obtained by using commands 'pcs resource standards' and"
-            " 'pcs resource providers'\n",
+            " 'pcs resource providers'.\n" + ERRORS_HAVE_OCURRED,
         )
 
     def test_print_info_about_agent_completion(self):
@@ -1035,7 +1035,8 @@ class FailOrWarn(ResourceTest):
         self.assert_pcs_fail(
             "resource create R Dummy".split(),
             "Error: Multiple agents match 'Dummy', please specify full name:"
-            " 'ocf:heartbeat:Dummy', 'ocf:pacemaker:Dummy'\n",
+            " 'ocf:heartbeat:Dummy' or 'ocf:pacemaker:Dummy'\n"
+            + ERRORS_HAVE_OCURRED,
         )
 
     def test_for_options_not_matching_resource_agent(self):

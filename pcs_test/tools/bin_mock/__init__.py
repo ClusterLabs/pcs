@@ -5,9 +5,13 @@ BIN_MOCK_DIR = os.path.dirname(os.path.abspath(__file__))
 CRM_RESOURCE_BIN = os.path.abspath(
     os.path.join(BIN_MOCK_DIR, "pcmk/crm_resource")
 )
+PACEMAKER_FENCED_BIN = os.path.abspath(
+    os.path.join(BIN_MOCK_DIR, "pcmk/pacemaker-fenced")
+)
 
 MOCK_SETTINGS = {
     "crm_resource_binary": CRM_RESOURCE_BIN,
+    "pacemaker_fenced": PACEMAKER_FENCED_BIN,
 }
 
 
