@@ -1,25 +1,46 @@
-from typing import Any, Dict, Iterable, List, Optional, Type
+from typing import Any, Dict, Iterable, List, Optional
 
 from pcs.common.interface.dto import to_dict
-from pcs.lib import resource_agent
+from pcs.common.reports import ReportProcessor
+from pcs.lib.cib.resource.agent import (
+    action_to_operation,
+    complete_operations_options,
+    get_default_operations,
+)
 from pcs.lib.env import LibraryEnvironment
+from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
+from pcs.lib.resource_agent import (
+    find_one_resource_agent_by_type,
+    list_resource_agents,
+    list_resource_agents_ocf_providers,
+    list_resource_agents_standards,
+    list_resource_agents_standards_and_providers,
+    ResourceAgentError,
+    resource_agent_error_to_report_item,
+    ResourceAgentFacadeFactory,
+    ResourceAgentMetadata,
+    split_resource_agent_name,
+)
+from pcs.lib.resource_agent.name import name_to_void_metadata
 
 
 def list_standards(lib_env: LibraryEnvironment) -> List[str]:
     """
     List resource agents standards (ocf, lsb, ... ) on the local host
     """
-    return resource_agent.list_resource_agents_standards(lib_env.cmd_runner())
+    return [
+        standard
+        for standard in list_resource_agents_standards(lib_env.cmd_runner())
+        if standard != "stonith"
+    ]
 
 
 def list_ocf_providers(lib_env: LibraryEnvironment) -> List[str]:
     """
     List resource agents ocf providers on the local host
     """
-    return resource_agent.list_resource_agents_ocf_providers(
-        lib_env.cmd_runner()
-    )
+    return list_resource_agents_ocf_providers(lib_env.cmd_runner())
 
 
 def list_agents_for_standard_and_provider(
@@ -31,14 +52,20 @@ def list_agents_for_standard_and_provider(
     standard_provider -- standard[:provider], e.g. None, ocf, ocf:pacemaker
     """
     if standard_provider:
-        standards = [standard_provider]
+        std_prov_list = [
+            standard_provider[:-1]
+            if standard_provider[-1] == ":"
+            else standard_provider
+        ]
     else:
-        standards = resource_agent.list_resource_agents_standards(
+        std_prov_list = list_resource_agents_standards_and_providers(
             lib_env.cmd_runner()
         )
     agents = []
-    for std in standards:
-        agents += resource_agent.list_resource_agents(lib_env.cmd_runner(), std)
+    for std_prov in std_prov_list:
+        if std_prov == "stonith":
+            continue
+        agents += list_resource_agents(lib_env.cmd_runner(), std_prov)
     return sorted(agents, key=str.lower)
 
 
@@ -53,73 +80,78 @@ def list_agents(
     List all resource agents on the local host, optionally filtered and
         described
 
-    describe -- load and return agents' description as well
+    describe -- load and return agents' metadata as well
     search -- return only agents which name contains this string
     """
     runner = lib_env.cmd_runner()
 
     # list agents for all standards and providers
     agent_names = []
-    for std in resource_agent.list_resource_agents_standards_and_providers(
-        runner
-    ):
+    for std_prov in list_resource_agents_standards_and_providers(runner):
+        if std_prov == "stonith":
+            continue
         agent_names += [
-            "{0}:{1}".format(std, agent)
-            for agent in resource_agent.list_resource_agents(runner, std)
+            f"{std_prov}:{agent}"
+            for agent in list_resource_agents(runner, std_prov)
         ]
     return _complete_agent_list(
         runner,
+        lib_env.report_processor,
         sorted(agent_names, key=str.lower),
         describe,
         search,
-        resource_agent.ResourceAgent,
     )
+
+
+# backward compatibility layer - export agent metadata in the legacy format
+def _agent_metadata_to_dict(
+    agent: ResourceAgentMetadata, describe: bool = False
+) -> Dict[str, str]:
+    agent_dto = agent.to_dto()
+    agent_dict = to_dict(agent_dto)
+    agent_dict["actions"] = [
+        action_to_operation(action, keep_extra_keys=True)
+        for action in agent_dto.actions
+    ]
+    agent_dict["default_actions"] = (
+        complete_operations_options(
+            get_default_operations(agent, keep_extra_keys=True)
+        )
+        if describe
+        else []
+    )
+    return agent_dict
 
 
 def _complete_agent_list(
     runner: CommandRunner,
+    report_processor: ReportProcessor,
     agent_names: Iterable[str],
     describe: bool,
     search: Optional[str],
-    metadata_class: Type[resource_agent.CrmAgent],
 ) -> List[Dict[str, Any]]:
-    # filter agents by name if requested
-    if search:
-        search_lower = search.lower()
-        agent_names = [
-            name for name in agent_names if search_lower in name.lower()
-        ]
-
-    # complete the output and load descriptions if requested
+    agent_factory = ResourceAgentFacadeFactory(runner, report_processor)
+    search_lower = search.lower() if search else None
     agent_list = []
     for name in agent_names:
+        if search_lower and search_lower not in name.lower():
+            continue
         try:
-            agent_metadata = metadata_class(runner, name)
-            metadata_dto = (
-                agent_metadata.get_full_info()
+            split_name = split_resource_agent_name(name)
+            metadata = (
+                agent_factory.facade_from_parsed_name(split_name).metadata
                 if describe
-                else agent_metadata.get_name_info()
+                else name_to_void_metadata(split_name)
             )
-            agent_list.append(to_dict(metadata_dto))
-        except resource_agent.ResourceAgentError:
-            # we don't return it in the list:
-            #
-            # UnableToGetAgentMetadata - if we cannot get valid metadata, it's
-            # not a resource agent
-            #
-            # InvalidResourceAgentName - invalid name cannot be used with a new
-            # resource. The list of names is gained from "crm_resource" whilst
-            # pcs is doing the validation. So there can be a name that pcs does
-            # not recognize as valid.
-            #
-            # Providing a warning is not the way (currently). Other components
-            # read this list and do not expect warnings there. Using the stderr
-            # (to separate warnings) is currently difficult.
+            agent_list.append(_agent_metadata_to_dict(metadata, describe))
+        except ResourceAgentError:
+            # Reports are still printed to stdout therefore we cannot report
+            # this as it would end up in the same output as # list of agents.
             pass
     return agent_list
 
 
-# TODO return aDTO
+# TODO return a DTO
 # for now, it is transformed to a dict for backward compatibility
 def describe_agent(
     lib_env: LibraryEnvironment, agent_name: str
@@ -129,10 +161,21 @@ def describe_agent(
 
     agent_name -- name of the agent
     """
-    agent = resource_agent.find_valid_resource_agent_by_name(
-        lib_env.report_processor,
-        lib_env.cmd_runner(),
-        agent_name,
-        absent_agent_supported=False,
-    )
-    return to_dict(agent.get_full_info())
+    runner = lib_env.cmd_runner()
+    report_processor = lib_env.report_processor
+    agent_factory = ResourceAgentFacadeFactory(runner, report_processor)
+    try:
+        found_name = (
+            split_resource_agent_name(agent_name)
+            if ":" in agent_name
+            else find_one_resource_agent_by_type(
+                runner, report_processor, agent_name
+            )
+        )
+        return _agent_metadata_to_dict(
+            agent_factory.facade_from_parsed_name(found_name).metadata,
+            describe=True,
+        )
+    except ResourceAgentError as e:
+        lib_env.report_processor.report(resource_agent_error_to_report_item(e))
+        raise LibraryError() from e

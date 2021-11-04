@@ -22,6 +22,7 @@ from pcs.common.file import RawFileError
 from pcs.common.str_tools import (
     format_list,
     format_list_custom_last_separator,
+    format_list_dont_sort,
     format_optional,
     format_plural,
     get_plural,
@@ -489,15 +490,29 @@ class RequiredOptionOfAlternativesIsMissing(ReportItemMessage):
     """
 
     option_names: List[str]
+    deprecated_names: List[str] = field(default_factory=list)
     option_type: Optional[str] = None
     _code = codes.REQUIRED_OPTION_OF_ALTERNATIVES_IS_MISSING
 
     @property
     def message(self) -> str:
-        return "{desc}option {option_names_list} has to be specified".format(
-            desc=format_optional(self.option_type),
-            option_names_list=format_list(self.option_names, separator=" or "),
-        )
+        flag_name_list = [
+            (name in self.deprecated_names, name) for name in self.option_names
+        ]
+        str_list = [
+            f"'{item[1]}' (deprecated)" if item[0] else f"'{item[1]}'"
+            for item in sorted(flag_name_list)
+        ]
+        if not str_list:
+            options_str = ""
+        elif len(str_list) == 1:
+            options_str = str_list[0]
+        else:
+            options_str = "{} or {}".format(
+                ", ".join(str_list[:-1]), str_list[-1]
+            )
+        desc = format_optional(self.option_type)
+        return f"{desc}option {options_str} has to be specified"
 
 
 @dataclass(frozen=True)
@@ -659,7 +674,7 @@ class DeprecatedOption(ReportItemMessage):
 
     option_name: str
     replaced_by: List[str]
-    option_type: str
+    option_type: Optional[str] = None
     _code = codes.DEPRECATED_OPTION
 
     @property
@@ -671,6 +686,35 @@ class DeprecatedOption(ReportItemMessage):
             option_name=self.option_name,
             desc=format_optional(self.option_type),
             hint=format_list(self.replaced_by),
+        )
+
+
+@dataclass(frozen=True)
+class DeprecatedOptionValue(ReportItemMessage):
+    """
+    Specified option value is deprecated and has been replaced by other value
+
+    option_name -- option which value is deprecated
+    deprecated_value -- value which should not be used anymore
+    replaced_by -- new value to be used instead
+    """
+
+    option_name: str
+    deprecated_value: str
+    replaced_by: Optional[str] = None
+    _code = codes.DEPRECATED_OPTION_VALUE
+
+    @property
+    def message(self) -> str:
+        return (
+            "Value '{deprecated_value}' of option {option_name} is deprecated "
+            "and should not be used{replaced_by}"
+        ).format(
+            deprecated_value=self.deprecated_value,
+            option_name=self.option_name,
+            replaced_by=format_optional(
+                self.replaced_by, f", use '{self.replaced_by}' value instead"
+            ),
         )
 
 
@@ -3643,8 +3687,6 @@ class InvalidResourceAgentName(ReportItemMessage):
             f"Invalid resource agent name '{self.name}'."
             " Use standard:provider:type when standard is 'ocf' or"
             " standard:type otherwise."
-            " List of standards and providers can be obtained by using commands"
-            " 'pcs resource standards' and 'pcs resource providers'"
         )
 
 
@@ -3662,10 +3704,8 @@ class InvalidStonithAgentName(ReportItemMessage):
     @property
     def message(self) -> str:
         return (
-            f"Invalid stonith agent name '{self.name}'."
-            " List of agents can be obtained by using command"
-            " 'pcs stonith list'. Do not use the 'stonith:' prefix. Agent name"
-            " cannot contain the ':' character."
+            f"Invalid stonith agent name '{self.name}'. Agent name cannot "
+            "contain the ':' character, do not use the 'stonith:' prefix."
         )
 
 
@@ -3707,7 +3747,9 @@ class AgentNameGuessFoundMoreThanOne(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        possible = format_list(self.possible_agents)
+        possible = format_list_custom_last_separator(
+            self.possible_agents, " or "
+        )
         return (
             f"Multiple agents match '{self.agent}', please specify full name: "
             f"{possible}"
@@ -3730,6 +3772,48 @@ class AgentNameGuessFoundNone(ReportItemMessage):
         return (
             f"Unable to find agent '{self.agent}', try specifying its full name"
         )
+
+
+@dataclass(frozen=True)
+class AgentImplementsUnsupportedOcfVersion(ReportItemMessage):
+    """
+    Specified agent implements OCF version not supported by pcs
+
+    agent -- name of the agent
+    ocf_version -- OCF version implemented by the agent
+    supported_versions -- OCF versions supported by pcs
+    """
+
+    agent: str
+    ocf_version: str
+    supported_versions: List[str]
+    _code = codes.AGENT_IMPLEMENTS_UNSUPPORTED_OCF_VERSION
+
+    @property
+    def message(self) -> str:
+        _version = format_plural(self.supported_versions, "version")
+        _is = format_plural(self.supported_versions, "is")
+        _version_list = format_list(self.supported_versions)
+        return (
+            f"Unable to process agent '{self.agent}' as it implements "
+            f"unsupported OCF version '{self.ocf_version}', supported "
+            f"{_version} {_is}: {_version_list}"
+        )
+
+
+@dataclass(frozen=True)
+class AgentGenericError(ReportItemMessage):
+    """
+    Unspecifed error related to resource / fence agent
+
+    agent -- name of the agent
+    """
+
+    agent: str
+
+    @property
+    def message(self) -> str:
+        return f"Unable to load agent '{self.agent}'"
 
 
 @dataclass(frozen=True)
@@ -5595,6 +5679,39 @@ class ResourceInstanceAttrValueNotUnique(ReportItemMessage):
             attr=self.instance_attr_name,
             agent=self.agent_name,
             res_id_list=format_list(self.resource_id_list),
+        )
+
+
+@dataclass(frozen=True)
+class ResourceInstanceAttrGroupValueNotUnique(ReportItemMessage):
+    """
+    Value of a group of resource instance attributes is not unique in the
+    configuration when creating/updating a resource
+
+    group_name -- name of a group of attributes
+    instance_attrs_map -- attributes which should be unique and their values
+    agent_name -- resource agent name of the resources
+    resource_id_list -- resources which already have the same instance_attr_values
+    """
+
+    group_name: str
+    instance_attrs_map: Dict[str, str]
+    agent_name: str
+    resource_id_list: List[str]
+    _code = codes.RESOURCE_INSTANCE_ATTR_GROUP_VALUE_NOT_UNIQUE
+
+    @property
+    def message(self) -> str:
+        attr_names, attr_values = zip(*sorted(self.instance_attrs_map.items()))
+        attr_names_str = format_list_dont_sort(list(attr_names))
+        attr_values_str = format_list_dont_sort(list(attr_values))
+        options = format_plural(self.instance_attrs_map, "option")
+        res_id_list = format_list(self.resource_id_list)
+        return (
+            f"Value {attr_values_str} of {options} {attr_names_str} (group "
+            f"'{self.group_name}') is not unique across '{self.agent_name}' "
+            f"resources. Following resources are configured with the same "
+            f"values of the instance attributes: {res_id_list}"
         )
 
 

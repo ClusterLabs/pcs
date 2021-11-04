@@ -1,22 +1,19 @@
+from typing import Iterable, Mapping, Optional
+
+from lxml.etree import _Element
+
 from pcs.common import reports
-from pcs.common.reports import ReportProcessor
-from pcs.common.reports.item import ReportItem
 from pcs.lib.cib.node import PacemakerNode
 from pcs.lib.cib.resource import primitive
+from pcs.lib.cib.resource.types import ResourceOperationIn
+from pcs.lib.cib.tools import IdProvider
 from pcs.lib.resource_agent import (
-    find_valid_resource_agent_by_name,
+    ResourceAgentFacade,
+    ResourceAgentMetadata,
     ResourceAgentName,
 )
 
 AGENT_NAME = ResourceAgentName("ocf", "pacemaker", "remote")
-
-
-def get_agent(report_processor, cmd_runner):
-    return find_valid_resource_agent_by_name(
-        report_processor,
-        cmd_runner,
-        AGENT_NAME.full_name,
-    )
 
 
 _IS_REMOTE_AGENT_XPATH_SNIPPET = """
@@ -109,16 +106,18 @@ def get_node_name_from_resource(resource_element):
     return resource_element.attrib["id"]
 
 
-def _validate_server_not_used(agent, option_dict):
+def _validate_server_not_used(
+    agent: ResourceAgentMetadata, option_dict: Mapping[str, str]
+) -> reports.ReportItemList:
     if "server" in option_dict:
         return [
-            ReportItem.error(
+            reports.ReportItem.error(
                 reports.messages.InvalidOptions(
                     ["server"],
                     sorted(
                         [
                             attr.name
-                            for attr in agent.get_full_info().parameters
+                            for attr in agent.parameters
                             if attr.name != "server"
                         ]
                     ),
@@ -134,41 +133,45 @@ def validate_host_not_conflicts(
 ):
     host = instance_attributes.get("server", node_name)
     if host in existing_nodes_addrs:
-        return [ReportItem.error(reports.messages.IdAlreadyExists(host))]
+        return [
+            reports.ReportItem.error(reports.messages.IdAlreadyExists(host))
+        ]
     return []
 
 
 def validate_create(
-    existing_nodes_names,
-    existing_nodes_addrs,
-    resource_agent,
-    new_node_name,
-    new_node_addr,
-    instance_attributes,
-):
+    existing_nodes_names: Iterable[str],
+    existing_nodes_addrs: Iterable[str],
+    resource_agent: ResourceAgentMetadata,
+    new_node_name: str,
+    new_node_addr: str,
+    instance_attributes: Mapping[str, str],
+) -> reports.ReportItemList:
     """
     validate inputs for create
 
-    list of string existing_nodes_names -- node names already in use
-    list of string existing_nodes_addrs -- node addresses already in use
+    existing_nodes_names -- node names already in use
+    existing_nodes_addrs -- node addresses already in use
     ResourceAgent resource_agent -- pacemaker_remote resource agent
-    string new_node_name -- the name of the future node
-    string new_node_addr -- the address of the future node
-    dict instance_attributes -- data for the future resource instance attributes
+    new_node_name -- the name of the future node
+    new_node_addr -- the address of the future node
+    instance_attributes -- data for the future resource instance attributes
     """
     report_list = _validate_server_not_used(resource_agent, instance_attributes)
 
     addr_is_used = False
     if new_node_addr in existing_nodes_addrs:
         report_list.append(
-            ReportItem.error(reports.messages.IdAlreadyExists(new_node_addr))
+            reports.ReportItem.error(
+                reports.messages.IdAlreadyExists(new_node_addr)
+            )
         )
         addr_is_used = True
 
     if not addr_is_used or new_node_addr != new_node_name:
         if new_node_name in existing_nodes_names:
             report_list.append(
-                ReportItem.error(
+                reports.ReportItem.error(
                     reports.messages.IdAlreadyExists(new_node_name)
                 )
             )
@@ -176,51 +179,56 @@ def validate_create(
     return report_list
 
 
-def prepare_instance_atributes(instance_attributes, host):
-    enriched_instance_attributes = instance_attributes.copy()
+def _prepare_instance_atributes(
+    instance_attributes: Optional[Mapping[str, str]],
+    host: str,
+) -> Mapping[str, str]:
+    enriched_instance_attributes = (
+        dict(instance_attributes) if instance_attributes else dict()
+    )
     enriched_instance_attributes["server"] = host
     return enriched_instance_attributes
 
 
 def create(
-    report_processor: ReportProcessor,
-    resource_agent,
-    resources_section,
-    id_provider,
-    host,
-    node_name,
-    raw_operation_list=None,
-    meta_attributes=None,
-    instance_attributes=None,
-    allow_invalid_operation=False,
-    allow_invalid_instance_attributes=False,
-    use_default_operations=True,
+    report_processor: reports.ReportProcessor,
+    resource_agent_facade: ResourceAgentFacade,
+    resources_section: _Element,
+    id_provider: IdProvider,
+    host: str,
+    node_name: str,
+    raw_operation_list: Optional[Iterable[ResourceOperationIn]] = None,
+    meta_attributes: Optional[Mapping[str, str]] = None,
+    instance_attributes: Optional[Mapping[str, str]] = None,
+    allow_invalid_operation: bool = False,
+    allow_invalid_instance_attributes: bool = False,
+    use_default_operations: bool = True,
 ):
     # pylint: disable=too-many-arguments
     """
     Prepare all parts of remote resource and append it into the cib.
 
-    report_processor is a tool for warning/info/error reporting
-    cmd_runner is tool for launching external commands
-    etree.Element resources_section is place where new element will be appended
-    string node_name is name of the remote node and id of new resource as well
-    list of dict raw_operation_list specifies operations of resource
-    dict meta_attributes specifies meta attributes of resource
-    dict instance_attributes specifies instance attributes of resource
-    bool allow_invalid_operation is flag for skipping validation of operations
-    bool allow_invalid_instance_attributes is flag for skipping validation of
+    report_processor -- tool for warning/info/error reporting
+    resources_section -- place where new element will be appended
+    node_name -- name of the remote node and id of new resource as well
+    raw_operation_list -- specifies operations of resource
+    meta_attributes -- specifies meta attributes of resource
+    instance_attributes -- specifies instance attributes of resource
+    allow_invalid_operation -- flag for skipping validation of operations
+    allow_invalid_instance_attributes -- flag for skipping validation of
         instance_attributes
-    bool use_default_operations is flag for completion operations with default
+    use_default_operations -- flag for completion operations with default
         actions specified in resource agent
     """
-    all_instance_attributes = instance_attributes.copy()
-    all_instance_attributes.update({"server": host})
+    all_instance_attributes = _prepare_instance_atributes(
+        instance_attributes, host
+    )
     return primitive.create(
         report_processor,
         resources_section,
         id_provider,
         node_name,
-        resource_agent,
+        resource_agent_facade,
         raw_operation_list,
         meta_attributes,
         all_instance_attributes,

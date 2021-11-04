@@ -165,6 +165,9 @@ def main():
         pcs_runner.test_installed = True
     else:
         sys.path.insert(0, PACKAGE_DIR)
+        from pcs import settings
+
+        settings.pcs_data_dir = os.path.join(PACKAGE_DIR, "data")
 
     run_concurrently = can_concurrency and "--no-parallel" not in sys.argv
 

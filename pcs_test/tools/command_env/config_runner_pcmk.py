@@ -296,12 +296,80 @@ class PcmkShortcuts:
             ),
         )
 
+    def list_agents_standards(
+        self,
+        stdout="",
+        stderr="",
+        returncode=0,
+        env=None,
+        name="runner.pcmk.list_agents_standards",
+    ):
+        """
+        Create a call for listing agents standards
+        """
+        self.__calls.place(
+            name,
+            RunnerCall(
+                ["crm_resource", "--list-standards"],
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode,
+                env=env,
+            ),
+        )
+
+    def list_agents_ocf_providers(
+        self,
+        stdout="",
+        stderr="",
+        returncode=0,
+        env=None,
+        name="runner.pcmk.list_agents_ocf_providers",
+    ):
+        """
+        Create a call for listing agents ocf providers
+        """
+        self.__calls.place(
+            name,
+            RunnerCall(
+                ["crm_resource", "--list-ocf-providers"],
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode,
+                env=env,
+            ),
+        )
+
+    def list_agents_for_standard_and_provider(
+        self,
+        standard_provider,
+        stdout="",
+        stderr="",
+        returncode=0,
+        env=None,
+        name="runner.pcmk.list_agents_for_standard_and_provider",
+    ):
+        """
+        Create a call for listing agents of given standard and provider
+        """
+        self.__calls.place(
+            name,
+            RunnerCall(
+                ["crm_resource", "--list-agents", standard_provider],
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode,
+                env=env,
+            ),
+        )
+
     def load_agent(
         self,
         name="runner.pcmk.load_agent",
         agent_name="ocf:heartbeat:Dummy",
         agent_filename=None,
         agent_is_missing=False,
+        stdout=None,
         stderr=None,
         instead=None,
         env=None,
@@ -313,6 +381,7 @@ class PcmkShortcuts:
         string agent_name
         string agent_filename -- points to file with the agent metadata in the
             content
+        bool agent_is_missing -- create a response as if the agent was missing
         string instead -- key of call instead of which this new call is to be
             placed
         dict env -- CommandRunner environment variables
@@ -333,7 +402,7 @@ class PcmkShortcuts:
             agent_metadata_filename = agent_filename
         elif agent_name in AGENT_FILENAME_MAP:
             agent_metadata_filename = AGENT_FILENAME_MAP[agent_name]
-        elif not agent_is_missing:
+        elif not stdout and not agent_is_missing:
             raise AssertionError(
                 (
                     "Filename with metadata of agent '{0}' not specified.\n"
@@ -343,7 +412,8 @@ class PcmkShortcuts:
                     " filename='FILENAME_HERE.xml')\n"
                     "  b) implicitly for agent '{0}' in 'AGENT_FILENAME_MAP' in"
                     " '{1}'\n"
-                    "Place agent metadata into '{2}FILENAME_HERE.xml'"
+                    "Place agent metadata into '{2}FILENAME_HERE.xml'\n"
+                    "Or define metadata directly in 'stdout' argument."
                 ).format(agent_name, os.path.realpath(__file__), rc(""))
             )
 
@@ -368,17 +438,19 @@ class PcmkShortcuts:
             )
             return
 
-        with open(rc(agent_metadata_filename)) as a_file:
-            self.__calls.place(
-                name,
-                RunnerCall(
-                    ["crm_resource", "--show-metadata", agent_name],
-                    stdout=a_file.read(),
-                    stderr=stderr,
-                    env=env,
-                ),
-                instead=instead,
-            )
+        if not stdout:
+            with open(rc(agent_metadata_filename)) as a_file:
+                stdout = a_file.read()
+        self.__calls.place(
+            name,
+            RunnerCall(
+                ["crm_resource", "--show-metadata", agent_name],
+                stdout=stdout,
+                stderr=stderr,
+                env=env,
+            ),
+            instead=instead,
+        )
 
     def load_fenced_metadata(
         self,

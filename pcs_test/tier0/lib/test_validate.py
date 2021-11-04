@@ -333,6 +333,52 @@ class DependsOnOption(TestCase):
         )
 
 
+class DeprecatedOption(TestCase):
+    def test_return_no_report_when_deprecated_not_present(self):
+        assert_report_item_list_equal(
+            validate.DeprecatedOption(
+                ["old1a", "old1b"], ["new1", "new2"]
+            ).validate({"new1": "value"}),
+            [],
+        )
+
+    def test_return_report_when_deprecated_present(self):
+        assert_report_item_list_equal(
+            validate.DeprecatedOption(
+                ["old1a", "old1b"], ["new1", "new2"]
+            ).validate({"old1b": "value"}),
+            [
+                fixture.warn(
+                    reports.codes.DEPRECATED_OPTION,
+                    option_name="old1b",
+                    replaced_by=["new1", "new2"],
+                    option_type=None,
+                ),
+            ],
+        )
+
+    def test_more_deprecated_present_and_custom_type(self):
+        assert_report_item_list_equal(
+            validate.DeprecatedOption(
+                ["old1a", "old1b"], ["new1", "new2"], "some type"
+            ).validate({"old1a": "valuea", "old1b": "valueb"}),
+            [
+                fixture.warn(
+                    reports.codes.DEPRECATED_OPTION,
+                    option_name="old1a",
+                    replaced_by=["new1", "new2"],
+                    option_type="some type",
+                ),
+                fixture.warn(
+                    reports.codes.DEPRECATED_OPTION,
+                    option_name="old1b",
+                    replaced_by=["new1", "new2"],
+                    option_type="some type",
+                ),
+            ],
+        )
+
+
 class IsRequiredAll(TestCase):
     def test_returns_no_report_when_required_is_present(self):
         assert_report_item_list_equal(
@@ -395,6 +441,22 @@ class IsRequiredSome(TestCase):
                 fixture.error(
                     reports.codes.REQUIRED_OPTION_OF_ALTERNATIVES_IS_MISSING,
                     option_names=["first", "second"],
+                    deprecated_names=[],
+                    option_type="type",
+                ),
+            ],
+        )
+
+    def test_returns_report_when_missing_with_deprecated(self):
+        assert_report_item_list_equal(
+            validate.IsRequiredSome(
+                ["first", "second"], "type", ["second"]
+            ).validate({"third": "value"}),
+            [
+                fixture.error(
+                    reports.codes.REQUIRED_OPTION_OF_ALTERNATIVES_IS_MISSING,
+                    option_names=["first", "second"],
+                    deprecated_names=["second"],
                     option_type="type",
                 ),
             ],
@@ -992,6 +1054,90 @@ class ValueId(TestCase):
                 {"id": validate.ValuePair("correct", "correct")}
             ),
             [],
+        )
+
+
+class ValueDeprecated(TestCase):
+    def test_no_deprecated(self):
+        assert_report_item_list_equal(
+            validate.ValueDeprecated(
+                "opt",
+                dict(valB="valA"),
+            ).validate(dict(other_opt="1")),
+            [],
+        )
+
+    def test_empty_deprecation_map(self):
+        assert_report_item_list_equal(
+            validate.ValueDeprecated("opt", dict()).validate(dict(opt="1")),
+            [],
+        )
+
+    def test_deprecated_no_replacement(self):
+        assert_report_item_list_equal(
+            validate.ValueDeprecated("opt", dict(valA=None)).validate(
+                dict(opt="valA")
+            ),
+            [
+                fixture.warn(
+                    reports.codes.DEPRECATED_OPTION_VALUE,
+                    option_name="opt",
+                    deprecated_value="valA",
+                    replaced_by=None,
+                )
+            ],
+        )
+
+    def test_deprecated_replaced(self):
+        assert_report_item_list_equal(
+            validate.ValueDeprecated(
+                "opt", dict(valA="valB"), reports.ReportItemSeverity.error()
+            ).validate(dict(opt="valA")),
+            [
+                fixture.error(
+                    reports.codes.DEPRECATED_OPTION_VALUE,
+                    option_name="opt",
+                    deprecated_value="valA",
+                    replaced_by="valB",
+                )
+            ],
+        )
+
+    def test_deprecated_replaced_normalized_value(self):
+        assert_report_item_list_equal(
+            validate.ValueDeprecated(
+                "opt", dict(valA="valB"), reports.ReportItemSeverity.error()
+            ).validate(
+                dict(
+                    opt=validate.ValuePair(original="val_a", normalized="valA")
+                )
+            ),
+            [
+                fixture.error(
+                    reports.codes.DEPRECATED_OPTION_VALUE,
+                    option_name="opt",
+                    deprecated_value="val_a",
+                    replaced_by="valB",
+                )
+            ],
+        )
+
+    def test_deprecated_replaced_custom_option_name_report(self):
+        assert_report_item_list_equal(
+            validate.ValueDeprecated(
+                "opt",
+                dict(valA="valB"),
+                reports.ReportItemSeverity.error(),
+                option_name_for_report="opt_for_report",
+            ).validate(dict(opt="valA")),
+            [
+                fixture.error(
+                    reports.codes.DEPRECATED_OPTION_VALUE,
+                    option_name="opt_for_report",
+                    deprecated_value="valA",
+                    replaced_by="valB",
+                )
+            ],
         )
 
 

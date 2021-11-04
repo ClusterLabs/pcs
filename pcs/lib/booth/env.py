@@ -1,3 +1,4 @@
+from typing import Optional
 from pcs.common import (
     file_type_codes,
     reports,
@@ -13,11 +14,11 @@ from pcs.lib.errors import LibraryError
 
 
 class BoothEnv:
-    def __init__(self, instance_name, booth_files_data):
+    def __init__(self, instance_name: Optional[str], booth_files_data):
         """
         Create a new BoothEnv
 
-        string|None instance_name -- booth instance name
+        instance_name -- booth instance name
         dict booth_files_data -- ghost files (config_data, key_data, key_path)
         """
         if (
@@ -77,7 +78,7 @@ class BoothEnv:
         )
 
     @property
-    def instance_name(self):
+    def instance_name(self) -> str:
         return self._instance_name
 
     @property

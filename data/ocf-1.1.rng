@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<grammar xmlns="http://relaxng.org/ns/structure/1.0">
+<!--
+This is NOT an official OCF 1.1 definition
+
+The purpose of this file is for pcs to be able to check whether it is able to
+process metadata provided by OCF agents. In comparison to official OCF 1.1 RNG,
+this one is rather relaxed.
+
+When implementing an OCF agent, please, stick with the official OCF standard
+RNGs. Thank you.
+-->
+
+<start>
+  <element name="resource-agent">
+    <attribute name="name"/>
+    <!-- defined by OCF, ignored by pcs -->
+    <optional><attribute name="version"/></optional>
+
+    <interleave>
+      <element name="version"><text/></element>
+
+      <zeroOrMore>
+        <element name="longdesc">
+          <ref name="description"/>
+        </element>
+      </zeroOrMore>
+
+      <zeroOrMore>
+        <element name="shortdesc">
+          <ref name="description"/>
+        </element>
+      </zeroOrMore>
+
+      <optional><element name="parameters">
+        <zeroOrMore><ref name="parameter"/></zeroOrMore>
+      </element></optional>
+
+      <optional><element name="actions">
+        <zeroOrMore><ref name="action"/></zeroOrMore>
+      </element></optional>
+
+      <!-- defined by OCF, ignored by pcs -->
+      <optional><element name="special">
+        <attribute name="tag"/>
+        <ref name="anyElement"/>
+      </element></optional>
+    </interleave>
+  </element>
+</start>
+
+<define name="any">
+   <zeroOrMore>
+     <choice>
+       <attribute>
+         <anyName/>
+       </attribute>
+       <text/>
+       <element>
+         <anyName/>
+         <ref name="any"/>
+       </element>
+     </choice>
+   </zeroOrMore>
+</define>
+
+<define name="anyElement">
+   <zeroOrMore>
+     <choice>
+       <text/>
+       <element>
+         <anyName/>
+         <ref name="any"/>
+       </element>
+     </choice>
+   </zeroOrMore>
+ </define>
+
+<define name="boolean-values">
+  <choice>
+    <value>0</value>
+    <value>1</value>
+  </choice>
+</define>
+
+<define name="description">
+  <!-- lang is for now ignored by pcs -->
+  <optional><attribute name="lang"/></optional>
+  <ref name="anyElement"/>
+</define>
+
+<define name="action">
+  <element name="action">
+    <attribute name="name"/>
+    <optional><attribute name="timeout"/></optional>
+    <optional><attribute name="interval"/></optional>
+    <optional><attribute name="start-delay"/></optional>
+    <optional><attribute name="depth"/></optional>
+    <optional><attribute name="role"/></optional>
+    <!-- used by fence agents -->
+    <optional>
+      <attribute name="on_target"><ref name="boolean-values"/></attribute>
+    </optional>
+    <!-- used by fence agents -->
+    <optional>
+      <attribute name="automatic"><ref name="boolean-values"/></attribute>
+    </optional>
+  </element>
+</define>
+
+<define name="parameter">
+  <element name="parameter">
+    <attribute name="name"/>
+    <optional><attribute name="unique-group"/></optional>
+    <optional>
+      <!-- deprecated, ignored by pcs -->
+      <attribute name="unique"><ref name="boolean-values"/></attribute>
+    </optional>
+    <optional>
+      <attribute name="required"><ref name="boolean-values"/></attribute>
+    </optional>
+    <optional>
+      <attribute name="reloadable"><ref name="boolean-values"/></attribute>
+    </optional>
+
+    <interleave>
+      <zeroOrMore>
+        <element name="longdesc">
+          <ref name="description"/>
+        </element>
+      </zeroOrMore>
+
+      <zeroOrMore>
+        <element name="shortdesc">
+          <ref name="description"/>
+        </element>
+      </zeroOrMore>
+
+      <optional>
+        <element name="deprecated">
+          <empty/>
+          <interleave>
+            <zeroOrMore>
+              <element name="replaced-with">
+                <attribute name="name"><text/></attribute>
+              </element>
+            </zeroOrMore>
+            <zeroOrMore>
+              <element name="desc">
+                <ref name="description"/>
+              </element>
+            </zeroOrMore>
+          </interleave>
+        </element>
+      </optional>
+
+      <optional>
+        <element name="content">
+          <choice>
+            <attribute name="type">
+              <choice>
+                <value>boolean</value>
+                <value>string</value>
+                <value>integer</value>
+              </choice>
+            </attribute>
+            <group>
+              <attribute name="type">
+                <value>select</value>
+              </attribute>
+              <zeroOrMore>
+                <element name="option"><attribute name="value"/></element>
+              </zeroOrMore>
+            </group>
+          </choice>
+          <optional>
+            <attribute name="default"><text/></attribute>
+          </optional>
+        </element>
+      </optional>
+
+    </interleave>
+  </element>
+</define>
+
+</grammar>

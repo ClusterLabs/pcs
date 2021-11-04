@@ -1,5 +1,5 @@
 from collections import Counter
-from typing import Container, Iterable, List, Optional, Set, Tuple
+from typing import Container, Iterable, List, Mapping, Optional, Set, Tuple
 
 from lxml.etree import _Element
 
@@ -7,8 +7,7 @@ from pcs.common import reports
 from pcs.common.reports import ReportItemList
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
-from pcs.lib.cib import resource
-from pcs.lib.cib import stonith
+from pcs.lib.cib import resource, stonith
 from pcs.lib.cib.nvpair import INSTANCE_ATTRIBUTES_TAG, get_value
 from pcs.lib.cib.resource.common import are_meta_disabled
 from pcs.lib.cib.tools import IdProvider
@@ -17,13 +16,12 @@ from pcs.lib.commands.resource import (
     resource_environment,
 )
 from pcs.lib.communication.corosync import GetCorosyncOnlineTargets
-
 from pcs.lib.communication.scsi import Unfence
 from pcs.lib.communication.tools import (
     AllSameDataMixin,
     run_and_raise,
 )
-from pcs.lib.env import LibraryEnvironment
+from pcs.lib.env import LibraryEnvironment, WaitType
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 from pcs.lib.node import get_existing_nodes_names
@@ -36,55 +34,100 @@ from pcs.lib.pacemaker.live import (
     is_getting_resource_digest_supported,
 )
 from pcs.lib.pacemaker.values import validate_id
-from pcs.lib.resource_agent import find_valid_stonith_agent_by_name as get_agent
+from pcs.lib.resource_agent import (
+    InvalidResourceAgentName,
+    ResourceAgentError,
+    resource_agent_error_to_report_item,
+    ResourceAgentFacade,
+    ResourceAgentFacadeFactory,
+    ResourceAgentName,
+    UnableToGetAgentMetadata,
+    UnsupportedOcfVersion,
+)
+
+
+def _get_agent_facade(
+    report_processor: reports.ReportProcessor,
+    factory: ResourceAgentFacadeFactory,
+    name: str,
+    allow_absent_agent: bool,
+) -> ResourceAgentFacade:
+    try:
+        if ":" in name:
+            raise InvalidResourceAgentName(name)
+        full_name = ResourceAgentName("stonith", None, name)
+        return factory.facade_from_parsed_name(full_name)
+    except (UnableToGetAgentMetadata, UnsupportedOcfVersion) as e:
+        if allow_absent_agent:
+            report_processor.report(
+                resource_agent_error_to_report_item(
+                    e, reports.ReportItemSeverity.warning(), is_stonith=True
+                )
+            )
+            return factory.void_facade_from_parsed_name(full_name)
+        report_processor.report(
+            resource_agent_error_to_report_item(
+                e,
+                reports.ReportItemSeverity.error(reports.codes.FORCE),
+                is_stonith=True,
+            )
+        )
+        raise LibraryError() from e
+    except ResourceAgentError as e:
+        report_processor.report(
+            resource_agent_error_to_report_item(
+                e, reports.ReportItemSeverity.error(), is_stonith=True
+            )
+        )
+        raise LibraryError() from e
 
 
 def create(
-    env,
-    stonith_id,
-    stonith_agent_name,
-    operations,
-    meta_attributes,
-    instance_attributes,
-    allow_absent_agent=False,
-    allow_invalid_operation=False,
-    allow_invalid_instance_attributes=False,
-    use_default_operations=True,
-    ensure_disabled=False,
-    wait=False,
+    env: LibraryEnvironment,
+    stonith_id: str,
+    stonith_agent_name: str,
+    operations: Iterable[Mapping[str, str]],
+    meta_attributes: Mapping[str, str],
+    instance_attributes: Mapping[str, str],
+    allow_absent_agent: bool = False,
+    allow_invalid_operation: bool = False,
+    allow_invalid_instance_attributes: bool = False,
+    use_default_operations: bool = True,
+    ensure_disabled: bool = False,
+    wait: WaitType = False,
 ):
     # pylint: disable=too-many-arguments, too-many-locals
     """
     Create stonith as resource in a cib.
 
-    LibraryEnvironment env provides all for communication with externals
-    string stonith_id is an identifier of stonith resource
-    string stonith_agent_name contains name for the identification of agent
-    list of dict operations contains attributes for each entered operation
-    dict meta_attributes contains attributes for primitive/meta_attributes
-    dict instance_attributes contains attributes for
-        primitive/instance_attributes
-    bool allow_absent_agent is a flag for allowing agent that is not installed
-        in a system
-    bool allow_invalid_operation is a flag for allowing to use operations that
+    env -- provides all for communication with externals
+    stonith_id -- an identifier of stonith resource
+    stonith_agent_name -- contains name for the identification of agent
+    operations -- contains attributes for each entered operation
+    meta_attributes -- contains attributes for primitive/meta_attributes
+    instance_attributes -- contains attributes for primitive/instance_attributes
+    allow_absent_agent -- a flag for allowing agent not installed in a system
+    allow_invalid_operation -- a flag for allowing to use operations that
         are not listed in a stonith agent metadata
-    bool allow_invalid_instance_attributes is a flag for allowing to use
-        instance attributes that are not listed in a stonith agent metadata
-        or for allowing to not use the instance_attributes that are required in
+    allow_invalid_instance_attributes -- a flag for allowing to use instance
+        attributes that are not listed in a stonith agent metadata or for
+        allowing to not use the instance_attributes that are required in
         stonith agent metadata
-    bool use_default_operations is a flag for stopping stopping of adding
-        default cib operations (specified in a stonith agent)
-    bool ensure_disabled is flag that keeps resource in target-role "Stopped"
-    mixed wait is flag for controlling waiting for pacemaker idle mechanism
+    use_default_operations -- a flag for stopping of adding default cib
+        operations (specified in a stonith agent)
+    ensure_disabled -- flag that keeps resource in target-role "Stopped"
+    wait -- flag for controlling waiting for pacemaker idle mechanism
     """
-    stonith_agent = get_agent(
+    runner = env.cmd_runner()
+    agent_factory = ResourceAgentFacadeFactory(runner, env.report_processor)
+    stonith_agent = _get_agent_facade(
         env.report_processor,
-        env.cmd_runner(),
+        agent_factory,
         stonith_agent_name,
         allow_absent_agent,
     )
-    if stonith_agent.get_provides_unfencing():
-        meta_attributes["provides"] = "unfencing"
+    if stonith_agent.metadata.provides_unfencing:
+        meta_attributes = dict(meta_attributes, provides="unfencing")
 
     with resource_environment(
         env,
@@ -114,58 +157,58 @@ def create(
 
 
 def create_in_group(
-    env,
-    stonith_id,
-    stonith_agent_name,
-    group_id,
-    operations,
-    meta_attributes,
-    instance_attributes,
-    allow_absent_agent=False,
-    allow_invalid_operation=False,
-    allow_invalid_instance_attributes=False,
-    use_default_operations=True,
-    ensure_disabled=False,
-    adjacent_resource_id=None,
-    put_after_adjacent=False,
-    wait=False,
+    env: LibraryEnvironment,
+    stonith_id: str,
+    stonith_agent_name: str,
+    group_id: str,
+    operations: Iterable[Mapping[str, str]],
+    meta_attributes: Mapping[str, str],
+    instance_attributes: Mapping[str, str],
+    allow_absent_agent: bool = False,
+    allow_invalid_operation: bool = False,
+    allow_invalid_instance_attributes: bool = False,
+    use_default_operations: bool = True,
+    ensure_disabled: bool = False,
+    adjacent_resource_id: Optional[str] = None,
+    put_after_adjacent: bool = False,
+    wait: WaitType = False,
 ):
     # pylint: disable=too-many-arguments, too-many-locals
     """
     Create stonith as resource in a cib and put it into defined group.
 
-    LibraryEnvironment env provides all for communication with externals
-    string stonith_id is an identifier of stonith resource
-    string stonith_agent_name contains name for the identification of agent
-    string group_id is identificator for group to put stonith inside
-    list of dict operations contains attributes for each entered operation
-    dict meta_attributes contains attributes for primitive/meta_attributes
-    dict instance_attributes contains attributes for
-        primitive/instance_attributes
-    bool allow_absent_agent is a flag for allowing agent that is not installed
-        in a system
-    bool allow_invalid_operation is a flag for allowing to use operations that
+    env -- provides all for communication with externals
+    stonith_id --an identifier of stonith resource
+    stonith_agent_name -- contains name for the identification of agent
+    group_id -- identificator for group to put stonith inside
+    operations -- contains attributes for each entered operation
+    meta_attributes -- contains attributes for primitive/meta_attributes
+    instance_attributes -- contains attributes for primitive/instance_attributes
+    allow_absent_agent -- a flag for allowing agent not installed in a system
+    allow_invalid_operation -- a flag for allowing to use operations that
         are not listed in a stonith agent metadata
-    bool allow_invalid_instance_attributes is a flag for allowing to use
-        instance attributes that are not listed in a stonith agent metadata
-        or for allowing to not use the instance_attributes that are required in
+    allow_invalid_instance_attributes -- a flag for allowing to use instance
+        attributes that are not listed in a stonith agent metadata or for
+        allowing to not use the instance_attributes that are required in
         stonith agent metadata
-    bool use_default_operations is a flag for stopping stopping of adding
-        default cib operations (specified in a stonith agent)
-    bool ensure_disabled is flag that keeps resource in target-role "Stopped"
-    string adjacent_resource_id identify neighbor of a newly created stonith
-    bool put_after_adjacent is flag to put a newly create resource befor/after
+    use_default_operations -- a flag for stopping of adding default cib
+        operations (specified in a stonith agent)
+    ensure_disabled -- flag that keeps resource in target-role "Stopped"
+    adjacent_resource_id -- identify neighbor of a newly created stonith
+    put_after_adjacent -- is flag to put a newly create resource befor/after
         adjacent stonith
-    mixed wait is flag for controlling waiting for pacemaker idle mechanism
+    wait -- flag for controlling waiting for pacemaker idle mechanism
     """
-    stonith_agent = get_agent(
+    runner = env.cmd_runner()
+    agent_factory = ResourceAgentFacadeFactory(runner, env.report_processor)
+    stonith_agent = _get_agent_facade(
         env.report_processor,
-        env.cmd_runner(),
+        agent_factory,
         stonith_agent_name,
         allow_absent_agent,
     )
-    if stonith_agent.get_provides_unfencing():
-        meta_attributes["provides"] = "unfencing"
+    if stonith_agent.metadata.provides_unfencing:
+        meta_attributes = dict(meta_attributes, provides="unfencing")
 
     with resource_environment(
         env,

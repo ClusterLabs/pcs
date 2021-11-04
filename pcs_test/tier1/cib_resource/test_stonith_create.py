@@ -1,7 +1,7 @@
 import re
 
 from pcs_test.tier1.cib_resource.common import ResourceTest
-from pcs_test.tier1.cib_resource.stonith_common import need_load_xvm_fence_agent
+from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.misc import is_minimum_pacemaker_version
 
 PCMK_2_0_3_PLUS = is_minimum_pacemaker_version(2, 0, 3)
@@ -12,8 +12,8 @@ ERRORS_HAVE_OCURRED = (
 
 
 class PlainStonith(ResourceTest):
-    @need_load_xvm_fence_agent
     def test_simplest(self):
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.assert_effect(
             "stonith create S fence_xvm".split(),
             """<resources>
@@ -28,6 +28,7 @@ class PlainStonith(ResourceTest):
         )
 
     def test_base_with_agent_that_provides_unfencing(self):
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.assert_effect(
             "stonith create S fence_scsi".split(),
             """<resources>
@@ -49,10 +50,10 @@ class PlainStonith(ResourceTest):
     def test_error_when_not_valid_name(self):
         self.assert_pcs_fail_regardless_of_force(
             "stonith create S fence_xvm:invalid".split(),
-            "Error: Invalid stonith agent name 'fence_xvm:invalid'. List of"
-            " agents can be obtained by using command 'pcs stonith list'."
-            " Do not use the 'stonith:' prefix. Agent name cannot contain"
-            " the ':' character.\n",
+            "Error: Invalid stonith agent name 'fence_xvm:invalid'. Agent name "
+            "cannot contain the ':' character, do not use the 'stonith:' prefix. "
+            "List of agents can be obtained by using command 'pcs stonith list'.\n"
+            + ERRORS_HAVE_OCURRED,
         )
 
     def test_error_when_not_valid_agent(self):
@@ -64,19 +65,19 @@ class PlainStonith(ResourceTest):
             # the whole of it.
             error_re = re.compile(
                 "^"
-                "Error: Agent 'absent' is not installed or does not provide "
+                "Error: Agent 'stonith:absent' is not installed or does not provide "
                 "valid metadata:( crm_resource:)? Metadata query for "
                 "stonith:absent failed:.+"
-                "use --force to override\n$",
+                f"use --force to override\n{ERRORS_HAVE_OCURRED}$",
                 re.MULTILINE,
             )
         else:
             error = (
-                "Error: Agent 'absent' is not installed or does not provide "
+                "Error: Agent 'stonith:absent' is not installed or does not provide "
                 "valid metadata: Agent absent not found or does not support "
                 "meta-data: Invalid argument (22), "
                 "Metadata query for stonith:absent failed: Input/output error, "
-                "use --force to override\n"
+                "use --force to override\n" + ERRORS_HAVE_OCURRED
             )
         self.assert_pcs_fail(
             "stonith create S absent".split(),
@@ -93,14 +94,14 @@ class PlainStonith(ResourceTest):
             # the whole of it.
             error_re = re.compile(
                 "^"
-                "Warning: Agent 'absent' is not installed or does not provide "
+                "Warning: Agent 'stonith:absent' is not installed or does not provide "
                 "valid metadata:( crm_resource:)? Metadata query for "
                 "stonith:absent failed:.+",
                 re.MULTILINE,
             )
         else:
             error = (
-                "Warning: Agent 'absent' is not installed or does not provide "
+                "Warning: Agent 'stonith:absent' is not installed or does not provide "
                 "valid metadata: Agent absent not found or does not support "
                 "meta-data: Invalid argument (22), "
                 "Metadata query for stonith:absent failed: Input/output error\n"
@@ -120,8 +121,8 @@ class PlainStonith(ResourceTest):
             output_regexp=error_re,
         )
 
-    @need_load_xvm_fence_agent
     def test_disabled_puts_target_role_stopped(self):
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.assert_effect(
             "stonith create S fence_xvm --disabled".split(),
             """<resources>
@@ -141,6 +142,7 @@ class PlainStonith(ResourceTest):
         )
 
     def test_debug_and_verbose_allowed(self):
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.assert_effect(
             "stonith create S fence_apc ip=i username=u verbose=v debug=d".split(),
             """<resources>
@@ -166,10 +168,14 @@ class PlainStonith(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
+            output=(
+                "Warning: stonith option 'debug' is deprecated and should not "
+                "be used, use 'debug_file' instead\n"
+            ),
         )
 
-    @need_load_xvm_fence_agent
     def test_error_when_action_specified(self):
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.assert_pcs_fail(
             "stonith create S fence_xvm action=reboot".split(),
             "Error: stonith option 'action' is deprecated and should not be"
@@ -177,8 +183,8 @@ class PlainStonith(ResourceTest):
             "use --force to override\n" + ERRORS_HAVE_OCURRED,
         )
 
-    @need_load_xvm_fence_agent
     def test_warn_when_action_specified_forced(self):
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.assert_effect(
             "stonith create S fence_xvm action=reboot --force".split(),
             """<resources>
@@ -201,8 +207,8 @@ class PlainStonith(ResourceTest):
 
 
 class WithMeta(ResourceTest):
-    @need_load_xvm_fence_agent
     def test_simplest_with_meta_provides(self):
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.assert_effect(
             "stonith create S fence_xvm meta provides=something".split(),
             """<resources>
@@ -222,6 +228,7 @@ class WithMeta(ResourceTest):
         )
 
     def test_base_with_agent_that_provides_unfencing_with_meta_provides(self):
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.assert_effect(
             "stonith create S fence_scsi meta provides=something".split(),
             """<resources>
@@ -242,8 +249,8 @@ class WithMeta(ResourceTest):
 
 
 class InGroup(ResourceTest):
-    @need_load_xvm_fence_agent
     def test_command_simply_puts_stonith_into_group(self):
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.assert_effect(
             "stonith create S fence_xvm --group G".split(),
             """<resources>
@@ -259,8 +266,8 @@ class InGroup(ResourceTest):
             </resources>""",
         )
 
-    @need_load_xvm_fence_agent
     def test_command_simply_puts_stonith_into_group_at_the_end(self):
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.assert_pcs_success("stonith create S1 fence_xvm --group G".split())
         self.assert_effect(
             "stonith create S2 fence_xvm --group G".split(),
@@ -284,8 +291,8 @@ class InGroup(ResourceTest):
             </resources>""",
         )
 
-    @need_load_xvm_fence_agent
     def test_command_simply_puts_stonith_into_group_before_another(self):
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.assert_pcs_success("stonith create S1 fence_xvm --group G".split())
         self.assert_effect(
             "stonith create S2 fence_xvm --group G --before S1".split(),
@@ -309,8 +316,8 @@ class InGroup(ResourceTest):
             </resources>""",
         )
 
-    @need_load_xvm_fence_agent
     def test_command_simply_puts_stonith_into_group_after_another(self):
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.assert_pcs_success_all(
             [
                 "stonith create S1 fence_xvm --group G".split(),
@@ -346,15 +353,15 @@ class InGroup(ResourceTest):
             </resources>""",
         )
 
-    @need_load_xvm_fence_agent
     def test_fail_when_inteded_before_item_does_not_exist(self):
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.assert_pcs_fail(
             "stonith create S2 fence_xvm --group G --before S1".split(),
             "Error: there is no resource 'S1' in the group 'G'\n",
         )
 
-    @need_load_xvm_fence_agent
     def test_fail_when_inteded_after_item_does_not_exist(self):
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.assert_pcs_fail(
             "stonith create S2 fence_xvm --group G --after S1".split(),
             "Error: there is no resource 'S1' in the group 'G'\n",
