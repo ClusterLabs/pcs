@@ -1,7 +1,7 @@
 from typing import Any, Dict, Iterable, List, Optional
 
 from pcs.common.interface.dto import to_dict
-from pcs.common.reports import ReportItemSeverity, ReportProcessor
+from pcs.common.reports import ReportProcessor
 from pcs.lib.cib.resource.agent import (
     action_to_operation,
     complete_operations_options,
@@ -144,12 +144,10 @@ def _complete_agent_list(
                 else name_to_void_metadata(split_name)
             )
             agent_list.append(_agent_metadata_to_dict(metadata, describe))
-        except ResourceAgentError as e:
-            report_processor.report(
-                resource_agent_error_to_report_item(
-                    e, ReportItemSeverity.warning()
-                )
-            )
+        except ResourceAgentError:
+            # Reports are still printed to stdout therefore we cannot report
+            # this as it would end up in the same output as # list of agents.
+            pass
     return agent_list
 
 

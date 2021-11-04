@@ -1480,12 +1480,6 @@ class StonithTest(TestCase, AssertPcsMixin):
             ),
         )
 
-    def test_stonith_create_action_empty(self):
-        self.assert_pcs_fail(
-            "stonith create test fence_apc ip=i username=u action=".split(),
-            "Error: action cannot be empty\n" + ERRORS_HAVE_OCURRED,
-        )
-
     def test_stonith_update_action(self):
         self.assert_pcs_success(
             "stonith create test fence_apc ip=i username=u".split()

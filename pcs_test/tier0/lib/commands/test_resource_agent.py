@@ -250,19 +250,6 @@ class ListAgents(TestCase):
                 ),
             ],
         )
-        self.env_assist.assert_reports(
-            [
-                fixture.warn(
-                    report_codes.UNABLE_TO_GET_AGENT_METADATA,
-                    agent="ocf:test:Stateful",
-                    reason=(
-                        "Agent ocf:test:Stateful not found or does not support "
-                        "meta-data: Invalid argument (22)\nMetadata query for "
-                        "ocf:test:Stateful failed: Input/output error"
-                    ),
-                )
-            ]
-        )
 
 
 class DescribeAgent(TestCase):

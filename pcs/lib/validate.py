@@ -329,9 +329,7 @@ class DeprecatedOption(KeyValidator):
             option_name_list,
             option_type=option_type,
             severity=(
-                ReportItemSeverity.deprecation()
-                if severity is None
-                else severity
+                ReportItemSeverity.warning() if severity is None else severity
             ),
         )
         self._deprecated_by = sorted(deprecated_by)
@@ -675,7 +673,7 @@ class ValueDeprecated(ValueValidator):
             option_name_for_report=option_name_for_report,
         )
         self._severity = (
-            ReportItemSeverity.deprecation() if severity is None else severity
+            ReportItemSeverity.warning() if severity is None else severity
         )
         self._deprecation_map = deprecation_map
 

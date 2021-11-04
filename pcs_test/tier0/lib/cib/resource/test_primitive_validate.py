@@ -127,17 +127,6 @@ class ValidateResourceInstanceAttributesCreate(TestCase):
             ),
             [
                 fixture.error(
-                    reports.codes.INVALID_OPTION_VALUE,
-                    option_name=name,
-                    option_value="",
-                    allowed_values=None,
-                    cannot_be_empty=True,
-                    forbidden_characters=None,
-                )
-                for name in options
-            ]
-            + [
-                fixture.error(
                     reports.codes.INVALID_OPTIONS,
                     force_code=reports.codes.FORCE,
                     option_names=["unknown"],
@@ -484,28 +473,6 @@ class ValidateResourceInstanceAttributesCreate(TestCase):
             ],
         )
 
-    def test_stonith_action_empty(self):
-        assert_report_item_list_equal(
-            primitive.validate_resource_instance_attributes_create(
-                _fixture_stonith(),
-                {
-                    "action": "",
-                    "required": "value",
-                },
-                etree.Element("resources"),
-            ),
-            [
-                fixture.error(
-                    reports.codes.INVALID_OPTION_VALUE,
-                    option_name="action",
-                    option_value="",
-                    allowed_values=None,
-                    cannot_be_empty=True,
-                    forbidden_characters=None,
-                ),
-            ],
-        )
-
     def test_stonith_action_not_set(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_create(
@@ -528,16 +495,7 @@ class ValidateResourceInstanceAttributesCreate(TestCase):
                 },
                 etree.Element("resources"),
             ),
-            [
-                fixture.error(
-                    reports.codes.INVALID_OPTION_VALUE,
-                    option_name="param1",
-                    option_value="",
-                    allowed_values=None,
-                    cannot_be_empty=True,
-                    forbidden_characters=None,
-                ),
-            ],
+            [],
         )
 
     def test_void_stonith_check_for_action(self):
@@ -552,14 +510,6 @@ class ValidateResourceInstanceAttributesCreate(TestCase):
                 etree.Element("resources"),
             ),
             [
-                fixture.error(
-                    reports.codes.INVALID_OPTION_VALUE,
-                    option_name="param1",
-                    option_value="",
-                    allowed_values=None,
-                    cannot_be_empty=True,
-                    forbidden_characters=None,
-                ),
                 fixture.error(
                     reports.codes.DEPRECATED_OPTION,
                     force_code=reports.codes.FORCE,

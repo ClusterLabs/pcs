@@ -303,9 +303,6 @@ def validate_resource_instance_attributes_create(
     force: bool = False,
 ) -> reports.ReportItemList:
     report_items: reports.ReportItemList = []
-    report_items += validate.ValidatorAll(
-        [validate.ValueNotEmpty(name, None) for name in instance_attributes]
-    ).validate(instance_attributes)
     if resource_agent.metadata.agent_exists:
         report_items += validate.ValidatorAll(
             resource_agent.get_validators_allowed_parameters(force)

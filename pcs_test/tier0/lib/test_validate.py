@@ -348,7 +348,7 @@ class DeprecatedOption(TestCase):
                 ["old1a", "old1b"], ["new1", "new2"]
             ).validate({"old1b": "value"}),
             [
-                fixture.deprecation(
+                fixture.warn(
                     reports.codes.DEPRECATED_OPTION,
                     option_name="old1b",
                     replaced_by=["new1", "new2"],
@@ -363,13 +363,13 @@ class DeprecatedOption(TestCase):
                 ["old1a", "old1b"], ["new1", "new2"], "some type"
             ).validate({"old1a": "valuea", "old1b": "valueb"}),
             [
-                fixture.deprecation(
+                fixture.warn(
                     reports.codes.DEPRECATED_OPTION,
                     option_name="old1a",
                     replaced_by=["new1", "new2"],
                     option_type="some type",
                 ),
-                fixture.deprecation(
+                fixture.warn(
                     reports.codes.DEPRECATED_OPTION,
                     option_name="old1b",
                     replaced_by=["new1", "new2"],
@@ -1079,7 +1079,7 @@ class ValueDeprecated(TestCase):
                 dict(opt="valA")
             ),
             [
-                fixture.deprecation(
+                fixture.warn(
                     reports.codes.DEPRECATED_OPTION_VALUE,
                     option_name="opt",
                     deprecated_value="valA",
