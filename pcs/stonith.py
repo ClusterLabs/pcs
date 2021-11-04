@@ -69,7 +69,7 @@ def stonith_list_available(lib, argv, modifiers):
         )
 
     for agent_info in agent_list:
-        name = agent_info["name"]
+        name = agent_info["type"]
         shortdesc = agent_info["shortdesc"]
         if shortdesc:
             print(
