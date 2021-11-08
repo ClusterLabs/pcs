@@ -126,25 +126,28 @@ cluster_cmd = create_router(
         # pcs manpage.
         # To be removed in the next significant version.
         "quorum": lambda lib, argv, modifiers: raise_command_replaced(
-            "pcs quorum"
+            ["pcs quorum"], pcs_version="0.10"
         ),
         "remote-node": create_router(
             {
                 "add": lambda lib, argv, modifiers: raise_command_replaced(
-                    "pcs cluster node add-guest",
+                    ["pcs cluster node add-guest"], pcs_version="0.10"
                 ),
                 "remove": lambda lib, argv, modifiers: raise_command_replaced(
-                    "pcs cluster node delete-guest",
-                    "pcs cluster node remove-guest",
+                    [
+                        "pcs cluster node delete-guest",
+                        "pcs cluster node remove-guest",
+                    ],
+                    pcs_version="0.10",
                 ),
             },
             ["cluster", "node"],
         ),
         "standby": lambda lib, argv, modifiers: raise_command_replaced(
-            "pcs node standby"
+            ["pcs node standby"], pcs_version="0.10"
         ),
         "unstandby": lambda lib, argv, modifiers: raise_command_replaced(
-            "pcs node unstandby"
+            ["pcs node unstandby"], pcs_version="0.10"
         ),
     },
     ["cluster"],

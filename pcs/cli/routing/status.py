@@ -29,7 +29,7 @@ status_cmd = create_router(
         # pcs manpage.
         # To be removed in the next significant version.
         "groups": lambda lib, argv, modifiers: raise_command_replaced(
-            "pcs resource group list"
+            ["pcs resource group list"], pcs_version="0.10"
         ),
     },
     ["status"],

@@ -1182,8 +1182,11 @@ def cluster_uidgid(lib, argv, modifiers, silent_list=False):
         raise CmdLineInputError(
             hint=(
                 msg_command_replaced(
-                    "pcs cluster uidgid delete",
-                    "pcs cluster uidgid remove",
+                    [
+                        "pcs cluster uidgid delete",
+                        "pcs cluster uidgid remove",
+                    ],
+                    pcs_version="0.10",
                 )
                 if command == "rm"
                 else None

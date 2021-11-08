@@ -2857,7 +2857,7 @@ def resource_failcount(lib, argv, modifiers):
     # manpage.
     # To be removed in the next significant version.
     if command == "reset":
-        raise_command_replaced("pcs resource cleanup")
+        raise_command_replaced(["pcs resource cleanup"], pcs_version="0.10")
 
     resource = argv.pop(0) if argv and "=" not in argv[0] else None
     parsed_options = prepare_options_allowed(

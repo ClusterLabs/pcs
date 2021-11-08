@@ -177,7 +177,7 @@ resource_cmd = create_router(
         # pcs manpage.
         # To be removed in the next significant version.
         "master": lambda lib, argv, modifiers: raise_command_replaced(
-            "pcs resource promotable"
+            ["pcs resource promotable"], pcs_version="0.10"
         ),
         "relations": show_resource_relations_cmd,
     },

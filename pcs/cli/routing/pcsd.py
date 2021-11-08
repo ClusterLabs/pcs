@@ -19,7 +19,7 @@ pcsd_cmd = create_router(
         # pcs manpage.
         # TODO To be removed in the next significant version.
         "clear-auth": lambda lib, argv, modifiers: raise_command_replaced(
-            "pcs host deauth", "pcs pcsd deauth"
+            ["pcs host deauth", "pcs pcsd deauth"], pcs_version="0.10"
         ),
     },
     ["pcsd"],
