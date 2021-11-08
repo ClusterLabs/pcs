@@ -26,7 +26,6 @@ from pcs.cli.common import parse_args
 from pcs.cli.common.errors import (
     CmdLineInputError,
     ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE,
-    HINT_SYNTAX_CHANGE,
     msg_command_replaced,
 )
 from pcs.cli.common.tools import print_to_stderr
@@ -1500,10 +1499,7 @@ def cluster_auth_cmd(lib, argv, modifiers):
         "--corosync_conf", "--request-timeout", "-u", "-p"
     )
     if argv:
-        # The hint is defined to print error messages which point users to the
-        # changes section in pcs manpage.
-        # To be removed in the next significant version.
-        raise CmdLineInputError(hint=HINT_SYNTAX_CHANGE)
+        raise CmdLineInputError()
     lib_env = utils.get_lib_env()
     target_factory = lib_env.get_node_target_factory()
     cluster_node_list = lib_env.get_corosync_conf().get_nodes()
@@ -1657,10 +1653,6 @@ def cluster_setup(lib, argv, modifiers):
             + allowed_options_live
             + allowed_options_local
         ),
-        # The hint is defined to print error messages which point users to the
-        # changes section in pcs manpage.
-        # To be removed in the next significant version.
-        hint_syntax_changed=modifiers.is_specified_any(["--local", "--name"]),
     )
     if is_local and modifiers.is_specified_any(allowed_options_live):
         raise CmdLineInputError(

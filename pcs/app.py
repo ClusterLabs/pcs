@@ -176,12 +176,6 @@ def main(argv=None):
             argv = parse_args.filter_out_options(argv)
     except getopt.GetoptError as err:
         error(str(err))
-        if err.opt in {"V", "clone", "device", "watchdog"}:
-            # Print error messages which point users to the changes section in
-            # pcs manpage.
-            # TODO remove
-            # To be removed in the next significant version.
-            print_to_stderr(f"Hint: {errors.HINT_SYNTAX_CHANGE}")
         print_to_stderr(usage.main())
         sys.exit(1)
 

@@ -17,10 +17,6 @@ def set_property(lib, argv, modifiers):
     modifiers.ensure_only_supported(
         "--force",
         "-f",
-        # The hint is defined to print error messages which point users to the
-        # changes section in pcs manpage.
-        # To be removed in the next significant version.
-        hint_syntax_changed=modifiers.is_specified("--node"),
     )
     if not argv:
         raise CmdLineInputError()
@@ -79,10 +75,6 @@ def unset_property(lib, argv, modifiers):
     modifiers.ensure_only_supported(
         "--force",
         "-f",
-        # The hint is defined to print error messages which point users to the
-        # changes section in pcs manpage.
-        # To be removed in the next significant version.
-        hint_syntax_changed=modifiers.is_specified("--node"),
     )
     if not argv:
         raise CmdLineInputError()
@@ -113,10 +105,6 @@ def list_property(lib, argv, modifiers):
         "--defaults",
         "--all",
         "-f",
-        # The hint is defined to print error messages which point users to the
-        # changes section in pcs manpage.
-        # To be removed in the next significant version.
-        hint_syntax_changed=modifiers.is_specified("--node"),
     )
     if len(argv) > 1:
         raise CmdLineInputError()

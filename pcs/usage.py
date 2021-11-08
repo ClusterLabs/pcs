@@ -773,8 +773,8 @@ Commands:
         If a node is not specified then resources / stonith devices on all
         nodes will be refreshed.
 
-    failcount show [<resource id>] [node=<node>] [operation=<operation>
-            [interval=<interval>]] [--full]
+    failcount [show [<resource id>] [node=<node>] [operation=<operation>
+            [interval=<interval>]]] [--full]
         Show current failcount for resources, optionally filtered by a resource,
         node, operation and its interval. If --full is specified do not sum
         failcounts per resource and node. Use 'pcs resource cleanup' or 'pcs

@@ -13,10 +13,6 @@ ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE = (
 )
 
 SEE_MAN_CHANGES = "See 'man pcs' -> Changes in pcs-{}."
-HINT_SYNTAX_CHANGE = (
-    "Syntax has changed from previous version. "
-    + SEE_MAN_CHANGES.format("0.10")
-)
 
 
 def msg_command_replaced(new_commands: List[str], pcs_version: str) -> str:

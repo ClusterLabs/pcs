@@ -2,7 +2,6 @@ from pcs import (
     pcsd,
     usage,
 )
-from pcs.cli.common.errors import raise_command_replaced
 from pcs.cli.common.routing import create_router
 
 
@@ -14,13 +13,6 @@ pcsd_cmd = create_router(
         "certkey": pcsd.pcsd_certkey_cmd,
         "status": pcsd.pcsd_status_cmd,
         "sync-certificates": pcsd.pcsd_sync_certs,
-        # removed commands
-        # These print error messages which point users to the changes section in
-        # pcs manpage.
-        # TODO To be removed in the next significant version.
-        "clear-auth": lambda lib, argv, modifiers: raise_command_replaced(
-            ["pcs host deauth", "pcs pcsd deauth"], pcs_version="0.10"
-        ),
     },
     ["pcsd"],
 )

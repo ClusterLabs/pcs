@@ -11,10 +11,7 @@ from pcs import (
     usage,
 )
 import pcs.cli.cluster.command as cluster_command
-from pcs.cli.common.errors import (
-    CmdLineInputError,
-    raise_command_replaced,
-)
+from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import InputModifiers
 from pcs.cli.common.routing import create_router
 from pcs.cli.reports.output import deprecation_warning
@@ -121,34 +118,6 @@ cluster_cmd = create_router(
         "verify": cluster.cluster_verify,
         "report": cluster.cluster_report,
         "remove_nodes_from_cib": cluster.remove_nodes_from_cib,
-        # removed commands
-        # These print error messages which point users to the changes section in
-        # pcs manpage.
-        # To be removed in the next significant version.
-        "quorum": lambda lib, argv, modifiers: raise_command_replaced(
-            ["pcs quorum"], pcs_version="0.10"
-        ),
-        "remote-node": create_router(
-            {
-                "add": lambda lib, argv, modifiers: raise_command_replaced(
-                    ["pcs cluster node add-guest"], pcs_version="0.10"
-                ),
-                "remove": lambda lib, argv, modifiers: raise_command_replaced(
-                    [
-                        "pcs cluster node delete-guest",
-                        "pcs cluster node remove-guest",
-                    ],
-                    pcs_version="0.10",
-                ),
-            },
-            ["cluster", "node"],
-        ),
-        "standby": lambda lib, argv, modifiers: raise_command_replaced(
-            ["pcs node standby"], pcs_version="0.10"
-        ),
-        "unstandby": lambda lib, argv, modifiers: raise_command_replaced(
-            ["pcs node unstandby"], pcs_version="0.10"
-        ),
     },
     ["cluster"],
 )

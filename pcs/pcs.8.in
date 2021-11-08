@@ -404,7 +404,7 @@ If a resource id is not specified then all resources / stonith devices will be r
 .br
 If a node is not specified then resources / stonith devices on all nodes will be refreshed.
 .TP
-failcount show [<resource id>] [node=<node>] [operation=<operation> [interval=<interval>]] [\fB\-\-full\fR]
+failcount [show [<resource id>] [node=<node>] [operation=<operation> [interval=<interval>]]] [\fB\-\-full\fR]
 Show current failcount for resources, optionally filtered by a resource, node, operation and its interval. If \fB\-\-full\fR is specified do not sum failcounts per resource and node. Use 'pcs resource cleanup' or 'pcs resource refresh' to reset failcounts.
 .TP
 relocate dry\-run [resource1] [resource2] ...

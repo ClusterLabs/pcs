@@ -23,7 +23,7 @@ from pcs.common.str_tools import format_list
 from pcs.settings import (
     pacemaker_wait_timeout_status as PACEMAKER_WAIT_TIMEOUT_STATUS,
 )
-from pcs.cli.common.errors import CmdLineInputError, raise_command_replaced
+from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import (
     group_by_keywords,
     prepare_options,
@@ -2842,22 +2842,13 @@ def is_managed(resource_id):
     return False  # pylint does not know utils.err raises
 
 
-def resource_failcount(lib, argv, modifiers):
+def resource_failcount_show(lib, argv, modifiers):
     """
     Options:
       * --full
       * -f - CIB file
     """
     modifiers.ensure_only_supported("-f", "--full")
-    if not argv:
-        raise CmdLineInputError()
-
-    command = argv.pop(0)
-    # Print error messages which point users to the changes section in pcs
-    # manpage.
-    # To be removed in the next significant version.
-    if command == "reset":
-        raise_command_replaced(["pcs resource cleanup"], pcs_version="0.10")
 
     resource = argv.pop(0) if argv and "=" not in argv[0] else None
     parsed_options = prepare_options_allowed(
@@ -2866,21 +2857,74 @@ def resource_failcount(lib, argv, modifiers):
     node = parsed_options.get("node")
     operation = parsed_options.get("operation")
     interval = parsed_options.get("interval")
+    result_lines = []
+    failures_data = lib.resource.get_failcounts(
+        resource=resource, node=node, operation=operation, interval=interval
+    )
 
-    if command == "show":
-        print(
-            resource_failcount_show(
-                lib,
-                resource,
-                node,
-                operation,
-                interval,
-                modifiers.get("--full"),
+    if not failures_data:
+        result_lines.append(
+            __headline_resource_failures(
+                True, resource, node, operation, interval
             )
         )
+        print("\n".join(result_lines))
         return
 
-    raise CmdLineInputError()
+    resource_list = sorted({fail["resource"] for fail in failures_data})
+    for current_resource in resource_list:
+        result_lines.append(
+            __headline_resource_failures(
+                False, current_resource, node, operation, interval
+            )
+        )
+        resource_failures = [
+            fail
+            for fail in failures_data
+            if fail["resource"] == current_resource
+        ]
+        node_list = sorted({fail["node"] for fail in resource_failures})
+        for current_node in node_list:
+            node_failures = [
+                fail
+                for fail in resource_failures
+                if fail["node"] == current_node
+            ]
+            if modifiers.get("--full"):
+                result_lines.append(f"  {current_node}:")
+                operation_list = sorted(
+                    {fail["operation"] for fail in node_failures}
+                )
+                for current_operation in operation_list:
+                    operation_failures = [
+                        fail
+                        for fail in node_failures
+                        if fail["operation"] == current_operation
+                    ]
+                    interval_list = sorted(
+                        {fail["interval"] for fail in operation_failures},
+                        # pacemaker's definition of infinity
+                        key=lambda x: 1000000 if x == "INFINITY" else x,
+                    )
+                    for current_interval in interval_list:
+                        interval_failures = [
+                            fail
+                            for fail in operation_failures
+                            if fail["interval"] == current_interval
+                        ]
+                        failcount, dummy_last_failure = __agregate_failures(
+                            interval_failures
+                        )
+                        result_lines.append(
+                            f"    {current_operation} {current_interval}ms: "
+                            f"{failcount}"
+                        )
+            else:
+                failcount, dummy_last_failure = __agregate_failures(
+                    node_failures
+                )
+                result_lines.append(f"  {current_node}: {failcount}")
+    print("\n".join(result_lines))
 
 
 def __agregate_failures(failure_list):
@@ -2921,80 +2965,6 @@ def __headline_resource_failures(empty, resource, node, operation, interval):
     return " ".join(headline_parts).format(
         node=node, resource=resource, operation=operation, interval=interval
     )
-
-
-def resource_failcount_show(lib, resource, node, operation, interval, full):
-    """
-    Commandline options:
-      * -f - CIB file
-    """
-    result_lines = []
-    failures_data = lib.resource.get_failcounts(
-        resource=resource, node=node, operation=operation, interval=interval
-    )
-
-    if not failures_data:
-        result_lines.append(
-            __headline_resource_failures(
-                True, resource, node, operation, interval
-            )
-        )
-        return "\n".join(result_lines)
-
-    resource_list = sorted({fail["resource"] for fail in failures_data})
-    for current_resource in resource_list:
-        result_lines.append(
-            __headline_resource_failures(
-                False, current_resource, node, operation, interval
-            )
-        )
-        resource_failures = [
-            fail
-            for fail in failures_data
-            if fail["resource"] == current_resource
-        ]
-        node_list = sorted({fail["node"] for fail in resource_failures})
-        for current_node in node_list:
-            node_failures = [
-                fail
-                for fail in resource_failures
-                if fail["node"] == current_node
-            ]
-            if full:
-                result_lines.append(f"  {current_node}:")
-                operation_list = sorted(
-                    {fail["operation"] for fail in node_failures}
-                )
-                for current_operation in operation_list:
-                    operation_failures = [
-                        fail
-                        for fail in node_failures
-                        if fail["operation"] == current_operation
-                    ]
-                    interval_list = sorted(
-                        {fail["interval"] for fail in operation_failures},
-                        # pacemaker's definition of infinity
-                        key=lambda x: 1000000 if x == "INFINITY" else x,
-                    )
-                    for current_interval in interval_list:
-                        interval_failures = [
-                            fail
-                            for fail in operation_failures
-                            if fail["interval"] == current_interval
-                        ]
-                        failcount, dummy_last_failure = __agregate_failures(
-                            interval_failures
-                        )
-                        result_lines.append(
-                            f"    {current_operation} {current_interval}ms: "
-                            f"{failcount}"
-                        )
-            else:
-                failcount, dummy_last_failure = __agregate_failures(
-                    node_failures
-                )
-                result_lines.append(f"  {current_node}: {failcount}")
-    return "\n".join(result_lines)
 
 
 def resource_node_lines(node):
