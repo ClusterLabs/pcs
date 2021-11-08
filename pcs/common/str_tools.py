@@ -25,33 +25,58 @@ def indent(line_list: Iterable[str], indent_step: int = 2) -> List[str]:
     ]
 
 
-def format_list_dont_sort(
-    item_list: List[str],  # Intetionaly not Sequence so string is prohibited
+ListOfStrings = List[str]  # Intetionaly not Sequence so string is prohibited
+
+
+def format_list_base(
+    item_list: ListOfStrings,
     separator: str = ", ",
 ) -> str:
-    return separator.join(f"'{item}'" for item in item_list)
+    return separator.join(item_list)
+
+
+def format_list_dont_sort(
+    item_list: ListOfStrings,
+    separator: str = ", ",
+) -> str:
+    return format_list_base(quote_items(item_list), separator)
 
 
 def format_list(
-    item_list: List[str],  # Intetionaly not Sequence so string is prohibited
+    item_list: ListOfStrings,
     separator: str = ", ",
 ) -> str:
     return format_list_dont_sort(sorted(item_list), separator)
 
 
 def format_list_custom_last_separator(
-    item_list: List[str],  # Intetionaly not Sequence so string is prohibited
+    item_list: ListOfStrings,
     last_separator: str,
     separator: str = ", ",
 ) -> str:
-    item_list = sorted(item_list)
-    if len(item_list) < 2:
-        return format_list(item_list, separator=separator)
-    return "{}{}{}".format(
-        format_list(item_list[:-1], separator=separator),
-        last_separator,
-        format_list(item_list[-1:], separator=separator),
+    return format_list_custom_last_separator_dont_sort(
+        quote_items(sorted(item_list)), last_separator, separator
     )
+
+
+def format_list_custom_last_separator_dont_sort(
+    item_list: ListOfStrings,
+    last_separator: str,
+    separator: str = ", ",
+) -> str:
+    if len(item_list) < 2:
+        return format_list_base(item_list)
+    return format_list_base(
+        [
+            format_list_base(item_list[:-1], separator=separator),
+            format_list_base(item_list[-1:]),
+        ],
+        separator=last_separator,
+    )
+
+
+def quote_items(item_list: ListOfStrings) -> List[str]:
+    return [f"'{item}'" for item in item_list]
 
 
 # For now, Tuple[str, str] is sufficient. Feel free to change it if needed,
