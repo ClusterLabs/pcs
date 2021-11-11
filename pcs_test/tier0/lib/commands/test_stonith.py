@@ -528,6 +528,10 @@ class CreateInGroup(CreateMixin, TestCase):
                     "must-set-new": "B",
                 },
             ),
+            expected_in_processor=False,
+        )
+
+        self.env_assist.assert_reports(
             [
                 fixture.error(
                     reports.codes.INVALID_ID_BAD_CHAR,
@@ -536,8 +540,7 @@ class CreateInGroup(CreateMixin, TestCase):
                     is_first_char=True,
                     invalid_character="0",
                 )
-            ],
-            expected_in_processor=False,
+            ]
         )
 
     def _assert_adjacent(self, adjacent, after):

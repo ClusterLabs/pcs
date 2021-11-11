@@ -2725,21 +2725,35 @@ class CannotGroupResourceNextToItself(ReportItemMessage):
 @dataclass(frozen=True)
 class CannotGroupResourceWrongType(ReportItemMessage):
     """
-    Cannot put a resource into a group as the resource is not a primitive
+    Cannot put a resource into a group as the resource or its parent
+    are of an unsupported type
 
     resource_id -- id of the element which cannot be put into a group
     resource_type -- tag of the element which cannot be put into a group
+    parent_id -- id of the parent element which cannot be put into a group
+    parent_type -- tag of the parent element which cannot be put into a group
     """
 
     resource_id: str
     resource_type: str
+    parent_id: Optional[str]
+    parent_type: Optional[str]
     _code = codes.CANNOT_GROUP_RESOURCE_WRONG_TYPE
 
     @property
     def message(self) -> str:
+        if self.parent_id and self.parent_type:
+            return (
+                "'{resource_id}' cannot be put into a group because its parent "
+                "'{parent_id}' is {_type_article} resource"
+            ).format(
+                resource_id=self.resource_id,
+                parent_id=self.parent_id,
+                _type_article=_type_to_string(self.parent_type, article=True),
+            )
         return (
-            "'{resource_id}' is {_type_article} resource, {_type} resources "
-            "cannot be put into a group"
+            "'{resource_id}' is {_type_article} resource, {_type} "
+            "resources cannot be put into a group"
         ).format(
             resource_id=self.resource_id,
             _type_article=_type_to_string(self.resource_type, article=True),

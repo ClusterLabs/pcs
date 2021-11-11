@@ -1322,7 +1322,7 @@ class FailOrWarnGroup(ResourceTest):
         self.assert_pcs_fail(
             "resource create R ocf:heartbeat:Dummy --group 1".split(),
             "Error: invalid group name '1', '1' is not a valid first character"
-            " for a group name\n",
+            " for a group name\n" + ERRORS_HAVE_OCURRED,
         )
 
     def test_fail_when_try_use_id_of_another_element(self):
@@ -1351,7 +1351,8 @@ class FailOrWarnGroup(ResourceTest):
                 "resource create R2 ocf:heartbeat:Dummy "
                 "--group R1-meta_attributes"
             ).split(),
-            "Error: 'R1-meta_attributes' is not a group\n",
+            "Error: 'R1-meta_attributes' is not a group\n"
+            + ERRORS_HAVE_OCURRED,
         )
 
     def test_fail_when_entered_both_after_and_before(self):
@@ -1388,13 +1389,13 @@ class FailOrWarnGroup(ResourceTest):
         )
         self.assert_pcs_fail(
             "resource create R2 ocf:heartbeat:Dummy --group G1 --before R1".split(),
-            "Error: there is no resource 'R1' in the group 'G1'\n",
+            "Error: 'R1' does not exist\n" + ERRORS_HAVE_OCURRED,
         )
 
     def test_fail_when_use_before_with_new_group(self):
         self.assert_pcs_fail(
             "resource create R2 ocf:heartbeat:Dummy --group G1 --before R1".split(),
-            "Error: there is no resource 'R1' in the group 'G1'\n",
+            "Error: 'R1' does not exist\n" + ERRORS_HAVE_OCURRED,
         )
 
     def test_fail_when_after_does_not_exist(self):
@@ -1403,13 +1404,13 @@ class FailOrWarnGroup(ResourceTest):
         )
         self.assert_pcs_fail(
             "resource create R2 ocf:heartbeat:Dummy --group G1 --after R1".split(),
-            "Error: there is no resource 'R1' in the group 'G1'\n",
+            "Error: 'R1' does not exist\n" + ERRORS_HAVE_OCURRED,
         )
 
     def test_fail_when_use_after_with_new_group(self):
         self.assert_pcs_fail(
             "resource create R2 ocf:heartbeat:Dummy --group G1 --after R1".split(),
-            "Error: there is no resource 'R1' in the group 'G1'\n",
+            "Error: 'R1' does not exist\n" + ERRORS_HAVE_OCURRED,
         )
 
     def test_fail_when_on_pacemaker_remote_attempt(self):

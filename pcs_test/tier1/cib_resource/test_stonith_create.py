@@ -353,18 +353,18 @@ class InGroup(ResourceTest):
             </resources>""",
         )
 
-    def test_fail_when_inteded_before_item_does_not_exist(self):
+    def test_fail_when_intended_before_item_does_not_exist(self):
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.assert_pcs_fail(
             "stonith create S2 fence_xvm --group G --before S1".split(),
-            "Error: there is no resource 'S1' in the group 'G'\n",
+            "Error: 'S1' does not exist\n" + ERRORS_HAVE_OCURRED,
         )
 
-    def test_fail_when_inteded_after_item_does_not_exist(self):
+    def test_fail_when_intended_after_item_does_not_exist(self):
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.assert_pcs_fail(
             "stonith create S2 fence_xvm --group G --after S1".split(),
-            "Error: there is no resource 'S1' in the group 'G'\n",
+            "Error: 'S1' does not exist\n" + ERRORS_HAVE_OCURRED,
         )
 
     def test_fail_when_entered_both_after_and_before(self):

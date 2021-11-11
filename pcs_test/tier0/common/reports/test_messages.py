@@ -1877,13 +1877,22 @@ class CannotGroupResourceNextToItself(NameBuildTest):
 
 
 class CannotGroupResourceWrongType(NameBuildTest):
-    def test_success(self):
+    def test_without_parent(self):
         self.assert_message_from_report(
             (
                 "'R' is a clone resource, clone resources cannot be put into "
                 "a group"
             ),
-            reports.CannotGroupResourceWrongType("R", "master"),
+            reports.CannotGroupResourceWrongType("R", "master", None, None),
+        )
+
+    def test_with_parent(self):
+        self.assert_message_from_report(
+            (
+                "'R' cannot be put into a group because its parent 'B' "
+                "is a bundle resource"
+            ),
+            reports.CannotGroupResourceWrongType("R", "master", "B", "bundle"),
         )
 
 
