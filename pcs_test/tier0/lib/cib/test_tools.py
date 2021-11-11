@@ -16,6 +16,33 @@ from pcs.common.tools import Version
 
 from pcs.lib.cib import tools as lib
 
+cib_element_lookup = etree.fromstring(
+    """
+            <cib>
+                <configuration>
+                    <resources>
+                        <primitive id="R1" />
+                        <primitive id="R3" />
+                        <primitive id="RX2" />
+                        <primitive id="RX2" />
+                        <primitive id="RX3" />
+                        <primitive id="T" />
+                    </resources>
+                    <tags>
+                        <tag id="T">
+                            <obj_ref id="RX1" />
+                            <obj_ref id="RX3" />
+                        </tag>
+                    </tags>
+                </configuration>
+                <status>
+                    <lrm_resource id="R3" />
+                    <lrm_resource id="R2" />
+                </status>
+            </cib>
+            """
+)
+
 # pylint: disable=no-self-use, line-too-long
 
 
@@ -843,3 +870,79 @@ class ElementSearcher(TestCase):
                 ),
             ],
         )
+
+
+class GetElementById(TestCase):
+    def test_one_match(self):
+        found_element = lib.get_element_by_id(cib_element_lookup, "R1")
+        self.assertEqual(
+            found_element,
+            cib_element_lookup.find('.//resources/primitive[@id="R1"]'),
+        )
+
+    def test_one_match_ignore_reference(self):
+        found_element = lib.get_element_by_id(cib_element_lookup, "R3")
+        self.assertEqual(
+            found_element,
+            cib_element_lookup.find('.//resources/primitive[@id="R3"]'),
+        )
+
+    def test_duplicate_ids(self):
+        with self.assertRaises(AssertionError):
+            lib.get_element_by_id(cib_element_lookup, "RX2")
+
+    def test_tag_id_same_as_resource_id(self):
+        with self.assertRaises(AssertionError):
+            lib.get_element_by_id(cib_element_lookup, "T")
+
+    def test_id_not_in_cib(self):
+        with self.assertRaises(lib.ElementNotFound):
+            lib.get_element_by_id(cib_element_lookup, "X")
+
+    def test_no_match_in_status(self):
+        with self.assertRaises(lib.ElementNotFound):
+            lib.get_element_by_id(cib_element_lookup, "R2")
+
+    def test_no_match_in_obj_ref(self):
+        with self.assertRaises(lib.ElementNotFound):
+            lib.get_element_by_id(cib_element_lookup, "RX1")
+
+
+class GetElementsById(TestCase):
+    def assert_result(self, found_id_list, unmatched_id_list):
+        found_elements, unmatched_ids = lib.get_elements_by_ids(
+            cib_element_lookup, found_id_list + unmatched_id_list
+        )
+        self.assertListEqual(
+            found_elements,
+            [
+                cib_element_lookup.find(
+                    f'.//resources/primitive[@id="{found_id}"]'
+                )
+                for found_id in found_id_list
+            ],
+        )
+        self.assertListEqual(unmatched_ids, unmatched_id_list)
+
+    def test_one_match(self):
+        self.assert_result(["R1"], [])
+
+    def test_one_match_ignore_reference(self):
+        self.assert_result(["R3"], [])
+
+    def test_duplicate_ids(self):
+        with self.assertRaises(AssertionError):
+            lib.get_elements_by_ids(cib_element_lookup, ["RX2"])
+
+    def test_tag_id_same_as_resource_id(self):
+        with self.assertRaises(AssertionError):
+            lib.get_elements_by_ids(cib_element_lookup, ["T"])
+
+    def test_id_not_in_cib(self):
+        self.assert_result(["R1"], ["X1", "X2"])
+
+    def test_no_match_in_status(self):
+        self.assert_result([], ["R2"])
+
+    def test_no_match_in_obj_ref(self):
+        self.assert_result([], ["RX1"])

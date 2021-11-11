@@ -1,9 +1,11 @@
 import re
 from typing import (
     cast,
+    Iterable,
     List,
-    Set,
     Pattern,
+    Set,
+    Tuple,
 )
 
 from lxml.etree import (
@@ -27,6 +29,10 @@ from pcs.lib.pacemaker.values import (
 from pcs.lib.xml_tools import get_root, get_sub_element
 
 _VERSION_FORMAT = r"(?P<major>\d+)\.(?P<minor>\d+)(\.(?P<rev>\d+))?$"
+
+
+class ElementNotFound(Exception):
+    pass
 
 
 class IdProvider:
@@ -70,6 +76,7 @@ class IdProvider:
         return report_list
 
 
+# DEPRECATED, use get_element(s)_by_id(s) instead
 class ElementSearcher:
     """
     Search for an element, allow to book its id if not found, provide reports
@@ -253,6 +260,45 @@ def get_configuration_elements_by_id(
             check_id=check_id,
         ),
     )
+
+
+def get_element_by_id(cib: _Element, element_id: str) -> _Element:
+    """
+    Returns an element from CIB with the given IDs
+
+    cib -- the whole cib
+    element_id -- element ID to look for
+    """
+    element_list = get_configuration_elements_by_id(cib, element_id)
+    if not element_list:
+        raise ElementNotFound
+    if len(element_list) > 1:
+        # List should only contain one element - IDs need to be unique across
+        # the whole CIB since Pacemaker does XML schema validation
+        raise AssertionError(
+            f"Found more than one match for id '{element_id}' in the CIB"
+        )
+    return element_list[0]
+
+
+def get_elements_by_ids(
+    cib: _Element, element_ids: Iterable[str]
+) -> Tuple[List[_Element], List[str]]:
+    """
+    Returns a list of elements from CIB with the given IDs and a list of IDs
+    that weren't found
+
+    cib -- the whole cib
+    element_ids -- iterable with element IDs to look for
+    """
+    found_element_list = []
+    id_not_found_list = []
+    for element_id in element_ids:
+        try:
+            found_element_list.append(get_element_by_id(cib, element_id))
+        except ElementNotFound:
+            id_not_found_list.append(element_id)
+    return found_element_list, id_not_found_list
 
 
 # DEPRECATED, use IdProvider instead
