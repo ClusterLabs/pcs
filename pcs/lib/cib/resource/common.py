@@ -158,6 +158,15 @@ def get_inner_resources(resource_el: _Element) -> List[_Element]:
     return []
 
 
+def is_resource(element: _Element) -> bool:
+    """
+    Return True for any resource, False otherwise, like meta_attributes element.
+
+    element -- element to check
+    """
+    return element.tag in ALL_RESOURCE_XML_TAGS
+
+
 def is_wrapper_resource(resource_el: _Element) -> bool:
     """
     Return True for resource_el of types that can contain other resource(s)

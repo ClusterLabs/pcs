@@ -10,8 +10,11 @@ from pcs_test.tools.assertions import (
 from pcs_test.tools.xml import etree_to_str
 
 from pcs.common.reports import codes as report_codes
+from pcs.common.reports.const import (
+    ADD_REMOVE_CONTAINER_TYPE_GROUP,
+    ADD_REMOVE_ITEM_TYPE_RESOURCE,
+)
 from pcs.lib.cib.resource import hierarchy
-from pcs.lib.cib.tools import IdProvider
 
 
 def _resource(cib, id_):
@@ -22,10 +25,8 @@ def _resources(cib, *ids):
     return [_resource(cib, id_) for id_ in ids]
 
 
-class ValidateMoveResourcesToGroupMixin:
+class ValidateMoveResourcesToGroup(TestCase):
     def setUp(self):
-        # pylint does not know this mixin goes to TestCase
-        # pylint: disable=invalid-name
         self.cib = etree.fromstring(
             """
             <resources>
@@ -51,11 +52,23 @@ class ValidateMoveResourcesToGroupMixin:
         """
         )
 
+    def _validate(self, group, resources, adjacent=None):
+        return hierarchy.validate_move_resources_to_group(
+            _resource(self.cib, group),
+            _resources(self.cib, *resources),
+            _resource(self.cib, adjacent) if adjacent else None,
+        )
+
     def test_no_resources_specified(self):
         assert_report_item_list_equal(
             self._validate("G", []),
             [
-                fixture.error(report_codes.CANNOT_GROUP_RESOURCE_NO_RESOURCES),
+                fixture.error(
+                    report_codes.ADD_REMOVE_ITEMS_NOT_SPECIFIED,
+                    container_type=ADD_REMOVE_CONTAINER_TYPE_GROUP,
+                    item_type=ADD_REMOVE_ITEM_TYPE_RESOURCE,
+                    container_id="G",
+                ),
             ],
         )
 
@@ -80,11 +93,15 @@ class ValidateMoveResourcesToGroupMixin:
                     report_codes.CANNOT_GROUP_RESOURCE_WRONG_TYPE,
                     resource_id="RC1-clone",
                     resource_type="clone",
+                    parent_id=None,
+                    parent_type=None,
                 ),
                 fixture.error(
                     report_codes.CANNOT_GROUP_RESOURCE_WRONG_TYPE,
                     resource_id="RB1-bundle",
                     resource_type="bundle",
+                    parent_id=None,
+                    parent_type=None,
                 ),
             ],
         )
@@ -96,12 +113,16 @@ class ValidateMoveResourcesToGroupMixin:
                 fixture.error(
                     report_codes.CANNOT_GROUP_RESOURCE_WRONG_TYPE,
                     resource_id="RC1",
-                    resource_type="clone",
+                    resource_type="primitive",
+                    parent_id="RC1-clone",
+                    parent_type="clone",
                 ),
                 fixture.error(
                     report_codes.CANNOT_GROUP_RESOURCE_WRONG_TYPE,
                     resource_id="RB1",
-                    resource_type="bundle",
+                    resource_type="primitive",
+                    parent_id="RB1-bundle",
+                    parent_type="bundle",
                 ),
             ],
         )
@@ -111,9 +132,11 @@ class ValidateMoveResourcesToGroupMixin:
             self._validate("G", ["RG2", "R1", "RG1"]),
             [
                 fixture.error(
-                    report_codes.CANNOT_GROUP_RESOURCE_ALREADY_IN_THE_GROUP,
-                    resource_list=["RG1", "RG2"],
-                    group_id="G",
+                    report_codes.ADD_REMOVE_CANNOT_ADD_ITEMS_ALREADY_IN_THE_CONTAINER,
+                    container_type=ADD_REMOVE_CONTAINER_TYPE_GROUP,
+                    item_type=ADD_REMOVE_ITEM_TYPE_RESOURCE,
+                    container_id="G",
+                    item_list=["RG1", "RG2"],
                 ),
             ],
         )
@@ -129,9 +152,11 @@ class ValidateMoveResourcesToGroupMixin:
             self._validate("G", ["R1"], "R2"),
             [
                 fixture.error(
-                    report_codes.CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_NOT_IN_GROUP,
-                    adjacent_resource_id="R2",
-                    group_id="G",
+                    report_codes.ADD_REMOVE_ADJACENT_ITEM_NOT_IN_THE_CONTAINER,
+                    container_type=ADD_REMOVE_CONTAINER_TYPE_GROUP,
+                    item_type=ADD_REMOVE_ITEM_TYPE_RESOURCE,
+                    container_id="G",
+                    adjacent_item_id="R2",
                 ),
             ],
         )
@@ -142,9 +167,11 @@ class ValidateMoveResourcesToGroupMixin:
             self._validate("G", ["R1"], "RGX"),
             [
                 fixture.error(
-                    report_codes.CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_NOT_IN_GROUP,
-                    adjacent_resource_id="RGX",
-                    group_id="G",
+                    report_codes.ADD_REMOVE_ADJACENT_ITEM_NOT_IN_THE_CONTAINER,
+                    container_type=ADD_REMOVE_CONTAINER_TYPE_GROUP,
+                    item_type=ADD_REMOVE_ITEM_TYPE_RESOURCE,
+                    container_id="G",
+                    adjacent_item_id="RGX",
                 ),
             ],
         )
@@ -154,8 +181,11 @@ class ValidateMoveResourcesToGroupMixin:
             self._validate("G", ["RG1"], "RG1"),
             [
                 fixture.error(
-                    report_codes.CANNOT_GROUP_RESOURCE_NEXT_TO_ITSELF,
-                    resource_id="RG1",
+                    report_codes.ADD_REMOVE_CANNOT_PUT_ITEM_NEXT_TO_ITSELF,
+                    container_type=ADD_REMOVE_CONTAINER_TYPE_GROUP,
+                    item_type=ADD_REMOVE_ITEM_TYPE_RESOURCE,
+                    container_id="G",
+                    adjacent_item_id="RG1",
                 ),
             ],
         )
@@ -165,66 +195,71 @@ class ValidateMoveResourcesToGroupMixin:
             self._validate("G", ["R3", "R2", "R1", "R2", "R1"]),
             [
                 fixture.error(
-                    report_codes.CANNOT_GROUP_RESOURCE_MORE_THAN_ONCE,
-                    resource_list=["R1", "R2"],
+                    report_codes.ADD_REMOVE_ITEMS_DUPLICATION,
+                    container_type=ADD_REMOVE_CONTAINER_TYPE_GROUP,
+                    item_type=ADD_REMOVE_ITEM_TYPE_RESOURCE,
+                    container_id="G",
+                    duplicate_items_list=["R1", "R2"],
                 ),
             ],
         )
 
-
-class ValidateMoveResourcesToGroupByElements(
-    ValidateMoveResourcesToGroupMixin, TestCase
-):
-    def _resource(self, id_):
-        return _resource(self.cib, id_)
-
-    def _resources(self, ids):
-        return _resources(self.cib, *ids)
-
-    def _validate(self, group, resources, adjacent=None):
-        return hierarchy.ValidateMoveResourcesToGroupByElements(
-            self._resource(group),
-            self._resources(resources),
-            self._resource(adjacent) if adjacent else None,
-        ).validate()
-
     def test_resources_are_not_resources(self):
-        # The validator expects to get resource elements. So this report is
-        # not the best, but at least the validator detects the problem.
-        # Validation using IDs provides better reporting in this case.
         assert_report_item_list_equal(
             self._validate("G", ["RB1-meta_attributes"]),
             [
                 fixture.error(
-                    report_codes.CANNOT_GROUP_RESOURCE_WRONG_TYPE,
-                    resource_id="RB1-meta_attributes",
-                    resource_type="meta_attributes",
+                    report_codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
+                    id="RB1-meta_attributes",
+                    expected_types=["primitive"],
+                    current_type="meta_attributes",
                 ),
             ],
         )
 
+    def test_adjacent_same_as_moved(self):
+        assert_report_item_list_equal(
+            self._validate("G", ["RG1", "RG2"], "RG1"),
+            [
+                fixture.error(
+                    report_codes.ADD_REMOVE_CANNOT_PUT_ITEM_NEXT_TO_ITSELF,
+                    container_type=ADD_REMOVE_CONTAINER_TYPE_GROUP,
+                    item_type=ADD_REMOVE_ITEM_TYPE_RESOURCE,
+                    container_id="G",
+                    adjacent_item_id="RG1",
+                ),
+            ],
+        )
 
-class ValidateMoveResourcesToGroupByIds(
-    ValidateMoveResourcesToGroupMixin, TestCase
-):
-    def _resource(self, id_):
-        # this is for inheritance
-        # pylint: disable=no-self-use
-        return id_
-
-    def _resources(self, ids):
-        # this is for inheritance
-        # pylint: disable=no-self-use
-        return ids
-
-    def _validate(self, group, resources, adjacent=None):
-        return hierarchy.ValidateMoveResourcesToGroupByIds(
-            self._resource(group),
-            self._resources(resources),
-            self._resource(adjacent) if adjacent else None,
-        ).validate(self.cib, IdProvider(self.cib))
+    def test_adjacent_same_as_moved_new_group(self):
+        empty_group_element = etree.fromstring('<group id="G-new" />')
+        assert_report_item_list_equal(
+            hierarchy.validate_move_resources_to_group(
+                empty_group_element,
+                _resources(self.cib, "RG1"),
+                _resource(self.cib, "RG1"),
+            ),
+            [
+                fixture.error(
+                    report_codes.ADD_REMOVE_CANNOT_PUT_ITEM_NEXT_TO_ITSELF,
+                    container_type=ADD_REMOVE_CONTAINER_TYPE_GROUP,
+                    item_type=ADD_REMOVE_ITEM_TYPE_RESOURCE,
+                    container_id="G-new",
+                    adjacent_item_id="RG1",
+                ),
+                fixture.error(
+                    report_codes.ADD_REMOVE_ADJACENT_ITEM_NOT_IN_THE_CONTAINER,
+                    container_type=ADD_REMOVE_CONTAINER_TYPE_GROUP,
+                    item_type=ADD_REMOVE_ITEM_TYPE_RESOURCE,
+                    container_id="G-new",
+                    adjacent_item_id="RG1",
+                ),
+            ],
+        )
 
     def test_new_group_not_valid_id(self):
+        # TODO: This can no longer be tested here
+        """
         assert_report_item_list_equal(
             self._validate("1Gr:oup", ["R1"]),
             [
@@ -244,60 +279,44 @@ class ValidateMoveResourcesToGroupByIds(
                 ),
             ],
         )
-
-    def test_missing_resources_specified(self):
-        assert_report_item_list_equal(
-            self._validate("G", ["RX1", "RX2"]),
-            [
-                fixture.report_not_found("RX1", context_type="resources"),
-                fixture.report_not_found("RX2", context_type="resources"),
-            ],
-        )
-
-    def test_resources_are_not_resources(self):
-        assert_report_item_list_equal(
-            self._validate("G", ["RB1-meta_attributes"]),
-            [
-                fixture.error(
-                    report_codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
-                    id="RB1-meta_attributes",
-                    expected_types=[
-                        "bundle",
-                        "clone",
-                        "group",
-                        "master",
-                        "primitive",
-                    ],
-                    current_type="meta_attributes",
-                ),
-            ],
-        )
+        """
 
     def test_adjacent_resource_new_group(self):
-        # pylint: disable=line-too-long
+        empty_group_element = etree.fromstring('<group id="G-new" />')
         assert_report_item_list_equal(
-            self._validate("G-new", ["R1"], "R2"),
+            hierarchy.validate_move_resources_to_group(
+                empty_group_element,
+                _resources(self.cib, "RG1"),
+                _resource(self.cib, "RG2"),
+            ),
             [
                 fixture.error(
-                    report_codes.CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_FOR_NEW_GROUP,
-                    adjacent_resource_id="R2",
-                    group_id="G-new",
+                    report_codes.ADD_REMOVE_ADJACENT_ITEM_NOT_IN_THE_CONTAINER,
+                    container_type=ADD_REMOVE_CONTAINER_TYPE_GROUP,
+                    item_type=ADD_REMOVE_ITEM_TYPE_RESOURCE,
+                    container_id="G-new",
+                    adjacent_item_id="RG2",
                 ),
             ],
         )
 
     def test_adjacent_resource_doesnt_exist(self):
-        # pylint: disable=line-too-long
+        # TODO: This can no longer be tested here
+        """
+
         assert_report_item_list_equal(
-            self._validate("G", ["R1"], "RX"),
+            self._validate("G", "RX"),
             [
                 fixture.error(
-                    report_codes.CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_NOT_IN_GROUP,
-                    adjacent_resource_id="RX",
-                    group_id="G",
+                    report_codes.ID_NOT_FOUND,
+                    id="RX",
+                    expected_types=["primitive"],
+                    context_type="resources",
+                    context_id="",
                 ),
             ],
         )
+        """
 
 
 class MoveResourcesToGroup(TestCase):

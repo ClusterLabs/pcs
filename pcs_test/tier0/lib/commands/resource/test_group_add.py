@@ -9,6 +9,10 @@ from pcs.common.reports import (
     codes as report_codes,
     messages as report_messages,
 )
+from pcs.common.reports.const import (
+    ADD_REMOVE_CONTAINER_TYPE_GROUP,
+    ADD_REMOVE_ITEM_TYPE_RESOURCE,
+)
 from pcs.common.reports.item import ReportItem
 from pcs.lib.errors import LibraryError
 from pcs.lib.commands import resource
@@ -399,29 +403,27 @@ class GroupAdd(TestCase):
                     expected_types=["group"],
                     current_type="meta_attributes",
                 ),
-                fixture.report_not_found("R4", context_type="resources"),
-                fixture.report_not_found("R3", context_type="resources"),
+                fixture.report_not_found("R4", expected_types=[]),
+                fixture.report_not_found("R3", expected_types=[]),
                 fixture.error(
                     report_codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
                     id="R2-meta_attributes",
-                    expected_types=[
-                        "bundle",
-                        "clone",
-                        "group",
-                        "master",
-                        "primitive",
-                    ],
+                    expected_types=["primitive"],
                     current_type="meta_attributes",
                 ),
                 fixture.error(
                     report_codes.CANNOT_GROUP_RESOURCE_WRONG_TYPE,
                     resource_id="RC1-clone",
                     resource_type="clone",
+                    parent_id=None,
+                    parent_type=None,
                 ),
                 fixture.error(
                     report_codes.CANNOT_GROUP_RESOURCE_WRONG_TYPE,
                     resource_id="RC1",
-                    resource_type="clone",
+                    resource_type="primitive",
+                    parent_id="RC1-clone",
+                    parent_type="clone",
                 ),
             ]
         )
@@ -450,10 +452,11 @@ class GroupAdd(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    # pylint: disable=line-too-long
-                    report_codes.CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_NOT_IN_GROUP,
-                    adjacent_resource_id="RX1",
-                    group_id="G",
+                    report_codes.ADD_REMOVE_ADJACENT_ITEM_NOT_IN_THE_CONTAINER,
+                    container_type=ADD_REMOVE_CONTAINER_TYPE_GROUP,
+                    item_type=ADD_REMOVE_ITEM_TYPE_RESOURCE,
+                    container_id="G",
+                    adjacent_item_id="RX1",
                 ),
             ]
         )

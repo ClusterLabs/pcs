@@ -1,16 +1,19 @@
-from collections import Counter
-from typing import Container, Iterable, List, Mapping, Optional, Set, Tuple
+from typing import Container, Iterable, List, Mapping, Optional, Tuple
 
 from lxml.etree import _Element
 
 from pcs.common import reports
-from pcs.common.reports import ReportItemList
+
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
 from pcs.lib.cib import resource, stonith
 from pcs.lib.cib.nvpair import INSTANCE_ATTRIBUTES_TAG, get_value
 from pcs.lib.cib.resource.common import are_meta_disabled
-from pcs.lib.cib.tools import IdProvider
+from pcs.lib.cib.tools import (
+    ElementNotFound,
+    get_element_by_id,
+    IdProvider,
+)
 from pcs.lib.commands.resource import (
     _ensure_disabled_after_wait,
     resource_environment,
@@ -44,6 +47,8 @@ from pcs.lib.resource_agent import (
     UnableToGetAgentMetadata,
     UnsupportedOcfVersion,
 )
+from pcs.lib.validate import validate_add_remove_items
+from pcs.lib.xml_tools import get_root
 
 
 def _get_agent_facade(
@@ -219,6 +224,37 @@ def create_in_group(
         ),
     ) as resources_section:
         id_provider = IdProvider(resources_section)
+
+        adjacent_resource_element = None
+        if adjacent_resource_id:
+            try:
+                adjacent_resource_element = get_element_by_id(
+                    get_root(resources_section), adjacent_resource_id
+                )
+            except ElementNotFound:
+                # We cannot continue without adjacent element because
+                # the validator might produce misleading reports
+                if env.report_processor.report(
+                    ReportItem.error(
+                        reports.messages.IdNotFound(adjacent_resource_id, [])
+                    )
+                ).has_errors:
+                    raise LibraryError() from None
+
+        try:
+            group_element = get_element_by_id(
+                get_root(resources_section), group_id
+            )
+        except ElementNotFound:
+            group_id_reports: List[ReportItem] = []
+            validate_id(
+                group_id, description="group name", reporter=group_id_reports
+            )
+            env.report_processor.report_list(group_id_reports)
+            group_element = resource.group.append_new(
+                resources_section, group_id
+            )
+
         stonith_element = resource.primitive.create(
             env.report_processor,
             resources_section,
@@ -234,11 +270,20 @@ def create_in_group(
         )
         if ensure_disabled:
             resource.common.disable(stonith_element, id_provider)
-        validate_id(group_id, "group name")
-        resource.group.place_resource(
-            resource.group.provide_group(resources_section, group_id),
-            stonith_element,
-            adjacent_resource_id,
+
+        if env.report_processor.report_list(
+            resource.hierarchy.validate_move_resources_to_group(
+                group_element,
+                [stonith_element],
+                adjacent_resource_element,
+            )
+        ).has_errors:
+            raise LibraryError()
+
+        resource.hierarchy.move_resources_to_group(
+            group_element,
+            [stonith_element],
+            adjacent_resource_element,
             put_after_adjacent,
         )
 
@@ -315,144 +360,6 @@ def history_update(env: LibraryEnvironment):
                 )
             )
         ) from e
-
-
-def _validate_add_remove_items(
-    add_item_list: Iterable[str],
-    remove_item_list: Iterable[str],
-    current_item_list: Iterable[str],
-    container_type: reports.types.AddRemoveContainerType,
-    item_type: reports.types.AddRemoveItemType,
-    container_id: str,
-    adjacent_item_id: Optional[str] = None,
-    container_can_be_empty: bool = False,
-) -> ReportItemList:
-    """
-    Validate if items can be added or removed to or from a container.
-
-    add_item_list -- items to be added
-    remove_item_list -- items to be removed
-    current_item_list -- items currently in the container
-    container_type -- container type
-    item_type -- item type
-    container_id -- id of the container
-    adjacent_item_id -- an adjacent item in the container
-    container_can_be_empty -- flag to decide if container can be left empty
-    """
-    # pylint: disable=too-many-locals
-    report_list: ReportItemList = []
-    if not add_item_list and not remove_item_list:
-        report_list.append(
-            ReportItem.error(
-                reports.messages.AddRemoveItemsNotSpecified(
-                    container_type, item_type, container_id
-                )
-            )
-        )
-
-    def _get_duplicate_items(item_list: Iterable[str]) -> Set[str]:
-        return {item for item, count in Counter(item_list).items() if count > 1}
-
-    duplicate_items_list = _get_duplicate_items(
-        add_item_list
-    ) | _get_duplicate_items(remove_item_list)
-    if duplicate_items_list:
-        report_list.append(
-            ReportItem.error(
-                reports.messages.AddRemoveItemsDuplication(
-                    container_type,
-                    item_type,
-                    container_id,
-                    sorted(duplicate_items_list),
-                )
-            )
-        )
-    already_present = set(add_item_list).intersection(current_item_list)
-    # report only if an adjacent id is not defined, because we want to allow
-    # to move items when adjacent_item_id is specified
-    if adjacent_item_id is None and already_present:
-        report_list.append(
-            ReportItem.error(
-                reports.messages.AddRemoveCannotAddItemsAlreadyInTheContainer(
-                    container_type,
-                    item_type,
-                    container_id,
-                    sorted(already_present),
-                )
-            )
-        )
-    missing_items = set(remove_item_list).difference(current_item_list)
-    if missing_items:
-        report_list.append(
-            ReportItem.error(
-                reports.messages.AddRemoveCannotRemoveItemsNotInTheContainer(
-                    container_type,
-                    item_type,
-                    container_id,
-                    sorted(missing_items),
-                )
-            )
-        )
-    common_items = set(add_item_list) & set(remove_item_list)
-    if common_items:
-        report_list.append(
-            ReportItem.error(
-                reports.messages.AddRemoveCannotAddAndRemoveItemsAtTheSameTime(
-                    container_type,
-                    item_type,
-                    container_id,
-                    sorted(common_items),
-                )
-            )
-        )
-    if not container_can_be_empty and not add_item_list:
-        remaining_items = set(current_item_list).difference(remove_item_list)
-        if not remaining_items:
-            report_list.append(
-                ReportItem.error(
-                    reports.messages.AddRemoveCannotRemoveAllItemsFromTheContainer(
-                        container_type,
-                        item_type,
-                        container_id,
-                        list(current_item_list),
-                    )
-                )
-            )
-    if adjacent_item_id:
-        if adjacent_item_id not in current_item_list:
-            report_list.append(
-                ReportItem.error(
-                    reports.messages.AddRemoveAdjacentItemNotInTheContainer(
-                        container_type,
-                        item_type,
-                        container_id,
-                        adjacent_item_id,
-                    )
-                )
-            )
-        if adjacent_item_id in add_item_list:
-            report_list.append(
-                ReportItem.error(
-                    reports.messages.AddRemoveCannotPutItemNextToItself(
-                        container_type,
-                        item_type,
-                        container_id,
-                        adjacent_item_id,
-                    )
-                )
-            )
-        if not add_item_list:
-            report_list.append(
-                ReportItem.error(
-                    reports.messages.AddRemoveCannotSpecifyAdjacentItemWithoutItemsToAdd(
-                        container_type,
-                        item_type,
-                        container_id,
-                        adjacent_item_id,
-                    )
-                )
-            )
-    return report_list
 
 
 def _update_scsi_devices_get_element_and_devices(
@@ -614,7 +521,7 @@ def update_scsi_devices_add_remove(
         runner, env.report_processor, env.get_cib(), stonith_id
     )
     if env.report_processor.report_list(
-        _validate_add_remove_items(
+        validate_add_remove_items(
             add_device_list,
             remove_device_list,
             current_device_list,

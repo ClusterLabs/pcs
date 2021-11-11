@@ -17,7 +17,7 @@ from pcs.common.reports.item import (
 )
 from pcs.common.str_tools import join_multilines
 from pcs.lib import tools
-from pcs.lib.cib.resource import primitive, group
+from pcs.lib.cib.resource import primitive, group, hierarchy
 from pcs.lib.booth import (
     config_files,
     config_validators,
@@ -396,37 +396,36 @@ def create_in_cluster(
     create_primitive = partial(
         primitive.create, env.report_processor, resources_section, id_provider
     )
-    into_booth_group = partial(
-        group.place_resource,
-        group.provide_group(resources_section, create_id("group")),
-    )
-
     agent_factory = ResourceAgentFacadeFactory(
         env.cmd_runner(), report_processor
     )
-    into_booth_group(
-        create_primitive(
-            create_id("ip"),
-            _get_agent_facade(
-                env.report_processor,
-                agent_factory,
-                allow_absent_resource_agent,
-                ResourceAgentName("ocf", "heartbeat", "IPaddr2"),
+
+    # Group id validation is not needed since create_id creates a new unique
+    # booth group identifier
+    hierarchy.move_resources_to_group(
+        group.append_new(resources_section, create_id("group")),
+        [
+            create_primitive(
+                create_id("ip"),
+                _get_agent_facade(
+                    env.report_processor,
+                    agent_factory,
+                    allow_absent_resource_agent,
+                    ResourceAgentName("ocf", "heartbeat", "IPaddr2"),
+                ),
+                instance_attributes={"ip": ip},
             ),
-            instance_attributes={"ip": ip},
-        )
-    )
-    into_booth_group(
-        create_primitive(
-            create_id("service"),
-            _get_agent_facade(
-                env.report_processor,
-                agent_factory,
-                allow_absent_resource_agent,
-                ResourceAgentName("ocf", "pacemaker", "booth-site"),
+            create_primitive(
+                create_id("service"),
+                _get_agent_facade(
+                    env.report_processor,
+                    agent_factory,
+                    allow_absent_resource_agent,
+                    ResourceAgentName("ocf", "pacemaker", "booth-site"),
+                ),
+                instance_attributes={"config": booth_env.config_path},
             ),
-            instance_attributes={"config": booth_env.config_path},
-        )
+        ],
     )
 
     env.push_cib()

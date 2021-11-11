@@ -39,7 +39,10 @@ from pcs.lib.cib.tag import (
     TAG_TAG,
 )
 from pcs.lib.cib.tools import (
+    ElementNotFound,
     find_element_by_tag_and_id,
+    get_element_by_id,
+    get_elements_by_ids,
     get_resources,
     get_status,
     IdProvider,
@@ -81,7 +84,7 @@ from pcs.lib.resource_agent import (
 )
 from pcs.lib.tools import get_tmp_cib
 from pcs.lib.validate import ValueTimeInterval
-from pcs.lib.xml_tools import etree_to_str
+from pcs.lib.xml_tools import etree_to_str, get_root
 
 
 @contextmanager
@@ -416,6 +419,9 @@ def create(
             allow_invalid_instance_attributes,
             use_default_operations,
         )
+        if env.report_processor.has_errors:
+            raise LibraryError()
+
         if ensure_disabled:
             resource.common.disable(primitive_element, id_provider)
 
@@ -496,6 +502,12 @@ def create_as_clone(
             instance_attributes,
             allow_not_suitable_command,
         )
+        if clone_id is not None:
+            env.report_processor.report_list(
+                resource.clone.validate_clone_id(clone_id, id_provider),
+            )
+        if env.report_processor.has_errors:
+            raise LibraryError()
 
         primitive_element = resource.primitive.create(
             env.report_processor,
@@ -510,11 +522,7 @@ def create_as_clone(
             allow_invalid_instance_attributes,
             use_default_operations,
         )
-        if clone_id is not None:
-            if env.report_processor.report_list(
-                resource.clone.validate_clone_id(clone_id, id_provider),
-            ).has_errors:
-                raise LibraryError()
+
         clone_element = resource.clone.append_new(
             resources_section,
             id_provider,
@@ -604,6 +612,35 @@ def create_in_group(
             allow_not_suitable_command,
         )
 
+        adjacent_resource_element = None
+        if adjacent_resource_id:
+            try:
+                adjacent_resource_element = get_element_by_id(
+                    get_root(resources_section), adjacent_resource_id
+                )
+            except ElementNotFound:
+                # We cannot continue without adjacent element because
+                # the validator might produce misleading reports
+                if env.report_processor.report(
+                    ReportItem.error(
+                        reports.messages.IdNotFound(adjacent_resource_id, [])
+                    )
+                ).has_errors:
+                    raise LibraryError() from None
+        try:
+            group_element = get_element_by_id(
+                get_root(resources_section), group_id
+            )
+        except ElementNotFound:
+            group_id_reports: List[ReportItem] = []
+            validate_id(
+                group_id, description="group name", reporter=group_id_reports
+            )
+            env.report_processor.report_list(group_id_reports)
+            group_element = resource.group.append_new(
+                resources_section, group_id
+            )
+
         primitive_element = resource.primitive.create(
             env.report_processor,
             resources_section,
@@ -619,11 +656,20 @@ def create_in_group(
         )
         if ensure_disabled:
             resource.common.disable(primitive_element, id_provider)
-        validate_id(group_id, "group name")
-        resource.group.place_resource(
-            resource.group.provide_group(resources_section, group_id),
-            primitive_element,
-            adjacent_resource_id,
+
+        if env.report_processor.report_list(
+            resource.hierarchy.validate_move_resources_to_group(
+                group_element,
+                [primitive_element],
+                adjacent_resource_element,
+            )
+        ).has_errors:
+            raise LibraryError()
+
+        resource.hierarchy.move_resources_to_group(
+            group_element,
+            [primitive_element],
+            adjacent_resource_element,
             put_after_adjacent,
         )
 
@@ -723,7 +769,7 @@ def create_into_bundle(
 
         bundle_el = _find_bundle(resources_section, bundle_id)
         if not resource.bundle.is_pcmk_remote_accessible(bundle_el):
-            if env.report_processor.report(
+            env.report_processor.report(
                 ReportItem(
                     severity=reports.item.get_severity(
                         reports.codes.FORCE,
@@ -734,8 +780,9 @@ def create_into_bundle(
                         resource_id,
                     ),
                 )
-            ).has_errors:
-                raise LibraryError()
+            )
+        if env.report_processor.has_errors:
+            raise LibraryError()
         resource.bundle.add_resource(bundle_el, primitive_element)
 
 
@@ -1363,25 +1410,53 @@ def group_add(
     mixed wait -- flag for controlling waiting for pacemaker idle mechanism
     """
     # pylint: disable = too-many-locals
+    # pylint: disable = too-many-branches
     wait_timeout = env.ensure_wait_satisfiable(wait)
     resources_section = get_resources(env.get_cib(None))
-    id_provider = IdProvider(resources_section)
 
-    validator = resource.hierarchy.ValidateMoveResourcesToGroupByIds(
-        group_id,
-        resource_id_list,
-        adjacent_resource_id=adjacent_resource_id,
-    )
+    adjacent_resource_element = None
+    if adjacent_resource_id:
+        try:
+            adjacent_resource_element = get_element_by_id(
+                get_root(resources_section), adjacent_resource_id
+            )
+        except ElementNotFound:
+            # We cannot continue without adjacent element because
+            # the validator might produce misleading reports
+            if env.report_processor.report(
+                ReportItem.error(
+                    reports.messages.IdNotFound(adjacent_resource_id, [])
+                )
+            ).has_errors:
+                raise LibraryError() from None
+
+    try:
+        group_element = get_element_by_id(get_root(resources_section), group_id)
+    except ElementNotFound:
+        group_id_reports: List[ReportItem] = []
+        validate_id(
+            group_id, description="group name", reporter=group_id_reports
+        )
+        env.report_processor.report_list(group_id_reports)
+        group_element = resource.group.append_new(resources_section, group_id)
+
+    (
+        resource_element_list,
+        id_not_found_list,
+    ) = get_elements_by_ids(get_root(resources_section), resource_id_list)
+    for resource_id in id_not_found_list:
+        env.report_processor.report(
+            ReportItem.error(reports.messages.IdNotFound(resource_id, []))
+        )
+
     if env.report_processor.report_list(
-        validator.validate(resources_section, id_provider)
+        resource.hierarchy.validate_move_resources_to_group(
+            group_element,
+            resource_element_list,
+            adjacent_resource_element,
+        )
     ).has_errors:
         raise LibraryError()
-
-    # If we get no group element from the validator and there were no
-    # errors, then the element does not exist and we can create it.
-    group_element = validator.group_element()
-    if group_element is None:
-        group_element = resource.group.append_new(resources_section, group_id)
 
     # Check that elements to move won't leave their group empty. In that case,
     # the group must be removed. Current lib implementation doesn't check
@@ -1395,7 +1470,7 @@ def group_add(
     # Group discovery step: create a dict of sets with all resources of affected
     # groups
     all_resources = {}
-    for resource_element in validator.resource_element_list():
+    for resource_element in resource_element_list:
         old_parent = resource.common.get_parent_resource(resource_element)
         if (
             old_parent is not None
@@ -1421,8 +1496,8 @@ def group_add(
 
     resource.hierarchy.move_resources_to_group(
         group_element,
-        validator.resource_element_list(),
-        adjacent_resource=validator.adjacent_resource_element(),
+        resource_element_list,
+        adjacent_resource=adjacent_resource_element,
         put_after_adjacent=put_after_adjacent,
     )
 
