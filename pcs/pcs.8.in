@@ -1314,10 +1314,30 @@ This section summarizes the most important changes in commands done in pcs-0.11.
 .SS "Legacy role names"
 .TP
 Roles 'Master' and 'Slave' are deprecated and should not be used anymore. Instead use 'Promoted' and 'Unpromoted' respectively. Similarly, \fB\-\-master\fR has been deprecated and replaced with \fB\-\-promoted\fR.
+.SS "cluster"
+.TP
+uidgid rm
+This command has been replaced with 'pcs cluster uidgid delete' and 'pcs cluster uidgid remove'.
 .SS "resource"
 .TP
 move
 The 'pcs resource move' now automatically removes location constraint used for moving a resource. It is equivalent of 'pcs resource move \fB\-\-autodelete\fR' from pcs-0.10.9. Legacy functionality of the 'resource move' command is still available as 'resource move\-with\-constraint <resource id>'.
+.TP
+show \-\-full
+This command has been replaced with 'pcs resource config'.
+.TP
+show \-\-groups
+This command has been replaced with 'pcs resource group list'.
+.TP
+show
+This command has been replaced with 'pcs resource status'.
+.SS "stonith"
+.TP
+show \-\-full
+This command has been replaced with 'pcs stonith config'.
+.TP
+show
+This command has been replaced with 'pcs stonith status'.
 .SH CHANGES IN PCS-0.10
 This section summarizes the most important changes in commands done in pcs-0.10.x compared to pcs-0.9.x. For detailed description of current commands see above.
 .SS "acl"
