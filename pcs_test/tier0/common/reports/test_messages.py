@@ -4306,6 +4306,17 @@ class CannotMoveResourceMasterResourceNotPromotable(NameBuildTest):
         )
 
 
+class CannotMoveResourceNotRunning(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "It is not possible to move resource 'R' as it is not running "
+                "at the moment"
+            ),
+            reports.CannotMoveResourceNotRunning("R"),
+        )
+
+
 class CannotMoveResourceStoppedNoNodeSpecified(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(

@@ -5815,6 +5815,26 @@ class CannotMoveResourceMasterResourceNotPromotable(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class CannotMoveResourceNotRunning(ReportItemMessage):
+    """
+    It is not possible to move a stopped resource and remove constraint used
+    for moving it
+
+    resource_id -- id of the resource to be moved
+    """
+
+    resource_id: str
+    _code = codes.CANNOT_MOVE_RESOURCE_NOT_RUNNING
+
+    @property
+    def message(self) -> str:
+        return (
+            f"It is not possible to move resource '{self.resource_id}' as it "
+            "is not running at the moment"
+        )
+
+
+@dataclass(frozen=True)
 class CannotMoveResourceStoppedNoNodeSpecified(ReportItemMessage):
     """
     When moving a stopped resource, a node to move it to must be specified
