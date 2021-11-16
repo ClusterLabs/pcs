@@ -122,6 +122,18 @@ class CannotMoveResourceMasterResourceNotPromotable(CliReportMessageTestBase):
         )
 
 
+class CannotMoveResourceNotRunning(CliReportMessageTestBase):
+    def test_success(self):
+        self.assert_message(
+            messages.CannotMoveResourceNotRunning("R"),
+            (
+                "It is not possible to move resource 'R' as it is not running "
+                "at the moment, use 'pcs resource move-with-constraint' or "
+                "'pcs constraint location' commands instead"
+            ),
+        )
+
+
 class InvalidCibContent(CliReportMessageTestBase):
     def test_message_can_be_more_verbose(self):
         report = "no verbose\noutput\n"

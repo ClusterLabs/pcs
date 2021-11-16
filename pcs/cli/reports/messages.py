@@ -142,6 +142,17 @@ class CannotMoveResourceMasterResourceNotPromotable(CliReportMessageCustom):
         )
 
 
+class CannotMoveResourceNotRunning(CliReportMessageCustom):
+    _obj: messages.CannotMoveResourceNotRunning
+
+    @property
+    def message(self) -> str:
+        return (
+            f"{self._obj.message}, use 'pcs resource move-with-constraint' or "
+            "'pcs constraint location' commands instead"
+        )
+
+
 class SbdWatchdogTestMultipleDevices(CliReportMessageCustom):
     _obj: messages.SbdWatchdogTestMultipleDevices
 

@@ -6,6 +6,7 @@ from typing import (
     Any,
     Callable,
     Dict,
+    FrozenSet,
     Iterable,
     List,
     Mapping,
@@ -1631,6 +1632,12 @@ def move_autoclean(
     resource_state_before = get_resource_state(
         env.get_cluster_state(), resource_id
     )
+    if not _resource_running_on_nodes(resource_state_before):
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.CannotMoveResourceNotRunning(resource_id)
+            )
+        )
     with get_tmp_cib(env.report_processor, cib_xml) as rsc_moved_cib_file:
         stdout, stderr, retval = resource_move(
             env.cmd_runner(dict(CIB_file=rsc_moved_cib_file.name)),
@@ -1642,17 +1649,6 @@ def move_autoclean(
         rsc_moved_cib_xml = rsc_moved_cib_file.read()
 
     if retval != 0:
-        if (
-            f"Resource '{resource_id}' not moved: active in 0 locations"
-            in stderr
-        ):
-            raise LibraryError(
-                ReportItem.error(
-                    reports.messages.CannotMoveResourceStoppedNoNodeSpecified(
-                        resource_id
-                    )
-                )
-            )
         raise LibraryError(
             ReportItem.error(
                 reports.messages.ResourceMovePcmkError(
@@ -1801,7 +1797,9 @@ def ban(env, resource_id, node=None, master=False, lifetime=None, wait=False):
     )
 
 
-def _resource_running_on_nodes(resource_state):
+def _resource_running_on_nodes(
+    resource_state: Dict[str, List[str]]
+) -> FrozenSet[str]:
     if resource_state:
         return frozenset(
             resource_state.get(const.PCMK_ROLE_PROMOTED, [])

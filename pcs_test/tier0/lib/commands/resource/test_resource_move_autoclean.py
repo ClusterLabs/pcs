@@ -1,5 +1,4 @@
 # pylint: disable=too-many-lines
-from textwrap import dedent
 from unittest import mock, TestCase
 
 from pcs import settings
@@ -731,60 +730,44 @@ class MoveAutocleanValidations(MoveAutocleanCommonSetup):
             ]
         )
 
-    def test_stopped_resource_need_node_specified(self):
-        stderr = dedent(
-            """\
-            Resource 'A' not moved: active in 0 locations.
-            To prevent 'A' from running on a specific location, specify a node.
-            Error performing operation: Invalid argument
-            """
-        )
+    def test_stopped_resource_node_not_specified(self):
         resource_id = "A"
-        config_load_cib_name = "load_cib"
-        cib_rsc_move_tmp_file_name = "cib_rsc_move_tmp_file"
         self.config.runner.cib.load(
             resources=_resources_tag(_rsc_primitive_fixture(resource_id)),
-            name=config_load_cib_name,
-        )
-        orig_cib = etree_to_str(
-            xml_fromstring(self.config.calls.get(config_load_cib_name).stdout)
-        )
-        self.tmp_file_mock_obj.set_calls(
-            [
-                TmpFileCall(
-                    cib_rsc_move_tmp_file_name,
-                    orig_content=orig_cib,
-                    new_content="doesn't matter",
-                ),
-            ]
         )
         self.config.runner.pcmk.load_state(
             resources=_state_resource_fixture(resource_id, "Stopped"),
-        )
-        self.config.runner.pcmk.resource_move(
-            resource=resource_id,
-            stderr=stderr,
-            returncode=1,
-            env=dict(CIB_file=cib_rsc_move_tmp_file_name),
         )
         self.env_assist.assert_raise_library_error(
             lambda: move_autoclean(self.env_assist.get_env(), resource_id),
             [
                 fixture.error(
-                    reports.codes.CANNOT_MOVE_RESOURCE_STOPPED_NO_NODE_SPECIFIED,
+                    reports.codes.CANNOT_MOVE_RESOURCE_NOT_RUNNING,
                     resource_id=resource_id,
                 )
             ],
             expected_in_processor=False,
         )
-        self.env_assist.assert_reports(
+
+    def test_stopped_resource_node_specified(self):
+        resource_id = "A"
+        self.config.runner.cib.load(
+            resources=_resources_tag(_rsc_primitive_fixture(resource_id)),
+        )
+        self.config.runner.pcmk.load_state(
+            resources=_state_resource_fixture(resource_id, "Stopped"),
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: move_autoclean(
+                self.env_assist.get_env(), resource_id, node="node"
+            ),
             [
-                fixture.debug(
-                    reports.codes.TMP_FILE_WRITE,
-                    file_path=cib_rsc_move_tmp_file_name,
-                    content=orig_cib,
-                ),
-            ]
+                fixture.error(
+                    reports.codes.CANNOT_MOVE_RESOURCE_NOT_RUNNING,
+                    resource_id=resource_id,
+                )
+            ],
+            expected_in_processor=False,
         )
 
     def test_constraint_already_exist(self):
@@ -843,7 +826,7 @@ class MoveAutocleanValidations(MoveAutocleanCommonSetup):
             ]
         )
         self.config.runner.pcmk.load_state(
-            resources=_state_resource_fixture(resource_id, "Stopped"),
+            resources=_state_resource_fixture(resource_id, "Started", node),
         )
         self.config.runner.pcmk.resource_move(
             resource=resource_id,
