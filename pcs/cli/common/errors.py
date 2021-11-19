@@ -15,7 +15,7 @@ ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE = (
 SEE_MAN_CHANGES = "See 'man pcs' -> Changes in pcs-{}."
 
 
-def msg_command_replaced(new_commands: List[str], pcs_version: str) -> str:
+def _msg_command_replaced(new_commands: List[str], pcs_version: str) -> str:
     return "This command has been replaced with {commands}. {changes}".format(
         commands=format_list_base(quote_items(new_commands)),
         changes=SEE_MAN_CHANGES.format(pcs_version),
@@ -24,7 +24,7 @@ def msg_command_replaced(new_commands: List[str], pcs_version: str) -> str:
 
 def raise_command_replaced(new_commands: List[str], pcs_version: str) -> None:
     raise CmdLineInputError(
-        message=msg_command_replaced(new_commands, pcs_version="0.10")
+        message=_msg_command_replaced(new_commands, pcs_version=pcs_version)
     )
 
 

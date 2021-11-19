@@ -797,7 +797,7 @@ This operation is expected to force\-reboot the local system without following a
 
 .SS "acl"
 .TP
-[config | show]
+[config]
 List all current access control lists.
 .TP
 enable
@@ -857,7 +857,7 @@ permission remove <permission id>
 Remove the permission id specified (permission id's are listed in parenthesis after permissions in 'pcs acl' output).
 .SS "property"
 .TP
-[config | list | show [<property> | \fB\-\-all\fR | \fB\-\-defaults\fR]] | [\fB\-\-all\fR | \fB\-\-defaults\fR]
+[config [<property> | \fB\-\-all\fR | \fB\-\-defaults\fR]] | [\fB\-\-all\fR | \fB\-\-defaults\fR]
 List property settings (default: lists configured properties).  If \fB\-\-defaults\fR is specified will show all property defaults, if \fB\-\-all\fR is specified, current configured properties will be shown with unset properties and their defaults.
 See \fBpacemaker-controld\fR(7) and \fBpacemaker-schedulerd\fR(7) man pages for a description of the properties.
 .TP
@@ -870,7 +870,7 @@ Remove property from configuration.
 See \fBpacemaker-controld\fR(7) and \fBpacemaker-schedulerd\fR(7) man pages for a description of the properties.
 .SS "constraint"
 .TP
-[config | list | show] [\fB\-\-full\fR] [\fB\-\-all\fR]
+[config] [\fB\-\-full\fR] [\fB\-\-all\fR]
 List all current constraints that are not expired. If \fB\-\-all\fR is specified also show expired constraints. If \fB\-\-full\fR is specified also list the constraint ids.
 .TP
 location <resource> prefers <node>[=<score>] [<node>[=<score>]]...
@@ -900,7 +900,7 @@ Creates a location constraint with a rule on the specified resource where expres
 .br
 where duration options and date spec options are: hours, monthdays, weekdays, yeardays, months, weeks, years, weekyears, moon. Resource may be either a resource id <resource_id> or %<resource_id> or resource%<resource_id>, or a resource name regular expression regexp%<resource_pattern>. If score is omitted it defaults to INFINITY. If id is omitted one is generated from the resource id. If resource\-discovery is omitted it defaults to 'always'.
 .TP
-location [config | show [resources [<resource>...]] | [nodes [<node>...]]] [\fB\-\-full\fR] [\fB\-\-all\fR]
+location [config [resources [<resource>...]] | [nodes [<node>...]]] [\fB\-\-full\fR] [\fB\-\-all\fR]
 List all the current location constraints that are not expired. If 'resources' is specified, location constraints are displayed per resource (default). If 'nodes' is specified, location constraints are displayed per node. If specific nodes or resources are specified then we only show information about them. Resource may be either a resource id <resource_id> or %<resource_id> or resource%<resource_id>, or a resource name regular expression regexp%<resource_pattern>. If \fB\-\-full\fR is specified show the internal constraint id's as well. If \fB\-\-all\fR is specified show the expired constraints.
 .TP
 location add <id> <resource> <node> <score> [resource\-discovery=<option>]
@@ -912,7 +912,7 @@ Remove a location constraint with the appropriate id.
 location remove <id>
 Remove a location constraint with the appropriate id.
 .TP
-order [config | show] [\fB\-\-full\fR]
+order [config] [\fB\-\-full\fR]
 List all current ordering constraints (if \fB\-\-full\fR is specified show the internal constraint id's as well).
 .TP
 order [action] <resource id> then [action] <resource id> [options]
@@ -927,7 +927,7 @@ Remove resource from any ordering constraint
 order remove <resource1> [resourceN]...
 Remove resource from any ordering constraint
 .TP
-colocation [config | show] [\fB\-\-full\fR]
+colocation [config] [\fB\-\-full\fR]
 List all current colocation constraints (if \fB\-\-full\fR is specified show the internal constraint id's as well).
 .TP
 colocation add [<role>] <source resource id> with [<role>] <target resource id> [score] [options] [id=constraint\-id]
@@ -942,7 +942,7 @@ Remove colocation constraints with specified resources.
 colocation remove <source resource id> <target resource id>
 Remove colocation constraints with specified resources.
 .TP
-ticket [config | show] [\fB\-\-full\fR]
+ticket [config] [\fB\-\-full\fR]
 List all current ticket constraints (if \fB\-\-full\fR is specified show the internal constraint id's as well).
 .TP
 ticket add <ticket> [<role>] <resource id> [<options>] [id=<constraint\-id>]
@@ -1216,7 +1216,7 @@ utilization [[<node>] [\fB\-\-name\fR <name>] | <node> <name>=<value> ...]
 Add specified utilization options to specified node.  If node is not specified, shows utilization of all nodes.  If \fB\-\-name\fR is specified, shows specified utilization value from all nodes. If utilization options are not specified, shows utilization of specified node.  Utilization option should be in format name=value, value has to be integer.  Options may be removed by setting an option without a value.  Example: pcs node utilization node1 cpu=4 ram=
 .SS "alert"
 .TP
-[config|show]
+[config]
 Show all configured alerts.
 .TP
 create path=<path> [id=<alert\-id>] [description=<description>] [options [<option>=<value>]...] [meta [<meta\-option>=<value>]...]

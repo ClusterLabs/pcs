@@ -23,7 +23,10 @@ from pcs.common.str_tools import format_list
 from pcs.settings import (
     pacemaker_wait_timeout_status as PACEMAKER_WAIT_TIMEOUT_STATUS,
 )
-from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.errors import (
+    raise_command_replaced,
+    CmdLineInputError,
+)
 from pcs.cli.common.parse_args import (
     group_by_keywords,
     prepare_options,
@@ -2303,50 +2306,18 @@ def resource_show(lib, argv, modifiers, stonith=False):
       * --groups - print resource groups
       * --hide-inactive - print only active resources
     """
+    del lib
     modifiers.ensure_only_supported(
         "-f", "--full", "--groups", "--hide-inactive"
     )
-    mutually_exclusive_opts = ("--full", "--groups", "--hide-inactive")
-    specified_modifiers = [
-        opt for opt in mutually_exclusive_opts if modifiers.is_specified(opt)
-    ]
-    if (len(specified_modifiers) > 1) or (argv and specified_modifiers):
-        utils.err(
-            "you can specify only one of resource id, {0}".format(
-                ", ".join(mutually_exclusive_opts)
-            )
-        )
-
     if modifiers.get("--groups"):
-        deprecation_warning(
-            "This command is deprecated and will be removed. "
-            "Please use 'pcs resource group list' instead."
-        )
-        resource_group_list(lib, argv, modifiers.get_subset("-f"))
-        return
+        raise_command_replaced(["pcs resource group list"], pcs_version="0.11")
 
+    keyword = "stonith" if stonith else "resource"
     if modifiers.get("--full") or argv:
-        deprecation_warning(
-            "This command is deprecated and will be removed. "
-            "Please use 'pcs {} config' instead.".format(
-                "stonith" if stonith else "resource"
-            )
-        )
-        resource_config(lib, argv, modifiers.get_subset("-f"), stonith=stonith)
-        return
+        raise_command_replaced([f"pcs {keyword} config"], pcs_version="0.11")
 
-    deprecation_warning(
-        "This command is deprecated and will be removed. "
-        "Please use 'pcs {} status' instead.".format(
-            "stonith" if stonith else "resource"
-        )
-    )
-    resource_status(
-        lib,
-        argv,
-        modifiers.get_subset("-f", "--hide-inactive"),
-        stonith=stonith,
-    )
+    raise_command_replaced([f"pcs {keyword} status"], pcs_version="0.11")
 
 
 def resource_status(lib, argv, modifiers, stonith=False):
@@ -3195,19 +3166,17 @@ def resource_cleanup(lib, argv, modifiers):
 def resource_refresh(lib, argv, modifiers):
     """
     Options:
-      * --full - refresh a resource on all nodes
       * --force - do refresh even though it may be time consuming
     """
     del lib
-    # TODO deprecated
-    # remove --full, see rhbz#1759269
-    # --full previously did what --strict was supposed to do (set --force
-    # flag for crm_resource). It was misnamed '--full' because we thought it
-    # was meant to be doing something else than what the --force in
-    # crm_resource actualy did.
-    modifiers.ensure_only_supported("--force", "--full", "--strict")
-    if modifiers.is_specified("--full"):
-        deprecation_warning("'--full' has been deprecated")
+    modifiers.ensure_only_supported(
+        "--force",
+        "--strict",
+        # The hint is defined to print error messages which point users to the
+        # changes section in pcs manpage.
+        # To be removed in the next significant version.
+        hint_syntax_changed=modifiers.is_specified("--full"),
+    )
     resource = argv.pop(0) if argv and "=" not in argv[0] else None
     parsed_options = prepare_options_allowed(argv, {"node"})
     print_to_stderr(
@@ -3215,7 +3184,7 @@ def resource_refresh(lib, argv, modifiers):
             utils.cmd_runner(),
             resource=resource,
             node=parsed_options.get("node"),
-            strict=(modifiers.get("--strict") or modifiers.get("--full")),
+            strict=modifiers.get("--strict"),
             force=modifiers.get("--force"),
         )
     )
