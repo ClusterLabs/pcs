@@ -1,21 +1,31 @@
-from typing import Optional
+from typing import (
+    List,
+    Optional,
+)
+
+from pcs.common.str_tools import (
+    format_list_base,
+    quote_items,
+)
 
 ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE = (
     "Cannot specify both --all and a list of nodes."
 )
-SEE_MAN_CHANGES = "See 'man pcs' -> Changes in pcs-0.10."
-HINT_SYNTAX_CHANGE = (
-    "Syntax has changed from previous version. " + SEE_MAN_CHANGES
-)
+
+SEE_MAN_CHANGES = "See 'man pcs' -> Changes in pcs-{}."
 
 
-def msg_command_replaced(*new_commands):
-    new = "', '".join(new_commands)
-    return f"This command has been replaced with '{new}'. {SEE_MAN_CHANGES}"
+def _msg_command_replaced(new_commands: List[str], pcs_version: str) -> str:
+    return "This command has been replaced with {commands}. {changes}".format(
+        commands=format_list_base(quote_items(new_commands)),
+        changes=SEE_MAN_CHANGES.format(pcs_version),
+    )
 
 
-def raise_command_replaced(*new_commands):
-    raise CmdLineInputError(message=msg_command_replaced(*new_commands))
+def raise_command_replaced(new_commands: List[str], pcs_version: str) -> None:
+    raise CmdLineInputError(
+        message=_msg_command_replaced(new_commands, pcs_version=pcs_version)
+    )
 
 
 class CmdLineInputError(Exception):

@@ -8,7 +8,6 @@ from pcs import (
     resource,
     usage,
 )
-from pcs.cli.common.errors import raise_command_replaced
 from pcs.cli.common.parse_args import InputModifiers
 from pcs.cli.common.routing import create_router
 
@@ -139,7 +138,13 @@ resource_cmd = create_router(
         ),
         "manage": resource.resource_manage_cmd,
         "unmanage": resource.resource_unmanage_cmd,
-        "failcount": resource.resource_failcount,
+        "failcount": create_router(
+            {
+                "show": resource.resource_failcount_show,
+            },
+            ["resource", "failcount"],
+            default_cmd="show",
+        ),
         "op": create_router(
             {
                 "defaults": resource_op_defaults_cmd,
@@ -172,13 +177,6 @@ resource_cmd = create_router(
         ),
         # internal use only
         "get_resource_agent_info": resource.get_resource_agent_info,
-        # removed commands
-        # These print error messages which point users to the changes section in
-        # pcs manpage.
-        # To be removed in the next significant version.
-        "master": lambda lib, argv, modifiers: raise_command_replaced(
-            "pcs resource promotable"
-        ),
         "relations": show_resource_relations_cmd,
     },
     ["resource"],

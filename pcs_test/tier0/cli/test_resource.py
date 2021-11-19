@@ -15,6 +15,9 @@ from pcs.cli.reports.processor import ReportItemSeverity
 
 class FailcountShow(TestCase):
     def setUp(self):
+        print_patcher = mock.patch("pcs.resource.print")
+        self.print_mock = print_patcher.start()
+        self.addCleanup(print_patcher.stop)
         self.lib = mock.Mock(spec_set=["resource"])
         self.resource = mock.Mock(spec_set=["get_failcounts"])
         self.get_failcounts = mock.Mock()
@@ -32,10 +35,22 @@ class FailcountShow(TestCase):
         full=False,
     ):
         self.get_failcounts.return_value = lib_failures
+        argv = []
+        if resource_id:
+            argv.append(resource_id)
+        if node:
+            argv.append(f"node={node}")
+        if operation:
+            argv.append(f"operation={operation}")
+        if interval:
+            argv.append(f"interval={interval}")
+
+        resource.resource_failcount_show(
+            self.lib, argv, dict_to_modifiers(dict(full=full))
+        )
+        self.print_mock.assert_called_once()
         ac(
-            resource.resource_failcount_show(
-                self.lib, resource_id, node, operation, interval, full
-            ),
+            self.print_mock.call_args[0][0],
             expected_output,
         )
 

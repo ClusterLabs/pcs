@@ -23,7 +23,10 @@ from pcs.common.str_tools import format_list
 from pcs.settings import (
     pacemaker_wait_timeout_status as PACEMAKER_WAIT_TIMEOUT_STATUS,
 )
-from pcs.cli.common.errors import CmdLineInputError, raise_command_replaced
+from pcs.cli.common.errors import (
+    raise_command_replaced,
+    CmdLineInputError,
+)
 from pcs.cli.common.parse_args import (
     group_by_keywords,
     prepare_options,
@@ -2303,50 +2306,18 @@ def resource_show(lib, argv, modifiers, stonith=False):
       * --groups - print resource groups
       * --hide-inactive - print only active resources
     """
+    del lib
     modifiers.ensure_only_supported(
         "-f", "--full", "--groups", "--hide-inactive"
     )
-    mutually_exclusive_opts = ("--full", "--groups", "--hide-inactive")
-    specified_modifiers = [
-        opt for opt in mutually_exclusive_opts if modifiers.is_specified(opt)
-    ]
-    if (len(specified_modifiers) > 1) or (argv and specified_modifiers):
-        utils.err(
-            "you can specify only one of resource id, {0}".format(
-                ", ".join(mutually_exclusive_opts)
-            )
-        )
-
     if modifiers.get("--groups"):
-        deprecation_warning(
-            "This command is deprecated and will be removed. "
-            "Please use 'pcs resource group list' instead."
-        )
-        resource_group_list(lib, argv, modifiers.get_subset("-f"))
-        return
+        raise_command_replaced(["pcs resource group list"], pcs_version="0.11")
 
+    keyword = "stonith" if stonith else "resource"
     if modifiers.get("--full") or argv:
-        deprecation_warning(
-            "This command is deprecated and will be removed. "
-            "Please use 'pcs {} config' instead.".format(
-                "stonith" if stonith else "resource"
-            )
-        )
-        resource_config(lib, argv, modifiers.get_subset("-f"), stonith=stonith)
-        return
+        raise_command_replaced([f"pcs {keyword} config"], pcs_version="0.11")
 
-    deprecation_warning(
-        "This command is deprecated and will be removed. "
-        "Please use 'pcs {} status' instead.".format(
-            "stonith" if stonith else "resource"
-        )
-    )
-    resource_status(
-        lib,
-        argv,
-        modifiers.get_subset("-f", "--hide-inactive"),
-        stonith=stonith,
-    )
+    raise_command_replaced([f"pcs {keyword} status"], pcs_version="0.11")
 
 
 def resource_status(lib, argv, modifiers, stonith=False):
@@ -2842,22 +2813,13 @@ def is_managed(resource_id):
     return False  # pylint does not know utils.err raises
 
 
-def resource_failcount(lib, argv, modifiers):
+def resource_failcount_show(lib, argv, modifiers):
     """
     Options:
       * --full
       * -f - CIB file
     """
     modifiers.ensure_only_supported("-f", "--full")
-    if not argv:
-        raise CmdLineInputError()
-
-    command = argv.pop(0)
-    # Print error messages which point users to the changes section in pcs
-    # manpage.
-    # To be removed in the next significant version.
-    if command == "reset":
-        raise_command_replaced("pcs resource cleanup")
 
     resource = argv.pop(0) if argv and "=" not in argv[0] else None
     parsed_options = prepare_options_allowed(
@@ -2866,21 +2828,74 @@ def resource_failcount(lib, argv, modifiers):
     node = parsed_options.get("node")
     operation = parsed_options.get("operation")
     interval = parsed_options.get("interval")
+    result_lines = []
+    failures_data = lib.resource.get_failcounts(
+        resource=resource, node=node, operation=operation, interval=interval
+    )
 
-    if command == "show":
-        print(
-            resource_failcount_show(
-                lib,
-                resource,
-                node,
-                operation,
-                interval,
-                modifiers.get("--full"),
+    if not failures_data:
+        result_lines.append(
+            __headline_resource_failures(
+                True, resource, node, operation, interval
             )
         )
+        print("\n".join(result_lines))
         return
 
-    raise CmdLineInputError()
+    resource_list = sorted({fail["resource"] for fail in failures_data})
+    for current_resource in resource_list:
+        result_lines.append(
+            __headline_resource_failures(
+                False, current_resource, node, operation, interval
+            )
+        )
+        resource_failures = [
+            fail
+            for fail in failures_data
+            if fail["resource"] == current_resource
+        ]
+        node_list = sorted({fail["node"] for fail in resource_failures})
+        for current_node in node_list:
+            node_failures = [
+                fail
+                for fail in resource_failures
+                if fail["node"] == current_node
+            ]
+            if modifiers.get("--full"):
+                result_lines.append(f"  {current_node}:")
+                operation_list = sorted(
+                    {fail["operation"] for fail in node_failures}
+                )
+                for current_operation in operation_list:
+                    operation_failures = [
+                        fail
+                        for fail in node_failures
+                        if fail["operation"] == current_operation
+                    ]
+                    interval_list = sorted(
+                        {fail["interval"] for fail in operation_failures},
+                        # pacemaker's definition of infinity
+                        key=lambda x: 1000000 if x == "INFINITY" else x,
+                    )
+                    for current_interval in interval_list:
+                        interval_failures = [
+                            fail
+                            for fail in operation_failures
+                            if fail["interval"] == current_interval
+                        ]
+                        failcount, dummy_last_failure = __agregate_failures(
+                            interval_failures
+                        )
+                        result_lines.append(
+                            f"    {current_operation} {current_interval}ms: "
+                            f"{failcount}"
+                        )
+            else:
+                failcount, dummy_last_failure = __agregate_failures(
+                    node_failures
+                )
+                result_lines.append(f"  {current_node}: {failcount}")
+    print("\n".join(result_lines))
 
 
 def __agregate_failures(failure_list):
@@ -2921,80 +2936,6 @@ def __headline_resource_failures(empty, resource, node, operation, interval):
     return " ".join(headline_parts).format(
         node=node, resource=resource, operation=operation, interval=interval
     )
-
-
-def resource_failcount_show(lib, resource, node, operation, interval, full):
-    """
-    Commandline options:
-      * -f - CIB file
-    """
-    result_lines = []
-    failures_data = lib.resource.get_failcounts(
-        resource=resource, node=node, operation=operation, interval=interval
-    )
-
-    if not failures_data:
-        result_lines.append(
-            __headline_resource_failures(
-                True, resource, node, operation, interval
-            )
-        )
-        return "\n".join(result_lines)
-
-    resource_list = sorted({fail["resource"] for fail in failures_data})
-    for current_resource in resource_list:
-        result_lines.append(
-            __headline_resource_failures(
-                False, current_resource, node, operation, interval
-            )
-        )
-        resource_failures = [
-            fail
-            for fail in failures_data
-            if fail["resource"] == current_resource
-        ]
-        node_list = sorted({fail["node"] for fail in resource_failures})
-        for current_node in node_list:
-            node_failures = [
-                fail
-                for fail in resource_failures
-                if fail["node"] == current_node
-            ]
-            if full:
-                result_lines.append(f"  {current_node}:")
-                operation_list = sorted(
-                    {fail["operation"] for fail in node_failures}
-                )
-                for current_operation in operation_list:
-                    operation_failures = [
-                        fail
-                        for fail in node_failures
-                        if fail["operation"] == current_operation
-                    ]
-                    interval_list = sorted(
-                        {fail["interval"] for fail in operation_failures},
-                        # pacemaker's definition of infinity
-                        key=lambda x: 1000000 if x == "INFINITY" else x,
-                    )
-                    for current_interval in interval_list:
-                        interval_failures = [
-                            fail
-                            for fail in operation_failures
-                            if fail["interval"] == current_interval
-                        ]
-                        failcount, dummy_last_failure = __agregate_failures(
-                            interval_failures
-                        )
-                        result_lines.append(
-                            f"    {current_operation} {current_interval}ms: "
-                            f"{failcount}"
-                        )
-            else:
-                failcount, dummy_last_failure = __agregate_failures(
-                    node_failures
-                )
-                result_lines.append(f"  {current_node}: {failcount}")
-    return "\n".join(result_lines)
 
 
 def resource_node_lines(node):
@@ -3225,19 +3166,17 @@ def resource_cleanup(lib, argv, modifiers):
 def resource_refresh(lib, argv, modifiers):
     """
     Options:
-      * --full - refresh a resource on all nodes
       * --force - do refresh even though it may be time consuming
     """
     del lib
-    # TODO deprecated
-    # remove --full, see rhbz#1759269
-    # --full previously did what --strict was supposed to do (set --force
-    # flag for crm_resource). It was misnamed '--full' because we thought it
-    # was meant to be doing something else than what the --force in
-    # crm_resource actualy did.
-    modifiers.ensure_only_supported("--force", "--full", "--strict")
-    if modifiers.is_specified("--full"):
-        deprecation_warning("'--full' has been deprecated")
+    modifiers.ensure_only_supported(
+        "--force",
+        "--strict",
+        # The hint is defined to print error messages which point users to the
+        # changes section in pcs manpage.
+        # To be removed in the next significant version.
+        hint_syntax_changed=modifiers.is_specified("--full"),
+    )
     resource = argv.pop(0) if argv and "=" not in argv[0] else None
     parsed_options = prepare_options_allowed(argv, {"node"})
     print_to_stderr(
@@ -3245,7 +3184,7 @@ def resource_refresh(lib, argv, modifiers):
             utils.cmd_runner(),
             resource=resource,
             node=parsed_options.get("node"),
-            strict=(modifiers.get("--strict") or modifiers.get("--full")),
+            strict=modifiers.get("--strict"),
             force=modifiers.get("--force"),
         )
     )

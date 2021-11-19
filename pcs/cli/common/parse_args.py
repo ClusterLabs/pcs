@@ -4,10 +4,7 @@ from typing import (
     Union,
 )
 
-from pcs.cli.common.errors import (
-    CmdLineInputError,
-    HINT_SYNTAX_CHANGE,
-)
+from pcs.cli.common.errors import SEE_MAN_CHANGES, CmdLineInputError
 from pcs.common.str_tools import (
     format_list,
     format_plural,
@@ -539,10 +536,11 @@ class InputModifiers:
                     option_list=format_list(sorted(unsupported_options)),
                     _is=pluralize("is"),
                 ),
-                # Print error messages which point users to the changes section
-                # in pcs manpage.
-                # To be removed in the next significant version.
-                hint=(HINT_SYNTAX_CHANGE if hint_syntax_changed else None),
+                hint="Syntax has changed from previous version. {}".format(
+                    SEE_MAN_CHANGES.format("0.11")
+                )
+                if hint_syntax_changed
+                else None,
             )
 
     def ensure_not_mutually_exclusive(self, *mutually_exclusive):

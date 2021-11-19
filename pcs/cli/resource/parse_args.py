@@ -96,7 +96,7 @@ def parse_create(arg_list):
                 hint=(
                     "Master/Slave resources have been renamed to promotable "
                     "clones, please use the 'promotable' keyword instead of "
-                    "'master'. " + SEE_MAN_CHANGES
+                    "'master'. " + SEE_MAN_CHANGES.format("0.10")
                 ),
             ) from e
         raise

@@ -24,10 +24,9 @@ from pcs import (
 from pcs.utils import parallel_for_nodes
 from pcs.cli.common import parse_args
 from pcs.cli.common.errors import (
+    raise_command_replaced,
     CmdLineInputError,
     ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE,
-    HINT_SYNTAX_CHANGE,
-    msg_command_replaced,
 )
 from pcs.cli.common.tools import print_to_stderr
 from pcs.cli.file import metadata as file_metadata
@@ -65,7 +64,7 @@ from pcs.lib.corosync import (
     live as corosync_live,
     qdevice_net,
 )
-from pcs.cli.reports.output import deprecation_warning, warn
+from pcs.cli.reports.output import warn
 from pcs.lib.errors import LibraryError
 from pcs.lib.node import get_existing_nodes_names
 import pcs.lib.pacemaker.live as lib_pacemaker
@@ -1140,7 +1139,7 @@ def cluster_uidgid(lib, argv, modifiers, silent_list=False):
     uid = ""
     gid = ""
 
-    if command in {"add", "delete", "remove", "rm"} and argv:
+    if command in {"add", "delete", "remove"} and argv:
         for arg in argv:
             if arg.find("=") == -1:
                 utils.err(
@@ -1162,33 +1161,23 @@ def cluster_uidgid(lib, argv, modifiers, silent_list=False):
 
         if command == "add":
             utils.write_uid_gid_file(uid, gid)
-        elif command in {"delete", "remove", "rm"}:
-            if command == "rm":
-                deprecation_warning(
-                    "'pcs cluster uidgid rm' has been deprecated, use 'pcs "
-                    "cluster uidgid delete' or 'pcs cluster uidgid remove' "
-                    "instead"
-                )
+        elif command in {"delete", "remove"}:
             file_removed = utils.remove_uid_gid_file(uid, gid)
             if not file_removed:
                 utils.err(
                     "no uidgid files with uid=%s and gid=%s found" % (uid, gid)
                 )
-
-    else:
-        # The hint is defined to print error messages which point users to the
-        # changes section in pcs manpage.
-        # To be removed in the next significant version.
-        raise CmdLineInputError(
-            hint=(
-                msg_command_replaced(
-                    "pcs cluster uidgid delete",
-                    "pcs cluster uidgid remove",
-                )
-                if command == "rm"
-                else None
-            )
+    elif command == "rm":
+        # To be removed in the next significant version
+        raise_command_replaced(
+            [
+                "pcs cluster uidgid delete",
+                "pcs cluster uidgid remove",
+            ],
+            pcs_version="0.11",
         )
+    else:
+        raise CmdLineInputError()
 
 
 def cluster_get_corosync_conf(lib, argv, modifiers):
@@ -1497,10 +1486,7 @@ def cluster_auth_cmd(lib, argv, modifiers):
         "--corosync_conf", "--request-timeout", "-u", "-p"
     )
     if argv:
-        # The hint is defined to print error messages which point users to the
-        # changes section in pcs manpage.
-        # To be removed in the next significant version.
-        raise CmdLineInputError(hint=HINT_SYNTAX_CHANGE)
+        raise CmdLineInputError()
     lib_env = utils.get_lib_env()
     target_factory = lib_env.get_node_target_factory()
     cluster_node_list = lib_env.get_corosync_conf().get_nodes()
@@ -1654,10 +1640,6 @@ def cluster_setup(lib, argv, modifiers):
             + allowed_options_live
             + allowed_options_local
         ),
-        # The hint is defined to print error messages which point users to the
-        # changes section in pcs manpage.
-        # To be removed in the next significant version.
-        hint_syntax_changed=modifiers.is_specified_any(["--local", "--name"]),
     )
     if is_local and modifiers.is_specified_any(allowed_options_live):
         raise CmdLineInputError(

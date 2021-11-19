@@ -137,68 +137,6 @@ class ConstraintTest(unittest.TestCase):
 
         output, returnVal = pcs(
             self.temp_cib.name,
-            "constraint location C1-group rule score=pingd defined pingd".split(),
-        )
-        assert returnVal == 0
-        assert output == (
-            "Warning: invalid score 'pingd', setting score-attribute=pingd instead\n"
-            "Deprecation Warning: Converting invalid score to "
-            "score-attribute=pingd is deprecated and will be removed.\n"
-        ), [output]
-
-        output, returnVal = pcs(
-            self.temp_cib.name,
-            "constraint location D3 rule score=pingd defined pingd --force".split(),
-        )
-        assert returnVal == 0
-        assert output == (
-            "Warning: invalid score 'pingd', setting score-attribute=pingd instead\n"
-            "Deprecation Warning: Converting invalid score to "
-            "score-attribute=pingd is deprecated and will be removed.\n"
-        ), [output]
-
-        output, returnVal = pcs(
-            self.temp_cib.name,
-            (
-                "constraint location D4 rule score=INFINITY "
-                "date start=2005-001 gt --force"
-            ).split(),
-        )
-        assert returnVal == 0
-        assert output == (
-            "Deprecation Warning: Syntax 'date start=<date> gt' is deprecated "
-            "and will be removed. Please use 'date gt <date>'.\n"
-        ), [output]
-
-        output, returnVal = pcs(
-            self.temp_cib.name,
-            (
-                "constraint location D5 rule score=INFINITY "
-                "date start=2005-001 end=2006-001 in_range"
-            ).split(),
-        )
-        assert returnVal == 0
-        assert output == (
-            "Deprecation Warning: Syntax 'date start=<date> end=<date> "
-            "in_range' is deprecated and will be removed. Please use 'date "
-            "in_range <date> to <date>'.\n"
-        ), [output]
-
-        output, returnVal = pcs(
-            self.temp_cib.name,
-            (
-                "constraint location D6 rule score=INFINITY "
-                "date-spec operation=date_spec years=3005"
-            ).split(),
-        )
-        assert output == (
-            "Deprecation Warning: Syntax 'operation=date_spec' is deprecated "
-            "and will be removed. Please use 'date-spec <date-spec options>'.\n"
-        ), [output]
-        assert returnVal == 0
-
-        output, returnVal = pcs(
-            self.temp_cib.name,
             (
                 "constraint location D3 rule score=-INFINITY "
                 "not_defined pingd or pingd lte 0 --force"
@@ -225,10 +163,6 @@ class ConstraintTest(unittest.TestCase):
             output,
             """\
 Location Constraints:
-  Resource: C1-group
-    Constraint: location-C1-group
-      Rule: score-attribute=pingd (id:location-C1-group-rule)
-        Expression: defined pingd (id:location-C1-group-rule-expr)
   Resource: D1
     Constraint: location-D1
       Rule: score=222 (id:location-D1-rule)
@@ -239,84 +173,13 @@ Location Constraints:
         Expression: #uname eq c00n04 (id:location-D2-rule-expr)
   Resource: D3
     Constraint: location-D3
-      Rule: score-attribute=pingd (id:location-D3-rule)
-        Expression: defined pingd (id:location-D3-rule-expr)
+      Rule: boolean-op=or score=-INFINITY (id:location-D3-rule)
+        Expression: not_defined pingd (id:location-D3-rule-expr)
+        Expression: pingd lte 0 (id:location-D3-rule-expr-1)
     Constraint: location-D3-1
-      Rule: boolean-op=or score=-INFINITY (id:location-D3-1-rule)
+      Rule: boolean-op=and score=-INFINITY (id:location-D3-1-rule)
         Expression: not_defined pingd (id:location-D3-1-rule-expr)
         Expression: pingd lte 0 (id:location-D3-1-rule-expr-1)
-    Constraint: location-D3-2
-      Rule: boolean-op=and score=-INFINITY (id:location-D3-2-rule)
-        Expression: not_defined pingd (id:location-D3-2-rule-expr)
-        Expression: pingd lte 0 (id:location-D3-2-rule-expr-1)
-  Resource: D4
-    Constraint: location-D4
-      Rule: score=INFINITY (id:location-D4-rule)
-        Expression: date gt 2005-001 (id:location-D4-rule-expr)
-  Resource: D5
-    Constraint (expired): location-D5
-      Rule (expired): score=INFINITY (id:location-D5-rule)
-        Expression: date in_range 2005-001 to 2006-001 (id:location-D5-rule-expr)
-  Resource: D6
-    Constraint: location-D6
-      Rule: score=INFINITY (id:location-D6-rule)
-        Expression: (id:location-D6-rule-expr)
-          Date Spec: years=3005 (id:location-D6-rule-expr-datespec)
-Ordering Constraints:
-Colocation Constraints:
-Ticket Constraints:
-""",
-        )
-
-        o, r = pcs(
-            self.temp_cib.name, "constraint remove location-C1-group".split()
-        )
-        ac(o, "")
-        assert r == 0
-
-        o, r = pcs(
-            self.temp_cib.name, "constraint delete location-D4-rule".split()
-        )
-        ac(o, "")
-        assert r == 0
-
-        output, returnVal = pcs(
-            self.temp_cib.name, "constraint --full --all".split()
-        )
-        assert returnVal == 0
-        ac(
-            output,
-            """\
-Location Constraints:
-  Resource: D1
-    Constraint: location-D1
-      Rule: score=222 (id:location-D1-rule)
-        Expression: #uname eq c00n03 (id:location-D1-rule-expr)
-  Resource: D2
-    Constraint: location-D2
-      Rule: score=-INFINITY (id:location-D2-rule)
-        Expression: #uname eq c00n04 (id:location-D2-rule-expr)
-  Resource: D3
-    Constraint: location-D3
-      Rule: score-attribute=pingd (id:location-D3-rule)
-        Expression: defined pingd (id:location-D3-rule-expr)
-    Constraint: location-D3-1
-      Rule: boolean-op=or score=-INFINITY (id:location-D3-1-rule)
-        Expression: not_defined pingd (id:location-D3-1-rule-expr)
-        Expression: pingd lte 0 (id:location-D3-1-rule-expr-1)
-    Constraint: location-D3-2
-      Rule: boolean-op=and score=-INFINITY (id:location-D3-2-rule)
-        Expression: not_defined pingd (id:location-D3-2-rule-expr)
-        Expression: pingd lte 0 (id:location-D3-2-rule-expr-1)
-  Resource: D5
-    Constraint (expired): location-D5
-      Rule (expired): score=INFINITY (id:location-D5-rule)
-        Expression: date in_range 2005-001 to 2006-001 (id:location-D5-rule-expr)
-  Resource: D6
-    Constraint: location-D6
-      Rule: score=INFINITY (id:location-D6-rule)
-        Expression: (id:location-D6-rule-expr)
-          Date Spec: years=3005 (id:location-D6-rule-expr-datespec)
 Ordering Constraints:
 Colocation Constraints:
 Ticket Constraints:
@@ -4120,9 +3983,6 @@ class LocationShowWithPattern(ConstraintBaseTest):
                 "constraint location add my-id1 R3 node1 -INFINITY resource-discovery=never".split(),
                 "constraint location add my-id2 R3 node2 -INFINITY resource-discovery=never".split(),
                 "constraint location add my-id3 regexp%R_[0-9]+ node4 -INFINITY resource-discovery=never".split(),
-                "constraint location R1 rule score=-INFINITY date-spec operation=date_spec years=3005".split(),
-                "constraint location R1 rule score=-INFINITY date-spec operation=date_spec years=3007".split(),
-                "constraint location regexp%R_[0-9]+ rule score=-INFINITY date-spec operation=date_spec years=3006".split(),
                 "constraint location regexp%R_[0-9]+ rule score=20 defined pingd".split(),
             ]
         )
@@ -4142,12 +4002,8 @@ class LocationShowWithPattern(ConstraintBaseTest):
                   Node: node3 (score:-30) (id:location-R_0-9-node3--30)
                   Node: node4 (score:-INFINITY) (resource-discovery=never) (id:my-id3)
                 Constraint: location-R_0-9
-                  Rule: score=-INFINITY (id:location-R_0-9-rule)
-                    Expression: (id:location-R_0-9-rule-expr)
-                      Date Spec: years=3006 (id:location-R_0-9-rule-expr-datespec)
-                Constraint: location-R_0-9-1
-                  Rule: score=20 (id:location-R_0-9-1-rule)
-                    Expression: defined pingd (id:location-R_0-9-1-rule-expr)
+                  Rule: score=20 (id:location-R_0-9-rule)
+                    Expression: defined pingd (id:location-R_0-9-rule-expr)
               Resource pattern: R_[a-z]+
                 Disabled on:
                   Node: node3 (score:-30) (id:location-R_a-z-node3--30)
@@ -4158,14 +4014,6 @@ class LocationShowWithPattern(ConstraintBaseTest):
                 Disabled on:
                   Node: node3 (score:-30) (id:location-R1-node3--30)
                   Node: node4 (score:-INFINITY) (id:location-R1-node4--INFINITY)
-                Constraint: location-R1
-                  Rule: score=-INFINITY (id:location-R1-rule)
-                    Expression: (id:location-R1-rule-expr)
-                      Date Spec: years=3005 (id:location-R1-rule-expr-datespec)
-                Constraint: location-R1-1
-                  Rule: score=-INFINITY (id:location-R1-1-rule)
-                    Expression: (id:location-R1-1-rule-expr)
-                      Date Spec: years=3007 (id:location-R1-1-rule-expr-datespec)
               Resource: R2
                 Enabled on:
                   Node: node3 (score:INFINITY) (id:location-R2-node3-INFINITY)
@@ -4194,10 +4042,6 @@ class LocationShowWithPattern(ConstraintBaseTest):
                   Node: node3 (score:-30)
                   Node: node4 (score:-INFINITY) (resource-discovery=never)
                 Constraint: location-R_0-9
-                  Rule: score=-INFINITY
-                    Expression:
-                      Date Spec: years=3006
-                Constraint: location-R_0-9-1
                   Rule: score=20
                     Expression: defined pingd
               Resource pattern: R_[a-z]+
@@ -4210,14 +4054,6 @@ class LocationShowWithPattern(ConstraintBaseTest):
                 Disabled on:
                   Node: node3 (score:-30)
                   Node: node4 (score:-INFINITY)
-                Constraint: location-R1
-                  Rule: score=-INFINITY
-                    Expression:
-                      Date Spec: years=3005
-                Constraint: location-R1-1
-                  Rule: score=-INFINITY
-                    Expression:
-                      Date Spec: years=3007
               Resource: R2
                 Enabled on:
                   Node: node3 (score:INFINITY)
@@ -4241,10 +4077,7 @@ class LocationShowWithPattern(ConstraintBaseTest):
             Location Constraints:
               Node: 
                 Allowed to run:
-                  Resource: R1 (score:0) (id:location-R1)
-                  Resource: R1 (score:0) (id:location-R1-1)
                   Resource pattern: R_[0-9]+ (score:0) (id:location-R_0-9)
-                  Resource pattern: R_[0-9]+ (score:0) (id:location-R_0-9-1)
               Node: node1
                 Allowed to run:
                   Resource: R1 (score:INFINITY) (id:location-R1-node1-INFINITY)
@@ -4274,21 +4107,8 @@ class LocationShowWithPattern(ConstraintBaseTest):
                   Resource pattern: R_[0-9]+ (score:-INFINITY) (resource-discovery=never) (id:my-id3)
               Resource pattern: R_[0-9]+
                 Constraint: location-R_0-9
-                  Rule: score=-INFINITY (id:location-R_0-9-rule)
-                    Expression: (id:location-R_0-9-rule-expr)
-                      Date Spec: years=3006 (id:location-R_0-9-rule-expr-datespec)
-                Constraint: location-R_0-9-1
-                  Rule: score=20 (id:location-R_0-9-1-rule)
-                    Expression: defined pingd (id:location-R_0-9-1-rule-expr)
-              Resource: R1
-                Constraint: location-R1
-                  Rule: score=-INFINITY (id:location-R1-rule)
-                    Expression: (id:location-R1-rule-expr)
-                      Date Spec: years=3005 (id:location-R1-rule-expr-datespec)
-                Constraint: location-R1-1
-                  Rule: score=-INFINITY (id:location-R1-1-rule)
-                    Expression: (id:location-R1-1-rule-expr)
-                      Date Spec: years=3007 (id:location-R1-1-rule-expr-datespec)
+                  Rule: score=20 (id:location-R_0-9-rule)
+                    Expression: defined pingd (id:location-R_0-9-rule-expr)
             """
             ),
         )
@@ -4307,21 +4127,8 @@ class LocationShowWithPattern(ConstraintBaseTest):
                   Resource: R3 (score:-INFINITY) (resource-discovery=never)
               Resource pattern: R_[0-9]+
                 Constraint: location-R_0-9
-                  Rule: score=-INFINITY
-                    Expression:
-                      Date Spec: years=3006
-                Constraint: location-R_0-9-1
                   Rule: score=20
                     Expression: defined pingd
-              Resource: R1
-                Constraint: location-R1
-                  Rule: score=-INFINITY
-                    Expression:
-                      Date Spec: years=3005
-                Constraint: location-R1-1
-                  Rule: score=-INFINITY
-                    Expression:
-                      Date Spec: years=3007
             """
             ),
         )
@@ -4339,10 +4146,6 @@ class LocationShowWithPattern(ConstraintBaseTest):
                   Node: node3 (score:-30)
                   Node: node4 (score:-INFINITY) (resource-discovery=never)
                 Constraint: location-R_0-9
-                  Rule: score=-INFINITY
-                    Expression:
-                      Date Spec: years=3006
-                Constraint: location-R_0-9-1
                   Rule: score=20
                     Expression: defined pingd
             """
