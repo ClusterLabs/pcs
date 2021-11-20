@@ -474,6 +474,26 @@ post '/manage/cluster-setup' do
   return [code, out]
 end
 
+post '/manage/api/v1/cluster-setup' do
+  auth_user = getAuthUser()
+  if not allowed_for_superuser(auth_user)
+    return 403, 'Permission denied.'
+  end
+  if params[:target_node] and params[:setup_data]
+    return send_request_with_token(
+      auth_user,
+      params[:target_node],
+      '/api/v1/cluster-setup/v1',
+      true, # post
+      {}, # data - useless when there are raw_data
+      false, # remote
+      params[:setup_data] # raw_data
+    )
+  end
+end
+
+
+
 # use case:
 # - js instructs us to add the just created cluster to our list of clusters
 post '/manage/remember-cluster' do
@@ -864,7 +884,13 @@ post '/managec/:cluster/api/v1/:command' do
   auth_user = getAuthUser()
   if params[:cluster] and params[:command]
     return send_cluster_request_with_token(
-      auth_user, params[:cluster], '/api/v1/' + params[:command] + '/v1', true, params, false, request.env['rack.input'].read
+      auth_user,
+      params[:cluster],
+      '/api/v1/' + params[:command] + '/v1',
+      true, # post
+      {}, # data - useless when there are raw_data
+      false, # remote
+      request.env['rack.input'].read # raw_data
     )
   end
 end
@@ -873,7 +899,13 @@ get '/managec/:cluster/api/v1/:command' do
   auth_user = getAuthUser()
   if params[:cluster] and params[:command]
     return send_cluster_request_with_token(
-      auth_user, params[:cluster], '/api/v1/' + params[:command] + '/v1', false, params, false, request.env['rack.input'].read
+      auth_user,
+      params[:cluster],
+      '/api/v1/' + params[:command] + '/v1',
+      false, # post
+      {}, # data - useless when there are raw_data
+      false, # remote
+      request.env['rack.input'].read # raw_data
     )
   end
 end

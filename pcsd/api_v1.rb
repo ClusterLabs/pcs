@@ -3,6 +3,8 @@ require 'json'
 require 'pcs.rb'
 require 'permissions.rb'
 
+# request: request.body contains json which represents parameters of pcs library
+#   command
 def route_api_v1(auth_user, params, request)
   req_map = {
     'acl-create-role/v1' => {
