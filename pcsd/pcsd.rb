@@ -452,28 +452,6 @@ get '/manage/can-add-cluster-or-nodes' do
   return 200, ""
 end
 
-# use case:
-# - js instructs a node from the future cluster to setup the cluster
-post '/manage/cluster-setup' do
-  auth_user = getAuthUser()
-  if not allowed_for_superuser(auth_user)
-    return 403, 'Permission denied.'
-  end
-  code, out = send_request_with_token(
-    auth_user,
-    params[:target_node],
-    'cluster_setup',
-    true,
-    {
-      :data_json => params[:setup_data],
-    },
-    true,
-    nil,
-    60
-  )
-  return [code, out]
-end
-
 post '/manage/api/v1/cluster-setup' do
   auth_user = getAuthUser()
   if not allowed_for_superuser(auth_user)

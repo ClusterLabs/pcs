@@ -29,9 +29,6 @@ def remote(params, request, auth_user)
       :cluster_status_plaintext => method(:cluster_status_plaintext),
       :auth => method(:auth),
       :check_auth => method(:check_auth),
-      # lib api:
-      # /api/v1/cluster-setup/v1
-      :cluster_setup => method(:cluster_setup),
       :get_quorum_info => method(:get_quorum_info),
       :get_corosync_conf => method(:get_corosync_conf_remote),
       :set_corosync_conf => method(:set_corosync_conf),
@@ -748,15 +745,6 @@ def cluster_remove_nodes(params, request, auth_user)
   end
   return pcs_internal_proxy_old(
     auth_user, params.fetch(:data_json, ""), "cluster.remove_nodes"
-  )
-end
-
-def cluster_setup(params, request, auth_user)
-  if not allowed_for_superuser(auth_user)
-    return 403, 'Permission denied'
-  end
-  return pcs_internal_proxy_old(
-    auth_user, params.fetch(:data_json, ""), "cluster.setup"
   )
 end
 
