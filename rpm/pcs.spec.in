@@ -100,7 +100,7 @@ Requires: python3-lxml
 Requires: python3-pycurl
 Requires: python3-pyparsing
 # ruby and gems for pcsd
-Requires: ruby >= 2.2.0
+Requires: ruby >= 2.5
 Requires: rubygems
 # for killall
 Requires: psmisc
