@@ -65,7 +65,7 @@ AC_PROG_MKDIR_P
 PKG_PROG_PKG_CONFIG
 
 # check for python
-AM_PATH_PYTHON([3.6])
+AM_PATH_PYTHON([3.9])
 eval PYTHON_SITELIB="`eval echo ${pythondir}`"
 AC_SUBST([PYTHON_SITELIB])
 # required to detect / install python modules
@@ -307,11 +307,6 @@ if test "x$tests_only" != "xyes"; then
 	PCS_CHECK_PYMOD([dacite], [], [yes])
 	PCS_CHECK_PYMOD([tornado], [>= 6.0.0], [yes])
 	PCS_CHECK_PYMOD([python-dateutil], [>= 2.7.0], [yes])
-
-	# python 3.6 needs dataclasses as well (added in 3.7)
-	if test "$PYTHON_VERSION" = "3.6"; then
-		PCS_CHECK_PYMOD([dataclasses], [], [yes])
-	fi
 
 	# special case, because we need to download from github
 	AC_PIP_MODULE([pyagentx])

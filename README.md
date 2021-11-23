@@ -27,7 +27,7 @@ There are three pcs branches:
 ### Dependencies
 
 These are the runtime dependencies of pcs and pcsd:
-* python 3.6+
+* python 3.9+
 * python3-cryptography
 * python3-dateutil 2.7.0+
 * python3-lxml
@@ -36,8 +36,6 @@ These are the runtime dependencies of pcs and pcsd:
 * python3-setuptools\_scm
 * python3-pyparsing
 * python3-tornado 6.1.0+
-* python dataclasses (`pip install dataclasses`; required only for python 3.6,
-  already included in 3.7+)
 * [dacite](https://github.com/konradhalas/dacite)
 * ruby 2.2.0+
 * killall (package psmisc)
