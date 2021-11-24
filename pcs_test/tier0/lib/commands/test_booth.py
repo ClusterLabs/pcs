@@ -358,17 +358,29 @@ class ConfigSetup(TestCase, FixtureMixin):
                 self.arbitrators,
             )
         )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.FILE_IO_ERROR,
-                    file_type_code=file_type_codes.BOOTH_CONFIG,
-                    file_path=self.fixture_cfg_path(),
-                    reason=error,
-                    operation=RawFileError.ACTION_WRITE,
-                ),
-            ]
-        )
+
+        if os.path.exists(os.path.dirname(self.fixture_key_path())) is not True:
+            self.env_assist.assert_reports(
+                [
+                    fixture.error(
+                        reports.codes.BOOTH_PATH_NOT_EXISTS,
+                        path=os.path.dirname(self.fixture_key_path()),
+                    ),
+                ]
+            )
+        else:
+            self.env_assist.assert_reports(
+                [
+                    fixture.error(
+                        reports.codes.FILE_IO_ERROR,
+                        file_type_code=file_type_codes.BOOTH_CONFIG,
+                        file_path=self.fixture_cfg_path(),
+                        reason=error,
+                        operation=RawFileError.ACTION_WRITE,
+                    ),
+                ]
+            )
+
 
     def test_write_key_error(self):
         error = "an error occurred"
@@ -390,17 +402,28 @@ class ConfigSetup(TestCase, FixtureMixin):
                 self.arbitrators,
             )
         )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.FILE_IO_ERROR,
-                    file_type_code=file_type_codes.BOOTH_KEY,
-                    file_path=self.fixture_key_path(),
-                    reason=error,
-                    operation=RawFileError.ACTION_WRITE,
-                ),
-            ]
-        )
+
+        if os.path.exists(os.path.dirname(self.fixture_key_path())) is not True:
+            self.env_assist.assert_reports(
+                [
+                    fixture.error(
+                        reports.codes.BOOTH_PATH_NOT_EXISTS,
+                        path=os.path.dirname(self.fixture_key_path()),
+                    ),
+                ]
+            )
+        else:
+            self.env_assist.assert_reports(
+                [
+                    fixture.error(
+                        reports.codes.FILE_IO_ERROR,
+                        file_type_code=file_type_codes.BOOTH_KEY,
+                        file_path=self.fixture_key_path(),
+                        reason=error,
+                        operation=RawFileError.ACTION_WRITE,
+                    ),
+                ]
+            )
 
     def test_not_live(self):
         key_path = "/tmp/pcs_test/booth.key"
