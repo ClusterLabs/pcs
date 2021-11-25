@@ -26,6 +26,8 @@ Summary: Pacemaker Configuration System
 
 %global pcs_bundled_dir @pcs_bundled_dir@
 
+%global required_pacemaker_version 2.1.0
+
 # javascript bundled libraries for old web-ui
 %global ember_version 1.4.0
 %global handlebars_version 1.2.1
@@ -89,7 +91,7 @@ BuildRequires: booth
 BuildRequires: corosync-qdevice-devel
 BuildRequires: corosynclib-devel >= 3.0
 BuildRequires: fence-agents-common
-BuildRequires: pacemaker-libs-devel >= 2.0.0
+BuildRequires: pacemaker-libs-devel >= %{required_pacemaker_version}
 BuildRequires: resource-agents
 BuildRequires: sbd
 # for post, preun and postun macros
@@ -105,7 +107,7 @@ Requires: rubygems
 # for killall
 Requires: psmisc
 # cluster stack and related packages
-Requires: pacemaker >= 2.0.0
+Requires: pacemaker >= %{required_pacemaker_version}
 Requires: corosync >= 3.0
 # pcs enables corosync encryption by default so we require libknet1-plugins-all
 Requires: libknet1-plugins-all
