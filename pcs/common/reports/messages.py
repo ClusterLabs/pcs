@@ -6273,6 +6273,7 @@ class NodeInLocalCluster(ReportItemMessage):
     def message(self) -> str:
         return f"Node '{self.node}' is part of local cluster"
 
+
 @dataclass(frozen=True)
 class BoothPathNotExists(ReportItemMessage):
     """
@@ -6288,8 +6289,10 @@ class BoothPathNotExists(ReportItemMessage):
     @property
     def message(self) -> str:
         return (
-            f"Configuration directory for booth '{self.path}' is missing. Is booth installed?"
+            f"Configuration directory for booth '{self.path}' is missing. "
+            "Is booth installed?"
         )
+
 
 @dataclass(frozen=True)
 class BoothLackOfSites(ReportItemMessage):

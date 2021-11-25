@@ -359,7 +359,7 @@ class ConfigSetup(TestCase, FixtureMixin):
             )
         )
 
-        if os.path.exists(os.path.dirname(self.fixture_key_path())) is not True:
+        if not os.path.exists(os.path.dirname(self.fixture_key_path())):
             self.env_assist.assert_reports(
                 [
                     fixture.error(
@@ -380,7 +380,6 @@ class ConfigSetup(TestCase, FixtureMixin):
                     ),
                 ]
             )
-
 
     def test_write_key_error(self):
         error = "an error occurred"
@@ -403,7 +402,7 @@ class ConfigSetup(TestCase, FixtureMixin):
             )
         )
 
-        if os.path.exists(os.path.dirname(self.fixture_key_path())) is not True:
+        if not os.path.exists(os.path.dirname(self.fixture_key_path())):
             self.env_assist.assert_reports(
                 [
                     fixture.error(
