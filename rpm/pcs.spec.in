@@ -28,11 +28,6 @@ Summary: Pacemaker Configuration System
 
 %global required_pacemaker_version 2.1.0
 
-# javascript bundled libraries for old web-ui
-%global ember_version 1.4.0
-%global handlebars_version 1.2.1
-%global jquery_ui_version 1.10.1
-%global jquery_version 1.9.1
 
 # mangling shebang in /usr/lib/pcsd/vendor/bundle/ruby/gems/rack-2.0.5/test/cgi/test from /usr/bin/env ruby to #!/usr/bin/ruby
 #*** ERROR: ./usr/lib/pcsd/vendor/bundle/ruby/gems/rack-2.0.5/test/cgi/test.ru has shebang which doesn't start with '/' (../../bin/rackup)
@@ -124,12 +119,6 @@ Requires: logrotate
 @pybundle@
 
 @gembundle@
-
-# javascript bundled libraries for old web-ui
-Provides: bundled(ember) = %{ember_version}
-Provides: bundled(handlebars) = %{handlebars_version}
-Provides: bundled(jquery) = %{jquery_version}
-Provides: bundled(jquery-ui) = %{jquery_ui_version}
 
 %description
 pcs is a corosync and pacemaker configuration tool.  It permits users to
