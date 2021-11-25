@@ -777,6 +777,7 @@ def pull_config(env: LibraryEnvironment, node_name, instance_name=None):
     booth_env = env.get_booth_env(instance_name)
     instance_name = booth_env.instance_name
     _ensure_live_env(env, booth_env)
+    conf_dir = os.path.dirname(booth_env.config_path)
 
     env.report_processor.report(
         ReportItem.info(
@@ -820,7 +821,12 @@ def pull_config(env: LibraryEnvironment, node_name, instance_name=None):
             )
         )
     except RawFileError as e:
-        report_processor.report(raw_file_error_report(e))
+        if not os.path.exists(conf_dir):
+            report_processor.report(
+                ReportItem.error(reports.messages.BoothPathNotExists(conf_dir))
+            )
+        else:
+            report_processor.report(raw_file_error_report(e))
     except KeyError as e:
         raise LibraryError(
             ReportItem.error(reports.messages.InvalidResponseFormat(node_name))
