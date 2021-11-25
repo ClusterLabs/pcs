@@ -333,23 +333,22 @@ class ConfigSetup(TestCase, FixtureMixin):
             overwrite_existing=True,
         )
 
-    def test_write_config_error(self):
-        error = "an error occurred"
+    def _assert_write_config_error(self, error, booth_dir_exists):
 
-        (
-            self.config.raw_file.write(
-                file_type_codes.BOOTH_KEY,
-                self.fixture_key_path(),
-                RANDOM_KEY,
-                name="raw_file.write.key",
-            ).raw_file.write(
-                file_type_codes.BOOTH_CONFIG,
-                self.fixture_cfg_path(),
-                self.fixture_cfg_content(),
-                exception_msg=error,
-                name="raw_file.write.cfg",
-            )
+        self.config.raw_file.write(
+            file_type_codes.BOOTH_KEY,
+            self.fixture_key_path(),
+            RANDOM_KEY,
+            name="raw_file.write.key",
         )
+        self.config.raw_file.write(
+            file_type_codes.BOOTH_CONFIG,
+            self.fixture_cfg_path(),
+            self.fixture_cfg_content(),
+            exception_msg=error,
+            name="raw_file.write.cfg",
+        )
+        self.config.fs.exists(self.booth_dir, booth_dir_exists)
 
         self.env_assist.assert_raise_library_error(
             lambda: commands.config_setup(
@@ -359,70 +358,77 @@ class ConfigSetup(TestCase, FixtureMixin):
             )
         )
 
-        if not os.path.exists(os.path.dirname(self.fixture_key_path())):
-            self.env_assist.assert_reports(
-                [
-                    fixture.error(
-                        reports.codes.BOOTH_PATH_NOT_EXISTS,
-                        path=os.path.dirname(self.fixture_key_path()),
-                    ),
-                ]
+    def test_write_config_error(self):
+        error = "an error occurred"
+        self._assert_write_config_error(error, True)
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.FILE_IO_ERROR,
+                    file_type_code=file_type_codes.BOOTH_CONFIG,
+                    file_path=self.fixture_cfg_path(),
+                    reason=error,
+                    operation=RawFileError.ACTION_WRITE,
+                ),
+            ]
+        )
+
+    def test_write_config_error_booth_dir_missing(self):
+        error = "an error occurred"
+        self._assert_write_config_error(error, False)
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.BOOTH_PATH_NOT_EXISTS,
+                    path=self.booth_dir,
+                ),
+            ]
+        )
+
+    def _assert_write_key_error(self, error, booth_dir_exists):
+        self.config.raw_file.write(
+            file_type_codes.BOOTH_KEY,
+            self.fixture_key_path(),
+            RANDOM_KEY,
+            exception_msg=error,
+            name="raw_file.write.key",
+        )
+        self.config.fs.exists(self.booth_dir, booth_dir_exists)
+
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_setup(
+                self.env_assist.get_env(),
+                self.sites,
+                self.arbitrators,
             )
-        else:
-            self.env_assist.assert_reports(
-                [
-                    fixture.error(
-                        reports.codes.FILE_IO_ERROR,
-                        file_type_code=file_type_codes.BOOTH_CONFIG,
-                        file_path=self.fixture_cfg_path(),
-                        reason=error,
-                        operation=RawFileError.ACTION_WRITE,
-                    ),
-                ]
-            )
+        )
 
     def test_write_key_error(self):
         error = "an error occurred"
-
-        (
-            self.config.raw_file.write(
-                file_type_codes.BOOTH_KEY,
-                self.fixture_key_path(),
-                RANDOM_KEY,
-                exception_msg=error,
-                name="raw_file.write.key",
-            )
+        self._assert_write_key_error(error, True)
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.FILE_IO_ERROR,
+                    file_type_code=file_type_codes.BOOTH_KEY,
+                    file_path=self.fixture_key_path(),
+                    reason=error,
+                    operation=RawFileError.ACTION_WRITE,
+                ),
+            ]
         )
 
-        self.env_assist.assert_raise_library_error(
-            lambda: commands.config_setup(
-                self.env_assist.get_env(),
-                self.sites,
-                self.arbitrators,
-            )
+    def test_write_key_error_booth_dir_missing(self):
+        error = "an error occurred"
+        self._assert_write_key_error(error, False)
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.BOOTH_PATH_NOT_EXISTS,
+                    path=self.booth_dir,
+                ),
+            ]
         )
-
-        if not os.path.exists(os.path.dirname(self.fixture_key_path())):
-            self.env_assist.assert_reports(
-                [
-                    fixture.error(
-                        reports.codes.BOOTH_PATH_NOT_EXISTS,
-                        path=os.path.dirname(self.fixture_key_path()),
-                    ),
-                ]
-            )
-        else:
-            self.env_assist.assert_reports(
-                [
-                    fixture.error(
-                        reports.codes.FILE_IO_ERROR,
-                        file_type_code=file_type_codes.BOOTH_KEY,
-                        file_path=self.fixture_key_path(),
-                        reason=error,
-                        operation=RawFileError.ACTION_WRITE,
-                    ),
-                ]
-            )
 
     def test_not_live(self):
         key_path = "/tmp/pcs_test/booth.key"
