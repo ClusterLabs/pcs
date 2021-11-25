@@ -85,7 +85,11 @@ def config_setup(
     booth_conf = booth_env.create_facade(site_list, arbitrator_list)
     booth_conf.set_authfile(booth_env.key_path)
 
-    key_dir = os.path.dirname(booth_env.key_path)
+    conf_dir = (
+        None
+        if booth_env.ghost_file_codes
+        else os.path.dirname(booth_env.config_path)
+    )
 
     try:
         booth_env.key.write_raw(
@@ -111,9 +115,9 @@ def config_setup(
             )
         )
     except RawFileError as e:
-        if not os.path.exists(key_dir):
+        if conf_dir and not os.path.exists(conf_dir):
             report_processor.report(
-                ReportItem.error(reports.messages.BoothPathNotExists(key_dir))
+                ReportItem.error(reports.messages.BoothPathNotExists(conf_dir))
             )
         else:
             report_processor.report(raw_file_error_report(e))
