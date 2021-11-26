@@ -138,6 +138,10 @@ if ENABLE_DOWNLOAD
 	rm -rf $$(realpath $(PCSD_BUNDLED_DIR_LOCAL)/../)
 	rm -rf .bundle Gemfile.lock
 else
+	with_cflags=""; \
+	if test "x$(ruby_CFLAGS)" != "x"; then \
+		with_cflags='--with-cflags=$(ruby_CFLAGS)'; \
+	fi; \
 	gem_files=`$(FIND) "$(PCSD_BUNDLED_CACHE_DIR)" -type f -name '*.gem'` && \
 	if test "x$${gem_files}" != "x"; then \
 		$(GEM) install \
@@ -145,6 +149,7 @@ else
 			-i "$(PCSD_BUNDLED_DIR_ROOT_LOCAL)" \
 			$${gem_files} \
 			-- \
+			"$${with_cflags}" \
 			'--with-ldflags=$(ruby_LIBS)'; \
 	fi
 endif
