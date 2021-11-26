@@ -85,6 +85,12 @@ def config_setup(
     booth_conf = booth_env.create_facade(site_list, arbitrator_list)
     booth_conf.set_authfile(booth_env.key_path)
 
+    conf_dir = (
+        None
+        if booth_env.ghost_file_codes
+        else os.path.dirname(booth_env.config_path)
+    )
+
     try:
         booth_env.key.write_raw(
             tools.generate_binary_key(
@@ -109,7 +115,12 @@ def config_setup(
             )
         )
     except RawFileError as e:
-        report_processor.report(raw_file_error_report(e))
+        if conf_dir and not os.path.exists(conf_dir):
+            report_processor.report(
+                ReportItem.error(reports.messages.BoothPathNotExists(conf_dir))
+            )
+        else:
+            report_processor.report(raw_file_error_report(e))
     if report_processor.has_errors:
         raise LibraryError()
 
@@ -766,6 +777,7 @@ def pull_config(env: LibraryEnvironment, node_name, instance_name=None):
     booth_env = env.get_booth_env(instance_name)
     instance_name = booth_env.instance_name
     _ensure_live_env(env, booth_env)
+    conf_dir = os.path.dirname(booth_env.config_path)
 
     env.report_processor.report(
         ReportItem.info(
@@ -809,7 +821,12 @@ def pull_config(env: LibraryEnvironment, node_name, instance_name=None):
             )
         )
     except RawFileError as e:
-        report_processor.report(raw_file_error_report(e))
+        if not os.path.exists(conf_dir):
+            report_processor.report(
+                ReportItem.error(reports.messages.BoothPathNotExists(conf_dir))
+            )
+        else:
+            report_processor.report(raw_file_error_report(e))
     except KeyError as e:
         raise LibraryError(
             ReportItem.error(reports.messages.InvalidResponseFormat(node_name))

@@ -20,10 +20,16 @@
   is not false when a stonith device is in a group ([ghpull#370])
 - Misleading error message from `pcs quorum unblock` when `wait_for_all=0`
   ([rhbz#1968088])
+- Misleading error message from `pcs booth setup` and `pcs booth pull` when
+  booth config directory (`/etc/booth`) is missing ([rhbz#1791670],
+  [ghpull#411], [ghissue#225])
 
 
+[ghissue#225]: https://github.com/ClusterLabs/pcs/issues/225
 [ghpull#370]: https://github.com/ClusterLabs/pcs/pull/370
+[ghpull#411]: https://github.com/ClusterLabs/pcs/pull/411
 [rhbz#1533090]: https://bugzilla.redhat.com/show_bug.cgi?id=1533090
+[rhbz#1791670]: https://bugzilla.redhat.com/show_bug.cgi?id=1791670
 [rhbz#1811072]: https://bugzilla.redhat.com/show_bug.cgi?id=1811072
 [rhbz#1968088]: https://bugzilla.redhat.com/show_bug.cgi?id=1968088
 [rhbz#1990787]: https://bugzilla.redhat.com/show_bug.cgi?id=1990787

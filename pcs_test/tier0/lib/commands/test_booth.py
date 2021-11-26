@@ -333,23 +333,22 @@ class ConfigSetup(TestCase, FixtureMixin):
             overwrite_existing=True,
         )
 
-    def test_write_config_error(self):
-        error = "an error occurred"
+    def _assert_write_config_error(self, error, booth_dir_exists):
 
-        (
-            self.config.raw_file.write(
-                file_type_codes.BOOTH_KEY,
-                self.fixture_key_path(),
-                RANDOM_KEY,
-                name="raw_file.write.key",
-            ).raw_file.write(
-                file_type_codes.BOOTH_CONFIG,
-                self.fixture_cfg_path(),
-                self.fixture_cfg_content(),
-                exception_msg=error,
-                name="raw_file.write.cfg",
-            )
+        self.config.raw_file.write(
+            file_type_codes.BOOTH_KEY,
+            self.fixture_key_path(),
+            RANDOM_KEY,
+            name="raw_file.write.key",
         )
+        self.config.raw_file.write(
+            file_type_codes.BOOTH_CONFIG,
+            self.fixture_cfg_path(),
+            self.fixture_cfg_content(),
+            exception_msg=error,
+            name="raw_file.write.cfg",
+        )
+        self.config.fs.exists(self.booth_dir, booth_dir_exists)
 
         self.env_assist.assert_raise_library_error(
             lambda: commands.config_setup(
@@ -358,6 +357,10 @@ class ConfigSetup(TestCase, FixtureMixin):
                 self.arbitrators,
             )
         )
+
+    def test_write_config_error(self):
+        error = "an error occurred"
+        self._assert_write_config_error(error, True)
         self.env_assist.assert_reports(
             [
                 fixture.error(
@@ -370,18 +373,27 @@ class ConfigSetup(TestCase, FixtureMixin):
             ]
         )
 
-    def test_write_key_error(self):
+    def test_write_config_error_booth_dir_missing(self):
         error = "an error occurred"
-
-        (
-            self.config.raw_file.write(
-                file_type_codes.BOOTH_KEY,
-                self.fixture_key_path(),
-                RANDOM_KEY,
-                exception_msg=error,
-                name="raw_file.write.key",
-            )
+        self._assert_write_config_error(error, False)
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.BOOTH_PATH_NOT_EXISTS,
+                    path=self.booth_dir,
+                ),
+            ]
         )
+
+    def _assert_write_key_error(self, error, booth_dir_exists):
+        self.config.raw_file.write(
+            file_type_codes.BOOTH_KEY,
+            self.fixture_key_path(),
+            RANDOM_KEY,
+            exception_msg=error,
+            name="raw_file.write.key",
+        )
+        self.config.fs.exists(self.booth_dir, booth_dir_exists)
 
         self.env_assist.assert_raise_library_error(
             lambda: commands.config_setup(
@@ -390,6 +402,10 @@ class ConfigSetup(TestCase, FixtureMixin):
                 self.arbitrators,
             )
         )
+
+    def test_write_key_error(self):
+        error = "an error occurred"
+        self._assert_write_key_error(error, True)
         self.env_assist.assert_reports(
             [
                 fixture.error(
@@ -398,6 +414,18 @@ class ConfigSetup(TestCase, FixtureMixin):
                     file_path=self.fixture_key_path(),
                     reason=error,
                     operation=RawFileError.ACTION_WRITE,
+                ),
+            ]
+        )
+
+    def test_write_key_error_booth_dir_missing(self):
+        error = "an error occurred"
+        self._assert_write_key_error(error, False)
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.BOOTH_PATH_NOT_EXISTS,
+                    path=self.booth_dir,
                 ),
             ]
         )
@@ -3308,26 +3336,29 @@ class PullConfigFailure(PullConfigBase):
             expected_in_processor=False,
         )
 
-    def test_write_failure(self):
-        (
-            self.config.http.booth.get_config(
-                self.name,
-                self.config_data.decode("utf-8"),
-                node_labels=[self.node_name],
-            ).raw_file.write(
-                file_type_codes.BOOTH_CONFIG,
-                self.config_path,
-                self.config_data,
-                can_overwrite=True,
-                exception_msg=self.reason,
-            )
+    def _assert_write_failure(self, booth_dir_exists):
+        self.config.http.booth.get_config(
+            self.name,
+            self.config_data.decode("utf-8"),
+            node_labels=[self.node_name],
         )
+        self.config.raw_file.write(
+            file_type_codes.BOOTH_CONFIG,
+            self.config_path,
+            self.config_data,
+            can_overwrite=True,
+            exception_msg=self.reason,
+        )
+        self.config.fs.exists(self.booth_dir, booth_dir_exists)
 
         self.env_assist.assert_raise_library_error(
             lambda: commands.pull_config(
                 self.env_assist.get_env(), self.node_name
             ),
         )
+
+    def test_write_failure(self):
+        self._assert_write_failure(True)
         self.env_assist.assert_reports(
             self.report_list[:1]
             + [
@@ -3338,6 +3369,18 @@ class PullConfigFailure(PullConfigBase):
                     reason=self.reason,
                     operation=RawFileError.ACTION_WRITE,
                 )
+            ]
+        )
+
+    def test_write_failure_booth_dir_missing(self):
+        self._assert_write_failure(False)
+        self.env_assist.assert_reports(
+            self.report_list[:1]
+            + [
+                fixture.error(
+                    reports.codes.BOOTH_PATH_NOT_EXISTS,
+                    path=self.booth_dir,
+                ),
             ]
         )
 
@@ -3506,22 +3549,24 @@ class PullConfigWithAuthfileFailure(PullConfigWithAuthfile):
         super().setUp()
         self.reason = "reason"
 
-    def test_authfile_write_failure(self):
-        (
-            self.config.raw_file.write(
-                file_type_codes.BOOTH_KEY,
-                self.authfile_path,
-                self.authfile_data,
-                can_overwrite=True,
-                exception_msg=self.reason,
-            )
+    def _assert_authfile_write_failure(self, booth_dir_exists):
+        self.config.raw_file.write(
+            file_type_codes.BOOTH_KEY,
+            self.authfile_path,
+            self.authfile_data,
+            can_overwrite=True,
+            exception_msg=self.reason,
         )
+        self.config.fs.exists(self.booth_dir, booth_dir_exists)
 
         self.env_assist.assert_raise_library_error(
             lambda: commands.pull_config(
                 self.env_assist.get_env(), self.node_name
             ),
         )
+
+    def test_authfile_write_failure(self):
+        self._assert_authfile_write_failure(True)
         self.env_assist.assert_reports(
             self.report_list[:1]
             + [
@@ -3532,6 +3577,18 @@ class PullConfigWithAuthfileFailure(PullConfigWithAuthfile):
                     reason=self.reason,
                     operation=RawFileError.ACTION_WRITE,
                 )
+            ]
+        )
+
+    def test_authfile_write_failure_booth_dir_missing(self):
+        self._assert_authfile_write_failure(False)
+        self.env_assist.assert_reports(
+            self.report_list[:1]
+            + [
+                fixture.error(
+                    reports.codes.BOOTH_PATH_NOT_EXISTS,
+                    path=self.booth_dir,
+                ),
             ]
         )
 
