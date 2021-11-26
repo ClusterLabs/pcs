@@ -4740,6 +4740,17 @@ class BoothAlreadyInCib(NameBuildTest):
         )
 
 
+class BoothPathNotExists(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Configuration directory for booth 'path' is missing. Is booth "
+                "installed?"
+            ),
+            reports.BoothPathNotExists("path"),
+        )
+
+
 class BoothNotExistsInCib(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
