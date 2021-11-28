@@ -109,6 +109,12 @@ def _agent_metadata_to_dict(
 ) -> Dict[str, str]:
     agent_dto = agent.to_dto()
     agent_dict = to_dict(agent_dto)
+    del agent_dict["name"]
+    agent_dict["name"] = agent.name.full_name
+    agent_dict["standard"] = agent.name.standard
+    agent_dict["provider"] = agent.name.provider
+    agent_dict["type"] = agent.name.type
+
     agent_dict["actions"] = [
         action_to_operation(action, keep_extra_keys=True)
         for action in agent_dto.actions

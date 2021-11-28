@@ -5,6 +5,18 @@ from pcs.common.interface.dto import DataTransferObject, meta
 
 
 @dataclass(frozen=True)
+class ResourceAgentNameDto(DataTransferObject):
+    standard: str
+    provider: Optional[str]
+    type: str
+
+
+@dataclass(frozen=True)
+class ListResourceAgentNameDto(DataTransferObject):
+    names: List[ResourceAgentNameDto]
+
+
+@dataclass(frozen=True)
 class ResourceAgentActionDto(DataTransferObject):
     # pylint: disable=too-many-instance-attributes
 
@@ -61,12 +73,7 @@ class ResourceAgentParameterDto(DataTransferObject):
 
 @dataclass(frozen=True)
 class ResourceAgentMetadataDto(DataTransferObject):
-    # pylint: disable=too-many-instance-attributes
-
-    name: str  # full agent name: standard + provider + type
-    standard: str
-    provider: Optional[str]
-    type: str
+    name: ResourceAgentNameDto
     shortdesc: Optional[str]
     longdesc: Optional[str]
     parameters: List[ResourceAgentParameterDto]

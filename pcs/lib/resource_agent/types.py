@@ -32,6 +32,21 @@ class ResourceAgentName:
     def is_stonith(self):
         return self.standard == "stonith"
 
+    def to_dto(self) -> ResourceAgentNameDto:
+        return ResourceAgentNameDto(
+            standard=self.standard,
+            provider=self.provider,
+            type=self.type,
+        )
+
+    @classmethod
+    def from_dto(cls, dto: ResourceAgentNameDto) -> "ResourceAgentName":
+        return cls(
+            dto.standard,
+            dto.provider,
+            dto.type,
+        )
+
 
 @dataclass(frozen=True)
 class ResourceAgentActionOcf1_0:  # pylint: disable=invalid-name
@@ -268,10 +283,7 @@ class ResourceAgentMetadata:
 
     def to_dto(self) -> ResourceAgentMetadataDto:
         return ResourceAgentMetadataDto(
-            self.name.full_name,
-            self.name.standard,
-            self.name.provider,
-            self.name.type,
+            self.name.to_dto(),
             self.shortdesc,
             self.longdesc,
             [parameter.to_dto() for parameter in self.parameters],
