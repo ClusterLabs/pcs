@@ -11,6 +11,9 @@
 ### Changed
 - Deprecation warnings use a "Deprecation Warning:" prefix instead of 
   "Warning:" on the command line
+- Minimal required version of python has been changed to 3.9
+- Minimal required version of ruby has been changed to 2.5
+- Minimal supported version of pacemaker is 2.1
 
 ### Fixed
 - Do not unfence newly added devices on fenced cluster nodes ([rhbz#1991654])

@@ -26,15 +26,8 @@ Summary: Pacemaker Configuration System
 
 %global pcs_bundled_dir @pcs_bundled_dir@
 
-# javascript bundled libraries for old web-ui
-%global ember_version 1.4.0
-%global handlebars_version 1.2.1
-%global jquery_ui_version 1.10.1
-%global jquery_version 1.9.1
+%global required_pacemaker_version 2.1.0
 
-%if "%{python3_version}" == "3.6"
-%define dataclasses_required 1
-%endif
 
 # mangling shebang in /usr/lib/pcsd/vendor/bundle/ruby/gems/rack-2.0.5/test/cgi/test from /usr/bin/env ruby to #!/usr/bin/ruby
 #*** ERROR: ./usr/lib/pcsd/vendor/bundle/ruby/gems/rack-2.0.5/test/cgi/test.ru has shebang which doesn't start with '/' (../../bin/rackup)
@@ -60,7 +53,7 @@ Source41: pyagentx-%{pyagentx_version}.tar.gz
 
 # python for pcs
 %if 0%{?fedora} >= 30
-BuildRequires: python3 >= 3.6
+BuildRequires: python3 >= 3.9
 BuildRequires: python3-setuptools
 %endif
 
@@ -88,6 +81,14 @@ BuildRequires: libffi-devel
 BuildRequires: ruby >= 2.5
 BuildRequires: ruby-devel
 BuildRequires: rubygems
+# cluster stack packages for pkg-config
+BuildRequires: booth
+BuildRequires: corosync-qdevice-devel
+BuildRequires: corosynclib-devel >= 3.0
+BuildRequires: fence-agents-common
+BuildRequires: pacemaker-libs-devel >= %{required_pacemaker_version}
+BuildRequires: resource-agents
+BuildRequires: sbd
 # for post, preun and postun macros
 BuildRequires: systemd
 
@@ -96,12 +97,12 @@ Requires: python3-lxml
 Requires: python3-pycurl
 Requires: python3-pyparsing
 # ruby and gems for pcsd
-Requires: ruby >= 2.2.0
+Requires: ruby >= 2.5
 Requires: rubygems
 # for killall
 Requires: psmisc
 # cluster stack and related packages
-Requires: pacemaker >= 2.0.0
+Requires: pacemaker >= %{required_pacemaker_version}
 Requires: corosync >= 3.0
 # pcs enables corosync encryption by default so we require libknet1-plugins-all
 Requires: libknet1-plugins-all
@@ -116,17 +117,8 @@ Requires: pam
 Requires: logrotate
 
 @pybundle@
-%if %{defined dataclasses_required}
-@pydataclassesbundle@
-%endif
 
 @gembundle@
-
-# javascript bundled libraries for old web-ui
-Provides: bundled(ember) = %{ember_version}
-Provides: bundled(handlebars) = %{handlebars_version}
-Provides: bundled(jquery) = %{jquery_version}
-Provides: bundled(jquery-ui) = %{jquery_ui_version}
 
 %description
 pcs is a corosync and pacemaker configuration tool.  It permits users to
