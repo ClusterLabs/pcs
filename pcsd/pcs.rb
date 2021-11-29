@@ -44,12 +44,12 @@ end
 def add_fence_level(auth_user, level, devices, node, remove = false)
   if not remove
     stdout, stderr, retval = run_cmd(
-      auth_user, PCS, "stonith", "level", "add", level, node, devices
+      auth_user, PCS, "--", "stonith", "level", "add", level, node, devices
     )
     return retval,stdout, stderr
   else
     stdout, stderr, retval = run_cmd(
-      auth_user, PCS, "stonith", "level", "remove", level, "target", node, "stonith", devices
+      auth_user, PCS, "--", "stonith", "level", "remove", level, "target", node, "stonith", devices
     )
     return retval,stdout, stderr
   end
@@ -57,22 +57,23 @@ end
 
 def add_node_attr(auth_user, node, key, value)
   stdout, stderr, retval = run_cmd(
-    auth_user, PCS, "node", "attribute", node, key.to_s + '=' + value.to_s
+    auth_user, PCS, "--", "node", "attribute", node, key.to_s + '=' + value.to_s
   )
   return retval
 end
 
 def add_meta_attr(auth_user, resource, key, value)
   cmd = ["resource", "meta", resource, key.to_s + "=" + value.to_s]
+  flags = []
   if key.to_s == "remote-node"
     # --force is a workaround for:
     # 1) Error: this command is not sufficient for create guest node, use 'pcs
     # cluster node add-guest', use --force to override
     # 2) Error: this command is not sufficient for remove guest node, use 'pcs
     # cluster node remove-guest', use --force to override
-    cmd << "--force"
+    flags << "--force"
   end
-  stdout, stderr, retval = run_cmd(auth_user, PCS, *cmd)
+  stdout, stderr, retval = run_cmd(auth_user, PCS, *flags, "--", *cmd)
   return retval
 end
 
@@ -89,17 +90,18 @@ def add_location_constraint(
     nodescore = node + "=" + score
   end
 
-  cmd = [PCS, "constraint", "location", resource, "prefers", nodescore]
-  cmd << '--force' if force
+  cmd = ["constraint", "location", resource, "prefers", nodescore]
+  flags = []
+  flags << '--force' if force
 
-  stdout, stderr, retval = run_cmd(auth_user, *cmd)
+  stdout, stderr, retval = run_cmd(auth_user, PCS, *flags, "--", *cmd)
   return retval, stderr.join(' ')
 end
 
 def add_location_constraint_rule(
   auth_user, resource, rule, score, force=false
 )
-  cmd = [PCS, "constraint", "location", resource, "rule"]
+  cmd = ["constraint", "location", resource, "rule"]
   if score != ''
     if is_score(score.upcase)
       cmd << "score=#{score.upcase}"
@@ -108,8 +110,9 @@ def add_location_constraint_rule(
     end
   end
   cmd.concat(rule.shellsplit())
-  cmd << '--force' if force
-  stdout, stderr, retval = run_cmd(auth_user, *cmd)
+  flags = []
+  flags << '--force' if force
+  stdout, stderr, retval = run_cmd(auth_user, PCS, *flags, "--", *cmd)
   return retval, stderr.join(' ')
 end
 
@@ -118,55 +121,59 @@ def add_order_constraint(
     force=false
 )
   command = [
-    PCS, "constraint", "order", actionA, resourceA, "then", actionB, resourceB
+    "constraint", "order", actionA, resourceA, "then", actionB, resourceB
   ]
   command << "score=" + score if score != ""
   command << (symmetrical ? "symmetrical" : "nonsymmetrical")
-  command << '--force' if force
-  stdout, stderr, retval = run_cmd(auth_user, *command)
+  flags = []
+  flags << '--force' if force
+  stdout, stderr, retval = run_cmd(auth_user, PCS, *flags, "--", *command)
   return retval, stderr.join(' ')
 end
 
 def add_order_set_constraint(auth_user, resource_set_list, force=false)
-  command = [PCS, "constraint", "order"]
+  command = ["constraint", "order"]
   resource_set_list.each { |resource_set|
     command << "set"
     command.concat(resource_set)
   }
-  command << '--force' if force
-  stdout, stderr, retval = run_cmd(auth_user, *command)
+  flags = []
+  flags << '--force' if force
+  stdout, stderr, retval = run_cmd(auth_user, PCS, *flags, "--", *command)
   return retval, stderr.join(' ')
 end
 
 def add_colocation_set_constraint(auth_user, resource_set_list, force=false)
-  command = [PCS, "constraint", "colocation"]
+  command = ["constraint", "colocation"]
   resource_set_list.each { |resource_set|
     command << "set"
     command.concat(resource_set)
   }
-  command << '--force' if force
-  stdout, stderr, retval = run_cmd(auth_user, *command)
+  flags = []
+  flags << '--force' if force
+  stdout, stderr, retval = run_cmd(auth_user, PCS, *flags, "--", *command)
   return retval, stderr.join(' ')
 end
 
 def add_ticket_constraint(
     auth_user, ticket, resource_id, role, loss_policy, force=false
 )
-  command = [PCS, "constraint", "ticket", "add", ticket]
+  command = ["constraint", "ticket", "add", ticket]
   if role
     command << role
   end
   command << resource_id
   command << 'loss-policy=' + loss_policy unless loss_policy.strip().empty?()
-  command << '--force' if force
-  stdout, stderr, retval = run_cmd(auth_user, *command)
+  flags = []
+  flags << '--force' if force
+  stdout, stderr, retval = run_cmd(auth_user, PCS, *flags, "--", *command)
   return retval, stderr.join(' ')
 end
 
 def add_ticket_set_constraint(
   auth_user, ticket, loss_policy, resource_set_list, force=false
 )
-  command = [PCS, 'constraint', 'ticket']
+  command = ['constraint', 'ticket']
   resource_set_list.each { |resource_set|
     command << 'set'
     command.concat(resource_set)
@@ -174,8 +181,9 @@ def add_ticket_set_constraint(
   command << 'setoptions'
   command << 'ticket=' + ticket
   command << 'loss-policy=' + loss_policy unless loss_policy.strip().empty?()
-  command << '--force' if force
-  stdout, stderr, retval = run_cmd(auth_user, *command)
+  flags = []
+  flags << '--force' if force
+  stdout, stderr, retval = run_cmd(auth_user, PCS, *flags, "--", *command)
   return retval, stderr.join(' ')
 end
 
@@ -186,16 +194,17 @@ def add_colocation_constraint(
     score = "INFINITY"
   end
   command = [
-    PCS, "constraint", "colocation", "add", resourceA, "with", resourceB, score
+    "constraint", "colocation", "add", resourceA, "with", resourceB, score
   ]
-  command << '--force' if force
-  stdout, stderr, retval = run_cmd(auth_user, *command)
+  flags = []
+  flags << '--force' if force
+  stdout, stderr, retval = run_cmd(auth_user, PCS, *flags, "--", *command)
   return retval, stderr.join(' ')
 end
 
 def remove_constraint(auth_user, constraint_id)
   stdout, stderror, retval = run_cmd(
-    auth_user, PCS, "constraint", "remove", constraint_id
+    auth_user, PCS, "--", "constraint", "remove", constraint_id
   )
   $logger.info stdout
   return retval
@@ -203,14 +212,14 @@ end
 
 def remove_constraint_rule(auth_user, rule_id)
   stdout, stderror, retval = run_cmd(
-    auth_user, PCS, "constraint", "rule", "remove", rule_id
+    auth_user, PCS, "--", "constraint", "rule", "remove", rule_id
   )
   $logger.info stdout
   return retval
 end
 
 def add_acl_role(auth_user, name, description)
-  cmd = [PCS, "acl", "role", "create", name.to_s]
+  cmd = [PCS, "--", "acl", "role", "create", name.to_s]
   if description.to_s != ""
     cmd << "description=#{description.to_s}"
   end
@@ -223,7 +232,7 @@ end
 
 def add_acl_permission(auth_user, acl_role_id, perm_type, xpath_id, query_id)
   stdout, stderror, retval = run_cmd(
-    auth_user, PCS, "acl", "permission", "add", acl_role_id.to_s, perm_type.to_s,
+    auth_user, PCS, "--", "acl", "permission", "add", acl_role_id.to_s, perm_type.to_s,
     xpath_id.to_s, query_id.to_s
   )
   if retval != 0
@@ -239,7 +248,7 @@ end
 def add_acl_usergroup(auth_user, acl_role_id, user_group, name)
   if (user_group == "user") or (user_group == "group")
     stdout, stderr, retval = run_cmd(
-      auth_user, PCS, "acl", user_group, "create", name.to_s, acl_role_id.to_s
+      auth_user, PCS, "--", "acl", user_group, "create", name.to_s, acl_role_id.to_s
     )
     if retval == 0
       return ""
@@ -250,7 +259,7 @@ def add_acl_usergroup(auth_user, acl_role_id, user_group, name)
     end
   end
   stdout, stderror, retval = run_cmd(
-    auth_user, PCS, "acl", "role", "assign",
+    auth_user, PCS, "--", "acl", "role", "assign",
     acl_role_id.to_s, user_group, name.to_s
   )
   if retval != 0
@@ -265,7 +274,7 @@ end
 
 def remove_acl_permission(auth_user, acl_perm_id)
   stdout, stderror, retval = run_cmd(
-    auth_user, PCS, "acl", "permission", "delete", acl_perm_id.to_s
+    auth_user, PCS, "--", "acl", "permission", "delete", acl_perm_id.to_s
   )
   if retval != 0
     if stderror.empty?
@@ -280,13 +289,13 @@ end
 def remove_acl_usergroup(auth_user, role_id, usergroup_id, user_or_group)
   if ['user', 'group'].include?(user_or_group)
     stdout, stderror, retval = run_cmd(
-      auth_user, PCS, "acl", "role", "unassign", role_id.to_s, user_or_group,
-      usergroup_id.to_s, "--autodelete"
+      auth_user, PCS, "--autodelete", "--", "acl", "role", "unassign", role_id.to_s, user_or_group,
+      usergroup_id.to_s
     )
   else
     stdout, stderror, retval = run_cmd(
-      auth_user, PCS, "acl", "role", "unassign", role_id.to_s,
-      usergroup_id.to_s, "--autodelete"
+      auth_user, PCS, "--autodelete", "--", "acl", "role", "unassign", role_id.to_s,
+      usergroup_id.to_s
     )
   end
   if retval != 0
@@ -574,7 +583,7 @@ def get_nodes_status()
   pacemaker_standby = []
   in_pacemaker = false
   stdout, stderr, retval = run_cmd(
-    PCSAuth.getSuperuserAuth(), PCS, "status", "nodes", "both"
+    PCSAuth.getSuperuserAuth(), PCS, "--", "status", "nodes", "both"
   )
   stdout.each {|l|
     l = l.chomp
@@ -742,17 +751,19 @@ def get_acls(auth_user, cib_dom=nil)
 end
 
 def enable_cluster(auth_user, all)
-  cmd = [PCS, "cluster", "enable"]
-  cmd << '--all' if all == '1'
-  stdout, stderror, retval = run_cmd(auth_user, *cmd)
+  cmd = ["cluster", "enable"]
+  flags = []
+  flags << '--all' if all == '1'
+  stdout, stderror, retval = run_cmd(auth_user, PCS, *flags, "--", *cmd)
   return false if retval != 0
   return true
 end
 
 def disable_cluster(auth_user, all)
-  cmd = [PCS, "cluster", "disable"]
-  cmd << '--all' if all == '1'
-  stdout, stderror, retval = run_cmd(auth_user, *cmd)
+  cmd = ["cluster", "disable"]
+  flags = []
+  flags << '--all' if all == '1'
+  stdout, stderror, retval = run_cmd(auth_user, PCS, *flags, "--", *cmd)
   return false if retval != 0
   return true
 end
@@ -1611,18 +1622,20 @@ class ServiceChecker
 end
 
 def set_cluster_prop_force(auth_user, prop, val)
-  cmd = [PCS, 'property', 'set', "#{prop}=#{val}", '--force']
+  cmd = ['property', 'set', "#{prop}=#{val}"]
+  flags = ['--force']
   if pacemaker_running?
-    _, _, retcode = run_cmd(auth_user, *cmd)
+    user = auth_user
   else
-    cmd += ['-f', CIB_PATH]
-    _, _, retcode = run_cmd(PCSAuth.getSuperuserAuth(), *cmd)
+    user = PCSAuth.getSuperuserAuth()
+    flags += ['-f', CIB_PATH]
   end
+    _, _, retcode = run_cmd(user, PCS, *flags, "--", *cmd)
   return (retcode == 0)
 end
 
 def get_parsed_local_sbd_config()
-  cmd = [PCS, 'stonith', 'sbd', 'local_config_in_json']
+  cmd = [PCS, '--', 'stonith', 'sbd', 'local_config_in_json']
   out, _, retcode = run_cmd(PCSAuth.getSuperuserAuth(), *cmd)
   if retcode != 0
     return nil
@@ -1676,7 +1689,7 @@ def get_authfile_from_booth_config(config_data)
 end
 
 def get_alerts(auth_user)
-  out, _, retcode = run_cmd(auth_user, PCS, 'alert', 'get_all_alerts')
+  out, _, retcode = run_cmd(auth_user, PCS, '--', 'alert', 'get_all_alerts')
 
   if retcode !=  0
     return nil
