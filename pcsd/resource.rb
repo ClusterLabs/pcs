@@ -194,7 +194,7 @@ end
 
 def getResourceAgents(auth_user)
   stdout, stderr, retval = run_cmd(
-    auth_user, PCS, "resource", "list", "--nodesc"
+    auth_user, PCS, "--nodesc", "--", "resource", "list"
   )
   if retval != 0
     $logger.error("Error running 'pcs resource list --nodesc")

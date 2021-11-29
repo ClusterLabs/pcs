@@ -199,6 +199,25 @@ def remote(params, request, auth_user)
   end
 end
 
+def _get_param_list(params)
+  param_line = []
+  meta_options = []
+  flags = []
+  params.each { |param, val|
+    if param.start_with?("_res_paramne_") or (param.start_with?("_res_paramempty_") and val != "")
+      myparam = param.sub(/^_res_paramne_/,"").sub(/^_res_paramempty_/,"")
+      param_line << "#{myparam}=#{val}"
+    end
+    if param == "disabled"
+      meta_options << 'meta' << 'target-role=Stopped'
+    end
+    if param == "force" and val
+      flags << "--force"
+    end
+  }
+  return param_line + meta_options, flags
+end
+
 def capabilities(params, request, auth_user)
   return JSON.generate({
     :pcsd_capabilities => CAPABILITIES_PCSD,
@@ -319,10 +338,11 @@ def cluster_start(params, request, auth_user)
     if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
       return 403, 'Permission denied'
     end
-    cmd = [PCS, 'cluster', 'start']
-    cmd << '--all' if params[:all] == '1'
+    cmd = ['cluster', 'start']
+    flags = []
+    flags << '--all' if params[:all] == '1'
     $logger.info "Starting Daemons"
-    output, stderr, retval = run_cmd(auth_user, *cmd)
+    output, stderr, retval = run_cmd(auth_user, PCS, *flags, '--',  *cmd)
     if retval != 0
       return [400, (output + stderr).join]
     else
@@ -355,7 +375,7 @@ def cluster_stop(params, request, auth_user)
     options << '--all' if params[:all] == '1'
     $logger.info "Stopping Daemons"
     stdout, stderr, retval = run_cmd(
-      auth_user, PCS, "cluster", "stop", *options
+      auth_user, PCS, *options, "--", "cluster", "stop"
     )
     if retval != 0
       return [400, stderr.join]
@@ -887,7 +907,7 @@ def remote_pacemaker_node_status(params, request, auth_user)
   if not allowed_for_local_cluster(auth_user, Permissions::READ)
     return 403, 'Permission denied'
   end
-  output, stderr, retval = run_cmd(auth_user, PCS, 'node', 'pacemaker-status')
+  output, stderr, retval = run_cmd(auth_user, PCS, '--', 'node', 'pacemaker-status')
   if retval != 0
     return [400, stderr]
   else
@@ -1290,7 +1310,7 @@ def resource_stop(params, request, auth_user)
     return 403, 'Permission denied'
   end
   stdout, stderr, retval = run_cmd(
-    auth_user, PCS, "resource", "disable", params[:resource]
+    auth_user, PCS, "--", "resource", "disable", params[:resource]
   )
   if retval == 0
     return JSON.generate({"success" => "true"})
@@ -1311,11 +1331,12 @@ def _resource_cleanup_refresh(action, params, request, auth_user)
   if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
     return 403, 'Permission denied'
   end
-  cmd = [PCS, "resource", action, params[:resource]]
+  cmd = ["resource", action, params[:resource]]
+  flags = []
   if params[:strict] == '1'
-    cmd << "--force"
+    flags << "--force"
   end
-  stdout, stderr, retval = run_cmd(auth_user, *cmd)
+  stdout, stderr, retval = run_cmd(auth_user, PCS, *flags, "--", *cmd)
   if retval == 0
     return JSON.generate({"success" => "true"})
   else
@@ -1330,7 +1351,7 @@ def resource_start(params, request, auth_user)
     return 403, 'Permission denied'
   end
   stdout, stderr, retval = run_cmd(
-    auth_user, PCS, "resource", "enable", params[:resource]
+    auth_user, PCS, "--", "resource", "enable", params[:resource]
   )
   if retval == 0
     return JSON.generate({"success" => "true"})
@@ -1345,39 +1366,40 @@ def update_resource (params, request, auth_user)
     return 403, 'Permission denied'
   end
 
-  param_line = getParamList(params)
+  param_line, param_flags = _get_param_list(params)
+  flags = param_flags.clone
   if not params[:resource_id]
-    cmd = [PCS, "resource", "create", params[:name], params[:resource_type]]
+    cmd = ["resource", "create", params[:name], params[:resource_type]]
     cmd += param_line
     if params[:resource_group] and params[:resource_group] != ""
-      cmd += ['--group', params[:resource_group]]
+      flags += ['--group', params[:resource_group]]
       if (
         ['before', 'after'].include?(params[:in_group_position]) and
         params[:in_group_reference_resource_id]
       )
-        cmd << "--#{params[:in_group_position]}"
-        cmd << params[:in_group_reference_resource_id]
+        flags << "--#{params[:in_group_position]}"
+        flags << params[:in_group_reference_resource_id]
       end
       resource_group = params[:resource_group]
     end
-    if params[:resource_type] == "ocf:pacemaker:remote" and not cmd.include?("--force")
+    if params[:resource_type] == "ocf:pacemaker:remote" and not flags.include?("--force")
       # Workaround for Error: this command is not sufficient for create remote
       # connection, use 'pcs cluster node add-remote', use --force to override.
       # It is not possible to specify meta attributes so we don't need to take
       # care of those.
-      cmd << "--force"
+      flags << "--force"
     end
-    out, stderr, retval = run_cmd(auth_user, *cmd)
+    out, stderr, retval = run_cmd(auth_user, PCS, *flags, "--", *cmd)
     if retval != 0
       return JSON.generate({"error" => "true", "stderr" => stderr, "stdout" => out})
     end
 
     if params[:resource_clone] and params[:resource_clone] != ""
       name = resource_group ? resource_group : params[:name]
-      run_cmd(auth_user, PCS, "resource", "clone", name)
+      run_cmd(auth_user, PCS, "--", "resource", "clone", name)
     elsif params[:resource_promotable] and params[:resource_promotable] != ""
       name = resource_group ? resource_group : params[:name]
-      run_cmd(auth_user, PCS, "resource", "promotable", name)
+      run_cmd(auth_user, PCS, "--", "resource", "promotable", name)
     end
 
     return JSON.generate({})
@@ -1389,7 +1411,7 @@ def update_resource (params, request, auth_user)
       params[:resource_id].sub!(/(.*):.*/,'\1')
     end
     run_cmd(
-      auth_user, PCS, "resource", "update", params[:resource_id], *param_line
+      auth_user, PCS, *param_flags, "--", "resource", "update", params[:resource_id], *param_line
     )
   end
 
@@ -1397,41 +1419,42 @@ def update_resource (params, request, auth_user)
     if params[:resource_group] == ""
       if params[:_orig_resource_group] != ""
         run_cmd(
-          auth_user, PCS, "resource", "group", "remove",
+          auth_user, PCS, "--", "resource", "group", "remove",
           params[:_orig_resource_group], params[:resource_id]
         )
       end
     else
       cmd = [
-        PCS, "resource", "group", "add", params[:resource_group],
+        "resource", "group", "add", params[:resource_group],
         params[:resource_id]
       ]
+      flags = []
       if (
         ['before', 'after'].include?(params[:in_group_position]) and
         params[:in_group_reference_resource_id]
       )
-        cmd << "--#{params[:in_group_position]}"
-        cmd << params[:in_group_reference_resource_id]
+        flags << "--#{params[:in_group_position]}"
+        flags << params[:in_group_reference_resource_id]
       end
-      run_cmd(auth_user, *cmd)
+      run_cmd(auth_user, PCS, *flags, "--", *cmd)
     end
   end
 
   if params[:resource_clone] and params[:_orig_resource_clone] == "false"
-    run_cmd(auth_user, PCS, "resource", "clone", params[:resource_id])
+    run_cmd(auth_user, PCS, "--", "resource", "clone", params[:resource_id])
   end
   if params[:resource_promotable] and params[:_orig_resource_promotable] == "false"
-    run_cmd(auth_user, PCS, "resource", "promotable", params[:resource_id])
+    run_cmd(auth_user, PCS, "--", "resource", "promotable", params[:resource_id])
   end
 
   if params[:_orig_resource_clone] == "true" and not params[:resource_clone]
     run_cmd(
-      auth_user, PCS, "resource", "unclone", params[:resource_id].sub(/:.*/,'')
+      auth_user, PCS, "--", "resource", "unclone", params[:resource_id].sub(/:.*/,'')
     )
   end
   if params[:_orig_resource_promotable] == "true" and not params[:resource_promotable]
     run_cmd(
-      auth_user, PCS, "resource", "unclone", params[:resource_id].sub(/:.*/,'')
+      auth_user, PCS, "--", "resource", "unclone", params[:resource_id].sub(/:.*/,'')
     )
   end
 
@@ -1445,13 +1468,13 @@ def update_fence_device(params, request, auth_user)
 
   $logger.info "Updating fence device"
   $logger.info params
-  param_line = getParamList(params)
+  param_line, flags = _get_param_list(params)
   $logger.info param_line
 
   if not params[:resource_id]
     out, stderr, retval = run_cmd(
       auth_user,
-      PCS, "stonith", "create", params[:name], params[:resource_type],
+      PCS, "--", "stonith", "create", params[:name], params[:resource_type],
       *param_line
     )
     if retval != 0
@@ -1462,7 +1485,7 @@ def update_fence_device(params, request, auth_user)
 
   if param_line.length != 0
     out, stderr, retval = run_cmd(
-      auth_user, PCS, "stonith", "update", params[:resource_id], *param_line
+      auth_user, PCS, *flags, "--", "stonith", "update", params[:resource_id], *param_line
     )
     if retval != 0
       return JSON.generate({"error" => "true", "stderr" => stderr, "stdout" => out})
@@ -1507,11 +1530,11 @@ def remove_resource(params, request, auth_user)
   else
     begin
       tmp_file = Tempfile.new('temp_cib')
-      _, err, retval = run_cmd(user, PCS, 'cluster', 'cib', tmp_file.path)
+      _, err, retval = run_cmd(user, PCS, '--', 'cluster', 'cib', tmp_file.path)
       if retval != 0
         return [400, 'Unable to stop resource(s).']
       end
-      cmd = [PCS, '-f', tmp_file.path, 'resource', 'disable']
+      cmd = [PCS, '-f', tmp_file.path, '--', 'resource', 'disable']
       resource_list.each { |resource|
         out, err, retval = run_cmd(user, *(cmd + [resource]))
         if retval != 0
@@ -1526,7 +1549,7 @@ def remove_resource(params, request, auth_user)
         end
       }
       _, _, retval = run_cmd(
-        user, PCS, 'cluster', 'cib-push', tmp_file.path, '--config', '--wait'
+        user, PCS, '--config', '--wait', '--', 'cluster', 'cib-push', tmp_file.path
       )
       if retval != 0
         return [400, 'Unable to stop resource(s).']
@@ -1545,11 +1568,12 @@ def remove_resource(params, request, auth_user)
     end
   end
   resource_to_remove.each { |resource|
-    cmd = [PCS, 'resource', 'delete', resource]
+    cmd = ['resource', 'delete', resource]
+    flags = []
     if force
-      cmd << '--force'
+      flags << '--force'
     end
-    out, err, retval = run_cmd(auth_user, *cmd)
+    out, err, retval = run_cmd(auth_user, PCS, *flags, '--', *cmd)
     if retval != 0
       unless (
         (out + err).join('').include?(' does not exist.') and
@@ -1620,7 +1644,7 @@ def remove_acl_roles_remote(params, request, auth_user)
   params.each { |name, value|
     if name.index("role-") == 0
       out, errout, retval = run_cmd(
-        auth_user, PCS, "acl", "role", "delete", value.to_s, "--autodelete"
+        auth_user, PCS, "--autodelete", "--", "acl", "role", "delete", value.to_s
       )
       if retval != 0
         errors += "Unable to remove role #{value}"
@@ -1851,7 +1875,7 @@ def add_group(params, request, auth_user)
   rg = params["resource_group"]
   resources = params["resources"]
   output, errout, retval = run_cmd(
-    auth_user, PCS, "resource", "group", "add", rg, *(resources.split(" "))
+    auth_user, PCS, "--", "resource", "group", "add", rg, *(resources.split(" "))
   )
   if retval == 0
     return 200
@@ -1907,7 +1931,7 @@ def update_cluster_settings(params, request, auth_user)
       cmd_args << "#{prop.downcase}=#{properties[prop]}"
     }
     stdout, stderr, retval = run_cmd(
-      auth_user, PCS, 'property', 'set', *cmd_args
+      auth_user, PCS, '--', 'property', 'set', *cmd_args
     )
     if retval != 0
       return [400, stderr.join('').gsub(', (use --force to override)', '')]
@@ -1920,11 +1944,12 @@ def cluster_destroy(params, request, auth_user)
   if not allowed_for_local_cluster(auth_user, Permissions::FULL)
     return 403, 'Permission denied'
   end
-  cmd = [PCS, "cluster", "destroy"]
+  cmd = ["cluster", "destroy"]
+  flags = []
   if params[:all] == '1'
-    cmd << '--all'
+    flags << '--all'
   end
-  out, errout, retval = run_cmd(auth_user, *cmd)
+  out, errout, retval = run_cmd(auth_user, PCS, *flags, '--', *cmd)
   if retval == 0
     return [200, "Successfully destroyed cluster"]
   else
@@ -1994,7 +2019,7 @@ def resource_promotable(params, request, auth_user)
     return [400, 'resource_id has to be specified.']
   end
   _, stderr, retval = run_cmd(
-    auth_user, PCS, 'resource', 'promotable', params[:resource_id]
+    auth_user, PCS, '--', 'resource', 'promotable', params[:resource_id]
   )
   if retval != 0
     return [400, 'Unable to create promotable resource from ' +
@@ -2015,7 +2040,7 @@ def resource_change_group(params, request, auth_user)
   if params[:group_id].empty?
     if params[:old_group_id]
       _, stderr, retval = run_cmd(
-        auth_user, PCS, 'resource', 'group', 'remove', params[:old_group_id],
+        auth_user, PCS, '--', 'resource', 'group', 'remove', params[:old_group_id],
         params[:resource_id]
       )
       if retval != 0
@@ -2027,16 +2052,17 @@ def resource_change_group(params, request, auth_user)
     return 200
   end
   cmd = [
-    PCS, 'resource', 'group', 'add', params[:group_id], params[:resource_id]
+    'resource', 'group', 'add', params[:group_id], params[:resource_id]
   ]
+  flags = []
   if (
   ['before', 'after'].include?(params[:in_group_position]) and
     params[:in_group_reference_resource_id]
   )
-    cmd << "--#{params[:in_group_position]}"
-    cmd << params[:in_group_reference_resource_id]
+    flags << "--#{params[:in_group_position]}"
+    flags << params[:in_group_reference_resource_id]
   end
-  _, stderr, retval = run_cmd(auth_user, *cmd)
+  _, stderr, retval = run_cmd(auth_user, PCS, *flags, '--', *cmd)
   if retval != 0
     return [400, "Unable to add resource '#{params[:resource_id]}' to " +
       "group '#{params[:group_id]}': #{stderr.join('')}"
@@ -2055,7 +2081,7 @@ def resource_ungroup(params, request, auth_user)
   end
 
   _, stderr, retval = run_cmd(
-    auth_user, PCS, 'resource', 'ungroup', params[:group_id]
+    auth_user, PCS, '--', 'resource', 'ungroup', params[:group_id]
   )
   if retval != 0
     return [400, 'Unable to ungroup group ' +
@@ -2075,7 +2101,7 @@ def resource_clone(params, request, auth_user)
   end
 
   _, stderr, retval = run_cmd(
-    auth_user, PCS, 'resource', 'clone', params[:resource_id]
+    auth_user, PCS, '--', 'resource', 'clone', params[:resource_id]
   )
   if retval != 0
     return [400, 'Unable to create clone resource from ' +
@@ -2095,7 +2121,7 @@ def resource_unclone(params, request, auth_user)
   end
 
   _, stderr, retval = run_cmd(
-    auth_user, PCS, 'resource', 'unclone', params[:resource_id]
+    auth_user, PCS, '--', 'resource', 'unclone', params[:resource_id]
   )
   if retval != 0
     return [400, 'Unable to unclone ' +
@@ -2119,7 +2145,7 @@ def set_resource_utilization(params, reqest, auth_user)
   value = params[:value] || ''
 
   _, stderr, retval = run_cmd(
-    auth_user, PCS, 'resource', 'utilization', res_id, "#{name}=#{value}"
+    auth_user, PCS, '--', 'resource', 'utilization', res_id, "#{name}=#{value}"
   )
 
   if retval != 0
@@ -2144,7 +2170,7 @@ def set_node_utilization(params, reqest, auth_user)
   value = params[:value] || ''
 
   _, stderr, retval = run_cmd(
-    auth_user, PCS, 'node', 'utilization', node, "#{name}=#{value}"
+    auth_user, PCS, '--', 'node', 'utilization', node, "#{name}=#{value}"
   )
 
   if retval != 0
@@ -2160,7 +2186,7 @@ def get_cluster_properties_definition(params, request, auth_user)
     return 403, 'Permission denied'
   end
   stdout, _, retval = run_cmd(
-    auth_user, PCS, 'property', 'get_cluster_properties_definition'
+    auth_user, PCS, '--', 'property', 'get_cluster_properties_definition'
   )
   if retval == 0
     return [200, stdout]
@@ -2177,7 +2203,7 @@ def get_resource_agent_metadata(params, request, auth_user)
     return [400, 'Parameter "resource_agent" required.']
   end
   stdout, stderr, retval = run_cmd(
-    auth_user, PCS, 'resource', 'get_resource_agent_info', agent
+    auth_user, PCS, '--', 'resource', 'get_resource_agent_info', agent
   )
   if retval != 0
     if stderr.join('').include?('is not supported')
@@ -2203,7 +2229,7 @@ def get_fence_agent_metadata(params, request, auth_user)
     return [400, 'Parameter "fence_agent" required.']
   end
   stdout, stderr, retval = run_cmd(
-    auth_user, PCS, 'stonith', 'get_fence_agent_info', agent
+    auth_user, PCS, '--', 'stonith', 'get_fence_agent_info', agent
   )
   if retval != 0
     return [400, stderr.join("\n")]
@@ -2225,7 +2251,7 @@ def check_sbd(param, request, auth_user)
   watchdog = param[:watchdog]
   if not watchdog.to_s.empty?
     stdout, stderr, ret_val = run_cmd(
-      auth_user, PCS, 'stonith', 'sbd', 'watchdog', 'list_json'
+      auth_user, PCS, '--', 'stonith', 'sbd', 'watchdog', 'list_json'
     )
     if ret_val != 0
       return [400, "Unable to get list of watchdogs: #{stderr.join("\n")}"]
@@ -2438,7 +2464,7 @@ def qdevice_net_sign_node_certificate(params, request, auth_user)
   stdout, stderr, retval = run_cmd_options(
     auth_user,
     {'stdin' => params[:certificate_request]},
-    PCS, 'qdevice', 'sign-net-cert-request', '--name', params[:cluster_name]
+    PCS, '--name', params[:cluster_name], '--', 'qdevice', 'sign-net-cert-request'
   )
   if retval != 0
     return [400, stderr.join('')]
@@ -2456,7 +2482,7 @@ def qdevice_net_client_init_certificate_storage(params, request, auth_user)
   stdout, stderr, retval = run_cmd_options(
     auth_user,
     {'stdin' => params[:ca_certificate]},
-    PCS, 'qdevice', 'net-client', 'setup'
+    PCS, '--', 'qdevice', 'net-client', 'setup'
   )
   if retval != 0
     return [400, stderr.join('')]
@@ -2474,7 +2500,7 @@ def qdevice_net_client_import_certificate(params, request, auth_user)
   stdout, stderr, retval = run_cmd_options(
     auth_user,
     {'stdin' => params[:certificate]},
-    PCS, 'qdevice', 'net-client', 'import-certificate'
+    PCS, '--', 'qdevice', 'net-client', 'import-certificate'
   )
   if retval != 0
     return [400, stderr.join('')]
@@ -2492,7 +2518,7 @@ def qdevice_net_client_destroy(param, request, auth_user)
   end
   stdout, stderr, retval = run_cmd(
     auth_user,
-    PCS, 'qdevice', 'net-client', 'destroy'
+    PCS, '--' 'qdevice', 'net-client', 'destroy'
   )
   if retval != 0
     return [400, stderr.join('')]
@@ -2558,7 +2584,7 @@ def manage_resource(param, request, auth_user)
   begin
     resource_list = JSON.parse(param[:resource_list_json])
     _, err, retval = run_cmd(
-      auth_user, PCS, 'resource', 'manage', *resource_list
+      auth_user, PCS, '--', 'resource', 'manage', *resource_list
     )
     if retval != 0
       return [400, err.join('')]
@@ -2579,7 +2605,7 @@ def unmanage_resource(param, request, auth_user)
   begin
     resource_list = JSON.parse(param[:resource_list_json])
     _, err, retval = run_cmd(
-      auth_user, PCS, 'resource', 'unmanage', *resource_list
+      auth_user, PCS, '--', 'resource', 'unmanage', *resource_list
     )
     if retval != 0
       return [400, err.join('')]
@@ -3073,7 +3099,7 @@ def remove_nodes_from_cib(params, request, auth_user)
     PcsdExchangeFormat::validate_item_is_Array("node_list", data[:node_list])
 
     stdout, stderr, retval = run_cmd(
-      auth_user, PCS, "cluster", "remove_nodes_from_cib", *data[:node_list]
+      auth_user, PCS, "--", "cluster", "remove_nodes_from_cib", *data[:node_list]
     )
     if retval == 0
       result = PcsdExchangeFormat::result(:success)
