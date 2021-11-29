@@ -205,7 +205,11 @@ agents [standard[:provider]]
 List available agents optionally filtered by standard and provider.
 .TP
 update <resource id> [resource options] [op [<operation action> <operation options>]...] [meta <meta operations>...] [\fB\-\-wait\fR[=n]]
-Add/Change options to specified resource, clone or multi\-state resource.  If an operation (op) is specified it will update the first found operation with the same action on the specified resource, if no operation with that action exists then a new operation will be created.  (WARNING: all existing options on the updated operation will be reset if not specified.)  If you want to create multiple monitor operations you should use the 'op add' & 'op remove' commands.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the changes to take effect and then return 0 if the changes have been processed or 1 otherwise.  If 'n' is not specified it defaults to 60 minutes.
+Add, remove or change options of specified resource, clone or multi\-state resource. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='.
+
+If an operation (op) is specified it will update the first found operation with the same action on the specified resource. If no operation with that action exists then a new operation will be created. (WARNING: all existing options on the updated operation will be reset if not specified.) If you want to create multiple monitor operations you should use the 'op add' & 'op remove' commands.
+
+If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the changes to take effect and then return 0 if the changes have been processed or 1 otherwise. If 'n' is not specified it defaults to 60 minutes.
 .TP
 op add <resource id> <operation action> [operation properties]
 Add operation for specified resource.
@@ -274,13 +278,13 @@ op defaults set remove [<set id>]...
 Delete specified options sets.
 .TP
 op defaults set update <set id> [meta [<name>=<value>]...]
-Add, remove or change values in specified set of default values for resource operations.
-.br
+Add, remove or change values in specified set of default values for resource operations. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='.
+
 NOTE: Defaults do not apply to resources which override them with their own defined values.
 .TP
 op defaults update <name>=<value>...
-Set default values for operations. This is a simplified command useful for cases when you only manage one set of default values.
-.br
+Add, remove or change default values for operations. This is a simplified command useful for cases when you only manage one set of default values. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='.
+
 NOTE: Defaults do not apply to resources which override them with their own defined values.
 .TP
 meta <resource id | group id | clone id> <meta options> [\fB\-\-wait\fR[=n]]
@@ -323,7 +327,11 @@ bundle reset <bundle id> [container <container options>] [network <network optio
 Configure specified bundle with given options. Unlike bundle update, this command resets the bundle according given options - no previous options are kept. Resources inside the bundle are kept as they are. If \fB\-\-disabled\fR is specified, the bundle is not started automatically. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the bundle to start and then return 0 on success or 1 on error. If 'n' is not specified it defaults to 60 minutes.
 .TP
 bundle update <bundle id> [container <container options>] [network <network options>] [port\-map (add <port options>) | (delete | remove <id>...)]... [storage\-map (add <storage options>) | (delete | remove <id>...)]... [meta <meta options>] [\fB\-\-wait\fR[=n]]
-Add, remove or change options to specified bundle. If you wish to update a resource encapsulated in the bundle, use the 'pcs resource update' command instead and specify the resource id.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the operation to finish (including moving resources if appropriate) and then return 0 on success or 1 on error.  If 'n' is not specified it defaults to 60 minutes.
+Add, remove or change options of specified bundle. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='.
+
+If you wish to update a resource encapsulated in the bundle, use the 'pcs resource update' command instead and specify the resource id.
+
+If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the operation to finish (including moving resources if appropriate) and then return 0 on success or 1 on error. If 'n' is not specified it defaults to 60 minutes.
 .TP
 manage <resource id | tag id>... [\fB\-\-monitor\fR]
 Set resources listed to managed mode (default). If \fB\-\-monitor\fR is specified, enable all monitor operations of the resources.
@@ -377,13 +385,13 @@ defaults set remove [<set id>]...
 Delete specified options sets.
 .TP
 defaults set update <set id> [meta [<name>=<value>]...]
-Add, remove or change values in specified set of default values for resources.
-.br
+Add, remove or change values in specified set of default values for resources. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='.
+
 NOTE: Defaults do not apply to resources which override them with their own defined values.
 .TP
 defaults update <name>=<value>...
-Set default values for resources. This is a simplified command useful for cases when you only manage one set of default values.
-.br
+Add, remove or change default values for resources. This is a simplified command useful for cases when you only manage one set of default values. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='.
+
 NOTE: Defaults do not apply to resources which override them with their own defined values.
 .TP
 cleanup [<resource id>] [node=<node>] [operation=<operation> [interval=<interval>]] [\fB\-\-strict\fR]
@@ -502,7 +510,11 @@ config [show] [\fB\-\-output\-format\fR <cmd|json|text>] [\fB\-\-corosync_conf\f
 Show cluster configuration. There are 3 formats of output available: 'cmd', 'json' and 'text', default is 'text'. Format 'text' is a human friendly output. Format 'cmd' prints a cluster setup command which recreates a cluster with the same configuration. Format 'json' is a machine oriented output with cluster configuration. If \fB\-\-corosync_conf\fR is specified, configuration file specified by <path> is used instead of the current cluster configuration.
 .TP
 config update [transport <transport options>] [compression <compression options>] [crypto <crypto options>] [totem <totem options>] [\fB\-\-corosync_conf\fR <path>]
-Update cluster configuration. If \fB\-\-corosync_conf\fR is specified, update cluster configuration in a file specified by <path>. All options are documented in corosync.conf(5) man page. There are different transport options for transport types. Compression and crypto options are only available for knet transport. Totem options can be set regardless of the transport type.
+Update cluster configuration. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='.
+
+If \fB\-\-corosync_conf\fR is specified, update cluster configuration in a file specified by <path>.
+
+All options are documented in corosync.conf(5) man page. There are different transport options for transport types. Compression and crypto options are only available for knet transport. Totem options can be set regardless of the transport type.
 .br
 Transport options for knet transport are: ip_version, knet_pmtud_interval, link_mode
 .br
@@ -620,7 +632,7 @@ link remove <linknumber> [<linknumber>]...
 Remove specified corosync links.
 .TP
 link update <linknumber> [<node_name>=<node_address>...] [options <link options>]
-Change node addresses / link options of an existing corosync link. Use this if you cannot add / remove links which is the preferred way.
+Add, remove or change node addresses / link options of an existing corosync link. Use this if you cannot add / remove links which is the preferred way. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='.
 .br
 Link options (documented in corosync.conf(5) man page) are:
 .br
@@ -682,7 +694,7 @@ Example: Use port p1 for node n1 and ports p2 and p3 for node n2
 pcs stonith create MyFence fence_virt 'pcmk_host_map=n1:p1;n2:p2,p3'
 .TP
 update <stonith id> [stonith device options]
-Add/Change options to specified stonith id.
+Add, remove or change options of specified stonith id. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='.
 .TP
 update\-scsi\-devices <stonith id> (set <device\-path> [<device\-path>...]) | (add <device\-path> [<device\-path>...] delete|remove <device\-path> [<device\-path>...] )
 Update scsi fencing devices without affecting other resources. You must specify either list of set devices or at least one device for add or delete/remove devices. Stonith resource must be running on one cluster node. Each device will be unfenced on each cluster node running cluster. Supported fence agents: fence_scsi.
@@ -1048,7 +1060,7 @@ device status [\fB\-\-full\fR]
 Show quorum device runtime status.  Using \fB\-\-full\fR will give more detailed output.
 .TP
 device update [<generic options>] [model <model options>] [heuristics <heuristics options>]
-Add/Change quorum device options. Requires the cluster to be stopped. Model and options are all documented in corosync\-qdevice(8) man page; for heuristics options check the quorum.device.heuristics subkey section, for model options check the quorum.device.<device model> subkey sections.
+Add, remove or change quorum device options. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='. Requires the cluster to be stopped. Model and options are all documented in corosync\-qdevice(8) man page; for heuristics options check the quorum.device.heuristics subkey section, for model options check the quorum.device.<device model> subkey sections.
 
 WARNING: If you want to change "host" option of qdevice model net, use "pcs quorum device remove" and "pcs quorum device add" commands to set up configuration properly unless old and new host is the same machine.
 .TP
@@ -1061,7 +1073,7 @@ Cancel waiting for all nodes when establishing quorum.  Useful in situations whe
 .B WARNING: If the nodes are not actually powered off or they do have access to shared resources, data corruption/cluster failure can occur. To prevent accidental running of this command, \-\-force or interactive user response is required in order to proceed.
 .TP
 update [auto_tie_breaker=[0|1]] [last_man_standing=[0|1]] [last_man_standing_window=[<time in ms>]] [wait_for_all=[0|1]]
-Add/Change quorum options.  At least one option must be specified.  Options are documented in corosync's votequorum(5) man page.  Requires the cluster to be stopped.
+Add, remove or change quorum options. At least one option must be specified. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='. Options are documented in corosync's votequorum(5) man page. Requires the cluster to be stopped.
 .SS "booth"
 .TP
 setup sites <address> <address> [<address>...] [arbitrators <address> ...] [\fB\-\-force\fR]
@@ -1223,7 +1235,7 @@ create path=<path> [id=<alert\-id>] [description=<description>] [options [<optio
 Define an alert handler with specified path. Id will be automatically generated if it is not specified.
 .TP
 update <alert\-id> [path=<path>] [description=<description>] [options [<option>=<value>]...] [meta [<meta\-option>=<value>]...]
-Update an existing alert handler with specified id.
+Update an existing alert handler with specified id. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='.
 .TP
 delete <alert\-id> ...
 Remove alert handlers with specified ids.
@@ -1235,7 +1247,7 @@ recipient add <alert\-id> value=<recipient\-value> [id=<recipient\-id>] [descrip
 Add new recipient to specified alert handler.
 .TP
 recipient update <recipient\-id> [value=<recipient\-value>] [description=<description>] [options [<option>=<value>]...] [meta [<meta\-option>=<value>]...]
-Update an existing recipient identified by its id.
+Update an existing recipient identified by its id. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='.
 .TP
 recipient delete <recipient\-id> ...
 Remove specified recipients.
