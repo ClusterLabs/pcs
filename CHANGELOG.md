@@ -1,14 +1,31 @@
 # Change Log
 
-## [Unreleased]
+## [0.11.1] - 2021-11-30
+
+### Removed
+- Deprecated obsolete commands `pcs config import-cman` and `pcs config export
+  pcs-commands|pcs-commands-verbose` have been removed ([rhbz#1881064])
+- Unused and unmaintained pcsd urls: `/remote/config_backup`,
+  `/remote/node_available`, `/remote/resource_status`
+- Pcsd no longer provides data in format used by web UI in pcs 0.9.142 and older
 
 ### Added
+- Explicit confirmation is now required to prevent accidental destroying
+  of the cluster with `pcs cluster destroy` ([rhbz#1283805])
 -  Add add/remove cli syntax for command `pcs stonith update-scsi-devices`
    ([rhbz#1992668])
 - Command `pcs resource move` is fully supported ([rhbz#1990787])
 - Support for OCF 1.1 resource and stonith agents ([rhbz#2018969])
 
 ### Changed
+- Pcs no longer depends on python3-distro package
+- 'pcs status xml' now prints cluster status in the new format provided by
+  Pacemaker 2.1 ([rhbz#1985981])
+- All errors, warning and progress related output is now printed to stderr
+  instead of stdout
+- Make roles `Promoted` and `Unpromoted` default ([rhbz#1885293])
+- Make auto-deleting constraint default for `pcs resource move` command
+  ([rhbz#1996062])
 - Deprecation warnings use a "Deprecation Warning:" prefix instead of 
   "Warning:" on the command line
 - Minimal required version of python has been changed to 3.9
@@ -27,53 +44,27 @@
   booth config directory (`/etc/booth`) is missing ([rhbz#1791670],
   [ghpull#411], [ghissue#225])
 
-
-[ghissue#225]: https://github.com/ClusterLabs/pcs/issues/225
-[ghpull#370]: https://github.com/ClusterLabs/pcs/pull/370
-[ghpull#411]: https://github.com/ClusterLabs/pcs/pull/411
-[rhbz#1533090]: https://bugzilla.redhat.com/show_bug.cgi?id=1533090
-[rhbz#1791670]: https://bugzilla.redhat.com/show_bug.cgi?id=1791670
-[rhbz#1811072]: https://bugzilla.redhat.com/show_bug.cgi?id=1811072
-[rhbz#1968088]: https://bugzilla.redhat.com/show_bug.cgi?id=1968088
-[rhbz#1990787]: https://bugzilla.redhat.com/show_bug.cgi?id=1990787
-[rhbz#1991654]: https://bugzilla.redhat.com/show_bug.cgi?id=1991654
-[rhbz#1992668]: https://bugzilla.redhat.com/show_bug.cgi?id=1992668
-[rhbz#2018969]: https://bugzilla.redhat.com/show_bug.cgi?id=2018969
-
-
-## [0.11.1.alpha.1] - 2021-08-26
-
-### Added
-- Explicit confirmation is now required to prevent accidental destroying
-  of the cluster with `pcs cluster destroy` ([rhbz#1283805])
-
-### Changed
-- Pcs no longer depends on python3-distro package
-- 'pcs status xml' now prints cluster status in the new format provided by
-  Pacemaker 2.1 ([rhbz#1985981])
-- All errors, warning and progress related output is now printed to stderr
-  instead of stdout
-- Make roles `Promoted` and `Unpromoted` default ([rhbz#1885293])
-- Make auto-deleting constraint default for `pcs resource move` command
-  ([rhbz#1996062])
-
-### Removed
-- Deprecated obsolete commands `pcs config import-cman` and `pcs config export
-  pcs-commands|pcs-commands-verbose` have been removed ([rhbz#1881064])
-- Unused and unmaintained pcsd urls: `/remote/config_backup`,
-  `/remote/node_available`, `/remote/resource_status`
-- Pcsd no longer provides data in format used by web UI in pcs 0.9.142 and older
-
 ### Deprecated
 - Legacy role names `Master` and `Slave` ([rhbz#1885293])
 - Option `--master` is deprecated and has been replaced by option `--promoted`
   ([rhbz#1885293])
 
+[ghissue#225]: https://github.com/ClusterLabs/pcs/issues/225
+[ghpull#370]: https://github.com/ClusterLabs/pcs/pull/370
+[ghpull#411]: https://github.com/ClusterLabs/pcs/pull/411
 [rhbz#1283805]: https://bugzilla.redhat.com/show_bug.cgi?id=1283805
+[rhbz#1533090]: https://bugzilla.redhat.com/show_bug.cgi?id=1533090
+[rhbz#1791670]: https://bugzilla.redhat.com/show_bug.cgi?id=1791670
+[rhbz#1811072]: https://bugzilla.redhat.com/show_bug.cgi?id=1811072
 [rhbz#1881064]: https://bugzilla.redhat.com/show_bug.cgi?id=1881064
 [rhbz#1885293]: https://bugzilla.redhat.com/show_bug.cgi?id=1885293
+[rhbz#1968088]: https://bugzilla.redhat.com/show_bug.cgi?id=1968088
 [rhbz#1985981]: https://bugzilla.redhat.com/show_bug.cgi?id=1985981
+[rhbz#1990787]: https://bugzilla.redhat.com/show_bug.cgi?id=1990787
+[rhbz#1991654]: https://bugzilla.redhat.com/show_bug.cgi?id=1991654
+[rhbz#1992668]: https://bugzilla.redhat.com/show_bug.cgi?id=1992668
 [rhbz#1996062]: https://bugzilla.redhat.com/show_bug.cgi?id=1996062
+[rhbz#2018969]: https://bugzilla.redhat.com/show_bug.cgi?id=2018969
 
 
 ## [0.10.10] - 2021-08-19
