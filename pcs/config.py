@@ -304,15 +304,16 @@ def config_restore(lib, argv, modifiers):
             config_restore_remote(infile_name, infile_obj)
     else:
         new_argv = ["config", "restore"]
+        options = []
         new_stdin = None
         if modifiers.get("--local"):
-            new_argv.append("--local")
+            options.append("--local")
         if infile_name:
             new_argv.append(os.path.abspath(infile_name))
         else:
             new_stdin = infile_obj.read()
         err_msgs, exitcode, std_out, std_err = utils.call_local_pcsd(
-            new_argv, new_stdin
+            new_argv, options, new_stdin
         )
         if err_msgs:
             for msg in err_msgs:

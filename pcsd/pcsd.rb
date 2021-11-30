@@ -150,10 +150,10 @@ get '/api/v1/?*' do
 end
 
 post '/run_pcs' do
-  command = params['command'] || '{}'
   std_in = params['stdin'] || nil
   begin
-    command_decoded = JSON.parse(command)
+    command = JSON.parse(params['command'] || '[]')
+    options = JSON.parse(params['options'] || '[]')
   rescue JSON::ParserError
     result = {
       'status' => 'error',
@@ -164,9 +164,9 @@ post '/run_pcs' do
   # Do not reveal potentially sensitive information: remove --debug and all its
   # prefixes since getopt parser in pcs considers them equal to --debug.
   debug_items = ["--de", "--deb", "--debu", "--debug"]
-  command_sanitized = []
-  command_decoded.each { |item|
-    command_sanitized << item unless debug_items.include?(item)
+  options_sanitized = []
+  options.each { |item|
+    options_sanitized << item unless debug_items.include?(item)
   }
 
   allowed_commands = {
@@ -296,10 +296,10 @@ post '/run_pcs' do
   }
   allowed = false
   command_settings = {}
-  allowed_commands.each { |cmd, cmd_settings|
-    if command_sanitized == cmd \
+  allowed_commands.each { |allowed_cmd, cmd_settings|
+    if command == allowed_cmd \
       or \
-      (cmd[-1] == '...' and cmd[0..-2] == command_sanitized[0..(cmd.length - 2)])
+      (allowed_cmd[-1] == '...' and allowed_cmd[0..-2] == command[0..(allowed_cmd.length - 2)])
       then
         allowed = true
         command_settings = cmd_settings
@@ -325,10 +325,10 @@ post '/run_pcs' do
     end
   end
 
-  options = {}
-  options['stdin'] = std_in if std_in
+  runner_options = {}
+  runner_options['stdin'] = std_in if std_in
   std_out, std_err, retval = run_cmd_options(
-    @auth_user, options, PCS, *command_sanitized
+    @auth_user, runner_options, PCS, *options, '--', *command
   )
   result = {
     'status' => 'ok',

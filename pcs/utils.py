@@ -1029,7 +1029,7 @@ def auth_hosts(host_dict):
     err("Unable to communicate with pcsd")
 
 
-def call_local_pcsd(argv, std_in=None):
+def call_local_pcsd(argv, options, std_in=None):
     """
     Commandline options:
       * --request-timeout - timeout of call to local pcsd
@@ -1039,6 +1039,7 @@ def call_local_pcsd(argv, std_in=None):
     # returns [list_of_errors, exit_code, stdout, stderr]
     data = {
         "command": json.dumps(argv),
+        "options": json.dumps(options),
     }
     if std_in:
         data["stdin"] = std_in
