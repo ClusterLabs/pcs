@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.10.12] - 2021-11-30
 
 ### Added
 - Option `--autodelete` of command `pcs resource move` is fully supported
