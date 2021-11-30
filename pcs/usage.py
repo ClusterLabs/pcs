@@ -437,16 +437,21 @@ Commands:
 
     update <resource id> [resource options] [op [<operation action>
            <operation options>]...] [meta <meta operations>...] [--wait[=n]]
-        Add/Change options to specified resource, clone or multi-state
-        resource.  If an operation (op) is specified it will update the first
-        found operation with the same action on the specified resource, if no
+        Add, remove or change options of specified resource, clone or
+        multi-state resource. Unspecified options will be kept unchanged. If
+        you wish to remove an option, set it to empty value, i.e.
+        'option_name='.
+
+        If an operation (op) is specified it will update the first found
+        operation with the same action on the specified resource. If no
         operation with that action exists then a new operation will be created.
         (WARNING: all existing options on the updated operation will be reset
-        if not specified.)  If you want to create multiple monitor operations
-        you should use the 'op add' & 'op remove' commands.  If --wait is
-        specified, pcs will wait up to 'n' seconds for the changes to take
-        effect and then return 0 if the changes have been processed or 1
-        otherwise.  If 'n' is not specified it defaults to 60 minutes.
+        if not specified.) If you want to create multiple monitor operations
+        you should use the 'op add' & 'op remove' commands.
+
+        If --wait is specified, pcs will wait up to 'n' seconds for the changes
+        to take effect and then return 0 if the changes have been processed or
+        1 otherwise. If 'n' is not specified it defaults to 60 minutes.
 
     op add <resource id> <operation action> [operation properties]
         Add operation for specified resource.
@@ -522,13 +527,18 @@ Commands:
 
     op defaults set update <set id> [meta [<name>=<value>]...]
         Add, remove or change values in specified set of default values for
-        resource operations.
+        resource operations. Unspecified options will be kept unchanged. If you
+        wish to remove an option, set it to empty value, i.e. 'option_name='.
+
         NOTE: Defaults do not apply to resources which override them with their
         own defined values.
 
     op defaults update <name>=<value>...
-        Set default values for operations. This is a simplified command useful
-        for cases when you only manage one set of default values.
+        Add, remove or change default values for operations. This is a
+        simplified command useful for cases when you only manage one set of
+        default values. Unspecified options will be kept unchanged. If you wish
+        to remove an option, set it to empty value, i.e. 'option_name='.
+
         NOTE: Defaults do not apply to resources which override them with their
         own defined values.
 
@@ -639,12 +649,17 @@ Commands:
             [storage-map (add <storage options>) | (delete | remove <id>...)]...
             [meta <meta options>]
             [--wait[=n]]
-        Add, remove or change options to specified bundle. If you wish to update
-        a resource encapsulated in the bundle, use the 'pcs resource update'
-        command instead and specify the resource id. If --wait is specified,
-        pcs will wait up to 'n' seconds for the operation to finish (including
-        moving resources if appropriate) and then return 0 on success or 1 on
-        error. If 'n' is not specified it defaults to 60 minutes.
+        Add, remove or change options of specified bundle. Unspecified options
+        will be kept unchanged. If you wish to remove an option, set it to
+        empty value, i.e. 'option_name='.
+
+        If you wish to update a resource encapsulated in a bundle, use the
+        'pcs resource update' command instead and specify the resource id.
+
+        If --wait is specified, pcs will wait up to 'n' seconds for the
+        operation to finish (including moving resources if appropriate) and
+        then return 0 on success or 1 on error. If 'n' is not specified it
+        defaults to 60 minutes.
 
     manage <resource id | tag id>... [--monitor]
         Set resources listed to managed mode (default). If --monitor is
@@ -708,13 +723,18 @@ Commands:
 
     defaults set update <set id> [meta [<name>=<value>]...]
         Add, remove or change values in specified set of default values for
-        resources.
+        resources. Unspecified options will be kept unchanged. If you wish to
+        remove an option, set it to empty value, i.e. 'option_name='.
+
         NOTE: Defaults do not apply to resources which override them with their
         own defined values.
 
     defaults update <name>=<value>...
-        Set default values for resources. This is a simplified command useful
-        for cases when you only manage one set of default values.
+        Add, remove or change default values for resources. This is a
+        simplified command useful for cases when you only manage one set of
+        default values. Unspecified options will be kept unchanged. If you wish
+        to remove an option, set it to empty value, i.e. 'option_name='.
+
         NOTE: Defaults do not apply to resources which override them with their
         own defined values.
 
@@ -961,12 +981,17 @@ Commands:
     config update [transport <transport options>]
             [compression <compression options>] [crypto <crypto options>]
             [totem <totem options>] [--corosync_conf <path>]
-        Update cluster configuration. If --corosync_conf is specified, update
-        cluster configuration in file specified by <path>. All options are
-        documented in corosync.conf(5) man page. There are different transport
-        options for transport types. Compression and crypto options are only
-        available for knet transport. Totem options can be set regardless of
-        the transport type.
+        Update cluster configuration. Unspecified options will be kept
+        unchanged. If you wish to remove an option, set it to empty value, i.e.
+        'option_name='.
+
+        If --corosync_conf is specified, update cluster configuration in file
+        specified by <path>.
+
+        All options are documented in corosync.conf(5) man page. There are
+        different transport options for transport types. Compression and crypto
+        options are only available for knet transport. Totem options can be set
+        regardless of the transport type.
 
         Transport options for knet transport are:
             ip_version, knet_pmtud_interval, link_mode
@@ -1180,8 +1205,11 @@ Commands:
 
     link update <linknumber> [<node_name>=<node_address>...]
             [options <link options>]
-        Change node addresses / link options of an existing corosync link. Use
-        this if you cannot add / remove links which is the preferred way.
+        Add, remove or change node addresses / link options of an existing
+        corosync link. Use this if you cannot add / remove links which is the
+        preferred way. Unspecified options will be kept unchanged. If you wish
+        to remove an option, set it to empty value, i.e. 'option_name='.
+
         Link options (documented in corosync.conf(5) man page) are:
         for knet transport:
             link_priority, mcastport, ping_interval, ping_precision,
@@ -1285,7 +1313,9 @@ Commands:
             pcs stonith create MyFence fence_virt 'pcmk_host_map=n1:p1;n2:p2,p3'
 
     update <stonith id> [stonith device options]
-        Add/Change options to specified stonith id.
+        Add, remove or change options of specified stonith id. Unspecified
+        options will be kept unchanged. If you wish to remove an option, set it
+        to empty value, i.e. 'option_name='.
 
     update-scsi-devices <stonith id> (set <device-path> [<device-path>...])
             | (add <device-path> [<device-path>...] delete|remove <device-path>
@@ -2139,11 +2169,14 @@ Commands:
 
     device update [<generic options>] [model <model options>]
             [heuristics <heuristics options>]
-        Add/Change quorum device options. Requires the cluster to be stopped.
+        Add, remove or change quorum device options. Requires the cluster to be
+        stopped. Unspecified options will be kept unchanged. If you wish to
+        remove an option, set it to empty value, i.e. 'option_name='.
+
         Model and options are all documented in corosync-qdevice(8) man page;
         for heuristics options check the quorum.device.heuristics subkey
-        section, for model options check the quorum.device.<device model> subkey
-        sections.
+        section, for model options check the quorum.device.<device model>
+        subkey sections.
 
         WARNING: If you want to change "host" option of qdevice model net, use
         "pcs quorum device remove" and "pcs quorum device add" commands
@@ -2169,9 +2202,11 @@ Commands:
 
     update [auto_tie_breaker=[0|1]] [last_man_standing=[0|1]]
             [last_man_standing_window=[<time in ms>]] [wait_for_all=[0|1]]
-        Add/Change quorum options.  At least one option must be specified.
-        Options are documented in corosync's votequorum(5) man page.  Requires
-        the cluster to be stopped.
+        Add, remove or change quorum options. At least one option must be
+        specified. Unspecified options will be kept unchanged. If you wish to
+        remove an option, set it to empty value, i.e. 'option_name='. Options
+        are documented in corosync's votequorum(5) man page. Requires the
+        cluster to be stopped.
 """
     if pout:
         print(sub_usage(args, output))
@@ -2285,7 +2320,9 @@ Commands:
 
     update <alert-id> [path=<path>] [description=<description>]
             [options [<option>=<value>]...] [meta [<meta-option>=<value>]...]
-        Update an existing alert handler with specified id.
+        Update an existing alert handler with specified id. Unspecified options
+        will be kept unchanged. If you wish to remove an option, set it to
+        empty value, i.e. 'option_name='.
 
     delete <alert-id> ...
         Remove alert handlers with specified ids.
@@ -2301,7 +2338,9 @@ Commands:
     recipient update <recipient-id> [value=<recipient-value>]
             [description=<description>] [options [<option>=<value>]...]
             [meta [<meta-option>=<value>]...]
-        Update an existing recipient identified by its id.
+        Update an existing recipient identified by its id. Unspecified options
+        will be kept unchanged. If you wish to remove an option, set it to
+        empty value, i.e. 'option_name='.
 
     recipient delete <recipient-id> ...
         Remove specified recipients.
