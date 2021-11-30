@@ -255,7 +255,7 @@ def print_pcsd_daemon_status(lib, modifiers):
         )
     else:
         err_msgs, exitcode, std_out, dummy_std_err = utils.call_local_pcsd(
-            ["status", "pcsd"]
+            ["status", "pcsd"], []
         )
         if err_msgs:
             for msg in err_msgs:
