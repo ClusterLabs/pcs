@@ -86,7 +86,11 @@ BuildRequires: booth
 BuildRequires: corosync-qdevice-devel
 BuildRequires: corosynclib-devel >= 3.0
 BuildRequires: fence-agents-common
+%if 0%{?suse_version}
+BuildRequires: libpacemaker-devel >= %{required_pacemaker_version}
+%else
 BuildRequires: pacemaker-libs-devel >= %{required_pacemaker_version}
+%endif
 BuildRequires: resource-agents
 BuildRequires: sbd
 # for post, preun and postun macros
