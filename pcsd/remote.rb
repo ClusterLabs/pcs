@@ -2515,7 +2515,7 @@ def qdevice_client_enable(param, request, auth_user)
   unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
     return 403, 'Permission denied'
   end
-  if not ServiceChecker.new('corosync', enabled: true).is_enabled?('corosync')
+  if not ServiceChecker.new(['corosync'], enabled: true).is_enabled?('corosync')
     return pcsd_success('corosync is not enabled, skipping')
   elsif enable_service('corosync-qdevice')
     return pcsd_success('corosync-qdevice enabled')
