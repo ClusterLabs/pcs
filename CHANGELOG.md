@@ -1,5 +1,14 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+- Pcs was not automatically enabling corosync-qdevice when adding a quorum
+  device to a cluster (broken since pcs-0.10.9) ([rhbz#2028902])
+
+[rhbz#2028902]: https://bugzilla.redhat.com/show_bug.cgi?id=2028902
+
+
 ## [0.11.1] - 2021-11-30
 
 ### Removed
