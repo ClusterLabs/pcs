@@ -193,11 +193,23 @@ def route_api_v1(auth_user, params, request)
       :only_superuser => false,
       :permissions => Permissions::READ,
     },
+    # deprecated, use resource-agent-get-agent-metadata/v1 instead
     'resource-agent-describe-agent/v1' => {
       :cmd => 'resource_agent.describe_agent',
       :only_superuser => false,
       :permissions => Permissions::READ,
     },
+    'resource-agent-get-agents-list/v1' => {
+      :cmd => 'resource_agent.get_agents_list',
+      :only_superuser => false,
+      :permissions => Permissions::READ,
+    },
+    'resource-agent-get-agent-metadata/v1' => {
+      :cmd => 'resource_agent.get_agent_metadata',
+      :only_superuser => false,
+      :permissions => Permissions::READ,
+    },
+    # deprecated, use resource-agent-get-agents-list/v1 instead
     'resource-agent-list-agents/v1' => {
       :cmd => 'resource_agent.list_agents',
       :only_superuser => false,
@@ -303,11 +315,13 @@ def route_api_v1(auth_user, params, request)
       :only_superuser => false,
       :permissions => Permissions::WRITE,
     },
+    # deprecated, use resource-agent-get-agent-metadata/v1 instead
     'stonith-agent-describe-agent/v1' => {
       :cmd => 'stonith_agent.describe_agent',
       :only_superuser => false,
       :permissions => Permissions::READ,
     },
+    # deprecated, use resource-agent-get-agents-list/v1 instead
     'stonith-agent-list-agents/v1' => {
       :cmd => 'stonith_agent.list_agents',
       :only_superuser => false,

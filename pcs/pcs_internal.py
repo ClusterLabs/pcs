@@ -2,7 +2,12 @@ import sys
 import json
 import logging
 
-from typing import Any, Optional
+from typing import (
+    Any,
+    Dict,
+    Mapping,
+    Optional,
+)
 
 from dacite import DaciteError
 
@@ -16,6 +21,7 @@ from pcs.common.reports import (
     ReportItemList,
     ReportProcessor,
 )
+from pcs.common.resource_agent_dto import ResourceAgentNameDto
 from pcs.lib.errors import LibraryError
 
 
@@ -58,6 +64,8 @@ SUPPORTED_COMMANDS = {
     "qdevice.client_net_import_certificate",
     "qdevice.qdevice_net_sign_certificate_request",
     "resource_agent.describe_agent",
+    "resource_agent.get_agents_list",
+    "resource_agent.get_agent_metadata",
     "resource_agent.list_agents",
     "resource_agent.list_agents_for_standard_and_provider",
     "resource_agent.list_ocf_providers",
@@ -90,6 +98,20 @@ SUPPORTED_COMMANDS = {
     "stonith.create",
     "stonith.create_in_group",
 }
+
+
+def _convert_input_data(cmd: str, data: Dict[str, Any]) -> Mapping[str, Any]:
+    if cmd == "resource_agent.get_agent_metadata":
+        try:
+            data["agent_name"] = dto.from_dict(
+                ResourceAgentNameDto, data["agent_name"]
+            )
+        except (DaciteError, KeyError) as e:
+            _exit(
+                communication.const.COM_STATUS_INPUT_ERROR,
+                status_msg=str(e),
+            )
+    return data
 
 
 def _exit(
@@ -162,7 +184,7 @@ def main() -> None:
             )
         for sub_cmd in input_dto.cmd.split("."):
             lib = getattr(lib, sub_cmd)
-        output_data = lib(**input_dto.cmd_data)  # type: ignore
+        output_data = lib(**_convert_input_data(input_dto.cmd, input_dto.cmd_data))  # type: ignore
         _exit(
             communication.const.COM_STATUS_SUCCESS,
             report_list=cli_env.report_processor.processed_items,
