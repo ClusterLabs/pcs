@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List
 
 from pcs import settings
 from pcs.common import reports
@@ -8,10 +8,11 @@ from pcs.lib.external import CommandRunner
 from .error import (
     AgentNameGuessFoundMoreThanOne,
     AgentNameGuessFoundNone,
-    InvalidResourceAgentName,
 )
-from .name import split_resource_agent_name
-from .types import ResourceAgentName
+from .types import (
+    ResourceAgentName,
+    StandardProviderTuple,
+)
 
 _IGNORED_AGENTS = frozenset(
     [
@@ -55,23 +56,27 @@ def list_resource_agents_ocf_providers(runner: CommandRunner) -> List[str]:
 
 def list_resource_agents_standards_and_providers(
     runner: CommandRunner,
-) -> List[str]:
+) -> List[StandardProviderTuple]:
     """
     Return a list of all standard[:provider] on the local host
     """
-    result = list_resource_agents_standards(runner)
-    if "ocf" in result:
-        # do not list "ocf" when we're going to list "ocf:{provider}"
-        result.remove("ocf")
-        result += [
-            f"ocf:{provider}"
-            for provider in list_resource_agents_ocf_providers(runner)
-        ]
-    return sorted(result, key=str.lower)
+    result = []
+    for standard in list_resource_agents_standards(runner):
+        if standard == "ocf":
+            # do not list "ocf" when we're going to list "ocf:{provider}"
+            result.extend(
+                [
+                    StandardProviderTuple(standard, provider)
+                    for provider in list_resource_agents_ocf_providers(runner)
+                ]
+            )
+        else:
+            result.append(StandardProviderTuple(standard))
+    return sorted(result)
 
 
 def list_resource_agents(
-    runner: CommandRunner, standard_provider: str
+    runner: CommandRunner, standard_provider: StandardProviderTuple
 ) -> List[str]:
     """
     Return a list of resource agents of the specified standard on the local host
@@ -80,7 +85,15 @@ def list_resource_agents(
     """
     # retval is 0 on success, anything else when no agents were found
     stdout, dummy_stderr, retval = runner.run(
-        [settings.crm_resource_binary, "--list-agents", standard_provider]
+        [
+            settings.crm_resource_binary,
+            "--list-agents",
+            (
+                f"{standard_provider.standard}:{standard_provider.provider}"
+                if standard_provider.provider
+                else standard_provider.standard
+            ),
+        ]
     )
     return (
         sorted(set(split_multiline(stdout)) - _IGNORED_AGENTS, key=str.lower)
@@ -96,25 +109,13 @@ def find_one_resource_agent_by_type(
     runner: CommandRunner,
     report_processor: reports.ReportProcessor,
     type_: str,
-    is_stonith: bool = False,
 ) -> ResourceAgentName:
     """
     Get one resource agent with the specified type from all standards:providers
 
     type_ -- last part of an agent's name
-    is_stonith -- report stonith specific reports
     """
-    possible_names, not_valid_names = _find_all_resource_agents_by_type(
-        runner, type_
-    )
-    for name in not_valid_names:
-        report_processor.report(
-            reports.ReportItem.warning(
-                reports.messages.InvalidStonithAgentName(name)
-                if is_stonith
-                else reports.messages.InvalidResourceAgentName(name)
-            )
-        )
+    possible_names = _find_all_resource_agents_by_type(runner, type_)
     if len(possible_names) == 1:
         report_processor.report(
             reports.ReportItem.info(
@@ -133,7 +134,7 @@ def find_one_resource_agent_by_type(
 
 def _find_all_resource_agents_by_type(
     runner: CommandRunner, type_: str
-) -> Tuple[List[ResourceAgentName], List[str]]:
+) -> List[ResourceAgentName]:
     """
     List resource agents with the specified type from all standards:providers
 
@@ -141,16 +142,14 @@ def _find_all_resource_agents_by_type(
     """
     type_lower = type_.lower()
     possible_names = []
-    not_valid_names = []
     for std_provider in list_resource_agents_standards_and_providers(runner):
         for existing_type in list_resource_agents(runner, std_provider):
             if type_lower == existing_type.lower():
-                try:
-                    possible_names.append(
-                        split_resource_agent_name(
-                            f"{std_provider}:{existing_type}"
-                        )
+                possible_names.append(
+                    ResourceAgentName(
+                        std_provider.standard,
+                        std_provider.provider,
+                        existing_type,
                     )
-                except InvalidResourceAgentName as e:
-                    not_valid_names.append(e.agent_name)
-    return possible_names, not_valid_names
+                )
+    return possible_names

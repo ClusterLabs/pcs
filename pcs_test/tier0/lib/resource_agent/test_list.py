@@ -11,7 +11,10 @@ from pcs.lib.resource_agent.error import (
     AgentNameGuessFoundMoreThanOne,
     AgentNameGuessFoundNone,
 )
-from pcs.lib.resource_agent.types import ResourceAgentName
+from pcs.lib.resource_agent.types import (
+    ResourceAgentName,
+    StandardProviderTuple,
+)
 
 
 class ListResourceAgentsStandards(TestCase):
@@ -150,15 +153,15 @@ class ListResourceAgentsStandardsAndProviders(TestCase):
         self.assertEqual(
             ra_list.list_resource_agents_standards_and_providers(mock_runner),
             [
-                "lsb",
-                "nagios",
-                "ocf:booth",
-                "ocf:heartbeat",
-                "ocf:openstack",
-                "ocf:pacemaker",
-                "service",
-                "stonith",
-                "systemd",
+                StandardProviderTuple("lsb"),
+                StandardProviderTuple("nagios"),
+                StandardProviderTuple("ocf", "booth"),
+                StandardProviderTuple("ocf", "heartbeat"),
+                StandardProviderTuple("ocf", "openstack"),
+                StandardProviderTuple("ocf", "pacemaker"),
+                StandardProviderTuple("service"),
+                StandardProviderTuple("stonith"),
+                StandardProviderTuple("systemd"),
             ],
         )
 
@@ -202,7 +205,9 @@ class ListResourceAgents(TestCase):
         )
 
         self.assertEqual(
-            ra_list.list_resource_agents(self.mock_runner, "ocf"),
+            ra_list.list_resource_agents(
+                self.mock_runner, StandardProviderTuple("ocf")
+            ),
             [
                 "dhcpd",
                 "docker",
@@ -229,7 +234,9 @@ class ListResourceAgents(TestCase):
         )
 
         self.assertEqual(
-            ra_list.list_resource_agents(self.mock_runner, "ocf:pacemaker"),
+            ra_list.list_resource_agents(
+                self.mock_runner, StandardProviderTuple("ocf", "pacemaker")
+            ),
             [
                 "Dummy",
                 "HealthCPU",
@@ -247,7 +254,10 @@ class ListResourceAgents(TestCase):
             1,
         )
         self.assertEqual(
-            ra_list.list_resource_agents(self.mock_runner, "nonsense"), []
+            ra_list.list_resource_agents(
+                self.mock_runner, StandardProviderTuple("nonsense")
+            ),
+            [],
         )
         self.assert_runner("nonsense")
 
@@ -280,7 +290,9 @@ class ListResourceAgents(TestCase):
         )
 
         self.assertEqual(
-            ra_list.list_resource_agents(self.mock_runner, "stonith"),
+            ra_list.list_resource_agents(
+                self.mock_runner, StandardProviderTuple("stonith")
+            ),
             [
                 "fence_scsi",
                 "fence_virt",
@@ -359,29 +371,3 @@ class FindOneResourceAgentByType(TestCase):
                 env.cmd_runner(), env.report_processor, "missing"
             )
         self.assertEqual(cm.exception.agent_name, "missing")
-
-    def _assert_bad_name(self, is_stonith, report_code):
-        self._fixture_success_calls()
-        env = self.env_assist.get_env()
-        with self.assertRaises(AgentNameGuessFoundNone) as cm:
-            ra_list.find_one_resource_agent_by_type(
-                env.cmd_runner(),
-                env.report_processor,
-                "nonvalid:dummy",
-                is_stonith=is_stonith,
-            )
-        self.assertEqual(cm.exception.agent_name, "nonvalid:dummy")
-        self.env_assist.assert_reports(
-            [
-                fixture.warn(
-                    report_code,
-                    name="service:nonvalid:dummy",
-                )
-            ]
-        )
-
-    def test_bad_name_resource(self):
-        self._assert_bad_name(False, report_codes.INVALID_RESOURCE_AGENT_NAME)
-
-    def test_bad_name_stonith(self):
-        self._assert_bad_name(True, report_codes.INVALID_STONITH_AGENT_NAME)

@@ -1,6 +1,8 @@
 from pcs.common.resource_agent_dto import (
+    ListResourceAgentNameDto,
     ResourceAgentActionDto,
     ResourceAgentMetadataDto,
+    ResourceAgentNameDto,
     ResourceAgentParameterDto,
 )
 from .error import (
@@ -26,4 +28,5 @@ from .types import (
     ResourceAgentMetadata,
     ResourceAgentName,
     ResourceAgentParameter,
+    StandardProviderTuple,
 )
