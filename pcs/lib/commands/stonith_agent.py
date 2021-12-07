@@ -3,20 +3,21 @@ from typing import Any, Dict, List, Optional
 from pcs.lib.commands.resource_agent import (
     _agent_metadata_to_dict,
     _complete_agent_list,
+    _get_agent_names,
 )
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.resource_agent import (
-    InvalidResourceAgentName,
-    list_resource_agents,
-    ResourceAgentError,
     resource_agent_error_to_report_item,
+    InvalidResourceAgentName,
+    ResourceAgentError,
     ResourceAgentFacadeFactory,
     ResourceAgentName,
+    StandardProviderTuple,
 )
 
 
-# TODO return a list of DTOs
+# deprecated: use pcs.commands.resource_agent.get_agent_list instead
 # for now, it is transformed to a list of dicts for backward compatibility
 def list_agents(
     lib_env: LibraryEnvironment,
@@ -30,17 +31,19 @@ def list_agents(
     search -- return only agents which name contains this string
     """
     runner = lib_env.cmd_runner()
-    std_prov = "stonith"
-    agent_names = [
-        f"{std_prov}:{agent}"
-        for agent in list_resource_agents(runner, std_prov)
-    ]
     return _complete_agent_list(
-        runner, lib_env.report_processor, agent_names, describe, search
+        runner,
+        lib_env.report_processor,
+        sorted(
+            _get_agent_names(runner, StandardProviderTuple("stonith")),
+            key=lambda item: item.full_name,
+        ),
+        describe,
+        search,
     )
 
 
-# TODO return a DTO
+# deprecated: use pcs.commands.resource_agent.get_agent_metadata instead
 # for now, it is transformed to a dict for backward compatibility
 def describe_agent(
     lib_env: LibraryEnvironment, agent_name: str

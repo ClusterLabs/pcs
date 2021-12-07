@@ -6,6 +6,7 @@ from pcs.common.resource_agent_dto import (
     ResourceAgentActionDto,
     ResourceAgentMetadataDto,
     ResourceAgentParameterDto,
+    ResourceAgentNameDto,
 )
 
 
@@ -289,3 +290,13 @@ class ResourceAgentMetadata:
             [parameter.to_dto() for parameter in self.parameters],
             [action.to_dto() for action in self.actions],
         )
+
+
+@dataclass(frozen=True, order=True)
+class StandardProviderTuple:
+    standard: str
+    provider: Optional[str] = None
+
+    @property
+    def is_stonith(self) -> bool:
+        return self.standard == "stonith"
