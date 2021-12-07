@@ -1049,13 +1049,15 @@ def resource_update(lib, args, modifiers, deal_with_guest_change=True):
         if report_list:
             process_library_reports(report_list)
     except lib_ra.ResourceAgentError as e:
-        severity = (
-            reports.ReportItemSeverity.WARNING
-            if modifiers.get("--force")
-            else reports.ReportItemSeverity.ERROR
-        )
         process_library_reports(
-            [lib_ra.resource_agent_error_to_report_item(e, severity)]
+            [
+                lib_ra.resource_agent_error_to_report_item(
+                    e,
+                    reports.get_severity(
+                        reports.codes.FORCE, modifiers.get("--force")
+                    ),
+                )
+            ]
         )
     except LibraryError as e:
         process_library_reports(e.args)
