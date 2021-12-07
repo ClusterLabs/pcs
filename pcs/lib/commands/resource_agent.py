@@ -16,11 +16,16 @@ from pcs.lib.resource_agent import (
     list_resource_agents_ocf_providers,
     list_resource_agents_standards,
     list_resource_agents_standards_and_providers,
-    ResourceAgentError,
     resource_agent_error_to_report_item,
+    split_resource_agent_name,
+    ListResourceAgentNameDto,
+    ResourceAgentError,
     ResourceAgentFacadeFactory,
     ResourceAgentMetadata,
-    split_resource_agent_name,
+    ResourceAgentMetadataDto,
+    ResourceAgentName,
+    ResourceAgentNameDto,
+    StandardProviderTuple,
 )
 from pcs.lib.resource_agent.name import name_to_void_metadata
 
@@ -52,10 +57,10 @@ def list_agents_for_standard_and_provider(
     standard_provider -- standard[:provider], e.g. None, ocf, ocf:pacemaker
     """
     if standard_provider:
+        if standard_provider[-1] == ":":
+            standard_provider = standard_provider[:-1]
         std_prov_list = [
-            standard_provider[:-1]
-            if standard_provider[-1] == ":"
-            else standard_provider
+            StandardProviderTuple(*standard_provider.split(":", 1))
         ]
     else:
         std_prov_list = list_resource_agents_standards_and_providers(
@@ -63,13 +68,13 @@ def list_agents_for_standard_and_provider(
         )
     agents = []
     for std_prov in std_prov_list:
-        if std_prov == "stonith":
+        if std_prov.is_stonith:
             continue
         agents += list_resource_agents(lib_env.cmd_runner(), std_prov)
     return sorted(agents, key=str.lower)
 
 
-# TODO return a list of DTOs
+# deprecated: use get_agent_list instead
 # for now, it is transformed to a list of dicts for backward compatibility
 def list_agents(
     lib_env: LibraryEnvironment,
@@ -88,18 +93,42 @@ def list_agents(
     # list agents for all standards and providers
     agent_names = []
     for std_prov in list_resource_agents_standards_and_providers(runner):
-        if std_prov == "stonith":
+        if std_prov.is_stonith:
             continue
-        agent_names += [
-            f"{std_prov}:{agent}"
-            for agent in list_resource_agents(runner, std_prov)
-        ]
+        agent_names.extend(_get_agent_names(runner, std_prov))
     return _complete_agent_list(
         runner,
         lib_env.report_processor,
-        sorted(agent_names, key=str.lower),
+        sorted(agent_names, key=lambda item: item.full_name),
         describe,
         search,
+    )
+
+
+def _get_agent_names(
+    runner: CommandRunner, standard_provider: StandardProviderTuple
+) -> List[ResourceAgentName]:
+    return [
+        ResourceAgentName(
+            standard_provider.standard, standard_provider.provider, agent
+        )
+        for agent in list_resource_agents(runner, standard_provider)
+    ]
+
+
+def get_agents_list(lib_env: LibraryEnvironment) -> ListResourceAgentNameDto:
+    """
+    List all resource agents on the local host
+    """
+    runner = lib_env.cmd_runner()
+    agent_names = []
+    for std_prov in list_resource_agents_standards_and_providers(runner):
+        agent_names.extend(_get_agent_names(runner, std_prov))
+    return ListResourceAgentNameDto(
+        names=[
+            name.to_dto()
+            for name in sorted(agent_names, key=lambda item: item.full_name)
+        ]
     )
 
 
@@ -132,7 +161,7 @@ def _agent_metadata_to_dict(
 def _complete_agent_list(
     runner: CommandRunner,
     report_processor: ReportProcessor,
-    agent_names: Iterable[str],
+    agent_names: Iterable[ResourceAgentName],
     describe: bool,
     search: Optional[str],
 ) -> List[Dict[str, Any]]:
@@ -140,14 +169,13 @@ def _complete_agent_list(
     search_lower = search.lower() if search else None
     agent_list = []
     for name in agent_names:
-        if search_lower and search_lower not in name.lower():
+        if search_lower and search_lower not in name.full_name.lower():
             continue
         try:
-            split_name = split_resource_agent_name(name)
             metadata = (
-                agent_factory.facade_from_parsed_name(split_name).metadata
+                agent_factory.facade_from_parsed_name(name).metadata
                 if describe
-                else name_to_void_metadata(split_name)
+                else name_to_void_metadata(name)
             )
             agent_list.append(_agent_metadata_to_dict(metadata, describe))
         except ResourceAgentError as e:
@@ -159,7 +187,27 @@ def _complete_agent_list(
     return agent_list
 
 
-# TODO return a DTO
+def get_agent_metadata(
+    lib_env: LibraryEnvironment, agent_name: ResourceAgentNameDto
+) -> ResourceAgentMetadataDto:
+    """
+    Return agent's metadata
+
+    agent_name -- name of the agent
+    """
+    runner = lib_env.cmd_runner()
+    report_processor = lib_env.report_processor
+    agent_factory = ResourceAgentFacadeFactory(runner, report_processor)
+    try:
+        return agent_factory.facade_from_parsed_name(
+            ResourceAgentName.from_dto(agent_name)
+        ).metadata.to_dto()
+    except ResourceAgentError as e:
+        lib_env.report_processor.report(resource_agent_error_to_report_item(e))
+        raise LibraryError() from e
+
+
+# deprecated: use get_agent_metadata instead
 # for now, it is transformed to a dict for backward compatibility
 def describe_agent(
     lib_env: LibraryEnvironment, agent_name: str

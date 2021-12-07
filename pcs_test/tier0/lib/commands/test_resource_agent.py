@@ -5,7 +5,13 @@ from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 
 from pcs.common.reports import codes as report_codes
-
+from pcs.common.resource_agent_dto import (
+    ResourceAgentActionDto,
+    ResourceAgentMetadataDto,
+    ResourceAgentNameDto,
+    ResourceAgentParameterDto,
+    ListResourceAgentNameDto,
+)
 from pcs.lib.commands import resource_agent as lib
 from pcs.lib.resource_agent import ResourceAgentName
 
@@ -782,4 +788,246 @@ class DescribeAgent(TestCase):
                     name="ocf:heartbeat:Something:else",
                 )
             ],
+        )
+
+
+class GetAgentMetadata(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+        standard = "ocf"
+        provider = "heartbeat"
+        agent_type = "Dummy"
+        self.name = ResourceAgentName(standard, provider, agent_type)
+        self.agent_metadata = ResourceAgentMetadataDto(
+            name=ResourceAgentNameDto(
+                standard=standard,
+                provider=provider,
+                type=agent_type,
+            ),
+            shortdesc="Example stateless resource agent: ®",
+            longdesc=(
+                "This is a Dummy Resource Agent for testing utf-8"
+                " in metadata: ®"
+            ),
+            parameters=[
+                ResourceAgentParameterDto(
+                    name="state-®",
+                    shortdesc="State file: ®",
+                    longdesc="Location to store the resource state in: ®",
+                    type="string",
+                    default="/var/run/resource-agents/Dummy-®.state",
+                    enum_values=None,
+                    required=False,
+                    advanced=False,
+                    deprecated=False,
+                    deprecated_by=[],
+                    deprecated_desc=None,
+                    unique_group="_pcs_unique_group_state-®",
+                    reloadable=True,
+                ),
+                ResourceAgentParameterDto(
+                    name="trace_ra",
+                    shortdesc=(
+                        "Set to 1 to turn on resource agent "
+                        "tracing (expect large output)"
+                    ),
+                    longdesc=(
+                        "Set to 1 to turn on resource agent tracing"
+                        " (expect large output) The trace output will be "
+                        "saved to trace_file, if set, or by default to "
+                        "$HA_VARRUN/ra_trace/<type>/<id>.<action>."
+                        "<timestamp> e.g. $HA_VARRUN/ra_trace/oracle/db."
+                        "start.2012-11-27.08:37:08"
+                    ),
+                    type="integer",
+                    default="0",
+                    enum_values=None,
+                    required=False,
+                    advanced=True,
+                    deprecated=False,
+                    deprecated_by=[],
+                    deprecated_desc=None,
+                    unique_group=None,
+                    reloadable=False,
+                ),
+                ResourceAgentParameterDto(
+                    name="trace_file",
+                    shortdesc="Path to a file to store resource agent tracing log",
+                    longdesc="Path to a file to store resource agent tracing log",
+                    type="string",
+                    default="",
+                    enum_values=None,
+                    required=False,
+                    advanced=True,
+                    deprecated=False,
+                    deprecated_by=[],
+                    deprecated_desc=None,
+                    unique_group=None,
+                    reloadable=False,
+                ),
+            ],
+            actions=[
+                ResourceAgentActionDto(
+                    name="start",
+                    timeout="20",
+                    interval=None,
+                    role=None,
+                    start_delay=None,
+                    depth=None,
+                    automatic=False,
+                    on_target=False,
+                ),
+                ResourceAgentActionDto(
+                    name="stop",
+                    timeout="20",
+                    interval=None,
+                    role=None,
+                    start_delay=None,
+                    depth=None,
+                    automatic=False,
+                    on_target=False,
+                ),
+                ResourceAgentActionDto(
+                    name="monitor",
+                    timeout="20",
+                    interval="10",
+                    role=None,
+                    start_delay=None,
+                    depth="0",
+                    automatic=False,
+                    on_target=False,
+                ),
+                ResourceAgentActionDto(
+                    name="meta-data",
+                    timeout="5",
+                    interval=None,
+                    role=None,
+                    start_delay=None,
+                    depth=None,
+                    automatic=False,
+                    on_target=False,
+                ),
+                ResourceAgentActionDto(
+                    name="validate-all",
+                    timeout="20",
+                    interval=None,
+                    role=None,
+                    start_delay=None,
+                    depth=None,
+                    automatic=False,
+                    on_target=False,
+                ),
+                ResourceAgentActionDto(
+                    name="custom-®",
+                    timeout="20",
+                    interval=None,
+                    role=None,
+                    start_delay=None,
+                    depth=None,
+                    automatic=False,
+                    on_target=False,
+                ),
+            ],
+        )
+
+    def test_full_name(self):
+        self.config.runner.pcmk.load_agent(
+            agent_name=self.name.full_name,
+            agent_filename="resource_agent_ocf_heartbeat_dummy_utf8.xml",
+            env={"PATH": "/usr/sbin:/bin:/usr/bin"},
+        )
+        self.assertEqual(
+            lib.get_agent_metadata(self.env_assist.get_env(), self.name),
+            self.agent_metadata,
+        )
+
+    def test_agent_not_found(self):
+        err_msg = "error message"
+        self.config.runner.pcmk.load_agent(
+            agent_name=self.name.full_name,
+            agent_is_missing=True,
+            stderr=err_msg,
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.get_agent_metadata(self.env_assist.get_env(), self.name)
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.UNABLE_TO_GET_AGENT_METADATA,
+                    agent=self.name.full_name,
+                    reason=err_msg,
+                )
+            ],
+        )
+
+    def test_metadata_load_error(self):
+        self.config.runner.pcmk.load_agent(
+            agent_is_missing=True,
+            env={"PATH": "/usr/sbin:/bin:/usr/bin"},
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.get_agent_metadata(self.env_assist.get_env(), self.name)
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.UNABLE_TO_GET_AGENT_METADATA,
+                    agent=self.name.full_name,
+                    reason=(
+                        f"Agent {self.name.full_name} not found or does not "
+                        "support meta-data: Invalid argument (22)\nMetadata "
+                        f"query for {self.name.full_name} failed: Input/output "
+                        "error"
+                    ),
+                )
+            ],
+        )
+
+
+class GetAgentsList(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
+    def test_success(self):
+        self.config.runner.pcmk.list_agents_standards(
+            "\n".join(["service", "ocf"])
+        )
+        self.config.runner.pcmk.list_agents_ocf_providers("\n".join(["test"]))
+        self.config.runner.pcmk.list_agents_for_standard_and_provider(
+            "ocf:test",
+            "\n".join(["Stateful", "Delay"]),
+            name="runner.pcmk.list_agents_ocf_providers.ocf_test",
+        )
+        self.config.runner.pcmk.list_agents_for_standard_and_provider(
+            "service",
+            "\n".join(["corosync", "pacemaker_remote"]),
+            name="runner.pcmk.list_agents_ocf_providers.service",
+        )
+        self.assertEqual(
+            lib.get_agents_list(self.env_assist.get_env()),
+            ListResourceAgentNameDto(
+                names=[
+                    ResourceAgentNameDto(
+                        standard="ocf",
+                        provider="test",
+                        type="Delay",
+                    ),
+                    ResourceAgentNameDto(
+                        standard="ocf",
+                        provider="test",
+                        type="Stateful",
+                    ),
+                    ResourceAgentNameDto(
+                        standard="service",
+                        provider=None,
+                        type="corosync",
+                    ),
+                    ResourceAgentNameDto(
+                        standard="service",
+                        provider=None,
+                        type="pacemaker_remote",
+                    ),
+                ]
+            ),
         )
