@@ -4882,6 +4882,27 @@ class UpdateInstanceAttrs(
             ),
         )
 
+    def test_nonexisting_agent(self):
+        agent = "ocf:pacemaker:nonexistent"
+        message = (
+            f"Agent '{agent}' is not installed or does "
+            "not provide valid metadata: Metadata query for "
+            f"{agent} failed: Input/output error"
+        )
+        self.assert_pcs_success(
+            f"resource create --force D0 {agent}".split(),
+            f"Warning: {message}\n",
+        )
+
+        self.assert_pcs_fail(
+            "resource update D0 test=testA".split(),
+            f"Error: {message}, use --force to override\n",
+        )
+        self.assert_pcs_success(
+            "resource update --force D0 test=testA".split(),
+            f"Warning: {message}\n",
+        )
+
     def test_update_existing(self):
         xml = """
             <resources>
