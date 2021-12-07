@@ -1334,7 +1334,7 @@ def _resource_cleanup_refresh(action, params, request, auth_user)
   cmd = ["resource", action, params[:resource]]
   flags = []
   if params[:strict] == '1'
-    flags << "--force"
+    flags << "--strict"
   end
   stdout, stderr, retval = run_cmd(auth_user, PCS, *flags, "--", *cmd)
   if retval == 0
