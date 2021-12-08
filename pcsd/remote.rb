@@ -2393,9 +2393,10 @@ def remote_enable_sbd(params, request, auth_user)
   end
 
   arg_list = []
+  flags = []
 
   if ['true', '1', 'on'].include?(params[:ignore_offline_nodes])
-    arg_list << '--skip-offline'
+    flags << '--skip-offline'
   end
 
   params[:watchdog].each do |node, watchdog|
@@ -2411,7 +2412,7 @@ def remote_enable_sbd(params, request, auth_user)
   end
 
   _, stderr, retcode = run_cmd(
-    auth_user, PCS, 'stonith', 'sbd', 'enable', *arg_list
+    auth_user, PCS, *flags, '--' 'stonith', 'sbd', 'enable', *arg_list
   )
 
   if retcode != 0
@@ -2426,14 +2427,14 @@ def remote_disable_sbd(params, request, auth_user)
     return 403, 'Permission denied'
   end
 
-  arg_list = []
+  flags = []
 
   if ['true', '1', 'on'].include?(params[:ignore_offline_nodes])
-    arg_list << '--skip-offline'
+    flags << '--skip-offline'
   end
 
   _, stderr, retcode = run_cmd(
-    auth_user, PCS, 'stonith', 'sbd', 'disable', *arg_list
+    auth_user, PCS, *flags, '--', 'stonith', 'sbd', 'disable'
   )
 
   if retcode != 0
@@ -2871,7 +2872,7 @@ def create_alert(params, request, auth_user)
   description = params[:description]
   meta_attr_list = _hash_to_argument_list(params[:meta_attr])
   instance_attr_list = _hash_to_argument_list(params[:instance_attr])
-  cmd = [PCS, 'alert', 'create', "path=#{path}"]
+  cmd = [PCS, '--', 'alert', 'create', "path=#{path}"]
   cmd << "id=#{alert_id}" if alert_id and alert_id != ''
   cmd << "description=#{description}" if description and description != ''
   cmd += ['options', *instance_attr_list] if instance_attr_list.any?
@@ -2895,7 +2896,7 @@ def update_alert(params, request, auth_user)
   description = params[:description]
   meta_attr_list = _hash_to_argument_list(params[:meta_attr])
   instance_attr_list = _hash_to_argument_list(params[:instance_attr])
-  cmd = [PCS, 'alert', 'update', alert_id]
+  cmd = [PCS, '--', 'alert', 'update', alert_id]
   cmd << "path=#{path}" if path
   cmd << "description=#{description}" if description
   cmd += ['options', *instance_attr_list] if instance_attr_list.any?
@@ -2915,7 +2916,7 @@ def remove_alerts_and_recipients(params, request, auth_user)
   recipient_list = params[:recipient_list]
   if recipient_list.kind_of?(Array) and recipient_list.any?
     output, stderr, retval = run_cmd(
-      auth_user, PCS, 'alert', 'recipient', 'remove', *recipient_list
+      auth_user, PCS, '--', 'alert', 'recipient', 'remove', *recipient_list
     )
     if retval != 0
       return [400, "Unable to remove recipients: #{stderr.join("\n")}"]
@@ -2923,7 +2924,7 @@ def remove_alerts_and_recipients(params, request, auth_user)
   end
   if alert_list.kind_of?(Array) and alert_list.any?
     output, stderr, retval = run_cmd(
-      auth_user, PCS, 'alert', 'remove', *alert_list
+      auth_user, PCS, '--', 'alert', 'remove', *alert_list
     )
     if retval != 0
       return [400, "Unable to remove alerts: #{stderr.join("\n")}"]
@@ -2948,7 +2949,7 @@ def create_recipient(params, request, auth_user)
   description = params[:description]
   meta_attr_list = _hash_to_argument_list(params[:meta_attr])
   instance_attr_list = _hash_to_argument_list(params[:instance_attr])
-  cmd = [PCS, 'alert', 'recipient', 'add', alert_id, "value=#{value}"]
+  cmd = [PCS, '--', 'alert', 'recipient', 'add', alert_id, "value=#{value}"]
   cmd << "id=#{recipient_id}" if recipient_id and recipient_id != ''
   cmd << "description=#{description}" if description and description != ''
   cmd += ['options', *instance_attr_list] if instance_attr_list.any?
@@ -2975,7 +2976,7 @@ def update_recipient(params, request, auth_user)
   description = params[:description]
   meta_attr_list = _hash_to_argument_list(params[:meta_attr])
   instance_attr_list = _hash_to_argument_list(params[:instance_attr])
-  cmd = [PCS, 'alert', 'recipient', 'update', recipient_id]
+  cmd = [PCS, '--', 'alert', 'recipient', 'update', recipient_id]
   cmd << "value=#{value}" if value
   cmd << "description=#{description}" if description
   cmd += ['options', *instance_attr_list] if instance_attr_list.any?

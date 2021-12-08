@@ -1,7 +1,7 @@
 def getFenceAgents(auth_user)
   fence_agent_list = {}
   stdout, stderr, retval = run_cmd(
-    auth_user, PCS, "stonith", "list", "--nodesc"
+    auth_user, PCS, "--nodesc", "--", "stonith", "list"
   )
   if retval != 0
     $logger.error("Error running 'pcs stonith list --nodesc")
