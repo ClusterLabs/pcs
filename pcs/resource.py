@@ -1697,7 +1697,7 @@ def resource_clone_create(
     ):
         element.parentNode.parentNode.removeChild(element.parentNode)
 
-    def _reject_stonith_clone_report(force_flags, stonith_ids, group_id=None):
+    if element.getAttribute("class") == "stonith":
         process_library_reports(
             [
                 reports.ReportItem(
@@ -1706,23 +1706,11 @@ def resource_clone_create(
                         is_forced=reports.codes.FORCE in force_flags,
                     ),
                     message=reports.messages.CloningStonithResourcesHasNoEffect(
-                        stonith_ids, group_id=group_id
+                        [name]
                     ),
                 )
             ]
         )
-
-    if element.getAttribute("class") == "stonith":
-        _reject_stonith_clone_report(force_flags, [name])
-
-    if element.tagName == "group":
-        stonith_ids = [
-            resource.getAttribute("id")
-            for resource in element.getElementsByTagName("primitive")
-            if resource.getAttribute("class") == "stonith"
-        ]
-        if stonith_ids:
-            _reject_stonith_clone_report(force_flags, stonith_ids, name)
 
     parts = parse_clone_args(argv, promotable=promotable)
     if not update_existing:

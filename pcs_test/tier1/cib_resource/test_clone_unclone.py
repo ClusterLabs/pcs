@@ -354,12 +354,9 @@ class Clone(
 
     def test_clone_group_with_stonith(self):
         self.set_cib_file(FIXTURE_GROUP_WITH_STONITH)
-        self.assert_pcs_fail(
+        self.assert_effect(
             "resource clone Group".split(),
-            fixture_clone_stonith_msg(group=True),
-        )
-        self.assert_resources_xml_in_cib(
-            fixture_resources_xml(FIXTURE_GROUP_WITH_STONITH)
+            fixture_resources_xml(FIXTURE_CLONED_GROUP_WITH_STONITH),
         )
 
     def test_clone_group_with_stonith_forced(self):
@@ -367,7 +364,6 @@ class Clone(
         self.assert_effect(
             "resource clone Group --force".split(),
             fixture_resources_xml(FIXTURE_CLONED_GROUP_WITH_STONITH),
-            output=fixture_clone_stonith_msg(forced=True, group=True),
         )
 
     def test_promotable_clone(self):
