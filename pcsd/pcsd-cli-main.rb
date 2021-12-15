@@ -10,6 +10,7 @@ require 'remote.rb'
 
 
 PCS = get_pcs_path()
+PCS_INTERNAL = get_pcs_internal_path()
 $logger_device = StringIO.new
 $logger = Logger.new($logger_device)
 early_log($logger)
