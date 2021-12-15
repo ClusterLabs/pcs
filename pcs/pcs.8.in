@@ -1315,7 +1315,7 @@ The 'pcs alert show' command has been deprecated and will be removed. Please use
 .SS "cluster"
 .TP
 auth
-The 'pcs cluster auth' command only authenticates nodes in a local cluster and does not accept a node list. The new command for authentication is 'pcs host auth'. It allows to specify host names, addresses and pcsd ports.
+The 'pcs cluster auth' command only authenticates nodes in a local cluster and does not accept a node list. The new command for authentication is 'pcs host auth'. It allows one to specify host names, addresses and pcsd ports.
 .TP
 node add
 Custom node names and Corosync 3.x with knet are fully supported now, therefore the syntax has been completely changed.
