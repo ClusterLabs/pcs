@@ -782,8 +782,8 @@ class Parser(TestCase):
     def test_not_valid_rule(self):
         test_data = [
             # node attr misc
-            ("#uname", (1, 7, 6, 'Expected "eq"')),
-            ("string node1", (1, 8, 7, 'Expected "eq"')),
+            ("#uname", (1, 7, 6, "Expected 'eq'")),
+            ("string node1", (1, 8, 7, "Expected 'eq'")),
             # node attr unary
             ("defined", (1, 8, 7, "Expected <attribute name>")),
             ("not_defined", (1, 12, 11, "Expected <attribute name>")),
@@ -791,58 +791,58 @@ class Parser(TestCase):
             ("defined date-spec hours=1", (1, 19, 18, "Expected end of text")),
             ("defined duration hours=1", (1, 18, 17, "Expected end of text")),
             # node attr binary
-            ("eq", (1, 3, 2, 'Expected "eq"')),
+            ("eq", (1, 3, 2, "Expected 'eq'")),
             ("#uname eq", (1, 10, 9, "Expected <attribute value>")),
-            ("#uname node1", (1, 8, 7, 'Expected "eq"')),
-            ("eq #uname", (1, 4, 3, 'Expected "eq"')),
+            ("#uname node1", (1, 8, 7, "Expected 'eq'")),
+            ("eq #uname", (1, 4, 3, "Expected 'eq'")),
             ("eq lt", (1, 6, 5, "Expected <attribute value>")),
-            ("string #uname eq node1", (1, 8, 7, 'Expected "eq"')),
+            ("string #uname eq node1", (1, 8, 7, "Expected 'eq'")),
             ("date-spec hours=1 eq node1", (1, 19, 18, "Expected end of text")),
             (
                 "#uname eq date-spec hours=1",
                 (1, 21, 20, "Expected end of text"),
             ),
-            ("duration hours=1 eq node1", (1, 10, 9, 'Expected "eq"')),
+            ("duration hours=1 eq node1", (1, 10, 9, "Expected 'eq'")),
             ("#uname eq duration hours=1", (1, 20, 19, "Expected end of text")),
             # node attr binary with optional parts
-            ("string", (1, 7, 6, 'Expected "eq"')),
+            ("string", (1, 7, 6, "Expected 'eq'")),
             ("#uname eq string", (1, 17, 16, "Expected <attribute value>")),
-            ("string #uname eq node1", (1, 8, 7, 'Expected "eq"')),
+            ("string #uname eq node1", (1, 8, 7, "Expected 'eq'")),
             # resource, op
-            ("resource", (1, 9, 8, 'Expected "eq"')),
-            ("op", (1, 3, 2, 'Expected "eq"')),
+            ("resource", (1, 9, 8, "Expected 'eq'")),
+            ("op", (1, 3, 2, "Expected 'eq'")),
             ("resource ::rA and", (1, 15, 14, "Expected end of text")),
             ("resource ::rA and op ", (1, 15, 14, "Expected end of text")),
             ("resource ::rA and (", (1, 15, 14, "Expected end of text")),
             # and, or
-            ("and", (1, 4, 3, 'Expected "eq"')),
-            ("or", (1, 3, 2, 'Expected "eq"')),
-            ("#uname and node1", (1, 8, 7, 'Expected "eq"')),
-            ("#uname or node1", (1, 8, 7, 'Expected "eq"')),
-            ("#uname or eq", (1, 8, 7, 'Expected "eq"')),
+            ("and", (1, 4, 3, "Expected 'eq'")),
+            ("or", (1, 3, 2, "Expected 'eq'")),
+            ("#uname and node1", (1, 8, 7, "Expected 'eq'")),
+            ("#uname or node1", (1, 8, 7, "Expected 'eq'")),
+            ("#uname or eq", (1, 8, 7, "Expected 'eq'")),
             ("#uname eq node1 and node2", (1, 17, 16, "Expected end of text")),
             ("#uname eq node1 and", (1, 17, 16, "Expected end of text")),
             (
                 "#uname eq node1 and #uname eq",
                 (1, 17, 16, "Expected end of text"),
             ),
-            ("and #uname eq node1", (1, 5, 4, 'Expected "eq"')),
+            ("and #uname eq node1", (1, 5, 4, "Expected 'eq'")),
             (
                 "#uname ne node1 and duration hours=1",
                 (1, 17, 16, "Expected end of text"),
             ),
             (
                 "duration monthdays=1 or #uname ne node1",
-                (1, 10, 9, 'Expected "eq"'),
+                (1, 10, 9, "Expected 'eq'"),
             ),
             # date
-            ("date in_range", (1, 14, 13, 'Expected "to"')),
-            ("date in_range 2014-06-26", (1, 15, 14, 'Expected "to"')),
+            ("date in_range", (1, 14, 13, "Expected 'to'")),
+            ("date in_range 2014-06-26", (1, 15, 14, "Expected 'to'")),
             ("date in_range 2014-06-26 to", (1, 28, 27, "Expected <date>")),
-            ("in_range 2014-06-26 to 2014-07-26", (1, 10, 9, 'Expected "eq"')),
+            ("in_range 2014-06-26 to 2014-07-26", (1, 10, 9, "Expected 'eq'")),
             (
                 "date in_range #uname eq node1 to 2014-07-26",
-                (1, 15, 14, 'Expected "to"'),
+                (1, 15, 14, "Expected 'to'"),
             ),
             (
                 "date in_range 2014-06-26 to #uname eq node1",
@@ -850,7 +850,7 @@ class Parser(TestCase):
             ),
             (
                 "date in_range defined pingd to 2014-07-26",
-                (1, 15, 14, 'Expected "to"'),
+                (1, 15, 14, "Expected 'to'"),
             ),
             (
                 "date in_range 2014-06-26 to defined pingd",
@@ -858,11 +858,11 @@ class Parser(TestCase):
             ),
             (
                 "string date in_range 2014-06-26 to 2014-07-26",
-                (1, 8, 7, 'Expected "eq"'),
+                (1, 8, 7, "Expected 'eq'"),
             ),
             (
                 "date in_range string 2014-06-26 to 2014-07-26",
-                (1, 15, 14, 'Expected "to"'),
+                (1, 15, 14, "Expected 'to'"),
             ),
             (
                 "date in_range 2014-06-26 to string 2014-07-26",
@@ -870,26 +870,33 @@ class Parser(TestCase):
             ),
             (
                 "date in_range 2014-06-26 string to 2014-07-26",
-                (1, 15, 14, 'Expected "to"'),
+                (1, 15, 14, "Expected 'to'"),
             ),
             (
                 "#uname in_range 2014-06-26 to 2014-07-26",
-                (1, 8, 7, 'Expected "eq"'),
+                (1, 8, 7, "Expected 'eq'"),
             ),
             # braces
-            ("(#uname)", (1, 8, 7, 'Expected "eq"')),
-            ("(", (1, 2, 1, 'Expected "date"')),
-            ("()", (1, 2, 1, 'Expected "date"')),
-            ("(#uname", (1, 8, 7, 'Expected "eq"')),
+            ("(#uname)", (1, 8, 7, "Expected 'eq'")),
+            ("(", (1, 2, 1, "Expected 'date'")),
+            ("()", (1, 2, 1, "Expected 'date'")),
+            ("(#uname", (1, 8, 7, "Expected 'eq'")),
             ("(#uname eq", (1, 11, 10, "Expected <attribute value>")),
-            ("(#uname eq node1", (1, 17, 16, 'Expected ")"')),
+            # pyparsing 2 uses double quotes, pyparsing 3 uses single quotes
+            ("(#uname eq node1", (1, 17, 16, {"Expected ')'", 'Expected ")"'})),
         ]
         for rule_string, exception_data in test_data:
             with self.subTest(rule_string=rule_string):
                 with self.assertRaises(rule.RuleParseError) as cm:
                     rule.parse_rule(rule_string)
                 e = cm.exception
-                self.assertEqual(
-                    exception_data, (e.lineno, e.colno, e.pos, e.msg)
-                )
+                if isinstance(exception_data[3], set):
+                    self.assertIn(e.msg, exception_data[3])
+                    self.assertEqual(
+                        exception_data[0:3], (e.lineno, e.colno, e.pos)
+                    )
+                else:
+                    self.assertEqual(
+                        exception_data, (e.lineno, e.colno, e.pos, e.msg)
+                    )
                 self.assertEqual(rule_string, e.rule_string)
