@@ -7,7 +7,9 @@
   device to a cluster (broken since pcs-0.10.9) ([rhbz#2028902])
 - `resource update` command exiting with a traceback when updating a resource
   with a non-existing resource agent ([rhbz#1384485])
+- pcs\_snmp\_agent is working again (broken since pcs-0.10.1) ([ghpull#431])
 
+[ghpull#431]: https://github.com/ClusterLabs/pcs/pull/431
 [rhbz#2028902]: https://bugzilla.redhat.com/show_bug.cgi?id=2028902
 [rhbz#1384485]: https://bugzilla.redhat.com/show_bug.cgi?id=1384485
 
