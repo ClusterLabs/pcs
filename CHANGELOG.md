@@ -8,10 +8,13 @@
 - `resource update` command exiting with a traceback when updating a resource
   with a non-existing resource agent ([rhbz#2019836])
 - pcs\_snmp\_agent is working again (broken since pcs-0.10.1) ([ghpull#431])
+- Skip checking of scsi devices to be removed before unfencing to be added
+  devices ([rhbz#2033248])
 
 [ghpull#431]: https://github.com/ClusterLabs/pcs/pull/431
 [rhbz#2028902]: https://bugzilla.redhat.com/show_bug.cgi?id=2028902
 [rhbz#2019836]: https://bugzilla.redhat.com/show_bug.cgi?id=2019836
+[rhbz#2033248]: https://bugzilla.redhat.com/show_bug.cgi?id=2033248
 
 
 ## [0.11.1] - 2021-11-30

@@ -13,10 +13,13 @@ class TestUnfenceNode(TestCase):
         self.old_devices = ["device1", "device3"]
         self.new_devices = ["device3", "device0", "device2"]
         self.added_devices = set(self.new_devices) - set(self.old_devices)
+        self.check_devices = sorted(
+            set(self.old_devices) & set(self.new_devices)
+        )
         self.node = "node1"
 
     def test_success_devices_to_unfence(self):
-        for old_dev in self.old_devices:
+        for old_dev in self.check_devices:
             self.config.runner.scsi.get_status(
                 self.node, old_dev, name=f"runner.scsi.is_fenced.{old_dev}"
             )
@@ -38,9 +41,19 @@ class TestUnfenceNode(TestCase):
         )
         self.env_assist.assert_reports([])
 
+    def test_success_replace_unavailable_device(self):
+        self.config.runner.scsi.unfence_node(self.node, {"device2"})
+        scsi.unfence_node(
+            self.env_assist.get_env(),
+            self.node,
+            {"device1"},
+            {"device2"},
+        )
+        self.env_assist.assert_reports([])
+
     def test_unfencing_failure(self):
         err_msg = "stderr"
-        for old_dev in self.old_devices:
+        for old_dev in self.check_devices:
             self.config.runner.scsi.get_status(
                 self.node, old_dev, name=f"runner.scsi.is_fenced.{old_dev}"
             )
@@ -98,7 +111,7 @@ class TestUnfenceNode(TestCase):
 
     def test_unfencing_skipped_devices_are_fenced(self):
         stdout_off = "Status: OFF"
-        for old_dev in self.old_devices:
+        for old_dev in self.check_devices:
             self.config.runner.scsi.get_status(
                 self.node,
                 old_dev,
@@ -116,7 +129,7 @@ class TestUnfenceNode(TestCase):
             [
                 fixture.info(
                     report_codes.STONITH_UNFENCING_SKIPPED_DEVICES_FENCED,
-                    devices=sorted(self.old_devices),
+                    devices=sorted(self.check_devices),
                 )
             ]
         )
