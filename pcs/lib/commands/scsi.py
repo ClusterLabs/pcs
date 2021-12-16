@@ -31,7 +31,8 @@ def unfence_node(
         return
     fence_scsi_bin = os.path.join(settings.fence_agent_binaries, "fence_scsi")
     fenced_devices = []
-    for device in original_devices:
+    # do not check devices being removed
+    for device in sorted(set(original_devices) & set(updated_devices)):
         stdout, stderr, return_code = env.cmd_runner().run(
             [
                 fence_scsi_bin,
