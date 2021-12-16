@@ -533,7 +533,7 @@ class ValidateNvsetAppendNew(TestCase):
                 fixture.error(
                     reports.codes.RULE_EXPRESSION_PARSE_ERROR,
                     rule_string="bad rule",
-                    reason='Expected "eq"',
+                    reason="Expected 'eq'",
                     rule_line="bad rule",
                     line_number=1,
                     column_number=5,
