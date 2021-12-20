@@ -99,6 +99,7 @@ EXTRA_DIST		= \
 			  common/interface/__init__.py \
 			  common/node_communicator.py \
 			  common/pacemaker/__init__.py \
+			  common/pacemaker/defaults.py \
 			  common/pacemaker/nvset.py \
 			  common/pacemaker/resource/__init__.py \
 			  common/pacemaker/resource/relations.py \

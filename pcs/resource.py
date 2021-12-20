@@ -19,6 +19,7 @@ from pcs.common import (
     const,
     pacemaker,
 )
+from pcs.common.pacemaker.defaults import CibDefaultsDto
 from pcs.common.str_tools import format_list
 from pcs.settings import (
     pacemaker_wait_timeout_status as PACEMAKER_WAIT_TIMEOUT_STATUS,
@@ -181,7 +182,7 @@ def resource_op_defaults_set_create_cmd(
 
 
 def _defaults_config_cmd(
-    lib_command: Callable[..., Any],
+    lib_command: Callable[[bool], CibDefaultsDto],
     argv: Sequence[str],
     modifiers: InputModifiers,
 ) -> None:
@@ -200,7 +201,10 @@ def _defaults_config_cmd(
     print(
         "\n".join(
             nvset_dto_list_to_lines(
-                lib_command(not modifiers.get("--no-expire-check")),
+                lib_command(
+                    not modifiers.get("--no-expire-check")
+                ).meta_attributes,
+                nvset_label="Meta Attrs",
                 with_ids=cast(bool, modifiers.get("--full")),
                 include_expired=cast(bool, modifiers.get("--all")),
                 text_if_empty="No defaults set",

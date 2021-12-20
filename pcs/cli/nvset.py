@@ -1,5 +1,4 @@
 from typing import (
-    cast,
     Iterable,
     List,
     Optional,
@@ -15,14 +14,12 @@ from pcs.common.str_tools import (
     format_optional,
     indent,
 )
-from pcs.common.types import (
-    CibNvsetType,
-    CibRuleInEffectStatus,
-)
+from pcs.common.types import CibRuleInEffectStatus
 
 
 def nvset_dto_list_to_lines(
     nvset_dto_list: Iterable[CibNvsetDto],
+    nvset_label: str,
     with_ids: bool = False,
     include_expired: bool = False,
     text_if_empty: Optional[str] = None,
@@ -39,12 +36,15 @@ def nvset_dto_list_to_lines(
     return [
         line
         for nvset_dto in nvset_dto_list
-        for line in nvset_dto_to_lines(nvset_dto, with_ids=with_ids)
+        for line in nvset_dto_to_lines(
+            nvset_dto, nvset_label=nvset_label, with_ids=with_ids
+        )
     ]
 
 
-def nvset_dto_to_lines(nvset: CibNvsetDto, with_ids: bool = False) -> List[str]:
-    nvset_label = _nvset_type_to_label.get(nvset.type, "Options Set")
+def nvset_dto_to_lines(
+    nvset: CibNvsetDto, nvset_label: str = "Options Set", with_ids: bool = False
+) -> List[str]:
     in_effect_label = get_in_effect_label(nvset.rule) if nvset.rule else None
     heading_parts = [
         "{label}{in_effect}: {id}".format(
@@ -67,9 +67,3 @@ def nvset_dto_to_lines(nvset: CibNvsetDto, with_ids: bool = False) -> List[str]:
         )
 
     return [" ".join(heading_parts)] + indent(lines)
-
-
-_nvset_type_to_label = {
-    cast(str, CibNvsetType.INSTANCE): "Attributes",
-    cast(str, CibNvsetType.META): "Meta Attrs",
-}
