@@ -3,11 +3,6 @@ from enum import auto
 from pcs.common.tools import AutoNameEnum
 
 
-class CibNvsetType(AutoNameEnum):
-    INSTANCE = auto()
-    META = auto()
-
-
 class CibRuleExpressionType(AutoNameEnum):
     RULE = auto()
     EXPRESSION = auto()  # node attribute expression, named 'expression' in CIB

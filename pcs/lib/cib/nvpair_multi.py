@@ -17,7 +17,6 @@ from pcs.common.pacemaker.nvset import (
     CibNvsetDto,
 )
 from pcs.common.reports import ReportItemList
-from pcs.common.types import CibNvsetType
 from pcs.lib import validate
 from pcs.lib.cib.rule import (
     RuleInEffectEval,
@@ -43,11 +42,7 @@ from pcs.lib.xml_tools import (
 NvsetTag = NewType("NvsetTag", str)
 NVSET_INSTANCE = NvsetTag("instance_attributes")
 NVSET_META = NvsetTag("meta_attributes")
-
-_tag_to_type = {
-    str(NVSET_META): CibNvsetType.META,
-    str(NVSET_INSTANCE): CibNvsetType.INSTANCE,
-}
+NVSETS_ALL = [NVSET_INSTANCE, NVSET_META]
 
 
 def nvpair_element_to_dto(nvpair_el: _Element) -> CibNvpairDto:
@@ -76,7 +71,6 @@ def nvset_element_to_dto(
         rule_dto = rule_element_to_dto(rule_in_effect_eval, rule_el)
     return CibNvsetDto(
         str(nvset_el.get("id", "")),
-        _tag_to_type[str(nvset_el.tag)],
         export_attributes(nvset_el, with_id=False),
         rule_dto,
         [
@@ -86,21 +80,18 @@ def nvset_element_to_dto(
     )
 
 
-def find_nvsets(parent_element: _Element) -> List[_Element]:
+def find_nvsets(parent_element: _Element, tag: NvsetTag) -> List[_Element]:
     """
     Get all nvset xml elements in the given parent element
 
     parent_element -- an element to look for nvsets in
+    tag -- tag of nvsets to be returned
     """
     return cast(
         # The xpath method has a complicated return value, but we know our xpath
         # expression returns only elements.
         List[_Element],
-        parent_element.xpath(
-            "./*[{nvset_tags}]".format(
-                nvset_tags=" or ".join(f"self::{tag}" for tag in _tag_to_type)
-            )
-        ),
+        parent_element.xpath(f"./{tag}"),
     )
 
 
@@ -118,7 +109,7 @@ def find_nvsets_by_ids(
     report_list: ReportItemList = []
     for nvset_id in id_list:
         searcher = ElementSearcher(
-            _tag_to_type.keys(),
+            [str(tag) for tag in NVSETS_ALL],
             nvset_id,
             parent_element,
             element_type_desc="options set",
