@@ -20,7 +20,6 @@ from pcs.common.pacemaker.rule import (
 )
 from pcs.common.tools import Version
 from pcs.common.types import (
-    CibNvsetType,
     CibRuleInEffectStatus,
     CibRuleExpressionType,
 )
@@ -66,25 +65,20 @@ class NvpairElementToDto(TestCase):
 
 
 class NvsetElementToDto(TestCase):
-    tag_type = (
-        ("meta_attributes", CibNvsetType.META),
-        ("instance_attributes", CibNvsetType.INSTANCE),
-    )
-
     def test_minimal(self):
-        for tag, nvtype in self.tag_type:
-            with self.subTest(tag=tag, nvset_type=nvtype):
+        for tag in nvpair_multi.NVSETS_ALL:
+            with self.subTest(tag=tag):
                 xml = etree.fromstring(f"""<{tag} id="my-id" />""")
                 self.assertEqual(
                     nvpair_multi.nvset_element_to_dto(
                         xml, get_in_effect_eval()
                     ),
-                    CibNvsetDto("my-id", nvtype, {}, None, []),
+                    CibNvsetDto("my-id", {}, None, []),
                 )
 
     def test_expired(self):
-        for tag, nvtype in self.tag_type:
-            with self.subTest(tag=tag, nvset_type=nvtype):
+        for tag in nvpair_multi.NVSETS_ALL:
+            with self.subTest(tag=tag):
                 xml = etree.fromstring(
                     f"""
                     <{tag} id="my-id" score="150">
@@ -107,7 +101,6 @@ class NvsetElementToDto(TestCase):
                     ),
                     CibNvsetDto(
                         "my-id",
-                        nvtype,
                         {"score": "150"},
                         CibRuleExpressionDto(
                             "my-id-rule",
@@ -139,8 +132,8 @@ class NvsetElementToDto(TestCase):
                 )
 
     def test_full(self):
-        for tag, nvtype in self.tag_type:
-            with self.subTest(tag=tag, nvset_type=nvtype):
+        for tag in nvpair_multi.NVSETS_ALL:
+            with self.subTest(tag=tag):
                 xml = etree.fromstring(
                     f"""
                     <{tag} id="my-id" score="150">
@@ -195,7 +188,6 @@ class NvsetElementToDto(TestCase):
                     ),
                     CibNvsetDto(
                         "my-id",
-                        nvtype,
                         {"score": "150"},
                         CibRuleExpressionDto(
                             "my-id-rule",
@@ -360,23 +352,45 @@ class NvsetElementToDto(TestCase):
 
 
 class FindNvsets(TestCase):
-    def test_empty(self):
-        xml = etree.fromstring("<parent />")
-        self.assertEqual([], nvpair_multi.find_nvsets(xml))
-
-    def test_full(self):
-        xml = etree.fromstring(
+    def setUp(self):
+        self.xml = etree.fromstring(
             """
             <parent>
                 <meta_attributes id="set1" />
                 <instance_attributes id="set2" />
                 <not_an_nvset id="set3" />
+                <instance_attributes id="set6" />
+                <meta_attributes id="set5" />
             </parent>
         """
         )
+
+    def test_empty(self):
+        xml = etree.fromstring("<parent />")
         self.assertEqual(
-            ["set1", "set2"],
-            [el.get("id") for el in nvpair_multi.find_nvsets(xml)],
+            [], nvpair_multi.find_nvsets(xml, nvpair_multi.NVSET_META)
+        )
+
+    def test_meta(self):
+        self.assertEqual(
+            ["set1", "set5"],
+            [
+                el.get("id")
+                for el in nvpair_multi.find_nvsets(
+                    self.xml, nvpair_multi.NVSET_META
+                )
+            ],
+        )
+
+    def test_instance(self):
+        self.assertEqual(
+            ["set2", "set6"],
+            [
+                el.get("id")
+                for el in nvpair_multi.find_nvsets(
+                    self.xml, nvpair_multi.NVSET_INSTANCE
+                )
+            ],
         )
 
 

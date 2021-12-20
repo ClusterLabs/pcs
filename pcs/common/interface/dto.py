@@ -103,7 +103,6 @@ def from_dict(cls: Type[DtoType], data: DtoPayload) -> DtoType:
         # see: https://github.com/konradhalas/dacite#casting
         config=dacite.Config(
             cast=[
-                types.CibNvsetType,
                 types.CibRuleInEffectStatus,
                 types.CibRuleExpressionType,
                 types.CorosyncTransportType,

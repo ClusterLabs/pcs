@@ -15,12 +15,12 @@ from pcs.common.pacemaker.nvset import (
     CibNvpairDto,
     CibNvsetDto,
 )
+from pcs.common.pacemaker.defaults import CibDefaultsDto
 from pcs.common.pacemaker.rule import (
     CibRuleDateCommonDto,
     CibRuleExpressionDto,
 )
 from pcs.common.types import (
-    CibNvsetType,
     CibRuleInEffectStatus,
     CibRuleExpressionType,
 )
@@ -502,7 +502,6 @@ class DefaultsConfigMixin:
     def fixture_expired_dto(expired):
         return CibNvsetDto(
             "my-id",
-            CibNvsetType.META,
             {},
             CibRuleExpressionDto(
                 "my-id-rule",
@@ -540,7 +539,10 @@ class DefaultsConfigMixin:
             (os.path.join(settings.pacemaker_binaries, "crm_rule")),
             return_value=True,
         )
-        self.assertEqual([], self.command(self.env_assist.get_env(), True))
+        self.assertEqual(
+            CibDefaultsDto(instance_attributes=[], meta_attributes=[]),
+            self.command(self.env_assist.get_env(), True),
+        )
 
     def test_full(self):
         defaults_xml = f"""
@@ -621,189 +623,190 @@ class DefaultsConfigMixin:
             return_value=False,
         )
         self.assertEqual(
-            [
-                CibNvsetDto(
-                    f"{self.tag}-meta_attributes",
-                    CibNvsetType.META,
-                    {},
-                    CibRuleExpressionDto(
-                        f"{self.tag}-meta_attributes-rule",
-                        CibRuleExpressionType.RULE,
-                        CibRuleInEffectStatus.UNKNOWN,
-                        {"boolean-op": "and", "score": "INFINITY"},
+            CibDefaultsDto(
+                instance_attributes=[
+                    CibNvsetDto(
+                        "instance",
+                        {},
                         None,
-                        None,
-                        [
-                            CibRuleExpressionDto(
-                                f"{self.tag}-meta_attributes-rule-rsc-Dummy",
-                                CibRuleExpressionType.RSC_EXPRESSION,
-                                CibRuleInEffectStatus.UNKNOWN,
-                                {
-                                    "class": "ocf",
-                                    "provider": "pacemaker",
-                                    "type": "Dummy",
-                                },
-                                None,
-                                None,
-                                [],
-                                "resource ocf:pacemaker:Dummy",
-                            ),
-                            CibRuleExpressionDto(
-                                f"{self.tag}-meta_attributes-rule-op-monitor",
-                                CibRuleExpressionType.OP_EXPRESSION,
-                                CibRuleInEffectStatus.UNKNOWN,
-                                {
-                                    "name": "monitor",
-                                    "interval": "30",
-                                },
-                                None,
-                                None,
-                                [],
-                                "op monitor interval=30",
-                            ),
-                            CibRuleExpressionDto(
-                                f"{self.tag}-meta_attributes-rule-rule",
-                                CibRuleExpressionType.RULE,
-                                CibRuleInEffectStatus.UNKNOWN,
-                                {"boolean-op": "or"},
-                                None,
-                                None,
-                                [
-                                    CibRuleExpressionDto(
-                                        f"{self.tag}-meta_attributes-rule-rule-expr",
-                                        CibRuleExpressionType.EXPRESSION,
-                                        CibRuleInEffectStatus.UNKNOWN,
-                                        {
-                                            "operation": "defined",
-                                            "attribute": "attr1",
-                                        },
-                                        None,
-                                        None,
-                                        [],
-                                        "defined attr1",
-                                    ),
-                                    CibRuleExpressionDto(
-                                        f"{self.tag}-meta_attributes-rule-rule-expr-1",
-                                        CibRuleExpressionType.EXPRESSION,
-                                        CibRuleInEffectStatus.UNKNOWN,
-                                        {
-                                            "attribute": "attr2",
-                                            "operation": "gt",
-                                            "type": "integer",
-                                            "value": "5",
-                                        },
-                                        None,
-                                        None,
-                                        [],
-                                        "attr2 gt integer 5",
-                                    ),
-                                    CibRuleExpressionDto(
-                                        f"{self.tag}-meta_attributes-rule-rule-expr-2",
-                                        CibRuleExpressionType.DATE_EXPRESSION,
-                                        CibRuleInEffectStatus.UNKNOWN,
-                                        {
-                                            "operation": "lt",
-                                            "end": "2020-08-07",
-                                        },
-                                        None,
-                                        None,
-                                        [],
-                                        "date lt 2020-08-07",
-                                    ),
-                                    CibRuleExpressionDto(
-                                        f"{self.tag}-meta_attributes-rule-rule-expr-3",
-                                        CibRuleExpressionType.DATE_EXPRESSION,
-                                        CibRuleInEffectStatus.UNKNOWN,
-                                        {
-                                            "operation": "in_range",
-                                            "start": "2020-09-01",
-                                            "end": "2020-09-11",
-                                        },
-                                        None,
-                                        None,
-                                        [],
-                                        "date in_range 2020-09-01 to 2020-09-11",
-                                    ),
-                                    CibRuleExpressionDto(
-                                        f"{self.tag}-meta_attributes-rule-rule-expr-4",
-                                        CibRuleExpressionType.DATE_EXPRESSION,
-                                        CibRuleInEffectStatus.UNKNOWN,
-                                        {
-                                            "operation": "in_range",
-                                            "start": "2020-10-01",
-                                        },
-                                        None,
-                                        CibRuleDateCommonDto(
-                                            f"{self.tag}-meta_attributes-rule-rule-expr-4-duration",
-                                            {"months": "1"},
-                                        ),
-                                        [],
-                                        "date in_range 2020-10-01 to duration months=1",
-                                    ),
-                                    CibRuleExpressionDto(
-                                        f"{self.tag}-meta_attributes-rule-rule-expr-5",
-                                        CibRuleExpressionType.DATE_EXPRESSION,
-                                        CibRuleInEffectStatus.UNKNOWN,
-                                        {"operation": "date_spec"},
-                                        CibRuleDateCommonDto(
-                                            f"{self.tag}-meta_attributes-rule-rule-expr-5-datespec",
-                                            {"years": "2021-2022"},
-                                        ),
-                                        None,
-                                        [],
-                                        "date-spec years=2021-2022",
-                                    ),
-                                    CibRuleExpressionDto(
-                                        f"{self.tag}-meta_attributes-rule-rule-expr-6",
-                                        CibRuleExpressionType.DATE_EXPRESSION,
-                                        CibRuleInEffectStatus.UNKNOWN,
-                                        {
-                                            "operation": "in_range",
-                                            "end": "2020-12-11",
-                                        },
-                                        None,
-                                        None,
-                                        [],
-                                        "date in_range to 2020-12-11",
-                                    ),
-                                ],
-                                "defined attr1 or attr2 gt integer 5 or "
-                                "date lt 2020-08-07 or "
-                                "date in_range 2020-09-01 to 2020-09-11 or "
-                                "date in_range 2020-10-01 to duration months=1 "
-                                "or date-spec years=2021-2022 or "
-                                "date in_range to 2020-12-11",
-                            ),
-                        ],
-                        "resource ocf:pacemaker:Dummy and "
-                        "op monitor interval=30 and "
-                        "(defined attr1 or attr2 gt integer 5 or "
-                        "date lt 2020-08-07 or "
-                        "date in_range 2020-09-01 to 2020-09-11 or "
-                        "date in_range 2020-10-01 to duration months=1 or "
-                        "date-spec years=2021-2022 or "
-                        "date in_range to 2020-12-11)",
+                        [CibNvpairDto("instance-pair", "inst", "ance")],
                     ),
-                    [
-                        CibNvpairDto("my-id-pair1", "name1", "value1"),
-                        CibNvpairDto("my-id-pair2", "name2", "value2"),
-                    ],
-                ),
-                CibNvsetDto(
-                    "instance",
-                    CibNvsetType.INSTANCE,
-                    {},
-                    None,
-                    [CibNvpairDto("instance-pair", "inst", "ance")],
-                ),
-                CibNvsetDto(
-                    "meta-plain",
-                    CibNvsetType.META,
-                    {"score": "123"},
-                    None,
-                    [CibNvpairDto("my-id-pair3", "name1", "value1")],
-                ),
-            ],
+                ],
+                meta_attributes=[
+                    CibNvsetDto(
+                        f"{self.tag}-meta_attributes",
+                        {},
+                        CibRuleExpressionDto(
+                            f"{self.tag}-meta_attributes-rule",
+                            CibRuleExpressionType.RULE,
+                            CibRuleInEffectStatus.UNKNOWN,
+                            {"boolean-op": "and", "score": "INFINITY"},
+                            None,
+                            None,
+                            [
+                                CibRuleExpressionDto(
+                                    f"{self.tag}-meta_attributes-rule-rsc-Dummy",
+                                    CibRuleExpressionType.RSC_EXPRESSION,
+                                    CibRuleInEffectStatus.UNKNOWN,
+                                    {
+                                        "class": "ocf",
+                                        "provider": "pacemaker",
+                                        "type": "Dummy",
+                                    },
+                                    None,
+                                    None,
+                                    [],
+                                    "resource ocf:pacemaker:Dummy",
+                                ),
+                                CibRuleExpressionDto(
+                                    f"{self.tag}-meta_attributes-rule-op-monitor",
+                                    CibRuleExpressionType.OP_EXPRESSION,
+                                    CibRuleInEffectStatus.UNKNOWN,
+                                    {
+                                        "name": "monitor",
+                                        "interval": "30",
+                                    },
+                                    None,
+                                    None,
+                                    [],
+                                    "op monitor interval=30",
+                                ),
+                                CibRuleExpressionDto(
+                                    f"{self.tag}-meta_attributes-rule-rule",
+                                    CibRuleExpressionType.RULE,
+                                    CibRuleInEffectStatus.UNKNOWN,
+                                    {"boolean-op": "or"},
+                                    None,
+                                    None,
+                                    [
+                                        CibRuleExpressionDto(
+                                            f"{self.tag}-meta_attributes-rule-rule-expr",
+                                            CibRuleExpressionType.EXPRESSION,
+                                            CibRuleInEffectStatus.UNKNOWN,
+                                            {
+                                                "operation": "defined",
+                                                "attribute": "attr1",
+                                            },
+                                            None,
+                                            None,
+                                            [],
+                                            "defined attr1",
+                                        ),
+                                        CibRuleExpressionDto(
+                                            f"{self.tag}-meta_attributes-rule-rule-expr-1",
+                                            CibRuleExpressionType.EXPRESSION,
+                                            CibRuleInEffectStatus.UNKNOWN,
+                                            {
+                                                "attribute": "attr2",
+                                                "operation": "gt",
+                                                "type": "integer",
+                                                "value": "5",
+                                            },
+                                            None,
+                                            None,
+                                            [],
+                                            "attr2 gt integer 5",
+                                        ),
+                                        CibRuleExpressionDto(
+                                            f"{self.tag}-meta_attributes-rule-rule-expr-2",
+                                            CibRuleExpressionType.DATE_EXPRESSION,
+                                            CibRuleInEffectStatus.UNKNOWN,
+                                            {
+                                                "operation": "lt",
+                                                "end": "2020-08-07",
+                                            },
+                                            None,
+                                            None,
+                                            [],
+                                            "date lt 2020-08-07",
+                                        ),
+                                        CibRuleExpressionDto(
+                                            f"{self.tag}-meta_attributes-rule-rule-expr-3",
+                                            CibRuleExpressionType.DATE_EXPRESSION,
+                                            CibRuleInEffectStatus.UNKNOWN,
+                                            {
+                                                "operation": "in_range",
+                                                "start": "2020-09-01",
+                                                "end": "2020-09-11",
+                                            },
+                                            None,
+                                            None,
+                                            [],
+                                            "date in_range 2020-09-01 to 2020-09-11",
+                                        ),
+                                        CibRuleExpressionDto(
+                                            f"{self.tag}-meta_attributes-rule-rule-expr-4",
+                                            CibRuleExpressionType.DATE_EXPRESSION,
+                                            CibRuleInEffectStatus.UNKNOWN,
+                                            {
+                                                "operation": "in_range",
+                                                "start": "2020-10-01",
+                                            },
+                                            None,
+                                            CibRuleDateCommonDto(
+                                                f"{self.tag}-meta_attributes-rule-rule-expr-4-duration",
+                                                {"months": "1"},
+                                            ),
+                                            [],
+                                            "date in_range 2020-10-01 to duration months=1",
+                                        ),
+                                        CibRuleExpressionDto(
+                                            f"{self.tag}-meta_attributes-rule-rule-expr-5",
+                                            CibRuleExpressionType.DATE_EXPRESSION,
+                                            CibRuleInEffectStatus.UNKNOWN,
+                                            {"operation": "date_spec"},
+                                            CibRuleDateCommonDto(
+                                                f"{self.tag}-meta_attributes-rule-rule-expr-5-datespec",
+                                                {"years": "2021-2022"},
+                                            ),
+                                            None,
+                                            [],
+                                            "date-spec years=2021-2022",
+                                        ),
+                                        CibRuleExpressionDto(
+                                            f"{self.tag}-meta_attributes-rule-rule-expr-6",
+                                            CibRuleExpressionType.DATE_EXPRESSION,
+                                            CibRuleInEffectStatus.UNKNOWN,
+                                            {
+                                                "operation": "in_range",
+                                                "end": "2020-12-11",
+                                            },
+                                            None,
+                                            None,
+                                            [],
+                                            "date in_range to 2020-12-11",
+                                        ),
+                                    ],
+                                    "defined attr1 or attr2 gt integer 5 or "
+                                    "date lt 2020-08-07 or "
+                                    "date in_range 2020-09-01 to 2020-09-11 or "
+                                    "date in_range 2020-10-01 to duration months=1 "
+                                    "or date-spec years=2021-2022 or "
+                                    "date in_range to 2020-12-11",
+                                ),
+                            ],
+                            "resource ocf:pacemaker:Dummy and "
+                            "op monitor interval=30 and "
+                            "(defined attr1 or attr2 gt integer 5 or "
+                            "date lt 2020-08-07 or "
+                            "date in_range 2020-09-01 to 2020-09-11 or "
+                            "date in_range 2020-10-01 to duration months=1 or "
+                            "date-spec years=2021-2022 or "
+                            "date in_range to 2020-12-11)",
+                        ),
+                        [
+                            CibNvpairDto("my-id-pair1", "name1", "value1"),
+                            CibNvpairDto("my-id-pair2", "name2", "value2"),
+                        ],
+                    ),
+                    CibNvsetDto(
+                        "meta-plain",
+                        {"score": "123"},
+                        None,
+                        [CibNvpairDto("my-id-pair3", "name1", "value1")],
+                    ),
+                ],
+            ),
             self.command(self.env_assist.get_env(), True),
         )
         self.env_assist.assert_reports(
@@ -840,7 +843,12 @@ class DefaultsConfigMixin:
     def test_crm_rule_missing(self):
         self._setup_rule_in_effect(crm_rule_present=False)
         self.assertEqual(
-            [self.fixture_expired_dto(CibRuleInEffectStatus.UNKNOWN)],
+            CibDefaultsDto(
+                meta_attributes=[
+                    self.fixture_expired_dto(CibRuleInEffectStatus.UNKNOWN),
+                ],
+                instance_attributes=[],
+            ),
             self.command(self.env_assist.get_env(), True),
         )
         self.env_assist.assert_reports(
@@ -854,7 +862,12 @@ class DefaultsConfigMixin:
     def test_no_expire_check(self):
         self._setup_rule_in_effect(crm_rule_check=False)
         self.assertEqual(
-            [self.fixture_expired_dto(CibRuleInEffectStatus.UNKNOWN)],
+            CibDefaultsDto(
+                meta_attributes=[
+                    self.fixture_expired_dto(CibRuleInEffectStatus.UNKNOWN)
+                ],
+                instance_attributes=[],
+            ),
             self.command(self.env_assist.get_env(), False),
         )
 
@@ -865,7 +878,12 @@ class DefaultsConfigMixin:
             RULE_EXPIRED_RETURNCODE,
         )
         self.assertEqual(
-            [self.fixture_expired_dto(CibRuleInEffectStatus.EXPIRED)],
+            CibDefaultsDto(
+                meta_attributes=[
+                    self.fixture_expired_dto(CibRuleInEffectStatus.EXPIRED)
+                ],
+                instance_attributes=[],
+            ),
             self.command(self.env_assist.get_env(), True),
         )
 
@@ -876,7 +894,14 @@ class DefaultsConfigMixin:
             RULE_NOT_YET_IN_EFFECT_RETURNCODE,
         )
         self.assertEqual(
-            [self.fixture_expired_dto(CibRuleInEffectStatus.NOT_YET_IN_EFFECT)],
+            CibDefaultsDto(
+                meta_attributes=[
+                    self.fixture_expired_dto(
+                        CibRuleInEffectStatus.NOT_YET_IN_EFFECT
+                    )
+                ],
+                instance_attributes=[],
+            ),
             self.command(self.env_assist.get_env(), True),
         )
 
@@ -887,7 +912,12 @@ class DefaultsConfigMixin:
             RULE_IN_EFFECT_RETURNCODE,
         )
         self.assertEqual(
-            [self.fixture_expired_dto(CibRuleInEffectStatus.IN_EFFECT)],
+            CibDefaultsDto(
+                meta_attributes=[
+                    self.fixture_expired_dto(CibRuleInEffectStatus.IN_EFFECT)
+                ],
+                instance_attributes=[],
+            ),
             self.command(self.env_assist.get_env(), True),
         )
 
@@ -898,7 +928,12 @@ class DefaultsConfigMixin:
             2,  # unexpected return code
         )
         self.assertEqual(
-            [self.fixture_expired_dto(CibRuleInEffectStatus.UNKNOWN)],
+            CibDefaultsDto(
+                meta_attributes=[
+                    self.fixture_expired_dto(CibRuleInEffectStatus.UNKNOWN)
+                ],
+                instance_attributes=[],
+            ),
             self.command(self.env_assist.get_env(), True),
         )
 
