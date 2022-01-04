@@ -169,16 +169,14 @@ RNGs. Thank you.
       <optional>
         <element name="content">
           <choice>
-            <attribute name="type">
-              <choice>
-                <value>boolean</value>
-                <value>string</value>
-                <value>integer</value>
-                <value>second</value><!-- used by fence agents -->
-                <value>int</value><!-- used by fence agents intead of integer -->
-                <value>time</value><!-- used by pacemaker metadata -->
-              </choice>
-            </attribute>
+            <!--
+              OCF 1.0 allows values: boolean, integer, string. Agents, however,
+              quite often use other values: int (fence agents), numeric
+              (ocf:linbit:drbd), second (fence agents), time (pacemaker
+              metadata). Since pcs doesn't actually care about the type, we
+              allow any type to keep compatibility with existing agents.
+            -->
+            <attribute name="type" />
             <group>
               <!--
                 used by fence agents and processed by pcs even though it is not
