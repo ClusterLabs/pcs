@@ -10,11 +10,15 @@
 - pcs\_snmp\_agent is working again (broken since pcs-0.10.1) ([ghpull#431])
 - Skip checking of scsi devices to be removed before unfencing to be added
   devices ([rhbz#2033248])
+- Make `ocf:linbit:drbd` agent pass OCF standard validation ([ghissue#441],
+  [rhbz#2036633])
 
+[ghissue#441]: https://github.com/ClusterLabs/pcs/issues/441
 [ghpull#431]: https://github.com/ClusterLabs/pcs/pull/431
-[rhbz#2028902]: https://bugzilla.redhat.com/show_bug.cgi?id=2028902
 [rhbz#2019836]: https://bugzilla.redhat.com/show_bug.cgi?id=2019836
+[rhbz#2028902]: https://bugzilla.redhat.com/show_bug.cgi?id=2028902
 [rhbz#2033248]: https://bugzilla.redhat.com/show_bug.cgi?id=2033248
+[rhbz#2036633]: https://bugzilla.redhat.com/show_bug.cgi?id=2036633
 
 
 ## [0.11.1] - 2021-11-30
