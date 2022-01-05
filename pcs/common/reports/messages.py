@@ -6141,6 +6141,27 @@ class ResourceMoveConstraintRemoved(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class ResourceMoveNotAffectingResource(ReportItemMessage):
+    """
+    Creating a location constraint to move a resource has no effect on the
+    resource.
+
+    resource_id -- id of the resource to be moved
+    """
+
+    resource_id: str
+    _code = codes.RESOURCE_MOVE_NOT_AFFECTING_RESOURCE
+
+    @property
+    def message(self) -> str:
+        return (
+            f"Unable to move resource '{self.resource_id}' using a location "
+            "constraint. Current location of the resource may be affected by "
+            "some other constraint."
+        )
+
+
+@dataclass(frozen=True)
 class ResourceMoveAffectsOtherResources(ReportItemMessage):
     """
     Moving a resource will also affect other resources.
