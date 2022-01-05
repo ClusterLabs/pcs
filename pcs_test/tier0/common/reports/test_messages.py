@@ -4515,6 +4515,18 @@ class ResourceMoveConstraintRemoved(NameBuildTest):
         )
 
 
+class ResourceMoveNotAffectingResource(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Unable to move resource 'R1' using a location constraint. "
+                "Current location of the resource may be affected by some "
+                "other constraint."
+            ),
+            reports.ResourceMoveNotAffectingResource("R1"),
+        )
+
+
 class ResourceMoveAffectsOtherResources(NameBuildTest):
     def test_multiple(self):
         self.assert_message_from_report(

@@ -56,6 +56,7 @@ from pcs.lib.pacemaker.live import (
     diff_cibs_xml,
     get_cib,
     get_cib_xml,
+    get_cluster_status_dom,
     has_resource_unmove_unban_expired_support,
     push_cib_diff_xml,
     resource_ban,
@@ -1689,10 +1690,19 @@ def move_autoclean(
                     )
                 )
             )
+    after_move_simulated_cib_xml = etree_to_str(after_move_simulated_cib)
+    _ensure_resource_was_moved(
+        env.cmd_runner,
+        env.report_processor,
+        resource_state_before,
+        after_move_simulated_cib_xml,
+        resource_id,
+        node,
+    )
     _ensure_resource_is_not_moved(
         env.cmd_runner,
         env.report_processor,
-        etree_to_str(after_move_simulated_cib),
+        after_move_simulated_cib_xml,
         remove_constraint_cib_diff,
         resource_id,
         strict,
@@ -1728,6 +1738,34 @@ def move_autoclean(
         )
     ).has_errors:
         raise LibraryError()
+
+
+def _ensure_resource_was_moved(
+    runner_factory: Callable[[Optional[Mapping[str, str]]], CommandRunner],
+    report_processor: reports.ReportProcessor,
+    resource_state_before: Dict[str, List[str]],
+    cib_xml: str,
+    resource_id: str,
+    node: Optional[str],
+) -> None:
+    with get_tmp_cib(report_processor, cib_xml) as rsc_moved_cib_file:
+        if not _was_resource_moved(
+            node,
+            resource_state_before,
+            get_resource_state(
+                get_cluster_status_dom(
+                    runner_factory(dict(CIB_file=rsc_moved_cib_file.name))
+                ),
+                resource_id,
+            ),
+        ):
+            raise LibraryError(
+                reports.ReportItem.error(
+                    reports.messages.ResourceMoveNotAffectingResource(
+                        resource_id
+                    )
+                )
+            )
 
 
 def _ensure_resource_is_not_moved(
@@ -1809,20 +1847,31 @@ def _resource_running_on_nodes(
     return frozenset()
 
 
+def _was_resource_moved(
+    node: Optional[str],
+    resource_state_before: Dict[str, List[str]],
+    resource_state_after: Dict[str, List[str]],
+) -> bool:
+    running_on_nodes = _resource_running_on_nodes(resource_state_after)
+    return not bool(
+        resource_state_before
+        and (  # running resource moved
+            not running_on_nodes
+            or (node and node not in running_on_nodes)
+            or (resource_state_before == resource_state_after)
+        )
+    )
+
+
 def _move_wait_report(
     resource_id: str,
     node: Optional[str],
     resource_state_before: Dict[str, List[str]],
     resource_state_after: Dict[str, List[str]],
 ) -> ReportItem:
-    allowed_nodes = frozenset([node] if node else [])
-    running_on_nodes = _resource_running_on_nodes(resource_state_after)
-
     severity = reports.item.ReportItemSeverity.info()
-    if resource_state_before and (  # running resource moved
-        not running_on_nodes
-        or (allowed_nodes and allowed_nodes.isdisjoint(running_on_nodes))
-        or (resource_state_before == resource_state_after)
+    if not _was_resource_moved(
+        node, resource_state_before, resource_state_after
     ):
         severity = reports.item.ReportItemSeverity.error()
     if not resource_state_after:
