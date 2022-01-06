@@ -418,46 +418,6 @@ class MoveAutocleanSuccess(MoveAutocleanCommonSetup):
 
     def get_reports(self, resource_id):
         return [
-            fixture.debug(
-                reports.codes.TMP_FILE_WRITE,
-                file_path=self.cib_rsc_move_tmp_file_name,
-                content=self.orig_cib,
-            ),
-            fixture.debug(
-                reports.codes.TMP_FILE_WRITE,
-                file_path=self.cib_diff_add_constraint_orig_tmp_file_name,
-                content=self.orig_cib,
-            ),
-            fixture.debug(
-                reports.codes.TMP_FILE_WRITE,
-                file_path=self.cib_diff_add_constraint_updated_tmp_file_name,
-                content=self.cib_with_constraint,
-            ),
-            fixture.debug(
-                reports.codes.TMP_FILE_WRITE,
-                file_path=self.cib_constraint_removed_by_unmove_file_name,
-                content=self.cib_with_constraint,
-            ),
-            fixture.debug(
-                reports.codes.TMP_FILE_WRITE,
-                file_path=self.cib_diff_remove_constraint_orig_tmp_file_name,
-                content=self.cib_with_constraint,
-            ),
-            fixture.debug(
-                reports.codes.TMP_FILE_WRITE,
-                file_path=self.cib_diff_remove_constraint_updated_tmp_file_name,
-                content=self.cib_without_constraint,
-            ),
-            fixture.debug(
-                reports.codes.TMP_FILE_WRITE,
-                file_path=self.cib_apply_diff_remove_constraint_from_simulated_cib_tmp_file_name,
-                content=self.cib_simulate_constraint,
-            ),
-            fixture.debug(
-                reports.codes.TMP_FILE_WRITE,
-                file_path=self.pcmk_simulate_remove_constraint_orig_cib_tmp_file_name,
-                content=self.cib_simulate_constraint,
-            ),
             fixture.info(
                 reports.codes.RESOURCE_MOVE_CONSTRAINT_CREATED,
                 resource_id=resource_id,
@@ -465,16 +425,6 @@ class MoveAutocleanSuccess(MoveAutocleanCommonSetup):
             fixture.info(
                 reports.codes.WAIT_FOR_IDLE_STARTED,
                 timeout=0,
-            ),
-            fixture.debug(
-                reports.codes.TMP_FILE_WRITE,
-                file_path=self.cib_apply_diff_remove_constraint_after_push_tmp_file_name,
-                content=self.cib_with_constraint,
-            ),
-            fixture.debug(
-                reports.codes.TMP_FILE_WRITE,
-                file_path=self.pcmk_simulate_remove_constraint_after_push_orig_cib_tmp_file_name,
-                content=self.cib_with_constraint,
             ),
             fixture.info(
                 reports.codes.RESOURCE_MOVE_CONSTRAINT_REMOVED,
@@ -940,36 +890,6 @@ class MoveAutocleanValidations(MoveAutocleanCommonSetup):
         move_autoclean(self.env_assist.get_env(), resource_id, node=node)
         self.env_assist.assert_reports(
             [
-                fixture.debug(
-                    reports.codes.TMP_FILE_WRITE,
-                    file_path=cib_rsc_move_tmp_file_name,
-                    content=orig_cib,
-                ),
-                fixture.debug(
-                    reports.codes.TMP_FILE_WRITE,
-                    file_path=cib_diff_add_constraint_orig_tmp_file_name,
-                    content=orig_cib,
-                ),
-                fixture.debug(
-                    reports.codes.TMP_FILE_WRITE,
-                    file_path=cib_diff_add_constraint_updated_tmp_file_name,
-                    content=cib_with_constraint,
-                ),
-                fixture.debug(
-                    reports.codes.TMP_FILE_WRITE,
-                    file_path=cib_constraint_removed_by_unmove_file_name,
-                    content=cib_with_constraint,
-                ),
-                fixture.debug(
-                    reports.codes.TMP_FILE_WRITE,
-                    file_path=cib_diff_remove_constraint_orig_tmp_file_name,
-                    content=cib_with_constraint,
-                ),
-                fixture.debug(
-                    reports.codes.TMP_FILE_WRITE,
-                    file_path=cib_diff_remove_constraint_updated_tmp_file_name,
-                    content=cib_without_constraint,
-                ),
                 fixture.info(
                     reports.codes.NO_ACTION_NECESSARY,
                 ),
@@ -1274,46 +1194,6 @@ class MoveAutocleanFailures(MoveAutocleanCommonSetup):
 
     def get_reports(self, stage=None):
         return [
-            fixture.debug(
-                reports.codes.TMP_FILE_WRITE,
-                file_path=self.cib_rsc_move_tmp_file_name,
-                content=self.orig_cib,
-            ),
-            fixture.debug(
-                reports.codes.TMP_FILE_WRITE,
-                file_path=self.cib_diff_add_constraint_orig_tmp_file_name,
-                content=self.orig_cib,
-            ),
-            fixture.debug(
-                reports.codes.TMP_FILE_WRITE,
-                file_path=self.cib_diff_add_constraint_updated_tmp_file_name,
-                content=self.cib_with_constraint,
-            ),
-            fixture.debug(
-                reports.codes.TMP_FILE_WRITE,
-                file_path=self.cib_constraint_removed_by_unmove_file_name,
-                content=self.cib_with_constraint,
-            ),
-            fixture.debug(
-                reports.codes.TMP_FILE_WRITE,
-                file_path=self.cib_diff_remove_constraint_orig_tmp_file_name,
-                content=self.cib_with_constraint,
-            ),
-            fixture.debug(
-                reports.codes.TMP_FILE_WRITE,
-                file_path=self.cib_diff_remove_constraint_updated_tmp_file_name,
-                content=self.cib_without_constraint,
-            ),
-            fixture.debug(
-                reports.codes.TMP_FILE_WRITE,
-                file_path=self.cib_apply_diff_remove_constraint_from_simulated_cib_tmp_file_name,
-                content=self.cib_simulate_constraint,
-            ),
-            fixture.debug(
-                reports.codes.TMP_FILE_WRITE,
-                file_path=self.pcmk_simulate_remove_constraint_orig_cib_tmp_file_name,
-                content=self.cib_simulate_constraint,
-            ),
             fixture.info(
                 reports.codes.RESOURCE_MOVE_CONSTRAINT_CREATED,
                 resource_id=self.resource_id,
@@ -1321,16 +1201,6 @@ class MoveAutocleanFailures(MoveAutocleanCommonSetup):
             fixture.info(
                 reports.codes.WAIT_FOR_IDLE_STARTED,
                 timeout=0,
-            ),
-            fixture.debug(
-                reports.codes.TMP_FILE_WRITE,
-                file_path=self.cib_apply_diff_remove_constraint_after_push_tmp_file_name,
-                content=self.cib_with_constraint,
-            ),
-            fixture.debug(
-                reports.codes.TMP_FILE_WRITE,
-                file_path=self.pcmk_simulate_remove_constraint_after_push_orig_cib_tmp_file_name,
-                content=self.cib_with_constraint,
             ),
             fixture.info(
                 reports.codes.RESOURCE_MOVE_CONSTRAINT_REMOVED,
@@ -1340,7 +1210,7 @@ class MoveAutocleanFailures(MoveAutocleanCommonSetup):
                 reports.codes.WAIT_FOR_IDLE_STARTED,
                 timeout=0,
             ),
-        ][: {None: None, 4: -2, 3: 10, 2: 8, 1: 6}[stage]]
+        ][: {None: None, 4: -2, 3: 2, 2: 0, 1: 0}[stage]]
 
     def test_move_affects_other_resources_strict(self):
         self.tmp_file_mock_obj.set_calls(
