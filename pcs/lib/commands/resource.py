@@ -1660,8 +1660,32 @@ def move_autoclean(
     add_constraint_cib_diff = diff_cibs_xml(
         env.cmd_runner(), env.report_processor, cib_xml, rsc_moved_cib_xml
     )
+    with get_tmp_cib(
+        env.report_processor, rsc_moved_cib_xml
+    ) as rsc_moved_constraint_cleared_cib_file:
+        stdout, stderr, retval = resource_unmove_unban(
+            env.cmd_runner(
+                dict(CIB_file=rsc_moved_constraint_cleared_cib_file.name)
+            ),
+            resource_id,
+            node,
+            master,
+        )
+        if retval != 0:
+            raise LibraryError(
+                ReportItem.error(
+                    reports.messages.ResourceUnmoveUnbanPcmkError(
+                        resource_id, stdout, stderr
+                    )
+                )
+            )
+        rsc_moved_constraint_cleared_cib_file.seek(0)
+        constraint_removed_cib = rsc_moved_constraint_cleared_cib_file.read()
     remove_constraint_cib_diff = diff_cibs_xml(
-        env.cmd_runner(), env.report_processor, rsc_moved_cib_xml, cib_xml
+        env.cmd_runner(),
+        env.report_processor,
+        rsc_moved_cib_xml,
+        constraint_removed_cib,
     )
 
     if not (add_constraint_cib_diff and remove_constraint_cib_diff):
@@ -1690,22 +1714,15 @@ def move_autoclean(
                     )
                 )
             )
-    after_move_simulated_cib_xml = etree_to_str(after_move_simulated_cib)
-    _ensure_resource_was_moved(
+    _ensure_resource_moved_and_not_moved_back(
         env.cmd_runner,
         env.report_processor,
-        resource_state_before,
-        after_move_simulated_cib_xml,
-        resource_id,
-        node,
-    )
-    _ensure_resource_is_not_moved(
-        env.cmd_runner,
-        env.report_processor,
-        after_move_simulated_cib_xml,
+        etree_to_str(after_move_simulated_cib),
         remove_constraint_cib_diff,
         resource_id,
         strict,
+        resource_state_before,
+        node,
     )
     push_cib_diff_xml(env.cmd_runner(), add_constraint_cib_diff)
     env.report_processor.report(
@@ -1714,13 +1731,15 @@ def move_autoclean(
         )
     )
     env.wait_for_idle(wait_timeout)
-    _ensure_resource_is_not_moved(
+    _ensure_resource_moved_and_not_moved_back(
         env.cmd_runner,
         env.report_processor,
         get_cib_xml(env.cmd_runner()),
         remove_constraint_cib_diff,
         resource_id,
         strict,
+        resource_state_before,
+        node,
     )
     push_cib_diff_xml(env.cmd_runner(), remove_constraint_cib_diff)
     env.report_processor.report(
@@ -1740,21 +1759,24 @@ def move_autoclean(
         raise LibraryError()
 
 
-def _ensure_resource_was_moved(
+def _ensure_resource_moved_and_not_moved_back(
     runner_factory: Callable[[Optional[Mapping[str, str]]], CommandRunner],
     report_processor: reports.ReportProcessor,
-    resource_state_before: Dict[str, List[str]],
     cib_xml: str,
+    remove_constraint_cib_diff: str,
     resource_id: str,
+    strict: bool,
+    resource_state_before: Dict[str, List[str]],
     node: Optional[str],
 ) -> None:
-    with get_tmp_cib(report_processor, cib_xml) as rsc_moved_cib_file:
+    # pylint: disable=too-many-locals
+    with get_tmp_cib(report_processor, cib_xml) as rsc_unmove_cib_file:
         if not _was_resource_moved(
             node,
             resource_state_before,
             get_resource_state(
                 get_cluster_status_dom(
-                    runner_factory(dict(CIB_file=rsc_moved_cib_file.name))
+                    runner_factory(dict(CIB_file=rsc_unmove_cib_file.name))
                 ),
                 resource_id,
             ),
@@ -1766,18 +1788,6 @@ def _ensure_resource_was_moved(
                     )
                 )
             )
-
-
-def _ensure_resource_is_not_moved(
-    runner_factory: Callable[[Optional[Mapping[str, str]]], CommandRunner],
-    report_processor: reports.ReportProcessor,
-    cib_xml: str,
-    remove_constraint_cib_diff: str,
-    resource_id: str,
-    strict: bool,
-) -> None:
-    # pylint: disable=too-many-locals
-    with get_tmp_cib(report_processor, cib_xml) as rsc_unmove_cib_file:
         push_cib_diff_xml(
             runner_factory(dict(CIB_file=rsc_unmove_cib_file.name)),
             remove_constraint_cib_diff,
