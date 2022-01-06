@@ -706,6 +706,7 @@ class PcmkShortcuts:
         stdout="",
         stderr="",
         returncode=0,
+        env=None,
     ):
         """
         Create a call for crm_resource --clear
@@ -722,6 +723,7 @@ class PcmkShortcuts:
         string stdout -- crm_resource's stdout
         string stderr -- crm_resource's stderr
         int returncode -- crm_resource's returncode
+        dict env -- CommandRunner environment variables
         """
         # arguments are used via locals()
         # pylint: disable=unused-argument
