@@ -373,6 +373,12 @@ def assert_report_item_list_equal(
             expected_report_info_list, real_report_item
         )
         if found_report_info is None:
+            if (
+                real_report_item.severity.level
+                == reports.ReportItemSeverity.DEBUG
+            ):
+                # ignore debug report items not specified as expected
+                continue
             raise _unexpected_report_given(
                 remaining_expected_report_info_list,
                 expected_report_info_list,
@@ -392,8 +398,8 @@ def assert_report_item_list_equal(
             )
 
         raise AssertionError(
-            "\nExpected LibraryError is missing\n{0}\n\n{1}\n\n{2}".format(
-                "{0}\n".format(hint) if hint else "",
+            "\nReport lists doesn't match{0}\n\n{1}\n\n{2}".format(
+                "\n{0}".format(hint) if hint else "",
                 format_items("expected", expected_report_info_list),
                 format_items("real", real_report_item_list),
             )
