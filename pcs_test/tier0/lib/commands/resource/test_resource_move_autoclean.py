@@ -20,6 +20,25 @@ from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.misc import get_test_resource as rc
 
 
+def _node_fixture(name, node_id):
+    return f'<node id="{node_id}" uname="{name}"/>'
+
+
+def _node_list_fixture(nodes):
+    return "\n".join(
+        _node_fixture(node_name, node_id)
+        for node_id, node_name in enumerate(nodes)
+    )
+
+
+def _nodes_section_fixture(content):
+    return f"""
+    <nodes>
+    {content}
+    </nodes>
+    """
+
+
 def _rsc_primitive_fixture(res_id):
     return f'<primitive id="{res_id}"/>'
 
@@ -144,6 +163,9 @@ class MoveAutocleanSuccess(MoveAutocleanCommonSetup):
             name=config_load_cib_name,
             resources=_resources_tag(
                 _resource_primitive + _resource_promotable_clone
+            ),
+            nodes=_nodes_section_fixture(
+                _node_list_fixture([self.orig_node, self.new_node])
             ),
         )
         self.orig_cib = etree_to_str(
@@ -794,9 +816,7 @@ class MoveAutocleanValidations(MoveAutocleanCommonSetup):
             resources=_state_resource_fixture(resource_id, "Stopped"),
         )
         self.env_assist.assert_raise_library_error(
-            lambda: move_autoclean(
-                self.env_assist.get_env(), resource_id, node="node"
-            ),
+            lambda: move_autoclean(self.env_assist.get_env(), resource_id),
             [
                 fixture.error(
                     reports.codes.CANNOT_MOVE_RESOURCE_NOT_RUNNING,
@@ -804,6 +824,27 @@ class MoveAutocleanValidations(MoveAutocleanCommonSetup):
                 )
             ],
             expected_in_processor=False,
+        )
+
+    def test_node_not_found(self):
+        resource_id = "A"
+        node = "non_existing_node"
+        self.config.runner.cib.load(
+            resources=_resources_tag(_rsc_primitive_fixture(resource_id)),
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: move_autoclean(
+                self.env_assist.get_env(), resource_id, node
+            ),
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.NODE_NOT_FOUND,
+                    node=node,
+                    searched_types=[],
+                )
+            ],
         )
 
     def test_constraint_already_exist(self):
@@ -835,6 +876,7 @@ class MoveAutocleanValidations(MoveAutocleanCommonSetup):
                   <rsc_location id="prefer-{resource_id}" rsc="{resource_id}" role="Started" node="{node}" score="INFINITY"/>
               </constraints>
             """,
+            nodes=_nodes_section_fixture(_node_list_fixture([node])),
             name=config_load_cib_name,
         )
         orig_cib = etree_to_str(
@@ -1012,6 +1054,9 @@ class MoveAutocleanFailures(MoveAutocleanCommonSetup):
 
         self.config.runner.cib.load(
             resources=_resources_tag(_rsc_primitive_fixture(self.resource_id)),
+            nodes=_nodes_section_fixture(
+                _node_list_fixture(["node1", "node2"])
+            ),
             name=self.config_load_cib_name,
         )
         self.orig_cib = etree_to_str(

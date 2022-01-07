@@ -3,6 +3,7 @@ from typing import (
     List,
     Optional,
     Tuple,
+    Set,
 )
 
 from lxml.etree import _Element
@@ -11,7 +12,7 @@ from pcs.common import reports
 from pcs.common.reports import ReportItemList
 from pcs.common.reports import ReportItemSeverity
 from pcs.common.reports.item import ReportItem
-from pcs.lib.cib.node import PacemakerNode
+from pcs.lib.cib.node import PacemakerNode, get_node_names
 from pcs.lib.cib.resource import remote_node, guest_node
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
 from pcs.lib.corosync.node import CorosyncNode
@@ -26,6 +27,10 @@ def get_existing_nodes_names(
     return __get_nodes_names(
         *__get_nodes(corosync_conf, cib), error_on_missing_name
     )
+
+
+def get_pacemaker_node_names(cib: _Element) -> Set[str]:
+    return get_node_names(cib) | set(get_existing_nodes_names(None, cib)[0])
 
 
 def get_existing_nodes_names_addrs(
