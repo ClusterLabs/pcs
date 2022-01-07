@@ -50,7 +50,10 @@ from pcs.lib.cib.tools import (
 from pcs.lib.env import LibraryEnvironment, WaitType
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
-from pcs.lib.node import get_existing_nodes_names_addrs
+from pcs.lib.node import (
+    get_existing_nodes_names_addrs,
+    get_pacemaker_node_names,
+)
 from pcs.lib.pacemaker import simulate as simulate_tools
 from pcs.lib.pacemaker.live import (
     diff_cibs_xml,
@@ -1590,6 +1593,16 @@ def move(
     )
 
 
+def _nodes_exist_reports(
+    cib: _Element, node_names: Iterable[str]
+) -> ReportItemList:
+    existing_node_names = get_pacemaker_node_names(cib)
+    return [
+        reports.ReportItem.error(reports.messages.NodeNotFound(node_name))
+        for node_name in (set(node_names) - existing_node_names)
+    ]
+
+
 def move_autoclean(
     env: LibraryEnvironment,
     resource_id: str,
@@ -1626,6 +1639,9 @@ def move_autoclean(
     )
     if resource_el is not None:
         report_list.extend(resource.common.validate_move(resource_el, master))
+
+    if node:
+        report_list.extend(_nodes_exist_reports(cib, [node]))
 
     if env.report_processor.report_list(report_list).has_errors:
         raise LibraryError()
@@ -1932,14 +1948,18 @@ class _MoveBanTemplate:
         lifetime=None,
         wait: WaitType = False,
     ):
+        # pylint: disable=too-many-locals
         # validate
         wait_timeout = env.ensure_wait_satisfiable(wait)  # raises on error
 
+        cib = env.get_cib()
         resource_el, report_list = resource.common.find_one_resource(
-            get_resources(env.get_cib()), resource_id
+            get_resources(cib), resource_id
         )
         if resource_el is not None:
             report_list.extend(self._validate(resource_el, master))
+        if node:
+            report_list.extend(_nodes_exist_reports(cib, [node]))
         if env.report_processor.report_list(report_list).has_errors:
             raise LibraryError()
 

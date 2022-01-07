@@ -1,12 +1,17 @@
 from collections import namedtuple
+from typing import Set
 from lxml import etree
+from lxml.etree import _Element
 
 from pcs.common import reports
 from pcs.common.reports.item import ReportItem
 from pcs.lib.cib.nvpair import update_nvset
 from pcs.lib.cib.tools import get_nodes
 from pcs.lib.errors import LibraryError
-from pcs.lib.xml_tools import append_when_useful
+from pcs.lib.xml_tools import (
+    append_when_useful,
+    get_root,
+)
 
 
 class PacemakerNode(namedtuple("PacemakerNode", "name addr")):
@@ -56,6 +61,13 @@ def update_node_instance_attrs(
     update_nvset(attrs_el, attrs, id_provider)
     append_when_useful(node_el, attrs_el)
     append_when_useful(cib_nodes, node_el)
+
+
+def get_node_names(cib: _Element) -> Set[str]:
+    return {
+        str(node.attrib["uname"])
+        for node in get_nodes(get_root(cib)).iterfind("./node")
+    }
 
 
 def _ensure_node_exists(tree, node_name, state_nodes=None):
