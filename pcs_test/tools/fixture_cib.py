@@ -310,6 +310,7 @@ MODIFIER_GENERATORS = {
     "replace": replace_all,
     "append": append_all,
     "resources": lambda xml: replace_all({"./configuration/resources": xml}),
+    "nodes": lambda xml: replace_all({"./configuration/nodes": xml}),
     "constraints": lambda xml: replace_all(
         {"./configuration/constraints": xml}
     ),

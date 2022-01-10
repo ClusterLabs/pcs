@@ -10,6 +10,29 @@ from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import resource
 
+
+def _node_fixture(name, node_id):
+    return f'<node id="{node_id}" uname="{name}"/>'
+
+
+def _node_list_fixture(nodes):
+    return "\n".join(
+        _node_fixture(node_name, node_id)
+        for node_id, node_name in enumerate(nodes)
+    )
+
+
+def _nodes_section_fixture(content):
+    return f"""
+    <nodes>
+    {content}
+    </nodes>
+    """
+
+
+nodes_section = _nodes_section_fixture(
+    _node_list_fixture(["node", "node1", "node2"])
+)
 resources_primitive = """
     <resources>
         <primitive id="A" />
@@ -128,8 +151,24 @@ class MoveBanBaseMixin(MoveBanClearBaseMixin):
             expected_in_processor=False,
         )
 
+    def test_node_not_found(self):
+        self.config.runner.cib.load(resources=resources_primitive)
+        node = "node"
+        self.env_assist.assert_raise_library_error(
+            lambda: self.lib_action(self.env_assist.get_env(), "A", node)
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.NODE_NOT_FOUND, node=node, searched_types=[]
+                )
+            ]
+        )
+
     def test_all_options(self):
-        self.config.runner.cib.load(resources=resources_promotable)
+        self.config.runner.cib.load(
+            resources=resources_promotable, nodes=nodes_section
+        )
         self.config_pcmk_action(
             resource="A-clone",
             master=True,
@@ -274,7 +313,9 @@ class MoveBanWaitMixin:
     def setUp(self):
         self.timeout = 10
         self.env_assist, self.config = get_env_tools(self)
-        self.config.runner.cib.load(resources=resources_primitive)
+        self.config.runner.cib.load(
+            resources=resources_primitive, nodes=nodes_section
+        )
 
     @mock.patch.object(
         settings,

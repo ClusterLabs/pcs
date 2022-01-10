@@ -12,9 +12,11 @@
   devices ([rhbz#2033248])
 - Make `ocf:linbit:drbd` agent pass OCF standard validation ([ghissue#441],
   [rhbz#2036633])
+- Multiple improvements of `pcs resource move` command ([rhbz#1996062])
 
 [ghissue#441]: https://github.com/ClusterLabs/pcs/issues/441
 [ghpull#431]: https://github.com/ClusterLabs/pcs/pull/431
+[rhbz#1996062]: https://bugzilla.redhat.com/show_bug.cgi?id=1996062
 [rhbz#2019836]: https://bugzilla.redhat.com/show_bug.cgi?id=2019836
 [rhbz#2028902]: https://bugzilla.redhat.com/show_bug.cgi?id=2028902
 [rhbz#2033248]: https://bugzilla.redhat.com/show_bug.cgi?id=2033248

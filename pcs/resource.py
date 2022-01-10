@@ -25,6 +25,7 @@ from pcs.settings import (
     pacemaker_wait_timeout_status as PACEMAKER_WAIT_TIMEOUT_STATUS,
 )
 from pcs.cli.common.errors import (
+    SEE_MAN_CHANGES,
     raise_command_replaced,
     CmdLineInputError,
 )
@@ -872,6 +873,12 @@ def resource_move(lib: Any, argv: List[str], modifiers: InputModifiers):
     node = None
     if argv:
         node = argv.pop(0)
+        if node.startswith("lifetime="):
+            deprecation_warning(
+                "Option 'lifetime' has been removed. {}".format(
+                    SEE_MAN_CHANGES.format("0.11")
+                )
+            )
     if argv:
         raise CmdLineInputError()
 
