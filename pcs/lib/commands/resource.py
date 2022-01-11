@@ -50,12 +50,16 @@ from pcs.lib.cib.tools import (
 from pcs.lib.env import LibraryEnvironment, WaitType
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
-from pcs.lib.node import get_existing_nodes_names_addrs
+from pcs.lib.node import (
+    get_existing_nodes_names_addrs,
+    get_pacemaker_node_names,
+)
 from pcs.lib.pacemaker import simulate as simulate_tools
 from pcs.lib.pacemaker.live import (
     diff_cibs_xml,
     get_cib,
     get_cib_xml,
+    get_cluster_status_dom,
     has_resource_unmove_unban_expired_support,
     push_cib_diff_xml,
     resource_ban,
@@ -1589,6 +1593,16 @@ def move(
     )
 
 
+def _nodes_exist_reports(
+    cib: _Element, node_names: Iterable[str]
+) -> ReportItemList:
+    existing_node_names = get_pacemaker_node_names(cib)
+    return [
+        reports.ReportItem.error(reports.messages.NodeNotFound(node_name))
+        for node_name in (set(node_names) - existing_node_names)
+    ]
+
+
 def move_autoclean(
     env: LibraryEnvironment,
     resource_id: str,
@@ -1626,6 +1640,9 @@ def move_autoclean(
     if resource_el is not None:
         report_list.extend(resource.common.validate_move(resource_el, master))
 
+    if node:
+        report_list.extend(_nodes_exist_reports(cib, [node]))
+
     if env.report_processor.report_list(report_list).has_errors:
         raise LibraryError()
 
@@ -1659,8 +1676,32 @@ def move_autoclean(
     add_constraint_cib_diff = diff_cibs_xml(
         env.cmd_runner(), env.report_processor, cib_xml, rsc_moved_cib_xml
     )
+    with get_tmp_cib(
+        env.report_processor, rsc_moved_cib_xml
+    ) as rsc_moved_constraint_cleared_cib_file:
+        stdout, stderr, retval = resource_unmove_unban(
+            env.cmd_runner(
+                dict(CIB_file=rsc_moved_constraint_cleared_cib_file.name)
+            ),
+            resource_id,
+            node,
+            master,
+        )
+        if retval != 0:
+            raise LibraryError(
+                ReportItem.error(
+                    reports.messages.ResourceUnmoveUnbanPcmkError(
+                        resource_id, stdout, stderr
+                    )
+                )
+            )
+        rsc_moved_constraint_cleared_cib_file.seek(0)
+        constraint_removed_cib = rsc_moved_constraint_cleared_cib_file.read()
     remove_constraint_cib_diff = diff_cibs_xml(
-        env.cmd_runner(), env.report_processor, rsc_moved_cib_xml, cib_xml
+        env.cmd_runner(),
+        env.report_processor,
+        rsc_moved_cib_xml,
+        constraint_removed_cib,
     )
 
     if not (add_constraint_cib_diff and remove_constraint_cib_diff):
@@ -1689,13 +1730,15 @@ def move_autoclean(
                     )
                 )
             )
-    _ensure_resource_is_not_moved(
+    _ensure_resource_moved_and_not_moved_back(
         env.cmd_runner,
         env.report_processor,
         etree_to_str(after_move_simulated_cib),
         remove_constraint_cib_diff,
         resource_id,
         strict,
+        resource_state_before,
+        node,
     )
     push_cib_diff_xml(env.cmd_runner(), add_constraint_cib_diff)
     env.report_processor.report(
@@ -1704,13 +1747,15 @@ def move_autoclean(
         )
     )
     env.wait_for_idle(wait_timeout)
-    _ensure_resource_is_not_moved(
+    _ensure_resource_moved_and_not_moved_back(
         env.cmd_runner,
         env.report_processor,
         get_cib_xml(env.cmd_runner()),
         remove_constraint_cib_diff,
         resource_id,
         strict,
+        resource_state_before,
+        node,
     )
     push_cib_diff_xml(env.cmd_runner(), remove_constraint_cib_diff)
     env.report_processor.report(
@@ -1730,16 +1775,35 @@ def move_autoclean(
         raise LibraryError()
 
 
-def _ensure_resource_is_not_moved(
+def _ensure_resource_moved_and_not_moved_back(
     runner_factory: Callable[[Optional[Mapping[str, str]]], CommandRunner],
     report_processor: reports.ReportProcessor,
     cib_xml: str,
     remove_constraint_cib_diff: str,
     resource_id: str,
     strict: bool,
+    resource_state_before: Dict[str, List[str]],
+    node: Optional[str],
 ) -> None:
     # pylint: disable=too-many-locals
     with get_tmp_cib(report_processor, cib_xml) as rsc_unmove_cib_file:
+        if not _was_resource_moved(
+            node,
+            resource_state_before,
+            get_resource_state(
+                get_cluster_status_dom(
+                    runner_factory(dict(CIB_file=rsc_unmove_cib_file.name))
+                ),
+                resource_id,
+            ),
+        ):
+            raise LibraryError(
+                reports.ReportItem.error(
+                    reports.messages.ResourceMoveNotAffectingResource(
+                        resource_id
+                    )
+                )
+            )
         push_cib_diff_xml(
             runner_factory(dict(CIB_file=rsc_unmove_cib_file.name)),
             remove_constraint_cib_diff,
@@ -1809,20 +1873,31 @@ def _resource_running_on_nodes(
     return frozenset()
 
 
+def _was_resource_moved(
+    node: Optional[str],
+    resource_state_before: Dict[str, List[str]],
+    resource_state_after: Dict[str, List[str]],
+) -> bool:
+    running_on_nodes = _resource_running_on_nodes(resource_state_after)
+    return not bool(
+        resource_state_before
+        and (  # running resource moved
+            not running_on_nodes
+            or (node and node not in running_on_nodes)
+            or (resource_state_before == resource_state_after)
+        )
+    )
+
+
 def _move_wait_report(
     resource_id: str,
     node: Optional[str],
     resource_state_before: Dict[str, List[str]],
     resource_state_after: Dict[str, List[str]],
 ) -> ReportItem:
-    allowed_nodes = frozenset([node] if node else [])
-    running_on_nodes = _resource_running_on_nodes(resource_state_after)
-
     severity = reports.item.ReportItemSeverity.info()
-    if resource_state_before and (  # running resource moved
-        not running_on_nodes
-        or (allowed_nodes and allowed_nodes.isdisjoint(running_on_nodes))
-        or (resource_state_before == resource_state_after)
+    if not _was_resource_moved(
+        node, resource_state_before, resource_state_after
     ):
         severity = reports.item.ReportItemSeverity.error()
     if not resource_state_after:
@@ -1873,14 +1948,18 @@ class _MoveBanTemplate:
         lifetime=None,
         wait: WaitType = False,
     ):
+        # pylint: disable=too-many-locals
         # validate
         wait_timeout = env.ensure_wait_satisfiable(wait)  # raises on error
 
+        cib = env.get_cib()
         resource_el, report_list = resource.common.find_one_resource(
-            get_resources(env.get_cib()), resource_id
+            get_resources(cib), resource_id
         )
         if resource_el is not None:
             report_list.extend(self._validate(resource_el, master))
+        if node:
+            report_list.extend(_nodes_exist_reports(cib, [node]))
         if env.report_processor.report_list(report_list).has_errors:
             raise LibraryError()
 

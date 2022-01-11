@@ -143,6 +143,6 @@ class Runner:
             env.update(env_extend)
         if env != call.env:
             raise self.__call_queue.error_with_context(
-                f"ENV doesn't match. Expected: {call.env}; Real: {env}"
+                f"Command #{i}: ENV doesn't match. Expected: {call.env}; Real: {env}"
             )
         return call.stdout, call.stderr, call.returncode
