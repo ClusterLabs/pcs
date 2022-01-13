@@ -2136,16 +2136,17 @@ def write_empty_cib(cibfile):
     """
     Commandline options: no options
     """
-    empty_xml = """<?xml version="1.0" encoding="UTF-8"?>
-<cib admin_epoch="0" epoch="1" num_updates="1" validate-with="pacemaker-1.2">
-  <configuration>
-    <crm_config/>
-    <nodes/>
-    <resources/>
-    <constraints/>
-  </configuration>
-  <status/>
-</cib>"""
+    empty_xml = """
+        <cib admin_epoch="0" epoch="1" num_updates="1" validate-with="pacemaker-3.1">
+          <configuration>
+            <crm_config/>
+            <nodes/>
+            <resources/>
+            <constraints/>
+          </configuration>
+          <status/>
+        </cib>
+    """
     with open(cibfile, "w") as f:
         f.write(empty_xml)
 
