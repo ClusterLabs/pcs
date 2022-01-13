@@ -348,6 +348,7 @@ def load_module(env, middleware_factory, name):
             middleware.build(),
             {
                 "describe_agent": resource_agent.describe_agent,
+                "get_agent_default_operations": resource_agent.get_agent_default_operations,
                 "get_agent_metadata": resource_agent.get_agent_metadata,
                 "get_agents_list": resource_agent.get_agents_list,
                 "list_agents": resource_agent.list_agents,

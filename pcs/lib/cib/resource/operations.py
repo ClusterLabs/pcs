@@ -1,5 +1,10 @@
 from collections import defaultdict
-from typing import Iterable, List
+from dataclasses import replace as dt_replace
+from typing import (
+    Iterable,
+    List,
+    Tuple,
+)
 
 from lxml import etree
 
@@ -8,6 +13,7 @@ from pcs.common import (
     pacemaker,
     reports,
 )
+from pcs.common.pacemaker.resource.operations import CibResourceOperationDto
 from pcs.common.reports import (
     ReportItemList,
     ReportProcessor,
@@ -19,6 +25,7 @@ from pcs.lib.cib.nvpair import append_new_instance_attributes
 from pcs.lib.cib.resource.agent import (
     complete_operations_options,
     get_default_operation_interval,
+    operation_dto_to_legacy_dict,
 )
 from pcs.lib.cib.resource.const import OPERATION_ATTRIBUTES as ATTRIBUTES
 from pcs.lib.cib.resource.types import (
@@ -37,16 +44,23 @@ OPERATION_NVPAIR_ATTRIBUTES = [
     "OCF_CHECK_LEVEL",
 ]
 
-ON_FAIL_VALUES = [
-    "block",
-    "demote",
-    "fence",
-    "ignore",
-    "restart",
-    "restart-container",
-    "standby",
-    "stop",
-]
+ON_FAIL_VALUES = tuple(
+    sorted(
+        map(
+            str,
+            (
+                const.PCMK_ON_FAIL_ACTION_IGNORE,
+                const.PCMK_ON_FAIL_ACTION_BLOCK,
+                const.PCMK_ON_FAIL_ACTION_DEMOTE,
+                const.PCMK_ON_FAIL_ACTION_STOP,
+                const.PCMK_ON_FAIL_ACTION_RESTART,
+                const.PCMK_ON_FAIL_ACTION_STANDBY,
+                const.PCMK_ON_FAIL_ACTION_FENCE,
+                const.PCMK_ON_FAIL_ACTION_RESTART_CONTAINER,
+            ),
+        )
+    )
+)
 
 _BOOLEAN_VALUES = [
     "0",
@@ -69,7 +83,7 @@ _normalize = validate.option_value_normalization(
 def prepare(
     report_processor: ReportProcessor,
     raw_operation_list: Iterable[ResourceOperationFilteredIn],
-    default_operation_list: Iterable[ResourceOperationIn],
+    default_operation_list: Iterable[CibResourceOperationDto],
     allowed_operation_name_list: Iterable[str],
     new_role_names_supported: bool,
     allow_invalid: bool = False,
@@ -103,15 +117,23 @@ def prepare(
     if report_processor.report_list(report_list).has_errors:
         raise LibraryError()
 
+    report_list, remaining_default_operations = uniquify_operations_intervals(
+        _get_remaining_defaults(
+            operation_list,
+            default_operation_list,
+        )
+    )
+    if report_processor.report_list(report_list).has_errors:
+        raise LibraryError()
+
     return [
         _filter_op_dict(op, new_role_names_supported)
         for op in complete_operations_options(operation_list)
-    ] + _get_remaining_defaults(
-        report_processor,
-        operation_list,
-        complete_operations_options(default_operation_list),
-        new_role_names_supported,
-    )
+        + [
+            operation_dto_to_legacy_dict(op, {})
+            for op in remaining_default_operations
+        ]
+    ]
 
 
 def _operations_to_normalized(
@@ -196,16 +218,13 @@ def _filter_op_dict(
 
 
 def _get_remaining_defaults(
-    report_processor: ReportProcessor,
     operation_list: Iterable[ResourceOperationFilteredIn],
-    default_operation_list: Iterable[ResourceOperationIn],
-    new_role_names_supported: bool,
-) -> List[ResourceOperationFilteredOut]:
+    default_operation_list: Iterable[CibResourceOperationDto],
+) -> List[CibResourceOperationDto]:
     """
     Return operations not mentioned in operation_list but contained in
         default_operation_list.
 
-    report_processor -- tool for warning/info/error reporting
     operation_list -- user entered operations that require follow-up care
     default_operation_list -- operations defined as default by (most probably)
         a resource agent
@@ -213,17 +232,14 @@ def _get_remaining_defaults(
     defined_operation_names = frozenset(
         operation["name"] for operation in operation_list
     )
-    return _make_unique_intervals(
-        report_processor,
-        [
-            _filter_op_dict(default_operation, new_role_names_supported)
-            for default_operation in default_operation_list
-            if default_operation["name"] not in defined_operation_names
-        ],
-    )
+    return [
+        default_operation
+        for default_operation in default_operation_list
+        if default_operation.name not in defined_operation_names
+    ]
 
 
-def get_interval_uniquer():
+def _get_interval_uniquer():
     used_intervals_map = defaultdict(set)
 
     def get_uniq_interval(name, initial_interval):
@@ -251,37 +267,32 @@ def get_interval_uniquer():
     return get_uniq_interval
 
 
-def _make_unique_intervals(
-    report_processor: ReportProcessor,
-    operation_list: Iterable[ResourceOperationFilteredIn],
-) -> List[ResourceOperationFilteredOut]:
+def uniquify_operations_intervals(
+    operation_list: Iterable[CibResourceOperationDto],
+) -> Tuple[reports.ReportItemList, List[CibResourceOperationDto]]:
     """
-    Return operation list similar to operation_list where intervals for the same
-        operation are unique
+    Return list of operation where intervals for the same operation are unique
 
-    report_processor -- tool for warning/info/error reporting
-    operation_list -- contains operation definitions
+    operation_list -- operations the new operation list will be based on
     """
-    get_unique_interval = get_interval_uniquer()
-    adapted_operation_list = []
+    get_unique_interval = _get_interval_uniquer()
+    report_list = []
+    new_operations = []
     for operation in operation_list:
-        adapted = dict(operation)
-        if "interval" in adapted:
-            adapted["interval"] = get_unique_interval(
-                operation["name"], operation["interval"]
-            )
-            if adapted["interval"] != operation["interval"]:
-                report_processor.report(
-                    ReportItem.warning(
-                        reports.messages.ResourceOperationIntervalAdapted(
-                            operation["name"],
-                            operation["interval"],
-                            adapted["interval"],
-                        )
+        new_interval = get_unique_interval(operation.name, operation.interval)
+        if new_interval != operation.interval:
+            report_list.append(
+                ReportItem.warning(
+                    reports.messages.ResourceOperationIntervalAdapted(
+                        operation.name,
+                        operation.interval,
+                        new_interval,
                     )
                 )
-        adapted_operation_list.append(adapted)
-    return adapted_operation_list
+            )
+            operation = dt_replace(operation, interval=new_interval)
+        new_operations.append(operation)
+    return report_list, new_operations
 
 
 def validate_different_intervals(operation_list):

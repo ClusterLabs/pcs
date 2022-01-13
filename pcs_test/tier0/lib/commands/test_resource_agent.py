@@ -4,6 +4,12 @@ from unittest import TestCase
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 
+from pcs.common import const
+from pcs.common.interface.dto import from_dict
+from pcs.common.pacemaker.resource.operations import (
+    CibResourceOperationDto,
+    ListCibResourceOperationDto,
+)
 from pcs.common.reports import codes as report_codes
 from pcs.common.resource_agent_dto import (
     ResourceAgentActionDto,
@@ -14,6 +20,24 @@ from pcs.common.resource_agent_dto import (
 )
 from pcs.lib.commands import resource_agent as lib
 from pcs.lib.resource_agent import ResourceAgentName
+
+
+def _operation_fixture(name, interval="", role=None, timeout=None):
+    return CibResourceOperationDto(
+        id="",
+        name=name,
+        interval=interval,
+        description=None,
+        start_delay=None,
+        interval_origin=None,
+        timeout=timeout,
+        enabled=None,
+        record_pending=None,
+        role=role,
+        on_fail=None,
+        meta_attributes=[],
+        instance_attributes=[],
+    )
 
 
 class ListStandards(TestCase):
@@ -268,6 +292,61 @@ class ListAgents(TestCase):
                     ),
                 )
             ]
+        )
+
+
+class ActionToOperation(TestCase):
+    # pylint: disable=protected-access
+    @staticmethod
+    def _action_dict(action):
+        all_keys = {
+            "name": "",
+            "timeout": None,
+            "interval": None,
+            "role": None,
+            "start-delay": None,
+            "OCF_CHECK_LEVEL": None,
+            "automatic": False,
+            "on_target": False,
+        }
+        all_keys.update(action)
+        return all_keys
+
+    @staticmethod
+    def _action_dto(action):
+        all_keys = {
+            "name": "",
+            "timeout": None,
+            "interval": None,
+            "role": None,
+            "start-delay": None,
+            "depth": None,
+            "automatic": False,
+            "on_target": False,
+        }
+        all_keys.update(action)
+        return from_dict(ResourceAgentActionDto, all_keys)
+
+    def test_remove_depth_with_0(self):
+        self.assertEqual(
+            lib._action_to_operation(
+                self._action_dto(
+                    {"name": "monitor", "timeout": "20", "depth": "0"},
+                )
+            ),
+            self._action_dict({"name": "monitor", "timeout": "20"}),
+        )
+
+    def test_transform_depth_to_ocf_check_level(self):
+        self.assertEqual(
+            lib._action_to_operation(
+                self._action_dto(
+                    {"name": "monitor", "timeout": "20", "depth": "1"},
+                )
+            ),
+            self._action_dict(
+                {"name": "monitor", "timeout": "20", "OCF_CHECK_LEVEL": "1"}
+            ),
         )
 
 
@@ -1031,3 +1110,98 @@ class GetAgentsList(TestCase):
                 ]
             ),
         )
+
+
+class GetAgentDefaultOperations(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
+    def test_resource(self):
+        agent_name = ResourceAgentName("ocf", "pacemaker", "Stateful")
+        self.config.runner.pcmk.load_agent(
+            agent_name=agent_name.full_name,
+            env={"PATH": "/usr/sbin:/bin:/usr/bin"},
+        )
+        self.assertEqual(
+            lib.get_agent_default_operations(
+                self.env_assist.get_env(), agent_name.to_dto()
+            ),
+            ListCibResourceOperationDto(
+                operations=[
+                    _operation_fixture("start", "0s", timeout="20s"),
+                    _operation_fixture("stop", "0s", timeout="20s"),
+                    _operation_fixture(
+                        "monitor",
+                        "10s",
+                        timeout="20s",
+                        role=const.PCMK_ROLE_PROMOTED,
+                    ),
+                    _operation_fixture(
+                        "monitor",
+                        "11s",
+                        timeout="20s",
+                        role=const.PCMK_ROLE_UNPROMOTED,
+                    ),
+                    _operation_fixture("promote", "0s", timeout="10s"),
+                    _operation_fixture("demote", "0s", timeout="10s"),
+                    _operation_fixture("notify", "0s", timeout="5s"),
+                    _operation_fixture("reload-agent", "0s", timeout="10s"),
+                ]
+            ),
+        )
+
+    def test_resource_only_necessary(self):
+        agent_name = ResourceAgentName("ocf", "pacemaker", "Stateful")
+        self.config.runner.pcmk.load_agent(
+            agent_name=agent_name.full_name,
+            env={"PATH": "/usr/sbin:/bin:/usr/bin"},
+        )
+        self.assertEqual(
+            lib.get_agent_default_operations(
+                self.env_assist.get_env(),
+                agent_name.to_dto(),
+                necessary_only=True,
+            ),
+            ListCibResourceOperationDto(
+                operations=[
+                    _operation_fixture(
+                        "monitor",
+                        "10s",
+                        timeout="20s",
+                        role=const.PCMK_ROLE_PROMOTED,
+                    ),
+                    _operation_fixture(
+                        "monitor",
+                        "11s",
+                        timeout="20s",
+                        role=const.PCMK_ROLE_UNPROMOTED,
+                    ),
+                ]
+            ),
+        )
+
+    def _test_stonith(self, necessary_only):
+        agent_name = ResourceAgentName("stonith", None, "fence_unfencing")
+        self.config.runner.pcmk.load_agent(
+            agent_name=agent_name.full_name,
+            env={"PATH": "/usr/sbin:/bin:/usr/bin"},
+        )
+        self.config.runner.pcmk.load_fenced_metadata()
+        self.assertEqual(
+            lib.get_agent_default_operations(
+                self.env_assist.get_env(),
+                agent_name.to_dto(),
+                necessary_only=necessary_only,
+            ),
+            ListCibResourceOperationDto(
+                operations=[
+                    _operation_fixture("monitor", interval="60s"),
+                ]
+            ),
+        )
+
+    def test_stonith(self):
+        self._test_stonith(False)
+
+    def test_stonith_only_necessary(self):
+        self._test_stonith(True)
