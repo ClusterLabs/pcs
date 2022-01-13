@@ -21,6 +21,7 @@ AGENT_FILENAME_MAP = {
     "ocf:heartbeat:IPaddr2": "resource_agent_ocf_heartbeat_ipaddr2.xml",
     "ocf:pacemaker:booth-site": "resource_agent_ocf_pacemaker_booth-site.xml",
     "ocf:pacemaker:Stateful": "resource_agent_ocf_pacemaker_stateful_ocf_1.1.xml",
+    "stonith:fence_unfencing": "stonith_agent_fence_unfencing.xml",
 }
 
 RULE_IN_EFFECT_RETURNCODE = 0

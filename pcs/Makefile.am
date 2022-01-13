@@ -102,6 +102,7 @@ EXTRA_DIST		= \
 			  common/pacemaker/defaults.py \
 			  common/pacemaker/nvset.py \
 			  common/pacemaker/resource/__init__.py \
+			  common/pacemaker/resource/operations.py \
 			  common/pacemaker/resource/relations.py \
 			  common/pacemaker/role.py \
 			  common/pacemaker/rule.py \

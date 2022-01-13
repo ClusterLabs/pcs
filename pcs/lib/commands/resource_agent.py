@@ -2,11 +2,13 @@ from typing import Any, Dict, Iterable, List, Optional
 
 from pcs.common.interface.dto import to_dict
 from pcs.common.reports import ReportProcessor
+from pcs.common.pacemaker.resource.operations import ListCibResourceOperationDto
 from pcs.lib.cib.resource.agent import (
-    action_to_operation,
-    complete_operations_options,
     get_default_operations,
+    operation_dto_to_legacy_dict,
 )
+from pcs.lib.cib.resource.operations import uniquify_operations_intervals
+from pcs.lib.cib.resource.types import ResourceOperationOut
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
@@ -25,6 +27,7 @@ from pcs.lib.resource_agent import (
     ResourceAgentMetadataDto,
     ResourceAgentName,
     ResourceAgentNameDto,
+    ResourceAgentActionDto,
     StandardProviderTuple,
 )
 from pcs.lib.resource_agent.name import name_to_void_metadata
@@ -132,6 +135,33 @@ def get_agents_list(lib_env: LibraryEnvironment) -> ListResourceAgentNameDto:
     )
 
 
+def _action_to_operation(
+    action: ResourceAgentActionDto,
+) -> ResourceOperationOut:
+    """
+    Transform agent action data to CIB operation data
+    """
+    # This function bridges new agent framework, which provides data in
+    # dataclasses, to old resource create code and transforms new data
+    # structures to a format expected by the old code. When resource create is
+    # overhauled, this fuction is expected to be removed.
+    operation = {}
+    for key, value in to_dict(action).items():
+        if key == "depth":
+            # "None" values are not put to CIB, so this keeps the key in place
+            # while making sure it's not put in CIB. I'm not sure why depth ==
+            # 0 is treated like this, but I keep it in place so the behavior is
+            # the same as it has been for a long time. If pcs starts using
+            # depth / OCF_CHECK_LEVEL or there is other demand for it, consider
+            # changing this so value of "0" is put in CIB.
+            operation["OCF_CHECK_LEVEL"] = None if value == "0" else value
+        elif key == "start_delay":
+            operation["start-delay"] = value
+        else:
+            operation[key] = value
+    return operation
+
+
 # backward compatibility layer - export agent metadata in the legacy format
 def _agent_metadata_to_dict(
     agent: ResourceAgentMetadata, describe: bool = False
@@ -145,13 +175,18 @@ def _agent_metadata_to_dict(
     agent_dict["type"] = agent.name.type
 
     agent_dict["actions"] = [
-        action_to_operation(action, keep_extra_keys=True)
-        for action in agent_dto.actions
+        _action_to_operation(action) for action in agent_dto.actions
     ]
+    operations_defaults = {
+        "OCF_CHECK_LEVEL": None,
+        "automatic": False,
+        "on_target": False,
+    }
     agent_dict["default_actions"] = (
-        complete_operations_options(
-            get_default_operations(agent, keep_extra_keys=True)
-        )
+        [
+            operation_dto_to_legacy_dict(op, operations_defaults)
+            for op in get_default_operations(agent)
+        ]
         if describe
         else []
     )
@@ -185,6 +220,21 @@ def _complete_agent_list(
     return agent_list
 
 
+def _get_agent_metadata(
+    runner: CommandRunner,
+    report_processor: ReportProcessor,
+    agent_name: ResourceAgentNameDto,
+) -> ResourceAgentMetadata:
+    agent_factory = ResourceAgentFacadeFactory(runner, report_processor)
+    try:
+        return agent_factory.facade_from_parsed_name(
+            ResourceAgentName.from_dto(agent_name)
+        ).metadata
+    except ResourceAgentError as e:
+        report_processor.report(resource_agent_error_to_report_item(e))
+        raise LibraryError() from e
+
+
 def get_agent_metadata(
     lib_env: LibraryEnvironment, agent_name: ResourceAgentNameDto
 ) -> ResourceAgentMetadataDto:
@@ -193,16 +243,11 @@ def get_agent_metadata(
 
     agent_name -- name of the agent
     """
-    runner = lib_env.cmd_runner()
-    report_processor = lib_env.report_processor
-    agent_factory = ResourceAgentFacadeFactory(runner, report_processor)
-    try:
-        return agent_factory.facade_from_parsed_name(
-            ResourceAgentName.from_dto(agent_name)
-        ).metadata.to_dto()
-    except ResourceAgentError as e:
-        lib_env.report_processor.report(resource_agent_error_to_report_item(e))
-        raise LibraryError() from e
+    return _get_agent_metadata(
+        lib_env.cmd_runner(),
+        lib_env.report_processor,
+        agent_name,
+    ).to_dto()
 
 
 # deprecated: use get_agent_metadata instead
@@ -233,3 +278,20 @@ def describe_agent(
     except ResourceAgentError as e:
         lib_env.report_processor.report(resource_agent_error_to_report_item(e))
         raise LibraryError() from e
+
+
+def get_agent_default_operations(
+    lib_env: LibraryEnvironment,
+    agent_name: ResourceAgentNameDto,
+    necessary_only: bool = False,
+) -> ListCibResourceOperationDto:
+    report_list, operation_list = uniquify_operations_intervals(
+        get_default_operations(
+            _get_agent_metadata(
+                lib_env.cmd_runner(), lib_env.report_processor, agent_name
+            ),
+            necessary_only,
+        )
+    )
+    lib_env.report_processor.report_list(report_list)
+    return ListCibResourceOperationDto(operations=operation_list)

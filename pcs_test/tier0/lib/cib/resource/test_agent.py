@@ -1,7 +1,6 @@
 from unittest import TestCase
 
-from pcs.common.interface.dto import from_dict
-from pcs.common.resource_agent_dto import ResourceAgentActionDto
+from pcs.common.pacemaker.resource.operations import CibResourceOperationDto
 from pcs.lib.cib.resource import agent
 from pcs.lib.resource_agent import (
     ResourceAgentAction,
@@ -90,44 +89,34 @@ class GetDefaultOperations(TestCase):
             actions=actions,
         )
 
+    @staticmethod
+    def op_fixture(name, interval, timeout):
+        return CibResourceOperationDto(
+            id="",
+            name=name,
+            interval=interval,
+            description=None,
+            start_delay=None,
+            interval_origin=None,
+            timeout=timeout,
+            enabled=None,
+            record_pending=None,
+            role=None,
+            on_fail=None,
+            meta_attributes=[],
+            instance_attributes=[],
+        )
+
     def test_select_only_actions_for_cib(self):
         self.assertEqual(
             agent.get_default_operations(
                 self.fixture_agent(self.fixture_actions)
             ),
             [
-                {
-                    "interval": None,
-                    "name": "custom1",
-                    "OCF_CHECK_LEVEL": None,
-                    "role": None,
-                    "start-delay": None,
-                    "timeout": "40s",
-                },
-                {
-                    "interval": "25s",
-                    "name": "custom2",
-                    "OCF_CHECK_LEVEL": None,
-                    "role": None,
-                    "start-delay": None,
-                    "timeout": "60s",
-                },
-                {
-                    "interval": "10s",
-                    "name": "monitor",
-                    "OCF_CHECK_LEVEL": None,
-                    "role": None,
-                    "start-delay": None,
-                    "timeout": "30s",
-                },
-                {
-                    "interval": "40s",
-                    "name": "start",
-                    "OCF_CHECK_LEVEL": None,
-                    "role": None,
-                    "start-delay": None,
-                    "timeout": None,
-                },
+                self.op_fixture("custom1", "0s", "40s"),
+                self.op_fixture("custom2", "25s", "60s"),
+                self.op_fixture("monitor", "10s", "30s"),
+                self.op_fixture("start", "40s", None),
             ],
         )
 
@@ -136,16 +125,7 @@ class GetDefaultOperations(TestCase):
             agent.get_default_operations(
                 self.fixture_stonith_agent(self.fixture_actions)
             ),
-            [
-                {
-                    "interval": "10s",
-                    "name": "monitor",
-                    "OCF_CHECK_LEVEL": None,
-                    "role": None,
-                    "start-delay": None,
-                    "timeout": "30s",
-                }
-            ],
+            [self.op_fixture("monitor", "10s", "30s")],
         )
 
     def test_select_only_necessary_actions_for_cib(self):
@@ -153,16 +133,7 @@ class GetDefaultOperations(TestCase):
             agent.get_default_operations(
                 self.fixture_agent(self.fixture_actions), necessary_only=True
             ),
-            [
-                {
-                    "interval": "10s",
-                    "name": "monitor",
-                    "OCF_CHECK_LEVEL": None,
-                    "role": None,
-                    "start-delay": None,
-                    "timeout": "30s",
-                }
-            ],
+            [self.op_fixture("monitor", "10s", "30s")],
         )
 
     def test_select_only_necessary_actions_for_cib_stonith(self):
@@ -171,16 +142,7 @@ class GetDefaultOperations(TestCase):
                 self.fixture_stonith_agent(self.fixture_actions),
                 necessary_only=True,
             ),
-            [
-                {
-                    "interval": "10s",
-                    "name": "monitor",
-                    "OCF_CHECK_LEVEL": None,
-                    "role": None,
-                    "start-delay": None,
-                    "timeout": "30s",
-                }
-            ],
+            [self.op_fixture("monitor", "10s", "30s")],
         )
 
     def test_complete_monitor(self):
@@ -189,16 +151,7 @@ class GetDefaultOperations(TestCase):
                 self.fixture_agent(self.fixture_actions_meta_only),
                 necessary_only=True,
             ),
-            [
-                {
-                    "interval": None,
-                    "name": "monitor",
-                    "OCF_CHECK_LEVEL": None,
-                    "role": None,
-                    "start-delay": None,
-                    "timeout": None,
-                }
-            ],
+            [self.op_fixture("monitor", "60s", None)],
         )
 
     def test_complete_monitor_stonith(self):
@@ -207,80 +160,5 @@ class GetDefaultOperations(TestCase):
                 self.fixture_stonith_agent(self.fixture_actions_meta_only),
                 necessary_only=True,
             ),
-            [
-                {
-                    "interval": None,
-                    "name": "monitor",
-                    "OCF_CHECK_LEVEL": None,
-                    "role": None,
-                    "start-delay": None,
-                    "timeout": None,
-                }
-            ],
-        )
-
-
-class ActionToOperation(TestCase):
-    @staticmethod
-    def _action_dict(action):
-        all_keys = {
-            "name": "",
-            "timeout": None,
-            "interval": None,
-            "role": None,
-            "start-delay": None,
-            "OCF_CHECK_LEVEL": None,
-        }
-        all_keys.update(action)
-        return all_keys
-
-    @staticmethod
-    def _action_dto(action):
-        all_keys = {
-            "name": "",
-            "timeout": None,
-            "interval": None,
-            "role": None,
-            "start-delay": None,
-            "depth": None,
-            "automatic": False,
-            "on_target": False,
-        }
-        all_keys.update(action)
-        return from_dict(ResourceAgentActionDto, all_keys)
-
-    def test_remove_depth_with_0(self):
-        self.assertEqual(
-            agent.action_to_operation(
-                self._action_dto(
-                    {"name": "monitor", "timeout": "20", "depth": "0"},
-                )
-            ),
-            self._action_dict({"name": "monitor", "timeout": "20"}),
-        )
-
-    def test_transform_depth_to_ocf_check_level(self):
-        self.assertEqual(
-            agent.action_to_operation(
-                self._action_dto(
-                    {"name": "monitor", "timeout": "20", "depth": "1"},
-                )
-            ),
-            self._action_dict(
-                {"name": "monitor", "timeout": "20", "OCF_CHECK_LEVEL": "1"}
-            ),
-        )
-
-    def test_remove_attributes_not_allowed_in_cib(self):
-        self.assertEqual(
-            agent.action_to_operation(
-                self._action_dto(
-                    {
-                        "name": "monitor",
-                        "on_target": True,
-                        "automatic": False,
-                    },
-                )
-            ),
-            self._action_dict({"name": "monitor"}),
+            [self.op_fixture("monitor", "60s", None)],
         )
