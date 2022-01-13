@@ -297,3 +297,16 @@ def get_agent_default_operations(
     )
     lib_env.report_processor.report_list(report_list)
     return ListCibResourceOperationDto(operations=operation_list)
+
+
+def get_structured_agent_name(
+    lib_env: LibraryEnvironment, agent_name: str
+) -> ResourceAgentNameDto:
+    # This is a temporary solution and should never be available via pcsd REST
+    # API. The code for splitting an agent name will be eventually moved to cli
+    # once all old commands that require this will be replaced and removed.
+    try:
+        return split_resource_agent_name(agent_name).to_dto()
+    except ResourceAgentError as e:
+        lib_env.report_processor.report(resource_agent_error_to_report_item(e))
+        raise LibraryError() from e

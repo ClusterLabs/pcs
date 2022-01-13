@@ -69,10 +69,7 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
 
     def fixture_description(self, advanced=False):
         advanced_params = """\
-              trace_ra: Set to 1 to turn on resource agent tracing (expect large output) The
-                        trace output will be saved to trace_file, if set, or by default to
-                        $HA_VARRUN/ra_trace/<type>/<id>.<action>.<timestamp> e.g.
-                        $HA_VARRUN/ra_trace/oracle/db.start.2012-11-27.08:37:08
+              trace_ra: Set to 1 to turn on resource agent tracing (expect large output) The trace output will be saved to trace_file, if set, or by default to $HA_VARRUN/ra_trace/<type>/<id>.<action>.<timestamp> e.g. $HA_VARRUN/ra_trace/oracle/db.start.2012-11-27.08:37:08
               trace_file: Path to a file to store resource agent tracing log
             """
         return outdent(
@@ -83,12 +80,8 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
 
             Resource options:
               state (unique): Location to store the resource state in.
-              yellow_limit (unique): Lower (!) limit of idle percentage to switch the health
-                                     attribute to yellow. I.e. the #health-cpu will go
-                                     yellow if the %idle of the CPU falls below 50%.
-              red_limit: Lower (!) limit of idle percentage to switch the health attribute
-                         to red. I.e. the #health-cpu will go red if the %idle of the CPU
-                         falls below 10%.
+              yellow_limit (unique): Lower (!) limit of idle percentage to switch the health attribute to yellow. I.e. the #health-cpu will go yellow if the %idle of the CPU falls below 50%.
+              red_limit: Lower (!) limit of idle percentage to switch the health attribute to red. I.e. the #health-cpu will go red if the %idle of the CPU falls below 10%.
 {0}
             Default operations:
               start: interval=0s timeout=10s
@@ -133,7 +126,7 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
             "resource describe nonexistent".split(),
             (
                 "Error: Unable to find agent 'nonexistent', try specifying"
-                " its full name\n" + ERRORS_HAVE_OCURRED
+                " its full name\n"
             ),
         )
 
@@ -143,7 +136,6 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
             (
                 "Error: Multiple agents match 'dummy', please specify full"
                 " name: 'ocf:heartbeat:Dummy' or 'ocf:pacemaker:Dummy'\n"
-                + ERRORS_HAVE_OCURRED
             ),
         )
 

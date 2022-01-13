@@ -21,7 +21,7 @@ from pcs.common.reports import (
     ReportItemList,
     ReportProcessor,
 )
-from pcs.common.resource_agent_dto import ResourceAgentNameDto
+from pcs.common.resource_agent.dto import ResourceAgentNameDto
 from pcs.lib.errors import LibraryError
 
 

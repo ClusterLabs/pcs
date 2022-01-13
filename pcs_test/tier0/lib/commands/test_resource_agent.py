@@ -11,7 +11,7 @@ from pcs.common.pacemaker.resource.operations import (
     ListCibResourceOperationDto,
 )
 from pcs.common.reports import codes as report_codes
-from pcs.common.resource_agent_dto import (
+from pcs.common.resource_agent.dto import (
     ResourceAgentActionDto,
     ResourceAgentMetadataDto,
     ResourceAgentNameDto,

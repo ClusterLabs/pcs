@@ -36,6 +36,7 @@ EXTRA_DIST		= \
 			  cli/common/printable_tree.py \
 			  cli/common/routing.py \
 			  cli/common/tools.py \
+			  cli/common/output.py \
 			  cli/constraint_colocation/command.py \
 			  cli/constraint_colocation/__init__.py \
 			  cli/constraint/command.py \
@@ -59,7 +60,9 @@ EXTRA_DIST		= \
 			  cli/reports/processor.py \
 			  cli/resource/__init__.py \
 			  cli/resource/parse_args.py \
+			  cli/resource/output.py \
 			  cli/resource/relations.py \
+			  cli/resource_agent.py \
 			  cli/routing/acl.py \
 			  cli/routing/alert.py \
 			  cli/routing/booth.py \
@@ -121,7 +124,9 @@ EXTRA_DIST		= \
 			  common/reports/messages.py \
 			  common/reports/processor.py \
 			  common/reports/types.py \
-			  common/resource_agent_dto.py \
+			  common/resource_agent/__init__.py \
+			  common/resource_agent/const.py \
+			  common/resource_agent/dto.py \
 			  common/services/common.py \
 			  common/services/drivers/__init__.py \
 			  common/services/drivers/systemd.py \

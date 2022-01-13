@@ -2,7 +2,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import AbstractSet, List, Mapping, NewType, Optional
 
-from pcs.common.resource_agent_dto import (
+from pcs.common.resource_agent.dto import (
     ResourceAgentActionDto,
     ResourceAgentMetadataDto,
     ResourceAgentParameterDto,
