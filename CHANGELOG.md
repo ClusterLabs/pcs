@@ -13,11 +13,14 @@
 - Make `ocf:linbit:drbd` agent pass OCF standard validation ([ghissue#441],
   [rhbz#2036633])
 - Multiple improvements of `pcs resource move` command ([rhbz#1996062])
+- Pcs no longer creates Pacemaker-1.x CIB when `-f` is used, so running `pcs
+  cluster cib-upgrade` manually is not needed ([rhbz#2022463])
 
 [ghissue#441]: https://github.com/ClusterLabs/pcs/issues/441
 [ghpull#431]: https://github.com/ClusterLabs/pcs/pull/431
 [rhbz#1996062]: https://bugzilla.redhat.com/show_bug.cgi?id=1996062
 [rhbz#2019836]: https://bugzilla.redhat.com/show_bug.cgi?id=2019836
+[rhbz#2022463]: https://bugzilla.redhat.com/show_bug.cgi?id=2022463
 [rhbz#2028902]: https://bugzilla.redhat.com/show_bug.cgi?id=2028902
 [rhbz#2033248]: https://bugzilla.redhat.com/show_bug.cgi?id=2033248
 [rhbz#2036633]: https://bugzilla.redhat.com/show_bug.cgi?id=2036633

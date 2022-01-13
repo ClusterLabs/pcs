@@ -1,8 +1,10 @@
+import os
 from unittest import TestCase
 
 from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.misc import (
     get_test_resource as rc,
+    get_tmp_dir,
     get_tmp_file,
     outdent,
     write_file_to_tmpfile,
@@ -19,7 +21,7 @@ class ParseArgvDashDash(TestCase, AssertPcsMixin):
     cmd = "constraint colocation add R1 with R2".split()
 
     def setUp(self):
-        self.temp_cib = get_tmp_file("tier1_misc")
+        self.temp_cib = get_tmp_file("tier1_misc_dashdash")
         write_file_to_tmpfile(rc("cib-empty.xml"), self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
         self.allowed_roles = format_list(const.PCMK_ROLES)
@@ -88,4 +90,25 @@ class ParseArgvDashDash(TestCase, AssertPcsMixin):
                 Error: invalid role value 'R2', allowed values are: {self.allowed_roles}
                 """
             ),
+        )
+
+
+class EmptyCibIsPcmk2Compatible(TestCase, AssertPcsMixin):
+    # This test verifies that a default empty CIB created by pcs when -f points
+    # to an empty file conforms to minimal schema version supported by
+    # pacemaker 2.0. If pcs prints a message that CIB schema has been upgraded,
+    # then the test fails and shows there is a bug. Bundle with promoted-max
+    # requires CIB compliant with schema 3.1, which was introduced in pacemaker
+    # 2.0.0.
+    def setUp(self):
+        self.cib_dir = get_tmp_dir("tier1_misc_empty_cib")
+        self.pcs_runner = PcsRunner(os.path.join(self.cib_dir.name, "cib.xml"))
+
+    def tearDown(self):
+        self.cib_dir.cleanup()
+
+    def test_success(self):
+        self.assert_pcs_success(
+            "resource bundle create b container docker image=my.img promoted-max=1".split(),
+            "",
         )
