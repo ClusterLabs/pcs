@@ -14,11 +14,15 @@
   [rhbz#2036633])
 - Multiple improvements of `pcs resource move --autodelete` command
   ([rhbz#1990784])
+- Pcs no longer creates Pacemaker-1.x CIB when `-f` is used, so running `pcs
+  cluster cib-upgrade` manually is not needed ([rhbz#2022463])
+
 
 [ghissue#441]: https://github.com/ClusterLabs/pcs/issues/441
 [ghpull#431]: https://github.com/ClusterLabs/pcs/pull/431
 [rhbz#1384485]: https://bugzilla.redhat.com/show_bug.cgi?id=1384485
 [rhbz#1990784]: https://bugzilla.redhat.com/show_bug.cgi?id=1990784
+[rhbz#2022463]: https://bugzilla.redhat.com/show_bug.cgi?id=2022463
 [rhbz#2028902]: https://bugzilla.redhat.com/show_bug.cgi?id=2028902
 [rhbz#2032997]: https://bugzilla.redhat.com/show_bug.cgi?id=2032997
 [rhbz#2036633]: https://bugzilla.redhat.com/show_bug.cgi?id=2036633
