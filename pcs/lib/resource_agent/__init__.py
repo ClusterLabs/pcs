@@ -1,4 +1,4 @@
-from pcs.common.resource_agent_dto import (
+from pcs.common.resource_agent.dto import (
     ListResourceAgentNameDto,
     ResourceAgentActionDto,
     ResourceAgentMetadataDto,
