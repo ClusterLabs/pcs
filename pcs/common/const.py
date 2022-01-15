@@ -3,6 +3,7 @@ from typing import NewType
 from pcs.common.tools import Version
 
 PcmkRoleType = NewType("PcmkRoleType", str)
+PcmkOnFailAction = NewType("PcmkOnFailAction", str)
 
 PCMK_ROLE_STARTED = PcmkRoleType("Started")
 PCMK_ROLE_STOPPED = PcmkRoleType("Stopped")
@@ -10,6 +11,14 @@ PCMK_ROLE_PROMOTED = PcmkRoleType("Promoted")
 PCMK_ROLE_UNPROMOTED = PcmkRoleType("Unpromoted")
 PCMK_ROLE_PROMOTED_LEGACY = PcmkRoleType("Master")
 PCMK_ROLE_UNPROMOTED_LEGACY = PcmkRoleType("Slave")
+PCMK_ON_FAIL_ACTION_IGNORE = PcmkOnFailAction("ignore")
+PCMK_ON_FAIL_ACTION_BLOCK = PcmkOnFailAction("block")
+PCMK_ON_FAIL_ACTION_DEMOTE = PcmkOnFailAction("demote")
+PCMK_ON_FAIL_ACTION_STOP = PcmkOnFailAction("stop")
+PCMK_ON_FAIL_ACTION_RESTART = PcmkOnFailAction("restart")
+PCMK_ON_FAIL_ACTION_STANDBY = PcmkOnFailAction("standby")
+PCMK_ON_FAIL_ACTION_FENCE = PcmkOnFailAction("fence")
+PCMK_ON_FAIL_ACTION_RESTART_CONTAINER = PcmkOnFailAction("restart-container")
 PCMK_ROLE_PROMOTED_PRIMARY = PCMK_ROLE_PROMOTED
 PCMK_ROLE_UNPROMOTED_PRIMARY = PCMK_ROLE_UNPROMOTED
 PCMK_ROLES_PROMOTED = (PCMK_ROLE_PROMOTED, PCMK_ROLE_PROMOTED_LEGACY)

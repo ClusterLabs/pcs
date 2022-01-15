@@ -1,4 +1,8 @@
 import json
+from typing import (
+    Any,
+    List,
+)
 
 from pcs import (
     resource,
@@ -12,6 +16,7 @@ from pcs.cli.reports.output import (
     error,
     print_to_stderr,
 )
+from pcs.cli.resource.output import format_resource_agent_metadata
 from pcs.cli.resource.parse_args import parse_create_simple as parse_create_args
 from pcs.common import reports
 from pcs.common.fencing_topology import (
@@ -19,6 +24,8 @@ from pcs.common.fencing_topology import (
     TARGET_TYPE_REGEXP,
     TARGET_TYPE_ATTRIBUTE,
 )
+
+from pcs.common.resource_agent.dto import ResourceAgentNameDto
 from pcs.common.str_tools import format_list, indent
 from pcs.lib.errors import LibraryError
 
@@ -88,7 +95,9 @@ def stonith_list_available(lib, argv, modifiers):
             print(name)
 
 
-def stonith_list_options(lib, argv, modifiers):
+def stonith_list_options(
+    lib: Any, argv: List[str], modifiers: parse_args.InputModifiers
+) -> None:
     """
     Options:
       * --full - show advanced options
@@ -96,13 +105,16 @@ def stonith_list_options(lib, argv, modifiers):
     modifiers.ensure_only_supported("--full")
     if len(argv) != 1:
         raise CmdLineInputError()
-    agent_name = argv[0]
-
+    agent_name = ResourceAgentNameDto("stonith", None, argv[0])
     print(
-        resource._format_agent_description(
-            lib.stonith_agent.describe_agent(agent_name),
-            stonith=True,
-            show_all=modifiers.get("--full"),
+        "\n".join(
+            format_resource_agent_metadata(
+                lib.resource_agent.get_agent_metadata(agent_name),
+                lib.resource_agent.get_agent_default_operations(
+                    agent_name
+                ).operations,
+                verbose=modifiers.is_specified("--full"),
+            )
         )
     )
 

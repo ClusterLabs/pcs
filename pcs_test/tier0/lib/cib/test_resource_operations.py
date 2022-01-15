@@ -1,10 +1,8 @@
-from functools import partial
 from unittest import mock, TestCase
 from lxml import etree
 
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal
-from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 from pcs_test.tools.misc import create_patcher
 
 from pcs.common import const
@@ -12,10 +10,30 @@ from pcs.common.reports import (
     codes as report_codes,
     ReportItemSeverity as severities,
 )
+from pcs.common.pacemaker.resource.operations import CibResourceOperationDto
 from pcs.lib.cib.resource import operations
 from pcs.lib.validate import ValuePair
 
 # pylint: disable=no-self-use
+
+
+def _operation_fixture(name, interval="", role=None):
+    return CibResourceOperationDto(
+        id="",
+        name=name,
+        interval=interval,
+        description=None,
+        start_delay=None,
+        interval_origin=None,
+        timeout=None,
+        enabled=None,
+        record_pending=None,
+        role=role,
+        on_fail=None,
+        meta_attributes=[],
+        instance_attributes=[],
+    )
+
 
 patch_operations = create_patcher("pcs.lib.cib.resource.operations")
 
@@ -58,8 +76,11 @@ class Prepare(TestCase):
             {"name": "Start"},
             {"name": "Monitor"},
         ]
-        default_operation_list = [{"name": "stop"}]
-        completed_default_operation_list = [{"name": "stop", "interval": "0s"}]
+        default_operation_list = [{"name": "stop", "interval": "10s"}]
+        completed_default_operation_list = [
+            {"name": "start", "interval": "0s"},
+            {"name": "monitor", "interval": "60s"},
+        ]
         allowed_operation_name_list = ["start", "stop", "monitor"]
         allow_invalid = True
 
@@ -89,19 +110,17 @@ class Prepare(TestCase):
             normalized_to_operations.return_value
         )
         complete_operations_options.assert_has_calls(
-            [
-                mock.call(normalized_to_operations.return_value),
-                mock.call(default_operation_list),
-            ]
+            [mock.call(normalized_to_operations.return_value)]
         )
         get_remaining_defaults.assert_called_once_with(
-            report_processor,
             normalized_to_operations.return_value,
-            completed_default_operation_list,
-            new_role_names_supported,
+            default_operation_list,
         )
-        report_processor.report_list.assert_called_once_with(
-            ["options_report", "different_interval_report"]
+        report_processor.report_list.assert_has_calls(
+            [
+                mock.call(["options_report", "different_interval_report"]),
+                mock.call([]),
+            ]
         )
 
 
@@ -148,47 +167,48 @@ class ValidateDifferentIntervals(TestCase):
 
 
 class MakeUniqueIntervals(TestCase):
-    def setUp(self):
-        # pylint: disable=protected-access
-        self.report_processor = MockLibraryReportProcessor()
-        self.run = partial(
-            operations._make_unique_intervals, self.report_processor
-        )
-
     def test_return_copy_input_when_no_interval_duplication(self):
         operation_list = [
-            {"name": "monitor", "interval": "10s"},
-            {"name": "monitor", "interval": "5s"},
-            {"name": "monitor"},
-            {"name": "monitor", "interval": ""},
-            {"name": "start", "interval": "5s"},
+            _operation_fixture("monitor", "10s"),
+            _operation_fixture("monitor", "5s"),
+            _operation_fixture("monitor"),
+            _operation_fixture("start", "5s"),
         ]
-        self.assertEqual(operation_list, self.run(operation_list))
+        (
+            report_list,
+            new_operation_list,
+        ) = operations.uniquify_operations_intervals(operation_list)
+        assert_report_item_list_equal(report_list, [])
+        self.assertEqual(operation_list, new_operation_list)
 
     def test_adopt_duplicit_values(self):
-        self.assertEqual(
-            self.run(
-                [
-                    {"name": "monitor", "interval": "60s"},
-                    {"name": "monitor", "interval": "1m"},
-                    {"name": "monitor", "interval": "5s"},
-                    {"name": "monitor", "interval": "6s"},
-                    {"name": "monitor", "interval": "5s"},
-                    {"name": "start", "interval": "5s"},
-                ]
-            ),
+        (
+            report_list,
+            new_operation_list,
+        ) = operations.uniquify_operations_intervals(
             [
-                {"name": "monitor", "interval": "60s"},
-                {"name": "monitor", "interval": "61"},
-                {"name": "monitor", "interval": "5s"},
-                {"name": "monitor", "interval": "6s"},
-                {"name": "monitor", "interval": "7"},
-                {"name": "start", "interval": "5s"},
+                _operation_fixture("monitor", "60s"),
+                _operation_fixture("monitor", "1m"),
+                _operation_fixture("monitor", "5s"),
+                _operation_fixture("monitor", "6s"),
+                _operation_fixture("monitor", "5s"),
+                _operation_fixture("start", "5s"),
+            ]
+        )
+        self.assertEqual(
+            new_operation_list,
+            [
+                _operation_fixture("monitor", "60s"),
+                _operation_fixture("monitor", "61"),
+                _operation_fixture("monitor", "5s"),
+                _operation_fixture("monitor", "6s"),
+                _operation_fixture("monitor", "7"),
+                _operation_fixture("start", "5s"),
             ],
         )
 
         assert_report_item_list_equal(
-            self.report_processor.report_item_list,
+            report_list,
             [
                 (
                     severities.WARNING,
@@ -212,18 +232,16 @@ class MakeUniqueIntervals(TestCase):
         )
 
     def test_keep_duplicit_values_when_are_not_valid_interval(self):
-        self.assertEqual(
-            self.run(
-                [
-                    {"name": "monitor", "interval": "some"},
-                    {"name": "monitor", "interval": "some"},
-                ]
-            ),
-            [
-                {"name": "monitor", "interval": "some"},
-                {"name": "monitor", "interval": "some"},
-            ],
-        )
+        operation_list = [
+            _operation_fixture("monitor", "some"),
+            _operation_fixture("monitor", "some"),
+        ]
+        (
+            report_list,
+            new_operation_list,
+        ) = operations.uniquify_operations_intervals(operation_list)
+        assert_report_item_list_equal(report_list, [])
+        self.assertEqual(new_operation_list, operation_list)
 
 
 class Normalize(TestCase):
@@ -336,16 +354,20 @@ class ValidateOperation(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="b",
                     option_name="on-fail",
-                    allowed_values=[
-                        "block",
-                        "demote",
-                        "fence",
-                        "ignore",
-                        "restart",
-                        "restart-container",
-                        "standby",
-                        "stop",
-                    ],
+                    allowed_values=tuple(
+                        sorted(
+                            [
+                                "block",
+                                "demote",
+                                "fence",
+                                "ignore",
+                                "restart",
+                                "restart-container",
+                                "standby",
+                                "stop",
+                            ]
+                        )
+                    ),
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
@@ -470,47 +492,21 @@ class ValidateOperation(TestCase):
         )
 
 
-@mock.patch("pcs.lib.cib.resource.operations._make_unique_intervals")
 class GetRemainingDefaults(TestCase):
-    def test_returns_remaining_operations(self, make_unique_intervals):
+    def test_success(self):
         # pylint: disable=protected-access
-        make_unique_intervals.side_effect = lambda report_processor, ops: ops
         self.assertEqual(
             operations._get_remaining_defaults(
-                report_processor=None,
                 operation_list=[{"name": "monitor"}],
                 default_operation_list=[
-                    {"name": "monitor"},
-                    {"name": "start", "role": const.PCMK_ROLE_PROMOTED},
-                    {"name": "stop", "role": const.PCMK_ROLE_UNPROMOTED_LEGACY},
+                    _operation_fixture("monitor"),
+                    _operation_fixture("start"),
+                    _operation_fixture("stop"),
                 ],
-                new_role_names_supported=False,
             ),
             [
-                dict(name="start", role=const.PCMK_ROLE_PROMOTED_LEGACY),
-                dict(name="stop", role=const.PCMK_ROLE_UNPROMOTED_LEGACY),
-            ],
-        )
-
-    def test_returns_remaining_operations_new_roles(
-        self, make_unique_intervals
-    ):
-        # pylint: disable=protected-access
-        make_unique_intervals.side_effect = lambda report_processor, ops: ops
-        self.assertEqual(
-            operations._get_remaining_defaults(
-                report_processor=None,
-                operation_list=[{"name": "monitor"}],
-                default_operation_list=[
-                    {"name": "monitor"},
-                    {"name": "start", "role": const.PCMK_ROLE_PROMOTED},
-                    {"name": "stop", "role": const.PCMK_ROLE_UNPROMOTED_LEGACY},
-                ],
-                new_role_names_supported=True,
-            ),
-            [
-                dict(name="start", role=const.PCMK_ROLE_PROMOTED_PRIMARY),
-                dict(name="stop", role=const.PCMK_ROLE_UNPROMOTED_PRIMARY),
+                _operation_fixture("start"),
+                _operation_fixture("stop"),
             ],
         )
 
