@@ -9,10 +9,10 @@ from pcs.common.pacemaker.nvset import (
     CibNvpairDto,
     CibNvsetDto,
 )
+from pcs.common.pacemaker.defaults import CibDefaultsDto
 from pcs.common.pacemaker.rule import CibRuleExpressionDto
 from pcs.common.reports import codes as report_codes
 from pcs.common.types import (
-    CibNvsetType,
     CibRuleInEffectStatus,
     CibRuleExpressionType,
 )
@@ -37,59 +37,61 @@ class DefaultsBaseMixin:
 
 @mock.patch("pcs.resource.print")
 class DefaultsConfigMixin(DefaultsBaseMixin):
-    dto_list = [
-        CibNvsetDto(
-            "my-meta_attributes",
-            CibNvsetType.META,
-            {},
-            CibRuleExpressionDto(
-                "my-meta-rule",
-                CibRuleExpressionType.RULE,
-                CibRuleInEffectStatus.EXPIRED,
-                {"boolean-op": "and", "score": "INFINITY"},
-                None,
-                None,
+    empty_dto = CibDefaultsDto(instance_attributes=[], meta_attributes=[])
+    dto_list = CibDefaultsDto(
+        meta_attributes=[
+            CibNvsetDto(
+                "my-meta_attributes",
+                {},
+                CibRuleExpressionDto(
+                    "my-meta-rule",
+                    CibRuleExpressionType.RULE,
+                    CibRuleInEffectStatus.EXPIRED,
+                    {"boolean-op": "and", "score": "INFINITY"},
+                    None,
+                    None,
+                    [
+                        CibRuleExpressionDto(
+                            "my-meta-rule-rsc",
+                            CibRuleExpressionType.RSC_EXPRESSION,
+                            CibRuleInEffectStatus.UNKNOWN,
+                            {
+                                "class": "ocf",
+                                "provider": "pacemaker",
+                                "type": "Dummy",
+                            },
+                            None,
+                            None,
+                            [],
+                            "resource ocf:pacemaker:Dummy",
+                        ),
+                    ],
+                    "resource ocf:pacemaker:Dummy",
+                ),
                 [
-                    CibRuleExpressionDto(
-                        "my-meta-rule-rsc",
-                        CibRuleExpressionType.RSC_EXPRESSION,
-                        CibRuleInEffectStatus.UNKNOWN,
-                        {
-                            "class": "ocf",
-                            "provider": "pacemaker",
-                            "type": "Dummy",
-                        },
-                        None,
-                        None,
-                        [],
-                        "resource ocf:pacemaker:Dummy",
-                    ),
+                    CibNvpairDto("my-id-pair1", "name1", "value1"),
+                    CibNvpairDto("my-id-pair2", "name2", "value2"),
                 ],
-                "resource ocf:pacemaker:Dummy",
             ),
-            [
-                CibNvpairDto("my-id-pair1", "name1", "value1"),
-                CibNvpairDto("my-id-pair2", "name2", "value2"),
-            ],
-        ),
-        CibNvsetDto(
-            "instance",
-            CibNvsetType.INSTANCE,
-            {},
-            None,
-            [CibNvpairDto("instance-pair", "inst", "ance")],
-        ),
-        CibNvsetDto(
-            "meta-plain",
-            CibNvsetType.META,
-            {"score": "123"},
-            None,
-            [CibNvpairDto("my-id-pair3", "name 1", "value 1")],
-        ),
-    ]
+            CibNvsetDto(
+                "meta-plain",
+                {"score": "123"},
+                None,
+                [CibNvpairDto("my-id-pair3", "name 1", "value 1")],
+            ),
+        ],
+        instance_attributes=[
+            CibNvsetDto(
+                "instance",
+                {},
+                None,
+                [CibNvpairDto("instance-pair", "inst", "ance")],
+            ),
+        ],
+    )
 
     def test_no_args(self, mock_print):
-        self.lib_command.return_value = []
+        self.lib_command.return_value = self.empty_dto
         self._call_cmd([])
         self.lib_command.assert_called_once_with(True)
         mock_print.assert_called_once_with("No defaults set")
@@ -102,13 +104,13 @@ class DefaultsConfigMixin(DefaultsBaseMixin):
         mock_print.assert_not_called()
 
     def test_full(self, mock_print):
-        self.lib_command.return_value = []
+        self.lib_command.return_value = self.empty_dto
         self._call_cmd([], {"full": True})
         self.lib_command.assert_called_once_with(True)
         mock_print.assert_called_once_with("No defaults set")
 
     def test_no_expire_check(self, mock_print):
-        self.lib_command.return_value = []
+        self.lib_command.return_value = self.empty_dto
         self._call_cmd([], {"no-expire-check": True})
         self.lib_command.assert_called_once_with(False)
         mock_print.assert_called_once_with("No defaults set")
@@ -125,8 +127,6 @@ class DefaultsConfigMixin(DefaultsBaseMixin):
                   name2=value2
                   Rule (expired): boolean-op=and score=INFINITY
                     Expression: resource ocf:pacemaker:Dummy
-                Attributes: instance
-                  inst=ance
                 Meta Attrs: meta-plain score=123
                   "name 1"="value 1"'''
             )
@@ -139,8 +139,6 @@ class DefaultsConfigMixin(DefaultsBaseMixin):
         mock_print.assert_called_once_with(
             dedent(
                 '''\
-                Attributes: instance
-                  inst=ance
                 Meta Attrs: meta-plain score=123
                   "name 1"="value 1"'''
             )
@@ -158,8 +156,6 @@ class DefaultsConfigMixin(DefaultsBaseMixin):
                   name2=value2
                   Rule (expired): boolean-op=and score=INFINITY (id:my-meta-rule)
                     Expression: resource ocf:pacemaker:Dummy (id:my-meta-rule-rsc)
-                Attributes: instance
-                  inst=ance
                 Meta Attrs: meta-plain score=123
                   "name 1"="value 1"'''
             )

@@ -6,9 +6,11 @@ from typing import (
     Mapping,
     Optional,
 )
+from lxml.etree import _Element
 
 from pcs.common import reports
 from pcs.common.pacemaker.nvset import CibNvsetDto
+from pcs.common.pacemaker.defaults import CibDefaultsDto
 from pcs.common.reports.item import ReportItem
 from pcs.common.tools import Version
 from pcs.lib.cib import (
@@ -30,6 +32,7 @@ from pcs.lib.cib.tools import (
 )
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
+from pcs.lib.external import CommandRunner
 from pcs.lib.pacemaker.live import has_rule_in_effect_status_tool
 
 
@@ -155,53 +158,81 @@ def _defaults_create(
 
 def resource_defaults_config(
     env: LibraryEnvironment, evaluate_expired: bool
-) -> List[CibNvsetDto]:
+) -> CibDefaultsDto:
     """
     List all resource defaults nvsets
 
     env --
     evaluate_expired -- also evaluate whether rules are expired or in effect
     """
-    return _defaults_config(env, sections.RSC_DEFAULTS, evaluate_expired)
+    cib = env.get_cib()
+    rule_evaluator = _get_rule_evaluator(
+        cib, env.cmd_runner(), env.report_processor, evaluate_expired
+    )
+    get_config = lambda tag: _defaults_config(
+        cib,
+        tag,
+        sections.RSC_DEFAULTS,
+        rule_evaluator,
+    )
+    return CibDefaultsDto(
+        instance_attributes=get_config(nvpair_multi.NVSET_INSTANCE),
+        meta_attributes=get_config(nvpair_multi.NVSET_META),
+    )
 
 
 def operation_defaults_config(
     env: LibraryEnvironment, evaluate_expired: bool
-) -> List[CibNvsetDto]:
+) -> CibDefaultsDto:
     """
     List all operation defaults nvsets
 
     env --
     evaluate_expired -- also evaluate whether rules are expired or in effect
     """
-    return _defaults_config(env, sections.OP_DEFAULTS, evaluate_expired)
+    cib = env.get_cib()
+    rule_evaluator = _get_rule_evaluator(
+        cib, env.cmd_runner(), env.report_processor, evaluate_expired
+    )
+    get_config = lambda tag: _defaults_config(
+        cib,
+        tag,
+        sections.OP_DEFAULTS,
+        rule_evaluator,
+    )
+    return CibDefaultsDto(
+        instance_attributes=get_config(nvpair_multi.NVSET_INSTANCE),
+        meta_attributes=get_config(nvpair_multi.NVSET_META),
+    )
+
+
+def _get_rule_evaluator(
+    cib: _Element,
+    runner: CommandRunner,
+    report_processor: reports.ReportProcessor,
+    evaluate_expired: bool,
+) -> RuleInEffectEval:
+    if evaluate_expired:
+        if has_rule_in_effect_status_tool():
+            return RuleInEffectEvalOneByOne(cib, runner)
+        report_processor.report(
+            ReportItem.warning(
+                reports.messages.RuleInEffectStatusDetectionNotSupported()
+            )
+        )
+    return RuleInEffectEvalDummy()
 
 
 def _defaults_config(
-    env: LibraryEnvironment, cib_section_name: str, evaluate_expired: bool
+    cib: _Element,
+    nvset_tag: nvpair_multi.NvsetTag,
+    cib_section_name: str,
+    rule_evaluator: RuleInEffectEval,
 ) -> List[CibNvsetDto]:
-    runner = env.cmd_runner()
-    cib = env.get_cib()
-
-    if evaluate_expired:
-        if has_rule_in_effect_status_tool():
-            in_effect_eval: RuleInEffectEval = RuleInEffectEvalOneByOne(
-                cib, runner
-            )
-        else:
-            in_effect_eval = RuleInEffectEvalDummy()
-            env.report_processor.report(
-                ReportItem.warning(
-                    reports.messages.RuleInEffectStatusDetectionNotSupported()
-                )
-            )
-    else:
-        in_effect_eval = RuleInEffectEvalDummy()
-
     return [
-        nvpair_multi.nvset_element_to_dto(nvset_el, in_effect_eval)
+        nvpair_multi.nvset_element_to_dto(nvset_el, rule_evaluator)
         for nvset_el in nvpair_multi.find_nvsets(
-            sections.get(cib, cib_section_name)
+            sections.get(cib, cib_section_name), nvset_tag
         )
     ]
 
@@ -327,7 +358,7 @@ def _defaults_update(
             return
 
         nvset_elements = nvpair_multi.find_nvsets(
-            sections.get(cib, cib_section_name)
+            sections.get(cib, cib_section_name), nvpair_multi.NVSET_META
         )
         if len(nvset_elements) > 1:
             env.report_processor.report(

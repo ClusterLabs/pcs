@@ -348,12 +348,14 @@ def load_module(env, middleware_factory, name):
             middleware.build(),
             {
                 "describe_agent": resource_agent.describe_agent,
+                "get_agent_default_operations": resource_agent.get_agent_default_operations,
                 "get_agent_metadata": resource_agent.get_agent_metadata,
                 "get_agents_list": resource_agent.get_agents_list,
-                "list_agents": resource_agent.list_agents,
+                "get_structured_agent_name": resource_agent.get_structured_agent_name,
                 "list_agents_for_standard_and_provider": (
                     resource_agent.list_agents_for_standard_and_provider
                 ),
+                "list_agents": resource_agent.list_agents,
                 "list_ocf_providers": resource_agent.list_ocf_providers,
                 "list_standards": resource_agent.list_standards,
             },

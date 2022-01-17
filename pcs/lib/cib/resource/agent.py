@@ -1,9 +1,18 @@
-from typing import Iterable, List
+from typing import (
+    Any,
+    Iterable,
+    List,
+    Mapping,
+)
 
 from pcs.common.interface.dto import to_dict
-from pcs.common.resource_agent_dto import ResourceAgentActionDto
+from pcs.common.const import PcmkRoleType
+from pcs.common.pacemaker.resource.operations import CibResourceOperationDto
+from pcs.common.pacemaker.nvset import (
+    CibNvpairDto,
+    CibNvsetDto,
+)
 from pcs.lib.resource_agent import ResourceAgentAction, ResourceAgentMetadata
-from pcs.lib.cib.resource.const import OPERATION_ATTRIBUTES
 from pcs.lib.cib.resource.types import ResourceOperationIn, ResourceOperationOut
 
 
@@ -46,11 +55,7 @@ def complete_operations_options(
 def get_default_operations(
     agent_metadata: ResourceAgentMetadata,
     necessary_only: bool = False,
-    keep_extra_keys: bool = False,
-) -> List[ResourceOperationOut]:
-    """
-    Return operations which should be put to a CIB resource on its creation
-    """
+) -> List[CibResourceOperationDto]:
     is_default_operation = (
         _is_default_operation_stonith
         if agent_metadata.name.is_stonith
@@ -76,37 +81,69 @@ def get_default_operations(
             )
 
     # transform actions to operation definitions
-    return [
-        action_to_operation(action.to_dto(), keep_extra_keys=keep_extra_keys)
-        for action in action_list
-    ]
+    return [action_to_operation_dto(action) for action in action_list]
 
 
-def action_to_operation(
-    action: ResourceAgentActionDto, keep_extra_keys: bool = False
-) -> ResourceOperationOut:
+def action_to_operation_dto(
+    action: ResourceAgentAction,
+) -> CibResourceOperationDto:
     """
     Transform agent action data to CIB operation data
     """
-    # This function bridges new agent framework, which provides data in
-    # dataclasses, to old resource create code and transforms new data
-    # structures to a format expected by the old code. When resource create is
-    # overhauled, this fuction is expected to be removed.
-    operation = {}
-    for key, value in to_dict(action).items():
-        if key == "depth":
-            # "None" values are not put to CIB, so this keeps the key in place
-            # while making sure it's not put in CIB. I'm not sure why depth ==
-            # 0 is treated like this, but I keep it in place so the behavior is
-            # the same as it has been for a long time. If pcs starts using
-            # depth / OCF_CHECK_LEVEL or there is other demand for it, consider
-            # changing this so value of "0" is put in CIB.
-            operation["OCF_CHECK_LEVEL"] = None if value == "0" else value
-        elif key == "start_delay":
-            operation["start-delay"] = value
-        elif key in OPERATION_ATTRIBUTES or keep_extra_keys:
-            operation[key] = value
-    return operation
+    instance_attributes = []
+    if action.depth not in (None, "0"):
+        instance_attributes = [
+            CibNvsetDto(
+                id="",
+                options={},
+                rule=None,
+                nvpairs=[
+                    CibNvpairDto(
+                        id="", name="OCF_CHECK_LEVEL", value=str(action.depth)
+                    )
+                ],
+            )
+        ]
+    return CibResourceOperationDto(
+        id="",
+        name=action.name,
+        interval=(
+            action.interval
+            if action.interval
+            else get_default_operation_interval(action.name)
+        ),
+        description=None,
+        start_delay=action.start_delay,
+        interval_origin=None,
+        timeout=action.timeout,
+        enabled=None,
+        record_pending=None,
+        role=PcmkRoleType(action.role) if action.role else None,
+        on_fail=None,
+        meta_attributes=[],
+        instance_attributes=instance_attributes,
+    )
+
+
+def operation_dto_to_legacy_dict(
+    operation: CibResourceOperationDto,
+    defaults: Mapping[str, Any],
+) -> ResourceOperationOut:
+    operation_dict = dict(defaults)
+    operation_dict.update(
+        {
+            key: value
+            for key, value in to_dict(operation).items()
+            if key in ("name", "timeout", "interval", "role")
+        }
+    )
+    operation_dict["start-delay"] = operation.start_delay
+    operation_dict["OCF_CHECK_LEVEL"] = None
+    for nvset in operation.instance_attributes:
+        for nvpair in nvset.nvpairs:
+            if nvpair.name == "OCF_CHECK_LEVEL":
+                operation_dict["OCF_CHECK_LEVEL"] = nvpair.value
+    return operation_dict
 
 
 def _is_default_operation_resource(action: ResourceAgentAction) -> bool:

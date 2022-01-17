@@ -19,6 +19,8 @@ from pcs.common import (
     const,
     pacemaker,
 )
+from pcs.common.pacemaker.defaults import CibDefaultsDto
+from pcs.common.resource_agent.dto import ResourceAgentNameDto
 from pcs.common.str_tools import format_list
 from pcs.settings import (
     pacemaker_wait_timeout_status as PACEMAKER_WAIT_TIMEOUT_STATUS,
@@ -42,6 +44,8 @@ from pcs.cli.resource.parse_args import (
     parse_clone as parse_clone_args,
     parse_create as parse_create_args,
 )
+from pcs.cli.resource.output import format_resource_agent_metadata
+from pcs.cli.resource_agent import find_single_agent
 from pcs.common import reports
 from pcs.common.str_tools import (
     indent,
@@ -181,7 +185,7 @@ def resource_op_defaults_set_create_cmd(
 
 
 def _defaults_config_cmd(
-    lib_command: Callable[..., Any],
+    lib_command: Callable[[bool], CibDefaultsDto],
     argv: Sequence[str],
     modifiers: InputModifiers,
 ) -> None:
@@ -200,7 +204,10 @@ def _defaults_config_cmd(
     print(
         "\n".join(
             nvset_dto_list_to_lines(
-                lib_command(not modifiers.get("--no-expire-check")),
+                lib_command(
+                    not modifiers.get("--no-expire-check")
+                ).meta_attributes,
+                nvset_label="Meta Attrs",
                 with_ids=cast(bool, modifiers.get("--full")),
                 include_expired=cast(bool, modifiers.get("--all")),
                 text_if_empty="No defaults set",
@@ -492,7 +499,9 @@ def resource_list_available(lib, argv, modifiers):
             print(name)
 
 
-def resource_list_options(lib, argv, modifiers):
+def resource_list_options(
+    lib: Any, argv: List[str], modifiers: InputModifiers
+) -> None:
     """
     Options:
       * --full - show advanced
@@ -500,132 +509,28 @@ def resource_list_options(lib, argv, modifiers):
     modifiers.ensure_only_supported("--full")
     if len(argv) != 1:
         raise CmdLineInputError()
-    agent_name = argv[0]
 
+    agent_name_str = argv[0]
+    agent_name: ResourceAgentNameDto
+    if ":" in agent_name_str:
+        agent_name = lib.resource_agent.get_structured_agent_name(
+            agent_name_str
+        )
+    else:
+        agent_name = find_single_agent(
+            lib.resource_agent.get_agents_list().names, agent_name_str
+        )
     print(
-        _format_agent_description(
-            lib.resource_agent.describe_agent(agent_name),
-            show_all=modifiers.get("--full"),
+        "\n".join(
+            format_resource_agent_metadata(
+                lib.resource_agent.get_agent_metadata(agent_name),
+                lib.resource_agent.get_agent_default_operations(
+                    agent_name
+                ).operations,
+                verbose=modifiers.is_specified("--full"),
+            )
         )
     )
-
-
-def _format_agent_description(description, stonith=False, show_all=False):
-    """
-    Commandline options: no options
-    """
-    output = []
-
-    if description.get("name"):
-        name = description["name"]
-        # Previously, "stonith:" prefix was not returned from functions
-        # providing stonith agents description. When these functions got
-        # overhauled for implementing OCF 1.1 support, code for stonith agents
-        # got unified with code for resource agents. As a result, a full name
-        # of an agent is now returned in all cases. So we strip the "stonith:"
-        # prefix to get the same behavior as before.
-        if name.startswith("stonith:"):
-            name = name[len("stonith:") :]
-        if description.get("shortdesc"):
-            output.append(
-                "{0} - {1}".format(
-                    name,
-                    _format_desc(len(name + " - "), description["shortdesc"]),
-                )
-            )
-        else:
-            output.append(name)
-    elif description.get("shortdesc"):
-        output.append(description["shortdesc"])
-
-    if description.get("longdesc"):
-        output.append("")
-        output.append(description["longdesc"])
-
-    if description.get("parameters"):
-        output_params = []
-        for param in description["parameters"]:
-            # Do not show advanced options, for exmaple
-            # pcmk_(reboot|off|list|monitor|status)_(action|timeout|retries)
-            # for stonith agents
-            if not show_all and param.get("advanced", False):
-                continue
-            if not show_all and param.get("deprecated", False):
-                continue
-            param_deprecated = param.get("deprecated", False)
-            param_deprecated_by = param.get("deprecated_by", [])
-
-            param_title_parts = [param.get("name")]
-            if show_all and param_deprecated and not param_deprecated_by:
-                param_title_parts.append("(deprecated)")
-            if show_all and param_deprecated_by:
-                param_title_parts.append(
-                    "(deprecated by {0})".format(", ".join(param_deprecated_by))
-                )
-            if param.get("required"):
-                param_title_parts.append("(required)")
-            if param.get("unique_group") is not None:
-                param_title_parts.append(
-                    "(unique)"
-                    if param["unique_group"].startswith(
-                        lib_ra.const.DEFAULT_UNIQUE_GROUP_PREFIX
-                    )
-                    else "(unique group: {})".format(param["unique_group"])
-                )
-            param_title = " ".join(param_title_parts)
-
-            param_longdesc = param.get("longdesc", "")
-            param_shortdesc = param.get("shortdesc", "")
-            param_desc = None
-            if param_longdesc:
-                param_desc = param_longdesc.replace("\n", " ")
-            if not param_desc and param_shortdesc:
-                param_desc = param_shortdesc.replace("\n", " ")
-            if not param_desc:
-                param_desc = "No description available"
-            if param.get("deprecated_desc"):
-                param_desc += " DEPRECATED: " + param["deprecated_desc"]
-
-            output_params.append(
-                "  {0}: {1}".format(
-                    param_title, _format_desc(len(param_title) + 4, param_desc)
-                )
-            )
-        if output_params:
-            output.append("")
-            if stonith:
-                output.append("Stonith options:")
-            else:
-                output.append("Resource options:")
-            output.extend(output_params)
-
-    if description.get("default_actions"):
-        output_actions = []
-        for action in description["default_actions"]:
-            parts = ["  {0}:".format(action.get("name", ""))]
-            parts.extend(
-                [
-                    "{0}={1}".format(name, value)
-                    for name, value in sorted(action.items())
-                    # Previously, keys "automatic" and "on_target" were not
-                    # returned from functions providing agents description.
-                    # Sice these functions got overhauled for implementing OCF
-                    # 1.1 support, the complete structure of metadata is being
-                    # returned. So we remove the additional keys (which are not
-                    # part of a CIB operation anyway) to get the same behavior
-                    # as before. If there is a request to display those keys,
-                    # we can do so.
-                    if name not in {"name", "automatic", "on_target"}
-                    and value is not None
-                ]
-            )
-            output_actions.append(" ".join(parts))
-        if output_actions:
-            output.append("")
-            output.append("Default operations:")
-            output.extend(output_actions)
-
-    return "\n".join(output)
 
 
 # Return the string formatted with a line length of terminal width  and indented
