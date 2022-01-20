@@ -1,20 +1,22 @@
 ## PCS - Pacemaker/Corosync Configuration System
 
-Pcs is a Corosync and Pacemaker configuration tool. It permits users to
-easily view, modify and create Pacemaker based clusters. Pcs contains pcsd, a
-pcs daemon, which operates as a remote server for pcs.
+Pcs is a Corosync and Pacemaker configuration tool. It permits users to easily
+view, modify and create Pacemaker based clusters. Pcs contains pcsd, a pcs
+daemon, which operates as a remote server for pcs.
 
 ---
 
 ### Pcs Versions
 
 There are three pcs branches:
-* master
+* main
   * This is where pcs-0.11 lives.
   * Clusters running Pacemaker 2.1+ on top of Corosync 3.x are supported.
   * The main development happens here.
 * pcs-0.10
-  * Clusters running Pacemaker 2.0+ on top of Corosync 3.x are supported.
+  * Clusters running Pacemaker 2.0 on top of Corosync 3.x are supported.
+  * Pacemaker 2.1 is supported, if it is compiled with `--enable-compat-2.0`
+    option.
   * This branch is in maintenance mode - bugs are being fixed but only a subset
     of new features lands here.
 * pcs-0.9
@@ -91,9 +93,10 @@ systemctl enable pcsd
 ### Packages
 
 Currently this is built into Fedora, RHEL and its clones and Debian and its
-derivates.
+derivates. It is likely that other Linux distributions also contain pcs
+packages.
 * [Fedora package git repositories](https://src.fedoraproject.org/rpms/pcs)
-* [Current Fedora .spec](https://src.fedoraproject.org/rpms/pcs/blob/master/f/pcs.spec)
+* [Current Fedora .spec](https://src.fedoraproject.org/rpms/pcs/blob/rawhide/f/pcs.spec)
 * [Debian-HA project home page](https://wiki.debian.org/Debian-HA)
 
 ---
@@ -151,7 +154,7 @@ derivates.
 [ClusterLabs website](https://clusterlabs.org) is an excellent place to learn
 more about Pacemaker clusters.
 * [ClusterLabs quick start](https://clusterlabs.org/quickstart.html)
-* [Clusters from Scratch](https://clusterlabs.org/pacemaker/doc/en-US/Pacemaker/2.0/html/Clusters_from_Scratch/index.html)
+* [Clusters from Scratch](https://clusterlabs.org/pacemaker/doc/2.1/Clusters_from_Scratch/html/)
 * [ClusterLabs documentation page](https://clusterlabs.org/pacemaker/doc/)
 
 ---
@@ -161,5 +164,5 @@ If you have any bug reports or feature requests please feel free to open a
 github issue on the pcs project.
 
 Alternatively you can use ClusterLabs
-[users mailinglist](https://oss.clusterlabs.org/mailman/listinfo/users)
+[users mailinglist](https://lists.clusterlabs.org/mailman/listinfo/users)
 which is also a great place to ask Pacemaker clusters related questions.
