@@ -66,7 +66,7 @@ def export_attributes(
     result = {str(key): str(value) for key, value in element.attrib.items()}
     if not with_id:
         result.pop("id", None)
-    for role_name in ("role", "rsc-role"):
+    for role_name in ("role", "rsc-role", "with-rsc-role"):
         if role_name in result:
             result[role_name] = pacemaker.role.get_value_primary(
                 const.PcmkRoleType(result[role_name].capitalize())
