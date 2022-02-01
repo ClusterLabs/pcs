@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.11.2] - 2022-02-01
 
 ### Fixed
 - Pcs was not automatically enabling corosync-qdevice when adding a quorum
