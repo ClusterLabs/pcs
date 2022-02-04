@@ -3789,9 +3789,9 @@ class AgentNameGuessFoundNone(ReportItemMessage):
 
 
 @dataclass(frozen=True)
-class AgentImplementsUnsupportedOcfVersion(ReportItemMessage):
+class AgentImplementsUnsupportedOcfVersionAssumedVersion(ReportItemMessage):
     """
-    Specified agent implements OCF version not supported by pcs
+    Specified agent implements OCF version not supported by pcs, assumed OCF 1.0
 
     agent -- name of the agent
     ocf_version -- OCF version implemented by the agent
@@ -3801,7 +3801,8 @@ class AgentImplementsUnsupportedOcfVersion(ReportItemMessage):
     agent: str
     ocf_version: str
     supported_versions: List[str]
-    _code = codes.AGENT_IMPLEMENTS_UNSUPPORTED_OCF_VERSION
+    assumed_version: str
+    _code = codes.AGENT_IMPLEMENTS_UNSUPPORTED_OCF_VERSION_ASSUMED_VERSION
 
     @property
     def message(self) -> str:
@@ -3809,9 +3810,9 @@ class AgentImplementsUnsupportedOcfVersion(ReportItemMessage):
         _is = format_plural(self.supported_versions, "is")
         _version_list = format_list(self.supported_versions)
         return (
-            f"Unable to process agent '{self.agent}' as it implements "
-            f"unsupported OCF version '{self.ocf_version}', supported "
-            f"{_version} {_is}: {_version_list}"
+            f"Agent '{self.agent}' implements unsupported OCF version "
+            f"'{self.ocf_version}', supported {_version} {_is}: "
+            f"{_version_list}; assumed version '{self.assumed_version}'"
         )
 
 

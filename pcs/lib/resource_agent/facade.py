@@ -188,18 +188,32 @@ class ResourceAgentFacadeFactory:
         self._fenced_metadata = None
 
     def facade_from_parsed_name(
-        self, name: ResourceAgentName
+        self, name: ResourceAgentName, report_warnings=True
     ) -> ResourceAgentFacade:
         """
         Create ResourceAgentFacade based on specified agent name
 
         name -- agent name to get a facade for
         """
-        return self._facade_from_metadata(
-            ocf_version_to_ocf_unified(
-                parse_metadata(name, load_metadata(self._runner, name))
-            )
+        metadata, raw_ocf_version = parse_metadata(
+            name,
+            load_metadata(self._runner, name),
         )
+        if (
+            report_warnings
+            and raw_ocf_version not in const.SUPPORTED_OCF_VERSIONS
+        ):
+            self._report_processor.report(
+                reports.ReportItem.warning(
+                    reports.messages.AgentImplementsUnsupportedOcfVersionAssumedVersion(
+                        name.full_name,
+                        raw_ocf_version,
+                        sorted(const.SUPPORTED_OCF_VERSIONS),
+                        const.OCF_1_0,
+                    )
+                )
+            )
+        return self._facade_from_metadata(ocf_version_to_ocf_unified(metadata))
 
     def void_facade_from_parsed_name(
         self, name: ResourceAgentName
@@ -232,15 +246,12 @@ class ResourceAgentFacadeFactory:
                 const.FAKE_AGENT_STANDARD, None, const.PACEMAKER_FENCED
             )
             try:
+                metadata, _ = parse_metadata(
+                    agent_name,
+                    load_fake_agent_metadata(self._runner, agent_name.type),
+                )
                 self._fenced_metadata = ocf_unified_to_pcs(
-                    ocf_version_to_ocf_unified(
-                        parse_metadata(
-                            agent_name,
-                            load_fake_agent_metadata(
-                                self._runner, agent_name.type
-                            ),
-                        )
-                    )
+                    ocf_version_to_ocf_unified(metadata)
                 )
             except ResourceAgentError as e:
                 # If pcs is unable to load fenced metadata, cache an empty

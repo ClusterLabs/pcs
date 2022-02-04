@@ -84,7 +84,6 @@ from pcs.lib.resource_agent import (
     ResourceAgentName,
     split_resource_agent_name,
     UnableToGetAgentMetadata,
-    UnsupportedOcfVersion,
 )
 from pcs.lib.tools import get_tmp_cib
 from pcs.lib.validate import ValueTimeInterval
@@ -162,7 +161,7 @@ def _get_agent_facade(
             else find_one_resource_agent_by_type(runner, report_processor, name)
         )
         return factory.facade_from_parsed_name(split_name)
-    except (UnableToGetAgentMetadata, UnsupportedOcfVersion) as e:
+    except UnableToGetAgentMetadata as e:
         if allow_absent_agent:
             report_processor.report(
                 resource_agent_error_to_report_item(

@@ -12,7 +12,6 @@ from .error import (
     ResourceAgentError,
     resource_agent_error_to_report_item,
     UnableToGetAgentMetadata,
-    UnsupportedOcfVersion,
 )
 from .facade import ResourceAgentFacade, ResourceAgentFacadeFactory
 from .list import (

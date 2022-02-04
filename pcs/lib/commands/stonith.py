@@ -45,7 +45,6 @@ from pcs.lib.resource_agent import (
     ResourceAgentFacadeFactory,
     ResourceAgentName,
     UnableToGetAgentMetadata,
-    UnsupportedOcfVersion,
 )
 from pcs.lib.validate import validate_add_remove_items
 from pcs.lib.xml_tools import get_root
@@ -62,7 +61,7 @@ def _get_agent_facade(
             raise InvalidResourceAgentName(name)
         full_name = ResourceAgentName("stonith", None, name)
         return factory.facade_from_parsed_name(full_name)
-    except (UnableToGetAgentMetadata, UnsupportedOcfVersion) as e:
+    except UnableToGetAgentMetadata as e:
         if allow_absent_agent:
             report_processor.report(
                 resource_agent_error_to_report_item(

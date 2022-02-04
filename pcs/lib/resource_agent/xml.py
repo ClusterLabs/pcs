@@ -8,7 +8,7 @@ from pcs.common.tools import xml_fromstring
 from pcs.lib.external import CommandRunner
 
 from . import const
-from .error import UnableToGetAgentMetadata, UnsupportedOcfVersion
+from .error import UnableToGetAgentMetadata
 from .types import (
     FakeAgentName,
     ResourceAgentActionOcf1_0,
@@ -137,8 +137,11 @@ def load_fake_agent_metadata(
 
 
 def parse_metadata(
-    name: ResourceAgentName, metadata: _Element
-) -> Union[ResourceAgentMetadataOcf1_0, ResourceAgentMetadataOcf1_1]:
+    name: ResourceAgentName,
+    metadata: _Element,
+) -> Tuple[
+    Union[ResourceAgentMetadataOcf1_0, ResourceAgentMetadataOcf1_1], str
+]:
     """
     Parse XML metadata to a dataclass
 
@@ -146,11 +149,9 @@ def parse_metadata(
     metadata -- metadata XML document
     """
     ocf_version = _get_ocf_version(metadata)
-    if ocf_version == const.OCF_1_0:
-        return _parse_agent_1_0(name, metadata)
     if ocf_version == const.OCF_1_1:
-        return _parse_agent_1_1(name, metadata)
-    raise UnsupportedOcfVersion(name.full_name, ocf_version)
+        return _parse_agent_1_1(name, metadata), ocf_version
+    return _parse_agent_1_0(name, metadata), ocf_version
 
 
 def _parse_agent_1_0(

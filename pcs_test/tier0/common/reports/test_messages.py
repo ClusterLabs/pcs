@@ -2833,22 +2833,22 @@ class AgentNameGuessFoundNone(NameBuildTest):
         )
 
 
-class AgentImplementsUnsupportedOcfVersion(NameBuildTest):
+class AgentImplementsUnsupportedOcfVersionAssumedVersion(NameBuildTest):
     def test_singular(self):
         self.assert_message_from_report(
-            "Unable to process agent 'agent-name' as it implements unsupported "
-            "OCF version 'ocf-2.3', supported version is: 'v1'",
-            reports.AgentImplementsUnsupportedOcfVersion(
-                "agent-name", "ocf-2.3", ["v1"]
+            "Agent 'agent-name' implements unsupported OCF version 'ocf-2.3', "
+            "supported version is: 'v1'; assumed version 'v1'",
+            reports.AgentImplementsUnsupportedOcfVersionAssumedVersion(
+                "agent-name", "ocf-2.3", ["v1"], "v1"
             ),
         )
 
     def test_plural(self):
         self.assert_message_from_report(
-            "Unable to process agent 'agent-name' as it implements unsupported "
-            "OCF version 'ocf-2.3', supported versions are: 'v1', 'v2', 'v3'",
-            reports.AgentImplementsUnsupportedOcfVersion(
-                "agent-name", "ocf-2.3", ["v1", "v2", "v3"]
+            "Agent 'agent-name' implements unsupported OCF version 'ocf-2.3', "
+            "supported versions are: 'v1', 'v2', 'v3'; assumed version 'v1'",
+            reports.AgentImplementsUnsupportedOcfVersionAssumedVersion(
+                "agent-name", "ocf-2.3", ["v1", "v2", "v3"], "v1"
             ),
         )
 

@@ -351,6 +351,7 @@ class LoadFakeAgentMetadata(TestCase):
 class ParseOcfToolsMixin:
     agent_name = ra.ResourceAgentName("ocf", "pacemaker", "Dummy")
     ocf_version = None
+    parsed_ocf_version = None
 
     def parse(self, xml, agent_name=None):
         agent_name = agent_name or self.agent_name
@@ -383,19 +384,17 @@ class ParseOcfToolsMixin:
             version_el.text = ocf_version
         return etree_to_str(dom)
 
-
-class ParseOcfGeneric(ParseOcfToolsMixin, TestCase):
-    def test_unsupported_ocf_version(self):
-        with self.assertRaises(ra.UnsupportedOcfVersion) as cm:
-            self.parse(self.xml("""<resource-agent/>""", ocf_version="1.2"))
-        self.assertEqual(cm.exception.agent_name, self.agent_name.full_name)
-        self.assertEqual(cm.exception.ocf_version, "1.2")
+    def assert_parse_result(self, xml, metadata):
+        self.assertEqual(
+            self.parse(xml),
+            (metadata, self.parsed_ocf_version or self.ocf_version),
+        )
 
 
 class ParseOcf10BaseMixin(ParseOcfToolsMixin):
     def test_empty_agent(self):
-        self.assertEqual(
-            self.parse(self.xml("""<resource-agent/>""")),
+        self.assert_parse_result(
+            self.xml("""<resource-agent/>"""),
             ResourceAgentMetadataOcf1_0(
                 self.agent_name,
                 shortdesc=None,
@@ -406,16 +405,14 @@ class ParseOcf10BaseMixin(ParseOcfToolsMixin):
         )
 
     def test_desc_element(self):
-        self.assertEqual(
-            self.parse(
-                self.xml(
-                    """
+        self.assert_parse_result(
+            self.xml(
+                """
                         <resource-agent>
                             <shortdesc>This is a shortdesc</shortdesc>
                             <longdesc>This is a longdesc</longdesc>
                         </resource-agent>
                     """
-                )
             ),
             ResourceAgentMetadataOcf1_0(
                 self.agent_name,
@@ -427,16 +424,14 @@ class ParseOcf10BaseMixin(ParseOcfToolsMixin):
         )
 
     def test_desc_element_empty(self):
-        self.assertEqual(
-            self.parse(
-                self.xml(
-                    """
+        self.assert_parse_result(
+            self.xml(
+                """
                         <resource-agent>
                             <longdesc/>
                             <shortdesc/>
                         </resource-agent>
                     """
-                )
             ),
             ResourceAgentMetadataOcf1_0(
                 self.agent_name,
@@ -448,15 +443,13 @@ class ParseOcf10BaseMixin(ParseOcfToolsMixin):
         )
 
     def test_desc_attribute(self):
-        self.assertEqual(
-            self.parse(
-                self.xml(
-                    """
+        self.assert_parse_result(
+            self.xml(
+                """
                         <resource-agent shortdesc="This is a shortdesc">
                             <longdesc></longdesc>
                         </resource-agent>
                     """
-                )
             ),
             ResourceAgentMetadataOcf1_0(
                 self.agent_name,
@@ -468,13 +461,11 @@ class ParseOcf10BaseMixin(ParseOcfToolsMixin):
         )
 
     def test_desc_attribute_empty(self):
-        self.assertEqual(
-            self.parse(
-                self.xml(
-                    """
+        self.assert_parse_result(
+            self.xml(
+                """
                         <resource-agent shortdesc=""/>
                     """
-                )
             ),
             ResourceAgentMetadataOcf1_0(
                 self.agent_name,
@@ -486,15 +477,13 @@ class ParseOcf10BaseMixin(ParseOcfToolsMixin):
         )
 
     def test_desc_element_and_attribute(self):
-        self.assertEqual(
-            self.parse(
-                self.xml(
-                    """
+        self.assert_parse_result(
+            self.xml(
+                """
                         <resource-agent shortdesc="shortdesc attribute">
                             <shortdesc>shortdesc element</shortdesc>
                         </resource-agent>
                     """
-                )
             ),
             ResourceAgentMetadataOcf1_0(
                 self.agent_name,
@@ -506,15 +495,13 @@ class ParseOcf10BaseMixin(ParseOcfToolsMixin):
         )
 
     def test_desc_element_empty_and_attribute(self):
-        self.assertEqual(
-            self.parse(
-                self.xml(
-                    """
+        self.assert_parse_result(
+            self.xml(
+                """
                         <resource-agent shortdesc="shortdesc attribute">
                             <shortdesc></shortdesc>
                         </resource-agent>
                     """
-                )
             ),
             ResourceAgentMetadataOcf1_0(
                 self.agent_name,
@@ -526,15 +513,13 @@ class ParseOcf10BaseMixin(ParseOcfToolsMixin):
         )
 
     def test_desc_element_empty_and_attribute_empty(self):
-        self.assertEqual(
-            self.parse(
-                self.xml(
-                    """
+        self.assert_parse_result(
+            self.xml(
+                """
                         <resource-agent shortdesc="">
                             <shortdesc></shortdesc>
                         </resource-agent>
                     """
-                )
             ),
             ResourceAgentMetadataOcf1_0(
                 self.agent_name,
@@ -546,15 +531,13 @@ class ParseOcf10BaseMixin(ParseOcfToolsMixin):
         )
 
     def test_parameters_empty_list(self):
-        self.assertEqual(
-            self.parse(
-                self.xml(
-                    """
+        self.assert_parse_result(
+            self.xml(
+                """
                         <resource-agent>
                             <parameters/>
                         </resource-agent>
                     """
-                )
             ),
             ResourceAgentMetadataOcf1_0(
                 self.agent_name,
@@ -581,17 +564,15 @@ class ParseOcf10BaseMixin(ParseOcfToolsMixin):
             )
 
     def test_parameters_minimal(self):
-        self.assertEqual(
-            self.parse(
-                self.xml(
-                    """
+        self.assert_parse_result(
+            self.xml(
+                """
                         <resource-agent>
                             <parameters>
                                 <parameter name="a_parameter"/>
                             </parameters>
                         </resource-agent>
                     """
-                )
             ),
             ResourceAgentMetadataOcf1_0(
                 self.agent_name,
@@ -616,10 +597,9 @@ class ParseOcf10BaseMixin(ParseOcfToolsMixin):
         )
 
     def test_parameters_all_settings(self):
-        self.assertEqual(
-            self.parse(
-                self.xml(
-                    """
+        self.assert_parse_result(
+            self.xml(
+                """
                         <resource-agent>
                             <parameters>
                                 <parameter name="a_parameter" required="1"
@@ -632,7 +612,6 @@ class ParseOcf10BaseMixin(ParseOcfToolsMixin):
                             </parameters>
                         </resource-agent>
                     """
-                )
             ),
             ResourceAgentMetadataOcf1_0(
                 self.agent_name,
@@ -657,10 +636,9 @@ class ParseOcf10BaseMixin(ParseOcfToolsMixin):
         )
 
     def test_parameters_content(self):
-        self.assertEqual(
-            self.parse(
-                self.xml(
-                    """
+        self.assert_parse_result(
+            self.xml(
+                """
                         <resource-agent>
                             <parameters>
                                 <parameter name="with_type">
@@ -676,7 +654,6 @@ class ParseOcf10BaseMixin(ParseOcfToolsMixin):
                             </parameters>
                         </resource-agent>
                     """
-                )
             ),
             ResourceAgentMetadataOcf1_0(
                 self.agent_name,
@@ -713,15 +690,13 @@ class ParseOcf10BaseMixin(ParseOcfToolsMixin):
         )
 
     def test_actions_empty_list(self):
-        self.assertEqual(
-            self.parse(
-                self.xml(
-                    """
+        self.assert_parse_result(
+            self.xml(
+                """
                         <resource-agent>
                             <actions/>
                         </resource-agent>
                     """
-                )
             ),
             ResourceAgentMetadataOcf1_0(
                 self.agent_name,
@@ -748,10 +723,9 @@ class ParseOcf10BaseMixin(ParseOcfToolsMixin):
             )
 
     def test_actions_multiple(self):
-        self.assertEqual(
-            self.parse(
-                self.xml(
-                    """
+        self.assert_parse_result(
+            self.xml(
+                """
                         <resource-agent>
                             <actions>
                                 <action name="minimal"/>
@@ -764,7 +738,6 @@ class ParseOcf10BaseMixin(ParseOcfToolsMixin):
                             </actions>
                         </resource-agent>
                     """
-                )
             ),
             ResourceAgentMetadataOcf1_0(
                 self.agent_name,
@@ -808,7 +781,26 @@ class ParseOcf10BaseMixin(ParseOcfToolsMixin):
 
 
 class ParseOcf10NoVersion(ParseOcf10BaseMixin, TestCase):
-    pass
+    parsed_ocf_version = "1.0"
+
+
+class ParseOcf10UnsupportedVersion(ParseOcf10BaseMixin, TestCase):
+    ocf_version = "0.1.2"
+
+    # These tests test that pcs raises an error if an agent doesn't conform to
+    # OCF schema. There is, however, no validation against OCF schema for
+    # agents with unsupported OCF version. That means no error message, pcs
+    # tries to process the agent and crashes. However bad that sounds, it's
+    # indended as that's how pcs behaved before OCF 1.1 was implemented.
+    # There's therefore no point in running these tests.
+
+    def test_parameters_empty_parameter(self):
+        # parameters must have at least 'name' attribute
+        pass
+
+    def test_actions_empty_action(self):
+        # actions must have at least 'name' attribute
+        pass
 
 
 class ParseOcf10ExplicitVersion(ParseOcf10BaseMixin, TestCase):
@@ -819,8 +811,8 @@ class ParseOcf11(ParseOcfToolsMixin, TestCase):
     ocf_version = "1.1"
 
     def test_empty_agent(self):
-        self.assertEqual(
-            self.parse(self.xml("""<resource-agent/>""")),
+        self.assert_parse_result(
+            self.xml("""<resource-agent/>"""),
             ResourceAgentMetadataOcf1_1(
                 self.agent_name,
                 shortdesc=None,
@@ -831,16 +823,14 @@ class ParseOcf11(ParseOcfToolsMixin, TestCase):
         )
 
     def test_desc_element(self):
-        self.assertEqual(
-            self.parse(
-                self.xml(
-                    """
+        self.assert_parse_result(
+            self.xml(
+                """
                         <resource-agent>
                             <shortdesc>This is a shortdesc</shortdesc>
                             <longdesc>This is a longdesc</longdesc>
                         </resource-agent>
                     """
-                )
             ),
             ResourceAgentMetadataOcf1_1(
                 self.agent_name,
@@ -852,16 +842,14 @@ class ParseOcf11(ParseOcfToolsMixin, TestCase):
         )
 
     def test_desc_element_empty(self):
-        self.assertEqual(
-            self.parse(
-                self.xml(
-                    """
+        self.assert_parse_result(
+            self.xml(
+                """
                         <resource-agent>
                             <longdesc/>
                             <shortdesc/>
                         </resource-agent>
                     """
-                )
             ),
             ResourceAgentMetadataOcf1_1(
                 self.agent_name,
@@ -873,15 +861,13 @@ class ParseOcf11(ParseOcfToolsMixin, TestCase):
         )
 
     def test_parameters_empty_list(self):
-        self.assertEqual(
-            self.parse(
-                self.xml(
-                    """
+        self.assert_parse_result(
+            self.xml(
+                """
                         <resource-agent>
                             <parameters/>
                         </resource-agent>
                     """
-                )
             ),
             ResourceAgentMetadataOcf1_1(
                 self.agent_name,
@@ -908,17 +894,15 @@ class ParseOcf11(ParseOcfToolsMixin, TestCase):
             )
 
     def test_parameters_minimal(self):
-        self.assertEqual(
-            self.parse(
-                self.xml(
-                    """
+        self.assert_parse_result(
+            self.xml(
+                """
                         <resource-agent>
                             <parameters>
                                 <parameter name="a_parameter"/>
                             </parameters>
                         </resource-agent>
                     """
-                )
             ),
             ResourceAgentMetadataOcf1_1(
                 self.agent_name,
@@ -945,10 +929,9 @@ class ParseOcf11(ParseOcfToolsMixin, TestCase):
         )
 
     def test_parameters_deprecated_minimal(self):
-        self.assertEqual(
-            self.parse(
-                self.xml(
-                    """
+        self.assert_parse_result(
+            self.xml(
+                """
                         <resource-agent>
                             <parameters>
                                 <parameter name="a_parameter">
@@ -957,7 +940,6 @@ class ParseOcf11(ParseOcfToolsMixin, TestCase):
                             </parameters>
                         </resource-agent>
                     """
-                )
             ),
             ResourceAgentMetadataOcf1_1(
                 self.agent_name,
@@ -984,10 +966,9 @@ class ParseOcf11(ParseOcfToolsMixin, TestCase):
         )
 
     def test_parameters_deprecated_replaced_with(self):
-        self.assertEqual(
-            self.parse(
-                self.xml(
-                    """
+        self.assert_parse_result(
+            self.xml(
+                """
                         <resource-agent>
                             <parameters>
                                 <parameter name="a_parameter">
@@ -999,7 +980,6 @@ class ParseOcf11(ParseOcfToolsMixin, TestCase):
                             </parameters>
                         </resource-agent>
                     """
-                )
             ),
             ResourceAgentMetadataOcf1_1(
                 self.agent_name,
@@ -1026,10 +1006,9 @@ class ParseOcf11(ParseOcfToolsMixin, TestCase):
         )
 
     def test_parameters_all_settings(self):
-        self.assertEqual(
-            self.parse(
-                self.xml(
-                    """
+        self.assert_parse_result(
+            self.xml(
+                """
                         <resource-agent>
                             <parameters>
                                 <parameter name="a_parameter"
@@ -1048,7 +1027,6 @@ class ParseOcf11(ParseOcfToolsMixin, TestCase):
                             </parameters>
                         </resource-agent>
                     """
-                )
             ),
             ResourceAgentMetadataOcf1_1(
                 self.agent_name,
@@ -1075,10 +1053,9 @@ class ParseOcf11(ParseOcfToolsMixin, TestCase):
         )
 
     def test_parameters_content(self):
-        self.assertEqual(
-            self.parse(
-                self.xml(
-                    """
+        self.assert_parse_result(
+            self.xml(
+                """
                         <resource-agent>
                             <parameters>
                                 <parameter name="with_type">
@@ -1094,7 +1071,6 @@ class ParseOcf11(ParseOcfToolsMixin, TestCase):
                             </parameters>
                         </resource-agent>
                     """
-                )
             ),
             ResourceAgentMetadataOcf1_1(
                 self.agent_name,
@@ -1135,15 +1111,13 @@ class ParseOcf11(ParseOcfToolsMixin, TestCase):
         )
 
     def test_actions_empty_list(self):
-        self.assertEqual(
-            self.parse(
-                self.xml(
-                    """
+        self.assert_parse_result(
+            self.xml(
+                """
                         <resource-agent>
                             <actions/>
                         </resource-agent>
                     """
-                )
             ),
             ResourceAgentMetadataOcf1_1(
                 self.agent_name,
@@ -1170,10 +1144,9 @@ class ParseOcf11(ParseOcfToolsMixin, TestCase):
             )
 
     def test_actions_multiple(self):
-        self.assertEqual(
-            self.parse(
-                self.xml(
-                    """
+        self.assert_parse_result(
+            self.xml(
+                """
                         <resource-agent>
                             <actions>
                                 <action name="minimal"/>
@@ -1186,7 +1159,6 @@ class ParseOcf11(ParseOcfToolsMixin, TestCase):
                             </actions>
                         </resource-agent>
                     """
-                )
             ),
             ResourceAgentMetadataOcf1_1(
                 self.agent_name,

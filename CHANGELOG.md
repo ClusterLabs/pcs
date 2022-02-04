@@ -1,5 +1,13 @@
 # Change Log
 
+## [Unreleased]
+### Fixed
+- Agents not conforming to OCF standard are processed as if they conformed to
+  OCF 1.0 - in the same way as before pcs-0.10.12 ([rhbz#2050274])
+
+[rhbz#2050274]: https://bugzilla.redhat.com/show_bug.cgi?id=2050274
+
+
 ## [0.10.13] - 2022-01-31
 
 ### Fixed
