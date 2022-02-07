@@ -23,6 +23,9 @@ class ResourceNotFound(Exception):
     pass
 
 
+_id_xpath_predicate = "(@id=$id or starts-with(@id, concat($id, ':')))"
+
+
 class _Attrs:
     def __init__(self, owner_name, attrib, required_attrs):
         """
@@ -67,12 +70,18 @@ class _Children:
             element_name, wrapper = self.children[name]
             return [
                 wrapper(element)
-                for element in self.dom_part.findall(".//" + element_name)
+                for element in self.dom_part.xpath(
+                    ".//*[local-name()=$tag_name]", tag_name=element_name
+                )
             ]
 
         if name in self.sections.keys():
             element_name, wrapper = self.sections[name]
-            return wrapper(self.dom_part.findall(".//" + element_name)[0])
+            return wrapper(
+                self.dom_part.xpath(
+                    ".//*[local-name()=$tag_name]", tag_name=element_name
+                )[0]
+            )
 
         raise AttributeError(
             "'{0}' does not declare child or section '{1}'".format(
@@ -155,10 +164,6 @@ class ClusterState(_Element):
     }
 
 
-def _id_xpath_predicate(resource_id):
-    return """(@id="{0}" or starts-with(@id, "{0}:"))""".format(resource_id)
-
-
 def _get_primitives_for_state_check(
     cluster_state, resource_id, expected_running
 ):
@@ -168,16 +173,16 @@ def _get_primitives_for_state_check(
         |
         .//group[{predicate_id}]/resource[{predicate_position}]
         |
-        .//clone[@id="{id}"]/resource
+        .//clone[@id=$id]/resource
         |
-        .//clone[@id="{id}"]/group/resource[{predicate_position}]
+        .//clone[@id=$id]/group/resource[{predicate_position}]
         |
-        .//bundle[@id="{id}"]/replica/resource
+        .//bundle[@id=$id]/replica/resource
     """.format(
-            id=resource_id,
-            predicate_id=_id_xpath_predicate(resource_id),
+            predicate_id=_id_xpath_predicate,
             predicate_position=("last()" if expected_running else "1"),
-        )
+        ),
+        id=resource_id,
     )
     return [
         element
@@ -263,8 +268,9 @@ def is_resource_managed(cluster_state, resource_id):
         |
         .//group[{predicate_id}]/resource
         """.format(
-            predicate_id=_id_xpath_predicate(resource_id)
-        )
+            predicate_id=_id_xpath_predicate
+        ),
+        id=resource_id,
     )
     if primitive_list:
         for primitive in primitive_list:
@@ -279,12 +285,11 @@ def is_resource_managed(cluster_state, resource_id):
 
     parent_list = cluster_state.xpath(
         """
-        .//clone[@id="{0}"]
+        .//clone[@id=$resource_id]
         |
-        .//bundle[@id="{0}"]
-        """.format(
-            resource_id
-        )
+        .//bundle[@id=$resource_id]
+        """,
+        resource_id=resource_id,
     )
     for parent in parent_list:
         if is_false(parent.attrib.get("managed", "")):

@@ -130,7 +130,7 @@ def remove_role(acl_section, role_id, autodelete_users_groups=False):
     """
     acl_role = find_role(acl_section, role_id)
     acl_role.getparent().remove(acl_role)
-    for role_el in acl_section.findall(".//role[@id='{0}']".format(role_id)):
+    for role_el in acl_section.xpath(".//role[@id=$role_id]", role_id=role_id):
         role_parent = role_el.getparent()
         role_parent.remove(role_el)
         if autodelete_users_groups and role_parent.find(".//role") is None:
@@ -142,10 +142,10 @@ def _assign_role(acl_section, role_id, target_el):
         role_el = find_role(acl_section, role_id)
     except LibraryError as e:
         return list(e.args)
-    assigned_role = target_el.find(
-        "./role[@id='{0}']".format(role_el.get("id"))
+    assigned_role_list = target_el.xpath(
+        "./role[@id=$role_id]", role_id=role_el.get("id")
     )
-    if assigned_role is not None:
+    if assigned_role_list:
         return [
             ReportItem.error(
                 reports.messages.CibAclRoleIsAlreadyAssignedToTarget(
@@ -196,8 +196,10 @@ def unassign_role(target_el, role_id, autodelete_target=False):
     role_id -- id of role
     autodelete_target -- if True remove target_el if there is no role assigned
     """
-    assigned_role = target_el.find("./role[@id='{0}']".format(role_id))
-    if assigned_role is None:
+    assigned_role_list = target_el.xpath(
+        "./role[@id=$role_id]", role_id=role_id
+    )
+    if not assigned_role_list:
         raise LibraryError(
             ReportItem.error(
                 reports.messages.CibAclRoleIsNotAssignedToTarget(
@@ -205,7 +207,8 @@ def unassign_role(target_el, role_id, autodelete_target=False):
                 )
             )
         )
-    target_el.remove(assigned_role)
+    for assigned_role in assigned_role_list:
+        target_el.remove(assigned_role)
     if autodelete_target and target_el.find("./role") is None:
         target_el.getparent().remove(target_el)
 
@@ -229,9 +232,8 @@ def create_target(acl_section, target_id):
     """
     # id of element acl_target is not type ID in CIB ACL schema so we don't need
     # to check if it is unique ID in whole CIB
-    if (
-        acl_section.find("./{0}[@id='{1}']".format(TAG_TARGET, target_id))
-        is not None
+    if acl_section.xpath(
+        f"./{TAG_TARGET}[@id=$target_id]", target_id=target_id
     ):
         raise LibraryError(
             ReportItem.error(
@@ -325,7 +327,7 @@ def get_role_list(acl_section):
     acl_section -- etree node
     """
     output_list = []
-    for role_el in acl_section.findall("./{0}".format(TAG_ROLE)):
+    for role_el in acl_section.xpath(f"./{TAG_ROLE}"):
         role = etree_element_attibutes_to_dict(role_el, ["id", "description"])
         role["permission_list"] = _get_permission_list(role_el)
         output_list.append(role)
@@ -396,7 +398,9 @@ def get_group_list(acl_section):
 
 def get_target_like_list(acl_section, tag):
     output_list = []
-    for target_el in acl_section.findall("./{0}".format(tag)):
+    for target_el in acl_section.xpath(
+        "./*[local-name()=$tag_name]", tag_name=tag
+    ):
         output_list.append(
             {
                 "id": target_el.get("id"),
@@ -425,8 +429,9 @@ def remove_permissions_referencing(tree, reference):
     tree -- etree node
     reference -- reference identifier
     """
-    xpath = './/acl_permission[@reference="{0}"]'.format(reference)
-    for permission in tree.findall(xpath):
+    for permission in tree.xpath(
+        ".//acl_permission[@reference=$reference]", reference=reference
+    ):
         permission.getparent().remove(permission)
 
 

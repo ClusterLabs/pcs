@@ -1770,7 +1770,8 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
         tag_obj_ref_list = []
         for el in find_resources_to_delete(resource_el):
             xpath_result = get_tags(xml_etree).xpath(
-                './/tag/obj_ref[@id="{0}"]'.format(el.get("id", "")),
+                ".//tag/obj_ref[@id=$id]",
+                id=el.get("id", ""),
             )
             if xpath_result:
                 tag_obj_ref_list.extend(xpath_result)

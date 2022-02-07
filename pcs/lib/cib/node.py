@@ -106,7 +106,8 @@ def _get_node_by_uname(tree, uname):
     etree tree -- node parent element
     string uname -- node name
     """
-    return tree.find("./node[@uname='{0}']".format(uname))
+    nodes = tree.xpath("./node[@uname=$uname]", uname=uname)
+    return nodes[0] if nodes else None
 
 
 def _create_node(node_id, uname, node_type=None):

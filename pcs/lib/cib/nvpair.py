@@ -39,11 +39,12 @@ def set_nvpair_in_nvset(nvset_element, name, value, id_provider):
     value -- value of nvpair
     IdProvider id_provider -- elements' ids generator
     """
-    nvpair = nvset_element.find("./nvpair[@name='{0}']".format(name))
-    if nvpair is None:
+    nvpair_list = nvset_element.xpath("./nvpair[@name=$name]", name=name)
+    if not nvpair_list:
         if value:
             _append_new_nvpair(nvset_element, name, value, id_provider)
     else:
+        nvpair = nvpair_list[0]
         if value:
             nvpair.set("value", value)
         else:
@@ -222,7 +223,15 @@ def has_meta_attribute(resource_el, name):
     return (
         len(
             resource_el.xpath(
-                './{0}/nvpair[@name="{1}"]'.format(META_ATTRIBUTES_TAG, name)
+                """
+                    ./*[local-name()=$tag_name]
+                    /nvpair[
+                        @name=$name and string-length(@value) > 0
+                    ]
+                    /@value
+                """,
+                tag_name=META_ATTRIBUTES_TAG,
+                name=name,
             )
         )
         > 0

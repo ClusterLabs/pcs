@@ -1,7 +1,9 @@
 from typing import (
     Any,
     Callable,
+    cast,
     Dict,
+    List,
 )
 from lxml.etree import (
     _Element,
@@ -131,7 +133,14 @@ def check_is_without_duplication(
 ) -> None:
     duplicate_element_list = [
         duplicate_element
-        for duplicate_element in constraint_section.findall(".//" + element.tag)
+        for duplicate_element in cast(
+            # The xpath method has a complicated return value, but we know our
+            # xpath expression returns only elements.
+            List[_Element],
+            constraint_section.xpath(
+                ".//*[local-name()=$tag_name]", tag_name=element.tag
+            ),
+        )
         if (
             element is not duplicate_element
             and are_duplicate(element, duplicate_element)

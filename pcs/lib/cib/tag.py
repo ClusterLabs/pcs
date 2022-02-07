@@ -463,7 +463,7 @@ class ValidateTagUpdateByIds:
         xpath_result = cast(
             List[_Element],
             self._tag_element.xpath(
-                f'./{TAG_OBJREF}[@id="{obj_ref_id}"]',
+                f"./{TAG_OBJREF}[@id=$obj_ref_id]", obj_ref_id=obj_ref_id
             ),
         )
         return xpath_result[0] if xpath_result else None
@@ -484,33 +484,32 @@ def find_constraints_referencing_tag(
         ./rsc_colocation[
             not (descendant::resource_set)
             and
-            (@rsc="{_id}" or @with-rsc="{_id}")
+            (@rsc=$tag_id or @with-rsc=$tag_id)
         ]
         |
         ./rsc_location[
             not (descendant::resource_set)
             and
-            @rsc="{_id}"
+            @rsc=$tag_id
         ]
         |
         ./rsc_order[
             not (descendant::resource_set)
             and
-            (@first="{_id}" or @then="{_id}")
+            (@first=$tag_id or @then=$tag_id)
         ]
         |
         ./rsc_ticket[
             not (descendant::resource_set)
             and
-            @rsc="{_id}"
+            @rsc=$tag_id
         ]
         |
         (./rsc_colocation|./rsc_location|./rsc_order|./rsc_ticket)[
-            ./resource_set/resource_ref[@id="{_id}"]
+            ./resource_set/resource_ref[@id=$tag_id]
         ]
-        """.format(
-            _id=tag_id
-        )
+        """,
+        tag_id=tag_id,
     )
     return cast(List[_Element], constraint_list)
 

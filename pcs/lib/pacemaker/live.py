@@ -865,7 +865,10 @@ def get_resource_digests(
     for digest_type in ["all", "nonprivate", "nonreloadable"]:
         xpath_result = cast(
             List[str],
-            dom.xpath(f'./digests/digest[@type="{digest_type}"]/@hash'),
+            dom.xpath(
+                "./digests/digest[@type=$digest_type]/@hash",
+                digest_type=digest_type,
+            ),
         )
         digests[digest_type] = xpath_result[0] if xpath_result else None
     if not any(digests.values()):

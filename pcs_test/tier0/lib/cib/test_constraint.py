@@ -229,8 +229,8 @@ class CreateIdTest(TestCase):
 
 def fixture_constraint_section(return_value):
     constraint_section = mock.MagicMock()
-    constraint_section.findall = mock.MagicMock()
-    constraint_section.findall.return_value = return_value
+    constraint_section.xpath = mock.MagicMock()
+    constraint_section.xpath.return_value = return_value
     return constraint_section
 
 

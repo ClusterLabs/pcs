@@ -73,21 +73,20 @@ def find_node_resources(resources_section, node_identifier):
         "server"
     """
     return resources_section.xpath(
-        """
+        f"""
             .//primitive[
-                {is_remote} and (
-                    @id="{identifier}"
+                {_IS_REMOTE_AGENT_XPATH_SNIPPET} and (
+                    @id=$identifier
                     or
                     instance_attributes/nvpair[
                         @name="server"
                         and
-                        @value="{identifier}"
+                        @value=$identifier
                     ]
                 )
             ]
-        """.format(
-            is_remote=_IS_REMOTE_AGENT_XPATH_SNIPPET, identifier=node_identifier
-        )
+        """,
+        identifier=node_identifier,
     )
 
 

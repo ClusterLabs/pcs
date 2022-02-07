@@ -79,7 +79,9 @@ def config(tag_name, is_plain, env):
     env is library environment
     """
     constraints_info = {"plain": [], "with_resource_sets": []}
-    for element in get_constraints(env.get_cib()).findall(".//" + tag_name):
+    for element in get_constraints(env.get_cib()).xpath(
+        ".//*[local-name()=$tag_name]", tag_name=tag_name
+    ):
         if is_plain(element):
             constraints_info["plain"].append(constraint.export_plain(element))
         else:

@@ -272,14 +272,13 @@ def find_resources_to_manage(resource_el):
             # OR
             # a bundle which contains a primitive with the specified id
             """
-                (./master|./clone)[(group|group/primitive|primitive)[@id='{r}']]
+                (./master|./clone)[(group|group/primitive|primitive)[@id=$r]]
                 |
-                //group[primitive[@id='{r}']]
+                //group[primitive[@id=$r]]
                 |
-                ./bundle[primitive[@id='{r}']]
-            """.format(
-                r=res_id
-            )
+                ./bundle[primitive[@id=$r]]
+            """,
+            r=res_id,
         )
         +
         # its children

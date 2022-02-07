@@ -91,7 +91,7 @@ def find_nvsets(parent_element: _Element, tag: NvsetTag) -> List[_Element]:
         # The xpath method has a complicated return value, but we know our xpath
         # expression returns only elements.
         List[_Element],
-        parent_element.xpath(f"./{tag}"),
+        parent_element.xpath("./*[local-name()=$tag_name]", tag_name=tag),
     )
 
 
