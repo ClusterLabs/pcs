@@ -425,26 +425,38 @@ def _append_level_element(tree, level, target_type, target_value, devices):
 def _find_level_elements(
     tree, level=None, target_type=None, target_value=None, devices=None
 ):
+    xpath_vars = {}
+
     xpath_target = ""
     if target_type and target_value:
         if target_type == TARGET_TYPE_NODE:
-            xpath_target = "@target='{0}'".format(target_value)
+            xpath_target = "@target=$var_target"
+            xpath_vars["var_target"] = target_value
         elif target_type == TARGET_TYPE_REGEXP:
-            xpath_target = "@target-pattern='{0}'".format(target_value)
+            xpath_target = "@target-pattern=$var_target_pattern"
+            xpath_vars["var_target_pattern"] = target_value
         elif target_type == TARGET_TYPE_ATTRIBUTE:
             xpath_target = (
-                "@target-attribute='{0}' and @target-value='{1}'"
-            ).format(target_value[0], target_value[1])
+                "@target-attribute=$var_target_attribute "
+                "and @target-value=$var_target_value"
+            )
+            xpath_vars["var_target_attribute"] = target_value[0]
+            xpath_vars["var_target_value"] = target_value[1]
     xpath_devices = ""
     if devices:
-        xpath_devices = "@devices='{0}'".format(",".join(devices))
+        xpath_devices = "@devices=$var_devices"
     xpath_level = ""
     if level:
-        xpath_level = "@index='{0}'".format(level)
+        xpath_level = "@index=$var_level"
 
     xpath_attrs = " and ".join(
         filter(None, [xpath_level, xpath_devices, xpath_target])
     )
     if xpath_attrs:
-        return tree.xpath("fencing-level[{0}]".format(xpath_attrs))
+        return tree.xpath(
+            f"fencing-level[{xpath_attrs}]",
+            var_devices=(",".join(devices) if devices else ""),
+            var_level=level,
+            **xpath_vars,
+        )
     return tree.findall("fencing-level")

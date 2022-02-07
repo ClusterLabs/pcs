@@ -42,8 +42,10 @@ def get_sub_element(
     append_if_missing -- if the searched element does not exist, append it to
         the parent element
     """
-    sub_element = element.find("./{0}".format(sub_element_tag))
-    if sub_element is None:
+    sub_element_list = element.xpath(
+        "./*[local-name()=$tag_name]", tag_name=sub_element_tag
+    )
+    if not sub_element_list:
         sub_element = etree.Element(sub_element_tag)
         if new_id:
             sub_element.set("id", new_id)
@@ -52,7 +54,8 @@ def get_sub_element(
                 element.append(sub_element)
             else:
                 element.insert(new_index, sub_element)
-    return sub_element
+        return sub_element
+    return sub_element_list[0]
 
 
 def export_attributes(

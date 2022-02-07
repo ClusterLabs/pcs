@@ -32,7 +32,7 @@ def is_stonith_resource(resources_el, name):
     return (
         len(
             resources_el.xpath(
-                "primitive[@id='{0}' and @class='stonith']".format(name)
+                "primitive[@id=$id and @class='stonith']", id=name
             )
         )
         > 0

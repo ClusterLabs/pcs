@@ -215,7 +215,7 @@ def find_node_resources(resources_section, node_identifier):
         """
         .//primitive[
             (
-                @id="{0}"
+                @id=$node_id
                 and
                 meta_attributes[
                     nvpair[
@@ -240,12 +240,11 @@ def find_node_resources(resources_section, node_identifier):
                         @name="remote-node"
                     )
                     and
-                    @value="{0}"
+                    @value=$node_id
                 ]
             ]
         ]
-    """.format(
-            node_identifier
-        )
+    """,
+        node_id=node_identifier,
     )
     return resources

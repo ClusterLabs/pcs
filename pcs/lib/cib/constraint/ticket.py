@@ -142,9 +142,9 @@ def create_plain(constraint_section, options):
 
 def remove_plain(constraint_section, ticket_key, resource_id):
     ticket_element_list = constraint_section.xpath(
-        './/rsc_ticket[@ticket="{0}" and @rsc="{1}"]'.format(
-            ticket_key, resource_id
-        )
+        ".//rsc_ticket[@ticket=$ticket and @rsc=$resource]",
+        ticket=ticket_key,
+        resource=resource_id,
     )
 
     for ticket_element in ticket_element_list:
@@ -155,9 +155,9 @@ def remove_plain(constraint_section, ticket_key, resource_id):
 
 def remove_with_resource_set(constraint_section, ticket_key, resource_id):
     ref_element_list = constraint_section.xpath(
-        (
-            './/rsc_ticket[@ticket="{0}"]/resource_set/resource_ref[@id="{1}"]'
-        ).format(ticket_key, resource_id)
+        ".//rsc_ticket[@ticket=$ticket]/resource_set/resource_ref[@id=$resource]",
+        ticket=ticket_key,
+        resource=resource_id,
     )
 
     for ref_element in ref_element_list:
