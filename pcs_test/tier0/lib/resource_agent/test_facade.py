@@ -100,6 +100,13 @@ class ResourceAgentFacadeFactory(TestCase):
             </parameters>
         </resource-agent>
     """
+    _fixture_agent_not_valid_xml = """
+        <resource-agent name="agent">
+            <parameters>
+                <parameter label="something wrong"/>
+            </parameters>
+        </resource-agent>
+    """
     _fixture_fenced_xml = """
         <resource-agent name="pacemaker-fenced">
             <parameters>
@@ -163,6 +170,43 @@ class ResourceAgentFacadeFactory(TestCase):
         self.config.runner.pcmk.load_agent(
             agent_name="service:daemon",
             stdout=self._fixture_agent_bad_version_xml,
+        )
+
+        env = self.env_assist.get_env()
+        facade = ra.ResourceAgentFacadeFactory(
+            env.cmd_runner(), env.report_processor
+        ).facade_from_parsed_name(name, report_warnings=False)
+        self.assertEqual(facade.metadata.name, name)
+        self.assertTrue(facade.metadata.agent_exists)
+
+    def test_facade_ocf_1_0_not_valid(self):
+        name = ra.ResourceAgentName("service", None, "daemon")
+        self.config.runner.pcmk.load_agent(
+            agent_name="service:daemon",
+            stdout=self._fixture_agent_not_valid_xml,
+        )
+
+        env = self.env_assist.get_env()
+        facade = ra.ResourceAgentFacadeFactory(
+            env.cmd_runner(), env.report_processor
+        ).facade_from_parsed_name(name)
+        self.assertEqual(facade.metadata.name, name)
+        self.assertTrue(facade.metadata.agent_exists)
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.UNABLE_TO_GET_AGENT_METADATA,
+                    agent=name.full_name,
+                    reason="Element parameter failed to validate attributes, line 3",
+                )
+            ]
+        )
+
+    def test_facade_ocf_1_0_not_valid_disabled_warning(self):
+        name = ra.ResourceAgentName("service", None, "daemon")
+        self.config.runner.pcmk.load_agent(
+            agent_name="service:daemon",
+            stdout=self._fixture_agent_not_valid_xml,
         )
 
         env = self.env_assist.get_env()

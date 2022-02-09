@@ -67,19 +67,41 @@ def _ocf_1_1_to_ocf_unified(
         longdesc=metadata.longdesc,
         parameters=_ocf_1_1_parameter_list_to_ocf_unified(metadata.parameters),
         # OCF 1.1 actions are the same as in OCF 1.0
-        actions=_ocf_1_0_action_list_to_ocf_unified(metadata.actions),
+        actions=_ocf_1_1_action_list_to_ocf_unified(metadata.actions),
     )
 
 
 def _ocf_1_0_action_list_to_ocf_unified(
-    action_list: Iterable[
-        Union[ResourceAgentActionOcf1_0, ResourceAgentActionOcf1_1]
-    ],
+    action_list: Iterable[ResourceAgentActionOcf1_0],
 ) -> List[ResourceAgentAction]:
     """
     Transform OCF 1.0 actions to a universal format
 
     action_list -- actions according OCF 1.0
+    """
+    return [
+        ResourceAgentAction(
+            name=action.name,
+            timeout=action.timeout,
+            interval=action.interval,
+            role=action.role,
+            start_delay=action.start_delay,
+            depth=action.depth,
+            automatic=_bool_value_legacy(action.automatic),
+            on_target=_bool_value_legacy(action.on_target),
+        )
+        for action in action_list
+        if action.name
+    ]
+
+
+def _ocf_1_1_action_list_to_ocf_unified(
+    action_list: Iterable[ResourceAgentActionOcf1_1],
+) -> List[ResourceAgentAction]:
+    """
+    Transform OCF 1.1 actions to a universal format
+
+    action_list -- actions according OCF 1.1
     """
     return [
         ResourceAgentAction(
@@ -111,6 +133,8 @@ def _ocf_1_0_parameter_list_to_ocf_unified(
 
     result = []
     for parameter in parameter_list:
+        if not parameter.name:
+            continue
         result.append(
             ResourceAgentParameter(
                 name=parameter.name,
@@ -119,17 +143,17 @@ def _ocf_1_0_parameter_list_to_ocf_unified(
                 type=parameter.type,
                 default=parameter.default,
                 enum_values=parameter.enum_values,
-                required=_bool_value(parameter.required),
+                required=_bool_value_legacy(parameter.required),
                 advanced=False,
-                deprecated=_bool_value(parameter.deprecated),
+                deprecated=_bool_value_legacy(parameter.deprecated),
                 deprecated_by=sorted(deprecated_by_dict[parameter.name]),
                 deprecated_desc=None,
                 unique_group=(
                     f"{const.DEFAULT_UNIQUE_GROUP_PREFIX}{parameter.name}"
-                    if _bool_value(parameter.unique)
+                    if _bool_value_legacy(parameter.unique)
                     else None
                 ),
-                reloadable=_bool_value(parameter.unique),
+                reloadable=_bool_value_legacy(parameter.unique),
             )
         )
     return result
@@ -170,3 +194,14 @@ def _bool_value(value: Optional[str]) -> bool:
     value -- raw bool value
     """
     return value == "1"
+
+
+def _bool_value_legacy(value: Optional[str]) -> bool:
+    """
+    Transform raw bool value from metadata to bool type in backward compatible way
+
+    value -- raw bool value
+    """
+    return (
+        False if not value else value.lower() in {"true", "on", "yes", "y", "1"}
+    )

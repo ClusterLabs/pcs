@@ -94,9 +94,7 @@ def _metadata_xml_to_dom(metadata: str) -> _Element:
     """
     dom = xml_fromstring(metadata)
     ocf_version = _get_ocf_version(dom)
-    if ocf_version == const.OCF_1_0:
-        etree.RelaxNG(file=settings.path.ocf_1_0_schema).assertValid(dom)
-    elif ocf_version == const.OCF_1_1:
+    if ocf_version == const.OCF_1_1:
         etree.RelaxNG(file=settings.path.ocf_1_1_schema).assertValid(dom)
     return dom
 
@@ -230,7 +228,7 @@ def _parse_parameters_1_0(
         )
         result.append(
             ResourceAgentParameterOcf1_0(
-                name=str(parameter_el.attrib["name"]),
+                name=str(parameter_el.get("name", "")),
                 shortdesc=_get_shortdesc(parameter_el),
                 longdesc=_get_longdesc(parameter_el),
                 type=value_type,
@@ -286,7 +284,7 @@ def _parse_parameters_1_1(
 def _parse_actions_1_0(element: _Element) -> List[ResourceAgentActionOcf1_0]:
     return [
         ResourceAgentActionOcf1_0(
-            name=str(action.attrib["name"]),
+            name=str(action.get("name", "")),
             timeout=action.get("timeout"),
             interval=action.get("interval"),
             role=action.get("role"),

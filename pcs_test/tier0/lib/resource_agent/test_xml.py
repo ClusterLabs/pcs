@@ -164,8 +164,13 @@ class MetadataXmlToDom(TestCase):
             ra.xml._metadata_xml_to_dom("not an xml")
 
     def test_no_version_not_valid(self):
-        with self.assertRaises(etree.DocumentInvalid):
-            ra.xml._metadata_xml_to_dom("<resource-agent/>")
+        # pylint: disable=no-self-use
+        metadata = """
+            <resource-agent/>
+        """
+        assert_xml_equal(
+            metadata, etree_to_str(ra.xml._metadata_xml_to_dom(metadata))
+        )
 
     def test_no_version_valid(self):
         # pylint: disable=no-self-use
@@ -178,14 +183,15 @@ class MetadataXmlToDom(TestCase):
         )
 
     def test_ocf_1_0_not_valid(self):
-        with self.assertRaises(etree.DocumentInvalid):
-            ra.xml._metadata_xml_to_dom(
-                """
-                    <resource-agent>
-                        <version>1.0</version>
-                    </resource-agent>
-                """
-            )
+        # pylint: disable=no-self-use
+        metadata = """
+            <resource-agent>
+                <version>1.0</version>
+            </resource-agent>
+        """
+        assert_xml_equal(
+            metadata, etree_to_str(ra.xml._metadata_xml_to_dom(metadata))
+        )
 
     def test_ocf_1_0_valid(self):
         # pylint: disable=no-self-use
@@ -273,19 +279,16 @@ class LoadMetadata(TestCase):
 
     def test_not_valid_xml(self):
         agent_name = ra.ResourceAgentName("ocf", "pacemaker", "Dummy")
+        metadata = "<resource-agent/>"
         self.config.runner.pcmk.load_agent(
             agent_name="ocf:pacemaker:Dummy",
-            stdout="<resource-agent/>",
+            stdout=metadata,
         )
 
         env = self.env_assist.get_env()
-        with self.assertRaises(ra.UnableToGetAgentMetadata) as cm:
-            ra.xml.load_metadata(env.cmd_runner(), agent_name)
-        self.assertEqual(cm.exception.agent_name, "ocf:pacemaker:Dummy")
-        self.assertTrue(
-            cm.exception.message.startswith(
-                "Element resource-agent failed to validate"
-            )
+        assert_xml_equal(
+            metadata,
+            etree_to_str(ra.xml.load_metadata(env.cmd_runner(), agent_name)),
         )
 
 
@@ -335,16 +338,15 @@ class LoadFakeAgentMetadata(TestCase):
 
     def test_not_valid_xml(self):
         agent_name = ra.const.PACEMAKER_FENCED
-        self.config.runner.pcmk.load_fenced_metadata(stdout="<resource-agent/>")
+        metadata = "<resource-agent/>"
+        self.config.runner.pcmk.load_fenced_metadata(stdout=metadata)
 
         env = self.env_assist.get_env()
-        with self.assertRaises(ra.UnableToGetAgentMetadata) as cm:
-            ra.xml.load_fake_agent_metadata(env.cmd_runner(), agent_name)
-        self.assertEqual(cm.exception.agent_name, "pacemaker-fenced")
-        self.assertTrue(
-            cm.exception.message.startswith(
-                "Element resource-agent failed to validate"
-            )
+        assert_xml_equal(
+            metadata,
+            etree_to_str(
+                ra.xml.load_fake_agent_metadata(env.cmd_runner(), agent_name)
+            ),
         )
 
 
@@ -549,19 +551,37 @@ class ParseOcf10BaseMixin(ParseOcfToolsMixin):
         )
 
     def test_parameters_empty_parameter(self):
-        # parameters must have at least 'name' attribute
-        with self.assertRaises(ra.UnableToGetAgentMetadata):
-            self.parse(
-                self.xml(
-                    """
-                        <resource-agent>
-                            <parameters>
-                                <parameter/>
-                            </parameters>
-                        </resource-agent>
-                    """
-                )
-            )
+        self.assert_parse_result(
+            self.xml(
+                """
+                    <resource-agent>
+                        <parameters>
+                            <parameter/>
+                        </parameters>
+                    </resource-agent>
+                """
+            ),
+            ResourceAgentMetadataOcf1_0(
+                self.agent_name,
+                shortdesc=None,
+                longdesc=None,
+                parameters=[
+                    ResourceAgentParameterOcf1_0(
+                        name="",
+                        shortdesc=None,
+                        longdesc=None,
+                        type="string",
+                        default=None,
+                        enum_values=None,
+                        required=None,
+                        deprecated=None,
+                        obsoletes=None,
+                        unique=None,
+                    )
+                ],
+                actions=[],
+            ),
+        )
 
     def test_parameters_minimal(self):
         self.assert_parse_result(
@@ -708,19 +728,35 @@ class ParseOcf10BaseMixin(ParseOcfToolsMixin):
         )
 
     def test_actions_empty_action(self):
-        # actions must have at least 'name' attribute
-        with self.assertRaises(ra.UnableToGetAgentMetadata):
-            self.parse(
-                self.xml(
-                    """
-                        <resource-agent>
-                            <actions>
-                                <action/>
-                            </actions>
-                        </resource-agent>
-                    """
-                )
-            )
+        self.assert_parse_result(
+            self.xml(
+                """
+                    <resource-agent>
+                        <actions>
+                            <action/>
+                        </actions>
+                    </resource-agent>
+                """
+            ),
+            ResourceAgentMetadataOcf1_0(
+                self.agent_name,
+                shortdesc=None,
+                longdesc=None,
+                parameters=[],
+                actions=[
+                    ResourceAgentActionOcf1_0(
+                        name="",
+                        timeout=None,
+                        interval=None,
+                        role=None,
+                        start_delay=None,
+                        depth=None,
+                        automatic=None,
+                        on_target=None,
+                    ),
+                ],
+            ),
+        )
 
     def test_actions_multiple(self):
         self.assert_parse_result(
@@ -786,21 +822,6 @@ class ParseOcf10NoVersion(ParseOcf10BaseMixin, TestCase):
 
 class ParseOcf10UnsupportedVersion(ParseOcf10BaseMixin, TestCase):
     ocf_version = "0.1.2"
-
-    # These tests test that pcs raises an error if an agent doesn't conform to
-    # OCF schema. There is, however, no validation against OCF schema for
-    # agents with unsupported OCF version. That means no error message, pcs
-    # tries to process the agent and crashes. However bad that sounds, it's
-    # indended as that's how pcs behaved before OCF 1.1 was implemented.
-    # There's therefore no point in running these tests.
-
-    def test_parameters_empty_parameter(self):
-        # parameters must have at least 'name' attribute
-        pass
-
-    def test_actions_empty_action(self):
-        # actions must have at least 'name' attribute
-        pass
 
 
 class ParseOcf10ExplicitVersion(ParseOcf10BaseMixin, TestCase):
