@@ -208,7 +208,9 @@ def _complete_agent_list(
             continue
         try:
             metadata = (
-                agent_factory.facade_from_parsed_name(name).metadata
+                agent_factory.facade_from_parsed_name(
+                    name, report_warnings=False
+                ).metadata
                 if describe
                 else name_to_void_metadata(name)
             )

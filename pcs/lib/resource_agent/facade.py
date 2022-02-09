@@ -2,12 +2,19 @@ from collections import defaultdict
 from dataclasses import replace as dc_replace
 from typing import Dict, Iterable, List, Optional, Set
 
+from lxml import etree
+
+from pcs import settings
 from pcs.common import reports
 from pcs.lib import validate
 from pcs.lib.external import CommandRunner
 
 from . import const
-from .error import ResourceAgentError, resource_agent_error_to_report_item
+from .error import (
+    ResourceAgentError,
+    resource_agent_error_to_report_item,
+    UnableToGetAgentMetadata,
+)
 from .name import name_to_void_metadata
 from .ocf_transform import ocf_version_to_ocf_unified
 from .pcs_transform import get_additional_trace_parameters, ocf_unified_to_pcs
@@ -188,18 +195,41 @@ class ResourceAgentFacadeFactory:
         self._fenced_metadata = None
 
     def facade_from_parsed_name(
-        self, name: ResourceAgentName
+        self, name: ResourceAgentName, report_warnings=True
     ) -> ResourceAgentFacade:
         """
         Create ResourceAgentFacade based on specified agent name
 
         name -- agent name to get a facade for
         """
-        return self._facade_from_metadata(
-            ocf_version_to_ocf_unified(
-                parse_metadata(name, load_metadata(self._runner, name))
-            )
-        )
+        dom_metadata = load_metadata(self._runner, name)
+        metadata, raw_ocf_version = parse_metadata(name, dom_metadata)
+        if report_warnings:
+            if raw_ocf_version not in const.SUPPORTED_OCF_VERSIONS:
+                self._report_processor.report(
+                    reports.ReportItem.warning(
+                        reports.messages.AgentImplementsUnsupportedOcfVersionAssumedVersion(
+                            name.full_name,
+                            raw_ocf_version,
+                            sorted(const.SUPPORTED_OCF_VERSIONS),
+                            const.OCF_1_0,
+                        )
+                    )
+                )
+            if raw_ocf_version != const.OCF_1_1:
+                try:
+                    etree.RelaxNG(
+                        file=settings.path.ocf_1_0_schema
+                    ).assertValid(dom_metadata)
+                except etree.DocumentInvalid as e:
+                    self._report_processor.report(
+                        resource_agent_error_to_report_item(
+                            UnableToGetAgentMetadata(name.full_name, str(e)),
+                            severity=reports.ReportItemSeverity.warning(),
+                            is_stonith=name.is_stonith,
+                        )
+                    )
+        return self._facade_from_metadata(ocf_version_to_ocf_unified(metadata))
 
     def void_facade_from_parsed_name(
         self, name: ResourceAgentName
@@ -232,15 +262,12 @@ class ResourceAgentFacadeFactory:
                 const.FAKE_AGENT_STANDARD, None, const.PACEMAKER_FENCED
             )
             try:
+                metadata, _ = parse_metadata(
+                    agent_name,
+                    load_fake_agent_metadata(self._runner, agent_name.type),
+                )
                 self._fenced_metadata = ocf_unified_to_pcs(
-                    ocf_version_to_ocf_unified(
-                        parse_metadata(
-                            agent_name,
-                            load_fake_agent_metadata(
-                                self._runner, agent_name.type
-                            ),
-                        )
-                    )
+                    ocf_version_to_ocf_unified(metadata)
                 )
             except ResourceAgentError as e:
                 # If pcs is unable to load fenced metadata, cache an empty

@@ -2,8 +2,6 @@ from typing import Iterable
 
 from pcs.common import reports
 
-from . import const
-
 
 class ResourceAgentError(Exception):
     def __init__(self, agent_name: str):
@@ -37,12 +35,6 @@ class UnableToGetAgentMetadata(ResourceAgentError):
         self.message = message
 
 
-class UnsupportedOcfVersion(ResourceAgentError):
-    def __init__(self, agent_name: str, ocf_version: str):
-        super().__init__(agent_name)
-        self.ocf_version = ocf_version
-
-
 def resource_agent_error_to_report_item(
     e: ResourceAgentError,
     severity: reports.ReportItemSeverity = reports.ReportItemSeverity.error(),
@@ -68,11 +60,5 @@ def resource_agent_error_to_report_item(
     elif isinstance(e, UnableToGetAgentMetadata):
         message = reports.messages.UnableToGetAgentMetadata(
             e.agent_name, e.message
-        )
-    elif isinstance(e, UnsupportedOcfVersion):
-        message = reports.messages.AgentImplementsUnsupportedOcfVersion(
-            e.agent_name,
-            e.ocf_version,
-            sorted(const.SUPPORTED_OCF_VERSIONS),
         )
     return reports.ReportItem(severity, message)

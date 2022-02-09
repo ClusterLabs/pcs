@@ -8,7 +8,7 @@ from pcs.common.tools import xml_fromstring
 from pcs.lib.external import CommandRunner
 
 from . import const
-from .error import UnableToGetAgentMetadata, UnsupportedOcfVersion
+from .error import UnableToGetAgentMetadata
 from .types import (
     FakeAgentName,
     ResourceAgentActionOcf1_0,
@@ -94,9 +94,7 @@ def _metadata_xml_to_dom(metadata: str) -> _Element:
     """
     dom = xml_fromstring(metadata)
     ocf_version = _get_ocf_version(dom)
-    if ocf_version == const.OCF_1_0:
-        etree.RelaxNG(file=settings.path.ocf_1_0_schema).assertValid(dom)
-    elif ocf_version == const.OCF_1_1:
+    if ocf_version == const.OCF_1_1:
         etree.RelaxNG(file=settings.path.ocf_1_1_schema).assertValid(dom)
     return dom
 
@@ -137,8 +135,11 @@ def load_fake_agent_metadata(
 
 
 def parse_metadata(
-    name: ResourceAgentName, metadata: _Element
-) -> Union[ResourceAgentMetadataOcf1_0, ResourceAgentMetadataOcf1_1]:
+    name: ResourceAgentName,
+    metadata: _Element,
+) -> Tuple[
+    Union[ResourceAgentMetadataOcf1_0, ResourceAgentMetadataOcf1_1], str
+]:
     """
     Parse XML metadata to a dataclass
 
@@ -146,11 +147,9 @@ def parse_metadata(
     metadata -- metadata XML document
     """
     ocf_version = _get_ocf_version(metadata)
-    if ocf_version == const.OCF_1_0:
-        return _parse_agent_1_0(name, metadata)
     if ocf_version == const.OCF_1_1:
-        return _parse_agent_1_1(name, metadata)
-    raise UnsupportedOcfVersion(name.full_name, ocf_version)
+        return _parse_agent_1_1(name, metadata), ocf_version
+    return _parse_agent_1_0(name, metadata), ocf_version
 
 
 def _parse_agent_1_0(
@@ -229,7 +228,7 @@ def _parse_parameters_1_0(
         )
         result.append(
             ResourceAgentParameterOcf1_0(
-                name=str(parameter_el.attrib["name"]),
+                name=str(parameter_el.get("name", "")),
                 shortdesc=_get_shortdesc(parameter_el),
                 longdesc=_get_longdesc(parameter_el),
                 type=value_type,
@@ -285,7 +284,7 @@ def _parse_parameters_1_1(
 def _parse_actions_1_0(element: _Element) -> List[ResourceAgentActionOcf1_0]:
     return [
         ResourceAgentActionOcf1_0(
-            name=str(action.attrib["name"]),
+            name=str(action.get("name", "")),
             timeout=action.get("timeout"),
             interval=action.get("interval"),
             role=action.get("role"),

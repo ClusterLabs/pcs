@@ -1,5 +1,20 @@
 # Change Log
 
+## [Unreleased]
+### Fixed
+- Agents not conforming to OCF standard are processed as if they conformed to
+  OCF 1.0 - in the same way as before pcs-0.10.12 ([rhbz#2050274])
+- OCF 1.0 agents not conforming to the schema are processed anyway
+  ([rhbz#2050274])
+
+### Deprecated
+- Agents not complying with OCF 1.0 schema are processed, incompatibilities are
+  listed as warnings. In pcs-0.11, they will be reported as errors and prevent
+  pcs from working with such agents. ([rhbz#2050274])
+
+[rhbz#2050274]: https://bugzilla.redhat.com/show_bug.cgi?id=2050274
+
+
 ## [0.10.13] - 2022-01-31
 
 ### Fixed
