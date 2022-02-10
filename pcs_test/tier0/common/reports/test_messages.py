@@ -4721,8 +4721,8 @@ class BoothTicketNameInvalid(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
             (
-                "booth ticket name 'ticket&' is not valid, use alphanumeric "
-                "chars or dash"
+                "booth ticket name 'ticket&' is not valid, use up to 63 "
+                "alphanumeric characters or dash"
             ),
             reports.BoothTicketNameInvalid("ticket&"),
         )
