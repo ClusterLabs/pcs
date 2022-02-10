@@ -124,23 +124,36 @@ class AddTicket(TestCase):
         )
 
     def test_success(self):
-        assert_report_item_list_equal(
-            config_validators.add_ticket(
-                self.conf, "ticketB", {"timeout": "10"}
-            ),
-            [],
-        )
+        for ticket in (
+            "abcdefghij01234567890123456789012345678901234567890123456789012",
+            "ticketB",
+        ):
+            with self.subTest(ticket=ticket):
+                assert_report_item_list_equal(
+                    config_validators.add_ticket(
+                        self.conf, ticket, {"timeout": "10"}
+                    ),
+                    [],
+                )
 
     def test_bad_ticket_name(self):
-        assert_report_item_list_equal(
-            config_validators.add_ticket(self.conf, "@ticketB", {}),
-            [
-                fixture.error(
-                    report_codes.BOOTH_TICKET_NAME_INVALID,
-                    ticket_name="@ticketB",
-                ),
-            ],
-        )
+        for ticket in (
+            # too long
+            "abcdefghij012345678901234567890123456789012345678901234567890123",
+            # disallowed characters
+            "my_ticket",
+            "@ticketB",
+        ):
+            with self.subTest(ticket=ticket):
+                assert_report_item_list_equal(
+                    config_validators.add_ticket(self.conf, ticket, {}),
+                    [
+                        fixture.error(
+                            report_codes.BOOTH_TICKET_NAME_INVALID,
+                            ticket_name=ticket,
+                        ),
+                    ],
+                )
 
     def test_duplicate_ticket_name(self):
         assert_report_item_list_equal(

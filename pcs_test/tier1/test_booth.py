@@ -207,8 +207,8 @@ class AddTicketTest(BoothTest):
         self.assert_pcs_fail(
             "booth ticket add @TicketA".split(),
             (
-                "Error: booth ticket name '@TicketA' is not valid, use "
-                "alphanumeric chars or dash\n"
+                "Error: booth ticket name '@TicketA' is not valid, use up to 63 "
+                "alphanumeric characters or dash\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
                 "continue\n"
             ),

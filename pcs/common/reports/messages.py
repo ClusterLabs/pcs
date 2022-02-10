@@ -6457,7 +6457,7 @@ class BoothTicketNameInvalid(ReportItemMessage):
     def message(self) -> str:
         return (
             f"booth ticket name '{self.ticket_name}' is not valid, use "
-            "alphanumeric chars or dash"
+            "up to 63 alphanumeric characters or dash"
         )
 
 

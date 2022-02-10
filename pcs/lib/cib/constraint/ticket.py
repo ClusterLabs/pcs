@@ -13,6 +13,7 @@ from pcs.common import (
 )
 from pcs.common.reports.item import ReportItem
 from pcs.lib import validate
+from pcs.lib.booth.config_validators import validate_ticket_name
 from pcs.lib.cib.constraint import constraint
 from pcs.lib.cib import tools
 from pcs.lib.errors import LibraryError
@@ -72,6 +73,8 @@ def prepare_options_with_set(cib, options, resource_set_list):
                 reports.messages.RequiredOptionsAreMissing(["ticket"])
             )
         )
+    else:
+        report_list.extend(validate_ticket_name(options["ticket"]))
     if report_list:
         raise LibraryError(*report_list)
     return options
@@ -81,7 +84,7 @@ def prepare_options_plain(
     cib: _Element,
     report_processor: reports.ReportProcessor,
     options,
-    ticket,
+    ticket: str,
     resource_id,
 ):
     options = options.copy()
@@ -94,6 +97,8 @@ def prepare_options_plain(
                 reports.messages.RequiredOptionsAreMissing(["ticket"])
             )
         )
+    else:
+        report_processor.report_list(validate_ticket_name(ticket))
     options["ticket"] = ticket
 
     if not resource_id:

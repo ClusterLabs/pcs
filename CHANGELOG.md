@@ -1,5 +1,13 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+- Booth ticket name validation ([rhbz#2053177])
+
+[rhbz#2053177]: https://bugzilla.redhat.com/show_bug.cgi?id=2053177
+
+
 ## [0.11.2] - 2022-02-01
 
 ### Fixed
