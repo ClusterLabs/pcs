@@ -1,14 +1,12 @@
 from collections import Counter
 import re
 
-from pcs.common import reports as report
-from pcs.common.reports import codes as report_codes
-from pcs.common.reports.item import ReportItem
+from pcs.common import reports
 from pcs.lib import validate
 from pcs.lib.booth import constants
 
 
-__TICKET_NAME_RE = re.compile(r"^[\w-]+$")
+__TICKET_NAME_RE = re.compile(r"^[a-zA-Z0-9-]{1,63}$")
 
 
 def check_instance_name(name):
@@ -20,8 +18,10 @@ def check_instance_name(name):
     report_list = []
     if "/" in name:
         report_list.append(
-            ReportItem.error(
-                report.messages.BoothInvalidName(name, forbidden_characters="/")
+            reports.ReportItem.error(
+                reports.messages.BoothInvalidName(
+                    name, forbidden_characters="/"
+                )
             )
         )
     return report_list
@@ -39,15 +39,15 @@ def create(site_list, arbitrator_list):
 
     if len(site_list) < 2:
         report_list.append(
-            ReportItem.error(
-                report.messages.BoothLackOfSites(sorted(site_list))
+            reports.ReportItem.error(
+                reports.messages.BoothLackOfSites(sorted(site_list))
             )
         )
 
     if len(peer_list) % 2 == 0:
         report_list.append(
-            ReportItem.error(
-                report.messages.BoothEvenPeersNumber(len(peer_list))
+            reports.ReportItem.error(
+                reports.messages.BoothEvenPeersNumber(len(peer_list))
             )
         )
 
@@ -56,8 +56,8 @@ def create(site_list, arbitrator_list):
     }
     if duplicate_addresses:
         report_list.append(
-            ReportItem.error(
-                report.messages.BoothAddressDuplication(
+            reports.ReportItem.error(
+                reports.messages.BoothAddressDuplication(
                     sorted(duplicate_addresses)
                 )
             )
@@ -79,7 +79,7 @@ def add_ticket(
         instead of errors
     """
     return (
-        _validate_ticket_name(ticket_name)
+        validate_ticket_name(ticket_name)
         + _validate_ticket_unique(conf_facade, ticket_name)
         + _validate_ticket_options(ticket_options, allow_unknown_options)
     )
@@ -94,18 +94,18 @@ def remove_ticket(conf_facade, ticket_name):
     """
     if not conf_facade.has_ticket(ticket_name):
         return [
-            ReportItem.error(
-                report.messages.BoothTicketDoesNotExist(ticket_name)
+            reports.ReportItem.error(
+                reports.messages.BoothTicketDoesNotExist(ticket_name)
             )
         ]
     return []
 
 
-def _validate_ticket_name(ticket_name):
+def validate_ticket_name(ticket_name: str) -> reports.ReportItemList:
     if not __TICKET_NAME_RE.search(ticket_name):
         return [
-            ReportItem.error(
-                report.messages.BoothTicketNameInvalid(ticket_name)
+            reports.ReportItem.error(
+                reports.messages.BoothTicketNameInvalid(ticket_name)
             )
         ]
     return []
@@ -114,7 +114,9 @@ def _validate_ticket_name(ticket_name):
 def _validate_ticket_unique(conf_facade, ticket_name):
     if conf_facade.has_ticket(ticket_name):
         return [
-            ReportItem.error(report.messages.BoothTicketDuplicate(ticket_name))
+            reports.ReportItem.error(
+                reports.messages.BoothTicketDuplicate(ticket_name)
+            )
         ]
     return []
 
@@ -125,8 +127,8 @@ def _validate_ticket_options(options, allow_unknown_options):
             constants.TICKET_KEYS,
             option_type="booth ticket",
             banned_name_list=constants.GLOBAL_KEYS,
-            severity=report.item.get_severity(
-                report_codes.FORCE, allow_unknown_options
+            severity=reports.item.get_severity(
+                reports.codes.FORCE, allow_unknown_options
             ),
         ),
     ] + [validate.ValueNotEmpty(option, None) for option in options]

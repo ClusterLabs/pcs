@@ -6,6 +6,7 @@ from pcs_test.tools.assertions import (
     assert_raise_library_error,
     assert_xml_equal,
 )
+from pcs_test.tools import fixture
 
 from pcs.common import const
 from pcs.common.reports import ReportItemSeverity as severities
@@ -32,11 +33,11 @@ class PrepareOptionsPlainTest(TestCase):
                 "loss-policy": "fence",
                 "rsc": "resourceA",
                 "rsc-role": const.PCMK_ROLE_PROMOTED_PRIMARY,
-                "ticket": "ticket_key",
+                "ticket": "ticket-key",
             },
             self.prepare(
                 {"loss-policy": "fence", "rsc-role": "master"},
-                "ticket_key",
+                "ticket-key",
                 "resourceA",
             ),
         )
@@ -49,11 +50,11 @@ class PrepareOptionsPlainTest(TestCase):
                 "id": "generated_id",
                 "loss-policy": "fence",
                 "rsc": "resourceA",
-                "ticket": "ticket_key",
+                "ticket": "ticket-key",
             },
             self.prepare(
                 {"loss-policy": "fence", "rsc-role": ""},
-                "ticket_key",
+                "ticket-key",
                 "resourceA",
             ),
         )
@@ -62,7 +63,7 @@ class PrepareOptionsPlainTest(TestCase):
         assert_raise_library_error(
             lambda: self.prepare(
                 {"unknown": "nonsense", "rsc-role": "master"},
-                "ticket_key",
+                "ticket-key",
                 "resourceA",
             ),
             (
@@ -86,7 +87,7 @@ class PrepareOptionsPlainTest(TestCase):
     def test_refuse_bad_role(self, _):
         assert_raise_library_error(
             lambda: self.prepare(
-                {"id": "id", "rsc-role": "bad_role"}, "ticket_key", "resourceA"
+                {"id": "id", "rsc-role": "bad_role"}, "ticket-key", "resourceA"
             ),
             (
                 severities.ERROR,
@@ -116,10 +117,25 @@ class PrepareOptionsPlainTest(TestCase):
             ),
         )
 
+    def test_refuse_bad_ticket(self, _):
+        assert_raise_library_error(
+            lambda: self.prepare(
+                {
+                    "id": "id",
+                },
+                "bad_ticket",
+                "resourceA",
+            ),
+            fixture.error(
+                report_codes.BOOTH_TICKET_NAME_INVALID,
+                ticket_name="bad_ticket",
+            ),
+        )
+
     def test_refuse_missing_resource_id(self, _):
         assert_raise_library_error(
             lambda: self.prepare(
-                {"id": "id", "rsc-role": "master"}, "ticket_key", ""
+                {"id": "id", "rsc-role": "master"}, "ticket-key", ""
             ),
             (
                 severities.ERROR,
@@ -136,7 +152,7 @@ class PrepareOptionsPlainTest(TestCase):
         assert_raise_library_error(
             lambda: self.prepare(
                 {"loss-policy": "unknown", "ticket": "T", "id": "id"},
-                "ticket_key",
+                "ticket-key",
                 "resourceA",
             ),
             (
@@ -160,7 +176,7 @@ class PrepareOptionsPlainTest(TestCase):
             "ticket": "T",
             "rsc-role": const.PCMK_ROLE_PROMOTED,
         }
-        ticket_key = "ticket_key"
+        ticket_key = "ticket-key"
         resource_id = "resourceA"
         expected_options = options.copy()
         expected_options.update(
@@ -276,6 +292,16 @@ class PrepareOptionsWithSetTest(TestCase):
             ),
         )
 
+    def test_refuse_bad_ticket(self, _):
+        assert_raise_library_error(
+            lambda: self.prepare({"id": "id", "ticket": "bad_ticket"}),
+            (
+                severities.ERROR,
+                report_codes.BOOTH_TICKET_NAME_INVALID,
+                {"ticket_name": "bad_ticket"},
+            ),
+        )
+
 
 class Element:
     # pylint: disable=too-few-public-methods
@@ -291,14 +317,14 @@ class AreDuplicatePlain(TestCase):
     def setUp(self):
         self.first = Element(
             {
-                "ticket": "ticket_key",
+                "ticket": "ticket-key",
                 "rsc": "resourceA",
                 "rsc-role": const.PCMK_ROLE_PROMOTED_LEGACY,
             }
         )
         self.second = Element(
             {
-                "ticket": "ticket_key",
+                "ticket": "ticket-key",
                 "rsc": "resourceA",
                 "rsc-role": const.PCMK_ROLE_PROMOTED_LEGACY,
             }
@@ -363,8 +389,8 @@ class AreDuplicateWithResourceSet(TestCase):
         mock_have_duplicate_resource_sets.return_value = True
         self.assertTrue(
             ticket.are_duplicate_with_resource_set(
-                Element({"ticket": "ticket_key"}),
-                Element({"ticket": "ticket_key"}),
+                Element({"ticket": "ticket-key"}),
+                Element({"ticket": "ticket-key"}),
             )
         )
 
@@ -374,7 +400,7 @@ class AreDuplicateWithResourceSet(TestCase):
         mock_have_duplicate_resource_sets.return_value = True
         self.assertFalse(
             ticket.are_duplicate_with_resource_set(
-                Element({"ticket": "ticket_key"}),
+                Element({"ticket": "ticket-key"}),
                 Element({"ticket": "X"}),
             )
         )
