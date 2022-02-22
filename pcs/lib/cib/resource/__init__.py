@@ -1,4 +1,4 @@
-from pcs.lib.cib.resource import (
+from . import (
     bundle,
     clone,
     common,
@@ -9,4 +9,6 @@ from pcs.lib.cib.resource import (
     primitive,
     relations,
     remote_node,
+    stonith,
+    validations,
 )

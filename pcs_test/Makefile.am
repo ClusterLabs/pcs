@@ -137,7 +137,9 @@ EXTRA_DIST		= \
 			  tier0/lib/cib/resource/test_agent.py \
 			  tier0/lib/cib/resource/test_hierarchy.py \
 			  tier0/lib/cib/resource/test_primitive_validate.py \
+			  tier0/lib/cib/resource/test_stonith.py \
 			  tier0/lib/cib/resource/test_relations.py \
+			  tier0/lib/cib/resource/test_validations.py \
 			  tier0/lib/cib/rule/__init__.py \
 			  tier0/lib/cib/rule/test_cib_to_dto.py \
 			  tier0/lib/cib/rule/test_cib_to_str.py \
@@ -166,7 +168,6 @@ EXTRA_DIST		= \
 			  tier0/lib/cib/test_resource_set.py \
 			  tier0/lib/cib/test_sections.py \
 			  tier0/lib/cib/test_status.py \
-			  tier0/lib/cib/test_stonith.py \
 			  tier0/lib/cib/test_tag.py \
 			  tier0/lib/cib/test_tools.py \
 			  tier0/lib/commands/cluster/common.py \

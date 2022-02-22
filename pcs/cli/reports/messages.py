@@ -516,6 +516,22 @@ class InvalidStonithAgentName(CliReportMessageCustom):
         )
 
 
+class ResourceStonithCommandsMismatch(CliReportMessageCustom):
+    _obj: messages.ResourceStonithCommandsMismatch
+
+    @property
+    def message(self) -> str:
+        cmd = (
+            {const.PCS_COMMAND_STONITH_CREATE: "pcs stonith create"}.get(
+                self._obj.command_to_use_instead
+            )
+            if self._obj.command_to_use_instead
+            else None
+        )
+        additional_msg = format_optional(cmd, " Use '{}' command instead.")
+        return f"{self._obj.message}{additional_msg}"
+
+
 def _create_report_msg_map() -> Dict[str, type]:
     result: Dict[str, type] = {}
     for report_msg_cls in get_all_subclasses(CliReportMessageCustom):

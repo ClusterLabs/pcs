@@ -12,6 +12,7 @@ from lxml import etree
 
 from pcs import settings
 from pcs.cli.common.parse_args import InputModifiers
+from pcs.common import str_tools
 from pcs.lib.external import CommandRunner
 
 from pcs_test import TEST_ROOT
@@ -323,11 +324,7 @@ def create_patcher(target_prefix_or_module):
 
 
 def outdent(text):
-    line_list = text.splitlines()
-    smallest_indentation = min(
-        [len(line) - len(line.lstrip(" ")) for line in line_list if line]
-    )
-    return "\n".join([line[smallest_indentation:] for line in line_list])
+    return "\n".join(str_tools.outdent(text.splitlines()))
 
 
 def create_setup_patch_mixin(module_specification_or_patcher):

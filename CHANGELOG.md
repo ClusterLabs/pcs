@@ -24,8 +24,13 @@
 - Pcs no longer creates Pacemaker-1.x CIB when `-f` is used, so running `pcs
   cluster cib-upgrade` manually is not needed ([rhbz#2022463])
 
+### Deprecated
+- Usage of `pcs resource` commands for stonith resources and vice versa
+  ([rhbz#1301204])
+
 [ghissue#441]: https://github.com/ClusterLabs/pcs/issues/441
 [ghpull#431]: https://github.com/ClusterLabs/pcs/pull/431
+[rhbz#1301204]: https://bugzilla.redhat.com/show_bug.cgi?id=1301204
 [rhbz#1996062]: https://bugzilla.redhat.com/show_bug.cgi?id=1996062
 [rhbz#2019836]: https://bugzilla.redhat.com/show_bug.cgi?id=2019836
 [rhbz#2022463]: https://bugzilla.redhat.com/show_bug.cgi?id=2022463

@@ -31,7 +31,9 @@ FENCE_HISTORY_COMMAND_UPDATE = FenceHistoryCommandType("update")
 PCS_COMMAND_OPERATION_DEFAULTS_UPDATE = PcsCommand(
     "resource op defaults update"
 )
+PCS_COMMAND_RESOURCE_CREATE = PcsCommand("resource create")
 PCS_COMMAND_RESOURCE_DEFAULTS_UPDATE = PcsCommand("resource defaults update")
+PCS_COMMAND_STONITH_CREATE = PcsCommand("stonith create")
 
 SERVICE_ACTION_START = ServiceAction("START")
 SERVICE_ACTION_STOP = ServiceAction("STOP")

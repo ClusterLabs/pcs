@@ -301,7 +301,8 @@ class FailcountShow(TestCase):
 class GroupAdd(TestCase, AssertPcsMixin):
     def setUp(self):
         self.lib = mock.Mock(spec_set=["resource"])
-        self.resource = mock.Mock(spec_set=["group_add"])
+        self.resource = mock.Mock(spec_set=["group_add", "is_any_stonith"])
+        self.resource.is_any_stonith.return_value = False
         self.lib.resource = self.resource
 
     def test_no_args(self):
@@ -478,7 +479,8 @@ class ResourceMoveBanMixin:
 class ResourceMoveLegacy(ResourceMoveBanMixin, TestCase):
     def setUp(self):
         self.lib = mock.Mock(spec_set=["resource"])
-        self.resource = mock.Mock(spec_set=["move"])
+        self.resource = mock.Mock(spec_set=["move", "is_any_stonith"])
+        self.resource.is_any_stonith.return_value = False
         self.lib.resource = self.resource
         self.lib_command = self.resource.move
         self.cli_command = resource.resource_move_with_constraint
@@ -488,7 +490,8 @@ class ResourceMoveLegacy(ResourceMoveBanMixin, TestCase):
 class ResourceBan(ResourceMoveBanMixin, TestCase):
     def setUp(self):
         self.lib = mock.Mock(spec_set=["resource"])
-        self.resource = mock.Mock(spec_set=["ban"])
+        self.resource = mock.Mock(spec_set=["ban", "is_any_stonith"])
+        self.resource.is_any_stonith.return_value = False
         self.lib.resource = self.resource
         self.lib_command = self.resource.ban
         self.cli_command = resource.resource_ban
@@ -499,7 +502,8 @@ class ResourceBan(ResourceMoveBanMixin, TestCase):
 class ResourceMove(TestCase):
     def setUp(self):
         self.lib = mock.Mock(spec_set=["resource"])
-        self.resource = mock.Mock(spec_set=["move_autoclean"])
+        self.resource = mock.Mock(spec_set=["move_autoclean", "is_any_stonith"])
+        self.resource.is_any_stonith.return_value = False
         self.lib.resource = self.resource
 
     def test_no_args(self, mock_deprecation):
@@ -576,7 +580,8 @@ class ResourceMove(TestCase):
 class ResourceClear(TestCase):
     def setUp(self):
         self.lib = mock.Mock(spec_set=["resource"])
-        self.resource = mock.Mock(spec_set=["unmove_unban"])
+        self.resource = mock.Mock(spec_set=["unmove_unban", "is_any_stonith"])
+        self.resource.is_any_stonith.return_value = False
         self.lib.resource = self.resource
 
     def test_no_args(self):
@@ -628,8 +633,14 @@ class ResourceDisable(TestCase):
     def setUp(self):
         self.lib = mock.Mock(spec_set=["resource", "env"])
         self.resource = mock.Mock(
-            spec_set=["disable", "disable_safe", "disable_simulate"]
+            spec_set=[
+                "disable",
+                "disable_safe",
+                "disable_simulate",
+                "is_any_stonith",
+            ]
         )
+        self.resource.is_any_stonith.return_value = False
         self.lib.resource = self.resource
 
         self.report_processor = mock.Mock(
@@ -650,7 +661,9 @@ class ResourceDisable(TestCase):
 
     def test_no_args(self):
         with self.assertRaises(CmdLineInputError) as cm:
-            resource.resource_disable_cmd(self.lib, [], dict_to_modifiers({}))
+            resource.resource_disable_common(
+                self.lib, [], dict_to_modifiers({})
+            )
         self.assertEqual(
             cm.exception.message, "You must specify resource(s) to disable"
         )
@@ -660,14 +673,16 @@ class ResourceDisable(TestCase):
         self.resource.disable_simulate.assert_not_called()
 
     def test_one_resource(self):
-        resource.resource_disable_cmd(self.lib, ["R1"], dict_to_modifiers({}))
+        resource.resource_disable_common(
+            self.lib, ["R1"], dict_to_modifiers({})
+        )
         self.resource.disable.assert_called_once_with(["R1"], False)
         self.report_processor.suppress_reports_of_severity.assert_not_called()
         self.resource.disable_safe.assert_not_called()
         self.resource.disable_simulate.assert_not_called()
 
     def test_more_resources(self):
-        resource.resource_disable_cmd(
+        resource.resource_disable_common(
             self.lib, ["R1", "R2"], dict_to_modifiers({})
         )
         self.resource.disable.assert_called_once_with(["R1", "R2"], False)
@@ -676,7 +691,7 @@ class ResourceDisable(TestCase):
         self.resource.disable_simulate.assert_not_called()
 
     def test_safe(self):
-        resource.resource_disable_cmd(
+        resource.resource_disable_common(
             self.lib, ["R1", "R2"], dict_to_modifiers(dict(safe=True))
         )
         self.resource.disable_safe.assert_called_once_with(
@@ -687,7 +702,7 @@ class ResourceDisable(TestCase):
         self.resource.disable_simulate.assert_not_called()
 
     def test_safe_brief(self):
-        resource.resource_disable_cmd(
+        resource.resource_disable_common(
             self.lib,
             ["R1", "R2"],
             dict_to_modifiers(dict(safe=True, brief=True)),
@@ -702,7 +717,7 @@ class ResourceDisable(TestCase):
         self.resource.disable_simulate.assert_not_called()
 
     def test_safe_wait(self):
-        resource.resource_disable_cmd(
+        resource.resource_disable_common(
             self.lib,
             ["R1", "R2"],
             dict_to_modifiers(dict(safe=True, wait="10")),
@@ -715,7 +730,7 @@ class ResourceDisable(TestCase):
         self.resource.disable_simulate.assert_not_called()
 
     def test_safe_no_strict(self):
-        resource.resource_disable_cmd(
+        resource.resource_disable_common(
             self.lib, ["R1", "R2"], dict_to_modifiers({"no-strict": True})
         )
         self.resource.disable_safe.assert_called_once_with(
@@ -726,7 +741,7 @@ class ResourceDisable(TestCase):
         self.resource.disable_simulate.assert_not_called()
 
     def test_safe_no_strict_wait(self):
-        resource.resource_disable_cmd(
+        resource.resource_disable_common(
             self.lib,
             ["R1", "R2"],
             dict_to_modifiers({"no-strict": True, "wait": "10"}),
@@ -741,7 +756,7 @@ class ResourceDisable(TestCase):
     @mock.patch("pcs.resource.print")
     def test_simulate(self, mock_print):
         self.resource.disable_simulate.return_value = self._fixture_output()
-        resource.resource_disable_cmd(
+        resource.resource_disable_common(
             self.lib, ["R1", "R2"], dict_to_modifiers(dict(simulate=True))
         )
         self.resource.disable_simulate.assert_called_once_with(
@@ -806,7 +821,7 @@ class ResourceDisable(TestCase):
 
     def test_simulate_wait(self):
         with self.assertRaises(CmdLineInputError) as cm:
-            resource.resource_disable_cmd(
+            resource.resource_disable_common(
                 self.lib,
                 ["R1"],
                 dict_to_modifiers(dict(simulate=True, wait=True)),
@@ -822,7 +837,7 @@ class ResourceDisable(TestCase):
 
     def test_simulate_safe(self):
         with self.assertRaises(CmdLineInputError) as cm:
-            resource.resource_disable_cmd(
+            resource.resource_disable_common(
                 self.lib,
                 ["R1"],
                 dict_to_modifiers(
@@ -838,7 +853,7 @@ class ResourceDisable(TestCase):
         self.resource.disable_simulate.assert_not_called()
 
     def test_wait(self):
-        resource.resource_disable_cmd(
+        resource.resource_disable_common(
             self.lib, ["R1", "R2"], dict_to_modifiers(dict(wait="10"))
         )
         self.report_processor.suppress_reports_of_severity.assert_not_called()
@@ -851,8 +866,14 @@ class ResourceSafeDisable(TestCase):
     def setUp(self):
         self.lib = mock.Mock(spec_set=["resource"])
         self.resource = mock.Mock(
-            spec_set=["disable", "disable_safe", "disable_simulate"]
+            spec_set=[
+                "disable",
+                "disable_safe",
+                "disable_simulate",
+                "is_any_stonith",
+            ]
         )
+        self.resource.is_any_stonith.return_value = False
         self.lib.resource = self.resource
         self.force_warning = (
             "option '--force' is specified therefore checks for disabling "
@@ -1093,7 +1114,8 @@ class ResourceSafeDisable(TestCase):
 class ResourceEnable(TestCase):
     def setUp(self):
         self.lib = mock.Mock(spec_set=["resource"])
-        self.resource = mock.Mock(spec_set=["enable"])
+        self.resource = mock.Mock(spec_set=["enable", "is_any_stonith"])
+        self.resource.is_any_stonith.return_value = False
         self.lib.resource = self.resource
 
     def test_no_args(self):
@@ -1126,7 +1148,8 @@ class ResourceEnable(TestCase):
 class ResourceManage(TestCase):
     def setUp(self):
         self.lib = mock.Mock(spec_set=["resource"])
-        self.resource = mock.Mock(spec_set=["manage"])
+        self.resource = mock.Mock(spec_set=["manage", "is_any_stonith"])
+        self.resource.is_any_stonith.return_value = False
         self.lib.resource = self.resource
 
     def test_no_args(self):
@@ -1163,7 +1186,8 @@ class ResourceManage(TestCase):
 class ResourceUnmanage(TestCase):
     def setUp(self):
         self.lib = mock.Mock(spec_set=["resource"])
-        self.resource = mock.Mock(spec_set=["unmanage"])
+        self.resource = mock.Mock(spec_set=["unmanage", "is_any_stonith"])
+        self.resource.is_any_stonith.return_value = False
         self.lib.resource = self.resource
 
     def test_no_args(self):

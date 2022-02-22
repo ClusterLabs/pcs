@@ -15,13 +15,12 @@ from pcs.common.reports import (
     ReportItemList,
 )
 from pcs.common.tools import timeout_to_seconds
-from pcs.lib.cib import resource
+from pcs.lib.cib.const import TAG_RESOURCE_PRIMITIVE
 from pcs.lib.cib.nvpair import (
     INSTANCE_ATTRIBUTES_TAG,
     arrange_first_instance_attributes,
     get_value,
 )
-from pcs.lib.cib.resource.primitive import TAG as TAG_PRIMITIVE
 from pcs.lib.cib.tools import IdProvider
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
@@ -29,6 +28,11 @@ from pcs.lib.pacemaker.live import get_resource_digests
 from pcs.lib.pacemaker.state import get_resource_state
 from pcs.lib.pacemaker.values import is_false
 from pcs.lib.xml_tools import get_root
+
+from . import (
+    common,
+    operations,
+)
 
 
 # TODO replace by the new finding function
@@ -40,6 +44,13 @@ def is_stonith_resource(resources_el, name):
             )
         )
         > 0
+    )
+
+
+def is_stonith(resource_el: _Element):
+    return (
+        resource_el.tag == TAG_RESOURCE_PRIMITIVE
+        and resource_el.get("class") == "stonith"
     )
 
 
@@ -94,8 +105,8 @@ def validate_stonith_restartless_update(
     cib -- cib element
     stonith_id -- id of a stonith resource
     """
-    stonith_el, report_list = resource.common.find_one_resource(
-        cib, stonith_id, resource_tags=[TAG_PRIMITIVE]
+    stonith_el, report_list = common.find_one_resource(
+        cib, stonith_id, resource_tags=[TAG_RESOURCE_PRIMITIVE]
     )
     if stonith_el is None:
         return stonith_el, report_list
@@ -189,7 +200,7 @@ def _get_monitor_attrs(
     status, it will be found later.
     """
     monitor_attrs_list: List[Dict[str, Optional[str]]] = []
-    for operation_el in resource.operations.get_resource_operations(
+    for operation_el in operations.get_resource_operations(
         resource_el, names=["monitor"]
     ):
         sec = timeout_to_seconds(operation_el.get("interval", ""))

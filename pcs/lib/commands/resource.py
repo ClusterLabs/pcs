@@ -165,6 +165,14 @@ def _get_agent_facade(
             if ":" in name
             else find_one_resource_agent_by_type(runner, report_processor, name)
         )
+        if split_name.is_stonith:
+            report_processor.report(
+                reports.ReportItem.deprecation(
+                    reports.messages.ResourceStonithCommandsMismatch(
+                        "fence agent", reports.const.PCS_COMMAND_STONITH_CREATE
+                    )
+                )
+            )
         return factory.facade_from_parsed_name(split_name)
     except (UnableToGetAgentMetadata, UnsupportedOcfVersion) as e:
         if allow_absent_agent:
@@ -666,7 +674,7 @@ def create_in_group(
             resource.common.disable(primitive_element, id_provider)
 
         if env.report_processor.report_list(
-            resource.hierarchy.validate_move_resources_to_group(
+            resource.validations.validate_move_resources_to_group(
                 group_element,
                 [primitive_element],
                 adjacent_resource_element,
@@ -1168,6 +1176,17 @@ def disable_safe(
     resource_el_list = _disable_validate_and_edit_cib(
         env, cib, resource_or_tag_ids
     )
+    if any(
+        resource.stonith.is_stonith(resource_el)
+        for resource_el in resource_el_list
+    ):
+        env.report_processor.report(
+            reports.ReportItem.deprecation(
+                reports.messages.ResourceStonithCommandsMismatch(
+                    "stonith device"
+                )
+            )
+        )
     disabled_resource_id_set, inner_resource_id_set = _disable_get_element_ids(
         resource_el_list
     )
@@ -1457,8 +1476,20 @@ def group_add(
             ReportItem.error(reports.messages.IdNotFound(resource_id, []))
         )
 
+    if any(
+        resource.stonith.is_stonith(resource_el)
+        for resource_el in resource_element_list
+    ):
+        env.report_processor.report(
+            reports.ReportItem.deprecation(
+                reports.messages.ResourceStonithCommandsMismatch(
+                    "stonith resource"
+                )
+            )
+        )
+
     if env.report_processor.report_list(
-        resource.hierarchy.validate_move_resources_to_group(
+        resource.validations.validate_move_resources_to_group(
             group_element,
             resource_element_list,
             adjacent_resource_element,
@@ -1642,7 +1673,9 @@ def move_autoclean(
         get_resources(cib), resource_id
     )
     if resource_el is not None:
-        report_list.extend(resource.common.validate_move(resource_el, master))
+        report_list.extend(
+            resource.validations.validate_move(resource_el, master)
+        )
 
     if node:
         report_list.extend(_nodes_exist_reports(cib, [node]))
@@ -2015,7 +2048,7 @@ class _MoveBanTemplate:
 
 class _Move(_MoveBanTemplate):
     def _validate(self, resource_el, master):
-        return resource.common.validate_move(resource_el, master)
+        return resource.validations.validate_move(resource_el, master)
 
     def _run_action(self, runner, resource_id, node, master, lifetime):
         return resource_move(
@@ -2060,7 +2093,7 @@ class _Move(_MoveBanTemplate):
 
 class _Ban(_MoveBanTemplate):
     def _validate(self, resource_el, master):
-        return resource.common.validate_ban(resource_el, master)
+        return resource.validations.validate_ban(resource_el, master)
 
     def _run_action(self, runner, resource_id, node, master, lifetime):
         return resource_ban(
@@ -2144,7 +2177,7 @@ def unmove_unban(
     )
     if resource_el is not None:
         report_list.extend(
-            resource.common.validate_unmove_unban(resource_el, master)
+            resource.validations.validate_unmove_unban(resource_el, master)
         )
     if expired and not has_resource_unmove_unban_expired_support(
         env.cmd_runner()
@@ -2200,11 +2233,34 @@ def get_resource_relations_tree(
     """
     cib = env.get_cib()
 
-    dummy_resource_el, report_list = resource.common.find_one_resource(
-        get_resources(cib), resource_id
-    )
-    if env.report_processor.report_list(report_list).has_errors:
-        raise LibraryError()
+    try:
+        resource_el = get_element_by_id(cib, resource_id)
+    except ElementNotFound as e:
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.IdNotFound(
+                    resource_id, expected_types=["resource"]
+                )
+            )
+        ) from e
+    if not resource.common.is_resource(resource_el):
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.IdBelongsToUnexpectedType(
+                    resource_id,
+                    expected_types=["resource"],
+                    current_type=resource_el.tag,
+                )
+            )
+        )
+    if resource.stonith.is_stonith(resource_el):
+        env.report_processor.report(
+            reports.ReportItem.deprecation(
+                reports.messages.ResourceStonithCommandsMismatch(
+                    "stonith resource"
+                )
+            )
+        )
 
     (
         resources_dict,
@@ -2255,3 +2311,31 @@ def get_required_cib_version_for_primitive(
         if op.get("on-fail", "") == "demote":
             return Version(3, 4, 0)
     return None
+
+
+def is_any_resource_except_stonith(
+    env: LibraryEnvironment,
+    resource_id_list: List[str],
+) -> bool:
+    """
+    Return True if any resource is a non stonith resource. False otherwise.
+    """
+    cib = env.get_cib()
+    return any(
+        not resource.stonith.is_stonith(resource_el)
+        for resource_el in _find_resources_expand_tags(cib, resource_id_list)[0]
+    )
+
+
+def is_any_stonith(
+    env: LibraryEnvironment,
+    resource_id_list: List[str],
+) -> bool:
+    """
+    Return True if any resource is a stonith resource. False otherwise.
+    """
+    cib = env.get_cib()
+    return any(
+        resource.stonith.is_stonith(resource_el)
+        for resource_el in _find_resources_expand_tags(cib, resource_id_list)[0]
+    )

@@ -3,6 +3,7 @@ from lxml import etree
 from pcs.common import reports
 from pcs.common.reports.item import ReportItem
 from pcs.lib import validate
+from pcs.lib.cib.const import TAG_RESOURCE_BUNDLE as TAG
 from pcs.lib.cib.nvpair import (
     META_ATTRIBUTES_TAG,
     append_new_meta_attributes,
@@ -18,8 +19,6 @@ from pcs.lib.xml_tools import (
     reset_element,
     update_attributes_remove_empty,
 )
-
-TAG = "bundle"
 
 GENERIC_CONTAINER_TYPES = {"docker", "podman", "rkt"}
 

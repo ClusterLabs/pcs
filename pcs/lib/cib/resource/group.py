@@ -8,7 +8,7 @@ from lxml.etree import (
     _Element,
 )
 
-TAG = "group"
+from pcs.lib.cib.const import TAG_RESOURCE_GROUP as TAG
 
 
 def is_group(resource_el: _Element) -> bool:

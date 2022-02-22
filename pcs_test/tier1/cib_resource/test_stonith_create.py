@@ -249,6 +249,11 @@ class WithMeta(ResourceTest):
 
 
 class InGroup(ResourceTest):
+    deprecation_warning = (
+        "Deprecation Warning: Option to group stonith resource is deprecated "
+        "and will be removed in a future release.\n"
+    )
+
     def test_command_simply_puts_stonith_into_group(self):
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.assert_effect(
@@ -264,11 +269,15 @@ class InGroup(ResourceTest):
                     </primitive>
                 </group>
             </resources>""",
+            output=self.deprecation_warning,
         )
 
     def test_command_simply_puts_stonith_into_group_at_the_end(self):
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
-        self.assert_pcs_success("stonith create S1 fence_xvm --group G".split())
+        self.assert_pcs_success(
+            "stonith create S1 fence_xvm --group G".split(),
+            stdout_full=self.deprecation_warning,
+        )
         self.assert_effect(
             "stonith create S2 fence_xvm --group G".split(),
             """<resources>
@@ -289,11 +298,15 @@ class InGroup(ResourceTest):
                     </primitive>
                 </group>
             </resources>""",
+            output=self.deprecation_warning,
         )
 
     def test_command_simply_puts_stonith_into_group_before_another(self):
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
-        self.assert_pcs_success("stonith create S1 fence_xvm --group G".split())
+        self.assert_pcs_success(
+            "stonith create S1 fence_xvm --group G".split(),
+            stdout_full=self.deprecation_warning,
+        )
         self.assert_effect(
             "stonith create S2 fence_xvm --group G --before S1".split(),
             """<resources>
@@ -314,6 +327,7 @@ class InGroup(ResourceTest):
                     </primitive>
                 </group>
             </resources>""",
+            output=self.deprecation_warning,
         )
 
     def test_command_simply_puts_stonith_into_group_after_another(self):
@@ -351,20 +365,29 @@ class InGroup(ResourceTest):
                     </primitive>
                 </group>
             </resources>""",
+            output=self.deprecation_warning,
         )
 
     def test_fail_when_intended_before_item_does_not_exist(self):
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.assert_pcs_fail(
             "stonith create S2 fence_xvm --group G --before S1".split(),
-            "Error: 'S1' does not exist\n" + ERRORS_HAVE_OCURRED,
+            (
+                self.deprecation_warning
+                + "Error: 'S1' does not exist\n"
+                + ERRORS_HAVE_OCURRED
+            ),
         )
 
     def test_fail_when_intended_after_item_does_not_exist(self):
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.assert_pcs_fail(
             "stonith create S2 fence_xvm --group G --after S1".split(),
-            "Error: 'S1' does not exist\n" + ERRORS_HAVE_OCURRED,
+            (
+                self.deprecation_warning
+                + "Error: 'S1' does not exist\n"
+                + ERRORS_HAVE_OCURRED
+            ),
         )
 
     def test_fail_when_entered_both_after_and_before(self):

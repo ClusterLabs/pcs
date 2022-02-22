@@ -12,15 +12,11 @@ from lxml.etree import _Element
 from pcs.common import reports
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
-from pcs.lib.cib import (
-    resource,
-    stonith,
-)
+from pcs.lib.cib import resource
 from pcs.lib.cib.nvpair import (
     INSTANCE_ATTRIBUTES_TAG,
     get_value,
 )
-from pcs.lib.cib.resource.common import are_meta_disabled
 from pcs.lib.cib.tools import (
     ElementNotFound,
     IdProvider,
@@ -154,7 +150,8 @@ def create(
         wait,
         [stonith_id],
         _ensure_disabled_after_wait(
-            ensure_disabled or are_meta_disabled(meta_attributes),
+            ensure_disabled
+            or resource.common.are_meta_disabled(meta_attributes),
         ),
     ) as resources_section:
         id_provider = IdProvider(resources_section)
@@ -176,6 +173,7 @@ def create(
             resource.common.disable(stonith_element, id_provider)
 
 
+# DEPRECATED: this command is deprecated and will be removed in a future release
 def create_in_group(
     env: LibraryEnvironment,
     stonith_id: str,
@@ -195,6 +193,7 @@ def create_in_group(
 ):
     # pylint: disable=too-many-arguments, too-many-locals
     """
+    DEPRECATED
     Create stonith as resource in a cib and put it into defined group.
 
     env -- provides all for communication with externals
@@ -235,7 +234,8 @@ def create_in_group(
         wait,
         [stonith_id],
         _ensure_disabled_after_wait(
-            ensure_disabled or are_meta_disabled(meta_attributes),
+            ensure_disabled
+            or resource.common.are_meta_disabled(meta_attributes),
         ),
     ) as resources_section:
         id_provider = IdProvider(resources_section)
@@ -287,7 +287,7 @@ def create_in_group(
             resource.common.disable(stonith_element, id_provider)
 
         if env.report_processor.report_list(
-            resource.hierarchy.validate_move_resources_to_group(
+            resource.validations.validate_move_resources_to_group(
                 group_element,
                 [stonith_element],
                 adjacent_resource_element,
@@ -401,7 +401,7 @@ def _update_scsi_devices_get_element_and_devices(
     (
         stonith_el,
         report_list,
-    ) = stonith.validate_stonith_restartless_update(cib, stonith_id)
+    ) = resource.stonith.validate_stonith_restartless_update(cib, stonith_id)
     if report_processor.report_list(report_list).has_errors:
         raise LibraryError()
     # for mypy, this should not happen because exception would be raised
@@ -497,7 +497,7 @@ def update_scsi_devices(
     )
     if env.report_processor.has_errors:
         raise LibraryError()
-    stonith.update_scsi_devices_without_restart(
+    resource.stonith.update_scsi_devices_without_restart(
         runner,
         env.get_cluster_state(),
         stonith_el,
@@ -551,7 +551,7 @@ def update_scsi_devices_add_remove(
         .union(add_device_list)
         .difference(remove_device_list)
     )
-    stonith.update_scsi_devices_without_restart(
+    resource.stonith.update_scsi_devices_without_restart(
         env.cmd_runner(),
         env.get_cluster_state(),
         stonith_el,

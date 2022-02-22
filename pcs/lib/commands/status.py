@@ -21,10 +21,8 @@ from pcs.common.str_tools import (
     format_list,
     indent,
 )
-from pcs.lib.cib import (
-    nvpair,
-    stonith,
-)
+from pcs.lib.cib import nvpair
+from pcs.lib.cib.resource import stonith
 from pcs.lib.cib.tools import (
     get_crm_config,
     get_resources,

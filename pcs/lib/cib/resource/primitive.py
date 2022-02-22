@@ -12,6 +12,7 @@ from lxml.etree import _Element
 
 from pcs.common import reports
 from pcs.lib import validate
+from pcs.lib.cib.const import TAG_RESOURCE_PRIMITIVE as TAG
 from pcs.lib.cib.nvpair import (
     INSTANCE_ATTRIBUTES_TAG,
     append_new_instance_attributes,
@@ -37,8 +38,6 @@ from pcs.lib.resource_agent import (
     ResourceAgentName,
 )
 from pcs.lib.resource_agent.const import STONITH_ACTION_REPLACED_BY
-
-TAG = "primitive"
 
 
 def is_primitive(resource_el):

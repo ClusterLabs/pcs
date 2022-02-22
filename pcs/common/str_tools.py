@@ -11,8 +11,10 @@ from typing import (
     Union,
 )
 
+ListOfStrings = List[str]  # Intetionaly not Sequence so string is prohibited
 
-def indent(line_list: Iterable[str], indent_step: int = 2) -> List[str]:
+
+def indent(line_list: ListOfStrings, indent_step: int = 2) -> List[str]:
     """
     return line list where each line of input is prefixed by N spaces
 
@@ -25,7 +27,13 @@ def indent(line_list: Iterable[str], indent_step: int = 2) -> List[str]:
     ]
 
 
-ListOfStrings = List[str]  # Intetionaly not Sequence so string is prohibited
+def outdent(line_list: ListOfStrings) -> List[str]:
+    if not line_list:
+        return []
+    smallest_indentation = min(
+        [len(line) - len(line.lstrip(" ")) for line in line_list if line]
+    )
+    return [line[smallest_indentation:] for line in line_list]
 
 
 def format_list_base(
