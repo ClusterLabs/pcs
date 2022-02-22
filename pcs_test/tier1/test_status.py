@@ -196,7 +196,13 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
             )
 
     def test_no_stonith_warning_when_stonith_in_group(self):
-        self.assert_pcs_success("stonith create S fence_xvm --group G".split())
+        self.assert_pcs_success(
+            "stonith create S fence_xvm --group G".split(),
+            (
+                "Deprecation Warning: Option to group stonith resource is "
+                "deprecated and will be removed in a future release.\n"
+            ),
+        )
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         if PCMK_2_0_3_PLUS:

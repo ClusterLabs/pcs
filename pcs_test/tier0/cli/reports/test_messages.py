@@ -618,3 +618,30 @@ class StonithRestartlessUpdateUnableToPerform(CliReportMessageTestBase):
             report_msg,
             f"{report_msg.message}, please use command 'pcs stonith update' instead",
         )
+
+
+class ResourceStonithCommandsMismatch(CliReportMessageTestBase):
+    def test_no_cmd(self):
+        report_msg = messages.ResourceStonithCommandsMismatch("elemen type")
+        self.assert_message(
+            report_msg,
+            report_msg.message,
+        )
+
+    def test_unknown_cmd(self):
+        report_msg = messages.ResourceStonithCommandsMismatch(
+            "elemen type", const.PCS_COMMAND_RESOURCE_CREATE
+        )
+        self.assert_message(
+            report_msg,
+            report_msg.message,
+        )
+
+    def test_use_instead(self):
+        report_msg = messages.ResourceStonithCommandsMismatch(
+            "elemen type", const.PCS_COMMAND_STONITH_CREATE
+        )
+        self.assert_message(
+            report_msg,
+            f"{report_msg.message} Use 'pcs stonith create' command instead.",
+        )

@@ -66,10 +66,13 @@ class GetResourceRelationsTree(TestCase):
             lambda: resource.get_resource_relations_tree(
                 self.env_assist.get_env(),
                 resource_id,
-            )
-        )
-        self.env_assist.assert_reports(
-            [fixture.report_not_found(resource_id, context_type="resources")]
+            ),
+            [
+                fixture.report_not_found(
+                    resource_id, expected_types=["resource"]
+                )
+            ],
+            expected_in_processor=False,
         )
 
     def test_simple(self):

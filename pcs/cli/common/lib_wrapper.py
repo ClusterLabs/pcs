@@ -383,6 +383,8 @@ def load_module(env, middleware_factory, name):
                 "enable": resource.enable,
                 "get_failcounts": resource.get_failcounts,
                 "group_add": resource.group_add,
+                "is_any_resource_except_stonith": resource.is_any_resource_except_stonith,
+                "is_any_stonith": resource.is_any_stonith,
                 "manage": resource.manage,
                 "move": resource.move,
                 "move_autoclean": resource.move_autoclean,

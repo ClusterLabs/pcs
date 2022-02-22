@@ -79,6 +79,7 @@ EXTRA_DIST		= \
 			  cli/routing/qdevice.py \
 			  cli/routing/quorum.py \
 			  cli/routing/resource.py \
+			  cli/routing/resource_stonith_common.py \
 			  cli/routing/status.py \
 			  cli/routing/stonith.py \
 			  cli/routing/tag.py \
@@ -184,6 +185,7 @@ EXTRA_DIST		= \
 			  lib/booth/sync.py \
 			  lib/cib/acl.py \
 			  lib/cib/alert.py \
+			  lib/cib/const.py \
 			  lib/cib/constraint/colocation.py \
 			  lib/cib/constraint/constraint.py \
 			  lib/cib/constraint/__init__.py \
@@ -208,7 +210,9 @@ EXTRA_DIST		= \
 			  lib/cib/resource/primitive.py \
 			  lib/cib/resource/relations.py \
 			  lib/cib/resource/remote_node.py \
+			  lib/cib/resource/stonith.py \
 			  lib/cib/resource/types.py \
+			  lib/cib/resource/validations.py \
 			  lib/cib/rule/cib_to_dto.py \
 			  lib/cib/rule/cib_to_str.py \
 			  lib/cib/rule/expression_part.py \
@@ -220,7 +224,6 @@ EXTRA_DIST		= \
 			  lib/cib/rule/validator.py \
 			  lib/cib/sections.py \
 			  lib/cib/status.py \
-			  lib/cib/stonith.py \
 			  lib/cib/tag.py \
 			  lib/cib/tools.py \
 			  lib/commands/acl.py \

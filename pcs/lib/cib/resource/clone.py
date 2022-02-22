@@ -17,14 +17,14 @@ from lxml.etree import _Element
 
 from pcs.common.reports import ReportItemList
 from pcs.lib.cib import nvpair
+from pcs.lib.cib.const import TAG_RESOURCE_CLONE as TAG_CLONE
+from pcs.lib.cib.const import TAG_RESOURCE_MASTER as TAG_MASTER
 from pcs.lib.cib.tools import IdProvider
 from pcs.lib.pacemaker.values import (
     is_true,
     validate_id,
 )
 
-TAG_CLONE = "clone"
-TAG_MASTER = "master"
 ALL_TAGS = [TAG_CLONE, TAG_MASTER]
 
 

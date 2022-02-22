@@ -2,6 +2,7 @@ import json
 from typing import (
     Any,
     List,
+    Optional,
 )
 
 from pcs import (
@@ -27,6 +28,7 @@ from pcs.common.fencing_topology import (
 from pcs.common.resource_agent.dto import ResourceAgentNameDto
 from pcs.common.str_tools import (
     format_list,
+    format_optional,
     indent,
 )
 from pcs.lib.errors import LibraryError
@@ -121,6 +123,20 @@ def stonith_list_options(
     )
 
 
+def _check_is_stonith(
+    lib: Any,
+    resource_id_list: List[str],
+    cmd_to_use: Optional[str] = None,
+) -> None:
+    if lib.resource.is_any_resource_except_stonith(resource_id_list):
+        deprecation_warning(
+            reports.messages.ResourceStonithCommandsMismatch(
+                "resources"
+            ).message
+            + format_optional(cmd_to_use, " Please use '{}' instead.")
+        )
+
+
 def stonith_create(lib, argv, modifiers):
     """
     Options:
@@ -188,6 +204,10 @@ def stonith_create(lib, argv, modifiers):
             **settings,
         )
     else:
+        deprecation_warning(
+            "Option to group stonith resource is deprecated and will be "
+            "removed in a future release."
+        )
         adjacent_resource_id = None
         put_after_adjacent = False
         if modifiers.get("--after"):
@@ -284,11 +304,13 @@ def stonith_level_add_cmd(lib, argv, modifiers):
     if len(argv) < 3:
         raise CmdLineInputError()
     target_type, target_value = _stonith_level_parse_node(argv[1])
+    stonith_devices = _stonith_level_normalize_devices(argv[2:])
+    _check_is_stonith(lib, stonith_devices)
     lib.fencing_topology.add_level(
         argv[0],
         target_type,
         target_value,
-        _stonith_level_normalize_devices(argv[2:]),
+        stonith_devices,
         force_device=modifiers.get("--force"),
         force_node=modifiers.get("--force"),
     )
@@ -928,3 +950,121 @@ def stonith_update_scsi_devices(lib, argv, modifiers):
             parsed_args.get("delete", []) + parsed_args.get("remove", []),
             force_flags=force_flags,
         )
+
+
+def delete_cmd(
+    lib: Any, argv: List[str], modifiers: parse_args.InputModifiers
+) -> None:
+    """
+    Options:
+      * -f - CIB file
+      * --force - don't stop a resource before its deletion
+    """
+    modifiers.ensure_only_supported("-f", "--force")
+    if len(argv) != 1:
+        raise CmdLineInputError()
+    resource_id = argv[0]
+    _check_is_stonith(lib, [resource_id], "pcs resource delete")
+    resource.resource_remove(resource_id)
+
+
+def enable_cmd(
+    lib: Any, argv: List[str], modifiers: parse_args.InputModifiers
+) -> None:
+    """
+    Options:
+      * --wait
+      * -f - CIB file
+    """
+    modifiers.ensure_only_supported("--wait", "-f")
+    if not argv:
+        raise CmdLineInputError(
+            "You must specify stonith resource(s) to enable"
+        )
+    resources = argv
+    _check_is_stonith(lib, resources, "pcs resource enable")
+    lib.resource.enable(resources, modifiers.get("--wait"))
+
+
+def disable_cmd(
+    lib: Any, argv: List[str], modifiers: parse_args.InputModifiers
+) -> None:
+    """
+    Options:
+      * -f - CIB file
+      * --brief - show brief output of --simulate
+      * --safe - only disable if no other resource gets stopped or demoted
+      * --simulate - do not push the CIB, print its effects
+      * --no-strict - allow disable if other resource is affected
+      * --wait
+    """
+    if not argv:
+        raise CmdLineInputError(
+            "You must specify stonith resource(s) to disable"
+        )
+    _check_is_stonith(lib, argv, "pcs resource disable")
+    if modifiers.is_specified_any(("--safe", "--no-strict", "--simulate")):
+        deprecation_warning(
+            "Options '--safe', '--no-strict' and '--simualte' are deprecated "
+            "and will be removed in a future release."
+        )
+    resource.resource_disable_common(lib, argv, modifiers)
+
+
+def update_cmd(
+    lib: Any, argv: List[str], modifiers: parse_args.InputModifiers
+) -> None:
+    """
+    Options:
+      * -f - CIB file
+      * --wait
+      * --force - allow invalid options, do not fail if not possible to get
+        agent metadata, allow not suitable command
+    """
+    if not argv:
+        raise CmdLineInputError()
+    _check_is_stonith(lib, [argv[0]], "pcs resource update")
+    resource.resource_update(argv, modifiers)
+
+
+def op_add_cmd(
+    lib: Any, argv: List[str], modifiers: parse_args.InputModifiers
+) -> None:
+    """
+    Options:
+      * -f - CIB file
+      * --force - allow unknown options
+    """
+    if not argv:
+        raise CmdLineInputError()
+    _check_is_stonith(lib, [argv[0]], "pcs resource op add")
+    resource.resource_op_add(argv, modifiers)
+
+
+def op_delete_cmd(
+    lib: Any, argv: List[str], modifiers: parse_args.InputModifiers
+) -> None:
+    """
+    Options:
+      * -f - CIB file
+    """
+    modifiers.ensure_only_supported("-f")
+    if not argv:
+        raise CmdLineInputError()
+    _check_is_stonith(lib, [argv[0]], "pcs resource op delete")
+    resource.resource_operation_remove(argv[0], argv[1:])
+
+
+def meta_cmd(
+    lib: Any, argv: List[str], modifiers: parse_args.InputModifiers
+) -> None:
+    """
+    Options:
+      * --force - allow not suitable command
+      * --wait
+      * -f - CIB file
+    """
+    if not argv:
+        raise CmdLineInputError()
+    _check_is_stonith(lib, [argv[0]], "pcs resource meta")
+    resource.resource_meta(argv, modifiers)

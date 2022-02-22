@@ -3,7 +3,7 @@ from unittest import TestCase
 from lxml import etree
 
 from pcs.common import reports
-from pcs.lib.cib import stonith
+from pcs.lib.cib.resource import stonith
 
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal

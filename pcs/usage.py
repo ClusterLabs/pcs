@@ -1,10 +1,80 @@
 import re
+from typing import (
+    Iterable,
+    List,
+    Tuple,
+)
 
+from pcs.cli.common.output import format_with_indentation
 from pcs.cli.reports.output import print_to_stderr
+from pcs.common.str_tools import (
+    indent,
+    outdent,
+)
 
 # pylint: disable=too-many-lines, too-many-branches, global-statement
 
 examples = ""
+
+_WIDTH = 80
+_SECOND_LEVEL_CMD_INDENT = 4
+_SYNTAX_INDENT = 8
+_DESC_INDENT = 4
+
+
+def _unwrap(text: str) -> str:
+    return " ".join(outdent(text.splitlines())).strip()
+
+
+def _format_syntax(cmd_syntax: str) -> str:
+    return "\n".join(
+        indent(
+            format_with_indentation(
+                _unwrap(cmd_syntax),
+                indentation=_SYNTAX_INDENT,
+                max_length_trim=_SECOND_LEVEL_CMD_INDENT,
+                max_length=_WIDTH,
+            ),
+            indent_step=_SECOND_LEVEL_CMD_INDENT,
+        )
+    )
+
+
+def _format_desc_without_unwrap(cmd_desc_list: Iterable[str]) -> str:
+    return "\n".join(
+        "\n".join(
+            format_with_indentation(
+                cmd_desc,
+                indentation=_DESC_INDENT + _SECOND_LEVEL_CMD_INDENT,
+                indent_first=True,
+                max_length=_WIDTH,
+            )
+        )
+        for cmd_desc in cmd_desc_list
+    )
+
+
+def _format_desc(cmd_desc_list: Iterable[str]) -> str:
+    return _format_desc_without_unwrap(
+        _unwrap(cmd_desc) for cmd_desc in cmd_desc_list
+    )
+
+
+def _format_desc_item_list(item_list: Iterable[str]) -> List[str]:
+    indent_step = 2
+    lines = []
+    for item in item_list:
+        lines.extend(
+            format_with_indentation(
+                _unwrap(item),
+                indentation=_DESC_INDENT,
+                max_length_trim=indent_step
+                + _DESC_INDENT
+                + _SECOND_LEVEL_CMD_INDENT,
+                max_length=_WIDTH,
+            )
+        )
+    return indent(lines, indent_step=indent_step)
 
 
 def full_usage():
@@ -215,6 +285,429 @@ Commands:
     return output
 
 
+def _alias_of(cmd: str) -> str:
+    return f"This command is an alias of '{cmd}' command."
+
+
+_DELETE_CMD = "delete"
+_REMOVE_CMD = "remove"
+_RESOURCE_DELETE_SYNTAX = "<resource id|group id|bundle id|clone id>"
+_RESOURCE_DELETE_DESC = (
+    """
+    Deletes the resource, group, bundle or clone (and all resources within the
+    group/bundle/clone).
+    """,
+)
+
+_RESOURCE_GROUP_CMD = "group"
+_RESOURCE_GROUP_DELETE_SYNTAX = "<group id> [<resource id>]... [--wait[=n]]"
+_RESOURCE_GROUP_DELETE_DESC = (
+    """
+    Remove the group (note: this does not remove any resources from the
+    cluster) or if resources are specified, remove the specified resources from
+    the group.
+    """,
+    """
+    If --wait is specified, pcs will wait up to 'n' seconds for the operation
+    to finish (including moving resources if appropriate) and the return 0 on
+    success or 1 on error. If 'n' is not specified it defaults to 60 minutes.
+    """,
+)
+
+_RESOURCE_CLEANUP_CMD = "cleanup"
+_RESOURCE_CLEANUP_SYNTAX = _unwrap(
+    """
+    [<resource id | stonith id>] [node=<node>] [operation=<operation>
+    [interval=<interval>]] [--strict]
+    """
+)
+_RESOURCE_CLEANUP_DESC = (
+    """
+    Make the cluster forget failed operations from history of the resource /
+    stonith device and re-detect its current state. This can be useful to purge
+    knowledge of past failures that have since been resolved.
+    """,
+    "",
+    """
+    If the named resource is part of a group, or one numbered instance of a
+    clone or bundled resource, the clean-up applies to the whole collective
+    resource unless --strict is given.
+    """,
+    "",
+    """
+    If a resource id / stonith id is not specified then all resources / stonith
+    devices will be cleaned up.
+    """,
+    "",
+    """
+    If a node is not specified then resources / stonith devices on all nodes
+    will be cleaned up.
+    """,
+)
+
+_RESOURCE_REFRESH_CMD = "refresh"
+_RESOURCE_REFRESH_SYNTAX = (
+    "[<resource id | stonith id>] [node=<node>] [--strict]"
+)
+_RESOURCE_REFRESH_DESC = (
+    """
+    Make the cluster forget the complete operation history (including failures)
+    of the resource / stonith device and re-detect its current state. If you
+    are interested in forgetting failed operations only, use the 'pcs resource
+    cleanup' command.
+    """,
+    "",
+    """
+    If the named resource is part of a group, or one numbered instance of a
+    clone or bundled resource, the refresh applies to the whole collective
+    resource unless --strict is given.
+    """,
+    "",
+    """
+    If a resource id / stonith id is not specified then all resources / stonith
+    devices will be refreshed.
+    """,
+    "",
+    """
+    If a node is not specified then resources / stonith devices on all nodes
+    will be refreshed.
+    """,
+)
+
+_RESOURCE_FAILCOUNT_CMD = "failcount"
+_RESOURCE_FAILCOUNT_SHOW_SYNTAX = _unwrap(
+    """
+    [show [<resource id | stonith id>] [node=<node>] [operation=<operation>
+    [interval=<interval>]]] [--full]
+    """
+)
+_RESOURCE_FAILCOUNT_SHOW_DESC = (
+    """
+    Show current failcount for resources and stonith devices, optionally
+    filtered by a resource / stonith device, node, operation and its interval.
+    If --full is specified do not sum failcounts per resource / stonith device
+    and node. Use 'pcs resource cleanup' or 'pcs resource refresh' to reset
+    failcounts.
+    """,
+)
+
+_RESOURCE_OP_CMD = "op"
+_RESOURCE_OP_ADD_CMD = f"{_RESOURCE_OP_CMD} add"
+_RESOURCE_OP_ADD_SYNTAX = "<{obj} id> <operation action> [operation properties]"
+
+
+def _resource_op_add_desc_fn(obj: str) -> Tuple[str]:
+    return (f"Add operation for specified {obj}.",)
+
+
+_RESOURCE_OP_DELETE_CMD = f"{_RESOURCE_OP_CMD} {_DELETE_CMD}"
+_RESOURCE_OP_REMOVE_CMD = f"{_RESOURCE_OP_CMD} {_REMOVE_CMD}"
+_RESOURCE_OP_REMOVE_SYNTAX = (
+    "<{obj} id> <operation action> [<operation properties>...]"
+)
+_RESOURCE_OP_REMOVE_DESC = (
+    """
+    Remove specified operation (note: you must specify the exact operation
+    properties to properly remove an existing operation).
+    """,
+)
+_RESOURCE_OP_REMOVE_BY_ID_SYNTAX = "<operation id>"
+_RESOURCE_OP_REMOVE_BY_ID_DESC = ("Remove the specified operation id.",)
+
+_RESOURCE_DEFAULTS_MAY_BE_OVERRIDDEN = _unwrap(
+    """
+    NOTE: Defaults do not apply to resources / stonith devices which override
+    them with their own defined values.
+    """
+)
+_SYNTAX_NAME_VALUE_REPEATED = "<name>=<value>..."
+_RESOURCE_OP_DEFAULTS_CMD = f"{_RESOURCE_OP_CMD} defaults"
+_RESOURCE_OP_DEFAULTS_DESC = (
+    "Set default values for operations.",
+    _RESOURCE_DEFAULTS_MAY_BE_OVERRIDDEN,
+)
+
+_RESOURCE_OP_DEFAULTS_CONFIG_CMD = f"{_RESOURCE_OP_DEFAULTS_CMD} [config]"
+_RESOURCE_OP_DEFAULTS_CONFIG_SYNTAX = "[--all] [--full] [--no-expire-check]"
+_RESOURCE_OP_DEFAULTS_CONFIG_DESC = (
+    """
+    List currently configured default values for operations. If --all is
+    specified, also list expired sets of values. If --full is specified, also
+    list ids. If --no-expire-check is specified, do not evaluate whether sets
+    of values are expired.
+    """,
+)
+
+_RESOURCE_OP_DEFAULTS_SET_CMD = f"{_RESOURCE_OP_DEFAULTS_CMD} set"
+_RESOURCE_OP_DEFAULTS_SET_CREATE_CMD = f"{_RESOURCE_OP_DEFAULTS_SET_CMD} create"
+_RESOURCE_OP_DEFAULTS_SET_CREATE_SYNTAX = (
+    "[<set options>] [meta [<name>=<value>]...] [rule [<expression>]]"
+)
+_RESOURCE_OP_DEFAULTS_SET_CREATE_DESC = (
+    _unwrap(
+        """
+        Create a new set of default values for resource / stonith device
+        operations. You may specify a rule describing resources / stonith
+        devices and / or operations to which the set applies.
+        """
+    ),
+    "",
+    "Set options are: id, score",
+    "",
+    "Expression looks like one of the following:",
+    *_format_desc_item_list(
+        [
+            "op <operation name> [interval=<interval>]",
+            "resource [<standard>]:[<provider>]:[<type>]",
+            "defined|not_defined <node attribute>",
+            """
+            <node attribute> lt|gt|lte|gte|eq|ne
+            [string|integer|number|version] <value>
+            """,
+            "date gt|lt <date>",
+            "date in_range [<date>] to <date>",
+            "date in_range <date> to duration <duration options>",
+            "date-spec <date-spec options>",
+            "<expression> and|or <expression>",
+            "(<expression>)",
+        ]
+    ),
+    "",
+    _unwrap(
+        """
+        You may specify all or any of 'standard', 'provider' and 'type' in a
+        resource expression. For example: 'resource ocf::' matches all
+        resources of 'ocf' standard, while 'resource ::Dummy' matches all
+        resources of 'Dummy' type regardless of their standard and provider.
+        """
+    ),
+    "",
+    "Dates are expected to conform to ISO 8601 format.",
+    "",
+    _unwrap(
+        """
+        Duration options are: hours, monthdays, weekdays, yearsdays, months,
+        weeks, years, weekyears, moon. Value for these options is an integer.
+        """
+    ),
+    "",
+    _unwrap(
+        """
+        Date-spec options are: hours, monthdays, weekdays, yearsdays, months,
+        weeks, years, weekyears, moon. Value for these options is an integer or
+        a range written as integer-integer.
+        """
+    ),
+    "",
+    _RESOURCE_DEFAULTS_MAY_BE_OVERRIDDEN,
+)
+
+_RESOURCE_OP_DEFAULTS_SET_DELETE_CMD = (
+    f"{_RESOURCE_OP_DEFAULTS_SET_CMD} {_DELETE_CMD}"
+)
+_RESOURCE_OP_DEFAULTS_SET_REMOVE_CMD = (
+    f"{_RESOURCE_OP_DEFAULTS_SET_CMD} {_REMOVE_CMD}"
+)
+_RESOURCE_OP_DEFAULTS_SET_DELETE_SYNTAX = "[<set id>]..."
+_RESOURCE_OP_DEFAULTS_SET_DELETE_DESC = ("Delete specified options sets.",)
+
+_RESOURCE_OP_DEFAULTS_SET_UPDATE_CMD = f"{_RESOURCE_OP_DEFAULTS_SET_CMD} update"
+_RESOURCE_OP_DEFAULTS_SET_UPDATE_SYNTAX = "<set id> [meta [<name>=<value>]...]"
+_RESOURCE_OP_DEFAULTS_SET_UPDATE_DESC = (
+    """
+    Add, remove or change values in specified set of default values for
+    resource / stonith device operations. Unspecified options will be kept
+    unchanged. If you wish to remove an option, set it to empty value, i.e.
+    'option_name='.
+    """,
+    "",
+    _RESOURCE_DEFAULTS_MAY_BE_OVERRIDDEN,
+)
+
+_RESOURCE_OP_DEFAULTS_UPDATE_CMD = f"{_RESOURCE_OP_DEFAULTS_CMD} update"
+_RESOURCE_OP_DEFAULTS_UPDATE_DESC = (
+    """
+    Add, remove or change default values for operations. This is a simplified
+    command useful for cases when you only manage one set of default values.
+    Unspecified options will be kept unchanged. If you wish to remove an
+    option, set it to empty value, i.e. 'option_name='.
+    """,
+    "",
+    _RESOURCE_DEFAULTS_MAY_BE_OVERRIDDEN,
+)
+
+_RESOURCE_META_CMD = "meta"
+_RESOURCE_META_SYNTAX = "<{obj}> <meta options> [--wait[=n]]"
+
+
+def _resource_meta_desc_fn(obj: str, parent_cmd: str) -> Iterable[str]:
+    return (
+        f"""
+        Add specified options to the specified {obj}. Meta options should be in
+        the format of name=value, options may be removed by setting an option
+        without a value. If --wait is specified, pcs will wait up to 'n'
+        seconds for the changes to take effect and then return 0 if the changes
+        have been processed or 1 otherwise. If 'n' is not specified it defaults
+        to 60 minutes.
+        """,
+        f"""
+        Example: pcs {parent_cmd} {_RESOURCE_META_CMD} test_{parent_cmd}
+        failure-timeout=50 stickiness=
+        """,
+    )
+
+
+_RESOURCE_DEFAULTS_CMD = "defaults"
+_RESOURCE_DEFAULTS_CONFIG_CMD = f"{_RESOURCE_DEFAULTS_CMD} [config]"
+_RESOURCE_DEFAULTS_CONFIG_SYNTAX = "[--all] [--full] [--no-expire-check]"
+_RESOURCE_DEFAULTS_CONFIG_DESC = (
+    """
+    List currently configured default values for resources / stonith devices.
+    If --all is specified, also list expired sets of values. If --full is
+    specified, also list ids. If --no-expire-check is specified, do not
+    evaluate whether sets of values are expired.
+    """,
+)
+
+_RESOURCE_DEFAULTS_DESC = (
+    "Set default values for resources / stonith devices.",
+    _RESOURCE_DEFAULTS_MAY_BE_OVERRIDDEN,
+)
+
+_RESOURCE_DEFAULTS_SET_CMD = f"{_RESOURCE_DEFAULTS_CMD} set"
+_RESOURCE_DEFAULTS_SET_CREATE_CMD = f"{_RESOURCE_DEFAULTS_SET_CMD} create"
+_RESOURCE_DEFAULTS_SET_CREATE_SYNTAX = (
+    "[<set options>] [meta [<name>=<value>]...] [rule [<expression>]]"
+)
+_RESOURCE_DEFAULTS_SET_CREATE_DESC = (
+    _unwrap(
+        """
+        Create a new set of default values for resources / stonith devices. You
+        may specify a rule describing resources / stonith devices to which the
+        set applies.
+        """
+    ),
+    "",
+    "Set options are: id, score",
+    "",
+    "Expression looks like one of the following:",
+    *_format_desc_item_list(
+        [
+            "resource [<standard>]:[<provider>]:[<type>]",
+            "date gt|lt <date>",
+            "date in_range [<date>] to <date>",
+            "date in_range <date> to duration <duration options>",
+            "date-spec <date-spec options>",
+            "<expression> and|or <expression>",
+            "(<expression>)",
+        ]
+    ),
+    "",
+    _unwrap(
+        """
+        You may specify all or any of 'standard', 'provider' and 'type' in a
+        resource expression. For example: 'resource ocf::' matches all
+        resources of 'ocf' standard, while 'resource ::Dummy' matches all
+        resources of 'Dummy' type regardless of their standard and provider.
+        """
+    ),
+    "",
+    "Dates are expected to conform to ISO 8601 format.",
+    "",
+    _unwrap(
+        """
+        Duration options are: hours, monthdays, weekdays, yearsdays, months,
+        weeks, years, weekyears, moon. Value for these options is an integer.
+        """
+    ),
+    "",
+    _unwrap(
+        """
+        Date-spec options are: hours, monthdays, weekdays, yearsdays, months,
+        weeks, years, weekyears, moon. Value for these options is an integer or
+        a range written as integer-integer.
+        """
+    ),
+    "",
+    _RESOURCE_DEFAULTS_MAY_BE_OVERRIDDEN,
+)
+
+_RESOURCE_DEFAULTS_SET_REMOVE_CMD = (
+    f"{_RESOURCE_DEFAULTS_SET_CMD} {_REMOVE_CMD}"
+)
+_RESOURCE_DEFAULTS_SET_DELETE_CMD = (
+    f"{_RESOURCE_DEFAULTS_SET_CMD} {_DELETE_CMD}"
+)
+_RESOURCE_DEFAULTS_SET_REMOVE_SYNTAX = "[<set id>]..."
+_RESOURCE_DEFAULTS_SET_REMOVE_DESC = ("Delete specified options sets.",)
+
+_RESOURCE_DEFAULTS_SET_UPDATE_CMD = f"{_RESOURCE_DEFAULTS_SET_CMD} update"
+_RESOURCE_DEFAULTS_SET_UPDATE_SYNTAX = "<set id> [meta [<name>=<value>]...]"
+_RESOURCE_DEFAULTS_SET_UPDATE_DESC = (
+    """
+    Add, remove or change values in specified set of default values for
+    resources / stonith devices. Unspecified options will be kept unchanged. If
+    you wish to remove an option, set it to empty value, i.e. 'option_name='.
+    """,
+    "",
+    _RESOURCE_DEFAULTS_MAY_BE_OVERRIDDEN,
+)
+
+_RESOURCE_DEFAULTS_UPDATE_CMD = f"{_RESOURCE_DEFAULTS_CMD} update"
+_RESOURCE_DEFAULTS_UPDATE_DESC = (
+    """
+    Add, remove or change default values for resources / stonith devices. This
+    is a simplified command useful for cases when you only manage one set of
+    default values. Unspecified options will be kept unchanged. If you wish to
+    remove an option, set it to empty value, i.e. 'option_name='.
+    """,
+    "",
+    _RESOURCE_DEFAULTS_MAY_BE_OVERRIDDEN,
+)
+
+_RESOURCE_UPDATE_CMD = "update"
+_RESOURCE_UPDATE_SYNTAX = _unwrap(
+    """
+    <{obj} id> [{obj} options] [op [<operation action> <operation options>]...]
+    [meta <meta operations>...] [--wait[=n]]
+    """
+)
+
+
+def _resource_update_desc_fn(is_stonith: bool) -> Iterable[str]:
+    if is_stonith:
+        obj = obj_long = "stonith device"
+    else:
+        obj = "resource"
+        obj_long = "resource, clone or multi-state resource"
+    return (
+        f"""
+        Add, remove or change options of specified {obj_long}. Unspecified
+        options will be kept unchanged. If you wish to remove an option, set it
+        to empty value, i.e. 'option_name='.
+        """,
+        "",
+        f"""
+        If an operation (op) is specified it will update the first found
+        operation with the same action on the specified {obj}. If no operation
+        with that action exists then a new operation will be created.
+        (WARNING: all existing options on the updated operation will be reset
+         if not specified.) If you want to create multiple monitor operations
+         you should use the 'op add' & 'op remove' commands.
+        """,
+        "",
+        """
+        If --wait is specified, pcs will wait up to 'n' seconds for the changes
+        to take effect and then return 0 if the changes have been processed or
+        1 otherwise. If 'n' is not specified it defaults to 60 minutes.
+        """,
+    )
+
+
+_STONITH_DELETE_SYNTAX = "<stonith id>"
+_STONITH_DELETE_DESC = ("Remove stonith id from configuration.",)
+
+
 def resource(args=()):
     output = """
 Usage: pcs resource [commands]...
@@ -268,13 +761,11 @@ Commands:
                 ip=192.168.0.99 cidr_netmask=32 nic=eth2 \\
                 op monitor interval=30s
 
-    delete <resource id|group id|bundle id|clone id>
-        Deletes the resource, group, bundle or clone (and all resources within
-        the group/bundle/clone).
+{delete_syntax}
+{delete_desc}
 
-    remove <resource id|group id|bundle id|clone id>
-        Deletes the resource, group, bundle or clone (and all resources within
-        the group/bundle/clone).
+{remove_syntax}
+{delete_desc}
 
     enable <resource id | tag id>... [--wait[=n]]
         Allow the cluster to start the resources. Depending on the rest of the
@@ -305,7 +796,7 @@ Commands:
         if the resources have not stopped. If 'n' is not specified it defaults
         to 60 minutes.
 
-    safe-disable <resource id | tag id>... [--brief] [--no-strict] 
+    safe-disable <resource id | tag id>... [--brief] [--no-strict]
             [--simulate [--brief]] [--wait[=n]] [--force]
         Attempt to stop the resources if they are running and forbid the
         cluster from starting them again. Depending on the rest of the
@@ -464,122 +955,47 @@ Commands:
     agents [standard[:provider]]
         List available agents optionally filtered by standard and provider.
 
-    update <resource id> [resource options] [op [<operation action>
-           <operation options>]...] [meta <meta operations>...] [--wait[=n]]
-        Add, remove or change options of specified resource, clone or
-        multi-state resource. Unspecified options will be kept unchanged. If
-        you wish to remove an option, set it to empty value, i.e.
-        'option_name='.
+{update_syntax}
+{update_desc}
 
-        If an operation (op) is specified it will update the first found
-        operation with the same action on the specified resource. If no
-        operation with that action exists then a new operation will be created.
-        (WARNING: all existing options on the updated operation will be reset
-        if not specified.) If you want to create multiple monitor operations
-        you should use the 'op add' & 'op remove' commands.
+{op_add_syntax}
+{op_add_desc}
 
-        If --wait is specified, pcs will wait up to 'n' seconds for the changes
-        to take effect and then return 0 if the changes have been processed or
-        1 otherwise. If 'n' is not specified it defaults to 60 minutes.
+{op_delete_syntax}
+{op_remove_desc}
 
-    op add <resource id> <operation action> [operation properties]
-        Add operation for specified resource.
+{op_delete_by_id_syntax}
+{op_remove_by_id_desc}
 
-    op delete <resource id> <operation action> [<operation properties>...]
-        Remove specified operation (note: you must specify the exact operation
-        properties to properly remove an existing operation).
+{op_remove_syntax}
+{op_remove_desc}
 
-    op delete <operation id>
-        Remove the specified operation id.
+{op_remove_by_id_syntax}
+{op_remove_by_id_desc}
 
-    op remove <resource id> <operation action> [<operation properties>...]
-        Remove specified operation (note: you must specify the exact operation
-        properties to properly remove an existing operation).
+{op_defaults_config_syntax}
+{op_defaults_config_desc}
 
-    op remove <operation id>
-        Remove the specified operation id.
+{op_defaults_syntax}
+{op_defaults_desc}
 
-    op defaults [config] [--all] [--full] [--no-expire-check]
-        List currently configured default values for operations. If --all is
-        specified, also list expired sets of values. If --full is specified,
-        also list ids. If --no-expire-check is specified, do not evaluate
-        whether sets of values are expired.
+{op_defaults_set_create_syntax}
+{op_defaults_set_create_desc}
 
-    op defaults <name>=<value>...
-        Set default values for operations.
-        NOTE: Defaults do not apply to resources which override them with their
-        own defined values.
+{op_defaults_set_delete_syntax}
+{op_defaults_set_delete_desc}
 
-    op defaults set create [<set options>] [meta [<name>=<value>]...]
-            [rule [<expression>]]
-        Create a new set of default values for resource operations. You may
-        specify a rule describing resources and / or operations to which the set
-        applies.
+{op_defaults_set_remove_syntax}
+{op_defaults_set_delete_desc}
 
-        Set options are: id, score
+{op_defaults_set_update_syntax}
+{op_defaults_set_update_desc}
 
-        Expression looks like one of the following:
-          op <operation name> [interval=<interval>]
-          resource [<standard>]:[<provider>]:[<type>]
-          defined|not_defined <node attribute>
-          <node attribute> lt|gt|lte|gte|eq|ne [string|integer|number|version]
-              <value>
-          date gt|lt <date>
-          date in_range [<date>] to <date>
-          date in_range <date> to duration <duration options>
-          date-spec <date-spec options>
-          <expression> and|or <expression>
-          (<expression>)
+{op_defaults_update_syntax}
+{op_defaults_update_desc}
 
-        You may specify all or any of 'standard', 'provider' and 'type' in
-        a resource expression. For example: 'resource ocf::' matches all
-        resources of 'ocf' standard, while 'resource ::Dummy' matches all
-        resources of 'Dummy' type regardless of their standard and provider.
-
-        Dates are expected to conform to ISO 8601 format.
-
-        Duration options are: hours, monthdays, weekdays, yearsdays, months,
-        weeks, years, weekyears, moon. Value for these options is an integer.
-
-        Date-spec options are: hours, monthdays, weekdays, yearsdays, months,
-        weeks, years, weekyears, moon. Value for these options is an integer or
-        a range written as integer-integer.
-
-        NOTE: Defaults do not apply to resources which override them with their
-        own defined values.
-
-    op defaults set delete [<set id>]...
-        Delete specified options sets.
-
-    op defaults set remove [<set id>]...
-        Delete specified options sets.
-
-    op defaults set update <set id> [meta [<name>=<value>]...]
-        Add, remove or change values in specified set of default values for
-        resource operations. Unspecified options will be kept unchanged. If you
-        wish to remove an option, set it to empty value, i.e. 'option_name='.
-
-        NOTE: Defaults do not apply to resources which override them with their
-        own defined values.
-
-    op defaults update <name>=<value>...
-        Add, remove or change default values for operations. This is a
-        simplified command useful for cases when you only manage one set of
-        default values. Unspecified options will be kept unchanged. If you wish
-        to remove an option, set it to empty value, i.e. 'option_name='.
-
-        NOTE: Defaults do not apply to resources which override them with their
-        own defined values.
-
-    meta <resource id | group id | clone id> <meta options>
-         [--wait[=n]]
-        Add specified options to the specified resource, group or clone. Meta
-        options should be in the format of name=value, options may be removed
-        by setting an option without a value. If --wait is specified, pcs will
-        wait up to 'n' seconds for the changes to take effect and then return 0
-        if the changes have been processed or 1 otherwise. If 'n' is not
-        specified it defaults to 60 minutes.
-        Example: pcs resource meta TestResource failure-timeout=50 stickiness=
+{meta_syntax}
+{meta_desc}
 
     group list
         Show all currently configured resource groups and their resources.
@@ -605,29 +1021,14 @@ Commands:
         then return 0 on success or 1 on error. If 'n' is not specified 
         it defaults to 60 minutes.
 
-    group delete <group id> [resource id]... [--wait[=n]]
-        Remove the group (note: this does not remove any resources from the
-        cluster) or if resources are specified, remove the specified resources
-        from the group.  If --wait is specified, pcs will wait up to 'n' seconds
-        for the operation to finish (including moving resources if appropriate)
-        and the return 0 on success or 1 on error.  If 'n' is not specified it
-        defaults to 60 minutes.
+{group_delete_syntax}
+{group_delete_desc}
 
-    group remove <group id> [resource id]... [--wait[=n]]
-        Remove the group (note: this does not remove any resources from the
-        cluster) or if resources are specified, remove the specified resources
-        from the group.  If --wait is specified, pcs will wait up to 'n' seconds
-        for the operation to finish (including moving resources if appropriate)
-        and the return 0 on success or 1 on error.  If 'n' is not specified it
-        defaults to 60 minutes.
+{group_remove_syntax}
+{group_delete_desc}
 
-    ungroup <group id> [resource id]... [--wait[=n]]
-        Remove the group (note: this does not remove any resources from the
-        cluster) or if resources are specified, remove the specified resources
-        from the group.  If --wait is specified, pcs will wait up to 'n' seconds
-        for the operation to finish (including moving resources if appropriate)
-        and the return 0 on success or 1 on error.  If 'n' is not specified it
-        defaults to 60 minutes.
+{ungroup_syntax}
+{group_delete_desc}
 
     clone <resource id | group id> [<clone id>] [clone options]... [--wait[=n]]
         Set up the specified resource or group as a clone. If --wait is
@@ -700,105 +1101,35 @@ Commands:
         --monitor is specified, disable all monitor operations of the
         resources.
 
-    defaults [config] [--all] [--full] [--no-expire-check]
-        List currently configured default values for resources. If --all is
-        specified, also list expired sets of values. If --full is specified,
-        also list ids. If --no-expire-check is specified, do not evaluate
-        whether sets of values are expired.
+{defaults_config_syntax}
+{defaults_config_desc}
 
-    defaults <name>=<value>...
-        Set default values for resources.
-        NOTE: Defaults do not apply to resources which override them with their
-        own defined values.
+{defaults_syntax}
+{defaults_desc}
 
-    defaults set create [<set options>] [meta [<name>=<value>]...]
-            [rule [<expression>]]
-        Create a new set of default values for resources. You may specify a rule
-        describing resources to which the set applies.
+{defaults_set_create_syntax}
+{defaults_set_create_desc}
 
-        Set options are: id, score
+{defaults_set_delete_syntax}
+{defaults_set_remove_desc}
 
-        Expression looks like one of the following:
-          resource [<standard>]:[<provider>]:[<type>]
-          date gt|lt <date>
-          date in_range [<date>] to <date>
-          date in_range <date> to duration <duration options>
-          date-spec <date-spec options>
-          <expression> and|or <expression>
-          (<expression>)
+{defaults_set_remove_syntax}
+{defaults_set_remove_desc}
 
-        You may specify all or any of 'standard', 'provider' and 'type' in
-        a resource expression. For example: 'resource ocf::' matches all
-        resources of 'ocf' standard, while 'resource ::Dummy' matches all
-        resources of 'Dummy' type regardless of their standard and provider.
+{defaults_set_update_syntax}
+{defaults_set_update_desc}
 
-        Dates are expected to conform to ISO 8601 format.
+{defaults_update_syntax}
+{defaults_update_desc}
 
-        Duration options are: hours, monthdays, weekdays, yearsdays, months,
-        weeks, years, weekyears, moon. Value for these options is an integer.
+{cleanup_syntax}
+{cleanup_desc}
 
-        Date-spec options are: hours, monthdays, weekdays, yearsdays, months,
-        weeks, years, weekyears, moon. Value for these options is an integer or
-        a range written as integer-integer.
+{refresh_syntax}
+{refresh_desc}
 
-        NOTE: Defaults do not apply to resources which override them with their
-        own defined values.
-
-    defaults set delete [<set id>]...
-        Delete specified options sets.
-
-    defaults set remove [<set id>]...
-        Delete specified options sets.
-
-    defaults set update <set id> [meta [<name>=<value>]...]
-        Add, remove or change values in specified set of default values for
-        resources. Unspecified options will be kept unchanged. If you wish to
-        remove an option, set it to empty value, i.e. 'option_name='.
-
-        NOTE: Defaults do not apply to resources which override them with their
-        own defined values.
-
-    defaults update <name>=<value>...
-        Add, remove or change default values for resources. This is a
-        simplified command useful for cases when you only manage one set of
-        default values. Unspecified options will be kept unchanged. If you wish
-        to remove an option, set it to empty value, i.e. 'option_name='.
-
-        NOTE: Defaults do not apply to resources which override them with their
-        own defined values.
-
-    cleanup [<resource id>] [node=<node>] [operation=<operation>
-            [interval=<interval>]] [--strict]
-        Make the cluster forget failed operations from history of the resource
-        and re-detect its current state. This can be useful to purge knowledge
-        of past failures that have since been resolved.
-        If the named resource is part of a group, or one numbered instance of a
-        clone or bundled resource, the clean-up applies to the whole collective
-        resource unless --strict is given.
-        If a resource id is not specified then all resources / stonith devices
-        will be cleaned up.
-        If a node is not specified then resources / stonith devices on all
-        nodes will be cleaned up.
-
-    refresh [<resource id>] [node=<node>] [--strict]
-        Make the cluster forget the complete operation history (including
-        failures) of the resource and re-detect its current state. If you are
-        interested in forgetting failed operations only, use the 'pcs resource
-        cleanup' command.
-        If the named resource is part of a group, or one numbered instance of a
-        clone or bundled resource, the refresh applies to the whole collective
-        resource unless --strict is given.
-        If a resource id is not specified then all resources / stonith devices
-        will be refreshed.
-        If a node is not specified then resources / stonith devices on all
-        nodes will be refreshed.
-
-    failcount [show [<resource id>] [node=<node>] [operation=<operation>
-            [interval=<interval>]]] [--full]
-        Show current failcount for resources, optionally filtered by a resource,
-        node, operation and its interval. If --full is specified do not sum
-        failcounts per resource and node. Use 'pcs resource cleanup' or 'pcs
-        resource refresh' to reset failcounts.
+{failcount_show_syntax}
+{failcount_show_desc}
 
     relocate dry-run [resource1] [resource2] ...
         The same as 'relocate run' but has no effect on the cluster.
@@ -868,7 +1199,150 @@ Notes:
     test resource configuration, but it should *not* normally be used to start
     resources in a cluster.
 
-"""
+""".format(
+        delete_syntax=_format_syntax(
+            f"{_DELETE_CMD} {_RESOURCE_DELETE_SYNTAX}"
+        ),
+        remove_syntax=_format_syntax(
+            f"{_REMOVE_CMD} {_RESOURCE_DELETE_SYNTAX}"
+        ),
+        delete_desc=_format_desc(_RESOURCE_DELETE_DESC),
+        group_delete_syntax=_format_syntax(
+            f"{_RESOURCE_GROUP_CMD} {_DELETE_CMD} {_RESOURCE_GROUP_DELETE_SYNTAX}"
+        ),
+        group_remove_syntax=_format_syntax(
+            f"{_RESOURCE_GROUP_CMD} {_REMOVE_CMD} {_RESOURCE_GROUP_DELETE_SYNTAX}"
+        ),
+        ungroup_syntax=_format_syntax(
+            f"ungroup {_RESOURCE_GROUP_DELETE_SYNTAX}"
+        ),
+        group_delete_desc=_format_desc(_RESOURCE_GROUP_DELETE_DESC),
+        cleanup_syntax=_format_syntax(
+            f"{_RESOURCE_CLEANUP_CMD} {_RESOURCE_CLEANUP_SYNTAX}"
+        ),
+        cleanup_desc=_format_desc(_RESOURCE_CLEANUP_DESC),
+        refresh_syntax=_format_syntax(
+            f"{_RESOURCE_REFRESH_CMD} {_RESOURCE_REFRESH_SYNTAX}"
+        ),
+        refresh_desc=_format_desc(_RESOURCE_REFRESH_DESC),
+        failcount_show_syntax=_format_syntax(
+            f"{_RESOURCE_FAILCOUNT_CMD} {_RESOURCE_FAILCOUNT_SHOW_SYNTAX}"
+        ),
+        failcount_show_desc=_format_desc(_RESOURCE_FAILCOUNT_SHOW_DESC),
+        op_defaults_syntax=_format_syntax(
+            f"{_RESOURCE_OP_DEFAULTS_CMD} {_SYNTAX_NAME_VALUE_REPEATED}"
+        ),
+        op_defaults_desc=_format_desc(_RESOURCE_OP_DEFAULTS_DESC),
+        op_defaults_config_syntax=_format_syntax(
+            f"{_RESOURCE_OP_DEFAULTS_CONFIG_CMD} {_RESOURCE_OP_DEFAULTS_CONFIG_SYNTAX}"
+        ),
+        op_defaults_config_desc=_format_desc(_RESOURCE_OP_DEFAULTS_CONFIG_DESC),
+        op_defaults_set_create_syntax=_format_syntax(
+            f"{_RESOURCE_OP_DEFAULTS_SET_CREATE_CMD} {_RESOURCE_OP_DEFAULTS_SET_CREATE_SYNTAX}"
+        ),
+        op_defaults_set_create_desc=_format_desc_without_unwrap(
+            _RESOURCE_OP_DEFAULTS_SET_CREATE_DESC
+        ),
+        op_defaults_set_delete_syntax=_format_syntax(
+            f"{_RESOURCE_OP_DEFAULTS_SET_DELETE_CMD} {_RESOURCE_OP_DEFAULTS_SET_DELETE_SYNTAX}"
+        ),
+        op_defaults_set_remove_syntax=_format_syntax(
+            f"{_RESOURCE_OP_DEFAULTS_SET_REMOVE_CMD} {_RESOURCE_OP_DEFAULTS_SET_DELETE_SYNTAX}"
+        ),
+        op_defaults_set_delete_desc=_format_desc(
+            _RESOURCE_OP_DEFAULTS_SET_DELETE_DESC
+        ),
+        op_defaults_set_update_syntax=_format_syntax(
+            f"{_RESOURCE_OP_DEFAULTS_SET_UPDATE_CMD} {_RESOURCE_OP_DEFAULTS_SET_UPDATE_SYNTAX}"
+        ),
+        op_defaults_set_update_desc=_format_desc(
+            _RESOURCE_OP_DEFAULTS_SET_UPDATE_DESC
+        ),
+        op_defaults_update_syntax=_format_syntax(
+            f"{_RESOURCE_OP_DEFAULTS_UPDATE_CMD} {_SYNTAX_NAME_VALUE_REPEATED}"
+        ),
+        op_defaults_update_desc=_format_desc(_RESOURCE_OP_DEFAULTS_UPDATE_DESC),
+        op_add_syntax=_format_syntax(
+            "{} {}".format(
+                _RESOURCE_OP_ADD_CMD,
+                _RESOURCE_OP_ADD_SYNTAX.format(obj="resource"),
+            )
+        ),
+        op_add_desc=_format_desc(_resource_op_add_desc_fn("resource")),
+        op_remove_syntax=_format_syntax(
+            "{} {}".format(
+                _RESOURCE_OP_REMOVE_CMD,
+                _RESOURCE_OP_REMOVE_SYNTAX.format(obj="resource"),
+            )
+        ),
+        op_delete_syntax=_format_syntax(
+            "{} {}".format(
+                _RESOURCE_OP_DELETE_CMD,
+                _RESOURCE_OP_REMOVE_SYNTAX.format(obj="resource"),
+            )
+        ),
+        op_remove_desc=_format_desc(_RESOURCE_OP_REMOVE_DESC),
+        op_remove_by_id_syntax=_format_syntax(
+            f"{_RESOURCE_OP_REMOVE_CMD} {_RESOURCE_OP_REMOVE_BY_ID_SYNTAX}"
+        ),
+        op_delete_by_id_syntax=_format_syntax(
+            f"{_RESOURCE_OP_DELETE_CMD} {_RESOURCE_OP_REMOVE_BY_ID_SYNTAX}"
+        ),
+        op_remove_by_id_desc=_format_desc(_RESOURCE_OP_REMOVE_BY_ID_DESC),
+        meta_syntax=_format_syntax(
+            "{} {}".format(
+                _RESOURCE_META_CMD,
+                _RESOURCE_META_SYNTAX.format(
+                    obj="resource id | group id | clone id"
+                ),
+            )
+        ),
+        meta_desc=_format_desc(
+            _resource_meta_desc_fn(
+                obj="resource, group or clone", parent_cmd="resource"
+            )
+        ),
+        defaults_config_syntax=_format_syntax(
+            f"{_RESOURCE_DEFAULTS_CONFIG_CMD} {_RESOURCE_DEFAULTS_CONFIG_SYNTAX}"
+        ),
+        defaults_config_desc=_format_desc(_RESOURCE_DEFAULTS_CONFIG_DESC),
+        defaults_syntax=_format_syntax(
+            f"{_RESOURCE_DEFAULTS_CMD} {_SYNTAX_NAME_VALUE_REPEATED}"
+        ),
+        defaults_desc=_format_desc(_RESOURCE_DEFAULTS_DESC),
+        defaults_set_create_syntax=_format_syntax(
+            f"{_RESOURCE_DEFAULTS_SET_CREATE_CMD} {_RESOURCE_DEFAULTS_SET_CREATE_SYNTAX}"
+        ),
+        defaults_set_create_desc=_format_desc_without_unwrap(
+            _RESOURCE_DEFAULTS_SET_CREATE_DESC
+        ),
+        defaults_set_delete_syntax=_format_syntax(
+            f"{_RESOURCE_DEFAULTS_SET_DELETE_CMD} {_RESOURCE_DEFAULTS_SET_REMOVE_SYNTAX}"
+        ),
+        defaults_set_remove_syntax=_format_syntax(
+            f"{_RESOURCE_DEFAULTS_SET_REMOVE_CMD} {_RESOURCE_DEFAULTS_SET_REMOVE_SYNTAX}"
+        ),
+        defaults_set_remove_desc=_format_desc(
+            _RESOURCE_DEFAULTS_SET_REMOVE_DESC
+        ),
+        defaults_set_update_syntax=_format_syntax(
+            f"{_RESOURCE_DEFAULTS_SET_UPDATE_CMD} {_RESOURCE_DEFAULTS_SET_UPDATE_SYNTAX}"
+        ),
+        defaults_set_update_desc=_format_desc(
+            _RESOURCE_DEFAULTS_SET_UPDATE_DESC
+        ),
+        defaults_update_syntax=_format_syntax(
+            f"{_RESOURCE_DEFAULTS_UPDATE_CMD} {_SYNTAX_NAME_VALUE_REPEATED}"
+        ),
+        defaults_update_desc=_format_desc(_RESOURCE_DEFAULTS_UPDATE_DESC),
+        update_syntax=_format_syntax(
+            "{} {}".format(
+                _RESOURCE_UPDATE_CMD,
+                _RESOURCE_UPDATE_SYNTAX.format(obj="resource"),
+            )
+        ),
+        update_desc=_format_desc(_resource_update_desc_fn(is_stonith=False)),
+    )
     return sub_usage(args, output)
 
 
@@ -1336,10 +1810,8 @@ Commands:
         Example: Use port p1 for node n1 and ports p2 and p3 for node n2
             pcs stonith create MyFence fence_virt 'pcmk_host_map=n1:p1;n2:p2,p3'
 
-    update <stonith id> [stonith device options]
-        Add, remove or change options of specified stonith id. Unspecified
-        options will be kept unchanged. If you wish to remove an option, set it
-        to empty value, i.e. 'option_name='.
+{update_syntax}
+{update_desc}
 
     update-scsi-devices <stonith id> (set <device-path> [<device-path>...])
             | (add <device-path> [<device-path>...] delete|remove <device-path>
@@ -1350,11 +1822,80 @@ Commands:
         node. Each device will be unfenced on each cluster node running
         cluster. Supported fence agents: fence_scsi.
 
-    delete <stonith id>
-        Remove stonith id from configuration.
+{delete_syntax}
+{delete_desc}
 
-    remove <stonith id>
-        Remove stonith id from configuration.
+{remove_syntax}
+{delete_desc}
+
+{op_add_syntax}
+{op_add_desc}
+
+{op_delete_syntax}
+{op_remove_desc}
+
+{op_delete_by_id_syntax}
+{op_remove_by_id_desc}
+
+{op_remove_syntax}
+{op_remove_desc}
+
+{op_remove_by_id_syntax}
+{op_remove_by_id_desc}
+
+{op_defaults_config_syntax}
+{op_defaults_config_desc}
+
+{op_defaults_syntax}
+{op_defaults_desc}
+
+{op_defaults_set_create_syntax}
+{op_defaults_set_create_desc}
+
+{op_defaults_set_delete_syntax}
+{op_defaults_set_delete_desc}
+
+{op_defaults_set_remove_syntax}
+{op_defaults_set_delete_desc}
+
+{op_defaults_set_update_syntax}
+{op_defaults_set_update_desc}
+
+{op_defaults_update_syntax}
+{op_defaults_update_desc}
+
+{meta_syntax}
+{meta_desc}
+
+{defaults_config_syntax}
+{defaults_config_desc}
+
+{defaults_syntax}
+{defaults_desc}
+
+{defaults_set_create_syntax}
+{defaults_set_create_desc}
+
+{defaults_set_delete_syntax}
+{defaults_set_remove_desc}
+
+{defaults_set_remove_syntax}
+{defaults_set_remove_desc}
+
+{defaults_set_update_syntax}
+{defaults_set_update_desc}
+
+{defaults_update_syntax}
+{defaults_update_desc}
+
+{cleanup_syntax}
+{cleanup_desc}
+
+{refresh_syntax}
+{refresh_desc}
+
+{failcount_show_syntax}
+{failcount_show_desc}
 
     enable <stonith id>... [--wait[=n]]
         Allow the cluster to use the stonith devices. If --wait is specified,
@@ -1369,31 +1910,6 @@ Commands:
         'n' seconds for the stonith devices to stop and then return 0 if the
         stonith devices are stopped or 1 if the stonith devices have not
         stopped. If 'n' is not specified it defaults to 60 minutes.
-
-    cleanup [<stonith id>] [--node <node>] [--strict]
-        Make the cluster forget failed operations from history of the stonith
-        device and re-detect its current state. This can be useful to purge
-        knowledge of past failures that have since been resolved.
-        If the named stonith device is part of a group, or one numbered
-        instance of a clone or bundled resource, the clean-up applies to the
-        whole collective resource unless --strict is given.
-        If a stonith id is not specified then all resources / stonith devices
-        will be cleaned up.
-        If a node is not specified then resources / stonith devices on all
-        nodes will be cleaned up.
-
-    refresh [<stonith id>] [--node <node>] [--strict]
-        Make the cluster forget the complete operation history (including
-        failures) of the stonith device and re-detect its current state. If you
-        are interested in forgetting failed operations only, use the 'pcs
-        stonith cleanup' command.
-        If the named stonith device is part of a group, or one numbered
-        instance of a clone or bundled resource, the refresh applies to the
-        whole collective resource unless --strict is given.
-        If a stonith id is not specified then all resources / stonith devices
-        will be refreshed.
-        If a node is not specified then resources / stonith devices on all
-        nodes will be refreshed.
 
     level [config]
         Lists all of the fencing levels currently configured.
@@ -1529,7 +2045,165 @@ Commands:
         following any shutdown procedures using a watchdog. If no watchdog is
         specified, available watchdog will be used if only one watchdog device
         is available on the local system.
-"""
+""".format(
+        delete_syntax=_format_syntax(f"{_DELETE_CMD} {_STONITH_DELETE_SYNTAX}"),
+        remove_syntax=_format_syntax(f"{_REMOVE_CMD} {_STONITH_DELETE_SYNTAX}"),
+        delete_desc=_format_desc(_STONITH_DELETE_DESC),
+        cleanup_syntax=_format_syntax(
+            f"{_RESOURCE_CLEANUP_CMD} {_RESOURCE_CLEANUP_SYNTAX}"
+        ),
+        cleanup_desc=_format_desc(
+            (_alias_of(f"resource {_RESOURCE_CLEANUP_CMD}"),)
+            + _RESOURCE_CLEANUP_DESC
+        ),
+        refresh_syntax=_format_syntax(
+            f"{_RESOURCE_REFRESH_CMD} {_RESOURCE_REFRESH_SYNTAX}"
+        ),
+        refresh_desc=_format_desc(
+            (_alias_of(f"resource {_RESOURCE_REFRESH_CMD}"),)
+            + _RESOURCE_REFRESH_DESC
+        ),
+        failcount_show_syntax=_format_syntax(
+            f"{_RESOURCE_FAILCOUNT_CMD} {_RESOURCE_FAILCOUNT_SHOW_SYNTAX}"
+        ),
+        failcount_show_desc=_format_desc(
+            (_alias_of("resource failcount show"),)
+            + _RESOURCE_FAILCOUNT_SHOW_DESC
+        ),
+        op_defaults_syntax=_format_syntax(
+            f"{_RESOURCE_OP_DEFAULTS_CMD} {_SYNTAX_NAME_VALUE_REPEATED}"
+        ),
+        op_defaults_desc=_format_desc(
+            (_alias_of(f"resource {_RESOURCE_OP_DEFAULTS_CMD}"),)
+            + _RESOURCE_OP_DEFAULTS_DESC
+        ),
+        op_defaults_config_syntax=_format_syntax(
+            f"{_RESOURCE_OP_DEFAULTS_CONFIG_CMD} {_RESOURCE_OP_DEFAULTS_CONFIG_SYNTAX}"
+        ),
+        op_defaults_config_desc=_format_desc(
+            (_alias_of(f"resource {_RESOURCE_OP_DEFAULTS_CONFIG_CMD}"),)
+            + _RESOURCE_OP_DEFAULTS_CONFIG_DESC
+        ),
+        op_defaults_set_create_syntax=_format_syntax(
+            f"{_RESOURCE_OP_DEFAULTS_SET_CREATE_CMD} {_RESOURCE_OP_DEFAULTS_SET_CREATE_SYNTAX}"
+        ),
+        op_defaults_set_create_desc=_format_desc_without_unwrap(
+            (_alias_of(f"resource {_RESOURCE_DEFAULTS_SET_CREATE_CMD}"),)
+            + _RESOURCE_OP_DEFAULTS_SET_CREATE_DESC
+        ),
+        op_defaults_set_delete_syntax=_format_syntax(
+            f"{_RESOURCE_OP_DEFAULTS_SET_DELETE_CMD} {_RESOURCE_OP_DEFAULTS_SET_DELETE_SYNTAX}"
+        ),
+        op_defaults_set_remove_syntax=_format_syntax(
+            f"{_RESOURCE_OP_DEFAULTS_SET_REMOVE_CMD} {_RESOURCE_OP_DEFAULTS_SET_DELETE_SYNTAX}"
+        ),
+        op_defaults_set_delete_desc=_format_desc(
+            (_alias_of(f"resource {_RESOURCE_OP_DEFAULTS_SET_DELETE_CMD}"),)
+            + _RESOURCE_OP_DEFAULTS_SET_DELETE_DESC
+        ),
+        op_defaults_set_update_syntax=_format_syntax(
+            f"{_RESOURCE_OP_DEFAULTS_SET_UPDATE_CMD} {_RESOURCE_OP_DEFAULTS_SET_UPDATE_SYNTAX}"
+        ),
+        op_defaults_set_update_desc=_format_desc(
+            (_alias_of(f"resource {_RESOURCE_DEFAULTS_SET_UPDATE_CMD}"),)
+            + _RESOURCE_OP_DEFAULTS_SET_UPDATE_DESC
+        ),
+        op_defaults_update_syntax=_format_syntax(
+            f"{_RESOURCE_OP_DEFAULTS_UPDATE_CMD} {_SYNTAX_NAME_VALUE_REPEATED}"
+        ),
+        op_defaults_update_desc=_format_desc(
+            (_alias_of(f"resource {_RESOURCE_DEFAULTS_UPDATE_CMD}"),)
+            + _RESOURCE_OP_DEFAULTS_UPDATE_DESC
+        ),
+        op_add_syntax=_format_syntax(
+            "{} {}".format(
+                _RESOURCE_OP_ADD_CMD,
+                _RESOURCE_OP_ADD_SYNTAX.format(obj="stonith"),
+            )
+        ),
+        op_add_desc=_format_desc(_resource_op_add_desc_fn("stonith device")),
+        op_remove_syntax=_format_syntax(
+            "{} {}".format(
+                _RESOURCE_OP_REMOVE_CMD,
+                _RESOURCE_OP_REMOVE_SYNTAX.format(obj="stonith"),
+            )
+        ),
+        op_delete_syntax=_format_syntax(
+            "{} {}".format(
+                _RESOURCE_OP_DELETE_CMD,
+                _RESOURCE_OP_REMOVE_SYNTAX.format(obj="stonith"),
+            )
+        ),
+        op_remove_desc=_format_desc(_RESOURCE_OP_REMOVE_DESC),
+        op_remove_by_id_syntax=_format_syntax(
+            f"{_RESOURCE_OP_REMOVE_CMD} {_RESOURCE_OP_REMOVE_BY_ID_SYNTAX}"
+        ),
+        op_delete_by_id_syntax=_format_syntax(
+            f"{_RESOURCE_OP_DELETE_CMD} {_RESOURCE_OP_REMOVE_BY_ID_SYNTAX}"
+        ),
+        op_remove_by_id_desc=_format_desc(_RESOURCE_OP_REMOVE_BY_ID_DESC),
+        meta_syntax=_format_syntax(
+            "{} {}".format(
+                _RESOURCE_META_CMD,
+                _RESOURCE_META_SYNTAX.format(obj="stonith id"),
+            )
+        ),
+        meta_desc=_format_desc(
+            _resource_meta_desc_fn(obj="stonith device", parent_cmd="stonith")
+        ),
+        defaults_config_syntax=_format_syntax(
+            f"{_RESOURCE_DEFAULTS_CONFIG_CMD} {_RESOURCE_DEFAULTS_CONFIG_SYNTAX}"
+        ),
+        defaults_config_desc=_format_desc(
+            (_alias_of(f"resource {_RESOURCE_DEFAULTS_CONFIG_CMD}"),)
+            + _RESOURCE_DEFAULTS_CONFIG_DESC
+        ),
+        defaults_syntax=_format_syntax(
+            f"{_RESOURCE_DEFAULTS_CMD} {_SYNTAX_NAME_VALUE_REPEATED}"
+        ),
+        defaults_desc=_format_desc(
+            (_alias_of(f"resource {_RESOURCE_DEFAULTS_CMD}"),)
+            + _RESOURCE_DEFAULTS_DESC
+        ),
+        defaults_set_create_syntax=_format_syntax(
+            f"{_RESOURCE_DEFAULTS_SET_CREATE_CMD} {_RESOURCE_DEFAULTS_SET_CREATE_SYNTAX}"
+        ),
+        defaults_set_create_desc=_format_desc_without_unwrap(
+            (_alias_of(f"resource {_RESOURCE_DEFAULTS_SET_CREATE_CMD}"),)
+            + _RESOURCE_DEFAULTS_SET_CREATE_DESC
+        ),
+        defaults_set_delete_syntax=_format_syntax(
+            f"{_RESOURCE_DEFAULTS_SET_DELETE_CMD} {_RESOURCE_DEFAULTS_SET_REMOVE_SYNTAX}"
+        ),
+        defaults_set_remove_syntax=_format_syntax(
+            f"{_RESOURCE_DEFAULTS_SET_REMOVE_CMD} {_RESOURCE_DEFAULTS_SET_REMOVE_SYNTAX}"
+        ),
+        defaults_set_remove_desc=_format_desc(
+            (_alias_of(f"resource {_RESOURCE_DEFAULTS_SET_REMOVE_CMD}"),)
+            + _RESOURCE_DEFAULTS_SET_REMOVE_DESC
+        ),
+        defaults_set_update_syntax=_format_syntax(
+            f"{_RESOURCE_DEFAULTS_SET_UPDATE_CMD} {_RESOURCE_DEFAULTS_SET_UPDATE_SYNTAX}"
+        ),
+        defaults_set_update_desc=_format_desc(
+            (_alias_of(f"resource {_RESOURCE_DEFAULTS_SET_UPDATE_CMD}"),)
+            + _RESOURCE_DEFAULTS_SET_UPDATE_DESC
+        ),
+        defaults_update_syntax=_format_syntax(
+            f"{_RESOURCE_DEFAULTS_UPDATE_CMD} {_SYNTAX_NAME_VALUE_REPEATED}"
+        ),
+        defaults_update_desc=_format_desc(
+            (_alias_of(f"resource {_RESOURCE_DEFAULTS_UPDATE_CMD}"),)
+            + _RESOURCE_DEFAULTS_UPDATE_DESC
+        ),
+        update_syntax=_format_syntax(
+            "{} {}".format(
+                _RESOURCE_UPDATE_CMD,
+                _RESOURCE_UPDATE_SYNTAX.format(obj="stonith"),
+            )
+        ),
+        update_desc=_format_desc(_resource_update_desc_fn(is_stonith=True)),
+    )
     return sub_usage(args, output)
 
 

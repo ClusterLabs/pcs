@@ -300,6 +300,10 @@ class Clone(
         self.temp_cib = get_tmp_file("tier1_cib_resource_clone_unclone_clone")
         self.pcs_runner = PcsRunner(self.temp_cib.name)
         self.set_cib_file(FIXTURE_PRIMITIVE_FOR_CLONE)
+        self.stonith_deprecation_warning = (
+            "Deprecation Warning: Ability of this command to accept stonith "
+            "resources is deprecated and will be removed in a future release.\n"
+        )
 
     def tearDown(self):
         self.temp_cib.close()
@@ -338,7 +342,7 @@ class Clone(
         self.set_cib_file(FIXTURE_STONITH_FOR_CLONE)
         self.assert_pcs_fail(
             "resource clone fence-device".split(),
-            fixture_clone_stonith_msg(),
+            self.stonith_deprecation_warning + fixture_clone_stonith_msg(),
         )
         self.assert_resources_xml_in_cib(
             fixture_resources_xml(FIXTURE_STONITH_FOR_CLONE)
@@ -349,7 +353,8 @@ class Clone(
         self.assert_effect(
             "resource clone fence-device --force".split(),
             fixture_resources_xml(FIXTURE_STONITH_CLONE),
-            output=fixture_clone_stonith_msg(forced=True),
+            output=self.stonith_deprecation_warning
+            + fixture_clone_stonith_msg(forced=True),
         )
 
     def test_clone_group_with_stonith(self):
@@ -386,7 +391,7 @@ class Clone(
         self.set_cib_file(FIXTURE_STONITH_FOR_CLONE)
         self.assert_pcs_fail(
             "resource promotable fence-device".split(),
-            fixture_clone_stonith_msg(),
+            self.stonith_deprecation_warning + fixture_clone_stonith_msg(),
         )
         self.assert_resources_xml_in_cib(
             fixture_resources_xml(FIXTURE_STONITH_FOR_CLONE)
@@ -397,7 +402,8 @@ class Clone(
         self.assert_effect(
             "resource promotable fence-device --force".split(),
             fixture_resources_xml(FIXTURE_STONITH_PROMOTABLE),
-            output=fixture_clone_stonith_msg(forced=True),
+            output=self.stonith_deprecation_warning
+            + fixture_clone_stonith_msg(forced=True),
         )
 
     def test_promotable_keyword_and_option(self):

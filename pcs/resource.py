@@ -9,6 +9,7 @@ from typing import (
     Any,
     Callable,
     List,
+    Optional,
     Sequence,
     cast,
 )
@@ -63,6 +64,7 @@ from pcs.common.resource_agent.dto import ResourceAgentNameDto
 from pcs.common.str_tools import (
     format_list,
     format_list_custom_last_separator,
+    format_optional,
     indent,
 )
 from pcs.lib.cib.resource import (
@@ -98,6 +100,18 @@ from pcs.settings import (
 RESOURCE_RELOCATE_CONSTRAINT_PREFIX = "pcs-relocate-"
 
 
+def _check_is_not_stonith(
+    lib: Any, resource_id_list: List[str], cmd_to_use: Optional[str] = None
+) -> None:
+    if lib.resource.is_any_stonith(resource_id_list):
+        deprecation_warning(
+            reports.messages.ResourceStonithCommandsMismatch(
+                "stonith resources"
+            ).message
+            + format_optional(cmd_to_use, " Please use '{}' instead.")
+        )
+
+
 def _detect_guest_change(meta_attributes, allow_not_suitable_command):
     """
     Commandline options:
@@ -127,19 +141,23 @@ def _detect_guest_change(meta_attributes, allow_not_suitable_command):
         raise LibraryError()
 
 
-def resource_utilization_cmd(lib, argv, modifiers):
+def resource_utilization_cmd(
+    lib: Any, argv: List[str], modifiers: InputModifiers
+) -> None:
     """
     Options:
       * -f - CIB file
     """
-    del lib
     modifiers.ensure_only_supported("-f")
     if not argv:
         print_resources_utilization()
-    elif len(argv) == 1:
-        print_resource_utilization(argv.pop(0))
+        return
+    resource_id = argv.pop(0)
+    _check_is_not_stonith(lib, [resource_id])
+    if argv:
+        set_resource_utilization(resource_id, argv)
     else:
-        set_resource_utilization(argv.pop(0), argv)
+        print_resource_utilization(resource_id)
 
 
 def _defaults_set_create_cmd(
@@ -393,13 +411,24 @@ def resource_op_defaults_legacy_cmd(
     )
 
 
-def resource_op_add_cmd(lib, argv, modifiers):
+def op_add_cmd(lib: Any, argv: List[str], modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file
       * --force - allow unknown options
     """
-    del lib
+    if not argv:
+        raise CmdLineInputError()
+    _check_is_not_stonith(lib, [argv[0]], "pcs stonith op add")
+    resource_op_add(argv, modifiers)
+
+
+def resource_op_add(argv: List[str], modifiers: InputModifiers) -> None:
+    """
+    Commandline options:
+      * -f - CIB file
+      * --force - allow unknown options
+    """
     modifiers.ensure_only_supported("-f", "--force")
     if not argv:
         raise CmdLineInputError()
@@ -427,17 +456,17 @@ def resource_op_add_cmd(lib, argv, modifiers):
     utils.replace_cib_configuration(resource_operation_add(dom, res_id, argv))
 
 
-def resource_op_delete_cmd(lib, argv, modifiers):
+def op_delete_cmd(lib: Any, argv: List[str], modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file
     """
-    del lib
     modifiers.ensure_only_supported("-f")
     if not argv:
         raise CmdLineInputError()
-    res_id = argv.pop(0)
-    resource_operation_remove(res_id, argv)
+    resource_id = argv.pop(0)
+    _check_is_not_stonith(lib, [resource_id], "pcs stonith op delete")
+    resource_operation_remove(resource_id, argv)
 
 
 def parse_resource_options(argv):
@@ -532,6 +561,13 @@ def resource_list_options(
     else:
         agent_name = find_single_agent(
             lib.resource_agent.get_agents_list().names, agent_name_str
+        )
+    if agent_name.standard == "stonith":
+        deprecation_warning(
+            reports.messages.ResourceStonithCommandsMismatch(
+                "stonith / fence agents"
+            ).message
+            + " Please use 'pcs stonith describe' instead."
         )
     print(
         "\n".join(
@@ -762,7 +798,7 @@ def resource_move_with_constraint(
     )
 
 
-def resource_move(lib: Any, argv: List[str], modifiers: InputModifiers):
+def resource_move(lib: Any, argv: List[str], modifiers: InputModifiers) -> None:
     """
     Options:
       * --autodelete - deprecated, not needed anymore
@@ -804,7 +840,7 @@ def resource_move(lib: Any, argv: List[str], modifiers: InputModifiers):
     )
 
 
-def resource_ban(lib, argv, modifiers):
+def resource_ban(lib: Any, argv: List[str], modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file
@@ -828,7 +864,9 @@ def resource_ban(lib, argv, modifiers):
     )
 
 
-def resource_unmove_unban(lib, argv, modifiers):
+def resource_unmove_unban(
+    lib: Any, argv: List[str], modifiers: InputModifiers
+) -> None:
     """
     Options:
       * -f - CIB file
@@ -907,9 +945,7 @@ def resource_agents(lib, argv, modifiers):
         )
 
 
-# Update a resource, removing any args that are empty and adding/updating
-# args that are not empty
-def resource_update(lib, args, modifiers, deal_with_guest_change=True):
+def update_cmd(lib: Any, argv: List[str], modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file
@@ -917,7 +953,22 @@ def resource_update(lib, args, modifiers, deal_with_guest_change=True):
       * --force - allow invalid options, do not fail if not possible to get
         agent metadata, allow not suitable command
     """
-    del lib
+    if not argv:
+        raise CmdLineInputError()
+    _check_is_not_stonith(lib, [argv[0]], "pcs stonith update")
+    resource_update(argv, modifiers)
+
+
+# Update a resource, removing any args that are empty and adding/updating
+# args that are not empty
+def resource_update(args: List[str], modifiers: InputModifiers) -> None:
+    """
+    Commandline options:
+      * -f - CIB file
+      * --wait
+      * --force - allow invalid options, do not fail if not possible to get
+        agent metadata, allow not suitable command
+    """
     modifiers.ensure_only_supported("-f", "--wait", "--force")
     if len(args) < 2:
         raise CmdLineInputError()
@@ -988,7 +1039,7 @@ def resource_update(lib, args, modifiers, deal_with_guest_change=True):
             dict(params),
             res_id,
             get_resources(lib_pacemaker.get_cib(cib_xml)),
-            force=modifiers.get("--force"),
+            force=bool(modifiers.get("--force")),
         )
         if report_list:
             process_library_reports(report_list)
@@ -998,22 +1049,15 @@ def resource_update(lib, args, modifiers, deal_with_guest_change=True):
                 lib_ra.resource_agent_error_to_report_item(
                     e,
                     reports.get_severity(
-                        reports.codes.FORCE, modifiers.get("--force")
+                        reports.codes.FORCE, bool(modifiers.get("--force"))
                     ),
                 )
             ]
         )
-    except LibraryError as e:
-        process_library_reports(e.args)
 
     utils.dom_update_instance_attr(resource, params)
 
     remote_node_name = utils.dom_get_resource_remote_node_name(resource)
-
-    if remote_node_name == guest_node.get_guest_option_value(
-        prepare_options(meta_values)
-    ):
-        deal_with_guest_change = False
 
     # The "remote-node" meta attribute makes sense (and causes creation of
     # inner pacemaker resource) only for primitive. The meta attribute
@@ -1026,7 +1070,9 @@ def resource_update(lib, args, modifiers, deal_with_guest_change=True):
     # the code path does not reach this point.
     # 2) No persistent changes happened until this line if the parameter
     # "res_id" is an id of the primitive.
-    if deal_with_guest_change:
+    if remote_node_name != guest_node.get_guest_option_value(
+        prepare_options(meta_values)
+    ):
         _detect_guest_change(
             prepare_options(meta_values),
             modifiers.get("--force"),
@@ -1394,14 +1440,26 @@ def resource_operation_remove(res_id, argv):
     utils.replace_cib_configuration(dom)
 
 
-def resource_meta(lib, argv, modifiers):
+def meta_cmd(lib: Any, argv: List[str], modifiers: InputModifiers) -> None:
     """
     Options:
       * --force - allow not suitable command
       * --wait
       * -f - CIB file
     """
-    del lib
+    if not argv:
+        raise CmdLineInputError()
+    _check_is_not_stonith(lib, [argv[0]], "pcs stonith meta")
+    resource_meta(argv, modifiers)
+
+
+def resource_meta(argv: List[str], modifiers: InputModifiers) -> None:
+    """
+    Commandline options:
+      * --force - allow not suitable command
+      * --wait
+      * -f - CIB file
+    """
     modifiers.ensure_only_supported("--force", "--wait", "-f")
     if len(argv) < 2:
         raise CmdLineInputError()
@@ -1528,19 +1586,24 @@ def resource_group_add_cmd(lib, argv, modifiers):
     )
 
 
-def resource_clone(lib, argv, modifiers, promotable=False):
+def resource_clone(
+    lib: Any,
+    argv: List[str],
+    modifiers: InputModifiers,
+    promotable: bool = False,
+) -> None:
     """
     Options:
       * --wait
       * -f - CIB file
       * --force - allow to clone stonith resource
     """
-    del lib
     modifiers.ensure_only_supported("-f", "--force", "--wait")
     if not argv:
         raise CmdLineInputError()
 
     res = argv[0]
+    _check_is_not_stonith(lib, [res])
     cib_dom = utils.get_cib_dom()
 
     if modifiers.is_specified("--wait"):
@@ -1722,17 +1785,20 @@ def resource_clone_master_remove(lib, argv, modifiers):
             utils.err("\n".join(msg).strip())
 
 
-def resource_remove_cmd(lib, argv, modifiers):
+def resource_remove_cmd(
+    lib: Any, argv: List[str], modifiers: InputModifiers
+) -> None:
     """
     Options:
       * -f - CIB file
       * --force - don't stop a resource before its deletion
     """
-    del lib
     modifiers.ensure_only_supported("-f", "--force")
     if len(argv) != 1:
         raise CmdLineInputError()
-    resource_remove(argv[0])
+    resource_id = argv[0]
+    _check_is_not_stonith(lib, [resource_id], "pcs stonith delete")
+    resource_remove(resource_id)
 
 
 # TODO move to lib (complete rewrite)
@@ -2379,9 +2445,29 @@ def resource_config(lib, argv, modifiers, stonith=False):
             utils.err(f"unable to find resource '{resource_id}'")
 
 
-def resource_disable_cmd(lib, argv, modifiers):
+def resource_disable_cmd(
+    lib: Any, argv: List[str], modifiers: InputModifiers
+) -> None:
     """
     Options:
+      * -f - CIB file
+      * --brief - show brief output of --simulate
+      * --safe - only disable if no other resource gets stopped or demoted
+      * --simulate - do not push the CIB, print its effects
+      * --no-strict - allow disable if other resource is affected
+      * --wait
+    """
+    if not argv:
+        raise CmdLineInputError("You must specify resource(s) to disable")
+    _check_is_not_stonith(lib, argv, "pcs stonith disable")
+    resource_disable_common(lib, argv, modifiers)
+
+
+def resource_disable_common(
+    lib: Any, argv: List[str], modifiers: InputModifiers
+) -> None:
+    """
+    Commandline options:
       * -f - CIB file
       * --brief - show brief output of --simulate
       * --safe - only disable if no other resource gets stopped or demoted
@@ -2461,7 +2547,9 @@ def resource_safe_disable_cmd(
     )
 
 
-def resource_enable_cmd(lib, argv, modifiers):
+def resource_enable_cmd(
+    lib: Any, argv: List[str], modifiers: InputModifiers
+) -> None:
     """
     Options:
       * --wait
@@ -2471,6 +2559,7 @@ def resource_enable_cmd(lib, argv, modifiers):
     if not argv:
         raise CmdLineInputError("You must specify resource(s) to enable")
     resources = argv
+    _check_is_not_stonith(lib, resources, "pcs stonith enable")
     lib.resource.enable(resources, modifiers.get("--wait"))
 
 
@@ -2529,7 +2618,9 @@ def resource_disable(argv):
     return None
 
 
-def resource_restart(lib, argv, modifiers):
+def resource_restart(
+    lib: Any, argv: List[str], modifiers: InputModifiers
+) -> None:
     """
     Options:
       * --wait
@@ -2538,6 +2629,7 @@ def resource_restart(lib, argv, modifiers):
     modifiers.ensure_only_supported("--wait")
     if not argv:
         utils.err("You must specify a resource to restart")
+    _check_is_not_stonith(lib, [argv[0]])
 
     dom = utils.get_cib_dom()
     node = None
@@ -2570,8 +2662,9 @@ def resource_restart(lib, argv, modifiers):
         args.extend(["--node", node])
 
     if modifiers.is_specified("--wait"):
-        if modifiers.get("--wait"):
-            args.extend(["--timeout", modifiers.get("--wait")])
+        wait = modifiers.get("--wait")
+        if wait:
+            args.extend(["--timeout", str(wait)])
         else:
             utils.err("You must specify the number of seconds to wait")
 
@@ -2582,21 +2675,15 @@ def resource_restart(lib, argv, modifiers):
     print_to_stderr(f"{resource} successfully restarted")
 
 
-def resource_force_action(lib, argv, modifiers, action=None):
+def resource_force_action(
+    lib: Any, argv: List[str], modifiers: InputModifiers, action: str
+) -> None:
     """
     Options:
       * --force
       * --full - more verbose output
     """
-    del lib
     modifiers.ensure_only_supported("--force", "--full")
-    if action is None:
-        raise CmdLineInputError()
-    if not argv:
-        utils.err("You must specify a resource to {0}".format(action))
-    if len(argv) != 1:
-        raise CmdLineInputError()
-
     action_command = {
         "debug-start": "--force-start",
         "debug-stop": "--force-stop",
@@ -2607,8 +2694,13 @@ def resource_force_action(lib, argv, modifiers, action=None):
 
     if action not in action_command:
         raise CmdLineInputError()
+    if not argv:
+        utils.err("You must specify a resource to {0}".format(action))
+    if len(argv) != 1:
+        raise CmdLineInputError()
 
     resource = argv[0]
+    _check_is_not_stonith(lib, [resource])
     dom = utils.get_cib_dom()
 
     if not (
@@ -2666,7 +2758,9 @@ def resource_force_action(lib, argv, modifiers, action=None):
     sys.exit(retval)
 
 
-def resource_manage_cmd(lib, argv, modifiers):
+def resource_manage_cmd(
+    lib: Any, argv: List[str], modifiers: InputModifiers
+) -> None:
     """
     Options:
       * -f - CIB file
@@ -2676,10 +2770,13 @@ def resource_manage_cmd(lib, argv, modifiers):
     if not argv:
         raise CmdLineInputError("You must specify resource(s) to manage")
     resources = argv
+    _check_is_not_stonith(lib, resources)
     lib.resource.manage(resources, with_monitor=modifiers.get("--monitor"))
 
 
-def resource_unmanage_cmd(lib, argv, modifiers):
+def resource_unmanage_cmd(
+    lib: Any, argv: List[str], modifiers: InputModifiers
+) -> None:
     """
     Options:
       * -f - CIB file
@@ -2689,6 +2786,7 @@ def resource_unmanage_cmd(lib, argv, modifiers):
     if not argv:
         raise CmdLineInputError("You must specify resource(s) to unmanage")
     resources = argv
+    _check_is_not_stonith(lib, resources)
     lib.resource.unmanage(resources, with_monitor=modifiers.get("--monitor"))
 
 
@@ -2723,7 +2821,9 @@ def is_managed(resource_id):
     return False  # pylint does not know utils.err raises
 
 
-def resource_failcount_show(lib, argv, modifiers):
+def resource_failcount_show(
+    lib: Any, argv: List[str], modifiers: InputModifiers
+) -> None:
     """
     Options:
       * --full
@@ -3100,7 +3200,9 @@ def resource_refresh(lib, argv, modifiers):
     )
 
 
-def resource_relocate_show_cmd(lib, argv, modifiers):
+def resource_relocate_show_cmd(
+    lib: Any, argv: List[str], modifiers: InputModifiers
+) -> None:
     """
     Options: no options
     """
@@ -3111,26 +3213,34 @@ def resource_relocate_show_cmd(lib, argv, modifiers):
     resource_relocate_show(utils.get_cib_dom())
 
 
-def resource_relocate_dry_run_cmd(lib, argv, modifiers):
+def resource_relocate_dry_run_cmd(
+    lib: Any, argv: List[str], modifiers: InputModifiers
+) -> None:
     """
     Options:
       * -f - CIB file
     """
-    del lib
     modifiers.ensure_only_supported("-f")
+    if argv:
+        _check_is_not_stonith(lib, argv)
     resource_relocate_run(utils.get_cib_dom(), argv, dry=True)
 
 
-def resource_relocate_run_cmd(lib, argv, modifiers):
+def resource_relocate_run_cmd(
+    lib: Any, argv: List[str], modifiers: InputModifiers
+) -> None:
     """
     Options: no options
     """
-    del lib
     modifiers.ensure_only_supported()
+    if argv:
+        _check_is_not_stonith(lib, argv)
     resource_relocate_run(utils.get_cib_dom(), argv, dry=False)
 
 
-def resource_relocate_clear_cmd(lib, argv, modifiers):
+def resource_relocate_clear_cmd(
+    lib: Any, argv: List[str], modifiers: InputModifiers
+) -> None:
     """
     Options:
       * -f - CIB file

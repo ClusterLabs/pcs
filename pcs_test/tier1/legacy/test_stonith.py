@@ -1800,7 +1800,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             )
 
         self.assert_pcs_success(
-            "resource remove n1-apc1".split(), "Deleting Resource - n1-apc1\n"
+            "stonith remove n1-apc1".split(), "Deleting Resource - n1-apc1\n"
         )
 
         if PCMK_2_0_3_PLUS:
@@ -1838,7 +1838,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             )
 
         self.assert_pcs_success(
-            "resource delete n1-apc2".split(),
+            "stonith delete n1-apc2".split(),
             outdent(
                 """\
             Deleting Resource - n1-apc2

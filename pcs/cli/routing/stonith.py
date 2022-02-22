@@ -5,21 +5,39 @@ from pcs import (
 )
 from pcs.cli.common.routing import create_router
 
+from .resource_stonith_common import (
+    resource_defaults_cmd,
+    resource_op_defaults_cmd,
+)
+
 stonith_cmd = create_router(
     {
         "help": lambda lib, argv, modifiers: print(usage.stonith(argv)),
         "list": stonith.stonith_list_available,
         "describe": stonith.stonith_list_options,
         "create": stonith.stonith_create,
-        "update": resource.resource_update,
+        "update": stonith.update_cmd,
         "update-scsi-devices": stonith.stonith_update_scsi_devices,
-        "delete": resource.resource_remove_cmd,
-        "remove": resource.resource_remove_cmd,
+        "delete": stonith.delete_cmd,
+        "remove": stonith.delete_cmd,
         # TODO remove, deprecated command
         # replaced with 'stonith status' and 'stonith config'
         "show": stonith.stonith_show_cmd,
         "status": stonith.stonith_status_cmd,
         "config": stonith.stonith_config_cmd,
+        "meta": stonith.meta_cmd,
+        "op": create_router(
+            {
+                "defaults": resource_op_defaults_cmd(
+                    ["resource", "op", "defaults"]
+                ),
+                "add": stonith.op_add_cmd,
+                "remove": stonith.op_delete_cmd,
+                "delete": stonith.op_delete_cmd,
+            },
+            ["stonith", "op"],
+        ),
+        "defaults": resource_defaults_cmd(["resource", "defaults"]),
         "level": create_router(
             {
                 "add": stonith.stonith_level_add_cmd,
@@ -31,6 +49,13 @@ stonith_cmd = create_router(
             },
             ["stonith", "level"],
             default_cmd="config",
+        ),
+        "failcount": create_router(
+            {
+                "show": resource.resource_failcount_show,
+            },
+            ["stonith", "failcount"],
+            default_cmd="show",
         ),
         "fence": stonith.stonith_fence,
         "cleanup": resource.resource_cleanup,
@@ -63,8 +88,8 @@ stonith_cmd = create_router(
             },
             ["stonith", "sbd"],
         ),
-        "enable": resource.resource_enable_cmd,
-        "disable": resource.resource_disable_cmd,
+        "enable": stonith.enable_cmd,
+        "disable": stonith.disable_cmd,
         "history": create_router(
             {
                 "show": stonith.stonith_history_show_cmd,

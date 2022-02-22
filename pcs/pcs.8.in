@@ -229,13 +229,13 @@ Remove the specified operation id.
 op defaults [config] [\fB\-\-all\fR] [\fB\-\-full\fR] [\fB\-\-no\-check\-expired\fR]
 List currently configured default values for operations. If \fB\-\-all\fR is specified, also list expired sets of values. If \fB\-\-full\fR is specified, also list ids. If \fB\-\-no\-expire\-check\fR is specified, do not evaluate whether sets of values are expired.
 .TP
-op defaults <name>=<value>
+op defaults <name>=<value>...
 Set default values for operations.
 .br
-NOTE: Defaults do not apply to resources which override them with their own defined values.
+NOTE: Defaults do not apply to resources / stonith devices which override them with their own defined values.
 .TP
 op defaults set create [<set options>] [meta [<name>=<value>]...] [rule [<expression>]]
-Create a new set of default values for resource operations. You may specify a rule describing resources and / or operations to which the set applies.
+Create a new set of default values for resource / stonith device operations. You may specify a rule describing resources / stonith devices and / or operations to which the set applies.
 
 Set options are: id, score
 
@@ -269,7 +269,7 @@ Duration options are: hours, monthdays, weekdays, yearsdays, months, weeks, year
 
 Date\-spec options are: hours, monthdays, weekdays, yearsdays, months, weeks, years, weekyears, moon. Value for these options is an integer or a range written as integer\-integer.
 
-NOTE: Defaults do not apply to resources which override them with their own defined values.
+NOTE: Defaults do not apply to resources / stonith devices which override them with their own defined values.
 .TP
 op defaults set delete [<set id>]...
 Delete specified options sets.
@@ -278,14 +278,14 @@ op defaults set remove [<set id>]...
 Delete specified options sets.
 .TP
 op defaults set update <set id> [meta [<name>=<value>]...]
-Add, remove or change values in specified set of default values for resource operations. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='.
+Add, remove or change values in specified set of default values for resource / stonith device operations. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='.
 
-NOTE: Defaults do not apply to resources which override them with their own defined values.
+NOTE: Defaults do not apply to resources / stonith devices which override them with their own defined values.
 .TP
 op defaults update <name>=<value>...
 Add, remove or change default values for operations. This is a simplified command useful for cases when you only manage one set of default values. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='.
 
-NOTE: Defaults do not apply to resources which override them with their own defined values.
+NOTE: Defaults do not apply to resources / stonith devices which override them with their own defined values.
 .TP
 meta <resource id | group id | clone id> <meta options> [\fB\-\-wait\fR[=n]]
 Add specified options to the specified resource, group or clone. Meta options should be in the format of name=value, options may be removed by setting an option without a value. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the changes to take effect and then return 0 if the changes have been processed or 1 otherwise. If 'n' is not specified it defaults to 60 minutes.
@@ -340,15 +340,15 @@ unmanage <resource id | tag id>... [\fB\-\-monitor\fR]
 Set resources listed to unmanaged mode. When a resource is in unmanaged mode, the cluster is not allowed to start nor stop the resource. If \fB\-\-monitor\fR is specified, disable all monitor operations of the resources.
 .TP
 defaults [config] [\fB\-\-all\fR] [\fB\-\-full\fR] [\fB\-\-no\-check\-expired\fR]
-List currently configured default values for resources. If \fB\-\-all\fR is specified, also list expired sets of values. If \fB\-\-full\fR is specified, also list ids. If \fB\-\-no\-expire\-check\fR is specified, do not evaluate whether sets of values are expired.
+List currently configured default values for resources / stonith devices. If \fB\-\-all\fR is specified, also list expired sets of values. If \fB\-\-full\fR is specified, also list ids. If \fB\-\-no\-expire\-check\fR is specified, do not evaluate whether sets of values are expired.
 .TP
-defaults <name>=<value>
-Set default values for resources.
+defaults <name>=<value>...
+Set default values for resources / stonith devices.
 .br
-NOTE: Defaults do not apply to resources which override them with their own defined values.
+NOTE: Defaults do not apply to resources / stonith devices which override them with their own defined values.
 .TP
 defaults set create [<set options>] [meta [<name>=<value>]...] [rule [<expression>]]
-Create a new set of default values for resources. You may specify a rule describing resources to which the set applies.
+Create a new set of default values for resources / stonith devices. You may specify a rule describing resources / stonith devices to which the set applies.
 
 Set options are: id, score
 
@@ -376,7 +376,7 @@ Duration options are: hours, monthdays, weekdays, yearsdays, months, weeks, year
 
 Date\-spec options are: hours, monthdays, weekdays, yearsdays, months, weeks, years, weekyears, moon. Value for these options is an integer or a range written as integer\-integer.
 
-NOTE: Defaults do not apply to resources which override them with their own defined values.
+NOTE: Defaults do not apply to resources / stonith devices which override them with their own defined values.
 .TP
 defaults set delete [<set id>]...
 Delete specified options sets.
@@ -385,35 +385,35 @@ defaults set remove [<set id>]...
 Delete specified options sets.
 .TP
 defaults set update <set id> [meta [<name>=<value>]...]
-Add, remove or change values in specified set of default values for resources. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='.
+Add, remove or change values in specified set of default values for resources / stonith devices. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='.
 
-NOTE: Defaults do not apply to resources which override them with their own defined values.
+NOTE: Defaults do not apply to resources / stonith devices which override them with their own defined values.
 .TP
 defaults update <name>=<value>...
-Add, remove or change default values for resources. This is a simplified command useful for cases when you only manage one set of default values. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='.
+Add, remove or change default values for resources / stonith devices. This is a simplified command useful for cases when you only manage one set of default values. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='.
 
-NOTE: Defaults do not apply to resources which override them with their own defined values.
+NOTE: Defaults do not apply to resources / stonith devices which override them with their own defined values.
 .TP
-cleanup [<resource id>] [node=<node>] [operation=<operation> [interval=<interval>]] [\fB\-\-strict\fR]
-Make the cluster forget failed operations from history of the resource and re\-detect its current state. This can be useful to purge knowledge of past failures that have since been resolved.
-.br
+cleanup [<resource id | stonith id>] [node=<node>] [operation=<operation> [interval=<interval>]] [\fB\-\-strict\fR]
+Make the cluster forget failed operations from history of the resource / stonith device and re\-detect its current state. This can be useful to purge knowledge of past failures that have since been resolved.
+
 If the named resource is part of a group, or one numbered instance of a clone or bundled resource, the clean\-up applies to the whole collective resource unless \fB\-\-strict\fR is given.
-.br
-If a resource id is not specified then all resources / stonith devices will be cleaned up.
-.br
+
+If a resource id / stonith id is not specified then all resources / stonith devices will be cleaned up.
+
 If a node is not specified then resources / stonith devices on all nodes will be cleaned up.
 .TP
-refresh [<resource id>] [node=<node>] [\fB\-\-strict\fR]
-Make the cluster forget the complete operation history (including failures) of the resource and re\-detect its current state. If you are interested in forgetting failed operations only, use the 'pcs resource cleanup' command.
-.br
+refresh [<resource id | stonith id>] [node=<node>] [\fB\-\-strict\fR]
+Make the cluster forget the complete operation history (including failures) of the resource / stonith device and re\-detect its current state. If you are interested in forgetting failed operations only, use the 'pcs resource cleanup' command.
+
 If the named resource is part of a group, or one numbered instance of a clone or bundled resource, the refresh applies to the whole collective resource unless \fB\-\-strict\fR is given.
-.br
-If a resource id is not specified then all resources / stonith devices will be refreshed.
-.br
+
+If a resource id / stonith id is not specified then all resources / stonith devices will be refreshed.
+
 If a node is not specified then resources / stonith devices on all nodes will be refreshed.
 .TP
-failcount [show [<resource id>] [node=<node>] [operation=<operation> [interval=<interval>]]] [\fB\-\-full\fR]
-Show current failcount for resources, optionally filtered by a resource, node, operation and its interval. If \fB\-\-full\fR is specified do not sum failcounts per resource and node. Use 'pcs resource cleanup' or 'pcs resource refresh' to reset failcounts.
+failcount [show [<resource id | stonith id>] [node=<node>] [operation=<operation> [interval=<interval>]]] [\fB\-\-full\fR]
+Show current failcount for resources and stonith devices, optionally filtered by a resource / stonith device, node, operation and its interval. If \fB\-\-full\fR is specified do not sum failcounts per resource / stonith device and node. Use 'pcs resource cleanup' or 'pcs resource refresh' to reset failcounts.
 .TP
 relocate dry\-run [resource1] [resource2] ...
 The same as 'relocate run' but has no effect on the cluster.
@@ -693,8 +693,12 @@ Example: Use port p1 for node n1 and ports p2 and p3 for node n2
 .br
 pcs stonith create MyFence fence_virt 'pcmk_host_map=n1:p1;n2:p2,p3'
 .TP
-update <stonith id> [stonith device options]
-Add, remove or change options of specified stonith id. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='.
+update <stonith id> [stonith options] [op [<operation action> <operation options>]...] [meta <meta operations>...] [\fB\-\-wait\fR[=n]]
+Add, remove or change options of specified stonith device. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='.
+
+If an operation (op) is specified it will update the first found operation with the same action on the specified stonith device. If no operation with that action exists then a new operation will be created. (WARNING: all existing options on the updated operation will be reset if not specified.) If you want to create multiple monitor operations you should use the 'op add' & 'op remove' commands.
+
+If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the changes to take effect and then return 0 if the changes have been processed or 1 otherwise. If 'n' is not specified it defaults to 60 minutes.
 .TP
 update\-scsi\-devices <stonith id> (set <device\-path> [<device\-path>...]) | (add <device\-path> [<device\-path>...] delete|remove <device\-path> [<device\-path>...] )
 Update scsi fencing devices without affecting other resources. You must specify either list of set devices or at least one device for add or delete/remove devices. Stonith resource must be running on one cluster node. Each device will be unfenced on each cluster node running cluster. Supported fence agents: fence_scsi.
@@ -705,29 +709,202 @@ Remove stonith id from configuration.
 remove <stonith id>
 Remove stonith id from configuration.
 .TP
+op add <stonith id> <operation action> [operation properties]
+Add operation for specified stonith device.
+.TP
+op delete <stonith id> <operation action> [<operation properties>...]
+Remove specified operation (note: you must specify the exact operation properties to properly remove an existing operation).
+.TP
+op delete <operation id>
+Remove the specified operation id.
+.TP
+op remove <stonith id> <operation action> [<operation properties>...]
+Remove specified operation (note: you must specify the exact operation properties to properly remove an existing operation).
+.TP
+op remove <operation id>
+Remove the specified operation id.
+.TP
+op defaults [config] [\fB\-\-all\fR] [\fB\-\-full\fR] [\fB\-\-no\-check\-expired\fR]
+This command is an alias of 'resource op defaults [config]' command.
+
+List currently configured default values for operations. If \fB\-\-all\fR is specified, also list expired sets of values. If \fB\-\-full\fR is specified, also list ids. If \fB\-\-no\-expire\-check\fR is specified, do not evaluate whether sets of values are expired.
+.TP
+op defaults <name>=<value>...
+This command is an alias of 'resource op defaults' command.
+
+Set default values for operations.
+.br
+NOTE: Defaults do not apply to resources / stonith devices which override them with their own defined values.
+.TP
+op defaults set create [<set options>] [meta [<name>=<value>]...] [rule [<expression>]]
+This command is an alias of 'resource op defaults set create' command.
+
+Create a new set of default values for resource / stonith device operations. You may specify a rule describing resources / stonith devices and / or operations to which the set applies.
+
+Set options are: id, score
+
+Expression looks like one of the following:
+.br
+  op <operation name> [interval=<interval>]
+.br
+  resource [<standard>]:[<provider>]:[<type>]
+.br
+  defined|not_defined <node attribute>
+.br
+  <node attribute> lt|gt|lte|gte|eq|ne [string|integer|number|version] <value>
+.br
+  date gt|lt <date>
+.br
+  date in_range [<date>] to <date>
+.br
+  date in_range <date> to duration <duration options>
+.br
+  date\-spec <date\-spec options>
+.br
+  <expression> and|or <expression>
+.br
+  (<expression>)
+
+You may specify all or any of 'standard', 'provider' and 'type' in a resource expression. For example: 'resource ocf::' matches all resources of 'ocf' standard, while 'resource ::Dummy' matches all resources of 'Dummy' type regardless of their standard and provider.
+
+Dates are expected to conform to ISO 8601 format.
+
+Duration options are: hours, monthdays, weekdays, yearsdays, months, weeks, years, weekyears, moon. Value for these options is an integer.
+
+Date\-spec options are: hours, monthdays, weekdays, yearsdays, months, weeks, years, weekyears, moon. Value for these options is an integer or a range written as integer\-integer.
+
+NOTE: Defaults do not apply to resources / stonith devices which override them with their own defined values.
+.TP
+op defaults set delete [<set id>]...
+This command is an alias of 'resource op defaults set delete' command.
+
+Delete specified options sets.
+.TP
+op defaults set remove [<set id>]...
+This command is an alias of 'resource op defaults set delete' command.
+
+Delete specified options sets.
+.TP
+op defaults set update <set id> [meta [<name>=<value>]...]
+This command is an alias of 'resource op defaults set update' command.
+
+Add, remove or change values in specified set of default values for resource / stonith device operations. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='.
+
+NOTE: Defaults do not apply to resources / stonith devices which override them with their own defined values.
+.TP
+op defaults update <name>=<value>...
+This command is an alias of 'resource op defaults update' command.
+
+Add, remove or change default values for operations. This is a simplified command useful for cases when you only manage one set of default values. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='.
+
+NOTE: Defaults do not apply to resources / stonith devices which override them with their own defined values.
+.TP
+meta <stonith id> <meta options> [\fB\-\-wait\fR[=n]]
+Add specified options to the specified stonith device. Meta options should be in the format of name=value, options may be removed by setting an option without a value. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the changes to take effect and then return 0 if the changes have been processed or 1 otherwise. If 'n' is not specified it defaults to 60 minutes.
+
+Example: pcs stonith meta test_stonith failure\-timeout=50 stickiness=
+.TP
+defaults [config] [\fB\-\-all\fR] [\fB\-\-full\fR] [\fB\-\-no\-check\-expired\fR]
+This command is an alias of 'resource defaults [config]' command.
+
+List currently configured default values for resources / stonith devices. If \fB\-\-all\fR is specified, also list expired sets of values. If \fB\-\-full\fR is specified, also list ids. If \fB\-\-no\-expire\-check\fR is specified, do not evaluate whether sets of values are expired.
+.TP
+defaults <name>=<value>...
+This command is an alias of 'resource defaults' command.
+
+Set default values for resources / stonith devices.
+.br
+NOTE: Defaults do not apply to resources / stonith devices which override them with their own defined values.
+.TP
+defaults set create [<set options>] [meta [<name>=<value>]...] [rule [<expression>]]
+This command is an alias of 'resource defaults set create' command.
+
+Create a new set of default values for resources / stonith devices. You may specify a rule describing resources / stonith devices to which the set applies.
+
+Set options are: id, score
+
+Expression looks like one of the following:
+.br
+  resource [<standard>]:[<provider>]:[<type>]
+.br
+  date gt|lt <date>
+.br
+  date in_range [<date>] to <date>
+.br
+  date in_range <date> to duration <duration options>
+.br
+  date\-spec <date\-spec options>
+.br
+  <expression> and|or <expression>
+.br
+  (<expression>)
+
+You may specify all or any of 'standard', 'provider' and 'type' in a resource expression. For example: 'resource ocf::' matches all resources of 'ocf' standard, while 'resource ::Dummy' matches all resources of 'Dummy' type regardless of their standard and provider.
+
+Dates are expected to conform to ISO 8601 format.
+
+Duration options are: hours, monthdays, weekdays, yearsdays, months, weeks, years, weekyears, moon. Value for these options is an integer.
+
+Date\-spec options are: hours, monthdays, weekdays, yearsdays, months, weeks, years, weekyears, moon. Value for these options is an integer or a range written as integer\-integer.
+
+NOTE: Defaults do not apply to resources / stonith devices which override them with their own defined values.
+.TP
+defaults set delete [<set id>]...
+This command is an alias of 'resource defaults set delete' command.
+
+Delete specified options sets.
+.TP
+defaults set remove [<set id>]...
+This command is an alias of 'resource defaults set delete' command.
+
+Delete specified options sets.
+.TP
+defaults set update <set id> [meta [<name>=<value>]...]
+This command is an alias of 'resource defaults set update' command.
+
+Add, remove or change values in specified set of default values for resources / stonith devices. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='.
+
+NOTE: Defaults do not apply to resources / stonith devices which override them with their own defined values.
+.TP
+defaults update <name>=<value>...
+This command is an alias of 'resource defaults update' command.
+
+Add, remove or change default values for resources / stonith devices. This is a simplified command useful for cases when you only manage one set of default values. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='.
+
+NOTE: Defaults do not apply to resources / stonith devices which override them with their own defined values.
+.TP
+cleanup [<resource id | stonith id>] [node=<node>] [operation=<operation> [interval=<interval>]] [\fB\-\-strict\fR]
+This command is an alias of 'resource cleanup' command.
+
+Make the cluster forget failed operations from history of the resource / stonith device and re\-detect its current state. This can be useful to purge knowledge of past failures that have since been resolved.
+
+If the named resource is part of a group, or one numbered instance of a clone or bundled resource, the clean\-up applies to the whole collective resource unless \fB\-\-strict\fR is given.
+
+If a resource id / stonith id is not specified then all resources / stonith devices will be cleaned up.
+
+If a node is not specified then resources / stonith devices on all nodes will be cleaned up.
+.TP
+refresh [<resource id | stonith id>] [node=<node>] [\fB\-\-strict\fR]
+This command is an alias of 'resource refresh' command.
+
+Make the cluster forget the complete operation history (including failures) of the resource / stonith device and re\-detect its current state. If you are interested in forgetting failed operations only, use the 'pcs resource cleanup' command.
+
+If the named resource is part of a group, or one numbered instance of a clone or bundled resource, the refresh applies to the whole collective resource unless \fB\-\-strict\fR is given.
+
+If a resource id / stonith id is not specified then all resources / stonith devices will be refreshed.
+
+If a node is not specified then resources / stonith devices on all nodes will be refreshed.
+.TP
+failcount [show [<resource id | stonith id>] [node=<node>] [operation=<operation> [interval=<interval>]]] [\fB\-\-full\fR]
+This command is an alias of 'resource failcount show' command.
+
+Show current failcount for resources and stonith devices, optionally filtered by a resource / stonith device, node, operation and its interval. If \fB\-\-full\fR is specified do not sum failcounts per resource / stonith device and node. Use 'pcs resource cleanup' or 'pcs resource refresh' to reset failcounts.
+.TP
 enable <stonith id>... [\fB\-\-wait[=n]\fR]
 Allow the cluster to use the stonith devices. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the stonith devices to start and then return 0 if the stonith devices are started, or 1 if the stonith devices have not yet started. If 'n' is not specified it defaults to 60 minutes.
 .TP
 disable <stonith id>... [\fB\-\-wait[=n]\fR]
 Attempt to stop the stonith devices if they are running and disallow the cluster to use them. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the stonith devices to stop and then return 0 if the stonith devices are stopped or 1 if the stonith devices have not stopped. If 'n' is not specified it defaults to 60 minutes.
-.TP
-cleanup [<stonith id>] [\fB\-\-node\fR <node>] [\fB\-\-strict\fR]
-Make the cluster forget failed operations from history of the stonith device and re\-detect its current state. This can be useful to purge knowledge of past failures that have since been resolved.
-.br
-If the named stonith device is part of a group, or one numbered instance of a clone or bundled resource, the clean\-up applies to the whole collective resource unless \fB\-\-strict\fR is given.
-.br
-If a stonith id is not specified then all resources / stonith devices will be cleaned up.
-.br
-If a node is not specified then resources / stonith devices on all nodes will be cleaned up.
-.TP
-refresh [<stonith id>] [\fB\-\-node\fR <node>] [\fB\-\-strict\fR]
-Make the cluster forget the complete operation history (including failures) of the stonith device and re\-detect its current state. If you are interested in forgetting failed operations only, use the 'pcs stonith cleanup' command.
-.br
-If the named stonith device is part of a group, or one numbered instance of a clone or bundled resource, the refresh applies to the whole collective resource unless \fB\-\-strict\fR is given.
-.br
-If a stonith id is not specified then all resources / stonith devices will be refreshed.
-.br
-If a node is not specified then resources / stonith devices on all nodes will be refreshed.
 .TP
 level [config]
 Lists all of the fencing levels currently configured.
