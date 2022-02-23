@@ -728,7 +728,7 @@ class NotLive(TestCase):
         )
 
     def test_unknown_host_addr_not_specified(self):
-        self.config.env.set_known_hosts_dests(dict())
+        self.config.env.set_known_hosts_dests({})
         (
             self.config.runner.cib.load(env=self.cmd_env)
             .runner.pcmk.load_agent(
@@ -756,7 +756,7 @@ class NotLive(TestCase):
         )
 
     def test_unknown_host_addr_specified(self):
-        self.config.env.set_known_hosts_dests(dict())
+        self.config.env.set_known_hosts_dests({})
         (
             self.config.runner.cib.load(env=self.cmd_env)
             .runner.pcmk.load_agent(

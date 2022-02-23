@@ -92,7 +92,7 @@ class CommandRunnerTest(TestCase):
                     {
                         "command": command_str,
                         "stdin": None,
-                        "environment": dict(),
+                        "environment": {},
                     },
                 ),
                 (
@@ -271,7 +271,7 @@ class CommandRunnerTest(TestCase):
                     {
                         "command": command_str,
                         "stdin": stdin,
-                        "environment": dict(),
+                        "environment": {},
                     },
                 ),
                 (
@@ -332,7 +332,7 @@ class CommandRunnerTest(TestCase):
                     {
                         "command": command_str,
                         "stdin": None,
-                        "environment": dict(),
+                        "environment": {},
                     },
                 )
             ],
@@ -384,7 +384,7 @@ class CommandRunnerTest(TestCase):
                     {
                         "command": command_str,
                         "stdin": None,
-                        "environment": dict(),
+                        "environment": {},
                     },
                 )
             ],

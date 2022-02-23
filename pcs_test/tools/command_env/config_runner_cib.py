@@ -66,7 +66,7 @@ class CibShortcuts:
             )
         else:
             with open(
-                rc(filename if filename else self.cib_filename)
+                rc(filename if filename else self.cib_filename),
             ) as cib_file:
                 cib = modify_cib(
                     cib_file.read(), modifiers, **modifier_shortcuts

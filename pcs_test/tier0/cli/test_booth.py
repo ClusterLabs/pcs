@@ -16,7 +16,7 @@ class SetupTest(TestCase):
         booth_cmd.config_setup(
             self.lib,
             ["sites", "1.1.1.1", "2.2.2.2", "3.3.3.3"],
-            dict_to_modifiers(dict()),
+            dict_to_modifiers({}),
         )
         self.lib.booth.config_setup.assert_called_once_with(
             ["1.1.1.1", "2.2.2.2", "3.3.3.3"],
@@ -46,14 +46,12 @@ class DestroyTest(TestCase):
 
     def test_too_many_args(self):
         with self.assertRaises(CmdLineInputError) as cm:
-            booth_cmd.config_destroy(
-                self.lib, ["aaa"], dict_to_modifiers(dict())
-            )
+            booth_cmd.config_destroy(self.lib, ["aaa"], dict_to_modifiers({}))
         self.assertIsNone(cm.exception.message)
         self.lib.booth.config_destroy.assert_not_called()
 
     def test_lib_call_minimal(self):
-        booth_cmd.config_destroy(self.lib, [], dict_to_modifiers(dict()))
+        booth_cmd.config_destroy(self.lib, [], dict_to_modifiers({}))
         self.lib.booth.config_destroy.assert_called_once_with(
             ignore_config_load_problems=False,
             instance_name=None,
@@ -76,7 +74,7 @@ class AddTicketTest(TestCase):
 
     def test_lib_call_minimal(self):
         booth_cmd.config_ticket_add(
-            self.lib, ["ticketA"], dict_to_modifiers(dict())
+            self.lib, ["ticketA"], dict_to_modifiers({})
         )
         self.lib.booth.config_ticket_add.assert_called_once_with(
             "ticketA",
@@ -117,7 +115,7 @@ class DeleteRemoveTicketMixin:
 
     def test_lib_call_minimal(self):
         booth_cmd.config_ticket_remove(
-            self.lib, ["ticketA"], dict_to_modifiers(dict())
+            self.lib, ["ticketA"], dict_to_modifiers({})
         )
         self.lib.booth.config_ticket_remove.assert_called_once_with(
             "ticketA",
@@ -157,7 +155,7 @@ class CreateTest(AssertPcsMixin, TestCase):
 
     def test_lib_call_minimal(self):
         booth_cmd.create_in_cluster(
-            self.lib, ["ip", "1.2.3.4"], dict_to_modifiers(dict())
+            self.lib, ["ip", "1.2.3.4"], dict_to_modifiers({})
         )
         self.lib.booth.create_in_cluster.assert_called_once_with(
             "1.2.3.4",
@@ -190,7 +188,7 @@ class DeleteRemoveTestMixin(AssertPcsMixin):
     def test_lib_call_minimal(self):
         resource_remove = lambda x: x
         booth_cmd.get_remove_from_cluster(resource_remove)(
-            self.lib, [], dict_to_modifiers(dict())
+            self.lib, [], dict_to_modifiers({})
         )
         self.lib.booth.remove_from_cluster.assert_called_once_with(
             resource_remove,
@@ -224,7 +222,7 @@ class TicketGrantTest(TestCase):
         self.lib.booth = mock.Mock(spec_set=["ticket_grant"])
 
     def test_lib_call_minimal(self):
-        booth_cmd.ticket_grant(self.lib, ["ticketA"], dict_to_modifiers(dict()))
+        booth_cmd.ticket_grant(self.lib, ["ticketA"], dict_to_modifiers({}))
         self.lib.booth.ticket_grant.assert_called_once_with(
             "ticketA",
             instance_name=None,
@@ -250,9 +248,7 @@ class TicketRevokeTest(TestCase):
         self.lib.booth = mock.Mock(spec_set=["ticket_revoke"])
 
     def test_lib_call_minimal(self):
-        booth_cmd.ticket_revoke(
-            self.lib, ["ticketA"], dict_to_modifiers(dict())
-        )
+        booth_cmd.ticket_revoke(self.lib, ["ticketA"], dict_to_modifiers({}))
         self.lib.booth.ticket_revoke.assert_called_once_with(
             "ticketA",
             instance_name=None,
@@ -282,13 +278,13 @@ class ConfigTest(TestCase):
     def test_too_many_args(self):
         with self.assertRaises(CmdLineInputError) as cm:
             booth_cmd.config_show(
-                self.lib, ["aaa", "bbb"], dict_to_modifiers(dict())
+                self.lib, ["aaa", "bbb"], dict_to_modifiers({})
             )
         self.assertIsNone(cm.exception.message)
         self.lib.booth.config_text.assert_not_called()
 
     def test_lib_call_minimal(self):
-        booth_cmd.config_show(self.lib, [], dict_to_modifiers(dict()))
+        booth_cmd.config_show(self.lib, [], dict_to_modifiers({}))
         self.lib.booth.config_text.assert_called_once_with(
             instance_name=None,
             node_name=None,
@@ -319,7 +315,7 @@ class Restart(TestCase):
     def test_lib_call_minimal(self):
         resource_restart = lambda x: x
         booth_cmd.get_restart(resource_restart)(
-            self.lib, [], dict_to_modifiers(dict())
+            self.lib, [], dict_to_modifiers({})
         )
         # The first arg going to the lib call is a lambda which we cannot get
         # in here. So we must check all the other parameters in a bit more
@@ -351,7 +347,7 @@ class Sync(TestCase):
         self.lib.booth = mock.Mock(spec_set=["config_sync"])
 
     def test_lib_call_minimal(self):
-        booth_cmd.sync(self.lib, [], dict_to_modifiers(dict()))
+        booth_cmd.sync(self.lib, [], dict_to_modifiers({}))
         self.lib.booth.config_sync.assert_called_once_with(
             instance_name=None,
             skip_offline_nodes=False,
@@ -384,7 +380,7 @@ class BoothServiceTestMixin:
         self.lib = mock.Mock(spec_set=["booth"])
 
     def test_lib_call_minimal(self):
-        self.cli_cmd(self.lib, [], dict_to_modifiers(dict()))
+        self.cli_cmd(self.lib, [], dict_to_modifiers({}))
         self.lib_cmd.assert_called_once_with(
             instance_name=None,
         )
@@ -438,7 +434,7 @@ class Pull(TestCase):
         self.lib.booth = mock.Mock(spec_set=["pull_config"])
 
     def test_lib_call_minimal(self):
-        booth_cmd.pull(self.lib, ["node1"], dict_to_modifiers(dict()))
+        booth_cmd.pull(self.lib, ["node1"], dict_to_modifiers({}))
         self.lib.booth.pull_config.assert_called_once_with(
             "node1",
             instance_name=None,
@@ -474,7 +470,7 @@ class Status(TestCase):
         }
 
     def test_lib_call_minimal(self):
-        booth_cmd.status(self.lib, [], dict_to_modifiers(dict()))
+        booth_cmd.status(self.lib, [], dict_to_modifiers({}))
         self.lib.booth.get_status.assert_called_once_with(
             instance_name=None,
         )

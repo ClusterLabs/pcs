@@ -283,7 +283,7 @@ def _get_node_name_validators(node_index):
 
 
 def _addr_type_analyzer():
-    cache = dict()
+    cache = {}
 
     def analyzer(addr):
         if addr not in cache:
@@ -298,7 +298,7 @@ def _extract_existing_addrs_and_names(
 ):
     existing_names = set()
     existing_addrs = set()
-    existing_addr_types_dict = dict()
+    existing_addr_types_dict = {}
     for node in coro_existing_nodes:
         existing_names.add(node.name)
         existing_addrs.update(set(node.addrs_plain()))
@@ -1941,8 +1941,8 @@ def _get_qdevice_generic_options_validators(
 
 
 def _split_heuristics_exec_options(options):
-    options_exec = dict()
-    options_nonexec = dict()
+    options_exec = {}
+    options_nonexec = {}
     for name, value in options.items():
         if name.startswith("exec_"):
             options_exec[name] = value

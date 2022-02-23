@@ -716,7 +716,7 @@ class NotLive(TestCase):
                 />
             </meta_attributes>
         """
-        self.config.env.set_known_hosts_dests(dict())
+        self.config.env.set_known_hosts_dests({})
         self.config.local.load_cib(env=self.cmd_env)
         self.config.local.push_cib(meta_attributes=meta_attributes)
         node_add_guest(self.env_assist.get_env(), options={"remote-port": "99"})
@@ -748,7 +748,7 @@ class NotLive(TestCase):
                 />
             </meta_attributes>
         """
-        self.config.env.set_known_hosts_dests(dict())
+        self.config.env.set_known_hosts_dests({})
         self.config.local.load_cib(env=self.cmd_env)
         self.config.local.push_cib(meta_attributes=meta_attributes)
         node_add_guest(self.env_assist.get_env(), options={"remote-addr": "aa"})

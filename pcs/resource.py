@@ -5,6 +5,7 @@ import re
 import textwrap
 import time
 import json
+from functools import partial
 
 from typing import (
     Any,
@@ -1037,6 +1038,12 @@ def resource_update(lib, args, modifiers, deal_with_guest_change=True):
     else:
         operations = operations[0]
 
+    get_role = partial(
+        pacemaker.role.get_value_for_cib,
+        is_latest_supported=utils.isCibVersionSatisfied(
+            dom, const.PCMK_NEW_ROLES_CIB_VERSION
+        ),
+    )
     for op_argv in op_values:
         if not op_argv:
             continue
@@ -1052,11 +1059,6 @@ def resource_update(lib, args, modifiers, deal_with_guest_change=True):
 
         op_role = ""
         op_vars = utils.convert_args_to_tuples(op_argv[1:])
-
-        get_role = lambda _role: pacemaker.role.get_value_for_cib(
-            _role,
-            utils.isCibVersionSatisfied(dom, const.PCMK_NEW_ROLES_CIB_VERSION),
-        )
 
         for k, v in op_vars:
             if k == "role":
@@ -2851,7 +2853,7 @@ def resource_node_lines(node):
         "primitive": "Resource",
     }
     lines = []
-    if node.tag in simple_types.keys():
+    if node.tag in simple_types:
         lines.append(
             f"{simple_types[node.tag]}: {node.attrib['id']}"
             + _get_attrs(node, " (", ")")

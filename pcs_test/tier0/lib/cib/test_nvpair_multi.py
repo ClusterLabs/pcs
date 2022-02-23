@@ -41,7 +41,7 @@ from pcs.lib.cib.tools import IdProvider
 
 class RuleInEffectEvalMock(RuleInEffectEval):
     def __init__(self, mock_data=None):
-        self._mock_data = mock_data or dict()
+        self._mock_data = mock_data or {}
 
     def get_rule_status(self, rule_id):
         return self._mock_data.get(rule_id, CibRuleInEffectStatus.UNKNOWN)

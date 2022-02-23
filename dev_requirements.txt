@@ -1,6 +1,6 @@
 lxml-stubs
-pylint==2.9.6
-astroid==2.6.6
+pylint==2.12.2
+astroid==2.9.3
 mypy==0.910
 black==21.7b0
 types-cryptography

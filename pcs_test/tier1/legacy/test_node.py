@@ -567,7 +567,7 @@ class NodeAttributeTest(
         self.temp_cib.close()
 
     def fixture_attrs(self, nodes, attrs=None):
-        attrs = dict() if attrs is None else attrs
+        attrs = {} if attrs is None else attrs
         xml_lines = ["<nodes>"]
         for node_id, node_name in enumerate(nodes, 1):
             xml_lines.extend(
@@ -577,7 +577,7 @@ class NodeAttributeTest(
                 ]
             )
             nv = '<nvpair id="nodes-{id}-{name}" name="{name}" value="{val}"/>'
-            for name, value in attrs.get(node_name, dict()).items():
+            for name, value in attrs.get(node_name, {}).items():
                 xml_lines.append(nv.format(id=node_id, name=name, val=value))
             xml_lines.extend(["</instance_attributes>", "</node>"])
         xml_lines.append("</nodes>")

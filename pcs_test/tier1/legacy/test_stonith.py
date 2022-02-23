@@ -1979,7 +1979,7 @@ class LevelTestsBase(TestCase, AssertPcsMixin):
         write_data_to_tmpfile(cib, self.temp_cib)
 
     def fixture_cib_config_cache(self):
-        # pylint: disable=global-statement
+        # pylint: disable=global-statement,global-variable-not-assigned
         global _fixture_stonith_level_cache, _fixture_stonith_level_cache_lock
         with _fixture_stonith_level_cache_lock:
             if _fixture_stonith_level_cache is None:

@@ -62,7 +62,7 @@ class IsMultipleTest(TestCase):
         self.assertFalse(tools._is_multiple("some string"))
 
     def test_list_empty(self):
-        self.assertTrue(tools._is_multiple(list()))
+        self.assertTrue(tools._is_multiple([]))
 
     def test_list_single(self):
         self.assertFalse(tools._is_multiple(["the only list item"]))
@@ -71,7 +71,7 @@ class IsMultipleTest(TestCase):
         self.assertTrue(tools._is_multiple(["item1", "item2"]))
 
     def test_dict_empty(self):
-        self.assertTrue(tools._is_multiple(dict()))
+        self.assertTrue(tools._is_multiple({}))
 
     def test_dict_single(self):
         self.assertFalse(tools._is_multiple({"the only index": "something"}))

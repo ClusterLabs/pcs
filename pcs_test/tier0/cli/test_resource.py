@@ -303,16 +303,14 @@ class GroupAdd(TestCase, AssertPcsMixin):
 
     def test_no_args(self):
         with self.assertRaises(CmdLineInputError) as cm:
-            resource.resource_group_add_cmd(
-                self.lib, [], dict_to_modifiers(dict())
-            )
+            resource.resource_group_add_cmd(self.lib, [], dict_to_modifiers({}))
         self.assertIsNone(cm.exception.message)
         self.resource.group_add.assert_not_called()
 
     def test_no_resources(self):
         with self.assertRaises(CmdLineInputError) as cm:
             resource.resource_group_add_cmd(
-                self.lib, ["G"], dict_to_modifiers(dict())
+                self.lib, ["G"], dict_to_modifiers({})
             )
         self.assertIsNone(cm.exception.message)
         self.resource.group_add.assert_not_called()
@@ -331,7 +329,7 @@ class GroupAdd(TestCase, AssertPcsMixin):
 
     def test_success(self):
         resource.resource_group_add_cmd(
-            self.lib, ["G", "R1", "R2"], dict_to_modifiers(dict())
+            self.lib, ["G", "R1", "R2"], dict_to_modifiers({})
         )
         self.resource.group_add.assert_called_once_with(
             "G",
@@ -381,7 +379,7 @@ class GroupAdd(TestCase, AssertPcsMixin):
 class ResourceMoveBanMixin:
     def test_no_args(self):
         with self.assertRaises(CmdLineInputError) as cm:
-            self.cli_command(self.lib, [], dict_to_modifiers(dict()))
+            self.cli_command(self.lib, [], dict_to_modifiers({}))
         self.assertEqual(cm.exception.message, self.no_args_error)
         self.lib_command.assert_not_called()
 
@@ -390,7 +388,7 @@ class ResourceMoveBanMixin:
             self.cli_command(
                 self.lib,
                 ["resource", "arg1", "arg2", "arg3"],
-                dict_to_modifiers(dict()),
+                dict_to_modifiers({}),
             )
         self.assertIsNone(cm.exception.message)
         self.lib_command.assert_not_called()
@@ -400,7 +398,7 @@ class ResourceMoveBanMixin:
             self.cli_command(
                 self.lib,
                 ["resource", "node1", "node2"],
-                dict_to_modifiers(dict()),
+                dict_to_modifiers({}),
             )
         self.assertIsNone(cm.exception.message)
         self.lib_command.assert_not_called()
@@ -410,28 +408,26 @@ class ResourceMoveBanMixin:
             self.cli_command(
                 self.lib,
                 ["resource", "lifetime=1h", "lifetime=2h"],
-                dict_to_modifiers(dict()),
+                dict_to_modifiers({}),
             )
         self.assertIsNone(cm.exception.message)
         self.lib_command.assert_not_called()
 
     def test_succes(self):
-        self.cli_command(self.lib, ["resource"], dict_to_modifiers(dict()))
+        self.cli_command(self.lib, ["resource"], dict_to_modifiers({}))
         self.lib_command.assert_called_once_with(
             "resource", lifetime=None, master=False, node=None, wait=False
         )
 
     def test_success_node(self):
-        self.cli_command(
-            self.lib, ["resource", "node"], dict_to_modifiers(dict())
-        )
+        self.cli_command(self.lib, ["resource", "node"], dict_to_modifiers({}))
         self.lib_command.assert_called_once_with(
             "resource", lifetime=None, master=False, node="node", wait=False
         )
 
     def test_success_lifetime(self):
         self.cli_command(
-            self.lib, ["resource", "lifetime=1h"], dict_to_modifiers(dict())
+            self.lib, ["resource", "lifetime=1h"], dict_to_modifiers({})
         )
         self.lib_command.assert_called_once_with(
             "resource", lifetime="P1h", master=False, node=None, wait=False
@@ -439,7 +435,7 @@ class ResourceMoveBanMixin:
 
     def test_success_lifetime_unchanged(self):
         self.cli_command(
-            self.lib, ["resource", "lifetime=T1h"], dict_to_modifiers(dict())
+            self.lib, ["resource", "lifetime=T1h"], dict_to_modifiers({})
         )
         self.lib_command.assert_called_once_with(
             "resource", lifetime="T1h", master=False, node=None, wait=False
@@ -449,7 +445,7 @@ class ResourceMoveBanMixin:
         self.cli_command(
             self.lib,
             ["resource", "node", "lifetime=1h"],
-            dict_to_modifiers(dict()),
+            dict_to_modifiers({}),
         )
         self.lib_command.assert_called_once_with(
             "resource", lifetime="P1h", master=False, node="node", wait=False
@@ -459,7 +455,7 @@ class ResourceMoveBanMixin:
         self.cli_command(
             self.lib,
             ["resource", "lifetime=1h", "node"],
-            dict_to_modifiers(dict()),
+            dict_to_modifiers({}),
         )
         self.lib_command.assert_called_once_with(
             "resource", lifetime="P1h", master=False, node="node", wait=False
@@ -505,7 +501,7 @@ class ResourceMove(TestCase):
 
     def test_no_args(self, mock_deprecation):
         with self.assertRaises(CmdLineInputError) as cm:
-            resource.resource_move(self.lib, [], dict_to_modifiers(dict()))
+            resource.resource_move(self.lib, [], dict_to_modifiers({}))
         self.assertEqual(
             cm.exception.message, "must specify a resource to move"
         )
@@ -517,16 +513,14 @@ class ResourceMove(TestCase):
             resource.resource_move(
                 self.lib,
                 ["resource", "arg1", "arg2"],
-                dict_to_modifiers(dict()),
+                dict_to_modifiers({}),
             )
         self.assertIsNone(cm.exception.message)
         self.resource.move_autoclean.assert_not_called()
         mock_deprecation.assert_not_called()
 
     def test_succes(self, mock_deprecation):
-        resource.resource_move(
-            self.lib, ["resource"], dict_to_modifiers(dict())
-        )
+        resource.resource_move(self.lib, ["resource"], dict_to_modifiers({}))
         self.resource.move_autoclean.assert_called_once_with(
             "resource", node=None, master=False, wait_timeout=-1, strict=False
         )
@@ -534,7 +528,7 @@ class ResourceMove(TestCase):
 
     def test_success_node(self, mock_deprecation):
         resource.resource_move(
-            self.lib, ["resource", "node"], dict_to_modifiers(dict())
+            self.lib, ["resource", "node"], dict_to_modifiers({})
         )
         self.resource.move_autoclean.assert_called_once_with(
             "resource", node="node", master=False, wait_timeout=-1, strict=False
@@ -584,9 +578,7 @@ class ResourceClear(TestCase):
 
     def test_no_args(self):
         with self.assertRaises(CmdLineInputError) as cm:
-            resource.resource_unmove_unban(
-                self.lib, [], dict_to_modifiers(dict())
-            )
+            resource.resource_unmove_unban(self.lib, [], dict_to_modifiers({}))
         self.assertEqual(
             cm.exception.message, "must specify a resource to clear"
         )
@@ -597,14 +589,14 @@ class ResourceClear(TestCase):
             resource.resource_unmove_unban(
                 self.lib,
                 ["resource", "arg1", "arg2"],
-                dict_to_modifiers(dict()),
+                dict_to_modifiers({}),
             )
         self.assertIsNone(cm.exception.message)
         self.resource.unmove_unban.assert_not_called()
 
     def test_succes(self):
         resource.resource_unmove_unban(
-            self.lib, ["resource"], dict_to_modifiers(dict())
+            self.lib, ["resource"], dict_to_modifiers({})
         )
         self.resource.unmove_unban.assert_called_once_with(
             "resource", node=None, master=False, expired=False, wait=False
@@ -612,7 +604,7 @@ class ResourceClear(TestCase):
 
     def test_success_node(self):
         resource.resource_unmove_unban(
-            self.lib, ["resource", "node"], dict_to_modifiers(dict())
+            self.lib, ["resource", "node"], dict_to_modifiers({})
         )
         self.resource.unmove_unban.assert_called_once_with(
             "resource", node="node", master=False, expired=False, wait=False
@@ -655,9 +647,7 @@ class ResourceDisable(TestCase):
 
     def test_no_args(self):
         with self.assertRaises(CmdLineInputError) as cm:
-            resource.resource_disable_cmd(
-                self.lib, [], dict_to_modifiers(dict())
-            )
+            resource.resource_disable_cmd(self.lib, [], dict_to_modifiers({}))
         self.assertEqual(
             cm.exception.message, "You must specify resource(s) to disable"
         )
@@ -667,9 +657,7 @@ class ResourceDisable(TestCase):
         self.resource.disable_simulate.assert_not_called()
 
     def test_one_resource(self):
-        resource.resource_disable_cmd(
-            self.lib, ["R1"], dict_to_modifiers(dict())
-        )
+        resource.resource_disable_cmd(self.lib, ["R1"], dict_to_modifiers({}))
         self.resource.disable.assert_called_once_with(["R1"], False)
         self.report_processor.suppress_reports_of_severity.assert_not_called()
         self.resource.disable_safe.assert_not_called()
@@ -677,7 +665,7 @@ class ResourceDisable(TestCase):
 
     def test_more_resources(self):
         resource.resource_disable_cmd(
-            self.lib, ["R1", "R2"], dict_to_modifiers(dict())
+            self.lib, ["R1", "R2"], dict_to_modifiers({})
         )
         self.resource.disable.assert_called_once_with(["R1", "R2"], False)
         self.report_processor.suppress_reports_of_severity.assert_not_called()
@@ -1107,23 +1095,19 @@ class ResourceEnable(TestCase):
 
     def test_no_args(self):
         with self.assertRaises(CmdLineInputError) as cm:
-            resource.resource_enable_cmd(
-                self.lib, [], dict_to_modifiers(dict())
-            )
+            resource.resource_enable_cmd(self.lib, [], dict_to_modifiers({}))
         self.assertEqual(
             cm.exception.message, "You must specify resource(s) to enable"
         )
         self.resource.enable.assert_not_called()
 
     def test_one_resource(self):
-        resource.resource_enable_cmd(
-            self.lib, ["R1"], dict_to_modifiers(dict())
-        )
+        resource.resource_enable_cmd(self.lib, ["R1"], dict_to_modifiers({}))
         self.resource.enable.assert_called_once_with(["R1"], False)
 
     def test_more_resources(self):
         resource.resource_enable_cmd(
-            self.lib, ["R1", "R2"], dict_to_modifiers(dict())
+            self.lib, ["R1", "R2"], dict_to_modifiers({})
         )
         self.resource.enable.assert_called_once_with(["R1", "R2"], False)
 
@@ -1144,23 +1128,19 @@ class ResourceManage(TestCase):
 
     def test_no_args(self):
         with self.assertRaises(CmdLineInputError) as cm:
-            resource.resource_manage_cmd(
-                self.lib, [], dict_to_modifiers(dict())
-            )
+            resource.resource_manage_cmd(self.lib, [], dict_to_modifiers({}))
         self.assertEqual(
             cm.exception.message, "You must specify resource(s) to manage"
         )
         self.resource.manage.assert_not_called()
 
     def test_one_resource(self):
-        resource.resource_manage_cmd(
-            self.lib, ["R1"], dict_to_modifiers(dict())
-        )
+        resource.resource_manage_cmd(self.lib, ["R1"], dict_to_modifiers({}))
         self.resource.manage.assert_called_once_with(["R1"], with_monitor=False)
 
     def test_more_resources(self):
         resource.resource_manage_cmd(
-            self.lib, ["R1", "R2"], dict_to_modifiers(dict())
+            self.lib, ["R1", "R2"], dict_to_modifiers({})
         )
         self.resource.manage.assert_called_once_with(
             ["R1", "R2"], with_monitor=False
@@ -1185,25 +1165,21 @@ class ResourceUnmanage(TestCase):
 
     def test_no_args(self):
         with self.assertRaises(CmdLineInputError) as cm:
-            resource.resource_unmanage_cmd(
-                self.lib, [], dict_to_modifiers(dict())
-            )
+            resource.resource_unmanage_cmd(self.lib, [], dict_to_modifiers({}))
         self.assertEqual(
             cm.exception.message, "You must specify resource(s) to unmanage"
         )
         self.resource.unmanage.assert_not_called()
 
     def test_one_resource(self):
-        resource.resource_unmanage_cmd(
-            self.lib, ["R1"], dict_to_modifiers(dict())
-        )
+        resource.resource_unmanage_cmd(self.lib, ["R1"], dict_to_modifiers({}))
         self.resource.unmanage.assert_called_once_with(
             ["R1"], with_monitor=False
         )
 
     def test_more_resources(self):
         resource.resource_unmanage_cmd(
-            self.lib, ["R1", "R2"], dict_to_modifiers(dict())
+            self.lib, ["R1", "R2"], dict_to_modifiers({})
         )
         self.resource.unmanage.assert_called_once_with(
             ["R1", "R2"], with_monitor=False
