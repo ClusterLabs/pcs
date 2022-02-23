@@ -1,9 +1,12 @@
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from pcs import stonith
-from pcs.common import reports
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import InputModifiers
+from pcs.common import reports
 
 from pcs_test.tools.misc import dict_to_modifiers
 

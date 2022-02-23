@@ -11,23 +11,26 @@ from lxml.etree import _Element
 
 from pcs.common import reports
 from pcs.common.fencing_topology import (
+    TARGET_TYPE_ATTRIBUTE,
     TARGET_TYPE_NODE,
     TARGET_TYPE_REGEXP,
-    TARGET_TYPE_ATTRIBUTE,
 )
 from pcs.common.reports import (
-    codes as report_codes,
-    has_errors,
     ReportItemList,
     ReportItemSeverity,
     ReportProcessor,
 )
+from pcs.common.reports import codes as report_codes
+from pcs.common.reports import has_errors
 from pcs.common.reports.item import ReportItem
 from pcs.lib.cib.stonith import is_stonith_resource
 from pcs.lib.cib.tools import find_unique_id
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.state import _Element as StateElement
-from pcs.lib.pacemaker.values import sanitize_id, validate_id
+from pcs.lib.pacemaker.values import (
+    sanitize_id,
+    validate_id,
+)
 
 
 def add_level(

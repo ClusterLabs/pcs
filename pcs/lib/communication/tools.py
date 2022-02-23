@@ -1,9 +1,9 @@
 from pcs.common import reports
-from pcs.common.reports.item import ReportItem
 from pcs.common.node_communicator import Request
 from pcs.common.reports import ReportItemSeverity
-from pcs.lib.node_communication import response_to_report_item
+from pcs.common.reports.item import ReportItem
 from pcs.lib.errors import LibraryError
+from pcs.lib.node_communication import response_to_report_item
 
 
 class CommunicationCommandInterface:

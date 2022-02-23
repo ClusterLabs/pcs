@@ -1,14 +1,19 @@
-from logging import Logger
-from shlex import quote as shell_quote
 import signal
 import subprocess
-from typing import Dict, Mapping, Optional, Sequence, Tuple
+from logging import Logger
+from shlex import quote as shell_quote
+from typing import (
+    Dict,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+)
 
 from pcs import settings
 from pcs.common import reports
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
-
 from pcs.common.str_tools import join_multilines
 from pcs.lib.errors import LibraryError
 

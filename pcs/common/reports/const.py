@@ -10,7 +10,6 @@ from .types import (
     StonithRestartlessUpdateUnableToPerformReason,
 )
 
-
 ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE = AddRemoveContainerType("stonith")
 ADD_REMOVE_CONTAINER_TYPE_GROUP = AddRemoveContainerType("group")
 ADD_REMOVE_ITEM_TYPE_DEVICE = AddRemoveItemType("device")

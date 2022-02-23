@@ -6,14 +6,17 @@ from typing import (
     Sequence,
 )
 
-from pcs import settings, utils
+import pcs.common.ssl
+from pcs import (
+    settings,
+    utils,
+)
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import InputModifiers
 from pcs.cli.reports import process_library_reports
 from pcs.cli.reports.output import print_to_stderr
 from pcs.common import reports
 from pcs.common.reports.item import ReportItem
-import pcs.common.ssl
 from pcs.lib.node import get_existing_nodes_names
 
 

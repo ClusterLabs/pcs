@@ -1,12 +1,15 @@
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
+
+from pcs import settings
+from pcs.common.file import RawFileError
+from pcs.common.reports import codes as report_codes
+from pcs.lib.commands import pcsd
 
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
-
-from pcs import settings
-from pcs.common.reports import codes as report_codes
-from pcs.common.file import RawFileError
-from pcs.lib.commands import pcsd
 
 
 class SynchronizeSslCertificates(TestCase):

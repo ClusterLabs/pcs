@@ -1,12 +1,12 @@
 from pcs_test.tools.color_text_runner.format import (
     blue,
-    red,
-    green,
-    lightgrey,
-    get_description,
     format_module,
     format_test_method_name,
     format_traceback,
+    get_description,
+    green,
+    lightgrey,
+    red,
 )
 
 

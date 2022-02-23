@@ -1,6 +1,11 @@
 from pcs import settings
 from pcs.common import reports
 from pcs.common.reports.item import ReportItem
+from pcs.lib import (
+    sbd,
+    validate,
+)
+from pcs.lib.communication.nodes import GetOnlineTargets
 from pcs.lib.communication.sbd import (
     CheckSbd,
     DisableSbdService,
@@ -11,19 +16,11 @@ from pcs.lib.communication.sbd import (
     SetSbdConfig,
     SetStonithWatchdogTimeoutToZero,
 )
-from pcs.lib.communication.nodes import GetOnlineTargets
-from pcs.lib.communication.tools import (
-    run as run_com,
-    run_and_raise,
-)
-from pcs.lib import (
-    sbd,
-    validate,
-)
-from pcs.lib.tools import environment_file_to_dict
+from pcs.lib.communication.tools import run as run_com
+from pcs.lib.communication.tools import run_and_raise
 from pcs.lib.errors import LibraryError
 from pcs.lib.node import get_existing_nodes_names
-
+from pcs.lib.tools import environment_file_to_dict
 
 UNSUPPORTED_SBD_OPTION_LIST = [
     "SBD_WATCHDOG_DEV",

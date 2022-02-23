@@ -1,20 +1,19 @@
 from textwrap import dedent
 from unittest import TestCase
 
-from pcs_test.tools import fixture
-from pcs_test.tools.command_env import get_env_tools
-
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import cluster
 from pcs.lib.corosync.constants import (
     TOTEM_OPTIONS,
-    TRANSPORT_KNET_CRYPTO_OPTIONS,
     TRANSPORT_KNET_COMPRESSION_OPTIONS,
+    TRANSPORT_KNET_CRYPTO_OPTIONS,
     TRANSPORT_KNET_GENERIC_OPTIONS,
 )
 
-from .common import fixture_totem
+from pcs_test.tools import fixture
+from pcs_test.tools.command_env import get_env_tools
 
+from .common import fixture_totem
 
 ALLOWED_COMPRESSION_OPTIONS = list(TRANSPORT_KNET_COMPRESSION_OPTIONS)
 ALLOWED_CRYPTO_OPTIONS = list(TRANSPORT_KNET_CRYPTO_OPTIONS)

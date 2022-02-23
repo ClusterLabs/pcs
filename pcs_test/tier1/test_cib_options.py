@@ -5,8 +5,8 @@ from lxml import etree
 
 from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
+from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
-    get_test_resource as rc,
     get_tmp_file,
     skip_unless_crm_rule,
     skip_unless_pacemaker_supports_rsc_and_op_rules,
@@ -15,7 +15,6 @@ from pcs_test.tools.misc import (
 )
 from pcs_test.tools.pcs_runner import PcsRunner
 from pcs_test.tools.xml import XmlManipulation
-
 
 empty_cib = rc("cib-empty.xml")
 empty_cib_rules = rc("cib-empty-3.4.xml")

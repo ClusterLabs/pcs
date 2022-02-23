@@ -1,12 +1,12 @@
 import os.path
 from unittest import TestCase
 
-from pcs_test.tools import fixture
-from pcs_test.tools.command_env import get_env_tools
-
 from pcs import settings
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import cluster
+
+from pcs_test.tools import fixture
+from pcs_test.tools.command_env import get_env_tools
 
 
 class SuccessMinimal(TestCase):

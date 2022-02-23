@@ -1,6 +1,9 @@
 import logging
 from collections import namedtuple
-from typing import Dict, Any
+from typing import (
+    Any,
+    Dict,
+)
 
 from pcs.cli.common import middleware
 from pcs.lib.commands import (
@@ -19,20 +22,17 @@ from pcs.lib.commands import (
     resource,
     resource_agent,
     sbd,
-    services,
     scsi,
+    services,
     status,
     stonith,
     stonith_agent,
     tag,
 )
-from pcs.lib.commands.constraint import (
-    colocation as constraint_colocation,
-    order as constraint_order,
-    ticket as constraint_ticket,
-)
+from pcs.lib.commands.constraint import colocation as constraint_colocation
+from pcs.lib.commands.constraint import order as constraint_order
+from pcs.lib.commands.constraint import ticket as constraint_ticket
 from pcs.lib.env import LibraryEnvironment
-
 
 # Note: not properly typed
 _CACHE: Dict[Any, Any] = {}

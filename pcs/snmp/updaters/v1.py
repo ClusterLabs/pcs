@@ -1,12 +1,12 @@
 import logging
 
-from pcs.utils import run_pcsdcli
-from pcs.snmp.agentx.updater import AgentxUpdaterBase
 from pcs.snmp.agentx.types import (
     IntegerType,
-    StringType,
     Oid,
+    StringType,
 )
+from pcs.snmp.agentx.updater import AgentxUpdaterBase
+from pcs.utils import run_pcsdcli
 
 logger = logging.getLogger("pcs.snmp.updaters.v1")
 logger.addHandler(logging.NullHandler())

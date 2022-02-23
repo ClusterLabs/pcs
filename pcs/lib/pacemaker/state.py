@@ -3,7 +3,10 @@ The intention is put there knowledge about cluster state structure.
 Hide information about underlaying xml is desired too.
 """
 from collections import defaultdict
-from typing import Dict, Any
+from typing import (
+    Any,
+    Dict,
+)
 
 from lxml import etree
 

@@ -1,14 +1,13 @@
 from unittest import TestCase
 
+from pcs.lib.corosync import config_validators
+
 from pcs_test.tier0.lib.corosync.test_config_validators_common import (
     TotemBase,
     TransportKnetBase,
     TransportUdpBase,
 )
-
 from pcs_test.tools.assertions import assert_report_item_list_equal
-
-from pcs.lib.corosync import config_validators
 
 
 class UpdateTotem(TotemBase, TestCase):

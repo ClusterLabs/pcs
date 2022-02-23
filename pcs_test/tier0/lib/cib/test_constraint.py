@@ -1,17 +1,21 @@
 from functools import partial
-from unittest import mock, TestCase
-from lxml import etree
-
-from pcs_test.tools.assertions import (
-    assert_raise_library_error,
-    assert_xml_equal,
+from unittest import (
+    TestCase,
+    mock,
 )
-from pcs_test.tools.custom_mock import MockLibraryReportProcessor
-from pcs_test.tools.assertions import assert_report_item_list_equal
+
+from lxml import etree
 
 from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
 from pcs.lib.cib.constraint import constraint
+
+from pcs_test.tools.assertions import (
+    assert_raise_library_error,
+    assert_report_item_list_equal,
+    assert_xml_equal,
+)
+from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
 # pylint: disable=no-self-use, redundant-keyword-arg
 

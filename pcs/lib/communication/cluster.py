@@ -1,15 +1,15 @@
 from pcs.common import reports
 from pcs.common.node_communicator import RequestData
 from pcs.common.reports.item import ReportItem
-from pcs.lib.corosync import live as corosync_live
 from pcs.lib.communication.tools import (
     AllAtOnceStrategyMixin,
     AllSameDataMixin,
     OneByOneStrategyMixin,
     RunRemotelyBase,
-    SkipOfflineMixin,
     SimpleResponseProcessingMixin,
+    SkipOfflineMixin,
 )
+from pcs.lib.corosync import live as corosync_live
 from pcs.lib.node_communication import response_to_report_item
 
 

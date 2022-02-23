@@ -1,13 +1,17 @@
 # pylint: disable=too-many-lines
 from unittest import TestCase
 
+from pcs.common.reports import codes as report_codes
+from pcs.lib.cib.node import PacemakerNode
+from pcs.lib.corosync import (
+    config_validators,
+    constants,
+    node,
+)
+
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal
 from pcs_test.tools.custom_mock import patch_getaddrinfo
-
-from pcs.common.reports import codes as report_codes
-from pcs.lib.cib.node import PacemakerNode
-from pcs.lib.corosync import config_validators, constants, node
 
 forbidden_characters_kwargs = dict(
     allowed_values=None,

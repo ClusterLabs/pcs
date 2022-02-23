@@ -1,7 +1,7 @@
-from pcs_test.tools.assertions import prepare_diff
-
 from pcs.lib.corosync.config_facade import ConfigFacade
 from pcs.lib.errors import LibraryError
+
+from pcs_test.tools.assertions import prepare_diff
 
 CALL_TYPE_PUSH_COROSYNC_CONF = "CALL_TYPE_PUSH_COROSYNC_CONF"
 

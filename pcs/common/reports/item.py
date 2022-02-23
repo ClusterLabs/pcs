@@ -11,16 +11,16 @@ from pcs.common.interface.dto import (
     ImplementsToDto,
 )
 
-from .types import (
-    ForceCode,
-    MessageCode,
-    SeverityLevel,
-)
 from .dto import (
     ReportItemContextDto,
     ReportItemDto,
     ReportItemMessageDto,
     ReportItemSeverityDto,
+)
+from .types import (
+    ForceCode,
+    MessageCode,
+    SeverityLevel,
 )
 
 

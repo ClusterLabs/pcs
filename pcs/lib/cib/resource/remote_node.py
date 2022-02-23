@@ -1,4 +1,8 @@
-from typing import Iterable, Mapping, Optional
+from typing import (
+    Iterable,
+    Mapping,
+    Optional,
+)
 
 from lxml.etree import _Element
 

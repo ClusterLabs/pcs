@@ -1,17 +1,8 @@
 # pylint: disable=too-many-lines
 # pylint: disable=line-too-long
-from unittest import mock, TestCase
-
-from pcs_test.tier0.lib.commands.tag.tag_common import fixture_tags_xml
-from pcs_test.tools import fixture
-from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.custom_mock import (
-    TmpFileMock,
-    TmpFileCall,
-)
-from pcs_test.tools.misc import (
-    get_test_resource as rc,
-    outdent,
+from unittest import (
+    TestCase,
+    mock,
 )
 
 from pcs import settings
@@ -21,6 +12,15 @@ from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import resource
 from pcs.lib.errors import LibraryError
 
+from pcs_test.tier0.lib.commands.tag.tag_common import fixture_tags_xml
+from pcs_test.tools import fixture
+from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.custom_mock import (
+    TmpFileCall,
+    TmpFileMock,
+)
+from pcs_test.tools.misc import get_test_resource as rc
+from pcs_test.tools.misc import outdent
 
 TIMEOUT = 10
 

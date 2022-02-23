@@ -1,5 +1,4 @@
 import json
-
 from textwrap import dedent
 from unittest import TestCase
 

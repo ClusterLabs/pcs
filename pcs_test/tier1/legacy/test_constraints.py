@@ -1,13 +1,22 @@
 # pylint: disable=too-many-lines
-import os
 import datetime
+import os
 import unittest
 from collections import namedtuple
+
 from lxml import etree
 
+from pcs import settings
+from pcs.common import const
+from pcs.common.str_tools import format_list
+from pcs.constraint import (
+    CRM_RULE_MISSING_MSG,
+    LOCATION_NODE_VALIDATION_SKIP_MSG,
+)
+
 from pcs_test.tools.assertions import (
-    ac,
     AssertPcsMixin,
+    ac,
     console_report,
 )
 from pcs_test.tools.bin_mock import get_mock_settings
@@ -19,22 +28,17 @@ from pcs_test.tools.fixture_cib import (
     wrap_element_by_master,
     wrap_element_by_master_file,
 )
+from pcs_test.tools.misc import ParametrizedTestMetaClass
+from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
-    get_test_resource as rc,
     get_tmp_file,
-    skip_unless_crm_rule,
     outdent,
-    ParametrizedTestMetaClass,
+    skip_unless_crm_rule,
     write_file_to_tmpfile,
 )
-from pcs_test.tools.pcs_runner import pcs, PcsRunner
-
-from pcs import settings
-from pcs.common import const
-from pcs.common.str_tools import format_list
-from pcs.constraint import (
-    LOCATION_NODE_VALIDATION_SKIP_MSG,
-    CRM_RULE_MISSING_MSG,
+from pcs_test.tools.pcs_runner import (
+    PcsRunner,
+    pcs,
 )
 
 # pylint: disable=line-too-long

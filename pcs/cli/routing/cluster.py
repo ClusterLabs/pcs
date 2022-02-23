@@ -3,6 +3,7 @@ from typing import (
     Sequence,
 )
 
+import pcs.cli.cluster.command as cluster_command
 from pcs import (
     cluster,
     pcsd,
@@ -10,7 +11,6 @@ from pcs import (
     status,
     usage,
 )
-import pcs.cli.cluster.command as cluster_command
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import InputModifiers
 from pcs.cli.common.routing import create_router

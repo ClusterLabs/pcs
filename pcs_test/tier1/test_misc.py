@@ -1,18 +1,18 @@
 import os
 from unittest import TestCase
 
+from pcs.common import const
+from pcs.common.str_tools import format_list
+
 from pcs_test.tools.assertions import AssertPcsMixin
+from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
-    get_test_resource as rc,
     get_tmp_dir,
     get_tmp_file,
     outdent,
     write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import PcsRunner
-
-from pcs.common import const
-from pcs.common.str_tools import format_list
 
 
 class ParseArgvDashDash(TestCase, AssertPcsMixin):

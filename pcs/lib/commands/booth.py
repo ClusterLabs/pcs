@@ -1,23 +1,26 @@
 import base64
-from functools import partial
 import os.path
+from functools import partial
 from typing import Optional
 
-from pcs.common.services.errors import ManageServiceError
-
 from pcs import settings
-from pcs.common import file_type_codes
-from pcs.common import reports
-from pcs.common.file import FileAlreadyExists, RawFileError
+from pcs.common import (
+    file_type_codes,
+    reports,
+)
+from pcs.common.file import (
+    FileAlreadyExists,
+    RawFileError,
+)
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports import codes as report_codes
 from pcs.common.reports.item import (
-    get_severity,
     ReportItem,
+    get_severity,
 )
+from pcs.common.services.errors import ManageServiceError
 from pcs.common.str_tools import join_multilines
 from pcs.lib import tools
-from pcs.lib.cib.resource import primitive, group, hierarchy
 from pcs.lib.booth import (
     config_files,
     config_validators,
@@ -25,7 +28,15 @@ from pcs.lib.booth import (
     resource,
     status,
 )
-from pcs.lib.cib.tools import get_resources, IdProvider
+from pcs.lib.cib.resource import (
+    group,
+    hierarchy,
+    primitive,
+)
+from pcs.lib.cib.tools import (
+    IdProvider,
+    get_resources,
+)
 from pcs.lib.communication.booth import (
     BoothGetConfig,
     BoothSendConfig,
@@ -34,16 +45,19 @@ from pcs.lib.communication.tools import run_and_raise
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.file.instance import FileInstance
-from pcs.lib.file.raw_file import GhostFile, raw_file_error_report
+from pcs.lib.file.raw_file import (
+    GhostFile,
+    raw_file_error_report,
+)
 from pcs.lib.interface.config import ParserErrorException
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.resource_agent import (
-    resource_agent_error_to_report_item,
     ResourceAgentError,
     ResourceAgentFacade,
     ResourceAgentFacadeFactory,
     ResourceAgentName,
     UnableToGetAgentMetadata,
+    resource_agent_error_to_report_item,
 )
 from pcs.lib.services import (
     ensure_is_systemd,

@@ -1,15 +1,16 @@
 from unittest import TestCase
-from lxml import etree
 
-from pcs_test.tools.assertions import (
-    assert_xml_equal,
-    assert_raise_library_error,
-)
-from pcs_test.tools.xml import etree_to_str
+from lxml import etree
 
 from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
 from pcs.lib.cib import sections
+
+from pcs_test.tools.assertions import (
+    assert_raise_library_error,
+    assert_xml_equal,
+)
+from pcs_test.tools.xml import etree_to_str
 
 
 class Get(TestCase):

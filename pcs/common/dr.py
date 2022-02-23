@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import Sequence
 
-from pcs.common.types import DrRole
 from pcs.common.interface.dto import DataTransferObject
+from pcs.common.types import DrRole
 
 
 @dataclass(frozen=True)

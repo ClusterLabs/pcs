@@ -1,17 +1,18 @@
 from unittest import TestCase
-from lxml import etree
 
-from pcs_test.tools.assertions import (
-    assert_xml_equal,
-    assert_report_item_list_equal,
-)
-from pcs_test.tools.misc import create_setup_patch_mixin
+from lxml import etree
 
 from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
 from pcs.lib.cib.node import PacemakerNode
 from pcs.lib.cib.resource import guest_node
 from pcs.lib.cib.tools import IdProvider
+
+from pcs_test.tools.assertions import (
+    assert_report_item_list_equal,
+    assert_xml_equal,
+)
+from pcs_test.tools.misc import create_setup_patch_mixin
 
 # pylint: disable=no-self-use
 

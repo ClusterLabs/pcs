@@ -1,7 +1,6 @@
-import sys
 import json
 import logging
-
+import sys
 from typing import (
     Any,
     Dict,
@@ -11,7 +10,10 @@ from typing import (
 
 from dacite import DaciteError
 
-from pcs import settings, utils
+from pcs import (
+    settings,
+    utils,
+)
 from pcs.cli.common.env_cli import Env
 from pcs.cli.common.lib_wrapper import Library
 from pcs.common import communication
@@ -23,7 +25,6 @@ from pcs.common.reports import (
 )
 from pcs.common.resource_agent.dto import ResourceAgentNameDto
 from pcs.lib.errors import LibraryError
-
 
 SUPPORTED_COMMANDS = {
     "acl.add_permission",

@@ -1,6 +1,12 @@
-from typing import cast, List
+from typing import (
+    List,
+    cast,
+)
 
-from lxml.etree import _Element, SubElement
+from lxml.etree import (
+    SubElement,
+    _Element,
+)
 
 TAG = "group"
 

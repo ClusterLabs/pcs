@@ -1,4 +1,5 @@
 from unittest import TestCase
+
 from lxml import etree
 
 from pcs.lib.cib.resource import group

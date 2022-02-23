@@ -1,19 +1,22 @@
 from tornado.httputil import parse_cookie
 from tornado.testing import AsyncHTTPTestCase
-from tornado.web import Application, RequestHandler
-
-from pcs_test.tier0.daemon.test_session import AssertMixin
-from pcs_test.tier0.daemon.app.fixtures_app import (
-    USER,
-    GROUPS,
-    PASSWORD,
-    UserAuthInfo,
-    UserAuthMixin,
+from tornado.web import (
+    Application,
+    RequestHandler,
 )
-from pcs_test.tools.misc import create_setup_patch_mixin
 
 from pcs.daemon import session
 from pcs.daemon.app import session as app_session
+
+from pcs_test.tier0.daemon.app.fixtures_app import (
+    GROUPS,
+    PASSWORD,
+    USER,
+    UserAuthInfo,
+    UserAuthMixin,
+)
+from pcs_test.tier0.daemon.test_session import AssertMixin
+from pcs_test.tools.misc import create_setup_patch_mixin
 
 # pylint: disable=too-many-ancestors
 

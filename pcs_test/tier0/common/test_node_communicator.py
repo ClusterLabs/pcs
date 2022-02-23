@@ -1,18 +1,19 @@
 import io
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
+
+import pcs.common.node_communicator as lib
+from pcs import settings
+from pcs.common import host
+from pcs.common import pcs_pycurl as pycurl
+from pcs.common.host import Destination
 
 from pcs_test.tools.custom_mock import (
     MockCurl,
     MockCurlMulti,
 )
-
-from pcs import settings
-from pcs.common import (
-    host,
-    pcs_pycurl as pycurl,
-)
-from pcs.common.host import Destination
-import pcs.common.node_communicator as lib
 
 PORT = settings.pcsd_default_port
 

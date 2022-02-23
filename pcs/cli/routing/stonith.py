@@ -5,7 +5,6 @@ from pcs import (
 )
 from pcs.cli.common.routing import create_router
 
-
 stonith_cmd = create_router(
     {
         "help": lambda lib, argv, modifiers: print(usage.stonith(argv)),

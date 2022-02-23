@@ -1,15 +1,18 @@
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
 
-from pcs_test.tools.misc import dict_to_modifiers
-
+from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.resource import relations
 from pcs.common.interface import dto
 from pcs.common.pacemaker.resource.relations import (
     RelationEntityDto,
     ResourceRelationDto,
     ResourceRelationType,
 )
-from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.resource import relations
+
+from pcs_test.tools.misc import dict_to_modifiers
 
 
 class ShowResourceRelationsCmd(TestCase):

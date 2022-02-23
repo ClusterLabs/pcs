@@ -1,5 +1,8 @@
+from pcs.daemon.auth import (
+    authorize_user,
+    check_user_groups,
+)
 from pcs.daemon.session import Storage
-from pcs.daemon.auth import check_user_groups, authorize_user
 
 PCSD_SESSION = "pcsd.sid"
 

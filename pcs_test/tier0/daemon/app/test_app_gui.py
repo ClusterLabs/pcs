@@ -1,11 +1,10 @@
 import logging
 
-from pcs_test.tools.misc import create_setup_patch_mixin
-from pcs_test.tier0.daemon.app import fixtures_app
-
 from pcs.daemon import ruby_pcsd
 from pcs.daemon.app import sinatra_ui
 
+from pcs_test.tier0.daemon.app import fixtures_app
+from pcs_test.tools.misc import create_setup_patch_mixin
 
 USER = "user"
 PASSWORD = "password"

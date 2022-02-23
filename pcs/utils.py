@@ -1,54 +1,37 @@
 # pylint: disable=too-many-lines
-import os
-import sys
-import subprocess
-import xml.dom.minidom
-from xml.dom.minidom import (
-    parseString,
-    Document as DomDocument,
-)
-import xml.etree.ElementTree as ET
-import re
-import json
-import tempfile
-import signal
-import time
-from io import BytesIO
-import tarfile
-import getpass
 import base64
-import threading
+import getpass
+import json
 import logging
+import os
+import re
+import signal
+import subprocess
+import sys
+import tarfile
+import tempfile
+import threading
+import time
+import xml.dom.minidom
+import xml.etree.ElementTree as ET
 from functools import lru_cache
-from urllib.parse import urlencode
-
+from io import BytesIO
 from typing import (
     Any,
     Dict,
     Sequence,
     Tuple,
 )
+from urllib.parse import urlencode
+from xml.dom.minidom import Document as DomDocument
+from xml.dom.minidom import parseString
 
-from pcs import settings, usage
-
-from pcs.common import (
-    const,
-    file as pcs_file,
-    file_type_codes,
-    pacemaker as common_pacemaker,
-    pcs_pycurl as pycurl,
+import pcs.cli.booth.env
+import pcs.lib.corosync.config_parser as corosync_conf_parser
+from pcs import (
+    settings,
+    usage,
 )
-from pcs.common.host import PcsKnownHost
-from pcs.common.reports import ReportProcessor
-from pcs.common.reports.item import ReportItemList
-from pcs.common.reports.messages import CibUpgradeFailedToMinimalRequiredVersion
-from pcs.common.services.interfaces import ServiceManagerInterface
-from pcs.common.services.errors import ManageServiceError
-from pcs.common.tools import (
-    timeout_to_seconds,
-    Version,
-)
-
 from pcs.cli.common import middleware
 from pcs.cli.common.env_cli import Env
 from pcs.cli.common.errors import CmdLineInputError
@@ -58,15 +41,25 @@ from pcs.cli.common.tools import (
     print_to_stderr,
     timeout_to_seconds_legacy,
 )
-from pcs.cli.reports import (
-    output as reports_output,
-    process_library_reports,
-    ReportProcessorToConsole,
-)
-import pcs.cli.booth.env
 from pcs.cli.file import metadata as cli_file_metadata
-
-import pcs.lib.corosync.config_parser as corosync_conf_parser
+from pcs.cli.reports import ReportProcessorToConsole
+from pcs.cli.reports import output as reports_output
+from pcs.cli.reports import process_library_reports
+from pcs.common import const
+from pcs.common import file as pcs_file
+from pcs.common import file_type_codes
+from pcs.common import pacemaker as common_pacemaker
+from pcs.common import pcs_pycurl as pycurl
+from pcs.common.host import PcsKnownHost
+from pcs.common.reports import ReportProcessor
+from pcs.common.reports.item import ReportItemList
+from pcs.common.reports.messages import CibUpgradeFailedToMinimalRequiredVersion
+from pcs.common.services.errors import ManageServiceError
+from pcs.common.services.interfaces import ServiceManagerInterface
+from pcs.common.tools import (
+    Version,
+    timeout_to_seconds,
+)
 from pcs.lib.corosync.config_facade import ConfigFacade as corosync_conf_facade
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
@@ -78,15 +71,11 @@ from pcs.lib.file.instance import FileInstance as LibFileInstance
 from pcs.lib.interface.config import ParserErrorException
 from pcs.lib.pacemaker.live import get_cluster_status_dom
 from pcs.lib.pacemaker.state import ClusterState
-from pcs.lib.pacemaker.values import (
-    is_boolean,
-    is_score as is_score_value,
-    validate_id,
-)
-from pcs.lib.services import (
-    get_service_manager as _get_service_manager,
-    service_exception_to_report,
-)
+from pcs.lib.pacemaker.values import is_boolean
+from pcs.lib.pacemaker.values import is_score as is_score_value
+from pcs.lib.pacemaker.values import validate_id
+from pcs.lib.services import get_service_manager as _get_service_manager
+from pcs.lib.services import service_exception_to_report
 
 # pylint: disable=invalid-name
 # pylint: disable=too-many-branches
@@ -1992,8 +1981,8 @@ def getTerminalSize(fd=1):
     try:
         # pylint: disable=import-outside-toplevel
         import fcntl
-        import termios
         import struct
+        import termios
 
         hw = struct.unpack(
             str("hh"), fcntl.ioctl(fd, termios.TIOCGWINSZ, "1234")

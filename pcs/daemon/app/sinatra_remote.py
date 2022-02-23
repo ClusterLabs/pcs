@@ -2,8 +2,8 @@ from tornado.locks import Lock
 
 from pcs.daemon import ruby_pcsd
 from pcs.daemon.app.sinatra_common import Sinatra
-from pcs.daemon.http_server import HttpsServerManage
 from pcs.daemon.auth import authorize_user
+from pcs.daemon.http_server import HttpsServerManage
 
 
 class SinatraRemote(Sinatra):

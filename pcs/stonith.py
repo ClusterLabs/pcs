@@ -20,13 +20,15 @@ from pcs.cli.resource.output import format_resource_agent_metadata
 from pcs.cli.resource.parse_args import parse_create_simple as parse_create_args
 from pcs.common import reports
 from pcs.common.fencing_topology import (
+    TARGET_TYPE_ATTRIBUTE,
     TARGET_TYPE_NODE,
     TARGET_TYPE_REGEXP,
-    TARGET_TYPE_ATTRIBUTE,
 )
-
 from pcs.common.resource_agent.dto import ResourceAgentNameDto
-from pcs.common.str_tools import format_list, indent
+from pcs.common.str_tools import (
+    format_list,
+    indent,
+)
 from pcs.lib.errors import LibraryError
 
 # pylint: disable=too-many-branches, too-many-statements, protected-access

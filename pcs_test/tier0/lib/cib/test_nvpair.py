@@ -1,11 +1,12 @@
 from unittest import TestCase
-from lxml import etree
 
-from pcs_test.tools.assertions import assert_xml_equal
-from pcs_test.tools.xml import etree_to_str
+from lxml import etree
 
 from pcs.lib.cib import nvpair
 from pcs.lib.cib.tools import IdProvider
+
+from pcs_test.tools.assertions import assert_xml_equal
+from pcs_test.tools.xml import etree_to_str
 
 # pylint: disable=no-self-use, protected-access
 

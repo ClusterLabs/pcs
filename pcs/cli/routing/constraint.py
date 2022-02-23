@@ -1,11 +1,10 @@
+import pcs.cli.constraint_colocation.command as colocation_command
 from pcs import (
     constraint,
     usage,
 )
 from pcs.cli.common.routing import create_router
-import pcs.cli.constraint_colocation.command as colocation_command
 from pcs.cli.constraint_ticket import command as ticket_command
-
 
 constraint_cmd = create_router(
     {

@@ -5,11 +5,11 @@ from pcs.common import (
     pacemaker,
     reports,
 )
+from pcs.lib import validate
 from pcs.lib.cib.tools import (
     are_new_role_names_supported,
     find_unique_id,
 )
-from pcs.lib import validate
 from pcs.lib.errors import LibraryError
 from pcs.lib.xml_tools import export_attributes
 

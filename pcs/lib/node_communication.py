@@ -3,7 +3,6 @@ import os
 from pcs import settings
 from pcs.common import pcs_pycurl as pycurl
 from pcs.common import reports
-from pcs.common.reports.item import ReportItem
 from pcs.common.node_communicator import (
     CommunicatorLoggerInterface,
     HostNotFound,
@@ -13,6 +12,7 @@ from pcs.common.reports import (
     ReportItemSeverity,
     ReportProcessor,
 )
+from pcs.common.reports.item import ReportItem
 from pcs.lib.errors import LibraryError
 
 

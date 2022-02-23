@@ -2,9 +2,6 @@ from unittest import TestCase
 
 from lxml import etree
 
-from pcs_test.tools.assertions import assert_xml_equal
-from pcs_test.tools.xml import etree_to_str
-
 from pcs.common.tools import Version
 from pcs.lib.cib import rule
 from pcs.lib.cib.rule.expression_part import (
@@ -12,18 +9,18 @@ from pcs.lib.cib.rule.expression_part import (
     BOOL_OR,
     DATE_OP_GT,
     DATE_OP_LT,
+    NODE_ATTR_OP_DEFINED,
+    NODE_ATTR_OP_EQ,
+    NODE_ATTR_OP_GT,
+    NODE_ATTR_OP_GTE,
+    NODE_ATTR_OP_LT,
+    NODE_ATTR_OP_LTE,
+    NODE_ATTR_OP_NE,
+    NODE_ATTR_OP_NOT_DEFINED,
     NODE_ATTR_TYPE_INTEGER,
     NODE_ATTR_TYPE_NUMBER,
     NODE_ATTR_TYPE_STRING,
     NODE_ATTR_TYPE_VERSION,
-    NODE_ATTR_OP_DEFINED,
-    NODE_ATTR_OP_NOT_DEFINED,
-    NODE_ATTR_OP_EQ,
-    NODE_ATTR_OP_NE,
-    NODE_ATTR_OP_GTE,
-    NODE_ATTR_OP_GT,
-    NODE_ATTR_OP_LTE,
-    NODE_ATTR_OP_LT,
     BoolExpr,
     DateInRangeExpr,
     DatespecExpr,
@@ -33,6 +30,9 @@ from pcs.lib.cib.rule.expression_part import (
     RscExpr,
 )
 from pcs.lib.cib.tools import IdProvider
+
+from pcs_test.tools.assertions import assert_xml_equal
+from pcs_test.tools.xml import etree_to_str
 
 
 class Base(TestCase):

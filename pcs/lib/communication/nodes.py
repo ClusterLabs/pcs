@@ -1,20 +1,18 @@
 import json
 
 from pcs.common import reports
-from pcs.common.reports import (
-    codes as report_codes,
-    ReportItemSeverity,
-)
-from pcs.common.reports.item import ReportItem
 from pcs.common.node_communicator import RequestData
+from pcs.common.reports import ReportItemSeverity
+from pcs.common.reports import codes as report_codes
+from pcs.common.reports.item import ReportItem
 from pcs.lib import node_communication_format
 from pcs.lib.communication.tools import (
     AllAtOnceStrategyMixin,
     AllSameDataMixin,
     RunRemotelyBase,
-    SkipOfflineMixin,
     SimpleResponseProcessingMixin,
     SimpleResponseProcessingNoResponseOnSuccessMixin,
+    SkipOfflineMixin,
 )
 from pcs.lib.node_communication import response_to_report_item
 

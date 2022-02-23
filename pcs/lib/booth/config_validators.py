@@ -1,10 +1,9 @@
-from collections import Counter
 import re
+from collections import Counter
 
 from pcs.common import reports
 from pcs.lib import validate
 from pcs.lib.booth import constants
-
 
 __TICKET_NAME_RE = re.compile(r"^[a-zA-Z0-9-]{1,63}$")
 

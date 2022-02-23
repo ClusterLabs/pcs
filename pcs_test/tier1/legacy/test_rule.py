@@ -1,18 +1,24 @@
 # pylint: disable=too-many-lines
-from unittest import TestCase
 import xml.dom.minidom
+from unittest import TestCase
 
-from pcs import rule, utils
+from pcs import (
+    rule,
+    utils,
+)
 from pcs.common import const
 from pcs.common.str_tools import format_list_custom_last_separator
 
-from pcs_test.tools.assertions import ac, assert_xml_equal
+from pcs_test.tools.assertions import (
+    ac,
+    assert_xml_equal,
+)
+from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
-    get_test_resource as rc,
     get_tmp_file,
+    skip_unless_crm_rule,
     write_file_to_tmpfile,
 )
-from pcs_test.tools.misc import skip_unless_crm_rule
 from pcs_test.tools.pcs_runner import pcs
 
 # pylint: disable=invalid-name

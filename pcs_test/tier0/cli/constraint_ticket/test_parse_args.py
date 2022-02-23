@@ -1,7 +1,7 @@
 from unittest import TestCase
 
-from pcs.cli.constraint_ticket import parse_args
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.constraint_ticket import parse_args
 
 
 class ParseAddTest(TestCase):

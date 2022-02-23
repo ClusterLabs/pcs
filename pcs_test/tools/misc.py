@@ -1,22 +1,22 @@
-from functools import lru_cache
 import logging
 import os
 import re
 import tempfile
-from unittest import mock, skipUnless
+from functools import lru_cache
+from unittest import (
+    mock,
+    skipUnless,
+)
 
 from lxml import etree
-
-from pcs_test import (
-    TEST_ROOT,
-    settings as tests_settings,
-)
-from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
 from pcs import settings
 from pcs.cli.common.parse_args import InputModifiers
 from pcs.lib.external import CommandRunner
 
+from pcs_test import TEST_ROOT
+from pcs_test import settings as tests_settings
+from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
 runner = CommandRunner(
     mock.MagicMock(logging.Logger), MockLibraryReportProcessor(), os.environ

@@ -7,13 +7,13 @@ from typing import (
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import InputModifiers
 from pcs.cli.reports.output import error
-from pcs.common.reports import codes as report_codes
 from pcs.common.dr import (
     DrConfigDto,
     DrConfigSiteDto,
     DrSiteStatusDto,
 )
 from pcs.common.interface import dto
+from pcs.common.reports import codes as report_codes
 from pcs.common.str_tools import indent
 
 

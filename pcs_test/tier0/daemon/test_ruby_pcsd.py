@@ -1,16 +1,26 @@
 import json
 import logging
 from base64 import b64encode
-from unittest import TestCase, mock
+from unittest import (
+    TestCase,
+    mock,
+)
 from urllib.parse import urlencode
 
-from tornado.httputil import HTTPServerRequest, HTTPHeaders
-from tornado.testing import AsyncTestCase, gen_test
+from tornado.httputil import (
+    HTTPHeaders,
+    HTTPServerRequest,
+)
+from tornado.testing import (
+    AsyncTestCase,
+    gen_test,
+)
 from tornado.web import HTTPError
 
-from pcs_test.tools.misc import create_patcher, get_test_resource as rc
-
 from pcs.daemon import ruby_pcsd
+
+from pcs_test.tools.misc import create_patcher
+from pcs_test.tools.misc import get_test_resource as rc
 
 # Don't write errors to test output.
 logging.getLogger("pcs.daemon").setLevel(logging.CRITICAL)

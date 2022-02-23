@@ -1,21 +1,23 @@
-from functools import partial
 import logging
-from unittest import mock, TestCase
+from functools import partial
+from unittest import (
+    TestCase,
+    mock,
+)
 
-from pcs_test.tools import fixture
-from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.misc import create_patcher
-from pcs_test.tools.custom_mock import MockLibraryReportProcessor
-
-from pcs.common.reports import codes as report_codes
 from pcs.common.fencing_topology import (
     TARGET_TYPE_ATTRIBUTE,
     TARGET_TYPE_NODE,
     TARGET_TYPE_REGEXP,
 )
+from pcs.common.reports import codes as report_codes
+from pcs.lib.commands import fencing_topology as lib
 from pcs.lib.env import LibraryEnvironment
 
-from pcs.lib.commands import fencing_topology as lib
+from pcs_test.tools import fixture
+from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.custom_mock import MockLibraryReportProcessor
+from pcs_test.tools.misc import create_patcher
 
 # pylint: disable=no-self-use
 

@@ -3,20 +3,18 @@ from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
 from pcs.common.services.interfaces import ServiceManagerInterface
 from pcs.lib import sbd
-from pcs.lib.env import LibraryEnvironment
-from pcs.lib.errors import LibraryError
-from pcs.lib.communication import (
-    qdevice as qdevice_com,
-    qdevice_net as qdevice_net_com,
-)
+from pcs.lib.communication import qdevice as qdevice_com
+from pcs.lib.communication import qdevice_net as qdevice_net_com
 from pcs.lib.communication.tools import run_and_raise
+from pcs.lib.corosync import config_validators as corosync_conf_validators
+from pcs.lib.corosync import live as corosync_live
 from pcs.lib.corosync import (
-    config_validators as corosync_conf_validators,
-    live as corosync_live,
-    qdevice_net,
     qdevice_client,
+    qdevice_net,
 )
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfFacade
+from pcs.lib.env import LibraryEnvironment
+from pcs.lib.errors import LibraryError
 from pcs.lib.node import get_existing_nodes_names
 
 

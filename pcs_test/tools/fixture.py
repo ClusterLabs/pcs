@@ -3,7 +3,6 @@ import json
 from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
 
-
 ALL_RESOURCE_XML_TAGS = ["bundle", "clone", "group", "master", "primitive"]
 
 

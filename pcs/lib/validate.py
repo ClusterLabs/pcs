@@ -34,7 +34,6 @@ from typing import (
     Any,
     Callable,
     Container,
-    cast,
     Dict,
     Iterable,
     Mapping,
@@ -43,6 +42,7 @@ from typing import (
     Pattern,
     Set,
     Union,
+    cast,
 )
 
 from pcs.common import reports
@@ -56,12 +56,12 @@ from pcs.common.validate import (
     is_integer,
     is_port_number,
 )
+from pcs.lib.cib.tools import IdProvider
 from pcs.lib.corosync import constants as corosync_constants
 from pcs.lib.pacemaker.values import (
     is_score,
     validate_id,
 )
-from pcs.lib.cib.tools import IdProvider
 
 _FLOAT_RE = re.compile(r"^[-+]?(\d+|(\d*\.\d+)|(\d+\.\d*))([eE][+-]?\d+)?$")
 _PCMK_DATESPEC_PART_RE = re.compile(r"^(?P<since>[0-9]+)(-(?P<until>[0-9]+))?$")

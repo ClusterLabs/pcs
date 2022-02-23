@@ -1,5 +1,6 @@
 import os.path
 from textwrap import dedent
+
 from lxml import etree
 
 from pcs import settings

@@ -1,10 +1,11 @@
 from unittest import TestCase
+
 from lxml import etree
+
+from pcs.lib import xml_tools as lib
 
 from pcs_test.tools.assertions import assert_xml_equal
 from pcs_test.tools.xml import etree_to_str
-
-from pcs.lib import xml_tools as lib
 
 
 class GetSubElementTest(TestCase):

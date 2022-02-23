@@ -1,16 +1,20 @@
 # pylint: disable=too-many-lines,no-member
-from functools import partial
 import json
 import re
+from functools import partial
 from unittest import TestCase
 
+from pcs import settings
+from pcs.common import reports
+from pcs.lib.commands import cluster
+
 from pcs_test.tier0.lib.commands.cluster.test_add_nodes import (
+    QDEVICE_HOST,
+    LocalConfig,
     corosync_conf_fixture,
     corosync_node_fixture,
     generate_nodes,
-    LocalConfig,
     node_fixture,
-    QDEVICE_HOST,
 )
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
@@ -18,10 +22,6 @@ from pcs_test.tools.command_env.config_http_corosync import (
     corosync_running_check_response,
 )
 from pcs_test.tools.custom_mock import patch_getaddrinfo
-
-from pcs import settings
-from pcs.common import reports
-from pcs.lib.commands import cluster
 
 get_env_tools = partial(get_env_tools, local_extensions={"local": LocalConfig})
 

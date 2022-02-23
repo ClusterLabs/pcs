@@ -1,14 +1,17 @@
 from textwrap import dedent
-from unittest import mock, TestCase
-
-from pcs_test.tools import fixture
-from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.misc import get_test_resource as rc
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from pcs import settings
 from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import resource
+
+from pcs_test.tools import fixture
+from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.misc import get_test_resource as rc
 
 
 def _node_fixture(name, node_id):

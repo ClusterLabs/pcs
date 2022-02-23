@@ -2,7 +2,10 @@ import json
 from functools import partial
 
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.parse_args import prepare_options, group_by_keywords
+from pcs.cli.common.parse_args import (
+    group_by_keywords,
+    prepare_options,
+)
 from pcs.cli.reports.output import deprecation_warning
 from pcs.common.str_tools import indent
 

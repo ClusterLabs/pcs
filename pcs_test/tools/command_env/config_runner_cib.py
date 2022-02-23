@@ -1,10 +1,7 @@
-from pcs_test.tools.command_env.mock_runner import (
-    Call as RunnerCall,
-    CheckStdinEqualXml,
-)
+from pcs_test.tools.command_env.mock_runner import Call as RunnerCall
+from pcs_test.tools.command_env.mock_runner import CheckStdinEqualXml
 from pcs_test.tools.fixture_cib import modify_cib
 from pcs_test.tools.misc import get_test_resource as rc
-
 
 CIB_FILENAME = "cib-empty.xml"
 

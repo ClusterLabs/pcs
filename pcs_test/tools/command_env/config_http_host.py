@@ -1,11 +1,12 @@
 import json
 
 from pcs import settings
-from pcs_test.tools.misc import outdent
+
 from pcs_test.tools.command_env.mock_node_communicator import (
     place_communication,
     place_multinode_call,
 )
+from pcs_test.tools.misc import outdent
 
 
 class HostShortcuts:

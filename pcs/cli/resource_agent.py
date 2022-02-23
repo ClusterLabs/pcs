@@ -1,8 +1,9 @@
 from typing import List
-from pcs.common import reports
-from pcs.common.resource_agent.dto import ResourceAgentNameDto
+
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.tools import print_to_stderr
+from pcs.common import reports
+from pcs.common.resource_agent.dto import ResourceAgentNameDto
 
 
 def get_resource_agent_full_name(agent_name: ResourceAgentNameDto) -> str:

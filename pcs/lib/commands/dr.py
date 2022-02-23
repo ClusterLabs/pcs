@@ -18,15 +18,12 @@ from pcs.common.dr import (
     DrConfigSiteDto,
     DrSiteStatusDto,
 )
-from pcs.common.interface import dto
 from pcs.common.file import RawFileError
+from pcs.common.interface import dto
 from pcs.common.node_communicator import RequestTarget
-from pcs.common.reports import (
-    codes as report_codes,
-    ReportItemList,
-)
+from pcs.common.reports import ReportItemList
+from pcs.common.reports import codes as report_codes
 from pcs.common.reports.item import ReportItem
-
 from pcs.lib import node_communication_format
 from pcs.lib.communication.corosync import GetCorosyncConf
 from pcs.lib.communication.nodes import (
@@ -34,15 +31,11 @@ from pcs.lib.communication.nodes import (
     RemoveFilesWithoutForces,
 )
 from pcs.lib.communication.status import GetFullClusterStatusPlaintext
-from pcs.lib.communication.tools import (
-    run as run_com_cmd,
-    run_and_raise,
-)
+from pcs.lib.communication.tools import run as run_com_cmd
+from pcs.lib.communication.tools import run_and_raise
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
-from pcs.lib.dr.config.facade import (
-    DrRole,
-    Facade as DrConfigFacade,
-)
+from pcs.lib.dr.config.facade import DrRole
+from pcs.lib.dr.config.facade import Facade as DrConfigFacade
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.file.instance import FileInstance

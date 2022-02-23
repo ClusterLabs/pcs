@@ -1,12 +1,13 @@
 import sys
 
+from pcs.cli.common.tools import print_to_stderr
 from pcs.common.reports import (
-    codes,
     ReportItem,
     ReportItemList,
     ReportItemSeverity,
+    codes,
 )
-from pcs.cli.common.tools import print_to_stderr
+
 from .messages import report_item_msg_from_dto
 
 

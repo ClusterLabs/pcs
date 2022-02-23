@@ -1,4 +1,7 @@
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from pcs.common.reports.constraints import (
     constraint_plain,

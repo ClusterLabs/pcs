@@ -1,8 +1,8 @@
 import os.path
 
-from pcs_test.tools.command_env.mock_runner import Call as RunnerCall
-
 from pcs import settings
+
+from pcs_test.tools.command_env.mock_runner import Call as RunnerCall
 
 
 class ScsiShortcuts:

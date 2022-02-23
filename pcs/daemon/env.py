@@ -2,12 +2,12 @@ import ssl
 from collections import namedtuple
 from functools import lru_cache
 from os.path import (
-    dirname,
-    realpath,
     abspath,
-    exists as path_exists,
-    join as join_path,
+    dirname,
 )
+from os.path import exists as path_exists
+from os.path import join as join_path
+from os.path import realpath
 
 from pcs import settings
 from pcs.common.validate import is_port_number

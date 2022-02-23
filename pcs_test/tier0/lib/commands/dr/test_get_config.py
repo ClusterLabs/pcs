@@ -6,8 +6,8 @@ from pcs.common.file import RawFileError
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import dr
 
-from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools import fixture
+from pcs_test.tools.command_env import get_env_tools
 
 REASON = "error msg"
 

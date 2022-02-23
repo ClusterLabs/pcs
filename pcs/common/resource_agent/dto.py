@@ -1,7 +1,16 @@
-from dataclasses import dataclass, field
-from typing import List, Optional
+from dataclasses import (
+    dataclass,
+    field,
+)
+from typing import (
+    List,
+    Optional,
+)
 
-from pcs.common.interface.dto import DataTransferObject, meta
+from pcs.common.interface.dto import (
+    DataTransferObject,
+    meta,
+)
 
 
 @dataclass(frozen=True)

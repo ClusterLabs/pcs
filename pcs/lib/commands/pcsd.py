@@ -4,8 +4,8 @@ from pcs.common import (
     reports,
 )
 from pcs.common.file import RawFileError
-from pcs.common.tools import format_environment_error
 from pcs.common.reports.item import ReportItem
+from pcs.common.tools import format_environment_error
 from pcs.lib.communication.nodes import SendPcsdSslCertAndKey
 from pcs.lib.communication.tools import run_and_raise
 from pcs.lib.env import LibraryEnvironment

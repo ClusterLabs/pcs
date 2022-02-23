@@ -1,5 +1,6 @@
-from pcs_test.tier0.daemon.app.fixtures_app import AppTest
 from pcs.daemon.app.common import RedirectHandler
+
+from pcs_test.tier0.daemon.app.fixtures_app import AppTest
 
 MANAGE = "/manage"
 

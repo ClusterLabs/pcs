@@ -1,18 +1,20 @@
 import os.path
 from textwrap import dedent
-from unittest import mock, TestCase
-
-from pcs_test.tools.assertions import assert_raise_library_error
-from pcs_test.tools.misc import get_test_resource as rc
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from pcs import settings
 from pcs.common import file_type_codes
 from pcs.common.file import RawFileError
 from pcs.common.reports import ReportItemSeverity as severity
 from pcs.common.reports import codes as report_codes
+from pcs.lib.corosync import live as lib
 from pcs.lib.external import CommandRunner
 
-from pcs.lib.corosync import live as lib
+from pcs_test.tools.assertions import assert_raise_library_error
+from pcs_test.tools.misc import get_test_resource as rc
 
 # pylint: disable=no-self-use
 

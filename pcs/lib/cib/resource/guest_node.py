@@ -1,14 +1,13 @@
 from pcs.common import reports
 from pcs.common.reports.item import ReportItem
 from pcs.lib import validate
-from pcs.lib.cib.tools import does_id_exist
 from pcs.lib.cib.node import PacemakerNode
 from pcs.lib.cib.nvpair import (
-    has_meta_attribute,
     arrange_first_meta_attributes,
     get_meta_attribute_value,
+    has_meta_attribute,
 )
-
+from pcs.lib.cib.tools import does_id_exist
 
 # TODO pcs currently does not care about multiple meta_attributes and here
 # we don't care as well

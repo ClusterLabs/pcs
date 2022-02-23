@@ -6,7 +6,11 @@ from pcs.common import file_type_codes
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import status
 from pcs.lib.errors import LibraryError
-from pcs_test.tools import fixture, fixture_crm_mon
+
+from pcs_test.tools import (
+    fixture,
+    fixture_crm_mon,
+)
 from pcs_test.tools.assertions import assert_xml_equal
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.misc import read_test_resource as rc_read

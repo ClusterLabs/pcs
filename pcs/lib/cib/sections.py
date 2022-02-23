@@ -7,7 +7,6 @@ from pcs.common.reports.item import ReportItem
 from pcs.lib.errors import LibraryError
 from pcs.lib.xml_tools import get_sub_element
 
-
 CONFIGURATION = "configuration"
 CONSTRAINTS = "configuration/constraints"
 CRM_CONFIG = "configuration/crm_config"

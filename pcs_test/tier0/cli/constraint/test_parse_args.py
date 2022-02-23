@@ -1,9 +1,12 @@
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.constraint.parse_args import (
-    prepare_set_args,
     prepare_resource_sets,
+    prepare_set_args,
 )
 
 

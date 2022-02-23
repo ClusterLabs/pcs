@@ -1,12 +1,11 @@
 # pylint: disable=too-many-lines
 from unittest import TestCase
 
-from pcs_test.tools import fixture
-from pcs_test.tools.assertions import assert_report_item_list_equal
-
 from pcs.common.reports import codes as report_codes
 from pcs.lib.corosync import config_validators
 
+from pcs_test.tools import fixture
+from pcs_test.tools.assertions import assert_report_item_list_equal
 
 fixture_report_exec_names = fixture.error(
     report_codes.INVALID_USERDEFINED_OPTIONS,

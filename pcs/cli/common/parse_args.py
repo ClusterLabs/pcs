@@ -1,10 +1,13 @@
 from typing import (
-    Mapping,
     Iterable,
+    Mapping,
     Union,
 )
 
-from pcs.cli.common.errors import SEE_MAN_CHANGES, CmdLineInputError
+from pcs.cli.common.errors import (
+    SEE_MAN_CHANGES,
+    CmdLineInputError,
+)
 from pcs.common.str_tools import (
     format_list,
     format_plural,

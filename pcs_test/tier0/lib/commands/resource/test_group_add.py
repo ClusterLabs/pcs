@@ -1,21 +1,23 @@
-from unittest import mock, TestCase
-
-from pcs_test.tools import fixture
-from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.misc import get_test_resource as rc
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from pcs import settings
-from pcs.common.reports import (
-    codes as report_codes,
-    messages as report_messages,
-)
+from pcs.common.reports import codes as report_codes
+from pcs.common.reports import messages as report_messages
 from pcs.common.reports.const import (
     ADD_REMOVE_CONTAINER_TYPE_GROUP,
     ADD_REMOVE_ITEM_TYPE_RESOURCE,
 )
 from pcs.common.reports.item import ReportItem
-from pcs.lib.errors import LibraryError
 from pcs.lib.commands import resource
+from pcs.lib.errors import LibraryError
+
+from pcs_test.tools import fixture
+from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.misc import get_test_resource as rc
+
 
 # This class does not focusing on validation testing, there are validator tests
 # for that in pcs_test.tier0.lib.cib.test_resource_relation

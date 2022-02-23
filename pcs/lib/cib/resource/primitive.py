@@ -1,4 +1,11 @@
-from typing import cast, Iterable, List, Mapping, Optional, Set
+from typing import (
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Set,
+    cast,
+)
 
 from lxml import etree
 from lxml.etree import _Element
@@ -6,23 +13,21 @@ from lxml.etree import _Element
 from pcs.common import reports
 from pcs.lib import validate
 from pcs.lib.cib.nvpair import (
+    INSTANCE_ATTRIBUTES_TAG,
     append_new_instance_attributes,
     append_new_meta_attributes,
     get_nvset_as_dict,
     get_value,
-    INSTANCE_ATTRIBUTES_TAG,
 )
 from pcs.lib.cib.resource.agent import get_default_operations
-from pcs.lib.cib.resource.operations import (
-    create_operations,
-    prepare as prepare_operations,
-)
+from pcs.lib.cib.resource.operations import create_operations
+from pcs.lib.cib.resource.operations import prepare as prepare_operations
 from pcs.lib.cib.resource.types import ResourceOperationIn
 from pcs.lib.cib.tools import (
+    IdProvider,
     are_new_role_names_supported,
     does_id_exist,
     find_element_by_tag_and_id,
-    IdProvider,
 )
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import validate_id
@@ -32,7 +37,6 @@ from pcs.lib.resource_agent import (
     ResourceAgentName,
 )
 from pcs.lib.resource_agent.const import STONITH_ACTION_REPLACED_BY
-
 
 TAG = "primitive"
 

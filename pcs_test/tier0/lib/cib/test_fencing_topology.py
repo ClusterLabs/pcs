@@ -1,33 +1,36 @@
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
+
 from lxml import etree
 
-from pcs_test.tools import fixture, fixture_crm_mon
+from pcs import settings
+from pcs.common import reports
+from pcs.common.fencing_topology import (
+    TARGET_TYPE_ATTRIBUTE,
+    TARGET_TYPE_NODE,
+    TARGET_TYPE_REGEXP,
+)
+from pcs.common.reports import ReportItemSeverity as severity
+from pcs.common.reports import codes as report_codes
+from pcs.common.reports.item import ReportItem
+from pcs.lib.cib import fencing_topology as lib
+from pcs.lib.errors import LibraryError
+from pcs.lib.pacemaker.state import ClusterState
+
+from pcs_test.tools import (
+    fixture,
+    fixture_crm_mon,
+)
 from pcs_test.tools.assertions import (
     assert_report_item_list_equal,
     assert_xml_equal,
 )
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
-from pcs_test.tools.misc import (
-    create_patcher,
-    get_test_resource as rc,
-)
+from pcs_test.tools.misc import create_patcher
+from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.xml import etree_to_str
-
-from pcs import settings
-from pcs.common import reports
-from pcs.common.reports import codes as report_codes
-from pcs.common.fencing_topology import (
-    TARGET_TYPE_NODE,
-    TARGET_TYPE_REGEXP,
-    TARGET_TYPE_ATTRIBUTE,
-)
-from pcs.common.reports import ReportItemSeverity as severity
-from pcs.common.reports.item import ReportItem
-from pcs.lib.errors import LibraryError
-from pcs.lib.pacemaker.state import ClusterState
-
-from pcs.lib.cib import fencing_topology as lib
-
 
 patch_lib = create_patcher("pcs.lib.cib.fencing_topology")
 

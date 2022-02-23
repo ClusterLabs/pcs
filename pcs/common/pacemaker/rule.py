@@ -7,8 +7,8 @@ from typing import (
 
 from pcs.common.interface.dto import DataTransferObject
 from pcs.common.types import (
-    CibRuleInEffectStatus,
     CibRuleExpressionType,
+    CibRuleInEffectStatus,
 )
 
 
