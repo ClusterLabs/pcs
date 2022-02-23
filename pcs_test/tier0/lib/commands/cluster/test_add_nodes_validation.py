@@ -1313,7 +1313,7 @@ class ClusterStatus(TestCase):
                     )
                 ),
             ),
-            dict(label="new4", output=json.dumps(dict())),
+            dict(label="new4", output=json.dumps({})),
             dict(
                 label="new5", was_connected=False, errno=7, error_msg="an error"
             ),

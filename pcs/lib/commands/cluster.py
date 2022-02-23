@@ -1947,7 +1947,7 @@ def add_link(
     """
     _ensure_live_env(env)  # raises if env is not live
 
-    link_options = link_options or dict()
+    link_options = link_options or {}
     force = report_codes.FORCE in force_flags
     skip_offline = report_codes.SKIP_OFFLINE_NODES in force_flags
 
@@ -2058,8 +2058,8 @@ def update_link(
     """
     _ensure_live_env(env)  # raises if env is not live
 
-    node_addr_map = node_addr_map or dict()
-    link_options = link_options or dict()
+    node_addr_map = node_addr_map or {}
+    link_options = link_options or {}
     force = report_codes.FORCE in force_flags
     skip_offline = report_codes.SKIP_OFFLINE_NODES in force_flags
 

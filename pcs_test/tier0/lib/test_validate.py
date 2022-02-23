@@ -1073,7 +1073,7 @@ class ValueDeprecated(TestCase):
 
     def test_empty_deprecation_map(self):
         assert_report_item_list_equal(
-            validate.ValueDeprecated("opt", dict()).validate(dict(opt="1")),
+            validate.ValueDeprecated("opt", {}).validate(dict(opt="1")),
             [],
         )
 

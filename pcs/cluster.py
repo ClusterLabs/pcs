@@ -492,9 +492,7 @@ def stop_cluster_nodes(nodes):
     node_errors = parallel_for_nodes(
         utils.repeat_if_timeout(utils.stopPacemaker), nodes, quiet=True
     )
-    accessible_nodes = [
-        node for node in nodes if node not in node_errors.keys()
-    ]
+    accessible_nodes = [node for node in nodes if node not in node_errors]
     if node_errors:
         utils.err(
             "unable to stop all nodes\n" + "\n".join(node_errors.values()),
@@ -1245,7 +1243,7 @@ def cluster_destroy(lib, argv, modifiers):
         lib_env = utils.get_lib_env()
         try:
             cib = lib_env.get_cib()
-        except LibraryError as e:
+        except LibraryError:
             warn(
                 "Unable to load CIB to get guest and remote nodes from it, "
                 "those nodes will not be deconfigured."

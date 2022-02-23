@@ -443,7 +443,7 @@ def stopCluster(node, quiet=False, pacemaker=True, corosync=True, force=True):
     Commandline options:
       * --request-timeout - timeout for HTTP requests
     """
-    data = dict()
+    data = {}
     timeout = None
     if pacemaker and not corosync:
         data["component"] = "pacemaker"
@@ -834,7 +834,7 @@ def run(
       * --debug
     """
     if not env_extend:
-        env_extend = dict()
+        env_extend = {}
     env_var = env_extend
     env_var.update(dict(os.environ))
     env_var["LC_ALL"] = "C"
@@ -897,7 +897,7 @@ def cmd_runner():
     Commandline options:
       * -f - CIB file
     """
-    env_vars = dict()
+    env_vars = {}
     if usefile:
         env_vars["CIB_file"] = filename
     env_vars.update(os.environ)
@@ -917,8 +917,8 @@ def run_pcsdcli(command, data=None):
         * send_local_configs
     """
     if not data:
-        data = dict()
-    env_var = dict()
+        data = {}
+    env_var = {}
     if "--debug" in pcs_options:
         env_var["PCSD_DEBUG"] = "true"
     if "--request-timeout" in pcs_options:
@@ -1141,7 +1141,7 @@ def parallel_for_nodes(action, node_list, *args, **kwargs):
     Commandline options: no options
     NOTE: callback 'action' may use some cmd options
     """
-    node_errors = dict()
+    node_errors = {}
 
     def report(node, returncode, output):
         message = "{0}: {1}".format(node, output.strip())
@@ -1837,7 +1837,7 @@ def get_node_attributes(filter_node=None, filter_attr=None):
     if node_config == "":
         err("unable to get crm_config, is pacemaker running?")
     dom = parseString(node_config).documentElement
-    nas = dict()
+    nas = {}
     for node in dom.getElementsByTagName("node"):
         nodename = node.getAttribute("uname")
         if filter_node is not None and nodename != filter_node:
@@ -1848,7 +1848,7 @@ def get_node_attributes(filter_node=None, filter_attr=None):
                 if filter_attr is not None and attr_name != filter_attr:
                     continue
                 if nodename not in nas:
-                    nas[nodename] = dict()
+                    nas[nodename] = {}
                 nas[nodename][attr_name] = nvp.getAttribute("value")
             # Use just first element of attributes. We don't support
             # attributes with rules just yet.

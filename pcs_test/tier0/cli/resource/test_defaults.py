@@ -31,7 +31,7 @@ class DefaultsBaseMixin:
         self.cli_command = getattr(resource, self.cli_command_name)
 
     def _call_cmd(self, argv, modifiers=None):
-        modifiers = modifiers or dict()
+        modifiers = modifiers or {}
         self.cli_command(self.lib, argv, dict_to_modifiers(modifiers))
 
 

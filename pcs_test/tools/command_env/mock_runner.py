@@ -110,7 +110,7 @@ class Call:
         self.stderr = stderr
         self.returncode = returncode
         self.check_stdin = check_stdin if check_stdin else check_no_stdin
-        self.env = env or dict()
+        self.env = env or {}
 
     def __repr__(self):
         return str("<Runner '{0}' returncode='{1}' env='{2}'>").format(

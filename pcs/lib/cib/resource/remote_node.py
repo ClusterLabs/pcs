@@ -183,7 +183,7 @@ def _prepare_instance_atributes(
     host: str,
 ) -> Mapping[str, str]:
     enriched_instance_attributes = (
-        dict(instance_attributes) if instance_attributes else dict()
+        dict(instance_attributes) if instance_attributes else {}
     )
     enriched_instance_attributes["server"] = host
     return enriched_instance_attributes

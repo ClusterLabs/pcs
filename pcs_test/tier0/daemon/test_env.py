@@ -72,7 +72,6 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
             env.PCSD_DISABLE_GUI: "true",
             env.PCSD_SESSION_LIFETIME: str(session_lifetime),
             env.PCSD_DEV: "true",
-            env.PCSD_DEV: "true",
         }
         self.assert_environ_produces_modified_pcsd_env(
             environ=environ,

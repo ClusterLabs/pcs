@@ -365,10 +365,10 @@ def stonith_level_config_to_str(config):
     """
     Commandline option: no options
     """
-    config_data = dict()
+    config_data = {}
     for level in config:
         if level["target_type"] not in config_data:
-            config_data[level["target_type"]] = dict()
+            config_data[level["target_type"]] = {}
         if level["target_value"] not in config_data[level["target_type"]]:
             config_data[level["target_type"]][level["target_value"]] = []
         config_data[level["target_type"]][level["target_value"]].append(level)

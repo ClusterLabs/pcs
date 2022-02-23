@@ -1499,10 +1499,7 @@ def find_constraints_containing(resource_id, passed_dom=None):
             break
 
     if resource_match:
-        if (
-            resource_match.parentNode.tagName == "master"
-            or resource_match.parentNode.tagName == "clone"
-        ):
+        if resource_match.parentNode.tagName in ("master", "clone"):
             constraints_found, set_constraints = find_constraints_containing(
                 resource_match.parentNode.getAttribute("id"), dom
             )

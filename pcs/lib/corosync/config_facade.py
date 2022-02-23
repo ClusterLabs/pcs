@@ -378,7 +378,7 @@ class ConfigFacade(FacadeInterface):
             if transport in constants.TRANSPORTS_UDP
             else constants.LINK_OPTIONS_KNET_COROSYNC
         )
-        raw_options = dict()
+        raw_options = {}
         for totem_section in self.config.get_sections("totem"):
             for interface_section in totem_section.get_sections("interface"):
                 # if no linknumber is set, corosync treats it as 0
@@ -386,7 +386,7 @@ class ConfigFacade(FacadeInterface):
                     "linknumber", "0"
                 )
                 if linknumber not in raw_options:
-                    raw_options[linknumber] = dict()
+                    raw_options[linknumber] = {}
                 for name, value in interface_section.get_attributes():
                     if name in allowed_options:
                         raw_options[linknumber][name] = value

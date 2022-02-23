@@ -400,7 +400,7 @@ class GetNvsetAsDictTest(TestCase):
     def test_no_element(self):
         resource_element = etree.fromstring("<primitive/>")
         self.assertEqual(
-            dict(),
+            {},
             nvpair.get_nvset_as_dict("meta_attributes", resource_element),
         )
 
@@ -413,7 +413,7 @@ class GetNvsetAsDictTest(TestCase):
         """
         )
         self.assertEqual(
-            dict(),
+            {},
             nvpair.get_nvset_as_dict("meta_attributes", resource_element),
         )
 

@@ -390,7 +390,7 @@ class PcmkShortcuts:
         if env:
             env = dict(env)
         else:
-            env = dict()
+            env = {}
         env["PATH"] = ":".join(
             [
                 settings.fence_agent_binaries,

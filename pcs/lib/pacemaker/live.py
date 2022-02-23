@@ -838,7 +838,7 @@ def get_resource_digests(
     """
     # pylint: disable=too-many-locals
     if crm_meta_attributes is None:
-        crm_meta_attributes = dict()
+        crm_meta_attributes = {}
     command = [
         __exec("crm_resource"),
         "--digests",
