@@ -1507,21 +1507,15 @@ def update_transport_knet(
     #   1. set it to "none"
     #   2. set it to default, which is "none" according to `man corosync.conf`,
     #      by using value of empty string
-    crypto_cipher_enabled = (
-        crypto_options.get(
-            "cipher",
-            current_crypto_options.get("cipher", "none"),
-        )
-        not in ["none", ""]
-    )
+    crypto_cipher_enabled = crypto_options.get(
+        "cipher",
+        current_crypto_options.get("cipher", "none"),
+    ) not in ["none", ""]
 
-    crypto_hash_disabled = (
-        crypto_options.get(
-            "hash",
-            current_crypto_options.get("hash", "none"),
-        )
-        in ["none", ""]
-    )
+    crypto_hash_disabled = crypto_options.get(
+        "hash",
+        current_crypto_options.get("hash", "none"),
+    ) in ["none", ""]
 
     if crypto_cipher_enabled and crypto_hash_disabled:
         report_items.append(
