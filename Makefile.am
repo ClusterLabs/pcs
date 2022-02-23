@@ -203,6 +203,17 @@ endif
 		$(TIME) $(PYTHON) -m pylint --rcfile pylintrc --persistent=n --reports=n --score=n --disable similarities ${pylint_options} ${PCS_PYTHON_PACKAGES}
 endif
 
+isort_check: pyproject.toml
+if DEV_TESTS
+	export PYTHONPATH=${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/packages && \
+		$(TIME) $(PYTHON) -m isort --check-only ${PCS_PYTHON_PACKAGES}
+endif
+
+isort: pyproject.toml
+if DEV_TESTS
+	export PYTHONPATH=${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/packages && \
+		$(TIME) $(PYTHON) -m isort ${PCS_PYTHON_PACKAGES}
+endif
 
 black_check: pyproject.toml
 if DEV_TESTS
@@ -300,7 +311,7 @@ test-tree-clean:
 	fi
 	find ${abs_top_builddir} -type d -name __pycache__ -exec rm -rf {} \; 2>/dev/null || :
 
-check-local: check-local-deps test-tree-prep pylint black_check mypy tests_tier0 tests_tier1 pcsd-tests test-tree-clean
+check-local: check-local-deps test-tree-prep pylint isort_check black_check mypy tests_tier0 tests_tier1 pcsd-tests test-tree-clean
 
 clean-local: test-tree-clean
 	$(PYTHON) setup.py clean

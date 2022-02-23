@@ -3,6 +3,7 @@ pylint==2.12.2
 astroid==2.9.3
 mypy==0.931
 black==22.1.0
+isort
 types-cryptography
 types-dataclasses
 types-pycurl
