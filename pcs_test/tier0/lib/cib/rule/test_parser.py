@@ -1,6 +1,7 @@
-import dataclasses
 from textwrap import dedent
 from unittest import TestCase
+
+import dataclasses
 
 from pcs.common.str_tools import indent
 from pcs.lib.cib import rule

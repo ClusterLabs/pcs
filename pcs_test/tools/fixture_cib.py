@@ -1,7 +1,11 @@
 import logging
 import os
 from unittest import mock
+
 from lxml import etree
+
+from pcs import settings
+from pcs.lib.external import CommandRunner
 
 from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
@@ -12,9 +16,6 @@ from pcs_test.tools.misc import (
 )
 from pcs_test.tools.pcs_runner import PcsRunner
 from pcs_test.tools.xml import etree_to_str
-
-from pcs import settings
-from pcs.lib.external import CommandRunner
 
 # pylint: disable=line-too-long
 

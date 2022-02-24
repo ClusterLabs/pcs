@@ -10,33 +10,35 @@ from typing import (
 from lxml.etree import _Element
 
 from pcs.common import reports
-from pcs.common.reports.item import ReportItem, ReportItemList
+from pcs.common.reports.item import (
+    ReportItem,
+    ReportItemList,
+)
 from pcs.lib.cib import nvpair
+from pcs.lib.cib.resource.bundle import TAG as TAG_BUNDLE
 from pcs.lib.cib.resource.bundle import (
-    TAG as TAG_BUNDLE,
-    is_bundle,
     get_inner_resource as get_bundle_inner_resource,
 )
+from pcs.lib.cib.resource.bundle import is_bundle
+from pcs.lib.cib.resource.clone import ALL_TAGS as TAG_CLONE_ALL
 from pcs.lib.cib.resource.clone import (
-    ALL_TAGS as TAG_CLONE_ALL,
     get_inner_resource as get_clone_inner_resource,
+)
+from pcs.lib.cib.resource.clone import (
     get_parent_any_clone,
     is_any_clone,
     is_master,
     is_promotable_clone,
 )
+from pcs.lib.cib.resource.group import TAG as TAG_GROUP
 from pcs.lib.cib.resource.group import (
-    TAG as TAG_GROUP,
-    is_group,
     get_inner_resources as get_group_inner_resources,
 )
-from pcs.lib.cib.resource.primitive import (
-    TAG as TAG_PRIMITIVE,
-    is_primitive,
-)
+from pcs.lib.cib.resource.group import is_group
+from pcs.lib.cib.resource.primitive import TAG as TAG_PRIMITIVE
+from pcs.lib.cib.resource.primitive import is_primitive
 from pcs.lib.cib.tools import ElementSearcher
 from pcs.lib.xml_tools import find_parent
-
 
 ALL_RESOURCE_XML_TAGS = sorted(
     TAG_CLONE_ALL + [TAG_GROUP, TAG_PRIMITIVE, TAG_BUNDLE]

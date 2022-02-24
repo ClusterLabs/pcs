@@ -1,11 +1,11 @@
 import re
 from typing import (
-    cast,
     Iterable,
     List,
     Pattern,
     Set,
     Tuple,
+    cast,
 )
 
 from lxml.etree import (
@@ -18,7 +18,10 @@ from pcs.common import (
     reports,
 )
 from pcs.common.reports import codes as report_codes
-from pcs.common.reports.item import ReportItem, ReportItemList
+from pcs.common.reports.item import (
+    ReportItem,
+    ReportItemList,
+)
 from pcs.common.tools import Version
 from pcs.lib.cib import sections
 from pcs.lib.errors import LibraryError
@@ -26,7 +29,10 @@ from pcs.lib.pacemaker.values import (
     sanitize_id,
     validate_id,
 )
-from pcs.lib.xml_tools import get_root, get_sub_element
+from pcs.lib.xml_tools import (
+    get_root,
+    get_sub_element,
+)
 
 _VERSION_FORMAT = r"(?P<major>\d+)\.(?P<minor>\d+)(\.(?P<rev>\d+))?$"
 

@@ -1,14 +1,20 @@
 from collections import defaultdict
+from typing import (
+    AbstractSet,
+    List,
+    Mapping,
+    NewType,
+    Optional,
+)
+
 from dataclasses import dataclass
-from typing import AbstractSet, List, Mapping, NewType, Optional
 
 from pcs.common.resource_agent.dto import (
     ResourceAgentActionDto,
     ResourceAgentMetadataDto,
-    ResourceAgentParameterDto,
     ResourceAgentNameDto,
+    ResourceAgentParameterDto,
 )
-
 
 FakeAgentName = NewType("FakeAgentName", str)
 OcfVersion = NewType("OcfVersion", str)

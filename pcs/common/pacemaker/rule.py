@@ -1,14 +1,15 @@
-from dataclasses import dataclass
 from typing import (
     Mapping,
     Optional,
     Sequence,
 )
 
+from dataclasses import dataclass
+
 from pcs.common.interface.dto import DataTransferObject
 from pcs.common.types import (
-    CibRuleInEffectStatus,
     CibRuleExpressionType,
+    CibRuleInEffectStatus,
 )
 
 

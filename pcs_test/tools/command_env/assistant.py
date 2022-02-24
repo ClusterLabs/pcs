@@ -4,11 +4,17 @@ import os
 import os.path
 import sys
 from functools import partial
-
 from unittest import mock
 
+from pcs.common.file import RawFile
+from pcs.common.node_communicator import NodeCommunicatorFactory
+from pcs.lib.env import LibraryEnvironment
+
 from pcs_test.tools import fixture
-from pcs_test.tools.assertions import assert_raise_library_error, prepare_diff
+from pcs_test.tools.assertions import (
+    assert_raise_library_error,
+    prepare_diff,
+)
 from pcs_test.tools.case_analysis import test_failed
 from pcs_test.tools.command_env import spy
 from pcs_test.tools.command_env.calls import Queue as CallQueue
@@ -33,10 +39,6 @@ from pcs_test.tools.command_env.mock_raw_file import get_raw_file_mock
 from pcs_test.tools.command_env.mock_runner import Runner
 from pcs_test.tools.command_env.mock_service_manager import ServiceManagerMock
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
-
-from pcs.common.file import RawFile
-from pcs.common.node_communicator import NodeCommunicatorFactory
-from pcs.lib.env import LibraryEnvironment
 
 patch_lib_env = partial(mock.patch.object, LibraryEnvironment)
 

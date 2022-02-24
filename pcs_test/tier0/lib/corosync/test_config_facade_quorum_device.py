@@ -2,17 +2,18 @@ import re
 from textwrap import dedent
 from unittest import TestCase
 
+import pcs.lib.corosync.config_facade as lib
+from pcs.common.reports import ReportItemSeverity as severity
+from pcs.common.reports import codes as report_codes
+from pcs.lib.corosync.config_parser import Parser
+
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import (
     ac,
     assert_raise_library_error,
 )
-from pcs_test.tools.misc import get_test_resource as rc, outdent
-
-from pcs.common.reports import ReportItemSeverity as severity
-from pcs.common.reports import codes as report_codes
-import pcs.lib.corosync.config_facade as lib
-from pcs.lib.corosync.config_parser import Parser
+from pcs_test.tools.misc import get_test_resource as rc
+from pcs_test.tools.misc import outdent
 
 
 def _read_file(name):

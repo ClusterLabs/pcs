@@ -1,12 +1,12 @@
 import json
 
+import pcs.lib.pacemaker.live as lib_pacemaker
 from pcs import utils
 from pcs.cli.common.errors import (
-    CmdLineInputError,
     ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE,
+    CmdLineInputError,
 )
 from pcs.cli.common.parse_args import prepare_options
-import pcs.lib.pacemaker.live as lib_pacemaker
 
 
 def node_attribute_cmd(lib, argv, modifiers):

@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from typing import (
     Any,
     Dict,
@@ -6,21 +5,23 @@ from typing import (
     Optional,
 )
 
+from dataclasses import dataclass
+
 from pcs.common.interface.dto import (
     ImplementsFromDto,
     ImplementsToDto,
 )
 
-from .types import (
-    ForceCode,
-    MessageCode,
-    SeverityLevel,
-)
 from .dto import (
     ReportItemContextDto,
     ReportItemDto,
     ReportItemMessageDto,
     ReportItemSeverityDto,
+)
+from .types import (
+    ForceCode,
+    MessageCode,
+    SeverityLevel,
 )
 
 

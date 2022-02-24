@@ -4,7 +4,6 @@ from pcs_test.tools.command_env.config_runner_corosync import CorosyncShortcuts
 from pcs_test.tools.command_env.config_runner_pcmk import PcmkShortcuts
 from pcs_test.tools.command_env.config_runner_sbd import SbdShortcuts
 from pcs_test.tools.command_env.config_runner_scsi import ScsiShortcuts
-
 from pcs_test.tools.command_env.mock_runner import Call as RunnerCall
 
 

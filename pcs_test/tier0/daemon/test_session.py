@@ -1,10 +1,10 @@
-from unittest import TestCase
 from contextlib import contextmanager
-
-from pcs_test.tools.misc import create_setup_patch_mixin
+from unittest import TestCase
 
 from pcs.daemon import session
 from pcs.daemon.session import Session
+
+from pcs_test.tools.misc import create_setup_patch_mixin
 
 SID = "abc"
 USER = "user"

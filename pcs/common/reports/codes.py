@@ -1,8 +1,5 @@
-from .types import (
-    ForceCode as F,
-    MessageCode as M,
-)
-
+from .types import ForceCode as F
+from .types import MessageCode as M
 
 # force categories
 FORCE = F("FORCE")

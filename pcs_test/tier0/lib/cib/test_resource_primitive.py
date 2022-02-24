@@ -1,12 +1,16 @@
 from functools import partial
-from unittest import mock, TestCase
-from lxml import etree
+from unittest import (
+    TestCase,
+    mock,
+)
 
-from pcs_test.tools.assertions import assert_xml_equal
+from lxml import etree
 
 from pcs.lib.cib.resource import primitive
 from pcs.lib.cib.tools import IdProvider
 from pcs.lib.resource_agent import ResourceAgentName
+
+from pcs_test.tools.assertions import assert_xml_equal
 
 
 class FindPrimitivesByAgent(TestCase):

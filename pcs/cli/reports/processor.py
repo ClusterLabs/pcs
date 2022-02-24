@@ -6,12 +6,12 @@ from pcs.common.reports import (
     ReportProcessor,
 )
 
+from .messages import report_item_msg_from_dto
 from .output import (
     error,
     prepare_force_text,
     warn,
 )
-from .messages import report_item_msg_from_dto
 
 
 class ReportProcessorToConsole(ReportProcessor):

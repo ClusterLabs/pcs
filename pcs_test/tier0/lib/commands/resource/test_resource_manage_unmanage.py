@@ -1,14 +1,13 @@
 # pylint: disable=too-many-lines,line-too-long
 from unittest import TestCase
 
-from pcs_test.tier0.lib.commands.tag.tag_common import fixture_tags_xml
-from pcs_test.tools import fixture
-from pcs_test.tools.command_env import get_env_tools
-
 from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import resource
 
+from pcs_test.tier0.lib.commands.tag.tag_common import fixture_tags_xml
+from pcs_test.tools import fixture
+from pcs_test.tools.command_env import get_env_tools
 
 fixture_primitive_cib_managed = """
     <resources>

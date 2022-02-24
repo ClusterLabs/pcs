@@ -1,6 +1,10 @@
 import abc
 
-from .item import ReportItem, ReportItemList, ReportItemSeverity
+from .item import (
+    ReportItem,
+    ReportItemList,
+    ReportItemSeverity,
+)
 
 
 class ReportProcessor(abc.ABC):

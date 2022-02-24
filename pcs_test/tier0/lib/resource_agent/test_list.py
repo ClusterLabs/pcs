@@ -1,7 +1,7 @@
-from unittest import mock, TestCase
-
-from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools import fixture
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from pcs import settings
 from pcs.common.reports import codes as report_codes
@@ -15,6 +15,9 @@ from pcs.lib.resource_agent.types import (
     ResourceAgentName,
     StandardProviderTuple,
 )
+
+from pcs_test.tools import fixture
+from pcs_test.tools.command_env import get_env_tools
 
 
 class ListResourceAgentsStandards(TestCase):

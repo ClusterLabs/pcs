@@ -1,11 +1,11 @@
-import sys
 import os
+import sys
 
 from pcs import utils
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.reports import process_library_reports
-from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.errors import LibraryError
+from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.pacemaker.live import get_cluster_status_dom
 from pcs.lib.pacemaker.state import ClusterState
 from pcs.pcsd import pcsd_status_cmd

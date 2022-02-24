@@ -1,5 +1,5 @@
-from collections import namedtuple
 import fcntl
+from collections import namedtuple
 from functools import partial
 
 from pcs.cli.reports.output import error

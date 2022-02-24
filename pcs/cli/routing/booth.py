@@ -1,8 +1,10 @@
 from pcs import usage
 from pcs.cli.booth import command
 from pcs.cli.common.routing import create_router
-from pcs.resource import resource_remove, resource_restart
-
+from pcs.resource import (
+    resource_remove,
+    resource_restart,
+)
 
 booth_cmd = create_router(
     {

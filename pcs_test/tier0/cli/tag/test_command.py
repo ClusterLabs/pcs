@@ -1,9 +1,13 @@
 from textwrap import dedent
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.tag import command
 from pcs.lib.errors import LibraryError
+
 from pcs_test.tools.misc import dict_to_modifiers
 
 

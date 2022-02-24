@@ -1,13 +1,13 @@
 import importlib
 import os
 import sys
-from threading import Thread
 import time
 import unittest
+from threading import Thread
 
 try:
-    from testtools import ConcurrentTestSuite
     import concurrencytest
+    from testtools import ConcurrentTestSuite
 
     can_concurrency = True
 except ImportError:

@@ -1,18 +1,17 @@
 # pylint: disable=too-many-lines,no-member
 import json
 import re
-
 from functools import partial
 from textwrap import dedent
 from unittest import TestCase
 
-from pcs_test.tools import fixture
-from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.misc import outdent
-
 from pcs import settings
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import cluster
+
+from pcs_test.tools import fixture
+from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.misc import outdent
 
 QDEVICE_HOST = "qdevice.host"
 CLUSTER_NAME = "myCluster"

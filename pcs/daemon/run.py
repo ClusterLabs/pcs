@@ -8,8 +8,18 @@ from tornado.locks import Lock
 from tornado.web import Application
 
 from pcs import settings
-from pcs.daemon import log, ruby_pcsd, session, ssl, systemd
-from pcs.daemon.app import sinatra_ui, sinatra_remote, ui
+from pcs.daemon import (
+    log,
+    ruby_pcsd,
+    session,
+    ssl,
+    systemd,
+)
+from pcs.daemon.app import (
+    sinatra_remote,
+    sinatra_ui,
+    ui,
+)
 from pcs.daemon.app.common import RedirectHandler
 from pcs.daemon.env import prepare_env
 from pcs.daemon.http_server import HttpsServerManage

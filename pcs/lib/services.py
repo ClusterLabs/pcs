@@ -3,10 +3,12 @@ from typing import (
     Optional,
     Sequence,
 )
-from pcs.common import services
 
 from pcs import settings
-from pcs.common import reports
+from pcs.common import (
+    reports,
+    services,
+)
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 

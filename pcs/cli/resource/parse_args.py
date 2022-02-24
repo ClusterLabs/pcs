@@ -1,5 +1,11 @@
-from pcs.cli.common.parse_args import group_by_keywords, prepare_options
-from pcs.cli.common.errors import CmdLineInputError, SEE_MAN_CHANGES
+from pcs.cli.common.errors import (
+    SEE_MAN_CHANGES,
+    CmdLineInputError,
+)
+from pcs.cli.common.parse_args import (
+    group_by_keywords,
+    prepare_options,
+)
 
 
 def parse_create_simple(arg_list):

@@ -21,8 +21,14 @@ from pcs.common.str_tools import (
     format_list,
     indent,
 )
-from pcs.lib.cib import nvpair, stonith
-from pcs.lib.cib.tools import get_crm_config, get_resources
+from pcs.lib.cib import (
+    nvpair,
+    stonith,
+)
+from pcs.lib.cib.tools import (
+    get_crm_config,
+    get_resources,
+)
 from pcs.lib.communication.nodes import CheckReachability
 from pcs.lib.communication.tools import run as run_communication
 from pcs.lib.env import LibraryEnvironment
@@ -33,7 +39,6 @@ from pcs.lib.pacemaker.live import (
     get_cluster_status_text,
     get_ticket_status_text,
 )
-
 from pcs.lib.resource_agent.const import STONITH_ACTION_REPLACED_BY
 from pcs.lib.sbd import get_sbd_service_name
 

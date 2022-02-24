@@ -1,12 +1,12 @@
 import os.path
 import re
 from typing import (
-    cast,
     Dict,
     Iterable,
     List,
     Optional,
     Tuple,
+    cast,
 )
 
 from lxml import etree
@@ -18,19 +18,18 @@ from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
 from pcs.common.str_tools import join_multilines
 from pcs.common.tools import (
+    Version,
     format_os_error,
     xml_fromstring,
-    Version,
 )
 from pcs.common.types import CibRuleInEffectStatus
+from pcs.lib import tools
 from pcs.lib.cib.tools import get_pacemaker_version_by_which_cib_was_validated
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 from pcs.lib.pacemaker import api_result
 from pcs.lib.pacemaker.state import ClusterState
-from pcs.lib import tools
 from pcs.lib.xml_tools import etree_to_str
-
 
 __EXITCODE_NOT_CONNECTED = 102
 __EXITCODE_CIB_SCOPE_VALID_BUT_NOT_PRESENT = 105
@@ -838,7 +837,7 @@ def get_resource_digests(
     """
     # pylint: disable=too-many-locals
     if crm_meta_attributes is None:
-        crm_meta_attributes = dict()
+        crm_meta_attributes = {}
     command = [
         __exec("crm_resource"),
         "--digests",

@@ -1,13 +1,16 @@
 import logging
 from unittest import TestCase
-from unittest.mock import Mock, MagicMock
+from unittest.mock import (
+    MagicMock,
+    Mock,
+)
 
 from tornado.httpserver import HTTPServer
 
-from pcs_test.tools.misc import create_setup_patch_mixin
-
 from pcs.daemon import http_server
 from pcs.daemon.ssl import PcsdSSL
+
+from pcs_test.tools.misc import create_setup_patch_mixin
 
 PORT = 1234
 BIND_ADDRESSES = ["addr1", "addr2"]

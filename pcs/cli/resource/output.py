@@ -3,8 +3,8 @@ from typing import List
 from pcs.cli.common.output import format_with_indentation
 from pcs.cli.resource_agent import get_resource_agent_full_name
 from pcs.common import resource_agent
-from pcs.common.str_tools import indent
 from pcs.common.pacemaker.resource.operations import CibResourceOperationDto
+from pcs.common.str_tools import indent
 
 
 def format_resource_agent_metadata(

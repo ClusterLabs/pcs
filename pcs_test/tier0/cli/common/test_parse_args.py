@@ -1,22 +1,22 @@
 from unittest import TestCase
 
+from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import (
+    InputModifiers,
+    _is_negative_num,
+    _is_num,
+    filter_out_non_option_negative_numbers,
+    filter_out_options,
     group_by_keywords,
+    is_long_option_expecting_value,
+    is_option_expecting_value,
+    is_short_option_expecting_value,
     parse_typed_arg,
     prepare_options,
     prepare_options_allowed,
     split_list,
     split_option,
-    filter_out_non_option_negative_numbers,
-    filter_out_options,
-    _is_num,
-    _is_negative_num,
-    is_short_option_expecting_value,
-    is_long_option_expecting_value,
-    is_option_expecting_value,
-    InputModifiers,
 )
-from pcs.cli.common.errors import CmdLineInputError
 
 
 class PrepareOptionsTest(TestCase):

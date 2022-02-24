@@ -5,8 +5,8 @@ from pcs.lib.communication.tools import (
     AllAtOnceStrategyMixin,
     AllSameDataMixin,
     RunRemotelyBase,
-    SkipOfflineMixin,
     SimpleResponseProcessingMixin,
+    SkipOfflineMixin,
 )
 
 

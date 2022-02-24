@@ -1,32 +1,42 @@
 # pylint: disable=too-many-lines
 import os.path
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
+
 from lxml import etree
 
+import pcs.lib.pacemaker.live as lib
+from pcs import settings
+from pcs.common.reports import ReportItemSeverity as Severity
+from pcs.common.reports import codes as report_codes
+from pcs.common.tools import Version
+from pcs.common.types import CibRuleInEffectStatus
+from pcs.lib.external import CommandRunner
+from pcs.lib.pacemaker import api_result
+
+from pcs_test.tools import (
+    fixture,
+    fixture_crm_mon,
+)
 from pcs_test.tools.assertions import (
     assert_raise_library_error,
     assert_report_item_list_equal,
     assert_xml_equal,
     start_tag_error_text,
 )
-from pcs_test.tools import fixture, fixture_crm_mon
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.command_env.mock_runner import Call as RunnerCall
 from pcs_test.tools.custom_mock import (
-    TmpFileMock,
     TmpFileCall,
+    TmpFileMock,
 )
 from pcs_test.tools.misc import get_test_resource as rc
-from pcs_test.tools.xml import etree_to_str, XmlManipulation
-
-from pcs import settings
-from pcs.common.reports import ReportItemSeverity as Severity
-from pcs.common.reports import codes as report_codes
-from pcs.common.tools import Version
-from pcs.common.types import CibRuleInEffectStatus
-from pcs.lib.pacemaker import api_result
-import pcs.lib.pacemaker.live as lib
-from pcs.lib.external import CommandRunner
+from pcs_test.tools.xml import (
+    XmlManipulation,
+    etree_to_str,
+)
 
 _EXITCODE_NOT_CONNECTED = 102
 

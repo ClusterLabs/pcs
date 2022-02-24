@@ -1,5 +1,7 @@
-from unittest import mock, TestCase
-
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from pcs.common.services import errors
 from pcs.common.services.drivers import SysVInitRhelDriver

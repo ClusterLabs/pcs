@@ -1,6 +1,6 @@
 from typing import (
-    cast,
     Dict,
+    cast,
 )
 
 from lxml.etree import _Element
@@ -19,7 +19,7 @@ class RuleToStr:
 
     def __init__(self) -> None:
         # The cache prevents evaluating subtrees repeatedly.
-        self._cache: Dict[str, str] = dict()
+        self._cache: Dict[str, str] = {}
 
     def get_str(self, rule_part_element: _Element) -> str:
         """

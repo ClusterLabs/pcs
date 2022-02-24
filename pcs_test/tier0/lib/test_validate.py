@@ -1,9 +1,7 @@
 import re
 from unittest import TestCase
-from lxml import etree
 
-from pcs_test.tools import fixture
-from pcs_test.tools.assertions import assert_report_item_list_equal
+from lxml import etree
 
 from pcs.common import reports
 from pcs.common.reports.const import (
@@ -12,6 +10,9 @@ from pcs.common.reports.const import (
 )
 from pcs.lib import validate
 from pcs.lib.cib.tools import IdProvider
+
+from pcs_test.tools import fixture
+from pcs_test.tools.assertions import assert_report_item_list_equal
 
 # pylint: disable=no-self-use
 # pylint: disable=too-many-lines
@@ -1073,7 +1074,7 @@ class ValueDeprecated(TestCase):
 
     def test_empty_deprecation_map(self):
         assert_report_item_list_equal(
-            validate.ValueDeprecated("opt", dict()).validate(dict(opt="1")),
+            validate.ValueDeprecated("opt", {}).validate(dict(opt="1")),
             [],
         )
 

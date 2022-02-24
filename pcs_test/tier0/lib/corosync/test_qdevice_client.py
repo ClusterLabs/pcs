@@ -1,14 +1,16 @@
 import os.path
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
 
-from pcs_test.tools.assertions import assert_raise_library_error
-
+import pcs.lib.corosync.qdevice_client as lib
 from pcs import settings
 from pcs.common.reports import ReportItemSeverity as severity
 from pcs.common.reports import codes as report_codes
 from pcs.lib.external import CommandRunner
 
-import pcs.lib.corosync.qdevice_client as lib
+from pcs_test.tools.assertions import assert_raise_library_error
 
 
 class GetStatusTextTest(TestCase):

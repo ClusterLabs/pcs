@@ -1,18 +1,19 @@
 from unittest import TestCase
-from lxml import etree
 
-from pcs_test.tools.assertions import assert_report_item_list_equal
-from pcs_test.tools import fixture
+from lxml import etree
 
 from pcs.common import reports
 from pcs.lib.cib.resource import primitive
 from pcs.lib.resource_agent import (
-    const,
     ResourceAgentFacade,
     ResourceAgentMetadata,
     ResourceAgentName,
     ResourceAgentParameter,
+    const,
 )
+
+from pcs_test.tools import fixture
+from pcs_test.tools.assertions import assert_report_item_list_equal
 
 
 def _fixture_metadata(name, parameters):

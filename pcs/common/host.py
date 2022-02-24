@@ -2,7 +2,6 @@ from collections import namedtuple
 
 from pcs import settings
 
-
 Destination = namedtuple("Destination", ["addr", "port"])
 
 

@@ -1,30 +1,30 @@
 import os.path
 from unittest import TestCase
 
-from pcs_test.tools import fixture
-from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.command_env.config_runner_pcmk import (
-    RULE_IN_EFFECT_RETURNCODE,
-    RULE_EXPIRED_RETURNCODE,
-    RULE_NOT_YET_IN_EFFECT_RETURNCODE,
-)
-
 from pcs import settings
 from pcs.common import reports
+from pcs.common.pacemaker.defaults import CibDefaultsDto
 from pcs.common.pacemaker.nvset import (
     CibNvpairDto,
     CibNvsetDto,
 )
-from pcs.common.pacemaker.defaults import CibDefaultsDto
 from pcs.common.pacemaker.rule import (
     CibRuleDateCommonDto,
     CibRuleExpressionDto,
 )
 from pcs.common.types import (
-    CibRuleInEffectStatus,
     CibRuleExpressionType,
+    CibRuleInEffectStatus,
 )
 from pcs.lib.commands import cib_options
+
+from pcs_test.tools import fixture
+from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.command_env.config_runner_pcmk import (
+    RULE_EXPIRED_RETURNCODE,
+    RULE_IN_EFFECT_RETURNCODE,
+    RULE_NOT_YET_IN_EFFECT_RETURNCODE,
+)
 
 
 class DefaultsCreateMixin:

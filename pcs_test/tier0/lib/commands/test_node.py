@@ -1,20 +1,23 @@
 import logging
 from contextlib import contextmanager
-from unittest import mock, TestCase
 from functools import partial
-from lxml import etree
+from unittest import (
+    TestCase,
+    mock,
+)
 
-from pcs_test.tools.assertions import assert_raise_library_error
-from pcs_test.tools.custom_mock import MockLibraryReportProcessor
-from pcs_test.tools.misc import create_patcher
+from lxml import etree
 
 from pcs.common.reports import ReportItemSeverity as severity
 from pcs.common.reports import codes as report_codes
 from pcs.lib.cib.tools import IdProvider
+from pcs.lib.commands import node as lib
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 
-from pcs.lib.commands import node as lib
+from pcs_test.tools.assertions import assert_raise_library_error
+from pcs_test.tools.custom_mock import MockLibraryReportProcessor
+from pcs_test.tools.misc import create_patcher
 
 # pylint: disable=protected-access
 

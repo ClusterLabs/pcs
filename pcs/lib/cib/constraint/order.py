@@ -6,7 +6,6 @@ from pcs.lib.cib.constraint import constraint
 from pcs.lib.cib.tools import check_new_id_applicable
 from pcs.lib.errors import LibraryError
 
-
 TAG_NAME = "rsc_order"
 DESCRIPTION = "constraint id"
 ATTRIB = {

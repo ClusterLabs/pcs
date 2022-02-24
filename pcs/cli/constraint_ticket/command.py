@@ -1,7 +1,10 @@
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.constraint import command
 from pcs.cli.constraint_ticket import parse_args
-from pcs.cli.reports.output import error, warn
+from pcs.cli.reports.output import (
+    error,
+    warn,
+)
 from pcs.common.reports import constraints
 
 

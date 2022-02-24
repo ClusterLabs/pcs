@@ -1,16 +1,14 @@
 from unittest import TestCase
 
-from pcs_test.tools import fixture
-from pcs_test.tools.assertions import assert_report_item_list_equal
-from pcs_test.tools.custom_mock import patch_getaddrinfo
-
 from pcs.common.reports import codes as report_codes
 from pcs.lib.cib.node import PacemakerNode as PNode
 from pcs.lib.corosync import config_validators
-from pcs.lib.corosync.node import (
-    CorosyncNode as CNode,
-    CorosyncNodeAddress as CAddr,
-)
+from pcs.lib.corosync.node import CorosyncNode as CNode
+from pcs.lib.corosync.node import CorosyncNodeAddress as CAddr
+
+from pcs_test.tools import fixture
+from pcs_test.tools.assertions import assert_report_item_list_equal
+from pcs_test.tools.custom_mock import patch_getaddrinfo
 
 # pylint: disable=no-self-use
 

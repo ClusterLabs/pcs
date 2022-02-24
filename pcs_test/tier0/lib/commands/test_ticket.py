@@ -1,11 +1,14 @@
-from unittest import mock, TestCase
-
-from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.misc import create_patcher
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands.constraint import ticket as ticket_command
+
+from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.misc import create_patcher
 
 patch_commands = create_patcher("pcs.lib.commands.constraint.ticket")
 

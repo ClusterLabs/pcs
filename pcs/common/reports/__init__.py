@@ -5,16 +5,16 @@ from . import (
     messages,
     types,
 )
+from .conversions import report_dto_to_item
+from .dto import ReportItemDto
 from .item import (
-    get_severity,
     ReportItem,
+    ReportItemContext,
     ReportItemList,
     ReportItemSeverity,
-    ReportItemContext,
+    get_severity,
 )
-from .dto import ReportItemDto
 from .processor import (
-    has_errors,
     ReportProcessor,
+    has_errors,
 )
-from .conversions import report_dto_to_item

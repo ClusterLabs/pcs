@@ -1,6 +1,14 @@
 import logging
 from subprocess import DEVNULL
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
+
+import pcs.lib.external as lib
+from pcs import settings
+from pcs.common.reports import ReportItemSeverity as severity
+from pcs.common.reports import codes as report_codes
 
 from pcs_test.tools.assertions import (
     assert_raise_library_error,
@@ -8,12 +16,6 @@ from pcs_test.tools.assertions import (
 )
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 from pcs_test.tools.misc import outdent
-
-from pcs import settings
-from pcs.common.reports import ReportItemSeverity as severity
-from pcs.common.reports import codes as report_codes
-
-import pcs.lib.external as lib
 
 
 @mock.patch("subprocess.Popen", autospec=True)
@@ -92,7 +94,7 @@ class CommandRunnerTest(TestCase):
                     {
                         "command": command_str,
                         "stdin": None,
-                        "environment": dict(),
+                        "environment": {},
                     },
                 ),
                 (
@@ -271,7 +273,7 @@ class CommandRunnerTest(TestCase):
                     {
                         "command": command_str,
                         "stdin": stdin,
-                        "environment": dict(),
+                        "environment": {},
                     },
                 ),
                 (
@@ -332,7 +334,7 @@ class CommandRunnerTest(TestCase):
                     {
                         "command": command_str,
                         "stdin": None,
-                        "environment": dict(),
+                        "environment": {},
                     },
                 )
             ],
@@ -384,7 +386,7 @@ class CommandRunnerTest(TestCase):
                     {
                         "command": command_str,
                         "stdin": None,
-                        "environment": dict(),
+                        "environment": {},
                     },
                 )
             ],

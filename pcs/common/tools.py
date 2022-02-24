@@ -1,6 +1,6 @@
+import threading
 from collections import namedtuple
 from enum import Enum
-import threading
 from typing import (
     MutableSet,
     Optional,
@@ -10,7 +10,6 @@ from typing import (
 
 from lxml import etree
 from lxml.etree import _Element
-
 
 T = TypeVar("T", bound=type)
 

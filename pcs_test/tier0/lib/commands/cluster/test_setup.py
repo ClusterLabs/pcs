@@ -1,18 +1,16 @@
 # pylint: disable=too-many-lines
 import json
 from copy import deepcopy
-
-from unittest import mock, TestCase
-
-from pcs_test.tools import fixture
-from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.command_env.mock_node_communicator import (
-    create_communication,
+from unittest import (
+    TestCase,
+    mock,
 )
-from pcs_test.tools.custom_mock import patch_getaddrinfo
 
 from pcs import settings
-from pcs.common import file_type_codes, reports
+from pcs.common import (
+    file_type_codes,
+    reports,
+)
 from pcs.common.file import RawFileError
 from pcs.common.host import Destination
 from pcs.common.ssl import (
@@ -23,6 +21,13 @@ from pcs.common.ssl import (
 )
 from pcs.lib.commands import cluster
 from pcs.lib.corosync import constants
+
+from pcs_test.tools import fixture
+from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.command_env.mock_node_communicator import (
+    create_communication,
+)
+from pcs_test.tools.custom_mock import patch_getaddrinfo
 
 PCSD_SSL_KEY = generate_key()
 PCSD_SSL_CERT = generate_cert(PCSD_SSL_KEY, "servername")

@@ -2,6 +2,7 @@ from unittest import TestCase
 
 from pcs.common import reports
 from pcs.lib.commands import tag as cmd_tag
+
 from pcs_test.tier0.lib.commands.tag.tag_common import (
     fixture_resouces_for_reference_ids,
     fixture_tags_xml,

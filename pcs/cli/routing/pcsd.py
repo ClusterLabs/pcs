@@ -5,7 +5,6 @@ from pcs import (
 from pcs.cli.common.errors import raise_command_replaced
 from pcs.cli.common.routing import create_router
 
-
 pcsd_cmd = create_router(
     {
         "help": lambda lib, argv, modifiers: usage.pcsd(argv),

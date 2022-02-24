@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import (
     Container,
     Dict,
@@ -6,10 +7,9 @@ from typing import (
     NewType,
     Optional,
 )
-from collections import defaultdict
+
 from dataclasses import dataclass
 from lxml.etree import _Element
-
 
 SimulationOperationType = NewType("SimulationOperationType", str)
 

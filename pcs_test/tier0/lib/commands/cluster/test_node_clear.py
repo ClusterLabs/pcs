@@ -1,11 +1,11 @@
 from unittest import TestCase
 
+from pcs.common.reports import codes as report_codes
+from pcs.lib.commands.cluster import node_clear
+
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.misc import get_test_resource as rc
-
-from pcs.common.reports import codes as report_codes
-from pcs.lib.commands.cluster import node_clear
 
 
 def _read_file(name):

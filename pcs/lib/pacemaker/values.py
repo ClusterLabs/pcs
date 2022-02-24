@@ -6,10 +6,12 @@ from typing import (
 )
 
 from pcs.common import reports
-from pcs.common.reports.item import ReportItem, ReportItemList
+from pcs.common.reports.item import (
+    ReportItem,
+    ReportItemList,
+)
 from pcs.common.tools import timeout_to_seconds
 from pcs.lib.errors import LibraryError
-
 
 _BOOLEAN_TRUE = frozenset(["true", "on", "yes", "y", "1"])
 _BOOLEAN_FALSE = frozenset(["false", "off", "no", "n", "0"])

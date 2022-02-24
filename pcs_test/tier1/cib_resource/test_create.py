@@ -1,15 +1,18 @@
 import re
-from unittest import mock, TestCase
-
-from pcs_test.tier1.cib_resource.common import ResourceTest
-from pcs_test.tools.assertions import AssertPcsMixin
-from pcs_test.tools.bin_mock import get_mock_settings
-from pcs_test.tools.pcs_runner import PcsRunner
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from pcs import resource
 from pcs.cli.common.parse_args import InputModifiers
 from pcs.common import const
 from pcs.common.str_tools import format_list
+
+from pcs_test.tier1.cib_resource.common import ResourceTest
+from pcs_test.tools.assertions import AssertPcsMixin
+from pcs_test.tools.bin_mock import get_mock_settings
+from pcs_test.tools.pcs_runner import PcsRunner
 
 # pylint: disable=invalid-name
 # pylint: disable=no-self-use

@@ -1,4 +1,9 @@
-from typing import Any, Dict, List, Optional
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+)
 
 from pcs.lib.commands.resource_agent import (
     _agent_metadata_to_dict,
@@ -8,12 +13,12 @@ from pcs.lib.commands.resource_agent import (
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.resource_agent import (
-    resource_agent_error_to_report_item,
     InvalidResourceAgentName,
     ResourceAgentError,
     ResourceAgentFacadeFactory,
     ResourceAgentName,
     StandardProviderTuple,
+    resource_agent_error_to_report_item,
 )
 
 

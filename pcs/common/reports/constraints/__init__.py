@@ -1,8 +1,6 @@
-from .common import (
-    constraint_plain as constraint_plain_default,
-    constraint_with_sets,
-)
 from .colocation import constraint_plain as colocation_plain
+from .common import constraint_plain as constraint_plain_default
+from .common import constraint_with_sets
 from .order import constraint_plain as order_plain
 from .ticket import constraint_plain as ticket_plain
 

@@ -4,9 +4,9 @@ from pcs.common import reports
 from pcs.common.reports.item import ReportItem
 from pcs.lib import validate
 from pcs.lib.cib.nvpair import (
+    META_ATTRIBUTES_TAG,
     append_new_meta_attributes,
     arrange_first_meta_attributes,
-    META_ATTRIBUTES_TAG,
 )
 from pcs.lib.cib.resource.primitive import TAG as TAG_PRIMITIVE
 from pcs.lib.cib.tools import ElementSearcher
@@ -15,8 +15,8 @@ from pcs.lib.pacemaker.values import sanitize_id
 from pcs.lib.xml_tools import (
     append_when_useful,
     get_sub_element,
-    update_attributes_remove_empty,
     reset_element,
+    update_attributes_remove_empty,
 )
 
 TAG = "bundle"

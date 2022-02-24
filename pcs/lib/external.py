@@ -1,14 +1,19 @@
-from logging import Logger
-from shlex import quote as shell_quote
 import signal
 import subprocess
-from typing import Dict, Mapping, Optional, Sequence, Tuple
+from logging import Logger
+from shlex import quote as shell_quote
+from typing import (
+    Dict,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+)
 
 from pcs import settings
 from pcs.common import reports
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
-
 from pcs.common.str_tools import join_multilines
 from pcs.lib.errors import LibraryError
 
@@ -35,7 +40,7 @@ class CommandRunner:
         # where the library runs.  We also get rid of PATH settings, so all
         # executables must be specified with full path unless the PATH variable
         # is set from outside.
-        self._env_vars = env_vars if env_vars else dict()
+        self._env_vars = env_vars if env_vars else {}
 
     @property
     def env_vars(self) -> Dict[str, str]:
@@ -53,7 +58,7 @@ class CommandRunner:
         # a pacemaker tool on a CIB in a file but cannot afford the risk of
         # changing the CIB in the file specified by the user.
         env_vars = dict(self._env_vars)
-        env_vars.update(dict(env_extend) if env_extend else dict())
+        env_vars.update(dict(env_extend) if env_extend else {})
 
         log_args = " ".join([shell_quote(x) for x in args])
         self._logger.debug(

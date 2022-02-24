@@ -2,14 +2,12 @@
 import base64
 import json
 import os.path
-
 from functools import partial
 from textwrap import dedent
-from unittest import mock, TestCase
-
-from pcs_test.tools import fixture
-from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.custom_mock import patch_getaddrinfo
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from pcs import settings
 from pcs.common import (
@@ -19,12 +17,16 @@ from pcs.common import (
 from pcs.common.file import RawFileError
 from pcs.lib.commands import cluster
 
+from pcs_test.tools import fixture
+from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.custom_mock import patch_getaddrinfo
+
 from .common import (
     CLUSTER_NAME,
     QDEVICE_HOST,
-    get_two_node,
     corosync_conf_fixture,
     corosync_node_fixture,
+    get_two_node,
     node_fixture,
 )
 

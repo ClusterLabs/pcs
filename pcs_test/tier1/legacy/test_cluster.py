@@ -2,19 +2,19 @@ from functools import partial
 from unittest import TestCase
 
 from pcs_test.tools.assertions import (
-    ac,
     AssertPcsMixin,
+    ac,
 )
+from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
-    get_test_resource as rc,
     get_tmp_dir,
     get_tmp_file,
     skip_unless_root,
     write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import (
-    pcs,
     PcsRunner,
+    pcs,
 )
 
 

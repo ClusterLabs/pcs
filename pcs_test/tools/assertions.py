@@ -1,6 +1,7 @@
 import difflib
 import doctest
 import re
+
 from lxml.doctestcompare import LXMLOutputChecker
 from lxml.etree import LXML_VERSION
 

@@ -1,10 +1,13 @@
-from unittest import mock, TestCase
-
-from pcs_test.tools import fixture
-from pcs_test.tools.command_env import get_env_tools
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from pcs.common import reports
 from pcs.lib import resource_agent as ra
+
+from pcs_test.tools import fixture
+from pcs_test.tools.command_env import get_env_tools
 
 
 @mock.patch("pcs.lib.resource_agent.facade.ocf_unified_to_pcs")

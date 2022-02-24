@@ -1,8 +1,11 @@
+from pcs.lib.corosync.config_facade import ConfigFacade
+from pcs.lib.corosync.config_parser import (
+    Parser,
+    Section,
+)
+
 from pcs_test.tools.command_env.mock_get_local_corosync_conf import Call
 from pcs_test.tools.misc import get_test_resource as rc
-
-from pcs.lib.corosync.config_facade import ConfigFacade
-from pcs.lib.corosync.config_parser import Parser, Section
 
 
 class CorosyncConf:

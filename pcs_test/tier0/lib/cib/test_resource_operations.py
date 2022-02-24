@@ -1,18 +1,20 @@
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
+
 from lxml import etree
+
+from pcs.common import const
+from pcs.common.pacemaker.resource.operations import CibResourceOperationDto
+from pcs.common.reports import ReportItemSeverity as severities
+from pcs.common.reports import codes as report_codes
+from pcs.lib.cib.resource import operations
+from pcs.lib.validate import ValuePair
 
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal
 from pcs_test.tools.misc import create_patcher
-
-from pcs.common import const
-from pcs.common.reports import (
-    codes as report_codes,
-    ReportItemSeverity as severities,
-)
-from pcs.common.pacemaker.resource.operations import CibResourceOperationDto
-from pcs.lib.cib.resource import operations
-from pcs.lib.validate import ValuePair
 
 # pylint: disable=no-self-use
 

@@ -1,14 +1,25 @@
 # pylint: disable=too-many-lines
 import json
 from textwrap import dedent
-from unittest import skip, TestCase
+from unittest import (
+    TestCase,
+    skip,
+)
 
 from lxml import etree
 
+from pcs import (
+    resource,
+    utils,
+)
+from pcs.common import const
+from pcs.common.str_tools import format_list_custom_last_separator
+from pcs.constraint import LOCATION_NODE_VALIDATION_SKIP_MSG
+
 from pcs_test.tier1.cib_resource.common import ResourceTest
 from pcs_test.tools.assertions import (
-    ac,
     AssertPcsMixin,
+    ac,
     assert_pcs_status,
 )
 from pcs_test.tools.bin_mock import get_mock_settings
@@ -17,30 +28,24 @@ from pcs_test.tools.fixture_cib import (
     CachedCibFixture,
     fixture_master_xml,
     fixture_to_cib,
-    wrap_element_by_master_file,
     wrap_element_by_master,
+    wrap_element_by_master_file,
 )
+from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
-    get_test_resource as rc,
     get_tmp_file,
     is_minimum_pacemaker_version,
     is_pacemaker_21_without_20_compatibility,
     outdent,
-    skip_unless_pacemaker_supports_op_onfail_demote,
     skip_unless_crm_rule,
+    skip_unless_pacemaker_supports_op_onfail_demote,
     write_data_to_tmpfile,
     write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import (
-    pcs,
     PcsRunner,
+    pcs,
 )
-
-from pcs import utils
-from pcs import resource
-from pcs.common import const
-from pcs.common.str_tools import format_list_custom_last_separator
-from pcs.constraint import LOCATION_NODE_VALIDATION_SKIP_MSG
 
 # pylint: disable=invalid-name
 # pylint: disable=no-self-use

@@ -1,10 +1,9 @@
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from lxml import etree
-
-from pcs_test.tools.assertions import assert_report_item_equal
-from pcs_test.tools.fixture_crm_mon import complete_state
-from pcs_test.tools.misc import get_test_resource as rc
 
 from pcs import settings
 from pcs.common.reports import ReportItemSeverity as severities
@@ -15,6 +14,10 @@ from pcs.lib.pacemaker.state import (
     _Attrs,
     _Children,
 )
+
+from pcs_test.tools.assertions import assert_report_item_equal
+from pcs_test.tools.fixture_crm_mon import complete_state
+from pcs_test.tools.misc import get_test_resource as rc
 
 # pylint: disable=no-self-use, protected-access
 

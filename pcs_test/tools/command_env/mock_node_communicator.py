@@ -1,17 +1,17 @@
 import json
 from urllib.parse import parse_qs
 
-from pcs_test.tools.custom_mock import MockCurlSimple
-
 from pcs import settings
 from pcs.common import pcs_pycurl as pycurl
 from pcs.common.host import Destination
 from pcs.common.node_communicator import (
-    RequestTarget,
-    RequestData,
     Request,
+    RequestData,
+    RequestTarget,
     Response,
 )
+
+from pcs_test.tools.custom_mock import MockCurlSimple
 
 # pylint: disable=too-many-arguments, protected-access
 

@@ -1,6 +1,9 @@
 # pylint: disable=too-many-lines
 from unittest import TestCase
 
+from pcs.common.reports import codes as report_codes
+from pcs.lib.corosync import config_validators
+
 from pcs_test.tier0.lib.corosync.test_config_validators_common import (
     TotemBase,
     TransportKnetBase,
@@ -9,9 +12,6 @@ from pcs_test.tier0.lib.corosync.test_config_validators_common import (
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal
 from pcs_test.tools.custom_mock import patch_getaddrinfo
-
-from pcs.common.reports import codes as report_codes
-from pcs.lib.corosync import config_validators
 
 # pylint: disable=no-self-use
 

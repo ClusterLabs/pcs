@@ -1,10 +1,15 @@
-from dataclasses import dataclass, field, is_dataclass
 import pkgutil
 from typing import (
     Any,
     List,
 )
 from unittest import TestCase
+
+from dataclasses import (
+    dataclass,
+    field,
+    is_dataclass,
+)
 
 import pcs
 from pcs.common.interface.dto import (

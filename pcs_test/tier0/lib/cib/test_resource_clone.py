@@ -1,14 +1,15 @@
 from unittest import TestCase
+
 from lxml import etree
+
+from pcs.lib.cib.resource import clone
+from pcs.lib.cib.tools import IdProvider
 
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import (
     assert_report_item_list_equal,
     assert_xml_equal,
 )
-
-from pcs.lib.cib.resource import clone
-from pcs.lib.cib.tools import IdProvider
 
 
 class AppendNewCommon(TestCase):

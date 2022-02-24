@@ -12,7 +12,8 @@ extension-pkg-whitelist=lxml.etree,pycurl
 
 [MESSAGES CONTROL]
 # line-too-long and trailing-whitespace is handled by black
-disable=bad-continuation, fixme, line-too-long, missing-docstring, trailing-whitespace
+# wrong-import-order is handled by isort
+disable=bad-continuation, fixme, line-too-long, missing-docstring, trailing-whitespace, consider-using-f-string, unspecified-encoding, wrong-import-order
 # Everything in module context is a constant, but our naming convetion allows
 # constants to have same name format as variables
 const-rgx=(([A-Z_][A-Z0-9_]*)|(__.*__))|([a-z_][a-z0-9_]*)$

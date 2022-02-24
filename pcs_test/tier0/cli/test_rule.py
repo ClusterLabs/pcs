@@ -8,8 +8,8 @@ from pcs.common.pacemaker.rule import (
     CibRuleExpressionDto,
 )
 from pcs.common.types import (
-    CibRuleInEffectStatus,
     CibRuleExpressionType,
+    CibRuleInEffectStatus,
 )
 
 

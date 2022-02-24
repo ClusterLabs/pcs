@@ -1,11 +1,6 @@
 # pylint: disable=too-many-lines
 from collections import defaultdict
-from dataclasses import (
-    dataclass,
-    field,
-)
 from typing import (
-    cast,
     Any,
     Dict,
     List,
@@ -14,6 +9,12 @@ from typing import (
     Sequence,
     Tuple,
     Union,
+    cast,
+)
+
+from dataclasses import (
+    dataclass,
+    field,
 )
 
 from pcs.common import file_type_codes
@@ -36,10 +37,9 @@ from . import (
     const,
     types,
 )
+from .constraints import constraint_to_str
 from .dto import ReportItemMessageDto
 from .item import ReportItemMessage
-from .constraints import constraint_to_str
-
 
 INSTANCE_SUFFIX = "@{0}"
 NODE_PREFIX = "{0}: "

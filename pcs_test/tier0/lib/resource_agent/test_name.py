@@ -1,10 +1,10 @@
 from unittest import TestCase
 
 from pcs.lib.resource_agent import (
-    const,
     InvalidResourceAgentName,
     ResourceAgentMetadata,
     ResourceAgentName,
+    const,
     split_resource_agent_name,
 )
 from pcs.lib.resource_agent.name import name_to_void_metadata

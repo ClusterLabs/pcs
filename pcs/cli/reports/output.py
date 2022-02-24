@@ -1,11 +1,12 @@
 import sys
 
 from pcs.common.reports import (
-    codes,
     ReportItem,
     ReportItemList,
     ReportItemSeverity,
+    codes,
 )
+
 from .messages import report_item_msg_from_dto
 
 

@@ -1,15 +1,18 @@
 # pylint: disable=too-many-lines
-from io import StringIO
 import sys
-from time import sleep
-from unittest import mock, TestCase
 import xml.dom.minidom
 import xml.etree.ElementTree as ET
-
-from pcs_test.tools.xml import dom_get_child_elements
-from pcs_test.tools.misc import get_test_resource as rc
+from io import StringIO
+from time import sleep
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from pcs import utils
+
+from pcs_test.tools.misc import get_test_resource as rc
+from pcs_test.tools.xml import dom_get_child_elements
 
 # pylint: disable=line-too-long
 # pylint: disable=invalid-name

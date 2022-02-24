@@ -1,5 +1,6 @@
 from collections import namedtuple
 from typing import Set
+
 from lxml import etree
 from lxml.etree import _Element
 

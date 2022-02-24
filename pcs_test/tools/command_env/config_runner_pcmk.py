@@ -1,15 +1,13 @@
 import os
 
-from pcs_test.tools.command_env.mock_runner import (
-    Call as RunnerCall,
-    CheckStdinEqualXml,
-)
+from pcs import settings
+
+from pcs_test.tools.command_env.mock_runner import Call as RunnerCall
+from pcs_test.tools.command_env.mock_runner import CheckStdinEqualXml
 from pcs_test.tools.fixture_cib import modify_cib
 from pcs_test.tools.fixture_crm_mon import complete_state
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.xml import etree_to_str
-
-from pcs import settings
 
 # pylint: disable=too-many-arguments
 
@@ -390,7 +388,7 @@ class PcmkShortcuts:
         if env:
             env = dict(env)
         else:
-            env = dict()
+            env = {}
         env["PATH"] = ":".join(
             [
                 settings.fence_agent_binaries,

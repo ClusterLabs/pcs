@@ -1,11 +1,11 @@
 from collections import defaultdict
-from dataclasses import replace as dt_replace
 from typing import (
     Iterable,
     List,
     Tuple,
 )
 
+from dataclasses import replace as dt_replace
 from lxml import etree
 
 from pcs.common import (
@@ -29,9 +29,9 @@ from pcs.lib.cib.resource.agent import (
 )
 from pcs.lib.cib.resource.const import OPERATION_ATTRIBUTES as ATTRIBUTES
 from pcs.lib.cib.resource.types import (
-    ResourceOperationIn,
     ResourceOperationFilteredIn,
     ResourceOperationFilteredOut,
+    ResourceOperationIn,
 )
 from pcs.lib.cib.tools import (
     create_subelement_id,

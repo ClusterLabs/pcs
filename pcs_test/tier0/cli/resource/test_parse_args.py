@@ -1,7 +1,7 @@
 from unittest import TestCase
 
-from pcs.cli.resource import parse_args
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.resource import parse_args
 
 
 class ParseCloneArgs(TestCase):

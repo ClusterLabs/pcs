@@ -12,10 +12,14 @@ from pcs.common.reports import (
     ReportProcessor,
 )
 from pcs.lib import node_communication_format
-from pcs.lib.cib.resource import guest_node, primitive, remote_node
+from pcs.lib.cib.resource import (
+    guest_node,
+    primitive,
+    remote_node,
+)
 from pcs.lib.cib.tools import (
-    IdProvider,
     ElementSearcher,
+    IdProvider,
     get_resources,
 )
 
@@ -29,12 +33,13 @@ from pcs.lib.communication.nodes import (
     RemoveFiles,
     ServiceAction,
 )
-from pcs.lib.communication.tools import (
-    run as run_com,
-    run_and_raise,
-)
+from pcs.lib.communication.tools import run as run_com
+from pcs.lib.communication.tools import run_and_raise
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
-from pcs.lib.env import LibraryEnvironment, WaitType
+from pcs.lib.env import (
+    LibraryEnvironment,
+    WaitType,
+)
 from pcs.lib.errors import LibraryError
 from pcs.lib.file.instance import FileInstance
 from pcs.lib.file.raw_file import raw_file_error_report
@@ -43,8 +48,8 @@ from pcs.lib.pacemaker import state
 from pcs.lib.pacemaker.live import remove_node
 from pcs.lib.resource_agent import (
     ResourceAgentError,
-    resource_agent_error_to_report_item,
     ResourceAgentFacadeFactory,
+    resource_agent_error_to_report_item,
 )
 from pcs.lib.tools import generate_binary_key
 

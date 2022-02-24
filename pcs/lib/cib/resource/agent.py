@@ -5,16 +5,21 @@ from typing import (
     Mapping,
 )
 
-from pcs.common.interface.dto import to_dict
 from pcs.common.const import PcmkRoleType
-from pcs.common.pacemaker.resource.operations import CibResourceOperationDto
+from pcs.common.interface.dto import to_dict
 from pcs.common.pacemaker.nvset import (
     CibNvpairDto,
     CibNvsetDto,
 )
-from pcs.lib.resource_agent import ResourceAgentAction, ResourceAgentMetadata
-from pcs.lib.cib.resource.types import ResourceOperationIn, ResourceOperationOut
-
+from pcs.common.pacemaker.resource.operations import CibResourceOperationDto
+from pcs.lib.cib.resource.types import (
+    ResourceOperationIn,
+    ResourceOperationOut,
+)
+from pcs.lib.resource_agent import (
+    ResourceAgentAction,
+    ResourceAgentMetadata,
+)
 
 # Operation monitor is always required, even if creating default actions was
 # not requested or a resource/stonith agent does not specify it. See

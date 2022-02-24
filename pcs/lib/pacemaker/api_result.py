@@ -1,5 +1,6 @@
-from dataclasses import dataclass
 from typing import Sequence
+
+from dataclasses import dataclass
 
 
 @dataclass(frozen=True)

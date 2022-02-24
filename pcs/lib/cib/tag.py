@@ -1,6 +1,8 @@
-from collections import Counter, OrderedDict
+from collections import (
+    Counter,
+    OrderedDict,
+)
 from typing import (
-    cast,
     Container,
     Dict,
     Iterable,
@@ -9,18 +11,22 @@ from typing import (
     Sequence,
     Tuple,
     Union,
+    cast,
 )
 
 from lxml import etree
 from lxml.etree import _Element
 
 from pcs.common import reports
-from pcs.common.reports import ReportItem, ReportItemList
+from pcs.common.reports import (
+    ReportItem,
+    ReportItemList,
+)
 from pcs.lib.cib.resource.common import find_resources
 from pcs.lib.cib.tools import (
     ElementSearcher,
-    get_configuration_elements_by_id,
     IdProvider,
+    get_configuration_elements_by_id,
 )
 from pcs.lib.pacemaker.values import validate_id
 from pcs.lib.xml_tools import (

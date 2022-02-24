@@ -1,13 +1,14 @@
 from typing import (
     Any,
     Callable,
-    cast,
     Dict,
     List,
+    cast,
 )
+
 from lxml.etree import (
-    _Element,
     SubElement,
+    _Element,
 )
 
 from pcs.common import reports
@@ -16,8 +17,8 @@ from pcs.common.reports.item import ReportItem
 from pcs.lib.cib import resource
 from pcs.lib.cib.constraint import resource_set
 from pcs.lib.cib.tools import (
-    find_unique_id,
     find_element_by_tag_and_id,
+    find_unique_id,
 )
 from pcs.lib.errors import LibraryError
 from pcs.lib.xml_tools import (

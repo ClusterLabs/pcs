@@ -1,9 +1,10 @@
-from dataclasses import dataclass
 from typing import (
     Any,
     Mapping,
     Optional,
 )
+
+from dataclasses import dataclass
 
 from pcs.common.interface.dto import DataTransferObject
 

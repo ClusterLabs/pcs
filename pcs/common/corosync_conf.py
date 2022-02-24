@@ -1,9 +1,10 @@
-from dataclasses import dataclass
 from typing import (
     List,
     Mapping,
     Optional,
 )
+
+from dataclasses import dataclass
 
 from pcs.common.interface.dto import DataTransferObject
 from pcs.common.types import CorosyncTransportType

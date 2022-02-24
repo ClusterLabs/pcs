@@ -1,19 +1,11 @@
 import io
 import logging
-from unittest import mock, TestCase
-
-from pcs_test.tools import fixture
-from pcs_test.tools.assertions import (
-    assert_raise_library_error,
-    assert_report_item_equal,
+from unittest import (
+    TestCase,
+    mock,
 )
-from pcs_test.tools.custom_mock import (
-    MockCurl,
-    MockCurlSimple,
-    MockLibraryReportProcessor,
-)
-from pcs_test.tools.misc import outdent
 
+import pcs.lib.node_communication as lib
 from pcs import settings
 from pcs.common import pcs_pycurl as pycurl
 from pcs.common.host import (
@@ -28,7 +20,18 @@ from pcs.common.node_communicator import (
 )
 from pcs.common.reports import ReportItemSeverity as severity
 from pcs.common.reports import codes as report_codes
-import pcs.lib.node_communication as lib
+
+from pcs_test.tools import fixture
+from pcs_test.tools.assertions import (
+    assert_raise_library_error,
+    assert_report_item_equal,
+)
+from pcs_test.tools.custom_mock import (
+    MockCurl,
+    MockCurlSimple,
+    MockLibraryReportProcessor,
+)
+from pcs_test.tools.misc import outdent
 
 
 class NodeTargetLibFactory(TestCase):

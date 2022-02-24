@@ -7,8 +7,8 @@ from typing import Optional
 # places
 # pylint: disable=unused-import
 from pcs.common import reports
+from pcs.common.file import RawFile as RealFile
 from pcs.common.file import (
-    RawFile as RealFile,
     RawFileError,
     RawFileInterface,
 )

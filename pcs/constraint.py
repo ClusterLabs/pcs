@@ -1,20 +1,20 @@
 import sys
-from collections import defaultdict
-from os.path import isfile
 import xml.dom.minidom
-from xml.dom.minidom import parseString
+from collections import defaultdict
 from enum import Enum
+from os.path import isfile
+from xml.dom.minidom import parseString
 
+import pcs.cli.constraint_colocation.command as colocation_command
+import pcs.cli.constraint_order.command as order_command
+from pcs import rule as rule_utils
 from pcs import (
-    rule as rule_utils,
     settings,
     usage,
     utils,
 )
 from pcs.cli.common import parse_args
 from pcs.cli.common.errors import CmdLineInputError
-import pcs.cli.constraint_colocation.command as colocation_command
-import pcs.cli.constraint_order.command as order_command
 from pcs.cli.constraint_ticket import command as ticket_command
 from pcs.cli.reports import process_library_reports
 from pcs.cli.reports.output import warn
@@ -24,17 +24,15 @@ from pcs.common import (
     reports,
 )
 from pcs.common.reports import ReportItem
-from pcs.common.reports.constraints import (
-    colocation as colocation_format,
-    order as order_format,
-)
+from pcs.common.reports.constraints import colocation as colocation_format
+from pcs.common.reports.constraints import order as order_format
 from pcs.common.str_tools import format_list
 from pcs.lib.cib.constraint import resource_set
 from pcs.lib.cib.constraint.order import ATTRIB as order_attrib
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.pacemaker.values import (
-    sanitize_id,
     SCORE_INFINITY,
+    sanitize_id,
 )
 
 # pylint: disable=too-many-branches, too-many-statements
@@ -1499,10 +1497,7 @@ def find_constraints_containing(resource_id, passed_dom=None):
             break
 
     if resource_match:
-        if (
-            resource_match.parentNode.tagName == "master"
-            or resource_match.parentNode.tagName == "clone"
-        ):
+        if resource_match.parentNode.tagName in ("master", "clone"):
             constraints_found, set_constraints = find_constraints_containing(
                 resource_match.parentNode.getAttribute("id"), dom
             )

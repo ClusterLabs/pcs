@@ -1,5 +1,8 @@
 # pylint: disable=too-many-lines
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from pcs import settings
 from pcs.common import (
@@ -12,11 +15,11 @@ from pcs.lib.xml_tools import etree_to_str
 
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_xml_equal
+from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.custom_mock import (
     TmpFileCall,
     TmpFileMock,
 )
-from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.misc import get_test_resource as rc
 
 

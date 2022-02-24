@@ -6,23 +6,24 @@ from threading import Lock
 from unittest import TestCase
 
 from pcs.common.str_tools import indent
+
 from pcs_test.tier1.cib_resource.common import ResourceTest
 from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.fixture_cib import CachedCibFixture
+from pcs_test.tools.misc import ParametrizedTestMetaClass
+from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
-    get_test_resource as rc,
     get_tmp_file,
     is_minimum_pacemaker_version,
-    skip_unless_crm_rule,
     outdent,
-    ParametrizedTestMetaClass,
+    skip_unless_crm_rule,
     write_data_to_tmpfile,
     write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import (
-    pcs,
     PcsRunner,
+    pcs,
 )
 
 # pylint: disable=invalid-name
@@ -1973,7 +1974,7 @@ class LevelTestsBase(TestCase, AssertPcsMixin):
         write_data_to_tmpfile(cib, self.temp_cib)
 
     def fixture_cib_config_cache(self):
-        # pylint: disable=global-statement
+        # pylint: disable=global-statement,global-variable-not-assigned
         global _fixture_stonith_level_cache, _fixture_stonith_level_cache_lock
         with _fixture_stonith_level_cache_lock:
             if _fixture_stonith_level_cache is None:

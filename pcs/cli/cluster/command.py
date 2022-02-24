@@ -1,8 +1,8 @@
+from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.parse_args import prepare_options
 from pcs.cli.resource.parse_args import (
     parse_create_simple as parse_resource_create_args,
 )
-from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.parse_args import prepare_options
 
 
 def _node_add_remote_separate_name_and_addr(arg_list):

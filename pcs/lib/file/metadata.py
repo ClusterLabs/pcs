@@ -4,7 +4,6 @@ from pcs import settings
 from pcs.common import file_type_codes as code
 from pcs.common.file import FileMetadata
 
-
 _metadata = {
     code.BOOTH_CONFIG: lambda filename: FileMetadata(
         # The filename is expected to be complete (i.e. booth.conf) and verified

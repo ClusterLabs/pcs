@@ -1,9 +1,9 @@
 import logging
 from unittest import mock
 
-from pcs_test.tools.custom_mock import MockLibraryReportProcessor
-
 from pcs.lib.env import LibraryEnvironment as Env
+
+from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
 
 def get_mocked_env(**kwargs):

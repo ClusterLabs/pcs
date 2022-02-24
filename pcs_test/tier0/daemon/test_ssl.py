@@ -1,10 +1,17 @@
 import os
 import ssl
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
+
+from pcs.daemon.ssl import (
+    CertKeyPair,
+    PcsdSSL,
+    SSLCertKeyException,
+)
 
 from pcs_test.tools.misc import get_tmp_dir
-
-from pcs.daemon.ssl import PcsdSSL, CertKeyPair, SSLCertKeyException
 
 SERVER_NAME = "pcsd-daemon"
 SSL_OPTIONS = 0

@@ -1,13 +1,13 @@
 import inspect
 from unittest import TestCase
 
+from pcs.cli.reports import messages as cli_messages
 from pcs.common import file_type_codes
 from pcs.common.reports import (
+    const,
     item,
     messages,
-    const,
 )
-from pcs.cli.reports import messages as cli_messages
 
 
 class AllClassesTested(TestCase):

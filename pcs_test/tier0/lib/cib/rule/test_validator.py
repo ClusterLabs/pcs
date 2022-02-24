@@ -1,8 +1,5 @@
 from unittest import TestCase
 
-from pcs_test.tools import fixture
-from pcs_test.tools.assertions import assert_report_item_list_equal
-
 from pcs.common import reports
 from pcs.common.types import CibRuleExpressionType
 from pcs.lib.cib.rule.expression_part import (
@@ -10,13 +7,13 @@ from pcs.lib.cib.rule.expression_part import (
     BOOL_OR,
     DATE_OP_GT,
     NODE_ATTR_OP_DEFINED,
-    NODE_ATTR_OP_NOT_DEFINED,
     NODE_ATTR_OP_EQ,
-    NODE_ATTR_OP_NE,
-    NODE_ATTR_OP_GTE,
     NODE_ATTR_OP_GT,
-    NODE_ATTR_OP_LTE,
+    NODE_ATTR_OP_GTE,
     NODE_ATTR_OP_LT,
+    NODE_ATTR_OP_LTE,
+    NODE_ATTR_OP_NE,
+    NODE_ATTR_OP_NOT_DEFINED,
     NODE_ATTR_TYPE_INTEGER,
     NODE_ATTR_TYPE_NUMBER,
     NODE_ATTR_TYPE_STRING,
@@ -30,6 +27,9 @@ from pcs.lib.cib.rule.expression_part import (
     RscExpr,
 )
 from pcs.lib.cib.rule.validator import Validator
+
+from pcs_test.tools import fixture
+from pcs_test.tools.assertions import assert_report_item_list_equal
 
 
 class ComplexExpressions(TestCase):

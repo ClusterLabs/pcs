@@ -1,9 +1,12 @@
-from unittest import mock, TestCase
-
-from pcs_test.tools.misc import dict_to_modifiers
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from pcs import host
 from pcs.cli.common.errors import CmdLineInputError
+
+from pcs_test.tools.misc import dict_to_modifiers
 
 
 class HostAuth(TestCase):
