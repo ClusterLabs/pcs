@@ -1,11 +1,10 @@
 import base64
 
-from pcs_test.tools import fixture
-
 from pcs import settings
 from pcs.common import file_type_codes
 from pcs.common.reports import codes as report_codes
 
+from pcs_test.tools import fixture
 
 OFFLINE_ERROR_MSG = "Could not resolve host"
 FAIL_HTTP_KWARGS = dict(

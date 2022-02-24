@@ -1,4 +1,7 @@
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from pcs.cli.booth import command as booth_cmd
 from pcs.cli.common.errors import CmdLineInputError

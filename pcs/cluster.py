@@ -9,37 +9,38 @@ import tempfile
 import time
 import xml.dom.minidom
 from typing import (
-    cast,
     Any,
     Iterable,
     List,
     Mapping,
     Optional,
+    cast,
 )
 
+import pcs.lib.pacemaker.live as lib_pacemaker
 from pcs import (
     settings,
     utils,
 )
-from pcs.utils import parallel_for_nodes
 from pcs.cli.common import parse_args
 from pcs.cli.common.errors import (
-    CmdLineInputError,
     ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE,
     HINT_SYNTAX_CHANGE,
+    CmdLineInputError,
     msg_command_replaced,
 )
 from pcs.cli.file import metadata as file_metadata
 from pcs.cli.reports import process_library_reports
 from pcs.cli.reports.messages import report_item_msg_from_dto
+from pcs.cli.reports.output import warn
+from pcs.common import file as pcs_file
 from pcs.common import (
-    file as pcs_file,
     file_type_codes,
     reports,
 )
 from pcs.common.corosync_conf import (
-    CorosyncNodeDto,
     CorosyncConfDto,
+    CorosyncNodeDto,
 )
 from pcs.common.interface import dto
 from pcs.common.node_communicator import (
@@ -55,19 +56,14 @@ from pcs.common.tools import format_os_error
 from pcs.lib import sbd as lib_sbd
 from pcs.lib.commands.remote_node import _destroy_pcmk_remote_env
 from pcs.lib.communication.nodes import CheckAuth
-from pcs.lib.communication.tools import (
-    run_and_raise,
-    run as run_com_cmd,
-    RunRemotelyBase,
-)
-from pcs.lib.corosync import (
-    live as corosync_live,
-    qdevice_net,
-)
-from pcs.cli.reports.output import warn
+from pcs.lib.communication.tools import RunRemotelyBase
+from pcs.lib.communication.tools import run as run_com_cmd
+from pcs.lib.communication.tools import run_and_raise
+from pcs.lib.corosync import live as corosync_live
+from pcs.lib.corosync import qdevice_net
 from pcs.lib.errors import LibraryError
 from pcs.lib.node import get_existing_nodes_names
-import pcs.lib.pacemaker.live as lib_pacemaker
+from pcs.utils import parallel_for_nodes
 
 # pylint: disable=too-many-branches, too-many-statements
 

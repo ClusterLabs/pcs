@@ -7,15 +7,15 @@ from pcs.common.node_communicator import (
     RequestData,
 )
 from pcs.common.reports.item import ReportItem
+from pcs.lib.communication.qdevice import QdeviceBase
 from pcs.lib.communication.tools import (
     AllAtOnceStrategyMixin,
     AllSameDataMixin,
     RunRemotelyBase,
-    SkipOfflineMixin,
     SimpleResponseProcessingMixin,
     SimpleResponseProcessingNoResponseOnSuccessMixin,
+    SkipOfflineMixin,
 )
-from pcs.lib.communication.qdevice import QdeviceBase
 
 
 class GetCaCert(AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase):

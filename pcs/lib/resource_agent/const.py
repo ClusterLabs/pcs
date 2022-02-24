@@ -1,5 +1,10 @@
 from pcs.common.resource_agent import const
-from .types import FakeAgentName, OcfVersion, _FAKE_AGENT_STANDARD
+
+from .types import (
+    _FAKE_AGENT_STANDARD,
+    FakeAgentName,
+    OcfVersion,
+)
 
 OCF_1_0 = OcfVersion("1.0")
 OCF_1_1 = OcfVersion("1.1")

@@ -1,58 +1,65 @@
 # pylint: disable=too-many-lines
-import sys
-from xml.dom.minidom import parseString
+import json
 import re
+import sys
 import textwrap
 import time
-import json
 from functools import partial
-
 from typing import (
     Any,
     Callable,
-    cast,
     List,
     Sequence,
+    cast,
 )
+from xml.dom.minidom import parseString
 
-from pcs import constraint, utils
-from pcs.common import (
-    const,
-    pacemaker,
+import pcs.lib.cib.acl as lib_acl
+import pcs.lib.pacemaker.live as lib_pacemaker
+import pcs.lib.resource_agent as lib_ra
+from pcs import (
+    constraint,
+    utils,
 )
-from pcs.common.pacemaker.defaults import CibDefaultsDto
-from pcs.common.resource_agent.dto import ResourceAgentNameDto
-from pcs.common.str_tools import format_list
-from pcs.settings import (
-    pacemaker_wait_timeout_status as PACEMAKER_WAIT_TIMEOUT_STATUS,
+from pcs.cli.common.errors import (
+    CmdLineInputError,
+    raise_command_replaced,
 )
-from pcs.cli.common.errors import CmdLineInputError, raise_command_replaced
 from pcs.cli.common.parse_args import (
+    InputModifiers,
     group_by_keywords,
     prepare_options,
     prepare_options_allowed,
     wait_to_timeout,
-    InputModifiers,
 )
 from pcs.cli.common.tools import timeout_to_seconds_legacy
 from pcs.cli.nvset import nvset_dto_list_to_lines
 from pcs.cli.reports import process_library_reports
-from pcs.cli.reports.output import error, warn
+from pcs.cli.reports.output import (
+    error,
+    warn,
+)
+from pcs.cli.resource.output import format_resource_agent_metadata
 from pcs.cli.resource.parse_args import (
     parse_bundle_create_options,
     parse_bundle_reset_options,
     parse_bundle_update_options,
-    parse_clone as parse_clone_args,
-    parse_create as parse_create_args,
 )
-from pcs.cli.resource.output import format_resource_agent_metadata
+from pcs.cli.resource.parse_args import parse_clone as parse_clone_args
+from pcs.cli.resource.parse_args import parse_create as parse_create_args
 from pcs.cli.resource_agent import find_single_agent
-from pcs.common import reports
-from pcs.common.str_tools import (
-    indent,
-    format_list_custom_last_separator,
+from pcs.common import (
+    const,
+    pacemaker,
+    reports,
 )
-import pcs.lib.cib.acl as lib_acl
+from pcs.common.pacemaker.defaults import CibDefaultsDto
+from pcs.common.resource_agent.dto import ResourceAgentNameDto
+from pcs.common.str_tools import (
+    format_list,
+    format_list_custom_last_separator,
+    indent,
+)
 from pcs.lib.cib.resource import (
     bundle,
     guest_node,
@@ -67,15 +74,15 @@ from pcs.lib.cib.tools import (
     get_tags,
 )
 from pcs.lib.commands.resource import (
-    _validate_guest_change,
     _get_nodes_to_validate_against,
+    _validate_guest_change,
 )
 from pcs.lib.errors import LibraryError
-import pcs.lib.pacemaker.live as lib_pacemaker
 from pcs.lib.pacemaker.state import get_resource_state
-
 from pcs.lib.pacemaker.values import validate_id
-import pcs.lib.resource_agent as lib_ra
+from pcs.settings import (
+    pacemaker_wait_timeout_status as PACEMAKER_WAIT_TIMEOUT_STATUS,
+)
 
 # pylint: disable=invalid-name
 # pylint: disable=too-many-branches

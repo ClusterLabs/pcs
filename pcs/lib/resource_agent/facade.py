@@ -1,7 +1,13 @@
 from collections import defaultdict
-from dataclasses import replace as dc_replace
-from typing import Dict, Iterable, List, Optional, Set
+from typing import (
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Set,
+)
 
+from dataclasses import replace as dc_replace
 from lxml import etree
 
 from pcs import settings
@@ -12,18 +18,25 @@ from pcs.lib.external import CommandRunner
 from . import const
 from .error import (
     ResourceAgentError,
-    resource_agent_error_to_report_item,
     UnableToGetAgentMetadata,
+    resource_agent_error_to_report_item,
 )
 from .name import name_to_void_metadata
 from .ocf_transform import ocf_version_to_ocf_unified
-from .pcs_transform import get_additional_trace_parameters, ocf_unified_to_pcs
+from .pcs_transform import (
+    get_additional_trace_parameters,
+    ocf_unified_to_pcs,
+)
 from .types import (
     ResourceAgentMetadata,
     ResourceAgentName,
     ResourceAgentParameter,
 )
-from .xml import load_fake_agent_metadata, load_metadata, parse_metadata
+from .xml import (
+    load_fake_agent_metadata,
+    load_metadata,
+    parse_metadata,
+)
 
 
 class ResourceAgentFacade:

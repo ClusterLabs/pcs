@@ -1,7 +1,9 @@
-from dataclasses import dataclass
 from typing import Sequence
 
+from dataclasses import dataclass
+
 from pcs.common.interface.dto import DataTransferObject
+
 from .nvset import CibNvsetDto
 
 

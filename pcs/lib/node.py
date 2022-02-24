@@ -2,18 +2,26 @@ from typing import (
     Iterable,
     List,
     Optional,
-    Tuple,
     Set,
+    Tuple,
 )
 
 from lxml.etree import _Element
 
 from pcs.common import reports
-from pcs.common.reports import ReportItemList
-from pcs.common.reports import ReportItemSeverity
+from pcs.common.reports import (
+    ReportItemList,
+    ReportItemSeverity,
+)
 from pcs.common.reports.item import ReportItem
-from pcs.lib.cib.node import PacemakerNode, get_node_names
-from pcs.lib.cib.resource import remote_node, guest_node
+from pcs.lib.cib.node import (
+    PacemakerNode,
+    get_node_names,
+)
+from pcs.lib.cib.resource import (
+    guest_node,
+    remote_node,
+)
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
 from pcs.lib.corosync.node import CorosyncNode
 from pcs.lib.xml_tools import get_root

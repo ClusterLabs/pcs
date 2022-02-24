@@ -1,11 +1,11 @@
 from unittest import TestCase
 
-from pcs_test.tools import fixture
-from pcs_test.tools.command_env import get_env_tools
-
 from pcs.common import reports
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands.sbd import disable_sbd
+
+from pcs_test.tools import fixture
+from pcs_test.tools.command_env import get_env_tools
 
 
 class DisableSbd(TestCase):

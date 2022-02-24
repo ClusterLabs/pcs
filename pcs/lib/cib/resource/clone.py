@@ -7,7 +7,10 @@ promotable clones are clones with meta attribute promotable=true. Master
 elements are deprecated yet still supported in pacemaker. We provide read-only
 support for them to be able to read, process and display CIBs containing them.
 """
-from typing import Mapping, Optional
+from typing import (
+    Mapping,
+    Optional,
+)
 
 from lxml import etree
 from lxml.etree import _Element
@@ -15,8 +18,10 @@ from lxml.etree import _Element
 from pcs.common.reports import ReportItemList
 from pcs.lib.cib import nvpair
 from pcs.lib.cib.tools import IdProvider
-from pcs.lib.pacemaker.values import is_true, validate_id
-
+from pcs.lib.pacemaker.values import (
+    is_true,
+    validate_id,
+)
 
 TAG_CLONE = "clone"
 TAG_MASTER = "master"

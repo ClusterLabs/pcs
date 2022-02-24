@@ -1,12 +1,12 @@
-from os.path import join as join_path
 from functools import partial
+from os.path import join as join_path
 from ssl import OP_NO_SSLv2
 from unittest import TestCase
 
-from pcs_test.tools.misc import create_setup_patch_mixin
-
 from pcs import settings
 from pcs.daemon import env
+
+from pcs_test.tools.misc import create_setup_patch_mixin
 
 
 class Logger:

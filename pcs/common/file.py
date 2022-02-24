@@ -1,7 +1,7 @@
-from collections import namedtuple
 import fcntl
 import os
 import shutil
+from collections import namedtuple
 
 from pcs.common.tools import format_os_error
 

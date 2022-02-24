@@ -1,13 +1,15 @@
-from unittest import mock, TestCase
-
-from pcs_test.tools import fixture
-from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.misc import get_test_resource as rc
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from pcs import settings
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands.cluster import verify
 
+from pcs_test.tools import fixture
+from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.misc import get_test_resource as rc
 
 CRM_VERIFY_ERROR_REPORT_LINES = [
     "someting wrong\nsomething else wrong\n",

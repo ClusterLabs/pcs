@@ -1,4 +1,9 @@
-from typing import List, Optional, Tuple, Union
+from typing import (
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 from lxml import etree
 from lxml.etree import _Element
@@ -19,7 +24,6 @@ from .types import (
     ResourceAgentParameterOcf1_0,
     ResourceAgentParameterOcf1_1,
 )
-
 
 ### load metadata
 

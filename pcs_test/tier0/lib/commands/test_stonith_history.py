@@ -1,10 +1,10 @@
 from unittest import TestCase
 
-from pcs_test.tools import fixture
-from pcs_test.tools.command_env import get_env_tools
-
 from pcs.common import reports
 from pcs.lib.commands import stonith
+
+from pcs_test.tools import fixture
+from pcs_test.tools.command_env import get_env_tools
 
 
 class HistoryGetText(TestCase):

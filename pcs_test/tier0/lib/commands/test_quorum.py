@@ -2,7 +2,17 @@
 import base64
 import logging
 import re
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
+
+from pcs.common import reports
+from pcs.common.reports import ReportItemSeverity as severity
+from pcs.common.reports import codes as report_codes
+from pcs.lib.commands import quorum as lib
+from pcs.lib.corosync.config_facade import ConfigFacade
+from pcs.lib.env import LibraryEnvironment
 
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import (
@@ -12,18 +22,8 @@ from pcs_test.tools.assertions import (
 )
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
-from pcs_test.tools.misc import (
-    get_test_resource as rc,
-    outdent,
-)
-
-from pcs.common import reports
-from pcs.common.reports import ReportItemSeverity as severity
-from pcs.common.reports import codes as report_codes
-from pcs.lib.env import LibraryEnvironment
-from pcs.lib.corosync.config_facade import ConfigFacade
-
-from pcs.lib.commands import quorum as lib
+from pcs_test.tools.misc import get_test_resource as rc
+from pcs_test.tools.misc import outdent
 
 
 def _read_file_rc(name):

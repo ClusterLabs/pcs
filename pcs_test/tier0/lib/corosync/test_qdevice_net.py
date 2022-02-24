@@ -1,11 +1,12 @@
 import base64
 import os.path
 from textwrap import dedent
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
 
-from pcs_test.tools.assertions import assert_raise_library_error
-from pcs_test.tools.misc import get_test_resource, get_tmp_dir
-
+import pcs.lib.corosync.qdevice_net as lib
 from pcs import settings
 from pcs.common import reports
 from pcs.common.reports import ReportItemSeverity as severity
@@ -13,7 +14,11 @@ from pcs.common.reports import codes as report_codes
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 
-import pcs.lib.corosync.qdevice_net as lib
+from pcs_test.tools.assertions import assert_raise_library_error
+from pcs_test.tools.misc import (
+    get_test_resource,
+    get_tmp_dir,
+)
 
 # pylint: disable=no-self-use
 

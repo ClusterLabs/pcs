@@ -3,17 +3,21 @@
 
 # pylint: disable=wrong-import-position, no-member, protected-access
 
-import os.path
-import sys
-import pprint
 import logging
+import os.path
+import pprint
+import sys
 
 PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, PACKAGE_DIR)
 
-from pcs.common.host import Destination
-from pcs.common.node_communicator import Request, RequestData, RequestTarget
 from pcs import utils
+from pcs.common.host import Destination
+from pcs.common.node_communicator import (
+    Request,
+    RequestData,
+    RequestTarget,
+)
 
 logger_handler = logging.StreamHandler()
 logger_handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))

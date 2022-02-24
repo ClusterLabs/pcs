@@ -1,5 +1,4 @@
 from typing import (
-    cast,
     AbstractSet,
     Any,
     Iterable,
@@ -10,6 +9,7 @@ from typing import (
     Sequence,
     Set,
     Tuple,
+    cast,
 )
 
 from lxml.etree import _Element
@@ -21,7 +21,6 @@ from pcs.common.pacemaker.resource.relations import (
 )
 from pcs.lib.cib import tools
 from pcs.lib.cib.resource import common
-
 
 IdRelationMap = Mapping[str, RelationEntityDto]
 

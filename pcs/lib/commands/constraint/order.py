@@ -1,6 +1,7 @@
 from functools import partial
-from pcs.lib.cib.constraint import order
+
 import pcs.lib.commands.constraint.common
+from pcs.lib.cib.constraint import order
 
 # configure common constraint command
 config = partial(

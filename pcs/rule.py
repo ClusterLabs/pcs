@@ -1,7 +1,10 @@
 import re
 import xml.dom.minidom
-
-from typing import List, Any, Optional
+from typing import (
+    Any,
+    List,
+    Optional,
+)
 
 from pcs import utils
 from pcs.cli.reports.output import warn

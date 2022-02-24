@@ -1,4 +1,7 @@
-from typing import List, Optional
+from typing import (
+    List,
+    Optional,
+)
 
 from pcs.common.pacemaker.rule import CibRuleExpressionDto
 from pcs.common.str_tools import (
@@ -6,8 +9,8 @@ from pcs.common.str_tools import (
     indent,
 )
 from pcs.common.types import (
-    CibRuleInEffectStatus,
     CibRuleExpressionType,
+    CibRuleInEffectStatus,
 )
 
 _in_effect_label_map = {

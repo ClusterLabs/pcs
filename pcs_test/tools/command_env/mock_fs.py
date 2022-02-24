@@ -2,7 +2,6 @@ import site
 
 from pcs_test import PROJECT_ROOT
 
-
 CALL_TYPE_FS = "CALL_TYPE_FS"
 
 _FUNC_ARGS = {

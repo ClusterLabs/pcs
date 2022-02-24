@@ -1,5 +1,16 @@
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
+
 from lxml import etree
+
+from pcs import settings
+from pcs.common.reports import ReportItemSeverity as severity
+from pcs.common.reports import codes as report_codes
+from pcs.lib.cib import node
+from pcs.lib.cib.tools import IdProvider
+from pcs.lib.pacemaker.state import ClusterState
 
 from pcs_test.tools import fixture_crm_mon
 from pcs_test.tools.assertions import (
@@ -8,14 +19,6 @@ from pcs_test.tools.assertions import (
 )
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.xml import etree_to_str
-
-from pcs import settings
-from pcs.common.reports import ReportItemSeverity as severity
-from pcs.common.reports import codes as report_codes
-from pcs.lib.cib.tools import IdProvider
-from pcs.lib.pacemaker.state import ClusterState
-
-from pcs.lib.cib import node
 
 # pylint: disable=protected-access
 

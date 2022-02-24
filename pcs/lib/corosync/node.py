@@ -1,13 +1,13 @@
-from collections import namedtuple
 import socket
+from collections import namedtuple
 
-from pcs.lib.validate import (
-    is_ipv4_address,
-    is_ipv6_address,
-)
 from pcs.common.corosync_conf import (
     CorosyncNodeAddressDto,
     CorosyncNodeDto,
+)
+from pcs.lib.validate import (
+    is_ipv4_address,
+    is_ipv6_address,
 )
 
 ADDR_IPV4 = "IPv4"

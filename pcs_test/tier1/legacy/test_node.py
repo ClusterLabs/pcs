@@ -1,25 +1,30 @@
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from lxml import etree
 
+from pcs import (
+    node,
+    utils,
+)
+
 from pcs_test.tools.assertions import (
-    ac,
     AssertPcsMixin,
+    ac,
 )
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
+from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
-    get_test_resource as rc,
     get_tmp_file,
     outdent,
     write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import (
-    pcs,
     PcsRunner,
+    pcs,
 )
-
-from pcs import node
-from pcs import utils
 
 # pylint: disable=invalid-name, line-too-long
 

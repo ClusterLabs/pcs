@@ -1,28 +1,30 @@
 import base64
 import logging
-from unittest import mock, TestCase
-
-from pcs_test.tools.assertions import (
-    assert_raise_library_error,
-    assert_report_item_list_equal,
+from unittest import (
+    TestCase,
+    mock,
 )
-from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
+import pcs.lib.commands.qdevice as lib
 from pcs.common import reports
 from pcs.common.reports import ReportItemSeverity as severity
-from pcs.common.services.interfaces import ServiceManagerInterface
+from pcs.common.reports import codes as report_codes
 from pcs.common.services.errors import (
     DisableServiceError,
     EnableServiceError,
     StartServiceError,
     StopServiceError,
 )
-from pcs.common.reports import codes as report_codes
+from pcs.common.services.interfaces import ServiceManagerInterface
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import KillServicesError
 
-import pcs.lib.commands.qdevice as lib
+from pcs_test.tools.assertions import (
+    assert_raise_library_error,
+    assert_report_item_list_equal,
+)
+from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
 
 class QdeviceTestCase(TestCase):

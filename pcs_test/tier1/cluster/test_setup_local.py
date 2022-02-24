@@ -3,6 +3,7 @@ from textwrap import dedent
 from unittest import TestCase
 
 from pcs import settings
+
 from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.misc import (
     get_tmp_file,

@@ -1,16 +1,14 @@
 from unittest import TestCase
 
+from pcs.common.reports import codes as report_codes
+from pcs.lib.commands import stonith_agent as lib
+
+from pcs_test.tools import fixture
 from pcs_test.tools.assertions import (
     assert_raise_library_error,
     start_tag_error_text,
 )
-from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
-
-from pcs.common.reports import codes as report_codes
-
-from pcs.lib.commands import stonith_agent as lib
-
 
 _fixture_fenced_xml = """
     <?xml version="1.0"?><!DOCTYPE resource-agent SYSTEM "ra-api-1.dtd">

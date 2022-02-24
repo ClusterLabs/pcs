@@ -1,19 +1,19 @@
-import sys
+import datetime
+import difflib
+import grp
+import json
+import logging
 import os
 import os.path
-import re
-import datetime
-from io import BytesIO
-import tarfile
-import json
-from xml.dom.minidom import parse
-import logging
 import pwd
-import grp
+import re
+import shutil
+import sys
+import tarfile
 import tempfile
 import time
-import shutil
-import difflib
+from io import BytesIO
+from xml.dom.minidom import parse
 
 try:
     import distro
@@ -25,16 +25,17 @@ except ImportError:
 
 # TODO remove, deprecated
 try:
-    import clufter.facts
-    import clufter.format_manager
-    import clufter.filter_manager
     import clufter.command_manager
+    import clufter.facts
+    import clufter.filter_manager
+    import clufter.format_manager
 
     no_clufter = False
 except ImportError:
     no_clufter = True
 
 from pcs import (
+    alert,
     cluster,
     constraint,
     quorum,
@@ -44,7 +45,6 @@ from pcs import (
     stonith,
     usage,
     utils,
-    alert,
 )
 from pcs.cli.common import middleware
 from pcs.cli.common.errors import CmdLineInputError

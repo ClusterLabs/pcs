@@ -4,15 +4,14 @@ from lxml import etree
 
 from pcs.common import reports
 from pcs.common.reports.item import ReportItem
-from pcs.lib.errors import LibraryError
 from pcs.lib.cib.tools import (
     check_new_id_applicable,
     does_id_exist,
-    find_unique_id,
     find_element_by_tag_and_id,
+    find_unique_id,
 )
+from pcs.lib.errors import LibraryError
 from pcs.lib.xml_tools import etree_element_attibutes_to_dict
-
 
 TAG_GROUP = "acl_group"
 TAG_ROLE = "acl_role"

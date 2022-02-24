@@ -1,7 +1,7 @@
 from functools import partial
 
-from pcs.lib.cib.constraint import colocation
 import pcs.lib.commands.constraint.common
+from pcs.lib.cib.constraint import colocation
 
 # configure common constraint command
 config = partial(

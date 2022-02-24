@@ -1,10 +1,22 @@
-from collections import namedtuple
-from concurrent.futures import ProcessPoolExecutor
-from ctypes import byref, cast, CDLL, CFUNCTYPE, POINTER, sizeof, Structure
-from ctypes import c_char, c_char_p, c_int, c_uint, c_void_p
-from ctypes.util import find_library
 import grp
 import pwd
+from collections import namedtuple
+from concurrent.futures import ProcessPoolExecutor
+from ctypes import (
+    CDLL,
+    CFUNCTYPE,
+    POINTER,
+    Structure,
+    byref,
+    c_char,
+    c_char_p,
+    c_int,
+    c_uint,
+    c_void_p,
+    cast,
+    sizeof,
+)
+from ctypes.util import find_library
 
 from tornado.gen import coroutine
 

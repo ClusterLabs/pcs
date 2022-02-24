@@ -1,6 +1,6 @@
 from typing import (
-    cast,
     List,
+    cast,
 )
 
 from lxml.etree import _Element

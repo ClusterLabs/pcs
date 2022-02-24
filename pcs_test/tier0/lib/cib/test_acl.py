@@ -1,19 +1,23 @@
-from unittest import mock, TestCase
-from lxml import etree
-
-from pcs_test.tools.assertions import (
-    assert_raise_library_error,
-    assert_xml_equal,
-    ExtendedAssertionsMixin,
+from unittest import (
+    TestCase,
+    mock,
 )
-from pcs_test.tools.misc import get_test_resource as rc
-from pcs_test.tools.xml import get_xml_manipulation_creator_from_file
+
+from lxml import etree
 
 from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
 from pcs.lib.cib import acl as lib
 from pcs.lib.cib.tools import get_acls
 from pcs.lib.errors import LibraryError
+
+from pcs_test.tools.assertions import (
+    ExtendedAssertionsMixin,
+    assert_raise_library_error,
+    assert_xml_equal,
+)
+from pcs_test.tools.misc import get_test_resource as rc
+from pcs_test.tools.xml import get_xml_manipulation_creator_from_file
 
 
 class LibraryAclTest(TestCase):

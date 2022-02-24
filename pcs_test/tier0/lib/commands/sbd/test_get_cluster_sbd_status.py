@@ -1,13 +1,12 @@
-from functools import partial
 import json
+from functools import partial
 from unittest import TestCase
-
-from pcs_test.tools import fixture
-from pcs_test.tools.command_env import get_env_tools
 
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands.sbd import get_cluster_sbd_status
 
+from pcs_test.tools import fixture
+from pcs_test.tools.command_env import get_env_tools
 
 warn_unable_to_get_sbd_status = partial(
     fixture.warn,

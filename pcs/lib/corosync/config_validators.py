@@ -1,5 +1,9 @@
 # pylint: disable=too-many-lines
-from collections import Counter, defaultdict, namedtuple
+from collections import (
+    Counter,
+    defaultdict,
+    namedtuple,
+)
 from itertools import zip_longest
 from typing import (
     List,
@@ -9,17 +13,17 @@ from typing import (
 
 from pcs.common import reports
 from pcs.common.reports import (
-    get_severity,
     ReportItem,
     ReportItemList,
     ReportItemSeverity,
+    get_severity,
 )
 from pcs.lib import validate
 from pcs.lib.corosync import constants
 from pcs.lib.corosync.node import (
+    ADDR_FQDN,
     ADDR_IPV4,
     ADDR_IPV6,
-    ADDR_FQDN,
     ADDR_UNRESOLVABLE,
     get_address_type,
 )

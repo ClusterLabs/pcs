@@ -7,12 +7,15 @@ from typing import (
     TypeVar,
     Union,
 )
-from dataclasses import asdict, fields, is_dataclass
 
 import dacite
+from dataclasses import (
+    asdict,
+    fields,
+    is_dataclass,
+)
 
 from pcs.common import types
-
 
 PrimitiveType = Union[str, int, float, bool, None]
 DtoPayload = Dict[str, "SerializableType"]  # type: ignore

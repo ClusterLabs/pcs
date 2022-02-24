@@ -1,21 +1,24 @@
 from textwrap import dedent
-from unittest import mock, TestCase
-
-from pcs_test.tools.misc import dict_to_modifiers
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from pcs import resource
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.common.pacemaker.defaults import CibDefaultsDto
 from pcs.common.pacemaker.nvset import (
     CibNvpairDto,
     CibNvsetDto,
 )
-from pcs.common.pacemaker.defaults import CibDefaultsDto
 from pcs.common.pacemaker.rule import CibRuleExpressionDto
 from pcs.common.reports import codes as report_codes
 from pcs.common.types import (
-    CibRuleInEffectStatus,
     CibRuleExpressionType,
+    CibRuleInEffectStatus,
 )
+
+from pcs_test.tools.misc import dict_to_modifiers
 
 
 class DefaultsBaseMixin:

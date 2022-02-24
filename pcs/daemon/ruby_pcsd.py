@@ -1,19 +1,27 @@
 import json
 import logging
-from base64 import b64decode, b64encode, binascii
+from base64 import (
+    b64decode,
+    b64encode,
+    binascii,
+)
 from collections import namedtuple
 from time import time as now
 
 import pycurl
-from tornado.gen import convert_yielded
-from tornado.web import HTTPError
-from tornado.httputil import HTTPServerRequest, HTTPHeaders
-from tornado.httpclient import AsyncHTTPClient, HTTPClientError
 from tornado.curl_httpclient import CurlError
-
+from tornado.gen import convert_yielded
+from tornado.httpclient import (
+    AsyncHTTPClient,
+    HTTPClientError,
+)
+from tornado.httputil import (
+    HTTPHeaders,
+    HTTPServerRequest,
+)
+from tornado.web import HTTPError
 
 from pcs.daemon import log
-
 
 SINATRA_GUI = "sinatra_gui"
 SINATRA_REMOTE = "sinatra_remote"

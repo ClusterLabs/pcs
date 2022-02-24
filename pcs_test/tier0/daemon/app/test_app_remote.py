@@ -1,15 +1,18 @@
 import logging
-from urllib.parse import urlencode
 from unittest import mock
+from urllib.parse import urlencode
 
 from tornado.locks import Lock
 from tornado.util import TimeoutError as TornadoTimeoutError
 
+from pcs.daemon import (
+    http_server,
+    ruby_pcsd,
+)
+from pcs.daemon.app import sinatra_remote
+
 from pcs_test.tier0.daemon.app import fixtures_app
 from pcs_test.tools.misc import create_setup_patch_mixin
-
-from pcs.daemon import ruby_pcsd, http_server
-from pcs.daemon.app import sinatra_remote
 
 # Don't write errors to test output.
 logging.getLogger("tornado.access").setLevel(logging.CRITICAL)

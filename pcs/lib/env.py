@@ -1,22 +1,25 @@
 from typing import (
-    cast,
     Mapping,
     Optional,
     Union,
+    cast,
 )
 
 from lxml.etree import _Element
-from pcs.common.services.interfaces import ServiceManagerInterface
 
-from pcs.common import file_type_codes
-from pcs.common import reports
-from pcs.common.node_communicator import Communicator, NodeCommunicatorFactory
+from pcs.common import (
+    file_type_codes,
+    reports,
+)
+from pcs.common.node_communicator import (
+    Communicator,
+    NodeCommunicatorFactory,
+)
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
+from pcs.common.services.interfaces import ServiceManagerInterface
 from pcs.common.tools import Version
 from pcs.lib.booth.env import BoothEnv
-from pcs.lib.dr.env import DrEnv
-from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.communication import qdevice
 from pcs.lib.communication.corosync import (
     CheckCorosyncOffline,
@@ -32,10 +35,12 @@ from pcs.lib.corosync.config_parser import (
     verify_section as verify_corosync_section,
 )
 from pcs.lib.corosync.live import get_local_corosync_conf
-from pcs.lib.external import CommandRunner
+from pcs.lib.dr.env import DrEnv
 from pcs.lib.errors import LibraryError
+from pcs.lib.external import CommandRunner
 from pcs.lib.file.instance import FileInstance
 from pcs.lib.interface.config import ParserErrorException
+from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.node_communication import (
     LibCommunicatorLogger,
     NodeTargetLibFactory,

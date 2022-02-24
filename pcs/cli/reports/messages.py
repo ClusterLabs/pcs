@@ -1,23 +1,23 @@
 from typing import (
-    get_type_hints,
     Any,
     Dict,
     Mapping,
+    get_type_hints,
 )
 
 from pcs.common import file_type_codes
-from pcs.common.str_tools import (
-    format_list,
-    format_optional,
-    format_plural,
-    transform,
-)
 from pcs.common.reports import (
     const,
     dto,
     item,
     messages,
     types,
+)
+from pcs.common.str_tools import (
+    format_list,
+    format_optional,
+    format_plural,
+    transform,
 )
 from pcs.common.tools import get_all_subclasses
 

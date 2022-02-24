@@ -1,12 +1,13 @@
-from dataclasses import dataclass
 from typing import (
     Any,
     Mapping,
     Sequence,
 )
 
-from pcs.common.types import ResourceRelationType
+from dataclasses import dataclass
+
 from pcs.common.interface.dto import DataTransferObject
+from pcs.common.types import ResourceRelationType
 
 
 @dataclass(frozen=True)

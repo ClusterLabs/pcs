@@ -1,9 +1,6 @@
 # coding=utf-8
 from unittest import TestCase
 
-from pcs_test.tools import fixture
-from pcs_test.tools.command_env import get_env_tools
-
 from pcs.common import const
 from pcs.common.interface.dto import from_dict
 from pcs.common.pacemaker.resource.operations import (
@@ -12,14 +9,17 @@ from pcs.common.pacemaker.resource.operations import (
 )
 from pcs.common.reports import codes as report_codes
 from pcs.common.resource_agent.dto import (
+    ListResourceAgentNameDto,
     ResourceAgentActionDto,
     ResourceAgentMetadataDto,
     ResourceAgentNameDto,
     ResourceAgentParameterDto,
-    ListResourceAgentNameDto,
 )
 from pcs.lib.commands import resource_agent as lib
 from pcs.lib.resource_agent import ResourceAgentName
+
+from pcs_test.tools import fixture
+from pcs_test.tools.command_env import get_env_tools
 
 
 def _operation_fixture(name, interval="", role=None, timeout=None):

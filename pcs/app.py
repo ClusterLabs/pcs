@@ -1,14 +1,13 @@
 import getopt
+import logging
 import os
 import sys
-import logging
 
 from pcs import (
     settings,
     usage,
     utils,
 )
-
 from pcs.cli.common import (
     capabilities,
     completion,
@@ -16,7 +15,10 @@ from pcs.cli.common import (
     parse_args,
     routing,
 )
-from pcs.cli.reports import process_library_reports, output
+from pcs.cli.reports import (
+    output,
+    process_library_reports,
+)
 from pcs.cli.routing import (
     acl,
     alert,

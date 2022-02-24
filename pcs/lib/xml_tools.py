@@ -1,4 +1,7 @@
-from typing import Dict, Iterable
+from typing import (
+    Dict,
+    Iterable,
+)
 
 from lxml import etree
 from lxml.etree import _Element

@@ -1,16 +1,19 @@
 from random import shuffle
 from textwrap import dedent
-from unittest import mock, TestCase
-
-from pcs_test.tools.assertions import (
-    ac,
-    AssertPcsMixin,
+from unittest import (
+    TestCase,
+    mock,
 )
-from pcs_test.tools.misc import dict_to_modifiers
 
 from pcs import resource
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.reports.processor import ReportItemSeverity
+
+from pcs_test.tools.assertions import (
+    AssertPcsMixin,
+    ac,
+)
+from pcs_test.tools.misc import dict_to_modifiers
 
 
 class FailcountShow(TestCase):

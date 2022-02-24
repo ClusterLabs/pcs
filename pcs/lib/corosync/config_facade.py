@@ -1,19 +1,22 @@
 from typing import (
-    cast,
     Dict,
     Iterable,
     List,
     Mapping,
     Optional,
+    cast,
 )
 
 from pcs import settings
 from pcs.common import reports
 from pcs.common.reports.item import ReportItem
-from pcs.lib.corosync import config_parser, constants, node
+from pcs.lib.corosync import (
+    config_parser,
+    constants,
+    node,
+)
 from pcs.lib.errors import LibraryError
 from pcs.lib.interface.config import FacadeInterface
-
 
 _KNET_COMPRESSION_OPTIONS_PREFIX = "knet_compression_"
 _KNET_CRYPTO_OPTIONS_PREFIX = "crypto_"

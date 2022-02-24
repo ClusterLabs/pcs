@@ -11,14 +11,17 @@ from pcs.common.reports.const import (
     ADD_REMOVE_CONTAINER_TYPE_GROUP,
     ADD_REMOVE_ITEM_TYPE_RESOURCE,
 )
-from pcs.common.reports.item import ReportItem, ReportItemList
+from pcs.common.reports.item import (
+    ReportItem,
+    ReportItemList,
+)
 from pcs.lib.cib.resource import (
     clone,
     group,
 )
 from pcs.lib.cib.resource.common import (
-    get_parent_resource,
     get_inner_resources,
+    get_parent_resource,
     is_resource,
     is_wrapper_resource,
 )

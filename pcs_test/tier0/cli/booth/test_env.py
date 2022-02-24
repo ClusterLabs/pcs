@@ -1,4 +1,7 @@
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from pcs.cli.booth import env
 from pcs.common import file_type_codes

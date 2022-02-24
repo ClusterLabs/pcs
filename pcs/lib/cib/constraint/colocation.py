@@ -5,7 +5,10 @@ from pcs.common.reports.item import ReportItem
 from pcs.lib.cib.constraint import constraint
 from pcs.lib.cib.tools import check_new_id_applicable
 from pcs.lib.errors import LibraryError
-from pcs.lib.pacemaker.values import is_score, SCORE_INFINITY
+from pcs.lib.pacemaker.values import (
+    SCORE_INFINITY,
+    is_score,
+)
 
 TAG_NAME = "rsc_colocation"
 DESCRIPTION = "constraint id"

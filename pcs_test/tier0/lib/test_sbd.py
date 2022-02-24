@@ -1,4 +1,16 @@
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
+
+import pcs.lib.sbd as lib_sbd
+from pcs import settings
+from pcs.common import reports
+from pcs.common.reports import ReportItemSeverity as Severities
+from pcs.common.reports import codes as report_codes
+from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
+from pcs.lib.errors import LibraryError
+from pcs.lib.external import CommandRunner
 
 from pcs_test.tools.assertions import (
     assert_raise_library_error,
@@ -6,15 +18,6 @@ from pcs_test.tools.assertions import (
 )
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 from pcs_test.tools.misc import outdent
-
-from pcs import settings
-from pcs.common import reports
-from pcs.common.reports import ReportItemSeverity as Severities
-from pcs.common.reports import codes as report_codes
-from pcs.lib.errors import LibraryError
-from pcs.lib.external import CommandRunner
-import pcs.lib.sbd as lib_sbd
-from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
 
 
 class TestException(Exception):

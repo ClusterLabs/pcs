@@ -4,7 +4,10 @@ from pcs.common import reports
 from pcs.common.reports.item import ReportItem
 from pcs.lib.cib.node import update_node_instance_attrs
 from pcs.lib.cib.tools import IdProvider
-from pcs.lib.env import LibraryEnvironment, WaitType
+from pcs.lib.env import (
+    LibraryEnvironment,
+    WaitType,
+)
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.live import get_local_node_name
 from pcs.lib.pacemaker.state import ClusterState

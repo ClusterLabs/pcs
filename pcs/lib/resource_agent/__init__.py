@@ -5,15 +5,19 @@ from pcs.common.resource_agent.dto import (
     ResourceAgentNameDto,
     ResourceAgentParameterDto,
 )
+
 from .error import (
     AgentNameGuessFoundMoreThanOne,
     AgentNameGuessFoundNone,
     InvalidResourceAgentName,
     ResourceAgentError,
-    resource_agent_error_to_report_item,
     UnableToGetAgentMetadata,
+    resource_agent_error_to_report_item,
 )
-from .facade import ResourceAgentFacade, ResourceAgentFacadeFactory
+from .facade import (
+    ResourceAgentFacade,
+    ResourceAgentFacadeFactory,
+)
 from .list import (
     find_one_resource_agent_by_type,
     list_resource_agents,

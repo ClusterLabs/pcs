@@ -1,9 +1,9 @@
 # pylint: disable=too-many-lines
 from unittest import TestCase
 
-from pcs_test.tools.misc import outdent
-
 from pcs.lib.corosync import config_parser
+
+from pcs_test.tools.misc import outdent
 
 
 class SectionTest(TestCase):

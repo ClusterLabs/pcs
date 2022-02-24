@@ -2,8 +2,12 @@ from typing import (
     Any,
     Sequence,
 )
+
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.parse_args import group_by_keywords, InputModifiers
+from pcs.cli.common.parse_args import (
+    InputModifiers,
+    group_by_keywords,
+)
 from pcs.cli.reports.output import warn
 from pcs.common.str_tools import indent
 

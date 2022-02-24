@@ -2,7 +2,6 @@
 from contextlib import contextmanager
 from functools import partial
 from typing import (
-    cast,
     Any,
     Callable,
     Dict,
@@ -14,6 +13,7 @@ from typing import (
     Set,
     Tuple,
     Union,
+    cast,
 )
 
 from lxml.etree import _Element
@@ -27,27 +27,28 @@ from pcs.common.interface import dto
 from pcs.common.reports import ReportItemList
 from pcs.common.reports.item import ReportItem
 from pcs.common.tools import (
-    timeout_to_seconds,
     Version,
+    timeout_to_seconds,
 )
-from pcs.lib.cib import (
-    resource,
-    status as cib_status,
-)
+from pcs.lib.cib import resource
+from pcs.lib.cib import status as cib_status
 from pcs.lib.cib.tag import (
-    expand_tag,
     TAG_TAG,
+    expand_tag,
 )
 from pcs.lib.cib.tools import (
     ElementNotFound,
+    IdProvider,
     find_element_by_tag_and_id,
     get_element_by_id,
     get_elements_by_ids,
     get_resources,
     get_status,
-    IdProvider,
 )
-from pcs.lib.env import LibraryEnvironment, WaitType
+from pcs.lib.env import (
+    LibraryEnvironment,
+    WaitType,
+)
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 from pcs.lib.node import (
@@ -68,26 +69,29 @@ from pcs.lib.pacemaker.live import (
     simulate_cib,
 )
 from pcs.lib.pacemaker.state import (
+    ResourceNotFound,
     ensure_resource_state,
     get_resource_state,
     info_resource_state,
     is_resource_managed,
-    ResourceNotFound,
 )
 from pcs.lib.pacemaker.values import validate_id
 from pcs.lib.resource_agent import (
-    find_one_resource_agent_by_type,
     ResourceAgentError,
-    resource_agent_error_to_report_item,
     ResourceAgentFacade,
     ResourceAgentFacadeFactory,
     ResourceAgentName,
-    split_resource_agent_name,
     UnableToGetAgentMetadata,
+    find_one_resource_agent_by_type,
+    resource_agent_error_to_report_item,
+    split_resource_agent_name,
 )
 from pcs.lib.tools import get_tmp_cib
 from pcs.lib.validate import ValueTimeInterval
-from pcs.lib.xml_tools import etree_to_str, get_root
+from pcs.lib.xml_tools import (
+    etree_to_str,
+    get_root,
+)
 
 
 @contextmanager

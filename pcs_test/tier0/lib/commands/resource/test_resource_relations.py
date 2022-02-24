@@ -1,10 +1,10 @@
 from unittest import TestCase
 
-from pcs_test.tools import fixture
-from pcs_test.tools.command_env import get_env_tools
-
 from pcs.common.pacemaker.resource.relations import ResourceRelationType
 from pcs.lib.commands import resource
+
+from pcs_test.tools import fixture
+from pcs_test.tools.command_env import get_env_tools
 
 
 def fixture_primitive(_id, members):

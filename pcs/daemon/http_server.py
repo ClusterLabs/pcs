@@ -1,8 +1,8 @@
 from tornado.httpserver import HTTPServer
 from tornado.netutil import bind_sockets
 
-from pcs.daemon.ssl import PcsdSSL
 from pcs.daemon import log
+from pcs.daemon.ssl import PcsdSSL
 
 
 class HttpsServerManageException(Exception):

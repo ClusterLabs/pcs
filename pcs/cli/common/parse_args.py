@@ -1,12 +1,12 @@
 from typing import (
-    Mapping,
     Iterable,
+    Mapping,
     Union,
 )
 
 from pcs.cli.common.errors import (
-    CmdLineInputError,
     HINT_SYNTAX_CHANGE,
+    CmdLineInputError,
 )
 from pcs.common.str_tools import (
     format_list,

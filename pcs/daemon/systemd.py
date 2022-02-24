@@ -1,6 +1,5 @@
-import socket
 import os.path
-
+import socket
 from functools import lru_cache
 
 from tornado.iostream import IOStream

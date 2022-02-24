@@ -5,7 +5,10 @@ client.
 """
 from functools import partial
 
-from pcs.lib.cib.constraint import constraint, resource_set
+from pcs.lib.cib.constraint import (
+    constraint,
+    resource_set,
+)
 from pcs.lib.cib.tools import get_constraints
 
 

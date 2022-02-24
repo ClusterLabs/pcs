@@ -1,10 +1,13 @@
-from unittest import mock, TestCase
-
-from pcs_test.tools.assertions import ExtendedAssertionsMixin
-from pcs_test.tools.custom_mock import MockLibraryReportProcessor
+from unittest import (
+    TestCase,
+    mock,
+)
 
 import pcs.lib.commands.acl as cmd_acl
 from pcs.lib.env import LibraryEnvironment
+
+from pcs_test.tools.assertions import ExtendedAssertionsMixin
+from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
 
 class AclCommandsTest(TestCase, ExtendedAssertionsMixin):

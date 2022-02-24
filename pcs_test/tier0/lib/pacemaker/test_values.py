@@ -1,11 +1,10 @@
 from unittest import TestCase
 
-from pcs_test.tools.assertions import assert_raise_library_error
-
+import pcs.lib.pacemaker.values as lib
 from pcs.common.reports import ReportItemSeverity as severity
 from pcs.common.reports import codes as report_codes
 
-import pcs.lib.pacemaker.values as lib
+from pcs_test.tools.assertions import assert_raise_library_error
 
 # pylint: disable=no-self-use
 

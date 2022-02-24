@@ -2,14 +2,14 @@ import base64
 import json
 
 from pcs.common import reports
-from pcs.common.reports.item import ReportItem
 from pcs.common.node_communicator import RequestData
+from pcs.common.reports.item import ReportItem
 from pcs.lib.communication.tools import (
     AllAtOnceStrategyMixin,
     AllSameDataMixin,
     RunRemotelyBase,
-    SkipOfflineMixin,
     SimpleResponseProcessingMixin,
+    SkipOfflineMixin,
 )
 
 

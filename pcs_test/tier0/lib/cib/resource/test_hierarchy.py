@@ -2,19 +2,19 @@ from unittest import TestCase
 
 from lxml import etree
 
-from pcs_test.tools import fixture
-from pcs_test.tools.assertions import (
-    assert_report_item_list_equal,
-    assert_xml_equal,
-)
-from pcs_test.tools.xml import etree_to_str
-
 from pcs.common.reports import codes as report_codes
 from pcs.common.reports.const import (
     ADD_REMOVE_CONTAINER_TYPE_GROUP,
     ADD_REMOVE_ITEM_TYPE_RESOURCE,
 )
 from pcs.lib.cib.resource import hierarchy
+
+from pcs_test.tools import fixture
+from pcs_test.tools.assertions import (
+    assert_report_item_list_equal,
+    assert_xml_equal,
+)
+from pcs_test.tools.xml import etree_to_str
 
 
 def _resource(cib, id_):

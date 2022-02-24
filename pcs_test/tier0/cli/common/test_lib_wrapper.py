@@ -1,4 +1,7 @@
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from pcs.cli.common.lib_wrapper import Library
 

@@ -4,7 +4,6 @@ from pcs import (
 )
 from pcs.cli.common.routing import create_router
 
-
 qdevice_cmd = create_router(
     {
         "help": lambda lib, argv, modifiers: usage.qdevice(argv),

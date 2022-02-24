@@ -1,14 +1,16 @@
-from dataclasses import dataclass
 from typing import (
     Optional,
     Sequence,
 )
+
+from dataclasses import dataclass
+
 from pcs.common.const import (
     PcmkOnFailAction,
     PcmkRoleType,
 )
-from pcs.common.pacemaker.nvset import CibNvsetDto
 from pcs.common.interface.dto import DataTransferObject
+from pcs.common.pacemaker.nvset import CibNvsetDto
 
 
 @dataclass(frozen=True)

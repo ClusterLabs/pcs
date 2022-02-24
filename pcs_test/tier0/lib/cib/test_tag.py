@@ -3,20 +3,20 @@ from unittest import TestCase
 
 from lxml import etree
 
+from pcs.common import reports
+from pcs.lib.cib import tag as lib
+from pcs.lib.cib.tools import (
+    IdProvider,
+    get_constraints,
+    get_resources,
+    get_tags,
+)
+from pcs.lib.xml_tools import etree_to_str
+
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import (
     assert_report_item_list_equal,
     assert_xml_equal,
-)
-
-from pcs.common import reports
-from pcs.lib.xml_tools import etree_to_str
-from pcs.lib.cib import tag as lib
-from pcs.lib.cib.tools import (
-    get_constraints,
-    get_resources,
-    get_tags,
-    IdProvider,
 )
 
 # pylint: disable=protected-access

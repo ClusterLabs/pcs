@@ -1,16 +1,17 @@
-from functools import partial
 import logging
-from unittest import mock, TestCase
+from functools import partial
+from unittest import (
+    TestCase,
+    mock,
+)
 
-from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.custom_mock import MockLibraryReportProcessor
-
+import pcs.lib.commands.alert as cmd_alert
 from pcs.common.reports import ReportItemSeverity as Severities
 from pcs.common.reports import codes as report_codes
 from pcs.lib.env import LibraryEnvironment
 
-import pcs.lib.commands.alert as cmd_alert
-
+from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
 get_env_tools = partial(
     get_env_tools,

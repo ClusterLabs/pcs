@@ -1,7 +1,5 @@
-from tornado.web import (
-    RequestHandler,
-    RedirectHandler as TornadoRedirectHandler,
-)
+from tornado.web import RedirectHandler as TornadoRedirectHandler
+from tornado.web import RequestHandler
 
 
 class EnhanceHeadersMixin:

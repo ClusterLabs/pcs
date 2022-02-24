@@ -1,8 +1,8 @@
 import os.path
 
-from pcs_test import TEST_ROOT
-
 from pcs import utils
+
+from pcs_test import TEST_ROOT
 
 __pcs_location = os.path.join(TEST_ROOT, "pcs_for_tests")
 # this can be changed from suite.py

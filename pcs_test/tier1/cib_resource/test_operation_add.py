@@ -2,8 +2,8 @@ from unittest import TestCase
 
 from pcs_test.tier1.cib_resource.common import get_cib_resources
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
+from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
-    get_test_resource as rc,
     get_tmp_file,
     write_data_to_tmpfile,
     write_file_to_tmpfile,

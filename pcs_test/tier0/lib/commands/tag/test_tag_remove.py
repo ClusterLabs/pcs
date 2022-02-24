@@ -2,6 +2,7 @@ from unittest import TestCase
 
 from pcs.common import reports
 from pcs.lib.commands import tag as cmd_tag
+
 from pcs_test.tier0.lib.commands.tag.tag_common import (
     fixture_constraints_for_tags,
     fixture_resources_for_ids,
@@ -9,7 +10,6 @@ from pcs_test.tier0.lib.commands.tag.tag_common import (
 )
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
-
 
 TAG_DEFINITIONS = [
     ("tag1", ("i1", "i2")),

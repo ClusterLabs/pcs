@@ -1,7 +1,6 @@
 """
 Provides classes used as nodes of a semantic tree of a parsed rule expression.
 """
-from dataclasses import dataclass
 from typing import (
     NewType,
     Optional,
@@ -9,6 +8,7 @@ from typing import (
     Tuple,
 )
 
+from dataclasses import dataclass
 
 BoolOperator = NewType("BoolOperator", str)
 BOOL_AND = BoolOperator("AND")

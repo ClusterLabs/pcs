@@ -1,26 +1,20 @@
+import json
 from typing import (
     Any,
     Dict,
     NamedTuple,
     Type,
 )
-import json
 
-from pcs.common import (
-    file_type_codes as code,
-    reports,
-)
+from pcs.common import file_type_codes as code
+from pcs.common import reports
 from pcs.common.reports.item import ReportItem
 from pcs.lib.booth.config_facade import ConfigFacade as BoothConfigFacade
-from pcs.lib.booth.config_parser import (
-    Exporter as BoothConfigExporter,
-    Parser as BoothConfigParser,
-)
+from pcs.lib.booth.config_parser import Exporter as BoothConfigExporter
+from pcs.lib.booth.config_parser import Parser as BoothConfigParser
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
-from pcs.lib.corosync.config_parser import (
-    Exporter as CorosyncConfigExporter,
-    Parser as CorosyncConfigParser,
-)
+from pcs.lib.corosync.config_parser import Exporter as CorosyncConfigExporter
+from pcs.lib.corosync.config_parser import Parser as CorosyncConfigParser
 from pcs.lib.dr.config.facade import Facade as DrConfigFacade
 from pcs.lib.interface.config import (
     ExporterInterface,

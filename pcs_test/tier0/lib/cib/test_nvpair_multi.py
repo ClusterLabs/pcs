@@ -2,13 +2,6 @@ from unittest import TestCase
 
 from lxml import etree
 
-from pcs_test.tools import fixture
-from pcs_test.tools.assertions import (
-    assert_report_item_list_equal,
-    assert_xml_equal,
-)
-from pcs_test.tools.xml import etree_to_str
-
 from pcs.common import reports
 from pcs.common.pacemaker.nvset import (
     CibNvpairDto,
@@ -20,8 +13,8 @@ from pcs.common.pacemaker.rule import (
 )
 from pcs.common.tools import Version
 from pcs.common.types import (
-    CibRuleInEffectStatus,
     CibRuleExpressionType,
+    CibRuleInEffectStatus,
 )
 from pcs.lib.cib import nvpair_multi
 from pcs.lib.cib.rule import RuleInEffectEval
@@ -37,6 +30,13 @@ from pcs.lib.cib.rule.expression_part import (
     RscExpr,
 )
 from pcs.lib.cib.tools import IdProvider
+
+from pcs_test.tools import fixture
+from pcs_test.tools.assertions import (
+    assert_report_item_list_equal,
+    assert_xml_equal,
+)
+from pcs_test.tools.xml import etree_to_str
 
 
 class RuleInEffectEvalMock(RuleInEffectEval):

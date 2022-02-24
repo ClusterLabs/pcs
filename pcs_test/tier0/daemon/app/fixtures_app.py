@@ -1,11 +1,18 @@
 from pprint import pformat
 from urllib.parse import urlencode
 
-from tornado.httputil import HTTPHeaders, parse_cookie
+from tornado.httputil import (
+    HTTPHeaders,
+    parse_cookie,
+)
 from tornado.testing import AsyncHTTPTestCase
 from tornado.web import Application
 
-from pcs.daemon import ruby_pcsd, auth, session
+from pcs.daemon import (
+    auth,
+    ruby_pcsd,
+    session,
+)
 from pcs.daemon.app.session import PCSD_SESSION
 
 USER = "user"

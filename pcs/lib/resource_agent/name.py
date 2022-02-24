@@ -2,7 +2,10 @@ import re
 
 from . import const
 from .error import InvalidResourceAgentName
-from .types import ResourceAgentMetadata, ResourceAgentName
+from .types import (
+    ResourceAgentMetadata,
+    ResourceAgentName,
+)
 
 
 def split_resource_agent_name(full_agent_name: str) -> ResourceAgentName:

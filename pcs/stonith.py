@@ -11,17 +11,20 @@ from pcs import (
 from pcs.cli.common import parse_args
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.fencing_topology import target_type_map_cli_to_lib
-from pcs.cli.reports.output import error, warn
+from pcs.cli.reports.output import (
+    error,
+    warn,
+)
 from pcs.cli.resource.output import format_resource_agent_metadata
 from pcs.cli.resource.parse_args import parse_create_simple as parse_create_args
 from pcs.common import reports
 from pcs.common.fencing_topology import (
+    TARGET_TYPE_ATTRIBUTE,
     TARGET_TYPE_NODE,
     TARGET_TYPE_REGEXP,
-    TARGET_TYPE_ATTRIBUTE,
 )
-from pcs.common.str_tools import indent
 from pcs.common.resource_agent.dto import ResourceAgentNameDto
+from pcs.common.str_tools import indent
 from pcs.lib.errors import LibraryError
 
 # pylint: disable=too-many-branches, too-many-statements, protected-access

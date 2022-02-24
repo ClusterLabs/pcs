@@ -1,18 +1,19 @@
 from functools import partial
+
 from lxml import etree
 
 from pcs.common import reports
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
-from pcs.lib.errors import LibraryError
 from pcs.lib.cib.nvpair import get_nvset
 from pcs.lib.cib.tools import (
     check_new_id_applicable,
+    find_element_by_tag_and_id,
     find_unique_id,
     get_alerts,
     validate_id_does_not_exist,
-    find_element_by_tag_and_id,
 )
+from pcs.lib.errors import LibraryError
 from pcs.lib.xml_tools import get_sub_element
 
 TAG_ALERT = "alert"

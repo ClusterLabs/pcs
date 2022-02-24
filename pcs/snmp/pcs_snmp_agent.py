@@ -1,7 +1,7 @@
-import os
-import sys
 import logging
 import logging.handlers
+import os
+import sys
 
 # pylint: disable=import-error
 import pyagentx
@@ -9,7 +9,6 @@ import pyagentx
 import pcs.utils
 from pcs.snmp import settings
 from pcs.snmp.updaters.v1 import ClusterPcsV1Updater
-
 
 logger = logging.getLogger("pcs.snmp")
 logger.addHandler(logging.NullHandler())

@@ -1,11 +1,18 @@
 from functools import partial
-from typing import cast, List, Optional
+from typing import (
+    List,
+    Optional,
+    cast,
+)
 
 from lxml import etree
 from lxml.etree import _Element
 
 from pcs.lib.cib.tools import create_subelement_id
-from pcs.lib.xml_tools import get_sub_element, append_when_useful
+from pcs.lib.xml_tools import (
+    append_when_useful,
+    get_sub_element,
+)
 
 META_ATTRIBUTES_TAG = "meta_attributes"
 INSTANCE_ATTRIBUTES_TAG = "instance_attributes"

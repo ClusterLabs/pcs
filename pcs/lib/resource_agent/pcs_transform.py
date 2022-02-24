@@ -1,5 +1,6 @@
-from dataclasses import replace
 from typing import List
+
+from dataclasses import replace
 
 from pcs.common.const import PcmkRoleType
 from pcs.common.pacemaker import role

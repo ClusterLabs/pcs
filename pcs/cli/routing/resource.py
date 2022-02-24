@@ -11,7 +11,6 @@ from pcs import (
 from pcs.cli.common.errors import raise_command_replaced
 from pcs.cli.common.parse_args import InputModifiers
 from pcs.cli.common.routing import create_router
-
 from pcs.cli.resource.relations import show_resource_relations_cmd
 
 

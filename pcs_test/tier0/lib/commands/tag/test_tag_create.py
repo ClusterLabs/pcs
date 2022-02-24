@@ -1,15 +1,14 @@
 from unittest import TestCase
 
+from pcs.common import reports
+from pcs.lib.commands import tag as cmd_tag
+
 from pcs_test.tier0.lib.commands.tag.tag_common import (
     fixture_resources_for_ids,
     fixture_tags_xml,
 )
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
-
-from pcs.common import reports
-from pcs.lib.commands import tag as cmd_tag
-
 
 TAG1_ID1_ID2 = fixture_tags_xml([("tag1", ("id1", "id2"))])
 

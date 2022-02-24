@@ -3,8 +3,8 @@ from typing import (
     Optional,
 )
 
-from pcs.common.fencing_topology import TARGET_TYPE_NODE
 from pcs.common import reports as report
+from pcs.common.fencing_topology import TARGET_TYPE_NODE
 from pcs.lib.cib import fencing_topology as cib_fencing_topology
 from pcs.lib.cib.tools import (
     get_fencing_topology,

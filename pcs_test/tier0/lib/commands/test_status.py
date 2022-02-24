@@ -5,6 +5,7 @@ from pcs import settings
 from pcs.common import file_type_codes
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import status
+
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.misc import read_test_resource as rc_read
