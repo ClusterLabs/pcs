@@ -6,10 +6,8 @@ from unittest import TestCase
 from pcs.common import reports
 from pcs.common.reports import codes as report_codes
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
-from pcs.lib.corosync.config_parser import (
-    Parser as CorosyncParser,
-    Section as CorosyncSection,
-)
+from pcs.lib.corosync.config_parser import Parser as CorosyncParser
+from pcs.lib.corosync.config_parser import Section as CorosyncSection
 
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_raise_library_error

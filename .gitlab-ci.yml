@@ -121,6 +121,15 @@ black:
     - ./configure --enable-local-build --enable-dev-tests --enable-tests-only
     - make black_check
 
+isort:
+  stage: stage1
+  script:
+    - dnf install -y ${COMMON_DEPENDENCIES}
+    - python3 -m pip install --upgrade -r dev_requirements.txt
+    - ./autogen.sh
+    - ./configure --enable-local-build --enable-dev-tests --enable-tests-only
+    - make isort_check
+
 pylint:
   stage: stage1
   script:

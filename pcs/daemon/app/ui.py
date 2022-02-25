@@ -3,7 +3,10 @@ import os.path
 from pcs.daemon import session
 from pcs.daemon.app import session as app_session
 from pcs.daemon.app.common import BaseHandler
-from pcs.daemon.app.ui_common import AjaxMixin, StaticFile
+from pcs.daemon.app.ui_common import (
+    AjaxMixin,
+    StaticFile,
+)
 
 
 class SPAHandler(BaseHandler):

@@ -6,8 +6,15 @@ from typing import (
 from pcs.common.tools import get_all_subclasses
 
 from . import messages
-from .dto import ReportItemDto, ReportItemMessageDto
-from .item import ReportItem, ReportItemContext, ReportItemSeverity
+from .dto import (
+    ReportItemDto,
+    ReportItemMessageDto,
+)
+from .item import (
+    ReportItem,
+    ReportItemContext,
+    ReportItemSeverity,
+)
 
 
 def report_dto_to_item(

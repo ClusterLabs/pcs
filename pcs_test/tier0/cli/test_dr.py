@@ -1,12 +1,14 @@
 from textwrap import dedent
-from unittest import mock, TestCase
-
-from pcs_test.tools.misc import dict_to_modifiers
-
-from pcs.common.reports import codes as report_codes
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from pcs.cli import dr
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.common.reports import codes as report_codes
+
+from pcs_test.tools.misc import dict_to_modifiers
 
 
 @mock.patch("pcs.cli.dr.print")

@@ -7,8 +7,8 @@ from pcs.common.pacemaker.rule import (
     CibRuleExpressionDto,
 )
 from pcs.common.types import (
-    CibRuleInEffectStatus,
     CibRuleExpressionType,
+    CibRuleInEffectStatus,
 )
 from pcs.lib.cib.rule import (
     RuleInEffectEval,
@@ -18,7 +18,7 @@ from pcs.lib.cib.rule import (
 
 class RuleInEffectEvalMock(RuleInEffectEval):
     def __init__(self, mock_data=None):
-        self._mock_data = mock_data or dict()
+        self._mock_data = mock_data or {}
 
     def get_rule_status(self, rule_id):
         return self._mock_data.get(rule_id, CibRuleInEffectStatus.UNKNOWN)

@@ -1,5 +1,15 @@
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
+
 from lxml import etree
+
+from pcs.common import (
+    const,
+    reports,
+)
+from pcs.lib.cib.constraint import resource_set
 
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import (
@@ -7,12 +17,6 @@ from pcs_test.tools.assertions import (
     assert_xml_equal,
 )
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
-
-from pcs.common import (
-    const,
-    reports,
-)
-from pcs.lib.cib.constraint import resource_set
 
 # pylint: disable=no-self-use
 

@@ -1,11 +1,11 @@
 from typing import (
-    cast,
     Iterable,
     List,
     Mapping,
     NewType,
     Optional,
     Tuple,
+    cast,
 )
 
 from lxml import etree
@@ -37,7 +37,6 @@ from pcs.lib.xml_tools import (
     export_attributes,
     remove_one_element,
 )
-
 
 NvsetTag = NewType("NvsetTag", str)
 NVSET_INSTANCE = NvsetTag("instance_attributes")

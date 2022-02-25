@@ -1,10 +1,9 @@
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from lxml import etree
-
-from pcs_test.tools.assertions import assert_xml_equal
-from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.xml import etree_to_str
 
 from pcs.lib import resource_agent as ra
 from pcs.lib.external import CommandRunner
@@ -16,6 +15,10 @@ from pcs.lib.resource_agent.types import (
     ResourceAgentParameterOcf1_0,
     ResourceAgentParameterOcf1_1,
 )
+
+from pcs_test.tools.assertions import assert_xml_equal
+from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.xml import etree_to_str
 
 
 class LoadMetadataXml(TestCase):

@@ -1,3 +1,8 @@
+from dataclasses import (
+    asdict,
+    fields,
+    is_dataclass,
+)
 from typing import (
     Any,
     Dict,
@@ -7,12 +12,10 @@ from typing import (
     TypeVar,
     Union,
 )
-from dataclasses import asdict, fields, is_dataclass
 
 import dacite
 
 from pcs.common import types
-
 
 PrimitiveType = Union[str, int, float, bool, None]
 DtoPayload = Dict[str, "SerializableType"]  # type: ignore
@@ -33,7 +36,7 @@ class DataTransferObject:
 
 
 def meta(name: str) -> Dict[str, str]:
-    metadata: Dict[str, str] = dict()
+    metadata: Dict[str, str] = {}
     if name:
         metadata[META_NAME] = name
     return metadata
@@ -50,7 +53,7 @@ def _is_compatible_type(_type: Type, arg_index: int) -> bool:
 def _convert_dict(
     klass: Type[DataTransferObject], obj_dict: DtoPayload
 ) -> DtoPayload:
-    new_dict = dict()
+    new_dict = {}
     for _field in fields(klass):
         value = obj_dict[_field.name]
         if is_dataclass(_field.type):
@@ -76,7 +79,7 @@ DtoType = TypeVar("DtoType", bound=DataTransferObject)
 
 
 def _convert_payload(klass: Type[DtoType], data: DtoPayload) -> DtoPayload:
-    new_dict = dict()
+    new_dict = {}
     for _field in fields(klass):
         value = data[_field.metadata.get(META_NAME, _field.name)]
         if is_dataclass(_field.type):

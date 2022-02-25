@@ -1,14 +1,13 @@
 import getopt
+import logging
 import os
 import sys
-import logging
 
 from pcs import (
     settings,
     usage,
     utils,
 )
-
 from pcs.cli.common import (
     capabilities,
     completion,
@@ -17,7 +16,11 @@ from pcs.cli.common import (
     routing,
 )
 from pcs.cli.reports import process_library_reports
-from pcs.cli.reports.output import deprecation_warning, error, print_to_stderr
+from pcs.cli.reports.output import (
+    deprecation_warning,
+    error,
+    print_to_stderr,
+)
 from pcs.cli.routing import (
     acl,
     alert,

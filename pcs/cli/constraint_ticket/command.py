@@ -1,7 +1,10 @@
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.constraint import command
 from pcs.cli.constraint_ticket import parse_args
-from pcs.cli.reports.output import deprecation_warning, error
+from pcs.cli.reports.output import (
+    deprecation_warning,
+    error,
+)
 from pcs.common.reports import constraints
 
 

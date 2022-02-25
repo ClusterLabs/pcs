@@ -1,11 +1,12 @@
 from unittest import TestCase
+
 from lxml import etree
 
-from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.assertions import AssertPcsMixin
+from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
+from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
-    get_test_resource as rc,
     get_tmp_file,
     outdent,
     write_file_to_tmpfile,

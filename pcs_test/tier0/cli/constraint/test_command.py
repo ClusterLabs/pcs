@@ -1,7 +1,10 @@
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
 
-from pcs.cli.constraint import command
 from pcs.cli.common.parse_args import InputModifiers
+from pcs.cli.constraint import command
 
 
 def fixture_constraint():

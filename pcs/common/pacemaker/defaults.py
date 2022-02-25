@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Sequence
 
 from pcs.common.interface.dto import DataTransferObject
+
 from .nvset import CibNvsetDto
 
 

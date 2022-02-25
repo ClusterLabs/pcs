@@ -1,10 +1,13 @@
 from typing import (
-    Mapping,
     Iterable,
+    Mapping,
     Union,
 )
 
-from pcs.cli.common.errors import SEE_MAN_CHANGES, CmdLineInputError
+from pcs.cli.common.errors import (
+    SEE_MAN_CHANGES,
+    CmdLineInputError,
+)
 from pcs.common.str_tools import (
     format_list,
     format_plural,
@@ -154,7 +157,7 @@ def prepare_options(cmdline_args, allowed_repeatable_options=()):
 
     Commandline options: no options
     """
-    options = dict()
+    options = {}
     for arg in cmdline_args:
         name, value = split_option(arg)
         if name not in options:
@@ -263,7 +266,7 @@ def group_by_keywords(
 
     def is_acceptable_keyword_occurence(keyword):
         return (
-            keyword not in groups.keys()
+            keyword not in groups
             or keyword_repeat_allowed
             or keyword in keywords_for_grouping
         )

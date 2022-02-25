@@ -1,4 +1,7 @@
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import InputModifiers

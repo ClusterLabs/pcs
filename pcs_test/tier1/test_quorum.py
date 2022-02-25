@@ -2,10 +2,10 @@ from textwrap import dedent
 from unittest import TestCase
 
 from pcs_test.tools.assertions import AssertPcsMixin
+from pcs_test.tools.misc import ParametrizedTestMetaClass
+from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
-    get_test_resource as rc,
     get_tmp_file,
-    ParametrizedTestMetaClass,
     write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import PcsRunner

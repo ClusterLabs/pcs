@@ -7,10 +7,12 @@ from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
 from pcs.common.services.interfaces import ServiceManagerInterface
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfFacade
-from pcs.lib.services import is_systemd
-from pcs.lib.tools import dict_to_environment_file, environment_file_to_dict
 from pcs.lib.errors import LibraryError
-
+from pcs.lib.services import is_systemd
+from pcs.lib.tools import (
+    dict_to_environment_file,
+    environment_file_to_dict,
+)
 
 DEVICE_INITIALIZATION_OPTIONS_MAPPING = {
     "watchdog-timeout": "-1",

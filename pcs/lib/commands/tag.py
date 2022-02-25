@@ -11,10 +11,10 @@ from lxml.etree import _Element
 
 from pcs.lib.cib import tag
 from pcs.lib.cib.tools import (
+    IdProvider,
     get_constraints,
     get_resources,
     get_tags,
-    IdProvider,
 )
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError

@@ -1,16 +1,15 @@
-from collections import Counter
 import dataclasses
+from collections import Counter
 from typing import (
-    cast,
     List,
     Set,
+    cast,
 )
 
 from dateutil import parser as dateutil_parser
 
 from pcs.common import reports
 from pcs.common.types import CibRuleExpressionType
-
 from pcs.lib import validate
 
 from .expression_part import (

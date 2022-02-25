@@ -3,6 +3,7 @@ import os
 
 from pcs.daemon import auth
 from pcs.daemon.app import ui
+
 from pcs_test.tier0.daemon.app import fixtures_app
 from pcs_test.tools.misc import (
     create_setup_patch_mixin,

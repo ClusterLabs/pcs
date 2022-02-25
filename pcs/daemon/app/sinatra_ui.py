@@ -1,4 +1,7 @@
-from pcs.daemon import ruby_pcsd, session
+from pcs.daemon import (
+    ruby_pcsd,
+    session,
+)
 from pcs.daemon.app import session as app_session
 from pcs.daemon.app.sinatra_common import Sinatra
 from pcs.daemon.app.ui_common import AjaxMixin

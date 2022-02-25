@@ -1,13 +1,9 @@
 # pylint: disable=too-many-lines
 from functools import partial
 from textwrap import dedent
-from unittest import mock, TestCase
-
-from pcs_test.tools import fixture
-from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.misc import (
-    get_test_resource as rc,
-    ParametrizedTestMetaClass,
+from unittest import (
+    TestCase,
+    mock,
 )
 
 from pcs import settings
@@ -17,6 +13,10 @@ from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import resource
 from pcs.lib.errors import LibraryError
 
+from pcs_test.tools import fixture
+from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.misc import ParametrizedTestMetaClass
+from pcs_test.tools.misc import get_test_resource as rc
 
 TIMEOUT = 10
 

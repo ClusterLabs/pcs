@@ -1,5 +1,8 @@
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.parse_args import group_by_keywords, prepare_options
+from pcs.cli.common.parse_args import (
+    group_by_keywords,
+    prepare_options,
+)
 
 
 def config_setup(lib, arg_list, modifiers):

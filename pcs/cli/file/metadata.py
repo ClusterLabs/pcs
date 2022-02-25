@@ -3,7 +3,6 @@ import os.path
 from pcs.common import file_type_codes as code
 from pcs.common.file import FileMetadata
 
-
 _metadata = {
     code.BOOTH_CONFIG: lambda path: FileMetadata(
         file_type_code=code.BOOTH_CONFIG,

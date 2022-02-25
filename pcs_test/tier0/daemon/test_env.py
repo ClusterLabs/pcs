@@ -1,12 +1,12 @@
-from os.path import join as join_path
 from functools import partial
+from os.path import join as join_path
 from ssl import OP_NO_SSLv2
 from unittest import TestCase
 
-from pcs_test.tools.misc import create_setup_patch_mixin
-
 from pcs import settings
 from pcs.daemon import env
+
+from pcs_test.tools.misc import create_setup_patch_mixin
 
 
 class Logger:
@@ -71,7 +71,6 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
             env.PCSD_DEBUG: "true",
             env.PCSD_DISABLE_GUI: "true",
             env.PCSD_SESSION_LIFETIME: str(session_lifetime),
-            env.PCSD_DEV: "true",
             env.PCSD_DEV: "true",
         }
         self.assert_environ_produces_modified_pcsd_env(

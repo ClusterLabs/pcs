@@ -1,8 +1,7 @@
-import sys
 import json
+import sys
 
 from pcs import utils
-
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.reports.output import deprecation_warning
 

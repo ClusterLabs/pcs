@@ -1,12 +1,15 @@
 import os
 from textwrap import dedent
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from pcs.cli.booth import command as booth_cmd
 
 from pcs_test.tools.assertions import AssertPcsMixin
+from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
-    get_test_resource as rc,
     get_tmp_dir,
     get_tmp_file,
     outdent,
@@ -14,7 +17,6 @@ from pcs_test.tools.misc import (
     write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import PcsRunner
-
 
 EMPTY_CIB = rc("cib-empty.xml")
 

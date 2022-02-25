@@ -1,7 +1,10 @@
 import re
 import xml.dom.minidom
-
-from typing import List, Any, Optional
+from typing import (
+    Any,
+    List,
+    Optional,
+)
 
 from pcs import utils
 from pcs.common import (
@@ -91,12 +94,12 @@ def dom_rule_add(dom_element, options, rule_argv, cib_schema_version):
         utils.err(
             "'%s' is not a valid rule expression: %s" % (" ".join(rule_argv), e)
         )
-    except UnexpectedEndOfInput as e:
+    except UnexpectedEndOfInput:
         utils.err(
             "'%s' is not a valid rule expression: unexpected end of rule"
             % " ".join(rule_argv)
         )
-    except (ParserException, CibBuilderException) as e:
+    except (ParserException, CibBuilderException):
         utils.err("'%s' is not a valid rule expression" % " ".join(rule_argv))
 
     # add options into rule xml
@@ -474,7 +477,7 @@ class SymbolTernary(SymbolOperator):
 
 class SymbolTable:
     def __init__(self):
-        self.table = dict()
+        self.table = {}
 
     def has_symbol(self, symbol_id):
         return symbol_id in self.table
@@ -512,7 +515,7 @@ class Parser:
     def __init__(self):
         self.current_symbol = None
         self.current_symbol_index = -1
-        self.program = list()
+        self.program = []
         self.symbol_table = SymbolTable()
         self.new_symbol_literal(SymbolBase.LITERAL)
         self.new_symbol_literal(SymbolBase.END)
@@ -556,7 +559,7 @@ class Parser:
         return symbol_class
 
     def symbolize(self, program):
-        symbolized_program = list()
+        symbolized_program = []
         literal_class = self.symbol_table.get_symbol(SymbolBase.LITERAL)
         for token in program:
             if self.symbol_table.has_symbol(token) and (
@@ -643,7 +646,7 @@ class DateCommonValue:
     KEYWORD: Optional[str] = None
 
     def __init__(self, parts_string, keyword=None):
-        self.parts = dict()
+        self.parts = {}
         for part in parts_string.split():
             if not self.accepts_part(part):
                 raise SyntaxError("unexpected '%s' in %s" % (part, keyword))

@@ -3,10 +3,12 @@ import re
 from textwrap import dedent
 from unittest import TestCase
 
+from pcs import settings
+
 from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.bin_mock import get_mock_settings
+from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
-    get_test_resource as rc,
     get_tmp_file,
     is_minimum_pacemaker_version,
     is_pacemaker_21_without_20_compatibility,
@@ -14,8 +16,6 @@ from pcs_test.tools.misc import (
     write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import PcsRunner
-
-from pcs import settings
 
 PCMK_2_0_3_PLUS = is_minimum_pacemaker_version(2, 0, 3)
 

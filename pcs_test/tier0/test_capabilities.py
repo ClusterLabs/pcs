@@ -1,6 +1,5 @@
-from unittest import TestCase
-
 import os.path
+from unittest import TestCase
 
 from lxml import etree
 

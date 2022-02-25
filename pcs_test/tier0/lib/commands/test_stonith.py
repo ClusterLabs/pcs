@@ -1,13 +1,16 @@
 from functools import partial
-from unittest import mock, TestCase
-
-from pcs_test.tools import fixture
-from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.misc import get_test_resource as rc
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from pcs import settings
 from pcs.common import reports
 from pcs.lib.commands import stonith
+
+from pcs_test.tools import fixture
+from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.misc import get_test_resource as rc
 
 expected_cib_simple = """
     <primitive class="stonith" id="stonith-test" type="test_simple">

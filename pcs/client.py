@@ -1,4 +1,7 @@
-from pcs import settings, utils
+from pcs import (
+    settings,
+    utils,
+)
 from pcs.cli.common.errors import CmdLineInputError
 
 

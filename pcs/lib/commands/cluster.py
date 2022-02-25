@@ -2,7 +2,6 @@
 import math
 import os.path
 import time
-
 from typing import (
     Any,
     Container,
@@ -23,22 +22,24 @@ from pcs.common.corosync_conf import (
 )
 from pcs.common.file import RawFileError
 from pcs.common.node_communicator import HostNotFound
-from pcs.common.reports import (
-    codes as report_codes,
-    ReportProcessor,
-)
+from pcs.common.reports import ReportProcessor
+from pcs.common.reports import codes as report_codes
 from pcs.common.reports.item import ReportItem
+from pcs.common.str_tools import join_multilines
 from pcs.common.tools import format_environment_error
 from pcs.common.types import (
     CorosyncTransportType,
     UnknownCorosyncTransportTypeException,
 )
-from pcs.common.str_tools import join_multilines
-from pcs.lib import node_communication_format, sbd, validate
+from pcs.lib import (
+    node_communication_format,
+    sbd,
+    validate,
+)
 from pcs.lib.booth import sync as booth_sync
 from pcs.lib.cib import fencing_topology
-from pcs.lib.cib.resource.remote_node import find_node_list as get_remote_nodes
 from pcs.lib.cib.resource.guest_node import find_node_list as get_guest_nodes
+from pcs.lib.cib.resource.remote_node import find_node_list as get_remote_nodes
 from pcs.lib.cib.tools import (
     get_fencing_topology,
     get_resources,
@@ -63,34 +64,32 @@ from pcs.lib.communication.nodes import (
 )
 from pcs.lib.communication.sbd import (
     CheckSbd,
-    SetSbdConfig,
-    EnableSbdService,
     DisableSbdService,
+    EnableSbdService,
+    SetSbdConfig,
 )
-from pcs.lib.communication.tools import (
-    run as run_com,
-    run_and_raise,
-    AllSameDataMixin,
-)
+from pcs.lib.communication.tools import AllSameDataMixin
+from pcs.lib.communication.tools import run as run_com
+from pcs.lib.communication.tools import run_and_raise
 from pcs.lib.corosync import (
     config_facade,
     config_parser,
     config_validators,
-    constants as corosync_constants,
-    qdevice_net,
 )
+from pcs.lib.corosync import constants as corosync_constants
+from pcs.lib.corosync import qdevice_net
 from pcs.lib.env import LibraryEnvironment
-from pcs.lib.file.instance import FileInstance
-from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.errors import LibraryError
+from pcs.lib.file.instance import FileInstance
 from pcs.lib.interface.config import ParserErrorException
+from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.pacemaker.live import (
     get_cib,
     get_cib_xml,
     get_cib_xml_cmd_results,
     remove_node,
-    verify as verify_cmd,
 )
+from pcs.lib.pacemaker.live import verify as verify_cmd
 from pcs.lib.pacemaker.state import ClusterState
 from pcs.lib.pacemaker.values import get_valid_timeout_seconds
 from pcs.lib.tools import (
@@ -1947,7 +1946,7 @@ def add_link(
     """
     _ensure_live_env(env)  # raises if env is not live
 
-    link_options = link_options or dict()
+    link_options = link_options or {}
     force = report_codes.FORCE in force_flags
     skip_offline = report_codes.SKIP_OFFLINE_NODES in force_flags
 
@@ -2058,8 +2057,8 @@ def update_link(
     """
     _ensure_live_env(env)  # raises if env is not live
 
-    node_addr_map = node_addr_map or dict()
-    link_options = link_options or dict()
+    node_addr_map = node_addr_map or {}
+    link_options = link_options or {}
     force = report_codes.FORCE in force_flags
     skip_offline = report_codes.SKIP_OFFLINE_NODES in force_flags
 

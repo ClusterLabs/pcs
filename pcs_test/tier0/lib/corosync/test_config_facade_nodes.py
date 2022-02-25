@@ -1,10 +1,10 @@
 from textwrap import dedent
 from unittest import TestCase
 
-from pcs_test.tools.assertions import ac
-
 import pcs.lib.corosync.config_facade as lib
 from pcs.lib.corosync.config_parser import Parser
+
+from pcs_test.tools.assertions import ac
 
 
 def _get_facade(config_text):

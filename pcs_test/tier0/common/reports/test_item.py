@@ -1,5 +1,3 @@
-from unittest import TestCase
-
 from dataclasses import (
     dataclass,
     field,
@@ -11,11 +9,12 @@ from typing import (
     Optional,
     Union,
 )
+from unittest import TestCase
 
 from pcs.common.reports import (
-    types,
     dto,
     item,
+    types,
 )
 
 REPORT_CODE = types.MessageCode("REPORT_CODE")

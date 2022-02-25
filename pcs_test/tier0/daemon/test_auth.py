@@ -1,9 +1,9 @@
-from unittest import TestCase
 import logging
-
-from pcs_test.tools.misc import create_setup_patch_mixin
+from unittest import TestCase
 
 from pcs.daemon import auth
+
+from pcs_test.tools.misc import create_setup_patch_mixin
 
 USER = "user"
 PASSWORD = "password"

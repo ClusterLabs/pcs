@@ -1,4 +1,8 @@
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
+
 from lxml import etree
 
 import pcs.lib.booth.resource as booth_resource

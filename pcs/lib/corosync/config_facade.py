@@ -1,19 +1,22 @@
 from typing import (
-    cast,
     Dict,
     Iterable,
     List,
     Mapping,
     Optional,
+    cast,
 )
 
 from pcs import settings
 from pcs.common import reports
 from pcs.common.reports.item import ReportItem
-from pcs.lib.corosync import config_parser, constants, node
+from pcs.lib.corosync import (
+    config_parser,
+    constants,
+    node,
+)
 from pcs.lib.errors import LibraryError
 from pcs.lib.interface.config import FacadeInterface
-
 
 _KNET_COMPRESSION_OPTIONS_PREFIX = "knet_compression_"
 _KNET_CRYPTO_OPTIONS_PREFIX = "crypto_"
@@ -378,7 +381,7 @@ class ConfigFacade(FacadeInterface):
             if transport in constants.TRANSPORTS_UDP
             else constants.LINK_OPTIONS_KNET_COROSYNC
         )
-        raw_options = dict()
+        raw_options = {}
         for totem_section in self.config.get_sections("totem"):
             for interface_section in totem_section.get_sections("interface"):
                 # if no linknumber is set, corosync treats it as 0
@@ -386,7 +389,7 @@ class ConfigFacade(FacadeInterface):
                     "linknumber", "0"
                 )
                 if linknumber not in raw_options:
-                    raw_options[linknumber] = dict()
+                    raw_options[linknumber] = {}
                 for name, value in interface_section.get_attributes():
                     if name in allowed_options:
                         raw_options[linknumber][name] = value

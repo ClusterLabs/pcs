@@ -1,6 +1,9 @@
 import errno
 import fcntl
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from pcs.common.file import (
     FileAlreadyExists,
@@ -8,8 +11,8 @@ from pcs.common.file import (
     RawFile,
     RawFileError,
 )
-from pcs_test.tools.misc import create_patcher
 
+from pcs_test.tools.misc import create_patcher
 
 FILE_TYPE_CODE = "file type code"
 FILE_PATH = "file path"

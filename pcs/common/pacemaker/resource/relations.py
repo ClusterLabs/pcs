@@ -5,8 +5,8 @@ from typing import (
     Sequence,
 )
 
-from pcs.common.types import ResourceRelationType
 from pcs.common.interface.dto import DataTransferObject
+from pcs.common.types import ResourceRelationType
 
 
 @dataclass(frozen=True)

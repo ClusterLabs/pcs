@@ -2,8 +2,8 @@ from functools import partial
 from typing import Callable
 
 from lxml.etree import (
-    _Element,
     SubElement,
+    _Element,
 )
 
 from pcs.common import (
@@ -14,8 +14,8 @@ from pcs.common import (
 from pcs.common.reports.item import ReportItem
 from pcs.lib import validate
 from pcs.lib.booth.config_validators import validate_ticket_name
-from pcs.lib.cib.constraint import constraint
 from pcs.lib.cib import tools
+from pcs.lib.cib.constraint import constraint
 from pcs.lib.errors import LibraryError
 from pcs.lib.xml_tools import remove_when_pointless
 

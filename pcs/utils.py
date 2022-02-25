@@ -1,54 +1,37 @@
 # pylint: disable=too-many-lines
-import os
-import sys
-import subprocess
-import xml.dom.minidom
-from xml.dom.minidom import (
-    parseString,
-    Document as DomDocument,
-)
-import xml.etree.ElementTree as ET
-import re
-import json
-import tempfile
-import signal
-import time
-from io import BytesIO
-import tarfile
-import getpass
 import base64
-import threading
+import getpass
+import json
 import logging
+import os
+import re
+import signal
+import subprocess
+import sys
+import tarfile
+import tempfile
+import threading
+import time
+import xml.dom.minidom
+import xml.etree.ElementTree as ET
 from functools import lru_cache
-from urllib.parse import urlencode
-
+from io import BytesIO
 from typing import (
     Any,
     Dict,
     Sequence,
     Tuple,
 )
+from urllib.parse import urlencode
+from xml.dom.minidom import Document as DomDocument
+from xml.dom.minidom import parseString
 
-from pcs import settings, usage
-
-from pcs.common import (
-    const,
-    file as pcs_file,
-    file_type_codes,
-    pacemaker as common_pacemaker,
-    pcs_pycurl as pycurl,
+import pcs.cli.booth.env
+import pcs.lib.corosync.config_parser as corosync_conf_parser
+from pcs import (
+    settings,
+    usage,
 )
-from pcs.common.host import PcsKnownHost
-from pcs.common.reports import ReportProcessor
-from pcs.common.reports.item import ReportItemList
-from pcs.common.reports.messages import CibUpgradeFailedToMinimalRequiredVersion
-from pcs.common.services.interfaces import ServiceManagerInterface
-from pcs.common.services.errors import ManageServiceError
-from pcs.common.tools import (
-    timeout_to_seconds,
-    Version,
-)
-
 from pcs.cli.common import middleware
 from pcs.cli.common.env_cli import Env
 from pcs.cli.common.errors import CmdLineInputError
@@ -58,15 +41,25 @@ from pcs.cli.common.tools import (
     print_to_stderr,
     timeout_to_seconds_legacy,
 )
-from pcs.cli.reports import (
-    output as reports_output,
-    process_library_reports,
-    ReportProcessorToConsole,
-)
-import pcs.cli.booth.env
 from pcs.cli.file import metadata as cli_file_metadata
-
-import pcs.lib.corosync.config_parser as corosync_conf_parser
+from pcs.cli.reports import ReportProcessorToConsole
+from pcs.cli.reports import output as reports_output
+from pcs.cli.reports import process_library_reports
+from pcs.common import const
+from pcs.common import file as pcs_file
+from pcs.common import file_type_codes
+from pcs.common import pacemaker as common_pacemaker
+from pcs.common import pcs_pycurl as pycurl
+from pcs.common.host import PcsKnownHost
+from pcs.common.reports import ReportProcessor
+from pcs.common.reports.item import ReportItemList
+from pcs.common.reports.messages import CibUpgradeFailedToMinimalRequiredVersion
+from pcs.common.services.errors import ManageServiceError
+from pcs.common.services.interfaces import ServiceManagerInterface
+from pcs.common.tools import (
+    Version,
+    timeout_to_seconds,
+)
 from pcs.lib.corosync.config_facade import ConfigFacade as corosync_conf_facade
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
@@ -78,15 +71,11 @@ from pcs.lib.file.instance import FileInstance as LibFileInstance
 from pcs.lib.interface.config import ParserErrorException
 from pcs.lib.pacemaker.live import get_cluster_status_dom
 from pcs.lib.pacemaker.state import ClusterState
-from pcs.lib.pacemaker.values import (
-    is_boolean,
-    is_score as is_score_value,
-    validate_id,
-)
-from pcs.lib.services import (
-    get_service_manager as _get_service_manager,
-    service_exception_to_report,
-)
+from pcs.lib.pacemaker.values import is_boolean
+from pcs.lib.pacemaker.values import is_score as is_score_value
+from pcs.lib.pacemaker.values import validate_id
+from pcs.lib.services import get_service_manager as _get_service_manager
+from pcs.lib.services import service_exception_to_report
 
 # pylint: disable=invalid-name
 # pylint: disable=too-many-branches
@@ -448,7 +437,7 @@ def stopCluster(node, quiet=False, pacemaker=True, corosync=True, force=True):
     Commandline options:
       * --request-timeout - timeout for HTTP requests
     """
-    data = dict()
+    data = {}
     timeout = None
     if pacemaker and not corosync:
         data["component"] = "pacemaker"
@@ -846,7 +835,7 @@ def run(
       * --debug
     """
     if not env_extend:
-        env_extend = dict()
+        env_extend = {}
     env_var = env_extend
     env_var.update(dict(os.environ))
     env_var["LC_ALL"] = "C"
@@ -917,7 +906,7 @@ def cmd_runner():
     Commandline options:
       * -f - CIB file
     """
-    env_vars = dict()
+    env_vars = {}
     if usefile:
         env_vars["CIB_file"] = filename
     env_vars.update(os.environ)
@@ -937,8 +926,8 @@ def run_pcsdcli(command, data=None):
         * send_local_configs
     """
     if not data:
-        data = dict()
-    env_var = dict()
+        data = {}
+    env_var = {}
     if "--debug" in pcs_options:
         env_var["PCSD_DEBUG"] = "true"
     if "--request-timeout" in pcs_options:
@@ -1161,7 +1150,7 @@ def parallel_for_nodes(action, node_list, *args, **kwargs):
     Commandline options: no options
     NOTE: callback 'action' may use some cmd options
     """
-    node_errors = dict()
+    node_errors = {}
 
     def report(node, returncode, output):
         message = "{0}: {1}".format(node, output.strip())
@@ -1863,7 +1852,7 @@ def get_node_attributes(filter_node=None, filter_attr=None):
     if node_config == "":
         err("unable to get crm_config, is pacemaker running?")
     dom = parseString(node_config).documentElement
-    nas = dict()
+    nas = {}
     for node in dom.getElementsByTagName("node"):
         nodename = node.getAttribute("uname")
         if filter_node is not None and nodename != filter_node:
@@ -1874,7 +1863,7 @@ def get_node_attributes(filter_node=None, filter_attr=None):
                 if filter_attr is not None and attr_name != filter_attr:
                     continue
                 if nodename not in nas:
-                    nas[nodename] = dict()
+                    nas[nodename] = {}
                 nas[nodename][attr_name] = nvp.getAttribute("value")
             # Use just first element of attributes. We don't support
             # attributes with rules just yet.
@@ -1992,8 +1981,8 @@ def getTerminalSize(fd=1):
     try:
         # pylint: disable=import-outside-toplevel
         import fcntl
-        import termios
         import struct
+        import termios
 
         hw = struct.unpack(
             str("hh"), fcntl.ioctl(fd, termios.TIOCGWINSZ, "1234")

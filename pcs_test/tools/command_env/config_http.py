@@ -6,16 +6,14 @@ from pcs_test.tools.command_env.config_http_corosync import CorosyncShortcuts
 from pcs_test.tools.command_env.config_http_files import FilesShortcuts
 from pcs_test.tools.command_env.config_http_host import HostShortcuts
 from pcs_test.tools.command_env.config_http_pcmk import PcmkShortcuts
-from pcs_test.tools.command_env.config_http_scsi import ScsiShortcuts
 from pcs_test.tools.command_env.config_http_sbd import SbdShortcuts
+from pcs_test.tools.command_env.config_http_scsi import ScsiShortcuts
 from pcs_test.tools.command_env.config_http_status import StatusShortcuts
 from pcs_test.tools.command_env.mock_node_communicator import (
     place_communication,
+    place_multinode_call,
     place_requests,
     place_responses,
-)
-from pcs_test.tools.command_env.mock_node_communicator import (
-    place_multinode_call,
 )
 
 # pylint: disable=line-too-long

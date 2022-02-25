@@ -1,12 +1,9 @@
 # pylint: disable=too-many-lines
 import json
-
 from textwrap import dedent
-from unittest import mock, TestCase
-
-from pcs_test.tools.misc import (
-    dict_to_modifiers,
-    get_tmp_file,
+from unittest import (
+    TestCase,
+    mock,
 )
 
 from pcs import cluster
@@ -20,6 +17,11 @@ from pcs.common.corosync_conf import (
 from pcs.common.interface import dto
 from pcs.common.reports import codes as report_codes
 from pcs.common.types import CorosyncTransportType
+
+from pcs_test.tools.misc import (
+    dict_to_modifiers,
+    get_tmp_file,
+)
 
 
 def _node(name, **kwargs):

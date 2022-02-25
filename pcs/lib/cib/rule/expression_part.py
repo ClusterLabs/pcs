@@ -9,7 +9,6 @@ from typing import (
     Tuple,
 )
 
-
 BoolOperator = NewType("BoolOperator", str)
 BOOL_AND = BoolOperator("AND")
 BOOL_OR = BoolOperator("OR")

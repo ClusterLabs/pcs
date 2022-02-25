@@ -7,13 +7,13 @@ from pcs.common.pacemaker.rule import (
     CibRuleExpressionDto,
 )
 from pcs.common.types import (
-    CibRuleInEffectStatus,
     CibRuleExpressionType,
+    CibRuleInEffectStatus,
 )
 from pcs.lib.xml_tools import export_attributes
 
-from .in_effect import RuleInEffectEval
 from .cib_to_str import RuleToStr
+from .in_effect import RuleInEffectEval
 
 
 def rule_element_to_dto(

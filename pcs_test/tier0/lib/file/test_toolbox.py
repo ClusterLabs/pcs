@@ -4,6 +4,7 @@ from unittest import TestCase
 from pcs.common.reports import codes as report_codes
 from pcs.lib.file import toolbox
 from pcs.lib.interface.config import ParserErrorException
+
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal
 

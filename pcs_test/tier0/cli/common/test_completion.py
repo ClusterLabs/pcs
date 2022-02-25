@@ -2,9 +2,9 @@ from unittest import TestCase
 
 from pcs.cli.common.completion import (
     _find_suggestions,
+    _split_words,
     has_applicable_environment,
     make_suggestions,
-    _split_words,
 )
 
 tree = {

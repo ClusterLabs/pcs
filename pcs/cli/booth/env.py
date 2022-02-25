@@ -1,11 +1,11 @@
+from pcs.cli.file import metadata
+from pcs.cli.reports import output
+from pcs.common import file as pcs_file
 from pcs.common import (
-    file as pcs_file,
     file_type_codes,
     reports,
 )
 from pcs.common.reports.item import ReportItem
-from pcs.cli.reports import output
-from pcs.cli.file import metadata
 from pcs.lib.errors import LibraryError
 
 

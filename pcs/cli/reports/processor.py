@@ -1,19 +1,19 @@
 from typing import List
 
+from pcs.cli.common.tools import print_to_stderr
 from pcs.common.reports import (
     ReportItem,
     ReportItemSeverity,
     ReportProcessor,
 )
-from pcs.cli.common.tools import print_to_stderr
 
+from .messages import report_item_msg_from_dto
 from .output import (
-    error,
     deprecation_warning,
+    error,
     prepare_force_text,
     warn,
 )
-from .messages import report_item_msg_from_dto
 
 
 class ReportProcessorToConsole(ReportProcessor):

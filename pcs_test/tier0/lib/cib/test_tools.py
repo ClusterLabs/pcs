@@ -1,20 +1,23 @@
 from functools import partial
-from unittest import mock, TestCase
-from lxml import etree
-
-from pcs_test.tools.assertions import (
-    assert_raise_library_error,
-    assert_report_item_list_equal,
+from unittest import (
+    TestCase,
+    mock,
 )
-from pcs_test.tools import fixture
-from pcs_test.tools.misc import get_test_resource as rc
-from pcs_test.tools.xml import get_xml_manipulation_creator_from_file
+
+from lxml import etree
 
 from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
 from pcs.common.tools import Version
-
 from pcs.lib.cib import tools as lib
+
+from pcs_test.tools import fixture
+from pcs_test.tools.assertions import (
+    assert_raise_library_error,
+    assert_report_item_list_equal,
+)
+from pcs_test.tools.misc import get_test_resource as rc
+from pcs_test.tools.xml import get_xml_manipulation_creator_from_file
 
 cib_element_lookup = etree.fromstring(
     """

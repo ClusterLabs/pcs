@@ -1,24 +1,32 @@
 from functools import partial
-from unittest import mock, TestCase
-
-from pcs_test.tier0.lib.commands.remote_node.fixtures_add import (
-    EnvConfigMixin,
-    REPORTS as FIXTURE_REPORTS,
-    EXTRA_REPORTS as FIXTURE_EXTRA_REPORTS,
-    FAIL_HTTP_KWARGS,
-    fixture_reports_not_live_cib,
-    fixture_reports_new_node_unreachable,
+from unittest import (
+    TestCase,
+    mock,
 )
-from pcs_test.tools import fixture
-from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.misc import get_test_resource as rc
-from pcs_test.tools.xml import XmlManipulation
 
 from pcs import settings
 from pcs.common import reports
 from pcs.common.host import Destination
 from pcs.lib.commands.remote_node import node_add_guest as node_add_guest_orig
 
+from pcs_test.tier0.lib.commands.remote_node.fixtures_add import (
+    EXTRA_REPORTS as FIXTURE_EXTRA_REPORTS,
+)
+from pcs_test.tier0.lib.commands.remote_node.fixtures_add import (
+    FAIL_HTTP_KWARGS,
+)
+from pcs_test.tier0.lib.commands.remote_node.fixtures_add import (
+    REPORTS as FIXTURE_REPORTS,
+)
+from pcs_test.tier0.lib.commands.remote_node.fixtures_add import (
+    EnvConfigMixin,
+    fixture_reports_new_node_unreachable,
+    fixture_reports_not_live_cib,
+)
+from pcs_test.tools import fixture
+from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.misc import get_test_resource as rc
+from pcs_test.tools.xml import XmlManipulation
 
 NODE_NAME = "node-name"
 NODE_ADDR_PCSD = "node-addr"
@@ -716,7 +724,7 @@ class NotLive(TestCase):
                 />
             </meta_attributes>
         """
-        self.config.env.set_known_hosts_dests(dict())
+        self.config.env.set_known_hosts_dests({})
         self.config.local.load_cib(env=self.cmd_env)
         self.config.local.push_cib(meta_attributes=meta_attributes)
         node_add_guest(self.env_assist.get_env(), options={"remote-port": "99"})
@@ -748,7 +756,7 @@ class NotLive(TestCase):
                 />
             </meta_attributes>
         """
-        self.config.env.set_known_hosts_dests(dict())
+        self.config.env.set_known_hosts_dests({})
         self.config.local.load_cib(env=self.cmd_env)
         self.config.local.push_cib(meta_attributes=meta_attributes)
         node_add_guest(self.env_assist.get_env(), options={"remote-addr": "aa"})

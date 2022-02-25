@@ -6,11 +6,12 @@ from typing import (
     Mapping,
     Optional,
 )
+
 from lxml.etree import _Element
 
 from pcs.common import reports
-from pcs.common.pacemaker.nvset import CibNvsetDto
 from pcs.common.pacemaker.defaults import CibDefaultsDto
+from pcs.common.pacemaker.nvset import CibNvsetDto
 from pcs.common.reports.item import ReportItem
 from pcs.common.tools import Version
 from pcs.lib.cib import (

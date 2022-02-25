@@ -1,15 +1,15 @@
 import unittest
 
 from pcs_test.tools.color_text_runner.format import (
-    separator1,
     format_error_list,
     format_error_overview,
     format_skips,
+    separator1,
 )
 from pcs_test.tools.color_text_runner.writer import (
     DotWriter,
-    StandardVerboseWriter,
     ImprovedVerboseWriter,
+    StandardVerboseWriter,
     Writer,
 )
 

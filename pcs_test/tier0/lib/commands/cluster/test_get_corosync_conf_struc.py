@@ -1,9 +1,6 @@
 from textwrap import dedent
 from unittest import TestCase
 
-from pcs_test.tools import fixture
-from pcs_test.tools.command_env import get_env_tools
-
 from pcs.common.corosync_conf import (
     CorosyncConfDto,
     CorosyncNodeAddressDto,
@@ -13,6 +10,9 @@ from pcs.common.corosync_conf import (
 from pcs.common.reports import codes as report_codes
 from pcs.common.types import CorosyncTransportType
 from pcs.lib.commands import cluster
+
+from pcs_test.tools import fixture
+from pcs_test.tools.command_env import get_env_tools
 
 from .common import fixture_totem
 

@@ -1,9 +1,12 @@
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from pcs import stonith
-from pcs.common import reports
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import InputModifiers
+from pcs.common import reports
 
 from pcs_test.tools.misc import dict_to_modifiers
 
@@ -49,21 +52,19 @@ class SbdEnable(TestCase):
 
     def test_no_args(self):
         self.call_cmd([])
-        self.assert_called_with(None, dict(), dict())
+        self.assert_called_with(None, {}, {})
 
     def test_watchdog(self):
         self.call_cmd(["watchdog=/dev/wd"])
-        self.assert_called_with("/dev/wd", dict(), dict())
+        self.assert_called_with("/dev/wd", {}, {})
 
     def test_device(self):
         self.call_cmd(["device=/dev/sda"])
-        self.assert_called_with(
-            None, dict(), dict(), default_device_list=["/dev/sda"]
-        )
+        self.assert_called_with(None, {}, {}, default_device_list=["/dev/sda"])
 
     def test_options(self):
         self.call_cmd(["SBD_A=a", "SBD_B=b"])
-        self.assert_called_with(None, dict(), dict(SBD_A="a", SBD_B="b"))
+        self.assert_called_with(None, {}, dict(SBD_A="a", SBD_B="b"))
 
     def test_multiple_watchdogs_devices(self):
         self.call_cmd(
@@ -82,7 +83,7 @@ class SbdEnable(TestCase):
         self.assert_called_with(
             "/dev/wd",
             {"node-a": "/dev/wda", "node-b": "/dev/wdb"},
-            dict(),
+            {},
             default_device_list=["/dev/sda1", "/dev/sda2"],
             node_device_dict={
                 "node-b": ["/dev/sdb1", "/dev/sdb2"],
@@ -101,8 +102,8 @@ class SbdEnable(TestCase):
         )
         self.assert_called_with(
             None,
-            dict(),
-            dict(),
+            {},
+            {},
             allow_unknown_opts=True,
             ignore_offline_nodes=True,
             no_watchdog_validation=True,
@@ -137,7 +138,7 @@ class SbdDeviceSetup(TestCase):
     @mock.patch("pcs.cli.reports.output.warn")
     def test_minimal(self, mock_warn):
         self.call_cmd(["device=/dev/sda"])
-        self.assert_called_with(["/dev/sda"], dict())
+        self.assert_called_with(["/dev/sda"], {})
         mock_warn.assert_called_once_with(
             "All current content on device(s) '/dev/sda' will be overwritten"
         )

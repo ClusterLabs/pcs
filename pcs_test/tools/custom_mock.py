@@ -1,21 +1,21 @@
 import io
 import socket
 from dataclasses import dataclass
-from unittest import mock
 from typing import (
     Callable,
     Iterable,
     Optional,
     Union,
 )
+from unittest import mock
 
-from pcs_test.tools.assertions import assert_report_item_list_equal
-
+import pcs.common.pcs_pycurl as pycurl
 from pcs.common.reports import (
     ReportItemSeverity,
     ReportProcessor,
 )
-import pcs.common.pcs_pycurl as pycurl
+
+from pcs_test.tools.assertions import assert_report_item_list_equal
 
 
 def get_getaddrinfo_mock(resolvable_addr_list):

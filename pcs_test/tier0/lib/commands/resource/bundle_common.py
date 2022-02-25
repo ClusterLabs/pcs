@@ -1,10 +1,6 @@
 from textwrap import dedent
 from unittest import mock
 
-from pcs_test.tools import fixture
-from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.misc import get_test_resource as rc
-
 from pcs import settings
 from pcs.common import reports
 from pcs.common.reports import ReportItemSeverity as severities
@@ -16,6 +12,10 @@ from pcs.lib.cib.resource.bundle import (
     STORAGE_MAP_OPTIONS,
 )
 from pcs.lib.errors import LibraryError
+
+from pcs_test.tools import fixture
+from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.misc import get_test_resource as rc
 
 TIMEOUT = 10
 

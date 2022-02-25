@@ -1,12 +1,14 @@
 from functools import partial
 
-from pcs.lib.cib.constraint import constraint, ticket
+import pcs.lib.commands.constraint.common
+from pcs.lib.cib.constraint import (
+    constraint,
+    ticket,
+)
 from pcs.lib.cib.tools import (
     are_new_role_names_supported,
     get_constraints,
 )
-import pcs.lib.commands.constraint.common
-
 
 # configure common constraint command
 config = partial(

@@ -1,4 +1,15 @@
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
+
+import pcs.lib.commands.sbd as cmd_sbd
+from pcs import settings
+from pcs.common import reports
+from pcs.common.node_communicator import RequestTarget
+from pcs.common.reports import ReportItem
+from pcs.common.reports import ReportItemSeverity as Severities
+from pcs.lib.errors import LibraryError
 
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import (
@@ -7,16 +18,6 @@ from pcs_test.tools.assertions import (
 )
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.misc import outdent
-
-from pcs import settings
-from pcs.common import reports
-from pcs.common.node_communicator import RequestTarget
-from pcs.common.reports import (
-    ReportItem,
-    ReportItemSeverity as Severities,
-)
-from pcs.lib.errors import LibraryError
-import pcs.lib.commands.sbd as cmd_sbd
 
 # pylint: disable=protected-access
 

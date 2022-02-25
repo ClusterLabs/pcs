@@ -1,8 +1,17 @@
-from typing import Any, Dict, Iterable, List, Optional
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+)
 
 from pcs.common.interface.dto import to_dict
-from pcs.common.reports import ReportItemSeverity, ReportProcessor
 from pcs.common.pacemaker.resource.operations import ListCibResourceOperationDto
+from pcs.common.reports import (
+    ReportItemSeverity,
+    ReportProcessor,
+)
 from pcs.lib.cib.resource.agent import (
     get_default_operations,
     operation_dto_to_legacy_dict,
@@ -13,6 +22,15 @@ from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 from pcs.lib.resource_agent import (
+    ListResourceAgentNameDto,
+    ResourceAgentActionDto,
+    ResourceAgentError,
+    ResourceAgentFacadeFactory,
+    ResourceAgentMetadata,
+    ResourceAgentMetadataDto,
+    ResourceAgentName,
+    ResourceAgentNameDto,
+    StandardProviderTuple,
     find_one_resource_agent_by_type,
     list_resource_agents,
     list_resource_agents_ocf_providers,
@@ -20,15 +38,6 @@ from pcs.lib.resource_agent import (
     list_resource_agents_standards_and_providers,
     resource_agent_error_to_report_item,
     split_resource_agent_name,
-    ListResourceAgentNameDto,
-    ResourceAgentError,
-    ResourceAgentFacadeFactory,
-    ResourceAgentMetadata,
-    ResourceAgentMetadataDto,
-    ResourceAgentName,
-    ResourceAgentNameDto,
-    ResourceAgentActionDto,
-    StandardProviderTuple,
 )
 from pcs.lib.resource_agent.name import name_to_void_metadata
 

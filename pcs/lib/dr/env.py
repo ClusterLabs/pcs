@@ -1,10 +1,7 @@
 from pcs.common import file_type_codes
-
 from pcs.lib.file.instance import FileInstance
-from pcs.lib.file.toolbox import (
-    for_file_type as get_file_toolbox,
-    FileToolbox,
-)
+from pcs.lib.file.toolbox import FileToolbox
+from pcs.lib.file.toolbox import for_file_type as get_file_toolbox
 
 from .config.facade import (
     DrRole,

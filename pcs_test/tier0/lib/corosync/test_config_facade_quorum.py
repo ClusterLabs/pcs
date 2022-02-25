@@ -1,10 +1,10 @@
 from textwrap import dedent
 from unittest import TestCase
 
-from pcs_test.tools.misc import get_test_resource as rc
-
 import pcs.lib.corosync.config_facade as lib
 from pcs.lib.corosync.config_parser import Parser
+
+from pcs_test.tools.misc import get_test_resource as rc
 
 
 def _read_file(name):

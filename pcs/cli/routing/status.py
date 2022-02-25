@@ -2,13 +2,12 @@ from pcs import (
     status,
     usage,
 )
+from pcs.cli.booth.command import status as booth_status_cmd
 from pcs.cli.common.routing import create_router
-
 from pcs.pcsd import pcsd_status_cmd
 from pcs.qdevice import qdevice_status_cmd
 from pcs.quorum import quorum_status_cmd
 from pcs.resource import resource_status
-from pcs.cli.booth.command import status as booth_status_cmd
 
 status_cmd = create_router(
     {

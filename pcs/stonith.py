@@ -20,13 +20,15 @@ from pcs.cli.resource.output import format_resource_agent_metadata
 from pcs.cli.resource.parse_args import parse_create_simple as parse_create_args
 from pcs.common import reports
 from pcs.common.fencing_topology import (
+    TARGET_TYPE_ATTRIBUTE,
     TARGET_TYPE_NODE,
     TARGET_TYPE_REGEXP,
-    TARGET_TYPE_ATTRIBUTE,
 )
-
 from pcs.common.resource_agent.dto import ResourceAgentNameDto
-from pcs.common.str_tools import format_list, indent
+from pcs.common.str_tools import (
+    format_list,
+    indent,
+)
 from pcs.lib.errors import LibraryError
 
 # pylint: disable=too-many-branches, too-many-statements, protected-access
@@ -368,10 +370,10 @@ def stonith_level_config_to_str(config):
     """
     Commandline option: no options
     """
-    config_data = dict()
+    config_data = {}
     for level in config:
         if level["target_type"] not in config_data:
-            config_data[level["target_type"]] = dict()
+            config_data[level["target_type"]] = {}
         if level["target_value"] not in config_data[level["target_type"]]:
             config_data[level["target_type"]][level["target_value"]] = []
         config_data[level["target_type"]][level["target_value"]].append(level)

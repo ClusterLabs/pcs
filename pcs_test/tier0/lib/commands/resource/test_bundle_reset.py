@@ -1,21 +1,21 @@
 from unittest import TestCase
 
-from pcs_test.tier0.lib.commands.resource.bundle_common import (
-    FixturesMixin,
-    SetUpMixin,
-    ParametrizedContainerMixin,
-    NetworkMixin,
-    PortMapMixin,
-    StorageMapMixin,
-    MetaMixin,
-    AllOptionsMixin,
-    WaitMixin,
-)
-from pcs_test.tools import fixture
-
 from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands.resource import bundle_reset
+
+from pcs_test.tier0.lib.commands.resource.bundle_common import (
+    AllOptionsMixin,
+    FixturesMixin,
+    MetaMixin,
+    NetworkMixin,
+    ParametrizedContainerMixin,
+    PortMapMixin,
+    SetUpMixin,
+    StorageMapMixin,
+    WaitMixin,
+)
+from pcs_test.tools import fixture
 
 
 class BaseMixin(FixturesMixin):

@@ -2,10 +2,6 @@
 import json
 from unittest import TestCase
 
-from pcs_test.tools import fixture
-from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.misc import get_test_resource, outdent
-
 from pcs import settings
 from pcs.common import reports
 from pcs.common.reports import codes as report_codes
@@ -15,6 +11,13 @@ from pcs.lib.commands.sbd import (
     enable_sbd,
 )
 from pcs.lib.corosync.config_parser import Parser
+
+from pcs_test.tools import fixture
+from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.misc import (
+    get_test_resource,
+    outdent,
+)
 
 
 def _get_corosync_conf_text_with_atb(orig_cfg_file):

@@ -1,8 +1,10 @@
 import os
 
 from pcs import settings
-from pcs.common import file_type_codes
-from pcs.common import reports
+from pcs.common import (
+    file_type_codes,
+    reports,
+)
 from pcs.common.reports.item import ReportItem
 from pcs.lib.file.instance import FileInstance
 

@@ -1,5 +1,5 @@
-from pcs_test.tools.misc import outdent
 from pcs_test.tools.command_env.mock_runner import Call as RunnerCall
+from pcs_test.tools.misc import outdent
 
 
 class CorosyncShortcuts:

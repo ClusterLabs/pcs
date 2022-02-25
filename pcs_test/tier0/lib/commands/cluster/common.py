@@ -2,7 +2,6 @@ from textwrap import dedent
 
 from pcs_test.tools.misc import outdent
 
-
 QDEVICE_HOST = "qdevice.host"
 CLUSTER_NAME = "myCluster"
 

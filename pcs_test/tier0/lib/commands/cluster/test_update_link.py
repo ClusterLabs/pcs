@@ -1,12 +1,12 @@
 from textwrap import dedent
 from unittest import TestCase
 
+from pcs.common.reports import codes as report_codes
+from pcs.lib.commands import cluster
+
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.custom_mock import patch_getaddrinfo
-
-from pcs.common.reports import codes as report_codes
-from pcs.lib.commands import cluster
 
 
 class UpdateLink(TestCase):

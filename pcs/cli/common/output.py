@@ -1,5 +1,5 @@
-import textwrap
 import sys
+import textwrap
 from shutil import get_terminal_size
 from typing import List
 

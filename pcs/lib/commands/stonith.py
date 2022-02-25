@@ -1,18 +1,30 @@
-from typing import Container, Iterable, List, Mapping, Optional, Tuple
+from typing import (
+    Container,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Tuple,
+)
 
 from lxml.etree import _Element
 
 from pcs.common import reports
-
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
-from pcs.lib.cib import resource, stonith
-from pcs.lib.cib.nvpair import INSTANCE_ATTRIBUTES_TAG, get_value
+from pcs.lib.cib import (
+    resource,
+    stonith,
+)
+from pcs.lib.cib.nvpair import (
+    INSTANCE_ATTRIBUTES_TAG,
+    get_value,
+)
 from pcs.lib.cib.resource.common import are_meta_disabled
 from pcs.lib.cib.tools import (
     ElementNotFound,
-    get_element_by_id,
     IdProvider,
+    get_element_by_id,
 )
 from pcs.lib.commands.resource import (
     _ensure_disabled_after_wait,
@@ -24,7 +36,10 @@ from pcs.lib.communication.tools import (
     AllSameDataMixin,
     run_and_raise,
 )
-from pcs.lib.env import LibraryEnvironment, WaitType
+from pcs.lib.env import (
+    LibraryEnvironment,
+    WaitType,
+)
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 from pcs.lib.node import get_existing_nodes_names
@@ -40,12 +55,12 @@ from pcs.lib.pacemaker.values import validate_id
 from pcs.lib.resource_agent import (
     InvalidResourceAgentName,
     ResourceAgentError,
-    resource_agent_error_to_report_item,
     ResourceAgentFacade,
     ResourceAgentFacadeFactory,
     ResourceAgentName,
     UnableToGetAgentMetadata,
     UnsupportedOcfVersion,
+    resource_agent_error_to_report_item,
 )
 from pcs.lib.validate import validate_add_remove_items
 from pcs.lib.xml_tools import get_root

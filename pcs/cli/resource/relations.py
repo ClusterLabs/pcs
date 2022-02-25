@@ -1,12 +1,18 @@
 from typing import (
     Any,
-    cast,
     Iterable,
     List,
     Mapping,
     Sequence,
+    cast,
 )
 
+from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.parse_args import InputModifiers
+from pcs.cli.common.printable_tree import (
+    PrintableTreeNode,
+    tree_to_lines,
+)
 from pcs.common.interface import dto
 from pcs.common.pacemaker.resource.relations import (
     RelationEntityDto,
@@ -14,12 +20,6 @@ from pcs.common.pacemaker.resource.relations import (
     ResourceRelationType,
 )
 from pcs.common.str_tools import format_optional
-from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.parse_args import InputModifiers
-from pcs.cli.common.printable_tree import (
-    tree_to_lines,
-    PrintableTreeNode,
-)
 
 
 def show_resource_relations_cmd(

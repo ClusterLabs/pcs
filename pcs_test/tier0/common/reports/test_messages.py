@@ -3,15 +3,13 @@ from unittest import TestCase
 
 from pcs.common import file_type_codes
 from pcs.common.fencing_topology import (
+    TARGET_TYPE_ATTRIBUTE,
     TARGET_TYPE_NODE,
     TARGET_TYPE_REGEXP,
-    TARGET_TYPE_ATTRIBUTE,
 )
 from pcs.common.file import RawFileError
-from pcs.common.reports import (
-    const,
-    messages as reports,
-)
+from pcs.common.reports import const
+from pcs.common.reports import messages as reports
 from pcs.common.types import CibRuleExpressionType
 
 # pylint: disable=too-many-lines
@@ -516,7 +514,7 @@ class RunExternalProcessStarted(NameBuildTest):
     def test_build_message_minimal(self):
         self.assert_message_from_report(
             "Running: COMMAND\nEnvironment:\n",
-            reports.RunExternalProcessStarted("COMMAND", "", dict()),
+            reports.RunExternalProcessStarted("COMMAND", "", {}),
         )
 
     def test_build_message_with_stdin(self):
@@ -527,7 +525,7 @@ class RunExternalProcessStarted(NameBuildTest):
                 "STDIN\n"
                 "--Debug Input End--\n"
             ),
-            reports.RunExternalProcessStarted("COMMAND", "STDIN", dict()),
+            reports.RunExternalProcessStarted("COMMAND", "STDIN", {}),
         )
 
     def test_build_message_with_env(self):

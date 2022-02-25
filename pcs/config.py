@@ -1,20 +1,21 @@
-import sys
+import datetime
+import difflib
+import grp
+import json
 import os
 import os.path
-import re
-import datetime
-from io import BytesIO
-import tarfile
-import json
-from xml.dom.minidom import parse
 import pwd
-import grp
+import re
+import shutil
+import sys
+import tarfile
 import tempfile
 import time
-import shutil
-import difflib
+from io import BytesIO
+from xml.dom.minidom import parse
 
 from pcs import (
+    alert,
     cluster,
     constraint,
     quorum,
@@ -24,14 +25,16 @@ from pcs import (
     stonith,
     usage,
     utils,
-    alert,
 )
 from pcs.cli.common import middleware
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.constraint import command as constraint_command
 from pcs.cli.nvset import nvset_dto_list_to_lines
 from pcs.cli.reports import process_library_reports
-from pcs.cli.reports.output import print_to_stderr, warn
+from pcs.cli.reports.output import (
+    print_to_stderr,
+    warn,
+)
 from pcs.common.reports import constraints as constraints_reports
 from pcs.common.str_tools import indent
 from pcs.lib.commands import quorum as lib_quorum

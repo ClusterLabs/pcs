@@ -27,7 +27,7 @@ class Facade(FacadeInterface):
 
     @classmethod
     def empty(cls) -> "Facade":
-        return cls(dict())
+        return cls({})
 
     @property
     def local_role(self) -> DrRole:

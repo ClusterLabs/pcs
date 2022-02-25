@@ -1,4 +1,9 @@
-from typing import List, Optional, Tuple, Union
+from typing import (
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 from lxml import etree
 from lxml.etree import _Element
@@ -8,7 +13,10 @@ from pcs.common.tools import xml_fromstring
 from pcs.lib.external import CommandRunner
 
 from . import const
-from .error import UnableToGetAgentMetadata, UnsupportedOcfVersion
+from .error import (
+    UnableToGetAgentMetadata,
+    UnsupportedOcfVersion,
+)
 from .types import (
     FakeAgentName,
     ResourceAgentActionOcf1_0,
@@ -19,7 +27,6 @@ from .types import (
     ResourceAgentParameterOcf1_0,
     ResourceAgentParameterOcf1_1,
 )
-
 
 ### load metadata
 

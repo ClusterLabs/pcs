@@ -1,14 +1,14 @@
 import json
 from unittest import TestCase
 
-from pcs_test.tools import fixture
-from pcs_test.tools.command_env import get_env_tools
-
 from pcs import settings
 from pcs.common import file_type_codes
 from pcs.common.reports import codes as report_codes
-from pcs.lib.dr.config.facade import DrRole
 from pcs.lib.commands import dr
+from pcs.lib.dr.config.facade import DrRole
+
+from pcs_test.tools import fixture
+from pcs_test.tools.command_env import get_env_tools
 
 DR_CFG_DESC = "disaster-recovery config"
 

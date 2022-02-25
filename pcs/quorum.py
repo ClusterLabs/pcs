@@ -6,7 +6,10 @@ from pcs.cli.common import parse_args
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.tools import print_to_stderr
 from pcs.cli.reports import process_library_reports
-from pcs.common.str_tools import format_list, indent
+from pcs.common.str_tools import (
+    format_list,
+    indent,
+)
 from pcs.lib.node import get_existing_nodes_names
 
 

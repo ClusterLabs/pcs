@@ -1,4 +1,7 @@
-from typing import NamedTuple, Any
+from typing import (
+    Any,
+    NamedTuple,
+)
 
 from pcs.common.services.interfaces.manager import ServiceManagerInterface
 

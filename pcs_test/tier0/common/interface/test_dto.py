@@ -1,5 +1,9 @@
-from dataclasses import dataclass, field, is_dataclass
 import pkgutil
+from dataclasses import (
+    dataclass,
+    field,
+    is_dataclass,
+)
 from typing import (
     Any,
     List,

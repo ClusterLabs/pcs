@@ -2,23 +2,26 @@
 from functools import partial
 from unittest import TestCase
 
-from pcs_test.tier0.lib.commands.remote_node.fixtures_add import (
-    FAIL_HTTP_KWARGS,
-)
-from pcs_test.tier0.lib.commands.remote_node.fixtures_remove import (
-    EnvConfigMixin,
-    REPORTS as FIXTURE_REPORTS,
-    EXTRA_REPORTS as FIXTURE_EXTRA_REPORTS,
-)
-from pcs_test.tools import fixture
-from pcs_test.tools.command_env import get_env_tools
-
-from pcs.common.reports import codes as report_codes
 from pcs.common.host import Destination
+from pcs.common.reports import codes as report_codes
 from pcs.lib.commands.remote_node import (
     node_remove_guest as node_remove_guest_orig,
 )
 
+from pcs_test.tier0.lib.commands.remote_node.fixtures_add import (
+    FAIL_HTTP_KWARGS,
+)
+from pcs_test.tier0.lib.commands.remote_node.fixtures_remove import (
+    EXTRA_REPORTS as FIXTURE_EXTRA_REPORTS,
+)
+from pcs_test.tier0.lib.commands.remote_node.fixtures_remove import (
+    REPORTS as FIXTURE_REPORTS,
+)
+from pcs_test.tier0.lib.commands.remote_node.fixtures_remove import (
+    EnvConfigMixin,
+)
+from pcs_test.tools import fixture
+from pcs_test.tools.command_env import get_env_tools
 
 REMOTE_HOST = "remote-host"
 REMOTE_DEST_LIST = [Destination("remote-addr", 2224)]
