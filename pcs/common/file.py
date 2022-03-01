@@ -1,41 +1,50 @@
 import fcntl
 import os
 import shutil
-from collections import namedtuple
+from dataclasses import dataclass
+from typing import (
+    NewType,
+    Optional,
+)
 
+from pcs.common.file_type_codes import FileTypeCode
 from pcs.common.tools import format_os_error
 
 # TODO add logging (logger / debug reports ?) to the RawFile class; be aware
 # the class is used both in pcs.cli and pcs.lib packages
 
-FileMetadata = namedtuple(
-    "FileMetadata",
-    [
-        "file_type_code",
-        "path",
-        "owner_user_name",
-        "owner_group_name",
-        "permissions",
-        "is_binary",
-    ],
-)
+
+@dataclass(frozen=True)
+class FileMetadata:
+    file_type_code: FileTypeCode
+    path: str
+    owner_user_name: Optional[str]
+    owner_group_name: Optional[str]
+    permissions: Optional[int]
+    is_binary: bool
+
+
+FileAction = NewType("FileAction", str)
 
 
 class RawFileError(Exception):
     # So far there has been no need to have a separate exception for each
     # action. Actions must be passed in a report and we certainely do not want
     # a separate report for each action.
-    ACTION_CHMOD = "chmod"
-    ACTION_CHOWN = "chown"
-    ACTION_READ = "read"
-    ACTION_REMOVE = "remove"
-    ACTION_WRITE = "write"
 
-    def __init__(self, metadata, action, reason=""):
+    ACTION_CHMOD = FileAction("chmod")
+    ACTION_CHOWN = FileAction("chown")
+    ACTION_READ = FileAction("read")
+    ACTION_REMOVE = FileAction("remove")
+    ACTION_WRITE = FileAction("write")
+
+    def __init__(
+        self, metadata: FileMetadata, action: FileAction, reason: str = ""
+    ):
         """
-        FileMetadata metadata -- describes the file involved in the error
-        string action -- possible values enumerated in RawFileError
-        string reason -- plain text error details
+        metadata -- describes the file involved in the error
+        action -- possible values enumerated in RawFileError
+        reason -- plain text error details
         """
         super().__init__()
         self.metadata = metadata
@@ -44,52 +53,52 @@ class RawFileError(Exception):
 
 
 class FileAlreadyExists(RawFileError):
-    def __init__(self, metadata):
+    def __init__(self, metadata: FileMetadata):
         """
-        FileMetadata metadata -- describes the file involved in the error
+        metadata -- describes the file involved in the error
         """
         super().__init__(metadata, RawFileError.ACTION_WRITE)
 
 
 class RawFileInterface:
-    def __init__(self, metadata):
+    def __init__(self, metadata: FileMetadata):
         """
-        FileMetadata metadata -- describes the file and provides its metadata
+        metadata -- describes the file and provides its metadata
         """
         self.__metadata = metadata
 
     @property
-    def metadata(self):
+    def metadata(self) -> FileMetadata:
         return self.__metadata
 
-    def exists(self):
+    def exists(self) -> bool:
         """
         Return True if file exists, False otherwise
         """
         raise NotImplementedError()
 
-    def read(self):
+    def read(self) -> bytes:
         """
         Return content of the file as bytes
         """
         raise NotImplementedError()
 
-    def write(self, file_data, can_overwrite=False):
+    def write(self, file_data: bytes, can_overwrite: bool = False) -> None:
         """
         Write file_data to the file
 
-        bytes file_data -- data to be written
-        bool can_overwrite -- raise if False and the file already exists
+        file_data -- data to be written
+        can_overwrite -- raise if False and the file already exists
         """
         raise NotImplementedError()
 
 
 class RawFile(RawFileInterface):
-    def exists(self):
+    def exists(self) -> bool:
         # Returns False if the file is not accessible, does not raise.
         return os.path.exists(self.metadata.path)
 
-    def read(self):
+    def read(self) -> bytes:
         try:
             mode = "rb" if self.metadata.is_binary else "r"
             with open(self.metadata.path, mode) as my_file:
@@ -109,7 +118,7 @@ class RawFile(RawFileInterface):
                 self.metadata, RawFileError.ACTION_READ, format_os_error(e)
             ) from e
 
-    def write(self, file_data, can_overwrite=False):
+    def write(self, file_data: bytes, can_overwrite: bool = False) -> None:
         try:
             mode = "{write_mode}{binary_mode}".format(
                 write_mode="w" if can_overwrite else "x",
@@ -169,18 +178,20 @@ class RawFile(RawFileInterface):
                 self.metadata, RawFileError.ACTION_WRITE, format_os_error(e)
             ) from e
 
-    def remove(self, fail_if_file_not_found=True):
-        get_raw_file_error = lambda e: RawFileError(
-            self.metadata, RawFileError.ACTION_REMOVE, format_os_error(e)
-        )
+    def remove(self, fail_if_file_not_found: bool = True) -> None:
         try:
             os.remove(self.metadata.path)
         except FileNotFoundError as e:
             if fail_if_file_not_found:
-                raise get_raw_file_error(e) from e
+                raise self.__get_raw_file_error(e) from e
         except OSError as e:
-            raise get_raw_file_error(e) from e
+            raise self.__get_raw_file_error(e) from e
 
-    def backup(self):
+    def backup(self) -> None:
         # TODO implement
         raise NotImplementedError()
+
+    def __get_raw_file_error(self, e: OSError) -> RawFileError:
+        return RawFileError(
+            self.metadata, RawFileError.ACTION_REMOVE, format_os_error(e)
+        )

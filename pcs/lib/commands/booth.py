@@ -1,7 +1,10 @@
 import base64
 import os.path
 from functools import partial
-from typing import Optional
+from typing import (
+    Optional,
+    cast,
+)
 
 from pcs import settings
 from pcs.common import (
@@ -47,6 +50,7 @@ from pcs.lib.errors import LibraryError
 from pcs.lib.file.instance import FileInstance
 from pcs.lib.file.raw_file import (
     GhostFile,
+    RealFile,
     raw_file_error_report,
 )
 from pcs.lib.interface.config import ParserErrorException
@@ -197,8 +201,8 @@ def config_destroy(
     if report_processor.has_errors:
         raise LibraryError()
 
+    authfile_path = None
     try:
-        authfile_path = None
         booth_conf = booth_env.config.read_to_facade()
         authfile_path = booth_conf.get_authfile()
     except RawFileError as e:
@@ -224,8 +228,14 @@ def config_destroy(
         authfile_dir, authfile_name = os.path.split(authfile_path)
         if (authfile_dir == settings.booth_config_dir) and authfile_name:
             try:
-                key_file = FileInstance.for_booth_key(authfile_name)
-                key_file.raw_file.remove(fail_if_file_not_found=False)
+                key_file = FileInstance.for_booth_key(
+                    authfile_name, ghost_file=False
+                )
+                # We're sure we have a RealFile instance as for_booth_key was
+                # called with ghost_file=False
+                cast(RealFile, key_file.raw_file).remove(
+                    fail_if_file_not_found=False
+                )
             except RawFileError as e:
                 report_processor.report(
                     raw_file_error_report(
