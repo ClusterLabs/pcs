@@ -32,11 +32,11 @@ class ResourceAgentName:
         return ":".join(filter(None, [self.standard, self.provider, self.type]))
 
     @property
-    def is_pcmk_fake_agent(self):
+    def is_pcmk_fake_agent(self) -> bool:
         return self.standard == _FAKE_AGENT_STANDARD
 
     @property
-    def is_stonith(self):
+    def is_stonith(self) -> bool:
         return self.standard == "stonith"
 
     def to_dto(self) -> ResourceAgentNameDto:

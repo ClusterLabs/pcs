@@ -15,13 +15,13 @@ class AgentNameGuessFoundMoreThanOne(ResourceAgentError):
         self.names_found = names_found
 
     @property
-    def searched_name(self):
+    def searched_name(self) -> str:
         return self.agent_name
 
 
 class AgentNameGuessFoundNone(ResourceAgentError):
     @property
-    def searched_name(self):
+    def searched_name(self) -> str:
         return self.agent_name
 
 
