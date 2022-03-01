@@ -4,8 +4,11 @@
 
 ### Fixed
 - Booth ticket name validation ([rhbz#2053177])
+- Adding booth ticket doesn't report 'mode' as an uknown option anymore
+  ([rhbz#2058243])
 
 [rhbz#2053177]: https://bugzilla.redhat.com/show_bug.cgi?id=2053177
+[rhbz#2058243]: https://bugzilla.redhat.com/show_bug.cgi?id=2058243
 
 
 ## [0.11.2] - 2022-02-01
@@ -65,7 +68,7 @@
 - Make roles `Promoted` and `Unpromoted` default ([rhbz#1885293])
 - Make auto-deleting constraint default for `pcs resource move` command
   ([rhbz#1996062])
-- Deprecation warnings use a "Deprecation Warning:" prefix instead of 
+- Deprecation warnings use a "Deprecation Warning:" prefix instead of
   "Warning:" on the command line
 - Minimal required version of python has been changed to 3.9
 - Minimal required version of ruby has been changed to 2.5
