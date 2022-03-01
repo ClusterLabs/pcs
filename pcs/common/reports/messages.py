@@ -18,7 +18,10 @@ from typing import (
 
 from pcs.common import file_type_codes
 from pcs.common.fencing_topology import TARGET_TYPE_ATTRIBUTE
-from pcs.common.file import RawFileError
+from pcs.common.file import (
+    FileAction,
+    RawFileError,
+)
 from pcs.common.str_tools import (
     format_list,
     format_list_custom_last_separator,
@@ -152,8 +155,8 @@ def _format_file_role(role: file_type_codes.FileTypeCode) -> str:
     return _file_role_translation.get(role, role)
 
 
-def _format_file_action(action: str) -> str:
-    return _file_operation_translation.get(action, action)
+def _format_file_action(action: FileAction) -> str:
+    return _file_operation_translation.get(action, str(action))
 
 
 _file_operation_translation = {
@@ -4697,7 +4700,7 @@ class FileIoError(ReportItemMessage):
     """
 
     file_type_code: file_type_codes.FileTypeCode
-    operation: str
+    operation: FileAction
     reason: str
     file_path: str = ""
     _code = codes.FILE_IO_ERROR
@@ -6233,7 +6236,7 @@ class ParseErrorJsonFile(ReportItemMessage):
     position: int
     reason: str
     full_msg: str
-    file_path: str
+    file_path: Optional[str]
     _code = codes.PARSE_ERROR_JSON_FILE
 
     @property

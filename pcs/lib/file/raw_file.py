@@ -1,18 +1,21 @@
 import errno
 import os
-from typing import Optional
+from typing import (
+    Dict,
+    Optional,
+)
 
 # the import makes it look like RealFile is implemented here so we don't
 # have to import RawFile from common and Ghost file from here in other
 # places
 # pylint: disable=unused-import
 from pcs.common import reports
+from pcs.common.file import FileMetadata
 from pcs.common.file import RawFile as RealFile
 from pcs.common.file import (
     RawFileError,
     RawFileInterface,
 )
-from pcs.common.reports import ReportItem
 
 # TODO add logging (logger / debug reports ?)
 
@@ -21,7 +24,7 @@ def raw_file_error_report(
     error: RawFileError,
     force_code: Optional[reports.types.ForceCode] = None,
     is_forced_or_warning: bool = False,
-) -> ReportItem:
+) -> reports.ReportItem:
     """
     Translate a RawFileError instance to a report
 
@@ -29,7 +32,7 @@ def raw_file_error_report(
     force_code -- is it a forcible error? by which code?
     is_forced_or_warning -- translate to a warning if True, error otherwise
     """
-    return ReportItem(
+    return reports.ReportItem(
         severity=reports.get_severity(force_code, is_forced_or_warning),
         message=reports.messages.FileIoError(
             error.metadata.file_type_code,
@@ -43,41 +46,32 @@ def raw_file_error_report(
     )
 
 
-def export_ghost_file(ghost_file):
-    """
-    Export GhostFile so it can be transfered to a client
-
-    GhostFile ghost_file -- a ghost file instance
-    """
-    return {
-        "content": ghost_file.content,
-    }
-
-
 class GhostFileError(RawFileError):
     pass
 
 
 class GhostFile(RawFileInterface):
-    def __init__(self, metadata, file_data=None):
+    def __init__(
+        self, metadata: FileMetadata, file_data: Optional[bytes] = None
+    ):
         """
-        FileMetadata metadata -- describes the file and provides its metadata
-        bytes file_data -- data of the ghost file
+        metadata -- describes the file and provides its metadata
+        file_data -- data of the ghost file
         """
         super().__init__(metadata)
         self.__file_data = file_data
 
     @property
-    def content(self):
+    def content(self) -> Optional[bytes]:
         """
         Export the file content
         """
         return self.__file_data
 
-    def exists(self):
+    def exists(self) -> bool:
         return self.__file_data is not None
 
-    def read(self):
+    def read(self) -> bytes:
         if self.__file_data is None:
             raise GhostFileError(
                 self.metadata,
@@ -87,5 +81,16 @@ class GhostFile(RawFileInterface):
             )
         return self.__file_data
 
-    def write(self, file_data, can_overwrite=False):
+    def write(self, file_data: bytes, can_overwrite: bool = False) -> None:
         self.__file_data = file_data
+
+
+def export_ghost_file(ghost_file: GhostFile) -> Dict[str, Optional[bytes]]:
+    """
+    Export GhostFile so it can be transfered to a client
+
+    ghost_file -- a ghost file instance
+    """
+    return {
+        "content": ghost_file.content,
+    }

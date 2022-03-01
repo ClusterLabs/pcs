@@ -1,26 +1,41 @@
+from typing import (
+    Any,
+    Optional,
+)
+
+from pcs.common import (
+    file_type_codes,
+    reports,
+)
+
+
 class ParserErrorException(Exception):
     pass
 
 
 class ParserInterface:
     @staticmethod
-    def parse(raw_file_data):
+    def parse(raw_file_data: bytes) -> Any:
         raise NotImplementedError()
 
     @staticmethod
     def exception_to_report_list(
-        exception, file_type_code, file_path, force_code, is_forced_or_warning
-    ):
+        exception: ParserErrorException,
+        file_type_code: file_type_codes.FileTypeCode,
+        file_path: Optional[str],
+        force_code: Optional[reports.types.ForceCode],
+        is_forced_or_warning: bool,
+    ) -> reports.ReportItemList:
         raise NotImplementedError()
 
 
 class ExporterInterface:
     @staticmethod
-    def export(config_structure):
+    def export(config_structure: Any) -> bytes:
         """
         Export config structure to raw file data (bytes)
 
-        mixed config_structure -- parsed config file
+        config_structure -- parsed config file
         """
         raise NotImplementedError()
 
@@ -32,7 +47,7 @@ class FacadeInterface:
     # is). The create method is not used by the files framework (there is no
     # need and also due to mentioned interface differences). Therefore the
     # create method is not defined here in the interface.
-    def __init__(self, parsed_config):
+    def __init__(self, parsed_config: Any):
         """
         Create a facade around a parsed config file
 
@@ -41,7 +56,7 @@ class FacadeInterface:
         self._config = parsed_config
 
     @property
-    def config(self):
+    def config(self) -> Any:
         """
         Export a parsed config file
         """

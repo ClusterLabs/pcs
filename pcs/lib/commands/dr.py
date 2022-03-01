@@ -298,7 +298,7 @@ def _load_dr_config(
             DrConfigFacade.empty(),
         )
     try:
-        return [], config_file.read_to_facade()
+        return [], cast(DrConfigFacade, config_file.read_to_facade())
     except RawFileError as e:
         return [raw_file_error_report(e)], DrConfigFacade.empty()
     except ParserErrorException as e:
