@@ -234,7 +234,7 @@ class AddTicketTest(BoothTest):
             (
                 "Error: invalid booth ticket option 'site', allowed options"
                 " are: 'acquire-after', 'attr-prereq', "
-                "'before-acquire-handler', 'expire', 'renewal-freq', "
+                "'before-acquire-handler', 'expire', 'mode', 'renewal-freq', "
                 "'retries', 'timeout', 'weights'\n"
                 "Error: timeout cannot be empty\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
@@ -246,7 +246,7 @@ class AddTicketTest(BoothTest):
         msg = (
             "invalid booth ticket option 'unknown', allowed options"
             " are: 'acquire-after', 'attr-prereq', 'before-acquire-handler',"
-            " 'expire', 'renewal-freq', 'retries', 'timeout', 'weights'"
+            " 'expire', 'mode', 'renewal-freq', 'retries', 'timeout', 'weights'"
         )
         self.assert_pcs_fail(
             "booth ticket add TicketA unknown=a".split(),
