@@ -121,16 +121,25 @@ def _validate_ticket_unique(conf_facade, ticket_name):
 
 
 def _validate_ticket_options(options, allow_unknown_options):
-    validator_list = [
-        validate.NamesIn(
-            constants.TICKET_KEYS,
-            option_type="booth ticket",
-            banned_name_list=constants.GLOBAL_KEYS,
-            severity=reports.item.get_severity(
-                reports.codes.FORCE, allow_unknown_options
+    severity = reports.item.get_severity(
+        reports.codes.FORCE, allow_unknown_options
+    )
+    validator_list = (
+        [
+            validate.NamesIn(
+                constants.TICKET_KEYS,
+                option_type="booth ticket",
+                banned_name_list=constants.GLOBAL_KEYS,
+                severity=severity,
             ),
-        ),
-    ] + [validate.ValueNotEmpty(option, None) for option in options]
+        ]
+        + [
+            validate.ValueNotEmpty(option, None)
+            for option in options
+            if option != "mode"
+        ]
+        + [validate.ValueIn("mode", ["auto", "manual"], severity=severity)]
+    )
     normalized_options = validate.values_to_pairs(
         options, lambda key, value: value.strip()
     )

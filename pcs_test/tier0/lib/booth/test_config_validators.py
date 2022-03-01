@@ -100,6 +100,7 @@ class AddTicket(TestCase):
             "attr-prereq",
             "before-acquire-handler",
             "expire",
+            "mode",
             "renewal-freq",
             "retries",
             "timeout",
@@ -127,6 +128,7 @@ class AddTicket(TestCase):
         for ticket in (
             "abcdefghij01234567890123456789012345678901234567890123456789012",
             "ticketB",
+            "ticket-C",
         ):
             with self.subTest(ticket=ticket):
                 assert_report_item_list_equal(
@@ -176,6 +178,7 @@ class AddTicket(TestCase):
                     "port": "b",
                     "timeout": " ",
                     "unknown": " ",
+                    "mode": "special",
                 },
             ),
             [
@@ -204,6 +207,15 @@ class AddTicket(TestCase):
                     option_name="unknown",
                     allowed_values=None,
                     cannot_be_empty=True,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    force_code=report_codes.FORCE,
+                    option_value="special",
+                    option_name="mode",
+                    allowed_values=["auto", "manual"],
+                    cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
             ],

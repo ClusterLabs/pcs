@@ -21,6 +21,7 @@ TICKET_KEYS = (
     "attr-prereq",
     "before-acquire-handler",
     "expire",
+    "mode",
     "renewal-freq",
     "retries",
     "timeout",
