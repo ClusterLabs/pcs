@@ -8,6 +8,7 @@ from typing import (
     Mapping,
     Optional,
     Sequence,
+    cast,
 )
 
 from pcs import settings
@@ -746,8 +747,9 @@ def config_update_local(
     _ensure_live_env(env)
     corosync_conf_instance = FileInstance.for_corosync_conf()
     try:
-        corosync_conf: config_facade.ConfigFacade = (
-            corosync_conf_instance.raw_to_facade(corosync_conf_content)
+        corosync_conf: config_facade.ConfigFacade = cast(
+            config_facade.ConfigFacade,
+            corosync_conf_instance.raw_to_facade(corosync_conf_content),
         )
     except ParserErrorException as e:
         if env.report_processor.report_list(

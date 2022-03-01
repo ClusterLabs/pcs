@@ -1,5 +1,6 @@
 from typing import (
     Mapping,
+    Optional,
     Type,
 )
 
@@ -153,8 +154,8 @@ class Parser(ParserInterface):
     def exception_to_report_list(
         exception: ParserErrorException,
         file_type_code: file_type_codes.FileTypeCode,
-        file_path: str,
-        force_code: reports.types.ForceCode,
+        file_path: Optional[str],
+        force_code: Optional[reports.types.ForceCode],
         is_forced_or_warning: bool,
     ) -> reports.ReportItemList:
         # TODO switch to new exceptions / reports and do not ignore input
