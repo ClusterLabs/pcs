@@ -1,8 +1,9 @@
 import json
+from dataclasses import dataclass
 from typing import (
     Any,
     Dict,
-    NamedTuple,
+    Optional,
     Type,
 )
 
@@ -24,7 +25,8 @@ from pcs.lib.interface.config import (
 )
 
 
-class FileToolbox(NamedTuple):
+@dataclass(frozen=True)
+class FileToolbox:
     # File type code the toolbox belongs to
     file_type_code: code.FileTypeCode
     # Provides an easy access for reading and modifying data
@@ -60,10 +62,10 @@ class JsonParser(ParserInterface):
 
     @staticmethod
     def exception_to_report_list(
-        exception: JsonParserException,
+        exception: ParserErrorException,
         file_type_code: code.FileTypeCode,
-        file_path: str,
-        force_code: reports.types.ForceCode,
+        file_path: Optional[str],
+        force_code: Optional[reports.types.ForceCode],
         is_forced_or_warning: bool,
     ) -> reports.ReportItemList:
         if isinstance(exception, JsonParserException):
@@ -111,8 +113,8 @@ class NoopParser(ParserInterface):
     def exception_to_report_list(
         exception: ParserErrorException,
         file_type_code: code.FileTypeCode,
-        file_path: str,
-        force_code: reports.types.ForceCode,
+        file_path: Optional[str],
+        force_code: Optional[reports.types.ForceCode],
         is_forced_or_warning: bool,
     ) -> reports.ReportItemList:
         return []
