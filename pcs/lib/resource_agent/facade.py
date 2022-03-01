@@ -6,6 +6,7 @@ from typing import (
     List,
     Optional,
     Set,
+    cast,
 )
 
 from pcs.common import reports
@@ -24,6 +25,7 @@ from .pcs_transform import (
     ocf_unified_to_pcs,
 )
 from .types import (
+    FakeAgentName,
     ResourceAgentMetadata,
     ResourceAgentName,
     ResourceAgentParameter,
@@ -170,7 +172,7 @@ class ResourceAgentFacade:
         return validators
 
     @property
-    def _validator_option_type(self):
+    def _validator_option_type(self) -> str:
         return "stonith" if self.metadata.name.is_stonith else "resource"
 
     def _get_all_params_deprecated_by(self) -> Dict[str, Set[str]]:
@@ -201,7 +203,7 @@ class ResourceAgentFacadeFactory:
     ) -> None:
         self._runner = runner
         self._report_processor = report_processor
-        self._fenced_metadata = None
+        self._fenced_metadata: Optional[ResourceAgentMetadata] = None
 
     def facade_from_parsed_name(
         self, name: ResourceAgentName
@@ -242,7 +244,7 @@ class ResourceAgentFacadeFactory:
             )
         return ResourceAgentFacade(metadata, additional_parameters)
 
-    def _get_fenced_parameters(self):
+    def _get_fenced_parameters(self) -> List[ResourceAgentParameter]:
         if self._fenced_metadata is None:
             agent_name = ResourceAgentName(
                 const.FAKE_AGENT_STANDARD, None, const.PACEMAKER_FENCED
@@ -253,7 +255,8 @@ class ResourceAgentFacadeFactory:
                         parse_metadata(
                             agent_name,
                             load_fake_agent_metadata(
-                                self._runner, agent_name.type
+                                self._runner,
+                                cast(FakeAgentName, agent_name.type),
                             ),
                         )
                     )
