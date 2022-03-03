@@ -1,11 +1,12 @@
 import fcntl
 import os
 import shutil
-from dataclasses import dataclass
 from typing import (
     NewType,
     Optional,
 )
+
+from dataclasses import dataclass
 
 from pcs.common.file_type_codes import FileTypeCode
 from pcs.common.tools import format_os_error
