@@ -1,11 +1,12 @@
 import json
-from dataclasses import dataclass
 from typing import (
     Any,
     Dict,
     Optional,
     Type,
 )
+
+from dataclasses import dataclass
 
 from pcs.common import file_type_codes as code
 from pcs.common import reports
