@@ -500,7 +500,10 @@ class RequiredOptionOfAlternativesIsMissing(ReportItemMessage):
     @property
     def message(self) -> str:
         flag_name_list = [
-            (name in self.deprecated_names, name) for name in self.option_names
+            # pylint: disable=unsupported-membership-test
+            # This seems to be a bug in pylint in combination with python 3.6
+            (name in self.deprecated_names, name)
+            for name in self.option_names
         ]
         str_list = [
             f"'{item[1]}' (deprecated)" if item[0] else f"'{item[1]}'"
