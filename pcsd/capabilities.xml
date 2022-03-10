@@ -1902,6 +1902,14 @@
         pcs commands: stonith update-scsi-devices
       </description>
     </capability>
+    <capability id="pcmk.stonith.update.scsi-devices.mpath" in-pcs="1" in-pcsd="0">
+      <description>
+        Support update of multipath scsi fencing devices without affecting other
+        resources.
+
+        pcs commands: stonith update-scsi-devices
+      </description>
+    </capability>
     <capability id="pcmk.stonith.scsi-unfence-node-v2" in-pcs="0" in-pcsd="1">
       <description>
         Unfence scsi devices on a cluster node. In comparison with v1, only
@@ -1909,6 +1917,15 @@
         fenced, unfencing will be skipped.
 
         daemon urls: /api/v1/scsi-unfence-node/v2
+      </description>
+    </capability>
+    <capability id="pcmk.stonith.scsi-unfence-node-mpath" in-pcs="0" in-pcsd="1">
+      <description>
+        Unfence multipath scsi devices on a cluster node. Only newly added
+        devices are unfenced. In case any existing device is fenced, unfencing
+        will be skipped.
+
+        daemon urls: /api/v1/scsi-unfence-node-mpath/v1
       </description>
     </capability>
     <capability id="pcmk.stonith.enable-disable" in-pcs="1" in-pcsd="1">

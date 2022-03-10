@@ -27,7 +27,10 @@ from pcs.lib.commands.resource import (
     resource_environment,
 )
 from pcs.lib.communication.corosync import GetCorosyncOnlineTargets
-from pcs.lib.communication.scsi import Unfence
+from pcs.lib.communication.scsi import (
+    Unfence,
+    UnfenceMpath,
+)
 from pcs.lib.communication.tools import (
     AllSameDataMixin,
     run_and_raise,
@@ -417,6 +420,7 @@ def _update_scsi_devices_get_element_and_devices(
 
 def _unfencing_scsi_devices(
     env: LibraryEnvironment,
+    stonith_el: _Element,
     original_devices: Iterable[str],
     updated_devices: Iterable[str],
     force_flags: Container[reports.types.ForceCode] = (),
@@ -456,11 +460,22 @@ def _unfencing_scsi_devices(
     online_corosync_target_list = run_and_raise(
         env.get_node_communicator(), com_cmd
     )
-    com_cmd = Unfence(
-        env.report_processor,
-        original_devices=sorted(original_devices),
-        updated_devices=sorted(updated_devices),
-    )
+    if stonith_el.get("type") == "fence_mpath":
+        com_cmd = UnfenceMpath(
+            env.report_processor,
+            original_devices=sorted(original_devices),
+            updated_devices=sorted(updated_devices),
+            node_key_map=resource.stonith.get_node_key_map_for_mpath(
+                stonith_el,
+                [target.label for target in online_corosync_target_list],
+            ),
+        )
+    else:  # fence_scsi
+        com_cmd = Unfence(
+            env.report_processor,
+            original_devices=sorted(original_devices),
+            updated_devices=sorted(updated_devices),
+        )
     com_cmd.set_targets(online_corosync_target_list)
     run_and_raise(env.get_node_communicator(), com_cmd)
 
@@ -505,7 +520,7 @@ def update_scsi_devices(
         set_device_list,
     )
     _unfencing_scsi_devices(
-        env, current_device_list, set_device_list, force_flags
+        env, stonith_el, current_device_list, set_device_list, force_flags
     )
     env.push_cib()
 
@@ -559,6 +574,6 @@ def update_scsi_devices_add_remove(
         updated_device_set,
     )
     _unfencing_scsi_devices(
-        env, current_device_list, updated_device_set, force_flags
+        env, stonith_el, current_device_list, updated_device_set, force_flags
     )
     env.push_cib()

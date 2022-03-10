@@ -67,3 +67,61 @@ class ScsiShortcuts:
                 )
             ),
         )
+
+    def unfence_node_mpath(
+        self,
+        node_key_map,
+        original_devices=(),
+        updated_devices=(),
+        node_labels=None,
+        communication_list=None,
+        name="http.scsi.unfence_node",
+    ):
+        """
+        Create a calls for node unfencing
+
+        dict node_key_map -- map of node name to its registration key
+        list original_devices -- list of scsi devices before an update
+        list updated_devices -- list of scsi devices after an update
+        list node_labels -- create success responses from these nodes
+        list communication_list -- use these custom responses
+        string name -- the key of this call
+        """
+        if (node_labels is None and communication_list is None) or (
+            node_labels and communication_list
+        ):
+            raise AssertionError(
+                "Exactly one of 'node_labels', 'communication_list' "
+                "must be specified"
+            )
+
+        if node_labels:
+            communication_list = [
+                dict(
+                    label=node,
+                    raw_data=json.dumps(
+                        dict(
+                            key=node_key_map[node],
+                            original_devices=original_devices,
+                            updated_devices=updated_devices,
+                        )
+                    ),
+                )
+                for node in node_labels
+            ]
+        place_communication(
+            self.__calls,
+            name,
+            communication_list,
+            action="api/v1/scsi-unfence-node-mpath/v1",
+            output=json.dumps(
+                to_dict(
+                    communication.dto.InternalCommunicationResultDto(
+                        status=communication.const.COM_STATUS_SUCCESS,
+                        status_msg=None,
+                        report_list=[],
+                        data=None,
+                    )
+                )
+            ),
+        )

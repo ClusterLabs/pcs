@@ -701,7 +701,7 @@ If an operation (op) is specified it will update the first found operation with 
 If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the changes to take effect and then return 0 if the changes have been processed or 1 otherwise. If 'n' is not specified it defaults to 60 minutes.
 .TP
 update\-scsi\-devices <stonith id> (set <device\-path> [<device\-path>...]) | (add <device\-path> [<device\-path>...] delete|remove <device\-path> [<device\-path>...] )
-Update scsi fencing devices without affecting other resources. You must specify either list of set devices or at least one device for add or delete/remove devices. Stonith resource must be running on one cluster node. Each device will be unfenced on each cluster node running cluster. Supported fence agents: fence_scsi.
+Update scsi fencing devices without affecting other resources. You must specify either list of set devices or at least one device for add or delete/remove devices. Stonith resource must be running on one cluster node. Each device will be unfenced on each cluster node running cluster. Supported fence agents: fence_scsi, fence_mpath.
 .TP
 delete <stonith id>
 Remove stonith id from configuration.

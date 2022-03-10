@@ -315,6 +315,11 @@ def route_api_v1(auth_user, params, request)
       :only_superuser => false,
       :permissions => Permissions::WRITE,
     },
+    'scsi-unfence-node-mpath/v1' => {
+      :cmd => 'scsi.unfence_node_mpath',
+      :only_superuser => false,
+      :permissions => Permissions::WRITE,
+    },
     # deprecated, use resource-agent-get-agent-metadata/v1 instead
     'stonith-agent-describe-agent/v1' => {
       :cmd => 'stonith_agent.describe_agent',

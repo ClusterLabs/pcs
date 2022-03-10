@@ -1996,6 +1996,53 @@ class StonithRestartlessUpdateUnableToPerform(NameBuildTest):
         )
 
 
+class StonithRestartlessUpdateMissingMpathKeys(NameBuildTest):
+    def test_plural(self):
+        self.assert_message_from_report(
+            (
+                "Missing mpath reservation keys for nodes: 'rh9-2', 'rh9-3', "
+                "in 'pcmk_host_map' value: 'rh9-1:1'"
+            ),
+            reports.StonithRestartlessUpdateMissingMpathKeys(
+                "rh9-1:1", ["rh9-2", "rh9-3"]
+            ),
+        )
+
+    def test_singular(self):
+        self.assert_message_from_report(
+            (
+                "Missing mpath reservation key for node: 'rh9-2', "
+                "in 'pcmk_host_map' value: 'rh9-1:1'"
+            ),
+            reports.StonithRestartlessUpdateMissingMpathKeys(
+                "rh9-1:1", ["rh9-2"]
+            ),
+        )
+
+    def test_missing_map_and_empty_nodes(self):
+        self.assert_message_from_report(
+            "Missing mpath reservation keys, 'pcmk_host_map' not set",
+            reports.StonithRestartlessUpdateMissingMpathKeys(None, []),
+        )
+
+    def test_missing_map_non_empty_nodes(self):
+        self.assert_message_from_report(
+            "Missing mpath reservation keys, 'pcmk_host_map' not set",
+            reports.StonithRestartlessUpdateMissingMpathKeys(
+                None, ["rh9-1", "rh9-2"]
+            ),
+        )
+
+    def test_non_empty_map_empty_nodes(self):
+        self.assert_message_from_report(
+            (
+                "Missing mpath reservation keys for nodes in 'pcmk_host_map' "
+                "value: 'rh-1:1'"
+            ),
+            reports.StonithRestartlessUpdateMissingMpathKeys("rh-1:1", []),
+        )
+
+
 class ResourceRunningOnNodes(NameBuildTest):
     def test_one_node(self):
         self.assert_message_from_report(

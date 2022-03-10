@@ -2,11 +2,16 @@
 
 ## [Unreleased]
 
+### Added
+- Add support for fence_mpath to `pcs stonith update-scsi-devices` command
+  ([rhbz#2024522])
+
 ### Fixed
 - Booth ticket name validation ([rhbz#2053177])
 - Adding booth ticket doesn't report 'mode' as an uknown option anymore
   ([rhbz#2058243])
 
+[rhbz#2024522]: https://bugzilla.redhat.com/show_bug.cgi?id=2024522
 [rhbz#2053177]: https://bugzilla.redhat.com/show_bug.cgi?id=2053177
 [rhbz#2058243]: https://bugzilla.redhat.com/show_bug.cgi?id=2058243
 

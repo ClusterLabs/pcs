@@ -1,5 +1,8 @@
 import json
-from typing import Iterable
+from typing import (
+    Dict,
+    Iterable,
+)
 
 from dacite import DaciteError
 
@@ -85,3 +88,33 @@ class Unfence(
                     reports.messages.InvalidResponseFormat(node_label)
                 )
             )
+
+
+class UnfenceMpath(Unfence):
+    def __init__(
+        self,
+        report_processor: reports.ReportProcessor,
+        original_devices: Iterable[str],
+        updated_devices: Iterable[str],
+        node_key_map: Dict[str, str],
+    ) -> None:
+        super().__init__(report_processor, original_devices, updated_devices)
+        self._node_key_map = node_key_map
+
+    def _prepare_initial_requests(self):
+        return [
+            Request(
+                target,
+                RequestData(
+                    "api/v1/scsi-unfence-node-mpath/v1",
+                    data=json.dumps(
+                        dict(
+                            key=self._node_key_map[target.label],
+                            original_devices=self._original_devices,
+                            updated_devices=self._updated_devices,
+                        )
+                    ),
+                ),
+            )
+            for target in self._target_list
+        ]
