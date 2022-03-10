@@ -676,7 +676,7 @@ update <stonith id> [stonith device options]
 Add, remove or change options of specified stonith id. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='.
 .TP
 update\-scsi\-devices <stonith id> (set <device\-path> [<device\-path>...]) | (add <device\-path> [<device\-path>...] delete|remove <device\-path> [<device\-path>...] )
-Update scsi fencing devices without affecting other resources. You must specify either list of set devices or at least one device for add or delete/remove devices. Stonith resource must be running on one cluster node. Each device will be unfenced on each cluster node running cluster. Supported fence agents: fence_scsi.
+Update scsi fencing devices without affecting other resources. You must specify either list of set devices or at least one device for add or delete/remove devices. Stonith resource must be running on one cluster node. Each device will be unfenced on each cluster node running cluster. Supported fence agents: fence_scsi, fence_mpath.
 .TP
 delete <stonith id>
 Remove stonith id from configuration.

@@ -7,8 +7,15 @@ from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 
 
-class TestUnfenceNode(TestCase):
+class TestUnfenceNodeBase:
+    plug = None
+    fence_agent = None
+
+    def call_function(self, *args, **kwargs):
+        raise NotImplementedError()
+
     def setUp(self):
+        # pylint: disable=invalid-name
         self.env_assist, self.config = get_env_tools(self)
         self.old_devices = ["device1", "device3"]
         self.new_devices = ["device3", "device0", "device2"]
@@ -16,36 +23,42 @@ class TestUnfenceNode(TestCase):
         self.check_devices = sorted(
             set(self.old_devices) & set(self.new_devices)
         )
-        self.node = "node1"
 
     def test_success_devices_to_unfence(self):
         for old_dev in self.check_devices:
             self.config.runner.scsi.get_status(
-                self.node, old_dev, name=f"runner.scsi.is_fenced.{old_dev}"
+                self.plug,
+                old_dev,
+                self.fence_agent,
+                name=f"runner.scsi.is_fenced.{old_dev}",
             )
-        self.config.runner.scsi.unfence_node(self.node, self.added_devices)
-        scsi.unfence_node(
+        self.config.runner.scsi.unfence_node(
+            self.plug, self.added_devices, self.fence_agent
+        )
+        self.call_function(
             self.env_assist.get_env(),
-            self.node,
+            self.plug,
             self.old_devices,
             self.new_devices,
         )
         self.env_assist.assert_reports([])
 
     def test_success_no_devices_to_unfence(self):
-        scsi.unfence_node(
+        self.call_function(
             self.env_assist.get_env(),
-            self.node,
+            self.plug,
             {"device1", "device2", "device3"},
             {"device3"},
         )
         self.env_assist.assert_reports([])
 
     def test_success_replace_unavailable_device(self):
-        self.config.runner.scsi.unfence_node(self.node, {"device2"})
-        scsi.unfence_node(
+        self.config.runner.scsi.unfence_node(
+            self.plug, {"device2"}, self.fence_agent
+        )
+        self.call_function(
             self.env_assist.get_env(),
-            self.node,
+            self.plug,
             {"device1"},
             {"device2"},
         )
@@ -55,15 +68,22 @@ class TestUnfenceNode(TestCase):
         err_msg = "stderr"
         for old_dev in self.check_devices:
             self.config.runner.scsi.get_status(
-                self.node, old_dev, name=f"runner.scsi.is_fenced.{old_dev}"
+                self.plug,
+                old_dev,
+                self.fence_agent,
+                name=f"runner.scsi.is_fenced.{old_dev}",
             )
         self.config.runner.scsi.unfence_node(
-            self.node, self.added_devices, stderr=err_msg, return_code=1
+            self.plug,
+            self.added_devices,
+            self.fence_agent,
+            stderr=err_msg,
+            return_code=1,
         )
         self.env_assist.assert_raise_library_error(
-            lambda: scsi.unfence_node(
+            lambda: self.call_function(
                 self.env_assist.get_env(),
-                self.node,
+                self.plug,
                 self.old_devices,
                 self.new_devices,
             ),
@@ -83,19 +103,23 @@ class TestUnfenceNode(TestCase):
         err_device = new_devices[2]
         for dev in ok_devices:
             self.config.runner.scsi.get_status(
-                self.node, dev, name=f"runner.scsi.is_fenced.{dev}"
+                self.plug,
+                dev,
+                self.fence_agent,
+                name=f"runner.scsi.is_fenced.{dev}",
             )
         self.config.runner.scsi.get_status(
-            self.node,
+            self.plug,
             err_device,
+            self.fence_agent,
             name=f"runner.scsi.is_fenced.{err_device}",
             stderr=err_msg,
             return_code=1,
         )
         self.env_assist.assert_raise_library_error(
-            lambda: scsi.unfence_node(
+            lambda: self.call_function(
                 self.env_assist.get_env(),
-                self.node,
+                self.plug,
                 old_devices,
                 new_devices,
             ),
@@ -113,15 +137,16 @@ class TestUnfenceNode(TestCase):
         stdout_off = "Status: OFF"
         for old_dev in self.check_devices:
             self.config.runner.scsi.get_status(
-                self.node,
+                self.plug,
                 old_dev,
+                self.fence_agent,
                 name=f"runner.scsi.is_fenced.{old_dev}",
                 stdout=stdout_off,
                 return_code=2,
             )
-        scsi.unfence_node(
+        self.call_function(
             self.env_assist.get_env(),
-            self.node,
+            self.plug,
             self.old_devices,
             self.new_devices,
         )
@@ -133,3 +158,19 @@ class TestUnfenceNode(TestCase):
                 )
             ]
         )
+
+
+class TestUnfenceNodeScsi(TestUnfenceNodeBase, TestCase):
+    plug = "node1"
+    fence_agent = "fence_scsi"
+
+    def call_function(self, *args, **kwargs):
+        scsi.unfence_node(*args, **kwargs)
+
+
+class TestUnfenceNodeMpath(TestUnfenceNodeBase, TestCase):
+    plug = "1"
+    fence_agent = "fence_mpath"
+
+    def call_function(self, *args, **kwargs):
+        scsi.unfence_node_mpath(*args, **kwargs)

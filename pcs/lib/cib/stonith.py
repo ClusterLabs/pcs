@@ -1,3 +1,4 @@
+import re
 from typing import (
     Dict,
     Iterable,
@@ -80,7 +81,7 @@ def get_misconfigured_resources(
     return stonith_all, stonith_with_action, stonith_with_method_cycle
 
 
-SUPPORTED_RESOURCE_TYPES_FOR_RESTARTLESS_UPDATE = ["fence_scsi"]
+SUPPORTED_RESOURCE_TYPES_FOR_RESTARTLESS_UPDATE = ["fence_scsi", "fence_mpath"]
 
 
 def validate_stonith_restartless_update(
@@ -127,6 +128,34 @@ def validate_stonith_restartless_update(
             )
         )
     return stonith_el, report_list
+
+
+def get_node_key_map_for_mpath(
+    stonith_el: _Element, node_labels: Iterable[str]
+) -> Dict[str, str]:
+    library_error = lambda host_map, missing_nodes: LibraryError(
+        ReportItem.error(
+            reports.messages.StonithRestartlessUpdateMissingMpathKeys(
+                host_map, sorted(missing_nodes)
+            )
+        )
+    )
+    pcmk_host_map_value = get_value(
+        INSTANCE_ATTRIBUTES_TAG, stonith_el, "pcmk_host_map"
+    )
+    missing_nodes = set(node_labels)
+    if not pcmk_host_map_value:
+        raise library_error(pcmk_host_map_value, missing_nodes)
+    node_key_map = {}
+    pattern = re.compile(r"(?P<node>[^=:; \t]+)[=:](?P<key>[^=:; \t]+)[; \t]?")
+    for match in pattern.finditer(pcmk_host_map_value):
+        if match:
+            group_dict = match.groupdict()
+            node_key_map[group_dict["node"]] = group_dict["key"]
+    missing_nodes -= set(node_key_map.keys())
+    if missing_nodes:
+        raise library_error(pcmk_host_map_value, missing_nodes)
+    return node_key_map
 
 
 DIGEST_ATTRS = ["op-digest", "op-secure-digest", "op-restart-digest"]

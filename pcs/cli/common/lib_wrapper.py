@@ -482,6 +482,7 @@ def load_module(env, middleware_factory, name):
             middleware.build(),
             {
                 "unfence_node": scsi.unfence_node,
+                "unfence_node_mpath": scsi.unfence_node_mpath,
             },
         )
 

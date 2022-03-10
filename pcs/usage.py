@@ -1324,7 +1324,7 @@ Commands:
         specify either list of set devices or at least one device for add or
         delete/remove devices. Stonith resource must be running on one cluster
         node. Each device will be unfenced on each cluster node running
-        cluster. Supported fence agents: fence_scsi.
+        cluster. Supported fence agents: fence_scsi, fence_mpath.
 
     delete <stonith id>
         Remove stonith id from configuration.

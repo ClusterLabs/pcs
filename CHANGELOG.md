@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+- Add support for fence_mpath to `pcs stonith update-scsi-devices` command
+  ([rhbz#2023845])
+
 ### Fixed
 - Agents not conforming to OCF standard are processed as if they conformed to
   OCF 1.0 - in the same way as before pcs-0.10.12 ([rhbz#2050274])
@@ -18,6 +22,7 @@
 
 [rhbz#1786964]: https://bugzilla.redhat.com/show_bug.cgi?id=1786964
 [rhbz#1791661]: https://bugzilla.redhat.com/show_bug.cgi?id=1791661
+[rhbz#2023845]: https://bugzilla.redhat.com/show_bug.cgi?id=2023845
 [rhbz#2050274]: https://bugzilla.redhat.com/show_bug.cgi?id=2050274
 
 

@@ -2925,6 +2925,38 @@ class StonithRestartlessUpdateUnableToPerform(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class StonithRestartlessUpdateMissingMpathKeys(ReportItemMessage):
+    """
+    Unable to update mpath devices because reservation keys for some nodes are
+    missing.
+
+    pcmk_host_map_value -- a string which specifies nodes to keys map
+    missing_nodes -- nodes which do not have keys
+    """
+
+    pcmk_host_map_value: Optional[str]
+    missing_nodes: List[str]
+    _code = codes.STONITH_RESTARTLESS_UPDATE_MISSING_MPATH_KEYS
+
+    @property
+    def message(self) -> str:
+        if not self.pcmk_host_map_value:
+            return "Missing mpath reservation keys, 'pcmk_host_map' not set"
+        keys = format_plural(self.missing_nodes, "key")
+        nodes = format_plural(self.missing_nodes, "node")
+        node_list = format_list(self.missing_nodes)
+        node_names = f": {node_list},"
+        if not self.missing_nodes:
+            keys = "keys"
+            nodes = "nodes"
+            node_names = ""
+        return (
+            f"Missing mpath reservation {keys} for {nodes}{node_names} in "
+            f"'pcmk_host_map' value: '{self.pcmk_host_map_value}'"
+        )
+
+
+@dataclass(frozen=True)
 class ResourceRunningOnNodes(ReportItemMessage):
     """
     Resource is running on some nodes. Taken from cluster state.

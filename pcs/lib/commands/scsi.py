@@ -8,37 +8,39 @@ from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 
 
-def unfence_node(
+def _unfence_node_devices(
     env: LibraryEnvironment,
-    node: str,
+    plug: str,
     original_devices: Iterable[str],
     updated_devices: Iterable[str],
-) -> None:
+    fence_agent: str,
+):
     """
-    Unfence scsi devices on a node by calling fence_scsi agent script. Only
-    newly added devices will be unfenced (set(updated_devices) -
-    set(original_devices)). Before unfencing, original devices are be checked
-    if any of them are not fenced. If there is a fenced device, unfencing will
-    be skipped.
+    Unfence shared devices by calling fence agent script. Only newly added
+    devices will be unfenced (set(updated_devices) - set(original_devices)).
+    Before unfencing, original devices are checked if any of them are not
+    fenced. If there is a fenced device, unfencing will be skipped.
 
     env -- provides communication with externals
-    node -- node name on wich is unfencing performed
+    plug -- an information used for unfencing (a node name for fence_scsi,
+        registration key for fence_mpath)
     original_devices -- list of devices defined before update
     updated_devices -- list of devices defined after update
+    fence_agent -- fance agent name
     """
     devices_to_unfence = set(updated_devices) - set(original_devices)
     if not devices_to_unfence:
         return
-    fence_scsi_bin = os.path.join(settings.fence_agent_binaries, "fence_scsi")
+    fence_agent_bin = os.path.join(settings.fence_agent_binaries, fence_agent)
     fenced_devices = []
     # do not check devices being removed
     for device in sorted(set(original_devices) & set(updated_devices)):
         stdout, stderr, return_code = env.cmd_runner().run(
             [
-                fence_scsi_bin,
+                fence_agent_bin,
                 "--action=status",
                 f"--devices={device}",
-                f"--plug={node}",
+                f"--plug={plug}",
             ]
         )
         if return_code == 2:
@@ -64,11 +66,11 @@ def unfence_node(
         return
     stdout, stderr, return_code = env.cmd_runner().run(
         [
-            fence_scsi_bin,
+            fence_agent_bin,
             "--action=on",
             "--devices",
             ",".join(sorted(devices_to_unfence)),
-            f"--plug={node}",
+            f"--plug={plug}",
         ],
     )
     if return_code != 0:
@@ -79,3 +81,49 @@ def unfence_node(
                 )
             )
         )
+
+
+def unfence_node(
+    env: LibraryEnvironment,
+    node: str,
+    original_devices: Iterable[str],
+    updated_devices: Iterable[str],
+) -> None:
+    """
+    Unfence scsi devices on a node by calling fence_scsi agent script. Only
+    newly added devices will be unfenced (set(updated_devices) -
+    set(original_devices)). Before unfencing, original devices are checked
+    if any of them are not fenced. If there is a fenced device, unfencing will
+    be skipped.
+
+    env -- provides communication with externals
+    node -- node name on wich is unfencing performed
+    original_devices -- list of devices defined before update
+    updated_devices -- list of devices defined after update
+    """
+    _unfence_node_devices(
+        env, node, original_devices, updated_devices, "fence_scsi"
+    )
+
+
+def unfence_node_mpath(
+    env: LibraryEnvironment,
+    key: str,
+    original_devices: Iterable[str],
+    updated_devices: Iterable[str],
+) -> None:
+    """
+    Unfence mpath devices on a node by calling fence_mpath agent script. Only
+    newly added devices will be unfenced (set(updated_devices) -
+    set(original_devices)). Before unfencing, original devices are checked
+    if any of them are not fenced. If there is a fenced device, unfencing will
+    be skipped.
+
+    env -- provides communication with externals
+    key -- registration key of the node for unfencing
+    original_devices -- list of devices defined before update
+    updated_devices -- list of devices defined after update
+    """
+    _unfence_node_devices(
+        env, key, original_devices, updated_devices, "fence_mpath"
+    )

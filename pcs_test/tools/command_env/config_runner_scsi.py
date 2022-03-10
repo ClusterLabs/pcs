@@ -11,32 +11,34 @@ class ScsiShortcuts:
 
     def unfence_node(
         self,
-        node,
+        plug,
         devices,
+        fence_agent,
         stdout="",
         stderr="",
         return_code=0,
         name="runner.scsi.unfence_node",
     ):
         """
-        Create a calls for node scsi unfencing
+        Create a calls for node scsi/mpath unfencing
 
-        string node -- a node from which is unfencing performed
+        string plug -- a nodename or key for fence_scsi/fence_mpath agents
         list devices -- list of devices to unfence
-        string stdout -- stdout from fence_scsi agent script
-        string stderr -- stderr from fence_scsi agent script
-        int return_code -- return code of the fence_scsi agent script
+        string fence_agent -- name of fence agent script
+        string stdout -- stdout from fence agent script
+        string stderr -- stderr from fence agent script
+        int return_code -- return code of the fence agent script
         string name -- the key of this call
         """
         self.__calls.place(
             name,
             RunnerCall(
                 [
-                    os.path.join(settings.fence_agent_binaries, "fence_scsi"),
+                    os.path.join(settings.fence_agent_binaries, fence_agent),
                     "--action=on",
                     "--devices",
                     ",".join(sorted(devices)),
-                    f"--plug={node}",
+                    f"--plug={plug}",
                 ],
                 stdout=stdout,
                 stderr=stderr,
@@ -48,6 +50,7 @@ class ScsiShortcuts:
         self,
         node,
         device,
+        fence_agent,
         stdout="",
         stderr="",
         return_code=0,
@@ -67,7 +70,7 @@ class ScsiShortcuts:
             name,
             RunnerCall(
                 [
-                    os.path.join(settings.fence_agent_binaries, "fence_scsi"),
+                    os.path.join(settings.fence_agent_binaries, fence_agent),
                     "--action=status",
                     f"--devices={device}",
                     f"--plug={node}",

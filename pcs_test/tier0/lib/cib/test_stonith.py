@@ -6,7 +6,10 @@ from pcs.common import reports
 from pcs.lib.cib import stonith
 
 from pcs_test.tools import fixture
-from pcs_test.tools.assertions import assert_report_item_list_equal
+from pcs_test.tools.assertions import (
+    assert_raise_library_error,
+    assert_report_item_list_equal,
+)
 
 
 class IsStonithEnabled(TestCase):
@@ -192,7 +195,7 @@ class ValidateStonithRestartlessUpdate(TestCase):
                     reports.codes.STONITH_RESTARTLESS_UPDATE_UNSUPPORTED_AGENT,
                     resource_id=resource_id,
                     resource_type=resource_type,
-                    supported_stonith_types=["fence_scsi"],
+                    supported_stonith_types=["fence_scsi", "fence_mpath"],
                 )
             ],
         )
@@ -279,3 +282,124 @@ class ValidateStonithRestartlessUpdate(TestCase):
 
     def test_unsupported_type(self):
         self.assert_unsupported_stonith_agent("unsupported_type", "fence_xvm")
+
+
+def _fixture_stonith_el(host_map_value):
+    if host_map_value is None:
+        return etree.fromstring(
+            '<primitive id="fence-mepath" class="stonith" type="fence_mpath" />'
+        )
+    return etree.fromstring(
+        f"""
+        <primitive id="fence-mepath" class="stonith" type="fence_mpath">
+            <instance_attributes id="fence-mepath-instance_attributes">
+                <nvpair id="fence-mepath-instance_attributes-pcmk_host_map"
+                    name="pcmk_host_map" value="{host_map_value}" />
+            </instance_attributes>
+        </primitive>
+        """
+    )
+
+
+class GetNodeKeyMapForMpath(TestCase):
+    NODE_LABELS = ["rh9-1", "rh9-2", "rh9-3"]
+
+    def assert_success(self, value, result_dict, node_labels=None):
+        if node_labels is None:
+            node_labels = self.NODE_LABELS
+        self.assertEqual(
+            stonith.get_node_key_map_for_mpath(
+                _fixture_stonith_el(value), node_labels
+            ),
+            result_dict,
+        )
+
+    def assert_error(self, value, node_labels=None, missing_nodes=None):
+        if node_labels is None:
+            node_labels = self.NODE_LABELS
+        if missing_nodes is None:
+            missing_nodes = self.NODE_LABELS
+        assert_raise_library_error(
+            lambda: stonith.get_node_key_map_for_mpath(
+                _fixture_stonith_el(value), node_labels
+            ),
+            fixture.error(
+                reports.codes.STONITH_RESTARTLESS_UPDATE_MISSING_MPATH_KEYS,
+                pcmk_host_map_value=value if value else None,
+                missing_nodes=sorted(missing_nodes),
+            ),
+        )
+
+    def test_invalid_part_skipped(self):
+        self.assert_success(
+            "  ;\trh9-1:1;rh9-2==22;rh9-3 :3;e",
+            {"rh9-1": "1"},
+            node_labels=self.NODE_LABELS[0:1],
+        )
+
+    def test_success_colon_sign_as_assigment_char(self):
+        self.assert_success(
+            "rh9-1:1;rh9-2:2;rh9-3:3",
+            {"rh9-1": "1", "rh9-2": "2", "rh9-3": "3"},
+        )
+
+    def test_success_equal_sign_as_assigment_char(self):
+        self.assert_success(
+            "rh9-1=1;rh9-2=2;rh9-3=3",
+            {"rh9-1": "1", "rh9-2": "2", "rh9-3": "3"},
+        )
+
+    def test_success_mixed_assigment_char(self):
+        self.assert_success(
+            "rh9-1:1;rh9-2=2;rh9-3:3",
+            {"rh9-1": "1", "rh9-2": "2", "rh9-3": "3"},
+        )
+
+    def test_success_semicolon_as_separator(self):
+        self.assert_success(
+            "rh9-1:1;rh9-2:2;rh9-3:3;",
+            {"rh9-1": "1", "rh9-2": "2", "rh9-3": "3"},
+        )
+
+    def test_success_space_as_separator(self):
+        self.assert_success(
+            "rh9-1:1 rh9-2:2 rh9-3:3 ",
+            {"rh9-1": "1", "rh9-2": "2", "rh9-3": "3"},
+        )
+
+    def test_success_tab_as_separator(self):
+        self.assert_success(
+            "rh9-1:1\trh9-2:2\trh9-3:3\t",
+            {"rh9-1": "1", "rh9-2": "2", "rh9-3": "3"},
+        )
+
+    def test_success_mixed_separators(self):
+        self.assert_success(
+            "rh9-1:1;rh9-2:2 rh9-3:3\trh9-4:4",
+            {"rh9-1": "1", "rh9-2": "2", "rh9-3": "3", "rh9-4": "4"},
+            node_labels=self.NODE_LABELS + ["rh9-4"],
+        )
+
+    def test_success_more_keys_than_current_nodes(self):
+        self.assert_success(
+            "rh9-1:1;rh9-2:2;rh9-3:3",
+            {"rh9-1": "1", "rh9-2": "2", "rh9-3": "3"},
+            node_labels=self.NODE_LABELS[:-1],
+        )
+
+    def test_empty_nodes(self):
+        self.assert_success(
+            "rh9-1:1;rh9-2:2", {"rh9-1": "1", "rh9-2": "2"}, node_labels=[]
+        )
+
+    def test_missing_value(self):
+        self.assert_error(None)
+
+    def test_empty_value(self):
+        self.assert_error("")
+
+    def test_not_enough_keys_for_nodes_misconfiguration(self):
+        self.assert_error("rh9-1:1;rh9-2;rh9-3:3", missing_nodes=["rh9-2"])
+
+    def test_not_enough_keys_for_nodes_missing(self):
+        self.assert_error("rh9-1:1", missing_nodes=["rh9-3", "rh9-2"])

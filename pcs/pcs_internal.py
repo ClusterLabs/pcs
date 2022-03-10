@@ -93,6 +93,7 @@ SUPPORTED_COMMANDS = {
     "services.start_service",
     "services.stop_service",
     "scsi.unfence_node",
+    "scsi.unfence_node_mpath",
     "status.full_cluster_status_plaintext",
     "stonith_agent.describe_agent",
     "stonith_agent.list_agents",
