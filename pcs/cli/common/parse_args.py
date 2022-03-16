@@ -65,6 +65,8 @@ PCS_LONG_OPTIONS = [
     "booth-conf=",
     "booth-key=",
     "no-watchdog-validation",
+    # pcs cluster setup
+    "no-cluster-uuid",
     "no-keys-sync",
     # in pcs status - do not display resource status on inactive node
     "hide-inactive",
@@ -484,6 +486,7 @@ class InputModifiers:
                 "--no-default-ops": "--no-default-ops" in options,
                 "--nodesc": "--nodesc" in options,
                 "--no-expire-check": "--no-expire-check" in options,
+                "--no-cluster-uuid": "--no-cluster-uuid" in options,
                 "--no-keys-sync": "--no-keys-sync" in options,
                 "--no-strict": "--no-strict" in options,
                 "--no-watchdog-validation": "--no-watchdog-validation"

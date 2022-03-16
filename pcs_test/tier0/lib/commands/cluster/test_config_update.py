@@ -413,6 +413,7 @@ class UpdateConfigLocal(TestCase):
 
     def test_add_modify_remove_options(self):
         before = fixture_totem(
+            cluster_uuid=None,
             transport_options={
                 "ip_version": "ipv4",
                 "knet_pmtud_interval": "10",

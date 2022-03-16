@@ -42,12 +42,87 @@ class GetCorosyncConfStruct(TestCase):
         self.assertEqual(
             CorosyncConfDto(
                 cluster_name="",
+                cluster_uuid=None,
                 transport=CorosyncTransportType.KNET,
                 totem_options={},
                 transport_options={},
                 compression_options={},
                 crypto_options={},
                 nodes=[],
+                links_options={},
+                quorum_options={},
+                quorum_device=None,
+            ),
+            cluster.get_corosync_conf_struct(self.env_assist.get_env()),
+        )
+
+    def test_corosync_conf_with_uuid(self):
+        self.config.corosync_conf.load_content(
+            dedent(
+                """\
+                totem {
+                    version: 2
+                    cluster_name: HACluster
+                    cluster_uuid: uuid
+                    transport: knet
+                    crypto_cipher: aes256
+                    crypto_hash: sha256
+                }
+                
+                nodelist {
+                    node {
+                        ring0_addr: node1-addr
+                        name: node1
+                        nodeid: 1
+                    }
+
+                    node {
+                        ring0_addr: node2-addr
+                        name: node2
+                        nodeid: 2
+                    }
+                }
+                
+                quorum {
+                    provider: corosync_votequorum
+                    two_node: 1
+                }
+                """
+            )
+        )
+        self.assertEqual(
+            CorosyncConfDto(
+                cluster_name="HACluster",
+                cluster_uuid="uuid",
+                transport=CorosyncTransportType.KNET,
+                totem_options={},
+                transport_options={},
+                compression_options={},
+                crypto_options={"cipher": "aes256", "hash": "sha256"},
+                nodes=[
+                    CorosyncNodeDto(
+                        name="node1",
+                        nodeid="1",
+                        addrs=[
+                            CorosyncNodeAddressDto(
+                                addr="node1-addr",
+                                link="0",
+                                type="FQDN",
+                            ),
+                        ],
+                    ),
+                    CorosyncNodeDto(
+                        name="node2",
+                        nodeid="2",
+                        addrs=[
+                            CorosyncNodeAddressDto(
+                                addr="node2-addr",
+                                link="0",
+                                type="FQDN",
+                            ),
+                        ],
+                    ),
+                ],
                 links_options={},
                 quorum_options={},
                 quorum_device=None,
@@ -138,6 +213,7 @@ class GetCorosyncConfStruct(TestCase):
         self.assertEqual(
             CorosyncConfDto(
                 cluster_name="HACluster",
+                cluster_uuid=None,
                 transport=CorosyncTransportType.KNET,
                 totem_options={
                     "consensus": "3600",

@@ -5,6 +5,9 @@
 ### Added
 - Add support for fence_mpath to `pcs stonith update-scsi-devices` command
   ([rhbz#2023845])
+- Support for cluster UUIDs. New clusters now get a UUID during setup. Existing
+  clusters can get a UUID by running the new `pcs cluster config uuid generate`
+  command ([rhbz#1950551])
 
 ### Fixed
 - Agents not conforming to OCF standard are processed as if they conformed to
@@ -22,6 +25,7 @@
 
 [rhbz#1786964]: https://bugzilla.redhat.com/show_bug.cgi?id=1786964
 [rhbz#1791661]: https://bugzilla.redhat.com/show_bug.cgi?id=1791661
+[rhbz#1950551]: https://bugzilla.redhat.com/show_bug.cgi?id=1950551
 [rhbz#2023845]: https://bugzilla.redhat.com/show_bug.cgi?id=2023845
 [rhbz#2050274]: https://bugzilla.redhat.com/show_bug.cgi?id=2050274
 

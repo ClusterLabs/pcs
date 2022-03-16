@@ -51,6 +51,7 @@ class ClusterSetup(TestCase):
             totem_options={},
             quorum_options={},
             force_flags=[],
+            no_cluster_uuid=False,
         )
 
     def assert_setup_called_with(self, node_list, **kwargs):
@@ -414,6 +415,11 @@ class ClusterSetup(TestCase):
         self.call_cmd([node_name], {"start": True, "wait": "10"})
         self.assert_setup_called_with([_node(node_name)], start=True, wait="10")
 
+    def test_no_cluster_uuid(self):
+        node_name = "node"
+        self.call_cmd([node_name], {"no-cluster-uuid": True})
+        self.assert_setup_called_with([_node(node_name)], no_cluster_uuid=True)
+
     def test_force(self):
         node_name = "node"
         self.call_cmd([node_name], {"force": True})
@@ -432,6 +438,7 @@ class ClusterSetup(TestCase):
                 "start": True,
                 "wait": "15",
                 "no-keys-sync": True,
+                "no-cluster-uuid": True,
             },
         )
         self.assert_setup_called_with(
@@ -440,6 +447,7 @@ class ClusterSetup(TestCase):
             start=True,
             wait="15",
             no_keys_sync=True,
+            no_cluster_uuid=True,
             force_flags=[report_codes.FORCE],
         )
 
@@ -1395,6 +1403,7 @@ class ConfigShow(TestCase):
 
         return CorosyncConfDto(
             cluster_name="HACluster",
+            cluster_uuid="uuid",
             transport=CorosyncTransportType.KNET,
             totem_options={"census": "3600", "join": "50", "token": "3000"},
             transport_options={"ip_version": "ipv4-6", "link_mode": "passive"},
@@ -1471,6 +1480,7 @@ class ConfigShow(TestCase):
         self.output_text = dedent(
             """\
             Cluster Name: HACluster
+            Cluster UUID: uuid
             Transport: knet
             Nodes:
               node1:

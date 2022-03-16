@@ -55,6 +55,12 @@ cluster_cmd = create_router(
             {
                 "show": cluster.config_show,
                 "update": cluster.config_update,
+                "uuid": create_router(
+                    {
+                        "generate": cluster.generate_uuid,
+                    },
+                    ["cluster", "config", "uuid"],
+                ),
             },
             ["cluster", "config"],
             default_cmd="show",

@@ -97,7 +97,7 @@ class SetupLocal(AssertPcsMixin, TestCase):
         )
         self.corosync_conf_file.write("some already existing content")
         self.assert_pcs_fail(
-            "cluster setup cluster_name node1 node2".split(),
+            "cluster setup cluster_name node1 node2 --no-cluster-uuid".split(),
             dedent(
                 # pylint: disable=line-too-long
                 f"""\
@@ -116,7 +116,8 @@ class SetupLocal(AssertPcsMixin, TestCase):
         self.known_hosts_file.close()
         self.assert_pcs_success(
             # need to use --force for not failing on unresolvable addresses
-            "cluster setup cluster_name node1 node2 --force --overwrite".split(),
+            "cluster setup cluster_name node1 node2 --force --overwrite "
+            "--no-cluster-uuid".split(),
             dedent(
                 # pylint: disable=line-too-long
                 f"""\
@@ -140,7 +141,8 @@ class SetupLocal(AssertPcsMixin, TestCase):
             ]
         )
         self.assert_pcs_success(
-            "cluster setup cluster_name node1 node2 --overwrite".split(),
+            "cluster setup cluster_name node1 node2 --overwrite "
+            "--no-cluster-uuid".split(),
             dedent(
                 """\
                 No addresses specified for host 'node1', using '10.0.1.1'
@@ -170,7 +172,7 @@ class SetupLocal(AssertPcsMixin, TestCase):
                 "crypto cipher=aes256 hash=sha512 model=openssl "
                 "totem consensus=0 downcheck=1 token=12 "
                 "quorum last_man_standing=1 last_man_standing_window=10 "
-                "--overwrite"
+                "--overwrite --no-cluster-uuid"
             ).split()
         )
         self.assertEqual(
@@ -271,7 +273,8 @@ class SetupLocal(AssertPcsMixin, TestCase):
                 "compression level=2 model=zlib threshold=10 "
                 "crypto hash=sha512 model=openssl "
                 "totem consensus=0 downcheck=1 token=12 "
-                "quorum lst_man_standing=1 last_man_standing_window=10"
+                "quorum lst_man_standing=1 last_man_standing_window=10 "
+                "--no-cluster-uuid"
             ).split(),
             stdout_full=dedent(
                 """\

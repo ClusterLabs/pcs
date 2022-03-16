@@ -26,7 +26,8 @@ class UpdateLocal(AssertPcsMixin, TestCase):
 
     def test_minimal(self):
         write_data_to_tmpfile(
-            fixture_corosync_conf_minimal(), self.corosync_conf_file
+            fixture_corosync_conf_minimal(no_cluster_uuid=True),
+            self.corosync_conf_file,
         )
         self.assert_pcs_success(
             "cluster config update transport ip_version=ipv4 totem token=12".split()
@@ -94,6 +95,7 @@ class UpdateLocal(AssertPcsMixin, TestCase):
                 totem {
                     version: 2
                     cluster_name: cluster_name
+                    cluster_uuid: cluster_uuid
                     transport: knet
                     crypto_cipher: aes256
                     crypto_hash: sha512
