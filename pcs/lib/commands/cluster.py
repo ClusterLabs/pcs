@@ -8,6 +8,7 @@ from typing import (
     Mapping,
     Optional,
     Sequence,
+    Tuple,
     cast,
 )
 
@@ -25,7 +26,10 @@ from pcs.common.file import RawFileError
 from pcs.common.node_communicator import HostNotFound
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports import codes as report_codes
-from pcs.common.reports.item import ReportItem
+from pcs.common.reports.item import (
+    ReportItem,
+    ReportItemList,
+)
 from pcs.common.str_tools import join_multilines
 from pcs.common.tools import format_environment_error
 from pcs.common.types import (
@@ -79,7 +83,10 @@ from pcs.lib.corosync import (
 )
 from pcs.lib.corosync import constants as corosync_constants
 from pcs.lib.corosync import qdevice_net
-from pcs.lib.env import LibraryEnvironment
+from pcs.lib.env import (
+    LibraryEnvironment,
+    WaitType,
+)
 from pcs.lib.errors import LibraryError
 from pcs.lib.file.instance import FileInstance
 from pcs.lib.interface.config import ParserErrorException
@@ -96,6 +103,7 @@ from pcs.lib.pacemaker.values import get_valid_timeout_seconds
 from pcs.lib.tools import (
     environment_file_to_dict,
     generate_binary_key,
+    generate_uuid,
 )
 
 
@@ -181,20 +189,21 @@ def verify(env: LibraryEnvironment, verbose=False):
 
 
 def setup(
-    env,
-    cluster_name,
-    nodes,
-    transport_type=None,
-    transport_options=None,
-    link_list=None,
-    compression_options=None,
-    crypto_options=None,
-    totem_options=None,
-    quorum_options=None,
-    wait=False,
-    start=False,
-    enable=False,
-    no_keys_sync=False,
+    env: LibraryEnvironment,
+    cluster_name: str,
+    nodes: Sequence[Mapping[str, Any]],
+    transport_type: Optional[str] = None,
+    transport_options: Mapping[str, str] = None,
+    link_list: Sequence[Mapping[str, Any]] = None,
+    compression_options: Mapping[str, str] = None,
+    crypto_options: Mapping[str, str] = None,
+    totem_options: Mapping[str, str] = None,
+    quorum_options: Mapping[str, str] = None,
+    wait: WaitType = False,
+    start: bool = False,
+    enable: bool = False,
+    no_keys_sync: bool = False,
+    no_cluster_uuid: bool = False,
     force_flags: Container[reports.types.ForceCode] = (),
 ):
     # pylint: disable=too-many-arguments
@@ -204,33 +213,35 @@ def setup(
     """
     Set up cluster on specified nodes.
     Validation of the inputs is done here. Possible existing clusters are
-    destroyed (when using force). Authkey files for corosync and pacemaer,
-    known hosts and and newly generated corosync.conf are distributed to all
+    destroyed (when using force). Authkey files for corosync and pacemaker,
+    known hosts and newly generated corosync.conf are distributed to all
     nodes.
     Raise LibraryError on any error.
 
-    env LibraryEnvironment
-    cluster_name string -- name of a cluster to set up
-    nodes list -- list of dicts which represents node.
-        Supported keys are: name (required), addrs. See note bellow.
-    transport_type string -- transport type of a cluster
-    transport_options dict -- transport specific options
-    link_list list of dict -- list of links, depends of transport_type
-    compression_options dict -- only available for knet transport. In
+    env
+    cluster_name -- name of a cluster to set up
+    nodes -- list of dicts which represents node.
+        Supported keys are: name (required), addrs. See note below.
+    transport_type -- transport type of a cluster
+    transport_options -- transport specific options
+    link_list -- list of links, depends of transport_type
+    compression_options -- only available for knet transport. In
         corosync.conf they are prefixed 'knet_compression_'
-    crypto_options dict -- only available for knet transport'. In corosync.conf
+    crypto_options -- only available for knet transport'. In corosync.conf
         they are prefixed 'crypto_'
-    totem_options dict -- options of section 'totem' in corosync.conf
-    quorum_options dict -- options of section 'quorum' in corosync.conf
+    totem_options -- options of section 'totem' in corosync.conf
+    quorum_options -- options of section 'quorum' in corosync.conf
     wait -- specifies if command should try to wait for cluster to start up.
         Has no effect start is False. If set to False command will not wait for
         cluster to start. If None command will wait for some default timeout.
         If int wait set timeout to int value of seconds.
-    start bool -- if True start cluster when it is set up
-    enable bool -- if True enable cluster when it is set up
-    no_keys_sync bool -- if True do not crete and distribute files: pcsd ssl
+    start -- if True start cluster when it is set up
+    enable -- if True enable cluster when it is set up
+    no_keys_sync -- if True do not create and distribute files: pcsd ssl
         cert and key, pacemaker authkey, corosync authkey
-    force_flags list -- list of flags codes
+    no_cluster_uuid -- if True, do not generate a unique cluster UUID into
+        the 'totem' section of corosync.conf
+    force_flags -- list of flags codes
 
     The command is defaulting node addresses if they are not specified. The
     defaulting is done for each node individually if and only if the "addrs" key
@@ -413,6 +424,7 @@ def setup(
                 crypto_options,
                 totem_options,
                 quorum_options,
+                no_cluster_uuid,
             ).config.export()
         ),
     )
@@ -449,6 +461,7 @@ def setup_local(
     crypto_options: Mapping[str, str],
     totem_options: Mapping[str, str],
     quorum_options: Mapping[str, str],
+    no_cluster_uuid: bool = False,
     force_flags: Container[reports.types.ForceCode] = (),
 ) -> bytes:
     """
@@ -468,6 +481,8 @@ def setup_local(
         they are prefixed 'crypto_'
     totem_options -- options of section 'totem' in corosync.conf
     quorum_options -- options of section 'quorum' in corosync.conf
+    no_cluster_uuid -- if True, do not generate a unique cluster UUID into
+        the totem section of corosync.conf
     force_flags -- list of flags codes
 
     The command is defaulting node addresses if they are not specified. The
@@ -553,6 +568,7 @@ def setup_local(
             crypto_options,
             totem_options,
             quorum_options,
+            no_cluster_uuid,
         )
         .config.export()
         .encode("utf-8")
@@ -629,6 +645,7 @@ def _create_corosync_conf(
     crypto_options: Mapping[str, str],
     totem_options: Mapping[str, str],
     quorum_options: Mapping[str, str],
+    no_cluster_uuid: bool,
 ) -> config_facade.ConfigFacade:
     # pylint: disable=too-many-arguments
     corosync_conf = config_facade.ConfigFacade.create(
@@ -642,6 +659,8 @@ def _create_corosync_conf(
         compression_options,
         crypto_options,
     )
+    if not no_cluster_uuid:
+        corosync_conf.set_cluster_uuid(generate_uuid())
 
     _verify_corosync_conf(corosync_conf)  # raises if corosync not valid
     return corosync_conf
@@ -795,6 +814,7 @@ def get_corosync_conf_struct(env: LibraryEnvironment) -> CorosyncConfDto:
     try:
         return CorosyncConfDto(
             cluster_name=corosync_conf.get_cluster_name(),
+            cluster_uuid=corosync_conf.get_cluster_uuid(),
             transport=CorosyncTransportType.from_str(
                 corosync_conf.get_transport()
             ),
@@ -2185,3 +2205,82 @@ def corosync_authkey_change(
     com_cmd = ReloadCorosyncConf(env.report_processor)
     com_cmd.set_targets(online_cluster_target_list)
     run_and_raise(env.get_node_communicator(), com_cmd)
+
+
+def _generate_cluster_uuid(
+    corosync_conf: config_facade.ConfigFacade, is_forced: bool
+) -> Tuple[ReportItemList, config_facade.ConfigFacade]:
+    report_list = []
+    if corosync_conf.get_cluster_uuid():
+        report_list.append(
+            reports.ReportItem(
+                severity=reports.item.get_severity(
+                    report_codes.FORCE, is_forced
+                ),
+                message=reports.messages.ClusterUuidAlreadySet(),
+            )
+        )
+        if not is_forced:
+            return report_list, corosync_conf
+
+    corosync_conf.set_cluster_uuid(generate_uuid())
+    return report_list, corosync_conf
+
+
+def generate_cluster_uuid(
+    env: LibraryEnvironment,
+    force_flags: Container[reports.types.ForceCode] = (),
+) -> None:
+    """
+    Add or update cluster UUID in live cluster
+
+    env
+    """
+    _ensure_live_env(env)
+    corosync_conf = env.get_corosync_conf()
+    report_list, corosync_conf = _generate_cluster_uuid(
+        corosync_conf, report_codes.FORCE in force_flags
+    )
+    if env.report_processor.report_list(report_list).has_errors:
+        raise LibraryError()
+    env.push_corosync_conf(corosync_conf)
+
+
+def generate_cluster_uuid_local(
+    env: LibraryEnvironment,
+    corosync_conf_content: bytes,
+    force_flags: Container[reports.types.ForceCode] = (),
+) -> bytes:
+    """
+    Add or update cluster UUID in corosync.conf passed as an argument and return
+    the updated config
+
+    env
+    corosync_conf_content -- corosync.conf to be updated
+    """
+    _ensure_live_env(env)
+    corosync_conf_instance = FileInstance.for_corosync_conf()
+    try:
+        corosync_conf: config_facade.ConfigFacade = cast(
+            config_facade.ConfigFacade,
+            corosync_conf_instance.raw_to_facade(corosync_conf_content),
+        )
+    except ParserErrorException as e:
+        if env.report_processor.report_list(
+            corosync_conf_instance.toolbox.parser.exception_to_report_list(
+                e,
+                corosync_conf_instance.toolbox.file_type_code,
+                None,
+                force_code=None,
+                is_forced_or_warning=False,
+            )
+        ).has_errors:
+            raise LibraryError() from e
+
+    report_list, corosync_conf = _generate_cluster_uuid(
+        corosync_conf, report_codes.FORCE in force_flags
+    )
+    if env.report_processor.report_list(report_list).has_errors:
+        raise LibraryError()
+
+    return corosync_conf_instance.facade_to_raw(corosync_conf)

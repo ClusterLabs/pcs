@@ -2207,6 +2207,19 @@ class CorosyncTransportUnsupportedOptions(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class ClusterUuidAlreadySet(ReportItemMessage):
+    """
+    Cluster UUID has already been set in corosync.conf
+    """
+
+    _code = codes.CLUSTER_UUID_ALREADY_SET
+
+    @property
+    def message(self) -> str:
+        return "Cluster UUID has already been set"
+
+
+@dataclass(frozen=True)
 class QdeviceAlreadyDefined(ReportItemMessage):
     """
     Qdevice is already set up in a cluster, when it was expected not to be

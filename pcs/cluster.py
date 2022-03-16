@@ -10,6 +10,7 @@ import time
 import xml.dom.minidom
 from typing import (
     Any,
+    Callable,
     Iterable,
     List,
     Mapping,
@@ -66,6 +67,43 @@ from pcs.lib.node import get_existing_nodes_names
 from pcs.utils import parallel_for_nodes
 
 # pylint: disable=too-many-branches, too-many-statements
+
+
+def _corosync_conf_local_cmd_call(
+    corosync_conf_path: parse_args.ModifierValueType,
+    lib_cmd: Callable[[bytes], bytes],
+) -> None:
+    """
+    Call a library command that requires modifications of a corosync.conf file
+    supplied as an argument
+
+    The lib command needs to take the corosync.conf file content as its first
+    argument
+
+        lib_cmd -- the lib command to be called
+    """
+    corosync_conf_file = pcs_file.RawFile(
+        file_metadata.for_file_type(
+            file_type_codes.COROSYNC_CONF, corosync_conf_path
+        )
+    )
+
+    try:
+        corosync_conf_file.write(
+            lib_cmd(
+                corosync_conf_file.read(),
+            ),
+            can_overwrite=True,
+        )
+    except pcs_file.RawFileError as e:
+        raise CmdLineInputError(
+            reports.messages.FileIoError(
+                e.metadata.file_type_code,
+                e.action,
+                e.reason,
+                file_path=e.metadata.path,
+            ).message
+        ) from e
 
 
 def cluster_cib_upgrade_cmd(lib, argv, modifiers):
@@ -1620,13 +1658,19 @@ def cluster_setup(lib, argv, modifiers):
         as warnings
       * --no-keys-sync - do not create and distribute pcsd ssl cert and key,
         corosync and pacemaker authkeys
+      * --no-cluster-uuid - do not generate a cluster UUID during setup
       * --corosync_conf - corosync.conf file path, do not talk to cluster nodes
     """
     # pylint: disable=too-many-locals
     is_local = modifiers.is_specified("--corosync_conf")
 
-    allowed_options_common = ["--force"]
-    allowed_options_live = ["--wait", "--start", "--enable", "--no-keys-sync"]
+    allowed_options_common = ["--force", "--no-cluster-uuid"]
+    allowed_options_live = [
+        "--wait",
+        "--start",
+        "--enable",
+        "--no-keys-sync",
+    ]
     allowed_options_local = ["--corosync_conf", "--overwrite"]
     modifiers.ensure_only_supported(
         *(
@@ -1700,6 +1744,7 @@ def cluster_setup(lib, argv, modifiers):
             start=modifiers.get("--start"),
             enable=modifiers.get("--enable"),
             no_keys_sync=modifiers.get("--no-keys-sync"),
+            no_cluster_uuid=modifiers.is_specified("--no-cluster-uuid"),
             force_flags=force_flags,
         )
         return
@@ -1716,6 +1761,7 @@ def cluster_setup(lib, argv, modifiers):
         quorum_options=parse_args.prepare_options(
             parsed_args.get("quorum", [])
         ),
+        no_cluster_uuid=modifiers.is_specified("--no-cluster-uuid"),
         force_flags=force_flags,
     )
 
@@ -1766,35 +1812,17 @@ def config_update(
             parse_args.prepare_options(parsed_args["totem"]),
         )
         return
-    corosync_conf_file = pcs_file.RawFile(
-        file_metadata.for_file_type(
-            file_type_codes.COROSYNC_CONF, modifiers.get("--corosync_conf")
-        )
-    )
 
-    try:
-        corosync_conf_file.write(
-            lib.cluster.config_update_local(
-                corosync_conf_file.read(),
-                parse_args.prepare_options(parsed_args["transport"]),
-                parse_args.prepare_options(parsed_args["compression"]),
-                parse_args.prepare_options(parsed_args["crypto"]),
-                parse_args.prepare_options(parsed_args["totem"]),
-            ),
-            can_overwrite=True,
-        )
-    except pcs_file.RawFileError as e:
-        # TODO do not use LibraryError
-        raise LibraryError(
-            reports.ReportItem.error(
-                reports.messages.FileIoError(
-                    e.metadata.file_type_code,
-                    e.action,
-                    e.reason,
-                    file_path=e.metadata.path,
-                )
-            )
-        ) from e
+    _corosync_conf_local_cmd_call(
+        modifiers.get("--corosync_conf"),
+        lambda corosync_conf_content: lib.cluster.config_update_local(
+            corosync_conf_content,
+            parse_args.prepare_options(parsed_args["transport"]),
+            parse_args.prepare_options(parsed_args["compression"]),
+            parse_args.prepare_options(parsed_args["crypto"]),
+            parse_args.prepare_options(parsed_args["totem"]),
+        ),
+    )
 
 
 def _format_options(label: str, options: Mapping[str, str]) -> List[str]:
@@ -1854,10 +1882,10 @@ def config_show(
 
 
 def _config_get_text(corosync_conf: CorosyncConfDto) -> List[str]:
-    lines = [
-        f"Cluster Name: {corosync_conf.cluster_name}",
-        "Transport: {}".format(corosync_conf.transport.lower()),
-    ]
+    lines = [f"Cluster Name: {corosync_conf.cluster_name}"]
+    if corosync_conf.cluster_uuid:
+        lines.append(f"Cluster UUID: {corosync_conf.cluster_uuid}")
+    lines.append("Transport: {}".format(corosync_conf.transport.lower()))
     lines.extend(_format_nodes(corosync_conf.nodes))
     if corosync_conf.links_options:
         lines.append("Links:")
@@ -1957,6 +1985,8 @@ def _config_get_cmd(corosync_conf: CorosyncConfDto) -> List[str]:
     lines.extend(indent(transport))
     lines.extend(_section_to_lines(corosync_conf.totem_options, "totem"))
     lines.extend(_section_to_lines(corosync_conf.quorum_options, "quorum"))
+    if not corosync_conf.cluster_uuid:
+        lines.extend(indent(["--no-cluster-uuid"]))
     return lines
 
 
@@ -2114,4 +2144,32 @@ def link_update(lib, argv, modifiers):
         parse_args.prepare_options(parsed["nodes"]),
         parse_args.prepare_options(parsed["options"]),
         force_flags=force_flags,
+    )
+
+
+def generate_uuid(
+    lib: Any, argv: List[str], modifiers: parse_args.InputModifiers
+):
+    """
+    Options:
+      * --force - allow to rewrite an existing UUID in corosync.conf
+      * --corosync_conf - corosync.conf file path, do not talk to cluster nodes
+    """
+    modifiers.ensure_only_supported("--force", "--corosync_conf")
+    if argv:
+        raise CmdLineInputError()
+
+    force_flags = []
+    if modifiers.get("--force"):
+        force_flags.append(reports.codes.FORCE)
+
+    if not modifiers.is_specified("--corosync_conf"):
+        lib.cluster.generate_cluster_uuid(force_flags=force_flags)
+        return
+
+    _corosync_conf_local_cmd_call(
+        modifiers.get("--corosync_conf"),
+        lambda corosync_conf_content: lib.cluster.generate_cluster_uuid_local(
+            corosync_conf_content, force_flags=force_flags
+        ),
     )

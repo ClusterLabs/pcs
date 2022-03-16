@@ -91,6 +91,22 @@ class ConfigFacade(FacadeInterface):
     def get_cluster_name(self) -> str:
         return cast(str, self._get_option_value("totem", "cluster_name", ""))
 
+    def get_cluster_uuid(self) -> Optional[str]:
+        return self._get_option_value("totem", "cluster_uuid")
+
+    def set_cluster_uuid(self, cluster_uuid: str) -> None:
+        """
+        Updates or adds a cluster_uuid in the totem section, assumes that UUID
+        can be rewritten
+
+            cluster_uuid - new cluster UUID
+        """
+        totem_section_list = self.__ensure_section(self.config, "totem")
+        self.__set_section_options(
+            totem_section_list, {"cluster_uuid": cluster_uuid}
+        )
+        self.__remove_empty_sections(self.config)
+
     # To get a list of nodenames use pcs.lib.node.get_existing_nodes_names
 
     def get_nodes(self) -> List[node.CorosyncNode]:

@@ -196,6 +196,8 @@ def load_module(env, middleware_factory, name):
                 "setup_local": cluster.setup_local,
                 "update_link": cluster.update_link,
                 "verify": cluster.verify,
+                "generate_cluster_uuid": cluster.generate_cluster_uuid,
+                "generate_cluster_uuid_local": cluster.generate_cluster_uuid_local,
             },
         )
 

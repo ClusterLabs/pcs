@@ -35,6 +35,7 @@ class CorosyncQuorumDeviceSettingsDto(DataTransferObject):
 class CorosyncConfDto(DataTransferObject):
     # pylint: disable=too-many-instance-attributes
     cluster_name: str
+    cluster_uuid: Optional[str]
     transport: CorosyncTransportType
     totem_options: Mapping[str, str]
     transport_options: Mapping[str, str]

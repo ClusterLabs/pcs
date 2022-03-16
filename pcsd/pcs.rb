@@ -625,21 +625,29 @@ def get_nodes_status()
   }
 end
 
-def get_cluster_name()
+def get_cluster_name_and_uuid()
   if has_corosync_conf()
     corosync_conf = CorosyncConf::parse_string(
       Cfgsync::CorosyncConf.from_file().text()
     )
-    # mimic corosync behavior - the last cluster_name found is used
+    # mimic corosync behavior - the last value is used
     cluster_name = ''
+    cluster_uuid = ''
     corosync_conf.sections('totem').each { |totem|
       totem.attributes('cluster_name').each { |attrib|
         cluster_name = attrib[1]
       }
+      totem.attributes('cluster_uuid').each { |attrib|
+        cluster_uuid = attrib[1]
+      }
     }
-    return cluster_name
+    return cluster_name, cluster_uuid
   end
-  return ''
+  return '', ''
+end
+
+def get_cluster_name()
+  return get_cluster_name_and_uuid()[0]
 end
 
 def get_node_attributes(auth_user, cib_dom=nil)
@@ -1404,6 +1412,7 @@ end
 def get_node_status(auth_user, cib_dom)
   node_status = {
       :cluster_name => $cluster_name,
+      :cluster_uuid => $cluster_uuid,
       :groups => [],
       :constraints => {
           # :rsc_location => [],

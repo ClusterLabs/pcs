@@ -1356,7 +1356,8 @@ Commands:
             [transport knet|udp|udpu
                 [<transport options>] [link <link options>]...
                 [compression <compression options>] [crypto <crypto options>]
-            ] [totem <totem options>] [quorum <quorum options>]
+            ] [totem <totem options>] [quorum <quorum options>] 
+            [--no-cluster-uuid]
             ([--enable] [--start [--wait[=<n>]]] [--no-keys-sync])
             | [--corosync_conf <path>]
         Create a cluster from the listed nodes and synchronize cluster
@@ -1414,6 +1415,7 @@ Commands:
         'knet_compression_' and crypto options are prefixed 'crypto_'. Quorum
         options are documented in votequorum(5) man page.
 
+        --no-cluster-uuid will not generate a unique ID for the cluster.
         --enable will configure the cluster to start on nodes boot.
         --start will start the cluster right after creating it.
         --wait will wait up to 'n' seconds for the cluster to start.
@@ -1426,7 +1428,8 @@ Commands:
         used in the new cluster and to send cluster configuration files to them.
         If this is not what you want, specify --corosync_conf option followed by
         a file path. Pcs will save corosync.conf to the specified file and will
-        not connect to cluster nodes. These are the task pcs skips in that case:
+        not connect to cluster nodes. These are the tasks that pcs skips in that
+        case:
         * make sure the nodes are not running or configured to run a cluster
           already
         * make sure cluster packages are installed on all nodes and their
@@ -1507,6 +1510,17 @@ Commands:
             max_network_delay, merge, miss_count_const, send_join,
             seqno_unchanged_const, token, token_coefficient, token_retransmit,
             token_retransmits_before_loss_const, window_size
+            
+    config uuid generate [--corosync_conf <path>] [--force]
+        Generate a new cluster UUID and distribute it to all cluster nodes. 
+        Cluster UUID is not used by the cluster stack in any way, it is provided
+        to easily distinguish between multiple clusters in a multi-cluster 
+        environment since the cluster name does not have to be unique.
+        
+        If --corosync_conf is specified, update cluster configuration in file
+        specified by <path>.
+        
+        If --force is specified, existing UUID will be overwritten.
 
     authkey corosync [<path>]
        Generate a new corosync authkey and distribute it to all cluster nodes.
