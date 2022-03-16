@@ -29,12 +29,16 @@ from pcs_test.tools.command_env.mock_node_communicator import (
 )
 from pcs_test.tools.custom_mock import patch_getaddrinfo
 
+from .common import (
+    CLUSTER_NAME,
+    CLUSTER_UUID,
+)
+
 PCSD_SSL_KEY = generate_key()
 PCSD_SSL_CERT = generate_cert(PCSD_SSL_KEY, "servername")
 PCSD_SSL_KEY_DUMP = dump_key(PCSD_SSL_KEY)
 PCSD_SSL_CERT_DUMP = dump_cert(PCSD_SSL_CERT)
 RANDOM_KEY = "I'm so random!".encode()
-CLUSTER_NAME = "myCluster"
 NODE_LIST = ["node1", "node2", "node3"]
 COMMAND_NODE_LIST = [dict(name=node, addrs=None) for node in NODE_LIST]
 COROSYNC_NODE_LIST = {node: [node] for node in NODE_LIST}
@@ -61,7 +65,7 @@ totem {{
     cluster_name: {cluster_name}
     transport: {transport_type}\
 {totem_options}{transport_options}{compression_options}{crypto_options}\
-{interface_list}
+{cluster_uuid}{interface_list}
 }}
 
 nodelist {{
@@ -128,8 +132,12 @@ def corosync_conf_fixture(
     compression_options=None,
     crypto_options=None,
     cluster_name=None,
+    cluster_uuid=CLUSTER_UUID,
 ):
     # pylint: disable=too-many-arguments, too-many-locals
+    if cluster_uuid:
+        cluster_uuid = f"\n    cluster_uuid: {cluster_uuid}"
+
     if transport_type == "knet" and not crypto_options:
         crypto_options = {
             "cipher": "aes256",
@@ -172,7 +180,8 @@ def corosync_conf_fixture(
             ]
         )
     return COROSYNC_CONF_TEMPLATE.format(
-        cluster_name=(CLUSTER_NAME if cluster_name is None else cluster_name),
+        cluster_name=CLUSTER_NAME if cluster_name is None else cluster_name,
+        cluster_uuid=cluster_uuid or "",
         node_list="\n".join(
             [
                 NODE_TEMPLATE.format(
@@ -200,7 +209,7 @@ def corosync_conf_fixture(
     )
 
 
-def config_succes_minimal_fixture(
+def config_success_minimal_fixture(
     config,
     corosync_conf=None,
     node_labels=None,
@@ -399,6 +408,7 @@ class CheckLive(TestCase):
         self.assert_live_required(["CIB", "COROSYNC_CONF"])
 
 
+@mock.patch("pcs.lib.commands.cluster.generate_uuid", lambda: CLUSTER_UUID)
 @mock.patch(
     "pcs.lib.commands.cluster.generate_binary_key",
     lambda random_bytes_count: RANDOM_KEY,
@@ -413,7 +423,7 @@ class SetupSuccessMinimal(TestCase):
         self.env_assist, self.config = get_env_tools(self)
         self.config.env.set_known_nodes(NODE_LIST + ["random_node"])
         patch_getaddrinfo(self, NODE_LIST)
-        config_succes_minimal_fixture(
+        config_success_minimal_fixture(
             self.config,
             corosync_conf=corosync_conf_fixture(COROSYNC_NODE_LIST),
         )
@@ -595,6 +605,39 @@ class SetupSuccessMinimal(TestCase):
         )
 
 
+@mock.patch("pcs.lib.commands.cluster.generate_uuid", lambda: CLUSTER_UUID)
+@mock.patch(
+    "pcs.lib.commands.cluster.generate_binary_key",
+    lambda random_bytes_count: RANDOM_KEY,
+)
+@mock.patch("pcs.lib.commands.cluster.ssl.generate_key", lambda: PCSD_SSL_KEY)
+@mock.patch(
+    "pcs.lib.commands.cluster.ssl.generate_cert",
+    lambda ssl_key, server_name: PCSD_SSL_CERT,
+)
+class SetupSuccessNoClusterUuid(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        self.config.env.set_known_nodes(NODE_LIST + ["random_node"])
+        patch_getaddrinfo(self, NODE_LIST)
+        config_success_minimal_fixture(
+            self.config,
+            corosync_conf=corosync_conf_fixture(
+                COROSYNC_NODE_LIST, cluster_uuid=None
+            ),
+        )
+
+    def test_minimal(self):
+        cluster.setup(
+            self.env_assist.get_env(),
+            CLUSTER_NAME,
+            COMMAND_NODE_LIST,
+            no_cluster_uuid=True,
+        )
+        self.env_assist.assert_reports(reports_success_minimal_fixture())
+
+
+@mock.patch("pcs.lib.commands.cluster.generate_uuid", lambda: CLUSTER_UUID)
 @mock.patch(
     "pcs.lib.commands.cluster.generate_binary_key",
     lambda random_bytes_count: RANDOM_KEY,
@@ -618,7 +661,7 @@ class SetupSuccessAddresses(TestCase):
             dict(zip(self.node_names, self.node_dests))
         )
         patch_getaddrinfo(self, self.node_coros)
-        config_succes_minimal_fixture(
+        config_success_minimal_fixture(
             self.config,
             corosync_conf=corosync_conf_fixture(
                 {
@@ -660,6 +703,7 @@ class SetupSuccessAddresses(TestCase):
         )
 
 
+@mock.patch("pcs.lib.commands.cluster.generate_uuid", lambda: CLUSTER_UUID)
 @mock.patch(
     "pcs.lib.commands.cluster.generate_binary_key",
     lambda random_bytes_count: RANDOM_KEY,
@@ -752,6 +796,7 @@ class Setup2NodeSuccessMinimal(TestCase):
         )
 
 
+@mock.patch("pcs.lib.commands.cluster.generate_uuid", lambda: CLUSTER_UUID)
 @mock.patch(
     "pcs.lib.commands.cluster.generate_binary_key",
     lambda random_bytes_count: RANDOM_KEY,
@@ -959,7 +1004,7 @@ class Validation(TestCase):
     def test_cluster_name_gfs2_forced(self):
         # Test that the force is passed correctly to the cluster name validators
         cluster_name = "bad cluster.name for gfs2"
-        config_succes_minimal_fixture(
+        config_success_minimal_fixture(
             self.config,
             corosync_conf=corosync_conf_fixture(
                 self.corosync_node_list,
@@ -1028,7 +1073,7 @@ class Validation(TestCase):
         )
 
     def test_unresolvable_addrs_forced(self):
-        config_succes_minimal_fixture(
+        config_success_minimal_fixture(
             self.config,
             corosync_conf=corosync_conf_fixture(
                 {"node1": ["addr1"], "node2": ["addr2"], "node3": ["addr3"]}
@@ -1732,7 +1777,7 @@ class Validation(TestCase):
         node3_response = deepcopy(self.get_host_info_ok)
         node3_response["services"]["pacemaker_remote"]["running"] = True
 
-        config_succes_minimal_fixture(
+        config_success_minimal_fixture(
             self.config, corosync_conf=corosync_conf_fixture(COROSYNC_NODE_LIST)
         )
         dummy_requests, get_host_info_responses = create_communication(
@@ -1932,6 +1977,7 @@ QUORUM_OPTIONS = dict(
 )
 
 
+@mock.patch("pcs.lib.commands.cluster.generate_uuid", lambda: CLUSTER_UUID)
 @mock.patch(
     "pcs.lib.commands.cluster.generate_binary_key",
     lambda random_bytes_count: RANDOM_KEY,
@@ -1954,7 +2000,7 @@ class TransportKnetSuccess(TestCase):
             for node in NODE_LIST
         }
         self.resolvable_hosts.extend(set(flat_list(node_addrs.values())))
-        config_succes_minimal_fixture(
+        config_success_minimal_fixture(
             self.config,
             corosync_conf=corosync_conf_fixture(
                 node_addrs, transport_type=self.transport_type
@@ -2020,7 +2066,7 @@ class TransportKnetSuccess(TestCase):
             hash="sha512",
             model="openssl",
         )
-        config_succes_minimal_fixture(
+        config_success_minimal_fixture(
             self.config,
             corosync_conf=corosync_conf_fixture(
                 node_addrs,
@@ -2064,7 +2110,7 @@ class TransportKnetSuccess(TestCase):
             cipher="none",
             hash="none",
         )
-        config_succes_minimal_fixture(
+        config_success_minimal_fixture(
             self.config,
             corosync_conf=corosync_conf_fixture(
                 node_addrs,
@@ -2091,6 +2137,7 @@ class TransportKnetSuccess(TestCase):
         )
 
 
+@mock.patch("pcs.lib.commands.cluster.generate_uuid", lambda: CLUSTER_UUID)
 @mock.patch(
     "pcs.lib.commands.cluster.generate_binary_key",
     lambda random_bytes_count: RANDOM_KEY,
@@ -2110,7 +2157,7 @@ class TransportUdpSuccess(TestCase):
     def test_basic(self):
         node_addrs = {node: [f"{node}.addr"] for node in NODE_LIST}
         self.resolvable_hosts.extend(set(flat_list(node_addrs.values())))
-        config_succes_minimal_fixture(
+        config_success_minimal_fixture(
             self.config,
             corosync_conf=corosync_conf_fixture(
                 node_addrs, transport_type=self.transport_type
@@ -2145,7 +2192,7 @@ class TransportUdpSuccess(TestCase):
             )
         ]
         transport_options = dict(ip_version="ipv6", netmtu="1")
-        config_succes_minimal_fixture(
+        config_success_minimal_fixture(
             self.config,
             corosync_conf=corosync_conf_fixture(
                 node_addrs,
@@ -2189,6 +2236,7 @@ def get_time_mock(step=1):
     return time
 
 
+@mock.patch("pcs.lib.commands.cluster.generate_uuid", lambda: CLUSTER_UUID)
 @mock.patch(
     "pcs.lib.commands.cluster.generate_binary_key",
     lambda random_bytes_count: RANDOM_KEY,
@@ -2528,6 +2576,7 @@ class SetupWithWait(TestCase):
 REASON = "error msg"
 
 
+@mock.patch("pcs.lib.commands.cluster.generate_uuid", lambda: CLUSTER_UUID)
 @mock.patch(
     "pcs.lib.commands.cluster.generate_binary_key",
     lambda random_bytes_count: RANDOM_KEY,
@@ -2564,7 +2613,7 @@ class Failures(RemoveCallsMixin, TestCase):
             + [dict(label=node) for node in self.nodes_success]
         )
         patch_getaddrinfo(self, NODE_LIST)
-        config_succes_minimal_fixture(
+        config_success_minimal_fixture(
             self.config,
             corosync_conf=corosync_conf_fixture(COROSYNC_NODE_LIST),
         )
@@ -3101,6 +3150,7 @@ class Failures(RemoveCallsMixin, TestCase):
         )
 
 
+@mock.patch("pcs.lib.commands.cluster.generate_uuid", lambda: CLUSTER_UUID)
 @mock.patch(
     "pcs.lib.commands.cluster.generate_binary_key",
     lambda random_bytes_count: RANDOM_KEY,
@@ -3110,7 +3160,7 @@ class SslCertSync(RemoveCallsMixin, TestCase):
         self.env_assist, self.config = get_env_tools(self)
         self.config.env.set_known_nodes(NODE_LIST)
         patch_getaddrinfo(self, NODE_LIST)
-        config_succes_minimal_fixture(
+        config_success_minimal_fixture(
             self.config,
             corosync_conf=corosync_conf_fixture(COROSYNC_NODE_LIST),
         )
@@ -3320,6 +3370,7 @@ class SslCertSync(RemoveCallsMixin, TestCase):
         )
 
 
+@mock.patch("pcs.lib.commands.cluster.generate_uuid", lambda: CLUSTER_UUID)
 class SetupLocal(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
@@ -3340,6 +3391,40 @@ class SetupLocal(TestCase):
                 crypto_options={},
                 totem_options={},
                 quorum_options={},
+                force_flags=[],
+            ).decode("utf-8"),
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
+                    host_name=node,
+                    address=node,
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
+                )
+                for node in NODE_LIST
+            ]
+        )
+
+    def test_no_cluster_uuid(self):
+        self.config.env.set_known_nodes(NODE_LIST + ["random_node"])
+        patch_getaddrinfo(self, NODE_LIST)
+        self.assertEqual(
+            corosync_conf_fixture(COROSYNC_NODE_LIST, cluster_uuid=None),
+            cluster.setup_local(
+                self.env_assist.get_env(),
+                CLUSTER_NAME,
+                COMMAND_NODE_LIST,
+                transport_type=None,
+                transport_options={},
+                link_list=[],
+                compression_options={},
+                crypto_options={},
+                totem_options={},
+                quorum_options={},
+                no_cluster_uuid=True,
                 force_flags=[],
             ).decode("utf-8"),
         )

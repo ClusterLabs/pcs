@@ -46,6 +46,7 @@ SUPPORTED_COMMANDS = {
     "alert.update_alert",
     "alert.update_recipient",
     "cluster.add_nodes",
+    "cluster.generate_cluster_uuid",
     "cluster.node_clear",
     "cluster.remove_nodes",
     "cluster.setup",
