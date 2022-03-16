@@ -3357,6 +3357,38 @@ class SbdNotInstalled(NameBuildTest):
         )
 
 
+class SbdWithDeviceCannotSetWatchdogTimeout(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "stonith-watchdog-timeout can only be set to 0 while sbd is using devices",
+            reports.SbdWithDeviceCannotSetWatchdogTimeout(),
+        )
+
+
+class SbdNotUsedCannotSetWatchdogTimeout(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Unable to set stonith-watchdog-timeout while sbd is disabled",
+            reports.SbdNotUsedCannotSetWatchdogTimeout(),
+        )
+
+
+class StonithWatchdogTimeoutInvalid(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "The value of stonith-watchdog-timeout must be integer",
+            reports.StonithWatchdogTimeoutInvalid(),
+        )
+
+
+class StonithWatchdogTimeoutTooSmall(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "The stonith-watchdog-timeout must be greater than 5",
+            reports.StonithWatchdogTimeoutTooSmall("5"),
+        )
+
+
 class WatchdogNotFound(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(

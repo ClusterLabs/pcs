@@ -20,6 +20,8 @@
   ([rhbz#1786964])
 - Pcs daemon was allowing expired accounts, and accounts with expired
   passwords to login when using PAM auth. ([huntr#220307])
+- Preventing fence-loop caused when stonith-watchdog-timeout is set
+  with wrong value ([rhbz#1954099])
 
 ### Deprecated
 - Agents not complying with OCF 1.0 schema are processed, incompatibilities are
@@ -30,6 +32,7 @@
 [rhbz#1786964]: https://bugzilla.redhat.com/show_bug.cgi?id=1786964
 [rhbz#1791661]: https://bugzilla.redhat.com/show_bug.cgi?id=1791661
 [rhbz#1950551]: https://bugzilla.redhat.com/show_bug.cgi?id=1950551
+[rhbz#1954099]: https://bugzilla.redhat.com/show_bug.cgi?id=1954099
 [rhbz#2023845]: https://bugzilla.redhat.com/show_bug.cgi?id=2023845
 [rhbz#2050274]: https://bugzilla.redhat.com/show_bug.cgi?id=2050274
 [huntr#220307]: https://huntr.dev/bounties/7aa921fc-a568-4fd8-96f4-7cd826246aa5/
