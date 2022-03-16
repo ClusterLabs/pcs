@@ -2,8 +2,12 @@ import json
 import sys
 
 from pcs import utils
+from pcs.common import reports
+from pcs.common.reports.item import ReportItem
+from pcs.common.reports.item import ReportItemList
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.reports.output import deprecation_warning
+from pcs.lib import sbd
 
 
 def set_property(lib, argv, modifiers):
@@ -39,6 +43,28 @@ def set_property(lib, argv, modifiers):
                 if utils.is_valid_cluster_property(
                     prop_def_dict, args[0], args[1]
                 ):
+                    if args[0] == "stonith-watchdog-timeout":
+                        lib_env = utils.get_lib_env()
+                        is_sbd_enabled = sbd.is_sbd_enabled(lib_env.service_manager)
+                        report_list: ReportItemList = []
+                        if is_sbd_enabled:
+                            report_list = sbd.validate_stonith_watchdog_timeout(args[1])
+                            if report_list:
+                                utils.err(
+                                    report_list[0].message.message
+                                )
+                                failed = True
+                        else:
+                            if args[1] != "0":
+                                report_list.append(
+                                    ReportItem.error(
+                                        reports.messages.SbdNotUsedCannotSetWatchdogTimeout()
+                                    )
+                                )
+                                utils.err(
+                                    report_list[0].message.message
+                                )
+                                failed = True
                     properties[args[0]] = args[1]
                 else:
                     utils.err(

@@ -336,13 +336,64 @@ def get_device_sbd_header_dump(cmd_runner, device):
     return std_out
 
 
+def get_local_sbd_watchdog_timeout():
+    """
+    Returns the value of SBD_WATCHDOG_TIMEOUT used in local SBD config
+    """
+    if not path.exists(settings.sbd_config):
+        return []
+
+    cfg = environment_file_to_dict(get_local_sbd_config())
+    local_sbd_watchdog_timeout = cfg["SBD_WATCHDOG_TIMEOUT"]
+    return local_sbd_watchdog_timeout
+
+
+def validate_stonith_watchdog_timeout(stonith_watchdog_timeout):
+    """
+    Check sbd status and config when user is setting stonith-watchdog-timeout
+    Returns error message if the value is unacceptable, otherwise return nothing
+    to set the property
+
+    stonith_watchdog_timeout -- string
+    """
+    report_item_list = []
+    try:
+        stonith_watchdog_timeout = int(stonith_watchdog_timeout)
+        if stonith_watchdog_timeout == 0:
+            return report_item_list
+        elif is_device_set_local():
+            report_item_list.append(
+                ReportItem.error(
+                    reports.messages.SbdWithDeviceCannotSetWatchdogTimeout()
+                )
+            )
+        else:
+            local_sbd_watchdog_timeout = int(get_local_sbd_watchdog_timeout())
+            if stonith_watchdog_timeout < local_sbd_watchdog_timeout:
+                report_item_list.append(
+                    ReportItem.error(
+                        reports.messages.StonithWatchdogTimeoutTooSmall(
+                            local_sbd_watchdog_timeout
+                    )
+                )
+            )
+    except ValueError:
+        report_item_list.append(
+            ReportItem.error(
+                reports.messages.StonithWatchdogTimeoutInvalid()
+            )
+        )
+
+    return report_item_list
+
+
 def set_message(cmd_runner, device, node_name, message):
     """
     Set message of specified type 'message' on SBD device for node.
 
     cmd_runner -- CommandRunner
     device -- string, device path
-    node_name -- string, nae of node for which message should be set
+    node_name -- string, name of node for which message should be set
     message -- string, message type
     """
     dummy_std_out, std_err, ret_val = cmd_runner.run(

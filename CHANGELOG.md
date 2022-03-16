@@ -16,11 +16,14 @@
   ([rhbz#2058243])
 - Pcs daemon was allowing expired accounts, and accounts with expired
   passwords to login when using PAM auth. ([huntr#220307])
+- Preventing fence-loop caused when stonith-watchdog-timeout is set
+  with wrong value ([rhbz#2058246])
 
 [rhbz#2024522]: https://bugzilla.redhat.com/show_bug.cgi?id=2024522
 [rhbz#2053177]: https://bugzilla.redhat.com/show_bug.cgi?id=2053177
 [rhbz#2054671]: https://bugzilla.redhat.com/show_bug.cgi?id=2054671
 [rhbz#2058243]: https://bugzilla.redhat.com/show_bug.cgi?id=2058243
+[rhbz#2058246]: https://bugzilla.redhat.com/show_bug.cgi?id=2058246
 [rhbz#2058247]: https://bugzilla.redhat.com/show_bug.cgi?id=2058247
 [huntr#220307]: https://huntr.dev/bounties/7aa921fc-a568-4fd8-96f4-7cd826246aa5/
 
