@@ -5,6 +5,9 @@
 ### Added
 - Add support for fence_mpath to `pcs stonith update-scsi-devices` command
   ([rhbz#2024522])
+- Support for cluster UUIDs. New clusters now get a UUID during setup. Existing
+  clusters can get a UUID by running the new `pcs cluster config uuid generate`
+  command ([rhbz#2054671])
 
 ### Fixed
 - Booth ticket name validation ([rhbz#2053177])
@@ -13,6 +16,7 @@
 
 [rhbz#2024522]: https://bugzilla.redhat.com/show_bug.cgi?id=2024522
 [rhbz#2053177]: https://bugzilla.redhat.com/show_bug.cgi?id=2053177
+[rhbz#2054671]: https://bugzilla.redhat.com/show_bug.cgi?id=2054671
 [rhbz#2058243]: https://bugzilla.redhat.com/show_bug.cgi?id=2058243
 
 

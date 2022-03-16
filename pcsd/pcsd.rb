@@ -66,7 +66,7 @@ before do
     # for nil and empty username (if auth_user and auth_user[:username])
     @auth_user = {} if not @auth_user
   end
-  $cluster_name = get_cluster_name()
+  $cluster_name, $cluster_uuid = get_cluster_name_and_uuid()
 end
 
 configure do

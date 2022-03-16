@@ -1,5 +1,6 @@
 import os
 import tempfile
+import uuid
 from contextlib import contextmanager
 from typing import (
     Any,
@@ -12,6 +13,10 @@ from pcs.lib.errors import LibraryError
 
 def generate_binary_key(random_bytes_count):
     return os.urandom(random_bytes_count)
+
+
+def generate_uuid() -> str:
+    return uuid.uuid4().hex
 
 
 def environment_file_to_dict(config):

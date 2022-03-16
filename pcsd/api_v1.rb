@@ -118,6 +118,11 @@ def route_api_v1(auth_user, params, request)
       :only_superuser => true,
       :permissions => nil,
     },
+    'cluster-generate-cluster-uuid/v1' => {
+      :cmd => 'cluster.generate_cluster_uuid',
+      :only_superuser => true,
+      :permission => nil,
+    },
     'constraint-colocation-create-with-set/v1' => {
       :cmd => 'constraint_colocation.create_with_set',
       :only_superuser => false,

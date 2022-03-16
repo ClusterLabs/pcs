@@ -252,6 +252,16 @@
         pcs commands: cluster config update
       </description>
     </capability>
+    <capability id="cluster.config.uuid" in-pcs="1" in-pcsd="1">
+      <description>
+        Support for generating, regenerating and showing cluster UUID. Each new
+        cluster gets a UUID during setup unless explicitly disabled.
+
+        pcs commands: cluster config show
+                      cluster config uuid generate
+                      cluster setup --no-cluster-uuid
+      </description>
+    </capability>
     <capability id="corosync.config.reload" in-pcs="1" in-pcsd="0">
       <description>
         Instruct corosync to reload its configuration from its config files.

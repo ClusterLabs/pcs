@@ -4,6 +4,7 @@ from pcs_test.tools.misc import outdent
 
 QDEVICE_HOST = "qdevice.host"
 CLUSTER_NAME = "myCluster"
+CLUSTER_UUID = "abcdef0123456789abcdef0123456789"
 
 
 def get_two_node(nodes_num):
@@ -85,13 +86,14 @@ def node_fixture(node, node_id, addr_sufix=""):
 
 TOTEM_TEMPLATE = """\
 totem {{
-    transport: {transport_type}\
+    transport: {transport_type}{cluster_uuid}\
 {totem_options}{transport_options}{compression_options}{crypto_options}
 }}
 """
 
 
 def fixture_totem(
+    cluster_uuid=CLUSTER_UUID,
     transport_type="knet",
     transport_options=None,
     compression_options=None,
@@ -108,7 +110,11 @@ def fixture_totem(
             ]
         )
 
+    if cluster_uuid:
+        cluster_uuid = f"\n    cluster_uuid: {cluster_uuid}"
+
     return TOTEM_TEMPLATE.format(
+        cluster_uuid=cluster_uuid or "",
         transport_type=transport_type,
         transport_options=options_fixture(transport_options),
         compression_options=options_fixture(

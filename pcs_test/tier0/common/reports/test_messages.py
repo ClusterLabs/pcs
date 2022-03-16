@@ -1561,6 +1561,13 @@ class CorosyncTransportUnsupportedOptions(NameBuildTest):
         )
 
 
+class ClusterUuidAlreadySet(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Cluster UUID has already been set", reports.ClusterUuidAlreadySet()
+        )
+
+
 class QdeviceAlreadyDefined(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(

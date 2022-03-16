@@ -1,12 +1,18 @@
 from textwrap import dedent
 
 
-def fixture_corosync_conf_minimal():
-    return dedent(
-        """\
+def fixture_corosync_conf_minimal(no_cluster_uuid=False):
+    corosync_conf = """\
         totem {
             version: 2
             cluster_name: cluster_name
+        """
+    if not no_cluster_uuid:
+        corosync_conf += """\
+                cluster_uuid: cluster_uuid
+            """
+
+    corosync_conf += """\
             transport: knet
             ip_version: ipv6
             crypto_cipher: aes256
@@ -39,4 +45,5 @@ def fixture_corosync_conf_minimal():
             timestamp: on
         }
         """
-    )
+
+    return dedent(corosync_conf)
