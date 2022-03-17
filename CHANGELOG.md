@@ -17,6 +17,8 @@
 - Booth ticket name validation ([rhbz#1791661])
 - Adding booth ticket doesn't report 'mode' as an uknown option anymore
   ([rhbz#1786964])
+- Pcs daemon was allowing expired accounts, and accounts with expired
+  passwords to login when using PAM auth. ([huntr#220307])
 
 ### Deprecated
 - Agents not complying with OCF 1.0 schema are processed, incompatibilities are
@@ -28,6 +30,7 @@
 [rhbz#1950551]: https://bugzilla.redhat.com/show_bug.cgi?id=1950551
 [rhbz#2023845]: https://bugzilla.redhat.com/show_bug.cgi?id=2023845
 [rhbz#2050274]: https://bugzilla.redhat.com/show_bug.cgi?id=2050274
+[huntr#220307]: https://huntr.dev/bounties/7aa921fc-a568-4fd8-96f4-7cd826246aa5/
 
 
 ## [0.10.13] - 2022-01-31
