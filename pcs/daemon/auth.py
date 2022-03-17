@@ -64,6 +64,7 @@ libpam = CDLL(find_library("pam"))
 strdup = prep_fn(libc.strdup, POINTER(c_char), [c_char_p])
 calloc = prep_fn(libc.calloc, c_void_p, [c_uint, c_uint])
 pam_authenticate = prep_fn(libpam.pam_authenticate, c_int, [pam_handle, c_int])
+pam_acct_mgmt = prep_fn(libpam.pam_acct_mgmt, c_int, [pam_handle, c_int])
 pam_end = prep_fn(libpam.pam_end, c_int, [pam_handle, c_int])
 pam_start = prep_fn(
     libpam.pam_start,
@@ -102,6 +103,8 @@ def authenticate_by_pam(username, password):
     )
     if returncode == PAM_SUCCESS:
         returncode = pam_authenticate(pamh, 0)
+    if returncode == PAM_SUCCESS:
+        returncode = pam_acct_mgmt(pamh, 0)
     pam_end(pamh, returncode)
     return returncode == PAM_SUCCESS
 

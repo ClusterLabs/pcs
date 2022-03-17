@@ -13,11 +13,14 @@
 - Booth ticket name validation ([rhbz#2053177])
 - Adding booth ticket doesn't report 'mode' as an uknown option anymore
   ([rhbz#2058243])
+- Pcs daemon was allowing expired accounts, and accounts with expired
+  passwords to login when using PAM auth. ([huntr#220307])
 
 [rhbz#2024522]: https://bugzilla.redhat.com/show_bug.cgi?id=2024522
 [rhbz#2053177]: https://bugzilla.redhat.com/show_bug.cgi?id=2053177
 [rhbz#2054671]: https://bugzilla.redhat.com/show_bug.cgi?id=2054671
 [rhbz#2058243]: https://bugzilla.redhat.com/show_bug.cgi?id=2058243
+[huntr#220307]: https://huntr.dev/bounties/7aa921fc-a568-4fd8-96f4-7cd826246aa5/
 
 
 ## [0.11.2] - 2022-02-01
