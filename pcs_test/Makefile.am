@@ -310,6 +310,7 @@ EXTRA_DIST		= \
 			  tier1/cib_resource/test_enable_disable.py \
 			  tier1/cib_resource/test_group_ungroup.py \
 			  tier1/cib_resource/test_manage_unmanage.py \
+			  tier1/cib_resource/test_move.py \
 			  tier1/cib_resource/test_operation_add.py \
 			  tier1/cib_resource/test_stonith_create.py \
 			  tier1/cib_resource/test_stonith_enable_disable.py \

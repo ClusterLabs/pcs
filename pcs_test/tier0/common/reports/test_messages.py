@@ -4618,6 +4618,17 @@ class ResourceMoveAutocleanSimulationFailure(NameBuildTest):
         )
 
 
+class ResourceMayOrMayNotMove(NameBuildTest):
+    def test_build_message(self):
+        self.assert_message_from_report(
+            (
+                "A move constraint has been created and the resource 'id' may "
+                "or may not move depending on other configuration"
+            ),
+            reports.ResourceMayOrMayNotMove("id"),
+        )
+
+
 class ParseErrorJsonFile(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(

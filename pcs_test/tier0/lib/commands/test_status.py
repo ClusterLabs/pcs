@@ -867,3 +867,61 @@ class FullClusterStatusPlaintext(TestCase):
                   pcsd: inactive/disabled"""
             ),
         )
+
+    def test_move_constrains_warnings(self):
+        self.config.runner.pcmk.load_state_plaintext(
+            stdout="crm_mon cluster status",
+        )
+        self.config.fs.exists(settings.corosync_conf_file, return_value=True)
+        self.config.corosync_conf.load()
+        self.config.runner.cib.load(
+            constraints="""
+            <constraints>
+                <rsc_location id="cli-ban-P1-on-node1" rsc="P1"
+                    role="Started" node="node1" score="-INFINITY"/>
+                <rsc_location id="cli-prefer-P1" rsc="P1" role="Started"
+                    node="node3" score="INFINITY"/>
+                <rsc_location id="cli-prefer-P2" rsc="P2" role="Started"
+                    node="node1" score="INFINITY"/>
+                <rsc_location id="cli-ban-P2-on-node1" rsc="P2"
+                    role="Started" node="node1" score="-INFINITY"/>
+                <rsc_location id="location-P3-node3--INFINITY" rsc="P3"
+                    node="node3" score="-INFINITY"/>
+            </constraints>
+        """,
+            resources="""
+            <resources>
+                <primitive class="ocf" id="P1" provider="pacemaker"
+                    type="Dummy"/>
+                <primitive class="ocf" id="P2" provider="pacemaker"
+                    type="Dummy"/>
+                <primitive class="ocf" id="P3" provider="pacemaker"
+                    type="Dummy"/>
+            </resources>
+        """,
+        )
+        self.config.services.is_running(
+            "sbd", return_value=True, name="services.is_running.sbd"
+        )
+        self._fixture_config_local_daemons(sbd_enabled=True, sbd_active=True)
+
+        self.assertEqual(
+            # pylint: disable=line-too-long
+            status.full_cluster_status_plaintext(self.env_assist.get_env()),
+            dedent(
+                """\
+                Cluster name: test99
+
+                WARNINGS:
+                Following resources have been moved and their move constraints are still in place: 'P1', 'P2'
+                Run 'pcs constraint location' or 'pcs resource clear <resource id>' to view or remove the constraints, respectively
+
+                crm_mon cluster status
+
+                Daemon Status:
+                  corosync: active/enabled
+                  pacemaker: active/enabled
+                  pcsd: active/enabled
+                  sbd: active/enabled"""
+            ),
+        )

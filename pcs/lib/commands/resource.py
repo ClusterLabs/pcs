@@ -1968,6 +1968,13 @@ class _MoveBanTemplate:
         raise NotImplementedError()
 
     @staticmethod
+    def _report_resource_may_or_may_not_move(
+        resource_id: str,
+    ) -> ReportItemList:
+        del resource_id
+        return []
+
+    @staticmethod
     def _report_wait_result(
         resource_id,
         node,
@@ -2014,6 +2021,7 @@ class _MoveBanTemplate:
             master=master,
             lifetime=lifetime,
         )
+
         if retval != 0:
             if (
                 f"Resource '{resource_id}' not moved: active in 0 locations"
@@ -2024,6 +2032,10 @@ class _MoveBanTemplate:
                 )
             raise LibraryError(
                 self._report_action_pcmk_error(resource_id, stdout, stderr)
+            )
+        if node and not stdout and not stderr:
+            env.report_processor.report_list(
+                self._report_resource_may_or_may_not_move(resource_id)
             )
         env.report_processor.report(
             self._report_action_pcmk_success(resource_id, stdout, stderr)
@@ -2075,6 +2087,16 @@ class _Move(_MoveBanTemplate):
                 stderr,
             )
         )
+
+    @staticmethod
+    def _report_resource_may_or_may_not_move(
+        resource_id: str,
+    ) -> ReportItemList:
+        return [
+            ReportItem.warning(
+                reports.messages.ResourceMayOrMayNotMove(resource_id)
+            )
+        ]
 
     @staticmethod
     def _report_wait_result(

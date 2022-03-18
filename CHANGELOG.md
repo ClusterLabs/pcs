@@ -8,6 +8,7 @@
 - Support for cluster UUIDs. New clusters now get a UUID during setup. Existing
   clusters can get a UUID by running the new `pcs cluster config uuid generate`
   command ([rhbz#2054671])
+- Add warning regarding move constraints to `pcs status` ([rhbz#2058247])
 
 ### Fixed
 - Booth ticket name validation ([rhbz#2053177])
@@ -20,6 +21,7 @@
 [rhbz#2053177]: https://bugzilla.redhat.com/show_bug.cgi?id=2053177
 [rhbz#2054671]: https://bugzilla.redhat.com/show_bug.cgi?id=2054671
 [rhbz#2058243]: https://bugzilla.redhat.com/show_bug.cgi?id=2058243
+[rhbz#2058247]: https://bugzilla.redhat.com/show_bug.cgi?id=2058247
 [huntr#220307]: https://huntr.dev/bounties/7aa921fc-a568-4fd8-96f4-7cd826246aa5/
 
 

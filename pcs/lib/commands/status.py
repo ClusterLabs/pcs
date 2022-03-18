@@ -4,6 +4,7 @@ from typing import (
     List,
     Mapping,
     NamedTuple,
+    cast,
 )
 
 from lxml.etree import _Element
@@ -142,6 +143,7 @@ def full_cluster_status_plaintext(
     # check stonith configuration
     warning_list = list(warning_list)
     warning_list.extend(_stonith_warnings(cib, is_sbd_running))
+    warning_list.extend(_move_constraints_warnings(cib))
 
     # put it all together
     if report_processor.has_errors:
@@ -226,6 +228,26 @@ def _stonith_warnings(cib: _Element, is_sbd_running: bool) -> List[str]:
             )
         )
 
+    return warning_list
+
+
+def _move_constraints_warnings(cib: _Element) -> List[str]:
+    warning_list: List[str] = []
+    resource_id_list = cast(
+        List[str],
+        cib.xpath("//constraints/rsc_location[starts-with(@id, 'cli-')]/@rsc"),
+    )
+    if resource_id_list:
+        warning_list.append(
+            "Following resources have been moved and their move constraints "
+            "are still in place: {0}".format(
+                format_list(list(set(resource_id_list)))
+            )
+        )
+        warning_list.append(
+            "Run 'pcs constraint location' or 'pcs resource clear "
+            "<resource id>' to view or remove the constraints, respectively"
+        )
     return warning_list
 
 
