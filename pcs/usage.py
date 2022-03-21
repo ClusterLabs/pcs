@@ -550,9 +550,10 @@ def _resource_meta_desc_fn(obj: str, parent_cmd: str) -> Iterable[str]:
         have been processed or 1 otherwise. If 'n' is not specified it defaults
         to 60 minutes.
         """,
+        "Example:",
         f"""
-        Example: pcs {parent_cmd} {_RESOURCE_META_CMD} test_{parent_cmd}
-        failure-timeout=50 stickiness=
+        pcs {parent_cmd} {_RESOURCE_META_CMD} test_{parent_cmd}
+        failure-timeout=50 resource-stickiness=
         """,
     )
 
