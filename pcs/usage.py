@@ -550,7 +550,8 @@ Commands:
         wait up to 'n' seconds for the changes to take effect and then return 0
         if the changes have been processed or 1 otherwise. If 'n' is not
         specified it defaults to 60 minutes.
-        Example: pcs resource meta TestResource failure-timeout=50 stickiness=
+        Example:
+        pcs resource meta TestResource failure-timeout=50 resource-stickiness=
 
     group list
         Show all currently configured resource groups and their resources.

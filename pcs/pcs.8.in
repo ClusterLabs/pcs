@@ -269,7 +269,7 @@ NOTE: Defaults do not apply to resources which override them with their own defi
 meta <resource id | group id | clone id> <meta options> [\fB\-\-wait\fR[=n]]
 Add specified options to the specified resource, group or clone. Meta options should be in the format of name=value, options may be removed by setting an option without a value. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the changes to take effect and then return 0 if the changes have been processed or 1 otherwise. If 'n' is not specified it defaults to 60 minutes.
 .br
-Example: pcs resource meta TestResource failure\-timeout=50 stickiness=
+Example: pcs resource meta TestResource failure\-timeout=50 resource\-stickiness=
 .TP
 group list
 Show all currently configured resource groups and their resources.
