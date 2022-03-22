@@ -18,6 +18,8 @@ def set_property(lib, argv, modifiers):
       * --force - allow unknown options
       * -f - CIB file
     """
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-nested-blocks
     del lib
     modifiers.ensure_only_supported(
         "--force",

@@ -4536,37 +4536,43 @@ class SbdNotInstalled(ReportItemMessage):
 @dataclass(frozen=True)
 class SbdWithDeviceCannotSetWatchdogTimeout(ReportItemMessage):
     """
-    Can't set stonith-watchdog-timeout When using SBD with device
+    Can't set stonith-watchdog-timeout when using SBD with device
     """
+
     _code = codes.SBD_WITH_DEVICE_CANNOT_SET_WATCHDOG_TIMEOUT
 
     @property
     def message(self) -> str:
-        return "stonith-watchdog-timeout can only be set to 0 while sbd is using devices"
+        return (
+            "stonith-watchdog-timeout can only be set to 0 while SBD is "
+            "using devices"
+        )
 
 
 @dataclass(frozen=True)
 class SbdNotUsedCannotSetWatchdogTimeout(ReportItemMessage):
     """
-    Can't set stonith-watchdog-timeout When using SBD with device
+    Can't set stonith-watchdog-timeout when SBD is not enabled
     """
+
     _code = codes.SBD_NOT_USED_CANNOT_SET_WATCHDOG_TIMEOUT
 
     @property
     def message(self) -> str:
-        return "Unable to set stonith-watchdog-timeout while sbd is disabled"
+        return "Unable to set stonith-watchdog-timeout while SBD is disabled"
 
 
 @dataclass(frozen=True)
 class StonithWatchdogTimeoutInvalid(ReportItemMessage):
     """
-    stonith-watchdog-timeout is not integer
+    stonith-watchdog-timeout is not an integer
     """
+
     _code = codes.STONITH_WATCHDOG_TIMEOUT_INVALID
 
     @property
     def message(self) -> str:
-        return "The value of stonith-watchdog-timeout must be integer"
+        return "The value of stonith-watchdog-timeout must be an integer"
 
 
 @dataclass(frozen=True)
@@ -4576,6 +4582,7 @@ class StonithWatchdogTimeoutTooSmall(ReportItemMessage):
 
     local_sbd_watchdog_timeout -- local sbd watchdog timeout
     """
+
     local_sbd_watchdog_timeout: int
     _code = codes.STONITH_WATCHDOG_TIMEOUT_TOO_SMALL
 
