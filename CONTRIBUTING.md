@@ -42,6 +42,7 @@
 * To run all the tests, type `make check`.
   * You may run specific tests like this:
     * `make black_check`
+    * `make isort_check`
     * `make mypy`
     * `make pylint`
     * `make tests_tier0`
@@ -58,6 +59,7 @@
   * The point of this test is to make sure all necessary files are present in
     the tarball.
 * To run black code formater, type `make black`.
+* To run isort code formater, type `make isort`.
 
 ### Distribution tarball
 * To create a tarball for distribution, run `make dist`.
