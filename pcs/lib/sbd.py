@@ -361,7 +361,7 @@ def validate_stonith_watchdog_timeout(stonith_watchdog_timeout):
         stonith_watchdog_timeout = int(stonith_watchdog_timeout)
         if stonith_watchdog_timeout == 0:
             return report_item_list
-        elif is_device_set_local():
+        if is_device_set_local():
             report_item_list.append(
                 ReportItem.error(
                     reports.messages.SbdWithDeviceCannotSetWatchdogTimeout()
@@ -374,14 +374,12 @@ def validate_stonith_watchdog_timeout(stonith_watchdog_timeout):
                     ReportItem.error(
                         reports.messages.StonithWatchdogTimeoutTooSmall(
                             local_sbd_watchdog_timeout
+                        )
                     )
                 )
-            )
     except ValueError:
         report_item_list.append(
-            ReportItem.error(
-                reports.messages.StonithWatchdogTimeoutInvalid()
-            )
+            ReportItem.error(reports.messages.StonithWatchdogTimeoutInvalid())
         )
 
     return report_item_list
