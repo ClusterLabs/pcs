@@ -552,21 +552,23 @@ class ValuePredicateBase(ValueValidator):
         self._forbidden_characters = None
 
     def _validate_value(self, value: ValuePair) -> ReportItemList:
-        if not self._is_valid(value.normalized):
-            return [
-                ReportItem(
-                    severity=self._severity,
-                    message=reports.messages.InvalidOptionValue(
-                        self._get_option_name_for_report(),
-                        value.original,
-                        self._get_allowed_values(),
-                        cannot_be_empty=self._value_cannot_be_empty,
-                        forbidden_characters=self._forbidden_characters,
-                    ),
-                )
-            ]
+        return (
+            []
+            if self._is_valid(value.normalized)
+            else [self._get_report_item(value)]
+        )
 
-        return []
+    def _get_report_item(self, value: ValuePair) -> ReportItem:
+        return ReportItem(
+            severity=self._severity,
+            message=reports.messages.InvalidOptionValue(
+                self._get_option_name_for_report(),
+                value.original,
+                self._get_allowed_values(),
+                cannot_be_empty=self._value_cannot_be_empty,
+                forbidden_characters=self._forbidden_characters,
+            ),
+        )
 
     def _is_valid(self, value: TypeOptionValue) -> bool:
         raise NotImplementedError()
