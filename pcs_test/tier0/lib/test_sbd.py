@@ -98,7 +98,7 @@ class EvenNumberOfNodesAndNoQdevice(TestCase):
         )
 
 
-@mock.patch("pcs.lib.sbd.is_device_set_local")
+@mock.patch("pcs.lib.sbd._is_device_set_local")
 @mock.patch("pcs.lib.sbd.is_sbd_enabled")
 @mock.patch("pcs.lib.sbd.is_sbd_installed")
 @mock.patch("pcs.lib.sbd._even_number_of_nodes_and_no_qdevice")
@@ -490,19 +490,20 @@ class GetLocalSbdDeviceListTest(TestCase):
 
 @mock.patch("pcs.lib.sbd.get_local_sbd_device_list")
 class IsDeviceSetLocalTest(TestCase):
+    # pylint: disable=protected-access
     def test_no_device(self, mock_device_list):
         mock_device_list.return_value = []
-        self.assertFalse(lib_sbd.is_device_set_local())
+        self.assertFalse(lib_sbd._is_device_set_local())
         mock_device_list.assert_called_once_with()
 
     def test_one_device(self, mock_device_list):
         mock_device_list.return_value = ["device1"]
-        self.assertTrue(lib_sbd.is_device_set_local())
+        self.assertTrue(lib_sbd._is_device_set_local())
         mock_device_list.assert_called_once_with()
 
     def test_multiple_devices(self, mock_device_list):
         mock_device_list.return_value = ["device1", "device2"]
-        self.assertTrue(lib_sbd.is_device_set_local())
+        self.assertTrue(lib_sbd._is_device_set_local())
         mock_device_list.assert_called_once_with()
 
 

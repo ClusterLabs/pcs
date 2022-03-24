@@ -3357,35 +3357,43 @@ class SbdNotInstalled(NameBuildTest):
         )
 
 
-class SbdWithDeviceCannotSetWatchdogTimeout(NameBuildTest):
-    def test_all(self):
+class StonithWatchdogTimeoutCannotBeSet(NameBuildTest):
+    def test_sbd_not_enabled(self):
         self.assert_message_from_report(
-            "stonith-watchdog-timeout can only be set to 0 while SBD is using devices",
-            reports.SbdWithDeviceCannotSetWatchdogTimeout(),
+            "stonith-watchdog-timeout can only be unset or set to 0 while SBD "
+            "is disabled",
+            reports.StonithWatchdogTimeoutCannotBeSet(
+                reports.const.SBD_NOT_SET_UP
+            ),
+        )
+
+    def test_sbd_with_devices(self):
+        self.assert_message_from_report(
+            "stonith-watchdog-timeout can only be unset or set to 0 while SBD "
+            "is enabled with devices",
+            reports.StonithWatchdogTimeoutCannotBeSet(
+                reports.const.SBD_SET_UP_WITH_DEVICES
+            ),
         )
 
 
-class SbdNotUsedCannotSetWatchdogTimeout(NameBuildTest):
-    def test_all(self):
+class StonithWatchdogTimeoutCannotBeUnset(NameBuildTest):
+    def test_sbd_without_devices(self):
         self.assert_message_from_report(
-            "Unable to set stonith-watchdog-timeout while SBD is disabled",
-            reports.SbdNotUsedCannotSetWatchdogTimeout(),
-        )
-
-
-class StonithWatchdogTimeoutInvalid(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "The value of stonith-watchdog-timeout must be an integer",
-            reports.StonithWatchdogTimeoutInvalid(),
+            "stonith-watchdog-timeout cannot be unset or set to 0 while SBD "
+            "is enabled without devices",
+            reports.StonithWatchdogTimeoutCannotBeUnset(
+                reports.const.SBD_SET_UP_WITHOUT_DEVICES
+            ),
         )
 
 
 class StonithWatchdogTimeoutTooSmall(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(
-            "The stonith-watchdog-timeout must be greater than 5",
-            reports.StonithWatchdogTimeoutTooSmall("5"),
+            "The stonith-watchdog-timeout must be greater than SBD watchdog "
+            "timeout '5', entered '4'",
+            reports.StonithWatchdogTimeoutTooSmall(5, "4"),
         )
 
 
