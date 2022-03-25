@@ -2,8 +2,13 @@
 
 ## [Unreleased]
 
+### Security
+- CVE-2022-1049: Pcs daemon was allowing expired accounts, and accounts with
+  expired passwords to login when using PAM auth. ([huntr#220307],
+  [rhbz#2068456])
+
 ### Added
-- Add support for fence_mpath to `pcs stonith update-scsi-devices` command
+- Add support for fence\_mpath to `pcs stonith update-scsi-devices` command
   ([rhbz#2023845])
 - Support for cluster UUIDs. New clusters now get a UUID during setup. Existing
   clusters can get a UUID by running the new `pcs cluster config uuid generate`
@@ -18,8 +23,6 @@
 - Booth ticket name validation ([rhbz#1791661])
 - Adding booth ticket doesn't report 'mode' as an uknown option anymore
   ([rhbz#1786964])
-- Pcs daemon was allowing expired accounts, and accounts with expired
-  passwords to login when using PAM auth. ([huntr#220307])
 - Preventing fence-loop caused when stonith-watchdog-timeout is set
   with wrong value ([rhbz#1954099])
 
@@ -35,6 +38,7 @@
 [rhbz#1954099]: https://bugzilla.redhat.com/show_bug.cgi?id=1954099
 [rhbz#2023845]: https://bugzilla.redhat.com/show_bug.cgi?id=2023845
 [rhbz#2050274]: https://bugzilla.redhat.com/show_bug.cgi?id=2050274
+[rhbz#2068456]: https://bugzilla.redhat.com/show_bug.cgi?id=2068456
 [huntr#220307]: https://huntr.dev/bounties/7aa921fc-a568-4fd8-96f4-7cd826246aa5/
 
 
