@@ -3083,7 +3083,14 @@ monitor interval=20 (A-monitor-interval-20)
             )
 
         o, r = pcs(self.temp_cib.name, "resource move DGroup rh7-1".split())
-        ac(o, "")
+        ac(
+            o,
+            (
+                "Warning: A move constraint has been created and the resource "
+                "'DGroup' may or may not move depending on other configuration"
+                "\n"
+            ),
+        )
         assert r == 0
 
         o, r = pcs(self.temp_cib.name, ["constraint"])

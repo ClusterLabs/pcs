@@ -6125,6 +6125,27 @@ class ResourceUnmoveUnbanPcmkSuccess(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class ResourceMayOrMayNotMove(ReportItemMessage):
+    """
+    A move constraint has been created and the resource may or may not move
+    depending on other configuration.
+
+    resource_id -- id of the resource to be moved
+    """
+
+    resource_id: str
+    _code = codes.RESOURCE_MAY_OR_MAY_NOT_MOVE
+
+    @property
+    def message(self) -> str:
+        return (
+            "A move constraint has been created and the resource "
+            f"'{self.resource_id}' may or may not move depending on other "
+            "configuration"
+        )
+
+
+@dataclass(frozen=True)
 class ResourceMoveConstraintCreated(ReportItemMessage):
     """
     A constraint to move resource has been created.

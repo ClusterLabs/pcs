@@ -213,7 +213,28 @@ class MoveMixin:
 
 
 class Move(MoveMixin, MoveBanBaseMixin, TestCase):
-    pass
+    def test_resource_may_or_may_not_move(self):
+        self.config.runner.cib.load(
+            resources=resources_primitive, nodes=nodes_section
+        )
+        self.config_pcmk_action(
+            resource="A", node="node1", stdout="", stderr=""
+        )
+        self.lib_action(self.env_assist.get_env(), "A", node="node1")
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    report_codes.RESOURCE_MAY_OR_MAY_NOT_MOVE,
+                    resource_id="A",
+                ),
+                fixture.info(
+                    self.report_code_pcmk_success,
+                    resource_id="A",
+                    stdout="",
+                    stderr="",
+                ),
+            ]
+        )
 
 
 class BanMixin:

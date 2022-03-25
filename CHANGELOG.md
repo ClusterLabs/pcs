@@ -8,6 +8,7 @@
 - Support for cluster UUIDs. New clusters now get a UUID during setup. Existing
   clusters can get a UUID by running the new `pcs cluster config uuid generate`
   command ([rhbz#1950551])
+- Add warning regarding move constraints to `pcs status` ([rhbz#1730232])
 
 ### Fixed
 - Agents not conforming to OCF standard are processed as if they conformed to
@@ -25,6 +26,7 @@
   listed as warnings. In pcs-0.11, they will be reported as errors and prevent
   pcs from working with such agents. ([rhbz#2050274])
 
+[rhbz#1730232]: https://bugzilla.redhat.com/show_bug.cgi?id=1730232
 [rhbz#1786964]: https://bugzilla.redhat.com/show_bug.cgi?id=1786964
 [rhbz#1791661]: https://bugzilla.redhat.com/show_bug.cgi?id=1791661
 [rhbz#1950551]: https://bugzilla.redhat.com/show_bug.cgi?id=1950551
