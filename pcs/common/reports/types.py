@@ -14,3 +14,6 @@ SeverityLevel = NewType("SeverityLevel", str)
 StonithRestartlessUpdateUnableToPerformReason = NewType(
     "StonithRestartlessUpdateUnableToPerformReason", str
 )
+StonithWatchdogTimeoutCannotBeSetReason = NewType(
+    "StonithWatchdogTimeoutCannotBeSetReason", str
+)
