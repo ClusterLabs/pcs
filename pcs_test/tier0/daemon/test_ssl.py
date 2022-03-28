@@ -64,9 +64,12 @@ class Pair(SslFilesMixin, TestCase):
             336245135,
             "[SSL: EE_KEY_TOO_SMALL] ee key too small (_ssl.c:3542)",
         )
-        # 512 cannot be used as we would get an error from FIPS and 1024 is
-        # long enough. So a mock must be used.
-        self.pair.regenerate(SERVER_NAME, 1024)
+        # If a short key, which would cause the SSL library error, is used,
+        # then we get a FIPS error instead. If a key long enough for FIPS is
+        # used, then the SSL library doesn't produce any error, as the key is
+        # sufficiently long for it. Therefore, we use a key long enough for
+        # FIPS, and mock SSL library to throw an error.
+        self.pair.regenerate(SERVER_NAME, 2048)
         errors = self.pair.check()
         self.assertEqual(
             errors,
