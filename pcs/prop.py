@@ -3,7 +3,12 @@ import sys
 
 from pcs import utils
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.reports.output import warn
+from pcs.cli.reports.output import (
+    process_library_reports,
+    warn,
+)
+from pcs.common import reports
+from pcs.lib import sbd
 
 
 def set_property(lib, argv, modifiers):
@@ -12,6 +17,8 @@ def set_property(lib, argv, modifiers):
       * --force - allow unknown options
       * -f - CIB file
     """
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-nested-blocks
     del lib
     modifiers.ensure_only_supported(
         "--force",
@@ -36,6 +43,25 @@ def set_property(lib, argv, modifiers):
         elif not args[0]:
             utils.err("empty property name: '{0}'".format(arg), False)
             failed = True
+        elif args[0] == "stonith-watchdog-timeout":
+            lib_env = utils.get_lib_env()
+            if sbd.is_sbd_enabled(lib_env.service_manager):
+                report_list = sbd.validate_stonith_watchdog_timeout(
+                    args[1], forced
+                )
+                if report_list:
+                    process_library_reports(report_list)
+                properties[args[0]] = args[1]
+            elif args[1] not in ["", "0"]:
+                utils.err(
+                    reports.messages.StonithWatchdogTimeoutCannotBeSet(
+                        reports.const.SBD_NOT_SET_UP
+                    ).message,
+                    False,
+                )
+                failed = True
+            else:
+                properties[args[0]] = args[1]
         elif forced or args[1].strip() == "":
             properties[args[0]] = args[1]
         else:

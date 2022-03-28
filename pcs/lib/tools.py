@@ -4,6 +4,7 @@ import uuid
 from contextlib import contextmanager
 from typing import (
     Any,
+    Dict,
     Union,
 )
 
@@ -19,7 +20,7 @@ def generate_uuid() -> str:
     return uuid.uuid4().hex
 
 
-def environment_file_to_dict(config):
+def environment_file_to_dict(config: str) -> Dict[str, str]:
     """
     Parse systemd Environment file. This parser is simplified version of
     parser in systemd, because of their poor implementation.

@@ -8,6 +8,7 @@ from .types import (
     ReasonType,
     ServiceAction,
     StonithRestartlessUpdateUnableToPerformReason,
+    StonithWatchdogTimeoutCannotBeSetReason,
 )
 
 ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE = AddRemoveContainerType("stonith")
@@ -44,6 +45,14 @@ REASON_NOT_LIVE_CIB = ReasonType("not_live_cib")
 
 DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS = DefaultAddressSource("known_hosts")
 DEFAULT_ADDRESS_SOURCE_HOST_NAME = DefaultAddressSource("host_name")
+
+SBD_NOT_SET_UP = StonithWatchdogTimeoutCannotBeSetReason("sbd_not_set_up")
+SBD_SET_UP_WITH_DEVICES = StonithWatchdogTimeoutCannotBeSetReason(
+    "sbd_set_up_with_devices"
+)
+SBD_SET_UP_WITHOUT_DEVICES = StonithWatchdogTimeoutCannotBeSetReason(
+    "sbd_set_up_without_devices"
+)
 
 STONITH_RESTARTLESS_UPDATE_UNABLE_TO_PERFORM_REASON_NOT_RUNNING = (
     StonithRestartlessUpdateUnableToPerformReason("not_running")

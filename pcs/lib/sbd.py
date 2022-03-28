@@ -1,11 +1,12 @@
 import re
 from os import path
+from typing import Optional
 
 from pcs import settings
 from pcs.common import reports
-from pcs.common.reports import ReportProcessor
-from pcs.common.reports.item import ReportItem
 from pcs.common.services.interfaces import ServiceManagerInterface
+from pcs.common.validate import is_integer
+from pcs.lib import validate
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfFacade
 from pcs.lib.errors import LibraryError
 from pcs.lib.services import is_systemd
@@ -20,6 +21,43 @@ DEVICE_INITIALIZATION_OPTIONS_MAPPING = {
     "loop-timeout": "-3",
     "msgwait-timeout": "-4",
 }
+
+# based on sbd documentation
+_DEFAULT_SBD_WATCHDOG_TIMEOUT = 5
+
+
+class _StonithWatchdogTimeoutValidator(validate.ValuePredicateBase):
+    def __init__(
+        self,
+        option_name: validate.TypeOptionName,
+        threshold: int,
+        option_name_for_report: Optional[str] = None,
+        severity: Optional[reports.ReportItemSeverity] = None,
+    ):
+        """
+        threshold -- values greater than this are allowed
+        severity -- severity of produced reports, defaults to error
+        """
+        super().__init__(
+            option_name,
+            option_name_for_report=option_name_for_report,
+            severity=severity,
+        )
+        self._threshold = threshold
+
+    def _is_valid(self, value: validate.TypeOptionValue) -> bool:
+        return is_integer(value, self._threshold + 1)
+
+    def _get_report_item(self, value: validate.ValuePair) -> reports.ReportItem:
+        return reports.ReportItem(
+            severity=self._severity,
+            message=reports.messages.StonithWatchdogTimeoutTooSmall(
+                self._threshold, value.original
+            ),
+        )
+
+    def _get_allowed_values(self) -> None:
+        pass
 
 
 def _even_number_of_nodes_and_no_qdevice(
@@ -62,7 +100,7 @@ def is_auto_tie_breaker_needed(
         )
         and is_sbd_installed(service_manager)
         and is_sbd_enabled(service_manager)
-        and not is_device_set_local()
+        and not _is_device_set_local()
     )
 
 
@@ -111,12 +149,12 @@ def validate_new_nodes_devices(nodes_devices):
 
     dict nodes_devices -- name: node name, key: list of SBD devices
     """
-    if is_device_set_local():
+    if _is_device_set_local():
         return validate_nodes_devices(
             nodes_devices, adding_nodes_to_sbd_enabled_cluster=True
         )
     return [
-        ReportItem.error(
+        reports.ReportItem.error(
             reports.messages.SbdWithDevicesNotUsedCannotSetDevice(node)
         )
         for node, devices in nodes_devices.items()
@@ -140,7 +178,7 @@ def validate_nodes_devices(
     for node_label, device_list in node_device_dict.items():
         if not device_list:
             report_item_list.append(
-                ReportItem.error(
+                reports.ReportItem.error(
                     reports.messages.SbdNoDeviceForNode(
                         node_label,
                         sbd_enabled_in_cluster=(
@@ -151,7 +189,7 @@ def validate_nodes_devices(
             )
         elif len(device_list) > settings.sbd_max_device_num:
             report_item_list.append(
-                ReportItem.error(
+                reports.ReportItem.error(
                     reports.messages.SbdTooManyDevicesForNode(
                         node_label, device_list, settings.sbd_max_device_num
                     )
@@ -160,7 +198,7 @@ def validate_nodes_devices(
         for device in device_list:
             if not device or not path.isabs(device):
                 report_item_list.append(
-                    ReportItem.error(
+                    reports.ReportItem.error(
                         reports.messages.SbdDevicePathNotAbsolute(
                             device, node_label
                         )
@@ -193,10 +231,10 @@ def get_default_sbd_config():
     }
 
 
-def get_local_sbd_config():
+def get_local_sbd_config() -> str:
     """
     Get local SBD configuration.
-    Returns SBD configuration file as string.
+
     Raises LibraryError on any failure.
     """
     try:
@@ -204,7 +242,7 @@ def get_local_sbd_config():
             return sbd_cfg.read()
     except EnvironmentError as e:
         raise LibraryError(
-            ReportItem.error(
+            reports.ReportItem.error(
                 reports.messages.UnableToGetSbdConfig("local node", str(e))
             )
         ) from e
@@ -231,7 +269,10 @@ def is_sbd_installed(service_manager: ServiceManagerInterface) -> bool:
 
 
 def initialize_block_devices(
-    report_processor: ReportProcessor, cmd_runner, device_list, option_dict
+    report_processor: reports.ReportProcessor,
+    cmd_runner,
+    device_list,
+    option_dict,
 ):
     """
     Initialize devices with specified options in option_dict.
@@ -243,7 +284,7 @@ def initialize_block_devices(
     option_dict -- dictionary of options and their values
     """
     report_processor.report(
-        ReportItem.info(
+        reports.ReportItem.info(
             reports.messages.SbdDeviceInitializationStarted(device_list)
         )
     )
@@ -259,14 +300,14 @@ def initialize_block_devices(
     _, std_err, ret_val = cmd_runner.run(cmd)
     if ret_val != 0:
         raise LibraryError(
-            ReportItem.error(
+            reports.ReportItem.error(
                 reports.messages.SbdDeviceInitializationError(
                     device_list, std_err
                 )
             )
         )
     report_processor.report(
-        ReportItem.info(
+        reports.ReportItem.info(
             reports.messages.SbdDeviceInitializationSuccess(device_list)
         )
     )
@@ -288,7 +329,7 @@ def get_local_sbd_device_list():
     return [device.strip() for device in devices.split(";") if device.strip()]
 
 
-def is_device_set_local():
+def _is_device_set_local() -> bool:
     """
     Returns True if there is at least one device specified in local SBD config,
     False otherwise.
@@ -309,7 +350,7 @@ def get_device_messages_info(cmd_runner, device):
     if ret_val != 0:
         # sbd writes error message into std_out
         raise LibraryError(
-            ReportItem.error(
+            reports.ReportItem.error(
                 reports.messages.SbdDeviceListError(device, std_out)
             )
         )
@@ -329,11 +370,70 @@ def get_device_sbd_header_dump(cmd_runner, device):
     if ret_val != 0:
         # sbd writes error message into std_out
         raise LibraryError(
-            ReportItem.error(
+            reports.ReportItem.error(
                 reports.messages.SbdDeviceDumpError(device, std_out)
             )
         )
     return std_out
+
+
+def _get_local_sbd_watchdog_timeout() -> int:
+    """
+    Return the value of SBD_WATCHDOG_TIMEOUT used in local SBD config
+    """
+    if not path.exists(settings.sbd_config):
+        return _DEFAULT_SBD_WATCHDOG_TIMEOUT
+
+    cfg = environment_file_to_dict(get_local_sbd_config())
+    try:
+        return int(cfg["SBD_WATCHDOG_TIMEOUT"])
+    except (KeyError, ValueError):
+        return _DEFAULT_SBD_WATCHDOG_TIMEOUT
+
+
+def validate_stonith_watchdog_timeout(
+    stonith_watchdog_timeout: str, force: bool = False
+) -> reports.ReportItemList:
+    """
+    Check sbd status and config when user is setting stonith-watchdog-timeout
+    Returns error message if the value is unacceptable, otherwise return nothing
+    to set the property
+
+    stonith_watchdog_timeout -- value to be validated
+    """
+    severity = reports.get_severity(reports.codes.FORCE, force)
+    if _is_device_set_local():
+        return (
+            [
+                reports.ReportItem(
+                    severity,
+                    reports.messages.StonithWatchdogTimeoutCannotBeSet(
+                        reports.const.SBD_SET_UP_WITH_DEVICES
+                    ),
+                )
+            ]
+            if stonith_watchdog_timeout not in ["", "0"]
+            else []
+        )
+
+    if stonith_watchdog_timeout in ["", "0"]:
+        return [
+            reports.ReportItem(
+                severity,
+                reports.messages.StonithWatchdogTimeoutCannotBeUnset(
+                    reports.const.SBD_SET_UP_WITHOUT_DEVICES
+                ),
+            )
+        ]
+    return validate.ValidatorAll(
+        [
+            _StonithWatchdogTimeoutValidator(
+                "stonith-watchdog-timeout",
+                _get_local_sbd_watchdog_timeout(),
+                severity=severity,
+            )
+        ]
+    ).validate({"stonith-watchdog-timeout": stonith_watchdog_timeout})
 
 
 def set_message(cmd_runner, device, node_name, message):
@@ -342,7 +442,7 @@ def set_message(cmd_runner, device, node_name, message):
 
     cmd_runner -- CommandRunner
     device -- string, device path
-    node_name -- string, nae of node for which message should be set
+    node_name -- string, name of node for which message should be set
     message -- string, message type
     """
     dummy_std_out, std_err, ret_val = cmd_runner.run(
@@ -350,7 +450,7 @@ def set_message(cmd_runner, device, node_name, message):
     )
     if ret_val != 0:
         raise LibraryError(
-            ReportItem.error(
+            reports.ReportItem.error(
                 reports.messages.SbdDeviceMessageError(
                     device, node_name, message, std_err
                 )
@@ -370,7 +470,9 @@ def get_available_watchdogs(cmd_runner):
     )
     if ret_val != 0:
         raise LibraryError(
-            ReportItem.error(reports.messages.SbdListWatchdogError(std_err))
+            reports.ReportItem.error(
+                reports.messages.SbdListWatchdogError(std_err)
+            )
         )
     return {
         match.group("watchdog"): {
@@ -388,13 +490,15 @@ def test_watchdog(cmd_runner, watchdog=None):
     if ret_val:
         if "Multiple watchdog devices discovered" in std_out:
             raise LibraryError(
-                ReportItem.error(
+                reports.ReportItem.error(
                     reports.messages.SbdWatchdogTestMultipleDevices()
                 )
             )
         raise LibraryError(
-            ReportItem.error(reports.messages.SbdWatchdogTestError(std_out))
+            reports.ReportItem.error(
+                reports.messages.SbdWatchdogTestError(std_out)
+            )
         )
     raise LibraryError(
-        ReportItem.error(reports.messages.SbdWatchdogTestFailed())
+        reports.ReportItem.error(reports.messages.SbdWatchdogTestFailed())
     )

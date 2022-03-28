@@ -234,6 +234,16 @@ def _build_node_description(node_types: List[str]) -> str:
     return "nor " + " or ".join([label(ntype) for ntype in node_types])
 
 
+def _stonith_watchdog_timeout_reason_to_str(
+    reason: types.StonithWatchdogTimeoutCannotBeSetReason,
+) -> str:
+    return {
+        const.SBD_NOT_SET_UP: "SBD is disabled",
+        const.SBD_SET_UP_WITH_DEVICES: "SBD is enabled with devices",
+        const.SBD_SET_UP_WITHOUT_DEVICES: "SBD is enabled without devices",
+    }.get(reason, reason)
+
+
 @dataclass(frozen=True, init=False)
 class LegacyCommonMessage(ReportItemMessage):
     """
@@ -4531,6 +4541,62 @@ class SbdNotInstalled(ReportItemMessage):
     @property
     def message(self) -> str:
         return f"SBD is not installed on node '{self.node}'"
+
+
+@dataclass(frozen=True)
+class StonithWatchdogTimeoutCannotBeSet(ReportItemMessage):
+    """
+    Can't set stonith-watchdog-timeout
+    """
+
+    reason: types.StonithWatchdogTimeoutCannotBeSetReason
+    _code = codes.STONITH_WATCHDOG_TIMEOUT_CANNOT_BE_SET
+
+    @property
+    def message(self) -> str:
+        return (
+            "stonith-watchdog-timeout can only be unset or set to 0 while "
+            + _stonith_watchdog_timeout_reason_to_str(self.reason)
+        )
+
+
+@dataclass(frozen=True)
+class StonithWatchdogTimeoutCannotBeUnset(ReportItemMessage):
+    """
+    Can't unset stonith-watchdog-timeout
+    """
+
+    reason: types.StonithWatchdogTimeoutCannotBeSetReason
+    _code = codes.STONITH_WATCHDOG_TIMEOUT_CANNOT_BE_UNSET
+
+    @property
+    def message(self) -> str:
+        return (
+            "stonith-watchdog-timeout cannot be unset or set to 0 while "
+            + _stonith_watchdog_timeout_reason_to_str(self.reason)
+        )
+
+
+@dataclass(frozen=True)
+class StonithWatchdogTimeoutTooSmall(ReportItemMessage):
+    """
+    The value of stonith-watchdog-timeout is too small
+
+    cluster_sbd_watchdog_timeout -- sbd watchdog timeout set in sbd config
+    entered_watchdog_timeout -- entered stonith-watchdog-timeout property
+    """
+
+    cluster_sbd_watchdog_timeout: int
+    entered_watchdog_timeout: str
+    _code = codes.STONITH_WATCHDOG_TIMEOUT_TOO_SMALL
+
+    @property
+    def message(self) -> str:
+        return (
+            "The stonith-watchdog-timeout must be greater than SBD watchdog "
+            f"timeout '{self.cluster_sbd_watchdog_timeout}', entered "
+            f"'{self.entered_watchdog_timeout}'"
+        )
 
 
 @dataclass(frozen=True)
