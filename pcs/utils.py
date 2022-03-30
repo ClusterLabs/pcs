@@ -1110,18 +1110,18 @@ def run_parallel(worker_list, wait_seconds=1):
     """
     Commandline options: no options
     """
-    thread_list = []
+    thread_list = set()
     for worker in worker_list:
         thread = threading.Thread(target=worker)
         thread.daemon = True
         thread.start()
-        thread_list.append(thread)
+        thread_list.add(thread)
 
     while thread_list:
-        for thread in thread_list:
-            thread.join(wait_seconds)
-            if not thread.is_alive():
-                thread_list.remove(thread)
+        thread = thread_list.pop()
+        thread.join(wait_seconds)
+        if thread.is_alive():
+            thread_list.add(thread)
 
 
 def create_task(report, action, node, *args, **kwargs):
