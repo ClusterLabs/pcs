@@ -1029,6 +1029,7 @@ def _get_linux_dist():
         # should never get here. Pylint, of course, cannot know that.
         # pylint: disable=deprecated-method
         # pylint: disable=no-member
+        # pylint: disable=used-before-assignment
         distribution = platform.linux_distribution(full_distribution_name=False)
     else:
         distribution = distro.linux_distribution(full_distribution_name=False)

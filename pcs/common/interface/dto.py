@@ -75,10 +75,10 @@ def to_dict(obj: DataTransferObject) -> DtoPayload:
     return _convert_dict(obj.__class__, asdict(obj))
 
 
-DtoType = TypeVar("DtoType", bound=DataTransferObject)
+DTOTYPE = TypeVar("DTOTYPE", bound=DataTransferObject)
 
 
-def _convert_payload(klass: Type[DtoType], data: DtoPayload) -> DtoPayload:
+def _convert_payload(klass: Type[DTOTYPE], data: DtoPayload) -> DtoPayload:
     new_dict = {}
     for _field in fields(klass):
         value = data[_field.metadata.get(META_NAME, _field.name)]
@@ -98,7 +98,7 @@ def _convert_payload(klass: Type[DtoType], data: DtoPayload) -> DtoPayload:
     return new_dict
 
 
-def from_dict(cls: Type[DtoType], data: DtoPayload) -> DtoType:
+def from_dict(cls: Type[DTOTYPE], data: DtoPayload) -> DTOTYPE:
     return dacite.from_dict(
         data_class=cls,
         data=_convert_payload(cls, data),

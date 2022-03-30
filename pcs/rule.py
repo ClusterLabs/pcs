@@ -31,7 +31,7 @@ def parse_argv(argv, extra_options=None):
     while argv:
         found = False
         option = argv.pop(0)
-        for name in options:
+        for name in list(options):
             if option.startswith(name + "="):
                 options[name] = option.split("=", 1)[1]
                 found = True

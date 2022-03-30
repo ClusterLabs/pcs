@@ -111,24 +111,23 @@ def run_tier1_fixtures(run_concurrently=True):
     print("Preparing tier1 fixtures...")
     time_start = time.time()
     if run_concurrently:
-        thread_list = []
+        thread_list = set()
         for instance in fixture_instances:
             thread = Thread(target=instance.set_up)
             thread.daemon = True
             thread.start()
-            thread_list.append(thread)
+            thread_list.add(thread)
         timeout_counter = 30  # 30 * 10s = 5min
         while thread_list:
             if timeout_counter < 0:
                 raise AssertionError("Fixture threads seem to be stuck :(")
-            for thread in thread_list:
-                thread.join(timeout=10)
-                sys.stdout.write(".")
-                sys.stdout.flush()
-                timeout_counter -= 1
-                if not thread.is_alive():
-                    thread_list.remove(thread)
-                    continue
+            thread = thread_list.pop()
+            thread.join(timeout=10)
+            sys.stdout.write(".")
+            sys.stdout.flush()
+            timeout_counter -= 1
+            if thread.is_alive():
+                thread_list.add(thread)
 
     else:
         for instance in fixture_instances:

@@ -101,7 +101,7 @@ class EnvLoader:
     def has_errors(self):
         return len(self.errors) > 0
 
-    @lru_cache()
+    @lru_cache(maxsize=5)
     def port(self):
         port = self.environ.get(PCSD_PORT, settings.pcsd_default_port)
         if not is_port_number(port):
@@ -170,7 +170,7 @@ class EnvLoader:
             existence_required=not self.pcsd_disable_gui(),
         )
 
-    @lru_cache()
+    @lru_cache(maxsize=5)
     def pcsd_dev(self):
         return self.__has_true_in_environ(PCSD_DEV)
 
