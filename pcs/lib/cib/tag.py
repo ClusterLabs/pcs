@@ -35,8 +35,10 @@ from pcs.lib.xml_tools import (
     remove_one_element,
 )
 
-TAG_TAG = "tag"
-TAG_OBJREF = "obj_ref"
+from .const import (
+    TAG_OBJREF,
+    TAG_TAG,
+)
 
 
 def _validate_tag_id(tag_id: str, id_provider: IdProvider) -> ReportItemList:

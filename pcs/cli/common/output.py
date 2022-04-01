@@ -3,41 +3,63 @@ import textwrap
 from shutil import get_terminal_size
 from typing import List
 
+INDENT_STEP = 2
+SUBSEQUENT_INDENT_STEP = 4
 
-def format_with_indentation(
+
+def _smart_wrap(
+    text: str, subsequent_indent: int = SUBSEQUENT_INDENT_STEP
+) -> List[str]:
+    initial_indent = len(text) - len(text.lstrip(" "))
+    return format_wrap_for_terminal(
+        text, subsequent_indent=subsequent_indent + initial_indent
+    )
+
+
+def smart_wrap_text(
+    lines: List[str], subsequent_indent: int = SUBSEQUENT_INDENT_STEP
+) -> List[str]:
+    output = []
+    for line in lines:
+        if not line:
+            output.append("")
+            continue
+        output.extend(_smart_wrap(line, subsequent_indent=subsequent_indent))
+    return output
+
+
+def format_wrap_for_terminal(
     text: str,
-    indentation: int = 0,
-    indent_first: bool = False,
-    max_length_trim: int = 0,
-    max_length: int = 0,
+    subsequent_indent: int = SUBSEQUENT_INDENT_STEP,
+    trim: int = 0,
 ) -> List[str]:
     """
     Returns text as a list of lines. Length of a line is determined by a
     terminal size if not explicitely specified.
 
     text -- string to format
-    indentation -- number of spaces to put at the begining of each line (except
-        first one)
-    indent_first -- if True also indent the first line by the same number of
-        spaces as defined as `indentation` argument
-    max_length_trim -- number which will be substracted from maximal line
-        length. Can be used in cases lines will be indented later by this
-        number of spaces.
-    max_length -- maximal line length. Terminal size is used if less than or
-        equal to 0.
+    subsequent_indent -- number of spaces all subsequent lines will be indented
+        compared to the first one.
+    trim -- number which will be substracted from terminal size. Can be used in
+        cases lines will be indented later by this number of spaces.
     """
     if any((sys.stdout.isatty(), sys.stderr.isatty())):
-        indent = " " * indentation
-        default_max_length = 40
-        if max_length <= 0:
-            max_length = get_terminal_size()[0]
-        return textwrap.wrap(
+        return format_wrap(
             text,
-            max(
-                max_length - max_length_trim,
-                default_max_length,
-            ),
-            initial_indent=indent if indent_first else "",
-            subsequent_indent=indent,
+            # minimal line length is 40
+            max(get_terminal_size()[0] - trim, 40),
+            subsequent_indent=subsequent_indent,
         )
     return [text]
+
+
+def format_wrap(
+    text: str,
+    max_length: int,
+    subsequent_indent: int = SUBSEQUENT_INDENT_STEP,
+) -> List[str]:
+    return textwrap.wrap(
+        text,
+        max_length,
+        subsequent_indent=" " * subsequent_indent,
+    )

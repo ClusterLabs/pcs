@@ -1750,6 +1750,15 @@
         daemon urls: resource_cleanup (param: strict=1)
       </description>
     </capability>
+    <capability id="pcmk.resource.config.output-formats" in-pcs="1" in-pcsd="0">
+      <description>
+        Display configured resources in various formats.
+
+        pcs commands:
+          resource config --output-format=text|json|cmd
+          stonith config --output-format=text|json|cmd
+      </description>
+    </capability>
     <capability id="pcmk.resource.refresh" in-pcs="1" in-pcsd="0">
       <description>
         Forget history of resources and redetect their current state. Optionally

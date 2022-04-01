@@ -47,10 +47,10 @@ def nvset_dto_to_lines(
 ) -> List[str]:
     in_effect_label = get_in_effect_label(nvset.rule) if nvset.rule else None
     heading_parts = [
-        "{label}{in_effect}: {id}".format(
+        "{label}{in_effect}:{id}".format(
             label=nvset_label,
             in_effect=format_optional(in_effect_label, " ({})"),
-            id=nvset.id,
+            id=format_optional(nvset.id, " {}"),
         )
     ]
     if nvset.options:

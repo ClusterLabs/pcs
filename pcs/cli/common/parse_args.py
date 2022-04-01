@@ -1,7 +1,9 @@
+from collections.abc import Set
 from typing import (
     Iterable,
     Mapping,
     Union,
+    cast,
 )
 
 from pcs.cli.common.errors import (
@@ -15,6 +17,11 @@ from pcs.common.str_tools import (
 from pcs.common.tools import timeout_to_seconds
 
 ModifierValueType = Union[None, bool, str]
+
+_OUTPUT_FORMAT_OPTION_STR = "output-format"
+_OUTPUT_FORMAT_OPTION = f"--{_OUTPUT_FORMAT_OPTION_STR}"
+OUTPUT_FORMAT_VALUE_TEXT = "text"
+_OUTPUT_FORMAT_VALUES = frozenset((OUTPUT_FORMAT_VALUE_TEXT, "cmd", "json"))
 
 ARG_TYPE_DELIMITER = "%"
 
@@ -81,7 +88,7 @@ PCS_LONG_OPTIONS = [
     # allow overwriting existing files, currently meant for / used in CLI only
     "overwrite",
     # output format of commands, e.g: json, cmd, text, ...
-    "output-format=",
+    f"{_OUTPUT_FORMAT_OPTION_STR}=",
     # auth token
     "token=",
 ]
@@ -506,7 +513,9 @@ class InputModifiers:
                 "--group": options.get("--group", None),
                 "--name": options.get("--name", None),
                 "--node": options.get("--node", None),
-                "--output-format": options.get("--output-format", "text"),
+                _OUTPUT_FORMAT_OPTION: options.get(
+                    _OUTPUT_FORMAT_OPTION, OUTPUT_FORMAT_VALUE_TEXT
+                ),
                 "--request-timeout": options.get("--request-timeout", None),
                 "--to": options.get("--to", None),
                 "--token": options.get("--token", None),
@@ -525,14 +534,16 @@ class InputModifiers:
         return InputModifiers(opt_dict)
 
     def ensure_only_supported(
-        self, *supported_options, hint_syntax_changed: bool = False
-    ):
-        unsupported_options = (
-            # --debug is supported in all commands
-            self._defined_options
-            - set(supported_options)
-            - set(["--debug"])
-        )
+        self,
+        *supported_options: str,
+        hint_syntax_changed: bool = False,
+        output_format_supported: bool = False,
+    ) -> None:
+        # --debug is supported in all commands
+        supported_options_set = set(supported_options) | {"--debug"}
+        if output_format_supported:
+            supported_options_set.add(_OUTPUT_FORMAT_OPTION)
+        unsupported_options = self._defined_options - supported_options_set
         if unsupported_options:
             pluralize = lambda word: format_plural(unsupported_options, word)
             raise CmdLineInputError(
@@ -611,3 +622,22 @@ class InputModifiers:
         if option in self._options:
             return self._options[option]
         raise AssertionError(f"Non existing default value for '{option}'")
+
+    def get_output_format(
+        self, supported_formats: Set[str] = _OUTPUT_FORMAT_VALUES
+    ) -> str:
+        output_format = self.get(_OUTPUT_FORMAT_OPTION)
+        if output_format in supported_formats:
+            return cast(str, output_format)
+        raise CmdLineInputError(
+            (
+                "Unknown value '{value}' for '{option}' option. Supported "
+                "{value_pl} {is_pl}: {supported}"
+            ).format(
+                value=output_format,
+                option=_OUTPUT_FORMAT_OPTION,
+                value_pl=format_plural(supported_formats, "value"),
+                is_pl=format_plural(supported_formats, "is"),
+                supported=format_list(list(supported_formats)),
+            )
+        )

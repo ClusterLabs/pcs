@@ -41,7 +41,7 @@ from pcs.lib.xml_tools import (
 NvsetTag = NewType("NvsetTag", str)
 NVSET_INSTANCE = NvsetTag("instance_attributes")
 NVSET_META = NvsetTag("meta_attributes")
-NVSETS_ALL = [NVSET_INSTANCE, NVSET_META]
+NVSET_UTILIZATION = NvsetTag("utilization")
 
 
 def nvpair_element_to_dto(nvpair_el: _Element) -> CibNvpairDto:
@@ -72,10 +72,13 @@ def nvset_element_to_dto(
         str(nvset_el.get("id", "")),
         export_attributes(nvset_el, with_id=False),
         rule_dto,
-        [
-            nvpair_element_to_dto(nvpair_el)
-            for nvpair_el in nvset_el.iterfind("./nvpair")
-        ],
+        sorted(
+            (
+                nvpair_element_to_dto(nvpair_el)
+                for nvpair_el in nvset_el.iterfind("./nvpair")
+            ),
+            key=lambda obj: obj.id,
+        ),
     )
 
 
@@ -108,7 +111,7 @@ def find_nvsets_by_ids(
     report_list: ReportItemList = []
     for nvset_id in id_list:
         searcher = ElementSearcher(
-            [str(tag) for tag in NVSETS_ALL],
+            [str(tag) for tag in (NVSET_INSTANCE, NVSET_META)],
             nvset_id,
             parent_element,
             element_type_desc="options set",

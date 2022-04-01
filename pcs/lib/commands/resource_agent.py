@@ -7,7 +7,10 @@ from typing import (
 )
 
 from pcs.common.interface.dto import to_dict
-from pcs.common.pacemaker.resource.operations import ListCibResourceOperationDto
+from pcs.common.pacemaker.resource.operations import (
+    OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME,
+    ListCibResourceOperationDto,
+)
 from pcs.common.reports import (
     ReportItemSeverity,
     ReportProcessor,
@@ -163,7 +166,9 @@ def _action_to_operation(
             # the same as it has been for a long time. If pcs starts using
             # depth / OCF_CHECK_LEVEL or there is other demand for it, consider
             # changing this so value of "0" is put in CIB.
-            operation["OCF_CHECK_LEVEL"] = None if value == "0" else value
+            operation[OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME] = (
+                None if value == "0" else value
+            )
         elif key == "start_delay":
             operation["start-delay"] = value
         else:
@@ -187,7 +192,7 @@ def _agent_metadata_to_dict(
         _action_to_operation(action) for action in agent_dto.actions
     ]
     operations_defaults = {
-        "OCF_CHECK_LEVEL": None,
+        OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME: None,
         "automatic": False,
         "on_target": False,
     }

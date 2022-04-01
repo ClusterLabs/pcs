@@ -5,7 +5,7 @@ from typing import (
     Tuple,
 )
 
-from pcs.cli.common.output import format_with_indentation
+from pcs.cli.common.output import format_wrap
 from pcs.cli.reports.output import print_to_stderr
 from pcs.common.str_tools import (
     indent,
@@ -29,11 +29,10 @@ def _unwrap(text: str) -> str:
 def _format_syntax(cmd_syntax: str) -> str:
     return "\n".join(
         indent(
-            format_with_indentation(
+            format_wrap(
                 _unwrap(cmd_syntax),
-                indentation=_SYNTAX_INDENT,
-                max_length_trim=_SECOND_LEVEL_CMD_INDENT,
-                max_length=_WIDTH,
+                subsequent_indent=_SYNTAX_INDENT,
+                max_length=_WIDTH - _SECOND_LEVEL_CMD_INDENT,
             ),
             indent_step=_SECOND_LEVEL_CMD_INDENT,
         )
@@ -41,13 +40,16 @@ def _format_syntax(cmd_syntax: str) -> str:
 
 
 def _format_desc_without_unwrap(cmd_desc_list: Iterable[str]) -> str:
+    indent_step = _DESC_INDENT + _SECOND_LEVEL_CMD_INDENT
     return "\n".join(
         "\n".join(
-            format_with_indentation(
-                cmd_desc,
-                indentation=_DESC_INDENT + _SECOND_LEVEL_CMD_INDENT,
-                indent_first=True,
-                max_length=_WIDTH,
+            indent(
+                format_wrap(
+                    cmd_desc,
+                    max_length=_WIDTH - indent_step,
+                    subsequent_indent=0,
+                ),
+                indent_step=indent_step,
             )
         )
         for cmd_desc in cmd_desc_list
@@ -61,20 +63,16 @@ def _format_desc(cmd_desc_list: Iterable[str]) -> str:
 
 
 def _format_desc_item_list(item_list: Iterable[str]) -> List[str]:
-    indent_step = 2
     lines = []
     for item in item_list:
         lines.extend(
-            format_with_indentation(
+            format_wrap(
                 _unwrap(item),
-                indentation=_DESC_INDENT,
-                max_length_trim=indent_step
-                + _DESC_INDENT
-                + _SECOND_LEVEL_CMD_INDENT,
-                max_length=_WIDTH,
+                subsequent_indent=2,
+                max_length=_WIDTH - _DESC_INDENT - _SECOND_LEVEL_CMD_INDENT - 2,
             )
         )
-    return indent(lines, indent_step=indent_step)
+    return indent(lines, indent_step=2)
 
 
 def full_usage():
@@ -288,6 +286,16 @@ Commands:
 def _alias_of(cmd: str) -> str:
     return f"This command is an alias of '{cmd}' command."
 
+
+_OUTPUT_FORMAT_SYNTAX = "--output-format text|cmd|json"
+_OUTPUT_FORMAT_DESC = _unwrap(
+    """
+    There are 3 formats of output available: 'cmd', 'json' and 'text', default
+    is 'text'. Format 'text' is a human friendly output. Format 'cmd' prints
+    pcs commands which can be used to recreate the same configuration. Format 'json' is a
+    machine oriented output of the configuration.
+    """
+)
 
 _DELETE_CMD = "delete"
 _REMOVE_CMD = "remove"
@@ -705,8 +713,36 @@ def _resource_update_desc_fn(is_stonith: bool) -> Iterable[str]:
     )
 
 
+def _resource_config_syntax(obj: str) -> str:
+    return f"config [{_OUTPUT_FORMAT_SYNTAX}] [<{obj} id>]..."
+
+
+def _resource_config_desc(obj: str) -> Iterable[str]:
+    return (
+        f"""
+        Show options of all currently configured {obj}s or if {obj} ids are
+        specified show the options for the specified {obj} ids.
+        """,
+        "",
+        _OUTPUT_FORMAT_DESC,
+    )
+
+
 _STONITH_DELETE_SYNTAX = "<stonith id>"
 _STONITH_DELETE_DESC = ("Remove stonith id from configuration.",)
+
+_CLUSTER_CONFIG_SHOW_SYNTAX = (
+    f"config [show] [{_OUTPUT_FORMAT_SYNTAX}] [--corosync_conf <path>]"
+)
+_CLUSTER_CONFIG_SHOW_DESC = (
+    """
+    Show cluster configuration. If --corosync_conf is
+    specified, configuration file specified by <path> is used instead of the
+    current cluster configuration.
+    """,
+    "",
+    _OUTPUT_FORMAT_DESC,
+)
 
 
 def resource(args=()):
@@ -722,9 +758,8 @@ Commands:
         the specified tag. If node is specified, only show status of resources
         configured for the specified node.
 
-    config [<resource id>]...
-        Show options of all currently configured resources or if resource ids
-        are specified show the options for the specified resource ids.
+{config_syntax}
+{config_desc}
 
     list [filter] [--nodesc]
         Show list of all available resource agents (if filter is provided then
@@ -1201,6 +1236,8 @@ Notes:
     resources in a cluster.
 
 """.format(
+        config_syntax=_format_syntax(_resource_config_syntax("resource")),
+        config_desc=_format_desc(_resource_config_desc("resource")),
         delete_syntax=_format_syntax(
             f"{_DELETE_CMD} {_RESOURCE_DELETE_SYNTAX}"
         ),
@@ -1473,14 +1510,8 @@ Commands:
             pcs cluster setup newcluster node1 node2 \\
                 transport udp link mcastport=55405
 
-    config [show] [--output-format <cmd|json|text>] [--corosync_conf <path>]
-        Show cluster configuration. There are 3 formats of output available:
-        'cmd', 'json' and 'text', default is 'text'. Format 'text' is a human
-        friendly output. Format 'cmd' prints a cluster setup command which
-        recreates a cluster with the same configuration. Format 'json' is a
-        machine oriented output with cluster configuration. If --corosync_conf
-        is specified, configuration file specified by <path> is used instead of
-        the current cluster configuration.
+{config_show_syntax}
+{config_show_desc}
 
     config update [transport <transport options>]
             [compression <compression options>] [crypto <crypto options>]
@@ -1775,7 +1806,10 @@ Commands:
         Create a tarball containing everything needed when reporting cluster
         problems.  If --from and --to are not used, the report will include
         the past 24 hours.
-"""
+""".format(
+        config_show_syntax=_format_syntax(_CLUSTER_CONFIG_SHOW_SYNTAX),
+        config_show_desc=_format_desc(_CLUSTER_CONFIG_SHOW_DESC),
+    )
     return sub_usage(args, output)
 
 
@@ -1792,9 +1826,8 @@ Commands:
         resource or resources in the specified tag. If node is specified, only
         show status of resources configured for the specified node.
 
-    config [<stonith id>]...
-        Show options of all currently configured stonith devices or if stonith
-        ids are specified show the options for the specified stonith device ids.
+{config_syntax}
+{config_desc}
 
     list [filter] [--nodesc]
         Show list of all available stonith agents (if filter is provided then
@@ -2061,6 +2094,8 @@ Commands:
         specified, available watchdog will be used if only one watchdog device
         is available on the local system.
 """.format(
+        config_syntax=_format_syntax(_resource_config_syntax("stonith")),
+        config_desc=_format_desc(_resource_config_desc("stonith device")),
         delete_syntax=_format_syntax(f"{_DELETE_CMD} {_STONITH_DELETE_SYNTAX}"),
         remove_syntax=_format_syntax(f"{_REMOVE_CMD} {_STONITH_DELETE_SYNTAX}"),
         delete_desc=_format_desc(_STONITH_DELETE_DESC),

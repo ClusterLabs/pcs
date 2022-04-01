@@ -4,12 +4,25 @@ import uuid
 from contextlib import contextmanager
 from typing import (
     Any,
+    Callable,
     Dict,
+    Optional,
+    TypeVar,
     Union,
 )
 
 from pcs.common import reports
 from pcs.lib.errors import LibraryError
+
+T = TypeVar("T")
+
+
+def get_optional_value(
+    constructor: Callable[[str], T], value: Optional[str]
+) -> Optional[T]:
+    if value is None:
+        return None
+    return constructor(value)
 
 
 def generate_binary_key(random_bytes_count):

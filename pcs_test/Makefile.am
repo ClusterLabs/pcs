@@ -16,6 +16,7 @@ EXTRA_DIST		= \
 			  resources/cib-empty.xml \
 			  resources/cib-largefile.xml \
 			  resources/cib-large.xml \
+			  resources/cib-resources.xml \
 			  resources/cib-tags.xml \
 			  resources/corosync-3nodes.conf \
 			  resources/corosync-3nodes-qdevice.conf \
@@ -204,6 +205,7 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/resource/test_bundle_reset.py \
 			  tier0/lib/commands/resource/test_bundle_update.py \
 			  tier0/lib/commands/resource/test_failcounts.py \
+			  tier0/lib/commands/resource/test_get_configured_resources.py \
 			  tier0/lib/commands/resource/test_group_add.py \
 			  tier0/lib/commands/resource/test_resource_create.py \
 			  tier0/lib/commands/resource/test_resource_enable_disable.py \
@@ -332,6 +334,10 @@ EXTRA_DIST		= \
 			  tier1/legacy/test_rule.py \
 			  tier1/legacy/test_stonith.py \
 			  tier1/legacy/test_utils.py \
+			  tier1/resource/__init__.py \
+			  tier1/resource/test_config.py \
+			  tier1/stonith/__init__.py \
+			  tier1/stonith/test_config.py \
 			  tier1/test_booth.py \
 			  tier1/test_cib_options.py \
 			  tier1/test_cluster_pcmk_remote.py \
@@ -414,4 +420,5 @@ EXTRA_DIST		= \
 			  tools/__init__.py \
 			  tools/misc.py \
 			  tools/pcs_runner.py \
+			  tools/resources_dto.py \
 			  tools/xml.py

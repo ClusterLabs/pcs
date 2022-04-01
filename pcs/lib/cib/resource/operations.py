@@ -3,16 +3,19 @@ from dataclasses import replace as dt_replace
 from typing import (
     Iterable,
     List,
+    Optional,
     Tuple,
 )
 
 from lxml import etree
+from lxml.etree import _Element
 
 from pcs.common import (
     const,
     pacemaker,
     reports,
 )
+from pcs.common.pacemaker import role
 from pcs.common.pacemaker.resource.operations import CibResourceOperationDto
 from pcs.common.reports import (
     ReportItemList,
@@ -21,6 +24,10 @@ from pcs.common.reports import (
 from pcs.common.reports.item import ReportItem
 from pcs.common.tools import timeout_to_seconds
 from pcs.lib import validate
+from pcs.lib.cib import (
+    nvpair_multi,
+    rule,
+)
 from pcs.lib.cib.nvpair import append_new_instance_attributes
 from pcs.lib.cib.resource.agent import (
     complete_operations_options,
@@ -39,6 +46,7 @@ from pcs.lib.cib.tools import (
 )
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import is_true
+from pcs.lib.tools import get_optional_value
 
 OPERATION_NVPAIR_ATTRIBUTES = [
     "OCF_CHECK_LEVEL",
@@ -265,6 +273,45 @@ def _get_interval_uniquer():
         return str(normalized_interval)
 
     return get_uniq_interval
+
+
+def op_element_to_dto(
+    op_element: _Element, rule_eval: Optional[rule.RuleInEffectEval] = None
+) -> CibResourceOperationDto:
+    if rule_eval is None:
+        rule_eval = rule.RuleInEffectEvalDummy()
+    return CibResourceOperationDto(
+        id=str(op_element.attrib["id"]),
+        name=str(op_element.attrib["name"]),
+        interval=str(op_element.attrib["interval"]),
+        description=op_element.get("description"),
+        start_delay=op_element.get("start-delay"),
+        interval_origin=op_element.get("interval-origin"),
+        timeout=op_element.get("timeout"),
+        enabled=get_optional_value(is_true, op_element.get("enabled")),
+        record_pending=get_optional_value(
+            is_true, op_element.get("record-pending")
+        ),
+        role=get_optional_value(
+            lambda _role: role.get_value_primary(const.PcmkRoleType(_role)),
+            op_element.get("role"),
+        ),
+        on_fail=get_optional_value(
+            const.PcmkOnFailAction, op_element.get("on-fail")
+        ),
+        meta_attributes=[
+            nvpair_multi.nvset_element_to_dto(nvset, rule_eval)
+            for nvset in nvpair_multi.find_nvsets(
+                op_element, nvpair_multi.NVSET_META
+            )
+        ],
+        instance_attributes=[
+            nvpair_multi.nvset_element_to_dto(nvset, rule_eval)
+            for nvset in nvpair_multi.find_nvsets(
+                op_element, nvpair_multi.NVSET_INSTANCE
+            )
+        ],
+    )
 
 
 def uniquify_operations_intervals(

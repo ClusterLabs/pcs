@@ -5758,15 +5758,19 @@ class SystemWillReset(ReportItemMessage):
 class ResourceBundleUnsupportedContainerType(ReportItemMessage):
     bundle_id: str
     supported_container_types: List[str]
+    updating_options: bool = True
     _code = codes.RESOURCE_BUNDLE_UNSUPPORTED_CONTAINER_TYPE
 
     @property
     def message(self) -> str:
         container_types = format_list(self.supported_container_types)
+        inner_text = format_optional(
+            self.updating_options,
+            ", therefore it is not possible to set its container options",
+        )
         return (
-            f"Bundle '{self.bundle_id}' uses unsupported container type, "
-            "therefore it is not possible to set its container options. "
-            f"Supported container types are: {container_types}"
+            f"Bundle '{self.bundle_id}' uses unsupported container type"
+            f"{inner_text}. Supported container types are: {container_types}"
         )
 
 

@@ -660,6 +660,7 @@ class ContainerUnknown(TestCase):
                     supported_container_types=sorted(
                         ["rkt", "docker", "podman"]
                     ),
+                    updating_options=True,
                 )
             ]
         )

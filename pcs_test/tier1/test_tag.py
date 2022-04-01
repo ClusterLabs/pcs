@@ -305,31 +305,56 @@ class PcsConfigTagsTest(TestTagMixin, TestCase):
         # pylint: disable=line-too-long
         """\
         Resources:
-         Resource: not-in-tags (class=ocf provider=pacemaker type=Dummy)
-          Operations: monitor interval=10s timeout=20s (not-in-tags-monitor-interval-10s)
-         Resource: x1 (class=ocf provider=pacemaker type=Dummy)
-          Operations: monitor interval=10s timeout=20s (x1-monitor-interval-10s)
-         Resource: x2 (class=ocf provider=pacemaker type=Dummy)
-          Operations: monitor interval=10s timeout=20s (x2-monitor-interval-10s)
-         Resource: x3 (class=ocf provider=pacemaker type=Dummy)
-          Operations: monitor interval=10s timeout=20s (x3-monitor-interval-10s)
-         Resource: y1 (class=ocf provider=pacemaker type=Dummy)
-          Operations: monitor interval=10s timeout=20s (y1-monitor-interval-10s)
-         Clone: y2-clone
-          Resource: y2 (class=ocf provider=pacemaker type=Dummy)
-           Operations: monitor interval=10s timeout=20s (y2-monitor-interval-10s)
+          Resource: not-in-tags (class=ocf provider=pacemaker type=Dummy)
+            Operations:
+              monitor: not-in-tags-monitor-interval-10s
+                interval=10s
+                timeout=20s
+          Resource: x1 (class=ocf provider=pacemaker type=Dummy)
+            Operations:
+              monitor: x1-monitor-interval-10s
+                interval=10s
+                timeout=20s
+          Resource: x2 (class=ocf provider=pacemaker type=Dummy)
+            Operations:
+              monitor: x2-monitor-interval-10s
+                interval=10s
+                timeout=20s
+          Resource: x3 (class=ocf provider=pacemaker type=Dummy)
+            Operations:
+              monitor: x3-monitor-interval-10s
+                interval=10s
+                timeout=20s
+          Resource: y1 (class=ocf provider=pacemaker type=Dummy)
+            Operations:
+              monitor: y1-monitor-interval-10s
+                interval=10s
+                timeout=20s
+          Clone: y2-clone
+            Resource: y2 (class=ocf provider=pacemaker type=Dummy)
+              Operations:
+                monitor: y2-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
         """
     )
     expected_stonith_devices = outdent(
         """\
         Stonith Devices:
-         Resource: fence-rh-1 (class=stonith type=fence_xvm)
-          Operations: monitor interval=60s (fence-rh-1-monitor-interval-60s)
-         Resource: fence-rh-2 (class=stonith type=fence_xvm)
-          Operations: monitor interval=60s (fence-rh-2-monitor-interval-60s)
-         Resource: fence-kdump (class=stonith type=fence_kdump)
-          Attributes: pcmk_host_list="rh-1 rh-2"
-          Operations: monitor interval=60s (fence-kdump-monitor-interval-60s)
+          Resource: fence-rh-1 (class=stonith type=fence_xvm)
+            Operations:
+              monitor: fence-rh-1-monitor-interval-60s
+                interval=60s
+          Resource: fence-rh-2 (class=stonith type=fence_xvm)
+            Operations:
+              monitor: fence-rh-2-monitor-interval-60s
+                interval=60s
+          Resource: fence-kdump (class=stonith type=fence_kdump)
+            Attributes: fence-kdump-instance_attributes
+              pcmk_host_list="rh-1 rh-2"
+            Operations:
+              monitor: fence-kdump-monitor-interval-60s
+                interval=60s
         """
     )
     expected_fencing_levels = outdent(

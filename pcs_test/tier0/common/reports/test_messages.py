@@ -4284,6 +4284,17 @@ class ResourceBundleUnsupportedContainerType(NameBuildTest):
             ),
         )
 
+    def test_no_update(self):
+        self.assert_message_from_report(
+            (
+                "Bundle 'bundle id' uses unsupported container type. Supported "
+                "container types are: 'a', 'b', 'c'"
+            ),
+            reports.ResourceBundleUnsupportedContainerType(
+                "bundle id", ["b", "a", "c"], updating_options=False
+            ),
+        )
+
 
 class FenceHistoryCommandError(NameBuildTest):
     def test_success(self):

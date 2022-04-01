@@ -86,8 +86,8 @@ tag
 [status [<resource id | tag id>] [node=<node>] [\fB\-\-hide\-inactive\fR]]
 Show status of all currently configured resources. If \fB\-\-hide\-inactive\fR is specified, only show active resources. If a resource or tag id is specified, only show status of the specified resource or resources in the specified tag. If node is specified, only show status of resources configured for the specified node.
 .TP
-config [<resource id>]...
-Show options of all currently configured resources or if resource ids are specified show the options for the specified resource ids.
+config [\fB\-\-output\-format\fR text|cmd|json] [<resource id>]...
+Show options of all currently configured resources or if resource ids are specified show the options for the specified resource ids. There are 3 formats of output available: 'cmd', 'json' and 'text', default is 'text'. Format 'text' is a human friendly output. Format 'cmd' prints pcs commands which can be used to recreate the same configuration. Format 'json' is a machine oriented output of the configuration.
 .TP
 list [filter] [\fB\-\-nodesc\fR]
 Show list of all available resource agents (if filter is provided then only resource agents matching the filter will be shown). If \fB\-\-nodesc\fR is used then descriptions of resource agents are not printed.
@@ -506,8 +506,8 @@ Set link options for the second and fourth links only. Link options are matched 
 Create a cluster using udp transport with a non-default port:
     pcs cluster setup newcluster node1 node2 transport udp link mcastport=55405
 .TP
-config [show] [\fB\-\-output\-format\fR <cmd|json|text>] [\fB\-\-corosync_conf\fR <path>]
-Show cluster configuration. There are 3 formats of output available: 'cmd', 'json' and 'text', default is 'text'. Format 'text' is a human friendly output. Format 'cmd' prints a cluster setup command which recreates a cluster with the same configuration. Format 'json' is a machine oriented output with cluster configuration. If \fB\-\-corosync_conf\fR is specified, configuration file specified by <path> is used instead of the current cluster configuration.
+config [show] [\fB\-\-output\-format\fR cmd|json|text] [\fB\-\-corosync_conf\fR <path>]
+Show cluster configuration. There are 3 formats of output available: 'cmd', 'json' and 'text', default is 'text'. Format 'text' is a human friendly output. Format 'cmd' prints pcs commands which can be used to recreate the same configuration. Format 'json' is a machine oriented output of the configuration. If \fB\-\-corosync_conf\fR is specified, configuration file specified by <path> is used instead of the current cluster configuration.
 .TP
 config update [transport <transport options>] [compression <compression options>] [crypto <crypto options>] [totem <totem options>] [\fB\-\-corosync_conf\fR <path>]
 Update cluster configuration. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='.
@@ -680,8 +680,8 @@ Create a tarball containing everything needed when reporting cluster problems.  
 [status [<resource id | tag id>] [node=<node>] [\fB\-\-hide\-inactive\fR]]
 Show status of all currently configured stonith devices. If \fB\-\-hide\-inactive\fR is specified, only show active stonith devices. If a resource or tag id is specified, only show status of the specified resource or resources in the specified tag. If node is specified, only show status of resources configured for the specified node.
 .TP
-config [<stonith id>]...
-Show options of all currently configured stonith devices or if stonith ids are specified show the options for the specified stonith device ids.
+config [\fB\-\-output\-format\fR text|cmd|json] [<stonith id>]...
+Show options of all currently configured stonith devices or if stonith device ids are specified show the options for the specified stonith device ids. There are 3 formats of output available: 'cmd', 'json' and 'text', default is 'text'. Format 'text' is a human friendly output. Format 'cmd' prints pcs commands which can be used to recreate the same configuration. Format 'json' is a machine oriented output of the configuration.
 .TP
 list [filter] [\fB\-\-nodesc\fR]
 Show list of all available stonith agents (if filter is provided then only stonith agents matching the filter will be shown). If \fB\-\-nodesc\fR is used then descriptions of stonith agents are not printed.

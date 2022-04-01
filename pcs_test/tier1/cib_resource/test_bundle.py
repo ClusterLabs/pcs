@@ -669,7 +669,7 @@ class BundleShow(TestCase, AssertPcsMixin):
             "resource config B1".split(),
             outdent(
                 """\
-             Bundle: B1
+            Bundle: B1
               Docker: image=pcs:test
             """
             ),
@@ -694,8 +694,8 @@ class BundleShow(TestCase, AssertPcsMixin):
             "resource config B1".split(),
             outdent(
                 """\
-             Bundle: B1
-              Docker: image=pcs:test options="a b c" promoted-max=2 replicas=4
+            Bundle: B1
+              Docker: image=pcs:test replicas=4 promoted-max=2 options="a b c"
             """
             ),
         )
@@ -712,7 +712,7 @@ class BundleShow(TestCase, AssertPcsMixin):
             "resource config B1".split(),
             outdent(
                 """\
-             Bundle: B1
+            Bundle: B1
               Docker: image=pcs:test
               Network: control-port=12345 host-interface=eth0 host-netmask=24
             """
@@ -732,11 +732,11 @@ class BundleShow(TestCase, AssertPcsMixin):
             "resource config B1".split(),
             outdent(
                 """\
-             Bundle: B1
+            Bundle: B1
               Docker: image=pcs:test
               Port Mapping:
-               internal-port=2002 port=2000 (B1-port-map-1001)
-               range=3000-3300 (B1-port-map-3000-3300)
+                port=2000 internal-port=2002 (B1-port-map-1001)
+                range=3000-3300 (B1-port-map-3000-3300)
             """
             ),
         )
@@ -755,11 +755,11 @@ class BundleShow(TestCase, AssertPcsMixin):
             "resource config B1".split(),
             outdent(
                 """\
-             Bundle: B1
+            Bundle: B1
               Docker: image=pcs:test
               Storage Mapping:
-               source-dir=/tmp/docker1a target-dir=/tmp/docker1b (B1-storage-map)
-               source-dir=/tmp/docker2a target-dir=/tmp/docker2b (my-storage-map)
+                source-dir=/tmp/docker1a target-dir=/tmp/docker1b (B1-storage-map)
+                source-dir=/tmp/docker2a target-dir=/tmp/docker2b (my-storage-map)
             """
             ),
         )
@@ -775,9 +775,10 @@ class BundleShow(TestCase, AssertPcsMixin):
             "resource config B1".split(),
             outdent(
                 """\
-             Bundle: B1
+            Bundle: B1
               Docker: image=pcs:test
-              Meta Attrs: target-role=Stopped
+              Meta Attributes: B1-meta_attributes
+                target-role=Stopped
             """
             ),
         )
@@ -797,11 +798,14 @@ class BundleShow(TestCase, AssertPcsMixin):
             "resource config B1".split(),
             outdent(
                 """\
-             Bundle: B1
+            Bundle: B1
               Docker: image=pcs:test
               Network: control-port=1234
               Resource: A (class=ocf provider=pacemaker type=Dummy)
-               Operations: monitor interval=10s timeout=20s (A-monitor-interval-10s)
+                Operations:
+                  monitor: A-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
             """
             ),
         )
@@ -848,18 +852,23 @@ class BundleShow(TestCase, AssertPcsMixin):
             "resource config B1".split(),
             outdent(
                 """\
-             Bundle: B1
-              Docker: image=pcs:test options="a b c" promoted-max=2 replicas=4
+            Bundle: B1
+              Docker: image=pcs:test replicas=4 promoted-max=2 options="a b c"
               Network: control-port=12345 host-interface=eth0 host-netmask=24
               Port Mapping:
-               internal-port=2002 port=2000 (B1-port-map-1001)
-               range=3000-3300 (B1-port-map-3000-3300)
+                port=2000 internal-port=2002 (B1-port-map-1001)
+                range=3000-3300 (B1-port-map-3000-3300)
               Storage Mapping:
-               source-dir=/tmp/docker1a target-dir=/tmp/docker1b (B1-storage-map)
-               source-dir=/tmp/docker2a target-dir=/tmp/docker2b (my-storage-map)
-              Meta Attrs: is-managed=false target-role=Stopped
+                source-dir=/tmp/docker1a target-dir=/tmp/docker1b (B1-storage-map)
+                source-dir=/tmp/docker2a target-dir=/tmp/docker2b (my-storage-map)
+              Meta Attributes: B1-meta_attributes
+                is-managed=false
+                target-role=Stopped
               Resource: A (class=ocf provider=pacemaker type=Dummy)
-               Operations: monitor interval=10s timeout=20s (A-monitor-interval-10s)
+                Operations:
+                  monitor: A-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
             """
             ),
         )

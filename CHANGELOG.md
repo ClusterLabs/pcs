@@ -14,6 +14,8 @@
   clusters can get a UUID by running the new `pcs cluster config uuid generate`
   command ([rhbz#2054671])
 - Add warning regarding move constraints to `pcs status` ([rhbz#2058247])
+- Support for output formats `json` and `cmd` to `pcs resource config` and `pcs
+  stonith config` commands ([rhbz#2058251], [rhbz#2058252])
 
 ### Fixed
 - Booth ticket name validation ([rhbz#2053177])
@@ -28,6 +30,8 @@
 [rhbz#2058243]: https://bugzilla.redhat.com/show_bug.cgi?id=2058243
 [rhbz#2058246]: https://bugzilla.redhat.com/show_bug.cgi?id=2058246
 [rhbz#2058247]: https://bugzilla.redhat.com/show_bug.cgi?id=2058247
+[rhbz#2058251]: https://bugzilla.redhat.com/show_bug.cgi?id=2058251
+[rhbz#2058252]: https://bugzilla.redhat.com/show_bug.cgi?id=2058252
 [rhbz#2068457]: https://bugzilla.redhat.com/show_bug.cgi?id=2068457
 [huntr#220307]: https://huntr.dev/bounties/7aa921fc-a568-4fd8-96f4-7cd826246aa5/
 
