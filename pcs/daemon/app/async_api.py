@@ -28,7 +28,7 @@ from pcs.common.async_tasks.dto import (
     TaskIdentDto,
 )
 from pcs.common.interface.dto import (
-    DtoType,
+    DTOTYPE,
     from_dict,
     to_dict,
 )
@@ -90,8 +90,8 @@ class BaseAPIHandler(RequestHandler):
 
     @staticmethod
     def _from_dict_exc_handled(
-        convert_to: Type[DtoType], dictionary: Dict[str, Any]
-    ) -> DtoType:
+        convert_to: Type[DTOTYPE], dictionary: Dict[str, Any]
+    ) -> DTOTYPE:
         """
         Dacite conversion to DTO from JSON with handled exceptions
         :param convert_to: DTO type to return and validate against
