@@ -1,3 +1,4 @@
+# pylint: disable=global-statement
 import multiprocessing as mp
 import os
 import signal
@@ -38,7 +39,7 @@ def worker_init(message_q: mp.Queue, logging_q: mp.Queue) -> None:
     logger.info("Worker initialized.")
 
     # Let task_executor use worker_com for sending messages to the scheduler
-    global worker_com  # pylint: disable=global-statement
+    global worker_com
     worker_com = message_q
 
     def ignore_signals(sig_num, frame):  # type: ignore
@@ -60,10 +61,9 @@ def task_executor(task: WorkerCommand) -> None:
     Launches the task inside the worker
     :param task: Task identifier, command and parameter object
     """
-    # pylint: disable=broad-except
     logger = getLogger("pcs_worker")
 
-    global worker_com  # pylint: disable=global-statement
+    global worker_com  # pylint: disable=global-variable-not-assigned
     worker_com.put(
         Message(
             task.task_ident,
@@ -98,7 +98,7 @@ def task_executor(task: WorkerCommand) -> None:
         logger.exception("Task %s raised a LibraryException.", task.task_ident)
         pause_worker()
         return
-    except Exception:
+    except Exception:  # pylint: disable=broad-except
         # For unhandled exceptions during execution
         worker_com.put(
             Message(

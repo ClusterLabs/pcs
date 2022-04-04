@@ -5,15 +5,13 @@ from unittest import mock
 
 from tornado.testing import gen_test
 
-import pcs.daemon.async_tasks.worker as worker
-import pcs.settings as settings
+from pcs import settings
 from pcs.common.async_tasks.dto import CommandDto
 from pcs.common.async_tasks.types import (
     TaskFinishType,
     TaskKillReason,
-    TaskState,
 )
-from pcs.common.reports.dto import ReportItemDto
+from pcs.daemon.async_tasks import worker
 from pcs.daemon.async_tasks.messaging import (
     Message,
     TaskExecuted,

@@ -4,11 +4,13 @@ from unittest import (
     mock,
 )
 
-import pcs.common.async_tasks.types as types
-import pcs.daemon.async_tasks.messaging as messaging
-import pcs.daemon.async_tasks.worker as worker
+from pcs.common.async_tasks import types
 from pcs.common.async_tasks.dto import CommandDto
 from pcs.common.reports import ReportItemDto
+from pcs.daemon.async_tasks import (
+    messaging,
+    worker,
+)
 
 from .dummy_commands import (
     RESULT,

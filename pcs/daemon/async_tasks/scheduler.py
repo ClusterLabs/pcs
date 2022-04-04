@@ -43,11 +43,13 @@ class TaskNotFoundError(Exception):
 
 
 class Scheduler:
+    # pylint: disable=too-many-instance-attributes
     """
     Task management core with an interface for the REST API
     """
 
     def __init__(self) -> None:
+        # pylint: disable=consider-using-with
         self._proc_pool_manager = mp.Manager()
         self._worker_message_q = self._proc_pool_manager.Queue()
         self._logger = pcsd_logger
@@ -60,7 +62,7 @@ class Scheduler:
             initargs=[self._worker_message_q, self._logging_q],
         )
         self._created_tasks_index: Deque[str] = deque()
-        self._task_register: Dict[str, Task] = dict()
+        self._task_register: Dict[str, Task] = {}
         self._logger.info("Scheduler was successfully initialized.")
         self._logger.debug(
             "Process pool initialized with %d workers that reset "
@@ -253,6 +255,5 @@ class Scheduler:
         Cleanly terminates the scheduler
         """
         self._worker_log_listener.stop()
-        self._proc_pool_manager.join()
         self._proc_pool.terminate()
         self._logger.info("Scheduler is correctly terminated.")

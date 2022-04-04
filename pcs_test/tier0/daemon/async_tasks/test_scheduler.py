@@ -96,8 +96,8 @@ class NewTaskTest(SchedulerBaseTestCase):
         )
 
     class UuidStub:
-        def __init__(self, x):
-            self._iter = iter(x)
+        def __init__(self, uuid_list):
+            self._iter = iter(uuid_list)
 
         @property
         def hex(self):
@@ -110,51 +110,6 @@ class NewTaskTest(SchedulerBaseTestCase):
             ["id0", "id1"],
             list(self.scheduler._task_register.keys()),
         )
-
-
-"""
-class GarbageHuntingTest(SchedulerBaseAsyncTestCase):
-    @gen_test
-    async def test_no_defunct_or_abandoned(self):
-        self._create_tasks(3)
-        await self.scheduler._garbage_hunting()
-        self.assertIsNone(self.scheduler.get_task("id0").kill_reason)
-        self.assertIsNone(self.scheduler.get_task("id1").kill_reason)
-        self.assertIsNone(self.scheduler.get_task("id2").kill_reason)
-
-    @mock.patch(
-        "pcs.daemon.async_tasks.task.Task.is_defunct",
-        side_effect=[False, True, False],
-    )
-    @gen_test
-    async def test_defunct(self, _):
-        self._create_tasks(3)
-        await self.scheduler._garbage_hunting()
-        self.assertIsNone(self.scheduler.get_task("id0").kill_reason)
-        self.assertEqual(
-            TaskKillReason.COMPLETION_TIMEOUT,
-            self.scheduler.get_task("id1").kill_reason,
-        )
-        self.assertIsNone(self.scheduler.get_task("id2").kill_reason)
-
-    @mock.patch(
-        "pcs.daemon.async_tasks.task.Task.is_abandoned",
-        side_effect=[False, True, True],
-    )
-    @gen_test
-    async def test_abandoned(self, _):
-        self._create_tasks(3)
-        await self.scheduler._garbage_hunting()
-        self.assertIsNone(self.scheduler.get_task("id0").kill_reason)
-        self.assertEqual(
-            TaskKillReason.ABANDONED,
-            self.scheduler.get_task("id1").kill_reason,
-        )
-        self.assertEqual(
-            TaskKillReason.ABANDONED,
-            self.scheduler.get_task("id2").kill_reason,
-        )
-"""
 
 
 class ReceiveMessagesTest(SchedulerBaseAsyncTestCase):

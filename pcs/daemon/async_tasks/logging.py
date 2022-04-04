@@ -1,9 +1,5 @@
-import datetime
 import logging
 import multiprocessing as mp
-import os
-
-import pcs.settings as settings
 
 
 def setup_worker_logger(queue: mp.Queue) -> logging.Logger:
