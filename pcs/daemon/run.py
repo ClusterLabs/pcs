@@ -23,9 +23,9 @@ from pcs.daemon.app import (
     ui,
 )
 from pcs.daemon.app.common import RedirectHandler
+from pcs.daemon.async_tasks.scheduler import Scheduler
 from pcs.daemon.env import prepare_env
 from pcs.daemon.http_server import HttpsServerManage
-from pcs.daemon.async_tasks.scheduler import Scheduler
 
 
 class SignalInfo:

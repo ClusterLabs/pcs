@@ -1,17 +1,20 @@
-from collections import Counter
 import logging
 import multiprocessing as mp
-
+from collections import Counter
 from dataclasses import dataclass
 from datetime import datetime
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
+
 from tornado.testing import AsyncTestCase
 
-from pcs.daemon.async_tasks import scheduler
 from pcs.common.async_tasks.dto import CommandDto
 from pcs.common.async_tasks.types import TaskState
 from pcs.common.reports.item import ReportItemMessage
 from pcs.common.reports.types import MessageCode
+from pcs.daemon.async_tasks import scheduler
 
 DATETIME_NOW = datetime(2020, 2, 20, 20, 20, 20, 20)
 

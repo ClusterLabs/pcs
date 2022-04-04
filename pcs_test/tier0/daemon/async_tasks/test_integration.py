@@ -2,24 +2,31 @@ from datetime import timedelta
 from logging import Logger
 from multiprocessing import Queue
 from unittest import mock
+
 from tornado.testing import gen_test
 
-import pcs.settings as settings
 import pcs.daemon.async_tasks.worker as worker
-
+import pcs.settings as settings
 from pcs.common.async_tasks.dto import CommandDto
 from pcs.common.async_tasks.types import (
     TaskFinishType,
-    TaskState,
     TaskKillReason,
+    TaskState,
 )
 from pcs.common.reports.dto import ReportItemDto
-from pcs.daemon.async_tasks.messaging import Message, TaskExecuted, TaskFinished
+from pcs.daemon.async_tasks.messaging import (
+    Message,
+    TaskExecuted,
+    TaskFinished,
+)
 from pcs.daemon.async_tasks.report_proc import WorkerReportProcessor
 from pcs.daemon.async_tasks.scheduler import TaskNotFoundError
 from pcs.daemon.async_tasks.worker import task_executor
 
-from .dummy_commands import RESULT, test_command_map
+from .dummy_commands import (
+    RESULT,
+    test_command_map,
+)
 from .helpers import (
     DATETIME_NOW,
     AssertTaskStatesMixin,
@@ -244,7 +251,6 @@ class GarbageCollectionTimeoutTests(
             TaskFinishType.UNFINISHED,
             task_kill_reason=None,
         )
-
 
     @gen_test
     async def test_finished_abandoned_timeout(self):

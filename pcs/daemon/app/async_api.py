@@ -1,8 +1,6 @@
 import json
 import logging
-
 from typing import (
-    cast,
     Any,
     Awaitable,
     Dict,
@@ -10,21 +8,34 @@ from typing import (
     Optional,
     Tuple,
     Type,
+    cast,
 )
 
 import tornado
-
-from dacite import DaciteError, MissingValueError, UnexpectedDataError
+from dacite import (
+    DaciteError,
+    MissingValueError,
+    UnexpectedDataError,
+)
 from tornado.httputil import responses
-from tornado.web import HTTPError, RequestHandler
+from tornado.web import (
+    HTTPError,
+    RequestHandler,
+)
 
+from pcs.common.async_tasks.dto import (
+    CommandDto,
+    TaskIdentDto,
+)
 from pcs.common.interface.dto import (
+    DtoType,
     from_dict,
     to_dict,
-    DtoType,
 )
-from pcs.common.async_tasks.dto import CommandDto, TaskIdentDto
-from pcs.daemon.async_tasks.scheduler import Scheduler, TaskNotFoundError
+from pcs.daemon.async_tasks.scheduler import (
+    Scheduler,
+    TaskNotFoundError,
+)
 
 
 class APIError(HTTPError):

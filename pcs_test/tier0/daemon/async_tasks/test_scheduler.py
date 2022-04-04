@@ -1,21 +1,32 @@
 # pylint: disable=protected-access
 from collections import deque
-from unittest import mock
 from queue import Empty
+from unittest import mock
+
 from tornado.testing import gen_test
-from pcs.daemon.async_tasks import scheduler
-from pcs.common.async_tasks.dto import CommandDto, TaskResultDto
+
+from pcs.common.async_tasks.dto import (
+    CommandDto,
+    TaskResultDto,
+)
 from pcs.common.async_tasks.types import (
-    TaskState,
-    TaskKillReason,
     TaskFinishType,
+    TaskKillReason,
+    TaskState,
 )
 from pcs.common.reports import ReportItem
 from pcs.common.reports.messages import CibUpgradeSuccessful
-from pcs.daemon.async_tasks.messaging import Message, TaskExecuted
+from pcs.daemon.async_tasks import scheduler
+from pcs.daemon.async_tasks.messaging import (
+    Message,
+    TaskExecuted,
+)
 from pcs.daemon.async_tasks.worker import task_executor
 
-from .helpers import SchedulerBaseTestCase, SchedulerBaseAsyncTestCase
+from .helpers import (
+    SchedulerBaseAsyncTestCase,
+    SchedulerBaseTestCase,
+)
 
 WORKER1_PID = 2222
 WORKER2_PID = 3333

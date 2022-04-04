@@ -1,26 +1,35 @@
 import multiprocessing as mp
 import sys
 import uuid
-
 from collections import deque
 from logging import handlers
-from typing import (
-    Dict,
-    Deque,
-)
 from queue import Empty
+from typing import (
+    Deque,
+    Dict,
+)
 
 from pcs import settings
-from pcs.common.async_tasks.dto import CommandDto, TaskResultDto
-from pcs.common.async_tasks.types import TaskKillReason
+from pcs.common.async_tasks.dto import (
+    CommandDto,
+    TaskResultDto,
+)
 from pcs.common.async_tasks.types import (
-    TaskState,
     TaskKillReason,
+    TaskState,
 )
 from pcs.daemon.log import pcsd as pcsd_logger
+
 from .messaging import Message
-from .task import Task, TaskState, UnknownMessageError
-from .worker import worker_init, task_executor
+from .task import (
+    Task,
+    TaskState,
+    UnknownMessageError,
+)
+from .worker import (
+    task_executor,
+    worker_init,
+)
 
 
 class TaskNotFoundError(Exception):

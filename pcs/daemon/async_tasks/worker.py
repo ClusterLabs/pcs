@@ -1,7 +1,6 @@
 import multiprocessing as mp
 import os
 import signal
-
 from dataclasses import dataclass
 from logging import getLogger
 
@@ -9,6 +8,7 @@ from pcs.common.async_tasks.dto import CommandDto
 from pcs.common.async_tasks.types import TaskFinishType
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
+
 from .command_mapping import command_map
 from .logging import setup_worker_logger
 from .messaging import (

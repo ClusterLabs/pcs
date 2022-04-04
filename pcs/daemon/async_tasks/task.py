@@ -1,18 +1,20 @@
 import datetime
 import os
 import signal
-
 from typing import (
     Any,
     List,
     Optional,
 )
 
-from pcs.common.async_tasks.dto import CommandDto, TaskResultDto
+from pcs.common.async_tasks.dto import (
+    CommandDto,
+    TaskResultDto,
+)
 from pcs.common.async_tasks.types import (
     TaskFinishType,
-    TaskState,
     TaskKillReason,
+    TaskState,
 )
 from pcs.common.interface.dto import ImplementsToDto
 from pcs.common.reports.dto import ReportItemDto
@@ -20,7 +22,12 @@ from pcs.settings import (
     task_abandoned_timeout_seconds,
     task_unresponsive_timeout_seconds,
 )
-from .messaging import Message, TaskExecuted, TaskFinished
+
+from .messaging import (
+    Message,
+    TaskExecuted,
+    TaskFinished,
+)
 from .worker import WorkerCommand
 
 

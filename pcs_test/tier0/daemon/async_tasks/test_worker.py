@@ -1,14 +1,19 @@
 from multiprocessing import Queue
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
 
 import pcs.common.async_tasks.types as types
 import pcs.daemon.async_tasks.messaging as messaging
 import pcs.daemon.async_tasks.worker as worker
-
 from pcs.common.async_tasks.dto import CommandDto
 from pcs.common.reports import ReportItemDto
 
-from .dummy_commands import RESULT, test_command_map
+from .dummy_commands import (
+    RESULT,
+    test_command_map,
+)
 from .helpers import MockOsKillMixin
 
 TASK_IDENT = "id0"

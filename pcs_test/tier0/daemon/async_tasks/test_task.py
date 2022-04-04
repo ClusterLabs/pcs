@@ -1,20 +1,25 @@
 # pylint: disable=protected-access
 from datetime import timedelta
-from unittest import mock, TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
 
 import pcs.common.async_tasks.types as types
-import pcs.daemon.async_tasks.task as tasks
 import pcs.daemon.async_tasks.messaging as messaging
-
-
+import pcs.daemon.async_tasks.task as tasks
+from pcs.common.async_tasks.dto import CommandDto
+from pcs.common.reports import ReportItemDto
 from pcs.settings import (
     task_abandoned_timeout_seconds,
     task_unresponsive_timeout_seconds,
 )
-from pcs.common.async_tasks.dto import CommandDto
-from pcs.common.reports import ReportItemDto
 
-from .helpers import DATETIME_NOW, MockDateTimeNowMixin, MockOsKillMixin
+from .helpers import (
+    DATETIME_NOW,
+    MockDateTimeNowMixin,
+    MockOsKillMixin,
+)
 
 TASK_IDENT = "id0"
 TEST_TIMEOUT_S = 10
