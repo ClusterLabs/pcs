@@ -51,7 +51,7 @@ class Scheduler:
         self._proc_pool_manager = mp.Manager()
         self._worker_message_q = self._proc_pool_manager.Queue()
         self._logger = pcsd_logger
-        self._logging_q: mp.Queue = self._proc_pool_manager.Queue()
+        self._logging_q = self._proc_pool_manager.Queue()
         self._worker_log_listener = self._init_worker_logging()
         self._proc_pool = mp.Pool(
             processes=settings.worker_count,
