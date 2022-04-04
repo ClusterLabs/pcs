@@ -1,3 +1,4 @@
+import multiprocessing
 import os.path
 
 systemctl_binary = "@SYSTEMCTL@"
@@ -132,3 +133,15 @@ class _PathManager:
         return pcs_data_dir
 
 path = _PathManager()
+
+# Scheduler settings
+async_api_scheduler_interval_ms = 300
+
+worker_count = multiprocessing.cpu_count()
+worker_task_limit = 5
+
+task_unresponsive_timeout_seconds = 60 * 60
+task_abandoned_timeout_seconds = 1 * 60
+
+worker_logs_path = "/var/log/pcsd/worker_logs/"
+async_api_log_filename = "/var/log/pcsd/async_api.log"
