@@ -14,10 +14,7 @@ from pcs.common.async_tasks.dto import (
     CommandDto,
     TaskResultDto,
 )
-from pcs.common.async_tasks.types import (
-    TaskKillReason,
-    TaskState,
-)
+from pcs.common.async_tasks.types import TaskKillReason
 from pcs.daemon.log import pcsd as pcsd_logger
 
 from .messaging import Message
