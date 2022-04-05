@@ -1,5 +1,6 @@
 import json
 import logging
+from http.client import responses
 from typing import (
     Any,
     Awaitable,
@@ -11,15 +12,14 @@ from typing import (
     cast,
 )
 
-import tornado
 from dacite import (
     DaciteError,
     MissingValueError,
     UnexpectedDataError,
 )
-from tornado.httputil import responses
 from tornado.web import (
     HTTPError,
+    MissingArgumentError,
     RequestHandler,
 )
 
@@ -172,7 +172,7 @@ class TaskInfoHandler(BaseAPIHandler):
                     to_dict(self.scheduler.get_task(cast(str, task_ident)))
                 )
             )
-        except tornado.web.MissingArgumentError as exc:
+        except MissingArgumentError as exc:
             raise APIError(
                 http_code=400,
                 error_msg=f'URL argument "{exc.arg_name}" is missing.',
