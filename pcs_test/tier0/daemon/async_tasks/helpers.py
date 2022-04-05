@@ -47,21 +47,22 @@ class SchedulerTestWrapper:
     def prepare_scheduler(self):
         # Instance attributes are not created in the mock, this includes handler
         # list which is needed by QueueListener
-        self.logger_mock = (
-            mock.patch(
-                "pcs.daemon.async_tasks.scheduler.pcsd_logger",
-                spec=logging.Logger,
-                handlers=[],
-            )
-            .start()
-            .return_value
-        )
+        self.logger_mock = mock.patch(
+            "pcs.daemon.async_tasks.scheduler.pcsd_logger",
+            spec=logging.Logger,
+            handlers=[],
+        ).start()
         # We can patch Queue here because it is NOT shared between tests
         self.worker_com = mp.Queue()
         # Manager has to be mocked because it creates a new process
+        # There are two queue calls, first is for worker message queue, second
+        # is for the logging queue
         mock.patch(
             "multiprocessing.Manager"
-        ).start().return_value.Queue.return_value = self.worker_com
+        ).start().return_value.Queue.side_effect = [
+            self.worker_com,
+            mp.Queue(),
+        ]
         self.mp_pool_mock = (
             mock.patch("multiprocessing.Pool", spec=mp.Pool)
             .start()
