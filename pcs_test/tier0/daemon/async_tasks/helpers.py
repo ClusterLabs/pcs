@@ -45,10 +45,13 @@ class SchedulerTestWrapper:
     logger_mock = None
 
     def prepare_scheduler(self):
+        # Instance attributes are not created in the mock, this includes handler
+        # list which is needed by QueueListener
         self.logger_mock = (
             mock.patch(
-                "pcs.daemon.async_tasks.scheduler.setup_scheduler_logger",
+                "pcs.daemon.async_tasks.scheduler.pcsd_logger",
                 spec=logging.Logger,
+                handlers=[],
             )
             .start()
             .return_value
