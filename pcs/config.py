@@ -39,7 +39,6 @@ from pcs import (
     cluster,
     constraint,
     quorum,
-    resource,
     settings,
     status,
     stonith,
@@ -48,10 +47,18 @@ from pcs import (
 )
 from pcs.cli.common import middleware
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.output import (
+    INDENT_STEP,
+    smart_wrap_text,
+)
 from pcs.cli.constraint import command as constraint_command
 from pcs.cli.nvset import nvset_dto_list_to_lines
 from pcs.cli.reports import process_library_reports
 from pcs.cli.reports.output import warn
+from pcs.cli.resource.output import (
+    ResourcesConfigurationFacade,
+    resources_to_text,
+)
 from pcs.common.reports import constraints as constraints_reports
 from pcs.common.str_tools import indent
 from pcs.lib.commands import quorum as lib_quorum
@@ -103,30 +110,33 @@ def _config_show_cib_lines(lib):
     utils.pcs_options["--full"] = 1
     # get latest modifiers object after updating pcs_options
     modifiers = utils.get_input_modifiers()
-    cib_xml = utils.get_cib()
-    cib_etree = utils.get_cib_etree(cib_xml=cib_xml)
-    cib_dom = utils.get_cib_dom(cib_xml=cib_xml)
+    cib_dom = utils.get_cib_dom()
 
-    resource_lines = []
-    stonith_lines = []
-    for resource_el in cib_etree.find(".//resources"):
-        is_stonith = (
-            "class" in resource_el.attrib
-            and resource_el.attrib["class"] == "stonith"
-        )
-        resource_el_lines = resource.resource_node_lines(resource_el)
-        if is_stonith:
-            stonith_lines += resource_el_lines
-        else:
-            resource_lines += resource_el_lines
+    resources_facade = ResourcesConfigurationFacade.from_resources_dto(
+        lib.resource.get_configured_resources()
+    )
 
     all_lines = []
 
     all_lines.append("Resources:")
-    all_lines.extend(indent(resource_lines, indent_step=1))
+    all_lines.extend(
+        smart_wrap_text(
+            indent(
+                resources_to_text(resources_facade.filter_stonith(False)),
+                indent_step=INDENT_STEP,
+            )
+        )
+    )
     all_lines.append("")
     all_lines.append("Stonith Devices:")
-    all_lines.extend(indent(stonith_lines, indent_step=1))
+    all_lines.extend(
+        smart_wrap_text(
+            indent(
+                resources_to_text(resources_facade.filter_stonith(True)),
+                indent_step=INDENT_STEP,
+            )
+        )
+    )
     all_lines.append("Fencing Levels:")
     levels_lines = stonith.stonith_level_config_to_str(
         lib.fencing_topology.get_config()

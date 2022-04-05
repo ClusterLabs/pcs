@@ -105,7 +105,12 @@ EXTRA_DIST		= \
 			  common/pacemaker/defaults.py \
 			  common/pacemaker/nvset.py \
 			  common/pacemaker/resource/__init__.py \
+			  common/pacemaker/resource/bundle.py \
+			  common/pacemaker/resource/clone.py \
+			  common/pacemaker/resource/list.py \
+			  common/pacemaker/resource/group.py \
 			  common/pacemaker/resource/operations.py \
+			  common/pacemaker/resource/primitive.py \
 			  common/pacemaker/resource/relations.py \
 			  common/pacemaker/role.py \
 			  common/pacemaker/rule.py \
@@ -184,6 +189,7 @@ EXTRA_DIST		= \
 			  lib/booth/sync.py \
 			  lib/cib/acl.py \
 			  lib/cib/alert.py \
+			  lib/cib/const.py \
 			  lib/cib/constraint/colocation.py \
 			  lib/cib/constraint/constraint.py \
 			  lib/cib/constraint/__init__.py \

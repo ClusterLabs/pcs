@@ -1219,9 +1219,12 @@ class StonithTest(TestCase, AssertPcsMixin):
             "stonith config test9".split(),
             outdent(
                 """\
-             Resource: test9 (class=stonith type=fence_apc)
-              Attributes: pcmk_status_action=xxx
-              Operations: monitor interval=60s (test9-monitor-interval-60s)
+            Resource: test9 (class=stonith type=fence_apc)
+              Attributes: test9-instance_attributes
+                pcmk_status_action=xxx
+              Operations:
+                monitor: test9-monitor-interval-60s
+                  interval=60s
             """
             ),
         )
@@ -1253,16 +1256,26 @@ class StonithTest(TestCase, AssertPcsMixin):
 
         self.assert_pcs_fail(
             "resource config apc-fencing".split(),
-            "Error: unable to find resource 'apc-fencing'\n",
+            "Warning: Unable to find resource 'apc-fencing'\n"
+            "Error: No resource found\n",
         )
 
         self.assert_pcs_success(
             "stonith config apc-fencing".split(),
             outdent(
                 """\
-             Resource: apc-fencing (class=stonith type=fence_apc)
-              Attributes: ip=morph-apc password=apc pcmk_host_check=static-list pcmk_host_list=buzz-01,buzz-02,buzz-03,buzz-04,buzz-05 pcmk_host_map=buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5 switch=1 username=apc
-              Operations: monitor interval=60s (apc-fencing-monitor-interval-60s)
+            Resource: apc-fencing (class=stonith type=fence_apc)
+              Attributes: apc-fencing-instance_attributes
+                ip=morph-apc
+                password=apc
+                pcmk_host_check=static-list
+                pcmk_host_list=buzz-01,buzz-02,buzz-03,buzz-04,buzz-05
+                pcmk_host_map=buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5
+                switch=1
+                username=apc
+              Operations:
+                monitor: apc-fencing-monitor-interval-60s
+                  interval=60s
             """
             ),
         )
@@ -1286,8 +1299,10 @@ class StonithTest(TestCase, AssertPcsMixin):
             "stonith config test2".split(),
             outdent(
                 """\
-             Resource: test2 (class=stonith type=fence_apc)
-              Operations: monitor interval=60s (test2-monitor-interval-60s)
+            Resource: test2 (class=stonith type=fence_apc)
+              Operations:
+                monitor: test2-monitor-interval-60s
+                  interval=60s
             """
             ),
         )
@@ -1296,13 +1311,21 @@ class StonithTest(TestCase, AssertPcsMixin):
             "stonith config".split(),
             outdent(
                 """\
-             Resource: test1 (class=stonith type=fence_noexist)
-              Operations: monitor interval=60s (test1-monitor-interval-60s)
-             Resource: test2 (class=stonith type=fence_apc)
-              Operations: monitor interval=60s (test2-monitor-interval-60s)
-             Resource: test3 (class=stonith type=fence_ilo)
-              Attributes: ip=test username=testA
-              Operations: monitor interval=60s (test3-monitor-interval-60s)
+            Resource: test1 (class=stonith type=fence_noexist)
+              Operations:
+                monitor: test1-monitor-interval-60s
+                  interval=60s
+            Resource: test2 (class=stonith type=fence_apc)
+              Operations:
+                monitor: test2-monitor-interval-60s
+                  interval=60s
+            Resource: test3 (class=stonith type=fence_ilo)
+              Attributes: test3-instance_attributes
+                ip=test
+                username=testA
+              Operations:
+                monitor: test3-monitor-interval-60s
+                  interval=60s
             """
             ),
         )
@@ -1337,16 +1360,27 @@ class StonithTest(TestCase, AssertPcsMixin):
             Resources:
 
             Stonith Devices:
-             Resource: test1 (class=stonith type=fence_noexist)
-              Operations: monitor interval=60s (test1-monitor-interval-60s)
-             Resource: test2 (class=stonith type=fence_apc)
-              Operations: monitor interval=60s (test2-monitor-interval-60s)
-             Resource: test3 (class=stonith type=fence_ilo)
-              Attributes: ip=test username=testA
-              Operations: monitor interval=60s (test3-monitor-interval-60s)
-             Resource: test-fencing (class=stonith type=fence_apc)
-              Attributes: pcmk_host_list="rhel7-node1 rhel7-node2"
-              Operations: monitor interval=61s (test-fencing-monitor-interval-61s)
+              Resource: test1 (class=stonith type=fence_noexist)
+                Operations:
+                  monitor: test1-monitor-interval-60s
+                    interval=60s
+              Resource: test2 (class=stonith type=fence_apc)
+                Operations:
+                  monitor: test2-monitor-interval-60s
+                    interval=60s
+              Resource: test3 (class=stonith type=fence_ilo)
+                Attributes: test3-instance_attributes
+                  ip=test
+                  username=testA
+                Operations:
+                  monitor: test3-monitor-interval-60s
+                    interval=60s
+              Resource: test-fencing (class=stonith type=fence_apc)
+                Attributes: test-fencing-instance_attributes
+                  pcmk_host_list="rhel7-node1 rhel7-node2"
+                Operations:
+                  monitor: test-fencing-monitor-interval-61s
+                    interval=61s
             Fencing Levels:
 
             Location Constraints:
@@ -1397,9 +1431,13 @@ class StonithTest(TestCase, AssertPcsMixin):
             "stonith config S".split(),
             outdent(
                 """\
-             Resource: S (class=stonith type=fence_apc)
-              Attributes: ip=i login=l
-              Operations: monitor interval=60s (S-monitor-interval-60s)
+            Resource: S (class=stonith type=fence_apc)
+              Attributes: S-instance_attributes
+                ip=i
+                login=l
+              Operations:
+                monitor: S-monitor-interval-60s
+                  interval=60s
             """
             ),
         )
@@ -1417,9 +1455,15 @@ class StonithTest(TestCase, AssertPcsMixin):
             "stonith config S".split(),
             outdent(
                 """\
-             Resource: S (class=stonith type=fence_apc)
-              Attributes: ip=i1 ipaddr=i2 login=l username=u
-              Operations: monitor interval=60s (S-monitor-interval-60s)
+            Resource: S (class=stonith type=fence_apc)
+              Attributes: S-instance_attributes
+                ip=i1
+                ipaddr=i2
+                login=l
+                username=u
+              Operations:
+                monitor: S-monitor-interval-60s
+                  interval=60s
             """
             ),
         )
@@ -1439,18 +1483,30 @@ class StonithTest(TestCase, AssertPcsMixin):
             "stonith config".split(),
             outdent(
                 """\
-             Resource: f1 (class=stonith type=fence_scsi)
-              Meta Attrs: provides=unfencing
-              Operations: monitor interval=60s (f1-monitor-interval-60s)
-             Resource: f2 (class=stonith type=fence_scsi)
-              Meta Attrs: provides=unfencing
-              Operations: monitor interval=60s (f2-monitor-interval-60s)
-             Resource: f3 (class=stonith type=fence_scsi)
-              Meta Attrs: provides=unfencing
-              Operations: monitor interval=60s (f3-monitor-interval-60s)
-             Resource: f4 (class=stonith type=fence_xvm)
-              Meta Attrs: provides=something
-              Operations: monitor interval=60s (f4-monitor-interval-60s)
+            Resource: f1 (class=stonith type=fence_scsi)
+              Meta Attributes: f1-meta_attributes
+                provides=unfencing
+              Operations:
+                monitor: f1-monitor-interval-60s
+                  interval=60s
+            Resource: f2 (class=stonith type=fence_scsi)
+              Meta Attributes: f2-meta_attributes
+                provides=unfencing
+              Operations:
+                monitor: f2-monitor-interval-60s
+                  interval=60s
+            Resource: f3 (class=stonith type=fence_scsi)
+              Meta Attributes: f3-meta_attributes
+                provides=unfencing
+              Operations:
+                monitor: f3-monitor-interval-60s
+                  interval=60s
+            Resource: f4 (class=stonith type=fence_xvm)
+              Meta Attributes: f4-meta_attributes
+                provides=something
+              Operations:
+                monitor: f4-monitor-interval-60s
+                  interval=60s
             """
             ),
         )
@@ -1475,9 +1531,14 @@ class StonithTest(TestCase, AssertPcsMixin):
             "stonith config".split(),
             outdent(
                 """\
-                 Resource: test (class=stonith type=fence_apc)
-                  Attributes: action=a ip=i username=u
-                  Operations: monitor interval=60s (test-monitor-interval-60s)
+                Resource: test (class=stonith type=fence_apc)
+                  Attributes: test-instance_attributes
+                    action=a
+                    ip=i
+                    username=u
+                  Operations:
+                    monitor: test-monitor-interval-60s
+                      interval=60s
                 """
             ),
         )
@@ -1491,9 +1552,13 @@ class StonithTest(TestCase, AssertPcsMixin):
             "stonith config".split(),
             outdent(
                 """\
-                 Resource: test (class=stonith type=fence_apc)
-                  Attributes: ip=i username=u
-                  Operations: monitor interval=60s (test-monitor-interval-60s)
+                Resource: test (class=stonith type=fence_apc)
+                  Attributes: test-instance_attributes
+                    ip=i
+                    username=u
+                  Operations:
+                    monitor: test-monitor-interval-60s
+                      interval=60s
                 """
             ),
         )
@@ -1515,9 +1580,14 @@ class StonithTest(TestCase, AssertPcsMixin):
             "stonith config".split(),
             outdent(
                 """\
-                 Resource: test (class=stonith type=fence_apc)
-                  Attributes: action=a ip=i username=u
-                  Operations: monitor interval=60s (test-monitor-interval-60s)
+                Resource: test (class=stonith type=fence_apc)
+                  Attributes: test-instance_attributes
+                    action=a
+                    ip=i
+                    username=u
+                  Operations:
+                    monitor: test-monitor-interval-60s
+                      interval=60s
                 """
             ),
         )
@@ -1528,9 +1598,13 @@ class StonithTest(TestCase, AssertPcsMixin):
             "stonith config".split(),
             outdent(
                 """\
-                 Resource: test (class=stonith type=fence_apc)
-                  Attributes: ip=i username=u
-                  Operations: monitor interval=60s (test-monitor-interval-60s)
+                Resource: test (class=stonith type=fence_apc)
+                  Attributes: test-instance_attributes
+                    ip=i
+                    username=u
+                  Operations:
+                    monitor: test-monitor-interval-60s
+                      interval=60s
                 """
             ),
         )
@@ -1566,9 +1640,12 @@ class StonithTest(TestCase, AssertPcsMixin):
             "stonith config F1".split(),
             outdent(
                 """\
-             Resource: F1 (class=stonith type=fence_apc)
-              Attributes: pcmk_host_list="nodea nodeb"
-              Operations: monitor interval=60s (F1-monitor-interval-60s)
+            Resource: F1 (class=stonith type=fence_apc)
+              Attributes: F1-instance_attributes
+                pcmk_host_list="nodea nodeb"
+              Operations:
+                monitor: F1-monitor-interval-60s
+                  interval=60s
             """
             ),
         )
@@ -1631,6 +1708,8 @@ class StonithTest(TestCase, AssertPcsMixin):
                   * n2-apc1\t(stonith:fence_apc):\tStopped
                   * n2-apc2\t(stonith:fence_apc):\tStopped
                   * n2-apc3\t(stonith:fence_apc):\tStopped
+
+                Fencing Levels:
                  Target: rh7-1
                    Level 1 - n1-ipmi
                    Level 2 - n1-apc1,n1-apc2,n2-apc2
@@ -1653,6 +1732,8 @@ class StonithTest(TestCase, AssertPcsMixin):
                  n2-apc1\t(stonith:fence_apc):\tStopped
                  n2-apc2\t(stonith:fence_apc):\tStopped
                  n2-apc3\t(stonith:fence_apc):\tStopped
+
+                Fencing Levels:
                  Target: rh7-1
                    Level 1 - n1-ipmi
                    Level 2 - n1-apc1,n1-apc2,n2-apc2
@@ -1678,6 +1759,8 @@ class StonithTest(TestCase, AssertPcsMixin):
                   * n1-apc2\t(stonith:fence_apc):\tStopped
                   * n2-apc1\t(stonith:fence_apc):\tStopped
                   * n2-apc3\t(stonith:fence_apc):\tStopped
+
+                Fencing Levels:
                  Target: rh7-1
                    Level 1 - n1-ipmi
                    Level 2 - n1-apc1,n1-apc2
@@ -1699,6 +1782,8 @@ class StonithTest(TestCase, AssertPcsMixin):
                  n1-apc2\t(stonith:fence_apc):\tStopped
                  n2-apc1\t(stonith:fence_apc):\tStopped
                  n2-apc3\t(stonith:fence_apc):\tStopped
+
+                Fencing Levels:
                  Target: rh7-1
                    Level 1 - n1-ipmi
                    Level 2 - n1-apc1,n1-apc2
@@ -1723,6 +1808,8 @@ class StonithTest(TestCase, AssertPcsMixin):
                   * n1-apc1\t(stonith:fence_apc):\tStopped
                   * n1-apc2\t(stonith:fence_apc):\tStopped
                   * n2-apc3\t(stonith:fence_apc):\tStopped
+
+                Fencing Levels:
                  Target: rh7-1
                    Level 1 - n1-ipmi
                    Level 2 - n1-apc1,n1-apc2
@@ -1743,6 +1830,8 @@ class StonithTest(TestCase, AssertPcsMixin):
                  n1-apc1\t(stonith:fence_apc):\tStopped
                  n1-apc2\t(stonith:fence_apc):\tStopped
                  n2-apc3\t(stonith:fence_apc):\tStopped
+
+                Fencing Levels:
                  Target: rh7-1
                    Level 1 - n1-ipmi
                    Level 2 - n1-apc1,n1-apc2
@@ -1766,6 +1855,8 @@ class StonithTest(TestCase, AssertPcsMixin):
                   * n2-ipmi\t(stonith:fence_apc):\tStopped
                   * n1-apc1\t(stonith:fence_apc):\tStopped
                   * n1-apc2\t(stonith:fence_apc):\tStopped
+
+                Fencing Levels:
                  Target: rh7-1
                    Level 1 - n1-ipmi
                    Level 2 - n1-apc1,n1-apc2
@@ -1784,6 +1875,8 @@ class StonithTest(TestCase, AssertPcsMixin):
                  n2-ipmi\t(stonith:fence_apc):\tStopped
                  n1-apc1\t(stonith:fence_apc):\tStopped
                  n1-apc2\t(stonith:fence_apc):\tStopped
+
+                Fencing Levels:
                  Target: rh7-1
                    Level 1 - n1-ipmi
                    Level 2 - n1-apc1,n1-apc2
@@ -1805,6 +1898,8 @@ class StonithTest(TestCase, AssertPcsMixin):
                   * n1-ipmi\t(stonith:fence_apc):\tStopped
                   * n2-ipmi\t(stonith:fence_apc):\tStopped
                   * n1-apc2\t(stonith:fence_apc):\tStopped
+
+                Fencing Levels:
                  Target: rh7-1
                    Level 1 - n1-ipmi
                    Level 2 - n1-apc2
@@ -1822,6 +1917,8 @@ class StonithTest(TestCase, AssertPcsMixin):
                  n1-ipmi\t(stonith:fence_apc):\tStopped
                  n2-ipmi\t(stonith:fence_apc):\tStopped
                  n1-apc2\t(stonith:fence_apc):\tStopped
+
+                Fencing Levels:
                  Target: rh7-1
                    Level 1 - n1-ipmi
                    Level 2 - n1-apc2
@@ -1847,6 +1944,8 @@ class StonithTest(TestCase, AssertPcsMixin):
                     """\
                   * n1-ipmi\t(stonith:fence_apc):\tStopped
                   * n2-ipmi\t(stonith:fence_apc):\tStopped
+
+                Fencing Levels:
                  Target: rh7-1
                    Level 1 - n1-ipmi
                  Target: rh7-2
@@ -1862,6 +1961,8 @@ class StonithTest(TestCase, AssertPcsMixin):
                     """\
                  n1-ipmi\t(stonith:fence_apc):\tStopped
                  n2-ipmi\t(stonith:fence_apc):\tStopped
+
+                Fencing Levels:
                  Target: rh7-1
                    Level 1 - n1-ipmi
                  Target: rh7-2
@@ -2105,10 +2206,10 @@ class LevelAdd(LevelTestsBase):
             outdent(
                 """\
                 Error: 'x' is not a valid level value, use a positive integer
-                Error: invalid device id 'dev@ce', '@' is not a valid character for a device id
-                Error: Errors have occurred, therefore pcs is unable to continue
                 Warning: Node 'rh7-X' does not appear to exist in configuration
+                Error: invalid device id 'dev@ce', '@' is not a valid character for a device id
                 Warning: Stonith resource(s) 'F0' do not exist
+                Error: Errors have occurred, therefore pcs is unable to continue
                 """
             ),
         )
@@ -2425,7 +2526,10 @@ class LevelConfig(LevelTestsBase):
             )
         self.assert_pcs_success(
             ["stonith"],
-            result + "\n".join(indent(self.config_lines, 1)) + "\n",
+            result
+            + "\n"
+            + "\n".join(["Fencing Levels:"] + indent(self.config_lines, 1))
+            + "\n",
             despace=True,
         )
         self.pcs_runner.mock_settings["corosync_conf_file"] = rc(
@@ -2435,15 +2539,30 @@ class LevelConfig(LevelTestsBase):
             ["config"],
             self.full_config.format(
                 devices="""
- Resource: F1 (class=stonith type=fence_apc)
-  Attributes: ip=i pcmk_host_list="rh7-1 rh7-2" username=u
-  Operations: monitor interval=60s (F1-monitor-interval-60s)
- Resource: F2 (class=stonith type=fence_apc)
-  Attributes: ip=i pcmk_host_list="rh7-1 rh7-2" username=u
-  Operations: monitor interval=60s (F2-monitor-interval-60s)
- Resource: F3 (class=stonith type=fence_apc)
-  Attributes: ip=i pcmk_host_list="rh7-1 rh7-2" username=u
-  Operations: monitor interval=60s (F3-monitor-interval-60s)\
+  Resource: F1 (class=stonith type=fence_apc)
+    Attributes: F1-instance_attributes
+      ip=i
+      pcmk_host_list="rh7-1 rh7-2"
+      username=u
+    Operations:
+      monitor: F1-monitor-interval-60s
+        interval=60s
+  Resource: F2 (class=stonith type=fence_apc)
+    Attributes: F2-instance_attributes
+      ip=i
+      pcmk_host_list="rh7-1 rh7-2"
+      username=u
+    Operations:
+      monitor: F2-monitor-interval-60s
+        interval=60s
+  Resource: F3 (class=stonith type=fence_apc)
+    Attributes: F3-instance_attributes
+      ip=i
+      pcmk_host_list="rh7-1 rh7-2"
+      username=u
+    Operations:
+      monitor: F3-monitor-interval-60s
+        interval=60s\
 """,
                 levels=("\n" + "\n".join(indent(self.config_lines, 2))),
             ),

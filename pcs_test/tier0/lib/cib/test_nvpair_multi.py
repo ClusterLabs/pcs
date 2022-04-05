@@ -65,8 +65,14 @@ class NvpairElementToDto(TestCase):
 
 
 class NvsetElementToDto(TestCase):
+    all_nvsets = (
+        nvpair_multi.NVSET_INSTANCE,
+        nvpair_multi.NVSET_META,
+        nvpair_multi.NVSET_UTILIZATION,
+    )
+
     def test_minimal(self):
-        for tag in nvpair_multi.NVSETS_ALL:
+        for tag in self.all_nvsets:
             with self.subTest(tag=tag):
                 xml = etree.fromstring(f"""<{tag} id="my-id" />""")
                 self.assertEqual(
@@ -77,7 +83,7 @@ class NvsetElementToDto(TestCase):
                 )
 
     def test_expired(self):
-        for tag in nvpair_multi.NVSETS_ALL:
+        for tag in self.all_nvsets:
             with self.subTest(tag=tag):
                 xml = etree.fromstring(
                     f"""
@@ -132,7 +138,7 @@ class NvsetElementToDto(TestCase):
                 )
 
     def test_full(self):
-        for tag in nvpair_multi.NVSETS_ALL:
+        for tag in self.all_nvsets:
             with self.subTest(tag=tag):
                 xml = etree.fromstring(
                     f"""

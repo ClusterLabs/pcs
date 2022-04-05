@@ -89,9 +89,16 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
               red_limit: Lower (!) limit of idle percentage to switch the health attribute to red. I.e. the #health-cpu will go red if the %idle of the CPU falls below 10%.
 {0}
             Default operations:
-              start: interval=0s timeout=10s
-              stop: interval=0s timeout=10s
-              monitor: interval=10s start-delay=0s timeout=10s
+              start:
+                interval=0s
+                timeout=10s
+              stop:
+                interval=0s
+                timeout=10s
+              monitor:
+                interval=10s
+                start-delay=0s
+                timeout=10s
             """.format(
                 advanced_params if advanced else ""
             )
@@ -580,8 +587,11 @@ class Resource(TestCase, AssertPcsMixin):
             output,
             outdent(
                 """\
-             Resource: dummy0 (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10s timeout=20s (dummy0-monitor-interval-10s)
+            Resource: dummy0 (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                monitor: dummy0-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
             """
             ),
         )
@@ -603,7 +613,7 @@ class Resource(TestCase, AssertPcsMixin):
 
         self.assert_pcs_fail(
             "resource config ClusterIP".split(),
-            "Error: unable to find resource 'ClusterIP'\n",
+            "Warning: Unable to find resource 'ClusterIP'\nError: No resource found\n",
         )
 
         self.assert_pcs_success(
@@ -646,9 +656,13 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config ClusterIP".split(),
             outdent(
                 """\
-             Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
-              Attributes: cidr_netmask=32 ip=192.168.0.99
-              Operations: monitor interval=30s (ClusterIP-monitor-interval-30s)
+            Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
+              Attributes: ClusterIP-instance_attributes
+                cidr_netmask=32
+                ip=192.168.0.99
+              Operations:
+                monitor: ClusterIP-monitor-interval-30s
+                  interval=30s
             """
             ),
         )
@@ -728,10 +742,15 @@ Error: moni=tor does not appear to be a valid operation action
             "resource config ClusterIP".split(),
             outdent(
                 """\
-             Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
-              Attributes: cidr_netmask=32 ip=192.168.0.99
-              Operations: monitor interval=30s (ClusterIP-monitor-interval-30s)
-                          monitor interval=31s (ClusterIP-monitor-interval-31s)
+            Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
+              Attributes: ClusterIP-instance_attributes
+                cidr_netmask=32
+                ip=192.168.0.99
+              Operations:
+                monitor: ClusterIP-monitor-interval-30s
+                  interval=30s
+                monitor: ClusterIP-monitor-interval-31s
+                  interval=31s
             """
             ),
         )
@@ -746,7 +765,18 @@ Error: moni=tor does not appear to be a valid operation action
         o, r = pcs(self.temp_cib.name, "resource config OPTest".split())
         ac(
             o,
-            " Resource: OPTest (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=30s OCF_CHECK_LEVEL=1 (OPTest-monitor-interval-30s)\n              monitor interval=25s OCF_CHECK_LEVEL=1 (OPTest-monitor-interval-25s)\n",
+            outdent(
+                """\
+            Resource: OPTest (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                monitor: OPTest-monitor-interval-30s
+                  interval=30s
+                  OCF_CHECK_LEVEL=1
+                monitor: OPTest-monitor-interval-25s
+                  interval=25s
+                  OCF_CHECK_LEVEL=1
+            """
+            ),
         )
         assert r == 0
 
@@ -793,7 +823,24 @@ start interval=0s timeout=30s (OPTest2-start-interval-0s)
         o, r = pcs(self.temp_cib.name, "resource config OPTest2".split())
         ac(
             o,
-            " Resource: OPTest2 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=30s OCF_CHECK_LEVEL=1 (OPTest2-monitor-interval-30s)\n              monitor interval=25s OCF_CHECK_LEVEL=2 (OPTest2-monitor-interval-25s)\n              start interval=0s timeout=30s (OPTest2-start-interval-0s)\n              monitor interval=60s timeout=1800s (OPTest2-monitor-interval-60s)\n",
+            outdent(
+                """\
+            Resource: OPTest2 (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                monitor: OPTest2-monitor-interval-30s
+                  interval=30s
+                  OCF_CHECK_LEVEL=1
+                monitor: OPTest2-monitor-interval-25s
+                  interval=25s
+                  OCF_CHECK_LEVEL=2
+                start: OPTest2-start-interval-0s
+                  interval=0s
+                  timeout=30s
+                monitor: OPTest2-monitor-interval-60s
+                  interval=60s
+                  timeout=1800s
+            """
+            ),
         )
         assert r == 0
 
@@ -807,7 +854,15 @@ start interval=0s timeout=30s (OPTest2-start-interval-0s)
         o, r = pcs(self.temp_cib.name, "resource config OPTest3".split())
         ac(
             o,
-            " Resource: OPTest3 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest3-monitor-interval-60s)\n",
+            outdent(
+                """\
+            Resource: OPTest3 (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                monitor: OPTest3-monitor-interval-60s
+                  interval=60s
+                  OCF_CHECK_LEVEL=1
+            """
+            ),
         )
         assert r == 0
 
@@ -828,7 +883,15 @@ start interval=0s timeout=30s (OPTest2-start-interval-0s)
         o, r = pcs(self.temp_cib.name, "resource config OPTest4".split())
         ac(
             o,
-            " Resource: OPTest4 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest4-monitor-interval-60s)\n",
+            outdent(
+                """\
+            Resource: OPTest4 (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                monitor: OPTest4-monitor-interval-60s
+                  interval=60s
+                  OCF_CHECK_LEVEL=1
+            """
+            ),
         )
         assert r == 0
 
@@ -849,7 +912,15 @@ start interval=0s timeout=30s (OPTest2-start-interval-0s)
         o, r = pcs(self.temp_cib.name, "resource config OPTest5".split())
         ac(
             o,
-            " Resource: OPTest5 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest5-monitor-interval-60s)\n",
+            outdent(
+                """\
+            Resource: OPTest5 (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                monitor: OPTest5-monitor-interval-60s
+                  interval=60s
+                  OCF_CHECK_LEVEL=1
+            """
+            ),
         )
         assert r == 0
 
@@ -871,9 +942,14 @@ start interval=0s timeout=30s (OPTest2-start-interval-0s)
             "resource config OPTest6".split(),
             outdent(
                 """\
-             Resource: OPTest6 (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10s timeout=20s (OPTest6-monitor-interval-10s)
-                          monitor interval=30s OCF_CHECK_LEVEL=1 (OPTest6-monitor-interval-30s)
+            Resource: OPTest6 (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                monitor: OPTest6-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
+                monitor: OPTest6-monitor-interval-30s
+                  interval=30s
+                  OCF_CHECK_LEVEL=1
             """
             ),
         )
@@ -915,7 +991,18 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
         o, r = pcs(self.temp_cib.name, "resource config OPTest7".split())
         ac(
             o,
-            " Resource: OPTest7 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)\n              monitor interval=61s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-61s)\n",
+            outdent(
+                """\
+            Resource: OPTest7 (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                monitor: OPTest7-monitor-interval-60s
+                  interval=60s
+                  OCF_CHECK_LEVEL=1
+                monitor: OPTest7-monitor-interval-61s
+                  interval=61s
+                  OCF_CHECK_LEVEL=1
+            """
+            ),
         )
         assert r == 0
 
@@ -967,10 +1054,16 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
             "resource config OCFTest1".split(),
             outdent(
                 """\
-                 Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)
-                  Operations: monitor interval=10s timeout=20s (OCFTest1-monitor-interval-10s)
-                              monitor interval=31s (OCFTest1-monitor-interval-31s)
-                              monitor interval=30s OCF_CHECK_LEVEL=15 (OCFTest1-monitor-interval-30s)
+                Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)
+                  Operations:
+                    monitor: OCFTest1-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
+                    monitor: OCFTest1-monitor-interval-31s
+                      interval=31s
+                    monitor: OCFTest1-monitor-interval-30s
+                      interval=30s
+                      OCF_CHECK_LEVEL=15
                 """
             ),
         )
@@ -985,7 +1078,20 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
         o, r = pcs(self.temp_cib.name, "resource config OCFTest1".split())
         ac(
             o,
-            " Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=61s OCF_CHECK_LEVEL=5 (OCFTest1-monitor-interval-61s)\n              monitor interval=31s (OCFTest1-monitor-interval-31s)\n              monitor interval=30s OCF_CHECK_LEVEL=15 (OCFTest1-monitor-interval-30s)\n",
+            outdent(
+                """\
+            Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                monitor: OCFTest1-monitor-interval-61s
+                  interval=61s
+                  OCF_CHECK_LEVEL=5
+                monitor: OCFTest1-monitor-interval-31s
+                  interval=31s
+                monitor: OCFTest1-monitor-interval-30s
+                  interval=30s
+                  OCF_CHECK_LEVEL=15
+            """
+            ),
         )
         assert r == 0
 
@@ -999,7 +1105,20 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
         o, r = pcs(self.temp_cib.name, "resource config OCFTest1".split())
         ac(
             o,
-            " Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=60s OCF_CHECK_LEVEL=4 (OCFTest1-monitor-interval-60s)\n              monitor interval=31s (OCFTest1-monitor-interval-31s)\n              monitor interval=30s OCF_CHECK_LEVEL=15 (OCFTest1-monitor-interval-30s)\n",
+            outdent(
+                """\
+            Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                monitor: OCFTest1-monitor-interval-60s
+                  interval=60s
+                  OCF_CHECK_LEVEL=4
+                monitor: OCFTest1-monitor-interval-31s
+                  interval=31s
+                monitor: OCFTest1-monitor-interval-30s
+                  interval=30s
+                  OCF_CHECK_LEVEL=15
+            """
+            ),
         )
         assert r == 0
 
@@ -1013,7 +1132,20 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
         o, r = pcs(self.temp_cib.name, "resource config OCFTest1".split())
         ac(
             o,
-            " Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)\n  Operations: monitor interval=35s OCF_CHECK_LEVEL=4 (OCFTest1-monitor-interval-35s)\n              monitor interval=31s (OCFTest1-monitor-interval-31s)\n              monitor interval=30s OCF_CHECK_LEVEL=15 (OCFTest1-monitor-interval-30s)\n",
+            outdent(
+                """\
+            Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                monitor: OCFTest1-monitor-interval-35s
+                  interval=35s
+                  OCF_CHECK_LEVEL=4
+                monitor: OCFTest1-monitor-interval-31s
+                  interval=31s
+                monitor: OCFTest1-monitor-interval-30s
+                  interval=30s
+                  OCF_CHECK_LEVEL=15
+            """
+            ),
         )
         assert r == 0
 
@@ -1050,11 +1182,20 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
         self.assert_pcs_success(
             "resource config state".split(),
             outdent(
-                """\
-             Resource: state (class=ocf provider=pacemaker type=Stateful)
-              Operations: monitor interval=10s role=Master timeout=20s (state-monitor-interval-10s)
-                          monitor interval=11 role=Slave timeout=20s (state-monitor-interval-11)
-                          monitor interval=15 role=Master (state-monitor-interval-15)
+                f"""\
+            Resource: state (class=ocf provider=pacemaker type=Stateful)
+              Operations:
+                monitor: state-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
+                  role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                monitor: state-monitor-interval-11
+                  interval=11
+                  timeout=20s
+                  role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                monitor: state-monitor-interval-15
+                  interval=15
+                  role={const.PCMK_ROLE_PROMOTED_PRIMARY}
             """
             ),
         )
@@ -1122,9 +1263,13 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
             "resource config ClusterIP".split(),
             outdent(
                 """\
-             Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
-              Attributes: cidr_netmask=32 ip=192.168.0.99
-              Operations: monitor interval=31s (ClusterIP-monitor-interval-31s)
+            Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
+              Attributes: ClusterIP-instance_attributes
+                cidr_netmask=32
+                ip=192.168.0.99
+              Operations:
+                monitor: ClusterIP-monitor-interval-31s
+                  interval=31s
             """
             ),
         )
@@ -1137,8 +1282,10 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
             "resource config ClusterIP".split(),
             outdent(
                 """\
-             Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
-              Attributes: cidr_netmask=32 ip=192.168.0.99
+            Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
+              Attributes: ClusterIP-instance_attributes
+                cidr_netmask=32
+                ip=192.168.0.99
             """
             ),
         )
@@ -1167,10 +1314,17 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
             "resource config ClusterIP".split(),
             outdent(
                 """\
-             Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
-              Attributes: cidr_netmask=32 ip=192.168.0.99
-              Operations: stop interval=0s timeout=34s (ClusterIP-stop-interval-0s)
-                          start interval=0s timeout=33s (ClusterIP-start-interval-0s)
+            Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
+              Attributes: ClusterIP-instance_attributes
+                cidr_netmask=32
+                ip=192.168.0.99
+              Operations:
+                stop: ClusterIP-stop-interval-0s
+                  interval=0s
+                  timeout=34s
+                start: ClusterIP-start-interval-0s
+                  interval=0s
+                  timeout=33s
             """
             ),
         )
@@ -1204,9 +1358,13 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
             "resource config ClusterIP".split(),
             outdent(
                 """\
-             Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
-              Attributes: cidr_netmask=32 ip=192.168.0.99
-              Operations: monitor interval=30s (ClusterIP-monitor-interval-30s)
+            Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
+              Attributes: ClusterIP-instance_attributes
+                cidr_netmask=32
+                ip=192.168.0.99
+              Operations:
+                monitor: ClusterIP-monitor-interval-30s
+                  interval=30s
             """
             ),
         )
@@ -1218,19 +1376,29 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
             "resource config ClusterIP".split(),
             outdent(
                 """\
-             Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
-              Attributes: cidr_netmask=32 ip=192.168.0.99
-              Operations: monitor interval=32s (ClusterIP-monitor-interval-32s)
+            Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
+              Attributes: ClusterIP-instance_attributes
+                cidr_netmask=32
+                ip=192.168.0.99
+              Operations:
+                monitor: ClusterIP-monitor-interval-32s
+                  interval=32s
             """
             ),
         )
 
         show_clusterip = outdent(
             """\
-             Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
-              Attributes: cidr_netmask=32 ip=192.168.0.99
-              Operations: monitor interval=33s (ClusterIP-monitor-interval-33s)
-                          start interval=30s timeout=180s (ClusterIP-start-interval-30s)
+            Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
+              Attributes: ClusterIP-instance_attributes
+                cidr_netmask=32
+                ip=192.168.0.99
+              Operations:
+                monitor: ClusterIP-monitor-interval-33s
+                  interval=33s
+                start: ClusterIP-start-interval-30s
+                  interval=30s
+                  timeout=180s
             """
         )
         self.assert_pcs_success(
@@ -1292,10 +1460,16 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
             "resource config ClusterIP".split(),
             outdent(
                 """\
-             Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
-              Attributes: cidr_netmask=32 ip=192.168.0.99
-              Operations: monitor interval=60s (abcd)
-                          start interval=30s timeout=180s (ClusterIP-start-interval-30s)
+            Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
+              Attributes: ClusterIP-instance_attributes
+                cidr_netmask=32
+                ip=192.168.0.99
+              Operations:
+                monitor: abcd
+                  interval=60s
+                start: ClusterIP-start-interval-30s
+                  interval=30s
+                  timeout=180s
             """
             ),
         )
@@ -1310,14 +1484,27 @@ monitor interval=60s OCF_CHECK_LEVEL=1 (OPTest7-monitor-interval-60s)
             "resource config A".split(),
             outdent(
                 """\
-             Resource: A (class=ocf provider=heartbeat type=Dummy)
-              Operations: migrate_from interval=0s timeout=20s (A-migrate_from-interval-0s)
-                          migrate_to interval=0s timeout=20s (A-migrate_to-interval-0s)
-                          monitor interval=10 (A-monitor-interval-10)
-                          monitor interval=20 (A-monitor-interval-20)
-                          reload interval=0s timeout=20s (A-reload-interval-0s)
-                          start interval=0s timeout=20s (A-start-interval-0s)
-                          stop interval=0s timeout=20s (A-stop-interval-0s)
+            Resource: A (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                migrate_from: A-migrate_from-interval-0s
+                  interval=0s
+                  timeout=20s
+                migrate_to: A-migrate_to-interval-0s
+                  interval=0s
+                  timeout=20s
+                monitor: A-monitor-interval-10
+                  interval=10
+                monitor: A-monitor-interval-20
+                  interval=20
+                reload: A-reload-interval-0s
+                  interval=0s
+                  timeout=20s
+                start: A-start-interval-0s
+                  interval=0s
+                  timeout=20s
+                stop: A-stop-interval-0s
+                  interval=0s
+                  timeout=20s
             """
             ),
         )
@@ -1346,14 +1533,27 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config A".split(),
             outdent(
                 """\
-             Resource: A (class=ocf provider=heartbeat type=Dummy)
-              Operations: migrate_from interval=0s timeout=20s (A-migrate_from-interval-0s)
-                          migrate_to interval=0s timeout=20s (A-migrate_to-interval-0s)
-                          monitor interval=11 (A-monitor-interval-11)
-                          monitor interval=20 (A-monitor-interval-20)
-                          reload interval=0s timeout=20s (A-reload-interval-0s)
-                          start interval=0s timeout=20s (A-start-interval-0s)
-                          stop interval=0s timeout=20s (A-stop-interval-0s)
+            Resource: A (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                migrate_from: A-migrate_from-interval-0s
+                  interval=0s
+                  timeout=20s
+                migrate_to: A-migrate_to-interval-0s
+                  interval=0s
+                  timeout=20s
+                monitor: A-monitor-interval-11
+                  interval=11
+                monitor: A-monitor-interval-20
+                  interval=20
+                reload: A-reload-interval-0s
+                  interval=0s
+                  timeout=20s
+                start: A-start-interval-0s
+                  interval=0s
+                  timeout=20s
+                stop: A-stop-interval-0s
+                  interval=0s
+                  timeout=20s
             """
             ),
         )
@@ -1374,7 +1574,7 @@ monitor interval=20 (A-monitor-interval-20)
             output,
             outdent(
                 """\
-             Resource: B (class=ocf provider=heartbeat type=Dummy)
+            Resource: B (class=ocf provider=heartbeat type=Dummy)
             """
             ),
         )
@@ -1390,10 +1590,14 @@ monitor interval=20 (A-monitor-interval-20)
         output, returnVal = pcs(self.temp_cib.name, "resource config B".split())
         ac(
             output,
-            """\
- Resource: B (class=ocf provider=heartbeat type=Dummy)
-  Operations: monitor interval=60s (B-monitor-interval-60s)
-""",
+            outdent(
+                """\
+            Resource: B (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                monitor: B-monitor-interval-60s
+                  interval=60s
+            """
+            ),
         )
         self.assertEqual(0, returnVal)
 
@@ -1407,10 +1611,14 @@ monitor interval=20 (A-monitor-interval-20)
         output, returnVal = pcs(self.temp_cib.name, "resource config B".split())
         ac(
             output,
-            """\
- Resource: B (class=ocf provider=heartbeat type=Dummy)
-  Operations: monitor interval=30 (B-monitor-interval-30)
-""",
+            outdent(
+                """\
+            Resource: B (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                monitor: B-monitor-interval-30
+                  interval=30
+            """
+            ),
         )
         self.assertEqual(0, returnVal)
 
@@ -1424,11 +1632,17 @@ monitor interval=20 (A-monitor-interval-20)
         output, returnVal = pcs(self.temp_cib.name, "resource config B".split())
         ac(
             output,
-            """\
- Resource: B (class=ocf provider=heartbeat type=Dummy)
-  Operations: monitor interval=30 (B-monitor-interval-30)
-              start interval=0 timeout=10 (B-start-interval-0)
-""",
+            outdent(
+                """\
+            Resource: B (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                monitor: B-monitor-interval-30
+                  interval=30
+                start: B-start-interval-0
+                  interval=0
+                  timeout=10
+            """
+            ),
         )
         self.assertEqual(0, returnVal)
 
@@ -1442,11 +1656,17 @@ monitor interval=20 (A-monitor-interval-20)
         output, returnVal = pcs(self.temp_cib.name, "resource config B".split())
         ac(
             output,
-            """\
- Resource: B (class=ocf provider=heartbeat type=Dummy)
-  Operations: monitor interval=30 (B-monitor-interval-30)
-              start interval=0 timeout=20 (B-start-interval-0)
-""",
+            outdent(
+                """\
+            Resource: B (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                monitor: B-monitor-interval-30
+                  interval=30
+                start: B-start-interval-0
+                  interval=0
+                  timeout=20
+            """
+            ),
         )
         self.assertEqual(0, returnVal)
 
@@ -1460,11 +1680,17 @@ monitor interval=20 (A-monitor-interval-20)
         output, returnVal = pcs(self.temp_cib.name, "resource config B".split())
         ac(
             output,
-            """\
- Resource: B (class=ocf provider=heartbeat type=Dummy)
-  Operations: monitor interval=33 (B-monitor-interval-33)
-              start interval=0 timeout=20 (B-start-interval-0)
-""",
+            outdent(
+                """\
+            Resource: B (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                monitor: B-monitor-interval-33
+                  interval=33
+                start: B-start-interval-0
+                  interval=0
+                  timeout=20
+            """
+            ),
         )
         self.assertEqual(0, returnVal)
 
@@ -1478,12 +1704,20 @@ monitor interval=20 (A-monitor-interval-20)
         output, returnVal = pcs(self.temp_cib.name, "resource config B".split())
         ac(
             output,
-            """\
- Resource: B (class=ocf provider=heartbeat type=Dummy)
-  Operations: monitor interval=33 (B-monitor-interval-33)
-              start interval=0 timeout=20 (B-start-interval-0)
-              monitor interval=100 role=Master (B-monitor-interval-100)
-""",
+            outdent(
+                f"""\
+            Resource: B (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                monitor: B-monitor-interval-33
+                  interval=33
+                start: B-start-interval-0
+                  interval=0
+                  timeout=20
+                monitor: B-monitor-interval-100
+                  interval=100
+                  role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+            """
+            ),
         )
         self.assertEqual(0, returnVal)
 
@@ -1497,12 +1731,20 @@ monitor interval=20 (A-monitor-interval-20)
         output, returnVal = pcs(self.temp_cib.name, "resource config B".split())
         ac(
             output,
-            """\
- Resource: B (class=ocf provider=heartbeat type=Dummy)
-  Operations: monitor interval=33 (B-monitor-interval-33)
-              start interval=0 timeout=22 (B-start-interval-0)
-              monitor interval=100 role=Master (B-monitor-interval-100)
-""",
+            outdent(
+                f"""\
+            Resource: B (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                monitor: B-monitor-interval-33
+                  interval=33
+                start: B-start-interval-0
+                  interval=0
+                  timeout=22
+                monitor: B-monitor-interval-100
+                  interval=100
+                  role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+            """
+            ),
         )
         self.assertEqual(0, returnVal)
 
@@ -1637,17 +1879,32 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config AGroup".split(),
             outdent(
                 """\
-             Group: AGroup
+            Group: AGroup
               Resource: A1 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10s timeout=20s (A1-monitor-interval-10s)
+                Operations:
+                  monitor: A1-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
               Resource: A2 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10s timeout=20s (A2-monitor-interval-10s)
+                Operations:
+                  monitor: A2-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
               Resource: A3 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10s timeout=20s (A3-monitor-interval-10s)
+                Operations:
+                  monitor: A3-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
               Resource: A4 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10s timeout=20s (A4-monitor-interval-10s)
+                Operations:
+                  monitor: A4-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
               Resource: A5 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10s timeout=20s (A5-monitor-interval-10s)
+                Operations:
+                  monitor: A5-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
             """
             ),
         )
@@ -1812,29 +2069,54 @@ monitor interval=20 (A-monitor-interval-20)
             Pacemaker Nodes:
 
             Resources:
-             Resource: ClusterIP6 (class=ocf provider=heartbeat type=IPaddr2)
-              Attributes: cidr_netmask=32 ip=192.168.0.96
-              Operations: monitor interval=30s (ClusterIP6-monitor-interval-30s)
-             Group: TestGroup1
-              Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
-               Attributes: cidr_netmask=32 ip=192.168.0.99
-               Operations: monitor interval=30s (ClusterIP-monitor-interval-30s)
-             Group: TestGroup2
-              Resource: ClusterIP2 (class=ocf provider=heartbeat type=IPaddr2)
-               Attributes: cidr_netmask=32 ip=192.168.0.92
-               Operations: monitor interval=30s (ClusterIP2-monitor-interval-30s)
-              Resource: ClusterIP3 (class=ocf provider=heartbeat type=IPaddr2)
-               Attributes: cidr_netmask=32 ip=192.168.0.93
-               Operations: monitor interval=30s (ClusterIP3-monitor-interval-30s)
-             Clone: ClusterIP4-clone
-              Resource: ClusterIP4 (class=ocf provider=heartbeat type=IPaddr2)
-               Attributes: cidr_netmask=32 ip=192.168.0.94
-               Operations: monitor interval=30s (ClusterIP4-monitor-interval-30s)
-             Clone: Master
-              Meta Attrs: promotable=true
-              Resource: ClusterIP5 (class=ocf provider=heartbeat type=IPaddr2)
-               Attributes: cidr_netmask=32 ip=192.168.0.95
-               Operations: monitor interval=30s (ClusterIP5-monitor-interval-30s)
+              Resource: ClusterIP6 (class=ocf provider=heartbeat type=IPaddr2)
+                Attributes: ClusterIP6-instance_attributes
+                  cidr_netmask=32
+                  ip=192.168.0.96
+                Operations:
+                  monitor: ClusterIP6-monitor-interval-30s
+                    interval=30s
+              Group: TestGroup1
+                Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
+                  Attributes: ClusterIP-instance_attributes
+                    cidr_netmask=32
+                    ip=192.168.0.99
+                  Operations:
+                    monitor: ClusterIP-monitor-interval-30s
+                      interval=30s
+              Group: TestGroup2
+                Resource: ClusterIP2 (class=ocf provider=heartbeat type=IPaddr2)
+                  Attributes: ClusterIP2-instance_attributes
+                    cidr_netmask=32
+                    ip=192.168.0.92
+                  Operations:
+                    monitor: ClusterIP2-monitor-interval-30s
+                      interval=30s
+                Resource: ClusterIP3 (class=ocf provider=heartbeat type=IPaddr2)
+                  Attributes: ClusterIP3-instance_attributes
+                    cidr_netmask=32
+                    ip=192.168.0.93
+                  Operations:
+                    monitor: ClusterIP3-monitor-interval-30s
+                      interval=30s
+              Clone: ClusterIP4-clone
+                Resource: ClusterIP4 (class=ocf provider=heartbeat type=IPaddr2)
+                  Attributes: ClusterIP4-instance_attributes
+                    cidr_netmask=32
+                    ip=192.168.0.94
+                  Operations:
+                    monitor: ClusterIP4-monitor-interval-30s
+                      interval=30s
+              Clone: Master
+                Meta Attributes:
+                  promotable=true
+                Resource: ClusterIP5 (class=ocf provider=heartbeat type=IPaddr2)
+                  Attributes: ClusterIP5-instance_attributes
+                    cidr_netmask=32
+                    ip=192.168.0.95
+                  Operations:
+                    monitor: ClusterIP5-monitor-interval-30s
+                      interval=30s
 
             Stonith Devices:
             Fencing Levels:
@@ -1889,9 +2171,12 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config".split(),
             outdent(
                 """\
-             Clone: D1-clone
+            Clone: D1-clone
               Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
+                Operations:
+                  monitor: D1-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
             """
             ),
         )
@@ -1907,9 +2192,10 @@ monitor interval=20 (A-monitor-interval-20)
             ),
         )
 
-        o, r = pcs(self.temp_cib.name, "resource config".split())
-        assert r == 0
-        ac(o, "")
+        self.assert_pcs_success(
+            "resource config".split(),
+            "",
+        )
 
         o, r = pcs(
             self.temp_cib.name,
@@ -2056,27 +2342,51 @@ monitor interval=20 (A-monitor-interval-20)
             Pacemaker Nodes:
 
             Resources:
-             Resource: ClusterIP6 (class=ocf provider=heartbeat type=IPaddr2)
-              Attributes: cidr_netmask=32 ip=192.168.0.96
-              Operations: monitor interval=30s (ClusterIP6-monitor-interval-30s)
-             Group: TestGroup1
-              Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
-               Attributes: cidr_netmask=32 ip=192.168.0.99
-               Operations: monitor interval=30s (ClusterIP-monitor-interval-30s)
-             Group: TestGroup2
-              Resource: ClusterIP2 (class=ocf provider=heartbeat type=IPaddr2)
-               Attributes: cidr_netmask=32 ip=192.168.0.92
-               Operations: monitor interval=30s (ClusterIP2-monitor-interval-30s)
-              Resource: ClusterIP3 (class=ocf provider=heartbeat type=IPaddr2)
-               Attributes: cidr_netmask=32 ip=192.168.0.93
-               Operations: monitor interval=30s (ClusterIP3-monitor-interval-30s)
-             Clone: ClusterIP4-clone
-              Resource: ClusterIP4 (class=ocf provider=heartbeat type=IPaddr2)
-               Attributes: cidr_netmask=32 ip=192.168.0.94
-               Operations: monitor interval=30s (ClusterIP4-monitor-interval-30s)
-             Resource: ClusterIP5 (class=ocf provider=heartbeat type=IPaddr2)
-              Attributes: cidr_netmask=32 ip=192.168.0.95
-              Operations: monitor interval=30s (ClusterIP5-monitor-interval-30s)
+              Resource: ClusterIP6 (class=ocf provider=heartbeat type=IPaddr2)
+                Attributes: ClusterIP6-instance_attributes
+                  cidr_netmask=32
+                  ip=192.168.0.96
+                Operations:
+                  monitor: ClusterIP6-monitor-interval-30s
+                    interval=30s
+              Resource: ClusterIP5 (class=ocf provider=heartbeat type=IPaddr2)
+                Attributes: ClusterIP5-instance_attributes
+                  cidr_netmask=32
+                  ip=192.168.0.95
+                Operations:
+                  monitor: ClusterIP5-monitor-interval-30s
+                    interval=30s
+              Group: TestGroup1
+                Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
+                  Attributes: ClusterIP-instance_attributes
+                    cidr_netmask=32
+                    ip=192.168.0.99
+                  Operations:
+                    monitor: ClusterIP-monitor-interval-30s
+                      interval=30s
+              Group: TestGroup2
+                Resource: ClusterIP2 (class=ocf provider=heartbeat type=IPaddr2)
+                  Attributes: ClusterIP2-instance_attributes
+                    cidr_netmask=32
+                    ip=192.168.0.92
+                  Operations:
+                    monitor: ClusterIP2-monitor-interval-30s
+                      interval=30s
+                Resource: ClusterIP3 (class=ocf provider=heartbeat type=IPaddr2)
+                  Attributes: ClusterIP3-instance_attributes
+                    cidr_netmask=32
+                    ip=192.168.0.93
+                  Operations:
+                    monitor: ClusterIP3-monitor-interval-30s
+                      interval=30s
+              Clone: ClusterIP4-clone
+                Resource: ClusterIP4 (class=ocf provider=heartbeat type=IPaddr2)
+                  Attributes: ClusterIP4-instance_attributes
+                    cidr_netmask=32
+                    ip=192.168.0.94
+                  Operations:
+                    monitor: ClusterIP4-monitor-interval-30s
+                      interval=30s
 
             Stonith Devices:
             Fencing Levels:
@@ -2179,13 +2489,20 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config".split(),
             outdent(
                 """\
-             Clone: GroupMaster
-              Meta Attrs: promotable=true
+            Clone: GroupMaster
+              Meta Attributes:
+                promotable=true
               Group: Group
-               Resource: D0 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10s timeout=20s (D0-monitor-interval-10s)
-               Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
+                Resource: D0 (class=ocf provider=heartbeat type=Dummy)
+                  Operations:
+                    monitor: D0-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
+                Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+                  Operations:
+                    monitor: D1-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
             """
             ),
         )
@@ -2242,12 +2559,18 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config".split(),
             outdent(
                 """\
-             Clone: gr-clone
+            Clone: gr-clone
               Group: gr
-               Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10s timeout=20s (dummy1-monitor-interval-10s)
-               Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10s timeout=20s (dummy2-monitor-interval-10s)
+                Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
+                  Operations:
+                    monitor: dummy1-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
+                Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
+                  Operations:
+                    monitor: dummy2-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
             """
             ),
         )
@@ -2262,11 +2585,17 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config".split(),
             outdent(
                 """\
-             Group: gr
+            Group: gr
               Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10s timeout=20s (dummy1-monitor-interval-10s)
+                Operations:
+                  monitor: dummy1-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
               Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10s timeout=20s (dummy2-monitor-interval-10s)
+                Operations:
+                  monitor: dummy2-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
             """
             ),
         )
@@ -2280,12 +2609,18 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config".split(),
             outdent(
                 """\
-             Clone: gr-clone
+            Clone: gr-clone
               Group: gr
-               Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10s timeout=20s (dummy1-monitor-interval-10s)
-               Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10s timeout=20s (dummy2-monitor-interval-10s)
+                Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
+                  Operations:
+                    monitor: dummy1-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
+                Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
+                  Operations:
+                    monitor: dummy2-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
             """
             ),
         )
@@ -2300,11 +2635,17 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config".split(),
             outdent(
                 """\
-             Group: gr
+            Group: gr
               Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10s timeout=20s (dummy1-monitor-interval-10s)
+                Operations:
+                  monitor: dummy1-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
               Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10s timeout=20s (dummy2-monitor-interval-10s)
+                Operations:
+                  monitor: dummy2-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
             """
             ),
         )
@@ -2318,12 +2659,18 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config".split(),
             outdent(
                 """\
-             Clone: gr-clone
+            Clone: gr-clone
               Group: gr
-               Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10s timeout=20s (dummy1-monitor-interval-10s)
-               Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10s timeout=20s (dummy2-monitor-interval-10s)
+                Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
+                  Operations:
+                    monitor: dummy1-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
+                Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
+                  Operations:
+                    monitor: dummy2-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
             """
             ),
         )
@@ -2340,12 +2687,18 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config".split(),
             outdent(
                 """\
-             Clone: gr-clone
+            Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                monitor: dummy1-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
+            Clone: gr-clone
               Group: gr
-               Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10s timeout=20s (dummy2-monitor-interval-10s)
-             Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10s timeout=20s (dummy1-monitor-interval-10s)
+                Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
+                  Operations:
+                    monitor: dummy2-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
             """
             ),
         )
@@ -2360,10 +2713,16 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config".split(),
             outdent(
                 """\
-             Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10s timeout=20s (dummy1-monitor-interval-10s)
-             Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10s timeout=20s (dummy2-monitor-interval-10s)
+            Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                monitor: dummy1-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
+            Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                monitor: dummy2-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
             """
             ),
         )
@@ -2408,16 +2767,31 @@ monitor interval=20 (A-monitor-interval-20)
         self.assert_pcs_success(
             "resource config".split(),
             outdent(
-                """\
-             Group: gr
+                f"""\
+            Group: gr
               Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
-               Operations: monitor interval=10s role=Master timeout=20s (dummy1-monitor-interval-10s)
-                           monitor interval=11 role=Slave timeout=20s (dummy1-monitor-interval-11)
-             Clone: dummy2-master
-              Meta Attrs: promotable=true
+                Operations:
+                  monitor: dummy1-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
+                    role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                  monitor: dummy1-monitor-interval-11
+                    interval=11
+                    timeout=20s
+                    role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+            Clone: dummy2-master
+              Meta Attributes:
+                promotable=true
               Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
-               Operations: monitor interval=10s role=Master timeout=20s (dummy2-monitor-interval-10s)
-                           monitor interval=11 role=Slave timeout=20s (dummy2-monitor-interval-11)
+                Operations:
+                  monitor: dummy2-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
+                    role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                  monitor: dummy2-monitor-interval-11
+                    interval=11
+                    timeout=20s
+                    role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
             """
             ),
         )
@@ -2431,14 +2805,28 @@ monitor interval=20 (A-monitor-interval-20)
         self.assert_pcs_success(
             "resource config".split(),
             outdent(
-                """\
-             Group: gr
+                f"""\
+            Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
+              Operations:
+                monitor: dummy2-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
+                  role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                monitor: dummy2-monitor-interval-11
+                  interval=11
+                  timeout=20s
+                  role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+            Group: gr
               Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
-               Operations: monitor interval=10s role=Master timeout=20s (dummy1-monitor-interval-10s)
-                           monitor interval=11 role=Slave timeout=20s (dummy1-monitor-interval-11)
-             Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
-              Operations: monitor interval=10s role=Master timeout=20s (dummy2-monitor-interval-10s)
-                          monitor interval=11 role=Slave timeout=20s (dummy2-monitor-interval-11)
+                Operations:
+                  monitor: dummy1-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
+                    role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                  monitor: dummy1-monitor-interval-11
+                    interval=11
+                    timeout=20s
+                    role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
             """
             ),
         )
@@ -2458,16 +2846,31 @@ monitor interval=20 (A-monitor-interval-20)
         self.assert_pcs_success(
             "resource config".split(),
             outdent(
-                """\
-             Clone: gr-master
-              Meta Attrs: promotable=true
+                f"""\
+            Clone: gr-master
+              Meta Attributes:
+                promotable=true
               Group: gr
-               Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
-                Operations: monitor interval=10s role=Master timeout=20s (dummy1-monitor-interval-10s)
-                            monitor interval=11 role=Slave timeout=20s (dummy1-monitor-interval-11)
-               Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
-                Operations: monitor interval=10s role=Master timeout=20s (dummy2-monitor-interval-10s)
-                            monitor interval=11 role=Slave timeout=20s (dummy2-monitor-interval-11)
+                Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
+                  Operations:
+                    monitor: dummy1-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
+                      role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                    monitor: dummy1-monitor-interval-11
+                      interval=11
+                      timeout=20s
+                      role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
+                  Operations:
+                    monitor: dummy2-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
+                      role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                    monitor: dummy2-monitor-interval-11
+                      interval=11
+                      timeout=20s
+                      role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
             """
             ),
         )
@@ -2481,14 +2884,28 @@ monitor interval=20 (A-monitor-interval-20)
         self.assert_pcs_success(
             "resource config".split(),
             outdent(
-                """\
-             Group: gr
+                f"""\
+            Group: gr
               Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
-               Operations: monitor interval=10s role=Master timeout=20s (dummy1-monitor-interval-10s)
-                           monitor interval=11 role=Slave timeout=20s (dummy1-monitor-interval-11)
+                Operations:
+                  monitor: dummy1-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
+                    role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                  monitor: dummy1-monitor-interval-11
+                    interval=11
+                    timeout=20s
+                    role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
               Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
-               Operations: monitor interval=10s role=Master timeout=20s (dummy2-monitor-interval-10s)
-                           monitor interval=11 role=Slave timeout=20s (dummy2-monitor-interval-11)
+                Operations:
+                  monitor: dummy2-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
+                    role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                  monitor: dummy2-monitor-interval-11
+                    interval=11
+                    timeout=20s
+                    role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
             """
             ),
         )
@@ -2502,16 +2919,31 @@ monitor interval=20 (A-monitor-interval-20)
         self.assert_pcs_success(
             "resource config".split(),
             outdent(
-                """\
-             Clone: gr-master
-              Meta Attrs: promotable=true
+                f"""\
+            Clone: gr-master
+              Meta Attributes:
+                promotable=true
               Group: gr
-               Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
-                Operations: monitor interval=10s role=Master timeout=20s (dummy1-monitor-interval-10s)
-                            monitor interval=11 role=Slave timeout=20s (dummy1-monitor-interval-11)
-               Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
-                Operations: monitor interval=10s role=Master timeout=20s (dummy2-monitor-interval-10s)
-                            monitor interval=11 role=Slave timeout=20s (dummy2-monitor-interval-11)
+                Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
+                  Operations:
+                    monitor: dummy1-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
+                      role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                    monitor: dummy1-monitor-interval-11
+                      interval=11
+                      timeout=20s
+                      role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
+                  Operations:
+                    monitor: dummy2-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
+                      role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                    monitor: dummy2-monitor-interval-11
+                      interval=11
+                      timeout=20s
+                      role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
             """
             ),
         )
@@ -2525,14 +2957,28 @@ monitor interval=20 (A-monitor-interval-20)
         self.assert_pcs_success(
             "resource config".split(),
             outdent(
-                """\
-             Group: gr
+                f"""\
+            Group: gr
               Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
-               Operations: monitor interval=10s role=Master timeout=20s (dummy1-monitor-interval-10s)
-                           monitor interval=11 role=Slave timeout=20s (dummy1-monitor-interval-11)
+                Operations:
+                  monitor: dummy1-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
+                    role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                  monitor: dummy1-monitor-interval-11
+                    interval=11
+                    timeout=20s
+                    role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
               Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
-               Operations: monitor interval=10s role=Master timeout=20s (dummy2-monitor-interval-10s)
-                           monitor interval=11 role=Slave timeout=20s (dummy2-monitor-interval-11)
+                Operations:
+                  monitor: dummy2-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
+                    role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                  monitor: dummy2-monitor-interval-11
+                    interval=11
+                    timeout=20s
+                    role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
             """
             ),
         )
@@ -2552,16 +2998,31 @@ monitor interval=20 (A-monitor-interval-20)
         self.assert_pcs_success(
             "resource config".split(),
             outdent(
-                """\
-             Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
-              Operations: monitor interval=10s role=Master timeout=20s (dummy2-monitor-interval-10s)
-                          monitor interval=11 role=Slave timeout=20s (dummy2-monitor-interval-11)
-             Clone: gr-master
-              Meta Attrs: promotable=true
+                f"""\
+            Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
+              Operations:
+                monitor: dummy2-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
+                  role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                monitor: dummy2-monitor-interval-11
+                  interval=11
+                  timeout=20s
+                  role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+            Clone: gr-master
+              Meta Attributes:
+                promotable=true
               Group: gr
-               Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
-                Operations: monitor interval=10s role=Master timeout=20s (dummy1-monitor-interval-10s)
-                            monitor interval=11 role=Slave timeout=20s (dummy1-monitor-interval-11)
+                Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
+                  Operations:
+                    monitor: dummy1-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
+                      role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                    monitor: dummy1-monitor-interval-11
+                      interval=11
+                      timeout=20s
+                      role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
             """
             ),
         )
@@ -2575,13 +3036,27 @@ monitor interval=20 (A-monitor-interval-20)
         self.assert_pcs_success(
             "resource config".split(),
             outdent(
-                """\
-             Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
-              Operations: monitor interval=10s role=Master timeout=20s (dummy2-monitor-interval-10s)
-                          monitor interval=11 role=Slave timeout=20s (dummy2-monitor-interval-11)
-             Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
-              Operations: monitor interval=10s role=Master timeout=20s (dummy1-monitor-interval-10s)
-                          monitor interval=11 role=Slave timeout=20s (dummy1-monitor-interval-11)
+                f"""\
+            Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
+              Operations:
+                monitor: dummy2-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
+                  role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                monitor: dummy2-monitor-interval-11
+                  interval=11
+                  timeout=20s
+                  role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+            Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
+              Operations:
+                monitor: dummy1-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
+                  role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                monitor: dummy1-monitor-interval-11
+                  interval=11
+                  timeout=20s
+                  role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
             """
             ),
         )
@@ -2600,16 +3075,31 @@ monitor interval=20 (A-monitor-interval-20)
         self.assert_pcs_success(
             "resource config".split(),
             outdent(
-                """\
-             Clone: gr-master
-              Meta Attrs: promotable=true
+                f"""\
+            Clone: gr-master
+              Meta Attributes:
+                promotable=true
               Group: gr
-               Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
-                Operations: monitor interval=10s role=Master timeout=20s (dummy1-monitor-interval-10s)
-                            monitor interval=11 role=Slave timeout=20s (dummy1-monitor-interval-11)
-               Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
-                Operations: monitor interval=10s role=Master timeout=20s (dummy2-monitor-interval-10s)
-                            monitor interval=11 role=Slave timeout=20s (dummy2-monitor-interval-11)
+                Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
+                  Operations:
+                    monitor: dummy1-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
+                      role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                    monitor: dummy1-monitor-interval-11
+                      interval=11
+                      timeout=20s
+                      role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
+                  Operations:
+                    monitor: dummy2-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
+                      role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                    monitor: dummy2-monitor-interval-11
+                      interval=11
+                      timeout=20s
+                      role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
             """
             ),
         )
@@ -2623,16 +3113,31 @@ monitor interval=20 (A-monitor-interval-20)
         self.assert_pcs_success(
             "resource config".split(),
             outdent(
-                """\
-             Clone: gr-master
-              Meta Attrs: promotable=true
+                f"""\
+            Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
+              Operations:
+                monitor: dummy2-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
+                  role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                monitor: dummy2-monitor-interval-11
+                  interval=11
+                  timeout=20s
+                  role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+            Clone: gr-master
+              Meta Attributes:
+                promotable=true
               Group: gr
-               Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
-                Operations: monitor interval=10s role=Master timeout=20s (dummy1-monitor-interval-10s)
-                            monitor interval=11 role=Slave timeout=20s (dummy1-monitor-interval-11)
-             Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
-              Operations: monitor interval=10s role=Master timeout=20s (dummy2-monitor-interval-10s)
-                          monitor interval=11 role=Slave timeout=20s (dummy2-monitor-interval-11)
+                Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
+                  Operations:
+                    monitor: dummy1-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
+                      role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                    monitor: dummy1-monitor-interval-11
+                      interval=11
+                      timeout=20s
+                      role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
             """
             ),
         )
@@ -2659,14 +3164,22 @@ monitor interval=20 (A-monitor-interval-20)
         o, r = pcs(self.temp_cib.name, ["resource", "config"])
         ac(
             o,
-            """\
- Group: AG
-  Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-   Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
- Clone: D0-clone
-  Resource: D0 (class=ocf provider=heartbeat type=Dummy)
-   Operations: monitor interval=10s timeout=20s (D0-monitor-interval-10s)
-""",
+            outdent(
+                """\
+            Group: AG
+              Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+                Operations:
+                  monitor: D1-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
+            Clone: D0-clone
+              Resource: D0 (class=ocf provider=heartbeat type=Dummy)
+                Operations:
+                  monitor: D0-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
+            """
+            ),
         )
         assert r == 0
 
@@ -2677,14 +3190,22 @@ monitor interval=20 (A-monitor-interval-20)
         o, r = pcs(self.temp_cib.name, ["resource", "config"])
         ac(
             o,
-            """\
- Clone: D0-clone
-  Resource: D0 (class=ocf provider=heartbeat type=Dummy)
-   Operations: monitor interval=10s timeout=20s (D0-monitor-interval-10s)
- Clone: D1-clone
-  Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-   Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
-""",
+            outdent(
+                """\
+            Clone: D0-clone
+              Resource: D0 (class=ocf provider=heartbeat type=Dummy)
+                Operations:
+                  monitor: D0-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
+            Clone: D1-clone
+              Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+                Operations:
+                  monitor: D1-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
+            """
+            ),
         )
         assert r == 0
 
@@ -2710,15 +3231,24 @@ monitor interval=20 (A-monitor-interval-20)
         o, r = pcs(self.temp_cib.name, "resource config".split())
         ac(
             o,
-            """\
- Group: AG
-  Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-   Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
- Clone: D0-clone
-  Meta Attrs: promotable=true
-  Resource: D0 (class=ocf provider=heartbeat type=Dummy)
-   Operations: monitor interval=10s timeout=20s (D0-monitor-interval-10s)
-""",
+            outdent(
+                """\
+            Group: AG
+              Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+                Operations:
+                  monitor: D1-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
+            Clone: D0-clone
+              Meta Attributes: D0-clone-meta_attributes
+                promotable=true
+              Resource: D0 (class=ocf provider=heartbeat type=Dummy)
+                Operations:
+                  monitor: D0-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
+            """
+            ),
         )
         assert r == 0
 
@@ -2729,16 +3259,26 @@ monitor interval=20 (A-monitor-interval-20)
         o, r = pcs(self.temp_cib.name, "resource config".split())
         ac(
             o,
-            """\
- Clone: D0-clone
-  Meta Attrs: promotable=true
-  Resource: D0 (class=ocf provider=heartbeat type=Dummy)
-   Operations: monitor interval=10s timeout=20s (D0-monitor-interval-10s)
- Clone: D1-clone
-  Meta Attrs: promotable=true
-  Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-   Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
-""",
+            outdent(
+                """\
+            Clone: D0-clone
+              Meta Attributes: D0-clone-meta_attributes
+                promotable=true
+              Resource: D0 (class=ocf provider=heartbeat type=Dummy)
+                Operations:
+                  monitor: D0-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
+            Clone: D1-clone
+              Meta Attributes: D1-clone-meta_attributes
+                promotable=true
+              Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+                Operations:
+                  monitor: D1-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
+            """
+            ),
         )
         assert r == 0
 
@@ -2805,21 +3345,36 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config".split(),
             outdent(
                 """\
-             Clone: D0-clone
+            Clone: D0-clone
               Resource: D0 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10s timeout=20s (D0-monitor-interval-10s)
-             Clone: D3-clone
-              Meta Attrs: promotable=true
+                Operations:
+                  monitor: D0-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
+            Clone: D3-clone
+              Meta Attributes: D3-clone-meta_attributes
+                promotable=true
               Resource: D3 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10s timeout=20s (D3-monitor-interval-10s)
-             Clone: D1-master-custom
-              Meta Attrs: promotable=true
+                Operations:
+                  monitor: D3-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
+            Clone: D1-master-custom
+              Meta Attributes:
+                promotable=true
               Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
-             Clone: D2-master
-              Meta Attrs: promotable=true
+                Operations:
+                  monitor: D1-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
+            Clone: D2-master
+              Meta Attributes:
+                promotable=true
               Resource: D2 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10s timeout=20s (D2-monitor-interval-10s)
+                Operations:
+                  monitor: D2-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
             """
             ),
         )
@@ -2845,18 +3400,32 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config".split(),
             outdent(
                 """\
-             Clone: D3-clone
-              Meta Attrs: promotable=true
+            Resource: D0 (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                monitor: D0-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
+            Resource: D2 (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                monitor: D2-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
+            Clone: D3-clone
+              Meta Attributes: D3-clone-meta_attributes
+                promotable=true
               Resource: D3 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10s timeout=20s (D3-monitor-interval-10s)
-             Clone: D1-master-custom
-              Meta Attrs: promotable=true
+                Operations:
+                  monitor: D3-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
+            Clone: D1-master-custom
+              Meta Attributes:
+                promotable=true
               Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
-             Resource: D0 (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10s timeout=20s (D0-monitor-interval-10s)
-             Resource: D2 (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10s timeout=20s (D2-monitor-interval-10s)
+                Operations:
+                  monitor: D1-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
             """
             ),
         )
@@ -2880,9 +3449,13 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config".split(),
             outdent(
                 """\
-                 Resource: D2 (class=lsb type=network)
-                  Attributes: foo=bar
-                  Operations: monitor interval=15 timeout=15 (D2-monitor-interval-15)
+                Resource: D2 (class=lsb type=network)
+                  Attributes: D2-instance_attributes
+                    foo=bar
+                  Operations:
+                    monitor: D2-monitor-interval-15
+                      interval=15
+                      timeout=15
                 """
             ),
         )
@@ -2903,9 +3476,14 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config".split(),
             outdent(
                 """\
-                 Resource: D2 (class=lsb type=network)
-                  Attributes: bar=baz foo=bar
-                  Operations: monitor interval=15 timeout=15 (D2-monitor-interval-15)
+                Resource: D2 (class=lsb type=network)
+                  Attributes: D2-instance_attributes
+                    bar=baz
+                    foo=bar
+                  Operations:
+                    monitor: D2-monitor-interval-15
+                      interval=15
+                      timeout=15
                 """
             ),
         )
@@ -2980,12 +3558,17 @@ monitor interval=20 (A-monitor-interval-20)
         o, r = pcs(self.temp_cib.name, "resource config".split())
         ac(
             o,
-            """\
- Clone: DGroup-clone
-  Group: DGroup
-   Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-    Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
-""",
+            outdent(
+                """\
+            Clone: DGroup-clone
+              Group: DGroup
+                Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+                  Operations:
+                    monitor: D1-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
+            """
+            ),
         )
         assert r == 0
 
@@ -3013,13 +3596,19 @@ monitor interval=20 (A-monitor-interval-20)
         assert r == 0
         ac(
             o,
-            """\
- Clone: DGroup-clone
-  Meta Attrs: promotable=true
-  Group: DGroup
-   Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-    Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
-""",
+            outdent(
+                """\
+            Clone: DGroup-clone
+              Meta Attributes: DGroup-clone-meta_attributes
+                promotable=true
+              Group: DGroup
+                Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+                  Operations:
+                    monitor: D1-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
+            """
+            ),
         )
 
         o, r = pcs(self.temp_cib.name, "resource promotable DGroup".split())
@@ -3151,11 +3740,17 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config".split(),
             outdent(
                 """\
-             Resource: dummy-clone (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10s timeout=20s (dummy-clone-monitor-interval-10s)
-             Clone: dummy-clone-1
+            Resource: dummy-clone (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                monitor: dummy-clone-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
+            Clone: dummy-clone-1
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
+                Operations:
+                  monitor: dummy-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
             """
             ),
         )
@@ -3175,11 +3770,17 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config".split(),
             outdent(
                 """\
-             Resource: dummy-clone (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10s timeout=20s (dummy-clone-monitor-interval-10s)
-             Clone: dummy-clone-1
+            Resource: dummy-clone (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                monitor: dummy-clone-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
+            Clone: dummy-clone-1
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
+                Operations:
+                  monitor: dummy-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
             """
             ),
         )
@@ -3209,12 +3810,19 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config".split(),
             outdent(
                 """\
-             Resource: dummy-clone (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10s timeout=20s (dummy-clone-monitor-interval-10s)
-             Clone: dummy-clone-1
-              Meta Attrs: promotable=true
+            Resource: dummy-clone (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                monitor: dummy-clone-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
+            Clone: dummy-clone-1
+              Meta Attributes: dummy-clone-1-meta_attributes
+                promotable=true
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
+                Operations:
+                  monitor: dummy-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
             """
             ),
         )
@@ -3234,12 +3842,19 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config".split(),
             outdent(
                 """\
-             Resource: dummy-clone (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10s timeout=20s (dummy-clone-monitor-interval-10s)
-             Clone: dummy-clone-1
-              Meta Attrs: promotable=true
+            Resource: dummy-clone (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                monitor: dummy-clone-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
+            Clone: dummy-clone-1
+              Meta Attributes: dummy-clone-1-meta_attributes
+                promotable=true
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
+                Operations:
+                  monitor: dummy-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
             """
             ),
         )
@@ -3256,9 +3871,12 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config".split(),
             outdent(
                 """\
-             Clone: D1-clone
+            Clone: D1-clone
               Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
+                Operations:
+                  monitor: D1-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
             """
             ),
         )
@@ -3273,10 +3891,14 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config".split(),
             outdent(
                 """\
-             Clone: D1-clone
-              Meta Attrs: foo=bar
+            Clone: D1-clone
+              Meta Attributes: D1-clone-meta_attributes
+                foo=bar
               Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
+                Operations:
+                  monitor: D1-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
             """
             ),
         )
@@ -3287,10 +3909,15 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config".split(),
             outdent(
                 """\
-             Clone: D1-clone
-              Meta Attrs: bar=baz foo=bar
+            Clone: D1-clone
+              Meta Attributes: D1-clone-meta_attributes
+                bar=baz
+                foo=bar
               Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
+                Operations:
+                  monitor: D1-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
             """
             ),
         )
@@ -3303,10 +3930,14 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config".split(),
             outdent(
                 """\
-             Clone: D1-clone
-              Meta Attrs: bar=baz
+            Clone: D1-clone
+              Meta Attributes: D1-clone-meta_attributes
+                bar=baz
               Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
+                Operations:
+                  monitor: D1-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
             """
             ),
         )
@@ -3338,10 +3969,16 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config".split(),
             outdent(
                 """\
-             Resource: A (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10s timeout=20s (A-monitor-interval-10s)
-             Resource: B (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10s timeout=20s (B-monitor-interval-10s)
+            Resource: A (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                monitor: A-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
+            Resource: B (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                monitor: B-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
             """
             ),
         )
@@ -3438,10 +4075,14 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config".split(),
             outdent(
                 """\
-             Clone: AGMaster
-              Meta Attrs: promotable=true
+            Clone: AGMaster
+              Meta Attributes:
+                promotable=true
               Resource: A (class=ocf provider=heartbeat type=Dummy)
-               Operations: monitor interval=10s timeout=20s (A-monitor-interval-10s)
+                Operations:
+                  monitor: A-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
             """
             ),
         )
@@ -3469,12 +4110,18 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config".split(),
             outdent(
                 """\
-             Clone: DG-clone
+            Clone: DG-clone
               Group: DG
-               Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
-               Resource: D2 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10s timeout=20s (D2-monitor-interval-10s)
+                Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+                  Operations:
+                    monitor: D1-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
+                Resource: D2 (class=ocf provider=heartbeat type=Dummy)
+                  Operations:
+                    monitor: D2-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
             """
             ),
         )
@@ -3543,10 +4190,16 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config".split(),
             outdent(
                 """\
-             Resource: B (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10s timeout=20s (B-monitor-interval-10s)
-             Resource: C (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10s timeout=20s (C-monitor-interval-10s)
+            Resource: B (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                monitor: B-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
+            Resource: C (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                monitor: C-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
             """
             ),
         )
@@ -3573,12 +4226,19 @@ monitor interval=20 (A-monitor-interval-20)
         self.assert_pcs_success(
             "resource config".split(),
             outdent(
-                """\
-             Resource: B (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=30s (B-monitor-interval-30s)
-                          monitor interval=31s role=Master (B-monitor-interval-31s)
-             Resource: C (class=ocf provider=heartbeat type=Dummy)
-              Operations: monitor interval=10s timeout=20s (C-monitor-interval-10s)
+                f"""\
+            Resource: B (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                monitor: B-monitor-interval-30s
+                  interval=30s
+                monitor: B-monitor-interval-31s
+                  interval=31s
+                  role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+            Resource: C (class=ocf provider=heartbeat type=Dummy)
+              Operations:
+                monitor: C-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
             """
             ),
         )
@@ -3700,19 +4360,40 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config".split(),
             outdent(
                 """\
-             Resource: myip (class=ocf provider=heartbeat type=IPaddr2)
-              Operations: monitor interval=10s timeout=20s (myip-monitor-interval-10s)
-             Resource: myip2 (class=ocf provider=heartbeat type=IPaddr2)
-              Attributes: ip=3.3.3.3
-              Operations: monitor interval=10s timeout=20s (myip2-monitor-interval-10s)
-             Resource: myfs (class=ocf provider=heartbeat type=Filesystem)
-              Operations: monitor interval=20s timeout=40s (myfs-monitor-interval-20s)
-             Resource: myfs2 (class=ocf provider=heartbeat type=Filesystem)
-              Attributes: device=x directory=y
-              Operations: monitor interval=20s timeout=40s (myfs2-monitor-interval-20s)
-             Resource: myfs3 (class=ocf provider=heartbeat type=Filesystem)
-              Attributes: device=x directory=y fstype=z
-              Operations: monitor interval=20s timeout=40s (myfs3-monitor-interval-20s)
+            Resource: myip (class=ocf provider=heartbeat type=IPaddr2)
+              Operations:
+                monitor: myip-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
+            Resource: myip2 (class=ocf provider=heartbeat type=IPaddr2)
+              Attributes: myip2-instance_attributes
+                ip=3.3.3.3
+              Operations:
+                monitor: myip2-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
+            Resource: myfs (class=ocf provider=heartbeat type=Filesystem)
+              Operations:
+                monitor: myfs-monitor-interval-20s
+                  interval=20s
+                  timeout=40s
+            Resource: myfs2 (class=ocf provider=heartbeat type=Filesystem)
+              Attributes: myfs2-instance_attributes
+                device=x
+                directory=y
+              Operations:
+                monitor: myfs2-monitor-interval-20s
+                  interval=20s
+                  timeout=40s
+            Resource: myfs3 (class=ocf provider=heartbeat type=Filesystem)
+              Attributes: myfs3-instance_attributes
+                device=x
+                directory=y
+                fstype=z
+              Operations:
+                monitor: myfs3-monitor-interval-20s
+                  interval=20s
+                  timeout=40s
             """
             ),
         )
@@ -3747,14 +4428,23 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config dummies-clone".split(),
             outdent(
                 """\
-             Clone: dummies-clone
+            Clone: dummies-clone
               Group: dummies
-               Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10s timeout=20s (dummy1-monitor-interval-10s)
-               Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10s timeout=20s (dummy2-monitor-interval-10s)
-               Resource: dummy3 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10s timeout=20s (dummy3-monitor-interval-10s)
+                Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
+                  Operations:
+                    monitor: dummy1-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
+                Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
+                  Operations:
+                    monitor: dummy2-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
+                Resource: dummy3 (class=ocf provider=heartbeat type=Dummy)
+                  Operations:
+                    monitor: dummy3-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
             """
             ),
         )
@@ -3813,14 +4503,23 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config dummies-clone".split(),
             outdent(
                 """\
-             Clone: dummies-clone
+            Clone: dummies-clone
               Group: dummies
-               Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10s timeout=20s (dummy1-monitor-interval-10s)
-               Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10s timeout=20s (dummy2-monitor-interval-10s)
-               Resource: dummy3 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10s timeout=20s (dummy3-monitor-interval-10s)
+                Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
+                  Operations:
+                    monitor: dummy1-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
+                Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
+                  Operations:
+                    monitor: dummy2-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
+                Resource: dummy3 (class=ocf provider=heartbeat type=Dummy)
+                  Operations:
+                    monitor: dummy3-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
             """
             ),
         )
@@ -3869,15 +4568,25 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config dummies-master".split(),
             outdent(
                 """\
-             Clone: dummies-master
-              Meta Attrs: promotable=true
+            Clone: dummies-master
+              Meta Attributes:
+                promotable=true
               Group: dummies
-               Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10s timeout=20s (dummy1-monitor-interval-10s)
-               Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10s timeout=20s (dummy2-monitor-interval-10s)
-               Resource: dummy3 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10s timeout=20s (dummy3-monitor-interval-10s)
+                Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
+                  Operations:
+                    monitor: dummy1-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
+                Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
+                  Operations:
+                    monitor: dummy2-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
+                Resource: dummy3 (class=ocf provider=heartbeat type=Dummy)
+                  Operations:
+                    monitor: dummy3-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
             """
             ),
         )
@@ -3935,15 +4644,25 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config dummies-master".split(),
             outdent(
                 """\
-             Clone: dummies-master
-              Meta Attrs: promotable=true
+            Clone: dummies-master
+              Meta Attributes:
+                promotable=true
               Group: dummies
-               Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10s timeout=20s (dummy1-monitor-interval-10s)
-               Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10s timeout=20s (dummy2-monitor-interval-10s)
-               Resource: dummy3 (class=ocf provider=heartbeat type=Dummy)
-                Operations: monitor interval=10s timeout=20s (dummy3-monitor-interval-10s)
+                Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
+                  Operations:
+                    monitor: dummy1-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
+                Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
+                  Operations:
+                    monitor: dummy2-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
+                Resource: dummy3 (class=ocf provider=heartbeat type=Dummy)
+                  Operations:
+                    monitor: dummy3-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
             """
             ),
         )
@@ -3987,22 +4706,40 @@ monitor interval=20 (A-monitor-interval-20)
 
         status = outdent(
             """\
-             Resource: D1 (class=ocf provider=pacemaker type=Dummy)
-              Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
-             Group: GR
+            Resource: D1 (class=ocf provider=pacemaker type=Dummy)
+              Operations:
+                monitor: D1-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
+            Group: GR
               Resource: DG1 (class=ocf provider=pacemaker type=Dummy)
-               Operations: monitor interval=10s timeout=20s (DG1-monitor-interval-10s)
+                Operations:
+                  monitor: DG1-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
               Resource: DG2 (class=ocf provider=pacemaker type=Dummy)
-               Operations: monitor interval=10s timeout=20s (DG2-monitor-interval-10s)
-             Clone: DC-clone
+                Operations:
+                  monitor: DG2-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
+            Clone: DC-clone
               Resource: DC (class=ocf provider=pacemaker type=Dummy)
-               Operations: monitor interval=10s timeout=20s (DC-monitor-interval-10s)
-             Clone: GRC-clone
+                Operations:
+                  monitor: DC-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
+            Clone: GRC-clone
               Group: GRC
-               Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
-                Operations: monitor interval=10s timeout=20s (DGC1-monitor-interval-10s)
-               Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
-                Operations: monitor interval=10s timeout=20s (DGC2-monitor-interval-10s)
+                Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
+                  Operations:
+                    monitor: DGC1-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
+                Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
+                  Operations:
+                    monitor: DGC2-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
             """
         )
 
@@ -4037,32 +4774,60 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config".split(),
             outdent(
                 """\
-             Resource: D1 (class=ocf provider=pacemaker type=Dummy)
-              Meta Attrs: resource-stickiness=0
-              Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
-             Group: GR
-              Meta Attrs: resource-stickiness=0
+            Resource: D1 (class=ocf provider=pacemaker type=Dummy)
+              Meta Attributes: D1-meta_attributes
+                resource-stickiness=0
+              Operations:
+                monitor: D1-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
+            Group: GR
+              Meta Attributes: GR-meta_attributes
+                resource-stickiness=0
               Resource: DG1 (class=ocf provider=pacemaker type=Dummy)
-               Meta Attrs: resource-stickiness=0
-               Operations: monitor interval=10s timeout=20s (DG1-monitor-interval-10s)
+                Meta Attributes: DG1-meta_attributes
+                  resource-stickiness=0
+                Operations:
+                  monitor: DG1-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
               Resource: DG2 (class=ocf provider=pacemaker type=Dummy)
-               Meta Attrs: resource-stickiness=0
-               Operations: monitor interval=10s timeout=20s (DG2-monitor-interval-10s)
-             Clone: DC-clone
-              Meta Attrs: resource-stickiness=0
+                Meta Attributes: DG2-meta_attributes
+                  resource-stickiness=0
+                Operations:
+                  monitor: DG2-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
+            Clone: DC-clone
+              Meta Attributes: DC-clone-meta_attributes
+                resource-stickiness=0
               Resource: DC (class=ocf provider=pacemaker type=Dummy)
-               Meta Attrs: resource-stickiness=0
-               Operations: monitor interval=10s timeout=20s (DC-monitor-interval-10s)
-             Clone: GRC-clone
-              Meta Attrs: resource-stickiness=0
+                Meta Attributes: DC-meta_attributes
+                  resource-stickiness=0
+                Operations:
+                  monitor: DC-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
+            Clone: GRC-clone
+              Meta Attributes: GRC-clone-meta_attributes
+                resource-stickiness=0
               Group: GRC
-               Meta Attrs: resource-stickiness=0
-               Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
-                Meta Attrs: resource-stickiness=0
-                Operations: monitor interval=10s timeout=20s (DGC1-monitor-interval-10s)
-               Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
-                Meta Attrs: resource-stickiness=0
-                Operations: monitor interval=10s timeout=20s (DGC2-monitor-interval-10s)
+                Meta Attributes: GRC-meta_attributes
+                  resource-stickiness=0
+                Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
+                  Meta Attributes: DGC1-meta_attributes
+                    resource-stickiness=0
+                  Operations:
+                    monitor: DGC1-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
+                Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
+                  Meta Attributes: DGC2-meta_attributes
+                    resource-stickiness=0
+                  Operations:
+                    monitor: DGC2-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
             """
             ),
         )
@@ -4082,26 +4847,48 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config".split(),
             outdent(
                 """\
-             Resource: D1 (class=ocf provider=pacemaker type=Dummy)
-              Meta Attrs: resource-stickiness=0
-              Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
-             Group: GR
+            Resource: D1 (class=ocf provider=pacemaker type=Dummy)
+              Meta Attributes: D1-meta_attributes
+                resource-stickiness=0
+              Operations:
+                monitor: D1-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
+            Group: GR
               Resource: DG1 (class=ocf provider=pacemaker type=Dummy)
-               Meta Attrs: resource-stickiness=0
-               Operations: monitor interval=10s timeout=20s (DG1-monitor-interval-10s)
+                Meta Attributes: DG1-meta_attributes
+                  resource-stickiness=0
+                Operations:
+                  monitor: DG1-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
               Resource: DG2 (class=ocf provider=pacemaker type=Dummy)
-               Operations: monitor interval=10s timeout=20s (DG2-monitor-interval-10s)
-             Clone: DC-clone
+                Operations:
+                  monitor: DG2-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
+            Clone: DC-clone
               Resource: DC (class=ocf provider=pacemaker type=Dummy)
-               Meta Attrs: resource-stickiness=0
-               Operations: monitor interval=10s timeout=20s (DC-monitor-interval-10s)
-             Clone: GRC-clone
+                Meta Attributes: DC-meta_attributes
+                  resource-stickiness=0
+                Operations:
+                  monitor: DC-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
+            Clone: GRC-clone
               Group: GRC
-               Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
-                Meta Attrs: resource-stickiness=0
-                Operations: monitor interval=10s timeout=20s (DGC1-monitor-interval-10s)
-               Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
-                Operations: monitor interval=10s timeout=20s (DGC2-monitor-interval-10s)
+                Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
+                  Meta Attributes: DGC1-meta_attributes
+                    resource-stickiness=0
+                  Operations:
+                    monitor: DGC1-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
+                Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
+                  Operations:
+                    monitor: DGC2-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
             """
             ),
         )
@@ -4121,26 +4908,48 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config".split(),
             outdent(
                 """\
-             Resource: D1 (class=ocf provider=pacemaker type=Dummy)
-              Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
-             Group: GR
+            Resource: D1 (class=ocf provider=pacemaker type=Dummy)
+              Operations:
+                monitor: D1-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
+            Group: GR
               Resource: DG1 (class=ocf provider=pacemaker type=Dummy)
-               Operations: monitor interval=10s timeout=20s (DG1-monitor-interval-10s)
+                Operations:
+                  monitor: DG1-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
               Resource: DG2 (class=ocf provider=pacemaker type=Dummy)
-               Operations: monitor interval=10s timeout=20s (DG2-monitor-interval-10s)
-             Clone: DC-clone
+                Operations:
+                  monitor: DG2-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
+            Clone: DC-clone
               Resource: DC (class=ocf provider=pacemaker type=Dummy)
-               Operations: monitor interval=10s timeout=20s (DC-monitor-interval-10s)
-             Clone: GRC-clone
-              Meta Attrs: resource-stickiness=0
+                Operations:
+                  monitor: DC-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
+            Clone: GRC-clone
+              Meta Attributes: GRC-clone-meta_attributes
+                resource-stickiness=0
               Group: GRC
-               Meta Attrs: resource-stickiness=0
-               Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
-                Meta Attrs: resource-stickiness=0
-                Operations: monitor interval=10s timeout=20s (DGC1-monitor-interval-10s)
-               Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
-                Meta Attrs: resource-stickiness=0
-                Operations: monitor interval=10s timeout=20s (DGC2-monitor-interval-10s)
+                Meta Attributes: GRC-meta_attributes
+                  resource-stickiness=0
+                Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
+                  Meta Attributes: DGC1-meta_attributes
+                    resource-stickiness=0
+                  Operations:
+                    monitor: DGC1-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
+                Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
+                  Meta Attributes: DGC2-meta_attributes
+                    resource-stickiness=0
+                  Operations:
+                    monitor: DGC2-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
             """
             ),
         )
@@ -4160,27 +4969,50 @@ monitor interval=20 (A-monitor-interval-20)
             "resource config".split(),
             outdent(
                 """\
-             Resource: D1 (class=ocf provider=pacemaker type=Dummy)
-              Operations: monitor interval=10s timeout=20s (D1-monitor-interval-10s)
-             Group: GR
-              Meta Attrs: resource-stickiness=0
+            Resource: D1 (class=ocf provider=pacemaker type=Dummy)
+              Operations:
+                monitor: D1-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
+            Group: GR
+              Meta Attributes: GR-meta_attributes
+                resource-stickiness=0
               Resource: DG1 (class=ocf provider=pacemaker type=Dummy)
-               Meta Attrs: resource-stickiness=0
-               Operations: monitor interval=10s timeout=20s (DG1-monitor-interval-10s)
+                Meta Attributes: DG1-meta_attributes
+                  resource-stickiness=0
+                Operations:
+                  monitor: DG1-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
               Resource: DG2 (class=ocf provider=pacemaker type=Dummy)
-               Meta Attrs: resource-stickiness=0
-               Operations: monitor interval=10s timeout=20s (DG2-monitor-interval-10s)
-             Clone: DC-clone
-              Meta Attrs: resource-stickiness=0
+                Meta Attributes: DG2-meta_attributes
+                  resource-stickiness=0
+                Operations:
+                  monitor: DG2-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
+            Clone: DC-clone
+              Meta Attributes: DC-clone-meta_attributes
+                resource-stickiness=0
               Resource: DC (class=ocf provider=pacemaker type=Dummy)
-               Meta Attrs: resource-stickiness=0
-               Operations: monitor interval=10s timeout=20s (DC-monitor-interval-10s)
-             Clone: GRC-clone
+                Meta Attributes: DC-meta_attributes
+                  resource-stickiness=0
+                Operations:
+                  monitor: DC-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
+            Clone: GRC-clone
               Group: GRC
-               Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
-                Operations: monitor interval=10s timeout=20s (DGC1-monitor-interval-10s)
-               Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
-                Operations: monitor interval=10s timeout=20s (DGC2-monitor-interval-10s)
+                Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
+                  Operations:
+                    monitor: DGC1-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
+                Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
+                  Operations:
+                    monitor: DGC2-monitor-interval-10s
+                      interval=10s
+                      timeout=20s
             """
             ),
         )
@@ -4700,18 +5532,33 @@ class MetaAttrs(
         output, returnVal = pcs(self.temp_cib.name, "resource config".split())
         ac(
             output,
-            """\
- Resource: D0 (class=ocf provider=heartbeat type=Dummy)
-  Attributes: test=testC test2=test2a
-  Meta Attrs: test5=test5a test7=test7a
-  Operations: monitor interval=35 (D0-monitor-interval-35)
- Group: TestRG
-  Meta Attrs: testrgmeta=mymeta testrgmeta2=mymeta2
-  Resource: D1 (class=ocf provider=heartbeat type=Dummy)
-   Attributes: test=testA test2=test2a
-   Meta Attrs: d1meta=superd1meta
-   Operations: monitor interval=30 (D1-monitor-interval-30)
-""",
+            outdent(
+                """\
+            Resource: D0 (class=ocf provider=heartbeat type=Dummy)
+              Attributes: D0-instance_attributes
+                test=testC
+                test2=test2a
+              Meta Attributes: D0-meta_attributes
+                test5=test5a
+                test7=test7a
+              Operations:
+                monitor: D0-monitor-interval-35
+                  interval=35
+            Group: TestRG
+              Meta Attributes: TestRG-meta_attributes
+                testrgmeta=mymeta
+                testrgmeta2=mymeta2
+              Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+                Attributes: D1-instance_attributes
+                  test=testA
+                  test2=test2a
+                Meta Attributes: D1-meta_attributes
+                  d1meta=superd1meta
+                Operations:
+                  monitor: D1-monitor-interval-30
+                    interval=30
+            """
+            ),
         )
         assert returnVal == 0
 
@@ -4876,10 +5723,18 @@ class UpdateInstanceAttrs(
             "resource config D0".split(),
             outdent(
                 """\
-             Resource: D0 (class=ocf provider=heartbeat type=Dummy)
-              Attributes: test=testB test2=testC test3=testD test4=test4A
-              Meta Attrs: test6= test7=test7a
-              Operations: monitor interval=35 (D0-monitor-interval-35)
+            Resource: D0 (class=ocf provider=heartbeat type=Dummy)
+              Attributes: D0-instance_attributes
+                test=testB
+                test2=testC
+                test3=testD
+                test4=test4A
+              Meta Attributes: D0-meta_attributes
+                test6=
+                test7=test7a
+              Operations:
+                monitor: D0-monitor-interval-35
+                  interval=35
             """
             ),
         )
@@ -5039,14 +5894,27 @@ class CloneMasterUpdate(TestCase, AssertPcsMixin):
             "resource config dummy-clone".split(),
             outdent(
                 """\
-             Clone: dummy-clone
+            Clone: dummy-clone
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-               Operations: migrate_from interval=0s timeout=20s (dummy-migrate_from-interval-0s)
-                           migrate_to interval=0s timeout=20s (dummy-migrate_to-interval-0s)
-                           monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
-                           reload interval=0s timeout=20s (dummy-reload-interval-0s)
-                           start interval=0s timeout=20s (dummy-start-interval-0s)
-                           stop interval=0s timeout=20s (dummy-stop-interval-0s)
+                Operations:
+                  migrate_from: dummy-migrate_from-interval-0s
+                    interval=0s
+                    timeout=20s
+                  migrate_to: dummy-migrate_to-interval-0s
+                    interval=0s
+                    timeout=20s
+                  monitor: dummy-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
+                  reload: dummy-reload-interval-0s
+                    interval=0s
+                    timeout=20s
+                  start: dummy-start-interval-0s
+                    interval=0s
+                    timeout=20s
+                  stop: dummy-stop-interval-0s
+                    interval=0s
+                    timeout=20s
             """
             ),
         )
@@ -5062,14 +5930,27 @@ class CloneMasterUpdate(TestCase, AssertPcsMixin):
             "resource config dummy-clone".split(),
             outdent(
                 """\
-             Clone: dummy-clone
+            Clone: dummy-clone
               Resource: dummy (class=ocf provider=heartbeat type=Dummy)
-               Operations: migrate_from interval=0s timeout=20s (dummy-migrate_from-interval-0s)
-                           migrate_to interval=0s timeout=20s (dummy-migrate_to-interval-0s)
-                           monitor interval=10s timeout=20s (dummy-monitor-interval-10s)
-                           reload interval=0s timeout=20s (dummy-reload-interval-0s)
-                           start interval=0s timeout=20s (dummy-start-interval-0s)
-                           stop interval=0s timeout=20s (dummy-stop-interval-0s)
+                Operations:
+                  migrate_from: dummy-migrate_from-interval-0s
+                    interval=0s
+                    timeout=20s
+                  migrate_to: dummy-migrate_to-interval-0s
+                    interval=0s
+                    timeout=20s
+                  monitor: dummy-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
+                  reload: dummy-reload-interval-0s
+                    interval=0s
+                    timeout=20s
+                  start: dummy-start-interval-0s
+                    interval=0s
+                    timeout=20s
+                  stop: dummy-stop-interval-0s
+                    interval=0s
+                    timeout=20s
             """
             ),
         )
@@ -5079,15 +5960,29 @@ class CloneMasterUpdate(TestCase, AssertPcsMixin):
         # order to test it, we need to put a master in the CIB without pcs.
         fixture_to_cib(self.temp_cib.name, fixture_master_xml("dummy"))
         show = outdent(
-            """\
-             Clone: dummy-master
-              Meta Attrs: promotable=true
+            f"""\
+            Clone: dummy-master
+              Meta Attributes:
+                promotable=true
               Resource: dummy (class=ocf provider=pacemaker type=Stateful)
-               Operations: monitor interval=10 role=Master timeout=20 (dummy-monitor-interval-10)
-                           monitor interval=11 role=Slave timeout=20 (dummy-monitor-interval-11)
-                           notify interval=0s timeout=5 (dummy-notify-interval-0s)
-                           start interval=0s timeout=20 (dummy-start-interval-0s)
-                           stop interval=0s timeout=20 (dummy-stop-interval-0s)
+                Operations:
+                  monitor: dummy-monitor-interval-10
+                    interval=10
+                    timeout=20
+                    role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                  monitor: dummy-monitor-interval-11
+                    interval=11
+                    timeout=20
+                    role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                  notify: dummy-notify-interval-0s
+                    interval=0s
+                    timeout=5
+                  start: dummy-start-interval-0s
+                    interval=0s
+                    timeout=20
+                  stop: dummy-stop-interval-0s
+                    interval=0s
+                    timeout=20
             """
         )
         self.assert_pcs_success("resource config dummy-master".split(), show)
@@ -5365,7 +6260,7 @@ class BundleShow(BundleCommon):
             "resource config B1".split(),
             outdent(
                 """\
-             Bundle: B1
+            Bundle: B1
               Docker: image=pcs:test
               Network: control-port=1234
             """
@@ -5378,7 +6273,7 @@ class BundleShow(BundleCommon):
             "resource config B1".split(),
             outdent(
                 """\
-             Bundle: B1
+            Bundle: B1
               Rkt: image=pcs:test
               Network: control-port=1234
             """
@@ -5792,12 +6687,20 @@ class ResourceUpdateUniqueAttrChecks(TestCase, AssertPcsMixin):
         )
         res_config = outdent(
             """\
-             Resource: R1 (class=ocf provider=pacemaker type=Dummy)
-              Attributes: state=1
-              Operations: monitor interval=10s timeout=20s (R1-monitor-interval-10s)
-             Resource: R2 (class=ocf provider=pacemaker type=Dummy)
-              Attributes: state=1
-              Operations: monitor interval=10s timeout=20s (R2-monitor-interval-10s)
+            Resource: R1 (class=ocf provider=pacemaker type=Dummy)
+              Attributes: R1-instance_attributes
+                state=1
+              Operations:
+                monitor: R1-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
+            Resource: R2 (class=ocf provider=pacemaker type=Dummy)
+              Attributes: R2-instance_attributes
+                state=1
+              Operations:
+                monitor: R2-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
             """
         )
         self.assert_pcs_success("resource config".split(), res_config)
@@ -5811,12 +6714,20 @@ class ResourceUpdateUniqueAttrChecks(TestCase, AssertPcsMixin):
         self.assert_pcs_success("resource config".split(), res_config)
         res_config = outdent(
             """\
-             Resource: R1 (class=ocf provider=pacemaker type=Dummy)
-              Attributes: state=1
-              Operations: monitor interval=10s timeout=20s (R1-monitor-interval-10s)
-             Resource: R2 (class=ocf provider=pacemaker type=Dummy)
-              Attributes: state=2
-              Operations: monitor interval=10s timeout=20s (R2-monitor-interval-10s)
+            Resource: R1 (class=ocf provider=pacemaker type=Dummy)
+              Attributes: R1-instance_attributes
+                state=1
+              Operations:
+                monitor: R1-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
+            Resource: R2 (class=ocf provider=pacemaker type=Dummy)
+              Attributes: R2-instance_attributes
+                state=2
+              Operations:
+                monitor: R2-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
             """
         )
         self.assert_pcs_success("resource update R2 state=2".split())
@@ -5844,14 +6755,25 @@ class ResourceUpdateUniqueAttrChecks(TestCase, AssertPcsMixin):
             "resource config".split(),
             outdent(
                 """\
-             Resource: R1 (class=ocf provider=pacemaker type=Dummy)
-              Attributes: state=1
-              Operations: monitor interval=10s timeout=20s (R1-monitor-interval-10s)
-             Resource: R2 (class=ocf provider=pacemaker type=Dummy)
-              Attributes: state=1
-              Operations: monitor interval=10s timeout=20s (R2-monitor-interval-10s)
-             Resource: R3 (class=ocf provider=pacemaker type=Dummy)
-              Operations: monitor interval=10s timeout=20s (R3-monitor-interval-10s)
+            Resource: R1 (class=ocf provider=pacemaker type=Dummy)
+              Attributes: R1-instance_attributes
+                state=1
+              Operations:
+                monitor: R1-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
+            Resource: R2 (class=ocf provider=pacemaker type=Dummy)
+              Attributes: R2-instance_attributes
+                state=1
+              Operations:
+                monitor: R2-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
+            Resource: R3 (class=ocf provider=pacemaker type=Dummy)
+              Operations:
+                monitor: R3-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
             """
             ),
         )
@@ -5866,15 +6788,27 @@ class ResourceUpdateUniqueAttrChecks(TestCase, AssertPcsMixin):
             "resource config".split(),
             outdent(
                 """\
-             Resource: R1 (class=ocf provider=pacemaker type=Dummy)
-              Attributes: state=1
-              Operations: monitor interval=10s timeout=20s (R1-monitor-interval-10s)
-             Resource: R2 (class=ocf provider=pacemaker type=Dummy)
-              Attributes: state=1
-              Operations: monitor interval=10s timeout=20s (R2-monitor-interval-10s)
-             Resource: R3 (class=ocf provider=pacemaker type=Dummy)
-              Attributes: state=1
-              Operations: monitor interval=10s timeout=20s (R3-monitor-interval-10s)
+            Resource: R1 (class=ocf provider=pacemaker type=Dummy)
+              Attributes: R1-instance_attributes
+                state=1
+              Operations:
+                monitor: R1-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
+            Resource: R2 (class=ocf provider=pacemaker type=Dummy)
+              Attributes: R2-instance_attributes
+                state=1
+              Operations:
+                monitor: R2-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
+            Resource: R3 (class=ocf provider=pacemaker type=Dummy)
+              Attributes: R3-instance_attributes
+                state=1
+              Operations:
+                monitor: R3-monitor-interval-10s
+                  interval=10s
+                  timeout=20s
             """
             ),
         )

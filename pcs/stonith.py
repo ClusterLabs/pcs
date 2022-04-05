@@ -10,12 +10,13 @@ from pcs import (
 )
 from pcs.cli.common import parse_args
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.output import smart_wrap_text
 from pcs.cli.fencing_topology import target_type_map_cli_to_lib
 from pcs.cli.reports.output import (
     error,
     warn,
 )
-from pcs.cli.resource.output import format_resource_agent_metadata
+from pcs.cli.resource.output import resource_agent_metadata_to_text
 from pcs.cli.resource.parse_args import parse_create_simple as parse_create_args
 from pcs.common import reports
 from pcs.common.fencing_topology import (
@@ -34,23 +35,18 @@ def stonith_show_cmd(lib, argv, modifiers):
     # TODO remove, deprecated command
     # replaced with 'stonith status' and 'stonith config'
     resource.resource_show(lib, argv, modifiers, stonith=True)
-    print_stonith_levels(lib)
 
 
 def stonith_status_cmd(lib, argv, modifiers):
     resource.resource_status(lib, argv[:], modifiers, stonith=True)
     if not argv:
-        print_stonith_levels(lib)
+        _print_stonith_levels(lib)
 
 
-def stonith_config_cmd(lib, argv, modifiers):
-    resource.resource_config(lib, argv, modifiers, stonith=True)
-    print_stonith_levels(lib)
-
-
-def print_stonith_levels(lib):
+def _print_stonith_levels(lib):
     levels = stonith_level_config_to_str(lib.fencing_topology.get_config())
     if levels:
+        print("\nFencing Levels:")
         print("\n".join(indent(levels, 1)))
 
 
@@ -106,12 +102,14 @@ def stonith_list_options(
     agent_name = ResourceAgentNameDto("stonith", None, argv[0])
     print(
         "\n".join(
-            format_resource_agent_metadata(
-                lib.resource_agent.get_agent_metadata(agent_name),
-                lib.resource_agent.get_agent_default_operations(
-                    agent_name
-                ).operations,
-                verbose=modifiers.is_specified("--full"),
+            smart_wrap_text(
+                resource_agent_metadata_to_text(
+                    lib.resource_agent.get_agent_metadata(agent_name),
+                    lib.resource_agent.get_agent_default_operations(
+                        agent_name
+                    ).operations,
+                    verbose=modifiers.is_specified("--full"),
+                )
             )
         )
     )
@@ -938,3 +936,11 @@ def stonith_update_scsi_devices(lib, argv, modifiers):
             parsed_args.get("delete", []) + parsed_args.get("remove", []),
             force_flags=force_flags,
         )
+
+
+def config_cmd(
+    lib: Any, argv: List[str], modifiers: parse_args.InputModifiers
+) -> None:
+    resource.config_common(lib, argv, modifiers, stonith=True)
+    if modifiers.get_output_format() == parse_args.OUTPUT_FORMAT_VALUE_TEXT:
+        _print_stonith_levels(lib)

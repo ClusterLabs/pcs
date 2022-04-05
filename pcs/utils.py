@@ -48,6 +48,9 @@ from pcs.common import file_type_codes
 from pcs.common import pacemaker as common_pacemaker
 from pcs.common import pcs_pycurl as pycurl
 from pcs.common.host import PcsKnownHost
+from pcs.common.pacemaker.resource.operations import (
+    OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME,
+)
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItemList
 from pcs.common.reports.messages import CibUpgradeFailedToMinimalRequiredVersion
@@ -1812,7 +1815,10 @@ def get_operation_ocf_check_level(operation_el):
     """
     for attr_el in operation_el.getElementsByTagName("instance_attributes"):
         for nvpair_el in attr_el.getElementsByTagName("nvpair"):
-            if nvpair_el.getAttribute("name") == "OCF_CHECK_LEVEL":
+            if (
+                nvpair_el.getAttribute("name")
+                == OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME
+            ):
                 return nvpair_el.getAttribute("value")
     return None
 

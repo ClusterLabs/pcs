@@ -34,8 +34,8 @@ class ParseArgvDashDash(TestCase, AssertPcsMixin):
             self.cmd + ["-123"],
             outdent(
                 """\
-                Error: Resource 'R1' does not exist
                 Warning: Using '-123' without '--' is deprecated, those parameters will be considered position independent options in future pcs versions
+                Error: Resource 'R1' does not exist
                 """
             ),
         )
@@ -45,8 +45,8 @@ class ParseArgvDashDash(TestCase, AssertPcsMixin):
             self.cmd + ["-12.3"],
             outdent(
                 f"""\
-                Error: invalid role value 'R2', allowed values are: {self.allowed_roles}
                 Warning: Using '-12.3' without '--' is deprecated, those parameters will be considered position independent options in future pcs versions
+                Error: invalid role value 'R2', allowed values are: {self.allowed_roles}
                 """
             ),
         )
@@ -56,8 +56,8 @@ class ParseArgvDashDash(TestCase, AssertPcsMixin):
             self.cmd + ["-inFIniTY"],
             outdent(
                 f"""\
-                Error: invalid role value 'R2', allowed values are: {self.allowed_roles}
                 Warning: Using '-inFIniTY' without '--' is deprecated, those parameters will be considered position independent options in future pcs versions
+                Error: invalid role value 'R2', allowed values are: {self.allowed_roles}
                 """
             ),
         )

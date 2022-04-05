@@ -11,7 +11,10 @@ from pcs.common.pacemaker.nvset import (
     CibNvpairDto,
     CibNvsetDto,
 )
-from pcs.common.pacemaker.resource.operations import CibResourceOperationDto
+from pcs.common.pacemaker.resource.operations import (
+    OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME,
+    CibResourceOperationDto,
+)
 from pcs.lib.cib.resource.types import (
     ResourceOperationIn,
     ResourceOperationOut,
@@ -104,7 +107,9 @@ def action_to_operation_dto(
                 rule=None,
                 nvpairs=[
                     CibNvpairDto(
-                        id="", name="OCF_CHECK_LEVEL", value=str(action.depth)
+                        id="",
+                        name=OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME,
+                        value=str(action.depth),
                     )
                 ],
             )
@@ -143,11 +148,13 @@ def operation_dto_to_legacy_dict(
         }
     )
     operation_dict["start-delay"] = operation.start_delay
-    operation_dict["OCF_CHECK_LEVEL"] = None
+    operation_dict[OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME] = None
     for nvset in operation.instance_attributes:
         for nvpair in nvset.nvpairs:
-            if nvpair.name == "OCF_CHECK_LEVEL":
-                operation_dict["OCF_CHECK_LEVEL"] = nvpair.value
+            if nvpair.name == OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME:
+                operation_dict[
+                    OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME
+                ] = nvpair.value
     return operation_dict
 
 

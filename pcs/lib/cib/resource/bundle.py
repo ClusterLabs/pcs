@@ -1,25 +1,33 @@
+from typing import Optional
+
 from lxml import etree
+from lxml.etree import _Element
 
 from pcs.common import reports
+from pcs.common.pacemaker.resource import bundle
 from pcs.common.reports.item import ReportItem
 from pcs.lib import validate
+from pcs.lib.cib import (
+    nvpair_multi,
+    rule,
+)
+from pcs.lib.cib.const import TAG_RESOURCE_BUNDLE as TAG
+from pcs.lib.cib.const import TAG_RESOURCE_PRIMITIVE as TAG_PRIMITIVE
 from pcs.lib.cib.nvpair import (
     META_ATTRIBUTES_TAG,
     append_new_meta_attributes,
     arrange_first_meta_attributes,
 )
-from pcs.lib.cib.resource.primitive import TAG as TAG_PRIMITIVE
 from pcs.lib.cib.tools import ElementSearcher
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import sanitize_id
+from pcs.lib.tools import get_optional_value
 from pcs.lib.xml_tools import (
     append_when_useful,
     get_sub_element,
     reset_element,
     update_attributes_remove_empty,
 )
-
-TAG = "bundle"
 
 GENERIC_CONTAINER_TYPES = {"docker", "podman", "rkt"}
 
@@ -67,6 +75,101 @@ STORAGE_MAP_OPTIONS = frozenset(
 
 def is_bundle(resource_el):
     return resource_el.tag == TAG
+
+
+def bundle_element_to_dto(
+    bundle_element: _Element,
+    rule_eval: Optional[rule.RuleInEffectEval] = None,
+) -> bundle.CibResourceBundleDto:
+    if rule_eval is None:
+        rule_eval = rule.RuleInEffectEvalDummy()
+    primitive_el = get_inner_resource(bundle_element)
+    runtime_el = _get_container_element(bundle_element)
+    network_el = bundle_element.find("network")
+    return bundle.CibResourceBundleDto(
+        id=str(bundle_element.attrib["id"]),
+        description=bundle_element.get("description"),
+        member_id=(
+            str(primitive_el.attrib["id"]) if primitive_el is not None else None
+        ),
+        container_type=(
+            bundle.ContainerType(runtime_el.tag)
+            if runtime_el is not None
+            else None
+        ),
+        container_options=(
+            bundle.CibResourceBundleContainerRuntimeOptionsDto(
+                image=str(runtime_el.attrib["image"]),
+                replicas=get_optional_value(int, runtime_el.get("replicas")),
+                replicas_per_host=get_optional_value(
+                    int, runtime_el.get("replicas-per-host")
+                ),
+                promoted_max=get_optional_value(
+                    int,
+                    runtime_el.get("promoted-max") or runtime_el.get("masters"),
+                ),
+                run_command=runtime_el.get("run-command"),
+                network=runtime_el.get("network"),
+                options=runtime_el.get("options"),
+            )
+            if runtime_el is not None
+            else None
+        ),
+        network=(
+            _bundle_network_element_to_dto(network_el)
+            if network_el is not None
+            else None
+        ),
+        port_mappings=[
+            bundle.CibResourceBundlePortMappingDto(
+                id=str(net_map_el.attrib["id"]),
+                port=get_optional_value(int, net_map_el.get("port")),
+                internal_port=get_optional_value(
+                    int, net_map_el.get("internal-port")
+                ),
+                range=net_map_el.get("range"),
+            )
+            for net_map_el in bundle_element.findall("network/port-mapping")
+        ],
+        storage_mappings=[
+            bundle.CibResourceBundleStorageMappingDto(
+                id=str(storage_el.attrib["id"]),
+                source_dir=storage_el.get("source-dir"),
+                source_dir_root=storage_el.get("source-dir-root"),
+                target_dir=str(storage_el.attrib["target-dir"]),
+                options=storage_el.get("options"),
+            )
+            for storage_el in bundle_element.findall("storage/storage-mapping")
+        ],
+        meta_attributes=[
+            nvpair_multi.nvset_element_to_dto(nvset, rule_eval)
+            for nvset in nvpair_multi.find_nvsets(
+                bundle_element, nvpair_multi.NVSET_META
+            )
+        ],
+        instance_attributes=[
+            nvpair_multi.nvset_element_to_dto(nvset, rule_eval)
+            for nvset in nvpair_multi.find_nvsets(
+                bundle_element, nvpair_multi.NVSET_INSTANCE
+            )
+        ],
+    )
+
+
+def _bundle_network_element_to_dto(
+    network_element: _Element,
+) -> bundle.CibResourceBundleNetworkOptionsDto:
+    return bundle.CibResourceBundleNetworkOptionsDto(
+        ip_range_start=network_element.get("ip-range-start"),
+        control_port=get_optional_value(
+            int, network_element.get("control-port")
+        ),
+        host_interface=network_element.get("host-interface"),
+        host_netmask=get_optional_value(
+            int, network_element.get("host-netmask")
+        ),
+        add_host=get_optional_value(bool, network_element.get("add-host")),
+    )
 
 
 def validate_new(

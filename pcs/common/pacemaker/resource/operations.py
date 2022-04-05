@@ -12,6 +12,8 @@ from pcs.common.const import (
 from pcs.common.interface.dto import DataTransferObject
 from pcs.common.pacemaker.nvset import CibNvsetDto
 
+OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME = "OCF_CHECK_LEVEL"
+
 
 @dataclass(frozen=True)
 class CibResourceOperationDto(DataTransferObject):

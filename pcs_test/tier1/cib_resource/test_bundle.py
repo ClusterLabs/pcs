@@ -16,6 +16,11 @@ from pcs_test.tools.pcs_runner import PcsRunner
 # pylint: disable=line-too-long
 # pylint: disable=too-many-public-methods
 
+INVALID_CONTAINER_OPTION_MSG = (
+    "invalid container option 'extra', allowed options are: "
+    "'image', 'masters', 'network', 'options', 'promoted-max', "
+    "'replicas', 'replicas-per-host', 'run-command'"
+)
 ERRORS_HAVE_OCURRED = (
     "Error: Errors have occurred, therefore pcs is unable to continue\n"
 )
@@ -198,9 +203,8 @@ class BundleCreate(BundleCreateCommon):
             """.split(),
             "Error: Only one of container options 'masters' and 'promoted-max' "
             "can be used\n"
-            + ERRORS_HAVE_OCURRED
-            + "Warning: container option 'masters' is deprecated and should "
-            "not be used, use 'promoted-max' instead\n",
+            "Warning: container option 'masters' is deprecated and should "
+            "not be used, use 'promoted-max' instead\n" + ERRORS_HAVE_OCURRED,
         )
 
     def test_fail_when_missing_args_1(self):
@@ -235,10 +239,8 @@ class BundleCreate(BundleCreateCommon):
                 resource bundle create B1 container docker image=pcs:test
                 extra=option
             """.split(),
-            "Error: invalid container option 'extra', allowed options are: "
-            "'image', 'masters', 'network', 'options', 'promoted-max', "
-            "'replicas', 'replicas-per-host', 'run-command', use --force "
-            "to override\n" + ERRORS_HAVE_OCURRED,
+            f"Error: {INVALID_CONTAINER_OPTION_MSG}, use --force to override\n"
+            + ERRORS_HAVE_OCURRED,
         )
 
     def test_unknown_option_forced(self):
@@ -251,7 +253,7 @@ class BundleCreate(BundleCreateCommon):
                 resource bundle create B1 container docker image=pcs:test
                 extra=option --force
             """.split(),
-            stdout_start="Error: Unable to update cib\n",
+            stdout_start=f"Warning: {INVALID_CONTAINER_OPTION_MSG}\nError: Unable to update cib\n",
         )
 
     def test_more_errors(self):
@@ -530,11 +532,10 @@ class BundleUpdate(BundleCreateCommon):
         )
         self.assert_pcs_fail(
             "resource bundle update B container masters=2".split(),
+            "Warning: container option 'masters' is deprecated and should "
+            "not be used, use 'promoted-max' instead\n"
             "Error: Cannot set container option 'masters' because container "
-            "option 'promoted-max' is already set\n"
-            + ERRORS_HAVE_OCURRED
-            + "Warning: container option 'masters' is deprecated and should "
-            "not be used, use 'promoted-max' instead\n",
+            "option 'promoted-max' is already set\n" + ERRORS_HAVE_OCURRED,
         )
 
     def test_masters_set_after_promoted_max_with_remove(self):
@@ -591,9 +592,7 @@ class BundleUpdate(BundleCreateCommon):
 
         self.assert_pcs_fail(
             "resource bundle update B container extra=option".split(),
-            "Error: invalid container option 'extra', allowed options are: "
-            "'image', 'masters', 'network', 'options', 'promoted-max', "
-            "'replicas', 'replicas-per-host', 'run-command', use --force "
+            f"Error: {INVALID_CONTAINER_OPTION_MSG}, use --force "
             "to override\n" + ERRORS_HAVE_OCURRED,
         )
         # Test that pcs allows to specify options it does not know about. This
@@ -602,7 +601,7 @@ class BundleUpdate(BundleCreateCommon):
         # supported by pacemaker and so the command fails.
         self.assert_pcs_fail(
             "resource bundle update B container extra=option --force".split(),
-            stdout_start="Error: Unable to update cib\n",
+            stdout_start=f"Warning: {INVALID_CONTAINER_OPTION_MSG}\nError: Unable to update cib\n",
         )
 
         # no force needed when removing an unknown option
@@ -660,7 +659,7 @@ class BundleShow(TestCase, AssertPcsMixin):
             "resource config B1".split(),
             outdent(
                 """\
-             Bundle: B1
+            Bundle: B1
               Docker: image=pcs:test
             """
             ),
@@ -685,8 +684,8 @@ class BundleShow(TestCase, AssertPcsMixin):
             "resource config B1".split(),
             outdent(
                 """\
-             Bundle: B1
-              Docker: image=pcs:test options="a b c" promoted-max=2 replicas=4
+            Bundle: B1
+              Docker: image=pcs:test replicas=4 promoted-max=2 options="a b c"
             """
             ),
         )
@@ -703,7 +702,7 @@ class BundleShow(TestCase, AssertPcsMixin):
             "resource config B1".split(),
             outdent(
                 """\
-             Bundle: B1
+            Bundle: B1
               Docker: image=pcs:test
               Network: control-port=12345 host-interface=eth0 host-netmask=24
             """
@@ -723,11 +722,11 @@ class BundleShow(TestCase, AssertPcsMixin):
             "resource config B1".split(),
             outdent(
                 """\
-             Bundle: B1
+            Bundle: B1
               Docker: image=pcs:test
               Port Mapping:
-               internal-port=2002 port=2000 (B1-port-map-1001)
-               range=3000-3300 (B1-port-map-3000-3300)
+                port=2000 internal-port=2002 (B1-port-map-1001)
+                range=3000-3300 (B1-port-map-3000-3300)
             """
             ),
         )
@@ -746,11 +745,11 @@ class BundleShow(TestCase, AssertPcsMixin):
             "resource config B1".split(),
             outdent(
                 """\
-             Bundle: B1
+            Bundle: B1
               Docker: image=pcs:test
               Storage Mapping:
-               source-dir=/tmp/docker1a target-dir=/tmp/docker1b (B1-storage-map)
-               source-dir=/tmp/docker2a target-dir=/tmp/docker2b (my-storage-map)
+                source-dir=/tmp/docker1a target-dir=/tmp/docker1b (B1-storage-map)
+                source-dir=/tmp/docker2a target-dir=/tmp/docker2b (my-storage-map)
             """
             ),
         )
@@ -766,9 +765,10 @@ class BundleShow(TestCase, AssertPcsMixin):
             "resource config B1".split(),
             outdent(
                 """\
-             Bundle: B1
+            Bundle: B1
               Docker: image=pcs:test
-              Meta Attrs: target-role=Stopped
+              Meta Attributes: B1-meta_attributes
+                target-role=Stopped
             """
             ),
         )
@@ -788,11 +788,14 @@ class BundleShow(TestCase, AssertPcsMixin):
             "resource config B1".split(),
             outdent(
                 """\
-             Bundle: B1
+            Bundle: B1
               Docker: image=pcs:test
               Network: control-port=1234
               Resource: A (class=ocf provider=pacemaker type=Dummy)
-               Operations: monitor interval=10s timeout=20s (A-monitor-interval-10s)
+                Operations:
+                  monitor: A-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
             """
             ),
         )
@@ -839,18 +842,23 @@ class BundleShow(TestCase, AssertPcsMixin):
             "resource config B1".split(),
             outdent(
                 """\
-             Bundle: B1
-              Docker: image=pcs:test options="a b c" promoted-max=2 replicas=4
+            Bundle: B1
+              Docker: image=pcs:test replicas=4 promoted-max=2 options="a b c"
               Network: control-port=12345 host-interface=eth0 host-netmask=24
               Port Mapping:
-               internal-port=2002 port=2000 (B1-port-map-1001)
-               range=3000-3300 (B1-port-map-3000-3300)
+                port=2000 internal-port=2002 (B1-port-map-1001)
+                range=3000-3300 (B1-port-map-3000-3300)
               Storage Mapping:
-               source-dir=/tmp/docker1a target-dir=/tmp/docker1b (B1-storage-map)
-               source-dir=/tmp/docker2a target-dir=/tmp/docker2b (my-storage-map)
-              Meta Attrs: is-managed=false target-role=Stopped
+                source-dir=/tmp/docker1a target-dir=/tmp/docker1b (B1-storage-map)
+                source-dir=/tmp/docker2a target-dir=/tmp/docker2b (my-storage-map)
+              Meta Attributes: B1-meta_attributes
+                is-managed=false
+                target-role=Stopped
               Resource: A (class=ocf provider=pacemaker type=Dummy)
-               Operations: monitor interval=10s timeout=20s (A-monitor-interval-10s)
+                Operations:
+                  monitor: A-monitor-interval-10s
+                    interval=10s
+                    timeout=20s
             """
             ),
         )

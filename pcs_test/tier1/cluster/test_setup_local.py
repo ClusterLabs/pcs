@@ -101,9 +101,9 @@ class SetupLocal(AssertPcsMixin, TestCase):
             dedent(
                 # pylint: disable=line-too-long
                 f"""\
-                Error: Corosync configuration file '{self.corosync_conf_file.name}' already exists, use --overwrite to overwrite existing file(s)
                 No addresses specified for host 'node1', using '10.0.1.1'
                 No addresses specified for host 'node2', using '10.0.1.2'
+                Error: Corosync configuration file '{self.corosync_conf_file.name}' already exists, use --overwrite to overwrite existing file(s)
                 """
             ),
         )

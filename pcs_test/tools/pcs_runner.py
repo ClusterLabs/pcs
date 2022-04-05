@@ -15,16 +15,23 @@ class PcsRunner:
         self.corosync_conf_opt = corosync_conf_opt
         self.mock_settings = mock_settings
 
-    def run(self, args):
+    def run(self, args, ignore_stderr=False):
         return pcs(
             self.cib_file,
             args,
             corosync_conf_opt=self.corosync_conf_opt,
             mock_settings=self.mock_settings,
+            ignore_stderr=ignore_stderr,
         )
 
 
-def pcs(cib_file, args, corosync_conf_opt=None, mock_settings=None):
+def pcs(
+    cib_file,
+    args,
+    corosync_conf_opt=None,
+    mock_settings=None,
+    ignore_stderr=False,
+):
     """
     Run pcs with -f on specified file
     Return tuple with:
@@ -49,4 +56,4 @@ def pcs(cib_file, args, corosync_conf_opt=None, mock_settings=None):
         cmd.extend(["--corosync_conf", corosync_conf_opt])
     cmd += args
 
-    return utils.run(cmd, env_extend=env)
+    return utils.run(cmd, env_extend=env, ignore_stderr=ignore_stderr)

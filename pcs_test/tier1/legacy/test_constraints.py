@@ -1929,8 +1929,8 @@ Warning: changing a monitor operation interval from 10s to 11 to make the operat
         )
         ac(
             o,
-            "Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints. Use --force to override.\n"
-            + LOCATION_NODE_VALIDATION_SKIP_WARNING,
+            LOCATION_NODE_VALIDATION_SKIP_WARNING
+            + "Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints. Use --force to override.\n",
         )
         assert r == 1
 
@@ -1940,8 +1940,8 @@ Warning: changing a monitor operation interval from 10s to 11 to make the operat
         )
         ac(
             o,
-            "Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints. Use --force to override.\n"
-            + LOCATION_NODE_VALIDATION_SKIP_WARNING,
+            LOCATION_NODE_VALIDATION_SKIP_WARNING
+            + "Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints. Use --force to override.\n",
         )
         assert r == 1
 
@@ -2167,8 +2167,8 @@ Ticket Constraints:
         )
         ac(
             o,
-            "Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints. Use --force to override.\n"
-            + LOCATION_NODE_VALIDATION_SKIP_WARNING,
+            LOCATION_NODE_VALIDATION_SKIP_WARNING
+            + "Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints. Use --force to override.\n",
         )
         assert r == 1
 
@@ -2178,8 +2178,8 @@ Ticket Constraints:
         )
         ac(
             o,
-            "Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints. Use --force to override.\n"
-            + LOCATION_NODE_VALIDATION_SKIP_WARNING,
+            LOCATION_NODE_VALIDATION_SKIP_WARNING
+            + "Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints. Use --force to override.\n",
         )
         assert r == 1
 
@@ -3145,11 +3145,12 @@ Ticket Constraints:
         ac(
             output,
             console_report(
+                "Duplicate constraints:",
+                "  set D1 D2 (id:order_set_D1D2_set) (id:order_set_D1D2)",
                 "Error: duplicate constraint already exists, use --force to "
                 "override",
-                ERRORS_HAVE_OCURRED + "Duplicate constraints:",
-                "  set D1 D2 (id:order_set_D1D2_set) (id:order_set_D1D2)",
-            ),
+            )
+            + ERRORS_HAVE_OCURRED,
         )
         self.assertEqual(1, returnVal)
 
@@ -3181,11 +3182,12 @@ Ticket Constraints:
         ac(
             output,
             console_report(
+                "Duplicate constraints:",
+                "  set D1 D2 (id:order_set_D1D2D5_set) set D5 D6 (id:order_set_D1D2D5_set-1) (id:order_set_D1D2D5)",
                 "Error: duplicate constraint already exists, use --force to "
                 "override",
-                ERRORS_HAVE_OCURRED + "Duplicate constraints:",
-                "  set D1 D2 (id:order_set_D1D2D5_set) set D5 D6 (id:order_set_D1D2D5_set-1) (id:order_set_D1D2D5)",
-            ),
+            )
+            + ERRORS_HAVE_OCURRED,
         )
         self.assertEqual(1, returnVal)
 
@@ -3215,11 +3217,12 @@ Ticket Constraints:
         ac(
             output,
             console_report(
+                "Duplicate constraints:",
+                "  set D1 D2 (id:colocation_set_D1D2_set) setoptions score=INFINITY (id:colocation_set_D1D2)",
                 "Error: duplicate constraint already exists, use --force to "
                 "override",
-                ERRORS_HAVE_OCURRED + "Duplicate constraints:",
-                "  set D1 D2 (id:colocation_set_D1D2_set) setoptions score=INFINITY (id:colocation_set_D1D2)",
-            ),
+            )
+            + ERRORS_HAVE_OCURRED,
         )
         self.assertEqual(1, returnVal)
 
@@ -3251,11 +3254,12 @@ Ticket Constraints:
         ac(
             output,
             console_report(
+                "Duplicate constraints:",
+                "  set D1 D2 (id:colocation_set_D1D2D5_set) set D5 D6 (id:colocation_set_D1D2D5_set-1) setoptions score=INFINITY (id:colocation_set_D1D2D5)",
                 "Error: duplicate constraint already exists, use --force to "
                 "override",
-                ERRORS_HAVE_OCURRED + "Duplicate constraints:",
-                "  set D1 D2 (id:colocation_set_D1D2D5_set) set D5 D6 (id:colocation_set_D1D2D5_set-1) setoptions score=INFINITY (id:colocation_set_D1D2D5)",
-            ),
+            )
+            + ERRORS_HAVE_OCURRED,
         )
         self.assertEqual(1, returnVal)
 
@@ -3745,9 +3749,10 @@ class TicketAdd(ConstraintBaseTest):
         self.assert_pcs_fail(
             "constraint ticket add T master A loss-policy=fence".split(),
             (
-                "Error: duplicate constraint already exists, use --force to "
-                "override\n" + ERRORS_HAVE_OCURRED + "Duplicate constraints:\n"
+                "Duplicate constraints:\n"
                 "  Master A loss-policy=fence ticket=T (id:ticket-T-A-Master)\n"
+                "Error: duplicate constraint already exists, use --force to "
+                "override\n" + ERRORS_HAVE_OCURRED
             ),
         )
 
@@ -4352,9 +4357,9 @@ class BundleLocation(Bundle):
         self.assert_pcs_fail(
             "constraint location R prefers node1".split(),
             (
-                "Error: R is a bundle resource, you should use the bundle id: "
+                LOCATION_NODE_VALIDATION_SKIP_WARNING
+                + "Error: R is a bundle resource, you should use the bundle id: "
                 "B when adding constraints. Use --force to override.\n"
-                + LOCATION_NODE_VALIDATION_SKIP_WARNING
             ),
         )
 
@@ -4377,9 +4382,9 @@ class BundleLocation(Bundle):
         self.assert_pcs_fail(
             "constraint location R avoids node1".split(),
             (
-                "Error: R is a bundle resource, you should use the bundle id: "
+                LOCATION_NODE_VALIDATION_SKIP_WARNING
+                + "Error: R is a bundle resource, you should use the bundle id: "
                 "B when adding constraints. Use --force to override.\n"
-                + LOCATION_NODE_VALIDATION_SKIP_WARNING
             ),
         )
 
@@ -4402,9 +4407,9 @@ class BundleLocation(Bundle):
         self.assert_pcs_fail(
             "constraint location add id R node1 100".split(),
             (
-                "Error: R is a bundle resource, you should use the bundle id: "
+                LOCATION_NODE_VALIDATION_SKIP_WARNING
+                + "Error: R is a bundle resource, you should use the bundle id: "
                 "B when adding constraints. Use --force to override.\n"
-                + LOCATION_NODE_VALIDATION_SKIP_WARNING
             ),
         )
 
@@ -4725,7 +4730,7 @@ class LocationPrefersAvoidsMixin(
                 ["constraint", "location", "dummy", self.command]
                 + self._unpack_node_score_list_to_cmd(node_score_list)
             ),
-            error_msg + LOCATION_NODE_VALIDATION_SKIP_WARNING,
+            LOCATION_NODE_VALIDATION_SKIP_WARNING + error_msg,
         )
         self.assert_resources_xml_in_cib("<constraints/>")
 
@@ -4807,8 +4812,9 @@ class LocationAdd(ConstraintEffect):
         self.assert_pcs_fail(
             "constraint location add location1 D1 rh7-1 bar".split(),
             (
-                "Error: invalid score 'bar', use integer or INFINITY or "
-                "-INFINITY\n" + LOCATION_NODE_VALIDATION_SKIP_WARNING
+                LOCATION_NODE_VALIDATION_SKIP_WARNING
+                + "Error: invalid score 'bar', use integer or INFINITY or "
+                "-INFINITY\n"
             ),
         )
         self.assert_resources_xml_in_cib("<constraints/>")
@@ -4817,9 +4823,9 @@ class LocationAdd(ConstraintEffect):
         self.assert_pcs_fail(
             "constraint location add loc:dummy D1 rh7-1 100".split(),
             (
-                "Error: invalid constraint id 'loc:dummy', ':' is not a valid "
+                LOCATION_NODE_VALIDATION_SKIP_WARNING
+                + "Error: invalid constraint id 'loc:dummy', ':' is not a valid "
                 "character for a constraint id\n"
-                + LOCATION_NODE_VALIDATION_SKIP_WARNING
             ),
         )
         self.assert_resources_xml_in_cib("<constraints/>")

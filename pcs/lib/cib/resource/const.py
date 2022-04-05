@@ -1,3 +1,7 @@
+from pcs.common.pacemaker.resource.operations import (
+    OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME,
+)
+
 OPERATION_ATTRIBUTES = [
     "id",
     "description",
@@ -10,5 +14,5 @@ OPERATION_ATTRIBUTES = [
     "role",
     "start-delay",
     "timeout",
-    "OCF_CHECK_LEVEL",
+    OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME,
 ]

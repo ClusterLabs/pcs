@@ -12,19 +12,26 @@ from typing import (
     Optional,
 )
 
+import dataclasses
 from lxml import etree
 from lxml.etree import _Element
 
+from pcs.common.pacemaker import nvset
+from pcs.common.pacemaker.resource.clone import CibResourceCloneDto
 from pcs.common.reports import ReportItemList
-from pcs.lib.cib import nvpair
+from pcs.lib.cib import (
+    nvpair,
+    nvpair_multi,
+    rule,
+)
+from pcs.lib.cib.const import TAG_RESOURCE_CLONE as TAG_CLONE
+from pcs.lib.cib.const import TAG_RESOURCE_MASTER as TAG_MASTER
 from pcs.lib.cib.tools import IdProvider
 from pcs.lib.pacemaker.values import (
     is_true,
     validate_id,
 )
 
-TAG_CLONE = "clone"
-TAG_MASTER = "master"
 ALL_TAGS = [TAG_CLONE, TAG_MASTER]
 
 
@@ -52,6 +59,66 @@ def is_promotable_clone(resource_el):
             default="false",
         )
     )
+
+
+def clone_element_to_dto(
+    clone_element: _Element,
+    rule_eval: Optional[rule.RuleInEffectEval] = None,
+) -> CibResourceCloneDto:
+    if rule_eval is None:
+        rule_eval = rule.RuleInEffectEvalDummy()
+    return CibResourceCloneDto(
+        id=str(clone_element.attrib["id"]),
+        description=clone_element.get("description"),
+        member_id=str(get_inner_resource(clone_element).attrib["id"]),
+        meta_attributes=[
+            nvpair_multi.nvset_element_to_dto(nvset, rule_eval)
+            for nvset in nvpair_multi.find_nvsets(
+                clone_element, nvpair_multi.NVSET_META
+            )
+        ],
+        instance_attributes=[
+            nvpair_multi.nvset_element_to_dto(nvset, rule_eval)
+            for nvset in nvpair_multi.find_nvsets(
+                clone_element, nvpair_multi.NVSET_INSTANCE
+            )
+        ],
+    )
+
+
+def master_element_to_dto(
+    master_element: _Element,
+    rule_eval: Optional[rule.RuleInEffectEval] = None,
+) -> CibResourceCloneDto:
+    clone_dto = clone_element_to_dto(master_element, rule_eval)
+    promotable_nvpair = nvset.CibNvpairDto(
+        id="", name="promotable", value="true"
+    )
+    if clone_dto.meta_attributes:
+        first_meta_attibutes = clone_dto.meta_attributes[0]
+        clone_dto = dataclasses.replace(
+            clone_dto,
+            meta_attributes=[
+                dataclasses.replace(
+                    first_meta_attibutes,
+                    nvpairs=(
+                        list(first_meta_attibutes.nvpairs) + [promotable_nvpair]
+                    ),
+                )
+            ]
+            + list(clone_dto.meta_attributes[1:]),
+        )
+    else:
+        clone_dto = dataclasses.replace(
+            clone_dto,
+            meta_attributes=[
+                nvset.CibNvsetDto(
+                    id="", options={}, rule=None, nvpairs=[promotable_nvpair]
+                )
+            ],
+        )
+
+    return clone_dto
 
 
 def get_parent_any_clone(resource_el):

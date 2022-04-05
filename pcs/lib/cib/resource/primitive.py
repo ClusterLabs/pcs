@@ -11,7 +11,14 @@ from lxml import etree
 from lxml.etree import _Element
 
 from pcs.common import reports
+from pcs.common.pacemaker.resource.primitive import CibResourcePrimitiveDto
+from pcs.common.resource_agent.dto import ResourceAgentNameDto
 from pcs.lib import validate
+from pcs.lib.cib import (
+    nvpair_multi,
+    rule,
+)
+from pcs.lib.cib.const import TAG_RESOURCE_PRIMITIVE as TAG
 from pcs.lib.cib.nvpair import (
     INSTANCE_ATTRIBUTES_TAG,
     append_new_instance_attributes,
@@ -20,7 +27,10 @@ from pcs.lib.cib.nvpair import (
     get_value,
 )
 from pcs.lib.cib.resource.agent import get_default_operations
-from pcs.lib.cib.resource.operations import create_operations
+from pcs.lib.cib.resource.operations import (
+    create_operations,
+    op_element_to_dto,
+)
 from pcs.lib.cib.resource.operations import prepare as prepare_operations
 from pcs.lib.cib.resource.types import ResourceOperationIn
 from pcs.lib.cib.tools import (
@@ -38,11 +48,48 @@ from pcs.lib.resource_agent import (
 )
 from pcs.lib.resource_agent.const import STONITH_ACTION_REPLACED_BY
 
-TAG = "primitive"
-
 
 def is_primitive(resource_el):
     return resource_el.tag == TAG
+
+
+def primitive_element_to_dto(
+    primitive_element: _Element,
+    rule_eval: Optional[rule.RuleInEffectEval] = None,
+) -> CibResourcePrimitiveDto:
+    if rule_eval is None:
+        rule_eval = rule.RuleInEffectEvalDummy()
+    return CibResourcePrimitiveDto(
+        id=str(primitive_element.attrib["id"]),
+        agent_name=ResourceAgentNameDto(
+            standard=str(primitive_element.attrib["class"]),
+            provider=primitive_element.get("provider"),
+            type=str(primitive_element.attrib["type"]),
+        ),
+        description=primitive_element.get("description"),
+        operations=[
+            op_element_to_dto(op_element, rule_eval)
+            for op_element in primitive_element.findall("operations/op")
+        ],
+        meta_attributes=[
+            nvpair_multi.nvset_element_to_dto(nvset, rule_eval)
+            for nvset in nvpair_multi.find_nvsets(
+                primitive_element, nvpair_multi.NVSET_META
+            )
+        ],
+        instance_attributes=[
+            nvpair_multi.nvset_element_to_dto(nvset, rule_eval)
+            for nvset in nvpair_multi.find_nvsets(
+                primitive_element, nvpair_multi.NVSET_INSTANCE
+            )
+        ],
+        utilization=[
+            nvpair_multi.nvset_element_to_dto(nvset, rule_eval)
+            for nvset in nvpair_multi.find_nvsets(
+                primitive_element, nvpair_multi.NVSET_UTILIZATION
+            )
+        ],
+    )
 
 
 def _find_primitives_by_agent(

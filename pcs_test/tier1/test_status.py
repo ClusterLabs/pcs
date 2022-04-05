@@ -553,6 +553,8 @@ class StonithStatus(ResourceStonithStatusBase, TestCase):
           * fence-rh-1	(stonith:fence_xvm):	 Started rh-1
           * fence-rh-2	(stonith:fence_xvm):	 Stopped
           * fence-kdump	(stonith:fence_kdump):	 Stopped
+
+        Fencing Levels:
          Target: rh-1
            Level 1 - fence-kdump
            Level 2 - fence-rh-1
@@ -564,6 +566,8 @@ class StonithStatus(ResourceStonithStatusBase, TestCase):
     active_resources_output = outdent(
         """\
           * fence-rh-1	(stonith:fence_xvm):	 Started rh-1
+
+        Fencing Levels:
          Target: rh-1
            Level 1 - fence-kdump
            Level 2 - fence-rh-1

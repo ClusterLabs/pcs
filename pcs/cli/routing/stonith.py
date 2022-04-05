@@ -10,6 +10,7 @@ stonith_cmd = create_router(
         "help": lambda lib, argv, modifiers: usage.stonith(argv),
         "list": stonith.stonith_list_available,
         "describe": stonith.stonith_list_options,
+        "config": stonith.config_cmd,
         "create": stonith.stonith_create,
         "update": resource.resource_update,
         "update-scsi-devices": stonith.stonith_update_scsi_devices,
@@ -19,7 +20,6 @@ stonith_cmd = create_router(
         # replaced with 'stonith status' and 'stonith config'
         "show": stonith.stonith_show_cmd,
         "status": stonith.stonith_status_cmd,
-        "config": stonith.stonith_config_cmd,
         "level": create_router(
             {
                 "add": stonith.stonith_level_add_cmd,

@@ -6,6 +6,10 @@ from pcs.common import reports
 from pcs.common.resource_agent.dto import ResourceAgentNameDto
 
 
+def is_stonith(agent_name: ResourceAgentNameDto) -> bool:
+    return agent_name.standard == "stonith"
+
+
 def get_resource_agent_full_name(agent_name: ResourceAgentNameDto) -> str:
     provider = f":{agent_name.provider}" if agent_name.provider else ""
     return f"{agent_name.standard}{provider}:{agent_name.type}"

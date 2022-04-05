@@ -454,6 +454,7 @@ class ResetUnknownContainerType(BaseMixin, SetUpMixin, TestCase):
                     report_codes.RESOURCE_BUNDLE_UNSUPPORTED_CONTAINER_TYPE,
                     bundle_id="B1",
                     supported_container_types=["docker", "podman", "rkt"],
+                    updating_options=True,
                 ),
             ]
         )

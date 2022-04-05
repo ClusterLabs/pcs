@@ -24,18 +24,17 @@ from pcs.common import (
     reports,
 )
 from pcs.common.interface import dto
+from pcs.common.pacemaker.resource.list import ListCibResourcesDto
 from pcs.common.reports import ReportItemList
 from pcs.common.reports.item import ReportItem
 from pcs.common.tools import (
     Version,
     timeout_to_seconds,
 )
+from pcs.lib.cib import const as cib_const
 from pcs.lib.cib import resource
 from pcs.lib.cib import status as cib_status
-from pcs.lib.cib.tag import (
-    TAG_TAG,
-    expand_tag,
-)
+from pcs.lib.cib.tag import expand_tag
 from pcs.lib.cib.tools import (
     ElementNotFound,
     IdProvider,
@@ -330,7 +329,9 @@ def _check_special_cases(
         raise LibraryError()
 
 
-_find_bundle = partial(find_element_by_tag_and_id, resource.bundle.TAG)
+_find_bundle = partial(
+    find_element_by_tag_and_id, cib_const.TAG_RESOURCE_BUNDLE
+)
 
 
 def create(
@@ -2250,7 +2251,8 @@ def _find_resources_expand_tags(
     rsc_or_tag_el_list, report_list = resource.common.find_resources(
         cib,
         resource_or_tag_ids,
-        resource_tags=resource.common.ALL_RESOURCE_XML_TAGS + [TAG_TAG],
+        resource_tags=resource.common.ALL_RESOURCE_XML_TAGS
+        + [cib_const.TAG_TAG],
     )
 
     resource_set = set()
@@ -2276,3 +2278,46 @@ def get_required_cib_version_for_primitive(
         if op.get("on-fail", "") == "demote":
             return Version(3, 4, 0)
     return None
+
+
+def get_configured_resources(env: LibraryEnvironment) -> ListCibResourcesDto:
+    resources = get_resources(env.get_cib())
+    bundles = []
+    for bundle_el in resources.findall(cib_const.TAG_RESOURCE_BUNDLE):
+        bundle_dto = resource.bundle.bundle_element_to_dto(bundle_el)
+        bundles.append(bundle_dto)
+        if not (bundle_dto.container_type and bundle_dto.container_options):
+            env.report_processor.report(
+                reports.ReportItem.warning(
+                    reports.messages.ResourceBundleUnsupportedContainerType(
+                        str(bundle_el.attrib["id"]),
+                        supported_container_types=sorted(
+                            resource.bundle.GENERIC_CONTAINER_TYPES
+                        ),
+                        updating_options=False,
+                    )
+                )
+            )
+    return ListCibResourcesDto(
+        primitives=[
+            resource.primitive.primitive_element_to_dto(resource_el)
+            for resource_el in resources.findall(
+                f".//{cib_const.TAG_RESOURCE_PRIMITIVE}"
+            )
+        ],
+        clones=[
+            resource.clone.clone_element_to_dto(resource_el)
+            for resource_el in resources.findall(cib_const.TAG_RESOURCE_CLONE)
+        ]
+        + [
+            resource.clone.master_element_to_dto(resource_el)
+            for resource_el in resources.findall(cib_const.TAG_RESOURCE_MASTER)
+        ],
+        groups=[
+            resource.group.group_element_to_dto(resource_el)
+            for resource_el in resources.findall(
+                f".//{cib_const.TAG_RESOURCE_GROUP}"
+            )
+        ],
+        bundles=bundles,
+    )

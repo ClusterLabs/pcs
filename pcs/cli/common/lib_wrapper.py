@@ -383,6 +383,7 @@ def load_module(env, middleware_factory, name):
                 "disable_safe": resource.disable_safe,
                 "disable_simulate": resource.disable_simulate,
                 "enable": resource.enable,
+                "get_configured_resources": resource.get_configured_resources,
                 "get_failcounts": resource.get_failcounts,
                 "group_add": resource.group_add,
                 "manage": resource.manage,

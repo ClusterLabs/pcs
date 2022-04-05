@@ -102,7 +102,7 @@ resource_cmd = create_router(
         # replaced with 'resource status' and 'resource config'
         "show": resource.resource_show,
         "status": resource.resource_status,
-        "config": resource.resource_config,
+        "config": resource.config,
         "group": create_router(
             {
                 "add": resource.resource_group_add_cmd,

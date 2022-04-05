@@ -13,10 +13,12 @@ from .messages import report_item_msg_from_dto
 def warn(message: str, stderr: bool = False) -> None:
     stream = sys.stderr if stderr else sys.stdout
     stream.write(f"Warning: {message}\n")
+    stream.flush()
 
 
 def error(message: str) -> SystemExit:
     sys.stderr.write(f"Error: {message}\n")
+    sys.stderr.flush()
     return SystemExit(1)
 
 
@@ -45,7 +47,7 @@ def process_library_reports(report_item_list: ReportItemList) -> None:
             continue
 
         if severity != ReportItemSeverity.ERROR:
-            print(msg)
+            print(msg, flush=True)
             continue
 
         error(

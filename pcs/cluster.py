@@ -1858,18 +1858,12 @@ def config_show(
       * --corosync_conf - corosync.conf file path, do not talk to cluster nodes
       * --output-format - supported formats: text, cmd, json
     """
-    modifiers.ensure_only_supported("--corosync_conf", "--output-format")
+    modifiers.ensure_only_supported(
+        "--corosync_conf", output_format_supported=True
+    )
     if argv:
         raise CmdLineInputError()
-    output_format = modifiers.get("--output-format")
-    supported_formats = ["text", "cmd", "json"]
-    if not output_format in supported_formats:
-        raise CmdLineInputError(
-            (
-                "Unknown value '{}' for '--output-format' option. Supported "
-                "values are: {}"
-            ).format(output_format, format_list(supported_formats))
-        )
+    output_format = modifiers.get_output_format()
     corosync_conf_dto = lib.cluster.get_corosync_conf_struct()
     if output_format == "cmd":
         if corosync_conf_dto.quorum_device is not None:

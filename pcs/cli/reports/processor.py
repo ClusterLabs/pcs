@@ -30,7 +30,7 @@ class ReportProcessorToConsole(ReportProcessor):
         if severity in self._ignore_severities:
             # DEBUG overrides ignoring severities for debug reports
             if msg and self.debug and severity == ReportItemSeverity.DEBUG:
-                print(msg)
+                print(msg, flush=True)
             return
 
         if severity == ReportItemSeverity.ERROR:
@@ -43,7 +43,7 @@ class ReportProcessorToConsole(ReportProcessor):
         elif severity == ReportItemSeverity.WARNING:
             warn(msg)
         elif msg and (self.debug or severity != ReportItemSeverity.DEBUG):
-            print(msg)
+            print(msg, flush=True)
 
     def suppress_reports_of_severity(
         self, severity_list: List[ReportItemSeverity]

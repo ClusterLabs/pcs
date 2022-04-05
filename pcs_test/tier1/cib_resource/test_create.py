@@ -1054,11 +1054,10 @@ class FailOrWarn(ResourceTest):
         self.assert_pcs_fail(
             "resource create --no-default-ops R IPaddr2".split(),
             (
-                "Error: required resource option 'ip' is missing,"
-                " use --force to override\n"
-                + ERRORS_HAVE_OCURRED
-                + "Assumed agent name 'ocf:heartbeat:IPaddr2' (deduced from"
+                "Assumed agent name 'ocf:heartbeat:IPaddr2' (deduced from"
                 " 'IPaddr2')\n"
+                "Error: required resource option 'ip' is missing,"
+                " use --force to override\n" + ERRORS_HAVE_OCURRED
             ),
         )
 
@@ -1444,10 +1443,9 @@ class FailOrWarnGroup(ResourceTest):
         self.assert_pcs_fail(
             "resource create R2 ocf:pacemaker:remote server=R --force".split(),
             (
-                "Error: 'R' already exists\n"
-                + ERRORS_HAVE_OCURRED
-                + "Warning: this command is not sufficient for creating a "
+                "Warning: this command is not sufficient for creating a "
                 "remote connection, use 'pcs cluster node add-remote'\n"
+                "Error: 'R' already exists\n" + ERRORS_HAVE_OCURRED
             ),
         )
 
@@ -1461,10 +1459,9 @@ class FailOrWarnGroup(ResourceTest):
         self.assert_pcs_fail(
             "resource create R2 ocf:pacemaker:remote --force".split(),
             (
-                "Error: 'R2' already exists\n"
-                + ERRORS_HAVE_OCURRED
-                + "Warning: this command is not sufficient for creating a "
+                "Warning: this command is not sufficient for creating a "
                 "remote connection, use 'pcs cluster node add-remote'\n"
+                "Error: 'R2' already exists\n" + ERRORS_HAVE_OCURRED
             ),
         )
 
@@ -1481,10 +1478,9 @@ class FailOrWarnGroup(ResourceTest):
                 "meta remote-node=R --force"
             ).split(),
             (
-                "Error: 'R' already exists\n"
-                + ERRORS_HAVE_OCURRED
-                + "Warning: this command is not sufficient for creating a "
+                "Warning: this command is not sufficient for creating a "
                 "guest node, use 'pcs cluster node add-guest'\n"
+                "Error: 'R' already exists\n" + ERRORS_HAVE_OCURRED
             ),
         )
 
@@ -1501,10 +1497,9 @@ class FailOrWarnGroup(ResourceTest):
                 "meta remote-node=HOST --force"
             ).split(),
             (
-                "Error: 'HOST' already exists\n"
-                + ERRORS_HAVE_OCURRED
-                + "Warning: this command is not sufficient for creating a "
+                "Warning: this command is not sufficient for creating a "
                 "guest node, use 'pcs cluster node add-guest'\n"
+                "Error: 'HOST' already exists\n" + ERRORS_HAVE_OCURRED
             ),
         )
 
@@ -1521,10 +1516,9 @@ class FailOrWarnGroup(ResourceTest):
                 "meta remote-node=A remote-addr=HOST --force"
             ).split(),
             (
-                "Error: 'HOST' already exists\n"
-                + ERRORS_HAVE_OCURRED
-                + "Warning: this command is not sufficient for creating a "
+                "Warning: this command is not sufficient for creating a "
                 "guest node, use 'pcs cluster node add-guest'\n"
+                "Error: 'HOST' already exists\n" + ERRORS_HAVE_OCURRED
             ),
         )
 

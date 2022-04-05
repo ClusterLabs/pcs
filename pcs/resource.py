@@ -25,7 +25,9 @@ from pcs.cli.common.errors import (
     CmdLineInputError,
     raise_command_replaced,
 )
+from pcs.cli.common.output import smart_wrap_text
 from pcs.cli.common.parse_args import (
+    OUTPUT_FORMAT_VALUE_TEXT,
     InputModifiers,
     group_by_keywords,
     prepare_options,
@@ -39,7 +41,12 @@ from pcs.cli.reports.output import (
     error,
     warn,
 )
-from pcs.cli.resource.output import format_resource_agent_metadata
+from pcs.cli.resource.output import (
+    ResourcesConfigurationFacade,
+    resource_agent_metadata_to_text,
+    resources_to_cmd,
+    resources_to_text,
+)
 from pcs.cli.resource.parse_args import (
     parse_bundle_create_options,
     parse_bundle_reset_options,
@@ -53,15 +60,18 @@ from pcs.common import (
     pacemaker,
     reports,
 )
+from pcs.common.interface import dto
 from pcs.common.pacemaker.defaults import CibDefaultsDto
+from pcs.common.pacemaker.resource.list import ListCibResourcesDto
+from pcs.common.pacemaker.resource.operations import (
+    OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME,
+)
 from pcs.common.resource_agent.dto import ResourceAgentNameDto
 from pcs.common.str_tools import (
     format_list,
     format_list_custom_last_separator,
-    indent,
 )
 from pcs.lib.cib.resource import (
-    bundle,
     guest_node,
     primitive,
 )
@@ -530,12 +540,14 @@ def resource_list_options(
         )
     print(
         "\n".join(
-            format_resource_agent_metadata(
-                lib.resource_agent.get_agent_metadata(agent_name),
-                lib.resource_agent.get_agent_default_operations(
-                    agent_name
-                ).operations,
-                verbose=modifiers.is_specified("--full"),
+            smart_wrap_text(
+                resource_agent_metadata_to_text(
+                    lib.resource_agent.get_agent_metadata(agent_name),
+                    lib.resource_agent.get_agent_default_operations(
+                        agent_name
+                    ).operations,
+                    verbose=modifiers.is_specified("--full"),
+                )
             )
         )
     )
@@ -1173,7 +1185,7 @@ def resource_operation_add(
             "record-pending",
             "role",
             "on-fail",
-            "OCF_CHECK_LEVEL",
+            OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME,
         ]
         for key, value in op_properties:
             if key not in valid_attrs:
@@ -1223,7 +1235,7 @@ def resource_operation_add(
     op_el = dom.createElement("op")
     op_el.setAttribute("id", op_id)
     for key, val in op_properties:
-        if key == "OCF_CHECK_LEVEL":
+        if key == OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME:
             attrib_el = dom.createElement("instance_attributes")
             attrib_el.setAttribute(
                 "id", utils.find_unique_id(dom, "params-" + op_id)
@@ -2175,7 +2187,7 @@ def resource_show(lib, argv, modifiers, stonith=False):
                 "stonith" if stonith else "resource"
             )
         )
-        resource_config(lib, argv, modifiers.get_subset("-f"), stonith=stonith)
+        config_common(lib, argv, modifiers.get_subset("-f"), stonith=stonith)
         return
 
     warn(
@@ -2299,46 +2311,6 @@ def resource_status(lib, argv, modifiers, stonith=False):
             elif preg.match(line) and stonith:
                 has_resources = True
                 print(line)
-
-
-def _resource_stonith_lines(resource_el, only_stonith):
-    is_stonith = (
-        "class" in resource_el.attrib
-        and resource_el.attrib["class"] == "stonith"
-    )
-    if (only_stonith and is_stonith) or (not only_stonith and not is_stonith):
-        return resource_node_lines(resource_el)
-    return []
-
-
-def resource_config(lib, argv, modifiers, stonith=False):
-    """
-    Options:
-      * -f - CIB file
-    """
-    del lib
-    modifiers.ensure_only_supported("-f")
-
-    root = utils.get_cib_etree()
-    resources = root.find(".//resources")
-    if not argv:
-        for resource in resources:
-            lines = _resource_stonith_lines(resource, only_stonith=stonith)
-            if lines:
-                print("\n".join(indent(lines, indent_step=1)))
-        return
-
-    for resource_id in argv:
-        resource_found = False
-        for resource in resources.findall(str(".//*")):
-            if "id" in resource.attrib and resource.attrib["id"] == resource_id:
-                lines = _resource_stonith_lines(resource, only_stonith=stonith)
-                if lines:
-                    print("\n".join(indent(lines, indent_step=1)))
-                    resource_found = True
-                    break
-        if not resource_found:
-            utils.err(f"unable to find resource '{resource_id}'")
 
 
 def resource_disable_cmd(lib, argv, modifiers):
@@ -2841,175 +2813,6 @@ def resource_failcount_show(lib, resource, node, operation, interval, full):
     return "\n".join(result_lines)
 
 
-def resource_node_lines(node):
-    """
-    Commandline options: no options
-    """
-    simple_types = {
-        "clone": "Clone",
-        "group": "Group",
-        "primitive": "Resource",
-    }
-    lines = []
-    if node.tag in simple_types:
-        lines.append(
-            f"{simple_types[node.tag]}: {node.attrib['id']}"
-            + _get_attrs(node, " (", ")")
-        )
-        lines.extend(
-            indent(
-                _instance_vars_lines(node)
-                + _meta_vars_lines(node)
-                + _operations_lines(node),
-                indent_step=1,
-            )
-        )
-        for child in node:
-            lines.extend(indent(resource_node_lines(child), indent_step=1))
-        return lines
-    if node.tag == "master":
-        lines.append(
-            f"Clone: {node.attrib['id']}" + _get_attrs(node, " (", ")")
-        )
-        lines.extend(
-            indent(
-                _instance_vars_lines(node)
-                + _meta_vars_lines(node, extra_vars_dict={"promotable": "true"})
-                + _operations_lines(node),
-                indent_step=1,
-            )
-        )
-        for child in node:
-            lines.extend(indent(resource_node_lines(child), indent_step=1))
-        return lines
-    if node.tag == "bundle":
-        lines.append(
-            f"Bundle: {node.attrib['id']}" + _get_attrs(node, " (", ")")
-        )
-        lines.extend(
-            indent(
-                _bundle_container_strings(node)
-                + _bundle_network_strings(node)
-                + _bundle_mapping_strings(
-                    "Port Mapping:",
-                    node.findall("network/port-mapping"),
-                )
-                + _bundle_mapping_strings(
-                    "Storage Mapping:",
-                    node.findall("storage/storage-mapping"),
-                )
-                + _meta_vars_lines(node),
-                indent_step=1,
-            )
-        )
-        for child in node:
-            lines.extend(indent(resource_node_lines(child), indent_step=1))
-        return lines
-    return lines
-
-
-def _bundle_container_strings(bundle_el):
-    """
-    Commandline options: no options
-    """
-    lines = []
-    for container_type in bundle.GENERIC_CONTAINER_TYPES:
-        container_list = bundle_el.findall(container_type)
-        for container_el in container_list:
-            lines.append(
-                container_el.tag.capitalize()
-                + _get_attrs(container_el, ": ", "")
-            )
-    return lines
-
-
-def _bundle_network_strings(bundle_el):
-    """
-    Commandline options: no options
-    """
-    lines = []
-    network_list = bundle_el.findall("network")
-    for network_el in network_list:
-        attrs_string = _get_attrs(network_el)
-        if attrs_string:
-            lines.append("Network: " + attrs_string)
-    return lines
-
-
-def _bundle_mapping_strings(first_line, map_items):
-    """
-    Commandline options: no options
-    """
-    map_lines = [
-        _get_attrs(item, "", " ") + "(" + item.attrib["id"] + ")"
-        for item in map_items
-    ]
-    if map_lines:
-        return [first_line] + indent(map_lines, indent_step=1)
-    return []
-
-
-def _nvpairs_strings(node, parent_tag, extra_vars_dict=None):
-    """
-    Commandline options: no options
-    """
-    # In the new architecture, this is implemented in pcs.cli.nvset.
-    key_val = {
-        nvpair.attrib["name"]: nvpair.attrib["value"]
-        for nvpair in node.findall(f"{parent_tag}/nvpair")
-    }
-    if extra_vars_dict:
-        key_val.update(extra_vars_dict)
-    strings = []
-    for name, value in sorted(key_val.items()):
-        if " " in value:
-            value = f'"{value}"'
-        strings.append(f"{name}={value}")
-    return strings
-
-
-def _instance_vars_lines(node):
-    """
-    Commandline options: no options
-    """
-    nvpairs = _nvpairs_strings(node, "instance_attributes")
-    return ["Attributes: " + " ".join(nvpairs)] if nvpairs else []
-
-
-def _meta_vars_lines(node, extra_vars_dict=None):
-    """
-    Commandline options: no options
-    """
-    nvpairs = _nvpairs_strings(
-        node, "meta_attributes", extra_vars_dict=extra_vars_dict
-    )
-    return ["Meta Attrs: " + " ".join(nvpairs)] if nvpairs else []
-
-
-def _operations_lines(node):
-    """
-    Commandline options: no options
-    """
-    op_lines = []
-    for op in node.findall("operations/op"):
-        parts = []
-        parts.append(op.attrib["name"])
-        parts.extend(
-            [
-                f"{name}={value}"
-                for name, value in sorted(op.attrib.items())
-                if name not in {"id", "name"}
-            ]
-        )
-        parts.extend(_nvpairs_strings(op, "./"))
-        parts.append(f"({op.attrib['id']})")
-        op_lines.append(" ".join(parts))
-    if not op_lines:
-        return op_lines
-    label = "Operations: "
-    return [label + op_lines[0]] + indent(op_lines[1:], indent_step=len(label))
-
-
 def operation_to_string(op_el):
     """
     Commandline options: no options
@@ -3026,22 +2829,6 @@ def operation_to_string(op_el):
         )
     parts.append("(" + op_el.getAttribute("id") + ")")
     return " ".join(parts)
-
-
-def _get_attrs(node, prepend_string="", append_string=""):
-    """
-    Commandline options: no options
-    """
-    output = ""
-    for attr, val in sorted(node.attrib.items()):
-        if attr in ["id"]:
-            continue
-        if " " in val:
-            val = '"' + val + '"'
-        output += attr + "=" + val + " "
-    if output != "":
-        return prepend_string + output.rstrip() + append_string
-    return output.rstrip()
 
 
 def resource_cleanup(lib, argv, modifiers):
@@ -3486,3 +3273,53 @@ def resource_bundle_update_cmd(lib, argv, modifiers):
         force_options=modifiers.get("--force"),
         wait=modifiers.get("--wait"),
     )
+
+
+def config(lib: Any, argv: List[str], modifiers: InputModifiers) -> None:
+    config_common(lib, argv, modifiers, stonith=False)
+
+
+def config_common(
+    lib: Any, argv: List[str], modifiers: InputModifiers, stonith: bool
+) -> None:
+    """
+    Options:
+      * -f - CIB file
+      * --output-format - supported formats: text, cmd, json
+    """
+    modifiers.ensure_only_supported("-f", output_format_supported=True)
+    warnings_allowed = modifiers.get_output_format() == OUTPUT_FORMAT_VALUE_TEXT
+    if not warnings_allowed:
+        lib.env.report_processor.suppress_reports_of_severity(
+            [
+                reports.ReportItemSeverity.INFO,
+                reports.ReportItemSeverity.WARNING,
+            ]
+        )
+    resources_facade = (
+        ResourcesConfigurationFacade.from_resources_dto(
+            lib.resource.get_configured_resources()
+        )
+        .filter_stonith(stonith)
+        .filter_resources(argv, warnings_allowed)
+    )
+    output_format = modifiers.get_output_format()
+    if output_format == "cmd":
+        output = ";\n".join(
+            " \\\n".join(cmd) for cmd in resources_to_cmd(resources_facade)
+        )
+    elif output_format == "json":
+        output = json.dumps(
+            dto.to_dict(
+                ListCibResourcesDto(
+                    primitives=resources_facade.primitives,
+                    clones=resources_facade.clones,
+                    groups=resources_facade.groups,
+                    bundles=resources_facade.bundles,
+                )
+            )
+        )
+    else:
+        output = "\n".join(smart_wrap_text(resources_to_text(resources_facade)))
+    if output:
+        print(output)

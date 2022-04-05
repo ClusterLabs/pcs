@@ -25,6 +25,15 @@ def indent(line_list: Iterable[str], indent_step: int = 2) -> List[str]:
     ]
 
 
+def outdent(line_list: List[str]) -> List[str]:
+    if not line_list:
+        return []
+    smallest_indentation = min(
+        [len(line) - len(line.lstrip(" ")) for line in line_list if line]
+    )
+    return [line[smallest_indentation:] for line in line_list]
+
+
 def format_list_dont_sort(
     item_list: List[str],  # Intetionaly not Sequence so string is prohibited
     separator: str = ", ",
