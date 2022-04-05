@@ -95,6 +95,9 @@ EXTRA_DIST		= \
 			  common/file_type_codes.py \
 			  common/host.py \
 			  common/__init__.py \
+			  common/async_tasks/__init__.py \
+			  common/async_tasks/dto.py \
+			  common/async_tasks/types.py \
 			  common/communication/__init__.py \
 			  common/communication/const.py \
 			  common/communication/dto.py \
@@ -154,6 +157,7 @@ EXTRA_DIST		= \
 			  constraint.py \
 			  daemon/app/common.py \
 			  daemon/app/__init__.py \
+			  daemon/app/async_api.py \
 			  daemon/app/session.py \
 			  daemon/app/sinatra_common.py \
 			  daemon/app/sinatra_remote.py \
@@ -162,6 +166,14 @@ EXTRA_DIST		= \
 			  daemon/app/ui_common.py \
 			  daemon/app/ui.py \
 			  daemon/auth.py \
+			  daemon/async_tasks/__init__.py \
+			  daemon/async_tasks/command_mapping.py \
+			  daemon/async_tasks/logging.py \
+			  daemon/async_tasks/messaging.py \
+			  daemon/async_tasks/report_proc.py \
+			  daemon/async_tasks/scheduler.py \
+			  daemon/async_tasks/task.py \
+			  daemon/async_tasks/worker.py \
 			  daemon/env.py \
 			  daemon/http_server.py \
 			  daemon/__init__.py \

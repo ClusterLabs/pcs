@@ -116,6 +116,14 @@ EXTRA_DIST		= \
 			  tier0/daemon/app/test_app_remote.py \
 			  tier0/daemon/app/test_app_session.py \
 			  tier0/daemon/app/test_app_spa.py \
+			  tier0/daemon/async_tasks/__init__.py \
+			  tier0/daemon/async_tasks/dummy_commands.py \
+			  tier0/daemon/async_tasks/helpers.py \
+			  tier0/daemon/async_tasks/test_integration.py \
+			  tier0/daemon/async_tasks/test_scheduler.py \
+			  tier0/daemon/async_tasks/test_task.py \
+			  tier0/daemon/async_tasks/test_worker.py \
+			  tier0/daemon/test_async_api.py \
 			  tier0/daemon/__init__.py \
 			  tier0/daemon/test_auth.py \
 			  tier0/daemon/test_env.py \
