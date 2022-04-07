@@ -3,6 +3,7 @@ from typing import List
 from pcs.cli.common.tools import print_to_stderr
 from pcs.common.reports import (
     ReportItem,
+    ReportItemDto,
     ReportItemSeverity,
     ReportProcessor,
 )
@@ -22,12 +23,26 @@ class ReportProcessorToConsole(ReportProcessor):
         self._ignore_severities: List[ReportItemSeverity] = []
         self.debug = debug
 
-    def _do_report(self, report_item: ReportItem) -> None:
-        report_dto = report_item.to_dto()
-        msg = report_item_msg_from_dto(report_dto.message).message
-        if report_dto.context:
-            msg = f"{report_dto.context.node}: {msg}"
-        severity = report_dto.severity.level
+    def report_list_dto(
+        self, report_list_dto: List[ReportItemDto]
+    ) -> "ReportProcessorToConsole":
+        for report_item_dto in report_list_dto:
+            self.report_dto(report_item_dto)
+        return self
+
+    def report_dto(
+        self, report_item_dto: ReportItemDto
+    ) -> "ReportProcessorToConsole":
+        if _is_error(report_item_dto):
+            self._has_errors = True
+        self._do_report_dto(report_item_dto)
+        return self
+
+    def _do_report_dto(self, report_item_dto: ReportItemDto) -> None:
+        msg = report_item_msg_from_dto(report_item_dto.message).message
+        if report_item_dto.context:
+            msg = f"{report_item_dto.context.node}: {msg}"
+        severity = report_item_dto.severity.level
 
         if severity in self._ignore_severities:
             # DEBUG overrides ignoring severities for debug reports
@@ -39,7 +54,9 @@ class ReportProcessorToConsole(ReportProcessor):
             error(
                 "{msg}{force}".format(
                     msg=msg,
-                    force=prepare_force_text(report_item),
+                    force=prepare_force_text(
+                        ReportItemSeverity.from_dto(report_item_dto.severity)
+                    ),
                 )
             )
         elif severity == ReportItemSeverity.WARNING:
@@ -49,7 +66,22 @@ class ReportProcessorToConsole(ReportProcessor):
         elif msg and (self.debug or severity != ReportItemSeverity.DEBUG):
             print_to_stderr(msg)
 
+    def _do_report(self, report_item: ReportItem) -> None:
+        report_dto = report_item.to_dto()
+        self._do_report_dto(report_dto)
+
     def suppress_reports_of_severity(
         self, severity_list: List[ReportItemSeverity]
     ) -> None:
         self._ignore_severities = list(severity_list)
+
+
+def has_errors(report_list_dto: List[ReportItemDto]) -> bool:
+    for report_item_dto in report_list_dto:
+        if _is_error(report_item_dto):
+            return True
+    return False
+
+
+def _is_error(report_item_dto: ReportItemDto) -> bool:
+    return report_item_dto.severity.level == ReportItemSeverity.ERROR
