@@ -6,7 +6,7 @@ dnl op can be:
 dnl
 dnl lt or <
 dnl le or <=
-dnl eq or ==
+dnl eq or =
 dnl ge or >=
 dnl gt or >
 dnl
@@ -20,7 +20,7 @@ AC_DEFUN([AC_COMPARE_VERSIONS],[
 	verA="$1"
 	op="$2"
 	verB="$3"
-	if test "x$verA" == "x" || test "x$verB" == "x" || test "x$op" == x; then
+	if test "x$verA" = "x" || test "x$verB" = "x" || test "x$op" = x; then
 		AC_MSG_ERROR([ac_compare_versions: Missing parameters])
 	fi
 	case "$op" in
@@ -36,7 +36,7 @@ AC_DEFUN([AC_COMPARE_VERSIONS],[
 				result=true
 			fi
 			;;
-		"eq"|"==")
+		"eq"|"=")
 			if test "$verB" = "$verA"; then
 				result=true
 			fi
