@@ -4,6 +4,8 @@ systemctl_binary = "@SYSTEMCTL@"
 systemd_unit_path = "@SYSTEMD_UNIT_PATH@".split(":")
 chkconfig_binary = "/sbin/chkconfig"
 service_binary = "@SERVICE@"
+rc_config_binary = "@RC_CONFIG@"
+rc_service_binary = "@RC_SERVICE@"
 # Used only in utils.py in deprecated funcion
 pacemaker_binaries = "@PCMKEXECPREFIX@/sbin"
 corosync_binaries = "@COROEXECPREFIX@/sbin"
@@ -118,6 +120,7 @@ pcs_data_dir = "@LIB_DIR@/pcs/data/"
 _ocf_1_0_schema_filename = "ocf-1.0.rng"
 _ocf_1_1_schema_filename = "ocf-1.1.rng"
 
+
 class _PathManager:
     @property
     def ocf_1_0_schema(self):
@@ -130,5 +133,6 @@ class _PathManager:
     @property
     def pcs_data_dir(self):
         return pcs_data_dir
+
 
 path = _PathManager()

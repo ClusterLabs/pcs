@@ -401,6 +401,8 @@ if test "x$SYSTEMCTL" = "x"; then
 		AC_MSG_ERROR([Unable to find systemctl or service in $PATH])
 	fi
 fi
+AC_PATH_PROG([RC_CONFIG], [rc-config])
+AC_PATH_PROG([RC_SERVICE], [rc-service])
 
 if test "x$tests_only" != "xyes"; then
 	AC_PATH_PROG([KILLALL], [killall])

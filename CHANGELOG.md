@@ -16,6 +16,7 @@
 - Add warning regarding move constraints to `pcs status` ([rhbz#2058247])
 - Support for output formats `json` and `cmd` to `pcs resource config` and `pcs
   stonith config` commands ([rhbz#2058251], [rhbz#2058252])
+- Support systems with OpenRC init system ([ghissue#266])
 
 ### Fixed
 - Booth ticket name validation ([rhbz#2053177])
@@ -24,6 +25,7 @@
 - Preventing fence-loop caused when stonith-watchdog-timeout is set
   with wrong value ([rhbz#2058246])
 
+[ghissue#266]: https://github.com/ClusterLabs/pcs/issues/266
 [rhbz#2024522]: https://bugzilla.redhat.com/show_bug.cgi?id=2024522
 [rhbz#2053177]: https://bugzilla.redhat.com/show_bug.cgi?id=2053177
 [rhbz#2054671]: https://bugzilla.redhat.com/show_bug.cgi?id=2054671

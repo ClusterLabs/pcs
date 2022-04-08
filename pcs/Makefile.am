@@ -135,6 +135,7 @@ EXTRA_DIST		= \
 			  common/resource_agent/dto.py \
 			  common/services/common.py \
 			  common/services/drivers/__init__.py \
+			  common/services/drivers/openrc.py \
 			  common/services/drivers/systemd.py \
 			  common/services/drivers/sysvinit_rhel.py \
 			  common/services_dto.py \
