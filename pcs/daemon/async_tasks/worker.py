@@ -79,7 +79,7 @@ def task_executor(task: WorkerCommand) -> None:
 
     task_retval = None
     try:
-        task_retval = command_map[task.command.command_name](
+        task_retval = command_map[task.command.command_name](  # type: ignore
             env, **task.command.params
         )
     except LibraryError as e:
