@@ -1,0 +1,11 @@
+#!/usr/bin/env python3
+
+import os.path
+import sys
+
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.dirname(CURRENT_DIR))
+
+from pcs import async_client
+
+async_client.main()

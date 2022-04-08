@@ -1,6 +1,6 @@
+# pylint: disable=global-statement
 import getopt
 import json
-import os
 import signal
 import sys
 from textwrap import dedent
@@ -13,11 +13,6 @@ from typing import (
 
 import pycurl
 
-# Put pcs in path to make imports work
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.dirname(CURRENT_DIR))
-
-from pcs.cli.common import parse_args
 from pcs.cli.reports.processor import ReportProcessorToConsole
 from pcs.common.async_tasks.dto import (
     CommandDto,
@@ -34,48 +29,54 @@ from pcs.daemon.async_tasks.command_mapping import command_map
 
 LONG_OPTIONS = [
     "resource_or_tag_ids=",
+    "wait=",
 ]
+task_ident = ""
+report_list: List[ReportItemDto] = []
 
 
 def signal_handler(sig, frame):
+    # pylint: disable=unused-argument
     if sig == signal.SIGINT:
-        try:
-            task_ident_dto = frame.f_locals["task_ident_dto"]
-        except KeyError:
+        if not task_ident:
             error("no task to kill")
             raise SystemExit(1) from None
 
         # Kill task request
-        response = make_api_request_post(
-            "task/kill", json.dumps(to_dict(task_ident_dto))
-        )
-        task_result_dto = from_dict(TaskResultDto, json.loads(response))
-
+        task_ident_dto = TaskIdentDto(task_ident)
+        make_api_request_post("task/kill", json.dumps(to_dict(task_ident_dto)))
+        print("Task kill request sent...")
+        task_result_dto = fetch_task_result(task_ident_dto)
         print_command_return_value(task_result_dto)
         print_task_details(task_result_dto)
+        raise SystemExit(0)
 
 
 # REQUEST FUNCTIONS
-def _handle_api_error(c: pycurl.Curl, response: str) -> None:
-    if c.getinfo(pycurl.RESPONSE_CODE) != 200:
-        error_response = json.loads(response)
-        print(error_response.error_msg)
-
-    c.close()
+def _handle_api_error(curl: pycurl.Curl, response: str) -> None:
+    if curl.getinfo(pycurl.RESPONSE_CODE) != 200:
+        try:
+            error_response = json.loads(response)
+            error(error_response.error_message)
+        except AttributeError:
+            error(response)
+        curl.close()
+        raise SystemExit(1)
+    curl.close()
 
 
 def _make_api_request(endpoint) -> pycurl.Curl:
-    c = pycurl.Curl()
-    c.setopt(pycurl.URL, f"https://localhost:2224/async_api/{endpoint}")
-    c.setopt(pycurl.SSL_VERIFYPEER, 0)
-    c.setopt(pycurl.SSL_VERIFYHOST, 0)
-    return c
+    curl = pycurl.Curl()
+    curl.setopt(pycurl.URL, f"https://localhost:2224/async_api/{endpoint}")
+    curl.setopt(pycurl.SSL_VERIFYPEER, 0)
+    curl.setopt(pycurl.SSL_VERIFYHOST, 0)
+    return curl
 
 
 def make_api_request_get(endpoint: str, params: str) -> str:
-    c = _make_api_request(endpoint + params)
-    response = c.perform_rs()
-    _handle_api_error(c, response)
+    curl = _make_api_request(endpoint + params)
+    response = curl.perform_rs()
+    _handle_api_error(curl, response)
     return response
 
 
@@ -83,11 +84,11 @@ def make_api_request_post(
     endpoint: str,
     json_body: str,
 ) -> str:
-    c = _make_api_request(endpoint)
-    c.setopt(pycurl.HTTPHEADER, ["Content-Type: application/json"])
-    c.setopt(pycurl.POSTFIELDS, json_body)
-    response = c.perform_rs()
-    _handle_api_error(c, response)
+    curl = _make_api_request(endpoint)
+    curl.setopt(pycurl.HTTPHEADER, ["Content-Type: application/json"])
+    curl.setopt(pycurl.POSTFIELDS, json_body)
+    response = curl.perform_rs()
+    _handle_api_error(curl, response)
     return response
 
 
@@ -116,17 +117,14 @@ def error(text: str) -> None:
 
 
 # COMMAND CALL
-def perform_command(command: str, params: dict) -> TaskResultDto:
-    command_dto = CommandDto(command, params)
-    response = make_api_request_post(
-        "task/create", json.dumps(to_dict(command_dto))
-    )
-    task_ident_dto = from_dict(TaskIdentDto, json.loads(response))
-
+def fetch_task_result(
+    task_ident_dto: TaskIdentDto, sleep_interval: float = 0.3
+) -> TaskResultDto:
     task_state = TaskState.CREATED
     # Reuse PCS CLI report processor for printing reports
     cli_report_processor = ReportProcessorToConsole()
-    report_list: List[ReportItemDto] = []
+    # Using global report list to recall reports in signal handler
+    global report_list
     while task_state != TaskState.FINISHED:
         response = make_api_request_get(
             "task/result", f"?task_ident={task_ident_dto.task_ident}"
@@ -143,38 +141,53 @@ def perform_command(command: str, params: dict) -> TaskResultDto:
         )
         report_list = task_result_dto.reports
         # Wait for updates and continue until the task is finished
-        sleep(300 / 1000)  # 300ms
+        sleep(sleep_interval)  # 300ms
+    global task_ident
+    task_ident = ""
+    return task_result_dto
+
+
+def perform_command(command: str, params: dict) -> TaskResultDto:
+    command_dto = CommandDto(command, params)
+    response = make_api_request_post(
+        "task/create", json.dumps(to_dict(command_dto))
+    )
+    task_ident_dto = from_dict(TaskIdentDto, json.loads(response))
+    global task_ident
+    task_ident = task_ident_dto.task_ident
+
+    task_result_dto = fetch_task_result(task_ident_dto)
 
     return task_result_dto
 
 
-# MAIN
-signal.signal(signal.SIGINT, signal_handler)
-argv = sys.argv[1:]
+def main():
+    signal.signal(signal.SIGINT, signal_handler)
+    argv = sys.argv[1:]
 
-# Very simple argument parsing
-try:
-    options, cmd = getopt.gnu_getopt(
-        argv,
-        "",
-        LONG_OPTIONS,
-    )
-except getopt.GetoptError as err:
-    error(str(err))
-    raise SystemExit(1) from None
+    # Very simple argument parsing
+    try:
+        options, cmd = getopt.gnu_getopt(
+            argv,
+            "",
+            LONG_OPTIONS,
+        )
+    except getopt.GetoptError as err:
+        error(str(err))
+        raise SystemExit(1) from None
 
-# Check that daemon supports the command
-cmd_str = " ".join(cmd)
-if cmd_str not in command_map:
-    error("this command is not supported")
-    raise SystemExit(1)
+    # Check that daemon supports the command
+    cmd_str = " ".join(cmd)
+    if cmd_str not in command_map:
+        error("this command is not supported")
+        raise SystemExit(1)
 
-# Call the new daemon and print results
-option_dict: Dict[str, Union[str, List[str]]] = {}
-for opt in options:
-    # Accepting lib command argument names as options and values as JSON
-    # for easy parsing
-    option_dict[opt[0][2:]] = json.loads(opt[1])
-result = perform_command(cmd_str, option_dict)
-print_command_return_value(result)
-print_task_details(result)
+    # Call the new daemon and print results
+    option_dict: Dict[str, Union[str, List[str]]] = {}
+    for opt in options:
+        # Accepting lib command argument names as options and values as JSON
+        # for easy parsing
+        option_dict[opt[0][2:]] = json.loads(opt[1])
+    result = perform_command(cmd_str, option_dict)
+    print_command_return_value(result)
+    print_task_details(result)
