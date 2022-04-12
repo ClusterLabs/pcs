@@ -98,12 +98,12 @@ def task_executor(task: WorkerCommand) -> None:
         logger.exception("Task %s raised a LibraryException.", task.task_ident)
         pause_worker()
         return
-    except Exception:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except
         # For unhandled exceptions during execution
         worker_com.put(
             Message(
                 task.task_ident,
-                TaskFinished(TaskFinishType.UNHANDLED_EXCEPTION, None),
+                TaskFinished(TaskFinishType.UNHANDLED_EXCEPTION, str(e)),
             )
         )
         logger.exception(

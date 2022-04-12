@@ -20,6 +20,7 @@ pcs-*
 requirements.txt
 setup.py
 setup.cfg
+pcs/async_client
 pcs/pcs
 pcs/pcs_internal
 pcs/settings.py
