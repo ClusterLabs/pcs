@@ -1,0 +1,22 @@
+#!@PYTHON@
+
+import os.path
+import sys
+
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# We prevent to import some module from this dir instead of e.g. standard module.
+# There is no reason to import anything from this module.
+sys.path.remove(CURRENT_DIR)
+
+# Add pcs package.
+PACKAGE_DIR = os.path.dirname(CURRENT_DIR)
+BUNDLED_PACKAGES_DIR = os.path.join(
+    PACKAGE_DIR, "@PCS_BUNDLED_DIR_LOCAL@", "packages"
+)
+sys.path.insert(0, BUNDLED_PACKAGES_DIR)
+sys.path.insert(0, PACKAGE_DIR)
+
+from pcs import async_client
+
+async_client.main()
