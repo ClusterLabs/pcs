@@ -136,7 +136,7 @@ class Scheduler:
                 task.request_kill(TaskKillReason.COMPLETION_TIMEOUT)
             elif task.is_abandoned():
                 task_idents_to_delete.append(task.task_ident)
-            if task.is_kill_requested():
+            if task.state != TaskState.FINISHED and task.is_kill_requested():
                 task.kill()
         # Dictionary can't change size during iteration
         for task_ident in task_idents_to_delete:

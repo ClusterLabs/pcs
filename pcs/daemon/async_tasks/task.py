@@ -140,16 +140,9 @@ class Task(ImplementsToDto):
         """
         Reports if the task needs to be killed
 
-        Only CREATED and EXECUTED tasks can be killed. SCHEDULED tasks can be
-        killed only after they were executed.
-
-        :return: True for tasks marked for killing that are not QUEUED
-        or FINISHED, False otherwise
+        :return: True for tasks marked for killing
         """
-        return self._kill_reason is not None and self.state not in [
-            TaskState.QUEUED,
-            TaskState.FINISHED,
-        ]
+        return self._kill_reason is not None
 
     def request_kill(self, reason: TaskKillReason) -> None:
         """
@@ -167,6 +160,11 @@ class Task(ImplementsToDto):
         EXECUTED tasks are terminated by by sending SIGTERM to their worker
         process and their state is changed here.
         """
+        if self._state in (
+            TaskState.QUEUED,
+            TaskState.FINISHED,
+        ):
+            return
         if self._state == TaskState.EXECUTED:
             try:
                 os.kill(self._worker_pid, 15)
