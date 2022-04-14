@@ -174,13 +174,13 @@ class Scheduler:
                 # This may happen when messages are on the way but not quite
                 # delivered yet. We'll get them later.
                 return received_total
+            received_total += 1
             if not isinstance(message, Message):
                 self._logger.error(
                     "Scheduler received something that is not a valid message."
                     'The type was: "%s".',
                     type(message).__name__,
                 )
-                received_total += 1
                 continue
             try:
                 task: Task = self._task_register[message.task_ident]
@@ -190,6 +190,7 @@ class Scheduler:
                     "the task register.",
                     message.task_ident,
                 )
+                continue
             try:
                 task.receive_message(message)
             except UnknownMessageError as exc:
@@ -199,7 +200,6 @@ class Scheduler:
                     exc.payload_type,
                 )
                 task.request_kill(TaskKillReason.INTERNAL_MESSAGING_ERROR)
-            received_total += 1
         return received_total
 
     async def _schedule_tasks(self) -> None:

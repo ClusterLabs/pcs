@@ -130,6 +130,11 @@ class ReceiveMessagesTest(SchedulerBaseAsyncTestCase):
         self.assertIsNone(task2_dto.kill_reason)
 
     @gen_test
+    async def test_wrong_message_id(self):
+        # TODO
+        pass
+
+    @gen_test
     async def test_wrong_message_type(self):
         self._create_tasks(2)
         self.worker_com.put(Message("id0", TaskExecuted(WORKER1_PID)))
