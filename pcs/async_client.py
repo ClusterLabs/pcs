@@ -13,7 +13,7 @@ from typing import (
 
 import pycurl
 
-from pcs.cli.reports.processor import ReportProcessorToConsole
+from pcs.cli.reports.processor import print_report
 from pcs.common.async_tasks.dto import (
     CommandDto,
     TaskIdentDto,
@@ -121,8 +121,6 @@ def fetch_task_result(
     task_ident_dto: TaskIdentDto, sleep_interval: float = 0.3
 ) -> TaskResultDto:
     task_state = TaskState.CREATED
-    # Reuse PCS CLI report processor for printing reports
-    cli_report_processor = ReportProcessorToConsole()
     # Using global report list to recall reports in signal handler
     global report_list
     while task_state != TaskState.FINISHED:
@@ -133,12 +131,10 @@ def fetch_task_result(
         task_state = task_result_dto.state
 
         # Only print new reports - picks only reports not in report_list
-        cli_report_processor.report_list_dto(
-            task_result_dto.reports[
-                len(report_list) : len(task_result_dto.reports)
-                - len(report_list)
-            ]
-        )
+        for report_item_dto in task_result_dto.reports[
+            len(report_list) : len(task_result_dto.reports) - len(report_list)
+        ]:
+            print_report(report_item_dto)
         report_list = task_result_dto.reports
         # Wait for updates and continue until the task is finished
         sleep(sleep_interval)  # 300ms
