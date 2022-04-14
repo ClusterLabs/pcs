@@ -63,7 +63,6 @@ def task_executor(task: WorkerCommand) -> None:
     """
     logger = getLogger("pcs_worker")
 
-    global worker_com  # pylint: disable=global-variable-not-assigned
     worker_com.put(
         Message(
             task.task_ident,
@@ -103,11 +102,11 @@ def task_executor(task: WorkerCommand) -> None:
         worker_com.put(
             Message(
                 task.task_ident,
-                TaskFinished(TaskFinishType.UNHANDLED_EXCEPTION, str(e)),
+                TaskFinished(TaskFinishType.UNHANDLED_EXCEPTION, None),
             )
         )
         logger.exception(
-            "Task %s raised an unhandled exception.", task.task_ident
+            "Task %s raised an unhandled exception: %s", task.task_ident, e
         )
         pause_worker()
         return
