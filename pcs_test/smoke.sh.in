@@ -4,7 +4,7 @@ set -ex
 cluster_user=hacluster
 cluster_user_password=qa57Jk27eP
 
-echo "${cluster_user_password}" | passwd --stdin $cluster_user;
+echo "${cluster_user_password}" | passwd --stdin "${cluster_user}";
 
 pcs --help
 pcs --version
@@ -20,9 +20,10 @@ cat output.json; echo ""
 python3 -c "import json; import sys; json.load(open('output.json'))['status'] == 'exception' and (sys.exit(1))";
 
 token_file=$(mktemp)
-dd if=/dev/urandom bs=32 count=1 status=none | base64 > "$token_file"
+dd if=/dev/urandom bs=32 count=1 status=none | base64 > "${token_file}"
 custom_localhost_node_name="custom-node-name"
 
-pcs host auth $custom_localhost_node_name addr=localhost --token $token_file
-pcs pcsd accept_token $token_file
-pcs pcsd status $custom_localhost_node_name | grep "$custom_localhost_node_name: Online"
+pcs host auth "${custom_localhost_node_name}" addr=localhost --token "${token_file}"
+pcs pcsd accept_token "${token_file}"
+pcs pcsd status "${custom_localhost_node_name}" | grep "${custom_localhost_node_name}: Online"
+exit 0
