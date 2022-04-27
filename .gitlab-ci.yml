@@ -1,64 +1,8 @@
-image: fedora${CI_PCS_FC_IMG_TAG}
-
 variables:
-  PYTHON_DEPENDENCIES: "
-    python3-cryptography
-    python3-devel
-    python3-lxml
-    python3-pycurl
-    python3-pyparsing
-    python3-setuptools
-    python3-setuptools_scm
-    python3-wheel
-  "
-  RUBY_GEMS: "
-    rubygem-backports
-    rubygem-ethon
-    rubygem-ffi
-    rubygem-io-console
-    rubygem-json
-    rubygem-open4
-    rubygem-rack
-    rubygem-rack-protection
-    rubygem-rack-test
-    rubygem-rexml
-    rubygem-sinatra
-    rubygem-test-unit
-    rubygem-thin
-    rubygem-tilt
-    rubygem-webrick
-  "
-  COMMON_DEPENDENCIES: "
-    autoconf
-    automake
-    coreutils
-    curl
-    findutils
-    git
-    make
-    sed
-    systemd
-    tar
-    time
-    wget
-    python3-pip
-    pkgconf-pkg-config
-    ruby
-    ruby-devel
-    rubygem-bundler
-  "
-  COMMON_BUILD_DEPENDENCIES: "
-    fontconfig
-    gcc
-    gcc-c++
-    psmisc
-    redhat-rpm-config
-    ${COMMON_DEPENDENCIES}
-    ${PYTHON_DEPENDENCIES}
-  "
   APP_VERSION: "0.0.1.ci"
   DIST_VERSION: "${APP_VERSION}.${CI_PROJECT_NAMESPACE}-${CI_COMMIT_SHORT_SHA}"
   RPM_VERSION: "${APP_VERSION}-1.${CI_PROJECT_NAMESPACE}.$CI_COMMIT_SHORT_SHA"
+  BASE_IMAGE_NAME: "pcs-0.10"
 
 default:
   before_script:
@@ -72,12 +16,6 @@ stages:
 rpm_build:
   stage: stage1
   script:
-    - "dnf install -y
-        ${COMMON_BUILD_DEPENDENCIES}
-        dnf-plugins-core
-        rpm-build
-        rpmdevtools
-      "
     - ./autogen.sh
     - ./configure --enable-local-build
     - make rpm/pcs.spec
@@ -92,12 +30,6 @@ rpm_build:
 distcheck:
   stage: stage1
   script:
-    - "dnf install -y
-        ${COMMON_BUILD_DEPENDENCIES}
-        ${RUBY_GEMS}
-        bzip2
-        xz
-      "
     - "pip3 install
         dacite
         tornado
@@ -116,7 +48,6 @@ distcheck:
 black:
   stage: stage1
   script:
-    - dnf install -y ${COMMON_DEPENDENCIES}
     - python3 -m pip install --upgrade -r dev_requirements.txt
     - ./autogen.sh
     - ./configure --enable-local-build --enable-dev-tests --enable-tests-only
@@ -125,7 +56,6 @@ black:
 isort:
   stage: stage1
   script:
-    - dnf install -y ${COMMON_DEPENDENCIES}
     - python3 -m pip install --upgrade -r dev_requirements.txt
     - ./autogen.sh
     - ./configure --enable-local-build --enable-dev-tests --enable-tests-only
@@ -134,7 +64,6 @@ isort:
 pylint:
   stage: stage1
   script:
-    - dnf install -y ${COMMON_BUILD_DEPENDENCIES}
     - python3 -m pip install --upgrade -r dev_requirements.txt
     - ./autogen.sh
     - ./configure --enable-local-build --enable-dev-tests
@@ -144,7 +73,6 @@ pylint:
 mypy:
   stage: stage1
   script:
-    - dnf install -y ${COMMON_BUILD_DEPENDENCIES}
     - python3 -m pip install --upgrade -r dev_requirements.txt
     - ./autogen.sh
     - ./configure --enable-local-build --enable-dev-tests
@@ -154,7 +82,6 @@ mypy:
 ruby_tests:
   stage: stage1
   script:
-    - dnf install -y ${COMMON_BUILD_DEPENDENCIES}
     - ./autogen.sh
     - ./configure --enable-local-build
     - make
@@ -163,7 +90,6 @@ ruby_tests:
 python_tier0_tests:
   stage: stage1
   script:
-    - dnf install -y ${COMMON_BUILD_DEPENDENCIES}
     - python3 -m pip install concurrencytest
     - ./autogen.sh
     - ./configure --enable-local-build
@@ -175,16 +101,7 @@ python_tier1_tests:
   needs:
     - rpm_build
   script:
-    - "dnf install -y
-        ${COMMON_DEPENDENCIES}
-        python3-mock
-        fence-agents-scsi
-        fence-agents-apc
-        fence-agents-ipmilan
-        fence-virt
-        booth-site
-        rpms/pcs-*.rpm
-      "
+    - "dnf install -y rpms/pcs-*.rpm"
     - python3 -m pip install concurrencytest
     - ./autogen.sh
     - ./configure --enable-local-build --enable-destructive-tests --enable-tests-only
@@ -196,18 +113,9 @@ python_smoke_tests:
   needs:
     - rpm_build
   script:
-    - "dnf install -y
-        ${COMMON_DEPENDENCIES}
-        cracklib-dicts
-        passwd
-        procps-ng
-        rpms/pcs-*.rpm
-      "
-    - export GEM_HOME=/usr/lib64/pcsd/vendor/bundle/
-    - /usr/lib64/pcsd/pcsd & # start pcsd (ruby - thin)
-    - sleep 10 # wait for pcsd (ruby - thin) to start up properly
-    - /usr/sbin/pcsd & # start pcsd (python - tornado)
-    - sleep 10 # wait for pcsd (python - tornado) to start up properly
+    - "dnf install -y rpms/pcs-*.rpm"
+    - systemctl start pcsd
+    - sleep 2
     - ./autogen.sh
     - ./configure --enable-local-build --enable-tests-only
     - pcs_test/smoke.sh
