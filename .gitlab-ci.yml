@@ -66,7 +66,7 @@ pylint:
   script:
     - python3 -m pip install --upgrade -r dev_requirements.txt
     - ./autogen.sh
-    - ./configure --enable-local-build --enable-dev-tests
+    - ./configure --enable-local-build --enable-dev-tests --enable-parallel-pylint
     - make
     - make pylint
 
