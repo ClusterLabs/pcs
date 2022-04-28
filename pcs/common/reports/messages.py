@@ -7576,3 +7576,18 @@ class ResourceStonithCommandsMismatch(ReportItemMessage):
             f"Ability of this command to accept {self.not_accepted_type} is "
             "deprecated and will be removed in a future release."
         )
+
+
+@dataclass(frozen=True)
+class ClusterNodeNameIsNotASCII(ReportItemMessage):
+    """
+    Cannot add cluster node name is not ascii
+    """
+
+    _code = codes.Cluster_ADD_Node_NAME_IS_NOT_ASCII
+
+    @property
+    def message(self) -> str:
+        return (
+            "Cluster node name do not conform to the specification, is not ascii"
+        )

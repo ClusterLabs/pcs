@@ -5,9 +5,13 @@ from typing import (
     cast,
 )
 
+from pcs.common import reports
+from pcs.common.reports.item import ReportItem
+
 from lxml import etree
 from lxml.etree import _Element
 
+from pcs.lib.errors import LibraryError
 from pcs.lib.cib.tools import create_subelement_id
 from pcs.lib.xml_tools import (
     append_when_useful,
@@ -27,32 +31,21 @@ def _append_new_nvpair(nvset_element, name, value, id_provider):
     string value is value attribute of new nvpair
     IdProvider id_provider -- elements' ids generator
     """
-    etree.SubElement(
-        nvset_element,
-        "nvpair",
-        id=create_subelement_id(nvset_element, name, id_provider),
-        name=name,
-        value=clean_xml_string(value)
-    )
-
-def is_valid_xml_char_ordinal(i):
-    """
-    Defines whether char is valid to use in xml document
-    XML standard defines a valid char as::
-    Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
-    """
-    return ( # conditions ordered by presumed frequency
-        0x20 <= i <= 0xD7FF
-        or i in (0x9, 0xA, 0xD)
-        or 0xE000 <= i <= 0xFFFD
-        or 0x10000 <= i <= 0x10FFFF
+    if all(ord(c) < 128 for c in value):
+        etree.SubElement(
+            nvset_element,
+            "nvpair",
+            id=create_subelement_id(nvset_element, name, id_provider),
+            name=name,
+            value=value,
+        )
+    else:
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.ClusterNodeNameIsNotASCII()
+            )
         )
 
-def clean_xml_string(s):
-    """
-    Cleans string from invalid xml chars
-    """
-    return ''.join(c for c in s if is_valid_xml_char_ordinal(ord(c)))
 
 def set_nvpair_in_nvset(nvset_element, name, value, id_provider):
     """

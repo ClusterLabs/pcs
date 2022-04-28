@@ -5573,3 +5573,11 @@ class CloningStonithResourcesHasNoEffect(NameBuildTest):
                 ["fence1", "fence2"], "StonithGroup"
             ),
         )
+
+
+class ClusterNodeNameIsNotASCII(NameBuildTest):
+    def test_message(self):
+        self.assert_message_from_report(
+            "Cluster node name do not conform to the specification, is not ascii",
+            reports.ClusterNodeNameIsNotASCII(),
+        )
