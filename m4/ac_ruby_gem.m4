@@ -17,7 +17,11 @@ AC_DEFUN([AC_RUBY_GEM],[
 		gemoutput=$($GEM list --local | grep "^$module " 2>/dev/null)
 	fi
 	if test "x$gemoutput" != "x"; then
-		curversion=$(echo $gemoutput | sed -e 's#.*(##g' -e 's#)##'g -e 's#default: ##g')
+		curversionlist=$(echo $gemoutput | sed -e 's#.*(##g' -e 's#)##'g -e 's#default: ##g' | tr ',' ' ')
+		curversion=0.0.0
+		for version in $curversionlist; do
+			AC_COMPARE_VERSIONS([$curversion], [lt], [$version], [curversion=$version],)
+		done
 		if test "x$reqversion" != x; then
 			comp=$(echo $reqversion | cut -d " " -f 1)
 			tmpversion=$(echo $reqversion | cut -d " " -f 2)
