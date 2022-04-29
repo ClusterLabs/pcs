@@ -31,7 +31,7 @@ def _append_new_nvpair(nvset_element, name, value, id_provider):
     string value is value attribute of new nvpair
     IdProvider id_provider -- elements' ids generator
     """
-    if all(ord(c) < 128 for c in value):
+    try:
         etree.SubElement(
             nvset_element,
             "nvpair",
@@ -39,7 +39,7 @@ def _append_new_nvpair(nvset_element, name, value, id_provider):
             name=name,
             value=value,
         )
-    else:
+    except:
         raise LibraryError(
             ReportItem.error(
                 reports.messages.ClusterNodeNameIsNotASCII()
