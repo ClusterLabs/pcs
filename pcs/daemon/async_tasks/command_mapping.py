@@ -4,6 +4,6 @@ from pcs.lib.commands import (
 )
 
 command_map = {
-    "cluster status": status.full_cluster_status_plaintext,
-    "resource enable": resource.enable,
+    "cluster_status": status.full_cluster_status_plaintext,
+    "resource_enable": resource.enable,
 }

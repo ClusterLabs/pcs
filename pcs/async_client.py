@@ -1,15 +1,10 @@
 # pylint: disable=global-statement
-import getopt
 import json
 import signal
 import sys
 from textwrap import dedent
 from time import sleep
-from typing import (
-    Dict,
-    List,
-    Union,
-)
+from typing import List
 
 import pycurl
 
@@ -25,7 +20,6 @@ from pcs.common.interface.dto import (
     to_dict,
 )
 from pcs.common.reports import ReportItemDto
-from pcs.daemon.async_tasks.command_mapping import command_map
 
 LONG_OPTIONS = [
     "resource_or_tag_ids=",
@@ -159,31 +153,13 @@ def perform_command(command: str, params: dict) -> TaskResultDto:
 
 def main():
     signal.signal(signal.SIGINT, signal_handler)
-    argv = sys.argv[1:]
-
-    # Very simple argument parsing
-    try:
-        options, cmd = getopt.gnu_getopt(
-            argv,
-            "",
-            LONG_OPTIONS,
-        )
-    except getopt.GetoptError as err:
-        error(str(err))
-        raise SystemExit(1) from None
-
-    # Check that daemon supports the command
-    cmd_str = " ".join(cmd)
-    if cmd_str not in command_map:
-        error("this command is not supported")
+    if len(sys.argv) not in (2, 3):
+        error(f"Usage: {sys.argv[0]} <command> [<payload>]")
         raise SystemExit(1)
-
-    # Call the new daemon and print results
-    option_dict: Dict[str, Union[str, List[str]]] = {}
-    for opt in options:
-        # Accepting lib command argument names as options and values as JSON
-        # for easy parsing
-        option_dict[opt[0][2:]] = json.loads(opt[1])
-    result = perform_command(cmd_str, option_dict)
+    if len(sys.argv) == 3:
+        payload = sys.argv[2]
+    else:
+        payload = sys.stdin.read()
+    result = perform_command(sys.argv[1], json.loads(payload))
     print_command_return_value(result)
     print_task_details(result)
