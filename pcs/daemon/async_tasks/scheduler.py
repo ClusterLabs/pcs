@@ -70,7 +70,9 @@ class Scheduler:
 
     def _init_worker_logging(self) -> handlers.QueueListener:
         q_listener = handlers.QueueListener(
-            self._logging_q, *self._logger.handlers
+            self._logging_q,
+            *self._logger.handlers,
+            respect_handler_level=True,
         )
         q_listener.start()
         return q_listener

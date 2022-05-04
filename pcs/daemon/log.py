@@ -64,6 +64,7 @@ class Formatter(logging.Formatter):
 def setup(log_file):
     handler = logging.handlers.WatchedFileHandler(log_file, encoding="utf8")
     handler.setFormatter(Formatter())
+    handler.setLevel(logging.INFO)
 
     for logger_name in LOGGER_NAMES:
         pcsd_log = logging.getLogger(logger_name)
@@ -77,4 +78,7 @@ def enable_debug():
     # the loggers. Our handler has the implicit NOTSET level and there is no
     # reason to make it more complicated currently.
     for logger_name in LOGGER_NAMES:
-        logging.getLogger(logger_name).setLevel(logging.DEBUG)
+        logger = logging.getLogger(logger_name)
+        logger.setLevel(logging.DEBUG)
+        for handler in logger.handlers:
+            handler.setLevel(logging.DEBUG)
