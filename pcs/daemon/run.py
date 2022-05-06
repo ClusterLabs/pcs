@@ -120,7 +120,10 @@ def main():
     if env.PCSD_DEBUG:
         log.enable_debug()
 
-    async_scheduler = Scheduler()
+    async_scheduler = Scheduler(
+        worker_count=env.PCSD_WORKER_COUNT,
+        worker_reset_limit=env.PCSD_WORKER_RESET_LIMIT,
+    )
     SignalInfo.async_scheduler = async_scheduler
 
     sync_config_lock = Lock()

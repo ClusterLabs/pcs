@@ -10,7 +10,10 @@ from os.path import join as join_path
 from os.path import realpath
 
 from pcs import settings
-from pcs.common.validate import is_port_number
+from pcs.common.validate import (
+    is_integer,
+    is_port_number,
+)
 
 # Relative location instead of system location is used for development purposes.
 PCSD_LOCAL_DIR = realpath(dirname(abspath(__file__)) + "/../../pcsd")
@@ -27,6 +30,8 @@ PCSD_DISABLE_GUI = "PCSD_DISABLE_GUI"
 PCSD_SESSION_LIFETIME = "PCSD_SESSION_LIFETIME"
 PCSD_DEV = "PCSD_DEV"
 PCSD_STATIC_FILES_DIR = "PCSD_STATIC_FILES_DIR"
+PCSD_WORKER_COUNT = "PCSD_WORKER_COUNT"
+PCSD_WORKER_RESET_LIMIT = "PCSD_WORKER_RESET_LIMIT"
 
 Env = namedtuple(
     "Env",
@@ -41,6 +46,8 @@ Env = namedtuple(
         PCSD_SESSION_LIFETIME,
         PCSD_STATIC_FILES_DIR,
         PCSD_DEV,
+        PCSD_WORKER_COUNT,
+        PCSD_WORKER_RESET_LIMIT,
         "has_errors",
     ],
 )
@@ -59,6 +66,8 @@ def prepare_env(environ, logger=None):
         loader.session_lifetime(),
         loader.pcsd_static_files_dir(),
         loader.pcsd_dev(),
+        loader.pcsd_worker_count(),
+        loader.pcsd_worker_reset_limit(),
         loader.has_errors(),
     )
     if logger:
@@ -173,6 +182,25 @@ class EnvLoader:
     @lru_cache(maxsize=5)
     def pcsd_dev(self):
         return self.__has_true_in_environ(PCSD_DEV)
+
+    def _get_positive_int(self, key: str, default: int) -> int:
+        value = self.environ.get(key, default)
+        if not is_integer(value, at_least=1):
+            self.errors.append(
+                f"Value '{value}' for '{key}' is not a positive integer"
+            )
+            return default
+        return int(value)
+
+    def pcsd_worker_count(self) -> int:
+        return self._get_positive_int(
+            PCSD_WORKER_COUNT, settings.pcsd_worker_count
+        )
+
+    def pcsd_worker_reset_limit(self) -> int:
+        return self._get_positive_int(
+            PCSD_WORKER_RESET_LIMIT, settings.pcsd_worker_reset_limit
+        )
 
     def __in_pcsd_path(self, path, description="", existence_required=True):
         pcsd_dir = (

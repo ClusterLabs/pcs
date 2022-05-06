@@ -9,7 +9,6 @@ from typing import (
     Dict,
 )
 
-from pcs import settings
 from pcs.common.async_tasks.dto import (
     CommandDto,
     TaskResultDto,
@@ -45,7 +44,16 @@ class Scheduler:
     Task management core with an interface for the REST API
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        worker_count: int,
+        worker_reset_limit: int,
+    ) -> None:
+        """
+        worker_count -- number of worker processes to use
+        worker_reset_limit -- number of tasks a worker will process
+            before restarting itself
+        """
         # pylint: disable=consider-using-with
         self._proc_pool_manager = mp.Manager()
         self._worker_message_q = self._proc_pool_manager.Queue()
@@ -53,8 +61,8 @@ class Scheduler:
         self._logging_q = self._proc_pool_manager.Queue()
         self._worker_log_listener = self._init_worker_logging()
         self._proc_pool = mp.Pool(
-            processes=settings.worker_count,
-            maxtasksperchild=settings.worker_task_limit,
+            processes=worker_count,
+            maxtasksperchild=worker_reset_limit,
             initializer=worker_init,
             initargs=[self._worker_message_q, self._logging_q],
         )
@@ -64,8 +72,8 @@ class Scheduler:
         self._logger.debug(
             "Process pool initialized with %d workers that reset "
             "after %d tasks",
-            settings.worker_count,
-            settings.worker_task_limit,
+            worker_count,
+            worker_reset_limit,
         )
 
     def _init_worker_logging(self) -> handlers.QueueListener:

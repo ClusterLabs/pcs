@@ -43,6 +43,8 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
             env.PCSD_SESSION_LIFETIME: settings.gui_session_lifetime_seconds,
             env.PCSD_STATIC_FILES_DIR: pcsd_dir(env.PCSD_STATIC_FILES_DIR_NAME),
             env.PCSD_DEV: False,
+            env.PCSD_WORKER_COUNT: settings.pcsd_worker_count,
+            env.PCSD_WORKER_RESET_LIMIT: settings.pcsd_worker_reset_limit,
             "has_errors": False,
         }
         if specific_env_values is None:
@@ -72,6 +74,8 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
             env.PCSD_DISABLE_GUI: "true",
             env.PCSD_SESSION_LIFETIME: str(session_lifetime),
             env.PCSD_DEV: "true",
+            env.PCSD_WORKER_COUNT: "1",
+            env.PCSD_WORKER_RESET_LIMIT: "2",
         }
         self.assert_environ_produces_modified_pcsd_env(
             environ=environ,
@@ -88,6 +92,8 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
                     env.PCSD_STATIC_FILES_DIR_NAME
                 ),
                 env.PCSD_DEV: True,
+                env.PCSD_WORKER_COUNT: 1,
+                env.PCSD_WORKER_RESET_LIMIT: 2,
             },
         )
 
@@ -167,4 +173,28 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
                 "has_errors": False,
             },
             errors=[],
+        )
+
+    def test_invalid_worker_count(self):
+        self.assert_environ_produces_modified_pcsd_env(
+            environ={env.PCSD_WORKER_COUNT: "0"},
+            specific_env_values={
+                env.PCSD_WORKER_COUNT: settings.pcsd_worker_count,
+                "has_errors": True,
+            },
+            errors=[
+                f"Value '0' for '{env.PCSD_WORKER_COUNT}' is not a positive integer"
+            ],
+        )
+
+    def test_invalid_worker_reset_limit(self):
+        self.assert_environ_produces_modified_pcsd_env(
+            environ={env.PCSD_WORKER_RESET_LIMIT: "a"},
+            specific_env_values={
+                env.PCSD_WORKER_RESET_LIMIT: settings.pcsd_worker_reset_limit,
+                "has_errors": True,
+            },
+            errors=[
+                f"Value 'a' for '{env.PCSD_WORKER_RESET_LIMIT}' is not a positive integer"
+            ],
         )

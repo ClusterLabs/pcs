@@ -69,7 +69,9 @@ class SchedulerTestWrapper:
             .return_value
         ) = mock.Mock()
         # This might be needed when logger is called by get_logger, but is it?
-        self.scheduler = scheduler.Scheduler()
+        self.scheduler = scheduler.Scheduler(
+            worker_count=1, worker_reset_limit=2
+        )
 
     def _create_tasks(self, count, start_from=0):
         """Creates tasks with task_ident from id0 to idN"""
