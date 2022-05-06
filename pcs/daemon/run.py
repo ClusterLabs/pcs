@@ -2,9 +2,12 @@ import os
 import signal
 import socket
 from pathlib import Path
+from typing import Optional
 
-from tornado.gen import sleep as async_sleep
-from tornado.ioloop import IOLoop
+from tornado.ioloop import (
+    IOLoop,
+    PeriodicCallback,
+)
 from tornado.locks import Lock
 from tornado.web import Application
 
@@ -30,7 +33,7 @@ from pcs.daemon.http_server import HttpsServerManage
 
 class SignalInfo:
     # pylint: disable=too-few-public-methods
-    async_scheduler = None
+    async_scheduler: Optional[Scheduler] = None
     server_manage = None
     ioloop_started = False
 
@@ -58,12 +61,6 @@ def config_sync(sync_config_lock: Lock, ruby_pcsd_wrapper: ruby_pcsd.Wrapper):
         IOLoop.current().call_at(next_run_time, config_synchronization)
 
     return config_synchronization
-
-
-async def run_scheduler(scheduler: Scheduler) -> None:
-    while True:
-        await scheduler.perform_actions()
-        await async_sleep(settings.async_api_scheduler_interval_ms / 1000)
 
 
 def configure_app(
@@ -168,8 +165,11 @@ def main():
         log.pcsd.error("Invalid SSL certificate and/or key, exiting")
         raise SystemExit(1) from e
 
+    PeriodicCallback(
+        async_scheduler.perform_actions,
+        callback_time=settings.async_api_scheduler_interval_ms,
+    ).start()
     ioloop = IOLoop.current()
-    ioloop.add_callback(run_scheduler, async_scheduler)
     ioloop.add_callback(sign_ioloop_started)
     if systemd.is_systemd() and env.NOTIFY_SOCKET:
         ioloop.add_callback(systemd.notify, env.NOTIFY_SOCKET)
