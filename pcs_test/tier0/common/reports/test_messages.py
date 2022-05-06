@@ -5478,3 +5478,21 @@ class CloningStonithResourcesHasNoEffect(NameBuildTest):
                 ["fence1", "fence2"], "StonithGroup"
             ),
         )
+
+
+class CommandInvalidPayload(NameBuildTest):
+    def test_all(self):
+        reason = "a reason"
+        self.assert_message_from_report(
+            f"Invalid command payload: {reason}",
+            reports.CommandInvalidPayload(reason),
+        )
+
+
+class CommandUnknown(NameBuildTest):
+    def test_all(self):
+        cmd = "a cmd"
+        self.assert_message_from_report(
+            f"Unknown command '{cmd}'",
+            reports.CommandUnknown(cmd),
+        )

@@ -1,10 +1,20 @@
 # pylint: disable=global-statement
+import dataclasses
+import inspect
 import multiprocessing as mp
 import os
 import signal
 from dataclasses import dataclass
 from logging import getLogger
+from typing import (
+    Any,
+    Tuple,
+    Union,
+)
 
+import dacite
+
+from pcs.common import reports
 from pcs.common.async_tasks.dto import CommandDto
 from pcs.common.async_tasks.types import TaskFinishType
 from pcs.lib.env import LibraryEnvironment
@@ -77,8 +87,45 @@ def task_executor(task: WorkerCommand) -> None:
     )
 
     task_retval = None
+    command = task.command.command_name
     try:
-        task_retval = command_map[task.command.command_name](  # type: ignore
+        if command not in command_map:
+            raise LibraryError(
+                reports.ReportItem.error(
+                    reports.messages.CommandUnknown(command)
+                )
+            )
+        # Dacite will validate command.params against command signature.
+        # Dacite works only with dataclasses so we need to dinamically create
+        # one
+        try:
+            dacite.from_dict(
+                dataclasses.make_dataclass(
+                    f"{command}_params",
+                    [
+                        _param_to_field_tuple(param)
+                        for param in list(
+                            inspect.signature(
+                                command_map[command]
+                            ).parameters.values()
+                        )[1:]
+                    ],
+                ),
+                task.command.params,
+                config=dacite.Config(
+                    check_types=True,
+                    strict=True,
+                ),
+            )
+        except dacite.DaciteError as e:
+            # TODO: make custom message from exception without mentioning dataclasses and fields
+            raise LibraryError(
+                reports.ReportItem.error(
+                    reports.messages.CommandInvalidPayload(str(e))
+                )
+            ) from e
+
+        task_retval = command_map[command](  # type: ignore
             env, **task.command.params
         )
     except LibraryError as e:
@@ -94,7 +141,7 @@ def task_executor(task: WorkerCommand) -> None:
                 TaskFinished(TaskFinishType.FAIL, None),
             )
         )
-        logger.exception("Task %s raised a LibraryException.", task.task_ident)
+        logger.exception("Task %s raised a LibraryError.", task.task_ident)
         pause_worker()
         return
     except Exception as e:  # pylint: disable=broad-except
@@ -118,3 +165,18 @@ def task_executor(task: WorkerCommand) -> None:
     )
     logger.info("Task %s finished.", task.task_ident)
     pause_worker()
+
+
+def _param_to_field_tuple(
+    param: inspect.Parameter,
+) -> Union[Tuple[str, Any], Tuple[str, Any, dataclasses.Field]]:
+    field_type = Any
+    if param.annotation != inspect.Parameter.empty:
+        field_type = param.annotation
+    if param.default != inspect.Parameter.empty:
+        return (
+            param.name,
+            field_type,
+            dataclasses.field(default=param.default),
+        )
+    return (param.name, field_type)
