@@ -17,6 +17,7 @@ import dacite
 from pcs.common import reports
 from pcs.common.async_tasks.dto import CommandDto
 from pcs.common.async_tasks.types import TaskFinishType
+from pcs.common.interface import dto
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 
@@ -99,7 +100,7 @@ def task_executor(task: WorkerCommand) -> None:
         # Dacite works only with dataclasses so we need to dinamically create
         # one
         try:
-            dacite.from_dict(
+            dto.from_dict(
                 dataclasses.make_dataclass(
                     f"{command}_params",
                     [
@@ -112,13 +113,11 @@ def task_executor(task: WorkerCommand) -> None:
                     ],
                 ),
                 task.command.params,
-                config=dacite.Config(
-                    check_types=True,
-                    strict=True,
-                ),
+                strict=True,
             )
         except dacite.DaciteError as e:
-            # TODO: make custom message from exception without mentioning dataclasses and fields
+            # TODO: make custom message from exception without mentioning
+            # dataclasses and fields
             raise LibraryError(
                 reports.ReportItem.error(
                     reports.messages.CommandInvalidPayload(str(e))
