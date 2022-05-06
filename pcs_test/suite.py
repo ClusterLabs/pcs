@@ -168,7 +168,12 @@ def main():
 
         settings.pcs_data_dir = os.path.join(PACKAGE_DIR, "data")
 
-    run_concurrently = can_concurrency and "--no-parallel" not in sys.argv
+    measure_test_time = "--time" in sys.argv
+    run_concurrently = (
+        can_concurrency
+        and "--no-parallel" not in sys.argv
+        and not measure_test_time
+    )
 
     explicitly_enumerated_tests = [
         prepare_test_name(arg)
@@ -187,6 +192,7 @@ def main():
             "--installed",
             "--tier0",
             "--tier1",
+            "--time",
         )
     ]
 
@@ -233,6 +239,7 @@ def main():
             traceback_highlight=("--traceback-highlight" in sys.argv),
             fast_info=("--fast-info" in sys.argv),
             rich_format=(sys.stdout.isatty() and sys.stderr.isatty()),
+            measure_time=("--time" in sys.argv),
         )
 
     test_runner = unittest.TextTestRunner(

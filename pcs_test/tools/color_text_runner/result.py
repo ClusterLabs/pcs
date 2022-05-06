@@ -9,6 +9,7 @@ from pcs_test.tools.color_text_runner.writer import (
     DotWriter,
     ImprovedVerboseWriter,
     StandardVerboseWriter,
+    TimeWriter,
     Writer,
 )
 
@@ -19,6 +20,7 @@ def get_text_test_result_class(
     traceback_highlight=False,
     fast_info=False,
     rich_format=True,
+    measure_time=False,
 ):
     class ColorTextTestResult(unittest.TextTestResult):
         # pylint: disable=bad-super-call, invalid-name
@@ -101,6 +103,8 @@ def get_text_test_result_class(
                 self.stream.writeln(line)
 
         def __chooseWriter(self):
+            if measure_time:
+                return TimeWriter
             if traditional_verbose:
                 return StandardVerboseWriter
             if self.verbosity > 1:
