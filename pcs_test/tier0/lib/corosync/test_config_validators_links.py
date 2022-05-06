@@ -940,7 +940,7 @@ class UpdateLinkAddressesMixin:
             .name: self.coro_nodes[0]
             .addr_plain_for_link(self.linknumber),
         }
-        patch_getaddrinfo(self, new_addrs.values())
+        patch_getaddrinfo(self, list(new_addrs.values()) + self.existing_addrs)
 
         assert_report_item_list_equal(
             config_validators.update_link(
@@ -963,7 +963,7 @@ class UpdateLinkAddressesMixin:
             self.coro_nodes[1].name: "addr-new2",
             self.coro_nodes[2].name: "addr-new1",
         }
-        patch_getaddrinfo(self, new_addrs.values())
+        patch_getaddrinfo(self, list(new_addrs.values()) + self.existing_addrs)
 
         assert_report_item_list_equal(
             config_validators.update_link(
@@ -986,6 +986,7 @@ class UpdateLinkAddressesMixin:
         )
 
     def test_remove_address(self):
+        patch_getaddrinfo(self, self.existing_addrs)
         assert_report_item_list_equal(
             config_validators.update_link(
                 self.linknumber,
@@ -1035,7 +1036,7 @@ class UpdateLinkAddressesMixin:
             (constants.IP_VERSION_46, "new-addr", []),
             (constants.IP_VERSION_64, "new-addr", []),
         )
-        patch_getaddrinfo(self, ["new-addr"])
+        patch_getaddrinfo(self, self.existing_addrs + ["new-addr"])
         for ip_version, new_ip, reports in test_matrix:
             with self.subTest(ip_version=ip_version, new_ip=new_ip):
                 assert_report_item_list_equal(
@@ -1056,6 +1057,7 @@ class UpdateLinkAddressesMixin:
                 )
 
     def test_mixing_ip_families_new_vs_new(self):
+        patch_getaddrinfo(self, self.existing_addrs)
         assert_report_item_list_equal(
             config_validators.update_link(
                 self.linknumber,
@@ -1080,6 +1082,7 @@ class UpdateLinkAddressesMixin:
         )
 
     def test_unresolvable(self):
+        patch_getaddrinfo(self, self.existing_addrs)
         assert_report_item_list_equal(
             config_validators.update_link(
                 self.linknumber,
@@ -1104,6 +1107,7 @@ class UpdateLinkAddressesMixin:
         )
 
     def test_unresolvable_forced(self):
+        patch_getaddrinfo(self, self.existing_addrs)
         assert_report_item_list_equal(
             config_validators.update_link(
                 self.linknumber,
@@ -1128,6 +1132,7 @@ class UpdateLinkAddressesMixin:
         )
 
     def test_unknown_nodes(self):
+        patch_getaddrinfo(self, self.existing_addrs)
         assert_report_item_list_equal(
             config_validators.update_link(
                 self.linknumber,
@@ -1157,7 +1162,7 @@ class UpdateLinkAddressesMixin:
             self.coro_nodes[1].name: "}addr-new2{",
             self.coro_nodes[2].name: "addr-new3",
         }
-        patch_getaddrinfo(self, new_addrs.values())
+        patch_getaddrinfo(self, list(new_addrs.values()) + self.existing_addrs)
 
         assert_report_item_list_equal(
             config_validators.update_link(
@@ -1199,6 +1204,9 @@ class UpdateLinkAddressesUdp(UpdateLinkAddressesMixin, TestCase):
             )
             for i in range(1, 5)
         ]
+        self.existing_addrs = []
+        for a_node in self.coro_nodes:
+            self.existing_addrs.extend(a_node.addrs_plain())
 
     def test_new_address_already_used(self):
         pcmk_nodes = [PacemakerNode("node-remote", "addr-remote")]
@@ -1209,7 +1217,7 @@ class UpdateLinkAddressesUdp(UpdateLinkAddressesMixin, TestCase):
             self.coro_nodes[2].name: pcmk_nodes[0].addr,
             self.coro_nodes[3].name: "new-addr",
         }
-        patch_getaddrinfo(self, new_addrs.values())
+        patch_getaddrinfo(self, list(new_addrs.values()) + self.existing_addrs)
 
         assert_report_item_list_equal(
             config_validators.update_link(
@@ -1232,6 +1240,7 @@ class UpdateLinkAddressesUdp(UpdateLinkAddressesMixin, TestCase):
         )
 
     def test_mixing_ip_families_new_vs_ipv6(self):
+        patch_getaddrinfo(self, self.existing_addrs)
         coro_nodes = [
             node.CorosyncNode(
                 f"node{i}",
@@ -1263,6 +1272,7 @@ class UpdateLinkAddressesUdp(UpdateLinkAddressesMixin, TestCase):
         )
 
     def test_mixing_ip_families_new_vs_ipv4(self):
+        patch_getaddrinfo(self, self.existing_addrs)
         coro_nodes = [
             node.CorosyncNode(
                 f"node{i}", [node.CorosyncNodeAddress(f"10.0.0.{i}", "0")], i
@@ -1308,6 +1318,9 @@ class UpdateLinkAddressesKnet(UpdateLinkAddressesMixin, TestCase):
             )
             for i in range(1, 5)
         ]
+        self.existing_addrs = []
+        for a_node in self.coro_nodes:
+            self.existing_addrs.extend(a_node.addrs_plain())
 
     def test_new_address_already_used(self):
         pcmk_nodes = [PacemakerNode("node-remote", "addr-remote")]
@@ -1320,7 +1333,7 @@ class UpdateLinkAddressesKnet(UpdateLinkAddressesMixin, TestCase):
             .addr_plain_for_link("0"),
             self.coro_nodes[2].name: pcmk_nodes[0].addr,
         }
-        patch_getaddrinfo(self, new_addrs.values())
+        patch_getaddrinfo(self, list(new_addrs.values()) + self.existing_addrs)
 
         assert_report_item_list_equal(
             config_validators.update_link(
@@ -1343,6 +1356,7 @@ class UpdateLinkAddressesKnet(UpdateLinkAddressesMixin, TestCase):
         )
 
     def test_mixing_ip_families_new_vs_ipv6(self):
+        patch_getaddrinfo(self, self.existing_addrs)
         coro_nodes = [
             node.CorosyncNode(
                 f"node{i}",
@@ -1378,6 +1392,7 @@ class UpdateLinkAddressesKnet(UpdateLinkAddressesMixin, TestCase):
         )
 
     def test_mixing_ip_families_new_vs_ipv4(self):
+        patch_getaddrinfo(self, self.existing_addrs)
         coro_nodes = [
             node.CorosyncNode(
                 f"node{i}",
