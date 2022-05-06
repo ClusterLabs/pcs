@@ -1,3 +1,4 @@
+import datetime
 
 
 class Writer:
@@ -100,6 +101,61 @@ class StandardVerboseWriter(Writer):
 
     def addUnexpectedSuccess(self, test):
         self.stream.writeln(self.format.red("unexpected success"))
+
+
+class TimeWriter(StandardVerboseWriter):
+    def __init__(
+        self,
+        stream,
+        format_,
+        descriptions,
+        traceback_highlight=False,
+        fast_info=False,
+    ):
+        super().__init__(
+            stream,
+            format_,
+            descriptions,
+            traceback_highlight=traceback_highlight,
+            fast_info=fast_info,
+        )
+        self._start_time_map = {}
+
+    def _print_time(self, test):
+        end = datetime.datetime.now()
+        testname = self.format.test_name(test)
+        delta = (end - self._start_time_map[testname]).total_seconds()
+        self.stream.writeln(f"{delta:11.6f}s needed to run {testname}")
+
+    def addSuccess(self, test):
+        super().addSuccess(test)
+        self._print_time(test)
+
+    def addError(self, test, err, traceback):
+        super().addError(test, err, traceback)
+        self._print_time(test)
+
+    def addFailure(self, test, err, traceback):
+        super().addFailure(test, err, traceback)
+        self._print_time(test)
+
+    def addSkip(self, test, reason):
+        super().addSkip(test, reason)
+        self._print_time(test)
+
+    def startTest(self, test):
+        super().startTest(test)
+        self._start_time_map[
+            self.format.test_name(test)
+        ] = datetime.datetime.now()
+
+    def addExpectedFailure(self, test, err):
+        super().addExpectedFailure(test, err)
+        self._print_time(test)
+
+    def addUnexpectedSuccess(self, test):
+        super().addUnexpectedSuccess(test)
+        self._print_time(test)
 
 
 class ImprovedVerboseWriter(StandardVerboseWriter):
