@@ -217,14 +217,8 @@ def main():
             concurrencytest.fork_for_tests(),
         )
 
-    use_improved_result_class = (
-        sys.stdout.isatty()
-        and sys.stderr.isatty()
-        and "--vanilla" not in sys.argv
-    )
-
     ResultClass = unittest.TextTestResult
-    if use_improved_result_class:
+    if "--vanilla" not in sys.argv:
         from pcs_test.tools.color_text_runner import get_text_test_result_class
 
         ResultClass = get_text_test_result_class(
@@ -238,6 +232,7 @@ def main():
             ),
             traceback_highlight=("--traceback-highlight" in sys.argv),
             fast_info=("--fast-info" in sys.argv),
+            rich_format=(sys.stdout.isatty() and sys.stderr.isatty()),
         )
 
     test_runner = unittest.TextTestRunner(

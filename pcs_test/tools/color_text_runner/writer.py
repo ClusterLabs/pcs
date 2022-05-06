@@ -1,13 +1,3 @@
-from pcs_test.tools.color_text_runner.format import (
-    blue,
-    format_module,
-    format_test_method_name,
-    format_traceback,
-    get_description,
-    green,
-    lightgrey,
-    red,
-)
 
 
 class Writer:
@@ -15,11 +5,13 @@ class Writer:
     def __init__(
         self,
         stream,
+        format_,
         descriptions,
         traceback_highlight=False,
         fast_info=False,
     ):
         self.stream = stream
+        self.format = format_
         self.descriptions = descriptions
         self.traceback_highlight = traceback_highlight
         self.fast_info = fast_info
@@ -49,7 +41,7 @@ class Writer:
         if self.fast_info:
             self.stream.writeln()
             self.stream.writeln(
-                format_traceback(traceback)
+                self.format.traceback(traceback)
                 if self.traceback_highlight
                 else traceback
             )
@@ -57,68 +49,71 @@ class Writer:
 
 class DotWriter(Writer):
     def addSuccess(self, test):
-        self.stream.write(green("."))
+        self.stream.write(self.format.green("."))
         self.stream.flush()
 
     def addError(self, test, err, traceback):
-        self.stream.write(red("E"))
+        self.stream.write(self.format.red("E"))
         self.stream.flush()
         self.show_fast_info(traceback)
 
     def addFailure(self, test, err, traceback):
-        self.stream.write(red("F"))
+        self.stream.write(self.format.red("F"))
         self.stream.flush()
         self.show_fast_info(traceback)
 
     def addSkip(self, test, reason):
-        self.stream.write(blue("s"))
+        self.stream.write(self.format.blue("s"))
         self.stream.flush()
 
     def addExpectedFailure(self, test, err):
-        self.stream.write(blue("x"))
+        self.stream.write(self.format.blue("x"))
         self.stream.flush()
 
     def addUnexpectedSuccess(self, test):
-        self.stream.write(red("u"))
+        self.stream.write(self.format.red("u"))
         self.stream.flush()
 
 
 class StandardVerboseWriter(Writer):
     def addSuccess(self, test):
-        self.stream.writeln(green("OK"))
+        self.stream.writeln(self.format.green("OK"))
 
     def addError(self, test, err, traceback):
-        self.stream.writeln(red("ERROR"))
+        self.stream.writeln(self.format.red("ERROR"))
         self.show_fast_info(traceback)
 
     def addFailure(self, test, err, traceback):
-        self.stream.writeln(red("FAIL"))
+        self.stream.writeln(self.format.red("FAIL"))
         self.show_fast_info(traceback)
 
     def addSkip(self, test, reason):
-        self.stream.writeln(blue("skipped {0!r}".format(reason)))
+        self.stream.writeln(self.format.blue("skipped {0!r}".format(reason)))
 
     def startTest(self, test):
-        self.stream.write(get_description(test, self.descriptions))
+        self.stream.write(self.format.description(test, self.descriptions))
         self.stream.write(" ... ")
         self.stream.flush()
 
     def addExpectedFailure(self, test, err):
-        self.stream.writeln(blue("expected failure"))
+        self.stream.writeln(self.format.blue("expected failure"))
 
     def addUnexpectedSuccess(self, test):
-        self.stream.writeln(red("unexpected success"))
+        self.stream.writeln(self.format.red("unexpected success"))
 
 
 class ImprovedVerboseWriter(StandardVerboseWriter):
     def __init__(
         self,
         stream,
+        format_,
         descriptions,
         traceback_highlight=False,
         fast_info=False,
     ):
-        super().__init__(stream, descriptions, traceback_highlight, fast_info)
+        super().__init__(
+            stream, format_, descriptions, traceback_highlight, fast_info
+        )
         self.last_test = None
 
     def __is_new_module(self, test):
@@ -135,22 +130,22 @@ class ImprovedVerboseWriter(StandardVerboseWriter):
 
     def __format_module(self, test):
         if not self.__is_new_module(test):
-            return lightgrey(test.__class__.__module__)
-        return format_module(test)
+            return self.format.lightgrey(test.__class__.__module__)
+        return self.format.module(test)
 
     def __format_class(self, test):
         if not self.__is_new_class(test):
-            return lightgrey(test.__class__.__name__)
+            return self.format.lightgrey(test.__class__.__name__)
         return test.__class__.__name__
 
     def startTest(self, test):
         self.stream.write(
             self.__format_module(test)
-            + lightgrey(".")
+            + self.format.lightgrey(".")
             + self.__format_class(test)
-            + lightgrey(".")
-            + format_test_method_name(test)
-            + lightgrey(" : ")
+            + self.format.lightgrey(".")
+            + self.format.test_method_name(test)
+            + self.format.lightgrey(" : ")
         )
         self.stream.flush()
         self.last_test = test
