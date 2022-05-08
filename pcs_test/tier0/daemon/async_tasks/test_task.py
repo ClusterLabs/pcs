@@ -104,11 +104,20 @@ class TestKill(MockOsKillMixin, TaskBaseTestCase):
         self.assertEqual(types.TaskState.FINISHED, task_dto.state)
         self.assertEqual(types.TaskFinishType.KILL, task_dto.task_finish_type)
 
+    def _assert_not_killed(self, start_state):
+        finish_type = self.task.to_dto().task_finish_type
+        self.task.state = start_state
+        self.task.kill()
+        task_dto = self.task.to_dto()
+        self.mock_os_kill.assert_not_called()
+        self.assertEqual(start_state, task_dto.state)
+        self.assertEqual(finish_type, task_dto.task_finish_type)
+
     def test_kill_created(self):
         self._assert_killed(types.TaskState.CREATED)
 
     def test_kill_queued(self):
-        self._assert_killed(types.TaskState.QUEUED)
+        self._assert_not_killed(types.TaskState.QUEUED)
 
     def test_kill_executed_worker_alive(self):
         message = messaging.Message(
@@ -134,7 +143,7 @@ class TestKill(MockOsKillMixin, TaskBaseTestCase):
         self.assertEqual(types.TaskFinishType.KILL, task_dto.task_finish_type)
 
     def test_kill_finished(self):
-        self._assert_killed(types.TaskState.FINISHED)
+        self._assert_not_killed(types.TaskState.FINISHED)
 
 
 class TestGetLastTimestamp(MockDateTimeNowMixin, TaskBaseTestCase):
