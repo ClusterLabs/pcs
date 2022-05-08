@@ -1,13 +1,9 @@
 import multiprocessing as mp
 import sys
 import uuid
-from collections import deque
 from logging import handlers
 from queue import Empty
-from typing import (
-    Deque,
-    Dict,
-)
+from typing import Dict
 
 from pcs.common.async_tasks.dto import (
     CommandDto,
@@ -66,7 +62,6 @@ class Scheduler:
             initializer=worker_init,
             initargs=[self._worker_message_q, self._logging_q],
         )
-        self._created_tasks_index: Deque[str] = deque()
         self._task_register: Dict[str, Task] = {}
         self._logger.info("Scheduler was successfully initialized.")
         self._logger.debug(
@@ -121,7 +116,6 @@ class Scheduler:
             is_duplicate = task_ident in self._task_register
 
         self._task_register[task_ident] = Task(task_ident, command_dto)
-        self._created_tasks_index.append(task_ident)
         self._logger.debug(
             "New task %s created (command: %s, parameters: %s)",
             task_ident,
@@ -130,25 +124,37 @@ class Scheduler:
         )
         return task_ident
 
-    async def _garbage_collection(self) -> None:
-        """
-        Terminates and/or deletes tasks marked for garbage collection
+    async def _schedule_task(self, task: Task) -> None:
+        if task.is_kill_requested():
+            # The task state and finish types are set during garbage
+            # collection, we only prevent tasks here from queuing if
+            # they are killed in CREATED state
+            return
+        try:
+            self._proc_pool.apply_async(
+                func=task_executor,
+                args=[task.to_worker_command()],
+            )
+        except ValueError:
+            self._logger.critical(
+                "Unable to send task %s to worker pool.",
+                task.task_ident,
+            )
+            sys.exit(1)
+        task.state = TaskState.QUEUED
 
-        All tasks need to use kill requests to be killed which set the right
-        kill reason.
-        Task.kill method is responsible for changing state and deciding what
-        actions needs to be taken to properly remove the task from the scheduler
-        """
-        # self._logger.debug("Running garbage collection.")
+    async def _process_tasks(self) -> None:
         task_idents_to_delete = []
         for task in self._task_register.values():
-            if task.is_defunct():
+            if task.state == TaskState.CREATED:
+                await self._schedule_task(task)
+            elif task.is_defunct():
                 task.request_kill(TaskKillReason.COMPLETION_TIMEOUT)
             elif task.is_abandoned():
                 task_idents_to_delete.append(task.task_ident)
             if task.state != TaskState.FINISHED and task.is_kill_requested():
                 task.kill()
-        # Dictionary can't change size during iteration
+
         for task_ident in task_idents_to_delete:
             del self._task_register[task_ident]
 
@@ -160,13 +166,8 @@ class Scheduler:
         in scheduler's integration tests
         :return: Number of received messages (useful for testing)
         """
-        # self._logger.debug("Scheduler tick.")
-        await self._schedule_tasks()
-        # We need to guarantee that all messages have been received in tests
         received_total = await self._receive_messages()
-        # Garbage collection needs to run right after receiving messages to
-        # kill executed tasks most quickly
-        await self._garbage_collection()
+        await self._process_tasks()
         return received_total
 
     async def _receive_messages(self) -> int:
@@ -211,40 +212,6 @@ class Scheduler:
                 )
                 task.request_kill(TaskKillReason.INTERNAL_MESSAGING_ERROR)
         return received_total
-
-    async def _schedule_tasks(self) -> None:
-        """
-        Inserts tasks into the process pool
-        """
-        while self._created_tasks_index:
-            next_task_ident = self._created_tasks_index.popleft()
-            try:
-                next_task: Task = self._task_register[next_task_ident]
-            except KeyError:
-                self._logger.error(
-                    "Schedule attempt for task %s located in created tasks "
-                    "index failed because no such task exists in the task "
-                    "register.",
-                    next_task_ident,
-                )
-                continue
-            if next_task.is_kill_requested():
-                # The task state and finish types are set during garbage
-                # collection, we only prevent tasks here from queuing if
-                # they are killed in CREATED state
-                continue
-            try:
-                self._proc_pool.apply_async(
-                    func=task_executor,
-                    args=[next_task.to_worker_command()],
-                )
-            except ValueError:
-                self._logger.critical(
-                    "Unable to send task %s to worker pool.",
-                    next_task_ident,
-                )
-                sys.exit(1)
-            next_task.state = TaskState.QUEUED
 
     def _return_task(self, task_ident: str) -> Task:
         """

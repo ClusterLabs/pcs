@@ -106,13 +106,6 @@ class AssertTaskStatesMixin:
         )
         self.assertEqual(
             created,
-            len(self.scheduler._created_tasks_index),
-            "Expected {0} tasks in created tasks index.".format(
-                len(self.scheduler._created_tasks_index)
-            ),
-        )
-        self.assertEqual(
-            created,
             state_counts[TaskState.CREATED],
             "Expected {0} CREATED tasks.".format(
                 state_counts[TaskState.CREATED]

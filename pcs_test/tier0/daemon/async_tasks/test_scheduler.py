@@ -1,5 +1,4 @@
 # pylint: disable=protected-access
-from collections import deque
 from queue import Empty
 from unittest import mock
 
@@ -74,10 +73,6 @@ class KillTaskTest(SchedulerBaseTestCase):
 class NewTaskTest(SchedulerBaseTestCase):
     def test_new_task(self):
         self._create_tasks(1)
-        self.assertEqual(
-            deque(["id0"]),
-            self.scheduler._created_tasks_index,
-        )
         self.assertEqual(
             TaskResultDto(
                 "id0",
@@ -164,41 +159,30 @@ class ReceiveMessagesTest(SchedulerBaseAsyncTestCase):
             self.worker_com.get_nowait()
 
 
-class ScheduleTasksTest(SchedulerBaseAsyncTestCase):
+class ProcessTasksTest(SchedulerBaseAsyncTestCase):
     @gen_test
     async def test_empty_created_task_index(self):
-        await self.scheduler._schedule_tasks()
+        await self.scheduler._process_tasks()
         self.mp_pool_mock.assert_not_called()
 
     @gen_test
     async def test_normal_run(self):
         task_count = 4
         self._create_tasks(task_count)
-        await self.scheduler._schedule_tasks()
+        await self.scheduler._process_tasks()
         for task_ident in [f"id{i}" for i in range(task_count)]:
             self.assertEqual(
                 TaskState.QUEUED, self.scheduler.get_task(task_ident).state
             )
-        self.assertFalse(self.scheduler._created_tasks_index)
-
-    @gen_test
-    async def test_task_not_in_task_register(self):
-        self._create_tasks(3)
-        tasks = list(self.scheduler._task_register.values())
-        del self.scheduler._task_register["id0"]
-        await self.scheduler._schedule_tasks()
-        self.logger_mock.error.assert_called_once()
-        self.mp_pool_mock.apply_async.assert_has_calls(
-            [
-                mock.call(
-                    func=task_executor,
-                    args=[tasks[1].to_worker_command()],
-                ),
-                mock.call(
-                    func=task_executor,
-                    args=[tasks[2].to_worker_command()],
-                ),
-            ]
+        self.assertEqual(
+            0,
+            len(
+                list(
+                    task
+                    for task in self.scheduler._task_register.values()
+                    if task.state == TaskState.CREATED
+                )
+            ),
         )
 
     @gen_test
@@ -206,12 +190,10 @@ class ScheduleTasksTest(SchedulerBaseAsyncTestCase):
         self._create_tasks(3)
         tasks = list(self.scheduler._task_register.values())
         self.scheduler.kill_task("id1")
-        await self.scheduler._schedule_tasks()
+        await self.scheduler._process_tasks()
         deleted_task = self.scheduler.get_task("id1")
-        self.assertEqual(
-            TaskFinishType.UNFINISHED, deleted_task.task_finish_type
-        )
-        self.assertEqual(TaskState.CREATED, deleted_task.state)
+        self.assertEqual(TaskFinishType.KILL, deleted_task.task_finish_type)
+        self.assertEqual(TaskState.FINISHED, deleted_task.state)
         self.assertEqual(
             TaskState.QUEUED,
             self.scheduler.get_task("id0").state,
