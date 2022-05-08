@@ -1,7 +1,6 @@
 import sys
 
 from pcs.common.reports import (
-    ReportItem,
     ReportItemList,
     ReportItemSeverity,
     codes,
@@ -22,11 +21,11 @@ def error(message: str) -> SystemExit:
     return SystemExit(1)
 
 
-def prepare_force_text(report_item: ReportItem) -> str:
+def prepare_force_text(report_item_severity: ReportItemSeverity) -> str:
     force_text_map = {
         codes.SKIP_OFFLINE_NODES: ", use --skip-offline to override",
     }
-    force_code = report_item.severity.force_code
+    force_code = report_item_severity.force_code
     if force_code:
         return force_text_map.get(force_code, ", use --force to override")
     return ""
@@ -53,7 +52,7 @@ def process_library_reports(report_item_list: ReportItemList) -> None:
         error(
             "{msg}{force}".format(
                 msg=msg,
-                force=prepare_force_text(report_item),
+                force=prepare_force_text(report_item.severity),
             )
         )
         critical_error = True
