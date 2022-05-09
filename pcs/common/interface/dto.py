@@ -80,7 +80,7 @@ DTOTYPE = TypeVar("DTOTYPE", bound=DataTransferObject)
 
 
 def _convert_payload(klass: Type[DTOTYPE], data: DtoPayload) -> DtoPayload:
-    new_dict = {}
+    new_dict = dict(data)
     for _field in fields(klass):
         new_name = _field.metadata.get(META_NAME, _field.name)
         if new_name not in data:
@@ -98,6 +98,7 @@ def _convert_payload(klass: Type[DTOTYPE], data: DtoPayload) -> DtoPayload:
                 item_key: _convert_payload(_field.type.__args__[1], item_val)
                 for item_key, item_val in value.items()
             }
+        del new_dict[new_name]
         new_dict[_field.name] = value
     return new_dict
 
