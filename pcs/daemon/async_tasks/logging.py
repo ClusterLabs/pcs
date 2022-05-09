@@ -2,6 +2,8 @@ import logging
 import multiprocessing as mp
 import os
 
+WORKER_LOGGER = "pcs_worker"
+
 
 class Logger(logging.Logger):
     # pylint: disable=too-many-arguments
@@ -39,7 +41,7 @@ def setup_worker_logger(queue: mp.Queue) -> logging.Logger:
     :return: Logger instance
     """
     logging.setLoggerClass(Logger)
-    logger = logging.getLogger("pcs_worker")
+    logger = logging.getLogger(WORKER_LOGGER)
     logger.setLevel(logging.DEBUG)
 
     queue_handler = logging.handlers.QueueHandler(queue)  # type: ignore

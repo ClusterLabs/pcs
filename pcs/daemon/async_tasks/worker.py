@@ -22,7 +22,10 @@ from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 
 from .command_mapping import command_map
-from .logging import setup_worker_logger
+from .logging import (
+    WORKER_LOGGER,
+    setup_worker_logger,
+)
 from .messaging import (
     Message,
     TaskExecuted,
@@ -61,10 +64,12 @@ def worker_init(message_q: mp.Queue, logging_q: mp.Queue) -> None:
 
 
 def pause_worker() -> None:
-    getLogger("pcs_worker").debug(
+    logger = getLogger(WORKER_LOGGER)
+    logger.debug(
         "Pausing worker until the scheduler updates status of this task."
     )
     os.kill(os.getpid(), signal.SIGSTOP)
+    logger.debug("Worker unpaused.")
 
 
 def task_executor(task: WorkerCommand) -> None:
@@ -72,7 +77,7 @@ def task_executor(task: WorkerCommand) -> None:
     Launches the task inside the worker
     :param task: Task identifier, command and parameter object
     """
-    logger = getLogger("pcs_worker")
+    logger = getLogger(WORKER_LOGGER)
 
     worker_com.put(
         Message(

@@ -161,6 +161,25 @@ class NewTaskHandler(BaseAPIHandler):
         self.write(json.dumps(to_dict(TaskIdentDto(task_ident))))
 
 
+class RunTaskHandler(BaseAPIHandler):
+    """Run command synchronously"""
+
+    async def post(self) -> None:
+        if self.json is None:
+            raise RequestBodyMissingError()
+
+        command_dto = self._from_dict_exc_handled(CommandDto, self.json)
+        task_ident = self.scheduler.new_task(command_dto)
+        try:
+            self.write(
+                json.dumps(
+                    to_dict(await self.scheduler.wait_for_task(task_ident))
+                )
+            )
+        except TaskNotFoundError as exc:
+            raise APIError(http_code=500) from exc
+
+
 class TaskInfoHandler(BaseAPIHandler):
     """Get task status"""
 
@@ -216,4 +235,5 @@ def get_routes(
         ("/async_api/task/result", TaskInfoHandler, params),
         ("/async_api/task/create", NewTaskHandler, params),
         ("/async_api/task/kill", KillTaskHandler, params),
+        ("/async_api/task/run", RunTaskHandler, params),
     ]

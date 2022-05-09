@@ -92,6 +92,10 @@ class Scheduler:
 
         return task_result_dto
 
+    async def wait_for_task(self, task_ident: str) -> TaskResultDto:
+        await self._return_task(task_ident).finished_event.wait()
+        return self.get_task(task_ident)
+
     def kill_task(self, task_ident: str) -> None:
         """
         Terminates the specified task

@@ -21,10 +21,6 @@ from pcs.common.interface.dto import (
 )
 from pcs.common.reports import ReportItemDto
 
-LONG_OPTIONS = [
-    "resource_or_tag_ids=",
-    "wait=",
-]
 task_ident = ""
 report_list: List[ReportItemDto] = []
 
@@ -137,8 +133,7 @@ def fetch_task_result(
     return task_result_dto
 
 
-def perform_command(command: str, params: dict) -> TaskResultDto:
-    command_dto = CommandDto(command, params)
+def perform_command(command_dto: CommandDto) -> TaskResultDto:
     response = make_api_request_post(
         "task/create", json.dumps(to_dict(command_dto))
     )
@@ -151,15 +146,30 @@ def perform_command(command: str, params: dict) -> TaskResultDto:
     return task_result_dto
 
 
+def run_command_synchronously(command_dto: CommandDto) -> TaskResultDto:
+    print("Running command synchronously")
+    response = make_api_request_post(
+        "task/run", json.dumps(to_dict(command_dto))
+    )
+    task_result_dto = from_dict(TaskResultDto, json.loads(response))
+    for report_item_dto in task_result_dto.reports:
+        print_report(report_item_dto)
+    return task_result_dto
+
+
 def main():
     signal.signal(signal.SIGINT, signal_handler)
-    if len(sys.argv) not in (2, 3):
-        error(f"Usage: {sys.argv[0]} <command> [<payload>]")
+    if len(sys.argv) not in (2, 3, 4):
+        error(f"Usage: {sys.argv[0]} [--sync] <command> [<payload>]")
         raise SystemExit(1)
+    run_fn = perform_command
+    if sys.argv[1] == "--sync":
+        sys.argv.pop(0)
+        run_fn = run_command_synchronously
     if len(sys.argv) == 3:
         payload = sys.argv[2]
     else:
         payload = sys.stdin.read()
-    result = perform_command(sys.argv[1], json.loads(payload))
+    result = run_fn(CommandDto(sys.argv[1], json.loads(payload)))
     print_command_return_value(result)
     print_task_details(result)

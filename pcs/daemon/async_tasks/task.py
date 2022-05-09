@@ -7,6 +7,8 @@ from typing import (
     Optional,
 )
 
+from tornado.locks import Event
+
 from pcs.common.async_tasks.dto import (
     CommandDto,
     TaskResultDto,
@@ -57,6 +59,7 @@ class Task(ImplementsToDto):
         self._kill_reason: Optional[TaskKillReason] = None
         self._last_message_at: Optional[datetime.datetime] = None
         self._worker_pid: int = -1
+        self._finished_event = Event()
 
     @property
     def state(self) -> TaskState:
@@ -68,11 +71,20 @@ class Task(ImplementsToDto):
         Sets a new task state
         :param state: New task state
         """
+        self._set_state(state)
+
+    def _set_state(self, state: TaskState) -> None:
         self._state = state
+        if self.state == TaskState.FINISHED:
+            self._finished_event.set()
 
     @property
     def task_ident(self) -> str:
         return self._task_ident
+
+    @property
+    def finished_event(self) -> Event:
+        return self._finished_event
 
     def _get_last_updated_timestamp(self) -> Optional[datetime.datetime]:
         """
@@ -108,7 +120,7 @@ class Task(ImplementsToDto):
         :return: True if task was not queried for information before timeout,
             False otherwise
         """
-        if self._state == TaskState.FINISHED:
+        if self.state == TaskState.FINISHED:
             # Last message of finished task is notification of its completion
             # and thus marks the time of its completion
             return self._is_timed_out(task_abandoned_timeout_seconds)
@@ -126,7 +138,7 @@ class Task(ImplementsToDto):
         :return: True if no messages were received during timeout period since
             the last message, False otherwise
         """
-        if self._state == TaskState.EXECUTED:
+        if self.state == TaskState.EXECUTED:
             return self._is_timed_out(task_unresponsive_timeout_seconds)
         return False
 
@@ -160,12 +172,12 @@ class Task(ImplementsToDto):
         EXECUTED tasks are terminated by by sending SIGTERM to their worker
         process and their state is changed here.
         """
-        if self._state in (
+        if self.state in (
             TaskState.QUEUED,
             TaskState.FINISHED,
         ):
             return
-        if self._state == TaskState.EXECUTED:
+        if self.state == TaskState.EXECUTED:
             try:
                 os.kill(self._worker_pid, 15)
             except ProcessLookupError:
@@ -174,7 +186,7 @@ class Task(ImplementsToDto):
                 # the killing wasn't successful, don't change the state
                 return
 
-        self._state = TaskState.FINISHED
+        self._set_state(TaskState.FINISHED)
         self._task_finish_type = TaskFinishType.KILL
 
     # Message handlers
@@ -198,14 +210,14 @@ class Task(ImplementsToDto):
         Handler for scheduler's TaskExecuted messages
         """
         self._worker_pid = message_payload.worker_pid
-        self._state = TaskState.EXECUTED
+        self._set_state(TaskState.EXECUTED)
 
     def _message_finished(self, message_payload: TaskFinished) -> None:
         """
         Handler for scheduler's TaskFinished messages
         """
         self._result = message_payload.result
-        self._state = TaskState.FINISHED
+        self._set_state(TaskState.FINISHED)
         self._task_finish_type = message_payload.task_finish_type
         os.kill(self._worker_pid, signal.SIGCONT)
 
@@ -232,7 +244,7 @@ class Task(ImplementsToDto):
             self._task_ident,
             self._command,
             self._reports,
-            self._state,
+            self.state,
             self._task_finish_type,
             self._kill_reason,
             self._result,
