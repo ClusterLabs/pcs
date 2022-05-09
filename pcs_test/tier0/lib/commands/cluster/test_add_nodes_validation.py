@@ -305,26 +305,22 @@ class Inputs(TestCase):
     def test_conflict_existing_nodes(self):
         existing_nodes = ["node1", "node2", "node3"]
         new_nodes = ["new1", "remote-name", "node3", "guest-name"]
-        (
-            self.config.env.set_known_nodes(existing_nodes + new_nodes)
-            .services.is_enabled("sbd", return_value=False)
-            .corosync_conf.load_content(
-                corosync_conf_fixture(
-                    [
-                        corosync_node_fixture(
-                            1, "node1", ["addr1-1", "addr1-2"]
-                        ),
-                        corosync_node_fixture(
-                            2, "node2", ["addr2-1", "addr2-2"]
-                        ),
-                        corosync_node_fixture(
-                            3, "node3", ["addr3-1", "addr3-2"]
-                        ),
-                    ]
-                )
+        node1_addrs = ["new-addr1", "addr1-2", "guest-host", "remote-host"]
+        patch_getaddrinfo(self, new_nodes + node1_addrs)
+
+        self.config.env.set_known_nodes(existing_nodes + new_nodes)
+        self.config.services.is_enabled("sbd", return_value=False)
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(
+                [
+                    corosync_node_fixture(1, "node1", ["addr1-1", "addr1-2"]),
+                    corosync_node_fixture(2, "node2", ["addr2-1", "addr2-2"]),
+                    corosync_node_fixture(3, "node3", ["addr3-1", "addr3-2"]),
+                ]
             )
-            .runner.cib.load(
-                resources="""
+        )
+        self.config.runner.cib.load(
+            resources="""
                     <resources>
                         <primitive id="guest" class="ocf" provider="heartbeat"
                             type="VirtualDomain"
@@ -349,32 +345,23 @@ class Inputs(TestCase):
                         </primitive>
                     </resources>
                 """
-            )
-            .http.host.check_auth(node_labels=existing_nodes)
-            .local.get_host_info(new_nodes)
-            .local.pcsd_ssl_cert_sync_disabled()
         )
+        self.config.http.host.check_auth(node_labels=existing_nodes)
+        self.config.local.get_host_info(new_nodes)
+        self.config.local.pcsd_ssl_cert_sync_disabled()
 
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_nodes(
                 self.env_assist.get_env(),
                 [
                     # no change, addrs defined
-                    {
-                        "name": "new1",
-                        "addrs": [
-                            "new-addr1",
-                            "addr1-2",
-                            "guest-host",
-                            "remote-host",
-                        ],
-                    },
+                    {"name": new_nodes[0], "addrs": node1_addrs},
                     # no change, addrs defined even though empty
-                    {"name": "remote-name", "addrs": []},
+                    {"name": new_nodes[1], "addrs": []},
                     # use a default address
-                    {"name": "node3", "addrs": None},
+                    {"name": new_nodes[2], "addrs": None},
                     # use a default address
-                    {"name": "guest-name"},
+                    {"name": new_nodes[3]},
                 ],
             )
         )
@@ -430,18 +417,6 @@ class Inputs(TestCase):
                     node_index=4,
                 ),
                 fixture.error(
-                    reports.codes.NODE_ADDRESSES_UNRESOLVABLE,
-                    force_code=reports.codes.FORCE,
-                    address_list=[
-                        "addr1-2",
-                        "guest-host",
-                        "guest-name",
-                        "new-addr1",
-                        "node3",
-                        "remote-host",
-                    ],
-                ),
-                fixture.error(
                     reports.codes.NODE_NAMES_ALREADY_EXIST,
                     name_list=["guest-name", "node3", "remote-name"],
                 ),
@@ -455,39 +430,40 @@ class Inputs(TestCase):
     def conflict_existing_nodes_cib_load_error(self):
         existing_nodes = ["node1", "node2", "node3", "node4"]
         new_nodes = ["new1"]
-        (
-            self.config.env.set_known_nodes(existing_nodes + new_nodes)
-            .services.is_enabled("sbd", return_value=False)
-            .corosync_conf.load_content(
-                corosync_conf_fixture(
-                    [
-                        corosync_node_fixture(1, "node1", ["addr1-1"]),
-                        corosync_node_fixture(2, "node2", ["addr2-1"]),
-                        corosync_node_fixture(3, "node3", ["addr3-1"]),
-                        corosync_node_fixture(4, "node4", ["addr4-1"]),
-                    ]
-                )
+
+        self.config.env.set_known_nodes(existing_nodes + new_nodes)
+        self.config.services.is_enabled("sbd", return_value=False)
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(
+                [
+                    corosync_node_fixture(1, "node1", ["addr1-1"]),
+                    corosync_node_fixture(2, "node2", ["addr2-1"]),
+                    corosync_node_fixture(3, "node3", ["addr3-1"]),
+                    corosync_node_fixture(4, "node4", ["addr4-1"]),
+                ]
             )
-            .runner.cib.load(returncode=1, stderr="an error")
-            .http.host.check_auth(node_labels=existing_nodes)
-            .local.get_host_info(new_nodes)
-            .local.pcsd_ssl_cert_sync_disabled()
         )
+        self.config.runner.cib.load(returncode=1, stderr="an error")
+        self.config.http.host.check_auth(node_labels=existing_nodes)
+        self.config.local.get_host_info(new_nodes)
+        self.config.local.pcsd_ssl_cert_sync_disabled()
 
     def test_conflict_existing_nodes_cib_load_error(self):
+        node_name = "new1"
+        patch_getaddrinfo(self, [node_name])
         self.conflict_existing_nodes_cib_load_error()
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_nodes(
                 self.env_assist.get_env(),
-                [{"name": "new1"}],
+                [{"name": node_name}],
             )
         )
         self.env_assist.assert_reports(
             [
                 fixture.info(
                     reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
-                    host_name="new1",
-                    address="new1",
+                    host_name=node_name,
+                    address=node_name,
                     address_source=(
                         reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
                     ),
@@ -496,20 +472,17 @@ class Inputs(TestCase):
                     reports.codes.CIB_LOAD_ERROR_GET_NODES_FOR_VALIDATION,
                     force_code=reports.codes.FORCE,
                 ),
-                fixture.error(
-                    reports.codes.NODE_ADDRESSES_UNRESOLVABLE,
-                    force_code=reports.codes.FORCE,
-                    address_list=["new1"],
-                ),
             ]
         )
 
     def test_conflict_existing_nodes_cib_load_error_forced(self):
+        node_addrs = ["addr1-1"]
+        patch_getaddrinfo(self, node_addrs)
         self.conflict_existing_nodes_cib_load_error()
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_nodes(
                 self.env_assist.get_env(),
-                [{"name": "new1", "addrs": ["addr1-1"]}],
+                [{"name": "new1", "addrs": node_addrs}],
                 force_flags=[reports.codes.FORCE],
             )
         )
@@ -518,13 +491,9 @@ class Inputs(TestCase):
                 fixture.warn(
                     reports.codes.CIB_LOAD_ERROR_GET_NODES_FOR_VALIDATION
                 ),
-                fixture.warn(
-                    reports.codes.NODE_ADDRESSES_UNRESOLVABLE,
-                    address_list=["addr1-1"],
-                ),
                 fixture.error(
                     reports.codes.NODE_ADDRESSES_ALREADY_EXIST,
-                    address_list=["addr1-1"],
+                    address_list=node_addrs,
                 ),
             ]
         )
@@ -532,22 +501,21 @@ class Inputs(TestCase):
     def test_force_unresolvable(self):
         existing_nodes = ["node1", "node2"]
         new_nodes = ["new1"]
-        (
-            self.config.env.set_known_nodes(existing_nodes + new_nodes)
-            .services.is_enabled("sbd", return_value=False)
-            .corosync_conf.load_content(
-                corosync_conf_fixture(
-                    [
-                        node_fixture(node, i)
-                        for i, node in enumerate(existing_nodes, 1)
-                    ]
-                )
+        patch_getaddrinfo(self, [])
+        self.config.env.set_known_nodes(existing_nodes + new_nodes)
+        self.config.services.is_enabled("sbd", return_value=False)
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(
+                [
+                    node_fixture(node, i)
+                    for i, node in enumerate(existing_nodes, 1)
+                ]
             )
-            .runner.cib.load()
-            .http.host.check_auth(node_labels=existing_nodes)
-            .local.get_host_info(new_nodes)
-            .local.pcsd_ssl_cert_sync_disabled()
         )
+        self.config.runner.cib.load()
+        self.config.http.host.check_auth(node_labels=existing_nodes)
+        self.config.local.get_host_info(new_nodes)
+        self.config.local.pcsd_ssl_cert_sync_disabled()
 
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_nodes(
