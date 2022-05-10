@@ -236,7 +236,7 @@ end
 def _update_pcsd_settings(config, cluster_name, new_nodes)
   old_nodes = config.get_nodes(cluster_name)
 
-  # removing log is embeded in config.update_cluster
+  # removing log is embedded in config.update_cluster
   $logger.info(
     "Updating node list for: #{cluster_name} #{old_nodes}->#{new_nodes}"
   )
@@ -561,7 +561,7 @@ def set_configs(params, request, auth_user)
   remote_configs.each { |name, remote_cfg|
     begin
       # Save a remote config if it is a newer version than local. If the config
-      # is not present on a local node, the node is beeing added to a cluster,
+      # is not present on a local node, the node is being added to a cluster,
       # so we need to save the config as well.
       if force or not local_configs.key?(name) or remote_cfg > local_configs[name]
         local_configs[name].class.backup() if local_configs.key?(name)
@@ -1656,7 +1656,7 @@ def resource_unclone(params, request, auth_user)
   return 200
 end
 
-def set_resource_utilization(params, reqest, auth_user)
+def set_resource_utilization(params, request, auth_user)
   unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
     return 403, 'Permission denied'
   end
@@ -1681,7 +1681,7 @@ def set_resource_utilization(params, reqest, auth_user)
   return 200
 end
 
-def set_node_utilization(params, reqest, auth_user)
+def set_node_utilization(params, request, auth_user)
   unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
     return 403, 'Permission denied'
   end

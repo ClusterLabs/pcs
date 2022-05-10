@@ -278,7 +278,7 @@ class Unclone(
         self.assert_tags_xml(FIXTURE_TAGS_RESULT_XML)
         self.assert_constraint_xml("<constraints/>")
 
-    def test_unclone_resoruce_id(self):
+    def test_unclone_resource_id(self):
         self.assert_effect("resource unclone C".split(), FIXTURE_RESOURCES)
         self.assert_tags_xml(FIXTURE_TAGS_RESULT_XML)
         self.assert_constraint_xml("<constraints/>")

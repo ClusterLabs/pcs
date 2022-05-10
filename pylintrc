@@ -3,7 +3,7 @@
 # To install linters and their dependencies, run:
 # $ make python_static_code_analysis_reqirements
 #
-# This project should not containt any issues reported by any linter when using
+# This project should not contain any issues reported by any linter when using
 # this command to run linters on the whole project:
 # $ make black_check python_static_code_analysis
 
@@ -14,8 +14,8 @@ extension-pkg-whitelist=lxml.etree,pycurl
 # line-too-long and trailing-whitespace is handled by black
 # wrong-import-order is handled by isort
 disable=bad-continuation, fixme, line-too-long, missing-docstring, trailing-whitespace, consider-using-f-string, unspecified-encoding, wrong-import-order
-# Everything in module context is a constant, but our naming convetion allows
-# constants to have same name format as variables
+# Everything in module context is a constant, but our naming convention allows
+# constants to have the same name format as variables
 const-rgx=(([A-Z_][A-Z0-9_]*)|(__.*__))|([a-z_][a-z0-9_]*)$
 
 [DESIGN]

@@ -87,7 +87,7 @@ def _organize_lines(raw_line_list):
 def _search_with_multiple_re(re_object_list, string):
     """
     return MatchObject of first matching regular expression object or None
-    list re_object_list contains regular expresssion objects (products of
+    list re_object_list contains regular expression objects (products of
         re.compile)
     """
     for expression in re_object_list:

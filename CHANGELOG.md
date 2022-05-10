@@ -19,7 +19,7 @@
 
 ### Fixed
 - Booth ticket name validation ([rhbz#2053177])
-- Adding booth ticket doesn't report 'mode' as an uknown option anymore
+- Adding booth ticket doesn't report 'mode' as an unknown option anymore
   ([rhbz#2058243])
 - Preventing fence-loop caused when stonith-watchdog-timeout is set
   with wrong value ([rhbz#2058246])
@@ -458,7 +458,7 @@
   specified checkpoints ([rhbz#1655055])
 - Support for resource instance attributes uniqueness check according to
   resource agent metadata ([rhbz#1665404])
-- Command `pcs resource bundle reset` for a bundle configuration reseting
+- Command `pcs resource bundle reset` for a bundle configuration resetting
   ([rhbz#1657166])
 - `pcs cluster setup` now checks if nodes' addresses match value of `ip_version`
   ([rhbz#1667053])

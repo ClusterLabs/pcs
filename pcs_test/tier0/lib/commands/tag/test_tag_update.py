@@ -4,7 +4,7 @@ from pcs.common import reports
 from pcs.lib.commands import tag as cmd_tag
 
 from pcs_test.tier0.lib.commands.tag.tag_common import (
-    fixture_resouces_for_reference_ids,
+    fixture_resources_for_reference_ids,
     fixture_tags_xml,
 )
 from pcs_test.tools import fixture
@@ -18,7 +18,7 @@ class TestTagUpdate(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.config.runner.cib.load(
-            resources=fixture_resouces_for_reference_ids(
+            resources=fixture_resources_for_reference_ids(
                 ["e1", "e2", "e3", "a", "b"]
             ),
             tags=fixture_tags_xml([("t", ["e1", "e2", "e3"])]),
@@ -179,7 +179,7 @@ class TestTagUpdate(TestCase):
         )
         self.env_assist.assert_reports([])
 
-    def test_raises_exeption_in_case_of_report(self):
+    def test_raises_exception_in_case_of_report(self):
         self.env_assist.assert_raise_library_error(
             lambda: cmd_tag.update(
                 self.env_assist.get_env(),

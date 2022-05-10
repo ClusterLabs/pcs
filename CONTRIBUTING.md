@@ -21,7 +21,7 @@
 * Run `./autogen.sh`.
   * This generates `configure` script based on `configure.ac` file.
   * It requires an annotated tag to be present in git repository. The easiest
-    way to acomplish that is to add the upstream pcs repository as a remote
+    way to accomplish that is to add the upstream pcs repository as a remote
     repository.
 * Run `./configure`.
   * This checks all the dependencies and creates various files (including
@@ -54,12 +54,12 @@
   * The check is done by extracting files from the tarball, running
     `./configure` and `make check`.
   * Note, that `./configure` is run with no options, so it requires
-    dependencies to be installed system wide. This can be overriden by running
+    dependencies to be installed system wide. This can be overridden by running
     `make distcheck DISTCHECK_CONFIGURE_FLAGS='<flag>...'`.
   * The point of this test is to make sure all necessary files are present in
     the tarball.
-* To run black code formater, type `make black`.
-* To run isort code formater, type `make isort`.
+* To run black code formatter, type `make black`.
+* To run isort code formatter, type `make isort`.
 
 ### Distribution tarball
 * To create a tarball for distribution, run `make dist`.

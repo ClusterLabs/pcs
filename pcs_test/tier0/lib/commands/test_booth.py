@@ -1124,7 +1124,7 @@ class ConfigText(TestCase, FixtureMixin):
             ]
         )
 
-    def test_remote_bad_reponse(self):
+    def test_remote_bad_response(self):
         instance_name = "booth"
         node_name = "node1"
         (

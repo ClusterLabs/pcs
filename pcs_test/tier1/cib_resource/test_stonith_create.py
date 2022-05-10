@@ -6,7 +6,7 @@ from pcs_test.tools.misc import is_minimum_pacemaker_version
 
 PCMK_2_0_3_PLUS = is_minimum_pacemaker_version(2, 0, 3)
 PCMK_2_0_5_PLUS = is_minimum_pacemaker_version(2, 0, 5)
-ERRORS_HAVE_OCURRED = (
+ERRORS_HAVE_OCCURRED = (
     "Error: Errors have occurred, therefore pcs is unable to continue\n"
 )
 
@@ -53,7 +53,7 @@ class PlainStonith(ResourceTest):
             "Error: Invalid stonith agent name 'fence_xvm:invalid'. Agent name "
             "cannot contain the ':' character, do not use the 'stonith:' prefix. "
             "List of agents can be obtained by using command 'pcs stonith list'.\n"
-            + ERRORS_HAVE_OCURRED,
+            + ERRORS_HAVE_OCCURRED,
         )
 
     def test_error_when_not_valid_agent(self):
@@ -68,7 +68,7 @@ class PlainStonith(ResourceTest):
                 "Error: Agent 'stonith:absent' is not installed or does not provide "
                 "valid metadata:( crm_resource:)? Metadata query for "
                 "stonith:absent failed:.+"
-                f"use --force to override\n{ERRORS_HAVE_OCURRED}$",
+                f"use --force to override\n{ERRORS_HAVE_OCCURRED}$",
                 re.MULTILINE,
             )
         else:
@@ -77,7 +77,7 @@ class PlainStonith(ResourceTest):
                 "valid metadata: Agent absent not found or does not support "
                 "meta-data: Invalid argument (22), "
                 "Metadata query for stonith:absent failed: Input/output error, "
-                "use --force to override\n" + ERRORS_HAVE_OCURRED
+                "use --force to override\n" + ERRORS_HAVE_OCCURRED
             )
         self.assert_pcs_fail(
             "stonith create S absent".split(),
@@ -180,7 +180,7 @@ class PlainStonith(ResourceTest):
             "stonith create S fence_xvm action=reboot".split(),
             "Error: stonith option 'action' is deprecated and should not be"
             " used, use 'pcmk_off_action', 'pcmk_reboot_action' instead, "
-            "use --force to override\n" + ERRORS_HAVE_OCURRED,
+            "use --force to override\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def test_warn_when_action_specified_forced(self):
@@ -375,7 +375,7 @@ class InGroup(ResourceTest):
             (
                 self.deprecation_warning
                 + "Error: 'S1' does not exist\n"
-                + ERRORS_HAVE_OCURRED
+                + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -386,7 +386,7 @@ class InGroup(ResourceTest):
             (
                 self.deprecation_warning
                 + "Error: 'S1' does not exist\n"
-                + ERRORS_HAVE_OCURRED
+                + ERRORS_HAVE_OCCURRED
             ),
         )
 

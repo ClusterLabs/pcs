@@ -1602,7 +1602,7 @@ class GetResourceDigests(TestCase):
         )
         runner.run.assert_called_once_with(self.CALL_ARGS)
 
-    def assert_command_sucess(
+    def assert_command_success(
         self,
         digest_types=("all",),
         resource_options=None,
@@ -1659,13 +1659,13 @@ class GetResourceDigests(TestCase):
         test_list = [digest_types[0:1], digest_types[0:2], digest_types]
         for tested_digest_types in test_list:
             with self.subTest(tested_digest_types=tested_digest_types):
-                self.assert_command_sucess(digest_types=tested_digest_types)
+                self.assert_command_success(digest_types=tested_digest_types)
 
     def test_success_no_crm_attrs(self):
-        self.assert_command_sucess(crm_attrs={}, call_args=self.CALL_ARGS[:-2])
+        self.assert_command_success(crm_attrs={}, call_args=self.CALL_ARGS[:-2])
 
     def test_success_empty_resource_options(self):
-        self.assert_command_sucess(
+        self.assert_command_success(
             resource_options={}, crm_attrs={}, call_args=self.CALL_ARGS[:-4]
         )
 

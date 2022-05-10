@@ -54,7 +54,7 @@ class BaseTestMixin:
             [self.executable, self.service, self.subcmd]
         )
 
-    def test_instace_failure(self):
+    def test_instance_failure(self):
         result = ExecutorResult(1, "stdout", "stderr")
         self.mock_executor.run.return_value = result
         with self.assertRaises(self.exception) as cm:

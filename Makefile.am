@@ -51,7 +51,7 @@ ACLOCAL_AMFLAGS		= -I m4
 SUBDIRS			= pcs pcsd pcs_test data
 
 PCS_PYTHON_PACKAGES = pcs/ pcs_test/
-# depedency management
+# dependency management
 
 # 1 - sources directory - with python package sources
 # 2 - destination directory - python package will be installed into the
@@ -199,7 +199,7 @@ if DEV_TESTS
 if PARALLEL_PYLINT
 pylint_options = --jobs=0
 else
-pylint_options = 
+pylint_options =
 endif
 	export PYTHONPATH=${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/packages && \
 		$(TIME) $(PYTHON) -m pylint --rcfile pylintrc --persistent=n --reports=n --score=n --disable similarities ${pylint_options} ${PCS_PYTHON_PACKAGES}

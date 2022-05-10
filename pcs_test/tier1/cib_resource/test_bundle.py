@@ -16,7 +16,7 @@ from pcs_test.tools.pcs_runner import PcsRunner
 # pylint: disable=line-too-long
 # pylint: disable=too-many-public-methods
 
-ERRORS_HAVE_OCURRED = (
+ERRORS_HAVE_OCCURRED = (
     "Error: Errors have occurred, therefore pcs is unable to continue\n"
 )
 
@@ -200,7 +200,7 @@ class BundleCreate(BundleCreateCommon):
             "'promoted-max' can be used\n"
             "Deprecation Warning: container option 'masters' is deprecated and "
             "should not be used, use 'promoted-max' instead\n"
-            + ERRORS_HAVE_OCURRED,
+            + ERRORS_HAVE_OCCURRED,
         )
 
     def test_fail_when_missing_args_1(self):
@@ -219,14 +219,14 @@ class BundleCreate(BundleCreateCommon):
         self.assert_pcs_fail_regardless_of_force(
             "resource bundle create B1".split(),
             "Error: '' is not a valid container type value, use 'docker', "
-            "'podman', 'rkt'\n" + ERRORS_HAVE_OCURRED,
+            "'podman', 'rkt'\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def test_fail_when_missing_required(self):
         self.assert_pcs_fail_regardless_of_force(
             "resource bundle create B1 container docker".split(),
             "Error: required container option 'image' is missing\n"
-            + ERRORS_HAVE_OCURRED,
+            + ERRORS_HAVE_OCCURRED,
         )
 
     def test_fail_on_unknown_option(self):
@@ -238,7 +238,7 @@ class BundleCreate(BundleCreateCommon):
             "Error: invalid container option 'extra', allowed options are: "
             "'image', 'masters', 'network', 'options', 'promoted-max', "
             "'replicas', 'replicas-per-host', 'run-command', use --force "
-            "to override\n" + ERRORS_HAVE_OCURRED,
+            "to override\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def test_unknown_option_forced(self):
@@ -269,7 +269,7 @@ class BundleCreate(BundleCreateCommon):
                 Error: 'x' is not a valid replicas value, use a positive integer
                 """
             )
-            + ERRORS_HAVE_OCURRED,
+            + ERRORS_HAVE_OCCURRED,
         )
 
     def assert_no_options(self, keyword):
@@ -538,7 +538,7 @@ class BundleUpdate(BundleCreateCommon):
             "Deprecation Warning: container option 'masters' is deprecated "
             "and should not be used, use 'promoted-max' instead\n"
             "Error: Cannot set container option 'masters' because container "
-            "option 'promoted-max' is already set\n" + ERRORS_HAVE_OCURRED,
+            "option 'promoted-max' is already set\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def test_masters_set_after_promoted_max_with_remove(self):
@@ -569,7 +569,8 @@ class BundleUpdate(BundleCreateCommon):
         self.assert_pcs_fail(
             "resource bundle update B container promoted-max=3".split(),
             "Error: Cannot set container option 'promoted-max' because "
-            "container option 'masters' is already set\n" + ERRORS_HAVE_OCURRED,
+            "container option 'masters' is already set\n"
+            + ERRORS_HAVE_OCCURRED,
         )
 
     def test_promoted_max_set_after_masters_with_remove(self):
@@ -598,7 +599,7 @@ class BundleUpdate(BundleCreateCommon):
             "Error: invalid container option 'extra', allowed options are: "
             "'image', 'masters', 'network', 'options', 'promoted-max', "
             "'replicas', 'replicas-per-host', 'run-command', use --force "
-            "to override\n" + ERRORS_HAVE_OCURRED,
+            "to override\n" + ERRORS_HAVE_OCCURRED,
         )
         # Test that pcs allows to specify options it does not know about. This
         # ensures some kind of forward compatibility, so the user will be able

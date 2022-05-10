@@ -32,7 +32,7 @@ def fixture_constraints_for_tags(tag_list):
     )
 
 
-def fixture_resouces_for_reference_ids(id_list):
+def fixture_resources_for_reference_ids(id_list):
     return (
         "<resources>"
         + "".join(

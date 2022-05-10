@@ -41,13 +41,13 @@ class SplitResourceAgentName(TestCase):
             lambda: split_resource_agent_name("lsb:provider:Dummy"),
         )
 
-    def test_returns_resource_agent_containing_sytemd(self):
+    def test_returns_resource_agent_containing_systemd(self):
         self.assertEqual(
             ResourceAgentName("systemd", None, "lvm2-pvscan"),
             split_resource_agent_name("systemd:lvm2-pvscan"),
         )
 
-    def test_returns_resource_agent_containing_sytemd_instance(self):
+    def test_returns_resource_agent_containing_systemd_instance(self):
         self.assertEqual(
             ResourceAgentName("systemd", None, "lvm2-pvscan@252:2"),
             split_resource_agent_name("systemd:lvm2-pvscan@252:2"),
@@ -74,14 +74,16 @@ class SplitResourceAgentName(TestCase):
     def test_refuses_systemd_agent_name_with_provider(self):
         self.assertRaises(
             InvalidResourceAgentName,
-            lambda: split_resource_agent_name("sytemd:provider:lvm2-pvscan252"),
+            lambda: split_resource_agent_name(
+                "systemd:provider:lvm2-pvscan252"
+            ),
         )
 
     def test_refuses_systemd_agent_name_with_provider_and_instance(self):
         self.assertRaises(
             InvalidResourceAgentName,
             lambda: split_resource_agent_name(
-                "sytemd:provider:lvm2-pvscan252@252:2"
+                "systemd:provider:lvm2-pvscan252@252:2"
             ),
         )
 

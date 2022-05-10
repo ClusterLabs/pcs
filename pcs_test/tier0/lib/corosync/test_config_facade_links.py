@@ -900,7 +900,7 @@ class RemoveLinks(TestCase):
         )
         self.assert_remove(["0", "2"], before, after)
 
-    def test_more_occurences(self):
+    def test_more_occurrences(self):
         before = dedent(
             """\
             totem {

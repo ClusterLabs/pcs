@@ -55,7 +55,7 @@ scriptversion=2018-08-31.20; # UTC
 # .gitarchive-version - present in checked-out repository and git
 #   archive tarball, but not in the distribution tarball. Used as a last
 #   option for version. File must contain special string $Format:%d$,
-#   which is substitued by git on archive operation.
+#   which is substituted by git on archive operation.
 #
 # .gitattributes - present in checked-out repository and git archive
 #   tarball, but not in the distribution tarball. Must set export-subst

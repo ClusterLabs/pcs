@@ -1111,9 +1111,9 @@ def node_add_outside_cluster(lib, argv, modifiers):
         raise LibraryError()
 
     com_cmd = RemoteAddNodes(report_processor, target_list[0], cmd_data)
-    was_successfull = run_com_cmd(lib_env.get_node_communicator(), com_cmd)
+    was_successful = run_com_cmd(lib_env.get_node_communicator(), com_cmd)
 
-    if not was_successfull:
+    if not was_successful:
         raise LibraryError()
 
 

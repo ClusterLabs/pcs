@@ -779,7 +779,7 @@ class DescribeAgent(TestCase):
             ]
         )
 
-    def test_agent_ambiguos(self):
+    def test_agent_ambiguous(self):
         self.config.runner.pcmk.list_agents_standards("\n".join(["ocf"]))
         self.config.runner.pcmk.list_agents_ocf_providers(
             "\n".join(["heartbeat", "pacemaker"])

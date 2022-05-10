@@ -51,7 +51,7 @@ from pcs_test.tools.pcs_runner import (
 LOCATION_NODE_VALIDATION_SKIP_WARNING = (
     f"Warning: {LOCATION_NODE_VALIDATION_SKIP_MSG}\n"
 )
-ERRORS_HAVE_OCURRED = (
+ERRORS_HAVE_OCCURRED = (
     "Error: Errors have occurred, therefore pcs is unable to continue\n"
 )
 
@@ -1067,7 +1067,7 @@ Colocation Constraints:
             output,
             (
                 "Error: 'foo' is not a valid sequential value, use 'false', 'true'\n"
-                + ERRORS_HAVE_OCURRED
+                + ERRORS_HAVE_OCCURRED
             ),
         )
         self.assertEqual(1, retValue)
@@ -1080,7 +1080,7 @@ Colocation Constraints:
             output,
             (
                 "Error: 'foo' is not a valid require-all value, use 'false', 'true'\n"
-                + ERRORS_HAVE_OCURRED
+                + ERRORS_HAVE_OCCURRED
             ),
         )
         self.assertEqual(1, retValue)
@@ -1093,7 +1093,7 @@ Colocation Constraints:
             output,
             (
                 "Error: 'foo' is not a valid role value, use {}\n"
-                + ERRORS_HAVE_OCURRED
+                + ERRORS_HAVE_OCCURRED
             ).format(format_list(const.PCMK_ROLES)),
         )
         self.assertEqual(1, retValue)
@@ -1106,7 +1106,7 @@ Colocation Constraints:
             output,
             (
                 "Error: 'foo' is not a valid action value, use 'demote', 'promote', 'start', 'stop'\n"
-                + ERRORS_HAVE_OCURRED
+                + ERRORS_HAVE_OCCURRED
             ),
         )
         self.assertEqual(1, retValue)
@@ -1461,7 +1461,7 @@ Ordering Constraints:
             output,
             (
                 "Error: 'foo' is not a valid sequential value, use 'false', 'true'\n"
-                + ERRORS_HAVE_OCURRED
+                + ERRORS_HAVE_OCCURRED
             ),
         )
         self.assertEqual(1, retValue)
@@ -1474,7 +1474,7 @@ Ordering Constraints:
             output,
             (
                 "Error: 'foo' is not a valid require-all value, use 'false', 'true'\n"
-                + ERRORS_HAVE_OCURRED
+                + ERRORS_HAVE_OCCURRED
             ),
         )
         self.assertEqual(1, retValue)
@@ -1487,7 +1487,7 @@ Ordering Constraints:
             output,
             (
                 "Error: 'foo' is not a valid role value, use {}\n"
-                + ERRORS_HAVE_OCURRED
+                + ERRORS_HAVE_OCCURRED
             ).format(format_list(const.PCMK_ROLES)),
         )
         self.assertEqual(1, retValue)
@@ -1500,7 +1500,7 @@ Ordering Constraints:
             output,
             (
                 "Error: 'foo' is not a valid action value, use 'demote', 'promote', 'start', 'stop'\n"
-                + ERRORS_HAVE_OCURRED
+                + ERRORS_HAVE_OCCURRED
             ),
         )
         self.assertEqual(1, retValue)
@@ -1513,7 +1513,7 @@ Ordering Constraints:
             output,
             (
                 "Error: invalid set option 'foo', allowed options are: 'action', 'require-all', 'role', 'sequential'\n"
-                + ERRORS_HAVE_OCURRED
+                + ERRORS_HAVE_OCCURRED
             ),
         )
         self.assertEqual(1, retValue)
@@ -1706,9 +1706,9 @@ Ticket Constraints:
 
         o, r = pcs(
             self.temp_cib.name,
-            f"constraint location non-existant-resource rule role={const.PCMK_ROLE_PROMOTED} #uname eq rh7-1".split(),
+            f"constraint location non-existent-resource rule role={const.PCMK_ROLE_PROMOTED} #uname eq rh7-1".split(),
         )
-        ac(o, "Error: Resource 'non-existant-resource' does not exist\n")
+        ac(o, "Error: Resource 'non-existent-resource' does not exist\n")
         assert r == 1
 
         output, returnVal = pcs(
@@ -3061,7 +3061,7 @@ Ticket Constraints:
                 "  set D1 D2 (id:order_set_D1D2_set) (id:order_set_D1D2)",
                 "Error: duplicate constraint already exists, use --force to "
                 "override",
-                ERRORS_HAVE_OCURRED[:-1],
+                ERRORS_HAVE_OCCURRED[:-1],
             ),
         )
         self.assertEqual(1, returnVal)
@@ -3098,7 +3098,7 @@ Ticket Constraints:
                 "  set D1 D2 (id:order_set_D1D2D5_set) set D5 D6 (id:order_set_D1D2D5_set-1) (id:order_set_D1D2D5)",
                 "Error: duplicate constraint already exists, use --force to "
                 "override",
-                ERRORS_HAVE_OCURRED[:-1],
+                ERRORS_HAVE_OCCURRED[:-1],
             ),
         )
         self.assertEqual(1, returnVal)
@@ -3133,7 +3133,7 @@ Ticket Constraints:
                 "  set D1 D2 (id:colocation_set_D1D2_set) setoptions score=INFINITY (id:colocation_set_D1D2)",
                 "Error: duplicate constraint already exists, use --force to "
                 "override",
-                ERRORS_HAVE_OCURRED[:-1],
+                ERRORS_HAVE_OCCURRED[:-1],
             ),
         )
         self.assertEqual(1, returnVal)
@@ -3170,7 +3170,7 @@ Ticket Constraints:
                 "  set D1 D2 (id:colocation_set_D1D2D5_set) set D5 D6 (id:colocation_set_D1D2D5_set-1) setoptions score=INFINITY (id:colocation_set_D1D2D5)",
                 "Error: duplicate constraint already exists, use --force to "
                 "override",
-                ERRORS_HAVE_OCURRED[:-1],
+                ERRORS_HAVE_OCCURRED[:-1],
             ),
         )
         self.assertEqual(1, returnVal)
@@ -3654,7 +3654,7 @@ class TicketAdd(ConstraintBaseTest):
                 ("Error: 'bad-role' is not a valid role value, use {}").format(
                     format_list(const.PCMK_ROLES)
                 ),
-                ERRORS_HAVE_OCURRED[:-1],
+                ERRORS_HAVE_OCCURRED[:-1],
             ],
         )
 
@@ -3676,7 +3676,7 @@ class TicketAdd(ConstraintBaseTest):
                 f"  {const.PCMK_ROLE_UNPROMOTED} A loss-policy=fence ticket=T (id:ticket-T-A-{const.PCMK_ROLE_UNPROMOTED})",
                 "Error: duplicate constraint already exists, use --force to "
                 "override",
-                ERRORS_HAVE_OCURRED[:-1],
+                ERRORS_HAVE_OCCURRED[:-1],
             ],
         )
 
@@ -4554,7 +4554,7 @@ class LocationPrefersAvoidsMixin(
         self.temp_cib = get_tmp_file("tier1_constraint_location")
         write_file_to_tmpfile(self.empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
-        self.command = "to-be-overriden"
+        self.command = "to-be-overridden"
 
     def tearDown(self):
         self.temp_cib.close()

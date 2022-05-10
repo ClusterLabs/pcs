@@ -11,7 +11,7 @@ from pcs.lib.cib.tools import (
     find_unique_id,
 )
 from pcs.lib.errors import LibraryError
-from pcs.lib.xml_tools import etree_element_attibutes_to_dict
+from pcs.lib.xml_tools import etree_element_attributes_to_dict
 
 TAG_GROUP = "acl_group"
 TAG_ROLE = "acl_role"
@@ -327,7 +327,7 @@ def get_role_list(acl_section):
     """
     output_list = []
     for role_el in acl_section.xpath(f"./{TAG_ROLE}"):
-        role = etree_element_attibutes_to_dict(role_el, ["id", "description"])
+        role = etree_element_attributes_to_dict(role_el, ["id", "description"])
         role["permission_list"] = _get_permission_list(role_el)
         output_list.append(role)
     return output_list
@@ -336,7 +336,7 @@ def get_role_list(acl_section):
 def _get_permission_list(role_el):
     """
     Return list of all permissions of role element role_el.
-    Format of item of output list (if attribute is misssing in element under its
+    Format of item of output list (if attribute is missing in element under its
     key there is None):
         {
             "id": <id of permission element>,
@@ -348,12 +348,12 @@ def _get_permission_list(role_el):
             "attribute": <>,
         }
 
-    role_el -- acl_role etree element of which permissions whould be returned
+    role_el -- acl_role etree element of which permissions would be returned
     """
     output_list = []
     for permission in role_el.findall("./acl_permission"):
         output_list.append(
-            etree_element_attibutes_to_dict(
+            etree_element_attributes_to_dict(
                 permission,
                 [
                     "id",

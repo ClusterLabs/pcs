@@ -28,7 +28,7 @@ class CommunicationCommandInterface:
 
     def on_complete(self):
         """
-        Runs after all reqests finished.
+        Runs after all requests finished.
         """
         raise NotImplementedError()
 
@@ -41,7 +41,7 @@ class CommunicationCommandInterface:
     @property
     def has_errors(self):
         """
-        Has an error occured during running the requests.
+        Has an error occurred during running the requests.
         """
         raise NotImplementedError()
 
@@ -49,7 +49,7 @@ class CommunicationCommandInterface:
 def run(communicator, cmd):
     """
     Run communication command. Returns return value of method on_complete() of
-    communcation command after run.
+    communication command after run.
 
     NodeCommunicator communicator -- object used for communication
     CommunicationCommandInterface cmd
@@ -66,8 +66,8 @@ def run(communicator, cmd):
 def run_and_raise(communicator, cmd):
     """
     Run communication command. Returns return value of method on_complete() of
-    communcation command after run.
-    Raises LibraryError (with no report item) when some errors occured while
+    communication command after run.
+    Raises LibraryError (with no report item) when some errors occurred while
     running communication command.
 
     NodeCommunicator communicator -- object used for communication
@@ -291,8 +291,7 @@ class SimpleResponseProcessingMixin:
 
     def _get_success_report(self, node_label):
         """
-        Returns ReportItem which should be reported when request was
-        successfull.
+        Returns ReportItem which should be reported when request was successful
 
         string node_label -- node identifier on which request was successful
         """

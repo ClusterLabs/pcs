@@ -622,7 +622,7 @@ class StonithRestartlessUpdateUnableToPerform(CliReportMessageTestBase):
 
 class ResourceStonithCommandsMismatch(CliReportMessageTestBase):
     def test_no_cmd(self):
-        report_msg = messages.ResourceStonithCommandsMismatch("elemen type")
+        report_msg = messages.ResourceStonithCommandsMismatch("element type")
         self.assert_message(
             report_msg,
             report_msg.message,
@@ -630,7 +630,7 @@ class ResourceStonithCommandsMismatch(CliReportMessageTestBase):
 
     def test_unknown_cmd(self):
         report_msg = messages.ResourceStonithCommandsMismatch(
-            "elemen type", const.PCS_COMMAND_RESOURCE_CREATE
+            "element type", const.PCS_COMMAND_RESOURCE_CREATE
         )
         self.assert_message(
             report_msg,
@@ -639,7 +639,7 @@ class ResourceStonithCommandsMismatch(CliReportMessageTestBase):
 
     def test_use_instead(self):
         report_msg = messages.ResourceStonithCommandsMismatch(
-            "elemen type", const.PCS_COMMAND_STONITH_CREATE
+            "element type", const.PCS_COMMAND_STONITH_CREATE
         )
         self.assert_message(
             report_msg,

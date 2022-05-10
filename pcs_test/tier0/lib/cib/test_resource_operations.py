@@ -420,7 +420,7 @@ class ValidateOperation(TestCase):
             ],
         )
 
-    def test_return_errror_when_missing_key_name(self):
+    def test_return_error_when_missing_key_name(self):
         self.assert_operation_produces_report(
             {"role": const.PCMK_ROLE_PROMOTED},
             [

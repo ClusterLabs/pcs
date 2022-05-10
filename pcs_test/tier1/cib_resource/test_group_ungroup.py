@@ -272,7 +272,7 @@ class GroupDeleteRemoveUngroupBase(
         self.assert_tags_xml(FIXTURE_TAGS_CONFIG_XML)
         self.assert_constraint_xml(FIXTURE_CLONE_TAG_CONSTRAINTS)
 
-    def test_cloned_group_all_resorces_specified(self):
+    def test_cloned_group_all_resources_specified(self):
         self.assert_pcs_success("resource clone AGroup".split())
         self.assert_pcs_fail(
             ["resource"] + self.command + ["AGroup", "A1", "A2", "A3"],

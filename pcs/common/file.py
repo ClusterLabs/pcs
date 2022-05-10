@@ -112,7 +112,7 @@ class RawFile(RawFileInterface):
                     else content.encode("utf-8")
                 )
         except OSError as e:
-            # Specific expection if the file does not exist is not needed,
+            # Specific exception if the file does not exist is not needed,
             # anyone can and should check that using the exists method.
             raise RawFileError(
                 self.metadata, RawFileError.ACTION_READ, format_os_error(e)

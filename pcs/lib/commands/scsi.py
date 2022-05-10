@@ -97,7 +97,7 @@ def unfence_node(
     be skipped.
 
     env -- provides communication with externals
-    node -- node name on wich is unfencing performed
+    node -- node name on which unfencing is performed
     original_devices -- list of devices defined before update
     updated_devices -- list of devices defined after update
     """

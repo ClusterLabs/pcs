@@ -72,7 +72,7 @@ To install pcs and pcsd run the following in terminal:
 ./autogen.sh
 ./configure
 # alternatively './configure --enable-local-build' can be used to also download
-# missing dependecies
+# missing dependencies
 make
 make install
 ```

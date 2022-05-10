@@ -31,16 +31,16 @@ Config (with RunnerConfig, CibShortcuts, EnvConfig, ...)
 The tests use the Config for building list of expected calls (messages to
 the mocked parts). Config stores list of calls in CallListBuilder.
 
-EnvAssitant
+EnvAssistant
 -----------
-EnvAssitant provides CallListBuilder to Config. When test requests an
-environment (from the EnvAssitant) then the EnvAssitant:
+EnvAssistant provides CallListBuilder to Config. When test requests an
+environment (from the EnvAssistant) then the EnvAssistant:
 * takes calls from Config and prepares the Queue (of calls)
 * creates appropriate mock and provide them the Queue
 * patches environment by appropriate mocks
 * returns patched environment
 
-When the test is done the EnvAssitant unpatches the environment and do requeired
+When the test is done the EnvAssistant unpatches the environment and do requeired
 checks (that whole Queue is consumed, that there was no extra reports, ...)
 
 Example:

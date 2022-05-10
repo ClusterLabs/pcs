@@ -15,6 +15,6 @@ class ExecutorInterface:
             to the executable.
 
         Execute a specified program synchronously and return its result after
-        it's finnished.
+        it's finished.
         """
         raise NotImplementedError()

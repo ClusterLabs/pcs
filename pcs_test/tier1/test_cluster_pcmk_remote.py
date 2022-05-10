@@ -7,7 +7,7 @@ from pcs_test.tools.misc import (
     write_data_to_tmpfile,
 )
 
-ERRORS_HAVE_OCURRED = (
+ERRORS_HAVE_OCCURRED = (
     "Error: Errors have occurred, therefore pcs is unable to continue\n"
 )
 
@@ -51,7 +51,7 @@ class NodeAddRemote(RemoteTest):
             "was used)\n"
             "Error: invalid resource option 'server', allowed options"
             " are: 'port', 'reconnect_interval', 'trace_file', 'trace_ra'\n"
-            + ERRORS_HAVE_OCURRED,
+            + ERRORS_HAVE_OCCURRED,
         )
 
     def test_fail_on_unknown_instance_attribute_not_offer_server(self):
@@ -62,7 +62,7 @@ class NodeAddRemote(RemoteTest):
             "was used)\n"
             "Error: invalid resource option 'abcd', allowed options"
             " are: 'port', 'reconnect_interval', 'trace_file', 'trace_ra', "
-            "use --force to override\n" + ERRORS_HAVE_OCURRED,
+            "use --force to override\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def test_fail_on_bad_commandline_usage(self):
@@ -156,7 +156,7 @@ class NodeAddRemote(RemoteTest):
             "Unable to check if there is a conflict with nodes set in corosync "
             "because the command does not run on a live cluster (e.g. -f "
             "was used)\n"
-            "Error: 'node-addr' already exists\n" + ERRORS_HAVE_OCURRED,
+            "Error: 'node-addr' already exists\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def test_fail_when_server_already_used_as_guest(self):
@@ -174,7 +174,7 @@ class NodeAddRemote(RemoteTest):
             "Unable to check if there is a conflict with nodes set in corosync "
             "because the command does not run on a live cluster (e.g. -f "
             "was used)\n"
-            "Error: 'node-addr' already exists\n" + ERRORS_HAVE_OCURRED,
+            "Error: 'node-addr' already exists\n" + ERRORS_HAVE_OCCURRED,
         )
 
 
@@ -229,7 +229,7 @@ class NodeAddGuest(RemoteTest):
             "because the command does not run on a live cluster (e.g. -f "
             "was used)\n"
             "Error: the resource 'already-guest-node' is already a guest node\n"
-            + ERRORS_HAVE_OCURRED,
+            + ERRORS_HAVE_OCCURRED,
         )
 
     def test_fail_on_combined_reasons(self):
@@ -240,7 +240,7 @@ class NodeAddGuest(RemoteTest):
             "was used)\n"
             "Error: invalid guest option 'a', allowed options are:"
             " 'remote-addr', 'remote-connect-timeout', 'remote-port'\n"
-            "Error: resource 'G' does not exist\n" + ERRORS_HAVE_OCURRED,
+            "Error: resource 'G' does not exist\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def test_fail_when_disallowed_option_appear(self):
@@ -252,7 +252,7 @@ class NodeAddGuest(RemoteTest):
             "was used)\n"
             "Error: invalid guest option 'a', allowed options are:"
             " 'remote-addr', 'remote-connect-timeout', 'remote-port'\n"
-            + ERRORS_HAVE_OCURRED,
+            + ERRORS_HAVE_OCCURRED,
         )
 
     def test_fail_when_invalid_interval_appear(self):
@@ -266,7 +266,7 @@ class NodeAddGuest(RemoteTest):
             "because the command does not run on a live cluster (e.g. -f "
             "was used)\n"
             "Error: 'A' is not a valid remote-connect-timeout value, use time"
-            " interval (e.g. 1, 2s, 3m, 4h, ...)\n" + ERRORS_HAVE_OCURRED,
+            " interval (e.g. 1, 2s, 3m, 4h, ...)\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def test_fail_when_invalid_port_appear(self):
@@ -280,7 +280,7 @@ class NodeAddGuest(RemoteTest):
             "because the command does not run on a live cluster (e.g. -f "
             "was used)\n"
             "Error: '70000' is not a valid remote-port value, use a port number"
-            " (1..65535)\n" + ERRORS_HAVE_OCURRED,
+            " (1..65535)\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def test_fail_when_guest_node_conflicts_with_existing_id(self):
@@ -295,7 +295,7 @@ class NodeAddGuest(RemoteTest):
             "Unable to check if there is a conflict with nodes set in corosync "
             "because the command does not run on a live cluster (e.g. -f "
             "was used)\n"
-            "Error: 'CONFLICT' already exists\n" + ERRORS_HAVE_OCURRED,
+            "Error: 'CONFLICT' already exists\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def test_fail_when_guest_node_conflicts_with_existing_guest(self):
@@ -312,7 +312,7 @@ class NodeAddGuest(RemoteTest):
             "Unable to check if there is a conflict with nodes set in corosync "
             "because the command does not run on a live cluster (e.g. -f "
             "was used)\n"
-            "Error: 'node-name' already exists\n" + ERRORS_HAVE_OCURRED,
+            "Error: 'node-name' already exists\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def test_fail_when_guest_node_conflicts_with_existing_remote(self):
@@ -329,7 +329,7 @@ class NodeAddGuest(RemoteTest):
             "Unable to check if there is a conflict with nodes set in corosync "
             "because the command does not run on a live cluster (e.g. -f "
             "was used)\n"
-            "Error: 'node-addr' already exists\n" + ERRORS_HAVE_OCURRED,
+            "Error: 'node-addr' already exists\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def test_fail_when_guest_node_name_conflicts_with_existing_remote(self):
@@ -346,7 +346,7 @@ class NodeAddGuest(RemoteTest):
             "Unable to check if there is a conflict with nodes set in corosync "
             "because the command does not run on a live cluster (e.g. -f "
             "was used)\n"
-            "Error: 'R' already exists\n" + ERRORS_HAVE_OCURRED,
+            "Error: 'R' already exists\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def test_success(self):
@@ -536,7 +536,7 @@ class NodeDeleteRemoveRemote(RemoteTest):
             ["cluster", "node", self.command, "HOST-A"],
             "Error: more than one resource for 'HOST-A' found: "
             "'HOST-A', 'NODE-NAME', use --force to override\n"
-            + ERRORS_HAVE_OCURRED,
+            + ERRORS_HAVE_OCCURRED,
         )
 
     def _test_success_remove_multiple_nodes(self):

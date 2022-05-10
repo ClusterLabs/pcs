@@ -146,7 +146,7 @@ def stonith_create(lib, argv, modifiers):
       * --group - specifies group in which resource will be created
       * --force - allow not existing agent, invalid operations or invalid
         instance attributes
-      * --disabled - created reource will be disabled
+      * --disabled - created resource will be disabled
       * --no-default-ops - do not add default operations
       * --wait
       * -f - CIB file
@@ -347,7 +347,7 @@ def stonith_level_clear_cmd(lib, argv, modifiers):
 
     # TODO remove, deprecated backward compatibility mode for old syntax
     # Command parameters are: node, stonith-list
-    # Both the node and the stonith list are optional. If the node is ommited
+    # Both the node and the stonith list are optional. If the node is omitted
     # and the stonith list is present, there is no way to figure it out, since
     # there is no specification of what the parameter is. Hence the pre-lib
     # code tried both. It deleted all levels having the first parameter as

@@ -165,7 +165,7 @@ def kill_services(runner, services):
     )
     # If a process isn't running, killall will still return 1 even with --quiet.
     # We don't consider that an error, so we check for output string as well.
-    # If it's empty, no actuall error happened.
+    # If it's empty, no actual error happened.
     if retval != 0:
         message = join_multilines([stderr, stdout])
         if message:

@@ -48,7 +48,7 @@ class CreateWithSetTest(TestCase):
         self.role = const.PCMK_ROLE_PROMOTED_LEGACY
         self.independent_cib = etree.XML(etree.tostring(self.cib))
 
-    def create(self, duplication_alowed=False):
+    def create(self, duplication_allowed=False):
         constraint.create_with_set(
             "rsc_some",
             lambda cib, options, resource_set_list: options,
@@ -58,7 +58,7 @@ class CreateWithSetTest(TestCase):
                 {"ids": ["E", "F"], "options": {"action": "start"}},
             ],
             {"id": "some_id", "symmetrical": "true"},
-            duplication_alowed=duplication_alowed,
+            duplication_alowed=duplication_allowed,
         )
 
     def test_put_new_constraint_to_constraint_section(self):
@@ -154,7 +154,7 @@ class CreateWithSetTest(TestCase):
 
     def test_put_duplicate_constraint_when_duplication_allowed(self):
         self.create()
-        self.create(duplication_alowed=True)
+        self.create(duplication_allowed=True)
         expected_calls = [
             mock.call(),
             mock.call(),
