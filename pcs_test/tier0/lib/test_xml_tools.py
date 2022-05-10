@@ -154,7 +154,7 @@ class EtreeElementAttributesToDictTest(TestCase):
                 "id": "test_id",
                 "attribute": "value",
             },
-            lib.etree_element_attibutes_to_dict(self.el, ["id", "attribute"]),
+            lib.etree_element_attributes_to_dict(self.el, ["id", "attribute"]),
         )
 
     def test_only_not_existing(self):
@@ -163,7 +163,7 @@ class EtreeElementAttributesToDictTest(TestCase):
                 "_id": None,
                 "not_existing": None,
             },
-            lib.etree_element_attibutes_to_dict(
+            lib.etree_element_attributes_to_dict(
                 self.el, ["_id", "not_existing"]
             ),
         )
@@ -175,7 +175,7 @@ class EtreeElementAttributesToDictTest(TestCase):
                 "attribute": "value",
                 "not_existing": None,
             },
-            lib.etree_element_attibutes_to_dict(
+            lib.etree_element_attributes_to_dict(
                 self.el, ["id", "not_existing", "attribute"]
             ),
         )

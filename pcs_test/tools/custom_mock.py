@@ -102,7 +102,7 @@ class TmpFileMock:
         def _seek_callback(offset):
             if offset != 0:
                 raise AssertionError(
-                    "Calling seek on a temporary file in tests with a paremeter "
+                    "Calling seek on a temporary file in tests with a parameter "
                     "other than 0 is not supported"
                 )
 
@@ -263,7 +263,7 @@ class MockCurlMulti:
         self._number_of_performed_list = number_of_performed_list
         self._opts = {}
         self._handle_list = []
-        self._proccessed_list = []
+        self._processed_list = []
 
     @property
     def opts(self):
@@ -323,5 +323,5 @@ class MockCurlMulti:
                 # pylint: disable=unbalanced-tuple-unpacking
                 errno, msg = e.args
                 err_list.append((handle, errno, msg))
-            self._proccessed_list.append(handle)
+            self._processed_list.append(handle)
         return (0, ok_list, err_list)

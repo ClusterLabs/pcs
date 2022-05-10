@@ -1198,7 +1198,7 @@ post '/managec/:cluster/add_node_to_cluster' do
     return [400, "New node is not authenticated."]
   end
 
-  # Save the new node token on all nodes in a cluster the new node is beeing
+  # Save the new node token on all nodes in a cluster the new node is being
   # added to. Send the token to one node and let the cluster nodes synchronize
   # it by themselves.
   retval = pcs_compatibility_layer_known_hosts_add(
@@ -1332,7 +1332,7 @@ def pcs_compatibility_layer_get_cluster_known_hosts(cluster_name, target_node)
     return known_hosts, warning_messages
   end
 
-  # a remote host supports /get_cluster_known_hosts; an error occured
+  # a remote host supports /get_cluster_known_hosts; an error occurred
   if retval != 404
     warning_messages << (
       "Unable to automatically authenticate against cluster nodes: " +
@@ -1384,7 +1384,7 @@ def pcs_compatibility_layer_get_cluster_known_hosts(cluster_name, target_node)
     return known_hosts, warning_messages
   end
 
-  # a remote host supports /get_cluster_tokens; an error occured
+  # a remote host supports /get_cluster_tokens; an error occurred
   if retval != 404
     warning_messages << (
       "Unable to automatically authenticate against cluster nodes: " +

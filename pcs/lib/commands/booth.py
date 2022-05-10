@@ -81,8 +81,8 @@ def config_setup(
     create booth configuration
 
     env
-    list site_list -- site adresses of multisite
-    list arbitrator_list -- arbitrator adresses of multisite
+    list site_list -- site addresses of multisite
+    list arbitrator_list -- arbitrator addresses of multisite
     string instance_name -- booth instance name
     bool overwrite_existing -- allow overwriting existing files
     """

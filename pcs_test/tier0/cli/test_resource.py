@@ -401,7 +401,7 @@ class ResourceMoveBanMixin:
         self.assertIsNone(cm.exception.message)
         self.lib_command.assert_not_called()
 
-    def test_succes(self):
+    def test_success(self):
         self.cli_command(self.lib, ["resource"], dict_to_modifiers({}))
         self.lib_command.assert_called_once_with(
             "resource", lifetime=None, master=False, node=None, wait=False
@@ -429,7 +429,7 @@ class ResourceMoveBanMixin:
             "resource", lifetime="T1h", master=False, node=None, wait=False
         )
 
-    def test_succes_node_lifetime(self):
+    def test_success_node_lifetime(self):
         self.cli_command(
             self.lib,
             ["resource", "node", "lifetime=1h"],
@@ -504,7 +504,7 @@ class ResourceClear(TestCase):
         self.assertIsNone(cm.exception.message)
         self.resource.unmove_unban.assert_not_called()
 
-    def test_succes(self):
+    def test_success(self):
         resource.resource_unmove_unban(
             self.lib, ["resource"], dict_to_modifiers({})
         )

@@ -939,11 +939,11 @@ Pcs.ResourceObj = Ember.Object.extend({
     var out = "";
     if (self.error_list.length > 0) {
       out += "<span style='color: red;  font-weight: bold;'>ERRORS:</span><br>\n";
-      out += get_formated_html_list(self.error_list);
+      out += get_formatted_html_list(self.error_list);
     }
     if (self.warning_list.length > 0) {
       out += "<span style='color: orange;  font-weight: bold;'>WARNINGS:</span><br>\n";
-      out += get_formated_html_list(self.warning_list);
+      out += get_formatted_html_list(self.warning_list);
     }
     return out;
   }.property("error_list.@each", "warning_list.@each"),
@@ -1546,11 +1546,11 @@ Pcs.Clusternode = Ember.Object.extend({
     var out = "";
     if (self.error_list && self.error_list.length > 0) {
       out += "<span style='color: red;  font-weight: bold;'>ERRORS:</span><br>\n";
-      out += get_formated_html_list(self.error_list);
+      out += get_formatted_html_list(self.error_list);
     }
     if (self.warning_list && self.warning_list.length > 0) {
       out += "<span style='color: orange;  font-weight: bold;'>WARNINGS:</span><br>\n";
-      out += get_formated_html_list(self.warning_list);
+      out += get_formatted_html_list(self.warning_list);
     }
     return out;
   }.property("error_list", "warning_list"),
@@ -1699,7 +1699,7 @@ Pcs.Clusternode = Ember.Object.extend({
     if (this.get("sbd_config") && this.get("sbd_config")["SBD_WATCHDOG_DEV"]) {
       return this.get("sbd_config")["SBD_WATCHDOG_DEV"];
     } else {
-      return "<unkown>";
+      return "<unknown>";
     }
   }.property("sbd_config")
 });

@@ -70,7 +70,7 @@ class GetFullClusterStatusPlaintext(
                 )
             # TODO Node name should be added to each received report item and
             # those modified report itemss should be reported. That, however,
-            # requires reports overhaul which would add posibility to add a
+            # requires reports overhaul which would add possibility to add a
             # node name to any report item. Also, infos and warnings should not
             # be ignored.
             if output["report_list"]:
@@ -101,5 +101,5 @@ class GetFullClusterStatusPlaintext(
         # reported when the operation was unsuccessful and failed on at least
         # one node.  The only use case this communication command is used does
         # not need that report and on top of that the report causes confusing
-        # ouptut for the user. The report may be added in a future if needed.
+        # output for the user. The report may be added in a future if needed.
         return self._was_successful, self._cluster_status

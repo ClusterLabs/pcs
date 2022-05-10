@@ -383,7 +383,7 @@ class FullClusterStatusPlaintext(TestCase):
             ),
         )
 
-    def test_succes_mocked(self):
+    def test_success_mocked(self):
         tmp_file = "/fake/tmp_file"
         env = dict(CIB_file=tmp_file)
         (
@@ -411,7 +411,7 @@ class FullClusterStatusPlaintext(TestCase):
             ),
         )
 
-    def test_succes_mocked_verbose(self):
+    def test_success_mocked_verbose(self):
         tmp_file = "/fake/tmp_file"
         env = dict(CIB_file=tmp_file)
         (

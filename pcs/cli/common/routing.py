@@ -34,7 +34,7 @@ def create_router(
         except CmdLineInputError as e:
             if not usage_sub_cmd:
                 raise
-            return utils.exit_on_cmdline_input_errror(
+            return utils.exit_on_cmdline_input_error(
                 e, usage_sub_cmd[0], (usage_sub_cmd[1:] + [sub_cmd])
             )
 

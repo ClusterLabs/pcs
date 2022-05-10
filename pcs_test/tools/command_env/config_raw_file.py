@@ -49,7 +49,7 @@ class RawFileConfig:
 
         string file_type_code -- item from pcs.common.file_type_codes
         string path -- expected file path
-        bytes content -- the result of succesful reading
+        bytes content -- the result of a successful reading
         string exception_msg -- resulting error in case of unsuccessful reading
         string name -- the key of the call
         string before -- the key of a call before which this call is to be

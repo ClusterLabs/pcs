@@ -15,9 +15,9 @@ def create_role(lib_env, role_id, permission_info_list, description):
     Create new acl role.
     Raises LibraryError on any failure.
 
-    lib_env -- LibraryEnvirnoment
+    lib_env -- LibraryEnvironment
     role_id -- id of new role which should be created
-    permission_info_list -- list of permissons, items of list should be tuples:
+    permission_info_list -- list of permissions, items of list should be tuples:
         (<read|write|deny>, <xpath|id>, <any string>)
     description -- text description for role
     """
@@ -54,7 +54,7 @@ def assign_role_not_specific(lib_env, role_id, target_or_group_id):
     the same id only target element will be affected by this function.
     Raises LibraryError on any failure.
 
-    lib_env -- LibraryEnviroment
+    lib_env -- LibraryEnvironment
     role_id -- id of role which should be assigned to target/group
     target_or_group_id -- id of target/group element
     """
@@ -201,7 +201,7 @@ def remove_target(lib_env, target_id):
     Raises LibraryError on any failure.
 
     lib_env -- LibraryEnvironment
-    target_id -- id of taget which should be removed
+    target_id -- id of target which should be removed
     """
     with cib_acl_section(lib_env) as acl_section:
         acl.remove_target(acl_section, target_id)
@@ -225,9 +225,9 @@ def add_permission(lib_env, role_id, permission_info_list):
     created.
     Raises LibraryError on any failure.
 
-    lib_env -- LibraryEnvirnoment
+    lib_env -- LibraryEnvironment
     role_id -- id of role
-    permission_info_list -- list of permissons, items of list should be tuples:
+    permission_info_list -- list of permissions, items of list should be tuples:
         (<read|write|deny>, <xpath|id>, <any string>)
     """
     with cib_acl_section(lib_env) as acl_section:

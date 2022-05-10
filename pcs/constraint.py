@@ -93,7 +93,7 @@ def constraint_location_cmd(lib, argv, modifiers):
         else:
             raise CmdLineInputError()
     except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(
+        utils.exit_on_cmdline_input_error(
             e, "constraint", ["location", sub_cmd]
         )
 
@@ -116,7 +116,7 @@ def constraint_order_cmd(lib, argv, modifiers):
         else:
             order_start(lib, [sub_cmd] + argv, modifiers)
     except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_errror(e, "constraint", ["order", sub_cmd])
+        utils.exit_on_cmdline_input_error(e, "constraint", ["order", sub_cmd])
 
 
 def constraint_show(lib, argv, modifiers):

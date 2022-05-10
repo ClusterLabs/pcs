@@ -19,7 +19,7 @@ class Session:
         self.__username = username
         # The flag that indicated if the user was authenticated.
         # The user is authenticated when they are recognized as a system user
-        # belonging to the high availability admin group (typicaly hacluster).
+        # belonging to the high availability admin group (typically hacluster).
         self.__is_authenticated = is_authenticated
         # Id that will be returned by login-status or login (for ajax).
         self.__ajax_id = None
@@ -27,7 +27,7 @@ class Session:
             self.__ajax_id = (
                 ajax_id if ajax_id else f"{int(now())}-{random.randint(1, 100)}"
             )
-        # Groups of the user. Similary to username, it does not mean that the
+        # Groups of the user. Similalry to username, it does not mean that the
         # user is authenticated when the groups are loaded.
         self.__groups = groups or []
         # The moment of the last access. The only muttable attribute.

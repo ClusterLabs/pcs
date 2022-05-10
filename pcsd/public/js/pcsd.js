@@ -515,7 +515,7 @@ function node_stop(node, force) {
          - it can take minutes to stop a node (resources running on it have
            to be stopped/moved and we do not need to wait for that)
          - if pcs is not able to stop a node it returns an (forceable) error
-           immediatelly
+           immediately
         */
         return;
       }
@@ -1115,7 +1115,7 @@ function remove_nodes(ids, force) {
          - it can take minutes to stop a node (resources running on it have
            to be stopped/moved and we do not need to wait for that)
          - if pcs is not able to stop a node it returns an (forceable) error
-           immediatelly
+           immediately
         */
         return;
       }
@@ -1880,7 +1880,7 @@ function correct_visibility_dashboard_type(cluster, type) {
   }
 }
 
-function get_formated_html_list(data) {
+function get_formatted_html_list(data) {
   if (data == null || data.length == 0) {
     return "";
   }

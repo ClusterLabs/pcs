@@ -39,12 +39,12 @@ class Get(TestCase):
             """,
         )
 
-    def test_get_existing_optinal(self):
+    def test_get_existing_optional(self):
         self.assert_element_content(
             sections.get(self.tree, sections.ACLS), "<acls/>"
         )
 
-    def test_get_no_existing_optinal(self):
+    def test_get_no_existing_optional(self):
         self.assert_element_content(
             sections.get(self.tree, sections.ALERTS), "<alerts/>"
         )

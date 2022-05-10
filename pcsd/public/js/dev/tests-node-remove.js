@@ -58,7 +58,7 @@ testNodesRemove.nodesRemove403 = function(url, data, success, fail){
 testNodesRemove.nodesRemove500 = function(url, data, success, fail){
   switch(url){
     case "/managec/"+Pcs.cluster_name+"/cluster_remove_nodes": return fail(
-      500, "Somethig is wrong"
+      500, "Something is wrong"
     );
   }
 };

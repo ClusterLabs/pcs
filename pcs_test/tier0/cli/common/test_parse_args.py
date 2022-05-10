@@ -32,7 +32,7 @@ class PrepareOptionsTest(TestCase):
     def test_refuse_option_without_key(self):
         self.assertRaises(CmdLineInputError, lambda: prepare_options(["=a"]))
 
-    def test_refuse_options_with_same_key_and_differend_value(self):
+    def test_refuse_options_with_same_key_and_different_value(self):
         self.assertRaises(
             CmdLineInputError, lambda: prepare_options(["a=a", "a=b"])
         )
@@ -81,7 +81,7 @@ class PrepareOptionsAllowedTest(TestCase):
             CmdLineInputError, lambda: prepare_options_allowed(["=a"], ["a"])
         )
 
-    def test_refuse_options_with_same_key_and_differend_value(self):
+    def test_refuse_options_with_same_key_and_different_value(self):
         self.assertRaises(
             CmdLineInputError,
             lambda: prepare_options_allowed(["a=a", "a=b"], ["a"]),
@@ -160,7 +160,7 @@ class SplitByKeywords(TestCase):
             },
         )
 
-    def test_splict_without_implict_keyword(self):
+    def test_split_without_implicit_keyword(self):
         self.assertEqual(
             group_by_keywords(
                 ["first", 1, 2, "second", 3],
@@ -270,7 +270,7 @@ class SplitByKeywords(TestCase):
             ),
         )
 
-    def test_group_repeating_keyword_occurences(self):
+    def test_group_repeating_keyword_occurrences(self):
         self.assertEqual(
             group_by_keywords(
                 ["first", 1, 2, "second", 3, "first", 4],
@@ -294,7 +294,7 @@ class SplitByKeywords(TestCase):
             ),
         )
 
-    def test_implicit_first_kw_not_applyed_in_the_middle(self):
+    def test_implicit_first_kw_not_applied_in_the_middle(self):
         self.assertEqual(
             group_by_keywords(
                 [1, 2, "first", 3, "zero", 4],
@@ -307,7 +307,7 @@ class SplitByKeywords(TestCase):
             },
         )
 
-    def test_implicit_first_kw_applyed_in_the_middle_when_is_in_kwds(self):
+    def test_implicit_first_kw_applied_in_the_middle_when_is_in_kwds(self):
         self.assertEqual(
             group_by_keywords(
                 [1, 2, "first", 3, "zero", 4],

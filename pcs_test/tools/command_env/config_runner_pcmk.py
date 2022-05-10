@@ -239,7 +239,7 @@ class PcmkShortcuts:
         Create a call for loading plaintext pacemaker status
 
         str name -- key of the call
-        bool incative -- pass --inactive flag to crm_mon
+        bool inactive -- pass --inactive flag to crm_mon
         bool verbose -- pass flags for increased verbosity to crm_mon
         bool fence_history -- pass the flag for getting fence history to crm_mon
         str stdout -- crm_mon's stdout

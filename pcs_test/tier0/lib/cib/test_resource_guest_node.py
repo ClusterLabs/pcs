@@ -103,7 +103,7 @@ class ValidateHostConflicts(TestCase):
             "GUEST_ADDR_CONFLICT",
         )
 
-    def test_no_conflict_guest_node_whe_addr_is_different(self):
+    def test_no_conflict_guest_node_when_addr_is_different(self):
         self.assertEqual(
             [],
             self.validate(
@@ -117,7 +117,7 @@ class ValidateHostConflicts(TestCase):
     def test_report_conflict_remote_node(self):
         self.assert_already_exists_error("REMOTE_CONFLICT", "REMOTE_CONFLICT")
 
-    def test_no_conflict_remote_node_whe_addr_is_different(self):
+    def test_no_conflict_remote_node_when_addr_is_different(self):
         self.assertEqual(
             [],
             self.validate(

@@ -63,7 +63,7 @@
                     {{#unless Pcs.nodesController.cur_node.pacemaker_standby}}
                     {{#if Pcs.nodesController.cur_node.pacemaker_maintenance}}
                     <div id="pacemaker_online_status" class="status-standby">
-                      Pacemaker Maintanence
+                      Pacemaker Maintenance
                     </div>
                     {{else}}
                     <div id="pacemaker_online_status" class="status">
@@ -83,7 +83,7 @@
                     {{else}}
                     {{#if Pcs.nodesController.cur_node.pacemaker_maintenance}}
                     <div id="pacemaker_online_status" class="status-standby">
-                      Pacemaker Maintanence
+                      Pacemaker Maintenance
                     </div>
                     {{else}}
                     <div id="pacemaker_online_status" class="status-offline">
@@ -331,14 +331,14 @@
         <td>Node Name:</td>
         <td><input type=text name=new_nodename></td>
       </tr>
-      
+
       <tr>
         <td>Node Addresses:</td>
         <td class="link-expander">
           <a href="#" onclick="nodeAdd.dialog.toggleLinks();return false;">(+)</a>
         </td>
       </tr>
-      
+
       <tbody class="node-links" style="display:none">
         <tr>
           <td
@@ -358,12 +358,12 @@
         <tr><td><input type=text name="links[]"></td></tr>
         <tr><td><input type=text name="links[]"></td></tr>
       </tbody>
-      
+
       <tr>
         <td>Start the Node:</td>
         <td><input type="checkbox" name="auto_start" value="1" checked></td>
       </tr>
-      
+
       <tbody class="sbd-features" style="display:none">
         <tr>
           <td>SBD watchdog:</td>
@@ -387,7 +387,7 @@
           </td>
         </tr>
       </tbody>
-      
+
     </table>
     <table class="msg-box" style="width:100%"><tr><td/></tr></table>
   </form>

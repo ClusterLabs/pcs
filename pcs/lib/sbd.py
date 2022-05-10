@@ -90,7 +90,7 @@ def is_auto_tie_breaker_needed(
 
     service_manager --
     corosync_conf_facade --
-    node_number_modifier -- this value vill be added to current number of nodes.
+    node_number_modifier -- this value will be added to current number of nodes.
         This can be useful to test whenever is ATB needed when adding/removeing
         node.
     """
@@ -131,7 +131,7 @@ def atb_has_to_be_enabled(
 
     service_manager --
     corosync_conf_facade --
-    node_number_modifier -- this value vill be added to current number of nodes.
+    node_number_modifier -- this value will be added to current number of nodes.
         This can be useful to test whenever is ATB needed when adding/removeing
         node.
     """

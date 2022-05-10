@@ -23,7 +23,7 @@ class NeedsStoppedClusterTest(TestCase):
         {"ip_version": "ipv4-6", "netmtu": "2000"},
     ]
 
-    def _assert_needs_stoped_cluster(self, config, need_stopped, option_list):
+    def _assert_needs_stopped_cluster(self, config, need_stopped, option_list):
         for options in option_list:
             with self.subTest(options):
                 facade = _get_facade(config)
@@ -31,7 +31,7 @@ class NeedsStoppedClusterTest(TestCase):
                 self.assertEqual(facade.need_stopped_cluster, need_stopped)
 
     def test_remove_not_present_options(self):
-        self._assert_needs_stoped_cluster("", False, self._option_list_empty)
+        self._assert_needs_stopped_cluster("", False, self._option_list_empty)
 
     def test_remove_present_empty_options(self):
         config = dedent(
@@ -42,7 +42,7 @@ class NeedsStoppedClusterTest(TestCase):
             }
         """
         )
-        self._assert_needs_stoped_cluster(
+        self._assert_needs_stopped_cluster(
             config, False, self._option_list_empty
         )
 
@@ -55,7 +55,9 @@ class NeedsStoppedClusterTest(TestCase):
             }
         """
         )
-        self._assert_needs_stoped_cluster(config, True, self._option_list_empty)
+        self._assert_needs_stopped_cluster(
+            config, True, self._option_list_empty
+        )
 
     def test_modify_present_options(self):
         config = dedent(
@@ -66,7 +68,7 @@ class NeedsStoppedClusterTest(TestCase):
             }
         """
         )
-        self._assert_needs_stoped_cluster(
+        self._assert_needs_stopped_cluster(
             config, True, self._option_list_modify
         )
 
@@ -83,7 +85,7 @@ class NeedsStoppedClusterTest(TestCase):
             {"opt0": "", "opt1": "", "opt2": ""},
             {"opt0": "val0", "opt1": "val1", "opt2": "val22"},
         ]
-        self._assert_needs_stoped_cluster(config, False, not_banned_options)
+        self._assert_needs_stopped_cluster(config, False, not_banned_options)
 
 
 class SetTransportOptionsKnetMixin:

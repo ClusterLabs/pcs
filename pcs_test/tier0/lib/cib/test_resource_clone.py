@@ -250,7 +250,7 @@ class GetParentAnyClone(TestCase):
     def test_primitive_in_master(self):
         self.my_assert("C", "C-master")
 
-    def test_grop(self):
+    def test_group(self):
         self.my_assert("D", None)
 
     def test_primitive_in_group(self):

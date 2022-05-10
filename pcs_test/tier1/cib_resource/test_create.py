@@ -20,7 +20,7 @@ from pcs_test.tools.pcs_runner import PcsRunner
 # pylint: disable=too-many-lines
 # pylint: disable=too-many-public-methods
 
-ERRORS_HAVE_OCURRED = (
+ERRORS_HAVE_OCCURRED = (
     "Error: Errors have occurred, therefore pcs is unable to continue\n"
 )
 
@@ -429,7 +429,7 @@ class SuccessOperations(ResourceTest):
             </resources>""",
         )
 
-    def test_merging_default_ops_explictly_specified(self):
+    def test_merging_default_ops_explicitly_specified(self):
         self.assert_effect(
             "resource create R ocf:heartbeat:Dummy op start timeout=200".split(),
             """<resources>
@@ -938,7 +938,7 @@ class FailOrWarn(ResourceTest):
             "Error: Agent 'ocf:heartbeat:NoExisting' is not installed or "
             "does not provide valid metadata:( crm_resource:)? Metadata "
             "query for ocf:heartbeat:NoExisting failed:.+"
-            f", use --force to override\n{ERRORS_HAVE_OCURRED}$",
+            f", use --force to override\n{ERRORS_HAVE_OCCURRED}$",
             re.MULTILINE,
         )
         self.assert_pcs_fail(
@@ -978,14 +978,14 @@ class FailOrWarn(ResourceTest):
         self.assert_pcs_fail(
             "resource create R invalid_agent_name".split(),
             "Error: Unable to find agent 'invalid_agent_name', try specifying"
-            " its full name\n" + ERRORS_HAVE_OCURRED,
+            " its full name\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def test_fail_on_invalid_resource_agent_name_even_if_forced(self):
         self.assert_pcs_fail(
             "resource create R invalid_agent_name --force".split(),
             "Error: Unable to find agent 'invalid_agent_name', try specifying"
-            " its full name\n" + ERRORS_HAVE_OCURRED,
+            " its full name\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def test_fail_when_invalid_agent(self):
@@ -995,7 +995,7 @@ class FailOrWarn(ResourceTest):
             " standard:provider:type when standard is 'ocf' or"
             " standard:type otherwise. List of standards and providers can"
             " be obtained by using commands 'pcs resource standards' and"
-            " 'pcs resource providers'.\n" + ERRORS_HAVE_OCURRED,
+            " 'pcs resource providers'.\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def test_vail_when_agent_class_is_not_allowed(self):
@@ -1005,7 +1005,7 @@ class FailOrWarn(ResourceTest):
             " standard:provider:type when standard is 'ocf' or"
             " standard:type otherwise. List of standards and providers can"
             " be obtained by using commands 'pcs resource standards' and"
-            " 'pcs resource providers'.\n" + ERRORS_HAVE_OCURRED,
+            " 'pcs resource providers'.\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def test_fail_when_missing_provider_with_ocf_resource_agent(self):
@@ -1015,7 +1015,7 @@ class FailOrWarn(ResourceTest):
             " standard:provider:type when standard is 'ocf' or"
             " standard:type otherwise. List of standards and providers can"
             " be obtained by using commands 'pcs resource standards' and"
-            " 'pcs resource providers'.\n" + ERRORS_HAVE_OCURRED,
+            " 'pcs resource providers'.\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def test_fail_when_provider_appear_with_non_ocf_resource_agent(self):
@@ -1025,7 +1025,7 @@ class FailOrWarn(ResourceTest):
             " standard:provider:type when standard is 'ocf' or"
             " standard:type otherwise. List of standards and providers can"
             " be obtained by using commands 'pcs resource standards' and"
-            " 'pcs resource providers'.\n" + ERRORS_HAVE_OCURRED,
+            " 'pcs resource providers'.\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def test_print_info_about_agent_completion(self):
@@ -1039,7 +1039,7 @@ class FailOrWarn(ResourceTest):
             "resource create R Dummy".split(),
             "Error: Multiple agents match 'Dummy', please specify full name:"
             " 'ocf:heartbeat:Dummy' or 'ocf:pacemaker:Dummy'\n"
-            + ERRORS_HAVE_OCURRED,
+            + ERRORS_HAVE_OCCURRED,
         )
 
     def test_for_options_not_matching_resource_agent(self):
@@ -1047,7 +1047,7 @@ class FailOrWarn(ResourceTest):
             "resource create R ocf:heartbeat:Dummy a=b c=d".split(),
             "Error: invalid resource options: 'a', 'c', allowed options are: "
             "'fake', 'state', 'trace_file', 'trace_ra', use --force to "
-            "override\n" + ERRORS_HAVE_OCURRED,
+            "override\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def test_for_missing_options_of_resource_agent(self):
@@ -1057,7 +1057,7 @@ class FailOrWarn(ResourceTest):
                 "Assumed agent name 'ocf:heartbeat:IPaddr2' (deduced from"
                 " 'IPaddr2')\n"
                 "Error: required resource option 'ip' is missing,"
-                " use --force to override\n" + ERRORS_HAVE_OCURRED
+                " use --force to override\n" + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -1084,7 +1084,7 @@ class FailOrWarn(ResourceTest):
             (
                 "Error: invalid operation id '#O',"
                 " '#' is not a valid first character for a operation id\n"
-                + ERRORS_HAVE_OCURRED
+                + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -1123,7 +1123,7 @@ class FailOrWarn(ResourceTest):
                 "Error: 'monitro' is not a valid operation name value, use"
                 " 'meta-data', 'migrate_from', 'migrate_to', 'monitor',"
                 " 'reload', 'start', 'stop', 'validate-all', use --force to"
-                " override\n" + ERRORS_HAVE_OCURRED
+                " override\n" + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -1148,7 +1148,7 @@ class FailOrWarn(ResourceTest):
                 "Error: Value '1' of option 'state' is not unique across "
                 "'ocf:pacemaker:Dummy' resources. Following resources are "
                 "configured with the same value of the instance attribute: "
-                "'R1', use --force to override\n" + ERRORS_HAVE_OCURRED
+                "'R1', use --force to override\n" + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -1177,7 +1177,7 @@ class FailOrWarn(ResourceTest):
                 "'ocf:pacemaker:Dummy' resources. Following resources are "
                 "configured with the same value of the instance attribute: "
                 "'R1', 'R2', 'R3', use --force to override\n"
-                + ERRORS_HAVE_OCURRED
+                + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -1214,7 +1214,7 @@ class FailOrWarnOp(ResourceTest):
                 "Error: multiple specification of the same operation with the"
                 " same interval:\n"
                 "monitor with intervals 1h, 3600sec\n"
-                "monitor with intervals 1min, 60s\n" + ERRORS_HAVE_OCURRED
+                "monitor with intervals 1min, 60s\n" + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -1238,7 +1238,7 @@ class FailOrWarnOp(ResourceTest):
             " are: 'OCF_CHECK_LEVEL', 'description', 'enabled', 'id',"
             " 'interval', 'interval-origin', 'name', 'on-fail',"
             " 'record-pending', 'role', 'start-delay', 'timeout'\n"
-            + ERRORS_HAVE_OCURRED,
+            + ERRORS_HAVE_OCCURRED,
         )
 
     def test_fail_on_invalid_role(self):
@@ -1251,7 +1251,7 @@ class FailOrWarnOp(ResourceTest):
                 "Error: 'abc' is not a valid role value, use {}\n".format(
                     format_list(const.PCMK_ROLES)
                 )
-                + ERRORS_HAVE_OCURRED
+                + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -1265,7 +1265,7 @@ class FailOrWarnOp(ResourceTest):
                 "Error: 'abc' is not a valid role value, use {}\n".format(
                     format_list(const.PCMK_ROLES)
                 )
-                + ERRORS_HAVE_OCURRED
+                + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -1278,7 +1278,7 @@ class FailOrWarnOp(ResourceTest):
             (
                 "Error: 'Abc' is not a valid on-fail value, use 'block', "
                 "'demote', 'fence', 'ignore', 'restart', 'restart-container', "
-                "'standby', 'stop'\n" + ERRORS_HAVE_OCURRED
+                "'standby', 'stop'\n" + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -1290,7 +1290,7 @@ class FailOrWarnOp(ResourceTest):
             ).split(),
             (
                 "Error: 'Abc' is not a valid record-pending value, use '0', "
-                "'1', 'false', 'true'\n" + ERRORS_HAVE_OCURRED
+                "'1', 'false', 'true'\n" + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -1302,7 +1302,7 @@ class FailOrWarnOp(ResourceTest):
             ).split(),
             (
                 "Error: 'Abc' is not a valid enabled value, use '0', '1', "
-                "'false', 'true'\n" + ERRORS_HAVE_OCURRED
+                "'false', 'true'\n" + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -1315,7 +1315,7 @@ class FailOrWarnOp(ResourceTest):
             (
                 "Error: Only one of resource operation options "
                 "'interval-origin' and 'start-delay' can be used\n"
-                + ERRORS_HAVE_OCURRED
+                + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -1325,7 +1325,7 @@ class FailOrWarnGroup(ResourceTest):
         self.assert_pcs_fail(
             "resource create R ocf:heartbeat:Dummy --group 1".split(),
             "Error: invalid group name '1', '1' is not a valid first character"
-            " for a group name\n" + ERRORS_HAVE_OCURRED,
+            " for a group name\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def test_fail_when_try_use_id_of_another_element(self):
@@ -1355,7 +1355,7 @@ class FailOrWarnGroup(ResourceTest):
                 "--group R1-meta_attributes"
             ).split(),
             "Error: 'R1-meta_attributes' is not a group\n"
-            + ERRORS_HAVE_OCURRED,
+            + ERRORS_HAVE_OCCURRED,
         )
 
     def test_fail_when_entered_both_after_and_before(self):
@@ -1392,13 +1392,13 @@ class FailOrWarnGroup(ResourceTest):
         )
         self.assert_pcs_fail(
             "resource create R2 ocf:heartbeat:Dummy --group G1 --before R1".split(),
-            "Error: 'R1' does not exist\n" + ERRORS_HAVE_OCURRED,
+            "Error: 'R1' does not exist\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def test_fail_when_use_before_with_new_group(self):
         self.assert_pcs_fail(
             "resource create R2 ocf:heartbeat:Dummy --group G1 --before R1".split(),
-            "Error: 'R1' does not exist\n" + ERRORS_HAVE_OCURRED,
+            "Error: 'R1' does not exist\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def test_fail_when_after_does_not_exist(self):
@@ -1407,13 +1407,13 @@ class FailOrWarnGroup(ResourceTest):
         )
         self.assert_pcs_fail(
             "resource create R2 ocf:heartbeat:Dummy --group G1 --after R1".split(),
-            "Error: 'R1' does not exist\n" + ERRORS_HAVE_OCURRED,
+            "Error: 'R1' does not exist\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def test_fail_when_use_after_with_new_group(self):
         self.assert_pcs_fail(
             "resource create R2 ocf:heartbeat:Dummy --group G1 --after R1".split(),
-            "Error: 'R1' does not exist\n" + ERRORS_HAVE_OCURRED,
+            "Error: 'R1' does not exist\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def test_fail_when_on_pacemaker_remote_attempt(self):
@@ -1422,7 +1422,7 @@ class FailOrWarnGroup(ResourceTest):
             (
                 "Error: this command is not sufficient for creating a remote"
                 " connection, use 'pcs cluster node add-remote'"
-                ", use --force to override\n" + ERRORS_HAVE_OCURRED
+                ", use --force to override\n" + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -1445,7 +1445,7 @@ class FailOrWarnGroup(ResourceTest):
             (
                 "Warning: this command is not sufficient for creating a "
                 "remote connection, use 'pcs cluster node add-remote'\n"
-                "Error: 'R' already exists\n" + ERRORS_HAVE_OCURRED
+                "Error: 'R' already exists\n" + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -1461,7 +1461,7 @@ class FailOrWarnGroup(ResourceTest):
             (
                 "Warning: this command is not sufficient for creating a "
                 "remote connection, use 'pcs cluster node add-remote'\n"
-                "Error: 'R2' already exists\n" + ERRORS_HAVE_OCURRED
+                "Error: 'R2' already exists\n" + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -1480,7 +1480,7 @@ class FailOrWarnGroup(ResourceTest):
             (
                 "Warning: this command is not sufficient for creating a "
                 "guest node, use 'pcs cluster node add-guest'\n"
-                "Error: 'R' already exists\n" + ERRORS_HAVE_OCURRED
+                "Error: 'R' already exists\n" + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -1499,7 +1499,7 @@ class FailOrWarnGroup(ResourceTest):
             (
                 "Warning: this command is not sufficient for creating a "
                 "guest node, use 'pcs cluster node add-guest'\n"
-                "Error: 'HOST' already exists\n" + ERRORS_HAVE_OCURRED
+                "Error: 'HOST' already exists\n" + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -1518,7 +1518,7 @@ class FailOrWarnGroup(ResourceTest):
             (
                 "Warning: this command is not sufficient for creating a "
                 "guest node, use 'pcs cluster node add-guest'\n"
-                "Error: 'HOST' already exists\n" + ERRORS_HAVE_OCURRED
+                "Error: 'HOST' already exists\n" + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -1544,7 +1544,7 @@ class FailOrWarnGroup(ResourceTest):
             (
                 "Error: this command is not sufficient for creating a guest "
                 "node, use 'pcs cluster node add-guest', use --force to "
-                "override\n" + ERRORS_HAVE_OCURRED
+                "override\n" + ERRORS_HAVE_OCCURRED
             ),
         )
 

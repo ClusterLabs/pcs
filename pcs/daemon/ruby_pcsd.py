@@ -206,7 +206,7 @@ class Wrapper:
     def process_ruby_response(self, label, log_request, ruby_response):
         """
         Return relevant part of unpacked ruby response. As a side effect
-        relevant logs are writen.
+        relevant logs are written.
 
         string label -- is used as a log prefix
         callable log_request -- is used to log request when some errors happen;

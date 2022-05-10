@@ -444,7 +444,7 @@ class ValidateIdDoesNotExistsTest(TestCase):
         lib.validate_id_does_not_exist("tree", "some-id")
         does_id_exists.assert_called_once_with("tree", "some-id")
 
-    def test_raises_whne_id_exists(self, does_id_exists):
+    def test_raises_when_id_exists(self, does_id_exists):
         does_id_exists.return_value = True
         assert_raise_library_error(
             lambda: lib.validate_id_does_not_exist("tree", "some-id"),

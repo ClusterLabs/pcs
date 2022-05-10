@@ -116,7 +116,7 @@ class LocalConfig:
                 cert=cert,
                 signed_cert=b"signed cert",
                 node_labels=[QDEVICE_HOST],
-                name=f"{local_prefix}http.corosync.qdevice_sign_sertificate",
+                name=f"{local_prefix}http.corosync.qdevice_sign_certificate",
             )
             .fs.exists(
                 os.path.join(

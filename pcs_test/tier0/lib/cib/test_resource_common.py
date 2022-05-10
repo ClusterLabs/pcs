@@ -132,7 +132,7 @@ class FindOneOrMoreResources(TestCase):
         self.assertEqual("R1", resource.attrib.get("id"))
         assert_report_item_list_equal(report_list, [])
 
-    def test_one_nonexistant(self):
+    def test_one_nonexistent(self):
         resource, report_list = common.find_one_resource(self.cib, "R-missing")
         self.assertIsNone(resource)
         assert_report_item_list_equal(

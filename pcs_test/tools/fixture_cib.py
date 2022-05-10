@@ -236,10 +236,10 @@ def remove(element_xpath):
 
 
 def put_or_replace(parent_xpath, new_content):
-    # This tranformation makes sense in "configuration" section only. In this
-    # section there are sub-tags (optional or mandatory) that can occure max 1x.
+    # This transformation makes sense in "configuration" section only. In this
+    # section there are sub-tags (optional or mandatory) that can occur max 1x.
     #
-    # In other sections it is possible to have more occurences of sub-tags. For
+    # In other sections it is possible to have more occurrences of sub-tags. For
     # such cases it is better to use `replace_all` - the difference is that in
     # `replace_all` the element to be replaced is specified by full xpath
     # whilst in `put_or_replace` the xpath to the parent element is specified.
@@ -266,7 +266,7 @@ def replace_all(replacements):
 
     dict replacemens -- contains more replacements:
         key is xpath - its destination must be one element: replacement is
-        applied only on the first occurence
+        applied only on the first occurrence
         value is new content -contains a content that have to be placed instead
         of an element found by element_xpath
     """
@@ -304,7 +304,7 @@ def append_all(append_map):
 #  command, stdout, stderr, returncode, check_stdin
 # 3) special args of pcs_test.tools.command_env.config_*
 #  modifiers, filename, load_key, wait, exception
-# It would be not aplied. Not even mention that the majority of these names do
+# It would be not applied. Not even mention that the majority of these names do
 # not make sense for a cib modifying ;)
 MODIFIER_GENERATORS = {
     "remove": remove,
@@ -320,7 +320,7 @@ MODIFIER_GENERATORS = {
     "tags": lambda xml: put_or_replace("./configuration", xml),
     "optional_in_conf": lambda xml: put_or_replace("./configuration", xml),
     # common modifier `put_or_replace` makes not sense - see explanation inside
-    # this function - all occurences should be satisfied by `optional_in_conf`
+    # this function - all occurrences should be satisfied by `optional_in_conf`
 }
 
 

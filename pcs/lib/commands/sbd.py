@@ -138,7 +138,7 @@ def enable_sbd(
         as value
     allow_unknown_opts -- if True, accept also unknown options.
     ignore_offline_nodes -- if True, omit offline nodes
-    no_watchdog_validation -- it True, do not validate existance of a watchdog
+    no_watchdog_validation -- it True, do not validate existence of a watchdog
         on the nodes
     allow_invalid_option_values -- if True, invalid values of some options will
         be treated as warning instead of errors
@@ -469,10 +469,10 @@ def set_message(lib_env, device, node_name, message):
     """
     Set message on device for node_name.
 
-    lib_env -- LibrayEnvironment
+    lib_env -- LibraryEnvironment
     device -- string, absolute path to device
     node_name -- string
-    message -- string, mesage type, should be one of settings.sbd_message_types
+    message -- string, message type, should be one of settings.sbd_message_types
     """
     report_item_list = []
     missing_options = []

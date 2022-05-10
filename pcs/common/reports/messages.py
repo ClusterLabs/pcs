@@ -534,12 +534,12 @@ class RequiredOptionOfAlternativesIsMissing(ReportItemMessage):
 @dataclass(frozen=True)
 class InvalidOptions(ReportItemMessage):
     """
-    Specified option names are not valid, usualy an error or a warning
+    Specified option names are not valid, usually an error or a warning
 
     option_names -- specified invalid option names
     allowed -- possible allowed option names
     option_type -- describes the option
-    allowed_patterns -- allowed user defind options patterns
+    allowed_patterns -- allowed user defined options patterns
     """
 
     option_names: List[str]
@@ -638,7 +638,7 @@ class InvalidOptionType(ReportItemMessage):
 @dataclass(frozen=True)
 class InvalidOptionValue(ReportItemMessage):
     """
-    Specified value is not valid for the option, usualy an error or a warning
+    Specified value is not valid for the option, usually an error or a warning
 
     option_name -- specified option name whose value is not valid
     option_value -- specified value which is not valid
@@ -781,7 +781,7 @@ class InvalidIdIsEmpty(ReportItemMessage):
     """
     Empty string was specified as an id, which is not valid
 
-    id_description -- decribe id's role
+    id_description -- describe id's role
     """
 
     id_description: str
@@ -796,10 +796,11 @@ class InvalidIdIsEmpty(ReportItemMessage):
 class InvalidIdBadChar(ReportItemMessage):
     """
     specified id is not valid as it contains a forbidden character
-    id string specified id
-    id_description string decribe id's role
-    invalid_character forbidden character
-    is_first_char is it the first character which is forbidden?
+
+    id -- specified id
+    id_description -- describe id's role
+    invalid_character -- forbidden character
+    is_first_char -- is it the first character which is forbidden?
     """
 
     # pylint: disable=invalid-name, redefined-builtin
@@ -1042,10 +1043,10 @@ class NodeCommunicationDebugInfo(ReportItemMessage):
 @dataclass(frozen=True)
 class NodeCommunicationNotConnected(ReportItemMessage):
     """
-    An error occured when connecting to a remote node, debug info
+    An error occurred when connecting to a remote node, debug info
 
     node -- node address / name
-    reason -- decription of the error
+    reason -- description of the error
     """
 
     node: str
@@ -1079,7 +1080,7 @@ class NodeCommunicationErrorNotAuthorized(ReportItemMessage):
 
     node -- node address / name
     command -- executed command
-    reason -- decription of the error
+    reason -- description of the error
     """
 
     node: str
@@ -1099,7 +1100,7 @@ class NodeCommunicationErrorPermissionDenied(ReportItemMessage):
 
     node -- node address / name
     command -- executed command
-    reason -- decription of the error
+    reason -- description of the error
     """
 
     node: str
@@ -1119,7 +1120,7 @@ class NodeCommunicationErrorUnsupportedCommand(ReportItemMessage):
 
     node -- node address / name
     command -- executed command
-    reason -- decription of the error
+    reason -- description of the error
     """
 
     node: str
@@ -1142,7 +1143,7 @@ class NodeCommunicationCommandUnsuccessful(ReportItemMessage):
 
     node -- node address / name
     command -- executed command
-    reason -- decription of the error
+    reason -- description of the error
     """
 
     node: str
@@ -1162,7 +1163,7 @@ class NodeCommunicationError(ReportItemMessage):
 
     node -- node address / name
     command -- executed command
-    reason -- decription of the error
+    reason -- description of the error
     """
 
     node: str
@@ -1182,7 +1183,7 @@ class NodeCommunicationErrorUnableToConnect(ReportItemMessage):
 
     node -- node address / name
     command -- executed command
-    reason -- decription of the error
+    reason -- description of the error
     """
 
     node: str
@@ -1202,7 +1203,7 @@ class NodeCommunicationErrorTimedOut(ReportItemMessage):
 
     node -- node address / name
     command -- executed command
-    reason -- decription of the error
+    reason -- description of the error
     """
 
     node: str
@@ -1257,12 +1258,12 @@ class NodeCommunicationRetrying(ReportItemMessage):
 
 
 @dataclass(frozen=True)
-class DefaultsCanBeOverriden(ReportItemMessage):
+class DefaultsCanBeOverridden(ReportItemMessage):
     """
     Warning when settings defaults (op_defaults, rsc_defaults...)
     """
 
-    _code = codes.DEFAULTS_CAN_BE_OVERRIDEN
+    _code = codes.DEFAULTS_CAN_BE_OVERRIDDEN
 
     @property
     def message(self) -> str:
@@ -1338,7 +1339,7 @@ class CorosyncConfigAcceptedByNode(ReportItemMessage):
 @dataclass(frozen=True)
 class CorosyncConfigDistributionNodeError(ReportItemMessage):
     """
-    Communication error occured when saving corosync configuration to a node
+    Communication error occurred when saving corosync configuration to a node
 
     node -- faulty node address / name
     """
@@ -1367,7 +1368,7 @@ class CorosyncNotRunningCheckStarted(ReportItemMessage):
 @dataclass(frozen=True)
 class CorosyncNotRunningCheckNodeError(ReportItemMessage):
     """
-    Communication error occured when checking corosync is not running on a nodea
+    Communication error occurred when checking corosync is not running on a nodea
 
     node -- faulty node address / name
     """
@@ -1450,7 +1451,7 @@ class CorosyncQuorumHeuristicsEnabledWithNoExec(ReportItemMessage):
 @dataclass(frozen=True)
 class CorosyncQuorumSetExpectedVotesError(ReportItemMessage):
     """
-    Unable to set expcted votes in a live cluster
+    Unable to set expected votes in a live cluster
 
     reason -- an error message
     """
@@ -1484,7 +1485,7 @@ class CorosyncConfigReloaded(ReportItemMessage):
 @dataclass(frozen=True)
 class CorosyncConfigReloadError(ReportItemMessage):
     """
-    An error occured when reloading corosync configuration
+    An error occurred when reloading corosync configuration
 
     reason -- an error message
     node -- node label
@@ -2323,7 +2324,7 @@ class QdeviceInitializationSuccess(ReportItemMessage):
 @dataclass(frozen=True)
 class QdeviceInitializationError(ReportItemMessage):
     """
-    An error occured when creating qdevice on local host
+    An error occurred when creating qdevice on local host
 
     model -- qdevice model
     reason -- an error message
@@ -2401,7 +2402,7 @@ class QdeviceCertificateRemovedFromNode(ReportItemMessage):
 @dataclass(frozen=True)
 class QdeviceCertificateImportError(ReportItemMessage):
     """
-    An error occured when importing qdevice certificate to a node
+    An error occurred when importing qdevice certificate to a node
 
     reason -- an error message
     """
@@ -2417,7 +2418,7 @@ class QdeviceCertificateImportError(ReportItemMessage):
 @dataclass(frozen=True)
 class QdeviceCertificateSignError(ReportItemMessage):
     """
-    an error occured when signing qdevice certificate
+    an error occurred when signing qdevice certificate
 
     reason -- an error message
     """
@@ -2449,7 +2450,7 @@ class QdeviceDestroySuccess(ReportItemMessage):
 @dataclass(frozen=True)
 class QdeviceDestroyError(ReportItemMessage):
     """
-    An error occured when removing qdevice configuration from local host
+    An error occurred when removing qdevice configuration from local host
 
     model -- qdevice model
     reason -- an error message
@@ -3348,7 +3349,7 @@ class WaitForIdleNotLiveCluster(ReportItemMessage):
 @dataclass(frozen=True)
 class ResourceCleanupError(ReportItemMessage):
     """
-    An error occured when deleting resource failed operations in pacemaker
+    An error occurred when deleting resource failed operations in pacemaker
 
     reason -- error description
     resource -- resource which has been cleaned up
@@ -3373,7 +3374,7 @@ class ResourceCleanupError(ReportItemMessage):
 @dataclass(frozen=True)
 class ResourceRefreshError(ReportItemMessage):
     """
-    An error occured when deleting resource history in pacemaker
+    An error occurred when deleting resource history in pacemaker
 
     reason -- error description
     resource -- resource which has been cleaned up
@@ -3400,7 +3401,7 @@ class ResourceRefreshTooTimeConsuming(ReportItemMessage):
     """
     Resource refresh would execute more than threshold operations in a cluster
 
-    threshold -- current threshold for trigerring this error
+    threshold -- current threshold for triggering this error
     """
 
     threshold: int
@@ -3419,8 +3420,8 @@ class ResourceRefreshTooTimeConsuming(ReportItemMessage):
 @dataclass(frozen=True)
 class ResourceOperationIntervalDuplication(ReportItemMessage):
     """
-    More operations with same name and same interval apeared.
-    Each operation with the same name (e.g. monitoring) need to have unique
+    More operations with the same name and the same interval appeared.
+    Each operation with the same name (e.g. monitoring) needs to have a unique
     interval.
 
     dict duplications see resource operation interval duplication
@@ -3651,7 +3652,7 @@ class ServiceActionSucceeded(ReportItemMessage):
     """
     System service action was successful
 
-    action -- sucessful service action
+    action -- successful service action
     service -- service name or description
     node -- node on which service has been requested to start
     instance -- instance of service
@@ -3676,7 +3677,7 @@ class ServiceActionSucceeded(ReportItemMessage):
 @dataclass(frozen=True)
 class ServiceActionSkipped(ReportItemMessage):
     """
-    System service action was skipped, no error occured
+    System service action was skipped, no error occurred
 
     action -- skipped service action
     service -- service name or description
@@ -4010,7 +4011,7 @@ class SbdDeviceInitializationStarted(ReportItemMessage):
 @dataclass(frozen=True)
 class SbdDeviceInitializationSuccess(ReportItemMessage):
     """
-    Initialization of SBD device(s) successed
+    Initialization of SBD device(s) succeeded
     """
 
     device_list: List[str]
@@ -4151,10 +4152,10 @@ class FilesDistributionSkipped(ReportItemMessage):
 @dataclass(frozen=True)
 class FileDistributionSuccess(ReportItemMessage):
     """
-    A file has been successfuly distributed to a node
+    A file has been successfully distributed to a node
 
     node -- name of a destination node
-    file_description -- name (code) of a sucessfully put file
+    file_description -- name (code) of a successfully put file
     """
 
     node: str
@@ -4243,10 +4244,10 @@ class FilesRemoveFromNodesSkipped(ReportItemMessage):
 @dataclass(frozen=True)
 class FileRemoveFromNodeSuccess(ReportItemMessage):
     """
-    files was successfuly removed nodes
+    files was successfully removed nodes
 
     node -- name of destination node
-    file_description -- name (code) of sucessfully put files
+    file_description -- name (code) of successfully put files
     """
 
     node: str
@@ -4332,9 +4333,9 @@ class ServiceCommandsOnNodesSkipped(ReportItemMessage):
 @dataclass(frozen=True)
 class ServiceCommandOnNodeSuccess(ReportItemMessage):
     """
-    Files was successfuly distributed on nodes
+    Files was successfully distributed on nodes
 
-    service_command_description -- name (code) of sucessfully service command
+    service_command_description -- name (code) of successfully service command
     """
 
     node: str
@@ -4354,7 +4355,7 @@ class ServiceCommandOnNodeError(ReportItemMessage):
     """
     Action on nodes failed
 
-    service_command_description -- name (code) of sucessfully service command
+    service_command_description -- name (code) of successfully service command
     reason -- is error message
     """
 
@@ -4622,7 +4623,7 @@ class WatchdogNotFound(ReportItemMessage):
 @dataclass(frozen=True)
 class WatchdogInvalid(ReportItemMessage):
     """
-    Watchdog path is not absolut path
+    Watchdog path is not an absolute path
 
     watchdog -- watchdog device path
     """
@@ -5414,7 +5415,7 @@ class PcsdSslCertAndKeyDistributionStarted(ReportItemMessage):
 @dataclass(frozen=True)
 class PcsdSslCertAndKeySetSuccess(ReportItemMessage):
     """
-    Pcsd SSL certificate and key have been succesfuly saved on a node
+    Pcsd SSL certificate and key have been successfully saved on a node
 
     node -- node name
     """
@@ -6499,7 +6500,7 @@ class BoothAddressDuplication(ReportItemMessage):
     """
     Address of each peer must be unique. But address duplication appeared.
 
-    duplicate_addresses -- contains addreses entered multiple times
+    duplicate_addresses -- contains addresses entered multiple times
     """
 
     duplicate_addresses: List[str]
@@ -6577,7 +6578,7 @@ class BoothTicketNameInvalid(ReportItemMessage):
 @dataclass(frozen=True)
 class BoothTicketDuplicate(ReportItemMessage):
     """
-    Each booth ticket name must be uniqe. But duplicate booth ticket name was
+    Each booth ticket name must be unique. But duplicate booth ticket name was
     entered.
 
     ticket_name -- entered booth ticket name
@@ -6684,9 +6685,9 @@ class BoothConfigIsUsed(ReportItemMessage):
 class BoothMultipleTimesInCib(ReportItemMessage):
     """
     Each booth instance should be in a cib once maximally. But multiple
-    occurences detected. For example during remove booth instance from cib.
+    occurrences detected. For example during remove booth instance from cib.
     Notify user about this fact is required. When operation is forced user
-    should be notified about multiple occurences.
+    should be notified about multiple occurrences.
 
     name -- booth instance name
     """
@@ -6879,7 +6880,7 @@ class BoothTicketOperationFailed(ReportItemMessage):
 
     operation  -- determine what was intended perform with ticket_name
     reason -- error description from external booth command
-    site_ip -- specifiy what site had to run the command
+    site_ip -- specify what site had to run the command
     ticket_name -- specify with which ticket had to run the command
     """
 

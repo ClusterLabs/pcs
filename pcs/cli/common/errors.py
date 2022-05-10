@@ -20,7 +20,7 @@ def raise_command_replaced(*new_commands):
 
 class CmdLineInputError(Exception):
     """
-    Exception express that user entered incorrect commad in command line.
+    an incorrect command has been entered in the command line
     """
 
     def __init__(

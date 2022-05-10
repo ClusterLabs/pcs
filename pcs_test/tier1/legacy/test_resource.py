@@ -59,7 +59,7 @@ PCMK_2_0_3_PLUS = is_minimum_pacemaker_version(2, 0, 3)
 LOCATION_NODE_VALIDATION_SKIP_WARNING = (
     f"Warning: {LOCATION_NODE_VALIDATION_SKIP_MSG}\n"
 )
-ERRORS_HAVE_OCURRED = (
+ERRORS_HAVE_OCCURRED = (
     "Error: Errors have occurred, therefore pcs is unable to continue\n"
 )
 
@@ -81,7 +81,7 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
             """\
             ocf:pacemaker:HealthCPU - System health CPU usage
 
-            Systhem health agent that measures the CPU idling and updates the #health-cpu attribute.
+            System health agent that measures the CPU idling and updates the #health-cpu attribute.
 
             Resource options:
               state (unique): Location to store the resource state in.
@@ -130,7 +130,7 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
             "Error: Agent 'ocf:pacemaker:nonexistent' is not installed or does "
             "not provide valid metadata: Metadata query for "
             "ocf:pacemaker:nonexistent failed: Input/output error\n"
-            + ERRORS_HAVE_OCURRED,
+            + ERRORS_HAVE_OCCURRED,
         )
 
     def test_nonextisting_agent_guess_name(self):
@@ -533,7 +533,7 @@ class Resource(TestCase, AssertPcsMixin):
             o,
             "Error: Multiple agents match 'dummy', please specify full name: "
             "'ocf:heartbeat:Dummy' or 'ocf:pacemaker:Dummy'\n"
-            + ERRORS_HAVE_OCURRED,
+            + ERRORS_HAVE_OCCURRED,
         )
         assert r == 1
 
@@ -562,7 +562,7 @@ class Resource(TestCase, AssertPcsMixin):
         ac(
             o,
             "Error: Unable to find agent 'ipaddr3', try specifying its full name\n"
-            + ERRORS_HAVE_OCURRED,
+            + ERRORS_HAVE_OCCURRED,
         )
         assert r == 1
 
@@ -3435,7 +3435,7 @@ monitor interval=20 (A-monitor-interval-20)
             "resource create --no-default-ops D2 lsb:network foo=bar".split(),
             (
                 "Error: invalid resource option 'foo', there are no options"
-                " allowed, use --force to override\n" + ERRORS_HAVE_OCURRED
+                " allowed, use --force to override\n" + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -5038,7 +5038,7 @@ class OperationDeleteRemoveMixin(
         write_file_to_tmpfile(large_cib, self.temp_large_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
-        self.command = "to-be-overriden"
+        self.command = "to-be-overridden"
 
     def tearDown(self):
         self.temp_cib.close()
@@ -5690,7 +5690,7 @@ class UpdateInstanceAttrs(
             (
                 "Error: invalid resource options: 'test', 'test2', 'test4',"
                 " allowed options are: 'fake', 'state', 'trace_file', "
-                "'trace_ra', use --force to override\n" + ERRORS_HAVE_OCURRED
+                "'trace_ra', use --force to override\n" + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -6549,7 +6549,7 @@ class ResourceUpdateRemoteAndGuestChecks(TestCase, AssertPcsMixin):
             (
                 "Error: this command is not sufficient for creating a guest "
                 "node, use 'pcs cluster node add-guest', use --force to "
-                "override\n" + ERRORS_HAVE_OCURRED
+                "override\n" + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -6575,7 +6575,7 @@ class ResourceUpdateRemoteAndGuestChecks(TestCase, AssertPcsMixin):
             (
                 "Error: this command is not sufficient for removing a guest "
                 "node, use 'pcs cluster node remove-guest', use --force "
-                "to override\n" + ERRORS_HAVE_OCURRED
+                "to override\n" + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -6601,7 +6601,7 @@ class ResourceUpdateRemoteAndGuestChecks(TestCase, AssertPcsMixin):
             (
                 "Error: this command is not sufficient for creating a guest "
                 "node, use 'pcs cluster node add-guest', use --force to "
-                "override\n" + ERRORS_HAVE_OCURRED
+                "override\n" + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -6627,7 +6627,7 @@ class ResourceUpdateRemoteAndGuestChecks(TestCase, AssertPcsMixin):
             (
                 "Error: this command is not sufficient for removing a guest "
                 "node, use 'pcs cluster node remove-guest', use --force to "
-                "override\n" + ERRORS_HAVE_OCURRED
+                "override\n" + ERRORS_HAVE_OCCURRED
             ),
         )
 

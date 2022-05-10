@@ -20,7 +20,7 @@
         * show booth status
         All changes are done on the local host only and have to be manually
         pushed (synchronized) to all cluster nodes and other arbitrators /
-        sites (unles a feature which does this atomatically is implemented and
+        sites (unless a feature which does this automatically is implemented and
         added to this list).
 
         pcs commands: booth
@@ -558,7 +558,7 @@
     </capability>
     <capability id="node.start-stop-enable-disable.stop-component" in-pcs="0" in-pcsd="1">
       <description>
-        At the node level, provide means for stopping services separatelly so
+        At the node level, provide means for stopping services separately so
         the nodes stopping can be synchronized on the cluster level.
 
         daemon urls: cluster_stop (param: component)
@@ -1707,7 +1707,7 @@
     <capability id="pcmk.resource.move.autoclean" in-pcs="1" in-pcsd="1">
       <description>
         Constraint used for moving a resource is automatically removed once the
-        resource has been sucessfuly moved.
+        resource has been successfully moved.
 
         pcs commands: pcs resource move --autodelete
         daemon urls:
@@ -2145,7 +2145,7 @@
     <capability id="pcs.auth.client.cluster" in-pcs="1" in-pcsd="0">
       <description>
         Can authenticate against other hosts in the local cluster without
-        specifying them explicitely to be able to connect to such host.
+        specifying them explicitly to be able to connect to such host.
 
         pcs commands: pcs cluster auth
       </description>
@@ -2219,7 +2219,7 @@
     <capability id="pcs.automatic-pcs-configs-sync" in-pcs="0" in-pcsd="1">
       <description>
         Automatically synchronize pcs/pcsd configuration files across the local
-        cluster. This consists of the synchonization itself done by the daemon
+        cluster. This consists of the synchronization itself done by the daemon
         and commands to configure it (daemon and client).
 
         daemon urls: get_sync_capabilities, set_sync_options, get_configs,

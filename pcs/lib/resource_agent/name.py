@@ -29,8 +29,7 @@ def split_resource_agent_name(full_agent_name: str) -> ResourceAgentName:
         )
 
     # This allows even bad combinations like "systemd:provider:agent" or
-    # "ocf:agent". Those are catched by checks bellow to keep the regexp
-    # simple.
+    # "ocf:agent". Those are caught by checks bellow to keep the regexp simple.
     match = re.match(
         "^(?P<standard>[^:]+)(:(?P<provider>[^:]+))?:(?P<type>[^:]+)$",
         full_agent_name,

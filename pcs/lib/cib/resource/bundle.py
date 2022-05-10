@@ -676,7 +676,7 @@ def _validate_network_options_new(options, force_options):
     return validate.ValidatorAll(validators).validate(options)
 
 
-def _is_pcmk_remote_acccessible_after_update(network_el, options):
+def _is_pcmk_remote_accessible_after_update(network_el, options):
     port_name = "control-port"
     ip_name = "ip-range-start"
     port = network_el.get(port_name)
@@ -711,7 +711,7 @@ def _validate_network_options_update(
     inner_primitive = get_inner_resource(bundle_el)
     if (
         inner_primitive is not None
-        and not _is_pcmk_remote_acccessible_after_update(network_el, options)
+        and not _is_pcmk_remote_accessible_after_update(network_el, options)
     ):
         report_list.append(
             ReportItem(

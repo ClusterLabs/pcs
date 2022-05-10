@@ -51,7 +51,7 @@ from pcs_test.tools.pcs_runner import (
 LOCATION_NODE_VALIDATION_SKIP_WARNING = (
     f"Warning: {LOCATION_NODE_VALIDATION_SKIP_MSG}\n"
 )
-ERRORS_HAVE_OCURRED = (
+ERRORS_HAVE_OCCURRED = (
     "Error: Errors have occurred, therefore pcs is unable to continue\n"
 )
 
@@ -1799,9 +1799,9 @@ Ticket Constraints:
 
         o, r = pcs(
             self.temp_cib.name,
-            "constraint location non-existant-resource rule role=master #uname eq rh7-1".split(),
+            "constraint location non-existent-resource rule role=master #uname eq rh7-1".split(),
         )
-        ac(o, "Error: Resource 'non-existant-resource' does not exist\n")
+        ac(o, "Error: Resource 'non-existent-resource' does not exist\n")
         assert r == 1
 
         output, returnVal = pcs(
@@ -3150,7 +3150,7 @@ Ticket Constraints:
                 "Error: duplicate constraint already exists, use --force to "
                 "override",
             )
-            + ERRORS_HAVE_OCURRED,
+            + ERRORS_HAVE_OCCURRED,
         )
         self.assertEqual(1, returnVal)
 
@@ -3187,7 +3187,7 @@ Ticket Constraints:
                 "Error: duplicate constraint already exists, use --force to "
                 "override",
             )
-            + ERRORS_HAVE_OCURRED,
+            + ERRORS_HAVE_OCCURRED,
         )
         self.assertEqual(1, returnVal)
 
@@ -3222,7 +3222,7 @@ Ticket Constraints:
                 "Error: duplicate constraint already exists, use --force to "
                 "override",
             )
-            + ERRORS_HAVE_OCURRED,
+            + ERRORS_HAVE_OCCURRED,
         )
         self.assertEqual(1, returnVal)
 
@@ -3259,7 +3259,7 @@ Ticket Constraints:
                 "Error: duplicate constraint already exists, use --force to "
                 "override",
             )
-            + ERRORS_HAVE_OCURRED,
+            + ERRORS_HAVE_OCCURRED,
         )
         self.assertEqual(1, returnVal)
 
@@ -3752,7 +3752,7 @@ class TicketAdd(ConstraintBaseTest):
                 "Duplicate constraints:\n"
                 "  Master A loss-policy=fence ticket=T (id:ticket-T-A-Master)\n"
                 "Error: duplicate constraint already exists, use --force to "
-                "override\n" + ERRORS_HAVE_OCURRED
+                "override\n" + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -4674,7 +4674,7 @@ class LocationPrefersAvoidsMixin(
         self.temp_cib = get_tmp_file("tier1_constraint_location")
         write_file_to_tmpfile(self.empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
-        self.command = "to-be-overriden"
+        self.command = "to-be-overridden"
 
     def tearDown(self):
         self.temp_cib.close()

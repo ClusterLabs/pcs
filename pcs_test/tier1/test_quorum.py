@@ -181,7 +181,7 @@ class DeviceAddTest(TestBase):
             ),
         )
 
-    def test_succes_generic_and_model_options(self):
+    def test_success_generic_and_model_options(self):
         self.assert_pcs_success(
             (
                 "quorum device add timeout=12345 model net host=127.0.0.1 "
@@ -203,7 +203,7 @@ class DeviceAddTest(TestBase):
             ),
         )
 
-    def test_succes_model_options_and_heuristics(self):
+    def test_success_model_options_and_heuristics(self):
         self.assert_pcs_success(
             [
                 "quorum",
@@ -235,7 +235,7 @@ class DeviceAddTest(TestBase):
             ),
         )
 
-    def test_succes_model_options_and_heuristics_no_exec(self):
+    def test_success_model_options_and_heuristics_no_exec(self):
         self.assert_pcs_success(
             (
                 "quorum device add model net host=127.0.0.1 algorithm=ffsplit "
@@ -260,7 +260,7 @@ class DeviceAddTest(TestBase):
             ),
         )
 
-    def test_succes_all_options(self):
+    def test_success_all_options(self):
         self.assert_pcs_success(
             [
                 "quorum",

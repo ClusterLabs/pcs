@@ -278,7 +278,7 @@ done
 sed -i -e 's#^@#%#g' dynamic_files/pcs-snmp
 
 %posttrans
-# Make sure the new version of the daemon is runnning.
+# Make sure the new version of the daemon is running.
 # Also, make sure to start pcsd-ruby if it hasn't been started or even
 # installed before. This is done by restarting pcsd.service.
 %{_bindir}/systemctl daemon-reload

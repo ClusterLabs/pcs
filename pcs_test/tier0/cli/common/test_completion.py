@@ -28,7 +28,7 @@ class SuggestionTest(TestCase):
         self.assertEqual([], _find_suggestions(tree, ["pcs"], 0))
         self.assertEqual([], _find_suggestions(tree, ["pcs", "resource"], 0))
 
-    def test_suggest_nothing_when_cursor_possition_out_of_range(self):
+    def test_suggest_nothing_when_cursor_position_out_of_range(self):
         self.assertEqual([], _find_suggestions(tree, ["pcs", "resource"], 3))
 
     def test_suggest_when_last_word_not_started(self):
@@ -133,7 +133,7 @@ class MakeSuggestionsEnvironment(TestCase):
 
 
 class SplitWordsTest(TestCase):
-    def test_return_word_list_on_compatible_words_and_lenght(self):
+    def test_return_word_list_on_compatible_words_and_length(self):
         self.assertEqual(
             ["pcs", "resource", "op", "a"],
             _split_words("pcs resource op a", ["3", "8", "2", "1"]),

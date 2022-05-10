@@ -178,7 +178,7 @@ $.fn.buttonsetv = function() {
   $(this).buttonset();
   $('label:first', this).removeClass('ui-corner-left').addClass('ui-corner-top');
   $('label:last', this).removeClass('ui-corner-right').addClass('ui-corner-bottom');
-  mw = 0; // max witdh
+  mw = 0; // max width
   $('label', this).each(function(index){
      w = $(this).width();
      if (w > mw) mw = w; 

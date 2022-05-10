@@ -1364,7 +1364,7 @@ class MoveAutocleanFailures(MoveAutocleanCommonSetup):
         )
         self.env_assist.assert_reports(self.get_reports(stage=setup_stage))
 
-    def test_resource_not_runnig_after_move(self):
+    def test_resource_not_running_after_move(self):
         self.tmp_file_mock_obj.set_calls(
             self.get_tmp_files_mocks(
                 _simulation_transition_fixture(

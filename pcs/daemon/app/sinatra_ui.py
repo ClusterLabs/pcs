@@ -93,9 +93,9 @@ class SinatraAjaxProtected(SinatraGui, AjaxMixin):
 class Login(SinatraGui, AjaxMixin):
     # pylint: disable=too-many-ancestors
     """
-    Login handles urls that cares about loging process.
-    It displays a login form (taken from Sinatra), process data sent by the
-    form, call an authentication mechanism and uses session for expressing
+    Login handles urls that cares about logging process.
+    It displays a login form (taken from Sinatra), processes data sent by the
+    form, calls an authentication mechanism and uses a session for expressing
     a result of the authentication mechanism.
     """
 

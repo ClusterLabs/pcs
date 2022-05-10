@@ -18,7 +18,7 @@ from pcs.cli.common.errors import (
 from pcs.cli.common.parse_args import InputModifiers
 from pcs.cli.common.routing import create_router
 from pcs.cli.reports.output import warn
-from pcs.utils import exit_on_cmdline_input_errror
+from pcs.utils import exit_on_cmdline_input_error
 
 
 def certkey(lib: Any, argv: Sequence[str], modifiers: InputModifiers) -> None:
@@ -30,7 +30,7 @@ def certkey(lib: Any, argv: Sequence[str], modifiers: InputModifiers) -> None:
     try:
         return pcsd.pcsd_certkey_cmd(lib, argv, modifiers)
     except CmdLineInputError as e:
-        return exit_on_cmdline_input_errror(e, "pcsd", ["certkey"])
+        return exit_on_cmdline_input_error(e, "pcsd", ["certkey"])
 
 
 def pcsd_status(
@@ -44,7 +44,7 @@ def pcsd_status(
     try:
         return pcsd.pcsd_status_cmd(lib, argv, modifiers)
     except CmdLineInputError as e:
-        return exit_on_cmdline_input_errror(e, "pcsd", ["status"])
+        return exit_on_cmdline_input_error(e, "pcsd", ["status"])
 
 
 cluster_cmd = create_router(

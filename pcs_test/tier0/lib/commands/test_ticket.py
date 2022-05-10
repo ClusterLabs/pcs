@@ -14,7 +14,7 @@ patch_commands = create_patcher("pcs.lib.commands.constraint.ticket")
 
 
 class CreateTest(TestCase):
-    def test_sucess_create(self):
+    def test_success_create(self):
         env_assist, config = get_env_tools(test_case=self)
         (
             config.runner.cib.load(

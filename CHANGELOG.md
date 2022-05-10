@@ -23,7 +23,7 @@
 - OCF 1.0 agents not conforming to the schema are processed anyway
   ([rhbz#2050274])
 - Booth ticket name validation ([rhbz#1791661])
-- Adding booth ticket doesn't report 'mode' as an uknown option anymore
+- Adding booth ticket doesn't report 'mode' as an unknown option anymore
   ([rhbz#1786964])
 - Preventing fence-loop caused when stonith-watchdog-timeout is set
   with wrong value ([rhbz#1954099])
@@ -441,7 +441,7 @@
   specified checkpoints ([rhbz#1655055])
 - Support for resource instance attributes uniqueness check according to
   resource agent metadata ([rhbz#1665404])
-- Command `pcs resource bundle reset` for a bundle configuration reseting
+- Command `pcs resource bundle reset` for a bundle configuration resetting
   ([rhbz#1657166])
 - `pcs cluster setup` now checks if nodes' addresses match value of `ip_version`
   ([rhbz#1667053])

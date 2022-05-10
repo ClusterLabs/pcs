@@ -50,9 +50,9 @@ api.reports.toMsgs = function(reportList, msgBuilder){
     .map(function(report){
       var msg = report.report_text;
       if (msgBuilder) {
-        var buildedMsg = msgBuilder(report);
-        if (buildedMsg !== undefined) {
-          msg = buildedMsg;
+        var builtMsg = msgBuilder(report);
+        if (builtMsg !== undefined) {
+          msg = builtMsg;
         }
       }
       return {
@@ -394,7 +394,7 @@ api.clusterNodeAdd = function(submitData, processOptions){
     start: false, // don't slow it down; start will be considered aftermath
     enable: true,
     no_watchdog_validation: nodeAddData.sbd !== undefined
-      ? nodeAddData.sbd.noWatchdogValidation 
+      ? nodeAddData.sbd.noWatchdogValidation
       : false
     ,
   };

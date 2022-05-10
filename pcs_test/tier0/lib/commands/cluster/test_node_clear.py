@@ -129,7 +129,7 @@ class NodeClear(TestCase):
             ]
         )
 
-    def test_exisitng_node_forced(self):
+    def test_existing_node_forced(self):
         (
             self.config.corosync_conf.load()
             .runner.cib.load(filename="cib-empty.xml")

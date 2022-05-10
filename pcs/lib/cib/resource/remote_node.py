@@ -182,7 +182,7 @@ def validate_create(
     return report_list
 
 
-def _prepare_instance_atributes(
+def _prepare_instance_attributes(
     instance_attributes: Optional[Mapping[str, str]],
     host: str,
 ) -> Mapping[str, str]:
@@ -223,7 +223,7 @@ def create(
     use_default_operations -- flag for completion operations with default
         actions specified in resource agent
     """
-    all_instance_attributes = _prepare_instance_atributes(
+    all_instance_attributes = _prepare_instance_attributes(
         instance_attributes, host
     )
     return primitive.create(

@@ -208,7 +208,7 @@ def get_nvset_as_dict(tag_name, context_element):
     """
     Returns nvset with specified tag_name in context_element as dictionary
 
-    tag_name string -- tag of nvset element which values shold be returned
+    tag_name string -- tag of nvset element which values should be returned
     context_element etree.Element -- element in which required nvset is
         specified
     """
