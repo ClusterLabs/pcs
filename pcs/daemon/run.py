@@ -20,6 +20,7 @@ from pcs.daemon import (
     systemd,
 )
 from pcs.daemon.app import (
+    api_v1,
     async_api,
     sinatra_remote,
     sinatra_ui,
@@ -79,12 +80,15 @@ def configure_app(
             object via the method `initialize`.
         """
 
-        routes = sinatra_remote.get_routes(
-            ruby_pcsd_wrapper,
-            sync_config_lock,
-            https_server_manage,
+        routes = async_api.get_routes(async_scheduler)
+        routes.extend(api_v1.get_routes(async_scheduler))
+        routes.extend(
+            sinatra_remote.get_routes(
+                ruby_pcsd_wrapper,
+                sync_config_lock,
+                https_server_manage,
+            )
         )
-        routes.extend(async_api.get_routes(async_scheduler))
 
         if not disable_gui:
             routes.extend(

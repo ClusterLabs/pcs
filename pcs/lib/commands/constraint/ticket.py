@@ -1,6 +1,5 @@
 from functools import partial
 
-import pcs.lib.commands.constraint.common
 from pcs.lib.cib.constraint import (
     constraint,
     ticket,
@@ -10,16 +9,18 @@ from pcs.lib.cib.tools import (
     get_constraints,
 )
 
+from . import common
+
 # configure common constraint command
 config = partial(
-    pcs.lib.commands.constraint.common.config,
+    common.config,
     ticket.TAG_NAME,
     lambda element: element.attrib.has_key("rsc"),
 )
 
 # configure common constraint command
 create_with_set = partial(
-    pcs.lib.commands.constraint.common.create_with_set,
+    common.create_with_set,
     ticket.TAG_NAME,
     ticket.prepare_options_with_set,
     duplicate_check=ticket.are_duplicate_with_resource_set,

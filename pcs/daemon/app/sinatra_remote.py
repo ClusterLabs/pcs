@@ -107,5 +107,4 @@ def get_routes(
         ),
         (r"/remote/auth", Auth, ruby_wrapper),
         (r"/remote/.*", SinatraRemote, ruby_wrapper),
-        (r"/api/.*", SinatraRemote, ruby_wrapper),
     ]

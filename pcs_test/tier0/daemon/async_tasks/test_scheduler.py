@@ -6,6 +6,7 @@ from tornado.testing import gen_test
 
 from pcs.common.async_tasks.dto import (
     CommandDto,
+    CommandOptionsDto,
     TaskResultDto,
 )
 from pcs.common.async_tasks.types import (
@@ -76,7 +77,9 @@ class NewTaskTest(SchedulerBaseTestCase):
         self.assertEqual(
             TaskResultDto(
                 "id0",
-                CommandDto("command 0", {}),
+                CommandDto(
+                    "command 0", {}, CommandOptionsDto(request_timeout=None)
+                ),
                 [],
                 TaskState.CREATED,
                 TaskFinishType.UNFINISHED,

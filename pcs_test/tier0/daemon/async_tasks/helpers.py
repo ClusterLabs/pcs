@@ -10,7 +10,10 @@ from unittest import (
 
 from tornado.testing import AsyncTestCase
 
-from pcs.common.async_tasks.dto import CommandDto
+from pcs.common.async_tasks.dto import (
+    CommandDto,
+    CommandOptionsDto,
+)
 from pcs.common.async_tasks.types import TaskState
 from pcs.common.reports.item import ReportItemMessage
 from pcs.common.reports.types import MessageCode
@@ -78,7 +81,13 @@ class SchedulerTestWrapper:
         for i in range(start_from, count + start_from):
             with mock.patch("uuid.uuid4") as mock_uuid:
                 mock_uuid().hex = f"id{i}"
-                self.scheduler.new_task(CommandDto(f"command {i}", {}))
+                self.scheduler.new_task(
+                    CommandDto(
+                        f"command {i}",
+                        {},
+                        CommandOptionsDto(request_timeout=None),
+                    )
+                )
 
 
 class SchedulerBaseTestCase(SchedulerTestWrapper, TestCase):

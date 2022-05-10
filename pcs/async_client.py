@@ -11,6 +11,7 @@ import pycurl
 from pcs.cli.reports.processor import print_report
 from pcs.common.async_tasks.dto import (
     CommandDto,
+    CommandOptionsDto,
     TaskIdentDto,
     TaskResultDto,
 )
@@ -170,6 +171,12 @@ def main():
         payload = sys.argv[2]
     else:
         payload = sys.stdin.read()
-    result = run_fn(CommandDto(sys.argv[1], json.loads(payload)))
+    result = run_fn(
+        CommandDto(
+            sys.argv[1],
+            json.loads(payload),
+            options=CommandOptionsDto(request_timeout=None),
+        )
+    )
     print_command_return_value(result)
     print_task_details(result)

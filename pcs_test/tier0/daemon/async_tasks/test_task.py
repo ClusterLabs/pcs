@@ -7,7 +7,10 @@ from unittest import (
 
 import pcs.daemon.async_tasks.task as tasks
 from pcs.common.async_tasks import types
-from pcs.common.async_tasks.dto import CommandDto
+from pcs.common.async_tasks.dto import (
+    CommandDto,
+    CommandOptionsDto,
+)
 from pcs.common.reports import ReportItemDto
 from pcs.daemon.async_tasks import messaging
 from pcs.settings import (
@@ -30,7 +33,10 @@ WORKER_PID = 2222
 
 class TaskBaseTestCase(TestCase):
     def setUp(self):
-        self.task = tasks.Task(TASK_IDENT, CommandDto("command", {}))
+        self.task = tasks.Task(
+            TASK_IDENT,
+            CommandDto("command", {}, CommandOptionsDto(request_timeout=None)),
+        )
 
 
 class TestReceiveMessage(MockDateTimeNowMixin, TaskBaseTestCase):

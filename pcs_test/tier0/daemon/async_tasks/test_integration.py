@@ -6,7 +6,10 @@ from unittest import mock
 from tornado.testing import gen_test
 
 from pcs import settings
-from pcs.common.async_tasks.dto import CommandDto
+from pcs.common.async_tasks.dto import (
+    CommandDto,
+    CommandOptionsDto,
+)
 from pcs.common.async_tasks.types import (
     TaskFinishType,
     TaskKillReason,
@@ -33,6 +36,7 @@ from .helpers import (
     SchedulerBaseAsyncTestCase,
 )
 
+COMMAND_OPTIONS = CommandOptionsDto(request_timeout=None)
 worker.worker_com = Queue()  # patched at runtime
 
 
@@ -373,7 +377,7 @@ class TaskResultsTests(MockOsKillMixin, IntegrationBaseTestCase):
         super().setUp()
         self.addCleanup(mock.patch.stopall)
         mock.patch(
-            "pcs.daemon.async_tasks.worker.command_map", test_command_map
+            "pcs.daemon.async_tasks.worker.COMMAND_MAP", test_command_map
         ).start()
         mock.patch(
             "pcs.daemon.async_tasks.worker.getLogger", spec=Logger
@@ -400,7 +404,9 @@ class TaskResultsTests(MockOsKillMixin, IntegrationBaseTestCase):
         # distinguish between cases of ex/implicitly returned None
         with mock.patch("uuid.uuid4") as mock_uuid:
             mock_uuid().hex = "id0"
-            self.scheduler.new_task(CommandDto("success_with_reports", {}))
+            self.scheduler.new_task(
+                CommandDto("success_with_reports", {}, COMMAND_OPTIONS)
+            )
         await self.perform_actions(0)
         # This task sends one report and returns immediately, task_executor
         # sends two messages - TaskExecuted and TaskFinished
@@ -416,7 +422,7 @@ class TaskResultsTests(MockOsKillMixin, IntegrationBaseTestCase):
     async def test_task_successful_with_result(self):
         with mock.patch("uuid.uuid4") as mock_uuid:
             mock_uuid().hex = "id0"
-            self.scheduler.new_task(CommandDto("success", {}))
+            self.scheduler.new_task(CommandDto("success", {}, COMMAND_OPTIONS))
         await self.perform_actions(0)
         # This task sends no reports and returns immediately, task_executor
         # sends two messages - TaskExecuted and TaskFinished
@@ -432,7 +438,7 @@ class TaskResultsTests(MockOsKillMixin, IntegrationBaseTestCase):
     async def test_task_error(self):
         with mock.patch("uuid.uuid4") as mock_uuid:
             mock_uuid().hex = "id0"
-            self.scheduler.new_task(CommandDto("lib_exc", {}))
+            self.scheduler.new_task(CommandDto("lib_exc", {}, COMMAND_OPTIONS))
         await self.perform_actions(0)
         # This task immediately raises a LibraryException and executor detects
         # that as an error, sends two messages - TaskExecuted and TaskFinished
@@ -448,7 +454,9 @@ class TaskResultsTests(MockOsKillMixin, IntegrationBaseTestCase):
     async def test_task_unhandled_exception(self):
         with mock.patch("uuid.uuid4") as mock_uuid:
             mock_uuid().hex = "id0"
-            self.scheduler.new_task(CommandDto("unhandled_exc", {}))
+            self.scheduler.new_task(
+                CommandDto("unhandled_exc", {}, COMMAND_OPTIONS)
+            )
         await self.perform_actions(0)
         # This task immediately raises an Exception which the executor catches
         # and logs accordingly

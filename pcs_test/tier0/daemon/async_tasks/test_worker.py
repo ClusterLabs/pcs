@@ -5,7 +5,10 @@ from unittest import (
 )
 
 from pcs.common.async_tasks import types
-from pcs.common.async_tasks.dto import CommandDto
+from pcs.common.async_tasks.dto import (
+    CommandDto,
+    CommandOptionsDto,
+)
 from pcs.common.reports import ReportItemDto
 from pcs.daemon.async_tasks import (
     messaging,
@@ -20,12 +23,13 @@ from .helpers import MockOsKillMixin
 
 TASK_IDENT = "id0"
 WORKER_PID = 2222
+COMMAND_OPTIONS = CommandOptionsDto(request_timeout=None)
 
 
 worker.worker_com = Queue()  # patched at runtime
 
 
-@mock.patch("pcs.daemon.async_tasks.worker.command_map", test_command_map)
+@mock.patch("pcs.daemon.async_tasks.worker.COMMAND_MAP", test_command_map)
 @mock.patch("pcs.daemon.async_tasks.worker.getLogger", mock.MagicMock())
 @mock.patch("os.getpid")
 class TestExecutor(MockOsKillMixin, TestCase):
@@ -55,7 +59,10 @@ class TestExecutor(MockOsKillMixin, TestCase):
     def test_successful_run(self, mock_getpid):
         mock_getpid.return_value = WORKER_PID
         worker.task_executor(
-            worker.WorkerCommand(TASK_IDENT, CommandDto("success", {}))
+            worker.WorkerCommand(
+                TASK_IDENT,
+                CommandDto("success", {}, COMMAND_OPTIONS),
+            )
         )
         # 1. TaskExecuted
         self._assert_task_executed(worker.worker_com)
@@ -69,7 +76,10 @@ class TestExecutor(MockOsKillMixin, TestCase):
     def test_unsuccessful_run(self, mock_getpid):
         mock_getpid.return_value = WORKER_PID
         worker.task_executor(
-            worker.WorkerCommand(TASK_IDENT, CommandDto("lib_exc", {}))
+            worker.WorkerCommand(
+                TASK_IDENT,
+                CommandDto("lib_exc", {}, COMMAND_OPTIONS),
+            )
         )
         # 1. TaskExecuted
         self._assert_task_executed(worker.worker_com)
@@ -83,7 +93,14 @@ class TestExecutor(MockOsKillMixin, TestCase):
     def test_unsuccessful_run_additional_reports(self, mock_getpid):
         mock_getpid.return_value = WORKER_PID
         worker.task_executor(
-            worker.WorkerCommand(TASK_IDENT, CommandDto("lib_exc_reports", {}))
+            worker.WorkerCommand(
+                TASK_IDENT,
+                CommandDto(
+                    "lib_exc_reports",
+                    {},
+                    COMMAND_OPTIONS,
+                ),
+            )
         )
         # 1. TaskExecuted
         self._assert_task_executed(worker.worker_com)
@@ -100,7 +117,10 @@ class TestExecutor(MockOsKillMixin, TestCase):
     def test_unhandled_exception(self, mock_getpid):
         mock_getpid.return_value = WORKER_PID
         worker.task_executor(
-            worker.WorkerCommand(TASK_IDENT, CommandDto("unhandled_exc", {}))
+            worker.WorkerCommand(
+                TASK_IDENT,
+                CommandDto("unhandled_exc", {}, COMMAND_OPTIONS),
+            )
         )
         # 1. TaskExecuted
         self._assert_task_executed(worker.worker_com)

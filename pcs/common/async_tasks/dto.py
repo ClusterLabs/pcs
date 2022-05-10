@@ -17,9 +17,15 @@ from .types import (
 
 
 @dataclass(frozen=True)
+class CommandOptionsDto(DataTransferObject):
+    request_timeout: Optional[int] = None
+
+
+@dataclass(frozen=True)
 class CommandDto(DataTransferObject):
     command_name: str
     params: Dict[str, Any]
+    options: CommandOptionsDto
 
 
 @dataclass(frozen=True)

@@ -21,7 +21,7 @@ from pcs.common.interface import dto
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 
-from .command_mapping import command_map
+from .command_mapping import COMMAND_MAP
 from .logging import (
     WORKER_LOGGER,
     setup_worker_logger,
@@ -86,16 +86,23 @@ def task_executor(task: WorkerCommand) -> None:
         )
     )
     logger.info("Task %s executed.", task.task_ident)
+    request_timeout = task.command.options.request_timeout
+    if request_timeout is not None and request_timeout <= 0:
+        logger.warning(
+            "Invalid value '%s' for option 'request_timeout'", request_timeout
+        )
+        request_timeout = None
 
     env = LibraryEnvironment(  # type: ignore
         logger,
         WorkerReportProcessor(worker_com, task.task_ident),
+        request_timeout=request_timeout,
     )
 
     task_retval = None
     command = task.command.command_name
     try:
-        if command not in command_map:
+        if command not in COMMAND_MAP:
             raise LibraryError(
                 reports.ReportItem.error(
                     reports.messages.CommandUnknown(command)
@@ -105,21 +112,21 @@ def task_executor(task: WorkerCommand) -> None:
         # Dacite works only with dataclasses so we need to dinamically create
         # one
         try:
-            dto.from_dict(
+            data = dto.from_dict(
                 dataclasses.make_dataclass(
                     f"{command}_params",
                     [
                         _param_to_field_tuple(param)
                         for param in list(
                             inspect.signature(
-                                command_map[command]
+                                COMMAND_MAP[command]
                             ).parameters.values()
                         )[1:]
                     ],
                 ),
                 task.command.params,
                 strict=True,
-            )
+            ).__dict__  # type: ignore
         except dacite.DaciteError as e:
             # TODO: make custom message from exception without mentioning
             # dataclasses and fields
@@ -129,9 +136,7 @@ def task_executor(task: WorkerCommand) -> None:
                 )
             ) from e
 
-        task_retval = command_map[command](  # type: ignore
-            env, **task.command.params
-        )
+        task_retval = COMMAND_MAP[command](env, **data)
     except LibraryError as e:
         # Some code uses args for storing ReportList, sending them to the report
         # processor here
