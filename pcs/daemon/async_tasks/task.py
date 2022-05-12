@@ -179,7 +179,7 @@ class Task(ImplementsToDto):
             return
         if self.state == TaskState.EXECUTED:
             try:
-                os.kill(self._worker_pid, 15)
+                os.kill(self._worker_pid, signal.SIGTERM)
             except ProcessLookupError:
                 # PID doesn't exist, process might have died on its own or
                 # finished even in the time since task state was checked. Since

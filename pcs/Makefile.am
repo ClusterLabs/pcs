@@ -175,6 +175,7 @@ EXTRA_DIST		= \
 			  daemon/async_tasks/scheduler.py \
 			  daemon/async_tasks/task.py \
 			  daemon/async_tasks/worker.py \
+			  daemon/async_tasks/worker_communicator.py \
 			  daemon/env.py \
 			  daemon/http_server.py \
 			  daemon/__init__.py \

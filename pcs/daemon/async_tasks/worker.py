@@ -32,8 +32,17 @@ from .messaging import (
     TaskFinished,
 )
 from .report_proc import WorkerReportProcessor
+from .worker_communicator import WorkerCommunicator
 
-worker_com: mp.Queue
+worker_com: WorkerCommunicator
+
+
+def sigterm_handler(sig_num: int, frame: Any) -> None:
+    del sig_num, frame
+    if worker_com.is_locked:
+        worker_com.set_terminate()
+    else:
+        raise SystemExit(0)
 
 
 @dataclass(frozen=True)
@@ -54,13 +63,14 @@ def worker_init(message_q: mp.Queue, logging_q: mp.Queue) -> None:
 
     # Let task_executor use worker_com for sending messages to the scheduler
     global worker_com
-    worker_com = message_q
+    worker_com = WorkerCommunicator(message_q)
 
     def ignore_signals(sig_num, frame):  # type: ignore
         # pylint: disable=unused-argument
         pass
 
     signal.signal(signal.SIGINT, ignore_signals)
+    signal.signal(signal.SIGTERM, sigterm_handler)
 
 
 def pause_worker() -> None:

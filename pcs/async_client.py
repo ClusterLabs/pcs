@@ -24,15 +24,20 @@ from pcs.common.reports import ReportItemDto
 
 task_ident = ""
 report_list: List[ReportItemDto] = []
+kill_requested = False
 
 
 def signal_handler(sig, frame):
     # pylint: disable=unused-argument
     if sig == signal.SIGINT:
+        global kill_requested
         if not task_ident:
             error("no task to kill")
             raise SystemExit(1) from None
+        if kill_requested:
+            raise SystemExit(1)
 
+        kill_requested = True
         # Kill task request
         task_ident_dto = TaskIdentDto(task_ident)
         make_api_request_post("task/kill", json.dumps(to_dict(task_ident_dto)))
