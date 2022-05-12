@@ -116,7 +116,7 @@ class CibPush(AssertPcsMixin, TestCase):
             self.cib_push_cmd, stdout_start="Error: unable to parse new cib:"
         )
 
-    def test_diff_no_diffrence(self):
+    def test_diff_no_difference(self):
         write_data_to_tmpfile(CIB_EPOCH, self.updated_cib)
         self.assert_pcs_success(
             self.cib_push_diff_cmd,

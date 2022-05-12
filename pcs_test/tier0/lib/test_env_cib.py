@@ -430,7 +430,7 @@ class PushCibMockedWithWait(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
-    def test_wait_not_suported_for_mocked_cib(self):
+    def test_wait_not_supported_for_mocked_cib(self):
         tmp_file = "/fake/tmp/file"
         (
             self.config.env.set_cib_data(

@@ -30,7 +30,7 @@ class SuccessMinimal(TestCase):
             expected_in_processor=False,
         )
 
-    def test_sucess_pcmk_running(self):
+    def test_success_pcmk_running(self):
         self.config.services.is_running("pacemaker")
         for node in self.nodes:
             self.config.runner.pcmk.remove_node(
@@ -67,7 +67,7 @@ class SuccessMinimal(TestCase):
             expected_in_processor=False,
         )
 
-    def test_sucess_pcmk_not_running(self):
+    def test_success_pcmk_not_running(self):
         cmd_env = dict(CIB_file=os.path.join(settings.cib_dir, "cib.xml"))
         self.config.services.is_running("pacemaker", return_value=False)
         for node in self.nodes:

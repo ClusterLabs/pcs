@@ -209,7 +209,7 @@ def verify(runner, verbose=False):
             new_lines.append(line)
         # pcs has only one verbose option and cannot be more verbose like
         # `crm_verify` with more -V options. Decision has been made that pcs is
-        # limited to only two -V opions.
+        # limited to only two -V options.
         if verbose:
             can_be_more_verbose = False
         stderr = "".join(new_lines)

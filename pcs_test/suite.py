@@ -182,7 +182,7 @@ def main():
         not in (
             "-v",
             "--all-but",
-            "--fast-info",  # show a traceback immediatelly after the test fails
+            "--fast-info",  # show a traceback immediately after the test fails
             "--last-slash",
             "--list",
             "--no-parallel",
@@ -261,7 +261,7 @@ if __name__ == "__main__":
 # run all tests:
 # ./pcs_test/suite.py
 #
-# run with printing name of runned test:
+# run and print tests' names:
 # pcs_test/suite.py -v
 #
 # run specific test:
@@ -269,8 +269,8 @@ if __name__ == "__main__":
 # pcs_test/suite.py pcs_test.tier0.test_acl.ACLTest -v
 # pcs_test/suite.py pcs_test.tier0.test_acl.ACLTest.testAutoUpgradeofCIB
 #
-# run all test except some:
+# run all tests except some:
 # pcs_test/suite.py pcs_test.tier0.test_acl.ACLTest --all-but
 #
-# for remove extra features even if sys.stdout is attached to terminal
+# remove extra features
 # pcs_test/suite.py --vanilla

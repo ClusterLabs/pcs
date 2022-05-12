@@ -45,11 +45,11 @@ patch_lib_env = partial(mock.patch.object, LibraryEnvironment)
 
 def patch_env(call_queue, config, init_env, is_systemd=True):
     # pylint: disable=too-many-locals
-    # It is mandatory to patch some env objects/methods. It is ok when command
-    # does not use this objects/methods and specify no call for it. But it would
-    # be a problem when the test succeded because the live call respond
-    # correctly by accident. Such test would fails on different machine (with
-    # another live environment)
+    # It is mandatory to patch some env objects/methods. It is ok when a
+    # command does not use these objects/methods and specifies no calls for
+    # them. But it would be a problem when a test succeeds thanks to a live
+    # call responded correctly by accident. Such tests would fail on a
+    # different machine (with an other live environment).
 
     orig_cmd_runner = init_env.cmd_runner
     get_node_communicator = init_env.get_node_communicator
@@ -88,7 +88,7 @@ def patch_env(call_queue, config, init_env, is_systemd=True):
         ),
     ]
     if is_systemd:
-        # In most test cases we don't care about underlaying init system. But
+        # In most test cases we don't care about underlying init system. But
         # some tests actually test different behavior based on init
         # system. This will cause pcs.lib.services.is_systemd(<instance of
         # ServiceManagerMock>) to return True because we replace SystemdDriver
@@ -308,7 +308,7 @@ class EnvAssistant:
     def __assert_environment_created(self):
         if not hasattr(self, "_env"):
             raise AssertionError(
-                "LibraryEnvironment was not created in EnvAssitant."
+                "LibraryEnvironment was not created in EnvAssistant."
                 " Have you called method get_env?"
             )
 

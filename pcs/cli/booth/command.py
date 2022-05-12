@@ -57,7 +57,7 @@ def config_show(lib, arg_list, modifiers):
     print booth config
 
     Options:
-      * --name - name of a booth instace
+      * --name - name of a booth instance
       * --request-timeout - HTTP timeout for getting config from remote host
     """
     modifiers.ensure_only_supported("--name", "--request-timeout")
@@ -82,7 +82,7 @@ def config_ticket_add(lib, arg_list, modifiers):
       * --force
       * --booth-conf - booth config file
       * --booth-key - booth auth key file
-      * --name - name of a booth instace
+      * --name - name of a booth instance
     """
     modifiers.ensure_only_supported(
         "--force", "--booth-conf", "--name", "--booth-key"
@@ -104,7 +104,7 @@ def config_ticket_remove(lib, arg_list, modifiers):
     Options:
       * --booth-conf - booth config file
       * --booth-key - booth auth key file
-      * --name - name of a booth instace
+      * --name - name of a booth instance
     """
     modifiers.ensure_only_supported("--booth-conf", "--name", "--booth-key")
     if len(arg_list) != 1:
@@ -222,7 +222,7 @@ def sync(lib, arg_list, modifiers):
       * --name - name of a booth instance
       * --booth-conf - booth config file
       * --booth-key - booth authkey file
-      * --request-timeout - HTTP timeout for file ditribution
+      * --request-timeout - HTTP timeout for file distribution
     """
     modifiers.ensure_only_supported(
         "--skip-offline",
@@ -287,7 +287,7 @@ def pull(lib, arg_list, modifiers):
     """
     Options:
       * --name - name of a booth instance
-      * --request-timeout - HTTP timeout for file ditribution
+      * --request-timeout - HTTP timeout for file distribution
     """
     modifiers.ensure_only_supported("--name", "--request-timeout")
     if len(arg_list) != 1:

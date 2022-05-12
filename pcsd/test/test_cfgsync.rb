@@ -242,7 +242,7 @@ class TestPcsdKnownHosts < Test::Unit::TestCase
   end
 end
 
-class TestConfigSyncControll < Test::Unit::TestCase
+class TestConfigSyncControl < Test::Unit::TestCase
   def setup()
     file = File.open(CFG_SYNC_CONTROL, 'w')
     file.write(JSON.pretty_generate({}))

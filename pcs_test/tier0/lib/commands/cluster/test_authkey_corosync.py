@@ -713,7 +713,7 @@ class HostNotFound(TestCase):
             )
         )
 
-    def test_some_nodes_uknown(self):
+    def test_some_nodes_unknown(self):
         self.config.env.set_known_nodes(self.existing_nodes[1:])
         self.env_assist.assert_raise_library_error(
             lambda: cluster.corosync_authkey_change(self.env_assist.get_env())
@@ -727,7 +727,7 @@ class HostNotFound(TestCase):
             ]
         )
 
-    def test_all_nodes_uknown(self):
+    def test_all_nodes_unknown(self):
         self.config.env.set_known_nodes([])
         self.env_assist.assert_raise_library_error(
             lambda: cluster.corosync_authkey_change(self.env_assist.get_env())

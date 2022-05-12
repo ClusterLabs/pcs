@@ -50,7 +50,7 @@ def log_response(response, indent=0):
     label_data.append(("was_connected", response.was_connected))
 
     if response.was_connected:
-        label_data.append(("respose_code", response.response_code))
+        label_data.append(("response_code", response.response_code))
     else:
         label_data.extend(
             [
@@ -134,7 +134,7 @@ def _communication_to_response(
                 # 1) Library commands tests do not care about tokens. That
                 #    should be covered once in a specialized test, not in every
                 #    single library command test.
-                # 2) If we need to test teh case when a token is not accepted
+                # 2) If we need to test the case when a token is not accepted
                 #    by pcsd, we will do so by setting an appropriate response.
                 #    The actual token value doesn't matter.
                 RequestTarget(label, dest_list=dest_list, token=None),
@@ -175,7 +175,7 @@ def create_communication(
             string error_msg -- see Response
             string raw_data -- see data attrib in RequestData
         if some key is not present, it is put here from common values - rest
-        args of this fuction(except name, communication_list,
+        args of this function(except name, communication_list,
         error_msg_template)
     string action -- pcsd url, see RequestData
     list of pairs (tuple) param_list -- see RequestData
@@ -320,9 +320,9 @@ def _compare_request_data(expected, real):
     if expected == real:
         return True
 
-    # If data is in json format it is not possible to compare it as string.
-    # Because python 3 does not keep key order of dict. So if is response
-    # builded by json.dumps(some_dict) the result string can vary.
+    # If data is in json format, it is not possible to compare it as string,
+    # because python 3 does not keep key order of dict. So if a response is
+    # built by json.dumps(some_dict), the result string can vary.
 
     # Let's try known use: [('data_json', 'some_json_here')]
     # It means only one pair "data_json" + json string: everything else is False

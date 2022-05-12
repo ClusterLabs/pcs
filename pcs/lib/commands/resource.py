@@ -1656,9 +1656,9 @@ def move_autoclean(
     node -- node to move the resource to, ban on the current node if None
     master -- limit the constraint to the Master role
     wait_timeout -- timeout when waiting for the cluster to apply new
-        configuration, if <= 0 wait indefinetly
+        configuration, if <= 0 wait indefinitely
     strict -- if True affecting other resources than the specified resource
-        will cause failure. If False affecting other resources is alowed.
+        will cause failure. If False affecting other resources is allowed.
     """
     # pylint: disable=too-many-locals
     wait_timeout = max(wait_timeout, 0)

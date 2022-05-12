@@ -2946,7 +2946,7 @@ class Failures(RemoveCallsMixin, TestCase):
             ]
         )
 
-    def test_distibution_of_authkey_files_communication_failure(self):
+    def test_distribution_of_authkey_files_communication_failure(self):
         self._remove_calls(4)
         self.config.http.files.put_files(
             communication_list=[
@@ -3032,7 +3032,7 @@ class Failures(RemoveCallsMixin, TestCase):
             ]
         )
 
-    def test_distibution_of_authkey_files_invalid_response(self):
+    def test_distribution_of_authkey_files_invalid_response(self):
         self._remove_calls(4)
         self.config.http.files.put_files(
             communication_list=[
@@ -3074,7 +3074,7 @@ class Failures(RemoveCallsMixin, TestCase):
             ]
         )
 
-    def test_distibution_of_authkey_files_failure(self):
+    def test_distribution_of_authkey_files_failure(self):
         self._remove_calls(4)
         self.config.http.files.put_files(
             communication_list=self.communication_list,
@@ -3105,7 +3105,7 @@ class Failures(RemoveCallsMixin, TestCase):
             + self._get_failure_reports("remote/put_file")
         )
 
-    def test_distibution_known_hosts_failure(self):
+    def test_distribution_known_hosts_failure(self):
         self._remove_calls(8)
         self.config.http.host.update_known_hosts(
             communication_list=self.communication_list, to_add_hosts=NODE_LIST

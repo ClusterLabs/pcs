@@ -78,7 +78,7 @@ def str_to_ssl_options(ssl_options_string, reports):
     for raw_option in raw_ssl_options.split(","):
         option = raw_option.strip()
         if option == "OP_NO_RENEGOTIATION" and not hasattr(ssl, option):
-            # OP_NO_RENEGOTIATION is for a prevention of DoS attacs.
+            # OP_NO_RENEGOTIATION is for a prevention of DoS attacks.
             # See https://bugzilla.redhat.com/show_bug.cgi?id=1566430
             #
             # OP_NO_RENEGOTIATION is new in python 3.7. `pcs` supports python

@@ -68,7 +68,7 @@ def create_with_set(
         constraint_element,
         are_duplicate=duplicate_check,
         export_element=constraint.export_with_set,
-        duplication_alowed=duplication_alowed,
+        duplication_allowed=duplication_alowed,
     )
 
     env.push_cib()

@@ -200,7 +200,7 @@ def status_all_sites_plaintext(
     hide_inactive_resources -- if True, do not display non-running resources
     verbose -- if True, display more info
     """
-    # The command does not provide an option to skip offline / unreacheable /
+    # The command does not provide an option to skip offline / unreachable /
     # misbehaving nodes.
     # The point of such skipping is to stop a command if it is unable to make
     # changes on all nodes. The user can then decide to proceed anyway and

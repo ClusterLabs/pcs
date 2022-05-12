@@ -480,7 +480,7 @@ class UpdateScsiDevicesFailuresMixin(UpdateScsiDevicesMixin):
             expected_in_processor=False,
         )
 
-    def test_nonexistant_id(self):
+    def test_nonexistent_id(self):
         """
         lower level tested in
         pcs_test.tier0.lib.cib.test_stonith.ValidateStonithRestartlessUpdate

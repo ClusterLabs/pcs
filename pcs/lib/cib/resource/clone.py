@@ -2,7 +2,7 @@
 Module for stuff related to clones.
 
 Previously, promotable clones were implemented in pacemaker as 'master'
-elements whereas regular clones were 'clone' elemets. Since pacemaker-2.0,
+elements whereas regular clones were 'clone' elements. Since pacemaker-2.0,
 promotable clones are clones with meta attribute promotable=true. Master
 elements are deprecated yet still supported in pacemaker. We provide read-only
 support for them to be able to read, process and display CIBs containing them.
@@ -95,14 +95,15 @@ def master_element_to_dto(
         id="", name="promotable", value="true"
     )
     if clone_dto.meta_attributes:
-        first_meta_attibutes = clone_dto.meta_attributes[0]
+        first_meta_attributes = clone_dto.meta_attributes[0]
         clone_dto = dataclasses.replace(
             clone_dto,
             meta_attributes=[
                 dataclasses.replace(
-                    first_meta_attibutes,
+                    first_meta_attributes,
                     nvpairs=(
-                        list(first_meta_attibutes.nvpairs) + [promotable_nvpair]
+                        list(first_meta_attributes.nvpairs)
+                        + [promotable_nvpair]
                     ),
                 )
             ]
@@ -177,7 +178,7 @@ def get_inner_resource(clone_el):
 
 def validate_clone_id(clone_id: str, id_provider: IdProvider) -> ReportItemList:
     """
-    Validate that clone_id is an valid xml id an it is uniqe in the cib.
+    Validate that clone_id is a valid xml id and it is unique in the cib.
 
     clone_id -- identifier of clone element
     id_provider -- elements' ids generator

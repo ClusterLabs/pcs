@@ -224,7 +224,7 @@ class RequiredOptionOfAlternativesIsMissing(NameBuildTest):
             ),
         )
 
-    def test_with_deprected(self):
+    def test_with_deprecated(self):
         self.assert_message_from_report(
             (
                 "option 'bBb', 'aAa' (deprecated) or 'cCc' (deprecated) has "
@@ -798,14 +798,14 @@ class NodeCommunicationRetrying(NameBuildTest):
         )
 
 
-class DefaultsCanBeOverriden(NameBuildTest):
+class DefaultsCanBeOverridden(NameBuildTest):
     def test_message(self):
         self.assert_message_from_report(
             (
                 "Defaults do not apply to resources which override them with "
                 "their own defined values"
             ),
-            reports.DefaultsCanBeOverriden(),
+            reports.DefaultsCanBeOverridden(),
         )
 
 
@@ -5133,7 +5133,7 @@ class TagAddRemoveIdsDuplication(NameBuildTest):
 
 # TODO: remove, use ADD_REMOVE reports
 class TagAdjacentReferenceIdNotInTheTag(NameBuildTest):
-    def test_messag(self):
+    def test_message(self):
         self.assert_message_from_report(
             (
                 "There is no reference id 'adj_id' in the tag 'tag_id', cannot "

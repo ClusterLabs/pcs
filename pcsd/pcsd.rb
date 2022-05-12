@@ -730,7 +730,7 @@ post '/managec/:cluster/add_node_to_cluster' do
     return [400, "New node is not authenticated."]
   end
 
-  # Save the new node token on all nodes in a cluster the new node is beeing
+  # Save the new node token on all nodes in a cluster the new node is being
   # added to. Send the token to one node and let the cluster nodes synchronize
   # it by themselves.
   retval = pcs_compatibility_layer_known_hosts_add(

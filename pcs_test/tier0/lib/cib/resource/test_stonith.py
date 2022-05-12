@@ -337,19 +337,19 @@ class GetNodeKeyMapForMpath(TestCase):
             node_labels=self.NODE_LABELS[0:1],
         )
 
-    def test_success_colon_sign_as_assigment_char(self):
+    def test_success_colon_sign_as_assignment_char(self):
         self.assert_success(
             "rh9-1:1;rh9-2:2;rh9-3:3",
             {"rh9-1": "1", "rh9-2": "2", "rh9-3": "3"},
         )
 
-    def test_success_equal_sign_as_assigment_char(self):
+    def test_success_equal_sign_as_assignment_char(self):
         self.assert_success(
             "rh9-1=1;rh9-2=2;rh9-3=3",
             {"rh9-1": "1", "rh9-2": "2", "rh9-3": "3"},
         )
 
-    def test_success_mixed_assigment_char(self):
+    def test_success_mixed_assignment_char(self):
         self.assert_success(
             "rh9-1:1;rh9-2=2;rh9-3:3",
             {"rh9-1": "1", "rh9-2": "2", "rh9-3": "3"},

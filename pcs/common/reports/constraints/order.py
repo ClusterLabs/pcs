@@ -1,4 +1,4 @@
-# Reiplementing function pcs.lib.pacemaker.values.is_true to avaoid cyslic
+# Reiplementing function pcs.lib.pacemaker.values.is_true to avoid cyclic
 # imports. This is a temporary solution.
 def _is_true(val) -> bool:
     return val.lower() in {"true", "on", "yes", "y", "1"}

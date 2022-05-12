@@ -161,7 +161,7 @@ def validate_move(resource_element, master):
     # Allow moving both promoted and demoted instances of promotable clones
     # (analysis.is_promotable_clone). Do not allow to move promoted instances
     # of promotables' inner resources (analysis.is_in_promotable_clone) as that
-    # would create a constraint for the promoted role of a group or a primitve
+    # would create a constraint for the promoted role of a group or a primitive
     # which would not make sense if the group or primitive is later moved out
     # of its promotable clone. To be consistent, we do not allow to move
     # demoted instances of promotables' inner resources either. See

@@ -627,7 +627,7 @@ def resource_create(lib, argv, modifiers):
       * --group - specifies group in which resource will be created
       * --force - allow not existing agent, invalid operations or invalid
         instance attributes, allow not suitable command
-      * --disabled - created reource will be disabled
+      * --disabled - created resource will be disabled
       * --no-default-ops - do not add default operations
       * --wait
       * -f - CIB file
@@ -2472,7 +2472,7 @@ def resource_disable_common(
     if modifiers.get("--safe") or modifiers.get("--no-strict"):
         if modifiers.get("--brief"):
             # Brief mode skips simulation output by setting the report processor
-            # to ingore info reports which contain crm_simulate output and
+            # to ignore info reports which contain crm_simulate output and
             # resource status in this command
             lib.env.report_processor.suppress_reports_of_severity(
                 [reports.ReportItemSeverity.INFO]
@@ -2735,7 +2735,7 @@ def resource_manage_cmd(
     """
     Options:
       * -f - CIB file
-      * --monitor - enable monitor operation of specified resorces
+      * --monitor - enable monitor operation of specified resources
     """
     modifiers.ensure_only_supported("-f", "--monitor")
     if not argv:
@@ -2751,7 +2751,7 @@ def resource_unmanage_cmd(
     """
     Options:
       * -f - CIB file
-      * --monitor - bisable monitor operation of specified resorces
+      * --monitor - bisable monitor operation of specified resources
     """
     modifiers.ensure_only_supported("-f", "--monitor")
     if not argv:
@@ -2864,7 +2864,7 @@ def resource_failcount_show(
                             for fail in operation_failures
                             if fail["interval"] == current_interval
                         ]
-                        failcount, dummy_last_failure = __agregate_failures(
+                        failcount, dummy_last_failure = __aggregate_failures(
                             interval_failures
                         )
                         result_lines.append(
@@ -2872,14 +2872,14 @@ def resource_failcount_show(
                             f"{failcount}"
                         )
             else:
-                failcount, dummy_last_failure = __agregate_failures(
+                failcount, dummy_last_failure = __aggregate_failures(
                     node_failures
                 )
                 result_lines.append(f"  {current_node}: {failcount}")
     print("\n".join(result_lines))
 
 
-def __agregate_failures(failure_list):
+def __aggregate_failures(failure_list):
     """
     Commandline options: no options
     """

@@ -714,7 +714,7 @@ def node_remove_remote(
     callable remove_resource -- function for remove resource
     bool skip_offline_nodes -- a flag for ignoring when some nodes are offline
     bool allow_remove_multiple_nodes -- is a flag for allowing
-        remove unexpected multiple occurence of remote node for node_identifier
+        remove unexpected multiple occurrence of remote node for node_identifier
     bool allow_pacemaker_remote_service_fail -- is a flag for allowing
         successfully finish this command even if stoping/disabling
         pacemaker_remote not succeeded
@@ -773,7 +773,7 @@ def node_remove_guest(
     string node_identifier -- node name, hostname or resource id
     bool skip_offline_nodes -- a flag for ignoring when some nodes are offline
     bool allow_remove_multiple_nodes -- is a flag for allowing
-        remove unexpected multiple occurence of remote node for node_identifier
+        remove unexpected multiple occurrence of remote node for node_identifier
     bool allow_pacemaker_remote_service_fail -- is a flag for allowing
         successfully finish this command even if stoping/disabling
         pacemaker_remote not succeeded

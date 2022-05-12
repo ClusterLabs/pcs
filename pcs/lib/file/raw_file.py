@@ -87,7 +87,7 @@ class GhostFile(RawFileInterface):
 
 def export_ghost_file(ghost_file: GhostFile) -> Dict[str, Optional[bytes]]:
     """
-    Export GhostFile so it can be transfered to a client
+    Export GhostFile so it can be transferred to a client
 
     ghost_file -- a ghost file instance
     """

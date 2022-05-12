@@ -35,7 +35,7 @@ def format_wrap_for_terminal(
 ) -> List[str]:
     """
     Returns text as a list of lines. Length of a line is determined by a
-    terminal size if not explicitely specified.
+    terminal size if not explicitly specified.
 
     text -- string to format
     subsequent_indent -- number of spaces all subsequent lines will be indented

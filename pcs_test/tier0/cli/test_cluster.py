@@ -1536,7 +1536,7 @@ class ConfigShow(TestCase):
     def call_cmd(self, argv, modifiers=None):
         cluster.config_show(self.lib, argv, dict_to_modifiers(modifiers or {}))
 
-    def test_args_not_allowd(self, mock_print):
+    def test_args_not_allowed(self, mock_print):
         with self.assertRaises(CmdLineInputError) as cm:
             self.call_cmd(["arg"])
         self.assertIsNone(cm.exception.message)

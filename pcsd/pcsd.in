@@ -16,7 +16,7 @@ rescue SignalException => e
   if [Signal.list['INT'], Signal.list['TERM']].include?(e.signo)
     # gracefully exit on SIGINT and SIGTERM
     # pcsd sets up signal handlers later, this catches exceptions which occur
-    # by recieving signals before the handlers have been set up.
+    # by receiving signals before the handlers have been set up.
     exit
   else
     raise

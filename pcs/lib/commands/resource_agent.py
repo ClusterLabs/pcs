@@ -156,7 +156,7 @@ def _action_to_operation(
     # This function bridges new agent framework, which provides data in
     # dataclasses, to old resource create code and transforms new data
     # structures to a format expected by the old code. When resource create is
-    # overhauled, this fuction is expected to be removed.
+    # overhauled, this function is expected to be removed.
     operation = {}
     for key, value in to_dict(action).items():
         if key == "depth":

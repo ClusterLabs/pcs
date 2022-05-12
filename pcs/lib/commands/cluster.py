@@ -337,7 +337,7 @@ def setup(
     if report_processor.has_errors:
         raise LibraryError()
 
-    # Validation done. If errors occured, an exception has been raised and we
+    # Validation done. If errors occurred, an exception has been raised and we
     # don't get below this line.
 
     # Destroy cluster on all nodes.
@@ -554,7 +554,7 @@ def setup_local(
     ).has_errors:
         raise LibraryError()
 
-    # Validation done. If errors occured, an exception has been raised and we
+    # Validation done. If errors occurred, an exception has been raised and we
     # don't get below this line.
 
     return (
@@ -1135,12 +1135,12 @@ def add_nodes(
     if report_processor.has_errors:
         raise LibraryError()
 
-    # Validation done. If errors occured, an exception has been raised and we
+    # Validation done. If errors occurred, an exception has been raised and we
     # don't get below this line.
 
     # First set up everything else than corosync. Once the new nodes are present
     # in corosync.conf, they're considered part of a cluster and the node add
-    # command cannot be run again. So we need to minimize the amout of actions
+    # command cannot be run again. So we need to minimize the amount of actions
     # (and therefore possible failures) after adding the nodes to corosync.
 
     # distribute auth tokens of all cluster nodes (including the new ones) to
@@ -1164,7 +1164,7 @@ def add_nodes(
             qnetd_target,
             corosync_conf.get_cluster_name(),
             new_nodes_target_list,
-            # we don't want to allow skiping offline nodes which are being
+            # we don't want to allow skipping offline nodes which are being
             # added, otherwise qdevice will not work properly
             skip_offline_nodes=False,
             allow_skip_offline=False,
@@ -1280,7 +1280,7 @@ def add_nodes(
 
     # pcs_settings.conf was previously synced using pcsdcli send_local_configs.
     # This has been changed temporarily until new system for distribution and
-    # syncronization of configs will be introduced.
+    # synchronization of configs will be introduced.
     if os.path.isfile(settings.pcsd_settings_conf_location):
         try:
             with open(

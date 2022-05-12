@@ -52,7 +52,7 @@ class RequestData(
     namedtuple("RequestData", ["action", "structured_data", "data"])
 ):
     """
-    This class represents action and data asociated with action which will be
+    This class represents action and data associated with action which will be
     send in request
     """
 
@@ -196,7 +196,7 @@ class Response:
     @classmethod
     def connection_failure(cls, handle, errno, error_msg):
         """
-        Returns Response instance that is marked as not successfuly connected.
+        Returns Response instance that is marked as not successfully connected.
 
         pycurl.Curl handle -- curl easy handle, which was not connected
         int errno -- error number
@@ -330,13 +330,13 @@ class Communicator:
         Returns generator. When generator is invoked, all requests in queue
         (added by method add_requests) will be invoked in parallel, and
         generator will then return responses for these requests. It is possible
-        to add new request to the queue while the generator is in progres.
+        to add new request to the queue while the generator is in progress.
         Generator will stop (raise StopIteration) after all requests (also those
         added after creation of generator) are processed.
 
         WARNING: do not use multiple instances of generator (of one
         Communicator instance) when there is one which didn't finish
-        (raised StopIteration). It wil cause AssertionError.
+        (raised StopIteration). It will cause AssertionError.
 
         USAGE:
         com = Communicator(...)
@@ -481,7 +481,7 @@ def _create_request_handle(request, cookies, timeout):
 
     Request request -- request specification
     dict cookies -- cookies to add to request
-    int timeot -- request timeout
+    int timeout -- request timeout
     """
     # it is not possible to take this callback out of this function, because of
     # curl API
@@ -518,7 +518,7 @@ def _create_request_handle(request, cookies, timeout):
         handle.setopt(pycurl.COOKIE, _dict_to_cookies(cookies).encode("utf-8"))
     if request.data:
         handle.setopt(pycurl.COPYPOSTFIELDS, request.data.encode("utf-8"))
-    # add reference for request object and output bufers to handle, so later
+    # add reference for request object and output buffers to handle, so later
     # we don't need to match these objects when they are returned from
     # pycurl after they've been processed
     # similar usage is in pycurl example:

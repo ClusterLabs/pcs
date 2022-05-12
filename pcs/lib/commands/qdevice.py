@@ -21,9 +21,10 @@ from pcs.lib.services import service_exception_to_report
 def qdevice_setup(lib_env: LibraryEnvironment, model, enable, start):
     """
     Initialize qdevice on local host with specified model
-    string model qdevice model to initialize
-    bool enable make qdevice service start on boot
-    bool start start qdevice now
+
+    string model -- qdevice model to initialize
+    bool enable -- make qdevice service start on boot
+    bool start -- start qdevice now
     """
     _check_model(model)
     qdevice_net.qdevice_setup(lib_env.cmd_runner())
@@ -45,8 +46,9 @@ def qdevice_setup(lib_env: LibraryEnvironment, model, enable, start):
 def qdevice_destroy(lib_env: LibraryEnvironment, model, proceed_if_used=False):
     """
     Stop and disable qdevice on local host and remove its configuration
-    string model qdevice model to destroy
-    bool procced_if_used destroy qdevice even if it is used by clusters
+
+    string model -- qdevice model to destroy
+    bool procced_if_used -- destroy qdevice even if it is used by clusters
     """
     _check_model(model)
     report_processor = lib_env.report_processor
@@ -72,9 +74,10 @@ def qdevice_status_text(
 ):
     """
     Get runtime status of a quorum device in plain text
-    string model qdevice model to query
-    bool verbose get more detailed output
-    string cluster show information only about specified cluster
+
+    string model -- qdevice model to query
+    bool verbose -- get more detailed output
+    string cluster -- show information only about specified cluster
     """
     _check_model(model)
     runner = lib_env.cmd_runner()
@@ -131,8 +134,9 @@ def qdevice_start(lib_env: LibraryEnvironment, model):
 def qdevice_stop(lib_env: LibraryEnvironment, model, proceed_if_used=False):
     """
     stop qdevice now on local host
-    string model qdevice model to destroy
-    bool procced_if_used stop qdevice even if it is used by clusters
+
+    string model -- qdevice model to destroy
+    bool procced_if_used -- stop qdevice even if it is used by clusters
     """
     _check_model(model)
     _check_qdevice_not_used(
@@ -160,8 +164,9 @@ def qdevice_net_sign_certificate_request(
 ):
     """
     Sign node certificate request by qnetd CA
-    string certificate_request base64 encoded certificate request
-    string cluster_name name of the cluster to which qdevice is being added
+
+    string certificate_request -- base64 encoded certificate request
+    string cluster_name -- name of the cluster to which qdevice is being added
     """
     try:
         certificate_request_data = base64.b64decode(certificate_request)
@@ -184,8 +189,9 @@ def qdevice_net_sign_certificate_request(
 
 def client_net_setup(lib_env: LibraryEnvironment, ca_certificate):
     """
-    Intialize qdevice net client on local host
-    ca_certificate base64 encoded qnetd CA certificate
+    Initialize qdevice net client on local host
+
+    ca_certificate -- base64 encoded qnetd CA certificate
     """
     try:
         ca_certificate_data = base64.b64decode(ca_certificate)
@@ -205,7 +211,8 @@ def client_net_setup(lib_env: LibraryEnvironment, ca_certificate):
 def client_net_import_certificate(lib_env: LibraryEnvironment, certificate):
     """
     Import qnetd client certificate to local node certificate storage
-    certificate base64 encoded qnetd client certificate
+
+    certificate -- base64 encoded qnetd client certificate
     """
     try:
         certificate_data = base64.b64decode(certificate)

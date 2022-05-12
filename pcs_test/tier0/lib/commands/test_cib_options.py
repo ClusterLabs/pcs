@@ -47,7 +47,7 @@ class DefaultsCreateMixin:
         self.command(self.env_assist.get_env(), {}, {})
 
         self.env_assist.assert_reports(
-            [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDEN)]
+            [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN)]
         )
 
     def test_success_one_set_already_there(self):
@@ -70,7 +70,7 @@ class DefaultsCreateMixin:
         self.command(self.env_assist.get_env(), {}, {})
 
         self.env_assist.assert_reports(
-            [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDEN)]
+            [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN)]
         )
 
     def test_success_cib_upgrade_rsc_rules(self):
@@ -109,7 +109,7 @@ class DefaultsCreateMixin:
         self.env_assist.assert_reports(
             [
                 fixture.info(reports.codes.CIB_UPGRADE_SUCCESSFUL),
-                fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDEN),
+                fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN),
             ]
         )
 
@@ -173,7 +173,7 @@ class DefaultsCreateMixin:
                     option_type=None,
                     allowed_patterns=[],
                 ),
-                fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDEN),
+                fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN),
             ]
         )
 
@@ -286,7 +286,7 @@ class ResourceDefaultsCreate(DefaultsCreateMixin, TestCase):
         )
 
         self.env_assist.assert_reports(
-            [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDEN)]
+            [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN)]
         )
 
 
@@ -364,7 +364,7 @@ class OperationDefaultsCreate(DefaultsCreateMixin, TestCase):
         )
 
         self.env_assist.assert_reports(
-            [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDEN)]
+            [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN)]
         )
 
     def test_success_cib_upgrade_node_attr_type_int(self):
@@ -402,7 +402,7 @@ class OperationDefaultsCreate(DefaultsCreateMixin, TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.info(reports.codes.CIB_UPGRADE_SUCCESSFUL),
-                fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDEN),
+                fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN),
             ]
         )
 
@@ -441,7 +441,7 @@ class OperationDefaultsCreate(DefaultsCreateMixin, TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.info(reports.codes.CIB_UPGRADE_SUCCESSFUL),
-                fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDEN),
+                fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN),
             ]
         )
 
@@ -485,7 +485,7 @@ class OperationDefaultsCreate(DefaultsCreateMixin, TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.info(reports.codes.CIB_UPGRADE_SUCCESSFUL),
-                fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDEN),
+                fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN),
             ]
         )
 
@@ -1058,7 +1058,7 @@ class DefaultsUpdateLegacyMixin:
     def setUp(self):
         # pylint: disable=invalid-name
         self.env_assist, self.config = get_env_tools(self)
-        self.reports = [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDEN)]
+        self.reports = [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN)]
 
     def tearDown(self):
         # pylint: disable=invalid-name
@@ -1224,7 +1224,7 @@ class DefaultsUpdateMixin:
             {"a": "B", "c": "", "d": "e"},
         )
         self.env_assist.assert_reports(
-            [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDEN)]
+            [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN)]
         )
 
     def test_nvset_doesnt_exist(self):
@@ -1259,7 +1259,7 @@ class DefaultsUpdateMixin:
             {"a": "", "b": "", "c": ""},
         )
         self.env_assist.assert_reports(
-            [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDEN)]
+            [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN)]
         )
 
 

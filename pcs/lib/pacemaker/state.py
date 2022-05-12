@@ -1,6 +1,6 @@
 """
 The intention is put there knowledge about cluster state structure.
-Hide information about underlaying xml is desired too.
+Hide information about underlying xml is desired too.
 """
 from collections import defaultdict
 from typing import (
@@ -33,7 +33,7 @@ class _Attrs:
     def __init__(self, owner_name, attrib, required_attrs):
         """
         attrib lxml.etree._Attrib - wrapped attribute collection
-        required_attrs dict of required atribute names object_name:xml_attribute
+        required_attrs dict of required attribute names object_name:xml_attribute
         """
         self.owner_name = owner_name
         self.attrib = attrib

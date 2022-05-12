@@ -400,7 +400,7 @@ def create_operations(primitive_element, id_provider, operation_list):
 
 def append_new_operation(operations_element, id_provider, options):
     """
-    Create op element and apend it to operations_element.
+    Create op element and append it to operations_element.
 
     etree operations_element is the context element
     IdProvider id_provider -- elements' ids generator

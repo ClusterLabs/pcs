@@ -185,7 +185,7 @@ def get_parent_resource(resource_el: _Element) -> Optional[_Element]:
 
 def find_resources_to_enable(resource_el):
     """
-    Get resources to enable in order to enable specified resource succesfully
+    Get resources to enable in order to enable specified resource successfully
     etree resource_el -- resource element
     """
     if is_bundle(resource_el):
@@ -235,7 +235,7 @@ def disable(resource_el, id_provider):
 
 def find_resources_to_manage(resource_el):
     """
-    Get resources to manage to manage the specified resource succesfully
+    Get resources to manage to manage the specified resource successfully
     etree resource_el -- resource element
     """
     # If the resource_el is a primitive in a group, we set both the group and
@@ -251,7 +251,7 @@ def find_resources_to_manage(resource_el):
         +
         # its parents
         find_parent(resource_el, "resources").xpath(
-            # a master or a clone which contains a group, a primitve, or a
+            # a master or a clone which contains a group, a primitive, or a
             # grouped primitive with the specified id
             # OR
             # a group (in a clone, master, etc. - hence //) which contains a
@@ -275,7 +275,7 @@ def find_resources_to_manage(resource_el):
 
 def find_resources_to_unmanage(resource_el):
     """
-    Get resources to unmanage to unmanage the specified resource succesfully
+    Get resources to unmanage to unmanage the specified resource successfully
     etree resource_el -- resource element
     """
     # resource hierarchy - specified resource - what to return

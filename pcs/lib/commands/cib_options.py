@@ -152,7 +152,7 @@ def _defaults_create(
     )
 
     env.report_processor.report(
-        ReportItem.warning(reports.messages.DefaultsCanBeOverriden())
+        ReportItem.warning(reports.messages.DefaultsCanBeOverridden())
     )
     env.push_cib()
 
@@ -354,7 +354,7 @@ def _defaults_update(
                 break
         if only_removing and not sections.exists(cib, cib_section_name):
             env.report_processor.report(
-                ReportItem.warning(reports.messages.DefaultsCanBeOverriden())
+                ReportItem.warning(reports.messages.DefaultsCanBeOverridden())
             )
             return
 
@@ -371,7 +371,7 @@ def _defaults_update(
             )
             raise LibraryError()
         env.report_processor.report(
-            ReportItem.warning(reports.messages.DefaultsCanBeOverriden())
+            ReportItem.warning(reports.messages.DefaultsCanBeOverridden())
         )
         if len(nvset_elements) == 1:
             nvpair_multi.nvset_update(nvset_elements[0], id_provider, nvpairs)
@@ -399,6 +399,6 @@ def _defaults_update(
 
     nvpair_multi.nvset_update(nvset_elements[0], id_provider, nvpairs)
     env.report_processor.report(
-        ReportItem.warning(reports.messages.DefaultsCanBeOverriden())
+        ReportItem.warning(reports.messages.DefaultsCanBeOverridden())
     )
     env.push_cib()

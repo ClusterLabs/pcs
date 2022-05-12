@@ -43,7 +43,7 @@ from .const import (
 
 def _validate_tag_id(tag_id: str, id_provider: IdProvider) -> ReportItemList:
     """
-    Validate that tag_id is an valid xml id an it is uniqe in the cib.
+    Validate that tag_id is a valid xml id and it is unique in the cib.
 
     tag_id -- identifier of new tag
     id_provider -- elements' ids generator
@@ -418,7 +418,7 @@ class ValidateTagUpdateByIds:
         - there are no duplicate ids specified
         - ids exist in the tag
         - tag would not be left empty after removal
-        Saves found elements to remove in case of succes validation.
+        Saves found elements to remove in case of a successful validation.
         """
         report_list: ReportItemList = []
         if self._tag_element is None or not self._remove_idref_list:

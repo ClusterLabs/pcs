@@ -26,7 +26,7 @@ def get_system_or_local_path(system_path, local_path)
     return system_path
   else
     # i.e. this file is outside the system pcsd directory => the local
-    # (develpment) executable is used
+    # (development) executable is used
     return File.join(current_pcsd_path, local_path)
   end
 end
@@ -39,7 +39,7 @@ def get_pcs_internal_path()
   return get_system_or_local_path(PCS_INTERNAL_EXEC, "../pcs/pcs_internal")
 end
 
-# unique instance signature, allows detection of dameon restarts
+# unique instance signature, allows detection of daemon restarts
 COROSYNC = File.join(COROSYNC_BINARIES, "corosync")
 ISSYSTEMCTL = is_systemctl
 COROSYNC_CMAPCTL = File.join(COROSYNC_BINARIES, "corosync-cmapctl")

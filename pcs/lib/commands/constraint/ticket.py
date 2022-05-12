@@ -67,7 +67,7 @@ def create(
             are_new_role_names_supported(constraint_section)
         ),
         export_element=constraint.export_plain,
-        duplication_alowed=duplication_alowed,
+        duplication_allowed=duplication_alowed,
     )
 
     env.push_cib()

@@ -51,7 +51,7 @@ ACLOCAL_AMFLAGS		= -I m4
 SUBDIRS			= pcs pcsd pcs_test data
 
 PCS_PYTHON_PACKAGES = pcs/ pcs_test/
-# depedency management
+# dependency management
 
 # 1 - sources directory - with python package sources
 # 2 - destination directory - python package will be installed into the
@@ -199,7 +199,7 @@ if DEV_TESTS
 if PARALLEL_PYLINT
 pylint_options = --jobs=0
 else
-pylint_options = 
+pylint_options =
 endif
 	export PYTHONPATH=${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/packages && \
 		$(TIME) $(PYTHON) -m pylint --rcfile pylintrc --persistent=n --reports=n --score=n --disable similarities ${pylint_options} ${PCS_PYTHON_PACKAGES}
@@ -233,6 +233,20 @@ mypy:
 if DEV_TESTS
 	export PYTHONPATH=${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/packages && \
 		$(TIME) $(PYTHON) -m mypy --config-file mypy.ini --package pcs
+endif
+
+RUN_TYPOS=$(TYPOS) --color never --format brief --exclude typos_known | sed -e 's/:[0-9]\+:[0-9]\+:/:/' | $(SORT)
+.PHONY: typos_check
+typos_check:
+if TYPOS_CHECK
+	$(RUN_TYPOS) > typos_new
+	$(DIFF) typos_known typos_new
+endif
+
+.PHONY: typos_known
+typos_known:
+if TYPOS_CHECK
+	$(RUN_TYPOS) > typos_known
 endif
 
 tests_tier0:
@@ -313,7 +327,7 @@ test-tree-clean:
 	fi
 	find ${abs_top_builddir} -type d -name __pycache__ -exec rm -rf {} \; 2>/dev/null || :
 
-check-local: check-local-deps test-tree-prep pylint isort_check black_check mypy tests_tier0 tests_tier1 pcsd-tests test-tree-clean
+check-local: check-local-deps test-tree-prep typos_check pylint isort_check black_check mypy tests_tier0 tests_tier1 pcsd-tests test-tree-clean
 
 clean-local: test-tree-clean
 	$(PYTHON) setup.py clean

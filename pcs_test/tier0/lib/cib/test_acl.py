@@ -317,7 +317,7 @@ class AssignRoleTest(LibraryAclTest):
             )
         )
 
-    def test_sucess_group(self):
+    def test_success_group(self):
         group = self.cib.tree.find(".//acl_group[@id='group1']")
         lib.assign_role(self.cib.tree, "role1", group)
         self.assert_cib_equal(
@@ -710,7 +710,7 @@ class RemoveGroupTest(LibraryAclTest, ExtendedAssertionsMixin):
 
 
 class RemovePermissionForReferenceTest(LibraryAclTest):
-    def test_has_no_efect_when_id_not_referenced(self):
+    def test_has_no_effect_when_id_not_referenced(self):
         lib.remove_permissions_referencing(self.cib.tree, "dummy")
         self.assert_cib_equal(self.create_cib())
 

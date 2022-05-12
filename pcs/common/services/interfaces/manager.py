@@ -69,7 +69,7 @@ class ServiceManagerInterface:
         """
         service -- name of service to be checked
 
-        Returns True if specified service is installed (managable by init
+        Returns True if specified service is installed (manageable by init
         system), False otherwise.
         """
         raise NotImplementedError()

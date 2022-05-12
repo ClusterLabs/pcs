@@ -125,7 +125,7 @@ class SetupTest(BoothMixin, TestCase):
             ),
         )
 
-    def test_refuse_partialy_mocked_environment(self):
+    def test_refuse_partially_mocked_environment(self):
         self.assert_pcs_fail_original(
             # no --booth-key!
             (

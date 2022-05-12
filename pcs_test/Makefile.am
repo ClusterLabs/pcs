@@ -178,7 +178,7 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/cluster/test_add_nodes_validation.py \
 			  tier0/lib/commands/cluster/test_authkey_corosync.py \
 			  tier0/lib/commands/cluster/test_config_update.py \
-			  tier0/lib/commands/cluster/test_get_corosync_conf_struc.py \
+			  tier0/lib/commands/cluster/test_get_corosync_conf_struct.py \
 			  tier0/lib/commands/cluster/test_node_clear.py \
 			  tier0/lib/commands/cluster/test_remove_links.py \
 			  tier0/lib/commands/cluster/test_remove_nodes_from_cib.py \
