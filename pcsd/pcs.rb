@@ -438,8 +438,8 @@ end
 
 def _transform_data(data)
   # Converts data in a way that URI.encode_www_form method will encode it
-  # corectly. If an arrray is passed as value to encode_www_form, then parser of
-  # webbrick will use only last value.
+  # correctly. If an array is passed as a value to encode_www_form, then parser
+  # of webrick will use only the last value.
   new_data = []
   data.each { |key, val|
     if val.kind_of?(Array)
@@ -1988,7 +1988,7 @@ def run_pcs_internal(auth_user, cmd, data, request_timeout=nil)
       and \
       parsed_output[:report_list].kind_of?(Array) \
     )
-      # Remove all debug messages as they may containt sensitive info.
+      # Remove all debug messages as they may contain sensitive info.
       parsed_output[:report_list].delete_if { |report_item|
         report_item[:severity][:level] == 'DEBUG'
       }

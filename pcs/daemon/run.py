@@ -31,9 +31,9 @@ class SignalInfo:
     ioloop_started = False
 
 
-def handle_signal(incomming_signal, frame):
+def handle_signal(incoming_signal, frame):
     # pylint: disable=unused-argument
-    log.pcsd.warning("Caught signal: %s, shutting down", incomming_signal)
+    log.pcsd.warning("Caught signal: %s, shutting down", incoming_signal)
     if SignalInfo.server_manage:
         SignalInfo.server_manage.stop()
     if SignalInfo.ioloop_started:
@@ -64,7 +64,7 @@ def configure_app(
 ):
     def make_app(https_server_manage: HttpsServerManage):
         """
-        https_server_manage -- allows to controll the server (specifically
+        https_server_manage -- allows to control the server (specifically
             reload its SSL certificates). A relevant handler should get this
             object via the method `initialize`.
         """

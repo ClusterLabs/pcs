@@ -89,7 +89,7 @@ def _addr_list_to_dest(addr_list, port=None):
 
 
 class RequestTargetConstructorTest(TestCase):
-    def test_no_adresses(self):
+    def test_no_addresses(self):
         label = "label"
         target = lib.RequestTarget(label)
         self.assertEqual(label, target.label)
@@ -97,7 +97,7 @@ class RequestTargetConstructorTest(TestCase):
             _addr_list_to_dest([label], port=PORT), target.dest_list
         )
 
-    def test_with_adresses(self):
+    def test_with_addresses(self):
         label = "label"
         address_list = ["a1", "a2"]
         original_list = list(address_list)

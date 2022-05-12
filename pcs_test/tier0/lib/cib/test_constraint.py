@@ -192,7 +192,7 @@ class PrepareOptionsTest(TestCase):
             ),
         )
 
-    def test_has_no_side_efect_on_input_options(self):
+    def test_has_no_side_effect_on_input_options(self):
         mock_create_id = mock.MagicMock()
         mock_create_id.return_value = "new-id"
         options = {"a": "b"}
@@ -310,7 +310,7 @@ class CheckIsWithoutDuplicationTest(TestCase):
             element,
             are_duplicate=lambda e1, e2: True,
             export_element=constraint.export_with_set,
-            duplication_alowed=True,
+            duplication_allowed=True,
         )
         assert_report_item_list_equal(
             report_processor.report_item_list,

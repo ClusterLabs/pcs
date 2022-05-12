@@ -63,7 +63,7 @@ class BaseHandler(EnhanceHeadersMixin, RequestHandler):
         self.set_strict_transport_security()
 
     def data_received(self, chunk):
-        # abstract method `data_received` does need to be overriden. This
+        # abstract method `data_received` does need to be overridden. This
         # method should be implemented to handle streamed request data.
         # BUT we currently do not plan to use it SO:
         # pylint: disable=abstract-method

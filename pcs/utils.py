@@ -2829,7 +2829,7 @@ def get_library_wrapper():
     return Library(get_cli_env(), get_middleware_factory())
 
 
-def exit_on_cmdline_input_errror(
+def exit_on_cmdline_input_error(
     error: CmdLineInputError,
     main_name: str,
     usage_name: Sequence[str],

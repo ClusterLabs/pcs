@@ -392,7 +392,7 @@ class LibraryEnvironment:
         # * check for online nodes and run all commands on them only
         # * if those commands fail, exit with an error
         # * add support for allow_skip_offline=False
-        # * use simple report procesor
+        # * use simple report processor
         # Correct reloading is done in pcs.lib.cluster.remove_nodes for example.
 
         # Check if the cluster is stopped when needed

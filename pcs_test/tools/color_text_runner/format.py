@@ -5,7 +5,7 @@ separator2 = "-" * 70
 
 
 class Output:
-    palete = {
+    palette = {
         "black": "\033[30m",
         "red": "\033[31m",
         "green": "\033[32m",
@@ -33,9 +33,9 @@ class Output:
         if not self._rich:
             return text
         return (
-            "".join([self.palete[key] for key in key_list])
+            "".join([self.palette[key] for key in key_list])
             + text
-            + self.palete["end"]
+            + self.palette["end"]
         )
 
     def lightgrey(self, text):
@@ -160,21 +160,21 @@ class Format:
         return line_list
 
     def traceback(self, err):
-        formated_err = []
+        formatted_err = []
         path_regex = re.compile(
             r'^  File "(?P<path>[^"]+)", line (?P<line>\d+), in (?P<name>.*)$'
         )
         was_prev_path = False
         for line in err.splitlines():
             if line == "Traceback (most recent call last):":
-                formated_err.append(self._output.lightgrey(line))
+                formatted_err.append(self._output.lightgrey(line))
                 was_prev_path = False
                 continue
 
             match = path_regex.match(line)
             if match:
                 path = match.group("path").split("/")
-                formated_err.append(
+                formatted_err.append(
                     self._output.lightgrey('  File "')
                     + self._output.lightgrey("/").join(
                         path[:-1] + [self._output.bold(path[-1])]
@@ -186,12 +186,12 @@ class Format:
                 )
                 was_prev_path = True
             elif was_prev_path:
-                formated_err.append(self._output.bold(line))
+                formatted_err.append(self._output.bold(line))
                 was_prev_path = False
             else:
-                formated_err.append(line)
+                formatted_err.append(line)
                 was_prev_path = False
-        return "\n".join(formated_err) + "\n"
+        return "\n".join(formatted_err) + "\n"
 
     def skips(self, skip_map):
         return (

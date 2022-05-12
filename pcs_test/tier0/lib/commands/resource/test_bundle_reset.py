@@ -404,7 +404,7 @@ class ResetWithMetaMap(BaseMixin, MetaMixin, TestCase):
 
     def test_success(self):
         # When there is no meta attributes the new one are put on the first
-        # possition (since reset now uses update internally). This is the reason
+        # position (since reset now uses update internally). This is the reason
         # for reimplementation of this MetaMixin test.
         self.config.env.push_cib(
             resources="""

@@ -827,7 +827,7 @@ def _add_link_options_knet(options):
 
 
 def _update_link_options_knet(new_options, current_options):
-    # Changing linknumber is not allowed in update. It would effectivelly
+    # Changing linknumber is not allowed in update. It would effectively
     # delete one link and add a new one. Link update is meant for the cases
     # when there is only one link which cannot be removed and another one
     # cannot be added.

@@ -64,7 +64,7 @@ class _Exporter:
         # Add score only to the top level rule element (which is represented by
         # BoolExpr class). This is achieved by this function not being called for
         # child nodes.
-        # TODO This was implemented originaly only for rules in resource and
+        # TODO This was implemented originally only for rules in resource and
         # operation defaults. In those cases, score is the only rule attribute and
         # it is always INFINITY. Once this code is used for other rules, modify
         # this behavior as needed.

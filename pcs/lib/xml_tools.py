@@ -8,7 +8,7 @@ from lxml.etree import _Element
 
 
 def get_root(tree):
-    # ElementTree has getroot, Elemet has getroottree
+    # ElementTree has getroot, Element has getroottree
     return tree.getroot() if hasattr(tree, "getroot") else tree.getroottree()
 
 
@@ -96,7 +96,7 @@ def update_attributes_remove_empty(element, attributtes):
         update_attribute_remove_empty(element, name, value)
 
 
-def etree_element_attibutes_to_dict(etree_el, required_key_list):
+def etree_element_attributes_to_dict(etree_el, required_key_list):
     """
     Returns all attributes of etree_el from required_key_list in dictionary,
     where keys are attributes and values are values of attributes or None if
@@ -134,7 +134,7 @@ def is_element_useful(element, attribs_important=True):
     elements are not meaningful without sub-elements even if they have
     attributes (e.g. rsc_ticket - after last sub-element 'resource_set' removal
     there can be attributes but the element is pointless - more details at the
-    approrpriate place of use). By default, an element is meaningful when it
+    appropriate place of use). By default, an element is meaningful when it
     contains attributes (except id) even if it has no sub-elements. This can be
     switched by attribs_important parameter.
 
@@ -156,7 +156,7 @@ def append_when_useful(parent, element, attribs_important=True, index=None):
     lxml.etree.element element -- the element to append
     bool attribs_important -- if True, append even if the element has no
         children if it has attributes
-    int or None index -- postion to append the element, None means at the end
+    int or None index -- position to append the element, None means at the end
     """
     if element.getparent() == parent:
         return element

@@ -72,7 +72,7 @@ testNodeAdd.canAddClusterOrNodes403 = function(url, data, success, fail){
 testNodeAdd.canAddClusterOrNodes500 = function(url, data, success, fail){
   switch(url){
     case "/manage/can-add-cluster-or-nodes": return fail(
-      500, "Somethig is wrong",
+      500, "Something is wrong",
     );
     default:
       return testClusterSetup.successPath(url, data, success, fail);
@@ -165,7 +165,7 @@ testNodeAdd.nodeAdd403 = function(url, data, success, fail){
 testNodeAdd.nodeAdd500 = function(url, data, success, fail){
   switch(url){
     case "/managec/"+Pcs.cluster_name+"/cluster_add_nodes": return fail(
-      500, "Somethig is wrong"
+      500, "Something is wrong",
     );
     default:
       return testNodeAdd.successPath(url, data, success, fail);

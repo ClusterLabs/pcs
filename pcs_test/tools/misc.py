@@ -308,7 +308,7 @@ def create_patcher(target_prefix_or_module):
     """
     Return function for patching tests with preconfigured target prefix
     string|module target_prefix_or_module could be:
-        * a prefix for patched names. Typicaly tested module:
+        * a prefix for patched names. Typically tested module:
             "pcs.lib.commands.booth"
         * a (imported) module: pcs.lib.cib
         Between prefix and target is "." (dot)

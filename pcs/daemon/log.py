@@ -41,7 +41,7 @@ def from_external_source(level, created: float, usecs: int, message, group_id):
 
 class Formatter(logging.Formatter):
     default_time_format = "%Y-%m-%dT%H:%M:%S"
-    # It produces `datetime.miliseconds`
+    # It produces `datetime.milliseconds`
     default_msec_format = "%s.%03d"
 
     def __init__(self):

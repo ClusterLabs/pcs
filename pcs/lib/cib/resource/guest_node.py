@@ -205,7 +205,7 @@ def find_node_list(tree):
 
 def find_node_resources(resources_section, node_identifier):
     """
-    Return list of etree.Eleent primitives that are guest nodes.
+    Return list of etree.Element primitives that are guest nodes.
 
     etree.Element resources_section is a researched element
     string node_identifier could be id of resource, node name or node address

@@ -129,7 +129,7 @@ fi
 
 # configure options section
 AC_ARG_ENABLE([dev-tests],
-	      [AS_HELP_STRING([--enable-dev-tests], [Enable extra developers tests (black, mypy, pylint) (default: no)])],
+	      [AS_HELP_STRING([--enable-dev-tests], [Enable extra developers tests (black, isort, mypy, pylint) (default: no)])],
 	      [dev_tests="yes"])
 AM_CONDITIONAL([DEV_TESTS], [test "x$dev_tests" = "xyes"])
 
@@ -152,6 +152,11 @@ AC_ARG_ENABLE([parallel-pylint],
 	      [AS_HELP_STRING([--enable-parallel-pylint], [Enable running pylint in multiple threads (default: no)])],
 	      [parallel_pylint="yes"])
 AM_CONDITIONAL([PARALLEL_PYLINT], [test "x$parallel_pylint" = "xyes"])
+
+AC_ARG_ENABLE([typos-check],
+	      [AS_HELP_STRING([--enable-typos-check], [Enable checking source code for typos (needs https://github.com/crate-ci/typos to be installed) (default: no)])],
+	      [typos_check="yes"])
+AM_CONDITIONAL([TYPOS_CHECK], [test "x$typos_check" = "xyes"])
 
 AC_ARG_ENABLE([local-build],
 	      [AS_HELP_STRING([--enable-local-build], [Download and install all dependencies as user / bundles])],
@@ -187,6 +192,21 @@ if test "x$tests_only" != "xyes"; then
 	AC_CHECK_PROGS([FCMATCH], [fc-match])
 	if test "x$FCMATCH" = "x"; then
 		AC_MSG_ERROR([Unable to find fc-match binary])
+	fi
+fi
+
+if test "x$typos_check" = "xyes"; then
+	AC_PATH_PROG([DIFF], [diff])
+	if test "x$DIFF" = "x"; then
+		AC_MSG_ERROR([Unable to find diff in $PATH])
+	fi
+	AC_PATH_PROG([SORT], [sort])
+	if test "x$SORT" = "x"; then
+		AC_MSG_ERROR([Unable to find sort in $PATH])
+	fi
+	AC_PATH_PROG([TYPOS], [typos])
+	if test "x$TYPOS" = "x"; then
+		AC_MSG_ERROR([Unable to find typos in $PATH])
 	fi
 fi
 

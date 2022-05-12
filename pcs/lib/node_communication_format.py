@@ -138,7 +138,7 @@ def response_items_to_result(response_items, expected_keys, node_label):
     ->
     {"file1": Result("success", "")}}
 
-    dict resposne_items has item name as key and dict with result as value.
+    dict response_items has item name as key and dict with result as value.
     list expected_keys contains expected keys in a dict main_response[main_key]
     string node_label is a node label for reporting an invalid format
     """

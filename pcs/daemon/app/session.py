@@ -51,7 +51,7 @@ class Mixin:
         if self.__session is None:
             raise Exception(
                 "Session is not set in session mixin. "
-                "Session probably has not been initialized in requst handler."
+                "Session probably has not been initialized in request handler."
             )
         return self.__session
 

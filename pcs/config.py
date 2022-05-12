@@ -828,7 +828,7 @@ def config_import_cman(lib, argv, modifiers):
     Options:
       * --force - skip checks, overwrite files
       * --interactive - interactive issue resolving
-      * --request-timeout - effective only when ouput is not specified
+      * --request-timeout - effective only when output is not specified
     """
     # pylint: disable=no-member
     del lib

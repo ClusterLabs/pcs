@@ -418,7 +418,7 @@ def __get_rule_parser() -> pyparsing.ParserElement:
         [
             pyparsing.CaselessKeyword("resource").setName("'resource'"),
             # resource name
-            # Up to three parts seperated by ":". The parts can contain any
+            # Up to three parts separated by ":". The parts can contain any
             # characters except whitespace (token separator), ":" (parts
             # separator) and "()" (brackets).
             pyparsing.Regex(

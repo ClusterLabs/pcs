@@ -547,7 +547,7 @@ class LibraryRemoveTag(TestCase):
     def setUp(self):
         self.cib = etree.fromstring(FIXTURE_TWO_TAGS)
 
-    def test_remove_emtpy_list(self):
+    def test_remove_empty_list(self):
         lib.remove_tag([])
         assert_xml_equal(FIXTURE_TWO_TAGS, etree_to_str(self.cib))
 
@@ -644,7 +644,7 @@ class ValidateCommonConstraintsTestData(TestCase):
 
 
 class ValidateRemoveTag(ValidateCommonConstraintsTestData):
-    def test_sucess_non_empty_list_for_remove(self):
+    def test_success_non_empty_list_for_remove(self):
         # pylint: disable=no-self-use
         assert_report_item_list_equal(
             lib.validate_remove_tag(
@@ -803,7 +803,7 @@ class ValidateAddRemoveDuplicateReferenceIds(ValidateCommonTestData):
 
     def test_add_duplicates(self):
         for input_ids, output_ids in self.duplicated_ids_input_output:
-            with self.subTest(input_ids=input_ids, ouput_ids=output_ids):
+            with self.subTest(input_ids=input_ids, output_ids=output_ids):
                 assert_report_item_list_equal(
                     lib._validate_add_remove_duplicate_reference_ids(input_ids),
                     [
@@ -837,7 +837,7 @@ class LibraryRemoveObjRef(TestCase):
     def setUp(self):
         self.cib = etree.fromstring(FIXTURE_OBJ_REFS)
 
-    def test_remove_emtpy_list(self):
+    def test_remove_empty_list(self):
         lib.remove_obj_ref([])
         assert_xml_equal(FIXTURE_OBJ_REFS, etree_to_str(self.cib))
 
@@ -1083,7 +1083,7 @@ class LibraryAddObjRef(TestCase):
 
 
 class ValidateTagUpdateByIds(TestCase):
-    OBJ_REF_EXPCTED_TYPES = ["bundle", "clone", "group", "master", "primitive"]
+    OBJ_REF_EXPECTED_TYPES = ["bundle", "clone", "group", "master", "primitive"]
     test_cib = etree.fromstring(
         """
         <cib>
@@ -1165,15 +1165,15 @@ class ValidateTagUpdateByIds(TestCase):
                 fixture.report_not_found(
                     "none",
                     context_type="resources",
-                    expected_types=self.OBJ_REF_EXPCTED_TYPES,
+                    expected_types=self.OBJ_REF_EXPECTED_TYPES,
                 ),
                 fixture.report_not_found(
                     "status_id",
                     context_type="resources",
-                    expected_types=self.OBJ_REF_EXPCTED_TYPES,
+                    expected_types=self.OBJ_REF_EXPECTED_TYPES,
                 ),
                 fixture.report_unexpected_element(
-                    "other_id", "meta_attributes", self.OBJ_REF_EXPCTED_TYPES
+                    "other_id", "meta_attributes", self.OBJ_REF_EXPECTED_TYPES
                 ),
             ],
         )
@@ -1235,7 +1235,7 @@ class ValidateTagUpdateByIds(TestCase):
             ],
         )
 
-    def test_add_ids_erros(self):
+    def test_add_ids_errors(self):
         assert_report_item_list_equal(
             self._validate(
                 "tag",
@@ -1271,15 +1271,15 @@ class ValidateTagUpdateByIds(TestCase):
                 fixture.report_not_found(
                     "none",
                     context_type="resources",
-                    expected_types=self.OBJ_REF_EXPCTED_TYPES,
+                    expected_types=self.OBJ_REF_EXPECTED_TYPES,
                 ),
                 fixture.report_unexpected_element(
-                    "other_id", "meta_attributes", self.OBJ_REF_EXPCTED_TYPES
+                    "other_id", "meta_attributes", self.OBJ_REF_EXPECTED_TYPES
                 ),
                 fixture.report_not_found(
                     "status_id",
                     context_type="resources",
-                    expected_types=self.OBJ_REF_EXPCTED_TYPES,
+                    expected_types=self.OBJ_REF_EXPECTED_TYPES,
                 ),
                 fixture.error(
                     # pylint: disable=line-too-long
@@ -1379,7 +1379,7 @@ class ValidateTagUpdateByIds(TestCase):
                 fixture.report_not_found(
                     "none",
                     context_type="resources",
-                    expected_types=self.OBJ_REF_EXPCTED_TYPES,
+                    expected_types=self.OBJ_REF_EXPECTED_TYPES,
                 ),
             ],
         )

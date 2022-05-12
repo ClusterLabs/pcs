@@ -302,31 +302,31 @@ class NodeStandby(TestCase, AssertPcsMixin):
     def test_one_bad_node(self):
         self.assert_standby_none()
         self.assert_pcs_fail(
-            "node standby nonexistant-node".split(),
-            "Error: Node 'nonexistant-node' does not appear to exist in configuration\n",
+            "node standby nonexistent-node".split(),
+            "Error: Node 'nonexistent-node' does not appear to exist in configuration\n",
         )
         self.assert_standby_none()
 
         self.fixture_standby_all()
         self.assert_pcs_fail(
-            "node unstandby nonexistant-node".split(),
-            "Error: Node 'nonexistant-node' does not appear to exist in configuration\n",
+            "node unstandby nonexistent-node".split(),
+            "Error: Node 'nonexistent-node' does not appear to exist in configuration\n",
         )
         self.assert_standby_all()
 
     def test_bad_node_cancels_all_changes(self):
         self.assert_standby_none()
         self.assert_pcs_fail(
-            "node standby rh7-1 nonexistant-node and-another rh7-2".split(),
-            "Error: Node 'nonexistant-node' does not appear to exist in configuration\n"
+            "node standby rh7-1 nonexistent-node and-another rh7-2".split(),
+            "Error: Node 'nonexistent-node' does not appear to exist in configuration\n"
             "Error: Node 'and-another' does not appear to exist in configuration\n",
         )
         self.assert_standby_none()
 
         self.fixture_standby_all()
         self.assert_pcs_fail(
-            "node standby rh7-1 nonexistant-node and-another rh7-2".split(),
-            "Error: Node 'nonexistant-node' does not appear to exist in configuration\n"
+            "node standby rh7-1 nonexistent-node and-another rh7-2".split(),
+            "Error: Node 'nonexistent-node' does not appear to exist in configuration\n"
             "Error: Node 'and-another' does not appear to exist in configuration\n",
         )
         self.assert_standby_all()
@@ -451,31 +451,31 @@ class NodeMaintenance(TestCase, AssertPcsMixin):
     def test_one_bad_node(self):
         self.assert_maintenance_none()
         self.assert_pcs_fail(
-            "node maintenance nonexistant-node".split(),
-            "Error: Node 'nonexistant-node' does not appear to exist in configuration\n",
+            "node maintenance nonexistent-node".split(),
+            "Error: Node 'nonexistent-node' does not appear to exist in configuration\n",
         )
         self.assert_maintenance_none()
 
         self.fixture_maintenance_all()
         self.assert_pcs_fail(
-            "node unmaintenance nonexistant-node".split(),
-            "Error: Node 'nonexistant-node' does not appear to exist in configuration\n",
+            "node unmaintenance nonexistent-node".split(),
+            "Error: Node 'nonexistent-node' does not appear to exist in configuration\n",
         )
         self.assert_maintenance_all()
 
     def test_bad_node_cancels_all_changes(self):
         self.assert_maintenance_none()
         self.assert_pcs_fail(
-            "node maintenance rh7-1 nonexistant-node and-another rh7-2".split(),
-            "Error: Node 'nonexistant-node' does not appear to exist in configuration\n"
+            "node maintenance rh7-1 nonexistent-node and-another rh7-2".split(),
+            "Error: Node 'nonexistent-node' does not appear to exist in configuration\n"
             "Error: Node 'and-another' does not appear to exist in configuration\n",
         )
         self.assert_maintenance_none()
 
         self.fixture_maintenance_all()
         self.assert_pcs_fail(
-            "node maintenance rh7-1 nonexistant-node and-another rh7-2".split(),
-            "Error: Node 'nonexistant-node' does not appear to exist in configuration\n"
+            "node maintenance rh7-1 nonexistent-node and-another rh7-2".split(),
+            "Error: Node 'nonexistent-node' does not appear to exist in configuration\n"
             "Error: Node 'and-another' does not appear to exist in configuration\n",
         )
         self.assert_maintenance_all()

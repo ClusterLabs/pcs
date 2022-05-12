@@ -44,6 +44,13 @@ distcheck:
     paths:
       - dist
 
+typos:
+  stage: stage1
+  script:
+    - ./autogen.sh
+    - ./configure --enable-local-build --enable-typos-check
+    - make
+    - make typos_check
 
 black:
   stage: stage1

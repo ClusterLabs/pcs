@@ -29,7 +29,7 @@ class SyncConfigMutualExclusive(SinatraRemote):
     """
     SyncConfigMutualExclusive handles urls which should be directed to the
     Sinatra remote (non-GUI) functions that can not run at the same time as
-    config synchronization. The exclusivity is achived by sync_config_lock.
+    config synchronization. The exclusivity is achieved by sync_config_lock.
     """
 
     def initialize(

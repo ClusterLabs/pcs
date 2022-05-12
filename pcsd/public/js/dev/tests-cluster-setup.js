@@ -278,7 +278,7 @@ testClusterSetup.canAddClusterOrNodes403 = function(url, data, success, fail){
 testClusterSetup.canAddClusterOrNodes500 = function(url, data, success, fail){
   switch(url){
     case "/manage/can-add-cluster-or-nodes": return fail(
-      500, "Somethig is wrong",
+      500, "Something is wrong",
     );
     default:
       return testClusterSetup.successPath(url, data, success, fail);
@@ -302,7 +302,7 @@ testClusterSetup.canAddClusterOrNodes400 = function(url, data, success, fail){
 testClusterSetup.checkAuth500 = function(url, data, success, fail){
   switch(url){
     case "/manage/check_auth_against_nodes": return fail(
-      500, "Somethig is wrong",
+      500, "Something is wrong",
     );
     case "/manage/send-known-hosts-to-node": return success("success");
   }
@@ -375,7 +375,7 @@ testClusterSetup.clusterSetup403 = function(url, data, success, fail){
 testClusterSetup.clusterSetup500 = function(url, data, success, fail){
   switch(url){
     case "/manage/cluster-setup": return fail(
-      500, "Somethig is wrong",
+      500, "Something is wrong",
     );
     default:
       return testClusterSetup.successPath(url, data, success, fail);

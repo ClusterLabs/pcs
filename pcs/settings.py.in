@@ -4,7 +4,7 @@ systemctl_binary = "@SYSTEMCTL@"
 systemd_unit_path = "@SYSTEMD_UNIT_PATH@".split(":")
 chkconfig_binary = "/sbin/chkconfig"
 service_binary = "@SERVICE@"
-# Used only in utils.py in deprecated funcion
+# Used only in utils.py in a deprecated function
 pacemaker_binaries = "@PCMKEXECPREFIX@/sbin"
 corosync_binaries = "@COROEXECPREFIX@/sbin"
 corosync_qnet_binaries = "@COROQDEVEXECPREFIX@/bin"

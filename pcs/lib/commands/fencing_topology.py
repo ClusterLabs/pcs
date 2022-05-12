@@ -119,7 +119,7 @@ def remove_levels_by_params(
 
     # TODO remove, deprecated backward compatibility mode
     # CLI command parameters are: level, node, stonith, stonith... Both the
-    # node and the stonith list are optional. If the node is ommited and the
+    # node and the stonith list are optional. If the node is omitted and the
     # stonith list is present, there is no way to figure it out, since there is
     # no specification of what the parameter is. Hence the pre-lib code tried
     # both. First it assumed the first parameter is a node. If that fence level

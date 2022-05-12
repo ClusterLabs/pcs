@@ -50,7 +50,7 @@ def config_cmd(caption, load_constraints, format_options, modifiers):
     callable load_constraints which returns desired constraints as dictionary
         like {"plain": [], "with_resource_sets": []}
     callable format_options takes dict of options and show_detail flag (bool)
-        and returns string with constraint formated for commandline
+        and returns string with constraint formatted for commandline
     modifiers dict like object with command modifiers
 
     Commandline options:

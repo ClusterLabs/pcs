@@ -135,7 +135,7 @@ class StandbyMaintenancePassParametersAll(StandbyMaintenancePassParameters):
         )
 
 
-class SetInstaceAttrsBase(TestCase):
+class SetInstanceAttrsBase(TestCase):
     node_count = 2
 
     def setUp(self):
@@ -168,7 +168,7 @@ class SetInstaceAttrsBase(TestCase):
 
 @patch_command("update_node_instance_attrs")
 @patch_command("get_local_node_name")
-class SetInstaceAttrsLocal(SetInstaceAttrsBase):
+class SetInstanceAttrsLocal(SetInstanceAttrsBase):
     node_count = 2
 
     def test_not_possible_with_cib_file(self, mock_name, mock_attrs):
@@ -201,7 +201,7 @@ class SetInstaceAttrsLocal(SetInstaceAttrsBase):
 
 
 @patch_command("update_node_instance_attrs")
-class SetInstaceAttrsAll(SetInstaceAttrsBase):
+class SetInstanceAttrsAll(SetInstanceAttrsBase):
     node_count = 2
 
     def test_success(self, mock_attrs):
@@ -218,7 +218,7 @@ class SetInstaceAttrsAll(SetInstaceAttrsBase):
 
 
 @patch_command("update_node_instance_attrs")
-class SetInstaceAttrsList(SetInstaceAttrsBase):
+class SetInstanceAttrsList(SetInstanceAttrsBase):
     node_count = 4
 
     def test_success(self, mock_attrs):
@@ -264,7 +264,7 @@ class CibRunnerNodes(TestCase):
     @patch_env("ensure_wait_satisfiable")
     @patch_command("ClusterState")
     @patch_env("get_cluster_state")
-    def test_wire_together_all_expected_dependecies(
+    def test_wire_together_all_expected_dependencies(
         self,
         get_cluster_state,
         cluster_state,

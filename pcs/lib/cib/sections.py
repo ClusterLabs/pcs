@@ -1,6 +1,6 @@
 """
-This module defines madatory and optional cib sections. It provides function for
-getting existing section from the cib (lxml) tree.
+This module defines mandatory and optional cib sections. It provides functions
+for getting existing sections from the cib (lxml) tree.
 """
 from pcs.common import reports
 from pcs.common.reports.item import ReportItem

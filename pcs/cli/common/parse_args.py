@@ -140,7 +140,7 @@ def split_option(arg, allow_empty_value=True):
     Get (key, value) from a key=value commandline argument.
 
     Split the argument by the first = and return resulting parts. Raise
-    CmdLineInputError if the argument cannot be splitted.
+    CmdLineInputError if the argument cannot be split.
 
     string arg -- commandline argument
     allow_empty_value -- if True, empty value is allowed. Otherwise,
@@ -232,10 +232,10 @@ def group_by_keywords(
     set keyword_set contain all expected keywords
     string implicit_first_group_key is the key for capturing of arguments before
         the occurrence of the first keyword. implicit_first_group_key is not
-        a keyword => its occurence in args is considered as ordinary argument.
+        a keyword => its occurrence in args is considered as ordinary argument.
     bool keyword_repeat_allowed is the flag to turn on/off checking the
         uniqueness of each keyword in arg_list.
-    list group_repeated_keywords contains keywords for which each occurence is
+    list group_repeated_keywords contains keywords for which each occurrence is
         packed separately. For example when keywords are "first" and "seconds"
         and group_repeated_keywords is ["first"] then for arg_list
         ["first", 1, 2, "second", 3, "first", 4] it returns
@@ -274,7 +274,7 @@ def group_by_keywords(
                 completed_groups[implicit_first_group_key] = []
         return completed_groups
 
-    def is_acceptable_keyword_occurence(keyword):
+    def is_acceptable_keyword_occurrence(keyword):
         return (
             keyword not in groups
             or keyword_repeat_allowed
@@ -282,7 +282,7 @@ def group_by_keywords(
         )
 
     def process_keyword(keyword):
-        if not is_acceptable_keyword_occurence(keyword):
+        if not is_acceptable_keyword_occurrence(keyword):
             raise CmdLineInputError(
                 "'{0}' cannot be used more than once".format(keyword)
             )

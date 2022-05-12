@@ -21,7 +21,7 @@ def send_all_config_to_node(
     skip_wrong_config=False,
 ):
     """
-    Send all booth configs from default booth config directory and theri
+    Send all booth configs from default booth config directory and their
     authfiles to specified node.
 
     communicator -- NodeCommunicator

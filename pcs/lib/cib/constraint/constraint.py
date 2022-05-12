@@ -130,7 +130,7 @@ def check_is_without_duplication(
     element: _Element,
     are_duplicate: Callable[[_Element, _Element], bool],
     export_element: Callable[[_Element], Dict[str, Any]],
-    duplication_alowed: bool = False,
+    duplication_allowed: bool = False,
 ) -> None:
     duplicate_element_list = [
         duplicate_element
@@ -164,7 +164,7 @@ def check_is_without_duplication(
             ReportItem(
                 severity=reports.item.get_severity(
                     reports.codes.FORCE,
-                    duplication_alowed,
+                    duplication_allowed,
                 ),
                 message=reports.messages.DuplicateConstraintsExist(
                     [

@@ -12,7 +12,7 @@ from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.misc import get_test_resource as rc
 
 CRM_VERIFY_ERROR_REPORT_LINES = [
-    "someting wrong\nsomething else wrong\n",
+    "something wrong\nsomething else wrong\n",
     "  Use -V -V for more detail\n",
 ]
 

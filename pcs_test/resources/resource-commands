@@ -1,4 +1,4 @@
-# set of commands to genereate various resources configuration
+# set of commands to generate various resources configuration
 pcs resource bundle create B1 --force \
   container docker \
     image=pcs:test replicas=4 replicas-per-host=2 run-command=/bin/true network=extra_network_settings options=extra_options \

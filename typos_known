@@ -1,0 +1,114 @@
+./CHANGELOG.md: `regardles` -> `regardless`
+./Makefile.am: `ba` -> `by`, `be`
+./pcs/cli/common/output.py: `substracted` -> `subtracted`
+./pcs/cli/constraint/command.py: `alowed` -> `allowed`
+./pcs/cli/constraint/command.py: `alowed` -> `allowed`
+./pcs/cli/constraint_ticket/command.py: `alowed` -> `allowed`
+./pcs/cli/constraint_ticket/command.py: `alowed` -> `allowed`
+./pcs/common/reports/codes.py: `OVERRIDEN` -> `OVERRIDDEN`
+./pcs/common/reports/codes.py: `OVERRIDEN` -> `OVERRIDDEN`
+./pcs/common/reports/messages.py: `disabl` -> `disable`
+./pcs/common/reports/messages.py: `stopp` -> `stop`
+./pcs/config.py: `passin` -> `passing`
+./pcs/config.py: `passin` -> `passing`
+./pcs/config.py: `passin` -> `passing`
+./pcs/config.py: `passin` -> `passing`
+./pcsd/pcsd.rb: `ERRO` -> `ERROR`
+./pcsd/pcsd.rb: `WARNIN` -> `WARNING`
+./pcsd/test/test_cluster_entity.rb: `primitve` -> `primitive`
+./pcsd/test/test_cluster_entity.rb: `primitve` -> `primitive`
+./pcsd/test/test_cluster_entity.rb: `primitve` -> `primitive`
+./pcs/lib/commands/constraint/common.py: `alowed` -> `allowed`
+./pcs/lib/commands/constraint/common.py: `alowed` -> `allowed`
+./pcs/lib/commands/constraint/common.py: `alowed` -> `allowed`
+./pcs/lib/commands/constraint/common.py: `alowed` -> `allowed`
+./pcs/lib/commands/constraint/common.py: `alowed` -> `allowed`
+./pcs/lib/commands/constraint/common.py: `alowed` -> `allowed`
+./pcs/lib/commands/constraint/ticket.py: `alowed` -> `allowed`
+./pcs/lib/commands/constraint/ticket.py: `alowed` -> `allowed`
+./pcs/lib/commands/constraint/ticket.py: `alowed` -> `allowed`
+./pcs/lib/commands/constraint/ticket.py: `alowed` -> `allowed`
+./pcs/lib/commands/constraint/ticket.py: `alowed` -> `allowed`
+./pcs/lib/commands/constraint/ticket.py: `alowed` -> `allowed`
+./pcs/snmp/mibs/PCMK-PCS-V1-MIB.txt: `Resrouces` -> `Resources`
+./pcs/snmp/mibs/PCMK-PCS-V1-MIB.txt: `Resrouces` -> `Resources`
+./pcs/snmp/mibs/PCMK-PCS-V1-MIB.txt: `Resrouces` -> `Resources`
+./pcs/snmp/mibs/PCMK-PCS-V1-MIB.txt: `Resrouces` -> `Resources`
+./pcs_test/tier0/cli/constraint_ticket/test_command.py: `alowed` -> `allowed`
+./pcs_test/tier0/cli/constraint_ticket/test_command.py: `alowed` -> `allowed`
+./pcs_test/tier0/cli/constraint_ticket/test_command.py: `alowed` -> `allowed`
+./pcs_test/tier0/cli/constraint_ticket/test_command.py: `alowed` -> `allowed`
+./pcs_test/tier0/cli/test_cluster.py: `ba` -> `by`, `be`
+./pcs_test/tier0/cli/test_cluster.py: `ba` -> `by`, `be`
+./pcs_test/tier0/cli/test_cluster.py: `ba` -> `by`, `be`
+./pcs_test/tier0/cli/test_cluster.py: `ba` -> `by`, `be`
+./pcs_test/tier0/cli/test_cluster.py: `ba` -> `by`, `be`
+./pcs_test/tier0/cli/test_cluster.py: `ba` -> `by`, `be`
+./pcs_test/tier0/lib/cib/test_tools.py: `ba` -> `by`, `be`
+./pcs_test/tier0/lib/cib/test_tools.py: `ba` -> `by`, `be`
+./pcs_test/tier0/lib/cib/test_tools.py: `ba` -> `by`, `be`
+./pcs_test/tier0/lib/commands/test_constraint_common.py: `alowed` -> `allowed`
+./pcs_test/tier0/lib/corosync/test_config_parser.py: `ue` -> `use`, `due`
+./pcs_test/tier0/lib/corosync/test_config_parser.py: `ue` -> `use`, `due`
+./pcs_test/tier0/lib/corosync/test_config_parser.py: `ue` -> `use`, `due`
+./pcs_test/tier0/lib/corosync/test_config_parser.py: `ue` -> `use`, `due`
+./pcs_test/tier0/lib/corosync/test_config_validators_common.py: `ue` -> `use`, `due`
+./pcs_test/tier0/lib/corosync/test_config_validators_common.py: `ue` -> `use`, `due`
+./pcs_test/tier0/lib/corosync/test_config_validators_common.py: `ue` -> `use`, `due`
+./pcs_test/tier0/lib/corosync/test_config_validators_common.py: `ue` -> `use`, `due`
+./pcs_test/tier0/lib/corosync/test_config_validators_common.py: `ue` -> `use`, `due`
+./pcs_test/tier0/lib/corosync/test_config_validators_common.py: `ue` -> `use`, `due`
+./pcs_test/tier0/lib/corosync/test_config_validators_common.py: `ue` -> `use`, `due`
+./pcs_test/tier0/lib/corosync/test_config_validators_common.py: `ue` -> `use`, `due`
+./pcs_test/tier0/lib/corosync/test_config_validators_common.py: `ue` -> `use`, `due`
+./pcs_test/tier0/lib/corosync/test_config_validators_common.py: `ue` -> `use`, `due`
+./pcs_test/tier0/lib/corosync/test_config_validators_create.py: `ue` -> `use`, `due`
+./pcs_test/tier0/lib/corosync/test_config_validators_create.py: `ue` -> `use`, `due`
+./pcs_test/tier0/lib/corosync/test_config_validators_create.py: `ue` -> `use`, `due`
+./pcs_test/tier0/lib/corosync/test_config_validators_create.py: `ue` -> `use`, `due`
+./pcs_test/tier0/lib/corosync/test_config_validators_links.py: `ue` -> `use`, `due`
+./pcs_test/tier0/lib/corosync/test_config_validators_links.py: `ue` -> `use`, `due`
+./pcs_test/tier0/lib/corosync/test_config_validators_links.py: `ue` -> `use`, `due`
+./pcs_test/tier0/lib/corosync/test_config_validators_links.py: `ue` -> `use`, `due`
+./pcs_test/tier0/lib/corosync/test_config_validators_links.py: `ue` -> `use`, `due`
+./pcs_test/tier0/lib/corosync/test_config_validators_links.py: `ue` -> `use`, `due`
+./pcs_test/tier0/lib/corosync/test_config_validators_quorum.py: `ue` -> `use`, `due`
+./pcs_test/tier0/lib/corosync/test_config_validators_quorum.py: `ue` -> `use`, `due`
+./pcs_test/tier0/lib/pacemaker/test_values.py: `Alse` -> `Else`, `Also`, `False`
+./pcs_test/tier0/lib/pacemaker/test_values.py: `dum` -> `dumb`
+./pcs_test/tier0/lib/pacemaker/test_values.py: `dum` -> `dumb`
+./pcs_test/tier0/lib/pacemaker/test_values.py: `dum` -> `dumb`
+./pcs_test/tier0/lib/pacemaker/test_values.py: `dum` -> `dumb`
+./pcs_test/tier0/lib/pacemaker/test_values.py: `dum` -> `dumb`
+./pcs_test/tier0/lib/pacemaker/test_values.py: `dum` -> `dumb`
+./pcs_test/tier0/lib/pacemaker/test_values.py: `dum` -> `dumb`
+./pcs_test/tier0/lib/pacemaker/test_values.py: `dum` -> `dumb`
+./pcs_test/tier0/lib/pacemaker/test_values.py: `dum` -> `dumb`
+./pcs_test/tier0/lib/pacemaker/test_values.py: `dum` -> `dumb`
+./pcs_test/tier0/lib/pacemaker/test_values.py: `dum` -> `dumb`
+./pcs_test/tier0/lib/pacemaker/test_values.py: `dum` -> `dumb`
+./pcs_test/tier0/lib/pacemaker/test_values.py: `dum` -> `dumb`
+./pcs_test/tier0/lib/pacemaker/test_values.py: `dum` -> `dumb`
+./pcs_test/tier0/lib/pacemaker/test_values.py: `dum` -> `dumb`
+./pcs_test/tier0/lib/pacemaker/test_values.py: `dum` -> `dumb`
+./pcs_test/tier0/lib/pacemaker/test_values.py: `dum` -> `dumb`
+./pcs_test/tier0/lib/pacemaker/test_values.py: `dum` -> `dumb`
+./pcs_test/tier0/lib/pacemaker/test_values.py: `dum` -> `dumb`
+./pcs_test/tier0/lib/test_env_corosync.py: `ue` -> `use`, `due`
+./pcs_test/tier0/lib/test_env_corosync.py: `ue` -> `use`, `due`
+./pcs_test/tier0/lib/test_env_corosync.py: `ue` -> `use`, `due`
+./pcs_test/tier0/lib/test_env_corosync.py: `ue` -> `use`, `due`
+./pcs_test/tier0/lib/test_validate.py: `Ba` -> `By`, `Be`
+./pcs_test/tier0/lib/test_validate.py: `Ba` -> `By`, `Be`
+./pcs_test/tier1/legacy/test_utils.py: `dum` -> `dumb`
+./pcs_test/tier1/legacy/test_utils.py: `dum` -> `dumb`
+./pcs_test/tier1/legacy/test_utils.py: `dum` -> `dumb`
+./pcs_test/tier1/legacy/test_utils.py: `dum` -> `dumb`
+./pcs_test/tier1/legacy/test_utils.py: `dum` -> `dumb`
+./pcs_test/tier1/legacy/test_utils.py: `dum` -> `dumb`
+./pcs_test/tier1/legacy/test_utils.py: `dum` -> `dumb`
+./pcs_test/tier1/legacy/test_utils.py: `dum` -> `dumb`
+./pcs_test/tier1/legacy/test_utils.py: `ue` -> `use`, `due`
+./pcs_test/tier1/legacy/test_utils.py: `ue` -> `use`, `due`
+./pcs_test/tier1/legacy/test_utils.py: `Ue` -> `Use`, `Due`
+./pcs_test/tools/bin_mock/pcmk/crm_resource.d/list_agents_ocf__heartbeat: `exportfs` -> `exports`

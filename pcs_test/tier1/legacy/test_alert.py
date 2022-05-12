@@ -12,7 +12,7 @@ from pcs_test.tools.pcs_runner import PcsRunner
 
 empty_cib = rc("cib-empty.xml")
 
-ERRORS_HAVE_OCURRED = (
+ERRORS_HAVE_OCCURRED = (
     "Error: Errors have occurred, therefore pcs is unable to continue\n"
 )
 
@@ -177,7 +177,7 @@ class DeleteRemoveAlertTest(PcsAlertTest):
     def _test_not_existing_alert(self):
         self.assert_pcs_fail(
             ["alert", self.command, "alert1"],
-            ("Error: alert 'alert1' does not exist\n" + ERRORS_HAVE_OCURRED),
+            ("Error: alert 'alert1' does not exist\n" + ERRORS_HAVE_OCCURRED),
         )
 
     def _test_one(self):
@@ -326,7 +326,7 @@ Alerts:
             "alert recipient add alert value=rec_value".split(),
             (
                 "Error: Recipient 'rec_value' in alert 'alert' already exists, "
-                "use --force to override\n" + ERRORS_HAVE_OCURRED
+                "use --force to override\n" + ERRORS_HAVE_OCCURRED
             ),
         )
         self.assert_pcs_success(
@@ -436,7 +436,7 @@ Alerts:
             "alert recipient update alert-recipient value=value".split(),
             (
                 "Error: Recipient 'value' in alert 'alert' already exists, "
-                "use --force to override\n" + ERRORS_HAVE_OCURRED
+                "use --force to override\n" + ERRORS_HAVE_OCCURRED
             ),
         )
         self.assert_pcs_success(
@@ -594,7 +594,8 @@ class DeleteRemoveRecipientTest(PcsAlertTest):
             ["alert", "recipient", self.command, "rec1", "rec2", "rec3"],
             (
                 "Error: recipient 'rec2' does not exist\n"
-                "Error: recipient 'rec3' does not exist\n" + ERRORS_HAVE_OCURRED
+                "Error: recipient 'rec3' does not exist\n"
+                + ERRORS_HAVE_OCCURRED
             ),
         )
         self.assert_pcs_success(

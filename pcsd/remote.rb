@@ -274,7 +274,7 @@ end
 def _update_pcsd_settings(config, cluster_name, new_nodes)
   old_nodes = config.get_nodes(cluster_name)
 
-  # removing log is embeded in config.update_cluster
+  # removing log is embedded in config.update_cluster
   $logger.info(
     "Updating node list for: #{cluster_name} #{old_nodes}->#{new_nodes}"
   )
@@ -682,7 +682,7 @@ def set_configs(params, request, auth_user)
   remote_configs.each { |name, remote_cfg|
     begin
       # Save a remote config if it is a newer version than local. If the config
-      # is not present on a local node, the node is beeing added to a cluster,
+      # is not present on a local node, the node is being added to a cluster,
       # so we need to save the config as well.
       if force or not local_configs.key?(name) or remote_cfg > local_configs[name]
         local_configs[name].class.backup() if local_configs.key?(name)
@@ -2131,7 +2131,7 @@ def resource_unclone(params, request, auth_user)
   return 200
 end
 
-def set_resource_utilization(params, reqest, auth_user)
+def set_resource_utilization(params, request, auth_user)
   unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
     return 403, 'Permission denied'
   end
@@ -2156,7 +2156,7 @@ def set_resource_utilization(params, reqest, auth_user)
   return 200
 end
 
-def set_node_utilization(params, reqest, auth_user)
+def set_node_utilization(params, request, auth_user)
   unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
     return 403, 'Permission denied'
   end
@@ -2939,11 +2939,11 @@ def create_recipient(params, request, auth_user)
   end
   alert_id = params[:alert_id]
   if not alert_id or alert_id.strip! == ''
-    return [400, 'Missing required paramter: alert_id']
+    return [400, 'Missing required parameter: alert_id']
   end
   value = params[:value]
   if not value or value == ''
-    return [400, 'Missing required paramter: value']
+    return [400, 'Missing required parameter: value']
   end
   recipient_id = params[:recipient_id]
   description = params[:description]
@@ -2967,11 +2967,11 @@ def update_recipient(params, request, auth_user)
   end
   recipient_id = params[:recipient_id]
   if not recipient_id or recipient_id.strip! == ''
-    return [400, 'Missing required paramter: recipient_id']
+    return [400, 'Missing required parameter: recipient_id']
   end
   value = params[:value]
   if value and value.strip! == ''
-    return [400, 'Parameter value canot be empty string']
+    return [400, 'Parameter value cannot be empty string']
   end
   description = params[:description]
   meta_attr_list = _hash_to_argument_list(params[:meta_attr])

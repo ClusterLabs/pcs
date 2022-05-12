@@ -43,9 +43,9 @@ class ConstraintTest(TestCase):
 class ConstraintPlainTest(TestCase):
     @mock.patch("pcs.common.reports.constraints.colocation_plain")
     def test_choose_right_reporter(self, mock_colocation_plain):
-        mock_colocation_plain.return_value = "some constraint formated"
+        mock_colocation_plain.return_value = "some constraint formatted"
         self.assertEqual(
-            "some constraint formated",
+            "some constraint formatted",
             constraint_plain(
                 "rsc_colocation",
                 "constraint_in_library_representation",
