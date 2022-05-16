@@ -2,6 +2,7 @@ import logging
 
 LOGGER_NAMES = [
     "pcs.daemon",
+    "pcs.daemon.scheduler",
     "tornado.application",
     "tornado.access",
     "tornado.general",

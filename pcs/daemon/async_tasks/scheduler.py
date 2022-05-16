@@ -1,6 +1,5 @@
 import multiprocessing as mp
 import sys
-import uuid
 from logging import handlers
 from queue import Empty
 from typing import Dict
@@ -10,7 +9,9 @@ from pcs.common.async_tasks.dto import (
     TaskResultDto,
 )
 from pcs.common.async_tasks.types import TaskKillReason
+from pcs.common.tools import get_unique_uuid
 from pcs.daemon.log import pcsd as pcsd_logger
+from pcs.lib.auth.provider import AuthUser
 
 from .messaging import Message
 from .task import (
@@ -80,23 +81,32 @@ class Scheduler:
         q_listener.start()
         return q_listener
 
-    def get_task(self, task_ident: str) -> TaskResultDto:
+    def get_task(self, task_ident: str, auth_user: AuthUser) -> TaskResultDto:
         """
         Fetches all information about task for the client
         """
-        task_result_dto = self._return_task(task_ident).to_dto()
+        task = self._get_task(task_ident)
+        self._check_user(task, auth_user)
+        return task.to_dto()
 
+    def _get_task(self, task_ident: str) -> Task:
+        task = self._return_task(task_ident)
         # Task deletion after first retrieval of finished task
-        if task_result_dto.state == TaskState.FINISHED:
+        if task.state == TaskState.FINISHED:
             del self._task_register[task_ident]
+        return task
 
-        return task_result_dto
+    @staticmethod
+    def _check_user(task: Task, auth_user: AuthUser) -> None:
+        if task.auth_user.username != auth_user.username:
+            raise TaskNotFoundError(task.task_ident)
 
     async def wait_for_task(self, task_ident: str) -> TaskResultDto:
-        await self._return_task(task_ident).finished_event.wait()
-        return self.get_task(task_ident)
+        task = self._return_task(task_ident)
+        await task.finished_event.wait()
+        return self._get_task(task_ident).to_dto()
 
-    def kill_task(self, task_ident: str) -> None:
+    def kill_task(self, task_ident: str, auth_user: AuthUser) -> None:
         """
         Terminates the specified task
 
@@ -104,22 +114,22 @@ class Scheduler:
         the garbage collector
         """
         task = self._return_task(task_ident)
+        self._check_user(task, auth_user)
 
         self._logger.debug("User is killing a task %s.", task_ident)
         task.request_kill(TaskKillReason.USER)
 
-    def new_task(self, command_dto: CommandDto) -> str:
+    def new_task(self, command_dto: CommandDto, auth_user: AuthUser) -> str:
         """
         Creates a new task that will be executed by the scheduler
         :param command_dto: Command and its parameters
         :return: Task identifier
         """
-        is_duplicate = True
-        while is_duplicate:
-            task_ident = uuid.uuid4().hex
-            is_duplicate = task_ident in self._task_register
+        task_ident = get_unique_uuid(self._task_register)
 
-        self._task_register[task_ident] = Task(task_ident, command_dto)
+        self._task_register[task_ident] = Task(
+            task_ident, command_dto, auth_user
+        )
         self._logger.debug(
             "New task %s created (command: %s, parameters: %s)",
             task_ident,

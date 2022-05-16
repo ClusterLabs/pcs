@@ -1,3 +1,5 @@
+import base64
+import binascii
 import json
 import logging
 from typing import (
@@ -10,10 +12,7 @@ from typing import (
     Type,
 )
 
-from tornado.web import (
-    HTTPError,
-    RequestHandler,
-)
+from tornado.web import HTTPError
 
 from pcs.common import communication
 from pcs.common.async_tasks import types
@@ -27,6 +26,15 @@ from pcs.daemon.async_tasks.scheduler import (
     Scheduler,
     TaskNotFoundError,
 )
+from pcs.lib.auth.provider import (
+    AuthProvider,
+    AuthUser,
+)
+
+from .common import (
+    AuthProviderBaseHandler,
+    NotAuthorizedException,
+)
 
 
 class ApiError(HTTPError):
@@ -34,18 +42,19 @@ class ApiError(HTTPError):
         self,
         response_code: communication.types.CommunicationResultStatus,
         response_msg: str,
+        http_code: int = 200,
     ) -> None:
-        super().__init__(200)
+        super().__init__(http_code)
         self.response_code = response_code
         self.response_msg = response_msg
 
 
 class InvalidInputError(ApiError):
-    def __init__(self, msg="Input is not valid JSON object"):
+    def __init__(self, msg: str = "Input is not valid JSON object"):
         super().__init__(communication.const.COM_STATUS_INPUT_ERROR, msg)
 
 
-class BaseAPIHandler(RequestHandler):
+class BaseAPIHandler(AuthProviderBaseHandler):
     """
     Base handler for the REST API
 
@@ -53,12 +62,15 @@ class BaseAPIHandler(RequestHandler):
     and HTTP(S) settings.
     """
 
-    def initialize(self, scheduler: Scheduler) -> None:
+    def initialize(
+        self, scheduler: Scheduler, auth_provider: AuthProvider
+    ) -> None:
+        super()._init_auth_provider(auth_provider)
         # pylint: disable=attribute-defined-outside-init
         self.scheduler = scheduler
         self.json: Optional[Dict[str, Any]] = None
         # TODO: Turn into a constant
-        self.logger: logging.Logger = logging.getLogger("pcs_scheduler")
+        self.logger: logging.Logger = logging.getLogger("pcs.daemon.scheduler")
 
     def prepare(self) -> None:
         """JSON preprocessing"""
@@ -72,6 +84,16 @@ class BaseAPIHandler(RequestHandler):
                 self.json = json.loads(self.request.body)
             except json.JSONDecodeError as e:
                 raise InvalidInputError() from e
+
+    async def get_auth_user(self) -> AuthUser:
+        try:
+            return await super().get_auth_user()
+        except NotAuthorizedException as e:
+            raise ApiError(
+                response_code=communication.const.COM_STATUS_NOT_AUTHORIZED,
+                response_msg="",
+                http_code=401,
+            ) from e
 
     def send_response(
         self, response: communication.dto.InternalCommunicationResultDto
@@ -90,6 +112,12 @@ class BaseAPIHandler(RequestHandler):
         if "exc_info" in kwargs:
             _, exc, _ = kwargs["exc_info"]
             if isinstance(exc, ApiError):
+                if (
+                    exc.response_code
+                    == communication.const.COM_STATUS_NOT_AUTHORIZED
+                ):
+                    self.finish(json.dumps({"notauthorized": "true"}))
+                    return
                 response = communication.dto.InternalCommunicationResultDto(
                     status=exc.response_code,
                     status_msg=exc.response_msg,
@@ -107,7 +135,26 @@ class BaseAPIHandler(RequestHandler):
 class ApiV1Handler(BaseAPIHandler):
     """Create a new task from command"""
 
-    async def post(self, cmd) -> None:
+    def _get_effective_username(self) -> Optional[str]:
+        username = self.get_cookie("CIB_user")
+        if username:
+            return username
+        return None
+
+    def _get_effective_groups(self) -> Optional[List[str]]:
+        if self._get_effective_username():
+            groups_raw = self.get_cookie("CIB_user_groups")
+            if groups_raw:
+                try:
+                    return (
+                        base64.b64decode(groups_raw).decode("utf-8").split(" ")
+                    )
+                except (UnicodeError, binascii.Error):
+                    self.logger.warning("Unable to decode users groups")
+        return None
+
+    async def post(self, cmd: str) -> None:
+        auth_user = await self.get_auth_user()
         if cmd not in API_V1_MAP:
             raise ApiError(
                 communication.const.COM_STATUS_UNKNOWN_CMD,
@@ -118,9 +165,12 @@ class ApiV1Handler(BaseAPIHandler):
         command_dto = CommandDto(
             command_name=API_V1_MAP[cmd],
             params=self.json,
-            options=CommandOptionsDto(),
+            options=CommandOptionsDto(
+                effective_username=self._get_effective_username(),
+                effective_groups=self._get_effective_groups(),
+            ),
         )
-        task_ident = self.scheduler.new_task(command_dto)
+        task_ident = self.scheduler.new_task(command_dto, auth_user)
 
         try:
             task_result_dto = await self.scheduler.wait_for_task(task_ident)
@@ -147,9 +197,9 @@ class ApiV1Handler(BaseAPIHandler):
 
 
 def get_routes(
-    scheduler: Scheduler,
+    scheduler: Scheduler, auth_provider: AuthProvider
 ) -> List[Tuple[str, Type[BaseAPIHandler], dict]]:
-    params = dict(scheduler=scheduler)
+    params = dict(scheduler=scheduler, auth_provider=auth_provider)
     return [
         (r"/api/v1/(.*)", ApiV1Handler, params),
     ]

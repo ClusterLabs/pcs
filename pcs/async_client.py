@@ -1,5 +1,6 @@
 # pylint: disable=global-statement
 import json
+import os
 import signal
 import sys
 from textwrap import dedent
@@ -20,32 +21,54 @@ from pcs.common.interface.dto import (
     from_dict,
     to_dict,
 )
+from pcs.common.node_communicator import (
+    HostNotFound,
+    NodeTargetFactory,
+)
 from pcs.common.reports import ReportItemDto
+from pcs.utils import read_known_hosts_file
 
 task_ident = ""
 report_list: List[ReportItemDto] = []
 kill_requested = False
 
 
-def signal_handler(sig, frame):
-    # pylint: disable=unused-argument
-    if sig == signal.SIGINT:
-        global kill_requested
-        if not task_ident:
-            error("no task to kill")
-            raise SystemExit(1) from None
-        if kill_requested:
-            raise SystemExit(1)
+def get_token_for_localhost() -> str:
+    try:
+        return (
+            NodeTargetFactory(read_known_hosts_file())
+            .get_target("localhost")
+            .token
+        )
+    except HostNotFound as e:
+        error(f"No token found for '{e.name}'")
+        raise SystemExit(1) from e
 
-        kill_requested = True
-        # Kill task request
-        task_ident_dto = TaskIdentDto(task_ident)
-        make_api_request_post("task/kill", json.dumps(to_dict(task_ident_dto)))
-        print("Task kill request sent...")
-        task_result_dto = fetch_task_result(task_ident_dto)
-        print_command_return_value(task_result_dto)
-        print_task_details(task_result_dto)
-        raise SystemExit(0)
+
+def get_signal_handler(token: str):
+    def signal_handler(sig, frame):
+        # pylint: disable=unused-argument
+        if sig == signal.SIGINT:
+            global kill_requested
+            if not task_ident:
+                error("no task to kill")
+                raise SystemExit(1) from None
+            if kill_requested:
+                raise SystemExit(1)
+
+            kill_requested = True
+            # Kill task request
+            task_ident_dto = TaskIdentDto(task_ident)
+            make_api_request_post(
+                "task/kill", json.dumps(to_dict(task_ident_dto)), token
+            )
+            print("Task kill request sent...")
+            task_result_dto = fetch_task_result(task_ident_dto, token)
+            print_command_return_value(task_result_dto)
+            print_task_details(task_result_dto)
+            raise SystemExit(0)
+
+    return signal_handler
 
 
 # REQUEST FUNCTIONS
@@ -69,8 +92,9 @@ def _make_api_request(endpoint) -> pycurl.Curl:
     return curl
 
 
-def make_api_request_get(endpoint: str, params: str) -> str:
+def make_api_request_get(endpoint: str, params: str, auth_token: str) -> str:
     curl = _make_api_request(endpoint + params)
+    curl.setopt(pycurl.COOKIE, f"token={auth_token};".encode("utf-8"))
     response = curl.perform_rs()
     _handle_api_error(curl, response)
     return response
@@ -79,10 +103,12 @@ def make_api_request_get(endpoint: str, params: str) -> str:
 def make_api_request_post(
     endpoint: str,
     json_body: str,
+    auth_token: str,
 ) -> str:
     curl = _make_api_request(endpoint)
     curl.setopt(pycurl.HTTPHEADER, ["Content-Type: application/json"])
     curl.setopt(pycurl.POSTFIELDS, json_body)
+    curl.setopt(pycurl.COOKIE, f"token={auth_token};".encode("utf-8"))
     response = curl.perform_rs()
     _handle_api_error(curl, response)
     return response
@@ -114,14 +140,16 @@ def error(text: str) -> None:
 
 # COMMAND CALL
 def fetch_task_result(
-    task_ident_dto: TaskIdentDto, sleep_interval: float = 0.3
+    task_ident_dto: TaskIdentDto, auth_token: str, sleep_interval: float = 0.3
 ) -> TaskResultDto:
     task_state = TaskState.CREATED
     # Using global report list to recall reports in signal handler
     global report_list
     while task_state != TaskState.FINISHED:
         response = make_api_request_get(
-            "task/result", f"?task_ident={task_ident_dto.task_ident}"
+            "task/result",
+            f"?task_ident={task_ident_dto.task_ident}",
+            auth_token,
         )
         task_result_dto = from_dict(TaskResultDto, json.loads(response))
         task_state = task_result_dto.state
@@ -139,23 +167,25 @@ def fetch_task_result(
     return task_result_dto
 
 
-def perform_command(command_dto: CommandDto) -> TaskResultDto:
+def perform_command(command_dto: CommandDto, auth_token: str) -> TaskResultDto:
     response = make_api_request_post(
-        "task/create", json.dumps(to_dict(command_dto))
+        "task/create", json.dumps(to_dict(command_dto)), auth_token
     )
     task_ident_dto = from_dict(TaskIdentDto, json.loads(response))
     global task_ident
     task_ident = task_ident_dto.task_ident
 
-    task_result_dto = fetch_task_result(task_ident_dto)
+    task_result_dto = fetch_task_result(task_ident_dto, auth_token)
 
     return task_result_dto
 
 
-def run_command_synchronously(command_dto: CommandDto) -> TaskResultDto:
+def run_command_synchronously(
+    command_dto: CommandDto, auth_token: str
+) -> TaskResultDto:
     print("Running command synchronously")
     response = make_api_request_post(
-        "task/run", json.dumps(to_dict(command_dto))
+        "task/run", json.dumps(to_dict(command_dto)), auth_token
     )
     task_result_dto = from_dict(TaskResultDto, json.loads(response))
     for report_item_dto in task_result_dto.reports:
@@ -164,24 +194,31 @@ def run_command_synchronously(command_dto: CommandDto) -> TaskResultDto:
 
 
 def main():
-    signal.signal(signal.SIGINT, signal_handler)
-    if len(sys.argv) not in (2, 3, 4):
-        error(f"Usage: {sys.argv[0]} [--sync] <command> [<payload>]")
+    entrypoint = sys.argv.pop(0)
+    if len(sys.argv) not in (1, 2, 3):
+        error(f"Usage: {entrypoint} [--sync] <command> [<payload>]")
         raise SystemExit(1)
     run_fn = perform_command
-    if sys.argv[1] == "--sync":
+    if sys.argv[0] == "--sync":
         sys.argv.pop(0)
         run_fn = run_command_synchronously
-    if len(sys.argv) == 3:
-        payload = sys.argv[2]
+    if len(sys.argv) == 2:
+        payload = sys.argv[1]
     else:
         payload = sys.stdin.read()
+    token = os.environ.get("PCS_TOKEN", None)
+    if token is None:
+        token = get_token_for_localhost()
+    signal.signal(signal.SIGINT, get_signal_handler(token))
     result = run_fn(
         CommandDto(
-            sys.argv[1],
+            sys.argv[0],
             json.loads(payload),
-            options=CommandOptionsDto(request_timeout=None),
-        )
+            options=CommandOptionsDto(
+                request_timeout=None,
+            ),
+        ),
+        token,
     )
     print_command_return_value(result)
     print_task_details(result)

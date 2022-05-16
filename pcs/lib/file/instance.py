@@ -109,6 +109,10 @@ class FileInstance:
         return cls._for_common(file_type_codes.COROSYNC_CONF)
 
     @classmethod
+    def for_pcs_users_config(cls) -> "FileInstance":
+        return cls._for_common(file_type_codes.PCS_USERS_CONF)
+
+    @classmethod
     def _for_common(
         cls,
         file_type_code: file_type_codes.FileTypeCode,

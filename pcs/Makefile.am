@@ -193,6 +193,14 @@ EXTRA_DIST		= \
 			  entry_points/snmp_agent.py \
 			  host.py \
 			  __init__.py \
+			  lib/auth/config/__init__.py \
+			  lib/auth/config/exporter.py \
+			  lib/auth/config/facade.py \
+			  lib/auth/config/parser.py \
+			  lib/auth/config/types.py \
+			  lib/auth/__init__.py \
+			  lib/auth/const.py \
+			  lib/auth/provider.py \
 			  lib/booth/config_facade.py \
 			  lib/booth/config_files.py \
 			  lib/booth/config_parser.py \
@@ -303,6 +311,7 @@ EXTRA_DIST		= \
 			  lib/external.py \
 			  lib/file/__init__.py \
 			  lib/file/instance.py \
+			  lib/file/json.py \
 			  lib/file/metadata.py \
 			  lib/file/raw_file.py \
 			  lib/file/toolbox.py \

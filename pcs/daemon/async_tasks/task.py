@@ -20,6 +20,7 @@ from pcs.common.async_tasks.types import (
 )
 from pcs.common.interface.dto import ImplementsToDto
 from pcs.common.reports.dto import ReportItemDto
+from pcs.lib.auth.provider import AuthUser
 from pcs.settings import (
     task_abandoned_timeout_seconds,
     task_unresponsive_timeout_seconds,
@@ -49,9 +50,15 @@ class Task(ImplementsToDto):
     """
 
     # pylint: disable=too-many-instance-attributes
-    def __init__(self, task_ident: str, command: CommandDto) -> None:
+    def __init__(
+        self,
+        task_ident: str,
+        command: CommandDto,
+        auth_user: AuthUser,
+    ) -> None:
         self._task_ident: str = task_ident
         self._command: CommandDto = command
+        self._auth_user = auth_user
         self._reports: List[Any] = []
         self._result: Any = None
         self._state: TaskState = TaskState.CREATED
@@ -81,6 +88,10 @@ class Task(ImplementsToDto):
     @property
     def task_ident(self) -> str:
         return self._task_ident
+
+    @property
+    def auth_user(self) -> AuthUser:
+        return self._auth_user
 
     @property
     def finished_event(self) -> Event:
@@ -233,7 +244,7 @@ class Task(ImplementsToDto):
         Creates structure for sending task to a worker process
         :return: Instance with task identifier, command and parameters
         """
-        return WorkerCommand(self._task_ident, self._command)
+        return WorkerCommand(self._task_ident, self._command, self._auth_user)
 
     def to_dto(self) -> TaskResultDto:
         """

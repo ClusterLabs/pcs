@@ -30,6 +30,7 @@ from pcs.daemon.app.common import RedirectHandler
 from pcs.daemon.async_tasks.scheduler import Scheduler
 from pcs.daemon.env import prepare_env
 from pcs.daemon.http_server import HttpsServerManage
+from pcs.lib.auth.provider import AuthProvider
 
 
 class SignalInfo:
@@ -66,6 +67,7 @@ def config_sync(sync_config_lock: Lock, ruby_pcsd_wrapper: ruby_pcsd.Wrapper):
 
 def configure_app(
     async_scheduler: Scheduler,
+    auth_provider: AuthProvider,
     session_storage: session.Storage,
     ruby_pcsd_wrapper: ruby_pcsd.Wrapper,
     sync_config_lock: Lock,
@@ -80,8 +82,8 @@ def configure_app(
             object via the method `initialize`.
         """
 
-        routes = async_api.get_routes(async_scheduler)
-        routes.extend(api_v1.get_routes(async_scheduler))
+        routes = async_api.get_routes(async_scheduler, auth_provider)
+        routes.extend(api_v1.get_routes(async_scheduler, auth_provider))
         routes.extend(
             sinatra_remote.get_routes(
                 ruby_pcsd_wrapper,
@@ -128,6 +130,7 @@ def main():
         worker_count=env.PCSD_WORKER_COUNT,
         worker_reset_limit=env.PCSD_WORKER_RESET_LIMIT,
     )
+    auth_provider = AuthProvider(log.pcsd)
     SignalInfo.async_scheduler = async_scheduler
 
     sync_config_lock = Lock()
@@ -137,6 +140,7 @@ def main():
     )
     make_app = configure_app(
         async_scheduler,
+        auth_provider,
         session.Storage(env.PCSD_SESSION_LIFETIME),
         ruby_pcsd_wrapper,
         sync_config_lock,

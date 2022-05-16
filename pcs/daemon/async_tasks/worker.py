@@ -5,7 +5,10 @@ import multiprocessing as mp
 import os
 import signal
 from dataclasses import dataclass
-from logging import getLogger
+from logging import (
+    Logger,
+    getLogger,
+)
 from typing import (
     Any,
     Tuple,
@@ -15,11 +18,17 @@ from typing import (
 import dacite
 
 from pcs.common import reports
-from pcs.common.async_tasks.dto import CommandDto
+from pcs.common.async_tasks.dto import (
+    CommandDto,
+    CommandOptionsDto,
+)
 from pcs.common.async_tasks.types import TaskFinishType
 from pcs.common.interface import dto
+from pcs.common.str_tools import format_list
+from pcs.lib.auth.provider import AuthUser
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
+from pcs.utils import read_known_hosts_file
 
 from .command_mapping import COMMAND_MAP
 from .logging import (
@@ -49,6 +58,7 @@ def sigterm_handler(sig_num: int, frame: Any) -> None:
 class WorkerCommand:
     task_ident: str
     command: CommandDto
+    auth_user: AuthUser
 
 
 def worker_init(message_q: mp.Queue, logging_q: mp.Queue) -> None:
@@ -82,6 +92,21 @@ def pause_worker() -> None:
     logger.debug("Worker unpaused.")
 
 
+def _get_effective_user(
+    logger: Logger, auth_user: AuthUser, options: CommandOptionsDto
+) -> AuthUser:
+    username = auth_user.username
+    groups = auth_user.groups
+    if options.effective_username:
+        username = options.effective_username
+        if options.effective_groups:
+            groups = options.effective_groups
+        logger.debug(
+            "Effective user: '%s'; groups: %s", username, format_list(groups)
+        )
+    return AuthUser(username=username, groups=groups)
+
+
 def task_executor(task: WorkerCommand) -> None:
     """
     Launches the task inside the worker
@@ -95,17 +120,32 @@ def task_executor(task: WorkerCommand) -> None:
             TaskExecuted(os.getpid()),
         )
     )
-    logger.info("Task %s executed.", task.task_ident)
+    logger.info(
+        "Task '%s' executed by user '%s'.",
+        task.task_ident,
+        task.auth_user.username,
+    )
     request_timeout = task.command.options.request_timeout
     if request_timeout is not None and request_timeout <= 0:
         logger.warning(
             "Invalid value '%s' for option 'request_timeout'", request_timeout
         )
         request_timeout = None
+    auth_user = task.auth_user
+    logger.debug(
+        "Real user: '%s'; groups: %s",
+        auth_user.username,
+        format_list(auth_user.groups),
+    )
+    if auth_user.is_superuser:
+        auth_user = _get_effective_user(logger, auth_user, task.command.options)
 
     env = LibraryEnvironment(  # type: ignore
         logger,
         WorkerReportProcessor(worker_com, task.task_ident),
+        known_hosts_getter=read_known_hosts_file,
+        user_login=auth_user.username,
+        user_groups=auth_user.groups,
         request_timeout=request_timeout,
     )
 

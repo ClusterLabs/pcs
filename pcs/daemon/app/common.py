@@ -1,5 +1,11 @@
+from tornado.ioloop import IOLoop
 from tornado.web import RedirectHandler as TornadoRedirectHandler
 from tornado.web import RequestHandler
+
+from pcs.lib.auth.provider import (
+    AuthProvider,
+    AuthUser,
+)
 
 
 class EnhanceHeadersMixin:
@@ -132,6 +138,28 @@ class BaseHandler(EnhanceHeadersMixin, RequestHandler):
         # method should be implemented to handle streamed request data.
         # BUT we currently do not plan to use it SO:
         pass
+
+
+class NotAuthorizedException(Exception):
+    pass
+
+
+class AuthProviderBaseHandler(BaseHandler):
+    def _init_auth_provider(self, auth_provider: AuthProvider) -> None:
+        # pylint: disable=attribute-defined-outside-init
+        self._auth_provider = auth_provider
+
+    async def get_auth_user(self) -> AuthUser:
+        token = self.get_cookie("token", default=None)
+        if token is None:
+            raise NotAuthorizedException()
+        auth_user = await IOLoop.current().run_in_executor(
+            executor=None,
+            func=lambda: self._auth_provider.login_by_token(token),
+        )
+        if auth_user is None:
+            raise NotAuthorizedException()
+        return auth_user
 
 
 # abstract method `data_received` is not used in redirect:

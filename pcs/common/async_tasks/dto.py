@@ -19,6 +19,8 @@ from .types import (
 @dataclass(frozen=True)
 class CommandOptionsDto(DataTransferObject):
     request_timeout: Optional[int] = None
+    effective_username: Optional[str] = None
+    effective_groups: Optional[List[str]] = None
 
 
 @dataclass(frozen=True)
