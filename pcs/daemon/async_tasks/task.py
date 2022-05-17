@@ -65,6 +65,7 @@ class Task(ImplementsToDto):
         self._task_finish_type: TaskFinishType = TaskFinishType.UNFINISHED
         self._kill_reason: Optional[TaskKillReason] = None
         self._last_message_at: Optional[datetime.datetime] = None
+        self._execution_started_at: Optional[datetime.datetime] = None
         self._worker_pid: int = -1
         self._finished_event = Event()
 
@@ -84,6 +85,8 @@ class Task(ImplementsToDto):
         self._state = state
         if self.state == TaskState.FINISHED:
             self._finished_event.set()
+        elif self.state == TaskState.EXECUTED:
+            self._execution_started_at = datetime.datetime.now()
 
     @property
     def task_ident(self) -> str:
@@ -139,7 +142,7 @@ class Task(ImplementsToDto):
         # to finish and will be garbage collected as abandoned
         return False
 
-    def is_defunct(self) -> bool:
+    def is_defunct(self, timeout: Optional[int] = None) -> bool:
         """
         Checks that the task is not behaving as expected
 
@@ -149,8 +152,10 @@ class Task(ImplementsToDto):
         :return: True if no messages were received during timeout period since
             the last message, False otherwise
         """
+        if timeout is None or timeout <= 0:
+            timeout = task_unresponsive_timeout_seconds
         if self.state == TaskState.EXECUTED:
-            return self._is_timed_out(task_unresponsive_timeout_seconds)
+            return self._is_timed_out(timeout)
         return False
 
     def _task_updated(self) -> None:

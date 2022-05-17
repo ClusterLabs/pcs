@@ -1,8 +1,13 @@
 import multiprocessing as mp
 import sys
+from collections import defaultdict
 from logging import handlers
+from multiprocessing.pool import worker as mp_worker_init  # type: ignore
 from queue import Empty
-from typing import Dict
+from typing import (
+    Dict,
+    List,
+)
 
 from pcs.common.async_tasks.dto import (
     CommandDto,
@@ -35,6 +40,10 @@ class TaskNotFoundError(Exception):
         self.task_ident = task_ident
 
 
+MAX_WORKER_COUNT = 50
+THRESHOLD_TIMEOUT = 10
+
+
 class Scheduler:
     # pylint: disable=too-many-instance-attributes
     """
@@ -57,6 +66,8 @@ class Scheduler:
         self._logger = pcsd_logger
         self._logging_q = self._proc_pool_manager.Queue()
         self._worker_log_listener = self._init_worker_logging()
+        self._worker_count = worker_count
+        self._single_use_process_pool: List[mp.Process] = []
         self._proc_pool = mp.Pool(
             processes=worker_count,
             maxtasksperchild=worker_reset_limit,
@@ -138,6 +149,21 @@ class Scheduler:
         )
         return task_ident
 
+    def _is_possibly_dead_locked(self) -> bool:
+        counter: Dict[TaskState, List[Task]] = defaultdict(list)
+        for task in self._task_register.values():
+            counter[task.state].append(task)
+
+        return (
+            len(counter[TaskState.CREATED]) + len(counter[TaskState.QUEUED]) > 0
+            and (self._worker_count + len(self._single_use_process_pool))
+            <= len(counter[TaskState.EXECUTED])
+            and all(
+                task.is_defunct(THRESHOLD_TIMEOUT)
+                for task in counter[TaskState.EXECUTED]
+            )
+        )
+
     async def _schedule_task(self, task: Task) -> None:
         if task.is_kill_requested():
             # The task state and finish types are set during garbage
@@ -172,6 +198,34 @@ class Scheduler:
         for task_ident in task_idents_to_delete:
             del self._task_register[task_ident]
 
+    def _spawn_new_single_use_worker(self) -> None:
+        # pylint: disable=protected-access
+        additional_process = mp.Process(
+            group=None,
+            target=mp_worker_init,
+            args=(
+                self._proc_pool._inqueue,  # type: ignore
+                self._proc_pool._outqueue,  # type: ignore
+                worker_init,
+                (self._worker_message_q, self._logging_q),
+                1,
+                False,
+            ),
+        )
+        self._single_use_process_pool.append(additional_process)
+        self._logger.info("Starting new temporary worker")
+        additional_process.start()
+
+    def _handle_single_use_process_pool(self) -> None:
+        new_pool: List[mp.Process] = []
+        for process in self._single_use_process_pool:
+            if process.is_alive():
+                new_pool.append(process)
+            else:
+                self._logger.info("Temporary worker removed")
+                process.close()
+        self._single_use_process_pool = new_pool
+
     async def perform_actions(self) -> int:
         """
         Calls all actions that are done by the scheduler in one pass
@@ -182,6 +236,16 @@ class Scheduler:
         """
         received_total = await self._receive_messages()
         await self._process_tasks()
+        self._handle_single_use_process_pool()
+        if (
+            self._is_possibly_dead_locked()
+            and len(self._single_use_process_pool)
+            < MAX_WORKER_COUNT - self._worker_count
+        ):
+            self._logger.warning(
+                "All workers busy, possible dead-lock detected!"
+            )
+            self._spawn_new_single_use_worker()
         return received_total
 
     async def _receive_messages(self) -> int:
