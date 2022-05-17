@@ -20,6 +20,7 @@ from pcs.lib.interface.config import (
     ParserErrorException,
     ParserInterface,
 )
+from pcs.lib.permissions import config as pcs_settings_conf
 
 from .json import (
     JsonExporter,
@@ -123,9 +124,17 @@ _toolboxes = {
     ),
     code.PCS_USERS_CONF: FileToolbox(
         file_type_code=code.PCS_USERS_CONF,
-        facade=auth_config.facade.Facade,  # TODO: change
+        facade=auth_config.facade.Facade,
         parser=auth_config.parser.Parser,
         exporter=auth_config.exporter.Exporter,
+        validator=None,  # TODO needed for files syncing
+        version_controller=None,  # TODO needed for files syncing
+    ),
+    code.PCS_SETTINGS_CONF: FileToolbox(
+        file_type_code=code.PCS_SETTINGS_CONF,
+        facade=pcs_settings_conf.facade.FacadeV2,
+        parser=pcs_settings_conf.parser.ParserV2,
+        exporter=pcs_settings_conf.exporter.ExporterV2,
         validator=None,  # TODO needed for files syncing
         version_controller=None,  # TODO needed for files syncing
     ),

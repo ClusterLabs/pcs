@@ -119,6 +119,8 @@ EXTRA_DIST		= \
 			  common/pacemaker/resource/relations.py \
 			  common/pacemaker/role.py \
 			  common/pacemaker/rule.py \
+			  common/permissions/__init__.py \
+			  common/permissions/types.py \
 			  common/pcs_pycurl.py \
 			  common/reports/codes.py \
 			  common/reports/const.py \
@@ -327,6 +329,13 @@ EXTRA_DIST		= \
 			  lib/pacemaker/simulate.py \
 			  lib/pacemaker/state.py \
 			  lib/pacemaker/values.py \
+			  lib/permissions/__init__.py \
+			  lib/permissions/checker.py \
+			  lib/permissions/config/__init__.py \
+			  lib/permissions/config/exporter.py \
+			  lib/permissions/config/facade.py \
+			  lib/permissions/config/parser.py \
+			  lib/permissions/config/types.py \
 			  lib/resource_agent/const.py \
 			  lib/resource_agent/error.py \
 			  lib/resource_agent/facade.py \

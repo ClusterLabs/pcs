@@ -645,3 +645,11 @@ class ResourceStonithCommandsMismatch(CliReportMessageTestBase):
             report_msg,
             f"{report_msg.message} Use 'pcs stonith create' command instead.",
         )
+
+
+class NotAuthorized(CliReportMessageTestBase):
+    def test_message(self):
+        self.assert_message(
+            messages.NotAuthorized(),
+            "Current user is not authorized for this operation",
+        )

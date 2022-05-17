@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import (
     List,
     Optional,
+    Sequence,
     cast,
 )
 
@@ -21,7 +22,7 @@ from .config.parser import ParserError
 @dataclass(frozen=True)
 class AuthUser:
     username: str
-    groups: List[str]
+    groups: Sequence[str]
 
     @property
     def is_superuser(self) -> bool:
@@ -82,7 +83,7 @@ class AuthProvider:
         username = self._get_facade().get_user(token)
         if username is None:
             return None
-        groups = list(get_user_groups_sync(username))
+        groups = tuple(get_user_groups_sync(username))
         if const.ADMIN_GROUP in groups:
             return AuthUser(username=username, groups=groups)
         return None

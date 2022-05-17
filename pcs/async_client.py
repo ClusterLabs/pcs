@@ -216,6 +216,8 @@ def main():
             json.loads(payload),
             options=CommandOptionsDto(
                 request_timeout=None,
+                # effective_username="custom_user",
+                # effective_groups=["custom_group1", "custom_group2"],
             ),
         ),
         token,

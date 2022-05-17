@@ -1,10 +1,11 @@
+from dataclasses import dataclass
 from typing import (
     Any,
     Callable,
     Mapping,
 )
 
-from pcs.lib.commands import (
+from pcs.lib.commands import (  # status,; services,
     acl,
     alert,
     cluster,
@@ -16,86 +17,299 @@ from pcs.lib.commands import (
     resource_agent,
     sbd,
     scsi,
-    services,
-    status,
     stonith,
     stonith_agent,
 )
+from pcs.lib.permissions.config.types import PermissionAccessType as p
 
-COMMAND_MAP: Mapping[str, Callable[..., Any]] = {
-    "acl.add_permission": acl.add_permission,
-    "acl.assign_role_to_group": acl.assign_role_to_group,
-    "acl.assign_role_to_target": acl.assign_role_to_target,
-    "acl.create_group": acl.create_group,
-    "acl.create_role": acl.create_role,
-    "acl.create_target": acl.create_target,
-    "acl.remove_group": acl.remove_group,
-    "acl.remove_permission": acl.remove_permission,
-    "acl.remove_role": acl.remove_role,
-    "acl.remove_target": acl.remove_target,
-    "acl.unassign_role_from_group": acl.unassign_role_from_group,
-    "acl.unassign_role_from_target": acl.unassign_role_from_target,
-    "alert.add_recipient": alert.add_recipient,
-    "alert.create_alert": alert.create_alert,
-    "alert.remove_alert": alert.remove_alert,
-    "alert.remove_recipient": alert.remove_recipient,
-    "alert.update_alert": alert.update_alert,
-    "alert.update_recipient": alert.update_recipient,
-    "cluster.add_nodes": cluster.add_nodes,
-    "cluster.generate_cluster_uuid": cluster.generate_cluster_uuid,
-    "cluster.node_clear": cluster.node_clear,
-    "cluster.remove_nodes": cluster.remove_nodes,
-    "cluster.setup": cluster.setup,
-    "constraint.colocation.create_with_set": constraint.colocation.create_with_set,
-    "constraint.order.create_with_set": constraint.order.create_with_set,
-    "constraint.ticket.create": constraint.ticket.create,
-    "constraint.ticket.create_with_set": constraint.ticket.create_with_set,
-    "constraint.ticket.remove": constraint.ticket.remove,
-    "fencing_topology.add_level": fencing_topology.add_level,
-    "fencing_topology.remove_all_levels": fencing_topology.remove_all_levels,
-    "fencing_topology.remove_levels_by_params": fencing_topology.remove_levels_by_params,
-    "fencing_topology.verify": fencing_topology.verify,
-    "node.maintenance_unmaintenance_all": node.maintenance_unmaintenance_all,
-    "node.maintenance_unmaintenance_list": node.maintenance_unmaintenance_list,
-    "node.standby_unstandby_all": node.standby_unstandby_all,
-    "node.standby_unstandby_list": node.standby_unstandby_list,
-    "qdevice.client_net_import_certificate": qdevice.client_net_import_certificate,
-    "qdevice.qdevice_net_sign_certificate_request": qdevice.qdevice_net_sign_certificate_request,
-    "resource_agent.describe_agent": resource_agent.describe_agent,
-    "resource_agent.get_agents_list": resource_agent.get_agents_list,
-    "resource_agent.get_agent_metadata": resource_agent.get_agent_metadata,
-    "resource_agent.list_agents": resource_agent.list_agents,
-    "resource_agent.list_agents_for_standard_and_provider": resource_agent.list_agents_for_standard_and_provider,
-    "resource_agent.list_ocf_providers": resource_agent.list_ocf_providers,
-    "resource_agent.list_standards": resource_agent.list_standards,
-    "resource.ban": resource.ban,
-    "resource.create": resource.create,
-    "resource.create_as_clone": resource.create_as_clone,
-    "resource.create_in_group": resource.create_in_group,
-    "resource.disable": resource.disable,
-    "resource.disable_safe": resource.disable_safe,
-    "resource.disable_simulate": resource.disable_simulate,
-    "resource.enable": resource.enable,
-    "resource.group_add": resource.group_add,
-    "resource.manage": resource.manage,
-    "resource.move": resource.move,
-    "resource.move_autoclean": resource.move_autoclean,
-    "resource.unmanage": resource.unmanage,
-    "resource.unmove_unban": resource.unmove_unban,
-    "sbd.disable_sbd": sbd.disable_sbd,
-    "sbd.enable_sbd": sbd.enable_sbd,
-    "services.disable_service": services.disable_service,
-    "services.enable_service": services.enable_service,
-    "services.get_services_info": services.get_services_info,
-    "services.start_service": services.start_service,
-    "services.stop_service": services.stop_service,
-    "scsi.unfence_node": scsi.unfence_node,
-    "scsi.unfence_node_mpath": scsi.unfence_node_mpath,
-    "status.full_cluster_status_plaintext": status.full_cluster_status_plaintext,
-    "stonith_agent.describe_agent": stonith_agent.describe_agent,
-    "stonith_agent.list_agents": stonith_agent.list_agents,
-    "stonith.create": stonith.create,
-    "stonith.create_in_group": stonith.create_in_group,
+
+@dataclass(frozen=True)
+class Cmd:
+    cmd: Callable[..., Any]
+    required_permission: p
+
+
+COMMAND_MAP: Mapping[str, Cmd] = {
+    "acl.add_permission": Cmd(
+        cmd=acl.add_permission,
+        required_permission=p.GRANT,
+    ),
+    "acl.assign_role_to_group": Cmd(
+        cmd=acl.assign_role_to_group,
+        required_permission=p.GRANT,
+    ),
+    "acl.assign_role_to_target": Cmd(
+        cmd=acl.assign_role_to_target,
+        required_permission=p.GRANT,
+    ),
+    "acl.create_group": Cmd(
+        cmd=acl.create_group,
+        required_permission=p.GRANT,
+    ),
+    "acl.create_role": Cmd(
+        cmd=acl.create_role,
+        required_permission=p.GRANT,
+    ),
+    "acl.create_target": Cmd(
+        cmd=acl.create_target,
+        required_permission=p.GRANT,
+    ),
+    "acl.remove_group": Cmd(
+        cmd=acl.remove_group,
+        required_permission=p.GRANT,
+    ),
+    "acl.remove_permission": Cmd(
+        cmd=acl.remove_permission,
+        required_permission=p.GRANT,
+    ),
+    "acl.remove_role": Cmd(
+        cmd=acl.remove_role,
+        required_permission=p.GRANT,
+    ),
+    "acl.remove_target": Cmd(
+        cmd=acl.remove_target,
+        required_permission=p.GRANT,
+    ),
+    "acl.unassign_role_from_group": Cmd(
+        cmd=acl.unassign_role_from_group,
+        required_permission=p.GRANT,
+    ),
+    "acl.unassign_role_from_target": Cmd(
+        cmd=acl.unassign_role_from_target,
+        required_permission=p.GRANT,
+    ),
+    "alert.add_recipient": Cmd(
+        cmd=alert.add_recipient,
+        required_permission=p.WRITE,
+    ),
+    "alert.create_alert": Cmd(
+        cmd=alert.create_alert,
+        required_permission=p.WRITE,
+    ),
+    "alert.remove_alert": Cmd(
+        cmd=alert.remove_alert,
+        required_permission=p.WRITE,
+    ),
+    "alert.remove_recipient": Cmd(
+        cmd=alert.remove_recipient,
+        required_permission=p.WRITE,
+    ),
+    "alert.update_alert": Cmd(
+        cmd=alert.update_alert,
+        required_permission=p.WRITE,
+    ),
+    "alert.update_recipient": Cmd(
+        cmd=alert.update_recipient,
+        required_permission=p.WRITE,
+    ),
+    "cluster.add_nodes": Cmd(
+        cmd=cluster.add_nodes,
+        required_permission=p.FULL,
+    ),
+    "cluster.generate_cluster_uuid": Cmd(
+        cmd=cluster.generate_cluster_uuid,
+        required_permission=p.SUPERUSER,
+    ),
+    "cluster.node_clear": Cmd(
+        cmd=cluster.node_clear,
+        required_permission=p.WRITE,
+    ),
+    "cluster.remove_nodes": Cmd(
+        cmd=cluster.remove_nodes,
+        required_permission=p.FULL,
+    ),
+    "cluster.setup": Cmd(
+        cmd=cluster.setup,
+        required_permission=p.SUPERUSER,
+    ),
+    "constraint.colocation.create_with_set": Cmd(
+        cmd=constraint.colocation.create_with_set,
+        required_permission=p.WRITE,
+    ),
+    "constraint.order.create_with_set": Cmd(
+        cmd=constraint.order.create_with_set,
+        required_permission=p.WRITE,
+    ),
+    "constraint.ticket.create": Cmd(
+        cmd=constraint.ticket.create,
+        required_permission=p.WRITE,
+    ),
+    "constraint.ticket.create_with_set": Cmd(
+        cmd=constraint.ticket.create_with_set,
+        required_permission=p.WRITE,
+    ),
+    "constraint.ticket.remove": Cmd(
+        cmd=constraint.ticket.remove,
+        required_permission=p.WRITE,
+    ),
+    "fencing_topology.add_level": Cmd(
+        cmd=fencing_topology.add_level,
+        required_permission=p.WRITE,
+    ),
+    "fencing_topology.remove_all_levels": Cmd(
+        cmd=fencing_topology.remove_all_levels,
+        required_permission=p.WRITE,
+    ),
+    "fencing_topology.remove_levels_by_params": Cmd(
+        cmd=fencing_topology.remove_levels_by_params,
+        required_permission=p.WRITE,
+    ),
+    "fencing_topology.verify": Cmd(
+        cmd=fencing_topology.verify,
+        required_permission=p.WRITE,
+    ),
+    "node.maintenance_unmaintenance_all": Cmd(
+        cmd=node.maintenance_unmaintenance_all,
+        required_permission=p.WRITE,
+    ),
+    "node.maintenance_unmaintenance_list": Cmd(
+        cmd=node.maintenance_unmaintenance_list,
+        required_permission=p.WRITE,
+    ),
+    "node.standby_unstandby_all": Cmd(
+        cmd=node.standby_unstandby_all,
+        required_permission=p.WRITE,
+    ),
+    "node.standby_unstandby_list": Cmd(
+        cmd=node.standby_unstandby_list,
+        required_permission=p.WRITE,
+    ),
+    "qdevice.client_net_import_certificate": Cmd(
+        cmd=qdevice.client_net_import_certificate,
+        required_permission=p.FULL,
+    ),
+    # TODO: make sure WRITE is right permission
+    "qdevice.qdevice_net_sign_certificate_request": Cmd(
+        cmd=qdevice.qdevice_net_sign_certificate_request,
+        required_permission=p.WRITE,
+    ),
+    # deprecated, use resource-agent-get-agent-metadata/v1 instead
+    "resource_agent.describe_agent": Cmd(
+        cmd=resource_agent.describe_agent,
+        required_permission=p.READ,
+    ),
+    "resource_agent.get_agents_list": Cmd(
+        cmd=resource_agent.get_agents_list,
+        required_permission=p.READ,
+    ),
+    "resource_agent.get_agent_metadata": Cmd(
+        cmd=resource_agent.get_agent_metadata,
+        required_permission=p.READ,
+    ),
+    # deprecated, use resource-agent-get-agents-list/v1 instead
+    "resource_agent.list_agents": Cmd(
+        cmd=resource_agent.list_agents,
+        required_permission=p.READ,
+    ),
+    "resource_agent.list_agents_for_standard_and_provider": Cmd(
+        cmd=resource_agent.list_agents_for_standard_and_provider,
+        required_permission=p.READ,
+    ),
+    "resource_agent.list_ocf_providers": Cmd(
+        cmd=resource_agent.list_ocf_providers,
+        required_permission=p.READ,
+    ),
+    "resource_agent.list_standards": Cmd(
+        cmd=resource_agent.list_standards,
+        required_permission=p.READ,
+    ),
+    "resource.ban": Cmd(
+        cmd=resource.ban,
+        required_permission=p.WRITE,
+    ),
+    "resource.create": Cmd(
+        cmd=resource.create,
+        required_permission=p.WRITE,
+    ),
+    "resource.create_as_clone": Cmd(
+        cmd=resource.create_as_clone,
+        required_permission=p.WRITE,
+    ),
+    "resource.create_in_group": Cmd(
+        cmd=resource.create_in_group,
+        required_permission=p.WRITE,
+    ),
+    "resource.disable": Cmd(
+        cmd=resource.disable,
+        required_permission=p.WRITE,
+    ),
+    "resource.disable_safe": Cmd(
+        cmd=resource.disable_safe,
+        required_permission=p.WRITE,
+    ),
+    "resource.disable_simulate": Cmd(
+        cmd=resource.disable_simulate,
+        required_permission=p.READ,
+    ),
+    "resource.enable": Cmd(
+        cmd=resource.enable,
+        required_permission=p.WRITE,
+    ),
+    "resource.group_add": Cmd(
+        cmd=resource.group_add,
+        required_permission=p.WRITE,
+    ),
+    "resource.manage": Cmd(
+        cmd=resource.manage,
+        required_permission=p.WRITE,
+    ),
+    "resource.move": Cmd(
+        cmd=resource.move,
+        required_permission=p.WRITE,
+    ),
+    "resource.move_autoclean": Cmd(
+        cmd=resource.move_autoclean,
+        required_permission=p.WRITE,
+    ),
+    "resource.unmanage": Cmd(
+        cmd=resource.unmanage,
+        required_permission=p.WRITE,
+    ),
+    "resource.unmove_unban": Cmd(
+        cmd=resource.unmove_unban,
+        required_permission=p.WRITE,
+    ),
+    "sbd.disable_sbd": Cmd(
+        cmd=sbd.disable_sbd,
+        required_permission=p.WRITE,
+    ),
+    "sbd.enable_sbd": Cmd(
+        cmd=sbd.enable_sbd,
+        required_permission=p.WRITE,
+    ),
+    "scsi.unfence_node": Cmd(
+        cmd=scsi.unfence_node,
+        required_permission=p.WRITE,
+    ),
+    "scsi.unfence_node_mpath": Cmd(
+        cmd=scsi.unfence_node_mpath,
+        required_permission=p.WRITE,
+    ),
+    # deprecated, use resource-agent-get-agent-metadata/v1 instead
+    "stonith_agent.describe_agent": Cmd(
+        cmd=stonith_agent.describe_agent,
+        required_permission=p.READ,
+    ),
+    # deprecated, use resource-agent-get-agents-list/v1 instead
+    "stonith_agent.list_agents": Cmd(
+        cmd=stonith_agent.list_agents,
+        required_permission=p.READ,
+    ),
+    "stonith.create": Cmd(
+        cmd=stonith.create,
+        required_permission=p.WRITE,
+    ),
+    "stonith.create_in_group": Cmd(
+        cmd=stonith.create_in_group,
+        required_permission=p.WRITE,
+    ),
+    # CMDs allowed in pcs_internal but not exposed via REST API:
+    # "services.disable_service": Cmd(services.disable_service,
+    # "services.enable_service": Cmd(services.enable_service,
+    # "services.get_services_info": Cmd(services.get_services_info,
+    # "services.start_service": Cmd(services.start_service,
+    # "services.stop_service": Cmd(services.stop_service,
+    # "status.full_cluster_status_plaintext": Cmd(status.full_cluster_status_plaintext,
 }
 
 API_V1_MAP: Mapping[str, str] = {

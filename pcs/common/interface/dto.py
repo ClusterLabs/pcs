@@ -16,6 +16,7 @@ from typing import (
 import dacite
 
 import pcs.common.async_tasks.types as async_tasks_types
+import pcs.common.permissions.types as permissions_types
 from pcs.common import types
 
 PrimitiveType = Union[str, int, float, bool, None]
@@ -121,6 +122,8 @@ def from_dict(
                 async_tasks_types.TaskFinishType,
                 async_tasks_types.TaskState,
                 async_tasks_types.TaskKillReason,
+                permissions_types.PermissionAccessType,
+                permissions_types.PermissionTargetType,
             ],
             strict=strict,
         ),

@@ -24,10 +24,10 @@ from pcs.common.async_tasks.dto import (
 )
 from pcs.common.async_tasks.types import TaskFinishType
 from pcs.common.interface import dto
-from pcs.common.str_tools import format_list
 from pcs.lib.auth.provider import AuthUser
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
+from pcs.lib.permissions.checker import PermissionsChecker
 from pcs.utils import read_known_hosts_file
 
 from .command_mapping import COMMAND_MAP
@@ -101,10 +101,8 @@ def _get_effective_user(
         username = options.effective_username
         if options.effective_groups:
             groups = options.effective_groups
-        logger.debug(
-            "Effective user: '%s'; groups: %s", username, format_list(groups)
-        )
-    return AuthUser(username=username, groups=groups)
+        logger.debug("Effective user=%s groups=%s", username, ",".join(groups))
+    return AuthUser(username=username, groups=tuple(groups))
 
 
 def task_executor(task: WorkerCommand) -> None:
@@ -133,9 +131,9 @@ def task_executor(task: WorkerCommand) -> None:
         request_timeout = None
     auth_user = task.auth_user
     logger.debug(
-        "Real user: '%s'; groups: %s",
+        "Real user=%s groups=%s",
         auth_user.username,
-        format_list(auth_user.groups),
+        ",".join(auth_user.groups),
     )
     if auth_user.is_superuser:
         auth_user = _get_effective_user(logger, auth_user, task.command.options)
@@ -158,6 +156,13 @@ def task_executor(task: WorkerCommand) -> None:
                     reports.messages.CommandUnknown(command)
                 )
             )
+        cmd = COMMAND_MAP[command]
+        if not PermissionsChecker(logger).is_authorized(
+            auth_user, cmd.required_permission
+        ):
+            raise LibraryError(
+                reports.ReportItem.error(reports.messages.NotAuthorized())
+            )
         # Dacite will validate command.params against command signature.
         # Dacite works only with dataclasses so we need to dinamically create
         # one
@@ -168,9 +173,7 @@ def task_executor(task: WorkerCommand) -> None:
                     [
                         _param_to_field_tuple(param)
                         for param in list(
-                            inspect.signature(
-                                COMMAND_MAP[command]
-                            ).parameters.values()
+                            inspect.signature(cmd.cmd).parameters.values()
                         )[1:]
                     ],
                 ),
@@ -186,7 +189,7 @@ def task_executor(task: WorkerCommand) -> None:
                 )
             ) from e
 
-        task_retval = COMMAND_MAP[command](env, **data)
+        task_retval = cmd.cmd(env, **data)
     except LibraryError as e:
         # Some code uses args for storing ReportList, sending them to the report
         # processor here

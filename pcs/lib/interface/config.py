@@ -55,6 +55,9 @@ class FacadeInterface:
         """
         self._config = parsed_config
 
+    def _set_config(self, config: Any) -> None:
+        self._config = config
+
     @property
     def config(self) -> Any:
         """

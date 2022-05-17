@@ -14,7 +14,10 @@ from typing import (
 
 from tornado.web import HTTPError
 
-from pcs.common import communication
+from pcs.common import (
+    communication,
+    reports,
+)
 from pcs.common.async_tasks import types
 from pcs.common.async_tasks.dto import (
     CommandDto,
@@ -143,6 +146,7 @@ class ApiV1Handler(BaseAPIHandler):
 
     def _get_effective_groups(self) -> Optional[List[str]]:
         if self._get_effective_username():
+            # use groups only if user is specified as well
             groups_raw = self.get_cookie("CIB_user_groups")
             if groups_raw:
                 try:
@@ -179,6 +183,16 @@ class ApiV1Handler(BaseAPIHandler):
                 communication.const.COM_STATUS_EXCEPTION,
                 "Internal server error",
             ) from e
+        if (
+            task_result_dto.task_finish_type == types.TaskFinishType.FAIL
+            and task_result_dto.reports
+            and task_result_dto.reports[0].message.code
+            == reports.codes.NOT_AUTHORIZED
+        ):
+            raise ApiError(
+                communication.const.COM_STATUS_NOT_AUTHORIZED, "Not authorized"
+            )
+
         status_map = {
             types.TaskFinishType.SUCCESS: communication.const.COM_STATUS_SUCCESS,
             types.TaskFinishType.FAIL: communication.const.COM_STATUS_ERROR,

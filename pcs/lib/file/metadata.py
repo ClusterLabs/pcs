@@ -87,6 +87,17 @@ def _for_pcs_users_conf() -> FileMetadata:
     )
 
 
+def _for_pcs_settings_conf() -> FileMetadata:
+    return FileMetadata(
+        file_type_code=code.PCS_SETTINGS_CONF,
+        path=settings.pcsd_settings_conf_location,
+        owner_user_name="root",
+        owner_group_name="root",
+        permissions=0o600,
+        is_binary=False,
+    )
+
+
 def for_file_type(
     file_type_code: code.FileTypeCode, filename: Optional[str] = None
 ) -> FileMetadata:
@@ -109,5 +120,7 @@ def for_file_type(
         return _for_pcs_known_hosts()
     if file_type_code == code.PCS_USERS_CONF:
         return _for_pcs_users_conf()
+    if file_type_code == code.PCS_SETTINGS_CONF:
+        return _for_pcs_settings_conf()
 
     raise AssertionError("Unknown file_type_code")

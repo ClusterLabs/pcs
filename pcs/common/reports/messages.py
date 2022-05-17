@@ -7443,3 +7443,12 @@ class CommandUnknown(ReportItemMessage):
     @property
     def message(self) -> str:
         return f"Unknown command '{self.command}'"
+
+
+@dataclass(frozen=True)
+class NotAuthorized(ReportItemMessage):
+    _code = codes.NOT_AUTHORIZED
+
+    @property
+    def message(self) -> str:
+        return "Current user is not authorized for this operation"
