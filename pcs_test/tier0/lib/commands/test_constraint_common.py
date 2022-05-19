@@ -22,12 +22,11 @@ def fixture_cib_and_constraints():
         "cib",
         {"validate-with": f"pacemaker-{const.PCMK_NEW_ROLES_CIB_VERSION}"},
     )
-    resources_section = etree.SubElement(cib, "resources")
+    config_section = etree.SubElement(cib, "configuration")
+    resources_section = etree.SubElement(config_section, "resources")
     for _id in ("A", "B", "E", "F"):
         etree.SubElement(resources_section, "primitive").attrib["id"] = _id
-    constraint_section = etree.SubElement(
-        etree.SubElement(cib, "configuration"), "constraints"
-    )
+    constraint_section = etree.SubElement(config_section, "constraints")
     return cib, constraint_section
 
 
