@@ -186,5 +186,7 @@ def create_with_set(constraint_section, tag_name, options, resource_set_list):
     element = SubElement(constraint_section, tag_name)
     element.attrib.update(options)
     for resource_set_item in resource_set_list:
+        if tag_name == "rsc_order":
+            resource_set.is_resource_in_same_group(resource_set_item['ids'])
         resource_set.create(element, resource_set_item)
     return element

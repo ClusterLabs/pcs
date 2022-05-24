@@ -348,6 +348,20 @@ class EmptyResourceSetList(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class ResourceInGroupCannotSetOrderConstraints(ReportItemMessage):
+    """
+    Can't set order constraint for resource in a group because the
+    start sequence is determined by it's location in the group
+    """
+
+    _code = codes.RESOURCE_IN_GROUP_CANNOT_SET_ORDER_CONSTRAINTS
+
+    @property
+    def message(self) -> str:
+        return "Can't set order constraint for resource in a group"
+
+
+@dataclass(frozen=True)
 class RequiredOptionsAreMissing(ReportItemMessage):
     """
     Required option has not been specified, command cannot continue
