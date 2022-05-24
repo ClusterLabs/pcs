@@ -348,17 +348,19 @@ class EmptyResourceSetList(ReportItemMessage):
 
 
 @dataclass(frozen=True)
-class ResourceInGroupCannotSetOrderConstraints(ReportItemMessage):
+class CannotSetOrderConstraintsForResourcesInTheSameGroup(ReportItemMessage):
     """
-    Can't set order constraint for resource in a group because the
-    start sequence is determined by it's location in the group
+    Can't set order constraint for resources in one group because the
+    start sequence of the resources is determined by their location in the group
     """
 
-    _code = codes.RESOURCE_IN_GROUP_CANNOT_SET_ORDER_CONSTRAINTS
+    _code = codes.CANNOT_SET_ORDER_CONSTRAINTS_FOR_RESOURCES_IN_THE_SAME_GROUP
 
     @property
     def message(self) -> str:
-        return "Can't set order constraint for resource in a group"
+        return (
+            "Cannot create an order constraint for resources in the same group"
+        )
 
 
 @dataclass(frozen=True)

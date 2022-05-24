@@ -23,7 +23,10 @@
   ([rhbz#2058243])
 - Preventing fence-loop caused when stonith-watchdog-timeout is set
   with wrong value ([rhbz#2058246])
+- Do not allow to create an order constraint for resources in one group as that
+  may block Pacemaker ([ghpull#509])
 
+[ghpull#509]: https://github.com/ClusterLabs/pcs/pull/509
 [rhbz#2024522]: https://bugzilla.redhat.com/show_bug.cgi?id=2024522
 [rhbz#2053177]: https://bugzilla.redhat.com/show_bug.cgi?id=2053177
 [rhbz#2054671]: https://bugzilla.redhat.com/show_bug.cgi?id=2054671

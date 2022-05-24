@@ -188,10 +188,13 @@ def _validate_constraint_resource(cib_dom, resource_id):
         utils.err(resource_error)
 
 
-def _validate_resource_in_same_group(cib_dom, resource1, resource2):
-    test = utils.validate_resource_in_same_group(cib_dom, resource1, resource2)
-    if not test:
-        utils.err("unable to create constraint for resource in a same group")
+def _validate_resources_not_in_same_group(cib_dom, resource1, resource2):
+    if not utils.validate_resources_not_in_same_group(
+        cib_dom, resource1, resource2
+    ):
+        utils.err(
+            "Cannot create an order constraint for resources in the same group"
+        )
 
 
 # Syntax: colocation add [role] <src> with [role] <tgt> [score] [options]
@@ -484,7 +487,7 @@ def _order_add(resource1, resource2, options_list, modifiers):
     _validate_constraint_resource(cib_dom, resource1)
     _validate_constraint_resource(cib_dom, resource2)
 
-    _validate_resource_in_same_group(cib_dom, resource1, resource2)
+    _validate_resources_not_in_same_group(cib_dom, resource1, resource2)
 
     order_options = []
     id_specified = False

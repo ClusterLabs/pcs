@@ -13,13 +13,9 @@ from pcs.lib.cib.tools import (
     are_new_role_names_supported,
     find_unique_id,
     get_elements_by_ids,
-    get_resources,
 )
 from pcs.lib.errors import LibraryError
-from pcs.lib.xml_tools import (
-    export_attributes,
-    get_root,
-)
+from pcs.lib.xml_tools import export_attributes
 
 _BOOLEAN_VALUES = ("true", "false")
 
@@ -97,31 +93,21 @@ def export(element):
     }
 
 
-def is_resource_in_same_group(resource_id_list):
-    from pcs import utils
-    env = utils.get_lib_env()
-    cib = env.get_cib()
-    resource_section = get_resources(cib)
-
-    (
-        resource_element_list,
-        id_not_found_list,
-    ) = get_elements_by_ids(get_root(resource_section), resource_id_list)
-    for resource_id in id_not_found_list:
-        raise LibraryError(
-            ReportItem.error(reports.messages.IdNotFound(resource_id, []))
-        )
+def is_resource_in_same_group(cib, resource_id_list):
+    # We don't care about not found elements here, that is a job of another
+    # validator. We do not care if the id doesn't belong to a resource either
+    # for the same reason.
+    element_list, _ = get_elements_by_ids(cib, resource_id_list)
 
     parent_list = []
-    for resource_element in resource_element_list:
-        parent = get_parent_resource(resource_element)
+    for element in element_list:
+        parent = get_parent_resource(element)
         if parent is not None and group.is_group(parent):
             parent_list.append(parent)
 
-    set_parent_list = set(parent_list)
-    if len(set_parent_list) != len(parent_list):
+    if len(set(parent_list)) != len(parent_list):
         raise LibraryError(
             ReportItem.error(
-                reports.messages.ResourceInGroupCannotSetOrderConstraints()
+                reports.messages.CannotSetOrderConstraintsForResourcesInTheSameGroup()
             )
         )
