@@ -118,11 +118,11 @@ class EmptyResourceSetList(NameBuildTest):
         )
 
 
-class ResourceInGroupCannotSetOrderConstraints(NameBuildTest):
+class CannotSetOrderConstraintsForResourcesInTheSameGroup(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
-            "Can't set order constraint for resource in a group",
-            reports.ResourceInGroupCannotSetOrderConstraints(),
+            "Cannot create an order constraint for resources in the same group",
+            reports.CannotSetOrderConstraintsForResourcesInTheSameGroup(),
         )
 
 

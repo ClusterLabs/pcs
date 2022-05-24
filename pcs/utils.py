@@ -1404,9 +1404,14 @@ def validate_constraint_resource(dom, resource_id):
     return True, "", resource_id
 
 
-def validate_resource_in_same_group(dom, resource1, resource2):
-    resource_el1 = dom_get_resource(dom, resource1)
-    resource_el2 = dom_get_resource(dom, resource2)
+def validate_resources_not_in_same_group(dom, resource_id1, resource_id2):
+    resource_el1 = dom_get_resource(dom, resource_id1)
+    resource_el2 = dom_get_resource(dom, resource_id2)
+    if not resource_el1 or not resource_el2:
+        # Only primitive resources can be in a group. If at least one of the
+        # resources is not a primitive (resource_el is None), then the
+        # resources are not in the same group.
+        return True
     group1 = dom_get_parent_by_tag_names(resource_el1, ["group"])
     group2 = dom_get_parent_by_tag_names(resource_el2, ["group"])
     if not group1 or not group2:
