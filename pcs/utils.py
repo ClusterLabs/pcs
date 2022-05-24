@@ -1411,10 +1411,7 @@ def validate_resource_in_same_group(dom, resource1, resource2):
     group2 = dom_get_parent_by_tag_names(resource_el2, ["group"])
     if not group1 or not group2:
         return True
-    elif group1 == group2:
-        return False
-    else:
-        return True
+    return group1 != group2
 
 
 def dom_get_resource_remote_node_name(dom_resource):

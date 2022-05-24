@@ -6,16 +6,19 @@ from pcs.common import (
     reports,
 )
 from pcs.common.reports.item import ReportItem
+from pcs.lib.cib.resource import group
+from pcs.lib.cib.resource.common import get_parent_resource
 from pcs.lib.cib.tools import (
     are_new_role_names_supported,
     find_unique_id,
-    get_resources,
     get_elements_by_ids,
+    get_resources,
 )
-from pcs.lib.cib.resource import group
-from pcs.lib.cib.resource.common import get_parent_resource
 from pcs.lib.errors import LibraryError
-from pcs.lib.xml_tools import export_attributes, etree_to_str, get_root
+from pcs.lib.xml_tools import (
+    export_attributes,
+    get_root,
+)
 
 ATTRIB = {
     "sequential": ("true", "false"),
@@ -94,6 +97,7 @@ def export(element):
 
 def is_resource_in_same_group(resource_id_list):
     from pcs import utils
+
     env = utils.get_lib_env()
     cib = env.get_cib()
     resource_section = get_resources(cib)
@@ -114,10 +118,9 @@ def is_resource_in_same_group(resource_id_list):
             parent_list.append(parent)
 
     set_parent_list = set(parent_list)
-    if len(set_parent_list) == len(parent_list):
-        return
-    else:
+    if len(set_parent_list) != len(parent_list):
         raise LibraryError(
-            ReportItem.error(reports.messages.ResourceInGroupCannotSetOrderConstraints())
+            ReportItem.error(
+                reports.messages.ResourceInGroupCannotSetOrderConstraints()
+            )
         )
-

@@ -192,9 +192,7 @@ def _validate_constraint_resource(cib_dom, resource_id):
 def _validate_resource_in_same_group(cib_dom, resource1, resource2):
     test = utils.validate_resource_in_same_group(cib_dom, resource1, resource2)
     if not test:
-        utils.err(
-            "unable to create constraint for resource in a same group"
-        )
+        utils.err("unable to create constraint for resource in a same group")
 
 
 # Syntax: colocation add [role] <src> with [role] <tgt> [score] [options]
