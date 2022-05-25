@@ -97,7 +97,7 @@ def is_resource_in_same_group(cib, resource_id_list):
     # We don't care about not found elements here, that is a job of another
     # validator. We do not care if the id doesn't belong to a resource either
     # for the same reason.
-    element_list, _ = get_elements_by_ids(cib, resource_id_list)
+    element_list, _ = get_elements_by_ids(cib, set(resource_id_list))
 
     parent_list = []
     for element in element_list:
