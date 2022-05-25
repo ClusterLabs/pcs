@@ -5497,3 +5497,49 @@ class ExpiredConstraints(ConstraintBaseTest):
                 """
             ),
         )
+
+
+class OrderVsGroup(unittest.TestCase, AssertPcsMixin):
+    empty_cib = rc("cib-empty.xml")
+
+    def setUp(self):
+        self.temp_cib = get_tmp_file("tier1_constraint_order_vs_group")
+        write_file_to_tmpfile(self.empty_cib, self.temp_cib)
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
+        self.assert_pcs_success(
+            "resource create A ocf:heartbeat:Dummy --group grAB".split()
+        )
+        self.assert_pcs_success(
+            "resource create B ocf:heartbeat:Dummy --group grAB".split()
+        )
+        self.assert_pcs_success(
+            "resource create C ocf:heartbeat:Dummy --group grC".split()
+        )
+        self.assert_pcs_success("resource create D ocf:heartbeat:Dummy".split())
+
+    def tearDown(self):
+        self.temp_cib.close()
+
+    def test_deny_resources_in_one_group(self):
+        self.assert_pcs_fail(
+            "constraint order A then B".split(),
+            "Error: Cannot create an order constraint for resources in the same group\n",
+        )
+
+    def test_allow_resources_in_different_groups(self):
+        self.assert_pcs_success(
+            "constraint order A then C".split(),
+            "Adding A C (kind: Mandatory) (Options: first-action=start then-action=start)\n",
+        )
+
+    def test_allow_grouped_and_not_grouped_resource(self):
+        self.assert_pcs_success(
+            "constraint order A then D".split(),
+            "Adding A D (kind: Mandatory) (Options: first-action=start then-action=start)\n",
+        )
+
+    def test_allow_group_and_resource(self):
+        self.assert_pcs_success(
+            "constraint order grAB then C".split(),
+            "Adding grAB C (kind: Mandatory) (Options: first-action=start then-action=start)\n",
+        )
