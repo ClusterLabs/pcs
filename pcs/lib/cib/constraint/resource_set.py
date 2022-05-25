@@ -1,6 +1,5 @@
 from lxml import etree
 
-from pcs import utils
 from pcs.common import (
     const,
     pacemaker,
@@ -96,6 +95,7 @@ def export(element):
 
 
 def is_resource_in_same_group(resource_id_list):
+    from pcs import utils
     env = utils.get_lib_env()
     cib = env.get_cib()
     resource_section = get_resources(cib)
