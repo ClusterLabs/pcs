@@ -18,8 +18,18 @@ from pcs.common.async_tasks.types import TaskState
 from pcs.common.reports.item import ReportItemMessage
 from pcs.common.reports.types import MessageCode
 from pcs.daemon.async_tasks import scheduler
+from pcs.lib.auth.provider import AuthUser
 
 DATETIME_NOW = datetime(2020, 2, 20, 20, 20, 20, 20)
+AUTH_USER = AuthUser("username", ("group1", "group2"))
+
+
+class PermissionsCheckerMock:
+    def __init__(self, permissions):
+        self._permissions = permissions
+
+    def is_authorized(self, auth_user, access):
+        return access not in self._permissions.get(auth_user, tuple())
 
 
 @dataclass(frozen=True)
@@ -79,14 +89,17 @@ class SchedulerTestWrapper:
     def _create_tasks(self, count, start_from=0):
         """Creates tasks with task_ident from id0 to idN"""
         for i in range(start_from, count + start_from):
-            with mock.patch("uuid.uuid4") as mock_uuid:
-                mock_uuid().hex = f"id{i}"
+            with mock.patch(
+                "pcs.daemon.async_tasks.scheduler.get_unique_uuid"
+            ) as mock_uuid:
+                mock_uuid.return_value = f"id{i}"
                 self.scheduler.new_task(
                     CommandDto(
                         f"command {i}",
                         {},
                         CommandOptionsDto(request_timeout=None),
-                    )
+                    ),
+                    AUTH_USER,
                 )
 
 

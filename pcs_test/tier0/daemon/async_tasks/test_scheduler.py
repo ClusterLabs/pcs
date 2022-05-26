@@ -24,6 +24,7 @@ from pcs.daemon.async_tasks.messaging import (
 from pcs.daemon.async_tasks.worker import task_executor
 
 from .helpers import (
+    AUTH_USER,
     SchedulerBaseAsyncTestCase,
     SchedulerBaseTestCase,
 )
@@ -35,28 +36,28 @@ WORKER2_PID = 3333
 class GetTaskTest(SchedulerBaseTestCase):
     def test_task_exists(self):
         self._create_tasks(1)
-        task_result = self.scheduler.get_task("id0")
+        task_result = self.scheduler.get_task("id0", AUTH_USER)
         self.assertEqual("command 0", task_result.command.command_name)
 
     def test_task_not_exists(self):
         self._create_tasks(1)
         with self.assertRaises(scheduler.TaskNotFoundError):
-            self.scheduler.get_task("nonexistent")
+            self.scheduler.get_task("nonexistent", AUTH_USER)
 
     def test_delete_finished(self):
         self._create_tasks(3)
         self.scheduler._task_register["id1"].state = TaskState.FINISHED
-        self.scheduler.get_task("id1")
+        self.scheduler.get_task("id1", AUTH_USER)
         with self.assertRaises(scheduler.TaskNotFoundError):
-            self.scheduler.get_task("id1")
+            self.scheduler.get_task("id1", AUTH_USER)
 
 
 class KillTaskTest(SchedulerBaseTestCase):
     def test_task_exists(self):
         self._create_tasks(2)
-        self.scheduler.kill_task("id0")
-        task1_dto = self.scheduler.get_task("id0")
-        task2_dto = self.scheduler.get_task("id1")
+        self.scheduler.kill_task("id0", AUTH_USER)
+        task1_dto = self.scheduler.get_task("id0", AUTH_USER)
+        task2_dto = self.scheduler.get_task("id1", AUTH_USER)
         # State and task_finish_type is not changing, only kill_reason
         self.assertEqual(TaskKillReason.USER, task1_dto.kill_reason)
         self.assertEqual(TaskState.CREATED, task1_dto.state)
@@ -68,7 +69,7 @@ class KillTaskTest(SchedulerBaseTestCase):
     def test_task_not_exists(self):
         self._create_tasks(1)
         with self.assertRaises(scheduler.TaskNotFoundError):
-            self.scheduler.kill_task("nonexistent")
+            self.scheduler.kill_task("nonexistent", AUTH_USER)
 
 
 class NewTaskTest(SchedulerBaseTestCase):
@@ -86,7 +87,7 @@ class NewTaskTest(SchedulerBaseTestCase):
                 None,
                 None,
             ),
-            self.scheduler.get_task("id0"),
+            self.scheduler.get_task("id0", AUTH_USER),
         )
         self.assertListEqual(
             ["id0"],
@@ -120,8 +121,8 @@ class ReceiveMessagesTest(SchedulerBaseAsyncTestCase):
         received = 0
         while received < 2:
             received += await self.scheduler._receive_messages()
-        task1_dto = self.scheduler.get_task("id0")
-        task2_dto = self.scheduler.get_task("id1")
+        task1_dto = self.scheduler.get_task("id0", AUTH_USER)
+        task2_dto = self.scheduler.get_task("id1", AUTH_USER)
         self.assertEqual(
             TaskKillReason.INTERNAL_MESSAGING_ERROR, task1_dto.kill_reason
         )
@@ -175,7 +176,8 @@ class ProcessTasksTest(SchedulerBaseAsyncTestCase):
         await self.scheduler._process_tasks()
         for task_ident in [f"id{i}" for i in range(task_count)]:
             self.assertEqual(
-                TaskState.QUEUED, self.scheduler.get_task(task_ident).state
+                TaskState.QUEUED,
+                self.scheduler.get_task(task_ident, AUTH_USER).state,
             )
         self.assertEqual(
             0,
@@ -192,18 +194,18 @@ class ProcessTasksTest(SchedulerBaseAsyncTestCase):
     async def test_killed_task(self):
         self._create_tasks(3)
         tasks = list(self.scheduler._task_register.values())
-        self.scheduler.kill_task("id1")
+        self.scheduler.kill_task("id1", AUTH_USER)
         await self.scheduler._process_tasks()
-        deleted_task = self.scheduler.get_task("id1")
+        deleted_task = self.scheduler.get_task("id1", AUTH_USER)
         self.assertEqual(TaskFinishType.KILL, deleted_task.task_finish_type)
         self.assertEqual(TaskState.FINISHED, deleted_task.state)
         self.assertEqual(
             TaskState.QUEUED,
-            self.scheduler.get_task("id0").state,
+            self.scheduler.get_task("id0", AUTH_USER).state,
         )
         self.assertEqual(
             TaskState.QUEUED,
-            self.scheduler.get_task("id2").state,
+            self.scheduler.get_task("id2", AUTH_USER).state,
         )
         self.mp_pool_mock.apply_async.assert_has_calls(
             [

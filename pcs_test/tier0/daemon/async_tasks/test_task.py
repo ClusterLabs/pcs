@@ -19,6 +19,7 @@ from pcs.settings import (
 )
 
 from .helpers import (
+    AUTH_USER,
     DATETIME_NOW,
     MockDateTimeNowMixin,
     MockOsKillMixin,
@@ -36,6 +37,7 @@ class TaskBaseTestCase(TestCase):
         self.task = tasks.Task(
             TASK_IDENT,
             CommandDto("command", {}, CommandOptionsDto(request_timeout=None)),
+            AUTH_USER,
         )
 
 
@@ -60,7 +62,7 @@ class TestReceiveMessage(MockDateTimeNowMixin, TaskBaseTestCase):
         self.assertEqual(types.TaskState.EXECUTED, self.task.state)
         self.assertEqual(WORKER_PID, self.task._worker_pid)
         self.assertEqual(DATETIME_NOW, self.task._last_message_at)
-        self.mock_datetime_now.assert_called_once()
+        self.mock_datetime_now.assert_called()
 
     def test_task_finished(self):
         message = messaging.Message(

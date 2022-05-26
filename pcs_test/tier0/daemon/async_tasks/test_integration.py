@@ -29,10 +29,12 @@ from .dummy_commands import (
     test_command_map,
 )
 from .helpers import (
+    AUTH_USER,
     DATETIME_NOW,
     AssertTaskStatesMixin,
     MockDateTimeNowMixin,
     MockOsKillMixin,
+    PermissionsCheckerMock,
     SchedulerBaseAsyncTestCase,
 )
 
@@ -151,12 +153,12 @@ class GarbageCollectionTimeoutTests(
             seconds=timeout_s + 1
         )
         await self.perform_actions(0)
-        task_info = self.scheduler.get_task("id0")
+        task_info = self.scheduler.get_task("id0", AUTH_USER)
         self.assertEqual(task_finish_type, task_info.task_finish_type)
         self.assertEqual(task_kill_reason, task_info.kill_reason)
         if task_kill_reason is not None:
             with self.assertRaises(TaskNotFoundError):
-                self.scheduler.get_task("id0")
+                self.scheduler.get_task("id0", AUTH_USER)
 
     @gen_test
     async def test_get_task_removes_finished(self):
@@ -166,9 +168,9 @@ class GarbageCollectionTimeoutTests(
         await self.perform_actions(1)
         self.finish_tasks(["id0"])
         await self.perform_actions(1)
-        self.scheduler.get_task("id0")
+        self.scheduler.get_task("id0", AUTH_USER)
         with self.assertRaises(TaskNotFoundError):
-            self.scheduler.get_task("id0")
+            self.scheduler.get_task("id0", AUTH_USER)
 
     @gen_test
     async def test_created_defunct_timeout(self):
@@ -219,9 +221,9 @@ class GarbageCollectionTimeoutTests(
         )
         await self.perform_actions(0)
         with self.assertRaises(TaskNotFoundError):
-            self.scheduler.get_task("id0")
+            self.scheduler.get_task("id0", AUTH_USER)
         # If the guard task was removed, this fails the test case
-        self.scheduler.get_task("id1")
+        self.scheduler.get_task("id1", AUTH_USER)
 
     @gen_test
     async def test_created_abandoned_timeout(self):
@@ -268,7 +270,7 @@ class GarbageCollectionTimeoutTests(
         # Garbage collector deletes an abandoned task right away
         await self.perform_actions(0)
         with self.assertRaises(TaskNotFoundError):
-            self.scheduler.get_task("id0")
+            self.scheduler.get_task("id0", AUTH_USER)
 
 
 class GarbageCollectionUserKillTests(
@@ -284,11 +286,11 @@ class GarbageCollectionUserKillTests(
         self.mock_os_kill = self._init_mock_os_kill()
 
     def assert_end_state(self):
-        task_info_killed = self.scheduler.get_task("id0")
+        task_info_killed = self.scheduler.get_task("id0", AUTH_USER)
         self.assertEqual(TaskFinishType.KILL, task_info_killed.task_finish_type)
         self.assertEqual(TaskKillReason.USER, task_info_killed.kill_reason)
 
-        task_info_alive = self.scheduler.get_task("id1")
+        task_info_alive = self.scheduler.get_task("id1", AUTH_USER)
         self.assertEqual(
             TaskFinishType.UNFINISHED, task_info_alive.task_finish_type
         )
@@ -297,7 +299,7 @@ class GarbageCollectionUserKillTests(
     @gen_test
     async def test_kill_created(self):
         self._create_tasks(2)
-        self.scheduler.kill_task("id0")
+        self.scheduler.kill_task("id0", AUTH_USER)
         # Kill_task doesn't produce any messages since the worker is killed by
         # the system
         await self.perform_actions(0)
@@ -310,7 +312,7 @@ class GarbageCollectionUserKillTests(
     async def test_kill_scheduled(self):
         self._create_tasks(2)
         await self.perform_actions(0)
-        self.scheduler.kill_task("id0")
+        self.scheduler.kill_task("id0", AUTH_USER)
         # Garbage collection waits until the task is executed and then kills
         # the worker
         self.execute_tasks(["id0"])
@@ -327,7 +329,7 @@ class GarbageCollectionUserKillTests(
         await self.perform_actions(0)
         self.execute_tasks(["id0", "id1"])
         await self.perform_actions(2)
-        self.scheduler.kill_task("id0")
+        self.scheduler.kill_task("id0", AUTH_USER)
         await self.perform_actions(0)
         self.assert_task_state_counts_equal(0, 0, 1, 1)
 
@@ -345,19 +347,19 @@ class GarbageCollectionUserKillTests(
         # When scheduler picks up finished tasks, it sends a signal to worker
         # to resume via os.kill
         self.mock_os_kill.reset_mock()
-        self.scheduler.kill_task("id0")
+        self.scheduler.kill_task("id0", AUTH_USER)
         await self.perform_actions(0)
         self.assert_task_state_counts_equal(0, 0, 1, 1)
 
         self.mock_os_kill.assert_not_called()
 
-        task_info_not_killed = self.scheduler.get_task("id0")
+        task_info_not_killed = self.scheduler.get_task("id0", AUTH_USER)
         self.assertEqual(
             TaskFinishType.SUCCESS, task_info_not_killed.task_finish_type
         )
         self.assertEqual(TaskKillReason.USER, task_info_not_killed.kill_reason)
 
-        task_info_alive = self.scheduler.get_task("id1")
+        task_info_alive = self.scheduler.get_task("id1", AUTH_USER)
         self.assertEqual(
             TaskFinishType.UNFINISHED, task_info_alive.task_finish_type
         )
@@ -386,84 +388,102 @@ class TaskResultsTests(MockOsKillMixin, IntegrationBaseTestCase):
             "pcs.daemon.async_tasks.worker.worker_com",
             self.worker_com,
         ).start()
+        mock.patch(
+            "pcs.daemon.async_tasks.worker.worker_com",
+            self.worker_com,
+        ).start()
         lib_env_mock = (
             mock.patch("pcs.daemon.async_tasks.worker.LibraryEnvironment")
             .start()
             .return_value
         )
+        mock.patch(
+            "pcs.daemon.async_tasks.worker.PermissionsChecker",
+            lambda _: PermissionsCheckerMock({}),
+        ).start()
         lib_env_mock.report_processor = WorkerReportProcessor(
             self.worker_com, "id0"
         )
         # Os.kill is used to pause the worker and we do not want to pause tests
         self._init_mock_os_kill()
 
+    def _new_task(self, task_id, cmd):
+        with mock.patch(
+            "pcs.daemon.async_tasks.scheduler.get_unique_uuid"
+        ) as mock_uuid:
+            mock_uuid.return_value = task_id
+            self.scheduler.new_task(
+                CommandDto(cmd, {}, COMMAND_OPTIONS),
+                AUTH_USER,
+            )
+
     @gen_test
     async def test_task_successful_no_result_with_reports(self):
         # How is no result different from a None return value in DTO?
         # Functions without return values also return None - should we
         # distinguish between cases of ex/implicitly returned None
-        with mock.patch("uuid.uuid4") as mock_uuid:
-            mock_uuid().hex = "id0"
-            self.scheduler.new_task(
-                CommandDto("success_with_reports", {}, COMMAND_OPTIONS)
-            )
+        task_id = "id0"
+        self._new_task(task_id, "success_with_reports")
         await self.perform_actions(0)
         # This task sends one report and returns immediately, task_executor
         # sends two messages - TaskExecuted and TaskFinished
-        task_executor(self.scheduler._task_register["id0"].to_worker_command())
+        task_executor(
+            self.scheduler._task_register[task_id].to_worker_command()
+        )
         await self.perform_actions(3)
 
-        task_info = self.scheduler.get_task("id0")
+        task_info = self.scheduler.get_task(task_id, AUTH_USER)
         self.assertEqual(1, len(task_info.reports))
         self.assertEqual(TaskFinishType.SUCCESS, task_info.task_finish_type)
         self.assertIsNone(task_info.result)
 
     @gen_test
     async def test_task_successful_with_result(self):
-        with mock.patch("uuid.uuid4") as mock_uuid:
-            mock_uuid().hex = "id0"
-            self.scheduler.new_task(CommandDto("success", {}, COMMAND_OPTIONS))
+        task_id = "id0"
+        self._new_task(task_id, "success")
         await self.perform_actions(0)
         # This task sends no reports and returns immediately, task_executor
         # sends two messages - TaskExecuted and TaskFinished
-        task_executor(self.scheduler._task_register["id0"].to_worker_command())
+        task_executor(
+            self.scheduler._task_register[task_id].to_worker_command()
+        )
         await self.perform_actions(2)
 
-        task_info = self.scheduler.get_task("id0")
+        task_info = self.scheduler.get_task(task_id, AUTH_USER)
         self.assertEqual(0, len(task_info.reports))
         self.assertEqual(TaskFinishType.SUCCESS, task_info.task_finish_type)
         self.assertEqual(RESULT, task_info.result)
 
     @gen_test
     async def test_task_error(self):
-        with mock.patch("uuid.uuid4") as mock_uuid:
-            mock_uuid().hex = "id0"
-            self.scheduler.new_task(CommandDto("lib_exc", {}, COMMAND_OPTIONS))
+        task_id = "id0"
+        self._new_task(task_id, "lib_exc")
         await self.perform_actions(0)
         # This task immediately raises a LibraryException and executor detects
         # that as an error, sends two messages - TaskExecuted and TaskFinished
-        task_executor(self.scheduler._task_register["id0"].to_worker_command())
+        task_executor(
+            self.scheduler._task_register[task_id].to_worker_command()
+        )
         await self.perform_actions(2)
 
-        task_info = self.scheduler.get_task("id0")
+        task_info = self.scheduler.get_task(task_id, AUTH_USER)
         self.assertEqual(0, len(task_info.reports))
         self.assertEqual(TaskFinishType.FAIL, task_info.task_finish_type)
         self.assertIsNone(task_info.result)
 
     @gen_test
     async def test_task_unhandled_exception(self):
-        with mock.patch("uuid.uuid4") as mock_uuid:
-            mock_uuid().hex = "id0"
-            self.scheduler.new_task(
-                CommandDto("unhandled_exc", {}, COMMAND_OPTIONS)
-            )
+        task_id = "id0"
+        self._new_task(task_id, "unhandled_exc")
         await self.perform_actions(0)
         # This task immediately raises an Exception which the executor catches
         # and logs accordingly
-        task_executor(self.scheduler._task_register["id0"].to_worker_command())
+        task_executor(
+            self.scheduler._task_register[task_id].to_worker_command()
+        )
         await self.perform_actions(2)
 
-        task_info = self.scheduler.get_task("id0")
+        task_info = self.scheduler.get_task(task_id, AUTH_USER)
         self.assertEqual(0, len(task_info.reports))
         self.assertEqual(
             TaskFinishType.UNHANDLED_EXCEPTION, task_info.task_finish_type

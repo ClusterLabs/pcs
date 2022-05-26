@@ -5496,3 +5496,11 @@ class CommandUnknown(NameBuildTest):
             f"Unknown command '{cmd}'",
             reports.CommandUnknown(cmd),
         )
+
+
+class NotAuthorized(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Current user is not authorized for this operation",
+            reports.NotAuthorized(),
+        )

@@ -19,7 +19,11 @@ from .dummy_commands import (
     RESULT,
     test_command_map,
 )
-from .helpers import MockOsKillMixin
+from .helpers import (
+    AUTH_USER,
+    MockOsKillMixin,
+    PermissionsCheckerMock,
+)
 
 TASK_IDENT = "id0"
 WORKER_PID = 2222
@@ -31,6 +35,10 @@ worker.worker_com = Queue()  # patched at runtime
 
 @mock.patch("pcs.daemon.async_tasks.worker.COMMAND_MAP", test_command_map)
 @mock.patch("pcs.daemon.async_tasks.worker.getLogger", mock.MagicMock())
+@mock.patch(
+    "pcs.daemon.async_tasks.worker.PermissionsChecker",
+    lambda _: PermissionsCheckerMock({}),
+)
 @mock.patch("os.getpid")
 class TestExecutor(MockOsKillMixin, TestCase):
     """
@@ -62,6 +70,7 @@ class TestExecutor(MockOsKillMixin, TestCase):
             worker.WorkerCommand(
                 TASK_IDENT,
                 CommandDto("success", {}, COMMAND_OPTIONS),
+                AUTH_USER,
             )
         )
         # 1. TaskExecuted
@@ -79,6 +88,7 @@ class TestExecutor(MockOsKillMixin, TestCase):
             worker.WorkerCommand(
                 TASK_IDENT,
                 CommandDto("lib_exc", {}, COMMAND_OPTIONS),
+                AUTH_USER,
             )
         )
         # 1. TaskExecuted
@@ -100,6 +110,7 @@ class TestExecutor(MockOsKillMixin, TestCase):
                     {},
                     COMMAND_OPTIONS,
                 ),
+                AUTH_USER,
             )
         )
         # 1. TaskExecuted
@@ -120,6 +131,7 @@ class TestExecutor(MockOsKillMixin, TestCase):
             worker.WorkerCommand(
                 TASK_IDENT,
                 CommandDto("unhandled_exc", {}, COMMAND_OPTIONS),
+                AUTH_USER,
             )
         )
         # 1. TaskExecuted

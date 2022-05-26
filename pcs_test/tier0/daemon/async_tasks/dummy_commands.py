@@ -1,6 +1,8 @@
 from pcs.common.reports import ReportItem
 from pcs.common.reports.messages import CibUpgradeSuccessful
+from pcs.daemon.async_tasks.command_mapping import Cmd
 from pcs.lib.errors import LibraryError
+from pcs.lib.permissions.config.types import PermissionAccessType as p
 
 RESULT = "I'm done."
 
@@ -26,10 +28,14 @@ def dummy_workload_lib_exception_contains_reports(_) -> None:
     raise LibraryError(ReportItem.error(CibUpgradeSuccessful()))
 
 
+def _get_cmd(callback):
+    return Cmd(cmd=callback, required_permission=p.READ)
+
+
 test_command_map = {
-    "success": dummy_workload_with_result,
-    "success_with_reports": dummy_workload_no_result_with_reports,
-    "unhandled_exc": dummy_workload_unhandled_exception,
-    "lib_exc": dummy_workload_lib_exception,
-    "lib_exc_reports": dummy_workload_lib_exception_contains_reports,
+    "success": _get_cmd(dummy_workload_with_result),
+    "success_with_reports": _get_cmd(dummy_workload_no_result_with_reports),
+    "unhandled_exc": _get_cmd(dummy_workload_unhandled_exception),
+    "lib_exc": _get_cmd(dummy_workload_lib_exception),
+    "lib_exc_reports": _get_cmd(dummy_workload_lib_exception_contains_reports),
 }
