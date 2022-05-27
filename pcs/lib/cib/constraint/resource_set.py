@@ -5,10 +5,14 @@ from pcs.common import (
     pacemaker,
     reports,
 )
+from pcs.common.reports.item import ReportItem
 from pcs.lib import validate
+from pcs.lib.cib.resource import group
+from pcs.lib.cib.resource.common import get_parent_resource
 from pcs.lib.cib.tools import (
     are_new_role_names_supported,
     find_unique_id,
+    get_elements_by_ids,
 )
 from pcs.lib.errors import LibraryError
 from pcs.lib.xml_tools import export_attributes
@@ -87,3 +91,23 @@ def export(element):
         "ids": get_resource_id_set_list(element),
         "options": export_attributes(element),
     }
+
+
+def is_resource_in_same_group(cib, resource_id_list):
+    # We don't care about not found elements here, that is a job of another
+    # validator. We do not care if the id doesn't belong to a resource either
+    # for the same reason.
+    element_list, _ = get_elements_by_ids(cib, set(resource_id_list))
+
+    parent_list = []
+    for element in element_list:
+        parent = get_parent_resource(element)
+        if parent is not None and group.is_group(parent):
+            parent_list.append(parent)
+
+    if len(set(parent_list)) != len(parent_list):
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.CannotSetOrderConstraintsForResourcesInTheSameGroup()
+            )
+        )

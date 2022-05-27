@@ -230,6 +230,7 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/test_booth.py \
 			  tier0/lib/commands/test_cib_options.py \
 			  tier0/lib/commands/test_constraint_common.py \
+			  tier0/lib/commands/test_constraint_order.py \
 			  tier0/lib/commands/test_fencing_topology.py \
 			  tier0/lib/commands/test_node.py \
 			  tier0/lib/commands/test_pcsd.py \
