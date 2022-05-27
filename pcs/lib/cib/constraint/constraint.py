@@ -24,6 +24,7 @@ from pcs.lib.errors import LibraryError
 from pcs.lib.xml_tools import (
     export_attributes,
     find_parent,
+    get_root,
 )
 
 
@@ -185,6 +186,13 @@ def create_with_set(constraint_section, tag_name, options, resource_set_list):
         )
     element = SubElement(constraint_section, tag_name)
     element.attrib.update(options)
+    if tag_name == "rsc_order":
+        all_resource_ids = []
+        for resource_set_item in resource_set_list:
+            all_resource_ids.extend(resource_set_item["ids"])
+        resource_set.is_resource_in_same_group(
+            get_root(constraint_section), all_resource_ids
+        )
     for resource_set_item in resource_set_list:
         resource_set.create(element, resource_set_item)
     return element

@@ -27,12 +27,15 @@
   ([rhbz#1786964])
 - Preventing fence-loop caused when stonith-watchdog-timeout is set
   with wrong value ([rhbz#1954099])
+- Do not allow to create an order constraint for resources in one group as that
+  may block Pacemaker ([ghpull#509])
 
 ### Deprecated
 - Agents not complying with OCF 1.0 schema are processed, incompatibilities are
   listed as warnings. In pcs-0.11, they will be reported as errors and prevent
   pcs from working with such agents. ([rhbz#2050274])
 
+[ghpull#509]: https://github.com/ClusterLabs/pcs/pull/509
 [rhbz#1730232]: https://bugzilla.redhat.com/show_bug.cgi?id=1730232
 [rhbz#1786964]: https://bugzilla.redhat.com/show_bug.cgi?id=1786964
 [rhbz#1791661]: https://bugzilla.redhat.com/show_bug.cgi?id=1791661
