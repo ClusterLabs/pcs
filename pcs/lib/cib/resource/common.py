@@ -273,6 +273,24 @@ def find_resources_to_manage(resource_el):
     )
 
 
+def find_resources_to_manage_with_monitor(resource_el):
+    """
+    Get the specific resource  that needed to be enable monitor op
+    """
+    if is_bundle(resource_el):
+        in_bundle = get_bundle_inner_resource(resource_el)
+        return (
+            [resource_el, in_bundle] if in_bundle is not None else [resource_el]
+        )
+    if is_any_clone(resource_el):
+        resource_el = get_clone_inner_resource(resource_el)
+    if is_group(resource_el):
+        return get_group_inner_resources(resource_el)
+    if is_primitive(resource_el):
+        return [resource_el]
+    return []
+
+
 def find_resources_to_unmanage(resource_el):
     """
     Get resources to unmanage to unmanage the specified resource successfully

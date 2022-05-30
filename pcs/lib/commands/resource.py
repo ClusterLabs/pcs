@@ -1397,6 +1397,14 @@ def manage(
             resource_el, ["monitor"]
         )
         if with_monitor:
+            disabled_resource_list, _ = _find_resources_expand_tags(
+                cib, resource_or_tag_ids, resource.common.find_resources_to_manage_with_monitor
+            )
+            for disabled_resource in disabled_resource_list:
+                if disabled_resource.attrib["id"] == resource_el.attrib["id"]:
+                    # find out the specific resource that needs to be enable monitor
+                    for op in op_list:
+                        resource.operations.enable(op)
             for op in op_list:
                 resource.operations.enable(op)
         else:
