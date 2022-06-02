@@ -1433,3 +1433,44 @@ class WithMonitor(TestCase):
             resources=fixture_bundle_empty_cib_unmanaged_bundle
         )
         resource.unmanage(self.env_assist.get_env(), ["A-bundle"], True)
+
+    def test_manage_one_resource_in_group(self):
+        self.config.runner.cib.load(
+            resources=fixture_clone_group_cib_unmanaged_all_primitives_op_disabled
+        )
+        self.config.env.push_cib(
+            resources="""
+                <resources>
+                    <clone id="A-clone">
+                        <group id="A">
+                            <primitive id="A1" class="ocf" provider="heartbeat"
+                                type="Dummy"
+                            >
+                                <meta_attributes id="A1-meta_attributes" />
+                                <operations>
+                                    <op id="A1-start" name="start" />
+                                    <op id="A1-stop" name="stop" />
+                                    <op id="A1-monitor" name="monitor" />
+                                </operations>
+                            </primitive>
+                            <primitive id="A2" class="ocf" provider="heartbeat"
+                                type="Dummy"
+                            >
+                                <meta_attributes id="A2-meta_attributes">
+                                    <nvpair id="A2-meta_attributes-is-managed"
+                                        name="is-managed" value="false" />
+                                </meta_attributes>
+                                <operations>
+                                    <op id="A2-start" name="start" />
+                                    <op id="A2-stop" name="stop" />
+                                    <op id="A2-monitor" name="monitor"
+                                        enabled="false"
+                                    />
+                                </operations>
+                            </primitive>
+                        </group>
+                    </clone>
+                </resources>
+            """
+        )
+        resource.manage(self.env_assist.get_env(), ["A1"], True)
