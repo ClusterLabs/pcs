@@ -1834,7 +1834,7 @@ def _format_options(label: str, options: Mapping[str, str]) -> List[str]:
     if options:
         output.append(f"{label}:")
         output.extend(
-            indent(f"{opt}: {val}" for opt, val in sorted(options.items()))
+            indent([f"{opt}: {val}" for opt, val in sorted(options.items())])
         )
     return output
 
