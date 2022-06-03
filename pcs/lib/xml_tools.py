@@ -1,6 +1,7 @@
 from typing import (
     Dict,
     Iterable,
+    Optional,
 )
 
 from lxml import etree
@@ -10,6 +11,7 @@ from pcs.common import (
     const,
     pacemaker,
 )
+from pcs.common.types import StringCollection
 
 
 def get_root(tree):
@@ -17,15 +19,16 @@ def get_root(tree):
     return tree.getroot() if hasattr(tree, "getroot") else tree.getroottree()
 
 
-def find_parent(element, tag_names):
+def find_parent(
+    element: _Element, tag_names: StringCollection
+) -> Optional[_Element]:
     """
-    Find parent of an element based on parent's tag name. Return the parent
-    element or None if such element does not exist.
+    Return the closest parent with specified tag name of an element or None
 
-    etree element -- the element whose parent we want to find
-    strings tag_names -- allowed tag names of parent we are looking for
+    element -- the element whose parent we want to find
+    tag_names -- allowed tag names of a parent we are looking for
     """
-    candidate = element
+    candidate: Optional[_Element] = element
     while True:
         if candidate is None or candidate.tag in tag_names:
             return candidate

@@ -583,7 +583,14 @@ def remove_obj_ref(obj_ref_list: Iterable[_Element]) -> None:
 
     obj_ref_list -- list of obj_ref elements
     """
-    tag_elements = {find_parent(obj_ref, [TAG_TAG]) for obj_ref in obj_ref_list}
+    tag_elements = {
+        element
+        for element in {
+            find_parent(obj_ref, [TAG_TAG]) for obj_ref in obj_ref_list
+        }
+        if element is not None
+    }
+
     for obj_ref in obj_ref_list:
         remove_one_element(obj_ref)
     for tag in tag_elements:
@@ -662,7 +669,7 @@ def expand_tag(
     if some_or_tag_el.tag != TAG_TAG:
         return [some_or_tag_el]
 
-    conf_section = find_parent(some_or_tag_el, "configuration")
+    conf_section = find_parent(some_or_tag_el, {"configuration"})
     if conf_section is None:
         return []
 

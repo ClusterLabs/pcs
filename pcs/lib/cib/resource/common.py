@@ -4,6 +4,7 @@ from typing import (
     Optional,
     Set,
     Tuple,
+    cast,
 )
 
 from lxml.etree import _Element
@@ -233,10 +234,11 @@ def disable(resource_el, id_provider):
     )
 
 
-def find_resources_to_manage(resource_el):
+def find_resources_to_manage(resource_el: _Element) -> List[_Element]:
     """
-    Get resources to manage to manage the specified resource successfully
-    etree resource_el -- resource element
+    Get resources to set to managed for the specified resource to become managed
+
+    resource_el -- resource element
     """
     # If the resource_el is a primitive in a group, we set both the group and
     # the primitive to managed mode. Otherwise the resource_el, all its
@@ -246,31 +248,34 @@ def find_resources_to_manage(resource_el):
     # as a managed primitive in an unmanaged clone / group is still unmanaged
     # and vice versa.
     res_id = resource_el.attrib["id"]
-    return (
-        [resource_el]  # the resource itself
-        +
-        # its parents
-        find_parent(resource_el, "resources").xpath(
-            # a master or a clone which contains a group, a primitive, or a
-            # grouped primitive with the specified id
-            # OR
-            # a group (in a clone, master, etc. - hence //) which contains a
-            # primitive with the specified id
-            # OR
-            # a bundle which contains a primitive with the specified id
-            """
+    parent_el = []
+    top_element = find_parent(resource_el, {"resources"})
+    if top_element is not None:
+        parent_el = cast(
+            List[_Element],
+            top_element.xpath(
+                # a master or a clone which contains a group, a primitive, or a
+                # grouped primitive with the specified id
+                # OR
+                # a group (in a clone, master, etc. - hence //) which contains a
+                # primitive with the specified id
+                # OR
+                # a bundle which contains a primitive with the specified id
+                """
                 (./master|./clone)[(group|group/primitive|primitive)[@id=$r]]
                 |
                 //group[primitive[@id=$r]]
                 |
                 ./bundle[primitive[@id=$r]]
-            """,
-            r=res_id,
+                """,
+                r=res_id,
+            ),
         )
-        +
-        # its children
-        resource_el.xpath("(./group|./primitive|./group/primitive)")
+    children_el = cast(
+        List[_Element],
+        resource_el.xpath("(./group|./primitive|./group/primitive)"),
     )
+    return [resource_el] + parent_el + children_el
 
 
 def find_resources_to_unmanage(resource_el):
