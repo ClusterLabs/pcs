@@ -11,10 +11,10 @@ from typing import (
     Union,
 )
 
-ListOfStrings = List[str]  # Intetionaly not Sequence so string is prohibited
+from pcs.common.types import StringSequence
 
 
-def indent(line_list: ListOfStrings, indent_step: int = 2) -> List[str]:
+def indent(line_list: StringSequence, indent_step: int = 2) -> List[str]:
     """
     return line list where each line of input is prefixed by N spaces
 
@@ -27,7 +27,7 @@ def indent(line_list: ListOfStrings, indent_step: int = 2) -> List[str]:
     ]
 
 
-def outdent(line_list: ListOfStrings) -> List[str]:
+def outdent(line_list: StringSequence) -> List[str]:
     if not line_list:
         return []
     smallest_indentation = min(
@@ -37,28 +37,28 @@ def outdent(line_list: ListOfStrings) -> List[str]:
 
 
 def format_list_base(
-    item_list: ListOfStrings,
+    item_list: StringSequence,
     separator: str = ", ",
 ) -> str:
     return separator.join(item_list)
 
 
 def format_list_dont_sort(
-    item_list: ListOfStrings,
+    item_list: StringSequence,
     separator: str = ", ",
 ) -> str:
     return format_list_base(quote_items(item_list), separator)
 
 
 def format_list(
-    item_list: ListOfStrings,
+    item_list: StringSequence,
     separator: str = ", ",
 ) -> str:
     return format_list_dont_sort(sorted(item_list), separator)
 
 
 def format_list_custom_last_separator(
-    item_list: ListOfStrings,
+    item_list: StringSequence,
     last_separator: str,
     separator: str = ", ",
 ) -> str:
@@ -68,7 +68,7 @@ def format_list_custom_last_separator(
 
 
 def format_list_custom_last_separator_dont_sort(
-    item_list: ListOfStrings,
+    item_list: StringSequence,
     last_separator: str,
     separator: str = ", ",
 ) -> str:
@@ -83,7 +83,7 @@ def format_list_custom_last_separator_dont_sort(
     )
 
 
-def quote_items(item_list: ListOfStrings) -> List[str]:
+def quote_items(item_list: StringSequence) -> List[str]:
     return [f"'{item}'" for item in item_list]
 
 
