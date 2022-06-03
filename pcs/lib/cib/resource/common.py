@@ -1,6 +1,7 @@
 from typing import (
     Iterable,
     List,
+    Mapping,
     Optional,
     Set,
     Tuple,
@@ -10,8 +11,12 @@ from typing import (
 from lxml.etree import _Element
 
 from pcs.common.reports.item import ReportItemList
+from pcs.common.types import StringCollection
 from pcs.lib.cib import nvpair
-from pcs.lib.cib.tools import ElementSearcher
+from pcs.lib.cib.tools import (
+    ElementSearcher,
+    IdProvider,
+)
 from pcs.lib.xml_tools import find_parent
 
 from .bundle import TAG as TAG_BUNDLE
@@ -31,16 +36,18 @@ ALL_RESOURCE_XML_TAGS = sorted(
 )
 
 
-def are_meta_disabled(meta_attributes):
+def are_meta_disabled(meta_attributes: Mapping[str, str]) -> bool:
     return meta_attributes.get("target-role", "Started").lower() == "stopped"
 
 
-def _can_be_evaluated_as_positive_num(value):
+def _can_be_evaluated_as_positive_num(value: str) -> bool:
     string_wo_leading_zeros = str(value).lstrip("0")
-    return string_wo_leading_zeros and string_wo_leading_zeros[0].isdigit()
+    return (
+        bool(string_wo_leading_zeros) and string_wo_leading_zeros[0].isdigit()
+    )
 
 
-def is_clone_deactivated_by_meta(meta_attributes):
+def is_clone_deactivated_by_meta(meta_attributes: Mapping[str, str]) -> bool:
     return are_meta_disabled(meta_attributes) or any(
         not _can_be_evaluated_as_positive_num(meta_attributes.get(key, "1"))
         for key in ["clone-max", "clone-node-max"]
@@ -50,7 +57,7 @@ def is_clone_deactivated_by_meta(meta_attributes):
 def find_one_resource(
     context_element: _Element,
     resource_id: str,
-    resource_tags: Optional[Iterable[str]] = None,
+    resource_tags: Optional[StringCollection] = None,
 ) -> Tuple[Optional[_Element], ReportItemList]:
     """
     Find a single resource or return None if not found
@@ -71,10 +78,10 @@ def find_one_resource(
 def find_resources(
     context_element: _Element,
     resource_ids: Iterable[str],
-    resource_tags: Optional[Iterable[str]] = None,
+    resource_tags: Optional[StringCollection] = None,
 ) -> Tuple[List[_Element], ReportItemList]:
     """
-    Find a list of resource
+    Find a list of resources
 
     context_element -- an element to be searched in
     resource_id -- id of an element to find
@@ -96,7 +103,8 @@ def find_resources(
 def find_primitives(resource_el: _Element) -> List[_Element]:
     """
     Get list of primitives contained in a given resource
-    etree resource_el -- resource element
+
+    resource_el -- resource element
     """
     if is_bundle(resource_el):
         in_bundle = get_bundle_inner_resource(resource_el)
@@ -184,10 +192,11 @@ def get_parent_resource(resource_el: _Element) -> Optional[_Element]:
     return None
 
 
-def find_resources_to_enable(resource_el):
+def find_resources_to_enable(resource_el: _Element) -> List[_Element]:
     """
     Get resources to enable in order to enable specified resource successfully
-    etree resource_el -- resource element
+
+    resource_el -- resource element
     """
     if is_bundle(resource_el):
         to_enable = [resource_el]
@@ -201,35 +210,33 @@ def find_resources_to_enable(resource_el):
 
     to_enable = [resource_el]
     parent = resource_el.getparent()
-    if is_any_clone(parent) or is_bundle(parent):
+    if parent is not None and (is_any_clone(parent) or is_bundle(parent)):
         to_enable.append(parent)
     return to_enable
 
 
-def enable(resource_el, id_provider):
+def enable(resource_el: _Element, id_provider: IdProvider) -> None:
     """
     Enable specified resource
-    etree resource_el -- resource element
+
+    resource_el -- resource element
     """
     nvpair.arrange_first_meta_attributes(
         resource_el,
-        {
-            "target-role": "",
-        },
+        {"target-role": ""},
         id_provider,
     )
 
 
-def disable(resource_el, id_provider):
+def disable(resource_el: _Element, id_provider: IdProvider) -> None:
     """
     Disable specified resource
-    etree resource_el -- resource element
+
+    resource_el -- resource element
     """
     nvpair.arrange_first_meta_attributes(
         resource_el,
-        {
-            "target-role": "Stopped",
-        },
+        {"target-role": "Stopped"},
         id_provider,
     )
 
@@ -278,10 +285,11 @@ def find_resources_to_manage(resource_el: _Element) -> List[_Element]:
     return [resource_el] + parent_el + children_el
 
 
-def find_resources_to_unmanage(resource_el):
+def find_resources_to_unmanage(resource_el: _Element) -> List[_Element]:
     """
     Get resources to unmanage to unmanage the specified resource successfully
-    etree resource_el -- resource element
+
+    resource_el -- resource element
     """
     # resource hierarchy - specified resource - what to return
     # a primitive - the primitive - the primitive
@@ -333,30 +341,28 @@ def find_resources_to_unmanage(resource_el):
     return []
 
 
-def manage(resource_el, id_provider):
+def manage(resource_el: _Element, id_provider: IdProvider) -> None:
     """
     Set the resource to be managed by the cluster
-    etree resource_el -- resource element
+
+    resource_el -- resource element
     """
     nvpair.arrange_first_meta_attributes(
         resource_el,
-        {
-            "is-managed": "",
-        },
+        {"is-managed": ""},
         id_provider,
     )
 
 
-def unmanage(resource_el, id_provider):
+def unmanage(resource_el: _Element, id_provider: IdProvider) -> None:
     """
     Set the resource not to be managed by the cluster
-    etree resource_el -- resource element
+
+    resource_el -- resource element
     """
     nvpair.arrange_first_meta_attributes(
         resource_el,
-        {
-            "is-managed": "false",
-        },
+        {"is-managed": "false"},
         id_provider,
     )
 

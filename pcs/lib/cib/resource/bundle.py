@@ -1,4 +1,8 @@
-from typing import Optional
+from typing import (
+    List,
+    Optional,
+    cast,
+)
 
 from lxml import etree
 from lxml.etree import _Element
@@ -73,7 +77,7 @@ STORAGE_MAP_OPTIONS = frozenset(
 )
 
 
-def is_bundle(resource_el):
+def is_bundle(resource_el: _Element) -> bool:
     return resource_el.tag == TAG
 
 
@@ -485,8 +489,8 @@ def add_resource(bundle_element, primitive_element):
     bundle_element.append(primitive_element)
 
 
-def get_inner_resource(bundle_el):
-    resources = bundle_el.xpath("./primitive")
+def get_inner_resource(bundle_el: _Element) -> Optional[_Element]:
+    resources = cast(List[_Element], bundle_el.xpath("./primitive"))
     if resources:
         return resources[0]
     return None
