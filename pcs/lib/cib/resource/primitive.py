@@ -49,7 +49,7 @@ from pcs.lib.resource_agent import (
 from pcs.lib.resource_agent.const import STONITH_ACTION_REPLACED_BY
 
 
-def is_primitive(resource_el):
+def is_primitive(resource_el: _Element) -> bool:
     return resource_el.tag == TAG
 
 

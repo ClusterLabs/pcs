@@ -8,8 +8,10 @@ elements are deprecated yet still supported in pacemaker. We provide read-only
 support for them to be able to read, process and display CIBs containing them.
 """
 from typing import (
+    List,
     Mapping,
     Optional,
+    cast,
 )
 
 import dataclasses
@@ -35,19 +37,19 @@ from pcs.lib.pacemaker.values import (
 ALL_TAGS = [TAG_CLONE, TAG_MASTER]
 
 
-def is_clone(resource_el):
+def is_clone(resource_el: _Element) -> bool:
     return resource_el.tag == TAG_CLONE
 
 
-def is_master(resource_el):
+def is_master(resource_el: _Element) -> bool:
     return resource_el.tag == TAG_MASTER
 
 
-def is_any_clone(resource_el):
+def is_any_clone(resource_el: _Element) -> bool:
     return resource_el.tag in ALL_TAGS
 
 
-def is_promotable_clone(resource_el):
+def is_promotable_clone(resource_el: _Element) -> bool:
     """
     Return True if resource_el is a promotable clone, False on clone and master
     """
@@ -122,11 +124,11 @@ def master_element_to_dto(
     return clone_dto
 
 
-def get_parent_any_clone(resource_el):
+def get_parent_any_clone(resource_el: _Element) -> Optional[_Element]:
     """
     Get any parent clone of a primitive (may be in a group) or group
 
-    etree.Element resource_el -- the primitive or group to get its parent clone
+    resource_el -- the primitive or group to get its parent clone
     """
     element = resource_el
     for _ in range(2):
@@ -145,15 +147,16 @@ def append_new(
     primitive_element: _Element,
     options: Mapping[str, str],
     clone_id: Optional[str] = None,
-):
+) -> _Element:
     """
     Append a new clone element (containing the primitive_element) to the
     resources_section.
 
-    etree.Element resources_section is place where new clone will be appended.
-    IdProvider id_provider -- elements' ids generator
-    etree.Element primitive_element is resource which will be cloned.
-    dict options is source for clone meta options
+    resources_section -- place where the new clone will be appended
+    id_provider -- elements' ids generator
+    primitive_element -- resource which will be cloned
+    options -- source for clone meta options
+    clone_id -- optional custom clone id
     """
     clone_element = etree.SubElement(
         resources_section,
@@ -172,8 +175,8 @@ def append_new(
     return clone_element
 
 
-def get_inner_resource(clone_el):
-    return clone_el.xpath("./primitive | ./group")[0]
+def get_inner_resource(clone_el: _Element) -> _Element:
+    return cast(List[_Element], clone_el.xpath("./primitive | ./group"))[0]
 
 
 def validate_clone_id(clone_id: str, id_provider: IdProvider) -> ReportItemList:

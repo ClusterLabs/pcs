@@ -11,7 +11,6 @@ from pcs.lib.cib.tools import (
     find_unique_id,
 )
 from pcs.lib.errors import LibraryError
-from pcs.lib.xml_tools import etree_element_attributes_to_dict
 
 TAG_GROUP = "acl_group"
 TAG_ROLE = "acl_role"
@@ -327,7 +326,7 @@ def get_role_list(acl_section):
     """
     output_list = []
     for role_el in acl_section.xpath(f"./{TAG_ROLE}"):
-        role = etree_element_attributes_to_dict(role_el, ["id", "description"])
+        role = {key: role_el.get(key) for key in ["id", "description"]}
         role["permission_list"] = _get_permission_list(role_el)
         output_list.append(role)
     return output_list
@@ -353,9 +352,9 @@ def _get_permission_list(role_el):
     output_list = []
     for permission in role_el.findall("./acl_permission"):
         output_list.append(
-            etree_element_attributes_to_dict(
-                permission,
-                [
+            {
+                key: permission.get(key)
+                for key in [
                     "id",
                     "description",
                     "kind",
@@ -363,8 +362,8 @@ def _get_permission_list(role_el):
                     "reference",
                     "object-type",
                     "attribute",
-                ],
-            )
+                ]
+            }
         )
     return output_list
 
