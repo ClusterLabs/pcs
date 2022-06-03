@@ -12,8 +12,6 @@ from lxml.etree import (
 )
 
 from pcs.common import reports
-from pcs.common.reports import ReportProcessor
-from pcs.common.reports.item import ReportItem
 from pcs.lib.cib import resource
 from pcs.lib.cib.constraint import resource_set
 from pcs.lib.cib.tools import (
@@ -34,7 +32,7 @@ def _validate_attrib_names(attrib_names, options):
     ]
     if invalid_names:
         raise LibraryError(
-            ReportItem.error(
+            reports.ReportItem.error(
                 reports.messages.InvalidOptions(
                     sorted(invalid_names), sorted(attrib_names), None
                 )
@@ -43,7 +41,7 @@ def _validate_attrib_names(attrib_names, options):
 
 
 def find_valid_resource_id(
-    report_processor: ReportProcessor, cib, in_clone_allowed, _id
+    report_processor: reports.ReportProcessor, cib, in_clone_allowed, _id
 ):
     parent_tags = resource.clone.ALL_TAGS + [resource.bundle.TAG]
     resource_element = find_element_by_tag_and_id(
@@ -65,12 +63,14 @@ def find_valid_resource_id(
         str(clone.attrib["id"]),
     )
     if in_clone_allowed:
-        if report_processor.report(ReportItem.warning(report_msg)).has_errors:
+        if report_processor.report(
+            reports.ReportItem.warning(report_msg)
+        ).has_errors:
             raise LibraryError()
         return resource_element.attrib["id"]
 
     raise LibraryError(
-        ReportItem.error(
+        reports.ReportItem.error(
             report_msg,
             force_code=reports.codes.FORCE,
         )
@@ -126,7 +126,7 @@ def have_duplicate_resource_sets(element, other_element):
 
 
 def check_is_without_duplication(
-    report_processor: ReportProcessor,
+    report_processor: reports.ReportProcessor,
     constraint_section: _Element,
     element: _Element,
     are_duplicate: Callable[[_Element, _Element], bool],
@@ -153,7 +153,7 @@ def check_is_without_duplication(
 
     if report_processor.report_list(
         [
-            ReportItem.info(
+            reports.ReportItem.info(
                 reports.messages.DuplicateConstraintsList(
                     element.tag,
                     [
@@ -162,7 +162,7 @@ def check_is_without_duplication(
                     ],
                 )
             ),
-            ReportItem(
+            reports.ReportItem(
                 severity=reports.item.get_severity(
                     reports.codes.FORCE,
                     duplication_allowed,
@@ -182,7 +182,7 @@ def check_is_without_duplication(
 def create_with_set(constraint_section, tag_name, options, resource_set_list):
     if not resource_set_list:
         raise LibraryError(
-            ReportItem.error(reports.messages.EmptyResourceSetList())
+            reports.ReportItem.error(reports.messages.EmptyResourceSetList())
         )
     element = SubElement(constraint_section, tag_name)
     element.attrib.update(options)

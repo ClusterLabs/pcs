@@ -9,7 +9,6 @@ from lxml.etree import _Element
 
 from pcs.common import reports
 from pcs.common.pacemaker.resource import bundle
-from pcs.common.reports.item import ReportItem
 from pcs.lib import validate
 from pcs.lib.cib import (
     nvpair_multi,
@@ -320,7 +319,7 @@ def reset_to_minimal(bundle_element):
 
 
 def _get_report_unsupported_container(bundle_el):
-    return ReportItem.error(
+    return reports.ReportItem.error(
         reports.messages.ResourceBundleUnsupportedContainerType(
             bundle_el.get("id"),
             sorted(GENERIC_CONTAINER_TYPES),
@@ -479,7 +478,7 @@ def add_resource(bundle_element, primitive_element):
     inner_primitive = bundle_element.find(TAG_PRIMITIVE)
     if inner_primitive is not None:
         raise LibraryError(
-            ReportItem.error(
+            reports.ReportItem.error(
                 reports.messages.ResourceBundleAlreadyContainsAResource(
                     bundle_element.get("id"),
                     inner_primitive.get("id"),
@@ -505,7 +504,7 @@ def _is_supported_container(container_el):
 def _validate_container(container_type, container_options, force_options=False):
     if container_type not in GENERIC_CONTAINER_TYPES:
         return [
-            ReportItem.error(
+            reports.ReportItem.error(
                 reports.messages.InvalidOptionValue(
                     "container type",
                     container_type,
@@ -540,7 +539,7 @@ def _validate_generic_container_options(container_options, force_options=False):
     deprecation_reports = []
     if "masters" in container_options:
         deprecation_reports.append(
-            ReportItem.deprecation(
+            reports.ReportItem.deprecation(
                 reports.messages.DeprecatedOption(
                     "masters",
                     ["promoted-max"],
@@ -623,7 +622,7 @@ def _validate_generic_container_options_update(
         # deprecated. They may be removing it because they just found out it is
         # deprecated.
         deprecation_reports.append(
-            ReportItem.deprecation(
+            reports.ReportItem.deprecation(
                 reports.messages.DeprecatedOption(
                     "masters",
                     ["promoted-max"],
@@ -640,7 +639,7 @@ def _validate_generic_container_options_update(
         and options.get("promoted-max") != ""
     ):
         deprecation_reports.append(
-            ReportItem.error(
+            reports.ReportItem.error(
                 reports.messages.PrerequisiteOptionMustNotBeSet(
                     "masters", "promoted-max", "container", "container"
                 )
@@ -652,7 +651,7 @@ def _validate_generic_container_options_update(
         and options.get("masters") != ""
     ):
         deprecation_reports.append(
-            ReportItem.error(
+            reports.ReportItem.error(
                 reports.messages.PrerequisiteOptionMustNotBeSet(
                     "promoted-max", "masters", "container", "container"
                 )
@@ -718,7 +717,7 @@ def _validate_network_options_update(
         and not _is_pcmk_remote_accessible_after_update(network_el, options)
     ):
         report_list.append(
-            ReportItem(
+            reports.ReportItem(
                 severity=reports.item.get_severity(
                     reports.codes.FORCE,
                     force_options,
