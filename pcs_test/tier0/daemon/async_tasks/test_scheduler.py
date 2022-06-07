@@ -21,9 +21,11 @@ from pcs.daemon.async_tasks.messaging import (
     Message,
     TaskExecuted,
 )
+from pcs.daemon.async_tasks.task import Task
 from pcs.daemon.async_tasks.worker import task_executor
 
 from .helpers import (
+    ANOTHER_AUTH_USER,
     AUTH_USER,
     SchedulerBaseAsyncTestCase,
     SchedulerBaseTestCase,
@@ -51,6 +53,11 @@ class GetTaskTest(SchedulerBaseTestCase):
         with self.assertRaises(scheduler.TaskNotFoundError):
             self.scheduler.get_task("id1", AUTH_USER)
 
+    def test_different_user(self):
+        self._create_tasks(1)
+        with self.assertRaises(scheduler.TaskNotFoundError):
+            self.scheduler.get_task("id0", ANOTHER_AUTH_USER)
+
 
 class KillTaskTest(SchedulerBaseTestCase):
     def test_task_exists(self):
@@ -70,6 +77,11 @@ class KillTaskTest(SchedulerBaseTestCase):
         self._create_tasks(1)
         with self.assertRaises(scheduler.TaskNotFoundError):
             self.scheduler.kill_task("nonexistent", AUTH_USER)
+
+    def test_different_user(self):
+        self._create_tasks(1)
+        with self.assertRaises(scheduler.TaskNotFoundError):
+            self.scheduler.kill_task("id0", ANOTHER_AUTH_USER)
 
 
 class NewTaskTest(SchedulerBaseTestCase):
@@ -219,3 +231,106 @@ class ProcessTasksTest(SchedulerBaseAsyncTestCase):
                 ),
             ]
         )
+
+
+def get_generator(return_values):
+    def generator():
+        for item in return_values:
+            yield item
+
+    gen = generator()
+    return lambda *args, **kwargs: next(gen)
+
+
+class DeadlockDetectionTest(SchedulerBaseTestCase):
+    @staticmethod
+    def _create_task(index, state=TaskState.CREATED):
+        task = Task(
+            f"id{index}",
+            CommandDto(f"cmd{index}", {}, CommandOptionsDto()),
+            AUTH_USER,
+        )
+        task.state = state
+        return task
+
+    @mock.patch.object(Task, "is_defunct", lambda self, timeout: False)
+    def test_threshold_not_achieved(self):
+        task1 = self._create_task("1", TaskState.EXECUTED)
+        task2 = self._create_task("2")
+        self.scheduler._task_register = {
+            task.task_ident: task for task in (task1, task2)
+        }
+        self.assertFalse(self.scheduler._is_possibly_dead_locked())
+
+    @mock.patch.object(Task, "is_defunct", get_generator([True, False]))
+    def test_threshold_not_achieved_for_some(self):
+        task1 = self._create_task("1", TaskState.EXECUTED)
+        task2 = self._create_task("2", TaskState.EXECUTED)
+        task3 = self._create_task("3")
+        self.scheduler._task_register = {
+            task.task_ident: task for task in (task1, task2, task3)
+        }
+        self.assertFalse(self.scheduler._is_possibly_dead_locked())
+
+    @mock.patch.object(Task, "is_defunct", lambda self, timeout: True)
+    def test_no_tasks_waiting(self):
+        task1 = self._create_task("1", TaskState.EXECUTED)
+        task2 = self._create_task("2", TaskState.EXECUTED)
+        task3 = self._create_task("3", TaskState.FINISHED)
+        self.scheduler._task_register = {
+            task.task_ident: task for task in (task1, task2, task3)
+        }
+        self.assertFalse(self.scheduler._is_possibly_dead_locked())
+
+    @mock.patch.object(Task, "is_defunct", lambda self, timeout: True)
+    def test_new_tasks_waiting(self):
+        task1 = self._create_task("1", TaskState.EXECUTED)
+        task2 = self._create_task("2", TaskState.CREATED)
+        self.scheduler._task_register = {
+            task.task_ident: task for task in (task1, task2)
+        }
+        self.assertTrue(self.scheduler._is_possibly_dead_locked())
+
+    @mock.patch.object(Task, "is_defunct", lambda self, timeout: True)
+    def test_queued_tasks_waiting(self):
+        task1 = self._create_task("1", TaskState.EXECUTED)
+        task2 = self._create_task("2", TaskState.QUEUED)
+        self.scheduler._task_register = {
+            task.task_ident: task for task in (task1, task2)
+        }
+        self.assertTrue(self.scheduler._is_possibly_dead_locked())
+
+    @mock.patch.object(Task, "is_defunct", lambda self, timeout: True)
+    def test_any_tasks_waiting(self):
+        task1 = self._create_task("1", TaskState.EXECUTED)
+        task2 = self._create_task("2", TaskState.QUEUED)
+        task3 = self._create_task("3", TaskState.CREATED)
+        self.scheduler._task_register = {
+            task.task_ident: task for task in (task1, task2, task3)
+        }
+        self.assertTrue(self.scheduler._is_possibly_dead_locked())
+
+    @mock.patch.object(Task, "is_defunct", lambda self, timeout: True)
+    def test_workers_available(self):
+        self.scheduler._worker_count = 3
+        task1 = self._create_task("1", TaskState.EXECUTED)
+        task2 = self._create_task("2", TaskState.QUEUED)
+        task3 = self._create_task("3", TaskState.CREATED)
+        task4 = self._create_task("4", TaskState.EXECUTED)
+        self.scheduler._task_register = {
+            task.task_ident: task for task in (task1, task2, task3, task4)
+        }
+        self.assertFalse(self.scheduler._is_possibly_dead_locked())
+
+    @mock.patch.object(Task, "is_defunct", lambda self, timeout: True)
+    def test_workers_available_with_tmp_workers(self):
+        self.scheduler._worker_count = 1
+        self.scheduler._single_use_process_pool = list(range(2))
+        task1 = self._create_task("1", TaskState.EXECUTED)
+        task2 = self._create_task("2", TaskState.QUEUED)
+        task3 = self._create_task("3", TaskState.CREATED)
+        task4 = self._create_task("4", TaskState.EXECUTED)
+        self.scheduler._task_register = {
+            task.task_ident: task for task in (task1, task2, task3, task4)
+        }
+        self.assertFalse(self.scheduler._is_possibly_dead_locked())

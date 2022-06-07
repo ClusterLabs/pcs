@@ -152,7 +152,7 @@ class Task(ImplementsToDto):
         :return: True if no messages were received during timeout period since
             the last message, False otherwise
         """
-        if timeout is None or timeout <= 0:
+        if timeout is None or timeout < 0:
             timeout = task_unresponsive_timeout_seconds
         if self.state == TaskState.EXECUTED:
             return self._is_timed_out(timeout)

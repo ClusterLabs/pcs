@@ -3,6 +3,7 @@ import multiprocessing as mp
 from collections import Counter
 from dataclasses import dataclass
 from datetime import datetime
+from queue import Queue
 from unittest import (
     TestCase,
     mock,
@@ -22,6 +23,7 @@ from pcs.lib.auth.provider import AuthUser
 
 DATETIME_NOW = datetime(2020, 2, 20, 20, 20, 20, 20)
 AUTH_USER = AuthUser("username", ("group1", "group2"))
+ANOTHER_AUTH_USER = AuthUser("different user name", ["no group"])
 
 
 class PermissionsCheckerMock:
@@ -56,6 +58,7 @@ class SchedulerTestWrapper:
     worker_com = None
     mp_pool_mock = None
     logger_mock = None
+    logging_queue = None
 
     def prepare_scheduler(self):
         # Instance attributes are not created in the mock, this includes handler
@@ -66,7 +69,9 @@ class SchedulerTestWrapper:
             handlers=[],
         ).start()
         # We can patch Queue here because it is NOT shared between tests
-        self.worker_com = mp.Queue()
+        # self.worker_com = mp.Queue()
+        self.worker_com = Queue()
+        self.logging_queue = Queue()
         # Manager has to be mocked because it creates a new process
         # There are two queue calls, first is for worker message queue, second
         # is for the logging queue
@@ -74,7 +79,8 @@ class SchedulerTestWrapper:
             "multiprocessing.Manager"
         ).start().return_value.Queue.side_effect = [
             self.worker_com,
-            mp.Queue(),
+            self.logging_queue,
+            # mp.Queue(),
         ]
         self.mp_pool_mock = (
             mock.patch("multiprocessing.Pool", spec=mp.Pool)

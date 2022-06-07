@@ -1,6 +1,8 @@
 from datetime import timedelta
 from logging import Logger
-from multiprocessing import Queue
+from multiprocessing import Process
+from multiprocessing.pool import worker as mp_worker_init  # type: ignore
+from queue import Queue
 from unittest import mock
 
 from tornado.testing import gen_test
@@ -22,7 +24,10 @@ from pcs.daemon.async_tasks.messaging import (
 )
 from pcs.daemon.async_tasks.report_proc import WorkerReportProcessor
 from pcs.daemon.async_tasks.scheduler import TaskNotFoundError
-from pcs.daemon.async_tasks.worker import task_executor
+from pcs.daemon.async_tasks.worker import (
+    task_executor,
+    worker_init,
+)
 
 from .dummy_commands import (
     RESULT,
@@ -51,9 +56,9 @@ class IntegrationBaseTestCase(SchedulerBaseAsyncTestCase):
         guarantees that worker_com is emptied in one call, removing variability
         between test runs.
         """
-        received = await self.scheduler.perform_actions()
-        while received < message_count:
-            received += await self.scheduler._receive_messages()
+        # TODO: remove this function
+        del message_count
+        await self.scheduler.perform_actions()
 
     def execute_tasks(self, task_ident_list):
         """Simulates process pool workers launching tasks
@@ -489,3 +494,83 @@ class TaskResultsTests(MockOsKillMixin, IntegrationBaseTestCase):
             TaskFinishType.UNHANDLED_EXCEPTION, task_info.task_finish_type
         )
         self.assertIsNone(task_info.result)
+
+    @gen_test
+    async def test_wait_for_task(self):
+        task_id = "id0"
+        self._new_task(task_id, "success")
+        await self.perform_actions(0)
+        task_executor(
+            self.scheduler._task_register[task_id].to_worker_command()
+        )
+        await self.perform_actions(2)
+
+        task_info = await self.scheduler.wait_for_task(task_id)
+        self.assertEqual(0, len(task_info.reports))
+        self.assertEqual(TaskFinishType.SUCCESS, task_info.task_finish_type)
+        self.assertEqual(RESULT, task_info.result)
+
+
+class DeadlockTests(
+    MockOsKillMixin, AssertTaskStatesMixin, IntegrationBaseTestCase
+):
+    # pylint: disable=protected-access
+
+    def setUp(self):
+        super().setUp()
+        self.addCleanup(mock.patch.stopall)
+        mock.patch(
+            "pcs.daemon.async_tasks.scheduler.DEADLOCK_THRESHOLD_TIMEOUT", 0
+        ).start()
+        self.process_cls_mock = mock.Mock()
+        self.process_obj_mock = mock.Mock(spec=Process)
+        self.process_cls_mock.return_value = self.process_obj_mock
+        mock.patch(
+            "pcs.daemon.async_tasks.scheduler.mp.Process", self.process_cls_mock
+        ).start()
+
+    @gen_test
+    async def test_deadlock_mitigation(self):
+        self._create_tasks(2)
+        self.execute_tasks(["id0"])
+        await self.perform_actions(1)
+        # deadlock detected, new tmp worker spawned
+        self.assert_task_state_counts_equal(0, 1, 1, 0)
+        self.process_cls_mock.assert_called_once_with(
+            group=None,
+            target=mp_worker_init,
+            args=(
+                self.mp_pool_mock._inqueue,
+                self.mp_pool_mock._outqueue,
+                worker_init,
+                (self.worker_com, self.logging_queue),
+                1,
+                False,
+            ),
+        )
+        self.process_obj_mock.start.assert_called_once_with()
+        self.process_obj_mock.close.assert_not_called()
+        self.execute_tasks(["id1"])
+        self.process_obj_mock.is_alive.return_value = True
+        await self.perform_actions(0)
+        # tmp worker started executing a task
+        self.assert_task_state_counts_equal(0, 0, 2, 0)
+        self.process_obj_mock.close.assert_not_called()
+        self.finish_tasks(["id1"])
+        self.process_obj_mock.is_alive.return_value = False
+        await self.perform_actions(1)
+        # tmp worker finished the task and terminated itself
+        self.assert_task_state_counts_equal(0, 0, 1, 1)
+        self.process_obj_mock.close.assert_called_once_with()
+
+    @gen_test
+    async def test_max_worker_count_reached(self):
+        mock.patch(
+            "pcs.daemon.async_tasks.scheduler.MAX_WORKER_COUNT", 1
+        ).start()
+        self._create_tasks(3)
+        self.execute_tasks(["id0"])
+        await self.perform_actions(1)
+        self.assert_task_state_counts_equal(0, 2, 1, 0)
+        self.process_cls_mock.assert_not_called()
+        self.process_obj_mock.assert_not_called()

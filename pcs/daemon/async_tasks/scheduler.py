@@ -41,7 +41,7 @@ class TaskNotFoundError(Exception):
 
 
 MAX_WORKER_COUNT = 50
-THRESHOLD_TIMEOUT = 10
+DEADLOCK_THRESHOLD_TIMEOUT = 10
 
 
 class Scheduler:
@@ -159,7 +159,7 @@ class Scheduler:
             and (self._worker_count + len(self._single_use_process_pool))
             <= len(counter[TaskState.EXECUTED])
             and all(
-                task.is_defunct(THRESHOLD_TIMEOUT)
+                task.is_defunct(DEADLOCK_THRESHOLD_TIMEOUT)
                 for task in counter[TaskState.EXECUTED]
             )
         )
@@ -234,6 +234,7 @@ class Scheduler:
         in scheduler's integration tests
         :return: Number of received messages (useful for testing)
         """
+        # TODO: remove return and fix doctext
         received_total = await self._receive_messages()
         await self._process_tasks()
         self._handle_single_use_process_pool()
