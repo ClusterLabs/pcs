@@ -144,6 +144,3 @@ pcsd_worker_reset_limit = 100
 
 task_unresponsive_timeout_seconds = 60 * 60
 task_abandoned_timeout_seconds = 1 * 60
-
-worker_logs_path = "@LOCALSTATEDIR@/log/pcsd/worker_logs/"
-async_api_log_filename = "@LOCALSTATEDIR@/log/pcsd/async_api.log"
