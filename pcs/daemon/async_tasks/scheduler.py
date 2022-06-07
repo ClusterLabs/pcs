@@ -114,7 +114,7 @@ class Scheduler:
 
     async def wait_for_task(self, task_ident: str) -> TaskResultDto:
         task = self._return_task(task_ident)
-        await task.finished_event.wait()
+        await task.wait_until_finished()
         return self._get_task(task_ident).to_dto()
 
     def kill_task(self, task_ident: str, auth_user: AuthUser) -> None:

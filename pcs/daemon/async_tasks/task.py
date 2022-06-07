@@ -1,13 +1,13 @@
 import datetime
 import os
 import signal
+from asyncio import Event
 from typing import (
     Any,
+    Awaitable,
     List,
     Optional,
 )
-
-from tornado.locks import Event
 
 from pcs.common.async_tasks.dto import (
     CommandDto,
@@ -96,9 +96,8 @@ class Task(ImplementsToDto):
     def auth_user(self) -> AuthUser:
         return self._auth_user
 
-    @property
-    def finished_event(self) -> Event:
-        return self._finished_event
+    def wait_until_finished(self) -> Awaitable[Any]:
+        return self._finished_event.wait()
 
     def _get_last_updated_timestamp(self) -> Optional[datetime.datetime]:
         """
