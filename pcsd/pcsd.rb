@@ -17,7 +17,6 @@ require 'pcs.rb'
 require 'auth.rb'
 require 'cfgsync.rb'
 require 'permissions.rb'
-require 'api_v1.rb'
 
 use Rack::CommonLogger
 
@@ -126,14 +125,6 @@ end
 
 post '/remote/?:command?' do
   return remote(params, request, @auth_user)
-end
-
-post '/api/v1/?*' do
-  return route_api_v1(@auth_user, params, request)
-end
-
-get '/api/v1/?*' do
-  return route_api_v1(@auth_user, params, request)
 end
 
 post '/run_pcs' do

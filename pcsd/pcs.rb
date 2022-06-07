@@ -1720,44 +1720,6 @@ def get_pcs_internal_output_format(status, status_msg=nil)
   }
 end
 
-def _pcs_internal_proxy(auth_user, data, cmd)
-  begin
-    input_data = JSON.parse(data)
-    return run_pcs_internal(auth_user, cmd, input_data)
-  rescue JSON::ParserError => e
-    $logger.error("Invalid input data format: #{e}")
-    return get_pcs_internal_output_format(
-      'input_error', "Invalid input data format: #{e}"
-    )
-  end
-end
-
-def pcs_internal_proxy(auth_user, data, cmd)
-  return JSON.generate(_pcs_internal_proxy(auth_user, data, cmd))
-end
-
-def pcs_internal_proxy_old(auth_user, data, cmd)
-  # Backward compatibility layer for legacy endpoints introduced until pcs
-  # version 0.10.6. Report data structure has been changed.
-  output = _pcs_internal_proxy(auth_user, data, cmd)
-  if (
-    output.include?(:report_list) \
-    and \
-    output[:report_list].kind_of?(Array) \
-  )
-    output[:report_list].map! { |report|
-      {
-        'severity' => report[:severity][:level],
-        'code' => report[:message][:code],
-        'info' => report[:message][:payload],
-        'forceable' => report[:severity][:force_code],
-        'report_text' => report[:message][:message],
-      }
-    }
-  end
-  return JSON.generate(output)
-end
-
 def run_pcs_internal(auth_user, cmd, data, request_timeout=nil)
   input_data = {
     :cmd => cmd,

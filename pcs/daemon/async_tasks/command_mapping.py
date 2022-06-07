@@ -5,7 +5,7 @@ from typing import (
     Mapping,
 )
 
-from pcs.lib.commands import (  # status,; services,
+from pcs.lib.commands import (  # services,
     acl,
     alert,
     cluster,
@@ -17,6 +17,7 @@ from pcs.lib.commands import (  # status,; services,
     resource_agent,
     sbd,
     scsi,
+    status,
     stonith,
     stonith_agent,
 )
@@ -285,6 +286,10 @@ COMMAND_MAP: Mapping[str, Cmd] = {
         cmd=scsi.unfence_node_mpath,
         required_permission=p.WRITE,
     ),
+    "status.full_cluster_status_plaintext": Cmd(
+        cmd=status.full_cluster_status_plaintext,
+        required_permission=p.READ,
+    ),
     # deprecated, use resource-agent-get-agent-metadata/v1 instead
     "stonith_agent.describe_agent": Cmd(
         cmd=stonith_agent.describe_agent,
@@ -309,7 +314,6 @@ COMMAND_MAP: Mapping[str, Cmd] = {
     # "services.get_services_info": Cmd(services.get_services_info,
     # "services.start_service": Cmd(services.start_service,
     # "services.stop_service": Cmd(services.stop_service,
-    # "status.full_cluster_status_plaintext": Cmd(status.full_cluster_status_plaintext,
 }
 
 API_V1_MAP: Mapping[str, str] = {

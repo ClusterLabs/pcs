@@ -3,8 +3,6 @@ import logging
 import sys
 from typing import (
     Any,
-    Dict,
-    Mapping,
     Optional,
 )
 
@@ -23,98 +21,15 @@ from pcs.common.reports import (
     ReportItemList,
     ReportProcessor,
 )
-from pcs.common.resource_agent.dto import ResourceAgentNameDto
 from pcs.lib.errors import LibraryError
 
 SUPPORTED_COMMANDS = {
-    "acl.add_permission",
-    "acl.assign_role_to_group",
-    "acl.assign_role_to_target",
-    "acl.create_group",
-    "acl.create_role",
-    "acl.create_target",
-    "acl.remove_group",
-    "acl.remove_permission",
-    "acl.remove_role",
-    "acl.remove_target",
-    "acl.unassign_role_from_group",
-    "acl.unassign_role_from_target",
-    "alert.add_recipient",
-    "alert.create_alert",
-    "alert.remove_alert",
-    "alert.remove_recipient",
-    "alert.update_alert",
-    "alert.update_recipient",
-    "cluster.add_nodes",
-    "cluster.generate_cluster_uuid",
-    "cluster.node_clear",
-    "cluster.remove_nodes",
-    "cluster.setup",
-    "constraint_colocation.create_with_set",
-    "constraint_order.create_with_set",
-    "constraint_ticket.create",
-    "constraint_ticket.create_with_set",
-    "constraint_ticket.remove",
-    "fencing_topology.add_level",
-    "fencing_topology.remove_all_levels",
-    "fencing_topology.remove_levels_by_params",
-    "fencing_topology.verify",
-    "node.maintenance_unmaintenance_all",
-    "node.maintenance_unmaintenance_list",
-    "node.standby_unstandby_all",
-    "node.standby_unstandby_list",
-    "qdevice.client_net_import_certificate",
-    "qdevice.qdevice_net_sign_certificate_request",
-    "resource_agent.describe_agent",
-    "resource_agent.get_agents_list",
-    "resource_agent.get_agent_metadata",
-    "resource_agent.list_agents",
-    "resource_agent.list_agents_for_standard_and_provider",
-    "resource_agent.list_ocf_providers",
-    "resource_agent.list_standards",
-    "resource.ban",
-    "resource.create",
-    "resource.create_as_clone",
-    "resource.create_in_group",
-    "resource.disable",
-    "resource.disable_safe",
-    "resource.disable_simulate",
-    "resource.enable",
-    "resource.group_add",
-    "resource.manage",
-    "resource.move",
-    "resource.move_autoclean",
-    "resource.unmanage",
-    "resource.unmove_unban",
-    "sbd.disable_sbd",
-    "sbd.enable_sbd",
     "services.disable_service",
     "services.enable_service",
     "services.get_services_info",
     "services.start_service",
     "services.stop_service",
-    "scsi.unfence_node",
-    "scsi.unfence_node_mpath",
-    "status.full_cluster_status_plaintext",
-    "stonith_agent.describe_agent",
-    "stonith_agent.list_agents",
-    "stonith.create",
-    "stonith.create_in_group",
 }
-
-
-def _convert_input_data(cmd: str, data: Dict[str, Any]) -> Mapping[str, Any]:
-    if cmd == "resource_agent.get_agent_metadata":
-        try:
-            data["agent_name"] = dto.from_dict(
-                ResourceAgentNameDto, data["agent_name"]
-            )
-        except (DaciteError, KeyError) as e:
-            _exit(
-                communication.const.COM_STATUS_INPUT_ERROR,
-                status_msg=str(e),
-            )
-    return data
 
 
 def _exit(
@@ -187,7 +102,7 @@ def main() -> None:
             )
         for sub_cmd in input_dto.cmd.split("."):
             lib = getattr(lib, sub_cmd)
-        output_data = lib(**_convert_input_data(input_dto.cmd, input_dto.cmd_data))  # type: ignore
+        output_data = lib(**input_dto.cmd_data)  # type: ignore
         _exit(
             communication.const.COM_STATUS_SUCCESS,
             report_list=cli_env.report_processor.processed_items,

@@ -57,7 +57,7 @@ class InvalidInputError(ApiError):
         super().__init__(communication.const.COM_STATUS_INPUT_ERROR, msg)
 
 
-class BaseAPIHandler(AuthProviderBaseHandler):
+class BaseApiV1Handler(AuthProviderBaseHandler):
     """
     Base handler for the REST API
 
@@ -79,14 +79,10 @@ class BaseAPIHandler(AuthProviderBaseHandler):
         """JSON preprocessing"""
         # pylint: disable=attribute-defined-outside-init
         self.add_header("Content-Type", "application/json")
-        if (
-            "Content-Type" in self.request.headers
-            and self.request.headers["Content-Type"] == "application/json"
-        ):
-            try:
-                self.json = json.loads(self.request.body)
-            except json.JSONDecodeError as e:
-                raise InvalidInputError() from e
+        try:
+            self.json = json.loads(self.request.body)
+        except json.JSONDecodeError as e:
+            raise InvalidInputError() from e
 
     async def get_auth_user(self) -> AuthUser:
         try:
@@ -134,10 +130,6 @@ class BaseAPIHandler(AuthProviderBaseHandler):
         # We do not support HTTP chunk mode, reimplementing abstract
         pass
 
-
-class ApiV1Handler(BaseAPIHandler):
-    """Create a new task from command"""
-
     def _get_effective_username(self) -> Optional[str]:
         username = self.get_cookie("CIB_user")
         if username:
@@ -157,7 +149,9 @@ class ApiV1Handler(BaseAPIHandler):
                     self.logger.warning("Unable to decode users groups")
         return None
 
-    async def post(self, cmd: str) -> None:
+    async def process_request(
+        self, cmd: str
+    ) -> communication.dto.InternalCommunicationResultDto:
         auth_user = await self.get_auth_user()
         if cmd not in API_V1_MAP:
             raise ApiError(
@@ -197,23 +191,89 @@ class ApiV1Handler(BaseAPIHandler):
             types.TaskFinishType.SUCCESS: communication.const.COM_STATUS_SUCCESS,
             types.TaskFinishType.FAIL: communication.const.COM_STATUS_ERROR,
         }
-        self.send_response(
-            communication.dto.InternalCommunicationResultDto(
-                status=status_map.get(
-                    task_result_dto.task_finish_type,
-                    communication.const.COM_STATUS_EXCEPTION,
-                ),
-                status_msg=None,
-                report_list=task_result_dto.reports,
-                data=task_result_dto.result,
-            )
+        return communication.dto.InternalCommunicationResultDto(
+            status=status_map.get(
+                task_result_dto.task_finish_type,
+                communication.const.COM_STATUS_EXCEPTION,
+            ),
+            status_msg=None,
+            report_list=task_result_dto.reports,
+            data=task_result_dto.result,
         )
+
+
+class ApiV1Handler(BaseApiV1Handler):
+    async def post(self, cmd: str) -> None:
+        self.send_response(await self.process_request(cmd))
+
+    # TODO: test get method
+    async def get(self, cmd: str) -> None:
+        self.send_response(await self.process_request(cmd))
+
+
+class LegacyApiV1Handler(BaseApiV1Handler):
+    @staticmethod
+    def _get_cmd() -> str:
+        raise NotImplementedError()
+
+    def prepare(self) -> None:
+        # pylint: disable=attribute-defined-outside-init
+        self.add_header("Content-Type", "application/json")
+        try:
+            self.json = json.loads(self.get_argument("data_json", default=""))
+        except json.JSONDecodeError as e:
+            raise InvalidInputError() from e
+
+    def send_response(
+        self, response: communication.dto.InternalCommunicationResultDto
+    ) -> None:
+        result = to_dict(response)
+        result["report_list"] = [
+            dict(
+                severity=report.severity.level,
+                code=report.message.code,
+                info=report.message.payload,
+                forceable=report.severity.force_code,
+                report_text=report.message.message,
+            )
+            for report in response.report_list
+        ]
+        self.finish(json.dumps(result))
+
+    async def post(self) -> None:
+        self.send_response(await self.process_request(self._get_cmd()))
+
+    # TODO: test get method
+    async def get(self) -> None:
+        self.send_response(await self.process_request(self._get_cmd()))
+
+
+class ClusterStatusLegacyHandler(LegacyApiV1Handler):
+    @staticmethod
+    def _get_cmd() -> str:
+        return "status.full_cluster_status_plaintext"
+
+
+class ClusterAddNodesLegacyHandler(LegacyApiV1Handler):
+    @staticmethod
+    def _get_cmd() -> str:
+        return "cluster.add_nodes"
 
 
 def get_routes(
     scheduler: Scheduler, auth_provider: AuthProvider
-) -> List[Tuple[str, Type[BaseAPIHandler], dict]]:
+) -> List[Tuple[str, Type[BaseApiV1Handler], dict]]:
     params = dict(scheduler=scheduler, auth_provider=auth_provider)
     return [
+        (
+            "/remote/cluster_status_plaintext",
+            ClusterStatusLegacyHandler,
+            params,
+        ),
+        (
+            "/remote/cluster_add_nodes",
+            ClusterAddNodesLegacyHandler,
+            params,
+        ),
         (r"/api/v1/(.*)", ApiV1Handler, params),
     ]
