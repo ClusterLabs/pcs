@@ -149,7 +149,8 @@ class NvsetDtoListToLines(TestCase):
 
     def fixture_dto_list(self):
         return [
-            self.fixture_dto(in_effect) for in_effect in CibRuleInEffectStatus
+            self.fixture_dto(in_effect.value)
+            for in_effect in CibRuleInEffectStatus
         ]
 
     def test_expired_included(self):
