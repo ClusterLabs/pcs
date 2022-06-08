@@ -250,7 +250,8 @@ class DeadlockDetectionTest(SchedulerBaseTestCase):
             CommandDto(f"cmd{index}", {}, CommandOptionsDto()),
             AUTH_USER,
         )
-        task.state = state
+        if state != TaskState.CREATED:
+            task.state = state
         return task
 
     @mock.patch.object(Task, "is_defunct", lambda self, timeout: False)

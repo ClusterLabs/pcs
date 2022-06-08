@@ -28,7 +28,7 @@ from pcs.lib.auth.provider import AuthUser
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.permissions.checker import PermissionsChecker
-from pcs.utils import read_known_hosts_file
+from pcs.utils import read_known_hosts_file_not_cached
 
 from .command_mapping import COMMAND_MAP
 from .logging import (
@@ -141,7 +141,7 @@ def task_executor(task: WorkerCommand) -> None:
     env = LibraryEnvironment(  # type: ignore
         logger,
         WorkerReportProcessor(worker_com, task.task_ident),
-        known_hosts_getter=read_known_hosts_file,
+        known_hosts_getter=read_known_hosts_file_not_cached,
         user_login=auth_user.username,
         user_groups=auth_user.groups,
         request_timeout=request_timeout,

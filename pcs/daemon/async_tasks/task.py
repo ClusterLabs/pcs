@@ -44,6 +44,14 @@ class UnknownMessageError(Exception):
         self.payload_type = type(unknown_message.payload).__name__
 
 
+_STATE_CHANGES_SEQUENCE = (
+    TaskState.CREATED,
+    TaskState.QUEUED,
+    TaskState.EXECUTED,
+    TaskState.FINISHED,
+)
+
+
 class Task(ImplementsToDto):
     """
     Task's representation in the scheduler
@@ -82,6 +90,15 @@ class Task(ImplementsToDto):
         self._set_state(state)
 
     def _set_state(self, state: TaskState) -> None:
+        try:
+            if _STATE_CHANGES_SEQUENCE.index(
+                self._state
+            ) >= _STATE_CHANGES_SEQUENCE.index(state):
+                raise AssertionError(
+                    f"Invalid Task state change: {self._state} => {state}"
+                )
+        except ValueError as e:
+            raise AssertionError(f"Invalid Task state: {state}") from e
         self._state = state
         if self.state == TaskState.FINISHED:
             self._finished_event.set()

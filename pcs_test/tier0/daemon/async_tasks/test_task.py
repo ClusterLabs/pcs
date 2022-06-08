@@ -105,7 +105,8 @@ class TestKill(MockOsKillMixin, TaskBaseTestCase):
         self.mock_os_kill = self._init_mock_os_kill()
 
     def _assert_killed(self, start_state):
-        self.task.state = start_state
+        if self.task.state != start_state:
+            self.task.state = start_state
         self.task.kill()
         task_dto = self.task.to_dto()
         self.mock_os_kill.assert_not_called()
@@ -219,7 +220,8 @@ class TestIsTimedOut(MockDateTimeNowMixin, TaskBaseTestCase):
 @mock.patch.object(tasks.Task, "_is_timed_out")
 class TestDefunct(TaskBaseTestCase):
     def _assert_not_defunct(self, mock_is_timed_out, state):
-        self.task.state = state
+        if self.task.state != state:
+            self.task.state = state
         self.assertFalse(self.task.is_defunct())
         mock_is_timed_out.assert_not_called()
 
@@ -252,7 +254,8 @@ class TestDefunct(TaskBaseTestCase):
 @mock.patch.object(tasks.Task, "_is_timed_out")
 class TestAbandoned(TaskBaseTestCase):
     def _assert_not_abandoned(self, mock_is_timed_out, state):
-        self.task.state = state
+        if self.task.state != state:
+            self.task.state = state
         self.assertFalse(self.task.is_abandoned())
         mock_is_timed_out.assert_not_called()
 
