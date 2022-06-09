@@ -161,9 +161,6 @@ class GarbageCollectionTimeoutTests(
         task_info = self.scheduler.get_task("id0", AUTH_USER)
         self.assertEqual(task_finish_type, task_info.task_finish_type)
         self.assertEqual(task_kill_reason, task_info.kill_reason)
-        if task_kill_reason is not None:
-            with self.assertRaises(TaskNotFoundError):
-                self.scheduler.get_task("id0", AUTH_USER)
 
     @gen_test
     async def test_get_task_removes_finished(self):
@@ -174,8 +171,10 @@ class GarbageCollectionTimeoutTests(
         self.finish_tasks(["id0"])
         await self.perform_actions(1)
         self.scheduler.get_task("id0", AUTH_USER)
-        with self.assertRaises(TaskNotFoundError):
-            self.scheduler.get_task("id0", AUTH_USER)
+        # pylint: disable=protected-access
+        self.assertIsNotNone(
+            self.scheduler._task_register["id0"]._to_delete_timestamp
+        )
 
     @gen_test
     async def test_created_defunct_timeout(self):

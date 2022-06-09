@@ -76,6 +76,7 @@ class Task(ImplementsToDto):
         self._execution_started_at: Optional[datetime.datetime] = None
         self._worker_pid: int = -1
         self._finished_event = Event()
+        self._to_delete_timestamp: Optional[datetime.datetime] = None
 
     @property
     def state(self) -> TaskState:
@@ -194,6 +195,25 @@ class Task(ImplementsToDto):
         :param reason: Reason for killing the task
         """
         self._kill_reason = reason
+
+    def request_deletion(self, timeout: int) -> None:
+        """
+        Marks the task for deletion after specified timeout.
+
+        timeout -- timeout in seconds
+        """
+        if self._to_delete_timestamp is None:
+            self._to_delete_timestamp = (
+                datetime.datetime.now() + datetime.timedelta(seconds=timeout)
+            )
+
+    def is_deletion_requested(self) -> bool:
+        """
+        Indicates whether a task sould be deleted.
+        """
+        if self._to_delete_timestamp is None:
+            return False
+        return datetime.datetime.now() >= self._to_delete_timestamp
 
     def kill(self) -> None:
         """

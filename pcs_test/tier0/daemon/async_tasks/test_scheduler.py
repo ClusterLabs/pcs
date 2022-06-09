@@ -49,9 +49,13 @@ class GetTaskTest(SchedulerBaseTestCase):
     def test_delete_finished(self):
         self._create_tasks(3)
         self.scheduler._task_register["id1"].state = TaskState.FINISHED
+        self.assertIsNone(
+            self.scheduler._task_register["id1"]._to_delete_timestamp
+        )
         self.scheduler.get_task("id1", AUTH_USER)
-        with self.assertRaises(scheduler.TaskNotFoundError):
-            self.scheduler.get_task("id1", AUTH_USER)
+        self.assertIsNotNone(
+            self.scheduler._task_register["id1"]._to_delete_timestamp
+        )
 
     def test_different_user(self):
         self._create_tasks(1)

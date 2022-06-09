@@ -129,6 +129,7 @@ def main():
     async_scheduler = Scheduler(
         worker_count=env.PCSD_WORKER_COUNT,
         worker_reset_limit=env.PCSD_WORKER_RESET_LIMIT,
+        task_deletion_timeout_seconds=settings.task_deletion_timeout_seconds,
     )
     auth_provider = AuthProvider(log.pcsd)
     SignalInfo.async_scheduler = async_scheduler

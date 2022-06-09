@@ -54,6 +54,7 @@ class Scheduler:
         self,
         worker_count: int,
         worker_reset_limit: int,
+        task_deletion_timeout_seconds: int,
     ) -> None:
         """
         worker_count -- number of worker processes to use
@@ -82,6 +83,7 @@ class Scheduler:
             worker_count,
             worker_reset_limit,
         )
+        self._task_deletion_timeout = task_deletion_timeout_seconds
 
     def _init_worker_logging(self) -> handlers.QueueListener:
         q_listener = handlers.QueueListener(
@@ -104,7 +106,7 @@ class Scheduler:
         task = self._return_task(task_ident)
         # Task deletion after first retrieval of finished task
         if task.state == TaskState.FINISHED:
-            del self._task_register[task_ident]
+            task.request_deletion(self._task_deletion_timeout)
         return task
 
     @staticmethod
@@ -164,7 +166,7 @@ class Scheduler:
             )
         )
 
-    async def _schedule_task(self, task: Task) -> None:
+    def _schedule_task(self, task: Task) -> None:
         if task.is_kill_requested():
             # The task state and finish types are set during garbage
             # collection, we only prevent tasks here from queuing if
@@ -184,19 +186,20 @@ class Scheduler:
         task.state = TaskState.QUEUED
 
     async def _process_tasks(self) -> None:
-        task_idents_to_delete = []
-        for task in self._task_register.values():
-            if task.state == TaskState.CREATED:
-                await self._schedule_task(task)
-            elif task.is_defunct():
-                task.request_kill(TaskKillReason.COMPLETION_TIMEOUT)
-            elif task.is_abandoned():
-                task_idents_to_delete.append(task.task_ident)
-            if task.state != TaskState.FINISHED and task.is_kill_requested():
-                task.kill()
+        for task in list(self._task_register.values()):
+            await self._process_task(task)
 
-        for task_ident in task_idents_to_delete:
-            del self._task_register[task_ident]
+    async def _process_task(self, task: Task) -> None:
+        if task.state == TaskState.CREATED:
+            self._schedule_task(task)
+        elif task.is_defunct():
+            task.request_kill(TaskKillReason.COMPLETION_TIMEOUT)
+        elif task.is_abandoned():
+            task.request_deletion(self._task_deletion_timeout)
+        if task.state != TaskState.FINISHED and task.is_kill_requested():
+            task.kill()
+        if task.is_deletion_requested():
+            del self._task_register[task.task_ident]
 
     def _spawn_new_single_use_worker(self) -> None:
         # pylint: disable=protected-access

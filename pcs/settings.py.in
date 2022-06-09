@@ -144,3 +144,4 @@ pcsd_worker_reset_limit = 100
 
 task_unresponsive_timeout_seconds = 60 * 60
 task_abandoned_timeout_seconds = 1 * 60
+task_deletion_timeout_seconds = 1 * 60
