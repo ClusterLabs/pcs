@@ -98,7 +98,7 @@ class CreateTest(TestCase):
         )
 
 
-@patch_commands("get_constraints", mock.Mock)
+@patch_commands("get_constraints", mock.Mock())
 class RemoveTest(TestCase):
     @patch_commands("ticket.remove_plain", mock.Mock(return_value=1))
     @patch_commands(
