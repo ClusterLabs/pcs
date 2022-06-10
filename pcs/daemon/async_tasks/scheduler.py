@@ -1,6 +1,7 @@
 import multiprocessing as mp
 import sys
 from collections import defaultdict
+from dataclasses import dataclass
 from logging import handlers
 from multiprocessing.pool import worker as mp_worker_init  # type: ignore
 from queue import Empty
@@ -9,6 +10,7 @@ from typing import (
     List,
 )
 
+from pcs import settings
 from pcs.common.async_tasks.dto import (
     CommandDto,
     TaskResultDto,
@@ -21,6 +23,7 @@ from pcs.lib.auth.provider import AuthUser
 from .messaging import Message
 from .task import (
     Task,
+    TaskConfig,
     TaskState,
     UnknownMessageError,
 )
@@ -40,8 +43,14 @@ class TaskNotFoundError(Exception):
         self.task_ident = task_ident
 
 
-MAX_WORKER_COUNT = 50
-DEADLOCK_THRESHOLD_TIMEOUT = 10
+@dataclass(frozen=True)
+class SchedulerConfig:
+    worker_count: int = settings.pcsd_worker_count
+    max_worker_count: int = settings.pcsd_worker_count + 10
+    worker_reset_limit: int = settings.pcsd_worker_reset_limit
+    deadlock_threshold_timeout: int = settings.pcsd_deadlock_threshold_timeout
+    check_interval_ms: int = settings.async_api_scheduler_interval_ms
+    task_config: TaskConfig = TaskConfig()
 
 
 class Scheduler:
@@ -50,40 +59,31 @@ class Scheduler:
     Task management core with an interface for the REST API
     """
 
-    def __init__(
-        self,
-        worker_count: int,
-        worker_reset_limit: int,
-        task_deletion_timeout_seconds: int,
-    ) -> None:
+    def __init__(self, config: SchedulerConfig) -> None:
         """
         worker_count -- number of worker processes to use
         worker_reset_limit -- number of tasks a worker will process
             before restarting itself
         """
         # pylint: disable=consider-using-with
+        self._config = config
         self._proc_pool_manager = mp.Manager()
         self._worker_message_q = self._proc_pool_manager.Queue()
         self._logger = pcsd_logger
         self._logging_q = self._proc_pool_manager.Queue()
         self._worker_log_listener = self._init_worker_logging()
-        self._worker_count = worker_count
         self._single_use_process_pool: List[mp.Process] = []
         self._proc_pool = mp.Pool(
-            processes=worker_count,
-            maxtasksperchild=worker_reset_limit,
+            processes=self._config.worker_count,
+            maxtasksperchild=self._config.worker_reset_limit,
             initializer=worker_init,
             initargs=[self._worker_message_q, self._logging_q],
         )
         self._task_register: Dict[str, Task] = {}
         self._logger.info("Scheduler was successfully initialized.")
         self._logger.debug(
-            "Process pool initialized with %d workers that reset "
-            "after %d tasks",
-            worker_count,
-            worker_reset_limit,
+            "Scheduler initialized with config: %s", self._config
         )
-        self._task_deletion_timeout = task_deletion_timeout_seconds
 
     def _init_worker_logging(self) -> handlers.QueueListener:
         q_listener = handlers.QueueListener(
@@ -106,7 +106,7 @@ class Scheduler:
         task = self._return_task(task_ident)
         # Task deletion after first retrieval of finished task
         if task.state == TaskState.FINISHED:
-            task.request_deletion(self._task_deletion_timeout)
+            task.request_deletion()
         return task
 
     @staticmethod
@@ -141,7 +141,7 @@ class Scheduler:
         task_ident = get_unique_uuid(self._task_register)
 
         self._task_register[task_ident] = Task(
-            task_ident, command_dto, auth_user
+            task_ident, command_dto, auth_user, self._config.task_config
         )
         self._logger.debug(
             "New task %s created (command: %s, parameters: %s)",
@@ -158,10 +158,10 @@ class Scheduler:
 
         return (
             len(counter[TaskState.CREATED]) + len(counter[TaskState.QUEUED]) > 0
-            and (self._worker_count + len(self._single_use_process_pool))
+            and (self._config.worker_count + len(self._single_use_process_pool))
             <= len(counter[TaskState.EXECUTED])
             and all(
-                task.is_defunct(DEADLOCK_THRESHOLD_TIMEOUT)
+                task.is_defunct(self._config.deadlock_threshold_timeout)
                 for task in counter[TaskState.EXECUTED]
             )
         )
@@ -195,7 +195,7 @@ class Scheduler:
         elif task.is_defunct():
             task.request_kill(TaskKillReason.COMPLETION_TIMEOUT)
         elif task.is_abandoned():
-            task.request_deletion(self._task_deletion_timeout)
+            task.request_deletion()
         if task.state != TaskState.FINISHED and task.is_kill_requested():
             task.kill()
         if task.is_deletion_requested():
@@ -244,7 +244,7 @@ class Scheduler:
         if (
             self._is_possibly_dead_locked()
             and len(self._single_use_process_pool)
-            < MAX_WORKER_COUNT - self._worker_count
+            < self._config.max_worker_count - self._config.worker_count
         ):
             self._logger.warning(
                 "All workers busy, possible dead-lock detected!"

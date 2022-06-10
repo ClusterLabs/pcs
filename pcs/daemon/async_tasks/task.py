@@ -2,6 +2,7 @@ import datetime
 import os
 import signal
 from asyncio import Event
+from dataclasses import dataclass
 from typing import (
     Any,
     Awaitable,
@@ -9,6 +10,7 @@ from typing import (
     Optional,
 )
 
+from pcs import settings
 from pcs.common.async_tasks.dto import (
     CommandDto,
     TaskResultDto,
@@ -21,10 +23,6 @@ from pcs.common.async_tasks.types import (
 from pcs.common.interface.dto import ImplementsToDto
 from pcs.common.reports.dto import ReportItemDto
 from pcs.lib.auth.provider import AuthUser
-from pcs.settings import (
-    task_abandoned_timeout_seconds,
-    task_unresponsive_timeout_seconds,
-)
 
 from .messaging import (
     Message,
@@ -52,6 +50,13 @@ _STATE_CHANGES_SEQUENCE = (
 )
 
 
+@dataclass(frozen=True)
+class TaskConfig:
+    abandoned_timeout: int = settings.task_abandoned_timeout_seconds
+    unresponsive_timeout: int = settings.task_unresponsive_timeout_seconds
+    deletion_timeout: int = settings.task_deletion_timeout_seconds
+
+
 class Task(ImplementsToDto):
     """
     Task's representation in the scheduler
@@ -63,7 +68,9 @@ class Task(ImplementsToDto):
         task_ident: str,
         command: CommandDto,
         auth_user: AuthUser,
+        config: TaskConfig,
     ) -> None:
+        self._config = config
         self._task_ident: str = task_ident
         self._command: CommandDto = command
         self._auth_user = auth_user
@@ -154,7 +161,7 @@ class Task(ImplementsToDto):
         if self.state == TaskState.FINISHED:
             # Last message of finished task is notification of its completion
             # and thus marks the time of its completion
-            return self._is_timed_out(task_abandoned_timeout_seconds)
+            return self._is_timed_out(self._config.abandoned_timeout)
         # Even if the client dies before task finishes, task is going
         # to finish and will be garbage collected as abandoned
         return False
@@ -170,7 +177,7 @@ class Task(ImplementsToDto):
             the last message, False otherwise
         """
         if timeout is None or timeout < 0:
-            timeout = task_unresponsive_timeout_seconds
+            timeout = self._config.unresponsive_timeout
         if self.state == TaskState.EXECUTED:
             return self._is_timed_out(timeout)
         return False
@@ -196,15 +203,15 @@ class Task(ImplementsToDto):
         """
         self._kill_reason = reason
 
-    def request_deletion(self, timeout: int) -> None:
+    def request_deletion(self) -> None:
         """
-        Marks the task for deletion after specified timeout.
-
-        timeout -- timeout in seconds
+        Marks the task for deletion. .is_deletion_requested() method will
+        return True after TaskConfig.deletion_timeout timeout.
         """
         if self._to_delete_timestamp is None:
             self._to_delete_timestamp = (
-                datetime.datetime.now() + datetime.timedelta(seconds=timeout)
+                datetime.datetime.now()
+                + datetime.timedelta(seconds=self._config.deletion_timeout)
             )
 
     def is_deletion_requested(self) -> bool:

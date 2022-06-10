@@ -1,4 +1,5 @@
 # pylint: disable=protected-access
+import dataclasses
 from queue import Empty
 from unittest import mock
 
@@ -21,7 +22,10 @@ from pcs.daemon.async_tasks.messaging import (
     Message,
     TaskExecuted,
 )
-from pcs.daemon.async_tasks.task import Task
+from pcs.daemon.async_tasks.task import (
+    Task,
+    TaskConfig,
+)
 from pcs.daemon.async_tasks.worker import task_executor
 
 from .helpers import (
@@ -253,6 +257,7 @@ class DeadlockDetectionTest(SchedulerBaseTestCase):
             f"id{index}",
             CommandDto(f"cmd{index}", {}, CommandOptionsDto()),
             AUTH_USER,
+            TaskConfig(),
         )
         if state != TaskState.CREATED:
             task.state = state
@@ -317,7 +322,9 @@ class DeadlockDetectionTest(SchedulerBaseTestCase):
 
     @mock.patch.object(Task, "is_defunct", lambda self, timeout: True)
     def test_workers_available(self):
-        self.scheduler._worker_count = 3
+        self.scheduler._config = dataclasses.replace(
+            self.scheduler._config, worker_count=3
+        )
         task1 = self._create_task("1", TaskState.EXECUTED)
         task2 = self._create_task("2", TaskState.QUEUED)
         task3 = self._create_task("3", TaskState.CREATED)
@@ -329,7 +336,9 @@ class DeadlockDetectionTest(SchedulerBaseTestCase):
 
     @mock.patch.object(Task, "is_defunct", lambda self, timeout: True)
     def test_workers_available_with_tmp_workers(self):
-        self.scheduler._worker_count = 1
+        self.scheduler._config = dataclasses.replace(
+            self.scheduler._config, worker_count=1
+        )
         self.scheduler._single_use_process_pool = list(range(2))
         task1 = self._create_task("1", TaskState.EXECUTED)
         task2 = self._create_task("2", TaskState.QUEUED)

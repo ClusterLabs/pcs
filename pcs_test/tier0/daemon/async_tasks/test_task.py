@@ -38,6 +38,7 @@ class TaskBaseTestCase(TestCase):
             TASK_IDENT,
             CommandDto("command", {}, CommandOptionsDto(request_timeout=None)),
             AUTH_USER,
+            tasks.TaskConfig(),
         )
 
 

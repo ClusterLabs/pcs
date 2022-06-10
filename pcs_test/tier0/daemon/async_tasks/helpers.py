@@ -19,6 +19,7 @@ from pcs.common.async_tasks.types import TaskState
 from pcs.common.reports.item import ReportItemMessage
 from pcs.common.reports.types import MessageCode
 from pcs.daemon.async_tasks import scheduler
+from pcs.daemon.async_tasks.task import TaskConfig
 from pcs.lib.auth.provider import AuthUser
 
 DATETIME_NOW = datetime(2020, 2, 20, 20, 20, 20, 20)
@@ -89,9 +90,11 @@ class SchedulerTestWrapper:
         ) = mock.Mock()
         # This might be needed when logger is called by get_logger, but is it?
         self.scheduler = scheduler.Scheduler(
-            worker_count=1,
-            worker_reset_limit=2,
-            task_deletion_timeout_seconds=0,
+            scheduler.SchedulerConfig(
+                worker_count=1,
+                worker_reset_limit=2,
+                task_config=TaskConfig(deletion_timeout=0),
+            )
         )
 
     def _create_tasks(self, count, start_from=0):

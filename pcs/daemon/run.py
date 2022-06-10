@@ -27,7 +27,10 @@ from pcs.daemon.app import (
     ui,
 )
 from pcs.daemon.app.common import RedirectHandler
-from pcs.daemon.async_tasks.scheduler import Scheduler
+from pcs.daemon.async_tasks.scheduler import (
+    Scheduler,
+    SchedulerConfig,
+)
 from pcs.daemon.env import prepare_env
 from pcs.daemon.http_server import HttpsServerManage
 from pcs.lib.auth.provider import AuthProvider
@@ -127,9 +130,10 @@ def main():
         log.enable_debug()
 
     async_scheduler = Scheduler(
-        worker_count=env.PCSD_WORKER_COUNT,
-        worker_reset_limit=env.PCSD_WORKER_RESET_LIMIT,
-        task_deletion_timeout_seconds=settings.task_deletion_timeout_seconds,
+        SchedulerConfig(
+            worker_count=env.PCSD_WORKER_COUNT,
+            worker_reset_limit=env.PCSD_WORKER_RESET_LIMIT,
+        )
     )
     auth_provider = AuthProvider(log.pcsd)
     SignalInfo.async_scheduler = async_scheduler

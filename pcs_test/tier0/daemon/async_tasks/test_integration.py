@@ -1,3 +1,4 @@
+import dataclasses
 from datetime import timedelta
 from logging import Logger
 from multiprocessing import Process
@@ -518,9 +519,9 @@ class DeadlockTests(
     def setUp(self):
         super().setUp()
         self.addCleanup(mock.patch.stopall)
-        mock.patch(
-            "pcs.daemon.async_tasks.scheduler.DEADLOCK_THRESHOLD_TIMEOUT", 0
-        ).start()
+        self.scheduler._config = dataclasses.replace(
+            self.scheduler._config, deadlock_threshold_timeout=0
+        )
         self.process_cls_mock = mock.Mock()
         self.process_obj_mock = mock.Mock(spec=Process)
         self.process_cls_mock.return_value = self.process_obj_mock
@@ -564,9 +565,9 @@ class DeadlockTests(
 
     @gen_test
     async def test_max_worker_count_reached(self):
-        mock.patch(
-            "pcs.daemon.async_tasks.scheduler.MAX_WORKER_COUNT", 1
-        ).start()
+        self.scheduler._config = dataclasses.replace(
+            self.scheduler._config, max_worker_count=1
+        )
         self._create_tasks(3)
         self.execute_tasks(["id0"])
         await self.perform_actions(1)
