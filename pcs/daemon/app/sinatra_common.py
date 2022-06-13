@@ -16,6 +16,7 @@ class Sinatra(BaseHandler):
     def send_sinatra_result(self, result: ruby_pcsd.SinatraResult):
         for name, value in result.headers.items():
             self.set_header(name, value)
+        self.hide_header_server()
         self.set_status(result.status)
         self.write(result.body)
 
