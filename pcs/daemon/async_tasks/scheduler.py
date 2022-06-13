@@ -46,10 +46,11 @@ class TaskNotFoundError(Exception):
 @dataclass(frozen=True)
 class SchedulerConfig:
     worker_count: int = settings.pcsd_worker_count
-    max_worker_count: int = settings.pcsd_worker_count + 10
+    max_worker_count: int = (
+        settings.pcsd_worker_count + settings.pcsd_temporary_workers
+    )
     worker_reset_limit: int = settings.pcsd_worker_reset_limit
     deadlock_threshold_timeout: int = settings.pcsd_deadlock_threshold_timeout
-    check_interval_ms: int = settings.async_api_scheduler_interval_ms
     task_config: TaskConfig = TaskConfig()
 
 

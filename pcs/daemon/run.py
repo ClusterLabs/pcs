@@ -31,6 +31,7 @@ from pcs.daemon.async_tasks.scheduler import (
     Scheduler,
     SchedulerConfig,
 )
+from pcs.daemon.async_tasks.task import TaskConfig
 from pcs.daemon.env import prepare_env
 from pcs.daemon.http_server import HttpsServerManage
 from pcs.lib.auth.provider import AuthProvider
@@ -132,7 +133,14 @@ def main():
     async_scheduler = Scheduler(
         SchedulerConfig(
             worker_count=env.PCSD_WORKER_COUNT,
+            max_worker_count=env.PCSD_MAX_WORKER_COUNT,
             worker_reset_limit=env.PCSD_WORKER_RESET_LIMIT,
+            deadlock_threshold_timeout=env.PCSD_DEADLOCK_THRESHOLD_TIMEOUT,
+            task_config=TaskConfig(
+                abandoned_timeout=env.PCSD_TASK_ABANDONED_TIMEOUT,
+                unresponsive_timeout=env.PCSD_TASK_UNRESPONSIVE_TIMEOUT,
+                deletion_timeout=env.PCSD_TASK_DELETION_TIMOUT,
+            ),
         )
     )
     auth_provider = AuthProvider(log.pcsd)
@@ -183,7 +191,7 @@ def main():
 
     PeriodicCallback(
         async_scheduler.perform_actions,
-        callback_time=settings.async_api_scheduler_interval_ms,
+        callback_time=env.PCSD_CHECK_INTERVAL_MS,
     ).start()
     ioloop = IOLoop.current()
     ioloop.add_callback(sign_ioloop_started)

@@ -1,4 +1,3 @@
-import multiprocessing
 import os.path
 
 systemctl_binary = "@SYSTEMCTL@"
@@ -140,6 +139,7 @@ path = _PathManager()
 async_api_scheduler_interval_ms = 100
 
 pcsd_worker_count = 10
+pcsd_temporary_workers = 10
 pcsd_worker_reset_limit = 100
 pcsd_deadlock_threshold_timeout = 5
 
