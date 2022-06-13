@@ -1,7 +1,7 @@
 from pcs.common import reports as pcs_reports
-from pcs.daemon.async_tasks.messaging import Message
 
-from .worker_communicator import WorkerCommunicator
+from .communicator import WorkerCommunicator
+from .types import Message
 
 
 class WorkerReportProcessor(pcs_reports.ReportProcessor):

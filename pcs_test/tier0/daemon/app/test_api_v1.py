@@ -1,13 +1,12 @@
 from unittest import TestCase
 
-from pcs.daemon.async_tasks import command_mapping
+from pcs.daemon.app.api_v1 import API_V1_MAP
+from pcs.daemon.async_tasks.worker.command_mapping import COMMAND_MAP
 
 
 class ApiV1MapTest(TestCase):
     def test_all_commands_exist(self):
-        missing_commands = set(command_mapping.API_V1_MAP.values()) - set(
-            command_mapping.COMMAND_MAP.keys()
-        )
+        missing_commands = set(API_V1_MAP.values()) - set(COMMAND_MAP.keys())
         self.assertEqual(
             0,
             len(missing_commands),

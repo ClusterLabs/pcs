@@ -4,7 +4,6 @@ import inspect
 import multiprocessing as mp
 import os
 import signal
-from dataclasses import dataclass
 from logging import (
     Logger,
     getLogger,
@@ -18,10 +17,7 @@ from typing import (
 import dacite
 
 from pcs.common import reports
-from pcs.common.async_tasks.dto import (
-    CommandDto,
-    CommandOptionsDto,
-)
+from pcs.common.async_tasks.dto import CommandOptionsDto
 from pcs.common.async_tasks.types import TaskFinishType
 from pcs.common.interface import dto
 from pcs.lib.auth.provider import AuthUser
@@ -31,34 +27,28 @@ from pcs.lib.permissions.checker import PermissionsChecker
 from pcs.utils import read_known_hosts_file_not_cached
 
 from .command_mapping import COMMAND_MAP
+from .communicator import WorkerCommunicator
 from .logging import (
     WORKER_LOGGER,
     setup_worker_logger,
 )
-from .messaging import (
+from .report_processor import WorkerReportProcessor
+from .types import (
     Message,
     TaskExecuted,
     TaskFinished,
+    WorkerCommand,
 )
-from .report_proc import WorkerReportProcessor
-from .worker_communicator import WorkerCommunicator
 
 worker_com: WorkerCommunicator
 
 
-def sigterm_handler(sig_num: int, frame: Any) -> None:
+def _sigterm_handler(sig_num: int, frame: Any) -> None:
     del sig_num, frame
     if worker_com.is_locked:
         worker_com.set_terminate()
     else:
         raise SystemExit(0)
-
-
-@dataclass(frozen=True)
-class WorkerCommand:
-    task_ident: str
-    command: CommandDto
-    auth_user: AuthUser
 
 
 def worker_init(message_q: mp.Queue, logging_q: mp.Queue) -> None:
@@ -80,10 +70,10 @@ def worker_init(message_q: mp.Queue, logging_q: mp.Queue) -> None:
         pass
 
     signal.signal(signal.SIGINT, ignore_signals)
-    signal.signal(signal.SIGTERM, sigterm_handler)
+    signal.signal(signal.SIGTERM, _sigterm_handler)
 
 
-def pause_worker() -> None:
+def _pause_worker() -> None:
     logger = getLogger(WORKER_LOGGER)
     logger.debug(
         "Pausing worker until the scheduler updates status of this task."
@@ -204,7 +194,7 @@ def task_executor(task: WorkerCommand) -> None:
             )
         )
         logger.exception("Task %s raised a LibraryError.", task.task_ident)
-        pause_worker()
+        _pause_worker()
         return
     except Exception as e:  # pylint: disable=broad-except
         # For unhandled exceptions during execution
@@ -217,7 +207,7 @@ def task_executor(task: WorkerCommand) -> None:
         logger.exception(
             "Task %s raised an unhandled exception: %s", task.task_ident, e
         )
-        pause_worker()
+        _pause_worker()
         return
     worker_com.put(
         Message(
@@ -226,7 +216,7 @@ def task_executor(task: WorkerCommand) -> None:
         )
     )
     logger.info("Task %s finished.", task.task_ident)
-    pause_worker()
+    _pause_worker()
 
 
 def _param_to_field_tuple(

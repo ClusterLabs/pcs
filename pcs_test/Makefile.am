@@ -111,6 +111,7 @@ EXTRA_DIST		= \
 			  tier0/common/test_tools_xml_fromstring.py \
 			  tier0/daemon/app/fixtures_app.py \
 			  tier0/daemon/app/__init__.py \
+			  tier0/daemon/app/test_api_v1.py \
 			  tier0/daemon/app/test_app_gui.py \
 			  tier0/daemon/app/test_app_redirect.py \
 			  tier0/daemon/app/test_app_remote.py \
@@ -123,7 +124,6 @@ EXTRA_DIST		= \
 			  tier0/daemon/async_tasks/test_scheduler.py \
 			  tier0/daemon/async_tasks/test_task.py \
 			  tier0/daemon/async_tasks/test_worker.py \
-			  tier0/daemon/async_tasks/test_command_mapping.py \
 			  tier0/daemon/test_async_api.py \
 			  tier0/daemon/__init__.py \
 			  tier0/daemon/test_auth.py \

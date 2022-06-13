@@ -20,17 +20,17 @@ from pcs.common.tools import get_unique_uuid
 from pcs.daemon.log import pcsd as pcsd_logger
 from pcs.lib.auth.provider import AuthUser
 
-from .messaging import Message
 from .task import (
     Task,
     TaskConfig,
     TaskState,
     UnknownMessageError,
 )
-from .worker import (
+from .worker.executor import (
     task_executor,
     worker_init,
 )
+from .worker.types import Message
 
 
 class TaskNotFoundError(Exception):

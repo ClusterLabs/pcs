@@ -12,7 +12,11 @@ from pcs.common.async_tasks.dto import (
     CommandOptionsDto,
 )
 from pcs.common.reports import ReportItemDto
-from pcs.daemon.async_tasks import messaging
+from pcs.daemon.async_tasks.worker.types import (
+    Message,
+    TaskExecuted,
+    TaskFinished,
+)
 from pcs.settings import (
     task_abandoned_timeout_seconds,
     task_unresponsive_timeout_seconds,
@@ -49,16 +53,14 @@ class TestReceiveMessage(MockDateTimeNowMixin, TaskBaseTestCase):
 
     def test_report(self):
         payload = mock.MagicMock(ReportItemDto)
-        message = messaging.Message(TASK_IDENT, payload)
+        message = Message(TASK_IDENT, payload)
         self.task.receive_message(message)
         self.assertEqual([payload], self.task.to_dto().reports)
         self.assertEqual(DATETIME_NOW, self.task._last_message_at)
         self.mock_datetime_now.assert_called_once()
 
     def test_task_executed(self):
-        message = messaging.Message(
-            TASK_IDENT, messaging.TaskExecuted(WORKER_PID)
-        )
+        message = Message(TASK_IDENT, TaskExecuted(WORKER_PID))
         self.task.receive_message(message)
         self.assertEqual(types.TaskState.EXECUTED, self.task.state)
         self.assertEqual(WORKER_PID, self.task._worker_pid)
@@ -66,9 +68,9 @@ class TestReceiveMessage(MockDateTimeNowMixin, TaskBaseTestCase):
         self.mock_datetime_now.assert_called()
 
     def test_task_finished(self):
-        message = messaging.Message(
+        message = Message(
             TASK_IDENT,
-            messaging.TaskFinished(types.TaskFinishType.SUCCESS, "result"),
+            TaskFinished(types.TaskFinishType.SUCCESS, "result"),
         )
         self.task.receive_message(message)
         task_dto = self.task.to_dto()
@@ -81,7 +83,7 @@ class TestReceiveMessage(MockDateTimeNowMixin, TaskBaseTestCase):
         self.mock_datetime_now.assert_called_once()
 
     def test_unsupported_message_type(self):
-        message = messaging.Message(TASK_IDENT, 3)
+        message = Message(TASK_IDENT, 3)
         with self.assertRaises(tasks.UnknownMessageError) as thrown_exc:
             self.task.receive_message(message)
         self.assertEqual(type(3).__name__, thrown_exc.exception.payload_type)
@@ -130,9 +132,7 @@ class TestKill(MockOsKillMixin, TaskBaseTestCase):
         self._assert_not_killed(types.TaskState.QUEUED)
 
     def test_kill_executed_worker_alive(self):
-        message = messaging.Message(
-            TASK_IDENT, messaging.TaskExecuted(WORKER_PID)
-        )
+        message = Message(TASK_IDENT, TaskExecuted(WORKER_PID))
         self.task.receive_message(message)
         self.task.kill()
         task_dto = self.task.to_dto()
@@ -141,9 +141,7 @@ class TestKill(MockOsKillMixin, TaskBaseTestCase):
         self.assertEqual(types.TaskFinishType.KILL, task_dto.task_finish_type)
 
     def test_kill_executed_worker_dead(self):
-        message = messaging.Message(
-            TASK_IDENT, messaging.TaskExecuted(WORKER_PID)
-        )
+        message = Message(TASK_IDENT, TaskExecuted(WORKER_PID))
         self.task.receive_message(message)
         self.mock_os_kill.raiseError.side_effect = ProcessLookupError()
         self.task.kill()
@@ -186,16 +184,14 @@ class TestGetLastTimestamp(MockDateTimeNowMixin, TaskBaseTestCase):
 
     def test_executed(self):
         self._init_mock_datetime_now()
-        message = messaging.Message(
-            TASK_IDENT, messaging.TaskExecuted(WORKER_PID)
-        )
+        message = Message(TASK_IDENT, TaskExecuted(WORKER_PID))
         self.task.receive_message(message)
         self.assertEqual(DATETIME_NOW, self.task._get_last_updated_timestamp())
 
     def test_finished(self):
         self._init_mock_datetime_now()
-        message = messaging.Message(
-            TASK_IDENT, messaging.TaskFinished(types.TaskFinishType.FAIL, None)
+        message = Message(
+            TASK_IDENT, TaskFinished(types.TaskFinishType.FAIL, None)
         )
         self.task.receive_message(message)
         self.assertEqual(DATETIME_NOW, self.task._get_last_updated_timestamp())

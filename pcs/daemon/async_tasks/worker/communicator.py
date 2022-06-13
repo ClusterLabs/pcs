@@ -1,7 +1,7 @@
 import multiprocessing as mp
 from threading import Lock
 
-from .messaging import Message
+from .types import Message
 
 
 class WorkerCommunicator:

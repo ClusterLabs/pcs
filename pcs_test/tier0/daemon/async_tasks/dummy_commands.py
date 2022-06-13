@@ -1,6 +1,6 @@
 from pcs.common.reports import ReportItem
 from pcs.common.reports.messages import CibUpgradeSuccessful
-from pcs.daemon.async_tasks.command_mapping import Cmd
+from pcs.daemon.async_tasks.worker.command_mapping import _Cmd
 from pcs.lib.errors import LibraryError
 from pcs.lib.permissions.config.types import PermissionAccessType as p
 
@@ -29,7 +29,7 @@ def dummy_workload_lib_exception_contains_reports(_) -> None:
 
 
 def _get_cmd(callback):
-    return Cmd(cmd=callback, required_permission=p.READ)
+    return _Cmd(cmd=callback, required_permission=p.READ)
 
 
 test_command_map = {

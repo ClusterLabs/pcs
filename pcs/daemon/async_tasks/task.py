@@ -24,12 +24,12 @@ from pcs.common.interface.dto import ImplementsToDto
 from pcs.common.reports.dto import ReportItemDto
 from pcs.lib.auth.provider import AuthUser
 
-from .messaging import (
+from .worker.types import (
     Message,
     TaskExecuted,
     TaskFinished,
+    WorkerCommand,
 )
-from .worker import WorkerCommand
 
 
 class UnknownMessageError(Exception):

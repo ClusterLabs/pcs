@@ -17,17 +17,13 @@ from pcs.common.async_tasks.types import (
     TaskFinishType,
     TaskKillReason,
 )
-from pcs.daemon.async_tasks import worker
-from pcs.daemon.async_tasks.messaging import (
+from pcs.daemon.async_tasks.scheduler import TaskNotFoundError
+from pcs.daemon.async_tasks.worker import executor
+from pcs.daemon.async_tasks.worker.report_processor import WorkerReportProcessor
+from pcs.daemon.async_tasks.worker.types import (
     Message,
     TaskExecuted,
     TaskFinished,
-)
-from pcs.daemon.async_tasks.report_proc import WorkerReportProcessor
-from pcs.daemon.async_tasks.scheduler import TaskNotFoundError
-from pcs.daemon.async_tasks.worker import (
-    task_executor,
-    worker_init,
 )
 
 from .dummy_commands import (
@@ -45,7 +41,7 @@ from .helpers import (
 )
 
 COMMAND_OPTIONS = CommandOptionsDto(request_timeout=None)
-worker.worker_com = Queue()  # patched at runtime
+executor.worker_com = Queue()  # patched at runtime
 
 
 class IntegrationBaseTestCase(SchedulerBaseAsyncTestCase):
@@ -384,26 +380,25 @@ class TaskResultsTests(MockOsKillMixin, IntegrationBaseTestCase):
         super().setUp()
         self.addCleanup(mock.patch.stopall)
         mock.patch(
-            "pcs.daemon.async_tasks.worker.COMMAND_MAP", test_command_map
+            "pcs.daemon.async_tasks.worker.executor.COMMAND_MAP",
+            test_command_map,
         ).start()
         mock.patch(
-            "pcs.daemon.async_tasks.worker.getLogger", spec=Logger
+            "pcs.daemon.async_tasks.worker.executor.getLogger", spec=Logger
         ).start()
         mock.patch(
-            "pcs.daemon.async_tasks.worker.worker_com",
-            self.worker_com,
-        ).start()
-        mock.patch(
-            "pcs.daemon.async_tasks.worker.worker_com",
+            "pcs.daemon.async_tasks.worker.executor.worker_com",
             self.worker_com,
         ).start()
         lib_env_mock = (
-            mock.patch("pcs.daemon.async_tasks.worker.LibraryEnvironment")
+            mock.patch(
+                "pcs.daemon.async_tasks.worker.executor.LibraryEnvironment"
+            )
             .start()
             .return_value
         )
         mock.patch(
-            "pcs.daemon.async_tasks.worker.PermissionsChecker",
+            "pcs.daemon.async_tasks.worker.executor.PermissionsChecker",
             lambda _: PermissionsCheckerMock({}),
         ).start()
         lib_env_mock.report_processor = WorkerReportProcessor(
@@ -432,7 +427,7 @@ class TaskResultsTests(MockOsKillMixin, IntegrationBaseTestCase):
         await self.perform_actions(0)
         # This task sends one report and returns immediately, task_executor
         # sends two messages - TaskExecuted and TaskFinished
-        task_executor(
+        executor.task_executor(
             self.scheduler._task_register[task_id].to_worker_command()
         )
         await self.perform_actions(3)
@@ -449,7 +444,7 @@ class TaskResultsTests(MockOsKillMixin, IntegrationBaseTestCase):
         await self.perform_actions(0)
         # This task sends no reports and returns immediately, task_executor
         # sends two messages - TaskExecuted and TaskFinished
-        task_executor(
+        executor.task_executor(
             self.scheduler._task_register[task_id].to_worker_command()
         )
         await self.perform_actions(2)
@@ -466,7 +461,7 @@ class TaskResultsTests(MockOsKillMixin, IntegrationBaseTestCase):
         await self.perform_actions(0)
         # This task immediately raises a LibraryException and executor detects
         # that as an error, sends two messages - TaskExecuted and TaskFinished
-        task_executor(
+        executor.task_executor(
             self.scheduler._task_register[task_id].to_worker_command()
         )
         await self.perform_actions(2)
@@ -483,7 +478,7 @@ class TaskResultsTests(MockOsKillMixin, IntegrationBaseTestCase):
         await self.perform_actions(0)
         # This task immediately raises an Exception which the executor catches
         # and logs accordingly
-        task_executor(
+        executor.task_executor(
             self.scheduler._task_register[task_id].to_worker_command()
         )
         await self.perform_actions(2)
@@ -500,7 +495,7 @@ class TaskResultsTests(MockOsKillMixin, IntegrationBaseTestCase):
         task_id = "id0"
         self._new_task(task_id, "success")
         await self.perform_actions(0)
-        task_executor(
+        executor.task_executor(
             self.scheduler._task_register[task_id].to_worker_command()
         )
         await self.perform_actions(2)
@@ -542,7 +537,7 @@ class DeadlockTests(
             args=(
                 self.mp_pool_mock._inqueue,
                 self.mp_pool_mock._outqueue,
-                worker_init,
+                executor.worker_init,
                 (self.worker_com, self.logging_queue),
                 1,
                 False,
