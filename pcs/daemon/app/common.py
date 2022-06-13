@@ -22,6 +22,17 @@ class EnhanceHeadersMixin:
         # way to say that the webmasters knew what they were doing.
         self.set_header("X-Content-Type-Options", "nosniff")
 
+    def hide_header_server(self):
+        # The Server header describes the software used by the origin server
+        # that handled the request — that is, the server that generated the
+        # response.
+        #
+        # rhbz 2058278
+        # When a HTTP request is made against a cluster node running pcsd, the
+        # HTTP response contains HTTP Server name in its headers.
+        # This is perceived as a security threat.
+        self.clear_header("Server")
+
     def enhance_headers(self):
         self.set_header_nosniff_content_type()
 
@@ -53,14 +64,22 @@ class EnhanceHeadersMixin:
         # CSP.
         self.set_header("X-Xss-Protection", "1; mode=block")
 
+    def set_default_headers(self) -> None:
+        """
+        Modifies automatic tornado headers for all responses (i.e. including
+        errors).
+
+        Method `initialize` is the place for setting headers only for success
+        responses.
+        """
+        self.hide_header_server()
+        self.set_strict_transport_security()
+
 
 class BaseHandler(EnhanceHeadersMixin, RequestHandler):
     """
-    BaseHandler adds for all urls Strict-Transport-Security.
+    BaseHandler modifies HTTP headers.
     """
-
-    def set_default_headers(self):
-        self.set_strict_transport_security()
 
     def data_received(self, chunk):
         # abstract method `data_received` does need to be overridden. This
@@ -70,13 +89,9 @@ class BaseHandler(EnhanceHeadersMixin, RequestHandler):
         pass
 
 
+# abstract method `data_received` is not used in redirect:
+# pylint: disable=abstract-method
 class RedirectHandler(EnhanceHeadersMixin, TornadoRedirectHandler):
     """
-    RedirectHandler with Strict-Transport-Security headers.
+    RedirectHandler with modified HTTP headers.
     """
-
-    # abstract method `data_received` is not used in redirect:
-    # pylint: disable=abstract-method
-    def initialize(self, url, permanent=True):
-        super().initialize(url, permanent)
-        self.set_strict_transport_security()
