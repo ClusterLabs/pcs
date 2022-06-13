@@ -38,4 +38,3 @@ class StaticFile(EnhanceHeadersMixin, StaticFileHandler):
         # no another special reason for it. So, maybe, it can be removed in
         # future.
         self.set_header_nosniff_content_type()
-        self.set_strict_transport_security()

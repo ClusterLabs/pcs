@@ -6,6 +6,7 @@
 - CVE-2022-1049: Pcs daemon was allowing expired accounts, and accounts with
   expired passwords to login when using PAM auth. ([huntr#220307],
   [rhbz#2068457])
+- Pcsd does not expose the server name in HTTP headers anymore ([rhbz#2059122])
 
 ### Added
 - Add support for fence\_mpath to `pcs stonith update-scsi-devices` command
@@ -36,6 +37,7 @@
 [rhbz#2058247]: https://bugzilla.redhat.com/show_bug.cgi?id=2058247
 [rhbz#2058251]: https://bugzilla.redhat.com/show_bug.cgi?id=2058251
 [rhbz#2058252]: https://bugzilla.redhat.com/show_bug.cgi?id=2058252
+[rhbz#2059122]: https://bugzilla.redhat.com/show_bug.cgi?id=2059122
 [rhbz#2068457]: https://bugzilla.redhat.com/show_bug.cgi?id=2068457
 [rhbz#2095695]: https://bugzilla.redhat.com/show_bug.cgi?id=2095695
 [huntr#220307]: https://huntr.dev/bounties/7aa921fc-a568-4fd8-96f4-7cd826246aa5/
