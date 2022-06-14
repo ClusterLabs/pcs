@@ -315,7 +315,7 @@ post '/run_pcs' do
   runner_options = {}
   runner_options['stdin'] = std_in if std_in
   std_out, std_err, retval = run_cmd_options(
-    @auth_user, runner_options, PCS, *options, '--', *command
+    @auth_user, runner_options, PCS, *options_sanitized, '--', *command
   )
   result = {
     'status' => 'ok',
