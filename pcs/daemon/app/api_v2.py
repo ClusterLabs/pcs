@@ -145,8 +145,6 @@ class BaseAPIHandler(AuthProviderBaseHandler):
         already set by tornado.
         :param status_code: HTTP status code
         """
-        self.logger.exception("API error occurred.")
-
         response = {
             "http_code": status_code,
             "http_error": responses.get(status_code, "Unknown"),

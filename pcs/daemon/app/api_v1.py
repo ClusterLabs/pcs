@@ -174,7 +174,6 @@ class BaseApiV1Handler(AuthProviderBaseHandler):
         self.finish(json.dumps(to_dict(response)))
 
     def write_error(self, status_code: int, **kwargs: Any) -> None:
-        self.logger.exception("API error occurred.")
         response = communication.dto.InternalCommunicationResultDto(
             status=communication.const.COM_STATUS_EXCEPTION,
             status_msg=None,
