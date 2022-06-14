@@ -21,7 +21,7 @@ from pcs.daemon import (
 )
 from pcs.daemon.app import (
     api_v1,
-    async_api,
+    api_v2,
     sinatra_remote,
     sinatra_ui,
     ui,
@@ -86,7 +86,7 @@ def configure_app(
             object via the method `initialize`.
         """
 
-        routes = async_api.get_routes(async_scheduler, auth_provider)
+        routes = api_v2.get_routes(async_scheduler, auth_provider)
         routes.extend(api_v1.get_routes(async_scheduler, auth_provider))
         routes.extend(
             sinatra_remote.get_routes(

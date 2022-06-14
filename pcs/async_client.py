@@ -86,7 +86,7 @@ def _handle_api_error(curl: pycurl.Curl, response: str) -> None:
 
 def _make_api_request(endpoint) -> pycurl.Curl:
     curl = pycurl.Curl()
-    curl.setopt(pycurl.URL, f"https://localhost:2224/async_api/{endpoint}")
+    curl.setopt(pycurl.URL, f"https://localhost:2224/api_v2/{endpoint}")
     curl.setopt(pycurl.SSL_VERIFYPEER, 0)
     curl.setopt(pycurl.SSL_VERIFYHOST, 0)
     return curl

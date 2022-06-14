@@ -160,8 +160,8 @@ EXTRA_DIST		= \
 			  constraint.py \
 			  daemon/app/common.py \
 			  daemon/app/__init__.py \
-			  daemon/app/async_api.py \
 			  daemon/app/api_v1.py \
+			  daemon/app/api_v2.py \
 			  daemon/app/session.py \
 			  daemon/app/sinatra_common.py \
 			  daemon/app/sinatra_remote.py \
