@@ -68,6 +68,25 @@ class EnhanceHeadersMixin:
         # CSP.
         self.set_header("X-Xss-Protection", "1; mode=block")
 
+    def set_header_cache_control(self) -> None:
+        # rhbz#2097383
+        # The point is to prevent stealing sensitive data (such as fence
+        # devices passwords) from browser caches.
+
+        # no-store - Any caches of any kind should not store this response.
+        # no-cache - Response can be stored in caches, but the response must be
+        #   validated with the origin server before each reuse. This was
+        #   requested probably as a fallback for caches which don't support
+        #   no-store.
+        self.set_header("Cache-Control", "no-store, no-cache")
+        self.set_header("Pragma", "no-cache")
+
+    def clear_header_cache_control(self) -> None:
+        # Revert headers to default to allow caching, useful e.g. for static
+        # content.
+        self.clear_header("Cache-Control")
+        self.clear_header("Pragma")
+
     def set_default_headers(self) -> None:
         """
         Modifies automatic tornado headers for all responses (i.e. including
@@ -82,6 +101,7 @@ class EnhanceHeadersMixin:
         self.set_header_frame_options()
         self.set_header_content_security_policy()
         self.set_header_xss_protection()
+        self.set_header_cache_control()
 
 
 class BaseHandler(EnhanceHeadersMixin, RequestHandler):
