@@ -8,11 +8,15 @@ class EnhanceHeadersMixin:
     """
 
     def set_header_strict_transport_security(self):
-        # rhbz 1558063
+        # rhbz#1558063 rhbz#2097392
         # The HTTP Strict-Transport-Security response header (often abbreviated
-        # as HSTS)  lets a web site tell browsers that it should only be
+        # as HSTS) lets a web site tell browsers that it should only be
         # accessed using HTTPS, instead of using HTTP.
-        self.set_header("Strict-Transport-Security", "max-age=604800")
+        # Do not set "includeSubDomains" as that would affect all web sites and
+        # applications running on any subdomain of the domain where pcs web UI
+        # is running. The fact that pcs web UI runs on a specific port doesn't
+        # matter, subdomains would still be affected.
+        self.set_header("Strict-Transport-Security", "max-age=63072000")
 
     def set_header_nosniff_content_type(self):
         # The X-Content-Type-Options response HTTP header is a marker used by
