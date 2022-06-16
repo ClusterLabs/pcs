@@ -37,7 +37,7 @@ PCSD_DEADLOCK_THRESHOLD_TIMEOUT = "PCSD_DEADLOCK_THRESHOLD_TIMEOUT"
 PCSD_CHECK_INTERVAL_MS = "PCSD_CHECK_INTERVAL_MS"
 PCSD_TASK_ABANDONED_TIMEOUT = "PCSD_TASK_ABANDONED_TIMEOUT"
 PCSD_TASK_UNRESPONSIVE_TIMEOUT = "PCSD_TASK_UNRESPONSIVE_TIMEOUT"
-PCSD_TASK_DELETION_TIMOUT = "PCSD_TASK_DELETION_TIMOUT"
+PCSD_TASK_DELETION_TIMEOUT = "PCSD_TASK_DELETION_TIMEOUT"
 
 Env = namedtuple(
     "Env",
@@ -59,7 +59,7 @@ Env = namedtuple(
         PCSD_CHECK_INTERVAL_MS,
         PCSD_TASK_ABANDONED_TIMEOUT,
         PCSD_TASK_UNRESPONSIVE_TIMEOUT,
-        PCSD_TASK_DELETION_TIMOUT,
+        PCSD_TASK_DELETION_TIMEOUT,
         "has_errors",
     ],
 )
@@ -267,7 +267,7 @@ class EnvLoader:
     @lru_cache(maxsize=1)
     def pcsd_task_deletion_timeout(self) -> int:
         return self._get_non_negative_int(
-            PCSD_TASK_DELETION_TIMOUT, settings.task_deletion_timeout_seconds
+            PCSD_TASK_DELETION_TIMEOUT, settings.task_deletion_timeout_seconds
         )
 
     def __in_pcsd_path(self, path, description="", existence_required=True):

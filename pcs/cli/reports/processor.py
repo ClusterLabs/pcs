@@ -34,9 +34,9 @@ class ReportProcessorToConsole(ReportProcessor):
             print_report(report_item_dto)
 
     def _get_ignored_severities(
-        self, supressed_severity_list: Iterable[SeverityLevel]
+        self, suppressed_severity_list: Iterable[SeverityLevel]
     ) -> Set[SeverityLevel]:
-        ignore_severities = set(supressed_severity_list)
+        ignore_severities = set(suppressed_severity_list)
         if self.debug:
             ignore_severities -= {ReportItemSeverity.DEBUG}
         else:

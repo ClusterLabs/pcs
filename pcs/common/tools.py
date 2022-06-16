@@ -23,11 +23,11 @@ def get_all_subclasses(cls: T) -> MutableSet[T]:
     )
 
 
-def get_unique_uuid(alread_used: Container[str]) -> str:
+def get_unique_uuid(already_used: Container[str]) -> str:
     is_duplicate = True
     while is_duplicate:
         candidate = str(uuid.uuid4())
-        is_duplicate = candidate in alread_used
+        is_duplicate = candidate in already_used
     return candidate
 
 

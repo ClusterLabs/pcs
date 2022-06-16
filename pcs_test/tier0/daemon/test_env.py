@@ -53,7 +53,7 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
             env.PCSD_CHECK_INTERVAL_MS: settings.async_api_scheduler_interval_ms,
             env.PCSD_TASK_ABANDONED_TIMEOUT: settings.task_abandoned_timeout_seconds,
             env.PCSD_TASK_UNRESPONSIVE_TIMEOUT: settings.task_unresponsive_timeout_seconds,
-            env.PCSD_TASK_DELETION_TIMOUT: settings.task_deletion_timeout_seconds,
+            env.PCSD_TASK_DELETION_TIMEOUT: settings.task_deletion_timeout_seconds,
             "has_errors": False,
         }
         if specific_env_values is None:
@@ -90,7 +90,7 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
             env.PCSD_CHECK_INTERVAL_MS: "5",
             env.PCSD_TASK_ABANDONED_TIMEOUT: "6",
             env.PCSD_TASK_UNRESPONSIVE_TIMEOUT: "7",
-            env.PCSD_TASK_DELETION_TIMOUT: "8",
+            env.PCSD_TASK_DELETION_TIMEOUT: "8",
         }
         self.assert_environ_produces_modified_pcsd_env(
             environ=environ,
@@ -114,7 +114,7 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
                 env.PCSD_CHECK_INTERVAL_MS: 5,
                 env.PCSD_TASK_ABANDONED_TIMEOUT: 6,
                 env.PCSD_TASK_UNRESPONSIVE_TIMEOUT: 7,
-                env.PCSD_TASK_DELETION_TIMOUT: 8,
+                env.PCSD_TASK_DELETION_TIMEOUT: 8,
             },
         )
 
@@ -292,12 +292,12 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
 
     def test_invalid_task_deletion_timeout(self):
         self.assert_environ_produces_modified_pcsd_env(
-            environ={env.PCSD_TASK_DELETION_TIMOUT: "-1"},
+            environ={env.PCSD_TASK_DELETION_TIMEOUT: "-1"},
             specific_env_values={
-                env.PCSD_TASK_DELETION_TIMOUT: settings.task_deletion_timeout_seconds,
+                env.PCSD_TASK_DELETION_TIMEOUT: settings.task_deletion_timeout_seconds,
                 "has_errors": True,
             },
             errors=[
-                f"Value '-1' for '{env.PCSD_TASK_DELETION_TIMOUT}' is not a non-negative integer"
+                f"Value '-1' for '{env.PCSD_TASK_DELETION_TIMEOUT}' is not a non-negative integer"
             ],
         )

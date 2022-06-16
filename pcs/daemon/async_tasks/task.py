@@ -216,7 +216,7 @@ class Task(ImplementsToDto):
 
     def is_deletion_requested(self) -> bool:
         """
-        Indicates whether a task sould be deleted.
+        Indicates whether a task should be deleted.
         """
         if self._to_delete_timestamp is None:
             return False

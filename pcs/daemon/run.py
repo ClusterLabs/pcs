@@ -139,7 +139,7 @@ def main():
             task_config=TaskConfig(
                 abandoned_timeout=env.PCSD_TASK_ABANDONED_TIMEOUT,
                 unresponsive_timeout=env.PCSD_TASK_UNRESPONSIVE_TIMEOUT,
-                deletion_timeout=env.PCSD_TASK_DELETION_TIMOUT,
+                deletion_timeout=env.PCSD_TASK_DELETION_TIMEOUT,
             ),
         )
     )

@@ -154,7 +154,7 @@ def task_executor(task: WorkerCommand) -> None:
                 reports.ReportItem.error(reports.messages.NotAuthorized())
             )
         # Dacite will validate command.params against command signature.
-        # Dacite works only with dataclasses so we need to dinamically create
+        # Dacite works only with dataclasses so we need to dynamically create
         # one
         try:
             data = dto.from_dict(
