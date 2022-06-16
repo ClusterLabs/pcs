@@ -347,7 +347,7 @@ def create(
     env: LibraryEnvironment,
     resource_id: str,
     resource_agent_name: str,
-    operation_list: Iterable[Mapping[str, str]],
+    operation_list: List[Mapping[str, str]],
     meta_attributes: Mapping[str, str],
     instance_attributes: Mapping[str, str],
     allow_absent_agent: bool = False,
@@ -447,7 +447,7 @@ def create_as_clone(
     env: LibraryEnvironment,
     resource_id: str,
     resource_agent_name: str,
-    operation_list: Iterable[Mapping[str, str]],
+    operation_list: List[Mapping[str, str]],
     meta_attributes: Mapping[str, str],
     instance_attributes: Mapping[str, str],
     clone_meta_options: Mapping[str, str],
@@ -556,7 +556,7 @@ def create_in_group(
     resource_id: str,
     resource_agent_name: str,
     group_id: str,
-    operation_list: Iterable[Mapping[str, str]],
+    operation_list: List[Mapping[str, str]],
     meta_attributes: Mapping[str, str],
     instance_attributes: Mapping[str, str],
     allow_absent_agent: bool = False,
@@ -695,7 +695,7 @@ def create_into_bundle(
     env: LibraryEnvironment,
     resource_id: str,
     resource_agent_name: str,
-    operation_list: Iterable[Mapping[str, str]],
+    operation_list: List[Mapping[str, str]],
     meta_attributes: Mapping[str, str],
     instance_attributes: Mapping[str, str],
     bundle_id: str,
@@ -1150,7 +1150,7 @@ def disable(
 
 def disable_safe(
     env: LibraryEnvironment,
-    resource_or_tag_ids: Iterable[str],
+    resource_or_tag_ids: List[str],
     strict: bool,
     wait: WaitType = False,
 ):
@@ -1227,7 +1227,7 @@ def disable_safe(
 
 
 def disable_simulate(
-    env: LibraryEnvironment, resource_or_tag_ids: Iterable[str], strict: bool
+    env: LibraryEnvironment, resource_or_tag_ids: List[str], strict: bool
 ) -> Mapping[str, Union[str, List[str]]]:
     """
     Simulate disallowing specified resources to be started by the cluster
@@ -1266,7 +1266,7 @@ def disable_simulate(
 
 def enable(
     env: LibraryEnvironment,
-    resource_or_tag_ids: Iterable[str],
+    resource_or_tag_ids: List[str],
     wait: WaitType = False,
 ):
     """
@@ -1333,7 +1333,7 @@ def _resource_list_enable_disable(
 
 def unmanage(
     env: LibraryEnvironment,
-    resource_or_tag_ids: Iterable[str],
+    resource_or_tag_ids: List[str],
     with_monitor: bool = False,
 ) -> None:
     """
@@ -1368,7 +1368,7 @@ def unmanage(
 
 def manage(
     env: LibraryEnvironment,
-    resource_or_tag_ids: Iterable[str],
+    resource_or_tag_ids: List[str],
     with_monitor: bool = False,
 ) -> None:
     """
@@ -1431,7 +1431,7 @@ def manage(
 def group_add(
     env: LibraryEnvironment,
     group_id: str,
-    resource_id_list: Iterable[str],
+    resource_id_list: List[str],
     adjacent_resource_id: Optional[str] = None,
     put_after_adjacent: bool = True,
     wait: WaitType = False,
