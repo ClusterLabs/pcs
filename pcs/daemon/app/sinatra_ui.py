@@ -26,8 +26,6 @@ class SinatraGui(app_session.Mixin, Sinatra):
         # pylint: disable=arguments-differ
         app_session.Mixin.initialize(self, session_storage)
         Sinatra.initialize(self, ruby_pcsd_wrapper)
-        # add security related headers to all responses
-        self.enhance_headers()
 
     def before_sinatra_use(self):
         pass
@@ -142,7 +140,6 @@ class Logout(app_session.Mixin, AjaxMixin, BaseHandler):
         await self.init_session()
         self.session_logout()
         self.sid_to_cookies()
-        self.enhance_headers()
         if self.is_ajax:
             self.write("OK")
         else:
