@@ -17,6 +17,6 @@ BUNDLED_PACKAGES_DIR = os.path.join(
 sys.path.insert(0, BUNDLED_PACKAGES_DIR)
 sys.path.insert(0, PACKAGE_DIR)
 
-from pcs import async_client
+from pcs import api_v2_client
 
-async_client.main()
+api_v2_client.main()
