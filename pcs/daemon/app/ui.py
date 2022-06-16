@@ -17,8 +17,6 @@ class SPAHandler(BaseHandler):
         # pylint: disable=arguments-differ
         self.__index = index
         self.__fallback = fallback
-        # add security related headers to all responses
-        self.enhance_headers()
 
     def get(self, *args, **kwargs):
         del args, kwargs
@@ -64,7 +62,6 @@ class Logout(app_session.Mixin, AjaxMixin, BaseHandler):
         await self.init_session()
         self.session_logout()
         self.sid_to_cookies()
-        self.enhance_headers()
         self.write("OK")
 
 
