@@ -9,6 +9,8 @@
 - Pcsd does not expose the server name in HTTP headers anymore ([rhbz#2058278])
 - Set `Strict-Transport-Security: max-age=63072000` HTTP header for all
   responses ([rhbz#2097392])
+- Set HTTP headers to prevent caching everything except static files
+  ([rhbz#2097383])
 
 ### Added
 - Add support for fence\_mpath to `pcs stonith update-scsi-devices` command
@@ -51,6 +53,7 @@
 [rhbz#2058278]: https://bugzilla.redhat.com/show_bug.cgi?id=2058278
 [rhbz#2068456]: https://bugzilla.redhat.com/show_bug.cgi?id=2068456
 [rhbz#2097392]: https://bugzilla.redhat.com/show_bug.cgi?id=2097392
+[rhbz#2097383]: https://bugzilla.redhat.com/show_bug.cgi?id=2097383
 [huntr#220307]: https://huntr.dev/bounties/7aa921fc-a568-4fd8-96f4-7cd826246aa5/
 
 

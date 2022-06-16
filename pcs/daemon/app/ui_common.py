@@ -32,3 +32,5 @@ class StaticFile(EnhanceHeadersMixin, StaticFileHandler):
     # pylint: disable=abstract-method
     def initialize(self, path, default_filename=None):
         super().initialize(path, default_filename)
+        # allow static files to be cached
+        self.clear_header_cache_control()
