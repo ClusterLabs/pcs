@@ -16,7 +16,9 @@ class Sinatra(BaseHandler):
     def send_sinatra_result(self, result: ruby_pcsd.SinatraResult):
         for name, value in result.headers.items():
             self.set_header(name, value)
-        self.hide_header_server()
+        # make sure that security related headers, which need to be present in
+        # all responses, are not overridden by sinatra
+        self.set_default_headers()
         self.set_status(result.status)
         self.write(result.body)
 

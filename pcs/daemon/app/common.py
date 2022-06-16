@@ -7,7 +7,7 @@ class EnhanceHeadersMixin:
     EnhanceHeadersMixin allows to add security headers to GUI urls.
     """
 
-    def set_strict_transport_security(self):
+    def set_header_strict_transport_security(self):
         # rhbz 1558063
         # The HTTP Strict-Transport-Security response header (often abbreviated
         # as HSTS)  lets a web site tell browsers that it should only be
@@ -22,7 +22,7 @@ class EnhanceHeadersMixin:
         # way to say that the webmasters knew what they were doing.
         self.set_header("X-Content-Type-Options", "nosniff")
 
-    def hide_header_server(self):
+    def clear_header_server(self):
         # The Server header describes the software used by the origin server
         # that handled the request — that is, the server that generated the
         # response.
@@ -33,9 +33,7 @@ class EnhanceHeadersMixin:
         # This is perceived as a security threat.
         self.clear_header("Server")
 
-    def enhance_headers(self):
-        self.set_header_nosniff_content_type()
-
+    def set_header_frame_options(self) -> None:
         # The X-Frame-Options HTTP response header can be used to indicate
         # whether or not a browser should be allowed to render a page in a
         # <frame>, <iframe> or <object> . Sites can use this to avoid
@@ -43,6 +41,7 @@ class EnhanceHeadersMixin:
         # into other sites.
         self.set_header("X-Frame-Options", "SAMEORIGIN")
 
+    def set_header_content_security_policy(self) -> None:
         # The HTTP Content-Security-Policy (CSP) frame-ancestors directive
         # specifies valid parents that may embed a page using <frame>,
         # <iframe>, <object>, <embed>, or <applet>.
@@ -54,6 +53,7 @@ class EnhanceHeadersMixin:
         # X-Frame-Options header to keep them consistent.
         self.set_header("Content-Security-Policy", "frame-ancestors 'self'")
 
+    def set_header_xss_protection(self) -> None:
         # The HTTP X-XSS-Protection response header is a feature of Internet
         # Explorer, Chrome and Safari that stops pages from loading when they
         # detect reflected cross-site scripting (XSS) attacks. Although these
@@ -72,8 +72,12 @@ class EnhanceHeadersMixin:
         Method `initialize` is the place for setting headers only for success
         responses.
         """
-        self.hide_header_server()
-        self.set_strict_transport_security()
+        self.clear_header_server()
+        self.set_header_strict_transport_security()
+        self.set_header_nosniff_content_type()
+        self.set_header_frame_options()
+        self.set_header_content_security_policy()
+        self.set_header_xss_protection()
 
 
 class BaseHandler(EnhanceHeadersMixin, RequestHandler):
