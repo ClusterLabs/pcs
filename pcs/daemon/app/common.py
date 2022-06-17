@@ -87,6 +87,14 @@ class EnhanceHeadersMixin:
         self.clear_header("Cache-Control")
         self.clear_header("Pragma")
 
+    def set_header_referrer(self) -> None:
+        # rhbz#2097391
+        # Do not expose cluster configuration bits to other websites (URL may
+        # contain name of nodes/resources/etc.). This is mostly future-proof
+        # hardening as there are currently little to no links to external
+        # sites.
+        self.set_header("Referrer-Policy", "no-referrer")
+
     def set_default_headers(self) -> None:
         """
         Modifies automatic tornado headers for all responses (i.e. including
@@ -102,6 +110,7 @@ class EnhanceHeadersMixin:
         self.set_header_content_security_policy()
         self.set_header_xss_protection()
         self.set_header_cache_control()
+        self.set_header_referrer()
 
 
 class BaseHandler(EnhanceHeadersMixin, RequestHandler):
