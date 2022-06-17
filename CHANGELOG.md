@@ -12,6 +12,7 @@
 - Set HTTP headers to prevent caching everything except static files
   ([rhbz#2097733])
 - Set HTTP headers to prevent sending referrer ([rhbz#2097732])
+- Set cookie option SameSite to Lax ([rhbz#2097730])
 
 ### Added
 - Add support for fence\_mpath to `pcs stonith update-scsi-devices` command
@@ -45,6 +46,7 @@
 [rhbz#2059122]: https://bugzilla.redhat.com/show_bug.cgi?id=2059122
 [rhbz#2068457]: https://bugzilla.redhat.com/show_bug.cgi?id=2068457
 [rhbz#2095695]: https://bugzilla.redhat.com/show_bug.cgi?id=2095695
+[rhbz#2097730]: https://bugzilla.redhat.com/show_bug.cgi?id=2097730
 [rhbz#2097731]: https://bugzilla.redhat.com/show_bug.cgi?id=2097731
 [rhbz#2097732]: https://bugzilla.redhat.com/show_bug.cgi?id=2097732
 [rhbz#2097733]: https://bugzilla.redhat.com/show_bug.cgi?id=2097733
