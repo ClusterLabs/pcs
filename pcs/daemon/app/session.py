@@ -16,6 +16,10 @@ class Mixin:
     __cookie_options = {
         "secure": True,
         "httponly": True,
+        # rhbz#2097393
+        # Prevent a cookie to be sent on cross-site requests, allow it to be
+        # sent when navigating to pcs web UI from an external site.
+        "samesite": "Lax",
     }
 
     def initialize(self, session_storage: Storage):
