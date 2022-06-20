@@ -7,7 +7,7 @@ class EnhanceHeadersMixin:
     EnhanceHeadersMixin allows to add security headers to GUI urls.
     """
 
-    def set_header_strict_transport_security(self):
+    def set_header_strict_transport_security(self) -> None:
         # rhbz#1558063 rhbz#2097392
         # The HTTP Strict-Transport-Security response header (often abbreviated
         # as HSTS) lets a web site tell browsers that it should only be
@@ -18,7 +18,7 @@ class EnhanceHeadersMixin:
         # matter, subdomains would still be affected.
         self.set_header("Strict-Transport-Security", "max-age=63072000")
 
-    def set_header_nosniff_content_type(self):
+    def set_header_nosniff_content_type(self) -> None:
         # The X-Content-Type-Options response HTTP header is a marker used by
         # the server to indicate that the MIME types advertised in the
         # Content-Type headers should not be changed and be followed. This
@@ -26,7 +26,7 @@ class EnhanceHeadersMixin:
         # way to say that the webmasters knew what they were doing.
         self.set_header("X-Content-Type-Options", "nosniff")
 
-    def clear_header_server(self):
+    def clear_header_server(self) -> None:
         # The Server header describes the software used by the origin server
         # that handled the request — that is, the server that generated the
         # response.
@@ -118,11 +118,10 @@ class BaseHandler(EnhanceHeadersMixin, RequestHandler):
     BaseHandler modifies HTTP headers.
     """
 
-    def data_received(self, chunk):
+    def data_received(self, chunk: bytes) -> None:
         # abstract method `data_received` does need to be overridden. This
         # method should be implemented to handle streamed request data.
         # BUT we currently do not plan to use it SO:
-        # pylint: disable=abstract-method
         pass
 
 
