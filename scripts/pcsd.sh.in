@@ -1,8 +1,15 @@
 #!@BASH@
 set -x
 REPO_PATH="$(realpath $(dirname $0)/../)"
-echo "* stopping pcsd service..."
-systemctl stop pcsd
+
+systemctl is-active --quiet pcsd
+PCSD_INITIALLY_RUNNING=$?
+
+if [ $PCSD_INITIALLY_RUNNING -eq 0 ]; then
+        echo "* stopping pcsd service..."
+        systemctl stop pcsd
+fi
+
 # export PCSD_SSL_OPTIONS=${PCSD_SSL_OPTIONS:='OP_NO_SSLv2,OP_NO_SSLv3,OP_NO_TLSv1,OP_NO_TLSv1_1'}
 # export PCSD_SSL_CIPHERS=${PCSD_SSL_CIPHERS:='DEFAULT:!RC4:!3DES:@STRENGTH'}
 # export PCSD_BIND_ADDR=${PCSD_BIND_ADDR:='::'}
@@ -33,5 +40,8 @@ trap 'got_signal' SIGINT
 
 echo "* ready to provide services, ctrl+c to exit..."
 wait
-echo "* starting pcsd service..."
-systemctl start pcsd
+
+if [ $PCSD_INITIALLY_RUNNING -eq 0 ]; then
+        echo "* starting pcsd service..."
+        systemctl start pcsd
+fi
