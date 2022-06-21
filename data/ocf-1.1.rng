@@ -157,11 +157,18 @@ RNGs. Thank you.
       <optional>
         <element name="content">
           <choice>
+            <!--
+              OCF 1.1 allows values: boolean, integer, string. Agents, however,
+              quite often use other values: percentage (pacemaker metadata),
+              time (pacemaker metadata)
+            -->
             <attribute name="type">
               <choice>
                 <value>boolean</value>
                 <value>string</value>
                 <value>integer</value>
+                <value>percentage</value>
+                <value>time</value>
               </choice>
             </attribute>
             <group>
