@@ -110,7 +110,7 @@ def authenticate_by_pam(username, password):
     return returncode == PAM_SUCCESS
 
 
-def get_user_groups_sync(username: str) -> Iterable[str]:
+def get_user_groups_sync(username: str) -> tuple[str]:
     return tuple(
         [group.gr_name for group in grp.getgrall() if username in group.gr_mem]
         + [
