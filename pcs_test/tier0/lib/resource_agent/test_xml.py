@@ -64,23 +64,39 @@ class LoadFakeAgentMetadataXml(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_success(self):
-        agent_name = ra.const.PACEMAKER_FENCED
-        metadata = """
-            <resource-agent name="pacemaker-fenced">
-            </resource-agent>
-        """
-        self.config.runner.pcmk.load_fenced_metadata(stdout=metadata)
+        allowed_agents = [
+            ra.const.PACEMAKER_BASED,
+            ra.const.PACEMAKER_CONTROLD,
+            ra.const.PACEMAKER_FENCED,
+            ra.const.PACEMAKER_SCHEDULERD,
+        ]
+        for agent_name in allowed_agents:
+            with self.subTest(agent_name=agent_name):
+                metadata = f"""
+                    <resource-agent name="{agent_name}">
+                    </resource-agent>
+                """
+                call_name = f"runner.pcmk.load_fake_agent_metadata.{agent_name}"
+                self.config.runner.pcmk.load_fake_agent_metadata(
+                    name=call_name,
+                    agent_name=agent_name,
+                    stdout=metadata,
+                )
 
-        env = self.env_assist.get_env()
-        self.assertEqual(
-            # pylint: disable=protected-access
-            ra.xml._load_fake_agent_metadata_xml(env.cmd_runner(), agent_name),
-            metadata.strip(),
-        )
+                env = self.env_assist.get_env()
+                self.assertEqual(
+                    # pylint: disable=protected-access
+                    ra.xml._load_fake_agent_metadata_xml(
+                        env.cmd_runner(), agent_name
+                    ),
+                    metadata.strip(),
+                )
+                self.config.remove(call_name)
+            self.env_assist.cleanup(self)
 
     def test_failure(self):
         agent_name = ra.const.PACEMAKER_FENCED
-        self.config.runner.pcmk.load_fenced_metadata(
+        self.config.runner.pcmk.load_fake_agent_metadata(
             stdout="", stderr="error message"
         )
 
@@ -305,7 +321,7 @@ class LoadFakeAgentMetadata(TestCase):
             <resource-agent name="pacemaker-fenced">
             </resource-agent>
         """
-        self.config.runner.pcmk.load_fenced_metadata(stdout=metadata)
+        self.config.runner.pcmk.load_fake_agent_metadata(stdout=metadata)
 
         env = self.env_assist.get_env()
         assert_xml_equal(
@@ -317,7 +333,7 @@ class LoadFakeAgentMetadata(TestCase):
 
     def test_cannot_load(self):
         agent_name = ra.const.PACEMAKER_FENCED
-        self.config.runner.pcmk.load_fenced_metadata(
+        self.config.runner.pcmk.load_fake_agent_metadata(
             stdout="", stderr="error message"
         )
 
@@ -329,7 +345,7 @@ class LoadFakeAgentMetadata(TestCase):
 
     def test_not_xml(self):
         agent_name = ra.const.PACEMAKER_FENCED
-        self.config.runner.pcmk.load_fenced_metadata(
+        self.config.runner.pcmk.load_fake_agent_metadata(
             stdout="this is not an xml"
         )
 
@@ -342,7 +358,7 @@ class LoadFakeAgentMetadata(TestCase):
     def test_not_valid_xml(self):
         agent_name = ra.const.PACEMAKER_FENCED
         metadata = "<resource-agent/>"
-        self.config.runner.pcmk.load_fenced_metadata(stdout=metadata)
+        self.config.runner.pcmk.load_fake_agent_metadata(stdout=metadata)
 
         env = self.env_assist.get_env()
         assert_xml_equal(
