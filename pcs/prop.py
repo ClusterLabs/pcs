@@ -9,6 +9,7 @@ from pcs.cli.reports.output import (
 )
 from pcs.common import reports
 from pcs.lib import sbd
+from pcs.lib.commands import cluster_property
 
 
 def set_property(lib, argv, modifiers):
@@ -27,7 +28,8 @@ def set_property(lib, argv, modifiers):
     if not argv:
         raise CmdLineInputError()
 
-    prop_def_dict = utils.get_cluster_properties_definition()
+    lib_env = utils.get_lib_env()
+    prop_def_dict = cluster_property.get_cluster_properties_definition(lib_env)
     failed = False
     forced = modifiers.get("--force")
     properties = {}
@@ -40,7 +42,6 @@ def set_property(lib, argv, modifiers):
             utils.err("empty property name: '{0}'".format(arg), False)
             failed = True
         elif args[0] == "stonith-watchdog-timeout":
-            lib_env = utils.get_lib_env()
             if sbd.is_sbd_enabled(lib_env.service_manager):
                 report_list = sbd.validate_stonith_watchdog_timeout(
                     args[1], forced
@@ -174,7 +175,8 @@ def get_default_properties():
     Commandline options: no options
     """
     parameters = {}
-    prop_def_dict = utils.get_cluster_properties_definition()
+    lib_env = utils.get_lib_env()
+    prop_def_dict = cluster_property.get_cluster_properties_definition(lib_env)
     for name, prop in prop_def_dict.items():
         parameters[name] = prop["default"]
     return parameters
@@ -188,4 +190,6 @@ def print_cluster_properties_definition(lib, argv, modifiers):
     modifiers.ensure_only_supported()
     if argv:
         raise CmdLineInputError()
-    print(json.dumps(utils.get_cluster_properties_definition()))
+    lib_env = utils.get_lib_env()
+    prop_def_dict = cluster_property.get_cluster_properties_definition(lib_env)
+    print(json.dumps(prop_def_dict))

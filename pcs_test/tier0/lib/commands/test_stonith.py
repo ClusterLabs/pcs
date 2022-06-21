@@ -106,7 +106,7 @@ class CreateMixin:
             agent_name=f"stonith:{agent_name}",
             agent_filename="stonith_agent_fence_simple.xml",
         )
-        self.config.runner.pcmk.load_fenced_metadata()
+        self.config.runner.pcmk.load_fake_agent_metadata()
         self.config.runner.cib.load()
         self.config.runner.pcmk.stonith_agent_self_validation(
             instance_attributes, agent_name, output=""
@@ -264,7 +264,7 @@ class CreateMixin:
             agent_name=f"stonith:{agent_name}",
             agent_filename="stonith_agent_fence_unfencing.xml",
         )
-        self.config.runner.pcmk.load_fenced_metadata()
+        self.config.runner.pcmk.load_fake_agent_metadata()
         self.config.runner.cib.load()
         self.config.runner.pcmk.stonith_agent_self_validation(
             {}, agent_name, output=""
@@ -304,7 +304,7 @@ class CreateMixin:
             agent_name=f"stonith:{agent_name}",
             agent_filename="stonith_agent_fence_simple.xml",
         )
-        self.config.runner.pcmk.load_fenced_metadata()
+        self.config.runner.pcmk.load_fake_agent_metadata()
         self.config.runner.cib.load()
         self.config.runner.pcmk.stonith_agent_self_validation(
             instance_attributes, agent_name, output=""
@@ -332,7 +332,7 @@ class CreateMixin:
             agent_name=f"stonith:{agent_name}",
             agent_filename="stonith_agent_fence_custom_actions.xml",
         )
-        self.config.runner.pcmk.load_fenced_metadata()
+        self.config.runner.pcmk.load_fake_agent_metadata()
         self.config.runner.cib.load()
         self.config.runner.pcmk.stonith_agent_self_validation(
             {}, agent_name, output=""
@@ -364,7 +364,7 @@ class CreateMixin:
             agent_name=f"stonith:{agent_name}",
             agent_filename="stonith_agent_fence_simple.xml",
         )
-        self.config.runner.pcmk.load_fenced_metadata()
+        self.config.runner.pcmk.load_fake_agent_metadata()
         self.config.runner.cib.load(
             resources=self._expected_cib(expected_cib_simple)
         )
@@ -393,7 +393,7 @@ class CreateMixin:
             agent_name=f"stonith:{agent_name}",
             agent_filename="stonith_agent_fence_simple.xml",
         )
-        self.config.runner.pcmk.load_fenced_metadata()
+        self.config.runner.pcmk.load_fake_agent_metadata()
         self.config.runner.cib.load()
         self.config.runner.pcmk.stonith_agent_self_validation(
             instance_attributes, agent_name, output=""
@@ -544,7 +544,7 @@ class CreateMixin:
         self.config.runner.pcmk.load_agent(
             agent_name=f"stonith:{agent_name}", agent_is_missing=True
         )
-        self.config.runner.pcmk.load_fenced_metadata()
+        self.config.runner.pcmk.load_fake_agent_metadata()
         self.config.runner.cib.load()
         self.config.env.push_cib(
             resources=self._expected_cib(expected_cib_unknown)
@@ -609,7 +609,7 @@ class CreateMixin:
             agent_name=f"stonith:{agent_name}",
             agent_filename="stonith_agent_fence_simple.xml",
         )
-        self.config.runner.pcmk.load_fenced_metadata()
+        self.config.runner.pcmk.load_fake_agent_metadata()
         self.config.runner.cib.load()
         self.config.runner.pcmk.stonith_agent_self_validation(
             instance_attributes, agent_name, output=""
@@ -670,7 +670,7 @@ class CreateInGroup(CreateMixin, TestCase):
             agent_name=f"stonith:{agent_name}",
             agent_filename="stonith_agent_fence_simple.xml",
         )
-        self.config.runner.pcmk.load_fenced_metadata()
+        self.config.runner.pcmk.load_fake_agent_metadata()
         self.config.runner.cib.load()
 
         self.env_assist.assert_raise_library_error(
@@ -725,7 +725,7 @@ class CreateInGroup(CreateMixin, TestCase):
             agent_name=f"stonith:{agent_name}",
             agent_filename="stonith_agent_fence_simple.xml",
         )
-        self.config.runner.pcmk.load_fenced_metadata()
+        self.config.runner.pcmk.load_fake_agent_metadata()
         self.config.runner.cib.load(resources=original_cib)
         self.config.runner.pcmk.stonith_agent_self_validation(
             instance_attributes, agent_name, output=""

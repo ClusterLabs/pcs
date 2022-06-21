@@ -264,6 +264,7 @@ EXTRA_DIST		= \
 			  lib/commands/booth.py \
 			  lib/commands/cib_options.py \
 			  lib/commands/cluster.py \
+			  lib/commands/cluster_property.py \
 			  lib/commands/constraint/colocation.py \
 			  lib/commands/constraint/common.py \
 			  lib/commands/constraint/__init__.py \

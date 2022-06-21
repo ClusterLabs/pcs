@@ -229,6 +229,20 @@ class ResourceAgentFacadeFactory:
         """
         return self._facade_from_metadata(name_to_void_metadata(name))
 
+    def facade_from_pacemaker_daemon_name(
+        self, daemon_name: FakeAgentName
+    ) -> ResourceAgentFacade:
+        return ResourceAgentFacade(
+            ocf_version_to_ocf_unified(
+                parse_metadata(
+                    ResourceAgentName(
+                        const.FAKE_AGENT_STANDARD, None, daemon_name
+                    ),
+                    load_fake_agent_metadata(self._runner, daemon_name),
+                )
+            )
+        )
+
     def _facade_from_metadata(
         self, metadata: ResourceAgentMetadata
     ) -> ResourceAgentFacade:

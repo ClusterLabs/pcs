@@ -442,9 +442,10 @@ class PcmkShortcuts:
             instead=instead,
         )
 
-    def load_fenced_metadata(
+    def load_fake_agent_metadata(
         self,
-        name="runner.pcmk.load_fenced_metadata",
+        name="runner.pcmk.load_fake_agent_metadata",
+        agent_name="pacemaker-fenced",
         stdout=None,
         stderr="",
         returncode=0,
@@ -452,9 +453,11 @@ class PcmkShortcuts:
         before=None,
     ):
         """
-        Create a call for loading fenced metadata - additional fence options
+        Create a call for loading fake agent metadata - usually metadata
+        provided by pacemaker daemon
 
         string name -- the key of this call
+        string agent_name -- name of the fake agent
         string stdout -- fenced stdout, default metadata if None
         string stderr -- fenced stderr
         int returncode -- fenced returncode
@@ -466,10 +469,13 @@ class PcmkShortcuts:
         if stdout is None:
             with open(rc("fenced_metadata.xml")) as a_file:
                 stdout = a_file.read()
+        agent_path = settings.__dict__.get(
+            agent_name.replace("-", "_"), settings.pacemaker_fenced
+        )
         self.__calls.place(
             name,
             RunnerCall(
-                [settings.pacemaker_fenced, "metadata"],
+                [agent_path, "metadata"],
                 stdout=stdout,
                 stderr=stderr,
                 returncode=returncode,
