@@ -49,13 +49,22 @@ class EnhanceHeadersMixin:
         # The HTTP Content-Security-Policy (CSP) frame-ancestors directive
         # specifies valid parents that may embed a page using <frame>,
         # <iframe>, <object>, <embed>, or <applet>.
-
         # Requested upstream:
         # https://lists.clusterlabs.org/pipermail/users/2020-May/027199.html
-
         # For now, I'm just setting this to the same value as already present
         # X-Frame-Options header to keep them consistent.
-        self.set_header("Content-Security-Policy", "frame-ancestors 'self'")
+
+        # rhbz#2097778
+        # The HTTP Content-Security-Policy (CSP) default-src directive serves
+        # as a fallback for the other CSP fetch directives. For each of the
+        # fetch directives that are absent, the user agent looks for the
+        # default-src directive and uses this value for it.
+        # 'self' refers to the origin from which the protected document is
+        # being served, including the same URL scheme and port number.
+        self.set_header(
+            "Content-Security-Policy",
+            "frame-ancestors 'self'; default-src 'self'",
+        )
 
     def set_header_xss_protection(self) -> None:
         # The HTTP X-XSS-Protection response header is a feature of Internet
