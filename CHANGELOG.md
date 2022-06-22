@@ -27,6 +27,7 @@
 - Do not allow to create an order constraint for resources in one group as that
   may block Pacemaker ([ghpull#509])
 - `pcs quorum device remove` works again ([rhbz#2095695])
+- Fixed description of full permission ([rhbz#2059177])
 
 [ghpull#509]: https://github.com/ClusterLabs/pcs/pull/509
 [rhbz#2024522]: https://bugzilla.redhat.com/show_bug.cgi?id=2024522
@@ -38,6 +39,7 @@
 [rhbz#2058251]: https://bugzilla.redhat.com/show_bug.cgi?id=2058251
 [rhbz#2058252]: https://bugzilla.redhat.com/show_bug.cgi?id=2058252
 [rhbz#2059122]: https://bugzilla.redhat.com/show_bug.cgi?id=2059122
+[rhbz#2059177]: https://bugzilla.redhat.com/show_bug.cgi?id=2059177
 [rhbz#2068457]: https://bugzilla.redhat.com/show_bug.cgi?id=2068457
 [rhbz#2095695]: https://bugzilla.redhat.com/show_bug.cgi?id=2095695
 [huntr#220307]: https://huntr.dev/bounties/7aa921fc-a568-4fd8-96f4-7cd826246aa5/

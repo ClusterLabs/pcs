@@ -43,8 +43,8 @@ module Permissions
       {
         'code' => FULL,
         'label' => 'Full',
-        'description' => ('Allows unrestricted access to a cluster including '\
-          + 'adding and removing nodes and access to keys and certificates'),
+        'description' => ('Allows unrestricted access to a cluster except for'\
+          + ' adding nodes'),
       }
     ]
   end
