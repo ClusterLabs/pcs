@@ -1,8 +1,14 @@
+from http.cookies import Morsel
+
 from pcs.daemon.auth import (
     authorize_user,
     check_user_groups,
 )
 from pcs.daemon.session import Storage
+
+# monkeypatch Python 3.6 to add support for samesite attribute
+Morsel._reserved["samesite"] = "SameSite"  # pylint: disable=protected-access
+
 
 PCSD_SESSION = "pcsd.sid"
 
@@ -16,6 +22,10 @@ class Mixin:
     __cookie_options = {
         "secure": True,
         "httponly": True,
+        # rhbz#2097393
+        # Prevent a cookie to be sent on cross-site requests, allow it to be
+        # sent when navigating to pcs web UI from an external site.
+        "samesite": "Lax",
     }
 
     def initialize(self, session_storage: Storage):

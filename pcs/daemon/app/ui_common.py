@@ -31,11 +31,6 @@ class StaticFile(EnhanceHeadersMixin, StaticFileHandler):
     # BUT static files are not streamed SO:
     # pylint: disable=abstract-method
     def initialize(self, path, default_filename=None):
-        # pylint: disable=arguments-differ
         super().initialize(path, default_filename)
-        # In ruby server the header X-Content-Type-Options was sent and we
-        # keep it here to keep compatibility for simplifying testing. There is
-        # no another special reason for it. So, maybe, it can be removed in
-        # future.
-        self.set_header_nosniff_content_type()
-        self.set_strict_transport_security()
+        # allow static files to be cached
+        self.clear_header_cache_control()
