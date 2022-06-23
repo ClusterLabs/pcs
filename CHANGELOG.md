@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.10.14] - 2022-06-23
 
 ### Security
 - CVE-2022-1049: Pcs daemon was allowing expired accounts, and accounts with
