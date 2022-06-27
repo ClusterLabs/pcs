@@ -500,7 +500,7 @@ class TaskResultsTests(MockOsKillMixin, IntegrationBaseTestCase):
         )
         await self.perform_actions(2)
 
-        task_info = await self.scheduler.wait_for_task(task_id)
+        task_info = await self.scheduler.wait_for_task(task_id, AUTH_USER)
         self.assertEqual(0, len(task_info.reports))
         self.assertEqual(TaskFinishType.SUCCESS, task_info.task_finish_type)
         self.assertEqual(RESULT, task_info.result)

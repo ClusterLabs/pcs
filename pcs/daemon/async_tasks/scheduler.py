@@ -99,26 +99,25 @@ class Scheduler:
         """
         Fetches all information about task for the client
         """
-        task = self._get_task(task_ident)
-        self._check_user(task, auth_user)
-        return task.to_dto()
-
-    def _get_task(self, task_ident: str) -> Task:
         task = self._return_task(task_ident)
-        # Task deletion after first retrieval of finished task
+        self._check_user(task, auth_user)
         if task.state == TaskState.FINISHED:
             task.request_deletion()
-        return task
+        return task.to_dto()
 
     @staticmethod
     def _check_user(task: Task, auth_user: AuthUser) -> None:
         if task.auth_user.username != auth_user.username:
             raise TaskNotFoundError(task.task_ident)
 
-    async def wait_for_task(self, task_ident: str) -> TaskResultDto:
+    async def wait_for_task(
+        self, task_ident: str, auth_user: AuthUser
+    ) -> TaskResultDto:
         task = self._return_task(task_ident)
+        self._check_user(task, auth_user)
         await task.wait_until_finished()
-        return self._get_task(task_ident).to_dto()
+        task.request_deletion()
+        return task.to_dto()
 
     def kill_task(self, task_ident: str, auth_user: AuthUser) -> None:
         """

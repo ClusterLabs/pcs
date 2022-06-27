@@ -35,7 +35,8 @@ from pcs.lib.auth.provider import (
 )
 
 from .common import (
-    AuthProviderBaseHandler,
+    AuthProviderMixin,
+    BaseHandler,
     NotAuthorizedException,
 )
 
@@ -131,7 +132,7 @@ class InvalidInputError(ApiError):
         super().__init__(communication.const.COM_STATUS_INPUT_ERROR, msg)
 
 
-class BaseApiV1Handler(AuthProviderBaseHandler):
+class _BaseApiV1Handler(AuthProviderMixin, BaseHandler):
     """
     Base handler for the REST API
 
@@ -139,19 +140,21 @@ class BaseApiV1Handler(AuthProviderBaseHandler):
     and HTTP(S) settings.
     """
 
+    scheduler: Scheduler
+    json: Optional[Dict[str, Any]] = None
+    logger: logging.Logger
+
     def initialize(
         self, scheduler: Scheduler, auth_provider: AuthProvider
     ) -> None:
-        super()._init_auth_provider(auth_provider)
-        # pylint: disable=attribute-defined-outside-init
+        super().initialize()
+        self._set_auth_provider(auth_provider)
         self.scheduler = scheduler
-        self.json: Optional[Dict[str, Any]] = None
         # TODO: Turn into a constant
-        self.logger: logging.Logger = logging.getLogger("pcs.daemon.scheduler")
+        self.logger = logging.getLogger("pcs.daemon.scheduler")
 
     def prepare(self) -> None:
         """JSON preprocessing"""
-        # pylint: disable=attribute-defined-outside-init
         self.add_header("Content-Type", "application/json")
         try:
             self.json = json.loads(self.request.body)
@@ -244,7 +247,9 @@ class BaseApiV1Handler(AuthProviderBaseHandler):
         task_ident = self.scheduler.new_task(command_dto, auth_user)
 
         try:
-            task_result_dto = await self.scheduler.wait_for_task(task_ident)
+            task_result_dto = await self.scheduler.wait_for_task(
+                task_ident, auth_user
+            )
         except TaskNotFoundError as e:
             raise ApiError(
                 communication.const.COM_STATUS_EXCEPTION,
@@ -275,7 +280,7 @@ class BaseApiV1Handler(AuthProviderBaseHandler):
         )
 
 
-class ApiV1Handler(BaseApiV1Handler):
+class ApiV1Handler(_BaseApiV1Handler):
     async def post(self, cmd: str) -> None:
         self.send_response(await self.process_request(cmd))
 
@@ -284,13 +289,12 @@ class ApiV1Handler(BaseApiV1Handler):
         self.send_response(await self.process_request(cmd))
 
 
-class LegacyApiV1Handler(BaseApiV1Handler):
+class LegacyApiV1Handler(_BaseApiV1Handler):
     @staticmethod
     def _get_cmd() -> str:
         raise NotImplementedError()
 
     def prepare(self) -> None:
-        # pylint: disable=attribute-defined-outside-init
         self.add_header("Content-Type", "application/json")
         try:
             self.json = json.loads(self.get_argument("data_json", default=""))
@@ -335,7 +339,7 @@ class ClusterAddNodesLegacyHandler(LegacyApiV1Handler):
 
 def get_routes(
     scheduler: Scheduler, auth_provider: AuthProvider
-) -> List[Tuple[str, Type[BaseApiV1Handler], dict]]:
+) -> List[Tuple[str, Type[_BaseApiV1Handler], dict]]:
     params = dict(scheduler=scheduler, auth_provider=auth_provider)
     return [
         (

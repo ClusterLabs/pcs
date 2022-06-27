@@ -144,9 +144,10 @@ class NotAuthorizedException(Exception):
     pass
 
 
-class AuthProviderBaseHandler(BaseHandler):
-    def _init_auth_provider(self, auth_provider: AuthProvider) -> None:
-        # pylint: disable=attribute-defined-outside-init
+class AuthProviderMixin:
+    _auth_provider: AuthProvider
+
+    def _set_auth_provider(self, auth_provider: AuthProvider) -> None:
         self._auth_provider = auth_provider
 
     async def get_auth_user(self) -> AuthUser:

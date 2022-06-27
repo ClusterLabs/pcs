@@ -41,7 +41,8 @@ from pcs.lib.auth.provider import (
 )
 
 from .common import (
-    AuthProviderBaseHandler,
+    AuthProviderMixin,
+    BaseHandler,
     NotAuthorizedException,
 )
 
@@ -66,7 +67,7 @@ class RequestBodyMissingError(APIError):
         )
 
 
-class BaseAPIHandler(AuthProviderBaseHandler):
+class _BaseApiV2Handler(AuthProviderMixin, BaseHandler):
     """
     Base handler for the REST API
 
@@ -74,20 +75,20 @@ class BaseAPIHandler(AuthProviderBaseHandler):
     and HTTP(S) settings.
     """
 
+    scheduler: Scheduler
+    json: Optional[Dict[str, Any]] = None
+    logger: logging.Logger
+
     def initialize(
         self, scheduler: Scheduler, auth_provider: AuthProvider
     ) -> None:
-        super()._init_auth_provider(auth_provider)
-        # pylint: disable=attribute-defined-outside-init
+        super()._set_auth_provider(auth_provider)
         self.scheduler = scheduler
-        self.auth_provider = auth_provider
-        self.json: Optional[Dict[str, Any]] = None
         # TODO: Turn into a constant
-        self.logger: logging.Logger = logging.getLogger("pcs.daemon.scheduler")
+        self.logger = logging.getLogger("pcs.daemon.scheduler")
 
     def prepare(self) -> None:
         """JSON preprocessing"""
-        # pylint: disable=attribute-defined-outside-init
         self.add_header("Content-Type", "application/json")
         if (
             "Content-Type" in self.request.headers
@@ -165,7 +166,7 @@ class BaseAPIHandler(AuthProviderBaseHandler):
         pass
 
 
-class NewTaskHandler(BaseAPIHandler):
+class NewTaskHandler(_BaseApiV2Handler):
     """Create a new task from command"""
 
     async def post(self) -> None:
@@ -178,7 +179,7 @@ class NewTaskHandler(BaseAPIHandler):
         self.write(json.dumps(to_dict(TaskIdentDto(task_ident))))
 
 
-class RunTaskHandler(BaseAPIHandler):
+class RunTaskHandler(_BaseApiV2Handler):
     """Run command synchronously"""
 
     async def post(self) -> None:
@@ -191,14 +192,18 @@ class RunTaskHandler(BaseAPIHandler):
         try:
             self.write(
                 json.dumps(
-                    to_dict(await self.scheduler.wait_for_task(task_ident))
+                    to_dict(
+                        await self.scheduler.wait_for_task(
+                            task_ident, auth_user
+                        )
+                    )
                 )
             )
         except TaskNotFoundError as exc:
             raise APIError(http_code=500) from exc
 
 
-class TaskInfoHandler(BaseAPIHandler):
+class TaskInfoHandler(_BaseApiV2Handler):
     """Get task status"""
 
     async def get(self) -> None:
@@ -226,7 +231,7 @@ class TaskInfoHandler(BaseAPIHandler):
             ) from exc
 
 
-class KillTaskHandler(BaseAPIHandler):
+class KillTaskHandler(_BaseApiV2Handler):
     """Stop execution of a task"""
 
     async def post(self) -> None:
@@ -249,7 +254,7 @@ class KillTaskHandler(BaseAPIHandler):
 def get_routes(
     scheduler: Scheduler,
     auth_provider: AuthProvider,
-) -> List[Tuple[str, Type[BaseAPIHandler], dict]]:
+) -> List[Tuple[str, Type[_BaseApiV2Handler], dict]]:
     """
     Returns mapping of URL routes to functions and links API to the scheduler
     :param scheduler: Scheduler's instance

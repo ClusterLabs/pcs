@@ -17,7 +17,6 @@ from ctypes import (
     sizeof,
 )
 from ctypes.util import find_library
-from typing import Iterable
 
 from tornado.gen import coroutine
 
@@ -110,7 +109,7 @@ def authenticate_by_pam(username, password):
     return returncode == PAM_SUCCESS
 
 
-def get_user_groups_sync(username: str) -> tuple[str]:
+def get_user_groups_sync(username: str) -> tuple[str, ...]:
     return tuple(
         [group.gr_name for group in grp.getgrall() if username in group.gr_mem]
         + [

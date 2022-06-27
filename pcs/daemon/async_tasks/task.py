@@ -74,7 +74,7 @@ class Task(ImplementsToDto):
         self._task_ident: str = task_ident
         self._command: CommandDto = command
         self._auth_user = auth_user
-        self._reports: List[Any] = []
+        self._reports: List[ReportItemDto] = []
         self._result: Any = None
         self._state: TaskState = TaskState.CREATED
         self._task_finish_type: TaskFinishType = TaskFinishType.UNFINISHED
