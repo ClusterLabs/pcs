@@ -3,7 +3,6 @@ from functools import partial
 from lxml import etree
 
 from pcs.common import reports
-from pcs.common.reports.item import ReportItem
 from pcs.lib.cib.tools import (
     check_new_id_applicable,
     does_id_exist,
@@ -11,7 +10,6 @@ from pcs.lib.cib.tools import (
     find_unique_id,
 )
 from pcs.lib.errors import LibraryError
-from pcs.lib.xml_tools import etree_element_attributes_to_dict
 
 TAG_GROUP = "acl_group"
 TAG_ROLE = "acl_role"
@@ -34,7 +32,7 @@ def validate_permissions(tree, permission_info_list):
     for permission, scope_type, scope in permission_info_list:
         if not permission in allowed_permissions:
             report_items.append(
-                ReportItem.error(
+                reports.ReportItem.error(
                     reports.messages.InvalidOptionValue(
                         "permission", permission, allowed_permissions
                     )
@@ -43,7 +41,7 @@ def validate_permissions(tree, permission_info_list):
 
         if not scope_type in allowed_scopes:
             report_items.append(
-                ReportItem.error(
+                reports.ReportItem.error(
                     reports.messages.InvalidOptionValue(
                         "scope type", scope_type, allowed_scopes
                     )
@@ -52,7 +50,9 @@ def validate_permissions(tree, permission_info_list):
 
         if scope_type == "id" and not does_id_exist(tree, scope):
             report_items.append(
-                ReportItem.error(reports.messages.IdNotFound(scope, ["id"]))
+                reports.ReportItem.error(
+                    reports.messages.IdNotFound(scope, ["id"])
+                )
             )
 
     if report_items:
@@ -146,7 +146,7 @@ def _assign_role(acl_section, role_id, target_el):
     )
     if assigned_role_list:
         return [
-            ReportItem.error(
+            reports.ReportItem.error(
                 reports.messages.CibAclRoleIsAlreadyAssignedToTarget(
                     role_el.get("id"), target_el.get("id")
                 )
@@ -200,7 +200,7 @@ def unassign_role(target_el, role_id, autodelete_target=False):
     )
     if not assigned_role_list:
         raise LibraryError(
-            ReportItem.error(
+            reports.ReportItem.error(
                 reports.messages.CibAclRoleIsNotAssignedToTarget(
                     role_id, target_el.get("id")
                 )
@@ -235,7 +235,7 @@ def create_target(acl_section, target_id):
         f"./{TAG_TARGET}[@id=$target_id]", target_id=target_id
     ):
         raise LibraryError(
-            ReportItem.error(
+            reports.ReportItem.error(
                 reports.messages.CibAclTargetAlreadyExists(target_id)
             )
         )
@@ -327,7 +327,7 @@ def get_role_list(acl_section):
     """
     output_list = []
     for role_el in acl_section.xpath(f"./{TAG_ROLE}"):
-        role = etree_element_attributes_to_dict(role_el, ["id", "description"])
+        role = {key: role_el.get(key) for key in ["id", "description"]}
         role["permission_list"] = _get_permission_list(role_el)
         output_list.append(role)
     return output_list
@@ -353,9 +353,9 @@ def _get_permission_list(role_el):
     output_list = []
     for permission in role_el.findall("./acl_permission"):
         output_list.append(
-            etree_element_attributes_to_dict(
-                permission,
-                [
+            {
+                key: permission.get(key)
+                for key in [
                     "id",
                     "description",
                     "kind",
@@ -363,8 +363,8 @@ def _get_permission_list(role_el):
                     "reference",
                     "object-type",
                     "attribute",
-                ],
-            )
+                ]
+            }
         )
     return output_list
 

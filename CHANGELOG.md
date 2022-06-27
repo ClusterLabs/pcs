@@ -1,5 +1,15 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+- `pcs resource manage --monitor` no longer enables monitor operation for all
+  resources in a group if only one of the resources was requested to become
+  managed ([rhbz#1918527])
+
+[rhbz#1918527]: https://bugzilla.redhat.com/show_bug.cgi?id=1918527
+
+
 ## [0.10.14] - 2022-06-23
 
 ### Security

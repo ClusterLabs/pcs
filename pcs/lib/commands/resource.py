@@ -1362,24 +1362,33 @@ def manage(
     cib = env.get_cib()
 
     resource_el_list, report_list = _find_resources_expand_tags(
-        cib, resource_or_tag_ids, resource.common.find_resources_to_manage
+        cib, resource_or_tag_ids
     )
-
-    primitives_set = set()
-    for resource_el in resource_el_list:
-        resource.common.manage(resource_el, IdProvider(cib))
-        primitives_set.update(resource.common.find_primitives(resource_el))
-
-    for resource_el in sorted(
-        primitives_set, key=lambda element: element.get("id", "")
-    ):
-        op_list = resource.operations.get_resource_operations(
-            resource_el, ["monitor"]
+    resource_el_to_manage_list = set()
+    for el in resource_el_list:
+        resource_el_to_manage_list.update(
+            resource.common.find_resources_to_manage(el)
         )
-        if with_monitor:
-            for op in op_list:
+
+    # manage all resources that need to be managed in order for the user
+    # specified resource to become managed
+    for resource_el in resource_el_to_manage_list:
+        resource.common.manage(resource_el, IdProvider(cib))
+        if with_monitor and resource.primitive.is_primitive(resource_el):
+            for op in resource.operations.get_resource_operations(
+                resource_el, ["monitor"]
+            ):
                 resource.operations.enable(op)
-        else:
+
+    # only report disabled monitor operations for user specified resources and
+    # their primitives
+    for resource_el in sorted(
+        resource_el_list, key=lambda element: element.get("id", "")
+    ):
+        for primitive_el in resource.common.find_primitives(resource_el):
+            op_list = resource.operations.get_resource_operations(
+                primitive_el, ["monitor"]
+            )
             monitor_enabled = False
             for op in op_list:
                 if resource.operations.is_enabled(op):
@@ -1390,7 +1399,7 @@ def manage(
                 report_list.append(
                     ReportItem.warning(
                         reports.messages.ResourceManagedNoMonitorEnabled(
-                            str(resource_el.get("id", ""))
+                            str(primitive_el.get("id", ""))
                         )
                     )
                 )

@@ -1,26 +1,40 @@
 from typing import (
     Dict,
     Iterable,
+    List,
+    Mapping,
+    Optional,
+    Union,
+    cast,
 )
 
 from lxml import etree
-from lxml.etree import _Element
+from lxml.etree import (
+    _Element,
+    _ElementTree,
+)
+
+from pcs.common.types import StringCollection
 
 
-def get_root(tree):
+def get_root(tree: Union[_Element, _ElementTree]) -> _Element:
     # ElementTree has getroot, Element has getroottree
-    return tree.getroot() if hasattr(tree, "getroot") else tree.getroottree()
+    if isinstance(tree, _ElementTree):
+        return tree.getroot()
+    # getroot() turns _ElementTree to _Element
+    return tree.getroottree().getroot()
 
 
-def find_parent(element, tag_names):
+def find_parent(
+    element: _Element, tag_names: StringCollection
+) -> Optional[_Element]:
     """
-    Find parent of an element based on parent's tag name. Return the parent
-    element or None if such element does not exist.
+    Return the closest parent with specified tag name of an element or None
 
-    etree element -- the element whose parent we want to find
-    strings tag_names -- allowed tag names of parent we are looking for
+    element -- the element whose parent we want to find
+    tag_names -- allowed tag names of a parent we are looking for
     """
-    candidate = element
+    candidate: Optional[_Element] = element
     while True:
         if candidate is None or candidate.tag in tag_names:
             return candidate
@@ -28,12 +42,12 @@ def find_parent(element, tag_names):
 
 
 def get_sub_element(
-    element,
-    sub_element_tag,
-    new_id=None,
-    new_index=None,
-    append_if_missing=True,
-):
+    element: _Element,
+    sub_element_tag: str,
+    new_id: Optional[str] = None,
+    new_index: Optional[int] = None,
+    append_if_missing: bool = True,
+) -> _Element:
     """
     Returns the FIRST sub-element sub_element_tag of element. It will create new
     element if such doesn't exist yet.
@@ -45,8 +59,9 @@ def get_sub_element(
     append_if_missing -- if the searched element does not exist, append it to
         the parent element
     """
-    sub_element_list = element.xpath(
-        "./*[local-name()=$tag_name]", tag_name=sub_element_tag
+    sub_element_list = cast(
+        List[_Element],
+        element.xpath("./*[local-name()=$tag_name]", tag_name=sub_element_tag),
     )
     if not sub_element_list:
         sub_element = etree.Element(sub_element_tag)
@@ -70,13 +85,15 @@ def export_attributes(
     return result
 
 
-def update_attribute_remove_empty(element, name, value):
+def update_attribute_remove_empty(
+    element: _Element, name: str, value: str
+) -> None:
     """
-    Set an attribute's value or remove the attribute if the value is ""
+    Set an attribute's value or remove the attribute if the value is empty
 
-    etree element -- element to be updated
-    string name -- attribute name
-    mixed value -- attribute value
+    element -- element to be updated
+    name -- attribute name
+    value -- attribute value
     """
     if not value:
         if name in element.attrib:
@@ -85,34 +102,24 @@ def update_attribute_remove_empty(element, name, value):
     element.set(name, value)
 
 
-def update_attributes_remove_empty(element, attributtes):
+def update_attributes_remove_empty(
+    element: _Element, attributtes: Mapping[str, str]
+) -> None:
     """
-    Set an attributes' values or remove an attribute if its new value is ""
+    Set an attributes' values or remove an attribute if its new value is empty
 
-    etree element -- element to be updated
-    dict attributes -- new attributes' values
+    element -- element to be updated
+    attributes -- new attributes' values
     """
     for name, value in attributtes.items():
         update_attribute_remove_empty(element, name, value)
 
 
-def etree_element_attributes_to_dict(etree_el, required_key_list):
-    """
-    Returns all attributes of etree_el from required_key_list in dictionary,
-    where keys are attributes and values are values of attributes or None if
-    it's not present.
-
-    etree_el -- etree element from which attributes should be extracted
-    required_key_list -- list of strings, attributes names which should be
-        extracted
-    """
-    return {key: etree_el.get(key) for key in required_key_list}
-
-
 def etree_to_str(tree: _Element) -> str:
     """
     Export a lxml tree to a string
-    etree tree - the tree to be exported
+
+    tree - the tree to be exported
     """
     # etree returns string in bytes: b'xml'
     # python 3 removed .encode() from byte strings
@@ -122,7 +129,9 @@ def etree_to_str(tree: _Element) -> str:
     return raw.decode() if isinstance(raw, bytes) else raw
 
 
-def is_element_useful(element, attribs_important=True):
+def is_element_useful(
+    element: _Element, attribs_important: bool = True
+) -> bool:
     """
     Is an element worth keeping?
 
@@ -138,25 +147,32 @@ def is_element_useful(element, attribs_important=True):
     contains attributes (except id) even if it has no sub-elements. This can be
     switched by attribs_important parameter.
 
-    lxml.etree.element element -- element to analyze
-    bool attribs_important -- if True, the element is useful if it contains
+    element -- element to analyze
+    attribs_important -- if True, the element is useful if it contains
         attributes even if it has no sub-elements
     """
-    return len(element) or (
-        attribs_important and element.attrib and element.attrib.keys() != ["id"]
+    return len(element) > 0 or (
+        attribs_important
+        and bool(element.attrib)
+        and element.attrib.keys() != ["id"]
     )
 
 
-def append_when_useful(parent, element, attribs_important=True, index=None):
+def append_when_useful(
+    parent: _Element,
+    element: _Element,
+    attribs_important: bool = True,
+    index: Optional[int] = None,
+) -> _Element:
     """
     Append an element to a parent if the element is useful (see
         is_element_useful for details)
 
-    lxml.etree.element parent -- where to append the element
-    lxml.etree.element element -- the element to append
-    bool attribs_important -- if True, append even if the element has no
-        children if it has attributes
-    int or None index -- position to append the element, None means at the end
+    parent -- where to append the element
+    element -- the element to append
+    attribs_important -- if True, append even if the element has no children if
+        it has attributes
+    index -- position to append the element, None means at the end
     """
     if element.getparent() == parent:
         return element
@@ -176,21 +192,23 @@ def remove_when_pointless(
     Remove an element when it is not worth keeping (see is_element_useful for
         details).
 
-    lxml.etree.element element -- element to remove
-    bool attribs_important -- if True, do not delete the element if it contains
+    element -- element to remove
+    attribs_important -- if True, do not delete the element if it contains
         attributes
     """
     if not is_element_useful(element, attribs_important):
         remove_one_element(element)
 
 
-def reset_element(element, keep_attrs=None):
+def reset_element(
+    element: _Element, keep_attrs: Optional[StringCollection] = None
+) -> None:
     """
     Remove all subelements and all attributes (except mentioned in keep_attrs)
     of given element.
 
-    lxml.etree.element element -- element to reset
-    list keep_attrs -- names of attributes thas should be kept
+    element -- element to reset
+    keep_attrs -- names of attributes thas should be kept
     """
     keep_attrs = keep_attrs or []
     for child in list(element):
