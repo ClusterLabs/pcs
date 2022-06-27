@@ -1,6 +1,13 @@
 from enum import auto
+from typing import (
+    MutableSequence,
+    Union,
+)
 
 from pcs.common.tools import AutoNameEnum
+
+StringSequence = Union[MutableSequence[str], tuple[str, ...]]
+StringCollection = Union[StringSequence, set[str]]
 
 
 class CibRuleExpressionType(AutoNameEnum):

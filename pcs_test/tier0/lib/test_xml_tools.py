@@ -137,50 +137,6 @@ class UpdateAttributeRemoveEmpty(TestCase):
         self.assert_xml_equal('<test_element a="X" c="C" />')
 
 
-class EtreeElementAttributesToDictTest(TestCase):
-    def setUp(self):
-        self.el = etree.Element(
-            "test_element",
-            {
-                "id": "test_id",
-                "description": "some description",
-                "attribute": "value",
-            },
-        )
-
-    def test_only_existing(self):
-        self.assertEqual(
-            {
-                "id": "test_id",
-                "attribute": "value",
-            },
-            lib.etree_element_attributes_to_dict(self.el, ["id", "attribute"]),
-        )
-
-    def test_only_not_existing(self):
-        self.assertEqual(
-            {
-                "_id": None,
-                "not_existing": None,
-            },
-            lib.etree_element_attributes_to_dict(
-                self.el, ["_id", "not_existing"]
-            ),
-        )
-
-    def test_mix(self):
-        self.assertEqual(
-            {
-                "id": "test_id",
-                "attribute": "value",
-                "not_existing": None,
-            },
-            lib.etree_element_attributes_to_dict(
-                self.el, ["id", "not_existing", "attribute"]
-            ),
-        )
-
-
 class RemoveWhenPointless(TestCase):
     def assert_count_tags_after_call(self, count, tag, **kwargs):
         tree = etree.fromstring(

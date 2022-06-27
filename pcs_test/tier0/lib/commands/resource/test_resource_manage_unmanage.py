@@ -1,7 +1,6 @@
-# pylint: disable=too-many-lines,line-too-long
+# pylint: disable=too-many-lines
 from unittest import TestCase
 
-from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import resource
 
@@ -721,13 +720,9 @@ fixture_bundle_cib_unmanaged_both_op_disabled = """
 
 
 def fixture_report_no_monitors(resource_id):
-    return (
-        severities.WARNING,
+    return fixture.warn(
         report_codes.RESOURCE_MANAGED_NO_MONITOR_ENABLED,
-        {
-            "resource_id": resource_id,
-        },
-        None,
+        resource_id=resource_id,
     )
 
 
@@ -736,12 +731,11 @@ class UnmanageTag(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_tag(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_primitive_cib_managed,
-                tags=fixture_tags_xml([("T", ("A"))]),
-            ).env.push_cib(resources=fixture_primitive_cib_unmanaged)
+        self.config.runner.cib.load(
+            resources=fixture_primitive_cib_managed,
+            tags=fixture_tags_xml([("T", ("A"))]),
         )
+        self.config.env.push_cib(resources=fixture_primitive_cib_unmanaged)
         resource.unmanage(self.env_assist.get_env(), ["T"])
 
 
@@ -750,11 +744,12 @@ class ManageTag(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_tag(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_primitive_cib_unmanaged,
-                tags=fixture_tags_xml([("T", ("A"))]),
-            ).env.push_cib(resources=fixture_primitive_cib_managed_with_meta)
+        self.config.runner.cib.load(
+            resources=fixture_primitive_cib_unmanaged,
+            tags=fixture_tags_xml([("T", ("A"))]),
+        )
+        self.config.env.push_cib(
+            resources=fixture_primitive_cib_managed_with_meta
         )
         resource.manage(self.env_assist.get_env(), ["T"])
 
@@ -764,7 +759,7 @@ class UnmanagePrimitive(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_nonexistent_resource(self):
-        (self.config.runner.cib.load(resources=fixture_primitive_cib_managed))
+        self.config.runner.cib.load(resources=fixture_primitive_cib_managed)
 
         self.env_assist.assert_raise_library_error(
             lambda: resource.unmanage(self.env_assist.get_env(), ["B"]),
@@ -774,19 +769,13 @@ class UnmanagePrimitive(TestCase):
         )
 
     def test_primitive(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_primitive_cib_managed
-            ).env.push_cib(resources=fixture_primitive_cib_unmanaged)
-        )
+        self.config.runner.cib.load(resources=fixture_primitive_cib_managed)
+        self.config.env.push_cib(resources=fixture_primitive_cib_unmanaged)
         resource.unmanage(self.env_assist.get_env(), ["A"])
 
     def test_primitive_unmanaged(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_primitive_cib_unmanaged
-            ).env.push_cib(resources=fixture_primitive_cib_unmanaged)
-        )
+        self.config.runner.cib.load(resources=fixture_primitive_cib_unmanaged)
+        self.config.env.push_cib(resources=fixture_primitive_cib_unmanaged)
         resource.unmanage(self.env_assist.get_env(), ["A"])
 
 
@@ -795,7 +784,7 @@ class ManagePrimitive(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_nonexistent_resource(self):
-        (self.config.runner.cib.load(resources=fixture_primitive_cib_unmanaged))
+        self.config.runner.cib.load(resources=fixture_primitive_cib_unmanaged)
 
         self.env_assist.assert_raise_library_error(
             lambda: resource.manage(self.env_assist.get_env(), ["B"]),
@@ -805,19 +794,15 @@ class ManagePrimitive(TestCase):
         )
 
     def test_primitive(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_primitive_cib_unmanaged
-            ).env.push_cib(resources=fixture_primitive_cib_managed_with_meta)
+        self.config.runner.cib.load(resources=fixture_primitive_cib_unmanaged)
+        self.config.env.push_cib(
+            resources=fixture_primitive_cib_managed_with_meta
         )
         resource.manage(self.env_assist.get_env(), ["A"])
 
     def test_primitive_managed(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_primitive_cib_managed
-            ).env.push_cib(resources=fixture_primitive_cib_managed)
-        )
+        self.config.runner.cib.load(resources=fixture_primitive_cib_managed)
+        self.config.env.push_cib(resources=fixture_primitive_cib_managed)
         resource.manage(self.env_assist.get_env(), ["A"])
 
 
@@ -826,18 +811,14 @@ class UnmanageGroup(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_primitive(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_group_cib_managed
-            ).env.push_cib(resources=fixture_group_cib_unmanaged_resource)
-        )
+        self.config.runner.cib.load(resources=fixture_group_cib_managed)
+        self.config.env.push_cib(resources=fixture_group_cib_unmanaged_resource)
         resource.unmanage(self.env_assist.get_env(), ["A1"])
 
     def test_group(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_group_cib_managed
-            ).env.push_cib(resources=fixture_group_cib_unmanaged_all_resources)
+        self.config.runner.cib.load(resources=fixture_group_cib_managed)
+        self.config.env.push_cib(
+            resources=fixture_group_cib_unmanaged_all_resources
         )
         resource.unmanage(self.env_assist.get_env(), ["A"])
 
@@ -847,38 +828,38 @@ class ManageGroup(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_primitive(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_group_cib_unmanaged_all_resources
-            ).env.push_cib(
-                resources=fixture_group_cib_unmanaged_resource_with_other_resource_meta
-            )
+        self.config.runner.cib.load(
+            resources=fixture_group_cib_unmanaged_all_resources
+        )
+        self.config.env.push_cib(
+            resources=fixture_group_cib_unmanaged_resource_with_other_resource_meta
         )
         resource.manage(self.env_assist.get_env(), ["A2"])
 
     def test_primitive_unmanaged_group(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_group_cib_unmanaged_resource_and_group
-            ).env.push_cib(resources=fixture_group_cib_managed_with_both_meta)
+        self.config.runner.cib.load(
+            resources=fixture_group_cib_unmanaged_resource_and_group
+        )
+        self.config.env.push_cib(
+            resources=fixture_group_cib_managed_with_both_meta
         )
         resource.manage(self.env_assist.get_env(), ["A1"])
 
     def test_group(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_group_cib_unmanaged_all_resources
-            ).env.push_cib(
-                resources=fixture_group_cib_managed_with_resources_meta
-            )
+        self.config.runner.cib.load(
+            resources=fixture_group_cib_unmanaged_all_resources
+        )
+        self.config.env.push_cib(
+            resources=fixture_group_cib_managed_with_resources_meta
         )
         resource.manage(self.env_assist.get_env(), ["A"])
 
     def test_group_unmanaged_group(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_group_cib_unmanaged_resource_and_group
-            ).env.push_cib(resources=fixture_group_cib_managed_with_both_meta)
+        self.config.runner.cib.load(
+            resources=fixture_group_cib_unmanaged_resource_and_group
+        )
+        self.config.env.push_cib(
+            resources=fixture_group_cib_managed_with_both_meta
         )
         resource.manage(self.env_assist.get_env(), ["A"])
 
@@ -888,18 +869,16 @@ class UnmanageClone(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_primitive(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_clone_cib_managed
-            ).env.push_cib(resources=fixture_clone_cib_unmanaged_primitive)
+        self.config.runner.cib.load(resources=fixture_clone_cib_managed)
+        self.config.env.push_cib(
+            resources=fixture_clone_cib_unmanaged_primitive
         )
         resource.unmanage(self.env_assist.get_env(), ["A"])
 
     def test_clone(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_clone_cib_managed
-            ).env.push_cib(resources=fixture_clone_cib_unmanaged_primitive)
+        self.config.runner.cib.load(resources=fixture_clone_cib_managed)
+        self.config.env.push_cib(
+            resources=fixture_clone_cib_unmanaged_primitive
         )
         resource.unmanage(self.env_assist.get_env(), ["A-clone"])
 
@@ -909,54 +888,48 @@ class ManageClone(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_primitive(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_clone_cib_unmanaged_clone
-            ).env.push_cib(resources=fixture_clone_cib_managed_with_meta_clone)
+        self.config.runner.cib.load(resources=fixture_clone_cib_unmanaged_clone)
+        self.config.env.push_cib(
+            resources=fixture_clone_cib_managed_with_meta_clone
         )
         resource.manage(self.env_assist.get_env(), ["A"])
 
     def test_primitive_unmanaged_primitive(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_clone_cib_unmanaged_primitive
-            ).env.push_cib(
-                resources=fixture_clone_cib_managed_with_meta_primitive
-            )
+        self.config.runner.cib.load(
+            resources=fixture_clone_cib_unmanaged_primitive
+        )
+        self.config.env.push_cib(
+            resources=fixture_clone_cib_managed_with_meta_primitive
         )
         resource.manage(self.env_assist.get_env(), ["A"])
 
     def test_primitive_unmanaged_both(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_clone_cib_unmanaged_both
-            ).env.push_cib(resources=fixture_clone_cib_managed_with_meta_both)
+        self.config.runner.cib.load(resources=fixture_clone_cib_unmanaged_both)
+        self.config.env.push_cib(
+            resources=fixture_clone_cib_managed_with_meta_both
         )
         resource.manage(self.env_assist.get_env(), ["A"])
 
     def test_clone(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_clone_cib_unmanaged_clone
-            ).env.push_cib(resources=fixture_clone_cib_managed_with_meta_clone)
+        self.config.runner.cib.load(resources=fixture_clone_cib_unmanaged_clone)
+        self.config.env.push_cib(
+            resources=fixture_clone_cib_managed_with_meta_clone
         )
         resource.manage(self.env_assist.get_env(), ["A-clone"])
 
     def test_clone_unmanaged_primitive(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_clone_cib_unmanaged_primitive
-            ).env.push_cib(
-                resources=fixture_clone_cib_managed_with_meta_primitive
-            )
+        self.config.runner.cib.load(
+            resources=fixture_clone_cib_unmanaged_primitive
+        )
+        self.config.env.push_cib(
+            resources=fixture_clone_cib_managed_with_meta_primitive
         )
         resource.manage(self.env_assist.get_env(), ["A-clone"])
 
     def test_clone_unmanaged_both(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_clone_cib_unmanaged_both
-            ).env.push_cib(resources=fixture_clone_cib_managed_with_meta_both)
+        self.config.runner.cib.load(resources=fixture_clone_cib_unmanaged_both)
+        self.config.env.push_cib(
+            resources=fixture_clone_cib_managed_with_meta_both
         )
         resource.manage(self.env_assist.get_env(), ["A-clone"])
 
@@ -966,18 +939,16 @@ class UnmanageMaster(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_primitive(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_master_cib_managed
-            ).env.push_cib(resources=fixture_master_cib_unmanaged_primitive)
+        self.config.runner.cib.load(resources=fixture_master_cib_managed)
+        self.config.env.push_cib(
+            resources=fixture_master_cib_unmanaged_primitive
         )
         resource.unmanage(self.env_assist.get_env(), ["A"])
 
     def test_master(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_master_cib_managed
-            ).env.push_cib(resources=fixture_master_cib_unmanaged_primitive)
+        self.config.runner.cib.load(resources=fixture_master_cib_managed)
+        self.config.env.push_cib(
+            resources=fixture_master_cib_unmanaged_primitive
         )
         resource.unmanage(self.env_assist.get_env(), ["A-master"])
 
@@ -987,58 +958,52 @@ class ManageMaster(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_primitive(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_master_cib_unmanaged_primitive
-            ).env.push_cib(
-                resources=fixture_master_cib_managed_with_primitive_meta
-            )
+        self.config.runner.cib.load(
+            resources=fixture_master_cib_unmanaged_primitive
+        )
+        self.config.env.push_cib(
+            resources=fixture_master_cib_managed_with_primitive_meta
         )
         resource.manage(self.env_assist.get_env(), ["A"])
 
     def test_primitive_unmanaged_master(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_master_cib_unmanaged_master
-            ).env.push_cib(
-                resources=fixture_master_cib_managed_with_master_meta
-            )
+        self.config.runner.cib.load(
+            resources=fixture_master_cib_unmanaged_master
+        )
+        self.config.env.push_cib(
+            resources=fixture_master_cib_managed_with_master_meta
         )
         resource.manage(self.env_assist.get_env(), ["A"])
 
     def test_primitive_unmanaged_both(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_master_cib_unmanaged_both
-            ).env.push_cib(resources=fixture_master_cib_managed_with_both_meta)
+        self.config.runner.cib.load(resources=fixture_master_cib_unmanaged_both)
+        self.config.env.push_cib(
+            resources=fixture_master_cib_managed_with_both_meta
         )
         resource.manage(self.env_assist.get_env(), ["A"])
 
     def test_master(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_master_cib_unmanaged_master
-            ).env.push_cib(
-                resources=fixture_master_cib_managed_with_master_meta
-            )
+        self.config.runner.cib.load(
+            resources=fixture_master_cib_unmanaged_master
+        )
+        self.config.env.push_cib(
+            resources=fixture_master_cib_managed_with_master_meta
         )
         resource.manage(self.env_assist.get_env(), ["A-master"])
 
     def test_master_unmanaged_primitive(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_master_cib_unmanaged_primitive
-            ).env.push_cib(
-                resources=fixture_master_cib_managed_with_primitive_meta
-            )
+        self.config.runner.cib.load(
+            resources=fixture_master_cib_unmanaged_primitive
+        )
+        self.config.env.push_cib(
+            resources=fixture_master_cib_managed_with_primitive_meta
         )
         resource.manage(self.env_assist.get_env(), ["A-master"])
 
     def test_master_unmanaged_both(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_master_cib_unmanaged_both
-            ).env.push_cib(resources=fixture_master_cib_managed_with_both_meta)
+        self.config.runner.cib.load(resources=fixture_master_cib_unmanaged_both)
+        self.config.env.push_cib(
+            resources=fixture_master_cib_managed_with_both_meta
         )
         resource.manage(self.env_assist.get_env(), ["A-master"])
 
@@ -1048,32 +1013,23 @@ class UnmanageClonedGroup(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_primitive(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_clone_group_cib_managed
-            ).env.push_cib(
-                resources=fixture_clone_group_cib_unmanaged_primitive
-            )
+        self.config.runner.cib.load(resources=fixture_clone_group_cib_managed)
+        self.config.env.push_cib(
+            resources=fixture_clone_group_cib_unmanaged_primitive
         )
         resource.unmanage(self.env_assist.get_env(), ["A1"])
 
     def test_group(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_clone_group_cib_managed
-            ).env.push_cib(
-                resources=fixture_clone_group_cib_unmanaged_all_primitives
-            )
+        self.config.runner.cib.load(resources=fixture_clone_group_cib_managed)
+        self.config.env.push_cib(
+            resources=fixture_clone_group_cib_unmanaged_all_primitives
         )
         resource.unmanage(self.env_assist.get_env(), ["A"])
 
     def test_clone(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_clone_group_cib_managed
-            ).env.push_cib(
-                resources=fixture_clone_group_cib_unmanaged_all_primitives
-            )
+        self.config.runner.cib.load(resources=fixture_clone_group_cib_managed)
+        self.config.env.push_cib(
+            resources=fixture_clone_group_cib_unmanaged_all_primitives
         )
         resource.unmanage(self.env_assist.get_env(), ["A-clone"])
 
@@ -1083,62 +1039,56 @@ class ManageClonedGroup(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_primitive(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_clone_group_cib_unmanaged_primitive
-            ).env.push_cib(
-                resources=fixture_clone_group_cib_managed_with_primitive_meta
-            )
+        self.config.runner.cib.load(
+            resources=fixture_clone_group_cib_unmanaged_primitive
+        )
+        self.config.env.push_cib(
+            resources=fixture_clone_group_cib_managed_with_primitive_meta
         )
         resource.manage(self.env_assist.get_env(), ["A1"])
 
     def test_primitive_unmanaged_all(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_clone_group_cib_unmanaged_everything
-            ).env.push_cib(
-                resources=fixture_clone_group_cib_unmanaged_primitive_with_all_meta
-            )
+        self.config.runner.cib.load(
+            resources=fixture_clone_group_cib_unmanaged_everything
+        )
+        self.config.env.push_cib(
+            resources=fixture_clone_group_cib_unmanaged_primitive_with_all_meta
         )
         resource.manage(self.env_assist.get_env(), ["A2"])
 
     def test_group(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_clone_group_cib_unmanaged_all_primitives
-            ).env.push_cib(
-                resources=fixture_clone_group_cib_managed_with_all_primitive_meta
-            )
+        self.config.runner.cib.load(
+            resources=fixture_clone_group_cib_unmanaged_all_primitives
+        )
+        self.config.env.push_cib(
+            resources=fixture_clone_group_cib_managed_with_all_primitive_meta
         )
         resource.manage(self.env_assist.get_env(), ["A"])
 
     def test_group_unmanaged_all(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_clone_group_cib_unmanaged_everything
-            ).env.push_cib(
-                resources=fixture_clone_group_cib_managed_with_all_meta
-            )
+        self.config.runner.cib.load(
+            resources=fixture_clone_group_cib_unmanaged_everything
+        )
+        self.config.env.push_cib(
+            resources=fixture_clone_group_cib_managed_with_all_meta
         )
         resource.manage(self.env_assist.get_env(), ["A"])
 
     def test_clone(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_clone_group_cib_unmanaged_clone
-            ).env.push_cib(
-                resources=fixture_clone_group_cib_managed_with_clone_meta
-            )
+        self.config.runner.cib.load(
+            resources=fixture_clone_group_cib_unmanaged_clone
+        )
+        self.config.env.push_cib(
+            resources=fixture_clone_group_cib_managed_with_clone_meta
         )
         resource.manage(self.env_assist.get_env(), ["A-clone"])
 
     def test_clone_unmanaged_all(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_clone_group_cib_unmanaged_everything
-            ).env.push_cib(
-                resources=fixture_clone_group_cib_managed_with_all_meta
-            )
+        self.config.runner.cib.load(
+            resources=fixture_clone_group_cib_unmanaged_everything
+        )
+        self.config.env.push_cib(
+            resources=fixture_clone_group_cib_managed_with_all_meta
         )
         resource.manage(self.env_assist.get_env(), ["A-clone"])
 
@@ -1148,26 +1098,21 @@ class UnmanageBundle(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_primitive(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_bundle_cib_managed
-            ).env.push_cib(resources=fixture_bundle_cib_unmanaged_primitive)
+        self.config.runner.cib.load(resources=fixture_bundle_cib_managed)
+        self.config.env.push_cib(
+            resources=fixture_bundle_cib_unmanaged_primitive
         )
         resource.unmanage(self.env_assist.get_env(), ["A"])
 
     def test_bundle(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_bundle_cib_managed
-            ).env.push_cib(resources=fixture_bundle_cib_unmanaged_both)
-        )
+        self.config.runner.cib.load(resources=fixture_bundle_cib_managed)
+        self.config.env.push_cib(resources=fixture_bundle_cib_unmanaged_both)
         resource.unmanage(self.env_assist.get_env(), ["A-bundle"])
 
     def test_bundle_empty(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_bundle_empty_cib_managed
-            ).env.push_cib(resources=fixture_bundle_empty_cib_unmanaged_bundle)
+        self.config.runner.cib.load(resources=fixture_bundle_empty_cib_managed)
+        self.config.env.push_cib(
+            resources=fixture_bundle_empty_cib_unmanaged_bundle
         )
         resource.unmanage(self.env_assist.get_env(), ["A-bundle"])
 
@@ -1177,66 +1122,61 @@ class ManageBundle(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_primitive(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_bundle_cib_unmanaged_primitive
-            ).env.push_cib(
-                resources=fixture_bundle_cib_managed_with_meta_primitive
-            )
+        self.config.runner.cib.load(
+            resources=fixture_bundle_cib_unmanaged_primitive
+        )
+        self.config.env.push_cib(
+            resources=fixture_bundle_cib_managed_with_meta_primitive
         )
         resource.manage(self.env_assist.get_env(), ["A"])
 
     def test_primitive_unmanaged_bundle(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_bundle_cib_unmanaged_bundle
-            ).env.push_cib(
-                resources=fixture_bundle_cib_managed_with_meta_bundle
-            )
+        self.config.runner.cib.load(
+            resources=fixture_bundle_cib_unmanaged_bundle
+        )
+        self.config.env.push_cib(
+            resources=fixture_bundle_cib_managed_with_meta_bundle
         )
         resource.manage(self.env_assist.get_env(), ["A"])
 
     def test_primitive_unmanaged_both(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_bundle_cib_unmanaged_both
-            ).env.push_cib(resources=fixture_bundle_cib_managed_with_meta_both)
+        self.config.runner.cib.load(resources=fixture_bundle_cib_unmanaged_both)
+        self.config.env.push_cib(
+            resources=fixture_bundle_cib_managed_with_meta_both
         )
         resource.manage(self.env_assist.get_env(), ["A"])
 
     def test_bundle(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_bundle_cib_unmanaged_bundle
-            ).env.push_cib(
-                resources=fixture_bundle_cib_managed_with_meta_bundle
-            )
+        self.config.runner.cib.load(
+            resources=fixture_bundle_cib_unmanaged_bundle
+        )
+        self.config.env.push_cib(
+            resources=fixture_bundle_cib_managed_with_meta_bundle
         )
         resource.manage(self.env_assist.get_env(), ["A-bundle"])
 
     def test_bundle_unmanaged_primitive(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_bundle_cib_unmanaged_primitive
-            ).env.push_cib(
-                resources=fixture_bundle_cib_managed_with_meta_primitive
-            )
+        self.config.runner.cib.load(
+            resources=fixture_bundle_cib_unmanaged_primitive
+        )
+        self.config.env.push_cib(
+            resources=fixture_bundle_cib_managed_with_meta_primitive
         )
         resource.manage(self.env_assist.get_env(), ["A-bundle"])
 
     def test_bundle_unmanaged_both(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_bundle_cib_unmanaged_both
-            ).env.push_cib(resources=fixture_bundle_cib_managed_with_meta_both)
+        self.config.runner.cib.load(resources=fixture_bundle_cib_unmanaged_both)
+        self.config.env.push_cib(
+            resources=fixture_bundle_cib_managed_with_meta_both
         )
         resource.manage(self.env_assist.get_env(), ["A-bundle"])
 
     def test_bundle_empty(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_bundle_empty_cib_unmanaged_bundle
-            ).env.push_cib(resources=fixture_bundle_empty_cib_managed_with_meta)
+        self.config.runner.cib.load(
+            resources=fixture_bundle_empty_cib_unmanaged_bundle
+        )
+        self.config.env.push_cib(
+            resources=fixture_bundle_empty_cib_managed_with_meta
         )
         resource.manage(self.env_assist.get_env(), ["A-bundle"])
 
@@ -1297,11 +1237,8 @@ class MoreResources(TestCase):
                 </primitive>
             </resources>
         """
-        (
-            self.config.runner.cib.load(
-                resources=self.fixture_cib_managed
-            ).env.push_cib(resources=fixture_cib_unmanaged)
-        )
+        self.config.runner.cib.load(resources=self.fixture_cib_managed)
+        self.config.env.push_cib(resources=fixture_cib_unmanaged)
         resource.unmanage(self.env_assist.get_env(), ["A", "C"])
 
     def test_success_manage(self):
@@ -1321,15 +1258,12 @@ class MoreResources(TestCase):
                 </primitive>
             </resources>
         """
-        (
-            self.config.runner.cib.load(
-                resources=self.fixture_cib_unmanaged
-            ).env.push_cib(resources=fixture_cib_managed)
-        )
+        self.config.runner.cib.load(resources=self.fixture_cib_unmanaged)
+        self.config.env.push_cib(resources=fixture_cib_managed)
         resource.manage(self.env_assist.get_env(), ["A", "C"])
 
     def test_bad_resource_unmanage(self):
-        (self.config.runner.cib.load(resources=self.fixture_cib_managed))
+        self.config.runner.cib.load(resources=self.fixture_cib_managed)
 
         self.env_assist.assert_raise_library_error(
             lambda: resource.unmanage(
@@ -1344,7 +1278,7 @@ class MoreResources(TestCase):
         )
 
     def test_bad_resource_enable(self):
-        (self.config.runner.cib.load(resources=self.fixture_cib_unmanaged))
+        self.config.runner.cib.load(resources=self.fixture_cib_unmanaged)
 
         self.env_assist.assert_raise_library_error(
             lambda: resource.manage(
@@ -1364,158 +1298,179 @@ class WithMonitor(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_unmanage_noop(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_primitive_cib_managed
-            ).env.push_cib(resources=fixture_primitive_cib_unmanaged)
-        )
+        self.config.runner.cib.load(resources=fixture_primitive_cib_managed)
+        self.config.env.push_cib(resources=fixture_primitive_cib_unmanaged)
         resource.unmanage(self.env_assist.get_env(), ["A"], True)
 
     def test_manage_noop(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_primitive_cib_unmanaged
-            ).env.push_cib(resources=fixture_primitive_cib_managed_with_meta)
+        self.config.runner.cib.load(resources=fixture_primitive_cib_unmanaged)
+        self.config.env.push_cib(
+            resources=fixture_primitive_cib_managed_with_meta
         )
         resource.manage(self.env_assist.get_env(), ["A"], True)
 
     def test_unmanage(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_primitive_cib_managed_op_enabled
-            ).env.push_cib(
-                resources=fixture_primitive_cib_unmanaged_op_disabled
-            )
+        self.config.runner.cib.load(
+            resources=fixture_primitive_cib_managed_op_enabled
+        )
+        self.config.env.push_cib(
+            resources=fixture_primitive_cib_unmanaged_op_disabled
         )
         resource.unmanage(self.env_assist.get_env(), ["A"], True)
 
     def test_manage(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_primitive_cib_unmanaged_op_disabled
-            ).env.push_cib(
-                resources=fixture_primitive_cib_managed_with_meta_op_enabled
-            )
+        self.config.runner.cib.load(
+            resources=fixture_primitive_cib_unmanaged_op_disabled
+        )
+        self.config.env.push_cib(
+            resources=fixture_primitive_cib_managed_with_meta_op_enabled
         )
         resource.manage(self.env_assist.get_env(), ["A"], True)
 
     def test_unmanage_enabled_monitors(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_primitive_cib_managed_op_enabled
-            ).env.push_cib(resources=fixture_primitive_cib_unmanaged_op_enabled)
+        self.config.runner.cib.load(
+            resources=fixture_primitive_cib_managed_op_enabled
+        )
+        self.config.env.push_cib(
+            resources=fixture_primitive_cib_unmanaged_op_enabled
         )
         resource.unmanage(self.env_assist.get_env(), ["A"], False)
 
     def test_manage_disabled_monitors(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_primitive_cib_unmanaged_op_disabled
-            ).env.push_cib(
-                resources=fixture_primitive_cib_managed_with_meta_op_disabled
-            )
+        self.config.runner.cib.load(
+            resources=fixture_primitive_cib_unmanaged_op_disabled
+        )
+        self.config.env.push_cib(
+            resources=fixture_primitive_cib_managed_with_meta_op_disabled
         )
         resource.manage(self.env_assist.get_env(), ["A"], False)
-        self.env_assist.assert_reports(
-            [
-                fixture_report_no_monitors("A"),
-            ]
-        )
+        self.env_assist.assert_reports([fixture_report_no_monitors("A")])
 
     def test_unmanage_clone(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_clone_cib_managed_op_enabled
-            ).env.push_cib(
-                resources=fixture_clone_cib_unmanaged_primitive_op_disabled
-            )
+        self.config.runner.cib.load(
+            resources=fixture_clone_cib_managed_op_enabled
+        )
+        self.config.env.push_cib(
+            resources=fixture_clone_cib_unmanaged_primitive_op_disabled
         )
         resource.unmanage(self.env_assist.get_env(), ["A-clone"], True)
 
     def test_unmanage_in_clone(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_clone_cib_managed_op_enabled
-            ).env.push_cib(
-                resources=fixture_clone_cib_unmanaged_primitive_op_disabled
-            )
+        self.config.runner.cib.load(
+            resources=fixture_clone_cib_managed_op_enabled
+        )
+        self.config.env.push_cib(
+            resources=fixture_clone_cib_unmanaged_primitive_op_disabled
         )
         resource.unmanage(self.env_assist.get_env(), ["A"], True)
 
     def test_unmanage_master(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_master_cib_managed_op_enabled
-            ).env.push_cib(
-                resources=fixture_master_cib_unmanaged_primitive_op_disabled
-            )
+        self.config.runner.cib.load(
+            resources=fixture_master_cib_managed_op_enabled
+        )
+        self.config.env.push_cib(
+            resources=fixture_master_cib_unmanaged_primitive_op_disabled
         )
         resource.unmanage(self.env_assist.get_env(), ["A-master"], True)
 
     def test_unmanage_in_master(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_master_cib_managed_op_enabled
-            ).env.push_cib(
-                resources=fixture_master_cib_unmanaged_primitive_op_disabled
-            )
+        self.config.runner.cib.load(
+            resources=fixture_master_cib_managed_op_enabled
+        )
+        self.config.env.push_cib(
+            resources=fixture_master_cib_unmanaged_primitive_op_disabled
         )
         resource.unmanage(self.env_assist.get_env(), ["A"], True)
 
     def test_unmanage_clone_with_group(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_clone_group_cib_managed_op_enabled
-            ).env.push_cib(
-                resources=fixture_clone_group_cib_unmanaged_all_primitives_op_disabled
-            )
+        self.config.runner.cib.load(
+            resources=fixture_clone_group_cib_managed_op_enabled
+        )
+        self.config.env.push_cib(
+            resources=fixture_clone_group_cib_unmanaged_all_primitives_op_disabled
         )
         resource.unmanage(self.env_assist.get_env(), ["A-clone"], True)
 
     def test_unmanage_group_in_clone(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_clone_group_cib_managed_op_enabled
-            ).env.push_cib(
-                resources=fixture_clone_group_cib_unmanaged_all_primitives_op_disabled
-            )
+        self.config.runner.cib.load(
+            resources=fixture_clone_group_cib_managed_op_enabled
+        )
+        self.config.env.push_cib(
+            resources=fixture_clone_group_cib_unmanaged_all_primitives_op_disabled
         )
         resource.unmanage(self.env_assist.get_env(), ["A"], True)
 
     def test_unmanage_in_cloned_group(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_clone_group_cib_managed_op_enabled
-            ).env.push_cib(
-                resources=fixture_clone_group_cib_unmanaged_primitive_op_disabled
-            )
+        self.config.runner.cib.load(
+            resources=fixture_clone_group_cib_managed_op_enabled
+        )
+        self.config.env.push_cib(
+            resources=fixture_clone_group_cib_unmanaged_primitive_op_disabled
         )
         resource.unmanage(self.env_assist.get_env(), ["A1"], True)
 
     def test_unmanage_bundle(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_bundle_cib_managed_op_enabled
-            ).env.push_cib(
-                resources=fixture_bundle_cib_unmanaged_both_op_disabled
-            )
+        self.config.runner.cib.load(
+            resources=fixture_bundle_cib_managed_op_enabled
+        )
+        self.config.env.push_cib(
+            resources=fixture_bundle_cib_unmanaged_both_op_disabled
         )
         resource.unmanage(self.env_assist.get_env(), ["A-bundle"], True)
 
     def test_unmanage_in_bundle(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_bundle_cib_managed_op_enabled
-            ).env.push_cib(
-                resources=fixture_bundle_cib_unmanaged_primitive_op_disabled
-            )
+        self.config.runner.cib.load(
+            resources=fixture_bundle_cib_managed_op_enabled
+        )
+        self.config.env.push_cib(
+            resources=fixture_bundle_cib_unmanaged_primitive_op_disabled
         )
         resource.unmanage(self.env_assist.get_env(), ["A"], True)
 
     def test_unmanage_bundle_empty(self):
-        (
-            self.config.runner.cib.load(
-                resources=fixture_bundle_empty_cib_managed
-            ).env.push_cib(resources=fixture_bundle_empty_cib_unmanaged_bundle)
+        self.config.runner.cib.load(resources=fixture_bundle_empty_cib_managed)
+        self.config.env.push_cib(
+            resources=fixture_bundle_empty_cib_unmanaged_bundle
         )
         resource.unmanage(self.env_assist.get_env(), ["A-bundle"], True)
+
+    def test_manage_one_resource_in_group(self):
+        self.config.runner.cib.load(
+            resources=fixture_clone_group_cib_unmanaged_all_primitives_op_disabled
+        )
+        self.config.env.push_cib(
+            resources="""
+                <resources>
+                    <clone id="A-clone">
+                        <group id="A">
+                            <primitive id="A1" class="ocf" provider="heartbeat"
+                                type="Dummy"
+                            >
+                                <meta_attributes id="A1-meta_attributes" />
+                                <operations>
+                                    <op id="A1-start" name="start" />
+                                    <op id="A1-stop" name="stop" />
+                                    <op id="A1-monitor" name="monitor" />
+                                </operations>
+                            </primitive>
+                            <primitive id="A2" class="ocf" provider="heartbeat"
+                                type="Dummy"
+                            >
+                                <meta_attributes id="A2-meta_attributes">
+                                    <nvpair id="A2-meta_attributes-is-managed"
+                                        name="is-managed" value="false" />
+                                </meta_attributes>
+                                <operations>
+                                    <op id="A2-start" name="start" />
+                                    <op id="A2-stop" name="stop" />
+                                    <op id="A2-monitor" name="monitor"
+                                        enabled="false"
+                                    />
+                                </operations>
+                            </primitive>
+                        </group>
+                    </clone>
+                </resources>
+            """
+        )
+        resource.manage(self.env_assist.get_env(), ["A1"], True)
