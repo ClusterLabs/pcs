@@ -15,14 +15,12 @@ class AssertMixin:
     def assert_vanila_session(self, _session):
         self.assertIsNone(_session.username)
         self.assertFalse(_session.is_authenticated)
-        self.assertIsNone(_session.ajax_id)
         self.assertEqual(_session.groups, [])
 
     def assert_authenticated_session(self, _session, username, groups):
         self.assertEqual(_session.username, username)
         self.assertEqual(_session.groups, groups)
         self.assertTrue(_session.is_authenticated)
-        self.assertTrue(_session.ajax_id is not None)
 
     def assert_login_failed_session(self, _session, username):
         self.assertEqual(_session.username, username)
@@ -62,8 +60,6 @@ class SessionTest(TestCase, AssertMixin, PatchSessionMixin):
             session1.groups
         with self.refresh_test() as session1:
             session1.sid
-        with self.refresh_test() as session1:
-            session1.ajax_id
 
 
 class StorageTest(TestCase, AssertMixin, PatchSessionMixin):

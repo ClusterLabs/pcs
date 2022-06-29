@@ -10,7 +10,6 @@ class Session:
         username=None,
         groups=None,
         is_authenticated=False,
-        ajax_id=None,
     ):
         # Session id propageted via cookies.
         self.__sid = sid
@@ -21,12 +20,6 @@ class Session:
         # The user is authenticated when they are recognized as a system user
         # belonging to the high availability admin group (typically hacluster).
         self.__is_authenticated = is_authenticated
-        # Id that will be returned by login-status or login (for ajax).
-        self.__ajax_id = None
-        if self.__is_authenticated:
-            self.__ajax_id = (
-                ajax_id if ajax_id else f"{int(now())}-{random.randint(1, 100)}"
-            )
         # Groups of the user. Similalry to username, it does not mean that the
         # user is authenticated when the groups are loaded.
         self.__groups = groups or []
@@ -47,11 +40,6 @@ class Session:
     def sid(self):
         self.refresh()
         return self.__sid
-
-    @property
-    def ajax_id(self):
-        self.refresh()
-        return self.__ajax_id
 
     @property
     def groups(self):
@@ -93,13 +81,12 @@ class Storage:
             del self.__sessions[sid]
         return self
 
-    def login(self, sid, username, groups, ajax_id=None) -> Session:
+    def login(self, sid, username, groups) -> Session:
         return self.__register(
             self.__valid_sid(sid),
             username=username,
             groups=groups,
             is_authenticated=True,
-            ajax_id=ajax_id,
         )
 
     def rejected_user(self, sid, username) -> Session:

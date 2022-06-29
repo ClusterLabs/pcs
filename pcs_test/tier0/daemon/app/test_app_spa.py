@@ -94,7 +94,7 @@ class Login(AppTest):
         response = self.post(f"{PREFIX}login", LOGIN_BODY, is_ajax=True)
         self.assert_success_response(
             response,
-            self.session_storage.provide(self.extract_sid(response)).ajax_id,
+            "",
         )
 
 

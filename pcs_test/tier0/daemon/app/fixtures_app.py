@@ -112,9 +112,6 @@ class AppUiTestMixin(AppTest):
             is_authorized=self.groups_valid,
         )
 
-    def extract_sid(self, response):
-        return self.assert_session_in_response(response)
-
     def assert_session_in_response(self, response, sid=None):
         self.assertTrue("Set-Cookie" in response.headers)
         cookie = parse_cookie(response.headers["Set-Cookie"])

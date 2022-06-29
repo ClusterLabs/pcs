@@ -48,8 +48,6 @@ class Login(SPAHandler, app_session.Mixin, AjaxMixin):
         if not self.session.is_authenticated:
             raise self.unauthorized()
 
-        self.write(self.session.ajax_id)
-
 
 class Logout(app_session.Mixin, AjaxMixin, BaseHandler):
     """

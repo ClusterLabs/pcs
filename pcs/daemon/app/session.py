@@ -30,7 +30,6 @@ class Mixin:
         if self.__session.is_authenticated:
             self.__refresh_auth(
                 await check_user_groups(self.__session.username),
-                ajax_id=self.__session.ajax_id,
             )
 
     async def session_auth_user(self, username, password, sign_rejection=True):
@@ -98,13 +97,12 @@ class Mixin:
     def __sid_from_client(self):
         return self.get_cookie(PCSD_SESSION, default=None)
 
-    def __refresh_auth(self, user_auth_info, sign_rejection=True, ajax_id=None):
+    def __refresh_auth(self, user_auth_info, sign_rejection=True):
         if user_auth_info.is_authorized:
             self.__session = self.__storage.login(
                 self.__session.sid,
                 user_auth_info.name,
                 user_auth_info.groups,
-                ajax_id,
             )
             self.sid_to_cookies()
         elif sign_rejection:
