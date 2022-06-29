@@ -174,6 +174,7 @@ def main():
             port=env.PCSD_PORT,
             bind_addresses=env.PCSD_BIND_ADDR,
             ssl=pcsd_ssl,
+            unix_socket_path=settings.pcsd_unix_socket,
         ).start()
     except socket.gaierror as e:
         log.pcsd.error(

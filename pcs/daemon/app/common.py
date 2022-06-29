@@ -1,3 +1,7 @@
+import pwd
+import socket
+import struct
+
 from tornado.ioloop import IOLoop
 from tornado.web import RedirectHandler as TornadoRedirectHandler
 from tornado.web import RequestHandler
@@ -130,8 +134,30 @@ class EnhanceHeadersMixin:
 
 class BaseHandler(EnhanceHeadersMixin, RequestHandler):
     """
-    BaseHandler modifies HTTP headers.
+    BaseHandler modifies HTTP headers and adds basic tools for unix socket
+    support.
     """
+
+    @property
+    def unix_socket_is_used(self):
+        return self.request.connection.stream.socket.family == socket.AF_UNIX
+
+    @property
+    def unix_socket_username(self):
+        if not self.unix_socket_is_used:
+            return None
+
+        # It is not cached to prevent inapropriate cache when handler is (in
+        # hypotetical future) somehow reused. The responsibility for cache is
+        # left to the place, that uses it.
+        credentials = self.request.connection.stream.socket.getsockopt(
+            socket.SOL_SOCKET,
+            socket.SO_PEERCRED,
+            struct.calcsize("3i"),
+        )
+        dummy_pid, uid, dummy_gid = struct.unpack("3i", credentials)
+
+        return pwd.getpwuid(uid).pw_name
 
     def data_received(self, chunk: bytes) -> None:
         # abstract method `data_received` does need to be overridden. This

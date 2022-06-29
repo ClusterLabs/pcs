@@ -21,23 +21,27 @@ class SinatraAjaxProtected(app_session.Mixin, Sinatra, AjaxMixin):
         Sinatra.initialize(self, ruby_pcsd_wrapper)
 
     async def handle_sinatra_request(self):
-        self.init_session()
-        if self.session.is_authenticated:
-            self.session_refresh_auth(
-                await check_user_groups(self.session.username),
-                sign_rejection=True,
-            )
+        if self.unix_socket_is_used:
+            user_auth_info = await check_user_groups(self.unix_socket_username)
+        else:
+            self.init_session()
+            if not self.session.is_authenticated:
+                raise self.unauthorized()
+            user_auth_info = await check_user_groups(self.session.username)
 
-        # TODO this is for sinatra compatibility, review it.
-        if self.was_sid_in_request_cookies():
-            self.put_request_cookies_sid_to_response_cookies_sid()
-        if not self.is_authorized:
+            self.session_refresh_auth(user_auth_info, sign_rejection=True)
+            # TODO this is for sinatra compatibility, review it.
+            if self.was_sid_in_request_cookies():
+                self.put_request_cookies_sid_to_response_cookies_sid()
+
+        # User is authorized only to perform ajax calls to prevent CSRF attack.
+        if not (self.is_ajax and user_auth_info.is_authorized):
             raise self.unauthorized()
 
         result = await self.ruby_pcsd_wrapper.request_gui(
             self.request,
-            self.session.username,
-            self.session.groups,
+            user_auth_info.name,
+            user_auth_info.groups,
         )
         self.send_sinatra_result(result)
 
@@ -48,11 +52,6 @@ class SinatraAjaxProtected(app_session.Mixin, Sinatra, AjaxMixin):
     async def post(self, *args, **kwargs):
         del args, kwargs
         await self.handle_sinatra_request()
-
-    @property
-    def is_authorized(self):
-        # User is authorized only to perform ajax calls to prevent CSRF attack.
-        return self.is_ajax and self.session.is_authenticated
 
 
 def get_routes(
