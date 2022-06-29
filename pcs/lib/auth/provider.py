@@ -1,8 +1,6 @@
-import grp
 import logging
 from dataclasses import dataclass
 from typing import (
-    List,
     Optional,
     Sequence,
     cast,
@@ -27,13 +25,6 @@ class AuthUser:
     @property
     def is_superuser(self) -> bool:
         return self.username == const.SUPERUSER
-
-
-# TODO: remove
-def _get_user_groups(username: str) -> List[str]:
-    return sorted(
-        group.gr_name for group in grp.getgrall() if username in group.gr_mem
-    )
 
 
 class AuthProvider:

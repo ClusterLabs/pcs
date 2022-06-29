@@ -133,6 +133,11 @@ EXTRA_DIST		= \
 			  tier0/daemon/test_session.py \
 			  tier0/daemon/test_ssl.py \
 			  tier0/__init__.py \
+			  tier0/lib/auth/__init__.py \
+			  tier0/lib/auth/config/__init__.py \
+			  tier0/lib/auth/config/test_facade.py \
+			  tier0/lib/auth/config/test_parser.py \
+			  tier0/lib/auth/test_provider.py \
 			  tier0/lib/booth/__init__.py \
 			  tier0/lib/booth/test_config_facade.py \
 			  tier0/lib/booth/test_config_files.py \
@@ -294,6 +299,11 @@ EXTRA_DIST		= \
 			  tier0/lib/pacemaker/test_simulate.py \
 			  tier0/lib/pacemaker/test_state.py \
 			  tier0/lib/pacemaker/test_values.py \
+			  tier0/lib/permissions/__init__.py \
+			  tier0/lib/permissions/config/__init__.py \
+			  tier0/lib/permissions/config/test_facade.py \
+			  tier0/lib/permissions/config/test_parser.py \
+			  tier0/lib/permissions/test_checker.py \
 			  tier0/lib/resource_agent/__init__.py \
 			  tier0/lib/resource_agent/test_facade.py \
 			  tier0/lib/resource_agent/test_list.py \

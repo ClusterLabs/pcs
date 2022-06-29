@@ -1,7 +1,7 @@
 import logging
 from typing import (
     Collection,
-    List,
+    Sequence,
     Set,
     cast,
 )
@@ -27,7 +27,7 @@ from .config.types import (
 )
 
 
-def _get_empty_facade(permissions: List[PermissionEntry]) -> FacadeV2:
+def _get_empty_facade(permissions: Sequence[PermissionEntry]) -> FacadeV2:
     return FacadeV2(
         ConfigV2(
             data_version=1,
@@ -39,7 +39,7 @@ def _get_empty_facade(permissions: List[PermissionEntry]) -> FacadeV2:
     )
 
 
-def complete_access_list(
+def _complete_access_list(
     access_list: Collection[PermissionAccessType],
 ) -> Set[PermissionAccessType]:
     if PermissionAccessType.SUPERUSER in access_list:
@@ -69,19 +69,17 @@ class PermissionsChecker:
                 self._config_file_instance.raw_file.metadata.path,
             )
             return _get_empty_facade(
-                [
+                (
                     PermissionEntry(
                         type=PermissionTargetType.GROUP,
                         name=ADMIN_GROUP,
-                        allow=frozenset(
-                            (
-                                PermissionAccessType.READ,
-                                PermissionAccessType.WRITE,
-                                PermissionAccessType.GRANT,
-                            )
+                        allow=(
+                            PermissionAccessType.READ,
+                            PermissionAccessType.WRITE,
+                            PermissionAccessType.GRANT,
                         ),
-                    )
-                ]
+                    ),
+                )
             )
         try:
             return cast(FacadeV2, self._config_file_instance.read_to_facade())
@@ -107,11 +105,11 @@ class PermissionsChecker:
                 self._config_file_instance.raw_file.metadata.path,
                 e.reason,
             )
-        return _get_empty_facade([])
+        return _get_empty_facade(tuple())
 
     def get_permissions(self, auth_user: AuthUser) -> Set[PermissionAccessType]:
         if auth_user.username == SUPERUSER:
-            return complete_access_list((PermissionAccessType.SUPERUSER,))
+            return _complete_access_list((PermissionAccessType.SUPERUSER,))
         facade = self._get_facade()
         all_permissions: Set[PermissionAccessType] = set()
         for target_name, target_type in [
@@ -119,8 +117,8 @@ class PermissionsChecker:
         ] + [(group, PermissionTargetType.GROUP) for group in auth_user.groups]:
             entry = facade.get_entry(target_name, target_type)
             if entry:
-                all_permissions |= entry.allow
-        return complete_access_list(all_permissions)
+                all_permissions |= set(entry.allow)
+        return _complete_access_list(all_permissions)
 
     def is_authorized(
         self, auth_user: AuthUser, access: PermissionAccessType
@@ -134,7 +132,9 @@ class PermissionsChecker:
         user_permissions = self.get_permissions(auth_user)
         self._logger.debug(
             "Current user permissions: %s",
-            ",".join(permission.value for permission in user_permissions),
+            ",".join(
+                sorted(permission.value for permission in user_permissions)
+            ),
         )
         result = access in user_permissions
         if result:

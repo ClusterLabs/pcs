@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import (
-    FrozenSet,
+    Collection,
     Sequence,
 )
 
@@ -20,7 +20,7 @@ class ClusterEntry:
 class PermissionEntry:
     name: str
     type: PermissionTargetType
-    allow: FrozenSet[PermissionAccessType]
+    allow: Collection[PermissionAccessType]
 
 
 @dataclass(frozen=True)

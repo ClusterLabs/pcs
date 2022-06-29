@@ -1,12 +1,12 @@
 from enum import Enum
 
 
-class PermissionTargetType(Enum):
+class PermissionTargetType(str, Enum):
     USER = "user"
     GROUP = "group"
 
 
-class PermissionAccessType(Enum):
+class PermissionAccessType(str, Enum):
     READ = "read"
     WRITE = "write"
     GRANT = "grant"
