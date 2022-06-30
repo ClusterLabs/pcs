@@ -138,6 +138,9 @@ class OcfUnifiedToPcs(TestCase):
         )
 
         mock_action_role.assert_called_once_with(metadata)
+        mock_parameter_enum.assert_not_called()
+        mock_parameter_select.assert_not_called()
+        mock_parameter_dedup_desc.assert_not_called()
         mock_parameter_desc.assert_not_called()
         mock_parameter_advanced.assert_not_called()
         mock_stonith_parameters.assert_not_called()
@@ -175,6 +178,9 @@ class OcfUnifiedToPcs(TestCase):
         )
 
         mock_action_role.assert_called_once_with(metadata)
+        mock_parameter_enum.assert_not_called()
+        mock_parameter_select.assert_not_called()
+        mock_parameter_dedup_desc.assert_not_called()
         mock_parameter_desc.assert_not_called()
         mock_parameter_advanced.assert_not_called()
         mock_stonith_parameters.assert_called_once_with("from action role")
@@ -370,6 +376,156 @@ class MetadataActionTranslateRole(TestCase):
         )
 
 
+class MetadataParameterExtractAdvancedFromDesc(TestCase):
+    advanced_str_list = ["Advanced use only: ", "*** Advanced Use Only *** "]
+
+    @staticmethod
+    def _fixture_metadata(parameters):
+        return ra.ResourceAgentMetadata(
+            ra.ResourceAgentName("standard", "provider", "type"),
+            agent_exists=True,
+            ocf_version=ra.const.OCF_1_0,
+            shortdesc=None,
+            longdesc=None,
+            parameters=parameters,
+            actions=[],
+        )
+
+    @staticmethod
+    def _fixture_parameter(shortdesc, longdesc, advanced):
+        return ra.ResourceAgentParameter(
+            name="test-parameter",
+            shortdesc=shortdesc,
+            longdesc=longdesc,
+            type="string",
+            default=None,
+            enum_values=None,
+            required=False,
+            advanced=advanced,
+            deprecated=False,
+            deprecated_by=[],
+            deprecated_desc=None,
+            unique_group=None,
+            reloadable=False,
+        )
+
+    def test_no_parameters(self):
+        metadata_in = self._fixture_metadata([])
+        metadata_out = self._fixture_metadata([])
+        self.assertEqual(
+            # pylint: disable=protected-access
+            ra.pcs_transform._metadata_parameter_extract_advanced_from_desc(
+                metadata_in
+            ),
+            metadata_out,
+        )
+
+    def test_no_shortdesc(self):
+        metadata_in = self._fixture_metadata(
+            [self._fixture_parameter(None, None, False)]
+        )
+        metadata_out = self._fixture_metadata(
+            [self._fixture_parameter(None, None, False)]
+        )
+        self.assertEqual(
+            # pylint: disable=protected-access
+            ra.pcs_transform._metadata_parameter_extract_advanced_from_desc(
+                metadata_in
+            ),
+            metadata_out,
+        )
+
+    def test_no_advanced_str(self):
+        metadata_in = self._fixture_metadata(
+            [self._fixture_parameter("some shortdesc", None, False)]
+        )
+        metadata_out = self._fixture_metadata(
+            [self._fixture_parameter("some shortdesc", None, False)]
+        )
+        self.assertEqual(
+            # pylint: disable=protected-access
+            ra.pcs_transform._metadata_parameter_extract_advanced_from_desc(
+                metadata_in
+            ),
+            metadata_out,
+        )
+
+    def test_advanced_str_in_shortedsc(self):
+        for advanced_str in self.advanced_str_list:
+            with self.subTest(advanced_str=advanced_str):
+                metadata_in = self._fixture_metadata(
+                    [
+                        self._fixture_parameter(
+                            f"{advanced_str}: some shortdesc", None, False
+                        )
+                    ]
+                )
+                metadata_out = self._fixture_metadata(
+                    [
+                        self._fixture_parameter(
+                            f"{advanced_str}: some shortdesc", None, True
+                        )
+                    ]
+                )
+                self.assertEqual(
+                    # pylint: disable=protected-access
+                    ra.pcs_transform._metadata_parameter_extract_advanced_from_desc(
+                        metadata_in
+                    ),
+                    metadata_out,
+                )
+
+    def test_advanced_str_in_shortdesc_end(self):
+        for advanced_str in self.advanced_str_list:
+            with self.subTest(advanced_str=advanced_str):
+                metadata_in = self._fixture_metadata(
+                    [
+                        self._fixture_parameter(
+                            f"some shortdesc {advanced_str}", None, False
+                        )
+                    ]
+                )
+                metadata_out = self._fixture_metadata(
+                    [
+                        self._fixture_parameter(
+                            f"some shortdesc {advanced_str}", None, False
+                        )
+                    ]
+                )
+                self.assertEqual(
+                    # pylint: disable=protected-access
+                    ra.pcs_transform._metadata_parameter_extract_advanced_from_desc(
+                        metadata_in
+                    ),
+                    metadata_out,
+                )
+
+    def test_advanced_str_in_longdesc(self):
+        for advanced_str in self.advanced_str_list:
+            with self.subTest(advanced_str=advanced_str):
+                metadata_in = self._fixture_metadata(
+                    [
+                        self._fixture_parameter(
+                            None, f"{advanced_str}: some longdesc", False
+                        )
+                    ]
+                )
+                metadata_out = self._fixture_metadata(
+                    [
+                        self._fixture_parameter(
+                            None, f"{advanced_str}: some longdesc", False
+                        )
+                    ]
+                )
+                self.assertEqual(
+                    # pylint: disable=protected-access
+                    ra.pcs_transform._metadata_parameter_extract_advanced_from_desc(
+                        metadata_in
+                    ),
+                    metadata_out,
+                )
+
+
 class MetadataParameterExtractEnumValuesFromDesc(TestCase):
     longdesc = "longdesc  Allowed values: stop, freeze, ignore, demote, suicide"
     new_longdesc = "longdesc"
@@ -434,12 +590,15 @@ class MetadataParameterExtractEnumValuesFromDesc(TestCase):
         )
 
     def test_enum_type_no_values_in_longdesc(self):
-        self.maxDiff = 150
         metadata_in = self._fixture_metadata(
             [self._fixture_parameter("enum", self.new_longdesc)]
         )
         metadata_out = self._fixture_metadata(
-            [self._fixture_parameter("enum", self.new_longdesc, enum_values=[])]
+            [
+                self._fixture_parameter(
+                    "select", self.new_longdesc, enum_values=[]
+                )
+            ]
         )
         self.assertEqual(
             # pylint: disable=protected-access
@@ -456,7 +615,7 @@ class MetadataParameterExtractEnumValuesFromDesc(TestCase):
         metadata_out = self._fixture_metadata(
             [
                 self._fixture_parameter(
-                    "enum",
+                    "select",
                     self.new_longdesc,
                     default="stop",
                     enum_values=["stop"],
@@ -478,7 +637,7 @@ class MetadataParameterExtractEnumValuesFromDesc(TestCase):
         metadata_out = self._fixture_metadata(
             [
                 self._fixture_parameter(
-                    "enum", self.new_longdesc, enum_values=self.enum_values
+                    "select", self.new_longdesc, enum_values=self.enum_values
                 )
             ]
         )
@@ -497,7 +656,7 @@ class MetadataParameterExtractEnumValuesFromDesc(TestCase):
         metadata_out = self._fixture_metadata(
             [
                 self._fixture_parameter(
-                    "enum",
+                    "select",
                     self.new_longdesc,
                     default="stop",
                     enum_values=self.enum_values,
@@ -520,13 +679,15 @@ class MetadataParameterExtractEnumValuesFromDesc(TestCase):
                 )
             ]
         )
+        enum_values = list(self.enum_values)
+        enum_values.remove("stop")
         metadata_out = self._fixture_metadata(
             [
                 self._fixture_parameter(
-                    "enum",
+                    "select",
                     self.new_longdesc,
                     default="stop",
-                    enum_values=self.enum_values[1:] + [self.enum_values[0]],
+                    enum_values=enum_values + ["stop"],
                 )
             ]
         )
@@ -695,156 +856,6 @@ class MetadataParameterDeduplicateDesc(TestCase):
             ra.pcs_transform._metadata_parameter_deduplicate_desc(metadata_in),
             metadata_out,
         )
-
-
-class MetadataParameterExtractAdvancedFromDesc(TestCase):
-    advanced_str_list = ["Advanced use only: ", "*** Advanced Use Only *** "]
-
-    @staticmethod
-    def _fixture_metadata(parameters):
-        return ra.ResourceAgentMetadata(
-            ra.ResourceAgentName("standard", "provider", "type"),
-            agent_exists=True,
-            ocf_version=ra.const.OCF_1_0,
-            shortdesc=None,
-            longdesc=None,
-            parameters=parameters,
-            actions=[],
-        )
-
-    @staticmethod
-    def _fixture_parameter(shortdesc, longdesc, advanced):
-        return ra.ResourceAgentParameter(
-            name="test-parameter",
-            shortdesc=shortdesc,
-            longdesc=longdesc,
-            type="string",
-            default=None,
-            enum_values=None,
-            required=False,
-            advanced=advanced,
-            deprecated=False,
-            deprecated_by=[],
-            deprecated_desc=None,
-            unique_group=None,
-            reloadable=False,
-        )
-
-    def test_no_parameters(self):
-        metadata_in = self._fixture_metadata([])
-        metadata_out = self._fixture_metadata([])
-        self.assertEqual(
-            # pylint: disable=protected-access
-            ra.pcs_transform._metadata_parameter_extract_advanced_from_desc(
-                metadata_in
-            ),
-            metadata_out,
-        )
-
-    def test_no_shortdesc(self):
-        metadata_in = self._fixture_metadata(
-            [self._fixture_parameter(None, None, False)]
-        )
-        metadata_out = self._fixture_metadata(
-            [self._fixture_parameter(None, None, False)]
-        )
-        self.assertEqual(
-            # pylint: disable=protected-access
-            ra.pcs_transform._metadata_parameter_extract_advanced_from_desc(
-                metadata_in
-            ),
-            metadata_out,
-        )
-
-    def test_no_advanced_str(self):
-        metadata_in = self._fixture_metadata(
-            [self._fixture_parameter("some shortdesc", None, False)]
-        )
-        metadata_out = self._fixture_metadata(
-            [self._fixture_parameter("some shortdesc", None, False)]
-        )
-        self.assertEqual(
-            # pylint: disable=protected-access
-            ra.pcs_transform._metadata_parameter_extract_advanced_from_desc(
-                metadata_in
-            ),
-            metadata_out,
-        )
-
-    def test_advanced_str_in_shortedsc(self):
-        for advanced_str in self.advanced_str_list:
-            with self.subTest(advanced_str=advanced_str):
-                metadata_in = self._fixture_metadata(
-                    [
-                        self._fixture_parameter(
-                            f"{advanced_str}: some shortdesc", None, False
-                        )
-                    ]
-                )
-                metadata_out = self._fixture_metadata(
-                    [
-                        self._fixture_parameter(
-                            f"{advanced_str}: some shortdesc", None, True
-                        )
-                    ]
-                )
-                self.assertEqual(
-                    # pylint: disable=protected-access
-                    ra.pcs_transform._metadata_parameter_extract_advanced_from_desc(
-                        metadata_in
-                    ),
-                    metadata_out,
-                )
-
-    def test_advanced_str_in_shortdesc_end(self):
-        for advanced_str in self.advanced_str_list:
-            with self.subTest(advanced_str=advanced_str):
-                metadata_in = self._fixture_metadata(
-                    [
-                        self._fixture_parameter(
-                            f"some shortdesc {advanced_str}", None, False
-                        )
-                    ]
-                )
-                metadata_out = self._fixture_metadata(
-                    [
-                        self._fixture_parameter(
-                            f"some shortdesc {advanced_str}", None, False
-                        )
-                    ]
-                )
-                self.assertEqual(
-                    # pylint: disable=protected-access
-                    ra.pcs_transform._metadata_parameter_extract_advanced_from_desc(
-                        metadata_in
-                    ),
-                    metadata_out,
-                )
-
-    def test_advanced_str_in_longdesc(self):
-        for advanced_str in self.advanced_str_list:
-            with self.subTest(advanced_str=advanced_str):
-                metadata_in = self._fixture_metadata(
-                    [
-                        self._fixture_parameter(
-                            None, f"{advanced_str}: some longdesc", False
-                        )
-                    ]
-                )
-                metadata_out = self._fixture_metadata(
-                    [
-                        self._fixture_parameter(
-                            None, f"{advanced_str}: some longdesc", False
-                        )
-                    ]
-                )
-                self.assertEqual(
-                    # pylint: disable=protected-access
-                    ra.pcs_transform._metadata_parameter_extract_advanced_from_desc(
-                        metadata_in
-                    ),
-                    metadata_out,
-                )
 
 
 class MetadataParameterJoinShortLongDesc(TestCase):

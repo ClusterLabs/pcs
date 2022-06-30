@@ -196,7 +196,7 @@ class DescribeAgent(TestCase):
                 </resource-agent>
             """,
             env={"PATH": "/usr/sbin:/bin:/usr/bin"},
-            name="runner.pcmk.load_fake_agent_metadata.fence_apc",
+            name="runner.pcmk.load_agent.fence_apc",
         )
         self.config.runner.pcmk.load_fake_agent_metadata(
             stdout=_fixture_fenced_xml
