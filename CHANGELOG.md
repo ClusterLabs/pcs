@@ -6,8 +6,11 @@
 - `pcs resource manage --monitor` no longer enables monitor operation for all
   resources in a group if only one of the resources was requested to become
   managed ([rhbz#2092950])
+- `pcs resource restart` command works again (broken in pcs-0.11.3)
+  ([rhbz#2102663])
 
 [rhbz#2092950]: https://bugzilla.redhat.com/show_bug.cgi?id=2092950
+[rhbz#2102663]: https://bugzilla.redhat.com/show_bug.cgi?id=2102663
 
 
 ## [0.11.3] - 2022-06-23

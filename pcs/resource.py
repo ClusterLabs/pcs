@@ -2596,7 +2596,6 @@ def resource_restart(
     Options:
       * --wait
     """
-    del lib
     modifiers.ensure_only_supported("--wait")
     if not argv:
         utils.err("You must specify a resource to restart")
