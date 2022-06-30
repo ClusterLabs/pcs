@@ -6,7 +6,6 @@ from typing import (
     List,
     Optional,
     Set,
-    cast,
 )
 
 from pcs.common import reports
@@ -232,16 +231,7 @@ class ResourceAgentFacadeFactory:
     def facade_from_pacemaker_daemon_name(
         self, daemon_name: FakeAgentName
     ) -> ResourceAgentFacade:
-        return ResourceAgentFacade(
-            ocf_version_to_ocf_unified(
-                parse_metadata(
-                    ResourceAgentName(
-                        const.FAKE_AGENT_STANDARD, None, daemon_name
-                    ),
-                    load_fake_agent_metadata(self._runner, daemon_name),
-                )
-            )
-        )
+        return ResourceAgentFacade(self._get_fake_agent_metadata(daemon_name))
 
     def _facade_from_metadata(
         self, metadata: ResourceAgentMetadata
@@ -258,22 +248,22 @@ class ResourceAgentFacadeFactory:
             )
         return ResourceAgentFacade(metadata, additional_parameters)
 
+    def _get_fake_agent_metadata(
+        self, agent_name: FakeAgentName
+    ) -> ResourceAgentMetadata:
+        return ocf_version_to_ocf_unified(
+            parse_metadata(
+                ResourceAgentName(const.FAKE_AGENT_STANDARD, None, agent_name),
+                load_fake_agent_metadata(self._runner, agent_name),
+            )
+        )
+
     def _get_fenced_parameters(self) -> List[ResourceAgentParameter]:
         if self._fenced_metadata is None:
-            agent_name = ResourceAgentName(
-                const.FAKE_AGENT_STANDARD, None, const.PACEMAKER_FENCED
-            )
+            agent_name = const.PACEMAKER_FENCED
             try:
                 self._fenced_metadata = ocf_unified_to_pcs(
-                    ocf_version_to_ocf_unified(
-                        parse_metadata(
-                            agent_name,
-                            load_fake_agent_metadata(
-                                self._runner,
-                                cast(FakeAgentName, agent_name.type),
-                            ),
-                        )
-                    )
+                    self._get_fake_agent_metadata(agent_name)
                 )
             except ResourceAgentError as e:
                 # If pcs is unable to load fenced metadata, cache an empty
@@ -286,5 +276,9 @@ class ResourceAgentFacadeFactory:
                         e, severity=reports.ReportItemSeverity.warning()
                     )
                 )
-                self._fenced_metadata = name_to_void_metadata(agent_name)
+                self._fenced_metadata = name_to_void_metadata(
+                    ResourceAgentName(
+                        const.FAKE_AGENT_STANDARD, None, agent_name
+                    )
+                )
         return self._fenced_metadata.parameters

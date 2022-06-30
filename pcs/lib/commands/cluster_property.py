@@ -5,6 +5,7 @@ from typing import (
 )
 
 from pcs.common import reports
+from pcs.common.types import StringSequence
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.resource_agent import (
@@ -50,8 +51,23 @@ def _get_property_facade_list(
 # format
 def _cluster_property_metadata_to_dict(
     metadata: ResourceAgentMetadata,
-) -> Dict[str, Dict[str, Union[bool, str, List[str]]]]:
+) -> Dict[str, Dict[str, Union[bool, str, StringSequence]]]:
     banned_props = ["dc-version", "cluster-infrastructure"]
+    basic_props = [
+        "batch-limit",
+        "no-quorum-policy",
+        "symmetric-cluster",
+        "enable-acl",
+        "stonith-enabled",
+        "stonith-action",
+        "pe-input-series-max",
+        "stop-orphan-resources",
+        "stop-orphan-actions",
+        "cluster-delay",
+        "start-failure-is-fatal",
+        "pe-error-series-max",
+        "pe-warn-series-max",
+    ]
     readable_names = {
         "batch-limit": "Batch Limit",
         "no-quorum-policy": "No Quorum Policy",
@@ -71,13 +87,13 @@ def _cluster_property_metadata_to_dict(
     for parameter in metadata.parameters:
         if parameter.name in banned_props:
             continue
-        cluster_property: Dict[str, Union[bool, str, List[str]]] = {
+        cluster_property: Dict[str, Union[bool, str, StringSequence]] = {
             "name": parameter.name,
             "shortdesc": parameter.shortdesc or "",
             "longdesc": parameter.longdesc or "",
             "type": parameter.type,
             "default": parameter.default or "",
-            "advanced": parameter.advanced,
+            "advanced": parameter.name not in basic_props or parameter.advanced,
             "readable_name": readable_names.get(parameter.name, parameter.name),
             "source": metadata.name.type,
         }
@@ -88,7 +104,9 @@ def _cluster_property_metadata_to_dict(
     return property_definition
 
 
-def get_cluster_properties_definition(env: LibraryEnvironment):
+def get_cluster_properties_definition_legacy(
+    env: LibraryEnvironment,
+) -> Dict[str, Dict[str, Union[bool, str, StringSequence]]]:
     facade_factory = ResourceAgentFacadeFactory(
         env.cmd_runner(), env.report_processor
     )

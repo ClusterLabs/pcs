@@ -29,7 +29,9 @@ def set_property(lib, argv, modifiers):
         raise CmdLineInputError()
 
     lib_env = utils.get_lib_env()
-    prop_def_dict = cluster_property.get_cluster_properties_definition(lib_env)
+    prop_def_dict = cluster_property.get_cluster_properties_definition_legacy(
+        lib_env
+    )
     failed = False
     forced = modifiers.get("--force")
     properties = {}
@@ -176,7 +178,9 @@ def get_default_properties():
     """
     parameters = {}
     lib_env = utils.get_lib_env()
-    prop_def_dict = cluster_property.get_cluster_properties_definition(lib_env)
+    prop_def_dict = cluster_property.get_cluster_properties_definition_legacy(
+        lib_env
+    )
     for name, prop in prop_def_dict.items():
         parameters[name] = prop["default"]
     return parameters
@@ -191,5 +195,7 @@ def print_cluster_properties_definition(lib, argv, modifiers):
     if argv:
         raise CmdLineInputError()
     lib_env = utils.get_lib_env()
-    prop_def_dict = cluster_property.get_cluster_properties_definition(lib_env)
+    prop_def_dict = cluster_property.get_cluster_properties_definition_legacy(
+        lib_env
+    )
     print(json.dumps(prop_def_dict))

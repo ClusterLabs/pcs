@@ -259,6 +259,7 @@ def _parameter_extract_enum_values_from_desc(
     enum_values, longdesc = _get_enum_values_and_new_longdesc(parameter)
     if parameter.default is not None and parameter.default not in enum_values:
         enum_values.append(parameter.default)
+    parameter = replace(parameter, type="select")
     parameter = replace(parameter, longdesc=longdesc)
     return replace(parameter, enum_values=enum_values)
 
