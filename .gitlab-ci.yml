@@ -124,7 +124,8 @@ python_smoke_tests:
     - systemctl start pcsd
     - sleep 2
     - ./autogen.sh
-    - ./configure --enable-local-build --enable-tests-only
+    - ./configure --enable-local-build
+    - make
     - pcs_test/smoke.sh
   artifacts:
     paths:

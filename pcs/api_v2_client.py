@@ -16,7 +16,10 @@ from pcs.common.async_tasks.dto import (
     TaskIdentDto,
     TaskResultDto,
 )
-from pcs.common.async_tasks.types import TaskState
+from pcs.common.async_tasks.types import (
+    TaskFinishType,
+    TaskState,
+)
 from pcs.common.interface.dto import (
     from_dict,
     to_dict,
@@ -224,3 +227,5 @@ def main():
     )
     print_command_return_value(result)
     print_task_details(result)
+    if result.task_finish_type != TaskFinishType.SUCCESS:
+        raise SystemExit(1)

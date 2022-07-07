@@ -33,6 +33,10 @@ ToDictMetaKey = NewType("ToDictMetaKey", str)
 META_NAME = ToDictMetaKey("META_NAME")
 
 
+class PayloadConversionError(Exception):
+    pass
+
+
 class DataTransferObject:
     pass
 
@@ -81,7 +85,10 @@ DTOTYPE = TypeVar("DTOTYPE", bound=DataTransferObject)
 
 
 def _convert_payload(klass: Type[DTOTYPE], data: DtoPayload) -> DtoPayload:
-    new_dict = dict(data)
+    try:
+        new_dict = dict(data)
+    except ValueError as e:
+        raise PayloadConversionError() from e
     for _field in fields(klass):
         new_name = _field.metadata.get(META_NAME, _field.name)
         if new_name not in data:

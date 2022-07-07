@@ -33,7 +33,13 @@ def config(
     config_raw = lib.dr.get_config()
     try:
         config_dto = dto.from_dict(DrConfigDto, config_raw)
-    except (KeyError, TypeError, ValueError, DaciteError) as e:
+    except (
+        KeyError,
+        TypeError,
+        ValueError,
+        DaciteError,
+        dto.PayloadConversionError,
+    ) as e:
         raise error(
             "Unable to communicate with pcsd, received response:\n"
             f"{config_raw}"
@@ -103,6 +109,7 @@ def status(
         TypeError,
         ValueError,
         DaciteError,
+        dto.PayloadConversionError,
     ) as e:
         raise error(
             "Unable to communicate with pcsd, received response:\n"

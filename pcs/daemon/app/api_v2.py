@@ -28,6 +28,7 @@ from pcs.common.async_tasks.dto import (
 )
 from pcs.common.interface.dto import (
     DTOTYPE,
+    PayloadConversionError,
     from_dict,
     to_dict,
 )
@@ -131,7 +132,7 @@ class _BaseApiV2Handler(AuthProviderMixin, BaseHandler):
                 error_msg=f"Request body contains unexpected keys: "
                 f"{', '.join(exc.keys)}.",
             ) from exc
-        except DaciteError as exc:
+        except (DaciteError, PayloadConversionError) as exc:
             raise APIError(
                 http_code=400, error_msg="Malformed request body."
             ) from exc

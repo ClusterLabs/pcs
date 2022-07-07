@@ -13,7 +13,8 @@ if pidof systemd | grep "\b1\b"; then
     # this command requires full system with proper init process
     pcs cluster setup cluster-name localhost --debug
 fi
-# make sure that pcs_internal entrypoint works properly from pcsd
+
+# Sanity check of API V0
 token=$(python3 -c "import json; print(json.load(open('@LOCALSTATEDIR@/lib/pcsd/known-hosts'))['known_hosts']['localhost']['token']);")
 curl -kb "token=${token}" https://localhost:2224/remote/cluster_status_plaintext -d 'data_json={}' > output.json
 cat output.json; echo ""
@@ -26,4 +27,16 @@ custom_localhost_node_name="custom-node-name"
 pcs host auth "${custom_localhost_node_name}" addr=localhost --token "${token_file}"
 pcs pcsd accept_token "${token_file}"
 pcs pcsd status "${custom_localhost_node_name}" | grep "${custom_localhost_node_name}: Online"
+
+# Sanity check of API V1
+curl -kb "token=${token}" https://localhost:2224/api/v1/resource-agent-get-agents-list/v1 --data '{}' > output.json
+cat output.json; echo ""
+python3 -c "import json; import sys; json.load(open('output.json'))['status'] != 'success' and (sys.exit(1))";
+
+# Sanity check of API V2
+# async
+pcs/api_v2_client resource_agent.get_agent_metadata '{"agent_name":{"standard":"ocf","provider":"pacemaker","type":"Dummy"}}'
+
+# sync
+pcs/api_v2_client --sync resource_agent.get_agent_metadata '{"agent_name":{"standard":"ocf","provider":"pacemaker","type":"Stateful"}}'
 exit 0

@@ -178,6 +178,12 @@ def task_executor(task: WorkerCommand) -> None:
                     reports.messages.CommandInvalidPayload(str(e))
                 )
             ) from e
+        except dto.PayloadConversionError as e:
+            raise LibraryError(
+                reports.ReportItem.error(
+                    reports.messages.CommandInvalidPayload("")
+                )
+            ) from e
 
         task_retval = cmd.cmd(env, **data)
     except LibraryError as e:
