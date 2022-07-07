@@ -89,7 +89,11 @@ BuildRequires: corosync-qdevice-devel
 BuildRequires: corosynclib-devel >= 3.0
 BuildRequires: fence-agents-common
 %if 0%{?suse_version}
+%if 0%{?suse_version} > 1500
+BuildRequires: libpacemaker3-devel >= %{required_pacemaker_version}
+%else
 BuildRequires: libpacemaker-devel >= %{required_pacemaker_version}
+%endif
 %else
 BuildRequires: pacemaker-libs-devel >= %{required_pacemaker_version}
 %endif
