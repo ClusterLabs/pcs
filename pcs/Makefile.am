@@ -166,7 +166,6 @@ EXTRA_DIST		= \
 			  daemon/app/sinatra_common.py \
 			  daemon/app/sinatra_remote.py \
 			  daemon/app/sinatra_ui.py \
-			  daemon/app/test/__init__.py \
 			  daemon/app/ui_common.py \
 			  daemon/app/ui.py \
 			  daemon/auth.py \
