@@ -42,7 +42,6 @@ class Login(SPAHandler, app_session.Mixin, AjaxMixin):
         await self.session_auth_user(
             self.get_body_argument("username"),
             self.get_body_argument("password"),
-            sign_rejection=False,
         )
 
         if not self.session.is_authenticated:
