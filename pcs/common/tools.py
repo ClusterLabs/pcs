@@ -1,9 +1,7 @@
 import threading
 import uuid
 from collections import namedtuple
-from enum import Enum
 from typing import (
-    Container,
     MutableSet,
     Optional,
     TypeVar,
@@ -12,6 +10,8 @@ from typing import (
 
 from lxml import etree
 from lxml.etree import _Element
+
+from pcs.common.types import StringCollection
 
 T = TypeVar("T", bound=type)
 
@@ -23,7 +23,7 @@ def get_all_subclasses(cls: T) -> MutableSet[T]:
     )
 
 
-def get_unique_uuid(already_used: Container[str]) -> str:
+def get_unique_uuid(already_used: StringCollection) -> str:
     is_duplicate = True
     while is_duplicate:
         candidate = str(uuid.uuid4())
@@ -66,13 +66,6 @@ def xml_fromstring(xml: str) -> _Element:
         # see https://bugzilla.redhat.com/show_bug.cgi?id=1506864
         etree.XMLParser(huge_tree=True),
     )
-
-
-class AutoNameEnum(str, Enum):
-    def _generate_next_value_(name, start, count, last_values):
-        # pylint: disable=no-self-argument
-        del start, count, last_values
-        return name
 
 
 def timeout_to_seconds(timeout: Union[int, str]) -> Optional[int]:

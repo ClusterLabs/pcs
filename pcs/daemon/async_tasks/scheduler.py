@@ -136,7 +136,7 @@ class Scheduler:
         :param command: Command and its parameters
         :return: Task identifier
         """
-        task_ident = get_unique_uuid(self._task_register)
+        task_ident = get_unique_uuid(tuple(self._task_register.keys()))
 
         self._task_register[task_ident] = Task(
             task_ident, command, auth_user, self._config.task_config
