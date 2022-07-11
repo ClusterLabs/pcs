@@ -3,7 +3,6 @@ import logging
 from http.client import responses
 from typing import (
     Any,
-    Awaitable,
     Dict,
     List,
     Optional,
@@ -162,10 +161,6 @@ class _BaseApiV2Handler(AuthProviderMixin, BaseHandler):
                 response["error_message"] = exc.error_msg
 
         self.finish(json.dumps(response))
-
-    def data_received(self, chunk: bytes) -> Optional[Awaitable[None]]:
-        # We do not support HTTP chunk mode, reimplementing abstract
-        pass
 
 
 class NewTaskHandler(_BaseApiV2Handler):

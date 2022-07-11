@@ -4,7 +4,6 @@ import json
 import logging
 from typing import (
     Any,
-    Awaitable,
     Dict,
     List,
     Mapping,
@@ -202,10 +201,6 @@ class _BaseApiV1Handler(AuthProviderMixin, BaseHandler):
                 )
 
         self.send_response(response)
-
-    def data_received(self, chunk: bytes) -> Optional[Awaitable[None]]:
-        # We do not support HTTP chunk mode, reimplementing abstract
-        pass
 
     def _get_effective_username(self) -> Optional[str]:
         username = self.get_cookie("CIB_user")
