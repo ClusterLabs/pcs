@@ -7,11 +7,11 @@ from pcs.daemon.app.sinatra_common import Sinatra
 from pcs.daemon.app.ui_common import AjaxMixin
 
 
-class SinatraGui(app_session.Mixin, Sinatra):
+class SinatraAjaxProtected(app_session.Mixin, Sinatra, AjaxMixin):
+    # pylint: disable=too-many-ancestors
     """
-    SinatraGui is base class for handlers which calls the Sinatra GUI functions.
-    It adds work with session.
-    It adds default GET and POST handlers with hook before Sinatra is called.
+    SinatraAjaxProtected handles urls that calls the ajax Sinatra GUI functions.
+    It allows to use this urls only for ajax calls.
     """
 
     def initialize(self, session_storage, ruby_pcsd_wrapper):
@@ -19,12 +19,15 @@ class SinatraGui(app_session.Mixin, Sinatra):
         app_session.Mixin.initialize(self, session_storage)
         Sinatra.initialize(self, ruby_pcsd_wrapper)
 
-    def before_sinatra_use(self):
-        pass
-
     async def handle_sinatra_request(self):
         await self.init_session()
-        self.before_sinatra_use()
+
+        # TODO this is for sinatra compatibility, review it.
+        if self.was_sid_in_request_cookies():
+            self.put_request_cookies_sid_to_response_cookies_sid()
+        if not self.is_authorized:
+            raise self.unauthorized()
+
         result = await self.ruby_pcsd_wrapper.request_gui(
             self.request,
             self.session.username,
@@ -41,25 +44,10 @@ class SinatraGui(app_session.Mixin, Sinatra):
         del args, kwargs
         await self.handle_sinatra_request()
 
-
-class SinatraAjaxProtected(SinatraGui, AjaxMixin):
-    # pylint: disable=too-many-ancestors
-    """
-    SinatraAjaxProtected handles urls that calls the ajax Sinatra GUI functions.
-    It allows to use this urls only for ajax calls.
-    """
-
     @property
     def is_authorized(self):
         # User is authorized only to perform ajax calls to prevent CSRF attack.
         return self.is_ajax and self.session.is_authenticated
-
-    def before_sinatra_use(self):
-        # TODO this is for sinatra compatibility, review it.
-        if self.was_sid_in_request_cookies():
-            self.put_request_cookies_sid_to_response_cookies_sid()
-        if not self.is_authorized:
-            raise self.unauthorized()
 
 
 def get_routes(
