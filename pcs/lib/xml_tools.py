@@ -112,7 +112,7 @@ def update_attribute_remove_empty(
 
 
 def update_attributes_remove_empty(
-    element: _Element, attributtes: Mapping[str, str]
+    element: _Element, attributes: Mapping[str, str]
 ) -> None:
     """
     Set an attributes' values or remove an attribute if its new value is empty
@@ -120,7 +120,7 @@ def update_attributes_remove_empty(
     element -- element to be updated
     attributes -- new attributes' values
     """
-    for name, value in attributtes.items():
+    for name, value in attributes.items():
         update_attribute_remove_empty(element, name, value)
 
 
