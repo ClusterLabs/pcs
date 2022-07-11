@@ -20,6 +20,7 @@ from pcs.common.reports.item import ReportItemMessage
 from pcs.common.reports.types import MessageCode
 from pcs.daemon.async_tasks import scheduler
 from pcs.daemon.async_tasks.task import TaskConfig
+from pcs.daemon.async_tasks.types import Command
 from pcs.lib.auth.provider import AuthUser
 
 DATETIME_NOW = datetime(2020, 2, 20, 20, 20, 20, 20)
@@ -105,10 +106,12 @@ class SchedulerTestWrapper:
             ) as mock_uuid:
                 mock_uuid.return_value = f"id{i}"
                 self.scheduler.new_task(
-                    CommandDto(
-                        f"command {i}",
-                        {},
-                        CommandOptionsDto(request_timeout=None),
+                    Command(
+                        CommandDto(
+                            f"command {i}",
+                            {},
+                            CommandOptionsDto(request_timeout=None),
+                        )
                     ),
                     AUTH_USER,
                 )

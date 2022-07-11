@@ -18,6 +18,7 @@ from pcs.common.async_tasks.types import (
     TaskKillReason,
 )
 from pcs.daemon.async_tasks.scheduler import TaskNotFoundError
+from pcs.daemon.async_tasks.types import Command
 from pcs.daemon.async_tasks.worker import executor
 from pcs.daemon.async_tasks.worker.report_processor import WorkerReportProcessor
 from pcs.daemon.async_tasks.worker.types import (
@@ -413,7 +414,7 @@ class TaskResultsTests(MockOsKillMixin, IntegrationBaseTestCase):
         ) as mock_uuid:
             mock_uuid.return_value = task_id
             self.scheduler.new_task(
-                CommandDto(cmd, {}, COMMAND_OPTIONS),
+                Command(CommandDto(cmd, {}, COMMAND_OPTIONS)),
                 AUTH_USER,
             )
 

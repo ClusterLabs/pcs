@@ -172,6 +172,7 @@ EXTRA_DIST		= \
 			  daemon/async_tasks/__init__.py \
 			  daemon/async_tasks/scheduler.py \
 			  daemon/async_tasks/task.py \
+			  daemon/async_tasks/types.py \
 			  daemon/async_tasks/worker/command_mapping.py \
 			  daemon/async_tasks/worker/communicator.py \
 			  daemon/async_tasks/worker/executor.py \

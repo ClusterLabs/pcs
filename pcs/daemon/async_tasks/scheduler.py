@@ -11,12 +11,10 @@ from typing import (
 )
 
 from pcs import settings
-from pcs.common.async_tasks.dto import (
-    CommandDto,
-    TaskResultDto,
-)
+from pcs.common.async_tasks.dto import TaskResultDto
 from pcs.common.async_tasks.types import TaskKillReason
 from pcs.common.tools import get_unique_uuid
+from pcs.daemon.async_tasks.types import Command
 from pcs.daemon.log import pcsd as pcsd_logger
 from pcs.lib.auth.provider import AuthUser
 
@@ -132,22 +130,23 @@ class Scheduler:
         self._logger.debug("User is killing a task %s.", task_ident)
         task.request_kill(TaskKillReason.USER)
 
-    def new_task(self, command_dto: CommandDto, auth_user: AuthUser) -> str:
+    def new_task(self, command: Command, auth_user: AuthUser) -> str:
         """
         Creates a new task that will be executed by the scheduler
-        :param command_dto: Command and its parameters
+        :param command: Command and its parameters
         :return: Task identifier
         """
         task_ident = get_unique_uuid(self._task_register)
 
         self._task_register[task_ident] = Task(
-            task_ident, command_dto, auth_user, self._config.task_config
+            task_ident, command, auth_user, self._config.task_config
         )
         self._logger.debug(
-            "New task %s created (command: %s, parameters: %s)",
+            "New task %s created (command: %s, parameters: %s, api_v1_compatibility_mode: %s)",
             task_ident,
-            command_dto.command_name,
-            command_dto.params,
+            command.command_dto.command_name,
+            command.command_dto.params,
+            command.api_v1_compatible,
         )
         return task_ident
 

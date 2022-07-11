@@ -12,6 +12,7 @@ from pcs.common.async_tasks.dto import (
     CommandOptionsDto,
 )
 from pcs.common.reports import ReportItemDto
+from pcs.daemon.async_tasks.types import Command
 from pcs.daemon.async_tasks.worker.types import (
     Message,
     TaskExecuted,
@@ -40,7 +41,11 @@ class TaskBaseTestCase(TestCase):
     def setUp(self):
         self.task = tasks.Task(
             TASK_IDENT,
-            CommandDto("command", {}, CommandOptionsDto(request_timeout=None)),
+            Command(
+                CommandDto(
+                    "command", {}, CommandOptionsDto(request_timeout=None)
+                )
+            ),
             AUTH_USER,
             tasks.TaskConfig(),
         )

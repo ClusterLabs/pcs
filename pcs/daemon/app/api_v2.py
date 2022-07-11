@@ -36,6 +36,7 @@ from pcs.daemon.async_tasks.scheduler import (
     Scheduler,
     TaskNotFoundError,
 )
+from pcs.daemon.async_tasks.types import Command
 from pcs.lib.auth.provider import (
     AuthProvider,
     AuthUser,
@@ -176,7 +177,7 @@ class NewTaskHandler(_BaseApiV2Handler):
             raise RequestBodyMissingError()
 
         command_dto = self._from_dict_exc_handled(CommandDto, self.json)
-        task_ident = self.scheduler.new_task(command_dto, auth_user)
+        task_ident = self.scheduler.new_task(Command(command_dto), auth_user)
         self.write(json.dumps(to_dict(TaskIdentDto(task_ident))))
 
 
@@ -189,7 +190,7 @@ class RunTaskHandler(_BaseApiV2Handler):
             raise RequestBodyMissingError()
 
         command_dto = self._from_dict_exc_handled(CommandDto, self.json)
-        task_ident = self.scheduler.new_task(command_dto, auth_user)
+        task_ident = self.scheduler.new_task(Command(command_dto), auth_user)
         try:
             self.write(
                 json.dumps(

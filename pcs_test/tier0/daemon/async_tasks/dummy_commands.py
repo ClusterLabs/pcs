@@ -38,4 +38,7 @@ test_command_map = {
     "unhandled_exc": _get_cmd(dummy_workload_unhandled_exception),
     "lib_exc": _get_cmd(dummy_workload_lib_exception),
     "lib_exc_reports": _get_cmd(dummy_workload_lib_exception_contains_reports),
+    "success_api_v1": _get_cmd(dummy_workload_with_result),
 }
+
+test_api_v1_compatibility_mode = ("success_api_v1",)

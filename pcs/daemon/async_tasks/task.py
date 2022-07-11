@@ -11,10 +11,7 @@ from typing import (
 )
 
 from pcs import settings
-from pcs.common.async_tasks.dto import (
-    CommandDto,
-    TaskResultDto,
-)
+from pcs.common.async_tasks.dto import TaskResultDto
 from pcs.common.async_tasks.types import (
     TaskFinishType,
     TaskKillReason,
@@ -24,6 +21,7 @@ from pcs.common.interface.dto import ImplementsToDto
 from pcs.common.reports.dto import ReportItemDto
 from pcs.lib.auth.provider import AuthUser
 
+from .types import Command
 from .worker.types import (
     Message,
     TaskExecuted,
@@ -66,13 +64,13 @@ class Task(ImplementsToDto):
     def __init__(
         self,
         task_ident: str,
-        command: CommandDto,
+        command: Command,
         auth_user: AuthUser,
         config: TaskConfig,
     ) -> None:
         self._config = config
         self._task_ident: str = task_ident
-        self._command: CommandDto = command
+        self._command: Command = command
         self._auth_user = auth_user
         self._reports: List[ReportItemDto] = []
         self._result: Any = None
@@ -301,7 +299,7 @@ class Task(ImplementsToDto):
         """
         return TaskResultDto(
             self._task_ident,
-            self._command,
+            self._command.command_dto,
             self._reports,
             self.state,
             self._task_finish_type,

@@ -184,7 +184,7 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=qdevice.qdevice_net_sign_certificate_request,
         required_permission=p.WRITE,
     ),
-    # deprecated, use resource-agent-get-agent-metadata/v1 instead
+    # deprecated, API v1 compatibility
     "resource_agent.describe_agent": _Cmd(
         cmd=resource_agent.describe_agent,
         required_permission=p.READ,
@@ -197,19 +197,22 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=resource_agent.get_agent_metadata,
         required_permission=p.READ,
     ),
-    # deprecated, use resource-agent-get-agents-list/v1 instead
+    # deprecated, API v1 compatibility
     "resource_agent.list_agents": _Cmd(
         cmd=resource_agent.list_agents,
         required_permission=p.READ,
     ),
+    # deprecated, API v1 compatibility
     "resource_agent.list_agents_for_standard_and_provider": _Cmd(
         cmd=resource_agent.list_agents_for_standard_and_provider,
         required_permission=p.READ,
     ),
+    # deprecated, API v1 compatibility
     "resource_agent.list_ocf_providers": _Cmd(
         cmd=resource_agent.list_ocf_providers,
         required_permission=p.READ,
     ),
+    # deprecated, API v1 compatibility
     "resource_agent.list_standards": _Cmd(
         cmd=resource_agent.list_standards,
         required_permission=p.READ,
@@ -286,16 +289,17 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=scsi.unfence_node_mpath,
         required_permission=p.WRITE,
     ),
+    # deprecated, API v1 compatibility
     "status.full_cluster_status_plaintext": _Cmd(
         cmd=status.full_cluster_status_plaintext,
         required_permission=p.READ,
     ),
-    # deprecated, use resource-agent-get-agent-metadata/v1 instead
+    # deprecated, API v1 compatibility
     "stonith_agent.describe_agent": _Cmd(
         cmd=stonith_agent.describe_agent,
         required_permission=p.READ,
     ),
-    # deprecated, use resource-agent-get-agents-list/v1 instead
+    # deprecated, API v1 compatibility
     "stonith_agent.list_agents": _Cmd(
         cmd=stonith_agent.list_agents,
         required_permission=p.READ,
@@ -315,3 +319,15 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
     # "services.start_service": Cmd(services.start_service,
     # "services.stop_service": Cmd(services.stop_service,
 }
+
+
+API_V1_COMPATIBILITY_MODE = (
+    "resource_agent.describe_agent",
+    "resource_agent.list_agents",
+    "resource_agent.list_agents_for_standard_and_provider",
+    "resource_agent.list_ocf_providers",
+    "resource_agent.list_standards",
+    "status.full_cluster_status_plaintext",
+    "stonith_agent.describe_agent",
+    "stonith_agent.list_agents",
+)

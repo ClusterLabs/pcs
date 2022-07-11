@@ -26,7 +26,10 @@ from pcs.lib.errors import LibraryError
 from pcs.lib.permissions.checker import PermissionsChecker
 from pcs.utils import read_known_hosts_file_not_cached
 
-from .command_mapping import COMMAND_MAP
+from .command_mapping import (
+    API_V1_COMPATIBILITY_MODE,
+    COMMAND_MAP,
+)
 from .communicator import WorkerCommunicator
 from .logging import (
     WORKER_LOGGER,
@@ -113,7 +116,7 @@ def task_executor(task: WorkerCommand) -> None:
         task.task_ident,
         task.auth_user.username,
     )
-    request_timeout = task.command.options.request_timeout
+    request_timeout = task.command.command_dto.options.request_timeout
     if request_timeout is not None and request_timeout <= 0:
         logger.warning(
             "Invalid value '%s' for option 'request_timeout'", request_timeout
@@ -125,8 +128,9 @@ def task_executor(task: WorkerCommand) -> None:
         auth_user.username,
         ",".join(auth_user.groups),
     )
+    command_dto = task.command.command_dto
     if auth_user.is_superuser:
-        auth_user = _get_effective_user(logger, auth_user, task.command.options)
+        auth_user = _get_effective_user(logger, auth_user, command_dto.options)
 
     env = LibraryEnvironment(  # type: ignore
         logger,
@@ -138,15 +142,18 @@ def task_executor(task: WorkerCommand) -> None:
     )
 
     task_retval = None
-    command = task.command.command_name
+    command_name = command_dto.command_name
     try:
-        if command not in COMMAND_MAP:
+        if command_name not in COMMAND_MAP or (
+            not task.command.api_v1_compatible
+            and command_name in API_V1_COMPATIBILITY_MODE
+        ):
             raise LibraryError(
                 reports.ReportItem.error(
-                    reports.messages.CommandUnknown(command)
+                    reports.messages.CommandUnknown(command_name)
                 )
             )
-        cmd = COMMAND_MAP[command]
+        cmd = COMMAND_MAP[command_name]
         if not PermissionsChecker(logger).is_authorized(
             auth_user, cmd.required_permission
         ):
@@ -159,7 +166,7 @@ def task_executor(task: WorkerCommand) -> None:
         try:
             data = dto.from_dict(
                 dataclasses.make_dataclass(
-                    f"{command}_params",
+                    f"{command_name}_params",
                     [
                         _param_to_field_tuple(param)
                         for param in list(
@@ -167,7 +174,7 @@ def task_executor(task: WorkerCommand) -> None:
                         )[1:]
                     ],
                 ),
-                task.command.params,
+                command_dto.params,
                 strict=True,
             ).__dict__  # type: ignore
         except dacite.DaciteError as e:

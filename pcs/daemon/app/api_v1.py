@@ -29,6 +29,7 @@ from pcs.daemon.async_tasks.scheduler import (
     Scheduler,
     TaskNotFoundError,
 )
+from pcs.daemon.async_tasks.types import Command
 from pcs.lib.auth.provider import (
     AuthProvider,
     AuthUser,
@@ -244,7 +245,9 @@ class _BaseApiV1Handler(AuthProviderMixin, BaseHandler):
                 effective_groups=self._get_effective_groups(),
             ),
         )
-        task_ident = self.scheduler.new_task(command_dto, auth_user)
+        task_ident = self.scheduler.new_task(
+            Command(command_dto, api_v1_compatible=True), auth_user
+        )
 
         try:
             task_result_dto = await self.scheduler.wait_for_task(

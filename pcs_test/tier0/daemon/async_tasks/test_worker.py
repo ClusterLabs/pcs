@@ -4,12 +4,13 @@ from unittest import (
     mock,
 )
 
+from pcs.common import reports
 from pcs.common.async_tasks import types
 from pcs.common.async_tasks.dto import (
     CommandDto,
     CommandOptionsDto,
 )
-from pcs.common.reports import ReportItemDto
+from pcs.daemon.async_tasks.types import Command
 from pcs.daemon.async_tasks.worker import executor
 from pcs.daemon.async_tasks.worker.types import (
     Message,
@@ -20,6 +21,7 @@ from pcs.daemon.async_tasks.worker.types import (
 
 from .dummy_commands import (
     RESULT,
+    test_api_v1_compatibility_mode,
     test_command_map,
 )
 from .helpers import (
@@ -38,6 +40,10 @@ executor.worker_com = Queue()  # patched at runtime
 
 @mock.patch(
     "pcs.daemon.async_tasks.worker.executor.COMMAND_MAP", test_command_map
+)
+@mock.patch(
+    "pcs.daemon.async_tasks.worker.executor.API_V1_COMPATIBILITY_MODE",
+    test_api_v1_compatibility_mode,
 )
 @mock.patch(
     "pcs.daemon.async_tasks.worker.executor.getLogger", mock.MagicMock()
@@ -76,7 +82,7 @@ class TestExecutor(MockOsKillMixin, TestCase):
         executor.task_executor(
             WorkerCommand(
                 TASK_IDENT,
-                CommandDto("success", {}, COMMAND_OPTIONS),
+                Command(CommandDto("success", {}, COMMAND_OPTIONS)),
                 AUTH_USER,
             )
         )
@@ -94,7 +100,7 @@ class TestExecutor(MockOsKillMixin, TestCase):
         executor.task_executor(
             WorkerCommand(
                 TASK_IDENT,
-                CommandDto("lib_exc", {}, COMMAND_OPTIONS),
+                Command(CommandDto("lib_exc", {}, COMMAND_OPTIONS)),
                 AUTH_USER,
             )
         )
@@ -112,10 +118,12 @@ class TestExecutor(MockOsKillMixin, TestCase):
         executor.task_executor(
             WorkerCommand(
                 TASK_IDENT,
-                CommandDto(
-                    "lib_exc_reports",
-                    {},
-                    COMMAND_OPTIONS,
+                Command(
+                    CommandDto(
+                        "lib_exc_reports",
+                        {},
+                        COMMAND_OPTIONS,
+                    )
                 ),
                 AUTH_USER,
             )
@@ -124,7 +132,7 @@ class TestExecutor(MockOsKillMixin, TestCase):
         self._assert_task_executed(executor.worker_com)
         # 2. Report from the LibraryError exception
         payload = self._get_payload_from_worker_com(executor.worker_com)
-        self.assertIsInstance(payload, ReportItemDto)
+        self.assertIsInstance(payload, reports.ReportItemDto)
         # 3. TaskFinished
         payload = self._get_payload_from_worker_com(executor.worker_com)
         self.assertIsInstance(payload, TaskFinished)
@@ -137,7 +145,7 @@ class TestExecutor(MockOsKillMixin, TestCase):
         executor.task_executor(
             WorkerCommand(
                 TASK_IDENT,
-                CommandDto("unhandled_exc", {}, COMMAND_OPTIONS),
+                Command(CommandDto("unhandled_exc", {}, COMMAND_OPTIONS)),
                 AUTH_USER,
             )
         )
@@ -150,3 +158,45 @@ class TestExecutor(MockOsKillMixin, TestCase):
             types.TaskFinishType.UNHANDLED_EXCEPTION, payload.task_finish_type
         )
         self.assertIsNone(payload.result)
+
+    @mock.patch("pcs.daemon.async_tasks.worker.executor.worker_com", Queue())
+    def test_api_v1_compatibility_disabled(self, mock_getpid):
+        mock_getpid.return_value = WORKER_PID
+        executor.task_executor(
+            WorkerCommand(
+                TASK_IDENT,
+                Command(CommandDto("success_api_v1", {}, COMMAND_OPTIONS)),
+                AUTH_USER,
+            )
+        )
+        # 1. TaskExecuted
+        self._assert_task_executed(executor.worker_com)
+        # 2. Report from the LibraryError exception
+        payload = self._get_payload_from_worker_com(executor.worker_com)
+        self.assertIsInstance(payload, reports.ReportItemDto)
+        self.assertEqual(payload.message.code, reports.codes.COMMAND_UNKNOWN)
+        # 3. TaskFinished
+        payload = self._get_payload_from_worker_com(executor.worker_com)
+        self.assertIsInstance(payload, TaskFinished)
+        self.assertEqual(types.TaskFinishType.FAIL, payload.task_finish_type)
+
+    @mock.patch("pcs.daemon.async_tasks.worker.executor.worker_com", Queue())
+    def test_api_v1_compatibility_enabled(self, mock_getpid):
+        mock_getpid.return_value = WORKER_PID
+        executor.task_executor(
+            WorkerCommand(
+                TASK_IDENT,
+                Command(
+                    CommandDto("success_api_v1", {}, COMMAND_OPTIONS),
+                    api_v1_compatible=True,
+                ),
+                AUTH_USER,
+            )
+        )
+        # 1. TaskExecuted
+        self._assert_task_executed(executor.worker_com)
+        # 2. TaskFinished
+        payload = self._get_payload_from_worker_com(executor.worker_com)
+        self.assertIsInstance(payload, TaskFinished)
+        self.assertEqual(types.TaskFinishType.SUCCESS, payload.task_finish_type)
+        self.assertEqual(RESULT, payload.result)

@@ -4,9 +4,9 @@ from typing import (
     Union,
 )
 
-from pcs.common.async_tasks.dto import CommandDto
 from pcs.common.async_tasks.types import TaskFinishType
 from pcs.common.reports import ReportItemDto
+from pcs.daemon.async_tasks.types import Command
 from pcs.lib.auth.provider import AuthUser
 
 
@@ -34,5 +34,5 @@ class Message:
 @dataclass(frozen=True)
 class WorkerCommand:
     task_ident: str
-    command: CommandDto
+    command: Command
     auth_user: AuthUser
