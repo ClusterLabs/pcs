@@ -14,8 +14,6 @@ class SinatraGui(app_session.Mixin, Sinatra):
     It adds default GET and POST handlers with hook before Sinatra is called.
     """
 
-    can_use_sinatra = True
-
     def initialize(self, session_storage, ruby_pcsd_wrapper):
         # pylint: disable=arguments-differ
         app_session.Mixin.initialize(self, session_storage)
@@ -27,14 +25,13 @@ class SinatraGui(app_session.Mixin, Sinatra):
     async def handle_sinatra_request(self):
         await self.init_session()
         self.before_sinatra_use()
-        if self.can_use_sinatra:
-            result = await self.ruby_pcsd_wrapper.request_gui(
-                self.request,
-                self.session.username,
-                self.session.groups,
-                self.session.is_authenticated,
-            )
-            self.send_sinatra_result(result)
+        result = await self.ruby_pcsd_wrapper.request_gui(
+            self.request,
+            self.session.username,
+            self.session.groups,
+            self.session.is_authenticated,
+        )
+        self.send_sinatra_result(result)
 
     async def get(self, *args, **kwargs):
         del args, kwargs
