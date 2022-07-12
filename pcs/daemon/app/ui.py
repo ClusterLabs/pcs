@@ -7,6 +7,7 @@ from pcs.daemon.app.ui_common import (
     AjaxMixin,
     StaticFile,
 )
+from pcs.daemon.auth import authorize_user
 
 
 class SPAHandler(BaseHandler):
@@ -39,11 +40,13 @@ class Login(SPAHandler, app_session.Mixin, AjaxMixin):
         # This is the way of old (ruby) pcsd. Post login generates a session
         # cookie. No matter if authentication succeeded or failed.
 
-        await self.session_auth_user(
-            self.get_body_argument("username"),
-            self.get_body_argument("password"),
+        self.init_session()
+        self.session_refresh_auth(
+            await authorize_user(
+                self.get_body_argument("username"),
+                self.get_body_argument("password"),
+            ),
         )
-
         if not self.session.is_authenticated:
             raise self.unauthorized()
 
@@ -56,7 +59,7 @@ class Logout(app_session.Mixin, AjaxMixin, BaseHandler):
 
     async def get(self, *args, **kwargs):
         del args, kwargs
-        await self.init_session()
+        self.init_session()
         self.session_logout()
         self.sid_to_cookies()
         self.write("OK")

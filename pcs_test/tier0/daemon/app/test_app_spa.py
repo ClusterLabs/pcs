@@ -19,9 +19,7 @@ PREFIX = "/ui/"
 logging.getLogger("tornado.access").setLevel(logging.CRITICAL)
 
 
-class AppTest(
-    fixtures_app.AppUiTestMixin, create_setup_patch_mixin(ui.app_session)
-):
+class AppTest(fixtures_app.AppUiTestMixin):
     def setUp(self):
         self.public_dir = get_tmp_dir("tier0_daemon_app_spa")
         self.spa_dir_path = os.path.join(self.public_dir.name, "ui")
@@ -69,7 +67,7 @@ class Fallback(AppTest):
         )
 
 
-class Login(AppTest):
+class Login(AppTest, create_setup_patch_mixin(ui)):
     def setUp(self):
         self.setup_patch("authorize_user", self.authorize_user)
         super().setUp()

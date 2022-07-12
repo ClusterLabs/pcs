@@ -1,7 +1,3 @@
-from pcs.daemon.auth import (
-    authorize_user,
-    check_user_groups,
-)
 from pcs.daemon.session import Storage
 
 PCSD_SESSION = "pcsd.sid"
@@ -25,21 +21,8 @@ class Mixin:
     def initialize(self, session_storage: Storage):
         self.__storage = session_storage
 
-    async def init_session(self):
+    def init_session(self):
         self.__session = self.__storage.provide(self.__sid_from_client)
-        if self.__session.is_authenticated:
-            self.__refresh_auth(
-                await check_user_groups(self.__session.username),
-                sign_rejection=True,
-            )
-
-    async def session_auth_user(self, username, password):
-        """
-        Make user authorization and refresh storage.
-        """
-        # initialize session since it should be used without `init_session`
-        self.__session = self.__storage.provide(self.__sid_from_client)
-        self.__refresh_auth(await authorize_user(username, password))
 
     @property
     def session(self):
@@ -89,7 +72,7 @@ class Mixin:
     def __sid_from_client(self):
         return self.get_cookie(PCSD_SESSION, default=None)
 
-    def __refresh_auth(self, user_auth_info, sign_rejection=False):
+    def session_refresh_auth(self, user_auth_info, sign_rejection=False):
         if user_auth_info.is_authorized:
             self.__session = self.__storage.login(
                 self.__session.sid,

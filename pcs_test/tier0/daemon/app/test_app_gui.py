@@ -1,6 +1,9 @@
 import logging
 
-from pcs.daemon import ruby_pcsd
+from pcs.daemon import (
+    auth,
+    ruby_pcsd,
+)
 from pcs.daemon.app import sinatra_ui
 
 from pcs_test.tier0.daemon.app import fixtures_app
@@ -16,11 +19,20 @@ logging.getLogger("tornado.access").setLevel(logging.CRITICAL)
 
 class AppTest(
     fixtures_app.AppUiTestMixin,
-    create_setup_patch_mixin(sinatra_ui.app_session),
+    create_setup_patch_mixin(sinatra_ui),
 ):
     def setUp(self):
         self.wrapper = fixtures_app.RubyPcsdWrapper(ruby_pcsd.SINATRA_GUI)
+        self.setup_patch("check_user_groups", self.check_user_groups)
         super().setUp()
+
+    async def check_user_groups(self, username):
+        self.assertEqual(username, USER)
+        return auth.UserAuthInfo(
+            username,
+            self.user_auth_info.groups,
+            is_authorized=self.groups_valid,
+        )
 
     def get_routes(self):
         return sinatra_ui.get_routes(

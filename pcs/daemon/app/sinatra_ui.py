@@ -5,6 +5,7 @@ from pcs.daemon import (
 from pcs.daemon.app import session as app_session
 from pcs.daemon.app.sinatra_common import Sinatra
 from pcs.daemon.app.ui_common import AjaxMixin
+from pcs.daemon.auth import check_user_groups
 
 
 class SinatraAjaxProtected(app_session.Mixin, Sinatra, AjaxMixin):
@@ -20,7 +21,12 @@ class SinatraAjaxProtected(app_session.Mixin, Sinatra, AjaxMixin):
         Sinatra.initialize(self, ruby_pcsd_wrapper)
 
     async def handle_sinatra_request(self):
-        await self.init_session()
+        self.init_session()
+        if self.session.is_authenticated:
+            self.session_refresh_auth(
+                await check_user_groups(self.session.username),
+                sign_rejection=True,
+            )
 
         # TODO this is for sinatra compatibility, review it.
         if self.was_sid_in_request_cookies():

@@ -5,18 +5,19 @@ from tornado.web import (
     RequestHandler,
 )
 
-from pcs.daemon import session
+from pcs.daemon import (
+    auth,
+    session,
+)
 from pcs.daemon.app import session as app_session
 
 from pcs_test.tier0.daemon.app.fixtures_app import (
     GROUPS,
-    PASSWORD,
     USER,
     UserAuthInfo,
     UserAuthMixin,
 )
 from pcs_test.tier0.daemon.test_session import AssertMixin
-from pcs_test.tools.misc import create_setup_patch_mixin
 
 # pylint: disable=too-many-ancestors
 
@@ -42,7 +43,7 @@ class Handler(app_session.Mixin, RequestHandler):
     async def get(self, *args, **kwargs):
         del args, kwargs
         if self.test.auto_init_session:
-            await self.init_session()
+            self.init_session()
         await self.test.on_handle(self)
 
 
@@ -56,7 +57,6 @@ RESPONSE_SID_IN_STORAGE = "RESPONSE_SID_IN_STORAGE"
 class MixinTest(
     AsyncHTTPTestCase,
     AssertMixin,
-    create_setup_patch_mixin(app_session),
     UserAuthMixin,
 ):
     init_session = None
@@ -71,8 +71,6 @@ class MixinTest(
     def setUp(self):
         Handler.test = self
         self.storage = session.Storage(lifetime_seconds=10)
-        self.setup_patch("check_user_groups", self.check_user_groups)
-        self.setup_patch("authorize_user", self.authorize_user)
         self.fetch_args = {}
         self.sid = None
 
@@ -153,7 +151,7 @@ class GetNewSession(MixinTest):
 
     async def on_handle(self, handler):
         self.assertEqual(len(self.session_dict), 0)
-        await handler.init_session()
+        handler.init_session()
         self.assertEqual(len(self.session_dict), 1)
         self.sid = handler.session.sid
         handler.sid_to_cookies()
@@ -186,7 +184,14 @@ class CanLoginAndLogout(MixinTest):
     auto_init_session = False
 
     async def on_handle(self, handler):
-        await handler.session_auth_user(USER, PASSWORD)
+        handler.init_session()
+        handler.session_refresh_auth(
+            auth.UserAuthInfo(
+                USER,
+                self.user_auth_info.groups,
+                is_authorized=self.user_auth_info.valid,
+            )
+        )
         self.assert_authenticated_session(handler.session, USER, GROUPS)
         handler.session_logout()
         self.assert_vanila_session(handler.session)
@@ -196,8 +201,16 @@ class FailedLoginAttempt(MixinTest):
     auto_init_session = False
 
     async def on_handle(self, handler):
-        await handler.session_auth_user(USER, PASSWORD)
-        self.assert_vanila_session(handler.session)
+        handler.init_session()
+        handler.session_refresh_auth(
+            auth.UserAuthInfo(
+                USER,
+                [],
+                is_authorized=False,
+            ),
+            sign_rejection=True,
+        )
+        self.assert_login_failed_session(handler.session, USER)
 
 
 class CanLogoutWithoutSessionAccess(MixinTest):
@@ -207,19 +220,3 @@ class CanLogoutWithoutSessionAccess(MixinTest):
     async def on_handle(self, handler):
         handler.session_logout()
         self.assertNotEqual(self.sid, handler.session.sid)
-
-
-class AuthUpdatedByGroupCheck(MixinTest):
-    init_session = AUTHENTICATED_SESSION
-    groups_valid = True
-
-    async def on_handle(self, handler):
-        self.assertTrue(handler.was_sid_in_request_cookies())
-        self.assertTrue(handler.session.is_authenticated)
-
-
-class AuthRefusedByGroupCheck(MixinTest):
-    init_session = AUTHENTICATED_SESSION
-
-    async def on_handle(self, handler):
-        self.assertFalse(handler.session.is_authenticated)

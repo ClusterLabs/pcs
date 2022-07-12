@@ -101,16 +101,7 @@ class AppUiTestMixin(AppTest):
         self.user_auth_info = UserAuthInfo()
         self.groups_valid = True
         self.session_storage = session.Storage(lifetime_seconds=10)
-        self.setup_patch("check_user_groups", self.check_user_groups)
         super().setUp()
-
-    async def check_user_groups(self, username):
-        self.assertEqual(username, USER)
-        return auth.UserAuthInfo(
-            username,
-            self.user_auth_info.groups,
-            is_authorized=self.groups_valid,
-        )
 
     def assert_session_in_response(self, response, sid=None):
         self.assertTrue("Set-Cookie" in response.headers)
