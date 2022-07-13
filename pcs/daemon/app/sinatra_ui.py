@@ -38,7 +38,6 @@ class SinatraAjaxProtected(app_session.Mixin, Sinatra, AjaxMixin):
             self.request,
             self.session.username,
             self.session.groups,
-            self.session.is_authenticated,
         )
         self.send_sinatra_result(result)
 

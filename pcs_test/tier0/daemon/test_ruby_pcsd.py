@@ -121,7 +121,6 @@ class RunRuby(AsyncTestCase):
 
         user = "user"
         groups = ["hacluster"]
-        is_authenticated = True
 
         self.set_run_result(
             {
@@ -137,14 +136,12 @@ class RunRuby(AsyncTestCase):
             {
                 "username": user,
                 "groups": groups,
-                "is_authenticated": is_authenticated,
             },
         )
         result = yield self.wrapper.request_gui(
             http_request,
             user=user,
             groups=groups,
-            is_authenticated=is_authenticated,
         )
         self.assert_sinatra_result(result, headers, status, body)
 

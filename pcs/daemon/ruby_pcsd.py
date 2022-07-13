@@ -252,7 +252,7 @@ class Wrapper:
             raise HTTPError(500) from e
 
     async def request_gui(
-        self, request: HTTPServerRequest, user, groups, is_authenticated
+        self, request: HTTPServerRequest, user, groups
     ) -> SinatraResult:
         # Sessions handling was removed from ruby. However, some session
         # information is needed for ruby code (e.g. rendering some parts of
@@ -265,7 +265,6 @@ class Wrapper:
                     {
                         "username": user,
                         "groups": groups,
-                        "is_authenticated": is_authenticated,
                     },
                 )
             )
