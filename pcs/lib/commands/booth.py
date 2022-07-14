@@ -23,7 +23,10 @@ from pcs.common.reports.item import (
 )
 from pcs.common.services.errors import ManageServiceError
 from pcs.common.str_tools import join_multilines
-from pcs.lib import tools
+from pcs.lib import (
+    tools,
+    validate,
+)
 from pcs.lib.booth import (
     config_files,
     config_validators,
@@ -329,17 +332,22 @@ def config_ticket_add(
     booth_env = env.get_booth_env(instance_name)
     try:
         booth_conf = booth_env.config.read_to_facade()
+        options_pairs = validate.values_to_pairs(
+            options, config_validators.ticket_options_normalization()
+        )
         report_processor.report_list(
             config_validators.add_ticket(
                 booth_conf,
                 ticket_name,
-                options,
+                options_pairs,
                 allow_unknown_options=allow_unknown_options,
             )
         )
         if report_processor.has_errors:
             raise LibraryError()
-        booth_conf.add_ticket(ticket_name, options)
+        booth_conf.add_ticket(
+            ticket_name, validate.pairs_to_values(options_pairs)
+        )
         booth_env.config.write_facade(booth_conf, can_overwrite=True)
     except RawFileError as e:
         report_processor.report(raw_file_error_report(e))
