@@ -1194,7 +1194,7 @@ class ConfigTicketAdd(TestCase, FixtureMixin):
             },
         )
 
-    def test_success_ticket_options(self):
+    def assert_success_ticket_options(self, options_command, options_config):
         self.config.raw_file.read(
             file_type_codes.BOOTH_CONFIG,
             self.fixture_cfg_path(),
@@ -1203,17 +1203,29 @@ class ConfigTicketAdd(TestCase, FixtureMixin):
         self.config.raw_file.write(
             file_type_codes.BOOTH_CONFIG,
             self.fixture_cfg_path(),
-            self.fixture_cfg_content(
-                ticket_list=[
-                    ["ticketA", [("retries", "10"), ("timeout", "20")]]
-                ]
-            ),
+            self.fixture_cfg_content(ticket_list=[["ticketA", options_config]]),
             can_overwrite=True,
         )
         commands.config_ticket_add(
-            self.env_assist.get_env(),
-            "ticketA",
+            self.env_assist.get_env(), "ticketA", options_command
+        )
+
+    def test_success_ticket_options(self):
+        self.assert_success_ticket_options(
             {"timeout": "20", "retries": "10"},
+            [("retries", "10"), ("timeout", "20")],
+        )
+
+    def test_success_ticket_options_mode(self):
+        self.assert_success_ticket_options(
+            {"timeout": "20", "retries": "10", "mode": "manual"},
+            [("mode", "manual"), ("retries", "10"), ("timeout", "20")],
+        )
+
+    def test_success_ticket_options_mode_case_insensitive(self):
+        self.assert_success_ticket_options(
+            {"timeout": "20", "retries": "10", "mode": "MaNuAl"},
+            [("mode", "manual"), ("retries", "10"), ("timeout", "20")],
         )
 
     def test_ticket_already_exists(self):
