@@ -112,12 +112,8 @@ module PcsdFile
       end
     end
 
-    def dir()
-      return BOOTH_CONFIG_DIR
-    end
-
     def full_file_name()
-      @full_file_name ||= File.join(self.dir, @file[:name])
+      @full_file_name ||= File.join(BOOTH_CONFIG_DIR, @file[:name])
     end
   end
 

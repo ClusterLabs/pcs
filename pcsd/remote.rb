@@ -2090,6 +2090,10 @@ def booth_set_config(params, request, auth_user)
     check_permissions(auth_user, Permissions::WRITE)
     data = check_request_data_for_json(params, auth_user)
 
+    if not File.directory?(BOOTH_CONFIG_DIR)
+      raise "Configuration directory for booth '/etc/booth' is missing. Is booth installed?"
+    end
+
     PcsdExchangeFormat::validate_item_map_is_Hash('files', data)
     PcsdExchangeFormat::validate_item_is_Hash('file', :config, data[:config])
     if data[:authfile]
