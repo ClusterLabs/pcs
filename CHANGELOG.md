@@ -8,7 +8,10 @@
   managed ([rhbz#2092950])
 - `pcs resource restart` command works again (broken in pcs-0.11.3)
   ([rhbz#2102663])
+- Misleading error message from `pcs booth sync` when booth config directory
+  (`/etc/booth`) is missing ([rhbz#1791670])
 
+[rhbz#1791670]: https://bugzilla.redhat.com/show_bug.cgi?id=1791670
 [rhbz#2092950]: https://bugzilla.redhat.com/show_bug.cgi?id=2092950
 [rhbz#2102663]: https://bugzilla.redhat.com/show_bug.cgi?id=2102663
 
