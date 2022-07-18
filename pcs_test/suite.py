@@ -1,5 +1,6 @@
 import importlib
 import os
+import platform
 import sys
 import time
 import unittest
@@ -17,7 +18,10 @@ except ImportError:
 PACKAGE_DIR = os.path.realpath(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 )
+sys.path.insert(0, PACKAGE_DIR)
 
+# pylint: disable=wrong-import-position
+from pcs_test.tools.misc import compare_version
 
 # pylint: disable=redefined-outer-name
 
@@ -91,6 +95,18 @@ def tier1_fixtures_needed(test_list):
         if test_name.startswith("pcs_test.tier1.legacy."):
             return True
     return False
+
+
+def has_tier0_test(test_list):
+    for test_name in tests_from_suite(test_list):
+        if test_name.startswith("pcs_test.tier0."):
+            return True
+    return False
+
+
+def is_minimum_python_version(cmajor, cminor, crev):
+    major, minor, rev = platform.python_version_tuple()
+    return compare_version((major, minor, rev), (cmajor, cminor, crev)) > -1
 
 
 def run_tier1_fixtures(run_concurrently=True):
@@ -169,11 +185,6 @@ def main():
         settings.pcs_data_dir = os.path.join(PACKAGE_DIR, "data")
 
     measure_test_time = "--time" in sys.argv
-    run_concurrently = (
-        can_concurrency
-        and "--no-parallel" not in sys.argv
-        and not measure_test_time
-    )
 
     explicitly_enumerated_tests = [
         prepare_test_name(arg)
@@ -213,6 +224,15 @@ def main():
 
     tests_to_run = discovered_tests
     tier1_fixtures_cleanup = None
+    run_concurrently = (
+        can_concurrency
+        and "--no-parallel" not in sys.argv
+        and not measure_test_time
+        and not (
+            has_tier0_test(tests_to_run)
+            and is_minimum_python_version("3", "11", "")
+        )
+    )
     if tier1_fixtures_needed(tests_to_run):
         tier1_fixtures_cleanup = run_tier1_fixtures(
             run_concurrently=run_concurrently

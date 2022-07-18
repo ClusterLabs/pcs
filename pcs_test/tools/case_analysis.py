@@ -18,6 +18,10 @@ def test_failed(test):
     else:
         # Python 3.11+
         result = test._outcome.result
+        if not hasattr(result, "errors") or not hasattr(result, "failures"):
+            # test probably run by python concurrencytest module and therefore
+            # we cannot get test results in a teardown method in Python 3.11+
+            return None
 
     return _list2reason(test, result.errors) or _list2reason(
         test, result.failures
