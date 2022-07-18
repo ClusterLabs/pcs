@@ -18,12 +18,6 @@ except ImportError:
 PACKAGE_DIR = os.path.realpath(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 )
-sys.path.insert(0, PACKAGE_DIR)
-
-# pylint: disable=wrong-import-position
-from pcs_test.tools.misc import compare_version
-
-# pylint: disable=redefined-outer-name
 
 
 def prepare_test_name(test_name):
@@ -104,11 +98,6 @@ def has_tier0_test(test_list):
     return False
 
 
-def is_minimum_python_version(cmajor, cminor, crev):
-    major, minor, rev = platform.python_version_tuple()
-    return compare_version((major, minor, rev), (cmajor, cminor, crev)) > -1
-
-
 def run_tier1_fixtures(run_concurrently=True):
     # pylint: disable=import-outside-toplevel
     from pcs_test.tier1.legacy.test_constraints import (
@@ -164,6 +153,7 @@ def run_tier1_fixtures(run_concurrently=True):
 
 def main():
     # pylint: disable=import-outside-toplevel
+    # pylint: disable=too-many-locals
     if "BUNDLED_LIB_LOCATION" in os.environ:
         sys.path.insert(0, os.environ["BUNDLED_LIB_LOCATION"])
 
@@ -183,6 +173,12 @@ def main():
         from pcs import settings
 
         settings.pcs_data_dir = os.path.join(PACKAGE_DIR, "data")
+
+    from pcs_test.tools.misc import compare_version
+
+    def is_minimum_python_version(cmajor, cminor, crev):
+        major, minor, rev = platform.python_version_tuple()
+        return compare_version((major, minor, rev), (cmajor, cminor, crev)) > -1
 
     measure_test_time = "--time" in sys.argv
 
