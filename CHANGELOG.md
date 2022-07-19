@@ -6,7 +6,10 @@
 - `pcs resource manage --monitor` no longer enables monitor operation for all
   resources in a group if only one of the resources was requested to become
   managed ([rhbz#1918527])
+- Misleading error message from `pcs booth sync` when booth config directory
+  (`/etc/booth`) is missing ([rhbz#1791670])
 
+[rhbz#1791670]: https://bugzilla.redhat.com/show_bug.cgi?id=1791670
 [rhbz#1918527]: https://bugzilla.redhat.com/show_bug.cgi?id=1918527
 
 
