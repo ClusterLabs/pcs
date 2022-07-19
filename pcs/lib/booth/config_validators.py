@@ -100,6 +100,16 @@ def remove_ticket(conf_facade, ticket_name):
     return []
 
 
+def ticket_options_normalization() -> validate.TypeNormalizeFunc:
+    return validate.option_value_normalization(
+        {
+            "mode": (
+                lambda value: value.lower() if isinstance(value, str) else value
+            )
+        }
+    )
+
+
 def validate_ticket_name(ticket_name: str) -> reports.ReportItemList:
     if not __TICKET_NAME_RE.search(ticket_name):
         return [
