@@ -176,9 +176,14 @@ def main():
 
     from pcs_test.tools.misc import compare_version
 
-    def is_minimum_python_version(cmajor, cminor, crev):
-        major, minor, rev = platform.python_version_tuple()
-        return compare_version((major, minor, rev), (cmajor, cminor, crev)) > -1
+    def is_minimum_python_version(cmajor, cminor):
+        major, minor, _ = platform.python_version_tuple()
+        return (
+            compare_version(
+                (int(major), int(minor), 0), (int(cmajor), int(cminor), 0)
+            )
+            > -1
+        )
 
     measure_test_time = "--time" in sys.argv
 
@@ -225,8 +230,7 @@ def main():
         and "--no-parallel" not in sys.argv
         and not measure_test_time
         and not (
-            has_tier0_test(tests_to_run)
-            and is_minimum_python_version("3", "11", "")
+            has_tier0_test(tests_to_run) and is_minimum_python_version(3, 11)
         )
     )
     if tier1_fixtures_needed(tests_to_run):
