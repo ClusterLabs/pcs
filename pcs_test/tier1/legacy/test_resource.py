@@ -42,10 +42,8 @@ from pcs_test.tools.misc import (
     write_data_to_tmpfile,
     write_file_to_tmpfile,
 )
-from pcs_test.tools.pcs_runner import (
-    PcsRunner,
-    pcs,
-)
+from pcs_test.tools.pcs_runner import PcsRunner
+from pcs_test.tools.pcs_runner import pcs as pcs_new
 
 # pylint: disable=invalid-name
 # pylint: disable=no-self-use
@@ -53,6 +51,25 @@ from pcs_test.tools.pcs_runner import (
 # pylint: disable=too-many-public-methods
 # pylint: disable=redefined-outer-name
 # pylint: disable=too-many-statements
+
+# TODO remove
+def pcs(
+    cib_file,
+    args,
+    corosync_conf_opt=None,
+    mock_settings=None,
+    ignore_stderr=False,
+):
+    stdout, stderr, retval = pcs_new(
+        cib_file,
+        args,
+        corosync_conf_opt=corosync_conf_opt,
+        mock_settings=mock_settings,
+    )
+    if ignore_stderr:
+        stderr = None
+    return "".join(filter(None, [stderr, stdout])), retval
+
 
 PCMK_2_0_3_PLUS = is_minimum_pacemaker_version(2, 0, 3)
 

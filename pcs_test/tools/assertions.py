@@ -44,11 +44,6 @@ def start_tag_error_text():
     return msg
 
 
-def console_report(*lines):
-    # after lines append last new line
-    return "\n".join(lines + ("",))
-
-
 class AssertPcsMixin:
     """Run pcs command and assert its result"""
 
@@ -191,9 +186,7 @@ class AssertPcsMixin:
                 )
 
     def __prepare_output(self, output):
-        if isinstance(output, list):
-            return console_report(*output)
-        return output
+        return "\n".join(output + [""]) if isinstance(output, list) else output
 
     def __prepare_regexp_flags(self, flags):
         # python2 has different flags than python3

@@ -21,10 +21,28 @@ from pcs_test.tools.misc import (
     outdent,
     write_file_to_tmpfile,
 )
-from pcs_test.tools.pcs_runner import (
-    PcsRunner,
-    pcs,
-)
+from pcs_test.tools.pcs_runner import PcsRunner
+from pcs_test.tools.pcs_runner import pcs as pcs_new
+
+
+# TODO remove
+def pcs(
+    cib_file,
+    args,
+    corosync_conf_opt=None,
+    mock_settings=None,
+    ignore_stderr=False,
+):
+    stdout, stderr, retval = pcs_new(
+        cib_file,
+        args,
+        corosync_conf_opt=corosync_conf_opt,
+        mock_settings=mock_settings,
+    )
+    if ignore_stderr:
+        stderr = None
+    return "".join(filter(None, [stderr, stdout])), retval
+
 
 # pylint: disable=invalid-name, line-too-long
 
