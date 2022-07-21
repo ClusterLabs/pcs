@@ -8,7 +8,7 @@ from unittest import TestCase
 from pcs.common.str_tools import indent
 
 from pcs_test.tier1.cib_resource.common import ResourceTest
-from pcs_test.tools.assertions import AssertPcsMixin
+from pcs_test.tools.assertions import AssertPcsMixinOld as AssertPcsMixin
 from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.fixture_cib import CachedCibFixture
 from pcs_test.tools.misc import ParametrizedTestMetaClass
@@ -21,7 +21,7 @@ from pcs_test.tools.misc import (
     write_data_to_tmpfile,
     write_file_to_tmpfile,
 )
-from pcs_test.tools.pcs_runner import PcsRunner
+from pcs_test.tools.pcs_runner import PcsRunnerOld as PcsRunner
 from pcs_test.tools.pcs_runner import pcs as pcs_new
 
 

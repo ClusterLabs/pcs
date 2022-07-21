@@ -17,13 +17,15 @@ from pcs.common.str_tools import format_list_custom_last_separator
 from pcs.constraint import LOCATION_NODE_VALIDATION_SKIP_MSG
 
 from pcs_test.tier1.cib_resource.common import ResourceTest
+from pcs_test.tools.assertions import AssertPcsMixinOld as AssertPcsMixin
 from pcs_test.tools.assertions import (
-    AssertPcsMixin,
     ac,
     assert_pcs_status,
 )
 from pcs_test.tools.bin_mock import get_mock_settings
-from pcs_test.tools.cib import get_assert_pcs_effect_mixin
+from pcs_test.tools.cib import (
+    get_assert_pcs_effect_mixin_old as get_assert_pcs_effect_mixin,
+)
 from pcs_test.tools.fixture_cib import (
     CachedCibFixture,
     fixture_master_xml,
@@ -42,7 +44,7 @@ from pcs_test.tools.misc import (
     write_data_to_tmpfile,
     write_file_to_tmpfile,
 )
-from pcs_test.tools.pcs_runner import PcsRunner
+from pcs_test.tools.pcs_runner import PcsRunnerOld as PcsRunner
 from pcs_test.tools.pcs_runner import pcs as pcs_new
 
 # pylint: disable=invalid-name

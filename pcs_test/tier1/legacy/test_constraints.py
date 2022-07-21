@@ -40,11 +40,8 @@ from pcs_test.tools.pcs_runner import (
     pcs,
 )
 
-# pylint: disable=line-too-long
 # pylint: disable=too-many-public-methods
 # pylint: disable=invalid-name
-# pylint: disable=no-self-use
-# pylint: disable=redefined-outer-name
 # pylint: disable=too-many-statements
 
 LOCATION_NODE_VALIDATION_SKIP_WARNING = (
@@ -4065,7 +4062,7 @@ class TicketCreateWithSet(ConstraintBaseTest):
     def test_refuse_when_option_is_invalid(self):
         self.assert_pcs_fail(
             "constraint ticket set A B setoptions loss-policy".split(),
-            stdout_start=["Error: missing value of 'loss-policy' option"],
+            "Error: missing value of 'loss-policy' option\n",
         )
 
 
@@ -4094,12 +4091,12 @@ class TicketAdd(ConstraintBaseTest):
     def test_refuse_invalid_role(self):
         self.assert_pcs_fail(
             "constraint ticket add T bad-role A loss-policy=fence".split(),
-            [
-                ("Error: 'bad-role' is not a valid role value, use {}").format(
+            (
+                "Error: 'bad-role' is not a valid role value, use {}\n".format(
                     format_list(const.PCMK_ROLES)
-                ),
-                ERRORS_HAVE_OCCURRED[:-1],
-            ],
+                )
+                + ERRORS_HAVE_OCCURRED
+            ),
         )
 
     def test_refuse_duplicate_ticket(self):
@@ -4112,23 +4109,22 @@ class TicketAdd(ConstraintBaseTest):
         role = str(const.PCMK_ROLE_UNPROMOTED_LEGACY).lower()
         self.assert_pcs_fail(
             f"constraint ticket add T {role} A loss-policy=fence".split(),
-            [
+            (
                 f"Deprecation Warning: Value '{role}' of option role is "
                 f"deprecated and should not be used, use "
                 f"'{const.PCMK_ROLE_UNPROMOTED}' value instead\n"
-                "Duplicate constraints:",
-                f"  {const.PCMK_ROLE_UNPROMOTED} A loss-policy=fence ticket=T (id:ticket-T-A-{const.PCMK_ROLE_UNPROMOTED})",
-                "Error: duplicate constraint already exists, use --force to "
-                "override",
-                ERRORS_HAVE_OCCURRED[:-1],
-            ],
+                "Duplicate constraints:\n"
+                f"  {const.PCMK_ROLE_UNPROMOTED} A loss-policy=fence ticket=T (id:ticket-T-A-{const.PCMK_ROLE_UNPROMOTED})\n"
+                "Error: duplicate constraint already exists, use --force to override\n"
+                + ERRORS_HAVE_OCCURRED
+            ),
         )
 
     def test_accept_duplicate_ticket_with_force(self):
         role = str(const.PCMK_ROLE_PROMOTED_LEGACY).lower()
         self.assert_pcs_success(
             f"constraint ticket add T {role} A loss-policy=fence".split(),
-            stdout_full=(
+            stderr_full=(
                 f"Deprecation Warning: Value '{role}' of option role is "
                 f"deprecated and should not be used, use "
                 f"'{const.PCMK_ROLE_PROMOTED}' value instead\n"
@@ -4140,7 +4136,7 @@ class TicketAdd(ConstraintBaseTest):
                 f"constraint ticket add T {const.PCMK_ROLE_PROMOTED} A "
                 "loss-policy=fence --force"
             ).split(),
-            [
+            stderr_full=[
                 "Duplicate constraints:",
                 f"  {promoted_role} A loss-policy=fence ticket=T (id:ticket-T-A-{promoted_role})",
                 "Warning: duplicate constraint already exists",
@@ -4162,7 +4158,7 @@ class TicketDeleteRemoveTest(ConstraintBaseTest):
     def _test_usage(self):
         self.assert_pcs_fail(
             ["constraint", "ticket", self.command],
-            stdout_start=outdent(
+            stderr_start=outdent(
                 f"""
                 Usage: pcs constraint [constraints]...
                     ticket {self.command} <"""
@@ -4174,7 +4170,7 @@ class TicketDeleteRemoveTest(ConstraintBaseTest):
         self.assert_pcs_success("constraint ticket add T A".split())
         self.assert_pcs_success(
             "constraint ticket add T A --force".split(),
-            stdout_full=[
+            stderr_full=[
                 "Duplicate constraints:",
                 "  A ticket=T (id:ticket-T-A)",
                 "Warning: duplicate constraint already exists",
@@ -4243,7 +4239,7 @@ class TicketShow(ConstraintBaseTest):
         role = str(const.PCMK_ROLE_PROMOTED_LEGACY).lower()
         self.assert_pcs_success(
             f"constraint ticket add T {role} A loss-policy=fence".split(),
-            stdout_full=(
+            stderr_full=(
                 f"Deprecation Warning: Value '{role}' of option role is "
                 f"deprecated and should not be used, use "
                 f"'{const.PCMK_ROLE_PROMOTED}' value instead\n"
@@ -4303,7 +4299,7 @@ class LocationTypeId(ConstraintEffect):
                     rsc="A" score="INFINITY"
                 />
             </constraints>""",
-            output=LOCATION_NODE_VALIDATION_SKIP_WARNING,
+            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
     def test_avoids(self):
@@ -4319,7 +4315,7 @@ class LocationTypeId(ConstraintEffect):
                     rsc="A" score="-INFINITY"
                 />
             </constraints>""",
-            output=LOCATION_NODE_VALIDATION_SKIP_WARNING,
+            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
     def test_add(self):
@@ -4333,7 +4329,7 @@ class LocationTypeId(ConstraintEffect):
             """<constraints>
                 <rsc_location id="my-id" node="node1" rsc="A" score="INFINITY"/>
             </constraints>""",
-            output=LOCATION_NODE_VALIDATION_SKIP_WARNING,
+            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
     def test_rule(self):
@@ -4369,7 +4365,7 @@ class LocationTypePattern(ConstraintEffect):
                     rsc-pattern="res_[0-9]" score="INFINITY"
                 />
             </constraints>""",
-            LOCATION_NODE_VALIDATION_SKIP_WARNING,
+            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
     def test_avoids(self):
@@ -4380,7 +4376,7 @@ class LocationTypePattern(ConstraintEffect):
                     rsc-pattern="res_[0-9]" score="-INFINITY"
                 />
             </constraints>""",
-            LOCATION_NODE_VALIDATION_SKIP_WARNING,
+            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
     def test_add(self):
@@ -4391,7 +4387,7 @@ class LocationTypePattern(ConstraintEffect):
                     score="INFINITY"
                 />
             </constraints>""",
-            LOCATION_NODE_VALIDATION_SKIP_WARNING,
+            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
     def test_rule(self):
@@ -4520,7 +4516,6 @@ class LocationShowWithPattern(ConstraintBaseTest):
         self.assert_pcs_success(
             "constraint location config nodes --full".split(),
             outdent(
-                # pylint:disable=trailing-whitespace
                 """\
             Location Constraints:
               Node: 
@@ -4649,7 +4644,7 @@ class BundleLocation(Bundle):
                     />
                 </constraints>
             """,
-            output=LOCATION_NODE_VALIDATION_SKIP_WARNING,
+            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
     def test_bundle_avoids(self):
@@ -4662,7 +4657,7 @@ class BundleLocation(Bundle):
                     />
                 </constraints>
             """,
-            output=LOCATION_NODE_VALIDATION_SKIP_WARNING,
+            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
     def test_bundle_location(self):
@@ -4673,7 +4668,7 @@ class BundleLocation(Bundle):
                     <rsc_location id="id" node="node1" rsc="B" score="100" />
                 </constraints>
             """,
-            output=LOCATION_NODE_VALIDATION_SKIP_WARNING,
+            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
     def test_primitive_prefers(self):
@@ -4698,7 +4693,7 @@ class BundleLocation(Bundle):
                     />
                 </constraints>
             """,
-            output=LOCATION_NODE_VALIDATION_SKIP_WARNING,
+            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
     def test_primitive_avoids(self):
@@ -4723,7 +4718,7 @@ class BundleLocation(Bundle):
                     />
                 </constraints>
             """,
-            output=LOCATION_NODE_VALIDATION_SKIP_WARNING,
+            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
     def test_primitive_location(self):
@@ -4746,7 +4741,7 @@ class BundleLocation(Bundle):
                     <rsc_location id="id" node="node1" rsc="R" score="100" />
                 </constraints>
             """,
-            output=LOCATION_NODE_VALIDATION_SKIP_WARNING,
+            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
 
@@ -4823,7 +4818,10 @@ class BundleColocation(Bundle):
                     </rsc_colocation>
                 </constraints>
             """,
-            "Warning: R is a bundle resource, you should use the bundle id: B when adding constraints\n",
+            stderr_full=(
+                "Warning: R is a bundle resource, you should use the bundle "
+                "id: B when adding constraints\n"
+            ),
         )
 
 
@@ -4842,8 +4840,10 @@ class BundleOrder(Bundle):
                         then="X" then-action="start" />
                 </constraints>
             """,
-            "Adding B X (kind: Mandatory) (Options: first-action=start "
-            "then-action=start)\n",
+            stderr_full=(
+                "Adding B X (kind: Mandatory) (Options: first-action=start "
+                "then-action=start)\n"
+            ),
         )
 
     def test_primitive(self):
@@ -4865,8 +4865,10 @@ class BundleOrder(Bundle):
                         then="X" then-action="start" />
                 </constraints>
             """,
-            "Adding R X (kind: Mandatory) (Options: first-action=start "
-            "then-action=start)\n",
+            stderr_full=(
+                "Adding R X (kind: Mandatory) (Options: first-action=start "
+                "then-action=start)\n"
+            ),
         )
 
     def test_bundle_set(self):
@@ -4906,8 +4908,10 @@ class BundleOrder(Bundle):
                     </rsc_order>
                 </constraints>
             """,
-            "Warning: R is a bundle resource, you should use the bundle id: B "
-            "when adding constraints\n",
+            stderr_full=(
+                "Warning: R is a bundle resource, you should use the bundle id: B "
+                "when adding constraints\n"
+            ),
         )
 
 
@@ -4939,8 +4943,10 @@ class BundleTicket(Bundle):
                     <rsc_ticket id="ticket-T-R" rsc="R" ticket="T" />
                 </constraints>
             """,
-            "Warning: R is a bundle resource, you should use the bundle id: B "
-            "when adding constraints\n",
+            stderr_full=(
+                "Warning: R is a bundle resource, you should use the bundle id: B "
+                "when adding constraints\n"
+            ),
         )
 
     def test_bundle_set(self):
@@ -4978,8 +4984,10 @@ class BundleTicket(Bundle):
                     </rsc_ticket>
                 </constraints>
             """,
-            "Warning: R is a bundle resource, you should use the bundle id: B "
-            "when adding constraints\n",
+            stderr_full=(
+                "Warning: R is a bundle resource, you should use the bundle id: B "
+                "when adding constraints\n"
+            ),
         )
 
 
@@ -5004,6 +5012,7 @@ class LocationPrefersAvoidsMixin(
         self.temp_cib.close()
 
     def xml_score(self, score):
+        # pylint: disable=no-self-use
         return score if score else "INFINITY"
 
     @staticmethod
@@ -5043,7 +5052,7 @@ class LocationPrefersAvoidsMixin(
                 + self._unpack_node_score_list_to_cmd(node_score_list)
             ),
             self._construct_xml(node_score_list),
-            LOCATION_NODE_VALIDATION_SKIP_WARNING,
+            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
     def assert_failure(self, node_score_list, error_msg):
@@ -5199,10 +5208,9 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date lt 2019-01-01"
             ).split()
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             ["constraint"],
-            f"Warning: {CRM_RULE_MISSING_MSG}\n"
-            + outdent(
+            outdent(
                 """\
                 Location Constraints:
                   Resource: dummy
@@ -5214,6 +5222,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Ticket Constraints:
                 """
             ),
+            stderr_full=f"Warning: {CRM_RULE_MISSING_MSG}\n",
         )
 
     def test_in_effect_primitive_plain(self):
@@ -5224,7 +5233,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date gt 2019-01-01"
             ).split()
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             ["constraint"],
             outdent(
                 """\
@@ -5248,7 +5257,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date gt 2019-01-01"
             ).split()
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             "constraint --full".split(),
             outdent(
                 """\
@@ -5272,7 +5281,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date gt 2019-01-01"
             ).split()
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             "constraint --all".split(),
             outdent(
                 """\
@@ -5296,7 +5305,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date gt 2019-01-01"
             ).split()
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             "constraint --full --all".split(),
             outdent(
                 """\
@@ -5320,7 +5329,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date gt 2019-01-01"
             ).split()
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             ["constraint"],
             outdent(
                 """\
@@ -5344,7 +5353,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date lt 2019-01-01"
             ).split()
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             ["constraint"],
             outdent(
                 """\
@@ -5364,7 +5373,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date lt 2019-01-01"
             ).split()
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             "constraint --full".split(),
             outdent(
                 """\
@@ -5384,7 +5393,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date lt 2019-01-01"
             ).split()
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             "constraint --all".split(),
             outdent(
                 """\
@@ -5408,7 +5417,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date lt 2019-01-01"
             ).split()
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             "constraint --full --all".split(),
             outdent(
                 """\
@@ -5432,7 +5441,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date lt 2019-01-01"
             ).split()
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             ["constraint"],
             outdent(
                 """\
@@ -5452,7 +5461,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date eq 2019-01-01 or date eq 2019-03-01"
             ).split()
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             ["constraint"],
             outdent(
                 """\
@@ -5477,7 +5486,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date eq 2019-01-01 or date eq 2019-03-01"
             ).split()
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             "constraint --full".split(),
             outdent(
                 """\
@@ -5502,7 +5511,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date eq 2019-01-01 or date eq 2019-03-01"
             ).split()
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             "constraint --all".split(),
             outdent(
                 """\
@@ -5527,7 +5536,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date eq 2019-01-01 or date eq 2019-03-01"
             ).split()
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             "constraint --full --all".split(),
             outdent(
                 """\
@@ -5552,7 +5561,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date eq 2019-01-01 or date eq 2019-03-01"
             ).split()
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             ["constraint"],
             outdent(
                 """\
@@ -5575,7 +5584,7 @@ class ExpiredConstraints(ConstraintBaseTest):
             "constraint location dummy rule id=test-rule score=INFINITY date gt".split()
             + [self._tomorrow]
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             ["constraint"],
             outdent(
                 f"""\
@@ -5597,7 +5606,7 @@ class ExpiredConstraints(ConstraintBaseTest):
             "constraint location dummy rule id=test-rule score=INFINITY date gt".split()
             + [self._tomorrow]
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             "constraint --full".split(),
             outdent(
                 f"""\
@@ -5619,7 +5628,7 @@ class ExpiredConstraints(ConstraintBaseTest):
             "constraint location dummy rule id=test-rule score=INFINITY date gt".split()
             + [self._tomorrow]
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             "constraint --all".split(),
             outdent(
                 f"""\
@@ -5641,7 +5650,7 @@ class ExpiredConstraints(ConstraintBaseTest):
             "constraint location dummy rule id=test-rule score=INFINITY date gt".split()
             + [self._tomorrow]
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             "constraint --full --all".split(),
             outdent(
                 f"""\
@@ -5663,7 +5672,7 @@ class ExpiredConstraints(ConstraintBaseTest):
             "constraint location dummy_group rule id=test-rule score=INFINITY date gt".split()
             + [self._tomorrow]
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             ["constraint"],
             outdent(
                 f"""\
@@ -5718,7 +5727,7 @@ class ExpiredConstraints(ConstraintBaseTest):
             ).split()
         )
 
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             ["constraint"],
             outdent(
                 """\
@@ -5786,7 +5795,7 @@ class ExpiredConstraints(ConstraintBaseTest):
             ).split()
         )
 
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             "constraint --all".split(),
             outdent(
                 """\
@@ -5853,17 +5862,26 @@ class OrderVsGroup(unittest.TestCase, AssertPcsMixin):
     def test_allow_resources_in_different_groups(self):
         self.assert_pcs_success(
             "constraint order A then C".split(),
-            "Adding A C (kind: Mandatory) (Options: first-action=start then-action=start)\n",
+            stderr_full=(
+                "Adding A C (kind: Mandatory) (Options: first-action=start "
+                "then-action=start)\n"
+            ),
         )
 
     def test_allow_grouped_and_not_grouped_resource(self):
         self.assert_pcs_success(
             "constraint order A then D".split(),
-            "Adding A D (kind: Mandatory) (Options: first-action=start then-action=start)\n",
+            stderr_full=(
+                "Adding A D (kind: Mandatory) (Options: first-action=start "
+                "then-action=start)\n"
+            ),
         )
 
     def test_allow_group_and_resource(self):
         self.assert_pcs_success(
             "constraint order grAB then C".split(),
-            "Adding grAB C (kind: Mandatory) (Options: first-action=start then-action=start)\n",
+            stderr_full=(
+                "Adding grAB C (kind: Mandatory) (Options: first-action=start "
+                "then-action=start)\n"
+            ),
         )

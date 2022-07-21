@@ -10,18 +10,18 @@ from pcs import (
     utils,
 )
 
-from pcs_test.tools.assertions import (
-    AssertPcsMixin,
-    ac,
+from pcs_test.tools.assertions import AssertPcsMixinOld as AssertPcsMixin
+from pcs_test.tools.assertions import ac
+from pcs_test.tools.cib import (
+    get_assert_pcs_effect_mixin_old as get_assert_pcs_effect_mixin,
 )
-from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
     get_tmp_file,
     outdent,
     write_file_to_tmpfile,
 )
-from pcs_test.tools.pcs_runner import PcsRunner
+from pcs_test.tools.pcs_runner import PcsRunnerOld as PcsRunner
 from pcs_test.tools.pcs_runner import pcs as pcs_new
 
 

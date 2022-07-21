@@ -8,10 +8,7 @@ from lxml.etree import LXML_VERSION
 from pcs.common import reports
 from pcs.lib.errors import LibraryError
 
-# pylint: disable=invalid-name, no-self-use
-
-# cover python2 vs. python3 differences
-_re_object_type = type(re.compile(""))
+# pylint: disable=invalid-name
 
 
 def prepare_diff(first, second):
@@ -44,7 +41,7 @@ def start_tag_error_text():
     return msg
 
 
-class AssertPcsMixin:
+class AssertPcsMixinOld:
     """Run pcs command and assert its result"""
 
     def assert_pcs_success_all(self, command_list):
@@ -152,7 +149,7 @@ class AssertPcsMixin:
                     )
                 )
         elif stdout_regexp:
-            if not isinstance(stdout_regexp, _re_object_type):
+            if not isinstance(stdout_regexp, re.Pattern):
                 stdout_regexp = re.compile(stdout_regexp)
             if not stdout_regexp.search(stdout):
                 self.fail(
@@ -186,9 +183,11 @@ class AssertPcsMixin:
                 )
 
     def __prepare_output(self, output):
+        # pylint: disable=no-self-use
         return "\n".join(output + [""]) if isinstance(output, list) else output
 
     def __prepare_regexp_flags(self, flags):
+        # pylint: disable=no-self-use
         # python2 has different flags than python3
         possible_flags = [
             "ASCII",
@@ -206,6 +205,259 @@ class AssertPcsMixin:
             if hasattr(re, f) and (flags & getattr(re, f))
         ]
         return sorted(used_flags)
+
+
+class AssertPcsMixin:
+    """Run pcs command and assert its result"""
+
+    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-locals
+
+    def assert_pcs_success_all(self, command_list):
+        for command in command_list:
+            stdout, stderr, retval = self.pcs_runner.run(command)
+            if retval != 0:
+                raise AssertionError(
+                    f"Command '{command}' did not succeed\n"
+                    f"** return code: {retval}\n"
+                    f"** stdout:\n{stdout}\n"
+                    f"** stderr:\n{stderr}\n"
+                )
+
+    def assert_pcs_success(
+        self,
+        command,
+        stdout_full=None,
+        stdout_start=None,
+        stdout_regexp=None,
+        stderr_full=None,
+        stderr_start=None,
+        stderr_regexp=None,
+        despace=False,
+    ):
+        # It is common that successful commands don't print anything, so we
+        # default stdout and stderr to an empty string if not specified
+        # otherwise.
+        self.assert_pcs_result(
+            command,
+            stdout_full=self.__default_output_to_empty_str(
+                stdout_full, stdout_start, stdout_regexp
+            ),
+            stdout_start=stdout_start,
+            stdout_regexp=stdout_regexp,
+            stderr_full=self.__default_output_to_empty_str(
+                stderr_full, stderr_start, stderr_regexp
+            ),
+            stderr_start=stderr_start,
+            stderr_regexp=stderr_regexp,
+            returncode=0,
+            despace=despace,
+        )
+
+    def assert_pcs_fail(
+        self,
+        command,
+        stderr_full=None,
+        stderr_start=None,
+        stderr_regexp=None,
+        stdout_full=None,
+        stdout_start=None,
+        stdout_regexp=None,
+    ):
+        # It is common that failed commands don't print anything to stdout, so
+        # we default stdout to an empty string if not specified otherwise.
+        self.assert_pcs_result(
+            command,
+            stdout_full=self.__default_output_to_empty_str(
+                stdout_full, stdout_start, stdout_regexp
+            ),
+            stdout_start=stdout_start,
+            stdout_regexp=stdout_regexp,
+            stderr_full=stderr_full,
+            stderr_start=stderr_start,
+            stderr_regexp=stderr_regexp,
+            returncode=1,
+        )
+
+    def assert_pcs_fail_regardless_of_force(
+        self,
+        command,
+        stderr_full=None,
+        stderr_start=None,
+        stderr_regexp=None,
+        stdout_full=None,
+        stdout_start=None,
+        stdout_regexp=None,
+    ):
+        self.assert_pcs_fail(
+            command,
+            stdout_full=stdout_full,
+            stdout_start=stdout_start,
+            stdout_regexp=stdout_regexp,
+            stderr_full=stderr_full,
+            stderr_start=stderr_start,
+            stderr_regexp=stderr_regexp,
+        )
+        self.assert_pcs_fail(
+            command + ["--force"],
+            stdout_full=stdout_full,
+            stdout_start=stdout_start,
+            stdout_regexp=stdout_regexp,
+            stderr_full=stderr_full,
+            stderr_start=stderr_start,
+            stderr_regexp=stderr_regexp,
+        )
+
+    def assert_pcs_result(
+        self,
+        command,
+        stdout_full=None,
+        stdout_start=None,
+        stdout_regexp=None,
+        stderr_full=None,
+        stderr_start=None,
+        stderr_regexp=None,
+        returncode=0,
+        despace=False,
+    ):
+
+        self.__check_output_specified(
+            stdout_full, stdout_start, stdout_regexp, "stdout"
+        )
+        self.__check_output_specified(
+            stderr_full, stderr_start, stderr_regexp, "stderr"
+        )
+
+        stdout_actual, stderr_actual, retval_actual = self.pcs_runner.run(
+            command
+        )
+
+        self.assertEqual(
+            returncode,
+            retval_actual,
+            (
+                f"Expected return code '{returncode}' but was '{retval_actual}'\n"
+                f"** command: {command}\n"
+                f"** stdout:\n{stdout_actual}\n"
+                f"** stderr:\n{stderr_actual}\n"
+            ),
+        )
+
+        message_template = (
+            f"{{reason}}\n** Command: {command}\n** {{detail}}\n"
+            f"** Retval: {retval_actual}\n"
+            f"** Full stdout:\n{stdout_actual}\n"
+            f"** Full stderr:\n{stderr_actual}\n"
+        )
+        self.__fail_on_unexpected_output(
+            stdout_actual,
+            stdout_full,
+            stdout_start,
+            stdout_regexp,
+            despace,
+            "stdout",
+            message_template,
+        )
+
+        self.__fail_on_unexpected_output(
+            stderr_actual,
+            stderr_full,
+            stderr_start,
+            stderr_regexp,
+            despace,
+            "stderr",
+            message_template,
+        )
+
+    @staticmethod
+    def __default_output_to_empty_str(output_full, output_start, output_regexp):
+        if (
+            output_start is None
+            and output_full is None
+            and output_regexp is None
+        ):
+            return ""
+        return output_full
+
+    @staticmethod
+    def __check_output_specified(
+        output_full, output_start, output_regexp, label
+    ):
+        msg = (
+            f"Please specify exactly one: {label}_full or {label}_start or "
+            f"{label}_regexp"
+        )
+        specified_output = [
+            output
+            for output in (output_full, output_start, output_regexp)
+            if output is not None
+        ]
+        if not specified_output:
+            raise Exception(msg + ", none specified")
+        if len(specified_output) > 1:
+            raise Exception(msg + ", more than one specified")
+
+    def __fail_on_unexpected_output(
+        self,
+        output_actual,
+        output_full,
+        output_start,
+        output_regexp,
+        despace,
+        label,
+        message_template,
+    ):
+        if output_start:
+            expected_start = self.__prepare_output(output_start)
+            if not output_actual.startswith(expected_start):
+                diff = prepare_diff(
+                    output_actual[: len(expected_start)], expected_start
+                )
+                self.fail(
+                    message_template.format(
+                        reason=f"{label} does not start as expected",
+                        detail=f"diff is (expected is 2nd):\n{diff}\n",
+                    )
+                )
+            return
+
+        if output_regexp:
+            if not isinstance(output_regexp, re.Pattern):
+                output_regexp = re.compile(output_regexp)
+            if not output_regexp.search(output_actual):
+                flags = ", ".join(
+                    self.__prepare_regexp_flags(output_regexp.flags)
+                )
+                self.fail(
+                    message_template.format(
+                        reason=f"{label} does not match the expected regexp",
+                        detail=(
+                            f"regexp:\n{output_regexp.pattern}\n"
+                            f"regexp flags: {flags}\n"
+                        ),
+                    )
+                )
+            return
+
+        expected_full = self.__prepare_output(output_full)
+        if (despace and _despace(output_actual) != _despace(expected_full)) or (
+            not despace and output_actual != expected_full
+        ):
+            diff = prepare_diff(output_actual, expected_full)
+            self.fail(
+                message_template.format(
+                    reason=f"{label} is not as expected",
+                    detail=f"diff is (expected is 2nd):\n{diff}\n",
+                ),
+            )
+
+    @staticmethod
+    def __prepare_output(output):
+        return "\n".join(output + [""]) if isinstance(output, list) else output
+
+    @staticmethod
+    def __prepare_regexp_flags(used_flags):
+        return sorted([flag.name for flag in re.RegexFlag if used_flags & flag])
 
 
 class ExtendedAssertionsMixin:

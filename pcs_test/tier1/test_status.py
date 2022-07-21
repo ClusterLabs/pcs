@@ -5,7 +5,7 @@ from unittest import TestCase
 
 from pcs import settings
 
-from pcs_test.tools.assertions import AssertPcsMixin
+from pcs_test.tools.assertions import AssertPcsMixinOld as AssertPcsMixin
 from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
@@ -15,7 +15,7 @@ from pcs_test.tools.misc import (
     outdent,
     write_file_to_tmpfile,
 )
-from pcs_test.tools.pcs_runner import PcsRunner
+from pcs_test.tools.pcs_runner import PcsRunnerOld as PcsRunner
 
 PCMK_2_0_3_PLUS = is_minimum_pacemaker_version(2, 0, 3)
 

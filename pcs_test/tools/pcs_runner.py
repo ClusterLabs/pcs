@@ -15,14 +15,19 @@ class PcsRunner:
         self.corosync_conf_opt = corosync_conf_opt
         self.mock_settings = mock_settings
 
-    def run(self, args, ignore_stderr=False):
-        # TODO drop merging stdout and stderr together
-        stdout, stderr, retval = pcs(
+    def run(self, args):
+        return pcs(
             self.cib_file,
             args,
             corosync_conf_opt=self.corosync_conf_opt,
             mock_settings=self.mock_settings,
         )
+
+
+class PcsRunnerOld(PcsRunner):
+    # TODO remove this class
+    def run(self, args, ignore_stderr=False):
+        stdout, stderr, retval = super().run(args)
         if ignore_stderr:
             stderr = None
         return "".join(filter(None, [stderr, stdout])), retval

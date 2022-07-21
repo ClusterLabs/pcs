@@ -7,7 +7,7 @@ from unittest import (
 
 from pcs.cli.booth import command as booth_cmd
 
-from pcs_test.tools.assertions import AssertPcsMixin
+from pcs_test.tools.assertions import AssertPcsMixinOld as AssertPcsMixin
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
     get_tmp_dir,
@@ -16,7 +16,7 @@ from pcs_test.tools.misc import (
     skip_unless_booth_resource_agent_installed,
     write_file_to_tmpfile,
 )
-from pcs_test.tools.pcs_runner import PcsRunner
+from pcs_test.tools.pcs_runner import PcsRunnerOld as PcsRunner
 
 EMPTY_CIB = rc("cib-empty.xml")
 

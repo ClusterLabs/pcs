@@ -11,7 +11,7 @@ from pcs_test.tools.misc import (
     get_tmp_file,
     write_file_to_tmpfile,
 )
-from pcs_test.tools.pcs_runner import PcsRunner
+from pcs_test.tools.pcs_runner import PcsRunnerOld as PcsRunner
 
 
 class ResourceConfigJson(TestCase):
