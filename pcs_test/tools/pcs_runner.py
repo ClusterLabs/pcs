@@ -55,6 +55,25 @@ def pcs(cib_file, args, corosync_conf_opt=None, mock_settings=None):
     return _run(cmd, env_extend=env)
 
 
+def pcs_old(
+    cib_file,
+    args,
+    corosync_conf_opt=None,
+    mock_settings=None,
+    ignore_stderr=False,
+):
+    # TODO remove this function
+    stdout, stderr, retval = pcs(
+        cib_file,
+        args,
+        corosync_conf_opt=corosync_conf_opt,
+        mock_settings=mock_settings,
+    )
+    if ignore_stderr:
+        stderr = None
+    return "".join(filter(None, [stderr, stdout])), retval
+
+
 def _run(args, env_extend=None):
     env_vars = {"LC_ALL": "C"}
     env_vars.update(dict(env_extend) if env_extend else {})
