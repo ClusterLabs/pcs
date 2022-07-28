@@ -1,18 +1,14 @@
 import unittest
 
-from pcs_test.tools.assertions import (
-    AssertPcsMixin,
-    ac,
-)
+from pcs_test.tools.assertions import AssertPcsMixinOld as AssertPcsMixin
+from pcs_test.tools.assertions import ac
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
     get_tmp_file,
     write_file_to_tmpfile,
 )
-from pcs_test.tools.pcs_runner import (
-    PcsRunner,
-    pcs,
-)
+from pcs_test.tools.pcs_runner import PcsRunnerOld as PcsRunner
+from pcs_test.tools.pcs_runner import pcs_old as pcs
 
 # pylint: disable=invalid-name
 # pylint: disable=no-self-use

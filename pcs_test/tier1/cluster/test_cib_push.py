@@ -1,11 +1,11 @@
 from unittest import TestCase
 
-from pcs_test.tools.assertions import AssertPcsMixin
+from pcs_test.tools.assertions import AssertPcsMixinOld as AssertPcsMixin
 from pcs_test.tools.misc import (
     get_tmp_file,
     write_data_to_tmpfile,
 )
-from pcs_test.tools.pcs_runner import PcsRunner
+from pcs_test.tools.pcs_runner import PcsRunnerOld as PcsRunner
 
 CIB_EPOCH_TEMPLATE = """
     <cib epoch="{epoch}" num_updates="122" admin_epoch="0"

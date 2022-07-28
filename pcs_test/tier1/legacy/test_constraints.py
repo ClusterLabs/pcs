@@ -17,7 +17,6 @@ from pcs.constraint import (
 from pcs_test.tools.assertions import (
     AssertPcsMixin,
     ac,
-    console_report,
 )
 from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
@@ -41,11 +40,8 @@ from pcs_test.tools.pcs_runner import (
     pcs,
 )
 
-# pylint: disable=line-too-long
 # pylint: disable=too-many-public-methods
 # pylint: disable=invalid-name
-# pylint: disable=no-self-use
-# pylint: disable=redefined-outer-name
 # pylint: disable=too-many-statements
 
 LOCATION_NODE_VALIDATION_SKIP_WARNING = (
@@ -62,32 +58,46 @@ large_cib = rc("cib-large.xml")
 class ConstraintTestCibFixture(CachedCibFixture):
     def _setup_cib(self):
         line = "resource create D1 ocf:heartbeat:Dummy".split()
-        output, returnVal = pcs(self.cache_path, line)
-        assert returnVal == 0 and output == ""
+        stdout, stderr, retval = pcs(self.cache_path, line)
+        self.assertEqual(stderr, "")
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
         line = "resource create D2 ocf:heartbeat:Dummy".split()
-        output, returnVal = pcs(self.cache_path, line)
-        assert returnVal == 0 and output == ""
+        stdout, stderr, retval = pcs(self.cache_path, line)
+        self.assertEqual(stderr, "")
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
         line = "resource create D3 ocf:heartbeat:Dummy".split()
-        output, returnVal = pcs(self.cache_path, line)
-        assert returnVal == 0 and output == ""
+        stdout, stderr, retval = pcs(self.cache_path, line)
+        self.assertEqual(stderr, "")
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
         line = "resource create D4 ocf:heartbeat:Dummy".split()
-        output, returnVal = pcs(self.cache_path, line)
-        assert returnVal == 0 and output == ""
+        stdout, stderr, retval = pcs(self.cache_path, line)
+        self.assertEqual(stderr, "")
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
         line = "resource create D5 ocf:heartbeat:Dummy".split()
-        output, returnVal = pcs(self.cache_path, line)
-        assert returnVal == 0 and output == ""
+        stdout, stderr, retval = pcs(self.cache_path, line)
+        self.assertEqual(stderr, "")
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
         line = "resource create D6 ocf:heartbeat:Dummy".split()
-        output, returnVal = pcs(self.cache_path, line)
-        assert returnVal == 0 and output == ""
+        stdout, stderr, retval = pcs(self.cache_path, line)
+        self.assertEqual(stderr, "")
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
         line = "resource clone D3".split()
-        output, returnVal = pcs(self.cache_path, line)
-        assert returnVal == 0 and output == ""
+        stdout, stderr, retval = pcs(self.cache_path, line)
+        self.assertEqual(stderr, "")
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
         # pcs no longer allows turning resources into masters but supports
         # existing ones. In order to test it, we need to put a master in the
@@ -119,52 +129,57 @@ class ConstraintTest(unittest.TestCase):
 
     def testConstraintRules(self):
         self.fixture_resources()
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location D1 rule score=222 #uname eq c00n03".split(),
         )
-        assert output == "", [output]
-        assert returnVal == 0
+        self.assertEqual(stderr, "")
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location D2 rule score=-INFINITY #uname eq c00n04".split(),
         )
-        assert returnVal == 0
-        assert output == "", [output]
+        self.assertEqual(stderr, "")
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "resource create C1 ocf:heartbeat:Dummy --group C1-group".split(),
         )
-        assert r == 0 and o == "", o
+        self.assertEqual(stderr, "")
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             (
                 "constraint location D3 rule score=-INFINITY "
                 "not_defined pingd or pingd lte 0 --force"
             ).split(),
         )
-        assert returnVal == 0
-        assert output == "", [output]
+        self.assertEqual(stderr, "")
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             (
                 "constraint location D3 rule score=-INFINITY "
                 "not_defined pingd and pingd lte 0 --force"
             ).split(),
         )
-        assert returnVal == 0
-        assert output == "", [output]
+        self.assertEqual(stderr, "")
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint --full --all".split()
         )
-        assert returnVal == 0
         ac(
-            output,
+            stdout,
             """\
 Location Constraints:
   Resource: D1
@@ -189,23 +204,27 @@ Colocation Constraints:
 Ticket Constraints:
 """,
         )
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
     def testAdvancedConstraintRule(self):
         self.fixture_resources()
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             (
                 "constraint location D1 rule score=INFINITY "
                 "not_defined pingd or pingd lte 0"
             ).split(),
         )
-        ac(o, "")
-        assert r == 0
+        self.assertEqual(stderr, "")
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint --full".split())
-        assert returnVal == 0
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint --full".split()
+        )
         ac(
-            output,
+            stdout,
             """\
 Location Constraints:
   Resource: D1
@@ -218,52 +237,61 @@ Colocation Constraints:
 Ticket Constraints:
 """,
         )
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
     def testEmptyConstraints(self):
-        output, returnVal = pcs(self.temp_cib.name, ["constraint"])
-        assert (
-            returnVal == 0
-            and output
-            == "Location Constraints:\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n"
-        ), output
+        stdout, stderr, retval = pcs(self.temp_cib.name, ["constraint"])
+        ac(
+            stdout,
+            "Location Constraints:\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n",
+        )
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
     def testMultipleOrderConstraints(self):
         self.fixture_resources()
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order stop D1 then stop D2".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            o,
+            stderr,
             "Adding D1 D2 (kind: Mandatory) (Options: first-action=stop then-action=stop)\n",
         )
-        assert r == 0
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order start D1 then start D2".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            o,
+            stderr,
             "Adding D1 D2 (kind: Mandatory) (Options: first-action=start then-action=start)\n",
         )
-        assert r == 0
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(self.temp_cib.name, "constraint --full".split())
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint --full".split()
+        )
         ac(
-            o,
+            stdout,
             "Location Constraints:\nOrdering Constraints:\n  stop D1 then stop D2 (kind:Mandatory) (id:order-D1-D2-mandatory)\n  start D1 then start D2 (kind:Mandatory) (id:order-D1-D2-mandatory-1)\nColocation Constraints:\nTicket Constraints:\n",
         )
-        assert r == 0
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
     def test_order_options_empty_value(self):
         self.fixture_resources()
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order D1 then D2 option1=".split(),
         )
-        self.assertIn("value of 'option1' option is empty", o)
-        self.assertEqual(r, 1)
+        self.assertIn("value of 'option1' option is empty", stderr)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
     def test_order_too_many_resources(self):
         msg = (
@@ -272,81 +300,97 @@ Ticket Constraints:
             "create a constraint for more than two resources.\n"
         )
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order D1 then D2 then D3".split(),
         )
-        self.assertIn(msg, o)
-        self.assertEqual(r, 1)
+        self.assertIn(msg, stderr)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order start D1 then start D2 then start D3".split(),
         )
-        self.assertIn(msg, o)
-        self.assertEqual(r, 1)
+        self.assertIn(msg, stderr)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order start D1 then D2 then D3".split(),
         )
-        self.assertIn(msg, o)
-        self.assertEqual(r, 1)
+        self.assertIn(msg, stderr)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order D1 then start D2 then D3".split(),
         )
-        self.assertIn(msg, o)
-        self.assertEqual(r, 1)
+        self.assertIn(msg, stderr)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order D1 then D2 then start D3".split(),
         )
-        self.assertIn(msg, o)
-        self.assertEqual(r, 1)
+        self.assertIn(msg, stderr)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order start D1 then D2 then start D3".split(),
         )
-        self.assertIn(msg, o)
-        self.assertEqual(r, 1)
+        self.assertIn(msg, stderr)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order D1 then start D2 then start D3".split(),
         )
-        self.assertIn(msg, o)
-        self.assertEqual(r, 1)
+        self.assertIn(msg, stderr)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order start D1 then D2 then start D3".split(),
         )
-        self.assertIn(msg, o)
-        self.assertEqual(r, 1)
+        self.assertIn(msg, stderr)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
     def testOrderConstraintRequireAll(self):
         self.fixture_resources()
-        o, r = pcs(self.temp_cib.name, "cluster cib-upgrade".split())
-        ac(o, "Cluster CIB has been upgraded to latest version\n")
-        assert r == 0
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "cluster cib-upgrade".split()
+        )
+        self.assertEqual(
+            stderr, "Cluster CIB has been upgraded to latest version\n"
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order start D1 then start D2 require-all=false".split(),
         )
         ac(
-            o,
+            stderr,
             "Adding D1 D2 (kind: Mandatory) (Options: require-all=false first-action=start then-action=start)\n",
         )
-        assert r == 0
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(self.temp_cib.name, "constraint --full".split())
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint --full".split()
+        )
         ac(
-            o,
+            stdout,
             """\
 Location Constraints:
 Ordering Constraints:
@@ -355,37 +399,44 @@ Colocation Constraints:
 Ticket Constraints:
 """,
         )
-        assert r == 0
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
     def testAllConstraints(self):
         self.fixture_resources()
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location D5 prefers node1".split(),
         )
-        assert (
-            returnVal == 0 and output == LOCATION_NODE_VALIDATION_SKIP_WARNING
-        ), output
+        self.assertEqual(retval, 0)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint order Master then D5".split()
         )
-        assert (
-            returnVal == 0
-            and output
-            == "Adding Master D5 (kind: Mandatory) (Options: first-action=start then-action=start)\n"
-        ), output
+        self.assertEqual(retval, 0)
+        ac(
+            stderr,
+            "Adding Master D5 (kind: Mandatory) (Options: first-action=start then-action=start)\n",
+        )
+        self.assertEqual(stdout, "")
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add Master with D5".split(),
         )
-        assert returnVal == 0 and output == "", output
+        self.assertEqual(retval, 0)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint --full".split())
-        assert returnVal == 0
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint --full".split()
+        )
+        self.assertEqual(retval, 0)
+        self.assertEqual(stderr, "")
         ac(
-            output,
+            stdout,
             outdent(
                 """\
             Location Constraints:
@@ -401,12 +452,13 @@ Ticket Constraints:
             ),
         )
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint config --full".split()
         )
-        assert returnVal == 0
+        self.assertEqual(retval, 0)
+        self.assertEqual(stderr, "")
         ac(
-            output,
+            stdout,
             outdent(
                 """\
             Location Constraints:
@@ -425,49 +477,53 @@ Ticket Constraints:
     # see also BundleLocation
     def testLocationConstraints(self):
         self.fixture_resources()
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location D5 prefers node1".split(),
         )
-        assert (
-            returnVal == 0 and output == LOCATION_NODE_VALIDATION_SKIP_WARNING
-        ), output
+        self.assertEqual(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location D5 avoids node1".split(),
         )
-        assert (
-            returnVal == 0 and output == LOCATION_NODE_VALIDATION_SKIP_WARNING
-        ), output
+        self.assertEqual(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location D5 prefers node1".split(),
         )
-        assert (
-            returnVal == 0 and output == LOCATION_NODE_VALIDATION_SKIP_WARNING
-        ), output
+        self.assertEqual(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location D5 avoids node2".split(),
         )
-        assert (
-            returnVal == 0 and output == LOCATION_NODE_VALIDATION_SKIP_WARNING
-        ), output
+        self.assertEqual(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location add location-D5-node1-INFINITY".split(),
         )
-        assert returnVal == 1
-        assert output.startswith("\nUsage: pcs constraint"), output
+        self.assertEqual(retval, 1)
+        self.assertTrue(stderr.startswith("\nUsage: pcs constraint"), stderr)
+        self.assertEqual(stdout, "")
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint --full".split())
-        assert returnVal == 0
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint --full".split()
+        )
+        self.assertEqual(retval, 0)
+        self.assertEqual(stderr, "")
         ac(
-            output,
+            stdout,
             outdent(
                 """\
             Location Constraints:
@@ -483,22 +539,29 @@ Ticket Constraints:
             ),
         )
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location delete location-D5-node1-INFINITY".split(),
         )
-        assert returnVal == 0 and output == "", output
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location remove location-D5-node2--INFINITY".split(),
         )
-        assert returnVal == 0 and output == "", output
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint --full".split())
-        assert returnVal == 0
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint --full".split()
+        )
+        self.assertEqual(retval, 0)
+        self.assertEqual(stderr, "")
         ac(
-            output,
+            stdout,
             outdent(
                 """\
             Location Constraints:
@@ -511,41 +574,47 @@ Ticket Constraints:
 
     def testConstraintRemoval(self):
         self.fixture_resources()
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location D5 prefers node1".split(),
         )
-        assert (
-            returnVal == 0 and output == LOCATION_NODE_VALIDATION_SKIP_WARNING
-        ), output
+        self.assertEqual(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location D6 prefers node1".split(),
         )
-        assert (
-            returnVal == 0 and output == LOCATION_NODE_VALIDATION_SKIP_WARNING
-        ), output
+        self.assertEqual(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint remove blahblah".split()
         )
-        assert returnVal == 1 and output.startswith(
-            "Error: Unable to find constraint - 'blahblah'"
-        ), output
+        self.assertEqual(retval, 1)
+        self.assertTrue(
+            stderr.startswith("Error: Unable to find constraint - 'blahblah'"),
+            stderr,
+        )
+        self.assertEqual(stdout, "")
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint delete blahblah".split()
         )
-        assert returnVal == 1 and output.startswith(
-            "Error: Unable to find constraint - 'blahblah'"
-        ), output
+        self.assertEqual(retval, 1)
+        self.assertTrue(
+            stderr.startswith("Error: Unable to find constraint - 'blahblah'"),
+            stderr,
+        )
+        self.assertEqual(stdout, "")
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint location config --full".split()
         )
         ac(
-            output,
+            stdout,
             outdent(
                 """\
             Location Constraints:
@@ -558,20 +627,23 @@ Ticket Constraints:
             """
             ),
         )
-        assert returnVal == 0
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint remove location-D5-node1-INFINITY location-D6-node1-INFINITY".split(),
         )
-        ac(output, "")
-        assert returnVal == 0
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint location config --full".split()
         )
-        ac(output, "Location Constraints:\n")
-        assert returnVal == 0
+        ac(stdout, "Location Constraints:\n")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
     # see also BundleColocation
     def testColocationConstraints(self):
@@ -587,69 +659,86 @@ Ticket Constraints:
             ),
         )
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add D1 with D3-clone".split(),
         )
-        assert r == 0 and o == "", o
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add D1 with D2 100".split(),
         )
-        assert r == 0 and o == "", o
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "--force -- constraint colocation add D1 with D2 -100".split(),
         )
-        assert r == 0 and o == "", o
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add Master with D5 100".split(),
         )
-        assert r == 0 and o == "", o
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             f"constraint colocation add {const.PCMK_ROLE_PROMOTED} M1-master with {const.PCMK_ROLE_PROMOTED} M2-master".split(),
         )
-        assert r == 0 and o == "", o
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add M3-master with M4-master".split(),
         )
-        assert r == 0 and o == "", o
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
         role = str(const.PCMK_ROLE_UNPROMOTED_LEGACY).lower()
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             f"constraint colocation add {role} M5-master with started M6-master 500".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            o,
+            stderr,
             f"Deprecation Warning: Role value '{role}' is deprecated and "
             f"should not be used, use '{const.PCMK_ROLE_UNPROMOTED}' instead\n",
         )
-        assert r == 0
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             f"constraint colocation add M7-master with {const.PCMK_ROLE_PROMOTED} M8-master".split(),
         )
-        assert r == 0 and o == "", o
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             f"constraint colocation add {const.PCMK_ROLE_UNPROMOTED} M9-master with M10-master".split(),
         )
-        assert r == 0 and o == "", o
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(self.temp_cib.name, ["constraint"])
+        stdout, stderr, retval = pcs(self.temp_cib.name, ["constraint"])
         ac(
-            o,
+            stdout,
             outdent(
                 f"""\
             Location Constraints:
@@ -668,23 +757,28 @@ Ticket Constraints:
             """
             ),
         )
-        assert r == 0
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation delete M1-master M2-master".split(),
         )
-        assert r == 0 and o == "", o
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation remove M5-master M6-master".split(),
         )
-        assert r == 0 and o == "", o
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(self.temp_cib.name, ["constraint"])
+        stdout, stderr, retval = pcs(self.temp_cib.name, ["constraint"])
         ac(
-            o,
+            stdout,
             outdent(
                 f"""\
             Location Constraints:
@@ -701,18 +795,20 @@ Ticket Constraints:
             """
             ),
         )
-        assert r == 0
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
     def test_colocation_syntax_errors(self):
         def assert_usage(command):
-            output, returnVal = pcs(self.temp_cib.name, command)
+            stdout, stderr, retval = pcs(self.temp_cib.name, command)
             self.assertTrue(
-                output.startswith(
+                stderr.startswith(
                     "\nUsage: pcs constraint [constraints]...\n    colocation add"
                 ),
-                output,
+                stderr,
             )
-            self.assertEqual(returnVal, 1)
+            self.assertEqual(stdout, "")
+            self.assertEqual(retval, 1)
 
         role = str(const.PCMK_ROLE_PROMOTED).lower()
 
@@ -728,9 +824,9 @@ Ticket Constraints:
 
         assert_usage("constraint colocation add D1 D2 D3".split())
 
-        output, returnVal = pcs(self.temp_cib.name, ["constraint"])
+        stdout, stderr, retval = pcs(self.temp_cib.name, ["constraint"])
         self.assertEqual(
-            output,
+            stdout,
             outdent(
                 """\
             Location Constraints:
@@ -740,28 +836,31 @@ Ticket Constraints:
             """
             ),
         )
-        self.assertEqual(returnVal, 0)
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
     def test_colocation_errors(self):
         self.fixture_resources()
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add D1 with D20".split(),
         )
-        self.assertEqual(output, "Error: Resource 'D20' does not exist\n")
-        self.assertEqual(returnVal, 1)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "Error: Resource 'D20' does not exist\n")
+        self.assertEqual(retval, 1)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add D10 with D20".split(),
         )
-        self.assertEqual(output, "Error: Resource 'D10' does not exist\n")
-        self.assertEqual(returnVal, 1)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "Error: Resource 'D10' does not exist\n")
+        self.assertEqual(retval, 1)
 
-        output, returnVal = pcs(self.temp_cib.name, ["constraint"])
+        stdout, stderr, retval = pcs(self.temp_cib.name, ["constraint"])
         self.assertEqual(
-            output,
+            stdout,
             outdent(
                 """\
             Location Constraints:
@@ -771,21 +870,23 @@ Ticket Constraints:
             """
             ),
         )
-        self.assertEqual(returnVal, 0)
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
     def test_colocation_with_score_and_options(self):
         self.fixture_resources()
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "-- constraint colocation add D1 with D2 -100 id=abcd node-attribute=y".split(),
         )
-        self.assertEqual(output, "")
-        self.assertEqual(returnVal, 0)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(self.temp_cib.name, ["constraint"])
+        stdout, stderr, retval = pcs(self.temp_cib.name, ["constraint"])
         self.assertEqual(
-            output,
+            stdout,
             outdent(
                 """\
             Location Constraints:
@@ -796,44 +897,48 @@ Ticket Constraints:
             """
             ),
         )
-        self.assertEqual(returnVal, 0)
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
     def test_colocation_invalid_role(self):
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add abc D1 with D2".split(),
         )
         ac(
-            o,
+            stderr,
             "Error: invalid role value 'abc', allowed values are: {}\n".format(
                 format_list(const.PCMK_ROLES)
             ),
         )
-        self.assertEqual(r, 1)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add D1 with def D2".split(),
         )
         ac(
-            o,
+            stderr,
             "Error: invalid role value 'def', allowed values are: {}\n".format(
                 format_list(const.PCMK_ROLES)
             ),
         )
-        self.assertEqual(r, 1)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add abc D1 with def D2".split(),
         )
         ac(
-            o,
+            stderr,
             "Error: invalid role value 'abc', allowed values are: {}\n".format(
                 format_list(const.PCMK_ROLES)
             ),
         )
-        self.assertEqual(r, 1)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
     def test_colocation_too_many_resources(self):
         msg = (
@@ -842,111 +947,132 @@ Ticket Constraints:
             "to create a constraint for more than two resources.\n"
         )
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add D1 with D2 with D3".split(),
         )
-        self.assertIn(msg, o)
-        self.assertEqual(r, 1)
+        self.assertIn(msg, stderr)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add master D1 with D2 with D3".split(),
         )
-        self.assertIn(msg, o)
-        self.assertEqual(r, 1)
+        self.assertIn(msg, stderr)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add D1 with master D2 with D3".split(),
         )
-        self.assertIn(msg, o)
-        self.assertEqual(r, 1)
+        self.assertIn(msg, stderr)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add D1 with D2 with master D3".split(),
         )
-        self.assertIn(msg, o)
-        self.assertEqual(r, 1)
+        self.assertIn(msg, stderr)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add master D1 with master D2 with D3".split(),
         )
-        self.assertIn(msg, o)
-        self.assertEqual(r, 1)
+        self.assertIn(msg, stderr)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add master D1 with D2 with master D3".split(),
         )
-        self.assertIn(msg, o)
-        self.assertEqual(r, 1)
+        self.assertIn(msg, stderr)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add D1 with master D2 with master D3".split(),
         )
-        self.assertIn(msg, o)
-        self.assertEqual(r, 1)
+        self.assertIn(msg, stderr)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add master D1 with master D2 with master D3".split(),
         )
-        self.assertIn(msg, o)
-        self.assertEqual(r, 1)
+        self.assertIn(msg, stderr)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
     def test_colocation_options_empty_value(self):
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add D1 with D2 option1=".split(),
         )
-        self.assertIn("value of 'option1' option is empty", o)
-        self.assertEqual(r, 1)
+        self.assertEqual(stdout, "")
+        self.assertIn("value of 'option1' option is empty", stderr)
+        self.assertEqual(retval, 1)
 
     # see also BundleColocation
     def testColocationSets(self):
         self.fixture_resources()
         line = "resource create D7 ocf:heartbeat:Dummy".split()
-        output, returnVal = pcs(self.temp_cib.name, line)
-        assert returnVal == 0 and output == ""
+        stdout, stderr, retval = pcs(self.temp_cib.name, line)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
         line = "resource create D8 ocf:heartbeat:Dummy".split()
-        output, returnVal = pcs(self.temp_cib.name, line)
-        assert returnVal == 0 and output == ""
+        stdout, stderr, retval = pcs(self.temp_cib.name, line)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
         line = "resource create D9 ocf:heartbeat:Dummy".split()
-        output, returnVal = pcs(self.temp_cib.name, line)
-        assert returnVal == 0 and output == ""
+        stdout, stderr, retval = pcs(self.temp_cib.name, line)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(self.temp_cib.name, "constraint colocation set".split())
-        assert o.startswith("\nUsage: pcs constraint")
-        assert r == 1
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint colocation set".split()
+        )
+        self.assertEqual(stdout, "")
+        self.assertTrue(stderr.startswith("\nUsage: pcs constraint"), stderr)
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation set D7 D8 set".split(),
         )
-        assert o.startswith("\nUsage: pcs constraint")
-        assert r == 1
+        self.assertEqual(stdout, "")
+        self.assertTrue(stderr.startswith("\nUsage: pcs constraint"), stderr)
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation set D7 D8 set set D8 D9".split(),
         )
-        assert o.startswith("\nUsage: pcs constraint")
-        assert r == 1
+        self.assertEqual(stdout, "")
+        self.assertTrue(stderr.startswith("\nUsage: pcs constraint"), stderr)
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation set setoptions score=100".split(),
         )
-        assert o.startswith("\nUsage: pcs constraint")
-        assert r == 1
+        self.assertEqual(stdout, "")
+        self.assertTrue(stderr.startswith("\nUsage: pcs constraint"), stderr)
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             (
                 "constraint colocation "
@@ -955,16 +1081,18 @@ Ticket Constraints:
                 "setoptions score=INFINITY"
             ).split(),
         )
-        ac(o, "")
-        assert r == 0
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint colocation set D5 D6".split()
         )
-        assert r == 0
-        ac(o, "")
+        self.assertEqual(retval, 0)
+        self.assertEqual(stderr, "")
+        self.assertEqual(stdout, "")
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             (
                 "constraint colocation "
@@ -972,12 +1100,15 @@ Ticket Constraints:
                 f"set D8 D9 action=demote role={const.PCMK_ROLE_PROMOTED_PRIMARY}"
             ).split(),
         )
-        assert r == 0
-        ac(o, "")
+        self.assertEqual(retval, 0)
+        self.assertEqual(stderr, "")
+        self.assertEqual(stdout, "")
 
-        o, r = pcs(self.temp_cib.name, "constraint colocation --full".split())
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint colocation --full".split()
+        )
         ac(
-            o,
+            stdout,
             f"""\
 Colocation Constraints:
   Resource Sets:
@@ -986,17 +1117,21 @@ Colocation Constraints:
     set D5 D6 action=stop role=Started (id:colocation_set_D5D6D7-1_set) set D7 D8 action=promote role={const.PCMK_ROLE_UNPROMOTED_PRIMARY} (id:colocation_set_D5D6D7-1_set-1) set D8 D9 action=demote role={const.PCMK_ROLE_PROMOTED_PRIMARY} (id:colocation_set_D5D6D7-1_set-2) setoptions score=INFINITY (id:colocation_set_D5D6D7-1)
 """,
         )
-        assert r == 0
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint delete colocation_set_D5D6".split()
         )
-        ac(o, "")
-        assert r == 0
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(self.temp_cib.name, "constraint colocation --full".split())
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint colocation --full".split()
+        )
         ac(
-            o,
+            stdout,
             f"""\
 Colocation Constraints:
   Resource Sets:
@@ -1004,11 +1139,14 @@ Colocation Constraints:
     set D5 D6 action=stop role=Started (id:colocation_set_D5D6D7-1_set) set D7 D8 action=promote role={const.PCMK_ROLE_UNPROMOTED_PRIMARY} (id:colocation_set_D5D6D7-1_set-1) set D8 D9 action=demote role={const.PCMK_ROLE_PROMOTED_PRIMARY} (id:colocation_set_D5D6D7-1_set-2) setoptions score=INFINITY (id:colocation_set_D5D6D7-1)
 """,
         )
-        assert r == 0
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(self.temp_cib.name, "resource delete D5".split())
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "resource delete D5".split()
+        )
         ac(
-            o,
+            stderr,
             outdent(
                 """\
             Removing D5 from set colocation_set_D5D6D7_set
@@ -1017,11 +1155,15 @@ Colocation Constraints:
             """
             ),
         )
-        assert r == 0
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(self.temp_cib.name, "resource delete D6".split())
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "resource delete D6".split()
+        )
+        self.assertEqual(stdout, "")
         ac(
-            o,
+            stderr,
             outdent(
                 """\
             Removing D6 from set colocation_set_D5D6D7_set
@@ -1031,11 +1173,13 @@ Colocation Constraints:
             """
             ),
         )
-        assert r == 0
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(self.temp_cib.name, "constraint ref D7".split())
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint ref D7".split()
+        )
         ac(
-            o,
+            stdout,
             outdent(
                 """\
             Resource: D7
@@ -1044,11 +1188,14 @@ Colocation Constraints:
             """
             ),
         )
-        assert r == 0
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(self.temp_cib.name, "constraint ref D8".split())
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint ref D8".split()
+        )
         ac(
-            o,
+            stdout,
             outdent(
                 """\
             Resource: D8
@@ -1057,131 +1204,145 @@ Colocation Constraints:
             """
             ),
         )
-        assert r == 0
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, retValue = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation set D1 D2 sequential=foo".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
+            stderr,
             (
                 "Error: 'foo' is not a valid sequential value, use 'false', 'true'\n"
                 + ERRORS_HAVE_OCCURRED
             ),
         )
-        self.assertEqual(1, retValue)
+        self.assertEqual(retval, 1)
 
-        output, retValue = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation set D1 D2 require-all=foo".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
+            stderr,
             (
                 "Error: 'foo' is not a valid require-all value, use 'false', 'true'\n"
                 + ERRORS_HAVE_OCCURRED
             ),
         )
-        self.assertEqual(1, retValue)
+        self.assertEqual(retval, 1)
 
-        output, retValue = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation set D1 D2 role=foo".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
+            stderr,
             (
                 "Error: 'foo' is not a valid role value, use {}\n"
                 + ERRORS_HAVE_OCCURRED
             ).format(format_list(const.PCMK_ROLES)),
         )
-        self.assertEqual(1, retValue)
+        self.assertEqual(retval, 1)
 
-        output, retValue = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation set D1 D2 action=foo".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
+            stderr,
             (
                 "Error: 'foo' is not a valid action value, use 'demote', 'promote', 'start', 'stop'\n"
                 + ERRORS_HAVE_OCCURRED
             ),
         )
-        self.assertEqual(1, retValue)
+        self.assertEqual(retval, 1)
 
-        output, retValue = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation set D1 D2 foo=bar".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
+            stderr,
             (
                 "Error: invalid set option 'foo', allowed options are: 'action', 'require-all', 'role', 'sequential'\n"
                 "Error: Errors have occurred, therefore pcs is unable to continue\n"
             ),
         )
-        self.assertEqual(1, retValue)
+        self.assertEqual(retval, 1)
 
-        output, retValue = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation set D1 D2 setoptions foo=bar".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
+            stderr,
             "Error: invalid option 'foo', allowed options are: 'id', 'score'\n",
         )
-        self.assertEqual(1, retValue)
+        self.assertEqual(retval, 1)
 
-        output, retValue = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation set D1 D2 setoptions score=foo".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
+            stderr,
             "Error: invalid score 'foo', use integer or INFINITY or -INFINITY\n",
         )
-        self.assertEqual(1, retValue)
+        self.assertEqual(retval, 1)
 
     def testConstraintResourceDiscoveryRules(self):
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "resource create crd ocf:heartbeat:Dummy".split(),
         )
-        ac(o, "")
-        assert r == 0
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "resource create crd1 ocf:heartbeat:Dummy".split(),
         )
-        ac(o, "")
-        assert r == 0
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             (
                 "constraint location crd rule resource-discovery=exclusive "
                 "score=-INFINITY opsrole ne controller0 and opsrole ne controller1"
             ).split(),
         )
-        ac(o, "")
-        assert r == 0
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             (
                 "constraint location crd1 rule resource-discovery=exclusive "
                 "score=-INFINITY opsrole2 ne controller2"
             ).split(),
         )
-        ac(o, "")
-        assert r == 0
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(self.temp_cib.name, "constraint --full".split())
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint --full".split()
+        )
         ac(
-            o,
+            stdout,
             "\n".join(
                 [
                     "Location Constraints:",
@@ -1201,40 +1362,47 @@ Colocation Constraints:
             )
             + "\n",
         )
-        assert r == 0
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
     def testConstraintResourceDiscovery(self):
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "resource create crd ocf:heartbeat:Dummy".split(),
         )
-        ac(o, "")
-        assert r == 0
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "resource create crd1 ocf:heartbeat:Dummy".split(),
         )
-        ac(o, "")
-        assert r == 0
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "-- constraint location add my_constraint_id crd my_node -INFINITY resource-discovery=always".split(),
         )
-        ac(o, LOCATION_NODE_VALIDATION_SKIP_WARNING)
-        assert r == 0
+        self.assertEqual(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "-- constraint location add my_constraint_id2 crd1 my_node -INFINITY resource-discovery=never".split(),
         )
-        ac(o, LOCATION_NODE_VALIDATION_SKIP_WARNING)
-        assert r == 0
+        self.assertEqual(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(self.temp_cib.name, "constraint --full".split())
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint --full".split()
+        )
         ac(
-            o,
+            stdout,
             outdent(
                 """\
             Location Constraints:
@@ -1250,117 +1418,175 @@ Colocation Constraints:
             """
             ),
         )
-        assert r == 0
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "-- constraint location add my_constraint_id3 crd1 my_node2 -INFINITY bad-opt=test".split(),
         )
-        ac(o, "Error: bad option 'bad-opt', use --force to override\n")
-        assert r == 1
+        self.assertEqual(stdout, "")
+        self.assertEqual(
+            stderr, "Error: bad option 'bad-opt', use --force to override\n"
+        )
+        self.assertEqual(retval, 1)
 
     def testOrderSetsRemoval(self):
         for i in range(9):
-            o, r = pcs(
+            stdout, stderr, retval = pcs(
                 self.temp_cib.name,
                 f"resource create T{i} ocf:heartbeat:Dummy".split(),
             )
-            ac(o, "")
-            assert r == 0
-        o, r = pcs(self.temp_cib.name, "constraint order set T0 T1 T2".split())
-        ac(o, "")
-        assert r == 0
-        o, r = pcs(self.temp_cib.name, "constraint order set T2 T3".split())
-        ac(o, "")
-        assert r == 0
+            self.assertEqual(stdout, "")
+            self.assertEqual(stderr, "")
+            self.assertEqual(retval, 0)
 
-        o, r = pcs(self.temp_cib.name, "constraint order remove T1".split())
-        ac(o, "")
-        assert r == 0
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint order set T0 T1 T2".split()
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint order set T2 T3".split()
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(self.temp_cib.name, "constraint order remove T1".split())
-        ac(o, "Error: No matching resources found in ordering list\n")
-        assert r == 1
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint order remove T1".split()
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(self.temp_cib.name, "constraint order delete T1".split())
-        ac(o, "Error: No matching resources found in ordering list\n")
-        assert r == 1
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint order remove T1".split()
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(
+            stderr, "Error: No matching resources found in ordering list\n"
+        )
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(self.temp_cib.name, "constraint order".split())
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint order delete T1".split()
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(
+            stderr, "Error: No matching resources found in ordering list\n"
+        )
+        self.assertEqual(retval, 1)
+
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint order".split()
+        )
         ac(
-            o,
+            stdout,
             "Ordering Constraints:\n  Resource Sets:\n    set T0 T2\n    set T2 T3\n",
         )
-        assert r == 0
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(self.temp_cib.name, "constraint order delete T2".split())
-        ac(o, "")
-        assert r == 0
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint order delete T2".split()
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(self.temp_cib.name, "constraint order".split())
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint order".split()
+        )
         ac(
-            o,
+            stdout,
             "Ordering Constraints:\n  Resource Sets:\n    set T0\n    set T3\n",
         )
-        assert r == 0
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(self.temp_cib.name, "constraint order delete T0".split())
-        ac(o, "")
-        assert r == 0
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint order delete T0".split()
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(self.temp_cib.name, "constraint order".split())
-        ac(o, "Ordering Constraints:\n  Resource Sets:\n    set T3\n")
-        assert r == 0
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint order".split()
+        )
+        ac(stdout, "Ordering Constraints:\n  Resource Sets:\n    set T3\n")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(self.temp_cib.name, "constraint order remove T3".split())
-        ac(o, "")
-        assert r == 0
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint order remove T3".split()
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(self.temp_cib.name, "constraint order".split())
-        ac(o, "Ordering Constraints:\n")
-        assert r == 0
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint order".split()
+        )
+        ac(stdout, "Ordering Constraints:\n")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
     # see also BundleOrder
     def testOrderSets(self):
         self.fixture_resources()
         line = "resource create D7 ocf:heartbeat:Dummy".split()
-        output, returnVal = pcs(self.temp_cib.name, line)
-        assert returnVal == 0 and output == ""
+        stdout, stderr, retval = pcs(self.temp_cib.name, line)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
         line = "resource create D8 ocf:heartbeat:Dummy".split()
-        output, returnVal = pcs(self.temp_cib.name, line)
-        assert returnVal == 0 and output == ""
+        stdout, stderr, retval = pcs(self.temp_cib.name, line)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
         line = "resource create D9 ocf:heartbeat:Dummy".split()
-        output, returnVal = pcs(self.temp_cib.name, line)
-        assert returnVal == 0 and output == ""
+        stdout, stderr, retval = pcs(self.temp_cib.name, line)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(self.temp_cib.name, "constraint order set".split())
-        assert o.startswith("\nUsage: pcs constraint")
-        assert r == 1
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint order set".split()
+        )
+        self.assertEqual(stdout, "")
+        self.assertTrue(stderr.startswith("\nUsage: pcs constraint"), stderr)
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order set D7 D8 set".split(),
         )
-        assert o.startswith("\nUsage: pcs constraint")
-        assert r == 1
+        self.assertEqual(stdout, "")
+        self.assertTrue(stderr.startswith("\nUsage: pcs constraint"), stderr)
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order set D7 D8 set set D8 D9".split(),
         )
-        assert o.startswith("\nUsage: pcs constraint")
-        assert r == 1
+        self.assertEqual(stdout, "")
+        self.assertTrue(stderr.startswith("\nUsage: pcs constraint"), stderr)
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order set setoptions score=100".split(),
         )
-        assert o.startswith("\nUsage: pcs constraint")
-        assert r == 1
+        self.assertEqual(stdout, "")
+        self.assertTrue(stderr.startswith("\nUsage: pcs constraint"), stderr)
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             (
                 "constraint order "
@@ -1368,14 +1594,18 @@ Colocation Constraints:
                 "set D8 D9 sequential=true require-all=false action=start role=Stopped"
             ).split(),
         )
-        ac(o, "")
-        assert r == 0
+        self.assertEqual(stderr, "")
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(self.temp_cib.name, "constraint order set D5 D6".split())
-        assert r == 0
-        ac(o, "")
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint order set D5 D6".split()
+        )
+        self.assertEqual(retval, 0)
+        self.assertEqual(stderr, "")
+        self.assertEqual(stdout, "")
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             (
                 "constraint order "
@@ -1384,8 +1614,9 @@ Colocation Constraints:
                 f"set D8 D9 action=demote role={const.PCMK_ROLE_PROMOTED}"
             ).split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            o,
+            stderr,
             (
                 f"Deprecation Warning: Value "
                 f"'{const.PCMK_ROLE_UNPROMOTED_LEGACY}' of option "
@@ -1393,12 +1624,14 @@ Colocation Constraints:
                 f"'{const.PCMK_ROLE_UNPROMOTED}' value instead\n"
             ),
         )
-        assert r == 0
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(self.temp_cib.name, "constraint order --full".split())
-        assert r == 0
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint order --full".split()
+        )
+        self.assertEqual(retval, 0)
         ac(
-            o,
+            stdout,
             f"""\
 Ordering Constraints:
   Resource Sets:
@@ -1407,17 +1640,22 @@ Ordering Constraints:
     set D5 D6 action=stop role=Started (id:order_set_D5D6D7-1_set) set D7 D8 action=promote role={const.PCMK_ROLE_UNPROMOTED_PRIMARY} (id:order_set_D5D6D7-1_set-1) set D8 D9 action=demote role={const.PCMK_ROLE_PROMOTED_PRIMARY} (id:order_set_D5D6D7-1_set-2) (id:order_set_D5D6D7-1)
 """,
         )
+        self.assertEqual(stderr, "")
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint remove order_set_D5D6".split()
         )
-        assert r == 0
-        ac(o, "")
+        self.assertEqual(retval, 0)
+        self.assertEqual(stderr, "")
+        self.assertEqual(stdout, "")
 
-        o, r = pcs(self.temp_cib.name, "constraint order --full".split())
-        assert r == 0
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint order --full".split()
+        )
+        self.assertEqual(retval, 0)
+        self.assertEqual(stderr, "")
         ac(
-            o,
+            stdout,
             f"""\
 Ordering Constraints:
   Resource Sets:
@@ -1426,9 +1664,12 @@ Ordering Constraints:
 """,
         )
 
-        o, r = pcs(self.temp_cib.name, "resource delete D5".split())
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "resource delete D5".split()
+        )
+        self.assertEqual(stdout, "")
         ac(
-            o,
+            stderr,
             outdent(
                 """\
             Removing D5 from set order_set_D5D6D7_set
@@ -1437,11 +1678,14 @@ Ordering Constraints:
             """
             ),
         )
-        assert r == 0
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(self.temp_cib.name, "resource delete D6".split())
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "resource delete D6".split()
+        )
+        self.assertEqual(stdout, "")
         ac(
-            o,
+            stderr,
             outdent(
                 """\
             Removing D6 from set order_set_D5D6D7_set
@@ -1451,115 +1695,126 @@ Ordering Constraints:
             """
             ),
         )
-        assert r == 0
+        self.assertEqual(retval, 0)
 
-        output, retValue = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order set D1 D2 sequential=foo".split(),
         )
         ac(
-            output,
+            stderr,
             (
                 "Error: 'foo' is not a valid sequential value, use 'false', 'true'\n"
                 + ERRORS_HAVE_OCCURRED
             ),
         )
-        self.assertEqual(1, retValue)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
-        output, retValue = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order set D1 D2 require-all=foo".split(),
         )
         ac(
-            output,
+            stderr,
             (
                 "Error: 'foo' is not a valid require-all value, use 'false', 'true'\n"
                 + ERRORS_HAVE_OCCURRED
             ),
         )
-        self.assertEqual(1, retValue)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
-        output, retValue = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order set D1 D2 role=foo".split(),
         )
         ac(
-            output,
+            stderr,
             (
                 "Error: 'foo' is not a valid role value, use {}\n"
                 + ERRORS_HAVE_OCCURRED
             ).format(format_list(const.PCMK_ROLES)),
         )
-        self.assertEqual(1, retValue)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
-        output, retValue = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order set D1 D2 action=foo".split(),
         )
         ac(
-            output,
+            stderr,
             (
                 "Error: 'foo' is not a valid action value, use 'demote', 'promote', 'start', 'stop'\n"
                 + ERRORS_HAVE_OCCURRED
             ),
         )
-        self.assertEqual(1, retValue)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
-        output, retValue = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order set D1 D2 foo=bar".split(),
         )
         ac(
-            output,
+            stderr,
             (
                 "Error: invalid set option 'foo', allowed options are: 'action', 'require-all', 'role', 'sequential'\n"
                 + ERRORS_HAVE_OCCURRED
             ),
         )
-        self.assertEqual(1, retValue)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
-        output, retValue = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order set D1 D2 setoptions foo=bar".split(),
         )
         ac(
-            output,
+            stderr,
             """\
 Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
 """,
         )
-        self.assertEqual(1, retValue)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
-        output, retValue = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order set D1 D2 setoptions kind=foo".split(),
         )
         ac(
-            output,
+            stderr,
             "Error: 'foo' is not a valid kind value, use 'Mandatory', 'Optional', 'Serialize'\n",
         )
-        self.assertEqual(1, retValue)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
-        output, retValue = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order set D1 D2 setoptions symmetrical=foo".split(),
         )
         ac(
-            output,
+            stderr,
             "Error: 'foo' is not a valid symmetrical value, use 'false', 'true'\n",
         )
-        self.assertEqual(1, retValue)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
-        output, retValue = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order set D1 D2 setoptions symmetrical=false kind=mandatory".split(),
         )
-        ac(output, "")
-        self.assertEqual(0, retValue)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, retValue = pcs(self.temp_cib.name, "constraint --full".split())
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint --full".split()
+        )
         ac(
-            output,
+            stdout,
             f"""\
 Location Constraints:
 Ordering Constraints:
@@ -1571,50 +1826,65 @@ Colocation Constraints:
 Ticket Constraints:
 """,
         )
-        self.assertEqual(0, retValue)
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
     def testLocationConstraintRule(self):
         self.fixture_resources()
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location D1 prefers rh7-1".split(),
         )
-        assert r == 0 and o == LOCATION_NODE_VALIDATION_SKIP_WARNING, o
+        self.assertEqual(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location D2 prefers rh7-2".split(),
         )
-        assert r == 0 and o == LOCATION_NODE_VALIDATION_SKIP_WARNING, o
+        self.assertEqual(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint rule add location-D1-rh7-1-INFINITY #uname eq rh7-1".split(),
         )
-        assert r == 0 and o == "", o
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint rule add location-D1-rh7-1-INFINITY #uname eq rh7-1".split(),
         )
-        assert r == 0 and o == "", o
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint rule add location-D1-rh7-1-INFINITY #uname eq rh7-1".split(),
         )
-        assert r == 0 and o == "", o
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint rule add location-D2-rh7-2-INFINITY date-spec hours=9-16 weekdays=1-5".split(),
         )
-        assert r == 0 and o == "", o
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(self.temp_cib.name, "constraint --full".split())
-        assert r == 0
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint --full".split()
+        )
+        self.assertEqual(retval, 0)
         ac(
-            o,
+            stdout,
             """\
 Location Constraints:
   Resource: D1
@@ -1635,26 +1905,34 @@ Colocation Constraints:
 Ticket Constraints:
 """,
         )
+        self.assertEqual(stderr, "")
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint rule remove location-D1-rh7-1-INFINITY-rule-1".split(),
         )
-        ac(o, "Removing Rule: location-D1-rh7-1-INFINITY-rule-1\n")
-        assert r == 0
+        self.assertEqual(stdout, "")
+        self.assertEqual(
+            stderr, "Removing Rule: location-D1-rh7-1-INFINITY-rule-1\n"
+        )
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint rule remove location-D1-rh7-1-INFINITY-rule-2".split(),
         )
-        assert (
-            r == 0 and o == "Removing Rule: location-D1-rh7-1-INFINITY-rule-2\n"
-        ), o
+        self.assertEqual(stdout, "")
+        self.assertEqual(
+            stderr, "Removing Rule: location-D1-rh7-1-INFINITY-rule-2\n"
+        )
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(self.temp_cib.name, "constraint --full".split())
-        assert r == 0
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint --full".split()
+        )
+        self.assertEqual(retval, 0)
         ac(
-            o,
+            stdout,
             """\
 Location Constraints:
   Resource: D1
@@ -1671,19 +1949,24 @@ Colocation Constraints:
 Ticket Constraints:
 """,
         )
+        self.assertEqual(stderr, "")
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint rule delete location-D1-rh7-1-INFINITY-rule".split(),
         )
-        assert (
-            r == 0 and o == "Removing Constraint: location-D1-rh7-1-INFINITY\n"
-        ), o
+        self.assertEqual(stdout, "")
+        self.assertEqual(
+            stderr, "Removing Constraint: location-D1-rh7-1-INFINITY\n"
+        )
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(self.temp_cib.name, "constraint --full".split())
-        assert r == 0
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint --full".split()
+        )
+        self.assertEqual(retval, 0)
         ac(
-            o,
+            stdout,
             """\
 Location Constraints:
   Resource: D2
@@ -1696,47 +1979,54 @@ Colocation Constraints:
 Ticket Constraints:
 """,
         )
+        self.assertEqual(stderr, "")
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             f"constraint location D1 rule role={const.PCMK_ROLE_PROMOTED}".split(),
         )
-        ac(o, "Error: no rule expression was specified\n")
-        assert r == 1
+        self.assertEqual(stderr, "Error: no rule expression was specified\n")
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             f"constraint location non-existent-resource rule role={const.PCMK_ROLE_PROMOTED} #uname eq rh7-1".split(),
         )
-        ac(o, "Error: Resource 'non-existent-resource' does not exist\n")
-        assert r == 1
+        self.assertEqual(
+            stderr, "Error: Resource 'non-existent-resource' does not exist\n"
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint rule add location-D1-rh7-1-INFINITY #uname eq rh7-2".split(),
         )
         ac(
-            output,
+            stderr,
             "Error: Unable to find constraint: location-D1-rh7-1-INFINITY\n",
         )
-        assert returnVal == 1
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint rule add location-D2-rh7-2-INFINITY id=123 #uname eq rh7-2".split(),
         )
         ac(
-            output,
+            stderr,
             "Error: invalid rule id '123', '1' is not a valid first character for a rule id\n",
         )
-        assert returnVal == 1
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
     def testLocationBadRules(self):
         # pcs no longer allows creating masters but supports existing ones. In
         # order to test it, we need to put a master in the CIB without pcs.
         fixture_to_cib(self.temp_cib.name, fixture_master_xml("stateful0"))
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             (
                 "constraint location stateful0 rule role={role} #uname eq "
@@ -1745,12 +2035,15 @@ Ticket Constraints:
             .format(role=str(const.PCMK_ROLE_PROMOTED).lower())
             .split(),
         )
-        ac(o, "")
-        assert r == 0
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(self.temp_cib.name, "constraint --full".split())
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint --full".split()
+        )
         ac(
-            o,
+            stdout,
             f"""\
 Location Constraints:
   Resource: stateful0
@@ -1762,41 +2055,45 @@ Colocation Constraints:
 Ticket Constraints:
 """,
         )
-        assert r == 0
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
         # pcs no longer allows creating masters but supports existing ones. In
         # order to test it, we need to put a master in the CIB without pcs.
         fixture_to_cib(self.temp_cib.name, fixture_master_xml("stateful1"))
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location stateful1 rule rulename #uname eq rh7-1 --force".split(),
         )
         ac(
-            o,
+            stderr,
             "Error: 'rulename #uname eq rh7-1' is not a valid rule expression: unexpected '#uname'\n",
         )
-        assert r == 1
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             f"constraint location stateful1 rule role={const.PCMK_ROLE_PROMOTED} rulename #uname eq rh7-1 --force".split(),
         )
         ac(
-            o,
+            stderr,
             "Error: 'rulename #uname eq rh7-1' is not a valid rule expression: unexpected '#uname'\n",
         )
-        assert r == 1
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             f"constraint location stateful1 rule role={const.PCMK_ROLE_PROMOTED} 25 --force".split(),
         )
         ac(
-            o,
+            stderr,
             "Error: '25' is not a valid rule expression: missing one of 'eq', 'ne', 'lt', 'gt', 'lte', 'gte', 'in_range', 'defined', 'not_defined', 'date-spec'\n",
         )
-        assert r == 1
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
     def testMasterSlaveConstraint(self):
         cibadmin = os.path.join(settings.pacemaker_binaries, "cibadmin")
@@ -1806,218 +2103,241 @@ Ticket Constraints:
             + f' {cibadmin} -R --scope nodes --xml-text \'<nodes><node id="1" uname="rh7-1"/><node id="2" uname="rh7-2"/></nodes>\''
         )
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "resource create dummy1 ocf:heartbeat:Dummy".split(),
         )
-        ac(o, "")
-        assert r == 0
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
         # pcs no longer allows creating masters but supports existing ones. In
         # order to test it, we need to put a master in the CIB without pcs.
         fixture_to_cib(self.temp_cib.name, fixture_master_xml("stateful1"))
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "resource create stateful2 ocf:pacemaker:Stateful --group statefulG".split(),
             mock_settings=get_mock_settings("crm_resource_binary"),
         )
+        self.assertEqual(stdout, "")
         ac(
-            o,
-            """\
-Warning: changing a monitor operation interval from 10s to 11 to make the operation unique
-""",
+            stderr,
+            "Warning: changing a monitor operation interval from 10s to 11 to make the operation unique\n",
         )
-        assert r == 0
+        self.assertEqual(retval, 0)
 
         # pcs no longer allows turning resources into masters but supports
         # existing ones. In order to test it, we need to put a master in the
         # CIB without pcs.
         wrap_element_by_master(self.temp_cib, "statefulG")
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location stateful1 prefers rh7-1".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            o,
+            stderr,
             LOCATION_NODE_VALIDATION_SKIP_WARNING
             + "Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints. Use --force to override.\n",
         )
-        assert r == 1
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location statefulG prefers rh7-1".split(),
         )
-        ac(
-            o,
+        self.assertEqual(stdout, "")
+        self.assertEqual(
+            stderr,
             LOCATION_NODE_VALIDATION_SKIP_WARNING
             + "Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints. Use --force to override.\n",
         )
-        assert r == 1
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location stateful1 rule #uname eq rh7-1".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            o,
+            stderr,
             "Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints. Use --force to override.\n",
         )
-        assert r == 1
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location statefulG rule #uname eq rh7-1".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            o,
+            stderr,
             "Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints. Use --force to override.\n",
         )
-        assert r == 1
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order stateful1 then dummy1".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            o,
+            stderr,
             "Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints. Use --force to override.\n",
         )
-        assert r == 1
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order dummy1 then statefulG".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            o,
+            stderr,
             "Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints. Use --force to override.\n",
         )
-        assert r == 1
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order set stateful1 dummy1".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            o,
+            stderr,
             "Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints, use --force to override\n",
         )
-        assert r == 1
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order set dummy1 statefulG".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            o,
+            stderr,
             "Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints, use --force to override\n",
         )
-        assert r == 1
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add stateful1 with dummy1".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            o,
+            stderr,
             "Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints. Use --force to override.\n",
         )
-        assert r == 1
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add dummy1 with statefulG".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            o,
+            stderr,
             "Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints. Use --force to override.\n",
         )
-        assert r == 1
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation set dummy1 stateful1".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            o,
+            stderr,
             "Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints, use --force to override\n",
         )
-        assert r == 1
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation set statefulG dummy1".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            o,
+            stderr,
             "Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints, use --force to override\n",
         )
-        assert r == 1
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(self.temp_cib.name, "constraint --full".split())
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint --full".split()
+        )
         ac(
-            o,
+            stdout,
             "Location Constraints:\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n",
         )
-        assert r == 0
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location stateful1 prefers rh7-1 --force".split(),
         )
-        ac(o, LOCATION_NODE_VALIDATION_SKIP_WARNING)
-        assert r == 0
+        ac(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location statefulG rule #uname eq rh7-1 --force".split(),
         )
-        ac(o, "")
-        assert r == 0
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order stateful1 then dummy1 --force".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            o,
+            stderr,
             "Adding stateful1 dummy1 (kind: Mandatory) (Options: first-action=start then-action=start)\n",
         )
-        assert r == 0
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order set stateful1 dummy1 --force".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            o,
+            stderr,
             "Warning: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints\n",
         )
-        assert r == 0
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add stateful1 with dummy1 --force".split(),
         )
-        ac(o, "")
-        assert r == 0
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation set stateful1 dummy1 --force".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            o,
+            stderr,
             "Warning: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints\n",
         )
-        assert r == 0
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(self.temp_cib.name, "constraint --full".split())
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint --full".split()
+        )
         ac(
-            o,
+            stdout,
             """\
 Location Constraints:
   Resource: stateful1
@@ -2038,7 +2358,8 @@ Colocation Constraints:
 Ticket Constraints:
 """,
         )
-        assert r == 0
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
     def testCloneConstraint(self):
         cibadmin = os.path.join(settings.pacemaker_binaries, "cibadmin")
@@ -2048,214 +2369,243 @@ Ticket Constraints:
             + f' {cibadmin} -R --scope nodes --xml-text \'<nodes><node id="1" uname="rh7-1"/><node id="2" uname="rh7-2"/></nodes>\''
         )
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "resource create dummy1 ocf:heartbeat:Dummy".split(),
         )
-        ac(o, "")
-        assert r == 0
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "resource create dummy ocf:heartbeat:Dummy clone".split(),
         )
-        ac(o, "")
-        assert r == 0
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "resource create dummy2 ocf:heartbeat:Dummy --group dummyG".split(),
         )
-        ac(o, "")
-        assert r == 0
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(self.temp_cib.name, "resource clone dummyG".split())
-        ac(o, "")
-        assert r == 0
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "resource clone dummyG".split()
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location dummy prefers rh7-1".split(),
         )
-        ac(
-            o,
+        self.assertEqual(stdout, "")
+        self.assertEqual(
+            stderr,
             LOCATION_NODE_VALIDATION_SKIP_WARNING
             + "Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints. Use --force to override.\n",
         )
-        assert r == 1
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location dummyG prefers rh7-1".split(),
         )
-        ac(
-            o,
+        self.assertEqual(stdout, "")
+        self.assertEqual(
+            stderr,
             LOCATION_NODE_VALIDATION_SKIP_WARNING
             + "Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints. Use --force to override.\n",
         )
-        assert r == 1
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location dummy rule #uname eq rh7-1".split(),
         )
-        ac(
-            o,
+        self.assertEqual(stdout, "")
+        self.assertEqual(
+            stderr,
             "Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints. Use --force to override.\n",
         )
-        assert r == 1
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location dummyG rule #uname eq rh7-1".split(),
         )
-        ac(
-            o,
+        self.assertEqual(stdout, "")
+        self.assertEqual(
+            stderr,
             "Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints. Use --force to override.\n",
         )
-        assert r == 1
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order dummy then dummy1".split(),
         )
-        ac(
-            o,
+        self.assertEqual(stdout, "")
+        self.assertEqual(
+            stderr,
             "Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints. Use --force to override.\n",
         )
-        assert r == 1
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order dummy1 then dummyG".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            o,
+            stderr,
             "Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints. Use --force to override.\n",
         )
-        assert r == 1
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order set dummy1 dummy".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            o,
+            stderr,
             "Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints, use --force to override\n",
         )
-        assert r == 1
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order set dummyG dummy1".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            o,
+            stderr,
             "Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints, use --force to override\n",
         )
-        assert r == 1
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add dummy with dummy1".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            o,
+            stderr,
             "Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints. Use --force to override.\n",
         )
-        assert r == 1
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add dummy1 with dummyG".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            o,
+            stderr,
             "Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints. Use --force to override.\n",
         )
-        assert r == 1
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation set dummy1 dummy".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            o,
+            stderr,
             "Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints, use --force to override\n",
         )
-        assert r == 1
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation set dummy1 dummyG".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            o,
+            stderr,
             "Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints, use --force to override\n",
         )
-        assert r == 1
+        self.assertEqual(retval, 1)
 
-        o, r = pcs(self.temp_cib.name, "constraint --full".split())
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint --full".split()
+        )
         ac(
-            o,
+            stdout,
             "Location Constraints:\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n",
         )
-        assert r == 0
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location dummy prefers rh7-1 --force".split(),
         )
-        ac(o, LOCATION_NODE_VALIDATION_SKIP_WARNING)
-        assert r == 0
+        self.assertEqual(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location dummyG rule #uname eq rh7-1 --force".split(),
         )
-        ac(o, "")
-        assert r == 0
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order dummy then dummy1 --force".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            o,
+            stderr,
             "Adding dummy dummy1 (kind: Mandatory) (Options: first-action=start then-action=start)\n",
         )
-        assert r == 0
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order set dummy1 dummy --force".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            o,
+            stderr,
             "Warning: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints\n",
         )
-        assert r == 0
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add dummy with dummy1 --force".split(),
         )
-        ac(o, "")
-        assert r == 0
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation set dummy1 dummy --force".split(),
         )
-        ac(
-            o,
+        self.assertEqual(stdout, "")
+        self.assertEqual(
+            stderr,
             "Warning: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints\n",
         )
-        assert r == 0
+        self.assertEqual(retval, 0)
 
-        o, r = pcs(self.temp_cib.name, "constraint --full".split())
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint --full".split()
+        )
         ac(
-            o,
+            stdout,
             """\
 Location Constraints:
   Resource: dummy
@@ -2276,7 +2626,8 @@ Colocation Constraints:
 Ticket Constraints:
 """,
         )
-        assert r == 0
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
     def testMissingRole(self):
         cibadmin = os.path.join(settings.pacemaker_binaries, "cibadmin")
@@ -2296,9 +2647,9 @@ Ticket Constraints:
             + f' {cibadmin} -R --scope constraints --xml-text \'<constraints><rsc_location id="cli-prefer-stateful0-master" role="Master" rsc="stateful0-master" node="rh7-1" score="INFINITY"/><rsc_location id="cli-ban-stateful0-master-on-rh7-1" rsc="stateful0-master" role="Slave" node="rh7-1" score="-INFINITY"/></constraints>\''
         )
 
-        o, r = pcs(self.temp_cib.name, ["constraint"])
+        stdout, stderr, retval = pcs(self.temp_cib.name, ["constraint"])
         ac(
-            o,
+            stdout,
             outdent(
                 f"""\
             Location Constraints:
@@ -2313,24 +2664,26 @@ Ticket Constraints:
             """
             ),
         )
-        assert r == 0
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
     def testManyConstraints(self):
         write_file_to_tmpfile(large_cib, self.temp_cib)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location dummy prefers rh7-1".split(),
         )
-        ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
-        assert returnVal == 0
+        self.assertEqual(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location config resources dummy --full".split(),
         )
         ac(
-            output,
+            stdout,
             outdent(
                 """\
             Location Constraints:
@@ -2340,58 +2693,65 @@ Ticket Constraints:
             """
             ),
         )
-        assert returnVal == 0
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location remove location-dummy-rh7-1-INFINITY".split(),
         )
-        ac(output, "")
-        assert returnVal == 0
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add dummy1 with dummy2".split(),
         )
-        ac(output, "")
-        assert returnVal == 0
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation remove dummy1 dummy2".split(),
         )
-        ac(output, "")
-        assert returnVal == 0
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order dummy1 then dummy2".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
+            stderr,
             "Adding dummy1 dummy2 (kind: Mandatory) (Options: first-action=start then-action=start)\n",
         )
-        assert returnVal == 0
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint order remove dummy1".split()
         )
-        ac(output, "")
-        assert returnVal == 0
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location dummy prefers rh7-1".split(),
         )
-        ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
-        assert returnVal == 0
+        self.assertEqual(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location config resources dummy --full".split(),
         )
         ac(
-            output,
+            stdout,
             outdent(
                 """\
             Location Constraints:
@@ -2401,61 +2761,68 @@ Ticket Constraints:
             """
             ),
         )
-        assert returnVal == 0
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint remove location-dummy-rh7-1-INFINITY".split(),
         )
-        ac(output, "")
-        assert returnVal == 0
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
     def testConstraintResourceCloneUpdate(self):
         self.fixture_resources()
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location D1 prefers rh7-1".split(),
         )
-        ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
-        assert returnVal == 0
+        self.assertEqual(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add D1 with D5".split(),
         )
-        ac(output, "")
-        assert returnVal == 0
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint order D1 then D5".split()
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
-            """\
-Adding D1 D5 (kind: Mandatory) (Options: first-action=start then-action=start)
-""",
+            stderr,
+            "Adding D1 D5 (kind: Mandatory) (Options: first-action=start then-action=start)\n",
         )
-        assert returnVal == 0
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint order D6 then D1".split()
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
-            """\
-Adding D6 D1 (kind: Mandatory) (Options: first-action=start then-action=start)
-""",
+            stderr,
+            "Adding D6 D1 (kind: Mandatory) (Options: first-action=start then-action=start)\n",
         )
-        assert returnVal == 0
+        self.assertEqual(retval, 0)
 
-        assert returnVal == 0
-        output, returnVal = pcs(self.temp_cib.name, "resource clone D1".split())
-        ac(output, "")
-        assert returnVal == 0
+        self.assertEqual(retval, 0)
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "resource clone D1".split()
+        )
+        self.assertEqual(stderr, "")
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint --full".split())
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint --full".split()
+        )
         ac(
-            output,
+            stdout,
             """\
 Location Constraints:
   Resource: D1-clone
@@ -2469,60 +2836,67 @@ Colocation Constraints:
 Ticket Constraints:
 """,
         )
-        assert returnVal == 0
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
     def testConstraintGroupCloneUpdate(self):
         self.fixture_resources()
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "resource group add DG D1".split()
         )
-        ac(output, "")
-        assert returnVal == 0
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location DG prefers rh7-1".split(),
         )
-        ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
-        assert returnVal == 0
+        self.assertEqual(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add DG with D5".split(),
         )
-        ac(output, "")
-        assert returnVal == 0
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint order DG then D5".split()
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
-            """\
-Adding DG D5 (kind: Mandatory) (Options: first-action=start then-action=start)
-""",
+            stderr,
+            "Adding DG D5 (kind: Mandatory) (Options: first-action=start then-action=start)\n",
         )
-        assert returnVal == 0
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint order D6 then DG".split()
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
-            """\
-Adding D6 DG (kind: Mandatory) (Options: first-action=start then-action=start)
-""",
+            stderr,
+            "Adding D6 DG (kind: Mandatory) (Options: first-action=start then-action=start)\n",
         )
-        assert returnVal == 0
+        self.assertEqual(retval, 0)
 
-        assert returnVal == 0
-        output, returnVal = pcs(self.temp_cib.name, "resource clone DG".split())
-        ac(output, "")
-        assert returnVal == 0
+        self.assertEqual(retval, 0)
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "resource clone DG".split()
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint --full".split())
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint --full".split()
+        )
         ac(
-            output,
+            stdout,
             """\
 Location Constraints:
   Resource: DG-clone
@@ -2536,7 +2910,8 @@ Colocation Constraints:
 Ticket Constraints:
 """,
         )
-        assert returnVal == 0
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
     def testRemoteNodeConstraintsRemove(self):
         self.temp_corosync_conf = get_tmp_file("tier1_test_constraints")
@@ -2544,7 +2919,7 @@ Ticket Constraints:
         self.fixture_resources()
         # constraints referencing the remote node's name,
         # deleting the remote node resource
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             (
                 "resource create vm-guest1 ocf:heartbeat:VirtualDomain "
@@ -2552,44 +2927,51 @@ Ticket Constraints:
                 "meta remote-node=guest1 --force"
             ).split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
+            stderr,
             "Warning: this command is not sufficient for creating a guest node, use"
             " 'pcs cluster node add-guest'\n",
         )
-        self.assertEqual(0, returnVal)
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location D1 prefers node1=100".split(),
         )
-        ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location D1 prefers guest1=200".split(),
         )
-        ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location D2 avoids node2=300".split(),
         )
-        ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location D2 avoids guest1=400".split(),
         )
-        ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint --full".split())
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint --full".split()
+        )
         ac(
-            output,
+            stdout,
             """\
 Location Constraints:
   Resource: D1
@@ -2605,13 +2987,14 @@ Colocation Constraints:
 Ticket Constraints:
 """,
         )
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "resource delete vm-guest1".split()
         )
-        ac(
-            output,
+        self.assertEqual(
+            stderr,
             outdent(
                 """\
             Removing Constraint - location-D1-guest1-200
@@ -2620,11 +3003,14 @@ Ticket Constraints:
             """
             ),
         )
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint --full".split())
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint --full".split()
+        )
         ac(
-            output,
+            stdout,
             """\
 Location Constraints:
   Resource: D1
@@ -2638,11 +3024,12 @@ Colocation Constraints:
 Ticket Constraints:
 """,
         )
-        self.assertEqual(0, returnVal)
+        self.assertEqual(retval, 0)
+        self.assertEqual(stderr, "")
 
         # constraints referencing the remote node's name,
         # removing the remote node
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             (
                 "resource create vm-guest1 ocf:heartbeat:VirtualDomain "
@@ -2650,30 +3037,35 @@ Ticket Constraints:
                 "meta remote-node=guest1 --force"
             ).split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
+            stderr,
             "Warning: this command is not sufficient for creating a guest node, use"
             " 'pcs cluster node add-guest'\n",
         )
-        self.assertEqual(0, returnVal)
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location D1 prefers guest1=200".split(),
         )
-        ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location D2 avoids guest1=400".split(),
         )
-        ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint --full".split())
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint --full".split()
+        )
         ac(
-            output,
+            stdout,
             """\
 Location Constraints:
   Resource: D1
@@ -2689,15 +3081,17 @@ Colocation Constraints:
 Ticket Constraints:
 """,
         )
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "cluster node remove-guest guest1".split(),
             corosync_conf_opt=self.temp_corosync_conf.name,
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
+            stderr,
             outdent(
                 """\
             Running action(s) 'pacemaker_remote disable', 'pacemaker_remote stop' on 'guest1' was skipped because the command does not run on a live cluster (e.g. -f was used). Please, run the action(s) manually.
@@ -2705,11 +3099,13 @@ Ticket Constraints:
             """
             ),
         )
-        self.assertEqual(0, returnVal)
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint --full".split())
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint --full".split()
+        )
         ac(
-            output,
+            stdout,
             """\
 Location Constraints:
   Resource: D1
@@ -2725,17 +3121,19 @@ Colocation Constraints:
 Ticket Constraints:
 """,
         )
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "resource delete vm-guest1".split()
         )
-        ac(output, "Deleting Resource - vm-guest1\n")
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "Deleting Resource - vm-guest1\n")
+        self.assertEqual(retval, 0)
 
         # constraints referencing the remote node resource
         # deleting the remote node resource
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             (
                 "resource create vm-guest1 ocf:heartbeat:VirtualDomain "
@@ -2743,25 +3141,28 @@ Ticket Constraints:
                 "meta remote-node=guest1 --force"
             ).split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
+            stderr,
             "Warning: this command is not sufficient for creating a guest node, use"
             " 'pcs cluster node add-guest'\n",
         )
-        self.assertEqual(0, returnVal)
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location vm-guest1 prefers node1".split(),
         )
-        ac(output, LOCATION_NODE_VALIDATION_SKIP_WARNING)
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "resource delete vm-guest1".split()
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
+            stderr,
             outdent(
                 """\
             Removing Constraint - location-vm-guest1-node1-INFINITY
@@ -2771,148 +3172,147 @@ Ticket Constraints:
             """
             ),
         )
-        self.assertEqual(0, returnVal)
+        self.assertEqual(retval, 0)
 
     def testDuplicateOrder(self):
         self.fixture_resources()
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint order D1 then D2".split()
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
-            """\
-Adding D1 D2 (kind: Mandatory) (Options: first-action=start then-action=start)
-""",
+            stderr,
+            "Adding D1 D2 (kind: Mandatory) (Options: first-action=start then-action=start)\n",
         )
-        self.assertEqual(0, returnVal)
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint order D1 then D2".split()
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
+            stderr,
             """\
 Error: duplicate constraint already exists, use --force to override
   start D1 then start D2 (kind:Mandatory) (id:order-D1-D2-mandatory)
 """,
         )
-        self.assertEqual(1, returnVal)
+        self.assertEqual(retval, 1)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order D1 then D2 --force".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
-            """\
-Adding D1 D2 (kind: Mandatory) (Options: first-action=start then-action=start)
-""",
+            stderr,
+            "Adding D1 D2 (kind: Mandatory) (Options: first-action=start then-action=start)\n",
         )
-        self.assertEqual(0, returnVal)
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order start D1 then start D2".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
+            stderr,
             """\
 Error: duplicate constraint already exists, use --force to override
   start D1 then start D2 (kind:Mandatory) (id:order-D1-D2-mandatory)
   start D1 then start D2 (kind:Mandatory) (id:order-D1-D2-mandatory-1)
 """,
         )
-        self.assertEqual(1, returnVal)
+        self.assertEqual(retval, 1)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order start D1 then start D2 --force".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
-            """\
-Adding D1 D2 (kind: Mandatory) (Options: first-action=start then-action=start)
-""",
+            stderr,
+            "Adding D1 D2 (kind: Mandatory) (Options: first-action=start then-action=start)\n",
         )
-        self.assertEqual(0, returnVal)
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order start D2 then start D5".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
-            """\
-Adding D2 D5 (kind: Mandatory) (Options: first-action=start then-action=start)
-""",
+            stderr,
+            "Adding D2 D5 (kind: Mandatory) (Options: first-action=start then-action=start)\n",
         )
-        self.assertEqual(0, returnVal)
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order start D2 then start D5".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
+            stderr,
             """\
 Error: duplicate constraint already exists, use --force to override
   start D2 then start D5 (kind:Mandatory) (id:order-D2-D5-mandatory)
 """,
         )
-        self.assertEqual(1, returnVal)
+        self.assertEqual(retval, 1)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order start D2 then start D5 --force".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
-            """\
-Adding D2 D5 (kind: Mandatory) (Options: first-action=start then-action=start)
-""",
+            stderr,
+            "Adding D2 D5 (kind: Mandatory) (Options: first-action=start then-action=start)\n",
         )
-        self.assertEqual(0, returnVal)
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order stop D5 then stop D6".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
-            """\
-Adding D5 D6 (kind: Mandatory) (Options: first-action=stop then-action=stop)
-""",
+            stderr,
+            "Adding D5 D6 (kind: Mandatory) (Options: first-action=stop then-action=stop)\n",
         )
-        self.assertEqual(0, returnVal)
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order stop D5 then stop D6".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
+            stderr,
             """\
 Error: duplicate constraint already exists, use --force to override
   stop D5 then stop D6 (kind:Mandatory) (id:order-D5-D6-mandatory)
 """,
         )
-        self.assertEqual(1, returnVal)
+        self.assertEqual(retval, 1)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order stop D5 then stop D6 --force".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
-            """\
-Adding D5 D6 (kind: Mandatory) (Options: first-action=stop then-action=stop)
-""",
+            stderr,
+            "Adding D5 D6 (kind: Mandatory) (Options: first-action=stop then-action=stop)\n",
         )
-        self.assertEqual(0, returnVal)
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint --full".split())
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint --full".split()
+        )
         ac(
-            output,
+            stdout,
             """\
 Location Constraints:
 Ordering Constraints:
@@ -2927,108 +3327,121 @@ Colocation Constraints:
 Ticket Constraints:
 """,
         )
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
     def testDuplicateColocation(self):
         self.fixture_resources()
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add D1 with D2".split(),
         )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add D1 with D2".split(),
         )
         ac(
-            output,
+            stderr,
             """\
 Error: duplicate constraint already exists, use --force to override
   D1 with D2 (score:INFINITY) (id:colocation-D1-D2-INFINITY)
 """,
         )
-        self.assertEqual(1, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add D1 with D2 50".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
+            stderr,
             """\
 Error: duplicate constraint already exists, use --force to override
   D1 with D2 (score:INFINITY) (id:colocation-D1-D2-INFINITY)
 """,
         )
-        self.assertEqual(1, returnVal)
+        self.assertEqual(retval, 1)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add D1 with D2 50 --force".split(),
         )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add started D1 with started D2".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
+            stderr,
             """\
 Error: duplicate constraint already exists, use --force to override
   D1 with D2 (score:INFINITY) (id:colocation-D1-D2-INFINITY)
   D1 with D2 (score:50) (id:colocation-D1-D2-50)
 """,
         )
-        self.assertEqual(1, returnVal)
+        self.assertEqual(retval, 1)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add started D1 with started D2 --force".split(),
         )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add started D2 with started D5".split(),
         )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add stopped D2 with stopped D5".split(),
         )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add stopped D2 with stopped D5".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
+            stderr,
             """\
 Error: duplicate constraint already exists, use --force to override
   D2 with D5 (score:INFINITY) (rsc-role:Stopped) (with-rsc-role:Stopped) (id:colocation-D2-D5-INFINITY-1)
 """,
         )
-        self.assertEqual(1, returnVal)
+        self.assertEqual(retval, 1)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add stopped D2 with stopped D5 --force".split(),
         )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint --full".split())
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint --full".split()
+        )
         ac(
-            output,
+            stdout,
             """\
 Location Constraints:
 Ordering Constraints:
@@ -3042,168 +3455,181 @@ Colocation Constraints:
 Ticket Constraints:
 """,
         )
+        self.assertEqual(stderr, "")
 
     def testDuplicateSetConstraints(self):
         self.fixture_resources()
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint order set D1 D2".split()
         )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint order set D1 D2".split()
         )
         ac(
-            output,
-            console_report(
-                "Duplicate constraints:",
-                "  set D1 D2 (id:order_set_D1D2_set) (id:order_set_D1D2)",
+            stderr,
+            (
+                "Duplicate constraints:\n"
+                "  set D1 D2 (id:order_set_D1D2_set) (id:order_set_D1D2)\n"
                 "Error: duplicate constraint already exists, use --force to "
-                "override",
-                ERRORS_HAVE_OCCURRED[:-1],
+                "override\n" + ERRORS_HAVE_OCCURRED
             ),
         )
-        self.assertEqual(1, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order set D1 D2 --force".split(),
         )
         ac(
-            output,
-            console_report(
-                "Duplicate constraints:",
-                "  set D1 D2 (id:order_set_D1D2_set) (id:order_set_D1D2)",
-                "Warning: duplicate constraint already exists",
+            stderr,
+            (
+                "Duplicate constraints:\n"
+                "  set D1 D2 (id:order_set_D1D2_set) (id:order_set_D1D2)\n"
+                "Warning: duplicate constraint already exists\n"
             ),
         )
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order set D1 D2 set D5 D6".split(),
         )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order set D1 D2 set D5 D6".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
-            console_report(
-                "Duplicate constraints:",
-                "  set D1 D2 (id:order_set_D1D2D5_set) set D5 D6 (id:order_set_D1D2D5_set-1) (id:order_set_D1D2D5)",
+            stderr,
+            (
+                "Duplicate constraints:\n"
+                "  set D1 D2 (id:order_set_D1D2D5_set) set D5 D6 (id:order_set_D1D2D5_set-1) (id:order_set_D1D2D5)\n"
                 "Error: duplicate constraint already exists, use --force to "
-                "override",
-                ERRORS_HAVE_OCCURRED[:-1],
+                "override\n" + ERRORS_HAVE_OCCURRED
             ),
         )
-        self.assertEqual(1, returnVal)
+        self.assertEqual(retval, 1)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order set D1 D2 set D5 D6 --force".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
-            console_report(
-                "Duplicate constraints:",
-                "  set D1 D2 (id:order_set_D1D2D5_set) set D5 D6 (id:order_set_D1D2D5_set-1) (id:order_set_D1D2D5)",
-                "Warning: duplicate constraint already exists",
+            stderr,
+            (
+                "Duplicate constraints:\n"
+                "  set D1 D2 (id:order_set_D1D2D5_set) set D5 D6 (id:order_set_D1D2D5_set-1) (id:order_set_D1D2D5)\n"
+                "Warning: duplicate constraint already exists\n"
             ),
         )
-        self.assertEqual(0, returnVal)
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint colocation set D1 D2".split()
         )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint colocation set D1 D2".split()
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
-            console_report(
-                "Duplicate constraints:",
-                "  set D1 D2 (id:colocation_set_D1D2_set) setoptions score=INFINITY (id:colocation_set_D1D2)",
+            stderr,
+            (
+                "Duplicate constraints:\n"
+                "  set D1 D2 (id:colocation_set_D1D2_set) setoptions score=INFINITY (id:colocation_set_D1D2)\n"
                 "Error: duplicate constraint already exists, use --force to "
-                "override",
-                ERRORS_HAVE_OCCURRED[:-1],
+                "override\n" + ERRORS_HAVE_OCCURRED
             ),
         )
-        self.assertEqual(1, returnVal)
+        self.assertEqual(retval, 1)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation set D1 D2 --force".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
-            console_report(
-                "Duplicate constraints:",
-                "  set D1 D2 (id:colocation_set_D1D2_set) setoptions score=INFINITY (id:colocation_set_D1D2)",
-                "Warning: duplicate constraint already exists",
+            stderr,
+            (
+                "Duplicate constraints:\n"
+                "  set D1 D2 (id:colocation_set_D1D2_set) setoptions score=INFINITY (id:colocation_set_D1D2)\n"
+                "Warning: duplicate constraint already exists\n"
             ),
         )
-        self.assertEqual(0, returnVal)
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation set D1 D2 set D5 D6".split(),
         )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation set D1 D2 set D5 D6".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
-            console_report(
-                "Duplicate constraints:",
-                "  set D1 D2 (id:colocation_set_D1D2D5_set) set D5 D6 (id:colocation_set_D1D2D5_set-1) setoptions score=INFINITY (id:colocation_set_D1D2D5)",
+            stderr,
+            (
+                "Duplicate constraints:\n"
+                "  set D1 D2 (id:colocation_set_D1D2D5_set) set D5 D6 (id:colocation_set_D1D2D5_set-1) setoptions score=INFINITY (id:colocation_set_D1D2D5)\n"
                 "Error: duplicate constraint already exists, use --force to "
-                "override",
-                ERRORS_HAVE_OCCURRED[:-1],
+                "override\n" + ERRORS_HAVE_OCCURRED
             ),
         )
-        self.assertEqual(1, returnVal)
+        self.assertEqual(retval, 1)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation set D1 D2 set D5 D6 --force".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
-            console_report(
-                "Duplicate constraints:",
-                "  set D1 D2 (id:colocation_set_D1D2D5_set) set D5 D6 (id:colocation_set_D1D2D5_set-1) setoptions score=INFINITY (id:colocation_set_D1D2D5)",
-                "Warning: duplicate constraint already exists",
+            stderr,
+            (
+                "Duplicate constraints:\n"
+                "  set D1 D2 (id:colocation_set_D1D2D5_set) set D5 D6 (id:colocation_set_D1D2D5_set-1) setoptions score=INFINITY (id:colocation_set_D1D2D5)\n"
+                "Warning: duplicate constraint already exists\n"
             ),
         )
-        self.assertEqual(0, returnVal)
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint colocation set D6 D1".split()
         )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint order set D6 D1".split()
         )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint --full".split())
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint --full".split()
+        )
         ac(
-            output,
+            stdout,
             """\
 Location Constraints:
 Ordering Constraints:
@@ -3223,22 +3649,24 @@ Colocation Constraints:
 Ticket Constraints:
 """,
         )
+        self.assertEqual(stderr, "")
 
     def testDuplicateLocationRules(self):
         self.fixture_resources()
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location D1 rule #uname eq node1".split(),
         )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location D1 rule #uname eq node1".split(),
         )
         ac(
-            output,
+            stderr,
             """\
 Error: duplicate constraint already exists, use --force to override
   Constraint: location-D1
@@ -3246,35 +3674,40 @@ Error: duplicate constraint already exists, use --force to override
       Expression: #uname eq node1 (id:location-D1-rule-expr)
 """,
         )
-        self.assertEqual(1, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location D1 rule #uname eq node1 --force".split(),
         )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location D2 rule #uname eq node1".split(),
         )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location D2 rule #uname eq node1 or #uname eq node2".split(),
         )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location D2 rule #uname eq node1 or #uname eq node2".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
+            stderr,
             """\
 Error: duplicate constraint already exists, use --force to override
   Constraint: location-D2-1
@@ -3283,14 +3716,15 @@ Error: duplicate constraint already exists, use --force to override
       Expression: #uname eq node2 (id:location-D2-1-rule-expr-1)
 """,
         )
-        self.assertEqual(1, returnVal)
+        self.assertEqual(retval, 1)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location D2 rule #uname eq node2 or #uname eq node1".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
+            stderr,
             """\
 Error: duplicate constraint already exists, use --force to override
   Constraint: location-D2-1
@@ -3299,18 +3733,21 @@ Error: duplicate constraint already exists, use --force to override
       Expression: #uname eq node2 (id:location-D2-1-rule-expr-1)
 """,
         )
-        self.assertEqual(1, returnVal)
+        self.assertEqual(retval, 1)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location D2 rule #uname eq node2 or #uname eq node1 --force".split(),
         )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint --full".split())
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint --full".split()
+        )
         ac(
-            output,
+            stdout,
             """\
 Location Constraints:
   Resource: D1
@@ -3337,203 +3774,206 @@ Colocation Constraints:
 Ticket Constraints:
 """,
         )
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
     def testConstraintsCustomId(self):
         self.fixture_resources()
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add D1 with D2 id=1id".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
-            """\
-Error: invalid constraint id '1id', '1' is not a valid first character for a constraint id
-""",
+            stderr,
+            "Error: invalid constraint id '1id', '1' is not a valid first character for a constraint id\n",
         )
-        self.assertEqual(1, returnVal)
+        self.assertEqual(retval, 1)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add D1 with D2 id=id1".split(),
         )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add D1 with D2 id=id1".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
-            """\
-Error: id 'id1' is already in use, please specify another one
-""",
+            stderr,
+            "Error: id 'id1' is already in use, please specify another one\n",
         )
-        self.assertEqual(1, returnVal)
+        self.assertEqual(retval, 1)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add D2 with D1 100 id=id2".split(),
         )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation set D1 D2 setoptions id=3id".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
-            """\
-Error: invalid constraint id '3id', '3' is not a valid first character for a constraint id
-""",
+            stderr,
+            "Error: invalid constraint id '3id', '3' is not a valid first character for a constraint id\n",
         )
-        self.assertEqual(1, returnVal)
+        self.assertEqual(retval, 1)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation set D1 D2 setoptions id=id3".split(),
         )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation set D1 D2 setoptions id=id3".split(),
         )
-        ac(output, "Error: 'id3' already exists\n")
-        self.assertEqual(1, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "Error: 'id3' already exists\n")
+        self.assertEqual(retval, 1)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation set D2 D1 setoptions score=100 id=id4".split(),
         )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order set D1 D2 setoptions id=5id".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
-            """\
-Error: invalid constraint id '5id', '5' is not a valid first character for a constraint id
-""",
+            stderr,
+            "Error: invalid constraint id '5id', '5' is not a valid first character for a constraint id\n",
         )
-        self.assertEqual(1, returnVal)
+        self.assertEqual(retval, 1)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order set D1 D2 setoptions id=id5".split(),
         )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order set D1 D2 setoptions id=id5".split(),
         )
-        ac(output, "Error: 'id5' already exists\n")
-        self.assertEqual(1, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "Error: 'id5' already exists\n")
+        self.assertEqual(retval, 1)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order set D2 D1 setoptions kind=Mandatory id=id6".split(),
         )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order D1 then D2 id=7id".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
-            """\
-Error: invalid constraint id '7id', '7' is not a valid first character for a constraint id
-""",
+            stderr,
+            "Error: invalid constraint id '7id', '7' is not a valid first character for a constraint id\n",
         )
-        self.assertEqual(1, returnVal)
+        self.assertEqual(retval, 1)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order D1 then D2 id=id7".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
-            """\
-Adding D1 D2 (kind: Mandatory) (Options: id=id7 first-action=start then-action=start)
-""",
+            stderr,
+            "Adding D1 D2 (kind: Mandatory) (Options: id=id7 first-action=start then-action=start)\n",
         )
-        self.assertEqual(0, returnVal)
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order D1 then D2 id=id7".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
-            """\
-Error: id 'id7' is already in use, please specify another one
-""",
+            stderr,
+            "Error: id 'id7' is already in use, please specify another one\n",
         )
-        self.assertEqual(1, returnVal)
+        self.assertEqual(retval, 1)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint order D2 then D1 kind=Optional id=id8".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
-            """\
-Adding D2 D1 (kind: Optional) (Options: id=id8 first-action=start then-action=start)
-""",
+            stderr,
+            "Adding D2 D1 (kind: Optional) (Options: id=id8 first-action=start then-action=start)\n",
         )
-        self.assertEqual(0, returnVal)
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location D1 rule constraint-id=9id defined pingd".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
-            """\
-Error: invalid constraint id '9id', '9' is not a valid first character for a constraint id
-""",
+            stderr,
+            "Error: invalid constraint id '9id', '9' is not a valid first character for a constraint id\n",
         )
-        self.assertEqual(1, returnVal)
+        self.assertEqual(retval, 1)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location D1 rule constraint-id=id9 defined pingd".split(),
         )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location D1 rule constraint-id=id9 defined pingd".split(),
         )
+        self.assertEqual(stdout, "")
         ac(
-            output,
-            """\
-Error: id 'id9' is already in use, please specify another one
-""",
+            stderr,
+            "Error: id 'id9' is already in use, please specify another one\n",
         )
-        self.assertEqual(1, returnVal)
+        self.assertEqual(retval, 1)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint location D2 rule score=100 constraint-id=id10 id=rule1 defined pingd".split(),
         )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(self.temp_cib.name, "constraint --full".split())
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "constraint --full".split()
+        )
         ac(
-            output,
+            stdout,
             """\
 Location Constraints:
   Resource: D1
@@ -3559,7 +3999,8 @@ Colocation Constraints:
 Ticket Constraints:
 """,
         )
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
 
 class ConstraintBaseTest(unittest.TestCase, AssertPcsMixin):
@@ -3621,7 +4062,7 @@ class TicketCreateWithSet(ConstraintBaseTest):
     def test_refuse_when_option_is_invalid(self):
         self.assert_pcs_fail(
             "constraint ticket set A B setoptions loss-policy".split(),
-            stdout_start=["Error: missing value of 'loss-policy' option"],
+            "Error: missing value of 'loss-policy' option\n",
         )
 
 
@@ -3650,12 +4091,12 @@ class TicketAdd(ConstraintBaseTest):
     def test_refuse_invalid_role(self):
         self.assert_pcs_fail(
             "constraint ticket add T bad-role A loss-policy=fence".split(),
-            [
-                ("Error: 'bad-role' is not a valid role value, use {}").format(
+            (
+                "Error: 'bad-role' is not a valid role value, use {}\n".format(
                     format_list(const.PCMK_ROLES)
-                ),
-                ERRORS_HAVE_OCCURRED[:-1],
-            ],
+                )
+                + ERRORS_HAVE_OCCURRED
+            ),
         )
 
     def test_refuse_duplicate_ticket(self):
@@ -3668,23 +4109,22 @@ class TicketAdd(ConstraintBaseTest):
         role = str(const.PCMK_ROLE_UNPROMOTED_LEGACY).lower()
         self.assert_pcs_fail(
             f"constraint ticket add T {role} A loss-policy=fence".split(),
-            [
+            (
                 f"Deprecation Warning: Value '{role}' of option role is "
                 f"deprecated and should not be used, use "
                 f"'{const.PCMK_ROLE_UNPROMOTED}' value instead\n"
-                "Duplicate constraints:",
-                f"  {const.PCMK_ROLE_UNPROMOTED} A loss-policy=fence ticket=T (id:ticket-T-A-{const.PCMK_ROLE_UNPROMOTED})",
-                "Error: duplicate constraint already exists, use --force to "
-                "override",
-                ERRORS_HAVE_OCCURRED[:-1],
-            ],
+                "Duplicate constraints:\n"
+                f"  {const.PCMK_ROLE_UNPROMOTED} A loss-policy=fence ticket=T (id:ticket-T-A-{const.PCMK_ROLE_UNPROMOTED})\n"
+                "Error: duplicate constraint already exists, use --force to override\n"
+                + ERRORS_HAVE_OCCURRED
+            ),
         )
 
     def test_accept_duplicate_ticket_with_force(self):
         role = str(const.PCMK_ROLE_PROMOTED_LEGACY).lower()
         self.assert_pcs_success(
             f"constraint ticket add T {role} A loss-policy=fence".split(),
-            stdout_full=(
+            stderr_full=(
                 f"Deprecation Warning: Value '{role}' of option role is "
                 f"deprecated and should not be used, use "
                 f"'{const.PCMK_ROLE_PROMOTED}' value instead\n"
@@ -3696,7 +4136,7 @@ class TicketAdd(ConstraintBaseTest):
                 f"constraint ticket add T {const.PCMK_ROLE_PROMOTED} A "
                 "loss-policy=fence --force"
             ).split(),
-            [
+            stderr_full=[
                 "Duplicate constraints:",
                 f"  {promoted_role} A loss-policy=fence ticket=T (id:ticket-T-A-{promoted_role})",
                 "Warning: duplicate constraint already exists",
@@ -3718,7 +4158,7 @@ class TicketDeleteRemoveTest(ConstraintBaseTest):
     def _test_usage(self):
         self.assert_pcs_fail(
             ["constraint", "ticket", self.command],
-            stdout_start=outdent(
+            stderr_start=outdent(
                 f"""
                 Usage: pcs constraint [constraints]...
                     ticket {self.command} <"""
@@ -3730,7 +4170,7 @@ class TicketDeleteRemoveTest(ConstraintBaseTest):
         self.assert_pcs_success("constraint ticket add T A".split())
         self.assert_pcs_success(
             "constraint ticket add T A --force".split(),
-            stdout_full=[
+            stderr_full=[
                 "Duplicate constraints:",
                 "  A ticket=T (id:ticket-T-A)",
                 "Warning: duplicate constraint already exists",
@@ -3799,7 +4239,7 @@ class TicketShow(ConstraintBaseTest):
         role = str(const.PCMK_ROLE_PROMOTED_LEGACY).lower()
         self.assert_pcs_success(
             f"constraint ticket add T {role} A loss-policy=fence".split(),
-            stdout_full=(
+            stderr_full=(
                 f"Deprecation Warning: Value '{role}' of option role is "
                 f"deprecated and should not be used, use "
                 f"'{const.PCMK_ROLE_PROMOTED}' value instead\n"
@@ -3859,7 +4299,7 @@ class LocationTypeId(ConstraintEffect):
                     rsc="A" score="INFINITY"
                 />
             </constraints>""",
-            output=LOCATION_NODE_VALIDATION_SKIP_WARNING,
+            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
     def test_avoids(self):
@@ -3875,7 +4315,7 @@ class LocationTypeId(ConstraintEffect):
                     rsc="A" score="-INFINITY"
                 />
             </constraints>""",
-            output=LOCATION_NODE_VALIDATION_SKIP_WARNING,
+            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
     def test_add(self):
@@ -3889,7 +4329,7 @@ class LocationTypeId(ConstraintEffect):
             """<constraints>
                 <rsc_location id="my-id" node="node1" rsc="A" score="INFINITY"/>
             </constraints>""",
-            output=LOCATION_NODE_VALIDATION_SKIP_WARNING,
+            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
     def test_rule(self):
@@ -3925,7 +4365,7 @@ class LocationTypePattern(ConstraintEffect):
                     rsc-pattern="res_[0-9]" score="INFINITY"
                 />
             </constraints>""",
-            LOCATION_NODE_VALIDATION_SKIP_WARNING,
+            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
     def test_avoids(self):
@@ -3936,7 +4376,7 @@ class LocationTypePattern(ConstraintEffect):
                     rsc-pattern="res_[0-9]" score="-INFINITY"
                 />
             </constraints>""",
-            LOCATION_NODE_VALIDATION_SKIP_WARNING,
+            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
     def test_add(self):
@@ -3947,7 +4387,7 @@ class LocationTypePattern(ConstraintEffect):
                     score="INFINITY"
                 />
             </constraints>""",
-            LOCATION_NODE_VALIDATION_SKIP_WARNING,
+            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
     def test_rule(self):
@@ -4076,7 +4516,6 @@ class LocationShowWithPattern(ConstraintBaseTest):
         self.assert_pcs_success(
             "constraint location config nodes --full".split(),
             outdent(
-                # pylint:disable=trailing-whitespace
                 """\
             Location Constraints:
               Node: 
@@ -4205,7 +4644,7 @@ class BundleLocation(Bundle):
                     />
                 </constraints>
             """,
-            output=LOCATION_NODE_VALIDATION_SKIP_WARNING,
+            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
     def test_bundle_avoids(self):
@@ -4218,7 +4657,7 @@ class BundleLocation(Bundle):
                     />
                 </constraints>
             """,
-            output=LOCATION_NODE_VALIDATION_SKIP_WARNING,
+            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
     def test_bundle_location(self):
@@ -4229,7 +4668,7 @@ class BundleLocation(Bundle):
                     <rsc_location id="id" node="node1" rsc="B" score="100" />
                 </constraints>
             """,
-            output=LOCATION_NODE_VALIDATION_SKIP_WARNING,
+            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
     def test_primitive_prefers(self):
@@ -4254,7 +4693,7 @@ class BundleLocation(Bundle):
                     />
                 </constraints>
             """,
-            output=LOCATION_NODE_VALIDATION_SKIP_WARNING,
+            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
     def test_primitive_avoids(self):
@@ -4279,7 +4718,7 @@ class BundleLocation(Bundle):
                     />
                 </constraints>
             """,
-            output=LOCATION_NODE_VALIDATION_SKIP_WARNING,
+            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
     def test_primitive_location(self):
@@ -4302,7 +4741,7 @@ class BundleLocation(Bundle):
                     <rsc_location id="id" node="node1" rsc="R" score="100" />
                 </constraints>
             """,
-            output=LOCATION_NODE_VALIDATION_SKIP_WARNING,
+            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
 
@@ -4379,7 +4818,10 @@ class BundleColocation(Bundle):
                     </rsc_colocation>
                 </constraints>
             """,
-            "Warning: R is a bundle resource, you should use the bundle id: B when adding constraints\n",
+            stderr_full=(
+                "Warning: R is a bundle resource, you should use the bundle "
+                "id: B when adding constraints\n"
+            ),
         )
 
 
@@ -4398,8 +4840,10 @@ class BundleOrder(Bundle):
                         then="X" then-action="start" />
                 </constraints>
             """,
-            "Adding B X (kind: Mandatory) (Options: first-action=start "
-            "then-action=start)\n",
+            stderr_full=(
+                "Adding B X (kind: Mandatory) (Options: first-action=start "
+                "then-action=start)\n"
+            ),
         )
 
     def test_primitive(self):
@@ -4421,8 +4865,10 @@ class BundleOrder(Bundle):
                         then="X" then-action="start" />
                 </constraints>
             """,
-            "Adding R X (kind: Mandatory) (Options: first-action=start "
-            "then-action=start)\n",
+            stderr_full=(
+                "Adding R X (kind: Mandatory) (Options: first-action=start "
+                "then-action=start)\n"
+            ),
         )
 
     def test_bundle_set(self):
@@ -4462,8 +4908,10 @@ class BundleOrder(Bundle):
                     </rsc_order>
                 </constraints>
             """,
-            "Warning: R is a bundle resource, you should use the bundle id: B "
-            "when adding constraints\n",
+            stderr_full=(
+                "Warning: R is a bundle resource, you should use the bundle id: B "
+                "when adding constraints\n"
+            ),
         )
 
 
@@ -4495,8 +4943,10 @@ class BundleTicket(Bundle):
                     <rsc_ticket id="ticket-T-R" rsc="R" ticket="T" />
                 </constraints>
             """,
-            "Warning: R is a bundle resource, you should use the bundle id: B "
-            "when adding constraints\n",
+            stderr_full=(
+                "Warning: R is a bundle resource, you should use the bundle id: B "
+                "when adding constraints\n"
+            ),
         )
 
     def test_bundle_set(self):
@@ -4534,8 +4984,10 @@ class BundleTicket(Bundle):
                     </rsc_ticket>
                 </constraints>
             """,
-            "Warning: R is a bundle resource, you should use the bundle id: B "
-            "when adding constraints\n",
+            stderr_full=(
+                "Warning: R is a bundle resource, you should use the bundle id: B "
+                "when adding constraints\n"
+            ),
         )
 
 
@@ -4560,6 +5012,7 @@ class LocationPrefersAvoidsMixin(
         self.temp_cib.close()
 
     def xml_score(self, score):
+        # pylint: disable=no-self-use
         return score if score else "INFINITY"
 
     @staticmethod
@@ -4599,7 +5052,7 @@ class LocationPrefersAvoidsMixin(
                 + self._unpack_node_score_list_to_cmd(node_score_list)
             ),
             self._construct_xml(node_score_list),
-            LOCATION_NODE_VALIDATION_SKIP_WARNING,
+            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
     def assert_failure(self, node_score_list, error_msg):
@@ -4755,10 +5208,9 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date lt 2019-01-01"
             ).split()
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             ["constraint"],
-            f"Warning: {CRM_RULE_MISSING_MSG}\n"
-            + outdent(
+            outdent(
                 """\
                 Location Constraints:
                   Resource: dummy
@@ -4770,6 +5222,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Ticket Constraints:
                 """
             ),
+            stderr_full=f"Warning: {CRM_RULE_MISSING_MSG}\n",
         )
 
     def test_in_effect_primitive_plain(self):
@@ -4780,7 +5233,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date gt 2019-01-01"
             ).split()
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             ["constraint"],
             outdent(
                 """\
@@ -4804,7 +5257,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date gt 2019-01-01"
             ).split()
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             "constraint --full".split(),
             outdent(
                 """\
@@ -4828,7 +5281,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date gt 2019-01-01"
             ).split()
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             "constraint --all".split(),
             outdent(
                 """\
@@ -4852,7 +5305,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date gt 2019-01-01"
             ).split()
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             "constraint --full --all".split(),
             outdent(
                 """\
@@ -4876,7 +5329,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date gt 2019-01-01"
             ).split()
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             ["constraint"],
             outdent(
                 """\
@@ -4900,7 +5353,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date lt 2019-01-01"
             ).split()
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             ["constraint"],
             outdent(
                 """\
@@ -4920,7 +5373,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date lt 2019-01-01"
             ).split()
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             "constraint --full".split(),
             outdent(
                 """\
@@ -4940,7 +5393,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date lt 2019-01-01"
             ).split()
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             "constraint --all".split(),
             outdent(
                 """\
@@ -4964,7 +5417,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date lt 2019-01-01"
             ).split()
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             "constraint --full --all".split(),
             outdent(
                 """\
@@ -4988,7 +5441,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date lt 2019-01-01"
             ).split()
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             ["constraint"],
             outdent(
                 """\
@@ -5008,7 +5461,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date eq 2019-01-01 or date eq 2019-03-01"
             ).split()
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             ["constraint"],
             outdent(
                 """\
@@ -5033,7 +5486,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date eq 2019-01-01 or date eq 2019-03-01"
             ).split()
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             "constraint --full".split(),
             outdent(
                 """\
@@ -5058,7 +5511,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date eq 2019-01-01 or date eq 2019-03-01"
             ).split()
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             "constraint --all".split(),
             outdent(
                 """\
@@ -5083,7 +5536,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date eq 2019-01-01 or date eq 2019-03-01"
             ).split()
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             "constraint --full --all".split(),
             outdent(
                 """\
@@ -5108,7 +5561,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date eq 2019-01-01 or date eq 2019-03-01"
             ).split()
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             ["constraint"],
             outdent(
                 """\
@@ -5131,7 +5584,7 @@ class ExpiredConstraints(ConstraintBaseTest):
             "constraint location dummy rule id=test-rule score=INFINITY date gt".split()
             + [self._tomorrow]
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             ["constraint"],
             outdent(
                 f"""\
@@ -5153,7 +5606,7 @@ class ExpiredConstraints(ConstraintBaseTest):
             "constraint location dummy rule id=test-rule score=INFINITY date gt".split()
             + [self._tomorrow]
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             "constraint --full".split(),
             outdent(
                 f"""\
@@ -5175,7 +5628,7 @@ class ExpiredConstraints(ConstraintBaseTest):
             "constraint location dummy rule id=test-rule score=INFINITY date gt".split()
             + [self._tomorrow]
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             "constraint --all".split(),
             outdent(
                 f"""\
@@ -5197,7 +5650,7 @@ class ExpiredConstraints(ConstraintBaseTest):
             "constraint location dummy rule id=test-rule score=INFINITY date gt".split()
             + [self._tomorrow]
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             "constraint --full --all".split(),
             outdent(
                 f"""\
@@ -5219,7 +5672,7 @@ class ExpiredConstraints(ConstraintBaseTest):
             "constraint location dummy_group rule id=test-rule score=INFINITY date gt".split()
             + [self._tomorrow]
         )
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             ["constraint"],
             outdent(
                 f"""\
@@ -5274,7 +5727,7 @@ class ExpiredConstraints(ConstraintBaseTest):
             ).split()
         )
 
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             ["constraint"],
             outdent(
                 """\
@@ -5342,7 +5795,7 @@ class ExpiredConstraints(ConstraintBaseTest):
             ).split()
         )
 
-        self.assert_pcs_result(
+        self.assert_pcs_success(
             "constraint --all".split(),
             outdent(
                 """\
@@ -5409,17 +5862,26 @@ class OrderVsGroup(unittest.TestCase, AssertPcsMixin):
     def test_allow_resources_in_different_groups(self):
         self.assert_pcs_success(
             "constraint order A then C".split(),
-            "Adding A C (kind: Mandatory) (Options: first-action=start then-action=start)\n",
+            stderr_full=(
+                "Adding A C (kind: Mandatory) (Options: first-action=start "
+                "then-action=start)\n"
+            ),
         )
 
     def test_allow_grouped_and_not_grouped_resource(self):
         self.assert_pcs_success(
             "constraint order A then D".split(),
-            "Adding A D (kind: Mandatory) (Options: first-action=start then-action=start)\n",
+            stderr_full=(
+                "Adding A D (kind: Mandatory) (Options: first-action=start "
+                "then-action=start)\n"
+            ),
         )
 
     def test_allow_group_and_resource(self):
         self.assert_pcs_success(
             "constraint order grAB then C".split(),
-            "Adding grAB C (kind: Mandatory) (Options: first-action=start then-action=start)\n",
+            stderr_full=(
+                "Adding grAB C (kind: Mandatory) (Options: first-action=start "
+                "then-action=start)\n"
+            ),
         )

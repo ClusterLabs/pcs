@@ -1,5 +1,6 @@
 from pcs_test.tools.assertions import (
     AssertPcsMixin,
+    AssertPcsMixinOld,
     assert_xml_equal,
 )
 from pcs_test.tools.misc import write_data_to_tmpfile
@@ -31,8 +32,9 @@ def xml_format(xml_string):
     return "\n".join(reindented_lines)
 
 
-def get_assert_pcs_effect_mixin(get_cib_part):
-    class AssertPcsEffectMixin(AssertPcsMixin):
+# TODO remove this function
+def get_assert_pcs_effect_mixin_old(get_cib_part):
+    class AssertPcsEffectMixin(AssertPcsMixinOld):
         def assert_resources_xml_in_cib(
             self,
             expected_xml_resources,
@@ -97,6 +99,97 @@ def get_assert_pcs_effect_mixin(get_cib_part):
                 output,
                 output_start,
                 output_regexp,
+            )
+
+    return AssertPcsEffectMixin
+
+
+def get_assert_pcs_effect_mixin(get_cib_part):
+    class AssertPcsEffectMixin(AssertPcsMixin):
+        def assert_resources_xml_in_cib(
+            self,
+            expected_xml_resources,
+            get_cib_part_func=None,
+        ):
+            self.temp_cib.seek(0)
+            if get_cib_part_func is not None:
+                xml = get_cib_part_func(self.temp_cib)
+            else:
+                xml = get_cib_part(self.temp_cib)
+            try:
+                assert_xml_equal(expected_xml_resources, xml.decode())
+            except AssertionError as e:
+                raise AssertionError(
+                    "{0}\n\nCopy format ;)\n{1}".format(
+                        e.args[0], xml_format(xml.decode())
+                    )
+                ) from e
+
+        def assert_effect_single(
+            self,
+            command,
+            expected_xml,
+            stdout_full=None,
+            stdout_start=None,
+            stdout_regexp=None,
+            stderr_full=None,
+            stderr_start=None,
+            stderr_regexp=None,
+        ):
+            # pylint: disable=too-many-arguments
+            self.assert_pcs_success(
+                command,
+                stdout_full=stdout_full,
+                stdout_start=stdout_start,
+                stdout_regexp=stdout_regexp,
+                stderr_full=stderr_full,
+                stderr_start=stderr_start,
+                stderr_regexp=stderr_regexp,
+            )
+            self.assert_resources_xml_in_cib(expected_xml)
+
+        def assert_effect(
+            self,
+            alternative_cmds,
+            expected_xml,
+            stdout_full=None,
+            stdout_start=None,
+            stdout_regexp=None,
+            stderr_full=None,
+            stderr_start=None,
+            stderr_regexp=None,
+        ):
+            # pylint: disable=too-many-arguments
+            alternative_list = (
+                alternative_cmds
+                if isinstance(alternative_cmds[0], list)
+                else [alternative_cmds]
+            )
+            self.temp_cib.seek(0)
+            cib_content = self.temp_cib.read()
+            self.temp_cib.seek(0)
+            for alternative in alternative_list[:-1]:
+                self.assert_effect_single(
+                    alternative,
+                    expected_xml,
+                    stdout_full=stdout_full,
+                    stdout_start=stdout_start,
+                    stdout_regexp=stdout_regexp,
+                    stderr_full=stderr_full,
+                    stderr_start=stderr_start,
+                    stderr_regexp=stderr_regexp,
+                )
+                write_data_to_tmpfile(cib_content, self.temp_cib)
+
+            self.assert_effect_single(
+                alternative_list[-1],
+                expected_xml,
+                stdout_full=stdout_full,
+                stdout_start=stdout_start,
+                stdout_regexp=stdout_regexp,
+                stderr_full=stderr_full,
+                stderr_start=stderr_start,
+                stderr_regexp=stderr_regexp,
             )
 
     return AssertPcsEffectMixin

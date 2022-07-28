@@ -7,7 +7,7 @@ from pcs.common.pacemaker.resource.list import ListCibResourcesDto
 from pcs_test.tier1.resource.test_config import ResourceConfigCmdMixin
 from pcs_test.tools import resources_dto
 from pcs_test.tools.misc import get_test_resource
-from pcs_test.tools.pcs_runner import PcsRunner
+from pcs_test.tools.pcs_runner import PcsRunnerOld as PcsRunner
 
 
 class StonithConfigJson(TestCase):

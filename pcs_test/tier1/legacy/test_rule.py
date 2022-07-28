@@ -19,7 +19,7 @@ from pcs_test.tools.misc import (
     skip_unless_crm_rule,
     write_file_to_tmpfile,
 )
-from pcs_test.tools.pcs_runner import pcs
+from pcs_test.tools.pcs_runner import pcs_old as pcs
 
 # pylint: disable=invalid-name
 # pylint: disable=line-too-long
