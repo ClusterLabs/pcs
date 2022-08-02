@@ -275,7 +275,9 @@ class CheckSbd(AllAtOnceStrategyMixin, RunRemotelyBase):
             if not data["sbd"]["installed"]:
                 report_list.append(
                     ReportItem.error(
-                        reports.messages.SbdNotInstalled(node_label)
+                        reports.messages.ServiceNotInstalled(
+                            node_label, ["sbd"]
+                        )
                     )
                 )
             if "watchdog" in data:

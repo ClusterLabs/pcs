@@ -959,7 +959,9 @@ class Validations(TestCase):
             [fixture.info(report_codes.SBD_CHECK_STARTED)]
             + [
                 fixture.error(
-                    report_codes.SBD_NOT_INSTALLED, node=self.node_list[1]
+                    report_codes.SERVICE_NOT_INSTALLED,
+                    node=self.node_list[1],
+                    service_list=["sbd"],
                 )
             ]
             + [
