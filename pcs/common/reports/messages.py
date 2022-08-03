@@ -868,20 +868,6 @@ class InvalidScore(ReportItemMessage):
 
 
 @dataclass(frozen=True)
-class MultipleScoreOptions(ReportItemMessage):
-    """
-    More than one of mutually exclusive score options has been set
-    (score, score-attribute, score-attribute-mangle in rules or colocation sets)
-    """
-
-    _code = codes.MULTIPLE_SCORE_OPTIONS
-
-    @property
-    def message(self) -> str:
-        return "multiple score options cannot be specified"
-
-
-@dataclass(frozen=True)
 class RunExternalProcessStarted(ReportItemMessage):
     """
     Information about running an external process
@@ -2645,123 +2631,6 @@ class ResourceBundleAlreadyContainsAResource(ReportItemMessage):
             f"bundle '{self.bundle_id}' already contains resource "
             f"'{self.resource_id}', a bundle may contain at most one resource"
         )
-
-
-# TODO: remove, use ADD_REMOVE reports
-@dataclass(frozen=True)
-class CannotGroupResourceAdjacentResourceForNewGroup(ReportItemMessage):
-    """
-    Cannot put resources next to an adjacent resource in a group, because the
-    group does not exist yet and therefore cannot contain the adjacent resource
-
-    adjacent_resource_id -- id of an adjacent resource
-    group_id -- id of the group resources cannot be put into
-    """
-
-    adjacent_resource_id: str
-    group_id: str
-    _code = codes.CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_FOR_NEW_GROUP
-
-    @property
-    def message(self) -> str:
-        return (
-            f"Group '{self.group_id}' does not exist and therefore does not "
-            f"contain '{self.adjacent_resource_id}' resource to put resources "
-            "next to"
-        )
-
-
-# TODO: remove, use ADD_REMOVE reports
-@dataclass(frozen=True)
-class CannotGroupResourceAdjacentResourceNotInGroup(ReportItemMessage):
-    """
-    Cannot put resources next to an adjacent resource in a group, because the
-    adjacent resource does not belong to the group
-
-    adjacent_resource_id -- id of an adjacent resource
-    group_id -- id of the group resources cannot be put into
-    """
-
-    adjacent_resource_id: str
-    group_id: str
-    _code = codes.CANNOT_GROUP_RESOURCE_ADJACENT_RESOURCE_NOT_IN_GROUP
-
-    @property
-    def message(self) -> str:
-        return (
-            f"There is no resource '{self.adjacent_resource_id}' in the group "
-            f"'{self.group_id}', cannot put resources next to it in the group"
-        )
-
-
-# TODO: remove, use ADD_REMOVE reports
-@dataclass(frozen=True)
-class CannotGroupResourceAlreadyInTheGroup(ReportItemMessage):
-    """
-    Cannot put resources into a group, they are already there
-
-    resource_list -- ids of resources which cannot be put into a group
-    group_id -- id of the group the resource cannot be put into
-    """
-
-    resource_list: List[str]
-    group_id: str
-    _code = codes.CANNOT_GROUP_RESOURCE_ALREADY_IN_THE_GROUP
-
-    @property
-    def message(self) -> str:
-        resources = format_list(self.resource_list)
-        exist = format_plural(self.resource_list, "exists", "exist")
-        return f"{resources} already {exist} in '{self.group_id}'"
-
-
-# TODO: remove, use ADD_REMOVE reports
-@dataclass(frozen=True)
-class CannotGroupResourceMoreThanOnce(ReportItemMessage):
-    """
-    Cannot put the same resources into a group more than once
-
-    resource_list -- ids of resources specified more than once
-    """
-
-    resource_list: List[str]
-    _code = codes.CANNOT_GROUP_RESOURCE_MORE_THAN_ONCE
-
-    @property
-    def message(self) -> str:
-        resources = format_list(self.resource_list)
-        return f"Resources specified more than once: {resources}"
-
-
-# TODO: remove, use ADD_REMOVE reports
-@dataclass(frozen=True)
-class CannotGroupResourceNoResources(ReportItemMessage):
-    """
-    Cannot put resources into a group, no resources were specified
-    """
-
-    _code = codes.CANNOT_GROUP_RESOURCE_NO_RESOURCES
-
-    @property
-    def message(self) -> str:
-        return "No resources to add"
-
-
-# TODO: remove, use ADD_REMOVE reports
-@dataclass(frozen=True)
-class CannotGroupResourceNextToItself(ReportItemMessage):
-    """
-    Cannot put a resource into a group next to itself
-
-    resource_id -- id of the resource which cannot be put into a group
-    """
-
-    resource_id: str
-    _code = codes.CANNOT_GROUP_RESOURCE_NEXT_TO_ITSELF
-
-    @property
-    def message(self) -> str:
-        return f"Cannot put resource '{self.resource_id}' next to itself"
 
 
 @dataclass(frozen=True)
@@ -4568,23 +4437,6 @@ class SbdDeviceIsNotBlockDevice(ReportItemMessage):
         return f"{self.node}: device '{self.device}' is not a block device"
 
 
-# TODO: generalize
-@dataclass(frozen=True)
-class SbdNotInstalled(ReportItemMessage):
-    """
-    SBD is not installed on specified node
-
-    node -- node name
-    """
-
-    node: str
-    _code = codes.SBD_NOT_INSTALLED
-
-    @property
-    def message(self) -> str:
-        return f"SBD is not installed on node '{self.node}'"
-
-
 @dataclass(frozen=True)
 class StonithWatchdogTimeoutCannotBeSet(ReportItemMessage):
     """
@@ -4841,28 +4693,6 @@ class FileIoError(ReportItemMessage):
             file_path=format_optional(self.file_path, " '{0}'"),
             file_role=_format_file_role(self.file_type_code),
         )
-
-
-# TODO: not used? should be removed?
-@dataclass(frozen=True)
-class UnableToDetermineUserUid(ReportItemMessage):
-    user: str
-    _code = codes.UNABLE_TO_DETERMINE_USER_UID
-
-    @property
-    def message(self) -> str:
-        return f"Unable to determine uid of user '{self.user}'"
-
-
-# TODO: not used? should be removed?
-@dataclass(frozen=True)
-class UnableToDetermineGroupGid(ReportItemMessage):
-    group: str
-    _code = codes.UNABLE_TO_DETERMINE_GROUP_GID
-
-    @property
-    def message(self) -> str:
-        return f"Unable to determine gid of group '{self.group}'"
 
 
 @dataclass(frozen=True)
