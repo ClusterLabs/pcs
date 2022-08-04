@@ -8,9 +8,11 @@
   managed ([rhbz#1918527])
 - Misleading error message from `pcs booth sync` when booth config directory
   (`/etc/booth`) is missing ([rhbz#1791670])
+- `pcs quorum device remove` works again (broken since 0.10.13) ([rhbz#2115326])
 
 [rhbz#1791670]: https://bugzilla.redhat.com/show_bug.cgi?id=1791670
 [rhbz#1918527]: https://bugzilla.redhat.com/show_bug.cgi?id=1918527
+[rhbz#2115326]: https://bugzilla.redhat.com/show_bug.cgi?id=2115326
 
 
 ## [0.10.14] - 2022-06-23

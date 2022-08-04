@@ -2519,7 +2519,7 @@ def qdevice_net_client_destroy(param, request, auth_user)
   end
   stdout, stderr, retval = run_cmd(
     auth_user,
-    PCS, '--' 'qdevice', 'net-client', 'destroy'
+    PCS, '--', 'qdevice', 'net-client', 'destroy'
   )
   if retval != 0
     return [400, stderr.join('')]
