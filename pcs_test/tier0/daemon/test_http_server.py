@@ -9,6 +9,7 @@ from tornado.httpserver import HTTPServer
 
 from pcs.daemon import http_server
 from pcs.daemon.ssl import PcsdSSL
+from pcs.lib.auth.const import ADMIN_GROUP
 
 from pcs_test.tools.misc import create_setup_patch_mixin
 
@@ -32,6 +33,15 @@ BIND_UNIX_SOCKET = path2sock(UNIX_SOCKET_PATH)
 logging.getLogger("pcs.daemon").setLevel(logging.CRITICAL)
 
 
+def get_chown_mock(test_case):
+    def assert_chown(file, user, group):
+        test_case.assertEqual(file, UNIX_SOCKET_PATH)
+        test_case.assertEqual(user, 0)
+        test_case.assertEqual(group, ADMIN_GROUP)
+
+    return assert_chown
+
+
 class ManageTest(TestCase, create_setup_patch_mixin(http_server)):
     def setUp(self):
         self.server_list = []
@@ -41,6 +51,7 @@ class ManageTest(TestCase, create_setup_patch_mixin(http_server)):
         # self.setup_patch("PcsdSSL", Mock(return_value=self.pcsd_ssl))
         self.setup_patch("bind_sockets", lambda port, addr: addr2sock([addr]))
         self.setup_patch("bind_unix_socket", lambda path, mode: path2sock(path))
+        self.setup_patch("shutil.chown", get_chown_mock(self))
 
         self.app = MagicMock()
         self.https_server_manage = http_server.HttpsServerManage(

@@ -3,6 +3,7 @@ set -ex
 
 cluster_user=hacluster
 cluster_user_password=qa57Jk27eP
+pcsd_socket_path="@LOCALSTATEDIR@/run/pcsd.socket"
 
 echo "${cluster_user_password}" | passwd --stdin "${cluster_user}";
 
@@ -39,4 +40,14 @@ pcs/api_v2_client resource_agent.get_agent_metadata '{"agent_name":{"standard":"
 
 # sync
 pcs/api_v2_client --sync resource_agent.get_agent_metadata '{"agent_name":{"standard":"ocf","provider":"pacemaker","type":"Stateful"}}'
+
+# unix socket test
+curl --unix-socket "${pcsd_socket_path}" http:/something/api/v1/resource-agent-get-agents-list/v1 --data '{}' > output.json
+cat output.json; echo ""
+python3 -c "import json; import sys; json.load(open('output.json'))['status'] != 'success' and (sys.exit(1))";
+
+# make sure socket is not accessible by all users
+useradd testuser
+su testuser
+! curl --unix-socket "${pcsd_socket_path}" http:/something/api/v1/resource-agent-get-agents-list/v1 --data '{}'
 exit 0

@@ -1,3 +1,5 @@
+import shutil
+
 from tornado.httpserver import HTTPServer
 from tornado.netutil import (
     bind_sockets,
@@ -6,6 +8,7 @@ from tornado.netutil import (
 
 from pcs.daemon import log
 from pcs.daemon.ssl import PcsdSSL
+from pcs.lib.auth.const import ADMIN_GROUP
 
 
 class HttpsServerManageException(Exception):
@@ -79,8 +82,9 @@ class HttpsServerManage:
 
         self.__tcp_server.add_sockets(sockets)
         self.__unix_socket_server.add_socket(
-            bind_unix_socket(self.__unix_socket_path, mode=0o666)
+            bind_unix_socket(self.__unix_socket_path, mode=0o660)
         )
+        shutil.chown(self.__unix_socket_path, 0, ADMIN_GROUP)
 
         log.pcsd.info("Server is listening")
         self.__server_is_running = True

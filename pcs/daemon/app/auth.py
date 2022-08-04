@@ -11,6 +11,7 @@ from pcs.daemon.session import (
     Session,
     Storage,
 )
+from pcs.lib.auth.const import SUPERUSER
 from pcs.lib.auth.provider import (
     AuthProvider,
     AuthUser,
@@ -58,6 +59,9 @@ class _BaseLibAuthProvider:
             struct.calcsize("3i"),
         )
         dummy_pid, uid, dummy_gid = struct.unpack("3i", credentials)
+        if uid == 0:
+            # treat root as cluster superuser
+            return SUPERUSER
 
         return pwd.getpwuid(uid).pw_name
 
