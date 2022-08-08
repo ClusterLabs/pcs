@@ -66,10 +66,12 @@ class ManageTest(TestCase, create_setup_patch_mixin(http_server)):
     def test_starting_and_stopping_new_http_server(self):
         self.https_server_manage.start()
         self.server_list[0].add_sockets.assert_called_once_with(BIND_SOCKETS)
+        self.server_list[1].add_socket.assert_called_once_with(BIND_UNIX_SOCKET)
         self.assertTrue(self.https_server_manage.server_is_running)
 
         self.https_server_manage.stop()
         self.server_list[0].stop.assert_called_once()
+        self.server_list[1].stop.assert_called_once()
         self.assertFalse(self.https_server_manage.server_is_running)
 
     def test_reload_certs_raises_when_server_not_started(self):

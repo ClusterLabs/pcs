@@ -21,6 +21,7 @@ from tornado.httputil import (
 )
 from tornado.web import HTTPError
 
+from pcs.common.tools import StringCollection
 from pcs.daemon import log
 
 SINATRA_GUI = "sinatra_gui"
@@ -252,7 +253,7 @@ class Wrapper:
             raise HTTPError(500) from e
 
     async def request_gui(
-        self, request: HTTPServerRequest, user, groups
+        self, request: HTTPServerRequest, user: str, groups: StringCollection
     ) -> SinatraResult:
         # Sessions handling was removed from ruby. However, some session
         # information is needed for ruby code (e.g. rendering some parts of
@@ -264,7 +265,7 @@ class Wrapper:
                     request,
                     {
                         "username": user,
-                        "groups": groups,
+                        "groups": list(groups),
                     },
                 )
             )

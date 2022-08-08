@@ -1,18 +1,17 @@
 import logging
 import os
+from unittest import mock
 
-from pcs.daemon import auth
 from pcs.daemon.app import ui
-
-from pcs_test.tier0.daemon.app import fixtures_app
-from pcs_test.tools.misc import (
-    create_setup_patch_mixin,
-    get_tmp_dir,
+from pcs.lib.auth.provider import (
+    AuthProvider,
+    AuthUser,
 )
 
-USER = "user"
-PASSWORD = "password"
-LOGIN_BODY = {"username": USER, "password": PASSWORD}
+from pcs_test.tier0.daemon.app import fixtures_app
+from pcs_test.tools.misc import get_tmp_dir
+
+LOGIN_BODY = {"username": fixtures_app.USER, "password": fixtures_app.PASSWORD}
 PREFIX = "/ui/"
 
 # Don't write errors to test output.
@@ -41,13 +40,14 @@ class AppTest(fixtures_app.AppUiTestMixin):
             app_dir=self.spa_dir_path,
             fallback_page_path=self.fallback_path,
             session_storage=self.session_storage,
+            auth_provider=AuthProvider(logging.Logger("test logger")),
         )
 
 
 class Static(AppTest):
     def test_index(self):
         self.assert_success_response(
-            self.get(f"{PREFIX}"),
+            self.get(PREFIX),
             self.index_content,
         )
 
@@ -62,37 +62,37 @@ class Fallback(AppTest):
 
     def test_index(self):
         self.assert_success_response(
-            self.get(f"{PREFIX}"),
+            self.get(PREFIX),
             self.fallback_content,
         )
 
 
-class Login(AppTest, create_setup_patch_mixin(ui)):
+class Login(AppTest):
     def setUp(self):
-        self.setup_patch("authorize_user", self.authorize_user)
         super().setUp()
-
-    async def authorize_user(self, username, password):
-        self.assertEqual(username, USER)
-        self.assertEqual(password, PASSWORD)
-        return auth.UserAuthInfo(
-            username,
-            self.user_auth_info.groups,
-            is_authorized=self.user_auth_info.valid,
+        auth_provider_patcher = mock.patch.object(
+            AuthProvider, "auth_by_username_password"
         )
+        self.addCleanup(auth_provider_patcher.stop)
+        self.auth_provider_mock = auth_provider_patcher.start()
 
     def test_login_attempt_failed(self):
-        self.user_auth_info.valid = False
+        self.auth_provider_mock.return_value = None
         self.assert_unauth_ajax(
             self.post(f"{PREFIX}login", LOGIN_BODY, is_ajax=True)
         )
+        self.auth_provider_mock.assert_called_once_with(
+            fixtures_app.USER, fixtures_app.PASSWORD
+        )
 
     def test_login_attempt_succeeded(self):
-        self.user_auth_info.valid = True
+        self.auth_provider_mock.return_value = AuthUser(
+            fixtures_app.USER, fixtures_app.GROUPS
+        )
         response = self.post(f"{PREFIX}login", LOGIN_BODY, is_ajax=True)
-        self.assert_success_response(
-            response,
-            "",
+        self.assert_success_response(response, "")
+        self.auth_provider_mock.assert_called_once_with(
+            fixtures_app.USER, fixtures_app.PASSWORD
         )
 
 
@@ -101,6 +101,4 @@ class Logout(AppTest):
         session1 = self.create_login_session()
         response = self.get(f"{PREFIX}logout", sid=session1.sid, is_ajax=True)
         self.assert_success_response(response, "OK")
-        self.assertFalse(
-            self.session_storage.provide(session1.sid).is_authenticated
-        )
+        self.assertIsNone(self.session_storage.get(session1.sid))

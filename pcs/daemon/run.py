@@ -93,6 +93,7 @@ def configure_app(
                 ruby_pcsd_wrapper,
                 sync_config_lock,
                 https_server_manage,
+                auth_provider,
             )
         )
 
@@ -107,8 +108,11 @@ def configure_app(
                         "ui_instructions.html",
                     ),
                     session_storage=session_storage,
+                    auth_provider=auth_provider,
                 )
-                + sinatra_ui.get_routes(session_storage, ruby_pcsd_wrapper)
+                + sinatra_ui.get_routes(
+                    session_storage, auth_provider, ruby_pcsd_wrapper
+                )
             )
 
         return Application(routes, debug=debug)

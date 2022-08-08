@@ -10,9 +10,12 @@ from pcs.daemon import (
     ruby_pcsd,
 )
 from pcs.daemon.app import sinatra_remote
+from pcs.lib.auth.provider import (
+    AuthProvider,
+    AuthUser,
+)
 
 from pcs_test.tier0.daemon.app import fixtures_app
-from pcs_test.tools.misc import create_setup_patch_mixin
 
 # Don't write errors to test output.
 logging.getLogger("tornado.access").setLevel(logging.CRITICAL)
@@ -25,6 +28,7 @@ class AppTest(fixtures_app.AppTest):
             spec_set=http_server.HttpsServerManage
         )
         self.lock = Lock()
+        self.auth_provider = AuthProvider(logging.getLogger("test logger"))
         super().setUp()
 
     def get_routes(self):
@@ -32,6 +36,7 @@ class AppTest(fixtures_app.AppTest):
             self.wrapper,
             self.lock,
             self.https_server_manage,
+            self.auth_provider,
         )
 
 
@@ -51,18 +56,17 @@ class SetCerts(AppTest):
         self.https_server_manage.reload_certs.assert_not_called()
 
 
-class Auth(
-    AppTest,
-    create_setup_patch_mixin(sinatra_remote),
-    fixtures_app.UserAuthMixin,
-):
+class Auth(AppTest):
     # pylint: disable=too-many-ancestors
     def setUp(self):
-        self.setup_patch("authorize_user", self.authorize_user)
         super().setUp()
+        auth_provider_patcher = mock.patch.object(
+            AuthProvider, "auth_by_username_password"
+        )
+        self.addCleanup(auth_provider_patcher.stop)
+        self.auth_provider_mock = auth_provider_patcher.start()
 
-    def make_auth_request(self, valid=True):
-        self.user_auth_info = fixtures_app.UserAuthInfo(valid=valid)
+    def make_auth_request(self):
         return self.post(
             "/remote/auth",
             body={
@@ -72,10 +76,20 @@ class Auth(
         )
 
     def test_refuse_unknown_user(self):
-        self.assertEqual(b"", self.make_auth_request(valid=False).body)
+        self.auth_provider_mock.return_value = None
+        self.assertEqual(b"", self.make_auth_request().body)
+        self.auth_provider_mock.assert_called_once_with(
+            fixtures_app.USER, fixtures_app.PASSWORD
+        )
 
     def test_wraps_ruby_on_valid_user(self):
+        self.auth_provider_mock.return_value = AuthUser(
+            fixtures_app.USER, fixtures_app.GROUPS
+        )
         self.assert_wrappers_response(self.make_auth_request())
+        self.auth_provider_mock.assert_called_once_with(
+            fixtures_app.USER, fixtures_app.PASSWORD
+        )
 
 
 class SinatraRemote(AppTest):

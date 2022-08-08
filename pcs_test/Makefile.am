@@ -115,7 +115,6 @@ EXTRA_DIST		= \
 			  tier0/daemon/app/test_app_gui.py \
 			  tier0/daemon/app/test_app_redirect.py \
 			  tier0/daemon/app/test_app_remote.py \
-			  tier0/daemon/app/test_app_session.py \
 			  tier0/daemon/app/test_app_spa.py \
 			  tier0/daemon/async_tasks/__init__.py \
 			  tier0/daemon/async_tasks/dummy_commands.py \
@@ -125,7 +124,6 @@ EXTRA_DIST		= \
 			  tier0/daemon/async_tasks/test_task.py \
 			  tier0/daemon/async_tasks/test_worker.py \
 			  tier0/daemon/__init__.py \
-			  tier0/daemon/test_auth.py \
 			  tier0/daemon/test_env.py \
 			  tier0/daemon/test_http_server.py \
 			  tier0/daemon/test_ruby_pcsd.py \

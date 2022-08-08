@@ -162,13 +162,12 @@ EXTRA_DIST		= \
 			  daemon/app/__init__.py \
 			  daemon/app/api_v1.py \
 			  daemon/app/api_v2.py \
-			  daemon/app/session.py \
+			  daemon/app/auth.py \
 			  daemon/app/sinatra_common.py \
 			  daemon/app/sinatra_remote.py \
 			  daemon/app/sinatra_ui.py \
 			  daemon/app/ui_common.py \
 			  daemon/app/ui.py \
-			  daemon/auth.py \
 			  daemon/async_tasks/__init__.py \
 			  daemon/async_tasks/scheduler.py \
 			  daemon/async_tasks/task.py \
@@ -204,7 +203,9 @@ EXTRA_DIST		= \
 			  lib/auth/config/types.py \
 			  lib/auth/__init__.py \
 			  lib/auth/const.py \
+			  lib/auth/pam.py \
 			  lib/auth/provider.py \
+			  lib/auth/tools.py \
 			  lib/booth/config_facade.py \
 			  lib/booth/config_files.py \
 			  lib/booth/config_parser.py \

@@ -11,29 +11,13 @@ USER = "user"
 GROUPS = ["group1", "group2"]
 
 
-class AssertMixin:
-    def assert_vanila_session(self, _session):
-        self.assertIsNone(_session.username)
-        self.assertFalse(_session.is_authenticated)
-        self.assertEqual(_session.groups, [])
-
-    def assert_authenticated_session(self, _session, username, groups):
-        self.assertEqual(_session.username, username)
-        self.assertEqual(_session.groups, groups)
-        self.assertTrue(_session.is_authenticated)
-
-    def assert_login_failed_session(self, _session, username):
-        self.assertEqual(_session.username, username)
-        self.assertFalse(_session.is_authenticated)
-
-
 PatchSessionMixin = create_setup_patch_mixin(session)
 
 
-class SessionTest(TestCase, AssertMixin, PatchSessionMixin):
+class SessionTest(TestCase, PatchSessionMixin):
     def setUp(self):
         self.now = self.setup_patch("now", return_value=0)
-        self.session = Session(SID)
+        self.session = Session(SID, USER)
 
     def test_session_grows_older(self):
         self.now.return_value = 10.1
@@ -53,77 +37,45 @@ class SessionTest(TestCase, AssertMixin, PatchSessionMixin):
         with self.refresh_test() as session1:
             session1.refresh()
         with self.refresh_test() as session1:
-            session1.is_authenticated
-        with self.refresh_test() as session1:
             session1.username
-        with self.refresh_test() as session1:
-            session1.groups
         with self.refresh_test() as session1:
             session1.sid
 
 
-class StorageTest(TestCase, AssertMixin, PatchSessionMixin):
+class StorageTest(TestCase, PatchSessionMixin):
     def setUp(self):
         self.now = self.setup_patch("now", return_value=0)
         self.storage = session.Storage(lifetime_seconds=10)
 
-    def test_creates_vanilla_session_when_sid_not_specified(self):
-        self.assert_vanila_session(self.storage.provide())
-
     def test_does_not_accept_foreign_sid(self):
-        session1 = self.storage.provide("unknown_sid")
-        self.assertNotEqual(session1.sid, "unknown_sid")
-        self.assert_vanila_session(session1)
+        self.assertIsNone(self.storage.get("unknown_sid"))
 
     def test_provides_the_same_session_for_same_sid(self):
-        session1 = self.storage.provide()
-        session2 = self.storage.provide(session1.sid)
+        session1 = self.storage.login(USER)
+        session2 = self.storage.get(session1.sid)
         self.assertIs(session1, session2)
 
     def test_can_destroy_session(self):
-        session1 = self.storage.provide()
+        session1 = self.storage.login(USER)
         self.storage.destroy(session1.sid)
-        session2 = self.storage.provide(session1.sid)
-        self.assertIsNot(session1, session2)
+        self.assertIsNone(self.storage.get(session1.sid))
 
     def test_can_drop_expired_sessions_explicitly(self):
-        session1 = self.storage.provide()
+        session1 = self.storage.login(USER)
         self.now.return_value = 5
-        session2 = self.storage.provide()
+        session2 = self.storage.login(USER)
         self.now.return_value = 12
         self.storage.drop_expired()
-        session3 = self.storage.provide(session1.sid)
-        session4 = self.storage.provide(session2.sid)
-        self.assertIsNot(session3, session1)
-        self.assertIs(session4, session2)
+        self.assertIsNone(self.storage.get(session1.sid))
+        self.assertIs(self.storage.get(session2.sid), session2)
 
     def test_can_drop_expired_session_implicitly(self):
-        session1 = self.storage.provide()
-        sid = session1.sid
+        session1 = self.storage.login(USER)
         self.now.return_value = 11
-        session2 = self.storage.provide(sid)
-        self.assertIsNot(session1, session2)
+        self.storage.login(USER)
+        self.assertIsNone(self.storage.get(session1.sid))
 
     def test_can_login_new_session(self):
-        self.assert_authenticated_session(
-            self.storage.login(sid=None, username=USER, groups=GROUPS),
-            USER,
-            GROUPS,
-        )
-
-    def test_can_login_existing_session(self):
-        session1 = self.storage.provide()
-        session2 = self.storage.login(session1.sid, USER, GROUPS)
-        self.assert_authenticated_session(session2, USER, GROUPS)
-        self.assertEqual(session1.sid, session2.sid)
-
-    def test_can_sign_failed_login_attempt_new_session(self):
-        self.assert_login_failed_session(
-            self.storage.rejected_user(sid=None, username=USER), USER
-        )
-
-    def test_can_sign_failed_login_attempt_existing_session(self):
-        session1 = self.storage.provide()
-        session2 = self.storage.rejected_user(session1.sid, USER)
-        self.assert_login_failed_session(session2, USER)
-        self.assertEqual(session1.sid, session2.sid)
+        session1 = self.storage.login(USER)
+        self.assertIsNotNone(session1)
+        self.assertEqual(session1.username, USER)

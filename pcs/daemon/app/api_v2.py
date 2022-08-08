@@ -4,9 +4,7 @@ from http.client import responses
 from typing import (
     Any,
     Dict,
-    List,
     Optional,
-    Tuple,
     Type,
     cast,
 )
@@ -31,6 +29,10 @@ from pcs.common.interface.dto import (
     from_dict,
     to_dict,
 )
+from pcs.daemon.app.auth import (
+    NotAuthorizedException,
+    TokenAuthProvider,
+)
 from pcs.daemon.async_tasks.scheduler import (
     Scheduler,
     TaskNotFoundError,
@@ -42,9 +44,8 @@ from pcs.lib.auth.provider import (
 )
 
 from .common import (
-    AuthProviderMixin,
     BaseHandler,
-    NotAuthorizedException,
+    RoutesType,
 )
 
 
@@ -68,7 +69,7 @@ class RequestBodyMissingError(APIError):
         )
 
 
-class _BaseApiV2Handler(AuthProviderMixin, BaseHandler):
+class _BaseApiV2Handler(BaseHandler):
     """
     Base handler for the REST API
 
@@ -79,11 +80,13 @@ class _BaseApiV2Handler(AuthProviderMixin, BaseHandler):
     scheduler: Scheduler
     json: Optional[Dict[str, Any]] = None
     logger: logging.Logger
+    _auth_provider: TokenAuthProvider
 
     def initialize(
         self, scheduler: Scheduler, auth_provider: AuthProvider
     ) -> None:
-        super()._set_auth_provider(auth_provider)
+        super().initialize()
+        self._auth_provider = TokenAuthProvider(self, auth_provider)
         self.scheduler = scheduler
         # TODO: Turn into a constant
         self.logger = logging.getLogger("pcs.daemon.scheduler")
@@ -104,7 +107,7 @@ class _BaseApiV2Handler(AuthProviderMixin, BaseHandler):
 
     async def get_auth_user(self) -> AuthUser:
         try:
-            return await super().get_auth_user()
+            return await self._auth_provider.auth_by_token()
         except NotAuthorizedException as e:
             raise APIError(http_code=401) from e
 
@@ -251,7 +254,7 @@ class KillTaskHandler(_BaseApiV2Handler):
 def get_routes(
     scheduler: Scheduler,
     auth_provider: AuthProvider,
-) -> List[Tuple[str, Type[_BaseApiV2Handler], dict]]:
+) -> RoutesType:
     """
     Returns mapping of URL routes to functions and links API to the scheduler
     :param scheduler: Scheduler's instance

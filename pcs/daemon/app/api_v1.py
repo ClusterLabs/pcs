@@ -8,8 +8,6 @@ from typing import (
     List,
     Mapping,
     Optional,
-    Tuple,
-    Type,
 )
 
 from tornado.web import HTTPError
@@ -24,6 +22,10 @@ from pcs.common.async_tasks.dto import (
     CommandOptionsDto,
 )
 from pcs.common.interface.dto import to_dict
+from pcs.daemon.app.auth import (
+    NotAuthorizedException,
+    TokenAuthProvider,
+)
 from pcs.daemon.async_tasks.scheduler import (
     Scheduler,
     TaskNotFoundError,
@@ -35,9 +37,8 @@ from pcs.lib.auth.provider import (
 )
 
 from .common import (
-    AuthProviderMixin,
     BaseHandler,
-    NotAuthorizedException,
+    RoutesType,
 )
 
 API_V1_MAP: Mapping[str, str] = {
@@ -132,7 +133,7 @@ class InvalidInputError(ApiError):
         super().__init__(communication.const.COM_STATUS_INPUT_ERROR, msg)
 
 
-class _BaseApiV1Handler(AuthProviderMixin, BaseHandler):
+class _BaseApiV1Handler(BaseHandler):
     """
     Base handler for the REST API
 
@@ -143,12 +144,13 @@ class _BaseApiV1Handler(AuthProviderMixin, BaseHandler):
     scheduler: Scheduler
     json: Optional[Dict[str, Any]] = None
     logger: logging.Logger
+    _auth_provider: TokenAuthProvider
 
     def initialize(
         self, scheduler: Scheduler, auth_provider: AuthProvider
     ) -> None:
         super().initialize()
-        self._set_auth_provider(auth_provider)
+        self._auth_provider = TokenAuthProvider(self, auth_provider)
         self.scheduler = scheduler
         # TODO: Turn into a constant
         self.logger = logging.getLogger("pcs.daemon.scheduler")
@@ -163,7 +165,7 @@ class _BaseApiV1Handler(AuthProviderMixin, BaseHandler):
 
     async def get_auth_user(self) -> AuthUser:
         try:
-            return await super().get_auth_user()
+            return await self._auth_provider.auth_by_token()
         except NotAuthorizedException as e:
             raise ApiError(
                 response_code=communication.const.COM_STATUS_NOT_AUTHORIZED,
@@ -335,9 +337,7 @@ class ClusterAddNodesLegacyHandler(LegacyApiV1Handler):
         return "cluster.add_nodes"
 
 
-def get_routes(
-    scheduler: Scheduler, auth_provider: AuthProvider
-) -> List[Tuple[str, Type[_BaseApiV1Handler], dict]]:
+def get_routes(scheduler: Scheduler, auth_provider: AuthProvider) -> RoutesType:
     params = dict(scheduler=scheduler, auth_provider=auth_provider)
     return [
         (

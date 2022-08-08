@@ -134,19 +134,19 @@ class AuthProviderWriteFacadeTest(TestCase):
 
 
 @mock.patch.object(AuthProvider, "_get_facade", lambda _self: _FACADE)
-@mock.patch("pcs.lib.auth.provider.get_user_groups_sync")
+@mock.patch("pcs.lib.auth.provider.get_user_groups")
 class AuthProviderLoginByTokenTest(TestCase):
     def setUp(self):
         self.logger = mock.Mock(spec_set=Logger)
         self.provider = AuthProvider(self.logger)
 
     def test_non_existing_token(self, groups_mock):
-        self.assertIsNone(self.provider.login_by_token("non existing token"))
+        self.assertIsNone(self.provider.auth_by_token("non existing token"))
         groups_mock.assert_not_called()
 
     def test_not_in_admin_group(self, groups_mock):
         groups_mock.return_value = ["group1", "group0"]
-        self.assertIsNone(self.provider.login_by_token("token-user2"))
+        self.assertIsNone(self.provider.auth_by_token("token-user2"))
         groups_mock.assert_called_once_with("user2")
 
     def test_success(self, groups_mock):
@@ -154,9 +154,53 @@ class AuthProviderLoginByTokenTest(TestCase):
         groups_mock.return_value = groups
         self.assertEqual(
             AuthUser(username="user1", groups=tuple(groups)),
-            self.provider.login_by_token("token-user1"),
+            self.provider.auth_by_token("token-user1"),
         )
         groups_mock.assert_called_once_with("user1")
+
+
+@mock.patch("pcs.lib.auth.provider.authenticate_user")
+@mock.patch("pcs.lib.auth.provider.get_user_groups")
+class AuthProviderLoginByUsernamePasswordTest(TestCase):
+    def setUp(self):
+        self.logger = mock.Mock(spec_set=Logger)
+        self.provider = AuthProvider(self.logger)
+        self.username = "user name"
+        self.password = "psswd"
+
+    def test_invalid_credentials(self, groups_mock, pam_mock):
+        pam_mock.return_value = False
+        self.assertIsNone(
+            self.provider.auth_by_username_password(
+                self.username, self.password
+            )
+        )
+        pam_mock.assert_called_once_with(self.username, self.password)
+        groups_mock.assert_not_called()
+
+    def test_not_in_admin_group(self, groups_mock, pam_mock):
+        pam_mock.return_value = True
+        groups_mock.return_value = ["group1", "group0"]
+        self.assertIsNone(
+            self.provider.auth_by_username_password(
+                self.username, self.password
+            )
+        )
+        pam_mock.assert_called_once_with(self.username, self.password)
+        groups_mock.assert_called_once_with(self.username)
+
+    def test_success(self, groups_mock, pam_mock):
+        pam_mock.return_value = True
+        groups = ["group1", const.ADMIN_GROUP, "group0"]
+        groups_mock.return_value = groups
+        self.assertEqual(
+            AuthUser(username=self.username, groups=tuple(groups)),
+            self.provider.auth_by_username_password(
+                self.username, self.password
+            ),
+        )
+        pam_mock.assert_called_once_with(self.username, self.password)
+        groups_mock.assert_called_once_with(self.username)
 
 
 @mock.patch.object(AuthProvider, "_get_facade")

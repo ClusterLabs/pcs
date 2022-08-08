@@ -7,7 +7,6 @@ from typing import (
 )
 
 from pcs.common.file import RawFileError
-from pcs.daemon.auth import get_user_groups_sync
 from pcs.lib.file.instance import FileInstance
 from pcs.lib.file.json import JsonParserException
 from pcs.lib.interface.config import ParserErrorException
@@ -15,6 +14,11 @@ from pcs.lib.interface.config import ParserErrorException
 from . import const
 from .config.facade import Facade
 from .config.parser import ParserError
+from .pam import authenticate_user
+from .tools import (
+    UserGroupsError,
+    get_user_groups,
+)
 
 
 @dataclass(frozen=True)
@@ -70,13 +74,38 @@ class AuthProvider:
                 e.reason,
             )
 
-    def login_by_token(self, token: str) -> Optional[AuthUser]:
+    def login_user(self, username: str) -> Optional[AuthUser]:
+        try:
+            groups = get_user_groups(username)
+        except UserGroupsError:
+            self._logger.error(
+                "Unable to determine groups of user '%s'", username
+            )
+            return None
+        if const.ADMIN_GROUP not in groups:
+            self._logger.debug(
+                "User '%s' is not a member of '%s' group",
+                username,
+                const.ADMIN_GROUP,
+            )
+            return None
+        self._logger.debug("Successful login by '%s'", username)
+        return AuthUser(username=username, groups=tuple(groups))
+
+    def auth_by_token(self, token: str) -> Optional[AuthUser]:
         username = self._get_facade().get_user(token)
         if username is None:
             return None
-        groups = tuple(get_user_groups_sync(username))
-        if const.ADMIN_GROUP in groups:
-            return AuthUser(username=username, groups=groups)
+        return self.login_user(username)
+
+    def auth_by_username_password(
+        self, username: str, password: str
+    ) -> Optional[AuthUser]:
+        if authenticate_user(username, password):
+            return self.login_user(username)
+        self._logger.info(
+            "Failed login by '%s': bad username or password", username
+        )
         return None
 
     def create_token(self, username: str) -> str:
