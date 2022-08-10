@@ -124,6 +124,7 @@ EXTRA_DIST		= \
 			  common/reports/constraints/order.py \
 			  common/reports/constraints/ticket.py \
 			  common/reports/conversions.py \
+			  common/reports/deprecated_codes.py \
 			  common/reports/dto.py \
 			  common/reports/__init__.py \
 			  common/reports/item.py \

@@ -1588,7 +1588,11 @@ class ClusterStatus(TestCase):
             ]
             + [
                 fixture.info(reports.codes.SBD_CHECK_STARTED),
-                fixture.error(reports.codes.SBD_NOT_INSTALLED, node="new1"),
+                fixture.error(
+                    reports.codes.SERVICE_NOT_INSTALLED,
+                    node="new1",
+                    service_list=["sbd"],
+                ),
                 fixture.error(
                     reports.codes.WATCHDOG_NOT_FOUND,
                     node="new2",
@@ -1718,7 +1722,11 @@ class ClusterStatus(TestCase):
             ]
             + [
                 fixture.info(reports.codes.SBD_CHECK_STARTED),
-                fixture.error(reports.codes.SBD_NOT_INSTALLED, node="new1"),
+                fixture.error(
+                    reports.codes.SERVICE_NOT_INSTALLED,
+                    node="new1",
+                    service_list=["sbd"],
+                ),
                 fixture.info(reports.codes.SBD_CHECK_SUCCESS, node="new2"),
                 fixture.info(reports.codes.SBD_CHECK_SUCCESS, node="new3"),
                 fixture.warn(reports.codes.SBD_WATCHDOG_VALIDATION_INACTIVE),

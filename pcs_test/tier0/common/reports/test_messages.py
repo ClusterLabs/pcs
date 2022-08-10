@@ -510,14 +510,6 @@ class InvalidScore(NameBuildTest):
         )
 
 
-class MultipleScoreOptions(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "multiple score options cannot be specified",
-            reports.MultipleScoreOptions(),
-        )
-
-
 class RunExternalProcessStarted(NameBuildTest):
     def test_build_message_minimal(self):
         self.assert_message_from_report(
@@ -1815,77 +1807,6 @@ class ResourceBundleAlreadyContainsAResource(NameBuildTest):
             reports.ResourceBundleAlreadyContainsAResource(
                 "test_bundle", "test_resource"
             ),
-        )
-
-
-# TODO: remove, use ADD_REMOVE reports
-class CannotGroupResourceAdjacentResourceForNewGroup(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            (
-                "Group 'G' does not exist and therefore does not contain 'AR' "
-                "resource to put resources next to"
-            ),
-            reports.CannotGroupResourceAdjacentResourceForNewGroup("AR", "G"),
-        )
-
-
-# TODO: remove, use ADD_REMOVE reports
-class CannotGroupResourceAdjacentResourceNotInGroup(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            (
-                "There is no resource 'AR' in the group 'G', cannot put "
-                "resources next to it in the group"
-            ),
-            reports.CannotGroupResourceAdjacentResourceNotInGroup("AR", "G"),
-        )
-
-
-# TODO: remove, use ADD_REMOVE reports
-class CannotGroupResourceAlreadyInTheGroup(NameBuildTest):
-    def test_single_resource(self):
-        self.assert_message_from_report(
-            "'R' already exists in 'G'",
-            reports.CannotGroupResourceAlreadyInTheGroup(["R"], "G"),
-        )
-
-    def test_several_resources(self):
-        self.assert_message_from_report(
-            "'A', 'B' already exist in 'G'",
-            reports.CannotGroupResourceAlreadyInTheGroup(["B", "A"], "G"),
-        )
-
-
-# TODO: remove, use ADD_REMOVE reports
-class CannotGroupResourceMoreThanOnce(NameBuildTest):
-    def test_single_resource(self):
-        self.assert_message_from_report(
-            "Resources specified more than once: 'X'",
-            reports.CannotGroupResourceMoreThanOnce(["X"]),
-        )
-
-    def test_multiple_resources(self):
-        self.assert_message_from_report(
-            "Resources specified more than once: 'A', 'B'",
-            reports.CannotGroupResourceMoreThanOnce(["B", "A"]),
-        )
-
-
-# TODO: remove, use ADD_REMOVE reports
-class CannotGroupResourceNoResources(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            "No resources to add", reports.CannotGroupResourceNoResources()
-        )
-
-
-# TODO: remove, use ADD_REMOVE reports
-class CannotGroupResourceNextToItself(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            "Cannot put resource 'R' next to itself",
-            reports.CannotGroupResourceNextToItself("R"),
         )
 
 
@@ -3357,14 +3278,6 @@ class SbdDeviceIsNotBlockDevice(NameBuildTest):
         )
 
 
-class SbdNotInstalled(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "SBD is not installed on node 'node1'",
-            reports.SbdNotInstalled("node1"),
-        )
-
-
 class StonithWatchdogTimeoutCannotBeSet(NameBuildTest):
     def test_sbd_not_enabled(self):
         self.assert_message_from_report(
@@ -3571,22 +3484,6 @@ class FileIoError(NameBuildTest):
                 RawFileError.ACTION_CHOWN,
                 "Permission denied",
             ),
-        )
-
-
-class UnableToDetermineUserUid(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "Unable to determine uid of user 'username'",
-            reports.UnableToDetermineUserUid("username"),
-        )
-
-
-class UnableToDetermineGroupGid(NameBuildTest):
-    def test_all(self):
-        self.assert_message_from_report(
-            "Unable to determine gid of group 'group'",
-            reports.UnableToDetermineGroupGid("group"),
         )
 
 
