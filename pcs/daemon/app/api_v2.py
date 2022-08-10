@@ -262,8 +262,8 @@ def get_routes(
     """
     params = dict(scheduler=scheduler, auth_provider=auth_provider)
     return [
-        ("/api_v2/task/result", TaskInfoHandler, params),
-        ("/api_v2/task/create", NewTaskHandler, params),
-        ("/api_v2/task/kill", KillTaskHandler, params),
-        ("/api_v2/task/run", RunTaskHandler, params),
+        ("/api/v2/task/result", TaskInfoHandler, params),
+        ("/api/v2/task/create", NewTaskHandler, params),
+        ("/api/v2/task/kill", KillTaskHandler, params),
+        ("/api/v2/task/run", RunTaskHandler, params),
     ]
