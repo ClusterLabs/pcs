@@ -2537,5 +2537,16 @@
           stonith.create_in_group
       </description>
     </capability>
+    <capability id="pcs.rest-api.v2" in-pcs="0" in-pcsd="1">
+      <description>
+        API v2 with an interface for asynchronous execution of tasks on pcsd.
+        The API is available at these URLs:
+
+        /api/v2/task/create
+        /api/v2/task/result
+        /api/v2/task/kill
+        /api/v2/task/run
+      </description>
+    </capability>
   </capability-list>
 </pcs-capabilities>
