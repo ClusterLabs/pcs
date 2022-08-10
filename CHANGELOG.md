@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Security
+- CVE-2022-2735 pcs: obtaining an authentication token for hacluster user could
+  lead to privilege escalation ([rhbz#2116841])
+
 ### Added
 - API v2 providing asynchronous interface for pcsd. Note that this feature is
   in tech-preview state and thus may be changed in the future
@@ -18,6 +22,7 @@
 [rhbz#1791670]: https://bugzilla.redhat.com/show_bug.cgi?id=1791670
 [rhbz#2092950]: https://bugzilla.redhat.com/show_bug.cgi?id=2092950
 [rhbz#2102663]: https://bugzilla.redhat.com/show_bug.cgi?id=2102663
+[rhbz#2116841]: https://bugzilla.redhat.com/show_bug.cgi?id=2116841
 
 
 ## [0.11.3] - 2022-06-23
