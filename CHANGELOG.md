@@ -1,5 +1,14 @@
 # Change Log
 
+## [Unreleased]
+
+### Security
+- CVE-2022-2735 pcs: obtaining an authentication token for hacluster user could
+  lead to privilege escalation ([rhbz#2116841])
+
+[rhbz#2116841]: https://bugzilla.redhat.com/show_bug.cgi?id=2116841
+
+
 ## [0.11.3] - 2022-06-23
 
 ### Security
