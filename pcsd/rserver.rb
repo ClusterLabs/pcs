@@ -7,6 +7,29 @@ require 'thin'
 
 require 'settings.rb'
 
+# Replace Thin::Backends::UnixServer:connect
+# The only change is 'File.umask(0o777)' instead of 'File.umask(0)' to properly
+# set python-ruby socket permissions
+module Thin
+  module Backends
+    class UnixServer < Base
+      def connect
+        at_exit { remove_socket_file } # In case it crashes
+        old_umask = File.umask(0o077)
+        begin
+          EventMachine.start_unix_domain_server(@socket, UnixConnection, &method(:initialize_connection))
+          # HACK EventMachine.start_unix_domain_server doesn't return the connection signature
+          #      so we have to go in the internal stuff to find it.
+        @signature = EventMachine.instance_eval{@acceptors.keys.first}
+        ensure
+          File.umask(old_umask)
+        end
+      end
+    end
+  end
+end
+
+
 def pack_response(response)
   return [200, {}, [response.to_json.to_str]]
 end
