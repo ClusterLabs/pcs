@@ -2412,7 +2412,7 @@ def remote_enable_sbd(params, request, auth_user)
   end
 
   _, stderr, retcode = run_cmd(
-    auth_user, PCS, *flags, '--' 'stonith', 'sbd', 'enable', *arg_list
+    auth_user, PCS, *flags, '--', 'stonith', 'sbd', 'enable', *arg_list
   )
 
   if retcode != 0
