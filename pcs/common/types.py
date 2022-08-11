@@ -1,13 +1,21 @@
-from enum import auto
+from enum import (
+    Enum,
+    auto,
+)
 from typing import (
     MutableSequence,
     Union,
 )
 
-from pcs.common.tools import AutoNameEnum
-
 StringSequence = Union[MutableSequence[str], tuple[str, ...]]
 StringCollection = Union[StringSequence, set[str]]
+
+
+class AutoNameEnum(str, Enum):
+    def _generate_next_value_(name, start, count, last_values):  # type: ignore
+        # pylint: disable=no-self-argument
+        del start, count, last_values
+        return name
 
 
 class CibRuleExpressionType(AutoNameEnum):

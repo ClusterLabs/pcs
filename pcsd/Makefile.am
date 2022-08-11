@@ -40,7 +40,6 @@ pcsd_SCRIPTS		= \
 			  pcsd-cli.rb
 
 dist_pcsd_DATA		= \
-			  api_v1.rb \
 			  auth.rb \
 			  bootstrap.rb \
 			  capabilities.rng \

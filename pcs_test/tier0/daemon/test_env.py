@@ -22,9 +22,11 @@ class Logger:
 
 
 class Prepare(TestCase, create_setup_patch_mixin(env)):
+    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.path_exists = self.setup_patch("path_exists", return_value=True)
         self.logger = Logger()
+        self.maxDiff = None
 
     def assert_environ_produces_modified_pcsd_env(
         self, environ=None, specific_env_values=None, errors=None, warnings=None
@@ -43,6 +45,15 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
             env.PCSD_SESSION_LIFETIME: settings.gui_session_lifetime_seconds,
             env.PCSD_STATIC_FILES_DIR: pcsd_dir(env.PCSD_STATIC_FILES_DIR_NAME),
             env.PCSD_DEV: False,
+            env.PCSD_WORKER_COUNT: settings.pcsd_worker_count,
+            env.PCSD_WORKER_RESET_LIMIT: settings.pcsd_worker_reset_limit,
+            env.PCSD_MAX_WORKER_COUNT: settings.pcsd_worker_count
+            + settings.pcsd_temporary_workers,
+            env.PCSD_DEADLOCK_THRESHOLD_TIMEOUT: settings.pcsd_deadlock_threshold_timeout,
+            env.PCSD_CHECK_INTERVAL_MS: settings.async_api_scheduler_interval_ms,
+            env.PCSD_TASK_ABANDONED_TIMEOUT: settings.task_abandoned_timeout_seconds,
+            env.PCSD_TASK_UNRESPONSIVE_TIMEOUT: settings.task_unresponsive_timeout_seconds,
+            env.PCSD_TASK_DELETION_TIMEOUT: settings.task_deletion_timeout_seconds,
             "has_errors": False,
         }
         if specific_env_values is None:
@@ -72,6 +83,14 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
             env.PCSD_DISABLE_GUI: "true",
             env.PCSD_SESSION_LIFETIME: str(session_lifetime),
             env.PCSD_DEV: "true",
+            env.PCSD_WORKER_COUNT: "1",
+            env.PCSD_WORKER_RESET_LIMIT: "2",
+            env.PCSD_MAX_WORKER_COUNT: "3",
+            env.PCSD_DEADLOCK_THRESHOLD_TIMEOUT: "4",
+            env.PCSD_CHECK_INTERVAL_MS: "5",
+            env.PCSD_TASK_ABANDONED_TIMEOUT: "6",
+            env.PCSD_TASK_UNRESPONSIVE_TIMEOUT: "7",
+            env.PCSD_TASK_DELETION_TIMEOUT: "8",
         }
         self.assert_environ_produces_modified_pcsd_env(
             environ=environ,
@@ -88,6 +107,14 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
                     env.PCSD_STATIC_FILES_DIR_NAME
                 ),
                 env.PCSD_DEV: True,
+                env.PCSD_WORKER_COUNT: 1,
+                env.PCSD_WORKER_RESET_LIMIT: 2,
+                env.PCSD_MAX_WORKER_COUNT: 3,
+                env.PCSD_DEADLOCK_THRESHOLD_TIMEOUT: 4,
+                env.PCSD_CHECK_INTERVAL_MS: 5,
+                env.PCSD_TASK_ABANDONED_TIMEOUT: 6,
+                env.PCSD_TASK_UNRESPONSIVE_TIMEOUT: 7,
+                env.PCSD_TASK_DELETION_TIMEOUT: 8,
             },
         )
 
@@ -167,4 +194,110 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
                 "has_errors": False,
             },
             errors=[],
+        )
+
+    def test_invalid_worker_count(self):
+        self.assert_environ_produces_modified_pcsd_env(
+            environ={env.PCSD_WORKER_COUNT: "0"},
+            specific_env_values={
+                env.PCSD_WORKER_COUNT: settings.pcsd_worker_count,
+                "has_errors": True,
+            },
+            errors=[
+                f"Value '0' for '{env.PCSD_WORKER_COUNT}' is not a positive integer"
+            ],
+        )
+
+    def test_invalid_worker_reset_limit(self):
+        self.assert_environ_produces_modified_pcsd_env(
+            environ={env.PCSD_WORKER_RESET_LIMIT: "a"},
+            specific_env_values={
+                env.PCSD_WORKER_RESET_LIMIT: settings.pcsd_worker_reset_limit,
+                "has_errors": True,
+            },
+            errors=[
+                f"Value 'a' for '{env.PCSD_WORKER_RESET_LIMIT}' is not a positive integer"
+            ],
+        )
+
+    def test_invalid_max_worker_count(self):
+        self.assert_environ_produces_modified_pcsd_env(
+            environ={env.PCSD_MAX_WORKER_COUNT: "0"},
+            specific_env_values={
+                env.PCSD_MAX_WORKER_COUNT: settings.pcsd_worker_count
+                + settings.pcsd_temporary_workers,
+                "has_errors": True,
+            },
+            errors=[
+                f"Value '0' for '{env.PCSD_MAX_WORKER_COUNT}' is not a positive integer"
+            ],
+        )
+
+    def test_max_worker_count_dependent_on_worker_count(self):
+        self.assert_environ_produces_modified_pcsd_env(
+            environ={env.PCSD_WORKER_COUNT: "1"},
+            specific_env_values={
+                env.PCSD_WORKER_COUNT: 1,
+                env.PCSD_MAX_WORKER_COUNT: 1 + settings.pcsd_temporary_workers,
+            },
+        )
+
+    def test_invalid_deadlock_threshold_timeout(self):
+        self.assert_environ_produces_modified_pcsd_env(
+            environ={env.PCSD_DEADLOCK_THRESHOLD_TIMEOUT: "-1"},
+            specific_env_values={
+                env.PCSD_DEADLOCK_THRESHOLD_TIMEOUT: settings.pcsd_deadlock_threshold_timeout,
+                "has_errors": True,
+            },
+            errors=[
+                f"Value '-1' for '{env.PCSD_DEADLOCK_THRESHOLD_TIMEOUT}' is not a non-negative integer"
+            ],
+        )
+
+    def test_invalid_check_interval(self):
+        self.assert_environ_produces_modified_pcsd_env(
+            environ={env.PCSD_CHECK_INTERVAL_MS: "0"},
+            specific_env_values={
+                env.PCSD_CHECK_INTERVAL_MS: settings.async_api_scheduler_interval_ms,
+                "has_errors": True,
+            },
+            errors=[
+                f"Value '0' for '{env.PCSD_CHECK_INTERVAL_MS}' is not a positive integer"
+            ],
+        )
+
+    def test_invalid_task_abandoned_timeout(self):
+        self.assert_environ_produces_modified_pcsd_env(
+            environ={env.PCSD_TASK_ABANDONED_TIMEOUT: "0"},
+            specific_env_values={
+                env.PCSD_TASK_ABANDONED_TIMEOUT: settings.task_abandoned_timeout_seconds,
+                "has_errors": True,
+            },
+            errors=[
+                f"Value '0' for '{env.PCSD_TASK_ABANDONED_TIMEOUT}' is not a positive integer"
+            ],
+        )
+
+    def test_invalid_task_unresponsive_interval(self):
+        self.assert_environ_produces_modified_pcsd_env(
+            environ={env.PCSD_TASK_UNRESPONSIVE_TIMEOUT: "0"},
+            specific_env_values={
+                env.PCSD_TASK_UNRESPONSIVE_TIMEOUT: settings.task_unresponsive_timeout_seconds,
+                "has_errors": True,
+            },
+            errors=[
+                f"Value '0' for '{env.PCSD_TASK_UNRESPONSIVE_TIMEOUT}' is not a positive integer"
+            ],
+        )
+
+    def test_invalid_task_deletion_timeout(self):
+        self.assert_environ_produces_modified_pcsd_env(
+            environ={env.PCSD_TASK_DELETION_TIMEOUT: "-1"},
+            specific_env_values={
+                env.PCSD_TASK_DELETION_TIMEOUT: settings.task_deletion_timeout_seconds,
+                "has_errors": True,
+            },
+            errors=[
+                f"Value '-1' for '{env.PCSD_TASK_DELETION_TIMEOUT}' is not a non-negative integer"
+            ],
         )

@@ -9,11 +9,10 @@ from tornado.testing import AsyncHTTPTestCase
 from tornado.web import Application
 
 from pcs.daemon import (
-    auth,
     ruby_pcsd,
     session,
 )
-from pcs.daemon.app.session import PCSD_SESSION
+from pcs.daemon.app.auth import PCSD_SESSION
 
 USER = "user"
 GROUPS = ["group1", "group2"]
@@ -98,22 +97,8 @@ class AppTest(AsyncHTTPTestCase):
 
 class AppUiTestMixin(AppTest):
     def setUp(self):
-        self.user_auth_info = UserAuthInfo()
-        self.groups_valid = True
         self.session_storage = session.Storage(lifetime_seconds=10)
-        self.setup_patch("check_user_groups", self.check_user_groups)
         super().setUp()
-
-    async def check_user_groups(self, username):
-        self.assertEqual(username, USER)
-        return auth.UserAuthInfo(
-            username,
-            self.user_auth_info.groups,
-            is_authorized=self.groups_valid,
-        )
-
-    def extract_sid(self, response):
-        return self.assert_session_in_response(response)
 
     def assert_session_in_response(self, response, sid=None):
         self.assertTrue("Set-Cookie" in response.headers)
@@ -142,9 +127,7 @@ class AppUiTestMixin(AppTest):
         return super().fetch(path, raise_error=raise_error, **kwargs)
 
     def create_login_session(self):
-        return self.session_storage.login(
-            sid=None, username=USER, groups=GROUPS
-        )
+        return self.session_storage.login(USER)
 
     def assert_success_response(self, response, expected_body):
         self.assertEqual(response.code, 200)
@@ -153,33 +136,3 @@ class AppUiTestMixin(AppTest):
     def assert_unauth_ajax(self, response):
         self.assertEqual(response.code, 401)
         self.assertEqual(response.body, b'{"notauthorized":"true"}')
-
-
-class UserAuthInfo:
-    # pylint: disable=too-few-public-methods
-    def __init__(self, valid=False, groups=None):
-        if groups is None:
-            groups = GROUPS
-        self.valid = valid
-        self.groups = groups
-
-
-class UserAuthMixin:
-    user_auth_info = UserAuthInfo()
-
-    async def check_user_groups(self, username):
-        self.assertEqual(username, USER)
-        return auth.UserAuthInfo(
-            username,
-            self.user_auth_info.groups,
-            is_authorized=self.groups_valid,
-        )
-
-    async def authorize_user(self, username, password):
-        self.assertEqual(username, USER)
-        self.assertEqual(password, PASSWORD)
-        return auth.UserAuthInfo(
-            username,
-            self.user_auth_info.groups,
-            is_authorized=self.user_auth_info.valid,
-        )

@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+- API v2 providing asynchronous interface for pcsd. Note that this feature is
+  in tech-preview state and thus may be changed in the future
+
 ### Fixed
 - `pcs resource manage --monitor` no longer enables monitor operation for all
   resources in a group if only one of the resources was requested to become

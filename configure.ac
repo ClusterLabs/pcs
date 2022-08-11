@@ -546,6 +546,7 @@ AC_CONFIG_FILES([Makefile
 		 pcsd/settings.rb
 		 pcsd/logrotate/pcsd])
 
+AC_CONFIG_FILES([pcs/api_v2_client], [chmod +x pcs/api_v2_client])
 AC_CONFIG_FILES([pcs/pcs], [chmod +x pcs/pcs])
 AC_CONFIG_FILES([pcs/pcs_internal], [chmod +x pcs/pcs_internal])
 AC_CONFIG_FILES([pcs/snmp/pcs_snmp_agent], [chmod +x pcs/snmp/pcs_snmp_agent])

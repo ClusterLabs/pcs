@@ -2,8 +2,12 @@ import os
 import signal
 import socket
 from pathlib import Path
+from typing import Optional
 
-from tornado.ioloop import IOLoop
+from tornado.ioloop import (
+    IOLoop,
+    PeriodicCallback,
+)
 from tornado.locks import Lock
 from tornado.web import Application
 
@@ -16,17 +20,26 @@ from pcs.daemon import (
     systemd,
 )
 from pcs.daemon.app import (
+    api_v1,
+    api_v2,
     sinatra_remote,
     sinatra_ui,
     ui,
 )
 from pcs.daemon.app.common import RedirectHandler
+from pcs.daemon.async_tasks.scheduler import (
+    Scheduler,
+    SchedulerConfig,
+)
+from pcs.daemon.async_tasks.task import TaskConfig
 from pcs.daemon.env import prepare_env
 from pcs.daemon.http_server import HttpsServerManage
+from pcs.lib.auth.provider import AuthProvider
 
 
 class SignalInfo:
     # pylint: disable=too-few-public-methods
+    async_scheduler: Optional[Scheduler] = None
     server_manage = None
     ioloop_started = False
 
@@ -36,6 +49,8 @@ def handle_signal(incoming_signal, frame):
     log.pcsd.warning("Caught signal: %s, shutting down", incoming_signal)
     if SignalInfo.server_manage:
         SignalInfo.server_manage.stop()
+    if SignalInfo.async_scheduler:
+        SignalInfo.async_scheduler.terminate_nowait()
     if SignalInfo.ioloop_started:
         IOLoop.current().stop()
     raise SystemExit(0)
@@ -55,6 +70,8 @@ def config_sync(sync_config_lock: Lock, ruby_pcsd_wrapper: ruby_pcsd.Wrapper):
 
 
 def configure_app(
+    async_scheduler: Scheduler,
+    auth_provider: AuthProvider,
     session_storage: session.Storage,
     ruby_pcsd_wrapper: ruby_pcsd.Wrapper,
     sync_config_lock: Lock,
@@ -68,10 +85,16 @@ def configure_app(
             reload its SSL certificates). A relevant handler should get this
             object via the method `initialize`.
         """
-        routes = sinatra_remote.get_routes(
-            ruby_pcsd_wrapper,
-            sync_config_lock,
-            https_server_manage,
+
+        routes = api_v2.get_routes(async_scheduler, auth_provider)
+        routes.extend(api_v1.get_routes(async_scheduler, auth_provider))
+        routes.extend(
+            sinatra_remote.get_routes(
+                ruby_pcsd_wrapper,
+                sync_config_lock,
+                https_server_manage,
+                auth_provider,
+            )
         )
 
         if not disable_gui:
@@ -85,8 +108,11 @@ def configure_app(
                         "ui_instructions.html",
                     ),
                     session_storage=session_storage,
+                    auth_provider=auth_provider,
                 )
-                + sinatra_ui.get_routes(session_storage, ruby_pcsd_wrapper)
+                + sinatra_ui.get_routes(
+                    session_storage, auth_provider, ruby_pcsd_wrapper
+                )
             )
 
         return Application(routes, debug=debug)
@@ -108,12 +134,30 @@ def main():
     if env.PCSD_DEBUG:
         log.enable_debug()
 
+    async_scheduler = Scheduler(
+        SchedulerConfig(
+            worker_count=env.PCSD_WORKER_COUNT,
+            max_worker_count=env.PCSD_MAX_WORKER_COUNT,
+            worker_reset_limit=env.PCSD_WORKER_RESET_LIMIT,
+            deadlock_threshold_timeout=env.PCSD_DEADLOCK_THRESHOLD_TIMEOUT,
+            task_config=TaskConfig(
+                abandoned_timeout=env.PCSD_TASK_ABANDONED_TIMEOUT,
+                unresponsive_timeout=env.PCSD_TASK_UNRESPONSIVE_TIMEOUT,
+                deletion_timeout=env.PCSD_TASK_DELETION_TIMEOUT,
+            ),
+        )
+    )
+    auth_provider = AuthProvider(log.pcsd)
+    SignalInfo.async_scheduler = async_scheduler
+
     sync_config_lock = Lock()
     ruby_pcsd_wrapper = ruby_pcsd.Wrapper(
         settings.pcsd_ruby_socket,
         debug=env.PCSD_DEBUG,
     )
     make_app = configure_app(
+        async_scheduler,
+        auth_provider,
         session.Storage(env.PCSD_SESSION_LIFETIME),
         ruby_pcsd_wrapper,
         sync_config_lock,
@@ -134,6 +178,7 @@ def main():
             port=env.PCSD_PORT,
             bind_addresses=env.PCSD_BIND_ADDR,
             ssl=pcsd_ssl,
+            unix_socket_path=settings.pcsd_unix_socket,
         ).start()
     except socket.gaierror as e:
         log.pcsd.error(
@@ -149,6 +194,10 @@ def main():
         log.pcsd.error("Invalid SSL certificate and/or key, exiting")
         raise SystemExit(1) from e
 
+    PeriodicCallback(
+        async_scheduler.perform_actions,
+        callback_time=env.PCSD_CHECK_INTERVAL_MS,
+    ).start()
     ioloop = IOLoop.current()
     ioloop.add_callback(sign_ioloop_started)
     if systemd.is_systemd() and env.NOTIFY_SOCKET:

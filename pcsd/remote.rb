@@ -26,7 +26,6 @@ def remote(params, request, auth_user)
       :capabilities => method(:capabilities),
       :status => method(:node_status),
       :cluster_status => method(:cluster_status_remote),
-      :cluster_status_plaintext => method(:cluster_status_plaintext),
       :auth => method(:auth),
       :check_auth => method(:check_auth),
       :get_quorum_info => method(:get_quorum_info),
@@ -45,8 +44,6 @@ def remote(params, request, auth_user)
       :cluster_enable => method(:cluster_enable),
       :cluster_disable => method(:cluster_disable),
       :get_sw_versions => method(:get_sw_versions),
-      :cluster_add_nodes => method(:cluster_add_nodes),
-      :cluster_remove_nodes => method(:cluster_remove_nodes),
       :cluster_destroy => method(:cluster_destroy),
       :get_cluster_known_hosts => method(:get_cluster_known_hosts),
       :known_hosts_change => method(:known_hosts_change),
@@ -277,18 +274,6 @@ def cluster_status_remote(params, request, auth_user)
     return 403, 'Permission denied'
   end
   return JSON.generate(status)
-end
-
-# get cluster status in plaintext (over-the-network version of 'pcs status')
-def cluster_status_plaintext(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::READ)
-    return 403, 'Permission denied'
-  end
-  return pcs_internal_proxy_old(
-    auth_user,
-    params.fetch(:data_json, ""),
-    "status.full_cluster_status_plaintext"
-  )
 end
 
 def cluster_start(params, request, auth_user)
@@ -730,24 +715,6 @@ def get_sw_versions(params, request, auth_user)
     "corosync" => get_corosync_version(),
   }
   return JSON.generate(versions)
-end
-
-def cluster_add_nodes(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::FULL)
-    return 403, 'Permission denied'
-  end
-  return pcs_internal_proxy_old(
-    auth_user, params.fetch(:data_json, ""), "cluster.add_nodes"
-  )
-end
-
-def cluster_remove_nodes(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::FULL)
-    return 403, 'Permission denied'
-  end
-  return pcs_internal_proxy_old(
-    auth_user, params.fetch(:data_json, ""), "cluster.remove_nodes"
-  )
 end
 
 def remote_pacemaker_node_status(params, request, auth_user)

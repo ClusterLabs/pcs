@@ -47,13 +47,19 @@ class FacadeInterface:
     # is). The create method is not used by the files framework (there is no
     # need and also due to mentioned interface differences). Therefore the
     # create method is not defined here in the interface.
+
+    _config: Any
+
     def __init__(self, parsed_config: Any):
         """
         Create a facade around a parsed config file
 
         parsed_config -- parsed config file
         """
-        self._config = parsed_config
+        self._set_config(parsed_config)
+
+    def _set_config(self, config: Any) -> None:
+        self._config = config
 
     @property
     def config(self) -> Any:

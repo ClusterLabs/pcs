@@ -1,15 +1,12 @@
-import json
 from dataclasses import dataclass
 from typing import (
-    Any,
-    Dict,
     Optional,
     Type,
 )
 
 from pcs.common import file_type_codes as code
 from pcs.common import reports
-from pcs.common.reports.item import ReportItem
+from pcs.lib.auth import config as auth_config
 from pcs.lib.booth.config_facade import ConfigFacade as BoothConfigFacade
 from pcs.lib.booth.config_parser import Exporter as BoothConfigExporter
 from pcs.lib.booth.config_parser import Parser as BoothConfigParser
@@ -22,6 +19,12 @@ from pcs.lib.interface.config import (
     FacadeInterface,
     ParserErrorException,
     ParserInterface,
+)
+from pcs.lib.permissions import config as pcs_settings_conf
+
+from .json import (
+    JsonExporter,
+    JsonParser,
 )
 
 
@@ -39,69 +42,6 @@ class FileToolbox:
     validator: None  # TBI
     # Provides means for file syncing based on the file's version
     version_controller: None  # TBI
-
-
-class JsonParserException(ParserErrorException):
-    def __init__(self, json_exception: json.JSONDecodeError):
-        super().__init__()
-        self.json_exception = json_exception
-
-
-class JsonParser(ParserInterface):
-    """
-    Adapts standard json parser to our interfaces
-    """
-
-    @staticmethod
-    def parse(raw_file_data: bytes) -> Dict[str, Any]:
-        try:
-            # json.loads handles bytes, it expects utf-8, 16 or 32 encoding
-            return json.loads(raw_file_data)
-        except json.JSONDecodeError as e:
-            raise JsonParserException(e) from e
-
-    @staticmethod
-    def exception_to_report_list(
-        exception: ParserErrorException,
-        file_type_code: code.FileTypeCode,
-        file_path: Optional[str],
-        force_code: Optional[reports.types.ForceCode],
-        is_forced_or_warning: bool,
-    ) -> reports.ReportItemList:
-        if isinstance(exception, JsonParserException):
-            if isinstance(exception.json_exception, json.JSONDecodeError):
-                return [
-                    ReportItem(
-                        severity=reports.item.get_severity(
-                            force_code,
-                            is_forced_or_warning,
-                        ),
-                        message=reports.messages.ParseErrorJsonFile(
-                            file_type_code,
-                            exception.json_exception.lineno,
-                            exception.json_exception.colno,
-                            exception.json_exception.pos,
-                            exception.json_exception.msg,
-                            str(exception.json_exception),
-                            file_path=file_path,
-                        ),
-                    )
-                ]
-        raise exception
-
-
-class JsonExporter(ExporterInterface):
-    """
-    Adapts standard json exporter to our interfaces
-    """
-
-    @staticmethod
-    def export(config_structure: Dict[str, Any]) -> bytes:
-        return json.dumps(
-            config_structure,
-            indent=4,
-            sort_keys=True,
-        ).encode("utf-8")
 
 
 class NoopParser(ParserInterface):
@@ -179,6 +119,22 @@ _toolboxes = {
         facade=DrConfigFacade,
         parser=JsonParser,
         exporter=JsonExporter,
+        validator=None,  # TODO needed for files syncing
+        version_controller=None,  # TODO needed for files syncing
+    ),
+    code.PCS_USERS_CONF: FileToolbox(
+        file_type_code=code.PCS_USERS_CONF,
+        facade=auth_config.facade.Facade,
+        parser=auth_config.parser.Parser,
+        exporter=auth_config.exporter.Exporter,
+        validator=None,  # TODO needed for files syncing
+        version_controller=None,  # TODO needed for files syncing
+    ),
+    code.PCS_SETTINGS_CONF: FileToolbox(
+        file_type_code=code.PCS_SETTINGS_CONF,
+        facade=pcs_settings_conf.facade.FacadeV2,
+        parser=pcs_settings_conf.parser.ParserV2,
+        exporter=pcs_settings_conf.exporter.ExporterV2,
         validator=None,  # TODO needed for files syncing
         version_controller=None,  # TODO needed for files syncing
     ),

@@ -1,9 +1,13 @@
 from tornado.locks import Lock
 
 from pcs.daemon import ruby_pcsd
+from pcs.daemon.app.auth import (
+    NotAuthorizedException,
+    PasswordAuthProvider,
+)
 from pcs.daemon.app.sinatra_common import Sinatra
-from pcs.daemon.auth import authorize_user
 from pcs.daemon.http_server import HttpsServerManage
+from pcs.lib.auth.provider import AuthProvider
 
 
 class SinatraRemote(Sinatra):
@@ -72,13 +76,24 @@ class SetCerts(SinatraRemote):
 
 
 class Auth(SinatraRemote):
+    _auth_provider: PasswordAuthProvider
+
+    def initialize(
+        self, ruby_pcsd_wrapper: ruby_pcsd.Wrapper, auth_provider: AuthProvider
+    ) -> None:
+        # pylint: disable=arguments-differ
+        super().initialize(ruby_pcsd_wrapper)
+        self._auth_provider = PasswordAuthProvider(self, auth_provider)
+
     async def auth(self):
-        user_auth_info = await authorize_user(
-            self.get_body_argument("username"),
-            self.get_body_argument("password"),
-        )
-        if user_auth_info.is_authorized:
+        try:
+            await self._auth_provider.auth_by_username_password(
+                self.get_body_argument("username"),
+                self.get_body_argument("password"),
+            )
             await self.handle_sinatra_request()
+        except NotAuthorizedException:
+            pass
 
     async def post(self, *args, **kwargs):
         await self.auth()
@@ -91,6 +106,7 @@ def get_routes(
     ruby_pcsd_wrapper: ruby_pcsd.Wrapper,
     sync_config_lock: Lock,
     https_server_manage: HttpsServerManage,
+    auth_provider: AuthProvider,
 ):
     ruby_wrapper = dict(ruby_pcsd_wrapper=ruby_pcsd_wrapper)
     lock = dict(sync_config_lock=sync_config_lock)
@@ -105,7 +121,12 @@ def get_routes(
             SyncConfigMutualExclusive,
             {**ruby_wrapper, **lock},
         ),
-        (r"/remote/auth", Auth, ruby_wrapper),
+        (
+            r"/remote/auth",
+            Auth,
+            dict(
+                ruby_pcsd_wrapper=ruby_pcsd_wrapper, auth_provider=auth_provider
+            ),
+        ),
         (r"/remote/.*", SinatraRemote, ruby_wrapper),
-        (r"/api/.*", SinatraRemote, ruby_wrapper),
     ]

@@ -66,6 +66,7 @@ pcsd_exec_location = "@LIB_DIR@/pcsd"
 pcsd_log_location = "@LOCALSTATEDIR@/log/pcsd/pcsd.log"
 pcsd_default_port = 2224
 pcsd_config = "@CONF_DIR@/pcsd"
+pcsd_unix_socket = "@LOCALSTATEDIR@/run/pcsd.socket"
 cib_dir = "@PCMK_CIB_DIR@"
 pacemaker_uname = "@PCMK_USER@"
 pacemaker_gname = "@PCMK_GROUP@"
@@ -118,6 +119,7 @@ pcs_data_dir = "@LIB_DIR@/pcs/data/"
 _ocf_1_0_schema_filename = "ocf-1.0.rng"
 _ocf_1_1_schema_filename = "ocf-1.1.rng"
 
+
 class _PathManager:
     @property
     def ocf_1_0_schema(self):
@@ -131,4 +133,17 @@ class _PathManager:
     def pcs_data_dir(self):
         return pcs_data_dir
 
+
 path = _PathManager()
+
+# Scheduler settings
+async_api_scheduler_interval_ms = 100
+
+pcsd_worker_count = 10
+pcsd_temporary_workers = 10
+pcsd_worker_reset_limit = 100
+pcsd_deadlock_threshold_timeout = 5
+
+task_unresponsive_timeout_seconds = 60 * 60
+task_abandoned_timeout_seconds = 1 * 60
+task_deletion_timeout_seconds = 1 * 60

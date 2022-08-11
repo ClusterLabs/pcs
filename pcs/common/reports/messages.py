@@ -7423,3 +7423,32 @@ class ResourceStonithCommandsMismatch(ReportItemMessage):
             f"Ability of this command to accept {self.not_accepted_type} is "
             "deprecated and will be removed in a future release."
         )
+
+
+@dataclass(frozen=True)
+class CommandInvalidPayload(ReportItemMessage):
+    reason: str
+    _code = codes.COMMAND_INVALID_PAYLOAD
+
+    @property
+    def message(self) -> str:
+        return f"Invalid command payload: {self.reason}"
+
+
+@dataclass(frozen=True)
+class CommandUnknown(ReportItemMessage):
+    command: str
+    _code = codes.COMMAND_UNKNOWN
+
+    @property
+    def message(self) -> str:
+        return f"Unknown command '{self.command}'"
+
+
+@dataclass(frozen=True)
+class NotAuthorized(ReportItemMessage):
+    _code = codes.NOT_AUTHORIZED
+
+    @property
+    def message(self) -> str:
+        return "Current user is not authorized for this operation"

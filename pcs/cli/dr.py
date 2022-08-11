@@ -4,6 +4,8 @@ from typing import (
     Sequence,
 )
 
+from dacite import DaciteError
+
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import InputModifiers
 from pcs.cli.reports.output import error
@@ -31,7 +33,13 @@ def config(
     config_raw = lib.dr.get_config()
     try:
         config_dto = dto.from_dict(DrConfigDto, config_raw)
-    except (KeyError, TypeError, ValueError) as e:
+    except (
+        KeyError,
+        TypeError,
+        ValueError,
+        DaciteError,
+        dto.PayloadConversionError,
+    ) as e:
         raise error(
             "Unable to communicate with pcsd, received response:\n"
             f"{config_raw}"
@@ -96,7 +104,13 @@ def status(
             dto.from_dict(DrSiteStatusDto, status_raw)
             for status_raw in status_list_raw
         ]
-    except (KeyError, TypeError, ValueError) as e:
+    except (
+        KeyError,
+        TypeError,
+        ValueError,
+        DaciteError,
+        dto.PayloadConversionError,
+    ) as e:
         raise error(
             "Unable to communicate with pcsd, received response:\n"
             f"{status_list_raw}"

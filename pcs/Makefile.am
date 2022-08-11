@@ -20,6 +20,7 @@ EXTRA_DIST		= \
 			  acl.py \
 			  alert.py \
 			  app.py \
+			  api_v2_client.py \
 			  cli/booth/command.py \
 			  cli/booth/env.py \
 			  cli/booth/__init__.py \
@@ -95,6 +96,9 @@ EXTRA_DIST		= \
 			  common/file_type_codes.py \
 			  common/host.py \
 			  common/__init__.py \
+			  common/async_tasks/__init__.py \
+			  common/async_tasks/dto.py \
+			  common/async_tasks/types.py \
 			  common/communication/__init__.py \
 			  common/communication/const.py \
 			  common/communication/dto.py \
@@ -115,6 +119,8 @@ EXTRA_DIST		= \
 			  common/pacemaker/resource/relations.py \
 			  common/pacemaker/role.py \
 			  common/pacemaker/rule.py \
+			  common/permissions/__init__.py \
+			  common/permissions/types.py \
 			  common/pcs_pycurl.py \
 			  common/reports/codes.py \
 			  common/reports/const.py \
@@ -154,14 +160,25 @@ EXTRA_DIST		= \
 			  constraint.py \
 			  daemon/app/common.py \
 			  daemon/app/__init__.py \
-			  daemon/app/session.py \
+			  daemon/app/api_v1.py \
+			  daemon/app/api_v2.py \
+			  daemon/app/auth.py \
 			  daemon/app/sinatra_common.py \
 			  daemon/app/sinatra_remote.py \
 			  daemon/app/sinatra_ui.py \
-			  daemon/app/test/__init__.py \
 			  daemon/app/ui_common.py \
 			  daemon/app/ui.py \
-			  daemon/auth.py \
+			  daemon/async_tasks/__init__.py \
+			  daemon/async_tasks/scheduler.py \
+			  daemon/async_tasks/task.py \
+			  daemon/async_tasks/types.py \
+			  daemon/async_tasks/worker/command_mapping.py \
+			  daemon/async_tasks/worker/communicator.py \
+			  daemon/async_tasks/worker/executor.py \
+			  daemon/async_tasks/worker/__init__.py \
+			  daemon/async_tasks/worker/logging.py \
+			  daemon/async_tasks/worker/report_processor.py \
+			  daemon/async_tasks/worker/types.py \
 			  daemon/env.py \
 			  daemon/http_server.py \
 			  daemon/__init__.py \
@@ -179,6 +196,16 @@ EXTRA_DIST		= \
 			  entry_points/snmp_agent.py \
 			  host.py \
 			  __init__.py \
+			  lib/auth/config/__init__.py \
+			  lib/auth/config/exporter.py \
+			  lib/auth/config/facade.py \
+			  lib/auth/config/parser.py \
+			  lib/auth/config/types.py \
+			  lib/auth/__init__.py \
+			  lib/auth/const.py \
+			  lib/auth/pam.py \
+			  lib/auth/provider.py \
+			  lib/auth/tools.py \
 			  lib/booth/config_facade.py \
 			  lib/booth/config_files.py \
 			  lib/booth/config_parser.py \
@@ -289,6 +316,7 @@ EXTRA_DIST		= \
 			  lib/external.py \
 			  lib/file/__init__.py \
 			  lib/file/instance.py \
+			  lib/file/json.py \
 			  lib/file/metadata.py \
 			  lib/file/raw_file.py \
 			  lib/file/toolbox.py \
@@ -304,6 +332,13 @@ EXTRA_DIST		= \
 			  lib/pacemaker/simulate.py \
 			  lib/pacemaker/state.py \
 			  lib/pacemaker/values.py \
+			  lib/permissions/__init__.py \
+			  lib/permissions/checker.py \
+			  lib/permissions/config/__init__.py \
+			  lib/permissions/config/exporter.py \
+			  lib/permissions/config/facade.py \
+			  lib/permissions/config/parser.py \
+			  lib/permissions/config/types.py \
 			  lib/resource_agent/const.py \
 			  lib/resource_agent/error.py \
 			  lib/resource_agent/facade.py \

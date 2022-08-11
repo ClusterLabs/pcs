@@ -299,6 +299,10 @@ def remove_uid_gid_file(uid, gid):
 
 @lru_cache()
 def read_known_hosts_file():
+    return read_known_hosts_file_not_cached()
+
+
+def read_known_hosts_file_not_cached():
     """
     Commandline options: no options
     """

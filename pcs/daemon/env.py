@@ -10,7 +10,10 @@ from os.path import join as join_path
 from os.path import realpath
 
 from pcs import settings
-from pcs.common.validate import is_port_number
+from pcs.common.validate import (
+    is_integer,
+    is_port_number,
+)
 
 # Relative location instead of system location is used for development purposes.
 PCSD_LOCAL_DIR = realpath(dirname(abspath(__file__)) + "/../../pcsd")
@@ -27,6 +30,14 @@ PCSD_DISABLE_GUI = "PCSD_DISABLE_GUI"
 PCSD_SESSION_LIFETIME = "PCSD_SESSION_LIFETIME"
 PCSD_DEV = "PCSD_DEV"
 PCSD_STATIC_FILES_DIR = "PCSD_STATIC_FILES_DIR"
+PCSD_WORKER_COUNT = "PCSD_WORKER_COUNT"
+PCSD_WORKER_RESET_LIMIT = "PCSD_WORKER_RESET_LIMIT"
+PCSD_MAX_WORKER_COUNT = "PCSD_MAX_WORKER_COUNT"
+PCSD_DEADLOCK_THRESHOLD_TIMEOUT = "PCSD_DEADLOCK_THRESHOLD_TIMEOUT"
+PCSD_CHECK_INTERVAL_MS = "PCSD_CHECK_INTERVAL_MS"
+PCSD_TASK_ABANDONED_TIMEOUT = "PCSD_TASK_ABANDONED_TIMEOUT"
+PCSD_TASK_UNRESPONSIVE_TIMEOUT = "PCSD_TASK_UNRESPONSIVE_TIMEOUT"
+PCSD_TASK_DELETION_TIMEOUT = "PCSD_TASK_DELETION_TIMEOUT"
 
 Env = namedtuple(
     "Env",
@@ -41,6 +52,14 @@ Env = namedtuple(
         PCSD_SESSION_LIFETIME,
         PCSD_STATIC_FILES_DIR,
         PCSD_DEV,
+        PCSD_WORKER_COUNT,
+        PCSD_WORKER_RESET_LIMIT,
+        PCSD_MAX_WORKER_COUNT,
+        PCSD_DEADLOCK_THRESHOLD_TIMEOUT,
+        PCSD_CHECK_INTERVAL_MS,
+        PCSD_TASK_ABANDONED_TIMEOUT,
+        PCSD_TASK_UNRESPONSIVE_TIMEOUT,
+        PCSD_TASK_DELETION_TIMEOUT,
         "has_errors",
     ],
 )
@@ -59,6 +78,14 @@ def prepare_env(environ, logger=None):
         loader.session_lifetime(),
         loader.pcsd_static_files_dir(),
         loader.pcsd_dev(),
+        loader.pcsd_worker_count(),
+        loader.pcsd_worker_reset_limit(),
+        loader.pcsd_max_worker_count(),
+        loader.pcsd_deadlock_threshold_timeout(),
+        loader.pcsd_check_interval_ms(),
+        loader.pcsd_task_abandoned_timeout(),
+        loader.pcsd_task_unresponsive_timeout(),
+        loader.pcsd_task_deletion_timeout(),
         loader.has_errors(),
     )
     if logger:
@@ -173,6 +200,75 @@ class EnvLoader:
     @lru_cache(maxsize=5)
     def pcsd_dev(self):
         return self.__has_true_in_environ(PCSD_DEV)
+
+    def _get_positive_int(self, key: str, default: int) -> int:
+        value = self.environ.get(key, default)
+        if not is_integer(value, at_least=1):
+            self.errors.append(
+                f"Value '{value}' for '{key}' is not a positive integer"
+            )
+            return default
+        return int(value)
+
+    def _get_non_negative_int(self, key: str, default: int) -> int:
+        value = self.environ.get(key, default)
+        if not is_integer(value, at_least=0):
+            self.errors.append(
+                f"Value '{value}' for '{key}' is not a non-negative integer"
+            )
+            return default
+        return int(value)
+
+    @lru_cache(maxsize=1)
+    def pcsd_worker_count(self) -> int:
+        return self._get_positive_int(
+            PCSD_WORKER_COUNT, settings.pcsd_worker_count
+        )
+
+    @lru_cache(maxsize=1)
+    def pcsd_worker_reset_limit(self) -> int:
+        return self._get_positive_int(
+            PCSD_WORKER_RESET_LIMIT, settings.pcsd_worker_reset_limit
+        )
+
+    @lru_cache(maxsize=1)
+    def pcsd_max_worker_count(self) -> int:
+        return self._get_positive_int(
+            PCSD_MAX_WORKER_COUNT,
+            self.pcsd_worker_count() + settings.pcsd_temporary_workers,
+        )
+
+    @lru_cache(maxsize=1)
+    def pcsd_deadlock_threshold_timeout(self) -> int:
+        return self._get_non_negative_int(
+            PCSD_DEADLOCK_THRESHOLD_TIMEOUT,
+            settings.pcsd_deadlock_threshold_timeout,
+        )
+
+    @lru_cache(maxsize=1)
+    def pcsd_check_interval_ms(self) -> int:
+        return self._get_positive_int(
+            PCSD_CHECK_INTERVAL_MS, settings.async_api_scheduler_interval_ms
+        )
+
+    @lru_cache(maxsize=1)
+    def pcsd_task_abandoned_timeout(self) -> int:
+        return self._get_positive_int(
+            PCSD_TASK_ABANDONED_TIMEOUT, settings.task_abandoned_timeout_seconds
+        )
+
+    @lru_cache(maxsize=1)
+    def pcsd_task_unresponsive_timeout(self) -> int:
+        return self._get_positive_int(
+            PCSD_TASK_UNRESPONSIVE_TIMEOUT,
+            settings.task_unresponsive_timeout_seconds,
+        )
+
+    @lru_cache(maxsize=1)
+    def pcsd_task_deletion_timeout(self) -> int:
+        return self._get_non_negative_int(
+            PCSD_TASK_DELETION_TIMEOUT, settings.task_deletion_timeout_seconds
+        )
 
     def __in_pcsd_path(self, path, description="", existence_required=True):
         pcsd_dir = (

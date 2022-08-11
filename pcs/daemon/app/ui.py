@@ -1,19 +1,27 @@
 import os.path
 
 from pcs.daemon import session
-from pcs.daemon.app import session as app_session
-from pcs.daemon.app.common import BaseHandler
+from pcs.daemon.app.auth import (
+    NotAuthorizedException,
+    PasswordAuthProvider,
+    SessionAuthProvider,
+)
+from pcs.daemon.app.common import (
+    BaseHandler,
+    RoutesType,
+)
 from pcs.daemon.app.ui_common import (
     AjaxMixin,
     StaticFile,
 )
+from pcs.lib.auth.provider import AuthProvider
 
 
 class SPAHandler(BaseHandler):
     __index = None
     __fallback = None
 
-    def initialize(self, index, fallback):
+    def initialize(self, index: str, fallback: str) -> None:
         # pylint: disable=arguments-differ
         self.__index = index
         self.__fallback = fallback
@@ -28,40 +36,66 @@ class SPAHandler(BaseHandler):
         )
 
 
-class Login(SPAHandler, app_session.Mixin, AjaxMixin):
-    def initialize(self, session_storage, index, fallback):
+class Login(SPAHandler, AjaxMixin):
+    _password_auth_provider: PasswordAuthProvider
+    _session_auth_provider: SessionAuthProvider
+
+    def initialize(
+        self,
+        session_storage: session.Storage,
+        auth_provider: AuthProvider,
+        index: str,
+        fallback: str,
+    ) -> None:
         # pylint: disable=arguments-differ
-        app_session.Mixin.initialize(self, session_storage)
         SPAHandler.initialize(self, index, fallback)
+        self._password_auth_provider = PasswordAuthProvider(self, auth_provider)
+        self._session_auth_provider = SessionAuthProvider(
+            self, auth_provider, session_storage
+        )
+
+    def prepare(self) -> None:
+        self._session_auth_provider.init_session()
 
     async def post(self, *args, **kwargs):
         del args, kwargs
         # This is the way of old (ruby) pcsd. Post login generates a session
         # cookie. No matter if authentication succeeded or failed.
-
-        await self.session_auth_user(
-            self.get_body_argument("username"),
-            self.get_body_argument("password"),
-            sign_rejection=False,
-        )
-
-        if not self.session.is_authenticated:
-            raise self.unauthorized()
-
-        self.write(self.session.ajax_id)
+        try:
+            self._session_auth_provider.update_session(
+                await self._password_auth_provider.auth_by_username_password(
+                    self.get_body_argument("username"),
+                    self.get_body_argument("password"),
+                )
+            )
+        except NotAuthorizedException as e:
+            raise self.unauthorized() from e
 
 
-class Logout(app_session.Mixin, AjaxMixin, BaseHandler):
+class Logout(AjaxMixin, BaseHandler):
     """
     Logout handles url for logout. It is used for both ajax and non-ajax
     requests.
     """
 
+    _auth_provider: SessionAuthProvider
+
+    def initialize(
+        self,
+        session_storage: session.Storage,
+        auth_provider: AuthProvider,
+    ) -> None:
+        # pylint: disable=arguments-differ
+        self._auth_provider = SessionAuthProvider(
+            self, auth_provider, session_storage
+        )
+
+    def prepare(self) -> None:
+        self._auth_provider.init_session()
+
     async def get(self, *args, **kwargs):
         del args, kwargs
-        await self.init_session()
-        self.session_logout()
-        self.sid_to_cookies()
+        self._auth_provider.session_logout()
         self.write("OK")
 
 
@@ -78,12 +112,12 @@ class StaticFileMayBe(StaticFile):
 
 
 def get_routes(
-    url_prefix,
-    app_dir,
-    fallback_page_path,
+    url_prefix: str,
+    app_dir: str,
+    fallback_page_path: str,
     session_storage: session.Storage,
-):
-    sessions = dict(session_storage=session_storage)
+    auth_provider: AuthProvider,
+) -> RoutesType:
     static_path = lambda dir="": dict(path=os.path.join(app_dir, dir))
     pages = dict(
         index=os.path.join(app_dir, "index.html"),
@@ -98,7 +132,20 @@ def get_routes(
     return [
         (f"{url_prefix}static/(.*)", StaticFileMayBe, static_path("static")),
         (f"{url_prefix}manifest.json", StaticFileMayBe, static_path()),
-        (f"{url_prefix}login", Login, {**sessions, **pages}),
-        (f"{url_prefix}logout", Logout, sessions),
+        (
+            f"{url_prefix}login",
+            Login,
+            dict(
+                session_storage=session_storage,
+                auth_provider=auth_provider,
+                index=os.path.join(app_dir, "index.html"),
+                fallback=fallback_page_path,
+            ),
+        ),
+        (
+            f"{url_prefix}logout",
+            Logout,
+            dict(session_storage=session_storage, auth_provider=auth_provider),
+        ),
         (f"{url_prefix}.*", SPAHandler, pages),
     ]

@@ -111,19 +111,30 @@ EXTRA_DIST		= \
 			  tier0/common/test_tools_xml_fromstring.py \
 			  tier0/daemon/app/fixtures_app.py \
 			  tier0/daemon/app/__init__.py \
+			  tier0/daemon/app/test_api_v1.py \
 			  tier0/daemon/app/test_app_gui.py \
 			  tier0/daemon/app/test_app_redirect.py \
 			  tier0/daemon/app/test_app_remote.py \
-			  tier0/daemon/app/test_app_session.py \
 			  tier0/daemon/app/test_app_spa.py \
+			  tier0/daemon/async_tasks/__init__.py \
+			  tier0/daemon/async_tasks/dummy_commands.py \
+			  tier0/daemon/async_tasks/helpers.py \
+			  tier0/daemon/async_tasks/test_integration.py \
+			  tier0/daemon/async_tasks/test_scheduler.py \
+			  tier0/daemon/async_tasks/test_task.py \
+			  tier0/daemon/async_tasks/test_worker.py \
 			  tier0/daemon/__init__.py \
-			  tier0/daemon/test_auth.py \
 			  tier0/daemon/test_env.py \
 			  tier0/daemon/test_http_server.py \
 			  tier0/daemon/test_ruby_pcsd.py \
 			  tier0/daemon/test_session.py \
 			  tier0/daemon/test_ssl.py \
 			  tier0/__init__.py \
+			  tier0/lib/auth/__init__.py \
+			  tier0/lib/auth/config/__init__.py \
+			  tier0/lib/auth/config/test_facade.py \
+			  tier0/lib/auth/config/test_parser.py \
+			  tier0/lib/auth/test_provider.py \
 			  tier0/lib/booth/__init__.py \
 			  tier0/lib/booth/test_config_facade.py \
 			  tier0/lib/booth/test_config_files.py \
@@ -285,6 +296,11 @@ EXTRA_DIST		= \
 			  tier0/lib/pacemaker/test_simulate.py \
 			  tier0/lib/pacemaker/test_state.py \
 			  tier0/lib/pacemaker/test_values.py \
+			  tier0/lib/permissions/__init__.py \
+			  tier0/lib/permissions/config/__init__.py \
+			  tier0/lib/permissions/config/test_facade.py \
+			  tier0/lib/permissions/config/test_parser.py \
+			  tier0/lib/permissions/test_checker.py \
 			  tier0/lib/resource_agent/__init__.py \
 			  tier0/lib/resource_agent/test_facade.py \
 			  tier0/lib/resource_agent/test_list.py \
