@@ -1,8 +1,7 @@
 from functools import partial
 from unittest import TestCase
 
-from pcs_test.tools.assertions import AssertPcsMixinOld as AssertPcsMixin
-from pcs_test.tools.assertions import ac
+from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
     get_tmp_dir,
@@ -10,8 +9,10 @@ from pcs_test.tools.misc import (
     skip_unless_root,
     write_file_to_tmpfile,
 )
-from pcs_test.tools.pcs_runner import PcsRunnerOld as PcsRunner
-from pcs_test.tools.pcs_runner import pcs_old as pcs
+from pcs_test.tools.pcs_runner import (
+    PcsRunner,
+    pcs,
+)
 
 
 class UidGidTest(TestCase):
@@ -29,93 +30,135 @@ class UidGidTest(TestCase):
             None,
             mock_settings={"corosync_uidgid_dir": self.uid_gid_dir.name},
         )
-        o, r = _pcs("cluster uidgid".split())
-        ac(o, "No uidgids configured\n")
-        assert r == 0
+        stdout, stderr, retval = _pcs("cluster uidgid".split())
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "No uidgids configured\n")
+        self.assertEqual(retval, 0)
 
-        o, r = _pcs("cluster uidgid add".split())
-        assert r == 1
-        assert o.startswith("\nUsage:")
+        stdout, stderr, retval = _pcs("cluster uidgid add".split())
+        self.assertEqual(stdout, "")
+        self.assertTrue(stderr.startswith("\nUsage:"))
+        self.assertEqual(retval, 1)
 
-        o, r = _pcs("cluster uidgid rm".split())
-        assert r == 1
-        assert o.startswith(
-            "Error: This command has been replaced with 'pcs cluster uidgid "
-            "delete', 'pcs cluster uidgid remove'."
+        stdout, stderr, retval = _pcs("cluster uidgid rm".split())
+        self.assertEqual(stdout, "")
+        self.assertTrue(
+            stderr.startswith(
+                "Error: This command has been replaced with 'pcs cluster uidgid "
+                "delete', 'pcs cluster uidgid remove'."
+            )
         )
+        self.assertEqual(retval, 1)
 
-        o, r = _pcs("cluster uidgid xx".split())
-        assert r == 1
-        assert o.startswith("\nUsage:")
+        stdout, stderr, retval = _pcs("cluster uidgid xx".split())
+        self.assertEqual(stdout, "")
+        self.assertTrue(stderr.startswith("\nUsage:"))
+        self.assertEqual(retval, 1)
 
-        o, r = _pcs("cluster uidgid add uid=testuid gid=testgid".split())
-        assert r == 0
-        ac(o, "")
+        stdout, stderr, retval = _pcs(
+            "cluster uidgid add uid=testuid gid=testgid".split()
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = _pcs("cluster uidgid add uid=testuid gid=testgid".split())
-        ac(
-            o,
+        stdout, stderr, retval = _pcs(
+            "cluster uidgid add uid=testuid gid=testgid".split()
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(
+            stderr,
             "Error: uidgid file with uid=testuid and gid=testgid already "
             "exists\n",
         )
-        assert r == 1
+        self.assertEqual(retval, 1)
 
-        o, r = _pcs("cluster uidgid delete uid=testuid2 gid=testgid2".split())
-        assert r == 1
-        ac(
-            o,
+        stdout, stderr, retval = _pcs(
+            "cluster uidgid delete uid=testuid2 gid=testgid2".split()
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(
+            stderr,
             "Error: no uidgid files with uid=testuid2 and gid=testgid2 found\n",
         )
+        self.assertEqual(retval, 1)
 
-        o, r = _pcs("cluster uidgid remove uid=testuid gid=testgid2".split())
-        assert r == 1
-        ac(
-            o,
+        stdout, stderr, retval = _pcs(
+            "cluster uidgid remove uid=testuid gid=testgid2".split()
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(
+            stderr,
             "Error: no uidgid files with uid=testuid and gid=testgid2 found\n",
         )
+        self.assertEqual(retval, 1)
 
-        o, r = _pcs("cluster uidgid rm uid=testuid2 gid=testgid".split())
-        assert r == 1
-        assert o.startswith(
-            "Error: This command has been replaced with 'pcs cluster uidgid "
-            "delete', 'pcs cluster uidgid remove'."
+        stdout, stderr, retval = _pcs(
+            "cluster uidgid rm uid=testuid2 gid=testgid".split()
         )
+        self.assertEqual(stdout, "")
+        self.assertTrue(
+            stderr.startswith(
+                "Error: This command has been replaced with 'pcs cluster uidgid "
+                "delete', 'pcs cluster uidgid remove'."
+            )
+        )
+        self.assertEqual(retval, 1)
 
-        o, r = _pcs("cluster uidgid".split())
-        assert r == 0
-        ac(o, "UID/GID: uid=testuid gid=testgid\n")
+        stdout, stderr, retval = _pcs("cluster uidgid".split())
+        self.assertEqual(stdout, "UID/GID: uid=testuid gid=testgid\n")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = _pcs("cluster uidgid delete uid=testuid gid=testgid".split())
-        ac(o, "")
-        assert r == 0
+        stdout, stderr, retval = _pcs(
+            "cluster uidgid delete uid=testuid gid=testgid".split()
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = _pcs("cluster uidgid add uid=testuid gid=testgid".split())
-        assert r == 0
-        ac(o, "")
+        stdout, stderr, retval = _pcs(
+            "cluster uidgid add uid=testuid gid=testgid".split()
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = _pcs("cluster uidgid".split())
-        assert r == 0
-        ac(o, "UID/GID: uid=testuid gid=testgid\n")
+        stdout, stderr, retval = _pcs("cluster uidgid".split())
+        self.assertEqual(stdout, "UID/GID: uid=testuid gid=testgid\n")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = _pcs("cluster uidgid remove uid=testuid gid=testgid".split())
-        ac(o, "")
-        assert r == 0
+        stdout, stderr, retval = _pcs(
+            "cluster uidgid remove uid=testuid gid=testgid".split()
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = _pcs("cluster uidgid add uid=testuid gid=testgid".split())
-        assert r == 0
-        ac(o, "")
+        stdout, stderr, retval = _pcs(
+            "cluster uidgid add uid=testuid gid=testgid".split()
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = _pcs("cluster uidgid".split())
-        assert r == 0
-        ac(o, "UID/GID: uid=testuid gid=testgid\n")
+        stdout, stderr, retval = _pcs("cluster uidgid".split())
+        self.assertEqual(stdout, "UID/GID: uid=testuid gid=testgid\n")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = _pcs("cluster uidgid delete uid=testuid gid=testgid".split())
-        ac(o, "")
-        assert r == 0
+        stdout, stderr, retval = _pcs(
+            "cluster uidgid delete uid=testuid gid=testgid".split()
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        o, r = _pcs("cluster uidgid".split())
-        assert r == 0
-        ac(o, "No uidgids configured\n")
+        stdout, stderr, retval = _pcs("cluster uidgid".split())
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "No uidgids configured\n")
+        self.assertEqual(retval, 0)
 
 
 class ClusterUpgradeTest(TestCase, AssertPcsMixin):
@@ -134,9 +177,14 @@ class ClusterUpgradeTest(TestCase, AssertPcsMixin):
         assert data.find("pacemaker-1.2") != -1
         assert data.find("pacemaker-2.") == -1
 
-        o, r = pcs(self.temp_cib.name, "cluster cib-upgrade".split())
-        ac(o, "Cluster CIB has been upgraded to latest version\n")
-        assert r == 0
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "cluster cib-upgrade".split()
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(
+            stderr, "Cluster CIB has been upgraded to latest version\n"
+        )
+        self.assertEqual(retval, 0)
 
         self.temp_cib.seek(0)
         data = self.temp_cib.read()
@@ -144,9 +192,14 @@ class ClusterUpgradeTest(TestCase, AssertPcsMixin):
         assert data.find("pacemaker-2.") == -1
         assert data.find("pacemaker-3.") != -1
 
-        o, r = pcs(self.temp_cib.name, "cluster cib-upgrade".split())
-        ac(o, "Cluster CIB has been upgraded to latest version\n")
-        assert r == 0
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "cluster cib-upgrade".split()
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(
+            stderr, "Cluster CIB has been upgraded to latest version\n"
+        )
+        self.assertEqual(retval, 0)
 
 
 @skip_unless_root()

@@ -1,6 +1,6 @@
 import unittest
 
-from pcs_test.tools.assertions import AssertPcsMixinOld as AssertPcsMixin
+from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.misc import ParametrizedTestMetaClass
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
@@ -8,7 +8,7 @@ from pcs_test.tools.misc import (
     outdent,
     write_file_to_tmpfile,
 )
-from pcs_test.tools.pcs_runner import PcsRunnerOld as PcsRunner
+from pcs_test.tools.pcs_runner import PcsRunner
 
 empty_cib = rc("cib-empty.xml")
 
@@ -171,7 +171,11 @@ class DeleteRemoveAlertTest(PcsAlertTest):
     def _test_usage(self):
         self.assert_pcs_fail(
             ["alert", self.command],
-            stdout_start=f"\nUsage: pcs alert <command>\n    {self.command} <",
+            stderr_start=outdent(
+                f"""
+                Usage: pcs alert <command>
+                    {self.command} <"""
+            ),
         )
 
     def _test_not_existing_alert(self):
@@ -340,7 +344,7 @@ Alerts:
         )
         self.assert_pcs_success(
             "alert recipient add alert value=rec_value --force".split(),
-            "Warning: Recipient 'rec_value' in alert 'alert' already exists\n",
+            stderr_full="Warning: Recipient 'rec_value' in alert 'alert' already exists\n",
         )
         self.assert_pcs_success(
             "alert config".split(),
@@ -441,7 +445,7 @@ Alerts:
         )
         self.assert_pcs_success(
             "alert recipient update alert-recipient value=value --force".split(),
-            "Warning: Recipient 'value' in alert 'alert' already exists\n",
+            stderr_full="Warning: Recipient 'value' in alert 'alert' already exists\n",
         )
         self.assert_pcs_success(
             "alert config".split(),
@@ -504,7 +508,7 @@ class DeleteRemoveRecipientTest(PcsAlertTest):
     def _test_usage(self):
         self.assert_pcs_fail(
             ["alert", "recipient", self.command],
-            stdout_start=outdent(
+            stderr_start=outdent(
                 f"""
                 Usage: pcs alert <command>
                     recipient {self.command} <"""

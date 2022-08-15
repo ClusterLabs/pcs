@@ -10,19 +10,18 @@ from pcs import (
     utils,
 )
 
-from pcs_test.tools.assertions import AssertPcsMixinOld as AssertPcsMixin
-from pcs_test.tools.assertions import ac
-from pcs_test.tools.cib import (
-    get_assert_pcs_effect_mixin_old as get_assert_pcs_effect_mixin,
-)
+from pcs_test.tools.assertions import AssertPcsMixin
+from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
     get_tmp_file,
     outdent,
     write_file_to_tmpfile,
 )
-from pcs_test.tools.pcs_runner import PcsRunnerOld as PcsRunner
-from pcs_test.tools.pcs_runner import pcs_old as pcs
+from pcs_test.tools.pcs_runner import (
+    PcsRunner,
+    pcs,
+)
 
 # pylint: disable=invalid-name, line-too-long
 
@@ -85,99 +84,142 @@ class NodeUtilizationSet(
         """
 
     def test_node_utilization_set(self):
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "node utilization rh7-1 test1=10".split()
         )
-        ac("", output)
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "node utilization rh7-2".split()
         )
-        expected_out = """\
-Node Utilization:
-"""
-        ac(expected_out, output)
-        self.assertEqual(0, returnVal)
+        self.assertEqual(
+            stdout,
+            outdent(
+                """\
+                Node Utilization:
+                """
+            ),
+        )
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "node utilization rh7-1".split()
         )
-        expected_out = """\
-Node Utilization:
- rh7-1: test1=10
-"""
-        ac(expected_out, output)
-        self.assertEqual(0, returnVal)
+        self.assertEqual(
+            stdout,
+            outdent(
+                """\
+                Node Utilization:
+                 rh7-1: test1=10
+                """
+            ),
+        )
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "node utilization rh7-1 test1=-10 test4=1234".split(),
         )
-        ac("", output)
-        self.assertEqual(0, returnVal)
-        output, returnVal = pcs(
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
+
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "node utilization rh7-1".split()
         )
-        expected_out = """\
-Node Utilization:
- rh7-1: test1=-10 test4=1234
-"""
-        ac(expected_out, output)
-        self.assertEqual(0, returnVal)
+        self.assertEqual(
+            stdout,
+            outdent(
+                """\
+                Node Utilization:
+                 rh7-1: test1=-10 test4=1234
+                """
+            ),
+        )
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "node utilization rh7-2 test2=321 empty=".split(),
         )
-        ac("", output)
-        self.assertEqual(0, returnVal)
-        output, returnVal = pcs(
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
+
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "node utilization rh7-2".split()
         )
-        expected_out = """\
-Node Utilization:
- rh7-2: test2=321
-"""
-        ac(expected_out, output)
-        self.assertEqual(0, returnVal)
+        self.assertEqual(
+            stdout,
+            outdent(
+                """\
+                Node Utilization:
+                 rh7-2: test2=321
+                """
+            ),
+        )
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(self.temp_cib.name, "node utilization".split())
-        expected_out = """\
-Node Utilization:
- rh7-1: test1=-10 test4=1234
- rh7-2: test2=321
-"""
-        ac(expected_out, output)
-        self.assertEqual(0, returnVal)
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name, "node utilization".split()
+        )
+        self.assertEqual(
+            stdout,
+            outdent(
+                """\
+                Node Utilization:
+                 rh7-1: test1=-10 test4=1234
+                 rh7-2: test2=321
+                """
+            ),
+        )
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "node utilization rh7-2 test1=-20".split()
         )
-        ac("", output)
-        self.assertEqual(0, returnVal)
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "node utilization --name test1".split()
         )
-        expected_out = """\
-Node Utilization:
- rh7-1: test1=-10
- rh7-2: test1=-20
-"""
-        ac(expected_out, output)
-        self.assertEqual(0, returnVal)
+        self.assertEqual(
+            stdout,
+            outdent(
+                """\
+                Node Utilization:
+                 rh7-1: test1=-10
+                 rh7-2: test1=-20
+                """
+            ),
+        )
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
-        output, returnVal = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "node utilization --name test1 rh7-2".split(),
         )
-        expected_out = """\
-Node Utilization:
- rh7-2: test1=-20
-"""
-        ac(expected_out, output)
-        self.assertEqual(0, returnVal)
+        self.assertEqual(
+            stdout,
+            outdent(
+                """\
+                Node Utilization:
+                 rh7-2: test1=-20
+                """
+            ),
+        )
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
     def test_refuse_non_option_attribute_parameter_among_options(self):
         self.assert_pcs_fail(
@@ -394,11 +436,11 @@ class NodeStandby(TestCase, AssertPcsMixin):
     def test_all_and_nodelist(self):
         self.assert_pcs_fail(
             "node standby rh7-1 rh7-2 --all".split(),
-            stdout_full="Error: Cannot specify both --all and a list of nodes.\n",
+            "Error: Cannot specify both --all and a list of nodes.\n",
         )
         self.assert_pcs_fail(
             "node unstandby rh7-1 rh7-2 --all".split(),
-            stdout_full="Error: Cannot specify both --all and a list of nodes.\n",
+            "Error: Cannot specify both --all and a list of nodes.\n",
         )
 
 
@@ -543,11 +585,11 @@ class NodeMaintenance(TestCase, AssertPcsMixin):
     def test_all_and_nodelist(self):
         self.assert_pcs_fail(
             "node maintenance rh7-1 rh7-2 --all".split(),
-            stdout_full="Error: Cannot specify both --all and a list of nodes.\n",
+            "Error: Cannot specify both --all and a list of nodes.\n",
         )
         self.assert_pcs_fail(
             "node unmaintenance rh7-1 rh7-2 --all".split(),
-            stdout_full="Error: Cannot specify both --all and a list of nodes.\n",
+            "Error: Cannot specify both --all and a list of nodes.\n",
         )
 
 
@@ -867,7 +909,8 @@ Node Attributes:
         )
         self.assert_pcs_result(
             "node attribute rh7-1 missing=".split(),
-            "Error: attribute: 'missing' doesn't exist for node: 'rh7-1'\n",
+            stdout_full="",
+            stderr_full="Error: attribute: 'missing' doesn't exist for node: 'rh7-1'\n",
             returncode=2,
         )
 
@@ -902,10 +945,11 @@ Node Attributes:
         # this behaves differently than the rest of pcs - instead of doing
         # nothing it returns an error.
         # Should be changed to be consistent with the rest of pcs.
-        output, retval = pcs(
+        stdout, stderr, retval = pcs(
             self.temp_cib.name, "node attribute rh7-1 test=".split()
         )
+        self.assertEqual(stdout, "")
         self.assertEqual(
-            output, "Error: attribute: 'test' doesn't exist for node: 'rh7-1'\n"
+            stderr, "Error: attribute: 'test' doesn't exist for node: 'rh7-1'\n"
         )
         self.assertEqual(retval, 2)
