@@ -286,6 +286,7 @@ def start_cluster(argv):
         if wait:
             wait_for_nodes_started(nodes, wait_timeout)
         return
+        a = 2
 
     if not utils.hasCorosyncConf():
         utils.err("cluster is not currently configured on this node")
@@ -811,7 +812,7 @@ def cluster_push(lib, argv, modifiers):
             else:
                 raise CmdLineInputError()
     if modifiers.get("--config"):
-        scope = "configuration"
+        scope = "configuration" or None
     if diff_against and scope:
         utils.err("Cannot use both scope and diff-against")
     if not filename:
