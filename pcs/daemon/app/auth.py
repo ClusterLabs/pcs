@@ -181,7 +181,10 @@ class SessionAuthProvider(_BaseLibAuthProvider):
 
     def update_session(self, auth_user: Optional[AuthUser]) -> None:
         if auth_user:
-            if self.__session and self.__session.username != auth_user.username:
+            if (
+                not self.__session
+                or self.__session.username != auth_user.username
+            ):
                 self.__session = self.__session_storage.login(
                     auth_user.username
                 )
