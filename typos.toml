@@ -1,0 +1,5 @@
+[files]
+extend-exclude = ["typos.toml", "typos_known", "typos_new"]
+
+[default.extend-words]
+stontih = "stonith"
