@@ -235,7 +235,7 @@ if DEV_TESTS
 		$(TIME) $(PYTHON) -m mypy --config-file mypy.ini --package pcs
 endif
 
-RUN_TYPOS=$(TYPOS) --color never --format brief --exclude typos_known | sed -e 's/:[0-9]\+:[0-9]\+:/:/' | $(SORT)
+RUN_TYPOS=$(TYPOS) --color never --format brief | sed -e 's/:[0-9]\+:[0-9]\+:/:/' | $(SORT)
 .PHONY: typos_check
 typos_check:
 if TYPOS_CHECK
