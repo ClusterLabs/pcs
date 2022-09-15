@@ -1,0 +1,5 @@
+[files]
+extend-exclude = ["typos.toml", "typos_known", "typos_new", "jquery-*.js", "handlebars-*.js", "ember-*.js"]
+
+[default.extend-words]
+stontih = "stonith"
