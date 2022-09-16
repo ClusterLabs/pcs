@@ -95,9 +95,6 @@ class PrepareOptionsPlainTest(TestCase):
                     "allowed": [
                         "id",
                         "loss-policy",
-                        "rsc",
-                        "rsc-role",
-                        "ticket",
                     ],
                     "allowed_patterns": [],
                 },
