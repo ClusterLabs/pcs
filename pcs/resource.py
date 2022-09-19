@@ -2360,6 +2360,11 @@ def resource_disable_cmd(lib, argv, modifiers):
             modifiers.get("--wait"),
         )
         return
+    if modifiers.get("--brief"):
+        raise CmdLineInputError(
+            "The --brief option should be used after --simulate "
+            "or --safe option"
+        )
     lib.resource.disable(argv, modifiers.get("--wait"))
 
 
