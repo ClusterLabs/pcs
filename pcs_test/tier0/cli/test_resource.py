@@ -589,7 +589,7 @@ class ResourceDisable(TestCase):
             )
         self.assertEqual(
             cm.exception.message,
-            "The --brief option should be used after --simulate or --safe option",
+            "'--brief' cannot be used without '--simulate' or '--safe'",
         )
         self.report_processor.suppress_reports_of_severity.assert_not_called()
         self.resource.disable.assert_not_called()
