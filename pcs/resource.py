@@ -2485,8 +2485,7 @@ def resource_disable_common(
         return
     if modifiers.get("--brief"):
         raise CmdLineInputError(
-            "The --brief option should be used after --simulate "
-            "or --safe option"
+            "'--brief' cannot be used without '--simulate' or '--safe'"
         )
     lib.resource.disable(argv, modifiers.get("--wait"))
 
