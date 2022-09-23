@@ -432,6 +432,30 @@ class MutuallyExclusive(KeyValidator):
         return []
 
 
+class NamesExist(KeyValidator):
+    """
+    Report OPTIONS_DO_NOT_EXIST for option_dict keys not in option_name_list
+    """
+
+    def validate(self, option_dict: TypeOptionMap) -> ReportItemList:
+        not_existing_options = set(option_dict.keys()) - set(
+            self._option_name_list
+        )
+
+        report_list = []
+        if not_existing_options:
+            report_list.append(
+                ReportItem(
+                    severity=self._severity,
+                    message=reports.messages.OptionsDoNotExist(
+                        sorted(not_existing_options),
+                        self._option_type,
+                    ),
+                )
+            )
+        return report_list
+
+
 class NamesIn(KeyValidator):
     """
     Report INVALID_OPTIONS for option_dict keys not in option_name_list

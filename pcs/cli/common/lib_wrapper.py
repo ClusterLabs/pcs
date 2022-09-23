@@ -13,6 +13,7 @@ from pcs.lib.commands import (
     booth,
     cib_options,
     cluster,
+    cluster_property,
     dr,
     fencing_topology,
     node,
@@ -518,6 +519,16 @@ def load_module(env, middleware_factory, name):
                 "create": tag.create,
                 "remove": tag.remove,
                 "update": tag.update,
+            },
+        )
+
+    if name == "cluster_property":
+        return bind_all(
+            env,
+            middleware.build(middleware_factory.cib),
+            {
+                "set_property": cluster_property.set_property,
+                "unset_property": cluster_property.unset_property,
             },
         )
 

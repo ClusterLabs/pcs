@@ -365,6 +365,31 @@ class CannotSetOrderConstraintsForResourcesInTheSameGroup(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class OptionsDoNotExist(ReportItemMessage):
+    """
+    Specified options do not exist in the configuration.
+
+    option_names -- specified options
+    option_type -- describes the option
+    """
+
+    option_names: List[str]
+    option_type: Optional[str] = None
+    _code = codes.OPTIONS_DO_NOT_EXIST
+
+    @property
+    def message(self) -> str:
+        return (
+            "Specified {desc}{_option} {option_names_list} {_do} not exist"
+        ).format(
+            desc=format_optional(self.option_type),
+            _option=format_plural(self.option_names, "option"),
+            _do=format_plural(self.option_names, "does"),
+            option_names_list=format_list(self.option_names),
+        )
+
+
+@dataclass(frozen=True)
 class RequiredOptionsAreMissing(ReportItemMessage):
     """
     Required option has not been specified, command cannot continue
