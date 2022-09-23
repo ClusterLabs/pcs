@@ -59,6 +59,8 @@ from pcs.common.validate import (
 from pcs.lib.cib.tools import IdProvider
 from pcs.lib.corosync import constants as corosync_constants
 from pcs.lib.pacemaker.values import (
+    SCORE_INFINITY,
+    is_boolean,
     is_score,
     validate_id,
 )
@@ -832,6 +834,21 @@ class ValueNotEmpty(ValuePredicateBase):
         return self._value_desc_or_enum
 
 
+class ValuePcmkBoolean(ValuePredicateBase):
+    """
+    Report INVALID_OPTION_VALUE when the value is not a pacemaker boolean value
+    """
+
+    def _is_valid(self, value: TypeOptionValue) -> bool:
+        return is_boolean(value)
+
+    def _get_allowed_values(self) -> Any:
+        return (
+            "a pacemaker boolean value: true, false, on, off, yes, no, y, n, 1"
+            ", 0"
+        )
+
+
 class ValuePcmkDatespecPart(ValuePredicateBase):
     """
     Report INVALID_OPTION_VALUE when the value is not a valid Pacemaker
@@ -872,6 +889,53 @@ class ValuePcmkDatespecPart(ValuePredicateBase):
             f"{self._at_least}..{self._at_most} or "
             f"{self._at_least}..{self._at_most-1}-{self._at_least+1}..{self._at_most}"
         )
+
+
+class ValuePcmkPercentage(ValuePredicateBase):
+    """
+    Report INVALID_OPTION_VALUE when the value is not a non-negative integer
+    followed by '%' character.
+    """
+
+    def _is_valid(self, value: TypeOptionValue) -> bool:
+        if value[-1] != "%":
+            return False
+        return is_integer(value[:-1], 0)
+
+    def _get_allowed_values(self) -> Any:
+        return (
+            "a non-negative integer followed by '%' (e.g. 0%, 50%, 200%, ...)"
+        )
+
+
+class ValuePcmkInteger(ValuePredicateBase):
+    """
+    Report INVALID_OPTION_VALUE when the value is not an integer or
+    INFINITY/-INFINITY
+    """
+
+    def _is_valid(self, value: TypeOptionValue) -> bool:
+
+        return value in [SCORE_INFINITY, f"-{SCORE_INFINITY}"] or is_integer(
+            value, None, None
+        )
+
+    def _get_allowed_values(self) -> Any:
+        return "an integer or INFINITY/-INFINITY"
+
+
+class ValuePcmkPositiveInteger(ValuePredicateBase):
+    """
+    Report INVALID_OPTION_VALUE when the value is not a positive integer or
+    INFINITY
+    """
+
+    def _is_valid(self, value: TypeOptionValue) -> bool:
+
+        return value == SCORE_INFINITY or is_integer(value, 1)
+
+    def _get_allowed_values(self) -> Any:
+        return "a positive integer or INFINITY"
 
 
 class ValuePortNumber(ValuePredicateBase):

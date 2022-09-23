@@ -1391,6 +1391,52 @@ class ValueNotEmpty(TestCase):
         )
 
 
+class ValuePcmkBoolean(TestCase):
+    # The real code only calls ValuePredicateBase => only basic tests here.
+    def test_empty_report_on_valid_option(self):
+        for value in [
+            "True",
+            "oN",
+            "YES",
+            "Y",
+            "1",
+            "False",
+            "Off",
+            "NO",
+            "N",
+            "0",
+        ]:
+            with self.subTest(value=value):
+                assert_report_item_list_equal(
+                    validate.ValuePcmkBoolean("key", None, None).validate(
+                        {"key": value}
+                    ),
+                    [],
+                )
+
+    def test_report_invalid_value(self):
+        for value in ["T", "F", "-1", "2"]:
+            with self.subTest(value=value):
+                assert_report_item_list_equal(
+                    validate.ValuePcmkBoolean("key", None, None).validate(
+                        {"key": value}
+                    ),
+                    [
+                        fixture.error(
+                            reports.codes.INVALID_OPTION_VALUE,
+                            option_name="key",
+                            option_value=value,
+                            allowed_values=(
+                                "a pacemaker boolean value: true, false, on, "
+                                "off, yes, no, y, n, 1, 0"
+                            ),
+                            cannot_be_empty=False,
+                            forbidden_characters=None,
+                        ),
+                    ],
+                )
+
+
 class ValuePcmkDatespecPart(TestCase):
     # The real code only calls ValuePredicateBase => only basic tests here.
     def test_empty_report_on_valid_option(self):
@@ -1434,6 +1480,105 @@ class ValuePcmkDatespecPart(TestCase):
                 ),
             ],
         )
+
+
+class ValuePcmkPercentage(TestCase):
+    # The real code only calls ValuePredicateBase => only basic tests here.
+    def test_empty_report_on_valid_option(self):
+        for value in ["0%", "50%", "100%", "120%"]:
+            with self.subTest(value=value):
+                assert_report_item_list_equal(
+                    validate.ValuePcmkPercentage("key", None, None).validate(
+                        {"key": value}
+                    ),
+                    [],
+                )
+
+    def test_report_invalid_value(self):
+        for value in ["0", "50", "-10%", "not-a-number%"]:
+            with self.subTest(value=value):
+                assert_report_item_list_equal(
+                    validate.ValuePcmkPercentage("key", None, None).validate(
+                        {"key": value}
+                    ),
+                    [
+                        fixture.error(
+                            reports.codes.INVALID_OPTION_VALUE,
+                            option_name="key",
+                            option_value=value,
+                            allowed_values=(
+                                "a non-negative integer followed by '%' (e.g. "
+                                "0%, 50%, 200%, ...)"
+                            ),
+                            cannot_be_empty=False,
+                            forbidden_characters=None,
+                        ),
+                    ],
+                )
+
+
+class ValuePcmkInteger(TestCase):
+    # The real code only calls ValuePredicateBase => only basic tests here.
+    def test_empty_report_on_valid_option(self):
+        for value in ["INFINITY", "-INFINITY", "-1", "0", "+5", "100"]:
+            with self.subTest(value=value):
+                assert_report_item_list_equal(
+                    validate.ValuePcmkInteger("key", None, None).validate(
+                        {"key": value}
+                    ),
+                    [],
+                )
+
+    def test_report_invalid_value(self):
+        for value in ["a", "-infinity", "-10%", "3.14"]:
+            with self.subTest(value=value):
+                assert_report_item_list_equal(
+                    validate.ValuePcmkInteger("key", None, None).validate(
+                        {"key": value}
+                    ),
+                    [
+                        fixture.error(
+                            reports.codes.INVALID_OPTION_VALUE,
+                            option_name="key",
+                            option_value=value,
+                            allowed_values="an integer or INFINITY/-INFINITY",
+                            cannot_be_empty=False,
+                            forbidden_characters=None,
+                        ),
+                    ],
+                )
+
+
+class ValuePcmkPositiveInteger(TestCase):
+    # The real code only calls ValuePredicateBase => only basic tests here.
+    def test_empty_report_on_valid_option(self):
+        for value in ["INFINITY", "1", "+5"]:
+            with self.subTest(value=value):
+                assert_report_item_list_equal(
+                    validate.ValuePcmkPositiveInteger(
+                        "key", None, None
+                    ).validate({"key": value}),
+                    [],
+                )
+
+    def test_report_invalid_value(self):
+        for value in ["-INFINITY", "0", "-10", "3.14"]:
+            with self.subTest(value=value):
+                assert_report_item_list_equal(
+                    validate.ValuePcmkPositiveInteger(
+                        "key", None, None
+                    ).validate({"key": value}),
+                    [
+                        fixture.error(
+                            reports.codes.INVALID_OPTION_VALUE,
+                            option_name="key",
+                            option_value=value,
+                            allowed_values="a positive integer or INFINITY",
+                            cannot_be_empty=False,
+                            forbidden_characters=None,
+                        ),
+                    ],
+                )
 
 
 class ValuePortNumber(TestCase):
