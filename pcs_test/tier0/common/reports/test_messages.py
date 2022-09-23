@@ -127,6 +127,26 @@ class CannotSetOrderConstraintsForResourcesInTheSameGroup(NameBuildTest):
         )
 
 
+class OptionsDoNotExist(NameBuildTest):
+    def test_build_message_with_type(self):
+        self.assert_message_from_report(
+            "Specified TYPE option 'NAME' does not exist",
+            reports.OptionsDoNotExist(["NAME"], option_type="TYPE"),
+        )
+
+    def test_build_message_without_type(self):
+        self.assert_message_from_report(
+            "Specified option 'NAME' does not exist",
+            reports.OptionsDoNotExist(["NAME"]),
+        )
+
+    def test_build_message_with_multiple_names(self):
+        self.assert_message_from_report(
+            "Specified options 'ANOTHER', 'NAME' do not exist",
+            reports.OptionsDoNotExist(["NAME", "ANOTHER"]),
+        )
+
+
 class RequiredOptionsAreMissing(NameBuildTest):
     def test_build_message_with_type(self):
         self.assert_message_from_report(

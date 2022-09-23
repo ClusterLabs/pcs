@@ -41,6 +41,7 @@ from pcs.lib.xml_tools import (
 NvsetTag = NewType("NvsetTag", str)
 NVSET_INSTANCE = NvsetTag("instance_attributes")
 NVSET_META = NvsetTag("meta_attributes")
+NVSET_PROPERTY = NvsetTag("cluster_property_set")
 NVSET_UTILIZATION = NvsetTag("utilization")
 
 

@@ -515,6 +515,58 @@ class MutuallyExclusive(TestCase):
         )
 
 
+class NamesExist(TestCase):
+    def test_return_empty_report_on_existing_names(self):
+        assert_report_item_list_equal(
+            validate.NamesExist(["a", "b", "c"]).validate({"a": "A", "b": "B"}),
+            [],
+        )
+
+    def test_return_error_on_not_existing_names(self):
+        assert_report_item_list_equal(
+            validate.NamesExist(["a"], option_type="TYPE").validate(
+                {"a": "A", "b": "B", "c": "C"}
+            ),
+            [
+                fixture.error(
+                    reports.codes.OPTIONS_DO_NOT_EXIST,
+                    option_names=["b", "c"],
+                    option_type="TYPE",
+                )
+            ],
+        )
+
+    def test_return_error_on_not_existing_names_forceable(self):
+        code = "force_code"
+        assert_report_item_list_equal(
+            validate.NamesExist(
+                ["a"], severity=reports.item.ReportItemSeverity.error(code)
+            ).validate({"a": "A", "b": "B", "c": "C"}),
+            [
+                fixture.error(
+                    reports.codes.OPTIONS_DO_NOT_EXIST,
+                    force_code=code,
+                    option_names=["b", "c"],
+                    option_type=None,
+                )
+            ],
+        )
+
+    def test_return_error_on_not_existing_names_forced(self):
+        assert_report_item_list_equal(
+            validate.NamesExist(
+                ["a"], severity=reports.item.ReportItemSeverity.warning()
+            ).validate({"a": "A", "b": "B", "c": "C"}),
+            [
+                fixture.warn(
+                    reports.codes.OPTIONS_DO_NOT_EXIST,
+                    option_names=["b", "c"],
+                    option_type=None,
+                )
+            ],
+        )
+
+
 class NamesIn(TestCase):
     def test_return_empty_report_on_allowed_names(self):
         assert_report_item_list_equal(

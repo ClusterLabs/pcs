@@ -1,4 +1,5 @@
 from typing import (
+    Container,
     Dict,
     List,
     Union,
@@ -6,6 +7,10 @@ from typing import (
 
 from pcs.common import reports
 from pcs.common.types import StringSequence
+from pcs.lib import cluster_property
+from pcs.lib.cib import nvpair_multi
+from pcs.lib.cib.nvpair import get_nvset
+from pcs.lib.cib.tools import IdProvider
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.resource_agent import (
@@ -87,7 +92,7 @@ def _cluster_property_metadata_to_dict(
     for parameter in metadata.parameters:
         if parameter.name in banned_props:
             continue
-        cluster_property: Dict[str, Union[bool, str, StringSequence]] = {
+        single_property_dict: Dict[str, Union[bool, str, StringSequence]] = {
             "name": parameter.name,
             "shortdesc": parameter.shortdesc or "",
             "longdesc": parameter.longdesc or "",
@@ -98,9 +103,9 @@ def _cluster_property_metadata_to_dict(
             "source": metadata.name.type,
         }
         if parameter.enum_values is not None:
-            cluster_property["enum"] = parameter.enum_values
-            cluster_property["type"] = "enum"
-        property_definition[parameter.name] = cluster_property
+            single_property_dict["enum"] = parameter.enum_values
+            single_property_dict["type"] = "enum"
+        property_definition[parameter.name] = single_property_dict
     return property_definition
 
 
@@ -118,3 +123,88 @@ def get_cluster_properties_definition_legacy(
             _cluster_property_metadata_to_dict(facade.metadata)
         )
     return property_dict
+
+
+def set_property(
+    env: LibraryEnvironment,
+    cluster_options: Dict[str, str],
+    force_flags: Container[reports.types.ForceCode] = (),
+) -> None:
+    cib = env.get_cib()
+    service_manager = env.service_manager
+    id_provider = IdProvider(cib)
+    force = reports.codes.FORCE in force_flags
+    property_facade_list = _get_property_facade_list(
+        env.report_processor,
+        ResourceAgentFacadeFactory(env.cmd_runner(), env.report_processor),
+    )
+    cluster_property_set_el = (
+        cluster_property.get_default_cluster_property_set_element(
+            cib, id_provider
+        )
+    )
+    configured_options = [
+        nvpair_dict["name"]
+        for nvpair_dict in get_nvset(cluster_property_set_el)
+    ]
+    to_be_set_options = {
+        option: value
+        for option, value in cluster_options.items()
+        if value != ""
+    }
+    to_be_removed_options = [
+        option for option, value in cluster_options.items() if value == ""
+    ]
+    if env.report_processor.report_list(
+        cluster_property.validate_set_cluster_options(
+            property_facade_list,
+            service_manager,
+            to_be_set_options,
+            force=force,
+        )
+        + cluster_property.validate_remove_cluster_option(
+            configured_options,
+            service_manager,
+            to_be_removed_options,
+            force=force,
+        )
+    ).has_errors:
+        raise LibraryError()
+    nvpair_multi.nvset_update(
+        cluster_property_set_el,
+        id_provider,
+        cluster_options,
+    )
+    env.push_cib()
+
+
+def unset_property(
+    env: LibraryEnvironment,
+    cluster_options_list: StringSequence,
+    force_flags: Container[reports.types.ForceCode] = (),
+) -> None:
+    cib = env.get_cib()
+    id_provider = IdProvider(cib)
+    cluster_property_set_el = (
+        cluster_property.get_default_cluster_property_set_element(
+            cib, id_provider
+        )
+    )
+    if env.report_processor.report_list(
+        cluster_property.validate_remove_cluster_option(
+            [
+                nvpair_dict["name"]
+                for nvpair_dict in get_nvset(cluster_property_set_el)
+            ],
+            env.service_manager,
+            cluster_options_list,
+            force=reports.codes.FORCE in force_flags,
+        )
+    ).has_errors:
+        raise LibraryError()
+    nvpair_multi.nvset_update(
+        cluster_property_set_el,
+        id_provider,
+        {option: "" for option in cluster_options_list},
+    )
+    env.push_cib()
