@@ -582,6 +582,20 @@ class ResourceDisable(TestCase):
         self.resource.disable_safe.assert_not_called()
         self.resource.disable_simulate.assert_not_called()
 
+    def test_brief(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            resource.resource_disable_cmd(
+                self.lib, ["R1", "R2"], dict_to_modifiers(dict(brief=True))
+            )
+        self.assertEqual(
+            cm.exception.message,
+            "'--brief' cannot be used without '--simulate' or '--safe'",
+        )
+        self.report_processor.suppress_reports_of_severity.assert_not_called()
+        self.resource.disable.assert_not_called()
+        self.resource.disable_safe.assert_not_called()
+        self.resource.disable_simulate.assert_not_called()
+
     def test_safe(self):
         resource.resource_disable_cmd(
             self.lib, ["R1", "R2"], dict_to_modifiers(dict(safe=True))
