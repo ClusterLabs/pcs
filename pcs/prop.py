@@ -160,6 +160,7 @@ def list_property(lib, argv, modifiers):
     else:
         properties = {}
 
+
     if not modifiers.get("--defaults"):
         configured_properties = utils.get_set_properties(
             None if print_all else argv[0], properties
@@ -169,9 +170,16 @@ def list_property(lib, argv, modifiers):
         else:
             properties = configured_properties
 
-    print("Cluster Properties:")
-    for prop, val in sorted(properties.items()):
-        print(" {0}: {1}".format(prop, val))
+    if properties:
+        print("Cluster Properties:")
+        for prop, val in sorted(properties.items()):
+            print(" {0}: {1}".format(prop, val))
+    else:
+        properties = get_default_properties()
+        print("Cluster Properties:")
+        if not print_all:
+            if argv[0] in properties.keys():
+                print(" {0}: {1}".format(argv[0], properties[argv[0]]))
 
 
 def get_default_properties():

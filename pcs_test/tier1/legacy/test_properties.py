@@ -91,6 +91,10 @@ class PropertyTest(TestCase):
         assert "stonith-enabled: false" in output
         assert output.startswith("Cluster Properties:\n batch-limit")
 
+        output, returnVal = pcs(self.temp_cib.name, "property config stonith-action".split())
+        assert returnVal == 0, output
+        assert "stonith-action: reboot" in output
+
     def testBadProperties(self):
         o, r = pcs(self.temp_cib.name, "property set xxxx=zzzz".split())
         self.assertEqual(r, 1)
