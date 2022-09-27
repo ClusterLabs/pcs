@@ -7452,3 +7452,37 @@ class NotAuthorized(ReportItemMessage):
     @property
     def message(self) -> str:
         return "Current user is not authorized for this operation"
+
+
+@dataclass(frozen=True)
+class AgentSelfValidationResult(ReportItemMessage):
+    """
+    Result of running of resource options by agent itself
+
+    result -- output of agent
+    """
+
+    result: str
+    _code = codes.AGENT_SELF_VALIDATION_RESULT
+
+    @property
+    def message(self) -> str:
+        return "Validation result from agent:\n{result}".format(
+            result="\n".join(indent(self.result.splitlines()))
+        )
+
+
+@dataclass(frozen=True)
+class AgentSelfValidationInvalidData(ReportItemMessage):
+    """
+    Agent self validation produced an invalid data
+
+    reason -- text description of the issue
+    """
+
+    reason: str
+    _code = codes.AGENT_SELF_VALIDATION_INVALID_DATA
+
+    @property
+    def message(self) -> str:
+        return f"Invalid validation data from agent: {self.reason}"

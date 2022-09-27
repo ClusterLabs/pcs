@@ -97,6 +97,10 @@ class CreateMixin:
 
     def test_minimal_success(self):
         agent_name = "test_simple"
+        instance_attributes = {
+            "must-set": "value",
+            "must-set-new": "B",
+        }
 
         self.config.runner.pcmk.load_agent(
             agent_name=f"stonith:{agent_name}",
@@ -104,6 +108,9 @@ class CreateMixin:
         )
         self.config.runner.pcmk.load_fenced_metadata()
         self.config.runner.cib.load()
+        self.config.runner.pcmk.stonith_agent_self_validation(
+            instance_attributes, agent_name, output=""
+        )
         self.config.env.push_cib(
             resources=self._expected_cib(expected_cib_simple)
         )
@@ -114,10 +121,140 @@ class CreateMixin:
             agent_name,
             operations=[],
             meta_attributes={},
-            instance_attributes={
-                "must-set": "value",
-                "must-set-new": "B",
-            },
+            instance_attributes=instance_attributes,
+        )
+
+    def test_agent_self_validation_failure(self):
+        agent_name = "test_simple"
+        instance_attributes = {
+            "must-set": "value",
+            "must-set-new": "B",
+        }
+
+        self.config.runner.pcmk.load_agent(
+            agent_name=f"stonith:{agent_name}",
+            agent_filename="stonith_agent_fence_simple.xml",
+        )
+        self.config.runner.pcmk.load_fenced_metadata()
+        self.config.runner.cib.load()
+        self.config.runner.pcmk.stonith_agent_self_validation(
+            instance_attributes,
+            agent_name,
+            output="""
+            <output source="stderr">not ignored</output>
+            <output source="stdout">this is ignored</output>
+            <output source="stderr">
+            first issue
+            another one
+            </output>
+            """,
+            returncode=1,
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: self._create(
+                self.env_assist.get_env(),
+                "stonith-test",
+                agent_name,
+                operations=[],
+                meta_attributes={},
+                instance_attributes=instance_attributes,
+            ),
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.AGENT_SELF_VALIDATION_RESULT,
+                    result="not ignored\nfirst issue\nanother one",
+                    force_code=reports.codes.FORCE,
+                )
+            ]
+        )
+
+    def test_agent_self_validation_failure_forced(self):
+        agent_name = "test_simple"
+        instance_attributes = {
+            "must-set": "value",
+            "must-set-new": "B",
+        }
+
+        self.config.runner.pcmk.load_agent(
+            agent_name=f"stonith:{agent_name}",
+            agent_filename="stonith_agent_fence_simple.xml",
+        )
+        self.config.runner.pcmk.load_fenced_metadata()
+        self.config.runner.cib.load()
+        self.config.runner.pcmk.stonith_agent_self_validation(
+            instance_attributes,
+            agent_name,
+            output="""
+            <output source="stderr">not ignored</output>
+            <output source="stdout">this is ignored</output>
+            <output source="stderr">
+            first issue
+            another one
+            </output>
+            """,
+            returncode=1,
+        )
+        self.config.env.push_cib(
+            resources=self._expected_cib(expected_cib_simple)
+        )
+
+        self._create(
+            self.env_assist.get_env(),
+            "stonith-test",
+            agent_name,
+            operations=[],
+            meta_attributes={},
+            instance_attributes=instance_attributes,
+            allow_invalid_instance_attributes=True,
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.AGENT_SELF_VALIDATION_RESULT,
+                    result="not ignored\nfirst issue\nanother one",
+                )
+            ]
+        )
+
+    def test_agent_self_validation_invalid_output(self):
+        agent_name = "test_simple"
+        instance_attributes = {
+            "must-set": "value",
+            "must-set-new": "B",
+        }
+
+        self.config.runner.pcmk.load_agent(
+            agent_name=f"stonith:{agent_name}",
+            agent_filename="stonith_agent_fence_simple.xml",
+        )
+        self.config.runner.pcmk.load_fenced_metadata()
+        self.config.runner.cib.load()
+        self.config.runner.pcmk.stonith_agent_self_validation(
+            instance_attributes,
+            agent_name,
+            output="""<not valid> xml""",
+            returncode=0,
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: self._create(
+                self.env_assist.get_env(),
+                "stonith-test",
+                agent_name,
+                operations=[],
+                meta_attributes={},
+                instance_attributes=instance_attributes,
+            ),
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.AGENT_SELF_VALIDATION_INVALID_DATA,
+                    reason="Specification mandates value for attribute valid, line 5, column 29 (<string>, line 5)",
+                    force_code=reports.codes.FORCE,
+                )
+            ]
         )
 
     def test_unfencing(self):
@@ -129,6 +266,9 @@ class CreateMixin:
         )
         self.config.runner.pcmk.load_fenced_metadata()
         self.config.runner.cib.load()
+        self.config.runner.pcmk.stonith_agent_self_validation(
+            {}, agent_name, output=""
+        )
         self.config.env.push_cib(
             resources=self._expected_cib(expected_cib_unfencing)
         )
@@ -144,6 +284,10 @@ class CreateMixin:
 
     def test_disabled(self):
         agent_name = "test_simple"
+        instance_attributes = {
+            "must-set": "value",
+            "must-set-new": "B",
+        }
         expected_cib = expected_cib_simple.replace(
             '<instance_attributes id="stonith-test-instance_attributes">',
             """
@@ -162,6 +306,9 @@ class CreateMixin:
         )
         self.config.runner.pcmk.load_fenced_metadata()
         self.config.runner.cib.load()
+        self.config.runner.pcmk.stonith_agent_self_validation(
+            instance_attributes, agent_name, output=""
+        )
         self.config.env.push_cib(resources=self._expected_cib(expected_cib))
 
         self._create(
@@ -170,10 +317,7 @@ class CreateMixin:
             agent_name,
             operations=[],
             meta_attributes={},
-            instance_attributes={
-                "must-set": "value",
-                "must-set-new": "B",
-            },
+            instance_attributes=instance_attributes,
             ensure_disabled=True,
         )
 
@@ -190,6 +334,9 @@ class CreateMixin:
         )
         self.config.runner.pcmk.load_fenced_metadata()
         self.config.runner.cib.load()
+        self.config.runner.pcmk.stonith_agent_self_validation(
+            {}, agent_name, output=""
+        )
         self.config.env.push_cib(
             resources=self._expected_cib(expected_cib_operations)
         )
@@ -240,6 +387,7 @@ class CreateMixin:
 
     def test_instance_meta_and_operations(self):
         agent_name = "test_simple"
+        instance_attributes = {"undefined": "attribute"}
 
         self.config.runner.pcmk.load_agent(
             agent_name=f"stonith:{agent_name}",
@@ -247,6 +395,9 @@ class CreateMixin:
         )
         self.config.runner.pcmk.load_fenced_metadata()
         self.config.runner.cib.load()
+        self.config.runner.pcmk.stonith_agent_self_validation(
+            instance_attributes, agent_name, output=""
+        )
         self.config.env.push_cib(
             resources=self._expected_cib(expected_cib_simple_forced)
         )
@@ -257,7 +408,7 @@ class CreateMixin:
             agent_name,
             operations=[{"name": "bad-action"}],
             meta_attributes={"metaname": "metavalue"},
-            instance_attributes={"undefined": "attribute"},
+            instance_attributes=instance_attributes,
             allow_invalid_operation=True,
             allow_invalid_instance_attributes=True,
         )
@@ -432,6 +583,10 @@ class CreateMixin:
     def test_minimal_wait_ok_run_ok(self):
         agent_name = "test_simple"
         instance_name = "stonith-test"
+        instance_attributes = {
+            "must-set": "value",
+            "must-set-new": "B",
+        }
         timeout = 10
         expected_status = """
             <resources>
@@ -456,6 +611,9 @@ class CreateMixin:
         )
         self.config.runner.pcmk.load_fenced_metadata()
         self.config.runner.cib.load()
+        self.config.runner.pcmk.stonith_agent_self_validation(
+            instance_attributes, agent_name, output=""
+        )
         self.config.env.push_cib(
             resources=self._expected_cib(expected_cib_simple), wait=timeout
         )
@@ -467,10 +625,7 @@ class CreateMixin:
             agent_name,
             operations=[],
             meta_attributes={},
-            instance_attributes={
-                "must-set": "value",
-                "must-set-new": "B",
-            },
+            instance_attributes=instance_attributes,
             wait=str(timeout),
         )
         self.env_assist.assert_reports(
@@ -548,6 +703,10 @@ class CreateInGroup(CreateMixin, TestCase):
 
     def _assert_adjacent(self, adjacent, after):
         agent_name = "test_simple"
+        instance_attributes = {
+            "must-set": "value",
+            "must-set-new": "B",
+        }
         original_cib = (
             "<resources><group id='my-group'>"
             + self._dummy("dummy1")
@@ -568,6 +727,9 @@ class CreateInGroup(CreateMixin, TestCase):
         )
         self.config.runner.pcmk.load_fenced_metadata()
         self.config.runner.cib.load(resources=original_cib)
+        self.config.runner.pcmk.stonith_agent_self_validation(
+            instance_attributes, agent_name, output=""
+        )
         self.config.env.push_cib(resources=expected_cib)
 
         stonith.create_in_group(
@@ -577,10 +739,7 @@ class CreateInGroup(CreateMixin, TestCase):
             "my-group",
             operations=[],
             meta_attributes={},
-            instance_attributes={
-                "must-set": "value",
-                "must-set-new": "B",
-            },
+            instance_attributes=instance_attributes,
             adjacent_resource_id=adjacent,
             put_after_adjacent=after,
         )

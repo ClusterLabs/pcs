@@ -449,40 +449,40 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
 
 class ResourceTestCibFixture(CachedCibFixture):
     def _setup_cib(self):
-        self.assert_pcs_success(
+        self.assert_pcs_success_ignore_output(
             (
                 "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
-                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s --force"
             ).split()
         )
-        self.assert_pcs_success(
+        self.assert_pcs_success_ignore_output(
             (
                 "resource create --no-default-ops ClusterIP2 ocf:heartbeat:IPaddr2"
-                " cidr_netmask=32 ip=192.168.0.92 op monitor interval=30s"
+                " cidr_netmask=32 ip=192.168.0.92 op monitor interval=30s --force"
             ).split()
         )
-        self.assert_pcs_success(
+        self.assert_pcs_success_ignore_output(
             (
                 "resource create --no-default-ops ClusterIP3 ocf:heartbeat:IPaddr2"
-                " cidr_netmask=32 ip=192.168.0.93 op monitor interval=30s"
+                " cidr_netmask=32 ip=192.168.0.93 op monitor interval=30s --force"
             ).split()
         )
-        self.assert_pcs_success(
+        self.assert_pcs_success_ignore_output(
             (
                 "resource create --no-default-ops ClusterIP4 ocf:heartbeat:IPaddr2"
-                " cidr_netmask=32 ip=192.168.0.94 op monitor interval=30s"
+                " cidr_netmask=32 ip=192.168.0.94 op monitor interval=30s --force"
             ).split()
         )
-        self.assert_pcs_success(
+        self.assert_pcs_success_ignore_output(
             (
                 "resource create --no-default-ops ClusterIP5 ocf:heartbeat:IPaddr2"
-                " cidr_netmask=32 ip=192.168.0.95 op monitor interval=30s"
+                " cidr_netmask=32 ip=192.168.0.95 op monitor interval=30s --force"
             ).split()
         )
-        self.assert_pcs_success(
+        self.assert_pcs_success_ignore_output(
             (
                 "resource create --no-default-ops ClusterIP6 ocf:heartbeat:IPaddr2"
-                " cidr_netmask=32 ip=192.168.0.96 op monitor interval=30s"
+                " cidr_netmask=32 ip=192.168.0.96 op monitor interval=30s --force"
             ).split()
         )
         self.assert_pcs_success(
@@ -5810,6 +5810,13 @@ class UpdateInstanceAttrs(
         self.assert_effect(
             "resource update R fake=".split(),
             self.fixture_xml_resource_no_attrs(),
+        )
+
+    def test_agent_self_validation_failure(self):
+        self.fixture_resource()
+        self.assert_pcs_fail(
+            ["resource", "update", "R", "fake=is_invalid=True"],
+            stdout_start="Error: Validation result from agent (use --force to override):",
         )
 
 

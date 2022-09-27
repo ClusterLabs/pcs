@@ -122,15 +122,7 @@ class AssertPcsMixinOld:
         if len(specified_stdout) > 1:
             raise Exception(msg + ", both specified")
 
-        stdout, pcs_returncode = self.pcs_runner.run(command)
-        self.assertEqual(
-            returncode,
-            pcs_returncode,
-            (
-                'Expected return code "{0}", but was "{1}"'
-                + "\ncommand: {2}\nstdout:\n{3}"
-            ).format(returncode, pcs_returncode, command, stdout),
-        )
+        stdout = self.assert_pcs_success_ignore_output(command, returncode)
         message_template = (
             "{reason}\ncommand: {cmd}\ndiff is (expected is 2nd):\n{diff}"
             + "\nFull stdout:\n{stdout}"
@@ -181,6 +173,20 @@ class AssertPcsMixinOld:
                         stdout=stdout,
                     ),
                 )
+
+    def assert_pcs_success_ignore_output(self, command, returncode=0):
+        stdout, retval_actual = self.pcs_runner.run(command)
+
+        self.assertEqual(
+            returncode,
+            retval_actual,
+            (
+                f"Expected return code '{returncode}' but was '{retval_actual}'\n"
+                f"** command: {command}\n"
+                f"** stdout:\n{stdout}\n"
+            ),
+        )
+        return stdout
 
     def __prepare_output(self, output):
         # pylint: disable=no-self-use
@@ -328,24 +334,13 @@ class AssertPcsMixin:
             stderr_full, stderr_start, stderr_regexp, "stderr"
         )
 
-        stdout_actual, stderr_actual, retval_actual = self.pcs_runner.run(
-            command
-        )
-
-        self.assertEqual(
-            returncode,
-            retval_actual,
-            (
-                f"Expected return code '{returncode}' but was '{retval_actual}'\n"
-                f"** command: {command}\n"
-                f"** stdout:\n{stdout_actual}\n"
-                f"** stderr:\n{stderr_actual}\n"
-            ),
+        stdout_actual, stderr_actual = self.assert_pcs_success_ignore_output(
+            command, returncode
         )
 
         message_template = (
             f"{{reason}}\n** Command: {command}\n** {{detail}}\n"
-            f"** Retval: {retval_actual}\n"
+            f"** Retval: {returncode}\n"
             f"** Full stdout:\n{stdout_actual}\n"
             f"** Full stderr:\n{stderr_actual}\n"
         )
@@ -368,6 +363,21 @@ class AssertPcsMixin:
             "stderr",
             message_template,
         )
+
+    def assert_pcs_success_ignore_output(self, command, returncode=0):
+        stdout, stderr, retval_actual = self.pcs_runner.run(command)
+
+        self.assertEqual(
+            returncode,
+            retval_actual,
+            (
+                f"Expected return code '{returncode}' but was '{retval_actual}'\n"
+                f"** command: {command}\n"
+                f"** stdout:\n{stdout}\n"
+                f"** stderr:\n{stderr}\n"
+            ),
+        )
+        return stdout, stderr
 
     @staticmethod
     def __default_output_to_empty_str(output_full, output_start, output_regexp):
@@ -413,7 +423,7 @@ class AssertPcsMixin:
                 diff = prepare_diff(
                     output_actual[: len(expected_start)], expected_start
                 )
-                self.fail(
+                raise AssertionError(
                     message_template.format(
                         reason=f"{label} does not start as expected",
                         detail=f"diff is (expected is 2nd):\n{diff}\n",
@@ -428,7 +438,7 @@ class AssertPcsMixin:
                 flags = ", ".join(
                     self.__prepare_regexp_flags(output_regexp.flags)
                 )
-                self.fail(
+                raise AssertionError(
                     message_template.format(
                         reason=f"{label} does not match the expected regexp",
                         detail=(
@@ -444,7 +454,7 @@ class AssertPcsMixin:
             not despace and output_actual != expected_full
         ):
             diff = prepare_diff(output_actual, expected_full)
-            self.fail(
+            raise AssertionError(
                 message_template.format(
                     reason=f"{label} is not as expected",
                     detail=f"diff is (expected is 2nd):\n{diff}\n",

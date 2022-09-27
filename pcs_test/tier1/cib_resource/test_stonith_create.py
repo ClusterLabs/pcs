@@ -30,7 +30,7 @@ class PlainStonith(ResourceTest):
     def test_base_with_agent_that_provides_unfencing(self):
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.assert_effect(
-            "stonith create S fence_scsi".split(),
+            "stonith create S fence_scsi --force".split(),
             """<resources>
                 <primitive class="stonith" id="S" type="fence_scsi">
                     <meta_attributes id="S-meta_attributes">
@@ -45,6 +45,7 @@ class PlainStonith(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
+            output_start="Warning: Validation result from agent:",
         )
 
     def test_error_when_not_valid_name(self):
@@ -144,7 +145,7 @@ class PlainStonith(ResourceTest):
     def test_debug_and_verbose_allowed(self):
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.assert_effect(
-            "stonith create S fence_apc ip=i username=u verbose=v debug=d".split(),
+            "stonith create S fence_apc ip=i username=u verbose=v debug=d password=1234".split(),
             """<resources>
                 <primitive class="stonith" id="S" type="fence_apc">
                     <instance_attributes id="S-instance_attributes">
@@ -153,6 +154,9 @@ class PlainStonith(ResourceTest):
                         />
                         <nvpair id="S-instance_attributes-ip"
                             name="ip" value="i"
+                        />
+                        <nvpair id="S-instance_attributes-password"
+                            name="password" value="1234"
                         />
                         <nvpair id="S-instance_attributes-username"
                             name="username" value="u"
@@ -168,7 +172,7 @@ class PlainStonith(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
-            output=(
+            output_start=(
                 "Warning: stonith option 'debug' is deprecated and should not "
                 "be used, use 'debug_file' instead\n"
             ),
@@ -230,7 +234,7 @@ class WithMeta(ResourceTest):
     def test_base_with_agent_that_provides_unfencing_with_meta_provides(self):
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.assert_effect(
-            "stonith create S fence_scsi meta provides=something".split(),
+            "stonith create S fence_scsi meta provides=something --force".split(),
             """<resources>
                 <primitive class="stonith" id="S" type="fence_scsi">
                     <meta_attributes id="S-meta_attributes">
@@ -245,6 +249,7 @@ class WithMeta(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
+            output_start="Warning: Validation result from agent:",
         )
 
 

@@ -4,6 +4,7 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Mapping,
     Optional,
     Tuple,
     cast,
@@ -22,13 +23,17 @@ from pcs.common.tools import (
     format_os_error,
     xml_fromstring,
 )
-from pcs.common.types import CibRuleInEffectStatus
+from pcs.common.types import (
+    CibRuleInEffectStatus,
+    StringSequence,
+)
 from pcs.lib import tools
 from pcs.lib.cib.tools import get_pacemaker_version_by_which_cib_was_validated
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 from pcs.lib.pacemaker import api_result
 from pcs.lib.pacemaker.state import ClusterState
+from pcs.lib.resource_agent import ResourceAgentName
 from pcs.lib.xml_tools import etree_to_str
 
 __EXITCODE_NOT_CONNECTED = 102
@@ -873,3 +878,118 @@ def get_resource_digests(
     if not any(digests.values()):
         raise error_exception(join_multilines([stderr, stdout]))
     return digests
+
+
+def _validate_stonith_instance_attributes_via_pcmk(
+    cmd_runner: CommandRunner,
+    agent_name: ResourceAgentName,
+    instance_attributes: Mapping[str, str],
+    not_valid_severity: reports.ReportItemSeverity,
+) -> tuple[Optional[bool], reports.ReportItemList]:
+    cmd = [
+        settings.stonith_admin,
+        "--validate",
+        "--output-as",
+        "xml",
+        "--agent",
+        agent_name.type,
+    ]
+    return _handle_instance_attributes_validation_via_pcmk(
+        cmd_runner,
+        cmd,
+        "./validate/command/output",
+        instance_attributes,
+        not_valid_severity,
+    )
+
+
+def _validate_resource_instance_attributes_via_pcmk(
+    cmd_runner: CommandRunner,
+    agent_name: ResourceAgentName,
+    instance_attributes: Mapping[str, str],
+    not_valid_severity: reports.ReportItemSeverity,
+) -> tuple[Optional[bool], reports.ReportItemList]:
+    cmd = [
+        settings.crm_resource_binary,
+        "--validate",
+        "--output-as",
+        "xml",
+        "--class",
+        agent_name.standard,
+        "--agent",
+        agent_name.type,
+    ]
+    if agent_name.provider:
+        cmd.extend(["--provider", agent_name.provider])
+    return _handle_instance_attributes_validation_via_pcmk(
+        cmd_runner,
+        cmd,
+        "./resource-agent-action/command/output",
+        instance_attributes,
+        not_valid_severity,
+    )
+
+
+def _handle_instance_attributes_validation_via_pcmk(
+    cmd_runner: CommandRunner,
+    cmd: StringSequence,
+    data_xpath: str,
+    instance_attributes: Mapping[str, str],
+    not_valid_severity: reports.ReportItemSeverity,
+) -> tuple[Optional[bool], reports.ReportItemList]:
+    full_cmd = list(cmd)
+    for key, value in sorted(instance_attributes.items()):
+        full_cmd.extend(["--option", f"{key}={value}"])
+    stdout, dummy_stderr, return_value = cmd_runner.run(full_cmd)
+    try:
+        # dom = _get_api_result_dom(stdout)
+        dom = xml_fromstring(stdout)
+    except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
+        return None, [
+            reports.ReportItem(
+                not_valid_severity,
+                reports.messages.AgentSelfValidationInvalidData(str(e)),
+            )
+        ]
+    result = "\n".join(
+        "\n".join(
+            line.strip() for line in item.text.split("\n") if line.strip()
+        )
+        for item in dom.iterfind(data_xpath)
+        if item.get("source") == "stderr" and item.text
+    ).strip()
+    if return_value == 0:
+        if result:
+            return True, [
+                reports.ReportItem.warning(
+                    reports.messages.AgentSelfValidationResult(result)
+                )
+            ]
+        return True, []
+    return False, [
+        reports.ReportItem(
+            not_valid_severity,
+            reports.messages.AgentSelfValidationResult(result),
+        )
+    ]
+
+
+def validate_resource_instance_attributes_via_pcmk(
+    cmd_runner: CommandRunner,
+    resource_agent_name: ResourceAgentName,
+    instance_attributes: Mapping[str, str],
+    not_valid_severity: reports.ReportItemSeverity,
+) -> tuple[Optional[bool], reports.ReportItemList]:
+    if resource_agent_name.is_stonith:
+        return _validate_stonith_instance_attributes_via_pcmk(
+            cmd_runner,
+            resource_agent_name,
+            instance_attributes,
+            not_valid_severity,
+        )
+    return _validate_resource_instance_attributes_via_pcmk(
+        cmd_runner,
+        resource_agent_name,
+        instance_attributes,
+        not_valid_severity,
+    )

@@ -40,6 +40,10 @@ from pcs.lib.cib.tools import (
     find_element_by_tag_and_id,
 )
 from pcs.lib.errors import LibraryError
+from pcs.lib.external import CommandRunner
+from pcs.lib.pacemaker.live import (
+    validate_resource_instance_attributes_via_pcmk,
+)
 from pcs.lib.pacemaker.values import validate_id
 from pcs.lib.resource_agent import (
     ResourceAgentFacade,
@@ -119,6 +123,7 @@ def _find_primitives_by_agent(
 
 def create(
     report_processor: reports.ReportProcessor,
+    cmd_runner: CommandRunner,
     resources_section: _Element,
     id_provider: IdProvider,
     resource_id: str,
@@ -190,6 +195,7 @@ def create(
     )
 
     report_items = validate_resource_instance_attributes_create(
+        cmd_runner,
         resource_agent_facade,
         instance_attributes,
         resources_section,
@@ -347,7 +353,12 @@ def _validate_unique_instance_attributes(
     return report_list
 
 
+def _is_ocf_or_stonith_agent(resource_agent_name: ResourceAgentName) -> bool:
+    return resource_agent_name.standard in ("stonith", "ocf")
+
+
 def validate_resource_instance_attributes_create(
+    cmd_runner: CommandRunner,
     resource_agent: ResourceAgentFacade,
     instance_attributes: Mapping[str, str],
     resources_section: _Element,
@@ -357,6 +368,7 @@ def validate_resource_instance_attributes_create(
     report_items += validate.ValidatorAll(
         [validate.ValueNotEmpty(name, None) for name in instance_attributes]
     ).validate(instance_attributes)
+    agent_name = resource_agent.metadata.name
     if resource_agent.metadata.agent_exists:
         report_items += validate.ValidatorAll(
             resource_agent.get_validators_allowed_parameters(force)
@@ -369,13 +381,11 @@ def validate_resource_instance_attributes_create(
                 name: value
                 for name, value in instance_attributes.items()
                 # we create a custom report for stonith parameter "action"
-                if not (
-                    resource_agent.metadata.name.is_stonith and name == "action"
-                )
+                if not (agent_name.is_stonith and name == "action")
             }
         )
 
-    if resource_agent.metadata.name.is_stonith:
+    if agent_name.is_stonith:
         report_items += _validate_stonith_action(instance_attributes, force)
 
     if resource_agent.metadata.agent_exists:
@@ -385,16 +395,38 @@ def validate_resource_instance_attributes_create(
             resources_section,
             force=force,
         )
+
+    if (
+        _is_ocf_or_stonith_agent(agent_name)
+        and resource_agent.metadata.agent_exists
+        and resource_agent.metadata.provides_self_validation
+        and not any(
+            report_item.severity.level == reports.ReportItemSeverity.ERROR
+            for report_item in report_items
+        )
+    ):
+        (
+            dummy_is_valid,
+            agent_validation_reports,
+        ) = validate_resource_instance_attributes_via_pcmk(
+            cmd_runner,
+            agent_name,
+            instance_attributes,
+            reports.get_severity(reports.codes.FORCE, force),
+        )
+        report_items.extend(agent_validation_reports)
     return report_items
 
 
 def validate_resource_instance_attributes_update(
+    cmd_runner: CommandRunner,
     resource_agent: ResourceAgentFacade,
     instance_attributes: Mapping[str, str],
     resource_id: str,
     resources_section: _Element,
     force: bool = False,
 ) -> reports.ReportItemList:
+    # pylint: disable=too-many-locals
     # TODO This function currently accepts the updated resource as a string and
     # finds the corresponding xml element by itself. This is needed as the
     # function is called from old pcs code which uses dom while pcs.lib uses
@@ -407,6 +439,7 @@ def validate_resource_instance_attributes_update(
         find_element_by_tag_and_id(TAG, resources_section, resource_id),
     )
 
+    agent_name = resource_agent.metadata.name
     if resource_agent.metadata.agent_exists:
         report_items += validate.ValidatorAll(
             resource_agent.get_validators_allowed_parameters(force)
@@ -429,9 +462,7 @@ def validate_resource_instance_attributes_update(
                 # Allow removing deprecated parameters
                 if value != ""
                 # we create a custom report for stonith parameter "action"
-                and not (
-                    resource_agent.metadata.name.is_stonith and name == "action"
-                )
+                and not (agent_name.is_stonith and name == "action")
             }
         )
 
@@ -466,6 +497,36 @@ def validate_resource_instance_attributes_update(
             resource_id=resource_id,
             force=force,
         )
+
+    if (
+        _is_ocf_or_stonith_agent(agent_name)
+        and resource_agent.metadata.agent_exists
+        and resource_agent.metadata.provides_self_validation
+        and not any(
+            report_item.severity.level == reports.ReportItemSeverity.ERROR
+            for report_item in report_items
+        )
+    ):
+        (
+            is_valid,
+            dummy_reports,
+        ) = validate_resource_instance_attributes_via_pcmk(
+            cmd_runner,
+            agent_name,
+            current_instance_attrs,
+            reports.ReportItemSeverity.error(),
+        )
+        if is_valid:
+            (
+                dummy_is_valid,
+                agent_validation_reports,
+            ) = validate_resource_instance_attributes_via_pcmk(
+                cmd_runner,
+                resource_agent.metadata.name,
+                final_attrs,
+                reports.get_severity(reports.codes.FORCE, force),
+            )
+            report_items.extend(agent_validation_reports)
     return report_items
 
 

@@ -2344,6 +2344,11 @@
           /api/v1/resource-agent-get-agent-metadata/v1
       </description>
     </capability>
+    <capability id="resource-agents.self-validation" in-pcs="1" in-pcsd="1">
+      <description>
+        Additional validation of instance attributes by the agent itself.
+      </description>
+    </capability>
     <capability id="stonith-agents.describe" in-pcs="1" in-pcsd="1">
       <description>
         Describe a stonith agent - present its metadata.
@@ -2380,6 +2385,11 @@
     <capability id="stonith-agents.ocf.version-1-1" in-pcs="1" in-pcsd="1">
       <description>
         Stonith agents implementing OCF 1.1 are supported.
+      </description>
+    </capability>
+    <capability id="stonith-agents.self-validation" in-pcs="1" in-pcsd="1">
+      <description>
+        Additional validation of instance attributes by the agent itself.
       </description>
     </capability>
 

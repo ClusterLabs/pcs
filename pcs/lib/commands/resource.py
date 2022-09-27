@@ -425,6 +425,7 @@ def create(
 
         primitive_element = resource.primitive.create(
             env.report_processor,
+            runner,
             resources_section,
             id_provider,
             resource_id,
@@ -528,6 +529,7 @@ def create_as_clone(
 
         primitive_element = resource.primitive.create(
             env.report_processor,
+            runner,
             resources_section,
             id_provider,
             resource_id,
@@ -660,6 +662,7 @@ def create_in_group(
 
         primitive_element = resource.primitive.create(
             env.report_processor,
+            runner,
             resources_section,
             id_provider,
             resource_id,
@@ -770,6 +773,7 @@ def create_into_bundle(
 
         primitive_element = resource.primitive.create(
             env.report_processor,
+            runner,
             resources_section,
             id_provider,
             resource_id,

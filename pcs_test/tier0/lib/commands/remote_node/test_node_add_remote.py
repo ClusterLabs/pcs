@@ -74,11 +74,9 @@ def node_add_remote(
 
 class LocalConfig(EnvConfigMixin):
     def load_cluster_configs(self, cluster_node_list):
-        (
-            self.config.runner.cib.load()
-            .corosync_conf.load(node_name_list=cluster_node_list)
-            .runner.pcmk.load_agent(agent_name="ocf:pacemaker:remote")
-        )
+        self.config.runner.cib.load()
+        self.config.corosync_conf.load(node_name_list=cluster_node_list)
+        self.config.runner.pcmk.load_agent(agent_name="ocf:pacemaker:remote")
 
 
 get_env_tools = partial(get_env_tools, local_extensions={"local": LocalConfig})
@@ -180,22 +178,22 @@ class AddRemote(TestCase):
 
         # validation and creation of resource is covered in resource create
         # tests
-        (
-            self.config.local.load_cluster_configs(
-                cluster_node_list=[NODE_1, NODE_2]
-            )
-            .http.host.check_auth(
-                communication_list=[
-                    dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
-                ],
-            )
-            .local.get_host_info(NODE_NAME, NODE_DEST_LIST)
-            .local.push_existing_authkey_to_remote(NODE_NAME, NODE_DEST_LIST)
-            .local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST)
-            .env.push_cib(
-                resources=FIXTURE_RESOURCES_TEMPLATE.format(
-                    server=NODE_NAME, onfail=""
-                )
+        self.config.local.load_cluster_configs(
+            cluster_node_list=[NODE_1, NODE_2]
+        )
+        self.config.http.host.check_auth(
+            communication_list=[
+                dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
+            ],
+        )
+        self.config.local.get_host_info(NODE_NAME, NODE_DEST_LIST)
+        self.config.local.push_existing_authkey_to_remote(
+            NODE_NAME, NODE_DEST_LIST
+        )
+        self.config.local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST)
+        self.config.env.push_cib(
+            resources=FIXTURE_RESOURCES_TEMPLATE.format(
+                server=NODE_NAME, onfail=""
             )
         )
         node_add_remote(self.env_assist.get_env(), node_addr=NODE_NAME)
@@ -690,6 +688,7 @@ class AddRemote(TestCase):
 
 
 class NotLive(TestCase):
+    # pylint: disable=no-member
     def setUp(self):
         self.tmp_file = "/fake/tmp_file"
         self.cmd_env = dict(CIB_file=self.tmp_file)
@@ -701,26 +700,22 @@ class NotLive(TestCase):
             )
 
     def test_addr_specified(self):
-        (
-            self.config.runner.cib.load(env=self.cmd_env)
-            .runner.pcmk.load_agent(
-                agent_name="ocf:pacemaker:remote", env=self.cmd_env
-            )
-            .env.push_cib(resources=FIXTURE_RESOURCES)
+        self.config.runner.cib.load(env=self.cmd_env)
+        self.config.runner.pcmk.load_agent(
+            agent_name="ocf:pacemaker:remote", env=self.cmd_env
         )
+        self.config.env.push_cib(resources=FIXTURE_RESOURCES)
         node_add_remote(self.env_assist.get_env())
         self.env_assist.assert_reports(fixture_reports_not_live_cib(NODE_NAME))
 
     def test_addr_not_specified(self):
-        (
-            self.config.runner.cib.load(env=self.cmd_env)
-            .runner.pcmk.load_agent(
-                agent_name="ocf:pacemaker:remote", env=self.cmd_env
-            )
-            .env.push_cib(
-                resources=FIXTURE_RESOURCES_TEMPLATE.format(
-                    server=NODE_ADDR_PCSD, onfail=""
-                )
+        self.config.runner.cib.load(env=self.cmd_env)
+        self.config.runner.pcmk.load_agent(
+            agent_name="ocf:pacemaker:remote", env=self.cmd_env
+        )
+        self.config.env.push_cib(
+            resources=FIXTURE_RESOURCES_TEMPLATE.format(
+                server=NODE_ADDR_PCSD, onfail=""
             )
         )
         node_add_remote(self.env_assist.get_env(), no_node_addr=True)
@@ -740,16 +735,14 @@ class NotLive(TestCase):
 
     def test_unknown_host_addr_not_specified(self):
         self.config.env.set_known_hosts_dests({})
-        (
-            self.config.runner.cib.load(env=self.cmd_env)
-            .runner.pcmk.load_agent(
-                agent_name="ocf:pacemaker:remote", env=self.cmd_env
-            )
-            .env.push_cib(
-                resources=FIXTURE_RESOURCES_TEMPLATE.format(
-                    server=NODE_NAME, onfail=""
-                ),
-            )
+        self.config.runner.cib.load(env=self.cmd_env)
+        self.config.runner.pcmk.load_agent(
+            agent_name="ocf:pacemaker:remote", env=self.cmd_env
+        )
+        self.config.env.push_cib(
+            resources=FIXTURE_RESOURCES_TEMPLATE.format(
+                server=NODE_NAME, onfail=""
+            ),
         )
         node_add_remote(self.env_assist.get_env(), no_node_addr=True)
         self.env_assist.assert_reports(
@@ -768,18 +761,17 @@ class NotLive(TestCase):
 
     def test_unknown_host_addr_specified(self):
         self.config.env.set_known_hosts_dests({})
-        (
-            self.config.runner.cib.load(env=self.cmd_env)
-            .runner.pcmk.load_agent(
-                agent_name="ocf:pacemaker:remote", env=self.cmd_env
-            )
-            .env.push_cib(
-                resources=FIXTURE_RESOURCES_TEMPLATE.format(
-                    server="addr", onfail=""
-                )
+        server_value = "addr"
+        self.config.runner.cib.load(env=self.cmd_env)
+        self.config.runner.pcmk.load_agent(
+            agent_name="ocf:pacemaker:remote", env=self.cmd_env
+        )
+        self.config.env.push_cib(
+            resources=FIXTURE_RESOURCES_TEMPLATE.format(
+                server=server_value, onfail=""
             )
         )
-        node_add_remote(self.env_assist.get_env(), node_addr="addr")
+        node_add_remote(self.env_assist.get_env(), node_addr=server_value)
         self.env_assist.assert_reports(fixture_reports_not_live_cib(NODE_NAME))
 
     def test_wait(self):

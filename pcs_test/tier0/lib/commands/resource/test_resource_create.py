@@ -28,6 +28,7 @@ def create(
     operation_list=None,
     allow_invalid_operation=False,
     agent_name="ocf:heartbeat:Dummy",
+    allow_invalid_instance_attributes=False,
 ):
     return resource.create(
         env,
@@ -39,6 +40,7 @@ def create(
         wait=wait,
         ensure_disabled=disabled,
         allow_invalid_operation=allow_invalid_operation,
+        allow_invalid_instance_attributes=allow_invalid_instance_attributes,
     )
 
 
@@ -388,6 +390,13 @@ class CreateRolesNormalization(TestCase):
             agent_filename=agent_file_name,
         )
         self.config.runner.cib.load(filename=cib_file)
+        self.config.runner.pcmk.resource_agent_self_validation(
+            {},
+            output="",
+            standard="ocf",
+            provider="pacemaker",
+            agent_type="Stateful",
+        )
 
     def create(self, operation_list=None):
         resource.create(
@@ -583,10 +592,90 @@ class Create(TestCase):
     def test_simplest_resource(self):
         self.config.runner.pcmk.load_agent()
         self.config.runner.cib.load()
+        self.config.runner.pcmk.resource_agent_self_validation({}, output="")
         self.config.env.push_cib(
             resources=fixture_cib_resources_xml_primitive_simplest
         )
         create(self.env_assist.get_env())
+
+    def test_resource_self_validation_failure(self):
+        self.config.runner.pcmk.load_agent()
+        self.config.runner.cib.load()
+        self.config.runner.pcmk.resource_agent_self_validation(
+            {},
+            output="""
+            <output source="stderr">not ignored</output>
+            <output source="stdout">this is ignored</output>
+            <output source="stderr">
+            first issue
+            another one
+            </output>
+            """,
+            returncode=1,
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: create(self.env_assist.get_env()),
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.AGENT_SELF_VALIDATION_RESULT,
+                    result="not ignored\nfirst issue\nanother one",
+                    force_code=reports.codes.FORCE,
+                )
+            ]
+        )
+
+    def test_resource_self_validation_failure_forced(self):
+        self.config.runner.pcmk.load_agent()
+        self.config.runner.cib.load()
+        self.config.runner.pcmk.resource_agent_self_validation(
+            {},
+            output="""
+            <output source="stderr">not ignored</output>
+            <output source="stdout">this is ignored</output>
+            <output source="stderr">
+            first issue
+            another one
+            </output>
+            """,
+            returncode=1,
+        )
+        self.config.env.push_cib(
+            resources=fixture_cib_resources_xml_primitive_simplest
+        )
+        create(
+            self.env_assist.get_env(), allow_invalid_instance_attributes=True
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.AGENT_SELF_VALIDATION_RESULT,
+                    result="not ignored\nfirst issue\nanother one",
+                )
+            ]
+        )
+
+    def test_resource_self_validation_invalid_output(self):
+        self.config.runner.pcmk.load_agent()
+        self.config.runner.cib.load()
+        self.config.runner.pcmk.resource_agent_self_validation(
+            {},
+            output="""<not valid> xml""",
+            returncode=0,
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: create(self.env_assist.get_env()),
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.AGENT_SELF_VALIDATION_INVALID_DATA,
+                    reason="Specification mandates value for attribute valid, line 7, column 29 (<string>, line 7)",
+                    force_code=reports.codes.FORCE,
+                )
+            ]
+        )
 
     def test_invalid_agent_name(self):
         self.env_assist.assert_raise_library_error(
@@ -621,6 +710,7 @@ class Create(TestCase):
         )
         self.config.runner.pcmk.load_agent()
         self.config.runner.cib.load()
+        self.config.runner.pcmk.resource_agent_self_validation({}, output="")
         self.config.env.push_cib(
             resources=fixture_cib_resources_xml_primitive_simplest
         )
@@ -733,6 +823,7 @@ class Create(TestCase):
         )
 
     def test_agent_load_failure_forced(self):
+        instance_attributes = {"parameters": "can", "be": "anything"}
         self.config.runner.pcmk.load_agent(
             agent_is_missing=True,
             env={"PATH": "/usr/sbin:/bin:/usr/bin"},
@@ -762,7 +853,7 @@ class Create(TestCase):
             "ocf:heartbeat:Dummy",
             operation_list=[],
             meta_attributes={},
-            instance_attributes={"parameters": "can", "be": "anything"},
+            instance_attributes=instance_attributes,
             allow_absent_agent=True,
         )
         self.env_assist.assert_reports(
@@ -782,6 +873,7 @@ class Create(TestCase):
     def test_resource_with_operation(self):
         self.config.runner.pcmk.load_agent()
         self.config.runner.cib.load()
+        self.config.runner.pcmk.resource_agent_self_validation({}, output="")
         self.config.env.push_cib(
             resources="""
                 <resources>
@@ -827,12 +919,14 @@ class Create(TestCase):
             ),
         )
         self.config.runner.cib.load()
+        self.config.runner.pcmk.resource_agent_self_validation({}, output="")
         self.config.env.push_cib(resources=self.fixture_sanitized_operation)
         create(self.env_assist.get_env())
 
     def test_sanitize_operation_id_from_user(self):
         self.config.runner.pcmk.load_agent()
         self.config.runner.cib.load()
+        self.config.runner.pcmk.resource_agent_self_validation({}, output="")
         self.config.env.push_cib(resources=self.fixture_sanitized_operation)
         create(
             self.env_assist.get_env(),
@@ -1014,6 +1108,9 @@ class Create(TestCase):
                 </resources>
             """,
         )
+        self.config.runner.pcmk.resource_agent_self_validation(
+            dict(state=1), output=""
+        )
         self.config.env.push_cib(
             resources="""
                 <resources>
@@ -1099,6 +1196,7 @@ class Create(TestCase):
         )
         self.config.runner.cib.upgrade()
         self.config.runner.cib.load(filename="cib-empty-3.4.xml")
+        self.config.runner.pcmk.resource_agent_self_validation({}, output="")
         self.config.env.push_cib(
             resources="""
                 <resources>
@@ -1154,6 +1252,7 @@ class CreateWait(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
         self.config.runner.pcmk.load_agent()
         self.config.runner.cib.load()
+        self.config.runner.pcmk.resource_agent_self_validation({}, output="")
         self.config.env.push_cib(
             resources=fixture_cib_resources_xml_primitive_simplest,
             wait=TIMEOUT,
@@ -1283,9 +1382,15 @@ class CreateWait(TestCase):
 
 class CreateInGroup(TestCase):
     def setUp(self):
+        self.agent_self_validation_call_name = (
+            "runner.pcmk.resource_agent_self_validation"
+        )
         self.env_assist, self.config = get_env_tools(test_case=self)
         self.config.runner.pcmk.load_agent()
         self.config.runner.cib.load()
+        self.config.runner.pcmk.resource_agent_self_validation(
+            {}, output="", name=self.agent_self_validation_call_name
+        )
 
     def test_simplest_resource(self):
         (
@@ -1328,6 +1433,7 @@ class CreateInGroup(TestCase):
         create_group(self.env_assist.get_env(), wait=False)
 
     def test_cib_upgrade_on_onfail_demote(self):
+        self.config.remove(self.agent_self_validation_call_name)
         self.config.runner.cib.load(
             filename="cib-empty-3.3.xml",
             instead="runner.cib.load",
@@ -1335,6 +1441,7 @@ class CreateInGroup(TestCase):
         )
         self.config.runner.cib.upgrade()
         self.config.runner.cib.load(filename="cib-empty-3.4.xml")
+        self.config.runner.pcmk.resource_agent_self_validation({}, output="")
         self.config.env.push_cib(
             resources="""
                 <resources>
@@ -1529,9 +1636,15 @@ class CreateInGroup(TestCase):
 
 class CreateAsClone(TestCase):
     def setUp(self):
+        self.agent_self_validation_call_name = (
+            "runner.pcmk.resource_agent_self_validation"
+        )
         self.env_assist, self.config = get_env_tools(test_case=self)
         self.config.runner.pcmk.load_agent()
         self.config.runner.cib.load()
+        self.config.runner.pcmk.resource_agent_self_validation(
+            {}, output="", name=self.agent_self_validation_call_name
+        )
 
     def test_simplest_resource(self):
         (
@@ -1552,6 +1665,7 @@ class CreateAsClone(TestCase):
         )
 
     def test_custom_clone_id_error_invalid_id(self):
+        self.config.remove(self.agent_self_validation_call_name)
         self.env_assist.assert_raise_library_error(
             lambda: create_clone(
                 self.env_assist.get_env(), wait=False, clone_id="1invalid"
@@ -1563,6 +1677,7 @@ class CreateAsClone(TestCase):
 
     def test_custom_clone_id_error_id_already_exist(self):
         self.config.remove(name="runner.cib.load")
+        self.config.remove(self.agent_self_validation_call_name)
         self.config.runner.cib.load(
             resources="""
                 <resources>
@@ -1585,6 +1700,7 @@ class CreateAsClone(TestCase):
         self.env_assist.assert_reports([fixture.report_id_already_exist("C")])
 
     def test_cib_upgrade_on_onfail_demote(self):
+        self.config.remove(self.agent_self_validation_call_name)
         self.config.runner.cib.load(
             filename="cib-empty-3.3.xml",
             instead="runner.cib.load",
@@ -1592,6 +1708,7 @@ class CreateAsClone(TestCase):
         )
         self.config.runner.cib.upgrade()
         self.config.runner.cib.load(filename="cib-empty-3.4.xml")
+        self.config.runner.pcmk.resource_agent_self_validation({}, output="")
         self.config.env.push_cib(
             resources="""<resources>
                 <clone id="A-clone">
@@ -2148,6 +2265,7 @@ class CreateInToBundle(TestCase):
         self.config.runner.cib.load(
             filename="cib-empty-3.4.xml", resources=self.fixture_resources_pre
         )
+        self.config.runner.pcmk.resource_agent_self_validation({}, output="")
         self.config.env.push_cib(
             resources=self.fixture_resource_post_simple_without_network.format(
                 network="""
@@ -2177,11 +2295,13 @@ class CreateInToBundle(TestCase):
 
     def test_simplest_resource(self):
         self.config.runner.cib.load(resources=self.fixture_resources_pre)
+        self.config.runner.pcmk.resource_agent_self_validation({}, output="")
         self.config.env.push_cib(resources=self.fixture_resources_post_simple)
         create_bundle(self.env_assist.get_env(), wait=False)
 
     def test_bundle_doesnt_exist(self):
         self.config.runner.cib.load(resources=self.fixture_empty_resources)
+        self.config.runner.pcmk.resource_agent_self_validation({}, output="")
         self.env_assist.assert_raise_library_error(
             lambda: create_bundle(self.env_assist.get_env(), wait=False),
             [
@@ -2204,6 +2324,7 @@ class CreateInToBundle(TestCase):
                     </resources>
                 """
         )
+        self.config.runner.pcmk.resource_agent_self_validation({}, output="")
 
         self.env_assist.assert_raise_library_error(
             lambda: create_bundle(self.env_assist.get_env(), wait=False),
@@ -2229,6 +2350,7 @@ class CreateInToBundle(TestCase):
                     </resources>
                 """
         )
+        self.config.runner.pcmk.resource_agent_self_validation({}, output="")
         self.env_assist.assert_raise_library_error(
             lambda: create_bundle(self.env_assist.get_env(), wait=False),
             [
@@ -2243,6 +2365,7 @@ class CreateInToBundle(TestCase):
 
     def test_wait_fail(self):
         self.config.runner.cib.load(resources=self.fixture_resources_pre)
+        self.config.runner.pcmk.resource_agent_self_validation({}, output="")
         self.config.env.push_cib(
             resources=self.fixture_resources_post_simple,
             wait=TIMEOUT,
@@ -2267,6 +2390,7 @@ class CreateInToBundle(TestCase):
     )
     def test_wait_ok_run_ok(self):
         self.config.runner.cib.load(resources=self.fixture_resources_pre)
+        self.config.runner.pcmk.resource_agent_self_validation({}, output="")
         self.config.env.push_cib(
             resources=self.fixture_resources_post_simple, wait=TIMEOUT
         )
@@ -2287,6 +2411,7 @@ class CreateInToBundle(TestCase):
     )
     def test_wait_ok_run_fail(self):
         self.config.runner.cib.load(resources=self.fixture_resources_pre)
+        self.config.runner.pcmk.resource_agent_self_validation({}, output="")
         self.config.env.push_cib(
             resources=self.fixture_resources_post_simple, wait=TIMEOUT
         )
@@ -2311,6 +2436,7 @@ class CreateInToBundle(TestCase):
     )
     def test_disabled_wait_ok_not_running(self):
         self.config.runner.cib.load(resources=self.fixture_resources_pre)
+        self.config.runner.pcmk.resource_agent_self_validation({}, output="")
         self.config.env.push_cib(
             resources=self.fixture_resources_post_disabled, wait=TIMEOUT
         )
@@ -2329,6 +2455,7 @@ class CreateInToBundle(TestCase):
     )
     def test_disabled_wait_ok_running(self):
         self.config.runner.cib.load(resources=self.fixture_resources_pre)
+        self.config.runner.pcmk.resource_agent_self_validation({}, output="")
         self.config.env.push_cib(
             resources=self.fixture_resources_post_disabled, wait=TIMEOUT
         )
@@ -2356,6 +2483,7 @@ class CreateInToBundle(TestCase):
                 </resources>
             """
         )
+        self.config.runner.pcmk.resource_agent_self_validation({}, output="")
         self.env_assist.assert_raise_library_error(
             lambda: create_bundle(self.env_assist.get_env(), wait=False)
         )
@@ -2379,6 +2507,7 @@ class CreateInToBundle(TestCase):
                 </resources>
             """
         )
+        self.config.runner.pcmk.resource_agent_self_validation({}, output="")
         self.config.env.push_cib(
             resources=(
                 self.fixture_resource_post_simple_without_network.format(
@@ -2411,6 +2540,7 @@ class CreateInToBundle(TestCase):
                 </resources>
             """
         )
+        self.config.runner.pcmk.resource_agent_self_validation({}, output="")
         self.config.env.push_cib(
             resources=(
                 self.fixture_resource_post_simple_without_network.format(

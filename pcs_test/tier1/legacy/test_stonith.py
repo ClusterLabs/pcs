@@ -1182,7 +1182,7 @@ class StonithTest(TestCase, AssertPcsMixin):
 
         self.assert_pcs_success(
             "stonith create test2 fence_apc --force".split(),
-            "Warning: stonith option 'ip' or 'ipaddr' (deprecated) has to be "
+            stdout_start="Warning: stonith option 'ip' or 'ipaddr' (deprecated) has to be "
             "specified\n"
             "Warning: stonith option 'username' or 'login' (deprecated) has to "
             "be specified\n",
@@ -1207,7 +1207,7 @@ class StonithTest(TestCase, AssertPcsMixin):
 
         self.assert_pcs_success(
             "stonith create test9 fence_apc pcmk_status_action=xxx --force".split(),
-            "Warning: stonith option 'ip' or 'ipaddr' (deprecated) has to be "
+            stdout_start="Warning: stonith option 'ip' or 'ipaddr' (deprecated) has to be "
             "specified\n"
             "Warning: stonith option 'username' or 'login' (deprecated) has to "
             "be specified\n",
@@ -1242,8 +1242,8 @@ class StonithTest(TestCase, AssertPcsMixin):
 
         self.assert_pcs_success(
             "stonith create test3 fence_ilo ip=test --force".split(),
-            "Warning: stonith option 'username' or 'login' (deprecated) has to "
-            "be specified\n",
+            stdout_start="Warning: stonith option 'username' or 'login' "
+            "(deprecated) has to be specified\n",
         )
 
         # Testing that pcmk_host_check, pcmk_host_list & pcmk_host_map are
@@ -1340,8 +1340,8 @@ class StonithTest(TestCase, AssertPcsMixin):
                 "interval=61s",
                 "--force",
             ],
-            "Warning: stonith option 'ip' or 'ipaddr' (deprecated) has to be "
-            "specified\n"
+            stdout_start="Warning: stonith option 'ip' or 'ipaddr' "
+            "(deprecated) has to be specified\n"
             "Warning: stonith option 'username' or 'login' (deprecated) has to "
             "be specified\n",
         )
@@ -1421,7 +1421,7 @@ class StonithTest(TestCase, AssertPcsMixin):
     def test_stonith_create_deprecated_and_obsoleting(self):
         # 'ipaddr' and 'login' are obsoleted by 'ip' and 'username'
         self.assert_pcs_success(
-            "stonith create S fence_apc ip=i login=l".split(),
+            "stonith create S fence_apc ip=i login=l password=1234".split(),
             "Warning: stonith option 'login' is deprecated and should not be "
             "used, use 'username' instead\n",
         )
@@ -1433,6 +1433,7 @@ class StonithTest(TestCase, AssertPcsMixin):
               Attributes: S-instance_attributes
                 ip=i
                 login=l
+                password=1234
               Operations:
                 monitor: S-monitor-interval-60s
                   interval=60s
@@ -1443,7 +1444,17 @@ class StonithTest(TestCase, AssertPcsMixin):
     def test_stonith_create_both_deprecated_and_obsoleting(self):
         # 'ipaddr' and 'login' are obsoleted by 'ip' and 'username'
         self.assert_pcs_success(
-            "stonith create S fence_apc ip=i1 login=l ipaddr=i2 username=u".split(),
+            (
+                "stonith",
+                "create",
+                "S",
+                "fence_apc",
+                "ip=i1",
+                "login=l",
+                "ipaddr=i2",
+                "username=u",
+                "password=1234",
+            ),
             "Warning: stonith option 'ipaddr' is deprecated and should not be "
             "used, use 'ip' instead\n"
             "Warning: stonith option 'login' is deprecated and should not be "
@@ -1458,6 +1469,7 @@ class StonithTest(TestCase, AssertPcsMixin):
                 ip=i1
                 ipaddr=i2
                 login=l
+                password=1234
                 username=u
               Operations:
                 monitor: S-monitor-interval-60s
@@ -1467,15 +1479,41 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
     def test_stonith_create_provides_unfencing(self):
-        self.assert_pcs_success("stonith create f1 fence_scsi".split())
-        self.assert_pcs_success(
-            "stonith create f2 fence_scsi meta provides=unfencing".split()
+        self.assert_pcs_success_ignore_output(
+            ("stonith", "create", "f1", "fence_scsi", "--force")
         )
-        self.assert_pcs_success(
-            "stonith create f3 fence_scsi meta provides=something".split()
+        self.assert_pcs_success_ignore_output(
+            (
+                "stonith",
+                "create",
+                "f2",
+                "fence_scsi",
+                "meta",
+                "provides=unfencing",
+                "--force",
+            )
         )
-        self.assert_pcs_success(
-            "stonith create f4 fence_xvm meta provides=something".split()
+        self.assert_pcs_success_ignore_output(
+            (
+                "stonith",
+                "create",
+                "f3",
+                "fence_scsi",
+                "meta",
+                "provides=something",
+                "--force",
+            )
+        )
+        self.assert_pcs_success_ignore_output(
+            (
+                "stonith",
+                "create",
+                "f4",
+                "fence_xvm",
+                "meta",
+                "provides=something",
+                "--force",
+            )
         )
         self.assert_pcs_success(
             "stonith config".split(),
@@ -1521,7 +1559,7 @@ class StonithTest(TestCase, AssertPcsMixin):
 
         self.assert_pcs_success(
             "stonith create test fence_apc ip=i username=u action=a --force".split(),
-            "Warning: stonith option 'action' is deprecated and should not be "
+            stdout_start="Warning: stonith option 'action' is deprecated and should not be "
             "used, use 'pcmk_off_action', 'pcmk_reboot_action' instead\n",
         )
 
@@ -1549,7 +1587,7 @@ class StonithTest(TestCase, AssertPcsMixin):
 
     def test_stonith_update_action(self):
         self.assert_pcs_success(
-            "stonith create test fence_apc ip=i username=u".split()
+            "stonith create test fence_apc ip=i username=u password=1234".split()
         )
 
         self.assert_pcs_success(
@@ -1559,6 +1597,7 @@ class StonithTest(TestCase, AssertPcsMixin):
                 Resource: test (class=stonith type=fence_apc)
                   Attributes: test-instance_attributes
                     ip=i
+                    password=1234
                     username=u
                   Operations:
                     monitor: test-monitor-interval-60s
@@ -1576,7 +1615,7 @@ class StonithTest(TestCase, AssertPcsMixin):
 
         self.assert_pcs_success(
             "stonith update test action=a --force".split(),
-            "Warning: stonith option 'action' is deprecated and should not be "
+            stdout_start="Warning: stonith option 'action' is deprecated and should not be "
             "used, use 'pcmk_off_action', 'pcmk_reboot_action' instead\n",
         )
 
@@ -1588,6 +1627,7 @@ class StonithTest(TestCase, AssertPcsMixin):
                   Attributes: test-instance_attributes
                     action=a
                     ip=i
+                    password=1234
                     username=u
                   Operations:
                     monitor: test-monitor-interval-60s
@@ -1605,6 +1645,7 @@ class StonithTest(TestCase, AssertPcsMixin):
                 Resource: test (class=stonith type=fence_apc)
                   Attributes: test-instance_attributes
                     ip=i
+                    password=1234
                     username=u
                   Operations:
                     monitor: test-monitor-interval-60s
@@ -1634,7 +1675,7 @@ class StonithTest(TestCase, AssertPcsMixin):
                 "pcmk_host_list=nodea nodeb",
                 "--force",
             ],
-            "Warning: stonith option 'ip' or 'ipaddr' (deprecated) has to be "
+            stdout_start="Warning: stonith option 'ip' or 'ipaddr' (deprecated) has to be "
             "specified\n"
             "Warning: stonith option 'username' or 'login' (deprecated) has to "
             "be specified\n",
@@ -1665,31 +1706,31 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
         self.assert_pcs_success(
             "stonith create n1-ipmi fence_apc --force".split(),
-            deprecated_warnings,
+            stdout_start=deprecated_warnings,
         )
         self.assert_pcs_success(
             "stonith create n2-ipmi fence_apc --force".split(),
-            deprecated_warnings,
+            stdout_start=deprecated_warnings,
         )
         self.assert_pcs_success(
             "stonith create n1-apc1 fence_apc --force".split(),
-            deprecated_warnings,
+            stdout_start=deprecated_warnings,
         )
         self.assert_pcs_success(
             "stonith create n1-apc2 fence_apc --force".split(),
-            deprecated_warnings,
+            stdout_start=deprecated_warnings,
         )
         self.assert_pcs_success(
             "stonith create n2-apc1 fence_apc --force".split(),
-            deprecated_warnings,
+            stdout_start=deprecated_warnings,
         )
         self.assert_pcs_success(
             "stonith create n2-apc2 fence_apc --force".split(),
-            deprecated_warnings,
+            stdout_start=deprecated_warnings,
         )
         self.assert_pcs_success(
             "stonith create n2-apc3 fence_apc --force".split(),
-            deprecated_warnings,
+            stdout_start=deprecated_warnings,
         )
         self.assert_pcs_success_all(
             [
@@ -1983,8 +2024,8 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
         self.assertIn("No stonith devices and stonith-enabled is not false", o)
 
-        self.assert_pcs_success(
-            "stonith create test_stonith fence_apc ip=i username=u pcmk_host_argument=node1".split()
+        self.assert_pcs_success_ignore_output(
+            "stonith create test_stonith fence_apc ip=i username=u pcmk_host_argument=node1 --force".split()
         )
 
         o, r = pcs(
@@ -2011,7 +2052,7 @@ _fixture_stonith_level_cache_lock = Lock()
 
 class StonithLevelTestCibFixture(CachedCibFixture):
     def _fixture_stonith_resource(self, name):
-        self.assert_pcs_success(
+        self.assert_pcs_success_ignore_output(
             [
                 "stonith",
                 "create",
@@ -2020,6 +2061,7 @@ class StonithLevelTestCibFixture(CachedCibFixture):
                 "pcmk_host_list=rh7-1 rh7-2",
                 "ip=i",
                 "username=u",
+                "--force",
             ]
         )
 
@@ -2062,7 +2104,7 @@ class LevelTestsBase(TestCase, AssertPcsMixin):
         self.temp_cib.close()
 
     def fixture_stonith_resource(self, name):
-        self.assert_pcs_success(
+        self.assert_pcs_success_ignore_output(
             [
                 "stonith",
                 "create",
@@ -2071,6 +2113,7 @@ class LevelTestsBase(TestCase, AssertPcsMixin):
                 "pcmk_host_list=rh7-1 rh7-2",
                 "ip=i",
                 "username=u",
+                "--force",
             ]
         )
 
@@ -3292,7 +3335,7 @@ class StonithUpdate(ResourceTest):
 
     def fixture_create_stonith(self):
         self.assert_effect(
-            "stonith create S fence_apc ip=i login=l ssh=0 debug=d".split(),
+            "stonith create S fence_apc ip=i login=l ssh=0 debug=d password=1234".split(),
             """
             <resources>
                 <primitive class="stonith" id="S" type="fence_apc">
@@ -3305,6 +3348,9 @@ class StonithUpdate(ResourceTest):
                         />
                         <nvpair id="S-instance_attributes-login" name="login"
                             value="l"
+                        />
+                        <nvpair id="S-instance_attributes-password" name="password"
+                            value="1234"
                         />
                         <nvpair id="S-instance_attributes-ssh" name="ssh"
                             value="0"
@@ -3342,6 +3388,9 @@ class StonithUpdate(ResourceTest):
                         <nvpair id="S-instance_attributes-login" name="login"
                             value="l"
                         />
+                        <nvpair id="S-instance_attributes-password" name="password"
+                            value="1234"
+                        />
                         <nvpair id="S-instance_attributes-ssh" name="ssh"
                             value="0"
                         />
@@ -3372,6 +3421,9 @@ class StonithUpdate(ResourceTest):
                         />
                         <nvpair id="S-instance_attributes-login" name="login"
                             value="l"
+                        />
+                        <nvpair id="S-instance_attributes-password" name="password"
+                            value="1234"
                         />
                         <nvpair id="S-instance_attributes-ssh" name="ssh"
                             value="0"
@@ -3410,6 +3462,9 @@ class StonithUpdate(ResourceTest):
                         <nvpair id="S-instance_attributes-login" name="login"
                             value="l"
                         />
+                        <nvpair id="S-instance_attributes-password" name="password"
+                            value="1234"
+                        />
                         <nvpair id="S-instance_attributes-ssh" name="ssh"
                             value="1"
                         />
@@ -3439,6 +3494,9 @@ class StonithUpdate(ResourceTest):
                         />
                         <nvpair id="S-instance_attributes-login" name="login"
                             value="l"
+                        />
+                        <nvpair id="S-instance_attributes-password" name="password"
+                            value="1234"
                         />
                     </instance_attributes>
                     <operations>
@@ -3471,6 +3529,9 @@ class StonithUpdate(ResourceTest):
                         <nvpair id="S-instance_attributes-ip" name="ip"
                             value="i"
                         />
+                        <nvpair id="S-instance_attributes-password" name="password"
+                            value="1234"
+                        />
                         <nvpair id="S-instance_attributes-ssh" name="ssh"
                             value="0"
                         />
@@ -3500,6 +3561,9 @@ class StonithUpdate(ResourceTest):
                         />
                         <nvpair id="S-instance_attributes-login" name="login"
                             value="l"
+                        />
+                        <nvpair id="S-instance_attributes-password" name="password"
+                            value="1234"
                         />
                         <nvpair id="S-instance_attributes-ssh" name="ssh"
                             value="0"
@@ -3537,6 +3601,9 @@ class StonithUpdate(ResourceTest):
                         />
                         <nvpair id="S-instance_attributes-login" name="login"
                             value="l"
+                        />
+                        <nvpair id="S-instance_attributes-password" name="password"
+                            value="1234"
                         />
                         <nvpair id="S-instance_attributes-ssh" name="ssh"
                             value="0"

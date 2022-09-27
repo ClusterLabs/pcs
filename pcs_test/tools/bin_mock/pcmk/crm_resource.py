@@ -18,6 +18,17 @@ def write_local_file_to_stdout(file_name):
     write_file_to_stdout(os.path.join(DATA_DIR, file_name))
 
 
+def get_arg_values(argv, name):
+    values = []
+    next_value = len(argv)
+    for i, value in enumerate(argv):
+        if value == name:
+            next_value = i + 1
+        elif i == next_value:
+            values.append(value)
+    return values
+
+
 def main():
     argv = sys.argv[1:]
     if not argv:
@@ -85,6 +96,39 @@ def main():
             )
         else:
             raise AssertionError()
+    elif arg == "--validate":
+        if get_arg_values(argv, "--output-as")[0] != "xml":
+            raise AssertionError()
+        provider = get_arg_values(argv, "--provider")
+        is_invalid = "fake=is_invalid=True" in argv
+        output = ""
+        if is_invalid:
+            output = """<output source="stderr">Validation failure</output>"""
+        stdout = """
+            <pacemaker-result api-version="2.15" request="{cmd_str}">
+              <resource-agent-action action="validate" class="{standard}" type="{agent_type}"{provider_str}>
+                <overrides/>
+                <agent-status code="5" message="not installed" execution_code="0" execution_message="complete" reason="environment is invalid, resource considered stopped"/>
+                <command code="5">
+                {output}
+                </command>
+              </resource-agent-action>
+              <status code="5" message="Not installed">
+                <errors>
+                  <error>crm_resource: Error performing operation: Not installed</error>
+                </errors>
+              </status>
+            </pacemaker-result>
+        """.format(
+            cmd_str=" ".join(sys.argv),
+            standard=get_arg_values(argv, "--class")[0],
+            agent_type=get_arg_values(argv, "--agent")[0],
+            provider_str=f' provider="{provider[0]}"' if provider else "",
+            output=output,
+        )
+        sys.stdout.write(stdout)
+        if is_invalid:
+            raise SystemExit(1)
     else:
         raise AssertionError()
 

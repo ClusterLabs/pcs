@@ -1,10 +1,15 @@
-from unittest import TestCase
+# pylint: disable=too-many-lines
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from lxml import etree
 
 from pcs.common import reports
 from pcs.lib.cib.resource import primitive
 from pcs.lib.resource_agent import (
+    ResourceAgentAction,
     ResourceAgentFacade,
     ResourceAgentMetadata,
     ResourceAgentName,
@@ -16,15 +21,15 @@ from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal
 
 
-def _fixture_metadata(name, parameters):
+def _fixture_metadata(name, parameters, actions=None, exists=True):
     return ResourceAgentMetadata(
         name=name,
-        agent_exists=True,
+        agent_exists=exists,
         ocf_version=const.OCF_1_0,
         shortdesc=None,
         longdesc=None,
         parameters=parameters,
-        actions=[],
+        actions=actions or [],
     )
 
 
@@ -81,7 +86,7 @@ def _fixture_agent_deprecated_loop():
     )
 
 
-def _fixture_stonith():
+def _fixture_stonith(actions=None):
     return ResourceAgentFacade(
         _fixture_metadata(
             ResourceAgentName("stonith", None, "type"),
@@ -90,6 +95,7 @@ def _fixture_stonith():
                 _fixture_parameter("optional", False, []),
                 _fixture_parameter("action", True, []),
             ],
+            actions=actions,
         )
     )
 
@@ -110,8 +116,46 @@ def _fixture_void(stonith=False):
     )
 
 
+def _fixture_action(name):
+    return ResourceAgentAction(
+        name=name,
+        timeout=None,
+        interval=None,
+        role=None,
+        start_delay=None,
+        depth=None,
+        automatic=True,
+        on_target=False,
+    )
+
+
+def _fixture_ocf_agent(exists=True, self_validation=True):
+    actions = [_fixture_action("monitor")]
+    if self_validation:
+        actions.append(_fixture_action("validate-all"))
+    return ResourceAgentFacade(
+        _fixture_metadata(
+            name=ResourceAgentName("ocf", "provider", "type"),
+            parameters=[
+                _fixture_parameter("required", True, []),
+                _fixture_parameter("optional", False, []),
+            ],
+            actions=actions,
+            exists=exists,
+        )
+    )
+
+
 class ValidateResourceInstanceAttributesCreate(TestCase):
-    # pylint: disable=no-self-use
+    def setUp(self):
+        agent_self_validation_patcher = mock.patch(
+            "pcs.lib.cib.resource.primitive.validate_resource_instance_attributes_via_pcmk"
+        )
+        self.addCleanup(agent_self_validation_patcher.stop)
+        agent_self_validation_mock = agent_self_validation_patcher.start()
+        self.addCleanup(agent_self_validation_mock.assert_not_called)
+        self.cmd_runner = mock.Mock()
+
     def test_set_empty_string(self):
         options = [
             "required1_new",
@@ -122,6 +166,7 @@ class ValidateResourceInstanceAttributesCreate(TestCase):
         ]
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_create(
+                self.cmd_runner,
                 _fixture_agent(),
                 {name: "" for name in options},
                 etree.Element("resources"),
@@ -174,6 +219,7 @@ class ValidateResourceInstanceAttributesCreate(TestCase):
     def test_set_all_required_params_one_deprecated_one_new(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_create(
+                self.cmd_runner,
                 _fixture_agent(),
                 {
                     "required1_new": "A",
@@ -194,6 +240,7 @@ class ValidateResourceInstanceAttributesCreate(TestCase):
     def test_set_all_required_and_optional_params_one_deprecated_one_new(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_create(
+                self.cmd_runner,
                 _fixture_agent(),
                 {
                     "required1_new": "A",
@@ -222,6 +269,7 @@ class ValidateResourceInstanceAttributesCreate(TestCase):
     def test_set_all_required_and_optional_params_both_deprecated_and_new(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_create(
+                self.cmd_runner,
                 _fixture_agent(),
                 {
                     "required1_new": "A",
@@ -266,6 +314,7 @@ class ValidateResourceInstanceAttributesCreate(TestCase):
     def test_set_unknown_params(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_create(
+                self.cmd_runner,
                 _fixture_agent(),
                 {
                     "required1_new": "A",
@@ -300,6 +349,7 @@ class ValidateResourceInstanceAttributesCreate(TestCase):
     def test_set_unknown_params_forced(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_create(
+                self.cmd_runner,
                 _fixture_agent(),
                 {
                     "required1_new": "A",
@@ -334,6 +384,7 @@ class ValidateResourceInstanceAttributesCreate(TestCase):
     def test_missing_required(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_create(
+                self.cmd_runner,
                 _fixture_agent(),
                 {},
                 etree.Element("resources"),
@@ -359,6 +410,7 @@ class ValidateResourceInstanceAttributesCreate(TestCase):
     def test_missing_required_forced(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_create(
+                self.cmd_runner,
                 _fixture_agent(),
                 {},
                 etree.Element("resources"),
@@ -386,6 +438,7 @@ class ValidateResourceInstanceAttributesCreate(TestCase):
         # reports are not that important, since meta-data are broken.
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_create(
+                self.cmd_runner,
                 _fixture_agent_deprecated_loop(),
                 {
                     "loop3b": "value",
@@ -405,6 +458,7 @@ class ValidateResourceInstanceAttributesCreate(TestCase):
     def test_stonith_reports(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_create(
+                self.cmd_runner,
                 _fixture_stonith(),
                 {
                     "unknown": "option",
@@ -432,6 +486,7 @@ class ValidateResourceInstanceAttributesCreate(TestCase):
     def test_resource_action_not_deprecated(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_create(
+                self.cmd_runner,
                 _fixture_agent(),
                 {
                     "action": "reboot",
@@ -446,6 +501,7 @@ class ValidateResourceInstanceAttributesCreate(TestCase):
     def test_stonith_action_deprecated(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_create(
+                self.cmd_runner,
                 _fixture_stonith(),
                 {
                     "action": "reboot",
@@ -467,6 +523,7 @@ class ValidateResourceInstanceAttributesCreate(TestCase):
     def test_stonith_action_deprecated_forced(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_create(
+                self.cmd_runner,
                 _fixture_stonith(),
                 {
                     "action": "reboot",
@@ -488,6 +545,7 @@ class ValidateResourceInstanceAttributesCreate(TestCase):
     def test_stonith_action_empty(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_create(
+                self.cmd_runner,
                 _fixture_stonith(),
                 {
                     "action": "",
@@ -510,6 +568,7 @@ class ValidateResourceInstanceAttributesCreate(TestCase):
     def test_stonith_action_not_set(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_create(
+                self.cmd_runner,
                 _fixture_stonith(),
                 {
                     "required": "value",
@@ -522,6 +581,7 @@ class ValidateResourceInstanceAttributesCreate(TestCase):
     def test_void_checks_for_empty_strings(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_create(
+                self.cmd_runner,
                 _fixture_void(),
                 {
                     "param1": "",
@@ -544,6 +604,7 @@ class ValidateResourceInstanceAttributesCreate(TestCase):
     def test_void_stonith_check_for_action(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_create(
+                self.cmd_runner,
                 _fixture_void(stonith=True),
                 {
                     "param1": "",
@@ -572,8 +633,162 @@ class ValidateResourceInstanceAttributesCreate(TestCase):
         )
 
 
+class ValidateResourceInstanceAttributesCreateSelfValidation(TestCase):
+    def setUp(self):
+        agent_self_validation_patcher = mock.patch(
+            "pcs.lib.cib.resource.primitive.validate_resource_instance_attributes_via_pcmk"
+        )
+        self.addCleanup(agent_self_validation_patcher.stop)
+        self.agent_self_validation_mock = agent_self_validation_patcher.start()
+        self.agent_self_validation_mock.return_value = True, []
+        self.cmd_runner = mock.Mock()
+
+    def test_success(self):
+        attributes = {"required": "value"}
+        facade = _fixture_ocf_agent()
+        self.assertEqual(
+            primitive.validate_resource_instance_attributes_create(
+                self.cmd_runner,
+                facade,
+                attributes,
+                etree.Element("resources"),
+                force=False,
+            ),
+            [],
+        )
+        self.agent_self_validation_mock.assert_called_once_with(
+            self.cmd_runner,
+            facade.metadata.name,
+            attributes,
+            reports.ReportItemSeverity.error(reports.codes.FORCE),
+        )
+
+    def test_force(self):
+        attributes = {"required": "value"}
+        facade = _fixture_ocf_agent()
+        self.assertEqual(
+            primitive.validate_resource_instance_attributes_create(
+                self.cmd_runner,
+                facade,
+                attributes,
+                etree.Element("resources"),
+                force=True,
+            ),
+            [],
+        )
+        self.agent_self_validation_mock.assert_called_once_with(
+            self.cmd_runner,
+            facade.metadata.name,
+            attributes,
+            reports.ReportItemSeverity.warning(),
+        )
+
+    def test_failure(self):
+        attributes = {"required": "value"}
+        facade = _fixture_ocf_agent()
+        failure_reports = ["report1", "report2"]
+        self.agent_self_validation_mock.return_value = False, failure_reports
+        self.assertEqual(
+            primitive.validate_resource_instance_attributes_create(
+                self.cmd_runner,
+                facade,
+                attributes,
+                etree.Element("resources"),
+                force=False,
+            ),
+            failure_reports,
+        )
+        self.agent_self_validation_mock.assert_called_once_with(
+            self.cmd_runner,
+            facade.metadata.name,
+            attributes,
+            reports.ReportItemSeverity.error(reports.codes.FORCE),
+        )
+
+    def test_stonith_check(self):
+        attributes = {"required": "value"}
+        facade = _fixture_stonith(actions=[_fixture_action("validate-all")])
+        self.assertEqual(
+            primitive.validate_resource_instance_attributes_create(
+                self.cmd_runner,
+                facade,
+                attributes,
+                etree.Element("resources"),
+                force=False,
+            ),
+            [],
+        )
+        self.agent_self_validation_mock.assert_called_once_with(
+            self.cmd_runner,
+            facade.metadata.name,
+            attributes,
+            reports.ReportItemSeverity.error(reports.codes.FORCE),
+        )
+
+    def test_nonexisting_agent(self):
+        attributes = {"required": "value"}
+        facade = _fixture_ocf_agent(exists=False)
+        self.assertEqual(
+            primitive.validate_resource_instance_attributes_create(
+                self.cmd_runner,
+                facade,
+                attributes,
+                etree.Element("resources"),
+                force=False,
+            ),
+            [],
+        )
+        self.agent_self_validation_mock.assert_not_called()
+
+    def test_provides_self_validation(self):
+        attributes = {"required": "value"}
+        facade = _fixture_ocf_agent(self_validation=False)
+        self.assertEqual(
+            primitive.validate_resource_instance_attributes_create(
+                self.cmd_runner,
+                facade,
+                attributes,
+                etree.Element("resources"),
+                force=False,
+            ),
+            [],
+        )
+        self.agent_self_validation_mock.assert_not_called()
+
+    def test_previous_errors(self):
+        attributes = {}
+        facade = _fixture_ocf_agent()
+        assert_report_item_list_equal(
+            primitive.validate_resource_instance_attributes_create(
+                self.cmd_runner,
+                facade,
+                attributes,
+                etree.Element("resources"),
+                force=False,
+            ),
+            [
+                fixture.error(
+                    reports.codes.REQUIRED_OPTIONS_ARE_MISSING,
+                    force_code=reports.codes.FORCE,
+                    option_type="resource",
+                    option_names=["required"],
+                ),
+            ],
+        )
+        self.agent_self_validation_mock.assert_not_called()
+
+
 class ValidateResourceInstanceAttributesUpdate(TestCase):
     _NAME = "a-resource"
+
+    def setUp(self):
+        agent_self_validation_patcher = mock.patch(
+            "pcs.lib.cib.resource.primitive.validate_resource_instance_attributes_via_pcmk"
+        )
+        self.addCleanup(agent_self_validation_patcher.stop)
+        agent_self_validation_mock = agent_self_validation_patcher.start()
+        self.addCleanup(agent_self_validation_mock.assert_not_called)
+        self.cmd_runner = mock.Mock()
 
     def _fixture_resources(self, parameters):
         resources_el = etree.Element("resources")
@@ -588,6 +803,7 @@ class ValidateResourceInstanceAttributesUpdate(TestCase):
     def test_remove_required_deprecated(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_update(
+                self.cmd_runner,
                 _fixture_agent(),
                 {
                     "required2_old": "",
@@ -614,6 +830,7 @@ class ValidateResourceInstanceAttributesUpdate(TestCase):
     def test_remove_required_new(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_update(
+                self.cmd_runner,
                 _fixture_agent(),
                 {
                     "required1_new": "",
@@ -640,6 +857,7 @@ class ValidateResourceInstanceAttributesUpdate(TestCase):
     def test_remove_required_deprecated_set_new(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_update(
+                self.cmd_runner,
                 _fixture_agent(),
                 {
                     "required2_old": "",
@@ -659,6 +877,7 @@ class ValidateResourceInstanceAttributesUpdate(TestCase):
     def test_remove_required_new_set_deprecated(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_update(
+                self.cmd_runner,
                 _fixture_agent(),
                 {
                     "required1_old": "A",
@@ -685,6 +904,7 @@ class ValidateResourceInstanceAttributesUpdate(TestCase):
     def test_set_optional(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_update(
+                self.cmd_runner,
                 _fixture_agent(),
                 {
                     "optional1_new": "A",
@@ -703,6 +923,7 @@ class ValidateResourceInstanceAttributesUpdate(TestCase):
     def test_remove_optional(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_update(
+                self.cmd_runner,
                 _fixture_agent(),
                 {
                     "optional1_new": "",
@@ -721,6 +942,7 @@ class ValidateResourceInstanceAttributesUpdate(TestCase):
     def test_dont_report_previously_missing_required(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_update(
+                self.cmd_runner,
                 _fixture_agent(),
                 {
                     "optional1_new": "A",
@@ -738,6 +960,7 @@ class ValidateResourceInstanceAttributesUpdate(TestCase):
     def test_set_unknown_params(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_update(
+                self.cmd_runner,
                 _fixture_agent(),
                 {
                     "unknown1": "C",
@@ -777,6 +1000,7 @@ class ValidateResourceInstanceAttributesUpdate(TestCase):
     def test_remove_unknown_params(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_update(
+                self.cmd_runner,
                 _fixture_agent(),
                 {
                     "unknown1": "",
@@ -816,6 +1040,7 @@ class ValidateResourceInstanceAttributesUpdate(TestCase):
     def test_unknown_params_forced(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_update(
+                self.cmd_runner,
                 _fixture_agent(),
                 {
                     "unknown1": "",
@@ -858,6 +1083,7 @@ class ValidateResourceInstanceAttributesUpdate(TestCase):
         # reports are not that important, since meta-data are broken.
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_update(
+                self.cmd_runner,
                 _fixture_agent_deprecated_loop(),
                 {
                     "loop3b": "value",
@@ -878,6 +1104,7 @@ class ValidateResourceInstanceAttributesUpdate(TestCase):
     def test_stonith_reports(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_update(
+                self.cmd_runner,
                 _fixture_stonith(),
                 {
                     "required": "",
@@ -911,6 +1138,7 @@ class ValidateResourceInstanceAttributesUpdate(TestCase):
     def test_resource_action_not_deprecated(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_update(
+                self.cmd_runner,
                 _fixture_agent(),
                 {
                     "action": "reboot",
@@ -929,6 +1157,7 @@ class ValidateResourceInstanceAttributesUpdate(TestCase):
     def test_stonith_action_deprecated(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_update(
+                self.cmd_runner,
                 _fixture_stonith(),
                 {
                     "action": "reboot",
@@ -955,6 +1184,7 @@ class ValidateResourceInstanceAttributesUpdate(TestCase):
     def test_stonith_action_deprecated_forced(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_update(
+                self.cmd_runner,
                 _fixture_stonith(),
                 {
                     "action": "reboot",
@@ -981,6 +1211,7 @@ class ValidateResourceInstanceAttributesUpdate(TestCase):
     def test_stonith_action_add(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_update(
+                self.cmd_runner,
                 _fixture_stonith(),
                 {
                     "action": "reboot",
@@ -1006,6 +1237,7 @@ class ValidateResourceInstanceAttributesUpdate(TestCase):
     def test_stonith_action_empty(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_update(
+                self.cmd_runner,
                 _fixture_stonith(),
                 {
                     "action": "",
@@ -1024,6 +1256,7 @@ class ValidateResourceInstanceAttributesUpdate(TestCase):
     def test_stonith_action_not_updated(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_update(
+                self.cmd_runner,
                 _fixture_stonith(),
                 {
                     "optional": "value",
@@ -1042,6 +1275,7 @@ class ValidateResourceInstanceAttributesUpdate(TestCase):
     def test_void_stonith_check_for_action(self):
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_update(
+                self.cmd_runner,
                 _fixture_void(stonith=True),
                 {
                     "param1": "",
@@ -1063,6 +1297,253 @@ class ValidateResourceInstanceAttributesUpdate(TestCase):
                     option_type="stonith",
                     option_name="action",
                     replaced_by=["pcmk_off_action", "pcmk_reboot_action"],
+                ),
+            ],
+        )
+
+
+class ValidateResourceInstanceAttributesUpdateSelfValidation(TestCase):
+    _NAME = "a-resource"
+
+    def setUp(self):
+        agent_self_validation_patcher = mock.patch(
+            "pcs.lib.cib.resource.primitive.validate_resource_instance_attributes_via_pcmk"
+        )
+        self.addCleanup(agent_self_validation_patcher.stop)
+        self.agent_self_validation_mock = agent_self_validation_patcher.start()
+        self.agent_self_validation_mock.return_value = True, []
+        self.cmd_runner = mock.Mock()
+
+    def _fixture_resources(self, parameters):
+        resources_el = etree.Element("resources")
+        primitive_el = etree.SubElement(
+            resources_el, "primitive", dict(id=self._NAME)
+        )
+        nvset_el = etree.SubElement(primitive_el, "instance_attributes")
+        for name, value in parameters.items():
+            etree.SubElement(nvset_el, "nvpair", dict(name=name, value=value))
+        return resources_el
+
+    def test_success(self):
+        old_attributes = {"required": "old_value"}
+        new_attributes = {"required": "new_value"}
+        facade = _fixture_ocf_agent()
+        self.assertEqual(
+            primitive.validate_resource_instance_attributes_update(
+                self.cmd_runner,
+                facade,
+                new_attributes,
+                self._NAME,
+                self._fixture_resources(old_attributes),
+                force=False,
+            ),
+            [],
+        )
+        self.assertEqual(
+            self.agent_self_validation_mock.mock_calls,
+            [
+                mock.call(
+                    self.cmd_runner,
+                    facade.metadata.name,
+                    old_attributes,
+                    reports.ReportItemSeverity.error(),
+                ),
+                mock.call(
+                    self.cmd_runner,
+                    facade.metadata.name,
+                    new_attributes,
+                    reports.ReportItemSeverity.error(reports.codes.FORCE),
+                ),
+            ],
+        )
+
+    def test_force(self):
+        old_attributes = {"required": "old_value"}
+        new_attributes = {"required": "new_value"}
+        facade = _fixture_ocf_agent()
+        self.assertEqual(
+            primitive.validate_resource_instance_attributes_update(
+                self.cmd_runner,
+                facade,
+                new_attributes,
+                self._NAME,
+                self._fixture_resources(old_attributes),
+                force=True,
+            ),
+            [],
+        )
+        self.assertEqual(
+            self.agent_self_validation_mock.mock_calls,
+            [
+                mock.call(
+                    self.cmd_runner,
+                    facade.metadata.name,
+                    old_attributes,
+                    reports.ReportItemSeverity.error(),
+                ),
+                mock.call(
+                    self.cmd_runner,
+                    facade.metadata.name,
+                    new_attributes,
+                    reports.ReportItemSeverity.warning(),
+                ),
+            ],
+        )
+
+    def test_failure(self):
+        old_attributes = {"required": "old_value"}
+        new_attributes = {"required": "new_value"}
+        failure_reports = ["report1", "report2"]
+        facade = _fixture_ocf_agent()
+        self.agent_self_validation_mock.side_effect = (
+            (True, []),
+            (False, failure_reports),
+        )
+        self.assertEqual(
+            primitive.validate_resource_instance_attributes_update(
+                self.cmd_runner,
+                facade,
+                new_attributes,
+                self._NAME,
+                self._fixture_resources(old_attributes),
+                force=False,
+            ),
+            failure_reports,
+        )
+        self.assertEqual(
+            self.agent_self_validation_mock.mock_calls,
+            [
+                mock.call(
+                    self.cmd_runner,
+                    facade.metadata.name,
+                    old_attributes,
+                    reports.ReportItemSeverity.error(),
+                ),
+                mock.call(
+                    self.cmd_runner,
+                    facade.metadata.name,
+                    new_attributes,
+                    reports.ReportItemSeverity.error(reports.codes.FORCE),
+                ),
+            ],
+        )
+
+    def test_stonith_check(self):
+        old_attributes = {"required": "old_value"}
+        new_attributes = {"required": "new_value"}
+        facade = _fixture_stonith(actions=[_fixture_action("validate-all")])
+        self.assertEqual(
+            primitive.validate_resource_instance_attributes_update(
+                self.cmd_runner,
+                facade,
+                new_attributes,
+                self._NAME,
+                self._fixture_resources(old_attributes),
+                force=False,
+            ),
+            [],
+        )
+        self.assertEqual(
+            self.agent_self_validation_mock.mock_calls,
+            [
+                mock.call(
+                    self.cmd_runner,
+                    facade.metadata.name,
+                    old_attributes,
+                    reports.ReportItemSeverity.error(),
+                ),
+                mock.call(
+                    self.cmd_runner,
+                    facade.metadata.name,
+                    new_attributes,
+                    reports.ReportItemSeverity.error(reports.codes.FORCE),
+                ),
+            ],
+        )
+
+    def test_nonexisting_agent(self):
+        old_attributes = {"required": "old_value"}
+        new_attributes = {"required": "new_value"}
+        facade = _fixture_ocf_agent(exists=False)
+        self.assertEqual(
+            primitive.validate_resource_instance_attributes_update(
+                self.cmd_runner,
+                facade,
+                new_attributes,
+                self._NAME,
+                self._fixture_resources(old_attributes),
+                force=False,
+            ),
+            [],
+        )
+        self.agent_self_validation_mock.assert_not_called()
+
+    def test_provides_self_validation(self):
+        old_attributes = {"required": "old_value"}
+        new_attributes = {"required": "new_value"}
+        facade = _fixture_ocf_agent(self_validation=False)
+        self.assertEqual(
+            primitive.validate_resource_instance_attributes_update(
+                self.cmd_runner,
+                facade,
+                new_attributes,
+                self._NAME,
+                self._fixture_resources(old_attributes),
+                force=False,
+            ),
+            [],
+        )
+        self.agent_self_validation_mock.assert_not_called()
+
+    def test_previous_errors(self):
+        old_attributes = {"required": "old_value"}
+        new_attributes = {"required": ""}
+        facade = _fixture_ocf_agent()
+        assert_report_item_list_equal(
+            primitive.validate_resource_instance_attributes_update(
+                self.cmd_runner,
+                facade,
+                new_attributes,
+                self._NAME,
+                self._fixture_resources(old_attributes),
+                force=False,
+            ),
+            [
+                fixture.error(
+                    reports.codes.REQUIRED_OPTIONS_ARE_MISSING,
+                    force_code=reports.codes.FORCE,
+                    option_type="resource",
+                    option_names=["required"],
+                ),
+            ],
+        )
+        self.agent_self_validation_mock.assert_not_called()
+
+    def test_current_attributes_failure(self):
+        old_attributes = {"required": "old_value"}
+        new_attributes = {"required": "new_value"}
+        failure_reports = ["report1", "report2"]
+        facade = _fixture_ocf_agent()
+        self.agent_self_validation_mock.return_value = False, failure_reports
+        self.assertEqual(
+            primitive.validate_resource_instance_attributes_update(
+                self.cmd_runner,
+                facade,
+                new_attributes,
+                self._NAME,
+                self._fixture_resources(old_attributes),
+                force=False,
+            ),
+            [],
+        )
+        self.assertEqual(
+            self.agent_self_validation_mock.mock_calls,
+            [
+                mock.call(
+                    self.cmd_runner,
+                    facade.metadata.name,
+                    old_attributes,
+                    reports.ReportItemSeverity.error(),
                 ),
             ],
         )

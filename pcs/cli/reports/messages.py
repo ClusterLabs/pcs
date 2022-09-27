@@ -2,11 +2,13 @@ from typing import (
     Any,
     Dict,
     Mapping,
+    Optional,
     get_type_hints,
 )
 
 from pcs.common import file_type_codes
 from pcs.common.reports import (
+    codes,
     const,
     dto,
     item,
@@ -17,6 +19,7 @@ from pcs.common.str_tools import (
     format_list,
     format_optional,
     format_plural,
+    indent,
     transform,
 )
 from pcs.common.tools import get_all_subclasses
@@ -37,6 +40,20 @@ class CliReportMessage:
     @property
     def payload(self) -> Mapping[str, Any]:
         return self._dto_obj.payload
+
+    def get_message_with_force_text(
+        self, force_code: Optional[types.ForceCode]
+    ) -> str:
+        force_text_map = {
+            codes.SKIP_OFFLINE_NODES: ", use --skip-offline to override",
+        }
+        force_text = (
+            force_text_map.get(force_code, ", use --force to override")
+            if force_code
+            else ""
+        )
+
+        return f"{self.message}{force_text}"
 
 
 class CliReportMessageCustom(CliReportMessage):
@@ -530,6 +547,27 @@ class ResourceStonithCommandsMismatch(CliReportMessageCustom):
         )
         additional_msg = format_optional(cmd, " Use '{}' command instead.")
         return f"{self._obj.message}{additional_msg}"
+
+
+class AgentSelfValidationResult(CliReportMessageCustom):
+    _obj: messages.AgentSelfValidationResult
+    _base_msg = "Validation result from agent"
+
+    @property
+    def _formatted_result(self) -> str:
+        return "\n".join(indent(self._obj.result.splitlines()))
+
+    @property
+    def message(self) -> str:
+        return f"{self._base_msg}:\n{self._formatted_result}"
+
+    def get_message_with_force_text(
+        self, force_code: Optional[types.ForceCode]
+    ) -> str:
+        force_text = (
+            " (use --force to override)" if force_code == codes.FORCE else ""
+        )
+        return f"{self._base_msg}{force_text}:\n{self._formatted_result}"
 
 
 def _create_report_msg_map() -> Dict[str, type]:

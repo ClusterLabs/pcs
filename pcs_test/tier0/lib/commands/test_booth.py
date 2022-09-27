@@ -12,6 +12,7 @@ from pcs.common import (
     reports,
 )
 from pcs.common.file import RawFileError
+from pcs.lib.booth import constants
 from pcs.lib.commands import booth as commands
 
 from pcs_test.tools import fixture
@@ -1708,9 +1709,29 @@ class CreateInCluster(TestCase, FixtureMixin):
             agent_name="ocf:heartbeat:IPaddr2",
             name="runner.pcmk.load_agent.ipaddr2",
         )
+        self.config.runner.pcmk.resource_agent_self_validation(
+            dict(ip=self.site_ip),
+            standard="ocf",
+            provider="heartbeat",
+            agent_type="IPaddr2",
+            output="",
+        )
         self.config.runner.pcmk.load_agent(
             agent_name="ocf:pacemaker:booth-site",
             name="runner.pcmk.load_agent.booth-site",
+        )
+        self.config.runner.pcmk.resource_agent_self_validation(
+            dict(
+                config=os.path.join(
+                    settings.booth_config_dir,
+                    f"{instance_name}.conf",
+                )
+            ),
+            standard="ocf",
+            provider="pacemaker",
+            agent_type="booth-site",
+            output="",
+            name="runner.pcmk.agent_self_validation.booth-site",
         )
         self.config.env.push_cib(
             resources=self.fixture_cib_booth_group(instance_name)
@@ -1743,10 +1764,32 @@ class CreateInCluster(TestCase, FixtureMixin):
             name="runner.pcmk.load_agent.ipaddr2",
             env=env,
         )
+        self.config.runner.pcmk.resource_agent_self_validation(
+            dict(ip=self.site_ip),
+            standard="ocf",
+            provider="heartbeat",
+            agent_type="IPaddr2",
+            output="",
+            env=env,
+        )
         self.config.runner.pcmk.load_agent(
             agent_name="ocf:pacemaker:booth-site",
             name="runner.pcmk.load_agent.booth-site",
             env=env,
+        )
+        self.config.runner.pcmk.resource_agent_self_validation(
+            dict(
+                config=os.path.join(
+                    settings.booth_config_dir,
+                    f"{constants.DEFAULT_INSTANCE_NAME}.conf",
+                )
+            ),
+            standard="ocf",
+            provider="pacemaker",
+            agent_type="booth-site",
+            output="",
+            env=env,
+            name="runner.pcmk.agent_self_validation.booth-site",
         )
         self.config.env.push_cib(resources=self.fixture_cib_booth_group())
         commands.create_in_cluster(self.env_assist.get_env(), self.site_ip)
@@ -1854,6 +1897,13 @@ class CreateInCluster(TestCase, FixtureMixin):
         self.config.runner.pcmk.load_agent(
             agent_name="ocf:heartbeat:IPaddr2",
             name="runner.pcmk.load_agent.ipaddr2",
+        )
+        self.config.runner.pcmk.resource_agent_self_validation(
+            dict(ip=self.site_ip),
+            standard="ocf",
+            provider="heartbeat",
+            agent_type="IPaddr2",
+            output="",
         )
         self.config.runner.pcmk.load_agent(
             agent_name="ocf:pacemaker:booth-site",

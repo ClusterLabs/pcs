@@ -1046,6 +1046,7 @@ def resource_update(args: List[str], modifiers: InputModifiers) -> None:
             )
         )
         report_list = primitive.validate_resource_instance_attributes_update(
+            utils.cmd_runner(),
             agent_facade,
             dict(params),
             res_id,
