@@ -149,10 +149,9 @@ def prepare_options_plain(
         else:
             del options["rsc-role"]
 
-    allowed_options = ('loss-policy',)
 
     return constraint.prepare_options(
-        allowed_options,
+        tuple(list(ATTRIB) + list(ATTRIB_PLAIN)),
         options,
         partial(
             _create_id,

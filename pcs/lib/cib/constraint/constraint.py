@@ -27,14 +27,8 @@ from pcs.lib.xml_tools import (
 
 
 def _validate_attrib_names(attrib_names, options):
-    positional_arguments = ['rsc','rsc-role','ticket']
-    options2 = options.copy()
-    for arg in positional_arguments:
-        if arg in options2:
-            options2.pop(arg)
-
     invalid_names = [
-        name for name in options2.keys() if name not in attrib_names
+        name for name in options.keys() if name not in attrib_names
     ]
     if invalid_names:
         raise LibraryError(

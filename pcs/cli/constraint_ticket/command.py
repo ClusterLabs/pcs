@@ -49,9 +49,21 @@ def add(lib, argv, modifiers):
             "Resource role must not be specified among options"
             + ", specify it before resource id"
         )
-
     if resource_role:
         options["rsc-role"] = resource_role
+
+    allowed_option = ['id', 'loss-policy']
+    invalid_names = [ 
+        name for name in options.keys() if name not in allowed_option
+    ]
+    if invalid_names:
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.InvalidOptions(
+                    sorted(invalid_names), sorted(allowed_option), None
+                )
+            )
+        )
 
     lib.constraint_ticket.create(
         ticket,
