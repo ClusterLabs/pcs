@@ -101,11 +101,12 @@ CONSTRAINT_TEST_CIB_FIXTURE = ConstraintTestCibFixture(
 
 
 @skip_unless_crm_rule()
-class ConstraintTest(unittest.TestCase):
+class ConstraintTest(unittest.TestCase, AssertPcsMixin):
     def setUp(self):
         self.temp_cib = get_tmp_file("tier1_constraints")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         self.temp_corosync_conf = None
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
 
     def tearDown(self):
         self.temp_cib.close()
@@ -2632,20 +2633,17 @@ Ticket Constraints:
         self.fixture_resources()
         # constraints referencing the remote node's name,
         # deleting the remote node resource
-        output, returnVal = pcs(
-            self.temp_cib.name,
+        self.assert_pcs_success(
             (
                 "resource create vm-guest1 ocf:heartbeat:VirtualDomain "
                 "hypervisor=qemu:///system config=/root/guest1.xml "
                 "meta remote-node=guest1 --force"
             ).split(),
+            stdout_start=(
+                "Warning: this command is not sufficient for creating a guest "
+                "node, use 'pcs cluster node add-guest'\n",
+            ),
         )
-        ac(
-            output,
-            "Warning: this command is not sufficient for creating a guest node, use"
-            " 'pcs cluster node add-guest'\n",
-        )
-        self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             self.temp_cib.name,
@@ -2730,20 +2728,17 @@ Ticket Constraints:
 
         # constraints referencing the remote node's name,
         # removing the remote node
-        output, returnVal = pcs(
-            self.temp_cib.name,
+        self.assert_pcs_success(
             (
                 "resource create vm-guest1 ocf:heartbeat:VirtualDomain "
                 "hypervisor=qemu:///system config=/root/guest1.xml "
                 "meta remote-node=guest1 --force"
             ).split(),
+            stdout_start=(
+                "Warning: this command is not sufficient for creating a guest "
+                "node, use 'pcs cluster node add-guest'\n",
+            ),
         )
-        ac(
-            output,
-            "Warning: this command is not sufficient for creating a guest node, use"
-            " 'pcs cluster node add-guest'\n",
-        )
-        self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             self.temp_cib.name,
@@ -2823,20 +2818,17 @@ Ticket Constraints:
 
         # constraints referencing the remote node resource
         # deleting the remote node resource
-        output, returnVal = pcs(
-            self.temp_cib.name,
+        self.assert_pcs_success(
             (
                 "resource create vm-guest1 ocf:heartbeat:VirtualDomain "
                 "hypervisor=qemu:///system config=/root/guest1.xml "
                 "meta remote-node=guest1 --force"
             ).split(),
+            stdout_start=(
+                "Warning: this command is not sufficient for creating a guest "
+                "node, use 'pcs cluster node add-guest'\n",
+            ),
         )
-        ac(
-            output,
-            "Warning: this command is not sufficient for creating a guest node, use"
-            " 'pcs cluster node add-guest'\n",
-        )
-        self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             self.temp_cib.name,

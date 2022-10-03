@@ -15,6 +15,7 @@ from pcs.common.tools import Version
 from pcs.common.types import CibRuleInEffectStatus
 from pcs.lib.external import CommandRunner
 from pcs.lib.pacemaker import api_result
+from pcs.lib.resource_agent import ResourceAgentName
 
 from pcs_test.tools import (
     fixture,
@@ -1729,3 +1730,329 @@ class GetResourceDigests(TestCase):
 
     def test_no_digest_found(self):
         self.assert_command_failure(stdout=self.fixture_digests_xml())
+
+
+class HandleInstanceAttributesValidateViaPcmkTest(TestCase):
+    # pylint: disable=protected-access
+
+    def test_valid(self):
+        runner = get_runner(
+            stdout="""
+            <api>
+              <result>
+                <output source="stdout">
+                Some text which will be ignored
+
+                Still ignored
+                </output>
+              </result>
+            </api>
+            """
+        )
+        base_cmd = ["some", "command"]
+        (
+            is_valid,
+            report_list,
+        ) = lib._handle_instance_attributes_validation_via_pcmk(
+            runner,
+            base_cmd,
+            "result/output",
+            {"attr1": "val1", "attr2": "val2"},
+            not_valid_severity=Severity.info(),
+        )
+        self.assertTrue(is_valid)
+        self.assertEqual(report_list, [])
+        runner.run.assert_called_once_with(
+            base_cmd + ["--option", "attr1=val1", "--option", "attr2=val2"]
+        )
+
+    def test_invalid_xml_output(self):
+        runner = get_runner(stdout="not xml")
+        base_cmd = ["some", "command"]
+        (
+            is_valid,
+            report_list,
+        ) = lib._handle_instance_attributes_validation_via_pcmk(
+            runner,
+            base_cmd,
+            "result/output",
+            {"attr1": "val1", "attr2": "val2"},
+            not_valid_severity=Severity.info(),
+        )
+        self.assertIsNone(is_valid)
+        assert_report_item_list_equal(
+            report_list,
+            [
+                fixture.info(
+                    report_codes.AGENT_SELF_VALIDATION_INVALID_DATA,
+                    reason="Start tag expected, '<' not found, line 1, column 1 (<string>, line 1)",
+                )
+            ],
+        )
+        runner.run.assert_called_once_with(
+            base_cmd + ["--option", "attr1=val1", "--option", "attr2=val2"]
+        )
+
+    def test_valid_empty_result(self):
+        runner = get_runner(
+            stdout="""
+            <api>
+              <result>
+                <output source="stdout">this is ignored</output>
+              </result>
+            </api>
+            """
+        )
+        base_cmd = ["some", "command"]
+        (
+            is_valid,
+            report_list,
+        ) = lib._handle_instance_attributes_validation_via_pcmk(
+            runner,
+            base_cmd,
+            "result/output",
+            {"attr1": "val1", "attr2": "val2"},
+            not_valid_severity=Severity.info(),
+        )
+        self.assertTrue(is_valid)
+        assert_report_item_list_equal(
+            report_list,
+            [],
+        )
+        runner.run.assert_called_once_with(
+            base_cmd + ["--option", "attr1=val1", "--option", "attr2=val2"]
+        )
+
+    def test_failure_empty_result(self):
+        runner = get_runner(
+            stdout="""
+            <api>
+              <result>
+                <output source="stdout">this is ignored</output>
+              </result>
+            </api>
+            """,
+            returncode=1,
+        )
+        base_cmd = ["some", "command"]
+        (
+            is_valid,
+            report_list,
+        ) = lib._handle_instance_attributes_validation_via_pcmk(
+            runner,
+            base_cmd,
+            "result/output",
+            {"attr1": "val1", "attr2": "val2"},
+            not_valid_severity=Severity.info(),
+        )
+        self.assertFalse(is_valid)
+        assert_report_item_list_equal(
+            report_list,
+            [
+                fixture.info(
+                    report_codes.AGENT_SELF_VALIDATION_RESULT, result=""
+                )
+            ],
+        )
+        runner.run.assert_called_once_with(
+            base_cmd + ["--option", "attr1=val1", "--option", "attr2=val2"]
+        )
+
+    def test_failure(self):
+        runner = get_runner(
+            stdout="""
+            <api>
+              <result>
+                <output source="stderr">first line</output>
+                <output source="stdout">
+                Some text which will be ignored
+
+                Still ignored
+                </output>
+                <output source="stderr">
+                Important output
+                and another line
+                </output>
+              </result>
+            </api>
+            """,
+            returncode=1,
+        )
+        base_cmd = ["some", "command"]
+        (
+            is_valid,
+            report_list,
+        ) = lib._handle_instance_attributes_validation_via_pcmk(
+            runner,
+            base_cmd,
+            "result/output",
+            {"attr1": "val1", "attr2": "val2"},
+            not_valid_severity=Severity.info(),
+        )
+        self.assertFalse(is_valid)
+        assert_report_item_list_equal(
+            report_list,
+            [
+                fixture.info(
+                    report_codes.AGENT_SELF_VALIDATION_RESULT,
+                    result="first line\nImportant output\nand another line",
+                )
+            ],
+        )
+        runner.run.assert_called_once_with(
+            base_cmd + ["--option", "attr1=val1", "--option", "attr2=val2"]
+        )
+
+    def test_valid_with_result(self):
+        runner = get_runner(
+            stdout="""
+            <api>
+              <result>
+                <output source="stderr">first line</output>
+                <output source="stdout">
+                Some text which will be ignored
+
+                Still ignored
+                </output>
+                <output source="stderr">
+                Important output
+                and another line
+                </output>
+              </result>
+            </api>
+            """
+        )
+        base_cmd = ["some", "command"]
+        (
+            is_valid,
+            report_list,
+        ) = lib._handle_instance_attributes_validation_via_pcmk(
+            runner,
+            base_cmd,
+            "result/output",
+            {"attr1": "val1", "attr2": "val2"},
+            not_valid_severity=Severity.info(),
+        )
+        self.assertTrue(is_valid)
+        assert_report_item_list_equal(
+            report_list,
+            [
+                fixture.warn(
+                    report_codes.AGENT_SELF_VALIDATION_RESULT,
+                    result="first line\nImportant output\nand another line",
+                )
+            ],
+        )
+        runner.run.assert_called_once_with(
+            base_cmd + ["--option", "attr1=val1", "--option", "attr2=val2"]
+        )
+
+
+class ValidateResourceInstanceAttributesViaPcmkTest(TestCase):
+    # pylint: disable=protected-access
+    def setUp(self):
+        self.runner = mock.Mock()
+        self.attrs = dict(attra="val1", attrb="val2")
+        self.severity = Severity.info()
+        patcher = mock.patch(
+            "pcs.lib.pacemaker.live._handle_instance_attributes_validation_via_pcmk"
+        )
+        self.mock_handler = patcher.start()
+        self.ret_val = "ret val"
+        self.mock_handler.return_value = self.ret_val
+
+    def test_with_provider(self):
+        agent = ResourceAgentName(
+            standard="ocf", provider="pacemaker", type="Dummy"
+        )
+        self.assertEqual(
+            lib._validate_resource_instance_attributes_via_pcmk(
+                self.runner, agent, self.attrs, self.severity
+            ),
+            self.ret_val,
+        )
+        self.mock_handler.assert_called_once_with(
+            self.runner,
+            [
+                settings.crm_resource_binary,
+                "--validate",
+                "--output-as",
+                "xml",
+                "--class",
+                "ocf",
+                "--agent",
+                "Dummy",
+                "--provider",
+                "pacemaker",
+            ],
+            "./resource-agent-action/command/output",
+            self.attrs,
+            self.severity,
+        )
+
+    def test_without_provider(self):
+        agent = ResourceAgentName(
+            standard="standard", provider=None, type="Agent"
+        )
+        self.assertEqual(
+            lib._validate_resource_instance_attributes_via_pcmk(
+                self.runner, agent, self.attrs, self.severity
+            ),
+            self.ret_val,
+        )
+        self.mock_handler.assert_called_once_with(
+            self.runner,
+            [
+                settings.crm_resource_binary,
+                "--validate",
+                "--output-as",
+                "xml",
+                "--class",
+                "standard",
+                "--agent",
+                "Agent",
+            ],
+            "./resource-agent-action/command/output",
+            self.attrs,
+            self.severity,
+        )
+
+
+class ValidateStonithInstanceAttributesViaPcmkTest(TestCase):
+    # pylint: disable=protected-access
+
+    def setUp(self):
+        self.runner = mock.Mock()
+        self.attrs = dict(attra="val1", attrb="val2")
+        self.severity = Severity.info()
+        patcher = mock.patch(
+            "pcs.lib.pacemaker.live._handle_instance_attributes_validation_via_pcmk"
+        )
+        self.mock_handler = patcher.start()
+        self.ret_val = "ret val"
+        self.mock_handler.return_value = self.ret_val
+
+    def test_success(self):
+        agent = ResourceAgentName(
+            standard="stonith", provider=None, type="Agent"
+        )
+        self.assertEqual(
+            lib._validate_stonith_instance_attributes_via_pcmk(
+                self.runner, agent, self.attrs, self.severity
+            ),
+            self.ret_val,
+        )
+        self.mock_handler.assert_called_once_with(
+            self.runner,
+            [
+                settings.stonith_admin,
+                "--validate",
+                "--output-as",
+                "xml",
+                "--agent",
+                "Agent",
+            ],
+            "./validate/command/output",
+            self.attrs,
+            self.severity,
+        )

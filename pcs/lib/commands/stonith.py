@@ -162,6 +162,7 @@ def create(
         id_provider = IdProvider(resources_section)
         stonith_element = resource.primitive.create(
             env.report_processor,
+            runner,
             resources_section,
             id_provider,
             stonith_id,
@@ -274,6 +275,7 @@ def create_in_group(
 
         stonith_element = resource.primitive.create(
             env.report_processor,
+            runner,
             resources_section,
             id_provider,
             stonith_id,

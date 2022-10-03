@@ -965,6 +965,7 @@ def resource_update(lib, args, modifiers, deal_with_guest_change=True):
             )
         )
         report_list = primitive.validate_resource_instance_attributes_update(
+            utils.cmd_runner(),
             agent_facade,
             dict(params),
             res_id,

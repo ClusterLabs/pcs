@@ -1,12 +1,15 @@
 import inspect
+from typing import Optional
 from unittest import TestCase
 
 from pcs.cli.reports import messages as cli_messages
 from pcs.common import file_type_codes
 from pcs.common.reports import (
+    codes,
     const,
     item,
     messages,
+    types,
 )
 
 
@@ -39,12 +42,40 @@ class AllClassesTested(TestCase):
 
 
 class CliReportMessageTestBase(TestCase):
+    @staticmethod
+    def _get_cli_msg_obj(
+        msg_obj: item.ReportItemMessage,
+    ) -> cli_messages.CliReportMessage:
+        return cli_messages.report_item_msg_from_dto(msg_obj.to_dto())
+
     def assert_message(
         self, msg_obj: item.ReportItemMessage, expected_msg: str
     ) -> None:
+        self.assertEqual(self._get_cli_msg_obj(msg_obj).message, expected_msg)
+        self.assert_same_messages_with_force_code(msg_obj, None)
+
+    def assert_message_with_force_code(
+        self,
+        msg_obj: item.ReportItemMessage,
+        force_code: types.ForceCode,
+        expected_msg: str,
+    ) -> None:
         self.assertEqual(
-            cli_messages.report_item_msg_from_dto(msg_obj.to_dto()).message,
+            self._get_cli_msg_obj(msg_obj).get_message_with_force_text(
+                force_code
+            ),
             expected_msg,
+        )
+
+    def assert_same_messages_with_force_code(
+        self,
+        msg_obj: item.ReportItemMessage,
+        force_code: Optional[types.ForceCode],
+    ) -> None:
+        cli_msg_obj = self._get_cli_msg_obj(msg_obj)
+        self.assertEqual(
+            cli_msg_obj.get_message_with_force_text(force_code),
+            cli_msg_obj.message,
         )
 
 
@@ -618,4 +649,25 @@ class StonithRestartlessUpdateUnableToPerform(CliReportMessageTestBase):
         self.assert_message(
             report_msg,
             f"{report_msg.message}, please use command 'pcs stonith update' instead",
+        )
+
+
+class AgentSelfValidationResult(CliReportMessageTestBase):
+    def test_message(self):
+        self.assert_message(
+            messages.AgentSelfValidationResult("line 1\nline 3\nline 2"),
+            "Validation result from agent:\n  line 1\n  line 3\n  line 2",
+        )
+
+    def test_force(self):
+        self.assert_message_with_force_code(
+            messages.AgentSelfValidationResult("line 1\nline 3\nline 2"),
+            codes.FORCE,
+            "Validation result from agent (use --force to override):\n  line 1\n  line 3\n  line 2",
+        )
+
+    def test_unknown_force_code(self):
+        self.assert_same_messages_with_force_code(
+            messages.AgentSelfValidationResult("line 1\nline 3\nline 2"),
+            codes.SKIP_OFFLINE_NODES,
         )

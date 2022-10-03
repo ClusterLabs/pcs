@@ -437,7 +437,11 @@ def create_in_cluster(
         resource.create_resource_id, resources_section, instance_name
     )
     create_primitive = partial(
-        primitive.create, env.report_processor, resources_section, id_provider
+        primitive.create,
+        env.report_processor,
+        env.cmd_runner(),
+        resources_section,
+        id_provider,
     )
     agent_factory = ResourceAgentFacadeFactory(
         env.cmd_runner(), report_processor

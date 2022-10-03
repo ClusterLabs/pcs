@@ -11,6 +11,7 @@ from pcs.lib.cib.node import PacemakerNode
 from pcs.lib.cib.resource import primitive
 from pcs.lib.cib.resource.types import ResourceOperationIn
 from pcs.lib.cib.tools import IdProvider
+from pcs.lib.external import CommandRunner
 from pcs.lib.resource_agent import (
     ResourceAgentFacade,
     ResourceAgentMetadata,
@@ -195,6 +196,7 @@ def _prepare_instance_attributes(
 
 def create(
     report_processor: reports.ReportProcessor,
+    cmd_runner: CommandRunner,
     resource_agent_facade: ResourceAgentFacade,
     resources_section: _Element,
     id_provider: IdProvider,
@@ -228,6 +230,7 @@ def create(
     )
     return primitive.create(
         report_processor,
+        cmd_runner,
         resources_section,
         id_provider,
         node_name,

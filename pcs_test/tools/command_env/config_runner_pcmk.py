@@ -1018,3 +1018,100 @@ class PcmkShortcuts:
                 returncode=returncode,
             ),
         )
+
+    def resource_agent_self_validation(
+        self,
+        attributes,
+        standard="ocf",
+        provider="heartbeat",
+        agent_type="Dummy",
+        returncode=0,
+        output=None,
+        stdout="",
+        instead=None,
+        env=None,
+        name="runner.pcmk.resource_agent_self_validation",
+    ):
+        # pylint: disable=too-many-locals
+        if output and stdout:
+            raise AssertionError("Cannot specify both output and stdout")
+        cmd = [
+            "crm_resource",
+            "--validate",
+            "--output-as",
+            "xml",
+            "--class",
+            standard,
+            "--agent",
+            agent_type,
+        ]
+        if provider:
+            cmd.extend(["--provider", provider])
+        for key, value in sorted(attributes.items()):
+            cmd.extend(["--option", f"{key}={value}"])
+        if output is not None:
+            cmd_str = " ".join(cmd)
+            provider_str = f' provider="{provider}"' if provider else ""
+            stdout = f"""
+            <pacemaker-result api-version="2.15" request="{cmd_str}">
+              <resource-agent-action action="validate" class="{standard}" type="{agent_type}"{provider_str}>
+                <overrides/>
+                <agent-status code="5" message="not installed" execution_code="0" execution_message="complete" reason="environment is invalid, resource considered stopped"/>
+                <command code="5">
+                  {output}
+                </command>
+              </resource-agent-action>
+              <status code="5" message="Not installed">
+                <errors>
+                  <error>crm_resource: Error performing operation: Not installed</error>
+                </errors>
+              </status>
+            </pacemaker-result>
+            """
+        self.__calls.place(
+            name,
+            RunnerCall(cmd, stdout=stdout, returncode=returncode, env=env),
+            instead=instead,
+        )
+
+    def stonith_agent_self_validation(
+        self,
+        attributes,
+        agent,
+        returncode=0,
+        output=None,
+        stdout="",
+        instead=None,
+        env=None,
+        name="runner.pcmk.stonith_agent_self_validation",
+    ):
+        # pylint: disable=too-many-locals
+        if output and stdout:
+            raise AssertionError("Cannot specify both output and stdout")
+        cmd = [
+            "stonith_admin",
+            "--validate",
+            "--output-as",
+            "xml",
+            "--agent",
+            agent,
+        ]
+        for key, value in sorted(attributes.items()):
+            cmd.extend(["--option", f"{key}={value}"])
+        if output is not None:
+            cmd_str = " ".join(cmd)
+            stdout = f"""
+            <pacemaker-result api-version="2.22" request="{cmd_str}">
+              <validate agent="{agent}" valid="false">
+                <command code="-201">
+                  {output}
+                </command>
+              </validate>
+              <status code="1" message="Error occurred"/>
+            </pacemaker-result>
+            """
+        self.__calls.place(
+            name,
+            RunnerCall(cmd, stdout=stdout, returncode=returncode, env=env),
+            instead=instead,
+        )

@@ -5,16 +5,16 @@ from typing import (
 
 from pcs.common.reports import (
     ReportItem,
-    ReportItemDto,
     ReportItemSeverity,
     ReportProcessor,
 )
+from pcs.common.reports.dto import ReportItemDto
 from pcs.common.reports.types import SeverityLevel
 
 from .messages import report_item_msg_from_dto
 from .output import (
+    add_context_to_message,
     error,
-    prepare_force_text,
     warn,
 )
 
@@ -47,20 +47,20 @@ class ReportProcessorToConsole(ReportProcessor):
 
 
 def print_report(report_item_dto: ReportItemDto) -> None:
-    msg = report_item_msg_from_dto(report_item_dto.message).message
+    cli_report_msg = report_item_msg_from_dto(report_item_dto.message)
+    msg = cli_report_msg.message
     if not msg:
         return
-    if report_item_dto.context:
-        msg = f"{report_item_dto.context.node}: {msg}"
+    msg = add_context_to_message(msg, report_item_dto.context)
     severity = report_item_dto.severity.level
 
     if severity == ReportItemSeverity.ERROR:
         error(
-            "{msg}{force}".format(
-                msg=msg,
-                force=prepare_force_text(
-                    ReportItemSeverity.from_dto(report_item_dto.severity)
+            add_context_to_message(
+                cli_report_msg.get_message_with_force_text(
+                    report_item_dto.severity.force_code
                 ),
+                report_item_dto.context,
             )
         )
     elif severity == ReportItemSeverity.WARNING:

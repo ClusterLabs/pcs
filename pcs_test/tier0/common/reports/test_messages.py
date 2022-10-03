@@ -5542,3 +5542,21 @@ class AddRemoveCannotSpecifyAdjacentItemWithoutItemsToAdd(NameBuildTest):
                 "adjacent-item-id",
             ),
         )
+
+
+class AgentSelfValidationResult(NameBuildTest):
+    def test_message(self):
+        lines = list(f"line #{i}" for i in range(3))
+        self.assert_message_from_report(
+            "Validation result from agent:\n  {}".format("\n  ".join(lines)),
+            reports.AgentSelfValidationResult("\n".join(lines)),
+        )
+
+
+class AgentSelfValidationInvalidData(NameBuildTest):
+    def test_message(self):
+        reason = "not xml"
+        self.assert_message_from_report(
+            f"Invalid validation data from agent: {reason}",
+            reports.AgentSelfValidationInvalidData(reason),
+        )

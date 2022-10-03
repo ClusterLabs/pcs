@@ -281,6 +281,10 @@ class ResourceAgentMetadata:
         return False
 
     @property
+    def provides_self_validation(self) -> bool:
+        return any(action.name == "validate-all" for action in self.actions)
+
+    @property
     def unique_parameter_groups(self) -> Mapping[str, AbstractSet[str]]:
         result = defaultdict(set)
         for param in self.parameters:

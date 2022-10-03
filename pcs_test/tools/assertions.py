@@ -130,15 +130,7 @@ class AssertPcsMixin:
         if len(specified_stdout) > 1:
             raise Exception(msg + ", both specified")
 
-        stdout, pcs_returncode = self.pcs_runner.run(command)
-        self.assertEqual(
-            returncode,
-            pcs_returncode,
-            (
-                'Expected return code "{0}", but was "{1}"'
-                + "\ncommand: {2}\nstdout:\n{3}"
-            ).format(returncode, pcs_returncode, command, stdout),
-        )
+        stdout = self.assert_pcs_success_ignore_output(command, returncode)
         message_template = (
             "{reason}\ncommand: {cmd}\ndiff is (expected is 2nd):\n{diff}"
             + "\nFull stdout:\n{stdout}"
@@ -189,6 +181,20 @@ class AssertPcsMixin:
                         stdout=stdout,
                     ),
                 )
+
+    def assert_pcs_success_ignore_output(self, command, returncode=0):
+        stdout, retval_actual = self.pcs_runner.run(command)
+
+        self.assertEqual(
+            returncode,
+            retval_actual,
+            (
+                f"Expected return code '{returncode}' but was '{retval_actual}'\n"
+                f"** command: {command}\n"
+                f"** stdout:\n{stdout}\n"
+            ),
+        )
+        return stdout
 
     def __prepare_output(self, output):
         if isinstance(output, list):

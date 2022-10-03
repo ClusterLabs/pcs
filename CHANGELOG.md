@@ -6,6 +6,10 @@
 - CVE-2022-2735 pcs: obtaining an authentication token for hacluster user could
   lead to privilege escalation ([rhbz#2116838])
 
+### Added
+- Support for resource/stonith agent self-validation of instance attributes via
+  pacemaker ([rhbz#1816852])
+
 ### Fixed
 - `pcs resource manage --monitor` no longer enables monitor operation for all
   resources in a group if only one of the resources was requested to become
@@ -16,6 +20,7 @@
 - SBD enable from webui works again ([rhbz#2117650])
 
 [rhbz#1791670]: https://bugzilla.redhat.com/show_bug.cgi?id=1791670
+[rhbz#1816852]: https://bugzilla.redhat.com/show_bug.cgi?id=1816852
 [rhbz#1918527]: https://bugzilla.redhat.com/show_bug.cgi?id=1918527
 [rhbz#2115326]: https://bugzilla.redhat.com/show_bug.cgi?id=2115326
 [rhbz#2116838]: https://bugzilla.redhat.com/show_bug.cgi?id=2116838

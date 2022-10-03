@@ -392,6 +392,7 @@ def node_add_remote(
     try:
         remote_resource_element = remote_node.create(
             env.report_processor,
+            env.cmd_runner(),
             resource_agent_facade,
             get_resources(cib),
             id_provider,

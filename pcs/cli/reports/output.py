@@ -1,10 +1,11 @@
 import sys
+from typing import Optional
 
 from pcs.common.reports import (
     ReportItemList,
     ReportItemSeverity,
-    codes,
 )
+from pcs.common.reports.dto import ReportItemContextDto
 
 from .messages import report_item_msg_from_dto
 
@@ -21,14 +22,12 @@ def error(message: str) -> SystemExit:
     return SystemExit(1)
 
 
-def prepare_force_text(report_item_severity: ReportItemSeverity) -> str:
-    force_text_map = {
-        codes.SKIP_OFFLINE_NODES: ", use --skip-offline to override",
-    }
-    force_code = report_item_severity.force_code
-    if force_code:
-        return force_text_map.get(force_code, ", use --force to override")
-    return ""
+def add_context_to_message(
+    msg: str, context: Optional[ReportItemContextDto]
+) -> str:
+    if context:
+        msg = f"{context.node}: {msg}"
+    return msg
 
 
 def process_library_reports(report_item_list: ReportItemList) -> None:
@@ -38,7 +37,8 @@ def process_library_reports(report_item_list: ReportItemList) -> None:
     critical_error = False
     for report_item in report_item_list:
         report_dto = report_item.to_dto()
-        msg = report_item_msg_from_dto(report_dto.message).message
+        cli_report_msg = report_item_msg_from_dto(report_dto.message)
+        msg = add_context_to_message(cli_report_msg.message, report_dto.context)
         severity = report_dto.severity.level
 
         if severity == ReportItemSeverity.WARNING:
@@ -50,9 +50,11 @@ def process_library_reports(report_item_list: ReportItemList) -> None:
             continue
 
         error(
-            "{msg}{force}".format(
-                msg=msg,
-                force=prepare_force_text(report_item.severity),
+            add_context_to_message(
+                cli_report_msg.get_message_with_force_text(
+                    report_item.severity.force_code
+                ),
+                report_dto.context,
             )
         )
         critical_error = True
