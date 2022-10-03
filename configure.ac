@@ -367,9 +367,13 @@ rm -rf Gemfile Gemfile.lock
 echo "source 'https://rubygems.org'" > Gemfile
 echo "" >> Gemfile
 
-# PCS_BUNDLE_GEM([module])
+# PCS_BUNDLE_GEM([module], [version])
 AC_DEFUN([PCS_BUNDLE_GEM], [
-	echo "gem '$1'" >> Gemfile
+	if test "x$2" = "x"; then
+		echo "gem '$1'" >> Gemfile
+	else
+		echo "gem '$1', '$2'" >> Gemfile
+	fi
 	if test "x$cache_only" = "xyes"; then
 		src=`ls $PCSD_BUNDLED_CACHE_DIR/$1-*`
 		if test "x$src" = "x"; then
@@ -381,7 +385,7 @@ AC_DEFUN([PCS_BUNDLE_GEM], [
 # PCS_CHECK_GEM([module], [version])
 AC_DEFUN([PCS_CHECK_GEM], [
 	if test "x$local_build" = "xyes"; then
-		AC_RUBY_GEM([$1], [$2], [], [PCS_BUNDLE_GEM([$1])])
+		AC_RUBY_GEM([$1], [$2], [], [PCS_BUNDLE_GEM([$1], [$2])])
 	else
 		AC_RUBY_GEM([$1], [$2], [], [AC_MSG_ERROR([ruby gem $1 not found])])
 	fi
@@ -397,7 +401,7 @@ if test "x$tests_only" != "xyes"; then
 	PCS_CHECK_GEM([ffi])
 	PCS_CHECK_GEM([eventmachine])
 	PCS_CHECK_GEM([json])
-	PCS_CHECK_GEM([mustermann])
+	PCS_CHECK_GEM([mustermann], [< 3.0.0])
 	PCS_CHECK_GEM([open4])
 	PCS_CHECK_GEM([rack])
 	PCS_CHECK_GEM([rack-protection])
