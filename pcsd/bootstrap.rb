@@ -1,5 +1,4 @@
 require 'logger'
-require 'open4'
 require 'pathname'
 
 require 'settings.rb'
