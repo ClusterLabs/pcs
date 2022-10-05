@@ -1,7 +1,7 @@
 # Wrapper for PCS command
 
 require 'etc'
-require 'open4'
+require 'childprocess'
 require 'shellwords'
 require 'cgi'
 require 'net/http'
@@ -845,39 +845,48 @@ end
 def run_cmd_options(auth_user, options, *args)
   $logger.info("Running: " + args.join(" "))
   start = Time.now
-  out = ""
-  errout = ""
+  out = Tempfile.new
+  errout = Tempfile.new
 
-  proc_block = proc { |pid, stdin, stdout, stderr|
-    if options and options.key?('stdin')
-      stdin.puts(options['stdin'])
-      stdin.close()
-    end
-    out = stdout.readlines()
-    errout = stderr.readlines()
-    duration = Time.now - start
-    $logger.debug(out)
-    $logger.debug(errout)
-    $logger.debug("Duration: " + duration.to_s + "s")
-  }
   cib_user = auth_user[:username]
   # when running 'id -Gn' to get the groups they are not defined yet
   cib_groups = (auth_user[:usergroups] || []).join(' ')
   $logger.info("CIB USER: #{cib_user}, groups: #{cib_groups}")
-  # Open4.popen4 reimplementation which sets ENV in a child process prior
-  # to running an external process by exec
-  status = Open4::do_popen(proc_block, :init) { |ps_read, ps_write|
-    ps_read.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
-    ps_write.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
-    ENV['CIB_user'] = cib_user
-    ENV['CIB_user_groups'] = cib_groups
-    ENV['LC_ALL'] = 'C'
-    exec(*args)
-  }
 
-  retval = status.exitstatus
+  ChildProcess.posix_spawn = true
+  cmd = ChildProcess.build(*args)
+  cmd.io.stdout = out
+  cmd.io.stdout.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
+  cmd.io.stderr = errout
+  cmd.io.stderr.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
+  cmd.duplex = true
+  cmd.environment['CIB_user'] = cib_user
+  cmd.environment['CIB_user_groups'] = cib_groups
+  cmd.environment['LC_ALL'] = 'C'
+  cmd.start
+
+  if options and options.key?('stdin')
+    cmd.io.stdin.puts options['stdin']
+    cmd.io.stdin.close
+  end
+
+  cmd.wait
+  duration = Time.now - start
+  retval = cmd.exit_code
+
+  out.rewind
+  output = out.readlines
+  errout.rewind
+  error_output = errout.readlines
+  out.close
+  errout.close
+
+  $logger.debug(output.join(" "))
+  $logger.debug(error_output.join(" "))
+  $logger.debug("Duration: " + duration.to_s + "s")
   $logger.info("Return Value: " + retval.to_s)
-  return out, errout, retval
+
+  return output, error_output, retval
 end
 
 def is_score(score)

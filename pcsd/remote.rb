@@ -1,6 +1,6 @@
 require 'json'
 require 'uri'
-require 'open4'
+require 'childprocess'
 require 'set'
 require 'timeout'
 require 'rexml/document'
@@ -344,21 +344,28 @@ def config_restore(params, request, auth_user)
     end
     $logger.info "Restore node configuration"
     if params[:tarball] != nil and params[:tarball] != ""
-      out = ""
-      errout = ""
-      status = Open4::popen4(PCS, "config", "restore", "--local") { |pid, stdin, stdout, stderr|
-        stdin.print(params[:tarball])
-        stdin.close()
-        out = stdout.readlines()
-        errout = stderr.readlines()
-      }
-      retval = status.exitstatus
+      errout = Tempfile.new
+
+      ChildProcess.posix_spawn = true
+      pcs_restore_config = ChildProcess.build(PCS, "config", "restore", "--local")
+      pcs_restore_config.io.stderr = errout
+      pcs_restore_config.duplex = true
+      pcs_restore_config.start
+      pcs_restore_config.io.stdin.print params[:tarball]
+      pcs_restore_config.io.stdin.close
+      pcs_restore_config.wait
+      retval = pcs_restore_config.exit_code
+
+      errout.rewind
+      error_output = errout.readlines
+      errout.close
+
       if retval == 0
         $logger.info "Restore successful"
         return "Succeeded"
       else
-        $logger.info "Error during restore: #{errout.join(' ').strip()}"
-        return errout.length > 0 ? errout.join(' ').strip() : "Error"
+        $logger.info "Error during restore: #{error_output.join(' ').strip()}"
+        return error_output.length > 0 ? error_output.join(' ').strip() : "Error"
       end
     else
       $logger.info "Error: Invalid tarball"
