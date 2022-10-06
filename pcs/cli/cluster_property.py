@@ -11,7 +11,9 @@ from pcs.cli.common.parse_args import (
 from pcs.common import reports
 
 
-def set_property(lib: Any, argv: Sequence[str], modifiers: InputModifiers):
+def set_property(
+    lib: Any, argv: Sequence[str], modifiers: InputModifiers
+) -> None:
     """
     Options:
       * --force - allow unknown options
@@ -30,7 +32,9 @@ def set_property(lib: Any, argv: Sequence[str], modifiers: InputModifiers):
     lib.cluster_property.set_property(cluster_options, force_flags)
 
 
-def unset_property(lib: Any, argv: Sequence[str], modifiers: InputModifiers):
+def unset_property(
+    lib: Any, argv: Sequence[str], modifiers: InputModifiers
+) -> None:
     """
     Options:
       * --force - no error when removing not existing properties

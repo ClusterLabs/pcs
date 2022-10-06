@@ -71,7 +71,6 @@ from pcs.lib.file.instance import FileInstance as LibFileInstance
 from pcs.lib.interface.config import ParserErrorException
 from pcs.lib.pacemaker.live import get_cluster_status_dom
 from pcs.lib.pacemaker.state import ClusterState
-from pcs.lib.pacemaker.values import is_boolean
 from pcs.lib.pacemaker.values import is_score as is_score_value
 from pcs.lib.pacemaker.values import validate_id
 from pcs.lib.services import get_service_manager as _get_service_manager
@@ -89,10 +88,6 @@ usefile = False
 filename = ""
 # Note: not properly typed
 pcs_options: Dict[Any, Any] = {}
-
-
-class UnknownPropertyException(Exception):
-    pass
 
 
 def getValidateWithVersion(dom) -> Version:
@@ -2582,156 +2577,6 @@ def get_utilization_str(element, filter_name=None):
     for name, value in sorted(get_utilization(element, filter_name).items()):
         output.append(name + "=" + value)
     return " ".join(output)
-
-
-def is_valid_cluster_property(prop_def_dict, property_name, value):
-    """
-    Commandline options: no options
-    """
-    if property_name not in prop_def_dict:
-        raise UnknownPropertyException(
-            "unknown cluster property: '{0}'".format(property_name)
-        )
-    return is_valid_cib_value(
-        prop_def_dict[property_name]["type"],
-        value,
-        prop_def_dict[property_name].get("enum", []),
-    )
-
-
-def is_valid_cib_value(value_type, value, enum_options=()):
-    """
-    Commandline options: no options
-    """
-    value_type = value_type.lower()
-    if value_type == "enum":
-        return value in enum_options
-    if value_type == "boolean":
-        return is_boolean(value)
-    if value_type == "integer":
-        return is_score(value)
-    if value_type == "time":
-        return timeout_to_seconds(value) is not None
-    return True
-
-
-def get_cluster_properties_definition():
-    """
-    Commandline options: no options
-    """
-    # we don't want to change these properties
-    banned_props = ["dc-version", "cluster-infrastructure"]
-    basic_props = [
-        "batch-limit",
-        "no-quorum-policy",
-        "symmetric-cluster",
-        "enable-acl",
-        "stonith-enabled",
-        "stonith-action",
-        "pe-input-series-max",
-        "stop-orphan-resources",
-        "stop-orphan-actions",
-        "cluster-delay",
-        "start-failure-is-fatal",
-        "pe-error-series-max",
-        "pe-warn-series-max",
-    ]
-    readable_names = {
-        "batch-limit": "Batch Limit",
-        "no-quorum-policy": "No Quorum Policy",
-        "symmetric-cluster": "Symmetric",
-        "stonith-enabled": "Stonith Enabled",
-        "stonith-action": "Stonith Action",
-        "cluster-delay": "Cluster Delay",
-        "stop-orphan-resources": "Stop Orphan Resources",
-        "stop-orphan-actions": "Stop Orphan Actions",
-        "start-failure-is-fatal": "Start Failure is Fatal",
-        "pe-error-series-max": "PE Error Storage",
-        "pe-warn-series-max": "PE Warning Storage",
-        "pe-input-series-max": "PE Input Storage",
-        "enable-acl": "Enable ACLs",
-    }
-    sources = [
-        {
-            "name": "pacemaker-schedulerd",
-            "path": settings.pacemaker_schedulerd,
-        },
-        {
-            "name": "pacemaker-controld",
-            "path": settings.pacemaker_controld,
-        },
-        {
-            "name": "pacemaker-based",
-            "path": settings.pacemaker_based,
-        },
-    ]
-    definition = {}
-    for source in sources:
-        stdout, stderr, retval = cmd_runner().run([source["path"], "metadata"])
-        if retval != 0:
-            err("unable to run {0}\n{1}".format(source["name"], stderr))
-        try:
-            etree = ET.fromstring(stdout)
-            for e in etree.findall("./parameters/parameter"):
-                prop = get_cluster_property_from_xml(e)
-                if prop["name"] not in banned_props:
-                    prop["source"] = source["name"]
-                    prop["advanced"] = prop["name"] not in basic_props
-                    if prop["name"] in readable_names:
-                        prop["readable_name"] = readable_names[prop["name"]]
-                    else:
-                        prop["readable_name"] = prop["name"]
-                    definition[prop["name"]] = prop
-        except xml.parsers.expat.ExpatError as e:
-            err(
-                "unable to parse {0} metadata definition: {1}".format(
-                    source["name"], e
-                )
-            )
-        except ET.ParseError as e:
-            err(
-                "unable to parse {0} metadata definition: {1}".format(
-                    source["name"], e
-                )
-            )
-    return definition
-
-
-def get_cluster_property_from_xml(etree_el):
-    """
-    Commandline options: no options
-    """
-    prop = {
-        "name": etree_el.get("name", ""),
-        "shortdesc": "",
-        "longdesc": "",
-    }
-    for item in ["shortdesc", "longdesc"]:
-        item_el = etree_el.find(item)
-        if item_el is not None and item_el.text is not None:
-            prop[item] = item_el.text
-
-    content = etree_el.find("content")
-    if content is None:
-        prop["type"] = ""
-        prop["default"] = ""
-    else:
-        prop["type"] = content.get("type", "")
-        prop["default"] = content.get("default", "")
-
-    if prop["type"] == "enum":
-        prop["enum"] = []
-        if prop["longdesc"]:
-            values = prop["longdesc"].split("  Allowed values: ")
-            if len(values) == 2:
-                prop["enum"] = values[1].split(", ")
-                prop["longdesc"] = values[0]
-        if prop["default"] not in prop["enum"]:
-            prop["enum"].append(prop["default"])
-
-    if prop["longdesc"] == prop["shortdesc"]:
-        prop["longdesc"] = ""
-    return prop
 
 
 def get_lib_env() -> LibraryEnvironment:

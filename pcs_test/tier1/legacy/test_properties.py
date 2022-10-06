@@ -1,7 +1,4 @@
-from unittest import (
-    TestCase,
-    skip,
-)
+from unittest import TestCase
 
 from lxml import etree
 
@@ -123,7 +120,6 @@ class PropertyTest(TestCase):
             self.temp_cib.name, "property set blahblah=blah".split()
         )
         assert returnVal == 1
-        print(get_invalid_option_messages("blahblah"))
         assert output == get_invalid_option_messages("blahblah"), [output]
 
         output, returnVal = pcs(
@@ -170,7 +166,6 @@ class PropertyTest(TestCase):
         o, r = pcs(self.temp_cib.name, "property set xxxx=zzzz".split())
         self.assertEqual(r, 1)
         ac(
-            # pylint: disable=line-too-long
             o,
             get_invalid_option_messages("xxxx"),
         )
@@ -231,7 +226,6 @@ class PropertyTest(TestCase):
         o, _ = pcs(self.temp_cib.name, "property config".split())
         ac(o, "Cluster Properties:\n")
 
-    @skip("TODO: adapt cluster properties metadata to OCF 1.1")
     def test_set_property_validation_enum(self):
         output, returnVal = pcs(
             self.temp_cib.name, "property set no-quorum-policy=freeze".split()
@@ -266,8 +260,13 @@ class PropertyTest(TestCase):
         )
         ac(
             output,
-            "Error: invalid value of property: "
-            "'no-quorum-policy=not_valid_value', (use --force to override)\n",
+            (
+                "Error: 'not_valid_value' is not a valid no-quorum-policy "
+                "value, use 'demote', 'freeze', 'ignore', 'stop', 'suicide', "
+                "use --force to override\n"
+                "Error: Errors have occurred, therefore pcs is unable to "
+                "continue\n"
+            ),
         )
         self.assertEqual(returnVal, 1)
         o, _ = pcs(self.temp_cib.name, "property config".split())
@@ -282,7 +281,13 @@ class PropertyTest(TestCase):
             self.temp_cib.name,
             "property set no-quorum-policy=not_valid_value --force".split(),
         )
-        ac(output, "")
+        ac(
+            output,
+            (
+                "Warning: 'not_valid_value' is not a valid no-quorum-policy "
+                "value, use 'demote', 'freeze', 'ignore', 'stop', 'suicide'\n"
+            ),
+        )
         self.assertEqual(returnVal, 0)
         o, _ = pcs(self.temp_cib.name, "property config".split())
         ac(
@@ -341,8 +346,8 @@ class PropertyTest(TestCase):
             output,
             (
                 "Error: 'not_valid_value' is not a valid enable-acl value, use "
-                "a pacemaker boolean value: true, false, on, off, yes, no, y, "
-                "n, 1, 0, use --force to override\n"
+                "a pacemaker boolean value: '0', '1', 'false', 'n', 'no', "
+                "'off', 'on', 'true', 'y', 'yes', use --force to override\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
                 "continue\n"
             ),
@@ -364,8 +369,8 @@ class PropertyTest(TestCase):
             output,
             (
                 "Warning: 'not_valid_value' is not a valid enable-acl value, "
-                "use a pacemaker boolean value: true, false, on, off, yes, no, "
-                "y, n, 1, 0\n"
+                "use a pacemaker boolean value: '0', '1', 'false', 'n', 'no', "
+                "'off', 'on', 'true', 'y', 'yes'\n"
             ),
         )
         self.assertEqual(returnVal, 0)
@@ -425,7 +430,7 @@ class PropertyTest(TestCase):
             output,
             (
                 "Error: '0.1' is not a valid migration-limit value, use an "
-                "integer, use --force to override\n"
+                "integer or INFINITY or -INFINITY, use --force to override\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
                 "continue\n"
             ),
@@ -447,7 +452,7 @@ class PropertyTest(TestCase):
             output,
             (
                 "Warning: '0.1' is not a valid migration-limit value, use an "
-                "integer\n"
+                "integer or INFINITY or -INFINITY\n"
             ),
         )
         self.assertEqual(returnVal, 0)
@@ -518,7 +523,6 @@ class PropertyUnset(
     def test_dont_create_nvset_on_removal(self):
         # pcs mimics crm_attribute. So this behaves differently than the rest
         # of pcs - instead of doing nothing it returns an error.
-        # Should be changed to be consistent with the rest of pcs.
         self.assert_pcs_fail(
             "property unset batch-limit".split(),
             (

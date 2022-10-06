@@ -50,6 +50,7 @@ from pcs.common.reports import (
     ReportItemList,
     ReportItemSeverity,
 )
+from pcs.common.str_tools import format_list
 from pcs.common.tools import timeout_to_seconds
 from pcs.common.validate import (
     is_integer,
@@ -57,6 +58,7 @@ from pcs.common.validate import (
 )
 from pcs.lib.cib.tools import IdProvider
 from pcs.lib.corosync import constants as corosync_constants
+from pcs.lib.pacemaker.values import _BOOLEAN as BOOLEAN_VALUES
 from pcs.lib.pacemaker.values import (
     SCORE_INFINITY,
     is_boolean,
@@ -864,10 +866,8 @@ class ValuePcmkBoolean(ValuePredicateBase):
         return is_boolean(value)
 
     def _get_allowed_values(self) -> Any:
-        return (
-            "a pacemaker boolean value: true, false, on, off, yes, no, y, n, 1"
-            ", 0"
-        )
+        bool_values = format_list(list(BOOLEAN_VALUES))
+        return f"a pacemaker boolean value: {bool_values}"
 
 
 class ValuePcmkDatespecPart(ValuePredicateBase):
@@ -919,9 +919,7 @@ class ValuePcmkPercentage(ValuePredicateBase):
     """
 
     def _is_valid(self, value: TypeOptionValue) -> bool:
-        if value[-1] != "%":
-            return False
-        return is_integer(value[:-1], 0)
+        return bool(value) and value[-1] == "%" and is_integer(value[:-1], 0)
 
     def _get_allowed_values(self) -> Any:
         return (
@@ -936,13 +934,10 @@ class ValuePcmkInteger(ValuePredicateBase):
     """
 
     def _is_valid(self, value: TypeOptionValue) -> bool:
-
-        return value in [SCORE_INFINITY, f"-{SCORE_INFINITY}"] or is_integer(
-            value, None, None
-        )
+        return is_score(value)
 
     def _get_allowed_values(self) -> Any:
-        return "an integer or INFINITY/-INFINITY"
+        return f"an integer or {SCORE_INFINITY} or -{SCORE_INFINITY}"
 
 
 class ValuePcmkPositiveInteger(ValuePredicateBase):
@@ -953,10 +948,12 @@ class ValuePcmkPositiveInteger(ValuePredicateBase):
 
     def _is_valid(self, value: TypeOptionValue) -> bool:
 
-        return value == SCORE_INFINITY or is_integer(value, 1)
+        return value in [SCORE_INFINITY, f"+{SCORE_INFINITY}"] or is_integer(
+            value, 1
+        )
 
     def _get_allowed_values(self) -> Any:
-        return "a positive integer or INFINITY"
+        return f"a positive integer or {SCORE_INFINITY}"
 
 
 class ValuePortNumber(ValuePredicateBase):

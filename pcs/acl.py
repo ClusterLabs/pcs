@@ -57,11 +57,10 @@ def acl_enable(lib, argv, modifiers):
     Options:
       * -f - CIB file
     """
-    # TODO move to lib once lib supports cluster properties
     modifiers.ensure_only_supported("-f")
     if argv:
         raise CmdLineInputError()
-    prop.set_property(lib, ["enable-acl=true"], modifiers.get_subset("-f"))
+    lib.cluster_property.set_property({"enable-acl": "true"})
 
 
 def acl_disable(lib, argv, modifiers):
@@ -69,11 +68,10 @@ def acl_disable(lib, argv, modifiers):
     Options:
       * -f - CIB file
     """
-    # TODO move to lib once lib supports cluster properties
     modifiers.ensure_only_supported("-f")
     if argv:
         raise CmdLineInputError()
-    prop.set_property(lib, ["enable-acl=false"], modifiers.get_subset("-f"))
+    lib.cluster_property.set_property({"enable-acl": "false"})
 
 
 def user_create(lib, argv, modifiers):

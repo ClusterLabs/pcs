@@ -6,7 +6,10 @@ from typing import (
 from lxml.etree import _Element
 
 from pcs.common import reports
-from pcs.common.reports import ReportItemList
+from pcs.common.reports import (
+    ReportItem,
+    ReportItemList,
+)
 from pcs.common.services.interfaces import ServiceManagerInterface
 from pcs.common.types import StringSequence
 from pcs.lib import (
@@ -14,17 +17,14 @@ from pcs.lib import (
     validate,
 )
 from pcs.lib.cib import nvpair_multi
+from pcs.lib.cib.const import DEFAULT_CLUSTER_PROPERTY_SET_ID
 from pcs.lib.cib.tools import (
-    ElementNotFound,
     IdProvider,
     get_crm_config,
-    get_element_by_id,
     get_pacemaker_version_by_which_cib_was_validated,
 )
+from pcs.lib.errors import LibraryError
 from pcs.lib.resource_agent import ResourceAgentFacade
-
-DEFAULT_CLUSTER_PROPERTY_SET_ID = "cib-bootstrap-options"
-TAG_CRM_CONFIG = "crm_config"
 
 
 def _validate_stonith_watchdog_timeout_property(
@@ -47,14 +47,14 @@ def _validate_stonith_watchdog_timeout_property(
     return report_list
 
 
-def validate_set_cluster_options(
+def validate_set_cluster_properties(
     cluster_property_facade_list: List[ResourceAgentFacade],
     service_manager: ServiceManagerInterface,
     to_be_set_options: Dict[str, str],
     force: bool = False,
 ) -> ReportItemList:
     """
-    Validate that cluster options and theirs values can be set.
+    Validate that cluster options and their values can be set.
 
     cluster_property_facade_list -- facades for cluster properties metadata
     service_manager -- manager for system daemon services
@@ -77,11 +77,10 @@ def validate_set_cluster_options(
         )
     )
     for option_name in to_be_set_options:
-        try:
-            option_metadata = possible_options_dict[option_name]
-        except KeyError:
+        if option_name not in possible_options_dict:
             # unknow options will be reported by a validator
             continue
+        option_metadata = possible_options_dict[option_name]
         if option_metadata.name == "stonith-watchdog-timeout":
             # needs extra validation
             continue
@@ -93,7 +92,9 @@ def validate_set_cluster_options(
             )
         elif option_metadata.type == "integer":
             validators.append(
-                validate.ValueInteger(option_metadata.name, severity=severity)
+                validate.ValuePcmkInteger(
+                    option_metadata.name, severity=severity
+                )
             )
         elif option_metadata.type == "percentage":
             validators.append(
@@ -130,7 +131,7 @@ def validate_set_cluster_options(
     return report_list
 
 
-def validate_remove_cluster_option(
+def validate_remove_cluster_properties(
     configured_options: StringSequence,
     service_manager: ServiceManagerInterface,
     to_be_removed_options: StringSequence,
@@ -162,37 +163,35 @@ def validate_remove_cluster_option(
     return report_list
 
 
-def get_default_cluster_property_set_element(
+def get_cluster_property_set_element_legacy(
     cib: _Element, id_provider: IdProvider
 ) -> _Element:
     """
-    Return default cluster_property_set element. Options set in this element
-    have the highest priority and cannot be overridden by other
-    cluster_property_set elements and rules.
-
-    If default cluster_property_set does not exists, which is very unlikely,
-    then set element is created with the default id. Even if the default id of
-    this set is used somewhere in the cib, then use a first available id value
-    of "id-<counter>". This is the exact behaviour as in old architecture code.
+    Return the first cluster_property_set element. If the element does not
+    exist, try to create cluster_property_set element with id of value
+    'cib-bootstrap-options'. Raise error in case of the id is already used.
 
     cib -- cib tree
     id_provider -- checks id uniqueness and books ids if set
     """
-    try:
-        cluster_property_set_el = get_element_by_id(
-            cib, DEFAULT_CLUSTER_PROPERTY_SET_ID
+    crm_config_el = get_crm_config(cib)
+    property_el_list = nvpair_multi.find_nvsets(
+        crm_config_el, nvpair_multi.NVSET_PROPERTY
+    )
+    if property_el_list:
+        return property_el_list[0]
+    if id_provider.book_ids(DEFAULT_CLUSTER_PROPERTY_SET_ID):
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.CannotCreateDefaultClusterPropertySet()
+            )
         )
-        parent = cluster_property_set_el.getparent()
-        if parent is not None and parent.tag == TAG_CRM_CONFIG:
-            return cluster_property_set_el
-    except ElementNotFound:
-        pass
     return nvpair_multi.nvset_append_new(
-        get_crm_config(cib),
+        crm_config_el,
         id_provider,
         get_pacemaker_version_by_which_cib_was_validated(cib),
         nvpair_multi.NVSET_PROPERTY,
         {},
-        {"id": id_provider.allocate_id(DEFAULT_CLUSTER_PROPERTY_SET_ID)},
+        {"id": DEFAULT_CLUSTER_PROPERTY_SET_ID},
         nvset_rule=None,
     )
