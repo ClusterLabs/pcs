@@ -8,8 +8,10 @@ from typing import (
 from pcs.common import reports
 from pcs.common.types import StringSequence
 from pcs.lib import cluster_property
-from pcs.lib.cib import nvpair_multi
-from pcs.lib.cib.nvpair import get_nvset
+from pcs.lib.cib import (
+    nvpair_multi,
+    rule,
+)
 from pcs.lib.cib.tools import IdProvider
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
@@ -112,6 +114,11 @@ def _cluster_property_metadata_to_dict(
 def get_cluster_properties_definition_legacy(
     env: LibraryEnvironment,
 ) -> Dict[str, Dict[str, Union[bool, str, StringSequence]]]:
+    """
+    Return cluster properties definition in the legacy dictionary format.
+
+    env -- provides communication with externals
+    """
     facade_factory = ResourceAgentFacadeFactory(
         env.cmd_runner(), env.report_processor
     )
@@ -130,6 +137,14 @@ def set_property(
     cluster_options: Dict[str, str],
     force_flags: Container[reports.types.ForceCode] = (),
 ) -> None:
+    """
+    Set specific pacemaker cluster properties specified in the cluster_options
+    dictionary. Properties with empty values are removed.
+
+    env -- provides communication with externals
+    cluster_options -- dictionary of cluster property names and values
+    force_flags -- list of flags codes
+    """
     cib = env.get_cib()
     service_manager = env.service_manager
     id_provider = IdProvider(cib)
@@ -139,36 +154,50 @@ def set_property(
         ResourceAgentFacadeFactory(env.cmd_runner(), env.report_processor),
     )
     cluster_property_set_el = (
-        cluster_property.get_default_cluster_property_set_element(
+        cluster_property.get_cluster_property_set_element_legacy(
             cib, id_provider
         )
     )
     configured_options = [
-        nvpair_dict["name"]
-        for nvpair_dict in get_nvset(cluster_property_set_el)
+        nvpair_dto.name
+        for nvpair_dto in nvpair_multi.nvset_element_to_dto(
+            cluster_property_set_el, rule.RuleInEffectEvalDummy()
+        ).nvpairs
     ]
-    to_be_set_options = {
-        option: value
-        for option, value in cluster_options.items()
-        if value != ""
-    }
-    to_be_removed_options = [
-        option for option, value in cluster_options.items() if value == ""
-    ]
-    if env.report_processor.report_list(
-        cluster_property.validate_set_cluster_options(
-            property_facade_list,
-            service_manager,
-            to_be_set_options,
-            force=force,
+    to_be_set_options = {}
+    to_be_removed_options = []
+    for option, value in cluster_options.items():
+        if value != "":
+            to_be_set_options[option] = value
+        else:
+            to_be_removed_options.append(option)
+
+    if not to_be_set_options and not to_be_removed_options:
+        env.report_processor.report(
+            reports.ReportItem.error(
+                reports.messages.AddRemoveItemsNotSpecified(
+                    reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
+                    reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
+                    cluster_property_set_el.get("id", ""),
+                )
+            )
         )
-        + cluster_property.validate_remove_cluster_option(
-            configured_options,
-            service_manager,
-            to_be_removed_options,
-            force=force,
+    else:
+        env.report_processor.report_list(
+            cluster_property.validate_set_cluster_properties(
+                property_facade_list,
+                service_manager,
+                to_be_set_options,
+                force=force,
+            )
+            + cluster_property.validate_remove_cluster_properties(
+                configured_options,
+                service_manager,
+                to_be_removed_options,
+                force=force,
+            )
         )
-    ).has_errors:
+    if env.report_processor.has_errors:
         raise LibraryError()
     nvpair_multi.nvset_update(
         cluster_property_set_el,
@@ -183,18 +212,27 @@ def unset_property(
     cluster_options_list: StringSequence,
     force_flags: Container[reports.types.ForceCode] = (),
 ) -> None:
+    """
+    Remove cluster properties specified in the cluster_options_list.
+
+    env -- provides communication with externals
+    cluster_options_list -- list of cluster property names to be removed
+    force_flags -- list of flags codes
+    """
     cib = env.get_cib()
     id_provider = IdProvider(cib)
     cluster_property_set_el = (
-        cluster_property.get_default_cluster_property_set_element(
+        cluster_property.get_cluster_property_set_element_legacy(
             cib, id_provider
         )
     )
     if env.report_processor.report_list(
-        cluster_property.validate_remove_cluster_option(
+        cluster_property.validate_remove_cluster_properties(
             [
-                nvpair_dict["name"]
-                for nvpair_dict in get_nvset(cluster_property_set_el)
+                nvpair_dto.name
+                for nvpair_dto in nvpair_multi.nvset_element_to_dto(
+                    cluster_property_set_el, rule.RuleInEffectEvalDummy()
+                ).nvpairs
             ],
             env.service_manager,
             cluster_options_list,

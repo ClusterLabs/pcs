@@ -5611,3 +5611,14 @@ class BoothUnsupportedOptionEnableAuthfile(NameBuildTest):
             "Unsupported option 'enable-authfile' is set in booth configuration",
             reports.BoothUnsupportedOptionEnableAuthfile("instance name"),
         )
+
+
+class CannotCreateDefaultClusterPropertySet(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            (
+                "Cannot create default cluster_property_set element. ID "
+                "'cib-bootstrap-options' already exist"
+            ),
+            reports.CannotCreateDefaultClusterPropertySet(),
+        )
