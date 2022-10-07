@@ -1,5 +1,5 @@
 from typing import (
-    Iterable,
+    Collection,
     Optional,
 )
 
@@ -83,7 +83,7 @@ def remove_levels_by_params(
     # TODO create a special type, so that it cannot accept any string
     target_type: Optional[str] = None,
     target_value=None,
-    devices: Optional[Iterable[str]] = None,
+    devices: Optional[Collection[str]] = None,
     # TODO remove, deprecated backward compatibility layer
     ignore_if_missing: bool = False,
     # TODO remove, deprecated backward compatibility layer

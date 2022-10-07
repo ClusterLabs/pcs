@@ -1,5 +1,6 @@
 from typing import (
     Any,
+    Collection,
     Container,
     Iterable,
     List,
@@ -42,7 +43,7 @@ def resource_defaults_create(
     nvpairs: Mapping[str, str],
     nvset_options: Mapping[str, str],
     nvset_rule: Optional[str] = None,
-    force_flags: Container[reports.types.ForceCode] = (),
+    force_flags: Collection[reports.types.ForceCode] = (),
 ) -> None:
     """
     Create new resource defaults nvset
@@ -73,7 +74,7 @@ def operation_defaults_create(
     nvpairs: Mapping[str, str],
     nvset_options: Mapping[str, str],
     nvset_rule: Optional[str] = None,
-    force_flags: Container[reports.types.ForceCode] = (),
+    force_flags: Collection[reports.types.ForceCode] = (),
 ) -> None:
     """
     Create new operation defaults nvset
@@ -239,7 +240,7 @@ def _defaults_config(
 
 
 def resource_defaults_remove(
-    env: LibraryEnvironment, nvset_id_list: Iterable[str]
+    env: LibraryEnvironment, nvset_id_list: Collection[str]
 ) -> None:
     """
     Remove specified resource defaults nvsets
@@ -251,7 +252,7 @@ def resource_defaults_remove(
 
 
 def operation_defaults_remove(
-    env: LibraryEnvironment, nvset_id_list: Iterable[str]
+    env: LibraryEnvironment, nvset_id_list: Collection[str]
 ) -> None:
     """
     Remove specified operation defaults nvsets

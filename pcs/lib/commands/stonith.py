@@ -1,4 +1,5 @@
 from typing import (
+    Collection,
     Container,
     Iterable,
     List,
@@ -105,7 +106,7 @@ def create(
     env: LibraryEnvironment,
     stonith_id: str,
     stonith_agent_name: str,
-    operations: Iterable[Mapping[str, str]],
+    operations: Collection[Mapping[str, str]],
     meta_attributes: Mapping[str, str],
     instance_attributes: Mapping[str, str],
     allow_absent_agent: bool = False,
@@ -183,7 +184,7 @@ def create_in_group(
     stonith_id: str,
     stonith_agent_name: str,
     group_id: str,
-    operations: Iterable[Mapping[str, str]],
+    operations: Collection[Mapping[str, str]],
     meta_attributes: Mapping[str, str],
     instance_attributes: Mapping[str, str],
     allow_absent_agent: bool = False,
