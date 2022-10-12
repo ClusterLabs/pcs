@@ -134,6 +134,7 @@ def list_property(lib, argv, modifiers):
       * --all - list all properties
       * --defaults - list only default values of properties
     """
+    # pylint: disable=too-many-branches
     del lib
     modifiers.ensure_only_supported(
         "--defaults",
@@ -169,9 +170,16 @@ def list_property(lib, argv, modifiers):
         else:
             properties = configured_properties
 
-    print("Cluster Properties:")
-    for prop, val in sorted(properties.items()):
-        print(" {0}: {1}".format(prop, val))
+    if properties:
+        print("Cluster Properties:")
+        for prop, val in sorted(properties.items()):
+            print(" {0}: {1}".format(prop, val))
+    else:
+        properties = get_default_properties()
+        print("Cluster Properties:")
+        if not print_all:
+            if argv[0] in properties:
+                print(" {0}: {1}".format(argv[0], properties[argv[0]]))
 
 
 def get_default_properties():
