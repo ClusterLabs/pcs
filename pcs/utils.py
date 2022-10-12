@@ -1186,16 +1186,27 @@ def get_group_children(group_id):
     """
     Commandline options: no options
     """
-    child_resources = []
-    dom = get_cib_dom()
+    return dom_get_group_children(get_cib_dom(), group_id)
+
+
+def dom_get_group_children(dom, group_id):
     groups = dom.getElementsByTagName("group")
     for g in groups:
         if g.getAttribute("id") == group_id:
-            for child in g.childNodes:
-                if child.nodeType != xml.dom.minidom.Node.ELEMENT_NODE:
-                    continue
-                if child.tagName == "primitive":
-                    child_resources.append(child.getAttribute("id"))
+            return [
+                child_el.getAttribute("id")
+                for child_el in get_group_children_el_from_el(g)
+            ]
+    return []
+
+
+def get_group_children_el_from_el(group_el):
+    child_resources = []
+    for child in group_el.childNodes:
+        if child.nodeType != xml.dom.minidom.Node.ELEMENT_NODE:
+            continue
+        if child.tagName == "primitive":
+            child_resources.append(child)
     return child_resources
 
 

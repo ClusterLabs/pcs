@@ -15,10 +15,12 @@ DEFAULT_WAIT_TIMEOUT = 10
 WAIT_TIMEOUT_EXPIRED_RETURNCODE = 124
 AGENT_FILENAME_MAP = {
     "ocf:heartbeat:Dummy": "resource_agent_ocf_heartbeat_dummy.xml",
+    "ocf:pacemaker:Dummy": "resource_agent_ocf_pacemaker_dummy.xml",
     "ocf:pacemaker:remote": "resource_agent_ocf_pacemaker_remote.xml",
     "ocf:heartbeat:IPaddr2": "resource_agent_ocf_heartbeat_ipaddr2.xml",
     "ocf:pacemaker:booth-site": "resource_agent_ocf_pacemaker_booth-site.xml",
     "ocf:pacemaker:Stateful": "resource_agent_ocf_pacemaker_stateful_ocf_1.1.xml",
+    "systemd:chronyd": "resource_agent_systemd_chronyd.xml",
     "stonith:fence_unfencing": "stonith_agent_fence_unfencing.xml",
 }
 

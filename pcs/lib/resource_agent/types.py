@@ -284,6 +284,13 @@ class ResourceAgentMetadata:
         return any(action.name == "validate-all" for action in self.actions)
 
     @property
+    def provides_promotability(self) -> bool:
+        return set(action.name for action in self.actions) >= {
+            "promote",
+            "demote",
+        }
+
+    @property
     def unique_parameter_groups(self) -> Mapping[str, AbstractSet[str]]:
         result = defaultdict(set)
         for param in self.parameters:

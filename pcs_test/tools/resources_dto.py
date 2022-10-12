@@ -23,6 +23,9 @@ from pcs.common.resource_agent.dto import ResourceAgentNameDto
 DUMMY_AGENT_NAME = ResourceAgentNameDto(
     standard="ocf", provider="pacemaker", type="Dummy"
 )
+STATEFUL_AGENT_NAME = ResourceAgentNameDto(
+    standard="ocf", provider="pacemaker", type="Stateful"
+)
 
 STONITH_AGENT_NAME = ResourceAgentNameDto(
     standard="stonith", provider=None, type="fence_kdump"
@@ -58,9 +61,9 @@ def _primitive_fixture(primitive_id, agent_name=DUMMY_AGENT_NAME):
 
 
 PRIMITIVE_R1 = _primitive_fixture("R1")
-PRIMITIVE_R2 = _primitive_fixture("R2")
-PRIMITIVE_R3 = _primitive_fixture("R3")
-PRIMITIVE_R4 = _primitive_fixture("R4")
+PRIMITIVE_R2 = _primitive_fixture("R2", agent_name=STATEFUL_AGENT_NAME)
+PRIMITIVE_R3 = _primitive_fixture("R3", agent_name=STATEFUL_AGENT_NAME)
+PRIMITIVE_R4 = _primitive_fixture("R4", agent_name=STATEFUL_AGENT_NAME)
 PRIMITIVE_R5 = _primitive_fixture("R5")
 PRIMITIVE_R6 = CibResourcePrimitiveDto(
     id="R6",

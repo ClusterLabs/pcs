@@ -46,6 +46,7 @@ from pcs_test.tools.misc import (
 )
 from pcs_test.tools.pcs_runner import PcsRunnerOld as PcsRunner
 from pcs_test.tools.pcs_runner import pcs_old as pcs
+from pcs_test.tools.xml import XmlManipulation
 
 # pylint: disable=invalid-name
 # pylint: disable=no-self-use
@@ -176,7 +177,7 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
                 "provider": "pacemaker",
                 "type": "Dummy",
                 "shortdesc": "Example stateless resource agent",
-                "longdesc": "This is a Dummy Resource Agent. It does absolutely nothing except \nkeep track of whether its running or not.\nIts purpose in life is for testing and to serve as a template for RA writers.\n\nNB: Please pay attention to the timeouts specified in the actions\nsection below. They should be meaningful for the kind of resource\nthe agent manages. They should be the minimum advised timeouts,\nbut they shouldn't/cannot cover _all_ possible resource\ninstances. So, try to be neither overly generous nor too stingy,\nbut moderate. The minimum timeouts should never be below 10 seconds.",
+                "longdesc": "This is a dummy OCF resource agent. It does absolutely nothing except keep track\nof whether it is running or not, and can be configured so that actions fail or\ntake a long time. Its purpose is primarily for testing, and to serve as a\ntemplate for resource agent writers.",
                 "parameters": [
                     {
                         "name": "state",
@@ -190,8 +191,8 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
                         "deprecated": False,
                         "deprecated_by": [],
                         "deprecated_desc": None,
-                        "unique_group": "_pcs_unique_group_state",
-                        "reloadable": True,
+                        "unique_group": "state",
+                        "reloadable": False,
                     },
                     {
                         "name": "passwd",
@@ -205,13 +206,13 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
                         "deprecated": False,
                         "deprecated_by": [],
                         "deprecated_desc": None,
-                        "unique_group": "_pcs_unique_group_passwd",
+                        "unique_group": None,
                         "reloadable": True,
                     },
                     {
                         "name": "fake",
-                        "shortdesc": "Fake attribute that can be changed to cause a reload",
-                        "longdesc": "Fake attribute that can be changed to cause a reload",
+                        "shortdesc": "Fake attribute that can be changed to cause an agent reload",
+                        "longdesc": "Fake attribute that can be changed to cause an agent reload",
                         "type": "string",
                         "default": "dummy",
                         "enum_values": None,
@@ -221,7 +222,7 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
                         "deprecated_by": [],
                         "deprecated_desc": None,
                         "unique_group": None,
-                        "reloadable": False,
+                        "reloadable": True,
                     },
                     {
                         "name": "op_sleep",
@@ -235,13 +236,13 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
                         "deprecated": False,
                         "deprecated_by": [],
                         "deprecated_desc": None,
-                        "unique_group": "_pcs_unique_group_op_sleep",
+                        "unique_group": None,
                         "reloadable": True,
                     },
                     {
                         "name": "fail_start_on",
                         "shortdesc": "Report bogus start failure on specified host",
-                        "longdesc": "Start actions will return failure if running on the host specified here, but\nthe resource will start successfully anyway (future monitor calls will find it\nrunning). This can be used to test on-fail=ignore.",
+                        "longdesc": "Start, migrate_from, and reload-agent actions will return failure if running on\nthe host specified here, but the resource will run successfully anyway (future\nmonitor calls will find it running). This can be used to test on-fail=ignore.",
                         "type": "string",
                         "default": "",
                         "enum_values": None,
@@ -251,7 +252,7 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
                         "deprecated_by": [],
                         "deprecated_desc": None,
                         "unique_group": None,
-                        "reloadable": False,
+                        "reloadable": True,
                     },
                     {
                         "name": "envfile",
@@ -265,7 +266,7 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
                         "deprecated": False,
                         "deprecated_by": [],
                         "deprecated_desc": None,
-                        "unique_group": "_pcs_unique_group_envfile",
+                        "unique_group": None,
                         "reloadable": True,
                     },
                     {
@@ -332,6 +333,16 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
                     },
                     {
                         "name": "reload",
+                        "timeout": "20s",
+                        "interval": None,
+                        "role": None,
+                        "start-delay": None,
+                        "OCF_CHECK_LEVEL": None,
+                        "automatic": False,
+                        "on_target": False,
+                    },
+                    {
+                        "name": "reload-agent",
                         "timeout": "20s",
                         "interval": None,
                         "role": None,
@@ -414,6 +425,16 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
                     },
                     {
                         "name": "reload",
+                        "timeout": "20s",
+                        "interval": "0s",
+                        "role": None,
+                        "start-delay": None,
+                        "OCF_CHECK_LEVEL": None,
+                        "automatic": False,
+                        "on_target": False,
+                    },
+                    {
+                        "name": "reload-agent",
                         "timeout": "20s",
                         "interval": "0s",
                         "role": None,
@@ -5423,17 +5444,28 @@ class MetaAttrs(
     def tearDown(self):
         self.temp_cib.close()
 
+    def set_cib_file(self, *xml_string_list):
+        xml_manip = XmlManipulation.from_file(self.empty_cib)
+        xml_manip.append_to_first_tag_name("resources", *xml_string_list)
+        write_data_to_tmpfile(str(xml_manip), self.temp_cib)
+
+    @staticmethod
+    def _fixture_xml_resource_no_meta():
+        return """
+        <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+            <operations>
+                <op id="R-monitor-interval-10s" interval="10s"
+                    name="monitor" timeout="20s"
+                />
+            </operations>
+        </primitive>
+        """
+
     @staticmethod
     def fixture_xml_resource_no_meta():
-        return """
+        return f"""
             <resources>
-                <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
-                    <operations>
-                        <op id="R-monitor-interval-10s" interval="10s"
-                            name="monitor" timeout="20s"
-                        />
-                    </operations>
-                </primitive>
+            {MetaAttrs._fixture_xml_resource_no_meta()}
             </resources>
             """
 
@@ -5587,6 +5619,57 @@ class MetaAttrs(
             self.fixture_xml_resource_no_meta(),
         )
 
+    @staticmethod
+    def fixture_not_ocf_clone():
+        return """
+            <clone id="clone-R">
+                <primitive class="systemd" id="R" type="pacemaker">
+                    <instance_attributes id="R-instance_attributes" />
+                    <operations>
+                        <op id="R-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
+                        />
+                    </operations>
+                </primitive>
+            </clone>
+            """
+
+    def test_clone_promotable_not_ocf(self):
+        self.set_cib_file(self.fixture_not_ocf_clone())
+        self.assert_pcs_fail(
+            "resource meta clone-R promotable=1".split(),
+            stdout_full=(
+                "Error: Clone option 'promotable' is not compatible with "
+                "'systemd:pacemaker' resource agent of resource 'R'\n"
+            ),
+        )
+
+    def test_clone_globally_unique_not_ocf(self):
+        self.set_cib_file(self.fixture_not_ocf_clone())
+        self.assert_pcs_fail(
+            "resource meta clone-R globally-unique=1".split(),
+            stdout_full=(
+                "Error: Clone option 'globally-unique' is not compatible with "
+                "'systemd:pacemaker' resource agent of resource 'R'\n"
+            ),
+        )
+
+    def test_clone_promotable_unsupported(self):
+        self.set_cib_file(
+            f"""
+            <clone id="clone-R">
+                {self._fixture_xml_resource_no_meta()}
+            </clone>
+            """
+        )
+        self.assert_pcs_fail(
+            "resource meta clone-R promotable=1".split(),
+            stdout_full=(
+                "Error: Clone option 'promotable' is not compatible with "
+                "'ocf:pacemaker:Dummy' resource agent of resource 'R', use --force to override\n"
+            ),
+        )
+
 
 class UpdateInstanceAttrs(
     TestCase,
@@ -5613,6 +5696,11 @@ class UpdateInstanceAttrs(
     def tearDown(self):
         self.temp_cib.close()
 
+    def set_cib_file(self, *xml_string_list):
+        xml_manip = XmlManipulation.from_file(self.empty_cib)
+        xml_manip.append_to_first_tag_name("resources", *xml_string_list)
+        write_data_to_tmpfile(str(xml_manip), self.temp_cib)
+
     @staticmethod
     def fixture_xml_resource_no_attrs():
         return """
@@ -5628,17 +5716,23 @@ class UpdateInstanceAttrs(
             """
 
     @staticmethod
-    def fixture_xml_resource_empty_attrs():
+    def _fixture_xml_resource_empty_attrs():
         return """
+            <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+                <instance_attributes id="R-instance_attributes" />
+                <operations>
+                    <op id="R-monitor-interval-10s" interval="10s"
+                        name="monitor" timeout="20s"
+                    />
+                </operations>
+            </primitive>
+        """
+
+    @staticmethod
+    def fixture_xml_resource_empty_attrs():
+        return f"""
             <resources>
-                <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
-                    <instance_attributes id="R-instance_attributes" />
-                    <operations>
-                        <op id="R-monitor-interval-10s" interval="10s"
-                            name="monitor" timeout="20s"
-                        />
-                    </operations>
-                </primitive>
+            {UpdateInstanceAttrs._fixture_xml_resource_empty_attrs()}
             </resources>
             """
 
@@ -5813,6 +5907,57 @@ class UpdateInstanceAttrs(
         self.assert_pcs_fail(
             ["resource", "update", "R", "fake=is_invalid=True"],
             stdout_start="Error: Validation result from agent (use --force to override):",
+        )
+
+    @staticmethod
+    def fixture_not_ocf_clone():
+        return """
+            <clone id="clone-R">
+                <primitive class="systemd" id="R" type="pacemaker">
+                    <instance_attributes id="R-instance_attributes" />
+                    <operations>
+                        <op id="R-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
+                        />
+                    </operations>
+                </primitive>
+            </clone>
+            """
+
+    def test_clone_promotable_not_ocf(self):
+        self.set_cib_file(self.fixture_not_ocf_clone())
+        self.assert_pcs_fail(
+            "resource update clone-R promotable=1".split(),
+            stdout_full=(
+                "Error: Clone option 'promotable' is not compatible with "
+                "'systemd:pacemaker' resource agent of resource 'R'\n"
+            ),
+        )
+
+    def test_clone_globally_unique_not_ocf(self):
+        self.set_cib_file(self.fixture_not_ocf_clone())
+        self.assert_pcs_fail(
+            "resource update clone-R globally-unique=1".split(),
+            stdout_full=(
+                "Error: Clone option 'globally-unique' is not compatible with "
+                "'systemd:pacemaker' resource agent of resource 'R'\n"
+            ),
+        )
+
+    def test_clone_promotable_unsupported(self):
+        self.set_cib_file(
+            f"""
+            <clone id="clone-R">
+                {self._fixture_xml_resource_empty_attrs()}
+            </clone>
+            """
+        )
+        self.assert_pcs_fail(
+            "resource update clone-R promotable=1".split(),
+            stdout_full=(
+                "Error: Clone option 'promotable' is not compatible with "
+                "'ocf:pacemaker:Dummy' resource agent of resource 'R', use --force to override\n"
+            ),
         )
 
 

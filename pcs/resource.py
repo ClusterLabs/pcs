@@ -9,6 +9,7 @@ from typing import (
     Any,
     Callable,
     List,
+    Mapping,
     Optional,
     Sequence,
     cast,
@@ -95,7 +96,10 @@ from pcs.lib.commands.resource import (
 )
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.state import get_resource_state
-from pcs.lib.pacemaker.values import validate_id
+from pcs.lib.pacemaker.values import (
+    is_true,
+    validate_id,
+)
 from pcs.settings import (
     pacemaker_wait_timeout_status as PACEMAKER_WAIT_TIMEOUT_STATUS,
 )
@@ -707,6 +711,7 @@ def resource_create(lib, argv, modifiers):
             parts["options"],
             parts["clone"],
             clone_id=clone_id,
+            allow_incompatible_clone_meta_attributes=modifiers.get("--force"),
             **settings,
         )
     elif "promotable" in parts:
@@ -718,6 +723,7 @@ def resource_create(lib, argv, modifiers):
             parts["options"],
             dict(**parts["promotable"], promotable="true"),
             clone_id=clone_id,
+            allow_incompatible_clone_meta_attributes=modifiers.get("--force"),
             **settings,
         )
     elif "bundle" in parts:
@@ -1036,14 +1042,8 @@ def resource_update(args: List[str], modifiers: InputModifiers) -> None:
     params = utils.convert_args_to_tuples(ra_values)
 
     try:
-        agent_facade = lib_ra.ResourceAgentFacadeFactory(
-            utils.cmd_runner(), utils.get_report_processor()
-        ).facade_from_parsed_name(
-            lib_ra.ResourceAgentName(
-                resource.getAttribute("class"),
-                resource.getAttribute("provider"),
-                resource.getAttribute("type"),
-            )
+        agent_facade = _get_resource_agent_facade(
+            _get_resource_agent_name_from_rsc_el(resource)
         )
         report_list = primitive.validate_resource_instance_attributes_update(
             utils.cmd_runner(),
@@ -1489,13 +1489,24 @@ def resource_meta(argv: List[str], modifiers: InputModifiers) -> None:
     else:
         resource_el = utils.dom_get_any_resource(dom, res_id)
     if resource_el is None:
-        utils.err("unable to find a resource/clone/group: %s" % res_id)
+        raise error(f"unable to find a resource/clone/group: {res_id}")
 
     if modifiers.is_specified("--wait"):
         wait_timeout = utils.validate_wait_get_timeout()
 
+    attr_tuples = utils.convert_args_to_tuples(argv)
+
+    if resource_el.tagName == "clone":
+        clone_child = utils.dom_elem_get_clone_ms_resource(resource_el)
+        if clone_child:
+            _check_clone_incompatible_options_child(
+                clone_child,
+                dict(attr_tuples),
+                force=bool(modifiers.get("--force")),
+            )
+
     remote_node_name = utils.dom_get_resource_remote_node_name(resource_el)
-    utils.dom_update_meta_attr(resource_el, utils.convert_args_to_tuples(argv))
+    utils.dom_update_meta_attr(resource_el, attr_tuples)
 
     utils.replace_cib_configuration(dom)
 
@@ -1649,6 +1660,28 @@ def resource_clone(
             utils.err("\n".join(msg).strip())
 
 
+def _resource_is_ocf(resource_el) -> bool:
+    return resource_el.getAttribute("class") == "ocf"
+
+
+def _get_resource_agent_name_from_rsc_el(
+    resource_el,
+) -> lib_ra.ResourceAgentName:
+    return lib_ra.ResourceAgentName(
+        resource_el.getAttribute("class"),
+        resource_el.getAttribute("provider"),
+        resource_el.getAttribute("type"),
+    )
+
+
+def _get_resource_agent_facade(
+    resource_agent: lib_ra.ResourceAgentName,
+) -> lib_ra.ResourceAgentFacade:
+    return lib_ra.ResourceAgentFacadeFactory(
+        utils.cmd_runner(), utils.get_report_processor()
+    ).facade_from_parsed_name(resource_agent)
+
+
 def resource_clone_create(
     cib_dom, argv, update_existing=False, promotable=False, force_flags=()
 ):
@@ -1707,6 +1740,10 @@ def resource_clone_create(
         )
 
     parts = parse_clone_args(argv, promotable=promotable)
+    _check_clone_incompatible_options_child(
+        element, parts["meta"], force=reports.codes.FORCE in force_flags
+    )
+
     if not update_existing:
         clone_id = parts["clone_id"]
         if clone_id is not None:
@@ -1728,6 +1765,82 @@ def resource_clone_create(
     utils.dom_update_meta_attr(clone, sorted(parts["meta"].items()))
 
     return cib_dom, clone.getAttribute("id")
+
+
+def _check_clone_incompatible_options_child(
+    child_el,
+    clone_meta_attrs: Mapping[str, str],
+    force: bool = False,
+):
+    report_list = []
+    if child_el.tagName == "primitive":
+        report_list = _check_clone_incompatible_options_primitive(
+            child_el, clone_meta_attrs
+        )
+    elif child_el.tagName == "group":
+        group_id = child_el.getAttribute("id")
+        for primitive_el in utils.get_group_children_el_from_el(child_el):
+            report_list.extend(
+                _check_clone_incompatible_options_primitive(
+                    primitive_el,
+                    clone_meta_attrs,
+                    group_id=group_id,
+                    force=force,
+                )
+            )
+    if report_list:
+        process_library_reports(report_list)
+
+
+def _check_clone_incompatible_options_primitive(
+    primitive_el,
+    clone_meta_attrs: Mapping[str, str],
+    group_id: Optional[str] = None,
+    force: bool = False,
+) -> reports.ReportItemList:
+    resource_agent_name = _get_resource_agent_name_from_rsc_el(primitive_el)
+    primitive_id = primitive_el.getAttribute("id")
+    if not _resource_is_ocf(primitive_el):
+        for incompatible_attribute in ("globally-unique", "promotable"):
+            if is_true(clone_meta_attrs.get(incompatible_attribute, "0")):
+                return [
+                    reports.ReportItem.error(
+                        reports.messages.ResourceCloneIncompatibleMetaAttributes(
+                            incompatible_attribute,
+                            resource_agent_name.to_dto(),
+                            resource_id=primitive_id,
+                            group_id=group_id,
+                        )
+                    )
+                ]
+    else:
+        try:
+            resource_agent_facade = _get_resource_agent_facade(
+                resource_agent_name
+            )
+        except lib_ra.ResourceAgentError as e:
+            return [
+                lib_ra.resource_agent_error_to_report_item(
+                    e, reports.get_severity(reports.codes.FORCE, force)
+                )
+            ]
+        if resource_agent_facade.metadata.ocf_version == "1.1":
+            if (
+                is_true(clone_meta_attrs.get("promotable", "0"))
+                and not resource_agent_facade.metadata.provides_promotability
+            ):
+                return [
+                    reports.ReportItem(
+                        reports.get_severity(reports.codes.FORCE, force),
+                        reports.messages.ResourceCloneIncompatibleMetaAttributes(
+                            "promotable",
+                            resource_agent_name.to_dto(),
+                            resource_id=primitive_id,
+                            group_id=group_id,
+                        ),
+                    )
+                ]
+    return []
 
 
 def resource_clone_master_remove(lib, argv, modifiers):

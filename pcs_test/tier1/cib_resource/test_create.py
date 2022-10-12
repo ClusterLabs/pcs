@@ -770,6 +770,7 @@ class Promotable(TestCase, AssertPcsMixin):
             {},
             {"a": "b", "c": "d", "promotable": "true"},
             clone_id=None,
+            allow_incompatible_clone_meta_attributes=False,
             **self.fixture_options(),
         )
 

@@ -45,9 +45,11 @@ EXTRA_DIST		= \
 			  resources/resource_agent_ocf_heartbeat_dummy.xml \
 			  resources/resource_agent_ocf_heartbeat_ipaddr2.xml \
 			  resources/resource_agent_ocf_pacemaker_booth-site.xml \
+			  resources/resource_agent_ocf_pacemaker_dummy.xml \
 			  resources/resource_agent_ocf_pacemaker_remote.xml \
 			  resources/resource_agent_ocf_pacemaker_stateful_ocf_1.0.xml \
 			  resources/resource_agent_ocf_pacemaker_stateful_ocf_1.1.xml \
+			  resources/resource_agent_systemd_chronyd.xml \
 			  resources/stonith_agent_fence_custom_actions.xml \
 			  resources/stonith_agent_fence_simple.xml \
 			  resources/stonith_agent_fence_unfencing.xml \

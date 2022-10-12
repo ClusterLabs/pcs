@@ -75,7 +75,10 @@ from pcs.lib.pacemaker.state import (
     info_resource_state,
     is_resource_managed,
 )
-from pcs.lib.pacemaker.values import validate_id
+from pcs.lib.pacemaker.values import (
+    is_true,
+    validate_id,
+)
 from pcs.lib.resource_agent import (
     ResourceAgentError,
     ResourceAgentFacade,
@@ -461,6 +464,7 @@ def create_as_clone(
     ensure_disabled: bool = False,
     wait: WaitType = False,
     allow_not_suitable_command: bool = False,
+    allow_incompatible_clone_meta_attributes: bool = False,
 ):
     # pylint: disable=too-many-arguments, too-many-locals
     """
@@ -488,6 +492,9 @@ def create_as_clone(
     ensure_disabled -- is flag that keeps resource in target-role "Stopped"
     wait -- is flag for controlling waiting for pacemaker idle mechanism
     allow_not_suitable_command -- turn forceable errors into warnings
+    allow_incompatible_clone_meta_attributes -- if True some incompatible clone
+        meta attributes are treated as a warning, or as a forceable error if
+        False
     """
     runner = env.cmd_runner()
     agent_factory = ResourceAgentFacadeFactory(runner, env.report_processor)
@@ -498,6 +505,37 @@ def create_as_clone(
         resource_agent_name,
         allow_absent_agent,
     )
+    if resource_agent.metadata.name.standard != "ocf":
+        for incompatible_attr in ("globally-unique", "promotable"):
+            if is_true(clone_meta_options.get(incompatible_attr, "0")):
+                env.report_processor.report(
+                    reports.ReportItem.error(
+                        reports.messages.ResourceCloneIncompatibleMetaAttributes(
+                            incompatible_attr,
+                            resource_agent.metadata.name.to_dto(),
+                        )
+                    )
+                )
+    elif resource_agent.metadata.ocf_version == "1.1":
+        if (
+            is_true(clone_meta_options.get("promotable", "0"))
+            and not resource_agent.metadata.provides_promotability
+        ):
+            env.report_processor.report(
+                reports.ReportItem(
+                    reports.get_severity(
+                        reports.codes.FORCE,
+                        allow_incompatible_clone_meta_attributes,
+                    ),
+                    reports.messages.ResourceCloneIncompatibleMetaAttributes(
+                        "promotable",
+                        resource_agent.metadata.name.to_dto(),
+                    ),
+                )
+            )
+    if env.report_processor.has_errors:
+        raise LibraryError()
+
     with resource_environment(
         env,
         wait,
