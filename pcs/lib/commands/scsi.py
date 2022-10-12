@@ -1,5 +1,8 @@
 import os.path
-from typing import Iterable
+from typing import (
+    Collection,
+    Iterable,
+)
 
 from pcs import settings
 from pcs.common import reports
@@ -86,8 +89,8 @@ def _unfence_node_devices(
 def unfence_node(
     env: LibraryEnvironment,
     node: str,
-    original_devices: Iterable[str],
-    updated_devices: Iterable[str],
+    original_devices: Collection[str],
+    updated_devices: Collection[str],
 ) -> None:
     """
     Unfence scsi devices on a node by calling fence_scsi agent script. Only
@@ -109,8 +112,8 @@ def unfence_node(
 def unfence_node_mpath(
     env: LibraryEnvironment,
     key: str,
-    original_devices: Iterable[str],
-    updated_devices: Iterable[str],
+    original_devices: Collection[str],
+    updated_devices: Collection[str],
 ) -> None:
     """
     Unfence mpath devices on a node by calling fence_mpath agent script. Only

@@ -4,6 +4,7 @@ from functools import partial
 from typing import (
     Any,
     Callable,
+    Collection,
     Dict,
     FrozenSet,
     Iterable,
@@ -1131,7 +1132,7 @@ def _disable_run_simulate(
 
 def disable(
     env: LibraryEnvironment,
-    resource_or_tag_ids: Iterable[str],
+    resource_or_tag_ids: Collection[str],
     wait: WaitType = False,
 ):
     """
