@@ -135,7 +135,7 @@ class CreateMixin:
             agent_name=f"stonith:{agent_name}",
             agent_filename="stonith_agent_fence_simple.xml",
         )
-        self.config.runner.pcmk.load_fenced_metadata()
+        self.config.runner.pcmk.load_fake_agent_metadata()
         self.config.runner.cib.load()
         self.config.runner.pcmk.stonith_agent_self_validation(
             instance_attributes,
@@ -181,7 +181,7 @@ class CreateMixin:
             agent_name=f"stonith:{agent_name}",
             agent_filename="stonith_agent_fence_simple.xml",
         )
-        self.config.runner.pcmk.load_fenced_metadata()
+        self.config.runner.pcmk.load_fake_agent_metadata()
         self.config.runner.cib.load()
         self.config.runner.pcmk.stonith_agent_self_validation(
             instance_attributes,
@@ -229,7 +229,7 @@ class CreateMixin:
             agent_name=f"stonith:{agent_name}",
             agent_filename="stonith_agent_fence_simple.xml",
         )
-        self.config.runner.pcmk.load_fenced_metadata()
+        self.config.runner.pcmk.load_fake_agent_metadata()
         self.config.runner.cib.load()
         self.config.runner.pcmk.stonith_agent_self_validation(
             instance_attributes,

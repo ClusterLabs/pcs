@@ -58,7 +58,7 @@ def validate_set_cluster_properties(
 
     cluster_property_facade_list -- facades for cluster properties metadata
     service_manager -- manager for system daemon services
-    to_be_set_options -- list of to be set cluster options
+    to_be_set_options -- dictionary of options and their values
     force -- if True, validators produce a warning instead of an error
     """
     report_list: ReportItemList = []

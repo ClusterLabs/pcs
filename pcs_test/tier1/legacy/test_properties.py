@@ -521,8 +521,6 @@ class PropertyUnset(
         )
 
     def test_dont_create_nvset_on_removal(self):
-        # pcs mimics crm_attribute. So this behaves differently than the rest
-        # of pcs - instead of doing nothing it returns an error.
         self.assert_pcs_fail(
             "property unset batch-limit".split(),
             (
