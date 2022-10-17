@@ -2083,7 +2083,7 @@ class StonithLevelTestCibFixture(CachedCibFixture):
         )
 
 
-STONITH_LEVEL_TEST_CIB_FIXTURE = StonithLevelTestCibFixture(
+CIB_FIXTURE = StonithLevelTestCibFixture(
     "fixture_tier1_stonith_level_tests", rc("cib-empty-withnodes.xml")
 )
 
@@ -2129,7 +2129,7 @@ class LevelTestsBase(TestCase, AssertPcsMixin):
     @staticmethod
     def fixture_cib_config():
         cib_content = ""
-        with open(STONITH_LEVEL_TEST_CIB_FIXTURE.cache_path, "r") as cib_file:
+        with open(CIB_FIXTURE.cache_path, "r") as cib_file:
             cib_content = cib_file.read()
         config = outdent(
             """\
