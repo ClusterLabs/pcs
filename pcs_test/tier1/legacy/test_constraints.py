@@ -95,9 +95,7 @@ class ConstraintTestCibFixture(CachedCibFixture):
         wrap_element_by_master_file(self.cache_path, "D4", master_id="Master")
 
 
-CONSTRAINT_TEST_CIB_FIXTURE = ConstraintTestCibFixture(
-    "fixture_tier1_constraints", empty_cib
-)
+CIB_FIXTURE = ConstraintTestCibFixture("fixture_tier1_constraints", empty_cib)
 
 
 @skip_unless_crm_rule()
@@ -114,9 +112,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
             self.temp_corosync_conf.close()
 
     def fixture_resources(self):
-        write_file_to_tmpfile(
-            CONSTRAINT_TEST_CIB_FIXTURE.cache_path, self.temp_cib
-        )
+        write_file_to_tmpfile(CIB_FIXTURE.cache_path, self.temp_cib)
 
     def testConstraintRules(self):
         self.fixture_resources()
