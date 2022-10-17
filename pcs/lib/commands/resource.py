@@ -1698,8 +1698,9 @@ def move_autoclean(
     if env.report_processor.report_list(report_list).has_errors:
         raise LibraryError()
 
+    cluster_state=env.get_cluster_state()
     resource_state_before = get_resource_state(
-        env.get_cluster_state(), resource_id
+        cluster_state, resource_id
     )
     if not _resource_running_on_nodes(resource_state_before):
         raise LibraryError(
@@ -1707,6 +1708,13 @@ def move_autoclean(
                 reports.messages.CannotMoveResourceNotRunning(resource_id)
             )
         )
+    if not is_resource_managed(cluster_state, resource_id):
+        raise LibraryError(
+            ReportItem.warning(
+                reports.messages.ResourceIsUnmanaged(resource_id)
+                )
+            )
+
     with get_tmp_cib(env.report_processor, cib_xml) as rsc_moved_cib_file:
         stdout, stderr, retval = resource_move(
             env.cmd_runner(dict(CIB_file=rsc_moved_cib_file.name)),
