@@ -500,9 +500,7 @@ class ResourceTestCibFixture(CachedCibFixture):
         )
 
 
-RESOURCE_TEST_CIB_FIXTURE = ResourceTestCibFixture(
-    "fixture_tier1_resource", empty_cib
-)
+CIB_FIXTURE = ResourceTestCibFixture("fixture_tier1_resource", empty_cib)
 
 
 class Resource(TestCase, AssertPcsMixin):
@@ -520,9 +518,7 @@ class Resource(TestCase, AssertPcsMixin):
 
     # Setups up a cluster with Resources, groups, master/slave resource & clones
     def setupClusterA(self):
-        write_file_to_tmpfile(
-            RESOURCE_TEST_CIB_FIXTURE.cache_path, self.temp_cib
-        )
+        write_file_to_tmpfile(CIB_FIXTURE.cache_path, self.temp_cib)
 
     def testCaseInsensitive(self):
         o, r = pcs(

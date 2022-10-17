@@ -1,9 +1,9 @@
-import importlib
 import os
 import platform
 import sys
 import time
 import unittest
+from importlib import import_module
 from threading import Thread
 
 try:
@@ -37,7 +37,7 @@ def prepare_test_name(test_name):
     if not candidate.endswith(py_extension):
         return candidate
     try:
-        importlib.import_module(candidate)
+        import_module(candidate)
         return candidate
     except ImportError:
         return candidate[: -len(py_extension)]
@@ -85,10 +85,21 @@ def discover_tests(
 
 
 def tier1_fixtures_needed(test_list):
+    fixture_modules = set(
+        [
+            "pcs_test.tier1.legacy.test_constraints",
+            "pcs_test.tier1.legacy.test_resource",
+            "pcs_test.tier1.legacy.test_stonith",
+        ]
+    )
+    fixtures_needed = set()
     for test_name in tests_from_suite(test_list):
-        if test_name.startswith("pcs_test.tier1.legacy."):
-            return True
-    return False
+        for module in fixture_modules:
+            if test_name.startswith(module):
+                fixtures_needed.add(module)
+        if fixture_modules == fixtures_needed:
+            break
+    return fixtures_needed
 
 
 def has_tier0_test(test_list):
@@ -98,22 +109,16 @@ def has_tier0_test(test_list):
     return False
 
 
-def run_tier1_fixtures(run_concurrently=True):
-    # pylint: disable=import-outside-toplevel
-    from pcs_test.tier1.legacy.test_constraints import (
-        CONSTRAINT_TEST_CIB_FIXTURE,
-    )
-    from pcs_test.tier1.legacy.test_resource import RESOURCE_TEST_CIB_FIXTURE
-    from pcs_test.tier1.legacy.test_stonith import (
-        STONITH_LEVEL_TEST_CIB_FIXTURE,
-    )
+def run_tier1_fixtures(modules, run_concurrently=True):
+    fixture_instances = []
+    for mod in modules:
+        tmp_mod = import_module(mod)
+        fixture_instances.append(tmp_mod.CIB_FIXTURE)
+        del tmp_mod
 
-    fixture_instances = [
-        CONSTRAINT_TEST_CIB_FIXTURE,
-        RESOURCE_TEST_CIB_FIXTURE,
-        STONITH_LEVEL_TEST_CIB_FIXTURE,
-    ]
     print("Preparing tier1 fixtures...")
+    for mod in modules:
+        print(f"  * {mod}")
     time_start = time.time()
     if run_concurrently:
         thread_list = set()
@@ -128,7 +133,7 @@ def run_tier1_fixtures(run_concurrently=True):
                 raise AssertionError("Fixture threads seem to be stuck :(")
             thread = thread_list.pop()
             thread.join(timeout=10)
-            sys.stdout.write(".")
+            sys.stdout.write(". ")
             sys.stdout.flush()
             timeout_counter -= 1
             if thread.is_alive():
@@ -224,7 +229,6 @@ def main():
         sys.exit()
 
     tests_to_run = discovered_tests
-    tier1_fixtures_cleanup = None
     run_concurrently = (
         can_concurrency
         and "--no-parallel" not in sys.argv
@@ -233,10 +237,9 @@ def main():
             has_tier0_test(tests_to_run) and is_minimum_python_version(3, 11)
         )
     )
-    if tier1_fixtures_needed(tests_to_run):
-        tier1_fixtures_cleanup = run_tier1_fixtures(
-            run_concurrently=run_concurrently
-        )
+    tier1_fixtures_cleanup = run_tier1_fixtures(
+        tier1_fixtures_needed(tests_to_run), run_concurrently=run_concurrently
+    )
     if run_concurrently:
         tests_to_run = ConcurrentTestSuite(
             discovered_tests,
@@ -266,8 +269,7 @@ def main():
         verbosity=2 if "-v" in sys.argv else 1, resultclass=ResultClass
     )
     test_result = test_runner.run(tests_to_run)
-    if tier1_fixtures_cleanup:
-        tier1_fixtures_cleanup()
+    tier1_fixtures_cleanup()
     if not test_result.wasSuccessful():
         sys.exit(1)
 
