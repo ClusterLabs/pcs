@@ -899,6 +899,29 @@ class MoveAutocleanValidations(MoveAutocleanCommonSetup):
             ]
         )
 
+    def test_unmanaged_resource(self):
+        resource_id = "A"
+        self.config.runner.cib.load(
+            resources=_resources_tag(_rsc_primitive_fixture(resource_id))
+        )
+        self.config.runner.pcmk.load_state(
+            resources=_resources_tag(
+                '<resource id="{resource_id}" managed="{managed}" />'.format(
+                    resource_id=resource_id, managed="false"
+                )
+            )
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: move_autoclean(self.env_assist.get_env(), resource_id),
+            [
+                fixture.error(
+                    reports.codes.RESOURCE_IS_UNMANAGED,
+                    resource_id=resource_id,
+                )
+            ],
+            expected_in_processor=False,
+        )
+
 
 @mock.patch.object(
     settings,
