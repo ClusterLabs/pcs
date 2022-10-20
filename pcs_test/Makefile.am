@@ -123,6 +123,7 @@ EXTRA_DIST		= \
 			  tier0/daemon/async_tasks/test_scheduler.py \
 			  tier0/daemon/async_tasks/test_task.py \
 			  tier0/daemon/async_tasks/test_worker.py \
+			  tier0/daemon/async_tasks/test_command_mapping.py \
 			  tier0/daemon/__init__.py \
 			  tier0/daemon/test_env.py \
 			  tier0/daemon/test_http_server.py \
