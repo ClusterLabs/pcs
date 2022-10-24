@@ -10,6 +10,7 @@ from pcs.common.fencing_topology import (
 from pcs.common.file import RawFileError
 from pcs.common.reports import const
 from pcs.common.reports import messages as reports
+from pcs.common.resource_agent.dto import ResourceAgentNameDto
 from pcs.common.types import CibRuleExpressionType
 
 # pylint: disable=too-many-lines
@@ -5521,4 +5522,56 @@ class AgentSelfValidationInvalidData(NameBuildTest):
         self.assert_message_from_report(
             f"Invalid validation data from agent: {reason}",
             reports.AgentSelfValidationInvalidData(reason),
+        )
+
+
+class ResourceCloneIncompatibleMetaAttributes(NameBuildTest):
+    def test_with_provider(self):
+        attr = "attr_name"
+        self.assert_message_from_report(
+            f"Clone option '{attr}' is not compatible with 'standard:provider:type' resource agent",
+            reports.ResourceCloneIncompatibleMetaAttributes(
+                attr, ResourceAgentNameDto("standard", "provider", "type")
+            ),
+        )
+
+    def test_without_provider(self):
+        attr = "attr_name"
+        self.assert_message_from_report(
+            f"Clone option '{attr}' is not compatible with 'standard:type' resource agent",
+            reports.ResourceCloneIncompatibleMetaAttributes(
+                attr, ResourceAgentNameDto("standard", None, "type")
+            ),
+        )
+
+    def test_resource_id(self):
+        attr = "attr_name"
+        res_id = "resource_id"
+        self.assert_message_from_report(
+            (
+                f"Clone option '{attr}' is not compatible with 'standard:type' "
+                f"resource agent of resource '{res_id}'"
+            ),
+            reports.ResourceCloneIncompatibleMetaAttributes(
+                attr,
+                ResourceAgentNameDto("standard", None, "type"),
+                resource_id=res_id,
+            ),
+        )
+
+    def test_group_id(self):
+        attr = "attr_name"
+        res_id = "resource id"
+        group_id = "group id"
+        self.assert_message_from_report(
+            (
+                f"Clone option '{attr}' is not compatible with 'standard:type' "
+                f"resource agent of resource '{res_id}' in group '{group_id}'"
+            ),
+            reports.ResourceCloneIncompatibleMetaAttributes(
+                attr,
+                ResourceAgentNameDto("standard", None, "type"),
+                resource_id=res_id,
+                group_id=group_id,
+            ),
         )

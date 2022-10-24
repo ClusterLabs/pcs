@@ -13,23 +13,25 @@ from pcs_test.tools.misc import (
 from pcs_test.tools.pcs_runner import PcsRunnerOld as PcsRunner
 from pcs_test.tools.xml import XmlManipulation
 
-FIXTURE_DUMMY = """
-    <primitive class="ocf" id="Dummy" provider="heartbeat" type="Dummy">
-        <operations>
-            <op id="Dummy-monitor-interval-10s" interval="10s"
-                name="monitor" timeout="20s"/>
-        </operations>
-    </primitive>
-"""
 
-FIXTURE_PRIMITIVE_FOR_CLONE = """
-    <primitive class="ocf" id="C" provider="heartbeat" type="Dummy">
-        <operations>
-            <op id="C-monitor-interval-10s" interval="10s"
-                name="monitor" timeout="20s"/>
-        </operations>
-    </primitive>
-"""
+def _get_primitive_fixture(
+    res_id, agent_standard="ocf", agent_provider="heartbeat", agent_type="Dummy"
+):
+    _provider = ""
+    if agent_provider:
+        _provider = f' provider="{agent_provider}"'
+    return f"""
+        <primitive class="{agent_standard}" id="{res_id}"{_provider} type="{agent_type}">
+            <operations>
+                <op id="{res_id}-monitor-interval-10s" interval="10s"
+                    name="monitor" timeout="20s"/>
+            </operations>
+        </primitive>
+    """
+
+
+FIXTURE_DUMMY = _get_primitive_fixture("Dummy")
+FIXTURE_PRIMITIVE_FOR_CLONE = _get_primitive_fixture("C")
 
 FIXTURE_CLONE = f"""<clone id="C-clone">{FIXTURE_PRIMITIVE_FOR_CLONE}</clone>"""
 
@@ -373,11 +375,110 @@ class Clone(
             fixture_resources_xml(FIXTURE_CLONED_GROUP_WITH_STONITH),
         )
 
+    def test_clone_globally_unique_not_ocf_agent(self):
+        self.set_cib_file(
+            _get_primitive_fixture(
+                "C",
+                agent_standard="systemd",
+                agent_provider=None,
+                agent_type="pacemaker",
+            )
+        )
+        self.assert_pcs_fail(
+            "resource clone C globally-unique=true".split(),
+            stdout_full=(
+                "Error: Clone option 'globally-unique' is not compatible with "
+                "'systemd:pacemaker' resource agent of resource 'C'\n"
+            ),
+        )
+
+    def test_clone_promotable_group_some_unsupported(self):
+        self.set_cib_file(
+            '<group id="G">'
+            + "\n".join(
+                [
+                    _get_primitive_fixture(
+                        "A",
+                        agent_standard="systemd",
+                        agent_provider=None,
+                        agent_type="pacemaker",
+                    ),
+                    _get_primitive_fixture(
+                        "B",
+                        agent_provider="pacemaker",
+                        agent_type="Stateful",
+                    ),
+                    _get_primitive_fixture(
+                        "C",
+                        agent_provider="pacemaker",
+                    ),
+                ]
+            )
+            + "</group>"
+        )
+        self.assert_pcs_fail(
+            "resource clone G promotable=true".split(),
+            stdout_full=(
+                "Error: Clone option 'promotable' is not compatible with "
+                "'systemd:pacemaker' resource agent of resource 'A' in group "
+                "'G'\nError: Clone option 'promotable' is not compatible with "
+                "'ocf:pacemaker:Dummy' resource agent of resource 'C' in group "
+                "'G', use --force to override\n"
+            ),
+        )
+
+    def test_clone_promotable_not_ocf_agent(self):
+        self.set_cib_file(
+            _get_primitive_fixture(
+                "C",
+                agent_standard="systemd",
+                agent_provider=None,
+                agent_type="pacemaker",
+            )
+        )
+        self.assert_pcs_fail(
+            "resource clone C promotable=true".split(),
+            stdout_full=(
+                "Error: Clone option 'promotable' is not compatible with "
+                "'systemd:pacemaker' resource agent of resource 'C'\n"
+            ),
+        )
+
     def test_promotable_clone(self):
         self.assert_effect(
             "resource promotable C".split(),
             fixture_resources_xml(
                 fixture_clone("C-clone", "C", promotable=True)
+            ),
+        )
+
+    def test_promotable_clone_not_ocf_agent(self):
+        self.set_cib_file(
+            _get_primitive_fixture(
+                "C",
+                agent_standard="systemd",
+                agent_provider=None,
+                agent_type="pacemaker",
+            )
+        )
+        self.assert_pcs_fail(
+            "resource promotable C".split(),
+            stdout_full=(
+                "Error: Clone option 'promotable' is not compatible with "
+                "'systemd:pacemaker' resource agent of resource 'C'\n"
+            ),
+        )
+
+    def test_promotable_clone_unsupported_agent(self):
+        self.set_cib_file(
+            _get_primitive_fixture("C", agent_provider="pacemaker")
+        )
+        self.assert_pcs_fail(
+            "resource promotable C".split(),
+            stdout_full=(
+                "Error: Clone option 'promotable' is not compatible with "
+                "'ocf:pacemaker:Dummy' resource agent of resource 'C', use "
+                "--force to override\n"
             ),
         )
 
@@ -401,10 +502,9 @@ class Clone(
 
     def test_promotable_clone_id_is_stonith_forced(self):
         self.set_cib_file(FIXTURE_STONITH_FOR_CLONE)
-        self.assert_effect(
+        self.assert_pcs_fail(
             "resource promotable fence-device --force".split(),
-            fixture_resources_xml(FIXTURE_STONITH_PROMOTABLE),
-            output=self.stonith_deprecation_warning
+            stdout_start=self.stonith_deprecation_warning
             + fixture_clone_stonith_msg(forced=True),
         )
 

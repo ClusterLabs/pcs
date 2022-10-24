@@ -11,6 +11,7 @@ from pcs.common import (
 )
 from pcs.lib.commands import resource
 from pcs.lib.errors import LibraryError
+from pcs.lib.resource_agent import ResourceAgentName
 
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
@@ -72,11 +73,14 @@ def create_clone(
     clone_options=None,
     operation_list=None,
     clone_id=None,
+    agent="ocf:heartbeat:Dummy",
+    allow_incompatible_clone_meta_attributes=False,
 ):
+    # pylint: disable=too-many-arguments
     return resource.create_as_clone(
         env,
         "A",
-        "ocf:heartbeat:Dummy",
+        agent,
         operation_list=operation_list if operation_list else [],
         meta_attributes=meta_attributes if meta_attributes else {},
         instance_attributes={},
@@ -84,6 +88,7 @@ def create_clone(
         clone_id=clone_id,
         wait=wait,
         ensure_disabled=disabled,
+        allow_incompatible_clone_meta_attributes=allow_incompatible_clone_meta_attributes,
     )
 
 
@@ -2116,6 +2121,99 @@ class CreateAsClone(TestCase):
                     reports.codes.RESOURCE_DOES_NOT_RUN,
                     resource_id="A",
                 )
+            ]
+        )
+
+
+class CreateAsCloneFailures(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
+    def _test_non_ocf_param(self, attr):
+        agent = ResourceAgentName("systemd", None, "chronyd")
+        self.config.runner.pcmk.load_agent(agent_name=agent.full_name)
+        self.env_assist.assert_raise_library_error(
+            lambda: create_clone(
+                self.env_assist.get_env(),
+                agent=agent.full_name,
+                clone_options={attr: "1"},
+            ),
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.RESOURCE_CLONE_INCOMPATIBLE_META_ATTRIBUTES,
+                    attribute=attr,
+                    resource_agent=agent.to_dto(),
+                    resource_id=None,
+                    group_id=None,
+                )
+            ]
+        )
+
+    def test_non_ocf_globally_unique(self):
+        self._test_non_ocf_param("globally-unique")
+
+    def test_non_ocf_promotable(self):
+        self._test_non_ocf_param("promotable")
+
+    def test_promotable_not_supported(self):
+        agent = ResourceAgentName("ocf", "pacemaker", "Dummy")
+        self.config.runner.pcmk.load_agent(agent_name=agent.full_name)
+        self.env_assist.assert_raise_library_error(
+            lambda: create_clone(
+                self.env_assist.get_env(),
+                agent=agent.full_name,
+                clone_options={"promotable": "1"},
+            ),
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.RESOURCE_CLONE_INCOMPATIBLE_META_ATTRIBUTES,
+                    attribute="promotable",
+                    resource_agent=agent.to_dto(),
+                    resource_id=None,
+                    group_id=None,
+                    force_code=reports.codes.FORCE,
+                )
+            ]
+        )
+
+    def test_promotable_not_supported_forced(self):
+        agent = ResourceAgentName("ocf", "pacemaker", "Dummy")
+        self.config.runner.pcmk.load_agent(agent_name=agent.full_name)
+        self.config.runner.cib.load()
+        self.config.runner.pcmk.resource_agent_self_validation(
+            {},
+            standard=agent.standard,
+            provider=agent.provider,
+            agent_type=agent.type,
+            output="""<output source="stderr">error</output>""",
+            returncode=1,
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: create_clone(
+                self.env_assist.get_env(),
+                agent=agent.full_name,
+                clone_options={"promotable": "1"},
+                allow_incompatible_clone_meta_attributes=True,
+            ),
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.RESOURCE_CLONE_INCOMPATIBLE_META_ATTRIBUTES,
+                    attribute="promotable",
+                    resource_agent=agent.to_dto(),
+                    resource_id=None,
+                    group_id=None,
+                ),
+                fixture.error(
+                    reports.codes.AGENT_SELF_VALIDATION_RESULT,
+                    result="error",
+                    force_code=reports.codes.FORCE,
+                ),
             ]
         )
 

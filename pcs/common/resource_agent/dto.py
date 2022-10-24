@@ -20,6 +20,14 @@ class ResourceAgentNameDto(DataTransferObject):
     type: str
 
 
+def get_resource_agent_full_name(agent_name: ResourceAgentNameDto) -> str:
+    return ":".join(
+        filter(
+            None, [agent_name.standard, agent_name.provider, agent_name.type]
+        )
+    )
+
+
 @dataclass(frozen=True)
 class ListResourceAgentNameDto(DataTransferObject):
     names: List[ResourceAgentNameDto]

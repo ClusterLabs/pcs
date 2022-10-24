@@ -20,10 +20,13 @@
   ([rhbz#2102663])
 - Misleading error message from `pcs booth sync` when booth config directory
   (`/etc/booth`) is missing ([rhbz#1791670])
+- Creating a promotable or globally-unique clones is not allowed for non-ocf
+  resource agents ([rhbz#2112260])
 
 [rhbz#1791670]: https://bugzilla.redhat.com/show_bug.cgi?id=1791670
 [rhbz#2092950]: https://bugzilla.redhat.com/show_bug.cgi?id=2092950
 [rhbz#2102663]: https://bugzilla.redhat.com/show_bug.cgi?id=2102663
+[rhbz#2112260]: https://bugzilla.redhat.com/show_bug.cgi?id=2112260
 [rhbz#2112270]: https://bugzilla.redhat.com/show_bug.cgi?id=2112270
 [rhbz#2116841]: https://bugzilla.redhat.com/show_bug.cgi?id=2116841
 

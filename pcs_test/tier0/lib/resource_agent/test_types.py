@@ -45,75 +45,122 @@ class ResourceAgentName(TestCase):
         )
 
 
+def _fixture_metadata(name, actions):
+    return ra.ResourceAgentMetadata(
+        name,
+        agent_exists=True,
+        ocf_version=ra.const.OCF_1_0,
+        shortdesc=None,
+        longdesc=None,
+        parameters=[],
+        actions=actions,
+    )
+
+
+def _fixture_action(name, automatic, on_target):
+    return ra.ResourceAgentAction(
+        name=name,
+        timeout=None,
+        interval=None,
+        role=None,
+        start_delay=None,
+        depth=None,
+        automatic=automatic,
+        on_target=on_target,
+    )
+
+
 class ProvidesUnfencing(TestCase):
-    @staticmethod
-    def _fixture_metadata(name, actions):
-        return ra.ResourceAgentMetadata(
-            name,
-            agent_exists=True,
-            ocf_version=ra.const.OCF_1_0,
-            shortdesc=None,
-            longdesc=None,
-            parameters=[],
-            actions=actions,
-        )
-
-    @staticmethod
-    def _fixture_action(name, automatic, on_target):
-        return ra.ResourceAgentAction(
-            name=name,
-            timeout=None,
-            interval=None,
-            role=None,
-            start_delay=None,
-            depth=None,
-            automatic=automatic,
-            on_target=on_target,
-        )
-
     def test_not_stonith(self):
         self.assertFalse(
-            self._fixture_metadata(
+            _fixture_metadata(
                 ra.ResourceAgentName("ocf", "pacemaker", "Dummy"),
-                [self._fixture_action("on", True, True)],
+                [_fixture_action("on", True, True)],
             ).provides_unfencing
         )
 
     def test_not_automatic(self):
         self.assertFalse(
-            self._fixture_metadata(
+            _fixture_metadata(
                 ra.ResourceAgentName("stonith", None, "fence_xvm"),
-                [self._fixture_action("on", False, True)],
+                [_fixture_action("on", False, True)],
             ).provides_unfencing
         )
 
     def test_not_on_target(self):
         self.assertFalse(
-            self._fixture_metadata(
+            _fixture_metadata(
                 ra.ResourceAgentName("stonith", None, "fence_xvm"),
-                [self._fixture_action("on", True, False)],
+                [_fixture_action("on", True, False)],
             ).provides_unfencing
         )
 
     def test_not_action_on(self):
         self.assertFalse(
-            self._fixture_metadata(
+            _fixture_metadata(
                 ra.ResourceAgentName("stonith", None, "fence_xvm"),
-                [self._fixture_action("off", True, True)],
+                [_fixture_action("off", True, True)],
             ).provides_unfencing
         )
 
     def test_true(self):
         self.assertTrue(
-            self._fixture_metadata(
+            _fixture_metadata(
                 ra.ResourceAgentName("stonith", None, "fence_xvm"),
                 [
-                    self._fixture_action("on", False, True),
-                    self._fixture_action("on", True, False),
-                    self._fixture_action("off", True, True),
-                    self._fixture_action("on", True, True),
+                    _fixture_action("on", False, True),
+                    _fixture_action("on", True, False),
+                    _fixture_action("off", True, True),
+                    _fixture_action("on", True, True),
                 ],
             ).provides_unfencing
+        )
+
+
+class ProvidesPromotability(TestCase):
+    def test_both_actions_missing(self):
+        self.assertFalse(
+            _fixture_metadata(
+                ra.ResourceAgentName("systemd", None, "pacemaker"),
+                [_fixture_action("on", False, False)],
+            ).provides_promotability
+        )
+
+    def test_only_promote_action(self):
+        self.assertFalse(
+            _fixture_metadata(
+                ra.ResourceAgentName("ocf", "heartbeat", "Dummy"),
+                [
+                    _fixture_action("off", False, False),
+                    _fixture_action("promote", False, False),
+                ],
+            ).provides_promotability
+        )
+
+    def test_only_demote_action(self):
+        self.assertFalse(
+            _fixture_metadata(
+                ra.ResourceAgentName("ocf", "heartbeat", "Dummy"),
+                [
+                    _fixture_action("off", False, False),
+                    _fixture_action("monitor", False, False),
+                    _fixture_action("demote", False, False),
+                ],
+            ).provides_promotability
+        )
+
+    def test_both_actions(self):
+        self.assertTrue(
+            _fixture_metadata(
+                ra.ResourceAgentName("ocf", "pacemaker", "Dummy"),
+                [
+                    _fixture_action("on", False, False),
+                    _fixture_action("off", False, False),
+                    _fixture_action("monitor", False, False),
+                    _fixture_action("demote", False, False),
+                    _fixture_action("promote", False, False),
+                ],
+            ).provides_promotability
         )
 
 

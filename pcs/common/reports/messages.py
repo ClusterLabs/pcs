@@ -22,6 +22,10 @@ from pcs.common.file import (
     FileAction,
     RawFileError,
 )
+from pcs.common.resource_agent.dto import (
+    ResourceAgentNameDto,
+    get_resource_agent_full_name,
+)
 from pcs.common.str_tools import (
     format_list,
     format_list_custom_last_separator,
@@ -7486,3 +7490,35 @@ class AgentSelfValidationInvalidData(ReportItemMessage):
     @property
     def message(self) -> str:
         return f"Invalid validation data from agent: {self.reason}"
+
+
+@dataclass(frozen=True)
+class ResourceCloneIncompatibleMetaAttributes(ReportItemMessage):
+    """
+    Some clone specific meta attributes are not compatible with some resource
+    agents
+
+    attribute -- incompatible attribute name
+    resource_agent -- agent which doesn't support specified attribute
+    resource_id -- id of primitive resource to which this apply
+    group_id -- id of resource group in which resource_id is placed
+    """
+
+    attribute: str
+    resource_agent: ResourceAgentNameDto
+    resource_id: Optional[str] = None
+    group_id: Optional[str] = None
+    _code = codes.RESOURCE_CLONE_INCOMPATIBLE_META_ATTRIBUTES
+
+    @property
+    def message(self) -> str:
+        resource_desc = ""
+        if self.resource_id:
+            resource_desc = f" of resource '{self.resource_id}'"
+            if self.group_id:
+                resource_desc += f" in group '{self.group_id}'"
+        return (
+            f"Clone option '{self.attribute}' is not compatible with "
+            f"'{get_resource_agent_full_name(self.resource_agent)}' resource "
+            f"agent{resource_desc}"
+        )

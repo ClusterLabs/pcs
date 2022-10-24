@@ -18,10 +18,7 @@ from pcs.cli.common.output import (
 )
 from pcs.cli.nvset import nvset_dto_to_lines
 from pcs.cli.reports.output import warn
-from pcs.cli.resource_agent import (
-    get_resource_agent_full_name,
-    is_stonith,
-)
+from pcs.cli.resource_agent import is_stonith
 from pcs.common import resource_agent
 from pcs.common.pacemaker.nvset import CibNvsetDto
 from pcs.common.pacemaker.resource.bundle import (
@@ -39,7 +36,10 @@ from pcs.common.pacemaker.resource.operations import (
     CibResourceOperationDto,
 )
 from pcs.common.pacemaker.resource.primitive import CibResourcePrimitiveDto
-from pcs.common.resource_agent.dto import ResourceAgentNameDto
+from pcs.common.resource_agent.dto import (
+    ResourceAgentNameDto,
+    get_resource_agent_full_name,
+)
 from pcs.common.str_tools import (
     format_name_value_list,
     format_optional,
