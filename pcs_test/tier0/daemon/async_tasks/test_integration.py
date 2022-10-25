@@ -1,4 +1,5 @@
 import dataclasses
+import signal
 from datetime import timedelta
 from logging import Logger
 from multiprocessing import Process
@@ -507,6 +508,7 @@ class TaskResultsTests(MockOsKillMixin, IntegrationBaseTestCase):
         self.assertEqual(RESULT, task_info.result)
 
 
+@mock.patch("pcs.daemon.async_tasks.task.os.kill")
 class DeadlockTests(
     MockOsKillMixin, AssertTaskStatesMixin, IntegrationBaseTestCase
 ):
@@ -526,7 +528,7 @@ class DeadlockTests(
         ).start()
 
     @gen_test
-    async def test_deadlock_mitigation(self):
+    async def test_deadlock_mitigation(self, mock_kill):
         self._create_tasks(2)
         self.execute_tasks(["id0"])
         await self.perform_actions(1)
@@ -554,13 +556,15 @@ class DeadlockTests(
         self.process_obj_mock.close.assert_not_called()
         self.finish_tasks(["id1"])
         self.process_obj_mock.is_alive.return_value = False
+        mock_kill.assert_not_called()
         await self.perform_actions(1)
+        mock_kill.assert_called_once_with(1, signal.SIGCONT)
         # tmp worker finished the task and terminated itself
         self.assert_task_state_counts_equal(0, 0, 1, 1)
         self.process_obj_mock.close.assert_called_once_with()
 
     @gen_test
-    async def test_max_worker_count_reached(self):
+    async def test_max_worker_count_reached(self, mock_kill):
         self.scheduler._config = dataclasses.replace(
             self.scheduler._config, max_worker_count=1
         )
@@ -570,3 +574,4 @@ class DeadlockTests(
         self.assert_task_state_counts_equal(0, 2, 1, 0)
         self.process_cls_mock.assert_not_called()
         self.process_obj_mock.assert_not_called()
+        mock_kill.assert_not_called()
