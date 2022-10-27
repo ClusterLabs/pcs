@@ -1,88 +1,44 @@
 import os.path
 
+# generic system paths
+chkconfig_binary = "/sbin/chkconfig"
+find_executable = "@FIND@"
+killall_executable = "@KILLALL@"
+rm_executable = "@RM@"
+ruby_executable = "@RUBY@"
+service_binary = "@SERVICE@"
 systemctl_binary = "@SYSTEMCTL@"
 systemd_unit_path = "@SYSTEMD_UNIT_PATH@".split(":")
-chkconfig_binary = "/sbin/chkconfig"
-service_binary = "@SERVICE@"
-pacemaker_binaries = "@PCMKEXECPREFIX@/sbin"
-corosync_binaries = "@COROEXECPREFIX@/sbin"
-corosync_qnet_binaries = "@COROQDEVEXECPREFIX@/bin"
-corosync_qdevice_binaries = "@COROQDEVEXECPREFIX@/sbin"
-corosync_conf_dir = "@COROCONFDIR@/corosync"
-corosync_conf_file = os.path.join(corosync_conf_dir, "corosync.conf")
-corosync_uidgid_dir = os.path.join(corosync_conf_dir, "uidgid.d")
-corosync_qdevice_conf_dir = "@COROQDEVCONFDIR@"
-corosync_qdevice_net_server_certs_dir = os.path.join(
-    corosync_qdevice_conf_dir, "qnetd/nssdb"
-)
-corosync_qdevice_net_client_certs_dir = os.path.join(
-    corosync_qdevice_conf_dir, "qdevice/net/nssdb"
-)
-corosync_qdevice_net_client_ca_file_name = "qnetd-cacert.crt"
-corosync_authkey_file = os.path.join(corosync_conf_dir, "authkey")
-# Must be set to 256 for corosync to work in FIPS environment.
-corosync_authkey_bytes = 256
-corosync_log_file = "@COROLOGDIR@/corosync.log"
-pacemaker_authkey_file = "@PCMKCONFDIR@/pacemaker/authkey"
-# Using the same value as for corosync. Higher values MAY work in FIPS.
-pacemaker_authkey_bytes = 256
-pcsd_token_max_bytes = 256
-booth_authkey_file_mode = 0o600
-# Booth does not support keys longer than 64 bytes.
-booth_authkey_bytes = 64
-fence_agent_binaries = "@FASEXECPREFIX@/sbin"
-pacemaker_local_state_dir = os.path.join(
-    "/", "@PCMKLOCALSTATEDIR@", "lib/pacemaker"
-)
-pacemaker_daemon_dir = "@PCMK_DAEMON_DIR@"
-pacemaker_schedulerd = os.path.join(
-    pacemaker_daemon_dir, "pacemaker-schedulerd"
-)
-pacemaker_controld = os.path.join(pacemaker_daemon_dir, "pacemaker-controld")
-pacemaker_based = os.path.join(pacemaker_daemon_dir, "pacemaker-based")
-pacemaker_fenced = os.path.join(pacemaker_daemon_dir, "pacemaker-fenced")
+
+
+# pcs
 pcs_version = "@VERSION@"
-crm_resource_binary = "@PCMKEXECPREFIX@/sbin/crm_resource"
-crm_mon = "@PCMKEXECPREFIX@/sbin/crm_mon"
-crm_report = "@PCMKEXECPREFIX@/sbin/crm_report"
-crm_rule = "@PCMKEXECPREFIX@/sbin/crm_rule"
-crm_diff = "@PCMKEXECPREFIX@/sbin/crm_diff"
-cibadmin = "@PCMKEXECPREFIX@/sbin/cibadmin"
-stonith_admin = "@PCMKEXECPREFIX@/sbin/stonith_admin"
-pacemaker_api_result_schema = "@PCMK_SCHEMA_DIR@/api/api-result.rng"
-pcsd_var_location = "@LOCALSTATEDIR@/lib/pcsd"
-pcsd_ruby_socket = "@LOCALSTATEDIR@/run/pcsd-ruby.socket"
-pcsd_cert_location = os.path.join(pcsd_var_location, "pcsd.crt")
-pcsd_key_location = os.path.join(pcsd_var_location, "pcsd.key")
-pcsd_known_hosts_location = os.path.join(pcsd_var_location, "known-hosts")
-pcsd_users_conf_location = os.path.join(pcsd_var_location, "pcs_users.conf")
-pcsd_settings_conf_location = os.path.join(
-    pcsd_var_location, "pcs_settings.conf"
-)
-pcsd_dr_config_location = os.path.join(pcsd_var_location, "disaster-recovery")
+pcs_bundled_packages_dir = os.path.join("@PCS_BUNDLED_DIR@", "packages")
+pcs_data_dir = "@LIB_DIR@/pcs/data/"
+
+
+# pcsd
 pcsd_exec_location = "@LIB_DIR@/pcsd"
+# Set pcsd_gem_path to None if there are no bundled ruby gems and the path does
+# not exists.
+pcsd_gem_path = "@GEM_HOME@" or None
+pcsd_unix_socket = "@LOCALSTATEDIR@/run/pcsd.socket"
+pcsd_ruby_socket = "@LOCALSTATEDIR@/run/pcsd-ruby.socket"
 pcsd_log_location = "@LOCALSTATEDIR@/log/pcsd/pcsd.log"
 pcsd_default_port = 2224
 pcsd_config = "@CONF_DIR@/pcsd"
-pcsd_unix_socket = "@LOCALSTATEDIR@/run/pcsd.socket"
-cib_dir = "@PCMK_CIB_DIR@"
-pacemaker_uname = "@PCMK_USER@"
-pacemaker_gname = "@PCMK_GROUP@"
-sbd_binary = "@SBDEXECPREFIX@/sbin/sbd"
-sbd_watchdog_default = "/dev/watchdog"
-sbd_config = "@SBDCONFDIR@/sbd"
-# this limit is also mentioned in docs, change there as well
-sbd_max_device_num = 3
-# message types are also mentioned in docs, change there as well
-sbd_message_types = ["test", "reset", "off", "crashdump", "exit", "clear"]
-pacemaker_wait_timeout_status = 124
-booth_config_dir = "@BOOTHCONFDIR@"
-booth_binary = "@BOOTHEXECPREFIX@/sbin/booth"
-default_request_timeout = 60
-pcs_bundled_packages_dir = os.path.join("@PCS_BUNDLED_DIR@", "packages")
+
+pcsd_var_location = "@LOCALSTATEDIR@/lib/pcsd"
+pcsd_cert_location = os.path.join(pcsd_var_location, "pcsd.crt")
+pcsd_dr_config_location = os.path.join(pcsd_var_location, "disaster-recovery")
+pcsd_key_location = os.path.join(pcsd_var_location, "pcsd.key")
+pcsd_known_hosts_location = os.path.join(pcsd_var_location, "known-hosts")
+pcsd_settings_conf_location = os.path.join(
+    pcsd_var_location, "pcs_settings.conf"
+)
+pcsd_users_conf_location = os.path.join(pcsd_var_location, "pcs_users.conf")
 
 default_ssl_ciphers = "DEFAULT:!RC4:!3DES:@STRENGTH"
-
 # Ssl options are based on default options in python (maybe with some extra
 # options). Format here is the same as the PCSD_SSL_OPTIONS environment
 # variable format (string with coma as a delimiter).
@@ -99,20 +55,97 @@ default_ssl_options = ",".join(
         "OP_NO_RENEGOTIATION",
     ]
 )
-# Set pcsd_gem_path to None if there are no bundled ruby gems and the path does
-# not exists.
-pcsd_gem_path = "@GEM_HOME@" or None
-ruby_executable = "@RUBY@"
-
-killall_executable = "@KILLALL@"
-rm_executable = "@RM@"
-find_executable = "@FIND@"
-
+default_request_timeout = 60
 gui_session_lifetime_seconds = 60 * 60
+pcsd_token_max_bytes = 256
+
+# pcsd task scheduler settings
+async_api_scheduler_interval_ms = 100
+pcsd_worker_count = 10
+pcsd_temporary_workers = 10
+pcsd_worker_reset_limit = 100
+pcsd_deadlock_threshold_timeout = 5
+task_unresponsive_timeout_seconds = 60 * 60
+task_abandoned_timeout_seconds = 1 * 60
+task_deletion_timeout_seconds = 1 * 60
 
 
-pcs_data_dir = "@LIB_DIR@/pcs/data/"
+# corosync
+corosync_binaries = "@COROEXECPREFIX@/sbin"
+corosync_conf_dir = "@COROCONFDIR@/corosync"
+corosync_conf_file = os.path.join(corosync_conf_dir, "corosync.conf")
+corosync_uidgid_dir = os.path.join(corosync_conf_dir, "uidgid.d")
+corosync_authkey_file = os.path.join(corosync_conf_dir, "authkey")
+# Must be set to 256 for corosync to work in FIPS environment.
+corosync_authkey_bytes = 256
+corosync_log_file = "@COROLOGDIR@/corosync.log"
 
+
+# corosync qnetd and qdevice
+corosync_qnet_binaries = "@COROQDEVEXECPREFIX@/bin"
+corosync_qdevice_binaries = "@COROQDEVEXECPREFIX@/sbin"
+corosync_qdevice_conf_dir = "@COROQDEVCONFDIR@"
+corosync_qdevice_net_server_certs_dir = os.path.join(
+    corosync_qdevice_conf_dir, "qnetd/nssdb"
+)
+corosync_qdevice_net_client_certs_dir = os.path.join(
+    corosync_qdevice_conf_dir, "qdevice/net/nssdb"
+)
+corosync_qdevice_net_client_ca_file_name = "qnetd-cacert.crt"
+
+
+# pacemaker
+pacemaker_binaries = "@PCMKEXECPREFIX@/sbin"
+pacemaker_authkey_file = "@PCMKCONFDIR@/pacemaker/authkey"
+# Using the same value as for corosync. Higher values MAY work in FIPS.
+pacemaker_authkey_bytes = 256
+pacemaker_local_state_dir = os.path.join(
+    "/", "@PCMKLOCALSTATEDIR@", "lib/pacemaker"
+)
+pacemaker_daemon_dir = "@PCMK_DAEMON_DIR@"
+pacemaker_schedulerd = os.path.join(
+    pacemaker_daemon_dir, "pacemaker-schedulerd"
+)
+pacemaker_controld = os.path.join(pacemaker_daemon_dir, "pacemaker-controld")
+pacemaker_based = os.path.join(pacemaker_daemon_dir, "pacemaker-based")
+pacemaker_fenced = os.path.join(pacemaker_daemon_dir, "pacemaker-fenced")
+crm_resource_binary = "@PCMKEXECPREFIX@/sbin/crm_resource"
+crm_mon = "@PCMKEXECPREFIX@/sbin/crm_mon"
+crm_report = "@PCMKEXECPREFIX@/sbin/crm_report"
+crm_rule = "@PCMKEXECPREFIX@/sbin/crm_rule"
+crm_diff = "@PCMKEXECPREFIX@/sbin/crm_diff"
+cibadmin = "@PCMKEXECPREFIX@/sbin/cibadmin"
+stonith_admin = "@PCMKEXECPREFIX@/sbin/stonith_admin"
+pacemaker_api_result_schema = "@PCMK_SCHEMA_DIR@/api/api-result.rng"
+cib_dir = "@PCMK_CIB_DIR@"
+pacemaker_uname = "@PCMK_USER@"
+pacemaker_gname = "@PCMK_GROUP@"
+pacemaker_wait_timeout_status = 124
+
+
+# resource / stonith agents
+fence_agent_binaries = "@FASEXECPREFIX@/sbin"
+
+
+# sbd
+sbd_binary = "@SBDEXECPREFIX@/sbin/sbd"
+sbd_config = "@SBDCONFDIR@/sbd"
+# this limit is also mentioned in docs, change there as well
+sbd_max_device_num = 3
+# message types are also mentioned in docs, change there as well
+sbd_message_types = ["test", "reset", "off", "crashdump", "exit", "clear"]
+sbd_watchdog_default = "/dev/watchdog"
+
+
+# booth
+# Booth does not support keys longer than 64 bytes.
+booth_authkey_bytes = 64
+booth_authkey_file_mode = 0o600
+booth_binary = "@BOOTHEXECPREFIX@/sbin/booth"
+booth_config_dir = "@BOOTHCONFDIR@"
+
+
+# path manager
 _ocf_1_0_schema_filename = "ocf-1.0.rng"
 _ocf_1_1_schema_filename = "ocf-1.1.rng"
 
@@ -132,15 +165,3 @@ class _PathManager:
 
 
 path = _PathManager()
-
-# Scheduler settings
-async_api_scheduler_interval_ms = 100
-
-pcsd_worker_count = 10
-pcsd_temporary_workers = 10
-pcsd_worker_reset_limit = 100
-pcsd_deadlock_threshold_timeout = 5
-
-task_unresponsive_timeout_seconds = 60 * 60
-task_abandoned_timeout_seconds = 1 * 60
-task_deletion_timeout_seconds = 1 * 60
