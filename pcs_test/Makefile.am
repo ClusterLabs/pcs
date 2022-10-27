@@ -26,9 +26,6 @@ EXTRA_DIST		= \
 			  resources/corosync-qdevice.conf \
 			  resources/corosync-some-node-names.conf \
 			  resources/crm_mon.minimal.xml \
-			  resources/crm_mon_rng/crm_mon-2.3.rng \
-			  resources/crm_mon_rng/crm_mon.rng \
-			  resources/crm_mon_rng/fence-event-2.0.rng \
 			  resources/fenced_metadata.xml \
 			  resources/pcmk_api_rng/api-result.rng \
 			  resources/pcmk_api_rng/crm_mon-2.4.rng \

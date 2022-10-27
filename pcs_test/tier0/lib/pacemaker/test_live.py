@@ -174,7 +174,6 @@ class GetClusterStatusXml(GetClusterStatusMixin, TestCase):
 @mock.patch.object(
     settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
 )
-@mock.patch.object(settings, "crm_mon_schema", rc("crm_mon_rng/crm_mon.rng"))
 class GetClusterStatusDom(GetClusterStatusMixin, TestCase):
     def test_success(self):
         self.config.runner.pcmk.load_state(stdout=self.fixture_xml())
