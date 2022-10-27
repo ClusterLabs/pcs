@@ -778,7 +778,7 @@ class InvalidCibContent(ReportItemMessage):
     """
     Given cib content is not valid
 
-    report -- human readable explanation of a cib invalidity (a stdert of
+    report -- human readable explanation of a cib invalidity (a stderr of
         `crm_verify`)
     can_be_more_verbose -- can the user ask for a more verbose report
     """
