@@ -315,6 +315,7 @@ MODIFIER_GENERATORS = {
     "constraints": lambda xml: replace_all(
         {"./configuration/constraints": xml}
     ),
+    "crm_config": lambda xml: replace_all({"./configuration/crm_config": xml}),
     "fencing_topology": lambda xml: put_or_replace("./configuration", xml),
     "status": lambda xml: put_or_replace(".", xml),
     "tags": lambda xml: put_or_replace("./configuration", xml),
