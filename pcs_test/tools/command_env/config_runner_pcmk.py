@@ -466,8 +466,16 @@ class PcmkShortcuts:
         string before -- the key of a call before which this new call is to be
             placed
         """
+        name_to_metadata_file = {
+            "pacemaker-based": "based_metadata.xml",
+            "pacemaker-controld": "controld_metadata.xml",
+            "pacemaker-fenced": "fenced_metadata.xml",
+            "pacemaker-schedulerd": "schedulerd_metadata.xml",
+        }
         if stdout is None:
-            with open(rc("fenced_metadata.xml")) as a_file:
+            with open(
+                rc(name_to_metadata_file.get(agent_name, "fenced_metadata.xml"))
+            ) as a_file:
                 stdout = a_file.read()
         agent_path = settings.__dict__.get(
             agent_name.replace("-", "_"), settings.pacemaker_fenced

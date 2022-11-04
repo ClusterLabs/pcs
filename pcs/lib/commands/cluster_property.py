@@ -1,9 +1,12 @@
+from collections import Counter
 from typing import (
     Container,
     Dict,
     List,
     Union,
 )
+
+from lxml.etree import _Element
 
 from pcs.common import reports
 from pcs.common.types import StringSequence
@@ -132,6 +135,25 @@ def get_cluster_properties_definition_legacy(
     return property_dict
 
 
+def _configured_options(cluster_property_set_el: _Element) -> List[str]:
+    return [
+        nvpair_dto.name
+        for nvpair_dto in nvpair_multi.nvset_element_to_dto(
+            cluster_property_set_el, rule.RuleInEffectEvalDummy()
+        ).nvpairs
+    ]
+
+
+def _report_items_not_specified(container_id: str) -> reports.ReportItem:
+    return reports.ReportItem.error(
+        reports.messages.AddRemoveItemsNotSpecified(
+            reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
+            reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
+            container_id,
+        )
+    )
+
+
 def set_property(
     env: LibraryEnvironment,
     cluster_options: Dict[str, str],
@@ -158,12 +180,12 @@ def set_property(
             cib, id_provider
         )
     )
-    configured_options = [
-        nvpair_dto.name
-        for nvpair_dto in nvpair_multi.nvset_element_to_dto(
-            cluster_property_set_el, rule.RuleInEffectEvalDummy()
-        ).nvpairs
-    ]
+    if not cluster_options:
+        env.report_processor.report(
+            _report_items_not_specified(cluster_property_set_el.get("id", ""))
+        )
+        raise LibraryError()
+
     to_be_set_options = {}
     to_be_removed_options = []
     for option, value in cluster_options.items():
@@ -172,32 +194,20 @@ def set_property(
         else:
             to_be_removed_options.append(option)
 
-    if not to_be_set_options and not to_be_removed_options:
-        env.report_processor.report(
-            reports.ReportItem.error(
-                reports.messages.AddRemoveItemsNotSpecified(
-                    reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
-                    reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
-                    cluster_property_set_el.get("id", ""),
-                )
-            )
+    if env.report_processor.report_list(
+        cluster_property.validate_set_cluster_properties(
+            property_facade_list,
+            service_manager,
+            to_be_set_options,
+            force=force,
         )
-    else:
-        env.report_processor.report_list(
-            cluster_property.validate_set_cluster_properties(
-                property_facade_list,
-                service_manager,
-                to_be_set_options,
-                force=force,
-            )
-            + cluster_property.validate_remove_cluster_properties(
-                configured_options,
-                service_manager,
-                to_be_removed_options,
-                force=force,
-            )
+        + cluster_property.validate_remove_cluster_properties(
+            _configured_options(cluster_property_set_el),
+            service_manager,
+            to_be_removed_options,
+            force=force,
         )
-    if env.report_processor.has_errors:
+    ).has_errors:
         raise LibraryError()
     nvpair_multi.nvset_update(
         cluster_property_set_el,
@@ -205,6 +215,27 @@ def set_property(
         cluster_options,
     )
     env.push_cib()
+
+
+def _report_duplicate_items(
+    item_list: StringSequence, container_id: str, force: bool
+) -> reports.ReportItemList:
+    duplicates = {
+        item for item, count in Counter(item_list).items() if count > 1
+    }
+    if duplicates:
+        return [
+            reports.ReportItem(
+                severity=reports.get_severity(reports.codes.FORCE, force),
+                message=reports.messages.AddRemoveItemsDuplication(
+                    reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
+                    reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
+                    container_id,
+                    sorted(duplicates),
+                ),
+            )
+        ]
+    return []
 
 
 def unset_property(
@@ -226,14 +257,18 @@ def unset_property(
             cib, id_provider
         )
     )
+    set_id = cluster_property_set_el.get("id", "")
+    if not cluster_options_list:
+        env.report_processor.report(_report_items_not_specified(set_id))
+        raise LibraryError()
+    env.report_processor.report_list(
+        _report_duplicate_items(
+            cluster_options_list, set_id, reports.codes.FORCE in force_flags
+        )
+    )
     if env.report_processor.report_list(
         cluster_property.validate_remove_cluster_properties(
-            [
-                nvpair_dto.name
-                for nvpair_dto in nvpair_multi.nvset_element_to_dto(
-                    cluster_property_set_el, rule.RuleInEffectEvalDummy()
-                ).nvpairs
-            ],
+            _configured_options(cluster_property_set_el),
             env.service_manager,
             cluster_options_list,
             force=reports.codes.FORCE in force_flags,
