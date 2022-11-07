@@ -4,6 +4,7 @@ from lxml import etree
 
 from pcs.common.str_tools import format_list
 
+from pcs_test.tier0.lib.commands.test_cluster_property import ALLOWED_PROPERTIES
 from pcs_test.tools.assertions import ac
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.misc import get_test_resource as rc
@@ -19,56 +20,6 @@ from pcs_test.tools.pcs_runner import (
 # pylint: disable=invalid-name
 
 empty_cib = rc("cib-empty.xml")
-
-ALLOWED_PROPERTIES = [
-    "batch-limit",
-    "cluster-delay",
-    "cluster-infrastructure",
-    "cluster-ipc-limit",
-    "cluster-name",
-    "cluster-recheck-interval",
-    "concurrent-fencing",
-    "dc-deadtime",
-    "dc-version",
-    "election-timeout",
-    "enable-acl",
-    "enable-startup-probes",
-    "fence-reaction",
-    "have-watchdog",
-    "join-finalization-timeout",
-    "join-integration-timeout",
-    "load-threshold",
-    "maintenance-mode",
-    "migration-limit",
-    "no-quorum-policy",
-    "node-action-limit",
-    "node-health-base",
-    "node-health-green",
-    "node-health-red",
-    "node-health-strategy",
-    "node-health-yellow",
-    "pe-error-series-max",
-    "pe-input-series-max",
-    "pe-warn-series-max",
-    "placement-strategy",
-    "priority-fencing-delay",
-    "remove-after-stop",
-    "shutdown-escalation",
-    "shutdown-lock",
-    "shutdown-lock-limit",
-    "start-failure-is-fatal",
-    "startup-fencing",
-    "stonith-action",
-    "stonith-enabled",
-    "stonith-max-attempts",
-    "stonith-timeout",
-    "stonith-watchdog-timeout",
-    "stop-all-resources",
-    "stop-orphan-actions",
-    "stop-orphan-resources",
-    "symmetric-cluster",
-    "transition-delay",
-]
 
 
 def get_invalid_option_messages(option_name, error=True):

@@ -19,7 +19,10 @@
   (`/etc/booth`) is missing ([rhbz#1791670])
 - `pcs quorum device remove` works again (broken since 0.10.13) ([rhbz#2115326])
 - SBD enable from webui works again ([rhbz#2117650])
+- `pcs property set/unset` forbid manipulation of specific cluster properties
+  ([rhbz#2112263])
 
+[rhbz#2112263]: https://bugzilla.redhat.com/show_bug.cgi?id=2112263
 [rhbz#1791670]: https://bugzilla.redhat.com/show_bug.cgi?id=1791670
 [rhbz#1816852]: https://bugzilla.redhat.com/show_bug.cgi?id=1816852
 [rhbz#1918527]: https://bugzilla.redhat.com/show_bug.cgi?id=1918527

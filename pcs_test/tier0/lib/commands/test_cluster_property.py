@@ -12,18 +12,14 @@ from pcs_test.tools.command_env import get_env_tools
 ALLOWED_PROPERTIES = [
     "batch-limit",
     "cluster-delay",
-    "cluster-infrastructure",
     "cluster-ipc-limit",
-    "cluster-name",
     "cluster-recheck-interval",
     "concurrent-fencing",
     "dc-deadtime",
-    "dc-version",
     "election-timeout",
     "enable-acl",
     "enable-startup-probes",
     "fence-reaction",
-    "have-watchdog",
     "join-finalization-timeout",
     "join-integration-timeout",
     "load-threshold",
@@ -485,6 +481,59 @@ class TestPropertySet(
 ):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
+
+    def _set_banned_properties(self, force):
+        self.config.runner.cib.load(
+            crm_config=fixture_crm_config_properties(
+                [
+                    (
+                        "cib-bootstrap-options",
+                        {
+                            "cluster-infrastructure": "corosync",
+                            "cluster-name": "ClusterName",
+                            "dc-version": "2.1.4-5.el9-dc6eb4362e",
+                            "have-watchdog": "no",
+                        },
+                    )
+                ]
+            )
+        )
+        self.load_fake_agent_metadata()
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster_property.set_property(
+                self.env_assist.get_env(),
+                {
+                    "cluster-infrastructure": "cman",
+                    "cluster-name": "HACluster",
+                    "dc-version": "3.14",
+                    "have-watchdog": "yes",
+                    "no-quorum-policy": "freeze",
+                },
+                [reports.codes.FORCE] if force else [],
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTIONS,
+                    option_names=[
+                        "cluster-infrastructure",
+                        "cluster-name",
+                        "dc-version",
+                        "have-watchdog",
+                    ],
+                    allowed=ALLOWED_PROPERTIES,
+                    option_type="cluster property",
+                    allowed_patterns=[],
+                )
+            ]
+        )
+
+    def test_set_banned_properties(self):
+        self._set_banned_properties(False)
+
+    def test_set_banned_properties_forced(self):
+        self._set_banned_properties(True)
 
     def test_set_allowed_properties(self):
         self.config.runner.cib.load()
@@ -960,6 +1009,64 @@ class RemovePropertyMixin:
                 )
             ]
         )
+
+    def _remove_banned_properties(self, force):
+        self.config.runner.cib.load(
+            crm_config=fixture_crm_config_properties(
+                [
+                    (
+                        "cib-bootstrap-options",
+                        {
+                            "cluster-infrastructure": "corosync",
+                            "cluster-name": "ClusterName",
+                            "dc-version": "2.1.4-5.el9-dc6eb4362e",
+                            "have-watchdog": "no",
+                            "no-quorum-policy": "freeze",
+                        },
+                    )
+                ]
+            )
+        )
+        self.load_fake_agent_metadata()
+        self.env_assist.assert_raise_library_error(
+            lambda: self.command(
+                {
+                    "cluster-infrastructure": "",
+                    "cluster-name": "",
+                    "dc-version": "",
+                    "have-watchdog": "",
+                    "no-quorum-policy": "",
+                },
+                [reports.codes.FORCE] if force else [],
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.CANNOT_DO_ACTION_WITH_FORBIDDEN_OPTIONS,
+                    action="remove",
+                    specified_options=[
+                        "cluster-infrastructure",
+                        "cluster-name",
+                        "dc-version",
+                        "have-watchdog",
+                    ],
+                    forbidden_options=[
+                        "cluster-infrastructure",
+                        "cluster-name",
+                        "dc-version",
+                        "have-watchdog",
+                    ],
+                    option_type="cluster property",
+                )
+            ]
+        )
+
+    def test_remove_banned_properties(self):
+        self._remove_banned_properties(False)
+
+    def test_remove_banned_properties_forced(self):
+        self._remove_banned_properties(True)
 
 
 class TestPropertySetEmptyValues(

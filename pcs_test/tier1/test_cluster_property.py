@@ -179,7 +179,7 @@ class TestPropertySet(PropertyMixin, TestCase):
 
     def test_forbidden_properties_forced(self):
         self.assert_pcs_fail(
-            "property set cluster-name=NewName --foce".split(),
+            "property set cluster-name=NewName --force".split(),
             stderr_full=get_invalid_option_messages(
                 "cluster-name", forceable=False
             ),

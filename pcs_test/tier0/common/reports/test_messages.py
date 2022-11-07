@@ -5607,3 +5607,30 @@ class CannotCreateDefaultClusterPropertySet(NameBuildTest):
             ),
             reports.CannotCreateDefaultClusterPropertySet(),
         )
+
+
+class CannotDoActionWithForbiddenOptions(NameBuildTest):
+    def test_singular(self):
+        self.assert_message_from_report(
+            (
+                "Cannot remove forbidden option 'op1', list of all forbidden "
+                "options: 'op1'"
+            ),
+            reports.CannotDoActionWithForbiddenOptions(
+                "remove", ["op1"], ["op1"]
+            ),
+        )
+
+    def test_plural_with_desc(self):
+        self.assert_message_from_report(
+            (
+                "Cannot modify forbidden cluster property options: 'op1', "
+                "'op2', list of all forbidden options: 'op1', 'op2', 'op3'"
+            ),
+            reports.CannotDoActionWithForbiddenOptions(
+                "modify",
+                ["op1", "op2"],
+                ["op1", "op2", "op3"],
+                "cluster property",
+            ),
+        )
