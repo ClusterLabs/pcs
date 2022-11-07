@@ -26,6 +26,13 @@ from pcs.lib.cib.tools import (
 from pcs.lib.errors import LibraryError
 from pcs.lib.resource_agent import ResourceAgentFacade
 
+BANNED_CLUSTER_PROPERTY_LIST = [
+    "cluster-infrastructure",
+    "cluster-name",
+    "dc-version",
+    "have-watchdog",
+]
+
 
 def _validate_stonith_watchdog_timeout_property(
     service_manager: ServiceManagerInterface,
@@ -67,12 +74,14 @@ def validate_set_cluster_properties(
         parameter.name: parameter
         for facade in cluster_property_facade_list
         for parameter in facade.metadata.parameters
+        if parameter.name not in BANNED_CLUSTER_PROPERTY_LIST
     }
     severity = reports.get_severity(reports.codes.FORCE, force)
     validators.append(
         validate.NamesIn(
             possible_options_dict.keys(),
             option_type="cluster property",
+            banned_name_list=BANNED_CLUSTER_PROPERTY_LIST,
             severity=severity,
         )
     )
@@ -151,6 +160,7 @@ def validate_remove_cluster_properties(
         option_type="cluster property",
         severity=reports.get_severity(reports.codes.FORCE, force),
     ).validate({option: "" for option in to_be_removed_options})
+
     if (
         "stonith-watchdog-timeout" in to_be_removed_options
         and "stonith-watchdog-timeout" in configured_options
@@ -158,6 +168,20 @@ def validate_remove_cluster_properties(
         report_list.extend(
             _validate_stonith_watchdog_timeout_property(
                 service_manager, "", force=force
+            )
+        )
+    specified_forbidden_options = set(
+        BANNED_CLUSTER_PROPERTY_LIST
+    ).intersection(to_be_removed_options)
+    if specified_forbidden_options:
+        report_list.append(
+            reports.ReportItem.error(
+                reports.messages.CannotDoActionWithForbiddenOptions(
+                    "remove",
+                    sorted(specified_forbidden_options),
+                    sorted(BANNED_CLUSTER_PROPERTY_LIST),
+                    "cluster property",
+                )
             )
         )
     return report_list

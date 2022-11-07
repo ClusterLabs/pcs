@@ -258,6 +258,7 @@ def unset_property(
         )
     )
     set_id = cluster_property_set_el.get("id", "")
+
     if not cluster_options_list:
         env.report_processor.report(_report_items_not_specified(set_id))
         raise LibraryError()
@@ -275,6 +276,7 @@ def unset_property(
         )
     ).has_errors:
         raise LibraryError()
+
     nvpair_multi.nvset_update(
         cluster_property_set_el,
         id_provider,

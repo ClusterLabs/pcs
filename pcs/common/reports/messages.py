@@ -7594,3 +7594,27 @@ class CannotCreateDefaultClusterPropertySet(ReportItemMessage):
             "Cannot create default cluster_property_set element. ID "
             f"'{DEFAULT_CLUSTER_PROPERTY_SET_ID}' already exist"
         )
+
+
+@dataclass(frozen=True)
+class CannotDoActionWithForbiddenOptions(ReportItemMessage):
+    _code = codes.CANNOT_DO_ACTION_WITH_FORBIDDEN_OPTIONS
+
+    action: str
+    specified_options: List[str]
+    forbidden_options: List[str]
+    option_type: Optional[str] = None
+
+    @property
+    def message(self) -> str:
+        return (
+            "Cannot {action} forbidden {desc}option{plural_options} "
+            "{specified_options_list}, list of all forbidden options: "
+            "{forbidden_options_list}"
+        ).format(
+            action=self.action,
+            desc=format_optional(self.option_type),
+            plural_options=format_plural(self.forbidden_options, "", "s:"),
+            specified_options_list=format_list(self.specified_options),
+            forbidden_options_list=format_list(self.forbidden_options),
+        )
