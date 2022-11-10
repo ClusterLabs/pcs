@@ -5,6 +5,7 @@ from typing import (
     Dict,
 )
 
+from pcs import settings
 from pcs.cli.common import middleware
 from pcs.lib.commands import (
     acl,
@@ -151,30 +152,39 @@ def load_module(env, middleware_factory, name):
         )
 
     if name == "booth":
+        bindings = {
+            "config_setup": booth.config_setup,
+            "config_destroy": booth.config_destroy,
+            "config_text": booth.config_text,
+            "config_ticket_add": booth.config_ticket_add,
+            "config_ticket_remove": booth.config_ticket_remove,
+            "create_in_cluster": booth.create_in_cluster,
+            "remove_from_cluster": booth.remove_from_cluster,
+            "restart": booth.restart,
+            "config_sync": booth.config_sync,
+            "enable_booth": booth.enable_booth,
+            "disable_booth": booth.disable_booth,
+            "start_booth": booth.start_booth,
+            "stop_booth": booth.stop_booth,
+            "pull_config": booth.pull_config,
+            "get_status": booth.get_status,
+            "ticket_grant": booth.ticket_grant,
+            "ticket_revoke": booth.ticket_revoke,
+        }
+        if settings.booth_enable_authfile_set_enabled:
+            bindings[
+                "config_set_enable_authfile"
+            ] = booth.config_set_enable_authfile
+        if settings.booth_enable_authfile_unset_enabled:
+            bindings[
+                "config_unset_enable_authfile"
+            ] = booth.config_unset_enable_authfile
         return bind_all(
             env,
             middleware.build(
                 middleware_factory.booth_conf, middleware_factory.cib
             ),
-            {
-                "config_setup": booth.config_setup,
-                "config_destroy": booth.config_destroy,
-                "config_text": booth.config_text,
-                "config_ticket_add": booth.config_ticket_add,
-                "config_ticket_remove": booth.config_ticket_remove,
-                "create_in_cluster": booth.create_in_cluster,
-                "remove_from_cluster": booth.remove_from_cluster,
-                "restart": booth.restart,
-                "config_sync": booth.config_sync,
-                "enable_booth": booth.enable_booth,
-                "disable_booth": booth.disable_booth,
-                "start_booth": booth.start_booth,
-                "stop_booth": booth.stop_booth,
-                "pull_config": booth.pull_config,
-                "get_status": booth.get_status,
-                "ticket_grant": booth.ticket_grant,
-                "ticket_revoke": booth.ticket_revoke,
-            },
+            bindings,
         )
 
     if name == "cluster":

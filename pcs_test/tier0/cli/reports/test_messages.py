@@ -671,3 +671,26 @@ class AgentSelfValidationResult(CliReportMessageTestBase):
             messages.AgentSelfValidationResult("line 1\nline 3\nline 2"),
             codes.SKIP_OFFLINE_NODES,
         )
+
+
+class BoothAuthfileNotUsed(CliReportMessageTestBase):
+    def test_message(self):
+        self.assert_message(
+            messages.BoothAuthfileNotUsed("instance"),
+            (
+                "Booth authfile is not enabled. Run 'pcs booth enable-authfile "
+                "--name instance' to enable usage of authfile."
+            ),
+        )
+
+
+class BoothUnsupportedOptionEnableAuthfile(CliReportMessageTestBase):
+    def test_message(self):
+        self.assert_message(
+            messages.BoothUnsupportedOptionEnableAuthfile("instance"),
+            (
+                "Unsupported option 'enable-authfile' is set in booth "
+                "configuration. Run 'pcs booth clean-enable-authfile --name "
+                "instance' to remove the option."
+            ),
+        )

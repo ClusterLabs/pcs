@@ -180,6 +180,7 @@ class FixtureMixin:
     "pcs.lib.tools.generate_binary_key",
     lambda random_bytes_count: RANDOM_KEY,
 )
+@mock.patch("pcs.settings.booth_enable_authfile_set_enabled", False)
 class ConfigSetup(TestCase, FixtureMixin):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
@@ -475,6 +476,50 @@ class ConfigSetup(TestCase, FixtureMixin):
                 ),
             ],
             expected_in_processor=False,
+        )
+
+
+@mock.patch(
+    "pcs.lib.tools.generate_binary_key",
+    lambda random_bytes_count: RANDOM_KEY,
+)
+@mock.patch("pcs.settings.booth_enable_authfile_set_enabled", True)
+class ConfigSetupAuthfileFix(TestCase, FixtureMixin):
+    def setUp(self):
+        self.instance = "instance name"
+        self.env_assist, self.config = get_env_tools(self)
+        self.sites = ["1.1.1.1", "2.2.2.2"]
+        self.arbitrators = ["3.3.3.3"]
+
+    def test_success_default_instance(self):
+        self.config.raw_file.write(
+            file_type_codes.BOOTH_KEY,
+            self.fixture_key_path(self.instance),
+            RANDOM_KEY,
+            name="raw_file.write.key",
+        )
+        self.config.raw_file.write(
+            file_type_codes.BOOTH_CONFIG,
+            self.fixture_cfg_path(self.instance),
+            dedent(
+                """\
+                authfile = {key_path}
+                {fix_option} = yes
+                site = 1.1.1.1
+                site = 2.2.2.2
+                arbitrator = 3.3.3.3
+                """.format(
+                    fix_option=constants.AUTHFILE_FIX_OPTION,
+                    key_path=self.fixture_key_path(self.instance),
+                )
+            ).encode("utf-8"),
+            name="raw_file.write.cfg",
+        )
+        commands.config_setup(
+            self.env_assist.get_env(),
+            self.sites,
+            self.arbitrators,
+            instance_name=self.instance,
         )
 
 
@@ -3432,6 +3477,12 @@ class PullConfigWithAuthfileFailure(PullConfigWithAuthfile):
 class GetStatus(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
+        mock_check_patcher = mock.patch(
+            "pcs.lib.booth.status.check_authfile_misconfiguration"
+        )
+        self.mock_check = mock_check_patcher.start()
+        self.mock_check.return_value = None
+        self.addCleanup(mock_check_patcher.stop)
 
     def test_invalid_instance(self):
         instance_name = "/tmp/booth/booth"
@@ -3495,7 +3546,7 @@ class GetStatus(TestCase):
         self.assert_success()
 
     def test_success_custom_instance(self):
-        self.assert_success(instance_name="my_booth")
+        self.assert_success("custom instance name")
 
     def test_daemon_status_failure(self):
         self.config.runner.booth.status_daemon(
@@ -3545,4 +3596,75 @@ class GetStatus(TestCase):
                 ),
             ],
             expected_in_processor=False,
+        )
+
+
+@mock.patch("pcs.settings.booth_enable_authfile_set_enabled", True)
+@mock.patch("pcs.settings.booth_enable_authfile_unset_enabled", True)
+class GetStatusWarnings(TestCase, FixtureMixin):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        self.instance_name = "instance name"
+
+    def assert_success(self):
+        self.config.runner.booth.status_daemon(
+            self.instance_name, stdout="daemon status"
+        )
+        self.config.runner.booth.status_tickets(
+            self.instance_name, stdout="tickets status"
+        )
+        self.config.runner.booth.status_peers(
+            self.instance_name, stdout="peers status"
+        )
+        self.assertEqual(
+            commands.get_status(
+                self.env_assist.get_env(), instance_name=self.instance_name
+            ),
+            {
+                "status": "daemon status",
+                "ticket": "tickets status",
+                "peers": "peers status",
+            },
+        )
+
+    def test_warning(self):
+        self.config.raw_file.exists(
+            file_type_codes.BOOTH_CONFIG,
+            self.fixture_cfg_path(self.instance_name),
+        )
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
+            self.fixture_cfg_path(self.instance_name),
+            content=f"authfile = file\n{constants.AUTHFILE_FIX_OPTION} = no".encode(),
+        )
+        self.assert_success()
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.BOOTH_AUTHFILE_NOT_USED,
+                    instance=self.instance_name,
+                )
+            ]
+        )
+
+    def test_read_file_failure(self):
+        config = "invalid file ' format"
+        self.config.raw_file.exists(
+            file_type_codes.BOOTH_CONFIG,
+            self.fixture_cfg_path(self.instance_name),
+        )
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
+            self.fixture_cfg_path(self.instance_name),
+            content=config.encode(),
+        )
+        self.assert_success()
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.BOOTH_CONFIG_UNEXPECTED_LINES,
+                    line_list=[config],
+                    file_path=self.fixture_cfg_path(self.instance_name),
+                )
+            ]
         )

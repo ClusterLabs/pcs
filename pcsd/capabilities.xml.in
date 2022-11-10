@@ -47,6 +47,24 @@
         daemon urls: booth_get_config
       </description>
     </capability>
+    <capability id="booth.enable-authfile.set" in-pcs="@BOOTH_ENABLE_AUTHFILE_SET_CAPABILITY@" in-pcsd="0">
+      <description>
+        Support for setting 'enable-authfile' in booth configuration. This
+        option is required by some versions of booth in order to use a
+        configured authfile.
+
+        pcs commands: booth enable-authfile
+      </description>
+    </capability>
+    <capability id="booth.enable-authfile.unset" in-pcs="@BOOTH_ENABLE_AUTHFILE_UNSET_CAPABILITY@" in-pcsd="0">
+      <description>
+        Support for removing 'enable-authfile' from booth configuration. This
+        option is required by some versions of booth in order to use a
+        configured authfile.
+
+        pcs commands: booth clean-enable-authfile
+      </description>
+    </capability>
 
 
 

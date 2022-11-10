@@ -1,5 +1,9 @@
-from unittest import TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
 
+from pcs.lib.booth import constants
 from pcs.lib.booth.config_facade import ConfigFacade
 from pcs.lib.booth.config_parser import ConfigItem
 
@@ -146,6 +150,7 @@ class SetAuthfile(TestCase):
             ConfigItem("ticket", "ticketB", []),
         ]
 
+    @mock.patch("pcs.settings.booth_enable_authfile_set_enabled", False)
     def test_add_authfile(self):
         conf = ConfigFacade(self.conf_struct_base + self.conf_struct_tickets)
         conf.set_authfile("/path/to/auth.file")
@@ -158,6 +163,7 @@ class SetAuthfile(TestCase):
             ),
         )
 
+    @mock.patch("pcs.settings.booth_enable_authfile_set_enabled", False)
     def test_change_authfile(self):
         conf = ConfigFacade(
             self.conf_struct_base
@@ -172,6 +178,46 @@ class SetAuthfile(TestCase):
             conf.config,
             (
                 [ConfigItem("authfile", "/path/to/auth.file", [])]
+                + self.conf_struct_base
+                + self.conf_struct_tickets
+            ),
+        )
+
+    @mock.patch("pcs.settings.booth_enable_authfile_set_enabled", True)
+    def test_add_authfile_fix_enabled(self):
+        conf = ConfigFacade(self.conf_struct_base + self.conf_struct_tickets)
+        conf.set_authfile("/path/to/auth.file")
+        self.assertEqual(
+            conf.config,
+            (
+                [
+                    ConfigItem("authfile", "/path/to/auth.file", []),
+                    ConfigItem(constants.AUTHFILE_FIX_OPTION, "yes", []),
+                ]
+                + self.conf_struct_base
+                + self.conf_struct_tickets
+            ),
+        )
+
+    @mock.patch("pcs.settings.booth_enable_authfile_set_enabled", True)
+    def test_change_authfile_fix_enabled(self):
+        conf = ConfigFacade(
+            self.conf_struct_base
+            + [
+                ConfigItem("authfile", "/old/path/to/auth1.file", []),
+                ConfigItem(constants.AUTHFILE_FIX_OPTION, "yes", []),
+                ConfigItem("authfile", "/old/path/to/auth2.file", []),
+            ]
+            + self.conf_struct_tickets
+        )
+        conf.set_authfile("/path/to/auth.file")
+        self.assertEqual(
+            conf.config,
+            (
+                [
+                    ConfigItem("authfile", "/path/to/auth.file", []),
+                    ConfigItem(constants.AUTHFILE_FIX_OPTION, "yes", []),
+                ]
                 + self.conf_struct_base
                 + self.conf_struct_tickets
             ),

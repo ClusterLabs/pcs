@@ -36,7 +36,13 @@ prefix = "PCS.SETTINGS."
 
 for opt, val in os.environ.items():
     if opt.startswith(prefix):
-        setattr(settings, opt[len(prefix):], val)
+        opt_name = opt[len(prefix) :]
+        old_val = getattr(settings, opt_name)
+        if type(old_val) is bool:
+            val = val == str(True)
+        elif type(old_val) is int:
+            val = int(val)
+        setattr(settings, opt_name, val)
 
 from pcs import app
 app.main(sys.argv[1:])

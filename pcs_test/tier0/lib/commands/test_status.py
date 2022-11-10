@@ -1,9 +1,14 @@
+import os
 from textwrap import dedent
-from unittest import TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from pcs import settings
 from pcs.common import file_type_codes
 from pcs.common.reports import codes as report_codes
+from pcs.lib.booth import constants
 from pcs.lib.commands import status
 
 from pcs_test.tools import fixture
@@ -11,8 +16,11 @@ from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.misc import read_test_resource as rc_read
 
 
-class FullClusterStatusPlaintext(TestCase):
-    # pylint: disable=too-many-public-methods
+def _booth_config_path_fixture(instance_name="booth"):
+    return os.path.join(settings.booth_config_dir, f"{instance_name}.conf")
+
+
+class FullClusterStatusPlaintextBase(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.node_name_list = ["node1", "node2", "node3"]
@@ -138,6 +146,11 @@ class FullClusterStatusPlaintext(TestCase):
             )
         )
 
+
+@mock.patch("pcs.settings.booth_enable_authfile_set_enabled", False)
+@mock.patch("pcs.settings.booth_enable_authfile_unset_enabled", False)
+class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
+    # pylint: disable=too-many-public-methods
     def test_life_cib_mocked_corosync(self):
         self.config.env.set_corosync_conf_data("corosync conf data")
         self.env_assist.assert_raise_library_error(
@@ -882,3 +895,158 @@ class FullClusterStatusPlaintext(TestCase):
                   sbd: active/enabled"""
             ),
         )
+
+
+class FullClusterStatusPlaintextBoothWarning(FullClusterStatusPlaintextBase):
+    # pylint: disable=too-many-public-methods
+    def setUp(self):
+        super().setUp()
+        self._fixture_config_live_minimal()
+        self._fixture_config_local_daemons()
+
+    def _assert_status_output(self, warning=None):
+        warning_str = ""
+        if warning:
+            warning_str = f"\n\nWARNINGS:\n{warning}\n"
+        self.assertEqual(
+            status.full_cluster_status_plaintext(self.env_assist.get_env()),
+            dedent(
+                """\
+                Cluster name: test99{warning_str}
+                crm_mon cluster status
+
+                Daemon Status:
+                  corosync: active/enabled
+                  pacemaker: active/enabled
+                  pcsd: active/enabled"""
+            ).format(warning_str=warning_str),
+        )
+
+    @mock.patch("pcs.settings.booth_enable_authfile_set_enabled", True)
+    @mock.patch("pcs.settings.booth_enable_authfile_unset_enabled", False)
+    def test_booth_not_configured_set_enabled(self):
+        self.config.raw_file.exists(
+            file_type_codes.BOOTH_CONFIG,
+            _booth_config_path_fixture(),
+            exists=False,
+        )
+        self._assert_status_output()
+
+    @mock.patch("pcs.settings.booth_enable_authfile_set_enabled", True)
+    @mock.patch("pcs.settings.booth_enable_authfile_unset_enabled", False)
+    def test_booth_authfile_not_configured_set_enabled(self):
+        self.config.raw_file.exists(
+            file_type_codes.BOOTH_CONFIG,
+            _booth_config_path_fixture(),
+            exists=True,
+        )
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
+            _booth_config_path_fixture(),
+            content=dedent(
+                """
+                site = 1.1.1.1
+                """
+            ).encode("utf-8"),
+        )
+        self._assert_status_output()
+
+    @mock.patch("pcs.settings.booth_enable_authfile_set_enabled", False)
+    @mock.patch("pcs.settings.booth_enable_authfile_unset_enabled", True)
+    def test_booth_not_configured_unset_enabled(self):
+        self.config.raw_file.exists(
+            file_type_codes.BOOTH_CONFIG,
+            _booth_config_path_fixture(),
+            exists=False,
+        )
+        self._assert_status_output()
+
+    @mock.patch("pcs.settings.booth_enable_authfile_set_enabled", True)
+    @mock.patch("pcs.settings.booth_enable_authfile_unset_enabled", False)
+    def test_missing_option(self):
+        self.config.raw_file.exists(
+            file_type_codes.BOOTH_CONFIG,
+            _booth_config_path_fixture(),
+            exists=True,
+        )
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
+            _booth_config_path_fixture(),
+            content=dedent(
+                f"""
+                authfile = {_booth_config_path_fixture()}
+                site = 1.1.1.1
+                """
+            ).encode("utf-8"),
+        )
+        self._assert_status_output(
+            "Booth is configured to use an authfile, but authfile is not "
+            "enabled. Run 'pcs booth enable-authfile --name booth' to enable "
+            "usage of booth autfile."
+        )
+
+    @mock.patch("pcs.settings.booth_enable_authfile_set_enabled", True)
+    @mock.patch("pcs.settings.booth_enable_authfile_unset_enabled", False)
+    def test_properly_configured(self):
+        self.config.raw_file.exists(
+            file_type_codes.BOOTH_CONFIG,
+            _booth_config_path_fixture(),
+            exists=True,
+        )
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
+            _booth_config_path_fixture(),
+            content=dedent(
+                f"""
+                authfile = {_booth_config_path_fixture()}
+                {constants.AUTHFILE_FIX_OPTION} = yes
+                site = 1.1.1.1
+                """
+            ).encode("utf-8"),
+        )
+        self._assert_status_output()
+
+    @mock.patch("pcs.settings.booth_enable_authfile_set_enabled", False)
+    @mock.patch("pcs.settings.booth_enable_authfile_unset_enabled", True)
+    def test_unsupported_option(self):
+        self.config.raw_file.exists(
+            file_type_codes.BOOTH_CONFIG,
+            _booth_config_path_fixture(),
+            exists=True,
+        )
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
+            _booth_config_path_fixture(),
+            content=dedent(
+                f"""
+                authfile = {_booth_config_path_fixture()}
+                {constants.AUTHFILE_FIX_OPTION} = yes
+                site = 1.1.1.1
+                """
+            ).encode("utf-8"),
+        )
+        self._assert_status_output(
+            "Unsupported option 'enable-authfile' is set in booth "
+            "configuration. Run 'pcs booth enable-booth-clean --name booth' to "
+            "remove the option."
+        )
+
+    @mock.patch("pcs.settings.booth_enable_authfile_set_enabled", False)
+    @mock.patch("pcs.settings.booth_enable_authfile_unset_enabled", True)
+    def test_unsupported_option_not_present(self):
+        self.config.raw_file.exists(
+            file_type_codes.BOOTH_CONFIG,
+            _booth_config_path_fixture(),
+            exists=True,
+        )
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
+            _booth_config_path_fixture(),
+            content=dedent(
+                f"""
+                authfile = {_booth_config_path_fixture()}
+                site = 1.1.1.1
+                """
+            ).encode("utf-8"),
+        )
+        self._assert_status_output()

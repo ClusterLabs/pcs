@@ -35,6 +35,7 @@ pcs_test/resources/temp*.xml
 pcs_test/resources/temp*
 *.8
 
+pcsd/capabilities.xml
 pcsd/pcsd
 pcsd/pcsd-cli.rb
 pcsd/settings.rb

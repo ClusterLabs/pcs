@@ -7580,3 +7580,35 @@ class AgentSelfValidationInvalidData(ReportItemMessage):
     @property
     def message(self) -> str:
         return f"Invalid validation data from agent: {self.reason}"
+
+
+@dataclass(frozen=True)
+class BoothAuthfileNotUsed(ReportItemMessage):
+    """
+    Booth autfile configured but has no effect, another option should be
+    enabled as well.
+    """
+
+    instance: Optional[str]
+    _code = codes.BOOTH_AUTHFILE_NOT_USED
+
+    @property
+    def message(self) -> str:
+        return "Booth authfile is not enabled"
+
+
+@dataclass(frozen=True)
+class BoothUnsupportedOptionEnableAuthfile(ReportItemMessage):
+    """
+    Booth enable-autfile option is present in the booth configuration but is
+    not accepted by booth, which will cause booth to fail at startup.
+    """
+
+    instance: Optional[str]
+    _code = codes.BOOTH_UNSUPPORTED_OPTION_ENABLE_AUTHFILE
+
+    @property
+    def message(self) -> str:
+        return (
+            "Unsupported option 'enable-authfile' is set in booth configuration"
+        )

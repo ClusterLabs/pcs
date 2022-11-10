@@ -115,6 +115,34 @@ def config_ticket_remove(lib, arg_list, modifiers):
     )
 
 
+def enable_authfile(lib, arg_list, modifiers) -> None:
+    """
+    Options:
+      * --booth-conf - booth config file
+      * --booth-key - booth auth key file
+      * --name - name of a booth instance
+    """
+    modifiers.ensure_only_supported("--booth-conf", "--name", "--booth-key")
+    if len(arg_list):
+        raise CmdLineInputError()
+    lib.booth.config_set_enable_authfile(instance_name=modifiers.get("--name"))
+
+
+def enable_authfile_clean(lib, arg_list, modifiers) -> None:
+    """
+    Options:
+      * --booth-conf - booth config file
+      * --booth-key - booth auth key file
+      * --name - name of a booth instance
+    """
+    modifiers.ensure_only_supported("--booth-conf", "--name", "--booth-key")
+    if len(arg_list):
+        raise CmdLineInputError()
+    lib.booth.config_unset_enable_authfile(
+        instance_name=modifiers.get("--name")
+    )
+
+
 def _ticket_operation(lib_call, arg_list, booth_name):
     """
     Commandline options:

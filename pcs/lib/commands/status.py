@@ -22,6 +22,8 @@ from pcs.common.str_tools import (
     format_list,
     indent,
 )
+from pcs.lib.booth import status as booth_status
+from pcs.lib.booth.env import BoothEnv
 from pcs.lib.cib import (
     nvpair,
     stonith,
@@ -135,6 +137,9 @@ def full_cluster_status_plaintext(
     warning_list = list(warning_list)
     warning_list.extend(_stonith_warnings(cib, is_sbd_running))
     warning_list.extend(_move_constraints_warnings(cib))
+    warning_list.extend(
+        _booth_authfile_warning(env.report_processor, env.get_booth_env(None))
+    )
 
     # put it all together
     if report_processor.has_errors:
@@ -239,6 +244,31 @@ def _move_constraints_warnings(cib: _Element) -> List[str]:
             "Run 'pcs constraint location' or 'pcs resource clear "
             "<resource id>' to view or remove the constraints, respectively"
         )
+    return warning_list
+
+
+def _booth_authfile_warning(
+    report_processor: ReportProcessor, env: BoothEnv
+) -> List[str]:
+    warning_list: List[str] = []
+    report_msg = booth_status.check_authfile_misconfiguration(
+        env, report_processor
+    )
+    if report_msg:
+        if isinstance(report_msg, reports.messages.BoothAuthfileNotUsed):
+            warning_list.append(
+                "Booth is configured to use an authfile, but authfile is not "
+                "enabled. Run 'pcs booth enable-authfile --name "
+                f"{env.instance_name}' to enable usage of booth autfile."
+            )
+        elif isinstance(
+            report_msg, reports.messages.BoothUnsupportedOptionEnableAuthfile
+        ):
+            warning_list.append(
+                "Unsupported option 'enable-authfile' is set in booth "
+                "configuration. Run 'pcs booth enable-booth-clean --name "
+                f"{env.instance_name}' to remove the option."
+            )
     return warning_list
 
 

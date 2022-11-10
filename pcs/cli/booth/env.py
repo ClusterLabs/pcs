@@ -62,9 +62,10 @@ def middleware_config(config_path, key_path):
             # pcs.cli.common.lib_wrapper.lib_env_to_cli_env
             raise output.error("Error during library communication")
         try:
-            key_file.write(
-                modified_env["key_file"]["content"], can_overwrite=True
-            )
+            if modified_env["key_file"]["content"] is not None:
+                key_file.write(
+                    modified_env["key_file"]["content"], can_overwrite=True
+                )
             config_file.write(
                 modified_env["config_file"]["content"], can_overwrite=True
             )

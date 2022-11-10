@@ -9,6 +9,7 @@
 ### Added
 - Support for resource/stonith agent self-validation of instance attributes via
   pacemaker ([rhbz#1816852])
+- Support for booth 'enable-authfile' fix ([rhbz#2132582])
 
 ### Fixed
 - `pcs resource manage --monitor` no longer enables monitor operation for all
@@ -25,6 +26,7 @@
 [rhbz#2115326]: https://bugzilla.redhat.com/show_bug.cgi?id=2115326
 [rhbz#2116838]: https://bugzilla.redhat.com/show_bug.cgi?id=2116838
 [rhbz#2117650]: https://bugzilla.redhat.com/show_bug.cgi?id=2117650
+[rhbz#2132582]: https://bugzilla.redhat.com/show_bug.cgi?id=2132582
 
 
 ## [0.10.14] - 2022-06-23
