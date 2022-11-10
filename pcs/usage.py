@@ -5,9 +5,11 @@ from typing import (
     Tuple,
 )
 
+from pcs import settings
 from pcs.cli.common.output import format_wrap
 from pcs.cli.reports.output import print_to_stderr
 from pcs.common.str_tools import (
+    format_optional,
     indent,
     outdent,
 )
@@ -2930,6 +2932,17 @@ Commands:
 
 
 def booth(args=()):
+    enable_authfile = """
+    enable-authfile
+        Add option 'enable-authfile' to booth configuration. In some versions of
+        booth, auhfile is not used by default and explicit enabling is required.
+"""
+    enable_authfile_clean = """
+    clean-enable-authfile
+        Remove 'enable-authfile' option from booth configuration. This is
+        useful when upgrading from booth that required the option to be present
+        to a new version which doesn't tolerate the option.
+"""
     output = """
 Usage: pcs booth <command>
 Manage booth (cluster ticket manager)
@@ -2962,7 +2975,7 @@ Commands:
     create ip <address>
         Make the cluster run booth service on the specified ip address as
         a cluster resource.  Typically this is used to run booth site.
-
+{enable_authfile}{enable_authfile_clean}
     delete
         Remove booth resources created by the "pcs booth create" command.
 
@@ -3012,7 +3025,14 @@ Commands:
 
     stop
         Stop booth arbitrator service.
-"""
+""".format(
+        enable_authfile=format_optional(
+            settings.booth_enable_authfile_set_enabled, enable_authfile
+        ),
+        enable_authfile_clean=format_optional(
+            settings.booth_enable_authfile_unset_enabled, enable_authfile_clean
+        ),
+    )
     return sub_usage(args, output)
 
 

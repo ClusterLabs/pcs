@@ -5575,3 +5575,19 @@ class ResourceCloneIncompatibleMetaAttributes(NameBuildTest):
                 group_id=group_id,
             ),
         )
+
+
+class BoothAuthfileNotUsed(NameBuildTest):
+    def test_message(self):
+        self.assert_message_from_report(
+            "Booth authfile is not enabled",
+            reports.BoothAuthfileNotUsed("instance name"),
+        )
+
+
+class BoothUnsupportedOptionEnableAuthfile(NameBuildTest):
+    def test_message(self):
+        self.assert_message_from_report(
+            "Unsupported option 'enable-authfile' is set in booth configuration",
+            reports.BoothUnsupportedOptionEnableAuthfile("instance name"),
+        )

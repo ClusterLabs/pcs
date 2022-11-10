@@ -143,6 +143,8 @@ booth_authkey_bytes = 64
 booth_authkey_file_mode = 0o600
 booth_binary = "@BOOTHEXECPREFIX@/sbin/booth"
 booth_config_dir = "@BOOTHCONFDIR@"
+booth_enable_authfile_set_enabled = @BOOTH_ENABLE_AUTHFILE_SET_ENABLED@
+booth_enable_authfile_unset_enabled = @BOOTH_ENABLE_AUTHFILE_UNSET_ENABLED@ or booth_enable_authfile_set_enabled
 
 
 # path manager

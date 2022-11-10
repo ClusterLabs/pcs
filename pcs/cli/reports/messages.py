@@ -570,6 +570,28 @@ class AgentSelfValidationResult(CliReportMessageCustom):
         return f"{self._base_msg}{force_text}:\n{self._formatted_result}"
 
 
+class BoothAuthfileNotUsed(CliReportMessageCustom):
+    _obj: messages.BoothAuthfileNotUsed
+
+    @property
+    def message(self) -> str:
+        return (
+            f"{self._obj.message}. Run 'pcs booth enable-authfile --name "
+            f"{self._obj.instance}' to enable usage of authfile."
+        )
+
+
+class BoothUnsupportedOptionEnableAuthfile(CliReportMessageCustom):
+    _obj: messages.BoothUnsupportedOptionEnableAuthfile
+
+    @property
+    def message(self) -> str:
+        return (
+            f"{self._obj.message}. Run 'pcs booth clean-enable-authfile --name "
+            f"{self._obj.instance}' to remove the option."
+        )
+
+
 def _create_report_msg_map() -> Dict[str, type]:
     result: Dict[str, type] = {}
     for report_msg_cls in get_all_subclasses(CliReportMessageCustom):

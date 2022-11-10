@@ -175,6 +175,16 @@ AC_ARG_ENABLE([use-local-cache-only],
 	      [AS_HELP_STRING([--enable-use-local-cache-only], [Use only local cache to build bundles and disable downloads])],
 	      [cache_only="yes"])
 
+# This should be removed in the next major release
+AC_ARG_ENABLE([booth-enable-authfile-set],
+	      [AS_HELP_STRING([--enable-booth-enable-authfile-set], [Enable support for setting enable-authfile booth option])],
+	      [booth_enable_authfile_set="yes"])
+
+# This should stay here for at least another major release after booth-enable-authfile-set is removed
+AC_ARG_ENABLE([booth-enable-authfile-unset],
+	      [AS_HELP_STRING([--enable-booth-enable-authfile-unset], [Enable support for removing enable-authfile booth option])],
+	      [booth_enable_authfile_unset="yes"])
+
 # this will catch both ID and ID_LIKE from os-release
 AC_ARG_WITH([distro],
 	    [AS_HELP_STRING([--with-distro=DIR], [Set defaults to specified distro. Default: autodetected])],
@@ -409,6 +419,27 @@ AM_CONDITIONAL([INSTALL_EMBEDDED_GEMS], [test -n "$GEM_HOME"])
 
 AM_CONDITIONAL([ENABLE_DOWNLOAD], [test "x$cache_only" != "xyes"])
 
+if test "x$booth_enable_authfile_set" = "xyes"; then
+	BOOTH_ENABLE_AUTHFILE_SET_DOC="
+.TP
+enable-authfile
+Add option 'enable-authfile' to booth configuration. In some versions of booth, auhfile is not used by default and explicit enabling is required."
+fi
+if test "x$booth_enable_authfile_unset" = "xyes"; then
+	BOOTH_ENABLE_AUTHFILE_UNSET_DOC="
+.TP
+clean-enable-authfile
+Remove 'enable-authfile' option from booth configuration. This is useful when upgrading from booth that required the option to be present to a new version which doesn't tolerate the option."
+fi
+_AM_SUBST_NOTMAKE([BOOTH_ENABLE_AUTHFILE_SET_DOC])
+_AM_SUBST_NOTMAKE([BOOTH_ENABLE_AUTHFILE_UNSET_DOC])
+AC_SUBST([BOOTH_ENABLE_AUTHFILE_SET_DOC])
+AC_SUBST([BOOTH_ENABLE_AUTHFILE_UNSET_DOC])
+AC_SUBST([BOOTH_ENABLE_AUTHFILE_SET_ENABLED], [$(if test "x$booth_enable_authfile_set" = "xyes"; then echo "True"; else echo "False"; fi)])
+AC_SUBST([BOOTH_ENABLE_AUTHFILE_UNSET_ENABLED], [$(if test "x$booth_enable_authfile_unset" = "xyes"; then echo "True"; else echo "False"; fi)])
+AC_SUBST([BOOTH_ENABLE_AUTHFILE_SET_CAPABILITY], [$(test "x$booth_enable_authfile_set" != "xyes"; echo "$?")])
+AC_SUBST([BOOTH_ENABLE_AUTHFILE_UNSET_CAPABILITY], [$(test "x$booth_enable_authfile_unset" != "xyes"; echo "$?")])
+
 # detect different paths required to generate default settings
 AC_PATH_PROG([BASH], [bash])
 if test "x$BASH" = "x"; then
@@ -538,6 +569,7 @@ AC_CONFIG_FILES([Makefile
 		 pcs/pcs.8
 		 pcs_test/Makefile
 		 pcs_test/settings.py
+		 pcsd/capabilities.xml
 		 pcsd/Makefile
 		 pcsd/pcsd.8
 		 pcsd/pcsd-cli.rb

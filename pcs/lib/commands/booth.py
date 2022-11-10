@@ -269,6 +269,44 @@ def config_destroy(
         raise LibraryError()
 
 
+# TODO: remove once settings booth_enable_autfile_(set|unset)_enabled are removed
+def _config_set_enable_authfile(
+    env: LibraryEnvironment, value: bool, instance_name=None
+) -> None:
+    report_processor = env.report_processor
+    booth_env = env.get_booth_env(instance_name)
+    if (value and not settings.booth_enable_authfile_set_enabled) or (
+        not value and not settings.booth_enable_authfile_unset_enabled
+    ):
+        raise AssertionError()
+    try:
+        booth_conf = booth_env.config.read_to_facade()
+        booth_conf.set_option(
+            constants.AUTHFILE_FIX_OPTION, "yes" if value else ""
+        )
+        booth_env.config.write_facade(booth_conf, can_overwrite=True)
+    except RawFileError as e:
+        report_processor.report(raw_file_error_report(e))
+    except ParserErrorException as e:
+        report_processor.report_list(
+            booth_env.config.parser_exception_to_report_list(e)
+        )
+    if report_processor.has_errors:
+        raise LibraryError()
+
+
+def config_set_enable_authfile(
+    env: LibraryEnvironment, instance_name=None
+) -> None:
+    _config_set_enable_authfile(env, True, instance_name=instance_name)
+
+
+def config_unset_enable_authfile(
+    env: LibraryEnvironment, instance_name=None
+) -> None:
+    _config_set_enable_authfile(env, False, instance_name=instance_name)
+
+
 def config_text(env: LibraryEnvironment, instance_name=None, node_name=None):
     """
     get configuration in raw format
@@ -881,6 +919,11 @@ def get_status(env: LibraryEnvironment, instance_name=None):
     booth_env = env.get_booth_env(instance_name)
     _ensure_live_env(env, booth_env)
     instance_name = booth_env.instance_name
+    report_msg = status.check_authfile_misconfiguration(
+        booth_env, env.report_processor
+    )
+    if report_msg:
+        env.report_processor.report(reports.ReportItem.warning(report_msg))
     return {
         "status": status.get_daemon_status(env.cmd_runner(), instance_name),
         "ticket": status.get_tickets_status(env.cmd_runner(), instance_name),

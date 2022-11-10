@@ -1279,7 +1279,7 @@ config [<node>]
 Show booth configuration from the specified node or from the current node if node not specified.
 .TP
 create ip <address>
-Make the cluster run booth service on the specified ip address as a cluster resource.  Typically this is used to run booth site.
+Make the cluster run booth service on the specified ip address as a cluster resource.  Typically this is used to run booth site.@BOOTH_ENABLE_AUTHFILE_SET_DOC@@BOOTH_ENABLE_AUTHFILE_UNSET_DOC@
 .TP
 delete
 Remove booth resources created by the "pcs booth create" command.

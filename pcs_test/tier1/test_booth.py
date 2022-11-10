@@ -6,6 +6,7 @@ from unittest import (
 )
 
 from pcs.cli.booth import command as booth_cmd
+from pcs.lib.booth import constants
 
 from pcs_test.tools.assertions import AssertPcsMixinOld as AssertPcsMixin
 from pcs_test.tools.misc import get_test_resource as rc
@@ -37,7 +38,13 @@ class BoothMixin(AssertPcsMixin):
         self.booth_key_path = os.path.join(self.booth_dir.name, "booth.key")
         self.temp_cib = get_tmp_file("tier1_booth")
         write_file_to_tmpfile(EMPTY_CIB, self.temp_cib)
-        self.pcs_runner = PcsRunner(self.temp_cib.name)
+        self.pcs_runner = PcsRunner(
+            self.temp_cib.name,
+            mock_settings=dict(
+                booth_enable_authfile_set_enabled=str(False),
+                booth_enable_authfile_unset_enabled=str(False),
+            ),
+        )
 
     def tearDown(self):
         # pylint cannot possibly know this is being mixed into TestCase classes
@@ -102,6 +109,32 @@ class SetupTest(BoothMixin, TestCase):
             )
         with open(self.booth_key_path, "rb") as key_file:
             self.assertEqual(64, len(key_file.read()))
+
+    def test_success_setup_booth_config_enable_autfile(self):
+        self.pcs_runner = PcsRunner(
+            None,
+            mock_settings=dict(
+                booth_enable_authfile_set_enabled=str(True),
+                booth_enable_authfile_unset_enabled=str(False),
+            ),
+        )
+        self.ensure_booth_config_not_exists()
+        self.assert_pcs_success(
+            "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3".split()
+        )
+        with open(self.booth_cfg_path, "r") as config_file:
+            self.assertEqual(
+                dedent(
+                    f"""\
+                    authfile = {self.booth_key_path}
+                    {constants.AUTHFILE_FIX_OPTION} = yes
+                    site = 1.1.1.1
+                    site = 2.2.2.2
+                    arbitrator = 3.3.3.3
+                    """
+                ),
+                config_file.read(),
+            )
 
     def test_overwrite_existing_mocked_config(self):
         self.ensure_booth_config_exists()
@@ -566,3 +599,116 @@ class Status(BoothMixinNoFiles, TestCase):
                     status"""
             ),
         )
+
+
+class EnableAuthfile(BoothMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.pcs_runner.cib_file = None
+        self.pcs_runner.mock_settings[
+            "booth_enable_authfile_set_enabled"
+        ] = str(True)
+        self.ensure_booth_config_not_exists()
+
+    def test_not_enabled(self):
+        with open(self.booth_cfg_path, "w") as config_file:
+            config_file.write(f"authfile = {self.booth_key_path}\n")
+        self.assert_pcs_success("booth enable-authfile".split())
+        with open(self.booth_cfg_path, "r") as config_file:
+            self.assertEqual(
+                dedent(
+                    f"""\
+                    {constants.AUTHFILE_FIX_OPTION} = yes
+                    authfile = {self.booth_key_path}
+                    """
+                ),
+                config_file.read(),
+            )
+
+    def test_already_enabled(self):
+        with open(self.booth_cfg_path, "w") as config_file:
+            config_file.write(
+                dedent(
+                    f"""\
+                    authfile = {self.booth_key_path}
+                    {constants.AUTHFILE_FIX_OPTION} = on
+                    """
+                )
+            )
+        self.assert_pcs_success("booth enable-authfile".split())
+        with open(self.booth_cfg_path, "r") as config_file:
+            self.assertEqual(
+                dedent(
+                    f"""\
+                    {constants.AUTHFILE_FIX_OPTION} = yes
+                    authfile = {self.booth_key_path}
+                    """
+                ),
+                config_file.read(),
+            )
+
+
+class CleanEnableAuthfile(BoothMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.pcs_runner.cib_file = None
+        self.ensure_booth_config_not_exists()
+        self.pcs_runner.mock_settings[
+            "booth_enable_authfile_unset_enabled"
+        ] = str(True)
+
+    def test_not_set(self):
+        with open(self.booth_cfg_path, "w") as config_file:
+            config_file.write(f"authfile = {self.booth_key_path}\n")
+        self.assert_pcs_success("booth clean-enable-authfile".split())
+        with open(self.booth_cfg_path, "r") as config_file:
+            self.assertEqual(
+                dedent(
+                    f"""\
+                    authfile = {self.booth_key_path}
+                    """
+                ),
+                config_file.read(),
+            )
+
+    def test_enabled(self):
+        with open(self.booth_cfg_path, "w") as config_file:
+            config_file.write(
+                dedent(
+                    f"""\
+                    authfile = {self.booth_key_path}
+                    {constants.AUTHFILE_FIX_OPTION} = 1
+                    """
+                )
+            )
+        self.assert_pcs_success("booth clean-enable-authfile".split())
+        with open(self.booth_cfg_path, "r") as config_file:
+            self.assertEqual(
+                dedent(
+                    f"""\
+                    authfile = {self.booth_key_path}
+                    """
+                ),
+                config_file.read(),
+            )
+
+    def test_disabled(self):
+        with open(self.booth_cfg_path, "w") as config_file:
+            config_file.write(
+                dedent(
+                    f"""\
+                    authfile = {self.booth_key_path}
+                    {constants.AUTHFILE_FIX_OPTION} = off
+                    """
+                )
+            )
+        self.assert_pcs_success("booth clean-enable-authfile".split())
+        with open(self.booth_cfg_path, "r") as config_file:
+            self.assertEqual(
+                dedent(
+                    f"""\
+                    authfile = {self.booth_key_path}
+                    """
+                ),
+                config_file.read(),
+            )
