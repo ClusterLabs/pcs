@@ -1,4 +1,3 @@
-DEFAULT_CLUSTER_PROPERTY_SET_ID = "cib-bootstrap-options"
 TAG_CRM_CONFIG = "crm_config"
 TAG_RESOURCE_PRIMITIVE = "primitive"
 TAG_RESOURCE_GROUP = "group"

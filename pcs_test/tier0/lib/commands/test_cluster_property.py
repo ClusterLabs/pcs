@@ -94,12 +94,6 @@ class LoadMetadataMixin:
             )
 
 
-class NotLoadMetadataMixin:
-    # pylint: disable=invalid-name
-    def load_fake_agent_metadata(self):
-        pass
-
-
 class SetCommandMixin:
     def command(self, prop_dict, force_codes=None):
         cluster_property.set_property(
@@ -132,6 +126,28 @@ class CommonSetUnsetMixin:
         self.env_assist.assert_reports(
             [
                 fixture.error(
+                    reports.codes.ADD_REMOVE_ITEMS_NOT_SPECIFIED,
+                    force_code=reports.codes.FORCE,
+                    container_type="property_set",
+                    item_type="property",
+                    container_id="cib-bootstrap-options",
+                )
+            ]
+        )
+
+    def test_no_properties_specified_forced(self):
+        self.config.runner.cib.load()
+        self.load_fake_agent_metadata()
+        self.config.env.push_cib(
+            crm_config=fixture_crm_config_properties(
+                [("cib-bootstrap-options", {})]
+            )
+        )
+
+        self.command({}, [reports.codes.FORCE])
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
                     reports.codes.ADD_REMOVE_ITEMS_NOT_SPECIFIED,
                     container_type="property_set",
                     item_type="property",
@@ -212,7 +228,7 @@ class TestSetStonithWatchdogTimeoutSBDIsDisabled(
 
 
 class TestUnsetStonithWatchdogTimeoutSBDIsDisabled(
-    NotLoadMetadataMixin, StonithWatchdogTimeoutMixin, TestCase
+    LoadMetadataMixin, StonithWatchdogTimeoutMixin, TestCase
 ):
     sbd_enabled = False
 
@@ -222,8 +238,8 @@ class TestUnsetStonithWatchdogTimeoutSBDIsDisabled(
                 [("cib-bootstrap-options", {})]
             )
         )
-        cluster_property.unset_property(
-            self.env_assist.get_env(), ["stonith-watchdog-timeout"], []
+        cluster_property.set_property(
+            self.env_assist.get_env(), {"stonith-watchdog-timeout": ""}, []
         )
         self.env_assist.assert_reports([])
 
@@ -346,14 +362,14 @@ class TestSetStonithWatchdogTimeoutSBDIsEnabledWatchdogOnly(
 
 @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
 class TestUnsetStonithWatchdogTimeoutSBDIsEnabledWatchdogOnly(
-    NotLoadMetadataMixin, StonithWatchdogTimeoutMixin, TestCase
+    LoadMetadataMixin, StonithWatchdogTimeoutMixin, TestCase
 ):
     sbd_enabled = True
 
     def test_unset(self):
         self.env_assist.assert_raise_library_error(
-            lambda: cluster_property.unset_property(
-                self.env_assist.get_env(), ["stonith-watchdog-timeout"], []
+            lambda: cluster_property.set_property(
+                self.env_assist.get_env(), {"stonith-watchdog-timeout": ""}, []
             )
         )
         self.env_assist.assert_reports(
@@ -372,9 +388,9 @@ class TestUnsetStonithWatchdogTimeoutSBDIsEnabledWatchdogOnly(
                 [("cib-bootstrap-options", {})]
             )
         )
-        cluster_property.unset_property(
+        cluster_property.set_property(
             self.env_assist.get_env(),
-            ["stonith-watchdog-timeout"],
+            {"stonith-watchdog-timeout": ""},
             [reports.codes.FORCE],
         )
         self.env_assist.assert_reports(
@@ -460,7 +476,7 @@ class TestSetStonithWatchdogTimeoutSBDIsEnabledSharedDevices(
 
 @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: ["dev1", "dev2"])
 class TestUnsetStonithWatchdogTimeoutSBDIsEnabledSharedDevices(
-    NotLoadMetadataMixin, StonithWatchdogTimeoutMixin, TestCase
+    LoadMetadataMixin, StonithWatchdogTimeoutMixin, TestCase
 ):
     sbd_enabled = True
 
@@ -470,8 +486,8 @@ class TestUnsetStonithWatchdogTimeoutSBDIsEnabledSharedDevices(
                 [("cib-bootstrap-options", {})]
             )
         )
-        cluster_property.unset_property(
-            self.env_assist.get_env(), ["stonith-watchdog-timeout"], []
+        cluster_property.set_property(
+            self.env_assist.get_env(), {"stonith-watchdog-timeout": ""}, []
         )
         self.env_assist.assert_reports([])
 
@@ -754,10 +770,12 @@ class TestPropertySet(
                     allowed_patterns=[],
                 ),
                 fixture.error(
-                    reports.codes.OPTIONS_DO_NOT_EXIST,
+                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
                     force_code=reports.codes.FORCE,
-                    option_names=["c"],
-                    option_type="cluster property",
+                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
+                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
+                    container_id="first",
+                    item_list=["c"],
                 ),
             ]
         )
@@ -795,9 +813,11 @@ class TestPropertySet(
                     allowed_patterns=[],
                 ),
                 fixture.warn(
-                    reports.codes.OPTIONS_DO_NOT_EXIST,
-                    option_names=["c"],
-                    option_type="cluster property",
+                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
+                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
+                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
+                    container_id="first",
+                    item_list=["c"],
                 ),
             ]
         )
@@ -880,7 +900,10 @@ class TestPropertySet(
         )
 
 
-class RemovePropertyMixin:
+class TestPropertySetEmptyValues(LoadMetadataMixin, SetCommandMixin, TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+
     def test_remove_properties(self):
         self.config.runner.cib.load(
             crm_config=fixture_crm_config_properties(
@@ -907,10 +930,12 @@ class RemovePropertyMixin:
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    reports.codes.OPTIONS_DO_NOT_EXIST,
+                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
                     force_code=reports.codes.FORCE,
-                    option_names=["x", "y"],
-                    option_type="cluster property",
+                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
+                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
+                    container_id="set-id",
+                    item_list=["x", "y"],
                 )
             ]
         )
@@ -929,9 +954,11 @@ class RemovePropertyMixin:
         self.env_assist.assert_reports(
             [
                 fixture.warn(
-                    reports.codes.OPTIONS_DO_NOT_EXIST,
-                    option_names=["x", "y"],
-                    option_type="cluster property",
+                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
+                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
+                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
+                    container_id="set-id",
+                    item_list=["x", "y"],
                 )
             ]
         )
@@ -973,10 +1000,12 @@ class RemovePropertyMixin:
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    reports.codes.OPTIONS_DO_NOT_EXIST,
+                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
                     force_code=reports.codes.FORCE,
-                    option_names=["x", "y"],
-                    option_type="cluster property",
+                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
+                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
+                    container_id="first",
+                    item_list=["x", "y"],
                 )
             ]
         )
@@ -1003,9 +1032,11 @@ class RemovePropertyMixin:
         self.env_assist.assert_reports(
             [
                 fixture.warn(
-                    reports.codes.OPTIONS_DO_NOT_EXIST,
-                    option_names=["x", "y"],
-                    option_type="cluster property",
+                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
+                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
+                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
+                    container_id="first",
+                    item_list=["x", "y"],
                 )
             ]
         )
@@ -1042,23 +1073,23 @@ class RemovePropertyMixin:
         )
         self.env_assist.assert_reports(
             [
-                fixture.error(
-                    reports.codes.CANNOT_DO_ACTION_WITH_FORBIDDEN_OPTIONS,
-                    action="remove",
-                    specified_options=[
-                        "cluster-infrastructure",
-                        "cluster-name",
-                        "dc-version",
-                        "have-watchdog",
-                    ],
-                    forbidden_options=[
-                        "cluster-infrastructure",
-                        "cluster-name",
-                        "dc-version",
-                        "have-watchdog",
-                    ],
-                    option_type="cluster property",
-                )
+                # fixture.error(
+                #     reports.codes.CANNOT_DO_ACTION_WITH_FORBIDDEN_OPTIONS,
+                #     action="remove",
+                #     specified_options=[
+                #         "cluster-infrastructure",
+                #         "cluster-name",
+                #         "dc-version",
+                #         "have-watchdog",
+                #     ],
+                #     forbidden_options=[
+                #         "cluster-infrastructure",
+                #         "cluster-name",
+                #         "dc-version",
+                #         "have-watchdog",
+                #     ],
+                #     option_type="cluster property",
+                # )
             ]
         )
 
@@ -1067,87 +1098,3 @@ class RemovePropertyMixin:
 
     def test_remove_banned_properties_forced(self):
         self._remove_banned_properties(True)
-
-
-class TestPropertySetEmptyValues(
-    LoadMetadataMixin, SetCommandMixin, RemovePropertyMixin, TestCase
-):
-    def setUp(self):
-        self.env_assist, self.config = get_env_tools(self)
-
-
-class TestPropertyUnset(
-    NotLoadMetadataMixin, CommonSetUnsetMixin, RemovePropertyMixin, TestCase
-):
-    def setUp(self):
-        self.env_assist, self.config = get_env_tools(self)
-
-    def command(self, prop_dict, force_codes=None):
-        cluster_property.unset_property(
-            self.env_assist.get_env(),
-            prop_dict.keys(),
-            [] if force_codes is None else force_codes,
-        )
-
-    def test_duplicate_properties(self):
-        self.config.runner.cib.load(
-            crm_config=fixture_crm_config_properties(
-                [("set_id", {"enable-acl": "true"})]
-            )
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: cluster_property.unset_property(
-                self.env_assist.get_env(),
-                ["enable-acl", "enable-acl", "not-there", "not-there"],
-                [],
-            )
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.ADD_REMOVE_ITEMS_DUPLICATION,
-                    force_code=reports.codes.FORCE,
-                    container_type="property_set",
-                    item_type="property",
-                    container_id="set_id",
-                    duplicate_items_list=["enable-acl", "not-there"],
-                ),
-                fixture.error(
-                    reports.codes.OPTIONS_DO_NOT_EXIST,
-                    force_code=reports.codes.FORCE,
-                    option_names=["not-there"],
-                    option_type="cluster property",
-                ),
-            ]
-        )
-
-    def test_duplicate_properties_forced(self):
-        self.config.runner.cib.load(
-            crm_config=fixture_crm_config_properties(
-                [("set-id", {"enable-acl": "true"})]
-            )
-        )
-        self.config.env.push_cib(
-            crm_config=fixture_crm_config_properties([("set-id", {})])
-        )
-        cluster_property.unset_property(
-            self.env_assist.get_env(),
-            ["enable-acl", "enable-acl", "not-there", "not-there"],
-            [reports.codes.FORCE],
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.warn(
-                    reports.codes.ADD_REMOVE_ITEMS_DUPLICATION,
-                    container_type="property_set",
-                    item_type="property",
-                    container_id="set-id",
-                    duplicate_items_list=["enable-acl", "not-there"],
-                ),
-                fixture.warn(
-                    reports.codes.OPTIONS_DO_NOT_EXIST,
-                    option_names=["not-there"],
-                    option_type="cluster property",
-                ),
-            ]
-        )

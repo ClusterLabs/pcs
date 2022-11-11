@@ -1,15 +1,11 @@
 from typing import (
-    Dict,
-    List,
+    Iterable,
+    Mapping,
 )
 
 from lxml.etree import _Element
 
 from pcs.common import reports
-from pcs.common.reports import (
-    ReportItem,
-    ReportItemList,
-)
 from pcs.common.services.interfaces import ServiceManagerInterface
 from pcs.common.types import StringSequence
 from pcs.lib import (
@@ -17,7 +13,6 @@ from pcs.lib import (
     validate,
 )
 from pcs.lib.cib import nvpair_multi
-from pcs.lib.cib.const import DEFAULT_CLUSTER_PROPERTY_SET_ID
 from pcs.lib.cib.tools import (
     IdProvider,
     get_crm_config,
@@ -26,20 +21,22 @@ from pcs.lib.cib.tools import (
 from pcs.lib.errors import LibraryError
 from pcs.lib.resource_agent import ResourceAgentFacade
 
-BANNED_CLUSTER_PROPERTY_LIST = [
+_BANNED_CLUSTER_PROPERTY_LIST = [
     "cluster-infrastructure",
     "cluster-name",
     "dc-version",
     "have-watchdog",
+    "last-lrm-refresh",
 ]
+_DEFAULT_CLUSTER_PROPERTY_SET_ID = "cib-bootstrap-options"
 
 
 def _validate_stonith_watchdog_timeout_property(
     service_manager: ServiceManagerInterface,
     value: str,
     force: bool = False,
-) -> ReportItemList:
-    report_list: ReportItemList = []
+) -> reports.ReportItemList:
+    report_list: reports.ReportItemList = []
     if sbd.is_sbd_enabled(service_manager):
         report_list.extend(sbd.validate_stonith_watchdog_timeout(value, force))
     else:
@@ -55,135 +52,118 @@ def _validate_stonith_watchdog_timeout_property(
 
 
 def validate_set_cluster_properties(
-    cluster_property_facade_list: List[ResourceAgentFacade],
+    cluster_property_facade_list: Iterable[ResourceAgentFacade],
+    properties_set_id: str,
+    configured_properties: StringSequence,
+    new_properties: Mapping[str, str],
     service_manager: ServiceManagerInterface,
-    to_be_set_options: Dict[str, str],
     force: bool = False,
-) -> ReportItemList:
+) -> reports.ReportItemList:
     """
-    Validate that cluster options and their values can be set.
+    Validate that cluster properties and their values can be set.
 
     cluster_property_facade_list -- facades for cluster properties metadata
+    properties_set_id -- id of the properties set to be updated
+    configured_properties -- names of currently configured cluster properties
+    new_properties -- dictionary of properties and their values to be set
     service_manager -- manager for system daemon services
-    to_be_set_options -- dictionary of options and their values
-    force -- if True, validators produce a warning instead of an error
+    force -- if True, produce warnings instead of errors
     """
-    report_list: ReportItemList = []
-    validators: List[validate.ValidatorInterface] = []
-    possible_options_dict = {
+    # pylint: disable=too-many-locals
+    possible_properties_dict = {
         parameter.name: parameter
         for facade in cluster_property_facade_list
         for parameter in facade.metadata.parameters
-        if parameter.name not in BANNED_CLUSTER_PROPERTY_LIST
+        if parameter.name not in _BANNED_CLUSTER_PROPERTY_LIST
     }
     severity = reports.get_severity(reports.codes.FORCE, force)
-    validators.append(
-        validate.NamesIn(
-            possible_options_dict.keys(),
-            option_type="cluster property",
-            banned_name_list=BANNED_CLUSTER_PROPERTY_LIST,
-            severity=severity,
-        )
+
+    to_be_set_properties = {}
+    to_be_removed_properties = []
+    for name, value in new_properties.items():
+        if value != "":
+            to_be_set_properties[name] = value
+        else:
+            to_be_removed_properties.append(name)
+
+    report_list = validate.validate_set_unset_items(
+        to_be_set_properties.keys(),
+        to_be_removed_properties,
+        configured_properties,
+        reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
+        reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
+        properties_set_id,
+        severity=severity,
     )
-    for option_name in to_be_set_options:
-        if option_name not in possible_options_dict:
-            # unknow options will be reported by a validator
+
+    report_list.extend(
+        validate.NamesIn(
+            possible_properties_dict.keys(),
+            option_type="cluster property",
+            banned_name_list=_BANNED_CLUSTER_PROPERTY_LIST,
+            severity=severity,
+        ).validate(new_properties)
+    )
+
+    validators: list[validate.ValidatorInterface] = []
+    for property_name in to_be_set_properties:
+        if property_name not in possible_properties_dict:
+            # unknow properties are reported by NamesIn validator
             continue
-        option_metadata = possible_options_dict[option_name]
-        if option_metadata.name == "stonith-watchdog-timeout":
+        property_metadata = possible_properties_dict[property_name]
+        if property_metadata.name == "stonith-watchdog-timeout":
             # needs extra validation
             continue
-        if option_metadata.type == "boolean":
+        if property_metadata.type == "boolean":
             validators.append(
                 validate.ValuePcmkBoolean(
-                    option_metadata.name, severity=severity
+                    property_metadata.name, severity=severity
                 )
             )
-        elif option_metadata.type == "integer":
+        elif property_metadata.type == "integer":
             validators.append(
                 validate.ValuePcmkInteger(
-                    option_metadata.name, severity=severity
+                    property_metadata.name, severity=severity
                 )
             )
-        elif option_metadata.type == "percentage":
+        elif property_metadata.type == "percentage":
             validators.append(
                 validate.ValuePcmkPercentage(
-                    option_metadata.name, severity=severity
+                    property_metadata.name, severity=severity
                 )
             )
-        elif option_metadata.type == "select":
+        elif property_metadata.type == "select":
             validators.append(
                 validate.ValueIn(
-                    option_metadata.name,
-                    option_metadata.enum_values or [],
+                    property_metadata.name,
+                    property_metadata.enum_values or [],
                     severity=severity,
                 )
             )
-        elif option_metadata.type == "time":
+        elif property_metadata.type == "time":
             validators.append(
                 validate.ValueTimeInterval(
-                    option_metadata.name, severity=severity
+                    property_metadata.name, severity=severity
                 )
             )
     report_list.extend(
-        validate.ValidatorAll(validators).validate(to_be_set_options)
+        validate.ValidatorAll(validators).validate(to_be_set_properties)
     )
-    # more complex validation which depends on other configuration
-    if "stonith-watchdog-timeout" in to_be_set_options:
-        report_list.extend(
-            _validate_stonith_watchdog_timeout_property(
-                service_manager,
-                to_be_set_options["stonith-watchdog-timeout"],
-                force=force,
-            )
-        )
-    return report_list
 
-
-def validate_remove_cluster_properties(
-    configured_options: StringSequence,
-    service_manager: ServiceManagerInterface,
-    to_be_removed_options: StringSequence,
-    force: bool = False,
-) -> ReportItemList:
-    """
-    Validate that options to be removed exist in the current configuration and
-    can be removed.
-
-    configured_options -- current list of configured cluster options
-    service_manager -- manager for system daemon services
-    to_be_removed_options -- list of to be removed cluster options
-    force -- if True, validators produce a warning instead of an error
-    """
-    report_list = validate.NamesExist(
-        configured_options,
-        option_type="cluster property",
-        severity=reports.get_severity(reports.codes.FORCE, force),
-    ).validate({option: "" for option in to_be_removed_options})
-
-    if (
-        "stonith-watchdog-timeout" in to_be_removed_options
-        and "stonith-watchdog-timeout" in configured_options
+    # Only validate SWT if it is being set, or if it is being removed and it
+    # actually exists in the current configuration.
+    if "stonith-watchdog-timeout" in new_properties and (
+        new_properties["stonith-watchdog-timeout"]
+        or "stonith-watchdog-timeout" in configured_properties
     ):
         report_list.extend(
             _validate_stonith_watchdog_timeout_property(
-                service_manager, "", force=force
+                service_manager,
+                new_properties["stonith-watchdog-timeout"],
+                force=force,
             )
         )
-    specified_forbidden_options = set(
-        BANNED_CLUSTER_PROPERTY_LIST
-    ).intersection(to_be_removed_options)
-    if specified_forbidden_options:
-        report_list.append(
-            reports.ReportItem.error(
-                reports.messages.CannotDoActionWithForbiddenOptions(
-                    "remove",
-                    sorted(specified_forbidden_options),
-                    sorted(BANNED_CLUSTER_PROPERTY_LIST),
-                    "cluster property",
-                )
-            )
-        )
+
     return report_list
 
 
@@ -193,7 +173,7 @@ def get_cluster_property_set_element_legacy(
     """
     Return the first cluster_property_set element. If the element does not
     exist, try to create cluster_property_set element with id of value
-    'cib-bootstrap-options'. Raise error in case of the id is already used.
+    'cib-bootstrap-options'. Raise an error in case the id is already used.
 
     cib -- cib tree
     id_provider -- checks id uniqueness and books ids if set
@@ -204,10 +184,12 @@ def get_cluster_property_set_element_legacy(
     )
     if property_el_list:
         return property_el_list[0]
-    if id_provider.book_ids(DEFAULT_CLUSTER_PROPERTY_SET_ID):
+    if id_provider.book_ids(_DEFAULT_CLUSTER_PROPERTY_SET_ID):
         raise LibraryError(
-            ReportItem.error(
-                reports.messages.CannotCreateDefaultClusterPropertySet()
+            reports.ReportItem.error(
+                reports.messages.CannotCreateDefaultClusterPropertySet(
+                    _DEFAULT_CLUSTER_PROPERTY_SET_ID
+                )
             )
         )
     return nvpair_multi.nvset_append_new(
@@ -216,6 +198,6 @@ def get_cluster_property_set_element_legacy(
         get_pacemaker_version_by_which_cib_was_validated(cib),
         nvpair_multi.NVSET_PROPERTY,
         {},
-        {"id": DEFAULT_CLUSTER_PROPERTY_SET_ID},
+        {"id": _DEFAULT_CLUSTER_PROPERTY_SET_ID},
         nvset_rule=None,
     )
