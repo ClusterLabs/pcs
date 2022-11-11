@@ -27,9 +27,6 @@ EXTRA_DIST		= \
 			  resources/corosync-qdevice.conf \
 			  resources/corosync-some-node-names.conf \
 			  resources/crm_mon.minimal.xml \
-			  resources/crm_mon_rng/crm_mon-2.3.rng \
-			  resources/crm_mon_rng/crm_mon.rng \
-			  resources/crm_mon_rng/fence-event-2.0.rng \
 			  resources/based_metadata.xml \
 			  resources/controld_metadata.xml \
 			  resources/fenced_metadata.xml \
@@ -368,7 +365,7 @@ EXTRA_DIST		= \
 			  tier1/test_booth.py \
 			  tier1/test_cib_options.py \
 			  tier1/test_cluster_pcmk_remote.py \
-			  tier1/test_cluster_property.py
+			  tier1/test_cluster_property.py \
 			  tier1/test_misc.py \
 			  tier1/test_quorum.py \
 			  tier1/test_status.py \
