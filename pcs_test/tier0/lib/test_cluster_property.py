@@ -175,12 +175,6 @@ FIXTURE_ERROR_REPORTS = [
         cannot_be_empty=False,
         forbidden_characters=None,
     ),
-    # fixture.error(
-    #     reports.codes.STONITH_WATCHDOG_TIMEOUT_TOO_SMALL,
-    #     force_code=reports.codes.FORCE,
-    #     cluster_sbd_watchdog_timeout=5,
-    #     entered_watchdog_timeout="invalid",
-    # ),
 ]
 
 
@@ -249,6 +243,7 @@ class TestValidateSetClusterProperties(TestCase):
         assert_report_item_list_equal(
             lib_cluster_property.validate_set_cluster_properties(
                 self.mock_facade_list,
+                "property-set-id",
                 self.mock_service_manager,
                 to_be_set_dict,
                 force=force,
@@ -428,6 +423,7 @@ class TestValidateRemoveClusterProperties(TestCase):
         assert_report_item_list_equal(
             lib_cluster_property.validate_remove_cluster_properties(
                 self.configured_options,
+                "property-set-id",
                 self.mock_service_manager,
                 remove_list,
                 force=force,
@@ -446,7 +442,32 @@ class TestValidateRemoveClusterProperties(TestCase):
             self.mock_sbd_devices.assert_not_called()
 
     def test_empty_list_to_remove(self):
-        self.assert_validate_remove([], [])
+        self.assert_validate_remove(
+            [],
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_ITEMS_NOT_SPECIFIED,
+                    force_code=reports.codes.FORCE,
+                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
+                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
+                    container_id="property-set-id",
+                )
+            ],
+        )
+
+    def test_empty_list_to_remove_forced(self):
+        self.assert_validate_remove(
+            [],
+            [
+                fixture.warn(
+                    reports.codes.ADD_REMOVE_ITEMS_NOT_SPECIFIED,
+                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
+                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
+                    container_id="property-set-id",
+                )
+            ],
+            force=True,
+        )
 
     def test_remove_configured_options(self):
         self.assert_validate_remove(["a", "b"], [])
@@ -456,10 +477,12 @@ class TestValidateRemoveClusterProperties(TestCase):
             ["x", "y"],
             [
                 fixture.error(
-                    reports.codes.OPTIONS_DO_NOT_EXIST,
+                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
                     force_code=reports.codes.FORCE,
-                    option_names=["x", "y"],
-                    option_type="cluster property",
+                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
+                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
+                    container_id="property-set-id",
+                    item_list=["x", "y"],
                 )
             ],
         )
@@ -469,9 +492,11 @@ class TestValidateRemoveClusterProperties(TestCase):
             ["x", "y"],
             [
                 fixture.warn(
-                    reports.codes.OPTIONS_DO_NOT_EXIST,
-                    option_names=["x", "y"],
-                    option_type="cluster property",
+                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
+                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
+                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
+                    container_id="property-set-id",
+                    item_list=["x", "y"],
                 )
             ],
             force=True,
@@ -482,10 +507,12 @@ class TestValidateRemoveClusterProperties(TestCase):
             FORBIDDEN_OPTIONS_LIST[1:],
             [
                 fixture.error(
-                    reports.codes.OPTIONS_DO_NOT_EXIST,
+                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
                     force_code=reports.codes.FORCE,
-                    option_names=FORBIDDEN_OPTIONS_LIST[1:],
-                    option_type="cluster property",
+                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
+                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
+                    container_id="property-set-id",
+                    item_list=FORBIDDEN_OPTIONS_LIST[1:],
                 ),
                 fixture.error(
                     reports.codes.CANNOT_DO_ACTION_WITH_FORBIDDEN_OPTIONS,
@@ -502,9 +529,11 @@ class TestValidateRemoveClusterProperties(TestCase):
             FORBIDDEN_OPTIONS_LIST[1:],
             [
                 fixture.warn(
-                    reports.codes.OPTIONS_DO_NOT_EXIST,
-                    option_names=FORBIDDEN_OPTIONS_LIST[1:],
-                    option_type="cluster property",
+                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
+                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
+                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
+                    container_id="property-set-id",
+                    item_list=FORBIDDEN_OPTIONS_LIST[1:],
                 ),
                 fixture.error(
                     reports.codes.CANNOT_DO_ACTION_WITH_FORBIDDEN_OPTIONS,
@@ -559,10 +588,12 @@ class TestValidateRemoveClusterProperties(TestCase):
             ["stonith-watchdog-timeout"],
             [
                 fixture.error(
-                    reports.codes.OPTIONS_DO_NOT_EXIST,
+                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
                     force_code=reports.codes.FORCE,
-                    option_names=["stonith-watchdog-timeout"],
-                    option_type="cluster property",
+                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
+                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
+                    container_id="property-set-id",
+                    item_list=["stonith-watchdog-timeout"],
                 )
             ],
         )

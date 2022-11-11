@@ -3,6 +3,7 @@ MAINTAINERCLEANFILES	= Makefile.in
 EXTRA_DIST		= \
 			  curl_test.py \
 			  __init__.py \
+			  resources/based_metadata.xml \
 			  resources/capabilities.xml \
 			  resources/cib-empty-1.2.xml \
 			  resources/cib-empty-3.1.xml \
@@ -14,12 +15,13 @@ EXTRA_DIST		= \
 			  resources/cib-empty-with3nodes.xml \
 			  resources/cib-empty-withnodes.xml \
 			  resources/cib-empty.xml \
-			  resources/cib-large.xml \
 			  resources/cib-largefile.xml \
+			  resources/cib-large.xml \
 			  resources/cib-property.xml \
 			  resources/cib-resources.xml \
 			  resources/cib-tags.xml \
 			  resources/cluster.conf \
+			  resources/controld_metadata.xml \
 			  resources/corosync-3nodes.conf \
 			  resources/corosync-3nodes-qdevice.conf \
 			  resources/corosync-3nodes-qdevice-heuristics.conf \
@@ -28,8 +30,6 @@ EXTRA_DIST		= \
 			  resources/corosync-qdevice.conf \
 			  resources/corosync-some-node-names.conf \
 			  resources/crm_mon.minimal.xml \
-			  resources/based_metadata.xml \
-			  resources/controld_metadata.xml \
 			  resources/fenced_metadata.xml \
 			  resources/schedulerd_metadata.xml \
 			  resources/pcmk_api_rng/api-result.rng \

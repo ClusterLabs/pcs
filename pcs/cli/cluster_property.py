@@ -1,14 +1,17 @@
 from typing import (
     Any,
     Sequence,
+    cast,
 )
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import (
     InputModifiers,
+    ensure_unique_args,
     prepare_options,
 )
 from pcs.common import reports
+from pcs.common.types import StringSequence
 
 
 def set_property(
@@ -19,17 +22,14 @@ def set_property(
       * --force - allow unknown options
       * -f - CIB file
     """
-    modifiers.ensure_only_supported(
-        "--force",
-        "-f",
-    )
+    modifiers.ensure_only_supported("--force", "-f")
     if not argv:
         raise CmdLineInputError()
     force_flags = set()
     if modifiers.get("--force"):
         force_flags.add(reports.codes.FORCE)
     cluster_options = prepare_options(argv)
-    lib.cluster_property.set_property(cluster_options, force_flags)
+    lib.cluster_property.set_properties(cluster_options, force_flags)
 
 
 def unset_property(
@@ -40,13 +40,13 @@ def unset_property(
       * --force - no error when removing not existing properties
       * -f - CIB file
     """
-    modifiers.ensure_only_supported(
-        "--force",
-        "-f",
-    )
+    modifiers.ensure_only_supported("--force", "-f")
     if not argv:
         raise CmdLineInputError()
     force_flags = set()
     if modifiers.get("--force"):
         force_flags.add(reports.codes.FORCE)
-    lib.cluster_property.unset_property(argv, force_flags)
+    else:
+        ensure_unique_args(cast(StringSequence, argv))
+
+    lib.cluster_property.set_property({name: "" for name in argv}, force_flags)

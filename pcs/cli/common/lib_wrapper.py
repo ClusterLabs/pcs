@@ -527,8 +527,7 @@ def load_module(env, middleware_factory, name):
             env,
             middleware.build(middleware_factory.cib),
             {
-                "set_property": cluster_property.set_property,
-                "unset_property": cluster_property.unset_property,
+                "set_properties": cluster_property.set_properties,
             },
         )
 

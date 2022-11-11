@@ -34,7 +34,6 @@ from pcs.common.str_tools import (
     is_iterable_not_str,
 )
 from pcs.common.types import CibRuleExpressionType
-from pcs.lib.cib.const import DEFAULT_CLUSTER_PROPERTY_SET_ID
 
 from . import (
     codes,
@@ -364,31 +363,6 @@ class CannotSetOrderConstraintsForResourcesInTheSameGroup(ReportItemMessage):
     def message(self) -> str:
         return (
             "Cannot create an order constraint for resources in the same group"
-        )
-
-
-@dataclass(frozen=True)
-class OptionsDoNotExist(ReportItemMessage):
-    """
-    Specified options do not exist in the configuration.
-
-    option_names -- specified options
-    option_type -- describes the option
-    """
-
-    option_names: List[str]
-    option_type: Optional[str] = None
-    _code = codes.OPTIONS_DO_NOT_EXIST
-
-    @property
-    def message(self) -> str:
-        return (
-            "Specified {desc}{_option} {option_names_list} {_do} not exist"
-        ).format(
-            desc=format_optional(self.option_type),
-            _option=format_plural(self.option_names, "option"),
-            _do=format_plural(self.option_names, "does"),
-            option_names_list=format_list(self.option_names),
         )
 
 
@@ -7644,35 +7618,19 @@ class BoothUnsupportedOptionEnableAuthfile(ReportItemMessage):
 
 @dataclass(frozen=True)
 class CannotCreateDefaultClusterPropertySet(ReportItemMessage):
+    """
+    Cannot create default cluster properties nvset
+
+    nvset_id -- id of the nvset
+    """
+
+    nvset_id: str
     _code = codes.CANNOT_CREATE_DEFAULT_CLUSTER_PROPERTY_SET
 
     @property
     def message(self) -> str:
         return (
-            "Cannot create default cluster_property_set element. ID "
-            f"'{DEFAULT_CLUSTER_PROPERTY_SET_ID}' already exist"
-        )
-
-
-@dataclass(frozen=True)
-class CannotDoActionWithForbiddenOptions(ReportItemMessage):
-    _code = codes.CANNOT_DO_ACTION_WITH_FORBIDDEN_OPTIONS
-
-    action: str
-    specified_options: List[str]
-    forbidden_options: List[str]
-    option_type: Optional[str] = None
-
-    @property
-    def message(self) -> str:
-        return (
-            "Cannot {action} forbidden {desc}option{plural_options} "
-            "{specified_options_list}, list of all forbidden options: "
-            "{forbidden_options_list}"
-        ).format(
-            action=self.action,
-            desc=format_optional(self.option_type),
-            plural_options=format_plural(self.forbidden_options, "", "s:"),
-            specified_options_list=format_list(self.specified_options),
-            forbidden_options_list=format_list(self.forbidden_options),
+            "Cannot create default cluster_property_set element, ID "
+            f"'{self.nvset_id}' already exists. Find elements with the ID and "
+            "remove them from cluster configuration."
         )
