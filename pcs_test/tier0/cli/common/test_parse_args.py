@@ -5,6 +5,7 @@ from pcs.cli.common.parse_args import (
     InputModifiers,
     _is_negative_num,
     _is_num,
+    ensure_unique_args,
     filter_out_non_option_negative_numbers,
     filter_out_options,
     group_by_keywords,
@@ -825,3 +826,18 @@ class InputModifiersTest(TestCase):
         self.assertEqual(
             str(cm.exception), "'b', 'c' cannot be used without 'x'"
         )
+
+
+class EnsureUniqueArgsTest(TestCase):
+    def test_no_duplicate_args(self):
+        self.assertEqual(None, ensure_unique_args(["a", "b", "c"]))
+
+    def test_one_duplicate(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            ensure_unique_args(["a", "b", "c", "a"])
+        self.assertEqual("duplicate argument: 'a'", cm.exception.message)
+
+    def test_more_duplicates(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            ensure_unique_args(["a", "b", "c", "b", "a", "b"])
+        self.assertEqual("duplicate arguments: 'a', 'b'", cm.exception.message)
