@@ -432,7 +432,23 @@ class TestPropertySet(LoadMetadataMixin, TestCase):
         )
         self.env_assist.assert_reports([])
 
-    def _set_banned_properties(self, force):
+    def test_create_cib_bootstrap_options(self):
+        self.config.runner.cib.load()
+        self.load_fake_agent_metadata()
+        self.config.env.push_cib(
+            crm_config=fixture_crm_config_properties(
+                [("cib-bootstrap-options", {"maintenance-mode": "false"})]
+            )
+        )
+
+        cluster_property.set_properties(
+            self.env_assist.get_env(),
+            {"maintenance-mode": "false"},
+            [],
+        )
+        self.env_assist.assert_reports([])
+
+    def _readonly_properties(self, force):
         self.config.runner.cib.load(
             crm_config=fixture_crm_config_properties(
                 [
@@ -442,7 +458,6 @@ class TestPropertySet(LoadMetadataMixin, TestCase):
                             "cluster-infrastructure": "corosync",
                             "cluster-name": "ClusterName",
                             "dc-version": "2.1.4-5.el9-dc6eb4362e",
-                            "have-watchdog": "no",
                         },
                     )
                 ]
@@ -453,11 +468,9 @@ class TestPropertySet(LoadMetadataMixin, TestCase):
             lambda: cluster_property.set_properties(
                 self.env_assist.get_env(),
                 {
-                    "cluster-infrastructure": "cman",
                     "cluster-name": "HACluster",
-                    "dc-version": "3.14",
+                    "dc-version": "",
                     "have-watchdog": "yes",
-                    "no-quorum-policy": "freeze",
                 },
                 [reports.codes.FORCE] if force else [],
             )
@@ -467,7 +480,6 @@ class TestPropertySet(LoadMetadataMixin, TestCase):
                 fixture.error(
                     reports.codes.INVALID_OPTIONS,
                     option_names=[
-                        "cluster-infrastructure",
                         "cluster-name",
                         "dc-version",
                         "have-watchdog",
@@ -479,50 +491,71 @@ class TestPropertySet(LoadMetadataMixin, TestCase):
             ]
         )
 
-    def test_set_banned_properties(self):
-        self._set_banned_properties(False)
+    def test_readonly_properties(self):
+        self._readonly_properties(False)
 
-    def test_set_banned_properties_forced(self):
-        self._set_banned_properties(True)
+    def test_readonly_properties_forced(self):
+        self._readonly_properties(True)
 
-    def test_set_allowed_properties(self):
-        self.config.runner.cib.load()
+    def test_success(self):
+        orig_properties = {
+            "batch-limit": "10",
+            "enable-acl": "true",
+            "stonith-enabled": "true",
+        }
+        new_properties = {
+            "enable-acl": "false",
+            "stonith-enabled": "true",
+            "maintenance-mode": "false",
+        }
+
+        self.config.runner.cib.load(
+            crm_config=fixture_crm_config_properties(
+                [
+                    ("first-set", orig_properties),
+                    ("second-set", orig_properties),
+                ]
+            )
+        )
         self.load_fake_agent_metadata()
         self.config.env.push_cib(
             crm_config=fixture_crm_config_properties(
                 [
-                    (
-                        "cib-bootstrap-options",
-                        {
-                            "cluster-ipc-limit": "1000",
-                            "no-quorum-policy": "freeze",
-                            "stonith-max-attempts": "5",
-                        },
-                    )
+                    ("first-set", new_properties),
+                    ("second-set", orig_properties),
                 ]
             )
         )
+
         cluster_property.set_properties(
             self.env_assist.get_env(),
             {
-                "cluster-ipc-limit": "1000",
-                "no-quorum-policy": "freeze",
-                "stonith-max-attempts": "5",
+                "batch-limit": "",
+                "enable-acl": "false",
+                "maintenance-mode": "false",
             },
             [],
         )
         self.env_assist.assert_reports([])
 
-    def test_set_unallowed_properties(self):
-        self.config.runner.cib.load()
+    def test_validator_errors(self):
+        self.config.runner.cib.load(
+            crm_config=fixture_crm_config_properties(
+                [
+                    ("cib-bootstrap-options", {}),
+                ]
+            )
+        )
         self.load_fake_agent_metadata()
+
         self.env_assist.assert_raise_library_error(
             lambda: cluster_property.set_properties(
                 self.env_assist.get_env(),
                 {
-                    "a": "1",
-                    "b": "2",
-                    "no-quorum-policy": "freeze",
+                    "unknown": "property",
+                    "enable-acl": "Falsch",
+                    "batch-limit": "",
+                    "non-existing": "",
                 },
                 [],
             )
@@ -532,65 +565,11 @@ class TestPropertySet(LoadMetadataMixin, TestCase):
                 fixture.error(
                     reports.codes.INVALID_OPTIONS,
                     force_code=reports.codes.FORCE,
-                    option_names=["a", "b"],
+                    option_names=["unknown"],
                     allowed=ALLOWED_PROPERTIES,
                     option_type="cluster property",
                     allowed_patterns=[],
-                )
-            ]
-        )
-
-    def test_unallowed_properties_forced(self):
-        self.config.runner.cib.load()
-        self.load_fake_agent_metadata()
-        self.config.env.push_cib(
-            crm_config=fixture_crm_config_properties(
-                [
-                    (
-                        "cib-bootstrap-options",
-                        {"a": "1", "b": "2", "no-quorum-policy": "freeze"},
-                    )
-                ]
-            ),
-        )
-        cluster_property.set_properties(
-            self.env_assist.get_env(),
-            {"a": "1", "b": "2", "no-quorum-policy": "freeze"},
-            [reports.codes.FORCE],
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.warn(
-                    reports.codes.INVALID_OPTIONS,
-                    option_names=["a", "b"],
-                    allowed=ALLOWED_PROPERTIES,
-                    option_type="cluster property",
-                    allowed_patterns=[],
-                )
-            ]
-        )
-
-    def test_invalid_values(self):
-        self.config.runner.cib.load(
-            crm_config=fixture_crm_config_properties(
-                [
-                    (
-                        "cib-bootstrap-options",
-                        {"enable-acl": "true", "no-quorum-policy": "freeze"},
-                    )
-                ]
-            ),
-        )
-        self.load_fake_agent_metadata()
-        self.env_assist.assert_raise_library_error(
-            lambda: cluster_property.set_properties(
-                self.env_assist.get_env(),
-                {"enable-acl": "Falsch", "no-quorum-policy": "unknown"},
-                [],
-            )
-        )
-        self.env_assist.assert_reports(
-            [
+                ),
                 fixture.error(
                     reports.codes.INVALID_OPTION_VALUE,
                     force_code=reports.codes.FORCE,
@@ -605,33 +584,23 @@ class TestPropertySet(LoadMetadataMixin, TestCase):
                     forbidden_characters=None,
                 ),
                 fixture.error(
-                    reports.codes.INVALID_OPTION_VALUE,
+                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
                     force_code=reports.codes.FORCE,
-                    option_name="no-quorum-policy",
-                    option_value="unknown",
-                    allowed_values=[
-                        "stop",
-                        "freeze",
-                        "ignore",
-                        "demote",
-                        "suicide",
-                    ],
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
+                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
+                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
+                    container_id="cib-bootstrap-options",
+                    item_list=["batch-limit", "non-existing"],
                 ),
             ]
         )
 
-    def test_invalid_values_forced(self):
+    def test_validator_errors_forced(self):
         self.config.runner.cib.load(
             crm_config=fixture_crm_config_properties(
                 [
-                    (
-                        "cib-bootstrap-options",
-                        {"enable-acl": "true", "no-quorum-policy": "freeze"},
-                    )
+                    ("cib-bootstrap-options", {}),
                 ]
-            ),
+            )
         )
         self.load_fake_agent_metadata()
         self.config.env.push_cib(
@@ -639,175 +608,57 @@ class TestPropertySet(LoadMetadataMixin, TestCase):
                 [
                     (
                         "cib-bootstrap-options",
-                        {"enable-acl": "Falsch", "no-quorum-policy": "unknown"},
-                    )
+                        {
+                            "unknown": "property",
+                            "enable-acl": "Falsch",
+                            "batch-limit": "",
+                            "non-existing": "",
+                        },
+                    ),
                 ]
-            ),
+            )
         )
+
         cluster_property.set_properties(
             self.env_assist.get_env(),
-            {"enable-acl": "Falsch", "no-quorum-policy": "unknown"},
+            {
+                "unknown": "property",
+                "enable-acl": "Falsch",
+                "batch-limit": "",
+                "non-existing": "",
+            },
             [reports.codes.FORCE],
         )
         self.env_assist.assert_reports(
             [
+                fixture.warn(
+                    reports.codes.INVALID_OPTIONS,
+                    option_names=["unknown"],
+                    allowed=ALLOWED_PROPERTIES,
+                    option_type="cluster property",
+                    allowed_patterns=[],
+                ),
                 fixture.warn(
                     reports.codes.INVALID_OPTION_VALUE,
                     option_name="enable-acl",
                     option_value="Falsch",
                     allowed_values=(
                         "a pacemaker boolean value: '0', '1', 'false', 'n', "
-                        "'no', 'off', 'on', 'true', 'y', 'yes'"
+                        "'no', "
+                        "'off', 'on', 'true', 'y', 'yes'"
                     ),
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
                 fixture.warn(
-                    reports.codes.INVALID_OPTION_VALUE,
-                    option_name="no-quorum-policy",
-                    option_value="unknown",
-                    allowed_values=[
-                        "stop",
-                        "freeze",
-                        "ignore",
-                        "demote",
-                        "suicide",
-                    ],
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
+                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
+                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
+                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
+                    container_id="cib-bootstrap-options",
+                    item_list=["batch-limit", "non-existing"],
                 ),
             ]
         )
-
-    def test_set_allowed_properties_multiple_sets(self):
-        self.config.runner.cib.load(
-            crm_config=fixture_crm_config_properties(
-                [
-                    ("first", {"a": "1", "b": "2"}),
-                    ("second", {"x": "1", "y": "2"}),
-                ]
-            )
-        )
-        self.load_fake_agent_metadata()
-        self.config.env.push_cib(
-            crm_config=fixture_crm_config_properties(
-                [
-                    (
-                        "first",
-                        {
-                            "a": "1",
-                            "b": "2",
-                            "cluster-ipc-limit": "1000",
-                            "no-quorum-policy": "freeze",
-                            "stonith-max-attempts": "5",
-                        },
-                    ),
-                    ("second", {"x": "1", "y": "2"}),
-                ]
-            )
-        )
-        cluster_property.set_properties(
-            self.env_assist.get_env(),
-            {
-                "cluster-ipc-limit": "1000",
-                "no-quorum-policy": "freeze",
-                "stonith-max-attempts": "5",
-            },
-            [],
-        )
-        self.env_assist.assert_reports([])
-
-    def test_set_unallowed_properties_multiple_sets(self):
-        self.config.runner.cib.load(
-            crm_config=fixture_crm_config_properties(
-                [
-                    ("first", {"a": "1"}),
-                    ("second", {"x": "1", "y": "2"}),
-                ],
-            )
-        )
-        self.load_fake_agent_metadata()
-        self.env_assist.assert_raise_library_error(
-            lambda: cluster_property.set_properties(
-                self.env_assist.get_env(),
-                {"no-quorum-policy": "freeze", "b": "2", "c": "3"},
-                [],
-            )
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.INVALID_OPTIONS,
-                    force_code=reports.codes.FORCE,
-                    option_names=["b", "c"],
-                    allowed=ALLOWED_PROPERTIES,
-                    option_type="cluster property",
-                    allowed_patterns=[],
-                )
-            ]
-        )
-
-    def test_unallowed_properties_multiple_sets_forced(self):
-        self.config.runner.cib.load(
-            crm_config=fixture_crm_config_properties(
-                [
-                    ("first", {"a": "1"}),
-                    ("second", {"x": "1", "y": "2"}),
-                ],
-            )
-        )
-        self.load_fake_agent_metadata()
-        self.config.env.push_cib(
-            crm_config=fixture_crm_config_properties(
-                [
-                    (
-                        "first",
-                        {
-                            "a": "1",
-                            "b": "2",
-                            "c": "3",
-                            "no-quorum-policy": "freeze",
-                        },
-                    ),
-                    ("second", {"x": "1", "y": "2"}),
-                ],
-            ),
-        )
-        cluster_property.set_properties(
-            self.env_assist.get_env(),
-            {"b": "2", "c": "3", "no-quorum-policy": "freeze"},
-            [reports.codes.FORCE],
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.warn(
-                    reports.codes.INVALID_OPTIONS,
-                    option_names=["b", "c"],
-                    allowed=ALLOWED_PROPERTIES,
-                    option_type="cluster property",
-                    allowed_patterns=[],
-                )
-            ]
-        )
-
-    def test_set_and_unset_together(self):
-        self.config.runner.cib.load(
-            crm_config=fixture_crm_config_properties(
-                [("first", {"batch-limit": "1"})]
-            )
-        )
-        self.load_fake_agent_metadata()
-        self.config.env.push_cib(
-            crm_config=fixture_crm_config_properties(
-                [("first", {"enable-acl": "true"})],
-            ),
-        )
-        cluster_property.set_properties(
-            self.env_assist.get_env(),
-            {"batch-limit": "", "enable-acl": "true"},
-            [],
-        )
-        self.env_assist.assert_reports([])
 
     def _metadata_error(
         self, error_agent, stdout=None, reason=None, unsupported_version=False
@@ -885,215 +736,3 @@ class TestPropertySet(LoadMetadataMixin, TestCase):
             """,
             unsupported_version=True,
         )
-
-    def test_remove_valid_properties(self):
-        self.config.runner.cib.load(
-            crm_config=fixture_crm_config_properties(
-                [("set-id", {"batch-limit": "1", "enable-acl": "2"})]
-            )
-        )
-        self.load_fake_agent_metadata()
-        self.config.env.push_cib(
-            crm_config=fixture_crm_config_properties([("set-id", {})])
-        )
-        self.command({"batch-limit": "", "enable-acl": ""})
-        self.env_assist.assert_reports([])
-
-    def test_remove_not_configured_properties_and_invalid_properties(self):
-        self.config.runner.cib.load(
-            crm_config=fixture_crm_config_properties(
-                [("set-id", {"a": "1", "b": "2"})]
-            )
-        )
-        self.load_fake_agent_metadata()
-        self.env_assist.assert_raise_library_error(
-            lambda: self.command({"a": "", "x": ""})
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
-                    force_code=reports.codes.FORCE,
-                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
-                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
-                    container_id="set-id",
-                    item_list=["x"],
-                ),
-                fixture.error(
-                    reports.codes.INVALID_OPTIONS,
-                    force_code=reports.codes.FORCE,
-                    option_names=["a", "x"],
-                    allowed=ALLOWED_PROPERTIES,
-                    option_type="cluster property",
-                    allowed_patterns=[],
-                ),
-            ]
-        )
-
-    def test_remove_not_configured_properties_and_invalid_properties_forced(
-        self,
-    ):
-        self.config.runner.cib.load(
-            crm_config=fixture_crm_config_properties(
-                [("set-id", {"a": "1", "b": "2"})]
-            )
-        )
-        self.load_fake_agent_metadata()
-        self.config.env.push_cib(
-            crm_config=fixture_crm_config_properties([("set-id", {"b": "2"})])
-        )
-        self.command({"a": "", "x": ""}, [reports.codes.FORCE])
-        self.env_assist.assert_reports(
-            [
-                fixture.warn(
-                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
-                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
-                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
-                    container_id="set-id",
-                    item_list=["x"],
-                ),
-                fixture.warn(
-                    reports.codes.INVALID_OPTIONS,
-                    option_names=["a", "x"],
-                    allowed=ALLOWED_PROPERTIES,
-                    option_type="cluster property",
-                    allowed_patterns=[],
-                ),
-            ]
-        )
-
-    def test_remove_properties_multiple_sets(self):
-        self.config.runner.cib.load(
-            crm_config=fixture_crm_config_properties(
-                [
-                    ("first", {"batch-limit": "1", "enable-acl": "2"}),
-                    ("second", {"batch-limit": "1", "enable-acl": "2"}),
-                ]
-            )
-        )
-        self.load_fake_agent_metadata()
-        self.config.env.push_cib(
-            crm_config=fixture_crm_config_properties(
-                [
-                    ("first", {"batch-limit": "1"}),
-                    ("second", {"batch-limit": "1", "enable-acl": "2"}),
-                ]
-            )
-        )
-        self.command({"enable-acl": ""})
-        self.env_assist.assert_reports([])
-
-    def test_remove_not_configured_properties_multiple_sets(self):
-        self.config.runner.cib.load(
-            crm_config=fixture_crm_config_properties(
-                [
-                    ("first", {"batch-limit": "1", "enable-acl": "2"}),
-                    ("second", {"stonith-action": "1", "stonith-timeout": "2"}),
-                ]
-            )
-        )
-        self.load_fake_agent_metadata()
-        self.env_assist.assert_raise_library_error(
-            lambda: self.command(
-                {"enable-acl": "", "stonith-action": "", "stonith-timeout": ""}
-            )
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
-                    force_code=reports.codes.FORCE,
-                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
-                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
-                    container_id="first",
-                    item_list=["stonith-action", "stonith-timeout"],
-                )
-            ]
-        )
-
-    def test_remove_not_configured_properties_multiple_sets_forced(self):
-        self.config.runner.cib.load(
-            crm_config=fixture_crm_config_properties(
-                [
-                    ("first", {"batch-limit": "1", "enable-acl": "2"}),
-                    ("second", {"stonith-action": "1", "stonith-timeout": "2"}),
-                ]
-            )
-        )
-        self.load_fake_agent_metadata()
-        self.config.env.push_cib(
-            crm_config=fixture_crm_config_properties(
-                [
-                    ("first", {"batch-limit": "1"}),
-                    ("second", {"stonith-action": "1", "stonith-timeout": "2"}),
-                ]
-            )
-        )
-        self.command(
-            {"enable-acl": "", "stonith-action": "", "stonith-timeout": ""},
-            [reports.codes.FORCE],
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.warn(
-                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
-                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
-                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
-                    container_id="first",
-                    item_list=["stonith-action", "stonith-timeout"],
-                )
-            ]
-        )
-
-    def _remove_banned_properties(self, force):
-        self.config.runner.cib.load(
-            crm_config=fixture_crm_config_properties(
-                [
-                    (
-                        "cib-bootstrap-options",
-                        {
-                            "cluster-infrastructure": "corosync",
-                            "cluster-name": "ClusterName",
-                            "dc-version": "2.1.4-5.el9-dc6eb4362e",
-                            "have-watchdog": "no",
-                            "no-quorum-policy": "freeze",
-                        },
-                    )
-                ]
-            )
-        )
-        self.load_fake_agent_metadata()
-        self.env_assist.assert_raise_library_error(
-            lambda: self.command(
-                {
-                    "cluster-infrastructure": "",
-                    "cluster-name": "",
-                    "dc-version": "",
-                    "have-watchdog": "",
-                    "no-quorum-policy": "",
-                },
-                [reports.codes.FORCE] if force else [],
-            )
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.INVALID_OPTIONS,
-                    option_names=[
-                        "cluster-infrastructure",
-                        "cluster-name",
-                        "dc-version",
-                        "have-watchdog",
-                    ],
-                    allowed=ALLOWED_PROPERTIES,
-                    option_type="cluster property",
-                    allowed_patterns=[],
-                )
-            ]
-        )
-
-    def test_remove_banned_properties(self):
-        self._remove_banned_properties(False)
-
-    def test_remove_banned_properties_forced(self):
-        self._remove_banned_properties(True)

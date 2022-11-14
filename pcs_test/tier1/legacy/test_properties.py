@@ -161,7 +161,7 @@ class PropertyTest(TestCase):
             o,
             "Error: Cannot remove property 'zzzzz', it is not present in "
             "property set 'cib-bootstrap-options', use --force to override\n"
-            + get_invalid_option_messages("zzzzz"),
+            "Error: Errors have occurred, therefore pcs is unable to continue\n",
         )
         o, _ = pcs(self.temp_cib.name, "property config".split())
         ac(o, "Cluster Properties:\n")
@@ -171,8 +171,7 @@ class PropertyTest(TestCase):
         ac(
             o,
             "Warning: Cannot remove property 'zzzz', it is not present in "
-            "property set 'cib-bootstrap-options'\n"
-            + get_invalid_option_messages("zzzz", error=False),
+            "property set 'cib-bootstrap-options'\n",
         )
         o, _ = pcs(self.temp_cib.name, "property config".split())
         ac(o, "Cluster Properties:\n")
