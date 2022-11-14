@@ -15,35 +15,12 @@ from pcs_test.tools.misc import (
     write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import PcsRunner
+from pcs_test.tools.xml import etree_to_str
 
 property_cib = rc("cib-property.xml")
-
-
-FIXTURE_CRM_CONFIG = """
-    <crm_config>
-      <cluster_property_set id="cib-bootstrap-options">
-          <nvpair id="cib-bootstrap-options-have-watchdog" name="have-watchdog"
-              value="false"
-          />
-          <nvpair id="cib-bootstrap-options-cluster-name" name="cluster-name"
-              value="HACluster"
-          />
-          <nvpair id="cib-bootstrap-options-maintenance-mode"
-              name="maintenance-mode" value="false"
-          />
-          <nvpair id="cib-bootstrap-options-placement-strategy"
-              name="placement-strategy" value="minimal"
-          />
-          <nvpair id="cib-bootstrap-options-enable-acl" name="enable-acl"
-              value="false"
-          />
-        </cluster_property_set>
-        <cluster_property_set id="second-set" score="10">
-          <nvpair id="second-set-maintenance-mode" name="maintenance-mode"
-              value="false"/>
-        </cluster_property_set>
-    </crm_config>
-"""
+UNCHANGED_CRM_CONFIG = etree_to_str(
+    etree.parse(property_cib).findall(".//crm_config")[0]
+)
 
 
 def get_invalid_option_messages(option_names, error=True, forceable=True):
@@ -121,21 +98,21 @@ class TestPropertySet(PropertyMixin, TestCase):
             "property set".split(),
             stderr_start="\nUsage: pcs property set...",
         )
-        self.assert_resources_xml_in_cib(FIXTURE_CRM_CONFIG)
+        self.assert_resources_xml_in_cib(UNCHANGED_CRM_CONFIG)
 
     def test_missing_value(self):
         self.assert_pcs_fail(
             "property set keyword".split(),
             stderr_start="Error: missing value of 'keyword' option\n",
         )
-        self.assert_resources_xml_in_cib(FIXTURE_CRM_CONFIG)
+        self.assert_resources_xml_in_cib(UNCHANGED_CRM_CONFIG)
 
     def test_unknown_properties(self):
         self.assert_pcs_fail(
             "property set unknown=value".split(),
             stderr_full=get_invalid_option_messages(["unknown"]),
         )
-        self.assert_resources_xml_in_cib(FIXTURE_CRM_CONFIG)
+        self.assert_resources_xml_in_cib(UNCHANGED_CRM_CONFIG)
 
     def test_unknown_properties_forced(self):
         self.assert_effect_single(
@@ -179,7 +156,7 @@ class TestPropertySet(PropertyMixin, TestCase):
                 ["cluster-name"], forceable=False
             ),
         )
-        self.assert_resources_xml_in_cib(FIXTURE_CRM_CONFIG)
+        self.assert_resources_xml_in_cib(UNCHANGED_CRM_CONFIG)
 
     def test_forbidden_properties_forced(self):
         self.assert_pcs_fail(
@@ -188,7 +165,7 @@ class TestPropertySet(PropertyMixin, TestCase):
                 ["cluster-name"], forceable=False
             ),
         )
-        self.assert_resources_xml_in_cib(FIXTURE_CRM_CONFIG)
+        self.assert_resources_xml_in_cib(UNCHANGED_CRM_CONFIG)
 
     def test_set_stonith_watchdog_timeout(self):
         self.assert_pcs_fail(
@@ -200,7 +177,7 @@ class TestPropertySet(PropertyMixin, TestCase):
                 "continue\n"
             ),
         )
-        self.assert_resources_xml_in_cib(FIXTURE_CRM_CONFIG)
+        self.assert_resources_xml_in_cib(UNCHANGED_CRM_CONFIG)
 
 
 class TestPropertyUnset(PropertyMixin, TestCase):
@@ -233,7 +210,7 @@ class TestPropertyUnset(PropertyMixin, TestCase):
             "property unset".split(),
             stderr_start="\nUsage: pcs property unset...",
         )
-        self.assert_resources_xml_in_cib(FIXTURE_CRM_CONFIG)
+        self.assert_resources_xml_in_cib(UNCHANGED_CRM_CONFIG)
 
     def test_unset_not_configured_properties(self):
         self.assert_pcs_fail(
@@ -242,20 +219,18 @@ class TestPropertyUnset(PropertyMixin, TestCase):
                 "Error: Cannot remove properties 'missing1', 'missing2', they "
                 "are not present in property set 'cib-bootstrap-options', use "
                 "--force to override\n"
-            )
-            + get_invalid_option_messages(["missing1", "missing2"]),
+                "Error: Errors have occurred, therefore pcs is unable to "
+                "continue\n"
+            ),
         )
-        self.assert_resources_xml_in_cib(FIXTURE_CRM_CONFIG)
+        self.assert_resources_xml_in_cib(UNCHANGED_CRM_CONFIG)
 
     def test_unset_not_configured_properties_forced(self):
         self.assert_effect_single(
             "property unset missing1 missing2 --force".split(),
-            FIXTURE_CRM_CONFIG,
+            UNCHANGED_CRM_CONFIG,
             stderr_full=(
                 "Warning: Cannot remove properties 'missing1', 'missing2', they "
                 "are not present in property set 'cib-bootstrap-options'\n"
-            )
-            + get_invalid_option_messages(
-                ["missing1", "missing2"], error=False
             ),
         )

@@ -53,6 +53,7 @@ FORBIDDEN_OPTIONS_LIST = [
     "cluster-name",
     "dc-version",
     "have-watchdog",
+    "last-lrm-refresh",
 ]
 
 PARAMETER_DEFINITIONS = [
@@ -525,45 +526,14 @@ class TestValidateSetClusterProperties(TestCase):
         self.assert_validate_set(
             ["bool_param", "integer_param", "percentage_param", "a", "b", "c"],
             {"a": "", "b": ""},
-            [
-                fixture.error(
-                    reports.codes.INVALID_OPTIONS,
-                    force_code=reports.codes.FORCE,
-                    option_names=["a", "b"],
-                    allowed=[
-                        "bool_param",
-                        "integer_param",
-                        "percentage_param",
-                        "select_param",
-                        "stonith-watchdog-timeout",
-                        "time_param",
-                    ],
-                    option_type="cluster property",
-                    allowed_patterns=[],
-                )
-            ],
+            [],
         )
 
     def test_remove_invalid_configured_options_forced(self):
         self.assert_validate_set(
             ["bool_param", "integer_param", "percentage_param", "a", "b", "c"],
             {"a": "", "b": ""},
-            [
-                fixture.warn(
-                    reports.codes.INVALID_OPTIONS,
-                    option_names=["a", "b"],
-                    allowed=[
-                        "bool_param",
-                        "integer_param",
-                        "percentage_param",
-                        "select_param",
-                        "stonith-watchdog-timeout",
-                        "time_param",
-                    ],
-                    option_type="cluster property",
-                    allowed_patterns=[],
-                )
-            ],
+            [],
             force=True,
         )
 
@@ -580,21 +550,6 @@ class TestValidateSetClusterProperties(TestCase):
                     container_id="property-set-id",
                     item_list=["x", "y"],
                 ),
-                fixture.error(
-                    reports.codes.INVALID_OPTIONS,
-                    force_code=reports.codes.FORCE,
-                    option_names=["x", "y"],
-                    allowed=[
-                        "bool_param",
-                        "integer_param",
-                        "percentage_param",
-                        "select_param",
-                        "stonith-watchdog-timeout",
-                        "time_param",
-                    ],
-                    option_type="cluster property",
-                    allowed_patterns=[],
-                ),
             ],
         )
 
@@ -610,20 +565,6 @@ class TestValidateSetClusterProperties(TestCase):
                     container_id="property-set-id",
                     item_list=["x", "y"],
                 ),
-                fixture.warn(
-                    reports.codes.INVALID_OPTIONS,
-                    option_names=["x", "y"],
-                    allowed=[
-                        "bool_param",
-                        "integer_param",
-                        "percentage_param",
-                        "select_param",
-                        "stonith-watchdog-timeout",
-                        "time_param",
-                    ],
-                    option_type="cluster property",
-                    allowed_patterns=[],
-                ),
             ],
             force=True,
         )
@@ -631,15 +572,11 @@ class TestValidateSetClusterProperties(TestCase):
     def test_remove_forbidden_options(self):
         self.assert_validate_set(
             FORBIDDEN_OPTIONS_LIST,
-            {key: "" for key in FORBIDDEN_OPTIONS_LIST[1:]},
+            {key: "" for key in FORBIDDEN_OPTIONS_LIST},
             [
                 fixture.error(
                     reports.codes.INVALID_OPTIONS,
-                    option_names=[
-                        "cluster-name",
-                        "dc-version",
-                        "have-watchdog",
-                    ],
+                    option_names=FORBIDDEN_OPTIONS_LIST,
                     allowed=[
                         "bool_param",
                         "integer_param",
@@ -657,15 +594,11 @@ class TestValidateSetClusterProperties(TestCase):
     def test_remove_forbidden_options_forced(self):
         self.assert_validate_set(
             FORBIDDEN_OPTIONS_LIST,
-            {key: "" for key in FORBIDDEN_OPTIONS_LIST[1:]},
+            {key: "" for key in FORBIDDEN_OPTIONS_LIST},
             [
                 fixture.error(
                     reports.codes.INVALID_OPTIONS,
-                    option_names=[
-                        "cluster-name",
-                        "dc-version",
-                        "have-watchdog",
-                    ],
+                    option_names=FORBIDDEN_OPTIONS_LIST,
                     allowed=[
                         "bool_param",
                         "integer_param",

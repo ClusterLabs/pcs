@@ -21,7 +21,7 @@ from pcs.lib.cib.tools import (
 from pcs.lib.errors import LibraryError
 from pcs.lib.resource_agent import ResourceAgentFacade
 
-_BANNED_CLUSTER_PROPERTY_LIST = [
+_READONLY_CLUSTER_PROPERTY_LIST = [
     "cluster-infrastructure",
     "cluster-name",
     "dc-version",
@@ -74,7 +74,7 @@ def validate_set_cluster_properties(
         parameter.name: parameter
         for facade in cluster_property_facade_list
         for parameter in facade.metadata.parameters
-        if parameter.name not in _BANNED_CLUSTER_PROPERTY_LIST
+        if parameter.name not in _READONLY_CLUSTER_PROPERTY_LIST
     }
     severity = reports.get_severity(reports.codes.FORCE, force)
 
@@ -100,9 +100,21 @@ def validate_set_cluster_properties(
         validate.NamesIn(
             possible_properties_dict.keys(),
             option_type="cluster property",
-            banned_name_list=_BANNED_CLUSTER_PROPERTY_LIST,
+            banned_name_list=_READONLY_CLUSTER_PROPERTY_LIST,
             severity=severity,
-        ).validate(new_properties)
+        ).validate(
+            # Allow removing properties unknown to pacemaker while preventing
+            # setting them. Prevent removing read-only properties.
+            {
+                name: value
+                for name, value in new_properties.items()
+                if not (
+                    value == ""
+                    and name not in _READONLY_CLUSTER_PROPERTY_LIST
+                    and name not in possible_properties_dict
+                )
+            }
+        )
     )
 
     validators: list[validate.ValidatorInterface] = []

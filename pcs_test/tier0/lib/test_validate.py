@@ -2170,7 +2170,6 @@ class ValidateSetUnsetItems(TestCase):
     CONTAINER_ID = "container_id"
 
     def _validate(self, add, remove, current, severity=None):
-        # pylint: disable=protected-access
         return validate.validate_set_unset_items(
             add,
             remove,
