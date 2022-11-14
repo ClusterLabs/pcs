@@ -261,9 +261,24 @@ class TestValidateSetClusterProperties(TestCase):
             self.mock_is_sbd_enabled.assert_called_once_with(
                 self.mock_service_manager
             )
+            if sbd_enabled:
+                self.mock_sbd_devices.assert_called_once_with()
+                if sbd_devices:
+                    self.mock_sbd_timeout.assert_not_called()
+                else:
+                    if new_properties["stonith-watchdog-timeout"] in ["", "0"]:
+                        self.mock_sbd_timeout.assert_not_called()
+                    else:
+                        self.mock_sbd_timeout.assert_called_once_with()
+                self.mock_sbd_devices.reset_mock()
+            else:
+                self.mock_sbd_devices.assert_not_called()
+                self.mock_sbd_timeout.assert_not_called()
         else:
             self.mock_is_sbd_enabled.assert_not_called()
             self.mock_sbd_devices.assert_not_called()
+            self.mock_sbd_timeout.assert_not_called()
+
         self.mock_is_sbd_enabled.reset_mock()
 
     def test_no_properties_to_set_or_unset(self):
