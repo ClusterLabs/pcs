@@ -2,7 +2,10 @@ from unittest import TestCase
 
 from lxml import etree
 
-from pcs.common.str_tools import format_list
+from pcs.common.str_tools import (
+    format_list,
+    format_plural,
+)
 
 from pcs_test.tier0.lib.commands.test_cluster_property import ALLOWED_PROPERTIES
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
@@ -43,18 +46,19 @@ FIXTURE_CRM_CONFIG = """
 """
 
 
-def get_invalid_option_messages(option_name, error=True, forceable=True):
+def get_invalid_option_messages(option_names, error=True, forceable=True):
     error_occurred = (
         "Error: Errors have occurred, therefore pcs is unable to continue\n"
     )
     use_force = ", use --force to override"
     return (
-        "{severity}: invalid cluster property option '{option_name}', allowed "
-        "options are: {allowed_properties}{use_force}\n"
+        "{severity}: invalid cluster property {option_pl} {option_name_list}, "
+        "allowed options are: {allowed_properties}{use_force}\n"
         "{error_occurred}"
     ).format(
         severity="Error" if error else "Warning",
-        option_name=option_name,
+        option_name_list=format_list(option_names),
+        option_pl=format_plural(option_names, "option", "options:"),
         allowed_properties=format_list(ALLOWED_PROPERTIES),
         use_force=use_force if error and forceable else "",
         error_occurred=error_occurred if error else "",
@@ -129,7 +133,7 @@ class TestPropertySet(PropertyMixin, TestCase):
     def test_unknown_properties(self):
         self.assert_pcs_fail(
             "property set unknown=value".split(),
-            stderr_full=get_invalid_option_messages("unknown"),
+            stderr_full=get_invalid_option_messages(["unknown"]),
         )
         self.assert_resources_xml_in_cib(FIXTURE_CRM_CONFIG)
 
@@ -165,14 +169,14 @@ class TestPropertySet(PropertyMixin, TestCase):
                 </cluster_property_set>
             </crm_config>
             """,
-            stderr_full=get_invalid_option_messages("unknown", error=False),
+            stderr_full=get_invalid_option_messages(["unknown"], error=False),
         )
 
     def test_forbidden_properties(self):
         self.assert_pcs_fail(
             "property set cluster-name=NewName".split(),
             stderr_full=get_invalid_option_messages(
-                "cluster-name", forceable=False
+                ["cluster-name"], forceable=False
             ),
         )
         self.assert_resources_xml_in_cib(FIXTURE_CRM_CONFIG)
@@ -181,7 +185,7 @@ class TestPropertySet(PropertyMixin, TestCase):
         self.assert_pcs_fail(
             "property set cluster-name=NewName --force".split(),
             stderr_full=get_invalid_option_messages(
-                "cluster-name", forceable=False
+                ["cluster-name"], forceable=False
             ),
         )
         self.assert_resources_xml_in_cib(FIXTURE_CRM_CONFIG)
@@ -235,11 +239,11 @@ class TestPropertyUnset(PropertyMixin, TestCase):
         self.assert_pcs_fail(
             "property unset missing1 missing2".split(),
             stderr_full=(
-                "Error: Specified cluster property options 'missing1', "
-                "'missing2' do not exist, use --force to override\n"
-                "Error: Errors have occurred, therefore pcs is unable to "
-                "continue\n"
-            ),
+                "Error: Cannot remove properties 'missing1', 'missing2', they "
+                "are not present in property set 'cib-bootstrap-options', use "
+                "--force to override\n"
+            )
+            + get_invalid_option_messages(["missing1", "missing2"]),
         )
         self.assert_resources_xml_in_cib(FIXTURE_CRM_CONFIG)
 
@@ -248,7 +252,10 @@ class TestPropertyUnset(PropertyMixin, TestCase):
             "property unset missing1 missing2 --force".split(),
             FIXTURE_CRM_CONFIG,
             stderr_full=(
-                "Warning: Specified cluster property options 'missing1', "
-                "'missing2' do not exist\n"
+                "Warning: Cannot remove properties 'missing1', 'missing2', they "
+                "are not present in property set 'cib-bootstrap-options'\n"
+            )
+            + get_invalid_option_messages(
+                ["missing1", "missing2"], error=False
             ),
         )

@@ -60,7 +60,7 @@ def acl_enable(lib, argv, modifiers):
     modifiers.ensure_only_supported("-f")
     if argv:
         raise CmdLineInputError()
-    lib.cluster_property.set_property({"enable-acl": "true"})
+    lib.cluster_property.set_properties({"enable-acl": "true"})
 
 
 def acl_disable(lib, argv, modifiers):
@@ -71,7 +71,7 @@ def acl_disable(lib, argv, modifiers):
     modifiers.ensure_only_supported("-f")
     if argv:
         raise CmdLineInputError()
-    lib.cluster_property.set_property({"enable-acl": "false"})
+    lib.cluster_property.set_properties({"enable-acl": "false"})
 
 
 def user_create(lib, argv, modifiers):

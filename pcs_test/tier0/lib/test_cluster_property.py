@@ -191,6 +191,7 @@ def warning_reports(report_list):
 
 class TestValidateSetClusterProperties(TestCase):
     # pylint: disable=too-many-instance-attributes
+    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.mock_service_manager = mock.Mock(spec=ServiceManagerInterface)
         self.mock_facade_list = [
@@ -231,7 +232,8 @@ class TestValidateSetClusterProperties(TestCase):
 
     def assert_validate_set(
         self,
-        to_be_set_dict,
+        configured_properties,
+        new_properties,
         expected_report_list,
         sbd_enabled=False,
         sbd_devices=False,
@@ -244,42 +246,83 @@ class TestValidateSetClusterProperties(TestCase):
             lib_cluster_property.validate_set_cluster_properties(
                 self.mock_facade_list,
                 "property-set-id",
+                configured_properties,
+                new_properties,
                 self.mock_service_manager,
-                to_be_set_dict,
                 force=force,
             ),
             expected_report_list,
         )
-        if "stonith-watchdog-timeout" in to_be_set_dict:
+        if "stonith-watchdog-timeout" in new_properties and (
+            new_properties["stonith-watchdog-timeout"]
+            or "stonith-watchdog-timeout" in configured_properties
+        ):
             self.mock_is_sbd_enabled.assert_called_once_with(
                 self.mock_service_manager
             )
         else:
             self.mock_is_sbd_enabled.assert_not_called()
             self.mock_sbd_devices.assert_not_called()
+        self.mock_is_sbd_enabled.reset_mock()
+
+    def test_no_properties_to_set_or_unset(self):
+        self.assert_validate_set(
+            [],
+            {},
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_ITEMS_NOT_SPECIFIED,
+                    force_code=reports.codes.FORCE,
+                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
+                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
+                    container_id="property-set-id",
+                )
+            ],
+        )
+
+    def test_no_properties_to_set_or_unset_forced(self):
+        self.assert_validate_set(
+            [],
+            {},
+            [
+                fixture.warn(
+                    reports.codes.ADD_REMOVE_ITEMS_NOT_SPECIFIED,
+                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
+                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
+                    container_id="property-set-id",
+                )
+            ],
+            force=True,
+        )
 
     def test_set_valid_properties_and_values(self):
-        self.assert_validate_set(FIXTURE_VALID_OPTIONS_DICT, [])
+        self.assert_validate_set([], FIXTURE_VALID_OPTIONS_DICT, [])
 
     def test_set_invalid_properties_and_values(self):
         self.assert_validate_set(
-            FIXTURE_INVALID_OPTIONS_DICT, FIXTURE_ERROR_REPORTS
+            [], FIXTURE_INVALID_OPTIONS_DICT, FIXTURE_ERROR_REPORTS
         )
 
     def test_set_invalid_properties_and_values_forced(self):
         self.assert_validate_set(
+            [],
             FIXTURE_INVALID_OPTIONS_DICT,
             warning_reports(FIXTURE_ERROR_REPORTS),
             force=True,
         )
 
-    def test_set_zero_stonith_watchdog_timeout_sbd_disabled(self):
-        self.assert_validate_set({"stonith-watchdog-timeout": "0"}, [])
+    def test_unset_stonith_watchdog_timeout_sbd_disabled(self):
+        for value in ["0", ""]:
+            with self.subTest(value=value):
+                self.assert_validate_set(
+                    ["stonith-watchdog-timeout"],
+                    {"stonith-watchdog-timeout": value},
+                    [],
+                )
 
-    def test_set_stonith_watchdog_timeout_sbd_disabled(
-        self,
-    ):
+    def test_set_stonith_watchdog_timeout_sbd_disabled(self):
         self.assert_validate_set(
+            [],
             {"stonith-watchdog-timeout": "5"},
             [
                 fixture.error(
@@ -291,13 +334,14 @@ class TestValidateSetClusterProperties(TestCase):
 
     def test_set_ok_stonith_watchdog_timeout_sbd_enabled_without_devices(self):
         self.assert_validate_set(
-            {"stonith-watchdog-timeout": "15"}, [], sbd_enabled=True
+            [], {"stonith-watchdog-timeout": "15"}, [], sbd_enabled=True
         )
 
     def test_set_small_stonith_watchdog_timeout_sbd_enabled_without_devices(
         self,
     ):
         self.assert_validate_set(
+            [],
             {"stonith-watchdog-timeout": "9"},
             [
                 fixture.error(
@@ -314,6 +358,7 @@ class TestValidateSetClusterProperties(TestCase):
         self,
     ):
         self.assert_validate_set(
+            [],
             {"stonith-watchdog-timeout": "9"},
             [
                 fixture.warn(
@@ -331,6 +376,7 @@ class TestValidateSetClusterProperties(TestCase):
     ):
 
         self.assert_validate_set(
+            [],
             {"stonith-watchdog-timeout": "invalid"},
             [
                 fixture.error(
@@ -343,23 +389,45 @@ class TestValidateSetClusterProperties(TestCase):
             sbd_enabled=True,
         )
 
-    def test_set_zero_stonith_watchdog_timeout_sbd_enabled_without_devices(
+    def test_unset_stonith_watchdog_timeout_sbd_enabled_without_devices(
         self,
     ):
-        self.assert_validate_set(
-            {"stonith-watchdog-timeout": "0"},
-            [
-                fixture.error(
-                    reports.codes.STONITH_WATCHDOG_TIMEOUT_CANNOT_BE_UNSET,
-                    force_code=reports.codes.FORCE,
-                    reason="sbd_set_up_without_devices",
+        for value in ["0", ""]:
+            with self.subTest(value=value):
+                self.assert_validate_set(
+                    ["stonith-watchdog-timeout"],
+                    {"stonith-watchdog-timeout": value},
+                    [
+                        fixture.error(
+                            reports.codes.STONITH_WATCHDOG_TIMEOUT_CANNOT_BE_UNSET,
+                            force_code=reports.codes.FORCE,
+                            reason="sbd_set_up_without_devices",
+                        )
+                    ],
+                    sbd_enabled=True,
                 )
-            ],
-            sbd_enabled=True,
-        )
+
+    def test_unset_stonith_watchdog_timeout_sbd_enabled_without_devices_forced(
+        self,
+    ):
+        for value in ["0", ""]:
+            with self.subTest(value=value):
+                self.assert_validate_set(
+                    ["stonith-watchdog-timeout"],
+                    {"stonith-watchdog-timeout": value},
+                    [
+                        fixture.warn(
+                            reports.codes.STONITH_WATCHDOG_TIMEOUT_CANNOT_BE_UNSET,
+                            reason="sbd_set_up_without_devices",
+                        )
+                    ],
+                    force=True,
+                    sbd_enabled=True,
+                )
 
     def test_set_stonith_watchdog_timeout_sbd_enabled_with_devices(self):
         self.assert_validate_set(
+            [],
             {"stonith-watchdog-timeout": "15"},
             [
                 fixture.error(
@@ -374,6 +442,7 @@ class TestValidateSetClusterProperties(TestCase):
 
     def test_set_stonith_watchdog_timeout_sbd_enabled_with_devices_forced(self):
         self.assert_validate_set(
+            [],
             {"stonith-watchdog-timeout": 15},
             [
                 fixture.warn(
@@ -381,211 +450,26 @@ class TestValidateSetClusterProperties(TestCase):
                     reason="sbd_set_up_with_devices",
                 )
             ],
-            force=True,
             sbd_enabled=True,
             sbd_devices=True,
-        )
-
-    def test_set_zero_stonith_watchdog_timeout_sbd_enabled_with_devices(self):
-        self.assert_validate_set(
-            {"stonith-watchdog-timeout": "0"},
-            [],
-            sbd_enabled=True,
-            sbd_devices=True,
-        )
-
-
-class TestValidateRemoveClusterProperties(TestCase):
-    def setUp(self):
-        self.configured_options = ["a", "b", "c", "stonith-watchdog-timeout"]
-        self.mock_service_manager = mock.Mock(spec=ServiceManagerInterface)
-        self.patcher_is_sbd_enabled = mock.patch("pcs.lib.sbd.is_sbd_enabled")
-        self.patcher_sbd_devices = mock.patch(
-            "pcs.lib.sbd.get_local_sbd_device_list"
-        )
-        self.mock_is_sbd_enabled = self.patcher_is_sbd_enabled.start()
-        self.mock_sbd_devices = self.patcher_sbd_devices.start()
-
-    def tearDown(self):
-        self.patcher_is_sbd_enabled.stop()
-        self.patcher_sbd_devices.stop()
-
-    def assert_validate_remove(
-        self,
-        remove_list,
-        expected_report_list,
-        sbd_enabled=False,
-        sbd_devices=False,
-        force=False,
-    ):
-        self.mock_is_sbd_enabled.return_value = sbd_enabled
-        self.mock_sbd_devices.return_value = ["devices"] if sbd_devices else []
-        assert_report_item_list_equal(
-            lib_cluster_property.validate_remove_cluster_properties(
-                self.configured_options,
-                "property-set-id",
-                self.mock_service_manager,
-                remove_list,
-                force=force,
-            ),
-            expected_report_list,
-        )
-        if (
-            "stonith-watchdog-timeout" in remove_list
-            and "stonith-watchdog-timeout" in self.configured_options
-        ):
-            self.mock_is_sbd_enabled.assert_called_once_with(
-                self.mock_service_manager
-            )
-        else:
-            self.mock_is_sbd_enabled.assert_not_called()
-            self.mock_sbd_devices.assert_not_called()
-
-    def test_empty_list_to_remove(self):
-        self.assert_validate_remove(
-            [],
-            [
-                fixture.error(
-                    reports.codes.ADD_REMOVE_ITEMS_NOT_SPECIFIED,
-                    force_code=reports.codes.FORCE,
-                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
-                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
-                    container_id="property-set-id",
-                )
-            ],
-        )
-
-    def test_empty_list_to_remove_forced(self):
-        self.assert_validate_remove(
-            [],
-            [
-                fixture.warn(
-                    reports.codes.ADD_REMOVE_ITEMS_NOT_SPECIFIED,
-                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
-                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
-                    container_id="property-set-id",
-                )
-            ],
             force=True,
         )
 
-    def test_remove_configured_options(self):
-        self.assert_validate_remove(["a", "b"], [])
-
-    def test_remove_not_configured_options(self):
-        self.assert_validate_remove(
-            ["x", "y"],
-            [
-                fixture.error(
-                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
-                    force_code=reports.codes.FORCE,
-                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
-                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
-                    container_id="property-set-id",
-                    item_list=["x", "y"],
+    def test_unset_stonith_watchdog_timeout_sbd_enabled_with_devices(self):
+        for value in ["0", ""]:
+            with self.subTest(value=value):
+                self.assert_validate_set(
+                    ["stonith-watchdog-timeout"],
+                    {"stonith-watchdog-timeout": value},
+                    [],
+                    sbd_enabled=True,
+                    sbd_devices=True,
                 )
-            ],
-        )
-
-    def test_remove_not_configured_options_forced(self):
-        self.assert_validate_remove(
-            ["x", "y"],
-            [
-                fixture.warn(
-                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
-                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
-                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
-                    container_id="property-set-id",
-                    item_list=["x", "y"],
-                )
-            ],
-            force=True,
-        )
-
-    def test_remove_forbidden_options(self):
-        self.assert_validate_remove(
-            FORBIDDEN_OPTIONS_LIST[1:],
-            [
-                fixture.error(
-                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
-                    force_code=reports.codes.FORCE,
-                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
-                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
-                    container_id="property-set-id",
-                    item_list=FORBIDDEN_OPTIONS_LIST[1:],
-                ),
-                fixture.error(
-                    reports.codes.CANNOT_DO_ACTION_WITH_FORBIDDEN_OPTIONS,
-                    action="remove",
-                    specified_options=FORBIDDEN_OPTIONS_LIST[1:],
-                    forbidden_options=FORBIDDEN_OPTIONS_LIST,
-                    option_type="cluster property",
-                ),
-            ],
-        )
-
-    def test_remove_forbidden_options_forced(self):
-        self.assert_validate_remove(
-            FORBIDDEN_OPTIONS_LIST[1:],
-            [
-                fixture.warn(
-                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
-                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
-                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
-                    container_id="property-set-id",
-                    item_list=FORBIDDEN_OPTIONS_LIST[1:],
-                ),
-                fixture.error(
-                    reports.codes.CANNOT_DO_ACTION_WITH_FORBIDDEN_OPTIONS,
-                    action="remove",
-                    specified_options=FORBIDDEN_OPTIONS_LIST[1:],
-                    forbidden_options=FORBIDDEN_OPTIONS_LIST,
-                    option_type="cluster property",
-                ),
-            ],
-            force=True,
-        )
-
-    def test_remove_stonith_watchdog_timeout_sbd_disabled(self):
-        self.assert_validate_remove(["stonith-watchdog-timeout"], [])
-
-    def test_remove_stonith_watchdog_timeout_sbd_enabled_with_devices(self):
-        self.assert_validate_remove(
-            ["stonith-watchdog-timeout"], [], sbd_enabled=True, sbd_devices=True
-        )
-
-    def test_remove_stonith_watchdog_timeout_sbd_enabled_without_device(self):
-        self.assert_validate_remove(
-            ["stonith-watchdog-timeout"],
-            [
-                fixture.error(
-                    reports.codes.STONITH_WATCHDOG_TIMEOUT_CANNOT_BE_UNSET,
-                    force_code=reports.codes.FORCE,
-                    reason="sbd_set_up_without_devices",
-                )
-            ],
-            sbd_enabled=True,
-        )
-
-    def test_remove_stonith_watchdog_timeout_sbd_enabled_without_device_forced(
-        self,
-    ):
-        self.assert_validate_remove(
-            ["stonith-watchdog-timeout"],
-            [
-                fixture.warn(
-                    reports.codes.STONITH_WATCHDOG_TIMEOUT_CANNOT_BE_UNSET,
-                    reason="sbd_set_up_without_devices",
-                )
-            ],
-            sbd_enabled=True,
-            force=True,
-        )
 
     def test_remove_not_configured_stonith_watchdog_timeout(self):
-        self.configured_options.remove("stonith-watchdog-timeout")
-        self.assert_validate_remove(
-            ["stonith-watchdog-timeout"],
+        self.assert_validate_set(
+            ["a", "b"],
+            {"stonith-watchdog-timeout": ""},
             [
                 fixture.error(
                     reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
@@ -596,6 +480,205 @@ class TestValidateRemoveClusterProperties(TestCase):
                     item_list=["stonith-watchdog-timeout"],
                 )
             ],
+        )
+
+    def test_remove_valid_configured_options(self):
+        self.assert_validate_set(
+            ["bool_param", "integer_param", "percentage_param", "a", "b", "c"],
+            {"bool_param": "", "integer_param": ""},
+            [],
+        )
+
+    def test_remove_valid_not_configured_options(self):
+        self.assert_validate_set(
+            [],
+            {"bool_param": "", "integer_param": ""},
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
+                    force_code=reports.codes.FORCE,
+                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
+                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
+                    container_id="property-set-id",
+                    item_list=["bool_param", "integer_param"],
+                )
+            ],
+        )
+
+    def test_remove_valid_not_configured_options_forced(self):
+        self.assert_validate_set(
+            [],
+            {"bool_param": "", "integer_param": ""},
+            [
+                fixture.warn(
+                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
+                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
+                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
+                    container_id="property-set-id",
+                    item_list=["bool_param", "integer_param"],
+                )
+            ],
+            force=True,
+        )
+
+    def test_remove_invalid_configured_options(self):
+        self.assert_validate_set(
+            ["bool_param", "integer_param", "percentage_param", "a", "b", "c"],
+            {"a": "", "b": ""},
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTIONS,
+                    force_code=reports.codes.FORCE,
+                    option_names=["a", "b"],
+                    allowed=[
+                        "bool_param",
+                        "integer_param",
+                        "percentage_param",
+                        "select_param",
+                        "stonith-watchdog-timeout",
+                        "time_param",
+                    ],
+                    option_type="cluster property",
+                    allowed_patterns=[],
+                )
+            ],
+        )
+
+    def test_remove_invalid_configured_options_forced(self):
+        self.assert_validate_set(
+            ["bool_param", "integer_param", "percentage_param", "a", "b", "c"],
+            {"a": "", "b": ""},
+            [
+                fixture.warn(
+                    reports.codes.INVALID_OPTIONS,
+                    option_names=["a", "b"],
+                    allowed=[
+                        "bool_param",
+                        "integer_param",
+                        "percentage_param",
+                        "select_param",
+                        "stonith-watchdog-timeout",
+                        "time_param",
+                    ],
+                    option_type="cluster property",
+                    allowed_patterns=[],
+                )
+            ],
+            force=True,
+        )
+
+    def test_remove_invalid_not_configured_options(self):
+        self.assert_validate_set(
+            ["a", "b", "c"],
+            {"x": "", "y": ""},
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
+                    force_code=reports.codes.FORCE,
+                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
+                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
+                    container_id="property-set-id",
+                    item_list=["x", "y"],
+                ),
+                fixture.error(
+                    reports.codes.INVALID_OPTIONS,
+                    force_code=reports.codes.FORCE,
+                    option_names=["x", "y"],
+                    allowed=[
+                        "bool_param",
+                        "integer_param",
+                        "percentage_param",
+                        "select_param",
+                        "stonith-watchdog-timeout",
+                        "time_param",
+                    ],
+                    option_type="cluster property",
+                    allowed_patterns=[],
+                ),
+            ],
+        )
+
+    def test_remove_invalid_not_configured_options_forced(self):
+        self.assert_validate_set(
+            ["a", "b", "c"],
+            {"x": "", "y": ""},
+            [
+                fixture.warn(
+                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
+                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
+                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
+                    container_id="property-set-id",
+                    item_list=["x", "y"],
+                ),
+                fixture.warn(
+                    reports.codes.INVALID_OPTIONS,
+                    option_names=["x", "y"],
+                    allowed=[
+                        "bool_param",
+                        "integer_param",
+                        "percentage_param",
+                        "select_param",
+                        "stonith-watchdog-timeout",
+                        "time_param",
+                    ],
+                    option_type="cluster property",
+                    allowed_patterns=[],
+                ),
+            ],
+            force=True,
+        )
+
+    def test_remove_forbidden_options(self):
+        self.assert_validate_set(
+            FORBIDDEN_OPTIONS_LIST,
+            {key: "" for key in FORBIDDEN_OPTIONS_LIST[1:]},
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTIONS,
+                    option_names=[
+                        "cluster-name",
+                        "dc-version",
+                        "have-watchdog",
+                    ],
+                    allowed=[
+                        "bool_param",
+                        "integer_param",
+                        "percentage_param",
+                        "select_param",
+                        "stonith-watchdog-timeout",
+                        "time_param",
+                    ],
+                    option_type="cluster property",
+                    allowed_patterns=[],
+                )
+            ],
+        )
+
+    def test_remove_forbidden_options_forced(self):
+        self.assert_validate_set(
+            FORBIDDEN_OPTIONS_LIST,
+            {key: "" for key in FORBIDDEN_OPTIONS_LIST[1:]},
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTIONS,
+                    option_names=[
+                        "cluster-name",
+                        "dc-version",
+                        "have-watchdog",
+                    ],
+                    allowed=[
+                        "bool_param",
+                        "integer_param",
+                        "percentage_param",
+                        "select_param",
+                        "stonith-watchdog-timeout",
+                        "time_param",
+                    ],
+                    option_type="cluster property",
+                    allowed_patterns=[],
+                )
+            ],
+            force=True,
         )
 
 
