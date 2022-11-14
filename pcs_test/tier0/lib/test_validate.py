@@ -2164,54 +2164,155 @@ class ValidateAddRemoveItems(TestCase):
         )
 
 
-# class ValidateSetUnsetItems(TestCase):
-#     ##### TODO TODO TODO
-#     def test_return_empty_report_on_existing_names(self):
-#         assert_report_item_list_equal(
-#             validate.NamesExist(["a", "b", "c"]).validate({"a": "A", "b": "B"}),
-#             [],
-#         )
-#
-#     def test_return_error_on_not_existing_names(self):
-#         assert_report_item_list_equal(
-#             validate.NamesExist(["a"], option_type="TYPE").validate(
-#                 {"a": "A", "b": "B", "c": "C"}
-#             ),
-#             [
-#                 fixture.error(
-#                     reports.codes.OPTIONS_DO_NOT_EXIST,
-#                     option_names=["b", "c"],
-#                     option_type="TYPE",
-#                 )
-#             ],
-#         )
-#
-#     def test_return_error_on_not_existing_names_forceable(self):
-#         code = "force_code"
-#         assert_report_item_list_equal(
-#             validate.NamesExist(
-#                 ["a"], severity=reports.item.ReportItemSeverity.error(code)
-#             ).validate({"a": "A", "b": "B", "c": "C"}),
-#             [
-#                 fixture.error(
-#                     reports.codes.OPTIONS_DO_NOT_EXIST,
-#                     force_code=code,
-#                     option_names=["b", "c"],
-#                     option_type=None,
-#                 )
-#             ],
-#         )
-#
-#     def test_return_error_on_not_existing_names_forced(self):
-#         assert_report_item_list_equal(
-#             validate.NamesExist(
-#                 ["a"], severity=reports.item.ReportItemSeverity.warning()
-#             ).validate({"a": "A", "b": "B", "c": "C"}),
-#             [
-#                 fixture.warn(
-#                     reports.codes.OPTIONS_DO_NOT_EXIST,
-#                     option_names=["b", "c"],
-#                     option_type=None,
-#                 )
-#             ],
-#         )
+class ValidateSetUnsetItems(TestCase):
+    CONTAINER_TYPE = ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE
+    ITEM_TYPE = ADD_REMOVE_ITEM_TYPE_DEVICE
+    CONTAINER_ID = "container_id"
+
+    def _validate(self, add, remove, current, severity=None):
+        # pylint: disable=protected-access
+        return validate.validate_set_unset_items(
+            add,
+            remove,
+            current,
+            self.CONTAINER_TYPE,
+            self.ITEM_TYPE,
+            self.CONTAINER_ID,
+            severity,
+        )
+
+    def test_success(self):
+        assert_report_item_list_equal(
+            self._validate(["a"], ["b"], ["b", "c"]), []
+        )
+
+    def test_items_not_specified(self):
+        assert_report_item_list_equal(
+            self._validate([], [], []),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_ITEMS_NOT_SPECIFIED,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                )
+            ],
+        )
+
+    def test_items_not_specified_severity(self):
+        assert_report_item_list_equal(
+            self._validate(
+                [], [], [], severity=reports.ReportItemSeverity.warning()
+            ),
+            [
+                fixture.warn(
+                    reports.codes.ADD_REMOVE_ITEMS_NOT_SPECIFIED,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                )
+            ],
+        )
+
+    def test_duplicate_items(self):
+        assert_report_item_list_equal(
+            self._validate(["a", "a", "b", "b"], ["c", "c"], ["a", "b", "c"]),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_ITEMS_DUPLICATION,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    duplicate_items_list=["a", "b", "c"],
+                )
+            ],
+        )
+
+    def test_duplicate_items_severity(self):
+        assert_report_item_list_equal(
+            self._validate(
+                ["a", "a", "b", "b"],
+                ["c", "c"],
+                ["a", "b", "c"],
+                severity=reports.ReportItemSeverity.warning(),
+            ),
+            [
+                fixture.warn(
+                    reports.codes.ADD_REMOVE_ITEMS_DUPLICATION,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    duplicate_items_list=["a", "b", "c"],
+                )
+            ],
+        )
+
+    def test_remove_items_missing(self):
+        assert_report_item_list_equal(
+            self._validate([], ["a", "b"], ["c"]),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    item_list=["a", "b"],
+                )
+            ],
+        )
+
+    def test_remove_items_missing_severity(self):
+        assert_report_item_list_equal(
+            self._validate(
+                [],
+                ["a", "b"],
+                ["c"],
+                severity=reports.ReportItemSeverity.info(),
+            ),
+            [
+                fixture.info(
+                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    item_list=["a", "b"],
+                )
+            ],
+        )
+
+    def test_items_both_added_and_removed(self):
+        assert_report_item_list_equal(
+            self._validate(
+                ["a", "b"],
+                ["a", "b"],
+                ["a", "b"],
+            ),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_CANNOT_ADD_AND_REMOVE_ITEMS_AT_THE_SAME_TIME,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    item_list=["a", "b"],
+                )
+            ],
+        )
+
+    def test_items_both_added_and_removed_severity(self):
+        assert_report_item_list_equal(
+            self._validate(
+                ["a", "b"],
+                ["a", "b"],
+                ["a", "b"],
+                severity=reports.ReportItemSeverity.info(),
+            ),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_CANNOT_ADD_AND_REMOVE_ITEMS_AT_THE_SAME_TIME,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    item_list=["a", "b"],
+                )
+            ],
+        )
