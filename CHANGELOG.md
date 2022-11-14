@@ -23,12 +23,14 @@
   (`/etc/booth`) is missing ([rhbz#1791670])
 - Creating a promotable or globally-unique clones is not allowed for non-ocf
   resource agents ([rhbz#1493416])
+- Improved cluster properties validators, OCF 1.1 now supported ([rhbz#2019464])
 - `pcs property set/unset` forbid manipulation of specific cluster properties
   ([rhbz#1620043])
 
 [rhbz#1493416]: https://bugzilla.redhat.com/show_bug.cgi?id=1493416
 [rhbz#1620043]: https://bugzilla.redhat.com/show_bug.cgi?id=1620043
 [rhbz#1791670]: https://bugzilla.redhat.com/show_bug.cgi?id=1791670
+[rhbz#2019464]: https://bugzilla.redhat.com/show_bug.cgi?id=2019464
 [rhbz#2092950]: https://bugzilla.redhat.com/show_bug.cgi?id=2092950
 [rhbz#2102663]: https://bugzilla.redhat.com/show_bug.cgi?id=2102663
 [rhbz#2112270]: https://bugzilla.redhat.com/show_bug.cgi?id=2112270
