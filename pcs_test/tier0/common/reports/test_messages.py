@@ -5597,8 +5597,11 @@ class CannotCreateDefaultClusterPropertySet(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(
             (
-                "Cannot create default cluster_property_set element. ID "
-                "'cib-bootstrap-options' already exist"
+                "Cannot create default cluster_property_set element, ID "
+                "'cib-bootstrap-options' already exists. Find elements with the"
+                " ID and remove them from cluster configuration."
             ),
-            reports.CannotCreateDefaultClusterPropertySet(),
+            reports.CannotCreateDefaultClusterPropertySet(
+                "cib-bootstrap-options"
+            ),
         )

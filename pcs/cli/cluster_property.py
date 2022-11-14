@@ -49,4 +49,6 @@ def unset_property(
     else:
         ensure_unique_args(cast(StringSequence, argv))
 
-    lib.cluster_property.set_property({name: "" for name in argv}, force_flags)
+    lib.cluster_property.set_properties(
+        {name: "" for name in argv}, force_flags
+    )

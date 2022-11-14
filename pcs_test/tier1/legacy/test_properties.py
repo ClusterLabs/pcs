@@ -159,10 +159,9 @@ class PropertyTest(TestCase):
         self.assertEqual(r, 1)
         ac(
             o,
-            "Error: Specified cluster property option 'zzzzz' does not exist, "
-            "use --force to override\n"
-            "Error: Errors have occurred, therefore pcs is unable to "
-            "continue\n",
+            "Error: Cannot remove property 'zzzzz', it is not present in "
+            "property set 'cib-bootstrap-options', use --force to override\n"
+            + get_invalid_option_messages("zzzzz"),
         )
         o, _ = pcs(self.temp_cib.name, "property config".split())
         ac(o, "Cluster Properties:\n")
@@ -171,8 +170,9 @@ class PropertyTest(TestCase):
         self.assertEqual(r, 0)
         ac(
             o,
-            "Warning: Specified cluster property option 'zzzz' does not "
-            "exist\n",
+            "Warning: Cannot remove property 'zzzz', it is not present in "
+            "property set 'cib-bootstrap-options'\n"
+            + get_invalid_option_messages("zzzz", error=False),
         )
         o, _ = pcs(self.temp_cib.name, "property config".split())
         ac(o, "Cluster Properties:\n")
@@ -475,8 +475,9 @@ class PropertyUnset(
         self.assert_pcs_fail(
             "property unset batch-limit".split(),
             (
-                "Error: Specified cluster property option 'batch-limit' does "
-                "not exist, use --force to override\n"
+                "Error: Cannot remove property 'batch-limit', it is not present"
+                " in property set 'cib-bootstrap-options', use --force to "
+                "override\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
                 "continue\n"
             ),
