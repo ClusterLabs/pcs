@@ -181,6 +181,7 @@ def get_plural(singular: str) -> str:
         "has": "have",
         "does": "do",
         "it": "they",
+        "property": "properties",
     }
     if singular in common_plurals:
         return common_plurals[singular]

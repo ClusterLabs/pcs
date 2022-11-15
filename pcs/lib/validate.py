@@ -51,6 +51,7 @@ from pcs.common.reports import (
     ReportItemList,
     ReportItemSeverity,
 )
+from pcs.common.str_tools import format_list
 from pcs.common.tools import timeout_to_seconds
 from pcs.common.validate import (
     is_integer,
@@ -59,6 +60,9 @@ from pcs.common.validate import (
 from pcs.lib.cib.tools import IdProvider
 from pcs.lib.corosync import constants as corosync_constants
 from pcs.lib.pacemaker.values import (
+    BOOLEAN_VALUES,
+    SCORE_INFINITY,
+    is_boolean,
     is_score,
     validate_id,
 )
@@ -832,6 +836,19 @@ class ValueNotEmpty(ValuePredicateBase):
         return self._value_desc_or_enum
 
 
+class ValuePcmkBoolean(ValuePredicateBase):
+    """
+    Report INVALID_OPTION_VALUE when the value is not a pacemaker boolean value
+    """
+
+    def _is_valid(self, value: TypeOptionValue) -> bool:
+        return is_boolean(value)
+
+    def _get_allowed_values(self) -> Any:
+        bool_values = format_list(list(BOOLEAN_VALUES))
+        return f"a pacemaker boolean value: {bool_values}"
+
+
 class ValuePcmkDatespecPart(ValuePredicateBase):
     """
     Report INVALID_OPTION_VALUE when the value is not a valid Pacemaker
@@ -872,6 +889,49 @@ class ValuePcmkDatespecPart(ValuePredicateBase):
             f"{self._at_least}..{self._at_most} or "
             f"{self._at_least}..{self._at_most-1}-{self._at_least+1}..{self._at_most}"
         )
+
+
+class ValuePcmkPercentage(ValuePredicateBase):
+    """
+    Report INVALID_OPTION_VALUE when the value is not a non-negative integer
+    followed by '%' character.
+    """
+
+    def _is_valid(self, value: TypeOptionValue) -> bool:
+        return bool(value) and value[-1] == "%" and is_integer(value[:-1], 0)
+
+    def _get_allowed_values(self) -> Any:
+        return (
+            "a non-negative integer followed by '%' (e.g. 0%, 50%, 200%, ...)"
+        )
+
+
+class ValuePcmkInteger(ValuePredicateBase):
+    """
+    Report INVALID_OPTION_VALUE when the value is not an integer or
+    INFINITY/-INFINITY
+    """
+
+    def _is_valid(self, value: TypeOptionValue) -> bool:
+        return is_score(value)
+
+    def _get_allowed_values(self) -> Any:
+        return f"an integer or {SCORE_INFINITY} or -{SCORE_INFINITY}"
+
+
+class ValuePcmkPositiveInteger(ValuePredicateBase):
+    """
+    Report INVALID_OPTION_VALUE when the value is not a positive integer or
+    INFINITY
+    """
+
+    def _is_valid(self, value: TypeOptionValue) -> bool:
+        return value in [SCORE_INFINITY, f"+{SCORE_INFINITY}"] or is_integer(
+            value, 1
+        )
+
+    def _get_allowed_values(self) -> Any:
+        return f"a positive integer or {SCORE_INFINITY}"
 
 
 class ValuePortNumber(ValuePredicateBase):
@@ -1056,6 +1116,199 @@ def matches_regexp(value: TypeOptionValue, regexp: Union[str, Pattern]) -> bool:
 ### complex
 
 
+class _ValidateAddRemoveBase:
+    # pylint: disable=too-many-instance-attributes
+    def __init__(
+        self,
+        add_item_list: Iterable[str],
+        remove_item_list: Iterable[str],
+        current_item_list: Iterable[str],
+        container_type: reports.types.AddRemoveContainerType,
+        item_type: reports.types.AddRemoveItemType,
+        container_id: str,
+        adjacent_item_id: Optional[str] = None,
+        container_can_be_empty: bool = False,
+        severity: Optional[ReportItemSeverity] = None,
+    ):
+        """
+        Validate if items can be added or removed to or from a container.
+
+        add_item_list -- items to be added
+        remove_item_list -- items to be removed
+        current_item_list -- items currently in the container
+        container_type -- container type
+        item_type -- item type
+        container_id -- id of the container
+        adjacent_item_id -- an adjacent item in the container
+        container_can_be_empty -- flag to decide if container can be left empty
+        severity -- severity of produced reports, defaults to error
+        """
+        # pylint: disable=too-many-arguments
+        self._add_item_list = add_item_list
+        self._remove_item_list = remove_item_list
+        self._current_item_list = current_item_list
+        self._container_type = container_type
+        self._item_type = item_type
+        self._container_id = container_id
+        self._adjacent_item_id = adjacent_item_id
+        self._container_can_be_empty = container_can_be_empty
+        self._severity = (
+            ReportItemSeverity.error() if severity is None else severity
+        )
+
+    def validate_add_or_remove_specified(self) -> ReportItemList:
+        report_list: ReportItemList = []
+        if not self._add_item_list and not self._remove_item_list:
+            report_list.append(
+                ReportItem(
+                    self._severity,
+                    reports.messages.AddRemoveItemsNotSpecified(
+                        self._container_type,
+                        self._item_type,
+                        self._container_id,
+                    ),
+                )
+            )
+        return report_list
+
+    @staticmethod
+    def _get_duplicate_items(item_list: Iterable[str]) -> Set[str]:
+        return {item for item, count in Counter(item_list).items() if count > 1}
+
+    def validate_no_duplicate_items(self) -> ReportItemList:
+        report_list: ReportItemList = []
+        duplicate_items_list = self._get_duplicate_items(
+            self._add_item_list
+        ) | self._get_duplicate_items(self._remove_item_list)
+        if duplicate_items_list:
+            report_list.append(
+                ReportItem(
+                    self._severity,
+                    reports.messages.AddRemoveItemsDuplication(
+                        self._container_type,
+                        self._item_type,
+                        self._container_id,
+                        sorted(duplicate_items_list),
+                    ),
+                )
+            )
+        return report_list
+
+    def validate_add_items_not_yet_present(self) -> ReportItemList:
+        report_list: ReportItemList = []
+        already_present = set(self._add_item_list).intersection(
+            self._current_item_list
+        )
+        # report only if an adjacent id is not defined, because we want to allow
+        # to move items when adjacent_item_id is specified
+        if self._adjacent_item_id is None and already_present:
+            report_list.append(
+                ReportItem.error(
+                    reports.messages.AddRemoveCannotAddItemsAlreadyInTheContainer(
+                        self._container_type,
+                        self._item_type,
+                        self._container_id,
+                        sorted(already_present),
+                    )
+                )
+            )
+        return report_list
+
+    def validate_remove_items_present(self) -> ReportItemList:
+        report_list: ReportItemList = []
+        missing_items = set(self._remove_item_list).difference(
+            self._current_item_list
+        )
+        if missing_items:
+            report_list.append(
+                ReportItem(
+                    self._severity,
+                    reports.messages.AddRemoveCannotRemoveItemsNotInTheContainer(
+                        self._container_type,
+                        self._item_type,
+                        self._container_id,
+                        sorted(missing_items),
+                    ),
+                )
+            )
+        return report_list
+
+    def validate_item_not_both_added_and_removed(self) -> ReportItemList:
+        report_list: ReportItemList = []
+        common_items = set(self._add_item_list) & set(self._remove_item_list)
+        if common_items:
+            report_list.append(
+                ReportItem.error(
+                    reports.messages.AddRemoveCannotAddAndRemoveItemsAtTheSameTime(
+                        self._container_type,
+                        self._item_type,
+                        self._container_id,
+                        sorted(common_items),
+                    )
+                )
+            )
+        return report_list
+
+    def validate_container_wont_be_empty(self) -> ReportItemList:
+        report_list: ReportItemList = []
+        if not self._container_can_be_empty and not self._add_item_list:
+            remaining_items = set(self._current_item_list).difference(
+                self._remove_item_list
+            )
+            if not remaining_items:
+                report_list.append(
+                    ReportItem.error(
+                        reports.messages.AddRemoveCannotRemoveAllItemsFromTheContainer(
+                            self._container_type,
+                            self._item_type,
+                            self._container_id,
+                            list(self._current_item_list),
+                        )
+                    )
+                )
+        return report_list
+
+    def validate_adjacent(self) -> ReportItemList:
+        report_list: ReportItemList = []
+        if not self._adjacent_item_id:
+            return report_list
+
+        if self._adjacent_item_id not in self._current_item_list:
+            report_list.append(
+                ReportItem.error(
+                    reports.messages.AddRemoveAdjacentItemNotInTheContainer(
+                        self._container_type,
+                        self._item_type,
+                        self._container_id,
+                        self._adjacent_item_id,
+                    )
+                )
+            )
+        if self._adjacent_item_id in self._add_item_list:
+            report_list.append(
+                ReportItem.error(
+                    reports.messages.AddRemoveCannotPutItemNextToItself(
+                        self._container_type,
+                        self._item_type,
+                        self._container_id,
+                        self._adjacent_item_id,
+                    )
+                )
+            )
+        if not self._add_item_list:
+            report_list.append(
+                ReportItem.error(
+                    reports.messages.AddRemoveCannotSpecifyAdjacentItemWithoutItemsToAdd(
+                        self._container_type,
+                        self._item_type,
+                        self._container_id,
+                        self._adjacent_item_id,
+                    )
+                )
+            )
+        return report_list
+
+
 def validate_add_remove_items(
     add_item_list: Iterable[str],
     remove_item_list: Iterable[str],
@@ -1078,117 +1331,61 @@ def validate_add_remove_items(
     adjacent_item_id -- an adjacent item in the container
     container_can_be_empty -- flag to decide if container can be left empty
     """
-    # pylint: disable=too-many-locals
-    report_list: ReportItemList = []
-    if not add_item_list and not remove_item_list:
-        report_list.append(
-            ReportItem.error(
-                reports.messages.AddRemoveItemsNotSpecified(
-                    container_type, item_type, container_id
-                )
-            )
-        )
+    validator = _ValidateAddRemoveBase(
+        add_item_list,
+        remove_item_list,
+        current_item_list,
+        container_type,
+        item_type,
+        container_id,
+        adjacent_item_id=adjacent_item_id,
+        container_can_be_empty=container_can_be_empty,
+    )
+    return (
+        validator.validate_add_or_remove_specified()
+        + validator.validate_no_duplicate_items()
+        + validator.validate_add_items_not_yet_present()
+        + validator.validate_remove_items_present()
+        + validator.validate_item_not_both_added_and_removed()
+        + validator.validate_container_wont_be_empty()
+        + validator.validate_adjacent()
+    )
 
-    def _get_duplicate_items(item_list: Iterable[str]) -> Set[str]:
-        return {item for item, count in Counter(item_list).items() if count > 1}
 
-    duplicate_items_list = _get_duplicate_items(
-        add_item_list
-    ) | _get_duplicate_items(remove_item_list)
-    if duplicate_items_list:
-        report_list.append(
-            ReportItem.error(
-                reports.messages.AddRemoveItemsDuplication(
-                    container_type,
-                    item_type,
-                    container_id,
-                    sorted(duplicate_items_list),
-                )
-            )
-        )
-    already_present = set(add_item_list).intersection(current_item_list)
-    # report only if an adjacent id is not defined, because we want to allow
-    # to move items when adjacent_item_id is specified
-    if adjacent_item_id is None and already_present:
-        report_list.append(
-            ReportItem.error(
-                reports.messages.AddRemoveCannotAddItemsAlreadyInTheContainer(
-                    container_type,
-                    item_type,
-                    container_id,
-                    sorted(already_present),
-                )
-            )
-        )
-    missing_items = set(remove_item_list).difference(current_item_list)
-    if missing_items:
-        report_list.append(
-            ReportItem.error(
-                reports.messages.AddRemoveCannotRemoveItemsNotInTheContainer(
-                    container_type,
-                    item_type,
-                    container_id,
-                    sorted(missing_items),
-                )
-            )
-        )
-    common_items = set(add_item_list) & set(remove_item_list)
-    if common_items:
-        report_list.append(
-            ReportItem.error(
-                reports.messages.AddRemoveCannotAddAndRemoveItemsAtTheSameTime(
-                    container_type,
-                    item_type,
-                    container_id,
-                    sorted(common_items),
-                )
-            )
-        )
-    if not container_can_be_empty and not add_item_list:
-        remaining_items = set(current_item_list).difference(remove_item_list)
-        if not remaining_items:
-            report_list.append(
-                ReportItem.error(
-                    reports.messages.AddRemoveCannotRemoveAllItemsFromTheContainer(
-                        container_type,
-                        item_type,
-                        container_id,
-                        list(current_item_list),
-                    )
-                )
-            )
-    if adjacent_item_id:
-        if adjacent_item_id not in current_item_list:
-            report_list.append(
-                ReportItem.error(
-                    reports.messages.AddRemoveAdjacentItemNotInTheContainer(
-                        container_type,
-                        item_type,
-                        container_id,
-                        adjacent_item_id,
-                    )
-                )
-            )
-        if adjacent_item_id in add_item_list:
-            report_list.append(
-                ReportItem.error(
-                    reports.messages.AddRemoveCannotPutItemNextToItself(
-                        container_type,
-                        item_type,
-                        container_id,
-                        adjacent_item_id,
-                    )
-                )
-            )
-        if not add_item_list:
-            report_list.append(
-                ReportItem.error(
-                    reports.messages.AddRemoveCannotSpecifyAdjacentItemWithoutItemsToAdd(
-                        container_type,
-                        item_type,
-                        container_id,
-                        adjacent_item_id,
-                    )
-                )
-            )
-    return report_list
+def validate_set_unset_items(
+    add_item_list: Iterable[str],
+    remove_item_list: Iterable[str],
+    current_item_list: Iterable[str],
+    container_type: reports.types.AddRemoveContainerType,
+    item_type: reports.types.AddRemoveItemType,
+    container_id: str,
+    severity: Optional[ReportItemSeverity] = None,
+) -> ReportItemList:
+    """
+    Validate if items can be set or unset to or from a dict of options.
+
+    add_item_list -- items to be added
+    remove_item_list -- items to be removed
+    current_item_list -- items currently in the container
+    container_type -- container type
+    item_type -- item type
+    container_id -- id of the container
+    severity -- severity of produced reports, defaults to error
+    """
+    validator = _ValidateAddRemoveBase(
+        add_item_list,
+        remove_item_list,
+        current_item_list,
+        container_type,
+        item_type,
+        container_id,
+        adjacent_item_id=None,
+        container_can_be_empty=True,
+        severity=severity,
+    )
+    return (
+        validator.validate_add_or_remove_specified()
+        + validator.validate_no_duplicate_items()
+        + validator.validate_remove_items_present()
+        + validator.validate_item_not_both_added_and_removed()
+    )

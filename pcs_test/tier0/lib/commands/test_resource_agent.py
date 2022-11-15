@@ -1186,7 +1186,7 @@ class GetAgentDefaultOperations(TestCase):
             agent_name=agent_name.full_name,
             env={"PATH": "/usr/sbin:/bin:/usr/bin"},
         )
-        self.config.runner.pcmk.load_fenced_metadata()
+        self.config.runner.pcmk.load_fake_agent_metadata()
         self.assertEqual(
             lib.get_agent_default_operations(
                 self.env_assist.get_env(),

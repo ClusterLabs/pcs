@@ -1391,6 +1391,52 @@ class ValueNotEmpty(TestCase):
         )
 
 
+class ValuePcmkBoolean(TestCase):
+    # The real code only calls ValuePredicateBase => only basic tests here.
+    def test_empty_report_on_valid_option(self):
+        for value in [
+            "True",
+            "oN",
+            "YES",
+            "Y",
+            "1",
+            "False",
+            "Off",
+            "NO",
+            "N",
+            "0",
+        ]:
+            with self.subTest(value=value):
+                assert_report_item_list_equal(
+                    validate.ValuePcmkBoolean("key", None, None).validate(
+                        {"key": value}
+                    ),
+                    [],
+                )
+
+    def test_report_invalid_value(self):
+        for value in ["", "T", "F", "-1", "2"]:
+            with self.subTest(value=value):
+                assert_report_item_list_equal(
+                    validate.ValuePcmkBoolean("key", None, None).validate(
+                        {"key": value}
+                    ),
+                    [
+                        fixture.error(
+                            reports.codes.INVALID_OPTION_VALUE,
+                            option_name="key",
+                            option_value=value,
+                            allowed_values=(
+                                "a pacemaker boolean value: '0', '1', 'false', "
+                                "'n', 'no', 'off', 'on', 'true', 'y', 'yes'"
+                            ),
+                            cannot_be_empty=False,
+                            forbidden_characters=None,
+                        ),
+                    ],
+                )
+
+
 class ValuePcmkDatespecPart(TestCase):
     # The real code only calls ValuePredicateBase => only basic tests here.
     def test_empty_report_on_valid_option(self):
@@ -1434,6 +1480,115 @@ class ValuePcmkDatespecPart(TestCase):
                 ),
             ],
         )
+
+
+class ValuePcmkPercentage(TestCase):
+    # The real code only calls ValuePredicateBase => only basic tests here.
+    def test_empty_report_on_valid_option(self):
+        for value in ["0%", "50%", "100%", "120%"]:
+            with self.subTest(value=value):
+                assert_report_item_list_equal(
+                    validate.ValuePcmkPercentage("key", None, None).validate(
+                        {"key": value}
+                    ),
+                    [],
+                )
+
+    def test_report_invalid_value(self):
+        for value in ["", "0", "50", "-10%", "not-a-number%"]:
+            with self.subTest(value=value):
+                assert_report_item_list_equal(
+                    validate.ValuePcmkPercentage("key", None, None).validate(
+                        {"key": value}
+                    ),
+                    [
+                        fixture.error(
+                            reports.codes.INVALID_OPTION_VALUE,
+                            option_name="key",
+                            option_value=value,
+                            allowed_values=(
+                                "a non-negative integer followed by '%' (e.g. "
+                                "0%, 50%, 200%, ...)"
+                            ),
+                            cannot_be_empty=False,
+                            forbidden_characters=None,
+                        ),
+                    ],
+                )
+
+
+class ValuePcmkInteger(TestCase):
+    # The real code only calls ValuePredicateBase => only basic tests here.
+    def test_empty_report_on_valid_option(self):
+        for value in [
+            "INFINITY",
+            "+INFINITY",
+            "-INFINITY",
+            "-1",
+            "0",
+            "+5",
+            "100",
+        ]:
+            with self.subTest(value=value):
+                assert_report_item_list_equal(
+                    validate.ValuePcmkInteger("key", None, None).validate(
+                        {"key": value}
+                    ),
+                    [],
+                )
+
+    def test_report_invalid_value(self):
+        for value in ["", "a", "-infinity", "-10%", "3.14"]:
+            with self.subTest(value=value):
+                assert_report_item_list_equal(
+                    validate.ValuePcmkInteger("key", None, None).validate(
+                        {"key": value}
+                    ),
+                    [
+                        fixture.error(
+                            reports.codes.INVALID_OPTION_VALUE,
+                            option_name="key",
+                            option_value=value,
+                            allowed_values=(
+                                "an integer or INFINITY or -INFINITY"
+                            ),
+                            cannot_be_empty=False,
+                            forbidden_characters=None,
+                        ),
+                    ],
+                )
+
+
+class ValuePcmkPositiveInteger(TestCase):
+    # The real code only calls ValuePredicateBase => only basic tests here.
+    def test_empty_report_on_valid_option(self):
+        for value in ["INFINITY", "+INFINITY", "1", "+5"]:
+            with self.subTest(value=value):
+                assert_report_item_list_equal(
+                    validate.ValuePcmkPositiveInteger(
+                        "key", None, None
+                    ).validate({"key": value}),
+                    [],
+                )
+
+    def test_report_invalid_value(self):
+        for value in ["", "-INFINITY", "0", "-10", "3.14"]:
+            with self.subTest(value=value):
+                assert_report_item_list_equal(
+                    validate.ValuePcmkPositiveInteger(
+                        "key", None, None
+                    ).validate({"key": value}),
+                    [
+                        fixture.error(
+                            reports.codes.INVALID_OPTION_VALUE,
+                            option_name="key",
+                            option_value=value,
+                            allowed_values="a positive integer or INFINITY",
+                            cannot_be_empty=False,
+                            forbidden_characters=None,
+                        ),
+                    ],
+                )
 
 
 class ValuePortNumber(TestCase):
@@ -2005,5 +2160,158 @@ class ValidateAddRemoveItems(TestCase):
                     container_id=self.CONTAINER_ID,
                     adjacent_item_id="a1",
                 ),
+            ],
+        )
+
+
+class ValidateSetUnsetItems(TestCase):
+    CONTAINER_TYPE = ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE
+    ITEM_TYPE = ADD_REMOVE_ITEM_TYPE_DEVICE
+    CONTAINER_ID = "container_id"
+
+    def _validate(self, add, remove, current, severity=None):
+        return validate.validate_set_unset_items(
+            add,
+            remove,
+            current,
+            self.CONTAINER_TYPE,
+            self.ITEM_TYPE,
+            self.CONTAINER_ID,
+            severity,
+        )
+
+    def test_success(self):
+        assert_report_item_list_equal(
+            self._validate(["a"], ["b"], ["b", "c"]), []
+        )
+
+    def test_items_not_specified(self):
+        assert_report_item_list_equal(
+            self._validate([], [], []),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_ITEMS_NOT_SPECIFIED,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                )
+            ],
+        )
+
+    def test_items_not_specified_severity(self):
+        assert_report_item_list_equal(
+            self._validate(
+                [], [], [], severity=reports.ReportItemSeverity.warning()
+            ),
+            [
+                fixture.warn(
+                    reports.codes.ADD_REMOVE_ITEMS_NOT_SPECIFIED,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                )
+            ],
+        )
+
+    def test_duplicate_items(self):
+        assert_report_item_list_equal(
+            self._validate(["a", "a", "b", "b"], ["c", "c"], ["a", "b", "c"]),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_ITEMS_DUPLICATION,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    duplicate_items_list=["a", "b", "c"],
+                )
+            ],
+        )
+
+    def test_duplicate_items_severity(self):
+        assert_report_item_list_equal(
+            self._validate(
+                ["a", "a", "b", "b"],
+                ["c", "c"],
+                ["a", "b", "c"],
+                severity=reports.ReportItemSeverity.warning(),
+            ),
+            [
+                fixture.warn(
+                    reports.codes.ADD_REMOVE_ITEMS_DUPLICATION,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    duplicate_items_list=["a", "b", "c"],
+                )
+            ],
+        )
+
+    def test_remove_items_missing(self):
+        assert_report_item_list_equal(
+            self._validate([], ["a", "b"], ["c"]),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    item_list=["a", "b"],
+                )
+            ],
+        )
+
+    def test_remove_items_missing_severity(self):
+        assert_report_item_list_equal(
+            self._validate(
+                [],
+                ["a", "b"],
+                ["c"],
+                severity=reports.ReportItemSeverity.info(),
+            ),
+            [
+                fixture.info(
+                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    item_list=["a", "b"],
+                )
+            ],
+        )
+
+    def test_items_both_added_and_removed(self):
+        assert_report_item_list_equal(
+            self._validate(
+                ["a", "b"],
+                ["a", "b"],
+                ["a", "b"],
+            ),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_CANNOT_ADD_AND_REMOVE_ITEMS_AT_THE_SAME_TIME,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    item_list=["a", "b"],
+                )
+            ],
+        )
+
+    def test_items_both_added_and_removed_severity(self):
+        assert_report_item_list_equal(
+            self._validate(
+                ["a", "b"],
+                ["a", "b"],
+                ["a", "b"],
+                severity=reports.ReportItemSeverity.info(),
+            ),
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_CANNOT_ADD_AND_REMOVE_ITEMS_AT_THE_SAME_TIME,
+                    container_type=self.CONTAINER_TYPE,
+                    item_type=self.ITEM_TYPE,
+                    container_id=self.CONTAINER_ID,
+                    item_list=["a", "b"],
+                )
             ],
         )

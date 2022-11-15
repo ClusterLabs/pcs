@@ -115,7 +115,9 @@ class ListAgents(TestCase):
             env={"PATH": "/usr/sbin:/bin:/usr/bin"},
             name="runner.pcmk.load_agent.fence_apc",
         )
-        self.config.runner.pcmk.load_fenced_metadata(stdout=_fixture_fenced_xml)
+        self.config.runner.pcmk.load_fake_agent_metadata(
+            stdout=_fixture_fenced_xml
+        )
         self.config.runner.pcmk.load_agent(
             agent_name="stonith:fence_dummy",
             agent_is_missing=True,
@@ -209,7 +211,9 @@ class DescribeAgent(TestCase):
             env={"PATH": "/usr/sbin:/bin:/usr/bin"},
             name="runner.pcmk.load_agent.fence_apc",
         )
-        self.config.runner.pcmk.load_fenced_metadata(stdout=_fixture_fenced_xml)
+        self.config.runner.pcmk.load_fake_agent_metadata(
+            stdout=_fixture_fenced_xml
+        )
 
         self.assertEqual(
             lib.describe_agent(self.env_assist.get_env(), "fence_dummy"),

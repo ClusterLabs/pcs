@@ -3,6 +3,7 @@ MAINTAINERCLEANFILES	= Makefile.in
 EXTRA_DIST		= \
 			  curl_test.py \
 			  __init__.py \
+			  resources/based_metadata.xml \
 			  resources/capabilities.xml \
 			  resources/cib-empty-1.2.xml \
 			  resources/cib-empty-3.1.xml \
@@ -16,8 +17,10 @@ EXTRA_DIST		= \
 			  resources/cib-empty.xml \
 			  resources/cib-largefile.xml \
 			  resources/cib-large.xml \
+			  resources/cib-property.xml \
 			  resources/cib-resources.xml \
 			  resources/cib-tags.xml \
+			  resources/controld_metadata.xml \
 			  resources/corosync-3nodes.conf \
 			  resources/corosync-3nodes-qdevice.conf \
 			  resources/corosync-3nodes-qdevice-heuristics.conf \
@@ -27,6 +30,7 @@ EXTRA_DIST		= \
 			  resources/corosync-some-node-names.conf \
 			  resources/crm_mon.minimal.xml \
 			  resources/fenced_metadata.xml \
+			  resources/schedulerd_metadata.xml \
 			  resources/pcmk_api_rng/api-result.rng \
 			  resources/pcmk_api_rng/crm_mon-2.4.rng \
 			  resources/pcmk_api_rng/digests-2.9.rng \
@@ -82,6 +86,7 @@ EXTRA_DIST		= \
 			  tier0/cli/tag/test_command.py \
 			  tier0/cli/test_booth.py \
 			  tier0/cli/test_cluster.py \
+			  tier0/cli/test_cluster_property.py \
 			  tier0/cli/test_dr.py \
 			  tier0/cli/test_nvset.py \
 			  tier0/cli/test_resource.py \
@@ -240,6 +245,7 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/test_alert.py \
 			  tier0/lib/commands/test_booth.py \
 			  tier0/lib/commands/test_cib_options.py \
+			  tier0/lib/commands/test_cluster_property.py \
 			  tier0/lib/commands/test_constraint_common.py \
 			  tier0/lib/commands/test_constraint_order.py \
 			  tier0/lib/commands/test_fencing_topology.py \
@@ -309,6 +315,7 @@ EXTRA_DIST		= \
 			  tier0/lib/resource_agent/test_pcs_transform.py \
 			  tier0/lib/resource_agent/test_types.py \
 			  tier0/lib/resource_agent/test_xml.py \
+			  tier0/lib/test_cluster_property.py \
 			  tier0/lib/test_env_cib.py \
 			  tier0/lib/test_env_corosync.py \
 			  tier0/lib/test_env.py \
@@ -358,6 +365,7 @@ EXTRA_DIST		= \
 			  tier1/test_booth.py \
 			  tier1/test_cib_options.py \
 			  tier1/test_cluster_pcmk_remote.py \
+			  tier1/test_cluster_property.py \
 			  tier1/test_misc.py \
 			  tier1/test_quorum.py \
 			  tier1/test_status.py \
@@ -385,7 +393,10 @@ EXTRA_DIST		= \
 			  tools/bin_mock/pcmk/crm_resource.d/systemd__test@a__b_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource.py \
 			  tools/bin_mock/pcmk/pacemaker-fenced \
+			  tools/bin_mock/pcmk/pacemaker_metadata.d/pacemaker_based.xml \
+			  tools/bin_mock/pcmk/pacemaker_metadata.d/pacemaker_controld.xml \
 			  tools/bin_mock/pcmk/pacemaker_metadata.d/pacemaker_fenced.xml \
+			  tools/bin_mock/pcmk/pacemaker_metadata.d/pacemaker_schedulerd.xml \
 			  tools/bin_mock/pcmk/pacemaker_metadata.py \
 			  tools/case_analysis.py \
 			  tools/check/__init__.py \

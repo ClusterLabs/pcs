@@ -69,7 +69,9 @@ class LoadFakeAgentMetadataXml(TestCase):
             <resource-agent name="pacemaker-fenced">
             </resource-agent>
         """
-        self.config.runner.pcmk.load_fenced_metadata(stdout=metadata)
+        self.config.runner.pcmk.load_fake_agent_metadata(
+            agent_name="pacemaker-fenced", stdout=metadata
+        )
 
         env = self.env_assist.get_env()
         self.assertEqual(
@@ -80,7 +82,7 @@ class LoadFakeAgentMetadataXml(TestCase):
 
     def test_failure(self):
         agent_name = ra.const.PACEMAKER_FENCED
-        self.config.runner.pcmk.load_fenced_metadata(
+        self.config.runner.pcmk.load_fake_agent_metadata(
             stdout="", stderr="error message"
         )
 
@@ -302,7 +304,7 @@ class LoadFakeAgentMetadata(TestCase):
             <resource-agent name="pacemaker-fenced">
             </resource-agent>
         """
-        self.config.runner.pcmk.load_fenced_metadata(stdout=metadata)
+        self.config.runner.pcmk.load_fake_agent_metadata(stdout=metadata)
 
         env = self.env_assist.get_env()
         assert_xml_equal(
@@ -314,7 +316,7 @@ class LoadFakeAgentMetadata(TestCase):
 
     def test_cannot_load(self):
         agent_name = ra.const.PACEMAKER_FENCED
-        self.config.runner.pcmk.load_fenced_metadata(
+        self.config.runner.pcmk.load_fake_agent_metadata(
             stdout="", stderr="error message"
         )
 
@@ -326,7 +328,7 @@ class LoadFakeAgentMetadata(TestCase):
 
     def test_not_xml(self):
         agent_name = ra.const.PACEMAKER_FENCED
-        self.config.runner.pcmk.load_fenced_metadata(
+        self.config.runner.pcmk.load_fake_agent_metadata(
             stdout="this is not an xml"
         )
 
@@ -338,7 +340,9 @@ class LoadFakeAgentMetadata(TestCase):
 
     def test_not_valid_xml(self):
         agent_name = ra.const.PACEMAKER_FENCED
-        self.config.runner.pcmk.load_fenced_metadata(stdout="<resource-agent/>")
+        self.config.runner.pcmk.load_fake_agent_metadata(
+            stdout="<resource-agent/>"
+        )
 
         env = self.env_assist.get_env()
         with self.assertRaises(ra.UnableToGetAgentMetadata) as cm:

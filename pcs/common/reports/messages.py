@@ -104,11 +104,13 @@ def _key_numeric(item: str) -> Tuple[int, str]:
 
 
 _add_remove_container_translation = {
+    const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET: "property set",
     const.ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE: "stonith resource",
 }
 
 _add_remove_item_translation = {
     const.ADD_REMOVE_ITEM_TYPE_DEVICE: "device",
+    const.ADD_REMOVE_ITEM_TYPE_PROPERTY: "property",
 }
 
 _file_role_translation = {
@@ -7553,4 +7555,24 @@ class BoothUnsupportedOptionEnableAuthfile(ReportItemMessage):
     def message(self) -> str:
         return (
             "Unsupported option 'enable-authfile' is set in booth configuration"
+        )
+
+
+@dataclass(frozen=True)
+class CannotCreateDefaultClusterPropertySet(ReportItemMessage):
+    """
+    Cannot create default cluster properties nvset
+
+    nvset_id -- id of the nvset
+    """
+
+    nvset_id: str
+    _code = codes.CANNOT_CREATE_DEFAULT_CLUSTER_PROPERTY_SET
+
+    @property
+    def message(self) -> str:
+        return (
+            "Cannot create default cluster_property_set element, ID "
+            f"'{self.nvset_id}' already exists. Find elements with the ID and "
+            "remove them from cluster configuration."
         )
