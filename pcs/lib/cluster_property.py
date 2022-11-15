@@ -1,5 +1,6 @@
 from typing import (
     Iterable,
+    List,
     Mapping,
 )
 
@@ -117,7 +118,7 @@ def validate_set_cluster_properties(
         )
     )
 
-    validators: list[validate.ValidatorInterface] = []
+    validators: List[validate.ValidatorInterface] = []
     for property_name in to_be_set_properties:
         if property_name not in possible_properties_dict:
             # unknow properties are reported by NamesIn validator

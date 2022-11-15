@@ -660,9 +660,7 @@ class TestPropertySet(LoadMetadataMixin, TestCase):
             ]
         )
 
-    def _metadata_error(
-        self, error_agent, stdout=None, reason=None, unsupported_version=False
-    ):
+    def _metadata_error(self, error_agent, stdout=None, reason=None):
         self.config.runner.cib.load()
         for agent in [
             "pacemaker-based",
@@ -685,20 +683,15 @@ class TestPropertySet(LoadMetadataMixin, TestCase):
                 self.env_assist.get_env(), {}, []
             )
         )
-        if unsupported_version:
-            report = fixture.error(
-                reports.codes.AGENT_IMPLEMENTS_UNSUPPORTED_OCF_VERSION,
-                agent=f"__pcmk_internal:{error_agent}",
-                ocf_version="1.2",
-                supported_versions=["1.0", "1.1"],
-            )
-        else:
-            report = fixture.error(
-                reports.codes.UNABLE_TO_GET_AGENT_METADATA,
-                agent=error_agent,
-                reason="error" if reason is None else reason,
-            )
-        self.env_assist.assert_reports([report])
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.UNABLE_TO_GET_AGENT_METADATA,
+                    agent=error_agent,
+                    reason="error" if reason is None else reason,
+                )
+            ]
+        )
 
     def test_metadata_error_pacemaker_based(self):
         self._metadata_error("pacemaker-based")
@@ -717,22 +710,4 @@ class TestPropertySet(LoadMetadataMixin, TestCase):
                 "Start tag expected, '<' not found, line 1, column 1 (<string>,"
                 " line 1)"
             ),
-        )
-
-    def test_metadata_error_invalid_schema(self):
-        self._metadata_error(
-            "pacemaker-based",
-            stdout="<xml/>",
-            reason="Expecting element resource-agent, got xml, line 1",
-        )
-
-    def test_metadata_error_invalid_version(self):
-        self._metadata_error(
-            "pacemaker-controld",
-            stdout="""
-                <resource-agent name="pacemaker-based">
-                    <version>1.2</version>
-                </resource-agent>
-            """,
-            unsupported_version=True,
         )

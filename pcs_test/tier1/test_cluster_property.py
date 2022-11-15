@@ -96,21 +96,21 @@ class TestPropertySet(PropertyMixin, TestCase):
     def test_properties_to_set_missing(self):
         self.assert_pcs_fail(
             "property set".split(),
-            stderr_start="\nUsage: pcs property set...",
+            stdout_start="\nUsage: pcs property set...",
         )
         self.assert_resources_xml_in_cib(UNCHANGED_CRM_CONFIG)
 
     def test_missing_value(self):
         self.assert_pcs_fail(
             "property set keyword".split(),
-            stderr_start="Error: missing value of 'keyword' option\n",
+            stdout_start="Error: missing value of 'keyword' option\n",
         )
         self.assert_resources_xml_in_cib(UNCHANGED_CRM_CONFIG)
 
     def test_unknown_properties(self):
         self.assert_pcs_fail(
             "property set unknown=value".split(),
-            stderr_full=get_invalid_option_messages(["unknown"]),
+            stdout_full=get_invalid_option_messages(["unknown"]),
         )
         self.assert_resources_xml_in_cib(UNCHANGED_CRM_CONFIG)
 
@@ -146,13 +146,13 @@ class TestPropertySet(PropertyMixin, TestCase):
                 </cluster_property_set>
             </crm_config>
             """,
-            stderr_full=get_invalid_option_messages(["unknown"], error=False),
+            output=get_invalid_option_messages(["unknown"], error=False),
         )
 
     def test_forbidden_properties(self):
         self.assert_pcs_fail(
             "property set cluster-name=NewName".split(),
-            stderr_full=get_invalid_option_messages(
+            stdout_full=get_invalid_option_messages(
                 ["cluster-name"], forceable=False
             ),
         )
@@ -161,7 +161,7 @@ class TestPropertySet(PropertyMixin, TestCase):
     def test_forbidden_properties_forced(self):
         self.assert_pcs_fail(
             "property set cluster-name=NewName --force".split(),
-            stderr_full=get_invalid_option_messages(
+            stdout_full=get_invalid_option_messages(
                 ["cluster-name"], forceable=False
             ),
         )
@@ -170,7 +170,7 @@ class TestPropertySet(PropertyMixin, TestCase):
     def test_set_stonith_watchdog_timeout(self):
         self.assert_pcs_fail(
             "property set stonith-watchdog-timeout=5".split(),
-            stderr_full=(
+            stdout_full=(
                 "Error: stonith-watchdog-timeout can only be unset or set to 0 "
                 "while SBD is disabled\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
@@ -208,14 +208,14 @@ class TestPropertyUnset(PropertyMixin, TestCase):
     def test_properties_to_set_missing(self):
         self.assert_pcs_fail(
             "property unset".split(),
-            stderr_start="\nUsage: pcs property unset...",
+            stdout_start="\nUsage: pcs property unset...",
         )
         self.assert_resources_xml_in_cib(UNCHANGED_CRM_CONFIG)
 
     def test_unset_not_configured_properties(self):
         self.assert_pcs_fail(
             "property unset missing1 missing2".split(),
-            stderr_full=(
+            stdout_full=(
                 "Error: Cannot remove properties 'missing1', 'missing2', they "
                 "are not present in property set 'cib-bootstrap-options', use "
                 "--force to override\n"
@@ -229,7 +229,7 @@ class TestPropertyUnset(PropertyMixin, TestCase):
         self.assert_effect_single(
             "property unset missing1 missing2 --force".split(),
             UNCHANGED_CRM_CONFIG,
-            stderr_full=(
+            output=(
                 "Warning: Cannot remove properties 'missing1', 'missing2', they "
                 "are not present in property set 'cib-bootstrap-options'\n"
             ),

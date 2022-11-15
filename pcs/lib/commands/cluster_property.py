@@ -1,5 +1,7 @@
 from typing import (
     Container,
+    Dict,
+    List,
     Mapping,
     Union,
 )
@@ -27,7 +29,7 @@ from pcs.lib.resource_agent.facade import ResourceAgentFacadeFactory
 def _get_property_facade_list(
     report_processor: reports.ReportProcessor,
     factory: ResourceAgentFacadeFactory,
-) -> list[ResourceAgentFacade]:
+) -> List[ResourceAgentFacade]:
     pacemaker_daemons = [
         ra_const.PACEMAKER_BASED,
         ra_const.PACEMAKER_CONTROLD,
@@ -56,7 +58,7 @@ def _get_property_facade_list(
 # format
 def _cluster_property_metadata_to_dict(
     metadata: ResourceAgentMetadata,
-) -> dict[str, dict[str, Union[bool, str, StringSequence]]]:
+) -> Dict[str, Dict[str, Union[bool, str, StringSequence]]]:
     banned_props = ["dc-version", "cluster-infrastructure"]
     basic_props = {
         "batch-limit": "Batch Limit",
@@ -77,7 +79,7 @@ def _cluster_property_metadata_to_dict(
     for parameter in metadata.parameters:
         if parameter.name in banned_props:
             continue
-        single_property_dict: dict[str, Union[bool, str, StringSequence]] = {
+        single_property_dict: Dict[str, Union[bool, str, StringSequence]] = {
             "name": parameter.name,
             "shortdesc": parameter.shortdesc or "",
             "longdesc": parameter.longdesc or "",
@@ -96,7 +98,7 @@ def _cluster_property_metadata_to_dict(
 
 def get_cluster_properties_definition_legacy(
     env: LibraryEnvironment,
-) -> dict[str, dict[str, Union[bool, str, StringSequence]]]:
+) -> Dict[str, Dict[str, Union[bool, str, StringSequence]]]:
     """
     Return cluster properties definition in the legacy dictionary format.
 
