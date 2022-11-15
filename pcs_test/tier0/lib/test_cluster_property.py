@@ -631,8 +631,8 @@ class TestValidateSetClusterProperties(TestCase):
 
 
 class TestGetClusterPropertySetElementLegacy(TestCase):
-    @staticmethod
-    def test_return_first_set():
+    def test_return_first_set(self):
+        # pylint: disable=no-self-use
         cib = etree.fromstring(FIXTURE_TWO_PROPERTY_SETS)
         id_provider = IdProvider(cib)
         set_element = (
@@ -645,8 +645,8 @@ class TestGetClusterPropertySetElementLegacy(TestCase):
             etree_to_str(set_element),
         )
 
-    @staticmethod
-    def test_no_set_create_cib_bootstrap_options_set():
+    def test_no_set_create_cib_bootstrap_options_set(self):
+        # pylint: disable=no-self-use
         cib = etree.fromstring(FIXTURE_NO_SET)
         id_provider = IdProvider(cib)
         set_element = (
