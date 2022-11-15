@@ -118,22 +118,22 @@ FIXTURE_RESOURCES_TEMPLATE = """
             </instance_attributes>
             <operations>
                 <op id="node-name-migrate_from-interval-0s"
-                    interval="0s" name="migrate_from" timeout="60"
+                    interval="0s" name="migrate_from" timeout="60s"
                 />
                 <op id="node-name-migrate_to-interval-0s"
-                    interval="0s" name="migrate_to" timeout="60"
+                    interval="0s" name="migrate_to" timeout="60s"
                 />
                 <op id="node-name-monitor-interval-60s"
-                    interval="60s" name="monitor" timeout="30" {onfail}
+                    interval="60s" name="monitor" timeout="30s" {onfail}
                 />
                 <op id="node-name-reload-interval-0s"
-                  interval="0s" name="reload" timeout="60"
+                  interval="0s" name="reload" timeout="60s"
                 />
                 <op id="node-name-start-interval-0s"
-                    interval="0s" name="start" timeout="60"
+                    interval="0s" name="start" timeout="60s"
                 />
                 <op id="node-name-stop-interval-0s"
-                    interval="0s" name="stop" timeout="60"
+                    interval="0s" name="stop" timeout="60s"
                 />
             </operations>
         </primitive>
@@ -222,7 +222,7 @@ class AddRemote(TestCase):
             operations=[
                 {
                     "name": "monitor",
-                    "timeout": "30",
+                    "timeout": "30s",
                     "interval": "60s",
                     "on-fail": "demote",
                 }

@@ -467,7 +467,6 @@ class CreateMixin:
                         "pcmk_status_action",
                         "pcmk_status_retries",
                         "pcmk_status_timeout",
-                        "priority",
                     ],
                     allowed_patterns=[],
                 ),

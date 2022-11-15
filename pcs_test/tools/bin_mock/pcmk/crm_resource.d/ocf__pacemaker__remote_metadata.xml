@@ -41,4 +41,3 @@
     <action name="meta-data"  timeout="5s" />
   </actions>
 </resource-agent>
-
