@@ -67,7 +67,10 @@ def _load_fake_agent_metadata_xml(
     agent_name -- name of pacemaker part whose metadata we want to get
     """
     name_to_executable = {
+        const.PACEMAKER_BASED: settings.pacemaker_based,
+        const.PACEMAKER_CONTROLD: settings.pacemaker_controld,
         const.PACEMAKER_FENCED: settings.pacemaker_fenced,
+        const.PACEMAKER_SCHEDULERD: settings.pacemaker_schedulerd,
     }
     if agent_name not in name_to_executable:
         raise UnableToGetAgentMetadata(agent_name, "Unknown agent")

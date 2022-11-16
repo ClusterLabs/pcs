@@ -1,3 +1,4 @@
+TAG_CRM_CONFIG = "crm_config"
 TAG_RESOURCE_PRIMITIVE = "primitive"
 TAG_RESOURCE_GROUP = "group"
 TAG_RESOURCE_BUNDLE = "bundle"

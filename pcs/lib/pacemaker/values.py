@@ -15,7 +15,7 @@ from pcs.lib.errors import LibraryError
 
 _BOOLEAN_TRUE = frozenset(["true", "on", "yes", "y", "1"])
 _BOOLEAN_FALSE = frozenset(["false", "off", "no", "n", "0"])
-_BOOLEAN = _BOOLEAN_TRUE | _BOOLEAN_FALSE
+BOOLEAN_VALUES = _BOOLEAN_TRUE | _BOOLEAN_FALSE
 _ID_FIRST_CHAR_NOT_RE = re.compile("[^a-zA-Z_]")
 _ID_REST_CHARS_NOT_RE = re.compile("[^a-zA-Z0-9_.-]")
 SCORE_INFINITY = "INFINITY"
@@ -27,7 +27,7 @@ def is_boolean(val) -> bool:
     See crm_is_true in pacemaker/lib/common/utils.c
     val checked value
     """
-    return val.lower() in _BOOLEAN
+    return val.lower() in BOOLEAN_VALUES
 
 
 def is_true(val) -> bool:

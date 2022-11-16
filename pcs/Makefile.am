@@ -25,6 +25,7 @@ EXTRA_DIST		= \
 			  cli/booth/__init__.py \
 			  cli/cluster/command.py \
 			  cli/cluster/__init__.py \
+			  cli/cluster_property.py \
 			  cli/common/capabilities.py \
 			  cli/common/completion.py \
 			  cli/common/env_cli.py \
@@ -229,11 +230,13 @@ EXTRA_DIST		= \
 			  lib/cib/stonith.py \
 			  lib/cib/tag.py \
 			  lib/cib/tools.py \
+			  lib/cluster_property.py \
 			  lib/commands/acl.py \
 			  lib/commands/alert.py \
 			  lib/commands/booth.py \
 			  lib/commands/cib_options.py \
 			  lib/commands/cluster.py \
+			  lib/commands/cluster_property.py \
 			  lib/commands/constraint/colocation.py \
 			  lib/commands/constraint/common.py \
 			  lib/commands/constraint/__init__.py \

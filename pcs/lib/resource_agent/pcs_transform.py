@@ -1,4 +1,8 @@
-from typing import List
+from typing import (
+    List,
+    Optional,
+    Tuple,
+)
 
 from dataclasses import replace
 
@@ -91,12 +95,11 @@ def ocf_unified_to_pcs(
     result = metadata
     result = _metadata_action_translate_role(result)
     if metadata.name.is_pcmk_fake_agent:
+        result = _metadata_parameter_extract_enum_values_from_desc(result)
+        result = _metadata_parameter_remove_select_enum_values_from_desc(result)
+        result = _metadata_parameter_deduplicate_desc(result)
         result = _metadata_parameter_join_short_long_desc(result)
         result = _metadata_parameter_extract_advanced_from_desc(result)
-        # TODO: add transformation for cluster properties fake agents: move
-        # allowed values from longdesc to enum_values field. Only for
-        # pacemaker-schedulerd, other fake agents do not follow the same
-        # format.
     if metadata.name.is_stonith:
         result = _metadata_remove_unwanted_stonith_parameters(result)
         result = _metadata_make_stonith_action_parameter_deprecated(result)
@@ -136,9 +139,11 @@ def _metadata_parameter_extract_advanced_from_desc(
 def _parameter_extract_advanced_from_desc(
     parameter: ResourceAgentParameter,
 ) -> ResourceAgentParameter:
-    advanced_str = "Advanced use only: "
-    if parameter.shortdesc and parameter.shortdesc.startswith(advanced_str):
-        return replace(parameter, advanced=True)
+    advanced_str_list = ["Advanced use only: ", "*** Advanced Use Only *** "]
+    if parameter.shortdesc:
+        for advanced_str in advanced_str_list:
+            if parameter.shortdesc.startswith(advanced_str):
+                return replace(parameter, advanced=True)
     return parameter
 
 
@@ -233,3 +238,82 @@ def _metadata_make_stonith_port_parameter_not_required(
         else:
             new_parameters.append(param)
     return replace(metadata, parameters=new_parameters)
+
+
+def _metadata_parameter_extract_enum_values_from_desc(
+    metadata: ResourceAgentMetadata,
+) -> ResourceAgentMetadata:
+    return replace(
+        metadata,
+        parameters=[
+            _parameter_extract_enum_values_from_desc(parameter)
+            for parameter in metadata.parameters
+        ],
+    )
+
+
+def _parameter_extract_enum_values_from_desc(
+    parameter: ResourceAgentParameter,
+) -> ResourceAgentParameter:
+    if parameter.type != "enum":
+        return parameter
+    enum_values, longdesc = _get_enum_values_and_new_longdesc(parameter)
+    if parameter.default is not None and parameter.default not in enum_values:
+        enum_values.append(parameter.default)
+    parameter = replace(parameter, type="select")
+    parameter = replace(parameter, longdesc=longdesc)
+    return replace(parameter, enum_values=enum_values)
+
+
+def _metadata_parameter_remove_select_enum_values_from_desc(
+    metadata: ResourceAgentMetadata,
+) -> ResourceAgentMetadata:
+    return replace(
+        metadata,
+        parameters=[
+            _parameter_remove_select_enum_values_from_desc(parameter)
+            for parameter in metadata.parameters
+        ],
+    )
+
+
+def _parameter_remove_select_enum_values_from_desc(
+    parameter: ResourceAgentParameter,
+) -> ResourceAgentParameter:
+    if parameter.type != "select":
+        return parameter
+    _, longdesc = _get_enum_values_and_new_longdesc(parameter)
+    return replace(parameter, longdesc=longdesc)
+
+
+def _metadata_parameter_deduplicate_desc(
+    metadata: ResourceAgentMetadata,
+) -> ResourceAgentMetadata:
+    return replace(
+        metadata,
+        parameters=[
+            _parameter_deduplicate_desc(parameter)
+            for parameter in metadata.parameters
+        ],
+    )
+
+
+def _parameter_deduplicate_desc(
+    parameter: ResourceAgentParameter,
+) -> ResourceAgentParameter:
+    if parameter.shortdesc == parameter.longdesc:
+        return replace(parameter, longdesc=None)
+    return parameter
+
+
+def _get_enum_values_and_new_longdesc(
+    parameter: ResourceAgentParameter,
+) -> Tuple[List[str], Optional[str]]:
+    enum_values = []
+    longdesc = parameter.longdesc
+    if parameter.longdesc:
+        parts = parameter.longdesc.split("  Allowed values: ")
+        if len(parts) == 2:
+            enum_values = parts[1].split(", ")
+            longdesc = parts[0]
+    return enum_values, longdesc

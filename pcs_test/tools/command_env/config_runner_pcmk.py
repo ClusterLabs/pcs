@@ -451,9 +451,10 @@ class PcmkShortcuts:
             instead=instead,
         )
 
-    def load_fenced_metadata(
+    def load_fake_agent_metadata(
         self,
-        name="runner.pcmk.load_fenced_metadata",
+        name="runner.pcmk.load_fake_agent_metadata",
+        agent_name="pacemaker-fenced",
         stdout=None,
         stderr="",
         returncode=0,
@@ -461,24 +462,33 @@ class PcmkShortcuts:
         before=None,
     ):
         """
-        Create a call for loading fenced metadata - additional fence options
+        Create a call for loading fake agent metadata - usually metadata
+        provided by pacemaker daemon
 
         string name -- the key of this call
-        string stdout -- fenced stdout, default metadata if None
-        string stderr -- fenced stderr
-        int returncode -- fenced returncode
+        string agent_name -- name of the fake agent
+        string stdout -- fake agent stdout, default metadata if None
+        string stderr -- fake agent stderr
+        int returncode -- fake agent returncode
         string instead -- the key of a call instead of which this new call is to
             be placed
         string before -- the key of a call before which this new call is to be
             placed
         """
+        name_to_metadata_file = {
+            "pacemaker-based": "based_metadata.xml",
+            "pacemaker-controld": "controld_metadata.xml",
+            "pacemaker-fenced": "fenced_metadata.xml",
+            "pacemaker-schedulerd": "schedulerd_metadata.xml",
+        }
         if stdout is None:
-            with open(rc("fenced_metadata.xml")) as a_file:
+            with open(rc(name_to_metadata_file[agent_name])) as a_file:
                 stdout = a_file.read()
+        agent_path = settings.__dict__[agent_name.replace("-", "_")]
         self.__calls.place(
             name,
             RunnerCall(
-                [settings.pacemaker_fenced, "metadata"],
+                [agent_path, "metadata"],
                 stdout=stdout,
                 stderr=stderr,
                 returncode=returncode,

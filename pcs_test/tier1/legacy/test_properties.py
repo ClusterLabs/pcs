@@ -1,10 +1,10 @@
-from unittest import (
-    TestCase,
-    skip,
-)
+from unittest import TestCase
 
 from lxml import etree
 
+from pcs.common.str_tools import format_list
+
+from pcs_test.tier0.lib.commands.test_cluster_property import ALLOWED_PROPERTIES
 from pcs_test.tools.assertions import ac
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.misc import get_test_resource as rc
@@ -20,6 +20,24 @@ from pcs_test.tools.pcs_runner import (
 # pylint: disable=invalid-name
 
 empty_cib = rc("cib-empty.xml")
+
+
+def get_invalid_option_messages(option_name, error=True):
+    error_occurred = (
+        "Error: Errors have occurred, therefore pcs is unable to continue\n"
+    )
+    use_force = ", use --force to override"
+    return (
+        "{severity}: invalid cluster property option '{option_name}', allowed "
+        "options are: {allowed_properties}{use_force}\n"
+        "{error_occurred}"
+    ).format(
+        severity="Error" if error else "Warning",
+        option_name=option_name,
+        allowed_properties=format_list(ALLOWED_PROPERTIES),
+        use_force=use_force if error else "",
+        error_occurred=error_occurred if error else "",
+    )
 
 
 class PropertyTest(TestCase):
@@ -53,17 +71,15 @@ class PropertyTest(TestCase):
             self.temp_cib.name, "property set blahblah=blah".split()
         )
         assert returnVal == 1
-        assert (
-            # pylint: disable=line-too-long
-            output
-            == "Error: unknown cluster property: 'blahblah', (use --force to override)\n"
-        ), [output]
+        assert output == get_invalid_option_messages("blahblah"), [output]
 
         output, returnVal = pcs(
             self.temp_cib.name, "property set blahblah=blah --force".split()
         )
         assert returnVal == 0, output
-        assert output == "", output
+        assert output == get_invalid_option_messages(
+            "blahblah", error=False
+        ), output
 
         output, returnVal = pcs(
             self.temp_cib.name, "property set stonith-enabled=false".split()
@@ -101,9 +117,8 @@ class PropertyTest(TestCase):
         o, r = pcs(self.temp_cib.name, "property set xxxx=zzzz".split())
         self.assertEqual(r, 1)
         ac(
-            # pylint: disable=line-too-long
             o,
-            "Error: unknown cluster property: 'xxxx', (use --force to override)\n",
+            get_invalid_option_messages("xxxx"),
         )
         o, _ = pcs(self.temp_cib.name, "property config".split())
         ac(o, "Cluster Properties:\n")
@@ -111,7 +126,7 @@ class PropertyTest(TestCase):
         output, returnVal = pcs(
             self.temp_cib.name, "property set =5678 --force".split()
         )
-        ac(output, "Error: empty property name: '=5678'\n")
+        ac(output, "Error: missing key in '=5678' option\n")
         self.assertEqual(returnVal, 1)
         o, _ = pcs(self.temp_cib.name, "property config".split())
         ac(o, "Cluster Properties:\n")
@@ -119,7 +134,7 @@ class PropertyTest(TestCase):
         output, returnVal = pcs(
             self.temp_cib.name, "property set =5678".split()
         )
-        ac(output, "Error: empty property name: '=5678'\n")
+        ac(output, "Error: missing key in '=5678' option\n")
         self.assertEqual(returnVal, 1)
         o, _ = pcs(self.temp_cib.name, "property config".split())
         ac(o, "Cluster Properties:\n")
@@ -127,7 +142,7 @@ class PropertyTest(TestCase):
         output, returnVal = pcs(
             self.temp_cib.name, "property set bad_format".split()
         )
-        ac(output, "Error: invalid property format: 'bad_format'\n")
+        ac(output, "Error: missing value of 'bad_format' option\n")
         self.assertEqual(returnVal, 1)
         o, _ = pcs(self.temp_cib.name, "property config".split())
         ac(o, "Cluster Properties:\n")
@@ -135,24 +150,32 @@ class PropertyTest(TestCase):
         output, returnVal = pcs(
             self.temp_cib.name, "property set bad_format --force".split()
         )
-        ac(output, "Error: invalid property format: 'bad_format'\n")
+        ac(output, "Error: missing value of 'bad_format' option\n")
         self.assertEqual(returnVal, 1)
         o, _ = pcs(self.temp_cib.name, "property config".split())
         ac(o, "Cluster Properties:\n")
 
         o, r = pcs(self.temp_cib.name, "property unset zzzzz".split())
         self.assertEqual(r, 1)
-        ac(o, "Error: can't remove property: 'zzzzz' that doesn't exist\n")
+        ac(
+            o,
+            "Error: Cannot remove property 'zzzzz', it is not present in "
+            "property set 'cib-bootstrap-options', use --force to override\n"
+            "Error: Errors have occurred, therefore pcs is unable to continue\n",
+        )
         o, _ = pcs(self.temp_cib.name, "property config".split())
         ac(o, "Cluster Properties:\n")
 
         o, r = pcs(self.temp_cib.name, "property unset zzzz --force".split())
         self.assertEqual(r, 0)
-        ac(o, "")
+        ac(
+            o,
+            "Warning: Cannot remove property 'zzzz', it is not present in "
+            "property set 'cib-bootstrap-options'\n",
+        )
         o, _ = pcs(self.temp_cib.name, "property config".split())
         ac(o, "Cluster Properties:\n")
 
-    @skip("TODO: adapt cluster properties metadata to OCF 1.1")
     def test_set_property_validation_enum(self):
         output, returnVal = pcs(
             self.temp_cib.name, "property set no-quorum-policy=freeze".split()
@@ -187,8 +210,13 @@ class PropertyTest(TestCase):
         )
         ac(
             output,
-            "Error: invalid value of property: "
-            "'no-quorum-policy=not_valid_value', (use --force to override)\n",
+            (
+                "Error: 'not_valid_value' is not a valid no-quorum-policy "
+                "value, use 'demote', 'freeze', 'ignore', 'stop', 'suicide', "
+                "use --force to override\n"
+                "Error: Errors have occurred, therefore pcs is unable to "
+                "continue\n"
+            ),
         )
         self.assertEqual(returnVal, 1)
         o, _ = pcs(self.temp_cib.name, "property config".split())
@@ -203,7 +231,13 @@ class PropertyTest(TestCase):
             self.temp_cib.name,
             "property set no-quorum-policy=not_valid_value --force".split(),
         )
-        ac(output, "")
+        ac(
+            output,
+            (
+                "Warning: 'not_valid_value' is not a valid no-quorum-policy "
+                "value, use 'demote', 'freeze', 'ignore', 'stop', 'suicide'\n"
+            ),
+        )
         self.assertEqual(returnVal, 0)
         o, _ = pcs(self.temp_cib.name, "property config".split())
         ac(
@@ -260,8 +294,13 @@ class PropertyTest(TestCase):
         )
         ac(
             output,
-            "Error: invalid value of property: "
-            "'enable-acl=not_valid_value', (use --force to override)\n",
+            (
+                "Error: 'not_valid_value' is not a valid enable-acl value, use "
+                "a pacemaker boolean value: '0', '1', 'false', 'n', 'no', "
+                "'off', 'on', 'true', 'y', 'yes', use --force to override\n"
+                "Error: Errors have occurred, therefore pcs is unable to "
+                "continue\n"
+            ),
         )
         self.assertEqual(returnVal, 1)
         o, _ = pcs(self.temp_cib.name, "property config".split())
@@ -276,7 +315,14 @@ class PropertyTest(TestCase):
             self.temp_cib.name,
             "property set enable-acl=not_valid_value --force".split(),
         )
-        ac(output, "")
+        ac(
+            output,
+            (
+                "Warning: 'not_valid_value' is not a valid enable-acl value, "
+                "use a pacemaker boolean value: '0', '1', 'false', 'n', 'no', "
+                "'off', 'on', 'true', 'y', 'yes'\n"
+            ),
+        )
         self.assertEqual(returnVal, 0)
         o, _ = pcs(self.temp_cib.name, "property config".split())
         ac(
@@ -332,8 +378,12 @@ class PropertyTest(TestCase):
         )
         ac(
             output,
-            "Error: invalid value of property: "
-            "'migration-limit=0.1', (use --force to override)\n",
+            (
+                "Error: '0.1' is not a valid migration-limit value, use an "
+                "integer or INFINITY or -INFINITY, use --force to override\n"
+                "Error: Errors have occurred, therefore pcs is unable to "
+                "continue\n"
+            ),
         )
         self.assertEqual(returnVal, 1)
         o, _ = pcs(self.temp_cib.name, "property config".split())
@@ -348,7 +398,13 @@ class PropertyTest(TestCase):
             self.temp_cib.name,
             "property set migration-limit=0.1 --force".split(),
         )
-        ac(output, "")
+        ac(
+            output,
+            (
+                "Warning: '0.1' is not a valid migration-limit value, use an "
+                "integer or INFINITY or -INFINITY\n"
+            ),
+        )
         self.assertEqual(returnVal, 0)
         o, _ = pcs(self.temp_cib.name, "property config".split())
         ac(
@@ -415,10 +471,13 @@ class PropertyUnset(
         )
 
     def test_dont_create_nvset_on_removal(self):
-        # pcs mimics crm_attribute. So this behaves differently than the rest
-        # of pcs - instead of doing nothing it returns an error.
-        # Should be changed to be consistent with the rest of pcs.
         self.assert_pcs_fail(
             "property unset batch-limit".split(),
-            "Error: can't remove property: 'batch-limit' that doesn't exist\n",
+            (
+                "Error: Cannot remove property 'batch-limit', it is not present"
+                " in property set 'cib-bootstrap-options', use --force to "
+                "override\n"
+                "Error: Errors have occurred, therefore pcs is unable to "
+                "continue\n"
+            ),
         )

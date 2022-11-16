@@ -1,3 +1,4 @@
+from collections import Counter
 from typing import (
     AbstractSet,
     Iterable,
@@ -15,6 +16,7 @@ from pcs.common.str_tools import (
     format_plural,
 )
 from pcs.common.tools import timeout_to_seconds
+from pcs.common.types import StringSequence
 
 ModifierValueType = Union[None, bool, str]
 
@@ -156,6 +158,19 @@ def split_option(arg, allow_empty_value=True):
     if not (value or allow_empty_value):
         raise CmdLineInputError("value of '{0}' option is empty".format(key))
     return key, value
+
+
+def ensure_unique_args(cmdline_args: StringSequence) -> None:
+    """
+    Raises in case there are duplicate args
+    """
+    duplicities = [
+        item for item, count in Counter(cmdline_args).items() if count > 1
+    ]
+    if duplicities:
+        argument_pl = format_plural(duplicities, "argument")
+        duplicities_list = format_list(duplicities)
+        raise CmdLineInputError(f"duplicate {argument_pl}: {duplicities_list}")
 
 
 def prepare_options(cmdline_args, allowed_repeatable_options=()):
