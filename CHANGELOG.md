@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.11.4] - 2022-11-21
 
 ### Security
 - CVE-2022-2735 pcs: obtaining an authentication token for hacluster user could
