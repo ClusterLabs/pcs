@@ -215,6 +215,9 @@ class ConfigTest(TestCase):
         )
 
     def test_returns_export_of_found_elements(self):
+        def is_plain(element):
+            return element.attrib.has_key("is_plain")
+
         tag_name = "rsc_some"
         self.create(
             tag_name,
@@ -234,8 +237,6 @@ class ConfigTest(TestCase):
         etree.SubElement(self.constraint_section, tag_name).attrib.update(
             {"id": "plain1", "is_plain": "true"}
         )
-
-        is_plain = lambda element: element.attrib.has_key("is_plain")
 
         self.assertEqual(
             constraint.config(tag_name, is_plain, self.env),

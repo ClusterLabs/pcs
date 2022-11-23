@@ -171,6 +171,7 @@ def resource_defaults_config(
     rule_evaluator = _get_rule_evaluator(
         cib, env.cmd_runner(), env.report_processor, evaluate_expired
     )
+    # pylint: disable=unnecessary-lambda-assignment
     get_config = lambda tag: _defaults_config(
         cib,
         tag,
@@ -196,6 +197,7 @@ def operation_defaults_config(
     rule_evaluator = _get_rule_evaluator(
         cib, env.cmd_runner(), env.report_processor, evaluate_expired
     )
+    # pylint: disable=unnecessary-lambda-assignment
     get_config = lambda tag: _defaults_config(
         cib,
         tag,

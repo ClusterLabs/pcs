@@ -118,7 +118,9 @@ def get_routes(
     session_storage: session.Storage,
     auth_provider: AuthProvider,
 ) -> RoutesType:
-    static_path = lambda dir="": dict(path=os.path.join(app_dir, dir))
+    def static_path(directory=""):
+        return dict(path=os.path.join(app_dir, directory))
+
     pages = dict(
         index=os.path.join(app_dir, "index.html"),
         fallback=fallback_page_path,

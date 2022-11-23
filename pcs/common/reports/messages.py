@@ -1939,7 +1939,9 @@ class NodeAddressesAlreadyExist(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        pluralize = lambda word: format_plural(self.address_list, word)
+        def pluralize(word: str) -> str:
+            return format_plural(self.address_list, word)
+
         return (
             "Node {address} {addr_list} {_is} already used by existing nodes; "
             "please, use other {address}"
@@ -2002,7 +2004,9 @@ class NodeNamesAlreadyExist(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        pluralize = lambda word: format_plural(self.name_list, word)
+        def pluralize(word: str) -> str:
+            return format_plural(self.name_list, word)
+
         return (
             "Node {name} {name_list} {_is} already used by existing nodes; "
             "please, use other {name}"
@@ -5036,7 +5040,9 @@ class HostNotFound(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        pluralize = lambda word: format_plural(self.host_list, word)
+        def pluralize(word: str) -> str:
+            return format_plural(self.host_list, word)
+
         return "{host} {hosts_comma} {_is} not known to pcs".format(
             host=pluralize("host"),
             hosts_comma=format_list(self.host_list),
@@ -5204,6 +5210,7 @@ class ServiceVersionMismatch(ReportItemMessage):
             version_host.items(), key=lambda pair: len(pair[1]), reverse=True
         ):
             # pylint: disable=cell-var-from-loop
+            # pylint: disable=unnecessary-lambda-assignment
             pluralize = lambda word: format_plural(hosts, word)
             parts.append(
                 "{host} {hosts} {has} version {version}".format(

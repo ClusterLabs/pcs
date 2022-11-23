@@ -214,7 +214,9 @@ class UnableToConnectToAllRemainingNodes(CliReportMessageCustom):
 
     @property
     def message(self) -> str:
-        pluralize = lambda word: format_plural(self._obj.node_list, word)
+        def pluralize(word: str) -> str:
+            return format_plural(self._obj.node_list, word)
+
         return (
             "Remaining cluster {node} {nodes} could not be reached, run "
             "'pcs cluster sync' on any currently online node once the "
@@ -250,7 +252,9 @@ class HostNotFound(CliReportMessageCustom):
 
     @property
     def message(self) -> str:
-        pluralize = lambda word: format_plural(self._obj.host_list, word)
+        def pluralize(word: str) -> str:
+            return format_plural(self._obj.host_list, word)
+
         return (
             (
                 "{host} {hosts_comma} {_is} not known to pcs, try to "

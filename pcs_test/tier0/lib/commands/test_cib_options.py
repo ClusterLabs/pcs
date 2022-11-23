@@ -28,7 +28,10 @@ from pcs_test.tools.command_env.config_runner_pcmk import (
 
 
 class DefaultsCreateMixin:
-    command = lambda *args, **kwargs: None
+    @staticmethod
+    def command(*args, **kwargs):
+        pass
+
     tag = ""
 
     def setUp(self):
@@ -491,7 +494,10 @@ class OperationDefaultsCreate(DefaultsCreateMixin, TestCase):
 
 
 class DefaultsConfigMixin:
-    command = lambda *args, **kwargs: None
+    @staticmethod
+    def command(*args, **kwargs):
+        pass
+
     tag = ""
 
     def setUp(self):
@@ -949,7 +955,10 @@ class OperationDefaultsConfig(DefaultsConfigMixin, TestCase):
 
 
 class DefaultsRemoveMixin:
-    command = lambda *args, **kwargs: None
+    @staticmethod
+    def command(*args, **kwargs):
+        pass
+
     tag = ""
 
     def setUp(self):
@@ -1051,7 +1060,10 @@ class OperationDefaultsRemove(DefaultsRemoveMixin, TestCase):
 
 class DefaultsUpdateLegacyMixin:
     # This class tests legacy use cases of not providing an nvset ID
-    command = lambda *args, **kwargs: None
+    @staticmethod
+    def command(*args, **kwargs):
+        pass
+
     tag = ""
     command_for_report = None
 
@@ -1185,7 +1197,10 @@ class DefaultsUpdateLegacyMixin:
 
 
 class DefaultsUpdateMixin:
-    command = lambda *args, **kwargs: None
+    @staticmethod
+    def command(*args, **kwargs):
+        pass
+
     tag = ""
 
     def setUp(self):

@@ -108,15 +108,19 @@ class OddNumOfNodesSuccess(TestCase):
         self.config.http.host.check_auth(node_labels=self.node_list)
 
     def test_with_devices(self):
+        def config_generator(node):
+            return self.sbd_config_template.format(
+                node_name=node,
+                watchdog=self.watchdog_dict[node],
+                devices='SBD_DEVICE="{0}"\n'.format(
+                    ";".join(device_dict[node])
+                ),
+            )
+
         device_dict = {
             node: ["/dev/{0}-sbd{1}".format(node, j) for j in range(i)]
             for i, node in enumerate(self.node_list, start=1)
         }
-        config_generator = lambda node: self.sbd_config_template.format(
-            node_name=node,
-            watchdog=self.watchdog_dict[node],
-            devices='SBD_DEVICE="{0}"\n'.format(";".join(device_dict[node])),
-        )
         self.config.http.sbd.check_sbd(
             communication_list=[
                 fixture.check_sbd_comm_success_fixture(
@@ -146,11 +150,13 @@ class OddNumOfNodesSuccess(TestCase):
         )
 
     def test_no_device(self):
-        config_generator = lambda node: self.sbd_config_template.format(
-            node_name=node,
-            watchdog=self.watchdog_dict[node],
-            devices="",
-        )
+        def config_generator(node):
+            return self.sbd_config_template.format(
+                node_name=node,
+                watchdog=self.watchdog_dict[node],
+                devices="",
+            )
+
         self.config.http.sbd.check_sbd(
             communication_list=[
                 fixture.check_sbd_comm_success_fixture(
@@ -200,11 +206,14 @@ class OddNumOfNodesDefaultsSuccess(TestCase):
         self.config.http.host.check_auth(node_labels=self.node_list)
 
     def test_with_device(self):
+        def config_generator(node):
+            return self.sbd_config_template.format(
+                node_name=node,
+                devices='SBD_DEVICE="{0}"\n'.format(";".join(device_list)),
+            )
+
         device_list = ["/dev/sdb"]
-        config_generator = lambda node: self.sbd_config_template.format(
-            node_name=node,
-            devices='SBD_DEVICE="{0}"\n'.format(";".join(device_list)),
-        )
+
         self.config.http.sbd.check_sbd(
             communication_list=[
                 fixture.check_sbd_comm_success_fixture(
@@ -233,10 +242,9 @@ class OddNumOfNodesDefaultsSuccess(TestCase):
         )
 
     def test_no_device(self):
-        config_generator = lambda node: self.sbd_config_template.format(
-            node_name=node,
-            devices="",
-        )
+        def config_generator(node):
+            return self.sbd_config_template.format(node_name=node, devices="")
+
         self.config.http.sbd.check_sbd(
             communication_list=[
                 fixture.check_sbd_comm_success_fixture(node, self.watchdog, [])
@@ -337,9 +345,9 @@ class WatchdogValidations(TestCase):
         )
 
     def test_no_watchdog_validation(self):
-        config_generator = lambda node: self.sbd_config_template.format(
-            node_name=node,
-        )
+        def config_generator(node):
+            return self.sbd_config_template.format(node_name=node)
+
         self.config.http.sbd.check_sbd(
             communication_list=[
                 fixture.check_sbd_comm_success_fixture(node, "", [])
@@ -389,11 +397,13 @@ class EvenNumOfNodes(TestCase):
         self.config.http.host.check_auth(node_labels=self.node_list)
 
     def test_with_device(self):
+        def config_generator(node):
+            return self.sbd_config_template.format(
+                node_name=node,
+                devices='SBD_DEVICE="{0}"\n'.format(";".join(device_list)),
+            )
+
         device_list = ["/dev/sdb"]
-        config_generator = lambda node: self.sbd_config_template.format(
-            node_name=node,
-            devices='SBD_DEVICE="{0}"\n'.format(";".join(device_list)),
-        )
         self.config.http.sbd.check_sbd(
             communication_list=[
                 fixture.check_sbd_comm_success_fixture(
@@ -422,10 +432,9 @@ class EvenNumOfNodes(TestCase):
         )
 
     def test_no_device(self):
-        config_generator = lambda node: self.sbd_config_template.format(
-            node_name=node,
-            devices="",
-        )
+        def config_generator(node):
+            return self.sbd_config_template.format(node_name=node, devices="")
+
         self.config.http.sbd.check_sbd(
             communication_list=[
                 fixture.check_sbd_comm_success_fixture(node, self.watchdog, [])
@@ -460,10 +469,9 @@ class EvenNumOfNodes(TestCase):
         )
 
     def test_no_device_auto_tie_breaker_enabled(self):
-        config_generator = lambda node: self.sbd_config_template.format(
-            node_name=node,
-            devices="",
-        )
+        def config_generator(node):
+            return self.sbd_config_template.format(node_name=node, devices="")
+
         self.config.corosync_conf.load(
             filename=self.corosync_conf_name,
             auto_tie_breaker=True,
@@ -494,10 +502,9 @@ class EvenNumOfNodes(TestCase):
         )
 
     def test_no_device_with_qdevice(self):
-        config_generator = lambda node: self.sbd_config_template.format(
-            node_name=node,
-            devices="",
-        )
+        def config_generator(node):
+            return self.sbd_config_template.format(node_name=node, devices="")
+
         self.config.corosync_conf.load(
             filename="corosync-qdevice.conf",
             instead="corosync_conf.load",
@@ -1782,6 +1789,9 @@ class MissingNodeNamesInCorosync(TestCase):
         self.watchdog = "/dev/watchdog"
 
     def test_some_node_names_missing(self):
+        def config_generator(node):
+            return sbd_config_template.format(node_name=node, devices="")
+
         corosync_conf_name = "corosync-some-node-names.conf"
         node_list = ["rh7-2"]
         sbd_config_template = outdent(
@@ -1794,10 +1804,6 @@ class MissingNodeNamesInCorosync(TestCase):
         SBD_WATCHDOG_DEV=/dev/watchdog
         SBD_WATCHDOG_TIMEOUT=5
         """
-        )
-        config_generator = lambda node: sbd_config_template.format(
-            node_name=node,
-            devices="",
         )
 
         (

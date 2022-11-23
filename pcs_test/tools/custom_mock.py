@@ -66,6 +66,7 @@ class TmpFileMock:
     def _assert_file_content_equal(self, name, expected, real):
         if expected is None and real is None:
             return
+        # pylint: disable=unnecessary-lambda-assignment
         eq_callback = lambda file1, file2: file1 != file2
         if self._file_content_checker is not None:
             eq_callback = self._file_content_checker

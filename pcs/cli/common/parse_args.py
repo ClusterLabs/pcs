@@ -560,6 +560,7 @@ class InputModifiers:
             supported_options_set.add(_OUTPUT_FORMAT_OPTION)
         unsupported_options = self._defined_options - supported_options_set
         if unsupported_options:
+            # pylint: disable=unnecessary-lambda-assignment
             pluralize = lambda word: format_plural(unsupported_options, word)
             raise CmdLineInputError(
                 "Specified {option} {option_list} {_is} not supported in this "
