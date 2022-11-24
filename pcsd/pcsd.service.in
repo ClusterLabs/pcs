@@ -11,6 +11,7 @@ After=pcsd-ruby.service
 EnvironmentFile=@CONF_DIR@/pcsd
 ExecStart=@SBINDIR@/pcsd
 Type=notify
+KillMode=mixed
 
 [Install]
 WantedBy=multi-user.target
