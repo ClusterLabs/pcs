@@ -57,6 +57,7 @@ EXTRA_DIST		= \
 			  resources/transitions01.xml \
 			  resources/transitions02.xml \
 			  suite.py \
+			  api_v2_client.py \
 			  tier0/cli/booth/__init__.py \
 			  tier0/cli/booth/test_env.py \
 			  tier0/cli/cluster/__init__.py \

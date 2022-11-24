@@ -20,7 +20,6 @@ EXTRA_DIST		= \
 			  acl.py \
 			  alert.py \
 			  app.py \
-			  api_v2_client.py \
 			  cli/booth/command.py \
 			  cli/booth/env.py \
 			  cli/booth/__init__.py \

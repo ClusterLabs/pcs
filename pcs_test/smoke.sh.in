@@ -1,6 +1,8 @@
 #!@BASH@
 set -ex
 
+SCRIPT_DIR="$(dirname -- "$(realpath -- "$0")")"
+
 cluster_user=hacluster
 cluster_user_password=qa57Jk27eP
 pcsd_socket_path="@LOCALSTATEDIR@/run/pcsd.socket"
@@ -15,13 +17,15 @@ if pidof systemd | grep "\b1\b"; then
     pcs cluster setup cluster-name localhost --debug
 fi
 
+output_file=$(mktemp)
+token_file=$(mktemp)
+
 # Sanity check of API V0
 token=$(python3 -c "import json; print(json.load(open('@LOCALSTATEDIR@/lib/pcsd/known-hosts'))['known_hosts']['localhost']['token']);")
-curl -kb "token=${token}" https://localhost:2224/remote/cluster_status_plaintext -d 'data_json={}' > output.json
-cat output.json; echo ""
-python3 -c "import json; import sys; json.load(open('output.json'))['status'] == 'exception' and (sys.exit(1))";
+curl -kb "token=${token}" https://localhost:2224/remote/cluster_status_plaintext -d 'data_json={}' > "${output_file}"
+cat "${output_file}"; echo ""
+python3 -c "import json; import sys; json.load(open('${output_file}'))['status'] == 'exception' and (sys.exit(1))";
 
-token_file=$(mktemp)
 dd if=/dev/urandom bs=32 count=1 status=none | base64 > "${token_file}"
 custom_localhost_node_name="custom-node-name"
 
@@ -30,24 +34,28 @@ pcs pcsd accept_token "${token_file}"
 pcs pcsd status "${custom_localhost_node_name}" | grep "${custom_localhost_node_name}: Online"
 
 # Sanity check of API V1
-curl -kb "token=${token}" https://localhost:2224/api/v1/resource-agent-get-agents-list/v1 --data '{}' > output.json
-cat output.json; echo ""
-python3 -c "import json; import sys; json.load(open('output.json'))['status'] != 'success' and (sys.exit(1))";
+curl -kb "token=${token}" https://localhost:2224/api/v1/resource-agent-get-agents-list/v1 --data '{}' > "${output_file}"
+cat "${output_file}"; echo ""
+python3 -c "import json; import sys; json.load(open('${output_file}'))['status'] != 'success' and (sys.exit(1))";
 
 # Sanity check of API V2
 # async
-pcs/api_v2_client resource_agent.get_agent_metadata '{"agent_name":{"standard":"ocf","provider":"pacemaker","type":"Dummy"}}'
+env "PCS_TEST.TEST_INSTALLED=1" ${SCRIPT_DIR}/api_v2_client resource_agent.get_agent_metadata '{"agent_name":{"standard":"ocf","provider":"pacemaker","type":"Dummy"}}'
 
 # sync
-pcs/api_v2_client --sync resource_agent.get_agent_metadata '{"agent_name":{"standard":"ocf","provider":"pacemaker","type":"Stateful"}}'
+env "PCS_TEST.TEST_INSTALLED=1" ${SCRIPT_DIR}/api_v2_client --sync resource_agent.get_agent_metadata '{"agent_name":{"standard":"ocf","provider":"pacemaker","type":"Stateful"}}'
 
 # unix socket test
-curl --unix-socket "${pcsd_socket_path}" http:/something/api/v1/resource-agent-get-agents-list/v1 --data '{}' > output.json
-cat output.json; echo ""
-python3 -c "import json; import sys; json.load(open('output.json'))['status'] != 'success' and (sys.exit(1))";
+curl --unix-socket "${pcsd_socket_path}" http:/something/api/v1/resource-agent-get-agents-list/v1 --data '{}' > "${output_file}"
+cat "${output_file}"; echo ""
+python3 -c "import json; import sys; json.load(open('${output_file}'))['status'] != 'success' and (sys.exit(1))";
 
 # make sure socket is not accessible by all users
 useradd testuser
 su testuser
 ! curl --unix-socket "${pcsd_socket_path}" http:/something/api/v1/resource-agent-get-agents-list/v1 --data '{}'
+
+# cleanup
+rm "${token_file}"
+rm "${output_file}"
 exit 0

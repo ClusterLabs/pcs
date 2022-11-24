@@ -1,0 +1,20 @@
+#!@PYTHON@
+import os.path
+import sys
+
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+TEST_INSTALLED = os.environ.get("PCS_TEST.TEST_INSTALLED", "0") == "1"
+
+if TEST_INSTALLED:
+    BUNDLED_PACKAGES_DIR = os.path.join("@PCS_BUNDLED_DIR@", "packages")
+else:
+    PACKAGE_DIR = os.path.dirname(CURRENT_DIR)
+    sys.path.insert(0, PACKAGE_DIR)
+    BUNDLED_PACKAGES_DIR = os.path.join(PACKAGE_DIR, "@PCS_BUNDLED_DIR_LOCAL@", "packages")
+
+sys.path.insert(0, BUNDLED_PACKAGES_DIR)
+
+from api_v2_client import main
+
+main()

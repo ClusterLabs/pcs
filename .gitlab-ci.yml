@@ -126,6 +126,7 @@ python_smoke_tests:
     - ./autogen.sh
     - ./configure --enable-local-build
     - make
+    - rm -rf pcs
     - pcs_test/smoke.sh
   artifacts:
     paths:

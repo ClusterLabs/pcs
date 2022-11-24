@@ -578,10 +578,10 @@ AC_CONFIG_FILES([Makefile
 		 pcsd/settings.rb
 		 pcsd/logrotate/pcsd])
 
-AC_CONFIG_FILES([pcs/api_v2_client], [chmod +x pcs/api_v2_client])
 AC_CONFIG_FILES([pcs/pcs], [chmod +x pcs/pcs])
 AC_CONFIG_FILES([pcs/pcs_internal], [chmod +x pcs/pcs_internal])
 AC_CONFIG_FILES([pcs/snmp/pcs_snmp_agent], [chmod +x pcs/snmp/pcs_snmp_agent])
+AC_CONFIG_FILES([pcs_test/api_v2_client], [chmod +x pcs_test/api_v2_client])
 AC_CONFIG_FILES([pcs_test/smoke.sh], [chmod +x pcs_test/smoke.sh])
 AC_CONFIG_FILES([pcs_test/pcs_for_tests], [chmod +x pcs_test/pcs_for_tests])
 AC_CONFIG_FILES([pcs_test/suite], [chmod +x pcs_test/suite])
