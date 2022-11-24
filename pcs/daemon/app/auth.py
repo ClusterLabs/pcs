@@ -3,7 +3,6 @@ import socket
 import struct
 from typing import Optional
 
-# from tornado.httputil import HTTPServerRequest
 from tornado.ioloop import IOLoop
 from tornado.web import RequestHandler
 
