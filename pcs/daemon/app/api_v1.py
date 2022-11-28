@@ -8,13 +8,9 @@ from typing import (
     List,
     Mapping,
     Optional,
-    cast,
 )
 
-from tornado.web import (
-    HTTPError,
-    RequestHandler,
-)
+from tornado.web import HTTPError
 
 from pcs.common import (
     communication,
@@ -346,13 +342,13 @@ def get_routes(scheduler: Scheduler, auth_provider: AuthProvider) -> RoutesType:
     return [
         (
             "/remote/cluster_status_plaintext",
-            cast(RequestHandler, ClusterStatusLegacyHandler),
+            ClusterStatusLegacyHandler,
             params,
         ),
         (
             "/remote/cluster_add_nodes",
-            cast(RequestHandler, ClusterAddNodesLegacyHandler),
+            ClusterAddNodesLegacyHandler,
             params,
         ),
-        (r"/api/v1/(.*)", cast(RequestHandler, ApiV1Handler), params),
+        (r"/api/v1/(.*)", ApiV1Handler, params),
     ]

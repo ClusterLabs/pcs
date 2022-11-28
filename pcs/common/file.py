@@ -141,14 +141,12 @@ class RawFile(RawFileInterface):
                     if self.metadata.owner_user_name is not None:
                         shutil.chown(
                             self.metadata.path,
-                            self.metadata.owner_user_name,
-                            self.metadata.owner_group_name,
+                            user=self.metadata.owner_user_name,
                         )
-                    elif self.metadata.owner_group_name is not None:
+                    if self.metadata.owner_group_name is not None:
                         shutil.chown(
                             self.metadata.path,
-                            self.metadata.owner_user_name,
-                            self.metadata.owner_group_name,
+                            group=self.metadata.owner_group_name,
                         )
                 except LookupError as e:
                     raise RawFileError(

@@ -17,7 +17,6 @@ from dacite import (
 from tornado.web import (
     HTTPError,
     MissingArgumentError,
-    RequestHandler,
 )
 
 from pcs.common.async_tasks.dto import (
@@ -263,8 +262,8 @@ def get_routes(
     """
     params = dict(scheduler=scheduler, auth_provider=auth_provider)
     return [
-        ("/api/v2/task/result", cast(RequestHandler, TaskInfoHandler), params),
-        ("/api/v2/task/create", cast(RequestHandler, NewTaskHandler), params),
-        ("/api/v2/task/kill", cast(RequestHandler, KillTaskHandler), params),
-        ("/api/v2/task/run", cast(RequestHandler, RunTaskHandler), params),
+        ("/api/v2/task/result", TaskInfoHandler, params),
+        ("/api/v2/task/create", NewTaskHandler, params),
+        ("/api/v2/task/kill", KillTaskHandler, params),
+        ("/api/v2/task/run", RunTaskHandler, params),
     ]
