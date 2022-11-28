@@ -91,6 +91,7 @@ class StonithDescribeTest(TestCase, AssertPcsMixin):
         )
 
     def test_pcsd_interface(self):
+        self.maxDiff = None
         stdout, returncode = self.pcs_runner.run(
             "stonith get_fence_agent_info stonith:fence_apc".split()
         )
@@ -621,7 +622,7 @@ class StonithDescribeTest(TestCase, AssertPcsMixin):
                     {
                         "name": "pcmk_host_argument",
                         "shortdesc": "Advanced use only: An alternate parameter to supply instead of 'port'",
-                        "longdesc": "Advanced use only: An alternate parameter to supply instead of 'port'\nSome devices do not support the standard 'port' parameter or may provide additional ones.\nUse this to specify an alternate, device-specific, parameter that should indicate the machine to be fenced.\nA value of 'none' can be used to tell the cluster not to supply any additional parameters.",
+                        "longdesc": "Advanced use only: An alternate parameter to supply instead of 'port'\nSome devices do not support the standard 'port' parameter or may provide additional ones. Use this to specify an alternate, device-specific, parameter that should indicate the machine to be fenced. A value of 'none' can be used to tell the cluster not to supply any additional parameters.",
                         "type": "string",
                         "default": "port",
                         "enum_values": None,
@@ -651,7 +652,7 @@ class StonithDescribeTest(TestCase, AssertPcsMixin):
                     {
                         "name": "pcmk_host_list",
                         "shortdesc": "A list of machines controlled by this device (Optional unless pcmk_host_check=static-list).",
-                        "longdesc": None,
+                        "longdesc": "A list of machines controlled by this device (Optional unless pcmk_host_check=static-list).\nEg. node1,node2,node3",
                         "type": "string",
                         "default": "",
                         "enum_values": None,
@@ -696,8 +697,8 @@ class StonithDescribeTest(TestCase, AssertPcsMixin):
                     {
                         "name": "pcmk_delay_base",
                         "shortdesc": "Enable a base delay for fencing actions and specify base delay value.",
-                        "longdesc": "Enable a base delay for fencing actions and specify base delay value.\nThis prevents double fencing when different delays are configured on the nodes.\nUse this to enable a static delay for fencing actions.\nThe overall delay is derived from a random delay value adding this static delay so that the sum is kept below the maximum delay.",
-                        "type": "time",
+                        "longdesc": 'Enable a base delay for fencing actions and specify base delay value.\nThis enables a static delay for fencing actions, which can help avoid "death matches" where two nodes try to fence each other at the same time. If pcmk_delay_max is also used, a random delay will be added such that the total delay is kept below that value.\nThis can be set to a single time value to apply to any node targeted by this device (useful if a separate device is configured for each target), or to a node map (for example, "node1:1s;node2:5") to set a different value per target.',
+                        "type": "string",
                         "default": "0s",
                         "enum_values": None,
                         "required": False,
