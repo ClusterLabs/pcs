@@ -149,7 +149,6 @@ def prepare_options_plain(
         else:
             del options["rsc-role"]
 
-
     return constraint.prepare_options(
         tuple(list(ATTRIB) + list(ATTRIB_PLAIN)),
         options,

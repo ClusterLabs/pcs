@@ -57,11 +57,10 @@ def add(lib, argv, modifiers):
         name for name in options.keys() if name not in allowed_option
     ]
     if invalid_names:
-        raise LibraryError(
-            ReportItem.error(
-                reports.messages.InvalidOptions(
-                    sorted(invalid_names), sorted(allowed_option), None
-                )
+        invalid_option = " ".join(invalid_names)
+        raise CmdLineInputError(
+            "invalid option '{0}', allowed options are: 'id', 'loss-policy'".format(
+                invalid_option
             )
         )
 

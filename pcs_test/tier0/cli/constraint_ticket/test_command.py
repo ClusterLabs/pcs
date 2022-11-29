@@ -54,6 +54,19 @@ class AddTest(TestCase):
         )
 
     @mock.patch("pcs.cli.constraint_ticket.command.parse_args.parse_add")
+    def test_refuse_unknown_option_in_options(self, mock_parse_add):
+        mock_parse_add.return_value = (
+            "ticket",
+            "resource_id",
+            "resource_role",
+            {"unknown": "option"},
+        )
+        lib = None
+        self.assertRaises(
+            CmdLineInputError, lambda: command.add(lib, ["argv"], _modifiers())
+        )
+
+    @mock.patch("pcs.cli.constraint_ticket.command.parse_args.parse_add")
     def test_put_resource_role_to_options_for_library(self, mock_parse_add):
         mock_parse_add.return_value = (
             "ticket",
