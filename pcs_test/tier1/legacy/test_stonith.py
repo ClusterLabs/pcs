@@ -3329,6 +3329,15 @@ class LevelVerify(LevelTestsBase):
 
 
 class StonithUpdate(ResourceTest):
+    # added in fence-agents-all-4.11.0
+    agent_secure_warning = (
+        "("
+        "Warning: Validation result from agent:\n"
+        "  WARNING:root:Parse error: Ignoring option 'secure' because it does "
+        "not have value\n"
+        ")?"
+    )
+
     def setUp(self):
         super().setUp()
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
@@ -3365,11 +3374,12 @@ class StonithUpdate(ResourceTest):
                 </primitive>
             </resources>
             """,
-            output=(
+            output_regexp=(
                 "Warning: stonith option 'login' is deprecated and should not "
                 "be used, use 'username' instead\n"
                 "Warning: stonith option 'debug' is deprecated and should not "
                 "be used, use 'debug_file' instead\n"
+                + self.agent_secure_warning
             ),
         )
 
@@ -3404,9 +3414,10 @@ class StonithUpdate(ResourceTest):
                 </primitive>
             </resources>
             """,
-            output=(
+            output_regexp=(
                 "Warning: stonith option 'debug' is deprecated and should not "
                 "be used, use 'debug_file' instead\n"
+                + self.agent_secure_warning
             ),
         )
 
@@ -3438,6 +3449,7 @@ class StonithUpdate(ResourceTest):
                 </primitive>
             </resources>
             """,
+            output_regexp=self.agent_secure_warning,
         )
 
     def test_unset_deprecated_required_param(self):
@@ -3548,6 +3560,7 @@ class StonithUpdate(ResourceTest):
                 </primitive>
             </resources>
             """,
+            output_regexp=self.agent_secure_warning,
         )
 
     def test_unset_obsoleting_required_set_deprecated(self):
@@ -3581,9 +3594,9 @@ class StonithUpdate(ResourceTest):
                 </primitive>
             </resources>
             """,
-            output=(
+            output_regexp=(
                 "Warning: stonith option 'ipaddr' is deprecated and should not "
-                "be used, use 'ip' instead\n"
+                "be used, use 'ip' instead\n" + self.agent_secure_warning
             ),
         )
 
@@ -3621,8 +3634,8 @@ class StonithUpdate(ResourceTest):
                 </primitive>
             </resources>
             """,
-            output=(
+            output_regexp=(
                 "Warning: stonith option 'ipaddr' is deprecated and should not "
-                "be used, use 'ip' instead\n"
+                "be used, use 'ip' instead\n" + self.agent_secure_warning
             ),
         )
