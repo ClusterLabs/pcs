@@ -52,10 +52,11 @@ python3 -c "import json; import sys; json.load(open('${output_file}'))['status']
 
 # make sure socket is not accessible by all users
 useradd testuser
-su testuser
-! curl --unix-socket "${pcsd_socket_path}" http:/something/api/v1/resource-agent-get-agents-list/v1 --data '{}'
+su testuser -c '! curl --unix-socket '"${pcsd_socket_path}"' http:/something/api/v1/resource-agent-get-agents-list/v1 --data '\''{}'\'''
 
 # cleanup
 rm "${token_file}"
 rm "${output_file}"
+pcs cluster destroy --force
+userdel -r testuser
 exit 0
