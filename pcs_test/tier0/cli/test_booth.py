@@ -189,7 +189,9 @@ class DeleteRemoveTestMixin(AssertPcsMixin):
         self.lib.booth = mock.Mock(spec_set=["remove_from_cluster"])
 
     def test_lib_call_minimal(self):
-        resource_remove = lambda x: x
+        def resource_remove(something):
+            return something
+
         booth_cmd.get_remove_from_cluster(resource_remove)(
             self.lib, [], dict_to_modifiers({})
         )
@@ -200,7 +202,9 @@ class DeleteRemoveTestMixin(AssertPcsMixin):
         )
 
     def test_lib_call_full(self):
-        resource_remove = lambda x: x
+        def resource_remove(something):
+            return something
+
         booth_cmd.get_remove_from_cluster(resource_remove)(
             self.lib, [], dict_to_modifiers(dict(name="my_booth", force=True))
         )
@@ -316,7 +320,9 @@ class Restart(TestCase):
         self.lib.booth = mock.Mock(spec_set=["restart"])
 
     def test_lib_call_minimal(self):
-        resource_restart = lambda x: x
+        def resource_restart(something):
+            return something
+
         booth_cmd.get_restart(resource_restart)(
             self.lib, [], dict_to_modifiers({})
         )
@@ -330,7 +336,9 @@ class Restart(TestCase):
         )
 
     def test_lib_call_full(self):
-        resource_restart = lambda x: x
+        def resource_restart(something):
+            return something
+
         booth_cmd.get_restart(resource_restart)(
             self.lib, [], dict_to_modifiers(dict(name="my_booth", force=True))
         )

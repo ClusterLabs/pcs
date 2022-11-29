@@ -110,6 +110,11 @@ class SyncConfigMutualExclusive(AppTest):
     """
 
     def fetch_set_sync_options(self, method):
+        def fetch_sync_options():
+            return self.http_client.fetch(
+                self.get_url("/remote/set_sync_options"), **kwargs
+            )
+
         kwargs = (
             dict(method=method, body=urlencode({}))
             if method == "POST"
@@ -119,9 +124,6 @@ class SyncConfigMutualExclusive(AppTest):
         # Without lock the timeout should be enough to finish task. With the
         # lock it should raise because of timeout. The same timeout is used for
         # noticing differences between test with and test without lock.
-        fetch_sync_options = lambda: self.http_client.fetch(
-            self.get_url("/remote/set_sync_options"), **kwargs
-        )
         return self.io_loop.run_sync(fetch_sync_options, timeout=0.5)
 
     def check_call_wrapper_without_lock(self, method):

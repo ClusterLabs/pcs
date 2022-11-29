@@ -1,4 +1,8 @@
+from logging import Logger
 from typing import (
+    Any,
+    Callable,
+    Iterable,
     Mapping,
     Optional,
     Union,
@@ -11,6 +15,7 @@ from pcs.common import (
     file_type_codes,
     reports,
 )
+from pcs.common.host import PcsKnownHost
 from pcs.common.node_communicator import (
     Communicator,
     NodeCommunicatorFactory,
@@ -82,19 +87,23 @@ def _wait_type_to_int(wait: WaitType) -> int:
 
 
 class LibraryEnvironment:
-    # pylint: disable=too-many-instance-attributes, too-many-public-methods
+    # pylint: disable=too-many-instance-attributes
+    # pylint: disable=too-many-public-methods
 
     def __init__(
         self,
-        logger,
-        report_processor,
-        user_login=None,
-        user_groups=None,
-        cib_data=None,
-        corosync_conf_data=None,
-        booth_files_data=None,
-        known_hosts_getter=None,
-        request_timeout=None,
+        logger: Logger,
+        report_processor: reports.ReportProcessor,
+        user_login: Optional[str] = None,
+        user_groups: Optional[Iterable[str]] = None,
+        cib_data: Optional[str] = None,
+        corosync_conf_data: Optional[str] = None,
+        booth_files_data: Optional[Mapping[str, Any]] = None,
+        known_hosts_getter: Optional[
+            Callable[[], Mapping[str, PcsKnownHost]]
+        ] = None,
+        # TODO there is no validation and transformation from str to int
+        request_timeout: Optional[Union[int, str]] = None,
     ):
         # pylint: disable=too-many-arguments
         self._logger = logger
@@ -109,23 +118,23 @@ class LibraryEnvironment:
         # postponing dealing with them, because it's not that easy to move
         # related code currently - it's in pcsd
         self._known_hosts_getter = known_hosts_getter
-        self._known_hosts = None
-        self._cib_upgrade_reported = False
-        self._cib_data_tmp_file = None
-        self.__loaded_cib_diff_source = None
-        self.__loaded_cib_to_modify = None
+        self._known_hosts: Optional[Mapping[str, PcsKnownHost]] = None
+        self._cib_upgrade_reported: bool = False
+        self._cib_data_tmp_file: Optional[Any] = None  # TODO proper type hint
+        self.__loaded_cib_diff_source: Optional[str] = None
+        self.__loaded_cib_to_modify: Optional[_Element] = None
         self._communicator_factory = NodeCommunicatorFactory(
             LibCommunicatorLogger(self.logger, self.report_processor),
             self.user_login,
             self.user_groups,
             self._request_timeout,
         )
-        self.__loaded_booth_env = None
-        self.__loaded_dr_env = None
+        self.__loaded_booth_env: Optional[BoothEnv] = None
+        self.__loaded_dr_env: Optional[DrEnv] = None
         self.__service_manager: Optional[ServiceManagerInterface] = None
 
     @property
-    def logger(self):
+    def logger(self) -> Logger:
         return self._logger
 
     @property
@@ -133,15 +142,15 @@ class LibraryEnvironment:
         return self._report_processor
 
     @property
-    def user_login(self):
+    def user_login(self) -> Optional[str]:
         return self._user_login
 
     @property
-    def user_groups(self):
+    def user_groups(self) -> Optional[Iterable[str]]:
         return self._user_groups
 
     @property
-    def ghost_file_codes(self):
+    def ghost_file_codes(self) -> list[file_type_codes.FileTypeCode]:
         codes = set()
         if not self.is_cib_live:
             codes.add(file_type_codes.CIB)
@@ -192,12 +201,12 @@ class LibraryEnvironment:
         return self.__loaded_cib_to_modify
 
     @property
-    def cib(self):
-        if self.__loaded_cib_diff_source is None:
+    def cib(self) -> _Element:
+        if self.__loaded_cib_to_modify is None:
             raise AssertionError("CIB has not been loaded")
         return self.__loaded_cib_to_modify
 
-    def get_cluster_state(self):
+    def get_cluster_state(self) -> _Element:
         return get_cluster_status_dom(self.cmd_runner())
 
     def wait_for_idle(self, timeout: int = 0) -> None:
@@ -236,7 +245,7 @@ class LibraryEnvironment:
                 ReportItem.error(reports.messages.WaitForIdleNotLiveCluster())
             )
 
-    def push_cib(self, custom_cib=None, wait_timeout: int = -1):
+    def push_cib(self, custom_cib=None, wait_timeout: int = -1) -> None:
         """
         Push previously loaded instance of CIB or a custom CIB
 
@@ -278,7 +287,7 @@ class LibraryEnvironment:
         if cib_diff_xml:
             push_cib_diff_xml(cmd_runner, cib_diff_xml)
 
-    def __do_push_cib(self, push_strategy, wait_timeout: int):
+    def __do_push_cib(self, push_strategy, wait_timeout: int) -> None:
         push_strategy()
         self._cib_upgrade_reported = False
         self.__loaded_cib_diff_source = None
@@ -287,12 +296,12 @@ class LibraryEnvironment:
             self.wait_for_idle(wait_timeout)
 
     @property
-    def is_cib_live(self):
+    def is_cib_live(self) -> bool:
         return self._cib_data is None
 
     @property
-    def final_mocked_cib_content(self):
-        if self.is_cib_live:
+    def final_mocked_cib_content(self) -> str:
+        if self._cib_data is None:
             raise AssertionError(
                 "Final mocked cib content does not make sense in live env."
             )
@@ -303,7 +312,7 @@ class LibraryEnvironment:
 
         return self._cib_data
 
-    def get_corosync_conf_data(self):
+    def get_corosync_conf_data(self) -> str:
         if self._corosync_conf_data is None:
             return get_local_corosync_conf()
         return self._corosync_conf_data
@@ -340,8 +349,10 @@ class LibraryEnvironment:
         return facade
 
     def push_corosync_conf(
-        self, corosync_conf_facade, skip_offline_nodes=False
-    ):
+        self,
+        corosync_conf_facade: CorosyncConfigFacade,
+        skip_offline_nodes: bool = False,
+    ) -> None:
         bad_sections, bad_attr_names, bad_attr_values = verify_corosync_section(
             corosync_conf_facade.config
         )
@@ -433,7 +444,7 @@ class LibraryEnvironment:
                 raise LibraryError()
 
     @property
-    def is_corosync_conf_live(self):
+    def is_corosync_conf_live(self) -> bool:
         return self._corosync_conf_data is None
 
     def cmd_runner(
@@ -447,7 +458,7 @@ class LibraryEnvironment:
         if self.user_login:
             runner_env["CIB_user"] = self.user_login
 
-        if not self.is_cib_live:
+        if self._cib_data is not None:
             # Dump CIB data to a temporary file and set it up in the runner.
             # This way every called pacemaker tool can access the CIB and we
             # don't need to take care of it every time the runner is called.
@@ -463,7 +474,7 @@ class LibraryEnvironment:
         return CommandRunner(self.logger, self.report_processor, runner_env)
 
     @property
-    def communicator_factory(self):
+    def communicator_factory(self) -> NodeCommunicatorFactory:
         return self._communicator_factory
 
     def get_node_communicator(
@@ -479,7 +490,9 @@ class LibraryEnvironment:
             self.__get_known_hosts(), self.report_processor
         )
 
-    def get_known_hosts(self, host_name_list):
+    def get_known_hosts(
+        self, host_name_list: Iterable[str]
+    ) -> list[PcsKnownHost]:
         known_hosts = self.__get_known_hosts()
         return [
             known_hosts[host_name]
@@ -487,7 +500,7 @@ class LibraryEnvironment:
             if host_name in known_hosts
         ]
 
-    def __get_known_hosts(self):
+    def __get_known_hosts(self) -> Mapping[str, PcsKnownHost]:
         if self._known_hosts is None:
             if self._known_hosts_getter:
                 self._known_hosts = self._known_hosts_getter()

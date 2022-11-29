@@ -1,3 +1,4 @@
+from functools import partial
 from typing import (
     Any,
     Dict,
@@ -214,7 +215,7 @@ class UnableToConnectToAllRemainingNodes(CliReportMessageCustom):
 
     @property
     def message(self) -> str:
-        pluralize = lambda word: format_plural(self._obj.node_list, word)
+        pluralize = partial(format_plural, self._obj.node_list)
         return (
             "Remaining cluster {node} {nodes} could not be reached, run "
             "'pcs cluster sync' on any currently online node once the "
@@ -250,7 +251,7 @@ class HostNotFound(CliReportMessageCustom):
 
     @property
     def message(self) -> str:
-        pluralize = lambda word: format_plural(self._obj.host_list, word)
+        pluralize = partial(format_plural, self._obj.host_list)
         return (
             (
                 "{host} {hosts_comma} {_is} not known to pcs, try to "

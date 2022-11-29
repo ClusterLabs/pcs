@@ -193,12 +193,12 @@ def setup(
     cluster_name: str,
     nodes: Sequence[Mapping[str, Any]],
     transport_type: Optional[str] = None,
-    transport_options: Mapping[str, str] = None,
-    link_list: Sequence[Mapping[str, Any]] = None,
-    compression_options: Mapping[str, str] = None,
-    crypto_options: Mapping[str, str] = None,
-    totem_options: Mapping[str, str] = None,
-    quorum_options: Mapping[str, str] = None,
+    transport_options: Optional[Mapping[str, str]] = None,
+    link_list: Optional[Sequence[Mapping[str, Any]]] = None,
+    compression_options: Optional[Mapping[str, str]] = None,
+    crypto_options: Optional[Mapping[str, str]] = None,
+    totem_options: Optional[Mapping[str, str]] = None,
+    quorum_options: Optional[Mapping[str, str]] = None,
     wait: WaitType = False,
     start: bool = False,
     enable: bool = False,
@@ -611,7 +611,7 @@ def _validate_create_corosync_conf(
         force_unresolvable=force,
         force_cluster_name=force,
     )
-    max_node_addr_count = max([len(node["addrs"]) for node in nodes], default=0)
+    max_node_addr_count = max((len(node["addrs"]) for node in nodes), default=0)
     if transport_type in corosync_constants.TRANSPORTS_KNET:
         report_list += config_validators.create_transport_knet(
             transport_options, compression_options, crypto_options

@@ -2,12 +2,15 @@ from typing import (
     Any,
     Iterable,
     Optional,
+    Type,
 )
 
 from tornado.web import RedirectHandler as TornadoRedirectHandler
 from tornado.web import RequestHandler
 
-RoutesType = Iterable[tuple[str, RequestHandler, Optional[dict[str, Any]]]]
+RoutesType = Iterable[
+    tuple[str, Type[RequestHandler], Optional[dict[str, Any]]]
+]
 
 
 class EnhanceHeadersMixin:

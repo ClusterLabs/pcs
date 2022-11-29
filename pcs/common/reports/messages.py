@@ -4,6 +4,7 @@ from dataclasses import (
     dataclass,
     field,
 )
+from functools import partial
 from typing import (
     Any,
     Dict,
@@ -1939,7 +1940,7 @@ class NodeAddressesAlreadyExist(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        pluralize = lambda word: format_plural(self.address_list, word)
+        pluralize = partial(format_plural, self.address_list)
         return (
             "Node {address} {addr_list} {_is} already used by existing nodes; "
             "please, use other {address}"
@@ -2002,7 +2003,7 @@ class NodeNamesAlreadyExist(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        pluralize = lambda word: format_plural(self.name_list, word)
+        pluralize = partial(format_plural, self.name_list)
         return (
             "Node {name} {name_list} {_is} already used by existing nodes; "
             "please, use other {name}"
@@ -5036,7 +5037,7 @@ class HostNotFound(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        pluralize = lambda word: format_plural(self.host_list, word)
+        pluralize = partial(format_plural, self.host_list)
         return "{host} {hosts_comma} {_is} not known to pcs".format(
             host=pluralize("host"),
             hosts_comma=format_list(self.host_list),
@@ -5203,8 +5204,7 @@ class ServiceVersionMismatch(ReportItemMessage):
         for version, hosts in sorted(
             version_host.items(), key=lambda pair: len(pair[1]), reverse=True
         ):
-            # pylint: disable=cell-var-from-loop
-            pluralize = lambda word: format_plural(hosts, word)
+            pluralize = partial(format_plural, hosts)
             parts.append(
                 "{host} {hosts} {has} version {version}".format(
                     host=pluralize("host"),

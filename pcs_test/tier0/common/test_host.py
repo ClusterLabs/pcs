@@ -33,44 +33,57 @@ class PcsKnownHostFromKnownHost(TestCase):
         self.assertEqual(host.Destination("addr1", "port1"), known_host.dest)
 
     def test_missing_token(self):
-        known_host_call = lambda: host.PcsKnownHost.from_known_host_file_dict(
-            self.name,
-            dict(
-                dest_list=[_dest("addr1", "port1"), _dest("addr2", "port2")],
-            ),
-        )
+        def known_host_call():
+            return host.PcsKnownHost.from_known_host_file_dict(
+                self.name,
+                dict(
+                    dest_list=[
+                        _dest("addr1", "port1"),
+                        _dest("addr2", "port2"),
+                    ],
+                ),
+            )
+
         self.assertRaises(KeyError, known_host_call)
 
     def test_missing_port(self):
-        known_host_call = lambda: host.PcsKnownHost.from_known_host_file_dict(
-            self.name,
-            dict(
-                dest_list=[_dest("addr1", "port1"), dict(addr="addr2")],
-                token=self.token,
-            ),
-        )
+        def known_host_call():
+            return host.PcsKnownHost.from_known_host_file_dict(
+                self.name,
+                dict(
+                    dest_list=[_dest("addr1", "port1"), dict(addr="addr2")],
+                    token=self.token,
+                ),
+            )
+
         self.assertRaises(KeyError, known_host_call)
 
     def test_missing_addr(self):
-        known_host_call = lambda: host.PcsKnownHost.from_known_host_file_dict(
-            self.name,
-            dict(
-                dest_list=[_dest("addr1", "port1"), dict(port="port2")],
-                token=self.token,
-            ),
-        )
+        def known_host_call():
+            return host.PcsKnownHost.from_known_host_file_dict(
+                self.name,
+                dict(
+                    dest_list=[_dest("addr1", "port1"), dict(port="port2")],
+                    token=self.token,
+                ),
+            )
+
         self.assertRaises(KeyError, known_host_call)
 
     def test_no_dest_list(self):
-        known_host_call = lambda: host.PcsKnownHost.from_known_host_file_dict(
-            self.name, dict(token=self.token)
-        )
+        def known_host_call():
+            return host.PcsKnownHost.from_known_host_file_dict(
+                self.name, dict(token=self.token)
+            )
+
         self.assertRaises(KeyError, known_host_call)
 
     def test_dest_list_empty(self):
-        known_host_call = lambda: host.PcsKnownHost.from_known_host_file_dict(
-            self.name, dict(dest_list=[], token=self.token)
-        )
+        def known_host_call():
+            return host.PcsKnownHost.from_known_host_file_dict(
+                self.name, dict(dest_list=[], token=self.token)
+            )
+
         self.assertRaises(KeyError, known_host_call)
 
 

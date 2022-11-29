@@ -1,5 +1,6 @@
 from collections import Counter
 from collections.abc import Set
+from functools import partial
 from typing import (
     Iterable,
     Mapping,
@@ -560,7 +561,7 @@ class InputModifiers:
             supported_options_set.add(_OUTPUT_FORMAT_OPTION)
         unsupported_options = self._defined_options - supported_options_set
         if unsupported_options:
-            pluralize = lambda word: format_plural(unsupported_options, word)
+            pluralize = partial(format_plural, unsupported_options)
             raise CmdLineInputError(
                 "Specified {option} {option_list} {_is} not supported in this "
                 "command".format(

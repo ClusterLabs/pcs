@@ -1,9 +1,13 @@
 import pwd
 import socket
 import struct
-from typing import Optional
+from typing import (
+    Optional,
+    TypedDict,
+    cast,
+)
 
-# from tornado.httputil import HTTPServerRequest
+from tornado.http1connection import HTTP1Connection
 from tornado.ioloop import IOLoop
 from tornado.web import RequestHandler
 
@@ -41,8 +45,13 @@ class _BaseLibAuthProvider:
         return auth_user
 
     def is_unix_socket_used(self) -> bool:
+        # For whatever reason, handler.request.connection is typed as
+        # HTTPConnection in tornado. That class, however, doesn't have stream
+        # attribute. In reality, HTTP1Connection is probably used.
         return (
-            self._handler.request.connection.stream.socket.family
+            cast(
+                HTTP1Connection, self._handler.request.connection
+            ).stream.socket.family
             == socket.AF_UNIX
         )
 
@@ -53,7 +62,12 @@ class _BaseLibAuthProvider:
         # It is not cached to prevent inapropriate cache when handler is (in
         # hypotetical future) somehow reused. The responsibility for cache is
         # left to the place, that uses it.
-        credentials = self._handler.request.connection.stream.socket.getsockopt(
+        # For whatever reason, handler.request.connection is typed as
+        # HTTPConnection in tornado. That class, however, doesn't have stream
+        # attribute. In reality, HTTP1Connection is probably used.
+        credentials = cast(
+            HTTP1Connection, self._handler.request.connection
+        ).stream.socket.getsockopt(
             socket.SOL_SOCKET,
             socket.SO_PEERCRED,
             struct.calcsize("3i"),
@@ -111,7 +125,12 @@ class TokenAuthProvider(_BaseLibAuthProvider):
 
 
 class SessionAuthProvider(_BaseLibAuthProvider):
-    __cookie_options = {
+    class CookieOptions(TypedDict):
+        secure: bool
+        httponly: bool
+        samesite: str
+
+    __cookie_options: CookieOptions = {
         "secure": True,
         "httponly": True,
         # rhbz#2097393

@@ -3,7 +3,6 @@ from typing import (
     Collection,
     Container,
     Iterable,
-    List,
     Mapping,
     Optional,
 )
@@ -171,12 +170,15 @@ def resource_defaults_config(
     rule_evaluator = _get_rule_evaluator(
         cib, env.cmd_runner(), env.report_processor, evaluate_expired
     )
-    get_config = lambda tag: _defaults_config(
-        cib,
-        tag,
-        sections.RSC_DEFAULTS,
-        rule_evaluator,
-    )
+
+    def get_config(tag: nvpair_multi.NvsetTag) -> list[CibNvsetDto]:
+        return _defaults_config(
+            cib,
+            tag,
+            sections.RSC_DEFAULTS,
+            rule_evaluator,
+        )
+
     return CibDefaultsDto(
         instance_attributes=get_config(nvpair_multi.NVSET_INSTANCE),
         meta_attributes=get_config(nvpair_multi.NVSET_META),
@@ -196,12 +198,15 @@ def operation_defaults_config(
     rule_evaluator = _get_rule_evaluator(
         cib, env.cmd_runner(), env.report_processor, evaluate_expired
     )
-    get_config = lambda tag: _defaults_config(
-        cib,
-        tag,
-        sections.OP_DEFAULTS,
-        rule_evaluator,
-    )
+
+    def get_config(tag: nvpair_multi.NvsetTag) -> list[CibNvsetDto]:
+        return _defaults_config(
+            cib,
+            tag,
+            sections.OP_DEFAULTS,
+            rule_evaluator,
+        )
+
     return CibDefaultsDto(
         instance_attributes=get_config(nvpair_multi.NVSET_INSTANCE),
         meta_attributes=get_config(nvpair_multi.NVSET_META),
@@ -230,7 +235,7 @@ def _defaults_config(
     nvset_tag: nvpair_multi.NvsetTag,
     cib_section_name: str,
     rule_evaluator: RuleInEffectEval,
-) -> List[CibNvsetDto]:
+) -> list[CibNvsetDto]:
     return [
         nvpair_multi.nvset_element_to_dto(nvset_el, rule_evaluator)
         for nvset_el in nvpair_multi.find_nvsets(
