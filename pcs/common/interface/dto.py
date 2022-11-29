@@ -57,14 +57,16 @@ def _convert_dict(
     for _field in fields(klass):
         value = obj_dict[_field.name]
         if is_dataclass(_field.type):
-            value = _convert_dict(_field.type, value)
+            value = _convert_dict(_field.type, value)  # type: ignore
         elif isinstance(value, list) and _is_compatible_type(_field.type, 0):
             value = [
                 _convert_dict(_field.type.__args__[0], item) for item in value
             ]
         elif isinstance(value, dict) and _is_compatible_type(_field.type, 1):
             value = {
-                item_key: _convert_dict(_field.type.__args__[1], item_val)
+                item_key: _convert_dict(
+                    _field.type.__args__[1], item_val  # type: ignore
+                )
                 for item_key, item_val in value.items()
             }
         new_dict[_field.metadata.get(META_NAME, _field.name)] = value
@@ -83,7 +85,7 @@ def _convert_payload(klass: Type[DTOTYPE], data: DtoPayload) -> DtoPayload:
     for _field in fields(klass):
         value = data[_field.metadata.get(META_NAME, _field.name)]
         if is_dataclass(_field.type):
-            value = _convert_payload(_field.type, value)
+            value = _convert_payload(_field.type, value)  # type: ignore
         elif isinstance(value, list) and _is_compatible_type(_field.type, 0):
             value = [
                 _convert_payload(_field.type.__args__[0], item)
@@ -91,7 +93,9 @@ def _convert_payload(klass: Type[DTOTYPE], data: DtoPayload) -> DtoPayload:
             ]
         elif isinstance(value, dict) and _is_compatible_type(_field.type, 1):
             value = {
-                item_key: _convert_payload(_field.type.__args__[1], item_val)
+                item_key: _convert_payload(
+                    _field.type.__args__[1], item_val  # type: ignore
+                )
                 for item_key, item_val in value.items()
             }
         new_dict[_field.name] = value

@@ -658,7 +658,7 @@ def tag_element_to_dict(
 
 
 def expand_tag(
-    some_or_tag_el: _Element, only_expand_types: Iterable[str] = None
+    some_or_tag_el: _Element, only_expand_types: Optional[Iterable[str]] = None
 ) -> List[_Element]:
     """
     Substitute a tag element with elements which the tag refers to.

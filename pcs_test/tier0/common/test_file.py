@@ -198,7 +198,7 @@ class RawFileWrite(TestCase):
             "x",
             False,
         )
-        mock_chown.assert_called_once_with(FILE_PATH, FILE_OWNER, None)
+        mock_chown.assert_called_once_with(FILE_PATH, user=FILE_OWNER)
         mock_chmod.assert_not_called()
 
     def test_success_owner_group(self, mock_chmod, mock_chown, mock_flock):
@@ -208,14 +208,20 @@ class RawFileWrite(TestCase):
             "x",
             False,
         )
-        mock_chown.assert_called_once_with(FILE_PATH, None, FILE_GROUP)
+        mock_chown.assert_called_once_with(FILE_PATH, group=FILE_GROUP)
         mock_chmod.assert_not_called()
 
     def test_success_owner_both(self, mock_chmod, mock_chown, mock_flock):
         self.assert_success(
             mock_flock, RawFile(fixture_metadata(permissions=None)), "x", False
         )
-        mock_chown.assert_called_once_with(FILE_PATH, FILE_OWNER, FILE_GROUP)
+        mock_chown.assert_has_calls(
+            [
+                mock.call(FILE_PATH, user=FILE_OWNER),
+                mock.call(FILE_PATH, group=FILE_GROUP),
+            ]
+        )
+        self.assertEqual(mock_chown.call_count, 2)
         mock_chmod.assert_not_called()
 
     def test_success_permissions(self, mock_chmod, mock_chown, mock_flock):
@@ -232,7 +238,13 @@ class RawFileWrite(TestCase):
         self, mock_chmod, mock_chown, mock_flock
     ):
         self.assert_success(mock_flock, RawFile(fixture_metadata()), "x", False)
-        mock_chown.assert_called_once_with(FILE_PATH, FILE_OWNER, FILE_GROUP)
+        mock_chown.assert_has_calls(
+            [
+                mock.call(FILE_PATH, user=FILE_OWNER),
+                mock.call(FILE_PATH, group=FILE_GROUP),
+            ]
+        )
+        self.assertEqual(mock_chown.call_count, 2)
         mock_chmod.assert_called_once_with(self.fileno, FILE_PERMISSIONS)
 
     def test_already_exists(self, mock_chmod, mock_chown, mock_flock):
@@ -297,7 +309,7 @@ class RawFileWrite(TestCase):
                 mock_open().write.assert_not_called()
         mock_open.assert_has_calls([mock.call(FILE_PATH, "x")])
         mock_flock.assert_called_once_with(self.fileno, fcntl.LOCK_EX)
-        mock_chown.assert_called_once_with(FILE_PATH, FILE_OWNER, FILE_GROUP)
+        mock_chown.assert_called_once_with(FILE_PATH, user=FILE_OWNER)
         mock_chmod.assert_not_called()
         self.assertEqual(cm.exception.metadata, raw_file.metadata)
         self.assertEqual(cm.exception.action, RawFileError.ACTION_CHOWN)
@@ -314,7 +326,7 @@ class RawFileWrite(TestCase):
                 mock_open().write.assert_not_called()
         mock_open.assert_has_calls([mock.call(FILE_PATH, "x")])
         mock_flock.assert_called_once_with(self.fileno, fcntl.LOCK_EX)
-        mock_chown.assert_called_once_with(FILE_PATH, FILE_OWNER, FILE_GROUP)
+        mock_chown.assert_called_once_with(FILE_PATH, user=FILE_OWNER)
         mock_chmod.assert_not_called()
         self.assertEqual(cm.exception.metadata, raw_file.metadata)
         self.assertEqual(cm.exception.action, RawFileError.ACTION_CHOWN)
@@ -331,7 +343,13 @@ class RawFileWrite(TestCase):
                 mock_open().write.assert_not_called()
         mock_open.assert_has_calls([mock.call(FILE_PATH, "x")])
         mock_flock.assert_called_once_with(self.fileno, fcntl.LOCK_EX)
-        mock_chown.assert_called_once_with(FILE_PATH, FILE_OWNER, FILE_GROUP)
+        mock_chown.assert_has_calls(
+            [
+                mock.call(FILE_PATH, user=FILE_OWNER),
+                mock.call(FILE_PATH, group=FILE_GROUP),
+            ]
+        )
+        self.assertEqual(mock_chown.call_count, 2)
         mock_chmod.assert_called_once_with(self.fileno, FILE_PERMISSIONS)
         self.assertEqual(cm.exception.metadata, raw_file.metadata)
         self.assertEqual(cm.exception.action, RawFileError.ACTION_CHMOD)
@@ -348,7 +366,13 @@ class RawFileWrite(TestCase):
             mock_open().write.assert_called_once_with("data")
         mock_open.assert_has_calls([mock.call(FILE_PATH, "x")])
         mock_flock.assert_called_once_with(self.fileno, fcntl.LOCK_EX)
-        mock_chown.assert_called_once_with(FILE_PATH, FILE_OWNER, FILE_GROUP)
+        mock_chown.assert_has_calls(
+            [
+                mock.call(FILE_PATH, user=FILE_OWNER),
+                mock.call(FILE_PATH, group=FILE_GROUP),
+            ]
+        )
+        self.assertEqual(mock_chown.call_count, 2)
         mock_chmod.assert_called_once_with(self.fileno, FILE_PERMISSIONS)
         self.assertEqual(cm.exception.metadata, raw_file.metadata)
         self.assertEqual(cm.exception.action, RawFileError.ACTION_WRITE)

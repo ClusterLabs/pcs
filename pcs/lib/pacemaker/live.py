@@ -168,7 +168,9 @@ def get_ticket_status_text(runner: CommandRunner) -> Tuple[str, str, int]:
 ### cib
 
 
-def get_cib_xml_cmd_results(runner, scope=None):
+def get_cib_xml_cmd_results(
+    runner: CommandRunner, scope: Optional[str] = None
+) -> Tuple[str, str, int]:
     command = [__exec("cibadmin"), "--local", "--query"]
     if scope:
         command.append("--scope={0}".format(scope))
@@ -176,7 +178,7 @@ def get_cib_xml_cmd_results(runner, scope=None):
     return stdout, stderr, returncode
 
 
-def get_cib_xml(runner, scope=None):
+def get_cib_xml(runner: CommandRunner, scope: Optional[str] = None) -> str:
     stdout, stderr, retval = get_cib_xml_cmd_results(runner, scope)
     if retval != 0:
         if retval == __EXITCODE_CIB_SCOPE_VALID_BUT_NOT_PRESENT and scope:
@@ -195,11 +197,11 @@ def get_cib_xml(runner, scope=None):
     return stdout
 
 
-def parse_cib_xml(xml):
+def parse_cib_xml(xml: str) -> _Element:
     return xml_fromstring(xml)
 
 
-def get_cib(xml):
+def get_cib(xml: str) -> _Element:
     try:
         return parse_cib_xml(xml)
     except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:

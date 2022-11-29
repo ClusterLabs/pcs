@@ -1592,7 +1592,7 @@ def move(
     resource_id: str,
     node: Optional[str] = None,
     master: bool = False,
-    lifetime: str = None,
+    lifetime: Optional[str] = None,
     wait: WaitType = False,
 ) -> None:
     """
