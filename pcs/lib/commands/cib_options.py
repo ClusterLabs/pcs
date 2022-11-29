@@ -170,12 +170,15 @@ def resource_defaults_config(
     rule_evaluator = _get_rule_evaluator(
         cib, env.cmd_runner(), env.report_processor, evaluate_expired
     )
-    get_config = lambda tag: _defaults_config(
-        cib,
-        tag,
-        sections.RSC_DEFAULTS,
-        rule_evaluator,
-    )
+
+    def get_config(tag: nvpair_multi.NvsetTag) -> List[CibNvsetDto]:
+        return _defaults_config(
+            cib,
+            tag,
+            sections.RSC_DEFAULTS,
+            rule_evaluator,
+        )
+
     return CibDefaultsDto(
         instance_attributes=get_config(nvpair_multi.NVSET_INSTANCE),
         meta_attributes=get_config(nvpair_multi.NVSET_META),
@@ -195,12 +198,15 @@ def operation_defaults_config(
     rule_evaluator = _get_rule_evaluator(
         cib, env.cmd_runner(), env.report_processor, evaluate_expired
     )
-    get_config = lambda tag: _defaults_config(
-        cib,
-        tag,
-        sections.OP_DEFAULTS,
-        rule_evaluator,
-    )
+
+    def get_config(tag: nvpair_multi.NvsetTag) -> List[CibNvsetDto]:
+        return _defaults_config(
+            cib,
+            tag,
+            sections.OP_DEFAULTS,
+            rule_evaluator,
+        )
+
     return CibDefaultsDto(
         instance_attributes=get_config(nvpair_multi.NVSET_INSTANCE),
         meta_attributes=get_config(nvpair_multi.NVSET_META),

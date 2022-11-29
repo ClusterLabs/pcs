@@ -680,12 +680,16 @@ def _validate_network_options_new(options, force_options):
 
 
 def _is_pcmk_remote_accessible_after_update(network_el, options):
+    def removing(opt):
+        return options.get(opt) == ""
+
+    def not_adding(opt):
+        return options.get(opt) is None
+
     port_name = "control-port"
     ip_name = "ip-range-start"
     port = network_el.get(port_name)
     ip = network_el.get(ip_name)
-    removing = lambda opt: options.get(opt) == ""
-    not_adding = lambda opt: options.get(opt) is None
 
     # 3 cases in which pcmk remote will not be accessible after an update
     # case1: port set, IP !set; removing port, !adding IP

@@ -1792,16 +1792,19 @@ def operation_exists_by_name(operations_el, op_el):
     """
     Commandline options: no options
     """
+
+    def get_role(_el, new_roles_supported):
+        return common_pacemaker.role.get_value_for_cib(
+            _el.getAttribute("role") or const.PCMK_ROLE_STARTED,
+            new_roles_supported,
+        )
+
     new_roles_supported = isCibVersionSatisfied(
         operations_el, const.PCMK_NEW_ROLES_CIB_VERSION
     )
     existing = []
     op_name = op_el.getAttribute("name")
-    get_role_fn = lambda _el: common_pacemaker.role.get_value_for_cib(
-        _el.getAttribute("role") or const.PCMK_ROLE_STARTED,
-        new_roles_supported,
-    )
-    op_role = get_role_fn(op_el)
+    op_role = get_role(op_el, new_roles_supported)
     ocf_check_level = None
     if op_name == "monitor":
         ocf_check_level = get_operation_ocf_check_level(op_el)
@@ -1810,8 +1813,8 @@ def operation_exists_by_name(operations_el, op_el):
         if op.getAttribute("name") == op_name:
             if op_name != "monitor":
                 existing.append(op)
-            elif get_role_fn(
-                op
+            elif get_role(
+                op, new_roles_supported
             ) == op_role and ocf_check_level == get_operation_ocf_check_level(
                 op
             ):

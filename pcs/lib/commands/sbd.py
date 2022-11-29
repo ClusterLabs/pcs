@@ -38,14 +38,19 @@ _TIMEOUT_ACTION_ALLOWED_VALUES = (
     {"flush", "noflush"},
     {"reboot", "off", "crashdump"},
 )
-_tuple = lambda set1, set2: {f"{v1},{v2}" for v1 in set1 for v2 in set2}
+
+
+def __tuple(set1, set2):
+    return {f"{v1},{v2}" for v1 in set1 for v2 in set2}
+
+
 TIMEOUT_ACTION_ALLOWED_VALUE_LIST = sorted(
     _TIMEOUT_ACTION_ALLOWED_VALUES[0]
     | _TIMEOUT_ACTION_ALLOWED_VALUES[1]
-    | _tuple(
+    | __tuple(
         _TIMEOUT_ACTION_ALLOWED_VALUES[0], _TIMEOUT_ACTION_ALLOWED_VALUES[1]
     )
-    | _tuple(
+    | __tuple(
         _TIMEOUT_ACTION_ALLOWED_VALUES[1], _TIMEOUT_ACTION_ALLOWED_VALUES[0]
     )
 )

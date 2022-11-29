@@ -133,13 +133,17 @@ def validate_stonith_restartless_update(
 def get_node_key_map_for_mpath(
     stonith_el: _Element, node_labels: Iterable[str]
 ) -> Dict[str, str]:
-    library_error = lambda host_map, missing_nodes: LibraryError(
-        ReportItem.error(
-            reports.messages.StonithRestartlessUpdateMissingMpathKeys(
-                host_map, sorted(missing_nodes)
+    def library_error(
+        host_map: Optional[str], missing_nodes: Iterable[str]
+    ) -> LibraryError:
+        return LibraryError(
+            ReportItem.error(
+                reports.messages.StonithRestartlessUpdateMissingMpathKeys(
+                    host_map, sorted(missing_nodes)
+                )
             )
         )
-    )
+
     pcmk_host_map_value = get_value(
         INSTANCE_ATTRIBUTES_TAG, stonith_el, "pcmk_host_map"
     )

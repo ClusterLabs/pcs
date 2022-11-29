@@ -538,7 +538,7 @@ class RunExternalProcessStarted(NameBuildTest):
 
     def test_build_message_with_env(self):
         self.assert_message_from_report(
-            ("Running: COMMAND\nEnvironment:\n" "  env_a=A\n" "  env_b=B\n"),
+            ("Running: COMMAND\nEnvironment:\n  env_a=A\n  env_b=B\n"),
             reports.RunExternalProcessStarted(
                 "COMMAND",
                 "",
@@ -1511,7 +1511,7 @@ class CorosyncLinkAlreadyExistsCannotAdd(NameBuildTest):
 class CorosyncLinkDoesNotExistCannotRemove(NameBuildTest):
     def test_single_link(self):
         self.assert_message_from_report(
-            ("Cannot remove non-existent link 'abc', existing " "links: '5'"),
+            ("Cannot remove non-existent link 'abc', existing links: '5'"),
             reports.CorosyncLinkDoesNotExistCannotRemove(["abc"], ["5"]),
         )
 
@@ -2408,7 +2408,7 @@ class NodeToClearIsStillInCluster(NameBuildTest):
 class NodeRemoveInPacemakerFailed(NameBuildTest):
     def test_minimal(self):
         self.assert_message_from_report(
-            ("Unable to remove node(s) 'NODE1', 'NODE2' from " "pacemaker"),
+            ("Unable to remove node(s) 'NODE1', 'NODE2' from pacemaker"),
             reports.NodeRemoveInPacemakerFailed(["NODE2", "NODE1"]),
         )
 

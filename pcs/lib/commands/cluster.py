@@ -611,7 +611,7 @@ def _validate_create_corosync_conf(
         force_unresolvable=force,
         force_cluster_name=force,
     )
-    max_node_addr_count = max([len(node["addrs"]) for node in nodes], default=0)
+    max_node_addr_count = max((len(node["addrs"]) for node in nodes), default=0)
     if transport_type in corosync_constants.TRANSPORTS_KNET:
         report_list += config_validators.create_transport_knet(
             transport_options, compression_options, crypto_options

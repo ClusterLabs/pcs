@@ -31,7 +31,7 @@ def outdent(line_list: StringSequence) -> List[str]:
     if not line_list:
         return []
     smallest_indentation = min(
-        [len(line) - len(line.lstrip(" ")) for line in line_list if line]
+        len(line) - len(line.lstrip(" ")) for line in line_list if line
     )
     return [line[smallest_indentation:] for line in line_list]
 

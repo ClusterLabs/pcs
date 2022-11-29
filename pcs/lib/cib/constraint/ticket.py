@@ -185,9 +185,11 @@ def get_duplicit_checker_callback(
     new_roles_supported: bool,
 ) -> Callable[[_Element, _Element], bool]:
     def are_duplicate_plain(element: _Element, other_element: _Element) -> bool:
-        convert_role = lambda _el: pacemaker.role.get_value_for_cib(
-            _el.attrib.get("rsc-role", ""), new_roles_supported
-        )
+        def convert_role(_el):
+            return pacemaker.role.get_value_for_cib(
+                _el.attrib.get("rsc-role", ""), new_roles_supported
+            )
+
         if convert_role(element) != convert_role(other_element):
             return False
         return all(

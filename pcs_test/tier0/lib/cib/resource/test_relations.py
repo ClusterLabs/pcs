@@ -243,12 +243,15 @@ class ResourceRelationsFetcher(TestCase):
             """,
             )
         )
-        rsc_entity = lambda _id: RelationEntityDto(
-            _id,
-            ResourceRelationType.RSC_PRIMITIVE,
-            ["pcs_rsc_order_set_1"],
-            fixture_dummy_metadata(_id),
-        )
+
+        def rsc_entity(_id):
+            return RelationEntityDto(
+                _id,
+                ResourceRelationType.RSC_PRIMITIVE,
+                ["pcs_rsc_order_set_1"],
+                fixture_dummy_metadata(_id),
+            )
+
         res_list = ("d1", "d2", "d3", "d4", "d5", "d6")
         expected = (
             {_id: rsc_entity(_id) for _id in res_list},
@@ -571,11 +574,14 @@ class ResourceRelationTreeBuilder(TestCase):
                 },
             ),
         }
-        get_res = lambda _id: dict(
-            relation_entity=dto.to_dict(resources[_id]),
-            is_leaf=False,
-            members=[],
-        )
+
+        def get_res(_id):
+            return dict(
+                relation_entity=dto.to_dict(resources[_id]),
+                is_leaf=False,
+                members=[],
+            )
+
         expected = dict(
             relation_entity=dto.to_dict(resources["d5"]),
             is_leaf=False,
@@ -664,24 +670,27 @@ class ResourceRelationTreeBuilder(TestCase):
         )
 
     def test_order_loop(self):
+        def order_fixture(res1, res2):
+            return RelationEntityDto(
+                f"order-{res1}-{res2}-mandatory",
+                ResourceRelationType.ORDER,
+                members=[res1, res2],
+                metadata={
+                    "id": f"order-{res1}-{res2}-mandatory",
+                    "first": res1,
+                    "first-action": "start",
+                    "then": res2,
+                    "then-action": "start",
+                    "kind": "Mandatory",
+                },
+            )
+
         resources_members = ["order-d1-d2-mandatory", "order-d2-d1-mandatory"]
         resources = {
             "d1": self.primitive_fixture("d1", resources_members),
             "d2": self.primitive_fixture("d2", resources_members),
         }
-        order_fixture = lambda r1, r2: RelationEntityDto(
-            f"order-{r1}-{r2}-mandatory",
-            ResourceRelationType.ORDER,
-            members=[r1, r2],
-            metadata={
-                "id": f"order-{r1}-{r2}-mandatory",
-                "first": r1,
-                "first-action": "start",
-                "then": r2,
-                "then-action": "start",
-                "kind": "Mandatory",
-            },
-        )
+
         relations = {
             "order-d1-d2-mandatory": order_fixture("d1", "d2"),
             "order-d2-d1-mandatory": order_fixture("d2", "d1"),
