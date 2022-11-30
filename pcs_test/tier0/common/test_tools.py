@@ -21,7 +21,7 @@ class RunParallelTestCase(TestCase):
         finish_time = time.time()
         elapsed_time = finish_time - start_time
         self.assertTrue(elapsed_time > timeout)
-        self.assertTrue(elapsed_time < sum([i + 1 for i in range(timeout)]))
+        self.assertTrue(elapsed_time < sum(i + 1 for i in range(timeout)))
 
 
 class VersionTest(TestCase):

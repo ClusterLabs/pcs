@@ -2,7 +2,10 @@ import os.path
 
 from pcs.daemon import session
 from pcs.daemon.app import session as app_session
-from pcs.daemon.app.common import BaseHandler
+from pcs.daemon.app.common import (
+    BaseHandler,
+    RoutesType,
+)
 from pcs.daemon.app.ui_common import (
     AjaxMixin,
     StaticFile,
@@ -78,13 +81,15 @@ class StaticFileMayBe(StaticFile):
 
 
 def get_routes(
-    url_prefix,
-    app_dir,
-    fallback_page_path,
+    url_prefix: str,
+    app_dir: str,
+    fallback_page_path: str,
     session_storage: session.Storage,
-):
+) -> RoutesType:
+    def static_path(directory=""):
+        return dict(path=os.path.join(app_dir, directory))
+
     sessions = dict(session_storage=session_storage)
-    static_path = lambda dir="": dict(path=os.path.join(app_dir, dir))
     pages = dict(
         index=os.path.join(app_dir, "index.html"),
         fallback=fallback_page_path,

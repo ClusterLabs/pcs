@@ -1,5 +1,18 @@
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    Optional,
+    Tuple,
+    Type,
+)
+
 from tornado.web import RedirectHandler as TornadoRedirectHandler
 from tornado.web import RequestHandler
+
+RoutesType = Iterable[
+    Tuple[str, Type[RequestHandler], Optional[Dict[str, Any]]]
+]
 
 
 class EnhanceHeadersMixin:
@@ -115,7 +128,7 @@ class EnhanceHeadersMixin:
 
 class BaseHandler(EnhanceHeadersMixin, RequestHandler):
     """
-    BaseHandler modifies HTTP headers.
+    BaseHandler modifies HTTP headers
     """
 
     def data_received(self, chunk: bytes) -> None:
@@ -125,9 +138,9 @@ class BaseHandler(EnhanceHeadersMixin, RequestHandler):
         pass
 
 
-# abstract method `data_received` is not used in redirect:
-# pylint: disable=abstract-method
 class RedirectHandler(EnhanceHeadersMixin, TornadoRedirectHandler):
+    # abstract method `data_received` is not used in redirect:
+    # pylint: disable=abstract-method
     """
     RedirectHandler with modified HTTP headers.
     """

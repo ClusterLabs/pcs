@@ -136,26 +136,29 @@ class RawFile(RawFileInterface):
                 # just created the file. If the file already existed, make sure
                 # the ownership and permissions are correct before writing any
                 # data into it.
-                if (
-                    self.metadata.owner_user_name is not None
-                    or self.metadata.owner_group_name is not None
-                ):
-                    try:
+                try:
+                    # Need to split to two conditions and check owner and group
+                    # separately due to mypy.
+                    if self.metadata.owner_user_name is not None:
                         shutil.chown(
                             self.metadata.path,
-                            self.metadata.owner_user_name,
-                            self.metadata.owner_group_name,
+                            user=self.metadata.owner_user_name,
                         )
-                    except LookupError as e:
-                        raise RawFileError(
-                            self.metadata, RawFileError.ACTION_CHOWN, str(e)
-                        ) from e
-                    except OSError as e:
-                        raise RawFileError(
-                            self.metadata,
-                            RawFileError.ACTION_CHOWN,
-                            format_os_error(e),
-                        ) from e
+                    if self.metadata.owner_group_name is not None:
+                        shutil.chown(
+                            self.metadata.path,
+                            group=self.metadata.owner_group_name,
+                        )
+                except LookupError as e:
+                    raise RawFileError(
+                        self.metadata, RawFileError.ACTION_CHOWN, str(e)
+                    ) from e
+                except OSError as e:
+                    raise RawFileError(
+                        self.metadata,
+                        RawFileError.ACTION_CHOWN,
+                        format_os_error(e),
+                    ) from e
 
                 if self.metadata.permissions is not None:
                     try:

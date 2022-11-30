@@ -118,10 +118,12 @@ def create_id(cib, type_prefix, resource_set_list):
 
 
 def have_duplicate_resource_sets(element, other_element):
-    get_id_set_list = lambda element: [
-        resource_set.get_resource_id_set_list(resource_set_item)
-        for resource_set_item in element.findall(".//resource_set")
-    ]
+    def get_id_set_list(element):
+        return [
+            resource_set.get_resource_id_set_list(resource_set_item)
+            for resource_set_item in element.findall(".//resource_set")
+        ]
+
     return get_id_set_list(element) == get_id_set_list(other_element)
 
 

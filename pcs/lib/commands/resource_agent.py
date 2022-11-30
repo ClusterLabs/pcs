@@ -4,6 +4,7 @@ from typing import (
     Iterable,
     List,
     Optional,
+    cast,
 )
 
 from pcs.common.interface.dto import to_dict
@@ -170,13 +171,13 @@ def _action_to_operation(
             operation["start-delay"] = value
         else:
             operation[key] = value
-    return operation
+    return cast(ResourceOperationOut, operation)
 
 
 # backward compatibility layer - export agent metadata in the legacy format
 def _agent_metadata_to_dict(
     agent: ResourceAgentMetadata, describe: bool = False
-) -> Dict[str, str]:
+) -> Dict[str, Any]:
     agent_dto = agent.to_dto()
     agent_dict = to_dict(agent_dto)
     del agent_dict["name"]
