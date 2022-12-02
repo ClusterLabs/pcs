@@ -15,27 +15,32 @@ from pcs.lib.interface.config import (
     ParserInterface,
 )
 
+AttrName = str
+AttrValue = str
+AttrDict = dict[AttrName, AttrValue]
+AttrTuple = tuple[AttrName, AttrValue]
+
 
 class Section:
-    def __init__(self, name):
-        self._parent = None
-        self._attr_list = []
-        self._section_list = []
-        self._name = str(name)
+    def __init__(self, name: str):
+        self._parent: Optional["Section"] = None
+        self._attr_list: list[AttrTuple] = []
+        self._section_list: list["Section"] = []
+        self._name: str = name
 
     @property
-    def parent(self):
+    def parent(self) -> Optional["Section"]:
         return self._parent
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
 
     @property
-    def empty(self):
+    def empty(self) -> bool:
         return not self._attr_list and not self._section_list
 
-    def export(self, indent="    "):
+    def export(self, indent: str = "    ") -> str:
         lines = []
         for attr in self._attr_list:
             lines.append("{0}: {1}".format(*attr))
@@ -57,35 +62,34 @@ class Section:
             final += "\n"
         return final
 
-    def get_root(self):
+    def get_root(self) -> "Section":
         parent = self
         while parent.parent:
             parent = parent.parent
         return parent
 
-    def get_attributes(self, name=None):
+    def get_attributes(
+        self, name: Optional[AttrName] = None
+    ) -> list[AttrTuple]:
         return [
             attr for attr in self._attr_list if name is None or attr[0] == name
         ]
 
-    def get_attributes_dict(self):
+    def get_attributes_dict(self) -> AttrDict:
         return {attr[0]: attr[1] for attr in self._attr_list}
 
-    def get_attribute_value(self, name, default=None):
+    def get_attribute_value(
+        self, name: AttrName, default: Optional[AttrValue] = None
+    ) -> Optional[AttrValue]:
         return self.get_attributes_dict().get(name, default)
 
-    def add_attribute(self, name, value):
-        name, value = str(name), str(value)
-        self._attr_list.append([name, value])
+    def add_attribute(self, name: AttrName, value: AttrValue) -> "Section":
+        self._attr_list.append((name, value))
         return self
 
-    def del_attribute(self, attribute):
-        self._attr_list = [
-            attr for attr in self._attr_list if attr != attribute
-        ]
-        return self
-
-    def del_attributes_by_name(self, name, value=None):
+    def del_attributes_by_name(
+        self, name: AttrName, value: Optional[AttrValue] = None
+    ) -> "Section":
         self._attr_list = [
             attr
             for attr in self._attr_list
@@ -93,8 +97,7 @@ class Section:
         ]
         return self
 
-    def set_attribute(self, name, value):
-        name, value = str(name), str(value)
+    def set_attribute(self, name: AttrName, value: AttrValue) -> "Section":
         found = False
         new_attr_list = []
         for attr in self._attr_list:
@@ -102,22 +105,21 @@ class Section:
                 new_attr_list.append(attr)
             elif not found:
                 found = True
-                attr[1] = value
-                new_attr_list.append(attr)
+                new_attr_list.append((name, value))
         self._attr_list = new_attr_list
         if not found:
             self.add_attribute(name, value)
         return self
 
-    def get_sections(self, name=None):
+    def get_sections(self, name: Optional[str] = None) -> list["Section"]:
         return [
             section
             for section in self._section_list
             if name is None or section.name == name
         ]
 
-    def add_section(self, section):
-        parent = self
+    def add_section(self, section: "Section") -> "Section":
+        parent: Optional["Section"] = self
         while parent:
             if parent == section:
                 raise CircularParentshipException()
@@ -130,7 +132,7 @@ class Section:
         self._section_list.append(section)
         return self
 
-    def del_section(self, section):
+    def del_section(self, section: "Section") -> "Section":
         self._section_list.remove(section)
         # don't set parent to None if the section was not found in the list
         # thanks to remove raising a ValueError in that case
@@ -139,7 +141,7 @@ class Section:
         section._parent = None
         return self
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.export()
 
 
@@ -167,7 +169,7 @@ class Parser(ParserInterface):
         ]
 
     @staticmethod
-    def _parse_section(lines, section):
+    def _parse_section(lines: list[str], section: Section) -> None:
         # parser should work the same way as the original parser in corosync
         while lines:
             current_line = lines.pop(0).strip()
@@ -237,7 +239,9 @@ class Exporter(ExporterInterface):
         return config_structure.export().encode("utf-8")
 
 
-def verify_section(section, path_prefix=""):
+def verify_section(
+    section: Section, path_prefix: str = ""
+) -> tuple[list[str], list[str], list[AttrTuple]]:
     # prevents putting in any characters which break corosync.conf structure
     bad_section_name_list = []
     bad_attribute_name_list = []
@@ -267,15 +271,15 @@ def verify_section(section, path_prefix=""):
     )
 
 
-def _prefix_path(prefix, path):
+def _prefix_path(prefix: str, path: str) -> str:
     return f"{prefix}.{path}" if prefix and path else path
 
 
-def _is_valid_name(name):
+def _is_valid_name(name: str) -> bool:
     return constants.OPTION_NAME_RE.fullmatch(name) is not None
 
 
-def _is_valid_value(value):
+def _is_valid_value(value: str) -> bool:
     # pylint: disable=superfluous-parens
     return not (set(value) & set("{}\n\r"))
 

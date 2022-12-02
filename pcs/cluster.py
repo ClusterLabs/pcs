@@ -495,7 +495,7 @@ def stop_cluster_nodes(nodes):
                 error_list.append(node + ": " + data)
                 continue
             try:
-                quorum_status = corosync_live.QuorumStatus.from_string(data)
+                quorum_status = corosync_live.parse_quorum_status(data)
                 if not quorum_status.is_quorate:
                     # Get quorum status from a quorate node, non-quorate nodes
                     # may provide inaccurate info. If no node is quorate, there
@@ -688,7 +688,7 @@ def stop_cluster(argv):
         # - retval is 2 on success if a node is not in a partition with quorum
         output, dummy_retval = utils.run(["corosync-quorumtool", "-p", "-s"])
         try:
-            if corosync_live.QuorumStatus.from_string(
+            if corosync_live.parse_quorum_status(
                 output
             ).stopping_local_node_cause_quorum_loss():
                 utils.err(

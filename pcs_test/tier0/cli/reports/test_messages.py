@@ -228,8 +228,8 @@ class NodeUsedAsTieBreaker(CliReportMessageTestBase):
             messages.NodeUsedAsTieBreaker("node-1", "0"),
             (
                 "Node 'node-1' with id '0' is used as a tie breaker for a "
-                "qdevice, run 'pcs quorum device update model "
-                "tie_breaker=<node id>' to change it"
+                "qdevice and therefore cannot be removed, run 'pcs quorum "
+                "device update model tie_breaker=<node id>' to change it"
             ),
         )
 

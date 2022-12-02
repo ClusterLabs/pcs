@@ -1,6 +1,7 @@
 # pylint: disable=too-many-lines
 from unittest import TestCase
 
+from pcs.common.corosync_conf import CorosyncNodeAddressType
 from pcs.common.reports import codes as report_codes
 from pcs.lib.cib.node import PacemakerNode
 from pcs.lib.corosync import (
@@ -445,7 +446,7 @@ class AddLink(TestCase):
                 fixture.error(
                     report_codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK,
                     address=self.new_addrs["node2"],
-                    expected_address_type=node.ADDR_IPV4,
+                    expected_address_type=CorosyncNodeAddressType.IPV4,
                     link_number=None,
                 ),
             ],
@@ -467,7 +468,7 @@ class AddLink(TestCase):
                 fixture.error(
                     report_codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK,
                     address=self.new_addrs["node2"],
-                    expected_address_type=node.ADDR_IPV6,
+                    expected_address_type=CorosyncNodeAddressType.IPV6,
                     link_number=None,
                 ),
             ],
@@ -933,12 +934,12 @@ class UpdateLinkCommon(TestCase):
 class UpdateLinkAddressesMixin:
     def test_swap_addresses(self):
         new_addrs = {
-            self.coro_nodes[0]
-            .name: self.coro_nodes[1]
-            .addr_plain_for_link(self.linknumber),
-            self.coro_nodes[1]
-            .name: self.coro_nodes[0]
-            .addr_plain_for_link(self.linknumber),
+            self.coro_nodes[0].name: (
+                self.coro_nodes[1].addr_plain_for_link(self.linknumber)
+            ),
+            self.coro_nodes[1].name: (
+                self.coro_nodes[0].addr_plain_for_link(self.linknumber)
+            ),
         }
         patch_getaddrinfo(self, list(new_addrs.values()) + self.existing_addrs)
 
@@ -1013,13 +1014,13 @@ class UpdateLinkAddressesMixin:
         report_4 = fixture.error(
             report_codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK,
             address="10.0.0.1",
-            expected_address_type=node.ADDR_IPV6,
+            expected_address_type=CorosyncNodeAddressType.IPV6,
             link_number=self.linknumber,
         )
         report_6 = fixture.error(
             report_codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK,
             address="::ffff:10:0:2:3",
-            expected_address_type=node.ADDR_IPV4,
+            expected_address_type=CorosyncNodeAddressType.IPV4,
             link_number=self.linknumber,
         )
         test_matrix = (

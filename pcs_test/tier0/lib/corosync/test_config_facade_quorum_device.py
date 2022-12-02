@@ -91,7 +91,13 @@ class HasQuorumDeviceTest(TestCase):
 class GetQuorumDeviceModel(TestCase):
     def assert_model(self, config, expected_model):
         facade = _get_facade(config)
-        self.assertEqual(expected_model, facade.get_quorum_device_model())
+        if expected_model is None:
+            self.assertFalse(facade.has_quorum_device())
+            with self.assertRaises(AssertionError):
+                facade.get_quorum_device_model()
+        else:
+            self.assertTrue(facade.has_quorum_device())
+            self.assertEqual(expected_model, facade.get_quorum_device_model())
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
 
@@ -222,18 +228,22 @@ class GetQuorumDeviceSettingsTest(TestCase):
     def test_empty_config(self):
         config = ""
         facade = _get_facade(config)
-        self.assertEqual(
-            (None, {}, {}, {}), facade.get_quorum_device_settings()
-        )
+        self.assertFalse(facade.has_quorum_device())
+        with self.assertRaises(AssertionError):
+            facade.get_quorum_device_model()
+        with self.assertRaises(AssertionError):
+            facade.get_quorum_device_settings()
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
 
     def test_no_device(self):
         config = _read_file("corosync.conf")
         facade = _get_facade(config)
-        self.assertEqual(
-            (None, {}, {}, {}), facade.get_quorum_device_settings()
-        )
+        self.assertFalse(facade.has_quorum_device())
+        with self.assertRaises(AssertionError):
+            facade.get_quorum_device_model()
+        with self.assertRaises(AssertionError):
+            facade.get_quorum_device_settings()
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
 
@@ -247,9 +257,11 @@ class GetQuorumDeviceSettingsTest(TestCase):
         """
         )
         facade = _get_facade(config)
-        self.assertEqual(
-            (None, {}, {}, {}), facade.get_quorum_device_settings()
-        )
+        self.assertFalse(facade.has_quorum_device())
+        with self.assertRaises(AssertionError):
+            facade.get_quorum_device_model()
+        with self.assertRaises(AssertionError):
+            facade.get_quorum_device_settings()
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
 
@@ -267,10 +279,11 @@ class GetQuorumDeviceSettingsTest(TestCase):
         """
         )
         facade = _get_facade(config)
-        self.assertEqual(
-            (None, {}, {"option": "value"}, {}),
-            facade.get_quorum_device_settings(),
-        )
+        self.assertFalse(facade.has_quorum_device())
+        with self.assertRaises(AssertionError):
+            facade.get_quorum_device_model()
+        with self.assertRaises(AssertionError):
+            facade.get_quorum_device_settings()
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
 
@@ -289,8 +302,10 @@ class GetQuorumDeviceSettingsTest(TestCase):
         """
         )
         facade = _get_facade(config)
+        self.assertTrue(facade.has_quorum_device())
+        self.assertEqual("net", facade.get_quorum_device_model())
         self.assertEqual(
-            ("net", {"host": "127.0.0.1"}, {"option": "value"}, {}),
+            ({"host": "127.0.0.1"}, {"option": "value"}, {}),
             facade.get_quorum_device_settings(),
         )
         self.assertFalse(facade.need_stopped_cluster)
@@ -315,9 +330,10 @@ class GetQuorumDeviceSettingsTest(TestCase):
         """
         )
         facade = _get_facade(config)
+        self.assertTrue(facade.has_quorum_device())
+        self.assertEqual("net", facade.get_quorum_device_model())
         self.assertEqual(
             (
-                "net",
                 {"host": "127.0.0.1"},
                 {"option": "value"},
                 {"exec_ls": "test -f /tmp/test", "mode": "on"},
@@ -361,9 +377,10 @@ class GetQuorumDeviceSettingsTest(TestCase):
         """
         )
         facade = _get_facade(config)
+        self.assertTrue(facade.has_quorum_device())
+        self.assertEqual("net", facade.get_quorum_device_model())
         self.assertEqual(
             (
-                "net",
                 {"host": "127.0.0.1"},
                 {"option0": "valueY", "option1": "value1", "option2": "value2"},
                 {"exec_ls": "test -f /tmp/test", "mode": "on", "timeout": "5"},
@@ -409,9 +426,10 @@ class GetQuorumDeviceSettingsTest(TestCase):
         """
         )
         facade = _get_facade(config)
+        self.assertTrue(facade.has_quorum_device())
+        self.assertEqual("net", facade.get_quorum_device_model())
         self.assertEqual(
             (
-                "net",
                 {"host": "127.0.0.1"},
                 {"option0": "valueY", "option1": "value1", "option2": "value2"},
                 {"exec_ls": "test -f /tmp/test", "mode": "on", "timeout": "5"},
@@ -445,6 +463,7 @@ class IsQuorumDeviceHeuristicsEnabledWithNoExec(TestCase):
             """\
             quorum {
                 device {
+                    model: net
                     heuristics {
                     }
                 }
@@ -458,6 +477,7 @@ class IsQuorumDeviceHeuristicsEnabledWithNoExec(TestCase):
             """\
             quorum {
                 device {
+                    model: net
                     heuristics {
                         mode: off
                     }
@@ -472,6 +492,7 @@ class IsQuorumDeviceHeuristicsEnabledWithNoExec(TestCase):
             """\
             quorum {
                 device {
+                    model: net
                     heuristics {
                         mode: on
                     }
@@ -486,6 +507,7 @@ class IsQuorumDeviceHeuristicsEnabledWithNoExec(TestCase):
             """\
             quorum {
                 device {
+                    model: net
                     heuristics {
                         mode: on
                         exec_ls:
@@ -501,6 +523,7 @@ class IsQuorumDeviceHeuristicsEnabledWithNoExec(TestCase):
             """\
             quorum {
                 device {
+                    model: net
                     heuristics {
                         mode: on
                         exec_ls: test -f /tmp/test
@@ -516,6 +539,7 @@ class IsQuorumDeviceHeuristicsEnabledWithNoExec(TestCase):
             """\
             quorum {
                 device {
+                    model: net
                     heuristics {
                         mode: sync
                         exec_ls: test -f /tmp/test
@@ -531,6 +555,7 @@ class IsQuorumDeviceHeuristicsEnabledWithNoExec(TestCase):
             """\
             quorum {
                 device {
+                    model: net
                     heuristics {
                         mode: unknown
                     }
@@ -545,8 +570,10 @@ class IsQuorumDeviceHeuristicsEnabledWithNoExec(TestCase):
             """\
             quorum {
                 device {
+                    model: net
                     heuristics {
                         mode: unknown
+                        exec_ls: test -f /tmp/test
                     }
                 }
             }

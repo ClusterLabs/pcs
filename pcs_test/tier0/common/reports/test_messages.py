@@ -1134,15 +1134,26 @@ class CorosyncConfigMissingNamesOfNodes(NameBuildTest):
     def test_non_fatal(self):
         self.assert_message_from_report(
             "Some nodes are missing names in corosync.conf, "
-            "those nodes were omitted",
+            "those nodes were omitted. "
+            "Edit corosync.conf and make sure all nodes have their name set.",
             reports.CorosyncConfigMissingNamesOfNodes(),
         )
 
     def test_fatal(self):
         self.assert_message_from_report(
             "Some nodes are missing names in corosync.conf, "
-            "unable to continue",
+            "unable to continue. "
+            "Edit corosync.conf and make sure all nodes have their name set.",
             reports.CorosyncConfigMissingNamesOfNodes(fatal=True),
+        )
+
+
+class CorosyncConfigMissingIdsOfNodes(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Some nodes are missing IDs in corosync.conf. "
+            "Edit corosync.conf and make sure all nodes have their nodeid set.",
+            reports.CorosyncConfigMissingIdsOfNodes(),
         )
 
 
@@ -4081,7 +4092,7 @@ class NodeUsedAsTieBreaker(NameBuildTest):
         self.assert_message_from_report(
             (
                 "Node 'node2' with id '2' is used as a tie breaker for a "
-                "qdevice"
+                "qdevice and therefore cannot be removed"
             ),
             reports.NodeUsedAsTieBreaker("node2", 2),
         )

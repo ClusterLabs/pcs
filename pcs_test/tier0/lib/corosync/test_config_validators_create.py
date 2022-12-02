@@ -514,13 +514,13 @@ class Create(TestCase):
             [
                 fixture.error(
                     report_codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS,
-                    link_numbers=[0],
+                    link_numbers=["0"],
                 ),
                 fixture.error(
                     report_codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK,
                     address="::ffff:10:0:0:1",
                     expected_address_type="IPv4",
-                    link_number=0,
+                    link_number="0",
                 ),
             ],
         )
@@ -540,13 +540,13 @@ class Create(TestCase):
             [
                 fixture.error(
                     report_codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS,
-                    link_numbers=[0],
+                    link_numbers=["0"],
                 ),
                 fixture.error(
                     report_codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK,
                     address="10.0.0.3",
                     expected_address_type="IPv6",
-                    link_number=0,
+                    link_number="0",
                 ),
             ],
         )
@@ -785,7 +785,7 @@ class Create(TestCase):
                 ),
                 fixture.error(
                     report_codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS,
-                    link_numbers=[4, 6, 7],
+                    link_numbers=["4", "6", "7"],
                 ),
             ],
         )

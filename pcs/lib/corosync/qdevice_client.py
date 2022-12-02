@@ -5,12 +5,14 @@ from pcs.common import reports
 from pcs.common.reports.item import ReportItem
 from pcs.common.str_tools import join_multilines
 from pcs.lib.errors import LibraryError
+from pcs.lib.external import CommandRunner
 
 
-def get_status_text(runner, verbose=False):
+def get_status_text(runner: CommandRunner, verbose: bool = False) -> str:
     """
     Get quorum device client runtime status in plain text
-    bool verbose get more detailed output
+
+    verbose -- get more detailed output
     """
     cmd = [
         os.path.join(

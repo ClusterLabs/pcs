@@ -18,7 +18,7 @@ from pcs.lib.errors import LibraryError
 from pcs.lib.node import get_existing_nodes_names
 
 
-def get_config(lib_env):
+def get_config(lib_env: LibraryEnvironment):
     """
     Extract and return quorum configuration from corosync.conf
     lib_env LibraryEnvironment
@@ -27,13 +27,12 @@ def get_config(lib_env):
     device = None
     if cfg.has_quorum_device():
         (
-            model,
             model_options,
             generic_options,
             heuristics_options,
         ) = cfg.get_quorum_device_settings()
         device = {
-            "model": model,
+            "model": cfg.get_quorum_device_model(),
             "model_options": model_options,
             "generic_options": generic_options,
             "heuristics_options": heuristics_options,
@@ -171,7 +170,7 @@ def add_device(
             model_options,
             generic_options,
             heuristics_options,
-            [node.nodeid for node in cfg.get_nodes()],
+            [node.nodeid for node in cfg.get_nodes() if node.nodeid],
             force_model=force_model,
             force_options=force_options,
         )
@@ -289,7 +288,7 @@ def update_device(
             model_options,
             generic_options,
             heuristics_options,
-            [node.nodeid for node in cfg.get_nodes()],
+            [node.nodeid for node in cfg.get_nodes() if node.nodeid],
             force_options=force_options,
         )
     ).has_errors:

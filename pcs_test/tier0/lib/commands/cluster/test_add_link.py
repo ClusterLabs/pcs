@@ -223,7 +223,7 @@ class AddLink(TestCase):
             }
             """
         )
-        (self.config.corosync_conf.load_content(before).runner.cib.load())
+        self.config.corosync_conf.load_content(before).runner.cib.load()
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_link(
                 self.env_assist.get_env(),
@@ -237,14 +237,6 @@ class AddLink(TestCase):
                 fixture.error(
                     report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
                     fatal=True,
-                ),
-                fixture.error(
-                    report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
-                    actual_count=0,
-                    min_count=1,
-                    max_count=1,
-                    node_name=None,
-                    node_index=None,
                 ),
                 fixture.error(
                     report_codes.NODE_NOT_FOUND,

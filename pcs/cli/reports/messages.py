@@ -189,8 +189,7 @@ class NodeUsedAsTieBreaker(CliReportMessageCustom):
     @property
     def message(self) -> str:
         return (
-            f"Node '{self._obj.node}' with id '{self._obj.node_id}' is used as "
-            "a tie breaker for a qdevice, run 'pcs quorum device update model "
+            self._obj.message + ", run 'pcs quorum device update model "
             "tie_breaker=<node id>' to change it"
         )
 

@@ -1723,7 +1723,26 @@ class CorosyncConfigMissingNamesOfNodes(ReportItemMessage):
         note = (
             "unable to continue" if self.fatal else "those nodes were omitted"
         )
-        return f"Some nodes are missing names in corosync.conf, {note}"
+        return (
+            f"Some nodes are missing names in corosync.conf, {note}. "
+            "Edit corosync.conf and make sure all nodes have their name set."
+        )
+
+
+@dataclass(frozen=True)
+class CorosyncConfigMissingIdsOfNodes(ReportItemMessage):
+    """
+    Some nodes in corosync.conf do not have their id set
+    """
+
+    _code = codes.COROSYNC_CONFIG_MISSING_IDS_OF_NODES
+
+    @property
+    def message(self) -> str:
+        return (
+            "Some nodes are missing IDs in corosync.conf. "
+            "Edit corosync.conf and make sure all nodes have their nodeid set."
+        )
 
 
 @dataclass(frozen=True)
@@ -1799,7 +1818,7 @@ class CorosyncBadNodeAddressesCount(ReportItemMessage):
     actual_count: int
     min_count: int
     max_count: int
-    node_name: str = ""
+    node_name: Optional[str] = None
     node_index: Optional[int] = None
     _code = codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT
 
@@ -1865,7 +1884,7 @@ class CorosyncAddressIpVersionWrongForLink(ReportItemMessage):
 
     address: str
     expected_address_type: str
-    link_number: Optional[int] = None
+    link_number: Optional[Union[int, str]] = None
     _code = codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK
 
     @property
@@ -2193,7 +2212,7 @@ class CorosyncLinkDoesNotExistCannotUpdate(ReportItemMessage):
     existing_link_list -- linknumbers of existing links
     """
 
-    link_number: int
+    link_number: Union[int, str]
     existing_link_list: List[str]
     _code = codes.COROSYNC_LINK_DOES_NOT_EXIST_CANNOT_UPDATE
 
@@ -5463,15 +5482,15 @@ class NodeUsedAsTieBreaker(ReportItemMessage):
     node_id -- node id
     """
 
-    node: str
-    node_id: int
+    node: Optional[str]
+    node_id: Union[None, str, int]
     _code = codes.NODE_USED_AS_TIE_BREAKER
 
     @property
     def message(self) -> str:
         return (
             f"Node '{self.node}' with id '{self.node_id}' is used as a tie "
-            "breaker for a qdevice"
+            "breaker for a qdevice and therefore cannot be removed"
         )
 
 

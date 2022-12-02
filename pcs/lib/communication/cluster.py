@@ -103,9 +103,7 @@ class GetQuorumStatus(AllSameDataMixin, OneByOneStrategyMixin, RunRemotelyBase):
             # corosync is not running on the node, this is OK
             return self._get_next_list()
         try:
-            quorum_status = corosync_live.QuorumStatus.from_string(
-                response.data
-            )
+            quorum_status = corosync_live.parse_quorum_status(response.data)
             if not quorum_status.is_quorate:
                 return self._get_next_list()
             self._quorum_status = quorum_status

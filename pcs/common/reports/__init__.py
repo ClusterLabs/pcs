@@ -11,6 +11,7 @@ from .item import (
     ReportItem,
     ReportItemContext,
     ReportItemList,
+    ReportItemMessage,
     ReportItemSeverity,
     get_severity,
 )

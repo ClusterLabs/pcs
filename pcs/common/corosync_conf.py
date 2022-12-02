@@ -1,26 +1,29 @@
 from dataclasses import dataclass
 from typing import (
-    List,
     Mapping,
     Optional,
+    Sequence,
 )
 
 from pcs.common.interface.dto import DataTransferObject
-from pcs.common.types import CorosyncTransportType
+from pcs.common.types import (
+    CorosyncNodeAddressType,
+    CorosyncTransportType,
+)
 
 
 @dataclass(frozen=True)
 class CorosyncNodeAddressDto(DataTransferObject):
     addr: str
     link: str
-    type: str  # TODO: create enum of addr types in pcs.lib.corosync.node
+    type: CorosyncNodeAddressType
 
 
 @dataclass(frozen=True)
 class CorosyncNodeDto(DataTransferObject):
     name: str
     nodeid: str
-    addrs: List[CorosyncNodeAddressDto]
+    addrs: Sequence[CorosyncNodeAddressDto]
 
 
 @dataclass(frozen=True)
@@ -41,7 +44,7 @@ class CorosyncConfDto(DataTransferObject):
     transport_options: Mapping[str, str]
     compression_options: Mapping[str, str]
     crypto_options: Mapping[str, str]
-    nodes: List[CorosyncNodeDto]
+    nodes: Sequence[CorosyncNodeDto]
     links_options: Mapping[str, Mapping[str, str]]
     quorum_options: Mapping[str, str]
     quorum_device: Optional[CorosyncQuorumDeviceSettingsDto]
