@@ -1,5 +1,6 @@
 # pylint: disable=too-many-lines
 import xml.dom.minidom
+from textwrap import dedent
 from unittest import TestCase
 
 from pcs import (
@@ -10,6 +11,7 @@ from pcs.common import const
 from pcs.common.str_tools import format_list_custom_last_separator
 
 from pcs_test.tools.assertions import (
+    AssertPcsMixin,
     ac,
     assert_xml_equal,
 )
@@ -19,7 +21,7 @@ from pcs_test.tools.misc import (
     skip_unless_crm_rule,
     write_file_to_tmpfile,
 )
-from pcs_test.tools.pcs_runner import pcs_old as pcs
+from pcs_test.tools.pcs_runner import PcsRunner
 
 # pylint: disable=invalid-name
 # pylint: disable=line-too-long
@@ -2162,31 +2164,25 @@ class DomRuleAddXmlTest(TestCase):
         )
 
 
-class DomRuleAddTest(TestCase):
+class DomRuleAddTest(TestCase, AssertPcsMixin):
     def setUp(self):
         self.temp_cib = get_tmp_file("tier1_rule_dom_rule_add")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
-        output, returnVal = pcs(
-            self.temp_cib.name,
+        self.pcs_runner = PcsRunner(self.temp_cib.name)
+        self.assert_pcs_success(
             "resource create dummy1 ocf:heartbeat:Dummy".split(),
         )
-        self.assertEqual(output, "")
-        self.assertEqual(returnVal, 0)
 
     def tearDown(self):
         self.temp_cib.close()
 
     @skip_unless_crm_rule()
     def test_success(self):
-        output, returnVal = pcs(
-            self.temp_cib.name,
+        self.assert_pcs_success(
             "constraint location dummy1 rule #uname eq node1".split(),
         )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
-            self.temp_cib.name,
+        self.assert_pcs_success(
             (
                 "constraint location dummy1 rule id=MyRule score=100 role="
                 "{role} #uname eq node2"
@@ -2194,134 +2190,108 @@ class DomRuleAddTest(TestCase):
             .format(role=str(const.PCMK_ROLE_PROMOTED).lower())
             .split(),
         )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
-            self.temp_cib.name,
-            "constraint location dummy1 rule id=complexRule (#uname eq node3 and foo gt version 1.2) or (date-spec hours=12-23 weekdays=1-5 and date in_range 2014-07-26 to duration months=1)".split(),
+        self.assert_pcs_success(
+            (
+                "constraint location dummy1 rule id=complexRule (#uname eq node3 "
+                "and foo gt version 1.2) or (date-spec hours=12-23 weekdays=1-5 "
+                "and date in_range 2014-07-26 to duration months=1)"
+            ).split(),
         )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
-            self.temp_cib.name, "constraint location config --full".split()
+        self.assert_pcs_success(
+            "constraint location config --full".split(),
+            dedent(
+                f"""\
+                Location Constraints:
+                  Resource: dummy1
+                    Constraint: location-dummy1
+                      Rule: score=INFINITY (id:location-dummy1-rule)
+                        Expression: #uname eq node1 (id:location-dummy1-rule-expr)
+                    Constraint: location-dummy1-1
+                      Rule: role={const.PCMK_ROLE_PROMOTED_PRIMARY} score=100 (id:MyRule)
+                        Expression: #uname eq node2 (id:MyRule-expr)
+                    Constraint: location-dummy1-2
+                      Rule: boolean-op=or score=INFINITY (id:complexRule)
+                        Rule: boolean-op=and score=0 (id:complexRule-rule)
+                          Expression: #uname eq node3 (id:complexRule-rule-expr)
+                          Expression: foo gt version 1.2 (id:complexRule-rule-expr-1)
+                        Rule: boolean-op=and score=0 (id:complexRule-rule-1)
+                          Expression: (id:complexRule-rule-1-expr)
+                            Date Spec: hours=12-23 weekdays=1-5 (id:complexRule-rule-1-expr-datespec)
+                          Expression: date in_range 2014-07-26 to duration (id:complexRule-rule-1-expr-1)
+                            Duration: months=1 (id:complexRule-rule-1-expr-1-duration)
+                """,
+            ),
         )
-        ac(
-            output,
-            f"""\
-Location Constraints:
-  Resource: dummy1
-    Constraint: location-dummy1
-      Rule: score=INFINITY (id:location-dummy1-rule)
-        Expression: #uname eq node1 (id:location-dummy1-rule-expr)
-    Constraint: location-dummy1-1
-      Rule: role={const.PCMK_ROLE_PROMOTED_PRIMARY} score=100 (id:MyRule)
-        Expression: #uname eq node2 (id:MyRule-expr)
-    Constraint: location-dummy1-2
-      Rule: boolean-op=or score=INFINITY (id:complexRule)
-        Rule: boolean-op=and score=0 (id:complexRule-rule)
-          Expression: #uname eq node3 (id:complexRule-rule-expr)
-          Expression: foo gt version 1.2 (id:complexRule-rule-expr-1)
-        Rule: boolean-op=and score=0 (id:complexRule-rule-1)
-          Expression: (id:complexRule-rule-1-expr)
-            Date Spec: hours=12-23 weekdays=1-5 (id:complexRule-rule-1-expr-datespec)
-          Expression: date in_range 2014-07-26 to duration (id:complexRule-rule-1-expr-1)
-            Duration: months=1 (id:complexRule-rule-1-expr-1-duration)
-""",
-        )
-        self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
-            self.temp_cib.name, "constraint location config".split()
+        self.assert_pcs_success(
+            "constraint location config".split(),
+            dedent(
+                f"""\
+                Location Constraints:
+                  Resource: dummy1
+                    Constraint: location-dummy1
+                      Rule: score=INFINITY
+                        Expression: #uname eq node1
+                    Constraint: location-dummy1-1
+                      Rule: role={const.PCMK_ROLE_PROMOTED_PRIMARY} score=100
+                        Expression: #uname eq node2
+                    Constraint: location-dummy1-2
+                      Rule: boolean-op=or score=INFINITY
+                        Rule: boolean-op=and score=0
+                          Expression: #uname eq node3
+                          Expression: foo gt version 1.2
+                        Rule: boolean-op=and score=0
+                          Expression:
+                            Date Spec: hours=12-23 weekdays=1-5
+                          Expression: date in_range 2014-07-26 to duration
+                            Duration: months=1
+                """,
+            ),
         )
-        ac(
-            output,
-            f"""\
-Location Constraints:
-  Resource: dummy1
-    Constraint: location-dummy1
-      Rule: score=INFINITY
-        Expression: #uname eq node1
-    Constraint: location-dummy1-1
-      Rule: role={const.PCMK_ROLE_PROMOTED_PRIMARY} score=100
-        Expression: #uname eq node2
-    Constraint: location-dummy1-2
-      Rule: boolean-op=or score=INFINITY
-        Rule: boolean-op=and score=0
-          Expression: #uname eq node3
-          Expression: foo gt version 1.2
-        Rule: boolean-op=and score=0
-          Expression:
-            Date Spec: hours=12-23 weekdays=1-5
-          Expression: date in_range 2014-07-26 to duration
-            Duration: months=1
-""",
-        )
-        self.assertEqual(0, returnVal)
 
     @skip_unless_crm_rule()
     def test_invalid_score(self):
-        output, returnVal = pcs(
-            self.temp_cib.name,
+        self.assert_pcs_success(
             "constraint location dummy1 rule score-attribute=pingd defined pingd".split(),
         )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
-            self.temp_cib.name, "constraint location config --full".split()
+        self.assert_pcs_success(
+            "constraint location config --full".split(),
+            dedent(
+                """\
+                Location Constraints:
+                  Resource: dummy1
+                    Constraint: location-dummy1
+                      Rule: score-attribute=pingd (id:location-dummy1-rule)
+                        Expression: defined pingd (id:location-dummy1-rule-expr)
+                """,
+            ),
         )
-        ac(
-            output,
-            """\
-Location Constraints:
-  Resource: dummy1
-    Constraint: location-dummy1
-      Rule: score-attribute=pingd (id:location-dummy1-rule)
-        Expression: defined pingd (id:location-dummy1-rule-expr)
-""",
-        )
-        self.assertEqual(0, returnVal)
 
     def test_invalid_rule(self):
-        output, returnVal = pcs(
-            self.temp_cib.name,
+        self.assert_pcs_fail(
             "constraint location dummy1 rule score=100".split(),
+            "Error: no rule expression was specified\n",
         )
-        ac(output, "Error: no rule expression was specified\n")
-        self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(
-            self.temp_cib.name,
+        self.assert_pcs_fail(
             "constraint location dummy1 rule #uname eq".split(),
-        )
-        ac(
-            output,
             "Error: '#uname eq' is not a valid rule expression: unexpected end "
             "of rule\n",
         )
-        self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(
-            self.temp_cib.name,
+        self.assert_pcs_fail(
             "constraint location dummy1 rule string #uname eq node1".split(),
-        )
-        ac(
-            output,
             "Error: 'string #uname eq node1' is not a valid rule expression: "
             "unexpected 'string' before 'eq'\n",
         )
-        self.assertEqual(1, returnVal)
 
     @skip_unless_crm_rule()
     def test_ivalid_options(self):
-        output, returnVal = pcs(
-            self.temp_cib.name,
+        self.assert_pcs_fail(
             "constraint location dummy1 rule role=foo #uname eq node1".split(),
-        )
-        ac(
-            output,
             "Error: invalid role 'foo', use {}\n".format(
                 format_list_custom_last_separator(
                     const.PCMK_ROLES_PROMOTED + const.PCMK_ROLES_UNPROMOTED,
@@ -2329,60 +2299,44 @@ Location Constraints:
                 )
             ),
         )
-        self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(
-            self.temp_cib.name,
-            "constraint location dummy1 rule score=100 score-attribute=pingd #uname eq node1".split(),
+        self.assert_pcs_fail(
+            (
+                "constraint location dummy1 rule score=100 score-attribute=pingd "
+                "#uname eq node1"
+            ).split(),
+            "Error: can not specify both score and score-attribute\n",
         )
-        ac(output, "Error: can not specify both score and score-attribute\n")
-        self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(
-            self.temp_cib.name,
+        self.assert_pcs_fail(
             "constraint location dummy1 rule id=1foo #uname eq node1".split(),
-        )
-        ac(
-            output,
             "Error: invalid rule id '1foo', '1' is not a valid first character "
             "for a rule id\n",
         )
-        self.assertEqual(1, returnVal)
 
-        output, returnVal = pcs(
-            self.temp_cib.name, "constraint location config --full".split()
+        self.assert_pcs_success(
+            "constraint location config --full".split(),
+            "Location Constraints:\n",
         )
-        ac(output, "Location Constraints:\n")
-        self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
-            self.temp_cib.name,
+        self.assert_pcs_success(
             "constraint location dummy1 rule id=MyRule #uname eq node1".split(),
         )
-        ac(output, "")
-        self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
-            self.temp_cib.name, "constraint location config --full".split()
+        self.assert_pcs_success(
+            "constraint location config --full".split(),
+            dedent(
+                """\
+                Location Constraints:
+                  Resource: dummy1
+                    Constraint: location-dummy1
+                      Rule: score=INFINITY (id:MyRule)
+                        Expression: #uname eq node1 (id:MyRule-expr)
+                """,
+            ),
         )
-        ac(
-            output,
-            """\
-Location Constraints:
-  Resource: dummy1
-    Constraint: location-dummy1
-      Rule: score=INFINITY (id:MyRule)
-        Expression: #uname eq node1 (id:MyRule-expr)
-""",
-        )
-        self.assertEqual(0, returnVal)
 
-        output, returnVal = pcs(
-            self.temp_cib.name,
+        self.assert_pcs_fail(
             "constraint location dummy1 rule id=MyRule #uname eq node1".split(),
-        )
-        ac(
-            output,
             "Error: id 'MyRule' is already in use, please specify another one\n",
         )
-        self.assertEqual(1, returnVal)
