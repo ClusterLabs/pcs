@@ -1,4 +1,4 @@
-from pcs_test.tier1.cib_resource.common import ResourceTest
+from pcs_test.tier1.cib_resource.common import ResourceTestOld as ResourceTest
 from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.misc import ParametrizedTestMetaClass
 from pcs_test.tools.misc import get_test_resource as rc

@@ -1,6 +1,6 @@
 import re
 
-from pcs_test.tier1.cib_resource.common import ResourceTest
+from pcs_test.tier1.cib_resource.common import ResourceTestOld as ResourceTest
 from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.misc import is_minimum_pacemaker_version
 

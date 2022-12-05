@@ -9,7 +9,7 @@ from pcs.cli.common.parse_args import InputModifiers
 from pcs.common import const
 from pcs.common.str_tools import format_list
 
-from pcs_test.tier1.cib_resource.common import ResourceTest
+from pcs_test.tier1.cib_resource.common import ResourceTestOld as ResourceTest
 from pcs_test.tools.assertions import AssertPcsMixinOld as AssertPcsMixin
 from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.pcs_runner import PcsRunnerOld as PcsRunner
