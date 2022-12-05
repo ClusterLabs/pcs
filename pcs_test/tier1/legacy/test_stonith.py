@@ -3434,7 +3434,7 @@ class StonithUpdate(ResourceTest):
                 </primitive>
             </resources>
             """,
-            output_regexp=(
+            stderr_regexp=(
                 "Warning: stonith option 'login' is deprecated and should not "
                 "be used, use 'username' instead\n"
                 "Warning: stonith option 'debug' is deprecated and should not "
@@ -3474,7 +3474,7 @@ class StonithUpdate(ResourceTest):
                 </primitive>
             </resources>
             """,
-            output_regexp=(
+            stderr_regexp=(
                 "Warning: stonith option 'debug' is deprecated and should not "
                 "be used, use 'debug_file' instead\n"
                 + self.agent_secure_warning
@@ -3509,7 +3509,7 @@ class StonithUpdate(ResourceTest):
                 </primitive>
             </resources>
             """,
-            output_regexp=self.agent_secure_warning,
+            stderr_regexp=self.agent_secure_warning,
         )
 
     def test_unset_deprecated_required_param(self):
@@ -3620,7 +3620,7 @@ class StonithUpdate(ResourceTest):
                 </primitive>
             </resources>
             """,
-            output_regexp=self.agent_secure_warning,
+            stderr_regexp=self.agent_secure_warning,
         )
 
     def test_unset_obsoleting_required_set_deprecated(self):
@@ -3654,7 +3654,7 @@ class StonithUpdate(ResourceTest):
                 </primitive>
             </resources>
             """,
-            output_regexp=(
+            stderr_regexp=(
                 "Warning: stonith option 'ipaddr' is deprecated and should not "
                 "be used, use 'ip' instead\n" + self.agent_secure_warning
             ),
@@ -3694,7 +3694,7 @@ class StonithUpdate(ResourceTest):
                 </primitive>
             </resources>
             """,
-            output_regexp=(
+            stderr_regexp=(
                 "Warning: stonith option 'ipaddr' is deprecated and should not "
                 "be used, use 'ip' instead\n" + self.agent_secure_warning
             ),
