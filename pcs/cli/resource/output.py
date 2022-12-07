@@ -69,9 +69,9 @@ def _resource_operation_to_pairs(
         pairs.append(("interval-origin", operation_dto.interval_origin))
     if operation_dto.timeout:
         pairs.append(("timeout", operation_dto.timeout))
-    if operation_dto.enabled:
+    if operation_dto.enabled is not None:
         pairs.append(("enabled", _bool_to_cli_value(operation_dto.enabled)))
-    if operation_dto.record_pending:
+    if operation_dto.record_pending is not None:
         pairs.append(
             ("record-pending", _bool_to_cli_value(operation_dto.record_pending))
         )
@@ -474,13 +474,13 @@ def _resource_bundle_container_options_to_pairs(
     options: CibResourceBundleContainerRuntimeOptionsDto,
 ) -> List[Tuple[str, str]]:
     option_list = [("image", options.image)]
-    if options.replicas:
+    if options.replicas is not None:
         option_list.append(("replicas", str(options.replicas)))
-    if options.replicas_per_host:
+    if options.replicas_per_host is not None:
         option_list.append(
             ("replicas-per-host", str(options.replicas_per_host))
         )
-    if options.promoted_max:
+    if options.promoted_max is not None:
         option_list.append(("promoted-max", str(options.promoted_max)))
     if options.run_command:
         option_list.append(("run-command", options.run_command))
@@ -505,7 +505,7 @@ def _resource_bundle_network_options_to_pairs(
         network_options.append(
             ("ip-range-start", bundle_network_dto.ip_range_start)
         )
-    if bundle_network_dto.control_port:
+    if bundle_network_dto.control_port is not None:
         network_options.append(
             ("control-port", str(bundle_network_dto.control_port))
         )
@@ -513,7 +513,7 @@ def _resource_bundle_network_options_to_pairs(
         network_options.append(
             ("host-interface", bundle_network_dto.host_interface)
         )
-    if bundle_network_dto.host_netmask:
+    if bundle_network_dto.host_netmask is not None:
         network_options.append(
             ("host-netmask", str(bundle_network_dto.host_netmask))
         )
@@ -528,9 +528,9 @@ def _resource_bundle_port_mapping_to_pairs(
     bundle_net_port_mapping_dto: CibResourceBundlePortMappingDto,
 ) -> List[Tuple[str, str]]:
     mapping = []
-    if bundle_net_port_mapping_dto.port:
+    if bundle_net_port_mapping_dto.port is not None:
         mapping.append(("port", str(bundle_net_port_mapping_dto.port)))
-    if bundle_net_port_mapping_dto.internal_port:
+    if bundle_net_port_mapping_dto.internal_port is not None:
         mapping.append(
             ("internal-port", str(bundle_net_port_mapping_dto.internal_port))
         )

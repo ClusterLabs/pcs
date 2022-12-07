@@ -9,7 +9,11 @@
 
 ### Fixed
 - Graceful stopping pcsd service using `systemctl stop pcsd` command
+- Displaying bool and integer values in `pcs resource config` command
+  ([rhbz#2151164], [ghissue#604])
 
+[ghissue#604]: https://github.com/ClusterLabs/pcs/issues/604
+[rhbz#2151164]: https://bugzilla.redhat.com/show_bug.cgi?id=2151164
 [rhbz#2151524]: https://bugzilla.redhat.com/show_bug.cgi?id=2151524
 
 
