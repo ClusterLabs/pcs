@@ -5525,6 +5525,22 @@ class AgentSelfValidationInvalidData(NameBuildTest):
         )
 
 
+class AgentSelfValidationSkippedUpdatedResourceMisconfigured(NameBuildTest):
+    def test_message(self):
+        lines = list(f"line #{i}" for i in range(3))
+        self.assert_message_from_report(
+            (
+                "The resource was misconfigured before the update, therefore "
+                "agent self-validation will not be run for the updated "
+                "configuration. Validation output of the original "
+                "configuration:\n  {}"
+            ).format("\n  ".join(lines)),
+            reports.AgentSelfValidationSkippedUpdatedResourceMisconfigured(
+                "\n".join(lines)
+            ),
+        )
+
+
 class ResourceCloneIncompatibleMetaAttributes(NameBuildTest):
     def test_with_provider(self):
         attr = "attr_name"

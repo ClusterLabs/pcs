@@ -2,8 +2,16 @@
 
 ## [Unreleased]
 
+### Added
+- Warning to `pcs resource|stonith update` commands about not using agent
+  self-validation feature when the resource is already misconfigured
+  ([rhbz#2151524])
+
 ### Fixed
 - Graceful stopping pcsd service using `systemctl stop pcsd` command
+
+[rhbz#2151524]: https://bugzilla.redhat.com/show_bug.cgi?id=2151524
+
 
 ## [0.11.4] - 2022-11-21
 

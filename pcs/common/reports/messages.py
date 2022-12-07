@@ -7495,6 +7495,25 @@ class AgentSelfValidationInvalidData(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class AgentSelfValidationSkippedUpdatedResourceMisconfigured(ReportItemMessage):
+    """
+    Agent self validation is skipped when updating a resource as it is
+    misconfigured in its current state.
+    """
+
+    result: str
+    _code = codes.AGENT_SELF_VALIDATION_SKIPPED_UPDATED_RESOURCE_MISCONFIGURED
+
+    @property
+    def message(self) -> str:
+        return (
+            "The resource was misconfigured before the update, therefore agent "
+            "self-validation will not be run for the updated configuration. "
+            "Validation output of the original configuration:\n{result}"
+        ).format(result="\n".join(indent(self.result.splitlines())))
+
+
+@dataclass(frozen=True)
 class ResourceCloneIncompatibleMetaAttributes(ReportItemMessage):
     """
     Some clone specific meta attributes are not compatible with some resource

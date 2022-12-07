@@ -1706,16 +1706,15 @@ class HandleInstanceAttributesValidateViaPcmkTest(TestCase):
         base_cmd = ["some", "command"]
         (
             is_valid,
-            report_list,
+            reason,
         ) = lib._handle_instance_attributes_validation_via_pcmk(
             runner,
             base_cmd,
             "result/output",
             {"attr1": "val1", "attr2": "val2"},
-            not_valid_severity=Severity.info(),
         )
         self.assertTrue(is_valid)
-        self.assertEqual(report_list, [])
+        self.assertEqual(reason, "")
         runner.run.assert_called_once_with(
             base_cmd + ["--option", "attr1=val1", "--option", "attr2=val2"]
         )
@@ -1725,23 +1724,17 @@ class HandleInstanceAttributesValidateViaPcmkTest(TestCase):
         base_cmd = ["some", "command"]
         (
             is_valid,
-            report_list,
+            reason,
         ) = lib._handle_instance_attributes_validation_via_pcmk(
             runner,
             base_cmd,
             "result/output",
             {"attr1": "val1", "attr2": "val2"},
-            not_valid_severity=Severity.info(),
         )
         self.assertIsNone(is_valid)
-        assert_report_item_list_equal(
-            report_list,
-            [
-                fixture.info(
-                    report_codes.AGENT_SELF_VALIDATION_INVALID_DATA,
-                    reason="Start tag expected, '<' not found, line 1, column 1 (<string>, line 1)",
-                )
-            ],
+        self.assertEqual(
+            reason,
+            "Start tag expected, '<' not found, line 1, column 1 (<string>, line 1)",
         )
         runner.run.assert_called_once_with(
             base_cmd + ["--option", "attr1=val1", "--option", "attr2=val2"]
@@ -1760,19 +1753,15 @@ class HandleInstanceAttributesValidateViaPcmkTest(TestCase):
         base_cmd = ["some", "command"]
         (
             is_valid,
-            report_list,
+            reason,
         ) = lib._handle_instance_attributes_validation_via_pcmk(
             runner,
             base_cmd,
             "result/output",
             {"attr1": "val1", "attr2": "val2"},
-            not_valid_severity=Severity.info(),
         )
         self.assertTrue(is_valid)
-        assert_report_item_list_equal(
-            report_list,
-            [],
-        )
+        self.assertEqual(reason, "")
         runner.run.assert_called_once_with(
             base_cmd + ["--option", "attr1=val1", "--option", "attr2=val2"]
         )
@@ -1791,23 +1780,15 @@ class HandleInstanceAttributesValidateViaPcmkTest(TestCase):
         base_cmd = ["some", "command"]
         (
             is_valid,
-            report_list,
+            reason,
         ) = lib._handle_instance_attributes_validation_via_pcmk(
             runner,
             base_cmd,
             "result/output",
             {"attr1": "val1", "attr2": "val2"},
-            not_valid_severity=Severity.info(),
         )
         self.assertFalse(is_valid)
-        assert_report_item_list_equal(
-            report_list,
-            [
-                fixture.info(
-                    report_codes.AGENT_SELF_VALIDATION_RESULT, result=""
-                )
-            ],
-        )
+        self.assertEqual(reason, "")
         runner.run.assert_called_once_with(
             base_cmd + ["--option", "attr1=val1", "--option", "attr2=val2"]
         )
@@ -1835,23 +1816,17 @@ class HandleInstanceAttributesValidateViaPcmkTest(TestCase):
         base_cmd = ["some", "command"]
         (
             is_valid,
-            report_list,
+            reason,
         ) = lib._handle_instance_attributes_validation_via_pcmk(
             runner,
             base_cmd,
             "result/output",
             {"attr1": "val1", "attr2": "val2"},
-            not_valid_severity=Severity.info(),
         )
         self.assertFalse(is_valid)
-        assert_report_item_list_equal(
-            report_list,
-            [
-                fixture.info(
-                    report_codes.AGENT_SELF_VALIDATION_RESULT,
-                    result="first line\nImportant output\nand another line",
-                )
-            ],
+        self.assertEqual(
+            reason,
+            "first line\nImportant output\nand another line",
         )
         runner.run.assert_called_once_with(
             base_cmd + ["--option", "attr1=val1", "--option", "attr2=val2"]
@@ -1879,23 +1854,17 @@ class HandleInstanceAttributesValidateViaPcmkTest(TestCase):
         base_cmd = ["some", "command"]
         (
             is_valid,
-            report_list,
+            reason,
         ) = lib._handle_instance_attributes_validation_via_pcmk(
             runner,
             base_cmd,
             "result/output",
             {"attr1": "val1", "attr2": "val2"},
-            not_valid_severity=Severity.info(),
         )
         self.assertTrue(is_valid)
-        assert_report_item_list_equal(
-            report_list,
-            [
-                fixture.warn(
-                    report_codes.AGENT_SELF_VALIDATION_RESULT,
-                    result="first line\nImportant output\nand another line",
-                )
-            ],
+        self.assertEqual(
+            reason,
+            "first line\nImportant output\nand another line",
         )
         runner.run.assert_called_once_with(
             base_cmd + ["--option", "attr1=val1", "--option", "attr2=val2"]
@@ -1907,7 +1876,6 @@ class ValidateResourceInstanceAttributesViaPcmkTest(TestCase):
     def setUp(self):
         self.runner = mock.Mock()
         self.attrs = dict(attra="val1", attrb="val2")
-        self.severity = Severity.info()
         patcher = mock.patch(
             "pcs.lib.pacemaker.live._handle_instance_attributes_validation_via_pcmk"
         )
@@ -1921,7 +1889,7 @@ class ValidateResourceInstanceAttributesViaPcmkTest(TestCase):
         )
         self.assertEqual(
             lib._validate_resource_instance_attributes_via_pcmk(
-                self.runner, agent, self.attrs, self.severity
+                self.runner, agent, self.attrs
             ),
             self.ret_val,
         )
@@ -1941,7 +1909,6 @@ class ValidateResourceInstanceAttributesViaPcmkTest(TestCase):
             ],
             "./resource-agent-action/command/output",
             self.attrs,
-            self.severity,
         )
 
     def test_without_provider(self):
@@ -1950,7 +1917,7 @@ class ValidateResourceInstanceAttributesViaPcmkTest(TestCase):
         )
         self.assertEqual(
             lib._validate_resource_instance_attributes_via_pcmk(
-                self.runner, agent, self.attrs, self.severity
+                self.runner, agent, self.attrs
             ),
             self.ret_val,
         )
@@ -1968,7 +1935,6 @@ class ValidateResourceInstanceAttributesViaPcmkTest(TestCase):
             ],
             "./resource-agent-action/command/output",
             self.attrs,
-            self.severity,
         )
 
 
@@ -1978,7 +1944,6 @@ class ValidateStonithInstanceAttributesViaPcmkTest(TestCase):
     def setUp(self):
         self.runner = mock.Mock()
         self.attrs = dict(attra="val1", attrb="val2")
-        self.severity = Severity.info()
         patcher = mock.patch(
             "pcs.lib.pacemaker.live._handle_instance_attributes_validation_via_pcmk"
         )
@@ -1992,7 +1957,7 @@ class ValidateStonithInstanceAttributesViaPcmkTest(TestCase):
         )
         self.assertEqual(
             lib._validate_stonith_instance_attributes_via_pcmk(
-                self.runner, agent, self.attrs, self.severity
+                self.runner, agent, self.attrs
             ),
             self.ret_val,
         )
@@ -2008,5 +1973,4 @@ class ValidateStonithInstanceAttributesViaPcmkTest(TestCase):
             ],
             "./validate/command/output",
             self.attrs,
-            self.severity,
         )

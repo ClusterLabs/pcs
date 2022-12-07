@@ -357,6 +357,31 @@ def _is_ocf_or_stonith_agent(resource_agent_name: ResourceAgentName) -> bool:
     return resource_agent_name.standard in ("stonith", "ocf")
 
 
+def _get_report_from_agent_self_validation(
+    is_valid: Optional[bool],
+    reason: str,
+    report_severity: reports.ReportItemSeverity,
+) -> reports.ReportItemList:
+    report_items = []
+    if is_valid is None:
+        report_items.append(
+            reports.ReportItem(
+                report_severity,
+                reports.messages.AgentSelfValidationInvalidData(reason),
+            )
+        )
+    elif not is_valid or reason:
+        if is_valid:
+            report_severity = reports.ReportItemSeverity.warning()
+        report_items.append(
+            reports.ReportItem(
+                report_severity,
+                reports.messages.AgentSelfValidationResult(reason),
+            )
+        )
+    return report_items
+
+
 def validate_resource_instance_attributes_create(
     cmd_runner: CommandRunner,
     resource_agent: ResourceAgentFacade,
@@ -405,16 +430,16 @@ def validate_resource_instance_attributes_create(
             for report_item in report_items
         )
     ):
-        (
-            dummy_is_valid,
-            agent_validation_reports,
-        ) = validate_resource_instance_attributes_via_pcmk(
-            cmd_runner,
-            agent_name,
-            instance_attributes,
-            reports.get_severity(reports.codes.FORCE, force),
+        report_items.extend(
+            _get_report_from_agent_self_validation(
+                *validate_resource_instance_attributes_via_pcmk(
+                    cmd_runner,
+                    agent_name,
+                    instance_attributes,
+                ),
+                reports.get_severity(reports.codes.FORCE, force),
+            )
         )
-        report_items.extend(agent_validation_reports)
     return report_items
 
 
@@ -508,25 +533,40 @@ def validate_resource_instance_attributes_update(
         )
     ):
         (
-            is_valid,
-            dummy_reports,
+            original_is_valid,
+            original_reason,
         ) = validate_resource_instance_attributes_via_pcmk(
             cmd_runner,
             agent_name,
             current_instance_attrs,
-            reports.ReportItemSeverity.error(),
         )
-        if is_valid:
-            (
-                dummy_is_valid,
-                agent_validation_reports,
-            ) = validate_resource_instance_attributes_via_pcmk(
-                cmd_runner,
-                resource_agent.metadata.name,
-                final_attrs,
-                reports.get_severity(reports.codes.FORCE, force),
+        if original_is_valid:
+            report_items.extend(
+                _get_report_from_agent_self_validation(
+                    *validate_resource_instance_attributes_via_pcmk(
+                        cmd_runner,
+                        resource_agent.metadata.name,
+                        final_attrs,
+                    ),
+                    reports.get_severity(reports.codes.FORCE, force),
+                )
             )
-            report_items.extend(agent_validation_reports)
+        elif original_is_valid is None:
+            report_items.append(
+                reports.ReportItem.warning(
+                    reports.messages.AgentSelfValidationInvalidData(
+                        original_reason
+                    )
+                )
+            )
+        else:
+            report_items.append(
+                reports.ReportItem.warning(
+                    reports.messages.AgentSelfValidationSkippedUpdatedResourceMisconfigured(
+                        original_reason
+                    )
+                )
+            )
     return report_items
 
 
