@@ -753,7 +753,7 @@ Error: moni=tor does not appear to be a valid operation action
 
         o, r = pcs(
             self.temp_cib.name,
-            "resource create --no-default-ops OPTest ocf:heartbeat:Dummy op monitor interval=30s OCF_CHECK_LEVEL=1 op monitor interval=25s OCF_CHECK_LEVEL=1".split(),
+            "resource create --no-default-ops OPTest ocf:heartbeat:Dummy op monitor interval=30s OCF_CHECK_LEVEL=1 op monitor interval=25s OCF_CHECK_LEVEL=1 enabled=0".split(),
         )
         ac(o, "")
         assert r == 0
@@ -770,6 +770,7 @@ Error: moni=tor does not appear to be a valid operation action
                   OCF_CHECK_LEVEL=1
                 monitor: OPTest-monitor-interval-25s
                   interval=25s
+                  enabled=0
                   OCF_CHECK_LEVEL=1
             """
             ),

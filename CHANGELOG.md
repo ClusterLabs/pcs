@@ -7,6 +7,12 @@
   self-validation feature when the resource is already misconfigured
   ([rhbz#2151511])
 
+### Fixed
+- Displaying bool and integer values in `pcs resource config` command
+  ([rhbz#2151166], [ghissue#604])
+
+[ghissue#604]: https://github.com/ClusterLabs/pcs/issues/604
+[rhbz#2151166]: https://bugzilla.redhat.com/show_bug.cgi?id=2151166
 [rhbz#2151511]: https://bugzilla.redhat.com/show_bug.cgi?id=2151511
 
 
