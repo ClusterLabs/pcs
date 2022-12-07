@@ -1295,7 +1295,10 @@ class StonithTest(TestCase, AssertPcsMixin):
             ),
         )
 
-        self.assert_pcs_success("stonith update test3 username=testA".split())
+        self.assert_pcs_success(
+            "stonith update test3 username=testA".split(),
+            stdout_start="Warning: ",
+        )
 
         self.assert_pcs_success(
             "stonith config test2".split(),

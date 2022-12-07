@@ -904,8 +904,7 @@ def _validate_stonith_instance_attributes_via_pcmk(
     cmd_runner: CommandRunner,
     agent_name: ResourceAgentName,
     instance_attributes: Mapping[str, str],
-    not_valid_severity: reports.ReportItemSeverity,
-) -> Tuple[Optional[bool], reports.ReportItemList]:
+) -> Tuple[Optional[bool], str]:
     cmd = [
         settings.stonith_admin,
         "--validate",
@@ -919,7 +918,6 @@ def _validate_stonith_instance_attributes_via_pcmk(
         cmd,
         "./validate/command/output",
         instance_attributes,
-        not_valid_severity,
     )
 
 
@@ -927,8 +925,7 @@ def _validate_resource_instance_attributes_via_pcmk(
     cmd_runner: CommandRunner,
     agent_name: ResourceAgentName,
     instance_attributes: Mapping[str, str],
-    not_valid_severity: reports.ReportItemSeverity,
-) -> Tuple[Optional[bool], reports.ReportItemList]:
+) -> Tuple[Optional[bool], str]:
     cmd = [
         settings.crm_resource_binary,
         "--validate",
@@ -946,7 +943,6 @@ def _validate_resource_instance_attributes_via_pcmk(
         cmd,
         "./resource-agent-action/command/output",
         instance_attributes,
-        not_valid_severity,
     )
 
 
@@ -955,8 +951,7 @@ def _handle_instance_attributes_validation_via_pcmk(
     cmd: StringSequence,
     data_xpath: str,
     instance_attributes: Mapping[str, str],
-    not_valid_severity: reports.ReportItemSeverity,
-) -> Tuple[Optional[bool], reports.ReportItemList]:
+) -> Tuple[Optional[bool], str]:
     full_cmd = list(cmd)
     for key, value in sorted(instance_attributes.items()):
         full_cmd.extend(["--option", f"{key}={value}"])
@@ -965,12 +960,7 @@ def _handle_instance_attributes_validation_via_pcmk(
         # dom = _get_api_result_dom(stdout)
         dom = xml_fromstring(stdout)
     except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
-        return None, [
-            reports.ReportItem(
-                not_valid_severity,
-                reports.messages.AgentSelfValidationInvalidData(str(e)),
-            )
-        ]
+        return None, str(e)
     result = "\n".join(
         "\n".join(
             line.strip() for line in item.text.split("\n") if line.strip()
@@ -978,38 +968,22 @@ def _handle_instance_attributes_validation_via_pcmk(
         for item in dom.iterfind(data_xpath)
         if item.get("source") == "stderr" and item.text
     ).strip()
-    if return_value == 0:
-        if result:
-            return True, [
-                reports.ReportItem.warning(
-                    reports.messages.AgentSelfValidationResult(result)
-                )
-            ]
-        return True, []
-    return False, [
-        reports.ReportItem(
-            not_valid_severity,
-            reports.messages.AgentSelfValidationResult(result),
-        )
-    ]
+    return return_value == 0, result
 
 
 def validate_resource_instance_attributes_via_pcmk(
     cmd_runner: CommandRunner,
     resource_agent_name: ResourceAgentName,
     instance_attributes: Mapping[str, str],
-    not_valid_severity: reports.ReportItemSeverity,
-) -> Tuple[Optional[bool], reports.ReportItemList]:
+) -> Tuple[Optional[bool], str]:
     if resource_agent_name.is_stonith:
         return _validate_stonith_instance_attributes_via_pcmk(
             cmd_runner,
             resource_agent_name,
             instance_attributes,
-            not_valid_severity,
         )
     return _validate_resource_instance_attributes_via_pcmk(
         cmd_runner,
         resource_agent_name,
         instance_attributes,
-        not_valid_severity,
     )

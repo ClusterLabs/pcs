@@ -1,5 +1,15 @@
 # Change Log
 
+## [Unreleased]
+
+### Added
+- Warning to `pcs resource|stonith update` commands about not using agent
+  self-validation feature when the resource is already misconfigured
+  ([rhbz#2151511])
+
+[rhbz#2151511]: https://bugzilla.redhat.com/show_bug.cgi?id=2151511
+
+
 ## [0.10.15] - 2022-11-23
 
 ### Security
