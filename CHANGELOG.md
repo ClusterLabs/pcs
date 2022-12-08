@@ -4,6 +4,7 @@
 
 ### Fixed
 - Graceful stopping pcsd service using `systemctl stop pcsd` command
+- test, do not merge
 
 ## [0.11.4] - 2022-11-21
 
