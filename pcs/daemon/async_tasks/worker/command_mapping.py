@@ -9,6 +9,7 @@ from pcs.lib.commands import (  # services,
     acl,
     alert,
     cluster,
+    cluster_property,
     constraint,
     fencing_topology,
     node,
@@ -122,6 +123,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
     "cluster.setup": _Cmd(
         cmd=cluster.setup,
         required_permission=p.SUPERUSER,
+    ),
+    "cluster_property.set_properties": _Cmd(
+        cmd=cluster_property.set_properties,
+        required_permission=p.WRITE,
     ),
     "constraint.colocation.create_with_set": _Cmd(
         cmd=constraint.colocation.create_with_set,

@@ -1077,6 +1077,14 @@
         daemon urls: update_cluster_settings
       </description>
     </capability>
+    <capability id="pcmk.properties.cluster.set_properties.rest-api.v2" in-pcs="0" in-pcsd="1">
+      <description>
+        Set specified pacemaker cluster properties, remove those with empty
+        values.
+
+        API v2: cluster_property.set_properties
+      </description>
+    </capability>
     <capability id="pcmk.properties.cluster.describe" in-pcs="0" in-pcsd="1">
       <description>
         Show cluster properties definition and description (meta data).

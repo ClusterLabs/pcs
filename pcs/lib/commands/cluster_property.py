@@ -1,5 +1,5 @@
 from typing import (
-    Container,
+    Collection,
     Mapping,
     Union,
 )
@@ -118,7 +118,7 @@ def get_cluster_properties_definition_legacy(
 def set_properties(
     env: LibraryEnvironment,
     cluster_properties: Mapping[str, str],
-    force_flags: Container[reports.types.ForceCode] = (),
+    force_flags: Collection[reports.types.ForceCode] = (),
 ) -> None:
     """
     Set specified pacemaker cluster properties, remove those with empty values.
