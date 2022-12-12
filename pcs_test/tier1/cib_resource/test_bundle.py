@@ -1,21 +1,18 @@
+from textwrap import dedent
 from unittest import TestCase
 
 from lxml import etree
 
-from pcs_test.tools.assertions import AssertPcsMixinOld as AssertPcsMixin
+from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.bin_mock import get_mock_settings
-from pcs_test.tools.cib import (
-    get_assert_pcs_effect_mixin_old as get_assert_pcs_effect_mixin,
-)
+from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
     get_tmp_file,
-    outdent,
     write_file_to_tmpfile,
 )
-from pcs_test.tools.pcs_runner import PcsRunnerOld as PcsRunner
+from pcs_test.tools.pcs_runner import PcsRunner
 
-# pylint: disable=line-too-long
 # pylint: disable=too-many-public-methods
 
 ERRORS_HAVE_OCCURRED = (
@@ -188,8 +185,10 @@ class BundleCreate(BundleCreateCommon):
                     </bundle>
                 </resources>
             """,
-            "Deprecation Warning: container option 'masters' is deprecated and "
-            "should not be used, use 'promoted-max' instead\n",
+            stderr_full=(
+                "Deprecation Warning: container option 'masters' is deprecated and "
+                "should not be used, use 'promoted-max' instead\n"
+            ),
         )
 
     def test_deprecated_masters_and_promoted_max(self):
@@ -208,13 +207,13 @@ class BundleCreate(BundleCreateCommon):
     def test_fail_when_missing_args_1(self):
         self.assert_pcs_fail_regardless_of_force(
             "resource bundle".split(),
-            stdout_start="\nUsage: pcs resource bundle...\n",
+            stderr_start="\nUsage: pcs resource bundle...\n",
         )
 
     def test_fail_when_missing_args_2(self):
         self.assert_pcs_fail_regardless_of_force(
             "resource bundle create".split(),
-            stdout_start="\nUsage: pcs resource bundle create...\n",
+            stderr_start="\nUsage: pcs resource bundle create...\n",
         )
 
     def test_fail_when_missing_container_type(self):
@@ -253,7 +252,7 @@ class BundleCreate(BundleCreateCommon):
                 resource bundle create B1 container docker image=pcs:test
                 extra=option --force
             """.split(),
-            stdout_start=(
+            stderr_start=(
                 "Warning: invalid container option 'extra', allowed options "
                 "are: 'image', 'masters', 'network', 'options', 'promoted-max',"
                 " 'replicas', 'replicas-per-host', 'run-command'\n"
@@ -264,7 +263,7 @@ class BundleCreate(BundleCreateCommon):
     def test_more_errors(self):
         self.assert_pcs_fail_regardless_of_force(
             "resource bundle create B#1 container docker replicas=x".split(),
-            outdent(
+            dedent(
                 """\
                 Error: invalid bundle name 'B#1', '#' is not a valid character for a bundle name
                 Error: required container option 'image' is missing
@@ -441,7 +440,7 @@ class BundleUpdate(BundleCreateCommon):
     def test_fail_when_missing_args_1(self):
         self.assert_pcs_fail_regardless_of_force(
             "resource bundle update".split(),
-            stdout_start="\nUsage: pcs resource bundle update...\n",
+            stderr_start="\nUsage: pcs resource bundle update...\n",
         )
 
     def test_fail_when_missing_args_2(self):
@@ -502,16 +501,20 @@ class BundleUpdate(BundleCreateCommon):
                     </bundle>
                 </resources>
             """,
-            "Deprecation Warning: container option 'masters' is deprecated and "
-            "should not be used, use 'promoted-max' instead\n",
+            stderr_full=(
+                "Deprecation Warning: container option 'masters' is deprecated and "
+                "should not be used, use 'promoted-max' instead\n"
+            ),
         )
 
     def test_delete_masters(self):
         self.fixture_bundle("B")
         self.assert_pcs_success(
             "resource bundle update B container masters=2".split(),
-            "Deprecation Warning: container option 'masters' is deprecated and "
-            "should not be used, use 'promoted-max' instead\n",
+            stderr_full=(
+                "Deprecation Warning: container option 'masters' is deprecated and "
+                "should not be used, use 'promoted-max' instead\n"
+            ),
         )
         self.assert_effect(
             "resource bundle update B container masters=".split(),
@@ -557,16 +560,20 @@ class BundleUpdate(BundleCreateCommon):
                     </bundle>
                 </resources>
             """,
-            "Deprecation Warning: container option 'masters' is deprecated and "
-            "should not be used, use 'promoted-max' instead\n",
+            stderr_full=(
+                "Deprecation Warning: container option 'masters' is deprecated and "
+                "should not be used, use 'promoted-max' instead\n"
+            ),
         )
 
     def test_promoted_max_set_after_masters(self):
         self.fixture_bundle("B")
         self.assert_pcs_success(
             "resource bundle update B container masters=2".split(),
-            "Deprecation Warning: container option 'masters' is deprecated and "
-            "should not be used, use 'promoted-max' instead\n",
+            stderr_full=(
+                "Deprecation Warning: container option 'masters' is deprecated and "
+                "should not be used, use 'promoted-max' instead\n"
+            ),
         )
         self.assert_pcs_fail(
             "resource bundle update B container promoted-max=3".split(),
@@ -579,8 +586,10 @@ class BundleUpdate(BundleCreateCommon):
         self.fixture_bundle("B")
         self.assert_pcs_success(
             "resource bundle update B container masters=2".split(),
-            "Deprecation Warning: container option 'masters' is deprecated and "
-            "should not be used, use 'promoted-max' instead\n",
+            stderr_full=(
+                "Deprecation Warning: container option 'masters' is deprecated and "
+                "should not be used, use 'promoted-max' instead\n"
+            ),
         )
         self.assert_effect(
             "resource bundle update B container masters= promoted-max=3".split(),
@@ -609,7 +618,7 @@ class BundleUpdate(BundleCreateCommon):
         # supported by pacemaker and so the command fails.
         self.assert_pcs_fail(
             "resource bundle update B container extra=option --force".split(),
-            stdout_start=(
+            stderr_start=(
                 "Warning: invalid container option 'extra', allowed options "
                 "are: 'image', 'masters', 'network', 'options', 'promoted-max',"
                 " 'replicas', 'replicas-per-host', 'run-command'\n"
@@ -670,11 +679,11 @@ class BundleShow(TestCase, AssertPcsMixin):
         )
         self.assert_pcs_success(
             "resource config B1".split(),
-            outdent(
+            dedent(
                 """\
-            Bundle: B1
-              Docker: image=pcs:test
-            """
+                Bundle: B1
+                  Docker: image=pcs:test
+                """
             ),
         )
 
@@ -695,11 +704,11 @@ class BundleShow(TestCase, AssertPcsMixin):
         )
         self.assert_pcs_success(
             "resource config B1".split(),
-            outdent(
+            dedent(
                 """\
-            Bundle: B1
-              Docker: image=pcs:test replicas=4 promoted-max=2 options="a b c"
-            """
+                Bundle: B1
+                  Docker: image=pcs:test replicas=4 promoted-max=2 options="a b c"
+                """
             ),
         )
 
@@ -713,12 +722,12 @@ class BundleShow(TestCase, AssertPcsMixin):
         )
         self.assert_pcs_success(
             "resource config B1".split(),
-            outdent(
+            dedent(
                 """\
-            Bundle: B1
-              Docker: image=pcs:test
-              Network: control-port=12345 host-interface=eth0 host-netmask=24
-            """
+                Bundle: B1
+                  Docker: image=pcs:test
+                  Network: control-port=12345 host-interface=eth0 host-netmask=24
+                """
             ),
         )
 
@@ -733,14 +742,14 @@ class BundleShow(TestCase, AssertPcsMixin):
         )
         self.assert_pcs_success(
             "resource config B1".split(),
-            outdent(
+            dedent(
                 """\
-            Bundle: B1
-              Docker: image=pcs:test
-              Port Mapping:
-                port=2000 internal-port=2002 (B1-port-map-1001)
-                range=3000-3300 (B1-port-map-3000-3300)
-            """
+                Bundle: B1
+                  Docker: image=pcs:test
+                  Port Mapping:
+                    port=2000 internal-port=2002 (B1-port-map-1001)
+                    range=3000-3300 (B1-port-map-3000-3300)
+                """
             ),
         )
 
@@ -756,14 +765,14 @@ class BundleShow(TestCase, AssertPcsMixin):
         )
         self.assert_pcs_success(
             "resource config B1".split(),
-            outdent(
+            dedent(
                 """\
-            Bundle: B1
-              Docker: image=pcs:test
-              Storage Mapping:
-                source-dir=/tmp/docker1a target-dir=/tmp/docker1b (B1-storage-map)
-                source-dir=/tmp/docker2a target-dir=/tmp/docker2b (my-storage-map)
-            """
+                Bundle: B1
+                  Docker: image=pcs:test
+                  Storage Mapping:
+                    source-dir=/tmp/docker1a target-dir=/tmp/docker1b (B1-storage-map)
+                    source-dir=/tmp/docker2a target-dir=/tmp/docker2b (my-storage-map)
+                """
             ),
         )
 
@@ -776,13 +785,13 @@ class BundleShow(TestCase, AssertPcsMixin):
         )
         self.assert_pcs_success(
             "resource config B1".split(),
-            outdent(
+            dedent(
                 """\
-            Bundle: B1
-              Docker: image=pcs:test
-              Meta Attributes: B1-meta_attributes
-                target-role=Stopped
-            """
+                Bundle: B1
+                  Docker: image=pcs:test
+                  Meta Attributes: B1-meta_attributes
+                    target-role=Stopped
+                """
             ),
         )
 
@@ -799,17 +808,17 @@ class BundleShow(TestCase, AssertPcsMixin):
         )
         self.assert_pcs_success(
             "resource config B1".split(),
-            outdent(
+            dedent(
                 """\
-            Bundle: B1
-              Docker: image=pcs:test
-              Network: control-port=1234
-              Resource: A (class=ocf provider=pacemaker type=Dummy)
-                Operations:
-                  monitor: A-monitor-interval-10s
-                    interval=10s
-                    timeout=20s
-            """
+                Bundle: B1
+                  Docker: image=pcs:test
+                  Network: control-port=1234
+                  Resource: A (class=ocf provider=pacemaker type=Dummy)
+                    Operations:
+                      monitor: A-monitor-interval-10s
+                        interval=10s
+                        timeout=20s
+                """
             ),
         )
 
@@ -853,25 +862,25 @@ class BundleShow(TestCase, AssertPcsMixin):
         )
         self.assert_pcs_success(
             "resource config B1".split(),
-            outdent(
+            dedent(
                 """\
-            Bundle: B1
-              Docker: image=pcs:test replicas=4 promoted-max=2 options="a b c"
-              Network: control-port=12345 host-interface=eth0 host-netmask=24
-              Port Mapping:
-                port=2000 internal-port=2002 (B1-port-map-1001)
-                range=3000-3300 (B1-port-map-3000-3300)
-              Storage Mapping:
-                source-dir=/tmp/docker1a target-dir=/tmp/docker1b (B1-storage-map)
-                source-dir=/tmp/docker2a target-dir=/tmp/docker2b (my-storage-map)
-              Meta Attributes: B1-meta_attributes
-                is-managed=false
-                target-role=Stopped
-              Resource: A (class=ocf provider=pacemaker type=Dummy)
-                Operations:
-                  monitor: A-monitor-interval-10s
-                    interval=10s
-                    timeout=20s
-            """
+                Bundle: B1
+                  Docker: image=pcs:test replicas=4 promoted-max=2 options="a b c"
+                  Network: control-port=12345 host-interface=eth0 host-netmask=24
+                  Port Mapping:
+                    port=2000 internal-port=2002 (B1-port-map-1001)
+                    range=3000-3300 (B1-port-map-3000-3300)
+                  Storage Mapping:
+                    source-dir=/tmp/docker1a target-dir=/tmp/docker1b (B1-storage-map)
+                    source-dir=/tmp/docker2a target-dir=/tmp/docker2b (my-storage-map)
+                  Meta Attributes: B1-meta_attributes
+                    is-managed=false
+                    target-role=Stopped
+                  Resource: A (class=ocf provider=pacemaker type=Dummy)
+                    Operations:
+                      monitor: A-monitor-interval-10s
+                        interval=10s
+                        timeout=20s
+                """
             ),
         )

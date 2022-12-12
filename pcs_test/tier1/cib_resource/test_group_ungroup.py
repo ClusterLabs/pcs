@@ -2,15 +2,13 @@ from unittest import TestCase
 
 from lxml import etree
 
-from pcs_test.tools.cib import (
-    get_assert_pcs_effect_mixin_old as get_assert_pcs_effect_mixin,
-)
+from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
     get_tmp_file,
     write_data_to_tmpfile,
 )
-from pcs_test.tools.pcs_runner import PcsRunnerOld as PcsRunner
+from pcs_test.tools.pcs_runner import PcsRunner
 from pcs_test.tools.xml import XmlManipulation
 
 
@@ -215,7 +213,7 @@ class GroupDeleteRemoveUngroupBase(
                     fixture_primitive_xml("A3"),
                 ],
             ),
-            output=(
+            stderr_full=(
                 "Removing Constraint - location-TagGroupOnly-rh7-1-INFINITY\n"
                 "Removing Constraint - location-AGroup-rh7-1-INFINITY\n"
             ),
@@ -252,7 +250,7 @@ class GroupDeleteRemoveUngroupBase(
                     fixture_primitive_xml("A3"),
                 ],
             ),
-            output=(
+            stderr_full=(
                 "Removing Constraint - location-TagGroupOnly-rh7-1-INFINITY\n"
                 "Removing Constraint - location-AGroup-rh7-1-INFINITY\n"
             ),
@@ -303,7 +301,7 @@ class GroupDeleteRemoveUngroupBase(
                     fixture_primitive_xml("A2"),
                 ],
             ),
-            output="Removing Constraint - location-TagGroupOnly-rh7-1-INFINITY\n",
+            stderr_full="Removing Constraint - location-TagGroupOnly-rh7-1-INFINITY\n",
         )
         self.assert_tags_xml(FIXTURE_TAGS_RESULT_XML)
         self.assert_constraint_xml(FIXTURE_CLONE_CONSTRAINT)

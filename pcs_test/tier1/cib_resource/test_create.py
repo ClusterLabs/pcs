@@ -9,14 +9,11 @@ from pcs.cli.common.parse_args import InputModifiers
 from pcs.common import const
 from pcs.common.str_tools import format_list
 
-from pcs_test.tier1.cib_resource.common import ResourceTestOld as ResourceTest
-from pcs_test.tools.assertions import AssertPcsMixinOld as AssertPcsMixin
+from pcs_test.tier1.cib_resource.common import ResourceTest
+from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.bin_mock import get_mock_settings
-from pcs_test.tools.pcs_runner import PcsRunnerOld as PcsRunner
+from pcs_test.tools.pcs_runner import PcsRunner
 
-# pylint: disable=invalid-name
-# pylint: disable=no-self-use
-# pylint: disable=unused-argument
 # pylint: disable=too-many-lines
 # pylint: disable=too-many-public-methods
 
@@ -373,6 +370,7 @@ class SuccessOperations(ResourceTest):
         )
 
     def test_op_with_OCF_CHECK_LEVEL(self):
+        # pylint: disable=invalid-name
         self.assert_effect(
             (
                 "resource create R ocf:heartbeat:Dummy --no-default-ops "
@@ -498,8 +496,10 @@ class SuccessOperations(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
-            "Warning: changing a monitor operation interval from 10s to 11 to"
-            " make the operation unique\n",
+            stderr_full=(
+                "Warning: changing a monitor operation interval from 10s to 11 to"
+                " make the operation unique\n"
+            ),
         )
 
     def test_warn_on_forced_unknown_operation(self):
@@ -520,9 +520,11 @@ class SuccessOperations(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
-            "Warning: 'monitro' is not a valid operation name value, use "
-            "'meta-data', 'migrate_from', 'migrate_to', 'monitor', "
-            "'reload', 'start', 'stop', 'validate-all'\n",
+            stderr_full=(
+                "Warning: 'monitro' is not a valid operation name value, use "
+                "'meta-data', 'migrate_from', 'migrate_to', 'monitor', "
+                "'reload', 'start', 'stop', 'validate-all'\n"
+            ),
         )
 
     def test_op_id(self):
@@ -742,8 +744,8 @@ class Promotable(TestCase, AssertPcsMixin):
         # used for tests where code does not even call lib, so cib is not needed
         self.pcs_runner = PcsRunner(cib_file=None)
 
+    @staticmethod
     def fixture_options(
-        self,
         allow_absent_agent=False,
         allow_invalid_instance_attributes=False,
         allow_invalid_operation=False,
@@ -752,9 +754,8 @@ class Promotable(TestCase, AssertPcsMixin):
         use_default_operations=True,
         wait=False,
     ):
-        options = locals()
-        del options["self"]
-        return options
+        # pylint: disable=unused-argument
+        return locals()
 
     def test_alias_for_clone(self):
         resource.resource_create(
@@ -934,7 +935,7 @@ class FailOrWarn(ResourceTest):
         # The exact message returned form pacemaker differs from version to
         # version (sometimes from commit to commit), so we don't check for the
         # whole of it.
-        stdout_regexp = re.compile(
+        stderr_regexp = re.compile(
             "^"
             "Error: Agent 'ocf:heartbeat:NoExisting' is not installed or "
             "does not provide valid metadata:( crm_resource:)? Metadata "
@@ -944,7 +945,7 @@ class FailOrWarn(ResourceTest):
         )
         self.assert_pcs_fail(
             "resource create R ocf:heartbeat:NoExisting".split(),
-            stdout_regexp=stdout_regexp,
+            stderr_regexp=stderr_regexp,
         )
 
     def test_warn_when_forcing_noexistent_agent(self):
@@ -972,7 +973,7 @@ class FailOrWarn(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
-            output_regexp=output_regexp,
+            stderr_regexp=output_regexp,
         )
 
     def test_fail_on_invalid_resource_agent_name(self):
@@ -1032,7 +1033,9 @@ class FailOrWarn(ResourceTest):
     def test_print_info_about_agent_completion(self):
         self.assert_pcs_success(
             "resource create R delay".split(),
-            "Assumed agent name 'ocf:heartbeat:Delay' (deduced from 'delay')\n",
+            stderr_full=(
+                "Assumed agent name 'ocf:heartbeat:Delay' (deduced from 'delay')\n"
+            ),
         )
 
     def test_fail_for_unambiguous_agent(self):
@@ -1160,16 +1163,20 @@ class FailOrWarn(ResourceTest):
         )
         self.assert_pcs_success(
             "resource create R2 ocf:pacemaker:Dummy state=1 --force".split(),
-            "Warning: Value '1' of option 'state' is not unique across "
-            "'ocf:pacemaker:Dummy' resources. Following resources are "
-            "configured with the same value of the instance attribute: 'R1'\n",
+            stderr_full=(
+                "Warning: Value '1' of option 'state' is not unique across "
+                "'ocf:pacemaker:Dummy' resources. Following resources are "
+                "configured with the same value of the instance attribute: 'R1'\n"
+            ),
         )
         self.assert_pcs_success(
             "resource create R3 ocf:pacemaker:Dummy state=1 --force".split(),
-            "Warning: Value '1' of option 'state' is not unique across "
-            "'ocf:pacemaker:Dummy' resources. Following resources are "
-            "configured with the same value of the instance attribute: 'R1', "
-            "'R2'\n",
+            stderr_full=(
+                "Warning: Value '1' of option 'state' is not unique across "
+                "'ocf:pacemaker:Dummy' resources. Following resources are "
+                "configured with the same value of the instance attribute: 'R1', "
+                "'R2'\n"
+            ),
         )
         self.assert_pcs_fail(
             "resource create R4 ocf:pacemaker:Dummy state=1".split(),
@@ -1430,15 +1437,19 @@ class FailOrWarnGroup(ResourceTest):
     def test_warn_when_on_pacemaker_remote_attempt(self):
         self.assert_pcs_success(
             "resource create R2 ocf:pacemaker:remote --force".split(),
-            "Warning: this command is not sufficient for creating a remote"
-            " connection, use 'pcs cluster node add-remote'\n",
+            stderr_full=(
+                "Warning: this command is not sufficient for creating a remote"
+                " connection, use 'pcs cluster node add-remote'\n"
+            ),
         )
 
     def test_fail_when_on_pacemaker_remote_conflict_with_existing_node(self):
         self.assert_pcs_success(
             "resource create R ocf:pacemaker:remote --force".split(),
-            "Warning: this command is not sufficient for creating a remote"
-            " connection, use 'pcs cluster node add-remote'\n",
+            stderr_full=(
+                "Warning: this command is not sufficient for creating a remote"
+                " connection, use 'pcs cluster node add-remote'\n"
+            ),
         )
 
         self.assert_pcs_fail(
@@ -1453,8 +1464,10 @@ class FailOrWarnGroup(ResourceTest):
     def test_fail_when_on_pacemaker_remote_conflict_with_existing_id(self):
         self.assert_pcs_success(
             "resource create R ocf:pacemaker:remote server=R2 --force".split(),
-            "Warning: this command is not sufficient for creating a remote"
-            " connection, use 'pcs cluster node add-remote'\n",
+            stderr_full=(
+                "Warning: this command is not sufficient for creating a remote"
+                " connection, use 'pcs cluster node add-remote'\n"
+            ),
         )
 
         self.assert_pcs_fail(
@@ -1469,8 +1482,10 @@ class FailOrWarnGroup(ResourceTest):
     def test_fail_when_on_guest_conflict_with_existing_node(self):
         self.assert_pcs_success(
             "resource create R ocf:pacemaker:remote --force".split(),
-            "Warning: this command is not sufficient for creating a remote"
-            " connection, use 'pcs cluster node add-remote'\n",
+            stderr_full=(
+                "Warning: this command is not sufficient for creating a remote"
+                " connection, use 'pcs cluster node add-remote'\n"
+            ),
         )
 
         self.assert_pcs_fail(
@@ -1488,8 +1503,10 @@ class FailOrWarnGroup(ResourceTest):
     def test_fail_when_on_guest_conflict_with_existing_node_host(self):
         self.assert_pcs_success(
             "resource create R ocf:pacemaker:remote server=HOST --force".split(),
-            "Warning: this command is not sufficient for creating a remote"
-            " connection, use 'pcs cluster node add-remote'\n",
+            stderr_full=(
+                "Warning: this command is not sufficient for creating a remote"
+                " connection, use 'pcs cluster node add-remote'\n"
+            ),
         )
 
         self.assert_pcs_fail(
@@ -1507,8 +1524,10 @@ class FailOrWarnGroup(ResourceTest):
     def test_fail_when_on_guest_conflict_with_existing_node_host_addr(self):
         self.assert_pcs_success(
             "resource create R ocf:pacemaker:remote server=HOST --force".split(),
-            "Warning: this command is not sufficient for creating a remote"
-            " connection, use 'pcs cluster node add-remote'\n",
+            stderr_full=(
+                "Warning: this command is not sufficient for creating a remote"
+                " connection, use 'pcs cluster node add-remote'\n"
+            ),
         )
 
         self.assert_pcs_fail(
@@ -1526,8 +1545,10 @@ class FailOrWarnGroup(ResourceTest):
     def test_not_fail_when_on_guest_when_conflict_host_with_name(self):
         self.assert_pcs_success(
             "resource create R ocf:pacemaker:remote server=HOST --force".split(),
-            "Warning: this command is not sufficient for creating a remote"
-            " connection, use 'pcs cluster node add-remote'\n",
+            stderr_full=(
+                "Warning: this command is not sufficient for creating a remote"
+                " connection, use 'pcs cluster node add-remote'\n"
+            ),
         )
 
         self.assert_pcs_success(
@@ -1535,8 +1556,10 @@ class FailOrWarnGroup(ResourceTest):
                 "resource create R2 ocf:heartbeat:Dummy "
                 "meta remote-node=HOST remote-addr=R --force"
             ).split(),
-            "Warning: this command is not sufficient for creating a guest "
-            "node, use 'pcs cluster node add-guest'\n",
+            stderr_full=(
+                "Warning: this command is not sufficient for creating a guest "
+                "node, use 'pcs cluster node add-guest'\n"
+            ),
         )
 
     def test_fail_when_on_pacemaker_remote_guest_attempt(self):
@@ -1555,6 +1578,8 @@ class FailOrWarnGroup(ResourceTest):
                 "resource create R2 ocf:heartbeat:Dummy "
                 "meta remote-node=HOST --force"
             ).split(),
-            "Warning: this command is not sufficient for creating a guest node,"
-            " use 'pcs cluster node add-guest'\n",
+            stderr_full=(
+                "Warning: this command is not sufficient for creating a guest node,"
+                " use 'pcs cluster node add-guest'\n"
+            ),
         )

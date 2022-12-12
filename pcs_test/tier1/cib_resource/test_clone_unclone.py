@@ -2,15 +2,13 @@ from unittest import TestCase
 
 from lxml import etree
 
-from pcs_test.tools.cib import (
-    get_assert_pcs_effect_mixin_old as get_assert_pcs_effect_mixin,
-)
+from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
     get_tmp_file,
     write_data_to_tmpfile,
 )
-from pcs_test.tools.pcs_runner import PcsRunnerOld as PcsRunner
+from pcs_test.tools.pcs_runner import PcsRunner
 from pcs_test.tools.xml import XmlManipulation
 
 
@@ -357,8 +355,10 @@ class Clone(
         self.assert_effect(
             "resource clone fence-device --force".split(),
             fixture_resources_xml(FIXTURE_STONITH_CLONE),
-            output=self.stonith_deprecation_warning
-            + fixture_clone_stonith_msg(forced=True),
+            stderr_full=(
+                self.stonith_deprecation_warning
+                + fixture_clone_stonith_msg(forced=True)
+            ),
         )
 
     def test_clone_group_with_stonith(self):
@@ -386,7 +386,7 @@ class Clone(
         )
         self.assert_pcs_fail(
             "resource clone C globally-unique=true".split(),
-            stdout_full=(
+            (
                 "Error: Clone option 'globally-unique' is not compatible with "
                 "'systemd:pacemaker' resource agent of resource 'C'\n"
             ),
@@ -418,7 +418,7 @@ class Clone(
         )
         self.assert_pcs_fail(
             "resource clone G promotable=true".split(),
-            stdout_full=(
+            (
                 "Error: Clone option 'promotable' is not compatible with "
                 "'systemd:pacemaker' resource agent of resource 'A' in group "
                 "'G'\nError: Clone option 'promotable' is not compatible with "
@@ -438,7 +438,7 @@ class Clone(
         )
         self.assert_pcs_fail(
             "resource clone C promotable=true".split(),
-            stdout_full=(
+            (
                 "Error: Clone option 'promotable' is not compatible with "
                 "'systemd:pacemaker' resource agent of resource 'C'\n"
             ),
@@ -463,7 +463,7 @@ class Clone(
         )
         self.assert_pcs_fail(
             "resource promotable C".split(),
-            stdout_full=(
+            (
                 "Error: Clone option 'promotable' is not compatible with "
                 "'systemd:pacemaker' resource agent of resource 'C'\n"
             ),
@@ -475,7 +475,7 @@ class Clone(
         )
         self.assert_pcs_fail(
             "resource promotable C".split(),
-            stdout_full=(
+            (
                 "Error: Clone option 'promotable' is not compatible with "
                 "'ocf:pacemaker:Dummy' resource agent of resource 'C', use "
                 "--force to override\n"
@@ -504,8 +504,10 @@ class Clone(
         self.set_cib_file(FIXTURE_STONITH_FOR_CLONE)
         self.assert_pcs_fail(
             "resource promotable fence-device --force".split(),
-            stdout_start=self.stonith_deprecation_warning
-            + fixture_clone_stonith_msg(forced=True),
+            stderr_start=(
+                self.stonith_deprecation_warning
+                + fixture_clone_stonith_msg(forced=True)
+            ),
         )
 
     def test_promotable_keyword_and_option(self):
