@@ -11,7 +11,7 @@ from pcs_test.tools.misc import (
     get_tmp_file,
     write_file_to_tmpfile,
 )
-from pcs_test.tools.pcs_runner import PcsRunnerOld as PcsRunner
+from pcs_test.tools.pcs_runner import PcsRunner
 
 
 class ResourceConfigJson(TestCase):
@@ -21,10 +21,9 @@ class ResourceConfigJson(TestCase):
         )
 
     def test_all(self):
-        stdout, retval = self.pcs_runner.run(
+        stdout, stderr, retval = self.pcs_runner.run(
             ["resource", "config", "--output-format=json"]
         )
-        self.assertEqual(retval, 0)
         expected = ListCibResourcesDto(
             primitives=[
                 resources_dto.PRIMITIVE_R1,
@@ -50,12 +49,13 @@ class ResourceConfigJson(TestCase):
             ],
         )
         self.assertEqual(json.loads(stdout), to_dict(expected))
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
     def test_get_multiple(self):
-        stdout, retval = self.pcs_runner.run(
+        stdout, stderr, retval = self.pcs_runner.run(
             ["resource", "config", "--output-format=json", "G1-clone", "R1"]
         )
-        self.assertEqual(retval, 0)
         expected = ListCibResourcesDto(
             primitives=[
                 resources_dto.PRIMITIVE_R1,
@@ -68,6 +68,8 @@ class ResourceConfigJson(TestCase):
             bundles=[],
         )
         self.assertEqual(json.loads(stdout), to_dict(expected))
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
 
 class ResourceConfigCmdMixin:
@@ -87,14 +89,15 @@ class ResourceConfigCmdMixin:
         self.new_cib_file.close()
 
     def _get_as_json(self, runner):
-        stdout, retval = runner.run(
+        stdout, stderr, retval = runner.run(
             ["resource", "config", "--output-format=json"]
         )
+        self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
         return json.loads(stdout)
 
     def test_all(self):
-        stdout, retval = self.pcs_runner_orig.run(
+        stdout, stderr, retval = self.pcs_runner_orig.run(
             ["resource", "config", "--output-format=cmd"]
         )
         self.assertEqual(retval, 0)
@@ -103,11 +106,14 @@ class ResourceConfigCmdMixin:
             for cmd in stdout.replace("\\\n", "").strip().split(";\n")
         ]
         for cmd in cmds:
-            stdout, retval = self.pcs_runner_new.run(cmd)
+            stdout, stderr, retval = self.pcs_runner_new.run(cmd)
             self.assertEqual(
                 retval,
                 0,
-                f"Command {cmd} exited with {retval}\nstdout:\n{stdout}\n",
+                (
+                    f"Command {cmd} exited with {retval}\nstdout:\n{stdout}\n"
+                    f"stderr:\n{stderr}"
+                ),
             )
         self.assertEqual(
             self._get_as_json(self.pcs_runner_new),

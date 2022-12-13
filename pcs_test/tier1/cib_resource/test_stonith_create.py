@@ -45,7 +45,7 @@ class PlainStonith(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
-            output_start="Warning: Validation result from agent:",
+            stderr_start="Warning: Validation result from agent:",
         )
 
     def test_error_when_not_valid_name(self):
@@ -82,8 +82,8 @@ class PlainStonith(ResourceTest):
             )
         self.assert_pcs_fail(
             "stonith create S absent".split(),
-            stdout_full=error,
-            stdout_regexp=error_re,
+            stderr_full=error,
+            stderr_regexp=error_re,
         )
 
     def test_warning_when_not_valid_agent(self):
@@ -118,8 +118,8 @@ class PlainStonith(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
-            output=error,
-            output_regexp=error_re,
+            stderr_full=error,
+            stderr_regexp=error_re,
         )
 
     def test_disabled_puts_target_role_stopped(self):
@@ -172,7 +172,7 @@ class PlainStonith(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
-            output_start=(
+            stderr_start=(
                 "Warning: stonith option 'debug' is deprecated and should not "
                 "be used, use 'debug_file' instead\n"
             ),
@@ -205,8 +205,10 @@ class PlainStonith(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
-            "Warning: stonith option 'action' is deprecated and should not be "
-            "used, use 'pcmk_off_action', 'pcmk_reboot_action' instead\n",
+            stderr_full=(
+                "Warning: stonith option 'action' is deprecated and should not be "
+                "used, use 'pcmk_off_action', 'pcmk_reboot_action' instead\n"
+            ),
         )
 
 
@@ -249,7 +251,7 @@ class WithMeta(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
-            output_start="Warning: Validation result from agent:",
+            stderr_start="Warning: Validation result from agent:",
         )
 
 
@@ -274,14 +276,14 @@ class InGroup(ResourceTest):
                     </primitive>
                 </group>
             </resources>""",
-            output=self.deprecation_warning,
+            stderr_full=self.deprecation_warning,
         )
 
     def test_command_simply_puts_stonith_into_group_at_the_end(self):
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.assert_pcs_success(
             "stonith create S1 fence_xvm --group G".split(),
-            stdout_full=self.deprecation_warning,
+            stderr_full=self.deprecation_warning,
         )
         self.assert_effect(
             "stonith create S2 fence_xvm --group G".split(),
@@ -303,14 +305,14 @@ class InGroup(ResourceTest):
                     </primitive>
                 </group>
             </resources>""",
-            output=self.deprecation_warning,
+            stderr_full=self.deprecation_warning,
         )
 
     def test_command_simply_puts_stonith_into_group_before_another(self):
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
         self.assert_pcs_success(
             "stonith create S1 fence_xvm --group G".split(),
-            stdout_full=self.deprecation_warning,
+            stderr_full=self.deprecation_warning,
         )
         self.assert_effect(
             "stonith create S2 fence_xvm --group G --before S1".split(),
@@ -332,7 +334,7 @@ class InGroup(ResourceTest):
                     </primitive>
                 </group>
             </resources>""",
-            output=self.deprecation_warning,
+            stderr_full=self.deprecation_warning,
         )
 
     def test_command_simply_puts_stonith_into_group_after_another(self):
@@ -370,7 +372,7 @@ class InGroup(ResourceTest):
                     </primitive>
                 </group>
             </resources>""",
-            output=self.deprecation_warning,
+            stderr_full=self.deprecation_warning,
         )
 
     def test_fail_when_intended_before_item_does_not_exist(self):
