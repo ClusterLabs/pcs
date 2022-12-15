@@ -7,7 +7,6 @@ from typing import (
     Callable,
     Optional,
     Sequence,
-    cast,
 )
 
 from pcs import settings
@@ -459,7 +458,7 @@ def _store_to_tmpfile(
     data: bytes, report_item_message: Callable[[str], reports.ReportItemMessage]
 ) -> IO[bytes]:
     try:
-        return cast(IO[bytes], write_tmpfile(data, binary=True))
+        return write_tmpfile(data, binary=True)
     except EnvironmentError as e:
         raise LibraryError(
             reports.ReportItem.error(report_item_message(e.strerror))

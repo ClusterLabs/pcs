@@ -5,12 +5,14 @@ from contextlib import contextmanager
 from typing import (
     IO,
     Callable,
-    Iterator,
+    ContextManager,
+    Generator,
+    Literal,
     Mapping,
     Optional,
     TypeVar,
     Union,
-    cast,
+    overload,
 )
 
 from pcs.common import reports
@@ -78,6 +80,18 @@ def dict_to_environment_file(config_dict: Mapping[str, str]) -> str:
     return "".join(lines)
 
 
+@overload
+def write_tmpfile(data: Optional[bytes], binary: Literal[True]) -> IO[bytes]:
+    pass
+
+
+@overload
+def write_tmpfile(
+    data: Optional[str], binary: Literal[False] = False
+) -> IO[str]:
+    pass
+
+
 def write_tmpfile(
     data: Union[None, bytes, str], binary: bool = False
 ) -> Union[IO[str], IO[bytes]]:
@@ -97,11 +111,28 @@ def write_tmpfile(
     return tmpfile
 
 
-@contextmanager
+@overload
 def get_tmp_file(
-    data: Union[None, bytes, str] = None,
+    data: Optional[bytes], binary: Literal[True]
+) -> ContextManager[IO[bytes]]:
+    pass
+
+
+@overload
+def get_tmp_file(
+    data: Optional[str],
+    binary: Literal[False] = False,
+) -> ContextManager[IO[str]]:
+    pass
+
+
+# We ignore return type here as it doesn't work with mypy (@contextmanager and
+# @overload) and it is properly typed in @overload functions.
+@contextmanager
+def get_tmp_file(  # type: ignore
+    data: Optional[Union[bytes, str]],
     binary: bool = False,
-) -> Iterator[Union[IO[str], IO[bytes]]]:
+):
     mode = "w+b" if binary else "w+"
     tmpfile = None
     try:
@@ -118,7 +149,7 @@ def get_tmp_file(
 @contextmanager
 def get_tmp_cib(
     report_processor: reports.ReportProcessor, data: str
-) -> Iterator[IO[str]]:
+) -> Generator[IO[str], None, None]:
     try:
         with get_tmp_file(data) as tmp_cib_file:
             report_processor.report(
@@ -126,7 +157,7 @@ def get_tmp_cib(
                     reports.messages.TmpFileWrite(tmp_cib_file.name, data)
                 )
             )
-            yield cast(IO[str], tmp_cib_file)
+            yield tmp_cib_file
     except EnvironmentError as e:
         raise LibraryError(
             reports.ReportItem.error(reports.messages.CibSaveTmpError(str(e)))
@@ -137,7 +168,7 @@ def create_tmp_cib(
     report_processor: reports.ReportProcessor, data: str
 ) -> IO[str]:
     try:
-        tmp_file = cast(IO[str], write_tmpfile(data))
+        tmp_file = write_tmpfile(data)
         report_processor.report(
             reports.ReportItem.debug(
                 reports.messages.TmpFileWrite(tmp_file.name, data)
