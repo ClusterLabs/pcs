@@ -4,6 +4,7 @@ from unittest import TestCase
 from pcs.common.corosync_conf import (
     CorosyncConfDto,
     CorosyncNodeAddressDto,
+    CorosyncNodeAddressType,
     CorosyncNodeDto,
     CorosyncQuorumDeviceSettingsDto,
 )
@@ -107,7 +108,7 @@ class GetCorosyncConfStruct(TestCase):
                             CorosyncNodeAddressDto(
                                 addr="node1-addr",
                                 link="0",
-                                type="FQDN",
+                                type=CorosyncNodeAddressType.FQDN,
                             ),
                         ],
                     ),
@@ -118,7 +119,7 @@ class GetCorosyncConfStruct(TestCase):
                             CorosyncNodeAddressDto(
                                 addr="node2-addr",
                                 link="0",
-                                type="FQDN",
+                                type=CorosyncNodeAddressType.FQDN,
                             ),
                         ],
                     ),
@@ -238,12 +239,12 @@ class GetCorosyncConfStruct(TestCase):
                             CorosyncNodeAddressDto(
                                 addr="node1-addr",
                                 link="0",
-                                type="FQDN",
+                                type=CorosyncNodeAddressType.FQDN,
                             ),
                             CorosyncNodeAddressDto(
                                 addr="10.0.0.1",
                                 link="1",
-                                type="IPv4",
+                                type=CorosyncNodeAddressType.IPV4,
                             ),
                         ],
                     ),
@@ -254,12 +255,12 @@ class GetCorosyncConfStruct(TestCase):
                             CorosyncNodeAddressDto(
                                 addr="node2-addr",
                                 link="0",
-                                type="FQDN",
+                                type=CorosyncNodeAddressType.FQDN,
                             ),
                             CorosyncNodeAddressDto(
                                 addr="10.0.0.2",
                                 link="1",
-                                type="IPv4",
+                                type=CorosyncNodeAddressType.IPV4,
                             ),
                         ],
                     ),

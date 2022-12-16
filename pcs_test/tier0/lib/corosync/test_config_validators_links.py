@@ -446,7 +446,7 @@ class AddLink(TestCase):
                 fixture.error(
                     report_codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK,
                     address=self.new_addrs["node2"],
-                    expected_address_type=CorosyncNodeAddressType.IPV4,
+                    expected_address_type=CorosyncNodeAddressType.IPV4.value,
                     link_number=None,
                 ),
             ],
@@ -468,7 +468,7 @@ class AddLink(TestCase):
                 fixture.error(
                     report_codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK,
                     address=self.new_addrs["node2"],
-                    expected_address_type=CorosyncNodeAddressType.IPV6,
+                    expected_address_type=CorosyncNodeAddressType.IPV6.value,
                     link_number=None,
                 ),
             ],
@@ -1014,13 +1014,13 @@ class UpdateLinkAddressesMixin:
         report_4 = fixture.error(
             report_codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK,
             address="10.0.0.1",
-            expected_address_type=CorosyncNodeAddressType.IPV6,
+            expected_address_type=CorosyncNodeAddressType.IPV6.value,
             link_number=self.linknumber,
         )
         report_6 = fixture.error(
             report_codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK,
             address="::ffff:10:0:2:3",
-            expected_address_type=CorosyncNodeAddressType.IPV4,
+            expected_address_type=CorosyncNodeAddressType.IPV4.value,
             link_number=self.linknumber,
         )
         test_matrix = (

@@ -2,6 +2,7 @@ from textwrap import dedent
 from unittest import TestCase
 
 import pcs.lib.corosync.config_facade as lib
+from pcs.common.corosync_conf import CorosyncNodeAddressType
 from pcs.lib.corosync.config_parser import Parser
 
 from pcs_test.tools.assertions import ac
@@ -210,10 +211,10 @@ class GetNodesTest(TestCase):
         """
         )
         nodes = self.nodes_from_config(config)
-        self.assertEqual(nodes[0].addrs[0].type, "IPv4")
-        self.assertEqual(nodes[0].addrs[1].type, "FQDN")
-        self.assertEqual(nodes[1].addrs[0].type, "FQDN")
-        self.assertEqual(nodes[1].addrs[1].type, "IPv6")
+        self.assertEqual(nodes[0].addrs[0].type, CorosyncNodeAddressType.IPV4)
+        self.assertEqual(nodes[0].addrs[1].type, CorosyncNodeAddressType.FQDN)
+        self.assertEqual(nodes[1].addrs[0].type, CorosyncNodeAddressType.FQDN)
+        self.assertEqual(nodes[1].addrs[1].type, CorosyncNodeAddressType.IPV6)
 
 
 class AddNodesTest(TestCase):

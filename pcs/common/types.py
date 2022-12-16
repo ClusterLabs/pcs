@@ -69,7 +69,7 @@ class CorosyncTransportType(AutoNameEnum):
             raise UnknownCorosyncTransportTypeException(transport) from None
 
 
-class CorosyncNodeAddressType(AutoNameEnum):
+class CorosyncNodeAddressType(Enum):
     IPV4 = "IPv4"
     IPV6 = "IPv6"
     FQDN = "FQDN"
