@@ -8,6 +8,7 @@ from itertools import zip_longest
 from typing import (
     Any,
     Callable,
+    Collection,
     Iterable,
     Mapping,
     MutableSequence,
@@ -270,10 +271,7 @@ def create(
     # Check mixing IPv4 and IPv6 in one link, node names are not relevant
     links_ip_mismatch = []
     for link, link_addr_types in enumerate(zip_longest(*addr_types_per_node)):
-        if (
-            CorosyncNodeAddressType.IPV4 in link_addr_types
-            and CorosyncNodeAddressType.IPV6 in link_addr_types
-        ):
+        if _mixes_ipv4_ipv6(link_addr_types):
             links_ip_mismatch.append(str(link))
     if links_ip_mismatch:
         report_items.append(
@@ -591,8 +589,7 @@ def add_nodes(
         zip_longest(*new_addr_types_per_node)
     ):
         if (
-            CorosyncNodeAddressType.IPV4 in link_addr_types
-            and CorosyncNodeAddressType.IPV6 in link_addr_types
+            _mixes_ipv4_ipv6(link_addr_types)
             and existing_links[link_index] not in links_ip_mismatch_reported
         ):
             links_ip_mismatch.append(existing_links[link_index])
@@ -1043,10 +1040,7 @@ def add_link(
     )
 
     # Check mixing IPv4 and IPv6 in the link
-    if (
-        CorosyncNodeAddressType.IPV4 in addr_types
-        and CorosyncNodeAddressType.IPV6 in addr_types
-    ):
+    if _mixes_ipv4_ipv6(addr_types):
         report_items.append(
             ReportItem.error(
                 reports.messages.CorosyncIpVersionMismatchInLinks(),
@@ -1271,10 +1265,7 @@ def update_link(
         unresolvable_addresses, force_unresolvable
     )
     # Check mixing IPv4 and IPv6 in the link - get addresses after update
-    if (
-        CorosyncNodeAddressType.IPV4 in link_addr_types
-        and CorosyncNodeAddressType.IPV6 in link_addr_types
-    ):
+    if _mixes_ipv4_ipv6(link_addr_types):
         report_items.append(
             ReportItem.error(
                 reports.messages.CorosyncIpVersionMismatchInLinks(),
@@ -2199,3 +2190,9 @@ def _get_unsuitable_keys_and_values_validators(
         list[validate.ValidatorInterface],
         [validate.CorosyncOption(option_type=option_type)],
     ) + [validate.ValueCorosyncValue(name) for name in option_dict]
+
+
+def _mixes_ipv4_ipv6(addr_types: Collection[CorosyncNodeAddressType]) -> bool:
+    return {CorosyncNodeAddressType.IPV4, CorosyncNodeAddressType.IPV6} <= set(
+        addr_types
+    )
