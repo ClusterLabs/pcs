@@ -5,7 +5,7 @@ from typing import (
     Optional,
     Sequence,
     Union,
-    cast,
+    overload,
 )
 
 from pcs import settings
@@ -101,7 +101,7 @@ class ConfigFacade(FacadeInterface):
         return self._need_qdevice_reload
 
     def get_cluster_name(self) -> str:
-        return cast(str, self._get_option_value("totem", "cluster_name", ""))
+        return self._get_option_value("totem", "cluster_name", "")
 
     def get_cluster_uuid(self) -> Optional[str]:
         return self._get_option_value("totem", "cluster_uuid")
@@ -200,7 +200,7 @@ class ConfigFacade(FacadeInterface):
         node_section = Section("node")
         for link_id, link_addr in zip(link_ids, node_options["addrs"]):
             node_section.add_attribute(f"ring{link_id}_addr", link_addr)
-        node_section.add_attribute("name", cast(str, node_options["name"]))
+        node_section.add_attribute("name", str(node_options["name"]))
         node_section.add_attribute("nodeid", str(node_id))
         return node_section
 
@@ -456,6 +456,18 @@ class ConfigFacade(FacadeInterface):
         if self.get_transport() == "udp":
             return constants.IP_VERSION_4
         return constants.IP_VERSION_64
+
+    @overload
+    def _get_option_value(
+        self, section: str, option: str, default: str = ""
+    ) -> str:
+        pass
+
+    @overload
+    def _get_option_value(
+        self, section: str, option: str, default: Optional[str] = None
+    ) -> Optional[str]:
+        pass
 
     def _get_option_value(
         self, section: str, option: str, default: Optional[str] = None

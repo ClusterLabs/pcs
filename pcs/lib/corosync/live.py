@@ -5,7 +5,6 @@ from typing import (
     Container,
     Optional,
     Sequence,
-    cast,
 )
 
 from pcs import settings
@@ -223,6 +222,8 @@ def parse_quorum_status(quorum_status: str) -> QuorumStatus:
     return QuorumStatus(
         node_list=node_list,
         qdevice_list=qdevice_list,
-        is_quorate=cast(bool, quorate),
-        votes_needed_for_quorum=cast(int, quorum),
+        is_quorate=bool(quorate),
+        # if ... else is here just for mypy, quorum can never be None, an
+        # exception would be raised just above
+        votes_needed_for_quorum=int(quorum) if quorum is not None else 0,
     )

@@ -15,7 +15,6 @@ from typing import (
     MutableSet,
     Optional,
     Sequence,
-    cast,
 )
 
 from pcs.common import reports
@@ -691,14 +690,11 @@ def _get_link_options_validators_udp(
         for val in validators:
             val.empty_string_valid = True
     return (
-        cast(
-            list[validate.ValidatorInterface],
-            [validate.NamesIn(constants.LINK_OPTIONS_UDP, option_type="link")],
-        )
+        [validate.NamesIn(constants.LINK_OPTIONS_UDP, option_type="link")]
         + _get_unsuitable_keys_and_values_validators(
             options, option_type="link"
         )
-        + cast(list[validate.ValidatorInterface], validators)
+        + list(validators)
     )
 
 
@@ -856,14 +852,11 @@ def _get_link_options_validators_knet(
         for val in validators:
             val.empty_string_valid = True
     return (
-        cast(
-            list[validate.ValidatorInterface],
-            [validate.NamesIn(allowed_options, option_type="link")],
-        )
+        [validate.NamesIn(allowed_options, option_type="link")]
         + _get_unsuitable_keys_and_values_validators(
             options, option_type="link"
         )
-        + cast(list[validate.ValidatorInterface], validators)
+        + list(validators)
     )
 
 
@@ -1333,19 +1326,16 @@ def _get_transport_udp_generic_validators(
         for val in validators:
             val.empty_string_valid = True
     return (
-        cast(
-            list[validate.ValidatorInterface],
-            [
-                validate.NamesIn(
-                    constants.TRANSPORT_UDP_GENERIC_OPTIONS,
-                    option_type="udp/udpu transport",
-                )
-            ],
-        )
+        [
+            validate.NamesIn(
+                constants.TRANSPORT_UDP_GENERIC_OPTIONS,
+                option_type="udp/udpu transport",
+            )
+        ]
         + _get_unsuitable_keys_and_values_validators(
             options, option_type="udp/udpu transport"
         )
-        + cast(list[validate.ValidatorInterface], validators)
+        + list(validators)
     )
 
 
@@ -1437,19 +1427,16 @@ def _get_transport_knet_generic_validators(
         for val in validators:
             val.empty_string_valid = True
     return (
-        cast(
-            list[validate.ValidatorInterface],
-            [
-                validate.NamesIn(
-                    constants.TRANSPORT_KNET_GENERIC_OPTIONS,
-                    option_type="knet transport",
-                )
-            ],
-        )
+        [
+            validate.NamesIn(
+                constants.TRANSPORT_KNET_GENERIC_OPTIONS,
+                option_type="knet transport",
+            )
+        ]
         + _get_unsuitable_keys_and_values_validators(
             options, option_type="knet transport"
         )
-        + cast(list[validate.ValidatorInterface], validators)
+        + list(validators)
     )
 
 
@@ -1468,19 +1455,16 @@ def _get_transport_knet_compression_validators(
         for val in validators:
             val.empty_string_valid = True
     return (
-        cast(
-            list[validate.ValidatorInterface],
-            [
-                validate.NamesIn(
-                    constants.TRANSPORT_KNET_COMPRESSION_OPTIONS,
-                    option_type="compression",
-                )
-            ],
-        )
+        [
+            validate.NamesIn(
+                constants.TRANSPORT_KNET_COMPRESSION_OPTIONS,
+                option_type="compression",
+            )
+        ]
         + _get_unsuitable_keys_and_values_validators(
             options, option_type="compression"
         )
-        + cast(list[validate.ValidatorInterface], validators)
+        + list(validators)
     )
 
 
@@ -1499,19 +1483,15 @@ def _get_transport_knet_crypto_validators(
         for val in validators:
             val.empty_string_valid = True
     return (
-        cast(
-            list[validate.ValidatorInterface],
-            [
-                validate.NamesIn(
-                    constants.TRANSPORT_KNET_CRYPTO_OPTIONS,
-                    option_type="crypto",
-                )
-            ],
-        )
+        [
+            validate.NamesIn(
+                constants.TRANSPORT_KNET_CRYPTO_OPTIONS, option_type="crypto"
+            )
+        ]
         + _get_unsuitable_keys_and_values_validators(
             options, option_type="crypto"
         )
-        + cast(list[validate.ValidatorInterface], validators)
+        + list(validators)
     )
 
 
@@ -1670,14 +1650,11 @@ def _get_totem_options_validators(
         for val in validators:
             val.empty_string_valid = True
     return (
-        cast(
-            list[validate.ValidatorInterface],
-            [validate.NamesIn(constants.TOTEM_OPTIONS, option_type="totem")],
-        )
+        [validate.NamesIn(constants.TOTEM_OPTIONS, option_type="totem")]
         + _get_unsuitable_keys_and_values_validators(
             options, option_type="totem"
         )
-        + cast(list[validate.ValidatorInterface], validators)
+        + list(validators)
     )
 
 
@@ -1832,14 +1809,11 @@ def _get_quorum_options_validators(
         for val in validators:
             val.empty_string_valid = True
     return (
-        cast(
-            list[validate.ValidatorInterface],
-            [validate.NamesIn(constants.QUORUM_OPTIONS, option_type="quorum")],
-        )
+        [validate.NamesIn(constants.QUORUM_OPTIONS, option_type="quorum")]
         + _get_unsuitable_keys_and_values_validators(
             options, option_type="quorum"
         )
-        + cast(list[validate.ValidatorInterface], validators)
+        + list(validators)
     )
 
 
@@ -2003,15 +1977,11 @@ def _qdevice_add_model_net_options(
     force_options -- turn forceable errors into warnings
     """
     return validate.ValidatorAll(
-        cast(
-            list[validate.ValidatorInterface],
-            [
-                validate.IsRequiredAll(
-                    _QDEVICE_NET_REQUIRED_OPTIONS,
-                    option_type="quorum device model",
-                )
-            ],
-        )
+        [
+            validate.IsRequiredAll(
+                _QDEVICE_NET_REQUIRED_OPTIONS, option_type="quorum device model"
+            )
+        ]
         + _get_qdevice_model_net_options_validators(
             node_ids, force_options=force_options
         )
@@ -2053,19 +2023,16 @@ def _get_qdevice_generic_options_validators(
             val.empty_string_valid = True
 
     return (
-        cast(
-            list[validate.ValidatorInterface],
-            [
-                validate.NamesIn(
-                    ["sync_timeout", "timeout"],
-                    option_type="quorum device",
-                    banned_name_list=["model"],
-                    severity=severity,
-                )
-            ],
-        )
+        [
+            validate.NamesIn(
+                ["sync_timeout", "timeout"],
+                option_type="quorum device",
+                banned_name_list=["model"],
+                severity=severity,
+            )
+        ]
         + _get_unsuitable_keys_and_values_validators(options, "quorum device")
-        + cast(list[validate.ValidatorInterface], validators)
+        + list(validators)
     )
 
 
@@ -2103,17 +2070,14 @@ def _get_qdevice_heuristics_nonexec_options_validators(
     if allow_empty_values:
         for val in validators:
             val.empty_string_valid = True
-    return cast(
-        list[validate.ValidatorInterface],
-        [
-            validate.NamesIn(
-                allowed_options,
-                allowed_option_patterns=["exec_NAME"],
-                option_type="heuristics",
-                severity=severity,
-            )
-        ],
-    ) + cast(list[validate.ValidatorInterface], validators)
+    return [
+        validate.NamesIn(
+            allowed_options,
+            allowed_option_patterns=["exec_NAME"],
+            option_type="heuristics",
+            severity=severity,
+        )
+    ] + list(validators)
 
 
 def _get_qdevice_model_net_options_validators(
@@ -2154,19 +2118,15 @@ def _get_qdevice_model_net_options_validators(
         for val in validators_optional_options:
             val.empty_string_valid = True
     return (
-        cast(
-            list[validate.ValidatorInterface],
-            [
-                validate.NamesIn(
-                    _QDEVICE_NET_REQUIRED_OPTIONS
-                    + _QDEVICE_NET_OPTIONAL_OPTIONS,
-                    option_type="quorum device model",
-                    severity=severity,
-                )
-            ],
-        )
+        [
+            validate.NamesIn(
+                _QDEVICE_NET_REQUIRED_OPTIONS + _QDEVICE_NET_OPTIONAL_OPTIONS,
+                option_type="quorum device model",
+                severity=severity,
+            )
+        ]
         + validators_required_options
-        + cast(list[validate.ValidatorInterface], validators_optional_options)
+        + list(validators_optional_options)
     )
 
 
@@ -2186,10 +2146,9 @@ def _get_option_after_update(
 def _get_unsuitable_keys_and_values_validators(
     option_dict: Mapping[str, str], option_type: Optional[str] = None
 ) -> list[validate.ValidatorInterface]:
-    return cast(
-        list[validate.ValidatorInterface],
-        [validate.CorosyncOption(option_type=option_type)],
-    ) + [validate.ValueCorosyncValue(name) for name in option_dict]
+    return [validate.CorosyncOption(option_type=option_type)] + [
+        validate.ValueCorosyncValue(name) for name in option_dict
+    ]
 
 
 def _mixes_ipv4_ipv6(addr_types: Collection[CorosyncNodeAddressType]) -> bool:
