@@ -1851,9 +1851,11 @@ def remove_nodes(
         # required, cluster has to be turned off and therefore it loses quorum.
         com_cmd = cluster.GetQuorumStatus(report_processor)
         com_cmd.set_targets(targets_to_remove)
-        failures, quorum_status = run_com(env.get_node_communicator(), com_cmd)
-        if quorum_status:
-            if quorum_status.stopping_nodes_cause_quorum_loss(node_list):
+        failures, quorum_status_facade = run_com(
+            env.get_node_communicator(), com_cmd
+        )
+        if quorum_status_facade:
+            if quorum_status_facade.stopping_nodes_cause_quorum_loss(node_list):
                 report_processor.report(
                     ReportItem(
                         severity=reports.item.get_severity(

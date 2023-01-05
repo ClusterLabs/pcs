@@ -100,6 +100,35 @@ class QuorumStatus:
         """
         return sum(qdevice.votes for qdevice in self.qdevice_list)
 
+
+class QuorumStatusFacade:
+    @classmethod
+    def from_string(cls, quorum_status_string: str) -> "QuorumStatusFacade":
+        return cls(_parse_quorum_status(quorum_status_string))
+
+    def __init__(self, quorum_status: QuorumStatus):
+        self._quorum_status = quorum_status
+
+    @property
+    def node_list(self) -> Sequence[QuorumStatusNode]:
+        return self._quorum_status.node_list
+
+    @property
+    def qdevice_list(self) -> Sequence[QuorumStatusNode]:
+        return self._quorum_status.qdevice_list
+
+    @property
+    def is_quorate(self) -> bool:
+        return self._quorum_status.is_quorate
+
+    @property
+    def votes_needed_for_quorum(self) -> int:
+        return self._quorum_status.votes_needed_for_quorum
+
+    @property
+    def qdevice_votes(self) -> int:
+        return self._quorum_status.qdevice_votes
+
     def _get_votes_excluding_nodes(self, node_names: Container[str]) -> int:
         """
         How many votes do remain if specified nodes are not counted in?
@@ -151,7 +180,7 @@ class QuorumStatus:
         )
 
 
-def parse_quorum_status(quorum_status: str) -> QuorumStatus:
+def _parse_quorum_status(quorum_status: str) -> QuorumStatus:
     # pylint: disable=too-many-branches
     node_list: list[QuorumStatusNode] = []
     qdevice_list: list[QuorumStatusNode] = []

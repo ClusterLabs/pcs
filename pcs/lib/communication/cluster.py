@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pcs.common import reports
 from pcs.common.node_communicator import RequestData
 from pcs.common.reports.item import ReportItem
@@ -9,7 +11,10 @@ from pcs.lib.communication.tools import (
     SimpleResponseProcessingMixin,
     SkipOfflineMixin,
 )
-from pcs.lib.corosync import live as corosync_live
+from pcs.lib.corosync.live import (
+    QuorumStatusException,
+    QuorumStatusFacade,
+)
 from pcs.lib.node_communication import response_to_report_item
 
 
@@ -84,8 +89,8 @@ class DestroyWarnOnFailure(
 
 
 class GetQuorumStatus(AllSameDataMixin, OneByOneStrategyMixin, RunRemotelyBase):
-    _quorum_status = None
-    _has_failure = False
+    _quorum_status_facade: Optional[QuorumStatusFacade] = None
+    _has_failure: Optional[bool] = False
 
     def _get_request_data(self):
         return RequestData("remote/get_quorum_info")
@@ -103,11 +108,11 @@ class GetQuorumStatus(AllSameDataMixin, OneByOneStrategyMixin, RunRemotelyBase):
             # corosync is not running on the node, this is OK
             return self._get_next_list()
         try:
-            quorum_status = corosync_live.parse_quorum_status(response.data)
-            if not quorum_status.is_quorate:
+            quorum_status_facade = QuorumStatusFacade.from_string(response.data)
+            if not quorum_status_facade.is_quorate:
                 return self._get_next_list()
-            self._quorum_status = quorum_status
-        except corosync_live.QuorumStatusParsingException as e:
+            self._quorum_status_facade = quorum_status_facade
+        except QuorumStatusException as e:
             self._has_failure = True
             self._report(
                 ReportItem.warning(
@@ -120,5 +125,7 @@ class GetQuorumStatus(AllSameDataMixin, OneByOneStrategyMixin, RunRemotelyBase):
             return self._get_next_list()
         return []
 
-    def on_complete(self):
-        return self._has_failure, self._quorum_status
+    def on_complete(
+        self,
+    ) -> tuple[Optional[bool], Optional[QuorumStatusFacade]]:
+        return self._has_failure, self._quorum_status_facade
