@@ -8,6 +8,7 @@ from lxml.etree import _Element
 
 from pcs.common import reports
 from pcs.common.services.interfaces import ServiceManagerInterface
+from pcs.common.tools import timeout_to_seconds
 from pcs.common.types import StringSequence
 from pcs.lib import (
     sbd,
@@ -38,8 +39,21 @@ def _validate_stonith_watchdog_timeout_property(
     force: bool = False,
 ) -> reports.ReportItemList:
     report_list: reports.ReportItemList = []
+    original_value = value
+    # if value is not empty, try to convert time interval string
+    if value:
+        seconds = timeout_to_seconds(value)
+        if seconds is None:
+            # returns empty list because this should be reported by
+            # ValueTimeInterval validator
+            return report_list
+        value = str(seconds)
     if sbd.is_sbd_enabled(service_manager):
-        report_list.extend(sbd.validate_stonith_watchdog_timeout(value, force))
+        report_list.extend(
+            sbd.validate_stonith_watchdog_timeout(
+                validate.ValuePair(original_value, value), force
+            )
+        )
     else:
         if value not in ["", "0"]:
             report_list.append(
@@ -124,9 +138,6 @@ def validate_set_cluster_properties(
             # unknow properties are reported by NamesIn validator
             continue
         property_metadata = possible_properties_dict[property_name]
-        if property_metadata.name == "stonith-watchdog-timeout":
-            # needs extra validation
-            continue
         if property_metadata.type == "boolean":
             validators.append(
                 validate.ValuePcmkBoolean(
@@ -154,9 +165,13 @@ def validate_set_cluster_properties(
                 )
             )
         elif property_metadata.type == "time":
+            # make stonith-watchdog-timeout value not forcable
             validators.append(
                 validate.ValueTimeInterval(
-                    property_metadata.name, severity=severity
+                    property_metadata.name,
+                    severity=severity
+                    if property_metadata.name != "stonith-watchdog-timeout"
+                    else reports.ReportItemSeverity.error(),
                 )
             )
     report_list.extend(

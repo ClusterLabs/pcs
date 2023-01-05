@@ -83,6 +83,7 @@ FIXTURE_VALID_OPTIONS_DICT = {
     "integer_param": "10",
     "percentage_param": "20%",
     "select_param": "s3",
+    "stonith-watchdog-timeout": "0",
     "time_param": "5min",
 }
 
@@ -95,6 +96,8 @@ FIXTURE_INVALID_OPTIONS_DICT = {
     "unknown": "value",
     "have-watchdog": "100",
 }
+
+STONITH_WATCHDOG_TIMEOUT_UNSET_VALUES = ["", "0", "0s"]
 
 
 def _fixture_parameter(name, param_type, default, enum_values):
@@ -239,6 +242,7 @@ class TestValidateSetClusterProperties(TestCase):
         sbd_enabled=False,
         sbd_devices=False,
         force=False,
+        valid_value=True,
     ):
         self.mock_is_sbd_enabled.return_value = sbd_enabled
         self.mock_sbd_devices.return_value = ["devices"] if sbd_devices else []
@@ -254,9 +258,13 @@ class TestValidateSetClusterProperties(TestCase):
             ),
             expected_report_list,
         )
-        if "stonith-watchdog-timeout" in new_properties and (
-            new_properties["stonith-watchdog-timeout"]
-            or "stonith-watchdog-timeout" in configured_properties
+        if (
+            "stonith-watchdog-timeout" in new_properties
+            and (
+                new_properties["stonith-watchdog-timeout"]
+                or "stonith-watchdog-timeout" in configured_properties
+            )
+            and valid_value
         ):
             self.mock_is_sbd_enabled.assert_called_once_with(
                 self.mock_service_manager
@@ -266,7 +274,10 @@ class TestValidateSetClusterProperties(TestCase):
                 if sbd_devices:
                     self.mock_sbd_timeout.assert_not_called()
                 else:
-                    if new_properties["stonith-watchdog-timeout"] in ["", "0"]:
+                    if (
+                        new_properties["stonith-watchdog-timeout"]
+                        in STONITH_WATCHDOG_TIMEOUT_UNSET_VALUES
+                    ):
                         self.mock_sbd_timeout.assert_not_called()
                     else:
                         self.mock_sbd_timeout.assert_called_once_with()
@@ -280,6 +291,8 @@ class TestValidateSetClusterProperties(TestCase):
             self.mock_sbd_timeout.assert_not_called()
 
         self.mock_is_sbd_enabled.reset_mock()
+        self.mock_sbd_devices.reset_mock()
+        self.mock_sbd_timeout.reset_mock()
 
     def test_no_properties_to_set_or_unset(self):
         self.assert_validate_set(
@@ -328,7 +341,7 @@ class TestValidateSetClusterProperties(TestCase):
         )
 
     def test_unset_stonith_watchdog_timeout_sbd_disabled(self):
-        for value in ["0", ""]:
+        for value in STONITH_WATCHDOG_TIMEOUT_UNSET_VALUES:
             with self.subTest(value=value):
                 self.assert_validate_set(
                     ["stonith-watchdog-timeout"],
@@ -349,22 +362,27 @@ class TestValidateSetClusterProperties(TestCase):
         )
 
     def test_set_ok_stonith_watchdog_timeout_sbd_enabled_without_devices(self):
-        self.assert_validate_set(
-            [], {"stonith-watchdog-timeout": "15"}, [], sbd_enabled=True
-        )
+        for value in ["15", "15s"]:
+            with self.subTest(value=value):
+                self.assert_validate_set(
+                    [],
+                    {"stonith-watchdog-timeout": value},
+                    [],
+                    sbd_enabled=True,
+                )
 
     def test_set_small_stonith_watchdog_timeout_sbd_enabled_without_devices(
         self,
     ):
         self.assert_validate_set(
             [],
-            {"stonith-watchdog-timeout": "9"},
+            {"stonith-watchdog-timeout": "9s"},
             [
                 fixture.error(
                     reports.codes.STONITH_WATCHDOG_TIMEOUT_TOO_SMALL,
                     force_code=reports.codes.FORCE,
                     cluster_sbd_watchdog_timeout=10,
-                    entered_watchdog_timeout="9",
+                    entered_watchdog_timeout="9s",
                 )
             ],
             sbd_enabled=True,
@@ -387,28 +405,54 @@ class TestValidateSetClusterProperties(TestCase):
             force=True,
         )
 
-    def test_set_not_a_number_stonith_watchdog_timeout_sbd_enabled_without_devices(
+    def _set_invalid_value_stonith_watchdog_timeout(
+        self, sbd_enabled=False, sbd_devices=False
+    ):
+        for value in ["invalid", "10x"]:
+            with self.subTest(value=value):
+                self.assert_validate_set(
+                    [],
+                    {"stonith-watchdog-timeout": value},
+                    [
+                        fixture.error(
+                            reports.codes.INVALID_OPTION_VALUE,
+                            option_name="stonith-watchdog-timeout",
+                            option_value=value,
+                            allowed_values="time interval (e.g. 1, 2s, 3m, 4h, ...)",
+                            cannot_be_empty=False,
+                            forbidden_characters=None,
+                        )
+                    ],
+                    sbd_enabled=sbd_enabled,
+                    sbd_devices=sbd_devices,
+                    valid_value=False,
+                )
+
+    def test_set_invalid_value_stonith_watchdog_timeout_sbd_enabled_without_devices(
         self,
     ):
+        self._set_invalid_value_stonith_watchdog_timeout(
+            sbd_enabled=True, sbd_devices=False
+        )
 
-        self.assert_validate_set(
-            [],
-            {"stonith-watchdog-timeout": "invalid"},
-            [
-                fixture.error(
-                    reports.codes.STONITH_WATCHDOG_TIMEOUT_TOO_SMALL,
-                    force_code=reports.codes.FORCE,
-                    cluster_sbd_watchdog_timeout=10,
-                    entered_watchdog_timeout="invalid",
-                )
-            ],
-            sbd_enabled=True,
+    def test_set_invalid_value_stonith_watchdog_timeout_sbd_enabled_with_devices(
+        self,
+    ):
+        self._set_invalid_value_stonith_watchdog_timeout(
+            sbd_enabled=True, sbd_devices=True
+        )
+
+    def test_set_invalid_value_stonith_watchdog_timeout_sbd_disabled(
+        self,
+    ):
+        self._set_invalid_value_stonith_watchdog_timeout(
+            sbd_enabled=False, sbd_devices=False
         )
 
     def test_unset_stonith_watchdog_timeout_sbd_enabled_without_devices(
         self,
     ):
-        for value in ["0", ""]:
+        for value in STONITH_WATCHDOG_TIMEOUT_UNSET_VALUES:
             with self.subTest(value=value):
                 self.assert_validate_set(
                     ["stonith-watchdog-timeout"],
@@ -426,7 +470,7 @@ class TestValidateSetClusterProperties(TestCase):
     def test_unset_stonith_watchdog_timeout_sbd_enabled_without_devices_forced(
         self,
     ):
-        for value in ["0", ""]:
+        for value in STONITH_WATCHDOG_TIMEOUT_UNSET_VALUES:
             with self.subTest(value=value):
                 self.assert_validate_set(
                     ["stonith-watchdog-timeout"],
@@ -459,7 +503,7 @@ class TestValidateSetClusterProperties(TestCase):
     def test_set_stonith_watchdog_timeout_sbd_enabled_with_devices_forced(self):
         self.assert_validate_set(
             [],
-            {"stonith-watchdog-timeout": 15},
+            {"stonith-watchdog-timeout": "15s"},
             [
                 fixture.warn(
                     reports.codes.STONITH_WATCHDOG_TIMEOUT_CANNOT_BE_SET,
@@ -472,7 +516,7 @@ class TestValidateSetClusterProperties(TestCase):
         )
 
     def test_unset_stonith_watchdog_timeout_sbd_enabled_with_devices(self):
-        for value in ["0", ""]:
+        for value in STONITH_WATCHDOG_TIMEOUT_UNSET_VALUES:
             with self.subTest(value=value):
                 self.assert_validate_set(
                     ["stonith-watchdog-timeout"],

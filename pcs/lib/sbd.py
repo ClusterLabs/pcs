@@ -1,6 +1,9 @@
 import re
 from os import path
-from typing import Optional
+from typing import (
+    Optional,
+    Union,
+)
 
 from pcs import settings
 from pcs.common import reports
@@ -392,7 +395,10 @@ def _get_local_sbd_watchdog_timeout() -> int:
 
 
 def validate_stonith_watchdog_timeout(
-    stonith_watchdog_timeout: str, force: bool = False
+    stonith_watchdog_timeout: Union[
+        validate.TypeOptionValue, validate.ValuePair
+    ],
+    force: bool = False,
 ) -> reports.ReportItemList:
     """
     Check sbd status and config when user is setting stonith-watchdog-timeout
@@ -401,6 +407,7 @@ def validate_stonith_watchdog_timeout(
 
     stonith_watchdog_timeout -- value to be validated
     """
+    stonith_watchdog_timeout = validate.ValuePair.get(stonith_watchdog_timeout)
     severity = reports.get_severity(reports.codes.FORCE, force)
     if _is_device_set_local():
         return (
@@ -412,11 +419,11 @@ def validate_stonith_watchdog_timeout(
                     ),
                 )
             ]
-            if stonith_watchdog_timeout not in ["", "0"]
+            if stonith_watchdog_timeout.normalized not in ["", "0"]
             else []
         )
 
-    if stonith_watchdog_timeout in ["", "0"]:
+    if stonith_watchdog_timeout.normalized in ["", "0"]:
         return [
             reports.ReportItem(
                 severity,
