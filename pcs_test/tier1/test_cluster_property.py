@@ -169,10 +169,22 @@ class TestPropertySet(PropertyMixin, TestCase):
 
     def test_set_stonith_watchdog_timeout(self):
         self.assert_pcs_fail(
-            "property set stonith-watchdog-timeout=5".split(),
+            "property set stonith-watchdog-timeout=5s".split(),
             stderr_full=(
                 "Error: stonith-watchdog-timeout can only be unset or set to 0 "
                 "while SBD is disabled\n"
+                "Error: Errors have occurred, therefore pcs is unable to "
+                "continue\n"
+            ),
+        )
+        self.assert_resources_xml_in_cib(UNCHANGED_CRM_CONFIG)
+
+    def test_set_stonith_watchdog_timeout_invalid_value(self):
+        self.assert_pcs_fail(
+            "property set stonith-watchdog-timeout=5x".split(),
+            stderr_full=(
+                "Error: '5x' is not a valid stonith-watchdog-timeout value, use"
+                " time interval (e.g. 1, 2s, 3m, 4h, ...)\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
                 "continue\n"
             ),
