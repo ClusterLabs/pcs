@@ -2,4 +2,5 @@
 extend-exclude = ["typos.toml", "typos_known", "typos_new"]
 
 [default.extend-words]
+resrource = "resource"
 stontih = "stonith"
