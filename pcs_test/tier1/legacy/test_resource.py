@@ -5906,7 +5906,13 @@ class UpdateInstanceAttrs(
     def test_agent_self_validation_failure(self):
         self.fixture_resource()
         self.assert_pcs_fail(
-            ["resource", "update", "R", "fake=is_invalid=True"],
+            [
+                "resource",
+                "update",
+                "R",
+                "fake=is_invalid=True",
+                "--agent-validation",
+            ],
             stdout_start="Error: Validation result from agent (use --force to override):",
         )
 

@@ -753,6 +753,7 @@ class Promotable(TestCase, AssertPcsMixin):
         ensure_disabled=False,
         use_default_operations=True,
         wait=False,
+        enable_agent_self_validation=False,
     ):
         # pylint: disable=unused-argument
         return locals()

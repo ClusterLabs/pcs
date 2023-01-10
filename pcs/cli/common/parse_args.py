@@ -94,6 +94,8 @@ PCS_LONG_OPTIONS = [
     f"{_OUTPUT_FORMAT_OPTION_STR}=",
     # auth token
     "token=",
+    # enable agent self validation
+    "agent-validation",
 ]
 
 
@@ -485,6 +487,7 @@ class InputModifiers:
             {
                 # boolean values
                 "--all": "--all" in options,
+                "--agent-validation": "--agent-validation" in options,
                 "--autodelete": "--autodelete" in options,
                 "--brief": "--brief" in options,
                 "--config": "--config" in options,

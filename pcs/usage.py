@@ -680,7 +680,7 @@ _RESOURCE_UPDATE_CMD = "update"
 _RESOURCE_UPDATE_SYNTAX = _unwrap(
     """
     <{obj} id> [{obj} options] [op [<operation action> <operation options>]...]
-    [meta <meta operations>...] [--wait[=n]]
+    [meta <meta operations>...] [--agent-validation] [--wait[=n]]
     """
 )
 
@@ -705,6 +705,11 @@ def _resource_update_desc_fn(is_stonith: bool) -> Iterable[str]:
         (WARNING: all existing options on the updated operation will be reset
          if not specified.) If you want to create multiple monitor operations
          you should use the 'op add' & 'op remove' commands.
+        """,
+        "",
+        """
+        If --agent-validation is specified, resource agent validate-all action
+        will be used to validate resource options.
         """,
         "",
         """
@@ -778,7 +783,8 @@ Commands:
            [clone [<clone id>] [<clone options>] |
            promotable [<clone id>] [<promotable options>] |
            --group <group id> [--before <resource id> | --after <resource id>] |
-           bundle <bundle id>] [--disabled] [--no-default-ops] [--wait[=n]]
+           bundle <bundle id>] [--disabled] [--agent-validation]
+           [--no-default-ops] [--wait[=n]]
         Create specified resource. If clone is used a clone resource is
         created. If promotable is used a promotable clone resource is created.
         If --group is specified the resource is added to the group named. You
@@ -786,12 +792,13 @@ Commands:
         resource relatively to some resource already existing in the group. If
         bundle is used, the resource will be created inside of the specified
         bundle. If --disabled is specified the resource is not started
-        automatically. If --no-default-ops is specified, only monitor
-        operations are created for the resource and all other operations use
-        default settings. If --wait is specified, pcs will wait up to 'n'
-        seconds for the resource to start and then return 0 if the resource is
-        started, or 1 if the resource has not yet started. If 'n' is not
-        specified it defaults to 60 minutes.
+        automatically. If --agent-validation is specified, resource agent
+        validate-all action will be used to validate resource options. If
+        --no-default-ops is specified, only monitor operations are created for
+        the resource and all other operations use default settings. If --wait
+        is specified, pcs will wait up to 'n' seconds for the resource to start
+        and then return 0 if the resource is started, or 1 if the resource has
+        not yet started. If 'n' is not specified it defaults to 60 minutes.
         Example: Create a new resource called 'VirtualIP' with IP address
             192.168.0.99, netmask of 32, monitored everything 30 seconds,
             on eth2:
@@ -1844,13 +1851,15 @@ Commands:
            [op <operation action> <operation options> [<operation action>
            <operation options>]...] [meta <meta options>...]
            [--group <group id> [--before <stonith id> | --after <stonith id>]]
-           [--disabled] [--wait[=n]]
+           [--disabled] [--agent-validation] [--wait[=n]]
         Create stonith device with specified type and options.
         If --group is specified the stonith device is added to the group named.
         You can use --before or --after to specify the position of the added
         stonith device relatively to some stonith device already existing in the
         group.
         If --disabled is specified the stonith device is not used.
+        If --agent-validation is specified, resource agent validate-all action
+        will be used to validate resource options.
         If --wait is specified, pcs will wait up to 'n' seconds for the stonith
         device to start and then return 0 if the stonith device is started, or 1
         if the stonith device has not yet started.  If 'n' is not specified it

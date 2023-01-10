@@ -137,6 +137,7 @@ def create(
     resource_type: str = "resource",
     # TODO remove this arg
     do_not_report_instance_attribute_server_exists: bool = False,
+    enable_agent_self_validation: bool = False,
 ):
     # pylint: disable=too-many-arguments
     # pylint: disable=too-many-locals
@@ -159,6 +160,8 @@ def create(
     resource_type -- describes the resource for reports
     do_not_report_instance_attribute_server_exists -- dirty fix due to
         suboptimal architecture, TODO: fix the architecture and remove the param
+    enable_agent_self_validation -- if True, use agent self-validation feature
+        to validate instance attributes
     """
     if raw_operation_list is None:
         raw_operation_list = []
@@ -200,6 +203,7 @@ def create(
         instance_attributes,
         resources_section,
         force=allow_invalid_instance_attributes,
+        enable_agent_self_validation=enable_agent_self_validation,
     )
     # TODO remove this "if", see pcs.lib.cib.remote_node.create for details
     if do_not_report_instance_attribute_server_exists:
@@ -388,6 +392,7 @@ def validate_resource_instance_attributes_create(
     instance_attributes: Mapping[str, str],
     resources_section: _Element,
     force: bool = False,
+    enable_agent_self_validation: bool = False,
 ) -> reports.ReportItemList:
     report_items: reports.ReportItemList = []
     report_items += validate.ValidatorAll(
@@ -422,7 +427,8 @@ def validate_resource_instance_attributes_create(
         )
 
     if (
-        _is_ocf_or_stonith_agent(agent_name)
+        enable_agent_self_validation
+        and _is_ocf_or_stonith_agent(agent_name)
         and resource_agent.metadata.agent_exists
         and resource_agent.metadata.provides_self_validation
         and not any(
@@ -450,6 +456,7 @@ def validate_resource_instance_attributes_update(
     resource_id: str,
     resources_section: _Element,
     force: bool = False,
+    enable_agent_self_validation: bool = False,
 ) -> reports.ReportItemList:
     # pylint: disable=too-many-locals
     # TODO This function currently accepts the updated resource as a string and
@@ -524,7 +531,8 @@ def validate_resource_instance_attributes_update(
         )
 
     if (
-        _is_ocf_or_stonith_agent(agent_name)
+        enable_agent_self_validation
+        and _is_ocf_or_stonith_agent(agent_name)
         and resource_agent.metadata.agent_exists
         and resource_agent.metadata.provides_self_validation
         and not any(

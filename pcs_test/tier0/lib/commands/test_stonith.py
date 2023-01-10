@@ -108,9 +108,6 @@ class CreateMixin:
         )
         self.config.runner.pcmk.load_fake_agent_metadata()
         self.config.runner.cib.load()
-        self.config.runner.pcmk.stonith_agent_self_validation(
-            instance_attributes, agent_name, output=""
-        )
         self.config.env.push_cib(
             resources=self._expected_cib(expected_cib_simple)
         )
@@ -158,6 +155,7 @@ class CreateMixin:
                 operations=[],
                 meta_attributes={},
                 instance_attributes=instance_attributes,
+                enable_agent_self_validation=True,
             ),
         )
         self.env_assist.assert_reports(
@@ -208,6 +206,7 @@ class CreateMixin:
             meta_attributes={},
             instance_attributes=instance_attributes,
             allow_invalid_instance_attributes=True,
+            enable_agent_self_validation=True,
         )
         self.env_assist.assert_reports(
             [
@@ -245,6 +244,7 @@ class CreateMixin:
                 operations=[],
                 meta_attributes={},
                 instance_attributes=instance_attributes,
+                enable_agent_self_validation=True,
             ),
         )
         self.env_assist.assert_reports(
@@ -266,9 +266,6 @@ class CreateMixin:
         )
         self.config.runner.pcmk.load_fake_agent_metadata()
         self.config.runner.cib.load()
-        self.config.runner.pcmk.stonith_agent_self_validation(
-            {}, agent_name, output=""
-        )
         self.config.env.push_cib(
             resources=self._expected_cib(expected_cib_unfencing)
         )
@@ -306,9 +303,6 @@ class CreateMixin:
         )
         self.config.runner.pcmk.load_fake_agent_metadata()
         self.config.runner.cib.load()
-        self.config.runner.pcmk.stonith_agent_self_validation(
-            instance_attributes, agent_name, output=""
-        )
         self.config.env.push_cib(resources=self._expected_cib(expected_cib))
 
         self._create(
@@ -334,9 +328,6 @@ class CreateMixin:
         )
         self.config.runner.pcmk.load_fake_agent_metadata()
         self.config.runner.cib.load()
-        self.config.runner.pcmk.stonith_agent_self_validation(
-            {}, agent_name, output=""
-        )
         self.config.env.push_cib(
             resources=self._expected_cib(expected_cib_operations)
         )
@@ -395,9 +386,6 @@ class CreateMixin:
         )
         self.config.runner.pcmk.load_fake_agent_metadata()
         self.config.runner.cib.load()
-        self.config.runner.pcmk.stonith_agent_self_validation(
-            instance_attributes, agent_name, output=""
-        )
         self.config.env.push_cib(
             resources=self._expected_cib(expected_cib_simple_forced)
         )
@@ -610,9 +598,6 @@ class CreateMixin:
         )
         self.config.runner.pcmk.load_fake_agent_metadata()
         self.config.runner.cib.load()
-        self.config.runner.pcmk.stonith_agent_self_validation(
-            instance_attributes, agent_name, output=""
-        )
         self.config.env.push_cib(
             resources=self._expected_cib(expected_cib_simple), wait=timeout
         )
@@ -726,9 +711,6 @@ class CreateInGroup(CreateMixin, TestCase):
         )
         self.config.runner.pcmk.load_fake_agent_metadata()
         self.config.runner.cib.load(resources=original_cib)
-        self.config.runner.pcmk.stonith_agent_self_validation(
-            instance_attributes, agent_name, output=""
-        )
         self.config.env.push_cib(resources=expected_cib)
 
         stonith.create_in_group(

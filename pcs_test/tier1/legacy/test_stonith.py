@@ -1308,7 +1308,7 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "stonith update test3 username=testA".split(),
+            "stonith update test3 username=testA --agent-validation".split(),
             stderr_start="Warning: The resource was misconfigured before the update,",
         )
 

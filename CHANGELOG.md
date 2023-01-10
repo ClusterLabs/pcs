@@ -13,9 +13,15 @@
 - Displaying bool and integer values in `pcs resource config` command
   ([rhbz#2151164], [ghissue#604])
 
+### Changed
+- Agent self-validation feature is not used to validate resource options by
+  default. Use flag '--agent-validation' to use it in supported commands.
+  ([rhbz#2159454])
+
 [ghissue#604]: https://github.com/ClusterLabs/pcs/issues/604
 [rhbz#2151164]: https://bugzilla.redhat.com/show_bug.cgi?id=2151164
 [rhbz#2151524]: https://bugzilla.redhat.com/show_bug.cgi?id=2151524
+[rhbz#2159454]: https://bugzilla.redhat.com/show_bug.cgi?id=2159454
 
 
 ## [0.11.4] - 2022-11-21

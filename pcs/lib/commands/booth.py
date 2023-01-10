@@ -480,6 +480,7 @@ def create_in_cluster(
         env.cmd_runner(),
         resources_section,
         id_provider,
+        enable_agent_self_validation=False,
     )
     agent_factory = ResourceAgentFacadeFactory(
         env.cmd_runner(), report_processor
