@@ -8,6 +8,7 @@ from pcs.daemon.app.auth import (
 )
 from pcs.daemon.app.common import (
     BaseHandler,
+    LegacyApiBaseHandler,
     RoutesType,
 )
 from pcs.daemon.app.ui_common import (
@@ -17,7 +18,7 @@ from pcs.daemon.app.ui_common import (
 from pcs.lib.auth.provider import AuthProvider
 
 
-class SPAHandler(BaseHandler):
+class SPAHandler(LegacyApiBaseHandler):
     __index = None
     __fallback = None
 
@@ -26,8 +27,7 @@ class SPAHandler(BaseHandler):
         self.__index = index
         self.__fallback = fallback
 
-    def get(self, *args, **kwargs):
-        del args, kwargs
+    def get(self):
         self.render(
             self.__index
             if os.path.isfile(str(self.__index))
@@ -57,8 +57,7 @@ class Login(SPAHandler, AjaxMixin):
     def prepare(self) -> None:
         self._session_auth_provider.init_session()
 
-    async def post(self, *args, **kwargs):
-        del args, kwargs
+    async def post(self):
         # This is the way of old (ruby) pcsd. Post login generates a session
         # cookie. No matter if authentication succeeded or failed.
         try:
@@ -93,8 +92,7 @@ class Logout(AjaxMixin, BaseHandler):
     def prepare(self) -> None:
         self._auth_provider.init_session()
 
-    async def get(self, *args, **kwargs):
-        del args, kwargs
+    async def get(self):
         self._auth_provider.session_logout()
         self.write("OK")
 

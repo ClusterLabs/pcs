@@ -51,21 +51,7 @@ def getAuthUser()
 end
 
 before do
-  # nobody is logged in yet
-  @auth_user = nil
-
-  if(request.path.start_with?('/remote/') and request.path != "/remote/auth") or request.path == '/run_pcs' or request.path.start_with?('/api/')
-    # Sets @auth_user to a hash containing info about logged in user or halts
-    # the request processing if login credentials are incorrect.
-    @auth_user = PCSAuth.loginByToken(request.cookies)
-    unless @auth_user
-      halt [401, '{"notauthorized":"true"}']
-    end
-  else
-    # Set a sane default: nobody is logged in, but we do not need to check both
-    # for nil and empty username (if auth_user and auth_user[:username])
-    @auth_user = {} if not @auth_user
-  end
+  @auth_user = getAuthUser()
   $cluster_name, $cluster_uuid = get_cluster_name_and_uuid()
 end
 

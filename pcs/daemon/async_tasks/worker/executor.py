@@ -20,7 +20,11 @@ from pcs.common import reports
 from pcs.common.async_tasks.dto import CommandOptionsDto
 from pcs.common.async_tasks.types import TaskFinishType
 from pcs.common.interface import dto
-from pcs.lib.auth.provider import AuthUser
+from pcs.lib.auth.tools import (
+    DesiredUser,
+    get_effective_user,
+)
+from pcs.lib.auth.types import AuthUser
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.permissions.checker import PermissionsChecker
@@ -86,16 +90,19 @@ def _pause_worker() -> None:
 
 
 def _get_effective_user(
-    logger: Logger, auth_user: AuthUser, options: CommandOptionsDto
+    logger: Logger, real_user: AuthUser, options: CommandOptionsDto
 ) -> AuthUser:
-    username = auth_user.username
-    groups = auth_user.groups
-    if options.effective_username:
-        username = options.effective_username
-        if options.effective_groups:
-            groups = options.effective_groups
-        logger.debug("Effective user=%s groups=%s", username, ",".join(groups))
-    return AuthUser(username=username, groups=tuple(groups))
+    effective_user = get_effective_user(
+        real_user,
+        DesiredUser(options.effective_username, options.effective_groups),
+    )
+    if real_user != effective_user:
+        logger.debug(
+            "Effective user=%s groups=%s",
+            effective_user.username,
+            ",".join(effective_user.groups),
+        )
+    return effective_user
 
 
 def task_executor(task: WorkerCommand) -> None:

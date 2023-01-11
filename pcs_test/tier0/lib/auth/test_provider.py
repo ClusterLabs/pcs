@@ -13,10 +13,8 @@ from pcs.lib.auth import const
 from pcs.lib.auth.config.facade import Facade
 from pcs.lib.auth.config.parser import ParserError
 from pcs.lib.auth.config.types import TokenEntry
-from pcs.lib.auth.provider import (
-    AuthProvider,
-    AuthUser,
-)
+from pcs.lib.auth.provider import AuthProvider
+from pcs.lib.auth.types import AuthUser
 from pcs.lib.file.instance import FileInstance
 from pcs.lib.file.json import JsonParserException
 from pcs.lib.interface.config import ParserErrorException

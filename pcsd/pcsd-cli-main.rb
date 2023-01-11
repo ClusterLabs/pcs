@@ -106,13 +106,6 @@ def pcsd_cli_main()
         return {}
       },
     },
-    'set_token_to_accept' => {
-      'only_superuser' => true,
-      'call' => lambda { |params, auth_user_|
-        PCSAuth.addToken(SUPERUSER, params.fetch('token'))
-        return {}
-      },
-    },
     'send_local_configs' => {
       'only_superuser' => false,
       'call' => lambda { |params, auth_user_|

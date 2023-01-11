@@ -5,6 +5,7 @@ from typing import (
     Type,
 )
 
+from tornado.web import Finish
 from tornado.web import RedirectHandler as TornadoRedirectHandler
 from tornado.web import RequestHandler
 
@@ -143,6 +144,26 @@ class BaseHandler(EnhanceHeadersMixin, RequestHandler):
         # method should be implemented to handle streamed request data.
         # BUT we currently do not plan to use it SO:
         pass
+
+
+class LegacyApiBaseHandler(BaseHandler):
+    def unauthorized(self) -> Finish:
+        self.set_status(401)
+        self.write('{"notauthorized":"true"}')
+        return Finish()
+
+
+class LegacyApiHandler(LegacyApiBaseHandler):
+    async def _handle_request(self) -> None:
+        raise NotImplementedError()
+
+    async def get(self, *args, **kwargs):
+        del args, kwargs
+        await self._handle_request()
+
+    async def post(self, *args, **kwargs):
+        del args, kwargs
+        await self._handle_request()
 
 
 class RedirectHandler(EnhanceHeadersMixin, TornadoRedirectHandler):

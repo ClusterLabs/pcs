@@ -1,32 +1,39 @@
+from typing import Optional
+
 from tornado.locks import Lock
 
 from pcs.daemon import ruby_pcsd
 from pcs.daemon.app.auth import (
-    NotAuthorizedException,
-    PasswordAuthProvider,
+    LegacyTokenAuthenticationHandler,
+    TokenAuthProvider,
 )
-from pcs.daemon.app.sinatra_common import Sinatra
+from pcs.daemon.app.sinatra_common import SinatraMixin
 from pcs.daemon.http_server import HttpsServerManage
 from pcs.lib.auth.provider import AuthProvider
+from pcs.lib.auth.types import AuthUser
 
 
-class SinatraRemote(Sinatra):
+class SinatraRemote(LegacyTokenAuthenticationHandler, SinatraMixin):
     """
     SinatraRemote is handler for urls which should be directed to the Sinatra
     remote (non-GUI) functions.
     """
 
-    async def handle_sinatra_request(self):
-        result = await self.ruby_pcsd_wrapper.request_remote(self.request)
+    _token_auth_provider: TokenAuthProvider
+    _auth_user: Optional[AuthUser]
+
+    def initialize(
+        self, ruby_pcsd_wrapper: ruby_pcsd.Wrapper, auth_provider: AuthProvider
+    ) -> None:
+        # pylint: disable=arguments-differ
+        super().initialize(auth_provider)
+        self.initialize_sinatra(ruby_pcsd_wrapper)
+
+    async def _handle_request(self):
+        result = await self.ruby_pcsd_wrapper.request(
+            self.auth_user, self.request
+        )
         self.send_sinatra_result(result)
-
-    async def get(self, *args, **kwargs):
-        del args, kwargs
-        await self.handle_sinatra_request()
-
-    async def post(self, *args, **kwargs):
-        del args, kwargs
-        await self.handle_sinatra_request()
 
 
 class SyncConfigMutualExclusive(SinatraRemote):
@@ -36,20 +43,21 @@ class SyncConfigMutualExclusive(SinatraRemote):
     config synchronization. The exclusivity is achieved by sync_config_lock.
     """
 
+    __sync_config_lock: Lock
+
     def initialize(
-        self, sync_config_lock: Lock, ruby_pcsd_wrapper: ruby_pcsd.Wrapper
-    ):
-        # pylint: disable=arguments-differ, attribute-defined-outside-init
-        super().initialize(ruby_pcsd_wrapper)
+        self,
+        ruby_pcsd_wrapper: ruby_pcsd.Wrapper,
+        auth_provider: AuthProvider,
+        sync_config_lock: Lock,
+    ) -> None:
+        # pylint: disable=arguments-differ
+        super().initialize(ruby_pcsd_wrapper, auth_provider)
         self.__sync_config_lock = sync_config_lock
 
-    async def get(self, *args, **kwargs):
+    async def _handle_request(self):
         async with self.__sync_config_lock:
-            await super().get(*args, **kwargs)
-
-    async def post(self, *args, **kwargs):
-        async with self.__sync_config_lock:
-            await super().get(*args, **kwargs)
+            await super()._handle_request()
 
 
 class SetCerts(SinatraRemote):
@@ -59,47 +67,25 @@ class SetCerts(SinatraRemote):
     will take care of notify of http sever about this change.
     """
 
+    __https_server_manage: HttpsServerManage
+
     def initialize(
         self,
         ruby_pcsd_wrapper: ruby_pcsd.Wrapper,
+        auth_provider: AuthProvider,
         https_server_manage: HttpsServerManage,
     ):
-        # pylint: disable=arguments-differ, attribute-defined-outside-init
-        super().initialize(ruby_pcsd_wrapper)
+        # pylint: disable=arguments-differ
+        super().initialize(ruby_pcsd_wrapper, auth_provider)
         self.__https_server_manage = https_server_manage
 
-    async def handle_sinatra_request(self):
-        result = await self.ruby_pcsd_wrapper.request_remote(self.request)
+    async def _handle_request(self):
+        result = await self.ruby_pcsd_wrapper.request(
+            self.auth_user, self.request
+        )
         if result.status == 200:
             self.__https_server_manage.reload_certs()
         self.send_sinatra_result(result)
-
-
-class Auth(SinatraRemote):
-    _auth_provider: PasswordAuthProvider
-
-    def initialize(
-        self, ruby_pcsd_wrapper: ruby_pcsd.Wrapper, auth_provider: AuthProvider
-    ) -> None:
-        # pylint: disable=arguments-differ
-        super().initialize(ruby_pcsd_wrapper)
-        self._auth_provider = PasswordAuthProvider(self, auth_provider)
-
-    async def auth(self):
-        try:
-            await self._auth_provider.auth_by_username_password(
-                self.get_body_argument("username"),
-                self.get_body_argument("password"),
-            )
-            await self.handle_sinatra_request()
-        except NotAuthorizedException:
-            pass
-
-    async def post(self, *args, **kwargs):
-        await self.auth()
-
-    async def get(self, *args, **kwargs):
-        await self.auth()
 
 
 def get_routes(
@@ -108,25 +94,25 @@ def get_routes(
     https_server_manage: HttpsServerManage,
     auth_provider: AuthProvider,
 ):
-    ruby_wrapper = dict(ruby_pcsd_wrapper=ruby_pcsd_wrapper)
-    lock = dict(sync_config_lock=sync_config_lock)
-    server_manage = dict(https_server_manage=https_server_manage)
+    sinatra_remote_options = dict(
+        ruby_pcsd_wrapper=ruby_pcsd_wrapper, auth_provider=auth_provider
+    )
 
     return [
         # Urls protected by tokens. It is still done by ruby pcsd.
-        (r"/run_pcs", SinatraRemote, ruby_wrapper),
-        (r"/remote/set_certs", SetCerts, {**ruby_wrapper, **server_manage}),
+        (r"/run_pcs", SinatraRemote, sinatra_remote_options),
+        (
+            r"/remote/set_certs",
+            SetCerts,
+            dict(
+                **sinatra_remote_options,
+                https_server_manage=https_server_manage,
+            ),
+        ),
         (
             r"/remote/(set_sync_options|set_configs)",
             SyncConfigMutualExclusive,
-            {**ruby_wrapper, **lock},
+            dict(**sinatra_remote_options, sync_config_lock=sync_config_lock),
         ),
-        (
-            r"/remote/auth",
-            Auth,
-            dict(
-                ruby_pcsd_wrapper=ruby_pcsd_wrapper, auth_provider=auth_provider
-            ),
-        ),
-        (r"/remote/.*", SinatraRemote, ruby_wrapper),
+        (r"/remote/.*", SinatraRemote, sinatra_remote_options),
     ]

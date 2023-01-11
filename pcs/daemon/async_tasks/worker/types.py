@@ -7,7 +7,7 @@ from typing import (
 from pcs.common.async_tasks.types import TaskFinishType
 from pcs.common.reports import ReportItemDto
 from pcs.daemon.async_tasks.types import Command
-from pcs.lib.auth.provider import AuthUser
+from pcs.lib.auth.types import AuthUser
 
 
 @dataclass(frozen=True)

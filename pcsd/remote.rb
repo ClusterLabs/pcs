@@ -26,8 +26,6 @@ def remote(params, request, auth_user)
       :capabilities => method(:capabilities),
       :status => method(:node_status),
       :cluster_status => method(:cluster_status_remote),
-      :auth => method(:auth),
-      :check_auth => method(:check_auth),
       :get_quorum_info => method(:get_quorum_info),
       :get_corosync_conf => method(:get_corosync_conf_remote),
       :set_corosync_conf => method(:set_corosync_conf),
@@ -810,18 +808,6 @@ def imported_cluster_list(params, request, auth_user)
     imported_clusters["cluster_list"] << { "name": cluster.name }
   }
   return JSON.generate(imported_clusters)
-end
-
-def auth(params, request, auth_user)
-  # User authentication using username and password is done in python part of
-  # pcsd. We will get here only if credentials are correct, so we just need to
-  # create a token for the user.
-  return PCSAuth.createToken(params['username'])
-end
-
-def check_auth(params, request, auth_user)
-  # If we get here, we're already authorized
-  return [200, '{"success":true}']
 end
 
 def resource_stop(params, request, auth_user)

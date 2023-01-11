@@ -6,13 +6,16 @@ from pcs.daemon.app.auth import (
     NotAuthorizedException,
     SessionAuthProvider,
 )
-from pcs.daemon.app.common import RoutesType
-from pcs.daemon.app.sinatra_common import Sinatra
+from pcs.daemon.app.common import (
+    LegacyApiHandler,
+    RoutesType,
+)
+from pcs.daemon.app.sinatra_common import SinatraMixin
 from pcs.daemon.app.ui_common import AjaxMixin
 from pcs.lib.auth.provider import AuthProvider
 
 
-class SinatraAjaxProtected(Sinatra, AjaxMixin):
+class SinatraAjaxProtected(LegacyApiHandler, SinatraMixin, AjaxMixin):
     """
     SinatraAjaxProtected handles urls that calls the ajax Sinatra GUI functions.
     It allows to use this urls only for ajax calls.
@@ -27,7 +30,7 @@ class SinatraAjaxProtected(Sinatra, AjaxMixin):
         auth_provider: AuthProvider,
     ) -> None:
         # pylint: disable=arguments-differ
-        Sinatra.initialize(self, ruby_pcsd_wrapper)
+        self.initialize_sinatra(ruby_pcsd_wrapper)
         self._auth_provider = SessionAuthProvider(
             self, auth_provider, session_storage
         )
@@ -37,7 +40,7 @@ class SinatraAjaxProtected(Sinatra, AjaxMixin):
             raise self.unauthorized()
         self._auth_provider.init_session()
 
-    async def handle_sinatra_request(self):
+    async def _handle_request(self):
         try:
             auth_user = await self._auth_provider.auth_by_sid()
         except NotAuthorizedException as e:
@@ -46,20 +49,11 @@ class SinatraAjaxProtected(Sinatra, AjaxMixin):
         if self._auth_provider.is_sid_in_request_cookies():
             self._auth_provider.put_request_cookies_sid_to_response_cookies_sid()
 
-        result = await self.ruby_pcsd_wrapper.request_gui(
+        result = await self.ruby_pcsd_wrapper.request(
+            auth_user,
             self.request,
-            auth_user.username,
-            auth_user.groups,
         )
         self.send_sinatra_result(result)
-
-    async def get(self, *args, **kwargs):
-        del args, kwargs
-        await self.handle_sinatra_request()
-
-    async def post(self, *args, **kwargs):
-        del args, kwargs
-        await self.handle_sinatra_request()
 
 
 def get_routes(

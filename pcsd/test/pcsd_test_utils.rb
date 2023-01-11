@@ -1,9 +1,7 @@
 CURRENT_DIR = File.expand_path(File.dirname(__FILE__))
 CFG_COROSYNC_CONF = File.join(CURRENT_DIR, "corosync.conf.tmp")
 CFG_PCSD_SETTINGS = File.join(CURRENT_DIR, "pcs_settings.conf.tmp")
-CFG_PCSD_USERS = File.join(CURRENT_DIR, "pcs_users.conf.tmp")
 CFG_PCSD_KNOWN_HOSTS = File.join(CURRENT_DIR, 'known-hosts.tmp')
-PCSD_USERS_PATH = CFG_PCSD_USERS
 
 CFG_SYNC_CONTROL = File.join(CURRENT_DIR, 'cfgsync_ctl.tmp')
 

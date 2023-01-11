@@ -4,6 +4,7 @@ import sys
 from typing import (
     Any,
     Sequence,
+    cast,
 )
 
 import pcs.common.ssl
@@ -13,10 +14,20 @@ from pcs import (
 )
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import InputModifiers
-from pcs.cli.reports import process_library_reports
+from pcs.cli.reports import (
+    output,
+    process_library_reports,
+)
 from pcs.cli.reports.output import print_to_stderr
+from pcs.common import file as pcs_file
 from pcs.common import reports
 from pcs.common.reports.item import ReportItem
+from pcs.lib.auth import config as auth_config
+from pcs.lib.auth.const import SUPERUSER
+from pcs.lib.file.instance import FileInstance
+from pcs.lib.file.json import JsonParserException
+from pcs.lib.file.raw_file import raw_file_error_report
+from pcs.lib.interface.config import ParserErrorException
 from pcs.lib.node import get_existing_nodes_names
 
 
@@ -169,7 +180,44 @@ def accept_token_cmd(lib, argv, modifiers):
     modifiers.ensure_only_supported()
     if len(argv) != 1:
         raise CmdLineInputError("1 argument required")
-    utils.set_token_to_accept(utils.get_token_from_file(argv[0]))
+    token = utils.get_token_from_file(argv[0])
+    pcs_users_config = FileInstance.for_pcs_users_config()
+    facade = auth_config.facade.Facade([])
+    try:
+        if pcs_users_config.raw_file.exists():
+            facade = cast(
+                auth_config.facade.Facade, pcs_users_config.read_to_facade()
+            )
+    except auth_config.parser.ParserError as e:
+        output.warn(
+            "Unable to parse file '{}': {}".format(
+                pcs_users_config.raw_file.metadata.path, e.msg
+            )
+        )
+    except JsonParserException:
+        output.warn(
+            "Unable to parse file '{}': not valid json".format(
+                pcs_users_config.raw_file.metadata.path,
+            )
+        )
+    except ParserErrorException:
+        output.warn(
+            "Unable to parse file '{}'".format(
+                pcs_users_config.raw_file.metadata.path,
+            )
+        )
+    except pcs_file.RawFileError as e:
+        output.warn(
+            "Unable to read file '{}': {}".format(
+                pcs_users_config.raw_file.metadata.path,
+                e.reason,
+            )
+        )
+    facade.add_entry(SUPERUSER, token)
+    try:
+        pcs_users_config.write_facade(facade, can_overwrite=True)
+    except pcs_file.RawFileError as e:
+        raise output.error(raw_file_error_report(e).message.message)
 
 
 def _check_nodes(node_list, prefix=""):
@@ -183,8 +231,8 @@ def _check_nodes(node_list, prefix=""):
     status_desc_map = {online_code: "Online", 3: "Unable to authenticate"}
     status_list = []
 
-    def report(node, returncode, output):
-        del output
+    def report(node, returncode, _output):
+        del _output
         print(
             "{0}{1}: {2}".format(
                 prefix, node, status_desc_map.get(returncode, "Offline")

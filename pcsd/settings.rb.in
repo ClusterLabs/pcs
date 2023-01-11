@@ -10,7 +10,6 @@ CRT_FILE = File.join(PCSD_VAR_LOCATION, 'pcsd.crt')
 KEY_FILE = File.join(PCSD_VAR_LOCATION, 'pcsd.key')
 KNOWN_HOSTS_FILE_NAME = 'known-hosts'
 PCSD_SETTINGS_CONF_LOCATION = File.join(PCSD_VAR_LOCATION, "pcs_settings.conf")
-PCSD_USERS_CONF_LOCATION = File.join(PCSD_VAR_LOCATION, "pcs_users.conf")
 PCSD_DR_CONFIG_LOCATION = File.join(PCSD_VAR_LOCATION, "disaster-recovery")
 
 CRM_MON = "@PCMKEXECPREFIX@/sbin/crm_mon"

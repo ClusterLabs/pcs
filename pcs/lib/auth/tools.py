@@ -1,6 +1,13 @@
 import grp
 import pwd
 
+from pcs.common.tools import StringCollection
+
+from .types import (
+    AuthUser,
+    DesiredUser,
+)
+
 
 class UserGroupsError(Exception):
     pass
@@ -20,3 +27,16 @@ def get_user_groups(username: str) -> list[str]:
         ]
     except KeyError as e:
         raise UserGroupsError from e
+
+
+def get_effective_user(
+    authenticated_user: AuthUser,
+    effective_user_candidate: DesiredUser,
+) -> AuthUser:
+    username = authenticated_user.username
+    groups: StringCollection = authenticated_user.groups
+    if effective_user_candidate.username:
+        username = effective_user_candidate.username
+        if effective_user_candidate.groups:
+            groups = effective_user_candidate.groups
+    return AuthUser(username=username, groups=tuple(groups))

@@ -3,10 +3,8 @@ import os
 from unittest import mock
 
 from pcs.daemon.app import ui
-from pcs.lib.auth.provider import (
-    AuthProvider,
-    AuthUser,
-)
+from pcs.lib.auth.provider import AuthProvider
+from pcs.lib.auth.types import AuthUser
 
 from pcs_test.tier0.daemon.app import fixtures_app
 from pcs_test.tools.misc import get_tmp_dir

@@ -1,11 +1,7 @@
-import base64
-import binascii
 import json
-import logging
 from typing import (
     Any,
     Dict,
-    List,
     Mapping,
     Optional,
 )
@@ -23,18 +19,16 @@ from pcs.common.async_tasks.dto import (
 )
 from pcs.common.interface.dto import to_dict
 from pcs.daemon.app.auth import (
+    LegacyTokenAuthProvider,
     NotAuthorizedException,
-    TokenAuthProvider,
 )
 from pcs.daemon.async_tasks.scheduler import (
     Scheduler,
     TaskNotFoundError,
 )
 from pcs.daemon.async_tasks.types import Command
-from pcs.lib.auth.provider import (
-    AuthProvider,
-    AuthUser,
-)
+from pcs.lib.auth.provider import AuthProvider
+from pcs.lib.auth.types import AuthUser
 
 from .common import (
     BaseHandler,
@@ -143,17 +137,14 @@ class _BaseApiV1Handler(BaseHandler):
 
     scheduler: Scheduler
     json: Optional[Dict[str, Any]] = None
-    logger: logging.Logger
-    _auth_provider: TokenAuthProvider
+    _auth_provider: LegacyTokenAuthProvider
 
     def initialize(
         self, scheduler: Scheduler, auth_provider: AuthProvider
     ) -> None:
         super().initialize()
-        self._auth_provider = TokenAuthProvider(self, auth_provider)
+        self._auth_provider = LegacyTokenAuthProvider(self, auth_provider)
         self.scheduler = scheduler
-        # TODO: Turn into a constant
-        self.logger = logging.getLogger("pcs.daemon.scheduler")
 
     def prepare(self) -> None:
         """JSON preprocessing"""
@@ -163,9 +154,9 @@ class _BaseApiV1Handler(BaseHandler):
         except json.JSONDecodeError as e:
             raise InvalidInputError() from e
 
-    async def get_auth_user(self) -> AuthUser:
+    async def get_auth_user(self) -> tuple[AuthUser, AuthUser]:
         try:
-            return await self._auth_provider.auth_by_token()
+            return await self._auth_provider.auth_by_token_effective_user()
         except NotAuthorizedException as e:
             raise ApiError(
                 response_code=communication.const.COM_STATUS_NOT_AUTHORIZED,
@@ -204,29 +195,10 @@ class _BaseApiV1Handler(BaseHandler):
 
         self.send_response(response)
 
-    def _get_effective_username(self) -> Optional[str]:
-        username = self.get_cookie("CIB_user")
-        if username:
-            return username
-        return None
-
-    def _get_effective_groups(self) -> Optional[List[str]]:
-        if self._get_effective_username():
-            # use groups only if user is specified as well
-            groups_raw = self.get_cookie("CIB_user_groups")
-            if groups_raw:
-                try:
-                    return (
-                        base64.b64decode(groups_raw).decode("utf-8").split(" ")
-                    )
-                except (UnicodeError, binascii.Error):
-                    self.logger.warning("Unable to decode users groups")
-        return None
-
     async def process_request(
         self, cmd: str
     ) -> communication.dto.InternalCommunicationResultDto:
-        auth_user = await self.get_auth_user()
+        real_user, effective_user = await self.get_auth_user()
         if cmd not in API_V1_MAP:
             raise ApiError(
                 communication.const.COM_STATUS_UNKNOWN_CMD,
@@ -238,17 +210,17 @@ class _BaseApiV1Handler(BaseHandler):
             command_name=API_V1_MAP[cmd],
             params=self.json,
             options=CommandOptionsDto(
-                effective_username=self._get_effective_username(),
-                effective_groups=self._get_effective_groups(),
+                effective_username=effective_user.username,
+                effective_groups=list(effective_user.groups),
             ),
         )
         task_ident = self.scheduler.new_task(
-            Command(command_dto, api_v1_compatible=True), auth_user
+            Command(command_dto, api_v1_compatible=True), real_user
         )
 
         try:
             task_result_dto = await self.scheduler.wait_for_task(
-                task_ident, auth_user
+                task_ident, real_user
             )
         except TaskNotFoundError as e:
             raise ApiError(

@@ -21,7 +21,7 @@ from pcs.common.reports.types import MessageCode
 from pcs.daemon.async_tasks import scheduler
 from pcs.daemon.async_tasks.task import TaskConfig
 from pcs.daemon.async_tasks.types import Command
-from pcs.lib.auth.provider import AuthUser
+from pcs.lib.auth.types import AuthUser
 
 DATETIME_NOW = datetime(2020, 2, 20, 20, 20, 20, 20)
 AUTH_USER = AuthUser("username", ("group1", "group2"))

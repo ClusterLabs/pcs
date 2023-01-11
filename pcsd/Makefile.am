@@ -10,7 +10,6 @@ EXTRA_DIST		= \
 			  test/pcsd_test_utils.rb \
 			  test/pcs_settings.conf \
 			  test/test_all_suite.rb \
-			  test/test_auth.rb \
 			  test/test_cfgsync.rb \
 			  test/test_cluster_entity.rb \
 			  test/test_cluster.rb \

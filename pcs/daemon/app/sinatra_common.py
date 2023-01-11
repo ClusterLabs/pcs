@@ -1,16 +1,16 @@
 from pcs.daemon import ruby_pcsd
-from pcs.daemon.app.common import BaseHandler
 
 
-class Sinatra(BaseHandler):
+class SinatraMixin:
     """
     Sinatra is base class for handlers which calls the Sinatra via wrapper.
     It accept ruby wrapper during initialization. It also provides method for
     transformation result from sinatra to http response.
     """
 
-    def initialize(self, ruby_pcsd_wrapper: ruby_pcsd.Wrapper):
-        # pylint: disable=arguments-differ, attribute-defined-outside-init
+    __ruby_pcsd_wrapper: ruby_pcsd.Wrapper
+
+    def initialize_sinatra(self, ruby_pcsd_wrapper: ruby_pcsd.Wrapper):
         self.__ruby_pcsd_wrapper = ruby_pcsd_wrapper
 
     def send_sinatra_result(self, result: ruby_pcsd.SinatraResult):

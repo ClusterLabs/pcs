@@ -1,8 +1,6 @@
 import logging
-from dataclasses import dataclass
 from typing import (
     Optional,
-    Sequence,
     cast,
 )
 
@@ -19,16 +17,7 @@ from .tools import (
     UserGroupsError,
     get_user_groups,
 )
-
-
-@dataclass(frozen=True)
-class AuthUser:
-    username: str
-    groups: Sequence[str]
-
-    @property
-    def is_superuser(self) -> bool:
-        return self.username == const.SUPERUSER
+from .types import AuthUser
 
 
 class AuthProvider:
@@ -38,6 +27,8 @@ class AuthProvider:
 
     def _get_facade(self) -> Facade:
         try:
+            if not self._config_file_instance.raw_file.exists():
+                return Facade([])
             return cast(Facade, self._config_file_instance.read_to_facade())
         except ParserError as e:
             self._logger.error(
@@ -63,9 +54,9 @@ class AuthProvider:
             )
         return Facade([])
 
-    def _write_facade(self, facade: Facade) -> None:
+    def _write_facade(self, facade: Facade) -> bool:
         try:
-            self._config_file_instance.write_facade(facade, can_overwrite=True)
+            self._write_facade_base(facade)
         except RawFileError as e:
             self._logger.error(
                 "Action '%s' on file '%s' failed: %s",
@@ -73,6 +64,11 @@ class AuthProvider:
                 e.metadata.path,
                 e.reason,
             )
+            return False
+        return True
+
+    def _write_facade_base(self, facade: Facade) -> None:
+        self._config_file_instance.write_facade(facade, can_overwrite=True)
 
     def login_user(self, username: str) -> Optional[AuthUser]:
         try:
@@ -108,8 +104,9 @@ class AuthProvider:
         )
         return None
 
-    def create_token(self, username: str) -> str:
+    def create_token(self, username: str) -> Optional[str]:
         facade = self._get_facade()
         token = facade.add_user(username)
-        self._write_facade(facade)
-        return token
+        if self._write_facade(facade):
+            return token
+        return None

@@ -970,17 +970,6 @@ def run_pcsdcli(command, data=None):
     return output_json, retval
 
 
-def set_token_to_accept(token):
-    output, retval = run_pcsdcli("set_token_to_accept", dict(token=token))
-    if retval == 0:
-        if output["status"] == "access_denied":
-            err("Access denied")
-        if output["status"] != "ok":
-            err("Unable to communicate with pcsd")
-    else:
-        err("Unable to communicate with pcsd")
-
-
 def auth_hosts_token(host_dict):
     output, retval = run_pcsdcli("auth_with_token", dict(nodes=host_dict))
     if retval == 0:

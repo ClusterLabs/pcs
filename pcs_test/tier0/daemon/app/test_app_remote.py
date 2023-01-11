@@ -10,10 +10,8 @@ from pcs.daemon import (
     ruby_pcsd,
 )
 from pcs.daemon.app import sinatra_remote
-from pcs.lib.auth.provider import (
-    AuthProvider,
-    AuthUser,
-)
+from pcs.lib.auth.provider import AuthProvider
+from pcs.lib.auth.types import AuthUser
 
 from pcs_test.tier0.daemon.app import fixtures_app
 
@@ -23,13 +21,21 @@ logging.getLogger("tornado.access").setLevel(logging.CRITICAL)
 
 class AppTest(fixtures_app.AppTest):
     def setUp(self):
-        self.wrapper = fixtures_app.RubyPcsdWrapper(ruby_pcsd.SINATRA_REMOTE)
+        self.wrapper = fixtures_app.RubyPcsdWrapper(ruby_pcsd.SINATRA)
         self.https_server_manage = mock.MagicMock(
             spec_set=http_server.HttpsServerManage
         )
         self.lock = Lock()
         self.auth_provider = AuthProvider(logging.getLogger("test logger"))
         super().setUp()
+
+    def _mock_auth_provider_method(self, method_name, return_value=None):
+        method_patcher = mock.patch.object(AuthProvider, method_name)
+        self.addCleanup(method_patcher.stop)
+        method_mock = method_patcher.start()
+        if return_value:
+            method_mock.return_value = return_value
+        return method_mock
 
     def get_routes(self):
         return sinatra_remote.get_routes(
@@ -41,60 +47,44 @@ class AppTest(fixtures_app.AppTest):
 
 
 class SetCerts(AppTest):
+    def setUp(self):
+        super().setUp()
+        self._mock_auth_provider_method(
+            "auth_by_token", AuthUser(username="user", groups=("group1",))
+        )
+        self.headers = {"Cookie": "token=1234"}
+
     def test_it_asks_for_cert_reload_if_ruby_succeeds(self):
         self.wrapper.status_code = 200
         self.wrapper.body = b"success"
         # body is irelevant
-        self.assert_wrappers_response(self.post("/remote/set_certs", body={}))
+        self.assert_wrappers_response(
+            self.post("/remote/set_certs", body={}, headers=self.headers)
+        )
         self.https_server_manage.reload_certs.assert_called_once()
 
     def test_it_not_asks_for_cert_reload_if_ruby_fail(self):
         self.wrapper.status_code = 400
         self.wrapper.body = b"cannot save ssl certificate without ssl key"
         # body is irelevant
-        self.assert_wrappers_response(self.post("/remote/set_certs", body={}))
+        self.assert_wrappers_response(
+            self.post("/remote/set_certs", body={}, headers=self.headers)
+        )
         self.https_server_manage.reload_certs.assert_not_called()
 
 
-class Auth(AppTest):
-    # pylint: disable=too-many-ancestors
+class SinatraRemote(AppTest):
     def setUp(self):
         super().setUp()
-        auth_provider_patcher = mock.patch.object(
-            AuthProvider, "auth_by_username_password"
+        self._mock_auth_provider_method(
+            "auth_by_token", AuthUser(username="user", groups=("group1",))
         )
-        self.addCleanup(auth_provider_patcher.stop)
-        self.auth_provider_mock = auth_provider_patcher.start()
+        self.headers = {"Cookie": "token=1234"}
 
-    def make_auth_request(self):
-        return self.post(
-            "/remote/auth",
-            body={
-                "username": fixtures_app.USER,
-                "password": fixtures_app.PASSWORD,
-            },
-        )
-
-    def test_refuse_unknown_user(self):
-        self.auth_provider_mock.return_value = None
-        self.assertEqual(b"", self.make_auth_request().body)
-        self.auth_provider_mock.assert_called_once_with(
-            fixtures_app.USER, fixtures_app.PASSWORD
-        )
-
-    def test_wraps_ruby_on_valid_user(self):
-        self.auth_provider_mock.return_value = AuthUser(
-            fixtures_app.USER, fixtures_app.GROUPS
-        )
-        self.assert_wrappers_response(self.make_auth_request())
-        self.auth_provider_mock.assert_called_once_with(
-            fixtures_app.USER, fixtures_app.PASSWORD
-        )
-
-
-class SinatraRemote(AppTest):
     def test_take_result_from_ruby(self):
-        self.assert_wrappers_response(self.get("/remote/"))
+        self.assert_wrappers_response(
+            self.get("/remote/", headers=self.headers)
+        )
 
 
 class SyncConfigMutualExclusive(AppTest):
@@ -109,6 +99,12 @@ class SyncConfigMutualExclusive(AppTest):
     timeout and test detects an expected timeout error.
     """
 
+    def setUp(self):
+        super().setUp()
+        self._mock_auth_provider_method(
+            "auth_by_token", AuthUser(username="user", groups=("group1",))
+        )
+
     def fetch_set_sync_options(self, method):
         def fetch_sync_options():
             return self.http_client.fetch(
@@ -120,6 +116,7 @@ class SyncConfigMutualExclusive(AppTest):
             if method == "POST"
             else dict(method=method)
         )
+        kwargs["headers"] = {"Cookie": "token=1234"}
 
         # Without lock the timeout should be enough to finish task. With the
         # lock it should raise because of timeout. The same timeout is used for

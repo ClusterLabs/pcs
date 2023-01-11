@@ -38,10 +38,8 @@ from pcs.daemon.async_tasks.scheduler import (
     TaskNotFoundError,
 )
 from pcs.daemon.async_tasks.types import Command
-from pcs.lib.auth.provider import (
-    AuthProvider,
-    AuthUser,
-)
+from pcs.lib.auth.provider import AuthProvider
+from pcs.lib.auth.types import AuthUser
 
 from .common import (
     BaseHandler,

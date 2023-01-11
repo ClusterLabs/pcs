@@ -18,6 +18,7 @@ from tornado.testing import (
 from tornado.web import HTTPError
 
 from pcs.daemon import ruby_pcsd
+from pcs.lib.auth.types import AuthUser
 
 from pcs_test.tools.misc import create_patcher
 from pcs_test.tools.misc import get_test_resource as rc
@@ -94,34 +95,12 @@ class RunRuby(AsyncTestCase):
         self.assertEqual(result, ruby_pcsd.DEFAULT_SYNC_CONFIG_DELAY)
 
     @gen_test
-    def test_request_remote(self):
+    def test_request(self):
         headers = {"some": "header"}
         status = 200
         body = "content"
-        self.set_run_result(
-            {
-                "headers": headers,
-                "status": status,
-                "body": b64encode(str.encode(body)).decode(),
-            }
-        )
-        http_request = create_http_request()
-        self.request = ruby_pcsd.RubyDaemonRequest(
-            ruby_pcsd.SINATRA_REMOTE,
-            http_request,
-        )
-        result = yield self.wrapper.request_remote(http_request)
-        self.assert_sinatra_result(result, headers, status, body)
-
-    @gen_test
-    def test_request_gui(self):
-        headers = {"some": "header"}
-        status = 200
-        body = "content"
-
         user = "user"
         groups = ["hacluster"]
-
         self.set_run_result(
             {
                 "headers": headers,
@@ -131,17 +110,15 @@ class RunRuby(AsyncTestCase):
         )
         http_request = create_http_request()
         self.request = ruby_pcsd.RubyDaemonRequest(
-            ruby_pcsd.SINATRA_GUI,
+            ruby_pcsd.SINATRA,
             http_request,
             {
                 "username": user,
                 "groups": groups,
             },
         )
-        result = yield self.wrapper.request_gui(
-            http_request,
-            user=user,
-            groups=groups,
+        result = yield self.wrapper.request(
+            AuthUser(username=user, groups=groups), http_request
         )
         self.assert_sinatra_result(result, headers, status, body)
 

@@ -44,12 +44,10 @@ class TornadoCommunicationMiddleware
     begin
       type = env["HTTP_X_PCSD_TYPE"]
 
-      if ["sinatra_gui", "sinatra_remote"].include?(type)
-        if type == "sinatra_gui"
-          session = JSON.parse(Base64.strict_decode64(env["HTTP_X_PCSD_PAYLOAD"]))
-          Thread.current[:tornado_username] = session["username"]
-          Thread.current[:tornado_groups] = session["groups"]
-        end
+      if "sinatra" == type
+        session = JSON.parse(Base64.strict_decode64(env["HTTP_X_PCSD_PAYLOAD"]))
+        Thread.current[:tornado_username] = session["username"]
+        Thread.current[:tornado_groups] = session["groups"]
 
         status, headers, body = @app.call(env)
 

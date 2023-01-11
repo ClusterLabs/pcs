@@ -1,3 +1,6 @@
+import base64
+import binascii
+import logging
 import pwd
 import socket
 import struct
@@ -9,16 +12,27 @@ from typing import (
 
 from tornado.http1connection import HTTP1Connection
 from tornado.ioloop import IOLoop
-from tornado.web import RequestHandler
+from tornado.web import (
+    HTTPError,
+    RequestHandler,
+)
 
 from pcs.daemon.session import (
     Session,
     Storage,
 )
 from pcs.lib.auth.const import SUPERUSER
-from pcs.lib.auth.provider import (
-    AuthProvider,
-    AuthUser,
+from pcs.lib.auth.provider import AuthProvider
+from pcs.lib.auth.tools import (
+    DesiredUser,
+    get_effective_user,
+)
+from pcs.lib.auth.types import AuthUser
+
+from .common import (
+    LegacyApiBaseHandler,
+    LegacyApiHandler,
+    RoutesType,
 )
 
 PCSD_SESSION = "pcsd.sid"
@@ -34,6 +48,7 @@ class _BaseLibAuthProvider:
     ) -> None:
         self._auth_provider = auth_provider
         self._handler = handler
+        self._auth_logger = logging.getLogger("pcs.daemon.auth")
 
     async def login_user(self, username: str) -> AuthUser:
         auth_user = await IOLoop.current().run_in_executor(
@@ -119,9 +134,51 @@ class TokenAuthProvider(_BaseLibAuthProvider):
             raise NotAuthorizedException()
         return auth_user
 
+    async def create_token(self, user: AuthUser) -> Optional[str]:
+        return await IOLoop.current().run_in_executor(
+            executor=None,
+            func=lambda: self._auth_provider.create_token(user.username),
+        )
+
     @property
     def auth_token(self) -> Optional[str]:
         return self._handler.get_cookie("token", default=None)
+
+
+class LegacyTokenAuthProvider(TokenAuthProvider):
+    async def auth_by_token_effective_user(self) -> tuple[AuthUser, AuthUser]:
+        real_user = await self.auth_by_token()
+        self._auth_logger.debug(
+            "Real user=%s groups=%s",
+            real_user.username,
+            ",".join(real_user.groups),
+        )
+        if not real_user.is_superuser:
+            return real_user, real_user
+        effective_user = get_effective_user(
+            real_user, self._get_effective_user()
+        )
+        self._auth_logger.debug(
+            "Effective user=%s groups=%s",
+            effective_user.username,
+            ",".join(effective_user.groups),
+        )
+        return real_user, effective_user
+
+    def _get_effective_user(self) -> DesiredUser:
+        username = self._handler.get_cookie("CIB_user")
+        groups = []
+        if username:
+            # use groups only if user is specified as well
+            groups_raw = self._handler.get_cookie("CIB_user_groups")
+            if groups_raw:
+                try:
+                    groups = (
+                        base64.b64decode(groups_raw).decode("utf-8").split(" ")
+                    )
+                except (UnicodeError, binascii.Error):
+                    self._auth_logger.warning("Unable to decode users groups")
+        return DesiredUser(username, groups)
 
 
 class SessionAuthProvider(_BaseLibAuthProvider):
@@ -210,3 +267,81 @@ class SessionAuthProvider(_BaseLibAuthProvider):
         else:
             self.__session = None
         self._sid_to_cookies()
+
+
+class LegacyAuth(LegacyApiBaseHandler):
+    _password_auth_provider: PasswordAuthProvider
+    _token_auth_provider: TokenAuthProvider
+
+    def initialize(self, auth_provider: AuthProvider) -> None:
+        super().initialize()
+        self._password_auth_provider = PasswordAuthProvider(self, auth_provider)
+        self._token_auth_provider = TokenAuthProvider(self, auth_provider)
+
+    async def auth(self) -> None:
+        try:
+            auth_user = (
+                await self._password_auth_provider.auth_by_username_password(
+                    self.get_body_argument("username") or "",
+                    self.get_body_argument("password") or "",
+                )
+            )
+            token = await self._token_auth_provider.create_token(auth_user)
+            if token:
+                self.write(token)
+            else:
+                raise HTTPError(400, reason="Unable to store token")
+        except NotAuthorizedException:
+            # To stay backward compatible with original ruby implementation,
+            # an empty response needs to be returned if authentication fails
+            pass
+
+    async def post(self) -> None:
+        await self.auth()
+
+    async def get(self) -> None:
+        await self.auth()
+
+
+class LegacyTokenAuthenticationHandler(LegacyApiHandler):
+    _token_auth_provider: LegacyTokenAuthProvider
+    _auth_user: Optional[AuthUser]
+
+    def initialize(self, auth_provider: AuthProvider) -> None:
+        super().initialize()
+        self._token_auth_provider = LegacyTokenAuthProvider(self, auth_provider)
+
+    async def prepare(self) -> None:
+        # pylint: disable=invalid-overridden-method
+        super().prepare()
+        try:
+            (
+                _,
+                self._auth_user,
+            ) = await self._token_auth_provider.auth_by_token_effective_user()
+        except NotAuthorizedException as e:
+            raise self.unauthorized() from e
+
+    @property
+    def auth_user(self) -> AuthUser:
+        if not self._auth_user:
+            raise self.unauthorized()
+        return self._auth_user
+
+    async def _handle_request(self) -> None:
+        raise NotImplementedError()
+
+
+class CheckAuth(LegacyTokenAuthenticationHandler):
+    async def _handle_request(self) -> None:
+        self.write('{"success":true}')
+
+
+def get_routes(
+    auth_provider: AuthProvider,
+) -> RoutesType:
+    auth_payload = dict(auth_provider=auth_provider)
+    return [
+        ("/remote/auth", LegacyAuth, auth_payload),
+        ("/remote/check_auth", CheckAuth, auth_payload),
+    ]

@@ -19,7 +19,7 @@ from pcs.common.async_tasks.types import (
 )
 from pcs.common.interface.dto import ImplementsToDto
 from pcs.common.reports.dto import ReportItemDto
-from pcs.lib.auth.provider import AuthUser
+from pcs.lib.auth.types import AuthUser
 
 from .types import Command
 from .worker.types import (

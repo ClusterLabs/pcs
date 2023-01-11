@@ -9,7 +9,10 @@ from typing import (
 from pcs.common.tools import get_unique_uuid
 from pcs.lib.interface.config import FacadeInterface
 
-from .types import TokenEntry
+from .types import (
+    TOKEN_ENTRY_DATETIME_FORMAT,
+    TokenEntry,
+)
 
 
 class Facade(FacadeInterface):
@@ -32,11 +35,19 @@ class Facade(FacadeInterface):
             return None
         return entry.username
 
-    def add_user(self, username: str) -> str:
-        new_entry = TokenEntry(
-            username=username,
-            token=get_unique_uuid(tuple(entry.token for entry in self.config)),
-            creation_date=time.strftime("%Y-%m-%d %H:%M:%S %z"),
+    def add_entry(self, username: str, token: str) -> None:
+        self._set_config(
+            list(self.config)
+            + [
+                TokenEntry(
+                    username=username,
+                    token=token,
+                    creation_date=time.strftime(TOKEN_ENTRY_DATETIME_FORMAT),
+                )
+            ]
         )
-        self._set_config(list(self.config) + [new_entry])
-        return new_entry.token
+
+    def add_user(self, username: str) -> str:
+        token = get_unique_uuid(tuple(entry.token for entry in self.config))
+        self.add_entry(username, token)
+        return token

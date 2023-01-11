@@ -16,7 +16,7 @@ from pcs.common.async_tasks.types import TaskKillReason
 from pcs.common.tools import get_unique_uuid
 from pcs.daemon.async_tasks.types import Command
 from pcs.daemon.log import pcsd as pcsd_logger
-from pcs.lib.auth.provider import AuthUser
+from pcs.lib.auth.types import AuthUser
 
 from .task import (
     Task,

@@ -11,7 +11,7 @@ from pcs.lib.auth.const import (
     ADMIN_GROUP,
     SUPERUSER,
 )
-from pcs.lib.auth.provider import AuthUser
+from pcs.lib.auth.types import AuthUser
 from pcs.lib.file.instance import FileInstance
 from pcs.lib.file.json import JsonParserException
 from pcs.lib.interface.config import ParserErrorException

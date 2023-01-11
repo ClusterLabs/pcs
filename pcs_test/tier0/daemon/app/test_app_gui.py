@@ -3,10 +3,8 @@ from unittest import mock
 
 from pcs.daemon import ruby_pcsd
 from pcs.daemon.app import sinatra_ui
-from pcs.lib.auth.provider import (
-    AuthProvider,
-    AuthUser,
-)
+from pcs.lib.auth.provider import AuthProvider
+from pcs.lib.auth.types import AuthUser
 
 from pcs_test.tier0.daemon.app import fixtures_app
 
@@ -16,7 +14,7 @@ logging.getLogger("tornado.access").setLevel(logging.CRITICAL)
 
 class AppTest(fixtures_app.AppUiTestMixin):
     def setUp(self):
-        self.wrapper = fixtures_app.RubyPcsdWrapper(ruby_pcsd.SINATRA_GUI)
+        self.wrapper = fixtures_app.RubyPcsdWrapper(ruby_pcsd.SINATRA)
         super().setUp()
 
     def get_routes(self):

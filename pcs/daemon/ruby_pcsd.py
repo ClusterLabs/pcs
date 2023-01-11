@@ -21,12 +21,11 @@ from tornado.httputil import (
 )
 from tornado.web import HTTPError
 
-from pcs.common.tools import StringCollection
 from pcs.daemon import log
+from pcs.lib.auth.types import AuthUser
 
-SINATRA_GUI = "sinatra_gui"
-SINATRA_REMOTE = "sinatra_remote"
 SYNC_CONFIGS = "sync_configs"
+SINATRA = "sinatra"
 
 DEFAULT_SYNC_CONFIG_DELAY = 5
 RUBY_LOG_LEVEL_MAP = {
@@ -252,28 +251,20 @@ class Wrapper:
             log.pcsd.error("Cannot decode json from ruby pcsd wrapper: '%s'", e)
             raise HTTPError(500) from e
 
-    async def request_gui(
-        self, request: HTTPServerRequest, user: str, groups: StringCollection
+    async def request(
+        self, auth_user: AuthUser, request: HTTPServerRequest
     ) -> SinatraResult:
-        # Sessions handling was removed from ruby. However, some session
-        # information is needed for ruby code (e.g. rendering some parts of
-        # templates). So this information must be sent to ruby by another way.
         return SinatraResult.from_response(
             await convert_yielded(
                 self.run_ruby(
-                    SINATRA_GUI,
+                    SINATRA,
                     request,
                     {
-                        "username": user,
-                        "groups": list(groups),
+                        "username": auth_user.username,
+                        "groups": list(auth_user.groups),
                     },
                 )
             )
-        )
-
-    async def request_remote(self, request: HTTPServerRequest) -> SinatraResult:
-        return SinatraResult.from_response(
-            await convert_yielded(self.run_ruby(SINATRA_REMOTE, request))
         )
 
     async def sync_configs(self):
