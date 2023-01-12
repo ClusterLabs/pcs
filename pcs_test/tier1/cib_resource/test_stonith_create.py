@@ -45,7 +45,6 @@ class PlainStonith(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
-            output_start="Warning: Validation result from agent:",
         )
 
     def test_error_when_not_valid_name(self):
@@ -249,7 +248,6 @@ class WithMeta(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
-            output_start="Warning: Validation result from agent:",
         )
 
 

@@ -117,6 +117,7 @@ def create(
     use_default_operations: bool = True,
     ensure_disabled: bool = False,
     wait: WaitType = False,
+    enable_agent_self_validation: bool = False,
 ):
     # pylint: disable=too-many-arguments, too-many-locals
     """
@@ -139,6 +140,8 @@ def create(
         operations (specified in a stonith agent)
     ensure_disabled -- flag that keeps resource in target-role "Stopped"
     wait -- flag for controlling waiting for pacemaker idle mechanism
+    enable_agent_self_validation -- if True, use agent self-validation feature
+        to validate instance attributes
     """
     runner = env.cmd_runner()
     agent_factory = ResourceAgentFacadeFactory(runner, env.report_processor)
@@ -174,6 +177,7 @@ def create(
             allow_invalid_instance_attributes=allow_invalid_instance_attributes,
             use_default_operations=use_default_operations,
             resource_type="stonith",
+            enable_agent_self_validation=enable_agent_self_validation,
         )
         if ensure_disabled:
             resource.common.disable(stonith_element, id_provider)
@@ -195,6 +199,7 @@ def create_in_group(
     adjacent_resource_id: Optional[str] = None,
     put_after_adjacent: bool = False,
     wait: WaitType = False,
+    enable_agent_self_validation: bool = False,
 ):
     # pylint: disable=too-many-arguments, too-many-locals
     """
@@ -221,6 +226,8 @@ def create_in_group(
     put_after_adjacent -- is flag to put a newly create resource befor/after
         adjacent stonith
     wait -- flag for controlling waiting for pacemaker idle mechanism
+    enable_agent_self_validation -- if True, use agent self-validation feature
+        to validate instance attributes
     """
     runner = env.cmd_runner()
     agent_factory = ResourceAgentFacadeFactory(runner, env.report_processor)
@@ -286,6 +293,7 @@ def create_in_group(
             allow_invalid_operation,
             allow_invalid_instance_attributes,
             use_default_operations,
+            enable_agent_self_validation=enable_agent_self_validation,
         )
         if ensure_disabled:
             resource.common.disable(stonith_element, id_provider)

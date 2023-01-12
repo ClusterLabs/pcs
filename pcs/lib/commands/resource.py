@@ -348,6 +348,7 @@ def create(
     ensure_disabled: bool = False,
     wait: WaitType = False,
     allow_not_suitable_command: bool = False,
+    enable_agent_self_validation: bool = False,
 ):
     # pylint: disable=too-many-arguments, too-many-locals
     """
@@ -381,6 +382,8 @@ def create(
         pcs.lib.commands.remote_node);
         in the case of remote/guest node forcible error is produced when this
         flag is set to False and warning is produced otherwise
+    enable_agent_self_validation -- if True, use agent self-validation feature
+        to validate instance attributes
     """
     runner = env.cmd_runner()
     agent_factory = ResourceAgentFacadeFactory(runner, env.report_processor)
@@ -427,6 +430,7 @@ def create(
             allow_invalid_operation,
             allow_invalid_instance_attributes,
             use_default_operations,
+            enable_agent_self_validation=enable_agent_self_validation,
         )
         if env.report_processor.has_errors:
             raise LibraryError()
@@ -451,6 +455,7 @@ def create_as_clone(
     ensure_disabled: bool = False,
     wait: WaitType = False,
     allow_not_suitable_command: bool = False,
+    enable_agent_self_validation: bool = False,
 ):
     # pylint: disable=too-many-arguments, too-many-locals
     """
@@ -478,6 +483,8 @@ def create_as_clone(
     ensure_disabled -- is flag that keeps resource in target-role "Stopped"
     wait -- is flag for controlling waiting for pacemaker idle mechanism
     allow_not_suitable_command -- turn forceable errors into warnings
+    enable_agent_self_validation -- if True, use agent self-validation feature
+        to validate instance attributes
     """
     runner = env.cmd_runner()
     agent_factory = ResourceAgentFacadeFactory(runner, env.report_processor)
@@ -531,6 +538,7 @@ def create_as_clone(
             allow_invalid_operation,
             allow_invalid_instance_attributes,
             use_default_operations,
+            enable_agent_self_validation=enable_agent_self_validation,
         )
 
         clone_element = resource.clone.append_new(
@@ -561,6 +569,7 @@ def create_in_group(
     put_after_adjacent: bool = False,
     wait: WaitType = False,
     allow_not_suitable_command: bool = False,
+    enable_agent_self_validation: bool = False,
 ):
     # pylint: disable=too-many-arguments, too-many-locals
     """
@@ -589,6 +598,8 @@ def create_in_group(
         adjacent resource
     wait -- is flag for controlling waiting for pacemaker idle mechanism
     allow_not_suitable_command -- turn forceable errors into warnings
+    enable_agent_self_validation -- if True, use agent self-validation feature
+        to validate instance attributes
     """
     runner = env.cmd_runner()
     agent_factory = ResourceAgentFacadeFactory(runner, env.report_processor)
@@ -664,6 +675,7 @@ def create_in_group(
             allow_invalid_operation,
             allow_invalid_instance_attributes,
             use_default_operations,
+            enable_agent_self_validation=enable_agent_self_validation,
         )
         if ensure_disabled:
             resource.common.disable(primitive_element, id_provider)
@@ -701,6 +713,7 @@ def create_into_bundle(
     wait: WaitType = False,
     allow_not_suitable_command: bool = False,
     allow_not_accessible_resource: bool = False,
+    enable_agent_self_validation: bool = False,
 ):
     # pylint: disable=too-many-arguments, too-many-locals
     """
@@ -728,6 +741,8 @@ def create_into_bundle(
     wait -- is flag for controlling waiting for pacemaker idle mechanism
     allow_not_suitable_command -- turn forceable errors into warnings
     allow_not_accessible_resource -- turn forceable errors into warnings
+    enable_agent_self_validation -- if True, use agent self-validation feature
+        to validate instance attributes
     """
     runner = env.cmd_runner()
     agent_factory = ResourceAgentFacadeFactory(runner, env.report_processor)
@@ -775,6 +790,7 @@ def create_into_bundle(
             allow_invalid_operation,
             allow_invalid_instance_attributes,
             use_default_operations,
+            enable_agent_self_validation=enable_agent_self_validation,
         )
         if ensure_disabled:
             resource.common.disable(primitive_element, id_provider)

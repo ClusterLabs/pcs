@@ -580,6 +580,7 @@ def _format_desc(indentation, desc):
 def resource_create(lib, argv, modifiers):
     """
     Options:
+      * --agent-validation - use agent self validation of instance attributes
       * --before - specified resource inside a group before which new resource
         will be placed inside the group
       * --after - specified resource inside a group after which new resource
@@ -593,6 +594,7 @@ def resource_create(lib, argv, modifiers):
       * -f - CIB file
     """
     modifiers.ensure_only_supported(
+        "--agent-validation",
         "--before",
         "--after",
         "--group",
@@ -655,6 +657,7 @@ def resource_create(lib, argv, modifiers):
         use_default_operations=not modifiers.get("--no-default-ops"),
         wait=modifiers.get("--wait"),
         allow_not_suitable_command=modifiers.get("--force"),
+        enable_agent_self_validation=modifiers.get("--agent-validation"),
     )
 
     clone_id = parts.get("clone_id", None)
@@ -894,12 +897,15 @@ def resource_update(lib, args, modifiers, deal_with_guest_change=True):
     """
     Options:
       * -f - CIB file
+      * --agent-validation - use agent self validation of instance attributes
       * --wait
       * --force - allow invalid options, do not fail if not possible to get
         agent metadata, allow not suitable command
     """
     del lib
-    modifiers.ensure_only_supported("-f", "--wait", "--force")
+    modifiers.ensure_only_supported(
+        "-f", "--wait", "--force", "--agent-validation"
+    )
     if len(args) < 2:
         raise CmdLineInputError()
     res_id = args.pop(0)
@@ -970,7 +976,10 @@ def resource_update(lib, args, modifiers, deal_with_guest_change=True):
             dict(params),
             res_id,
             get_resources(lib_pacemaker.get_cib(cib_xml)),
-            force=modifiers.get("--force"),
+            force=bool(modifiers.get("--force")),
+            enable_agent_self_validation=bool(
+                modifiers.get("--agent-validation")
+            ),
         )
         if report_list:
             process_library_reports(report_list)

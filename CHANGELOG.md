@@ -11,9 +11,16 @@
 - Displaying bool and integer values in `pcs resource config` command
   ([rhbz#2151166], [ghissue#604])
 
+### Changed
+- Resource/stonith agent self-validation of instance attributes is now
+  disabled by default, as many agents do not work with it properly.
+  Use flag '--agent-validation' to enable it in supported commands.
+  ([rhbz#2159455])
+
 [ghissue#604]: https://github.com/ClusterLabs/pcs/issues/604
 [rhbz#2151166]: https://bugzilla.redhat.com/show_bug.cgi?id=2151166
 [rhbz#2151511]: https://bugzilla.redhat.com/show_bug.cgi?id=2151511
+[rhbz#2159455]: https://bugzilla.redhat.com/show_bug.cgi?id=2159455
 
 
 ## [0.10.15] - 2022-11-23

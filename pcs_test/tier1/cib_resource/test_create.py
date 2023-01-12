@@ -751,7 +751,9 @@ class Promotable(TestCase, AssertPcsMixin):
         ensure_disabled=False,
         use_default_operations=True,
         wait=False,
+        enable_agent_self_validation=False,
     ):
+        # pylint: disable=too-many-arguments
         options = locals()
         del options["self"]
         return options
