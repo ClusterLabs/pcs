@@ -148,6 +148,7 @@ def stonith_create(lib, argv, modifiers):
         instance attributes
       * --disabled - created resource will be disabled
       * --no-default-ops - do not add default operations
+      * --agent-validation - use agent self validation of instance attributes
       * --wait
       * -f - CIB file
     """
@@ -158,6 +159,7 @@ def stonith_create(lib, argv, modifiers):
         "--force",
         "--disabled",
         "--no-default-ops",
+        "--agent-validation",
         "--wait",
         "-f",
     )
@@ -191,6 +193,7 @@ def stonith_create(lib, argv, modifiers):
         ensure_disabled=modifiers.get("--disabled"),
         use_default_operations=not modifiers.get("--no-default-ops"),
         wait=modifiers.get("--wait"),
+        enable_agent_self_validation=modifiers.get("--agent-validation"),
     )
 
     if not modifiers.get("--group"):

@@ -1300,6 +1300,27 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_fail(
+            (
+                "stonith create apc-fencing fence_apc ip=morph-apc username=apc "
+                "--agent-validation"
+            ).split(),
+            stderr_start="Error: Validation result from agent",
+        )
+
+        self.assert_pcs_success(
+            (
+                "stonith create apc-fencing fence_apc ip=morph-apc username=apc "
+                "--agent-validation --force"
+            ).split(),
+            stderr_start="Warning: Validation result from agent",
+        )
+
+        self.assert_pcs_success(
+            "stonith remove apc-fencing".split(),
+            stderr_full="Deleting Resource - apc-fencing\n",
+        )
+
+        self.assert_pcs_fail(
             "stonith update test3 bad_ipaddr=test username=login".split(),
             stderr_regexp=(
                 "^Error: invalid stonith option 'bad_ipaddr', allowed options"
@@ -1308,7 +1329,7 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "stonith update test3 username=testA".split(),
+            "stonith update test3 username=testA --agent-validation".split(),
             stderr_start="Warning: The resource was misconfigured before the update,",
         )
 

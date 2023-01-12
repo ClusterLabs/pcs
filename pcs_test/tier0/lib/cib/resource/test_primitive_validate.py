@@ -643,6 +643,22 @@ class ValidateResourceInstanceAttributesCreateSelfValidation(TestCase):
         self.agent_self_validation_mock.return_value = True, []
         self.cmd_runner = mock.Mock()
 
+    def test_disabled(self):
+        attributes = {"required": "value"}
+        facade = _fixture_ocf_agent()
+        self.assertEqual(
+            primitive.validate_resource_instance_attributes_create(
+                self.cmd_runner,
+                facade,
+                attributes,
+                etree.Element("resources"),
+                force=False,
+                enable_agent_self_validation=False,
+            ),
+            [],
+        )
+        self.agent_self_validation_mock.assert_not_called()
+
     def test_success(self):
         attributes = {"required": "value"}
         facade = _fixture_ocf_agent()
@@ -653,6 +669,7 @@ class ValidateResourceInstanceAttributesCreateSelfValidation(TestCase):
                 attributes,
                 etree.Element("resources"),
                 force=False,
+                enable_agent_self_validation=True,
             ),
             [],
         )
@@ -672,6 +689,7 @@ class ValidateResourceInstanceAttributesCreateSelfValidation(TestCase):
                 attributes,
                 etree.Element("resources"),
                 force=True,
+                enable_agent_self_validation=True,
             ),
             [],
         )
@@ -693,6 +711,7 @@ class ValidateResourceInstanceAttributesCreateSelfValidation(TestCase):
                 attributes,
                 etree.Element("resources"),
                 force=False,
+                enable_agent_self_validation=True,
             ),
             [
                 fixture.error(
@@ -718,6 +737,7 @@ class ValidateResourceInstanceAttributesCreateSelfValidation(TestCase):
                 attributes,
                 etree.Element("resources"),
                 force=False,
+                enable_agent_self_validation=True,
             ),
             [],
         )
@@ -737,6 +757,7 @@ class ValidateResourceInstanceAttributesCreateSelfValidation(TestCase):
                 attributes,
                 etree.Element("resources"),
                 force=False,
+                enable_agent_self_validation=True,
             ),
             [],
         )
@@ -752,6 +773,7 @@ class ValidateResourceInstanceAttributesCreateSelfValidation(TestCase):
                 attributes,
                 etree.Element("resources"),
                 force=False,
+                enable_agent_self_validation=True,
             ),
             [],
         )
@@ -767,6 +789,7 @@ class ValidateResourceInstanceAttributesCreateSelfValidation(TestCase):
                 attributes,
                 etree.Element("resources"),
                 force=False,
+                enable_agent_self_validation=True,
             ),
             [
                 fixture.error(
@@ -1326,6 +1349,24 @@ class ValidateResourceInstanceAttributesUpdateSelfValidation(TestCase):
             etree.SubElement(nvset_el, "nvpair", dict(name=name, value=value))
         return resources_el
 
+    def test_disabled(self):
+        old_attributes = {"required": "old_value"}
+        new_attributes = {"required": "new_value"}
+        facade = _fixture_ocf_agent()
+        self.assertEqual(
+            primitive.validate_resource_instance_attributes_update(
+                self.cmd_runner,
+                facade,
+                new_attributes,
+                self._NAME,
+                self._fixture_resources(old_attributes),
+                force=False,
+                enable_agent_self_validation=False,
+            ),
+            [],
+        )
+        self.agent_self_validation_mock.assert_not_called()
+
     def test_success(self):
         old_attributes = {"required": "old_value"}
         new_attributes = {"required": "new_value"}
@@ -1338,6 +1379,7 @@ class ValidateResourceInstanceAttributesUpdateSelfValidation(TestCase):
                 self._NAME,
                 self._fixture_resources(old_attributes),
                 force=False,
+                enable_agent_self_validation=True,
             ),
             [],
         )
@@ -1369,6 +1411,7 @@ class ValidateResourceInstanceAttributesUpdateSelfValidation(TestCase):
                 self._NAME,
                 self._fixture_resources(old_attributes),
                 force=True,
+                enable_agent_self_validation=True,
             ),
             [],
         )
@@ -1405,6 +1448,7 @@ class ValidateResourceInstanceAttributesUpdateSelfValidation(TestCase):
                 self._NAME,
                 self._fixture_resources(old_attributes),
                 force=False,
+                enable_agent_self_validation=True,
             ),
             [
                 fixture.error(
@@ -1442,6 +1486,7 @@ class ValidateResourceInstanceAttributesUpdateSelfValidation(TestCase):
                 self._NAME,
                 self._fixture_resources(old_attributes),
                 force=False,
+                enable_agent_self_validation=True,
             ),
             [],
         )
@@ -1473,6 +1518,7 @@ class ValidateResourceInstanceAttributesUpdateSelfValidation(TestCase):
                 self._NAME,
                 self._fixture_resources(old_attributes),
                 force=False,
+                enable_agent_self_validation=True,
             ),
             [],
         )
@@ -1490,6 +1536,7 @@ class ValidateResourceInstanceAttributesUpdateSelfValidation(TestCase):
                 self._NAME,
                 self._fixture_resources(old_attributes),
                 force=False,
+                enable_agent_self_validation=True,
             ),
             [],
         )
@@ -1507,6 +1554,7 @@ class ValidateResourceInstanceAttributesUpdateSelfValidation(TestCase):
                 self._NAME,
                 self._fixture_resources(old_attributes),
                 force=False,
+                enable_agent_self_validation=True,
             ),
             [
                 fixture.error(
@@ -1533,6 +1581,7 @@ class ValidateResourceInstanceAttributesUpdateSelfValidation(TestCase):
                 self._NAME,
                 self._fixture_resources(old_attributes),
                 force=False,
+                enable_agent_self_validation=True,
             ),
             [
                 fixture.warn(

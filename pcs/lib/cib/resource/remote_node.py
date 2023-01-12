@@ -253,4 +253,5 @@ def create(
         # 3) call the validation from here and handle the results or config
         #    the validator before / when running it
         do_not_report_instance_attribute_server_exists=True,
+        enable_agent_self_validation=False,
     )
