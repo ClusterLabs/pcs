@@ -14,8 +14,9 @@
   ([rhbz#2151164], [ghissue#604])
 
 ### Changed
-- Agent self-validation feature is not used to validate resource options by
-  default. Use flag '--agent-validation' to use it in supported commands.
+- Resource/stonith agent self-validation of instance attributes is now
+  disabled by default, as many agents do not work with it properly.
+  Use flag '--agent-validation' to enable it in supported commands.
   ([rhbz#2159454])
 
 [ghissue#604]: https://github.com/ClusterLabs/pcs/issues/604

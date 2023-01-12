@@ -1858,8 +1858,8 @@ Commands:
         stonith device relatively to some stonith device already existing in the
         group.
         If --disabled is specified the stonith device is not used.
-        If --agent-validation is specified, resource agent validate-all action
-        will be used to validate resource options.
+        If --agent-validation is specified, stonith agent validate-all action
+        will be used to validate stonith device options.
         If --wait is specified, pcs will wait up to 'n' seconds for the stonith
         device to start and then return 0 if the stonith device is started, or 1
         if the stonith device has not yet started.  If 'n' is not specified it

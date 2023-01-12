@@ -599,7 +599,6 @@ class Create(TestCase):
     def test_simplest_resource(self):
         self.config.runner.pcmk.load_agent()
         self.config.runner.cib.load()
-        # self.config.runner.pcmk.resource_agent_self_validation({}, output="")
         self.config.env.push_cib(
             resources=fixture_cib_resources_xml_primitive_simplest
         )
