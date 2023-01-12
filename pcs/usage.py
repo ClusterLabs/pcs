@@ -687,9 +687,10 @@ _RESOURCE_UPDATE_SYNTAX = _unwrap(
 
 def _resource_update_desc_fn(is_stonith: bool) -> Iterable[str]:
     if is_stonith:
-        obj = obj_long = "stonith device"
+        agent_type = "stonith"
+        obj = obj_long = f"{agent_type} device"
     else:
-        obj = "resource"
+        obj = agent_type = "resource"
         obj_long = "resource, clone or multi-state resource"
     return (
         f"""
@@ -707,9 +708,9 @@ def _resource_update_desc_fn(is_stonith: bool) -> Iterable[str]:
          you should use the 'op add' & 'op remove' commands.
         """,
         "",
-        """
-        If --agent-validation is specified, resource agent validate-all action
-        will be used to validate resource options.
+        f"""
+        If --agent-validation is specified, {agent_type} agent validate-all
+        action will be used to validate {obj} options.
         """,
         "",
         """
