@@ -4,6 +4,7 @@ from typing import (
     Mapping,
     Optional,
     Sequence,
+    TypeVar,
     Union,
     overload,
 )
@@ -26,6 +27,8 @@ from pcs.lib.interface.config import FacadeInterface
 
 _KNET_COMPRESSION_OPTIONS_PREFIX = "knet_compression_"
 _KNET_CRYPTO_OPTIONS_PREFIX = "crypto_"
+
+T = TypeVar("T")
 
 
 class ConfigFacade(FacadeInterface):
@@ -341,7 +344,7 @@ class ConfigFacade(FacadeInterface):
         self.__set_section_options(interface_section_list, options_to_set)
         self.__remove_empty_sections(self.config)
 
-    def remove_links(self, link_list: StringSequence) -> None:
+    def remove_links(self, link_list: StringCollection) -> None:
         """
         Remove links from nodelist and relevant interface sections from totem
 
@@ -979,6 +982,6 @@ class ConfigFacade(FacadeInterface):
 
 
 def _add_prefix_to_dict_keys(
-    prefix: str, data: Mapping[str, Any]
-) -> dict[str, Any]:
+    prefix: str, data: Mapping[str, T]
+) -> dict[str, T]:
     return {"{}{}".format(prefix, key): value for key, value in data.items()}

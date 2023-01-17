@@ -913,8 +913,7 @@ def add_nodes(
 
     if corosync_conf.has_quorum_device():
         # get a target for qnetd if needed
-        qdevice_model = corosync_conf.get_quorum_device_model()
-        if qdevice_model == "net":
+        if corosync_conf.get_quorum_device_model() == "net":
             (
                 qdevice_model_options,
                 _,
@@ -1158,8 +1157,7 @@ def add_nodes(
 
     # qdevice setup
     if corosync_conf.has_quorum_device():
-        qdevice_model = corosync_conf.get_quorum_device_model()
-        if qdevice_model == "net":
+        if corosync_conf.get_quorum_device_model() == "net":
             qdevice_net.set_up_client_certificates(
                 env.cmd_runner(),
                 env.report_processor,

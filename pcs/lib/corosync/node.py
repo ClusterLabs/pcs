@@ -46,11 +46,6 @@ class CorosyncNode(ImplementsToDto):
     addrs: Sequence[CorosyncNodeAddress]
     nodeid: Optional[str]
 
-    def __post_init__(self) -> None:
-        # Make sure addrs is a tuple so it is not possible to change its items.
-        # Since the dataclass is frozen, object__setattr__ must be used.
-        object.__setattr__(self, "addrs", tuple(self.addrs))
-
     def addr_plain_for_link(self, link: str) -> Optional[str]:
         for addr in self.addrs:
             if addr.link == link:
