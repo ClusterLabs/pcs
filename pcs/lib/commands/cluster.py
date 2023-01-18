@@ -2016,7 +2016,7 @@ def add_link(
             link_options,
             corosync_conf.get_nodes(),
             cib_nodes,
-            corosync_conf.get_used_linknumber_list(),
+            [str(num) for num in corosync_conf.get_used_linknumber_list()],
             corosync_conf.get_transport(),
             corosync_conf.get_ip_version(),
             force_unresolvable=force,
@@ -2058,7 +2058,7 @@ def remove_links(
     report_processor.report_list(
         config_validators.remove_links(
             linknumber_list,
-            corosync_conf.get_used_linknumber_list(),
+            [str(num) for num in corosync_conf.get_used_linknumber_list()],
             corosync_conf.get_transport(),
         )
     )
@@ -2123,7 +2123,7 @@ def update_link(
             # cluster must be stopped for updating a link and then we cannot get
             # nodes from CIB
             [],
-            corosync_conf.get_used_linknumber_list(),
+            [str(num) for num in corosync_conf.get_used_linknumber_list()],
             corosync_conf.get_transport(),
             corosync_conf.get_ip_version(),
             force_unresolvable=force,

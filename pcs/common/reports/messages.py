@@ -1884,6 +1884,10 @@ class CorosyncAddressIpVersionWrongForLink(ReportItemMessage):
 
     address: str
     expected_address_type: str
+    # Using Union is a bad practice as it may make deserialization impossible.
+    # It works for int and str, though, as they are distinguishable. Code was
+    # historically putting either of int and str in here. We need the Union here
+    # for backward compatibility reasons.
     link_number: Optional[Union[int, str]] = None
     _code = codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK
 
@@ -2212,6 +2216,10 @@ class CorosyncLinkDoesNotExistCannotUpdate(ReportItemMessage):
     existing_link_list -- linknumbers of existing links
     """
 
+    # Using Union is a bad practice as it may make deserialization impossible.
+    # It works for int and str, though, as they are distinguishable. Code was
+    # historically putting either of int and str in here. We need the Union here
+    # for backward compatibility reasons.
     link_number: Union[int, str]
     existing_link_list: List[str]
     _code = codes.COROSYNC_LINK_DOES_NOT_EXIST_CANNOT_UPDATE
@@ -5483,7 +5491,7 @@ class NodeUsedAsTieBreaker(ReportItemMessage):
     """
 
     node: Optional[str]
-    node_id: Union[None, str, int]
+    node_id: Optional[str]
     _code = codes.NODE_USED_AS_TIE_BREAKER
 
     @property

@@ -5,7 +5,6 @@ from typing import (
     Optional,
     Sequence,
     TypeVar,
-    Union,
     overload,
 )
 
@@ -163,13 +162,15 @@ class ConfigFacade(FacadeInterface):
     @staticmethod
     def _get_nodeid_generator(
         used_ids: StringSequence,
-    ) -> Generator[str, None, None]:
+    ) -> Generator[int, None, None]:
+        # used_ids content is extracted from corosync.conf. We keep it as
+        # strings to avoid potential issues if loaded nodeid is not a number.
         used_ids_set = set(used_ids)
         current_id = 1
         while True:
             current_id_str = str(current_id)
             if current_id_str not in used_ids_set:
-                yield current_id_str
+                yield current_id
                 used_ids_set.add(current_id_str)
             current_id += 1
 
@@ -181,14 +182,14 @@ class ConfigFacade(FacadeInterface):
             if attr_name in constants.NODE_OPTIONS
         }
 
-    def get_used_linknumber_list(self) -> list[str]:
+    def get_used_linknumber_list(self) -> list[int]:
         for nodelist_section in self.config.get_sections("nodelist"):
             for node_section in nodelist_section.get_sections("node"):
                 node_data = self._get_node_data(node_section)
                 if not node_data:
                     continue
                 return [
-                    str(i)
+                    i
                     for i in range(constants.LINKS_MAX)
                     if node_data.get(f"ring{i}_addr")
                 ]
@@ -196,9 +197,9 @@ class ConfigFacade(FacadeInterface):
 
     @staticmethod
     def _create_node_section(
-        node_id: Union[int, str],
+        node_id: int,
         node_options: Mapping[str, Any],
-        link_ids: Sequence[Union[int, str]],
+        link_ids: Sequence[int],
     ) -> Section:
         node_section = Section("node")
         for link_id, link_addr in zip(link_ids, node_options["addrs"]):
@@ -294,7 +295,7 @@ class ConfigFacade(FacadeInterface):
             used_links = self.get_used_linknumber_list()
             available_links = range(constants.LINKS_KNET_MAX)
             for candidate in available_links:
-                if str(candidate) not in used_links:
+                if candidate not in used_links:
                     linknumber = str(candidate)
                     break
             if linknumber is None:
