@@ -797,9 +797,12 @@ def need_to_handle_qdevice_service():
     """
     try:
         with open(settings.corosync_conf_file, "rb") as corosync_conf_file:
-            return corosync_conf_facade(
-                corosync_conf_parser.Parser.parse(corosync_conf_file.read())
-            ).has_quorum_device()
+            return (
+                corosync_conf_facade(
+                    corosync_conf_parser.Parser.parse(corosync_conf_file.read())
+                ).get_quorum_device_model()
+                is not None
+            )
     except (EnvironmentError, corosync_conf_parser.CorosyncConfParserException):
         # corosync.conf not present or not valid => no qdevice specified
         return False

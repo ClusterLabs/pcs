@@ -655,7 +655,10 @@ class ConfigFacade(FacadeInterface):
         """
         return self._get_option_value("quorum", "auto_tie_breaker", "0") == "1"
 
-    def _get_raw_quorum_device_model(self) -> Optional[str]:
+    def get_quorum_device_model(self) -> Optional[str]:
+        """
+        Get quorum device model from quorum.device section
+        """
         models_found = []
         for quorum in self.config.get_sections("quorum"):
             for device in quorum.get_sections("device"):
@@ -664,38 +667,18 @@ class ConfigFacade(FacadeInterface):
                     models_found.append(model_list[-1][1])
         return models_found[-1] if models_found else None
 
-    def has_quorum_device(self) -> bool:
-        """
-        Check if quorum device is present in the config
-        """
-        return bool(self._get_raw_quorum_device_model())
-
-    def get_quorum_device_model(self) -> str:
-        """
-        Get quorum device model from quorum.device section
-        """
-        model = self._get_raw_quorum_device_model()
-        if model is None:
-            raise AssertionError(
-                "Asking for a quorum device model when quorum device is not "
-                "defined"
-            )
-        return model
-
     def get_quorum_device_settings(
         self,
     ) -> tuple[dict[str, str], dict[str, str], dict[str, str]]:
         """
         Get model, generic and heuristics options from quorum.device section
         """
-        model = self._get_raw_quorum_device_model()
+        model = self.get_quorum_device_model()
         if model is None:
-            raise AssertionError(
-                "Asking for a quorum device settings when quorum device is not "
-                "defined"
-            )
+            return {}, {}, {}
+
         model_options: dict[str, dict[str, str]] = {}
-        generic_options = {}
+        generic_options: dict[str, str] = {}
         heuristics_options: dict[str, str] = {}
         for quorum in self.config.get_sections("quorum"):
             for device in quorum.get_sections("device"):
@@ -718,7 +701,7 @@ class ConfigFacade(FacadeInterface):
         )
 
     def is_quorum_device_heuristics_enabled_with_no_exec(self) -> bool:
-        if not self.has_quorum_device():
+        if not self.get_quorum_device_model():
             return False
         heuristics_options = self.get_quorum_device_settings()[2]
         regexp = constants.QUORUM_DEVICE_HEURISTICS_EXEC_NAME_RE
@@ -748,7 +731,7 @@ class ConfigFacade(FacadeInterface):
         generic_options -- generic quorum device options
         heuristics_options -- heuristics options
         """
-        if self.has_quorum_device():
+        if self.get_quorum_device_model():
             raise LibraryError(
                 ReportItem.error(reports.messages.QdeviceAlreadyDefined())
             )
@@ -811,11 +794,11 @@ class ConfigFacade(FacadeInterface):
         generic_options -- generic quorum device options
         heuristics_options -- heuristics options
         """
-        if not self.has_quorum_device():
+        model = self.get_quorum_device_model()
+        if not model:
             raise LibraryError(
                 ReportItem.error(reports.messages.QdeviceNotDefined())
             )
-        model = self.get_quorum_device_model()
 
         # set new configuration
         device_sections = []
@@ -828,7 +811,7 @@ class ConfigFacade(FacadeInterface):
                 model_sections.extend(device.get_sections(model))
                 heuristics_sections.extend(device.get_sections("heuristics"))
         # we know device sections exist, otherwise the function would exit at
-        # has_quorum_device line above
+        # get_quorum_device_model line above
         if not model_sections:
             new_model = Section(model)
             device_sections[-1].add_section(new_model)
@@ -851,7 +834,7 @@ class ConfigFacade(FacadeInterface):
         """
         Remove quorum device heuristics configuration
         """
-        if not self.has_quorum_device():
+        if not self.get_quorum_device_model():
             raise LibraryError(
                 ReportItem.error(reports.messages.QdeviceNotDefined())
             )
@@ -866,7 +849,7 @@ class ConfigFacade(FacadeInterface):
         """
         Remove all quorum device configuration
         """
-        if not self.has_quorum_device():
+        if not self.get_quorum_device_model():
             raise LibraryError(
                 ReportItem.error(reports.messages.QdeviceNotDefined())
             )
@@ -878,7 +861,7 @@ class ConfigFacade(FacadeInterface):
 
     def __update_two_node(self) -> None:
         # get relevant status
-        has_quorum_device = self.has_quorum_device()
+        has_quorum_device = self.get_quorum_device_model() is not None
         has_two_nodes = len(self.get_nodes()) == 2
         auto_tie_breaker = self.is_enabled_auto_tie_breaker()
         # update two_node

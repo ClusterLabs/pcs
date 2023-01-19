@@ -798,14 +798,15 @@ def get_corosync_conf_struct(env: LibraryEnvironment) -> CorosyncConfDto:
     """
     corosync_conf = env.get_corosync_conf()
     quorum_device_dto: Optional[CorosyncQuorumDeviceSettingsDto] = None
-    if corosync_conf.has_quorum_device():
+    qd_model = corosync_conf.get_quorum_device_model()
+    if qd_model is not None:
         (
             qd_model_options,
             qd_generic_options,
             qd_heuristics_options,
         ) = corosync_conf.get_quorum_device_settings()
         quorum_device_dto = CorosyncQuorumDeviceSettingsDto(
-            model=corosync_conf.get_quorum_device_model(),
+            model=qd_model,
             model_options=qd_model_options,
             generic_options=qd_generic_options,
             heuristics_options=qd_heuristics_options,
@@ -911,26 +912,25 @@ def add_nodes(
     )
     report_processor.report_list(target_report_list)
 
-    if corosync_conf.has_quorum_device():
-        # get a target for qnetd if needed
-        if corosync_conf.get_quorum_device_model() == "net":
-            (
-                qdevice_model_options,
-                _,
-                _,
-            ) = corosync_conf.get_quorum_device_settings()
-            try:
-                qnetd_target = target_factory.get_target(
-                    qdevice_model_options["host"]
-                )
-            except HostNotFound:
-                report_processor.report(
-                    ReportItem.error(
-                        reports.messages.HostNotFound(
-                            [qdevice_model_options["host"]]
-                        )
+    # get a target for qnetd if needed
+    if corosync_conf.get_quorum_device_model() == "net":
+        (
+            qdevice_model_options,
+            _,
+            _,
+        ) = corosync_conf.get_quorum_device_settings()
+        try:
+            qnetd_target = target_factory.get_target(
+                qdevice_model_options["host"]
+            )
+        except HostNotFound:
+            report_processor.report(
+                ReportItem.error(
+                    reports.messages.HostNotFound(
+                        [qdevice_model_options["host"]]
                     )
                 )
+            )
 
     # Get targets for new nodes and report unknown (== not-authorized) nodes.
     # If a node doesn't contain the 'name' key, validation of inputs reports it.
@@ -1156,20 +1156,19 @@ def add_nodes(
     run_and_raise(env.get_node_communicator(), com_cmd)
 
     # qdevice setup
-    if corosync_conf.has_quorum_device():
-        if corosync_conf.get_quorum_device_model() == "net":
-            qdevice_net.set_up_client_certificates(
-                env.cmd_runner(),
-                env.report_processor,
-                env.communicator_factory,
-                qnetd_target,
-                corosync_conf.get_cluster_name(),
-                new_nodes_target_list,
-                # we don't want to allow skipping offline nodes which are being
-                # added, otherwise qdevice will not work properly
-                skip_offline_nodes=False,
-                allow_skip_offline=False,
-            )
+    if corosync_conf.get_quorum_device_model() == "net":
+        qdevice_net.set_up_client_certificates(
+            env.cmd_runner(),
+            env.report_processor,
+            env.communicator_factory,
+            qnetd_target,
+            corosync_conf.get_cluster_name(),
+            new_nodes_target_list,
+            # we don't want to allow skipping offline nodes which are being
+            # added, otherwise qdevice will not work properly
+            skip_offline_nodes=False,
+            allow_skip_offline=False,
+        )
 
     # sbd setup
     if is_sbd_enabled:
@@ -1745,16 +1744,8 @@ def remove_nodes(
         config_validators.remove_nodes(
             node_list,
             corosync_conf.get_nodes(),
-            (
-                corosync_conf.get_quorum_device_model()
-                if corosync_conf.has_quorum_device()
-                else None
-            ),
-            (
-                corosync_conf.get_quorum_device_settings()
-                if corosync_conf.has_quorum_device()
-                else ({}, {}, {})
-            ),
+            corosync_conf.get_quorum_device_model(),
+            corosync_conf.get_quorum_device_settings(),
         )
     )
     if report_processor.has_errors:

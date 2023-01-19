@@ -76,7 +76,7 @@ def _even_number_of_nodes_and_no_qdevice(
         node.
     """
     return (
-        not corosync_conf_facade.has_quorum_device()
+        not corosync_conf_facade.get_quorum_device_model()
         and (len(corosync_conf_facade.get_nodes()) + node_number_modifier) % 2
         == 0
     )

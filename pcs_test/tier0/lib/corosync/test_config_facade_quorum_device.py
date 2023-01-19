@@ -25,20 +25,23 @@ def _get_facade(config_text):
     return lib.ConfigFacade(Parser.parse(config_text.encode("utf-8")))
 
 
-class HasQuorumDeviceTest(TestCase):
-    def test_empty_config(self):
-        config = ""
+class GetQuorumDeviceModelAndSettingsTest(TestCase):
+    def assert_model_and_settings(
+        self, config, expected_model, expected_settings
+    ):
         facade = _get_facade(config)
-        self.assertFalse(facade.has_quorum_device())
+        self.assertEqual(expected_model, facade.get_quorum_device_model())
+        self.assertEqual(expected_settings, facade.get_quorum_device_settings())
         self.assertFalse(facade.need_stopped_cluster)
         self.assertFalse(facade.need_qdevice_reload)
 
+    def test_empty_config(self):
+        config = ""
+        self.assert_model_and_settings(config, None, ({}, {}, {}))
+
     def test_no_device(self):
         config = _read_file("corosync.conf")
-        facade = _get_facade(config)
-        self.assertFalse(facade.has_quorum_device())
-        self.assertFalse(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
+        self.assert_model_and_settings(config, None, ({}, {}, {}))
 
     def test_empty_device(self):
         config = dedent(
@@ -49,25 +52,7 @@ class HasQuorumDeviceTest(TestCase):
             }
         """
         )
-        facade = _get_facade(config)
-        self.assertFalse(facade.has_quorum_device())
-        self.assertFalse(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
-
-    def test_device_set(self):
-        config = dedent(
-            """\
-            quorum {
-                device {
-                    model: net
-                }
-            }
-        """
-        )
-        facade = _get_facade(config)
-        self.assertTrue(facade.has_quorum_device())
-        self.assertFalse(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
+        self.assert_model_and_settings(config, None, ({}, {}, {}))
 
     def test_no_model(self):
         config = dedent(
@@ -82,58 +67,7 @@ class HasQuorumDeviceTest(TestCase):
             }
         """
         )
-        facade = _get_facade(config)
-        self.assertFalse(facade.has_quorum_device())
-        self.assertFalse(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
-
-
-class GetQuorumDeviceModel(TestCase):
-    def assert_model(self, config, expected_model):
-        facade = _get_facade(config)
-        if expected_model is None:
-            self.assertFalse(facade.has_quorum_device())
-            with self.assertRaises(AssertionError):
-                facade.get_quorum_device_model()
-        else:
-            self.assertTrue(facade.has_quorum_device())
-            self.assertEqual(expected_model, facade.get_quorum_device_model())
-        self.assertFalse(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
-
-    def test_empty_config(self):
-        config = ""
-        self.assert_model(config, None)
-
-    def test_no_device(self):
-        config = _read_file("corosync.conf")
-        self.assert_model(config, None)
-
-    def test_empty_device(self):
-        config = dedent(
-            """\
-            quorum {
-                device {
-                }
-            }
-        """
-        )
-        self.assert_model(config, None)
-
-    def test_no_model(self):
-        config = dedent(
-            """\
-            quorum {
-                device {
-                    option: value
-                    net {
-                        host: 127.0.0.1
-                    }
-                }
-            }
-        """
-        )
-        self.assert_model(config, None)
+        self.assert_model_and_settings(config, None, ({}, {}, {}))
 
     def test_configured_properly(self):
         config = dedent(
@@ -149,167 +83,11 @@ class GetQuorumDeviceModel(TestCase):
             }
         """
         )
-        self.assert_model(config, "net")
-
-    def test_more_devices_one_quorum(self):
-        config = dedent(
-            """\
-            quorum {
-                device {
-                    option0: valueX
-                    option1: value1
-                    model: disk
-                    net {
-                        host: 127.0.0.1
-                    }
-                    heuristics {
-                        mode: sync
-                        exec_ls: test -f /tmp/test
-                    }
-                }
-                device {
-                    option0: valueY
-                    option2: value2
-                    model: net
-                    disk {
-                        path: /dev/quorum_disk
-                    }
-                    heuristics {
-                        mode: on
-                    }
-                    heuristics {
-                        timeout: 5
-                    }
-                }
-            }
-        """
-        )
-        self.assert_model(config, "net")
-
-    def test_more_devices_more_quorum(self):
-        config = dedent(
-            """\
-            quorum {
-                device {
-                    option0: valueX
-                    option1: value1
-                    model: disk
-                    net {
-                        host: 127.0.0.1
-                    }
-                    heuristics {
-                        mode: sync
-                        exec_ls: test -f /tmp/test
-                    }
-                }
-            }
-            quorum {
-                device {
-                    option0: valueY
-                    option2: value2
-                    model: net
-                    disk {
-                        path: /dev/quorum_disk
-                    }
-                    heuristics {
-                        mode: on
-                    }
-                    heuristics {
-                        timeout: 5
-                    }
-                }
-            }
-        """
-        )
-        self.assert_model(config, "net")
-
-
-class GetQuorumDeviceSettingsTest(TestCase):
-    def test_empty_config(self):
-        config = ""
-        facade = _get_facade(config)
-        self.assertFalse(facade.has_quorum_device())
-        with self.assertRaises(AssertionError):
-            facade.get_quorum_device_model()
-        with self.assertRaises(AssertionError):
-            facade.get_quorum_device_settings()
-        self.assertFalse(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
-
-    def test_no_device(self):
-        config = _read_file("corosync.conf")
-        facade = _get_facade(config)
-        self.assertFalse(facade.has_quorum_device())
-        with self.assertRaises(AssertionError):
-            facade.get_quorum_device_model()
-        with self.assertRaises(AssertionError):
-            facade.get_quorum_device_settings()
-        self.assertFalse(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
-
-    def test_empty_device(self):
-        config = dedent(
-            """\
-            quorum {
-                device {
-                }
-            }
-        """
-        )
-        facade = _get_facade(config)
-        self.assertFalse(facade.has_quorum_device())
-        with self.assertRaises(AssertionError):
-            facade.get_quorum_device_model()
-        with self.assertRaises(AssertionError):
-            facade.get_quorum_device_settings()
-        self.assertFalse(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
-
-    def test_no_model(self):
-        config = dedent(
-            """\
-            quorum {
-                device {
-                    option: value
-                    net {
-                        host: 127.0.0.1
-                    }
-                }
-            }
-        """
-        )
-        facade = _get_facade(config)
-        self.assertFalse(facade.has_quorum_device())
-        with self.assertRaises(AssertionError):
-            facade.get_quorum_device_model()
-        with self.assertRaises(AssertionError):
-            facade.get_quorum_device_settings()
-        self.assertFalse(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
-
-    def test_configured_properly(self):
-        config = dedent(
-            """\
-            quorum {
-                device {
-                    option: value
-                    model: net
-                    net {
-                        host: 127.0.0.1
-                    }
-                }
-            }
-        """
-        )
-        facade = _get_facade(config)
-        self.assertTrue(facade.has_quorum_device())
-        self.assertEqual("net", facade.get_quorum_device_model())
-        self.assertEqual(
+        self.assert_model_and_settings(
+            config,
+            "net",
             ({"host": "127.0.0.1"}, {"option": "value"}, {}),
-            facade.get_quorum_device_settings(),
         )
-        self.assertFalse(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
 
     def test_configured_properly_heuristics(self):
         config = dedent(
@@ -329,19 +107,15 @@ class GetQuorumDeviceSettingsTest(TestCase):
             }
         """
         )
-        facade = _get_facade(config)
-        self.assertTrue(facade.has_quorum_device())
-        self.assertEqual("net", facade.get_quorum_device_model())
-        self.assertEqual(
+        self.assert_model_and_settings(
+            config,
+            "net",
             (
                 {"host": "127.0.0.1"},
                 {"option": "value"},
                 {"exec_ls": "test -f /tmp/test", "mode": "on"},
             ),
-            facade.get_quorum_device_settings(),
         )
-        self.assertFalse(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
 
     def test_more_devices_one_quorum(self):
         config = dedent(
@@ -376,19 +150,15 @@ class GetQuorumDeviceSettingsTest(TestCase):
             }
         """
         )
-        facade = _get_facade(config)
-        self.assertTrue(facade.has_quorum_device())
-        self.assertEqual("net", facade.get_quorum_device_model())
-        self.assertEqual(
+        self.assert_model_and_settings(
+            config,
+            "net",
             (
                 {"host": "127.0.0.1"},
                 {"option0": "valueY", "option1": "value1", "option2": "value2"},
                 {"exec_ls": "test -f /tmp/test", "mode": "on", "timeout": "5"},
             ),
-            facade.get_quorum_device_settings(),
         )
-        self.assertFalse(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
 
     def test_more_devices_more_quorum(self):
         config = dedent(
@@ -425,19 +195,15 @@ class GetQuorumDeviceSettingsTest(TestCase):
             }
         """
         )
-        facade = _get_facade(config)
-        self.assertTrue(facade.has_quorum_device())
-        self.assertEqual("net", facade.get_quorum_device_model())
-        self.assertEqual(
+        self.assert_model_and_settings(
+            config,
+            "net",
             (
                 {"host": "127.0.0.1"},
                 {"option0": "valueY", "option1": "value1", "option2": "value2"},
                 {"exec_ls": "test -f /tmp/test", "mode": "on", "timeout": "5"},
             ),
-            facade.get_quorum_device_settings(),
         )
-        self.assertFalse(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
 
 
 class IsQuorumDeviceHeuristicsEnabledWithNoExec(TestCase):
