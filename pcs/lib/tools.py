@@ -3,12 +3,16 @@ import tempfile
 import uuid
 from contextlib import contextmanager
 from typing import (
-    Any,
+    IO,
     Callable,
-    Dict,
+    ContextManager,
+    Generator,
+    Literal,
+    Mapping,
     Optional,
     TypeVar,
     Union,
+    overload,
 )
 
 from pcs.common import reports
@@ -25,7 +29,7 @@ def get_optional_value(
     return constructor(value)
 
 
-def generate_binary_key(random_bytes_count):
+def generate_binary_key(random_bytes_count: int) -> bytes:
     return os.urandom(random_bytes_count)
 
 
@@ -33,7 +37,7 @@ def generate_uuid() -> str:
     return uuid.uuid4().hex
 
 
-def environment_file_to_dict(config: str) -> Dict[str, str]:
+def environment_file_to_dict(config: str) -> dict[str, str]:
     """
     Parse systemd Environment file. This parser is simplified version of
     parser in systemd, because of their poor implementation.
@@ -60,7 +64,7 @@ def environment_file_to_dict(config: str) -> Dict[str, str]:
     return data
 
 
-def dict_to_environment_file(config_dict):
+def dict_to_environment_file(config_dict: Mapping[str, str]) -> str:
     """
     Convert data in dictionary to Environment file format.
     Returns Environment file as string in format:
@@ -76,13 +80,27 @@ def dict_to_environment_file(config_dict):
     return "".join(lines)
 
 
-def write_tmpfile(data, binary=False):
+@overload
+def write_tmpfile(data: Optional[bytes], binary: Literal[True]) -> IO[bytes]:
+    pass
+
+
+@overload
+def write_tmpfile(
+    data: Optional[str], binary: Literal[False] = False
+) -> IO[str]:
+    pass
+
+
+def write_tmpfile(
+    data: Union[None, bytes, str], binary: bool = False
+) -> Union[IO[str], IO[bytes]]:
     """
     Write data to a new tmp file and return the file; raises EnvironmentError.
     DEPRECATED: use get_tmp_file context manager
 
-    string or bytes data -- data to write to the file
-    bool binary -- treat data as binary?
+    data -- data to write to the file
+    binary -- treat data as binary?
     """
     # pylint: disable=consider-using-with
     mode = "w+b" if binary else "w+"
@@ -93,11 +111,28 @@ def write_tmpfile(data, binary=False):
     return tmpfile
 
 
-@contextmanager
+@overload
 def get_tmp_file(
-    data: Union[None, bytes, str] = None,
+    data: Optional[bytes], binary: Literal[True]
+) -> ContextManager[IO[bytes]]:
+    pass
+
+
+@overload
+def get_tmp_file(
+    data: Optional[str],
+    binary: Literal[False] = False,
+) -> ContextManager[IO[str]]:
+    pass
+
+
+# We ignore return type here as it doesn't work with mypy (@contextmanager and
+# @overload) and it is properly typed in @overload functions.
+@contextmanager
+def get_tmp_file(  # type: ignore
+    data: Optional[Union[bytes, str]],
     binary: bool = False,
-) -> Any:
+):
     mode = "w+b" if binary else "w+"
     tmpfile = None
     try:
@@ -112,7 +147,9 @@ def get_tmp_file(
 
 
 @contextmanager
-def get_tmp_cib(report_processor: reports.ReportProcessor, data: str) -> Any:
+def get_tmp_cib(
+    report_processor: reports.ReportProcessor, data: str
+) -> Generator[IO[str], None, None]:
     try:
         with get_tmp_file(data) as tmp_cib_file:
             report_processor.report(
@@ -127,7 +164,9 @@ def get_tmp_cib(report_processor: reports.ReportProcessor, data: str) -> Any:
         ) from e
 
 
-def create_tmp_cib(report_processor: reports.ReportProcessor, data: str) -> Any:
+def create_tmp_cib(
+    report_processor: reports.ReportProcessor, data: str
+) -> IO[str]:
     try:
         tmp_file = write_tmpfile(data)
         report_processor.report(

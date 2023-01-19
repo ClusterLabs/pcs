@@ -41,7 +41,7 @@ class SectionTest(TestCase):
         self.assertEqual(
             section.get_attributes(),
             [
-                ["name1", "value1"],
+                ("name1", "value1"),
             ],
         )
 
@@ -49,8 +49,8 @@ class SectionTest(TestCase):
         self.assertEqual(
             section.get_attributes(),
             [
-                ["name1", "value1"],
-                ["name2", "value2"],
+                ("name1", "value1"),
+                ("name2", "value2"),
             ],
         )
 
@@ -58,9 +58,9 @@ class SectionTest(TestCase):
         self.assertEqual(
             section.get_attributes(),
             [
-                ["name1", "value1"],
-                ["name2", "value2"],
-                ["name2", "value2"],
+                ("name1", "value1"),
+                ("name2", "value2"),
+                ("name2", "value2"),
             ],
         )
 
@@ -74,23 +74,23 @@ class SectionTest(TestCase):
         self.assertEqual(
             section.get_attributes(),
             [
-                ["name1", "value1"],
-                ["name2", "value2"],
-                ["name3", "value3"],
-                ["name2", "value2a"],
+                ("name1", "value1"),
+                ("name2", "value2"),
+                ("name3", "value3"),
+                ("name2", "value2a"),
             ],
         )
         self.assertEqual(
             section.get_attributes("name1"),
             [
-                ["name1", "value1"],
+                ("name1", "value1"),
             ],
         )
         self.assertEqual(
             section.get_attributes("name2"),
             [
-                ["name2", "value2"],
-                ["name2", "value2a"],
+                ("name2", "value2"),
+                ("name2", "value2a"),
             ],
         )
         self.assertEqual(section.get_attributes("nameX"), [])
@@ -151,7 +151,7 @@ class SectionTest(TestCase):
         self.assertEqual(
             section.get_attributes(),
             [
-                ["name1", "value1"],
+                ("name1", "value1"),
             ],
         )
 
@@ -159,7 +159,7 @@ class SectionTest(TestCase):
         self.assertEqual(
             section.get_attributes(),
             [
-                ["name1", "value1"],
+                ("name1", "value1"),
             ],
         )
 
@@ -167,7 +167,7 @@ class SectionTest(TestCase):
         self.assertEqual(
             section.get_attributes(),
             [
-                ["name1", "value1a"],
+                ("name1", "value1a"),
             ],
         )
 
@@ -175,8 +175,8 @@ class SectionTest(TestCase):
         self.assertEqual(
             section.get_attributes(),
             [
-                ["name1", "value1a"],
-                ["name2", "value2"],
+                ("name1", "value1a"),
+                ("name2", "value2"),
             ],
         )
 
@@ -184,8 +184,8 @@ class SectionTest(TestCase):
         self.assertEqual(
             section.get_attributes(),
             [
-                ["name1", "value1"],
-                ["name2", "value2"],
+                ("name1", "value1"),
+                ("name2", "value2"),
             ],
         )
 
@@ -194,19 +194,19 @@ class SectionTest(TestCase):
         self.assertEqual(
             section.get_attributes(),
             [
-                ["name1", "value1"],
-                ["name2", "value2"],
-                ["name3", "value3"],
-                ["name2", "value2"],
+                ("name1", "value1"),
+                ("name2", "value2"),
+                ("name3", "value3"),
+                ("name2", "value2"),
             ],
         )
         section.set_attribute("name2", "value2a")
         self.assertEqual(
             section.get_attributes(),
             [
-                ["name1", "value1"],
-                ["name2", "value2a"],
-                ["name3", "value3"],
+                ("name1", "value1"),
+                ("name2", "value2a"),
+                ("name3", "value3"),
             ],
         )
 
@@ -216,61 +216,9 @@ class SectionTest(TestCase):
         self.assertEqual(
             section.get_attributes(),
             [
-                ["name1", "value1"],
-                ["name2", "value2a"],
-                ["name3", "value3"],
-            ],
-        )
-
-    def test_attribute_change(self):
-        section = config_parser.Section("mySection")
-        section.add_attribute("name1", "value1")
-        section.add_attribute("name2", "value2")
-        section.add_attribute("name3", "value3")
-        section.add_attribute("name2", "value2")
-
-        attr = section.get_attributes()[1]
-        attr[0] = "name2a"
-        attr[1] = "value2a"
-        self.assertEqual(
-            section.get_attributes(),
-            [
-                ["name1", "value1"],
-                ["name2a", "value2a"],
-                ["name3", "value3"],
-                ["name2", "value2"],
-            ],
-        )
-
-    def test_attribute_del(self):
-        section = config_parser.Section("mySection")
-        section.add_attribute("name1", "value1")
-        section.add_attribute("name2", "value2")
-        section.add_attribute("name3", "value3")
-        section.add_attribute("name2", "value2")
-
-        section.del_attribute(section.get_attributes()[1])
-        self.assertEqual(
-            section.get_attributes(),
-            [
-                ["name1", "value1"],
-                ["name3", "value3"],
-            ],
-        )
-
-        section.del_attribute(["name3", "value3"])
-        self.assertEqual(
-            section.get_attributes(),
-            [
-                ["name1", "value1"],
-            ],
-        )
-
-        section.del_attribute(["name3", "value3"])
-        self.assertEqual(
-            section.get_attributes(),
-            [
-                ["name1", "value1"],
+                ("name1", "value1"),
+                ("name2", "value2a"),
+                ("name3", "value3"),
             ],
         )
 
@@ -285,10 +233,10 @@ class SectionTest(TestCase):
         self.assertEqual(
             section.get_attributes(),
             [
-                ["name1", "value1"],
-                ["name2", "value2"],
-                ["name3", "value3"],
-                ["name2", "value2"],
+                ("name1", "value1"),
+                ("name2", "value2"),
+                ("name3", "value3"),
+                ("name2", "value2"),
             ],
         )
 
@@ -296,8 +244,8 @@ class SectionTest(TestCase):
         self.assertEqual(
             section.get_attributes(),
             [
-                ["name1", "value1"],
-                ["name3", "value3"],
+                ("name1", "value1"),
+                ("name3", "value3"),
             ],
         )
 
@@ -306,19 +254,19 @@ class SectionTest(TestCase):
         self.assertEqual(
             section.get_attributes(),
             [
-                ["name1", "value1"],
-                ["name3", "value3"],
-                ["name2", "value2"],
-                ["name2", "value2a"],
+                ("name1", "value1"),
+                ("name3", "value3"),
+                ("name2", "value2"),
+                ("name2", "value2a"),
             ],
         )
         section.del_attributes_by_name("name2", "value2")
         self.assertEqual(
             section.get_attributes(),
             [
-                ["name1", "value1"],
-                ["name3", "value3"],
-                ["name2", "value2a"],
+                ("name1", "value1"),
+                ("name3", "value3"),
+                ("name2", "value2a"),
             ],
         )
 
@@ -326,18 +274,18 @@ class SectionTest(TestCase):
         self.assertEqual(
             section.get_attributes(),
             [
-                ["name1", "value1"],
-                ["name3", "value3"],
-                ["name2", "value2a"],
-                ["name3", "value3a"],
+                ("name1", "value1"),
+                ("name3", "value3"),
+                ("name2", "value2a"),
+                ("name3", "value3a"),
             ],
         )
         section.del_attributes_by_name("name3")
         self.assertEqual(
             section.get_attributes(),
             [
-                ["name1", "value1"],
-                ["name2", "value2a"],
+                ("name1", "value1"),
+                ("name2", "value2a"),
             ],
         )
 
@@ -924,7 +872,7 @@ class ParserTest(TestCase):
             """
         )
         root = config_parser.Parser.parse(string.encode("utf-8"))
-        self.assertEqual(root.get_attributes(), [["name", "foo:value"]])
+        self.assertEqual(root.get_attributes(), [("name", "foo:value")])
         self.assertEqual(str(root), parsed)
 
     def test_attributes_empty_value(self):
@@ -940,7 +888,7 @@ class ParserTest(TestCase):
             """
         )
         root = config_parser.Parser.parse(string.encode("utf-8"))
-        self.assertEqual(root.get_attributes(), [["name", ""]])
+        self.assertEqual(root.get_attributes(), [("name", "")])
         self.assertEqual(str(root), parsed)
 
     def test_sections_empty_section(self):

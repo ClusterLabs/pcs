@@ -798,9 +798,9 @@ def get_corosync_conf_struct(env: LibraryEnvironment) -> CorosyncConfDto:
     """
     corosync_conf = env.get_corosync_conf()
     quorum_device_dto: Optional[CorosyncQuorumDeviceSettingsDto] = None
-    if corosync_conf.has_quorum_device():
+    qd_model = corosync_conf.get_quorum_device_model()
+    if qd_model is not None:
         (
-            qd_model,
             qd_model_options,
             qd_generic_options,
             qd_heuristics_options,
@@ -911,14 +911,14 @@ def add_nodes(
         skip_non_existing=skip_offline_nodes,
     )
     report_processor.report_list(target_report_list)
+
     # get a target for qnetd if needed
-    (
-        qdevice_model,
-        qdevice_model_options,
-        _,
-        _,
-    ) = corosync_conf.get_quorum_device_settings()
-    if qdevice_model == "net":
+    if corosync_conf.get_quorum_device_model() == "net":
+        (
+            qdevice_model_options,
+            _,
+            _,
+        ) = corosync_conf.get_quorum_device_settings()
         try:
             qnetd_target = target_factory.get_target(
                 qdevice_model_options["host"]
@@ -1156,7 +1156,7 @@ def add_nodes(
     run_and_raise(env.get_node_communicator(), com_cmd)
 
     # qdevice setup
-    if qdevice_model == "net":
+    if corosync_conf.get_quorum_device_model() == "net":
         qdevice_net.set_up_client_certificates(
             env.cmd_runner(),
             env.report_processor,
@@ -1744,6 +1744,7 @@ def remove_nodes(
         config_validators.remove_nodes(
             node_list,
             corosync_conf.get_nodes(),
+            corosync_conf.get_quorum_device_model(),
             corosync_conf.get_quorum_device_settings(),
         )
     )
@@ -1839,9 +1840,11 @@ def remove_nodes(
         # required, cluster has to be turned off and therefore it loses quorum.
         com_cmd = cluster.GetQuorumStatus(report_processor)
         com_cmd.set_targets(targets_to_remove)
-        failures, quorum_status = run_com(env.get_node_communicator(), com_cmd)
-        if quorum_status:
-            if quorum_status.stopping_nodes_cause_quorum_loss(node_list):
+        failures, quorum_status_facade = run_com(
+            env.get_node_communicator(), com_cmd
+        )
+        if quorum_status_facade:
+            if quorum_status_facade.stopping_nodes_cause_quorum_loss(node_list):
                 report_processor.report(
                     ReportItem(
                         severity=reports.item.get_severity(
@@ -2004,7 +2007,7 @@ def add_link(
             link_options,
             corosync_conf.get_nodes(),
             cib_nodes,
-            corosync_conf.get_used_linknumber_list(),
+            [str(num) for num in corosync_conf.get_used_linknumber_list()],
             corosync_conf.get_transport(),
             corosync_conf.get_ip_version(),
             force_unresolvable=force,
@@ -2046,7 +2049,7 @@ def remove_links(
     report_processor.report_list(
         config_validators.remove_links(
             linknumber_list,
-            corosync_conf.get_used_linknumber_list(),
+            [str(num) for num in corosync_conf.get_used_linknumber_list()],
             corosync_conf.get_transport(),
         )
     )
@@ -2111,7 +2114,7 @@ def update_link(
             # cluster must be stopped for updating a link and then we cannot get
             # nodes from CIB
             [],
-            corosync_conf.get_used_linknumber_list(),
+            [str(num) for num in corosync_conf.get_used_linknumber_list()],
             corosync_conf.get_transport(),
             corosync_conf.get_ip_version(),
             force_unresolvable=force,

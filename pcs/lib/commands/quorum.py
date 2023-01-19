@@ -18,26 +18,26 @@ from pcs.lib.errors import LibraryError
 from pcs.lib.node import get_existing_nodes_names
 
 
-def get_config(lib_env):
+def get_config(lib_env: LibraryEnvironment):
     """
     Extract and return quorum configuration from corosync.conf
     lib_env LibraryEnvironment
     """
     cfg = lib_env.get_corosync_conf()
     device = None
-    if cfg.has_quorum_device():
+    qd_model = cfg.get_quorum_device_model()
+    if qd_model is not None:
         (
-            model,
-            model_options,
-            generic_options,
-            heuristics_options,
+            qd_model_options,
+            qd_generic_options,
+            qd_heuristics_options,
         ) = cfg.get_quorum_device_settings()
-        device = {
-            "model": model,
-            "model_options": model_options,
-            "generic_options": generic_options,
-            "heuristics_options": heuristics_options,
-        }
+        device = dict(
+            model=qd_model,
+            model_options=qd_model_options,
+            generic_options=qd_generic_options,
+            heuristics_options=qd_heuristics_options,
+        )
     return {
         "options": cfg.get_quorum_options(),
         "device": device,
@@ -98,7 +98,9 @@ def set_options(
     cfg = lib_env.get_corosync_conf()
     if lib_env.report_processor.report_list(
         corosync_conf_validators.update_quorum_options(
-            options, cfg.has_quorum_device(), cfg.get_quorum_options()
+            options,
+            cfg.get_quorum_device_model() is not None,
+            cfg.get_quorum_options(),
         )
     ).has_errors:
         raise LibraryError()
@@ -159,7 +161,7 @@ def add_device(
     bool skip_offline_nodes -- continue even if not all nodes are accessible
     """
     cfg = lib_env.get_corosync_conf()
-    if cfg.has_quorum_device():
+    if cfg.get_quorum_device_model():
         raise LibraryError(
             ReportItem.error(reports.messages.QdeviceAlreadyDefined())
         )
@@ -171,7 +173,7 @@ def add_device(
             model_options,
             generic_options,
             heuristics_options,
-            [node.nodeid for node in cfg.get_nodes()],
+            [node.nodeid for node in cfg.get_nodes() if node.nodeid],
             force_model=force_model,
             force_options=force_options,
         )
@@ -279,17 +281,18 @@ def update_device(
     bool skip_offline_nodes -- continue even if not all nodes are accessible
     """
     cfg = lib_env.get_corosync_conf()
-    if not cfg.has_quorum_device():
+    model = cfg.get_quorum_device_model()
+    if not model:
         raise LibraryError(
             ReportItem.error(reports.messages.QdeviceNotDefined())
         )
     if lib_env.report_processor.report_list(
         corosync_conf_validators.update_quorum_device(
-            cfg.get_quorum_device_model(),
+            model,
             model_options,
             generic_options,
             heuristics_options,
-            [node.nodeid for node in cfg.get_nodes()],
+            [node.nodeid for node in cfg.get_nodes() if node.nodeid],
             force_options=force_options,
         )
     ).has_errors:
@@ -311,7 +314,7 @@ def remove_device_heuristics(lib_env, skip_offline_nodes=False):
     bool skip_offline_nodes -- continue even if not all nodes are accessible
     """
     cfg = lib_env.get_corosync_conf()
-    if not cfg.has_quorum_device():
+    if not cfg.get_quorum_device_model():
         raise LibraryError(
             ReportItem.error(reports.messages.QdeviceNotDefined())
         )
@@ -325,11 +328,11 @@ def remove_device(lib_env: LibraryEnvironment, skip_offline_nodes=False):
     skip_offline_nodes continue even if not all nodes are accessible
     """
     cfg = lib_env.get_corosync_conf()
-    if not cfg.has_quorum_device():
+    model = cfg.get_quorum_device_model()
+    if not model:
         raise LibraryError(
             ReportItem.error(reports.messages.QdeviceNotDefined())
         )
-    model = cfg.get_quorum_device_model()
     cfg.remove_quorum_device()
 
     if lib_env.is_corosync_conf_live:

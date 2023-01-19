@@ -665,7 +665,8 @@ class RemoveNodes(TestCase):
             config_validators.remove_nodes(
                 ["node3", "nodeX", "nodeY", "node4"],
                 self.fixture_nodes,
-                (None, None, None, None),
+                None,
+                ({}, {}, {}),
             ),
             [
                 fixture.error(
@@ -680,7 +681,8 @@ class RemoveNodes(TestCase):
             config_validators.remove_nodes(
                 ["node3", "node1", "node2", "node4"],
                 self.fixture_nodes,
-                (None, None, None, None),
+                None,
+                ({}, {}, {}),
             ),
             [fixture.error(report_codes.CANNOT_REMOVE_ALL_CLUSTER_NODES)],
         )
@@ -688,7 +690,7 @@ class RemoveNodes(TestCase):
     def test_qdevice_tie_breaker_none(self):
         assert_report_item_list_equal(
             config_validators.remove_nodes(
-                ["node4"], self.fixture_nodes, ("net", {}, None, None)
+                ["node4"], self.fixture_nodes, "net", ({}, {}, {})
             ),
             [],
         )
@@ -698,7 +700,8 @@ class RemoveNodes(TestCase):
             config_validators.remove_nodes(
                 ["node4"],
                 self.fixture_nodes,
-                ("net", {"tie_breaker": "highest"}, None, None),
+                "net",
+                ({"tie_breaker": "highest"}, {}, {}),
             ),
             [],
         )
@@ -708,7 +711,8 @@ class RemoveNodes(TestCase):
             config_validators.remove_nodes(
                 ["node4"],
                 self.fixture_nodes,
-                ("net", {"tie_breaker": "3"}, None, None),
+                "net",
+                ({"tie_breaker": "3"}, {}, {}),
             ),
             [],
         )
@@ -718,7 +722,8 @@ class RemoveNodes(TestCase):
             config_validators.remove_nodes(
                 ["node4"],
                 self.fixture_nodes,
-                ("net", {"tie_breaker": "4"}, None, None),
+                "net",
+                ({"tie_breaker": "4"}, {}, {}),
             ),
             [
                 fixture.error(
@@ -734,7 +739,8 @@ class RemoveNodes(TestCase):
             config_validators.remove_nodes(
                 ["node3", "node1", "node2", "node4", "nodeX"],
                 self.fixture_nodes,
-                ("net", {"tie_breaker": "4"}, None, None),
+                "net",
+                ({"tie_breaker": "4"}, {}, {}),
             ),
             [
                 fixture.error(

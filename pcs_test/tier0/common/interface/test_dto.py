@@ -17,6 +17,7 @@ from pcs.common.interface.dto import (
     meta,
     to_dict,
 )
+from pcs.common.types import CorosyncNodeAddressType
 
 
 def _import_all(_path):
@@ -53,7 +54,7 @@ class MyDto1(DataTransferObject):
 class MyDto2(DataTransferObject):
     field_d: int
     field_e: MyDto1 = field(metadata=meta(name="field-e"))
-    field_f: int
+    field_f: CorosyncNodeAddressType  # tests converting an Enum class
 
 
 @dataclass
@@ -64,24 +65,30 @@ class MyDto3(DataTransferObject):
 
 
 class DictName(TestCase):
+    maxDiff = None
     simple_dto = MyDto1(1, 2, 3)
     simple_dict = {"field_a": 1, "field-b": 2, "field_c": 3}
     nested_dto = MyDto3(
-        MyDto2(0, MyDto1(1, 2, 3), 4),
-        [MyDto2(5, MyDto1(6, 7, 8), 9), MyDto2(10, MyDto1(11, 12, 13), 14)],
+        MyDto2(0, MyDto1(1, 2, 3), CorosyncNodeAddressType.IPV4),
+        [
+            MyDto2(5, MyDto1(6, 7, 8), CorosyncNodeAddressType.FQDN),
+            MyDto2(
+                10, MyDto1(11, 12, 13), CorosyncNodeAddressType.UNRESOLVABLE
+            ),
+        ],
         15,
     )
     nested_dict = {
         "field-g": {
             "field_d": 0,
             "field-e": {"field_a": 1, "field-b": 2, "field_c": 3},
-            "field_f": 4,
+            "field_f": "IPv4",
         },
         "field_h": [
             {
                 "field_d": 5,
                 "field-e": {"field_a": 6, "field-b": 7, "field_c": 8},
-                "field_f": 9,
+                "field_f": "FQDN",
             },
             {
                 "field_d": 10,
@@ -90,7 +97,7 @@ class DictName(TestCase):
                     "field-b": 12,
                     "field_c": 13,
                 },
-                "field_f": 14,
+                "field_f": "unresolvable",
             },
         ],
         "field-i": 15,

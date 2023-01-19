@@ -1187,7 +1187,7 @@ class Validation(TestCase):
             [
                 fixture.error(
                     reports.codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS,
-                    link_numbers=[0],
+                    link_numbers=["0"],
                 )
             ]
         )
@@ -1227,7 +1227,7 @@ class Validation(TestCase):
                     reports.codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK,
                     address="::ffff:10:0:0:3",
                     expected_address_type="IPv4",
-                    link_number=0,
+                    link_number="0",
                 ),
             ]
         )

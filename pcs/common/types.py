@@ -67,3 +67,10 @@ class CorosyncTransportType(AutoNameEnum):
             return cls(transport.upper())
         except ValueError:
             raise UnknownCorosyncTransportTypeException(transport) from None
+
+
+class CorosyncNodeAddressType(Enum):
+    IPV4 = "IPv4"
+    IPV6 = "IPv6"
+    FQDN = "FQDN"
+    UNRESOLVABLE = "unresolvable"

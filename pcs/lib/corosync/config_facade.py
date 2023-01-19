@@ -1,25 +1,33 @@
 from typing import (
-    Dict,
-    Iterable,
-    List,
+    Any,
+    Generator,
     Mapping,
     Optional,
-    cast,
+    Sequence,
+    TypeVar,
+    overload,
 )
 
 from pcs import settings
 from pcs.common import reports
 from pcs.common.reports.item import ReportItem
-from pcs.lib.corosync import (
-    config_parser,
-    constants,
-    node,
+from pcs.common.types import (
+    StringCollection,
+    StringSequence,
+)
+from pcs.lib.corosync import constants
+from pcs.lib.corosync.config_parser import Section
+from pcs.lib.corosync.node import (
+    CorosyncNode,
+    CorosyncNodeAddress,
 )
 from pcs.lib.errors import LibraryError
 from pcs.lib.interface.config import FacadeInterface
 
 _KNET_COMPRESSION_OPTIONS_PREFIX = "knet_compression_"
 _KNET_CRYPTO_OPTIONS_PREFIX = "crypto_"
+
+T = TypeVar("T")
 
 
 class ConfigFacade(FacadeInterface):
@@ -29,19 +37,24 @@ class ConfigFacade(FacadeInterface):
     """
 
     @classmethod
-    def create(cls, cluster_name, node_list, transport):
+    def create(
+        cls,
+        cluster_name: str,
+        node_list: Sequence[Mapping[str, Any]],
+        transport: str,
+    ) -> "ConfigFacade":
         """
         Create a minimal config
 
-        string cluster_name -- a name of a cluster
-        list node_list -- list of dict: name, addrs
-        string transport -- corosync transport
+        cluster_name -- a name of a cluster
+        node_list -- list of dict: name, addrs
+        transport -- corosync transport
         """
-        root = config_parser.Section("")
-        totem_section = config_parser.Section("totem")
-        nodelist_section = config_parser.Section("nodelist")
-        quorum_section = config_parser.Section("quorum")
-        logging_section = config_parser.Section("logging")
+        root = Section("")
+        totem_section = Section("totem")
+        nodelist_section = Section("nodelist")
+        quorum_section = Section("quorum")
+        logging_section = Section("logging")
         root.add_section(totem_section)
         root.add_section(nodelist_section)
         root.add_section(quorum_section)
@@ -59,7 +72,7 @@ class ConfigFacade(FacadeInterface):
         for node_id, node_options in enumerate(node_list, 1):
             nodelist_section.add_section(
                 cls._create_node_section(
-                    node_id, node_options, range(constants.LINKS_MAX)
+                    node_id, node_options, list(range(constants.LINKS_MAX))
                 )
             )
 
@@ -69,10 +82,11 @@ class ConfigFacade(FacadeInterface):
 
         return self
 
-    def __init__(self, parsed_config):
+    def __init__(self, parsed_config: Section):
         """
         Create a facade around a parsed corosync config file
-        parsed_config parsed corosync config
+
+        parsed_config -- parsed corosync config
         """
         super().__init__(parsed_config)
         # set to True if changes cannot be applied on running cluster
@@ -81,25 +95,24 @@ class ConfigFacade(FacadeInterface):
         self._need_qdevice_reload = False
 
     @property
-    def need_stopped_cluster(self):
+    def need_stopped_cluster(self) -> bool:
         return self._need_stopped_cluster
 
     @property
-    def need_qdevice_reload(self):
+    def need_qdevice_reload(self) -> bool:
         return self._need_qdevice_reload
 
     def get_cluster_name(self) -> str:
-        return cast(str, self._get_option_value("totem", "cluster_name", ""))
+        return self._get_option_value("totem", "cluster_name", "")
 
     def get_cluster_uuid(self) -> Optional[str]:
         return self._get_option_value("totem", "cluster_uuid")
 
     def set_cluster_uuid(self, cluster_uuid: str) -> None:
         """
-        Updates or adds a cluster_uuid in the totem section, assumes that UUID
-        can be rewritten
+        Updates or adds a cluster UUID, assumes that UUID can be rewritten
 
-            cluster_uuid - new cluster UUID
+        cluster_uuid - new cluster UUID
         """
         totem_section_list = self.__ensure_section(self.config, "totem")
         self.__set_section_options(
@@ -109,7 +122,7 @@ class ConfigFacade(FacadeInterface):
 
     # To get a list of nodenames use pcs.lib.node.get_existing_nodes_names
 
-    def get_nodes(self) -> List[node.CorosyncNode]:
+    def get_nodes(self) -> list[CorosyncNode]:
         """
         Get all defined nodes
         """
@@ -123,10 +136,10 @@ class ConfigFacade(FacadeInterface):
                     continue
                 # add the node data to the resulting list
                 result.append(
-                    node.CorosyncNode(
+                    CorosyncNode(
                         node_data.get("name"),
                         [
-                            node.CorosyncNodeAddress(
+                            CorosyncNodeAddress(
                                 node_data[f"ring{i}_addr"], str(i)
                             )
                             for i in range(constants.LINKS_MAX)
@@ -137,62 +150,69 @@ class ConfigFacade(FacadeInterface):
                 )
         return result
 
-    def _get_used_nodeid_list(self):
+    def _get_used_nodeid_list(self) -> list[str]:
         used_ids = []
         for nodelist in self.config.get_sections("nodelist"):
             for node_section in nodelist.get_sections("node"):
                 used_ids.extend(
-                    [
-                        int(attr[1])
-                        for attr in node_section.get_attributes("nodeid")
-                    ]
+                    [attr[1] for attr in node_section.get_attributes("nodeid")]
                 )
         return used_ids
 
     @staticmethod
-    def _get_nodeid_generator(used_ids):
-        used_ids = set(used_ids)
+    def _get_nodeid_generator(
+        used_ids: StringSequence,
+    ) -> Generator[int, None, None]:
+        # used_ids content is extracted from corosync.conf. We keep it as
+        # strings to avoid potential issues if loaded nodeid is not a number.
+        used_ids_set = set(used_ids)
         current_id = 1
         while True:
-            if current_id not in used_ids:
+            current_id_str = str(current_id)
+            if current_id_str not in used_ids_set:
                 yield current_id
-                used_ids.add(current_id)
+                used_ids_set.add(current_id_str)
             current_id += 1
 
     @staticmethod
-    def _get_node_data(node_section):
+    def _get_node_data(node_section: Section) -> dict[str, str]:
         return {
             attr_name: attr_value
             for attr_name, attr_value in node_section.get_attributes()
             if attr_name in constants.NODE_OPTIONS
         }
 
-    def get_used_linknumber_list(self):
+    def get_used_linknumber_list(self) -> list[int]:
         for nodelist_section in self.config.get_sections("nodelist"):
             for node_section in nodelist_section.get_sections("node"):
                 node_data = self._get_node_data(node_section)
                 if not node_data:
                     continue
                 return [
-                    str(i)
+                    i
                     for i in range(constants.LINKS_MAX)
                     if node_data.get(f"ring{i}_addr")
                 ]
+        return []
 
     @staticmethod
-    def _create_node_section(node_id, node_options, link_ids):
-        node_section = config_parser.Section("node")
+    def _create_node_section(
+        node_id: int,
+        node_options: Mapping[str, Any],
+        link_ids: Sequence[int],
+    ) -> Section:
+        node_section = Section("node")
         for link_id, link_addr in zip(link_ids, node_options["addrs"]):
-            node_section.add_attribute("ring{}_addr".format(link_id), link_addr)
-        node_section.add_attribute("name", node_options["name"])
-        node_section.add_attribute("nodeid", node_id)
+            node_section.add_attribute(f"ring{link_id}_addr", link_addr)
+        node_section.add_attribute("name", str(node_options["name"]))
+        node_section.add_attribute("nodeid", str(node_id))
         return node_section
 
-    def add_nodes(self, node_list):
+    def add_nodes(self, node_list: Sequence[Mapping[str, Any]]) -> None:
         """
         Add nodes to a config with a nonempty nodelist
 
-        list node_list -- list of dict: name, addrs
+        node_list -- list of dict: name, addrs
         """
         nodelist_section = self.__ensure_section(self.config, "nodelist")[-1]
         node_id_generator = self._get_nodeid_generator(
@@ -208,11 +228,11 @@ class ConfigFacade(FacadeInterface):
             )
         self.__update_two_node()
 
-    def remove_nodes(self, node_name_list):
+    def remove_nodes(self, node_name_list: StringCollection) -> None:
         """
         Remove nodes from a config
 
-        iterable node_name_list -- names of nodes to remove
+        node_name_list -- names of nodes to remove
         """
         for nodelist_section in self.config.get_sections("nodelist"):
             for node_section in nodelist_section.get_sections("node"):
@@ -222,11 +242,11 @@ class ConfigFacade(FacadeInterface):
         self.__remove_empty_sections(self.config)
         self.__update_two_node()
 
-    def create_link_list(self, link_list):
+    def create_link_list(self, link_list: Sequence[Mapping[str, str]]) -> None:
         """
         Add a link list to a config without one
 
-        iterable link_list -- list of dicts with link_list options
+        link_list -- list of dicts with link_list options
         """
         available_link_numbers = list(range(constants.LINKS_KNET_MAX))
         linknumber_missing = []
@@ -257,50 +277,56 @@ class ConfigFacade(FacadeInterface):
         for link in sorted(links, key=lambda item: item["linknumber"]):
             self._set_link_options(link)
 
-    def add_link(self, node_addr_map, options):
+    def add_link(
+        self, node_addr_map: Mapping[str, str], options: Mapping[str, str]
+    ) -> None:
         """
         Add a new link to nodelist and create an interface section with options
 
-        dict node_addr_map -- key: node name, value: node address for the link
-        dict link_options -- link options
+        node_addr_map -- key: node name, value: node address for the link
+        link_options -- link options
         """
         # Get a linknumber
-        if "linknumber" in options:
-            linknumber = options["linknumber"]
+        options_updated = dict(options)
+        if "linknumber" in options_updated:
+            linknumber = options_updated["linknumber"]
         else:
             linknumber = None
             used_links = self.get_used_linknumber_list()
             available_links = range(constants.LINKS_KNET_MAX)
             for candidate in available_links:
-                if str(candidate) not in used_links:
-                    linknumber = candidate
+                if candidate not in used_links:
+                    linknumber = str(candidate)
                     break
             if linknumber is None:
                 raise AssertionError("No link number available")
-            options["linknumber"] = linknumber
+            options_updated["linknumber"] = linknumber
 
         # Add addresses
         for nodelist_section in self.config.get_sections("nodelist"):
             for node_section in nodelist_section.get_sections("node"):
                 node_name = self._get_node_data(node_section).get("name")
-                if node_name in node_addr_map:
+                if node_name is not None and node_name in node_addr_map:
                     node_section.add_attribute(
                         f"ring{linknumber}_addr", node_addr_map[node_name]
                     )
 
         # Add link options.
-        if options:
-            self._set_link_options(options)
+        if options_updated:
+            self._set_link_options(options_updated)
 
     def _set_link_options(
-        self, options, interface_section_list=None, linknumber=None
-    ):
+        self,
+        options: Mapping[str, str],
+        interface_section_list: Optional[Sequence[Section]] = None,
+        linknumber: Optional[str] = None,
+    ) -> None:
         """
         Add a new or change an existing interface section with link options
 
-        dict options -- link options
-        list interface_section_list -- list of existing sections to be changed
-        string linknumber -- linknumber to set to a newly created section
+        options -- link options
+        interface_section_list -- list of existing sections to be changed
+        linknumber -- linknumber to set to a newly created section
         """
         # If the only option is "linknumber" then there is no point in adding
         # the options at all. It would mean there are no options for the
@@ -310,7 +336,7 @@ class ConfigFacade(FacadeInterface):
 
         options_to_set = self.__translate_link_options(options)
         if not interface_section_list:
-            new_section = config_parser.Section("interface")
+            new_section = Section("interface")
             if linknumber:
                 new_section.set_attribute("linknumber", linknumber)
             totem_section = self.__ensure_section(self.config, "totem")[-1]
@@ -319,11 +345,11 @@ class ConfigFacade(FacadeInterface):
         self.__set_section_options(interface_section_list, options_to_set)
         self.__remove_empty_sections(self.config)
 
-    def remove_links(self, link_list):
+    def remove_links(self, link_list: StringCollection) -> None:
         """
         Remove links from nodelist and relevant interface sections from totem
 
-        iterable link_list -- list of linknumbers (strings) to be removed
+        link_list -- list of linknumbers to be removed
         """
         # Do not break when the interface / address is found to be sure to
         # remove all of them (config format allows to have more interface
@@ -345,29 +371,35 @@ class ConfigFacade(FacadeInterface):
                     )
         self.__remove_empty_sections(self.config)
 
-    def update_link(self, linknumber, node_addr_map, options):
+    def update_link(
+        self,
+        linknumber: str,
+        node_addr_map: Mapping[str, str],
+        options: Mapping[str, str],
+    ) -> None:
         """
         Change an existing link - node addresses and/or link options
 
-        string linknumber -- link to be changed
-        dict node_addr_map -- key: node name, value: node address for the link
-        dict link_options -- link options
+        linknumber -- link to be changed
+        node_addr_map -- key: node name, value: node address for the link
+        link_options -- link options
         """
         self._need_stopped_cluster = True
-        # make sure we do not change the linknumber
-        if "linknumber" in options:
-            del options["linknumber"]
         # change addresses
         if node_addr_map:
             for nodelist_section in self.config.get_sections("nodelist"):
                 for node_section in nodelist_section.get_sections("node"):
                     node_name = self._get_node_data(node_section).get("name")
-                    if node_name in node_addr_map:
+                    if node_name is not None and node_name in node_addr_map:
                         node_section.set_attribute(
                             f"ring{linknumber}_addr", node_addr_map[node_name]
                         )
+        # make sure we do not change the linknumber
+        options_without_linknumber = dict(options)
+        if "linknumber" in options_without_linknumber:
+            del options_without_linknumber["linknumber"]
         # change options
-        if options:
+        if options_without_linknumber:
             target_interface_section_list = []
             for totem_section in self.config.get_sections("totem"):
                 for interface_section in totem_section.get_sections(
@@ -381,13 +413,13 @@ class ConfigFacade(FacadeInterface):
                     ):
                         target_interface_section_list.append(interface_section)
             self._set_link_options(
-                options,
+                options_without_linknumber,
                 interface_section_list=target_interface_section_list,
                 linknumber=linknumber,
             )
         self.__remove_empty_sections(self.config)
 
-    def get_links_options(self):
+    def get_links_options(self) -> dict[str, dict[str, str]]:
         """
         Get all links' options in a dict: key=linknumber value=dict of options
         """
@@ -397,7 +429,7 @@ class ConfigFacade(FacadeInterface):
             if transport in constants.TRANSPORTS_UDP
             else constants.LINK_OPTIONS_KNET_COROSYNC
         )
-        raw_options = {}
+        raw_options: dict[str, dict[str, str]] = {}
         for totem_section in self.config.get_sections("totem"):
             for interface_section in totem_section.get_sections("interface"):
                 # if no linknumber is set, corosync treats it as 0
@@ -417,17 +449,29 @@ class ConfigFacade(FacadeInterface):
             for linknumber, options in raw_options.items()
         }
 
-    def get_transport(self):
+    def get_transport(self) -> str:
         transport = self._get_option_value("totem", "transport")
         return transport if transport else constants.TRANSPORT_DEFAULT
 
-    def get_ip_version(self):
+    def get_ip_version(self) -> str:
         ip_version = self._get_option_value("totem", "ip_version")
         if ip_version:
             return ip_version
         if self.get_transport() == "udp":
             return constants.IP_VERSION_4
         return constants.IP_VERSION_64
+
+    @overload
+    def _get_option_value(
+        self, section: str, option: str, default: str = ""
+    ) -> str:
+        pass
+
+    @overload
+    def _get_option_value(
+        self, section: str, option: str, default: Optional[str] = None
+    ) -> Optional[str]:
+        pass
 
     def _get_option_value(
         self, section: str, option: str, default: Optional[str] = None
@@ -473,25 +517,28 @@ class ConfigFacade(FacadeInterface):
         elif transport_type in constants.TRANSPORTS_UDP:
             self._set_transport_udp_options(transport_options)
 
-    def _set_transport_udp_options(self, options):
+    def _set_transport_udp_options(self, options: Mapping[str, str]) -> None:
         """
         Set transport options for udp transports
 
-        dict options -- transport options
+        options -- transport options
         """
         totem_section_list = self.__ensure_section(self.config, "totem")
         self.__set_section_options(totem_section_list, options)
         self.__remove_empty_sections(self.config)
 
     def _set_transport_knet_options(
-        self, generic_options, compression_options, crypto_options
-    ):
+        self,
+        generic_options: Mapping[str, str],
+        compression_options: Mapping[str, str],
+        crypto_options: Mapping[str, str],
+    ) -> None:
         """
         Set transport options for knet transport
 
-        dict generic_options -- generic transport options
-        dict compression_options -- compression options
-        dict crypto_options -- crypto options
+        generic_options -- generic transport options
+        compression_options -- compression options
+        crypto_options -- crypto options
         """
         totem_section_list = self.__ensure_section(self.config, "totem")
         self.__set_section_options(totem_section_list, generic_options)
@@ -512,9 +559,9 @@ class ConfigFacade(FacadeInterface):
     def _filter_options(
         self,
         section_name: str,
-        allowed_options: Iterable[str],
+        allowed_options: StringCollection,
         prefix: str = "",
-    ) -> Dict[str, str]:
+    ) -> dict[str, str]:
         options = {}
         for section in self.config.get_sections(section_name):
             for name, value in section.get_attributes():
@@ -525,7 +572,7 @@ class ConfigFacade(FacadeInterface):
                     options[name[len(prefix) :]] = value
         return options
 
-    def get_transport_options(self) -> Dict[str, str]:
+    def get_transport_options(self) -> dict[str, str]:
         """
         Get configurable generic transport options
         """
@@ -540,7 +587,7 @@ class ConfigFacade(FacadeInterface):
             )
         return {}
 
-    def get_compression_options(self) -> Dict[str, str]:
+    def get_compression_options(self) -> dict[str, str]:
         """
         Get configurable compression options
         """
@@ -550,7 +597,7 @@ class ConfigFacade(FacadeInterface):
             _KNET_COMPRESSION_OPTIONS_PREFIX,
         )
 
-    def get_crypto_options(self) -> Dict[str, str]:
+    def get_crypto_options(self) -> dict[str, str]:
         """
         Get configurable crypto options
         """
@@ -560,11 +607,11 @@ class ConfigFacade(FacadeInterface):
             _KNET_CRYPTO_OPTIONS_PREFIX,
         )
 
-    def set_totem_options(self, options):
+    def set_totem_options(self, options: Mapping[str, str]) -> None:
         """
         Set options in the "totem" section
 
-        dict options -- totem options
+        options -- totem options
         """
         totem_section_list = self.__ensure_section(self.config, "totem")
         self.__set_section_options(totem_section_list, options)
@@ -578,17 +625,17 @@ class ConfigFacade(FacadeInterface):
         # Note: all options in totem section supported by pcs are runtime
         # configurable.
 
-    def get_totem_options(self) -> Dict[str, str]:
+    def get_totem_options(self) -> dict[str, str]:
         """
         Get configurable totem options
         """
         return self._filter_options("totem", constants.TOTEM_OPTIONS)
 
-    def set_quorum_options(self, options):
+    def set_quorum_options(self, options: Mapping[str, str]) -> None:
         """
         Set options in the "quorum" section
 
-        dict options -- quorum options
+        options -- quorum options
         """
         quorum_section_list = self.__ensure_section(self.config, "quorum")
         self.__set_section_options(quorum_section_list, options)
@@ -596,48 +643,47 @@ class ConfigFacade(FacadeInterface):
         self.__remove_empty_sections(self.config)
         self._need_stopped_cluster = True
 
-    def get_quorum_options(self) -> Dict[str, str]:
+    def get_quorum_options(self) -> dict[str, str]:
         """
         Get configurable options from the "quorum" section
         """
         return self._filter_options("quorum", constants.QUORUM_OPTIONS)
 
-    def is_enabled_auto_tie_breaker(self):
+    def is_enabled_auto_tie_breaker(self) -> bool:
         """
         Returns True if auto tie braker option is enabled, False otherwise.
         """
         return self._get_option_value("quorum", "auto_tie_breaker", "0") == "1"
 
-    def has_quorum_device(self):
-        """
-        Check if quorum device is present in the config
-        """
-        for quorum in self.config.get_sections("quorum"):
-            for device in quorum.get_sections("device"):
-                if device.get_attributes("model"):
-                    return True
-        return False
-
-    def get_quorum_device_model(self):
+    def get_quorum_device_model(self) -> Optional[str]:
         """
         Get quorum device model from quorum.device section
         """
-        return self.get_quorum_device_settings()[0]
+        models_found = []
+        for quorum in self.config.get_sections("quorum"):
+            for device in quorum.get_sections("device"):
+                model_list = device.get_attributes("model")
+                if model_list:
+                    models_found.append(model_list[-1][1])
+        return models_found[-1] if models_found else None
 
-    def get_quorum_device_settings(self):
+    def get_quorum_device_settings(
+        self,
+    ) -> tuple[dict[str, str], dict[str, str], dict[str, str]]:
         """
-        Get configurable options from quorum.device section
+        Get model, generic and heuristics options from quorum.device section
         """
-        model = None
-        model_options = {}
-        generic_options = {}
-        heuristics_options = {}
+        model = self.get_quorum_device_model()
+        if model is None:
+            return {}, {}, {}
+
+        model_options: dict[str, dict[str, str]] = {}
+        generic_options: dict[str, str] = {}
+        heuristics_options: dict[str, str] = {}
         for quorum in self.config.get_sections("quorum"):
             for device in quorum.get_sections("device"):
                 for name, value in device.get_attributes():
-                    if name == "model":
-                        model = value
-                    else:
+                    if name != "model":
                         generic_options[name] = value
                 for subsection in device.get_sections():
                     if subsection.name == "heuristics":
@@ -649,14 +695,15 @@ class ConfigFacade(FacadeInterface):
                         subsection.get_attributes()
                     )
         return (
-            model,
             model_options.get(model, {}),
             generic_options,
             heuristics_options,
         )
 
-    def is_quorum_device_heuristics_enabled_with_no_exec(self):
-        heuristics_options = self.get_quorum_device_settings()[3]
+    def is_quorum_device_heuristics_enabled_with_no_exec(self) -> bool:
+        if not self.get_quorum_device_model():
+            return False
+        heuristics_options = self.get_quorum_device_settings()[2]
         regexp = constants.QUORUM_DEVICE_HEURISTICS_EXEC_NAME_RE
         exec_found = False
         for name, value in heuristics_options.items():
@@ -669,18 +716,22 @@ class ConfigFacade(FacadeInterface):
         )
 
     def add_quorum_device(
-        self, model, model_options, generic_options, heuristics_options
-    ):
+        self,
+        model: str,
+        model_options: Mapping[str, str],
+        generic_options: Mapping[str, str],
+        heuristics_options: Mapping[str, str],
+    ) -> None:
         # pylint: disable=too-many-locals
         """
         Add quorum device configuration
 
-        string model -- quorum device model
-        dict model_options -- model specific options
-        dict generic_options -- generic quorum device options
-        dict heuristics_options -- heuristics options
+        model -- quorum device model
+        model_options -- model specific options
+        generic_options -- generic quorum device options
+        heuristics_options -- heuristics options
         """
-        if self.has_quorum_device():
+        if self.get_quorum_device_model():
             raise LibraryError(
                 ReportItem.error(reports.messages.QdeviceAlreadyDefined())
             )
@@ -715,14 +766,14 @@ class ConfigFacade(FacadeInterface):
 
         # add new configuration
         quorum = quorum_section_list[-1]
-        new_device = config_parser.Section("device")
+        new_device = Section("device")
         quorum.add_section(new_device)
         self.__set_section_options([new_device], generic_options)
         new_device.set_attribute("model", model)
-        new_model = config_parser.Section(model)
+        new_model = Section(model)
         self.__set_section_options([new_model], model_options)
         new_device.add_section(new_model)
-        new_heuristics = config_parser.Section("heuristics")
+        new_heuristics = Section("heuristics")
         self.__set_section_options([new_heuristics], heuristics_options)
         new_device.add_section(new_heuristics)
 
@@ -731,20 +782,23 @@ class ConfigFacade(FacadeInterface):
         self.__remove_empty_sections(self.config)
 
     def update_quorum_device(
-        self, model_options, generic_options, heuristics_options
-    ):
+        self,
+        model_options: Mapping[str, str],
+        generic_options: Mapping[str, str],
+        heuristics_options: Mapping[str, str],
+    ) -> None:
         """
         Update existing quorum device configuration
 
-        dict model_options -- model specific options
-        dict generic_options -- generic quorum device options
-        dict heuristics_options -- heuristics options
+        model_options -- model specific options
+        generic_options -- generic quorum device options
+        heuristics_options -- heuristics options
         """
-        if not self.has_quorum_device():
+        model = self.get_quorum_device_model()
+        if not model:
             raise LibraryError(
                 ReportItem.error(reports.messages.QdeviceNotDefined())
             )
-        model = self.get_quorum_device_model()
 
         # set new configuration
         device_sections = []
@@ -757,13 +811,13 @@ class ConfigFacade(FacadeInterface):
                 model_sections.extend(device.get_sections(model))
                 heuristics_sections.extend(device.get_sections("heuristics"))
         # we know device sections exist, otherwise the function would exit at
-        # has_quorum_device line above
+        # get_quorum_device_model line above
         if not model_sections:
-            new_model = config_parser.Section(model)
+            new_model = Section(model)
             device_sections[-1].add_section(new_model)
             model_sections.append(new_model)
         if not heuristics_sections:
-            new_heuristics = config_parser.Section("heuristics")
+            new_heuristics = Section("heuristics")
             device_sections[-1].add_section(new_heuristics)
             heuristics_sections.append(new_heuristics)
 
@@ -776,11 +830,11 @@ class ConfigFacade(FacadeInterface):
         self.__remove_empty_sections(self.config)
         self._need_qdevice_reload = True
 
-    def remove_quorum_device_heuristics(self):
+    def remove_quorum_device_heuristics(self) -> None:
         """
         Remove quorum device heuristics configuration
         """
-        if not self.has_quorum_device():
+        if not self.get_quorum_device_model():
             raise LibraryError(
                 ReportItem.error(reports.messages.QdeviceNotDefined())
             )
@@ -791,11 +845,11 @@ class ConfigFacade(FacadeInterface):
         self.__remove_empty_sections(self.config)
         self._need_qdevice_reload = True
 
-    def remove_quorum_device(self):
+    def remove_quorum_device(self) -> None:
         """
         Remove all quorum device configuration
         """
-        if not self.has_quorum_device():
+        if not self.get_quorum_device_model():
             raise LibraryError(
                 ReportItem.error(reports.messages.QdeviceNotDefined())
             )
@@ -805,9 +859,9 @@ class ConfigFacade(FacadeInterface):
         self.__update_two_node()
         self.__remove_empty_sections(self.config)
 
-    def __update_two_node(self):
+    def __update_two_node(self) -> None:
         # get relevant status
-        has_quorum_device = self.has_quorum_device()
+        has_quorum_device = self.get_quorum_device_model() is not None
         has_two_nodes = len(self.get_nodes()) == 2
         auto_tie_breaker = self.is_enabled_auto_tie_breaker()
         # update two_node
@@ -818,7 +872,7 @@ class ConfigFacade(FacadeInterface):
             for quorum in self.config.get_sections("quorum"):
                 quorum.del_attributes_by_name("two_node")
 
-    def __update_qdevice_votes(self):
+    def __update_qdevice_votes(self) -> None:
         # ffsplit won't start if votes is missing or not set to 1
         # for other algorithms it's required not to put votes at all
         model = None
@@ -840,7 +894,10 @@ class ConfigFacade(FacadeInterface):
                 self.__set_section_options(device_sections, {"votes": ""})
 
     @staticmethod
-    def __set_section_options(section_list, options):
+    def __set_section_options(
+        section_list: Sequence[Section],
+        options: Mapping[str, str],
+    ) -> None:
         for section in section_list[:-1]:
             for name in options:
                 section.del_attributes_by_name(name)
@@ -851,15 +908,17 @@ class ConfigFacade(FacadeInterface):
                 section_list[-1].set_attribute(name, value)
 
     @staticmethod
-    def __ensure_section(parent_section, section_name):
+    def __ensure_section(
+        parent_section: Section, section_name: str
+    ) -> list[Section]:
         section_list = parent_section.get_sections(section_name)
         if not section_list:
-            new_section = config_parser.Section(section_name)
+            new_section = Section(section_name)
             parent_section.add_section(new_section)
             section_list.append(new_section)
         return section_list
 
-    def __remove_empty_sections(self, parent_section):
+    def __remove_empty_sections(self, parent_section: Section) -> None:
         for section in parent_section.get_sections():
             self.__remove_empty_sections(section)
             if section.empty or (
@@ -869,7 +928,9 @@ class ConfigFacade(FacadeInterface):
                 parent_section.del_section(section)
 
     @staticmethod
-    def __translate_link_options(options, input_to_corosync=True):
+    def __translate_link_options(
+        options: Mapping[str, str], input_to_corosync: bool = True
+    ) -> dict[str, str]:
         pairs = constants.LINK_OPTIONS_KNET_TRANSLATION
         if input_to_corosync:
             translate_map = {pair[0]: pair[1] for pair in pairs}
@@ -904,5 +965,7 @@ class ConfigFacade(FacadeInterface):
         return result
 
 
-def _add_prefix_to_dict_keys(prefix, data):
+def _add_prefix_to_dict_keys(
+    prefix: str, data: Mapping[str, T]
+) -> dict[str, T]:
     return {"{}{}".format(prefix, key): value for key, value in data.items()}

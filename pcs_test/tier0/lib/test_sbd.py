@@ -31,7 +31,9 @@ class EvenNumberOfNodesAndNoQdevice(TestCase):
 
     def _set_ret_vals(self, nodes, qdevice):
         self.mock_corosync_conf.get_nodes.return_value = nodes
-        self.mock_corosync_conf.has_quorum_device.return_value = qdevice
+        self.mock_corosync_conf.get_quorum_device_model.return_value = (
+            "net" if qdevice else None
+        )
 
     def test_even_num_no_qdevice(self):
         self._set_ret_vals([1, 2], False)

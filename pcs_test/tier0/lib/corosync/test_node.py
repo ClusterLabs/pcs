@@ -6,6 +6,7 @@ from pcs.common.corosync_conf import (
     CorosyncNodeAddressDto,
     CorosyncNodeDto,
 )
+from pcs.common.types import CorosyncNodeAddressType
 from pcs.lib.corosync.node import (
     CorosyncNode,
     CorosyncNodeAddress,
@@ -127,9 +128,17 @@ class CorosyncNodeToDto(TestCase):
                 "node1",
                 "1",
                 [
-                    CorosyncNodeAddressDto("10.0.0.1", "0", "IPv4"),
-                    CorosyncNodeAddressDto("node1.domain", "1", "FQDN"),
-                    CorosyncNodeAddressDto("fe80::5054:ff:fe81:1", "2", "IPv6"),
+                    CorosyncNodeAddressDto(
+                        "10.0.0.1", "0", CorosyncNodeAddressType.IPV4
+                    ),
+                    CorosyncNodeAddressDto(
+                        "node1.domain", "1", CorosyncNodeAddressType.FQDN
+                    ),
+                    CorosyncNodeAddressDto(
+                        "fe80::5054:ff:fe81:1",
+                        "2",
+                        CorosyncNodeAddressType.IPV6,
+                    ),
                 ],
             ),
         )
@@ -140,29 +149,36 @@ class GetAddrType(TestCase):
         self.assertEqual(expected_type, get_address_type(addr, resolve=resolve))
 
     def test_ipv4_resolve_false(self):
-        self.assert_call("IPv4", "10.0.0.1", False)
+        self.assert_call(CorosyncNodeAddressType.IPV4, "10.0.0.1", False)
 
     def test_ipv6_resolve_false(self):
-        self.assert_call("IPv6", "fe80::5054:ff:fe81:1", False)
+        self.assert_call(
+            CorosyncNodeAddressType.IPV6, "fe80::5054:ff:fe81:1", False
+        )
 
     def test_fqdn_resolve_false(self):
-        self.assert_call("FQDN", "node1.domain", False)
+        self.assert_call(CorosyncNodeAddressType.FQDN, "node1.domain", False)
 
     def test_ipv4_resolve_true(self):
-        self.assert_call("IPv4", "10.0.0.1", True)
+        self.assert_call(CorosyncNodeAddressType.IPV4, "10.0.0.1", True)
 
     def test_ipv6_resolve_true(self):
-        self.assert_call("IPv6", "fe80::5054:ff:fe81:1", True)
+        self.assert_call(
+            CorosyncNodeAddressType.IPV6, "fe80::5054:ff:fe81:1", True
+        )
 
     @patch("pcs.lib.corosync.node.socket.getaddrinfo")
     def test_fqdn_resolvable(self, mock_getaddrinfo):
         mock_getaddrinfo.return_value = None
-        self.assertEqual("FQDN", get_address_type("node1.domain", resolve=True))
+        self.assertEqual(
+            CorosyncNodeAddressType.FQDN,
+            get_address_type("node1.domain", resolve=True),
+        )
 
     @patch("pcs.lib.corosync.node.socket.getaddrinfo")
     def test_fqdn_unresolvable(self, mock_getaddrinfo):
         mock_getaddrinfo.side_effect = gaierror()
         self.assertEqual(
-            "unresolvable",
+            CorosyncNodeAddressType.UNRESOLVABLE,
             get_address_type("node1.domain", resolve=True),
         )

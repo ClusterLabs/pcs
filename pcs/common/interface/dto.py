@@ -3,6 +3,7 @@ from dataclasses import (
     fields,
     is_dataclass,
 )
+from enum import Enum
 from typing import (
     Any,
     Dict,
@@ -75,6 +76,8 @@ def _convert_dict(
                 )
                 for item_key, item_val in value.items()
             }
+        elif isinstance(value, Enum):
+            value = value.value
         new_dict[_field.metadata.get(META_NAME, _field.name)] = value
     return new_dict
 
@@ -125,8 +128,9 @@ def from_dict(
         # see: https://github.com/konradhalas/dacite#casting
         config=dacite.Config(
             cast=[
-                types.CibRuleInEffectStatus,
                 types.CibRuleExpressionType,
+                types.CibRuleInEffectStatus,
+                types.CorosyncNodeAddressType,
                 types.CorosyncTransportType,
                 types.DrRole,
                 types.ResourceRelationType,
