@@ -224,7 +224,7 @@ def provide_role(acl_section, role_id):
 def create_target(acl_section, target_id):
     """
     Creates new acl_target element with id target_id.
-    Raises LibraryError if target with wpecified id aleready exists.
+    Raises LibraryError if target with specified id already exists.
 
     acl_section -- etree node
     target_id -- id of new target

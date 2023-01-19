@@ -264,7 +264,7 @@ class ResponseToReportItemTest(TestCase):
             ),
         )
 
-    def test_timedouted(self):
+    def test_timeouted(self):
         response = self.fixture_response_not_connected(
             pycurl.E_OPERATION_TIMEOUTED, "err"
         )

@@ -36,6 +36,8 @@
 ./pcs_test/tier0/cli/test_cluster.py: `ba` -> `by`, `be`
 ./pcs_test/tier0/cli/test_cluster.py: `ba` -> `by`, `be`
 ./pcs_test/tier0/cli/test_cluster.py: `ba` -> `by`, `be`
+./pcs_test/tier0/lib/cib/test_resource_operations.py: `monitro` -> `monitor`
+./pcs_test/tier0/lib/cib/test_resource_operations.py: `monitro` -> `monitor`
 ./pcs_test/tier0/lib/cib/test_tools.py: `ba` -> `by`, `be`
 ./pcs_test/tier0/lib/cib/test_tools.py: `ba` -> `by`, `be`
 ./pcs_test/tier0/lib/cib/test_tools.py: `ba` -> `by`, `be`
@@ -92,6 +94,12 @@
 ./pcs_test/tier0/lib/test_env_corosync.py: `ue` -> `use`, `due`
 ./pcs_test/tier0/lib/test_validate.py: `Ba` -> `By`, `Be`
 ./pcs_test/tier0/lib/test_validate.py: `Ba` -> `By`, `Be`
+./pcs_test/tier1/cib_resource/test_create.py: `monitro` -> `monitor`
+./pcs_test/tier1/cib_resource/test_create.py: `monitro` -> `monitor`
+./pcs_test/tier1/cib_resource/test_create.py: `monitro` -> `monitor`
+./pcs_test/tier1/cib_resource/test_create.py: `monitro` -> `monitor`
+./pcs_test/tier1/cib_resource/test_create.py: `monitro` -> `monitor`
+./pcs_test/tier1/cib_resource/test_create.py: `monitro` -> `monitor`
 ./pcs_test/tier1/legacy/test_utils.py: `dum` -> `dumb`
 ./pcs_test/tier1/legacy/test_utils.py: `dum` -> `dumb`
 ./pcs_test/tier1/legacy/test_utils.py: `dum` -> `dumb`
