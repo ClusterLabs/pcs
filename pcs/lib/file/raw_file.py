@@ -1,7 +1,10 @@
 import errno
 import os
+from contextlib import contextmanager
+from io import BytesIO
 from typing import (
     Dict,
+    Iterator,
     Optional,
 )
 
@@ -83,6 +86,13 @@ class GhostFile(RawFileInterface):
 
     def write(self, file_data: bytes, can_overwrite: bool = False) -> None:
         self.__file_data = file_data
+
+    @contextmanager
+    def update(self) -> Iterator[BytesIO]:
+        io_buffer = BytesIO(self.read())
+        io_buffer.seek(0)
+        yield io_buffer
+        self.write(io_buffer.getvalue(), can_overwrite=True)
 
 
 def export_ghost_file(ghost_file: GhostFile) -> Dict[str, Optional[bytes]]:

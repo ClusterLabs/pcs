@@ -1,3 +1,4 @@
+from io import BytesIO
 from logging import Logger
 from unittest import (
     TestCase,
@@ -6,6 +7,7 @@ from unittest import (
 
 from pcs.common.file import (
     FileMetadata,
+    RawFile,
     RawFileError,
 )
 from pcs.common.file_type_codes import PCS_USERS_CONF
@@ -13,7 +15,10 @@ from pcs.lib.auth import const
 from pcs.lib.auth.config.facade import Facade
 from pcs.lib.auth.config.parser import ParserError
 from pcs.lib.auth.config.types import TokenEntry
-from pcs.lib.auth.provider import AuthProvider
+from pcs.lib.auth.provider import (
+    AuthProvider,
+    _UpdateFacadeError,
+)
 from pcs.lib.auth.types import AuthUser
 from pcs.lib.file.instance import FileInstance
 from pcs.lib.file.json import JsonParserException
@@ -93,10 +98,12 @@ class AuthProviderGetFacadeTest(TestCase):
         self.logger.error.assert_not_called()
 
 
-class AuthProviderWriteFacadeTest(TestCase):
+class AuthProviderUpdateFacadeTest(TestCase):
     # pylint: disable=protected-access
     def setUp(self):
         self.file_instance_mock = mock.Mock(spec_set=FileInstance)
+        self.raw_file_mock = mock.MagicMock(spec_set=RawFile)
+        self.file_instance_mock.raw_file = self.raw_file_mock
         self.file_instance_mock.raw_file.metadata = _FILE_METADATA
         self.logger = mock.Mock(spec_set=Logger)
         self.facade = Facade([f"token{i}" for i in range(3)])
@@ -107,27 +114,99 @@ class AuthProviderWriteFacadeTest(TestCase):
         ):
             self.provider = AuthProvider(self.logger)
 
-    def test_io_error(self):
+    def test_empty_file(self):
+        data = b""
+        new_data = b"new data"
+        io_buffer = BytesIO(data)
+        self.file_instance_mock.raw_file.update.return_value.__enter__.return_value = (
+            io_buffer
+        )
+        self.file_instance_mock.facade_to_raw.return_value = new_data
+        with self.provider._update_facade() as empty_facade:
+            self.assertEqual(tuple(), empty_facade.config)
+        self.logger.error.assert_not_called()
+        self.file_instance_mock.raw_to_facade.assert_not_called()
+        self.file_instance_mock.facade_to_raw.assert_called_once_with(
+            empty_facade
+        )
+        self.assertEqual(io_buffer.getvalue(), new_data)
+
+    def test_read_error(self):
         reason = "reason"
-        self.file_instance_mock.write_facade.side_effect = RawFileError(
-            _FILE_METADATA, RawFileError.ACTION_READ, reason
+        self.file_instance_mock.raw_file.update.return_value.__enter__.side_effect = RawFileError(
+            _FILE_METADATA, RawFileError.ACTION_UPDATE, reason
         )
-        self.provider._write_facade(self.facade)
+        with self.assertRaises(_UpdateFacadeError):
+            with self.provider._update_facade():
+                self.fail("should not get here")
         self.logger.error.assert_called_once_with(
-            "Action '%s' on file '%s' failed: %s",
-            RawFileError.ACTION_READ,
-            _FILE_PATH,
-            reason,
+            "Unable to update file '%s': %s", _FILE_PATH, reason
         )
-        self.file_instance_mock.write_facade.assert_called_once_with(
-            self.facade, can_overwrite=True
+
+    def test_write_error(self):
+        data = b"original data"
+        new_data = b"new data"
+        mock_facade = "facade"
+        reason = "reason"
+        self.file_instance_mock.raw_file.update.return_value.__exit__.side_effect = RawFileError(
+            _FILE_METADATA, RawFileError.ACTION_UPDATE, reason
+        )
+        io_buffer = BytesIO(data)
+        self.file_instance_mock.raw_file.update.return_value.__enter__.return_value = (
+            io_buffer
+        )
+        self.file_instance_mock.raw_to_facade.return_value = mock_facade
+        self.file_instance_mock.facade_to_raw.return_value = new_data
+        with self.assertRaises(_UpdateFacadeError):
+            with self.provider._update_facade() as facade:
+                self.assertIs(mock_facade, facade)
+        self.logger.error.assert_called_once_with(
+            "Unable to update file '%s': %s", _FILE_PATH, reason
+        )
+        self.file_instance_mock.raw_to_facade.assert_called_once_with(data)
+        self.file_instance_mock.facade_to_raw.assert_called_once_with(
+            mock_facade
+        )
+
+    def test_parsing_error(self):
+        data = b"original data"
+        new_data = b"new data"
+        io_buffer = BytesIO(data)
+        self.file_instance_mock.raw_file.update.return_value.__enter__.return_value = (
+            io_buffer
+        )
+        self.file_instance_mock.raw_to_facade.side_effect = (
+            ParserErrorException()
+        )
+        self.file_instance_mock.facade_to_raw.return_value = new_data
+        with self.provider._update_facade() as empty_facade:
+            self.assertEqual(tuple(), empty_facade.config)
+        self.assertEqual(io_buffer.getvalue(), new_data)
+        self.logger.error.assert_called_once_with(
+            "Unable to parse file '%s'", _FILE_PATH
+        )
+        self.file_instance_mock.raw_to_facade.assert_called_once_with(data)
+        self.file_instance_mock.facade_to_raw.assert_called_once_with(
+            empty_facade
         )
 
     def test_success(self):
-        self.provider._write_facade(self.facade)
+        data = b"original data"
+        new_data = b"new data"
+        mock_facade = "facade"
+        io_buffer = BytesIO(data)
+        self.file_instance_mock.raw_file.update.return_value.__enter__.return_value = (
+            io_buffer
+        )
+        self.file_instance_mock.raw_to_facade.return_value = mock_facade
+        self.file_instance_mock.facade_to_raw.return_value = new_data
+        with self.provider._update_facade() as facade:
+            self.assertIs(facade, mock_facade)
+        self.assertEqual(io_buffer.getvalue(), new_data)
         self.logger.error.assert_not_called()
-        self.file_instance_mock.write_facade.assert_called_once_with(
-            self.facade, can_overwrite=True
+        self.file_instance_mock.raw_to_facade.assert_called_once_with(data)
+        self.file_instance_mock.facade_to_raw.assert_called_once_with(
+            mock_facade
         )
 
 
@@ -201,17 +280,29 @@ class AuthProviderLoginByUsernamePasswordTest(TestCase):
         groups_mock.assert_called_once_with(self.username)
 
 
-@mock.patch.object(AuthProvider, "_get_facade")
-@mock.patch.object(AuthProvider, "_write_facade")
+@mock.patch.object(AuthProvider, "_update_facade")
 class AuthProviderCreateTokenTest(TestCase):
     def setUp(self):
         self.logger = mock.Mock(spec_set=Logger)
         self.provider = AuthProvider(self.logger)
 
-    def test_success(self, write_facade_mock, get_facade_mock):
+    def test_failure(self, update_facade_mock):
         token = "new_token"
+        username = "new_user"
         facade_mock = mock.Mock(spec_set=Facade)
         facade_mock.add_user.return_value = token
-        get_facade_mock.return_value = facade_mock
-        self.assertEqual(token, self.provider.create_token("new_user"))
-        write_facade_mock.assert_called_once_with(facade_mock)
+        update_facade_mock.return_value.__enter__.return_value = facade_mock
+        update_facade_mock.return_value.__exit__.side_effect = (
+            _UpdateFacadeError()
+        )
+        self.assertIsNone(self.provider.create_token(username))
+        facade_mock.add_user.assert_called_once_with(username)
+
+    def test_success(self, update_facade_mock):
+        token = "new_token"
+        username = "new_user"
+        facade_mock = mock.Mock(spec_set=Facade)
+        facade_mock.add_user.return_value = token
+        update_facade_mock.return_value.__enter__.return_value = facade_mock
+        self.assertEqual(token, self.provider.create_token(username))
+        facade_mock.add_user.assert_called_once_with(username)

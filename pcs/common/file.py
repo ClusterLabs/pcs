@@ -1,8 +1,14 @@
 import fcntl
 import os
 import shutil
+from contextlib import contextmanager
 from dataclasses import dataclass
+from io import BytesIO
 from typing import (
+    IO,
+    Any,
+    ContextManager,
+    Iterator,
     NewType,
     Optional,
 )
@@ -36,6 +42,7 @@ class RawFileError(Exception):
     ACTION_CHOWN = FileAction("chown")
     ACTION_READ = FileAction("read")
     ACTION_REMOVE = FileAction("remove")
+    ACTION_UPDATE = FileAction("update")
     ACTION_WRITE = FileAction("write")
 
     def __init__(
@@ -92,6 +99,15 @@ class RawFileInterface:
         """
         raise NotImplementedError()
 
+    def update(self) -> ContextManager[BytesIO]:
+        """
+        Returns a context manager which __enter__ method returns a buffer
+        filled with file data and stores data from the returned buffer to the
+        same file once __exit__ method is called. Context manager holds an
+        exclusive lock on the file between __enter__ and __exit__ calls.
+        """
+        raise NotImplementedError()
+
 
 class RawFile(RawFileInterface):
     def exists(self) -> bool:
@@ -118,6 +134,42 @@ class RawFile(RawFileInterface):
                 self.metadata, RawFileError.ACTION_READ, format_os_error(e)
             ) from e
 
+    def _chown(self) -> None:
+        try:
+            # Need to split to two conditions and check owner and group
+            # separately due to mypy.
+            if self.metadata.owner_user_name is not None:
+                shutil.chown(
+                    self.metadata.path,
+                    user=self.metadata.owner_user_name,
+                )
+            if self.metadata.owner_group_name is not None:
+                shutil.chown(
+                    self.metadata.path,
+                    group=self.metadata.owner_group_name,
+                )
+        except LookupError as e:
+            raise RawFileError(
+                self.metadata, RawFileError.ACTION_CHOWN, str(e)
+            ) from e
+        except OSError as e:
+            raise RawFileError(
+                self.metadata,
+                RawFileError.ACTION_CHOWN,
+                format_os_error(e),
+            ) from e
+
+    def _chmod(self, file_obj: IO[Any]) -> None:
+        if self.metadata.permissions is not None:
+            try:
+                os.chmod(file_obj.fileno(), self.metadata.permissions)
+            except OSError as e:
+                raise RawFileError(
+                    self.metadata,
+                    RawFileError.ACTION_CHMOD,
+                    format_os_error(e),
+                ) from e
+
     def write(self, file_data: bytes, can_overwrite: bool = False) -> None:
         try:
             mode = "{write_mode}{binary_mode}".format(
@@ -135,39 +187,9 @@ class RawFile(RawFileInterface):
                 # just created the file. If the file already existed, make sure
                 # the ownership and permissions are correct before writing any
                 # data into it.
-                try:
-                    # Need to split to two conditions and check owner and group
-                    # separately due to mypy.
-                    if self.metadata.owner_user_name is not None:
-                        shutil.chown(
-                            self.metadata.path,
-                            user=self.metadata.owner_user_name,
-                        )
-                    if self.metadata.owner_group_name is not None:
-                        shutil.chown(
-                            self.metadata.path,
-                            group=self.metadata.owner_group_name,
-                        )
-                except LookupError as e:
-                    raise RawFileError(
-                        self.metadata, RawFileError.ACTION_CHOWN, str(e)
-                    ) from e
-                except OSError as e:
-                    raise RawFileError(
-                        self.metadata,
-                        RawFileError.ACTION_CHOWN,
-                        format_os_error(e),
-                    ) from e
+                self._chown()
+                self._chmod(my_file)
 
-                if self.metadata.permissions is not None:
-                    try:
-                        os.chmod(my_file.fileno(), self.metadata.permissions)
-                    except OSError as e:
-                        raise RawFileError(
-                            self.metadata,
-                            RawFileError.ACTION_CHMOD,
-                            format_os_error(e),
-                        ) from e
                 # Write file data
                 my_file.write(
                     file_data
@@ -179,6 +201,43 @@ class RawFile(RawFileInterface):
         except OSError as e:
             raise RawFileError(
                 self.metadata, RawFileError.ACTION_WRITE, format_os_error(e)
+            ) from e
+
+    @contextmanager
+    def update(self) -> Iterator[BytesIO]:
+        mode = "a+"
+        if self.metadata.is_binary:
+            mode += "b"
+        try:
+            with open(self.metadata.path, mode) as file_obj:
+                # the lock is released when the file gets closed on leaving the
+                # with statement
+                fcntl.flock(file_obj.fileno(), fcntl.LOCK_EX)
+                file_obj.seek(0)
+                content = file_obj.read()
+                stream = BytesIO(
+                    content
+                    if self.metadata.is_binary
+                    else content.encode("utf-8")
+                )
+                stream.seek(0)
+                yield stream
+                self._chown()
+                self._chmod(file_obj)
+                file_obj.seek(0)
+                file_obj.truncate()
+                new_content = stream.getvalue()
+                file_obj.write(
+                    new_content
+                    if self.metadata.is_binary
+                    else new_content.decode("utf-8")
+                )
+
+        except OSError as e:
+            # Specific exception if the file does not exist is not needed,
+            # anyone can and should check that using the exists method.
+            raise RawFileError(
+                self.metadata, RawFileError.ACTION_UPDATE, format_os_error(e)
             ) from e
 
     def remove(self, fail_if_file_not_found: bool = True) -> None:

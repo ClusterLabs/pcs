@@ -1,5 +1,7 @@
 import logging
+from contextlib import contextmanager
 from typing import (
+    Iterator,
     Optional,
     cast,
 )
@@ -18,6 +20,10 @@ from .tools import (
     get_user_groups,
 )
 from .types import AuthUser
+
+
+class _UpdateFacadeError(Exception):
+    pass
 
 
 class AuthProvider:
@@ -54,21 +60,48 @@ class AuthProvider:
             )
         return Facade([])
 
-    def _write_facade(self, facade: Facade) -> bool:
+    @contextmanager
+    def _update_facade(self) -> Iterator[Facade]:
         try:
-            self._write_facade_base(facade)
+            with self._config_file_instance.raw_file.update() as io_buffer:
+                content = io_buffer.getvalue()
+                facade = Facade([])
+                if content:
+                    try:
+                        facade = cast(
+                            Facade,
+                            self._config_file_instance.raw_to_facade(content),
+                        )
+                    except ParserError as e:
+                        self._logger.error(
+                            "Unable to parse file '%s': %s",
+                            self._config_file_instance.raw_file.metadata.path,
+                            e.msg,
+                        )
+                    except JsonParserException:
+                        self._logger.error(
+                            "Unable to parse file '%s': not valid json",
+                            self._config_file_instance.raw_file.metadata.path,
+                        )
+                    except ParserErrorException:
+                        self._logger.error(
+                            "Unable to parse file '%s'",
+                            self._config_file_instance.raw_file.metadata.path,
+                        )
+                yield facade
+                io_buffer.seek(0)
+                io_buffer.truncate()
+                io_buffer.write(
+                    self._config_file_instance.facade_to_raw(facade)
+                )
+
         except RawFileError as e:
             self._logger.error(
-                "Action '%s' on file '%s' failed: %s",
-                e.action,
-                e.metadata.path,
+                "Unable to update file '%s': %s",
+                self._config_file_instance.raw_file.metadata.path,
                 e.reason,
             )
-            return False
-        return True
-
-    def _write_facade_base(self, facade: Facade) -> None:
-        self._config_file_instance.write_facade(facade, can_overwrite=True)
+            raise _UpdateFacadeError() from e
 
     def login_user(self, username: str) -> Optional[AuthUser]:
         try:
@@ -105,8 +138,8 @@ class AuthProvider:
         return None
 
     def create_token(self, username: str) -> Optional[str]:
-        facade = self._get_facade()
-        token = facade.add_user(username)
-        if self._write_facade(facade):
-            return token
-        return None
+        try:
+            with self._update_facade() as facade:
+                return facade.add_user(username)
+        except _UpdateFacadeError:
+            return None

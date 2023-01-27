@@ -171,6 +171,7 @@ _file_operation_translation = {
     RawFileError.ACTION_CHOWN: "change ownership of",
     RawFileError.ACTION_READ: "read",
     RawFileError.ACTION_REMOVE: "remove",
+    RawFileError.ACTION_UPDATE: "update",
     RawFileError.ACTION_WRITE: "write",
 }
 
