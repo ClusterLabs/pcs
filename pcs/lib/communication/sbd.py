@@ -98,8 +98,8 @@ class StonithWatchdogTimeoutAction(
         )
         if report_item is None:
             self._on_success()
-            return []
-        self._report(report_item)
+        else:
+            self._report(report_item)
         return self._get_next_list()
 
 

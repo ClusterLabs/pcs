@@ -19,7 +19,7 @@ class DisableSbd(TestCase):
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
         self.config.http.host.check_auth(node_labels=self.node_list)
         self.config.http.pcmk.set_stonith_watchdog_timeout_to_zero(
-            node_labels=self.node_list[:1]
+            communication_list=[[dict(label=node)] for node in self.node_list],
         )
         self.config.http.sbd.disable_sbd(node_labels=self.node_list)
         disable_sbd(self.env_assist.get_env())
@@ -56,7 +56,7 @@ class DisableSbd(TestCase):
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
         self.config.http.host.check_auth(node_labels=self.node_list)
         self.config.http.pcmk.set_stonith_watchdog_timeout_to_zero(
-            node_labels=self.node_list[:1]
+            communication_list=[[dict(label=node)] for node in self.node_list],
         )
         self.config.http.sbd.disable_sbd(node_labels=self.node_list)
 
@@ -158,7 +158,9 @@ class DisableSbd(TestCase):
             ]
         )
         self.config.http.pcmk.set_stonith_watchdog_timeout_to_zero(
-            node_labels=online_nodes_list[:1]
+            communication_list=[
+                [dict(label=node)] for node in self.node_list[1:]
+            ],
         )
         self.config.http.sbd.disable_sbd(node_labels=online_nodes_list)
         disable_sbd(self.env_assist.get_env(), ignore_offline_nodes=True)
@@ -291,7 +293,7 @@ class DisableSbd(TestCase):
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
         self.config.http.host.check_auth(node_labels=self.node_list)
         self.config.http.pcmk.set_stonith_watchdog_timeout_to_zero(
-            node_labels=self.node_list[:1]
+            communication_list=[[dict(label=node)] for node in self.node_list],
         )
         self.config.http.sbd.disable_sbd(
             communication_list=[
