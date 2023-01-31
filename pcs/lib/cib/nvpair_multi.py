@@ -17,6 +17,7 @@ from pcs.common.pacemaker.nvset import (
     CibNvsetDto,
 )
 from pcs.common.reports import ReportItemList
+from pcs.common.types import StringIterable
 from pcs.lib import validate
 from pcs.lib.cib.rule import (
     RuleInEffectEval,
@@ -99,7 +100,7 @@ def find_nvsets(parent_element: _Element, tag: NvsetTag) -> List[_Element]:
 
 
 def find_nvsets_by_ids(
-    parent_element: _Element, id_list: Iterable[str]
+    parent_element: _Element, id_list: StringIterable
 ) -> Tuple[List[_Element], ReportItemList]:
     """
     Find nvset elements by their IDs and return them with non-empty report

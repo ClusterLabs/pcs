@@ -1,6 +1,5 @@
 import re
 from typing import (
-    Iterable,
     List,
     Pattern,
     Set,
@@ -23,6 +22,7 @@ from pcs.common.reports.item import (
     ReportItemList,
 )
 from pcs.common.tools import Version
+from pcs.common.types import StringIterable
 from pcs.lib.cib import sections
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import (
@@ -288,7 +288,7 @@ def get_element_by_id(cib: _Element, element_id: str) -> _Element:
 
 
 def get_elements_by_ids(
-    cib: _Element, element_ids: Iterable[str]
+    cib: _Element, element_ids: StringIterable
 ) -> Tuple[List[_Element], List[str]]:
     """
     Returns a list of elements from CIB with the given IDs and a list of IDs

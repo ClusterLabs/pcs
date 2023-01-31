@@ -23,6 +23,7 @@ from pcs.common.reports import (
 )
 from pcs.common.reports.item import ReportItem
 from pcs.common.tools import timeout_to_seconds
+from pcs.common.types import StringCollection
 from pcs.lib import validate
 from pcs.lib.cib import (
     nvpair_multi,
@@ -92,7 +93,7 @@ def prepare(
     report_processor: ReportProcessor,
     raw_operation_list: Iterable[ResourceOperationFilteredIn],
     default_operation_list: Iterable[CibResourceOperationDto],
-    allowed_operation_name_list: Iterable[str],
+    allowed_operation_name_list: StringCollection,
     new_role_names_supported: bool,
     allow_invalid: bool = False,
 ) -> List[ResourceOperationFilteredOut]:

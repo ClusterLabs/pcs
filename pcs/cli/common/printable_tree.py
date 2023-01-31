@@ -7,7 +7,7 @@ class PrintableTreeNode:
         raise NotImplementedError()
 
     @property
-    def detail(self) -> Sequence[str]:
+    def detail(self) -> list[str]:
         raise NotImplementedError()
 
     @property
@@ -23,7 +23,7 @@ def tree_to_lines(
     verbose: bool = False,
     title_prefix: str = "",
     indent: str = "",
-) -> Sequence[str]:
+) -> list[str]:
     """
     Return sequence of strings representing lines to print out tree structure on
     command line.

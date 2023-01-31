@@ -3,7 +3,6 @@ import os
 import sys
 from typing import (
     Any,
-    Sequence,
     cast,
 )
 
@@ -22,6 +21,7 @@ from pcs.cli.reports.output import print_to_stderr
 from pcs.common import file as pcs_file
 from pcs.common import reports
 from pcs.common.reports.item import ReportItem
+from pcs.common.types import StringSequence
 from pcs.lib.auth import config as auth_config
 from pcs.lib.auth.const import SUPERUSER
 from pcs.lib.file.instance import FileInstance
@@ -250,7 +250,7 @@ def _check_nodes(node_list, prefix=""):
 
 def pcsd_status_cmd(
     lib: Any,
-    argv: Sequence[str],
+    argv: StringSequence,
     modifiers: InputModifiers,
     dont_exit: bool = False,
 ) -> None:

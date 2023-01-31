@@ -1,7 +1,6 @@
 from typing import (
     Any,
     List,
-    Sequence,
 )
 
 from dacite import DaciteError
@@ -17,11 +16,12 @@ from pcs.common.dr import (
 from pcs.common.interface import dto
 from pcs.common.reports import codes as report_codes
 from pcs.common.str_tools import indent
+from pcs.common.types import StringSequence
 
 
 def config(
     lib: Any,
-    argv: Sequence[str],
+    argv: StringSequence,
     modifiers: InputModifiers,
 ) -> None:
     """
@@ -63,7 +63,7 @@ def _config_site_lines(site_dto: DrConfigSiteDto) -> List[str]:
 
 def set_recovery_site(
     lib: Any,
-    argv: Sequence[str],
+    argv: StringSequence,
     modifiers: InputModifiers,
 ) -> None:
     """
@@ -78,7 +78,7 @@ def set_recovery_site(
 
 def status(
     lib: Any,
-    argv: Sequence[str],
+    argv: StringSequence,
     modifiers: InputModifiers,
 ) -> None:
     """
@@ -140,7 +140,7 @@ def status(
 
 def destroy(
     lib: Any,
-    argv: Sequence[str],
+    argv: StringSequence,
     modifiers: InputModifiers,
 ) -> None:
     """

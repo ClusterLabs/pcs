@@ -22,6 +22,7 @@ from pcs.common.str_tools import (
     format_list,
     indent,
 )
+from pcs.common.types import StringSequence
 from pcs.lib.booth import status as booth_status
 from pcs.lib.booth.env import BoothEnv
 from pcs.lib.cib import nvpair
@@ -326,7 +327,7 @@ def _get_node_reachability(
     node_target_factory: NodeTargetLibFactory,
     node_communicator: Communicator,
     report_processor: ReportProcessor,
-    node_name_list: Iterable[str],
+    node_name_list: StringSequence,
 ) -> Mapping[str, str]:
     # we are not interested in reports telling the user which nodes are
     # unknown since we display that info in the list of nodes
@@ -340,7 +341,7 @@ def _get_node_reachability(
 
 
 def _format_node_reachability(
-    node_name_list: Iterable[str], node_reachability: Mapping[str, str]
+    node_name_list: StringSequence, node_reachability: Mapping[str, str]
 ) -> List[str]:
     translate = {
         CheckReachability.REACHABLE: "Online",

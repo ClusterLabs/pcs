@@ -1,5 +1,4 @@
 from typing import (
-    Iterable,
     List,
     Mapping,
     Optional,
@@ -77,7 +76,7 @@ def find_one_resource(
 
 def find_resources(
     context_element: _Element,
-    resource_ids: Iterable[str],
+    resource_ids: StringCollection,
     resource_tags: Optional[StringCollection] = None,
 ) -> Tuple[List[_Element], ReportItemList]:
     """

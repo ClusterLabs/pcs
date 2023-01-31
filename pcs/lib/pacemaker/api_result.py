@@ -1,9 +1,10 @@
 from dataclasses import dataclass
-from typing import Sequence
+
+from pcs.common.types import StringSequence
 
 
 @dataclass(frozen=True)
 class Status:
     code: int
     message: str
-    errors: Sequence[str]
+    errors: StringSequence

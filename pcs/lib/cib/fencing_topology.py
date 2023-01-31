@@ -1,5 +1,4 @@
 from typing import (
-    Iterable,
     Optional,
     Sequence,
     Set,
@@ -23,6 +22,7 @@ from pcs.common.reports import (
 from pcs.common.reports import codes as report_codes
 from pcs.common.reports import has_errors
 from pcs.common.reports.item import ReportItem
+from pcs.common.types import StringCollection
 from pcs.lib.cib.resource.stonith import is_stonith_resource
 from pcs.lib.cib.tools import find_unique_id
 from pcs.lib.errors import LibraryError
@@ -104,7 +104,7 @@ def remove_levels_by_params(
     # TODO create a special type, so that it cannot accept any string
     target_type: Optional[str] = None,
     target_value=None,
-    devices: Optional[Iterable[str]] = None,
+    devices: Optional[StringCollection] = None,
     # TODO remove, deprecated backward compatibility layer
     ignore_if_missing: bool = False,
     # TODO remove, deprecated backward compatibility layer

@@ -2,7 +2,6 @@ import os.path
 import re
 from typing import (
     Dict,
-    Iterable,
     List,
     Mapping,
     Optional,
@@ -25,6 +24,7 @@ from pcs.common.tools import (
 )
 from pcs.common.types import (
     CibRuleInEffectStatus,
+    StringCollection,
     StringSequence,
 )
 from pcs.lib import tools
@@ -796,7 +796,7 @@ def __exec(name):
 
 
 def _is_in_pcmk_tool_help(
-    runner: CommandRunner, tool: str, text_list: Iterable[str]
+    runner: CommandRunner, tool: str, text_list: StringCollection
 ) -> bool:
     stdout, stderr, dummy_retval = runner.run([__exec(tool), "--help-all"])
     # Help goes to stderr but we check stdout as well if that gets changed. Use

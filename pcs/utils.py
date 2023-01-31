@@ -19,7 +19,6 @@ from io import BytesIO
 from typing import (
     Any,
     Dict,
-    Sequence,
     Tuple,
 )
 from urllib.parse import urlencode
@@ -63,6 +62,7 @@ from pcs.common.tools import (
     Version,
     timeout_to_seconds,
 )
+from pcs.common.types import StringSequence
 from pcs.lib.corosync.config_facade import ConfigFacade as corosync_conf_facade
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
@@ -2768,9 +2768,7 @@ def get_library_wrapper():
 
 
 def exit_on_cmdline_input_error(
-    error: CmdLineInputError,
-    main_name: str,
-    usage_name: Sequence[str],
+    error: CmdLineInputError, main_name: str, usage_name: StringSequence
 ) -> None:
     if error and error.message:
         reports_output.error(error.message)

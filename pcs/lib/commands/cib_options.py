@@ -2,7 +2,6 @@ from typing import (
     Any,
     Collection,
     Container,
-    Iterable,
     Mapping,
     Optional,
 )
@@ -14,6 +13,7 @@ from pcs.common.pacemaker.defaults import CibDefaultsDto
 from pcs.common.pacemaker.nvset import CibNvsetDto
 from pcs.common.reports.item import ReportItem
 from pcs.common.tools import Version
+from pcs.common.types import StringCollection
 from pcs.lib.cib import (
     nvpair_multi,
     sections,
@@ -245,7 +245,7 @@ def _defaults_config(
 
 
 def resource_defaults_remove(
-    env: LibraryEnvironment, nvset_id_list: Collection[str]
+    env: LibraryEnvironment, nvset_id_list: StringCollection
 ) -> None:
     """
     Remove specified resource defaults nvsets
@@ -257,7 +257,7 @@ def resource_defaults_remove(
 
 
 def operation_defaults_remove(
-    env: LibraryEnvironment, nvset_id_list: Collection[str]
+    env: LibraryEnvironment, nvset_id_list: StringCollection
 ) -> None:
     """
     Remove specified operation defaults nvsets
@@ -269,7 +269,9 @@ def operation_defaults_remove(
 
 
 def _defaults_remove(
-    env: LibraryEnvironment, cib_section_name: str, nvset_id_list: Iterable[str]
+    env: LibraryEnvironment,
+    cib_section_name: str,
+    nvset_id_list: StringCollection,
 ) -> None:
     if not nvset_id_list:
         return

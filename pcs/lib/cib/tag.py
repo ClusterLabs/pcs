@@ -3,12 +3,9 @@ from collections import (
     OrderedDict,
 )
 from typing import (
-    Container,
-    Dict,
     Iterable,
     List,
     Optional,
-    Sequence,
     Tuple,
     Union,
     cast,
@@ -21,6 +18,11 @@ from pcs.common import reports
 from pcs.common.reports import (
     ReportItem,
     ReportItemList,
+)
+from pcs.common.types import (
+    StringCollection,
+    StringIterable,
+    StringSequence,
 )
 from pcs.lib.cib.resource.common import find_resources
 from pcs.lib.cib.tools import (
@@ -55,8 +57,7 @@ def _validate_tag_id(tag_id: str, id_provider: IdProvider) -> ReportItemList:
 
 
 def _validate_tag_id_not_in_idref_list(
-    tag_id: str,
-    idref_list: Container[str],
+    tag_id: str, idref_list: StringCollection
 ) -> ReportItemList:
     """
     Validate that idref_list does not contain tag_id.
@@ -70,7 +71,7 @@ def _validate_tag_id_not_in_idref_list(
 
 
 def _validate_add_remove_duplicate_reference_ids(
-    idref_list: Iterable[str],
+    idref_list: StringSequence,
     add_or_not_remove: bool = True,
 ) -> ReportItemList:
     """
@@ -95,7 +96,7 @@ def _validate_add_remove_duplicate_reference_ids(
 
 
 def _validate_tag_create_idref_list_not_empty(
-    idref_list: Iterable[str],
+    idref_list: StringIterable,
 ) -> ReportItemList:
     """
     Validate that list of reference ids for tag create is not empty.
@@ -115,7 +116,7 @@ def _validate_tag_create_idref_list_not_empty(
 
 def _validate_reference_ids_are_resources(
     resources_section: _Element,
-    idref_list: Iterable[str],
+    idref_list: StringSequence,
 ) -> ReportItemList:
     """
     Validate that ids are resources.
@@ -130,7 +131,7 @@ def _validate_reference_ids_are_resources(
 def validate_create_tag(
     resources_section: _Element,
     tag_id: str,
-    idref_list: Sequence[str],
+    idref_list: StringSequence,
     id_provider: IdProvider,
 ) -> ReportItemList:
     """
@@ -154,8 +155,7 @@ def validate_create_tag(
 
 
 def validate_remove_tag(
-    constraint_section: _Element,
-    to_remove_tag_list: Iterable[str],
+    constraint_section: _Element, to_remove_tag_list: StringIterable
 ) -> ReportItemList:
     """
     Validation function for tag removal. List of tag elements is not empty and
@@ -216,8 +216,8 @@ class ValidateTagUpdateByIds:
     def __init__(
         self,
         tag_id: str,
-        add_idref_list: Sequence[str],
-        remove_idref_list: Sequence[str],
+        add_idref_list: StringSequence,
+        remove_idref_list: StringSequence,
         adjacent_idref: Optional[str] = None,
     ) -> None:
         """
@@ -524,7 +524,7 @@ def find_constraints_referencing_tag(
 
 def find_tag_elements_by_ids(
     tags_section: _Element,
-    tag_id_list: Iterable[str],
+    tag_id_list: StringIterable,
 ) -> Tuple[List[_Element], ReportItemList]:
     """
     Try to find tag elements by ids and return them with non-empty report
@@ -546,9 +546,7 @@ def find_tag_elements_by_ids(
 
 
 def create_tag(
-    tags_section: _Element,
-    tag_id: str,
-    idref_list: Iterable[str],
+    tags_section: _Element, tag_id: str, idref_list: StringIterable
 ) -> _Element:
     """
     Create new tag element and add it to cib.
@@ -636,7 +634,7 @@ def get_list_of_tag_elements(tags_section: _Element) -> List[_Element]:
 
 def tag_element_to_dict(
     tag_element: _Element,
-) -> Dict[str, Union[str, Iterable[str]]]:
+) -> dict[str, Union[str, list[str]]]:
     """
     Convert tag element to the dict structure
 
@@ -658,7 +656,8 @@ def tag_element_to_dict(
 
 
 def expand_tag(
-    some_or_tag_el: _Element, only_expand_types: Optional[Iterable[str]] = None
+    some_or_tag_el: _Element,
+    only_expand_types: Optional[StringCollection] = None,
 ) -> List[_Element]:
     """
     Substitute a tag element with elements which the tag refers to.

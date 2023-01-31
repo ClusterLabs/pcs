@@ -6,14 +6,17 @@ from typing import (
 )
 
 from pcs.common.interface.dto import DataTransferObject
-from pcs.common.types import ResourceRelationType
+from pcs.common.types import (
+    ResourceRelationType,
+    StringSequence,
+)
 
 
 @dataclass(frozen=True)
 class RelationEntityDto(DataTransferObject):
     id: str  # pylint: disable=invalid-name
     type: ResourceRelationType
-    members: Sequence[str]
+    members: StringSequence
     metadata: Mapping[str, Any]
 
 

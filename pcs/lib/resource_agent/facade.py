@@ -9,6 +9,7 @@ from typing import (
 )
 
 from pcs.common import reports
+from pcs.common.types import StringIterable
 from pcs.lib import validate
 from pcs.lib.external import CommandRunner
 
@@ -125,7 +126,7 @@ class ResourceAgentFacade:
     def get_validators_required_parameters(
         self,
         force: bool = False,
-        only_parameters: Optional[Iterable[str]] = None,
+        only_parameters: Optional[StringIterable] = None,
     ) -> List[validate.ValidatorInterface]:
         """
         Return validators checking if required parameters were specified

@@ -53,6 +53,10 @@ from pcs.common.reports import (
 )
 from pcs.common.str_tools import format_list
 from pcs.common.tools import timeout_to_seconds
+from pcs.common.types import (
+    StringCollection,
+    StringIterable,
+)
 from pcs.common.validate import (
     is_integer,
     is_port_number,
@@ -446,7 +450,7 @@ class NamesIn(KeyValidator):
         self,
         option_name_list: Iterable[TypeOptionName],
         option_type: Optional[str] = None,
-        allowed_option_patterns: Optional[Iterable[str]] = None,
+        allowed_option_patterns: Optional[StringIterable] = None,
         banned_name_list: Optional[Iterable[TypeOptionName]] = None,
         severity: Optional[ReportItemSeverity] = None,
     ):
@@ -1120,9 +1124,9 @@ class _ValidateAddRemoveBase:
     # pylint: disable=too-many-instance-attributes
     def __init__(
         self,
-        add_item_list: Iterable[str],
-        remove_item_list: Iterable[str],
-        current_item_list: Iterable[str],
+        add_item_list: StringCollection,
+        remove_item_list: StringCollection,
+        current_item_list: StringCollection,
         container_type: reports.types.AddRemoveContainerType,
         item_type: reports.types.AddRemoveItemType,
         container_id: str,
@@ -1172,7 +1176,7 @@ class _ValidateAddRemoveBase:
         return report_list
 
     @staticmethod
-    def _get_duplicate_items(item_list: Iterable[str]) -> Set[str]:
+    def _get_duplicate_items(item_list: StringIterable) -> Set[str]:
         return {item for item, count in Counter(item_list).items() if count > 1}
 
     def validate_no_duplicate_items(self) -> ReportItemList:
@@ -1310,9 +1314,9 @@ class _ValidateAddRemoveBase:
 
 
 def validate_add_remove_items(
-    add_item_list: Iterable[str],
-    remove_item_list: Iterable[str],
-    current_item_list: Iterable[str],
+    add_item_list: StringCollection,
+    remove_item_list: StringCollection,
+    current_item_list: StringCollection,
     container_type: reports.types.AddRemoveContainerType,
     item_type: reports.types.AddRemoveItemType,
     container_id: str,
@@ -1353,9 +1357,9 @@ def validate_add_remove_items(
 
 
 def validate_set_unset_items(
-    add_item_list: Iterable[str],
-    remove_item_list: Iterable[str],
-    current_item_list: Iterable[str],
+    add_item_list: StringCollection,
+    remove_item_list: StringCollection,
+    current_item_list: StringCollection,
     container_type: reports.types.AddRemoveContainerType,
     item_type: reports.types.AddRemoveItemType,
     container_id: str,

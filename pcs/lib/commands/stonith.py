@@ -1,7 +1,6 @@
 from typing import (
     Collection,
     Container,
-    Iterable,
     List,
     Mapping,
     Optional,
@@ -13,6 +12,7 @@ from lxml.etree import _Element
 from pcs.common import reports
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
+from pcs.common.types import StringCollection
 from pcs.lib.cib import resource
 from pcs.lib.cib.nvpair import (
     INSTANCE_ATTRIBUTES_TAG,
@@ -432,8 +432,8 @@ def _update_scsi_devices_get_element_and_devices(
 def _unfencing_scsi_devices(
     env: LibraryEnvironment,
     stonith_el: _Element,
-    original_devices: Iterable[str],
-    updated_devices: Iterable[str],
+    original_devices: StringCollection,
+    updated_devices: StringCollection,
     force_flags: Container[reports.types.ForceCode] = (),
 ) -> None:
     """
@@ -494,7 +494,7 @@ def _unfencing_scsi_devices(
 def update_scsi_devices(
     env: LibraryEnvironment,
     stonith_id: str,
-    set_device_list: Iterable[str],
+    set_device_list: StringCollection,
     force_flags: Container[reports.types.ForceCode] = (),
 ) -> None:
     """
@@ -539,8 +539,8 @@ def update_scsi_devices(
 def update_scsi_devices_add_remove(
     env: LibraryEnvironment,
     stonith_id: str,
-    add_device_list: Iterable[str],
-    remove_device_list: Iterable[str],
+    add_device_list: StringCollection,
+    remove_device_list: StringCollection,
     force_flags: Container[reports.types.ForceCode] = (),
 ) -> None:
     """

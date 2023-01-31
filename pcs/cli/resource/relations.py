@@ -1,6 +1,5 @@
 from typing import (
     Any,
-    Iterable,
     List,
     Mapping,
     Sequence,
@@ -20,11 +19,15 @@ from pcs.common.pacemaker.resource.relations import (
     ResourceRelationType,
 )
 from pcs.common.str_tools import format_optional
+from pcs.common.types import (
+    StringCollection,
+    StringSequence,
+)
 
 
 def show_resource_relations_cmd(
     lib: Any,
-    argv: Sequence[str],
+    argv: StringSequence,
     modifiers: InputModifiers,
 ) -> None:
     """
@@ -71,7 +74,7 @@ class ResourceRelationBase(PrintableTreeNode):
         return self._members
 
     @property
-    def detail(self) -> Sequence[str]:
+    def detail(self) -> list[str]:
         raise NotImplementedError()
 
     def get_title(self, verbose: bool) -> str:
@@ -135,7 +138,7 @@ class ResourcePrintableNode(ResourceRelationBase):
         return f"{self._relation_entity.id}{detail}"
 
     @property
-    def detail(self) -> Sequence[str]:
+    def detail(self) -> list[str]:
         return []
 
 
@@ -174,7 +177,7 @@ class RelationPrintableNode(ResourceRelationBase):
         )
 
     @property
-    def detail(self) -> Sequence[str]:
+    def detail(self) -> list[str]:
         ent = self._relation_entity
         if ent.type is ResourceRelationType.ORDER:
             return _order_metadata_to_str(ent.metadata)
@@ -188,7 +191,7 @@ class RelationPrintableNode(ResourceRelationBase):
         return []
 
 
-def _order_metadata_to_str(metadata: Mapping[str, Any]) -> Sequence[str]:
+def _order_metadata_to_str(metadata: Mapping[str, Any]) -> list[str]:
     return [
         "{action1} {resource1} then {action2} {resource2}".format(
             action1=metadata["first-action"],
@@ -199,7 +202,7 @@ def _order_metadata_to_str(metadata: Mapping[str, Any]) -> Sequence[str]:
     ] + _order_common_metadata_to_str(metadata)
 
 
-def _order_set_metadata_to_str(metadata: Mapping[str, Any]) -> Sequence[str]:
+def _order_set_metadata_to_str(metadata: Mapping[str, Any]) -> list[str]:
     result = []
     for res_set in metadata["sets"]:
         result.append(
@@ -226,7 +229,7 @@ def _resource_set_options_to_str(metadata: Mapping[str, Any]) -> str:
 
 
 def _filter_supported_keys(
-    data: Mapping[str, Any], supported_keys: Iterable[str]
+    data: Mapping[str, Any], supported_keys: StringCollection
 ) -> str:
     return " ".join(
         [
