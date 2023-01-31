@@ -1,10 +1,10 @@
 from typing import (
-    Iterable,
     List,
     NamedTuple,
 )
 
 from pcs.common.dr import DrRole
+from pcs.common.types import StringIterable
 from pcs.lib.interface.config import FacadeInterface
 
 
@@ -33,7 +33,7 @@ class Facade(FacadeInterface):
     def local_role(self) -> DrRole:
         return DrRole(self._config["local"]["role"])
 
-    def add_site(self, role: DrRole, node_list: Iterable[str]) -> None:
+    def add_site(self, role: DrRole, node_list: StringIterable) -> None:
         self._config["remote_sites"].append(
             dict(
                 role=role.value,

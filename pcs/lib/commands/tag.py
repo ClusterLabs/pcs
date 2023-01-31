@@ -1,14 +1,13 @@
 from contextlib import contextmanager
 from typing import (
-    Dict,
-    Iterable,
     Iterator,
     Optional,
-    Sequence,
+    Union,
 )
 
 from lxml.etree import _Element
 
+from pcs.common.types import StringSequence
 from pcs.lib.cib import tag
 from pcs.lib.cib.tools import (
     IdProvider,
@@ -28,9 +27,7 @@ def cib_tags_section(env: LibraryEnvironment) -> Iterator[_Element]:
 
 
 def create(
-    env: LibraryEnvironment,
-    tag_id: str,
-    idref_list: Sequence[str],
+    env: LibraryEnvironment, tag_id: str, idref_list: StringSequence
 ) -> None:
     """
     Create a tag in a cib.
@@ -55,8 +52,8 @@ def create(
 
 def config(
     env: LibraryEnvironment,
-    tag_filter: Sequence[str],
-) -> Iterable[Dict[str, Iterable[str]]]:
+    tag_filter: StringSequence,
+) -> list[dict[str, Union[str, list[str]]]]:
     """
     Get tags specified in tag_filter or if empty, then get all the tags
     configured.
@@ -79,7 +76,7 @@ def config(
     ]
 
 
-def remove(env: LibraryEnvironment, tag_list: Iterable[str]) -> None:
+def remove(env: LibraryEnvironment, tag_list: StringSequence) -> None:
     """
     Remove specified tags from a cib.
 
@@ -105,8 +102,8 @@ def remove(env: LibraryEnvironment, tag_list: Iterable[str]) -> None:
 def update(
     env: LibraryEnvironment,
     tag_id: str,
-    idref_add: Sequence[str],
-    idref_remove: Sequence[str],
+    idref_add: StringSequence,
+    idref_remove: StringSequence,
     adjacent_idref: Optional[str] = None,
     put_after_adjacent: bool = False,
 ) -> None:

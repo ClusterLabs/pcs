@@ -11,7 +11,6 @@ from typing import (
     List,
     Mapping,
     Optional,
-    Sequence,
     cast,
 )
 from xml.dom.minidom import parseString
@@ -78,6 +77,7 @@ from pcs.common.str_tools import (
     format_list_custom_last_separator,
     format_optional,
 )
+from pcs.common.types import StringSequence
 from pcs.lib.cib.resource import (
     guest_node,
     primitive,
@@ -175,7 +175,7 @@ def resource_utilization_cmd(
 
 def _defaults_set_create_cmd(
     lib_command: Callable[..., Any],
-    argv: Sequence[str],
+    argv: StringSequence,
     modifiers: InputModifiers,
 ):
     modifiers.ensure_only_supported("-f", "--force")
@@ -200,7 +200,7 @@ def _defaults_set_create_cmd(
 
 def resource_defaults_set_create_cmd(
     lib: Any,
-    argv: Sequence[str],
+    argv: StringSequence,
     modifiers: InputModifiers,
 ) -> None:
     """
@@ -215,7 +215,7 @@ def resource_defaults_set_create_cmd(
 
 def resource_op_defaults_set_create_cmd(
     lib: Any,
-    argv: Sequence[str],
+    argv: StringSequence,
     modifiers: InputModifiers,
 ) -> None:
     """
@@ -230,7 +230,7 @@ def resource_op_defaults_set_create_cmd(
 
 def _defaults_config_cmd(
     lib_command: Callable[[bool], CibDefaultsDto],
-    argv: Sequence[str],
+    argv: StringSequence,
     modifiers: InputModifiers,
 ) -> None:
     """
@@ -262,7 +262,7 @@ def _defaults_config_cmd(
 
 def resource_defaults_config_cmd(
     lib: Any,
-    argv: Sequence[str],
+    argv: StringSequence,
     modifiers: InputModifiers,
 ) -> None:
     """
@@ -277,7 +277,7 @@ def resource_defaults_config_cmd(
 
 def resource_op_defaults_config_cmd(
     lib: Any,
-    argv: Sequence[str],
+    argv: StringSequence,
     modifiers: InputModifiers,
 ) -> None:
     """
@@ -292,7 +292,7 @@ def resource_op_defaults_config_cmd(
 
 def _defaults_set_remove_cmd(
     lib_command: Callable[..., Any],
-    argv: Sequence[str],
+    argv: StringSequence,
     modifiers: InputModifiers,
 ) -> None:
     """
@@ -305,7 +305,7 @@ def _defaults_set_remove_cmd(
 
 def resource_defaults_set_remove_cmd(
     lib: Any,
-    argv: Sequence[str],
+    argv: StringSequence,
     modifiers: InputModifiers,
 ) -> None:
     """
@@ -319,7 +319,7 @@ def resource_defaults_set_remove_cmd(
 
 def resource_op_defaults_set_remove_cmd(
     lib: Any,
-    argv: Sequence[str],
+    argv: StringSequence,
     modifiers: InputModifiers,
 ) -> None:
     """
@@ -333,7 +333,7 @@ def resource_op_defaults_set_remove_cmd(
 
 def _defaults_set_update_cmd(
     lib_command: Callable[..., Any],
-    argv: Sequence[str],
+    argv: StringSequence,
     modifiers: InputModifiers,
 ) -> None:
     """
@@ -358,7 +358,7 @@ def _defaults_set_update_cmd(
 
 def resource_defaults_set_update_cmd(
     lib: Any,
-    argv: Sequence[str],
+    argv: StringSequence,
     modifiers: InputModifiers,
 ) -> None:
     """
@@ -372,7 +372,7 @@ def resource_defaults_set_update_cmd(
 
 def resource_op_defaults_set_update_cmd(
     lib: Any,
-    argv: Sequence[str],
+    argv: StringSequence,
     modifiers: InputModifiers,
 ) -> None:
     """
@@ -386,7 +386,7 @@ def resource_op_defaults_set_update_cmd(
 
 def resource_defaults_legacy_cmd(
     lib: Any,
-    argv: Sequence[str],
+    argv: StringSequence,
     modifiers: InputModifiers,
     deprecated_syntax_used: bool = False,
 ) -> None:
@@ -405,7 +405,7 @@ def resource_defaults_legacy_cmd(
 
 def resource_op_defaults_legacy_cmd(
     lib: Any,
-    argv: Sequence[str],
+    argv: StringSequence,
     modifiers: InputModifiers,
     deprecated_syntax_used: bool = False,
 ) -> None:

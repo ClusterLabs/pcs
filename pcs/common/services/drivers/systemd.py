@@ -1,10 +1,11 @@
 import os.path
 import re
 from typing import (
-    Iterable,
     List,
     Optional,
 )
+
+from pcs.common.types import StringIterable
 
 from .. import errors
 from ..interfaces import (
@@ -18,7 +19,7 @@ class SystemdDriver(ServiceManagerInterface):
         self,
         executor: ExecutorInterface,
         systemctl_bin: str,
-        systemd_unit_paths: Iterable[str],
+        systemd_unit_paths: StringIterable,
     ) -> None:
         """
         executor -- external commands used by this class are executed using

@@ -1,7 +1,6 @@
 from typing import (
     List,
     Optional,
-    Sequence,
 )
 
 from pcs import settings
@@ -9,6 +8,7 @@ from pcs.common import (
     reports,
     services,
 )
+from pcs.common.types import StringSequence
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 
@@ -17,7 +17,7 @@ class _CmdExecutor(services.interfaces.ExecutorInterface):
     def __init__(self, cmd_runner: CommandRunner) -> None:
         self._cmd_runner = cmd_runner
 
-    def run(self, args: Sequence[str]) -> services.types.ExecutorResult:
+    def run(self, args: StringSequence) -> services.types.ExecutorResult:
         stdout, stderr, retval = self._cmd_runner.run(args)
         return services.types.ExecutorResult(retval, stdout, stderr)
 

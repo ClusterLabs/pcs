@@ -1,14 +1,17 @@
+from collections.abc import Set
 from enum import (
     Enum,
     auto,
 )
 from typing import (
+    Generator,
     MutableSequence,
     Union,
 )
 
 StringSequence = Union[MutableSequence[str], tuple[str, ...]]
-StringCollection = Union[StringSequence, set[str]]
+StringCollection = Union[StringSequence, Set[str]]
+StringIterable = Union[StringCollection, Generator[str, None, None]]
 
 
 class AutoNameEnum(str, Enum):

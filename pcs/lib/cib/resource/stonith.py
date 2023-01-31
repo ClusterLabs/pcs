@@ -1,7 +1,6 @@
 import re
 from typing import (
     Dict,
-    Iterable,
     List,
     Optional,
     Tuple,
@@ -16,6 +15,7 @@ from pcs.common.reports import (
     ReportItemList,
 )
 from pcs.common.tools import timeout_to_seconds
+from pcs.common.types import StringIterable
 from pcs.lib.cib.const import TAG_RESOURCE_PRIMITIVE
 from pcs.lib.cib.nvpair import (
     INSTANCE_ATTRIBUTES_TAG,
@@ -142,10 +142,10 @@ def validate_stonith_restartless_update(
 
 
 def get_node_key_map_for_mpath(
-    stonith_el: _Element, node_labels: Iterable[str]
+    stonith_el: _Element, node_labels: StringIterable
 ) -> Dict[str, str]:
     def library_error(
-        host_map: Optional[str], missing_nodes: Iterable[str]
+        host_map: Optional[str], missing_nodes: StringIterable
     ) -> LibraryError:
         return LibraryError(
             ReportItem.error(
@@ -304,7 +304,7 @@ def update_scsi_devices_without_restart(
     cluster_state: _Element,
     resource_el: _Element,
     id_provider: IdProvider,
-    devices_list: Iterable[str],
+    devices_list: StringIterable,
 ) -> None:
     """
     Update scsi devices without restart of stonith resource or other resources.

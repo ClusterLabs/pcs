@@ -6,7 +6,6 @@ from typing import (
     Dict,
     Mapping,
     Optional,
-    Sequence,
     Tuple,
 )
 
@@ -15,6 +14,7 @@ from pcs.common import reports
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
 from pcs.common.str_tools import join_multilines
+from pcs.common.types import StringSequence
 from pcs.lib.errors import LibraryError
 
 
@@ -48,7 +48,7 @@ class CommandRunner:
 
     def run(
         self,
-        args: Sequence[str],
+        args: StringSequence,
         stdin_string: Optional[str] = None,
         env_extend: Optional[Mapping[str, str]] = None,
         binary_output: bool = False,

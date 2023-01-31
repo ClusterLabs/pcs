@@ -4,7 +4,6 @@ from functools import partial
 from typing import (
     Any,
     Callable,
-    Collection,
     Dict,
     FrozenSet,
     Iterable,
@@ -32,6 +31,7 @@ from pcs.common.tools import (
     Version,
     timeout_to_seconds,
 )
+from pcs.common.types import StringCollection
 from pcs.lib.cib import const as cib_const
 from pcs.lib.cib import resource
 from pcs.lib.cib import status as cib_status
@@ -116,7 +116,7 @@ def resource_environment(
 def _get_resource_state_wait(
     env: LibraryEnvironment,
     wait_timeout: int = -1,
-    wait_for_resource_ids: Optional[Iterable[str]] = None,
+    wait_for_resource_ids: Optional[StringCollection] = None,
     resource_state_reporter: Callable[
         [_Element, str], ReportItem
     ] = info_resource_state,
@@ -135,7 +135,7 @@ def _get_resource_state_wait(
 def _push_cib_wait(
     env: LibraryEnvironment,
     wait_timeout: int = -1,
-    wait_for_resource_ids: Optional[Iterable[str]] = None,
+    wait_for_resource_ids: Optional[StringCollection] = None,
     resource_state_reporter: Callable[
         [_Element, str], ReportItem
     ] = info_resource_state,
@@ -202,7 +202,7 @@ def _get_agent_facade(
 
 def _validate_remote_connection(
     resource_agent_name: ResourceAgentName,
-    existing_nodes_addrs: Iterable[str],
+    existing_nodes_addrs: StringCollection,
     resource_id: str,
     instance_attributes: Mapping[str, str],
     allow_not_suitable_command: bool,
@@ -231,8 +231,8 @@ def _validate_remote_connection(
 
 def _validate_guest_change(
     tree: _Element,
-    existing_nodes_names: Iterable[str],
-    existing_nodes_addrs: Iterable[str],
+    existing_nodes_names: StringCollection,
+    existing_nodes_addrs: StringCollection,
     meta_attributes: Mapping[str, str],
     allow_not_suitable_command: bool,
     detect_remove: bool = False,
@@ -1102,7 +1102,7 @@ def bundle_update(
 def _disable_validate_and_edit_cib(
     env: LibraryEnvironment,
     cib: _Element,
-    resource_or_tag_ids: Iterable[str],
+    resource_or_tag_ids: StringCollection,
 ) -> List[_Element]:
     resource_el_list, report_list = _find_resources_expand_tags(
         cib, resource_or_tag_ids
@@ -1186,7 +1186,7 @@ def _disable_run_simulate(
 
 def disable(
     env: LibraryEnvironment,
-    resource_or_tag_ids: Collection[str],
+    resource_or_tag_ids: StringCollection,
     wait: WaitType = False,
 ):
     """
@@ -1698,7 +1698,7 @@ def move(
 
 
 def _nodes_exist_reports(
-    cib: _Element, node_names: Iterable[str]
+    cib: _Element, node_names: StringCollection
 ) -> ReportItemList:
     existing_node_names = get_pacemaker_node_names(cib)
     return [
@@ -2374,7 +2374,7 @@ def get_resource_relations_tree(
 
 def _find_resources_expand_tags(
     cib: _Element,
-    resource_or_tag_ids: Iterable[str],
+    resource_or_tag_ids: StringCollection,
     additional_search: Optional[Callable[[_Element], List[_Element]]] = None,
 ) -> Tuple[List[_Element], ReportItemList]:
     rsc_or_tag_el_list, report_list = resource.common.find_resources(

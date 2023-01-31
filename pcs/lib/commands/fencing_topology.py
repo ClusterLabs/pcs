@@ -1,10 +1,8 @@
-from typing import (
-    Collection,
-    Optional,
-)
+from typing import Optional
 
 from pcs.common import reports as report
 from pcs.common.fencing_topology import TARGET_TYPE_NODE
+from pcs.common.types import StringCollection
 from pcs.lib.cib import fencing_topology as cib_fencing_topology
 from pcs.lib.cib.tools import (
     get_fencing_topology,
@@ -83,7 +81,7 @@ def remove_levels_by_params(
     # TODO create a special type, so that it cannot accept any string
     target_type: Optional[str] = None,
     target_value=None,
-    devices: Optional[Collection[str]] = None,
+    devices: Optional[StringCollection] = None,
     # TODO remove, deprecated backward compatibility layer
     ignore_if_missing: bool = False,
     # TODO remove, deprecated backward compatibility layer

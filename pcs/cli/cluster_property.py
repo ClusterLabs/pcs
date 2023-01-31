@@ -1,8 +1,4 @@
-from typing import (
-    Any,
-    Sequence,
-    cast,
-)
+from typing import Any
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import (
@@ -15,7 +11,7 @@ from pcs.common.types import StringSequence
 
 
 def set_property(
-    lib: Any, argv: Sequence[str], modifiers: InputModifiers
+    lib: Any, argv: StringSequence, modifiers: InputModifiers
 ) -> None:
     """
     Options:
@@ -33,7 +29,7 @@ def set_property(
 
 
 def unset_property(
-    lib: Any, argv: Sequence[str], modifiers: InputModifiers
+    lib: Any, argv: StringSequence, modifiers: InputModifiers
 ) -> None:
     """
     Options:
@@ -47,7 +43,7 @@ def unset_property(
     if modifiers.get("--force"):
         force_flags.add(reports.codes.FORCE)
     else:
-        ensure_unique_args(cast(StringSequence, argv))
+        ensure_unique_args(argv)
 
     lib.cluster_property.set_properties(
         {name: "" for name in argv}, force_flags

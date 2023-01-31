@@ -11,7 +11,6 @@ from typing import (
     List,
     Mapping,
     Optional,
-    Sequence,
     Tuple,
     Union,
     cast,
@@ -37,7 +36,10 @@ from pcs.common.str_tools import (
     indent,
     is_iterable_not_str,
 )
-from pcs.common.types import CibRuleExpressionType
+from pcs.common.types import (
+    CibRuleExpressionType,
+    StringIterable,
+)
 
 from . import (
     codes,
@@ -195,7 +197,9 @@ def _skip_reason_to_string(reason: types.ReasonType) -> str:
     }.get(reason, reason)
 
 
-def _typelist_to_string(type_list: Sequence[str], article: bool = False) -> str:
+def _typelist_to_string(
+    type_list: StringIterable, article: bool = False
+) -> str:
     if not type_list:
         return ""
     # use set to drop duplicate items:

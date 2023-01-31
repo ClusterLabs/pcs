@@ -2,7 +2,6 @@ from collections import Counter
 from collections.abc import Set
 from functools import partial
 from typing import (
-    Iterable,
     Mapping,
     Union,
     cast,
@@ -17,7 +16,10 @@ from pcs.common.str_tools import (
     format_plural,
 )
 from pcs.common.tools import timeout_to_seconds
-from pcs.common.types import StringSequence
+from pcs.common.types import (
+    StringIterable,
+    StringSequence,
+)
 
 ModifierValueType = Union[None, bool, str]
 
@@ -600,9 +602,7 @@ class InputModifiers:
             )
 
     def ensure_dependency_satisfied(
-        self,
-        main_option: str,
-        dependent_options: Iterable[str],
+        self, main_option: str, dependent_options: StringIterable
     ) -> None:
         """
         Raise a `CmdLineInputError` exception if any of `dependent_options` is
@@ -625,7 +625,7 @@ class InputModifiers:
     def is_specified(self, option: str) -> bool:
         return option in self._defined_options
 
-    def is_specified_any(self, option_list: Iterable[str]) -> bool:
+    def is_specified_any(self, option_list: StringIterable) -> bool:
         for option in option_list:
             if self.is_specified(option):
                 return True

@@ -1,8 +1,5 @@
 import json
-from typing import (
-    Dict,
-    Iterable,
-)
+from typing import Dict
 
 from dacite import DaciteError
 
@@ -14,6 +11,7 @@ from pcs.common.node_communicator import (
     Request,
     RequestData,
 )
+from pcs.common.types import StringIterable
 from pcs.lib.communication.tools import (
     AllAtOnceStrategyMixin,
     AllSameDataMixin,
@@ -32,12 +30,12 @@ class Unfence(
     def __init__(
         self,
         report_processor: reports.ReportProcessor,
-        original_devices: Iterable[str],
-        updated_devices: Iterable[str],
+        original_devices: StringIterable,
+        updated_devices: StringIterable,
     ) -> None:
         super().__init__(report_processor)
-        self._original_devices = original_devices
-        self._updated_devices = updated_devices
+        self._original_devices = list(original_devices)
+        self._updated_devices = list(updated_devices)
 
     def _get_request_data(self):
         return None
@@ -94,8 +92,8 @@ class UnfenceMpath(Unfence):
     def __init__(
         self,
         report_processor: reports.ReportProcessor,
-        original_devices: Iterable[str],
-        updated_devices: Iterable[str],
+        original_devices: StringIterable,
+        updated_devices: StringIterable,
         node_key_map: Dict[str, str],
     ) -> None:
         super().__init__(report_processor, original_devices, updated_devices)

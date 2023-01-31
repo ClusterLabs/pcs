@@ -2,7 +2,6 @@ from logging import Logger
 from typing import (
     Any,
     Callable,
-    Iterable,
     Mapping,
     Optional,
     Union,
@@ -24,6 +23,7 @@ from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
 from pcs.common.services.interfaces import ServiceManagerInterface
 from pcs.common.tools import Version
+from pcs.common.types import StringIterable
 from pcs.lib.booth.env import BoothEnv
 from pcs.lib.communication import qdevice
 from pcs.lib.communication.corosync import (
@@ -95,7 +95,7 @@ class LibraryEnvironment:
         logger: Logger,
         report_processor: reports.ReportProcessor,
         user_login: Optional[str] = None,
-        user_groups: Optional[Iterable[str]] = None,
+        user_groups: Optional[StringIterable] = None,
         cib_data: Optional[str] = None,
         corosync_conf_data: Optional[str] = None,
         booth_files_data: Optional[Mapping[str, Any]] = None,
@@ -109,7 +109,7 @@ class LibraryEnvironment:
         self._logger = logger
         self._report_processor = report_processor
         self._user_login = user_login
-        self._user_groups = [] if user_groups is None else user_groups
+        self._user_groups = [] if user_groups is None else list(user_groups)
         self._cib_data = cib_data
         self._corosync_conf_data = corosync_conf_data
         self._booth_files_data = booth_files_data or {}
@@ -146,7 +146,7 @@ class LibraryEnvironment:
         return self._user_login
 
     @property
-    def user_groups(self) -> Optional[Iterable[str]]:
+    def user_groups(self) -> Optional[list[str]]:
         return self._user_groups
 
     @property
@@ -491,7 +491,7 @@ class LibraryEnvironment:
         )
 
     def get_known_hosts(
-        self, host_name_list: Iterable[str]
+        self, host_name_list: StringIterable
     ) -> list[PcsKnownHost]:
         known_hosts = self.__get_known_hosts()
         return [

@@ -1,12 +1,10 @@
-from typing import (
-    Iterable,
-    Optional,
-)
+from typing import Optional
 
 from pcs.common.services_dto import (
     ServicesInfoResultDto,
     ServiceStatusDto,
 )
+from pcs.common.types import StringIterable
 from pcs.lib.env import LibraryEnvironment
 
 
@@ -44,7 +42,7 @@ def disable_service(
 
 def get_services_info(
     env: LibraryEnvironment,
-    services: Iterable[str],
+    services: StringIterable,
     installed: bool = False,
     enabled: bool = False,
     running: bool = False,

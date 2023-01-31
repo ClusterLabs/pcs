@@ -1,7 +1,4 @@
-from typing import (
-    Any,
-    Sequence,
-)
+from typing import Any
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import (
@@ -13,11 +10,12 @@ from pcs.cli.reports.output import (
     print_to_stderr,
 )
 from pcs.common.str_tools import indent
+from pcs.common.types import StringSequence
 
 
 def tag_create(
     lib: Any,
-    argv: Sequence[str],
+    argv: StringSequence,
     modifiers: InputModifiers,
 ) -> None:
     """
@@ -33,7 +31,7 @@ def tag_create(
 
 def tag_list_cmd(
     lib: Any,
-    argv: Sequence[str],
+    argv: StringSequence,
     modifiers: InputModifiers,
 ) -> None:
     """
@@ -49,7 +47,7 @@ def tag_list_cmd(
 
 def tag_config(
     lib: Any,
-    argv: Sequence[str],
+    argv: StringSequence,
     modifiers: InputModifiers,
 ) -> None:
     """
@@ -70,7 +68,7 @@ def tag_config(
 
 def tag_remove(
     lib: Any,
-    argv: Sequence[str],
+    argv: StringSequence,
     modifiers: InputModifiers,
 ) -> None:
     """
@@ -85,7 +83,7 @@ def tag_remove(
 
 def tag_update(
     lib: Any,
-    argv: Sequence[str],
+    argv: StringSequence,
     modifiers: InputModifiers,
 ) -> None:
     """

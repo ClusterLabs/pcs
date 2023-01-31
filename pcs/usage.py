@@ -1,6 +1,5 @@
 import re
 from typing import (
-    Iterable,
     List,
     Tuple,
 )
@@ -13,6 +12,7 @@ from pcs.common.str_tools import (
     indent,
     outdent,
 )
+from pcs.common.types import StringIterable
 
 # pylint: disable=too-many-lines, too-many-branches, global-statement
 
@@ -41,7 +41,7 @@ def _format_syntax(cmd_syntax: str) -> str:
     )
 
 
-def _format_desc_without_unwrap(cmd_desc_list: Iterable[str]) -> str:
+def _format_desc_without_unwrap(cmd_desc_list: StringIterable) -> str:
     indent_step = _DESC_INDENT + _SECOND_LEVEL_CMD_INDENT
     return "\n".join(
         "\n".join(
@@ -58,13 +58,13 @@ def _format_desc_without_unwrap(cmd_desc_list: Iterable[str]) -> str:
     )
 
 
-def _format_desc(cmd_desc_list: Iterable[str]) -> str:
+def _format_desc(cmd_desc_list: StringIterable) -> str:
     return _format_desc_without_unwrap(
         _unwrap(cmd_desc) for cmd_desc in cmd_desc_list
     )
 
 
-def _format_desc_item_list(item_list: Iterable[str]) -> List[str]:
+def _format_desc_item_list(item_list: StringIterable) -> List[str]:
     lines = []
     for item in item_list:
         lines.extend(
@@ -550,7 +550,7 @@ _RESOURCE_META_CMD = "meta"
 _RESOURCE_META_SYNTAX = "<{obj}> <meta options> [--wait[=n]]"
 
 
-def _resource_meta_desc_fn(obj: str, parent_cmd: str) -> Iterable[str]:
+def _resource_meta_desc_fn(obj: str, parent_cmd: str) -> tuple[str, ...]:
     return (
         f"""
         Add specified options to the specified {obj}. Meta options should be in
@@ -685,7 +685,7 @@ _RESOURCE_UPDATE_SYNTAX = _unwrap(
 )
 
 
-def _resource_update_desc_fn(is_stonith: bool) -> Iterable[str]:
+def _resource_update_desc_fn(is_stonith: bool) -> tuple[str, ...]:
     if is_stonith:
         agent_type = "stonith"
         obj = obj_long = f"{agent_type} device"
@@ -725,7 +725,7 @@ def _resource_config_syntax(obj: str) -> str:
     return f"config [{_OUTPUT_FORMAT_SYNTAX}] [<{obj} id>]..."
 
 
-def _resource_config_desc(obj: str) -> Iterable[str]:
+def _resource_config_desc(obj: str) -> tuple[str, ...]:
     return (
         f"""
         Show options of all currently configured {obj}s or if {obj} ids are

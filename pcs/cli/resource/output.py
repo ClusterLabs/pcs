@@ -45,6 +45,7 @@ from pcs.common.str_tools import (
     format_optional,
     indent,
 )
+from pcs.common.types import StringIterable
 
 
 def _get_ocf_check_level_from_operation(
@@ -198,7 +199,7 @@ class ResourcesConfigurationFacade:
         groups: Sequence[CibResourceGroupDto],
         clones: Sequence[CibResourceCloneDto],
         bundles: Sequence[CibResourceBundleDto],
-        filtered_ids: Iterable[str] = (),
+        filtered_ids: StringIterable = (),
         only_stonith: Optional[bool] = None,
     ) -> None:
         self._primitives = primitives
@@ -318,8 +319,7 @@ class ResourcesConfigurationFacade:
         )
 
     def filter_resources(
-        self,
-        resource_ids_to_find: Iterable[str],
+        self, resource_ids_to_find: StringIterable
     ) -> "ResourcesConfigurationFacade":
         if not resource_ids_to_find:
             return self
@@ -756,7 +756,7 @@ def _resource_primitive_to_cmd(
     return output
 
 
-def _options_to_cmd(options: Iterable[str]) -> str:
+def _options_to_cmd(options: StringIterable) -> str:
     return " ".join(quote(option) for option in options)
 
 

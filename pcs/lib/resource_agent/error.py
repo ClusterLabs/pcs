@@ -1,6 +1,5 @@
-from typing import Iterable
-
 from pcs.common import reports
+from pcs.common.types import StringCollection
 
 from . import const
 
@@ -12,7 +11,7 @@ class ResourceAgentError(Exception):
 
 
 class AgentNameGuessFoundMoreThanOne(ResourceAgentError):
-    def __init__(self, searched_name: str, names_found: Iterable[str]):
+    def __init__(self, searched_name: str, names_found: StringCollection):
         super().__init__(searched_name)
         self.names_found = names_found
 

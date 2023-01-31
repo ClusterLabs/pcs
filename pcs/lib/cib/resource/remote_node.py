@@ -7,6 +7,7 @@ from typing import (
 from lxml.etree import _Element
 
 from pcs.common import reports
+from pcs.common.types import StringCollection
 from pcs.lib.cib.node import PacemakerNode
 from pcs.lib.cib.resource import primitive
 from pcs.lib.cib.resource.types import ResourceOperationIn
@@ -133,8 +134,10 @@ def _validate_server_not_used(
 
 
 def validate_host_not_conflicts(
-    existing_nodes_addrs, node_name, instance_attributes
-):
+    existing_nodes_addrs: StringCollection,
+    node_name: str,
+    instance_attributes: Mapping[str, str],
+) -> reports.ReportItemList:
     host = instance_attributes.get("server", node_name)
     if host in existing_nodes_addrs:
         return [
@@ -144,8 +147,8 @@ def validate_host_not_conflicts(
 
 
 def validate_create(
-    existing_nodes_names: Iterable[str],
-    existing_nodes_addrs: Iterable[str],
+    existing_nodes_names: StringCollection,
+    existing_nodes_addrs: StringCollection,
     resource_agent: ResourceAgentMetadata,
     new_node_name: str,
     new_node_addr: str,

@@ -1,5 +1,10 @@
+from typing import Mapping
+
+from lxml.etree import _Element
+
 from pcs.common import reports
 from pcs.common.reports.item import ReportItem
+from pcs.common.types import StringCollection
 from pcs.lib import validate
 from pcs.lib.cib.node import PacemakerNode
 from pcs.lib.cib.nvpair import (
@@ -19,8 +24,12 @@ GUEST_OPTIONS = [
 
 
 def validate_conflicts(
-    tree, existing_nodes_names, existing_nodes_addrs, node_name, options
-):
+    tree: _Element,
+    existing_nodes_names: StringCollection,
+    existing_nodes_addrs: StringCollection,
+    node_name: str,
+    options: Mapping[str, str],
+) -> reports.ReportItemList:
     report_list = []
     if (
         does_id_exist(tree, node_name)

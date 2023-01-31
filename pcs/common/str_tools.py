@@ -117,7 +117,7 @@ def quote(string: str, chars_to_quote: str) -> str:
     return '"{string}"'.format(string=string.replace('"', '\\"'))
 
 
-def join_multilines(strings: Iterable[str]) -> str:
+def join_multilines(strings: StringSequence) -> str:
     return "\n".join([a.strip() for a in strings if a.strip()])
 
 

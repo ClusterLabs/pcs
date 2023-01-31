@@ -8,12 +8,13 @@ from pcs.common.permissions.types import (
     PermissionAccessType,
     PermissionTargetType,
 )
+from pcs.common.types import StringSequence
 
 
 @dataclass(frozen=True)
 class ClusterEntry:
     name: str
-    nodes: Sequence[str]
+    nodes: StringSequence
 
 
 @dataclass(frozen=True)
