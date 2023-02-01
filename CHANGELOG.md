@@ -11,6 +11,7 @@
 - Displaying bool and integer values in `pcs resource config` command
   ([rhbz#2151166], [ghissue#604])
 - Allow time values in stonith-watchdog-time property ([rhbz#2158804])
+- Enable/Disable sbd when cluster is not running ([rhbz#2166243])
 
 ### Changed
 - Resource/stonith agent self-validation of instance attributes is now
@@ -23,6 +24,7 @@
 [rhbz#2151511]: https://bugzilla.redhat.com/show_bug.cgi?id=2151511
 [rhbz#2158804]: https://bugzilla.redhat.com/show_bug.cgi?id=2158804
 [rhbz#2159455]: https://bugzilla.redhat.com/show_bug.cgi?id=2159455
+[rhbz#2166243]: https://bugzilla.redhat.com/show_bug.cgi?id=2166243
 
 
 ## [0.10.15] - 2022-11-23
