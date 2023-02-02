@@ -531,9 +531,6 @@ class AddDeviceNetTest(TestCase):
         }
         self.config.env.set_known_nodes(self.cluster_nodes + [self.qnetd_host])
         for cert_info in self.certs.values():
-            # b64encode accepts bytes in python3, so we must read the file as
-            # binary to get bytes instead of a string. In python2, it doesn't
-            # matter.
             with open(cert_info["path"], "rb") as a_file:
                 plain = a_file.read()
             cert_info["data"] = plain
@@ -653,10 +650,10 @@ class AddDeviceNetTest(TestCase):
             ]
         )
 
-    def assert_success_heuristics_no_exec(self, mock_write_tmpfile, mode, warn):
+    def assert_success_heuristics_no_exec(self, mock_get_tmp_file, mode, warn):
         tmpfile_instance = mock.MagicMock()
         tmpfile_instance.name = rc("file.tmp")
-        mock_write_tmpfile.return_value = tmpfile_instance
+        mock_get_tmp_file.return_value.__enter__.return_value = tmpfile_instance
 
         expected_corosync_conf = _read_file(
             rc(self.corosync_conf_name)
@@ -697,7 +694,7 @@ class AddDeviceNetTest(TestCase):
             {"mode": mode},
         )
 
-        mock_write_tmpfile.assert_called_once_with(
+        mock_get_tmp_file.assert_called_once_with(
             self.certs["signed_request"]["data"], binary=True
         )
         expected_reports = self.fixture_reports_success()
@@ -830,11 +827,11 @@ class AddDeviceNetTest(TestCase):
         )
 
     @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
-    @mock.patch("pcs.lib.corosync.qdevice_net.write_tmpfile")
-    def test_success_minimal(self, mock_write_tmpfile):
+    @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
+    def test_success_minimal(self, mock_get_tmp_file):
         tmpfile_instance = mock.MagicMock()
         tmpfile_instance.name = rc("file.tmp")
-        mock_write_tmpfile.return_value = tmpfile_instance
+        mock_get_tmp_file.return_value.__enter__.return_value = tmpfile_instance
 
         expected_corosync_conf = _read_file(
             rc(self.corosync_conf_name)
@@ -869,7 +866,7 @@ class AddDeviceNetTest(TestCase):
             {},
         )
 
-        mock_write_tmpfile.assert_called_once_with(
+        mock_get_tmp_file.assert_called_once_with(
             self.certs["signed_request"]["data"], binary=True
         )
         self.env_assist.assert_reports(self.fixture_reports_success())
@@ -919,11 +916,11 @@ class AddDeviceNetTest(TestCase):
         )
 
     @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
-    @mock.patch("pcs.lib.corosync.qdevice_net.write_tmpfile")
-    def test_success_corosync_not_running_not_enabled(self, mock_write_tmpfile):
+    @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
+    def test_success_corosync_not_running_not_enabled(self, mock_get_tmp_file):
         tmpfile_instance = mock.MagicMock()
         tmpfile_instance.name = rc("file.tmp")
-        mock_write_tmpfile.return_value = tmpfile_instance
+        mock_get_tmp_file.return_value.__enter__.return_value = tmpfile_instance
 
         expected_corosync_conf = _read_file(
             rc(self.corosync_conf_name)
@@ -983,7 +980,7 @@ class AddDeviceNetTest(TestCase):
             {},
         )
 
-        mock_write_tmpfile.assert_called_once_with(
+        mock_get_tmp_file.assert_called_once_with(
             self.certs["signed_request"]["data"], binary=True
         )
         self.env_assist.assert_reports(
@@ -1039,26 +1036,26 @@ class AddDeviceNetTest(TestCase):
         )
 
     @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
-    @mock.patch("pcs.lib.corosync.qdevice_net.write_tmpfile")
-    def test_success_heuristics_on_no_exec(self, mock_write_tmpfile):
-        self.assert_success_heuristics_no_exec(mock_write_tmpfile, "on", True)
+    @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
+    def test_success_heuristics_on_no_exec(self, mock_get_tmp_file):
+        self.assert_success_heuristics_no_exec(mock_get_tmp_file, "on", True)
 
     @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
-    @mock.patch("pcs.lib.corosync.qdevice_net.write_tmpfile")
-    def test_success_heuristics_sync_no_exec(self, mock_write_tmpfile):
-        self.assert_success_heuristics_no_exec(mock_write_tmpfile, "sync", True)
+    @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
+    def test_success_heuristics_sync_no_exec(self, mock_get_tmp_file):
+        self.assert_success_heuristics_no_exec(mock_get_tmp_file, "sync", True)
 
     @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
-    @mock.patch("pcs.lib.corosync.qdevice_net.write_tmpfile")
-    def test_success_heuristics_off_no_exec(self, mock_write_tmpfile):
-        self.assert_success_heuristics_no_exec(mock_write_tmpfile, "off", False)
+    @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
+    def test_success_heuristics_off_no_exec(self, mock_get_tmp_file):
+        self.assert_success_heuristics_no_exec(mock_get_tmp_file, "off", False)
 
     @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
-    @mock.patch("pcs.lib.corosync.qdevice_net.write_tmpfile")
-    def test_success_full(self, mock_write_tmpfile):
+    @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
+    def test_success_full(self, mock_get_tmp_file):
         tmpfile_instance = mock.MagicMock()
         tmpfile_instance.name = rc("file.tmp")
-        mock_write_tmpfile.return_value = tmpfile_instance
+        mock_get_tmp_file.return_value.__enter__.return_value = tmpfile_instance
 
         expected_corosync_conf = _read_file(
             rc(self.corosync_conf_name)
@@ -1122,15 +1119,15 @@ class AddDeviceNetTest(TestCase):
             },
         )
 
-        mock_write_tmpfile.assert_called_once_with(
+        mock_get_tmp_file.assert_called_once_with(
             self.certs["signed_request"]["data"], binary=True
         )
 
         self.env_assist.assert_reports(self.fixture_reports_success())
 
     @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
-    @mock.patch("pcs.lib.corosync.qdevice_net.write_tmpfile")
-    def test_success_one_node_offline(self, mock_write_tmpfile):
+    @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
+    def test_success_one_node_offline(self, mock_get_tmp_file):
         node_2_offline_msg = (
             "Failed connect to {0}:2224; No route to host"
         ).format(self.cluster_nodes[1])
@@ -1155,7 +1152,7 @@ class AddDeviceNetTest(TestCase):
 
         tmpfile_instance = mock.MagicMock()
         tmpfile_instance.name = rc("file.tmp")
-        mock_write_tmpfile.return_value = tmpfile_instance
+        mock_get_tmp_file.return_value.__enter__.return_value = tmpfile_instance
 
         expected_corosync_conf = _read_file(
             rc(self.corosync_conf_name)
@@ -1211,7 +1208,7 @@ class AddDeviceNetTest(TestCase):
             skip_offline_nodes=True,
         )
 
-        mock_write_tmpfile.assert_called_once_with(
+        mock_get_tmp_file.assert_called_once_with(
             self.certs["signed_request"]["data"], binary=True
         )
 
@@ -1437,11 +1434,11 @@ class AddDeviceNetTest(TestCase):
         )
 
     @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
-    @mock.patch("pcs.lib.corosync.qdevice_net.write_tmpfile")
-    def test_invalid_options_forced(self, mock_write_tmpfile):
+    @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
+    def test_invalid_options_forced(self, mock_get_tmp_file):
         tmpfile_instance = mock.MagicMock()
         tmpfile_instance.name = rc("file.tmp")
-        mock_write_tmpfile.return_value = tmpfile_instance
+        mock_get_tmp_file.return_value.__enter__.return_value = tmpfile_instance
 
         expected_corosync_conf = _read_file(
             rc(self.corosync_conf_name)
@@ -1913,11 +1910,11 @@ class AddDeviceNetTest(TestCase):
         )
 
     @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
-    @mock.patch("pcs.lib.corosync.qdevice_net.write_tmpfile")
-    def test_certificate_to_pk12_error(self, mock_write_tmpfile):
+    @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
+    def test_certificate_to_pk12_error(self, mock_get_tmp_file):
         tmpfile_instance = mock.MagicMock()
         tmpfile_instance.name = rc("file.tmp")
-        mock_write_tmpfile.return_value = tmpfile_instance
+        mock_get_tmp_file.return_value.__enter__.return_value = tmpfile_instance
 
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
         self.fixture_config_http_get_ca_cert()
@@ -1959,11 +1956,11 @@ class AddDeviceNetTest(TestCase):
         )
 
     @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
-    @mock.patch("pcs.lib.corosync.qdevice_net.write_tmpfile")
-    def test_client_import_cert_error(self, mock_write_tmpfile):
+    @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
+    def test_client_import_cert_error(self, mock_get_tmp_file):
         tmpfile_instance = mock.MagicMock()
         tmpfile_instance.name = rc("file.tmp")
-        mock_write_tmpfile.return_value = tmpfile_instance
+        mock_get_tmp_file.return_value.__enter__.return_value = tmpfile_instance
 
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
         self.fixture_config_http_get_ca_cert()

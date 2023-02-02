@@ -52,14 +52,14 @@ class LocalConfig:
     def set_expected_reports_list(self, expected_reports):
         self.expected_reports = expected_reports
 
-    def setup_qdevice_part1(self, mock_write_tmpfile, new_nodes):
+    def setup_qdevice_part1(self, mock_get_tmp_file, new_nodes):
         cert = b"cert"
         ca_cert = b"ca_cert"
         cert_req_path = "cert_req_path"
         tmp_file_path = "tmp_file_path"
         tempfile_mock = mock.Mock(spec_set=["close", "name"])
         tempfile_mock.name = tmp_file_path
-        mock_write_tmpfile.return_value = tempfile_mock
+        mock_get_tmp_file.return_value.__enter__.return_value = tempfile_mock
 
         local_prefix = "local.setup_qdevice."
         (
@@ -100,14 +100,14 @@ class LocalConfig:
             ]
         )
 
-    def setup_qdevice_part2(self, mock_write_tmpfile, new_nodes):
+    def setup_qdevice_part2(self, mock_get_tmp_file, new_nodes):
         cert = b"cert"
         tmp_file_path = "tmp_file_path"
         pk12_cert_path = "pk12_cert_path"
         pk12_cert = b"pk12_cert"
         tempfile_mock = mock.Mock(spec_set=["close", "name"])
         tempfile_mock.name = tmp_file_path
-        mock_write_tmpfile.return_value = tempfile_mock
+        mock_get_tmp_file.return_value.__enter__.return_value = tempfile_mock
 
         local_prefix = "local.setup_qdevice."
         (
@@ -155,9 +155,9 @@ class LocalConfig:
             ]
         )
 
-    def setup_qdevice(self, mock_write_tmpfile, new_nodes):
-        self.setup_qdevice_part1(mock_write_tmpfile, new_nodes)
-        self.setup_qdevice_part2(mock_write_tmpfile, new_nodes)
+    def setup_qdevice(self, mock_get_tmp_file, new_nodes):
+        self.setup_qdevice_part1(mock_get_tmp_file, new_nodes)
+        self.setup_qdevice_part2(mock_get_tmp_file, new_nodes)
 
     def distribute_and_reload_corosync_conf(
         self, corosync_conf_content, existing_nodes, new_nodes
@@ -1216,8 +1216,8 @@ class AddNodeFull(TestCase):
             .services.is_enabled("sbd", return_value=True)
         )
 
-    @mock.patch("pcs.lib.corosync.qdevice_net._store_to_tmpfile")
-    def test_with_qdevice(self, mock_write_tmpfile):
+    @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
+    def test_with_qdevice(self, mock_get_tmp_file):
         sbd_config = "SBD_DEVICE=/device\n"
         (
             self.config.corosync_conf.load_content(
@@ -1236,7 +1236,7 @@ class AddNodeFull(TestCase):
                 node_labels=self.new_nodes,
                 to_add_hosts=self.existing_nodes + self.new_nodes,
             )
-            .local.setup_qdevice(mock_write_tmpfile, self.new_nodes)
+            .local.setup_qdevice(mock_get_tmp_file, self.new_nodes)
             .local.setup_sbd(sbd_config, sbd_config_generator, self.new_nodes)
             .local.setup_booth(self.new_nodes)
             .local.files_sync(self.new_nodes)
@@ -3743,15 +3743,15 @@ class FailureQdevice(TestCase):
             expected_in_processor=False,
         )
 
-    @mock.patch("pcs.lib.corosync.qdevice_net._store_to_tmpfile")
-    def test_import_pk12_failure(self, mock_write_tmpfile):
+    @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
+    def test_import_pk12_failure(self, mock_get_tmp_file):
         cert = b"cert"
         tmp_file_path = "tmp_file_path"
         pk12_cert_path = "pk12_cert_path"
         pk12_cert = b"pk12_cert"
         (
             self.config.local.setup_qdevice_part1(
-                mock_write_tmpfile, self.new_nodes
+                mock_get_tmp_file, self.new_nodes
             )
             .http.corosync.qdevice_net_sign_certificate(
                 CLUSTER_NAME,
@@ -3817,14 +3817,14 @@ class FailureQdevice(TestCase):
             ]
         )
 
-    @mock.patch("pcs.lib.corosync.qdevice_net._store_to_tmpfile")
-    def test_read_pk12_from_file_failure(self, mock_write_tmpfile):
+    @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
+    def test_read_pk12_from_file_failure(self, mock_get_tmp_file):
         cert = b"cert"
         tmp_file_path = "tmp_file_path"
         pk12_cert_path = "pk12_cert_path"
         (
             self.config.local.setup_qdevice_part1(
-                mock_write_tmpfile, self.new_nodes
+                mock_get_tmp_file, self.new_nodes
             )
             .http.corosync.qdevice_net_sign_certificate(
                 CLUSTER_NAME,
@@ -3866,13 +3866,13 @@ class FailureQdevice(TestCase):
 
         self.env_assist.assert_reports(self.expected_reports)
 
-    @mock.patch("pcs.lib.corosync.qdevice_net._store_to_tmpfile")
-    def test_transform_to_pk12_failure(self, mock_write_tmpfile):
+    @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
+    def test_transform_to_pk12_failure(self, mock_get_tmp_file):
         cert = b"cert"
         tmp_file_path = "tmp_file_path"
         (
             self.config.local.setup_qdevice_part1(
-                mock_write_tmpfile, self.new_nodes
+                mock_get_tmp_file, self.new_nodes
             )
             .http.corosync.qdevice_net_sign_certificate(
                 CLUSTER_NAME,
@@ -3907,12 +3907,12 @@ class FailureQdevice(TestCase):
 
         self.env_assist.assert_reports(self.expected_reports)
 
-    @mock.patch("pcs.lib.corosync.qdevice_net._store_to_tmpfile")
-    def test_sign_certificate_failure(self, mock_write_tmpfile):
+    @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
+    def test_sign_certificate_failure(self, mock_get_tmp_file):
         cert = b"cert"
         (
             self.config.local.setup_qdevice_part1(
-                mock_write_tmpfile, self.new_nodes
+                mock_get_tmp_file, self.new_nodes
             ).http.corosync.qdevice_net_sign_certificate(
                 CLUSTER_NAME,
                 cert=cert,

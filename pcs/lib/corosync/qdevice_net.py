@@ -3,7 +3,6 @@ import os.path
 import re
 import shutil
 from typing import (
-    IO,
     Callable,
     Optional,
     Sequence,
@@ -21,7 +20,7 @@ from pcs.lib.communication import qdevice_net as qdevice_net_com
 from pcs.lib.communication.tools import run_and_raise
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
-from pcs.lib.tools import write_tmpfile
+from pcs.lib.tools import get_tmp_file
 
 SERVICE_NAME = "corosync-qnetd"
 
@@ -252,14 +251,18 @@ def qdevice_sign_certificate_request(
             )
         )
     # save the certificate request, corosync tool only works with files
-    tmpfile = _store_to_tmpfile(
-        cert_request, reports.messages.QdeviceCertificateSignError
-    )
-    # sign the request
-    stdout, stderr, retval = runner.run(
-        [__qnetd_certutil, "-s", "-c", tmpfile.name, "-n", cluster_name]
-    )
-    tmpfile.close()  # temp file is deleted on close
+    try:
+        with get_tmp_file(cert_request, binary=True) as tmpfile:
+            # sign the request
+            stdout, stderr, retval = runner.run(
+                [__qnetd_certutil, "-s", "-c", tmpfile.name, "-n", cluster_name]
+            )
+    except EnvironmentError as e:
+        raise LibraryError(
+            reports.ReportItem.error(
+                reports.messages.QdeviceCertificateSignError(e.strerror)
+            )
+        ) from e
     if retval != 0:
         raise LibraryError(
             reports.ReportItem.error(
@@ -393,15 +396,18 @@ def client_cert_request_to_pk12(
             )
         )
     # save the signed certificate request, corosync tool only works with files
-    tmpfile = _store_to_tmpfile(
-        cert_request,
-        reports.messages.QdeviceCertificateImportError,
-    )
-    # transform it
-    stdout, stderr, retval = runner.run(
-        [__qdevice_certutil, "-M", "-c", tmpfile.name]
-    )
-    tmpfile.close()  # temp file is deleted on close
+    try:
+        with get_tmp_file(cert_request, binary=True) as tmpfile:
+            # transform it
+            stdout, stderr, retval = runner.run(
+                [__qdevice_certutil, "-M", "-c", tmpfile.name]
+            )
+    except EnvironmentError as e:
+        raise LibraryError(
+            reports.ReportItem.error(
+                reports.messages.QdeviceCertificateImportError(e.strerror)
+            )
+        ) from e
     if retval != 0:
         raise LibraryError(
             reports.ReportItem.error(
@@ -429,14 +435,17 @@ def client_import_certificate_and_key(
             )
         )
     # save the certificate, corosync tool only works with files
-    tmpfile = _store_to_tmpfile(
-        pk12_certificate,
-        reports.messages.QdeviceCertificateImportError,
-    )
-    stdout, stderr, retval = runner.run(
-        [__qdevice_certutil, "-m", "-c", tmpfile.name]
-    )
-    tmpfile.close()  # temp file is deleted on close
+    try:
+        with get_tmp_file(pk12_certificate, binary=True) as tmpfile:
+            stdout, stderr, retval = runner.run(
+                [__qdevice_certutil, "-m", "-c", tmpfile.name]
+            )
+    except EnvironmentError as e:
+        raise LibraryError(
+            reports.ReportItem.error(
+                reports.messages.QdeviceCertificateImportError(e.strerror)
+            )
+        ) from e
     if retval != 0:
         raise LibraryError(
             reports.ReportItem.error(
@@ -452,17 +461,6 @@ def _nss_certificate_db_initialized(cert_db_path: str) -> bool:
         if os.path.exists(os.path.join(cert_db_path, filename)):
             return True
     return False
-
-
-def _store_to_tmpfile(
-    data: bytes, report_item_message: Callable[[str], reports.ReportItemMessage]
-) -> IO[bytes]:
-    try:
-        return write_tmpfile(data, binary=True)
-    except EnvironmentError as e:
-        raise LibraryError(
-            reports.ReportItem.error(report_item_message(e.strerror))
-        ) from e
 
 
 def _get_output_certificate(

@@ -81,37 +81,6 @@ def dict_to_environment_file(config_dict: Mapping[str, str]) -> str:
 
 
 @overload
-def write_tmpfile(data: Optional[bytes], binary: Literal[True]) -> IO[bytes]:
-    pass
-
-
-@overload
-def write_tmpfile(
-    data: Optional[str], binary: Literal[False] = False
-) -> IO[str]:
-    pass
-
-
-def write_tmpfile(
-    data: Union[None, bytes, str], binary: bool = False
-) -> Union[IO[str], IO[bytes]]:
-    """
-    Write data to a new tmp file and return the file; raises EnvironmentError.
-    DEPRECATED: use get_tmp_file context manager
-
-    data -- data to write to the file
-    binary -- treat data as binary?
-    """
-    # pylint: disable=consider-using-with
-    mode = "w+b" if binary else "w+"
-    tmpfile = tempfile.NamedTemporaryFile(mode=mode, suffix=".pcs")
-    if data is not None:
-        tmpfile.write(data)
-        tmpfile.flush()
-    return tmpfile
-
-
-@overload
 def get_tmp_file(
     data: Optional[bytes], binary: Literal[True]
 ) -> ContextManager[IO[bytes]]:
@@ -148,13 +117,13 @@ def get_tmp_file(  # type: ignore
 
 @contextmanager
 def get_tmp_cib(
-    report_processor: reports.ReportProcessor, data: str
+    report_processor: reports.ReportProcessor, data: Optional[str]
 ) -> Generator[IO[str], None, None]:
     try:
         with get_tmp_file(data) as tmp_cib_file:
             report_processor.report(
                 reports.ReportItem.debug(
-                    reports.messages.TmpFileWrite(tmp_cib_file.name, data)
+                    reports.messages.TmpFileWrite(tmp_cib_file.name, data or "")
                 )
             )
             yield tmp_cib_file
@@ -165,13 +134,17 @@ def get_tmp_cib(
 
 
 def create_tmp_cib(
-    report_processor: reports.ReportProcessor, data: str
+    report_processor: reports.ReportProcessor, data: Optional[str]
 ) -> IO[str]:
     try:
-        tmp_file = write_tmpfile(data)
+        # pylint: disable=consider-using-with
+        tmp_file = tempfile.NamedTemporaryFile(mode="w+", suffix=".pcs")
+        if data is not None:
+            tmp_file.write(data)
+            tmp_file.flush()
         report_processor.report(
             reports.ReportItem.debug(
-                reports.messages.TmpFileWrite(tmp_file.name, data)
+                reports.messages.TmpFileWrite(tmp_file.name, data or "")
             )
         )
         return tmp_file
