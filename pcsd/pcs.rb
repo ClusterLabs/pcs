@@ -1838,13 +1838,22 @@ end
 def set_cluster_prop_force(auth_user, prop, val)
   cmd = ['property', 'set', "#{prop}=#{val}"]
   flags = ['--force']
+  sig_file = "#{CIB_PATH}.sig"
+  retcode = 0
+
   if pacemaker_running?
-    user = auth_user
+    _, _, retcode = run_cmd(auth_user, PCS, *flags, "--", *cmd)
   else
-    user = PCSAuth.getSuperuserAuth()
-    flags += ['-f', CIB_PATH]
+    if File.exist?(CIB_PATH)
+      flags += ['-f', CIB_PATH]
+      _, _, retcode = run_cmd(PCSAuth.getSuperuserAuth(), PCS, *flags, "--", *cmd)
+      begin
+        File.delete(sig_file)
+      rescue => e
+        $logger.debug("Cannot delete file '#{sig_file}': #{e.message}")
+      end
+    end
   end
-    _, _, retcode = run_cmd(user, PCS, *flags, "--", *cmd)
   return (retcode == 0)
 end
 

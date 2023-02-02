@@ -134,7 +134,7 @@ class OddNumOfNodesSuccess(TestCase):
             node_labels=self.node_list,
         )
         self.config.http.pcmk.remove_stonith_watchdog_timeout(
-            node_labels=[self.node_list[0]]
+            communication_list=[[dict(label=node)] for node in self.node_list],
         )
         self.config.http.sbd.enable_sbd(node_labels=self.node_list)
         enable_sbd(
@@ -170,7 +170,7 @@ class OddNumOfNodesSuccess(TestCase):
             node_labels=self.node_list,
         )
         self.config.http.pcmk.remove_stonith_watchdog_timeout(
-            node_labels=[self.node_list[0]]
+            communication_list=[[dict(label=node)] for node in self.node_list],
         )
         self.config.http.sbd.enable_sbd(node_labels=self.node_list)
         enable_sbd(
@@ -227,7 +227,7 @@ class OddNumOfNodesDefaultsSuccess(TestCase):
             node_labels=self.node_list,
         )
         self.config.http.pcmk.remove_stonith_watchdog_timeout(
-            node_labels=[self.node_list[0]]
+            communication_list=[[dict(label=node)] for node in self.node_list],
         )
         self.config.http.sbd.enable_sbd(node_labels=self.node_list)
         enable_sbd(
@@ -256,7 +256,7 @@ class OddNumOfNodesDefaultsSuccess(TestCase):
             node_labels=self.node_list,
         )
         self.config.http.pcmk.remove_stonith_watchdog_timeout(
-            node_labels=[self.node_list[0]]
+            communication_list=[[dict(label=node)] for node in self.node_list],
         )
         self.config.http.sbd.enable_sbd(node_labels=self.node_list)
         enable_sbd(
@@ -359,7 +359,7 @@ class WatchdogValidations(TestCase):
             node_labels=self.node_list,
         )
         self.config.http.pcmk.remove_stonith_watchdog_timeout(
-            node_labels=[self.node_list[0]]
+            communication_list=[[dict(label=node)] for node in self.node_list],
         )
         self.config.http.sbd.enable_sbd(node_labels=self.node_list)
         enable_sbd(
@@ -417,7 +417,7 @@ class EvenNumOfNodes(TestCase):
             node_labels=self.node_list,
         )
         self.config.http.pcmk.remove_stonith_watchdog_timeout(
-            node_labels=[self.node_list[0]]
+            communication_list=[[dict(label=node)] for node in self.node_list],
         )
         self.config.http.sbd.enable_sbd(node_labels=self.node_list)
         enable_sbd(
@@ -452,7 +452,7 @@ class EvenNumOfNodes(TestCase):
             node_labels=self.node_list,
         )
         self.config.http.pcmk.remove_stonith_watchdog_timeout(
-            node_labels=[self.node_list[0]]
+            communication_list=[[dict(label=node)] for node in self.node_list],
         )
         self.config.http.sbd.enable_sbd(node_labels=self.node_list)
         enable_sbd(
@@ -488,7 +488,7 @@ class EvenNumOfNodes(TestCase):
             node_labels=self.node_list,
         )
         self.config.http.pcmk.remove_stonith_watchdog_timeout(
-            node_labels=[self.node_list[0]]
+            communication_list=[[dict(label=node)] for node in self.node_list],
         )
         self.config.http.sbd.enable_sbd(node_labels=self.node_list)
         enable_sbd(
@@ -520,7 +520,7 @@ class EvenNumOfNodes(TestCase):
             node_labels=self.node_list,
         )
         self.config.http.pcmk.remove_stonith_watchdog_timeout(
-            node_labels=[self.node_list[0]]
+            communication_list=[[dict(label=node)] for node in self.node_list],
         )
         self.config.http.sbd.enable_sbd(node_labels=self.node_list)
         enable_sbd(
@@ -611,7 +611,9 @@ class OfflineNodes(TestCase):
             node_labels=self.online_node_list,
         )
         self.config.http.pcmk.remove_stonith_watchdog_timeout(
-            node_labels=[self.online_node_list[0]]
+            communication_list=[
+                [dict(label=node)] for node in self.online_node_list
+            ],
         )
         self.config.http.sbd.enable_sbd(node_labels=self.online_node_list)
         enable_sbd(
@@ -651,7 +653,9 @@ class OfflineNodes(TestCase):
             node_labels=self.online_node_list,
         )
         self.config.http.pcmk.remove_stonith_watchdog_timeout(
-            node_labels=[self.online_node_list[0]]
+            communication_list=[
+                [dict(label=node)] for node in self.online_node_list
+            ],
         )
         self.config.http.sbd.enable_sbd(node_labels=self.online_node_list)
         enable_sbd(
@@ -1233,7 +1237,7 @@ class FailureHandling(TestCase):
             node_labels=self.node_list,
         )
         self.config.http.pcmk.remove_stonith_watchdog_timeout(
-            node_labels=[self.node_list[0]]
+            communication_list=[[dict(label=node)] for node in self.node_list],
         )
 
     def _remove_calls(self, count):
@@ -1309,7 +1313,8 @@ class FailureHandling(TestCase):
         )
 
     def test_removing_stonith_wd_timeout_failure(self):
-        self._remove_calls(2)
+        self._remove_calls(len(self.node_list) + 1)
+
         self.config.http.pcmk.remove_stonith_watchdog_timeout(
             communication_list=[
                 self.communication_list_failure[:1],
@@ -1338,7 +1343,7 @@ class FailureHandling(TestCase):
         )
 
     def test_removing_stonith_wd_timeout_not_connected(self):
-        self._remove_calls(2)
+        self._remove_calls(len(self.node_list) + 1)
         self.config.http.pcmk.remove_stonith_watchdog_timeout(
             communication_list=[
                 self.communication_list_not_connected[:1],
@@ -1367,7 +1372,7 @@ class FailureHandling(TestCase):
         )
 
     def test_removing_stonith_wd_timeout_complete_failure(self):
-        self._remove_calls(2)
+        self._remove_calls(len(self.node_list) + 1)
         self.config.http.pcmk.remove_stonith_watchdog_timeout(
             communication_list=[
                 self.communication_list_not_connected[:1],
@@ -1413,7 +1418,7 @@ class FailureHandling(TestCase):
         )
 
     def test_set_sbd_config_failure(self):
-        self._remove_calls(4)
+        self._remove_calls(len(self.node_list) + 1 + 2)
         self.config.http.sbd.set_sbd_config(
             communication_list=[
                 dict(
@@ -1460,7 +1465,7 @@ class FailureHandling(TestCase):
         )
 
     def test_set_corosync_conf_failed(self):
-        self._remove_calls(5)
+        self._remove_calls(len(self.node_list) + 1 + 3)
         self.config.env.push_corosync_conf(
             corosync_conf_text=_get_corosync_conf_text_with_atb(
                 self.corosync_conf_name
@@ -1484,7 +1489,7 @@ class FailureHandling(TestCase):
         )
 
     def test_check_sbd_invalid_data_format(self):
-        self._remove_calls(7)
+        self._remove_calls(len(self.node_list) + 1 + 5)
         self.config.http.sbd.check_sbd(
             communication_list=[
                 dict(
@@ -1523,7 +1528,7 @@ class FailureHandling(TestCase):
         )
 
     def test_check_sbd_failure(self):
-        self._remove_calls(7)
+        self._remove_calls(len(self.node_list) + 1 + 5)
         self.config.http.sbd.check_sbd(
             communication_list=[
                 dict(
@@ -1565,7 +1570,7 @@ class FailureHandling(TestCase):
         )
 
     def test_check_sbd_not_connected(self):
-        self._remove_calls(7)
+        self._remove_calls(len(self.node_list) + 1 + 5)
         self.config.http.sbd.check_sbd(
             communication_list=[
                 dict(
@@ -1608,7 +1613,7 @@ class FailureHandling(TestCase):
         )
 
     def test_get_online_targets_failed(self):
-        self._remove_calls(9)
+        self._remove_calls(len(self.node_list) + 1 + 7)
         self.config.http.host.check_auth(
             communication_list=self.communication_list_failure
         )
@@ -1633,7 +1638,7 @@ class FailureHandling(TestCase):
         )
 
     def test_get_online_targets_not_connected(self):
-        self._remove_calls(9)
+        self._remove_calls(len(self.node_list) + 1 + 7)
         self.config.http.host.check_auth(
             communication_list=self.communication_list_not_connected
         )
