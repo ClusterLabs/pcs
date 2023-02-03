@@ -114,6 +114,7 @@ EXTRA_DIST		= \
 			  common/interface/__init__.py \
 			  common/node_communicator.py \
 			  common/pacemaker/__init__.py \
+			  common/pacemaker/cluster_property.py \
 			  common/pacemaker/constraint/__init__.py \
 			  common/pacemaker/constraint/all.py \
 			  common/pacemaker/constraint/colocation.py \
@@ -126,8 +127,8 @@ EXTRA_DIST		= \
 			  common/pacemaker/resource/__init__.py \
 			  common/pacemaker/resource/bundle.py \
 			  common/pacemaker/resource/clone.py \
-			  common/pacemaker/resource/list.py \
 			  common/pacemaker/resource/group.py \
+			  common/pacemaker/resource/list.py \
 			  common/pacemaker/resource/operations.py \
 			  common/pacemaker/resource/primitive.py \
 			  common/pacemaker/resource/relations.py \
