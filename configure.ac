@@ -388,7 +388,6 @@ if test "x$tests_only" != "xyes"; then
 	PCS_CHECK_GEM([daemons])
 	PCS_CHECK_GEM([ethon])
 	PCS_CHECK_GEM([ffi])
-	PCS_CHECK_GEM([eventmachine])
 	PCS_CHECK_GEM([json])
 	PCS_CHECK_GEM([mustermann])
 	PCS_CHECK_GEM([rack])
@@ -396,7 +395,8 @@ if test "x$tests_only" != "xyes"; then
 	PCS_CHECK_GEM([rack-test])
 	PCS_CHECK_GEM([sinatra])
 	PCS_CHECK_GEM([tilt])
-	PCS_CHECK_GEM([thin])
+	PCS_CHECK_GEM([nio4r])
+	PCS_CHECK_GEM([puma])
 	PCS_CHECK_GEM([rexml])
 	PCS_CHECK_GEM([webrick])
 fi
