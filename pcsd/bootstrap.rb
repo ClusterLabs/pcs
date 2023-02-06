@@ -1,6 +1,7 @@
 require 'logger'
 require 'open4'
 require 'pathname'
+require 'stringio'
 
 require 'settings.rb'
 

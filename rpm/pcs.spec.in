@@ -11,8 +11,9 @@ Release: 1%{?numcomm:.%{numcomm}}%{?alphatag:.%{alphatag}}%{?dirty:.%{dirty}}%{?
 # ASL 2.0: dataclasses, tornado
 # ASL 2.0 or BSD: dateutil
 # MIT: backports, dacite, daemons, ember, ethon, handlebars, jquery, jquery-ui,
-#      mustermann, rack, rack-protection, rack-test, sinatra, tilt
+#      mustermann, rack, rack-protection, rack-test, sinatra, tilt, nio4r
 # GPLv2 or Ruby: eventmachne, json
+# BSD: puma
 # (GPLv2 or Ruby) and BSD: thin
 # BSD or Ruby: open4, ruby2_keywords
 # BSD and MIT: ffi
