@@ -420,7 +420,6 @@ if test "x$tests_only" != "xyes"; then
 	PCS_CHECK_GEM([nio4r])
 	PCS_CHECK_GEM([puma])
 	PCS_CHECK_GEM([rexml])
-	PCS_CHECK_GEM([webrick])
 fi
 
 if test "x$local_build" = "xyes" && test $(wc -l < Gemfile) -gt 2; then

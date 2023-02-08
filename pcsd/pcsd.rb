@@ -1,7 +1,5 @@
 require 'sinatra'
 require 'rexml/document'
-require 'webrick'
-require 'webrick/https'
 require 'openssl'
 require 'logger'
 require 'thread'
