@@ -12,11 +12,11 @@ property_cmd = create_router(
         "unset": cluster_property.unset_property,
         # TODO remove, deprecated command
         # replaced with 'config'
-        "list": prop.list_property_deprecated,
+        "list": cluster_property.list_property_deprecated,
         # TODO remove, deprecated command
         # replaced with 'config'
-        "show": prop.list_property_deprecated,
-        "config": prop.list_property,
+        "show": cluster_property.list_property_deprecated,
+        "config": cluster_property.config,
         "get_cluster_properties_definition": (
             prop.print_cluster_properties_definition
         ),

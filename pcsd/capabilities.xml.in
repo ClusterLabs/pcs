@@ -1124,6 +1124,13 @@
         daemon urls: get_cluster_properties_definition
       </description>
     </capability>
+    <capability id="pcmk.properties.cluster.config.output-formats" in-pcs="1" in-pcsd="0">
+      <description>
+        Display cluster properties configuration in various formats.
+
+        pcs commands: property config --output-format=text|cmd|json
+      </description>
+    </capability>
     <capability id="pcmk.properties.operation-defaults" in-pcs="1" in-pcsd="0">
       <description>
         Show and set resource operations defaults, can set multiple defaults at

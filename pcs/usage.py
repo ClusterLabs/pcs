@@ -2276,13 +2276,16 @@ Usage: pcs property [commands]...
 Configure pacemaker properties
 
 Commands:
-    [config [<property> | --all | --defaults]] | [--all | --defaults]
+    [config [<property>... | --all | --defaults
+            | ({output_format_syntax})]]
+            | [--all | --defaults | ({output_format_syntax})]
         List property settings (default: lists configured properties).
         If --defaults is specified will show all property defaults, if --all
         is specified, current configured properties will be shown with unset
         properties and their defaults.
-        See pacemaker-controld(7) and pacemaker-schedulerd(7) man pages for
-        a description of the properties.
+        See pacemaker-based(7), pacemaker-controld(7) and
+        pacemaker-schedulerd(7) man pages for a description of the properties.
+{output_format_desc}
 
     set <property>=[<value>] ... [--force]
         Set specific pacemaker properties (if the value is blank then the
@@ -2299,7 +2302,10 @@ Commands:
 
 Examples:
     pcs property set stonith-enabled=false
-"""
+""".format(
+        output_format_syntax=_OUTPUT_FORMAT_SYNTAX,
+        output_format_desc=_format_desc([_OUTPUT_FORMAT_DESC]),
+    )
     return sub_usage(args, output)
 
 
