@@ -4,6 +4,13 @@ from unittest import (
 )
 
 from pcs.common import reports
+from pcs.common.pacemaker.cluster_property import ClusterPropertyMetadataDto
+from pcs.common.pacemaker.nvset import (
+    CibNvpairDto,
+    CibNvsetDto,
+    ListCibNvsetDto,
+)
+from pcs.common.resource_agent.dto import ResourceAgentParameterDto
 from pcs.lib.commands import cluster_property
 
 from pcs_test.tools import fixture
@@ -55,10 +62,21 @@ ALLOWED_PROPERTIES = [
     "transition-delay",
 ]
 
+READONLY_PROPERTIES = [
+    "cluster-infrastructure",
+    "cluster-name",
+    "dc-version",
+    "have-watchdog",
+    "last-lrm-refresh",
+]
 
-def fixture_property_set(set_id, nvpairs):
+
+def fixture_property_set(set_id, nvpairs, score=None):
+    score_attr = ""
+    if score:
+        score_attr = f'score="{score}"'
     return (
-        f'<cluster_property_set id="{set_id}">'
+        f'<cluster_property_set id="{set_id}" {score_attr}>'
         + "".join(
             [
                 f'<nvpair id="{set_id}-{name}" name="{name}" value="{value}"/>'
@@ -70,13 +88,17 @@ def fixture_property_set(set_id, nvpairs):
     )
 
 
-def fixture_crm_config_properties(set_list):
+def fixture_crm_config_properties(set_list, score_list=None):
     return (
         "<crm_config>"
         + "".join(
             [
-                fixture_property_set(set_tuple[0], set_tuple[1])
-                for set_tuple in set_list
+                fixture_property_set(
+                    set_tuple[0],
+                    set_tuple[1],
+                    score=None if not score_list else score_list[idx],
+                )
+                for idx, set_tuple in enumerate(set_list)
             ]
         )
         + "</crm_config>"
@@ -396,7 +418,88 @@ class TestSetStonithWatchdogTimeoutSBDIsEnabledSharedDevices(
         )
 
 
-class TestPropertySet(LoadMetadataMixin, TestCase):
+class MetadataErrorMixin:
+    _load_cib_when_metadata_error = True
+
+    def metadata_error_command(self):
+        raise NotImplementedError
+
+    def _metadata_error(
+        self, error_agent, stdout=None, reason=None, unsupported_version=False
+    ):
+        if self._load_cib_when_metadata_error:
+            self.config.runner.cib.load()
+        for agent in [
+            "pacemaker-based",
+            "pacemaker-controld",
+            "pacemaker-schedulerd",
+        ]:
+            if agent == error_agent:
+                kwargs = dict(
+                    name=agent,
+                    agent_name=agent,
+                    stdout="" if stdout is None else stdout,
+                    stderr="error",
+                    returncode=2,
+                )
+            else:
+                kwargs = dict(name=agent, agent_name=agent)
+            self.config.runner.pcmk.load_fake_agent_metadata(**kwargs)
+        self.env_assist.assert_raise_library_error(self.metadata_error_command)
+        if unsupported_version:
+            report = fixture.error(
+                reports.codes.AGENT_IMPLEMENTS_UNSUPPORTED_OCF_VERSION,
+                agent=f"__pcmk_internal:{error_agent}",
+                ocf_version="1.2",
+                supported_versions=["1.0", "1.1"],
+            )
+        else:
+            report = fixture.error(
+                reports.codes.UNABLE_TO_GET_AGENT_METADATA,
+                agent=error_agent,
+                reason="error" if reason is None else reason,
+            )
+        self.env_assist.assert_reports([report])
+
+    def test_metadata_error_pacemaker_based(self):
+        self._metadata_error("pacemaker-based")
+
+    def test_metadata_error_pacemaker_controld(self):
+        self._metadata_error("pacemaker-controld")
+
+    def test_metadata_error_pacemaker_schedulerd(self):
+        self._metadata_error("pacemaker-schedulerd")
+
+    def test_metadata_error_xml_syntax_error(self):
+        self._metadata_error(
+            "pacemaker-schedulerd",
+            stdout="not an xml",
+            reason=(
+                "Start tag expected, '<' not found, line 1, column 1 (<string>,"
+                " line 1)"
+            ),
+        )
+
+    def test_metadata_error_invalid_schema(self):
+        self._metadata_error(
+            "pacemaker-based",
+            stdout="<xml/>",
+            reason="Expecting element resource-agent, got xml, line 1",
+        )
+
+    def test_metadata_error_invalid_version(self):
+        self._metadata_error(
+            "pacemaker-controld",
+            stdout="""
+                <resource-agent name="pacemaker-based">
+                    <version>1.2</version>
+                </resource-agent>
+            """,
+            unsupported_version=True,
+        )
+
+
+class TestPropertySet(LoadMetadataMixin, MetadataErrorMixin, TestCase):
     # pylint: disable=too-many-public-methods
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
@@ -407,6 +510,9 @@ class TestPropertySet(LoadMetadataMixin, TestCase):
             prop_dict,
             [] if force_codes is None else force_codes,
         )
+
+    def metadata_error_command(self):
+        return self.command({}, [])
 
     def test_no_properties_specified(self):
         self.config.runner.cib.load()
@@ -694,79 +800,268 @@ class TestPropertySet(LoadMetadataMixin, TestCase):
             ]
         )
 
-    def _metadata_error(
-        self, error_agent, stdout=None, reason=None, unsupported_version=False
-    ):
-        self.config.runner.cib.load()
-        for agent in [
-            "pacemaker-based",
-            "pacemaker-controld",
-            "pacemaker-schedulerd",
-        ]:
-            if agent == error_agent:
-                kwargs = dict(
-                    name=agent,
-                    agent_name=agent,
-                    stdout="" if stdout is None else stdout,
-                    stderr="error",
-                    returncode=2,
-                )
-            else:
-                kwargs = dict(name=agent, agent_name=agent)
-            self.config.runner.pcmk.load_fake_agent_metadata(**kwargs)
-        self.env_assist.assert_raise_library_error(
-            lambda: cluster_property.set_properties(
-                self.env_assist.get_env(), {}, []
-            )
+
+class TestGetProperties(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+
+    def command(self, evaluate_expired=False):
+        return cluster_property.get_properties(
+            self.env_assist.get_env(),
+            evaluate_expired=evaluate_expired,
         )
-        if unsupported_version:
-            report = fixture.error(
-                reports.codes.AGENT_IMPLEMENTS_UNSUPPORTED_OCF_VERSION,
-                agent=f"__pcmk_internal:{error_agent}",
-                ocf_version="1.2",
-                supported_versions=["1.0", "1.1"],
-            )
-        else:
-            report = fixture.error(
-                reports.codes.UNABLE_TO_GET_AGENT_METADATA,
-                agent=error_agent,
-                reason="error" if reason is None else reason,
-            )
-        self.env_assist.assert_reports([report])
 
-    def test_metadata_error_pacemaker_based(self):
-        self._metadata_error("pacemaker-based")
+    def test_no_properties_configured(self):
+        self.config.runner.cib.load()
+        self.assertEqual(self.command(), ListCibNvsetDto(nvsets=[]))
 
-    def test_metadata_error_pacemaker_controld(self):
-        self._metadata_error("pacemaker-controld")
-
-    def test_metadata_error_pacemaker_schedulerd(self):
-        self._metadata_error("pacemaker-schedulerd")
-
-    def test_metadata_error_xml_syntax_error(self):
-        self._metadata_error(
-            "pacemaker-schedulerd",
-            stdout="not an xml",
-            reason=(
-                "Start tag expected, '<' not found, line 1, column 1 (<string>,"
-                " line 1)"
+    def test_empty_cluster_property_set(self):
+        self.config.runner.cib.load(
+            crm_config=fixture_crm_config_properties([("set_id", {})])
+        )
+        self.assertEqual(
+            self.command(),
+            ListCibNvsetDto(
+                nvsets=[
+                    CibNvsetDto(id="set_id", options={}, rule=None, nvpairs=[])
+                ]
             ),
         )
 
-    def test_metadata_error_invalid_schema(self):
-        self._metadata_error(
-            "pacemaker-based",
-            stdout="<xml/>",
-            reason="Expecting element resource-agent, got xml, line 1",
+    def test_cluster_property_set_with_properties(self):
+        self.config.runner.cib.load(
+            crm_config=fixture_crm_config_properties(
+                [("set_id", {"prop1": "val1", "prop2": "val2"})],
+                score_list=[100],
+            )
+        )
+        self.assertEqual(
+            self.command(),
+            ListCibNvsetDto(
+                nvsets=[
+                    CibNvsetDto(
+                        id="set_id",
+                        options={"score": "100"},
+                        rule=None,
+                        nvpairs=[
+                            CibNvpairDto(
+                                id="set_id-prop1", name="prop1", value="val1"
+                            ),
+                            CibNvpairDto(
+                                id="set_id-prop2", name="prop2", value="val2"
+                            ),
+                        ],
+                    )
+                ]
+            ),
         )
 
-    def test_metadata_error_invalid_version(self):
-        self._metadata_error(
-            "pacemaker-controld",
+    def test_more_cluster_property_sets(self):
+        self.config.runner.cib.load(
+            crm_config=fixture_crm_config_properties(
+                [
+                    ("set_id", {"prop1": "val1", "prop2": "val2"}),
+                    ("set_id2", {"prop3": "val3", "prop4": "val4"}),
+                ],
+                score_list=[100, 200],
+            )
+        )
+        self.assertEqual(
+            self.command(),
+            ListCibNvsetDto(
+                nvsets=[
+                    CibNvsetDto(
+                        id="set_id",
+                        options={"score": "100"},
+                        rule=None,
+                        nvpairs=[
+                            CibNvpairDto(
+                                id="set_id-prop1", name="prop1", value="val1"
+                            ),
+                            CibNvpairDto(
+                                id="set_id-prop2", name="prop2", value="val2"
+                            ),
+                        ],
+                    ),
+                    CibNvsetDto(
+                        id="set_id2",
+                        options={"score": "200"},
+                        rule=None,
+                        nvpairs=[
+                            CibNvpairDto(
+                                id="set_id2-prop3", name="prop3", value="val3"
+                            ),
+                            CibNvpairDto(
+                                id="set_id2-prop4", name="prop4", value="val4"
+                            ),
+                        ],
+                    ),
+                ]
+            ),
+        )
+
+    def test_cib_error(self):
+        self.config.runner.cib.load(returncode=1, stderr="error")
+        self.env_assist.assert_raise_library_error(
+            self.command,
+            reports=[
+                fixture.error(reports.codes.CIB_LOAD_ERROR, reason="error")
+            ],
+            expected_in_processor=False,
+        )
+        self.env_assist.assert_reports([])
+
+    def test_evaluate_expired_but_no_set_rule(self):
+        self.config.runner.cib.load(
+            crm_config=fixture_crm_config_properties([("set_id", {})])
+        )
+        self.assertEqual(
+            self.command(evaluate_expired=True),
+            ListCibNvsetDto(
+                nvsets=[
+                    CibNvsetDto(id="set_id", options={}, rule=None, nvpairs=[])
+                ]
+            ),
+        )
+
+
+class TestGetPropertiesMetadata(MetadataErrorMixin, TestCase):
+    _load_cib_when_metadata_error = False
+
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+
+    def metadata_error_command(self):
+        return self.command()
+
+    def command(self):
+        return cluster_property.get_properties_metadata(
+            self.env_assist.get_env()
+        )
+
+    def test_get_properties_metadata(self):
+        self.config.runner.pcmk.load_fake_agent_metadata(
+            name="pacemaker-based",
+            agent_name="pacemaker-based",
             stdout="""
-                <resource-agent name="pacemaker-based">
-                    <version>1.2</version>
+                <?xml version="1.0"?>
+                <resource-agent name="pacemaker-based" version="2.1.5-7.el9">
+                  <version>1.1</version>
+                  <longdesc lang="en"></longdesc>
+                  <shortdesc lang="en"></shortdesc>
+                  <parameters>
+                    <parameter name="property-name">
+                      <longdesc lang="en">longdesc</longdesc>
+                      <shortdesc lang="en">shortdesc</shortdesc>
+                      <content type="boolean" default="false"/>
+                    </parameter>
+                  </parameters>
                 </resource-agent>
             """,
-            unsupported_version=True,
         )
+        self.config.runner.pcmk.load_fake_agent_metadata(
+            name="pacemaker-controld",
+            agent_name="pacemaker-controld",
+            stdout="""
+                <?xml version="1.0"?>
+                <resource-agent name="pacemaker-based" version="2.1.5-7.el9">
+                  <version>1.1</version>
+                  <longdesc lang="en"></longdesc>
+                  <shortdesc lang="en"></shortdesc>
+                  <parameters>
+                    <parameter name="enum-property">
+                      <longdesc lang="en">same desc</longdesc>
+                      <shortdesc lang="en">same desc</shortdesc>
+                      <content type="select" default="stop">
+                        <option value="stop" />
+                        <option value="freeze" />
+                        <option value="ignore" />
+                        <option value="demote" />
+                        <option value="suicide" />
+                      </content>
+                    </parameter>
+                  </parameters>
+                </resource-agent>
+            """,
+        )
+        self.config.runner.pcmk.load_fake_agent_metadata(
+            name="pacemaker-schedulerd",
+            agent_name="pacemaker-schedulerd",
+            stdout="""
+                <?xml version="1.0"?>
+                <resource-agent name="pacemaker-based" version="2.1.5-7.el9">
+                  <version>1.0</version>
+                  <longdesc lang="en"></longdesc>
+                  <shortdesc lang="en"></shortdesc>
+                  <parameters>
+                    <parameter name="advanced-property">
+                      <longdesc lang="en">longdesc</longdesc>
+                      <shortdesc lang="en">
+                        *** Advanced Use Only *** advanced shortdesc
+                      </shortdesc>
+                      <content type="boolean" default="false"/>
+                    </parameter>
+                  </parameters>
+                </resource-agent>
+            """,
+        )
+        self.assertEqual(
+            self.command(),
+            ClusterPropertyMetadataDto(
+                properties_metadata=[
+                    ResourceAgentParameterDto(
+                        name="property-name",
+                        shortdesc="shortdesc",
+                        longdesc="shortdesc.\nlongdesc",
+                        type="boolean",
+                        default="false",
+                        enum_values=None,
+                        required=False,
+                        advanced=False,
+                        deprecated=False,
+                        deprecated_by=[],
+                        deprecated_desc=None,
+                        unique_group=None,
+                        reloadable=False,
+                    ),
+                    ResourceAgentParameterDto(
+                        name="enum-property",
+                        shortdesc="same desc",
+                        longdesc=None,
+                        type="select",
+                        default="stop",
+                        enum_values=[
+                            "stop",
+                            "freeze",
+                            "ignore",
+                            "demote",
+                            "suicide",
+                        ],
+                        required=False,
+                        advanced=False,
+                        deprecated=False,
+                        deprecated_by=[],
+                        deprecated_desc=None,
+                        unique_group=None,
+                        reloadable=False,
+                    ),
+                    ResourceAgentParameterDto(
+                        name="advanced-property",
+                        shortdesc="advanced shortdesc",
+                        longdesc="advanced shortdesc.\nlongdesc",
+                        type="boolean",
+                        default="false",
+                        enum_values=None,
+                        required=False,
+                        advanced=True,
+                        deprecated=False,
+                        deprecated_by=[],
+                        deprecated_desc=None,
+                        unique_group=None,
+                        reloadable=False,
+                    ),
+                ],
+                readonly_properties=READONLY_PROPERTIES,
+            ),
+        )
+        self.env_assist.assert_reports([])
