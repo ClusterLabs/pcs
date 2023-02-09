@@ -16,7 +16,11 @@ def _modifiers(force=True):
 
 
 class AddTest(TestCase):
-    # pylint: disable=no-self-use
+    def setUp(self):
+        self.lib = mock.MagicMock()
+        self.lib.constraint_ticket = mock.MagicMock()
+        self.lib.constraint_ticket.create = mock.MagicMock()
+
     @mock.patch("pcs.cli.constraint_ticket.command.parse_args.parse_add")
     def test_call_library_with_correct_attrs(self, mock_parse_add):
         mock_parse_add.return_value = (
@@ -25,14 +29,11 @@ class AddTest(TestCase):
             "",
             {"loss-policy": "fence"},
         )
-        lib = mock.MagicMock()
-        lib.constraint_ticket = mock.MagicMock()
-        lib.constraint_ticket.create = mock.MagicMock()
 
-        command.add(lib, ["argv"], _modifiers())
+        command.add(self.lib, ["argv"], _modifiers())
 
         mock_parse_add.assert_called_once_with(["argv"])
-        lib.constraint_ticket.create.assert_called_once_with(
+        self.lib.constraint_ticket.create.assert_called_once_with(
             "ticket",
             "resource_id",
             {"loss-policy": "fence"},
@@ -48,9 +49,9 @@ class AddTest(TestCase):
             "resource_role",
             {"rsc-role": "master"},
         )
-        lib = None
         self.assertRaises(
-            CmdLineInputError, lambda: command.add(lib, ["argv"], _modifiers())
+            CmdLineInputError,
+            lambda: command.add(self.lib, ["argv"], _modifiers()),
         )
 
     @mock.patch("pcs.cli.constraint_ticket.command.parse_args.parse_add")
@@ -61,14 +62,11 @@ class AddTest(TestCase):
             "resource_role",
             {"loss-policy": "fence"},
         )
-        lib = mock.MagicMock()
-        lib.constraint_ticket = mock.MagicMock()
-        lib.constraint_ticket.create = mock.MagicMock()
 
-        command.add(lib, ["argv"], _modifiers())
+        command.add(self.lib, ["argv"], _modifiers())
 
         mock_parse_add.assert_called_once_with(["argv"])
-        lib.constraint_ticket.create.assert_called_once_with(
+        self.lib.constraint_ticket.create.assert_called_once_with(
             "ticket",
             "resource_id",
             {"loss-policy": "fence", "rsc-role": "resource_role"},

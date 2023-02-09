@@ -3,6 +3,7 @@ import datetime
 import os
 import unittest
 from collections import namedtuple
+from textwrap import dedent
 
 from lxml import etree
 
@@ -3702,16 +3703,37 @@ class TicketCreateWithSet(ConstraintBaseTest):
 
 
 class TicketAdd(ConstraintBaseTest):
-    def test_create_ticket(self):
-        self.assert_pcs_success(
-            "constraint ticket add T master A loss-policy=fence".split()
-        )
+    def test_create_minimal(self):
+        self.assert_pcs_success("constraint ticket add T A".split())
         self.assert_pcs_success(
             "constraint ticket config".split(),
+            dedent(
+                """\
+                Ticket Constraints:
+                  A ticket=T
+                """
+            ),
+        )
+
+    def test_create_all_options(self):
+        self.assert_pcs_success(
+            "constraint ticket add T master A loss-policy=fence id=my-constraint".split()
+        )
+        self.assert_pcs_success(
+            "constraint ticket config --full".split(),
             stdout_full=[
                 "Ticket Constraints:",
-                "  Master A loss-policy=fence ticket=T",
+                "  Master A loss-policy=fence ticket=T (id:my-constraint)",
             ],
+        )
+
+    def test_refuse_bad_option(self):
+        self.assert_pcs_fail(
+            "constraint ticket add T A loss_policy=fence".split(),
+            (
+                "Error: invalid option 'loss_policy', allowed options are: "
+                "'id', 'loss-policy'\n" + ERRORS_HAVE_OCCURRED
+            ),
         )
 
     def test_refuse_noexistent_resource_id(self):
@@ -3723,11 +3745,12 @@ class TicketAdd(ConstraintBaseTest):
     def test_refuse_invalid_role(self):
         self.assert_pcs_fail(
             "constraint ticket add T bad-role A loss-policy=fence".split(),
-            [
-                "Error: 'bad-role' is not a valid rsc-role value, use {}".format(
+            (
+                "Error: 'bad-role' is not a valid rsc-role value, use {}\n".format(
                     format_list(const.PCMK_ROLES)
                 )
-            ],
+                + ERRORS_HAVE_OCCURRED
+            ),
         )
 
     def test_refuse_duplicate_ticket(self):

@@ -1,5 +1,7 @@
 from typing import (
+    Callable,
     Iterable,
+    Optional,
     Set,
 )
 
@@ -18,15 +20,21 @@ from .output import (
     warn,
 )
 
+ReportItemPreprocessor = Callable[[ReportItem], Optional[ReportItem]]
+
 
 class ReportProcessorToConsole(ReportProcessor):
     def __init__(self, debug: bool = False) -> None:
         super().__init__()
         self.debug = debug
         self._ignore_severities = self._get_ignored_severities([])
+        self._report_item_preprocessor: ReportItemPreprocessor = lambda x: x
 
     def _do_report(self, report_item: ReportItem) -> None:
-        report_item_dto = report_item.to_dto()
+        filtered_report_item = self._report_item_preprocessor(report_item)
+        if not filtered_report_item:
+            return
+        report_item_dto = filtered_report_item.to_dto()
         if report_item_dto.severity.level not in self._ignore_severities:
             print_report(report_item_dto)
 
@@ -44,6 +52,12 @@ class ReportProcessorToConsole(ReportProcessor):
         self, severity_list: Iterable[SeverityLevel]
     ) -> None:
         self._ignore_severities = self._get_ignored_severities(severity_list)
+
+    def set_report_item_preprocessor(
+        self,
+        report_item_preprocessor: ReportItemPreprocessor,
+    ) -> None:
+        self._report_item_preprocessor = report_item_preprocessor
 
 
 def print_report(report_item_dto: ReportItemDto) -> None:

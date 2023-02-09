@@ -12,6 +12,8 @@
   ([rhbz#2151166], [ghissue#604])
 - Allow time values in stonith-watchdog-time property ([rhbz#2158804])
 - Enable/Disable sbd when cluster is not running ([rhbz#2166243])
+- Confusing error message in `pcs constraint ticket add` command
+  ([rhbz#2022748], [ghpull#559])
 
 ### Changed
 - Resource/stonith agent self-validation of instance attributes is now
@@ -20,6 +22,8 @@
   ([rhbz#2159455])
 
 [ghissue#604]: https://github.com/ClusterLabs/pcs/issues/604
+[ghpull#559]: https://github.com/ClusterLabs/pcs/pull/559
+[rhbz#2022748]: https://bugzilla.redhat.com/show_bug.cgi?id=2022748
 [rhbz#2151166]: https://bugzilla.redhat.com/show_bug.cgi?id=2151166
 [rhbz#2151511]: https://bugzilla.redhat.com/show_bug.cgi?id=2151511
 [rhbz#2158804]: https://bugzilla.redhat.com/show_bug.cgi?id=2158804

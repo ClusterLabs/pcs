@@ -48,6 +48,7 @@ def create(
 
     options = ticket.prepare_options_plain(
         cib,
+        env.report_processor,
         options,
         ticket_key,
         constraint.find_valid_resource_id(

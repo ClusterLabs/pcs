@@ -12,6 +12,7 @@ from pcs.common import (
     reports,
 )
 from pcs.common.reports.item import ReportItem
+from pcs.lib import validate
 from pcs.lib.booth.config_validators import validate_ticket_name
 from pcs.lib.cib import tools
 from pcs.lib.cib.constraint import constraint
@@ -79,7 +80,7 @@ def prepare_options_with_set(cib, options, resource_set_list):
     return options
 
 
-def prepare_options_plain(cib, options, ticket, resource_id):
+def prepare_options_plain(cib, report_processor, options, ticket, resource_id):
     options = options.copy()
 
     report_list = _validate_options_common(options)
@@ -92,7 +93,6 @@ def prepare_options_plain(cib, options, ticket, resource_id):
         )
     else:
         report_list.extend(validate_ticket_name(ticket))
-    options["ticket"] = ticket
 
     if not resource_id:
         report_list.append(
@@ -100,7 +100,6 @@ def prepare_options_plain(cib, options, ticket, resource_id):
                 reports.messages.RequiredOptionsAreMissing(["rsc"])
             )
         )
-    options["rsc"] = resource_id
 
     if "rsc-role" in options:
         if options["rsc-role"]:
@@ -122,21 +121,32 @@ def prepare_options_plain(cib, options, ticket, resource_id):
         else:
             del options["rsc-role"]
 
-    if report_list:
-        raise LibraryError(*report_list)
+    report_list.extend(
+        validate.NamesIn(
+            # rsc and rsc-ticket are passed as parameters not as items in the
+            # options dict
+            (set(ATTRIB) | set(ATTRIB_PLAIN) | {"id"})
+            - {"rsc", "ticket"}
+        ).validate(options)
+    )
 
-    return constraint.prepare_options(
-        tuple(list(ATTRIB) + list(ATTRIB_PLAIN)),
-        options,
-        partial(
-            _create_id,
+    if report_list:
+        report_processor.report_list(report_list)
+        raise LibraryError()
+
+    options["ticket"] = ticket
+    options["rsc"] = resource_id
+
+    if "id" not in options:
+        options["id"] = _create_id(
             cib,
             options["ticket"],
             resource_id,
             options.get("rsc-role", ""),
-        ),
-        partial(tools.check_new_id_applicable, cib, DESCRIPTION),
-    )
+        )
+    else:
+        tools.check_new_id_applicable(cib, DESCRIPTION, options["id"])
+    return options
 
 
 def create_plain(constraint_section, options):
