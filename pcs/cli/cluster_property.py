@@ -260,3 +260,19 @@ def config(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
 
     if output:
         print(output)
+
+
+def print_cluster_properties_definition_legacy(
+    lib: Any, argv: StringSequence, modifiers: InputModifiers
+) -> None:
+    """
+    Options: no options
+    """
+    modifiers.ensure_only_supported()
+    if argv:
+        raise CmdLineInputError()
+    print(
+        json.dumps(
+            lib.cluster_property.get_cluster_properties_definition_legacy()
+        )
+    )

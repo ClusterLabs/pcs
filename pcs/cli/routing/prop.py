@@ -1,7 +1,4 @@
-from pcs import (
-    prop,
-    usage,
-)
+from pcs import usage
 from pcs.cli import cluster_property
 from pcs.cli.common.routing import create_router
 
@@ -18,7 +15,7 @@ property_cmd = create_router(
         "show": cluster_property.list_property_deprecated,
         "config": cluster_property.config,
         "get_cluster_properties_definition": (
-            prop.print_cluster_properties_definition
+            cluster_property.print_cluster_properties_definition_legacy
         ),
     },
     ["property"],
