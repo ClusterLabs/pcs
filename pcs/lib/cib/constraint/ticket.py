@@ -99,7 +99,6 @@ def prepare_options_plain(
         )
     else:
         report_processor.report_list(validate_ticket_name(ticket))
-    options["ticket"] = ticket
 
     if not resource_id:
         report_processor.report(
@@ -107,7 +106,6 @@ def prepare_options_plain(
                 reports.messages.RequiredOptionsAreMissing(["rsc"])
             )
         )
-    options["rsc"] = resource_id
 
     role_value_validator = validate.ValueIn(
         "rsc-role", const.PCMK_ROLES, option_name_for_report="role"
@@ -136,9 +134,20 @@ def prepare_options_plain(
             )
         )
     )
+    report_processor.report_list(
+        validate.NamesIn(
+            # rsc and rsc-ticket are passed as parameters not as items in the
+            # options dict
+            (set(ATTRIB) | set(ATTRIB_PLAIN) | {"id"})
+            - {"rsc", "ticket"}
+        ).validate(options)
+    )
 
     if report_processor.has_errors:
         raise LibraryError()
+
+    options["ticket"] = ticket
+    options["rsc"] = resource_id
 
     if "rsc-role" in options:
         if options["rsc-role"]:
@@ -149,18 +158,16 @@ def prepare_options_plain(
         else:
             del options["rsc-role"]
 
-    return constraint.prepare_options(
-        tuple(list(ATTRIB) + list(ATTRIB_PLAIN)),
-        options,
-        partial(
-            _create_id,
+    if "id" not in options:
+        options["id"] = _create_id(
             cib,
             options["ticket"],
             resource_id,
             options.get("rsc-role", ""),
-        ),
-        partial(tools.check_new_id_applicable, cib, DESCRIPTION),
-    )
+        )
+    else:
+        tools.check_new_id_applicable(cib, DESCRIPTION, options["id"])
+    return options
 
 
 def create_plain(constraint_section, options):

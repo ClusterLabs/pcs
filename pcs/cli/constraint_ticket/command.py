@@ -1,3 +1,6 @@
+import dataclasses
+from typing import Optional
+
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.constraint import command
 from pcs.cli.constraint_ticket import parse_args
@@ -5,7 +8,9 @@ from pcs.cli.reports.output import (
     deprecation_warning,
     error,
 )
+from pcs.common import reports
 from pcs.common.reports import constraints
+from pcs.common.reports.messages import InvalidOptions
 
 
 def create_with_set(lib, argv, modifiers):
@@ -42,6 +47,18 @@ def add(lib, argv, modifiers):
         element
       * -f - CIB file
     """
+
+    def _report_item_preprocessor(
+        report_item: reports.ReportItem,
+    ) -> Optional[reports.ReportItem]:
+        if isinstance(report_item.message, InvalidOptions):
+            new_message = dataclasses.replace(
+                report_item.message,
+                allowed=sorted(set(report_item.message.allowed) - {"rsc-role"}),
+            )
+            return dataclasses.replace(report_item, message=new_message)
+        return report_item
+
     modifiers.ensure_only_supported("--force", "-f")
     ticket, resource_id, resource_role, options = parse_args.parse_add(argv)
     if "rsc-role" in options:
@@ -52,6 +69,10 @@ def add(lib, argv, modifiers):
 
     if resource_role:
         options["rsc-role"] = resource_role
+
+    lib.env.report_processor.set_report_item_preprocessor(
+        _report_item_preprocessor
+    )
 
     lib.constraint_ticket.create(
         ticket,

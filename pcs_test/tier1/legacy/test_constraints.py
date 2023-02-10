@@ -3,6 +3,7 @@ import datetime
 import os
 import unittest
 from collections import namedtuple
+from textwrap import dedent
 
 from lxml import etree
 
@@ -4055,19 +4056,42 @@ class TicketCreateWithSet(ConstraintBaseTest):
 
 
 class TicketAdd(ConstraintBaseTest):
-    def test_create_ticket(self):
+    def test_create_minimal(self):
+        self.assert_pcs_success("constraint ticket add T A".split())
+        self.assert_pcs_success(
+            "constraint ticket config".split(),
+            dedent(
+                """\
+                Ticket Constraints:
+                  A ticket=T
+                """
+            ),
+        )
+
+    def test_create_all_options(self):
         self.assert_pcs_success(
             (
                 f"constraint ticket add T {const.PCMK_ROLE_PROMOTED} A "
-                "loss-policy=fence"
+                "loss-policy=fence id=my-constraint"
             ).split()
         )
         self.assert_pcs_success(
-            "constraint ticket config".split(),
-            stdout_full=[
-                "Ticket Constraints:",
-                f"  {const.PCMK_ROLE_PROMOTED_PRIMARY} A loss-policy=fence ticket=T",
-            ],
+            "constraint ticket config --full".split(),
+            dedent(
+                f"""\
+                Ticket Constraints:
+                  {const.PCMK_ROLE_PROMOTED} A loss-policy=fence ticket=T (id:my-constraint)
+                """
+            ),
+        )
+
+    def test_refuse_bad_option(self):
+        self.assert_pcs_fail(
+            "constraint ticket add T A loss_policy=fence".split(),
+            (
+                "Error: invalid option 'loss_policy', allowed options are: "
+                "'id', 'loss-policy'\n" + ERRORS_HAVE_OCCURRED
+            ),
         )
 
     def test_refuse_noexistent_resource_id(self):

@@ -82,26 +82,25 @@ class PrepareOptionsPlainTest(TestCase):
     def test_refuse_unknown_attributes(self, _):
         assert_raise_library_error(
             lambda: self.prepare(
-                {"unknown": "nonsense", "rsc-role": "master"},
+                {"unknown": "nonsense", "rsc-role": "promoted"},
                 "ticket-key",
                 "resourceA",
-            ),
-            (
-                severities.ERROR,
-                report_codes.INVALID_OPTIONS,
-                {
-                    "option_names": ["unknown"],
-                    "option_type": None,
-                    "allowed": [
+            )
+        )
+        self.report_processor.assert_reports(
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["unknown"],
+                    option_type=None,
+                    allowed=[
                         "id",
                         "loss-policy",
-                        "rsc",
                         "rsc-role",
-                        "ticket",
                     ],
-                    "allowed_patterns": [],
-                },
-            ),
+                    allowed_patterns=[],
+                )
+            ]
         )
 
     def test_refuse_bad_role(self, _):
@@ -187,7 +186,7 @@ class PrepareOptionsPlainTest(TestCase):
         # pylint: disable=unused-argument
         assert_raise_library_error(
             lambda: self.prepare(
-                {"loss-policy": "unknown", "ticket": "T", "id": "id"},
+                {"loss-policy": "unknown", "id": "id"},
                 "ticket-key",
                 "resourceA",
             ),
@@ -210,7 +209,6 @@ class PrepareOptionsPlainTest(TestCase):
         mock_create_id.return_value = "generated_id"
         options = {
             "loss-policy": "freeze",
-            "ticket": "T",
             "rsc-role": const.PCMK_ROLE_PROMOTED,
         }
         ticket_key = "ticket-key"
