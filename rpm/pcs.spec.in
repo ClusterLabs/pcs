@@ -10,11 +10,10 @@ Release: 1%{?numcomm:.%{numcomm}}%{?alphatag:.%{alphatag}}%{?dirty:.%{dirty}}%{?
 # GPLv2: pcs
 # ASL 2.0: dataclasses, tornado
 # ASL 2.0 or BSD: dateutil
-# MIT: backports, dacite, daemons, ember, ethon, handlebars, jquery, jquery-ui,
-#      mustermann, rack, rack-protection, rack-test, sinatra, tilt, nio4r
-# GPLv2 or Ruby: eventmachne, json
+# MIT: backports, dacite, ember, ethon, handlebars, jquery, jquery-ui,
+#      mustermann, nio4r, rack, rack-protection, rack-test, sinatra, tilt
+# GPLv2 or Ruby: json
 # BSD: puma
-# (GPLv2 or Ruby) and BSD: thin
 # BSD or Ruby: open4, ruby2_keywords
 # BSD and MIT: ffi
 License: GPLv2 and ASL 2.0 and MIT and BSD and (GPLv2 or Ruby) and (BSD or Ruby) and (ASL 2.0 or BSD)
