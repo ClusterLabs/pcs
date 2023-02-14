@@ -99,6 +99,11 @@ class PropertyConfigurationFacade:
             if self._properties
             else {}
         )
+        self._defaults_map = {
+            parameter.name: parameter.default
+            for parameter in self._properties_metadata
+            if parameter.default is not None
+        }
 
     @classmethod
     def from_properties_dtos(
@@ -115,12 +120,13 @@ class PropertyConfigurationFacade:
     def properties(self) -> Sequence[CibNvsetDto]:
         return self._properties
 
-    def get_name_default_value_dict(self) -> dict[str, str]:
-        return {
-            parameter.name: parameter.default
-            for parameter in self._properties_metadata
-            if parameter.default is not None
-        }
+    @property
+    def defaults(self) -> dict[str, str]:
+        return self._defaults_map
+
+    def get_property_value(self, property_name: str) -> Optional[str]:
+        property_dto = self._name_nvpair_dto_map.get(property_name)
+        return property_dto.value if property_dto else None
 
     def get_name_value_default_list(self) -> list[tuple[str, str, bool]]:
         name_value_default_list = [
@@ -238,9 +244,7 @@ def config(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
             "Please use command 'pcs property defaults' instead."
         )
         output = "\n".join(
-            format_name_value_list(
-                sorted(properties_facade.get_name_default_value_dict().items())
-            )
+            format_name_value_list(sorted(properties_facade.defaults.items()))
         )
     elif output_format == "cmd":
         output = " \\\n".join(properties_to_cmd(properties_facade))
@@ -249,14 +253,7 @@ def config(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
             dto.to_dict(ListCibNvsetDto(properties_facade.properties[0:1]))
         )
     else:
-        output = "\n".join(
-            nvset_dto_to_lines(
-                properties_facade.properties[0],
-                nvset_label="Cluster Properties",
-            )
-            if properties_facade.properties
-            else []
-        )
+        output = "\n".join(properties_to_text(properties_facade))
 
     if output:
         print(output)

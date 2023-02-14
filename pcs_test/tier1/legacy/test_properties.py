@@ -52,7 +52,7 @@ class PropertyTest(TestCase):
     def testEmpty(self):
         output, returnVal = pcs(self.temp_cib.name, ["property"])
         assert returnVal == 0, "Unable to list resources"
-        assert output == "Cluster Properties:\n", [output]
+        assert output == "", [output]
 
     def testDefaults(self):
         output, returnVal = pcs(
@@ -60,12 +60,15 @@ class PropertyTest(TestCase):
         )
         prop_defaults = output
         assert returnVal == 0, "Unable to list resources"
-        assert output.startswith("Cluster Properties:\n batch-limit")
+        assert output.startswith(
+            "Deprecation Warning: Option --defaults is deprecated and will be "
+            "removed. Please use command 'pcs property defaults' "
+            "instead.\nbatch-limit=0"
+        )
 
         output, returnVal = pcs(self.temp_cib.name, "property --all".split())
         assert returnVal == 0, "Unable to list resources"
-        assert output.startswith("Cluster Properties:\n batch-limit")
-        ac(output, prop_defaults)
+        assert output.startswith("Cluster Properties:\n  batch-limit")
 
         output, returnVal = pcs(
             self.temp_cib.name, "property set blahblah=blah".split()
@@ -91,27 +94,33 @@ class PropertyTest(TestCase):
         assert returnVal == 0
         assert (
             output
-            == "Cluster Properties:\n blahblah: blah\n stonith-enabled: false\n"
+            == "Cluster Properties: cib-bootstrap-options\n  blahblah=blah\n  stonith-enabled=false\n"
         ), [output]
 
         output, returnVal = pcs(
             self.temp_cib.name, "property --defaults".split()
         )
         assert returnVal == 0, "Unable to list resources"
-        assert output.startswith("Cluster Properties:\n batch-limit")
+        assert output.startswith(
+            "Deprecation Warning: Option --defaults is deprecated and will be "
+            "removed. Please use command 'pcs property defaults' "
+            "instead.\nbatch-limit=0"
+        )
         ac(output, prop_defaults)
 
         output, returnVal = pcs(self.temp_cib.name, "property --all".split())
         assert returnVal == 0, "Unable to list resources"
-        assert "blahblah: blah" in output
-        assert "stonith-enabled: false" in output
-        assert output.startswith("Cluster Properties:\n batch-limit")
+        assert "blahblah=blah" in output
+        assert "stonith-enabled=false" in output
+        assert output.startswith(
+            "Cluster Properties: cib-bootstrap-options\n  batch-limit"
+        )
 
         output, returnVal = pcs(
             self.temp_cib.name, "property config stonith-action".split()
         )
         assert returnVal == 0, output
-        assert "stonith-action: reboot" in output
+        assert "stonith-action=reboot" in output
 
     def testBadProperties(self):
         o, r = pcs(self.temp_cib.name, "property set xxxx=zzzz".split())
@@ -121,7 +130,7 @@ class PropertyTest(TestCase):
             get_invalid_option_messages("xxxx"),
         )
         o, _ = pcs(self.temp_cib.name, "property config".split())
-        ac(o, "Cluster Properties:\n")
+        ac(o, "")
 
         output, returnVal = pcs(
             self.temp_cib.name, "property set =5678 --force".split()
@@ -129,7 +138,7 @@ class PropertyTest(TestCase):
         ac(output, "Error: missing key in '=5678' option\n")
         self.assertEqual(returnVal, 1)
         o, _ = pcs(self.temp_cib.name, "property config".split())
-        ac(o, "Cluster Properties:\n")
+        ac(o, "")
 
         output, returnVal = pcs(
             self.temp_cib.name, "property set =5678".split()
@@ -137,7 +146,7 @@ class PropertyTest(TestCase):
         ac(output, "Error: missing key in '=5678' option\n")
         self.assertEqual(returnVal, 1)
         o, _ = pcs(self.temp_cib.name, "property config".split())
-        ac(o, "Cluster Properties:\n")
+        ac(o, "")
 
         output, returnVal = pcs(
             self.temp_cib.name, "property set bad_format".split()
@@ -145,7 +154,7 @@ class PropertyTest(TestCase):
         ac(output, "Error: missing value of 'bad_format' option\n")
         self.assertEqual(returnVal, 1)
         o, _ = pcs(self.temp_cib.name, "property config".split())
-        ac(o, "Cluster Properties:\n")
+        ac(o, "")
 
         output, returnVal = pcs(
             self.temp_cib.name, "property set bad_format --force".split()
@@ -153,7 +162,7 @@ class PropertyTest(TestCase):
         ac(output, "Error: missing value of 'bad_format' option\n")
         self.assertEqual(returnVal, 1)
         o, _ = pcs(self.temp_cib.name, "property config".split())
-        ac(o, "Cluster Properties:\n")
+        ac(o, "")
 
         o, r = pcs(self.temp_cib.name, "property unset zzzzz".split())
         self.assertEqual(r, 1)
@@ -164,7 +173,7 @@ class PropertyTest(TestCase):
             "Error: Errors have occurred, therefore pcs is unable to continue\n",
         )
         o, _ = pcs(self.temp_cib.name, "property config".split())
-        ac(o, "Cluster Properties:\n")
+        ac(o, "")
 
         o, r = pcs(self.temp_cib.name, "property unset zzzz --force".split())
         self.assertEqual(r, 0)
@@ -174,7 +183,7 @@ class PropertyTest(TestCase):
             "property set 'cib-bootstrap-options'\n",
         )
         o, _ = pcs(self.temp_cib.name, "property config".split())
-        ac(o, "Cluster Properties:\n")
+        ac(o, "Cluster Properties: cib-bootstrap-options\n")
 
     def test_set_property_validation_enum(self):
         output, returnVal = pcs(
@@ -185,8 +194,8 @@ class PropertyTest(TestCase):
         o, _ = pcs(self.temp_cib.name, "property config".split())
         ac(
             o,
-            """Cluster Properties:
- no-quorum-policy: freeze
+            """Cluster Properties: cib-bootstrap-options
+  no-quorum-policy=freeze
 """,
         )
 
@@ -199,8 +208,8 @@ class PropertyTest(TestCase):
         o, _ = pcs(self.temp_cib.name, "property config".split())
         ac(
             o,
-            """Cluster Properties:
- no-quorum-policy: freeze
+            """Cluster Properties: cib-bootstrap-options
+  no-quorum-policy=freeze
 """,
         )
 
@@ -222,8 +231,8 @@ class PropertyTest(TestCase):
         o, _ = pcs(self.temp_cib.name, "property config".split())
         ac(
             o,
-            """Cluster Properties:
- no-quorum-policy: freeze
+            """Cluster Properties: cib-bootstrap-options
+  no-quorum-policy=freeze
 """,
         )
 
@@ -242,8 +251,8 @@ class PropertyTest(TestCase):
         o, _ = pcs(self.temp_cib.name, "property config".split())
         ac(
             o,
-            """Cluster Properties:
- no-quorum-policy: not_valid_value
+            """Cluster Properties: cib-bootstrap-options
+  no-quorum-policy=not_valid_value
 """,
         )
 
@@ -256,8 +265,8 @@ class PropertyTest(TestCase):
         o, _ = pcs(self.temp_cib.name, "property config".split())
         ac(
             o,
-            """Cluster Properties:
- enable-acl: TRUE
+            """Cluster Properties: cib-bootstrap-options
+  enable-acl=TRUE
 """,
         )
 
@@ -269,8 +278,8 @@ class PropertyTest(TestCase):
         o, _ = pcs(self.temp_cib.name, "property config".split())
         ac(
             o,
-            """Cluster Properties:
- enable-acl: no
+            """Cluster Properties: cib-bootstrap-options
+  enable-acl=no
 """,
         )
 
@@ -283,8 +292,8 @@ class PropertyTest(TestCase):
         o, _ = pcs(self.temp_cib.name, "property config".split())
         ac(
             o,
-            """Cluster Properties:
- enable-acl: TRUE
+            """Cluster Properties: cib-bootstrap-options
+  enable-acl=TRUE
 """,
         )
 
@@ -306,8 +315,8 @@ class PropertyTest(TestCase):
         o, _ = pcs(self.temp_cib.name, "property config".split())
         ac(
             o,
-            """Cluster Properties:
- enable-acl: TRUE
+            """Cluster Properties: cib-bootstrap-options
+  enable-acl=TRUE
 """,
         )
 
@@ -327,8 +336,8 @@ class PropertyTest(TestCase):
         o, _ = pcs(self.temp_cib.name, "property config".split())
         ac(
             o,
-            """Cluster Properties:
- enable-acl: not_valid_value
+            """Cluster Properties: cib-bootstrap-options
+  enable-acl=not_valid_value
 """,
         )
 
@@ -341,8 +350,8 @@ class PropertyTest(TestCase):
         o, _ = pcs(self.temp_cib.name, "property config".split())
         ac(
             o,
-            """Cluster Properties:
- migration-limit: 0
+            """Cluster Properties: cib-bootstrap-options
+  migration-limit=0
 """,
         )
 
@@ -354,8 +363,8 @@ class PropertyTest(TestCase):
         o, _ = pcs(self.temp_cib.name, "property config".split())
         ac(
             o,
-            """Cluster Properties:
- migration-limit: -10
+            """Cluster Properties: cib-bootstrap-options
+  migration-limit=-10
 """,
         )
 
@@ -368,8 +377,8 @@ class PropertyTest(TestCase):
         o, _ = pcs(self.temp_cib.name, "property config".split())
         ac(
             o,
-            """Cluster Properties:
- migration-limit: 0
+            """Cluster Properties: cib-bootstrap-options
+  migration-limit=0
 """,
         )
 
@@ -389,8 +398,8 @@ class PropertyTest(TestCase):
         o, _ = pcs(self.temp_cib.name, "property config".split())
         ac(
             o,
-            """Cluster Properties:
- migration-limit: 0
+            """Cluster Properties: cib-bootstrap-options
+  migration-limit=0
 """,
         )
 
@@ -409,8 +418,8 @@ class PropertyTest(TestCase):
         o, _ = pcs(self.temp_cib.name, "property config".split())
         ac(
             o,
-            """Cluster Properties:
- migration-limit: 0.1
+            """Cluster Properties: cib-bootstrap-options
+  migration-limit=0.1
 """,
         )
 

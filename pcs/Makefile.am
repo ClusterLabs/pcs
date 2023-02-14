@@ -380,7 +380,6 @@ EXTRA_DIST		= \
 			  node.py \
 			  pcsd.py \
 			  pcs_internal.py \
-			  prop.py \
 			  py.typed \
 			  qdevice.py \
 			  quorum.py \

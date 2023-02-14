@@ -1954,45 +1954,6 @@ def set_node_attribute(prop, value, node):
         err("unable to set attribute %s\n%s" % (prop, o))
 
 
-# If the property exists, remove it and replace it with the new property
-# If the value is blank, then we just remove it
-def set_cib_property(prop, value, cib_dom=None):
-    """
-    Commandline options:
-      * -f - CIB file
-      * --force - no error when removing non existing property
-    """
-    update_cib = cib_dom is None
-    if update_cib:
-        crm_config = get_cib_xpath("//crm_config")
-        if crm_config == "":
-            err("unable to get crm_config, is pacemaker running?")
-        crm_config = parseString(crm_config).documentElement
-    else:
-        document = cib_dom.getElementsByTagName("crm_config")
-        if not document:
-            err("unable to get crm_config, is pacemaker running?")
-        crm_config = document[0]
-
-    property_found = False
-    cluster_property_set = dom_prepare_child_element(
-        crm_config, "cluster_property_set", "cib-bootstrap-options"
-    )
-
-    for child in cluster_property_set.getElementsByTagName("nvpair"):
-        if child.getAttribute("name") == prop:
-            property_found = True
-            break
-    if not property_found and value == "" and "--force" not in pcs_options:
-        err("can't remove property: '{0}' that doesn't exist".format(prop))
-    dom_update_nv_pair(
-        cluster_property_set, prop, value, "cib-bootstrap-options-"
-    )
-
-    if update_cib:
-        replace_cib_configuration(crm_config)
-
-
 def getTerminalSize(fd=1):
     """
     Returns height and width of current terminal. First tries to get
@@ -2117,39 +2078,6 @@ def getClusterState():
     if returncode != 0:
         err("error running crm_mon, is pacemaker running?")
     return parseString(xml_string)
-
-
-# DEPRECATED
-# This should be all handle in pcs.lib. Currently, only pcs.config.config_show
-# uses this, as it it still legacy architecture code.
-def getClusterName():
-    """
-    Commandline options:
-      * -f - CIB file if there is no corosync.conf
-      * --corosync_conf - path to a mocked corosync.conf is set directly to
-        settings
-    """
-    try:
-        with open(settings.corosync_conf_file, "rb") as f:
-            conf = corosync_conf_facade(
-                corosync_conf_parser.Parser.parse(f.read())
-            )
-            cluster_name = conf.get_cluster_name()
-            if cluster_name:
-                return cluster_name
-    except (IOError, corosync_conf_parser.CorosyncConfParserException):
-        pass
-
-    # there is no corosync.conf on remote nodes, we can try to
-    # get cluster name from pacemaker
-    # pylint: disable=bare-except
-    try:
-        return get_set_properties("cluster-name")["cluster-name"]
-    except:
-        # we need to catch SystemExit (from utils.err), parse errors and so on
-        pass
-
-    return ""
 
 
 def write_empty_cib(cibfile):
@@ -2786,24 +2714,6 @@ def exit_on_cmdline_input_error(
 
 def get_report_processor() -> ReportProcessor:
     return ReportProcessorToConsole(debug=("--debug" in pcs_options))
-
-
-def get_set_properties(prop_name=None, defaults=None):
-    """
-    Commandline options:
-      * -f - CIB file
-    """
-    properties = {} if defaults is None else dict(defaults)
-    (output, retVal) = run(["cibadmin", "-Q", "--scope", "crm_config"])
-    if retVal != 0:
-        err("unable to get crm_config\n" + output)
-    dom = parseString(output)
-    de = dom.documentElement
-    crm_config_properties = de.getElementsByTagName("nvpair")
-    for prop in crm_config_properties:
-        if prop_name is None or (prop_name == prop.getAttribute("name")):
-            properties[prop.getAttribute("name")] = prop.getAttribute("value")
-    return properties
 
 
 def get_user_and_pass():
