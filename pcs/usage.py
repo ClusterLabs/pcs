@@ -1552,16 +1552,16 @@ Commands:
             max_network_delay, merge, miss_count_const, send_join,
             seqno_unchanged_const, token, token_coefficient, token_retransmit,
             token_retransmits_before_loss_const, window_size
-            
+
     config uuid generate [--corosync_conf <path>] [--force]
         Generate a new cluster UUID and distribute it to all cluster nodes. 
         Cluster UUID is not used by the cluster stack in any way, it is provided
         to easily distinguish between multiple clusters in a multi-cluster 
         environment since the cluster name does not have to be unique.
-        
+
         If --corosync_conf is specified, update cluster configuration in file
         specified by <path>.
-        
+
         If --force is specified, existing UUID will be overwritten.
 
     authkey corosync [<path>]
@@ -2286,6 +2286,9 @@ Commands:
         See pacemaker-based(7), pacemaker-controld(7) and
         pacemaker-schedulerd(7) man pages for a description of the properties.
 {output_format_desc}
+
+    defaults [<property>] ...
+        List all property defaults or only defaults for specified properties.
 
     set <property>=[<value>] ... [--force]
         Set specific pacemaker properties (if the value is blank then the

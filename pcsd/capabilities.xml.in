@@ -1131,6 +1131,13 @@
         pcs commands: property config --output-format=text|cmd|json
       </description>
     </capability>
+    <capability id="pcmk.properties.cluster.defaults" in-pcs="1" in-pcsd="0">
+      <description>
+        List all property defaults or only defaults for specified properties.
+
+          pcs commands: property defaults
+      </description>
+    </capability>
     <capability id="pcmk.properties.operation-defaults" in-pcs="1" in-pcsd="0">
       <description>
         Show and set resource operations defaults, can set multiple defaults at

@@ -192,6 +192,21 @@ def properties_to_text(
     return []
 
 
+def properties_defaults_to_text(
+    properties_facade: PropertyConfigurationFacade,
+    property_names: Optional[StringSequence] = None,
+) -> list[str]:
+    return format_name_value_list(
+        sorted(
+            [
+                (key, value)
+                for key, value in properties_facade.defaults.items()
+                if not property_names or key in property_names
+            ]
+        )
+    )
+
+
 def config(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
     """
     Options:
@@ -243,9 +258,7 @@ def config(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
             "Option --defaults is deprecated and will be removed. "
             "Please use command 'pcs property defaults' instead."
         )
-        output = "\n".join(
-            format_name_value_list(sorted(properties_facade.defaults.items()))
-        )
+        output = "\n".join(properties_defaults_to_text(properties_facade))
     elif output_format == "cmd":
         output = " \\\n".join(properties_to_cmd(properties_facade))
     elif output_format == "json":
@@ -255,6 +268,20 @@ def config(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
     else:
         output = "\n".join(properties_to_text(properties_facade))
 
+    if output:
+        print(output)
+
+
+def defaults(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
+    """
+    Options: no options
+    """
+    del modifiers
+    properties_facade = PropertyConfigurationFacade.from_properties_dtos(
+        ListCibNvsetDto(sets=[]),
+        lib.cluster_property.get_properties_metadata(),
+    )
+    output = "\n".join(properties_defaults_to_text(properties_facade, argv))
     if output:
         print(output)
 
