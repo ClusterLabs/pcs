@@ -1683,6 +1683,22 @@ class QdeviceCertificateSignError(NameBuildTest):
         )
 
 
+class QdeviceCertificateBadFormat(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Unable to parse quorum device certificate",
+            reports.QdeviceCertificateBadFormat(),
+        )
+
+
+class QdeviceCertificateReadError(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            "Unable to read quorum device certificate: reason",
+            reports.QdeviceCertificateReadError("reason"),
+        )
+
+
 class QdeviceDestroySuccess(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(

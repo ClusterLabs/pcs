@@ -2,6 +2,7 @@ import inspect
 import logging
 import os
 import os.path
+import shutil
 import sys
 from functools import partial
 from unittest import mock
@@ -122,6 +123,10 @@ def patch_env(call_queue, config, init_env, is_systemd=True):
                 mock.patch("os.listdir", fs_mock("os.listdir", os.listdir)),
                 mock.patch("os.chmod", fs_mock("os.chmod", os.chmod)),
                 mock.patch("os.chown", fs_mock("os.chown", os.chown)),
+                mock.patch(
+                    "shutil.rmtree", fs_mock("shutil.rmtree", shutil.rmtree)
+                ),
+                mock.patch("os.makedirs", fs_mock("os.makedirs", os.makedirs)),
             ]
         )
 

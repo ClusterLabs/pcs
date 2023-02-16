@@ -352,6 +352,9 @@ def load_module(env, middleware_factory, name):
                 "status_text": quorum.status_text,
                 "status_device_text": quorum.status_device_text,
                 "update_device": quorum.update_device,
+                # used by ha_cluster system role
+                "device_net_certificate_check_local": quorum.device_net_certificate_check_local,
+                "device_net_certificate_setup_local": quorum.device_net_certificate_setup_local,
             },
         )
 

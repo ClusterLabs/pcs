@@ -35,14 +35,14 @@ __qdevice_certutil = os.path.join(
     settings.corosync_qdevice_binaries, "corosync-qdevice-net-certutil"
 )
 __nss_certificate_db_files = (
-    # old NSS DB format
-    "cert8.db",
-    "key3.db",
-    "secmod.db",
     # new NSS DB format
     "cert9.db",
     "key4.db",
     "pkcs11.txt",
+    # old NSS DB format
+    "cert8.db",
+    "key3.db",
+    "secmod.db",
 )
 
 
@@ -111,6 +111,8 @@ def set_up_client_certificates(
 def qdevice_setup(runner: CommandRunner) -> None:
     """
     initialize qdevice on local host
+
+    runner -- command runner instance
     """
     if qdevice_initialized():
         raise LibraryError(
@@ -286,15 +288,15 @@ def client_setup(runner: CommandRunner, ca_certificate: bytes) -> None:
     """
     client_destroy()
     # save CA certificate, corosync tool only works with files
-    ca_file_path = os.path.join(
-        settings.corosync_qdevice_net_client_certs_dir,
-        settings.corosync_qdevice_net_client_ca_file_name,
-    )
     try:
-        if not os.path.exists(ca_file_path):
+        if not os.path.exists(settings.corosync_qdevice_net_client_certs_dir):
             os.makedirs(
                 settings.corosync_qdevice_net_client_certs_dir, mode=0o700
             )
+        ca_file_path = os.path.join(
+            settings.corosync_qdevice_net_client_certs_dir,
+            settings.corosync_qdevice_net_client_ca_file_name,
+        )
         with open(ca_file_path, "wb") as ca_file:
             ca_file.write(ca_certificate)
     except EnvironmentError as e:

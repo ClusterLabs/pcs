@@ -1,8 +1,13 @@
+import re
+from typing import Optional
+
+from pcs import settings
 from pcs.common import (
     file_type_codes,
     reports,
 )
 from pcs.common.services.interfaces import ServiceManagerInterface
+from pcs.common.str_tools import join_multilines
 from pcs.lib import sbd
 from pcs.lib.communication import qdevice as qdevice_com
 from pcs.lib.communication import qdevice_net as qdevice_net_com
@@ -403,6 +408,164 @@ def remove_device(lib_env: LibraryEnvironment, skip_offline_nodes=False):
             )
 
     lib_env.push_corosync_conf(cfg, skip_offline_nodes)
+
+
+def _ensure_live(lib_env: LibraryEnvironment) -> None:
+    if not lib_env.is_corosync_conf_live:
+        lib_env.report_processor.report(
+            reports.ReportItem.error(
+                reports.messages.LiveEnvironmentRequired(
+                    [file_type_codes.COROSYNC_CONF]
+                )
+            )
+        )
+        raise LibraryError()
+
+
+def device_net_certificate_setup_local(
+    lib_env: LibraryEnvironment,
+    qnetd_host: str,
+    cluster_name: str,
+) -> None:
+    """
+    Set up qdevice model net certificates on the local node
+
+    qnetd_host -- address of a qnetd host
+    cluster_name -- local node cluster name
+    """
+    _ensure_live(lib_env)
+    runner = lib_env.cmd_runner()
+    qnetd_target = lib_env.get_node_target_factory().get_target_from_hostname(
+        qnetd_host
+    )
+
+    # get qnetd CA certificate
+    com_cmd_1 = qdevice_net_com.GetCaCert(lib_env.report_processor)
+    com_cmd_1.set_targets([qnetd_target])
+    qnetd_ca_cert = run_and_raise(
+        lib_env.communicator_factory.get_communicator(), com_cmd_1
+    )[0][1]
+    # init certificate storage on local node
+    qdevice_net.client_setup(runner, qnetd_ca_cert)
+    # create client certificate request
+    cert_request = qdevice_net.client_generate_certificate_request(
+        runner, cluster_name
+    )
+    # sign the request on qnetd host
+    com_cmd_2 = qdevice_net_com.SignCertificate(lib_env.report_processor)
+    com_cmd_2.add_request(qnetd_target, cert_request, cluster_name)
+    signed_certificate = run_and_raise(
+        lib_env.communicator_factory.get_communicator(), com_cmd_2
+    )[0][1]
+    # transform the signed certificate to pk12 format which can sent to nodes
+    pk12 = qdevice_net.client_cert_request_to_pk12(runner, signed_certificate)
+    # store final certificate
+    qdevice_net.client_import_certificate_and_key(runner, pk12)
+
+
+def device_net_certificate_check_local(
+    lib_env: LibraryEnvironment,
+    qnetd_host: str,
+    cluster_name: str,
+) -> bool:
+    """
+    Check if the local node already has qdevice model net certificates
+
+    qnetd_host -- address of a qnetd host
+    cluster_name -- local node cluster name
+    """
+
+    def get_certificate_data(text: str) -> Optional[str]:
+        match = re.search(
+            r"-----BEGIN CERTIFICATE-----([a-zA-Z0-9/+=]+)-----END CERTIFICATE-----",
+            "".join(text.splitlines()),
+        )
+        return match.group(1) if match else None
+
+    _ensure_live(lib_env)
+    runner = lib_env.cmd_runner()
+    qnetd_target = lib_env.get_node_target_factory().get_target_from_hostname(
+        qnetd_host
+    )
+
+    if not qdevice_net.client_initialized():
+        return False
+
+    # check if certificates are present
+    list_certs_cmd = [
+        settings.certutil_executable,
+        "-d",
+        settings.corosync_qdevice_net_client_certs_dir,
+        "-L",
+    ]
+    stdout, stderr, retval = runner.run(list_certs_cmd)
+    if retval != 0:
+        lib_env.report_processor.report(
+            reports.ReportItem.error(
+                reports.messages.QdeviceCertificateReadError(
+                    join_multilines([stderr, stdout])
+                )
+            )
+        )
+        raise LibraryError()
+    for certname in ["QNet CA", "Cluster Cert"]:
+        if not re.search(rf"^{certname}\s*\S*,.*,.*$", stdout, re.MULTILINE):
+            return False
+
+    # check cluster name
+    stdout, stderr, retval = runner.run(list_certs_cmd + ["-n", "Cluster Cert"])
+    if retval != 0:
+        lib_env.report_processor.report(
+            reports.ReportItem.error(
+                reports.messages.QdeviceCertificateReadError(
+                    join_multilines([stderr, stdout])
+                )
+            )
+        )
+        raise LibraryError()
+    if not re.search(
+        rf'^\s*Subject: "CN={cluster_name}"$', stdout, re.MULTILINE
+    ):
+        return False
+
+    # get qnetd CA certificate from qnetd host
+    com_cmd = qdevice_net_com.GetCaCert(lib_env.report_processor)
+    com_cmd.set_targets([qnetd_target])
+    qnetd_ca_cert_text = run_and_raise(
+        lib_env.communicator_factory.get_communicator(), com_cmd
+    )[0][1]
+    qnetd_ca_cert = get_certificate_data(qnetd_ca_cert_text.decode())
+    if qnetd_ca_cert is None:
+        lib_env.report_processor.report(
+            reports.ReportItem.error(
+                reports.messages.QdeviceCertificateBadFormat()
+            )
+        )
+        raise LibraryError()
+
+    # get qnetd CA certificate from local node
+    stdout, stderr, retval = runner.run(
+        list_certs_cmd + ["-n", "QNet CA", "-a"]
+    )
+    if retval != 0:
+        lib_env.report_processor.report(
+            reports.ReportItem.error(
+                reports.messages.QdeviceCertificateReadError(
+                    join_multilines([stderr, stdout])
+                )
+            )
+        )
+        raise LibraryError()
+    local_ca_cert = get_certificate_data(stdout)
+    if local_ca_cert is None:
+        lib_env.report_processor.report(
+            reports.ReportItem.error(
+                reports.messages.QdeviceCertificateBadFormat()
+            )
+        )
+        raise LibraryError()
+
+    return qnetd_ca_cert == local_ca_cert
 
 
 def set_expected_votes_live(lib_env, expected_votes):

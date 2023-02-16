@@ -33,7 +33,12 @@ class FsConfig:
         self.__calls.place(name, call, before, instead)
 
     def exists(
-        self, path, return_value="", name="fs.exists", before=None, instead=None
+        self,
+        path,
+        return_value=True,
+        name="fs.exists",
+        before=None,
+        instead=None,
     ):
         call = FsCall(
             "os.path.exists",
@@ -124,5 +129,36 @@ class FsConfig:
             "os.listdir",
             call_kwargs={"path": path},
             return_value=list(return_value),
+        )
+        self.__calls.place(name, call, before, instead)
+
+    def rmtree(
+        self,
+        path,
+        return_value=None,
+        name="fs.rmtree",
+        before=None,
+        instead=None,
+    ):
+        call = FsCall(
+            "shutil.rmtree",
+            call_kwargs={"path": path},
+            return_value=return_value,
+        )
+        self.__calls.place(name, call, before, instead)
+
+    def makedirs(
+        self,
+        path,
+        mode,
+        side_effect=None,
+        name="fs.rmtree",
+        before=None,
+        instead=None,
+    ):
+        call = FsCall(
+            "os.makedirs",
+            call_kwargs={"path": path, "mode": mode},
+            side_effect=side_effect,
         )
         self.__calls.place(name, call, before, instead)

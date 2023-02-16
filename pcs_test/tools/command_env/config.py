@@ -57,9 +57,16 @@ class Config:
 
     def remove(self, name):
         """
-        Remove call with specified name from list.
+        Remove a call with the specified name from the list
         """
         self.__calls.remove(name)
+        return self
+
+    def trim_before(self, name):
+        """
+        Remove a call with the specified name and all calls after it from the list
+        """
+        self.__calls.trim_before(name)
         return self
 
     def __wrap_method(self, helper, name, method):

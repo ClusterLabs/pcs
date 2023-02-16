@@ -101,6 +101,8 @@ BuildRequires: resource-agents
 BuildRequires: sbd
 # for post, preun and postun macros
 BuildRequires: systemd
+# for working with qdevice certificates (certutil) - used in configure.ac
+BuildRequires: nss-tools
 
 Requires: python3-cryptography
 Requires: python3-lxml
@@ -125,6 +127,8 @@ Requires(postun): systemd
 Requires: pam
 # needs logrotate for /etc/logrotate.d/pcsd
 Requires: logrotate
+# for working with qdevice certificates (certutil)
+Requires: nss-tools
 
 @pybundle@
 

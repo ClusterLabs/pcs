@@ -90,6 +90,7 @@ EXTRA_DIST		= \
 			  tier0/cli/test_cluster_property.py \
 			  tier0/cli/test_dr.py \
 			  tier0/cli/test_nvset.py \
+			  tier0/cli/test_quorum.py \
 			  tier0/cli/test_resource.py \
 			  tier0/cli/test_rule.py \
 			  tier0/cli/test_status.py \

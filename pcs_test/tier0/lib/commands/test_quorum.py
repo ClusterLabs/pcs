@@ -1,13 +1,20 @@
 # pylint: disable=too-many-lines
 import base64
 import logging
+import os.path
 import re
+from textwrap import dedent
+from typing import NamedTuple
 from unittest import (
     TestCase,
     mock,
 )
 
-from pcs.common import reports
+from pcs import settings
+from pcs.common import (
+    file_type_codes,
+    reports,
+)
 from pcs.common.reports import ReportItemSeverity as severity
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import quorum as lib
@@ -21,7 +28,11 @@ from pcs_test.tools.assertions import (
     assert_report_item_list_equal,
 )
 from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.custom_mock import MockLibraryReportProcessor
+from pcs_test.tools.custom_mock import (
+    MockLibraryReportProcessor,
+    TmpFileCall,
+    TmpFileMock,
+)
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import outdent
 
@@ -504,7 +515,91 @@ class StatusDeviceTextTest(TestCase):
         mock_status.assert_called_once_with("mock_runner", True)
 
 
+class DeviceNetCertsMixin:
+    __client_initialized_counter = 0
+    ca_file_path = os.path.join(
+        settings.corosync_qdevice_net_client_certs_dir,
+        settings.corosync_qdevice_net_client_ca_file_name,
+    )
+
+    def fixture_certificates(self):
+        class Cert(NamedTuple):
+            data: bytes
+            b64data: bytes
+
+            @classmethod
+            def new(cls, data):
+                bytes_data = data.encode()
+                return cls(bytes_data, base64.b64encode(bytes_data))
+
+        class CertGroup(NamedTuple):
+            ca_cert: Cert
+            cert_request: Cert
+            signed_request: Cert
+            pk12_cert: Cert
+
+        self.certs = CertGroup(
+            Cert.new("qnetd CA certificate"),
+            Cert.new("qdevice certificate request"),
+            Cert.new("qdevice certificate request signed by qnetd"),
+            Cert.new("final qdevice certificate in pk12 format to be imported"),
+        )
+
+    def fixture_config_fs_client_initialized(self, result=True):
+        nssdb_files = [
+            "cert9.db",
+            "key4.db",
+            "pkcs11.txt",
+            "cert8.db",
+            "key3.db",
+            "secmod.db",
+        ]
+        test_files = nssdb_files[:1] if result else nssdb_files
+        for a_file in test_files:
+            self.config.fs.exists(
+                os.path.join(
+                    settings.corosync_qdevice_net_client_certs_dir, a_file
+                ),
+                return_value=result,
+                name=f"fs.exists.nssdb-file.{self.__client_initialized_counter}",
+            )
+            self.__client_initialized_counter += 1
+
+    def fixture_config_http_get_ca_cert(self, output=None, fail=False):
+        self.config.http.corosync.qdevice_net_get_ca_cert(
+            communication_list=[
+                {
+                    "label": self.qnetd_host,
+                    "output": (
+                        "Unable to read certificate: error description"
+                        if fail
+                        else (output or self.certs.ca_cert.b64data)
+                    ),
+                    "response_code": 400 if fail else 200,
+                },
+            ]
+        )
+
+    def fixture_config_http_sign_cert_request(self, output=None, fail=False):
+        self.config.http.corosync.qdevice_net_sign_certificate(
+            self.cluster_name,
+            self.certs.cert_request.data,
+            communication_list=[
+                {
+                    "label": self.qnetd_host,
+                    "output": (
+                        "an error"
+                        if fail
+                        else (output or self.certs.signed_request.b64data)
+                    ),
+                    "response_code": 400 if fail else 200,
+                },
+            ],
+        )
+
+
 class AddDeviceNetTest(TestCase):
+    # TODO adapt for DeviceNetCertsMixin
     # pylint: disable=too-many-public-methods
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
@@ -530,6 +625,7 @@ class AddDeviceNetTest(TestCase):
             },
         }
         self.config.env.set_known_nodes(self.cluster_nodes + [self.qnetd_host])
+        # TODO replace self.certs dict with a structure from DeviceNetCertsMixin
         for cert_info in self.certs.values():
             with open(cert_info["path"], "rb") as a_file:
                 plain = a_file.read()
@@ -537,6 +633,7 @@ class AddDeviceNetTest(TestCase):
             cert_info["b64data"] = base64.b64encode(plain)
 
     def fixture_config_http_get_ca_cert(self, output=None):
+        # TODO use fixture from DeviceNetCertsMixin
         self.config.http.corosync.qdevice_net_get_ca_cert(
             communication_list=[
                 {
@@ -553,6 +650,8 @@ class AddDeviceNetTest(TestCase):
         )
 
     def fixture_config_runner_get_cert_request(self):
+        # TODO remove support for ["path"]
+        # and then remove the whole fixture, as it becomes unneeded
         self.config.runner.corosync.qdevice_generate_cert(
             self.cluster_name, self.certs["cert_request"]["path"]
         )
@@ -570,6 +669,8 @@ class AddDeviceNetTest(TestCase):
         )
 
     def fixture_config_runner_cert_to_pk12(self, cert_file_path):
+        # TODO remove support for ["path"]
+        # and then remove the whole fixture, as it becomes unneeded
         self.config.runner.corosync.qdevice_get_pk12(
             cert_file_path, self.certs["final_cert"]["path"]
         )
@@ -826,6 +927,7 @@ class AddDeviceNetTest(TestCase):
             expected_in_processor=False,
         )
 
+    # TODO get rid of mock.patch
     @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
     @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
     def test_success_minimal(self, mock_get_tmp_file):
@@ -915,6 +1017,7 @@ class AddDeviceNetTest(TestCase):
             ]
         )
 
+    # TODO get rid of mock.patch
     @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
     @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
     def test_success_corosync_not_running_not_enabled(self, mock_get_tmp_file):
@@ -1035,21 +1138,25 @@ class AddDeviceNetTest(TestCase):
             ]
         )
 
+    # TODO get rid of mock.patch
     @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
     @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
     def test_success_heuristics_on_no_exec(self, mock_get_tmp_file):
         self.assert_success_heuristics_no_exec(mock_get_tmp_file, "on", True)
 
+    # TODO get rid of mock.patch
     @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
     @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
     def test_success_heuristics_sync_no_exec(self, mock_get_tmp_file):
         self.assert_success_heuristics_no_exec(mock_get_tmp_file, "sync", True)
 
+    # TODO get rid of mock.patch
     @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
     @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
     def test_success_heuristics_off_no_exec(self, mock_get_tmp_file):
         self.assert_success_heuristics_no_exec(mock_get_tmp_file, "off", False)
 
+    # TODO get rid of mock.patch
     @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
     @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
     def test_success_full(self, mock_get_tmp_file):
@@ -1125,6 +1232,7 @@ class AddDeviceNetTest(TestCase):
 
         self.env_assist.assert_reports(self.fixture_reports_success())
 
+    # TODO get rid of mock.patch
     @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
     @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
     def test_success_one_node_offline(self, mock_get_tmp_file):
@@ -1433,6 +1541,7 @@ class AddDeviceNetTest(TestCase):
             ]
         )
 
+    # TODO get rid of mock.patch
     @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
     @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
     def test_invalid_options_forced(self, mock_get_tmp_file):
@@ -1789,6 +1898,7 @@ class AddDeviceNetTest(TestCase):
             ]
         )
 
+    # TODO get rid of mock.patch
     @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
     def test_generate_cert_request_error(self):
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
@@ -1829,6 +1939,7 @@ class AddDeviceNetTest(TestCase):
             ]
         )
 
+    # TODO get rid of mock.patch
     @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
     def test_sign_certificate_error_communication(self):
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
@@ -1874,6 +1985,7 @@ class AddDeviceNetTest(TestCase):
             ]
         )
 
+    # TODO get rid of mock.patch
     @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
     def test_sign_certificate_error_decode_certificate(self):
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
@@ -1909,6 +2021,7 @@ class AddDeviceNetTest(TestCase):
             ]
         )
 
+    # TODO get rid of mock.patch
     @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
     @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
     def test_certificate_to_pk12_error(self, mock_get_tmp_file):
@@ -1955,6 +2068,7 @@ class AddDeviceNetTest(TestCase):
             ]
         )
 
+    # TODO get rid of mock.patch
     @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
     @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
     def test_client_import_cert_error(self, mock_get_tmp_file):
@@ -2012,6 +2126,743 @@ class AddDeviceNetTest(TestCase):
                 fixture.info(
                     report_codes.QDEVICE_CERTIFICATE_ACCEPTED_BY_NODE,
                     node=self.cluster_nodes[2],
+                ),
+            ]
+        )
+
+
+class DeviceNetCertificateSetupLocal(DeviceNetCertsMixin, TestCase):
+    # pylint: disable=too-many-instance-attributes
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+        self.qnetd_host = "qnetd-host"
+        self.cluster_name = "my-cluster"
+        self.signed_cert_tmp_file_name = "signed_cert.tmp"
+        self.pk12_cert_tmp_file_name = "pk12_cert.tmp"
+
+        self.tmp_file_patcher = mock.patch(
+            "pcs.lib.corosync.qdevice_net.get_tmp_file"
+        )
+        self.addCleanup(self.tmp_file_patcher.stop)
+        self.tmp_file_mock_obj = TmpFileMock()
+        self.addCleanup(self.tmp_file_mock_obj.assert_all_done)
+        self.tmp_file_mock = self.tmp_file_patcher.start()
+        self.tmp_file_mock.side_effect = (
+            self.tmp_file_mock_obj.get_mock_side_effect()
+        )
+
+        self.fixture_certificates()
+
+    def fixture_config_success(self, initialized=True):
+        mock_open_ca_file = mock.mock_open()()
+        mock_open_cert_request_file = mock.mock_open(
+            read_data=self.certs.cert_request.data
+        )()
+        mock_open_pk12_cert_file = mock.mock_open(
+            read_data=self.certs.pk12_cert.data
+        )()
+        tmp_file_mock_calls = []
+
+        self.fixture_config_http_get_ca_cert()
+        self.fixture_config_fs_client_initialized(initialized)
+        if initialized:
+            self.config.fs.rmtree(
+                settings.corosync_qdevice_net_client_certs_dir
+            )
+        self.config.fs.exists(
+            settings.corosync_qdevice_net_client_certs_dir,
+            return_value=initialized,
+            name="fs.exists.certs-dir",
+        )
+        if not initialized:
+            self.config.fs.makedirs(
+                settings.corosync_qdevice_net_client_certs_dir, 0o700
+            )
+        self.config.fs.open(
+            self.ca_file_path, mock_open_ca_file, mode="wb", name="fs.open.ca"
+        )
+        self.config.runner.corosync.qdevice_init_cert_storage(self.ca_file_path)
+        self.fixture_config_fs_client_initialized()
+        self.config.runner.corosync.qdevice_generate_cert(
+            self.cluster_name,
+            self.config.runner.corosync.qdevice_generated_cert_path,
+        )
+        self.config.fs.open(
+            self.config.runner.corosync.qdevice_generated_cert_path,
+            mock_open_cert_request_file,
+            mode="rb",
+            name="fs.open.cert_request",
+        )
+        self.fixture_config_http_sign_cert_request()
+        self.fixture_config_fs_client_initialized()
+        tmp_file_mock_calls.append(
+            TmpFileCall(
+                self.signed_cert_tmp_file_name,
+                is_binary=True,
+                orig_content=self.certs.signed_request.data,
+            )
+        )
+        self.config.runner.corosync.qdevice_get_pk12(
+            self.signed_cert_tmp_file_name,
+            self.config.runner.corosync.qdevice_pk12_cert_path,
+        )
+        self.config.fs.open(
+            self.config.runner.corosync.qdevice_pk12_cert_path,
+            mock_open_pk12_cert_file,
+            mode="rb",
+            name="fs.open.pk12_cert",
+        )
+        self.fixture_config_fs_client_initialized()
+        tmp_file_mock_calls.append(
+            TmpFileCall(
+                self.pk12_cert_tmp_file_name,
+                is_binary=True,
+                orig_content=self.certs.pk12_cert.data,
+            )
+        )
+        self.config.runner.corosync.qdevice_import_pk12(
+            self.pk12_cert_tmp_file_name
+        )
+
+        return mock_open_ca_file, tmp_file_mock_calls
+
+    def test_not_live(self):
+        self.config.env.set_corosync_conf_data("corosync config")
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.device_net_certificate_setup_local(
+                self.env_assist.get_env(), self.qnetd_host, self.cluster_name
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    forbidden_options=[file_type_codes.COROSYNC_CONF],
+                )
+            ]
+        )
+
+    def test_success_client_not_initialized(self):
+        mock_open_ca_file, tmp_file_mock_calls = self.fixture_config_success(
+            False
+        )
+        self.tmp_file_mock_obj.set_calls(tmp_file_mock_calls)
+
+        lib.device_net_certificate_setup_local(
+            self.env_assist.get_env(), self.qnetd_host, self.cluster_name
+        )
+
+        mock_open_ca_file.write.assert_called_once_with(self.certs.ca_cert.data)
+
+    def test_success_client_initialized(self):
+        mock_open_ca_file, tmp_file_mock_calls = self.fixture_config_success()
+        self.tmp_file_mock_obj.set_calls(tmp_file_mock_calls)
+
+        lib.device_net_certificate_setup_local(
+            self.env_assist.get_env(), self.qnetd_host, self.cluster_name
+        )
+
+        mock_open_ca_file.write.assert_called_once_with(self.certs.ca_cert.data)
+
+    def test_fail_http_get_ca_cert(self):
+        self.fixture_config_http_get_ca_cert(fail=True)
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.device_net_certificate_setup_local(
+                self.env_assist.get_env(), self.qnetd_host, self.cluster_name
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    force_code=None,
+                    node=self.qnetd_host,
+                    command="remote/qdevice_net_get_ca_certificate",
+                    reason="Unable to read certificate: error description",
+                ),
+            ]
+        )
+
+    def test_fail_write_ca_cert_to_file(self):
+        (
+            dummy_mock_open_ca_file,
+            dummy_tmp_file_mock_calls,
+        ) = self.fixture_config_success()
+        self.config.trim_before("fs.open.ca")
+        self.config.fs.open(
+            self.ca_file_path,
+            side_effect=OSError(1, "an error", self.ca_file_path),
+            mode="wb",
+            name="fs.open.ca",
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.device_net_certificate_setup_local(
+                self.env_assist.get_env(), self.qnetd_host, self.cluster_name
+            ),
+            [
+                fixture.error(
+                    report_codes.QDEVICE_INITIALIZATION_ERROR,
+                    force_code=None,
+                    model="net",
+                    reason="an error",
+                ),
+            ],
+            expected_in_processor=False,
+        )
+
+    def test_fail_init_cert_storage(self):
+        (
+            mock_open_ca_file,
+            dummy_tmp_file_mock_calls,
+        ) = self.fixture_config_success()
+        self.config.trim_before("runner.corosync.qdevice_init_cert_storage")
+        self.config.runner.corosync.qdevice_init_cert_storage(
+            self.ca_file_path, stderr="an error", returncode=1
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.device_net_certificate_setup_local(
+                self.env_assist.get_env(), self.qnetd_host, self.cluster_name
+            ),
+            [
+                fixture.error(
+                    report_codes.QDEVICE_INITIALIZATION_ERROR,
+                    force_code=None,
+                    model="net",
+                    reason="an error",
+                ),
+            ],
+            expected_in_processor=False,
+        )
+        mock_open_ca_file.write.assert_called_once_with(self.certs.ca_cert.data)
+
+    def test_fail_generate_cert_request(self):
+        (
+            mock_open_ca_file,
+            dummy_tmp_file_mock_calls,
+        ) = self.fixture_config_success()
+        self.config.trim_before("runner.corosync.qdevice_generate_cert")
+        self.config.runner.corosync.qdevice_generate_cert(
+            self.cluster_name, stdout="stdout", stderr="an error", returncode=1
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.device_net_certificate_setup_local(
+                self.env_assist.get_env(), self.qnetd_host, self.cluster_name
+            ),
+            [
+                fixture.error(
+                    report_codes.QDEVICE_INITIALIZATION_ERROR,
+                    force_code=None,
+                    model="net",
+                    reason="an error\nstdout",
+                ),
+            ],
+            expected_in_processor=False,
+        )
+        mock_open_ca_file.write.assert_called_once_with(self.certs.ca_cert.data)
+
+    def test_fail_read_cert_request(self):
+        (
+            mock_open_ca_file,
+            dummy_tmp_file_mock_calls,
+        ) = self.fixture_config_success()
+        self.config.trim_before("fs.open.cert_request")
+        self.config.fs.open(
+            self.config.runner.corosync.qdevice_generated_cert_path,
+            side_effect=OSError(
+                1,
+                "an error",
+                self.config.runner.corosync.qdevice_generated_cert_path,
+            ),
+            mode="rb",
+            name="fs.open.cert_request",
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.device_net_certificate_setup_local(
+                self.env_assist.get_env(), self.qnetd_host, self.cluster_name
+            ),
+            [
+                fixture.error(
+                    report_codes.QDEVICE_INITIALIZATION_ERROR,
+                    force_code=None,
+                    model="net",
+                    reason=f"{self.config.runner.corosync.qdevice_generated_cert_path}: an error",
+                ),
+            ],
+            expected_in_processor=False,
+        )
+        mock_open_ca_file.write.assert_called_once_with(self.certs.ca_cert.data)
+
+    def test_fail_http_sign_cert(self):
+        (
+            mock_open_ca_file,
+            dummy_tmp_file_mock_calls,
+        ) = self.fixture_config_success()
+        self.config.trim_before(
+            "http.corosync.qdevice_net_sign_certificate_requests"
+        )
+        self.fixture_config_http_sign_cert_request(fail=True)
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.device_net_certificate_setup_local(
+                self.env_assist.get_env(), self.qnetd_host, self.cluster_name
+            ),
+        )
+        mock_open_ca_file.write.assert_called_once_with(self.certs.ca_cert.data)
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    force_code=None,
+                    node=self.qnetd_host,
+                    command="remote/qdevice_net_sign_node_certificate",
+                    reason="an error",
+                ),
+            ]
+        )
+
+    def test_fail_write_signed_cert_to_tmpfile(self):
+        (
+            mock_open_ca_file,
+            dummy_tmp_file_mock_calls,
+        ) = self.fixture_config_success()
+        self.tmp_file_mock_obj.set_calls(
+            [
+                TmpFileCall(
+                    self.signed_cert_tmp_file_name,
+                    is_binary=True,
+                    orig_content=OSError(
+                        1, "an error", self.signed_cert_tmp_file_name
+                    ),
+                )
+            ]
+        )
+        self.config.trim_before("runner.corosync.qdevice_get_pk12")
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.device_net_certificate_setup_local(
+                self.env_assist.get_env(), self.qnetd_host, self.cluster_name
+            ),
+            [
+                fixture.error(
+                    report_codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
+                    force_code=None,
+                    reason="an error",
+                ),
+            ],
+            expected_in_processor=False,
+        )
+        mock_open_ca_file.write.assert_called_once_with(self.certs.ca_cert.data)
+
+    def test_fail_convert_signed_cert_to_pk12(self):
+        mock_open_ca_file, tmp_file_mock_calls = self.fixture_config_success()
+        self.tmp_file_mock_obj.set_calls(tmp_file_mock_calls[:1])
+        self.config.trim_before("runner.corosync.qdevice_get_pk12")
+        self.config.runner.corosync.qdevice_get_pk12(
+            self.signed_cert_tmp_file_name,
+            stdout="",
+            stderr="an error",
+            returncode=1,
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.device_net_certificate_setup_local(
+                self.env_assist.get_env(), self.qnetd_host, self.cluster_name
+            ),
+            [
+                fixture.error(
+                    report_codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
+                    force_code=None,
+                    reason="an error",
+                ),
+            ],
+            expected_in_processor=False,
+        )
+        mock_open_ca_file.write.assert_called_once_with(self.certs.ca_cert.data)
+
+    def test_fail_read_pk12_certificate(self):
+        mock_open_ca_file, tmp_file_mock_calls = self.fixture_config_success()
+        self.tmp_file_mock_obj.set_calls(tmp_file_mock_calls[:1])
+        self.config.trim_before("fs.open.pk12_cert")
+        self.config.fs.open(
+            self.config.runner.corosync.qdevice_pk12_cert_path,
+            side_effect=OSError(
+                1,
+                "an error",
+                self.config.runner.corosync.qdevice_pk12_cert_path,
+            ),
+            mode="rb",
+            name="fs.open.pk12_cert",
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.device_net_certificate_setup_local(
+                self.env_assist.get_env(), self.qnetd_host, self.cluster_name
+            ),
+            [
+                fixture.error(
+                    report_codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
+                    force_code=None,
+                    reason=f"{self.config.runner.corosync.qdevice_pk12_cert_path}: an error",
+                ),
+            ],
+            expected_in_processor=False,
+        )
+        mock_open_ca_file.write.assert_called_once_with(self.certs.ca_cert.data)
+
+    def test_fail_write_pk12_to_tmpfile(self):
+        mock_open_ca_file, tmp_file_mock_calls = self.fixture_config_success()
+        self.tmp_file_mock_obj.set_calls(
+            tmp_file_mock_calls[:1]
+            + [
+                TmpFileCall(
+                    self.signed_cert_tmp_file_name,
+                    is_binary=True,
+                    orig_content=OSError(
+                        1, "an error", self.pk12_cert_tmp_file_name
+                    ),
+                )
+            ]
+        )
+        self.config.trim_before("runner.corosync.qdevice_import_pk12")
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.device_net_certificate_setup_local(
+                self.env_assist.get_env(), self.qnetd_host, self.cluster_name
+            ),
+            [
+                fixture.error(
+                    report_codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
+                    force_code=None,
+                    reason="an error",
+                ),
+            ],
+            expected_in_processor=False,
+        )
+        mock_open_ca_file.write.assert_called_once_with(self.certs.ca_cert.data)
+
+    def test_fail_import_pk12(self):
+        mock_open_ca_file, tmp_file_mock_calls = self.fixture_config_success()
+        self.tmp_file_mock_obj.set_calls(tmp_file_mock_calls)
+        self.config.trim_before("runner.corosync.qdevice_import_pk12")
+        self.config.runner.corosync.qdevice_import_pk12(
+            self.pk12_cert_tmp_file_name, stderr="an error", returncode=1
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.device_net_certificate_setup_local(
+                self.env_assist.get_env(), self.qnetd_host, self.cluster_name
+            ),
+            [
+                fixture.error(
+                    report_codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
+                    force_code=None,
+                    reason="an error",
+                ),
+            ],
+            expected_in_processor=False,
+        )
+        mock_open_ca_file.write.assert_called_once_with(self.certs.ca_cert.data)
+
+
+class DeviceNetCertificateCheckLocal(DeviceNetCertsMixin, TestCase):
+    # pylint: disable=too-many-public-methods
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+        self.qnetd_host = "qnetd-host"
+        self.cluster_name = "my-cluster"
+        self.fixture_certificates()
+
+    @staticmethod
+    def fixture_cert_data(subject, data):
+        return dedent(
+            f"""\
+            some cert plaintext data
+              Subject: "CN={subject}"
+            some cert plaintext data
+            -----BEGIN CERTIFICATE-----
+            {data.decode()}
+            -----END CERTIFICATE-----
+            """
+        )
+
+    def fixture_show_cluster_cert(self, cluster_name, fail=False):
+        self.config.runner.corosync.qdevice_show_cert(
+            "Cluster Cert",
+            "" if fail else self.fixture_cert_data(cluster_name, b"whatever"),
+            stderr="stderr message" if fail else "",
+            returncode=1 if fail else 0,
+            name="runner.corosync.qdevice_show_cert.cluster",
+        )
+
+    def fixture_show_ca_cert(self, data, fail=False):
+        self.config.runner.corosync.qdevice_show_cert(
+            "QNet CA",
+            data,
+            ascii_only=True,
+            stderr="stderr message" if fail else "",
+            returncode=1 if fail else 0,
+            name="runner.corosync.qdevice_show_cert.ca",
+        )
+
+    def fixture_config_success(self):
+        self.fixture_config_fs_client_initialized()
+        self.config.runner.corosync.qdevice_list_certs()
+        self.fixture_show_cluster_cert(self.cluster_name)
+        self.fixture_config_http_get_ca_cert(
+            base64.b64encode(
+                self.fixture_cert_data(
+                    "whatever", self.certs.ca_cert.b64data
+                ).encode()
+            ),
+        )
+        self.fixture_show_ca_cert(
+            self.fixture_cert_data("whatever", self.certs.ca_cert.b64data),
+        )
+
+    def test_not_live(self):
+        self.config.env.set_corosync_conf_data("corosync config")
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.device_net_certificate_setup_local(
+                self.env_assist.get_env(), self.qnetd_host, self.cluster_name
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    forbidden_options=[file_type_codes.COROSYNC_CONF],
+                )
+            ]
+        )
+
+    def test_success_certificate_matches(self):
+        self.fixture_config_success()
+
+        self.assertTrue(
+            lib.device_net_certificate_check_local(
+                self.env_assist.get_env(), self.qnetd_host, self.cluster_name
+            )
+        )
+
+    def test_success_client_not_initialized(self):
+        self.fixture_config_fs_client_initialized(False)
+
+        self.assertFalse(
+            lib.device_net_certificate_check_local(
+                self.env_assist.get_env(), self.qnetd_host, self.cluster_name
+            )
+        )
+
+    def test_success_cluster_cert_missing(self):
+        self.fixture_config_fs_client_initialized()
+        self.config.runner.corosync.qdevice_list_certs("QNet CA  x,x,x")
+
+        self.assertFalse(
+            lib.device_net_certificate_check_local(
+                self.env_assist.get_env(), self.qnetd_host, self.cluster_name
+            )
+        )
+
+    def test_success_ca_cert_missing(self):
+        self.fixture_config_fs_client_initialized()
+        self.config.runner.corosync.qdevice_list_certs("Cluster Cert   x,x,x")
+
+        self.assertFalse(
+            lib.device_net_certificate_check_local(
+                self.env_assist.get_env(), self.qnetd_host, self.cluster_name
+            )
+        )
+
+    def test_success_cluster_cert_wrong_cluster_name(self):
+        self.fixture_config_fs_client_initialized()
+        self.config.runner.corosync.qdevice_list_certs()
+        self.fixture_show_cluster_cert(self.cluster_name + "X")
+
+        self.assertFalse(
+            lib.device_net_certificate_check_local(
+                self.env_assist.get_env(), self.qnetd_host, self.cluster_name
+            )
+        )
+
+    def test_success_qa_cert_not_matching(self):
+        self.fixture_config_fs_client_initialized()
+        self.config.runner.corosync.qdevice_list_certs()
+        self.fixture_show_cluster_cert(self.cluster_name)
+        self.fixture_config_http_get_ca_cert(
+            base64.b64encode(
+                self.fixture_cert_data(
+                    "whatever", self.certs.ca_cert.b64data
+                ).encode()
+            ),
+        )
+        self.fixture_show_ca_cert(
+            self.fixture_cert_data(
+                "whatever",
+                base64.b64encode(self.certs.ca_cert.data + b"X"),
+            ),
+        )
+
+        self.assertFalse(
+            lib.device_net_certificate_check_local(
+                self.env_assist.get_env(), self.qnetd_host, self.cluster_name
+            )
+        )
+
+    def test_fail_local_ca_cert_format(self):
+        self.fixture_config_success()
+        self.config.trim_before("runner.corosync.qdevice_show_cert.ca")
+        self.fixture_show_ca_cert("unexpected data format")
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.device_net_certificate_check_local(
+                self.env_assist.get_env(), self.qnetd_host, self.cluster_name
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.QDEVICE_CERTIFICATE_BAD_FORMAT,
+                    force_code=None,
+                ),
+            ]
+        )
+
+    def test_fail_local_ca_cert_read(self):
+        self.fixture_config_success()
+        self.config.trim_before("runner.corosync.qdevice_show_cert.ca")
+        self.fixture_show_ca_cert("stdout", fail=True)
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.device_net_certificate_check_local(
+                self.env_assist.get_env(), self.qnetd_host, self.cluster_name
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.QDEVICE_CERTIFICATE_READ_ERROR,
+                    force_code=None,
+                    reason="stderr message\nstdout",
+                ),
+            ]
+        )
+
+    def test_fail_remote_ca_cert_format(self):
+        self.fixture_config_success()
+        self.config.trim_before(
+            "http.corosync.qdevice_net_get_ca_cert_requests"
+        )
+        self.fixture_config_http_get_ca_cert(
+            base64.b64encode(b"unexpected data format")
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.device_net_certificate_check_local(
+                self.env_assist.get_env(), self.qnetd_host, self.cluster_name
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.QDEVICE_CERTIFICATE_BAD_FORMAT,
+                    force_code=None,
+                ),
+            ]
+        )
+
+    def test_fail_remote_ca_cert_fetch(self):
+        self.fixture_config_success()
+        self.config.trim_before(
+            "http.corosync.qdevice_net_get_ca_cert_requests"
+        )
+        self.fixture_config_http_get_ca_cert(fail=True)
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.device_net_certificate_check_local(
+                self.env_assist.get_env(), self.qnetd_host, self.cluster_name
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    force_code=None,
+                    node=self.qnetd_host,
+                    command="remote/qdevice_net_get_ca_certificate",
+                    reason="Unable to read certificate: error description",
+                ),
+            ]
+        )
+
+    def test_fail_cluster_cert_format(self):
+        self.fixture_config_success()
+        self.config.trim_before("runner.corosync.qdevice_show_cert.cluster")
+        self.fixture_show_cluster_cert("unexpected data format")
+
+        # We don't do full parsing, we just look for a specific string. So no
+        # there is no exception raised.
+        self.assertFalse(
+            lib.device_net_certificate_check_local(
+                self.env_assist.get_env(), self.qnetd_host, self.cluster_name
+            )
+        )
+
+    def test_fail_cluster_cert_read(self):
+        self.fixture_config_success()
+        self.config.trim_before("runner.corosync.qdevice_show_cert.cluster")
+        self.fixture_show_cluster_cert("stdout", fail=True)
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.device_net_certificate_check_local(
+                self.env_assist.get_env(), self.qnetd_host, self.cluster_name
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.QDEVICE_CERTIFICATE_READ_ERROR,
+                    force_code=None,
+                    reason="stderr message",
+                ),
+            ]
+        )
+
+    def test_fail_cert_list_format(self):
+        self.fixture_config_success()
+        self.config.trim_before("runner.corosync.qdevice_list_certs")
+        self.config.runner.corosync.qdevice_list_certs("unexpected data format")
+
+        # We don't do full parsing, we just look for a specific string. So no
+        # there is no exception raised.
+        self.assertFalse(
+            lib.device_net_certificate_check_local(
+                self.env_assist.get_env(), self.qnetd_host, self.cluster_name
+            )
+        )
+
+    def test_fail_cert_list_read(self):
+        self.fixture_config_success()
+        self.config.trim_before("runner.corosync.qdevice_list_certs")
+        self.config.runner.corosync.qdevice_list_certs(
+            stdout="some stdout", stderr="Error message", returncode=1
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.device_net_certificate_check_local(
+                self.env_assist.get_env(), self.qnetd_host, self.cluster_name
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.QDEVICE_CERTIFICATE_READ_ERROR,
+                    force_code=None,
+                    reason="Error message\nsome stdout",
                 ),
             ]
         )
