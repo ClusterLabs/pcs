@@ -119,9 +119,7 @@ def make_api_request_post(
 
 # PRETTY PRINT
 def print_command_return_value(task_result_dto: TaskResultDto) -> None:
-    return_value = task_result_dto.result
-    if return_value:
-        print(return_value)
+    print(task_result_dto.result)
 
 
 def print_task_details(task_result_dto: TaskResultDto) -> None:
