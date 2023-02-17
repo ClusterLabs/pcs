@@ -15,8 +15,6 @@ from pcs.common import (
     file_type_codes,
     reports,
 )
-from pcs.common.reports import ReportItemSeverity as severity
-from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import quorum as lib
 from pcs.lib.corosync.config_facade import ConfigFacade
 from pcs.lib.env import LibraryEnvironment
@@ -38,11 +36,7 @@ from pcs_test.tools.misc import outdent
 
 
 def _read_file_rc(name):
-    return _read_file(rc(name))
-
-
-def _read_file(name):
-    with open(name) as a_file:
+    with open(rc(name)) as a_file:
         return a_file.read()
 
 
@@ -248,8 +242,8 @@ class CheckIfAtbCanBeDisabledTest(TestCase):
         mock_atb_needed.return_value = True
         self.mock_corosync_conf.is_enabled_auto_tie_breaker.return_value = False
         report_item = fixture.error(
-            report_codes.COROSYNC_QUORUM_ATB_CANNOT_BE_DISABLED_DUE_TO_SBD,
-            force_code=report_codes.FORCE,
+            reports.codes.COROSYNC_QUORUM_ATB_CANNOT_BE_DISABLED_DUE_TO_SBD,
+            force_code=reports.codes.FORCE,
         )
         assert_raise_library_error(
             lambda: lib._check_if_atb_can_be_disabled(
@@ -354,12 +348,11 @@ class CheckIfAtbCanBeDisabledTest(TestCase):
             force=True,
         )
         assert_report_item_list_equal(
-            # pylint: disable=line-too-long
             self.mock_reporter.report_item_list,
             [
                 (
-                    severity.WARNING,
-                    report_codes.COROSYNC_QUORUM_ATB_CANNOT_BE_DISABLED_DUE_TO_SBD,
+                    reports.ReportItemSeverity.WARNING,
+                    reports.codes.COROSYNC_QUORUM_ATB_CANNOT_BE_DISABLED_DUE_TO_SBD,
                     {},
                     None,
                 )
@@ -418,7 +411,7 @@ class SetQuorumOptionsTest(TestCase):
     def test_bad_options(
         self, mock_runner, mock_get_corosync, mock_push_corosync, mock_check
     ):
-        # pylint: disable=unused-argument
+        del mock_runner
         original_conf = _read_file_rc("corosync.conf")
         mock_get_corosync.return_value = original_conf
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
@@ -431,8 +424,8 @@ class SetQuorumOptionsTest(TestCase):
             self.mock_reporter.report_item_list,
             [
                 (
-                    severity.ERROR,
-                    report_codes.INVALID_OPTIONS,
+                    reports.ReportItemSeverity.ERROR,
+                    reports.codes.INVALID_OPTIONS,
                     {
                         "option_names": ["invalid"],
                         "option_type": "quorum",
@@ -454,7 +447,7 @@ class SetQuorumOptionsTest(TestCase):
     def test_bad_config(
         self, mock_runner, mock_get_corosync, mock_push_corosync, mock_check
     ):
-        # pylint: disable=unused-argument
+        del mock_runner
         original_conf = "invalid {\nconfig: this is"
         mock_get_corosync.return_value = original_conf
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
@@ -467,8 +460,8 @@ class SetQuorumOptionsTest(TestCase):
             self.mock_reporter.report_item_list,
             [
                 (
-                    severity.ERROR,
-                    report_codes.PARSE_ERROR_COROSYNC_CONF_MISSING_CLOSING_BRACE,
+                    reports.ReportItemSeverity.ERROR,
+                    reports.codes.PARSE_ERROR_COROSYNC_CONF_MISSING_CLOSING_BRACE,
                     {},
                 ),
             ],
@@ -598,9 +591,9 @@ class DeviceNetCertsMixin:
         )
 
 
-class AddDeviceNetTest(TestCase):
-    # TODO adapt for DeviceNetCertsMixin
+class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
     # pylint: disable=too-many-public-methods
+    # pylint: disable=too-many-instance-attributes
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
 
@@ -610,86 +603,69 @@ class AddDeviceNetTest(TestCase):
         self.cluster_name = "test99"
         # nodes are defined in the corosync-3nodes.conf file
         self.cluster_nodes = ["rh7-1", "rh7-2", "rh7-3"]
-        self.certs = {
-            "cacert": {
-                "path": rc("qdevice-certs/qnetd-cacert.crt"),
-            },
-            "cert_request": {
-                "path": rc("qdevice-certs/qdevice-cert-request.crq"),
-            },
-            "signed_request": {
-                "path": rc("qdevice-certs/signed-certificate.crt"),
-            },
-            "final_cert": {
-                "path": rc("qdevice-certs/final-certificate.pk12"),
-            },
-        }
+        self.signed_cert_tmp_file_name = "signed_cert.tmp"
         self.config.env.set_known_nodes(self.cluster_nodes + [self.qnetd_host])
-        # TODO replace self.certs dict with a structure from DeviceNetCertsMixin
-        for cert_info in self.certs.values():
-            with open(cert_info["path"], "rb") as a_file:
-                plain = a_file.read()
-            cert_info["data"] = plain
-            cert_info["b64data"] = base64.b64encode(plain)
 
-    def fixture_config_http_get_ca_cert(self, output=None):
-        # TODO use fixture from DeviceNetCertsMixin
-        self.config.http.corosync.qdevice_net_get_ca_cert(
-            communication_list=[
-                {
-                    "label": self.qnetd_host,
-                    "output": output or self.certs["cacert"]["b64data"],
-                },
-            ]
+        self.tmp_file_patcher = mock.patch(
+            "pcs.lib.corosync.qdevice_net.get_tmp_file"
+        )
+        self.addCleanup(self.tmp_file_patcher.stop)
+        self.tmp_file_mock_obj = TmpFileMock()
+        self.addCleanup(self.tmp_file_mock_obj.assert_all_done)
+        self.tmp_file_mock = self.tmp_file_patcher.start()
+        self.tmp_file_mock.side_effect = (
+            self.tmp_file_mock_obj.get_mock_side_effect()
         )
 
-    def fixture_config_http_client_init(self):
-        self.config.http.corosync.qdevice_net_client_setup(
-            self.certs["cacert"]["data"],
-            self.cluster_nodes,
-        )
+        self.fixture_certificates()
 
-    def fixture_config_runner_get_cert_request(self):
-        # TODO remove support for ["path"]
-        # and then remove the whole fixture, as it becomes unneeded
-        self.config.runner.corosync.qdevice_generate_cert(
-            self.cluster_name, self.certs["cert_request"]["path"]
-        )
+    def fixture_config_success(self, expected_corosync_conf=""):
+        mock_open_cert_request_file = mock.mock_open(
+            read_data=self.certs.cert_request.data
+        )()
+        mock_open_pk12_cert_file = mock.mock_open(
+            read_data=self.certs.pk12_cert.data
+        )()
+        tmp_file_mock_calls = []
 
-    def fixture_config_http_sign_cert_request(self, output=None):
-        self.config.http.corosync.qdevice_net_sign_certificate(
-            self.cluster_name,
-            self.certs["cert_request"]["data"],
-            communication_list=[
-                {
-                    "label": self.qnetd_host,
-                    "output": output or self.certs["signed_request"]["b64data"],
-                },
-            ],
-        )
-
-    def fixture_config_runner_cert_to_pk12(self, cert_file_path):
-        # TODO remove support for ["path"]
-        # and then remove the whole fixture, as it becomes unneeded
-        self.config.runner.corosync.qdevice_get_pk12(
-            cert_file_path, self.certs["final_cert"]["path"]
-        )
-
-    def fixture_config_http_import_final_cert(self):
-        self.config.http.corosync.qdevice_net_client_import_cert_and_key(
-            self.certs["final_cert"]["data"], self.cluster_nodes
-        )
-
-    def fixture_config_success(
-        self, expected_corosync_conf, cert_to_pk12_cert_path
-    ):
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
         self.fixture_config_http_get_ca_cert()
-        self.fixture_config_http_client_init()
-        self.fixture_config_runner_get_cert_request()
+        self.config.http.corosync.qdevice_net_client_setup(
+            self.certs.ca_cert.data, self.cluster_nodes
+        )
+        self.fixture_config_fs_client_initialized()
+        self.config.runner.corosync.qdevice_generate_cert(
+            self.cluster_name,
+            self.config.runner.corosync.qdevice_generated_cert_path,
+        )
+        self.config.fs.open(
+            self.config.runner.corosync.qdevice_generated_cert_path,
+            mock_open_cert_request_file,
+            mode="rb",
+            name="fs.open.cert_request",
+        )
         self.fixture_config_http_sign_cert_request()
-        self.fixture_config_runner_cert_to_pk12(cert_to_pk12_cert_path)
-        self.fixture_config_http_import_final_cert()
+        self.fixture_config_fs_client_initialized()
+        tmp_file_mock_calls.append(
+            TmpFileCall(
+                self.signed_cert_tmp_file_name,
+                is_binary=True,
+                orig_content=self.certs.signed_request.data,
+            )
+        )
+        self.config.runner.corosync.qdevice_get_pk12(
+            self.signed_cert_tmp_file_name,
+            self.config.runner.corosync.qdevice_pk12_cert_path,
+        )
+        self.config.fs.open(
+            self.config.runner.corosync.qdevice_pk12_cert_path,
+            mock_open_pk12_cert_file,
+            mode="rb",
+            name="fs.open.pk12_cert",
+        )
+        self.config.http.corosync.qdevice_net_client_import_cert_and_key(
+            self.certs.pk12_cert.data, self.cluster_nodes
+        )
         self.config.http.corosync.qdevice_client_enable(
             node_labels=self.cluster_nodes
         )
@@ -700,116 +676,56 @@ class AddDeviceNetTest(TestCase):
             node_labels=self.cluster_nodes
         )
 
+        return tmp_file_mock_calls
+
     def fixture_reports_success(self):
-        return (
-            [
-                fixture.info(
-                    report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
-                ),
-            ]
-            + [
-                fixture.info(
-                    report_codes.QDEVICE_CERTIFICATE_ACCEPTED_BY_NODE, node=node
-                )
-                for node in self.cluster_nodes
-            ]
-            + [
-                fixture.info(
-                    reports.codes.SERVICE_ACTION_STARTED,
-                    action=reports.const.SERVICE_ACTION_ENABLE,
-                    service="corosync-qdevice",
-                    instance="",
-                ),
-            ]
-            + [
-                fixture.info(
-                    reports.codes.SERVICE_ACTION_SUCCEEDED,
-                    action=reports.const.SERVICE_ACTION_ENABLE,
-                    service="corosync-qdevice",
-                    node=node,
-                    instance="",
-                )
-                for node in self.cluster_nodes
-            ]
-            + [
-                fixture.info(
-                    reports.codes.SERVICE_ACTION_STARTED,
-                    action=reports.const.SERVICE_ACTION_START,
-                    service="corosync-qdevice",
-                    instance="",
-                ),
-            ]
-            + [
-                fixture.info(
-                    reports.codes.SERVICE_ACTION_SUCCEEDED,
-                    action=reports.const.SERVICE_ACTION_START,
-                    service="corosync-qdevice",
-                    node=node,
-                    instance="",
-                )
-                for node in self.cluster_nodes
-            ]
+        report_store = fixture.ReportStore()
+        report_store = report_store.info(
+            "started", reports.codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
         )
-
-    def assert_success_heuristics_no_exec(self, mock_get_tmp_file, mode, warn):
-        tmpfile_instance = mock.MagicMock()
-        tmpfile_instance.name = rc("file.tmp")
-        mock_get_tmp_file.return_value.__enter__.return_value = tmpfile_instance
-
-        expected_corosync_conf = _read_file(
-            rc(self.corosync_conf_name)
-        ).replace(
-            "    provider: corosync_votequorum\n",
-            outdent(
-                """\
-                    provider: corosync_votequorum
-
-                    device {
-                        model: net
-                        votes: 1
-
-                        net {
-                            algorithm: ffsplit
-                            host: qnetd-host
-                        }
-
-                        heuristics {
-                            mode: %mode%
-                        }
-                    }
-                """.replace(
-                    "%mode%", mode
-                )
-            ),
+        for node in self.cluster_nodes:
+            report_store = report_store.info(
+                f"cert_accepted_by_{node}",
+                reports.codes.QDEVICE_CERTIFICATE_ACCEPTED_BY_NODE,
+                node=node,
+            )
+        report_store = report_store.info(
+            "enable_qdevice_started",
+            reports.codes.SERVICE_ACTION_STARTED,
+            action=reports.const.SERVICE_ACTION_ENABLE,
+            service="corosync-qdevice",
+            instance="",
         )
-
-        self.fixture_config_success(
-            expected_corosync_conf, tmpfile_instance.name
+        for node in self.cluster_nodes:
+            report_store = report_store.info(
+                f"enable_qdevice_done_on_{node}",
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.const.SERVICE_ACTION_ENABLE,
+                service="corosync-qdevice",
+                node=node,
+                instance="",
+            )
+        report_store = report_store.info(
+            "start_qdevice_started",
+            reports.codes.SERVICE_ACTION_STARTED,
+            action=reports.const.SERVICE_ACTION_START,
+            service="corosync-qdevice",
+            instance="",
         )
+        for node in self.cluster_nodes:
+            report_store = report_store.info(
+                f"start_qdevice_done_on_{node}",
+                reports.codes.SERVICE_ACTION_SUCCEEDED,
+                action=reports.const.SERVICE_ACTION_START,
+                service="corosync-qdevice",
+                node=node,
+                instance="",
+            )
+        return report_store
 
-        lib.add_device(
-            self.env_assist.get_env(),
-            "net",
-            {"host": self.qnetd_host, "algorithm": "ffsplit"},
-            {},
-            {"mode": mode},
-        )
-
-        mock_get_tmp_file.assert_called_once_with(
-            self.certs["signed_request"]["data"], binary=True
-        )
-        expected_reports = self.fixture_reports_success()
-        if warn:
-            expected_reports += [
-                fixture.warn(
-                    report_codes.COROSYNC_QUORUM_HEURISTICS_ENABLED_WITH_NO_EXEC
-                )
-            ]
-        self.env_assist.assert_reports(expected_reports)
-
-    def test_not_live_success(self):
-        original_config = _read_file_rc("corosync-3nodes.conf")
-        expected_corosync_conf = original_config.replace(
+    def test_not_live_success_minimal(self):
+        original_config = _read_file_rc(self.corosync_conf_name)
+        expected_config = original_config.replace(
             "    provider: corosync_votequorum\n",
             outdent(
                 """\
@@ -828,11 +744,8 @@ class AddDeviceNetTest(TestCase):
             ),
         )
 
-        (
-            self.config.env.set_corosync_conf_data(
-                original_config
-            ).env.push_corosync_conf(corosync_conf_text=expected_corosync_conf)
-        )
+        self.config.env.set_corosync_conf_data(original_config)
+        self.config.env.push_corosync_conf(corosync_conf_text=expected_config)
 
         lib.add_device(
             self.env_assist.get_env(),
@@ -842,23 +755,81 @@ class AddDeviceNetTest(TestCase):
             {},
         )
 
+    def test_not_live_success_full(self):
+        original_config = _read_file_rc(self.corosync_conf_name)
+        expected_config = original_config.replace(
+            "    provider: corosync_votequorum\n",
+            outdent(
+                """\
+                    provider: corosync_votequorum
+
+                    device {
+                        sync_timeout: 34567
+                        timeout: 23456
+                        model: net
+                        votes: 1
+
+                        net {
+                            algorithm: ffsplit
+                            connect_timeout: 12345
+                            force_ip_version: 4
+                            host: qnetd-host
+                            port: 4433
+                            tie_breaker: lowest
+                        }
+
+                        heuristics {
+                            exec_ls: test -f /tmp/test
+                            exec_ping: ping -q -c 1 "127.0.0.1"
+                            interval: 30
+                            mode: on
+                            sync_timeout: 15
+                            timeout: 5
+                        }
+                    }
+                """
+            ),
+        )
+
+        self.config.env.set_corosync_conf_data(original_config)
+        self.config.env.push_corosync_conf(corosync_conf_text=expected_config)
+
+        lib.add_device(
+            self.env_assist.get_env(),
+            "net",
+            {
+                "host": self.qnetd_host,
+                "port": "4433",
+                "algorithm": "ffsplit",
+                "connect_timeout": "12345",
+                "force_ip_version": "4",
+                "tie_breaker": "lowest",
+            },
+            {"timeout": "23456", "sync_timeout": "34567"},
+            {
+                "mode": "on",
+                "timeout": "5",
+                "sync_timeout": "15",
+                "interval": "30",
+                "exec_ping": 'ping -q -c 1 "127.0.0.1"',
+                "exec_ls": "test -f /tmp/test",
+            },
+        )
+
     def test_not_live_error(self):
-        (
-            self.config.env.set_corosync_conf_data(
-                _read_file_rc("corosync-3nodes.conf")
-            )
+        self.config.env.set_corosync_conf_data(
+            _read_file_rc(self.corosync_conf_name)
         )
         self.env_assist.assert_raise_library_error(
             lambda: lib.add_device(
                 self.env_assist.get_env(), "bad model", {}, {}, {}
-            ),
-            [],
+            )
         )
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE,
+                    reports.codes.INVALID_OPTION_VALUE,
+                    force_code=reports.codes.FORCE,
                     option_name="model",
                     option_value="bad model",
                     allowed_values=["net"],
@@ -871,22 +842,19 @@ class AddDeviceNetTest(TestCase):
     def test_not_live_doesnt_care_about_node_names(self):
         # it's not live, it doesn't distribute config to nodes, therefore it
         # doesn't care about node names missing
-        (
-            self.config.env.set_corosync_conf_data(
-                _read_file_rc("corosync-no-node-names.conf")
-            )
+        self.config.env.set_corosync_conf_data(
+            _read_file_rc("corosync-no-node-names.conf")
         )
         self.env_assist.assert_raise_library_error(
             lambda: lib.add_device(
                 self.env_assist.get_env(), "bad model", {}, {}, {}
             ),
-            [],
         )
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE,
+                    reports.codes.INVALID_OPTION_VALUE,
+                    force_code=reports.codes.FORCE,
                     option_name="model",
                     option_value="bad model",
                     allowed_values=["net"],
@@ -897,7 +865,7 @@ class AddDeviceNetTest(TestCase):
         )
 
     def test_fail_if_device_already_set(self):
-        corosync_conf = _read_file(rc(self.corosync_conf_name)).replace(
+        corosync_conf = _read_file_rc(self.corosync_conf_name).replace(
             "    provider: corosync_votequorum\n",
             outdent(
                 """\
@@ -922,22 +890,13 @@ class AddDeviceNetTest(TestCase):
                 self.env_assist.get_env(), "net", {"host": "qnetd-host"}, {}, {}
             ),
             [
-                fixture.error(report_codes.QDEVICE_ALREADY_DEFINED),
+                fixture.error(reports.codes.QDEVICE_ALREADY_DEFINED),
             ],
             expected_in_processor=False,
         )
 
-    # TODO get rid of mock.patch
-    @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
-    @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
-    def test_success_minimal(self, mock_get_tmp_file):
-        tmpfile_instance = mock.MagicMock()
-        tmpfile_instance.name = rc("file.tmp")
-        mock_get_tmp_file.return_value.__enter__.return_value = tmpfile_instance
-
-        expected_corosync_conf = _read_file(
-            rc(self.corosync_conf_name)
-        ).replace(
+    def test_success_minimal(self):
+        expected_corosync_conf = _read_file_rc(self.corosync_conf_name).replace(
             "    provider: corosync_votequorum\n",
             outdent(
                 """\
@@ -956,9 +915,10 @@ class AddDeviceNetTest(TestCase):
             ),
         )
 
-        self.fixture_config_success(
-            expected_corosync_conf, tmpfile_instance.name
+        tmp_file_mock_calls = self.fixture_config_success(
+            expected_corosync_conf
         )
+        self.tmp_file_mock_obj.set_calls(tmp_file_mock_calls)
 
         lib.add_device(
             self.env_assist.get_env(),
@@ -968,9 +928,6 @@ class AddDeviceNetTest(TestCase):
             {},
         )
 
-        mock_get_tmp_file.assert_called_once_with(
-            self.certs["signed_request"]["data"], binary=True
-        )
         self.env_assist.assert_reports(self.fixture_reports_success())
 
     def test_some_node_names_missing(self):
@@ -989,7 +946,7 @@ class AddDeviceNetTest(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                    reports.codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
                     fatal=True,
                 ),
             ]
@@ -1011,23 +968,14 @@ class AddDeviceNetTest(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                    reports.codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
                     fatal=True,
                 ),
             ]
         )
 
-    # TODO get rid of mock.patch
-    @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
-    @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
-    def test_success_corosync_not_running_not_enabled(self, mock_get_tmp_file):
-        tmpfile_instance = mock.MagicMock()
-        tmpfile_instance.name = rc("file.tmp")
-        mock_get_tmp_file.return_value.__enter__.return_value = tmpfile_instance
-
-        expected_corosync_conf = _read_file(
-            rc(self.corosync_conf_name)
-        ).replace(
+    def test_success_corosync_not_running_not_enabled(self):
+        expected_corosync_conf = _read_file_rc(self.corosync_conf_name).replace(
             "    provider: corosync_votequorum\n",
             outdent(
                 """\
@@ -1046,13 +994,14 @@ class AddDeviceNetTest(TestCase):
             ),
         )
 
-        self.config.corosync_conf.load(filename=self.corosync_conf_name)
-        self.fixture_config_http_get_ca_cert()
-        self.fixture_config_http_client_init()
-        self.fixture_config_runner_get_cert_request()
-        self.fixture_config_http_sign_cert_request()
-        self.fixture_config_runner_cert_to_pk12(tmpfile_instance.name)
-        self.fixture_config_http_import_final_cert()
+        tmp_file_mock_calls = self.fixture_config_success(
+            expected_corosync_conf
+        )
+        self.tmp_file_mock_obj.set_calls(tmp_file_mock_calls)
+
+        self.config.calls.trim_before(
+            "http.corosync.qdevice_client_enable_requests"
+        )
         self.config.http.corosync.qdevice_client_enable(
             communication_list=[
                 {
@@ -1083,90 +1032,94 @@ class AddDeviceNetTest(TestCase):
             {},
         )
 
-        mock_get_tmp_file.assert_called_once_with(
-            self.certs["signed_request"]["data"], binary=True
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.info(
-                    report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
-                ),
-            ]
-            + [
-                fixture.info(
-                    report_codes.QDEVICE_CERTIFICATE_ACCEPTED_BY_NODE, node=node
+        report_list_success = self.fixture_reports_success()
+        expected_reports = report_list_success[
+            :f"enable_qdevice_done_on_{self.cluster_nodes[0]}"
+        ]
+        for node in self.cluster_nodes:
+            expected_reports = expected_reports.info(
+                f"enable_qdevice_skipped_on_{node}",
+                reports.codes.SERVICE_ACTION_SKIPPED,
+                action=reports.const.SERVICE_ACTION_ENABLE,
+                service="corosync-qdevice",
+                reason="corosync is not enabled",
+                node=node,
+                instance="",
+            )
+        expected_reports += report_list_success.only("start_qdevice_started")
+        for node in self.cluster_nodes:
+            expected_reports = expected_reports.info(
+                f"start_qdevice_skipped_on_{node}",
+                reports.codes.SERVICE_ACTION_SKIPPED,
+                action=reports.const.SERVICE_ACTION_START,
+                service="corosync-qdevice",
+                reason="corosync is not running",
+                node=node,
+                instance="",
+            )
+        self.env_assist.assert_reports(expected_reports)
+
+    def assert_success_heuristics_no_exec(self, mode, warn):
+        expected_corosync_conf = _read_file_rc(self.corosync_conf_name).replace(
+            "    provider: corosync_votequorum\n",
+            outdent(
+                """\
+                    provider: corosync_votequorum
+
+                    device {
+                        model: net
+                        votes: 1
+
+                        net {
+                            algorithm: ffsplit
+                            host: qnetd-host
+                        }
+
+                        heuristics {
+                            mode: %mode%
+                        }
+                    }
+                """.replace(
+                    "%mode%", mode
                 )
-                for node in self.cluster_nodes
-            ]
-            + [
-                fixture.info(
-                    reports.codes.SERVICE_ACTION_STARTED,
-                    action=reports.const.SERVICE_ACTION_ENABLE,
-                    service="corosync-qdevice",
-                    instance="",
-                ),
-            ]
-            + [
-                fixture.info(
-                    reports.codes.SERVICE_ACTION_SKIPPED,
-                    action=reports.const.SERVICE_ACTION_ENABLE,
-                    service="corosync-qdevice",
-                    reason="corosync is not enabled",
-                    node=node,
-                    instance="",
-                )
-                for node in self.cluster_nodes
-            ]
-            + [
-                fixture.info(
-                    reports.codes.SERVICE_ACTION_STARTED,
-                    action=reports.const.SERVICE_ACTION_START,
-                    service="corosync-qdevice",
-                    instance="",
-                ),
-            ]
-            + [
-                fixture.info(
-                    reports.codes.SERVICE_ACTION_SKIPPED,
-                    action=reports.const.SERVICE_ACTION_START,
-                    service="corosync-qdevice",
-                    reason="corosync is not running",
-                    node=node,
-                    instance="",
-                )
-                for node in self.cluster_nodes
-            ]
+            ),
         )
 
-    # TODO get rid of mock.patch
-    @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
-    @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
-    def test_success_heuristics_on_no_exec(self, mock_get_tmp_file):
-        self.assert_success_heuristics_no_exec(mock_get_tmp_file, "on", True)
+        tmp_file_mock_calls = self.fixture_config_success(
+            expected_corosync_conf
+        )
+        self.tmp_file_mock_obj.set_calls(tmp_file_mock_calls)
 
-    # TODO get rid of mock.patch
-    @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
-    @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
-    def test_success_heuristics_sync_no_exec(self, mock_get_tmp_file):
-        self.assert_success_heuristics_no_exec(mock_get_tmp_file, "sync", True)
+        lib.add_device(
+            self.env_assist.get_env(),
+            "net",
+            {"host": self.qnetd_host, "algorithm": "ffsplit"},
+            {},
+            {"mode": mode},
+        )
 
-    # TODO get rid of mock.patch
-    @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
-    @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
-    def test_success_heuristics_off_no_exec(self, mock_get_tmp_file):
-        self.assert_success_heuristics_no_exec(mock_get_tmp_file, "off", False)
+        expected_reports = self.fixture_reports_success()
+        if warn:
+            expected_reports = (
+                fixture.ReportStore().warn(
+                    "heuristics_without_exec",
+                    reports.codes.COROSYNC_QUORUM_HEURISTICS_ENABLED_WITH_NO_EXEC,
+                )
+                + expected_reports
+            )
+        self.env_assist.assert_reports(expected_reports)
 
-    # TODO get rid of mock.patch
-    @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
-    @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
-    def test_success_full(self, mock_get_tmp_file):
-        tmpfile_instance = mock.MagicMock()
-        tmpfile_instance.name = rc("file.tmp")
-        mock_get_tmp_file.return_value.__enter__.return_value = tmpfile_instance
+    def test_success_heuristics_on_no_exec(self):
+        self.assert_success_heuristics_no_exec("on", True)
 
-        expected_corosync_conf = _read_file(
-            rc(self.corosync_conf_name)
-        ).replace(
+    def test_success_heuristics_sync_no_exec(self):
+        self.assert_success_heuristics_no_exec("sync", True)
+
+    def test_success_heuristics_off_no_exec(self):
+        self.assert_success_heuristics_no_exec("off", False)
+
+    def test_success_full(self):
+        expected_corosync_conf = _read_file_rc(self.corosync_conf_name).replace(
             "    provider: corosync_votequorum\n",
             outdent(
                 """\
@@ -1200,9 +1153,10 @@ class AddDeviceNetTest(TestCase):
             ),
         )
 
-        self.fixture_config_success(
-            expected_corosync_conf, tmpfile_instance.name
+        tmp_file_mock_calls = self.fixture_config_success(
+            expected_corosync_conf
         )
+        self.tmp_file_mock_obj.set_calls(tmp_file_mock_calls)
 
         lib.add_device(
             self.env_assist.get_env(),
@@ -1226,19 +1180,12 @@ class AddDeviceNetTest(TestCase):
             },
         )
 
-        mock_get_tmp_file.assert_called_once_with(
-            self.certs["signed_request"]["data"], binary=True
-        )
-
         self.env_assist.assert_reports(self.fixture_reports_success())
 
-    # TODO get rid of mock.patch
-    @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
-    @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
-    def test_success_one_node_offline(self, mock_get_tmp_file):
+    def test_success_one_node_offline(self):
         node_2_offline_msg = (
-            "Failed connect to {0}:2224; No route to host"
-        ).format(self.cluster_nodes[1])
+            f"Failed connect to {self.cluster_nodes[1]}:2224; No route to host"
+        )
         node_2_offline_responses = [
             {"label": self.cluster_nodes[0]},
             {
@@ -1251,20 +1198,15 @@ class AddDeviceNetTest(TestCase):
         ]
 
         def node_2_offline_warning(command):
-            return fixture.warn(
-                report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+            return fixture.ReportStore().warn(
+                f"node_2_offline_{command}",
+                reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                 node=self.cluster_nodes[1],
                 reason=node_2_offline_msg,
                 command=command,
             )
 
-        tmpfile_instance = mock.MagicMock()
-        tmpfile_instance.name = rc("file.tmp")
-        mock_get_tmp_file.return_value.__enter__.return_value = tmpfile_instance
-
-        expected_corosync_conf = _read_file(
-            rc(self.corosync_conf_name)
-        ).replace(
+        expected_corosync_conf = _read_file_rc(self.corosync_conf_name).replace(
             "    provider: corosync_votequorum\n",
             outdent(
                 """\
@@ -1283,17 +1225,23 @@ class AddDeviceNetTest(TestCase):
             ),
         )
 
-        self.config.corosync_conf.load(filename=self.corosync_conf_name)
-        self.fixture_config_http_get_ca_cert()
-        self.config.http.corosync.qdevice_net_client_setup(
-            self.certs["cacert"]["data"],
-            communication_list=node_2_offline_responses,
+        tmp_file_mock_calls = self.fixture_config_success(
+            expected_corosync_conf
         )
-        self.fixture_config_runner_get_cert_request()
-        self.fixture_config_http_sign_cert_request()
-        self.fixture_config_runner_cert_to_pk12(tmpfile_instance.name)
+        self.tmp_file_mock_obj.set_calls(tmp_file_mock_calls)
+
+        self.config.remove("http.corosync.qdevice_net_client_setup_requests")
+        self.config.remove("http.corosync.qdevice_net_client_setup_responses")
+        self.config.http.corosync.qdevice_net_client_setup(
+            self.certs.ca_cert.data,
+            communication_list=node_2_offline_responses,
+            before="fs.exists.nssdb-file.0",
+        )
+        self.config.trim_before(
+            "http.corosync.qdevice_net_client_import_cert_and_key_requests"
+        )
         self.config.http.corosync.qdevice_net_client_import_cert_and_key(
-            self.certs["final_cert"]["data"],
+            self.certs.pk12_cert.data,
             communication_list=node_2_offline_responses,
         )
         self.config.http.corosync.qdevice_client_enable(
@@ -1316,176 +1264,39 @@ class AddDeviceNetTest(TestCase):
             skip_offline_nodes=True,
         )
 
-        mock_get_tmp_file.assert_called_once_with(
-            self.certs["signed_request"]["data"], binary=True
+        expected_reports = self.fixture_reports_success()
+        expected_reports = (
+            expected_reports[:f"cert_accepted_by_{self.cluster_nodes[0]}"]
+            + node_2_offline_warning(
+                "remote/qdevice_net_client_init_certificate_storage"
+            )
+            + expected_reports[f"cert_accepted_by_{self.cluster_nodes[0]}":]
         )
-
-        self.env_assist.assert_reports(
-            [
-                fixture.info(
-                    report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
-                ),
-                node_2_offline_warning(
-                    "remote/qdevice_net_client_init_certificate_storage"
-                ),
-                fixture.info(
-                    report_codes.QDEVICE_CERTIFICATE_ACCEPTED_BY_NODE,
-                    node=self.cluster_nodes[0],
-                ),
-                node_2_offline_warning(
-                    "remote/qdevice_net_client_import_certificate"
-                ),
-                fixture.info(
-                    report_codes.QDEVICE_CERTIFICATE_ACCEPTED_BY_NODE,
-                    node=self.cluster_nodes[2],
-                ),
-                fixture.info(
-                    reports.codes.SERVICE_ACTION_STARTED,
-                    action=reports.const.SERVICE_ACTION_ENABLE,
-                    service="corosync-qdevice",
-                    instance="",
-                ),
-                fixture.info(
-                    reports.codes.SERVICE_ACTION_SUCCEEDED,
-                    action=reports.const.SERVICE_ACTION_ENABLE,
-                    service="corosync-qdevice",
-                    node=self.cluster_nodes[0],
-                    instance="",
-                ),
-                node_2_offline_warning("remote/qdevice_client_enable"),
-                fixture.info(
-                    reports.codes.SERVICE_ACTION_SUCCEEDED,
-                    action=reports.const.SERVICE_ACTION_ENABLE,
-                    service="corosync-qdevice",
-                    node=self.cluster_nodes[2],
-                    instance="",
-                ),
-                fixture.info(
-                    reports.codes.SERVICE_ACTION_STARTED,
-                    action=reports.const.SERVICE_ACTION_START,
-                    service="corosync-qdevice",
-                    instance="",
-                ),
-                fixture.info(
-                    reports.codes.SERVICE_ACTION_SUCCEEDED,
-                    action=reports.const.SERVICE_ACTION_START,
-                    service="corosync-qdevice",
-                    node=self.cluster_nodes[0],
-                    instance="",
-                ),
-                node_2_offline_warning("remote/qdevice_client_start"),
-                fixture.info(
-                    reports.codes.SERVICE_ACTION_SUCCEEDED,
-                    action=reports.const.SERVICE_ACTION_START,
-                    service="corosync-qdevice",
-                    node=self.cluster_nodes[2],
-                    instance="",
-                ),
+        expected_reports = (
+            expected_reports[:f"cert_accepted_by_{self.cluster_nodes[1]}"]
+            + node_2_offline_warning(
+                "remote/qdevice_net_client_import_certificate"
+            )
+            + expected_reports[f"cert_accepted_by_{self.cluster_nodes[2]}":]
+        )
+        expected_reports = (
+            expected_reports[:f"enable_qdevice_done_on_{self.cluster_nodes[1]}"]
+            + node_2_offline_warning("remote/qdevice_client_enable")
+            + expected_reports[
+                f"enable_qdevice_done_on_{self.cluster_nodes[2]}":
             ]
         )
-
-    def test_success_file_minimal(self):
-        original_corosync_conf = _read_file_rc(self.corosync_conf_name)
-        expected_corosync_conf = original_corosync_conf.replace(
-            "    provider: corosync_votequorum\n",
-            outdent(
-                """\
-                    provider: corosync_votequorum
-
-                    device {
-                        model: net
-                        votes: 1
-
-                        net {
-                            algorithm: ffsplit
-                            host: qnetd-host
-                        }
-                    }
-                """
-            ),
+        expected_reports = (
+            expected_reports[:f"start_qdevice_done_on_{self.cluster_nodes[1]}"]
+            + node_2_offline_warning("remote/qdevice_client_start")
+            + expected_reports[
+                f"start_qdevice_done_on_{self.cluster_nodes[2]}":
+            ]
         )
-
-        (
-            self.config.env.set_corosync_conf_data(
-                original_corosync_conf
-            ).env.push_corosync_conf(corosync_conf_text=expected_corosync_conf)
-        )
-
-        lib.add_device(
-            self.env_assist.get_env(),
-            "net",
-            {"host": "qnetd-host", "algorithm": "ffsplit"},
-            {},
-            {},
-        )
-
-    def test_success_file_full(self):
-        expected_corosync_conf = _read_file(
-            rc(self.corosync_conf_name)
-        ).replace(
-            "    provider: corosync_votequorum\n",
-            outdent(
-                """\
-                    provider: corosync_votequorum
-
-                    device {
-                        sync_timeout: 34567
-                        timeout: 23456
-                        model: net
-                        votes: 1
-
-                        net {
-                            algorithm: ffsplit
-                            connect_timeout: 12345
-                            force_ip_version: 4
-                            host: qnetd-host
-                            port: 4433
-                            tie_breaker: lowest
-                        }
-
-                        heuristics {
-                            exec_ls: test -f /tmp/test
-                            exec_ping: ping -q -c 1 "127.0.0.1"
-                            interval: 30
-                            mode: on
-                            sync_timeout: 15
-                            timeout: 5
-                        }
-                    }
-                """
-            ),
-        )
-
-        (
-            self.config.env.set_corosync_conf_data(
-                _read_file_rc(self.corosync_conf_name)
-            ).env.push_corosync_conf(corosync_conf_text=expected_corosync_conf)
-        )
-
-        lib.add_device(
-            self.env_assist.get_env(),
-            "net",
-            {
-                "host": self.qnetd_host,
-                "port": "4433",
-                "algorithm": "ffsplit",
-                "connect_timeout": "12345",
-                "force_ip_version": "4",
-                "tie_breaker": "lowest",
-            },
-            {"timeout": "23456", "sync_timeout": "34567"},
-            {
-                "mode": "on",
-                "timeout": "5",
-                "sync_timeout": "15",
-                "interval": "30",
-                "exec_ping": 'ping -q -c 1 "127.0.0.1"',
-                "exec_ls": "test -f /tmp/test",
-            },
-        )
+        self.env_assist.assert_reports(expected_reports)
 
     def test_invalid_options(self):
-        (self.config.corosync_conf.load(filename=self.corosync_conf_name))
+        self.config.corosync_conf.load(filename=self.corosync_conf_name)
 
         self.env_assist.assert_raise_library_error(
             lambda: lib.add_device(
@@ -1494,22 +1305,21 @@ class AddDeviceNetTest(TestCase):
                 {"host": "qnetd-host", "algorithm": "ffsplit"},
                 {"bad_option": "bad_value"},
                 {"mode": "bad-mode", "bad_heur": "abc", "exec_bad.name": ""},
-            ),
-            [],
+            )
         )
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.INVALID_OPTIONS,
-                    force_code=report_codes.FORCE,
+                    reports.codes.INVALID_OPTIONS,
+                    force_code=reports.codes.FORCE,
                     option_names=["bad_option"],
                     option_type="quorum device",
                     allowed=["sync_timeout", "timeout"],
                     allowed_patterns=[],
                 ),
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE,
+                    reports.codes.INVALID_OPTION_VALUE,
+                    force_code=reports.codes.FORCE,
                     option_name="mode",
                     option_value="bad-mode",
                     allowed_values=("off", "on", "sync"),
@@ -1517,21 +1327,21 @@ class AddDeviceNetTest(TestCase):
                     forbidden_characters=None,
                 ),
                 fixture.error(
-                    report_codes.INVALID_OPTIONS,
-                    force_code=report_codes.FORCE,
+                    reports.codes.INVALID_OPTIONS,
+                    force_code=reports.codes.FORCE,
                     option_names=["bad_heur"],
                     option_type="heuristics",
                     allowed=["interval", "mode", "sync_timeout", "timeout"],
                     allowed_patterns=["exec_NAME"],
                 ),
                 fixture.error(
-                    report_codes.INVALID_USERDEFINED_OPTIONS,
+                    reports.codes.INVALID_USERDEFINED_OPTIONS,
                     option_names=["exec_bad.name"],
                     option_type="heuristics",
                     allowed_characters="a-z A-Z 0-9 /_-",
                 ),
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="exec_bad.name",
                     option_value="",
                     allowed_values="a command to be run",
@@ -1541,17 +1351,8 @@ class AddDeviceNetTest(TestCase):
             ]
         )
 
-    # TODO get rid of mock.patch
-    @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
-    @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
-    def test_invalid_options_forced(self, mock_get_tmp_file):
-        tmpfile_instance = mock.MagicMock()
-        tmpfile_instance.name = rc("file.tmp")
-        mock_get_tmp_file.return_value.__enter__.return_value = tmpfile_instance
-
-        expected_corosync_conf = _read_file(
-            rc(self.corosync_conf_name)
-        ).replace(
+    def test_invalid_options_forced(self):
+        expected_corosync_conf = _read_file_rc(self.corosync_conf_name).replace(
             "    provider: corosync_votequorum\n",
             outdent(
                 """\
@@ -1576,22 +1377,10 @@ class AddDeviceNetTest(TestCase):
             ),
         )
 
-        self.config.corosync_conf.load(filename=self.corosync_conf_name)
-        self.fixture_config_http_get_ca_cert()
-        self.fixture_config_http_client_init()
-        self.fixture_config_runner_get_cert_request()
-        self.fixture_config_http_sign_cert_request()
-        self.fixture_config_runner_cert_to_pk12(tmpfile_instance.name)
-        self.fixture_config_http_import_final_cert()
-        self.config.http.corosync.qdevice_client_enable(
-            node_labels=self.cluster_nodes
+        tmp_file_mock_calls = self.fixture_config_success(
+            expected_corosync_conf
         )
-        self.config.env.push_corosync_conf(
-            corosync_conf_text=expected_corosync_conf
-        )
-        self.config.http.corosync.qdevice_client_start(
-            node_labels=self.cluster_nodes
-        )
+        self.tmp_file_mock_obj.set_calls(tmp_file_mock_calls)
 
         lib.add_device(
             self.env_assist.get_env(),
@@ -1605,76 +1394,34 @@ class AddDeviceNetTest(TestCase):
             force_options=True,
         )
 
+        warnings = fixture.ReportStore()
+        warnings = warnings.warn(
+            "warning_1",
+            reports.codes.INVALID_OPTIONS,
+            option_names=["bad_option"],
+            option_type="quorum device",
+            allowed=["sync_timeout", "timeout"],
+            allowed_patterns=[],
+        )
+        warnings = warnings.warn(
+            "warning_2",
+            reports.codes.INVALID_OPTION_VALUE,
+            option_name="mode",
+            option_value="bad-mode",
+            allowed_values=("off", "on", "sync"),
+            cannot_be_empty=False,
+            forbidden_characters=None,
+        )
+        warnings = warnings.warn(
+            "warning_3",
+            reports.codes.INVALID_OPTIONS,
+            option_names=["bad_heur"],
+            option_type="heuristics",
+            allowed=["interval", "mode", "sync_timeout", "timeout"],
+            allowed_patterns=["exec_NAME"],
+        )
         self.env_assist.assert_reports(
-            [
-                fixture.warn(
-                    report_codes.INVALID_OPTIONS,
-                    option_names=["bad_option"],
-                    option_type="quorum device",
-                    allowed=["sync_timeout", "timeout"],
-                    allowed_patterns=[],
-                ),
-                fixture.warn(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_name="mode",
-                    option_value="bad-mode",
-                    allowed_values=("off", "on", "sync"),
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.warn(
-                    report_codes.INVALID_OPTIONS,
-                    option_names=["bad_heur"],
-                    option_type="heuristics",
-                    allowed=["interval", "mode", "sync_timeout", "timeout"],
-                    allowed_patterns=["exec_NAME"],
-                ),
-                fixture.info(
-                    report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
-                ),
-            ]
-            + [
-                fixture.info(
-                    report_codes.QDEVICE_CERTIFICATE_ACCEPTED_BY_NODE, node=node
-                )
-                for node in self.cluster_nodes
-            ]
-            + [
-                fixture.info(
-                    reports.codes.SERVICE_ACTION_STARTED,
-                    action=reports.const.SERVICE_ACTION_ENABLE,
-                    service="corosync-qdevice",
-                    instance="",
-                ),
-            ]
-            + [
-                fixture.info(
-                    reports.codes.SERVICE_ACTION_SUCCEEDED,
-                    action=reports.const.SERVICE_ACTION_ENABLE,
-                    service="corosync-qdevice",
-                    node=node,
-                    instance="",
-                )
-                for node in self.cluster_nodes
-            ]
-            + [
-                fixture.info(
-                    reports.codes.SERVICE_ACTION_STARTED,
-                    action=reports.const.SERVICE_ACTION_START,
-                    service="corosync-qdevice",
-                    instance="",
-                ),
-            ]
-            + [
-                fixture.info(
-                    reports.codes.SERVICE_ACTION_SUCCEEDED,
-                    action=reports.const.SERVICE_ACTION_START,
-                    service="corosync-qdevice",
-                    node=node,
-                    instance="",
-                )
-                for node in self.cluster_nodes
-            ]
+            warnings + self.fixture_reports_success()
         )
 
     def test_invalid_model(self):
@@ -1683,14 +1430,13 @@ class AddDeviceNetTest(TestCase):
         self.env_assist.assert_raise_library_error(
             lambda: lib.add_device(
                 self.env_assist.get_env(), "bad_model", {}, {}, {}
-            ),
-            [],
+            )
         )
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE,
+                    reports.codes.INVALID_OPTION_VALUE,
+                    force_code=reports.codes.FORCE,
                     option_name="model",
                     option_value="bad_model",
                     allowed_values=["net"],
@@ -1701,9 +1447,7 @@ class AddDeviceNetTest(TestCase):
         )
 
     def test_invalid_model_forced(self):
-        expected_corosync_conf = _read_file(
-            rc(self.corosync_conf_name)
-        ).replace(
+        expected_corosync_conf = _read_file_rc(self.corosync_conf_name).replace(
             "    provider: corosync_votequorum\n",
             outdent(
                 """\
@@ -1733,56 +1477,24 @@ class AddDeviceNetTest(TestCase):
         )
 
         self.env_assist.assert_reports(
-            [
-                fixture.warn(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_name="model",
-                    option_value="bad_model",
-                    allowed_values=["net"],
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-            ]
-            + [
-                fixture.info(
-                    reports.codes.SERVICE_ACTION_STARTED,
-                    action=reports.const.SERVICE_ACTION_ENABLE,
-                    service="corosync-qdevice",
-                    instance="",
-                ),
-            ]
-            + [
-                fixture.info(
-                    reports.codes.SERVICE_ACTION_SUCCEEDED,
-                    action=reports.const.SERVICE_ACTION_ENABLE,
-                    service="corosync-qdevice",
-                    node=node,
-                    instance="",
-                )
-                for node in self.cluster_nodes
-            ]
-            + [
-                fixture.info(
-                    reports.codes.SERVICE_ACTION_STARTED,
-                    action=reports.const.SERVICE_ACTION_START,
-                    service="corosync-qdevice",
-                    instance="",
-                ),
-            ]
-            + [
-                fixture.info(
-                    reports.codes.SERVICE_ACTION_SUCCEEDED,
-                    action=reports.const.SERVICE_ACTION_START,
-                    service="corosync-qdevice",
-                    node=node,
-                    instance="",
-                )
-                for node in self.cluster_nodes
-            ]
+            fixture.ReportStore().warn(
+                "warning_1",
+                reports.codes.INVALID_OPTION_VALUE,
+                option_name="model",
+                option_value="bad_model",
+                allowed_values=["net"],
+                cannot_be_empty=False,
+                forbidden_characters=None,
+            )
+            # model is not "net" - do not report certificates setup
+            + self.fixture_reports_success()["enable_qdevice_started":]
         )
 
     def test_get_ca_cert_error_communication(self):
-        self.config.corosync_conf.load(filename=self.corosync_conf_name)
+        dummy_tmp_file_mock_calls = self.fixture_config_success()
+        self.config.trim_before(
+            "http.corosync.qdevice_net_get_ca_cert_requests"
+        )
         self.config.http.corosync.qdevice_net_get_ca_cert(
             communication_list=[
                 {
@@ -1807,22 +1519,24 @@ class AddDeviceNetTest(TestCase):
         )
 
         self.env_assist.assert_reports(
-            [
-                fixture.info(
-                    report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
-                ),
-                fixture.error(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
-                    force_code=None,
-                    node=self.qnetd_host,
-                    command="remote/qdevice_net_get_ca_certificate",
-                    reason="Unable to read certificate: error description",
-                ),
+            self.fixture_reports_success()[
+                :f"cert_accepted_by_{self.cluster_nodes[0]}"
             ]
+            + fixture.ReportStore().error(
+                "error",
+                reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                force_code=None,
+                node=self.qnetd_host,
+                command="remote/qdevice_net_get_ca_certificate",
+                reason="Unable to read certificate: error description",
+            )
         )
 
     def test_get_ca_cert_error_decode_certificate(self):
-        self.config.corosync_conf.load(filename=self.corosync_conf_name)
+        dummy_tmp_file_mock_calls = self.fixture_config_success()
+        self.config.trim_before(
+            "http.corosync.qdevice_net_get_ca_cert_requests"
+        )
         self.fixture_config_http_get_ca_cert(
             output="invalid base64 encoded certificate data"
         )
@@ -1835,29 +1549,28 @@ class AddDeviceNetTest(TestCase):
                 {"timeout": "20"},
                 {},
                 skip_offline_nodes=True,  # test that this does not matter
-            ),
-            [],  # an empty LibraryError is raised
-            expected_in_processor=False,
+            )
         )
 
         self.env_assist.assert_reports(
-            [
-                fixture.info(
-                    report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
-                ),
-                fixture.error(
-                    report_codes.INVALID_RESPONSE_FORMAT,
-                    force_code=None,
-                    node=self.qnetd_host,
-                ),
+            self.fixture_reports_success()[
+                :f"cert_accepted_by_{self.cluster_nodes[0]}"
             ]
+            + fixture.ReportStore().error(
+                "error",
+                reports.codes.INVALID_RESPONSE_FORMAT,
+                force_code=None,
+                node=self.qnetd_host,
+            )
         )
 
     def test_error_client_setup(self):
-        self.config.corosync_conf.load(filename=self.corosync_conf_name)
-        self.fixture_config_http_get_ca_cert()
+        dummy_tmp_file_mock_calls = self.fixture_config_success()
+        self.config.trim_before(
+            "http.corosync.qdevice_net_client_setup_requests"
+        )
         self.config.http.corosync.qdevice_net_client_setup(
-            self.certs["cacert"]["data"],
+            self.certs.ca_cert.data,
             communication_list=[
                 {"label": self.cluster_nodes[0]},
                 {
@@ -1876,37 +1589,28 @@ class AddDeviceNetTest(TestCase):
                 {"host": "qnetd-host", "algorithm": "ffsplit"},
                 {"timeout": "20"},
                 {},
-            ),
-            [],  # an empty LibraryError is raised
-            expected_in_processor=False,
+            )
         )
 
         self.env_assist.assert_reports(
-            [
-                fixture.info(
-                    report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
-                ),
-                fixture.error(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
-                    force_code=report_codes.SKIP_OFFLINE_NODES,
-                    node=self.cluster_nodes[1],
-                    command=(
-                        "remote/qdevice_net_client_init_certificate_storage"
-                    ),
-                    reason="some error occurred",
-                ),
+            self.fixture_reports_success()[
+                :f"cert_accepted_by_{self.cluster_nodes[0]}"
             ]
+            + fixture.ReportStore().error(
+                "error",
+                reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                force_code=reports.codes.SKIP_OFFLINE_NODES,
+                node=self.cluster_nodes[1],
+                command=("remote/qdevice_net_client_init_certificate_storage"),
+                reason="some error occurred",
+            )
         )
 
-    # TODO get rid of mock.patch
-    @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
     def test_generate_cert_request_error(self):
-        self.config.corosync_conf.load(filename=self.corosync_conf_name)
-        self.fixture_config_http_get_ca_cert()
-        self.fixture_config_http_client_init()
+        dummy_tmp_file_mock_calls = self.fixture_config_success()
+        self.config.trim_before("runner.corosync.qdevice_generate_cert")
         self.config.runner.corosync.qdevice_generate_cert(
             self.cluster_name,
-            cert_req_path=None,
             stdout="",
             stderr="some error occurred",
             returncode=1,
@@ -1922,7 +1626,7 @@ class AddDeviceNetTest(TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.QDEVICE_INITIALIZATION_ERROR,
+                    reports.codes.QDEVICE_INITIALIZATION_ERROR,
                     force_code=None,
                     model="net",
                     reason="some error occurred",
@@ -1932,23 +1636,19 @@ class AddDeviceNetTest(TestCase):
         )
 
         self.env_assist.assert_reports(
-            [
-                fixture.info(
-                    report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
-                ),
+            self.fixture_reports_success()[
+                :f"cert_accepted_by_{self.cluster_nodes[0]}"
             ]
         )
 
-    # TODO get rid of mock.patch
-    @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
     def test_sign_certificate_error_communication(self):
-        self.config.corosync_conf.load(filename=self.corosync_conf_name)
-        self.fixture_config_http_get_ca_cert()
-        self.fixture_config_http_client_init()
-        self.fixture_config_runner_get_cert_request()
+        dummy_tmp_file_mock_calls = self.fixture_config_success()
+        self.config.trim_before(
+            "http.corosync.qdevice_net_sign_certificate_requests"
+        )
         self.config.http.corosync.qdevice_net_sign_certificate(
             self.cluster_name,
-            self.certs["cert_request"]["data"],
+            self.certs.cert_request.data,
             communication_list=[
                 {
                     "label": self.qnetd_host,
@@ -1965,33 +1665,28 @@ class AddDeviceNetTest(TestCase):
                 {"host": "qnetd-host", "algorithm": "ffsplit"},
                 {"timeout": "20"},
                 {},
-            ),
-            [],  # an empty LibraryError is raised
-            expected_in_processor=False,
+            )
         )
 
         self.env_assist.assert_reports(
-            [
-                fixture.info(
-                    report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
-                ),
-                fixture.error(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
-                    force_code=None,
-                    node=self.qnetd_host,
-                    command="remote/qdevice_net_sign_node_certificate",
-                    reason="some error occurred",
-                ),
+            self.fixture_reports_success()[
+                :f"cert_accepted_by_{self.cluster_nodes[0]}"
             ]
+            + fixture.ReportStore().error(
+                "error",
+                reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                force_code=None,
+                node=self.qnetd_host,
+                command="remote/qdevice_net_sign_node_certificate",
+                reason="some error occurred",
+            )
         )
 
-    # TODO get rid of mock.patch
-    @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
     def test_sign_certificate_error_decode_certificate(self):
-        self.config.corosync_conf.load(filename=self.corosync_conf_name)
-        self.fixture_config_http_get_ca_cert()
-        self.fixture_config_http_client_init()
-        self.fixture_config_runner_get_cert_request()
+        dummy_tmp_file_mock_calls = self.fixture_config_success()
+        self.config.trim_before(
+            "http.corosync.qdevice_net_sign_certificate_requests"
+        )
         self.fixture_config_http_sign_cert_request(
             output="invalid base64 encoded certificate data"
         )
@@ -2003,39 +1698,27 @@ class AddDeviceNetTest(TestCase):
                 {"host": "qnetd-host", "algorithm": "ffsplit"},
                 {"timeout": "20"},
                 {},
-            ),
-            [],  # an empty LibraryError is raised
-            expected_in_processor=False,
+            )
         )
 
         self.env_assist.assert_reports(
-            [
-                fixture.info(
-                    report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
-                ),
-                fixture.error(
-                    report_codes.INVALID_RESPONSE_FORMAT,
-                    force_code=None,
-                    node=self.qnetd_host,
-                ),
+            self.fixture_reports_success()[
+                :f"cert_accepted_by_{self.cluster_nodes[0]}"
             ]
+            + fixture.ReportStore().error(
+                "error",
+                reports.codes.INVALID_RESPONSE_FORMAT,
+                force_code=None,
+                node=self.qnetd_host,
+            )
         )
 
-    # TODO get rid of mock.patch
-    @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
-    @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
-    def test_certificate_to_pk12_error(self, mock_get_tmp_file):
-        tmpfile_instance = mock.MagicMock()
-        tmpfile_instance.name = rc("file.tmp")
-        mock_get_tmp_file.return_value.__enter__.return_value = tmpfile_instance
-
-        self.config.corosync_conf.load(filename=self.corosync_conf_name)
-        self.fixture_config_http_get_ca_cert()
-        self.fixture_config_http_client_init()
-        self.fixture_config_runner_get_cert_request()
-        self.fixture_config_http_sign_cert_request()
+    def test_certificate_to_pk12_error(self):
+        tmp_file_mock_calls = self.fixture_config_success()
+        self.tmp_file_mock_obj.set_calls(tmp_file_mock_calls)
+        self.config.trim_before("runner.corosync.qdevice_get_pk12")
         self.config.runner.corosync.qdevice_get_pk12(
-            tmpfile_instance.name,
+            self.signed_cert_tmp_file_name,
             output_path=None,
             stdout="",
             stderr="some error occurred",
@@ -2052,7 +1735,7 @@ class AddDeviceNetTest(TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
+                    reports.codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
                     force_code=None,
                     reason="some error occurred",
                 ),
@@ -2061,29 +1744,19 @@ class AddDeviceNetTest(TestCase):
         )
 
         self.env_assist.assert_reports(
-            [
-                fixture.info(
-                    report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
-                ),
+            self.fixture_reports_success()[
+                :f"cert_accepted_by_{self.cluster_nodes[0]}"
             ]
         )
 
-    # TODO get rid of mock.patch
-    @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized", lambda: True)
-    @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
-    def test_client_import_cert_error(self, mock_get_tmp_file):
-        tmpfile_instance = mock.MagicMock()
-        tmpfile_instance.name = rc("file.tmp")
-        mock_get_tmp_file.return_value.__enter__.return_value = tmpfile_instance
-
-        self.config.corosync_conf.load(filename=self.corosync_conf_name)
-        self.fixture_config_http_get_ca_cert()
-        self.fixture_config_http_client_init()
-        self.fixture_config_runner_get_cert_request()
-        self.fixture_config_http_sign_cert_request()
-        self.fixture_config_runner_cert_to_pk12(tmpfile_instance.name)
+    def test_client_import_cert_error(self):
+        tmp_file_mock_calls = self.fixture_config_success()
+        self.tmp_file_mock_obj.set_calls(tmp_file_mock_calls)
+        self.config.trim_before(
+            "http.corosync.qdevice_net_client_import_cert_and_key_requests"
+        )
         self.config.http.corosync.qdevice_net_client_import_cert_and_key(
-            self.certs["final_cert"]["data"],
+            self.certs.pk12_cert.data,
             communication_list=[
                 {"label": self.cluster_nodes[0]},
                 {
@@ -2102,33 +1775,23 @@ class AddDeviceNetTest(TestCase):
                 {"host": "qnetd-host", "algorithm": "ffsplit"},
                 {"timeout": "20"},
                 {},
-            ),
-            [],  # an empty LibraryError is raised
-            expected_in_processor=False,
+            )
         )
 
-        self.env_assist.assert_reports(
-            [
-                fixture.info(
-                    report_codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
-                ),
-                fixture.info(
-                    report_codes.QDEVICE_CERTIFICATE_ACCEPTED_BY_NODE,
-                    node=self.cluster_nodes[0],
-                ),
-                fixture.error(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
-                    force_code=report_codes.SKIP_OFFLINE_NODES,
-                    node=self.cluster_nodes[1],
-                    command="remote/qdevice_net_client_import_certificate",
-                    reason="some error occurred",
-                ),
-                fixture.info(
-                    report_codes.QDEVICE_CERTIFICATE_ACCEPTED_BY_NODE,
-                    node=self.cluster_nodes[2],
-                ),
-            ]
+        expected_reports = self.fixture_reports_success()
+        expected_reports = (
+            expected_reports[:f"cert_accepted_by_{self.cluster_nodes[1]}"]
+            + fixture.ReportStore().error(
+                "error",
+                reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                force_code=reports.codes.SKIP_OFFLINE_NODES,
+                node=self.cluster_nodes[1],
+                command="remote/qdevice_net_client_import_certificate",
+                reason="some error occurred",
+            )
+            + expected_reports.only(f"cert_accepted_by_{self.cluster_nodes[2]}")
         )
+        self.env_assist.assert_reports(expected_reports)
 
 
 class DeviceNetCertificateSetupLocal(DeviceNetCertsMixin, TestCase):
@@ -2236,7 +1899,7 @@ class DeviceNetCertificateSetupLocal(DeviceNetCertsMixin, TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    reports.codes.LIVE_ENVIRONMENT_REQUIRED,
                     forbidden_options=[file_type_codes.COROSYNC_CONF],
                 )
             ]
@@ -2275,7 +1938,7 @@ class DeviceNetCertificateSetupLocal(DeviceNetCertsMixin, TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     force_code=None,
                     node=self.qnetd_host,
                     command="remote/qdevice_net_get_ca_certificate",
@@ -2303,7 +1966,7 @@ class DeviceNetCertificateSetupLocal(DeviceNetCertsMixin, TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.QDEVICE_INITIALIZATION_ERROR,
+                    reports.codes.QDEVICE_INITIALIZATION_ERROR,
                     force_code=None,
                     model="net",
                     reason="an error",
@@ -2328,7 +1991,7 @@ class DeviceNetCertificateSetupLocal(DeviceNetCertsMixin, TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.QDEVICE_INITIALIZATION_ERROR,
+                    reports.codes.QDEVICE_INITIALIZATION_ERROR,
                     force_code=None,
                     model="net",
                     reason="an error",
@@ -2354,7 +2017,7 @@ class DeviceNetCertificateSetupLocal(DeviceNetCertsMixin, TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.QDEVICE_INITIALIZATION_ERROR,
+                    reports.codes.QDEVICE_INITIALIZATION_ERROR,
                     force_code=None,
                     model="net",
                     reason="an error\nstdout",
@@ -2387,7 +2050,7 @@ class DeviceNetCertificateSetupLocal(DeviceNetCertsMixin, TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.QDEVICE_INITIALIZATION_ERROR,
+                    reports.codes.QDEVICE_INITIALIZATION_ERROR,
                     force_code=None,
                     model="net",
                     reason=f"{self.config.runner.corosync.qdevice_generated_cert_path}: an error",
@@ -2416,7 +2079,7 @@ class DeviceNetCertificateSetupLocal(DeviceNetCertsMixin, TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     force_code=None,
                     node=self.qnetd_host,
                     command="remote/qdevice_net_sign_node_certificate",
@@ -2449,7 +2112,7 @@ class DeviceNetCertificateSetupLocal(DeviceNetCertsMixin, TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
+                    reports.codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
                     force_code=None,
                     reason="an error",
                 ),
@@ -2475,7 +2138,7 @@ class DeviceNetCertificateSetupLocal(DeviceNetCertsMixin, TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
+                    reports.codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
                     force_code=None,
                     reason="an error",
                 ),
@@ -2505,7 +2168,7 @@ class DeviceNetCertificateSetupLocal(DeviceNetCertsMixin, TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
+                    reports.codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
                     force_code=None,
                     reason=f"{self.config.runner.corosync.qdevice_pk12_cert_path}: an error",
                 ),
@@ -2536,7 +2199,7 @@ class DeviceNetCertificateSetupLocal(DeviceNetCertsMixin, TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
+                    reports.codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
                     force_code=None,
                     reason="an error",
                 ),
@@ -2559,7 +2222,7 @@ class DeviceNetCertificateSetupLocal(DeviceNetCertsMixin, TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
+                    reports.codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
                     force_code=None,
                     reason="an error",
                 ),
@@ -2634,7 +2297,7 @@ class DeviceNetCertificateCheckLocal(DeviceNetCertsMixin, TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    reports.codes.LIVE_ENVIRONMENT_REQUIRED,
                     forbidden_options=[file_type_codes.COROSYNC_CONF],
                 )
             ]
@@ -2726,7 +2389,7 @@ class DeviceNetCertificateCheckLocal(DeviceNetCertsMixin, TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.QDEVICE_CERTIFICATE_BAD_FORMAT,
+                    reports.codes.QDEVICE_CERTIFICATE_BAD_FORMAT,
                     force_code=None,
                 ),
             ]
@@ -2745,7 +2408,7 @@ class DeviceNetCertificateCheckLocal(DeviceNetCertsMixin, TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.QDEVICE_CERTIFICATE_READ_ERROR,
+                    reports.codes.QDEVICE_CERTIFICATE_READ_ERROR,
                     force_code=None,
                     reason="stderr message\nstdout",
                 ),
@@ -2769,7 +2432,7 @@ class DeviceNetCertificateCheckLocal(DeviceNetCertsMixin, TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.QDEVICE_CERTIFICATE_BAD_FORMAT,
+                    reports.codes.QDEVICE_CERTIFICATE_BAD_FORMAT,
                     force_code=None,
                 ),
             ]
@@ -2790,7 +2453,7 @@ class DeviceNetCertificateCheckLocal(DeviceNetCertsMixin, TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                     force_code=None,
                     node=self.qnetd_host,
                     command="remote/qdevice_net_get_ca_certificate",
@@ -2825,7 +2488,7 @@ class DeviceNetCertificateCheckLocal(DeviceNetCertsMixin, TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.QDEVICE_CERTIFICATE_READ_ERROR,
+                    reports.codes.QDEVICE_CERTIFICATE_READ_ERROR,
                     force_code=None,
                     reason="stderr message",
                 ),
@@ -2860,7 +2523,7 @@ class DeviceNetCertificateCheckLocal(DeviceNetCertsMixin, TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.QDEVICE_CERTIFICATE_READ_ERROR,
+                    reports.codes.QDEVICE_CERTIFICATE_READ_ERROR,
                     force_code=None,
                     reason="Error message\nsome stdout",
                 ),
@@ -2881,7 +2544,7 @@ class RemoveDeviceHeuristics(TestCase):
         self.env_assist.assert_raise_library_error(
             lambda: lib.remove_device_heuristics(self.env_assist.get_env()),
             [
-                fixture.error(report_codes.QDEVICE_NOT_DEFINED),
+                fixture.error(reports.codes.QDEVICE_NOT_DEFINED),
             ],
             expected_in_processor=False,
         )
@@ -2924,7 +2587,7 @@ class RemoveDeviceHeuristics(TestCase):
         self.env_assist.assert_raise_library_error(
             lambda: lib.remove_device_heuristics(self.env_assist.get_env()),
             [
-                fixture.error(report_codes.QDEVICE_NOT_DEFINED),
+                fixture.error(reports.codes.QDEVICE_NOT_DEFINED),
             ],
             expected_in_processor=False,
         )
@@ -3046,7 +2709,7 @@ class RemoveDeviceNetTest(TestCase):
         if atb_enabled:
             report_list.append(
                 fixture.warn(
-                    report_codes.COROSYNC_QUORUM_ATB_WILL_BE_ENABLED_DUE_TO_SBD
+                    reports.codes.COROSYNC_QUORUM_ATB_WILL_BE_ENABLED_DUE_TO_SBD
                 )
             )
         report_list += (
@@ -3087,11 +2750,11 @@ class RemoveDeviceNetTest(TestCase):
                 for node in cluster_nodes
             ]
             + [
-                fixture.info(report_codes.QDEVICE_CERTIFICATE_REMOVAL_STARTED),
+                fixture.info(reports.codes.QDEVICE_CERTIFICATE_REMOVAL_STARTED),
             ]
             + [
                 fixture.info(
-                    report_codes.QDEVICE_CERTIFICATE_REMOVED_FROM_NODE,
+                    reports.codes.QDEVICE_CERTIFICATE_REMOVED_FROM_NODE,
                     node=node,
                 )
                 for node in cluster_nodes
@@ -3123,7 +2786,7 @@ class RemoveDeviceNetTest(TestCase):
         self.env_assist.assert_raise_library_error(
             lambda: lib.remove_device(self.env_assist.get_env()),
             [
-                fixture.error(report_codes.QDEVICE_NOT_DEFINED),
+                fixture.error(reports.codes.QDEVICE_NOT_DEFINED),
             ],
             expected_in_processor=False,
         )
@@ -3153,7 +2816,7 @@ class RemoveDeviceNetTest(TestCase):
         self.env_assist.assert_raise_library_error(
             lambda: lib.remove_device(self.env_assist.get_env()),
             [
-                fixture.error(report_codes.QDEVICE_NOT_DEFINED),
+                fixture.error(reports.codes.QDEVICE_NOT_DEFINED),
             ],
             expected_in_processor=False,
         )
@@ -3259,7 +2922,7 @@ class RemoveDeviceNetTest(TestCase):
 
         def node_2_offline_warning(command):
             return fixture.warn(
-                report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                 node=cluster_nodes[1],
                 reason=node_2_offline_msg,
                 command=command,
@@ -3326,14 +2989,14 @@ class RemoveDeviceNetTest(TestCase):
                     node=cluster_nodes[2],
                     instance="",
                 ),
-                fixture.info(report_codes.QDEVICE_CERTIFICATE_REMOVAL_STARTED),
+                fixture.info(reports.codes.QDEVICE_CERTIFICATE_REMOVAL_STARTED),
                 fixture.info(
-                    report_codes.QDEVICE_CERTIFICATE_REMOVED_FROM_NODE,
+                    reports.codes.QDEVICE_CERTIFICATE_REMOVED_FROM_NODE,
                     node=cluster_nodes[0],
                 ),
                 node_2_offline_warning("remote/qdevice_net_client_destroy"),
                 fixture.info(
-                    report_codes.QDEVICE_CERTIFICATE_REMOVED_FROM_NODE,
+                    reports.codes.QDEVICE_CERTIFICATE_REMOVED_FROM_NODE,
                     node=cluster_nodes[2],
                 ),
             ]
@@ -3354,7 +3017,7 @@ class RemoveDeviceNetTest(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                    reports.codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
                     fatal=True,
                 ),
             ]
@@ -3375,7 +3038,7 @@ class RemoveDeviceNetTest(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
+                    reports.codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
                     fatal=True,
                 ),
             ]
@@ -3422,8 +3085,8 @@ class RemoveDeviceNetTest(TestCase):
                     instance="",
                 ),
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
-                    force_code=report_codes.SKIP_OFFLINE_NODES,
+                    reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    force_code=reports.codes.SKIP_OFFLINE_NODES,
                     node=cluster_nodes[1],
                     command="remote/qdevice_client_disable",
                     reason="some error occurred",
@@ -3500,8 +3163,8 @@ class RemoveDeviceNetTest(TestCase):
                     instance="",
                 ),
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
-                    force_code=report_codes.SKIP_OFFLINE_NODES,
+                    reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    force_code=reports.codes.SKIP_OFFLINE_NODES,
                     node=cluster_nodes[1],
                     command="remote/qdevice_client_stop",
                     reason="some error occurred",
@@ -3584,20 +3247,20 @@ class RemoveDeviceNetTest(TestCase):
                 for node in cluster_nodes
             ]
             + [
-                fixture.info(report_codes.QDEVICE_CERTIFICATE_REMOVAL_STARTED),
+                fixture.info(reports.codes.QDEVICE_CERTIFICATE_REMOVAL_STARTED),
                 fixture.info(
-                    report_codes.QDEVICE_CERTIFICATE_REMOVED_FROM_NODE,
+                    reports.codes.QDEVICE_CERTIFICATE_REMOVED_FROM_NODE,
                     node=cluster_nodes[0],
                 ),
                 fixture.error(
-                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
-                    force_code=report_codes.SKIP_OFFLINE_NODES,
+                    reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    force_code=reports.codes.SKIP_OFFLINE_NODES,
                     node=cluster_nodes[1],
                     command="remote/qdevice_net_client_destroy",
                     reason="some error occurred",
                 ),
                 fixture.info(
-                    report_codes.QDEVICE_CERTIFICATE_REMOVED_FROM_NODE,
+                    reports.codes.QDEVICE_CERTIFICATE_REMOVED_FROM_NODE,
                     node=cluster_nodes[2],
                 ),
             ]
@@ -3642,7 +3305,7 @@ class UpdateDeviceTest(TestCase):
         if warn:
             expected_reports += [
                 fixture.warn(
-                    report_codes.COROSYNC_QUORUM_HEURISTICS_ENABLED_WITH_NO_EXEC
+                    reports.codes.COROSYNC_QUORUM_HEURISTICS_ENABLED_WITH_NO_EXEC
                 )
             ]
         assert_report_item_list_equal(
@@ -3652,9 +3315,7 @@ class UpdateDeviceTest(TestCase):
     def assert_success_heuristics_update_no_exec(
         self, mock_get_corosync, mock_push_corosync, mode, warn
     ):
-        original_conf = _read_file(
-            rc("corosync-3nodes-qdevice-heuristics.conf")
-        )
+        original_conf = _read_file_rc("corosync-3nodes-qdevice-heuristics.conf")
         mock_get_corosync.return_value = original_conf
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
@@ -3680,7 +3341,7 @@ class UpdateDeviceTest(TestCase):
         if warn:
             expected_reports += [
                 fixture.warn(
-                    report_codes.COROSYNC_QUORUM_HEURISTICS_ENABLED_WITH_NO_EXEC
+                    reports.codes.COROSYNC_QUORUM_HEURISTICS_ENABLED_WITH_NO_EXEC
                 )
             ]
         assert_report_item_list_equal(
@@ -3694,7 +3355,11 @@ class UpdateDeviceTest(TestCase):
 
         assert_raise_library_error(
             lambda: lib.update_device(lib_env, {"host": "127.0.0.1"}, {}, {}),
-            (severity.ERROR, report_codes.QDEVICE_NOT_DEFINED, {}),
+            (
+                reports.ReportItemSeverity.ERROR,
+                reports.codes.QDEVICE_NOT_DEFINED,
+                {},
+            ),
         )
 
         mock_push_corosync.assert_not_called()
@@ -3775,9 +3440,7 @@ class UpdateDeviceTest(TestCase):
     def test_success_heuristics_update_no_exec_present(
         self, mock_get_corosync, mock_push_corosync
     ):
-        original_conf = _read_file(
-            rc("corosync-3nodes-qdevice-heuristics.conf")
-        )
+        original_conf = _read_file_rc("corosync-3nodes-qdevice-heuristics.conf")
         mock_get_corosync.return_value = original_conf
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
@@ -3798,9 +3461,7 @@ class UpdateDeviceTest(TestCase):
     def test_success_heuristics_update_no_exec_kept(
         self, mock_get_corosync, mock_push_corosync
     ):
-        original_conf = _read_file(
-            rc("corosync-3nodes-qdevice-heuristics.conf")
-        )
+        original_conf = _read_file_rc("corosync-3nodes-qdevice-heuristics.conf")
         mock_get_corosync.return_value = original_conf
         lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
 
@@ -3835,19 +3496,19 @@ class UpdateDeviceTest(TestCase):
             self.mock_reporter.report_item_list,
             [
                 (
-                    severity.ERROR,
-                    report_codes.INVALID_OPTIONS,
+                    reports.ReportItemSeverity.ERROR,
+                    reports.codes.INVALID_OPTIONS,
                     {
                         "option_names": ["bad_option"],
                         "option_type": "quorum device",
                         "allowed": ["sync_timeout", "timeout"],
                         "allowed_patterns": [],
                     },
-                    report_codes.FORCE,
+                    reports.codes.FORCE,
                 ),
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    force_code=report_codes.FORCE,
+                    reports.codes.INVALID_OPTION_VALUE,
+                    force_code=reports.codes.FORCE,
                     option_name="mode",
                     option_value="bad mode",
                     allowed_values=("off", "on", "sync"),
@@ -3855,7 +3516,7 @@ class UpdateDeviceTest(TestCase):
                     forbidden_characters=None,
                 ),
                 fixture.error(
-                    report_codes.INVALID_USERDEFINED_OPTIONS,
+                    reports.codes.INVALID_USERDEFINED_OPTIONS,
                     option_names=["exec_bad.name"],
                     option_type="heuristics",
                     allowed_characters="a-z A-Z 0-9 /_-",
@@ -3887,8 +3548,8 @@ class UpdateDeviceTest(TestCase):
             self.mock_reporter.report_item_list,
             [
                 (
-                    severity.WARNING,
-                    report_codes.INVALID_OPTIONS,
+                    reports.ReportItemSeverity.WARNING,
+                    reports.codes.INVALID_OPTIONS,
                     {
                         "option_names": ["bad_option"],
                         "option_type": "quorum device",
@@ -3897,7 +3558,7 @@ class UpdateDeviceTest(TestCase):
                     },
                 ),
                 fixture.warn(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="mode",
                     option_value="bad mode",
                     allowed_values=("off", "on", "sync"),
@@ -3954,7 +3615,7 @@ class SetExpectedVotesLiveTest(TestCase):
             lambda: lib.set_expected_votes_live(lib_env, "-5"),
             (
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="expected votes",
                     option_value="-5",
                     allowed_values="positive integer",

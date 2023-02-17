@@ -6,12 +6,6 @@ from pcs.common.reports import codes as report_codes
 ALL_RESOURCE_XML_TAGS = ["bundle", "clone", "group", "master", "primitive"]
 
 
-def report_variation(report, **_info):
-    updated_info = report[2].copy()
-    updated_info.update(_info)
-    return report[0], report[1], updated_info, report[3]
-
-
 def debug(code, context=None, **kwargs):
     return severities.DEBUG, code, kwargs, None, context
 
@@ -34,10 +28,13 @@ def info(code, context=None, **kwargs):
 
 class ReportStore:
     def __init__(self, names=None, reports=None):
-        if not names:
-            names = []
+        self.__names = names or []
+        self.__reports = reports or []
 
-        duplicate_names = {n for n in names if names.count(n) > 1}
+        if len(self.__names) != len(self.__reports):
+            raise AssertionError("Reports count doesn't match names count")
+
+        duplicate_names = {n for n in self.__names if self.__names.count(n) > 1}
         if duplicate_names:
             raise AssertionError(
                 "Duplicate names are not allowed in ReportStore. "
@@ -46,31 +43,34 @@ class ReportStore:
                 )
             )
 
-        self.__names = names
-        self.__reports = reports or []
-        if len(self.__names) != len(self.__reports):
-            raise AssertionError("Same count reports as names required")
+    @staticmethod
+    def _report_variation(report, payload):
+        updated_payload = report[2].copy()
+        updated_payload.update(payload)
+        return report[0], report[1], updated_payload, report[3]
 
     @property
     def reports(self):
         return list(self.__reports)
 
-    def adapt(self, name, **_info):
+    def adapt(self, name, **payload):
         index = self.__names.index(name)
         return ReportStore(
             self.__names,
             [
-                report if i != index else report_variation(report, **_info)
+                report
+                if i != index
+                else self._report_variation(report, payload)
                 for i, report in enumerate(self.__reports)
             ],
         )
 
-    def adapt_multi(self, name_list, **_info):
+    def adapt_multi(self, name_list, **payload):
         names, reports = zip(
             *[
                 (
                     name,
-                    report_variation(self[name], **_info)
+                    self._report_variation(self[name], payload)
                     if name in name_list
                     else self[name],
                 )
@@ -95,8 +95,10 @@ class ReportStore:
         report = self[name]
         return self.__append(as_name, warn(report[1], **report[2]))
 
-    def copy(self, name, as_name, **_info):
-        return self.__append(as_name, report_variation(self[name], **_info))
+    def copy(self, name, as_name, **payload):
+        return self.__append(
+            as_name, self._report_variation(self[name], payload)
+        )
 
     def remove(self, *name_list):
         names, reports = zip(
@@ -112,8 +114,10 @@ class ReportStore:
         names, reports = zip(*[(name, self[name]) for name in name_list])
         return ReportStore(list(names), list(reports))
 
-    def only(self, name, **_info):
-        return ReportStore([name], [report_variation(self[name], **_info)])
+    def only(self, name, **payload):
+        return ReportStore(
+            [name], [self._report_variation(self[name], payload)]
+        )
 
     def __getitem__(self, spec):
         if not isinstance(spec, slice):

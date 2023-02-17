@@ -9,18 +9,11 @@ from unittest import (
 import pcs.lib.corosync.qdevice_net as lib
 from pcs import settings
 from pcs.common import reports
-from pcs.common.reports import ReportItemSeverity as severity
-from pcs.common.reports import codes as report_codes
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 
 from pcs_test.tools.assertions import assert_raise_library_error
-from pcs_test.tools.misc import (
-    get_test_resource,
-    get_tmp_dir,
-)
-
-# pylint: disable=no-self-use
+from pcs_test.tools.misc import get_tmp_dir
 
 _qnetd_cert_tool = os.path.join(
     settings.corosync_qnet_binaries, "corosync-qnetd-certutil"
@@ -64,8 +57,8 @@ class QdeviceSetupTest(TestCase):
         assert_raise_library_error(
             lambda: lib.qdevice_setup(self.mock_runner),
             (
-                severity.ERROR,
-                report_codes.QDEVICE_ALREADY_INITIALIZED,
+                reports.ReportItemSeverity.ERROR,
+                reports.codes.QDEVICE_ALREADY_INITIALIZED,
                 {"model": "net"},
             ),
         )
@@ -80,8 +73,8 @@ class QdeviceSetupTest(TestCase):
         assert_raise_library_error(
             lambda: lib.qdevice_setup(self.mock_runner),
             (
-                severity.ERROR,
-                report_codes.QDEVICE_INITIALIZATION_ERROR,
+                reports.ReportItemSeverity.ERROR,
+                reports.codes.QDEVICE_INITIALIZATION_ERROR,
                 {
                     "model": "net",
                     "reason": "test error\nstdout",
@@ -96,6 +89,7 @@ class QdeviceSetupTest(TestCase):
 @mock.patch("pcs.lib.corosync.qdevice_net.shutil.rmtree")
 @mock.patch("pcs.lib.corosync.qdevice_net.qdevice_initialized")
 class QdeviceDestroyTest(TestCase):
+    # pylint: disable=no-self-use
     def test_success(self, mock_initialized, mock_rmtree):
         mock_initialized.return_value = True
         lib.qdevice_destroy()
@@ -114,8 +108,8 @@ class QdeviceDestroyTest(TestCase):
         assert_raise_library_error(
             lib.qdevice_destroy,
             (
-                severity.ERROR,
-                report_codes.QDEVICE_DESTROY_ERROR,
+                reports.ReportItemSeverity.ERROR,
+                reports.codes.QDEVICE_DESTROY_ERROR,
                 {
                     "model": "net",
                     "reason": "test message",
@@ -151,8 +145,8 @@ class QdeviceStatusGenericTest(TestCase):
         assert_raise_library_error(
             lambda: lib.qdevice_status_generic_text(self.mock_runner),
             (
-                severity.ERROR,
-                report_codes.QDEVICE_GET_STATUS_ERROR,
+                reports.ReportItemSeverity.ERROR,
+                reports.codes.QDEVICE_GET_STATUS_ERROR,
                 {
                     "model": "net",
                     "reason": "status error\nsome info",
@@ -206,8 +200,8 @@ class QdeviceStatusClusterTest(TestCase):
         assert_raise_library_error(
             lambda: lib.qdevice_status_cluster_text(self.mock_runner),
             (
-                severity.ERROR,
-                report_codes.QDEVICE_GET_STATUS_ERROR,
+                reports.ReportItemSeverity.ERROR,
+                reports.codes.QDEVICE_GET_STATUS_ERROR,
                 {
                     "model": "net",
                     "reason": "status error\nsome info",
@@ -309,8 +303,8 @@ class QdeviceSignCertificateRequestTest(CertificateTestCase):
                 self.mock_runner, "certificate request", "clusterName"
             ),
             (
-                severity.ERROR,
-                report_codes.QDEVICE_NOT_INITIALIZED,
+                reports.ReportItemSeverity.ERROR,
+                reports.codes.QDEVICE_NOT_INITIALIZED,
                 {
                     "model": "net",
                 },
@@ -350,8 +344,8 @@ class QdeviceSignCertificateRequestTest(CertificateTestCase):
                 self.mock_runner, "certificate request", "clusterName"
             ),
             (
-                severity.ERROR,
-                report_codes.QDEVICE_CERTIFICATE_SIGN_ERROR,
+                reports.ReportItemSeverity.ERROR,
+                reports.codes.QDEVICE_CERTIFICATE_SIGN_ERROR,
                 {
                     "reason": "tool output error\nstdout",
                 },
@@ -413,6 +407,7 @@ class QdeviceSignCertificateRequestTest(CertificateTestCase):
 @mock.patch("pcs.lib.corosync.qdevice_net.shutil.rmtree")
 @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized")
 class ClientDestroyTest(TestCase):
+    # pylint: disable=no-self-use
     def test_success(self, mock_initialized, mock_rmtree):
         mock_initialized.return_value = True
         lib.client_destroy()
@@ -431,8 +426,8 @@ class ClientDestroyTest(TestCase):
         assert_raise_library_error(
             lib.client_destroy,
             (
-                severity.ERROR,
-                report_codes.QDEVICE_DESTROY_ERROR,
+                reports.ReportItemSeverity.ERROR,
+                reports.codes.QDEVICE_DESTROY_ERROR,
                 {
                     "model": "net",
                     "reason": "test message",
@@ -486,8 +481,8 @@ class ClientSetupTest(TestCase):
                 self.mock_runner, "qnetd CA certificate".encode("utf-8")
             ),
             (
-                severity.ERROR,
-                report_codes.QDEVICE_INITIALIZATION_ERROR,
+                reports.ReportItemSeverity.ERROR,
+                reports.codes.QDEVICE_INITIALIZATION_ERROR,
                 {
                     "model": "net",
                     "reason": "tool output error\nstdout",
@@ -538,8 +533,8 @@ class ClientGenerateCertificateRequestTest(CertificateTestCase):
                 self.mock_runner, "clusterName"
             ),
             (
-                severity.ERROR,
-                report_codes.QDEVICE_NOT_INITIALIZED,
+                reports.ReportItemSeverity.ERROR,
+                reports.codes.QDEVICE_NOT_INITIALIZED,
                 {
                     "model": "net",
                 },
@@ -557,8 +552,8 @@ class ClientGenerateCertificateRequestTest(CertificateTestCase):
                 self.mock_runner, "clusterName"
             ),
             (
-                severity.ERROR,
-                report_codes.QDEVICE_INITIALIZATION_ERROR,
+                reports.ReportItemSeverity.ERROR,
+                reports.codes.QDEVICE_INITIALIZATION_ERROR,
                 {
                     "model": "net",
                     "reason": "tool output error\nstdout",
@@ -608,8 +603,8 @@ class ClientCertRequestToPk12Test(CertificateTestCase):
                 self.mock_runner, "certificate request"
             ),
             (
-                severity.ERROR,
-                report_codes.QDEVICE_NOT_INITIALIZED,
+                reports.ReportItemSeverity.ERROR,
+                reports.codes.QDEVICE_NOT_INITIALIZED,
                 {
                     "model": "net",
                 },
@@ -648,8 +643,8 @@ class ClientCertRequestToPk12Test(CertificateTestCase):
                 self.mock_runner, "certificate request"
             ),
             (
-                severity.ERROR,
-                report_codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
+                reports.ReportItemSeverity.ERROR,
+                reports.codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
                 {
                     "reason": "tool output error\nstdout",
                 },
@@ -721,8 +716,8 @@ class ClientImportCertificateAndKeyTest(CertificateTestCase):
                 self.mock_runner, "pk12 certificate"
             ),
             (
-                severity.ERROR,
-                report_codes.QDEVICE_NOT_INITIALIZED,
+                reports.ReportItemSeverity.ERROR,
+                reports.codes.QDEVICE_NOT_INITIALIZED,
                 {
                     "model": "net",
                 },
@@ -760,8 +755,8 @@ class ClientImportCertificateAndKeyTest(CertificateTestCase):
                 self.mock_runner, "pk12 certificate"
             ),
             (
-                severity.ERROR,
-                report_codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
+                reports.ReportItemSeverity.ERROR,
+                reports.codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
                 {
                     "reason": "tool output error\nstdout",
                 },
@@ -779,45 +774,44 @@ class ClientImportCertificateAndKeyTest(CertificateTestCase):
 class GetOutputCertificateTest(TestCase):
     # pylint: disable=protected-access
     def setUp(self):
-        self.file_path = get_test_resource("qdevice-certs/qnetd-cacert.crt")
-        with open(self.file_path, "rb") as a_file:
-            self.file_data = a_file.read()
+        self.file_path = "/tmp/a-file"
+        self.file_data = b"certificate data from a file"
+        self.mock_open = mock.mock_open(read_data=self.file_data)
+        open_patcher = mock.patch("builtins.open", self.mock_open)
+        open_patcher.start()
+        self.addCleanup(open_patcher.stop)
 
     def test_success(self):
         cert_tool_output = dedent(
-            """
+            f"""
             some line
-            Certificate stored in {0}
+            Certificate stored in {self.file_path}
             some other line
-            """.format(
-                self.file_path
-            )
+            """
         )
         report_func = mock.MagicMock()
-
         self.assertEqual(
             self.file_data,
             lib._get_output_certificate(cert_tool_output, report_func),
         )
         report_func.assert_not_called()
+        self.mock_open.assert_called_once_with(self.file_path, "rb")
 
     def test_success_request(self):
         cert_tool_output = dedent(
-            """
+            f"""
             some line
-            Certificate request stored in {0}
+            Certificate request stored in {self.file_path}
             some other line
-            """.format(
-                self.file_path
-            )
+            """
         )
         report_func = mock.MagicMock()
-
         self.assertEqual(
             self.file_data,
             lib._get_output_certificate(cert_tool_output, report_func),
         )
         report_func.assert_not_called()
+        self.mock_open.assert_called_once_with(self.file_path, "rb")
 
     def test_message_not_found(self):
         cert_tool_output = "some rubbish output"
@@ -829,38 +823,35 @@ class GetOutputCertificateTest(TestCase):
                 report_item_message,
             ),
             (
-                severity.ERROR,
-                report_codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
+                reports.ReportItemSeverity.ERROR,
+                reports.codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
                 {
                     "reason": cert_tool_output,
                 },
             ),
         )
+        self.mock_open.assert_not_called()
 
     def test_cannot_read_file(self):
         cert_tool_output = dedent(
-            """
+            f"""
             some line
-            Certificate request stored in {0}.bad
+            Certificate request stored in {self.file_path}
             some other line
-            """.format(
-                self.file_path
-            )
+            """
         )
-        report_item_message = reports.messages.QdeviceCertificateImportError
+        self.mock_open.side_effect = OSError(1, "an error")
 
         assert_raise_library_error(
             lambda: lib._get_output_certificate(
-                cert_tool_output,
-                report_item_message,
+                cert_tool_output, reports.messages.QdeviceCertificateImportError
             ),
             (
-                severity.ERROR,
-                report_codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
+                reports.ReportItemSeverity.ERROR,
+                reports.codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
                 {
-                    "reason": "{0}.bad: No such file or directory".format(
-                        self.file_path
-                    ),
+                    "reason": f"{self.file_path}: an error",
                 },
             ),
         )
+        self.mock_open.assert_called_once_with(self.file_path, "rb")

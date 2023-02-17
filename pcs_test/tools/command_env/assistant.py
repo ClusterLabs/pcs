@@ -3,7 +3,6 @@ import logging
 import os
 import os.path
 import shutil
-import sys
 from functools import partial
 from unittest import mock
 
@@ -104,13 +103,9 @@ def patch_env(call_queue, config, init_env, is_systemd=True):
 
     if is_fs_call_in(call_queue):
         fs_mock = get_fs_mock(call_queue)
-        builtin = (
-            ("__builtin__" if sys.version_info[0] == 2 else "builtins") + ".{0}"
-        ).format
-
         patcher_list.extend(
             [
-                mock.patch(builtin("open"), fs_mock("open", open)),
+                mock.patch("builtins.open", fs_mock("open", open)),
                 mock.patch(
                     "os.path.exists", fs_mock("os.path.exists", os.path.exists)
                 ),

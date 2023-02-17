@@ -37,10 +37,6 @@ EXTRA_DIST		= \
 			  resources/pcmk_api_rng/fence-event-2.0.rng \
 			  resources/pcmk_api_rng/resources-2.4.rng \
 			  resources/pcmk_api_rng/status-2.0.rng \
-			  resources/qdevice-certs/final-certificate.pk12 \
-			  resources/qdevice-certs/qdevice-cert-request.crq \
-			  resources/qdevice-certs/qnetd-cacert.crt \
-			  resources/qdevice-certs/signed-certificate.crt \
 			  resources/resource_agent_ocf_heartbeat_dummy_insane_action.xml \
 			  resources/resource_agent_ocf_heartbeat_dummy_utf8.xml \
 			  resources/resource_agent_ocf_heartbeat_dummy.xml \
