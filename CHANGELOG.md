@@ -16,6 +16,7 @@
 - Enable/Disable sbd when cluster is not running ([rhbz#2166249])
 - Confusing error message in `pcs constraint ticket add` command
   ([rhbz#2168617], [ghpull#559])
+- Internal server error during cluster setup with Ruby 3.2
 
 ### Changed
 - Resource/stonith agent self-validation of instance attributes is now
