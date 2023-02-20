@@ -20,7 +20,10 @@ from pcs.daemon.app import (
     sinatra_ui,
     ui,
 )
-from pcs.daemon.app.common import RedirectHandler
+from pcs.daemon.app.common import (
+    Http404Handler,
+    RedirectHandler,
+)
 from pcs.daemon.env import prepare_env
 from pcs.daemon.http_server import HttpsServerManage
 
@@ -93,7 +96,9 @@ def configure_app(
                 )
             )
 
-        return Application(routes, debug=debug)
+        return Application(
+            routes, debug=debug, default_handler_class=Http404Handler
+        )
 
     return make_app
 

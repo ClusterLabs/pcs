@@ -14,6 +14,8 @@
 - Enable/Disable sbd when cluster is not running ([rhbz#2166243])
 - Confusing error message in `pcs constraint ticket add` command
   ([rhbz#2022748], [ghpull#559])
+- Set `Content-Security-Policy: frame-ancestors 'self'; default-src 'self'`
+  HTTP header for HTTP 404 responses ([rhbz#2160555])
 
 ### Changed
 - Resource/stonith agent self-validation of instance attributes is now
@@ -28,6 +30,7 @@
 [rhbz#2151511]: https://bugzilla.redhat.com/show_bug.cgi?id=2151511
 [rhbz#2158804]: https://bugzilla.redhat.com/show_bug.cgi?id=2158804
 [rhbz#2159455]: https://bugzilla.redhat.com/show_bug.cgi?id=2159455
+[rhbz#2160555]: https://bugzilla.redhat.com/show_bug.cgi?id=2160555
 [rhbz#2166243]: https://bugzilla.redhat.com/show_bug.cgi?id=2166243
 
 

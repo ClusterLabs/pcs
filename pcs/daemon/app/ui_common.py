@@ -1,28 +1,15 @@
-from tornado.web import (
-    Finish,
-    StaticFileHandler,
-)
+from tornado.web import StaticFileHandler
 
 from pcs.daemon.app.common import EnhanceHeadersMixin
 
 
 class AjaxMixin:
-    """
-    AjaxMixin adds methods for an ajax request detection and common unauthorized
-    response.
-    """
-
     @property
     def is_ajax(self):
         return (
             self.request.headers.get("X-Requested-With", default=None)
             == "XMLHttpRequest"
         )
-
-    def unauthorized(self):
-        self.set_status(401)
-        self.write('{"notauthorized":"true"}')
-        return Finish()
 
 
 class StaticFile(EnhanceHeadersMixin, StaticFileHandler):

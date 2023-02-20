@@ -7,6 +7,10 @@ from typing import (
     Type,
 )
 
+from tornado.web import (
+    Finish,
+    HTTPError,
+)
 from tornado.web import RedirectHandler as TornadoRedirectHandler
 from tornado.web import RequestHandler
 
@@ -69,6 +73,12 @@ class EnhanceHeadersMixin:
         # For now, I'm just setting this to the same value as already present
         # X-Frame-Options header to keep them consistent.
         self.set_header("Content-Security-Policy", "frame-ancestors 'self'")
+
+    def set_header_content_security_policy_extended(self) -> None:
+        self.set_header(
+            "Content-Security-Policy",
+            "frame-ancestors 'self'; default-src 'self'",
+        )
 
     def set_header_xss_protection(self) -> None:
         # The HTTP X-XSS-Protection response header is a feature of Internet
@@ -137,6 +147,12 @@ class BaseHandler(EnhanceHeadersMixin, RequestHandler):
         # BUT we currently do not plan to use it SO:
         pass
 
+    def unauthorized(self) -> None:
+        self.set_status(401)
+        self.set_header_content_security_policy_extended()
+        self.write('{"notauthorized":"true"}')
+        return Finish()
+
 
 class RedirectHandler(EnhanceHeadersMixin, TornadoRedirectHandler):
     # abstract method `data_received` is not used in redirect:
@@ -144,3 +160,12 @@ class RedirectHandler(EnhanceHeadersMixin, TornadoRedirectHandler):
     """
     RedirectHandler with modified HTTP headers.
     """
+
+
+class Http404Handler(BaseHandler):
+    def set_default_headers(self) -> None:
+        super().set_default_headers()
+        self.set_header_content_security_policy_extended()
+
+    def prepare(self) -> None:
+        raise HTTPError(404)

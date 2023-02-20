@@ -19,6 +19,8 @@ class Sinatra(BaseHandler):
         # make sure that security related headers, which need to be present in
         # all responses, are not overridden by sinatra
         self.set_default_headers()
+        if result.status == 401 and result.body == b'{"notauthorized":"true"}':
+            self.set_header_content_security_policy_extended()
         self.set_status(result.status)
         self.write(result.body)
 
