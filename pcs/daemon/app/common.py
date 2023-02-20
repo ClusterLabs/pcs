@@ -5,7 +5,10 @@ from typing import (
     Type,
 )
 
-from tornado.web import Finish
+from tornado.web import (
+    Finish,
+    HTTPError,
+)
 from tornado.web import RedirectHandler as TornadoRedirectHandler
 from tornado.web import RequestHandler
 
@@ -144,6 +147,11 @@ class BaseHandler(EnhanceHeadersMixin, RequestHandler):
         # method should be implemented to handle streamed request data.
         # BUT we currently do not plan to use it SO:
         pass
+
+
+class Http404Handler(BaseHandler):
+    def prepare(self) -> None:
+        raise HTTPError(404)
 
 
 class LegacyApiBaseHandler(BaseHandler):

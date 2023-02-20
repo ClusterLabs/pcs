@@ -17,6 +17,8 @@
 - Confusing error message in `pcs constraint ticket add` command
   ([rhbz#2168617], [ghpull#559])
 - Internal server error during cluster setup with Ruby 3.2
+- Set `Content-Security-Policy: frame-ancestors 'self'; default-src 'self'`
+  HTTP header for HTTP 404 responses as well ([rhbz#2160664])
 
 ### Changed
 - Resource/stonith agent self-validation of instance attributes is now
@@ -30,6 +32,7 @@
 [rhbz#2151524]: https://bugzilla.redhat.com/show_bug.cgi?id=2151524
 [rhbz#2158790]: https://bugzilla.redhat.com/show_bug.cgi?id=2158790
 [rhbz#2159454]: https://bugzilla.redhat.com/show_bug.cgi?id=2159454
+[rhbz#2160664]: https://bugzilla.redhat.com/show_bug.cgi?id=2160664
 [rhbz#2166249]: https://bugzilla.redhat.com/show_bug.cgi?id=2166249
 [rhbz#2168617]: https://bugzilla.redhat.com/show_bug.cgi?id=2168617
 
