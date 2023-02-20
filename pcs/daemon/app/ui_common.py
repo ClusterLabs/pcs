@@ -4,11 +4,6 @@ from pcs.daemon.app.common import EnhanceHeadersMixin
 
 
 class AjaxMixin:
-    """
-    AjaxMixin adds methods for an ajax request detection and common unauthorized
-    response.
-    """
-
     @property
     def is_ajax(self):
         return (
