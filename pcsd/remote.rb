@@ -1765,7 +1765,7 @@ def check_sbd(param, request, auth_user)
       device_list.each { |device|
         out[:device_list] << {
           :path => device,
-          :exist => File.exists?(device),
+          :exist => File.exist?(device),
           :block_device => File.blockdev?(device),
         }
       }

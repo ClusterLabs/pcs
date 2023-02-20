@@ -17,7 +17,7 @@ module PcsdRemoveFile
     end
 
     def process()
-      unless File.exists? self.full_file_name
+      unless File.exist? self.full_file_name
         return PcsdExchangeFormat::result(:not_found)
       end
       begin
