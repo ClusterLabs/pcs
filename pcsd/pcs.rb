@@ -823,7 +823,7 @@ def get_pacemaker_version()
 end
 
 def get_rhel_version()
-  if File.exists?('/etc/system-release')
+  if File.exist?('/etc/system-release')
     release = File.open('/etc/system-release').read
     match = /(\d+)\.(\d+)/.match(release)
     if match
