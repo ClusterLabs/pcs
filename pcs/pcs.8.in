@@ -1067,6 +1067,8 @@ See \fBpacemaker-controld\fR(7) and \fBpacemaker-schedulerd\fR(7) man pages for 
 .TP
 defaults [<property>]...
 List all property defaults or only defaults for specified properties.
+describe [<property>...] [\fB\-\-output-format text|json\fR]
+Show cluster properties. There are 2 formats of output available: 'json' and 'text', default is 'text'. Format 'text' is a human friendly output. Format 'json' is a machine oriented output of the configuration.
 .TP
 unset <property> ...
 Remove property from configuration.

@@ -7,6 +7,7 @@ from typing import (
 )
 
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.output import smart_wrap_text
 from pcs.cli.common.parse_args import (
     InputModifiers,
     ensure_unique_args,
@@ -119,6 +120,10 @@ class PropertyConfigurationFacade:
     @property
     def properties(self) -> Sequence[CibNvsetDto]:
         return self._properties
+
+    @property
+    def properties_metadata(self) -> Sequence[ResourceAgentParameterDto]:
+        return self._properties_metadata
 
     @property
     def defaults(self) -> dict[str, str]:
@@ -282,6 +287,91 @@ def defaults(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
         lib.cluster_property.get_properties_metadata(),
     )
     output = "\n".join(properties_defaults_to_text(properties_facade, argv))
+    if output:
+        print(output)
+
+
+def _parameter_metadata_to_text(
+    metadata: ResourceAgentParameterDto,
+) -> list[str]:
+    text: list[str] = []
+    desc = ""
+    if metadata.longdesc:
+        desc = metadata.longdesc.replace("\n", " ")
+    if not desc and metadata.shortdesc:
+        desc = metadata.shortdesc.replace("\n", " ")
+    if not desc:
+        desc = "No description available"
+    text.append(f"Description: {desc}")
+    if metadata.enum_values:
+        type_or_allowed_values = "Allowed values: {}".format(
+            format_list(metadata.enum_values)
+        )
+    else:
+        type_or_allowed_values = f"Type: {metadata.type}"
+    text.append(type_or_allowed_values)
+    if metadata.default:
+        text.append(f"Default: {metadata.default}")
+    return [metadata.name] + indent(text)
+
+
+def cluster_property_metadata_to_text(
+    metadata: Sequence[ResourceAgentParameterDto],
+) -> list[str]:
+    """
+    Convert cluster property metadata to lines of description text.
+    Output example:
+
+    property-name
+      Description: <longdesc or shortdesc>
+      Type: <type> / Allowed values: <enum values>
+      Default: <default value>
+
+    metadata - list of ResourceAgentParameterDto which is used for cluster
+        property metadata
+    """
+    text: list[str] = []
+    for metadata_dto in metadata:
+        text.extend(_parameter_metadata_to_text(metadata_dto))
+    return text
+
+
+def describe(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
+    """
+    Options:
+      * --output-format - supported formats: text, json
+    """
+    modifiers.ensure_only_supported(output_format_supported=True)
+    output_format = modifiers.get_output_format(
+        supported_formats={"text", "json"}
+    )
+    properties_facade = PropertyConfigurationFacade.from_properties_dtos(
+        ListCibNvsetDto(sets=[]),
+        lib.cluster_property.get_properties_metadata(),
+    )
+
+    properties_metadata = sorted(
+        (
+            metadata
+            for metadata in properties_facade.properties_metadata
+            if not argv or metadata.name in argv
+        ),
+        key=lambda x: x.name,
+    )
+    if output_format == "json":
+        output = json.dumps(
+            dto.to_dict(
+                ClusterPropertyMetadataDto(
+                    properties_metadata=properties_metadata
+                )
+            )
+        )
+    else:
+        output = "\n".join(
+            smart_wrap_text(
+                cluster_property_metadata_to_text(properties_metadata)
+            )
+        )
     if output:
         print(output)
 

@@ -2290,6 +2290,12 @@ Commands:
     defaults [<property>] ...
         List all property defaults or only defaults for specified properties.
 
+    describe [<property>...] [--output-format text|json]
+        Show cluster properties. There are 2 formats of output available:
+        'json' and 'text', default is 'text'. Format 'text' is a human
+        friendly output. Format 'json' is a machine oriented output of the
+        configuration.
+
     set <property>=[<value>] ... [--force]
         Set specific pacemaker properties (if the value is blank then the
         property is removed from the configuration).  If a property is not
