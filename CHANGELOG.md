@@ -19,6 +19,7 @@
 - Internal server error during cluster setup with Ruby 3.2
 - Set `Content-Security-Policy: frame-ancestors 'self'; default-src 'self'`
   HTTP header for HTTP 404 responses as well ([rhbz#2160664])
+- Validate dates in location constraint rules ([ghpull#644])
 
 ### Changed
 - Resource/stonith agent self-validation of instance attributes is now
@@ -28,6 +29,7 @@
 
 [ghissue#604]: https://github.com/ClusterLabs/pcs/issues/604
 [ghpull#559]: https://github.com/ClusterLabs/pcs/pull/559
+[ghpull#644]: https://github.com/ClusterLabs/pcs/pull/644
 [rhbz#2151164]: https://bugzilla.redhat.com/show_bug.cgi?id=2151164
 [rhbz#2151524]: https://bugzilla.redhat.com/show_bug.cgi?id=2151524
 [rhbz#2158790]: https://bugzilla.redhat.com/show_bug.cgi?id=2158790
