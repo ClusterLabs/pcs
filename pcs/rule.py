@@ -989,7 +989,8 @@ class CibBuilder:
         )
         if not utils.is_iso8601_date(syntactic_tree.children[1].value):
             raise SyntaxError(
-                "invalid date '%s' is not in ISO8601 format" % syntactic_tree.children[1].value
+                "'%s' is not an ISO 8601 date"
+                % syntactic_tree.children[1].value
             )
         dom_expression.setAttribute("operation", syntactic_tree.symbol_id)
         if syntactic_tree.symbol_id == "gt":
@@ -1018,7 +1019,8 @@ class CibBuilder:
             else:
                 if not utils.is_iso8601_date(syntactic_tree.children[2].value):
                     raise SyntaxError(
-                        "invalid date '%s' is not in ISO8601 format" % syntactic_tree.children[2].value
+                        "'%s' is not an ISO 8601 date"
+                        % syntactic_tree.children[2].value
                     )
                 dom_expression.setAttribute(
                     "end", syntactic_tree.children[2].value

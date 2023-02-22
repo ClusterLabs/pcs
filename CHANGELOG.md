@@ -18,6 +18,7 @@
   HTTP header for HTTP 404 responses ([rhbz#2160555])
 - Set `autocomplete="off"` for a password input field in login page in web UI
   ([rhbz#1957591])
+- Validate dates in location constraint rules ([ghpull#644], [rhbz#2178707])
 
 ### Changed
 - Resource/stonith agent self-validation of instance attributes is now
@@ -27,6 +28,7 @@
 
 [ghissue#604]: https://github.com/ClusterLabs/pcs/issues/604
 [ghpull#559]: https://github.com/ClusterLabs/pcs/pull/559
+[ghpull#644]: https://github.com/ClusterLabs/pcs/pull/644
 [rhbz#1957591]: https://bugzilla.redhat.com/show_bug.cgi?id=1957591
 [rhbz#2022748]: https://bugzilla.redhat.com/show_bug.cgi?id=2022748
 [rhbz#2151166]: https://bugzilla.redhat.com/show_bug.cgi?id=2151166
@@ -35,6 +37,7 @@
 [rhbz#2159455]: https://bugzilla.redhat.com/show_bug.cgi?id=2159455
 [rhbz#2160555]: https://bugzilla.redhat.com/show_bug.cgi?id=2160555
 [rhbz#2166243]: https://bugzilla.redhat.com/show_bug.cgi?id=2166243
+[rhbz#2178707]: https://bugzilla.redhat.com/show_bug.cgi?id=2178707
 
 
 ## [0.10.15] - 2022-11-23
