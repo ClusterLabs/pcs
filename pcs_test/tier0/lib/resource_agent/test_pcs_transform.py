@@ -216,7 +216,7 @@ class OcfUnifiedToPcs(TestCase):
         )
         self.assertEqual(
             ra.pcs_transform.ocf_unified_to_pcs(metadata),
-            "from parameter advanced",
+            "from parameter desc",
         )
 
         mock_action_role.assert_called_once_with(metadata)
@@ -225,8 +225,10 @@ class OcfUnifiedToPcs(TestCase):
         mock_parameter_dedup_desc.assert_called_once_with(
             "from parameter select"
         )
-        mock_parameter_desc.assert_called_once_with("from parameter dedup desc")
-        mock_parameter_advanced.assert_called_once_with("from parameter desc")
+        mock_parameter_advanced.assert_called_once_with(
+            "from parameter dedup desc"
+        )
+        mock_parameter_desc.assert_called_once_with("from parameter advanced")
         mock_stonith_parameters.assert_not_called()
         mock_stonith_action.assert_not_called()
         mock_stonith_port.assert_not_called()
@@ -377,7 +379,7 @@ class MetadataActionTranslateRole(TestCase):
 
 
 class MetadataParameterExtractAdvancedFromDesc(TestCase):
-    advanced_str_list = ["Advanced use only: ", "*** Advanced Use Only *** "]
+    advanced_str_list = ["Advanced use only:", "*** Advanced Use Only ***"]
 
     @staticmethod
     def _fixture_metadata(parameters):
@@ -450,22 +452,35 @@ class MetadataParameterExtractAdvancedFromDesc(TestCase):
             metadata_out,
         )
 
+    def test_only_advanced_str_in_shortedsc(self):
+        for advanced_str in self.advanced_str_list:
+            with self.subTest(advanced_str=advanced_str):
+                metadata_in = self._fixture_metadata(
+                    [self._fixture_parameter(f"{advanced_str}", None, False)]
+                )
+                metadata_out = self._fixture_metadata(
+                    [self._fixture_parameter(None, None, True)]
+                )
+                self.assertEqual(
+                    # pylint: disable=protected-access
+                    ra.pcs_transform._metadata_parameter_extract_advanced_from_desc(
+                        metadata_in
+                    ),
+                    metadata_out,
+                )
+
     def test_advanced_str_in_shortedsc(self):
         for advanced_str in self.advanced_str_list:
             with self.subTest(advanced_str=advanced_str):
                 metadata_in = self._fixture_metadata(
                     [
                         self._fixture_parameter(
-                            f"{advanced_str}: some shortdesc", None, False
+                            f"{advanced_str}   : some shortdesc", None, False
                         )
                     ]
                 )
                 metadata_out = self._fixture_metadata(
-                    [
-                        self._fixture_parameter(
-                            f"{advanced_str}: some shortdesc", None, True
-                        )
-                    ]
+                    [self._fixture_parameter(": some shortdesc", None, True)]
                 )
                 self.assertEqual(
                     # pylint: disable=protected-access
@@ -945,12 +960,12 @@ class MetadataParameterJoinShortLongDesc(TestCase):
             metadata_out,
         )
 
-    def test_shortdesc_ang_longdesc(self):
+    def test_shortdesc_and_longdesc(self):
         metadata_in = self._fixture_metadata(
             [self._fixture_parameter("shortdesc", "longdesc")]
         )
         metadata_out = self._fixture_metadata(
-            [self._fixture_parameter("shortdesc", "shortdesc\nlongdesc")]
+            [self._fixture_parameter("shortdesc", "shortdesc.\nlongdesc")]
         )
         self.assertEqual(
             # pylint: disable=protected-access
