@@ -10,6 +10,8 @@
 - New URL for listing pcsd capabilities: `/capabilities`
 - It is now possible to list pcsd capabilities even if pcsd is not running:
   `pcsd --version --full`
+- Add lib commands `cluster_property.get_properties` and
+  `cluster_property.get_properties_metadata` to API v2
 
 ### Fixed
 - Crash in commands that ask for user input (like `pcs cluster destroy`) when
