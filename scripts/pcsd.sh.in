@@ -1,6 +1,6 @@
 #!@BASH@
 set -x
-REPO_PATH="$(realpath $(dirname $0)/../)"
+REPO_PATH="$(realpath "$(dirname "$0")"/../)"
 
 systemctl is-active --quiet pcsd
 PCSD_INITIALLY_RUNNING=$?
@@ -17,28 +17,32 @@ fi
 # export PCSD_SESSION_LIFETIME=$PCSD_SESSION_LIFETIME:=36a00}
 # export PCSD_WORKER_COUNT=1
 # export PCSD_WORKER_RESET_LIMIT=2
-export PCSD_DISABLE_GUI=${PCSD_DISABLE_GUI:=false}
-export PCSD_DEBUG=${PCSD_DEBUG:=true}
-export PCSD_DEV=${PCSD_DEV:=true}
+export PCSD_DISABLE_GUI="${PCSD_DISABLE_GUI:=false}"
+export PCSD_DEBUG="${PCSD_DEBUG:=true}"
+export PCSD_DEV="${PCSD_DEV:=true}"
 export GEM_HOME="$REPO_PATH/@PCSD_BUNDLED_DIR_ROOT_LOCAL@"
 # export GEM_PATH="$GEM_HOME:"`gem env gempath`
 
 # RACK_ENV=production ruby -I${REPO_PATH}/pcsd ${REPO_PATH}/pcsd/pcsd.service-runner &
-RACK_ENV=production ruby -I${REPO_PATH}/pcsd ${REPO_PATH}/pcsd/pcsd &
+RACK_ENV=production ruby "-I${REPO_PATH}/pcsd" "${REPO_PATH}/pcsd/pcsd" &
 pid_ruby=$!
 echo "* ruby daemon started: $pid_ruby"
 sleep 5
-${REPO_PATH}/pcs/pcs -d &
+"${REPO_PATH}/pcs/pcs" -d &
 pid_python=$!
 echo "* python daemon started: $pid_python"
-function got_signal {
-        echo "* killing $pid_python $pid_ruby"
+tail -f "@LOCALSTATEDIR@/log/pcsd/pcsd.log" &
+pid_tail=$!
+
+got_signal() {
+        echo "* killing $pid_tail $pid_python $pid_ruby"
+        kill $pid_tail
         kill $pid_python
         kill $pid_ruby
         sleep 5
 }
 
-trap 'got_signal' SIGINT
+trap 'got_signal' INT
 
 echo "* ready to provide services, ctrl+c to exit..."
 wait
