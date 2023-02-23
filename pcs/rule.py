@@ -973,6 +973,11 @@ class CibBuilder:
             "date_expression",
             dom_element.getAttribute("id") + "-expr",
         )
+        if not utils.is_iso8601_date(syntactic_tree.children[1].value):
+            raise SyntaxError(
+                "'%s' is not an ISO 8601 date"
+                % syntactic_tree.children[1].value
+            )
         dom_expression.setAttribute("operation", syntactic_tree.symbol_id)
         if syntactic_tree.symbol_id == "gt":
             dom_expression.setAttribute(
@@ -998,6 +1003,11 @@ class CibBuilder:
                 for key, value in duration.parts.items():
                     dom_duration.setAttribute(key, value)
             else:
+                if not utils.is_iso8601_date(syntactic_tree.children[2].value):
+                    raise SyntaxError(
+                        "'%s' is not an ISO 8601 date"
+                        % syntactic_tree.children[2].value
+                    )
                 dom_expression.setAttribute(
                     "end", syntactic_tree.children[2].value
                 )

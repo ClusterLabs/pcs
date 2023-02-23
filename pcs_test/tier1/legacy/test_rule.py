@@ -2200,6 +2200,14 @@ class DomRuleAddTest(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
+            (
+                "constraint location dummy1 rule (#uname eq node3) and "
+                "(date gt 2022-01-01 or date lt 2023-01-01 "
+                "or date in_range 2023-02-01 to 2023-02-28)"
+            ).split(),
+        )
+
+        self.assert_pcs_success(
             "constraint location config --full".split(),
             dedent(
                 f"""\
@@ -2221,6 +2229,13 @@ class DomRuleAddTest(TestCase, AssertPcsMixin):
                             Date Spec: hours=12-23 weekdays=1-5 (id:complexRule-rule-1-expr-datespec)
                           Expression: date in_range 2014-07-26 to duration (id:complexRule-rule-1-expr-1)
                             Duration: months=1 (id:complexRule-rule-1-expr-1-duration)
+                    Constraint: location-dummy1-3
+                      Rule: boolean-op=and score=INFINITY (id:location-dummy1-3-rule)
+                        Expression: #uname eq node3 (id:location-dummy1-3-rule-expr)
+                        Rule: boolean-op=or score=0 (id:location-dummy1-3-rule-rule)
+                          Expression: date gt 2022-01-01 (id:location-dummy1-3-rule-rule-expr)
+                          Expression: date lt 2023-01-01 (id:location-dummy1-3-rule-rule-expr-1)
+                          Expression: date in_range 2023-02-01 to 2023-02-28 (id:location-dummy1-3-rule-rule-expr-2)
                 """,
             ),
         )
@@ -2247,6 +2262,13 @@ class DomRuleAddTest(TestCase, AssertPcsMixin):
                             Date Spec: hours=12-23 weekdays=1-5
                           Expression: date in_range 2014-07-26 to duration
                             Duration: months=1
+                    Constraint: location-dummy1-3
+                      Rule: boolean-op=and score=INFINITY
+                        Expression: #uname eq node3
+                        Rule: boolean-op=or score=0
+                          Expression: date gt 2022-01-01
+                          Expression: date lt 2023-01-01
+                          Expression: date in_range 2023-02-01 to 2023-02-28
                 """,
             ),
         )
@@ -2339,4 +2361,28 @@ class DomRuleAddTest(TestCase, AssertPcsMixin):
         self.assert_pcs_fail(
             "constraint location dummy1 rule id=MyRule #uname eq node1".split(),
             "Error: id 'MyRule' is already in use, please specify another one\n",
+        )
+
+    @skip_unless_crm_rule()
+    def test_invalid_date(self):
+        self.assert_pcs_fail(
+            "constraint location dummy1 rule date gt abcd".split(),
+            (
+                "Error: 'date gt abcd' is not a valid rule expression: 'abcd' "
+                "is not an ISO 8601 date\n"
+            ),
+        )
+        self.assert_pcs_fail(
+            "constraint location dummy1 rule date in_range abcd to 2023-01-01".split(),
+            (
+                "Error: 'date in_range abcd to 2023-01-01' is not a valid rule "
+                "expression: invalid date 'abcd' in 'in_range ... to'\n"
+            ),
+        )
+        self.assert_pcs_fail(
+            "constraint location dummy1 rule date in_range 2023-01-01 to abcd".split(),
+            (
+                "Error: 'date in_range 2023-01-01 to abcd' is not a valid rule "
+                "expression: invalid date 'abcd' in 'in_range ... to'\n"
+            ),
         )
