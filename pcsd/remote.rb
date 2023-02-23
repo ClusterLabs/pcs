@@ -183,7 +183,11 @@ end
 
 # provides remote cluster status to a local gui
 def cluster_status_gui(auth_user, cluster_name, dont_update_config=false)
-  cluster_nodes = get_cluster_nodes(cluster_name)
+  config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
+  unless config.is_cluster_name_in_use(cluster_name)
+    return 404, 'Unknown cluster'
+  end
+  cluster_nodes = config.get_nodes(cluster_name)
   status = cluster_status_from_nodes(auth_user, cluster_nodes, cluster_name)
   unless status
     return 403, 'Permission denied'
@@ -214,7 +218,6 @@ def cluster_status_gui(auth_user, cluster_name, dont_update_config=false)
     new_cluster_nodes = status[:node_list].map{|n| n[:name]}
   end
 
-  config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
 
   if config.cluster_nodes_equal?(cluster_name, new_cluster_nodes)
     return JSON.generate(status)
