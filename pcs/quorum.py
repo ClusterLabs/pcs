@@ -4,7 +4,7 @@ from pcs import (
     stonith,
     utils,
 )
-from pcs.cli.cluster_property import PropertyConfigurationFacade
+from pcs.cli.cluster_property.output import PropertyConfigurationFacade
 from pcs.cli.common import parse_args
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import InputModifiers

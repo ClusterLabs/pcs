@@ -25,7 +25,7 @@ from pcs import (
     usage,
     utils,
 )
-from pcs.cli.cluster_property import (
+from pcs.cli.cluster_property.output import (
     PropertyConfigurationFacade,
     properties_to_text,
 )

@@ -3,7 +3,7 @@ from unittest import (
     mock,
 )
 
-from pcs.cli import cluster_property
+from pcs.cli.cluster_property import command as cluster_property
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.common.reports import codes as report_codes
 

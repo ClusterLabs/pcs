@@ -1,5 +1,5 @@
 from pcs import usage
-from pcs.cli import cluster_property
+from pcs.cli.cluster_property import command as cluster_property
 from pcs.cli.common.routing import create_router
 
 property_cmd = create_router(

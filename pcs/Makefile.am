@@ -23,9 +23,11 @@ EXTRA_DIST		= \
 			  cli/booth/command.py \
 			  cli/booth/env.py \
 			  cli/booth/__init__.py \
-			  cli/cluster/command.py \
 			  cli/cluster/__init__.py \
-			  cli/cluster_property.py \
+			  cli/cluster/command.py \
+			  cli/cluster_property/__init__.py \
+			  cli/cluster_property/command.py \
+			  cli/cluster_property/output.py \
 			  cli/common/completion.py \
 			  cli/common/env_cli.py \
 			  cli/common/errors.py \

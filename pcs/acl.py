@@ -1,4 +1,4 @@
-from pcs.cli.cluster_property import PropertyConfigurationFacade
+from pcs.cli.cluster_property.output import PropertyConfigurationFacade
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.reports.output import deprecation_warning
 from pcs.common.str_tools import indent
