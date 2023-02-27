@@ -2419,7 +2419,7 @@ Commands:
         Create a colocation constraint with a resource set.
         Available options are sequential=true/false and
         role=Stopped/Started/Promoted/Unpromoted. Available constraint_options
-        are id and either of: score, score-attribute, score-attribute-mangle.
+        are id and score.
 
     colocation delete <source resource id> <target resource id>
         Remove colocation constraints with specified resources.

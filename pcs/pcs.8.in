@@ -1134,7 +1134,7 @@ colocation add [<role>] <source resource id> with [<role>] <target resource id> 
 Request <source resource> to run on the same node where pacemaker has determined <target resource> should run.  Positive values of score mean the resources should be run on the same node, negative values mean the resources should not be run on the same node.  Specifying 'INFINITY' (or '\-INFINITY') for the score forces <source resource> to run (or not run) with <target resource> (score defaults to "INFINITY"). A role can be: 'Promoted', 'Unpromoted', 'Started', 'Stopped' (if no role is specified, it defaults to 'Started').
 .TP
 colocation set <resource1> [resourceN]... [options] [set <resourceX> ... [options]] [setoptions [constraint_options]]
-Create a colocation constraint with a resource set. Available options are sequential=true/false and role=Stopped/Started/Promoted/Unpromoted. Available constraint_options are id and either of: score, score\-attribute, score\-attribute\-mangle.
+Create a colocation constraint with a resource set. Available options are sequential=true/false and role=Stopped/Started/Promoted/Unpromoted. Available constraint_options are id and score.
 .TP
 colocation delete <source resource id> <target resource id>
 Remove colocation constraints with specified resources.
