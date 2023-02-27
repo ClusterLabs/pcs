@@ -467,6 +467,10 @@ AC_PATH_PROG([FIND], [find])
 if test "x$FIND" = "x"; then
 	AC_MSG_ERROR([Unable to find find in $PATH])
 fi
+AC_PATH_PROG([CERTUTIL], [certutil])
+if test "x$CERTUTIL" = "x"; then
+	AC_MSG_ERROR([Unable to find certutil in $PATH])
+fi
 
 # NOTE: some of those pacemaker var are only available
 # in pacemaker.pc with pacemaker >= 2.0.5

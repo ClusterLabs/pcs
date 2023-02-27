@@ -9,6 +9,7 @@ ruby_executable = "@RUBY@"
 service_binary = "@SERVICE@"
 systemctl_binary = "@SYSTEMCTL@"
 systemd_unit_path = "@SYSTEMD_UNIT_PATH@".split(":")
+certutil_executable = "@CERTUTIL@"
 
 
 # pcs

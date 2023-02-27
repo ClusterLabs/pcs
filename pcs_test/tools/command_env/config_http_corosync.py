@@ -247,6 +247,7 @@ class CorosyncShortcuts:
         node_labels=None,
         communication_list=None,
         name="http.corosync.qdevice_net_client_setup",
+        before=None,
     ):
         place_multinode_call(
             self.__calls,
@@ -255,6 +256,7 @@ class CorosyncShortcuts:
             communication_list,
             action="remote/qdevice_net_client_init_certificate_storage",
             param_list=[("ca_certificate", base64.b64encode(ca_cert))],
+            before=before,
         )
 
     def qdevice_net_sign_certificate(

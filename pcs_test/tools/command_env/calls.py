@@ -141,12 +141,23 @@ class CallListBuilder:
 
     def remove(self, name):
         """
-        Remove call under key name.
+        Remove a call with the specified name
         """
         try:
             index = self.__name_list.index(name)
             del self.__call_list[index]
             del self.__name_list[index]
+        except ValueError as e:
+            raise self.__name_not_exists(name) from e
+
+    def trim_before(self, name):
+        """
+        Remove a call with the specified name and all calls after it from the list
+        """
+        try:
+            index = self.__name_list.index(name)
+            self.__call_list = self.__call_list[:index]
+            self.__name_list = self.__name_list[:index]
         except ValueError as e:
             raise self.__name_not_exists(name) from e
 

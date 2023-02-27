@@ -406,6 +406,19 @@
           qdevice_net_client_destroy
       </description>
     </capability>
+    <capability id="corosync.quorum.device.client.model.net.certificates.local" in-pcs="1" in-pcsd="1">
+      <description>
+        Check if the local node has correct qdevice certificates for the
+        specified cluster name and qnetd host. Setup such certificates on the
+        local node.
+
+        pcs commands: quorum device (setup_local_qnetd_certs | check_local_qnetd_certs)
+
+        daemon urls:
+          /api/v2/quorum.device_net_certificate_check_local
+          /api/v2/quorum.device_net_certificate_setup_local
+      </description>
+    </capability>
     <capability id="corosync.quorum.set-expected-votes-runtime" in-pcs="1" in-pcsd="0">
       <description>
         Set expected votes in the live cluster to specified value.

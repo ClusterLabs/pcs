@@ -2,7 +2,7 @@ import inspect
 import logging
 import os
 import os.path
-import sys
+import shutil
 from functools import partial
 from unittest import mock
 
@@ -103,13 +103,9 @@ def patch_env(call_queue, config, init_env, is_systemd=True):
 
     if is_fs_call_in(call_queue):
         fs_mock = get_fs_mock(call_queue)
-        builtin = (
-            ("__builtin__" if sys.version_info[0] == 2 else "builtins") + ".{0}"
-        ).format
-
         patcher_list.extend(
             [
-                mock.patch(builtin("open"), fs_mock("open", open)),
+                mock.patch("builtins.open", fs_mock("open", open)),
                 mock.patch(
                     "os.path.exists", fs_mock("os.path.exists", os.path.exists)
                 ),
@@ -122,6 +118,10 @@ def patch_env(call_queue, config, init_env, is_systemd=True):
                 mock.patch("os.listdir", fs_mock("os.listdir", os.listdir)),
                 mock.patch("os.chmod", fs_mock("os.chmod", os.chmod)),
                 mock.patch("os.chown", fs_mock("os.chown", os.chown)),
+                mock.patch(
+                    "shutil.rmtree", fs_mock("shutil.rmtree", shutil.rmtree)
+                ),
+                mock.patch("os.makedirs", fs_mock("os.makedirs", os.makedirs)),
             ]
         )
 

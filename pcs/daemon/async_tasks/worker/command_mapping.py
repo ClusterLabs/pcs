@@ -14,6 +14,7 @@ from pcs.lib.commands import (  # services,
     fencing_topology,
     node,
     qdevice,
+    quorum,
     resource,
     resource_agent,
     sbd,
@@ -187,6 +188,14 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
     # TODO: make sure WRITE is right permission
     "qdevice.qdevice_net_sign_certificate_request": _Cmd(
         cmd=qdevice.qdevice_net_sign_certificate_request,
+        required_permission=p.WRITE,
+    ),
+    "quorum.device_net_certificate_check_local": _Cmd(
+        cmd=quorum.device_net_certificate_check_local,
+        required_permission=p.READ,
+    ),
+    "quorum.device_net_certificate_setup_local": _Cmd(
+        cmd=quorum.device_net_certificate_setup_local,
         required_permission=p.WRITE,
     ),
     # deprecated, API v1 compatibility

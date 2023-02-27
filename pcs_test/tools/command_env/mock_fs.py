@@ -12,6 +12,8 @@ _FUNC_ARGS = {
     "os.chmod": ["fd", "mode"],
     "os.chown": ["fd", "uid", "gid"],
     "os.listdir": ["path"],
+    "shutil.rmtree": ["path"],
+    "os.makedirs": ["path", "mode"],
 }
 
 

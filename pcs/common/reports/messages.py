@@ -121,6 +121,8 @@ _file_role_translation = {
     file_type_codes.BOOTH_KEY: "Booth key",
     file_type_codes.COROSYNC_AUTHKEY: "Corosync authkey",
     file_type_codes.COROSYNC_CONF: "Corosync configuration",
+    file_type_codes.COROSYNC_QDEVICE_NSSDB: "QDevice certificate database",
+    file_type_codes.COROSYNC_QNETD_NSSDB: "QNetd certificate database",
     file_type_codes.PCS_DR_CONFIG: "disaster-recovery configuration",
     file_type_codes.PACEMAKER_AUTHKEY: "Pacemaker authkey",
     file_type_codes.PCSD_ENVIRONMENT_CONFIG: "pcsd configuration",
@@ -2450,6 +2452,35 @@ class QdeviceCertificateImportError(ReportItemMessage):
     @property
     def message(self) -> str:
         return f"Unable to import quorum device certificate: {self.reason}"
+
+
+@dataclass(frozen=True)
+class QdeviceCertificateReadError(ReportItemMessage):
+    """
+    An error occurred when reading qdevice / qnetd certificate database
+
+    reason -- an error message
+    """
+
+    reason: str
+    _code = codes.QDEVICE_CERTIFICATE_READ_ERROR
+
+    @property
+    def message(self) -> str:
+        return f"Unable to read quorum device certificate: {self.reason}"
+
+
+@dataclass(frozen=True)
+class QdeviceCertificateBadFormat(ReportItemMessage):
+    """
+    Qdevice / qnetd certificate has an unexpected format
+    """
+
+    _code = codes.QDEVICE_CERTIFICATE_BAD_FORMAT
+
+    @property
+    def message(self) -> str:
+        return "Unable to parse quorum device certificate"
 
 
 @dataclass(frozen=True)

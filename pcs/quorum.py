@@ -1,15 +1,19 @@
+from typing import Any
+
 from pcs import (
     stonith,
     utils,
 )
 from pcs.cli.common import parse_args
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.parse_args import InputModifiers
 from pcs.cli.common.tools import print_to_stderr
 from pcs.cli.reports import process_library_reports
 from pcs.common.str_tools import (
     format_list,
     indent,
 )
+from pcs.common.types import StringSequence
 from pcs.lib.node import get_existing_nodes_names
 
 
@@ -321,3 +325,35 @@ def quorum_unblock_cmd(lib, argv, modifiers):
     )
     utils.set_cib_property("startup-fencing", startup_fencing)
     print_to_stderr("Waiting for nodes canceled")
+
+
+def check_local_qnetd_certs_cmd(
+    lib: Any, argv: StringSequence, modifiers: InputModifiers
+):
+    modifiers.ensure_only_supported()
+    if not argv or len(argv) != 2 or not argv[0] or not argv[1]:
+        raise CmdLineInputError(
+            "Expected arguments: <qnetd_host> <cluster_name>"
+        )
+    qnetd_host = argv[0]
+    cluster_name = argv[1]
+    result = lib.quorum.device_net_certificate_check_local(
+        qnetd_host, cluster_name
+    )
+    if result:
+        print("certificate present")
+    else:
+        print("certificate missing")
+
+
+def setup_local_qnetd_certs_cmd(
+    lib: Any, argv: StringSequence, modifiers: InputModifiers
+):
+    modifiers.ensure_only_supported()
+    if not argv or len(argv) != 2 or not argv[0] or not argv[1]:
+        raise CmdLineInputError(
+            "Expected arguments: <qnetd_host> <cluster_name>"
+        )
+    qnetd_host = argv[0]
+    cluster_name = argv[1]
+    lib.quorum.device_net_certificate_setup_local(qnetd_host, cluster_name)

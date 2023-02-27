@@ -75,7 +75,7 @@ class LocalConfig:
             )
             .fs.exists(
                 os.path.join(
-                    settings.corosync_qdevice_net_client_certs_dir, "cert8.db"
+                    settings.corosync_qdevice_net_client_certs_dir, "cert9.db"
                 ),
                 return_value=True,
                 name=f"{local_prefix}fs.exists.corosync_certs_db",
@@ -120,7 +120,7 @@ class LocalConfig:
             )
             .fs.exists(
                 os.path.join(
-                    settings.corosync_qdevice_net_client_certs_dir, "cert8.db"
+                    settings.corosync_qdevice_net_client_certs_dir, "cert9.db"
                 ),
                 return_value=True,
                 name=f"{local_prefix}fs.exists.corosync_certs_db2",
@@ -3761,7 +3761,7 @@ class FailureQdevice(TestCase):
             )
             .fs.exists(
                 os.path.join(
-                    settings.corosync_qdevice_net_client_certs_dir, "cert8.db"
+                    settings.corosync_qdevice_net_client_certs_dir, "cert9.db"
                 ),
                 return_value=True,
                 name="fs.exists.corosync_certs_db2",
@@ -3834,7 +3834,7 @@ class FailureQdevice(TestCase):
             )
             .fs.exists(
                 os.path.join(
-                    settings.corosync_qdevice_net_client_certs_dir, "cert8.db"
+                    settings.corosync_qdevice_net_client_certs_dir, "cert9.db"
                 ),
                 return_value=True,
                 name="fs.exists.corosync_certs_db2",
@@ -3882,7 +3882,7 @@ class FailureQdevice(TestCase):
             )
             .fs.exists(
                 os.path.join(
-                    settings.corosync_qdevice_net_client_certs_dir, "cert8.db"
+                    settings.corosync_qdevice_net_client_certs_dir, "cert9.db"
                 ),
                 return_value=True,
                 name="fs.exists.corosync_certs_db2",
@@ -3951,7 +3951,7 @@ class FailureQdevice(TestCase):
             )
             .fs.exists(
                 os.path.join(
-                    settings.corosync_qdevice_net_client_certs_dir, "cert8.db"
+                    settings.corosync_qdevice_net_client_certs_dir, "cert9.db"
                 ),
                 return_value=True,
                 name="fs.exists.corosync_certs_db",
@@ -4000,7 +4000,7 @@ class FailureQdevice(TestCase):
             )
             .fs.exists(
                 os.path.join(
-                    settings.corosync_qdevice_net_client_certs_dir, "cert8.db"
+                    settings.corosync_qdevice_net_client_certs_dir, "cert9.db"
                 ),
                 return_value=True,
                 name="fs.exists.corosync_certs_db",

@@ -24,6 +24,9 @@ quorum_cmd = create_router(
                 "remove": quorum.quorum_device_remove_cmd,
                 "status": quorum.quorum_device_status_cmd,
                 "update": quorum.quorum_device_update_cmd,
+                # used by ha_cluster system role
+                "check_local_qnetd_certs": quorum.check_local_qnetd_certs_cmd,
+                "setup_local_qnetd_certs": quorum.setup_local_qnetd_certs_cmd,
             },
             ["quorum", "device"],
         ),
