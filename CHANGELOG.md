@@ -12,6 +12,7 @@
   `pcsd --version --full`
 - Add lib commands `cluster_property.get_properties` and
   `cluster_property.get_properties_metadata` to API v2
+- Add `pcs property defaults` and `pcs property describe` CLI commands
 
 ### Fixed
 - Crash in commands that ask for user input (like `pcs cluster destroy`) when

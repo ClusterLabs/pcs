@@ -321,18 +321,17 @@ def quorum_unblock_cmd(lib, argv, modifiers):
         utils.err("unable to cancel waiting for nodes")
     print_to_stderr("Quorum unblocked")
 
-    properties_facade = PropertyConfigurationFacade.from_properties_dtos(
+    properties_facade = PropertyConfigurationFacade.from_properties_config(
         lib.cluster_property.get_properties(),
-        lib.cluster_property.get_properties_metadata(),
     )
-    startup_fencing = properties_facade.get_property_value("startup-fencing")
-    if startup_fencing is None:
-        startup_fencing = properties_facade.defaults.get("startup-fencing", "")
+    startup_fencing = properties_facade.get_property_value(
+        "startup-fencing", ""
+    )
     lib.cluster_property.set_properties(
         {
-            "startup-fencing": "false"
-            if not is_false(startup_fencing)
-            else "true"
+            "startup-fencing": (
+                "false" if not is_false(startup_fencing) else "true"
+            )
         }
     )
     lib.cluster_property.set_properties({"startup-fencing": startup_fencing})

@@ -37,9 +37,9 @@ def acl_config(lib, argv, modifiers):
         lib.cluster_property.get_properties(),
         lib.cluster_property.get_properties_metadata(),
     )
-    acl_enabled = properties_facade.get_property_value("enable-acl")
-    if acl_enabled is None:
-        acl_enabled = properties_facade.defaults.get("enable-acl", "")
+    acl_enabled = properties_facade.get_property_value_or_default(
+        "enable-acl", ""
+    )
     if is_true(acl_enabled):
         print("ACLs are enabled")
     else:

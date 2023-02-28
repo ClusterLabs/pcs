@@ -46,6 +46,7 @@ from pcs.cli.resource.output import (
     ResourcesConfigurationFacade,
     resources_to_text,
 )
+from pcs.common.interface import dto
 from pcs.common.pacemaker.constraint import CibConstraintsDto
 from pcs.common.str_tools import indent
 from pcs.lib.errors import LibraryError
@@ -66,9 +67,9 @@ def config_show(lib, argv, modifiers):
         raise CmdLineInputError()
 
     corosync_conf_dto = None
-    properties_facade = PropertyConfigurationFacade.from_properties_dtos(
+    cluster_name = ""
+    properties_facade = PropertyConfigurationFacade.from_properties_config(
         lib.cluster_property.get_properties(),
-        lib.cluster_property.get_properties_metadata(),
     )
     try:
         corosync_conf_dto = lib.cluster.get_corosync_conf_struct()
@@ -76,9 +77,9 @@ def config_show(lib, argv, modifiers):
     except LibraryError:
         # there is no corosync.conf on remote nodes, we can try to
         # get cluster name from pacemaker
-        cluster_name = properties_facade.get_property_value("cluster-name")
-        if cluster_name is None:
-            cluster_name = properties_facade.defaults.get("cluster-name", "")
+        pass
+    if not cluster_name:
+        cluster_name = properties_facade.get_property_value("cluster-name", "")
     print("Cluster Name: %s" % cluster_name)
 
     status.nodes_status(lib, ["config"], modifiers.get_subset("-f"))
@@ -95,9 +96,12 @@ def config_show(lib, argv, modifiers):
             lib, [], modifiers.get_subset(), silent_list=True
         )
     if corosync_conf_dto:
+        quorum_device_dict = {}
+        if corosync_conf_dto.quorum_device:
+            quorum_device_dict = dto.to_dict(corosync_conf_dto.quorum_device)
         config = dict(
             options=corosync_conf_dto.quorum_options,
-            device=corosync_conf_dto.quorum_device,
+            device=quorum_device_dict,
         )
         quorum_lines = quorum.quorum_config_to_str(config)
         if quorum_lines:
@@ -205,9 +209,8 @@ def _config_show_cib_lines(lib, properties_facade=None):
         all_lines.extend(operations_defaults_lines)
 
     if not properties_facade:
-        properties_facade = PropertyConfigurationFacade.from_properties_dtos(
-            lib.cluster_property.get_properties(),
-            lib.cluster_property.get_properties_metadata(),
+        properties_facade = PropertyConfigurationFacade.from_properties_config(
+            lib.cluster_property.get_properties()
         )
     properties_lines = properties_to_text(properties_facade)
     if properties_lines:

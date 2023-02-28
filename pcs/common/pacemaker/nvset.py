@@ -26,4 +26,4 @@ class CibNvsetDto(DataTransferObject):
 
 @dataclass(frozen=True)
 class ListCibNvsetDto(DataTransferObject):
-    sets: Sequence[CibNvsetDto]
+    nvsets: Sequence[CibNvsetDto]

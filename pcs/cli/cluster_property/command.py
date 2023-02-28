@@ -95,26 +95,33 @@ def config(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
                 format_list(mutually_exclusive_options)
             )
         )
-    modifiers.ensure_not_mutually_exclusive(
-        "--all", "--defaults", "--output-format"
-    )
+    modifiers.ensure_not_mutually_exclusive(*mutually_exclusive_options)
     output_format = modifiers.get_output_format()
 
-    if modifiers.get("--defaults"):
+    if argv or output_format == "cmd" or modifiers.get("--all"):
+        properties_facade = PropertyConfigurationFacade.from_properties_dtos(
+            lib.cluster_property.get_properties(),
+            lib.cluster_property.get_properties_metadata(),
+        )
+    elif modifiers.get("--defaults"):
         # do not load set properties
         # --defaults should work without a cib file
-        set_properties = ListCibNvsetDto(sets=[])
+        properties_facade = (
+            PropertyConfigurationFacade.from_properties_metadata(
+                lib.cluster_property.get_properties_metadata()
+            )
+        )
     else:
-        set_properties = lib.cluster_property.get_properties()
-    properties_facade = PropertyConfigurationFacade.from_properties_dtos(
-        set_properties,
-        lib.cluster_property.get_properties_metadata(),
-    )
+        # json or default text
+        # do not load properties metadata, only configured properties are needed
+        properties_facade = PropertyConfigurationFacade.from_properties_config(
+            lib.cluster_property.get_properties()
+        )
 
     if argv:
         output = "\n".join(
             properties_to_text_with_default_mark(
-                properties_facade, property_names_list=argv
+                properties_facade, property_names=argv
             )
         )
     elif modifiers.get("--all"):
@@ -126,7 +133,9 @@ def config(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
             "Option --defaults is deprecated and will be removed. "
             "Please use command 'pcs property defaults' instead."
         )
-        output = "\n".join(properties_defaults_to_text(properties_facade))
+        output = "\n".join(
+            properties_defaults_to_text(properties_facade.get_defaults())
+        )
     elif output_format == "cmd":
         output = " \\\n".join(properties_to_cmd(properties_facade))
     elif output_format == "json":
@@ -142,14 +151,20 @@ def config(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
 
 def defaults(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
     """
-    Options: no options
+    Options:
+      * --full - also list advanced cluster properties
     """
-    del modifiers
-    properties_facade = PropertyConfigurationFacade.from_properties_dtos(
-        ListCibNvsetDto(sets=[]),
-        lib.cluster_property.get_properties_metadata(),
+    modifiers.ensure_only_supported("--full")
+    if argv and modifiers.is_specified("--full"):
+        raise CmdLineInputError("cannot specify properties when using '--full'")
+    properties_facade = PropertyConfigurationFacade.from_properties_metadata(
+        lib.cluster_property.get_properties_metadata()
     )
-    output = "\n".join(properties_defaults_to_text(properties_facade, argv))
+    defaults_dict = properties_facade.get_defaults(
+        argv,
+        advanced=None if argv or modifiers.is_specified("--full") else False,
+    )
+    output = "\n".join(properties_defaults_to_text(defaults_dict))
     if output:
         print(output)
 
@@ -157,22 +172,24 @@ def defaults(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
 def describe(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
     """
     Options:
+      * --full - also list advanced cluster properties
       * --output-format - supported formats: text, json
     """
-    modifiers.ensure_only_supported(output_format_supported=True)
+    modifiers.ensure_only_supported("--full", output_format_supported=True)
+    if argv and modifiers.is_specified("--full"):
+        raise CmdLineInputError("cannot specify properties when using '--full'")
     output_format = modifiers.get_output_format(
         supported_formats={"text", "json"}
     )
-    properties_facade = PropertyConfigurationFacade.from_properties_dtos(
-        ListCibNvsetDto(sets=[]),
-        lib.cluster_property.get_properties_metadata(),
+    properties_facade = PropertyConfigurationFacade.from_properties_metadata(
+        lib.cluster_property.get_properties_metadata()
     )
-
     properties_metadata = sorted(
-        (
-            metadata
-            for metadata in properties_facade.properties_metadata
-            if not argv or metadata.name in argv
+        properties_facade.get_properties_metadata(
+            argv,
+            advanced=None
+            if argv or modifiers.is_specified("--full")
+            else False,
         ),
         key=lambda x: x.name,
     )
@@ -180,7 +197,8 @@ def describe(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
         output = json.dumps(
             dto.to_dict(
                 ClusterPropertyMetadataDto(
-                    properties_metadata=properties_metadata
+                    properties_metadata=properties_metadata,
+                    readonly_properties=properties_facade.readonly_properties,
                 )
             )
         )

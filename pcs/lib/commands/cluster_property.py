@@ -13,13 +13,13 @@ from pcs.lib.cib import (
     nvpair_multi,
     rule,
 )
+from pcs.lib.cib.rule.in_effect import get_rule_evaluator
 from pcs.lib.cib.tools import (
     IdProvider,
     get_crm_config,
 )
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
-from pcs.lib.pacemaker.live import has_rule_in_effect_status_tool
 from pcs.lib.resource_agent import (
     ResourceAgentError,
     ResourceAgentFacade,
@@ -188,23 +188,14 @@ def get_properties(
     evaluate_expired -- also evaluate whether rules are expired or in effect
     """
     cib = env.get_cib()
-    rule_in_effect_eval: rule.RuleInEffectEval = rule.RuleInEffectEvalDummy()
-    if evaluate_expired:
-        if has_rule_in_effect_status_tool():
-            rule_in_effect_eval = rule.RuleInEffectEvalOneByOne(
-                cib, env.cmd_runner()
-            )
-        else:
-            env.report_processor.report(
-                reports.ReportItem.warning(
-                    reports.messages.RuleInEffectStatusDetectionNotSupported()
-                )
-            )
+    rule_in_effect_eval = get_rule_evaluator(
+        cib, env.cmd_runner(), env.report_processor, evaluate_expired
+    )
     nvset_list = nvpair_multi.find_nvsets(
         get_crm_config(cib), nvpair_multi.NVSET_PROPERTY
     )
     return ListCibNvsetDto(
-        sets=[
+        nvsets=[
             nvpair_multi.nvset_element_to_dto(nvset_el, rule_in_effect_eval)
             for nvset_el in nvset_list
         ]
@@ -232,5 +223,6 @@ def get_properties_metadata(
         properties_metadata=[
             property_definition.to_dto()
             for property_definition in property_definition_list
-        ]
+        ],
+        readonly_properties=cluster_property.READONLY_CLUSTER_PROPERTY_LIST,
     )
