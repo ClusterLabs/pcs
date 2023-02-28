@@ -4177,12 +4177,6 @@ class LocationShowWithPattern(ConstraintBaseTest):
                 # pylint:disable=trailing-whitespace
                 """\
             Location Constraints:
-              Node: 
-                Allowed to run:
-                  Resource: R1 (score:0) (id:location-R1)
-                  Resource: R1 (score:0) (id:location-R1-1)
-                  Resource pattern: R_[0-9]+ (score:0) (id:location-R_0-9)
-                  Resource pattern: R_[0-9]+ (score:0) (id:location-R_0-9-1)
               Node: node1
                 Allowed to run:
                   Resource: R1 (score:INFINITY) (id:location-R1-node1-INFINITY)
