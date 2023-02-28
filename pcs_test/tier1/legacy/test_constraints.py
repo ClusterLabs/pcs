@@ -4530,9 +4530,6 @@ class LocationShowWithPattern(ConstraintBaseTest):
             outdent(
                 """\
             Location Constraints:
-              Node: 
-                Allowed to run:
-                  Resource pattern: R_[0-9]+ (score:0) (id:location-R_0-9)
               Node: node1
                 Allowed to run:
                   Resource: R1 (score:INFINITY) (id:location-R1-node1-INFINITY)
