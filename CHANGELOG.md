@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.11.5] - 2023-03-01
 
 ### Added
 - Warning to `pcs resource|stonith update` commands about not using agent
