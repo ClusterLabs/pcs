@@ -85,89 +85,81 @@ class EnvConfigMixin:
         )
 
 
-REPORTS = (
-    fixture.ReportStore()
-    .info(
-        "pcmk_remote_disable_stop_started",
-        report_codes.SERVICE_COMMANDS_ON_NODES_STARTED,
-        action_list=[
-            "pacemaker_remote stop",
-            "pacemaker_remote disable",
-        ],
+def base_reports_for_host(host):
+    return (
+        fixture.ReportSequenceBuilder()
+        .info(
+            report_codes.SERVICE_COMMANDS_ON_NODES_STARTED,
+            action_list=[
+                "pacemaker_remote stop",
+                "pacemaker_remote disable",
+            ],
+            node_list=[host],
+            _name="pcmk_remote_disable_stop_started",
+        )
+        .info(
+            report_codes.SERVICE_COMMAND_ON_NODE_SUCCESS,
+            service_command_description="pacemaker_remote disable",
+            node=host,
+            _name="pcmk_remote_disable_success",
+        )
+        .info(
+            report_codes.SERVICE_COMMAND_ON_NODE_SUCCESS,
+            service_command_description="pacemaker_remote stop",
+            node=host,
+            _name="pcmk_remote_stop_success",
+        )
+        .info(
+            report_codes.FILES_REMOVE_FROM_NODES_STARTED,
+            file_list=["pacemaker authkey"],
+            node_list=[host],
+            _name="authkey_remove_started",
+        )
+        .info(
+            report_codes.FILE_REMOVE_FROM_NODE_SUCCESS,
+            file_description="pacemaker authkey",
+            node=host,
+            _name="authkey_remove_success",
+        )
+        .fixtures
     )
-    .info(
-        "pcmk_remote_disable_success",
-        report_codes.SERVICE_COMMAND_ON_NODE_SUCCESS,
-        service_command_description="pacemaker_remote disable",
-    )
-    .info(
-        "pcmk_remote_stop_success",
-        report_codes.SERVICE_COMMAND_ON_NODE_SUCCESS,
-        service_command_description="pacemaker_remote stop",
-    )
-    .info(
-        "authkey_remove_started",
-        report_codes.FILES_REMOVE_FROM_NODES_STARTED,
-        file_list=["pacemaker authkey"],
-    )
-    .info(
-        "authkey_remove_success",
-        report_codes.FILE_REMOVE_FROM_NODE_SUCCESS,
-        file_description="pacemaker authkey",
-    )
-)
 
-EXTRA_REPORTS = (
-    fixture.ReportStore()
-    .error(
-        "manage_services_connection_failed",
+
+def report_remove_file_connection_failed(node):
+    return fixture.error(
         report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
-        command="remote/manage_services",
-        reason=OFFLINE_ERROR_MSG,
         force_code=report_codes.SKIP_OFFLINE_NODES,
-    )
-    .as_warn(
-        "manage_services_connection_failed",
-        "manage_services_connection_failed_warn",
-    )
-    .copy(
-        "manage_services_connection_failed",
-        "remove_file_connection_failed",
         command="remote/remove_file",
+        reason=OFFLINE_ERROR_MSG,
+        node=node,
     )
-    .as_warn(
-        "remove_file_connection_failed",
-        "remove_file_connection_failed_warn",
-    )
-    .error(
-        "authkey_remove_failed",
+
+
+def report_authkey_remove_failed(node):
+    return fixture.error(
         report_codes.FILE_REMOVE_FROM_NODE_ERROR,
+        force_code=report_codes.FORCE,
         reason="Access denied",
         file_description="pacemaker authkey",
-        force_code=report_codes.FORCE,
+        node=node,
     )
-    .as_warn(
-        "authkey_remove_failed",
-        "authkey_remove_failed_warn",
-    )
-    .error(
-        "pcmk_remote_disable_failed",
+
+
+def report_pcmk_remote_disable_failed(node):
+    return fixture.error(
         report_codes.SERVICE_COMMAND_ON_NODE_ERROR,
+        force_code=report_codes.FORCE,
         reason="Operation failed.",
         service_command_description="pacemaker_remote disable",
+        node=node,
+    )
+
+
+def report_pcmk_remote_stop_failed(node):
+    return fixture.error(
+        report_codes.SERVICE_COMMAND_ON_NODE_ERROR,
         force_code=report_codes.FORCE,
-    )
-    .as_warn(
-        "pcmk_remote_disable_failed",
-        "pcmk_remote_disable_failed_warn",
-    )
-    .copy(
-        "pcmk_remote_disable_failed",
-        "pcmk_remote_stop_failed",
+        reason="Operation failed.",
         service_command_description="pacemaker_remote stop",
+        node=node,
     )
-    .as_warn(
-        "pcmk_remote_stop_failed",
-        "pcmk_remote_stop_failed_warn",
-    )
-)

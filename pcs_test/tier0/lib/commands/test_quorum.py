@@ -679,49 +679,49 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
         return tmp_file_mock_calls
 
     def fixture_reports_success(self):
-        report_store = fixture.ReportStore()
-        report_store = report_store.info(
-            "started", reports.codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
+        report_builder = fixture.ReportSequenceBuilder()
+        report_builder.info(
+            reports.codes.QDEVICE_CERTIFICATE_DISTRIBUTION_STARTED
         )
         for node in self.cluster_nodes:
-            report_store = report_store.info(
-                f"cert_accepted_by_{node}",
+            report_builder.info(
                 reports.codes.QDEVICE_CERTIFICATE_ACCEPTED_BY_NODE,
                 node=node,
+                _name=f"cert_accepted_by_{node}",
             )
-        report_store = report_store.info(
-            "enable_qdevice_started",
+        report_builder.info(
             reports.codes.SERVICE_ACTION_STARTED,
             action=reports.const.SERVICE_ACTION_ENABLE,
             service="corosync-qdevice",
             instance="",
+            _name="enable_qdevice_started",
         )
         for node in self.cluster_nodes:
-            report_store = report_store.info(
-                f"enable_qdevice_done_on_{node}",
+            report_builder.info(
                 reports.codes.SERVICE_ACTION_SUCCEEDED,
                 action=reports.const.SERVICE_ACTION_ENABLE,
                 service="corosync-qdevice",
                 node=node,
                 instance="",
+                _name=f"enable_qdevice_done_on_{node}",
             )
-        report_store = report_store.info(
-            "start_qdevice_started",
+        report_builder.info(
             reports.codes.SERVICE_ACTION_STARTED,
             action=reports.const.SERVICE_ACTION_START,
             service="corosync-qdevice",
             instance="",
+            _name="start_qdevice_started",
         )
         for node in self.cluster_nodes:
-            report_store = report_store.info(
-                f"start_qdevice_done_on_{node}",
+            report_builder.info(
                 reports.codes.SERVICE_ACTION_SUCCEEDED,
                 action=reports.const.SERVICE_ACTION_START,
                 service="corosync-qdevice",
                 node=node,
                 instance="",
+                _name=f"start_qdevice_done_on_{node}",
             )
-        return report_store
+        return report_builder.fixtures
 
     def test_not_live_success_minimal(self):
         original_config = _read_file_rc(self.corosync_conf_name)
@@ -1033,12 +1033,13 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
         )
 
         report_list_success = self.fixture_reports_success()
-        expected_reports = report_list_success[
-            :f"enable_qdevice_done_on_{self.cluster_nodes[0]}"
-        ]
+        expected_reports = fixture.ReportSequenceBuilder(
+            report_list_success[
+                :f"enable_qdevice_done_on_{self.cluster_nodes[0]}"
+            ]
+        )
         for node in self.cluster_nodes:
-            expected_reports = expected_reports.info(
-                f"enable_qdevice_skipped_on_{node}",
+            expected_reports.info(
                 reports.codes.SERVICE_ACTION_SKIPPED,
                 action=reports.const.SERVICE_ACTION_ENABLE,
                 service="corosync-qdevice",
@@ -1046,10 +1047,11 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
                 node=node,
                 instance="",
             )
-        expected_reports += report_list_success.only("start_qdevice_started")
+        expected_reports.fixtures.append(
+            report_list_success["start_qdevice_started"]
+        )
         for node in self.cluster_nodes:
-            expected_reports = expected_reports.info(
-                f"start_qdevice_skipped_on_{node}",
+            expected_reports.info(
                 reports.codes.SERVICE_ACTION_SKIPPED,
                 action=reports.const.SERVICE_ACTION_START,
                 service="corosync-qdevice",
@@ -1100,12 +1102,10 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
 
         expected_reports = self.fixture_reports_success()
         if warn:
-            expected_reports = (
-                fixture.ReportStore().warn(
-                    "heuristics_without_exec",
-                    reports.codes.COROSYNC_QUORUM_HEURISTICS_ENABLED_WITH_NO_EXEC,
+            expected_reports.prepend(
+                fixture.warn(
+                    reports.codes.COROSYNC_QUORUM_HEURISTICS_ENABLED_WITH_NO_EXEC
                 )
-                + expected_reports
             )
         self.env_assist.assert_reports(expected_reports)
 
@@ -1198,8 +1198,7 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
         ]
 
         def node_2_offline_warning(command):
-            return fixture.ReportStore().warn(
-                f"node_2_offline_{command}",
+            return fixture.warn(
                 reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
                 node=self.cluster_nodes[1],
                 reason=node_2_offline_msg,
@@ -1265,33 +1264,25 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
         )
 
         expected_reports = self.fixture_reports_success()
-        expected_reports = (
-            expected_reports[:f"cert_accepted_by_{self.cluster_nodes[0]}"]
-            + node_2_offline_warning(
+        expected_reports.insert(
+            f"cert_accepted_by_{self.cluster_nodes[0]}",
+            node_2_offline_warning(
                 "remote/qdevice_net_client_init_certificate_storage"
-            )
-            + expected_reports[f"cert_accepted_by_{self.cluster_nodes[0]}":]
+            ),
         )
-        expected_reports = (
-            expected_reports[:f"cert_accepted_by_{self.cluster_nodes[1]}"]
-            + node_2_offline_warning(
+        expected_reports.replace(
+            f"cert_accepted_by_{self.cluster_nodes[1]}",
+            node_2_offline_warning(
                 "remote/qdevice_net_client_import_certificate"
-            )
-            + expected_reports[f"cert_accepted_by_{self.cluster_nodes[2]}":]
+            ),
         )
-        expected_reports = (
-            expected_reports[:f"enable_qdevice_done_on_{self.cluster_nodes[1]}"]
-            + node_2_offline_warning("remote/qdevice_client_enable")
-            + expected_reports[
-                f"enable_qdevice_done_on_{self.cluster_nodes[2]}":
-            ]
+        expected_reports.replace(
+            f"enable_qdevice_done_on_{self.cluster_nodes[1]}",
+            node_2_offline_warning("remote/qdevice_client_enable"),
         )
-        expected_reports = (
-            expected_reports[:f"start_qdevice_done_on_{self.cluster_nodes[1]}"]
-            + node_2_offline_warning("remote/qdevice_client_start")
-            + expected_reports[
-                f"start_qdevice_done_on_{self.cluster_nodes[2]}":
-            ]
+        expected_reports.replace(
+            f"start_qdevice_done_on_{self.cluster_nodes[1]}",
+            node_2_offline_warning("remote/qdevice_client_start"),
         )
         self.env_assist.assert_reports(expected_reports)
 
@@ -1394,34 +1385,32 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
             force_options=True,
         )
 
-        warnings = fixture.ReportStore()
-        warnings = warnings.warn(
-            "warning_1",
-            reports.codes.INVALID_OPTIONS,
-            option_names=["bad_option"],
-            option_type="quorum device",
-            allowed=["sync_timeout", "timeout"],
-            allowed_patterns=[],
-        )
-        warnings = warnings.warn(
-            "warning_2",
-            reports.codes.INVALID_OPTION_VALUE,
-            option_name="mode",
-            option_value="bad-mode",
-            allowed_values=("off", "on", "sync"),
-            cannot_be_empty=False,
-            forbidden_characters=None,
-        )
-        warnings = warnings.warn(
-            "warning_3",
-            reports.codes.INVALID_OPTIONS,
-            option_names=["bad_heur"],
-            option_type="heuristics",
-            allowed=["interval", "mode", "sync_timeout", "timeout"],
-            allowed_patterns=["exec_NAME"],
-        )
         self.env_assist.assert_reports(
-            warnings + self.fixture_reports_success()
+            [
+                fixture.warn(
+                    reports.codes.INVALID_OPTIONS,
+                    option_names=["bad_option"],
+                    option_type="quorum device",
+                    allowed=["sync_timeout", "timeout"],
+                    allowed_patterns=[],
+                ),
+                fixture.warn(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="mode",
+                    option_value="bad-mode",
+                    allowed_values=("off", "on", "sync"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.warn(
+                    reports.codes.INVALID_OPTIONS,
+                    option_names=["bad_heur"],
+                    option_type="heuristics",
+                    allowed=["interval", "mode", "sync_timeout", "timeout"],
+                    allowed_patterns=["exec_NAME"],
+                ),
+            ]
+            + self.fixture_reports_success().fixtures
         )
 
     def test_invalid_model(self):
@@ -1476,9 +1465,12 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
             self.env_assist.get_env(), "bad_model", {}, {}, {}, force_model=True
         )
 
-        self.env_assist.assert_reports(
-            fixture.ReportStore().warn(
-                "warning_1",
+        # model is not "net" - do not report certificates setup
+        expected_reports = self.fixture_reports_success()[
+            "enable_qdevice_started":
+        ]
+        expected_reports.prepend(
+            fixture.warn(
                 reports.codes.INVALID_OPTION_VALUE,
                 option_name="model",
                 option_value="bad_model",
@@ -1486,9 +1478,8 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
                 cannot_be_empty=False,
                 forbidden_characters=None,
             )
-            # model is not "net" - do not report certificates setup
-            + self.fixture_reports_success()["enable_qdevice_started":]
         )
+        self.env_assist.assert_reports(expected_reports)
 
     def test_get_ca_cert_error_communication(self):
         dummy_tmp_file_mock_calls = self.fixture_config_success()
@@ -1519,11 +1510,11 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
         )
 
         self.env_assist.assert_reports(
-            self.fixture_reports_success()[
-                :f"cert_accepted_by_{self.cluster_nodes[0]}"
-            ]
-            + fixture.ReportStore().error(
-                "error",
+            fixture.ReportSequenceBuilder(
+                self.fixture_reports_success()[
+                    :f"cert_accepted_by_{self.cluster_nodes[0]}"
+                ]
+            ).error(
                 reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                 force_code=None,
                 node=self.qnetd_host,
@@ -1553,11 +1544,11 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
         )
 
         self.env_assist.assert_reports(
-            self.fixture_reports_success()[
-                :f"cert_accepted_by_{self.cluster_nodes[0]}"
-            ]
-            + fixture.ReportStore().error(
-                "error",
+            fixture.ReportSequenceBuilder(
+                self.fixture_reports_success()[
+                    :f"cert_accepted_by_{self.cluster_nodes[0]}"
+                ]
+            ).error(
                 reports.codes.INVALID_RESPONSE_FORMAT,
                 force_code=None,
                 node=self.qnetd_host,
@@ -1593,11 +1584,11 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
         )
 
         self.env_assist.assert_reports(
-            self.fixture_reports_success()[
-                :f"cert_accepted_by_{self.cluster_nodes[0]}"
-            ]
-            + fixture.ReportStore().error(
-                "error",
+            fixture.ReportSequenceBuilder(
+                self.fixture_reports_success()[
+                    :f"cert_accepted_by_{self.cluster_nodes[0]}"
+                ]
+            ).error(
                 reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                 force_code=reports.codes.SKIP_OFFLINE_NODES,
                 node=self.cluster_nodes[1],
@@ -1669,11 +1660,11 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
         )
 
         self.env_assist.assert_reports(
-            self.fixture_reports_success()[
-                :f"cert_accepted_by_{self.cluster_nodes[0]}"
-            ]
-            + fixture.ReportStore().error(
-                "error",
+            fixture.ReportSequenceBuilder(
+                self.fixture_reports_success()[
+                    :f"cert_accepted_by_{self.cluster_nodes[0]}"
+                ]
+            ).error(
                 reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                 force_code=None,
                 node=self.qnetd_host,
@@ -1702,11 +1693,11 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
         )
 
         self.env_assist.assert_reports(
-            self.fixture_reports_success()[
-                :f"cert_accepted_by_{self.cluster_nodes[0]}"
-            ]
-            + fixture.ReportStore().error(
-                "error",
+            fixture.ReportSequenceBuilder(
+                self.fixture_reports_success()[
+                    :f"cert_accepted_by_{self.cluster_nodes[0]}"
+                ]
+            ).error(
                 reports.codes.INVALID_RESPONSE_FORMAT,
                 force_code=None,
                 node=self.qnetd_host,
@@ -1778,18 +1769,21 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
             )
         )
 
-        expected_reports = self.fixture_reports_success()
-        expected_reports = (
-            expected_reports[:f"cert_accepted_by_{self.cluster_nodes[1]}"]
-            + fixture.ReportStore().error(
-                "error",
+        success_reports = self.fixture_reports_success()
+        expected_reports = success_reports[
+            :f"cert_accepted_by_{self.cluster_nodes[1]}"
+        ]
+        expected_reports.append(
+            fixture.error(
                 reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
                 force_code=reports.codes.SKIP_OFFLINE_NODES,
                 node=self.cluster_nodes[1],
                 command="remote/qdevice_net_client_import_certificate",
                 reason="some error occurred",
             )
-            + expected_reports.only(f"cert_accepted_by_{self.cluster_nodes[2]}")
+        )
+        expected_reports.append(
+            success_reports[f"cert_accepted_by_{self.cluster_nodes[2]}"]
         )
         self.env_assist.assert_reports(expected_reports)
 

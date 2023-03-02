@@ -10,18 +10,16 @@ from pcs.common.host import Destination
 from pcs.lib.commands.remote_node import node_add_guest as node_add_guest_orig
 
 from pcs_test.tier0.lib.commands.remote_node.fixtures_add import (
-    EXTRA_REPORTS as FIXTURE_EXTRA_REPORTS,
-)
-from pcs_test.tier0.lib.commands.remote_node.fixtures_add import (
     FAIL_HTTP_KWARGS,
-)
-from pcs_test.tier0.lib.commands.remote_node.fixtures_add import (
-    REPORTS as FIXTURE_REPORTS,
-)
-from pcs_test.tier0.lib.commands.remote_node.fixtures_add import (
     EnvConfigMixin,
+    base_reports_for_host,
     fixture_reports_new_node_unreachable,
     fixture_reports_not_live_cib,
+    report_authkey_distribution_failed,
+    report_manage_services_connection_failed,
+    report_pcmk_remote_enable_failed,
+    report_pcmk_remote_start_failed,
+    report_put_file_connection_failed,
 )
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
@@ -94,34 +92,7 @@ class LocalConfig(EnvConfigMixin):
 
 get_env_tools = partial(get_env_tools, local_extensions={"local": LocalConfig})
 
-
-def base_reports_for_host(host=NODE_NAME):
-    return (
-        FIXTURE_REPORTS.adapt("authkey_distribution_started", node_list=[host])
-        .adapt("authkey_distribution_success", node=host)
-        .adapt("pcmk_remote_start_enable_started", node_list=[host])
-        .adapt("pcmk_remote_enable_success", node=host)
-        .adapt("pcmk_remote_start_success", node=host)
-    )
-
-
-REPORTS = base_reports_for_host()
-
-EXTRA_REPORTS = FIXTURE_EXTRA_REPORTS.adapt_multi(
-    [
-        "manage_services_connection_failed",
-        "manage_services_connection_failed_warn",
-        "put_file_connection_failed",
-        "put_file_connection_failed_warn",
-        "pcmk_remote_enable_failed",
-        "pcmk_remote_enable_failed_warn",
-        "pcmk_remote_start_failed",
-        "pcmk_remote_start_failed_warn",
-        "authkey_distribution_failed",
-        "authkey_distribution_failed_warn",
-    ],
-    node=NODE_NAME,
-)
+REPORTS = base_reports_for_host(NODE_NAME)
 
 
 class AddGuest(TestCase):
@@ -132,19 +103,19 @@ class AddGuest(TestCase):
     def _config_success_base(self):
         # Instance of 'Config' has no 'local' member
         # pylint: disable=no-member
-        (
-            self.config.local.load_cib()
-            .corosync_conf.load(node_name_list=[NODE_1, NODE_2])
-            .http.host.check_auth(
-                communication_list=[
-                    dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
-                ],
-            )
-            .local.get_host_info(NODE_NAME, NODE_DEST_LIST)
-            .local.push_existing_authkey_to_remote(NODE_NAME, NODE_DEST_LIST)
-            .local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST)
-            .local.push_cib()
+        self.config.local.load_cib()
+        self.config.corosync_conf.load(node_name_list=[NODE_1, NODE_2])
+        self.config.http.host.check_auth(
+            communication_list=[
+                dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
+            ],
         )
+        self.config.local.get_host_info(NODE_NAME, NODE_DEST_LIST)
+        self.config.local.push_existing_authkey_to_remote(
+            NODE_NAME, NODE_DEST_LIST
+        )
+        self.config.local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST)
+        self.config.local.push_cib()
 
     def test_success_base(self):
         self._config_success_base()
@@ -156,64 +127,59 @@ class AddGuest(TestCase):
         # Instance of 'Config' has no 'local' member
         # pylint: disable=no-member
         generate_binary_key.return_value = b"password"
-        (
-            self.config.local.load_cib()
-            .corosync_conf.load(node_name_list=[NODE_1, NODE_2])
-            .http.host.check_auth(
-                communication_list=[
-                    dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
-                ],
-            )
-            .local.get_host_info(NODE_NAME, NODE_DEST_LIST)
-            .local.authkey_exists(return_value=False)
-            .local.distribute_authkey(
-                communication_list=[
-                    dict(label=NODE_1, dest_list=NODE_1_DEST_LIST),
-                    dict(label=NODE_2, dest_list=NODE_2_DEST_LIST),
-                    dict(label=NODE_NAME, dest_list=NODE_DEST_LIST),
-                ],
-                pcmk_authkey_content=generate_binary_key.return_value,
-            )
-            .local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST)
-            .local.push_cib()
+        self.config.local.load_cib()
+        self.config.corosync_conf.load(node_name_list=[NODE_1, NODE_2])
+        self.config.http.host.check_auth(
+            communication_list=[
+                dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
+            ],
         )
+        self.config.local.get_host_info(NODE_NAME, NODE_DEST_LIST)
+        self.config.local.authkey_exists(return_value=False)
+        self.config.local.distribute_authkey(
+            communication_list=[
+                dict(label=NODE_1, dest_list=NODE_1_DEST_LIST),
+                dict(label=NODE_2, dest_list=NODE_2_DEST_LIST),
+                dict(label=NODE_NAME, dest_list=NODE_DEST_LIST),
+            ],
+            pcmk_authkey_content=generate_binary_key.return_value,
+        )
+        self.config.local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST)
+        self.config.local.push_cib()
+
         node_add_guest(self.env_assist.get_env())
         generate_binary_key.assert_called_once_with(random_bytes_count=256)
-        self.env_assist.assert_reports(
-            REPORTS.adapt(
-                "authkey_distribution_started",
+        my_reports = REPORTS.copy()
+        my_reports.replace(
+            "authkey_distribution_started",
+            REPORTS["authkey_distribution_started"].adapt(
                 node_list=[NODE_1, NODE_2, NODE_NAME],
-            )
-            .copy(
-                "authkey_distribution_success",
-                "authkey_distribution_success_node1",
-                node=NODE_1,
-            )
-            .copy(
-                "authkey_distribution_success",
-                "authkey_distribution_success_node2",
-                node=NODE_2,
-            )
+            ),
         )
+        my_reports.append(
+            REPORTS["authkey_distribution_success"].adapt(node=NODE_1),
+        )
+        my_reports.append(
+            REPORTS["authkey_distribution_success"].adapt(node=NODE_2),
+        )
+        self.env_assist.assert_reports(my_reports)
 
     def test_new_offline(self):
         # Instance of 'Config' has no 'local' member
         # pylint: disable=no-member
-        (
-            self.config.local.load_cib()
-            .corosync_conf.load(node_name_list=[NODE_1, NODE_2])
-            .http.host.check_auth(
-                communication_list=[
-                    dict(
-                        label=NODE_NAME,
-                        dest_list=NODE_DEST_LIST,
-                        **FAIL_HTTP_KWARGS,
-                    )
-                ],
-            )
+        self.config.local.load_cib()
+        self.config.corosync_conf.load(node_name_list=[NODE_1, NODE_2])
+        self.config.http.host.check_auth(
+            communication_list=[
+                dict(
+                    label=NODE_NAME,
+                    dest_list=NODE_DEST_LIST,
+                    **FAIL_HTTP_KWARGS,
+                )
+            ],
         )
         self.env_assist.assert_raise_library_error(
-            lambda: node_add_guest(self.env_assist.get_env()), []
+            lambda: node_add_guest(self.env_assist.get_env())
         )
         self.env_assist.assert_reports(
             [
@@ -231,22 +197,21 @@ class AddGuest(TestCase):
         # Instance of 'Config' has no 'local' member
         # pylint: disable=no-member
         pcmk_authkey_content = b"password"
-        (
-            self.config.local.load_cib()
-            .corosync_conf.load(node_name_list=[NODE_1, NODE_2])
-            .http.host.check_auth(
-                communication_list=[
-                    dict(
-                        label=NODE_NAME,
-                        dest_list=NODE_DEST_LIST,
-                        **FAIL_HTTP_KWARGS,
-                    )
-                ],
-            )
-            .local.authkey_exists(return_value=True)
-            .local.open_authkey(pcmk_authkey_content)
-            .local.push_cib()
+        self.config.local.load_cib()
+        self.config.corosync_conf.load(node_name_list=[NODE_1, NODE_2])
+        self.config.http.host.check_auth(
+            communication_list=[
+                dict(
+                    label=NODE_NAME,
+                    dest_list=NODE_DEST_LIST,
+                    **FAIL_HTTP_KWARGS,
+                )
+            ],
         )
+        self.config.local.authkey_exists(return_value=True)
+        self.config.local.open_authkey(pcmk_authkey_content)
+        self.config.local.push_cib()
+
         node_add_guest(self.env_assist.get_env(), skip_offline_nodes=True)
         self.env_assist.assert_reports(
             fixture_reports_new_node_unreachable(NODE_NAME, omitting=True)
@@ -257,36 +222,35 @@ class AddGuest(TestCase):
         # Instance of 'Config' has no 'local' member
         # pylint: disable=no-member
         generate_binary_key.return_value = b"password"
-        (
-            self.config.local.load_cib()
-            .corosync_conf.load(node_name_list=[NODE_1, NODE_2])
-            .http.host.check_auth(
-                communication_list=[
-                    dict(
-                        label=NODE_NAME,
-                        dest_list=NODE_DEST_LIST,
-                        **FAIL_HTTP_KWARGS,
-                    )
-                ],
-            )
-            .local.authkey_exists(return_value=False)
-            .local.distribute_authkey(
-                communication_list=[
-                    dict(
-                        label=NODE_1,
-                        dest_list=NODE_1_DEST_LIST,
-                        **FAIL_HTTP_KWARGS,
-                    ),
-                    dict(
-                        label=NODE_2,
-                        dest_list=NODE_2_DEST_LIST,
-                        **FAIL_HTTP_KWARGS,
-                    ),
-                ],
-                pcmk_authkey_content=generate_binary_key.return_value,
-            )
-            .local.push_cib()
+        self.config.local.load_cib()
+        self.config.corosync_conf.load(node_name_list=[NODE_1, NODE_2])
+        self.config.http.host.check_auth(
+            communication_list=[
+                dict(
+                    label=NODE_NAME,
+                    dest_list=NODE_DEST_LIST,
+                    **FAIL_HTTP_KWARGS,
+                )
+            ],
         )
+        self.config.local.authkey_exists(return_value=False)
+        self.config.local.distribute_authkey(
+            communication_list=[
+                dict(
+                    label=NODE_1,
+                    dest_list=NODE_1_DEST_LIST,
+                    **FAIL_HTTP_KWARGS,
+                ),
+                dict(
+                    label=NODE_2,
+                    dest_list=NODE_2_DEST_LIST,
+                    **FAIL_HTTP_KWARGS,
+                ),
+            ],
+            pcmk_authkey_content=generate_binary_key.return_value,
+        )
+        self.config.local.push_cib()
+
         node_add_guest(self.env_assist.get_env(), skip_offline_nodes=True)
         self.env_assist.assert_reports(
             fixture_reports_new_node_unreachable(NODE_NAME, omitting=True)
@@ -314,35 +278,30 @@ class AddGuest(TestCase):
     def test_fails_when_remote_node_is_not_prepared(self):
         # Instance of 'Config' has no 'local' member
         # pylint: disable=no-member
-        (
-            self.config.local.load_cib()
-            .corosync_conf.load(node_name_list=[NODE_1, NODE_2])
-            .http.host.check_auth(
-                communication_list=[
-                    dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
-                ],
-            )
-            .local.get_host_info(
-                NODE_NAME,
-                NODE_DEST_LIST,
-                output=dict(
-                    services=dict(
-                        pacemaker_remote=dict(
-                            installed=False, enabled=False, running=False
-                        ),
-                        pacemaker=dict(
-                            installed=True, enabled=False, running=True
-                        ),
-                        corosync=dict(
-                            installed=True, enabled=False, running=True
-                        ),
-                    ),
-                    cluster_configuration_exists=True,
-                ),
-            )
+        self.config.local.load_cib()
+        self.config.corosync_conf.load(node_name_list=[NODE_1, NODE_2])
+        self.config.http.host.check_auth(
+            communication_list=[
+                dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
+            ],
         )
+        self.config.local.get_host_info(
+            NODE_NAME,
+            NODE_DEST_LIST,
+            output=dict(
+                services=dict(
+                    pacemaker_remote=dict(
+                        installed=False, enabled=False, running=False
+                    ),
+                    pacemaker=dict(installed=True, enabled=False, running=True),
+                    corosync=dict(installed=True, enabled=False, running=True),
+                ),
+                cluster_configuration_exists=True,
+            ),
+        )
+
         self.env_assist.assert_raise_library_error(
-            lambda: node_add_guest(self.env_assist.get_env()), []
+            lambda: node_add_guest(self.env_assist.get_env())
         )
         self.env_assist.assert_reports(
             [
@@ -366,20 +325,19 @@ class AddGuest(TestCase):
     def test_fails_when_remote_node_returns_invalid_output(self):
         # Instance of 'Config' has no 'local' member
         # pylint: disable=no-member
-        (
-            self.config.local.load_cib()
-            .corosync_conf.load(node_name_list=[NODE_1, NODE_2])
-            .http.host.check_auth(
-                communication_list=[
-                    dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
-                ],
-            )
-            .local.get_host_info(
-                NODE_NAME, NODE_DEST_LIST, output="INVALID_OUTPUT"
-            )
+        self.config.local.load_cib()
+        self.config.corosync_conf.load(node_name_list=[NODE_1, NODE_2])
+        self.config.http.host.check_auth(
+            communication_list=[
+                dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
+            ],
         )
+        self.config.local.get_host_info(
+            NODE_NAME, NODE_DEST_LIST, output="INVALID_OUTPUT"
+        )
+
         self.env_assist.assert_raise_library_error(
-            lambda: node_add_guest(self.env_assist.get_env()), []
+            lambda: node_add_guest(self.env_assist.get_env())
         )
         self.env_assist.assert_reports(
             [
@@ -412,19 +370,20 @@ class AddGuest(TestCase):
                 />
             </meta_attributes>
         """
-        (
-            self.config.local.load_cib()
-            .corosync_conf.load(node_name_list=[NODE_1, NODE_2])
-            .http.host.check_auth(
-                communication_list=[
-                    dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
-                ],
-            )
-            .local.get_host_info(NODE_NAME, NODE_DEST_LIST)
-            .local.push_existing_authkey_to_remote(NODE_NAME, NODE_DEST_LIST)
-            .local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST)
-            .local.push_cib(meta_attributes=meta_attributes)
+        self.config.local.load_cib()
+        self.config.corosync_conf.load(node_name_list=[NODE_1, NODE_2])
+        self.config.http.host.check_auth(
+            communication_list=[
+                dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
+            ],
         )
+        self.config.local.get_host_info(NODE_NAME, NODE_DEST_LIST)
+        self.config.local.push_existing_authkey_to_remote(
+            NODE_NAME, NODE_DEST_LIST
+        )
+        self.config.local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST)
+        self.config.local.push_cib(meta_attributes=meta_attributes)
+
         # Since options are set, the default remote-addr == REMOTE_HOST is not
         # set. Therefore, it defaults to node name which is NODE_NAME.
         node_add_guest(
@@ -432,30 +391,28 @@ class AddGuest(TestCase):
             options={"remote-port": 1234, "remote-connect-timeout": 20},
         )
         self.env_assist.assert_reports(
-            base_reports_for_host(NODE_NAME).reports
-            + [
-                fixture.info(
-                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
-                    host_name=NODE_NAME,
-                    address=NODE_ADDR_PCSD,
-                    address_source=(
-                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
-                    ),
-                )
-            ]
+            fixture.ReportSequenceBuilder(
+                base_reports_for_host(NODE_NAME)
+            ).info(
+                reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
+                host_name=NODE_NAME,
+                address=NODE_ADDR_PCSD,
+                address_source=(
+                    reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                ),
+            )
         )
 
     def test_noexistent_resource(self):
         # Instance of 'Config' has no 'local' member
         # pylint: disable=no-member
-        self.config.local.load_cib().corosync_conf.load(
-            node_name_list=[NODE_1, NODE_2]
-        )
+        self.config.local.load_cib()
+        self.config.corosync_conf.load(node_name_list=[NODE_1, NODE_2])
+
         self.env_assist.assert_raise_library_error(
             lambda: node_add_guest(
                 self.env_assist.get_env(), resource_id="NOEXISTENT"
             ),
-            [],
         )
         self.env_assist.assert_reports(
             [
@@ -472,9 +429,9 @@ class AddGuest(TestCase):
     def test_validate_values(self):
         # Instance of 'Config' has no 'local' member
         # pylint: disable=no-member
-        self.config.local.load_cib().corosync_conf.load(
-            node_name_list=[NODE_1, NODE_2]
-        )
+        self.config.local.load_cib()
+        self.config.corosync_conf.load(node_name_list=[NODE_1, NODE_2])
+
         self.env_assist.assert_raise_library_error(
             lambda: node_add_guest(
                 self.env_assist.get_env(),
@@ -484,7 +441,6 @@ class AddGuest(TestCase):
                     "remote-connect-timeout": "def",
                 },
             ),
-            [],
         )
         self.env_assist.assert_reports(
             [
@@ -516,11 +472,11 @@ class AddGuest(TestCase):
                 NODE_2: NODE_2_DEST_LIST,
             }
         )
-        self.config.local.load_cib().corosync_conf.load(
-            node_name_list=[NODE_1, NODE_2]
-        )
+        self.config.local.load_cib()
+        self.config.corosync_conf.load(node_name_list=[NODE_1, NODE_2])
+
         self.env_assist.assert_raise_library_error(
-            lambda: node_add_guest(self.env_assist.get_env()), []
+            lambda: node_add_guest(self.env_assist.get_env())
         )
         self.env_assist.assert_reports(
             [
@@ -542,13 +498,12 @@ class AddGuest(TestCase):
                 NODE_2: NODE_2_DEST_LIST,
             }
         )
-        (
-            self.config.local.load_cib()
-            .corosync_conf.load(node_name_list=[NODE_1, NODE_2])
-            .local.authkey_exists(return_value=True)
-            .local.open_authkey(pcmk_authkey_content)
-            .local.push_cib()
-        )
+        self.config.local.load_cib()
+        self.config.corosync_conf.load(node_name_list=[NODE_1, NODE_2])
+        self.config.local.authkey_exists(return_value=True)
+        self.config.local.open_authkey(pcmk_authkey_content)
+        self.config.local.push_cib()
+
         node_add_guest(self.env_assist.get_env(), skip_offline_nodes=True)
         self.env_assist.assert_reports(
             fixture_reports_new_node_unreachable(NODE_NAME)
@@ -567,19 +522,18 @@ class AddGuest(TestCase):
                 NODE_2: NODE_2_DEST_LIST,
             }
         )
-        (
-            self.config.local.load_cib()
-            .corosync_conf.load(node_name_list=[NODE_1, NODE_2])
-            .local.authkey_exists(return_value=False)
-            .local.distribute_authkey(
-                communication_list=[
-                    dict(label=NODE_1, dest_list=NODE_1_DEST_LIST),
-                    dict(label=NODE_2, dest_list=NODE_2_DEST_LIST),
-                ],
-                pcmk_authkey_content=generate_binary_key.return_value,
-            )
-            .local.push_cib()
+        self.config.local.load_cib()
+        self.config.corosync_conf.load(node_name_list=[NODE_1, NODE_2])
+        self.config.local.authkey_exists(return_value=False)
+        self.config.local.distribute_authkey(
+            communication_list=[
+                dict(label=NODE_1, dest_list=NODE_1_DEST_LIST),
+                dict(label=NODE_2, dest_list=NODE_2_DEST_LIST),
+            ],
+            pcmk_authkey_content=generate_binary_key.return_value,
         )
+        self.config.local.push_cib()
+
         node_add_guest(self.env_assist.get_env(), skip_offline_nodes=True)
         generate_binary_key.assert_called_once_with(random_bytes_count=256)
         self.env_assist.assert_reports(
@@ -605,23 +559,21 @@ class AddGuest(TestCase):
 
     def test_some_node_names_missing(self):
         self._config_success_base()
-        (
-            self.config.env.set_known_hosts_dests(
-                {
-                    "rh7-1": [Destination("rh7-1", 2224)],
-                    "rh7-2": [Destination("rh7-2", 2224)],
-                    NODE_NAME: NODE_DEST_LIST,
-                }
-            ).corosync_conf.load(
-                filename="corosync-some-node-names.conf",
-                instead="corosync_conf.load",
-            )
+        self.config.env.set_known_hosts_dests(
+            {
+                "rh7-1": [Destination("rh7-1", 2224)],
+                "rh7-2": [Destination("rh7-2", 2224)],
+                NODE_NAME: NODE_DEST_LIST,
+            }
+        )
+        self.config.corosync_conf.load(
+            filename="corosync-some-node-names.conf",
+            instead="corosync_conf.load",
         )
 
         node_add_guest(self.env_assist.get_env())
         self.env_assist.assert_reports(
-            REPORTS.warn(
-                "missing_node_names_in_corosync",
+            fixture.ReportSequenceBuilder(REPORTS.copy()).warn(
                 reports.codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
                 fatal=False,
             )
@@ -634,8 +586,7 @@ class AddGuest(TestCase):
         )
         node_add_guest(self.env_assist.get_env())
         self.env_assist.assert_reports(
-            REPORTS.warn(
-                "missing_node_names_in_corosync",
+            fixture.ReportSequenceBuilder(REPORTS.copy()).warn(
                 reports.codes.COROSYNC_CONFIG_MISSING_NAMES_OF_NODES,
                 fatal=False,
             )
@@ -775,7 +726,6 @@ class NotLive(TestCase):
                     "remote-connect-timeout": "def",
                 },
             ),
-            [],
         )
         self.env_assist.assert_reports(
             [
@@ -819,22 +769,24 @@ class NotLive(TestCase):
 )
 class WithWait(TestCase):
     def setUp(self):
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
         self.wait = 1
         self.env_assist, self.config = get_env_tools(self)
-        (
-            self.config.env.set_known_hosts_dests(KNOWN_HOSTS_DESTS)
-            .local.load_cib()
-            .corosync_conf.load(node_name_list=[NODE_1, NODE_2])
-            .http.host.check_auth(
-                communication_list=[
-                    dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
-                ],
-            )
-            .local.get_host_info(NODE_NAME, NODE_DEST_LIST)
-            .local.push_existing_authkey_to_remote(NODE_NAME, NODE_DEST_LIST)
-            .local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST)
-            .local.push_cib(wait=self.wait)
+        self.config.env.set_known_hosts_dests(KNOWN_HOSTS_DESTS)
+        self.config.local.load_cib()
+        self.config.corosync_conf.load(node_name_list=[NODE_1, NODE_2])
+        self.config.http.host.check_auth(
+            communication_list=[
+                dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
+            ],
         )
+        self.config.local.get_host_info(NODE_NAME, NODE_DEST_LIST)
+        self.config.local.push_existing_authkey_to_remote(
+            NODE_NAME, NODE_DEST_LIST
+        )
+        self.config.local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST)
+        self.config.local.push_cib(wait=self.wait)
 
     def test_success_when_resource_started(self):
         self.config.runner.pcmk.load_state(
@@ -851,8 +803,7 @@ class WithWait(TestCase):
         )
         node_add_guest(self.env_assist.get_env(), wait=self.wait)
         self.env_assist.assert_reports(
-            REPORTS.info(
-                "resource_running",
+            fixture.ReportSequenceBuilder(REPORTS.copy()).info(
                 reports.codes.RESOURCE_RUNNING_ON_NODES,
                 roles_with_nodes={"Started": [NODE_1]},
                 resource_id=VIRTUAL_MACHINE_ID,
@@ -877,30 +828,29 @@ class WithWait(TestCase):
             lambda: node_add_guest(self.env_assist.get_env(), wait=self.wait)
         )
         self.env_assist.assert_reports(
-            REPORTS.reports
-            + [
-                fixture.error(
-                    reports.codes.RESOURCE_DOES_NOT_RUN,
-                    resource_id=VIRTUAL_MACHINE_ID,
-                )
-            ]
+            fixture.ReportSequenceBuilder(REPORTS.copy()).error(
+                reports.codes.RESOURCE_DOES_NOT_RUN,
+                resource_id=VIRTUAL_MACHINE_ID,
+            )
         )
 
 
 class RemoteService(TestCase):
     def setUp(self):
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
         self.env_assist, self.config = get_env_tools(self)
-        (
-            self.config.env.set_known_hosts_dests(KNOWN_HOSTS_DESTS)
-            .local.load_cib()
-            .corosync_conf.load(node_name_list=[NODE_1, NODE_2])
-            .http.host.check_auth(
-                communication_list=[
-                    dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
-                ],
-            )
-            .local.get_host_info(NODE_NAME, NODE_DEST_LIST)
-            .local.push_existing_authkey_to_remote(NODE_NAME, NODE_DEST_LIST)
+        self.config.env.set_known_hosts_dests(KNOWN_HOSTS_DESTS)
+        self.config.local.load_cib()
+        self.config.corosync_conf.load(node_name_list=[NODE_1, NODE_2])
+        self.config.http.host.check_auth(
+            communication_list=[
+                dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
+            ],
+        )
+        self.config.local.get_host_info(NODE_NAME, NODE_DEST_LIST)
+        self.config.local.push_existing_authkey_to_remote(
+            NODE_NAME, NODE_DEST_LIST
         )
 
     def test_fails_when_offline(self):
@@ -913,10 +863,9 @@ class RemoteService(TestCase):
             lambda: node_add_guest(self.env_assist.get_env()),
         )
 
-        self.env_assist.assert_reports(
-            REPORTS[:"pcmk_remote_enable_success"]
-            + EXTRA_REPORTS.select("manage_services_connection_failed")
-        )
+        my_reports = REPORTS[:"pcmk_remote_enable_success"]
+        my_reports.append(report_manage_services_connection_failed(NODE_NAME))
+        self.env_assist.assert_reports(my_reports)
 
     def test_fail_when_remotely_fail(self):
         # Instance of 'Config' has no 'local' member
@@ -932,13 +881,10 @@ class RemoteService(TestCase):
         self.env_assist.assert_raise_library_error(
             lambda: node_add_guest(self.env_assist.get_env()),
         )
-        self.env_assist.assert_reports(
-            REPORTS[:"pcmk_remote_enable_success"]
-            + EXTRA_REPORTS.select(
-                "pcmk_remote_enable_failed",
-                "pcmk_remote_start_failed",
-            )
-        )
+        my_reports = REPORTS[:"pcmk_remote_enable_success"]
+        my_reports.append(report_pcmk_remote_enable_failed(NODE_NAME))
+        my_reports.append(report_pcmk_remote_start_failed(NODE_NAME))
+        self.env_assist.assert_reports(my_reports)
 
     def test_forceable_when_remotely_fail(self):
         # Instance of 'Config' has no 'local' member
@@ -950,60 +896,54 @@ class RemoteService(TestCase):
                 "code": "fail",
                 "message": "Action failed",
             },
-        ).local.push_cib()
+        )
+        self.config.local.push_cib()
+
         node_add_guest(
             self.env_assist.get_env(), allow_pacemaker_remote_service_fail=True
         )
 
-        self.env_assist.assert_reports(
-            REPORTS[:"pcmk_remote_enable_success"]
-            + EXTRA_REPORTS.select(
-                "pcmk_remote_enable_failed_warn",
-                "pcmk_remote_start_failed_warn",
-            )
-        )
+        my_reports = REPORTS[:"pcmk_remote_enable_success"]
+        my_reports.append(report_pcmk_remote_enable_failed(NODE_NAME).to_warn())
+        my_reports.append(report_pcmk_remote_start_failed(NODE_NAME).to_warn())
+        self.env_assist.assert_reports(my_reports)
 
 
 class AuthkeyDistribution(TestCase):
     def setUp(self):
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
         self.env_assist, self.config = get_env_tools(self)
-        (
-            self.config.env.set_known_hosts_dests(KNOWN_HOSTS_DESTS)
-            .local.load_cib()
-            .corosync_conf.load(node_name_list=[NODE_1, NODE_2])
-            .http.host.check_auth(
-                communication_list=[
-                    dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
-                ],
-            )
-            .local.get_host_info(NODE_NAME, NODE_DEST_LIST)
+        self.config.env.set_known_hosts_dests(KNOWN_HOSTS_DESTS)
+        self.config.local.load_cib()
+        self.config.corosync_conf.load(node_name_list=[NODE_1, NODE_2])
+        self.config.http.host.check_auth(
+            communication_list=[
+                dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
+            ],
         )
+        self.config.local.get_host_info(NODE_NAME, NODE_DEST_LIST)
 
     def test_fails_when_offline(self):
         # Instance of 'Config' has no 'local' member
         # pylint: disable=no-member
         pcmk_authkey_content = b"password"
-        (
-            self.config.local.authkey_exists(return_value=True)
-            .local.open_authkey(pcmk_authkey_content)
-            .local.distribute_authkey(
-                communication_list=[
-                    dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
-                ],
-                pcmk_authkey_content=pcmk_authkey_content,
-                **FAIL_HTTP_KWARGS,
-            )
+        self.config.local.authkey_exists(return_value=True)
+        self.config.local.open_authkey(pcmk_authkey_content)
+        self.config.local.distribute_authkey(
+            communication_list=[
+                dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
+            ],
+            pcmk_authkey_content=pcmk_authkey_content,
+            **FAIL_HTTP_KWARGS,
         )
+
         self.env_assist.assert_raise_library_error(
             lambda: node_add_guest(self.env_assist.get_env())
         )
-        self.env_assist.assert_reports(
-            REPORTS[:"authkey_distribution_success"]
-            + EXTRA_REPORTS.only(
-                "manage_services_connection_failed",
-                command="remote/put_file",
-            )
-        )
+        my_reports = REPORTS[:"authkey_distribution_success"]
+        my_reports.append(report_put_file_connection_failed(NODE_NAME))
+        self.env_assist.assert_reports(my_reports)
 
     def test_fail_when_remotely_fail(self):
         # Instance of 'Config' has no 'local' member
@@ -1021,33 +961,32 @@ class AuthkeyDistribution(TestCase):
             lambda: node_add_guest(self.env_assist.get_env())
         )
 
-        self.env_assist.assert_reports(
-            REPORTS[:"authkey_distribution_success"]
-            + EXTRA_REPORTS.select("authkey_distribution_failed")
-        )
+        my_reports = REPORTS[:"authkey_distribution_success"]
+        my_reports.append(report_authkey_distribution_failed(NODE_NAME))
+        self.env_assist.assert_reports(my_reports)
 
     def test_forceable_when_remotely_fail(self):
         # Instance of 'Config' has no 'local' member
         # pylint: disable=no-member
-        (
-            self.config.local.push_existing_authkey_to_remote(
-                NODE_NAME,
-                NODE_DEST_LIST,
-                distribution_result={
-                    "code": "conflict",
-                    "message": "",
-                },
-            )
-            .local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST)
-            .local.push_cib()
+        self.config.local.push_existing_authkey_to_remote(
+            NODE_NAME,
+            NODE_DEST_LIST,
+            distribution_result={
+                "code": "conflict",
+                "message": "",
+            },
         )
+        self.config.local.run_pacemaker_remote(NODE_NAME, NODE_DEST_LIST)
+        self.config.local.push_cib()
 
         node_add_guest(
             self.env_assist.get_env(),
             allow_incomplete_distribution=True,
         )
 
-        self.env_assist.assert_reports(
-            REPORTS.remove("authkey_distribution_success")
-            + EXTRA_REPORTS.select("authkey_distribution_failed_warn")
+        my_reports = REPORTS.copy()
+        my_reports.replace(
+            "authkey_distribution_success",
+            report_authkey_distribution_failed(NODE_NAME).to_warn(),
         )
+        self.env_assist.assert_reports(my_reports)

@@ -283,13 +283,12 @@ class EnvAssistant:
     def assert_reports(self, expected_reports):
         self.__reports_asserted = True
         self.__assert_environment_created()
+        if isinstance(expected_reports, fixture.ReportSequenceBuilder):
+            expected_reports = expected_reports.fixtures.fixtures
+        elif isinstance(expected_reports, fixture.FixtureStore):
+            expected_reports = expected_reports.fixtures
         self._env.report_processor.assert_reports(
-            (
-                expected_reports.reports
-                if isinstance(expected_reports, fixture.ReportStore)
-                else expected_reports
-            )
-            + self.__extra_reports
+            expected_reports + self.__extra_reports
         )
 
     def assert_raise_library_error(
