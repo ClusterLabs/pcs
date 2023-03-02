@@ -758,6 +758,9 @@ def location_lines(
 
     if byNode:
         for node in nodelist:
+            if not node:
+                continue
+
             if valid_noderes:
                 if node not in valid_noderes:
                     continue
