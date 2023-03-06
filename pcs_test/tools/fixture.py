@@ -2,30 +2,32 @@ import json
 from collections import Counter
 from typing import (
     Any,
+    Generic,
     Mapping,
     NamedTuple,
     Optional,
-    Sequence,
     TypeVar,
     overload,
 )
 
 from pcs.common import reports
 from pcs.common.str_tools import format_list
-from pcs.common.types import (
-    StringCollection,
-    StringSequence,
-)
 
 ALL_RESOURCE_XML_TAGS = ["bundle", "clone", "group", "master", "primitive"]
 
 
+# Previously, a report item fixture was a plain tuple. That was, however, not
+# the best to work with when access to specific indexes was needed. To provide
+# a 1-to-1 replacement with more friendly interface, a NamedTuple was chosen
+# instead of a dataclass. Order of the attributes is the same as in the
+# original tuple, so it may be not the best, but it works without any changes
+# to related code.
 class ReportItemFixture(NamedTuple):
     severity: reports.types.SeverityLevel
     code: reports.types.MessageCode
     payload: Mapping[str, Any]
-    force_code: reports.types.ForceCode
-    context: Mapping[str, Any]
+    force_code: Optional[reports.types.ForceCode]
+    context: Optional[Mapping[str, Any]]
 
     def to_warn(self):
         return warn(self.code, self.context, **self.payload)
@@ -74,8 +76,8 @@ def deprecation(
 
 def error(
     code: reports.types.MessageCode,
-    force_code: Optional[Mapping[str, Any]] = None,
-    context=None,
+    force_code: Optional[reports.types.ForceCode] = None,
+    context: Optional[Mapping[str, Any]] = None,
     **kwargs,
 ) -> ReportItemFixture:
     return ReportItemFixture(
@@ -94,24 +96,24 @@ def info(
 
 
 T = TypeVar("T")
-C = TypeVar("C", bound="FixtureStore")
 
 
-class FixtureStore:
+class NameValueSequence(Generic[T]):
     def __init__(
         self,
-        name_list: Optional[StringSequence] = None,
-        fixture_list: Optional[Sequence[T]] = None,
+        name_list: Optional[list[Optional[str]]] = None,
+        value_list: Optional[list[T]] = None,
     ):
-        self.__names = name_list or []
-        self.__fixtures = fixture_list or []
+        self.__names: list[Optional[str]] = name_list or []
+        self.__values: list[T] = value_list or []
 
-        if len(self.__names) != len(self.__fixtures):
-            raise AssertionError("Fixtures count doesn't match names count")
+        if len(self.__names) != len(self.__values):
+            raise AssertionError("Values count doesn't match names count")
 
         name_counter = Counter(self.__names)
-        del name_counter[None]
-        duplicate_names = {n for n in name_counter if name_counter[n] > 1}
+        duplicate_names = [
+            n for n in name_counter if n is not None and name_counter[n] > 1
+        ]
         if duplicate_names:
             raise AssertionError(
                 f"Duplicate names are not allowed in {type(self).__name__}. "
@@ -119,76 +121,74 @@ class FixtureStore:
             )
 
     @property
-    def fixtures(self) -> list[T]:
-        return list(self.__fixtures)
-
-    @property
-    def names(self) -> list[str]:
+    def names(self) -> list[Optional[str]]:
         return list(self.__names)
 
-    def append(self, fixture: T, name: Optional[str] = None) -> None:
-        """
-        Append new fixture with the specified name at the end of store
+    @property
+    def values(self) -> list[T]:
+        return list(self.__values)
 
-        fixture -- new fixture
-        name -- new fixture name
+    def append(self, value: T, name: Optional[str] = None) -> None:
+        """
+        Append new value with the specified name at the end of sequence
+
+        value -- new value
+        name -- new value name
         """
         self.__check_name(name)
         self.__names.append(name)
-        self.__fixtures.append(fixture)
+        self.__values.append(value)
 
-    def prepend(self, fixture: T, name: Optional[str] = None) -> None:
+    def prepend(self, value: T, name: Optional[str] = None) -> None:
         """
-        Insert new fixture with the specified name at the start of store
+        Insert new value with the specified name at the start of sequence
 
-        fixture -- new fixture
-        name -- new fixture name
+        value -- new value
+        name -- new value name
         """
         self.__check_name(name)
         self.__names.insert(0, name)
-        self.__fixtures.insert(0, fixture)
+        self.__values.insert(0, value)
 
-    def insert(
-        self, before: str, fixture: T, name: Optional[str] = None
-    ) -> None:
+    def insert(self, before: str, value: T, name: Optional[str] = None) -> None:
         """
-        Insert new fixture before a specified fixture
+        Insert new value before a specified value
 
-        before -- name of a fixture before which the new one will be placed
-        fixture -- the new fixture
-        name -- name of the new fixture
+        before -- name of a value before which the new one will be placed
+        value -- the new value
+        name -- name of the new value
         """
         self.__check_name(name)
         index = self.__get_index(before)
         self.__names.insert(index, name)
-        self.__fixtures.insert(index, fixture)
+        self.__values.insert(index, value)
 
-    def remove(self, *name_list: StringCollection) -> None:
+    def remove(self, *name_list: str) -> None:
         """
-        Remove fixtures with specified names
+        Remove values with specified names
 
-        name_list -- names of fixtures to be removed
+        name_list -- names of values to be removed
         """
         for name in name_list:
             index = self.__get_index(name)
             del self.__names[index]
-            del self.__fixtures[index]
+            del self.__values[index]
 
     def replace(
-        self, name: str, fixture: T, new_name: Optional[str] = None
+        self, name: str, value: T, new_name: Optional[str] = None
     ) -> None:
         """
-        Replace a fixture specified by its name
+        Replace a value specified by its name
 
-        name -- name of a fixture to be replaced
-        fixture -- new fixture
-        new_name -- new name of the fixture, use 'name' if not specified
+        name -- name of a value to be replaced
+        value -- new value
+        new_name -- new name of the value, use 'name' if not specified
         """
         if new_name is not None and new_name != name and name in self.__names:
             raise AssertionError(f"Name '{new_name}' already present in {self}")
         for i, current_name in enumerate(self.__names):
             if current_name == name:
-                self.__fixtures[i] = fixture
+                self.__values[i] = value
                 if new_name:
                     self.__names[i] = new_name
                 return
@@ -196,43 +196,16 @@ class FixtureStore:
 
     def trim_before(self, name: str) -> None:
         """
-        Remove a fixture with the specified name and all fixtures after it
+        Remove a value with the specified name and all values after it
 
-        name -- name of a fixture to trim at
+        name -- name of a value to trim at
         """
         index = self.__get_index(name)
         self.__names = self.__names[:index]
-        self.__fixtures = self.__fixtures[:index]
+        self.__values = self.__values[:index]
 
-    def place(
-        self,
-        fixture: T,
-        name: Optional[str] = None,
-        *,
-        before: Optional[str] = None,
-        instead: Optional[str] = None,
-    ):
-        """
-        Place a new fixture
-
-        fixture -- the new fixture
-        name -- name of the new fixture
-        before -- place the new fixture before a fixture with this name
-        instead -- place the new fixture instead of a fixture with this name
-        """
-        if before and instead:
-            raise AssertionError(
-                f"Cannot use both 'before' ({before}) and 'instead' ({instead})"
-            )
-
-        if before:
-            return self.insert(before, fixture, name)
-        if instead:
-            return self.replace(instead, fixture, name)
-        return self.append(fixture, name)
-
-    def copy(self) -> C:
-        return type(self)(self.names, self.fixtures)
+    def copy(self) -> "NameValueSequence":
+        return type(self)(self.names, self.values)
 
     def __get_index(self, name: str) -> int:
         try:
@@ -243,7 +216,7 @@ class FixtureStore:
     def __index_error(self, index: str) -> str:
         return f"'{index}' not present in {self}"
 
-    def __check_name(self, name) -> None:
+    def __check_name(self, name: Optional[str]) -> None:
         if name is not None and name in self.__names:
             raise AssertionError(f"Name '{name}' already present in {self}")
 
@@ -252,34 +225,34 @@ class FixtureStore:
         pass
 
     @overload
-    def __getitem__(self, spec: slice) -> C:
+    def __getitem__(self, spec: slice) -> "NameValueSequence":
         pass
 
     def __getitem__(self, spec):
         if not isinstance(spec, slice):
             try:
-                return self.__fixtures[self.__names.index(spec)]
+                return self.__values[self.__names.index(spec)]
             except ValueError as e:
                 raise IndexError(self.__index_error(spec)) from e
 
         assert spec.step is None, "Step is not supported in slicing"
         start = None if spec.start is None else self.__names.index(spec.start)
         stop = None if spec.stop is None else self.__names.index(spec.stop)
-        return type(self)(self.__names[start:stop], self.__fixtures[start:stop])
+        return type(self)(self.__names[start:stop], self.__values[start:stop])
 
-    def __setitem__(self, name: str, fixture: T) -> None:
+    def __setitem__(self, name: str, value: T) -> None:
         return (
-            self.replace(name, fixture)
+            self.replace(name, value)
             if name in self.__names
-            else self.append(fixture, name)
+            else self.append(value, name)
         )
 
     def __delitem__(self, name: str) -> None:
         index = self.__get_index(name)
         del self.__names[index]
-        del self.__fixtures[index]
+        del self.__values[index]
 
-    def __add__(self, other: "FixtureStore") -> C:
+    def __add__(self, other: "NameValueSequence") -> "NameValueSequence":
         my_name = type(self).__name__
         other_name = type(other).__name__
         assert isinstance(
@@ -288,7 +261,7 @@ class FixtureStore:
 
         return type(self)(
             self.names + other.names,
-            self.fixtures + other.fixtures,
+            self.values + other.values,
         )
 
     def __str__(self) -> str:
@@ -296,18 +269,18 @@ class FixtureStore:
             [
                 f" {index:3}. {item[0] if item[0] else '<unnamed>'}: {item[1]}"
                 for index, item in enumerate(
-                    zip(self.__names, self.__fixtures), 1
+                    zip(self.__names, self.__values), 1
                 )
             ]
         )
 
 
 class ReportSequenceBuilder:
-    def __init__(self, store: Optional[FixtureStore] = None):
-        self._store = store or FixtureStore()
+    def __init__(self, store: Optional[NameValueSequence] = None):
+        self._store = store or NameValueSequence()
 
     @property
-    def fixtures(self) -> FixtureStore:
+    def fixtures(self) -> NameValueSequence:
         return self._store
 
     def info(
@@ -315,7 +288,7 @@ class ReportSequenceBuilder:
         code: reports.types.MessageCode,
         _name: Optional[str] = None,
         **kwargs,
-    ) -> "ReportStore":
+    ) -> "ReportSequenceBuilder":
         self._store.append(info(code, **kwargs), _name)
         return self
 
@@ -324,7 +297,7 @@ class ReportSequenceBuilder:
         code: reports.types.MessageCode,
         _name: Optional[str] = None,
         **kwargs,
-    ) -> "ReportStore":
+    ) -> "ReportSequenceBuilder":
         self._store.append(warn(code, **kwargs), _name)
         return self
 
@@ -333,7 +306,7 @@ class ReportSequenceBuilder:
         code: reports.types.MessageCode,
         _name: Optional[str] = None,
         **kwargs,
-    ) -> "ReportStore":
+    ) -> "ReportSequenceBuilder":
         self._store.append(deprecation(code, **kwargs), _name)
         return self
 
@@ -343,7 +316,7 @@ class ReportSequenceBuilder:
         force_code: Optional[reports.types.ForceCode] = None,
         _name: Optional[str] = None,
         **kwargs,
-    ) -> "ReportStore":
+    ) -> "ReportSequenceBuilder":
         self._store.append(error(code, force_code=force_code, **kwargs), _name)
         return self
 

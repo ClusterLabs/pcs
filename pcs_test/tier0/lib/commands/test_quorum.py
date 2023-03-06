@@ -1410,7 +1410,7 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
                     allowed_patterns=["exec_NAME"],
                 ),
             ]
-            + self.fixture_reports_success().fixtures
+            + self.fixture_reports_success().values
         )
 
     def test_invalid_model(self):

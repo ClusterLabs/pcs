@@ -284,9 +284,9 @@ class EnvAssistant:
         self.__reports_asserted = True
         self.__assert_environment_created()
         if isinstance(expected_reports, fixture.ReportSequenceBuilder):
-            expected_reports = expected_reports.fixtures.fixtures
-        elif isinstance(expected_reports, fixture.FixtureStore):
-            expected_reports = expected_reports.fixtures
+            expected_reports = expected_reports.fixtures.values
+        elif isinstance(expected_reports, fixture.NameValueSequence):
+            expected_reports = expected_reports.values
         self._env.report_processor.assert_reports(
             expected_reports + self.__extra_reports
         )
