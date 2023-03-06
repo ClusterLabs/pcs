@@ -1,9 +1,5 @@
 import logging
 from collections import namedtuple
-from typing import (
-    Any,
-    Dict,
-)
 
 from pcs import settings
 from pcs.cli.common import middleware
@@ -35,9 +31,6 @@ from pcs.lib.commands.constraint import colocation as constraint_colocation
 from pcs.lib.commands.constraint import order as constraint_order
 from pcs.lib.commands.constraint import ticket as constraint_ticket
 from pcs.lib.env import LibraryEnvironment
-
-# Note: not properly typed
-_CACHE: Dict[Any, Any] = {}
 
 
 def wrapper(dictionary):
@@ -104,12 +97,6 @@ def bind_all(env, run_with_middleware, dictionary):
             for exposed_fn, library_fn in dictionary.items()
         )
     )
-
-
-def get_module(env, middleware_factory, name):
-    if name not in _CACHE:
-        _CACHE[name] = load_module(env, middleware_factory, name)
-    return _CACHE[name]
 
 
 def load_module(env, middleware_factory, name):
@@ -547,4 +534,4 @@ class Library:
         self.middleware_factory = middleware_factory
 
     def __getattr__(self, name):
-        return get_module(self.env, self.middleware_factory, name)
+        return load_module(self.env, self.middleware_factory, name)

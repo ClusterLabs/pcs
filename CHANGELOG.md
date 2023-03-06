@@ -5,8 +5,11 @@
 ### Fixed
 - Crash in commands that ask for user input (like `pcs cluster destroy`) when
   stdin is closed ([ghissue#612])
+- Fix displaying differences between configuration checkpoints in
+  `pcs config checkpoint diff` command ([rhbz#2175881])
 
 [ghissue#612]: https://github.com/ClusterLabs/pcs/issues/612
+[rhbz#2175881]: https://bugzilla.redhat.com/show_bug.cgi?id=2175881
 
 
 ## [0.11.5] - 2023-03-01

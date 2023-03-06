@@ -691,6 +691,7 @@ def _checkpoint_to_lines(lib, checkpoint_number):
     orig_usefile = utils.usefile
     orig_filename = utils.filename
     orig_middleware = lib.middleware_factory
+    orig_env = lib.env
     # configure old code to read the CIB from a file
     utils.usefile = True
     utils.filename = os.path.join(
@@ -700,6 +701,7 @@ def _checkpoint_to_lines(lib, checkpoint_number):
     lib.middleware_factory = orig_middleware._replace(
         cib=middleware.cib(utils.filename, utils.touch_cib_file)
     )
+    lib.env = utils.get_cli_env()
     # export the CIB to text
     result = False, []
     if os.path.isfile(utils.filename):
@@ -708,6 +710,7 @@ def _checkpoint_to_lines(lib, checkpoint_number):
     utils.usefile = orig_usefile
     utils.filename = orig_filename
     lib.middleware_factory = orig_middleware
+    lib.env = orig_env
     return result
 
 
