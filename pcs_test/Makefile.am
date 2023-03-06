@@ -390,7 +390,7 @@ EXTRA_DIST		= \
 			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_scsi_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_xvm_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource.d/systemd__test@a__b_metadata.xml \
-			  tools/bin_mock/pcmk/crm_resource.py \
+			  tools/bin_mock/pcmk/crm_resource_mock.py \
 			  tools/bin_mock/pcmk/pacemaker-fenced \
 			  tools/bin_mock/pcmk/pacemaker_metadata.d/pacemaker_based.xml \
 			  tools/bin_mock/pcmk/pacemaker_metadata.d/pacemaker_controld.xml \

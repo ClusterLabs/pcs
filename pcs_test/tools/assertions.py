@@ -8,7 +8,7 @@ from lxml.etree import LXML_VERSION
 from pcs.common import reports
 from pcs.lib.errors import LibraryError
 
-# pylint: disable=invalid-name
+from pcs_test.tools.fixture import ReportItemFixture
 
 
 def prepare_diff(first, second):
@@ -21,6 +21,7 @@ def prepare_diff(first, second):
 
 
 def ac(a, b):
+    # pylint: disable=invalid-name
     """
     Compare the actual output 'a' and an expected output 'b', print diff b a
     """
@@ -662,9 +663,9 @@ def assert_report_item_list_equal(
         )
 
 
-def assert_raise_library_error(callableObj, *report_info_list):
+def assert_raise_library_error(callable_obj, *report_info_list):
     try:
-        callableObj()
+        callable_obj()
         raise AssertionError("LibraryError not raised")
     except LibraryError as e:
         assert_report_item_list_equal(e.args, list(report_info_list))
@@ -677,7 +678,9 @@ def __find_report_info(expected_report_info_list, real_report_item):
     return None
 
 
-def __report_item_equal(real_report_item, report_item_info):
+def __report_item_equal(
+    real_report_item: reports.ReportItem, report_item_info: ReportItemFixture
+) -> bool:
     report_dto: reports.ReportItemDto = real_report_item.to_dto()
     return (
         report_dto.severity.level == report_item_info[0]

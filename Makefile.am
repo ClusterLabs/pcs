@@ -232,7 +232,7 @@ endif
 mypy:
 if DEV_TESTS
 	export PYTHONPATH=${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/packages && \
-		$(TIME) $(PYTHON) -m mypy --config-file mypy.ini --package pcs
+		$(TIME) $(PYTHON) -m mypy --config-file mypy.ini --package pcs --package pcs_test
 endif
 
 RUN_TYPOS=$(TYPOS) --color never --format brief | sed -e 's/:[0-9]\+:[0-9]\+:/:/' | $(SORT)
