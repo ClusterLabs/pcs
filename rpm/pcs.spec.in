@@ -7,18 +7,27 @@ Version: @version@
 Release: 1%{?numcomm:.%{numcomm}}%{?alphatag:.%{alphatag}}%{?dirty:.%{dirty}}%{?dist}
 # https://docs.fedoraproject.org/en-US/packaging-guidelines/LicensingGuidelines/
 # https://fedoraproject.org/wiki/Licensing:Main?rd=Licensing#Good_Licenses
-# GPLv2: pcs
-# ASL 2.0: dataclasses, tornado
-# ASL 2.0 or BSD: dateutil
-# MIT: backports, dacite, ember, ethon, handlebars, jquery, jquery-ui,
-#      mustermann, nio4r, rack, rack-protection, rack-test, sinatra, tilt
-# GPLv2 or Ruby: json
-# BSD: puma
-# BSD or Ruby: open4, ruby2_keywords
-# BSD and MIT: ffi
-License: GPLv2 and ASL 2.0 and MIT and BSD and (GPLv2 or Ruby) and (BSD or Ruby) and (ASL 2.0 or BSD)
+# GPL-2.0-only: pcs
+# Apache-2.0: dataclasses, tornado
+# Apache-2.0 or BSD-3-Clause: dateutil
+# MIT: backports, childprocess, dacite, ethon, mustermann, nio4r, rack,
+#      rack-protection, rack-test, sinatra, tilt
+# BSD-2-Clause or Ruby: open4, ruby2_keywords
+# BSD 3-Clause: puma
+# BSD-3-Clause and MIT: ffi
+# Some gems we bundle are just dependencies of gems that we use,
+# here is their dependency tree (we directly require the 1st level only):
+# ethon:
+#   ffi
+# puma:
+#   nio4r
+# sinatra:
+#   mustermann:
+#     ruby2_keywords
+#   tilt
+License: GPL-2.0-only AND Apache-2.0 AND MIT AND BSD-2-Clause AND BSD-3-Clause AND (Apache-2.0 OR BSD-3-Clause) AND (BSD-2-Clause OR Ruby)
 URL: https://github.com/ClusterLabs/pcs
-Summary: Pacemaker Configuration System
+Summary: Pacemaker/Corosync Configuration System
 
 %global pcs_snmp_pkg_name  pcs-snmp
 
@@ -161,9 +170,9 @@ easily view, modify and create pacemaker based clusters.
 Group: System Environment/Base
 Summary: Pacemaker cluster SNMP agent
 # https://fedoraproject.org/wiki/Licensing:Main?rd=Licensing#Good_Licenses
-# GPLv2: pcs
+# GPL-2.0-only: pcs
 # BSD-2-Clause: pyagentx
-License: GPLv2 and BSD-2-Clause
+License: GPL-2.0-only AND BSD-2-Clause
 URL: https://github.com/ClusterLabs/pcs
 
 Requires: pcs = %{version}-%{release}
