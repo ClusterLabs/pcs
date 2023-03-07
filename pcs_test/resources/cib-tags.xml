@@ -93,10 +93,10 @@
       <lrm id="1">
         <lrm_resources>
           <lrm_resource id="fence-rh-1" type="fence_xvm" class="stonith">
-            <lrm_rsc_op id="fence-rh-1_last_0" operation_key="fence-rh-1_start_0" operation="start" transition-key="20:249:0:b73bc238-f34c-4c73-8a2a-5debbdbea0c2" on_node="rh-1" call-id="30" op-status="0" />
+            <lrm_rsc_op id="fence-rh-1_last_0" operation_key="fence-rh-1_start_0" operation="start" transition-key="20:249:0:b73bc238-f34c-4c73-8a2a-5debbdbea0c2" on_node="rh-1" call-id="30" op-status="0" rc-code="0" />
           </lrm_resource>
           <lrm_resource id="x1" type="Dummy" class="ocf" provider="pacemaker">
-            <lrm_rsc_op id="x1_last_0" operation_key="x1_start_0" operation="start" transition-key="22:257:0:b73bc238-f34c-4c73-8a2a-5debbdbea0c2" on_node="rh-1" call-id="41" op-status="0" />
+            <lrm_rsc_op id="x1_last_0" operation_key="x1_start_0" operation="start" transition-key="22:257:0:b73bc238-f34c-4c73-8a2a-5debbdbea0c2" on_node="rh-1" call-id="41" op-status="0" rc-code="0" />
           </lrm_resource>
         </lrm_resources>
       </lrm>
