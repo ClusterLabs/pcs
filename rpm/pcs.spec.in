@@ -92,6 +92,7 @@ BuildRequires: ruby-devel
 BuildRequires: rubygems
 # cluster stack packages for pkg-config
 BuildRequires: booth
+# not distributed in rhel 9
 %if 0%{?rhel} < 9
 BuildRequires: corosync-qdevice-devel
 %endif
