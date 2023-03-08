@@ -1,5 +1,5 @@
 #!@PYTHON@
 
-from crm_resource import main
+from crm_resource_mock import main
 
 main()

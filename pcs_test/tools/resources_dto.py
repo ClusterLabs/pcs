@@ -7,6 +7,7 @@ from pcs.common.pacemaker.nvset import (
     CibNvsetDto,
 )
 from pcs.common.pacemaker.resource.bundle import (
+    CONTAINER_TYPE_DOCKER,
     CibResourceBundleContainerRuntimeOptionsDto,
     CibResourceBundleDto,
     CibResourceBundleNetworkOptionsDto,
@@ -505,7 +506,7 @@ BUNDLE_B1 = CibResourceBundleDto(
     id="B1",
     description=None,
     member_id=None,
-    container_type="docker",
+    container_type=CONTAINER_TYPE_DOCKER,
     container_options=CibResourceBundleContainerRuntimeOptionsDto(
         image="pcs:test",
         replicas=4,
@@ -597,7 +598,7 @@ BUNDLE_B2 = CibResourceBundleDto(
     id="B2",
     description=None,
     member_id="R1",
-    container_type="docker",
+    container_type=CONTAINER_TYPE_DOCKER,
     container_options=CibResourceBundleContainerRuntimeOptionsDto(
         image="pcs:test",
         replicas=None,

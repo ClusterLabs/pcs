@@ -1,4 +1,3 @@
-# pylint: disable=no-member
 from functools import partial
 from unittest import (
     TestCase,
@@ -13,15 +12,15 @@ from pcs.lib.commands.remote_node import (
 
 from pcs_test.tier0.lib.commands.remote_node.fixtures_add import (
     FAIL_HTTP_KWARGS,
-)
-from pcs_test.tier0.lib.commands.remote_node.fixtures_remove import (
-    EXTRA_REPORTS as FIXTURE_EXTRA_REPORTS,
-)
-from pcs_test.tier0.lib.commands.remote_node.fixtures_remove import (
-    REPORTS as FIXTURE_REPORTS,
+    report_manage_services_connection_failed,
 )
 from pcs_test.tier0.lib.commands.remote_node.fixtures_remove import (
     EnvConfigMixin,
+    base_reports_for_host,
+    report_authkey_remove_failed,
+    report_pcmk_remote_disable_failed,
+    report_pcmk_remote_stop_failed,
+    report_remove_file_connection_failed,
 )
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
@@ -54,31 +53,7 @@ FIXTURE_RESOURCES = """
     REMOTE_HOST,
 )
 
-REPORTS = (
-    FIXTURE_REPORTS.adapt(
-        "pcmk_remote_disable_stop_started", node_list=[NODE_NAME]
-    )
-    .adapt("pcmk_remote_disable_success", node=NODE_NAME)
-    .adapt("pcmk_remote_stop_success", node=NODE_NAME)
-    .adapt("authkey_remove_started", node_list=[NODE_NAME])
-    .adapt("authkey_remove_success", node=NODE_NAME)
-)
-
-EXTRA_REPORTS = FIXTURE_EXTRA_REPORTS.adapt_multi(
-    [
-        "authkey_remove_failed",
-        "authkey_remove_failed_warn",
-        "manage_services_connection_failed",
-        "manage_services_connection_failed_warn",
-        "pcmk_remote_disable_failed",
-        "pcmk_remote_disable_failed_warn",
-        "pcmk_remote_stop_failed",
-        "pcmk_remote_stop_failed_warn",
-        "remove_file_connection_failed",
-        "remove_file_connection_failed_warn",
-    ],
-    node=NODE_NAME,
-)
+REPORTS = base_reports_for_host(NODE_NAME)
 
 get_env_tools = partial(
     get_env_tools, local_extensions={"local": EnvConfigMixin}
@@ -96,16 +71,16 @@ class RemoveRemote(TestCase):
         self.remove_resource = mock.Mock()
 
     def find_by(self, identifier):
-        (
-            self.config.runner.cib.load(resources=FIXTURE_RESOURCES)
-            .local.destroy_pacemaker_remote(
-                label=NODE_NAME, dest_list=NODE_DEST_LIST
-            )
-            .local.remove_authkey(
-                communication_list=[
-                    dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
-                ],
-            )
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
+        self.config.runner.cib.load(resources=FIXTURE_RESOURCES)
+        self.config.local.destroy_pacemaker_remote(
+            label=NODE_NAME, dest_list=NODE_DEST_LIST
+        )
+        self.config.local.remove_authkey(
+            communication_list=[
+                dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
+            ],
         )
         node_remove_remote(
             self.env_assist.get_env(),
@@ -135,18 +110,19 @@ class RemoveRemoteOthers(TestCase):
         )
 
     def test_can_skip_all_offline(self):
-        (
-            self.config.runner.cib.load(resources=FIXTURE_RESOURCES)
-            .local.destroy_pacemaker_remote(
-                label=NODE_NAME, dest_list=NODE_DEST_LIST, **FAIL_HTTP_KWARGS
-            )
-            .local.remove_authkey(
-                communication_list=[
-                    dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
-                ],
-                **FAIL_HTTP_KWARGS,
-            )
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
+        self.config.runner.cib.load(resources=FIXTURE_RESOURCES)
+        self.config.local.destroy_pacemaker_remote(
+            label=NODE_NAME, dest_list=NODE_DEST_LIST, **FAIL_HTTP_KWARGS
         )
+        self.config.local.remove_authkey(
+            communication_list=[
+                dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
+            ],
+            **FAIL_HTTP_KWARGS,
+        )
+
         node_remove_remote(
             self.env_assist.get_env(),
             remove_resource=self.remove_resource,
@@ -155,17 +131,17 @@ class RemoveRemoteOthers(TestCase):
         self.remove_resource.assert_called_once_with(
             NODE_NAME, is_remove_remote_context=True
         )
-        self.env_assist.assert_reports(
-            REPORTS.remove(
-                "pcmk_remote_disable_success",
-                "pcmk_remote_stop_success",
-                "authkey_remove_success",
-            )
-            + EXTRA_REPORTS.select(
-                "manage_services_connection_failed_warn",
-                "remove_file_connection_failed_warn",
-            )
+        my_reports = REPORTS.copy()
+        my_reports.replace(
+            "pcmk_remote_disable_success",
+            report_manage_services_connection_failed(NODE_NAME).to_warn(),
         )
+        my_reports.remove("pcmk_remote_stop_success")
+        my_reports.replace(
+            "authkey_remove_success",
+            report_remove_file_connection_failed(NODE_NAME).to_warn(),
+        )
+        self.env_assist.assert_reports(my_reports)
 
     def test_fail_when_identifier_not_found(self):
         (self.config.runner.cib.load(resources=FIXTURE_RESOURCES))
@@ -214,23 +190,15 @@ class MultipleResults(TestCase):
         self.env_assist, self.config = get_env_tools(self)
         self.remove_resource = mock.Mock()
         (self.config.runner.cib.load(resources=self.fixture_multi_resources))
-        self.multiple_result_reports = (
-            fixture.ReportStore()
-            .error(
-                "multiple_result_found",
-                report_codes.MULTIPLE_RESULTS_FOUND,
-                result_identifier_list=[
-                    NODE_NAME,
-                    REMOTE_HOST,
-                ],
-                result_type="resource",
-                search_description=REMOTE_HOST,
-                force_code=report_codes.FORCE,
-            )
-            .as_warn(
-                "multiple_result_found",
-                "multiple_result_found_warn",
-            )
+        self.report_multiple_results = fixture.error(
+            report_codes.MULTIPLE_RESULTS_FOUND,
+            force_code=report_codes.FORCE,
+            result_identifier_list=[
+                NODE_NAME,
+                REMOTE_HOST,
+            ],
+            result_type="resource",
+            search_description=REMOTE_HOST,
         )
         self.config.env.set_known_hosts_dests(
             {
@@ -247,73 +215,75 @@ class MultipleResults(TestCase):
                 remove_resource=self.remove_resource,
             )
         )
-        self.env_assist.assert_reports(
-            self.multiple_result_reports.select("multiple_result_found").reports
-        )
+        self.env_assist.assert_reports([self.report_multiple_results])
 
     def test_force(self):
-        (
-            self.config.local.destroy_pacemaker_remote(
-                communication_list=[
-                    dict(label=NODE_NAME, dest_list=NODE_DEST_LIST),
-                    dict(label=REMOTE_HOST, dest_list=REMOTE_DEST_LIST),
-                ]
-            ).local.remove_authkey(
-                communication_list=[
-                    dict(label=NODE_NAME, dest_list=NODE_DEST_LIST),
-                    dict(label=REMOTE_HOST, dest_list=REMOTE_DEST_LIST),
-                ],
-            )
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
+        self.config.local.destroy_pacemaker_remote(
+            communication_list=[
+                dict(label=NODE_NAME, dest_list=NODE_DEST_LIST),
+                dict(label=REMOTE_HOST, dest_list=REMOTE_DEST_LIST),
+            ]
         )
+        self.config.local.remove_authkey(
+            communication_list=[
+                dict(label=NODE_NAME, dest_list=NODE_DEST_LIST),
+                dict(label=REMOTE_HOST, dest_list=REMOTE_DEST_LIST),
+            ],
+        )
+
         node_remove_remote(
             self.env_assist.get_env(),
             node_identifier=REMOTE_HOST,
             remove_resource=self.remove_resource,
             allow_remove_multiple_nodes=True,
         )
-        self.env_assist.assert_reports(
-            REPORTS.adapt(
-                "pcmk_remote_disable_stop_started",
-                node_list=[NODE_NAME, REMOTE_HOST],
-            )
-            .copy(
-                "pcmk_remote_disable_success",
-                "pcmk_remote_disable_success_remote_host",
-                node=REMOTE_HOST,
-            )
-            .copy(
-                "pcmk_remote_stop_success",
-                "pcmk_remote_stop_success_remote_host",
-                node=REMOTE_HOST,
-            )
-            .adapt("authkey_remove_started", node_list=[NODE_NAME, REMOTE_HOST])
-            .copy(
-                "authkey_remove_success",
-                "authkey_remove_success_remote_host",
-                node=REMOTE_HOST,
-            )
-            + self.multiple_result_reports.select("multiple_result_found_warn")
+        my_reports = REPORTS.copy()
+        my_reports.replace(
+            "pcmk_remote_disable_stop_started",
+            REPORTS["pcmk_remote_disable_stop_started"].adapt(
+                node_list=[NODE_NAME, REMOTE_HOST]
+            ),
         )
+        my_reports.append(
+            REPORTS["pcmk_remote_disable_success"].adapt(node=REMOTE_HOST)
+        )
+        my_reports.append(
+            REPORTS["pcmk_remote_stop_success"].adapt(node=REMOTE_HOST)
+        )
+        my_reports.replace(
+            "authkey_remove_started",
+            REPORTS["authkey_remove_started"].adapt(
+                node_list=[NODE_NAME, REMOTE_HOST]
+            ),
+        )
+        my_reports.append(
+            REPORTS["authkey_remove_success"].adapt(node=REMOTE_HOST)
+        )
+        my_reports.append(self.report_multiple_results.to_warn())
+        self.env_assist.assert_reports(my_reports)
 
 
 class AuthkeyRemove(TestCase):
     def setUp(self):
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
         self.env_assist, self.config = get_env_tools(self)
         self.config.env.set_known_hosts_dests(
             {
                 NODE_NAME: NODE_DEST_LIST,
             }
         )
-        (
-            self.config.runner.cib.load(
-                resources=FIXTURE_RESOURCES
-            ).local.destroy_pacemaker_remote(
-                label=NODE_NAME, dest_list=NODE_DEST_LIST
-            )
+        self.config.runner.cib.load(resources=FIXTURE_RESOURCES)
+        self.config.local.destroy_pacemaker_remote(
+            label=NODE_NAME, dest_list=NODE_DEST_LIST
         )
         self.remove_resource = mock.Mock()
 
     def test_fails_when_offline(self):
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
         self.config.local.remove_authkey(
             communication_list=[
                 dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
@@ -326,12 +296,16 @@ class AuthkeyRemove(TestCase):
                 remove_resource=self.remove_resource,
             )
         )
-        self.env_assist.assert_reports(
-            REPORTS.remove("authkey_remove_success")
-            + EXTRA_REPORTS.select("remove_file_connection_failed")
+        my_reports = REPORTS.copy()
+        my_reports.replace(
+            "authkey_remove_success",
+            report_remove_file_connection_failed(NODE_NAME),
         )
+        self.env_assist.assert_reports(my_reports)
 
     def test_fails_when_remotely_fails(self):
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
         self.config.local.remove_authkey(
             communication_list=[
                 dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
@@ -347,12 +321,16 @@ class AuthkeyRemove(TestCase):
                 remove_resource=self.remove_resource,
             )
         )
-        self.env_assist.assert_reports(
-            REPORTS.remove("authkey_remove_success")
-            + EXTRA_REPORTS.select("authkey_remove_failed")
+        my_reports = REPORTS.copy()
+        my_reports.replace(
+            "authkey_remove_success",
+            report_authkey_remove_failed(NODE_NAME),
         )
+        self.env_assist.assert_reports(my_reports)
 
     def test_forceable_when_remotely_fail(self):
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
         self.config.local.remove_authkey(
             communication_list=[
                 dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
@@ -367,10 +345,12 @@ class AuthkeyRemove(TestCase):
             remove_resource=self.remove_resource,
             allow_pacemaker_remote_service_fail=True,
         )
-        self.env_assist.assert_reports(
-            REPORTS.remove("authkey_remove_success")
-            + EXTRA_REPORTS.select("authkey_remove_failed_warn")
+        my_reports = REPORTS.copy()
+        my_reports.replace(
+            "authkey_remove_success",
+            report_authkey_remove_failed(NODE_NAME).to_warn(),
         )
+        self.env_assist.assert_reports(my_reports)
 
 
 class PcmkRemoteServiceDestroy(TestCase):
@@ -385,10 +365,10 @@ class PcmkRemoteServiceDestroy(TestCase):
         )
 
     def test_fails_when_offline(self):
-        (
-            self.config.local.destroy_pacemaker_remote(
-                label=NODE_NAME, dest_list=NODE_DEST_LIST, **FAIL_HTTP_KWARGS
-            )
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
+        self.config.local.destroy_pacemaker_remote(
+            label=NODE_NAME, dest_list=NODE_DEST_LIST, **FAIL_HTTP_KWARGS
         )
         self.env_assist.assert_raise_library_error(
             lambda: node_remove_remote(
@@ -396,21 +376,20 @@ class PcmkRemoteServiceDestroy(TestCase):
                 remove_resource=self.remove_resource,
             )
         )
-        self.env_assist.assert_reports(
-            REPORTS[:"pcmk_remote_disable_success"]
-            + EXTRA_REPORTS.select("manage_services_connection_failed")
-        )
+        my_reports = REPORTS[:"pcmk_remote_disable_success"]
+        my_reports.append(report_manage_services_connection_failed(NODE_NAME))
+        self.env_assist.assert_reports(my_reports)
 
     def test_fails_when_remotely_fails(self):
-        (
-            self.config.local.destroy_pacemaker_remote(
-                label=NODE_NAME,
-                dest_list=NODE_DEST_LIST,
-                result={
-                    "code": "fail",
-                    "message": "Action failed",
-                },
-            )
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
+        self.config.local.destroy_pacemaker_remote(
+            label=NODE_NAME,
+            dest_list=NODE_DEST_LIST,
+            result={
+                "code": "fail",
+                "message": "Action failed",
+            },
         )
         self.env_assist.assert_raise_library_error(
             lambda: node_remove_remote(
@@ -418,41 +397,38 @@ class PcmkRemoteServiceDestroy(TestCase):
                 remove_resource=self.remove_resource,
             )
         )
-        self.env_assist.assert_reports(
-            REPORTS[:"pcmk_remote_disable_success"]
-            + EXTRA_REPORTS.select(
-                "pcmk_remote_disable_failed",
-                "pcmk_remote_stop_failed",
-            )
-        )
+        my_reports = REPORTS[:"pcmk_remote_disable_success"]
+        my_reports.append(report_pcmk_remote_disable_failed(NODE_NAME))
+        my_reports.append(report_pcmk_remote_stop_failed(NODE_NAME))
+        self.env_assist.assert_reports(my_reports)
 
     def test_forceable_when_remotely_fail(self):
-        (
-            self.config.local.destroy_pacemaker_remote(
-                label=NODE_NAME,
-                dest_list=NODE_DEST_LIST,
-                result={
-                    "code": "fail",
-                    "message": "Action failed",
-                },
-            ).local.remove_authkey(
-                communication_list=[
-                    dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
-                ],
-            )
+        # Instance of 'Config' has no 'local' member
+        # pylint: disable=no-member
+        self.config.local.destroy_pacemaker_remote(
+            label=NODE_NAME,
+            dest_list=NODE_DEST_LIST,
+            result={
+                "code": "fail",
+                "message": "Action failed",
+            },
+        ).local.remove_authkey(
+            communication_list=[
+                dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
+            ],
         )
         node_remove_remote(
             self.env_assist.get_env(),
             remove_resource=self.remove_resource,
             allow_pacemaker_remote_service_fail=True,
         )
-        self.env_assist.assert_reports(
-            REPORTS.remove(
-                "pcmk_remote_disable_success",
-                "pcmk_remote_stop_success",
-            )
-            + EXTRA_REPORTS.select(
-                "pcmk_remote_disable_failed_warn",
-                "pcmk_remote_stop_failed_warn",
-            )
+        my_reports = REPORTS.copy()
+        my_reports.replace(
+            "pcmk_remote_disable_success",
+            report_pcmk_remote_disable_failed(NODE_NAME).to_warn(),
         )
+        my_reports.replace(
+            "pcmk_remote_stop_success",
+            report_pcmk_remote_stop_failed(NODE_NAME).to_warn(),
+        )
+        self.env_assist.assert_reports(my_reports)

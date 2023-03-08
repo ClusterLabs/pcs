@@ -139,83 +139,92 @@ class EnvConfigMixin:
         )
 
 
-REPORTS = (
-    fixture.ReportStore()
-    .info(
-        "authkey_distribution_started",
-        report_codes.FILES_DISTRIBUTION_STARTED,
-        file_list=["pacemaker authkey"],
+def base_reports_for_host(host):
+    return (
+        fixture.ReportSequenceBuilder()
+        .info(
+            report_codes.FILES_DISTRIBUTION_STARTED,
+            file_list=["pacemaker authkey"],
+            node_list=[host],
+            _name="authkey_distribution_started",
+        )
+        .info(
+            report_codes.FILE_DISTRIBUTION_SUCCESS,
+            file_description="pacemaker authkey",
+            node=host,
+            _name="authkey_distribution_success",
+        )
+        .info(
+            report_codes.SERVICE_COMMANDS_ON_NODES_STARTED,
+            action_list=[
+                "pacemaker_remote start",
+                "pacemaker_remote enable",
+            ],
+            node_list=[host],
+        )
+        .info(
+            report_codes.SERVICE_COMMAND_ON_NODE_SUCCESS,
+            service_command_description="pacemaker_remote enable",
+            node=host,
+            _name="pcmk_remote_enable_success",
+        )
+        .info(
+            report_codes.SERVICE_COMMAND_ON_NODE_SUCCESS,
+            service_command_description="pacemaker_remote start",
+            node=host,
+        )
+        .fixtures
     )
-    .info(
-        "authkey_distribution_success",
-        report_codes.FILE_DISTRIBUTION_SUCCESS,
-        file_description="pacemaker authkey",
-    )
-    .info(
-        "pcmk_remote_start_enable_started",
-        report_codes.SERVICE_COMMANDS_ON_NODES_STARTED,
-        action_list=[
-            "pacemaker_remote start",
-            "pacemaker_remote enable",
-        ],
-    )
-    .info(
-        "pcmk_remote_enable_success",
-        report_codes.SERVICE_COMMAND_ON_NODE_SUCCESS,
-        service_command_description="pacemaker_remote enable",
-    )
-    .info(
-        "pcmk_remote_start_success",
-        report_codes.SERVICE_COMMAND_ON_NODE_SUCCESS,
-        service_command_description="pacemaker_remote start",
-    )
-)
 
-EXTRA_REPORTS = (
-    fixture.ReportStore()
-    .error(
-        "manage_services_connection_failed",
+
+def report_manage_services_connection_failed(node):
+    return fixture.error(
         report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+        force_code=report_codes.SKIP_OFFLINE_NODES,
         command="remote/manage_services",
         reason=OFFLINE_ERROR_MSG,
+        node=node,
+    )
+
+
+def report_put_file_connection_failed(node):
+    return fixture.error(
+        report_codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
         force_code=report_codes.SKIP_OFFLINE_NODES,
-    )
-    .as_warn(
-        "manage_services_connection_failed",
-        "manage_services_connection_failed_warn",
-    )
-    .copy(
-        "manage_services_connection_failed",
-        "put_file_connection_failed",
         command="remote/put_file",
+        reason=OFFLINE_ERROR_MSG,
+        node=node,
     )
-    .as_warn(
-        "put_file_connection_failed",
-        "put_file_connection_failed_warn",
-    )
-    .error(
-        "pcmk_remote_enable_failed",
+
+
+def report_pcmk_remote_enable_failed(node):
+    return fixture.error(
         report_codes.SERVICE_COMMAND_ON_NODE_ERROR,
+        force_code=report_codes.FORCE,
         reason="Operation failed.",
         service_command_description="pacemaker_remote enable",
+        node=node,
+    )
+
+
+def report_pcmk_remote_start_failed(node):
+    return fixture.error(
+        report_codes.SERVICE_COMMAND_ON_NODE_ERROR,
         force_code=report_codes.FORCE,
-    )
-    .as_warn("pcmk_remote_enable_failed", "pcmk_remote_enable_failed_warn")
-    .copy(
-        "pcmk_remote_enable_failed",
-        "pcmk_remote_start_failed",
+        reason="Operation failed.",
         service_command_description="pacemaker_remote start",
+        node=node,
     )
-    .as_warn("pcmk_remote_start_failed", "pcmk_remote_start_failed_warn")
-    .error(
-        "authkey_distribution_failed",
+
+
+def report_authkey_distribution_failed(node):
+    return fixture.error(
         report_codes.FILE_DISTRIBUTION_ERROR,
+        force_code=report_codes.FORCE,
         reason="File already exists",
         file_description="pacemaker authkey",
-        force_code=report_codes.FORCE,
+        node=node,
     )
-    .as_warn("authkey_distribution_failed", "authkey_distribution_failed_warn")
-)
 
 
 def fixture_reports_not_live_cib(node_name):
@@ -244,20 +253,16 @@ def fixture_reports_not_live_cib(node_name):
 
 def fixture_reports_new_node_unreachable(node_name, omitting=False):
     if omitting:
-        report = [
-            fixture.warn(
-                report_codes.OMITTING_NODE,
-                node=node_name,
-            ),
-        ]
+        report = fixture.warn(
+            report_codes.OMITTING_NODE,
+            node=node_name,
+        )
     else:
-        report = [
-            fixture.warn(
-                report_codes.HOST_NOT_FOUND,
-                host_list=[node_name],
-            ),
-        ]
-    return report + [
+        report = fixture.warn(
+            report_codes.HOST_NOT_FOUND,
+            host_list=[node_name],
+        )
+    return [report] + [
         fixture.info(
             report_codes.FILES_DISTRIBUTION_SKIPPED,
             reason_type="unreachable",

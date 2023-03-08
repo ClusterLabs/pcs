@@ -1,162 +1,337 @@
 import json
+from collections import Counter
+from typing import (
+    Any,
+    Generic,
+    Mapping,
+    NamedTuple,
+    Optional,
+    TypeVar,
+    overload,
+)
 
-from pcs.common.reports import ReportItemSeverity as severities
-from pcs.common.reports import codes as report_codes
+from pcs.common import reports
+from pcs.common.str_tools import format_list
 
 ALL_RESOURCE_XML_TAGS = ["bundle", "clone", "group", "master", "primitive"]
 
 
-def debug(code, context=None, **kwargs):
-    return severities.DEBUG, code, kwargs, None, context
+# Previously, a report item fixture was a plain tuple. That was, however, not
+# the best to work with when access to specific indexes was needed. To provide
+# a 1-to-1 replacement with more friendly interface, a NamedTuple was chosen
+# instead of a dataclass. Order of the attributes is the same as in the
+# original tuple, so it may be not the best, but it works without any changes
+# to related code.
+class ReportItemFixture(NamedTuple):
+    severity: reports.types.SeverityLevel
+    code: reports.types.MessageCode
+    payload: Mapping[str, Any]
+    force_code: Optional[reports.types.ForceCode]
+    context: Optional[Mapping[str, Any]]
+
+    def to_warn(self):
+        return warn(self.code, self.context, **self.payload)
+
+    def adapt(self, **payload):
+        updated_payload = self.payload.copy()
+        updated_payload.update(**payload)
+        return type(self)(
+            self.severity,
+            self.code,
+            updated_payload,
+            self.force_code,
+            self.context,
+        )
 
 
-def warn(code, context=None, **kwargs):
-    return severities.WARNING, code, kwargs, None, context
+def debug(
+    code: reports.types.MessageCode,
+    context: Optional[Mapping[str, Any]] = None,
+    **kwargs,
+) -> ReportItemFixture:
+    return ReportItemFixture(
+        reports.ReportItemSeverity.DEBUG, code, kwargs, None, context
+    )
 
 
-def deprecation(code, context=None, **kwargs):
-    return severities.DEPRECATION, code, kwargs, None, context
+def warn(
+    code: reports.types.MessageCode,
+    context: Optional[Mapping[str, Any]] = None,
+    **kwargs,
+) -> ReportItemFixture:
+    return ReportItemFixture(
+        reports.ReportItemSeverity.WARNING, code, kwargs, None, context
+    )
 
 
-def error(code, force_code=None, context=None, **kwargs):
-    return severities.ERROR, code, kwargs, force_code, context
+def deprecation(
+    code: reports.types.MessageCode,
+    context: Optional[Mapping[str, Any]] = None,
+    **kwargs,
+) -> ReportItemFixture:
+    return ReportItemFixture(
+        reports.ReportItemSeverity.DEPRECATION, code, kwargs, None, context
+    )
 
 
-def info(code, context=None, **kwargs):
-    return severities.INFO, code, kwargs, None, context
+def error(
+    code: reports.types.MessageCode,
+    force_code: Optional[reports.types.ForceCode] = None,
+    context: Optional[Mapping[str, Any]] = None,
+    **kwargs,
+) -> ReportItemFixture:
+    return ReportItemFixture(
+        reports.ReportItemSeverity.ERROR, code, kwargs, force_code, context
+    )
 
 
-class ReportStore:
-    def __init__(self, names=None, reports=None):
-        self.__names = names or []
-        self.__reports = reports or []
+def info(
+    code: reports.types.MessageCode,
+    context: Optional[Mapping[str, Any]] = None,
+    **kwargs,
+) -> ReportItemFixture:
+    return ReportItemFixture(
+        reports.ReportItemSeverity.INFO, code, kwargs, None, context
+    )
 
-        if len(self.__names) != len(self.__reports):
-            raise AssertionError("Reports count doesn't match names count")
 
-        duplicate_names = {n for n in self.__names if self.__names.count(n) > 1}
+T = TypeVar("T")
+
+
+class NameValueSequence(Generic[T]):
+    def __init__(
+        self,
+        name_list: Optional[list[Optional[str]]] = None,
+        value_list: Optional[list[T]] = None,
+    ):
+        self.__names: list[Optional[str]] = name_list or []
+        self.__values: list[T] = value_list or []
+
+        if len(self.__names) != len(self.__values):
+            raise AssertionError("Values count doesn't match names count")
+
+        name_counter = Counter(self.__names)
+        duplicate_names = [
+            n for n in name_counter if n is not None and name_counter[n] > 1
+        ]
         if duplicate_names:
             raise AssertionError(
-                "Duplicate names are not allowed in ReportStore. "
-                " Found duplications:\n  '{0}'".format(
-                    "'\n  '".join(duplicate_names)
-                )
+                f"Duplicate names are not allowed in {type(self).__name__}. "
+                f"Found duplications:\n  {format_list(duplicate_names)}"
             )
 
-    @staticmethod
-    def _report_variation(report, payload):
-        updated_payload = report[2].copy()
-        updated_payload.update(payload)
-        return report[0], report[1], updated_payload, report[3]
+    @property
+    def names(self) -> list[Optional[str]]:
+        return list(self.__names)
 
     @property
-    def reports(self):
-        return list(self.__reports)
+    def values(self) -> list[T]:
+        return list(self.__values)
 
-    def adapt(self, name, **payload):
-        index = self.__names.index(name)
-        return ReportStore(
-            self.__names,
-            [
-                report
-                if i != index
-                else self._report_variation(report, payload)
-                for i, report in enumerate(self.__reports)
-            ],
-        )
+    def append(self, value: T, name: Optional[str] = None) -> None:
+        """
+        Append new value with the specified name at the end of sequence
 
-    def adapt_multi(self, name_list, **payload):
-        names, reports = zip(
-            *[
-                (
-                    name,
-                    self._report_variation(self[name], payload)
-                    if name in name_list
-                    else self[name],
-                )
-                for name in self.__names
-            ]
-        )
-        return ReportStore(list(names), list(reports))
+        value -- new value
+        name -- new value name
+        """
+        self.__check_name(name)
+        self.__names.append(name)
+        self.__values.append(value)
 
-    def info(self, name, code, **kwargs):
-        return self.__append(name, info(code, **kwargs))
+    def prepend(self, value: T, name: Optional[str] = None) -> None:
+        """
+        Insert new value with the specified name at the start of sequence
 
-    def warn(self, name, code, **kwargs):
-        return self.__append(name, warn(code, **kwargs))
+        value -- new value
+        name -- new value name
+        """
+        self.__check_name(name)
+        self.__names.insert(0, name)
+        self.__values.insert(0, value)
 
-    def deprecation(self, name, code, **kwargs):
-        return self.__append(name, deprecation(code, **kwargs))
+    def insert(self, before: str, value: T, name: Optional[str] = None) -> None:
+        """
+        Insert new value before a specified value
 
-    def error(self, name, code, force_code=None, **kwargs):
-        return self.__append(name, error(code, force_code=force_code, **kwargs))
+        before -- name of a value before which the new one will be placed
+        value -- the new value
+        name -- name of the new value
+        """
+        self.__check_name(name)
+        index = self.__get_index(before)
+        self.__names.insert(index, name)
+        self.__values.insert(index, value)
 
-    def as_warn(self, name, as_name):
-        report = self[name]
-        return self.__append(as_name, warn(report[1], **report[2]))
+    def remove(self, *name_list: str) -> None:
+        """
+        Remove values with specified names
 
-    def copy(self, name, as_name, **payload):
-        return self.__append(
-            as_name, self._report_variation(self[name], payload)
-        )
+        name_list -- names of values to be removed
+        """
+        for name in name_list:
+            index = self.__get_index(name)
+            del self.__names[index]
+            del self.__values[index]
 
-    def remove(self, *name_list):
-        names, reports = zip(
-            *[
-                (name, self[name])
-                for name in self.__names
-                if name not in name_list
-            ]
-        )
-        return ReportStore(list(names), list(reports))
+    def replace(
+        self, name: str, value: T, new_name: Optional[str] = None
+    ) -> None:
+        """
+        Replace a value specified by its name
 
-    def select(self, *name_list):
-        names, reports = zip(*[(name, self[name]) for name in name_list])
-        return ReportStore(list(names), list(reports))
+        name -- name of a value to be replaced
+        value -- new value
+        new_name -- new name of the value, use 'name' if not specified
+        """
+        if new_name is not None and new_name != name and name in self.__names:
+            raise AssertionError(f"Name '{new_name}' already present in {self}")
+        for i, current_name in enumerate(self.__names):
+            if current_name == name:
+                self.__values[i] = value
+                if new_name:
+                    self.__names[i] = new_name
+                return
+        raise IndexError(self.__index_error(name))
 
-    def only(self, name, **payload):
-        return ReportStore(
-            [name], [self._report_variation(self[name], payload)]
-        )
+    def trim_before(self, name: str) -> None:
+        """
+        Remove a value with the specified name and all values after it
+
+        name -- name of a value to trim at
+        """
+        index = self.__get_index(name)
+        self.__names = self.__names[:index]
+        self.__values = self.__values[:index]
+
+    def copy(self) -> "NameValueSequence":
+        return type(self)(self.names, self.values)
+
+    def __get_index(self, name: str) -> int:
+        try:
+            return self.__names.index(name)
+        except ValueError as e:
+            raise IndexError(self.__index_error(name)) from e
+
+    def __index_error(self, index: str) -> str:
+        return f"'{index}' not present in {self}"
+
+    def __check_name(self, name: Optional[str]) -> None:
+        if name is not None and name in self.__names:
+            raise AssertionError(f"Name '{name}' already present in {self}")
+
+    @overload
+    def __getitem__(self, spec: str) -> T:
+        pass
+
+    @overload
+    def __getitem__(self, spec: slice) -> "NameValueSequence":
+        pass
 
     def __getitem__(self, spec):
         if not isinstance(spec, slice):
-            return self.__reports[self.__names.index(spec)]
+            try:
+                return self.__values[self.__names.index(spec)]
+            except ValueError as e:
+                raise IndexError(self.__index_error(spec)) from e
 
         assert spec.step is None, "Step is not supported in slicing"
         start = None if spec.start is None else self.__names.index(spec.start)
         stop = None if spec.stop is None else self.__names.index(spec.stop)
+        return type(self)(self.__names[start:stop], self.__values[start:stop])
 
-        return ReportStore(self.__names[start:stop], self.__reports[start:stop])
-
-    def __add__(self, other):
-        return ReportStore(
-            # pylint: disable=protected-access
-            self.__names + other.__names,
-            self.__reports + other.__reports,
+    def __setitem__(self, name: str, value: T) -> None:
+        return (
+            self.replace(name, value)
+            if name in self.__names
+            else self.append(value, name)
         )
 
-    def __append(self, name, report):
-        return ReportStore(self.__names + [name], self.__reports + [report])
+    def __delitem__(self, name: str) -> None:
+        index = self.__get_index(name)
+        del self.__names[index]
+        del self.__values[index]
+
+    def __add__(self, other: "NameValueSequence") -> "NameValueSequence":
+        my_name = type(self).__name__
+        other_name = type(other).__name__
+        assert isinstance(
+            other, type(self)
+        ), f"Can only concatenate {my_name} with {my_name}, not {other_name}"
+
+        return type(self)(
+            self.names + other.names,
+            self.values + other.values,
+        )
+
+    def __str__(self) -> str:
+        return f"{type(self).__name__} {hex(id(self))}:\n" + "\n".join(
+            [
+                f" {index:3}. {item[0] if item[0] else '<unnamed>'}: {item[1]}"
+                for index, item in enumerate(
+                    zip(self.__names, self.__values), 1
+                )
+            ]
+        )
+
+
+class ReportSequenceBuilder:
+    def __init__(self, store: Optional[NameValueSequence] = None):
+        self._store = store or NameValueSequence()
+
+    @property
+    def fixtures(self) -> NameValueSequence:
+        return self._store
+
+    def info(
+        self,
+        code: reports.types.MessageCode,
+        _name: Optional[str] = None,
+        **kwargs,
+    ) -> "ReportSequenceBuilder":
+        self._store.append(info(code, **kwargs), _name)
+        return self
+
+    def warn(
+        self,
+        code: reports.types.MessageCode,
+        _name: Optional[str] = None,
+        **kwargs,
+    ) -> "ReportSequenceBuilder":
+        self._store.append(warn(code, **kwargs), _name)
+        return self
+
+    def deprecation(
+        self,
+        code: reports.types.MessageCode,
+        _name: Optional[str] = None,
+        **kwargs,
+    ) -> "ReportSequenceBuilder":
+        self._store.append(deprecation(code, **kwargs), _name)
+        return self
+
+    def error(
+        self,
+        code: reports.types.MessageCode,
+        force_code: Optional[reports.types.ForceCode] = None,
+        _name: Optional[str] = None,
+        **kwargs,
+    ) -> "ReportSequenceBuilder":
+        self._store.append(error(code, force_code=force_code, **kwargs), _name)
+        return self
 
 
 def report_not_found(
     res_id, context_type="", expected_types=None, context_id=""
 ):
-    return (
-        severities.ERROR,
-        report_codes.ID_NOT_FOUND,
-        {
-            "context_type": context_type,
-            "context_id": context_id,
-            "id": res_id,
-            "expected_types": (
-                ALL_RESOURCE_XML_TAGS
-                if expected_types is None
-                else expected_types
-            ),
-        },
-        None,
+    return error(
+        reports.codes.ID_NOT_FOUND,
+        context_type=context_type,
+        context_id=context_id,
+        id=res_id,
+        expected_types=(
+            ALL_RESOURCE_XML_TAGS if expected_types is None else expected_types
+        ),
     )
 
 
@@ -170,62 +345,55 @@ def report_not_resource_or_tag(element_id, context_type="cib", context_id=""):
 
 
 def report_invalid_id(_id, invalid_char, id_description="id"):
-    return (
-        severities.ERROR,
-        report_codes.INVALID_ID_BAD_CHAR,
-        {
-            "id": _id,
-            "id_description": id_description,
-            "is_first_char": _id.index(invalid_char) == 0,
-            "invalid_character": invalid_char,
-        },
-        None,
+    return error(
+        reports.codes.INVALID_ID_BAD_CHAR,
+        id=_id,
+        id_description=id_description,
+        is_first_char=(_id.index(invalid_char) == 0),
+        invalid_character=invalid_char,
     )
 
 
 def report_id_already_exist(_id):
-    return (
-        severities.ERROR,
-        report_codes.ID_ALREADY_EXISTS,
-        {
-            "id": _id,
-        },
+    return error(
+        reports.codes.ID_ALREADY_EXISTS,
+        id=_id,
     )
 
 
-def report_resource_not_running(resource, severity=severities.INFO):
-    return (
+def report_resource_not_running(
+    resource, severity=reports.ReportItemSeverity.INFO
+):
+    return ReportItemFixture(
         severity,
-        report_codes.RESOURCE_DOES_NOT_RUN,
-        {
-            "resource_id": resource,
-        },
+        reports.codes.RESOURCE_DOES_NOT_RUN,
+        dict(resource_id=resource),
+        None,
         None,
     )
 
 
-def report_resource_running(resource, roles, severity=severities.INFO):
-    return (
+def report_resource_running(
+    resource, roles, severity=reports.ReportItemSeverity.INFO
+):
+    return ReportItemFixture(
         severity,
-        report_codes.RESOURCE_RUNNING_ON_NODES,
-        {
-            "resource_id": resource,
-            "roles_with_nodes": roles,
-        },
+        reports.codes.RESOURCE_RUNNING_ON_NODES,
+        dict(
+            resource_id=resource,
+            roles_with_nodes=roles,
+        ),
+        None,
         None,
     )
 
 
 def report_unexpected_element(element_id, element_type, expected_types):
-    return (
-        severities.ERROR,
-        report_codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
-        {
-            "id": element_id,
-            "expected_types": expected_types,
-            "current_type": element_type,
-        },
-        None,
+    return error(
+        reports.codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
+        id=element_id,
+        expected_types=expected_types,
+        current_type=element_type,
     )
 
 
@@ -236,14 +404,7 @@ def report_not_for_bundles(element_id):
 
 
 def report_wait_for_idle_timed_out(reason):
-    return (
-        severities.ERROR,
-        report_codes.WAIT_FOR_IDLE_TIMED_OUT,
-        {
-            "reason": reason.strip(),
-        },
-        None,
-    )
+    return error(reports.codes.WAIT_FOR_IDLE_TIMED_OUT, reason=reason.strip())
 
 
 def check_sbd_comm_success_fixture(node, watchdog, device_list):
