@@ -2061,7 +2061,12 @@ def is_run_interactive() -> bool:
     """
     Return True if pcs is running in an interactive environment, False otherwise
     """
-    return sys.stdin.isatty() and sys.stdout.isatty()
+    return (
+        sys.stdin is not None
+        and sys.stdout is not None
+        and sys.stdin.isatty()
+        and sys.stdout.isatty()
+    )
 
 
 def get_continue_confirmation_or_force(warning_text: str, force: bool) -> bool:
@@ -2087,7 +2092,7 @@ def get_terminal_password(message="Password: "):
     """
     Commandline options: no options
     """
-    if sys.stdin.isatty():
+    if sys.stdin is not None and sys.stdin.isatty():
         try:
             return getpass.getpass(message)
         except KeyboardInterrupt:

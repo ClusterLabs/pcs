@@ -1,5 +1,14 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+- Crash in commands that ask for user input (like `pcs cluster destroy`) when
+  stdin is closed ([ghissue#612])
+
+[ghissue#612]: https://github.com/ClusterLabs/pcs/issues/612
+
+
 ## [0.11.5] - 2023-03-01
 
 ### Added
