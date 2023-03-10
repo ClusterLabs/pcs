@@ -43,7 +43,9 @@ def format_wrap_for_terminal(
     trim -- number which will be substracted from terminal size. Can be used in
         cases lines will be indented later by this number of spaces.
     """
-    if any((sys.stdout.isatty(), sys.stderr.isatty())):
+    if (sys.stdout is not None and sys.stdout.isatty()) or (
+        sys.stderr is not None and sys.stderr.isatty()
+    ):
         return format_wrap(
             text,
             # minimal line length is 40
