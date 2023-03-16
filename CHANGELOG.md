@@ -19,6 +19,8 @@
 - Set `autocomplete="off"` for a password input field in login page in web UI
   ([rhbz#1957591])
 - Validate dates in location constraint rules ([ghpull#644], [rhbz#2178707])
+- Fix displaying differences between configuration checkpoints in
+  `pcs config checkpoint diff` command ([rhbz#2176490])
 
 ### Changed
 - Resource/stonith agent self-validation of instance attributes is now
@@ -37,6 +39,7 @@
 [rhbz#2159455]: https://bugzilla.redhat.com/show_bug.cgi?id=2159455
 [rhbz#2160555]: https://bugzilla.redhat.com/show_bug.cgi?id=2160555
 [rhbz#2166243]: https://bugzilla.redhat.com/show_bug.cgi?id=2166243
+[rhbz#2176490]: https://bugzilla.redhat.com/show_bug.cgi?id=2176490
 [rhbz#2178707]: https://bugzilla.redhat.com/show_bug.cgi?id=2178707
 
 
