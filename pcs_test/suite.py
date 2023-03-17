@@ -241,7 +241,12 @@ def main():
             ),
             traceback_highlight=("--traceback-highlight" in sys.argv),
             fast_info=("--fast-info" in sys.argv),
-            rich_format=(sys.stdout.isatty() and sys.stderr.isatty()),
+            rich_format=(
+                sys.stdout is not None
+                and sys.stderr is not None
+                and sys.stdout.isatty()
+                and sys.stderr.isatty()
+            ),
             measure_time=("--time" in sys.argv),
         )
 

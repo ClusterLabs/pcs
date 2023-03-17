@@ -2008,7 +2008,7 @@ def get_terminal_password(message="Password: "):
     """
     Commandline options: no options
     """
-    if sys.stdin.isatty():
+    if sys.stdin is not None and sys.stdin.isatty():
         try:
             return getpass.getpass(message)
         except KeyboardInterrupt:

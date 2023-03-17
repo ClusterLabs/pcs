@@ -21,6 +21,8 @@
 - Validate dates in location constraint rules ([ghpull#644], [rhbz#2178707])
 - Fix displaying differences between configuration checkpoints in
   `pcs config checkpoint diff` command ([rhbz#2176490])
+- Crash in commands that ask for user input (like `pcs cluster destroy`) when
+  stdin is closed ([ghissue#612])
 
 ### Changed
 - Resource/stonith agent self-validation of instance attributes is now
@@ -29,6 +31,7 @@
   ([rhbz#2159455])
 
 [ghissue#604]: https://github.com/ClusterLabs/pcs/issues/604
+[ghissue#612]: https://github.com/ClusterLabs/pcs/issues/612
 [ghpull#559]: https://github.com/ClusterLabs/pcs/pull/559
 [ghpull#644]: https://github.com/ClusterLabs/pcs/pull/644
 [rhbz#1957591]: https://bugzilla.redhat.com/show_bug.cgi?id=1957591
