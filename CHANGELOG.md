@@ -23,6 +23,8 @@
   `pcs config checkpoint diff` command ([rhbz#2176490])
 - Crash in commands that ask for user input (like `pcs cluster destroy`) when
   stdin is closed ([ghissue#612])
+- Fix `pcs stonith update-scsi-devices` command which was broken since
+  Pacemaker-2.1.5-rc1 ([rhbz#2179010])
 
 ### Changed
 - Resource/stonith agent self-validation of instance attributes is now
@@ -44,6 +46,7 @@
 [rhbz#2166243]: https://bugzilla.redhat.com/show_bug.cgi?id=2166243
 [rhbz#2176490]: https://bugzilla.redhat.com/show_bug.cgi?id=2176490
 [rhbz#2178707]: https://bugzilla.redhat.com/show_bug.cgi?id=2178707
+[rhbz#2179010]: https://bugzilla.redhat.com/show_bug.cgi?id=2179010
 
 
 ## [0.10.15] - 2022-11-23
