@@ -7,9 +7,12 @@
   stdin is closed ([ghissue#612])
 - Fix displaying differences between configuration checkpoints in
   `pcs config checkpoint diff` command ([rhbz#2175881])
+- Fix `pcs stonith update-scsi-devices` command which was broken since
+  Pacemaker-2.1.5-rc1 ([rhbz#2177996])
 
 [ghissue#612]: https://github.com/ClusterLabs/pcs/issues/612
 [rhbz#2175881]: https://bugzilla.redhat.com/show_bug.cgi?id=2175881
+[rhbz#2177996]: https://bugzilla.redhat.com/show_bug.cgi?id=2177996
 
 
 ## [0.11.5] - 2023-03-01

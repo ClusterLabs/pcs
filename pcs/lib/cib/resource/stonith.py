@@ -173,12 +173,64 @@ def get_node_key_map_for_mpath(
     return node_key_map
 
 
-DIGEST_ATTRS = ["op-digest", "op-secure-digest", "op-restart-digest"]
-DIGEST_ATTR_TO_TYPE_MAP = {
+DIGEST_ATTR_TO_DIGEST_TYPE_MAP = {
     "op-digest": "all",
     "op-secure-digest": "nonprivate",
     "op-restart-digest": "nonreloadable",
 }
+TRANSIENT_DIGEST_ATTR_TO_DIGEST_TYPE_MAP = {
+    "#digests-all": "all",
+    "#digests-secure": "nonprivate",
+}
+DIGEST_ATTRS = frozenset(DIGEST_ATTR_TO_DIGEST_TYPE_MAP.keys())
+TRANSIENT_DIGEST_ATTRS = frozenset(
+    TRANSIENT_DIGEST_ATTR_TO_DIGEST_TYPE_MAP.keys()
+)
+
+
+def _get_digest(
+    attr: str,
+    attr_to_type_map: Dict[str, str],
+    calculated_digests: Dict[str, Optional[str]],
+) -> str:
+    """
+    Return digest of right type for the specified attribute. If missing, raise
+    an error.
+
+    attr -- name of digest attribute
+    atttr_to_type_map -- map for attribute name to digest type conversion
+    calculated_digests -- digests calculated by pacemaker
+    """
+    if attr not in attr_to_type_map:
+        raise AssertionError(
+            f"Key '{attr}' is missing in the attribute name to digest type map"
+        )
+    digest = calculated_digests.get(attr_to_type_map[attr])
+    if digest is None:
+        # this should not happen and when it does it is pacemaker fault
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.StonithRestartlessUpdateUnableToPerform(
+                    f"necessary digest for '{attr}' attribute is missing"
+                )
+            )
+        )
+    return digest
+
+
+def _get_transient_instance_attributes(cib: _Element) -> List[_Element]:
+    """
+    Return list of instance_attributes elements which could contain digest
+    attributes.
+
+    cib -- CIB root element
+    """
+    return cast(
+        List[_Element],
+        cib.xpath(
+            "./status/node_state/transient_attributes/instance_attributes"
+        ),
+    )
 
 
 def _get_lrm_rsc_op_elements(
@@ -282,21 +334,89 @@ def _update_digest_attrs_in_lrm_rsc_op(
             )
         )
     for attr in common_digests_attrs:
-        new_digest = calculated_digests[DIGEST_ATTR_TO_TYPE_MAP[attr]]
-        if new_digest is None:
-            # this should not happen and when it does it is pacemaker fault
+        # update digest in cib
+        lrm_rsc_op.attrib[attr] = _get_digest(
+            attr, DIGEST_ATTR_TO_DIGEST_TYPE_MAP, calculated_digests
+        )
+
+
+def _get_transient_digest_value(
+    old_value: str, stonith_id: str, stonith_type: str, digest: str
+) -> str:
+    """
+    Return transient digest value with replaced digest.
+
+    Value has comma separated format:
+    <stonith_id>:<stonith_type>:<digest>,...
+
+    and we need to replace only digest for our currently updated stonith device.
+
+    old_value -- value to be replaced
+    stonith_id -- id of stonith resource
+    stonith_type -- stonith resource type
+    digest -- digest for new value
+    """
+    new_comma_values_list = []
+    for comma_value in old_value.split(","):
+        if comma_value:
+            try:
+                _id, _type, _ = comma_value.split(":")
+            except ValueError as e:
+                raise LibraryError(
+                    ReportItem.error(
+                        reports.messages.StonithRestartlessUpdateUnableToPerform(
+                            f"invalid digest attribute value: '{old_value}'"
+                        )
+                    )
+                ) from e
+            if _id == stonith_id and _type == stonith_type:
+                comma_value = ":".join([stonith_id, stonith_type, digest])
+        new_comma_values_list.append(comma_value)
+    return ",".join(new_comma_values_list)
+
+
+def _update_digest_attrs_in_transient_instance_attributes(
+    nvset_el: _Element,
+    stonith_id: str,
+    stonith_type: str,
+    calculated_digests: Dict[str, Optional[str]],
+) -> None:
+    """
+    Update digests attributes in transient instance attributes element.
+
+    nvset_el -- instance_attributes element containing nvpairs with digests
+        attributes
+    stonith_id -- id of stonith resource being updated
+    stonith_type -- type of stonith resource being updated
+    calculated_digests -- digests calculated by pacemaker
+    """
+    for attr in TRANSIENT_DIGEST_ATTRS:
+        nvpair_list = cast(
+            List[_Element],
+            nvset_el.xpath("./nvpair[@name=$name]", name=attr),
+        )
+        if not nvpair_list:
+            continue
+        if len(nvpair_list) > 1:
             raise LibraryError(
                 ReportItem.error(
                     reports.messages.StonithRestartlessUpdateUnableToPerform(
-                        (
-                            f"necessary digest for '{attr}' attribute is "
-                            "missing"
-                        )
+                        f"multiple digests attributes: '{attr}'"
                     )
                 )
             )
-        # update digest in cib
-        lrm_rsc_op.attrib[attr] = new_digest
+        old_value = nvpair_list[0].attrib["value"]
+        if old_value:
+            nvpair_list[0].attrib["value"] = _get_transient_digest_value(
+                str(old_value),
+                stonith_id,
+                stonith_type,
+                _get_digest(
+                    attr,
+                    TRANSIENT_DIGEST_ATTR_TO_DIGEST_TYPE_MAP,
+                    calculated_digests,
+                ),
+            )
 
 
 def update_scsi_devices_without_restart(
@@ -315,6 +435,8 @@ def update_scsi_devices_without_restart(
     id_provider -- elements' ids generator
     device_list -- list of updated scsi devices
     """
+    # pylint: disable=too-many-locals
+    cib = get_root(resource_el)
     resource_id = resource_el.get("id", "")
     roles_with_nodes = get_resource_state(cluster_state, resource_id)
     if "Started" not in roles_with_nodes:
@@ -345,17 +467,14 @@ def update_scsi_devices_without_restart(
     )
 
     lrm_rsc_op_start_list = _get_lrm_rsc_op_elements(
-        get_root(resource_el), resource_id, node_name, "start"
+        cib, resource_id, node_name, "start"
+    )
+    new_instance_attrs_digests = get_resource_digests(
+        runner, resource_id, node_name, new_instance_attrs
     )
     if len(lrm_rsc_op_start_list) == 1:
         _update_digest_attrs_in_lrm_rsc_op(
-            lrm_rsc_op_start_list[0],
-            get_resource_digests(
-                runner,
-                resource_id,
-                node_name,
-                new_instance_attrs,
-            ),
+            lrm_rsc_op_start_list[0], new_instance_attrs_digests
         )
     else:
         raise LibraryError(
@@ -368,7 +487,7 @@ def update_scsi_devices_without_restart(
 
     monitor_attrs_list = _get_monitor_attrs(resource_el)
     lrm_rsc_op_monitor_list = _get_lrm_rsc_op_elements(
-        get_root(resource_el), resource_id, node_name, "monitor"
+        cib, resource_id, node_name, "monitor"
     )
     if len(lrm_rsc_op_monitor_list) != len(monitor_attrs_list):
         raise LibraryError(
@@ -384,7 +503,7 @@ def update_scsi_devices_without_restart(
 
     for monitor_attrs in monitor_attrs_list:
         lrm_rsc_op_list = _get_lrm_rsc_op_elements(
-            get_root(resource_el),
+            cib,
             resource_id,
             node_name,
             "monitor",
@@ -413,3 +532,10 @@ def update_scsi_devices_without_restart(
                     )
                 )
             )
+    for nvset_el in _get_transient_instance_attributes(cib):
+        _update_digest_attrs_in_transient_instance_attributes(
+            nvset_el,
+            resource_id,
+            resource_el.get("type", ""),
+            new_instance_attrs_digests,
+        )
