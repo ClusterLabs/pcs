@@ -132,8 +132,6 @@ def remote(params, request, auth_user)
       # lib api:
       # /api/v1/stonith-agent-describe-agent/v1
       :get_fence_agent_metadata => method(:get_fence_agent_metadata),
-      :manage_resource => method(:manage_resource),
-      :unmanage_resource => method(:unmanage_resource),
   }
 
   command = params[:command].to_sym
@@ -2003,48 +2001,6 @@ def qdevice_client_start(param, request, auth_user)
     return pcsd_success('corosync-qdevice started')
   else
     return pcsd_error("Starting corosync-qdevice failed")
-  end
-end
-
-def manage_resource(param, request, auth_user)
-  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-  unless param[:resource_list_json]
-    return [400, "Required parameter 'resource_list_json' is missing."]
-  end
-  begin
-    resource_list = JSON.parse(param[:resource_list_json])
-    _, err, retval = run_cmd(
-      auth_user, PCS, '--', 'resource', 'manage', *resource_list
-    )
-    if retval != 0
-      return [400, err.join('')]
-    end
-    return [200, '']
-  rescue JSON::ParserError
-    return [400, 'Invalid input data format']
-  end
-end
-
-def unmanage_resource(param, request, auth_user)
-  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-  unless param[:resource_list_json]
-    return [400, "Required parameter 'resource_list_json' is missing."]
-  end
-  begin
-    resource_list = JSON.parse(param[:resource_list_json])
-    _, err, retval = run_cmd(
-      auth_user, PCS, '--', 'resource', 'unmanage', *resource_list
-    )
-    if retval != 0
-      return [400, err.join('')]
-    end
-    return [200, '']
-  rescue JSON::ParserError
-    return [400, 'Invalid input data format']
   end
 end
 

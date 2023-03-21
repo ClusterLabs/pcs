@@ -20,6 +20,7 @@ from pcs.daemon import (
     systemd,
 )
 from pcs.daemon.app import (
+    api_v0,
     api_v1,
     api_v2,
     auth,
@@ -92,6 +93,7 @@ def configure_app(
 
         routes = api_v2.get_routes(async_scheduler, auth_provider)
         routes.extend(api_v1.get_routes(async_scheduler, auth_provider))
+        routes.extend(api_v0.get_routes(async_scheduler, auth_provider))
         routes.extend(auth.get_routes(auth_provider))
         routes.extend(
             sinatra_remote.get_routes(

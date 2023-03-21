@@ -305,7 +305,8 @@ class LegacyAuth(LegacyApiBaseHandler):
 
 class LegacyTokenAuthenticationHandler(LegacyApiHandler):
     _token_auth_provider: LegacyTokenAuthProvider
-    _auth_user: Optional[AuthUser]
+    _real_user: Optional[AuthUser]
+    _effective_user: Optional[AuthUser]
 
     def initialize(self, auth_provider: AuthProvider) -> None:
         super().initialize()
@@ -316,17 +317,23 @@ class LegacyTokenAuthenticationHandler(LegacyApiHandler):
         super().prepare()
         try:
             (
-                _,
-                self._auth_user,
+                self._real_user,
+                self._effective_user,
             ) = await self._token_auth_provider.auth_by_token_effective_user()
         except NotAuthorizedException as e:
             raise self.unauthorized() from e
 
     @property
-    def auth_user(self) -> AuthUser:
-        if not self._auth_user:
+    def real_user(self) -> AuthUser:
+        if not self._real_user:
             raise self.unauthorized()
-        return self._auth_user
+        return self._real_user
+
+    @property
+    def effective_user(self) -> AuthUser:
+        if not self._effective_user:
+            raise self.unauthorized()
+        return self._effective_user
 
     async def _handle_request(self) -> None:
         raise NotImplementedError()

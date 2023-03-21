@@ -1,5 +1,3 @@
-from typing import Optional
-
 from tornado.locks import Lock
 
 from pcs.daemon import ruby_pcsd
@@ -10,7 +8,6 @@ from pcs.daemon.app.auth import (
 from pcs.daemon.app.sinatra_common import SinatraMixin
 from pcs.daemon.http_server import HttpsServerManage
 from pcs.lib.auth.provider import AuthProvider
-from pcs.lib.auth.types import AuthUser
 
 
 class SinatraRemote(LegacyTokenAuthenticationHandler, SinatraMixin):
@@ -20,7 +17,6 @@ class SinatraRemote(LegacyTokenAuthenticationHandler, SinatraMixin):
     """
 
     _token_auth_provider: TokenAuthProvider
-    _auth_user: Optional[AuthUser]
 
     def initialize(
         self, ruby_pcsd_wrapper: ruby_pcsd.Wrapper, auth_provider: AuthProvider
@@ -31,7 +27,7 @@ class SinatraRemote(LegacyTokenAuthenticationHandler, SinatraMixin):
 
     async def _handle_request(self):
         result = await self.ruby_pcsd_wrapper.request(
-            self.auth_user, self.request
+            self.effective_user, self.request
         )
         self.send_sinatra_result(result)
 
@@ -81,7 +77,7 @@ class SetCerts(SinatraRemote):
 
     async def _handle_request(self):
         result = await self.ruby_pcsd_wrapper.request(
-            self.auth_user, self.request
+            self.effective_user, self.request
         )
         if result.status == 200:
             self.__https_server_manage.reload_certs()
