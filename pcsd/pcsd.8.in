@@ -45,6 +45,9 @@ List of hostnames for which proxy is not used.
 .TP
 .B PCSD_DEBUG=<boolean>
 Set to \fBtrue\fR for advanced pcsd debugging information.
+.TP
+.B PCSD_RESTART_AFTER_REQUESTS=<integer>
+Number of requests after which the Ruby server will be restarted to reduce memory footprint. To disable restarts, set 0, other numbers lower than 50 are interpreted as 50. Invalid values are ignored and the default (200) is set instead.
 
 .SH FILES
 All files described in this section are located in \fB/var/lib/pcsd/\fR. They are not meant to be edited manually unless said otherwise.

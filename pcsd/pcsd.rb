@@ -51,6 +51,17 @@ end
 before do
   @auth_user = getAuthUser()
   $cluster_name, $cluster_uuid = get_cluster_name_and_uuid()
+  if PCSD_RESTART_AFTER_REQUESTS > 0
+    $request_counter += 1
+    # Even though Puma is multi-threaded, we don't need to lock here since GVL
+    # is only released during blocking I/O operations
+    if $request_counter >= PCSD_RESTART_AFTER_REQUESTS
+      $request_counter = 0
+      # Start Puma hot restart
+      $logger.debug('Requested a restart of Ruby server')
+      Process.kill("USR2", Process.pid)
+    end
+  end
 end
 
 configure do

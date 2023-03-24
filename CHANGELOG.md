@@ -5,6 +5,8 @@
 ### Added
 - Support for output formats `json` and `cmd` to constraints config commands
   ([rhbz#2179388], [rhbz#1423473], [rhbz#2163953])
+- Automatic restarts of the Puma web server in the legacy Ruby daemon to reduce
+  its memory footprint ([rhbz#1860626])
 
 ### Fixed
 - Crash in commands that ask for user input (like `pcs cluster destroy`) when
@@ -23,6 +25,7 @@
 
 [ghissue#612]: https://github.com/ClusterLabs/pcs/issues/612
 [rhbz#1423473]: https://bugzilla.redhat.com/show_bug.cgi?id=1423473
+[rhbz#1860626]: https://bugzilla.redhat.com/show_bug.cgi?id=1860626
 [rhbz#2163953]: https://bugzilla.redhat.com/show_bug.cgi?id=2163953
 [rhbz#2175881]: https://bugzilla.redhat.com/show_bug.cgi?id=2175881
 [rhbz#2177996]: https://bugzilla.redhat.com/show_bug.cgi?id=2177996
