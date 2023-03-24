@@ -1,8 +1,14 @@
 import base64
 import binascii
+import os.path
 from typing import List
 
-from pcs.common import reports
+from pcs import settings
+from pcs.common import (
+    file_type_codes,
+    reports,
+)
+from pcs.common.file import RawFileError
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports import codes as report_codes
 from pcs.common.reports.item import (
@@ -11,6 +17,7 @@ from pcs.common.reports.item import (
 )
 from pcs.common.services.errors import ManageServiceError
 from pcs.common.services.interfaces import ServiceManagerInterface
+from pcs.common.tools import format_os_error
 from pcs.lib import external
 from pcs.lib.corosync import qdevice_net
 from pcs.lib.env import LibraryEnvironment
@@ -157,16 +164,41 @@ def qdevice_kill(lib_env: LibraryEnvironment, model):
     _service_kill(lib_env, qdevice_net.SERVICE_NAME)
 
 
+def qdevice_net_get_ca_certificate(lib_env: LibraryEnvironment) -> bytes:
+    """
+    get base64 encoded qnetd CA certificate
+    """
+    path = os.path.join(
+        settings.corosync_qdevice_net_server_certs_dir,
+        settings.corosync_qdevice_net_server_ca_file_name,
+    )
+    try:
+        with open(path, "rb") as cert_file:
+            return base64.b64encode(cert_file.read())
+    except OSError as e:
+        lib_env.report_processor.report(
+            reports.ReportItem.error(
+                reports.messages.FileIoError(
+                    file_type_codes.COROSYNC_QNETD_CA_CERT,
+                    RawFileError.ACTION_READ,
+                    format_os_error(e),
+                    path,
+                )
+            )
+        )
+        raise LibraryError() from e
+
+
 def qdevice_net_sign_certificate_request(
     lib_env: LibraryEnvironment,
-    certificate_request,
-    cluster_name,
-):
+    certificate_request: str,
+    cluster_name: str,
+) -> bytes:
     """
     Sign node certificate request by qnetd CA
 
-    string certificate_request -- base64 encoded certificate request
-    string cluster_name -- name of the cluster to which qdevice is being added
+    certificate_request -- base64 encoded certificate request
+    cluster_name -- name of the cluster to which qdevice is being added
     """
     try:
         certificate_request_data = base64.b64decode(certificate_request)
@@ -187,7 +219,7 @@ def qdevice_net_sign_certificate_request(
     )
 
 
-def client_net_setup(lib_env: LibraryEnvironment, ca_certificate):
+def client_net_setup(lib_env: LibraryEnvironment, ca_certificate: str) -> None:
     """
     Initialize qdevice net client on local host
 
@@ -208,7 +240,9 @@ def client_net_setup(lib_env: LibraryEnvironment, ca_certificate):
     qdevice_net.client_setup(lib_env.cmd_runner(), ca_certificate_data)
 
 
-def client_net_import_certificate(lib_env: LibraryEnvironment, certificate):
+def client_net_import_certificate(
+    lib_env: LibraryEnvironment, certificate: str
+) -> None:
     """
     Import qnetd client certificate to local node certificate storage
 
@@ -231,11 +265,11 @@ def client_net_import_certificate(lib_env: LibraryEnvironment, certificate):
     )
 
 
-def client_net_destroy(lib_env: LibraryEnvironment):
-    # pylint: disable=unused-argument
+def client_net_destroy(lib_env: LibraryEnvironment) -> None:
     """
     delete qdevice client config files on local host
     """
+    del lib_env
     qdevice_net.client_destroy()
 
 

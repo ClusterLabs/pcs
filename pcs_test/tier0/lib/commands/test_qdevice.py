@@ -1,12 +1,18 @@
 import base64
 import logging
+import os.path
 from unittest import (
     TestCase,
     mock,
 )
 
 import pcs.lib.commands.qdevice as lib
-from pcs.common import reports
+from pcs import settings
+from pcs.common import (
+    file_type_codes,
+    reports,
+)
+from pcs.common.file import RawFileError
 from pcs.common.reports import ReportItemSeverity as severity
 from pcs.common.reports import codes as report_codes
 from pcs.common.services.errors import (
@@ -20,10 +26,12 @@ from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import KillServicesError
 
+from pcs_test.tools import fixture
 from pcs_test.tools.assertions import (
     assert_raise_library_error,
     assert_report_item_list_equal,
 )
+from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
 
@@ -1011,6 +1019,43 @@ class QdeviceNetKillTest(QdeviceTestCase):
             ),
         )
         mock_net_kill.assert_called_once_with("mock_runner", ["corosync-qnetd"])
+
+
+class QdeviceNetGetCaCertificate(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+        self.path = os.path.join(
+            settings.corosync_qdevice_net_server_certs_dir,
+            settings.corosync_qdevice_net_server_ca_file_name,
+        )
+
+    def test_success(self):
+        ca_cert_data = b"ca cert data"
+        mock_open_ca_file = mock.mock_open(read_data=ca_cert_data)()
+        self.config.fs.open(self.path, mock_open_ca_file, mode="rb")
+        result = lib.qdevice_net_get_ca_certificate(self.env_assist.get_env())
+        self.assertEqual(result, base64.b64encode(ca_cert_data))
+
+    def test_read_error(self):
+        self.config.fs.open(
+            self.path, side_effect=OSError(1, "an error", self.path), mode="rb"
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.qdevice_net_get_ca_certificate(
+                self.env_assist.get_env()
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.FILE_IO_ERROR,
+                    file_type_code=file_type_codes.COROSYNC_QNETD_CA_CERT,
+                    operation=RawFileError.ACTION_READ,
+                    reason=f"an error: '{self.path}'",
+                    file_path=self.path,
+                )
+            ]
+        )
 
 
 @mock.patch(
