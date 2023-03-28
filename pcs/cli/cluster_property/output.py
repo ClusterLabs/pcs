@@ -84,17 +84,21 @@ class PropertyConfigurationFacade:
         return self._properties
 
     @property
+    def properties_metadata(self) -> Sequence[ResourceAgentParameterDto]:
+        return self._properties_metadata
+
+    @property
     def readonly_properties(self) -> StringCollection:
         return self._readonly_properties
 
     def get_property_value(
-        self, property_name: str, custom_default=None
+        self, property_name: str, custom_default: Optional[str] = None
     ) -> Optional[str]:
         nvpair = self._name_nvpair_dto_map.get(property_name)
         return nvpair.value if nvpair else custom_default
 
     def get_property_value_or_default(
-        self, property_name: str, custom_default=None
+        self, property_name: str, custom_default: Optional[str] = None
     ) -> Optional[str]:
         value = self.get_property_value(property_name)
         if value is not None:
@@ -105,41 +109,38 @@ class PropertyConfigurationFacade:
     def _filter_names_advanced(
         metadata: ResourceAgentParameterDto,
         property_names: Optional[StringSequence] = None,
-        advanced: Optional[bool] = None,
+        include_advanced: bool = False,
     ) -> bool:
         return bool(
-            (
-                not property_names
-                and (advanced is None or metadata.advanced == advanced)
-            )
-            or (
-                property_names
-                and metadata.name in property_names
-                and (advanced is None or metadata.advanced == advanced)
-            )
+            (not property_names and (include_advanced or not metadata.advanced))
+            or (property_names and metadata.name in property_names)
         )
 
     def get_defaults(
         self,
         property_names: Optional[StringSequence] = None,
-        advanced: Optional[bool] = None,
+        include_advanced: bool = False,
     ) -> dict[str, str]:
         return {
             metadata.name: metadata.default
             for metadata in self._properties_metadata
             if metadata.default is not None
-            and self._filter_names_advanced(metadata, property_names, advanced)
+            and self._filter_names_advanced(
+                metadata, property_names, include_advanced
+            )
         }
 
     def get_properties_metadata(
         self,
         property_names: Optional[StringSequence] = None,
-        advanced: Optional[bool] = None,
+        include_advanced: bool = False,
     ) -> Sequence[ResourceAgentParameterDto]:
         return [
             metadata
             for metadata in self._properties_metadata
-            if self._filter_names_advanced(metadata, property_names, advanced)
+            if self._filter_names_advanced(
+                metadata, property_names, include_advanced
+            )
         ]
 
     def get_name_value_default_list(self) -> list[tuple[str, str, bool]]:
@@ -161,6 +162,11 @@ class PropertyConfigurationFacade:
 def properties_to_text(
     properties_facade: PropertyConfigurationFacade,
 ) -> list[str]:
+    """
+    Return a text format of configured properties.
+
+    properties_facade -- cluster property configuration and metadata
+    """
     if properties_facade.properties:
         return nvset_dto_to_lines(
             properties_facade.properties[0],
@@ -173,6 +179,15 @@ def properties_to_text_with_default_mark(
     properties_facade: PropertyConfigurationFacade,
     property_names: Optional[StringSequence] = None,
 ) -> list[str]:
+    """
+    Return text format of configured properties or property default values.
+    If default property value is missing then property is not displayed at all.
+    If property_names is specified, then only properties from the list is
+    displayed.
+
+    properties_facade -- cluster property configuration and metadata
+    property_names -- properties to be displayed
+    """
     lines: list[str] = []
     id_part = (
         f" {properties_facade.properties[0].id}"
@@ -192,6 +207,11 @@ def properties_to_text_with_default_mark(
 def properties_to_cmd(
     properties_facade: PropertyConfigurationFacade,
 ) -> list[str]:
+    """
+    Convert configured properties to the `pcs property set` command.
+
+    properties_facade -- cluster property configuration and metadata
+    """
     if properties_facade.properties and properties_facade.properties[0].nvpairs:
         options = [
             quote("=".join([nvpair.name, nvpair.value]))

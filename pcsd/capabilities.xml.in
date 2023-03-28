@@ -1135,6 +1135,7 @@
       <description>
         Show cluster properties definition and description (meta data).
 
+        pcs commands: property describe
         daemon urls: get_cluster_properties_definition
       </description>
     </capability>

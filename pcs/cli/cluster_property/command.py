@@ -134,7 +134,9 @@ def config(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
             "Please use command 'pcs property defaults' instead."
         )
         output = "\n".join(
-            properties_defaults_to_text(properties_facade.get_defaults())
+            properties_defaults_to_text(
+                properties_facade.get_defaults(include_advanced=True)
+            )
         )
     elif output_format == "cmd":
         output = " \\\n".join(properties_to_cmd(properties_facade))
@@ -161,8 +163,7 @@ def defaults(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
         lib.cluster_property.get_properties_metadata()
     )
     defaults_dict = properties_facade.get_defaults(
-        argv,
-        advanced=None if argv or modifiers.is_specified("--full") else False,
+        argv, include_advanced=modifiers.is_specified("--full")
     )
     output = "\n".join(properties_defaults_to_text(defaults_dict))
     if output:
@@ -181,23 +182,18 @@ def describe(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
     output_format = modifiers.get_output_format(
         supported_formats={"text", "json"}
     )
+    if output_format == "json" and (argv or modifiers.is_specified("--full")):
+        raise CmdLineInputError(
+            "property filtering is not supported with --output-format=json"
+        )
     properties_facade = PropertyConfigurationFacade.from_properties_metadata(
         lib.cluster_property.get_properties_metadata()
-    )
-    properties_metadata = sorted(
-        properties_facade.get_properties_metadata(
-            argv,
-            advanced=None
-            if argv or modifiers.is_specified("--full")
-            else False,
-        ),
-        key=lambda x: x.name,
     )
     if output_format == "json":
         output = json.dumps(
             dto.to_dict(
                 ClusterPropertyMetadataDto(
-                    properties_metadata=properties_metadata,
+                    properties_metadata=properties_facade.properties_metadata,
                     readonly_properties=properties_facade.readonly_properties,
                 )
             )
@@ -205,7 +201,15 @@ def describe(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
     else:
         output = "\n".join(
             smart_wrap_text(
-                cluster_property_metadata_to_text(properties_metadata)
+                cluster_property_metadata_to_text(
+                    sorted(
+                        properties_facade.get_properties_metadata(
+                            argv,
+                            include_advanced=modifiers.is_specified("--full"),
+                        ),
+                        key=lambda x: x.name,
+                    )
+                )
             )
         )
     if output:
