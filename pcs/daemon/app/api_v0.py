@@ -197,11 +197,7 @@ class QdeviceNetSignNodeCertificateHandler(_BaseApiV0Handler):
         )
         if not result.success:
             raise self._error(_reports_to_str(result.reports))
-        # base64.b64encode returns bytes.
-        # Bytes is printed like this: b'bytes content'
-        # We need to get rid of that b'', so we change bytes to string. Since
-        # it's base64encoded, it's safe to use ascii.
-        self.write(result.result.decode("ascii"))
+        self.write(result.result)
 
 
 class QdeviceNetClientInitCertificateStorageHandler(_BaseApiV0Handler):

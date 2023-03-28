@@ -4,7 +4,6 @@ require 'childprocess'
 require 'set'
 require 'timeout'
 require 'rexml/document'
-require 'base64'
 require 'tempfile'
 
 require 'pcs.rb'

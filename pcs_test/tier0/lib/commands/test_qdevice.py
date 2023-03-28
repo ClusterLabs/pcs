@@ -1034,7 +1034,7 @@ class QdeviceNetGetCaCertificate(TestCase):
         mock_open_ca_file = mock.mock_open(read_data=ca_cert_data)()
         self.config.fs.open(self.path, mock_open_ca_file, mode="rb")
         result = lib.qdevice_net_get_ca_certificate(self.env_assist.get_env())
-        self.assertEqual(result, base64.b64encode(ca_cert_data))
+        self.assertEqual(result, base64.b64encode(ca_cert_data).decode())
 
     def test_read_error(self):
         self.config.fs.open(
@@ -1064,13 +1064,13 @@ class QdeviceNetGetCaCertificate(TestCase):
 @mock.patch.object(LibraryEnvironment, "cmd_runner", lambda self: "mock_runner")
 class QdeviceNetSignCertificateRequestTest(QdeviceTestCase):
     def test_success(self, mock_qdevice_func):
-        qdevice_func_input = "certificate request".encode("utf-8")
-        qdevice_func_output = "signed certificate".encode("utf-8")
+        qdevice_func_input = "certificate request".encode()
+        qdevice_func_output = "signed certificate".encode()
         mock_qdevice_func.return_value = qdevice_func_output
         cluster_name = "clusterName"
 
         self.assertEqual(
-            base64.b64encode(qdevice_func_output),
+            base64.b64encode(qdevice_func_output).decode(),
             lib.qdevice_net_sign_certificate_request(
                 self.lib_env, base64.b64encode(qdevice_func_input), cluster_name
             ),

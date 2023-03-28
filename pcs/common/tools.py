@@ -16,6 +16,10 @@ from pcs.common.types import StringCollection
 T = TypeVar("T", bound=type)
 
 
+def bin_to_str(binary: bytes) -> str:
+    return "".join(map(chr, binary))
+
+
 def get_all_subclasses(cls: T) -> MutableSet[T]:
     subclasses = set(cls.__subclasses__())
     return subclasses.union(

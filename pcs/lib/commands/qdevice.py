@@ -164,7 +164,7 @@ def qdevice_kill(lib_env: LibraryEnvironment, model):
     _service_kill(lib_env, qdevice_net.SERVICE_NAME)
 
 
-def qdevice_net_get_ca_certificate(lib_env: LibraryEnvironment) -> bytes:
+def qdevice_net_get_ca_certificate(lib_env: LibraryEnvironment) -> str:
     """
     get base64 encoded qnetd CA certificate
     """
@@ -174,7 +174,7 @@ def qdevice_net_get_ca_certificate(lib_env: LibraryEnvironment) -> bytes:
     )
     try:
         with open(path, "rb") as cert_file:
-            return base64.b64encode(cert_file.read())
+            return base64.b64encode(cert_file.read()).decode()
     except OSError as e:
         lib_env.report_processor.report(
             reports.ReportItem.error(
@@ -193,9 +193,9 @@ def qdevice_net_sign_certificate_request(
     lib_env: LibraryEnvironment,
     certificate_request: str,
     cluster_name: str,
-) -> bytes:
+) -> str:
     """
-    Sign node certificate request by qnetd CA
+    Sign node certificate request by qnetd CA and return it base64 encoded
 
     certificate_request -- base64 encoded certificate request
     cluster_name -- name of the cluster to which qdevice is being added
@@ -216,7 +216,7 @@ def qdevice_net_sign_certificate_request(
         qdevice_net.qdevice_sign_certificate_request(
             lib_env.cmd_runner(), certificate_request_data, cluster_name
         )
-    )
+    ).decode()
 
 
 def client_net_setup(lib_env: LibraryEnvironment, ca_certificate: str) -> None:
