@@ -105,9 +105,7 @@ class _BaseApiV0Handler(LegacyTokenAuthenticationHandler):
             ),
         )
         task_ident = self._scheduler.new_task(
-            Command(
-                command_dto, api_v1_compatible=True, api_v0_compatible=True
-            ),
+            Command(command_dto, is_legacy_command=True),
             self.real_user,
         )
 

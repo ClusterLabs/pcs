@@ -217,9 +217,7 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=quorum.device_net_certificate_setup_local,
         required_permission=p.WRITE,
     ),
-    # TODO add to capabilities? It's only for APIv0
     # deprecated, API v0 compatibility
-    # or should we made it available in api v2 as well?
     "qdevice.qdevice_net_get_ca_certificate": _Cmd(
         cmd=qdevice.qdevice_net_get_ca_certificate,
         required_permission=p.READ,
@@ -365,7 +363,8 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
 }
 
 
-API_V1_COMPATIBILITY_MODE = (
+LEGACY_API_COMMANDS = (
+    "qdevice.qdevice_net_get_ca_certificate",
     "resource_agent.describe_agent",
     "resource_agent.list_agents",
     "resource_agent.list_agents_for_standard_and_provider",
@@ -374,9 +373,4 @@ API_V1_COMPATIBILITY_MODE = (
     "status.full_cluster_status_plaintext",
     "stonith_agent.describe_agent",
     "stonith_agent.list_agents",
-)
-API_V0_COMPATIBILITY_MODE = (
-    # this should be replaced by a generic command to fetch files defined by
-    # pcs and specified by a constant / enum
-    "qdevice.qdevice_net_get_ca_certificate",
 )

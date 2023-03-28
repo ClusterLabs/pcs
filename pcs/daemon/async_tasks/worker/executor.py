@@ -31,9 +31,8 @@ from pcs.lib.permissions.checker import PermissionsChecker
 from pcs.utils import read_known_hosts_file_not_cached
 
 from .command_mapping import (
-    API_V0_COMPATIBILITY_MODE,
-    API_V1_COMPATIBILITY_MODE,
     COMMAND_MAP,
+    LEGACY_API_COMMANDS,
 )
 from .communicator import WorkerCommunicator
 from .logging import (
@@ -152,16 +151,9 @@ def task_executor(task: WorkerCommand) -> None:
     task_retval = None
     command_name = command_dto.command_name
     try:
-        if (
-            command_name not in COMMAND_MAP
-            or (
-                not task.command.api_v1_compatible
-                and command_name in API_V1_COMPATIBILITY_MODE
-            )
-            or (
-                not task.command.api_v0_compatible
-                and command_name in API_V0_COMPATIBILITY_MODE
-            )
+        if command_name not in COMMAND_MAP or (
+            not task.command.is_legacy_command
+            and command_name in LEGACY_API_COMMANDS
         ):
             raise LibraryError(
                 reports.ReportItem.error(

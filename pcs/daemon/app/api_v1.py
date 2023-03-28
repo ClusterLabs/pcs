@@ -215,7 +215,7 @@ class _BaseApiV1Handler(BaseHandler):
             ),
         )
         task_ident = self.scheduler.new_task(
-            Command(command_dto, api_v1_compatible=True), real_user
+            Command(command_dto, is_legacy_command=True), real_user
         )
 
         try:
