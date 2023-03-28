@@ -1,13 +1,8 @@
 import base64
 import binascii
-import os.path
 from typing import List
 
-from pcs import settings
-from pcs.common import (
-    file_type_codes,
-    reports,
-)
+from pcs.common import reports
 from pcs.common.file import RawFileError
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports import codes as report_codes
@@ -17,11 +12,12 @@ from pcs.common.reports.item import (
 )
 from pcs.common.services.errors import ManageServiceError
 from pcs.common.services.interfaces import ServiceManagerInterface
-from pcs.common.tools import format_os_error
 from pcs.lib import external
 from pcs.lib.corosync import qdevice_net
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
+from pcs.lib.file.instance import FileInstance
+from pcs.lib.file.raw_file import raw_file_error_report
 from pcs.lib.services import service_exception_to_report
 
 
@@ -168,24 +164,12 @@ def qdevice_net_get_ca_certificate(lib_env: LibraryEnvironment) -> str:
     """
     get base64 encoded qnetd CA certificate
     """
-    path = os.path.join(
-        settings.corosync_qdevice_net_server_certs_dir,
-        settings.corosync_qdevice_net_server_ca_file_name,
-    )
     try:
-        with open(path, "rb") as cert_file:
-            return base64.b64encode(cert_file.read()).decode()
-    except OSError as e:
-        lib_env.report_processor.report(
-            reports.ReportItem.error(
-                reports.messages.FileIoError(
-                    file_type_codes.COROSYNC_QNETD_CA_CERT,
-                    RawFileError.ACTION_READ,
-                    format_os_error(e),
-                    path,
-                )
-            )
-        )
+        return base64.b64encode(
+            FileInstance.for_qnetd_ca_cert().read_raw()
+        ).decode()
+    except RawFileError as e:
+        lib_env.report_processor.report(raw_file_error_report(e))
         raise LibraryError() from e
 
 

@@ -1031,14 +1031,17 @@ class QdeviceNetGetCaCertificate(TestCase):
 
     def test_success(self):
         ca_cert_data = b"ca cert data"
-        mock_open_ca_file = mock.mock_open(read_data=ca_cert_data)()
-        self.config.fs.open(self.path, mock_open_ca_file, mode="rb")
+        self.config.raw_file.read(
+            file_type_codes.COROSYNC_QNETD_CA_CERT, self.path, ca_cert_data
+        )
         result = lib.qdevice_net_get_ca_certificate(self.env_assist.get_env())
         self.assertEqual(result, base64.b64encode(ca_cert_data).decode())
 
     def test_read_error(self):
-        self.config.fs.open(
-            self.path, side_effect=OSError(1, "an error", self.path), mode="rb"
+        self.config.raw_file.read(
+            file_type_codes.COROSYNC_QNETD_CA_CERT,
+            self.path,
+            exception_msg="an error",
         )
         self.env_assist.assert_raise_library_error(
             lambda: lib.qdevice_net_get_ca_certificate(
@@ -1051,7 +1054,7 @@ class QdeviceNetGetCaCertificate(TestCase):
                     reports.codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.COROSYNC_QNETD_CA_CERT,
                     operation=RawFileError.ACTION_READ,
-                    reason=f"an error: '{self.path}'",
+                    reason="an error",
                     file_path=self.path,
                 )
             ]
