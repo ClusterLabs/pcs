@@ -8,6 +8,7 @@ from lxml import etree
 from pcs.common import const
 from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
+from pcs.common.types import CibRuleInEffectStatus
 from pcs.lib.commands.constraint import common as constraint
 
 from pcs_test.tools import fixture
@@ -15,7 +16,12 @@ from pcs_test.tools.assertions import (
     assert_raise_library_error,
     assert_xml_equal,
 )
-from pcs_test.tools.custom_mock import MockLibraryReportProcessor
+from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.constraints_dto import get_all_constraints
+from pcs_test.tools.custom_mock import (
+    MockLibraryReportProcessor,
+    RuleInEffectEvalMock,
+)
 
 
 def fixture_cib_and_constraints():
@@ -200,73 +206,37 @@ class CreateWithSetTest(TestCase):
         )
 
 
-class ConfigTest(TestCase):
+class GetConfig(TestCase):
     def setUp(self):
-        self.cib, self.constraint_section = fixture_cib_and_constraints()
-        self.env = fixture_env(self.cib)
+        self.env_assist, self.config = get_env_tools(test_case=self)
 
-    def create(self, tag_name, resource_set_list):
-        constraint.create_with_set(
-            tag_name,
-            lambda cib, options, resource_set_list: options,
-            self.env,
-            resource_set_list,
-            {"id": "some_id", "symmetrical": "true"},
-        )
-
-    def test_returns_export_of_found_elements(self):
-        def is_plain(element):
-            return element.attrib.has_key("is_plain")
-
-        tag_name = "rsc_some"
-        self.create(
-            tag_name,
-            [
-                {
-                    "ids": ["A", "B"],
-                    "options": {"role": const.PCMK_ROLE_UNPROMOTED_LEGACY},
-                },
-            ],
-        )
-        self.create(
-            tag_name,
-            [
-                {"ids": ["E", "F"], "options": {"action": "start"}},
-            ],
-        )
-        etree.SubElement(self.constraint_section, tag_name).attrib.update(
-            {"id": "plain1", "is_plain": "true"}
-        )
-
-        self.assertEqual(
-            constraint.config(tag_name, is_plain, self.env),
+    @mock.patch("pcs.lib.commands.constraint.common.get_rule_evaluator")
+    def test_success(self, get_rule_evaluator_mock):
+        rule_evaluator = RuleInEffectEvalMock(
             {
-                "plain": [{"options": {"id": "plain1", "is_plain": "true"}}],
-                "with_resource_sets": [
-                    {
-                        "resource_sets": [
-                            {
-                                "ids": ["A", "B"],
-                                "options": {
-                                    "role": const.PCMK_ROLE_UNPROMOTED_PRIMARY,
-                                    "id": "some_id_set",
-                                },
-                            }
-                        ],
-                        "options": {"symmetrical": "true", "id": "some_id"},
-                    },
-                    {
-                        "options": {"symmetrical": "true", "id": "some_id"},
-                        "resource_sets": [
-                            {
-                                "ids": ["E", "F"],
-                                "options": {
-                                    "action": "start",
-                                    "id": "some_id_set-1",
-                                },
-                            }
-                        ],
-                    },
-                ],
-            },
+                "loc_constr_with_expired_rule-rule": CibRuleInEffectStatus.EXPIRED,
+                "loc_constr_with_not_expired_rule": CibRuleInEffectStatus.IN_EFFECT,
+            }
+        )
+        self.config.runner.cib.load(filename="cib-all.xml")
+        get_rule_evaluator_mock.return_value = rule_evaluator
+        self.assertEqual(
+            get_all_constraints(rule_evaluator),
+            constraint.get_config(
+                self.env_assist.get_env(), evaluate_rules=True
+            ),
+        )
+        get_rule_evaluator_mock.assert_called_once()
+
+    @mock.patch("pcs.lib.cib.rule.in_effect.has_rule_in_effect_status_tool")
+    def test_no_rule_evaluation(self, has_rule_tool_mock):
+        has_rule_tool_mock.side_effect = AssertionError(
+            "has_rule_in_effect_status_tool should not be called"
+        )
+        self.config.runner.cib.load(filename="cib-all.xml")
+        self.assertEqual(
+            get_all_constraints(RuleInEffectEvalMock({})),
+            constraint.get_config(
+                self.env_assist.get_env(), evaluate_rules=False
+            ),
         )

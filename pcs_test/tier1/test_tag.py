@@ -283,14 +283,7 @@ class PcsConfigTagsTest(TestTagMixin, TestCase):
     empty_resources = "\nResources:\n"
     empty_stonith_devices = "Stonith Devices:\n"
     empty_fencing_levels = "Fencing Levels:\n"
-    empty_constraints = outdent(
-        """
-        Location Constraints:
-        Ordering Constraints:
-        Colocation Constraints:
-        Ticket Constraints:
-        """
-    )
+    empty_constraints = ""
     empty_tags = outdent(
         """
         Tags:
@@ -392,15 +385,8 @@ class PcsConfigTagsTest(TestTagMixin, TestCase):
     expected_constraints = outdent(
         """
         Location Constraints:
-          Resource: x1
-            Enabled on:
-              Node: rh7-1 (score:INFINITY) (id:cx1)
-          Resource: x2
-            Enabled on:
-              Node: rh7-1 (score:INFINITY) (id:cx2)
-        Ordering Constraints:
-        Colocation Constraints:
-        Ticket Constraints:
+          resource 'x1' prefers node 'rh7-1' with score INFINITY (id: cx1)
+          resource 'x2' prefers node 'rh7-1' with score INFINITY (id: cx2)
         """
     )
 

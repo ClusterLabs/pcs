@@ -67,7 +67,7 @@ from pcs.common import (
 )
 from pcs.common.interface import dto
 from pcs.common.pacemaker.defaults import CibDefaultsDto
-from pcs.common.pacemaker.resource.list import ListCibResourcesDto
+from pcs.common.pacemaker.resource.list import CibResourcesDto
 from pcs.common.pacemaker.resource.operations import (
     OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME,
 )
@@ -3542,7 +3542,7 @@ def config_common(
     elif output_format == "json":
         output = json.dumps(
             dto.to_dict(
-                ListCibResourcesDto(
+                CibResourcesDto(
                     primitives=resources_facade.primitives,
                     clones=resources_facade.clones,
                     groups=resources_facade.groups,

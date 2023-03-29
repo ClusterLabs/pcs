@@ -19,6 +19,7 @@ EXTRA_DIST		= \
 			  resources/cib-large.xml \
 			  resources/cib-property.xml \
 			  resources/cib-resources.xml \
+			  resources/cib-all.xml \
 			  resources/cib-tags.xml \
 			  resources/controld_metadata.xml \
 			  resources/corosync-3nodes.conf \
@@ -67,7 +68,6 @@ EXTRA_DIST		= \
 			  tier0/cli/common/test_printable_tree.py \
 			  tier0/cli/common/test_tools.py \
 			  tier0/cli/constraint/__init__.py \
-			  tier0/cli/constraint/test_command.py \
 			  tier0/cli/constraint/test_parse_args.py \
 			  tier0/cli/constraint_ticket/__init__.py \
 			  tier0/cli/constraint_ticket/test_command.py \
@@ -345,6 +345,8 @@ EXTRA_DIST		= \
 			  tier1/cluster/test_config_show.py \
 			  tier1/cluster/test_config_update.py \
 			  tier1/cluster/test_setup_local.py \
+			  tier1/constraint/__init__.py \
+			  tier1/constraint/test_config.py \
 			  tier1/__init__.py \
 			  tier1/legacy/__init__.py \
 			  tier1/legacy/test_acl.py \
@@ -448,4 +450,5 @@ EXTRA_DIST		= \
 			  tools/misc.py \
 			  tools/pcs_runner.py \
 			  tools/resources_dto.py \
+			  tools/constraints_dto.py \
 			  tools/xml.py

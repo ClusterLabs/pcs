@@ -3,7 +3,7 @@ from shlex import split
 from unittest import TestCase
 
 from pcs.common.interface.dto import to_dict
-from pcs.common.pacemaker.resource.list import ListCibResourcesDto
+from pcs.common.pacemaker.resource.list import CibResourcesDto
 
 from pcs_test.tools import resources_dto
 from pcs_test.tools.misc import (
@@ -24,7 +24,7 @@ class ResourceConfigJson(TestCase):
         stdout, stderr, retval = self.pcs_runner.run(
             ["resource", "config", "--output-format=json"]
         )
-        expected = ListCibResourcesDto(
+        expected = CibResourcesDto(
             primitives=[
                 resources_dto.PRIMITIVE_R1,
                 resources_dto.PRIMITIVE_R7,
@@ -56,7 +56,7 @@ class ResourceConfigJson(TestCase):
         stdout, stderr, retval = self.pcs_runner.run(
             ["resource", "config", "--output-format=json", "G1-clone", "R1"]
         )
-        expected = ListCibResourcesDto(
+        expected = CibResourcesDto(
             primitives=[
                 resources_dto.PRIMITIVE_R1,
                 resources_dto.PRIMITIVE_R2,

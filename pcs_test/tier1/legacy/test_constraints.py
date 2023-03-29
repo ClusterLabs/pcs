@@ -10,10 +10,7 @@ from lxml import etree
 from pcs import settings
 from pcs.common import const
 from pcs.common.str_tools import format_list
-from pcs.constraint import (
-    CRM_RULE_MISSING_MSG,
-    LOCATION_NODE_VALIDATION_SKIP_MSG,
-)
+from pcs.constraint import LOCATION_NODE_VALIDATION_SKIP_MSG
 
 from pcs_test.tools.assertions import (
     AssertPcsMixin,
@@ -50,6 +47,11 @@ LOCATION_NODE_VALIDATION_SKIP_WARNING = (
 )
 ERRORS_HAVE_OCCURRED = (
     "Error: Errors have occurred, therefore pcs is unable to continue\n"
+)
+WARN_WITH_RULES_SKIP = "Warning: Constraints with rules are not displayed.\n"
+CRM_RULE_MISSING_MSG = (
+    "crm_rule is not available, therefore expired parts of configuration may "
+    "not be detected. Consider upgrading pacemaker."
 )
 
 empty_cib = rc("cib-empty-3.7.xml")
@@ -173,37 +175,32 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         self.assertEqual(stdout, "")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint --full --all".split()
+        self.assert_pcs_success(
+            "constraint --full --all".split(),
+            stdout_full=outdent(
+                """\
+                Location Constraints:
+                  resource 'D1' (id: location-D1)
+                    Rules:
+                      Rule: score=222 (id:location-D1-rule)
+                        Expression: #uname eq c00n03 (id:location-D1-rule-expr)
+                  resource 'D2' (id: location-D2)
+                    Rules:
+                      Rule: score=-INFINITY (id:location-D2-rule)
+                        Expression: #uname eq c00n04 (id:location-D2-rule-expr)
+                  resource 'D3' (id: location-D3)
+                    Rules:
+                      Rule: boolean-op=or score=-INFINITY (id:location-D3-rule)
+                        Expression: not_defined pingd (id:location-D3-rule-expr)
+                        Expression: pingd lte 0 (id:location-D3-rule-expr-1)
+                  resource 'D3' (id: location-D3-1)
+                    Rules:
+                      Rule: boolean-op=and score=-INFINITY (id:location-D3-1-rule)
+                        Expression: not_defined pingd (id:location-D3-1-rule-expr)
+                        Expression: pingd lte 0 (id:location-D3-1-rule-expr-1)
+                """
+            ),
         )
-        ac(
-            stdout,
-            """\
-Location Constraints:
-  Resource: D1
-    Constraint: location-D1
-      Rule: score=222 (id:location-D1-rule)
-        Expression: #uname eq c00n03 (id:location-D1-rule-expr)
-  Resource: D2
-    Constraint: location-D2
-      Rule: score=-INFINITY (id:location-D2-rule)
-        Expression: #uname eq c00n04 (id:location-D2-rule-expr)
-  Resource: D3
-    Constraint: location-D3
-      Rule: boolean-op=or score=-INFINITY (id:location-D3-rule)
-        Expression: not_defined pingd (id:location-D3-rule-expr)
-        Expression: pingd lte 0 (id:location-D3-rule-expr-1)
-    Constraint: location-D3-1
-      Rule: boolean-op=and score=-INFINITY (id:location-D3-1-rule)
-        Expression: not_defined pingd (id:location-D3-1-rule-expr)
-        Expression: pingd lte 0 (id:location-D3-1-rule-expr-1)
-Ordering Constraints:
-Colocation Constraints:
-Ticket Constraints:
-""",
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
 
     def testAdvancedConstraintRule(self):
         self.fixture_resources()
@@ -218,34 +215,22 @@ Ticket Constraints:
         self.assertEqual(stdout, "")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint --full".split()
+        self.assert_pcs_success(
+            ["constraint", "--full"],
+            stdout_full=outdent(
+                """\
+                Location Constraints:
+                  resource 'D1' (id: location-D1)
+                    Rules:
+                      Rule: boolean-op=or score=INFINITY (id:location-D1-rule)
+                        Expression: not_defined pingd (id:location-D1-rule-expr)
+                        Expression: pingd lte 0 (id:location-D1-rule-expr-1)
+                """
+            ),
         )
-        ac(
-            stdout,
-            """\
-Location Constraints:
-  Resource: D1
-    Constraint: location-D1
-      Rule: boolean-op=or score=INFINITY (id:location-D1-rule)
-        Expression: not_defined pingd (id:location-D1-rule-expr)
-        Expression: pingd lte 0 (id:location-D1-rule-expr-1)
-Ordering Constraints:
-Colocation Constraints:
-Ticket Constraints:
-""",
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
 
     def testEmptyConstraints(self):
-        stdout, stderr, retval = pcs(self.temp_cib.name, ["constraint"])
-        ac(
-            stdout,
-            "Location Constraints:\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n",
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
+        self.assert_pcs_success(["constraint"])
 
     def testMultipleOrderConstraints(self):
         self.fixture_resources()
@@ -271,15 +256,16 @@ Ticket Constraints:
         )
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint --full".split()
+        self.assert_pcs_success(
+            ["constraint", "--full"],
+            stdout_full=outdent(
+                """\
+                Order Constraints:
+                  stop resource 'D1' then stop resource 'D2' (id: order-D1-D2-mandatory)
+                  start resource 'D1' then start resource 'D2' (id: order-D1-D2-mandatory-1)
+                """
+            ),
         )
-        ac(
-            stdout,
-            "Location Constraints:\nOrdering Constraints:\n  stop D1 then stop D2 (kind:Mandatory) (id:order-D1-D2-mandatory)\n  start D1 then start D2 (kind:Mandatory) (id:order-D1-D2-mandatory-1)\nColocation Constraints:\nTicket Constraints:\n",
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
 
     def test_order_options_empty_value(self):
         self.fixture_resources()
@@ -384,21 +370,16 @@ Ticket Constraints:
         self.assertEqual(stdout, "")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint --full".split()
+        self.assert_pcs_success(
+            "constraint --full".split(),
+            stdout_full=outdent(
+                """\
+                Order Constraints:
+                  start resource 'D1' then start resource 'D2' (id: order-D1-D2-mandatory)
+                    require-all=0
+                """
+            ),
         )
-        ac(
-            stdout,
-            """\
-Location Constraints:
-Ordering Constraints:
-  start D1 then start D2 (kind:Mandatory) (Options: require-all=false) (id:order-D1-D2-mandatory)
-Colocation Constraints:
-Ticket Constraints:
-""",
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
 
     def testAllConstraints(self):
         self.fixture_resources()
@@ -428,47 +409,33 @@ Ticket Constraints:
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint --full".split()
-        )
-        self.assertEqual(retval, 0)
-        self.assertEqual(stderr, "")
-        ac(
-            stdout,
-            outdent(
+        self.assert_pcs_success(
+            "constraint --full".split(),
+            stdout_full=outdent(
                 """\
-            Location Constraints:
-              Resource: D5
-                Enabled on:
-                  Node: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)
-            Ordering Constraints:
-              start Master then start D5 (kind:Mandatory) (id:order-Master-D5-mandatory)
-            Colocation Constraints:
-              Master with D5 (score:INFINITY) (id:colocation-Master-D5-INFINITY)
-            Ticket Constraints:
-            """
+                Location Constraints:
+                  resource 'D5' prefers node 'node1' with score INFINITY (id: location-D5-node1-INFINITY)
+                Colocation Constraints:
+                  resource 'Master' with resource 'D5' (id: colocation-Master-D5-INFINITY)
+                    score=INFINITY
+                Order Constraints:
+                  start resource 'Master' then start resource 'D5' (id: order-Master-D5-mandatory)
+                """
             ),
         )
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint config --full".split()
-        )
-        self.assertEqual(retval, 0)
-        self.assertEqual(stderr, "")
-        ac(
-            stdout,
-            outdent(
+        self.assert_pcs_success(
+            "constraint config --full".split(),
+            stdout_full=outdent(
                 """\
-            Location Constraints:
-              Resource: D5
-                Enabled on:
-                  Node: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)
-            Ordering Constraints:
-              start Master then start D5 (kind:Mandatory) (id:order-Master-D5-mandatory)
-            Colocation Constraints:
-              Master with D5 (score:INFINITY) (id:colocation-Master-D5-INFINITY)
-            Ticket Constraints:
-            """
+                Location Constraints:
+                  resource 'D5' prefers node 'node1' with score INFINITY (id: location-D5-node1-INFINITY)
+                Colocation Constraints:
+                  resource 'Master' with resource 'D5' (id: colocation-Master-D5-INFINITY)
+                    score=INFINITY
+                Order Constraints:
+                  start resource 'Master' then start resource 'D5' (id: order-Master-D5-mandatory)
+                """
             ),
         )
 
@@ -515,25 +482,14 @@ Ticket Constraints:
         self.assertTrue(stderr.startswith("\nUsage: pcs constraint"), stderr)
         self.assertEqual(stdout, "")
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint --full".split()
-        )
-        self.assertEqual(retval, 0)
-        self.assertEqual(stderr, "")
-        ac(
-            stdout,
-            outdent(
+        self.assert_pcs_success(
+            "constraint --full".split(),
+            stdout_full=outdent(
                 """\
-            Location Constraints:
-              Resource: D5
-                Enabled on:
-                  Node: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)
-                Disabled on:
-                  Node: node2 (score:-INFINITY) (id:location-D5-node2--INFINITY)
-            Ordering Constraints:
-            Colocation Constraints:
-            Ticket Constraints:
-            """
+                Location Constraints:
+                  resource 'D5' prefers node 'node1' with score INFINITY (id: location-D5-node1-INFINITY)
+                  resource 'D5' avoids node 'node2' with score INFINITY (id: location-D5-node2--INFINITY)
+                """
             ),
         )
 
@@ -553,22 +509,7 @@ Ticket Constraints:
         self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint --full".split()
-        )
-        self.assertEqual(retval, 0)
-        self.assertEqual(stderr, "")
-        ac(
-            stdout,
-            outdent(
-                """\
-            Location Constraints:
-            Ordering Constraints:
-            Colocation Constraints:
-            Ticket Constraints:
-            """
-            ),
-        )
+        self.assert_pcs_success("constraint --full".split())
 
     def testConstraintRemoval(self):
         self.fixture_resources()
@@ -608,25 +549,16 @@ Ticket Constraints:
         )
         self.assertEqual(stdout, "")
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint location config --full".split()
-        )
-        ac(
-            stdout,
-            outdent(
+        self.assert_pcs_success(
+            "constraint location config --full".split(),
+            stdout_full=outdent(
                 """\
-            Location Constraints:
-              Resource: D5
-                Enabled on:
-                  Node: node1 (score:INFINITY) (id:location-D5-node1-INFINITY)
-              Resource: D6
-                Enabled on:
-                  Node: node1 (score:INFINITY) (id:location-D6-node1-INFINITY)
-            """
+                Location Constraints:
+                  resource 'D5' prefers node 'node1' with score INFINITY (id: location-D5-node1-INFINITY)
+                  resource 'D6' prefers node 'node1' with score INFINITY (id: location-D6-node1-INFINITY)
+                """
             ),
         )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
@@ -636,12 +568,7 @@ Ticket Constraints:
         self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint location config --full".split()
-        )
-        ac(stdout, "Location Constraints:\n")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
+        self.assert_pcs_success("constraint location config --full".split())
 
     # see also BundleColocation
     def testColocationConstraints(self):
@@ -734,29 +661,32 @@ Ticket Constraints:
         self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(self.temp_cib.name, ["constraint"])
-        ac(
-            stdout,
-            outdent(
+        self.assert_pcs_success(
+            ["constraint"],
+            stdout_full=outdent(
                 f"""\
-            Location Constraints:
-            Ordering Constraints:
-            Colocation Constraints:
-              D1 with D3-clone (score:INFINITY)
-              D1 with D2 (score:100)
-              D1 with D2 (score:-100)
-              Master with D5 (score:100)
-              M1-master with M2-master (score:INFINITY) (rsc-role:{const.PCMK_ROLE_PROMOTED_PRIMARY}) (with-rsc-role:{const.PCMK_ROLE_PROMOTED_PRIMARY})
-              M3-master with M4-master (score:INFINITY)
-              M5-master with M6-master (score:500) (rsc-role:{const.PCMK_ROLE_UNPROMOTED_PRIMARY}) (with-rsc-role:Started)
-              M7-master with M8-master (score:INFINITY) (rsc-role:Started) (with-rsc-role:{const.PCMK_ROLE_PROMOTED_PRIMARY})
-              M9-master with M10-master (score:INFINITY) (rsc-role:{const.PCMK_ROLE_UNPROMOTED_PRIMARY}) (with-rsc-role:Started)
-            Ticket Constraints:
-            """
+                Colocation Constraints:
+                  resource 'D1' with resource 'D3-clone'
+                    score=INFINITY
+                  resource 'D1' with resource 'D2'
+                    score=100
+                  resource 'D1' with resource 'D2'
+                    score=-100
+                  resource 'Master' with resource 'D5'
+                    score=100
+                  {const.PCMK_ROLE_PROMOTED_PRIMARY} resource 'M1-master' with {const.PCMK_ROLE_PROMOTED_PRIMARY} resource 'M2-master'
+                    score=INFINITY
+                  resource 'M3-master' with resource 'M4-master'
+                    score=INFINITY
+                  {const.PCMK_ROLE_UNPROMOTED_PRIMARY} resource 'M5-master' with Started resource 'M6-master'
+                    score=500
+                  Started resource 'M7-master' with {const.PCMK_ROLE_PROMOTED_PRIMARY} resource 'M8-master'
+                    score=INFINITY
+                  {const.PCMK_ROLE_UNPROMOTED_PRIMARY} resource 'M9-master' with Started resource 'M10-master'
+                    score=INFINITY
+                """
             ),
         )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
@@ -774,27 +704,28 @@ Ticket Constraints:
         self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(self.temp_cib.name, ["constraint"])
-        ac(
-            stdout,
-            outdent(
+        self.assert_pcs_success(
+            ["constraint"],
+            stdout_full=outdent(
                 f"""\
-            Location Constraints:
-            Ordering Constraints:
-            Colocation Constraints:
-              D1 with D3-clone (score:INFINITY)
-              D1 with D2 (score:100)
-              D1 with D2 (score:-100)
-              Master with D5 (score:100)
-              M3-master with M4-master (score:INFINITY)
-              M7-master with M8-master (score:INFINITY) (rsc-role:Started) (with-rsc-role:{const.PCMK_ROLE_PROMOTED_PRIMARY})
-              M9-master with M10-master (score:INFINITY) (rsc-role:{const.PCMK_ROLE_UNPROMOTED_PRIMARY}) (with-rsc-role:Started)
-            Ticket Constraints:
-            """
+                Colocation Constraints:
+                  resource 'D1' with resource 'D3-clone'
+                    score=INFINITY
+                  resource 'D1' with resource 'D2'
+                    score=100
+                  resource 'D1' with resource 'D2'
+                    score=-100
+                  resource 'Master' with resource 'D5'
+                    score=100
+                  resource 'M3-master' with resource 'M4-master'
+                    score=INFINITY
+                  Started resource 'M7-master' with {const.PCMK_ROLE_PROMOTED_PRIMARY} resource 'M8-master'
+                    score=INFINITY
+                  {const.PCMK_ROLE_UNPROMOTED_PRIMARY} resource 'M9-master' with Started resource 'M10-master'
+                    score=INFINITY
+                """
             ),
         )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
 
     def test_colocation_syntax_errors(self):
         def assert_usage(command):
@@ -822,20 +753,7 @@ Ticket Constraints:
 
         assert_usage("constraint colocation add D1 D2 D3".split())
 
-        stdout, stderr, retval = pcs(self.temp_cib.name, ["constraint"])
-        self.assertEqual(
-            stdout,
-            outdent(
-                """\
-            Location Constraints:
-            Ordering Constraints:
-            Colocation Constraints:
-            Ticket Constraints:
-            """
-            ),
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
+        self.assert_pcs_success(["constraint"])
 
     def test_colocation_errors(self):
         self.fixture_resources()
@@ -856,20 +774,7 @@ Ticket Constraints:
         self.assertEqual(stderr, "Error: Resource 'D10' does not exist\n")
         self.assertEqual(retval, 1)
 
-        stdout, stderr, retval = pcs(self.temp_cib.name, ["constraint"])
-        self.assertEqual(
-            stdout,
-            outdent(
-                """\
-            Location Constraints:
-            Ordering Constraints:
-            Colocation Constraints:
-            Ticket Constraints:
-            """
-            ),
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
+        self.assert_pcs_success(["constraint"])
 
     def test_colocation_with_score_and_options(self):
         self.fixture_resources()
@@ -882,21 +787,16 @@ Ticket Constraints:
         self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(self.temp_cib.name, ["constraint"])
-        self.assertEqual(
-            stdout,
-            outdent(
+        self.assert_pcs_success(
+            ["constraint"],
+            stdout_full=outdent(
                 """\
-            Location Constraints:
-            Ordering Constraints:
-            Colocation Constraints:
-              D1 with D2 (score:-100) (node-attribute:y)
-            Ticket Constraints:
-            """
+                Colocation Constraints:
+                  resource 'D1' with resource 'D2'
+                    score=-100
+                """
             ),
         )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
 
     def test_colocation_invalid_role(self):
         stdout, stderr, retval = pcs(
@@ -1102,21 +1002,37 @@ Ticket Constraints:
         self.assertEqual(stderr, "")
         self.assertEqual(stdout, "")
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint colocation --full".split()
+        self.assert_pcs_success(
+            "constraint colocation --full".split(),
+            stdout_full=outdent(
+                f"""\
+                Colocation Set Constraints:
+                  Set Constraint: colocation_set_D5D6D7
+                    score=INFINITY
+                    Resource Set: colocation_set_D5D6D7_set
+                      Resources: 'D5', 'D6', 'D7'
+                      sequential=0 require-all=1
+                    Resource Set: colocation_set_D5D6D7_set-1
+                      Resources: 'D8', 'D9'
+                      sequential=1 require-all=0 action=start role=Stopped
+                  Set Constraint: colocation_set_D5D6
+                    score=INFINITY
+                    Resource Set: colocation_set_D5D6_set
+                      Resources: 'D5', 'D6'
+                  Set Constraint: colocation_set_D5D6D7-1
+                    score=INFINITY
+                    Resource Set: colocation_set_D5D6D7-1_set
+                      Resources: 'D5', 'D6'
+                      action=stop role=Started
+                    Resource Set: colocation_set_D5D6D7-1_set-1
+                      Resources: 'D7', 'D8'
+                      action=promote role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                    Resource Set: colocation_set_D5D6D7-1_set-2
+                      Resources: 'D8', 'D9'
+                      action=demote role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                """
+            ),
         )
-        ac(
-            stdout,
-            f"""\
-Colocation Constraints:
-  Resource Sets:
-    set D5 D6 D7 require-all=true sequential=false (id:colocation_set_D5D6D7_set) set D8 D9 action=start require-all=false role=Stopped sequential=true (id:colocation_set_D5D6D7_set-1) setoptions score=INFINITY (id:colocation_set_D5D6D7)
-    set D5 D6 (id:colocation_set_D5D6_set) setoptions score=INFINITY (id:colocation_set_D5D6)
-    set D5 D6 action=stop role=Started (id:colocation_set_D5D6D7-1_set) set D7 D8 action=promote role={const.PCMK_ROLE_UNPROMOTED_PRIMARY} (id:colocation_set_D5D6D7-1_set-1) set D8 D9 action=demote role={const.PCMK_ROLE_PROMOTED_PRIMARY} (id:colocation_set_D5D6D7-1_set-2) setoptions score=INFINITY (id:colocation_set_D5D6D7-1)
-""",
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint delete colocation_set_D5D6".split()
@@ -1125,20 +1041,33 @@ Colocation Constraints:
         self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint colocation --full".split()
+        self.assert_pcs_success(
+            "constraint colocation --full".split(),
+            stdout_full=outdent(
+                f"""\
+                Colocation Set Constraints:
+                  Set Constraint: colocation_set_D5D6D7
+                    score=INFINITY
+                    Resource Set: colocation_set_D5D6D7_set
+                      Resources: 'D5', 'D6', 'D7'
+                      sequential=0 require-all=1
+                    Resource Set: colocation_set_D5D6D7_set-1
+                      Resources: 'D8', 'D9'
+                      sequential=1 require-all=0 action=start role=Stopped
+                  Set Constraint: colocation_set_D5D6D7-1
+                    score=INFINITY
+                    Resource Set: colocation_set_D5D6D7-1_set
+                      Resources: 'D5', 'D6'
+                      action=stop role=Started
+                    Resource Set: colocation_set_D5D6D7-1_set-1
+                      Resources: 'D7', 'D8'
+                      action=promote role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                    Resource Set: colocation_set_D5D6D7-1_set-2
+                      Resources: 'D8', 'D9'
+                      action=demote role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                """
+            ),
         )
-        ac(
-            stdout,
-            f"""\
-Colocation Constraints:
-  Resource Sets:
-    set D5 D6 D7 require-all=true sequential=false (id:colocation_set_D5D6D7_set) set D8 D9 action=start require-all=false role=Stopped sequential=true (id:colocation_set_D5D6D7_set-1) setoptions score=INFINITY (id:colocation_set_D5D6D7)
-    set D5 D6 action=stop role=Started (id:colocation_set_D5D6D7-1_set) set D7 D8 action=promote role={const.PCMK_ROLE_UNPROMOTED_PRIMARY} (id:colocation_set_D5D6D7-1_set-1) set D8 D9 action=demote role={const.PCMK_ROLE_PROMOTED_PRIMARY} (id:colocation_set_D5D6D7-1_set-2) setoptions score=INFINITY (id:colocation_set_D5D6D7-1)
-""",
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name, "resource delete D5".split()
@@ -1213,8 +1142,9 @@ Colocation Constraints:
         ac(
             stderr,
             (
-                "Error: 'foo' is not a valid sequential value, use 'false', 'true'\n"
-                + ERRORS_HAVE_OCCURRED
+                "Error: 'foo' is not a valid sequential value, use a pacemaker "
+                "boolean value: '0', '1', 'false', 'n', 'no', 'off', 'on', "
+                "'true', 'y', 'yes'\n" + ERRORS_HAVE_OCCURRED
             ),
         )
         self.assertEqual(retval, 1)
@@ -1227,8 +1157,9 @@ Colocation Constraints:
         ac(
             stderr,
             (
-                "Error: 'foo' is not a valid require-all value, use 'false', 'true'\n"
-                + ERRORS_HAVE_OCCURRED
+                "Error: 'foo' is not a valid require-all value, use a "
+                "pacemaker boolean value: '0', '1', 'false', 'n', 'no', "
+                "'off', 'on', 'true', 'y', 'yes'\n" + ERRORS_HAVE_OCCURRED
             ),
         )
         self.assertEqual(retval, 1)
@@ -1336,32 +1267,25 @@ Colocation Constraints:
         self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint --full".split()
+        self.assert_pcs_success(
+            "constraint --full".split(),
+            stdout_full=outdent(
+                """\
+                Location Constraints:
+                  resource 'crd' (id: location-crd)
+                    resource-discovery=exclusive
+                    Rules:
+                      Rule: boolean-op=and score=-INFINITY (id:location-crd-rule)
+                        Expression: opsrole ne controller0 (id:location-crd-rule-expr)
+                        Expression: opsrole ne controller1 (id:location-crd-rule-expr-1)
+                  resource 'crd1' (id: location-crd1)
+                    resource-discovery=exclusive
+                    Rules:
+                      Rule: score=-INFINITY (id:location-crd1-rule)
+                        Expression: opsrole2 ne controller2 (id:location-crd1-rule-expr)
+                """
+            ),
         )
-        ac(
-            stdout,
-            "\n".join(
-                [
-                    "Location Constraints:",
-                    "  Resource: crd",
-                    "    Constraint: location-crd (resource-discovery=exclusive)",
-                    "      Rule: boolean-op=and score=-INFINITY (id:location-crd-rule)",
-                    "        Expression: opsrole ne controller0 (id:location-crd-rule-expr)",
-                    "        Expression: opsrole ne controller1 (id:location-crd-rule-expr-1)",
-                    "  Resource: crd1",
-                    "    Constraint: location-crd1 (resource-discovery=exclusive)",
-                    "      Rule: score=-INFINITY (id:location-crd1-rule)",
-                    "        Expression: opsrole2 ne controller2 (id:location-crd1-rule-expr)",
-                    "Ordering Constraints:",
-                    "Colocation Constraints:",
-                    "Ticket Constraints:",
-                ]
-            )
-            + "\n",
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
 
     def testConstraintResourceDiscovery(self):
         stdout, stderr, retval = pcs(
@@ -1396,28 +1320,18 @@ Colocation Constraints:
         self.assertEqual(stdout, "")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint --full".split()
-        )
-        ac(
-            stdout,
-            outdent(
+        self.assert_pcs_success(
+            "constraint --full".split(),
+            stdout_full=outdent(
                 """\
-            Location Constraints:
-              Resource: crd
-                Disabled on:
-                  Node: my_node (score:-INFINITY) (resource-discovery=always) (id:my_constraint_id)
-              Resource: crd1
-                Disabled on:
-                  Node: my_node (score:-INFINITY) (resource-discovery=never) (id:my_constraint_id2)
-            Ordering Constraints:
-            Colocation Constraints:
-            Ticket Constraints:
-            """
+                Location Constraints:
+                  resource 'crd' avoids node 'my_node' with score INFINITY (id: my_constraint_id)
+                    resource-discovery=always
+                  resource 'crd1' avoids node 'my_node' with score INFINITY (id: my_constraint_id2)
+                    resource-discovery=never
+                """
             ),
         )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
@@ -1477,15 +1391,20 @@ Colocation Constraints:
         )
         self.assertEqual(retval, 1)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint order".split()
+        self.assert_pcs_success(
+            "constraint order".split(),
+            stdout_full=outdent(
+                """\
+                Order Set Constraints:
+                  Set Constraint:
+                    Resource Set:
+                      Resources: 'T0', 'T2'
+                  Set Constraint:
+                    Resource Set:
+                      Resources: 'T2', 'T3'
+                """
+            ),
         )
-        ac(
-            stdout,
-            "Ordering Constraints:\n  Resource Sets:\n    set T0 T2\n    set T2 T3\n",
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint order delete T2".split()
@@ -1494,15 +1413,20 @@ Colocation Constraints:
         self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint order".split()
+        self.assert_pcs_success(
+            "constraint order".split(),
+            stdout_full=outdent(
+                """\
+                Order Set Constraints:
+                  Set Constraint:
+                    Resource Set:
+                      Resources: 'T0'
+                  Set Constraint:
+                    Resource Set:
+                      Resources: 'T3'
+                """
+            ),
         )
-        ac(
-            stdout,
-            "Ordering Constraints:\n  Resource Sets:\n    set T0\n    set T3\n",
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint order delete T0".split()
@@ -1511,12 +1435,18 @@ Colocation Constraints:
         self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint order".split()
+        self.assert_pcs_success(
+            "constraint order".split(),
+            stdout_full=outdent(
+                """\
+                Order Set Constraints:
+                  Set Constraint:
+                    Resource Set:
+                      Resources: 'T3'
+                """
+            ),
         )
-        ac(stdout, "Ordering Constraints:\n  Resource Sets:\n    set T3\n")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
+        # ac(stdout, "Ordering Constraints:\n  Resource Sets:\n    set T3\n")
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint order remove T3".split()
@@ -1525,12 +1455,7 @@ Colocation Constraints:
         self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint order".split()
-        )
-        ac(stdout, "Ordering Constraints:\n")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
+        self.assert_pcs_success("constraint order".split())
 
     # see also BundleOrder
     def testOrderSets(self):
@@ -1624,21 +1549,34 @@ Colocation Constraints:
         )
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint order --full".split()
+        self.assert_pcs_success(
+            "constraint order --full".split(),
+            stdout_full=outdent(
+                f"""\
+                Order Set Constraints:
+                  Set Constraint: order_set_D5D6D7
+                    Resource Set: order_set_D5D6D7_set
+                      Resources: 'D5', 'D6', 'D7'
+                      sequential=0 require-all=1
+                    Resource Set: order_set_D5D6D7_set-1
+                      Resources: 'D8', 'D9'
+                      sequential=1 require-all=0 action=start role=Stopped
+                  Set Constraint: order_set_D5D6
+                    Resource Set: order_set_D5D6_set
+                      Resources: 'D5', 'D6'
+                  Set Constraint: order_set_D5D6D7-1
+                    Resource Set: order_set_D5D6D7-1_set
+                      Resources: 'D5', 'D6'
+                      action=stop role=Started
+                    Resource Set: order_set_D5D6D7-1_set-1
+                      Resources: 'D7', 'D8'
+                      action=promote role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                    Resource Set: order_set_D5D6D7-1_set-2
+                      Resources: 'D8', 'D9'
+                      action=demote role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                """
+            ),
         )
-        self.assertEqual(retval, 0)
-        ac(
-            stdout,
-            f"""\
-Ordering Constraints:
-  Resource Sets:
-    set D5 D6 D7 require-all=true sequential=false (id:order_set_D5D6D7_set) set D8 D9 action=start require-all=false role=Stopped sequential=true (id:order_set_D5D6D7_set-1) (id:order_set_D5D6D7)
-    set D5 D6 (id:order_set_D5D6_set) (id:order_set_D5D6)
-    set D5 D6 action=stop role=Started (id:order_set_D5D6D7-1_set) set D7 D8 action=promote role={const.PCMK_ROLE_UNPROMOTED_PRIMARY} (id:order_set_D5D6D7-1_set-1) set D8 D9 action=demote role={const.PCMK_ROLE_PROMOTED_PRIMARY} (id:order_set_D5D6D7-1_set-2) (id:order_set_D5D6D7-1)
-""",
-        )
-        self.assertEqual(stderr, "")
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint remove order_set_D5D6".split()
@@ -1647,19 +1585,30 @@ Ordering Constraints:
         self.assertEqual(stderr, "")
         self.assertEqual(stdout, "")
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint order --full".split()
-        )
-        self.assertEqual(retval, 0)
-        self.assertEqual(stderr, "")
-        ac(
-            stdout,
-            f"""\
-Ordering Constraints:
-  Resource Sets:
-    set D5 D6 D7 require-all=true sequential=false (id:order_set_D5D6D7_set) set D8 D9 action=start require-all=false role=Stopped sequential=true (id:order_set_D5D6D7_set-1) (id:order_set_D5D6D7)
-    set D5 D6 action=stop role=Started (id:order_set_D5D6D7-1_set) set D7 D8 action=promote role={const.PCMK_ROLE_UNPROMOTED_PRIMARY} (id:order_set_D5D6D7-1_set-1) set D8 D9 action=demote role={const.PCMK_ROLE_PROMOTED_PRIMARY} (id:order_set_D5D6D7-1_set-2) (id:order_set_D5D6D7-1)
-""",
+        self.assert_pcs_success(
+            "constraint order --full".split(),
+            stdout_full=outdent(
+                f"""\
+                Order Set Constraints:
+                  Set Constraint: order_set_D5D6D7
+                    Resource Set: order_set_D5D6D7_set
+                      Resources: 'D5', 'D6', 'D7'
+                      sequential=0 require-all=1
+                    Resource Set: order_set_D5D6D7_set-1
+                      Resources: 'D8', 'D9'
+                      sequential=1 require-all=0 action=start role=Stopped
+                  Set Constraint: order_set_D5D6D7-1
+                    Resource Set: order_set_D5D6D7-1_set
+                      Resources: 'D5', 'D6'
+                      action=stop role=Started
+                    Resource Set: order_set_D5D6D7-1_set-1
+                      Resources: 'D7', 'D8'
+                      action=promote role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                    Resource Set: order_set_D5D6D7-1_set-2
+                      Resources: 'D8', 'D9'
+                      action=demote role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                """
+            ),
         )
 
         stdout, stderr, retval = pcs(
@@ -1702,8 +1651,9 @@ Ordering Constraints:
         ac(
             stderr,
             (
-                "Error: 'foo' is not a valid sequential value, use 'false', 'true'\n"
-                + ERRORS_HAVE_OCCURRED
+                "Error: 'foo' is not a valid sequential value, use a pacemaker "
+                "boolean value: '0', '1', 'false', 'n', 'no', 'off', 'on', "
+                "'true', 'y', 'yes'\n" + ERRORS_HAVE_OCCURRED
             ),
         )
         self.assertEqual(stdout, "")
@@ -1716,8 +1666,9 @@ Ordering Constraints:
         ac(
             stderr,
             (
-                "Error: 'foo' is not a valid require-all value, use 'false', 'true'\n"
-                + ERRORS_HAVE_OCCURRED
+                "Error: 'foo' is not a valid require-all value, use a "
+                "pacemaker boolean value: '0', '1', 'false', 'n', 'no', "
+                "'off', 'on', 'true', 'y', 'yes'\n" + ERRORS_HAVE_OCCURRED
             ),
         )
         self.assertEqual(stdout, "")
@@ -1795,7 +1746,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         )
         ac(
             stderr,
-            "Error: 'foo' is not a valid symmetrical value, use 'false', 'true'\n",
+            "Error: 'foo' is not a valid symmetrical value, use '0', '1', 'false', 'n', 'no', 'off', 'on', 'true', 'y', 'yes'\n",
         )
         self.assertEqual(stdout, "")
         self.assertEqual(retval, 1)
@@ -1808,24 +1759,32 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint --full".split()
+        self.assert_pcs_success(
+            "constraint --full".split(),
+            stdout_full=outdent(
+                f"""\
+                Order Set Constraints:
+                  Set Constraint: order_set_D5D6D7
+                    Resource Set: order_set_D5D6D7_set
+                      Resources: 'D7'
+                      sequential=0 require-all=1
+                    Resource Set: order_set_D5D6D7_set-1
+                      Resources: 'D8', 'D9'
+                      sequential=1 require-all=0 action=start role=Stopped
+                  Set Constraint: order_set_D5D6D7-1
+                    Resource Set: order_set_D5D6D7-1_set-1
+                      Resources: 'D7', 'D8'
+                      action=promote role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                    Resource Set: order_set_D5D6D7-1_set-2
+                      Resources: 'D8', 'D9'
+                      action=demote role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                  Set Constraint: order_set_D1D2
+                    symmetrical=0 kind=Mandatory
+                    Resource Set: order_set_D1D2_set
+                      Resources: 'D1', 'D2'
+                """
+            ),
         )
-        ac(
-            stdout,
-            f"""\
-Location Constraints:
-Ordering Constraints:
-  Resource Sets:
-    set D7 require-all=true sequential=false (id:order_set_D5D6D7_set) set D8 D9 action=start require-all=false role=Stopped sequential=true (id:order_set_D5D6D7_set-1) (id:order_set_D5D6D7)
-    set D7 D8 action=promote role={const.PCMK_ROLE_UNPROMOTED_PRIMARY} (id:order_set_D5D6D7-1_set-1) set D8 D9 action=demote role={const.PCMK_ROLE_PROMOTED_PRIMARY} (id:order_set_D5D6D7-1_set-2) (id:order_set_D5D6D7-1)
-    set D1 D2 (id:order_set_D1D2_set) setoptions kind=Mandatory symmetrical=false (id:order_set_D1D2)
-Colocation Constraints:
-Ticket Constraints:
-""",
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
 
     def testLocationConstraintRule(self):
         self.fixture_resources()
@@ -1877,33 +1836,27 @@ Ticket Constraints:
         self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint --full".split()
+        self.assert_pcs_success(
+            "constraint --full".split(),
+            stdout_full=outdent(
+                """\
+                Location Constraints:
+                  resource 'D1' (id: location-D1-rh7-1-INFINITY)
+                    Rules:
+                      Rule: score=INFINITY (id:location-D1-rh7-1-INFINITY-rule)
+                        Expression: #uname eq rh7-1 (id:location-D1-rh7-1-INFINITY-rule-expr)
+                      Rule: score=INFINITY (id:location-D1-rh7-1-INFINITY-rule-1)
+                        Expression: #uname eq rh7-1 (id:location-D1-rh7-1-INFINITY-rule-1-expr)
+                      Rule: score=INFINITY (id:location-D1-rh7-1-INFINITY-rule-2)
+                        Expression: #uname eq rh7-1 (id:location-D1-rh7-1-INFINITY-rule-2-expr)
+                  resource 'D2' (id: location-D2-rh7-2-INFINITY)
+                    Rules:
+                      Rule: score=INFINITY (id:location-D2-rh7-2-INFINITY-rule)
+                        Expression: (id:location-D2-rh7-2-INFINITY-rule-expr)
+                          Date Spec: hours=9-16 weekdays=1-5 (id:location-D2-rh7-2-INFINITY-rule-expr-datespec)
+                """
+            ),
         )
-        self.assertEqual(retval, 0)
-        ac(
-            stdout,
-            """\
-Location Constraints:
-  Resource: D1
-    Constraint: location-D1-rh7-1-INFINITY
-      Rule: score=INFINITY (id:location-D1-rh7-1-INFINITY-rule)
-        Expression: #uname eq rh7-1 (id:location-D1-rh7-1-INFINITY-rule-expr)
-      Rule: score=INFINITY (id:location-D1-rh7-1-INFINITY-rule-1)
-        Expression: #uname eq rh7-1 (id:location-D1-rh7-1-INFINITY-rule-1-expr)
-      Rule: score=INFINITY (id:location-D1-rh7-1-INFINITY-rule-2)
-        Expression: #uname eq rh7-1 (id:location-D1-rh7-1-INFINITY-rule-2-expr)
-  Resource: D2
-    Constraint: location-D2-rh7-2-INFINITY
-      Rule: score=INFINITY (id:location-D2-rh7-2-INFINITY-rule)
-        Expression: (id:location-D2-rh7-2-INFINITY-rule-expr)
-          Date Spec: hours=9-16 weekdays=1-5 (id:location-D2-rh7-2-INFINITY-rule-expr-datespec)
-Ordering Constraints:
-Colocation Constraints:
-Ticket Constraints:
-""",
-        )
-        self.assertEqual(stderr, "")
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
@@ -1925,29 +1878,23 @@ Ticket Constraints:
         )
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint --full".split()
+        self.assert_pcs_success(
+            "constraint --full".split(),
+            stdout_full=outdent(
+                """\
+                Location Constraints:
+                  resource 'D1' (id: location-D1-rh7-1-INFINITY)
+                    Rules:
+                      Rule: score=INFINITY (id:location-D1-rh7-1-INFINITY-rule)
+                        Expression: #uname eq rh7-1 (id:location-D1-rh7-1-INFINITY-rule-expr)
+                  resource 'D2' (id: location-D2-rh7-2-INFINITY)
+                    Rules:
+                      Rule: score=INFINITY (id:location-D2-rh7-2-INFINITY-rule)
+                        Expression: (id:location-D2-rh7-2-INFINITY-rule-expr)
+                          Date Spec: hours=9-16 weekdays=1-5 (id:location-D2-rh7-2-INFINITY-rule-expr-datespec)
+                """
+            ),
         )
-        self.assertEqual(retval, 0)
-        ac(
-            stdout,
-            """\
-Location Constraints:
-  Resource: D1
-    Constraint: location-D1-rh7-1-INFINITY
-      Rule: score=INFINITY (id:location-D1-rh7-1-INFINITY-rule)
-        Expression: #uname eq rh7-1 (id:location-D1-rh7-1-INFINITY-rule-expr)
-  Resource: D2
-    Constraint: location-D2-rh7-2-INFINITY
-      Rule: score=INFINITY (id:location-D2-rh7-2-INFINITY-rule)
-        Expression: (id:location-D2-rh7-2-INFINITY-rule-expr)
-          Date Spec: hours=9-16 weekdays=1-5 (id:location-D2-rh7-2-INFINITY-rule-expr-datespec)
-Ordering Constraints:
-Colocation Constraints:
-Ticket Constraints:
-""",
-        )
-        self.assertEqual(stderr, "")
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
@@ -1959,25 +1906,19 @@ Ticket Constraints:
         )
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint --full".split()
+        self.assert_pcs_success(
+            "constraint --full".split(),
+            stdout_full=outdent(
+                """\
+                Location Constraints:
+                  resource 'D2' (id: location-D2-rh7-2-INFINITY)
+                    Rules:
+                      Rule: score=INFINITY (id:location-D2-rh7-2-INFINITY-rule)
+                        Expression: (id:location-D2-rh7-2-INFINITY-rule-expr)
+                          Date Spec: hours=9-16 weekdays=1-5 (id:location-D2-rh7-2-INFINITY-rule-expr-datespec)
+                """
+            ),
         )
-        self.assertEqual(retval, 0)
-        ac(
-            stdout,
-            """\
-Location Constraints:
-  Resource: D2
-    Constraint: location-D2-rh7-2-INFINITY
-      Rule: score=INFINITY (id:location-D2-rh7-2-INFINITY-rule)
-        Expression: (id:location-D2-rh7-2-INFINITY-rule-expr)
-          Date Spec: hours=9-16 weekdays=1-5 (id:location-D2-rh7-2-INFINITY-rule-expr-datespec)
-Ordering Constraints:
-Colocation Constraints:
-Ticket Constraints:
-""",
-        )
-        self.assertEqual(stderr, "")
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
@@ -2037,24 +1978,18 @@ Ticket Constraints:
         self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint --full".split()
+        self.assert_pcs_success(
+            "constraint --full".split(),
+            stdout_full=outdent(
+                f"""\
+                Location Constraints:
+                  resource 'stateful0' (id: location-stateful0)
+                    Rules:
+                      Rule: role={const.PCMK_ROLE_PROMOTED_PRIMARY} score=INFINITY (id:location-stateful0-rule)
+                        Expression: #uname eq rh7-1 (id:location-stateful0-rule-expr)
+                """
+            ),
         )
-        ac(
-            stdout,
-            f"""\
-Location Constraints:
-  Resource: stateful0
-    Constraint: location-stateful0
-      Rule: role={const.PCMK_ROLE_PROMOTED_PRIMARY} score=INFINITY (id:location-stateful0-rule)
-        Expression: #uname eq rh7-1 (id:location-stateful0-rule-expr)
-Ordering Constraints:
-Colocation Constraints:
-Ticket Constraints:
-""",
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
 
         # pcs no longer allows creating masters but supports existing ones. In
         # order to test it, we need to put a master in the CIB without pcs.
@@ -2264,15 +2199,7 @@ Ticket Constraints:
         )
         self.assertEqual(retval, 1)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint --full".split()
-        )
-        ac(
-            stdout,
-            "Location Constraints:\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n",
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
+        self.assert_pcs_success("constraint --full".split())
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
@@ -2331,33 +2258,33 @@ Ticket Constraints:
         )
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint --full".split()
+        self.assert_pcs_success(
+            "constraint --full".split(),
+            stdout_full=outdent(
+                """\
+                Location Constraints:
+                  resource 'stateful1' prefers node 'rh7-1' with score INFINITY (id: location-stateful1-rh7-1-INFINITY)
+                  resource 'statefulG' (id: location-statefulG)
+                    Rules:
+                      Rule: score=INFINITY (id:location-statefulG-rule)
+                        Expression: #uname eq rh7-1 (id:location-statefulG-rule-expr)
+                Colocation Constraints:
+                  resource 'stateful1' with resource 'dummy1' (id: colocation-stateful1-dummy1-INFINITY)
+                    score=INFINITY
+                Colocation Set Constraints:
+                  Set Constraint: colocation_set_s1d1
+                    score=INFINITY
+                    Resource Set: colocation_set_s1d1_set
+                      Resources: 'dummy1', 'stateful1'
+                Order Constraints:
+                  start resource 'stateful1' then start resource 'dummy1' (id: order-stateful1-dummy1-mandatory)
+                Order Set Constraints:
+                  Set Constraint: order_set_s1d1
+                    Resource Set: order_set_s1d1_set
+                      Resources: 'dummy1', 'stateful1'
+                """
+            ),
         )
-        ac(
-            stdout,
-            """\
-Location Constraints:
-  Resource: stateful1
-    Enabled on:
-      Node: rh7-1 (score:INFINITY) (id:location-stateful1-rh7-1-INFINITY)
-  Resource: statefulG
-    Constraint: location-statefulG
-      Rule: score=INFINITY (id:location-statefulG-rule)
-        Expression: #uname eq rh7-1 (id:location-statefulG-rule-expr)
-Ordering Constraints:
-  start stateful1 then start dummy1 (kind:Mandatory) (id:order-stateful1-dummy1-mandatory)
-  Resource Sets:
-    set stateful1 dummy1 (id:order_set_s1d1_set) (id:order_set_s1d1)
-Colocation Constraints:
-  stateful1 with dummy1 (score:INFINITY) (id:colocation-stateful1-dummy1-INFINITY)
-  Resource Sets:
-    set stateful1 dummy1 (id:colocation_set_s1d1_set) setoptions score=INFINITY (id:colocation_set_s1d1)
-Ticket Constraints:
-""",
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
 
     def testCloneConstraint(self):
         cibadmin = os.path.join(settings.pacemaker_binaries, "cibadmin")
@@ -2532,15 +2459,7 @@ Ticket Constraints:
         )
         self.assertEqual(retval, 1)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint --full".split()
-        )
-        ac(
-            stdout,
-            "Location Constraints:\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n",
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
+        self.assert_pcs_success("constraint --full".split())
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
@@ -2599,33 +2518,33 @@ Ticket Constraints:
         )
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint --full".split()
+        self.assert_pcs_success(
+            "constraint --full".split(),
+            stdout_full=outdent(
+                """\
+                Location Constraints:
+                  resource 'dummy' prefers node 'rh7-1' with score INFINITY (id: location-dummy-rh7-1-INFINITY)
+                  resource 'dummyG' (id: location-dummyG)
+                    Rules:
+                      Rule: score=INFINITY (id:location-dummyG-rule)
+                        Expression: #uname eq rh7-1 (id:location-dummyG-rule-expr)
+                Colocation Constraints:
+                  resource 'dummy' with resource 'dummy1' (id: colocation-dummy-dummy1-INFINITY)
+                    score=INFINITY
+                Colocation Set Constraints:
+                  Set Constraint: colocation_set_d1dy
+                    score=INFINITY
+                    Resource Set: colocation_set_d1dy_set
+                      Resources: 'dummy', 'dummy1'
+                Order Constraints:
+                  start resource 'dummy' then start resource 'dummy1' (id: order-dummy-dummy1-mandatory)
+                Order Set Constraints:
+                  Set Constraint: order_set_d1dy
+                    Resource Set: order_set_d1dy_set
+                      Resources: 'dummy', 'dummy1'
+                """
+            ),
         )
-        ac(
-            stdout,
-            """\
-Location Constraints:
-  Resource: dummy
-    Enabled on:
-      Node: rh7-1 (score:INFINITY) (id:location-dummy-rh7-1-INFINITY)
-  Resource: dummyG
-    Constraint: location-dummyG
-      Rule: score=INFINITY (id:location-dummyG-rule)
-        Expression: #uname eq rh7-1 (id:location-dummyG-rule-expr)
-Ordering Constraints:
-  start dummy then start dummy1 (kind:Mandatory) (id:order-dummy-dummy1-mandatory)
-  Resource Sets:
-    set dummy1 dummy (id:order_set_d1dy_set) (id:order_set_d1dy)
-Colocation Constraints:
-  dummy with dummy1 (score:INFINITY) (id:colocation-dummy-dummy1-INFINITY)
-  Resource Sets:
-    set dummy1 dummy (id:colocation_set_d1dy_set) setoptions score=INFINITY (id:colocation_set_d1dy)
-Ticket Constraints:
-""",
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
 
     def testMissingRole(self):
         cibadmin = os.path.join(settings.pacemaker_binaries, "cibadmin")
@@ -2645,25 +2564,16 @@ Ticket Constraints:
             + f' {cibadmin} -R --scope constraints --xml-text \'<constraints><rsc_location id="cli-prefer-stateful0-master" role="Master" rsc="stateful0-master" node="rh7-1" score="INFINITY"/><rsc_location id="cli-ban-stateful0-master-on-rh7-1" rsc="stateful0-master" role="Slave" node="rh7-1" score="-INFINITY"/></constraints>\''
         )
 
-        stdout, stderr, retval = pcs(self.temp_cib.name, ["constraint"])
-        ac(
-            stdout,
-            outdent(
+        self.assert_pcs_success(
+            ["constraint"],
+            stdout_full=outdent(
                 f"""\
-            Location Constraints:
-              Resource: stateful0-master
-                Enabled on:
-                  Node: rh7-1 (score:INFINITY) (role:{const.PCMK_ROLE_PROMOTED_PRIMARY})
-                Disabled on:
-                  Node: rh7-1 (score:-INFINITY) (role:{const.PCMK_ROLE_UNPROMOTED_PRIMARY})
-            Ordering Constraints:
-            Colocation Constraints:
-            Ticket Constraints:
-            """
+                Location Constraints:
+                  {const.PCMK_ROLE_PROMOTED_PRIMARY} resource 'stateful0-master' prefers node 'rh7-1' with score INFINITY
+                  {const.PCMK_ROLE_UNPROMOTED_PRIMARY} resource 'stateful0-master' avoids node 'rh7-1' with score INFINITY
+                """
             ),
         )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
 
     def testManyConstraints(self):
         write_file_to_tmpfile(large_cib, self.temp_cib)
@@ -2676,23 +2586,17 @@ Ticket Constraints:
         self.assertEqual(stdout, "")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
+        self.assert_pcs_success(
             "constraint location config resources dummy --full".split(),
-        )
-        ac(
-            stdout,
-            outdent(
+            stdout_full=outdent(
                 """\
-            Location Constraints:
-              Resource: dummy
-                Enabled on:
-                  Node: rh7-1 (score:INFINITY) (id:location-dummy-rh7-1-INFINITY)
-            """
+                Location Constraints:
+                  Resource: dummy
+                    Prefers:
+                      node 'rh7-1' with score INFINITY (id: location-dummy-rh7-1-INFINITY)
+                """
             ),
         )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
@@ -2744,23 +2648,17 @@ Ticket Constraints:
         self.assertEqual(stdout, "")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
+        self.assert_pcs_success(
             "constraint location config resources dummy --full".split(),
-        )
-        ac(
-            stdout,
-            outdent(
+            stdout_full=outdent(
                 """\
-            Location Constraints:
-              Resource: dummy
-                Enabled on:
-                  Node: rh7-1 (score:INFINITY) (id:location-dummy-rh7-1-INFINITY)
-            """
+                Location Constraints:
+                  Resource: dummy
+                    Prefers:
+                      node 'rh7-1' with score INFINITY (id: location-dummy-rh7-1-INFINITY)
+                """
             ),
         )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
@@ -2816,26 +2714,21 @@ Ticket Constraints:
         self.assertEqual(stdout, "")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint --full".split()
+        self.assert_pcs_success(
+            "constraint --full".split(),
+            stdout_full=outdent(
+                """\
+                Location Constraints:
+                  resource 'D1-clone' prefers node 'rh7-1' with score INFINITY (id: location-D1-rh7-1-INFINITY)
+                Colocation Constraints:
+                  resource 'D1-clone' with resource 'D5' (id: colocation-D1-D5-INFINITY)
+                    score=INFINITY
+                Order Constraints:
+                  start resource 'D1-clone' then start resource 'D5' (id: order-D1-D5-mandatory)
+                  start resource 'D6' then start resource 'D1-clone' (id: order-D6-D1-mandatory)
+                """
+            ),
         )
-        ac(
-            stdout,
-            """\
-Location Constraints:
-  Resource: D1-clone
-    Enabled on:
-      Node: rh7-1 (score:INFINITY) (id:location-D1-rh7-1-INFINITY)
-Ordering Constraints:
-  start D1-clone then start D5 (kind:Mandatory) (id:order-D1-D5-mandatory)
-  start D6 then start D1-clone (kind:Mandatory) (id:order-D6-D1-mandatory)
-Colocation Constraints:
-  D1-clone with D5 (score:INFINITY) (id:colocation-D1-D5-INFINITY)
-Ticket Constraints:
-""",
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
 
     def testConstraintGroupCloneUpdate(self):
         self.fixture_resources()
@@ -2890,26 +2783,21 @@ Ticket Constraints:
         self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint --full".split()
+        self.assert_pcs_success(
+            "constraint --full".split(),
+            stdout_full=outdent(
+                """\
+                Location Constraints:
+                  resource 'DG-clone' prefers node 'rh7-1' with score INFINITY (id: location-DG-rh7-1-INFINITY)
+                Colocation Constraints:
+                  resource 'DG-clone' with resource 'D5' (id: colocation-DG-D5-INFINITY)
+                    score=INFINITY
+                Order Constraints:
+                  start resource 'DG-clone' then start resource 'D5' (id: order-DG-D5-mandatory)
+                  start resource 'D6' then start resource 'DG-clone' (id: order-D6-DG-mandatory)
+                """
+            ),
         )
-        ac(
-            stdout,
-            """\
-Location Constraints:
-  Resource: DG-clone
-    Enabled on:
-      Node: rh7-1 (score:INFINITY) (id:location-DG-rh7-1-INFINITY)
-Ordering Constraints:
-  start DG-clone then start D5 (kind:Mandatory) (id:order-DG-D5-mandatory)
-  start D6 then start DG-clone (kind:Mandatory) (id:order-D6-DG-mandatory)
-Colocation Constraints:
-  DG-clone with D5 (score:INFINITY) (id:colocation-DG-D5-INFINITY)
-Ticket Constraints:
-""",
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
 
     def testRemoteNodeConstraintsRemove(self):
         self.temp_corosync_conf = get_tmp_file("tier1_test_constraints")
@@ -2962,28 +2850,18 @@ Ticket Constraints:
         self.assertEqual(stdout, "")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint --full".split()
+        self.assert_pcs_success(
+            "constraint --full".split(),
+            stdout_full=outdent(
+                """\
+                Location Constraints:
+                  resource 'D1' prefers node 'node1' with score 100 (id: location-D1-node1-100)
+                  resource 'D1' prefers node 'guest1' with score 200 (id: location-D1-guest1-200)
+                  resource 'D2' avoids node 'node2' with score 300 (id: location-D2-node2--300)
+                  resource 'D2' avoids node 'guest1' with score 400 (id: location-D2-guest1--400)
+                """
+            ),
         )
-        ac(
-            stdout,
-            """\
-Location Constraints:
-  Resource: D1
-    Enabled on:
-      Node: node1 (score:100) (id:location-D1-node1-100)
-      Node: guest1 (score:200) (id:location-D1-guest1-200)
-  Resource: D2
-    Disabled on:
-      Node: node2 (score:-300) (id:location-D2-node2--300)
-      Node: guest1 (score:-400) (id:location-D2-guest1--400)
-Ordering Constraints:
-Colocation Constraints:
-Ticket Constraints:
-""",
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name, "resource delete vm-guest1".split()
@@ -3001,26 +2879,16 @@ Ticket Constraints:
         self.assertEqual(stdout, "")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint --full".split()
+        self.assert_pcs_success(
+            "constraint --full".split(),
+            stdout_full=outdent(
+                """\
+                Location Constraints:
+                  resource 'D1' prefers node 'node1' with score 100 (id: location-D1-node1-100)
+                  resource 'D2' avoids node 'node2' with score 300 (id: location-D2-node2--300)
+                """
+            ),
         )
-        ac(
-            stdout,
-            """\
-Location Constraints:
-  Resource: D1
-    Enabled on:
-      Node: node1 (score:100) (id:location-D1-node1-100)
-  Resource: D2
-    Disabled on:
-      Node: node2 (score:-300) (id:location-D2-node2--300)
-Ordering Constraints:
-Colocation Constraints:
-Ticket Constraints:
-""",
-        )
-        self.assertEqual(retval, 0)
-        self.assertEqual(stderr, "")
 
         # constraints referencing the remote node's name,
         # removing the remote node
@@ -3053,28 +2921,18 @@ Ticket Constraints:
         self.assertEqual(stdout, "")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint --full".split()
+        self.assert_pcs_success(
+            "constraint --full".split(),
+            stdout_full=outdent(
+                """\
+                Location Constraints:
+                  resource 'D1' prefers node 'node1' with score 100 (id: location-D1-node1-100)
+                  resource 'D2' avoids node 'node2' with score 300 (id: location-D2-node2--300)
+                  resource 'D1' prefers node 'guest1' with score 200 (id: location-D1-guest1-200)
+                  resource 'D2' avoids node 'guest1' with score 400 (id: location-D2-guest1--400)
+                """
+            ),
         )
-        ac(
-            stdout,
-            """\
-Location Constraints:
-  Resource: D1
-    Enabled on:
-      Node: node1 (score:100) (id:location-D1-node1-100)
-      Node: guest1 (score:200) (id:location-D1-guest1-200)
-  Resource: D2
-    Disabled on:
-      Node: node2 (score:-300) (id:location-D2-node2--300)
-      Node: guest1 (score:-400) (id:location-D2-guest1--400)
-Ordering Constraints:
-Colocation Constraints:
-Ticket Constraints:
-""",
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
@@ -3093,28 +2951,18 @@ Ticket Constraints:
         )
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint --full".split()
+        self.assert_pcs_success(
+            "constraint --full".split(),
+            stdout_full=outdent(
+                """\
+                Location Constraints:
+                  resource 'D1' prefers node 'node1' with score 100 (id: location-D1-node1-100)
+                  resource 'D2' avoids node 'node2' with score 300 (id: location-D2-node2--300)
+                  resource 'D1' prefers node 'guest1' with score 200 (id: location-D1-guest1-200)
+                  resource 'D2' avoids node 'guest1' with score 400 (id: location-D2-guest1--400)
+                """
+            ),
         )
-        ac(
-            stdout,
-            """\
-Location Constraints:
-  Resource: D1
-    Enabled on:
-      Node: node1 (score:100) (id:location-D1-node1-100)
-      Node: guest1 (score:200) (id:location-D1-guest1-200)
-  Resource: D2
-    Disabled on:
-      Node: node2 (score:-300) (id:location-D2-node2--300)
-      Node: guest1 (score:-400) (id:location-D2-guest1--400)
-Ordering Constraints:
-Colocation Constraints:
-Ticket Constraints:
-""",
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name, "resource delete vm-guest1".split()
@@ -3297,27 +3145,21 @@ Error: duplicate constraint already exists, use --force to override
         )
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint --full".split()
+        self.assert_pcs_success(
+            "constraint --full".split(),
+            stdout_full=outdent(
+                """\
+                Order Constraints:
+                  start resource 'D1' then start resource 'D2' (id: order-D1-D2-mandatory)
+                  start resource 'D1' then start resource 'D2' (id: order-D1-D2-mandatory-1)
+                  start resource 'D1' then start resource 'D2' (id: order-D1-D2-mandatory-2)
+                  start resource 'D2' then start resource 'D5' (id: order-D2-D5-mandatory)
+                  start resource 'D2' then start resource 'D5' (id: order-D2-D5-mandatory-1)
+                  stop resource 'D5' then stop resource 'D6' (id: order-D5-D6-mandatory)
+                  stop resource 'D5' then stop resource 'D6' (id: order-D5-D6-mandatory-1)
+                """
+            ),
         )
-        ac(
-            stdout,
-            """\
-Location Constraints:
-Ordering Constraints:
-  start D1 then start D2 (kind:Mandatory) (id:order-D1-D2-mandatory)
-  start D1 then start D2 (kind:Mandatory) (id:order-D1-D2-mandatory-1)
-  start D1 then start D2 (kind:Mandatory) (id:order-D1-D2-mandatory-2)
-  start D2 then start D5 (kind:Mandatory) (id:order-D2-D5-mandatory)
-  start D2 then start D5 (kind:Mandatory) (id:order-D2-D5-mandatory-1)
-  stop D5 then stop D6 (kind:Mandatory) (id:order-D5-D6-mandatory)
-  stop D5 then stop D6 (kind:Mandatory) (id:order-D5-D6-mandatory-1)
-Colocation Constraints:
-Ticket Constraints:
-""",
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
 
     def testDuplicateColocation(self):
         self.fixture_resources()
@@ -3426,25 +3268,26 @@ Error: duplicate constraint already exists, use --force to override
         self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint --full".split()
+        self.assert_pcs_success(
+            "constraint --full".split(),
+            stdout_full=outdent(
+                """\
+                Colocation Constraints:
+                  resource 'D1' with resource 'D2' (id: colocation-D1-D2-INFINITY)
+                    score=INFINITY
+                  resource 'D1' with resource 'D2' (id: colocation-D1-D2-50)
+                    score=50
+                  Started resource 'D1' with Started resource 'D2' (id: colocation-D1-D2-INFINITY-1)
+                    score=INFINITY
+                  Started resource 'D2' with Started resource 'D5' (id: colocation-D2-D5-INFINITY)
+                    score=INFINITY
+                  Stopped resource 'D2' with Stopped resource 'D5' (id: colocation-D2-D5-INFINITY-1)
+                    score=INFINITY
+                  Stopped resource 'D2' with Stopped resource 'D5' (id: colocation-D2-D5-INFINITY-2)
+                    score=INFINITY
+                """
+            ),
         )
-        ac(
-            stdout,
-            """\
-Location Constraints:
-Ordering Constraints:
-Colocation Constraints:
-  D1 with D2 (score:INFINITY) (id:colocation-D1-D2-INFINITY)
-  D1 with D2 (score:50) (id:colocation-D1-D2-50)
-  D1 with D2 (score:INFINITY) (rsc-role:Started) (with-rsc-role:Started) (id:colocation-D1-D2-INFINITY-1)
-  D2 with D5 (score:INFINITY) (rsc-role:Started) (with-rsc-role:Started) (id:colocation-D2-D5-INFINITY)
-  D2 with D5 (score:INFINITY) (rsc-role:Stopped) (with-rsc-role:Stopped) (id:colocation-D2-D5-INFINITY-1)
-  D2 with D5 (score:INFINITY) (rsc-role:Stopped) (with-rsc-role:Stopped) (id:colocation-D2-D5-INFINITY-2)
-Ticket Constraints:
-""",
-        )
-        self.assertEqual(stderr, "")
 
     def testDuplicateSetConstraints(self):
         self.fixture_resources()
@@ -3462,7 +3305,7 @@ Ticket Constraints:
             stderr,
             (
                 "Duplicate constraints:\n"
-                "  set D1 D2 (id:order_set_D1D2_set) (id:order_set_D1D2)\n"
+                "  set D1 D2 (id:order_set_D1D2_set) setoptions (id:order_set_D1D2)\n"
                 "Error: duplicate constraint already exists, use --force to "
                 "override\n" + ERRORS_HAVE_OCCURRED
             ),
@@ -3478,7 +3321,7 @@ Ticket Constraints:
             stderr,
             (
                 "Duplicate constraints:\n"
-                "  set D1 D2 (id:order_set_D1D2_set) (id:order_set_D1D2)\n"
+                "  set D1 D2 (id:order_set_D1D2_set) setoptions (id:order_set_D1D2)\n"
                 "Warning: duplicate constraint already exists\n"
             ),
         )
@@ -3502,7 +3345,7 @@ Ticket Constraints:
             stderr,
             (
                 "Duplicate constraints:\n"
-                "  set D1 D2 (id:order_set_D1D2D5_set) set D5 D6 (id:order_set_D1D2D5_set-1) (id:order_set_D1D2D5)\n"
+                "  set D1 D2 (id:order_set_D1D2D5_set) set D5 D6 (id:order_set_D1D2D5_set-1) setoptions (id:order_set_D1D2D5)\n"
                 "Error: duplicate constraint already exists, use --force to "
                 "override\n" + ERRORS_HAVE_OCCURRED
             ),
@@ -3518,7 +3361,7 @@ Ticket Constraints:
             stderr,
             (
                 "Duplicate constraints:\n"
-                "  set D1 D2 (id:order_set_D1D2D5_set) set D5 D6 (id:order_set_D1D2D5_set-1) (id:order_set_D1D2D5)\n"
+                "  set D1 D2 (id:order_set_D1D2D5_set) set D5 D6 (id:order_set_D1D2D5_set-1) setoptions (id:order_set_D1D2D5)\n"
                 "Warning: duplicate constraint already exists\n"
             ),
         )
@@ -3614,31 +3457,58 @@ Ticket Constraints:
         self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint --full".split()
+        self.assert_pcs_success(
+            "constraint --full".split(),
+            stdout_full=outdent(
+                """\
+                Colocation Set Constraints:
+                  Set Constraint: colocation_set_D1D2
+                    score=INFINITY
+                    Resource Set: colocation_set_D1D2_set
+                      Resources: 'D1', 'D2'
+                  Set Constraint: colocation_set_D1D2-1
+                    score=INFINITY
+                    Resource Set: colocation_set_D1D2-1_set
+                      Resources: 'D1', 'D2'
+                  Set Constraint: colocation_set_D1D2D5
+                    score=INFINITY
+                    Resource Set: colocation_set_D1D2D5_set
+                      Resources: 'D1', 'D2'
+                    Resource Set: colocation_set_D1D2D5_set-1
+                      Resources: 'D5', 'D6'
+                  Set Constraint: colocation_set_D1D2D5-1
+                    score=INFINITY
+                    Resource Set: colocation_set_D1D2D5-1_set
+                      Resources: 'D1', 'D2'
+                    Resource Set: colocation_set_D1D2D5-1_set-1
+                      Resources: 'D5', 'D6'
+                  Set Constraint: colocation_set_D6D1
+                    score=INFINITY
+                    Resource Set: colocation_set_D6D1_set
+                      Resources: 'D1', 'D6'
+                Order Set Constraints:
+                  Set Constraint: order_set_D1D2
+                    Resource Set: order_set_D1D2_set
+                      Resources: 'D1', 'D2'
+                  Set Constraint: order_set_D1D2-1
+                    Resource Set: order_set_D1D2-1_set
+                      Resources: 'D1', 'D2'
+                  Set Constraint: order_set_D1D2D5
+                    Resource Set: order_set_D1D2D5_set
+                      Resources: 'D1', 'D2'
+                    Resource Set: order_set_D1D2D5_set-1
+                      Resources: 'D5', 'D6'
+                  Set Constraint: order_set_D1D2D5-1
+                    Resource Set: order_set_D1D2D5-1_set
+                      Resources: 'D1', 'D2'
+                    Resource Set: order_set_D1D2D5-1_set-1
+                      Resources: 'D5', 'D6'
+                  Set Constraint: order_set_D6D1
+                    Resource Set: order_set_D6D1_set
+                      Resources: 'D1', 'D6'
+                """
+            ),
         )
-        ac(
-            stdout,
-            """\
-Location Constraints:
-Ordering Constraints:
-  Resource Sets:
-    set D1 D2 (id:order_set_D1D2_set) (id:order_set_D1D2)
-    set D1 D2 (id:order_set_D1D2-1_set) (id:order_set_D1D2-1)
-    set D1 D2 (id:order_set_D1D2D5_set) set D5 D6 (id:order_set_D1D2D5_set-1) (id:order_set_D1D2D5)
-    set D1 D2 (id:order_set_D1D2D5-1_set) set D5 D6 (id:order_set_D1D2D5-1_set-1) (id:order_set_D1D2D5-1)
-    set D6 D1 (id:order_set_D6D1_set) (id:order_set_D6D1)
-Colocation Constraints:
-  Resource Sets:
-    set D1 D2 (id:colocation_set_D1D2_set) setoptions score=INFINITY (id:colocation_set_D1D2)
-    set D1 D2 (id:colocation_set_D1D2-1_set) setoptions score=INFINITY (id:colocation_set_D1D2-1)
-    set D1 D2 (id:colocation_set_D1D2D5_set) set D5 D6 (id:colocation_set_D1D2D5_set-1) setoptions score=INFINITY (id:colocation_set_D1D2D5)
-    set D1 D2 (id:colocation_set_D1D2D5-1_set) set D5 D6 (id:colocation_set_D1D2D5-1_set-1) setoptions score=INFINITY (id:colocation_set_D1D2D5-1)
-    set D6 D1 (id:colocation_set_D6D1_set) setoptions score=INFINITY (id:colocation_set_D6D1)
-Ticket Constraints:
-""",
-        )
-        self.assertEqual(stderr, "")
 
     def testDuplicateLocationRules(self):
         self.fixture_resources()
@@ -3732,39 +3602,36 @@ Error: duplicate constraint already exists, use --force to override
         self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint --full".split()
+        self.assert_pcs_success(
+            "constraint --full".split(),
+            stdout_full=outdent(
+                """\
+                Location Constraints:
+                  resource 'D1' (id: location-D1)
+                    Rules:
+                      Rule: score=INFINITY (id:location-D1-rule)
+                        Expression: #uname eq node1 (id:location-D1-rule-expr)
+                  resource 'D1' (id: location-D1-1)
+                    Rules:
+                      Rule: score=INFINITY (id:location-D1-1-rule)
+                        Expression: #uname eq node1 (id:location-D1-1-rule-expr)
+                  resource 'D2' (id: location-D2)
+                    Rules:
+                      Rule: score=INFINITY (id:location-D2-rule)
+                        Expression: #uname eq node1 (id:location-D2-rule-expr)
+                  resource 'D2' (id: location-D2-1)
+                    Rules:
+                      Rule: boolean-op=or score=INFINITY (id:location-D2-1-rule)
+                        Expression: #uname eq node1 (id:location-D2-1-rule-expr)
+                        Expression: #uname eq node2 (id:location-D2-1-rule-expr-1)
+                  resource 'D2' (id: location-D2-2)
+                    Rules:
+                      Rule: boolean-op=or score=INFINITY (id:location-D2-2-rule)
+                        Expression: #uname eq node2 (id:location-D2-2-rule-expr)
+                        Expression: #uname eq node1 (id:location-D2-2-rule-expr-1)
+                """
+            ),
         )
-        ac(
-            stdout,
-            """\
-Location Constraints:
-  Resource: D1
-    Constraint: location-D1
-      Rule: score=INFINITY (id:location-D1-rule)
-        Expression: #uname eq node1 (id:location-D1-rule-expr)
-    Constraint: location-D1-1
-      Rule: score=INFINITY (id:location-D1-1-rule)
-        Expression: #uname eq node1 (id:location-D1-1-rule-expr)
-  Resource: D2
-    Constraint: location-D2
-      Rule: score=INFINITY (id:location-D2-rule)
-        Expression: #uname eq node1 (id:location-D2-rule-expr)
-    Constraint: location-D2-1
-      Rule: boolean-op=or score=INFINITY (id:location-D2-1-rule)
-        Expression: #uname eq node1 (id:location-D2-1-rule-expr)
-        Expression: #uname eq node2 (id:location-D2-1-rule-expr-1)
-    Constraint: location-D2-2
-      Rule: boolean-op=or score=INFINITY (id:location-D2-2-rule)
-        Expression: #uname eq node2 (id:location-D2-2-rule-expr)
-        Expression: #uname eq node1 (id:location-D2-2-rule-expr-1)
-Ordering Constraints:
-Colocation Constraints:
-Ticket Constraints:
-""",
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
 
     def testConstraintsCustomId(self):
         self.fixture_resources()
@@ -3958,38 +3825,48 @@ Ticket Constraints:
         self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint --full".split()
+        self.assert_pcs_success(
+            "constraint --full".split(),
+            stdout_full=outdent(
+                """\
+                Location Constraints:
+                  resource 'D1' (id: id9)
+                    Rules:
+                      Rule: score=INFINITY (id:id9-rule)
+                        Expression: defined pingd (id:id9-rule-expr)
+                  resource 'D2' (id: id10)
+                    Rules:
+                      Rule: score=100 (id:rule1)
+                        Expression: defined pingd (id:rule1-expr)
+                Colocation Constraints:
+                  resource 'D1' with resource 'D2' (id: id1)
+                    score=INFINITY
+                  resource 'D2' with resource 'D1' (id: id2)
+                    score=100
+                Colocation Set Constraints:
+                  Set Constraint: id3
+                    score=INFINITY
+                    Resource Set: id3_set
+                      Resources: 'D1', 'D2'
+                  Set Constraint: id4
+                    score=100
+                    Resource Set: id4_set
+                      Resources: 'D1', 'D2'
+                Order Constraints:
+                  start resource 'D1' then start resource 'D2' (id: id7)
+                  start resource 'D2' then start resource 'D1' (id: id8)
+                    kind=Optional
+                Order Set Constraints:
+                  Set Constraint: id5
+                    Resource Set: id5_set
+                      Resources: 'D1', 'D2'
+                  Set Constraint: id6
+                    kind=Mandatory
+                    Resource Set: id6_set
+                      Resources: 'D1', 'D2'
+                """
+            ),
         )
-        ac(
-            stdout,
-            """\
-Location Constraints:
-  Resource: D1
-    Constraint: id9
-      Rule: score=INFINITY (id:id9-rule)
-        Expression: defined pingd (id:id9-rule-expr)
-  Resource: D2
-    Constraint: id10
-      Rule: score=100 (id:rule1)
-        Expression: defined pingd (id:rule1-expr)
-Ordering Constraints:
-  start D1 then start D2 (kind:Mandatory) (id:id7)
-  start D2 then start D1 (kind:Optional) (id:id8)
-  Resource Sets:
-    set D1 D2 (id:id5_set) (id:id5)
-    set D2 D1 (id:id6_set) setoptions kind=Mandatory (id:id6)
-Colocation Constraints:
-  D1 with D2 (score:INFINITY) (id:id1)
-  D2 with D1 (score:100) (id:id2)
-  Resource Sets:
-    set D1 D2 (id:id3_set) setoptions score=INFINITY (id:id3)
-    set D2 D1 (id:id4_set) setoptions score=100 (id:id4)
-Ticket Constraints:
-""",
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
 
 
 class ConstraintBaseTest(unittest.TestCase, AssertPcsMixin):
@@ -4026,11 +3903,15 @@ class TicketCreateWithSet(ConstraintBaseTest):
         )
         self.assert_pcs_success(
             "constraint ticket config".split(),
-            stdout_full=[
-                "Ticket Constraints:",
-                "  Resource Sets:",
-                "    set A B setoptions ticket=T",
-            ],
+            stdout_full=outdent(
+                """\
+                Ticket Set Constraints:
+                  Set Constraint:
+                    ticket=T
+                    Resource Set:
+                      Resources: 'A', 'B'
+                """
+            ),
         )
 
     def test_refuse_bad_loss_policy(self):
@@ -4063,7 +3944,7 @@ class TicketAdd(ConstraintBaseTest):
             dedent(
                 """\
                 Ticket Constraints:
-                  A ticket=T
+                  resource 'A' depends on ticket 'T'
                 """
             ),
         )
@@ -4077,10 +3958,11 @@ class TicketAdd(ConstraintBaseTest):
         )
         self.assert_pcs_success(
             "constraint ticket config --full".split(),
-            dedent(
+            stdout_full=outdent(
                 f"""\
                 Ticket Constraints:
-                  {const.PCMK_ROLE_PROMOTED} A loss-policy=fence ticket=T (id:my-constraint)
+                  {const.PCMK_ROLE_PROMOTED_PRIMARY} resource 'A' depends on ticket 'T' (id: my-constraint)
+                    loss-policy=fence
                 """
             ),
         )
@@ -4156,11 +4038,15 @@ class TicketAdd(ConstraintBaseTest):
         )
         self.assert_pcs_success(
             "constraint ticket config".split(),
-            stdout_full=[
-                "Ticket Constraints:",
-                f"  {promoted_role} A loss-policy=fence ticket=T",
-                f"  {promoted_role} A loss-policy=fence ticket=T",
-            ],
+            stdout_full=outdent(
+                f"""\
+                Ticket Constraints:
+                  {promoted_role} resource 'A' depends on ticket 'T'
+                    loss-policy=fence
+                  {promoted_role} resource 'A' depends on ticket 'T'
+                    loss-policy=fence
+                """
+            ),
         )
 
 
@@ -4196,14 +4082,22 @@ class TicketDeleteRemoveTest(ConstraintBaseTest):
         )
         self.assert_pcs_success(
             "constraint ticket config".split(),
-            stdout_full=[
-                "Ticket Constraints:",
-                "  A ticket=T",
-                "  A ticket=T",
-                "  Resource Sets:",
-                "    set A B setoptions ticket=T",
-                "    set A setoptions ticket=T",
-            ],
+            stdout_full=outdent(
+                """\
+                Ticket Constraints:
+                  resource 'A' depends on ticket 'T'
+                  resource 'A' depends on ticket 'T'
+                Ticket Set Constraints:
+                  Set Constraint:
+                    ticket=T
+                    Resource Set:
+                      Resources: 'A', 'B'
+                  Set Constraint:
+                    ticket=T
+                    Resource Set:
+                      Resources: 'A'
+                """
+            ),
         )
 
         # test
@@ -4213,17 +4107,20 @@ class TicketDeleteRemoveTest(ConstraintBaseTest):
 
         self.assert_pcs_success(
             "constraint ticket config".split(),
-            stdout_full=[
-                "Ticket Constraints:",
-                "  Resource Sets:",
-                "    set B setoptions ticket=T",
-            ],
+            stdout_full=outdent(
+                """\
+                Ticket Set Constraints:
+                  Set Constraint:
+                    ticket=T
+                    Resource Set:
+                      Resources: 'B'
+                """
+            ),
         )
 
     def _test_fail_when_no_matching_ticket_constraint_here(self):
         self.assert_pcs_success(
             "constraint ticket config".split(),
-            stdout_full=["Ticket Constraints:"],
         )
         self.assert_pcs_fail(
             ["constraint", "ticket", self.command, "T", "A"],
@@ -4259,12 +4156,18 @@ class TicketShow(ConstraintBaseTest):
         )
         self.assert_pcs_success(
             "constraint ticket config".split(),
-            [
-                "Ticket Constraints:",
-                f"  {const.PCMK_ROLE_PROMOTED_PRIMARY} A loss-policy=fence ticket=T",
-                "  Resource Sets:",
-                "    set A B setoptions ticket=T",
-            ],
+            outdent(
+                f"""\
+                Ticket Constraints:
+                  {const.PCMK_ROLE_PROMOTED_PRIMARY} resource 'A' depends on ticket 'T'
+                    loss-policy=fence
+                Ticket Set Constraints:
+                  Set Constraint:
+                    ticket=T
+                    Resource Set:
+                      Resources: 'A', 'B'
+                """
+            ),
         )
 
 
@@ -4449,79 +4352,61 @@ class LocationShowWithPattern(ConstraintBaseTest):
             "constraint location config --all --full".split(),
             outdent(
                 """\
-            Location Constraints:
-              Resource pattern: R_[0-9]+
-                Enabled on:
-                  Node: node1 (score:INFINITY) (id:location-R_0-9-node1-INFINITY)
-                  Node: node2 (score:20) (id:location-R_0-9-node2-20)
-                Disabled on:
-                  Node: node3 (score:-30) (id:location-R_0-9-node3--30)
-                  Node: node4 (score:-INFINITY) (resource-discovery=never) (id:my-id3)
-                Constraint: location-R_0-9
-                  Rule: score=20 (id:location-R_0-9-rule)
-                    Expression: defined pingd (id:location-R_0-9-rule-expr)
-              Resource pattern: R_[a-z]+
-                Disabled on:
-                  Node: node3 (score:-30) (id:location-R_a-z-node3--30)
-              Resource: R1
-                Enabled on:
-                  Node: node1 (score:INFINITY) (id:location-R1-node1-INFINITY)
-                  Node: node2 (score:20) (id:location-R1-node2-20)
-                Disabled on:
-                  Node: node3 (score:-30) (id:location-R1-node3--30)
-                  Node: node4 (score:-INFINITY) (id:location-R1-node4--INFINITY)
-              Resource: R2
-                Enabled on:
-                  Node: node3 (score:INFINITY) (id:location-R2-node3-INFINITY)
-                  Node: node4 (score:20) (id:location-R2-node4-20)
-                Disabled on:
-                  Node: node1 (score:-30) (id:location-R2-node1--30)
-                  Node: node2 (score:-INFINITY) (id:location-R2-node2--INFINITY)
-              Resource: R3
-                Disabled on:
-                  Node: node1 (score:-INFINITY) (resource-discovery=never) (id:my-id1)
-                  Node: node2 (score:-INFINITY) (resource-discovery=never) (id:my-id2)
-            """
+                Location Constraints:
+                  resource 'R1' prefers node 'node1' with score INFINITY (id: location-R1-node1-INFINITY)
+                  resource 'R1' prefers node 'node2' with score 20 (id: location-R1-node2-20)
+                  resource 'R1' avoids node 'node3' with score 30 (id: location-R1-node3--30)
+                  resource 'R1' avoids node 'node4' with score INFINITY (id: location-R1-node4--INFINITY)
+                  resource 'R2' prefers node 'node3' with score INFINITY (id: location-R2-node3-INFINITY)
+                  resource 'R2' prefers node 'node4' with score 20 (id: location-R2-node4-20)
+                  resource 'R2' avoids node 'node1' with score 30 (id: location-R2-node1--30)
+                  resource 'R2' avoids node 'node2' with score INFINITY (id: location-R2-node2--INFINITY)
+                  resource pattern 'R_[0-9]+' prefers node 'node1' with score INFINITY (id: location-R_0-9-node1-INFINITY)
+                  resource pattern 'R_[0-9]+' prefers node 'node2' with score 20 (id: location-R_0-9-node2-20)
+                  resource pattern 'R_[0-9]+' avoids node 'node3' with score 30 (id: location-R_0-9-node3--30)
+                  resource pattern 'R_[a-z]+' avoids node 'node3' with score 30 (id: location-R_a-z-node3--30)
+                  resource 'R3' avoids node 'node1' with score INFINITY (id: my-id1)
+                    resource-discovery=never
+                  resource 'R3' avoids node 'node2' with score INFINITY (id: my-id2)
+                    resource-discovery=never
+                  resource pattern 'R_[0-9]+' avoids node 'node4' with score INFINITY (id: my-id3)
+                    resource-discovery=never
+                  resource pattern 'R_[0-9]+' (id: location-R_0-9)
+                    Rules:
+                      Rule: score=20 (id:location-R_0-9-rule)
+                        Expression: defined pingd (id:location-R_0-9-rule-expr)
+                """
             ),
         )
 
         self.assert_pcs_success(
             "constraint location config".split(),
-            outdent(
+            stdout_full=outdent(
                 """\
-            Location Constraints:
-              Resource pattern: R_[0-9]+
-                Enabled on:
-                  Node: node1 (score:INFINITY)
-                  Node: node2 (score:20)
-                Disabled on:
-                  Node: node3 (score:-30)
-                  Node: node4 (score:-INFINITY) (resource-discovery=never)
-                Constraint: location-R_0-9
-                  Rule: score=20
-                    Expression: defined pingd
-              Resource pattern: R_[a-z]+
-                Disabled on:
-                  Node: node3 (score:-30)
-              Resource: R1
-                Enabled on:
-                  Node: node1 (score:INFINITY)
-                  Node: node2 (score:20)
-                Disabled on:
-                  Node: node3 (score:-30)
-                  Node: node4 (score:-INFINITY)
-              Resource: R2
-                Enabled on:
-                  Node: node3 (score:INFINITY)
-                  Node: node4 (score:20)
-                Disabled on:
-                  Node: node1 (score:-30)
-                  Node: node2 (score:-INFINITY)
-              Resource: R3
-                Disabled on:
-                  Node: node1 (score:-INFINITY) (resource-discovery=never)
-                  Node: node2 (score:-INFINITY) (resource-discovery=never)
-            """
+                Location Constraints:
+                  resource 'R1' prefers node 'node1' with score INFINITY
+                  resource 'R1' prefers node 'node2' with score 20
+                  resource 'R1' avoids node 'node3' with score 30
+                  resource 'R1' avoids node 'node4' with score INFINITY
+                  resource 'R2' prefers node 'node3' with score INFINITY
+                  resource 'R2' prefers node 'node4' with score 20
+                  resource 'R2' avoids node 'node1' with score 30
+                  resource 'R2' avoids node 'node2' with score INFINITY
+                  resource pattern 'R_[0-9]+' prefers node 'node1' with score INFINITY
+                  resource pattern 'R_[0-9]+' prefers node 'node2' with score 20
+                  resource pattern 'R_[0-9]+' avoids node 'node3' with score 30
+                  resource pattern 'R_[a-z]+' avoids node 'node3' with score 30
+                  resource 'R3' avoids node 'node1' with score INFINITY
+                    resource-discovery=never
+                  resource 'R3' avoids node 'node2' with score INFINITY
+                    resource-discovery=never
+                  resource pattern 'R_[0-9]+' avoids node 'node4' with score INFINITY
+                    resource-discovery=never
+                  resource pattern 'R_[0-9]+'
+                    Rules:
+                      Rule: score=20
+                        Expression: defined pingd
+                """
             ),
         )
 
@@ -4529,59 +4414,52 @@ class LocationShowWithPattern(ConstraintBaseTest):
             "constraint location config nodes --full".split(),
             outdent(
                 """\
-            Location Constraints:
-              Node: node1
-                Allowed to run:
-                  Resource: R1 (score:INFINITY) (id:location-R1-node1-INFINITY)
-                  Resource pattern: R_[0-9]+ (score:INFINITY) (id:location-R_0-9-node1-INFINITY)
-                Not allowed to run:
-                  Resource: R2 (score:-30) (id:location-R2-node1--30)
-                  Resource: R3 (score:-INFINITY) (resource-discovery=never) (id:my-id1)
-              Node: node2
-                Allowed to run:
-                  Resource: R1 (score:20) (id:location-R1-node2-20)
-                  Resource pattern: R_[0-9]+ (score:20) (id:location-R_0-9-node2-20)
-                Not allowed to run:
-                  Resource: R2 (score:-INFINITY) (id:location-R2-node2--INFINITY)
-                  Resource: R3 (score:-INFINITY) (resource-discovery=never) (id:my-id2)
-              Node: node3
-                Allowed to run:
-                  Resource: R2 (score:INFINITY) (id:location-R2-node3-INFINITY)
-                Not allowed to run:
-                  Resource: R1 (score:-30) (id:location-R1-node3--30)
-                  Resource pattern: R_[0-9]+ (score:-30) (id:location-R_0-9-node3--30)
-                  Resource pattern: R_[a-z]+ (score:-30) (id:location-R_a-z-node3--30)
-              Node: node4
-                Allowed to run:
-                  Resource: R2 (score:20) (id:location-R2-node4-20)
-                Not allowed to run:
-                  Resource: R1 (score:-INFINITY) (id:location-R1-node4--INFINITY)
-                  Resource pattern: R_[0-9]+ (score:-INFINITY) (resource-discovery=never) (id:my-id3)
-              Resource pattern: R_[0-9]+
-                Constraint: location-R_0-9
-                  Rule: score=20 (id:location-R_0-9-rule)
-                    Expression: defined pingd (id:location-R_0-9-rule-expr)
-            """
+                Location Constraints:
+                  Node: node1
+                    Preferred by:
+                      resource 'R1' with score INFINITY (id: location-R1-node1-INFINITY)
+                      resource pattern 'R_[0-9]+' with score INFINITY (id: location-R_0-9-node1-INFINITY)
+                    Avoided by:
+                      resource 'R2' with score 30 (id: location-R2-node1--30)
+                      resource 'R3' with score INFINITY (id: my-id1)
+                  Node: node2
+                    Preferred by:
+                      resource 'R1' with score 20 (id: location-R1-node2-20)
+                      resource pattern 'R_[0-9]+' with score 20 (id: location-R_0-9-node2-20)
+                    Avoided by:
+                      resource 'R2' with score INFINITY (id: location-R2-node2--INFINITY)
+                      resource 'R3' with score INFINITY (id: my-id2)
+                  Node: node3
+                    Preferred by:
+                      resource 'R2' with score INFINITY (id: location-R2-node3-INFINITY)
+                    Avoided by:
+                      resource 'R1' with score 30 (id: location-R1-node3--30)
+                      resource pattern 'R_[0-9]+' with score 30 (id: location-R_0-9-node3--30)
+                      resource pattern 'R_[a-z]+' with score 30 (id: location-R_a-z-node3--30)
+                  Node: node4
+                    Preferred by:
+                      resource 'R2' with score 20 (id: location-R2-node4-20)
+                    Avoided by:
+                      resource 'R1' with score INFINITY (id: location-R1-node4--INFINITY)
+                      resource pattern 'R_[0-9]+' with score INFINITY (id: my-id3)
+                """
             ),
+            stderr_full=WARN_WITH_RULES_SKIP,
         )
 
         self.assert_pcs_success(
             "constraint location config nodes node2".split(),
             outdent(
                 """\
-            Location Constraints:
-              Node: node2
-                Allowed to run:
-                  Resource: R1 (score:20)
-                  Resource pattern: R_[0-9]+ (score:20)
-                Not allowed to run:
-                  Resource: R2 (score:-INFINITY)
-                  Resource: R3 (score:-INFINITY) (resource-discovery=never)
-              Resource pattern: R_[0-9]+
-                Constraint: location-R_0-9
-                  Rule: score=20
-                    Expression: defined pingd
-            """
+                Location Constraints:
+                  Node: node2
+                    Preferred by:
+                      resource 'R1' with score 20
+                      resource pattern 'R_[0-9]+' with score 20
+                    Avoided by:
+                      resource 'R2' with score INFINITY
+                      resource 'R3' with score INFINITY
+                """
             ),
         )
 
@@ -4589,18 +4467,19 @@ class LocationShowWithPattern(ConstraintBaseTest):
             "constraint location config resources regexp%R_[0-9]+".split(),
             outdent(
                 """\
-            Location Constraints:
-              Resource pattern: R_[0-9]+
-                Enabled on:
-                  Node: node1 (score:INFINITY)
-                  Node: node2 (score:20)
-                Disabled on:
-                  Node: node3 (score:-30)
-                  Node: node4 (score:-INFINITY) (resource-discovery=never)
-                Constraint: location-R_0-9
-                  Rule: score=20
-                    Expression: defined pingd
-            """
+                Location Constraints:
+                  Resource pattern: R_[0-9]+
+                    Prefers:
+                      node 'node1' with score INFINITY
+                      node 'node2' with score 20
+                    Avoids:
+                      node 'node3' with score 30
+                      node 'node4' with score INFINITY
+                    Constraint:
+                      Rules:
+                        Rule: score=20
+                          Expression: defined pingd
+                """
             ),
         )
 
@@ -5222,13 +5101,10 @@ class ExpiredConstraints(ConstraintBaseTest):
             outdent(
                 """\
                 Location Constraints:
-                  Resource: dummy
-                    Constraint: location-dummy
+                  resource 'dummy'
+                    Rules:
                       Rule: score=INFINITY
                         Expression: date lt 2019-01-01
-                Ordering Constraints:
-                Colocation Constraints:
-                Ticket Constraints:
                 """
             ),
             stderr_full=f"Warning: {CRM_RULE_MISSING_MSG}\n",
@@ -5246,15 +5122,12 @@ class ExpiredConstraints(ConstraintBaseTest):
             ["constraint"],
             outdent(
                 """\
-            Location Constraints:
-              Resource: dummy
-                Constraint: location-dummy
-                  Rule: score=INFINITY
-                    Expression: date gt 2019-01-01
-            Ordering Constraints:
-            Colocation Constraints:
-            Ticket Constraints:
-            """
+                Location Constraints:
+                  resource 'dummy'
+                    Rules:
+                      Rule: score=INFINITY
+                        Expression: date gt 2019-01-01
+                """
             ),
         )
 
@@ -5270,15 +5143,12 @@ class ExpiredConstraints(ConstraintBaseTest):
             "constraint --full".split(),
             outdent(
                 """\
-            Location Constraints:
-              Resource: dummy
-                Constraint: location-dummy
-                  Rule: score=INFINITY (id:test-rule)
-                    Expression: date gt 2019-01-01 (id:test-rule-expr)
-            Ordering Constraints:
-            Colocation Constraints:
-            Ticket Constraints:
-            """
+                Location Constraints:
+                  resource 'dummy' (id: location-dummy)
+                    Rules:
+                      Rule: score=INFINITY (id:test-rule)
+                        Expression: date gt 2019-01-01 (id:test-rule-expr)
+                """
             ),
         )
 
@@ -5294,15 +5164,12 @@ class ExpiredConstraints(ConstraintBaseTest):
             "constraint --all".split(),
             outdent(
                 """\
-            Location Constraints:
-              Resource: dummy
-                Constraint: location-dummy
-                  Rule: score=INFINITY
-                    Expression: date gt 2019-01-01
-            Ordering Constraints:
-            Colocation Constraints:
-            Ticket Constraints:
-            """
+                Location Constraints:
+                  resource 'dummy'
+                    Rules:
+                      Rule: score=INFINITY
+                        Expression: date gt 2019-01-01
+                """
             ),
         )
 
@@ -5319,13 +5186,10 @@ class ExpiredConstraints(ConstraintBaseTest):
             outdent(
                 """\
                 Location Constraints:
-                  Resource: dummy
-                    Constraint: location-dummy
+                  resource 'dummy' (id: location-dummy)
+                    Rules:
                       Rule: score=INFINITY (id:test-rule)
                         Expression: date gt 2019-01-01 (id:test-rule-expr)
-                Ordering Constraints:
-                Colocation Constraints:
-                Ticket Constraints:
                 """
             ),
         )
@@ -5342,15 +5206,12 @@ class ExpiredConstraints(ConstraintBaseTest):
             ["constraint"],
             outdent(
                 """\
-            Location Constraints:
-              Resource: dummy_group
-                Constraint: location-dummy_group
-                  Rule: score=INFINITY
-                    Expression: date gt 2019-01-01
-            Ordering Constraints:
-            Colocation Constraints:
-            Ticket Constraints:
-            """
+                Location Constraints:
+                  resource 'dummy_group'
+                    Rules:
+                      Rule: score=INFINITY
+                        Expression: date gt 2019-01-01
+                """
             ),
         )
 
@@ -5362,17 +5223,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date lt 2019-01-01"
             ).split()
         )
-        self.assert_pcs_success(
-            ["constraint"],
-            outdent(
-                """\
-                Location Constraints:
-                Ordering Constraints:
-                Colocation Constraints:
-                Ticket Constraints:
-                """
-            ),
-        )
+        self.assert_pcs_success(["constraint"])
 
     def test_expired_primitive_full(self):
         self.fixture_primitive()
@@ -5382,17 +5233,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date lt 2019-01-01"
             ).split()
         )
-        self.assert_pcs_success(
-            "constraint --full".split(),
-            outdent(
-                """\
-                Location Constraints:
-                Ordering Constraints:
-                Colocation Constraints:
-                Ticket Constraints:
-                """
-            ),
-        )
+        self.assert_pcs_success("constraint --full".split())
 
     def test_expired_primitive_all(self):
         self.fixture_primitive()
@@ -5407,13 +5248,10 @@ class ExpiredConstraints(ConstraintBaseTest):
             outdent(
                 """\
                 Location Constraints:
-                  Resource: dummy
-                    Constraint (expired): location-dummy
+                  resource 'dummy'
+                    Rules:
                       Rule (expired): score=INFINITY
                         Expression: date lt 2019-01-01
-                Ordering Constraints:
-                Colocation Constraints:
-                Ticket Constraints:
                 """
             ),
         )
@@ -5431,13 +5269,10 @@ class ExpiredConstraints(ConstraintBaseTest):
             outdent(
                 """\
                 Location Constraints:
-                  Resource: dummy
-                    Constraint (expired): location-dummy
+                  resource 'dummy' (id: location-dummy)
+                    Rules:
                       Rule (expired): score=INFINITY (id:test-rule)
                         Expression: date lt 2019-01-01 (id:test-rule-expr)
-                Ordering Constraints:
-                Colocation Constraints:
-                Ticket Constraints:
                 """
             ),
         )
@@ -5450,17 +5285,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date lt 2019-01-01"
             ).split()
         )
-        self.assert_pcs_success(
-            ["constraint"],
-            outdent(
-                """\
-                Location Constraints:
-                Ordering Constraints:
-                Colocation Constraints:
-                Ticket Constraints:
-                """
-            ),
-        )
+        self.assert_pcs_success(["constraint"])
 
     def test_indeterminate_primitive_plain(self):
         self.fixture_primitive()
@@ -5475,14 +5300,11 @@ class ExpiredConstraints(ConstraintBaseTest):
             outdent(
                 """\
                 Location Constraints:
-                  Resource: dummy
-                    Constraint: location-dummy
+                  resource 'dummy'
+                    Rules:
                       Rule: boolean-op=or score=INFINITY
                         Expression: date eq 2019-01-01
                         Expression: date eq 2019-03-01
-                Ordering Constraints:
-                Colocation Constraints:
-                Ticket Constraints:
                 """
             ),
         )
@@ -5500,14 +5322,11 @@ class ExpiredConstraints(ConstraintBaseTest):
             outdent(
                 """\
                 Location Constraints:
-                  Resource: dummy
-                    Constraint: location-dummy
+                  resource 'dummy' (id: location-dummy)
+                    Rules:
                       Rule: boolean-op=or score=INFINITY (id:test-rule)
                         Expression: date eq 2019-01-01 (id:test-rule-expr)
                         Expression: date eq 2019-03-01 (id:test-rule-expr-1)
-                Ordering Constraints:
-                Colocation Constraints:
-                Ticket Constraints:
                 """
             ),
         )
@@ -5525,14 +5344,11 @@ class ExpiredConstraints(ConstraintBaseTest):
             outdent(
                 """\
                 Location Constraints:
-                  Resource: dummy
-                    Constraint: location-dummy
+                  resource 'dummy'
+                    Rules:
                       Rule: boolean-op=or score=INFINITY
                         Expression: date eq 2019-01-01
                         Expression: date eq 2019-03-01
-                Ordering Constraints:
-                Colocation Constraints:
-                Ticket Constraints:
                 """
             ),
         )
@@ -5550,14 +5366,11 @@ class ExpiredConstraints(ConstraintBaseTest):
             outdent(
                 """\
                 Location Constraints:
-                  Resource: dummy
-                    Constraint: location-dummy
+                  resource 'dummy' (id: location-dummy)
+                    Rules:
                       Rule: boolean-op=or score=INFINITY (id:test-rule)
                         Expression: date eq 2019-01-01 (id:test-rule-expr)
                         Expression: date eq 2019-03-01 (id:test-rule-expr-1)
-                Ordering Constraints:
-                Colocation Constraints:
-                Ticket Constraints:
                 """
             ),
         )
@@ -5575,14 +5388,11 @@ class ExpiredConstraints(ConstraintBaseTest):
             outdent(
                 """\
                 Location Constraints:
-                  Resource: dummy_group
-                    Constraint: location-dummy_group
+                  resource 'dummy_group'
+                    Rules:
                       Rule: boolean-op=or score=INFINITY
                         Expression: date eq 2019-01-01
                         Expression: date eq 2019-03-01
-                Ordering Constraints:
-                Colocation Constraints:
-                Ticket Constraints:
                 """
             ),
         )
@@ -5598,13 +5408,10 @@ class ExpiredConstraints(ConstraintBaseTest):
             outdent(
                 f"""\
                 Location Constraints:
-                  Resource: dummy
-                    Constraint: location-dummy
-                      Rule: score=INFINITY
+                  resource 'dummy'
+                    Rules:
+                      Rule (not yet in effect): score=INFINITY
                         Expression: date gt {self._tomorrow}
-                Ordering Constraints:
-                Colocation Constraints:
-                Ticket Constraints:
                 """
             ),
         )
@@ -5620,13 +5427,10 @@ class ExpiredConstraints(ConstraintBaseTest):
             outdent(
                 f"""\
                 Location Constraints:
-                  Resource: dummy
-                    Constraint: location-dummy
-                      Rule: score=INFINITY (id:test-rule)
+                  resource 'dummy' (id: location-dummy)
+                    Rules:
+                      Rule (not yet in effect): score=INFINITY (id:test-rule)
                         Expression: date gt {self._tomorrow} (id:test-rule-expr)
-                Ordering Constraints:
-                Colocation Constraints:
-                Ticket Constraints:
                 """
             ),
         )
@@ -5642,13 +5446,10 @@ class ExpiredConstraints(ConstraintBaseTest):
             outdent(
                 f"""\
                 Location Constraints:
-                  Resource: dummy
-                    Constraint: location-dummy
-                      Rule: score=INFINITY
+                  resource 'dummy'
+                    Rules:
+                      Rule (not yet in effect): score=INFINITY
                         Expression: date gt {self._tomorrow}
-                Ordering Constraints:
-                Colocation Constraints:
-                Ticket Constraints:
                 """
             ),
         )
@@ -5664,13 +5465,10 @@ class ExpiredConstraints(ConstraintBaseTest):
             outdent(
                 f"""\
                 Location Constraints:
-                  Resource: dummy
-                    Constraint: location-dummy
-                      Rule: score=INFINITY (id:test-rule)
+                  resource 'dummy' (id: location-dummy)
+                    Rules:
+                      Rule (not yet in effect): score=INFINITY (id:test-rule)
                         Expression: date gt {self._tomorrow} (id:test-rule-expr)
-                Ordering Constraints:
-                Colocation Constraints:
-                Ticket Constraints:
                 """
             ),
         )
@@ -5686,13 +5484,10 @@ class ExpiredConstraints(ConstraintBaseTest):
             outdent(
                 f"""\
                 Location Constraints:
-                  Resource: dummy_group
-                    Constraint: location-dummy_group
-                      Rule: score=INFINITY
+                  resource 'dummy_group'
+                    Rules:
+                      Rule (not yet in effect): score=INFINITY
                         Expression: date gt {self._tomorrow}
-                Ordering Constraints:
-                Colocation Constraints:
-                Ticket Constraints:
                 """
             ),
         )
@@ -5741,26 +5536,24 @@ class ExpiredConstraints(ConstraintBaseTest):
             outdent(
                 """\
                 Location Constraints:
-                  Resource: D1
-                    Constraint: location-D1
+                  resource 'D1'
+                    Rules:
                       Rule: score=INFINITY
                         Expression: not_defined pingd
-                    Constraint: location-D1-1
+                  resource 'D1'
+                    Rules:
                       Rule: boolean-op=and score=INFINITY
                         Rule: boolean-op=or score=0
                           Expression: date eq 2019-01-01
                           Expression: date eq 2019-01-30
                         Expression: #uname eq node1
-                  Resource: D3
-                    Constraint: location-D3
-                      Rule: score=INFINITY
+                  resource 'D3'
+                    Rules:
+                      Rule (expired): score=INFINITY
                         Expression: date in_range 2019-03-01 to duration
                           Duration: weeks=2
                       Rule: score=INFINITY
                         Expression: not_defined pingd
-                Ordering Constraints:
-                Colocation Constraints:
-                Ticket Constraints:
                 """
             ),
         )
@@ -5809,33 +5602,31 @@ class ExpiredConstraints(ConstraintBaseTest):
             outdent(
                 """\
                 Location Constraints:
-                  Resource: D1
-                    Constraint: location-D1
+                  resource 'D1'
+                    Rules:
                       Rule: score=INFINITY
                         Expression: not_defined pingd
-                    Constraint: location-D1-1
+                  resource 'D1'
+                    Rules:
                       Rule: boolean-op=and score=INFINITY
                         Rule: boolean-op=or score=0
                           Expression: date eq 2019-01-01
                           Expression: date eq 2019-01-30
                         Expression: #uname eq node1
-                  Resource: D2
-                    Constraint (expired): location-D2
+                  resource 'D2'
+                    Rules:
                       Rule (expired): score=INFINITY
                         Expression: date in_range 2019-01-01 to 2019-02-01
                       Rule (expired): score=INFINITY
                         Expression: date in_range 2019-03-01 to duration
                           Duration: weeks=2
-                  Resource: D3
-                    Constraint: location-D3
+                  resource 'D3'
+                    Rules:
                       Rule (expired): score=INFINITY
                         Expression: date in_range 2019-03-01 to duration
                           Duration: weeks=2
                       Rule: score=INFINITY
                         Expression: not_defined pingd
-                Ordering Constraints:
-                Colocation Constraints:
-                Ticket Constraints:
                 """
             ),
         )

@@ -376,6 +376,11 @@ def modify_cib(cib_xml, modifiers=None, **modifier_shortcuts):
     return etree_to_str(cib_tree)
 
 
+def modify_cib_file(file_path, **modifiers_shortcuts):
+    with open(file_path, "r") as file:
+        return modify_cib(file.read(), **modifiers_shortcuts)
+
+
 def _cannot_multireplace(tag, parent_xpath, cib_tree):
     return AssertionError(
         (

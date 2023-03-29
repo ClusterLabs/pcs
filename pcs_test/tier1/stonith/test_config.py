@@ -2,7 +2,7 @@ import json
 from unittest import TestCase
 
 from pcs.common.interface.dto import to_dict
-from pcs.common.pacemaker.resource.list import ListCibResourcesDto
+from pcs.common.pacemaker.resource.list import CibResourcesDto
 
 from pcs_test.tier1.resource.test_config import ResourceConfigCmdMixin
 from pcs_test.tools import resources_dto
@@ -23,7 +23,7 @@ class StonithConfigJson(TestCase):
             ignore_stderr=True,
         )
         self.assertEqual(retval, 0)
-        expected = ListCibResourcesDto(
+        expected = CibResourcesDto(
             primitives=[
                 resources_dto.STONITH_S2,
                 resources_dto.STONITH_S1,
@@ -40,7 +40,7 @@ class StonithConfigJson(TestCase):
             ignore_stderr=True,
         )
         self.assertEqual(retval, 0)
-        expected = ListCibResourcesDto(
+        expected = CibResourcesDto(
             primitives=[
                 resources_dto.STONITH_S1,
             ],

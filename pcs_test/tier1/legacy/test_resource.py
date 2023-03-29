@@ -1929,11 +1929,6 @@ class Resource(TestCase, AssertPcsMixin):
                 Stonith Devices:
                 Fencing Levels:
 
-                Location Constraints:
-                Ordering Constraints:
-                Colocation Constraints:
-                Ticket Constraints:
-
                 Alerts:
                  No alerts defined
 
@@ -2048,8 +2043,8 @@ class Resource(TestCase, AssertPcsMixin):
             "resource delete Master".split(),
             stderr_full=dedent(
                 """\
-                Removing Constraint - location-Master-rh7-2-INFINITY
                 Removing Constraint - location-ClusterIP5-rh7-1-INFINITY
+                Removing Constraint - location-Master-rh7-2-INFINITY
                 Deleting Resource - ClusterIP5
                 """
             ),
@@ -2160,13 +2155,8 @@ class Resource(TestCase, AssertPcsMixin):
                 Fencing Levels:
 
                 Location Constraints:
-                  Resource: ClusterIP5
-                    Enabled on:
-                      Node: rh7-1 (score:INFINITY) (id:location-ClusterIP5-rh7-1-INFINITY)
-                      Node: rh7-2 (score:INFINITY) (id:location-ClusterIP5-rh7-2-INFINITY)
-                Ordering Constraints:
-                Colocation Constraints:
-                Ticket Constraints:
+                  resource 'ClusterIP5' prefers node 'rh7-1' with score INFINITY (id: location-ClusterIP5-rh7-1-INFINITY)
+                  resource 'ClusterIP5' prefers node 'rh7-2' with score INFINITY (id: location-ClusterIP5-rh7-2-INFINITY)
 
                 Alerts:
                  No alerts defined
@@ -3242,7 +3232,12 @@ class Resource(TestCase, AssertPcsMixin):
         )
         self.assert_pcs_success(
             ["constraint"],
-            "Location Constraints:\n  Resource: DGroup\n    Enabled on:\n      Node: rh7-1 (score:INFINITY) (role:Started)\nOrdering Constraints:\nColocation Constraints:\nTicket Constraints:\n",
+            outdent(
+                """\
+                Location Constraints:
+                  Started resource 'DGroup' prefers node 'rh7-1' with score INFINITY
+                """
+            ),
         )
 
         self.assert_pcs_success(
@@ -5685,7 +5680,8 @@ class ResourceRemoveWithTicket(TestCase, AssertPcsMixin):
             "constraint ticket config".split(),
             (
                 "Ticket Constraints:\n"
-                f"  {const.PCMK_ROLE_PROMOTED_PRIMARY} A loss-policy=fence ticket=T\n"
+                f"  {const.PCMK_ROLE_PROMOTED_PRIMARY} resource 'A' depends on ticket 'T'\n"
+                "    loss-policy=fence\n"
             ),
         )
         self.assert_pcs_success(

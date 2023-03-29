@@ -3,6 +3,7 @@ from typing import (
     List,
     Optional,
     cast,
+    overload,
 )
 
 from lxml import etree
@@ -171,6 +172,26 @@ def get_nvset(nvset):
             }
         )
     return nvpair_list
+
+
+@overload
+def get_value(
+    tag_name: str,
+    context_element: _Element,
+    name: str,
+    default: None = None,
+) -> Optional[str]:
+    pass
+
+
+@overload
+def get_value(
+    tag_name: str,
+    context_element: _Element,
+    name: str,
+    default: str,
+) -> str:
+    pass
 
 
 def get_value(

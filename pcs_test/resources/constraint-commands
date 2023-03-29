@@ -1,0 +1,35 @@
+# set of commands to generate various constraints configuration
+pcs -- constraint location add location-R7-non-existing-node--10000 resource%R7 non-existing-node -10000;
+pcs -- constraint location add location-R7-another-one--INFINITY resource%R7 another-one -INFINITY;
+pcs -- constraint location add location-R7-localhost-INFINITY resource%R7 localhost INFINITY \
+  resource-discovery=always;
+pcs -- constraint location add location-G2-localhost-INFINITY resource%G2 localhost INFINITY;
+pcs -- constraint location add location-R-localhost-INFINITY 'regexp%R*' localhost INFINITY;
+pcs -- constraint location resource%B2 rule \
+  id=loc_constr_with_expired_rule-rule constraint-id=loc_constr_with_expired_rule score=500 \
+  date lt 2000-01-01;
+pcs -- constraint location resource%R6-clone rule \
+  id=loc_constr_with_not_expired_rule-rule constraint-id=loc_constr_with_not_expired_rule role=Unpromoted score=500 \
+  date gt 2000-01-01;
+pcs -- constraint rule add loc_constr_with_not_expired_rule \
+  id=loc_constr_with_not_expired_rule-rule-1 role=Promoted score-attribute=test-attr \
+  date gt 2010-12-31;
+pcs -- constraint colocation add Promoted G1-clone with Stopped R6-clone -100 \
+  id=colocation-G1-clone-R6-clone--100;
+pcs -- constraint colocation \
+  set R7 G2 role=Started \
+  set B2 R6-clone sequential=0 \
+  setoptions id=colocation_set_R7G2B2 score=-1;
+pcs -- constraint order stop R7 then stop G2 \
+  id=order-R7-G2-mandatory symmetrical=0 require-all=0 score=-123;
+pcs -- constraint order start G2 then start B2 \
+  id=order-G2-B2-Optional kind=Optional;
+pcs -- constraint order \
+  set B2 R6-clone require-all=0 action=stop \
+  set G1-clone sequential=0 action=promote \
+  setoptions id=order_set_B2R6-cloneSe kind=Optional;
+pcs -- constraint ticket add custom-ticket1 Promoted G1-clone \
+  id=ticket-custom-ticket1-G1-clone-Promoted loss-policy=demote;
+pcs -- constraint ticket \
+  set R7 B2 G2 role=Stopped \
+  setoptions id=ticket_set_R7B2G2 ticket=ticket2

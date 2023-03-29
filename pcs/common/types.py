@@ -5,7 +5,11 @@ from enum import (
 )
 from typing import (
     Generator,
+    Literal,
     MutableSequence,
+    Optional,
+    Type,
+    TypeVar,
     Union,
 )
 
@@ -19,6 +23,20 @@ class AutoNameEnum(str, Enum):
         # pylint: disable=no-self-argument
         del start, count, last_values
         return name
+
+
+T = TypeVar("T", bound=AutoNameEnum)
+
+
+def str_to_enum(enum_type: Type[T], value: Optional[str]) -> Optional[T]:
+    if value:
+        value = value.upper()
+        if value in {item.value for item in enum_type}:
+            return enum_type(value)
+    return None
+
+
+PcmkScore = Union[int, Literal["INFINITY", "+INFINITY", "-INFINITY"]]
 
 
 class CibRuleExpressionType(AutoNameEnum):

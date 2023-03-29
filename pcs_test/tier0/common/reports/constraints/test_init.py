@@ -4,13 +4,13 @@ from unittest import (
 )
 
 from pcs.common.reports.constraints import (
-    constraint_plain,
+    _constraint_plain,
     constraint_to_str,
 )
 
 
 class ConstraintTest(TestCase):
-    @mock.patch("pcs.common.reports.constraints.constraint_plain")
+    @mock.patch("pcs.common.reports.constraints._constraint_plain")
     def test_can_display_plain_constraint(self, mock_constraint_plain):
         mock_constraint_plain.return_value = "plain"
         self.assertEqual(
@@ -20,7 +20,7 @@ class ConstraintTest(TestCase):
             ),
         )
         mock_constraint_plain.assert_called_once_with(
-            "rsc_ticket", "constraint_in_library_representation", True
+            "rsc_ticket", "constraint_in_library_representation"
         )
 
     @mock.patch("pcs.common.reports.constraints.constraint_with_sets")
@@ -31,12 +31,10 @@ class ConstraintTest(TestCase):
             constraint_to_str(
                 "rsc_ticket",
                 {"resource_sets": "some_resource_sets", "options": {"a": "b"}},
-                with_id=False,
             ),
         )
         mock_constraint_with_sets.assert_called_once_with(
             {"resource_sets": "some_resource_sets", "options": {"a": "b"}},
-            False,
         )
 
 
@@ -46,12 +44,11 @@ class ConstraintPlainTest(TestCase):
         mock_colocation_plain.return_value = "some constraint formatted"
         self.assertEqual(
             "some constraint formatted",
-            constraint_plain(
+            _constraint_plain(
                 "rsc_colocation",
                 "constraint_in_library_representation",
-                with_id=True,
             ),
         )
         mock_colocation_plain.assert_called_once_with(
-            "constraint_in_library_representation", True
+            "constraint_in_library_representation"
         )

@@ -1,10 +1,9 @@
 from pcs.common.reports.constraints.common import prepare_options
 
 
-def constraint_plain(constraint_info, with_id=False):
+def constraint_plain(constraint_info):
     """
     dict constraint_info  see constraint in pcs/lib/exchange_formats.md
-    bool with_id have to show id with options_dict
     """
     options = constraint_info["options"]
     role = options.get("rsc-role", "")
@@ -18,6 +17,5 @@ def constraint_plain(constraint_info, with_id=False):
                 for name, value in options.items()
                 if name not in ["rsc-role", "rsc"]
             ),
-            with_id,
         )
     )

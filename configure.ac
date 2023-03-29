@@ -439,6 +439,11 @@ AC_SUBST([BOOTH_ENABLE_AUTHFILE_UNSET_ENABLED], [$(if test "x$booth_enable_authf
 AC_SUBST([BOOTH_ENABLE_AUTHFILE_SET_CAPABILITY], [$(test "x$booth_enable_authfile_set" != "xyes"; echo "$?")])
 AC_SUBST([BOOTH_ENABLE_AUTHFILE_UNSET_CAPABILITY], [$(test "x$booth_enable_authfile_unset" != "xyes"; echo "$?")])
 
+OUTPUT_FORMAT_SYNTAX_DOC="\fB\-\-output\-format\fR text|cmd|json"
+OUTPUT_FORMAT_DESC_DOC="There are 3 formats of output available: 'cmd', 'json' and 'text', default is 'text'. Format 'text' is a human friendly output. Format 'cmd' prints pcs commands which can be used to recreate the same configuration. Format 'json' is a machine oriented output of the configuration."
+AC_SUBST([OUTPUT_FORMAT_SYNTAX_DOC])
+AC_SUBST([OUTPUT_FORMAT_DESC_DOC])
+
 # detect different paths required to generate default settings
 AC_PATH_PROG([BASH], [bash])
 if test "x$BASH" = "x"; then

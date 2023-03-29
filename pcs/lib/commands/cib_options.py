@@ -20,21 +20,18 @@ from pcs.lib.cib import (
 )
 from pcs.lib.cib.rule import (
     RuleInEffectEval,
-    RuleInEffectEvalDummy,
-    RuleInEffectEvalOneByOne,
     RuleParseError,
     has_node_attr_expr_with_type_integer,
     has_rsc_or_op_expression,
     parse_rule,
 )
+from pcs.lib.cib.rule.in_effect import get_rule_evaluator
 from pcs.lib.cib.tools import (
     IdProvider,
     get_pacemaker_version_by_which_cib_was_validated,
 )
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
-from pcs.lib.external import CommandRunner
-from pcs.lib.pacemaker.live import has_rule_in_effect_status_tool
 
 
 def resource_defaults_create(
@@ -167,7 +164,7 @@ def resource_defaults_config(
     evaluate_expired -- also evaluate whether rules are expired or in effect
     """
     cib = env.get_cib()
-    rule_evaluator = _get_rule_evaluator(
+    rule_evaluator = get_rule_evaluator(
         cib, env.cmd_runner(), env.report_processor, evaluate_expired
     )
 
@@ -195,7 +192,7 @@ def operation_defaults_config(
     evaluate_expired -- also evaluate whether rules are expired or in effect
     """
     cib = env.get_cib()
-    rule_evaluator = _get_rule_evaluator(
+    rule_evaluator = get_rule_evaluator(
         cib, env.cmd_runner(), env.report_processor, evaluate_expired
     )
 
@@ -211,23 +208,6 @@ def operation_defaults_config(
         instance_attributes=get_config(nvpair_multi.NVSET_INSTANCE),
         meta_attributes=get_config(nvpair_multi.NVSET_META),
     )
-
-
-def _get_rule_evaluator(
-    cib: _Element,
-    runner: CommandRunner,
-    report_processor: reports.ReportProcessor,
-    evaluate_expired: bool,
-) -> RuleInEffectEval:
-    if evaluate_expired:
-        if has_rule_in_effect_status_tool():
-            return RuleInEffectEvalOneByOne(cib, runner)
-        report_processor.report(
-            ReportItem.warning(
-                reports.messages.RuleInEffectStatusDetectionNotSupported()
-            )
-        )
-    return RuleInEffectEvalDummy()
 
 
 def _defaults_config(

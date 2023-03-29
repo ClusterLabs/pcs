@@ -5,6 +5,12 @@ from pcs.common import (
     pacemaker,
     reports,
 )
+from pcs.common.const import PcmkAction
+from pcs.common.pacemaker.constraint import CibResourceSetDto
+from pcs.common.pacemaker.types import (
+    CibResourceSetOrdering,
+    CibResourceSetOrderType,
+)
 from pcs.common.reports.item import ReportItem
 from pcs.lib import validate
 from pcs.lib.cib.resource import group
@@ -13,11 +19,12 @@ from pcs.lib.cib.tools import (
     are_new_role_names_supported,
     find_unique_id,
     get_elements_by_ids,
+    role_constructor,
 )
 from pcs.lib.errors import LibraryError
+from pcs.lib.pacemaker.values import is_true
+from pcs.lib.tools import get_optional_value
 from pcs.lib.xml_tools import export_attributes
-
-_BOOLEAN_VALUES = ("true", "false")
 
 _ATTRIBUTES = ("action", "require-all", "role", "sequential")
 
@@ -42,9 +49,9 @@ def _validate_options(options) -> reports.ReportItemList:
     validators = [
         validate.NamesIn(_ATTRIBUTES, option_type="set"),
         validate.ValueIn("action", const.PCMK_ACTIONS),
-        validate.ValueIn("require-all", _BOOLEAN_VALUES),
+        validate.ValuePcmkBoolean("require-all"),
         validate.ValueIn("role", const.PCMK_ROLES),
-        validate.ValueIn("sequential", _BOOLEAN_VALUES),
+        validate.ValuePcmkBoolean("sequential"),
         validate.ValueDeprecated(
             "role",
             {
@@ -111,3 +118,43 @@ def is_resource_in_same_group(cib, resource_id_list):
                 reports.messages.CannotSetOrderConstraintsForResourcesInTheSameGroup()
             )
         )
+
+
+def is_set_constraint(constraint_el: etree._Element) -> bool:
+    return constraint_el.find("./resource_set") is not None
+
+
+def _resource_set_element_to_dto(
+    resource_set_el: etree._Element,
+) -> CibResourceSetDto:
+    return CibResourceSetDto(
+        set_id=resource_set_el.get("id", ""),
+        sequential=get_optional_value(
+            is_true, resource_set_el.get("sequential")
+        ),
+        require_all=get_optional_value(
+            is_true, resource_set_el.get("require-all")
+        ),
+        ordering=get_optional_value(
+            CibResourceSetOrdering, resource_set_el.get("ordering")
+        ),
+        action=get_optional_value(PcmkAction, resource_set_el.get("action")),
+        role=get_optional_value(role_constructor, resource_set_el.get("role")),
+        score=resource_set_el.get("score"),
+        kind=get_optional_value(
+            CibResourceSetOrderType, resource_set_el.get("kind")
+        ),
+        resources_ids=[
+            str(rsc_ref.attrib["id"])
+            for rsc_ref in resource_set_el.findall("./resource_ref")
+        ],
+    )
+
+
+def constraint_element_to_resource_set_dto_list(
+    constraint_el: etree._Element,
+) -> list[CibResourceSetDto]:
+    return [
+        _resource_set_element_to_dto(set_el)
+        for set_el in constraint_el.findall("./resource_set")
+    ]

@@ -15,7 +15,6 @@ class ConstraintPlainTest(TestCase):
                         "id": "some_id",
                     }
                 },
-                with_id=True,
             ),
         )
 
@@ -23,6 +22,6 @@ class ConstraintPlainTest(TestCase):
         self.assertEqual(
             "resourceA (id:some_id)",
             ticket.constraint_plain(
-                {"options": {"rsc": "resourceA", "id": "some_id"}}, with_id=True
+                {"options": {"rsc": "resourceA", "id": "some_id"}}
             ),
         )

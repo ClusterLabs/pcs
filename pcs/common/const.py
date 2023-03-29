@@ -4,6 +4,7 @@ from pcs.common.tools import Version
 
 PcmkRoleType = NewType("PcmkRoleType", str)
 PcmkOnFailAction = NewType("PcmkOnFailAction", str)
+PcmkAction = NewType("PcmkAction", str)
 
 PCMK_ROLE_STARTED = PcmkRoleType("Started")
 PCMK_ROLE_STOPPED = PcmkRoleType("Stopped")
@@ -27,8 +28,16 @@ PCMK_ROLES_RUNNING = (
     (PCMK_ROLE_STARTED,) + PCMK_ROLES_PROMOTED + PCMK_ROLES_UNPROMOTED
 )
 PCMK_ROLES = (PCMK_ROLE_STOPPED,) + PCMK_ROLES_RUNNING
-PCMK_ACTION_START = "start"
-PCMK_ACTIONS = (PCMK_ACTION_START, "stop", "promote", "demote")
+PCMK_ACTION_START = PcmkAction("start")
+PCMK_ACTION_STOP = PcmkAction("stop")
+PCMK_ACTION_PROMOTE = PcmkAction("promote")
+PCMK_ACTION_DEMOTE = PcmkAction("demote")
+PCMK_ACTIONS = (
+    PCMK_ACTION_START,
+    PCMK_ACTION_STOP,
+    PCMK_ACTION_PROMOTE,
+    PCMK_ACTION_DEMOTE,
+)
 PCMK_NEW_ROLES_CIB_VERSION = Version(3, 7, 0)
 PCMK_RULES_NODE_ATTR_EXPR_WITH_INT_TYPE_CIB_VERSION = Version(3, 5, 0)
 PCMK_ON_FAIL_DEMOTE_CIB_VERSION = Version(3, 4, 0)

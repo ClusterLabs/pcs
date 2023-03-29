@@ -12,12 +12,12 @@ import tarfile
 import tempfile
 import time
 from io import BytesIO
+from typing import cast
 from xml.dom.minidom import parse
 
 from pcs import (
     alert,
     cluster,
-    constraint,
     quorum,
     settings,
     status,
@@ -31,7 +31,7 @@ from pcs.cli.common.output import (
     INDENT_STEP,
     smart_wrap_text,
 )
-from pcs.cli.constraint import command as constraint_command
+from pcs.cli.constraint.output import constraints_to_text
 from pcs.cli.nvset import nvset_dto_list_to_lines
 from pcs.cli.reports import process_library_reports
 from pcs.cli.reports.output import (
@@ -42,7 +42,7 @@ from pcs.cli.resource.output import (
     ResourcesConfigurationFacade,
     resources_to_text,
 )
-from pcs.common.reports import constraints as constraints_reports
+from pcs.common.pacemaker.constraint import CibConstraintsDto
 from pcs.common.str_tools import indent
 from pcs.lib.commands import quorum as lib_quorum
 from pcs.lib.errors import LibraryError
@@ -93,7 +93,6 @@ def _config_show_cib_lines(lib):
     utils.pcs_options["--full"] = 1
     # get latest modifiers object after updating pcs_options
     modifiers = utils.get_input_modifiers()
-    cib_dom = utils.get_cib_dom()
 
     resources_facade = ResourcesConfigurationFacade.from_resources_dto(
         lib.resource.get_configured_resources()
@@ -127,40 +126,17 @@ def _config_show_cib_lines(lib):
     if levels_lines:
         all_lines.extend(indent(levels_lines, indent_step=2))
 
-    all_lines.append("")
-    constraints_element = cib_dom.getElementsByTagName("constraints")[0]
-    all_lines.extend(
-        constraint.location_lines(
-            constraints_element,
-            showDetail=True,
-            show_expired=True,
-            verify_expiration=False,
+    constraints_lines = smart_wrap_text(
+        constraints_to_text(
+            cast(
+                CibConstraintsDto,
+                lib.constraint.get_config(evaluate_rules=False),
+            ),
+            modifiers.is_specified("--full"),
         )
     )
-    all_lines.extend(
-        constraint_command.config_cmd(
-            "Ordering Constraints:",
-            lib.constraint_order.config,
-            constraints_reports.order_plain,
-            modifiers.get_subset("-f", "--full"),
-        )
-    )
-    all_lines.extend(
-        constraint_command.config_cmd(
-            "Colocation Constraints:",
-            lib.constraint_colocation.config,
-            constraints_reports.colocation_plain,
-            modifiers.get_subset("-f", "--full"),
-        )
-    )
-    all_lines.extend(
-        constraint_command.config_cmd(
-            "Ticket Constraints:",
-            lib.constraint_ticket.config,
-            constraints_reports.ticket_plain,
-            modifiers.get_subset("-f", "--full"),
-        )
-    )
+    if constraints_lines:
+        all_lines.extend([""] + constraints_lines)
 
     all_lines.append("")
     all_lines.extend(alert.alert_config_lines(lib))

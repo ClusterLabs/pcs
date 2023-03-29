@@ -4,10 +4,9 @@ def _is_true(val) -> bool:
     return val.lower() in {"true", "on", "yes", "y", "1"}
 
 
-def constraint_plain(constraint_info, with_id=False):
+def constraint_plain(constraint_info):
     """
     dict constraint_info see constraint in pcs/lib/exchange_formats.md
-    bool with_id have to show id with options_dict
     """
     options = constraint_info["options"]
     oc_resource1 = options.get("first", "")
@@ -30,8 +29,7 @@ def constraint_plain(constraint_info, with_id=False):
         score_text = "(kind:Mandatory)"
     else:
         score_text = "(score:" + oc_score + ")"
-    if with_id:
-        oc_id_out = "(id:" + oc_id + ")"
+    oc_id_out = "(id:" + oc_id + ")"
     already_processed_options = (
         "first",
         "then",

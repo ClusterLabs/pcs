@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+- Support for output formats `json` and `cmd` to constraints config commands
+  ([rhbz#2179388], [rhbz#1423473], [rhbz#2163953])
+
 ### Fixed
 - Crash in commands that ask for user input (like `pcs cluster destroy`) when
   stdin is closed ([ghissue#612])
@@ -11,8 +15,11 @@
   Pacemaker-2.1.5-rc1 ([rhbz#2177996])
 
 [ghissue#612]: https://github.com/ClusterLabs/pcs/issues/612
+[rhbz#1423473]: https://bugzilla.redhat.com/show_bug.cgi?id=1423473
+[rhbz#2163953]: https://bugzilla.redhat.com/show_bug.cgi?id=2163953
 [rhbz#2175881]: https://bugzilla.redhat.com/show_bug.cgi?id=2175881
 [rhbz#2177996]: https://bugzilla.redhat.com/show_bug.cgi?id=2177996
+[rhbz#2179388]: https://bugzilla.redhat.com/show_bug.cgi?id=2179388
 
 
 ## [0.11.5] - 2023-03-01

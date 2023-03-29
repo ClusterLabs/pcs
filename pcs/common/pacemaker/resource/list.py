@@ -10,7 +10,7 @@ from .primitive import CibResourcePrimitiveDto
 
 
 @dataclass(frozen=True)
-class ListCibResourcesDto(DataTransferObject):
+class CibResourcesDto(DataTransferObject):
     primitives: Sequence[CibResourcePrimitiveDto]
     clones: Sequence[CibResourceCloneDto]
     groups: Sequence[CibResourceGroupDto]

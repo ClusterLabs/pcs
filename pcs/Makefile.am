@@ -41,6 +41,13 @@ EXTRA_DIST		= \
 			  cli/constraint_colocation/command.py \
 			  cli/constraint_colocation/__init__.py \
 			  cli/constraint/command.py \
+			  cli/constraint/output/__init__.py \
+			  cli/constraint/output/all.py \
+			  cli/constraint/output/colocation.py \
+			  cli/constraint/output/location.py \
+			  cli/constraint/output/order.py \
+			  cli/constraint/output/set.py \
+			  cli/constraint/output/ticket.py \
 			  cli/constraint/__init__.py \
 			  cli/constraint_order/command.py \
 			  cli/constraint_order/__init__.py \
@@ -107,6 +114,13 @@ EXTRA_DIST		= \
 			  common/interface/__init__.py \
 			  common/node_communicator.py \
 			  common/pacemaker/__init__.py \
+			  common/pacemaker/constraint/__init__.py \
+			  common/pacemaker/constraint/all.py \
+			  common/pacemaker/constraint/colocation.py \
+			  common/pacemaker/constraint/location.py \
+			  common/pacemaker/constraint/order.py \
+			  common/pacemaker/constraint/set.py \
+			  common/pacemaker/constraint/ticket.py \
 			  common/pacemaker/defaults.py \
 			  common/pacemaker/nvset.py \
 			  common/pacemaker/resource/__init__.py \
@@ -119,6 +133,8 @@ EXTRA_DIST		= \
 			  common/pacemaker/resource/relations.py \
 			  common/pacemaker/role.py \
 			  common/pacemaker/rule.py \
+			  common/pacemaker/tools.py \
+			  common/pacemaker/types.py \
 			  common/permissions/__init__.py \
 			  common/permissions/types.py \
 			  common/pcs_pycurl.py \
@@ -223,6 +239,7 @@ EXTRA_DIST		= \
 			  lib/cib/const.py \
 			  lib/cib/constraint/colocation.py \
 			  lib/cib/constraint/constraint.py \
+			  lib/cib/constraint/location.py \
 			  lib/cib/constraint/__init__.py \
 			  lib/cib/constraint/order.py \
 			  lib/cib/constraint/resource_set.py \

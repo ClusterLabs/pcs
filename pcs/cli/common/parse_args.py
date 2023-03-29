@@ -26,7 +26,7 @@ ModifierValueType = Union[None, bool, str]
 _OUTPUT_FORMAT_OPTION_STR = "output-format"
 _OUTPUT_FORMAT_OPTION = f"--{_OUTPUT_FORMAT_OPTION_STR}"
 OUTPUT_FORMAT_VALUE_TEXT = "text"
-_OUTPUT_FORMAT_VALUES = frozenset((OUTPUT_FORMAT_VALUE_TEXT, "cmd", "json"))
+OUTPUT_FORMAT_VALUES = frozenset((OUTPUT_FORMAT_VALUE_TEXT, "cmd", "json"))
 
 ARG_TYPE_DELIMITER = "%"
 
@@ -336,7 +336,9 @@ def group_by_keywords(
     return get_completed_groups()
 
 
-def parse_typed_arg(arg, allowed_types, default_type):
+def parse_typed_arg(
+    arg: str, allowed_types: StringSequence, default_type: str
+) -> tuple[str, str]:
     """
     Get (type, value) from a typed commandline argument.
 
@@ -643,7 +645,7 @@ class InputModifiers:
         raise AssertionError(f"Non existing default value for '{option}'")
 
     def get_output_format(
-        self, supported_formats: Set[str] = _OUTPUT_FORMAT_VALUES
+        self, supported_formats: Set[str] = OUTPUT_FORMAT_VALUES
     ) -> str:
         output_format = self.get(_OUTPUT_FORMAT_OPTION)
         if output_format in supported_formats:

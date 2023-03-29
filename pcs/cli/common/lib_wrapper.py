@@ -28,6 +28,7 @@ from pcs.lib.commands import (
     tag,
 )
 from pcs.lib.commands.constraint import colocation as constraint_colocation
+from pcs.lib.commands.constraint import common as constraint_common
 from pcs.lib.commands.constraint import order as constraint_order
 from pcs.lib.commands.constraint import ticket as constraint_ticket
 from pcs.lib.env import LibraryEnvironment
@@ -232,7 +233,6 @@ def load_module(env, middleware_factory, name):
             middleware.build(middleware_factory.cib),
             {
                 "create_with_set": constraint_colocation.create_with_set,
-                "config": constraint_colocation.config,
             },
         )
 
@@ -242,7 +242,6 @@ def load_module(env, middleware_factory, name):
             middleware.build(middleware_factory.cib),
             {
                 "create_with_set": constraint_order.create_with_set,
-                "config": constraint_order.config,
             },
         )
 
@@ -252,9 +251,17 @@ def load_module(env, middleware_factory, name):
             middleware.build(middleware_factory.cib),
             {
                 "create_with_set": constraint_ticket.create_with_set,
-                "config": constraint_ticket.config,
                 "create": constraint_ticket.create,
                 "remove": constraint_ticket.remove,
+            },
+        )
+
+    if name == "constraint":
+        return bind_all(
+            env,
+            middleware.build(middleware_factory.cib),
+            {
+                "get_config": constraint_common.get_config,
             },
         )
 

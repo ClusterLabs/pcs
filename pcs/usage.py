@@ -294,8 +294,8 @@ _OUTPUT_FORMAT_DESC = _unwrap(
     """
     There are 3 formats of output available: 'cmd', 'json' and 'text', default
     is 'text'. Format 'text' is a human friendly output. Format 'cmd' prints
-    pcs commands which can be used to recreate the same configuration. Format 'json' is a
-    machine oriented output of the configuration.
+    pcs commands which can be used to recreate the same configuration. Format
+    'json' is a machine oriented output of the configuration.
     """
 )
 
@@ -2309,10 +2309,11 @@ Usage: pcs constraint [constraints]...
 Manage resource constraints
 
 Commands:
-    [config] [--all] [--full]
+    [config] [--all] [--full] [{output_format_syntax}]
         List all current constraints that are not expired. If --all
         is specified also show expired constraints. If --full is specified
         also list the constraint ids.
+        {output_format_desc}
 
     location <resource> prefers <node>[=<score>] [<node>[=<score>]]...
         Create a location constraint on a resource to prefer the specified node
@@ -2348,17 +2349,19 @@ Commands:
         If id is omitted one is generated from the resource id. If
         resource-discovery is omitted it defaults to 'always'.
 
-    location [config [resources [<resource>...]] | [nodes [<node>...]]]
-            [--all] [--full]
-        List all the current location constraints that are not expired. If
+    location [config [resources [<resource reference>...]] | [nodes [<node>...]]]
+            [--all] [--full] [{output_format_syntax}]
+        List all the current location constraints that are not expired.  If
         'resources' is specified, location constraints are displayed per
-        resource (default). If 'nodes' is specified, location constraints are
-        displayed per node. If specific nodes or resources are specified then
-        we only show information about them. Resource may be either a resource
-        id <resource_id> or %<resource_id> or resource%<resource_id>, or a
-        resource name regular expression regexp%<resource_pattern>. If --full
-        is specified show the internal constraint id's. If --all is
-        specified show the expired constraints.
+        resource. If 'nodes' is specified, location constraints are displayed
+        per node. If specific nodes, resources or resource name regular
+        expressions are specified, only constraints containing those will be
+        shown. Resource reference may be either a resource id <resource_id> or
+        %<resource_id> or resource%<resource_id>, or a resource name regular
+        expression regexp%<resource_pattern>. If --full is specified show the
+        internal constraint id's. If --all is specified show the expired
+        constraints.
+        {output_format_desc}
 
     location add <id> <resource> <node> <score> [resource-discovery=<option>]
         Add a location constraint with the appropriate id for the specified
@@ -2372,9 +2375,10 @@ Commands:
     location remove <id>
         Remove a location constraint with the appropriate id.
 
-    order [config] [--full]
+    order [config] [--full] [{output_format_syntax}]
         List all current ordering constraints (if --full is specified show
         the internal constraint id's as well).
+        {output_format_desc}
 
     order [action] <resource id> then [action] <resource id> [options]
         Add an ordering constraint specifying actions (start, stop, promote,
@@ -2398,9 +2402,10 @@ Commands:
     order remove <resource1> [resourceN]...
         Remove resource from any ordering constraint
 
-    colocation [config] [--full]
+    colocation [config] [--full] [{output_format_syntax}]
         List all current colocation constraints (if --full is specified show
         the internal constraint id's as well).
+        {output_format_desc}
 
     colocation add [<role>] <source resource id> with [<role>]
                    <target resource id> [score] [options] [id=constraint-id]
@@ -2427,9 +2432,10 @@ Commands:
     colocation remove <source resource id> <target resource id>
         Remove colocation constraints with specified resources.
 
-    ticket [config] [--full]
+    ticket [config] [--full] [{output_format_syntax}]
         List all current ticket constraints (if --full is specified show
         the internal constraint id's as well).
+        {output_format_desc}
 
     ticket add <ticket> [<role>] <resource id> [<options>]
                [id=<constraint-id>]
@@ -2485,7 +2491,11 @@ Commands:
     rule remove <rule id>
         Remove a rule from its location constraint and if it's the last rule,
         the constraint will also be removed.
-"""
+""".format(
+        output_format_syntax=_OUTPUT_FORMAT_SYNTAX,
+        output_format_desc=_format_desc((" ", _OUTPUT_FORMAT_DESC)),
+    )
+
     return sub_usage(args, output)
 
 

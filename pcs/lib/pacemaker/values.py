@@ -21,29 +21,35 @@ _ID_REST_CHARS_NOT_RE = re.compile("[^a-zA-Z0-9_.-]")
 SCORE_INFINITY = "INFINITY"
 
 
-def is_boolean(val) -> bool:
+def is_boolean(val: str) -> bool:
     """
     Does pacemaker consider a value to be a boolean?
-    See crm_is_true in pacemaker/lib/common/utils.c
-    val checked value
+    Pacemaker ignores case of this values.
+    See crm_str_to_boolean in pacemaker/lib/common/strings.c
+
+    val -- checked value
     """
     return val.lower() in BOOLEAN_VALUES
 
 
-def is_true(val) -> bool:
+def is_true(val: str) -> bool:
     """
     Does pacemaker consider a value to be true?
-    See crm_is_true in pacemaker/lib/common/utils.c
-    var checked value
+    Pacemaker ignores case of this values.
+    See crm_str_to_boolean in pacemaker/lib/common/strings.c
+
+    val -- checked value
     """
     return val.lower() in _BOOLEAN_TRUE
 
 
-def is_false(val) -> bool:
+def is_false(val: str) -> bool:
     """
     Does pacemaker consider a value to be false?
-    See crm_is_true in pacemaker/lib/common/utils.c
-    var checked value
+    Pacemaker ignores case of this values.
+    See crm_str_to_boolean in pacemaker/lib/common/strings.c
+
+    val -- checked value
     """
     return val.lower() in _BOOLEAN_FALSE
 

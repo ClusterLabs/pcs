@@ -16,7 +16,7 @@ from pcs.common.pacemaker.resource.bundle import (
 )
 from pcs.common.pacemaker.resource.clone import CibResourceCloneDto
 from pcs.common.pacemaker.resource.group import CibResourceGroupDto
-from pcs.common.pacemaker.resource.list import ListCibResourcesDto
+from pcs.common.pacemaker.resource.list import CibResourcesDto
 from pcs.common.pacemaker.resource.operations import CibResourceOperationDto
 from pcs.common.pacemaker.resource.primitive import CibResourcePrimitiveDto
 from pcs.common.resource_agent.dto import ResourceAgentNameDto
@@ -615,7 +615,7 @@ BUNDLE_B2 = CibResourceBundleDto(
     instance_attributes=[],
 )
 
-ALL_RESOURCES = ListCibResourcesDto(
+ALL_RESOURCES = CibResourcesDto(
     primitives=[
         PRIMITIVE_R1,
         PRIMITIVE_R7,

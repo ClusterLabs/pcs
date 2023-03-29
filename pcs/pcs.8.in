@@ -86,8 +86,8 @@ tag
 [status [<resource id | tag id>] [node=<node>] [\fB\-\-hide\-inactive\fR]]
 Show status of all currently configured resources. If \fB\-\-hide\-inactive\fR is specified, only show active resources. If a resource or tag id is specified, only show status of the specified resource or resources in the specified tag. If node is specified, only show status of resources configured for the specified node.
 .TP
-config [\fB\-\-output\-format\fR text|cmd|json] [<resource id>]...
-Show options of all currently configured resources or if resource ids are specified show the options for the specified resource ids. There are 3 formats of output available: 'cmd', 'json' and 'text', default is 'text'. Format 'text' is a human friendly output. Format 'cmd' prints pcs commands which can be used to recreate the same configuration. Format 'json' is a machine oriented output of the configuration.
+config [@OUTPUT_FORMAT_SYNTAX_DOC@] [<resource id>]...
+Show options of all currently configured resources or if resource ids are specified show the options for the specified resource ids. @OUTPUT_FORMAT_DESC_DOC@
 .TP
 list [filter] [\fB\-\-nodesc\fR]
 Show list of all available resource agents (if filter is provided then only resource agents matching the filter will be shown). If \fB\-\-nodesc\fR is used then descriptions of resource agents are not printed.
@@ -508,8 +508,8 @@ Set link options for the second and fourth links only. Link options are matched 
 Create a cluster using udp transport with a non-default port:
     pcs cluster setup newcluster node1 node2 transport udp link mcastport=55405
 .TP
-config [show] [\fB\-\-output\-format\fR cmd|json|text] [\fB\-\-corosync_conf\fR <path>]
-Show cluster configuration. There are 3 formats of output available: 'cmd', 'json' and 'text', default is 'text'. Format 'text' is a human friendly output. Format 'cmd' prints pcs commands which can be used to recreate the same configuration. Format 'json' is a machine oriented output of the configuration. If \fB\-\-corosync_conf\fR is specified, configuration file specified by <path> is used instead of the current cluster configuration.
+config [show] [@OUTPUT_FORMAT_SYNTAX_DOC@] [\fB\-\-corosync_conf\fR <path>]
+Show cluster configuration. @OUTPUT_FORMAT_DESC_DOC@ If \fB\-\-corosync_conf\fR is specified, configuration file specified by <path> is used instead of the current cluster configuration.
 .TP
 config update [transport <transport options>] [compression <compression options>] [crypto <crypto options>] [totem <totem options>] [\fB\-\-corosync_conf\fR <path>]
 Update cluster configuration. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='.
@@ -682,8 +682,8 @@ Create a tarball containing everything needed when reporting cluster problems.  
 [status [<resource id | tag id>] [node=<node>] [\fB\-\-hide\-inactive\fR]]
 Show status of all currently configured stonith devices. If \fB\-\-hide\-inactive\fR is specified, only show active stonith devices. If a resource or tag id is specified, only show status of the specified resource or resources in the specified tag. If node is specified, only show status of resources configured for the specified node.
 .TP
-config [\fB\-\-output\-format\fR text|cmd|json] [<stonith id>]...
-Show options of all currently configured stonith devices or if stonith device ids are specified show the options for the specified stonith device ids. There are 3 formats of output available: 'cmd', 'json' and 'text', default is 'text'. Format 'text' is a human friendly output. Format 'cmd' prints pcs commands which can be used to recreate the same configuration. Format 'json' is a machine oriented output of the configuration.
+config [@OUTPUT_FORMAT_SYNTAX_DOC@] [<stonith id>]...
+Show options of all currently configured stonith devices or if stonith device ids are specified show the options for the specified stonith device ids. @OUTPUT_FORMAT_DESC_DOC@
 .TP
 list [filter] [\fB\-\-nodesc\fR]
 Show list of all available stonith agents (if filter is provided then only stonith agents matching the filter will be shown). If \fB\-\-nodesc\fR is used then descriptions of stonith agents are not printed.
@@ -1070,8 +1070,8 @@ Remove property from configuration.
 See \fBpacemaker-controld\fR(7) and \fBpacemaker-schedulerd\fR(7) man pages for a description of the properties.
 .SS "constraint"
 .TP
-[config] [\fB\-\-full\fR] [\fB\-\-all\fR]
-List all current constraints that are not expired. If \fB\-\-all\fR is specified also show expired constraints. If \fB\-\-full\fR is specified also list the constraint ids.
+[config] [\fB\-\-full\fR] [\fB\-\-all\fR] [@OUTPUT_FORMAT_SYNTAX_DOC@]
+List all current constraints that are not expired. If \fB\-\-all\fR is specified also show expired constraints. If \fB\-\-full\fR is specified also list the constraint ids. @OUTPUT_FORMAT_DESC_DOC@
 .TP
 location <resource> prefers <node>[=<score>] [<node>[=<score>]]...
 Create a location constraint on a resource to prefer the specified node with score (default score: INFINITY). Resource may be either a resource id <resource_id> or %<resource_id> or resource%<resource_id>, or a resource name regular expression regexp%<resource_pattern>.
@@ -1100,8 +1100,8 @@ Creates a location constraint with a rule on the specified resource where expres
 .br
 where duration options and date spec options are: hours, monthdays, weekdays, yeardays, months, weeks, years, weekyears, moon. Resource may be either a resource id <resource_id> or %<resource_id> or resource%<resource_id>, or a resource name regular expression regexp%<resource_pattern>. If score is omitted it defaults to INFINITY. If id is omitted one is generated from the resource id. If resource\-discovery is omitted it defaults to 'always'.
 .TP
-location [config [resources [<resource>...]] | [nodes [<node>...]]] [\fB\-\-full\fR] [\fB\-\-all\fR]
-List all the current location constraints that are not expired. If 'resources' is specified, location constraints are displayed per resource (default). If 'nodes' is specified, location constraints are displayed per node. If specific nodes or resources are specified then we only show information about them. Resource may be either a resource id <resource_id> or %<resource_id> or resource%<resource_id>, or a resource name regular expression regexp%<resource_pattern>. If \fB\-\-full\fR is specified show the internal constraint id's as well. If \fB\-\-all\fR is specified show the expired constraints.
+location [config [resources [<resource reference>...]] | [nodes [<node>...]]] [\fB\-\-full\fR] [\fB\-\-all\fR] [@OUTPUT_FORMAT_SYNTAX_DOC@]
+List all the current location constraints that are not expired. If 'resources' is specified, location constraints are displayed per resource. If 'nodes' is specified, location constraints are displayed per node. If specific nodes, resources or resource name regular expressions are specified, only constraints containing those will be shown. Resource reference may be either a resource id <resource_id> or %<resource_id> or resource%<resource_id>, or a resource name regular expression regexp%<resource_pattern>. If \fB\-\-full\fR is specified show the internal constraint id's as well. If \fB\-\-all\fR is specified show the expired constraints. @OUTPUT_FORMAT_DESC_DOC@
 .TP
 location add <id> <resource> <node> <score> [resource\-discovery=<option>]
 Add a location constraint with the appropriate id for the specified resource, node name and score. Resource may be either a resource id <resource_id> or %<resource_id> or resource%<resource_id>, or a resource name regular expression regexp%<resource_pattern>.
@@ -1112,8 +1112,8 @@ Remove a location constraint with the appropriate id.
 location remove <id>
 Remove a location constraint with the appropriate id.
 .TP
-order [config] [\fB\-\-full\fR]
-List all current ordering constraints (if \fB\-\-full\fR is specified show the internal constraint id's as well).
+order [config] [\fB\-\-full\fR] [@OUTPUT_FORMAT_SYNTAX_DOC@]
+List all current ordering constraints (if \fB\-\-full\fR is specified show the internal constraint id's as well). @OUTPUT_FORMAT_DESC_DOC@
 .TP
 order [action] <resource id> then [action] <resource id> [options]
 Add an ordering constraint specifying actions (start, stop, promote, demote) and if no action is specified the default action will be start.  Available options are kind=Optional/Mandatory/Serialize, symmetrical=true/false, require\-all=true/false and id=<constraint\-id>.
@@ -1127,8 +1127,8 @@ Remove resource from any ordering constraint
 order remove <resource1> [resourceN]...
 Remove resource from any ordering constraint
 .TP
-colocation [config] [\fB\-\-full\fR]
-List all current colocation constraints (if \fB\-\-full\fR is specified show the internal constraint id's as well).
+colocation [config] [\fB\-\-full\fR] [@OUTPUT_FORMAT_SYNTAX_DOC@]
+List all current colocation constraints (if \fB\-\-full\fR is specified show the internal constraint id's as well). @OUTPUT_FORMAT_DESC_DOC@
 .TP
 colocation add [<role>] <source resource id> with [<role>] <target resource id> [score] [options] [id=constraint\-id]
 Request <source resource> to run on the same node where pacemaker has determined <target resource> should run.  Positive values of score mean the resources should be run on the same node, negative values mean the resources should not be run on the same node.  Specifying 'INFINITY' (or '\-INFINITY') for the score forces <source resource> to run (or not run) with <target resource> (score defaults to "INFINITY"). A role can be: 'Promoted', 'Unpromoted', 'Started', 'Stopped' (if no role is specified, it defaults to 'Started').
@@ -1142,8 +1142,8 @@ Remove colocation constraints with specified resources.
 colocation remove <source resource id> <target resource id>
 Remove colocation constraints with specified resources.
 .TP
-ticket [config] [\fB\-\-full\fR]
-List all current ticket constraints (if \fB\-\-full\fR is specified show the internal constraint id's as well).
+ticket [config] [\fB\-\-full\fR] [@OUTPUT_FORMAT_SYNTAX_DOC@]
+List all current ticket constraints (if \fB\-\-full\fR is specified show the internal constraint id's as well). @OUTPUT_FORMAT_DESC_DOC@
 .TP
 ticket add <ticket> [<role>] <resource id> [<options>] [id=<constraint\-id>]
 Create a ticket constraint for <resource id>. Available option is loss\-policy=fence/stop/freeze/demote. A role can be Promoted, Unpromoted, Started or Stopped.

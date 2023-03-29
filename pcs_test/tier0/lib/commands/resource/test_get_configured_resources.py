@@ -2,7 +2,7 @@ from unittest import TestCase
 
 from pcs.common import reports
 from pcs.common.pacemaker.resource.bundle import CibResourceBundleDto
-from pcs.common.pacemaker.resource.list import ListCibResourcesDto
+from pcs.common.pacemaker.resource.list import CibResourcesDto
 from pcs.common.pacemaker.resource.primitive import CibResourcePrimitiveDto
 from pcs.common.resource_agent.dto import ResourceAgentNameDto
 from pcs.lib.cib.resource.bundle import GENERIC_CONTAINER_TYPES
@@ -30,7 +30,7 @@ class GetResourceRelationsTree(TestCase):
                 """
         )
         self.assertEqual(
-            ListCibResourcesDto(
+            CibResourcesDto(
                 primitives=[
                     CibResourcePrimitiveDto(
                         id="R1",

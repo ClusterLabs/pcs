@@ -11,12 +11,24 @@ from pcs.common import (
     pacemaker,
     reports,
 )
+from pcs.common.pacemaker.constraint import (
+    CibConstraintTicketAttributesDto,
+    CibConstraintTicketDto,
+    CibConstraintTicketSetDto,
+)
+from pcs.common.pacemaker.types import CibTicketLossPolicy
 from pcs.common.reports.item import ReportItem
 from pcs.lib import validate
 from pcs.lib.booth.config_validators import validate_ticket_name
 from pcs.lib.cib import tools
 from pcs.lib.cib.constraint import constraint
+from pcs.lib.cib.constraint.resource_set import (
+    constraint_element_to_resource_set_dto_list,
+    is_set_constraint,
+)
+from pcs.lib.cib.tools import role_constructor
 from pcs.lib.errors import LibraryError
+from pcs.lib.tools import get_optional_value
 from pcs.lib.xml_tools import remove_when_pointless
 
 TAG_NAME = "rsc_ticket"
@@ -235,3 +247,43 @@ def are_duplicate_with_resource_set(element, other_element):
     return element.attrib["ticket"] == other_element.attrib[
         "ticket"
     ] and constraint.have_duplicate_resource_sets(element, other_element)
+
+
+def _element_to_attributes_dto(
+    element: _Element,
+) -> CibConstraintTicketAttributesDto:
+    return CibConstraintTicketAttributesDto(
+        constraint_id=str(element.attrib["id"]),
+        ticket=str(element.attrib["ticket"]),
+        loss_policy=get_optional_value(
+            CibTicketLossPolicy, element.get("loss-policy")
+        ),
+    )
+
+
+def _constraint_el_to_dto(element: _Element) -> CibConstraintTicketDto:
+    return CibConstraintTicketDto(
+        resource_id=str(element.attrib["rsc"]),
+        role=get_optional_value(role_constructor, element.get("rsc-role")),
+        attributes=_element_to_attributes_dto(element),
+    )
+
+
+def _set_constraint_el_to_dto(element: _Element) -> CibConstraintTicketSetDto:
+    return CibConstraintTicketSetDto(
+        resource_sets=constraint_element_to_resource_set_dto_list(element),
+        attributes=_element_to_attributes_dto(element),
+    )
+
+
+def get_all_as_dtos(
+    constraints_el: _Element,
+) -> tuple[list[CibConstraintTicketDto], list[CibConstraintTicketSetDto]]:
+    plain_list: list[CibConstraintTicketDto] = []
+    set_list: list[CibConstraintTicketSetDto] = []
+    for constraint_el in constraints_el.findall(f"./{TAG_NAME}"):
+        if is_set_constraint(constraint_el):
+            set_list.append(_set_constraint_el_to_dto(constraint_el))
+        else:
+            plain_list.append(_constraint_el_to_dto(constraint_el))
+    return plain_list, set_list

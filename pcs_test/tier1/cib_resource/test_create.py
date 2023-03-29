@@ -1298,8 +1298,9 @@ class FailOrWarnOp(ResourceTest):
                 "op monitor record-pending=Abc"
             ).split(),
             (
-                "Error: 'Abc' is not a valid record-pending value, use '0', "
-                "'1', 'false', 'true'\n" + ERRORS_HAVE_OCCURRED
+                "Error: 'Abc' is not a valid record-pending value, use a "
+                "pacemaker boolean value: '0', '1', 'false', 'n', 'no', "
+                "'off', 'on', 'true', 'y', 'yes'\n" + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -1310,8 +1311,9 @@ class FailOrWarnOp(ResourceTest):
                 "op monitor enabled=Abc"
             ).split(),
             (
-                "Error: 'Abc' is not a valid enabled value, use '0', '1', "
-                "'false', 'true'\n" + ERRORS_HAVE_OCCURRED
+                "Error: 'Abc' is not a valid enabled value, use a pacemaker "
+                "boolean value: '0', '1', 'false', 'n', 'no', 'off', 'on', "
+                "'true', 'y', 'yes'\n" + ERRORS_HAVE_OCCURRED
             ),
         )
 

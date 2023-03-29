@@ -15,7 +15,6 @@ from pcs.common import (
     pacemaker,
     reports,
 )
-from pcs.common.pacemaker import role
 from pcs.common.pacemaker.resource.operations import CibResourceOperationDto
 from pcs.common.reports import (
     ReportItemList,
@@ -44,6 +43,7 @@ from pcs.lib.cib.resource.types import (
 from pcs.lib.cib.tools import (
     create_subelement_id,
     does_id_exist,
+    role_constructor,
 )
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import is_true
@@ -194,8 +194,8 @@ def _validate_operation_list(
             reports.ReportItemSeverity.deprecation(),
         ),
         validate.ValueIn("on-fail", ON_FAIL_VALUES),
-        validate.ValueIn("record-pending", _BOOLEAN_VALUES),
-        validate.ValueIn("enabled", _BOOLEAN_VALUES),
+        validate.ValuePcmkBoolean("record-pending"),
+        validate.ValuePcmkBoolean("enabled"),
         validate.MutuallyExclusive(
             ["interval-origin", "start-delay"], option_type=option_type
         ),
@@ -293,10 +293,7 @@ def op_element_to_dto(
         record_pending=get_optional_value(
             is_true, op_element.get("record-pending")
         ),
-        role=get_optional_value(
-            lambda _role: role.get_value_primary(const.PcmkRoleType(_role)),
-            op_element.get("role"),
-        ),
+        role=get_optional_value(role_constructor, op_element.get("role")),
         on_fail=get_optional_value(
             const.PcmkOnFailAction, op_element.get("on-fail")
         ),

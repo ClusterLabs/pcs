@@ -889,6 +889,16 @@
 
 
 
+    <capability id="pcmk.constraint.config" in-pcs="1" in-pcsd="1">
+      <description>
+        Means to show/export constraint configuration.
+
+        pcs commands:
+          constraint [config] --output-format=text|json|cmd
+        API V2:
+          constraint.get_config
+      </description>
+    </capability>
     <capability id="pcmk.constraint.no-autocorrect" in-pcs="1" in-pcsd="1">
       <description>
         Internal option --autocorrect is not available anymore.

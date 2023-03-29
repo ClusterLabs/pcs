@@ -1,9 +1,7 @@
 from collections import defaultdict
-from shlex import quote
 from typing import (
     Container,
     Dict,
-    Iterable,
     List,
     Optional,
     Sequence,
@@ -14,7 +12,10 @@ from typing import (
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.output import (
     INDENT_STEP,
+    bool_to_cli_value,
     format_wrap_for_terminal,
+    options_to_cmd,
+    pairs_to_cmd,
 )
 from pcs.cli.nvset import nvset_dto_to_lines
 from pcs.cli.reports.output import warn
@@ -30,7 +31,7 @@ from pcs.common.pacemaker.resource.bundle import (
 )
 from pcs.common.pacemaker.resource.clone import CibResourceCloneDto
 from pcs.common.pacemaker.resource.group import CibResourceGroupDto
-from pcs.common.pacemaker.resource.list import ListCibResourcesDto
+from pcs.common.pacemaker.resource.list import CibResourcesDto
 from pcs.common.pacemaker.resource.operations import (
     OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME,
     CibResourceOperationDto,
@@ -71,10 +72,10 @@ def _resource_operation_to_pairs(
     if operation_dto.timeout:
         pairs.append(("timeout", operation_dto.timeout))
     if operation_dto.enabled is not None:
-        pairs.append(("enabled", _bool_to_cli_value(operation_dto.enabled)))
+        pairs.append(("enabled", bool_to_cli_value(operation_dto.enabled)))
     if operation_dto.record_pending is not None:
         pairs.append(
-            ("record-pending", _bool_to_cli_value(operation_dto.record_pending))
+            ("record-pending", bool_to_cli_value(operation_dto.record_pending))
         )
     if operation_dto.role:
         pairs.append(("role", operation_dto.role))
@@ -225,7 +226,7 @@ class ResourcesConfigurationFacade:
 
     @classmethod
     def from_resources_dto(
-        cls, resources_dto: ListCibResourcesDto
+        cls, resources_dto: CibResourcesDto
     ) -> "ResourcesConfigurationFacade":
         return cls(
             resources_dto.primitives,
@@ -491,10 +492,6 @@ def _resource_bundle_container_options_to_pairs(
     return option_list
 
 
-def _bool_to_cli_value(value: bool) -> str:
-    return "1" if value else "0"
-
-
 def _resource_bundle_network_options_to_pairs(
     bundle_network_dto: Optional[CibResourceBundleNetworkOptionsDto],
 ) -> List[Tuple[str, str]]:
@@ -519,7 +516,7 @@ def _resource_bundle_network_options_to_pairs(
         )
     if bundle_network_dto.add_host is not None:
         network_options.append(
-            ("add-host", _bool_to_cli_value(bundle_network_dto.add_host))
+            ("add-host", bool_to_cli_value(bundle_network_dto.add_host))
         )
     return network_options
 
@@ -681,7 +678,7 @@ def _nvset_to_cmd(
     nvsets: Sequence[CibNvsetDto],
 ) -> List[str]:
     if nvsets and nvsets[0].nvpairs:
-        options = _pairs_to_cmd(
+        options = pairs_to_cmd(
             (nvpair.name, nvpair.value) for nvpair in nvsets[0].nvpairs
         )
         if label:
@@ -700,7 +697,7 @@ def _resource_operation_to_cmd(
         cmd.append(
             "{name} {options}".format(
                 name=op.name,
-                options=_pairs_to_cmd(_resource_operation_to_pairs(op)),
+                options=pairs_to_cmd(_resource_operation_to_pairs(op)),
             )
         )
     return ["op"] + indent(cmd, indent_step=INDENT_STEP)
@@ -721,7 +718,7 @@ def _resource_primitive_to_cmd(
 
     output = [
         [
-            _options_to_cmd(
+            options_to_cmd(
                 [
                     "pcs",
                     "stonith" if _is_stonith else "resource",
@@ -746,7 +743,7 @@ def _resource_primitive_to_cmd(
     if utilization_cmd_params:
         output.append(
             [
-                _options_to_cmd(
+                options_to_cmd(
                     ["pcs", "resource", "utilization", primitive_dto.id]
                 )
             ]
@@ -756,24 +753,16 @@ def _resource_primitive_to_cmd(
     return output
 
 
-def _options_to_cmd(options: StringIterable) -> str:
-    return " ".join(quote(option) for option in options)
-
-
-def _pairs_to_cmd(pairs: Iterable[Tuple[str, str]]) -> str:
-    return _options_to_cmd("=".join(item) for item in pairs)
-
-
 def _resource_bundle_to_cmd(
     bundle_dto: CibResourceBundleDto,
 ) -> List[List[str]]:
     if not (bundle_dto.container_type and bundle_dto.container_options):
         return []
     options = [
-        _options_to_cmd(["container", str(bundle_dto.container_type)])
+        options_to_cmd(["container", str(bundle_dto.container_type)])
     ] + indent(
         [
-            _pairs_to_cmd(
+            pairs_to_cmd(
                 _resource_bundle_container_options_to_pairs(
                     bundle_dto.container_options
                 )
@@ -781,7 +770,7 @@ def _resource_bundle_to_cmd(
         ],
         indent_step=INDENT_STEP,
     )
-    network_options = _pairs_to_cmd(
+    network_options = pairs_to_cmd(
         _resource_bundle_network_options_to_pairs(bundle_dto.network)
     )
     if network_options:
@@ -789,7 +778,7 @@ def _resource_bundle_to_cmd(
     for port_mapping in bundle_dto.port_mappings:
         options.append(
             "port-map {}".format(
-                _pairs_to_cmd(
+                pairs_to_cmd(
                     _resource_bundle_port_mapping_to_pairs(port_mapping)
                 )
             )
@@ -797,18 +786,14 @@ def _resource_bundle_to_cmd(
     for storage_mapping in bundle_dto.storage_mappings:
         options.append(
             "storage-map {}".format(
-                _pairs_to_cmd(
+                pairs_to_cmd(
                     _resource_bundle_storage_mapping_to_pairs(storage_mapping)
                 )
             )
         )
     options.extend(_nvset_to_cmd("meta", bundle_dto.meta_attributes))
     return [
-        [
-            _options_to_cmd(
-                ["pcs", "resource", "bundle", "create", bundle_dto.id]
-            )
-        ]
+        [options_to_cmd(["pcs", "resource", "bundle", "create", bundle_dto.id])]
         + indent(options, indent_step=INDENT_STEP)
     ]
 
@@ -816,16 +801,16 @@ def _resource_bundle_to_cmd(
 def _resource_group_to_cmd(group_dto: CibResourceGroupDto) -> List[List[str]]:
     output = []
     output.append(
-        [_options_to_cmd(["pcs", "resource", "group", "add", group_dto.id])]
+        [options_to_cmd(["pcs", "resource", "group", "add", group_dto.id])]
         + indent(
-            [_options_to_cmd(group_dto.member_ids)],
+            [options_to_cmd(group_dto.member_ids)],
             indent_step=INDENT_STEP,
         )
     )
     meta_options = _nvset_to_cmd(None, group_dto.meta_attributes)
     if meta_options:
         output.append(
-            [_options_to_cmd(["pcs", "resource", "meta", group_dto.id])]
+            [options_to_cmd(["pcs", "resource", "meta", group_dto.id])]
             + indent(meta_options, indent_step=INDENT_STEP)
         )
     return output
@@ -834,7 +819,7 @@ def _resource_group_to_cmd(group_dto: CibResourceGroupDto) -> List[List[str]]:
 def _resource_clone_to_cmd(clone_dto: CibResourceCloneDto) -> List[List[str]]:
     return [
         [
-            _options_to_cmd(
+            options_to_cmd(
                 ["pcs", "resource", "clone", clone_dto.member_id, clone_dto.id]
             )
         ]

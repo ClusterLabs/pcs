@@ -12,13 +12,6 @@ from pcs.lib.cib.tools import (
 from . import common
 
 # configure common constraint command
-config = partial(
-    common.config,
-    ticket.TAG_NAME,
-    lambda element: element.attrib.has_key("rsc"),
-)
-
-# configure common constraint command
 create_with_set = partial(
     common.create_with_set,
     ticket.TAG_NAME,

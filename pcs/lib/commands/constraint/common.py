@@ -5,11 +5,18 @@ client.
 """
 from functools import partial
 
+from pcs.common.pacemaker.constraint import CibConstraintsDto
 from pcs.lib.cib.constraint import (
+    colocation,
     constraint,
+    location,
+    order,
     resource_set,
+    ticket,
 )
+from pcs.lib.cib.rule.in_effect import get_rule_evaluator
 from pcs.lib.cib.tools import get_constraints
+from pcs.lib.env import LibraryEnvironment
 
 
 def create_with_set(
@@ -74,21 +81,35 @@ def create_with_set(
     env.push_cib()
 
 
-def config(tag_name, is_plain, env):
-    """
-    string tag_name is constraint tag name
-    callable is_plain takes constraint element and returns if is plain (i.e.
-        without resource set)
-    env is library environment
-    """
-    constraints_info = {"plain": [], "with_resource_sets": []}
-    for element in get_constraints(env.get_cib()).xpath(
-        ".//*[local-name()=$tag_name]", tag_name=tag_name
-    ):
-        if is_plain(element):
-            constraints_info["plain"].append(constraint.export_plain(element))
-        else:
-            constraints_info["with_resource_sets"].append(
-                constraint.export_with_set(element)
-            )
-    return constraints_info
+def get_config(
+    env: LibraryEnvironment,
+    evaluate_rules: bool = False,
+) -> CibConstraintsDto:
+    cib = env.get_cib()
+    constraints_el = get_constraints(cib)
+    rule_evaluator = get_rule_evaluator(
+        cib, env.cmd_runner(), env.report_processor, evaluate_rules
+    )
+    location_constraints, location_set_constraints = location.get_all_as_dtos(
+        constraints_el, rule_evaluator
+    )
+    (
+        colocation_constraints,
+        colocation_set_constraints,
+    ) = colocation.get_all_as_dtos(constraints_el, rule_evaluator)
+    order_constraints, order_set_constraints = order.get_all_as_dtos(
+        constraints_el
+    )
+    ticket_constraints, ticket_set_constraints = ticket.get_all_as_dtos(
+        constraints_el
+    )
+    return CibConstraintsDto(
+        location=location_constraints,
+        location_set=location_set_constraints,
+        colocation=colocation_constraints,
+        colocation_set=colocation_set_constraints,
+        order=order_constraints,
+        order_set=order_set_constraints,
+        ticket=ticket_constraints,
+        ticket_set=ticket_set_constraints,
+    )

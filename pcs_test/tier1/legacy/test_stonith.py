@@ -1423,11 +1423,6 @@ class StonithTest(TestCase, AssertPcsMixin):
                         interval=61s
                 Fencing Levels:
 
-                Location Constraints:
-                Ordering Constraints:
-                Colocation Constraints:
-                Ticket Constraints:
-
                 Alerts:
                  No alerts defined
 
@@ -2588,11 +2583,6 @@ class LevelConfig(LevelTestsBase):
 
         Stonith Devices:{devices}
         Fencing Levels:{levels}
-
-        Location Constraints:
-        Ordering Constraints:
-        Colocation Constraints:
-        Ticket Constraints:
 
         Alerts:
          No alerts defined

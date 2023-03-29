@@ -2212,14 +2212,16 @@ class DomRuleAddTest(TestCase, AssertPcsMixin):
             dedent(
                 f"""\
                 Location Constraints:
-                  Resource: dummy1
-                    Constraint: location-dummy1
+                  resource 'dummy1' (id: location-dummy1)
+                    Rules:
                       Rule: score=INFINITY (id:location-dummy1-rule)
                         Expression: #uname eq node1 (id:location-dummy1-rule-expr)
-                    Constraint: location-dummy1-1
+                  resource 'dummy1' (id: location-dummy1-1)
+                    Rules:
                       Rule: role={const.PCMK_ROLE_PROMOTED_PRIMARY} score=100 (id:MyRule)
                         Expression: #uname eq node2 (id:MyRule-expr)
-                    Constraint: location-dummy1-2
+                  resource 'dummy1' (id: location-dummy1-2)
+                    Rules:
                       Rule: boolean-op=or score=INFINITY (id:complexRule)
                         Rule: boolean-op=and score=0 (id:complexRule-rule)
                           Expression: #uname eq node3 (id:complexRule-rule-expr)
@@ -2229,7 +2231,8 @@ class DomRuleAddTest(TestCase, AssertPcsMixin):
                             Date Spec: hours=12-23 weekdays=1-5 (id:complexRule-rule-1-expr-datespec)
                           Expression: date in_range 2014-07-26 to duration (id:complexRule-rule-1-expr-1)
                             Duration: months=1 (id:complexRule-rule-1-expr-1-duration)
-                    Constraint: location-dummy1-3
+                  resource 'dummy1' (id: location-dummy1-3)
+                    Rules:
                       Rule: boolean-op=and score=INFINITY (id:location-dummy1-3-rule)
                         Expression: #uname eq node3 (id:location-dummy1-3-rule-expr)
                         Rule: boolean-op=or score=0 (id:location-dummy1-3-rule-rule)
@@ -2245,14 +2248,16 @@ class DomRuleAddTest(TestCase, AssertPcsMixin):
             dedent(
                 f"""\
                 Location Constraints:
-                  Resource: dummy1
-                    Constraint: location-dummy1
+                  resource 'dummy1'
+                    Rules:
                       Rule: score=INFINITY
                         Expression: #uname eq node1
-                    Constraint: location-dummy1-1
+                  resource 'dummy1'
+                    Rules:
                       Rule: role={const.PCMK_ROLE_PROMOTED_PRIMARY} score=100
                         Expression: #uname eq node2
-                    Constraint: location-dummy1-2
+                  resource 'dummy1'
+                    Rules:
                       Rule: boolean-op=or score=INFINITY
                         Rule: boolean-op=and score=0
                           Expression: #uname eq node3
@@ -2262,7 +2267,8 @@ class DomRuleAddTest(TestCase, AssertPcsMixin):
                             Date Spec: hours=12-23 weekdays=1-5
                           Expression: date in_range 2014-07-26 to duration
                             Duration: months=1
-                    Constraint: location-dummy1-3
+                  resource 'dummy1'
+                    Rules:
                       Rule: boolean-op=and score=INFINITY
                         Expression: #uname eq node3
                         Rule: boolean-op=or score=0
@@ -2284,8 +2290,8 @@ class DomRuleAddTest(TestCase, AssertPcsMixin):
             dedent(
                 """\
                 Location Constraints:
-                  Resource: dummy1
-                    Constraint: location-dummy1
+                  resource 'dummy1' (id: location-dummy1)
+                    Rules:
                       Rule: score-attribute=pingd (id:location-dummy1-rule)
                         Expression: defined pingd (id:location-dummy1-rule-expr)
                 """,
@@ -2336,10 +2342,7 @@ class DomRuleAddTest(TestCase, AssertPcsMixin):
             "for a rule id\n",
         )
 
-        self.assert_pcs_success(
-            "constraint location config --full".split(),
-            "Location Constraints:\n",
-        )
+        self.assert_pcs_success("constraint location config --full".split(), "")
 
         self.assert_pcs_success(
             "constraint location dummy1 rule id=MyRule #uname eq node1".split(),
@@ -2350,8 +2353,8 @@ class DomRuleAddTest(TestCase, AssertPcsMixin):
             dedent(
                 """\
                 Location Constraints:
-                  Resource: dummy1
-                    Constraint: location-dummy1
+                  resource 'dummy1' (id: location-dummy1)
+                    Rules:
                       Rule: score=INFINITY (id:MyRule)
                         Expression: #uname eq node1 (id:MyRule-expr)
                 """,

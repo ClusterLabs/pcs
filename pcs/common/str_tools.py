@@ -101,6 +101,12 @@ def format_name_value_list(item_list: Sequence[Tuple[str, str]]) -> List[str]:
     return output
 
 
+def pairs_to_text(pairs: Sequence[tuple[str, str]]) -> list[str]:
+    if pairs:
+        return [" ".join(format_name_value_list(pairs))]
+    return []
+
+
 def quote(string: str, chars_to_quote: str) -> str:
     """
     Quote a string if it contains specified characters

@@ -1,7 +1,15 @@
+from typing import (
+    Any,
+    cast,
+)
+
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.parse_args import InputModifiers
 from pcs.cli.constraint import command
+from pcs.cli.constraint.output import print_config
 from pcs.cli.reports.output import deprecation_warning
-from pcs.common.reports import constraints
+from pcs.common.pacemaker.constraint import CibConstraintsDto
+from pcs.common.types import StringSequence
 
 
 def create_with_set(lib, argv, modifiers):
@@ -31,27 +39,22 @@ def show(lib, argv, modifiers):
     return config_cmd(lib, argv, modifiers)
 
 
-def config_cmd(lib, argv, modifiers):
-    """
-    show all order constraints
-    object lib exposes library
-    list argv see usage for "constraint colocation show"
-    dict like object modifiers can contain "full"
-
-    Options:
-      * --full - print more details
-      * -f - CIB file
-    """
-    modifiers.ensure_only_supported("-f", "--full")
+def config_cmd(
+    lib: Any, argv: StringSequence, modifiers: InputModifiers
+) -> None:
+    modifiers.ensure_only_supported("-f", "--output-format", "--full")
     if argv:
         raise CmdLineInputError()
-    print(
-        "\n".join(
-            command.config_cmd(
-                "Ordering Constraints:",
-                lib.constraint_order.config,
-                constraints.order_plain,
-                modifiers,
-            )
-        )
+
+    constraints_dto = cast(
+        CibConstraintsDto,
+        lib.constraint.get_config(evaluate_rules=True),
+    )
+
+    print_config(
+        CibConstraintsDto(
+            order=constraints_dto.order,
+            order_set=constraints_dto.order_set,
+        ),
+        modifiers,
     )

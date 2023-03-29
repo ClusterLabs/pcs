@@ -16,6 +16,7 @@ from pcs.common import (
     const,
     reports,
 )
+from pcs.common.pacemaker import role
 from pcs.common.reports import codes as report_codes
 from pcs.common.reports.item import (
     ReportItem,
@@ -540,3 +541,7 @@ def are_new_role_names_supported(cib: _Element) -> bool:
         get_pacemaker_version_by_which_cib_was_validated(cib)
         >= const.PCMK_NEW_ROLES_CIB_VERSION
     )
+
+
+def role_constructor(value: str) -> const.PcmkRoleType:
+    return role.get_value_primary(const.PcmkRoleType(value))

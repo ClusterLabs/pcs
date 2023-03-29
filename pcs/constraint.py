@@ -1,20 +1,31 @@
 import sys
 import xml.dom.minidom
-from collections import defaultdict
 from enum import Enum
-from os.path import isfile
+from typing import (
+    Any,
+    Iterable,
+    Optional,
+    Set,
+    TypeVar,
+    Union,
+    cast,
+)
 from xml.dom.minidom import parseString
 
-import pcs.cli.constraint_colocation.command as colocation_command
 import pcs.cli.constraint_order.command as order_command
 from pcs import rule as rule_utils
-from pcs import (
-    settings,
-    utils,
-)
+from pcs import utils
 from pcs.cli.common import parse_args
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.constraint_ticket import command as ticket_command
+from pcs.cli.common.output import (
+    INDENT_STEP,
+    lines_to_str,
+)
+from pcs.cli.constraint.output import (
+    CibConstraintLocationAnyDto,
+    location,
+    print_config,
+)
 from pcs.cli.reports import process_library_reports
 from pcs.cli.reports.output import (
     deprecation_warning,
@@ -27,10 +38,30 @@ from pcs.common import (
     pacemaker,
     reports,
 )
+from pcs.common.pacemaker.constraint import (
+    CibConstraintColocationDto,
+    CibConstraintColocationSetDto,
+    CibConstraintLocationDto,
+    CibConstraintLocationSetDto,
+    CibConstraintOrderDto,
+    CibConstraintOrderSetDto,
+    CibConstraintsDto,
+    CibConstraintTicketDto,
+    CibConstraintTicketSetDto,
+)
+from pcs.common.pacemaker.resource.list import CibResourcesDto
 from pcs.common.reports import ReportItem
 from pcs.common.reports.constraints import colocation as colocation_format
 from pcs.common.reports.constraints import order as order_format
-from pcs.common.str_tools import format_list
+from pcs.common.str_tools import (
+    format_list,
+    indent,
+)
+from pcs.common.types import (
+    StringCollection,
+    StringIterable,
+    StringSequence,
+)
 from pcs.lib.cib.constraint.order import ATTRIB as order_attrib
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.pacemaker.values import (
@@ -50,18 +81,9 @@ OPTIONS_SYMMETRICAL = order_attrib["symmetrical"]
 LOCATION_NODE_VALIDATION_SKIP_MSG = (
     "Validation for node existence in the cluster will be skipped"
 )
-CRM_RULE_MISSING_MSG = (
-    "crm_rule is not available, therefore expired constraints may be "
-    "shown. Consider upgrading pacemaker."
-)
 
 RESOURCE_TYPE_RESOURCE = "resource"
 RESOURCE_TYPE_REGEXP = "regexp"
-
-RULE_IN_EFFECT = "in effect"
-RULE_EXPIRED = "expired"
-RULE_NOT_IN_EFFECT = "not yet in effect"
-RULE_UNKNOWN_STATUS = "unknown status"
 
 
 class CrmRuleReturnCode(Enum):
@@ -124,22 +146,23 @@ def constraint_show(lib, argv, modifiers):
         "This command is deprecated and will be removed. "
         "Please use 'pcs constraint config' instead."
     )
-    return constraint_config_cmd(lib, argv, modifiers)
+    config_cmd(lib, argv, modifiers)
 
 
-def constraint_config_cmd(lib, argv, modifiers):
-    """
-    Options:
-      * --all - print expired constraints
-      * -f - CIB file
-      * --full
-    """
-    location_config_cmd(lib, argv, modifiers)
-    order_command.config_cmd(lib, argv, modifiers.get_subset("--full", "-f"))
-    colocation_command.config_cmd(
-        lib, argv, modifiers.get_subset("--full", "-f")
+def config_cmd(
+    lib: Any, argv: list[str], modifiers: parse_args.InputModifiers
+) -> None:
+    modifiers.ensure_only_supported("-f", "--output-format", "--full", "--all")
+    if argv:
+        raise CmdLineInputError()
+
+    print_config(
+        cast(
+            CibConstraintsDto,
+            lib.constraint.get_config(evaluate_rules=True),
+        ),
+        modifiers,
     )
-    ticket_command.config_cmd(lib, argv, modifiers.get_subset("--full", "-f"))
 
 
 def colocation_rm(lib, argv, modifiers):
@@ -338,7 +361,7 @@ def colocation_add(lib, argv, modifiers):
                     [
                         "  "
                         + colocation_format.constraint_plain(
-                            {"options": dict(dup.attributes.items())}, True
+                            {"options": dict(dup.attributes.items())}
                         )
                         for dup in duplicates
                     ]
@@ -568,7 +591,7 @@ def _order_add(resource1, resource2, options_list, modifiers):
                     [
                         "  "
                         + order_format.constraint_plain(
-                            {"options": dict(dup.attributes.items())}, True
+                            {"options": dict(dup.attributes.items())}
                         )
                         for dup in duplicates
                     ]
@@ -610,323 +633,178 @@ def location_show(lib, argv, modifiers):
     return location_config_cmd(lib, argv, modifiers)
 
 
-# Show the currently configured location constraints by node or resource
-def location_config_cmd(lib, argv, modifiers):
+_SetConstraint = TypeVar(
+    "_SetConstraint",
+    CibConstraintLocationSetDto,
+    CibConstraintColocationSetDto,
+    CibConstraintOrderSetDto,
+    CibConstraintTicketSetDto,
+)
+
+
+def _filter_set_constraints_by_resources(
+    constraints_dto: Iterable[_SetConstraint], resources: Set[str]
+) -> list[_SetConstraint]:
+    return [
+        constraint_set_dto
+        for constraint_set_dto in constraints_dto
+        if any(
+            set(resource_set.resources_ids) & resources
+            for resource_set in constraint_set_dto.resource_sets
+        )
+    ]
+
+
+def _filter_constraints_by_resources(
+    constraints_dto: CibConstraintsDto,
+    resources: StringIterable,
+    patterns: StringIterable,
+) -> CibConstraintsDto:
+    required_resources_set = set(resources)
+    required_patterns_set = set(patterns)
+    return CibConstraintsDto(
+        location=[
+            constraint_dto
+            for constraint_dto in constraints_dto.location
+            if (
+                constraint_dto.resource_id is not None
+                and constraint_dto.resource_id in required_resources_set
+            )
+            or (
+                constraint_dto.resource_pattern is not None
+                and constraint_dto.resource_pattern in required_patterns_set
+            )
+        ],
+        location_set=_filter_set_constraints_by_resources(
+            constraints_dto.location_set, required_resources_set
+        ),
+        colocation=[
+            constraint_dto
+            for constraint_dto in constraints_dto.colocation
+            if {constraint_dto.resource_id, constraint_dto.with_resource_id}
+            & required_resources_set
+        ],
+        colocation_set=_filter_set_constraints_by_resources(
+            constraints_dto.colocation_set, required_resources_set
+        ),
+        order=[
+            constraint_dto
+            for constraint_dto in constraints_dto.order
+            if {
+                constraint_dto.first_resource_id,
+                constraint_dto.then_resource_id,
+            }
+            & required_resources_set
+        ],
+        order_set=_filter_set_constraints_by_resources(
+            constraints_dto.order_set, required_resources_set
+        ),
+        ticket=[
+            constraint_dto
+            for constraint_dto in constraints_dto.ticket
+            if constraint_dto.resource_id in required_resources_set
+        ],
+        ticket_set=_filter_set_constraints_by_resources(
+            constraints_dto.ticket_set, required_resources_set
+        ),
+    )
+
+
+def _filter_location_by_node_base(
+    constraint_dtos: Iterable[CibConstraintLocationAnyDto],
+    nodes: StringCollection,
+) -> list[CibConstraintLocationAnyDto]:
+    return [
+        constraint_dto
+        for constraint_dto in constraint_dtos
+        if constraint_dto.attributes.node is not None
+        and constraint_dto.attributes.node in nodes
+    ]
+
+
+def location_config_cmd(
+    lib: Any, argv: StringSequence, modifiers: parse_args.InputModifiers
+) -> None:
     """
     Options:
       * --all - print expired constraints
       * --full - print all details
       * -f - CIB file
     """
-    del lib
-    modifiers.ensure_only_supported("-f", "--full", "--all")
-    by_node = False
+    modifiers.ensure_only_supported("-f", "--output-format", "--full", "--all")
+    filter_type: Optional[str] = None
+    if argv:
+        filter_type, *filter_items = argv
+        allowed_types = ("resources", "nodes")
+        if filter_type not in allowed_types:
+            raise CmdLineInputError(
+                f"Unknown keyword '{filter_type}'. Allowed keywords: "
+                f"{format_list(allowed_types)}"
+            )
+        if modifiers.get_output_format() != parse_args.OUTPUT_FORMAT_VALUE_TEXT:
+            raise CmdLineInputError(
+                "Output formats other than 'text' are not supported together "
+                "with grouping and filtering by nodes or resources"
+            )
 
-    if argv and argv[0] == "nodes":
-        by_node = True
+    constraints_dto = cast(
+        CibConstraintsDto,
+        lib.constraint.get_config(evaluate_rules=True),
+    )
 
-    if len(argv) > 1:
-        if by_node:
-            valid_noderes = argv[1:]
-        else:
-            valid_noderes = [
-                parse_args.parse_typed_arg(
-                    arg,
+    constraints_dto = CibConstraintsDto(
+        location=constraints_dto.location,
+        location_set=constraints_dto.location_set,
+    )
+
+    def _print_lines(lines: StringSequence) -> None:
+        if lines:
+            print("Location Constraints:")
+            print(lines_to_str(indent(lines, indent_step=INDENT_STEP)))
+
+    if filter_type == "resources":
+        if filter_items:
+            resources = []
+            patterns = []
+            for item in filter_items:
+                item_type, item_value = parse_args.parse_typed_arg(
+                    item,
                     [RESOURCE_TYPE_RESOURCE, RESOURCE_TYPE_REGEXP],
                     RESOURCE_TYPE_RESOURCE,
                 )
-                for arg in argv[1:]
-            ]
-    else:
-        valid_noderes = []
-
-    (dummy_dom, constraintsElement) = getCurrentConstraints()
-    print(
-        "\n".join(
-            location_lines(
-                constraintsElement,
-                showDetail=modifiers.get("--full"),
-                byNode=by_node,
-                valid_noderes=valid_noderes,
-                show_expired=modifiers.get("--all"),
+                if item_type == RESOURCE_TYPE_RESOURCE:
+                    resources.append(item_value)
+                elif item_type == RESOURCE_TYPE_REGEXP:
+                    patterns.append(item_value)
+            constraints_dto = _filter_constraints_by_resources(
+                constraints_dto, resources, patterns
+            )
+        _print_lines(
+            location.constraints_to_grouped_by_resource_text(
+                constraints_dto.location,
+                modifiers.is_specified("--full"),
             )
         )
-    )
-
-
-def location_lines(
-    constraintsElement,
-    showDetail=False,
-    byNode=False,
-    valid_noderes=None,
-    show_expired=False,
-    verify_expiration=True,
-):
-    """
-    Commandline options: no options
-    """
-    all_lines = []
-    nodehashon = {}
-    nodehashoff = {}
-    rschashon = {}
-    rschashoff = {}
-    ruleshash = defaultdict(list)
-    all_loc_constraints = constraintsElement.getElementsByTagName(
-        "rsc_location"
-    )
-    cib = utils.get_cib()
-
-    if not isfile(settings.crm_rule):
-        if verify_expiration:
-            warn(CRM_RULE_MISSING_MSG)
-        verify_expiration = False
-
-    all_lines.append("Location Constraints:")
-    for rsc_loc in all_loc_constraints:
-        if rsc_loc.hasAttribute("rsc-pattern"):
-            lc_rsc_type = RESOURCE_TYPE_REGEXP
-            lc_rsc_value = rsc_loc.getAttribute("rsc-pattern")
-            lc_name = "Resource pattern: {0}".format(lc_rsc_value)
-        else:
-            lc_rsc_type = RESOURCE_TYPE_RESOURCE
-            lc_rsc_value = rsc_loc.getAttribute("rsc")
-            lc_name = "Resource: {0}".format(lc_rsc_value)
-        lc_rsc = lc_rsc_type, lc_rsc_value, lc_name
-        lc_id = rsc_loc.getAttribute("id")
-        lc_node = rsc_loc.getAttribute("node")
-        lc_score = rsc_loc.getAttribute("score")
-        lc_role = pacemaker.role.get_value_primary(
-            rsc_loc.getAttribute("role").capitalize()
+        return
+    if filter_type == "nodes":
+        if filter_items:
+            constraints_dto = CibConstraintsDto(
+                location=_filter_location_by_node_base(
+                    constraints_dto.location, filter_items
+                ),
+                location_set=_filter_location_by_node_base(
+                    constraints_dto.location_set, filter_items
+                ),
+            )
+        _print_lines(
+            location.constraints_to_grouped_by_node_text(
+                constraints_dto.location,
+                modifiers.is_specified("--full"),
+            )
         )
-        lc_resource_discovery = rsc_loc.getAttribute("resource-discovery")
+        return
 
-        for child in rsc_loc.childNodes:
-            if child.nodeType == child.ELEMENT_NODE and child.tagName == "rule":
-                ruleshash[lc_rsc].append(child)
-
-        # NEED TO FIX FOR GROUP LOCATION CONSTRAINTS (where there are children
-        # of # rsc_location)
-        if lc_score == "":
-            lc_score = "0"
-
-        if lc_score == "INFINITY":
-            positive = True
-        elif lc_score == "-INFINITY":
-            positive = False
-        elif int(lc_score) >= 0:
-            positive = True
-        else:
-            positive = False
-
-        if positive:
-            nodeshash = nodehashon
-            rschash = rschashon
-        else:
-            nodeshash = nodehashoff
-            rschash = rschashoff
-
-        hash_element = {
-            "id": lc_id,
-            "rsc_type": lc_rsc_type,
-            "rsc_value": lc_rsc_value,
-            "rsc_label": lc_name,
-            "node": lc_node,
-            "score": lc_score,
-            "role": lc_role,
-            "resource-discovery": lc_resource_discovery,
-        }
-        if lc_node in nodeshash:
-            nodeshash[lc_node].append(hash_element)
-        else:
-            nodeshash[lc_node] = [hash_element]
-        if lc_rsc in rschash:
-            rschash[lc_rsc].append(hash_element)
-        else:
-            rschash[lc_rsc] = [hash_element]
-
-    nodelist = sorted(set(list(nodehashon.keys()) + list(nodehashoff.keys())))
-    rsclist = sorted(
-        set(list(rschashon.keys()) + list(rschashoff.keys())),
-        key=lambda item: (
-            {
-                RESOURCE_TYPE_RESOURCE: 1,
-                RESOURCE_TYPE_REGEXP: 0,
-            }[item[0]],
-            item[1],
-        ),
-    )
-
-    if byNode:
-        for node in nodelist:
-            if not node:
-                continue
-
-            if valid_noderes:
-                if node not in valid_noderes:
-                    continue
-            all_lines.append("  Node: " + node)
-
-            nodehash_label = (
-                (nodehashon, "    Allowed to run:"),
-                (nodehashoff, "    Not allowed to run:"),
-            )
-            all_lines += _hashtable_to_lines(
-                nodehash_label, "rsc_label", node, showDetail
-            )
-        all_lines += _show_location_rules(
-            ruleshash,
-            cib,
-            show_detail=showDetail,
-            show_expired=show_expired,
-            verify_expiration=verify_expiration,
-        )
-    else:
-        for rsc in rsclist:
-            rsc_lines = []
-            if valid_noderes:
-                if rsc[0:2] not in valid_noderes:
-                    continue
-            rsc_lines.append("  {0}".format(rsc[2]))
-            rschash_label = (
-                (rschashon, "    Enabled on:"),
-                (rschashoff, "    Disabled on:"),
-            )
-            rsc_lines += _hashtable_to_lines(
-                rschash_label, "node", rsc, showDetail
-            )
-            miniruleshash = {}
-            miniruleshash[rsc] = ruleshash[rsc]
-            rsc_lines += _show_location_rules(
-                miniruleshash,
-                cib,
-                show_detail=showDetail,
-                show_expired=show_expired,
-                verify_expiration=verify_expiration,
-                noheader=True,
-            )
-            # Append to all_lines only if the resource has any constraints
-            if len(rsc_lines) > 2:
-                all_lines += rsc_lines
-    return all_lines
-
-
-def _hashtable_to_lines(hash_label, hash_type, hash_key, show_detail):
-    hash_lines = []
-    for hashtable, label in hash_label:
-        if hash_key in hashtable:
-            labeled_lines = []
-            for options in hashtable[hash_key]:
-                # Skips nodeless constraints and prints nodes/resources
-                if not options[hash_type]:
-                    continue
-                line_parts = [
-                    "      {0}{1}".format(
-                        "Node: " if hash_type == "node" else "",
-                        options[hash_type],
-                    )
-                ]
-                line_parts.append(f"(score:{options['score']})")
-                if options["role"]:
-                    line_parts.append(
-                        "(role:{})".format(
-                            pacemaker.role.get_value_primary(options["role"])
-                        )
-                    )
-                if options["resource-discovery"]:
-                    line_parts.append(
-                        "(resource-discovery={0})".format(
-                            options["resource-discovery"]
-                        )
-                    )
-                if show_detail:
-                    line_parts.append(f"(id:{options['id']})")
-                labeled_lines.append(" ".join(line_parts))
-            if labeled_lines:
-                labeled_lines.insert(0, label)
-            hash_lines += labeled_lines
-    return hash_lines
-
-
-def _show_location_rules(
-    ruleshash,
-    cib,
-    show_detail,
-    show_expired=False,
-    verify_expiration=True,
-    noheader=False,
-):
-    """
-    Commandline options: no options
-    """
-    all_lines = []
-    constraint_options = {}
-    for rsc in sorted(
-        ruleshash.keys(),
-        key=lambda item: (
-            {
-                RESOURCE_TYPE_RESOURCE: 1,
-                RESOURCE_TYPE_REGEXP: 0,
-            }[item[0]],
-            item[1],
-        ),
-    ):
-        constrainthash = defaultdict(list)
-        if not noheader:
-            all_lines.append("  {0}".format(rsc[2]))
-        for rule in ruleshash[rsc]:
-            constraint_id = rule.parentNode.getAttribute("id")
-            constrainthash[constraint_id].append(rule)
-            constraint_options[constraint_id] = []
-            if rule.parentNode.getAttribute("resource-discovery"):
-                constraint_options[constraint_id].append(
-                    "resource-discovery=%s"
-                    % rule.parentNode.getAttribute("resource-discovery")
-                )
-
-        for constraint_id in sorted(constrainthash.keys()):
-            if (
-                constraint_id in constraint_options
-                and constraint_options[constraint_id]
-            ):
-                constraint_option_info = (
-                    " (" + " ".join(constraint_options[constraint_id]) + ")"
-                )
-            else:
-                constraint_option_info = ""
-
-            rule_lines = []
-            # When expiration check is needed, starting value should be True and
-            # when it's not, check is skipped so the initial value must be False
-            # to print the constraint
-            is_constraint_expired = verify_expiration
-            for rule in constrainthash[constraint_id]:
-                rule_status = RULE_UNKNOWN_STATUS
-                if verify_expiration:
-                    rule_status = _get_rule_status(rule.getAttribute("id"), cib)
-                    if rule_status != RULE_EXPIRED:
-                        is_constraint_expired = False
-
-                rule_lines.append(
-                    rule_utils.ExportDetailed().get_string(
-                        rule,
-                        rule_status == RULE_EXPIRED and show_expired,
-                        show_detail,
-                        indent="      ",
-                    )
-                )
-
-            if not show_expired and is_constraint_expired:
-                continue
-
-            all_lines.append(
-                "    Constraint{0}: {1}{2}".format(
-                    " (expired)" if is_constraint_expired else "",
-                    constraint_id,
-                    constraint_option_info,
-                )
-            )
-            all_lines += rule_lines
-    return all_lines
+    print_config(constraints_dto, modifiers)
 
 
 def _verify_node_name(node, existing_nodes):
@@ -946,19 +824,6 @@ def _verify_score(score):
         utils.err(
             "invalid score '%s', use integer or INFINITY or -INFINITY" % score
         )
-
-
-def _get_rule_status(rule_id, cib):
-    _, _, retval = utils.cmd_runner().run(
-        [settings.crm_rule, "--check", "--rule", rule_id, "--xml-text", "-"],
-        cib,
-    )
-    translation_map = {
-        CrmRuleReturnCode.IN_EFFECT.value: RULE_IN_EFFECT,
-        CrmRuleReturnCode.EXPIRED.value: RULE_EXPIRED,
-        CrmRuleReturnCode.TO_BE_IN_EFFECT.value: RULE_NOT_IN_EFFECT,
-    }
-    return translation_map.get(retval, RULE_UNKNOWN_STATUS)
 
 
 def location_prefer(lib, argv, modifiers):
@@ -1409,30 +1274,118 @@ def constraint_rm(
     return None
 
 
-def constraint_ref(lib, argv, modifiers):
-    """
-    Options:
-      * -f - CIB file
-    """
-    del lib
+def _get_constraint_ids(
+    constraint_dtos: Iterable[
+        Union[
+            CibConstraintLocationDto,
+            CibConstraintLocationSetDto,
+            CibConstraintColocationDto,
+            CibConstraintColocationSetDto,
+            CibConstraintOrderDto,
+            CibConstraintOrderSetDto,
+            CibConstraintTicketDto,
+            CibConstraintTicketSetDto,
+        ]
+    ]
+) -> list[str]:
+    return [
+        constraint_dto.attributes.constraint_id
+        for constraint_dto in constraint_dtos
+    ]
+
+
+def _get_all_constraints_ids(constraints_dto: CibConstraintsDto) -> Set[str]:
+    return set(
+        _get_constraint_ids(constraints_dto.location)
+        + _get_constraint_ids(constraints_dto.location_set)
+        + _get_constraint_ids(constraints_dto.colocation)
+        + _get_constraint_ids(constraints_dto.colocation_set)
+        + _get_constraint_ids(constraints_dto.order)
+        + _get_constraint_ids(constraints_dto.order_set)
+        + _get_constraint_ids(constraints_dto.ticket)
+        + _get_constraint_ids(constraints_dto.ticket_set)
+    )
+
+
+def _split_set_constraints(
+    constraints_dto: CibConstraintsDto,
+) -> tuple[CibConstraintsDto, CibConstraintsDto]:
+    return (
+        CibConstraintsDto(
+            location=constraints_dto.location,
+            colocation=constraints_dto.colocation,
+            order=constraints_dto.order,
+            ticket=constraints_dto.ticket,
+        ),
+        CibConstraintsDto(
+            location_set=constraints_dto.location_set,
+            colocation_set=constraints_dto.colocation_set,
+            order_set=constraints_dto.order_set,
+            ticket_set=constraints_dto.ticket_set,
+        ),
+    )
+
+
+def _find_constraints_containing_resource(
+    resources_dto: CibResourcesDto,
+    constraints_dto: CibConstraintsDto,
+    resource_id: str,
+) -> CibConstraintsDto:
+    resources_filter = [resource_id]
+    # Original implementation only included parent resource only if resource_id
+    # was referring to a primitive resource, ignoring groups. This may change in
+    # the future if necessary.
+    if any(
+        primitive_dto.id == resource_id
+        for primitive_dto in resources_dto.primitives
+    ):
+        for clone_dto in resources_dto.clones:
+            if clone_dto.member_id == resource_id:
+                resources_filter.append(clone_dto.id)
+                break
+    return _filter_constraints_by_resources(
+        constraints_dto, resources_filter, []
+    )
+
+
+def ref(
+    lib: Any, argv: list[str], modifiers: parse_args.InputModifiers
+) -> None:
     modifiers.ensure_only_supported("-f")
     if not argv:
         raise CmdLineInputError()
 
-    for arg in argv:
-        print("Resource: %s" % arg)
-        constraints, set_constraints = find_constraints_containing(arg)
-        if not constraints and not set_constraints:
-            print("  No Matches.")
+    resources_dto = cast(
+        CibResourcesDto, lib.resource.get_configured_resources()
+    )
+
+    constraints_dto = cast(
+        CibConstraintsDto,
+        lib.constraint.get_config(evaluate_rules=False),
+    )
+
+    for resource_id in sorted(set(argv)):
+        constraint_ids = _get_all_constraints_ids(
+            _find_constraints_containing_resource(
+                resources_dto, constraints_dto, resource_id
+            )
+        )
+        print(f"Resource: {resource_id}")
+        if constraint_ids:
+            print(
+                "\n".join(
+                    indent(
+                        sorted(constraint_ids),
+                        indent_step=INDENT_STEP,
+                    )
+                )
+            )
         else:
-            for constraint in constraints:
-                print("  " + constraint)
-            for constraint in sorted(set_constraints):
-                print("  " + constraint)
+            print("  No Matches")
 
 
 def remove_constraints_containing(
-    resource_id, output=False, constraints_element=None, passed_dom=None
+    resource_id: str, output=False, constraints_element=None, passed_dom=None
 ):
     """
     Commandline options:
@@ -1440,8 +1393,29 @@ def remove_constraints_containing(
     """
     lib = utils.get_library_wrapper()
     modifiers = utils.get_input_modifiers()
-    constraints, set_constraints = find_constraints_containing(
-        resource_id, passed_dom
+    resources_dto = cast(
+        CibResourcesDto, lib.resource.get_configured_resources()
+    )
+
+    constraints_dto, set_constraints_dto = _split_set_constraints(
+        cast(
+            CibConstraintsDto,
+            lib.constraint.get_config(evaluate_rules=False),
+        )
+    )
+    constraints = sorted(
+        _get_all_constraints_ids(
+            _find_constraints_containing_resource(
+                resources_dto, constraints_dto, resource_id
+            )
+        )
+    )
+    set_constraints = sorted(
+        _get_all_constraints_ids(
+            _find_constraints_containing_resource(
+                resources_dto, set_constraints_dto, resource_id
+            )
+        )
     )
     for c in constraints:
         if output:
@@ -1460,13 +1434,13 @@ def remove_constraints_containing(
 
     if set_constraints:
         (dom, constraintsElement) = getCurrentConstraints(passed_dom)
-        for c in constraintsElement.getElementsByTagName("resource_ref")[:]:
+        for set_c in constraintsElement.getElementsByTagName("resource_ref")[:]:
             # If resource id is in a set, remove it from the set, if the set
             # is empty, then we remove the set, if the parent of the set
             # is empty then we remove it
-            if c.getAttribute("id") == resource_id:
-                pn = c.parentNode
-                pn.removeChild(c)
+            if set_c.getAttribute("id") == resource_id:
+                pn = set_c.parentNode
+                pn.removeChild(set_c)
                 if output:
                     print_to_stderr(
                         "Removing {} from set {}".format(
@@ -1490,57 +1464,6 @@ def remove_constraints_containing(
             return dom
         utils.replace_cib_configuration(dom)
     return None
-
-
-def find_constraints_containing(resource_id, passed_dom=None):
-    """
-    Commandline options:
-      * -f - CIB file, effective only if passed_dom is None
-    """
-    if passed_dom:
-        dom = passed_dom
-    else:
-        dom = utils.get_cib_dom()
-    constraints_found = []
-    set_constraints = []
-
-    resources = dom.getElementsByTagName("primitive")
-    resource_match = None
-    for res in resources:
-        if res.getAttribute("id") == resource_id:
-            resource_match = res
-            break
-
-    if resource_match:
-        if resource_match.parentNode.tagName in ("master", "clone"):
-            constraints_found, set_constraints = find_constraints_containing(
-                resource_match.parentNode.getAttribute("id"), dom
-            )
-
-    constraints = dom.getElementsByTagName("constraints")
-    if not constraints:
-        return [], []
-
-    constraints = constraints[0]
-    myConstraints = constraints.getElementsByTagName("rsc_colocation")
-    myConstraints += constraints.getElementsByTagName("rsc_location")
-    myConstraints += constraints.getElementsByTagName("rsc_order")
-    myConstraints += constraints.getElementsByTagName("rsc_ticket")
-    attr_to_match = ["rsc", "first", "then", "with-rsc", "first", "then"]
-    for c in myConstraints:
-        for attr in attr_to_match:
-            if c.getAttribute(attr) == resource_id:
-                constraints_found.append(c.getAttribute("id"))
-                break
-
-    setConstraints = constraints.getElementsByTagName("resource_ref")
-    for c in setConstraints:
-        if c.getAttribute("id") == resource_id:
-            set_constraints.append(c.parentNode.parentNode.getAttribute("id"))
-
-    # Remove duplicates
-    set_constraints = list(set(set_constraints))
-    return constraints_found, set_constraints
 
 
 def remove_constraints_containing_node(dom, node, output=False):

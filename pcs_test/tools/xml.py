@@ -17,6 +17,10 @@ def etree_to_str(tree):
     return etree.tostring(tree, pretty_print=True).decode()
 
 
+def str_to_etree(string):
+    return etree.fromstring(string)
+
+
 class XmlManipulation:
     @classmethod
     def from_file(cls, file_name):
@@ -24,7 +28,7 @@ class XmlManipulation:
 
     @classmethod
     def from_str(cls, string):
-        return cls(etree.fromstring(string))
+        return cls(str_to_etree(string))
 
     def __init__(self, tree):
         self.tree = tree

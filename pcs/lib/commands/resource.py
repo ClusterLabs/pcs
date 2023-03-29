@@ -24,7 +24,7 @@ from pcs.common import (
     reports,
 )
 from pcs.common.interface import dto
-from pcs.common.pacemaker.resource.list import ListCibResourcesDto
+from pcs.common.pacemaker.resource.list import CibResourcesDto
 from pcs.common.reports import ReportItemList
 from pcs.common.reports.item import ReportItem
 from pcs.common.tools import (
@@ -2437,7 +2437,7 @@ def is_any_stonith(
     )
 
 
-def get_configured_resources(env: LibraryEnvironment) -> ListCibResourcesDto:
+def get_configured_resources(env: LibraryEnvironment) -> CibResourcesDto:
     resources = get_resources(env.get_cib())
     bundles = []
     for bundle_el in resources.findall(cib_const.TAG_RESOURCE_BUNDLE):
@@ -2455,7 +2455,7 @@ def get_configured_resources(env: LibraryEnvironment) -> ListCibResourcesDto:
                     )
                 )
             )
-    return ListCibResourcesDto(
+    return CibResourcesDto(
         primitives=[
             resource.primitive.primitive_element_to_dto(resource_el)
             for resource_el in resources.findall(

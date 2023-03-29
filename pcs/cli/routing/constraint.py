@@ -47,8 +47,8 @@ constraint_cmd = create_router(
         # TODO remove, deprecated command
         # replaced with 'config'
         "list": constraint.constraint_show,
-        "config": constraint.constraint_config_cmd,
-        "ref": constraint.constraint_ref,
+        "config": constraint.config_cmd,
+        "ref": constraint.ref,
         "rule": constraint.constraint_rule,
     },
     ["constraint"],

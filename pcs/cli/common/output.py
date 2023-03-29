@@ -1,10 +1,23 @@
 import sys
 import textwrap
+from shlex import quote
 from shutil import get_terminal_size
-from typing import List
+from typing import (
+    Iterable,
+    List,
+)
+
+from pcs.common.types import (
+    StringIterable,
+    StringSequence,
+)
 
 INDENT_STEP = 2
 SUBSEQUENT_INDENT_STEP = 4
+
+
+def bool_to_cli_value(value: bool) -> str:
+    return "1" if value else "0"
 
 
 def _smart_wrap(
@@ -17,7 +30,7 @@ def _smart_wrap(
 
 
 def smart_wrap_text(
-    lines: List[str], subsequent_indent: int = SUBSEQUENT_INDENT_STEP
+    lines: StringSequence, subsequent_indent: int = SUBSEQUENT_INDENT_STEP
 ) -> List[str]:
     output = []
     for line in lines:
@@ -65,3 +78,19 @@ def format_wrap(
         max_length,
         subsequent_indent=" " * subsequent_indent,
     )
+
+
+def options_to_cmd(options: StringIterable) -> str:
+    return " ".join(quote(option) for option in options)
+
+
+def pair_to_cmd(pair: tuple[str, str]) -> str:
+    return quote("=".join(pair))
+
+
+def pairs_to_cmd(pairs: Iterable[tuple[str, str]]) -> str:
+    return " ".join(pair_to_cmd(item) for item in pairs)
+
+
+def lines_to_str(lines: StringSequence) -> str:
+    return "\n".join(smart_wrap_text(lines))

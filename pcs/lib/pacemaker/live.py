@@ -735,7 +735,7 @@ def _run_fence_history_command(runner, command, node=None):
 
 
 def has_rule_in_effect_status_tool() -> bool:
-    return os.path.isfile(__exec("crm_rule"))
+    return os.path.isfile(settings.crm_rule)
 
 
 def get_rule_in_effect_status(
@@ -759,7 +759,7 @@ def get_rule_in_effect_status(
         # 112: undetermined (rule is too complicated for current implementation)
     }
     dummy_stdout, dummy_stderr, retval = runner.run(
-        [__exec("crm_rule"), "--check", "--rule", rule_id, "--xml-text", "-"],
+        [settings.crm_rule, "--check", "--rule", rule_id, "--xml-text", "-"],
         stdin_string=cib_xml,
     )
     return translation_map.get(retval, CibRuleInEffectStatus.UNKNOWN)

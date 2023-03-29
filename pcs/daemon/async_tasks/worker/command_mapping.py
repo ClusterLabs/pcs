@@ -149,6 +149,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=constraint.ticket.remove,
         required_permission=p.WRITE,
     ),
+    "constraint.get_config": _Cmd(
+        cmd=constraint.common.get_config,
+        required_permission=p.READ,
+    ),
     "fencing_topology.add_level": _Cmd(
         cmd=fencing_topology.add_level,
         required_permission=p.WRITE,

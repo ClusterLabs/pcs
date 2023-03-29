@@ -63,7 +63,7 @@ def is_stonith_enabled(crm_config_el: _Element) -> bool:
     for nvpair in crm_config_el.iterfind(
         "cluster_property_set/nvpair[@name='stonith-enabled']"
     ):
-        if is_false(nvpair.get("value")):
+        if is_false(nvpair.get("value", "true")):
             stonith_enabled = False
             break
     return stonith_enabled

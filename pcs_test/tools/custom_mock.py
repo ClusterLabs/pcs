@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import (
     Callable,
     Iterable,
+    Mapping,
     Optional,
     Union,
 )
@@ -14,6 +15,8 @@ from pcs.common.reports import (
     ReportItemSeverity,
     ReportProcessor,
 )
+from pcs.common.types import CibRuleInEffectStatus
+from pcs.lib.cib.rule.in_effect import RuleInEffectEval
 
 from pcs_test.tools.assertions import assert_report_item_list_equal
 
@@ -325,3 +328,11 @@ class MockCurlMulti:
                 err_list.append((handle, errno, msg))
             self._processed_list.append(handle)
         return (0, ok_list, err_list)
+
+
+class RuleInEffectEvalMock(RuleInEffectEval):
+    def __init__(self, results: Mapping[str, CibRuleInEffectStatus]) -> None:
+        self._results = dict(results)
+
+    def get_rule_status(self, rule_id: str) -> CibRuleInEffectStatus:
+        return self._results.get(rule_id, CibRuleInEffectStatus.UNKNOWN)
