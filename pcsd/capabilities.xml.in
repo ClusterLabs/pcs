@@ -898,9 +898,9 @@
 
 
 
-    <capability id="pcmk.constraint.config" in-pcs="1" in-pcsd="1">
+    <capability id="pcmk.constraint.config.output-formats" in-pcs="1" in-pcsd="1">
       <description>
-        Means to show/export constraint configuration.
+        Means to show/export constraint configuration in various formats.
 
         pcs commands:
           constraint [config] --output-format=text|json|cmd
