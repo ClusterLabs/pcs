@@ -958,3 +958,131 @@ class GetElementsById(TestCase):
 
     def test_no_match_in_obj_ref(self):
         self.assert_result([], ["RX1"])
+
+
+def _configuration_fixture(configuration_content):
+    return f"""
+    <cib>
+      <configuration>
+      {configuration_content}
+      </configuration>
+      <status>
+      {configuration_content}
+      </status>
+      {configuration_content}
+    </cib>
+    """
+
+
+class FindElementsWithoutIdReferencingId(TestCase):
+    # pylint: disable=protected-access
+    def setUp(self):
+        pass
+
+    def test_constraint_set_reference(self):
+        cib = etree.fromstring(
+            _configuration_fixture(
+                """
+                <constraints>
+                    <rsc_location>
+                        <resource_set>
+                            <resource_ref id="A"/>
+                            <resource_ref id="B"/>
+                        </resource_set>
+                        <resource_ref id="A" invalid="position"/>
+                    </rsc_location>
+                    <resource_ref id="A" invalid="position"/>
+                    <rsc_colocation>
+                        <resource_set>
+                            <resource_ref id="C"/>
+                            <resource_ref id="A"/>
+                        </resource_set>
+                    </rsc_colocation>
+                </constraints>
+                <resource_ref id="A" invalid="position"/>
+                """
+            )
+        )
+        self.assertEqual(
+            [
+                cib.find(
+                    "./configuration/constraints/rsc_location/resource_set/resource_ref[@id='A']"
+                ),
+                cib.find(
+                    "./configuration/constraints/rsc_colocation/resource_set/resource_ref[@id='A']"
+                ),
+            ],
+            list(lib._find_elements_without_id_referencing_id(cib, "A")),
+        )
+
+    def test_tag_reference(self):
+        cib = etree.fromstring(
+            _configuration_fixture(
+                """
+                <tags>
+                    <tag id="X">
+                        <obj_ref id="A"/>
+                    </tag>
+                    <obj_ref id="A" invalid="position"/>
+                    <tag id="Y">
+                        <obj_ref id="C"/>
+                        <obj_ref id="A"/>
+                        <obj_ref id="D"/>
+                    </tag>
+                    <tag id="Z">
+                        <obj_ref id="C"/>
+                    </tag>
+                </tags>
+                <obj_ref id="A" invalid="position"/>
+                """
+            )
+        )
+        self.assertEqual(
+            [
+                cib.find("./configuration/tags/tag[@id='X']/obj_ref[@id='A']"),
+                cib.find("./configuration/tags/tag[@id='Y']/obj_ref[@id='A']"),
+            ],
+            list(lib._find_elements_without_id_referencing_id(cib, "A")),
+        )
+
+    def test_acl_reference(self):
+        cib = etree.fromstring(
+            _configuration_fixture(
+                """
+                <acls>
+                    <acl_target>
+                        <role id="A"/>
+                        <role id="B"/>
+                    </acl_target>
+                    <role id="A" invalid="position"/>
+                    <acl_group>
+                        <role id="D"/>
+                        <role id="A"/>
+                        <role id="C"/>
+                    </acl_group>
+                </acls>
+                <role id="A" invalid="position"/>
+                """
+            )
+        )
+        self.assertEqual(
+            [
+                cib.find("./configuration/acls/acl_target/role[@id='A']"),
+                cib.find("./configuration/acls/acl_group/role[@id='A']"),
+            ],
+            list(lib._find_elements_without_id_referencing_id(cib, "A")),
+        )
+
+    def test_all_references_types(self):
+        pass
+
+
+class RemoveElementById(TestCase):
+    def setUp(self):
+        pass
+
+    def test_element_found(self):
+        pass
+
+    def test_element_not_found(self):
+        pass

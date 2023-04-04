@@ -18,6 +18,10 @@ from pcs.lib.tools import get_optional_value
 TAG_NAME = "rsc_location"
 
 
+def is_location_constraint(element: _Element) -> bool:
+    return element.tag == TAG_NAME
+
+
 def _element_to_attributes_dto(
     element: _Element, rule_in_effect_eval: RuleInEffectEval
 ) -> CibConstraintLocationAttributesDto:

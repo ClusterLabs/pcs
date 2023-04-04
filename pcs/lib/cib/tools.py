@@ -1,5 +1,6 @@
 import re
 from typing import (
+    Iterable,
     List,
     Pattern,
     Set,
@@ -33,9 +34,17 @@ from pcs.lib.pacemaker.values import (
 from pcs.lib.xml_tools import (
     get_root,
     get_sub_element,
+    remove_one_element,
 )
 
 _VERSION_FORMAT = r"(?P<major>\d+)\.(?P<minor>\d+)(\.(?P<rev>\d+))?$"
+_ELEMENTS_WITH_IDREF_WITHOUT_ID_XPATH = """
+    ./constraints/*/resource_set/resource_ref[@id=$referenced_id]
+    |
+    ./tags/tag/obj_ref[@id=$referenced_id]
+    |
+    ./acls/*/role[@id=$referenced_id]
+"""
 
 
 class ElementNotFound(Exception):
@@ -545,3 +554,86 @@ def are_new_role_names_supported(cib: _Element) -> bool:
 
 def role_constructor(value: str) -> const.PcmkRoleType:
     return role.get_value_primary(const.PcmkRoleType(value))
+
+
+def _get_configuration(element: _Element) -> _Element:
+    return get_configuration(get_root(element))
+
+
+def _find_elements_without_id_referencing_id(
+    element: _Element,
+    referenced_id: str,
+) -> Iterable[_Element]:
+    """
+    Find elements which are referencing specified id (resource or tag).
+
+    element -- any element within CIB tree
+    referenced_id -- id which references should be found
+    """
+    return cast(
+        Iterable[_Element],
+        _get_configuration(element).xpath(
+            _ELEMENTS_WITH_IDREF_WITHOUT_ID_XPATH,
+            referenced_id=referenced_id,
+        ),
+    )
+
+
+def find_elements_referencing_id(
+    element: _Element,
+    referenced_id: str,
+) -> Iterable[_Element]:
+    """
+    Find elements which are referencing specified id (resource or tag).
+
+    element -- any element within CIB tree
+    referenced_id -- id which references should be found
+    """
+    return cast(
+        Iterable[_Element],
+        _get_configuration(element).xpath(
+            """
+        ./constraints/rsc_colocation[
+            not (descendant::resource_set)
+            and
+            (@rsc=$referenced_id or @with-rsc=$referenced_id)
+        ]
+        |
+        ./constraints/rsc_location[
+            not (descendant::resource_set)
+            and
+            @rsc=$referenced_id
+        ]
+        |
+        ./constraints/rsc_order[
+            not (descendant::resource_set)
+            and
+            (@first=$referenced_id or @then=$referenced_id)
+        ]
+        |
+        ./constraints/rsc_ticket[
+            not (descendant::resource_set)
+            and
+            @rsc=$referenced_id
+        ]
+        |
+        ./acls/acl_role/acl_permission[@reference=$referenced_id]
+        |
+        """
+            + _ELEMENTS_WITH_IDREF_WITHOUT_ID_XPATH,
+            referenced_id=referenced_id,
+        ),
+    )
+
+
+def remove_element_by_id(cib: _Element, element_id: str) -> None:
+    """
+    Remove element with specified id from cib element.
+    """
+    for ref_el in _find_elements_without_id_referencing_id(cib, element_id):
+        remove_one_element(ref_el)
+
+    try:
+        remove_one_element(get_element_by_id(cib, element_id))
+    except ElementNotFound:
+        pass

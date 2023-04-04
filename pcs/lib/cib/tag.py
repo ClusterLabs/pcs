@@ -43,6 +43,10 @@ from .const import (
 )
 
 
+def is_tag(element: _Element) -> bool:
+    return element.tag == TAG_TAG
+
+
 def _validate_tag_id(tag_id: str, id_provider: IdProvider) -> ReportItemList:
     """
     Validate that tag_id is a valid xml id and it is unique in the cib.
@@ -485,6 +489,7 @@ def find_constraints_referencing_tag(
     constraints_section -- element constraints
     tag_id -- tag id
     """
+    # TODO: replace by find_elements_referencing_id
     constraint_list = constraints_section.xpath(
         """
         ./rsc_colocation[
