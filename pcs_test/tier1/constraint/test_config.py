@@ -285,10 +285,10 @@ class ConstraintConfigText(TestCase):
               resource pattern 'R*' prefers node 'localhost' with score INFINITY (id: location-R-localhost-INFINITY)
               resource 'R6-clone' (id: loc_constr_with_not_expired_rule)
                 Rules:
-                  Rule: role=Unpromoted score=500 (id:loc_constr_with_not_expired_rule-rule)
-                    Expression: date gt 2000-01-01 (id:loc_constr_with_not_expired_rule-rule-expr)
-                  Rule: role=Promoted score-attribute=test-attr (id:loc_constr_with_not_expired_rule-rule-1)
-                    Expression: date gt 2010-12-31 (id:loc_constr_with_not_expired_rule-rule-1-expr)
+                  Rule: role=Unpromoted score=500 (id: loc_constr_with_not_expired_rule-rule)
+                    Expression: date gt 2000-01-01 (id: loc_constr_with_not_expired_rule-rule-expr)
+                  Rule: role=Promoted score-attribute=test-attr (id: loc_constr_with_not_expired_rule-rule-1)
+                    Expression: date gt 2010-12-31 (id: loc_constr_with_not_expired_rule-rule-1-expr)
             Colocation Constraints:
               Promoted resource 'G1-clone' with Stopped resource 'R6-clone' (id: colocation-G1-clone-R6-clone--100)
                 score=-100
@@ -345,14 +345,14 @@ class ConstraintConfigText(TestCase):
               resource pattern 'R*' prefers node 'localhost' with score INFINITY (id: location-R-localhost-INFINITY)
               resource 'B2' (id: loc_constr_with_expired_rule)
                 Rules:
-                  Rule (expired): score=500 (id:loc_constr_with_expired_rule-rule)
-                    Expression: date lt 2000-01-01 (id:loc_constr_with_expired_rule-rule-expr)
+                  Rule (expired): score=500 (id: loc_constr_with_expired_rule-rule)
+                    Expression: date lt 2000-01-01 (id: loc_constr_with_expired_rule-rule-expr)
               resource 'R6-clone' (id: loc_constr_with_not_expired_rule)
                 Rules:
-                  Rule: role=Unpromoted score=500 (id:loc_constr_with_not_expired_rule-rule)
-                    Expression: date gt 2000-01-01 (id:loc_constr_with_not_expired_rule-rule-expr)
-                  Rule: role=Promoted score-attribute=test-attr (id:loc_constr_with_not_expired_rule-rule-1)
-                    Expression: date gt 2010-12-31 (id:loc_constr_with_not_expired_rule-rule-1-expr)
+                  Rule: role=Unpromoted score=500 (id: loc_constr_with_not_expired_rule-rule)
+                    Expression: date gt 2000-01-01 (id: loc_constr_with_not_expired_rule-rule-expr)
+                  Rule: role=Promoted score-attribute=test-attr (id: loc_constr_with_not_expired_rule-rule-1)
+                    Expression: date gt 2010-12-31 (id: loc_constr_with_not_expired_rule-rule-1-expr)
             Colocation Constraints:
               Promoted resource 'G1-clone' with Stopped resource 'R6-clone' (id: colocation-G1-clone-R6-clone--100)
                 score=-100

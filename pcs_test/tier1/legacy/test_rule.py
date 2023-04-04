@@ -2214,31 +2214,31 @@ class DomRuleAddTest(TestCase, AssertPcsMixin):
                 Location Constraints:
                   resource 'dummy1' (id: location-dummy1)
                     Rules:
-                      Rule: score=INFINITY (id:location-dummy1-rule)
-                        Expression: #uname eq node1 (id:location-dummy1-rule-expr)
+                      Rule: score=INFINITY (id: location-dummy1-rule)
+                        Expression: #uname eq node1 (id: location-dummy1-rule-expr)
                   resource 'dummy1' (id: location-dummy1-1)
                     Rules:
-                      Rule: role={const.PCMK_ROLE_PROMOTED_PRIMARY} score=100 (id:MyRule)
-                        Expression: #uname eq node2 (id:MyRule-expr)
+                      Rule: role={const.PCMK_ROLE_PROMOTED_PRIMARY} score=100 (id: MyRule)
+                        Expression: #uname eq node2 (id: MyRule-expr)
                   resource 'dummy1' (id: location-dummy1-2)
                     Rules:
-                      Rule: boolean-op=or score=INFINITY (id:complexRule)
-                        Rule: boolean-op=and score=0 (id:complexRule-rule)
-                          Expression: #uname eq node3 (id:complexRule-rule-expr)
-                          Expression: foo gt version 1.2 (id:complexRule-rule-expr-1)
-                        Rule: boolean-op=and score=0 (id:complexRule-rule-1)
-                          Expression: (id:complexRule-rule-1-expr)
-                            Date Spec: hours=12-23 weekdays=1-5 (id:complexRule-rule-1-expr-datespec)
-                          Expression: date in_range 2014-07-26 to duration (id:complexRule-rule-1-expr-1)
-                            Duration: months=1 (id:complexRule-rule-1-expr-1-duration)
+                      Rule: boolean-op=or score=INFINITY (id: complexRule)
+                        Rule: boolean-op=and score=0 (id: complexRule-rule)
+                          Expression: #uname eq node3 (id: complexRule-rule-expr)
+                          Expression: foo gt version 1.2 (id: complexRule-rule-expr-1)
+                        Rule: boolean-op=and score=0 (id: complexRule-rule-1)
+                          Expression: (id: complexRule-rule-1-expr)
+                            Date Spec: hours=12-23 weekdays=1-5 (id: complexRule-rule-1-expr-datespec)
+                          Expression: date in_range 2014-07-26 to duration (id: complexRule-rule-1-expr-1)
+                            Duration: months=1 (id: complexRule-rule-1-expr-1-duration)
                   resource 'dummy1' (id: location-dummy1-3)
                     Rules:
-                      Rule: boolean-op=and score=INFINITY (id:location-dummy1-3-rule)
-                        Expression: #uname eq node3 (id:location-dummy1-3-rule-expr)
-                        Rule: boolean-op=or score=0 (id:location-dummy1-3-rule-rule)
-                          Expression: date gt 2022-01-01 (id:location-dummy1-3-rule-rule-expr)
-                          Expression: date lt 2023-01-01 (id:location-dummy1-3-rule-rule-expr-1)
-                          Expression: date in_range 2023-02-01 to 2023-02-28 (id:location-dummy1-3-rule-rule-expr-2)
+                      Rule: boolean-op=and score=INFINITY (id: location-dummy1-3-rule)
+                        Expression: #uname eq node3 (id: location-dummy1-3-rule-expr)
+                        Rule: boolean-op=or score=0 (id: location-dummy1-3-rule-rule)
+                          Expression: date gt 2022-01-01 (id: location-dummy1-3-rule-rule-expr)
+                          Expression: date lt 2023-01-01 (id: location-dummy1-3-rule-rule-expr-1)
+                          Expression: date in_range 2023-02-01 to 2023-02-28 (id: location-dummy1-3-rule-rule-expr-2)
                 """,
             ),
         )
@@ -2292,8 +2292,8 @@ class DomRuleAddTest(TestCase, AssertPcsMixin):
                 Location Constraints:
                   resource 'dummy1' (id: location-dummy1)
                     Rules:
-                      Rule: score-attribute=pingd (id:location-dummy1-rule)
-                        Expression: defined pingd (id:location-dummy1-rule-expr)
+                      Rule: score-attribute=pingd (id: location-dummy1-rule)
+                        Expression: defined pingd (id: location-dummy1-rule-expr)
                 """,
             ),
         )
@@ -2355,8 +2355,8 @@ class DomRuleAddTest(TestCase, AssertPcsMixin):
                 Location Constraints:
                   resource 'dummy1' (id: location-dummy1)
                     Rules:
-                      Rule: score=INFINITY (id:MyRule)
-                        Expression: #uname eq node1 (id:MyRule-expr)
+                      Rule: score=INFINITY (id: MyRule)
+                        Expression: #uname eq node1 (id: MyRule-expr)
                 """,
             ),
         )

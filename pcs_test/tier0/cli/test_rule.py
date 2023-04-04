@@ -57,8 +57,8 @@ class ExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
         )
         output = dedent(
             """\
-              Rule: (id:my-id)
-                Expression: defined pingd (id:my-id-expr)
+              Rule: (id: my-id)
+                Expression: defined pingd (id: my-id-expr)
             """
         )
         self.assert_lines(dto, output)
@@ -91,8 +91,8 @@ class ExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
         )
         output = dedent(
             """\
-              Rule: (id:my-id)
-                Expression: my-attr eq 'my value' (id:my-id-expr)
+              Rule: (id: my-id)
+                Expression: my-attr eq 'my value' (id: my-id-expr)
             """
         )
         self.assert_lines(dto, output)
@@ -126,8 +126,8 @@ class ExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
         )
         output = dedent(
             """\
-              Rule: (id:my-id)
-                Expression: foo gt version 1.2.3 (id:my-id-expr)
+              Rule: (id: my-id)
+                Expression: foo gt version 1.2.3 (id: my-id-expr)
             """
         )
         self.assert_lines(dto, output)
@@ -158,8 +158,8 @@ class DateExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
         )
         output = dedent(
             """\
-              Rule: (id:rule)
-                Expression: date gt 2014-06-26 (id:rule-expr)
+              Rule: (id: rule)
+                Expression: date gt 2014-06-26 (id: rule-expr)
             """
         )
         self.assert_lines(dto, output)
@@ -191,9 +191,9 @@ class DateExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
         )
         output = dedent(
             """\
-              Rule: (id:rule)
-                Expression: (id:rule-expr)
-                  Date Spec: hours=1-14 monthdays=20-30 months=1 (id:rule-expr-datespec)
+              Rule: (id: rule)
+                Expression: (id: rule-expr)
+                  Date Spec: hours=1-14 monthdays=20-30 months=1 (id: rule-expr-datespec)
             """
         )
         self.assert_lines(dto, output)
@@ -226,8 +226,8 @@ class DateExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
         )
         output = dedent(
             """\
-              Rule: (id:rule)
-                Expression: date in_range 2014-06-26 to 2014-07-26 (id:rule-expr)
+              Rule: (id: rule)
+                Expression: date in_range 2014-06-26 to 2014-07-26 (id: rule-expr)
             """
         )
         self.assert_lines(dto, output)
@@ -256,8 +256,8 @@ class DateExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
         )
         output = dedent(
             """\
-              Rule: (id:rule)
-                Expression: date in_range to 2014-07-26 (id:rule-expr)
+              Rule: (id: rule)
+                Expression: date in_range to 2014-07-26 (id: rule-expr)
             """
         )
         self.assert_lines(dto, output)
@@ -289,9 +289,9 @@ class DateExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
         )
         output = dedent(
             """\
-              Rule: (id:rule)
-                Expression: date in_range 2014-06-26 to duration (id:rule-expr)
-                  Duration: years=1 (id:rule-expr-duration)
+              Rule: (id: rule)
+                Expression: date in_range 2014-06-26 to duration (id: rule-expr)
+                  Duration: years=1 (id: rule-expr-duration)
             """
         )
         self.assert_lines(dto, output)
@@ -322,8 +322,8 @@ class OpExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
         )
         output = dedent(
             """\
-              Rule: (id:my-id)
-                Expression: op start (id:my-id-op)
+              Rule: (id: my-id)
+                Expression: op start (id: my-id-op)
             """
         )
         self.assert_lines(dto, output)
@@ -352,8 +352,8 @@ class OpExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
         )
         output = dedent(
             """\
-              Rule: (id:my-id)
-                Expression: op start interval=2min (id:my-id-op)
+              Rule: (id: my-id)
+                Expression: op start interval=2min (id: my-id-op)
             """
         )
         self.assert_lines(dto, output)
@@ -384,8 +384,8 @@ class ResourceExpressionDtoToLines(RuleDtoToLinesMixin, TestCase):
         )
         output = dedent(
             """\
-              Rule: (id:my-id)
-                Expression: resource ocf:pacemaker:Dummy (id:my-id-expr)
+              Rule: (id: my-id)
+                Expression: resource ocf:pacemaker:Dummy (id: my-id-expr)
             """
         )
         self.assert_lines(dto, output)
@@ -421,8 +421,8 @@ class InEffect(RuleDtoToLinesMixin, TestCase):
             self.fixture_dto(CibRuleInEffectStatus.UNKNOWN),
             dedent(
                 """\
-                  Rule: (id:my-id)
-                    Expression: defined pingd (id:my-id-expr)
+                  Rule: (id: my-id)
+                    Expression: defined pingd (id: my-id-expr)
                 """
             ),
         )
@@ -432,8 +432,8 @@ class InEffect(RuleDtoToLinesMixin, TestCase):
             self.fixture_dto(CibRuleInEffectStatus.EXPIRED),
             dedent(
                 """\
-                  Rule (expired): (id:my-id)
-                    Expression: defined pingd (id:my-id-expr)
+                  Rule (expired): (id: my-id)
+                    Expression: defined pingd (id: my-id-expr)
                 """
             ),
         )
@@ -443,8 +443,8 @@ class InEffect(RuleDtoToLinesMixin, TestCase):
             self.fixture_dto(CibRuleInEffectStatus.NOT_YET_IN_EFFECT),
             dedent(
                 """\
-                  Rule (not yet in effect): (id:my-id)
-                    Expression: defined pingd (id:my-id-expr)
+                  Rule (not yet in effect): (id: my-id)
+                    Expression: defined pingd (id: my-id-expr)
                 """
             ),
         )
@@ -563,16 +563,16 @@ class RuleDtoToLines(RuleDtoToLinesMixin, TestCase):
         )
         output = dedent(
             """\
-            Rule: boolean-op=or score=INFINITY (id:complex)
-              Rule: boolean-op=and score=0 (id:complex-rule-1)
-                Expression: (id:complex-rule-1-expr)
-                  Date Spec: hours=12-23 weekdays=1-5 (id:complex-rule-1-expr-datespec)
-                Expression: date in_range 2014-07-26 to duration (id:complex-rule-1-expr-1)
-                  Duration: months=1 (id:complex-rule-1-expr-1-durat)
-              Rule: boolean-op=and score=0 (id:complex-rule)
-                Expression: foo gt version 1.2 (id:complex-rule-expr-1)
-                Expression: #uname eq 'node3 4' (id:complex-rule-expr)
-                Expression: #uname eq nodeA (id:complex-rule-expr-2)
+            Rule: boolean-op=or score=INFINITY (id: complex)
+              Rule: boolean-op=and score=0 (id: complex-rule-1)
+                Expression: (id: complex-rule-1-expr)
+                  Date Spec: hours=12-23 weekdays=1-5 (id: complex-rule-1-expr-datespec)
+                Expression: date in_range 2014-07-26 to duration (id: complex-rule-1-expr-1)
+                  Duration: months=1 (id: complex-rule-1-expr-1-durat)
+              Rule: boolean-op=and score=0 (id: complex-rule)
+                Expression: foo gt version 1.2 (id: complex-rule-expr-1)
+                Expression: #uname eq 'node3 4' (id: complex-rule-expr)
+                Expression: #uname eq nodeA (id: complex-rule-expr-2)
             """
         )
         self.assert_lines(dto, output)

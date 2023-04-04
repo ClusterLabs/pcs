@@ -157,8 +157,8 @@ class DefaultsConfigMixin(DefaultsBaseMixin):
                 Meta Attrs (expired): my-meta_attributes
                   name1=value1
                   name2=value2
-                  Rule (expired): boolean-op=and score=INFINITY (id:my-meta-rule)
-                    Expression: resource ocf:pacemaker:Dummy (id:my-meta-rule-rsc)
+                  Rule (expired): boolean-op=and score=INFINITY (id: my-meta-rule)
+                    Expression: resource ocf:pacemaker:Dummy (id: my-meta-rule-rsc)
                 Meta Attrs: meta-plain score=123
                   "name 1"="value 1"'''
             )

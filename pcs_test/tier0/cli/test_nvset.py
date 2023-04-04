@@ -84,8 +84,8 @@ class NvsetDtoToLines(TestCase):
               "name 2"="value 2"
               name1=value1
               "name=3"="value=3"
-              Rule: boolean-op=or (id:my-id-rule)
-                Expression: op monitor (id:my-id-rule-op)
+              Rule: boolean-op=or (id: my-id-rule)
+                Expression: op monitor (id: my-id-rule-op)
             """
         )
         self.assert_lines(dto, output)
@@ -159,20 +159,20 @@ class NvsetDtoListToLines(TestCase):
             f"""\
             {self.label} (not yet in effect): id-NOT_YET_IN_EFFECT score=150
               name1=value1
-              Rule (not yet in effect): boolean-op=or (id:id-NOT_YET_IN_EFFECT-rule)
-                Expression: op monitor (id:id-NOT_YET_IN_EFFECT-rule-op)
+              Rule (not yet in effect): boolean-op=or (id: id-NOT_YET_IN_EFFECT-rule)
+                Expression: op monitor (id: id-NOT_YET_IN_EFFECT-rule-op)
             {self.label}: id-IN_EFFECT score=150
               name1=value1
-              Rule: boolean-op=or (id:id-IN_EFFECT-rule)
-                Expression: op monitor (id:id-IN_EFFECT-rule-op)
+              Rule: boolean-op=or (id: id-IN_EFFECT-rule)
+                Expression: op monitor (id: id-IN_EFFECT-rule-op)
             {self.label} (expired): id-EXPIRED score=150
               name1=value1
-              Rule (expired): boolean-op=or (id:id-EXPIRED-rule)
-                Expression: op monitor (id:id-EXPIRED-rule-op)
+              Rule (expired): boolean-op=or (id: id-EXPIRED-rule)
+                Expression: op monitor (id: id-EXPIRED-rule-op)
             {self.label}: id-UNKNOWN score=150
               name1=value1
-              Rule: boolean-op=or (id:id-UNKNOWN-rule)
-                Expression: op monitor (id:id-UNKNOWN-rule-op)
+              Rule: boolean-op=or (id: id-UNKNOWN-rule)
+                Expression: op monitor (id: id-UNKNOWN-rule-op)
         """
         )
         self.assert_lines(self.fixture_dto_list(), True, output)
@@ -183,16 +183,16 @@ class NvsetDtoListToLines(TestCase):
             f"""\
             {self.label} (not yet in effect): id-NOT_YET_IN_EFFECT score=150
               name1=value1
-              Rule (not yet in effect): boolean-op=or (id:id-NOT_YET_IN_EFFECT-rule)
-                Expression: op monitor (id:id-NOT_YET_IN_EFFECT-rule-op)
+              Rule (not yet in effect): boolean-op=or (id: id-NOT_YET_IN_EFFECT-rule)
+                Expression: op monitor (id: id-NOT_YET_IN_EFFECT-rule-op)
             {self.label}: id-IN_EFFECT score=150
               name1=value1
-              Rule: boolean-op=or (id:id-IN_EFFECT-rule)
-                Expression: op monitor (id:id-IN_EFFECT-rule-op)
+              Rule: boolean-op=or (id: id-IN_EFFECT-rule)
+                Expression: op monitor (id: id-IN_EFFECT-rule-op)
             {self.label}: id-UNKNOWN score=150
               name1=value1
-              Rule: boolean-op=or (id:id-UNKNOWN-rule)
-                Expression: op monitor (id:id-UNKNOWN-rule-op)
+              Rule: boolean-op=or (id: id-UNKNOWN-rule)
+                Expression: op monitor (id: id-UNKNOWN-rule-op)
         """
         )
         self.assert_lines(self.fixture_dto_list(), False, output)

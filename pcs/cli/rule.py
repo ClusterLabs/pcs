@@ -45,7 +45,7 @@ def _rule_dto_to_lines(
         format_name_value_list(sorted(rule_expr.options.items()))
     )
     if with_ids:
-        heading_parts.append(f"(id:{rule_expr.id})")
+        heading_parts.append(f"(id: {rule_expr.id})")
 
     lines = []
     for child in rule_expr.expressions:
@@ -63,7 +63,7 @@ def _date_dto_to_lines(
     if operation == "date_spec":
         heading_parts = ["Expression:"]
         if with_ids:
-            heading_parts.append(f"(id:{rule_expr.id})")
+            heading_parts.append(f"(id: {rule_expr.id})")
         line_parts = ["Date Spec:"]
         if rule_expr.date_spec:
             line_parts.extend(
@@ -72,7 +72,7 @@ def _date_dto_to_lines(
                 )
             )
             if with_ids:
-                line_parts.append(f"(id:{rule_expr.date_spec.id})")
+                line_parts.append(f"(id: {rule_expr.date_spec.id})")
         return [" ".join(heading_parts)] + indent([" ".join(line_parts)])
 
     if operation == "in_range" and rule_expr.duration:
@@ -81,7 +81,7 @@ def _date_dto_to_lines(
             heading_parts.append(rule_expr.options["start"])
         heading_parts.extend(["to", "duration"])
         if with_ids:
-            heading_parts.append(f"(id:{rule_expr.id})")
+            heading_parts.append(f"(id: {rule_expr.id})")
         lines = [" ".join(heading_parts)]
 
         line_parts = ["Duration:"]
@@ -89,7 +89,7 @@ def _date_dto_to_lines(
             format_name_value_list(sorted(rule_expr.duration.options.items()))
         )
         if with_ids:
-            line_parts.append(f"(id:{rule_expr.duration.id})")
+            line_parts.append(f"(id: {rule_expr.duration.id})")
         lines.extend(indent([" ".join(line_parts)]))
 
         return lines
@@ -102,5 +102,5 @@ def _simple_expr_to_lines(
 ) -> List[str]:
     parts = ["Expression:", rule_expr.as_string]
     if with_ids:
-        parts.append(f"(id:{rule_expr.id})")
+        parts.append(f"(id: {rule_expr.id})")
     return [" ".join(parts)]
