@@ -97,7 +97,7 @@ class DefaultsConfigMixin(DefaultsBaseMixin):
         self.lib_command.return_value = self.empty_dto
         self._call_cmd([])
         self.lib_command.assert_called_once_with(True)
-        mock_print.assert_called_once_with("No defaults set")
+        mock_print.assert_not_called()
 
     def test_usage(self, mock_print):
         with self.assertRaises(CmdLineInputError) as cm:
@@ -110,13 +110,13 @@ class DefaultsConfigMixin(DefaultsBaseMixin):
         self.lib_command.return_value = self.empty_dto
         self._call_cmd([], {"full": True})
         self.lib_command.assert_called_once_with(True)
-        mock_print.assert_called_once_with("No defaults set")
+        mock_print.assert_not_called()
 
     def test_no_expire_check(self, mock_print):
         self.lib_command.return_value = self.empty_dto
         self._call_cmd([], {"no-expire-check": True})
         self.lib_command.assert_called_once_with(False)
-        mock_print.assert_called_once_with("No defaults set")
+        mock_print.assert_not_called()
 
     def test_print(self, mock_print):
         self.lib_command.return_value = self.dto_list

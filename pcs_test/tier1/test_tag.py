@@ -262,34 +262,14 @@ class PcsConfigTagsTest(TestTagMixin, TestCase):
         Cluster Name: test99
         Corosync Nodes:
          rh7-1 rh7-2
-        {pacemaker_nodes}
-        {resources}
-        {stonith_devices}{fencing_levels}{constraints}
-        Alerts:
-         No alerts defined
-
-        Resources Defaults:
-          No defaults set
-        Operations Defaults:
-          No defaults set
-
-        Cluster Properties:
-        {tags}
-        Quorum:
-          Options:
-        """
+        {pacemaker_nodes}{resources}{stonith_devices}{fencing_levels}{constraints}{tags}"""
     )
-    empty_pacemaker_nodes = "Pacemaker Nodes:"
-    empty_resources = "\nResources:\n"
-    empty_stonith_devices = "Stonith Devices:\n"
-    empty_fencing_levels = "Fencing Levels:\n"
+    empty_pacemaker_nodes = "Pacemaker Nodes:\n"
+    empty_resources = ""
+    empty_stonith_devices = ""
+    empty_fencing_levels = ""
     empty_constraints = ""
-    empty_tags = outdent(
-        """
-        Tags:
-         No tags defined
-        """
-    )
+    empty_tags = ""
     expected_pacemaker_nodes = outdent(
         """\
         Pacemaker Nodes:
@@ -297,8 +277,7 @@ class PcsConfigTagsTest(TestTagMixin, TestCase):
         """
     )
     expected_resources = outdent(
-        # pylint: disable=line-too-long
-        """\
+        """
         Resources:
           Resource: not-in-tags (class=ocf provider=pacemaker type=Dummy)
             Operations:
@@ -334,7 +313,7 @@ class PcsConfigTagsTest(TestTagMixin, TestCase):
         """
     )
     expected_stonith_devices = outdent(
-        """\
+        """
         Stonith Devices:
           Resource: fence-rh-1 (class=stonith type=fence_xvm)
             Operations:
@@ -353,7 +332,7 @@ class PcsConfigTagsTest(TestTagMixin, TestCase):
         """
     )
     expected_fencing_levels = outdent(
-        """\
+        """
         Fencing Levels:
           Target: rh-1
             Level 1 - fence-kdump

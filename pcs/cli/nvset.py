@@ -1,7 +1,6 @@
 from typing import (
     Iterable,
     List,
-    Optional,
 )
 
 from pcs.cli.rule import (
@@ -22,10 +21,7 @@ def nvset_dto_list_to_lines(
     nvset_label: str,
     with_ids: bool = False,
     include_expired: bool = False,
-    text_if_empty: Optional[str] = None,
 ) -> List[str]:
-    if not nvset_dto_list:
-        return [text_if_empty] if text_if_empty else []
     if not include_expired:
         nvset_dto_list = [
             nvset_dto

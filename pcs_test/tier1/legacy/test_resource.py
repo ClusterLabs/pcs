@@ -1925,25 +1925,6 @@ class Resource(TestCase, AssertPcsMixin):
                       Operations:
                         monitor: ClusterIP5-monitor-interval-30s
                           interval=30s
-
-                Stonith Devices:
-                Fencing Levels:
-
-                Alerts:
-                 No alerts defined
-
-                Resources Defaults:
-                  No defaults set
-                Operations Defaults:
-                  No defaults set
-
-                Cluster Properties:
-
-                Tags:
-                 No tags defined
-
-                Quorum:
-                  Options:
                 """
             ),
         )
@@ -2151,28 +2132,9 @@ class Resource(TestCase, AssertPcsMixin):
                         monitor: ClusterIP4-monitor-interval-30s
                           interval=30s
 
-                Stonith Devices:
-                Fencing Levels:
-
                 Location Constraints:
                   resource 'ClusterIP5' prefers node 'rh7-1' with score INFINITY (id: location-ClusterIP5-rh7-1-INFINITY)
                   resource 'ClusterIP5' prefers node 'rh7-2' with score INFINITY (id: location-ClusterIP5-rh7-2-INFINITY)
-
-                Alerts:
-                 No alerts defined
-
-                Resources Defaults:
-                  No defaults set
-                Operations Defaults:
-                  No defaults set
-
-                Cluster Properties:
-
-                Tags:
-                 No tags defined
-
-                Quorum:
-                  Options:
             """
             ),
         )

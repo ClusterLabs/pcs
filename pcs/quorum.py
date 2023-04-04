@@ -25,8 +25,9 @@ def quorum_config_cmd(lib, argv, modifiers):
     modifiers.ensure_only_supported("--corosync_conf")
     if argv:
         raise CmdLineInputError()
-    config = lib.quorum.get_config()
-    print("\n".join(quorum_config_to_str(config)))
+    lines = quorum_config_to_str(lib.quorum.get_config())
+    if lines:
+        print("\n".join(lines))
 
 
 def quorum_config_to_str(config):
@@ -35,8 +36,8 @@ def quorum_config_to_str(config):
     """
     lines = []
 
-    lines.append("Options:")
     if "options" in config and config["options"]:
+        lines.append("Options:")
         lines.extend(
             indent(
                 [

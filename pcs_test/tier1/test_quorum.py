@@ -41,7 +41,7 @@ class TestBase(TestCase, AssertPcsMixin):
 
 class QuorumConfigTest(TestBase):
     def test_no_device(self):
-        self.assert_pcs_success("quorum config".split(), "Options:\n")
+        self.assert_pcs_success("quorum config".split(), "")
 
     def test_with_device(self):
         self.fixture_conf_qdevice()
@@ -49,7 +49,6 @@ class QuorumConfigTest(TestBase):
             "quorum config".split(),
             dedent(
                 """\
-                Options:
                 Device:
                   Model: net
                     host: 127.0.0.1
@@ -89,14 +88,7 @@ class QuorumUpdateTest(TestBase):
         )
 
     def test_success(self):
-        self.assert_pcs_success(
-            "quorum config".split(),
-            dedent(
-                """\
-                Options:
-                """
-            ),
-        )
+        self.assert_pcs_success("quorum config".split(), "")
         self.assert_pcs_success("quorum update wait_for_all=1".split())
         self.assert_pcs_success(
             "quorum config".split(),
@@ -172,7 +164,6 @@ class DeviceAddTest(TestBase):
             "quorum config".split(),
             dedent(
                 """\
-                Options:
                 Device:
                   Model: net
                     algorithm: lms
@@ -192,7 +183,6 @@ class DeviceAddTest(TestBase):
             "quorum config".split(),
             dedent(
                 """\
-                Options:
                 Device:
                   timeout: 12345
                   votes: 1
@@ -222,7 +212,6 @@ class DeviceAddTest(TestBase):
             "quorum config".split(),
             dedent(
                 """\
-                Options:
                 Device:
                   votes: 1
                   Model: net
@@ -248,7 +237,6 @@ class DeviceAddTest(TestBase):
             "quorum config".split(),
             dedent(
                 """\
-                Options:
                 Device:
                   votes: 1
                   Model: net
@@ -280,7 +268,6 @@ class DeviceAddTest(TestBase):
             "quorum config".split(),
             dedent(
                 """\
-                Options:
                 Device:
                   timeout: 12345
                   votes: 1
@@ -338,7 +325,6 @@ Warning: 'bad' is not a valid mode value, use 'off', 'on', 'sync'
             "quorum config".split(),
             dedent(
                 """\
-                Options:
                 Device:
                   a: b
                   timeout: -1
@@ -369,7 +355,6 @@ Warning: 'bad' is not a valid mode value, use 'off', 'on', 'sync'
             "quorum config".split(),
             dedent(
                 """\
-                Options:
                 Device:
                   Model: invalid
                     x: y
@@ -390,7 +375,7 @@ class DeviceDeleteRemoveTest(TestBase):
     def _test_success(self):
         self.fixture_conf_qdevice()
         self.assert_pcs_success(["quorum", "device", self.command])
-        self.assert_pcs_success("quorum config".split(), "Options:\n")
+        self.assert_pcs_success("quorum config".split(), "")
 
     def _test_bad_options(self):
         self.assert_pcs_fail(
@@ -445,7 +430,6 @@ class DeviceHeuristicsDeleteRemove(TestBase):
             "quorum config".split(),
             dedent(
                 """\
-                Options:
                 Device:
                   Model: net
                     host: 127.0.0.1
@@ -480,7 +464,6 @@ class DeviceUpdateTest(TestBase):
             "quorum config".split(),
             dedent(
                 """\
-                Options:
                 Device:
                   timeout: 12345
                   Model: net
@@ -498,7 +481,6 @@ class DeviceUpdateTest(TestBase):
             "quorum config".split(),
             dedent(
                 """\
-                Options:
                 Device:
                   Model: net
                     host: 127.0.0.2
@@ -522,7 +504,6 @@ class DeviceUpdateTest(TestBase):
             "quorum config".split(),
             dedent(
                 """\
-                Options:
                 Device:
                   Model: net
                     host: 127.0.0.1
@@ -544,7 +525,6 @@ class DeviceUpdateTest(TestBase):
             "quorum config".split(),
             dedent(
                 """\
-                Options:
                 Device:
                   Model: net
                     host: 127.0.0.1
@@ -574,7 +554,6 @@ class DeviceUpdateTest(TestBase):
             "quorum config".split(),
             dedent(
                 """\
-                Options:
                 Device:
                   timeout: 12345
                   Model: net
@@ -664,7 +643,6 @@ Warning: '-1' is not a valid timeout value, use a positive integer
             "quorum config".split(),
             dedent(
                 """\
-                Options:
                 Device:
                   a: b
                   timeout: -1

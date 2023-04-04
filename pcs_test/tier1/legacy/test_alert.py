@@ -29,13 +29,7 @@ class PcsAlertTest(unittest.TestCase, AssertPcsMixin):
 
 class CreateAlertTest(PcsAlertTest):
     def test_create_multiple_without_id(self):
-        self.assert_pcs_success(
-            "alert config".split(),
-            """\
-Alerts:
- No alerts defined
-""",
-        )
+        self.assert_pcs_success("alert config".split(), "")
 
         self.assert_pcs_success("alert create path=test".split())
         self.assert_pcs_success("alert create path=test".split())
@@ -51,13 +45,7 @@ Alerts:
         )
 
     def test_create_multiple_with_id(self):
-        self.assert_pcs_success(
-            "alert config".split(),
-            """\
-Alerts:
- No alerts defined
-""",
-        )
+        self.assert_pcs_success("alert config".split(), "")
         self.assert_pcs_success("alert create id=alert1 path=test".split())
         self.assert_pcs_success(
             "alert create id=alert2 description=desc path=test".split()
@@ -118,13 +106,7 @@ Alerts:
 
 class UpdateAlertTest(PcsAlertTest):
     def test_update_everything(self):
-        self.assert_pcs_success(
-            "alert config".split(),
-            """\
-Alerts:
- No alerts defined
-""",
-        )
+        self.assert_pcs_success("alert config".split(), "")
         self.assert_pcs_success(
             (
                 "alert create id=alert1 description=desc path=test "
@@ -185,15 +167,7 @@ class DeleteRemoveAlertTest(PcsAlertTest):
         )
 
     def _test_one(self):
-        self.assert_pcs_success(
-            "alert config".split(),
-            outdent(
-                """\
-                Alerts:
-                 No alerts defined
-                """
-            ),
-        )
+        self.assert_pcs_success("alert config".split(), "")
 
         self.assert_pcs_success("alert create path=test id=alert1".split())
         self.assert_pcs_success(
@@ -206,26 +180,10 @@ class DeleteRemoveAlertTest(PcsAlertTest):
             ),
         )
         self.assert_pcs_success(["alert", self.command, "alert1"])
-        self.assert_pcs_success(
-            "alert config".split(),
-            outdent(
-                """\
-                Alerts:
-                 No alerts defined
-                """
-            ),
-        )
+        self.assert_pcs_success("alert config".split(), "")
 
     def _test_multiple(self):
-        self.assert_pcs_success(
-            "alert config".split(),
-            outdent(
-                """\
-                Alerts:
-                 No alerts defined
-                """
-            ),
-        )
+        self.assert_pcs_success("alert config".split(), "")
 
         self.assert_pcs_success("alert create path=test id=alert1".split())
         self.assert_pcs_success("alert create path=test id=alert2".split())
