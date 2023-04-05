@@ -282,34 +282,28 @@ class PcsConfigTagsTest(TestTagMixin, TestCase):
           Resource: not-in-tags (class=ocf provider=pacemaker type=Dummy)
             Operations:
               monitor: not-in-tags-monitor-interval-10s
-                interval=10s
-                timeout=20s
+                interval=10s timeout=20s
           Resource: x1 (class=ocf provider=pacemaker type=Dummy)
             Operations:
               monitor: x1-monitor-interval-10s
-                interval=10s
-                timeout=20s
+                interval=10s timeout=20s
           Resource: x2 (class=ocf provider=pacemaker type=Dummy)
             Operations:
               monitor: x2-monitor-interval-10s
-                interval=10s
-                timeout=20s
+                interval=10s timeout=20s
           Resource: x3 (class=ocf provider=pacemaker type=Dummy)
             Operations:
               monitor: x3-monitor-interval-10s
-                interval=10s
-                timeout=20s
+                interval=10s timeout=20s
           Resource: y1 (class=ocf provider=pacemaker type=Dummy)
             Operations:
               monitor: y1-monitor-interval-10s
-                interval=10s
-                timeout=20s
+                interval=10s timeout=20s
           Clone: y2-clone
             Resource: y2 (class=ocf provider=pacemaker type=Dummy)
               Operations:
                 monitor: y2-monitor-interval-10s
-                  interval=10s
-                  timeout=20s
+                  interval=10s timeout=20s
         """
     )
     expected_stonith_devices = outdent(

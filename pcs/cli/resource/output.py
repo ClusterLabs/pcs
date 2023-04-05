@@ -90,13 +90,14 @@ def _resource_operation_to_pairs(
 def _resource_operation_to_str(
     operation_dto: CibResourceOperationDto,
 ) -> List[str]:
-    lines = format_name_value_list(
-        [
-            pair
-            for pair in _resource_operation_to_pairs(operation_dto)
-            if pair[0] != "id"
-        ]
-    )
+    lines = []
+    op_pairs = [
+        pair
+        for pair in _resource_operation_to_pairs(operation_dto)
+        if pair[0] != "id"
+    ]
+    if op_pairs:
+        lines.append(" ".join(format_name_value_list(op_pairs)))
     # TODO: add support for meta and instance attributes once it is supported
     # by pcs
     return [

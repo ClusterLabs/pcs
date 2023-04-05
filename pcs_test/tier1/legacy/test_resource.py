@@ -83,15 +83,11 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
 {0}
             Default operations:
               start:
-                interval=0s
-                timeout=10s
+                interval=0s timeout=10s
               stop:
-                interval=0s
-                timeout=10s
+                interval=0s timeout=10s
               monitor:
-                interval=10s
-                start-delay=0s
-                timeout=10s
+                interval=10s start-delay=0s timeout=10s
             """.format(
                 advanced_params if advanced else ""
             )
@@ -596,8 +592,7 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: dummy0 (class=ocf provider=heartbeat type=Dummy)
                   Operations:
                     monitor: dummy0-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
+                      interval=10s timeout=20s
                 """
             ),
         )
@@ -756,12 +751,9 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: OPTest (class=ocf provider=heartbeat type=Dummy)
                   Operations:
                     monitor: OPTest-monitor-interval-30s
-                      interval=30s
-                      OCF_CHECK_LEVEL=1
+                      interval=30s OCF_CHECK_LEVEL=1
                     monitor: OPTest-monitor-interval-25s
-                      interval=25s
-                      enabled=0
-                      OCF_CHECK_LEVEL=1
+                      interval=25s enabled=0 OCF_CHECK_LEVEL=1
                 """
             ),
         )
@@ -797,17 +789,13 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: OPTest2 (class=ocf provider=heartbeat type=Dummy)
                   Operations:
                     monitor: OPTest2-monitor-interval-30s
-                      interval=30s
-                      OCF_CHECK_LEVEL=1
+                      interval=30s OCF_CHECK_LEVEL=1
                     monitor: OPTest2-monitor-interval-25s
-                      interval=25s
-                      OCF_CHECK_LEVEL=2
+                      interval=25s OCF_CHECK_LEVEL=2
                     start: OPTest2-start-interval-0s
-                      interval=0s
-                      timeout=30s
+                      interval=0s timeout=30s
                     monitor: OPTest2-monitor-interval-60s
-                      interval=60s
-                      timeout=1800s
+                      interval=60s timeout=1800s
                 """
             ),
         )
@@ -823,8 +811,7 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: OPTest3 (class=ocf provider=heartbeat type=Dummy)
                   Operations:
                     monitor: OPTest3-monitor-interval-60s
-                      interval=60s
-                      OCF_CHECK_LEVEL=1
+                      interval=60s OCF_CHECK_LEVEL=1
                 """
             ),
         )
@@ -844,8 +831,7 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: OPTest4 (class=ocf provider=heartbeat type=Dummy)
                   Operations:
                     monitor: OPTest4-monitor-interval-60s
-                      interval=60s
-                      OCF_CHECK_LEVEL=1
+                      interval=60s OCF_CHECK_LEVEL=1
                 """
             ),
         )
@@ -865,8 +851,7 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: OPTest5 (class=ocf provider=heartbeat type=Dummy)
                   Operations:
                     monitor: OPTest5-monitor-interval-60s
-                      interval=60s
-                      OCF_CHECK_LEVEL=1
+                      interval=60s OCF_CHECK_LEVEL=1
                 """
             ),
         )
@@ -886,11 +871,9 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: OPTest6 (class=ocf provider=heartbeat type=Dummy)
                   Operations:
                     monitor: OPTest6-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
+                      interval=10s timeout=20s
                     monitor: OPTest6-monitor-interval-30s
-                      interval=30s
-                      OCF_CHECK_LEVEL=1
+                      interval=30s OCF_CHECK_LEVEL=1
                 """
             ),
         )
@@ -922,11 +905,9 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: OPTest7 (class=ocf provider=heartbeat type=Dummy)
                   Operations:
                     monitor: OPTest7-monitor-interval-60s
-                      interval=60s
-                      OCF_CHECK_LEVEL=1
+                      interval=60s OCF_CHECK_LEVEL=1
                     monitor: OPTest7-monitor-interval-61s
-                      interval=61s
-                      OCF_CHECK_LEVEL=1
+                      interval=61s OCF_CHECK_LEVEL=1
                 """
             ),
         )
@@ -966,13 +947,11 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)
                   Operations:
                     monitor: OCFTest1-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
+                      interval=10s timeout=20s
                     monitor: OCFTest1-monitor-interval-31s
                       interval=31s
                     monitor: OCFTest1-monitor-interval-30s
-                      interval=30s
-                      OCF_CHECK_LEVEL=15
+                      interval=30s OCF_CHECK_LEVEL=15
                 """
             ),
         )
@@ -988,13 +967,11 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)
                   Operations:
                     monitor: OCFTest1-monitor-interval-61s
-                      interval=61s
-                      OCF_CHECK_LEVEL=5
+                      interval=61s OCF_CHECK_LEVEL=5
                     monitor: OCFTest1-monitor-interval-31s
                       interval=31s
                     monitor: OCFTest1-monitor-interval-30s
-                      interval=30s
-                      OCF_CHECK_LEVEL=15
+                      interval=30s OCF_CHECK_LEVEL=15
                 """
             ),
         )
@@ -1010,13 +987,11 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)
                   Operations:
                     monitor: OCFTest1-monitor-interval-60s
-                      interval=60s
-                      OCF_CHECK_LEVEL=4
+                      interval=60s OCF_CHECK_LEVEL=4
                     monitor: OCFTest1-monitor-interval-31s
                       interval=31s
                     monitor: OCFTest1-monitor-interval-30s
-                      interval=30s
-                      OCF_CHECK_LEVEL=15
+                      interval=30s OCF_CHECK_LEVEL=15
                 """
             ),
         )
@@ -1032,13 +1007,11 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)
                   Operations:
                     monitor: OCFTest1-monitor-interval-35s
-                      interval=35s
-                      OCF_CHECK_LEVEL=4
+                      interval=35s OCF_CHECK_LEVEL=4
                     monitor: OCFTest1-monitor-interval-31s
                       interval=31s
                     monitor: OCFTest1-monitor-interval-30s
-                      interval=30s
-                      OCF_CHECK_LEVEL=15
+                      interval=30s OCF_CHECK_LEVEL=15
                 """
             ),
         )
@@ -1078,16 +1051,11 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: state (class=ocf provider=pacemaker type=Stateful)
                   Operations:
                     monitor: state-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
-                      role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                      interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
                     monitor: state-monitor-interval-11
-                      interval=11
-                      timeout=20s
-                      role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                      interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
                     monitor: state-monitor-interval-15
-                      interval=15
-                      role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                      interval=15 role={const.PCMK_ROLE_PROMOTED_PRIMARY}
                 """
             ),
         )
@@ -1214,11 +1182,9 @@ class Resource(TestCase, AssertPcsMixin):
                     ip=192.168.0.99
                   Operations:
                     stop: ClusterIP-stop-interval-0s
-                      interval=0s
-                      timeout=34s
+                      interval=0s timeout=34s
                     start: ClusterIP-start-interval-0s
-                      interval=0s
-                      timeout=33s
+                      interval=0s timeout=33s
                 """
             ),
         )
@@ -1291,8 +1257,7 @@ class Resource(TestCase, AssertPcsMixin):
                 monitor: ClusterIP-monitor-interval-33s
                   interval=33s
                 start: ClusterIP-start-interval-30s
-                  interval=30s
-                  timeout=180s
+                  interval=30s timeout=180s
             """
         )
         self.assert_pcs_success(
@@ -1366,8 +1331,7 @@ class Resource(TestCase, AssertPcsMixin):
                     monitor: abcd
                       interval=60s
                     start: ClusterIP-start-interval-30s
-                      interval=30s
-                      timeout=180s
+                      interval=30s timeout=180s
                 """
             ),
         )
@@ -1385,24 +1349,19 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: A (class=ocf provider=heartbeat type=Dummy)
                   Operations:
                     migrate_from: A-migrate_from-interval-0s
-                      interval=0s
-                      timeout=20s
+                      interval=0s timeout=20s
                     migrate_to: A-migrate_to-interval-0s
-                      interval=0s
-                      timeout=20s
+                      interval=0s timeout=20s
                     monitor: A-monitor-interval-10
                       interval=10
                     monitor: A-monitor-interval-20
                       interval=20
                     reload: A-reload-interval-0s
-                      interval=0s
-                      timeout=20s
+                      interval=0s timeout=20s
                     start: A-start-interval-0s
-                      interval=0s
-                      timeout=20s
+                      interval=0s timeout=20s
                     stop: A-stop-interval-0s
-                      interval=0s
-                      timeout=20s
+                      interval=0s timeout=20s
                 """
             ),
         )
@@ -1426,24 +1385,19 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: A (class=ocf provider=heartbeat type=Dummy)
                   Operations:
                     migrate_from: A-migrate_from-interval-0s
-                      interval=0s
-                      timeout=20s
+                      interval=0s timeout=20s
                     migrate_to: A-migrate_to-interval-0s
-                      interval=0s
-                      timeout=20s
+                      interval=0s timeout=20s
                     monitor: A-monitor-interval-11
                       interval=11
                     monitor: A-monitor-interval-20
                       interval=20
                     reload: A-reload-interval-0s
-                      interval=0s
-                      timeout=20s
+                      interval=0s timeout=20s
                     start: A-start-interval-0s
-                      interval=0s
-                      timeout=20s
+                      interval=0s timeout=20s
                     stop: A-stop-interval-0s
-                      interval=0s
-                      timeout=20s
+                      interval=0s timeout=20s
                 """
             ),
         )
@@ -1506,8 +1460,7 @@ class Resource(TestCase, AssertPcsMixin):
                     monitor: B-monitor-interval-30
                       interval=30
                     start: B-start-interval-0
-                      interval=0
-                      timeout=10
+                      interval=0 timeout=10
                 """
             ),
         )
@@ -1525,8 +1478,7 @@ class Resource(TestCase, AssertPcsMixin):
                     monitor: B-monitor-interval-30
                       interval=30
                     start: B-start-interval-0
-                      interval=0
-                      timeout=20
+                      interval=0 timeout=20
                 """
             ),
         )
@@ -1544,8 +1496,7 @@ class Resource(TestCase, AssertPcsMixin):
                     monitor: B-monitor-interval-33
                       interval=33
                     start: B-start-interval-0
-                      interval=0
-                      timeout=20
+                      interval=0 timeout=20
                 """
             ),
         )
@@ -1563,11 +1514,9 @@ class Resource(TestCase, AssertPcsMixin):
                     monitor: B-monitor-interval-33
                       interval=33
                     start: B-start-interval-0
-                      interval=0
-                      timeout=20
+                      interval=0 timeout=20
                     monitor: B-monitor-interval-100
-                      interval=100
-                      role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                      interval=100 role={const.PCMK_ROLE_PROMOTED_PRIMARY}
                 """
             ),
         )
@@ -1585,11 +1534,9 @@ class Resource(TestCase, AssertPcsMixin):
                     monitor: B-monitor-interval-33
                       interval=33
                     start: B-start-interval-0
-                      interval=0
-                      timeout=22
+                      interval=0 timeout=22
                     monitor: B-monitor-interval-100
-                      interval=100
-                      role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                      interval=100 role={const.PCMK_ROLE_PROMOTED_PRIMARY}
                 """
             ),
         )
@@ -1712,28 +1659,23 @@ class Resource(TestCase, AssertPcsMixin):
                   Resource: A1 (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       monitor: A1-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                   Resource: A2 (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       monitor: A2-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                   Resource: A3 (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       monitor: A3-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                   Resource: A4 (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       monitor: A4-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                   Resource: A5 (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       monitor: A5-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 """
             ),
         )
@@ -1952,8 +1894,7 @@ class Resource(TestCase, AssertPcsMixin):
                   Resource: D1 (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       monitor: D1-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 """
             ),
         )
@@ -2196,13 +2137,11 @@ class Resource(TestCase, AssertPcsMixin):
                     Resource: D0 (class=ocf provider=heartbeat type=Dummy)
                       Operations:
                         monitor: D0-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
+                          interval=10s timeout=20s
                     Resource: D1 (class=ocf provider=heartbeat type=Dummy)
                       Operations:
                         monitor: D1-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
+                          interval=10s timeout=20s
                 """
             ),
         )
@@ -2242,13 +2181,11 @@ class Resource(TestCase, AssertPcsMixin):
                     Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
                       Operations:
                         monitor: dummy1-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
+                          interval=10s timeout=20s
                     Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
                       Operations:
                         monitor: dummy2-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
+                          interval=10s timeout=20s
                 """
             ),
         )
@@ -2262,13 +2199,11 @@ class Resource(TestCase, AssertPcsMixin):
                   Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       monitor: dummy1-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                   Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       monitor: dummy2-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 """
             ),
         )
@@ -2284,13 +2219,11 @@ class Resource(TestCase, AssertPcsMixin):
                     Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
                       Operations:
                         monitor: dummy1-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
+                          interval=10s timeout=20s
                     Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
                       Operations:
                         monitor: dummy2-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
+                          interval=10s timeout=20s
                 """
             ),
         )
@@ -2304,13 +2237,11 @@ class Resource(TestCase, AssertPcsMixin):
                   Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       monitor: dummy1-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                   Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       monitor: dummy2-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 """
             ),
         )
@@ -2326,13 +2257,11 @@ class Resource(TestCase, AssertPcsMixin):
                     Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
                       Operations:
                         monitor: dummy1-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
+                          interval=10s timeout=20s
                     Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
                       Operations:
                         monitor: dummy2-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
+                          interval=10s timeout=20s
                 """
             ),
         )
@@ -2345,15 +2274,13 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
                   Operations:
                     monitor: dummy1-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
+                      interval=10s timeout=20s
                 Clone: gr-clone
                   Group: gr
                     Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
                       Operations:
                         monitor: dummy2-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
+                          interval=10s timeout=20s
                 """
             ),
         )
@@ -2366,13 +2293,11 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
                   Operations:
                     monitor: dummy1-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
+                      interval=10s timeout=20s
                 Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
                   Operations:
                     monitor: dummy2-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
+                      interval=10s timeout=20s
                 """
             ),
         )
@@ -2420,26 +2345,18 @@ class Resource(TestCase, AssertPcsMixin):
                   Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
                     Operations:
                       monitor: dummy1-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
-                        role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                        interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
                       monitor: dummy1-monitor-interval-11
-                        interval=11
-                        timeout=20s
-                        role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                        interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
                 Clone: dummy2-master
                   Meta Attributes:
                     promotable=true
                   Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
                     Operations:
                       monitor: dummy2-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
-                        role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                        interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
                       monitor: dummy2-monitor-interval-11
-                        interval=11
-                        timeout=20s
-                        role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                        interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
                 """
             ),
         )
@@ -2452,24 +2369,16 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
                   Operations:
                     monitor: dummy2-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
-                      role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                      interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
                     monitor: dummy2-monitor-interval-11
-                      interval=11
-                      timeout=20s
-                      role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                      interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
                 Group: gr
                   Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
                     Operations:
                       monitor: dummy1-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
-                        role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                        interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
                       monitor: dummy1-monitor-interval-11
-                        interval=11
-                        timeout=20s
-                        role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                        interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
                 """
             ),
         )
@@ -2491,23 +2400,15 @@ class Resource(TestCase, AssertPcsMixin):
                     Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
                       Operations:
                         monitor: dummy1-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
-                          role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                          interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
                         monitor: dummy1-monitor-interval-11
-                          interval=11
-                          timeout=20s
-                          role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                          interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
                     Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
                       Operations:
                         monitor: dummy2-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
-                          role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                          interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
                         monitor: dummy2-monitor-interval-11
-                          interval=11
-                          timeout=20s
-                          role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                          interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
                 """
             ),
         )
@@ -2521,23 +2422,15 @@ class Resource(TestCase, AssertPcsMixin):
                   Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
                     Operations:
                       monitor: dummy1-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
-                        role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                        interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
                       monitor: dummy1-monitor-interval-11
-                        interval=11
-                        timeout=20s
-                        role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                        interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
                   Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
                     Operations:
                       monitor: dummy2-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
-                        role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                        interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
                       monitor: dummy2-monitor-interval-11
-                        interval=11
-                        timeout=20s
-                        role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                        interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
                 """
             ),
         )
@@ -2558,23 +2451,15 @@ class Resource(TestCase, AssertPcsMixin):
                     Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
                       Operations:
                         monitor: dummy1-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
-                          role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                          interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
                         monitor: dummy1-monitor-interval-11
-                          interval=11
-                          timeout=20s
-                          role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                          interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
                     Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
                       Operations:
                         monitor: dummy2-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
-                          role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                          interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
                         monitor: dummy2-monitor-interval-11
-                          interval=11
-                          timeout=20s
-                          role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                          interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
                 """
             ),
         )
@@ -2588,23 +2473,15 @@ class Resource(TestCase, AssertPcsMixin):
                   Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
                     Operations:
                       monitor: dummy1-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
-                        role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                        interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
                       monitor: dummy1-monitor-interval-11
-                        interval=11
-                        timeout=20s
-                        role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                        interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
                   Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
                     Operations:
                       monitor: dummy2-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
-                        role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                        interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
                       monitor: dummy2-monitor-interval-11
-                        interval=11
-                        timeout=20s
-                        role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                        interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
                 """
             ),
         )
@@ -2622,13 +2499,9 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
                   Operations:
                     monitor: dummy2-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
-                      role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                      interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
                     monitor: dummy2-monitor-interval-11
-                      interval=11
-                      timeout=20s
-                      role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                      interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
                 Clone: gr-master
                   Meta Attributes:
                     promotable=true
@@ -2636,13 +2509,9 @@ class Resource(TestCase, AssertPcsMixin):
                     Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
                       Operations:
                         monitor: dummy1-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
-                          role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                          interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
                         monitor: dummy1-monitor-interval-11
-                          interval=11
-                          timeout=20s
-                          role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                          interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
                 """
             ),
         )
@@ -2655,23 +2524,15 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
                   Operations:
                     monitor: dummy2-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
-                      role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                      interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
                     monitor: dummy2-monitor-interval-11
-                      interval=11
-                      timeout=20s
-                      role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                      interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
                 Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
                   Operations:
                     monitor: dummy1-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
-                      role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                      interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
                     monitor: dummy1-monitor-interval-11
-                      interval=11
-                      timeout=20s
-                      role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                      interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
                 """
             ),
         )
@@ -2693,23 +2554,15 @@ class Resource(TestCase, AssertPcsMixin):
                     Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
                       Operations:
                         monitor: dummy1-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
-                          role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                          interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
                         monitor: dummy1-monitor-interval-11
-                          interval=11
-                          timeout=20s
-                          role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                          interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
                     Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
                       Operations:
                         monitor: dummy2-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
-                          role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                          interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
                         monitor: dummy2-monitor-interval-11
-                          interval=11
-                          timeout=20s
-                          role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                          interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
                 """
             ),
         )
@@ -2723,13 +2576,9 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
                   Operations:
                     monitor: dummy2-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
-                      role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                      interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
                     monitor: dummy2-monitor-interval-11
-                      interval=11
-                      timeout=20s
-                      role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                      interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
                 Clone: gr-master
                   Meta Attributes:
                     promotable=true
@@ -2737,13 +2586,9 @@ class Resource(TestCase, AssertPcsMixin):
                     Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
                       Operations:
                         monitor: dummy1-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
-                          role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                          interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
                         monitor: dummy1-monitor-interval-11
-                          interval=11
-                          timeout=20s
-                          role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                          interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
                 """
             ),
         )
@@ -2765,14 +2610,12 @@ class Resource(TestCase, AssertPcsMixin):
                   Resource: D1 (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       monitor: D1-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 Clone: D0-clone
                   Resource: D0 (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       monitor: D0-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 """
             ),
         )
@@ -2786,14 +2629,12 @@ class Resource(TestCase, AssertPcsMixin):
                   Resource: D0 (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       monitor: D0-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 Clone: D1-clone
                   Resource: D1 (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       monitor: D1-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 """
             ),
         )
@@ -2815,16 +2656,14 @@ class Resource(TestCase, AssertPcsMixin):
                   Resource: D1 (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       monitor: D1-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 Clone: D0-clone
                   Meta Attributes: D0-clone-meta_attributes
                     promotable=true
                   Resource: D0 (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       monitor: D0-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 """
             ),
         )
@@ -2840,16 +2679,14 @@ class Resource(TestCase, AssertPcsMixin):
                   Resource: D0 (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       monitor: D0-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 Clone: D1-clone
                   Meta Attributes: D1-clone-meta_attributes
                     promotable=true
                   Resource: D1 (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       monitor: D1-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 """
             ),
         )
@@ -2897,32 +2734,28 @@ class Resource(TestCase, AssertPcsMixin):
                   Resource: D0 (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       monitor: D0-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 Clone: D3-clone
                   Meta Attributes: D3-clone-meta_attributes
                     promotable=true
                   Resource: D3 (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       monitor: D3-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 Clone: D1-master-custom
                   Meta Attributes:
                     promotable=true
                   Resource: D1 (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       monitor: D1-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 Clone: D2-master
                   Meta Attributes:
                     promotable=true
                   Resource: D2 (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       monitor: D2-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 """
             ),
         )
@@ -2949,29 +2782,25 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: D0 (class=ocf provider=heartbeat type=Dummy)
                   Operations:
                     monitor: D0-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
+                      interval=10s timeout=20s
                 Resource: D2 (class=ocf provider=heartbeat type=Dummy)
                   Operations:
                     monitor: D2-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
+                      interval=10s timeout=20s
                 Clone: D3-clone
                   Meta Attributes: D3-clone-meta_attributes
                     promotable=true
                   Resource: D3 (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       monitor: D3-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 Clone: D1-master-custom
                   Meta Attributes:
                     promotable=true
                   Resource: D1 (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       monitor: D1-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 """
             ),
         )
@@ -3000,8 +2829,7 @@ class Resource(TestCase, AssertPcsMixin):
                     foo=bar
                   Operations:
                     monitor: D2-monitor-interval-15
-                      interval=15
-                      timeout=15
+                      interval=15 timeout=15
                 """
             ),
         )
@@ -3030,8 +2858,7 @@ class Resource(TestCase, AssertPcsMixin):
                     foo=bar
                   Operations:
                     monitor: D2-monitor-interval-15
-                      interval=15
-                      timeout=15
+                      interval=15 timeout=15
                 """
             ),
         )
@@ -3088,8 +2915,7 @@ class Resource(TestCase, AssertPcsMixin):
                     Resource: D1 (class=ocf provider=heartbeat type=Dummy)
                       Operations:
                         monitor: D1-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
+                          interval=10s timeout=20s
                 """
             ),
         )
@@ -3121,8 +2947,7 @@ class Resource(TestCase, AssertPcsMixin):
                     Resource: D1 (class=ocf provider=heartbeat type=Dummy)
                       Operations:
                         monitor: D1-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
+                          interval=10s timeout=20s
                 """
             ),
         )
@@ -3241,14 +3066,12 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: dummy-clone (class=ocf provider=heartbeat type=Dummy)
                   Operations:
                     monitor: dummy-clone-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
+                      interval=10s timeout=20s
                 Clone: dummy-clone-1
                   Resource: dummy (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       monitor: dummy-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 """
             ),
         )
@@ -3267,14 +3090,12 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: dummy-clone (class=ocf provider=heartbeat type=Dummy)
                   Operations:
                     monitor: dummy-clone-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
+                      interval=10s timeout=20s
                 Clone: dummy-clone-1
                   Resource: dummy (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       monitor: dummy-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 """
             ),
         )
@@ -3294,16 +3115,14 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: dummy-clone (class=ocf provider=heartbeat type=Dummy)
                   Operations:
                     monitor: dummy-clone-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
+                      interval=10s timeout=20s
                 Clone: dummy-clone-1
                   Meta Attributes: dummy-clone-1-meta_attributes
                     promotable=true
                   Resource: dummy (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       monitor: dummy-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 """
             ),
         )
@@ -3322,16 +3141,14 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: dummy-clone (class=ocf provider=heartbeat type=Dummy)
                   Operations:
                     monitor: dummy-clone-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
+                      interval=10s timeout=20s
                 Clone: dummy-clone-1
                   Meta Attributes: dummy-clone-1-meta_attributes
                     promotable=true
                   Resource: dummy (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       monitor: dummy-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 """
             ),
         )
@@ -3348,8 +3165,7 @@ class Resource(TestCase, AssertPcsMixin):
                   Resource: D1 (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       monitor: D1-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 """
             ),
         )
@@ -3365,8 +3181,7 @@ class Resource(TestCase, AssertPcsMixin):
                   Resource: D1 (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       monitor: D1-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 """
             ),
         )
@@ -3383,8 +3198,7 @@ class Resource(TestCase, AssertPcsMixin):
                   Resource: D1 (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       monitor: D1-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 """
             ),
         )
@@ -3400,8 +3214,7 @@ class Resource(TestCase, AssertPcsMixin):
                   Resource: D1 (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       monitor: D1-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 """
             ),
         )
@@ -3430,13 +3243,11 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: A (class=ocf provider=heartbeat type=Dummy)
                   Operations:
                     monitor: A-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
+                      interval=10s timeout=20s
                 Resource: B (class=ocf provider=heartbeat type=Dummy)
                   Operations:
                     monitor: B-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
+                      interval=10s timeout=20s
                 """
             ),
         )
@@ -3524,8 +3335,7 @@ class Resource(TestCase, AssertPcsMixin):
                   Resource: A (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       monitor: A-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 """
             ),
         )
@@ -3547,13 +3357,11 @@ class Resource(TestCase, AssertPcsMixin):
                     Resource: D1 (class=ocf provider=heartbeat type=Dummy)
                       Operations:
                         monitor: D1-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
+                          interval=10s timeout=20s
                     Resource: D2 (class=ocf provider=heartbeat type=Dummy)
                       Operations:
                         monitor: D2-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
+                          interval=10s timeout=20s
                 """
             ),
         )
@@ -3604,13 +3412,11 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: B (class=ocf provider=heartbeat type=Dummy)
                   Operations:
                     monitor: B-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
+                      interval=10s timeout=20s
                 Resource: C (class=ocf provider=heartbeat type=Dummy)
                   Operations:
                     monitor: C-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
+                      interval=10s timeout=20s
                 """
             ),
         )
@@ -3635,13 +3441,11 @@ class Resource(TestCase, AssertPcsMixin):
                     monitor: B-monitor-interval-30s
                       interval=30s
                     monitor: B-monitor-interval-31s
-                      interval=31s
-                      role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                      interval=31s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
                 Resource: C (class=ocf provider=heartbeat type=Dummy)
                   Operations:
                     monitor: C-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
+                      interval=10s timeout=20s
                 """
             ),
         )
@@ -3737,28 +3541,24 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: myip (class=ocf provider=heartbeat type=IPaddr2)
                   Operations:
                     monitor: myip-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
+                      interval=10s timeout=20s
                 Resource: myip2 (class=ocf provider=heartbeat type=IPaddr2)
                   Attributes: myip2-instance_attributes
                     ip=3.3.3.3
                   Operations:
                     monitor: myip2-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
+                      interval=10s timeout=20s
                 Resource: myfs (class=ocf provider=heartbeat type=Filesystem)
                   Operations:
                     monitor: myfs-monitor-interval-20s
-                      interval=20s
-                      timeout=40s
+                      interval=20s timeout=40s
                 Resource: myfs2 (class=ocf provider=heartbeat type=Filesystem)
                   Attributes: myfs2-instance_attributes
                     device=x
                     directory=y
                   Operations:
                     monitor: myfs2-monitor-interval-20s
-                      interval=20s
-                      timeout=40s
+                      interval=20s timeout=40s
                 Resource: myfs3 (class=ocf provider=heartbeat type=Filesystem)
                   Attributes: myfs3-instance_attributes
                     device=x
@@ -3766,8 +3566,7 @@ class Resource(TestCase, AssertPcsMixin):
                     fstype=z
                   Operations:
                     monitor: myfs3-monitor-interval-20s
-                      interval=20s
-                      timeout=40s
+                      interval=20s timeout=40s
                 """
             ),
         )
@@ -3792,18 +3591,15 @@ class Resource(TestCase, AssertPcsMixin):
                     Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
                       Operations:
                         monitor: dummy1-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
+                          interval=10s timeout=20s
                     Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
                       Operations:
                         monitor: dummy2-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
+                          interval=10s timeout=20s
                     Resource: dummy3 (class=ocf provider=heartbeat type=Dummy)
                       Operations:
                         monitor: dummy3-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
+                          interval=10s timeout=20s
                 """
             ),
         )
@@ -3861,18 +3657,15 @@ class Resource(TestCase, AssertPcsMixin):
                     Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
                       Operations:
                         monitor: dummy1-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
+                          interval=10s timeout=20s
                     Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
                       Operations:
                         monitor: dummy2-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
+                          interval=10s timeout=20s
                     Resource: dummy3 (class=ocf provider=heartbeat type=Dummy)
                       Operations:
                         monitor: dummy3-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
+                          interval=10s timeout=20s
                 """
             ),
         )
@@ -3918,18 +3711,15 @@ class Resource(TestCase, AssertPcsMixin):
                     Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
                       Operations:
                         monitor: dummy1-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
+                          interval=10s timeout=20s
                     Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
                       Operations:
                         monitor: dummy2-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
+                          interval=10s timeout=20s
                     Resource: dummy3 (class=ocf provider=heartbeat type=Dummy)
                       Operations:
                         monitor: dummy3-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
+                          interval=10s timeout=20s
                 """
             ),
         )
@@ -3992,18 +3782,15 @@ class Resource(TestCase, AssertPcsMixin):
                     Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
                       Operations:
                         monitor: dummy1-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
+                          interval=10s timeout=20s
                     Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
                       Operations:
                         monitor: dummy2-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
+                          interval=10s timeout=20s
                     Resource: dummy3 (class=ocf provider=heartbeat type=Dummy)
                       Operations:
                         monitor: dummy3-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
+                          interval=10s timeout=20s
                 """
             ),
         )
@@ -4051,37 +3838,31 @@ class Resource(TestCase, AssertPcsMixin):
             Resource: D1 (class=ocf provider=pacemaker type=Dummy)
               Operations:
                 monitor: D1-monitor-interval-10s
-                  interval=10s
-                  timeout=20s
+                  interval=10s timeout=20s
             Group: GR
               Resource: DG1 (class=ocf provider=pacemaker type=Dummy)
                 Operations:
                   monitor: DG1-monitor-interval-10s
-                    interval=10s
-                    timeout=20s
+                    interval=10s timeout=20s
               Resource: DG2 (class=ocf provider=pacemaker type=Dummy)
                 Operations:
                   monitor: DG2-monitor-interval-10s
-                    interval=10s
-                    timeout=20s
+                    interval=10s timeout=20s
             Clone: DC-clone
               Resource: DC (class=ocf provider=pacemaker type=Dummy)
                 Operations:
                   monitor: DC-monitor-interval-10s
-                    interval=10s
-                    timeout=20s
+                    interval=10s timeout=20s
             Clone: GRC-clone
               Group: GRC
                 Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
                   Operations:
                     monitor: DGC1-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
+                      interval=10s timeout=20s
                 Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
                   Operations:
                     monitor: DGC2-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
+                      interval=10s timeout=20s
             """
         )
 
@@ -4124,8 +3905,7 @@ class Resource(TestCase, AssertPcsMixin):
                     resource-stickiness=0
                   Operations:
                     monitor: D1-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
+                      interval=10s timeout=20s
                 Group: GR
                   Meta Attributes: GR-meta_attributes
                     resource-stickiness=0
@@ -4134,15 +3914,13 @@ class Resource(TestCase, AssertPcsMixin):
                       resource-stickiness=0
                     Operations:
                       monitor: DG1-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                   Resource: DG2 (class=ocf provider=pacemaker type=Dummy)
                     Meta Attributes: DG2-meta_attributes
                       resource-stickiness=0
                     Operations:
                       monitor: DG2-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 Clone: DC-clone
                   Meta Attributes: DC-clone-meta_attributes
                     resource-stickiness=0
@@ -4151,8 +3929,7 @@ class Resource(TestCase, AssertPcsMixin):
                       resource-stickiness=0
                     Operations:
                       monitor: DC-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 Clone: GRC-clone
                   Meta Attributes: GRC-clone-meta_attributes
                     resource-stickiness=0
@@ -4164,15 +3941,13 @@ class Resource(TestCase, AssertPcsMixin):
                         resource-stickiness=0
                       Operations:
                         monitor: DGC1-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
+                          interval=10s timeout=20s
                     Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
                       Meta Attributes: DGC2-meta_attributes
                         resource-stickiness=0
                       Operations:
                         monitor: DGC2-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
+                          interval=10s timeout=20s
                 """
             ),
         )
@@ -4197,29 +3972,25 @@ class Resource(TestCase, AssertPcsMixin):
                     resource-stickiness=0
                   Operations:
                     monitor: D1-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
+                      interval=10s timeout=20s
                 Group: GR
                   Resource: DG1 (class=ocf provider=pacemaker type=Dummy)
                     Meta Attributes: DG1-meta_attributes
                       resource-stickiness=0
                     Operations:
                       monitor: DG1-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                   Resource: DG2 (class=ocf provider=pacemaker type=Dummy)
                     Operations:
                       monitor: DG2-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 Clone: DC-clone
                   Resource: DC (class=ocf provider=pacemaker type=Dummy)
                     Meta Attributes: DC-meta_attributes
                       resource-stickiness=0
                     Operations:
                       monitor: DC-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 Clone: GRC-clone
                   Group: GRC
                     Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
@@ -4227,13 +3998,11 @@ class Resource(TestCase, AssertPcsMixin):
                         resource-stickiness=0
                       Operations:
                         monitor: DGC1-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
+                          interval=10s timeout=20s
                     Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
                       Operations:
                         monitor: DGC2-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
+                          interval=10s timeout=20s
                 """
             ),
         )
@@ -4256,25 +4025,21 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: D1 (class=ocf provider=pacemaker type=Dummy)
                   Operations:
                     monitor: D1-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
+                      interval=10s timeout=20s
                 Group: GR
                   Resource: DG1 (class=ocf provider=pacemaker type=Dummy)
                     Operations:
                       monitor: DG1-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                   Resource: DG2 (class=ocf provider=pacemaker type=Dummy)
                     Operations:
                       monitor: DG2-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 Clone: DC-clone
                   Resource: DC (class=ocf provider=pacemaker type=Dummy)
                     Operations:
                       monitor: DC-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 Clone: GRC-clone
                   Meta Attributes: GRC-clone-meta_attributes
                     resource-stickiness=0
@@ -4286,15 +4051,13 @@ class Resource(TestCase, AssertPcsMixin):
                         resource-stickiness=0
                       Operations:
                         monitor: DGC1-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
+                          interval=10s timeout=20s
                     Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
                       Meta Attributes: DGC2-meta_attributes
                         resource-stickiness=0
                       Operations:
                         monitor: DGC2-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
+                          interval=10s timeout=20s
                 """
             ),
         )
@@ -4317,8 +4080,7 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: D1 (class=ocf provider=pacemaker type=Dummy)
                   Operations:
                     monitor: D1-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
+                      interval=10s timeout=20s
                 Group: GR
                   Meta Attributes: GR-meta_attributes
                     resource-stickiness=0
@@ -4327,15 +4089,13 @@ class Resource(TestCase, AssertPcsMixin):
                       resource-stickiness=0
                     Operations:
                       monitor: DG1-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                   Resource: DG2 (class=ocf provider=pacemaker type=Dummy)
                     Meta Attributes: DG2-meta_attributes
                       resource-stickiness=0
                     Operations:
                       monitor: DG2-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 Clone: DC-clone
                   Meta Attributes: DC-clone-meta_attributes
                     resource-stickiness=0
@@ -4344,20 +4104,17 @@ class Resource(TestCase, AssertPcsMixin):
                       resource-stickiness=0
                     Operations:
                       monitor: DC-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 Clone: GRC-clone
                   Group: GRC
                     Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
                       Operations:
                         monitor: DGC1-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
+                          interval=10s timeout=20s
                     Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
                       Operations:
                         monitor: DGC2-monitor-interval-10s
-                          interval=10s
-                          timeout=20s
+                          interval=10s timeout=20s
                 """
             ),
         )
@@ -5341,23 +5098,17 @@ class CloneMasterUpdate(TestCase, AssertPcsMixin):
                   Resource: dummy (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       migrate_from: dummy-migrate_from-interval-0s
-                        interval=0s
-                        timeout=20s
+                        interval=0s timeout=20s
                       migrate_to: dummy-migrate_to-interval-0s
-                        interval=0s
-                        timeout=20s
+                        interval=0s timeout=20s
                       monitor: dummy-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                       reload: dummy-reload-interval-0s
-                        interval=0s
-                        timeout=20s
+                        interval=0s timeout=20s
                       start: dummy-start-interval-0s
-                        interval=0s
-                        timeout=20s
+                        interval=0s timeout=20s
                       stop: dummy-stop-interval-0s
-                        interval=0s
-                        timeout=20s
+                        interval=0s timeout=20s
                 """
             ),
         )
@@ -5377,23 +5128,17 @@ class CloneMasterUpdate(TestCase, AssertPcsMixin):
                   Resource: dummy (class=ocf provider=heartbeat type=Dummy)
                     Operations:
                       migrate_from: dummy-migrate_from-interval-0s
-                        interval=0s
-                        timeout=20s
+                        interval=0s timeout=20s
                       migrate_to: dummy-migrate_to-interval-0s
-                        interval=0s
-                        timeout=20s
+                        interval=0s timeout=20s
                       monitor: dummy-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                       reload: dummy-reload-interval-0s
-                        interval=0s
-                        timeout=20s
+                        interval=0s timeout=20s
                       start: dummy-start-interval-0s
-                        interval=0s
-                        timeout=20s
+                        interval=0s timeout=20s
                       stop: dummy-stop-interval-0s
-                        interval=0s
-                        timeout=20s
+                        interval=0s timeout=20s
                 """
             ),
         )
@@ -5410,22 +5155,15 @@ class CloneMasterUpdate(TestCase, AssertPcsMixin):
               Resource: dummy (class=ocf provider=pacemaker type=Stateful)
                 Operations:
                   monitor: dummy-monitor-interval-10
-                    interval=10
-                    timeout=20
-                    role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                    interval=10 timeout=20 role={const.PCMK_ROLE_PROMOTED_PRIMARY}
                   monitor: dummy-monitor-interval-11
-                    interval=11
-                    timeout=20
-                    role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                    interval=11 timeout=20 role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
                   notify: dummy-notify-interval-0s
-                    interval=0s
-                    timeout=5
+                    interval=0s timeout=5
                   start: dummy-start-interval-0s
-                    interval=0s
-                    timeout=20
+                    interval=0s timeout=20
                   stop: dummy-stop-interval-0s
-                    interval=0s
-                    timeout=20
+                    interval=0s timeout=20
             """
         )
         self.assert_pcs_success("resource config dummy-master".split(), show)
@@ -6162,15 +5900,13 @@ class ResourceUpdateUniqueAttrChecks(TestCase, AssertPcsMixin):
                 state=1
               Operations:
                 monitor: R1-monitor-interval-10s
-                  interval=10s
-                  timeout=20s
+                  interval=10s timeout=20s
             Resource: R2 (class=ocf provider=pacemaker type=Dummy)
               Attributes: R2-instance_attributes
                 state=1
               Operations:
                 monitor: R2-monitor-interval-10s
-                  interval=10s
-                  timeout=20s
+                  interval=10s timeout=20s
             """
         )
         self.assert_pcs_success("resource config".split(), res_config)
@@ -6191,15 +5927,13 @@ class ResourceUpdateUniqueAttrChecks(TestCase, AssertPcsMixin):
                 state=1
               Operations:
                 monitor: R1-monitor-interval-10s
-                  interval=10s
-                  timeout=20s
+                  interval=10s timeout=20s
             Resource: R2 (class=ocf provider=pacemaker type=Dummy)
               Attributes: R2-instance_attributes
                 state=2
               Operations:
                 monitor: R2-monitor-interval-10s
-                  interval=10s
-                  timeout=20s
+                  interval=10s timeout=20s
             """
         )
         self.assert_pcs_success("resource update R2 state=2".split())
@@ -6234,20 +5968,17 @@ class ResourceUpdateUniqueAttrChecks(TestCase, AssertPcsMixin):
                     state=1
                   Operations:
                     monitor: R1-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
+                      interval=10s timeout=20s
                 Resource: R2 (class=ocf provider=pacemaker type=Dummy)
                   Attributes: R2-instance_attributes
                     state=1
                   Operations:
                     monitor: R2-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
+                      interval=10s timeout=20s
                 Resource: R3 (class=ocf provider=pacemaker type=Dummy)
                   Operations:
                     monitor: R3-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
+                      interval=10s timeout=20s
                 """
             ),
         )
@@ -6269,22 +6000,19 @@ class ResourceUpdateUniqueAttrChecks(TestCase, AssertPcsMixin):
                     state=1
                   Operations:
                     monitor: R1-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
+                      interval=10s timeout=20s
                 Resource: R2 (class=ocf provider=pacemaker type=Dummy)
                   Attributes: R2-instance_attributes
                     state=1
                   Operations:
                     monitor: R2-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
+                      interval=10s timeout=20s
                 Resource: R3 (class=ocf provider=pacemaker type=Dummy)
                   Attributes: R3-instance_attributes
                     state=1
                   Operations:
                     monitor: R3-monitor-interval-10s
-                      interval=10s
-                      timeout=20s
+                      interval=10s timeout=20s
                 """
             ),
         )
