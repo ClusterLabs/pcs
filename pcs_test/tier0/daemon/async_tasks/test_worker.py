@@ -21,8 +21,8 @@ from pcs.daemon.async_tasks.worker.types import (
 
 from .dummy_commands import (
     RESULT,
-    test_api_v1_compatibility_mode,
     test_command_map,
+    test_legacy_api_commands,
 )
 from .helpers import (
     AUTH_USER,
@@ -42,8 +42,8 @@ executor.worker_com = Queue()  # patched at runtime
     "pcs.daemon.async_tasks.worker.executor.COMMAND_MAP", test_command_map
 )
 @mock.patch(
-    "pcs.daemon.async_tasks.worker.executor.API_V1_COMPATIBILITY_MODE",
-    test_api_v1_compatibility_mode,
+    "pcs.daemon.async_tasks.worker.executor.LEGACY_API_COMMANDS",
+    test_legacy_api_commands,
 )
 @mock.patch(
     "pcs.daemon.async_tasks.worker.executor.getLogger", mock.MagicMock()
@@ -160,7 +160,7 @@ class TestExecutor(MockOsKillMixin, TestCase):
         self.assertIsNone(payload.result)
 
     @mock.patch("pcs.daemon.async_tasks.worker.executor.worker_com", Queue())
-    def test_api_v1_compatibility_disabled(self, mock_getpid):
+    def test_legacy_api_command_fails_when_not_allowed(self, mock_getpid):
         mock_getpid.return_value = WORKER_PID
         executor.task_executor(
             WorkerCommand(
@@ -181,14 +181,14 @@ class TestExecutor(MockOsKillMixin, TestCase):
         self.assertEqual(types.TaskFinishType.FAIL, payload.task_finish_type)
 
     @mock.patch("pcs.daemon.async_tasks.worker.executor.worker_com", Queue())
-    def test_api_v1_compatibility_enabled(self, mock_getpid):
+    def test_legacy_api_command_succeeds_when_allowed(self, mock_getpid):
         mock_getpid.return_value = WORKER_PID
         executor.task_executor(
             WorkerCommand(
                 TASK_IDENT,
                 Command(
                     CommandDto("success_api_v1", {}, COMMAND_OPTIONS),
-                    api_v1_compatible=True,
+                    is_legacy_command=True,
                 ),
                 AUTH_USER,
             )

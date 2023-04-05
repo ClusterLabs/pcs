@@ -1,12 +1,18 @@
 import base64
 import logging
+import os.path
 from unittest import (
     TestCase,
     mock,
 )
 
 import pcs.lib.commands.qdevice as lib
-from pcs.common import reports
+from pcs import settings
+from pcs.common import (
+    file_type_codes,
+    reports,
+)
+from pcs.common.file import RawFileError
 from pcs.common.reports import ReportItemSeverity as severity
 from pcs.common.reports import codes as report_codes
 from pcs.common.services.errors import (
@@ -20,10 +26,12 @@ from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import KillServicesError
 
+from pcs_test.tools import fixture
 from pcs_test.tools.assertions import (
     assert_raise_library_error,
     assert_report_item_list_equal,
 )
+from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
 
@@ -1013,19 +1021,59 @@ class QdeviceNetKillTest(QdeviceTestCase):
         mock_net_kill.assert_called_once_with("mock_runner", ["corosync-qnetd"])
 
 
+class QdeviceNetGetCaCertificate(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+        self.path = os.path.join(
+            settings.corosync_qdevice_net_server_certs_dir,
+            settings.corosync_qdevice_net_server_ca_file_name,
+        )
+
+    def test_success(self):
+        ca_cert_data = b"ca cert data"
+        self.config.raw_file.read(
+            file_type_codes.COROSYNC_QNETD_CA_CERT, self.path, ca_cert_data
+        )
+        result = lib.qdevice_net_get_ca_certificate(self.env_assist.get_env())
+        self.assertEqual(result, base64.b64encode(ca_cert_data).decode())
+
+    def test_read_error(self):
+        self.config.raw_file.read(
+            file_type_codes.COROSYNC_QNETD_CA_CERT,
+            self.path,
+            exception_msg="an error",
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.qdevice_net_get_ca_certificate(
+                self.env_assist.get_env()
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.FILE_IO_ERROR,
+                    file_type_code=file_type_codes.COROSYNC_QNETD_CA_CERT,
+                    operation=RawFileError.ACTION_READ,
+                    reason="an error",
+                    file_path=self.path,
+                )
+            ]
+        )
+
+
 @mock.patch(
     "pcs.lib.commands.qdevice.qdevice_net.qdevice_sign_certificate_request"
 )
 @mock.patch.object(LibraryEnvironment, "cmd_runner", lambda self: "mock_runner")
 class QdeviceNetSignCertificateRequestTest(QdeviceTestCase):
     def test_success(self, mock_qdevice_func):
-        qdevice_func_input = "certificate request".encode("utf-8")
-        qdevice_func_output = "signed certificate".encode("utf-8")
+        qdevice_func_input = "certificate request".encode()
+        qdevice_func_output = "signed certificate".encode()
         mock_qdevice_func.return_value = qdevice_func_output
         cluster_name = "clusterName"
 
         self.assertEqual(
-            base64.b64encode(qdevice_func_output),
+            base64.b64encode(qdevice_func_output).decode(),
             lib.qdevice_net_sign_certificate_request(
                 self.lib_env, base64.b64encode(qdevice_func_input), cluster_name
             ),

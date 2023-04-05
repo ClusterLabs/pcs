@@ -89,6 +89,7 @@ corosync_qdevice_conf_dir = "@COROQDEVCONFDIR@"
 corosync_qdevice_net_server_certs_dir = os.path.join(
     corosync_qdevice_conf_dir, "qnetd/nssdb"
 )
+corosync_qdevice_net_server_ca_file_name = "qnetd-cacert.crt"
 corosync_qdevice_net_client_certs_dir = os.path.join(
     corosync_qdevice_conf_dir, "qdevice/net/nssdb"
 )

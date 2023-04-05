@@ -15,6 +15,7 @@ from pcs.common.async_tasks.dto import (
     CommandOptionsDto,
 )
 from pcs.common.reports.dto import ReportItemDto
+from pcs.common.str_tools import format_list
 from pcs.daemon.app.auth import LegacyTokenAuthenticationHandler
 from pcs.daemon.async_tasks.scheduler import (
     Scheduler,
@@ -82,6 +83,13 @@ class _BaseApiV0Handler(LegacyTokenAuthenticationHandler):
         self.write(message)
         return Finish()
 
+    def _check_required_params(self, required_params: set[str]) -> None:
+        missing_params = required_params - set(self.request.arguments.keys())
+        if missing_params:
+            raise self._error(
+                f"Required parameters missing: {format_list(missing_params)}"
+            )
+
     async def _process_request(
         self, cmd_name: str, cmd_params: Mapping[str, Any]
     ) -> SimplifiedResult:
@@ -97,7 +105,8 @@ class _BaseApiV0Handler(LegacyTokenAuthenticationHandler):
             ),
         )
         task_ident = self._scheduler.new_task(
-            Command(command_dto, api_v1_compatible=True), self.real_user
+            Command(command_dto, is_legacy_command=True),
+            self.real_user,
         )
 
         try:
@@ -138,10 +147,7 @@ class _BaseApiV0Handler(LegacyTokenAuthenticationHandler):
 
 class ResourceManageUnmanageHandler(_BaseApiV0Handler):
     async def _handle_request(self) -> None:
-        if not "resource_list_json" in self.request.arguments:
-            raise self._error(
-                "Required parameter 'resource_list_json' is missing."
-            )
+        self._check_required_params({"resource_list_json"})
         try:
             resource_list = json.loads(self.get_argument("resource_list_json"))
         except json.JSONDecodeError as e:
@@ -169,17 +175,96 @@ class ResourceUnmanageHandler(ResourceManageUnmanageHandler):
         return "resource.unmanage"
 
 
+class QdeviceNetGetCaCertificateHandler(_BaseApiV0Handler):
+    async def _handle_request(self) -> None:
+        result = await self._process_request(
+            "qdevice.qdevice_net_get_ca_certificate", {}
+        )
+        if not result.success:
+            raise self._error(_reports_to_str(result.reports))
+        self.write(result.result)
+
+
+class QdeviceNetSignNodeCertificateHandler(_BaseApiV0Handler):
+    async def _handle_request(self) -> None:
+        self._check_required_params({"certificate_request", "cluster_name"})
+        result = await self._process_request(
+            "qdevice.qdevice_net_sign_certificate_request",
+            dict(
+                certificate_request=self.get_argument("certificate_request"),
+                cluster_name=self.get_body_argument("cluster_name"),
+            ),
+        )
+        if not result.success:
+            raise self._error(_reports_to_str(result.reports))
+        self.write(result.result)
+
+
+class QdeviceNetClientInitCertificateStorageHandler(_BaseApiV0Handler):
+    async def _handle_request(self) -> None:
+        self._check_required_params({"ca_certificate"})
+        result = await self._process_request(
+            "qdevice.client_net_setup",
+            dict(ca_certificate=self.get_argument("ca_certificate")),
+        )
+        if not result.success:
+            raise self._error(_reports_to_str(result.reports))
+
+
+class QdeviceNetClientImportCertificateHandler(_BaseApiV0Handler):
+    async def _handle_request(self) -> None:
+        self._check_required_params({"certificate"})
+        result = await self._process_request(
+            "qdevice.client_net_import_certificate",
+            dict(certificate=self.get_argument("certificate")),
+        )
+        if not result.success:
+            raise self._error(_reports_to_str(result.reports))
+
+
+class QdeviceNetClientDestroyHandler(_BaseApiV0Handler):
+    async def _handle_request(self) -> None:
+        result = await self._process_request("qdevice.client_net_destroy", {})
+        if not result.success:
+            raise self._error(_reports_to_str(result.reports))
+
+
 def get_routes(scheduler: Scheduler, auth_provider: AuthProvider) -> RoutesType:
+    def r(url: str) -> str:
+        # pylint: disable=invalid-name
+        return f"/remote/{url}"
+
     params = dict(scheduler=scheduler, auth_provider=auth_provider)
     return [
+        # resources
+        (r("manage_resource"), ResourceManageHandler, params),
+        (r("unmanage_resource"), ResourceUnmanageHandler, params),
+        # qdevice
         (
-            "/remote/manage_resource",
-            ResourceManageHandler,
+            r("qdevice_net_client_destroy"),
+            QdeviceNetClientDestroyHandler,
             params,
         ),
         (
-            "/remote/unmanage_resource",
-            ResourceUnmanageHandler,
+            # /api/v1/qdevice-client-net-import-certificate/v1
+            r("qdevice_net_client_import_certificate"),
+            QdeviceNetClientImportCertificateHandler,
+            params,
+        ),
+        (
+            r("qdevice_net_client_init_certificate_storage"),
+            QdeviceNetClientInitCertificateStorageHandler,
+            params,
+        ),
+        (
+            r("qdevice_net_get_ca_certificate"),
+            QdeviceNetGetCaCertificateHandler,
+            params,
+        ),
+        (
+            # /api/v1/qdevice-qdevice-net-sign-certificate-request/v1
+            r("qdevice_net_sign_node_certificate"),
+            QdeviceNetSignNodeCertificateHandler,
             params,
         ),
     ]

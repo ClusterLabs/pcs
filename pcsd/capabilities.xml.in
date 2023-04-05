@@ -406,6 +406,15 @@
           qdevice_net_client_destroy
       </description>
     </capability>
+    <capability id="corosync.quorum.device.client.model.net.certificates.rest-api.v2" in-pcs="0" in-pcsd="1">
+      <description>
+        Set up and destroy certificates in qdevice model net client.
+
+        API v2:
+          qdevice.client_net_setup
+          qdevice.client_net_destroy
+      </description>
+    </capability>
     <capability id="corosync.quorum.device.client.model.net.certificates.local" in-pcs="1" in-pcsd="1">
       <description>
         Check if the local node has correct qdevice certificates for the
@@ -414,9 +423,9 @@
 
         pcs commands: quorum device (setup_local_qnetd_certs | check_local_qnetd_certs)
 
-        daemon urls:
-          /api/v2/quorum.device_net_certificate_check_local
-          /api/v2/quorum.device_net_certificate_setup_local
+        API v2:
+          quorum.device_net_certificate_check_local
+          quorum.device_net_certificate_setup_local
       </description>
     </capability>
     <capability id="corosync.quorum.set-expected-votes-runtime" in-pcs="1" in-pcsd="0">

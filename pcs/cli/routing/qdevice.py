@@ -15,18 +15,6 @@ qdevice_cmd = create_router(
         "kill": qdevice.qdevice_kill_cmd,
         "enable": qdevice.qdevice_enable_cmd,
         "disable": qdevice.qdevice_disable_cmd,
-        # following commands are internal use only, called from pcsd
-        "sign-net-cert-request": qdevice.qdevice_sign_net_cert_request_cmd,
-        "net-client": create_router(
-            {
-                "setup": qdevice.qdevice_net_client_setup_cmd,
-                "import-certificate": (
-                    qdevice.qdevice_net_client_import_certificate_cmd
-                ),
-                "destroy": qdevice.qdevice_net_client_destroy,
-            },
-            ["qdevice", "net-client"],
-        ),
     },
     ["qdevice"],
 )

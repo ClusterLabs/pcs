@@ -23,6 +23,7 @@ from pcs.lib.interface.config import (
 
 
 class FileInstance:
+    # pylint: disable=too-many-public-methods
     """
     Provides a high-level easy access to config files
     """
@@ -107,6 +108,13 @@ class FileInstance:
         Factory for corosync config file
         """
         return cls._for_common(file_type_codes.COROSYNC_CONF)
+
+    @classmethod
+    def for_qnetd_ca_cert(cls) -> "FileInstance":
+        """
+        Factory for corosync qnetd CA certificate
+        """
+        return cls._for_common(file_type_codes.COROSYNC_QNETD_CA_CERT)
 
     @classmethod
     def for_pcs_users_config(cls) -> "FileInstance":

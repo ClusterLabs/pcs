@@ -94,8 +94,16 @@ _toolboxes = {
         facade=CorosyncConfigFacade,
         parser=CorosyncConfigParser,
         exporter=CorosyncConfigExporter,
-        validator=None,
-        version_controller=None,
+        validator=None,  # TODO needed for files syncing
+        version_controller=None,  # TODO needed for files syncing
+    ),
+    code.COROSYNC_QNETD_CA_CERT: FileToolbox(
+        file_type_code=code.COROSYNC_QNETD_CA_CERT,
+        facade=NoopFacade,
+        parser=NoopParser,
+        exporter=NoopExporter,
+        validator=None,  # TODO needed for files syncing
+        version_controller=None,  # TODO needed for files syncing
     ),
     code.PACEMAKER_AUTHKEY: FileToolbox(
         file_type_code=code.PACEMAKER_AUTHKEY,

@@ -41,4 +41,4 @@ test_command_map = {
     "success_api_v1": _get_cmd(dummy_workload_with_result),
 }
 
-test_api_v1_compatibility_mode = ("success_api_v1",)
+test_legacy_api_commands = ("success_api_v1",)

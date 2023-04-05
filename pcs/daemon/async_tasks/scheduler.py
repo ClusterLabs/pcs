@@ -142,11 +142,14 @@ class Scheduler:
             task_ident, command, auth_user, self._config.task_config
         )
         self._logger.debug(
-            "New task %s created (command: %s, parameters: %s, api_v1_compatibility_mode: %s)",
+            (
+                "New task %s created (command: %s, parameters: %s, "
+                "is_legacy_command: %s)"
+            ),
             task_ident,
             command.command_dto.command_name,
             command.command_dto.params,
-            command.api_v1_compatible,
+            command.is_legacy_command,
         )
         return task_ident
 

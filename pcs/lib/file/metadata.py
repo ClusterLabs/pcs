@@ -43,6 +43,20 @@ def _for_corosync_conf() -> FileMetadata:
     )
 
 
+def _for_corosync_qnetd_ca_cert() -> FileMetadata:
+    return FileMetadata(
+        file_type_code=code.COROSYNC_QNETD_CA_CERT,
+        path=os.path.join(
+            settings.corosync_qdevice_net_server_certs_dir,
+            settings.corosync_qdevice_net_server_ca_file_name,
+        ),
+        owner_user_name="coroqnetd",
+        owner_group_name="coroqnetd",
+        permissions=0o600,
+        is_binary=True,
+    )
+
+
 def _for_pacemaker_authkey() -> FileMetadata:
     return FileMetadata(
         file_type_code=code.PACEMAKER_AUTHKEY,
@@ -112,6 +126,8 @@ def for_file_type(
         return _for_booth_key(filename)
     if file_type_code == code.COROSYNC_CONF:
         return _for_corosync_conf()
+    if file_type_code == code.COROSYNC_QNETD_CA_CERT:
+        return _for_corosync_qnetd_ca_cert()
     if file_type_code == code.PACEMAKER_AUTHKEY:
         return _for_pacemaker_authkey()
     if file_type_code == code.PCS_DR_CONFIG:

@@ -122,6 +122,7 @@ _file_role_translation = {
     file_type_codes.COROSYNC_AUTHKEY: "Corosync authkey",
     file_type_codes.COROSYNC_CONF: "Corosync configuration",
     file_type_codes.COROSYNC_QDEVICE_NSSDB: "QDevice certificate database",
+    file_type_codes.COROSYNC_QNETD_CA_CERT: "QNetd CA certificate",
     file_type_codes.COROSYNC_QNETD_NSSDB: "QNetd certificate database",
     file_type_codes.PCS_DR_CONFIG: "disaster-recovery configuration",
     file_type_codes.PACEMAKER_AUTHKEY: "Pacemaker authkey",

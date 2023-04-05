@@ -185,14 +185,29 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=node.standby_unstandby_list,
         required_permission=p.WRITE,
     ),
-    "qdevice.client_net_import_certificate": _Cmd(
-        cmd=qdevice.client_net_import_certificate,
+    "qdevice.client_net_destroy": _Cmd(
+        cmd=qdevice.client_net_destroy,
+        # Last step of adding qdevice into a cluster is distribution of
+        # corosync.conf file with qdevice settings. This requires FULL
+        # permissions currently. If that gets relaxed, we can require lower
+        # permissions in here as well.
         required_permission=p.FULL,
     ),
-    # TODO: make sure WRITE is right permission
-    "qdevice.qdevice_net_sign_certificate_request": _Cmd(
-        cmd=qdevice.qdevice_net_sign_certificate_request,
-        required_permission=p.WRITE,
+    "qdevice.client_net_import_certificate": _Cmd(
+        cmd=qdevice.client_net_import_certificate,
+        # Last step of adding qdevice into a cluster is distribution of
+        # corosync.conf file with qdevice settings. This requires FULL
+        # permissions currently. If that gets relaxed, we can require lower
+        # permissions in here as well.
+        required_permission=p.FULL,
+    ),
+    "qdevice.client_net_setup": _Cmd(
+        cmd=qdevice.client_net_setup,
+        # Last step of adding qdevice into a cluster is distribution of
+        # corosync.conf file with qdevice settings. This requires FULL
+        # permissions currently. If that gets relaxed, we can require lower
+        # permissions in here as well.
+        required_permission=p.FULL,
     ),
     "quorum.device_net_certificate_check_local": _Cmd(
         cmd=quorum.device_net_certificate_check_local,
@@ -201,6 +216,15 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
     "quorum.device_net_certificate_setup_local": _Cmd(
         cmd=quorum.device_net_certificate_setup_local,
         required_permission=p.WRITE,
+    ),
+    # deprecated, API v0 compatibility
+    "qdevice.qdevice_net_get_ca_certificate": _Cmd(
+        cmd=qdevice.qdevice_net_get_ca_certificate,
+        required_permission=p.READ,
+    ),
+    "qdevice.qdevice_net_sign_certificate_request": _Cmd(
+        cmd=qdevice.qdevice_net_sign_certificate_request,
+        required_permission=p.READ,
     ),
     # deprecated, API v1 compatibility
     "resource_agent.describe_agent": _Cmd(
@@ -339,7 +363,8 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
 }
 
 
-API_V1_COMPATIBILITY_MODE = (
+LEGACY_API_COMMANDS = (
+    "qdevice.qdevice_net_get_ca_certificate",
     "resource_agent.describe_agent",
     "resource_agent.list_agents",
     "resource_agent.list_agents_for_standard_and_provider",

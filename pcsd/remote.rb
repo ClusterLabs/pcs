@@ -4,7 +4,6 @@ require 'childprocess'
 require 'set'
 require 'timeout'
 require 'rexml/document'
-require 'base64'
 require 'tempfile'
 
 require 'pcs.rb'
@@ -53,15 +52,6 @@ def remote(params, request, auth_user)
       :sbd_enable => method(:sbd_enable),
       :remove_stonith_watchdog_timeout=> method(:remove_stonith_watchdog_timeout),
       :set_stonith_watchdog_timeout_to_zero => method(:set_stonith_watchdog_timeout_to_zero),
-      :qdevice_net_get_ca_certificate => method(:qdevice_net_get_ca_certificate),
-      # lib api:
-      # /api/v1/qdevice-qdevice-net-sign-certificate-request/v1
-      :qdevice_net_sign_node_certificate => method(:qdevice_net_sign_node_certificate),
-      :qdevice_net_client_init_certificate_storage => method(:qdevice_net_client_init_certificate_storage),
-      # lib api:
-      # /api/v1/qdevice-client-net-import-certificate/v1
-      :qdevice_net_client_import_certificate => method(:qdevice_net_client_import_certificate),
-      :qdevice_net_client_destroy => method(:qdevice_net_client_destroy),
       :qdevice_client_enable => method(:qdevice_client_enable),
       :qdevice_client_disable => method(:qdevice_client_disable),
       :qdevice_client_start => method(:qdevice_client_start),
@@ -1871,89 +1861,6 @@ def set_stonith_watchdog_timeout_to_zero(param, request, auth_user)
     )
     return [400, 'ERROR']
   end
-end
-
-def qdevice_net_get_ca_certificate(params, request, auth_user)
-  unless allowed_for_local_cluster(auth_user, Permissions::READ)
-    return 403, 'Permission denied'
-  end
-  begin
-    return [
-      200,
-      Base64.encode64(File.read(COROSYNC_QDEVICE_NET_SERVER_CA_FILE))
-    ]
-  rescue => e
-    return [400, "Unable to read certificate: #{e}"]
-  end
-end
-
-def qdevice_net_sign_node_certificate(params, request, auth_user)
-  unless allowed_for_local_cluster(auth_user, Permissions::READ)
-    return 403, 'Permission denied'
-  end
-  stdout, stderr, retval = run_cmd_options(
-    auth_user,
-    {'stdin' => params[:certificate_request]},
-    PCS, '--name', params[:cluster_name], '--', 'qdevice', 'sign-net-cert-request'
-  )
-  if retval != 0
-    return [400, stderr.join('')]
-  end
-  return [200, stdout.join('')]
-end
-
-def qdevice_net_client_init_certificate_storage(params, request, auth_user)
-  # Last step of adding qdevice into a cluster is distribution of corosync.conf
-  # file with qdevice settings. This requires FULL permissions currently.
-  # If that gets relaxed, we can require lower permissions in here as well.
-  unless allowed_for_local_cluster(auth_user, Permissions::FULL)
-    return 403, 'Permission denied'
-  end
-  stdout, stderr, retval = run_cmd_options(
-    auth_user,
-    {'stdin' => params[:ca_certificate]},
-    PCS, '--', 'qdevice', 'net-client', 'setup'
-  )
-  if retval != 0
-    return [400, stderr.join('')]
-  end
-  return [200, stdout.join('')]
-end
-
-def qdevice_net_client_import_certificate(params, request, auth_user)
-  # Last step of adding qdevice into a cluster is distribution of corosync.conf
-  # file with qdevice settings. This requires FULL permissions currently.
-  # If that gets relaxed, we can require lower permissions in here as well.
-  unless allowed_for_local_cluster(auth_user, Permissions::FULL)
-    return 403, 'Permission denied'
-  end
-  stdout, stderr, retval = run_cmd_options(
-    auth_user,
-    {'stdin' => params[:certificate]},
-    PCS, '--', 'qdevice', 'net-client', 'import-certificate'
-  )
-  if retval != 0
-    return [400, stderr.join('')]
-  end
-  return [200, stdout.join('')]
-end
-
-def qdevice_net_client_destroy(param, request, auth_user)
-  # When removing a qdevice from a cluster, an updated corosync.conf file
-  # with removed qdevice settings is distributed. This requires FULL permissions
-  # currently. If that gets relaxed, we can require lower permissions in here
-  # as well.
-  unless allowed_for_local_cluster(auth_user, Permissions::FULL)
-    return 403, 'Permission denied'
-  end
-  stdout, stderr, retval = run_cmd(
-    auth_user,
-    PCS, '--', 'qdevice', 'net-client', 'destroy'
-  )
-  if retval != 0
-    return [400, stderr.join('')]
-  end
-  return [200, stdout.join('')]
 end
 
 def qdevice_client_disable(param, request, auth_user)
