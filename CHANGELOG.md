@@ -19,7 +19,7 @@
   - Headings of empty sections are no longer displayed
   - Resource listing is more dense as operations options are shown in a single
     line
-  - Specifying `--full` to show IDs of elemets now shows IDs of nvpairs as well
+  - Specifying `--full` to show IDs of elements now shows IDs of nvpairs as well
 
 [ghissue#612]: https://github.com/ClusterLabs/pcs/issues/612
 [rhbz#1423473]: https://bugzilla.redhat.com/show_bug.cgi?id=1423473
