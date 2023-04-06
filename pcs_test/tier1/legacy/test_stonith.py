@@ -1397,8 +1397,6 @@ class StonithTest(TestCase, AssertPcsMixin):
                  rh7-1 rh7-2
                 Pacemaker Nodes:
 
-                Resources:
-
                 Stonith Devices:
                   Resource: test1 (class=stonith type=fence_noexist)
                     Operations:
@@ -1421,23 +1419,6 @@ class StonithTest(TestCase, AssertPcsMixin):
                     Operations:
                       monitor: test-fencing-monitor-interval-61s
                         interval=61s
-                Fencing Levels:
-
-                Alerts:
-                 No alerts defined
-
-                Resources Defaults:
-                  No defaults set
-                Operations Defaults:
-                  No defaults set
-
-                Cluster Properties:
-
-                Tags:
-                 No tags defined
-
-                Quorum:
-                  Options:
                 """
             ),
         )
@@ -2579,26 +2560,9 @@ class LevelConfig(LevelTestsBase):
         Pacemaker Nodes:
          rh7-1 rh7-2
 
-        Resources:
-
         Stonith Devices:{devices}
+
         Fencing Levels:{levels}
-
-        Alerts:
-         No alerts defined
-
-        Resources Defaults:
-          No defaults set
-        Operations Defaults:
-          No defaults set
-
-        Cluster Properties:
-
-        Tags:
-         No tags defined
-
-        Quorum:
-          Options:
         """
     )
 
@@ -2610,7 +2574,16 @@ class LevelConfig(LevelTestsBase):
             "corosync.conf"
         )
         self.assert_pcs_success(
-            ["config"], self.full_config.format(devices="", levels="")
+            ["config"],
+            dedent(
+                """\
+                Cluster Name: test99
+                Corosync Nodes:
+                 rh7-1 rh7-2
+                Pacemaker Nodes:
+                 rh7-1 rh7-2
+                """
+            ),
         )
 
     def test_all_possibilities(self):
@@ -2647,32 +2620,38 @@ class LevelConfig(LevelTestsBase):
         self.assert_pcs_success(
             ["config"],
             self.full_config.format(
-                devices="""
-  Resource: F1 (class=stonith type=fence_apc)
-    Attributes: F1-instance_attributes
-      ip=i
-      pcmk_host_list="rh7-1 rh7-2"
-      username=u
-    Operations:
-      monitor: F1-monitor-interval-60s
-        interval=60s
-  Resource: F2 (class=stonith type=fence_apc)
-    Attributes: F2-instance_attributes
-      ip=i
-      pcmk_host_list="rh7-1 rh7-2"
-      username=u
-    Operations:
-      monitor: F2-monitor-interval-60s
-        interval=60s
-  Resource: F3 (class=stonith type=fence_apc)
-    Attributes: F3-instance_attributes
-      ip=i
-      pcmk_host_list="rh7-1 rh7-2"
-      username=u
-    Operations:
-      monitor: F3-monitor-interval-60s
-        interval=60s\
-""",
+                devices="\n".join(
+                    indent(
+                        dedent(
+                            """
+                            Resource: F1 (class=stonith type=fence_apc)
+                              Attributes: F1-instance_attributes
+                                ip=i
+                                pcmk_host_list="rh7-1 rh7-2"
+                                username=u
+                              Operations:
+                                monitor: F1-monitor-interval-60s
+                                  interval=60s
+                            Resource: F2 (class=stonith type=fence_apc)
+                              Attributes: F2-instance_attributes
+                                ip=i
+                                pcmk_host_list="rh7-1 rh7-2"
+                                username=u
+                              Operations:
+                                monitor: F2-monitor-interval-60s
+                                  interval=60s
+                            Resource: F3 (class=stonith type=fence_apc)
+                              Attributes: F3-instance_attributes
+                                ip=i
+                                pcmk_host_list="rh7-1 rh7-2"
+                                username=u
+                              Operations:
+                                monitor: F3-monitor-interval-60s
+                                  interval=60s
+                            """
+                        ).splitlines()
+                    )
+                ),
                 levels=("\n" + "\n".join(indent(self.config_lines, 2))),
             ),
         )

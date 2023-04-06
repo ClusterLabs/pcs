@@ -816,8 +816,7 @@ class BundleShow(TestCase, AssertPcsMixin):
                   Resource: A (class=ocf provider=pacemaker type=Dummy)
                     Operations:
                       monitor: A-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 """
             ),
         )
@@ -879,8 +878,7 @@ class BundleShow(TestCase, AssertPcsMixin):
                   Resource: A (class=ocf provider=pacemaker type=Dummy)
                     Operations:
                       monitor: A-monitor-interval-10s
-                        interval=10s
-                        timeout=20s
+                        interval=10s timeout=20s
                 """
             ),
         )

@@ -101,6 +101,22 @@ def format_name_value_list(item_list: Sequence[Tuple[str, str]]) -> List[str]:
     return output
 
 
+# For now, Tuple[str, str, str] is sufficient. Feel free to change it if
+# needed, e.g. when values can be integers.
+def format_name_value_id_list(
+    item_list: Sequence[Tuple[str, str, str]]
+) -> List[str]:
+    """
+    Turn 3-tuples to 'name=value (id: id))' strings with standard quoting
+    """
+    output = []
+    for name, value, an_id in item_list:
+        name = quote(name, "= ")
+        value = quote(value, "= ")
+        output.append(f"{name}={value} (id: {an_id})")
+    return output
+
+
 def pairs_to_text(pairs: Sequence[tuple[str, str]]) -> list[str]:
     if pairs:
         return [" ".join(format_name_value_list(pairs))]

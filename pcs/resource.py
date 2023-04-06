@@ -245,19 +245,14 @@ def _defaults_config_cmd(
     modifiers.ensure_only_supported(
         "-f", "--all", "--full", "--no-expire-check"
     )
-    print(
-        "\n".join(
-            nvset_dto_list_to_lines(
-                lib_command(
-                    not modifiers.get("--no-expire-check")
-                ).meta_attributes,
-                nvset_label="Meta Attrs",
-                with_ids=cast(bool, modifiers.get("--full")),
-                include_expired=cast(bool, modifiers.get("--all")),
-                text_if_empty="No defaults set",
-            )
-        )
+    lines = nvset_dto_list_to_lines(
+        lib_command(not modifiers.get("--no-expire-check")).meta_attributes,
+        nvset_label="Meta Attrs",
+        with_ids=cast(bool, modifiers.get("--full")),
+        include_expired=cast(bool, modifiers.get("--all")),
     )
+    if lines:
+        print("\n".join(lines))
 
 
 def resource_defaults_config_cmd(

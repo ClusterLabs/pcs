@@ -63,8 +63,10 @@ def config_show(lib, argv, modifiers):
         raise CmdLineInputError()
     print("Cluster Name: %s" % utils.getClusterName())
     status.nodes_status(lib, ["config"], modifiers.get_subset("-f"))
-    print()
-    print("\n".join(_config_show_cib_lines(lib)))
+    cib_lines = _config_show_cib_lines(lib)
+    if cib_lines:
+        print()
+        print("\n".join(cib_lines))
     if (
         utils.hasCorosyncConf()
         and not modifiers.is_specified("-f")
@@ -74,11 +76,13 @@ def config_show(lib, argv, modifiers):
             lib, [], modifiers.get_subset(), silent_list=True
         )
     if modifiers.is_specified("--corosync_conf") or utils.hasCorosyncConf():
-        print()
-        print("Quorum:")
         try:
             config = lib_quorum.get_config(utils.get_lib_env())
-            print("\n".join(indent(quorum.quorum_config_to_str(config))))
+            quorum_lines = quorum.quorum_config_to_str(config)
+            if quorum_lines:
+                print()
+                print("Quorum:")
+                print("\n".join(indent(quorum_lines)))
         except LibraryError as e:
             process_library_reports(e.args)
 
@@ -100,30 +104,35 @@ def _config_show_cib_lines(lib):
 
     all_lines = []
 
-    all_lines.append("Resources:")
-    all_lines.extend(
-        smart_wrap_text(
-            indent(
-                resources_to_text(resources_facade.filter_stonith(False)),
-                indent_step=INDENT_STEP,
-            )
+    resources_lines = smart_wrap_text(
+        indent(
+            resources_to_text(resources_facade.filter_stonith(False)),
+            indent_step=INDENT_STEP,
         )
     )
-    all_lines.append("")
-    all_lines.append("Stonith Devices:")
-    all_lines.extend(
-        smart_wrap_text(
-            indent(
-                resources_to_text(resources_facade.filter_stonith(True)),
-                indent_step=INDENT_STEP,
-            )
+    if resources_lines:
+        all_lines.append("Resources:")
+        all_lines.extend(resources_lines)
+
+    stonith_lines = smart_wrap_text(
+        indent(
+            resources_to_text(resources_facade.filter_stonith(True)),
+            indent_step=INDENT_STEP,
         )
     )
-    all_lines.append("Fencing Levels:")
+    if stonith_lines:
+        if all_lines:
+            all_lines.append("")
+        all_lines.append("Stonith Devices:")
+        all_lines.extend(stonith_lines)
+
     levels_lines = stonith.stonith_level_config_to_str(
         lib.fencing_topology.get_config()
     )
     if levels_lines:
+        if all_lines:
+            all_lines.append("")
+        all_lines.append("Fencing Levels:")
         all_lines.extend(indent(levels_lines, indent_step=2))
 
     constraints_lines = smart_wrap_text(
@@ -136,61 +145,72 @@ def _config_show_cib_lines(lib):
         )
     )
     if constraints_lines:
-        all_lines.extend([""] + constraints_lines)
+        if all_lines:
+            all_lines.append("")
+        all_lines.extend(constraints_lines)
 
-    all_lines.append("")
-    all_lines.extend(alert.alert_config_lines(lib))
+    alert_lines = alert.alert_config_lines(lib)
+    if alert_lines:
+        if all_lines:
+            all_lines.append("")
+        all_lines.extend(alert_lines)
 
-    all_lines.append("")
-    all_lines.append("Resources Defaults:")
-    all_lines.extend(
-        indent(
-            nvset_dto_list_to_lines(
-                lib.cib_options.resource_defaults_config(
-                    evaluate_expired=False
-                ).meta_attributes,
-                nvset_label="Meta Attrs",
-                with_ids=modifiers.get("--full"),
-                text_if_empty="No defaults set",
-            )
+    resources_defaults_lines = indent(
+        nvset_dto_list_to_lines(
+            lib.cib_options.resource_defaults_config(
+                evaluate_expired=False
+            ).meta_attributes,
+            nvset_label="Meta Attrs",
+            with_ids=modifiers.get("--full"),
         )
     )
-    all_lines.append("Operations Defaults:")
-    all_lines.extend(
-        indent(
-            nvset_dto_list_to_lines(
-                lib.cib_options.operation_defaults_config(
-                    evaluate_expired=False
-                ).meta_attributes,
-                nvset_label="Meta Attrs",
-                with_ids=modifiers.get("--full"),
-                text_if_empty="No defaults set",
-            )
+    if resources_defaults_lines:
+        if all_lines:
+            all_lines.append("")
+        all_lines.append("Resources Defaults:")
+        all_lines.extend(resources_defaults_lines)
+
+    operations_defaults_lines = indent(
+        nvset_dto_list_to_lines(
+            lib.cib_options.operation_defaults_config(
+                evaluate_expired=False
+            ).meta_attributes,
+            nvset_label="Meta Attrs",
+            with_ids=modifiers.get("--full"),
         )
     )
+    if operations_defaults_lines:
+        if all_lines:
+            all_lines.append("")
+        all_lines.append("Operations Defaults:")
+        all_lines.extend(operations_defaults_lines)
 
-    all_lines.append("")
-    all_lines.append("Cluster Properties:")
     properties = utils.get_set_properties()
-    all_lines.extend(
-        indent(
-            [
-                "{0}: {1}".format(prop, val)
-                for prop, val in sorted(properties.items())
-            ],
-            indent_step=1,
+    if properties:
+        if all_lines:
+            all_lines.append("")
+        all_lines.append("Cluster Properties:")
+        all_lines.extend(
+            indent(
+                [
+                    "{0}: {1}".format(prop, val)
+                    for prop, val in sorted(properties.items())
+                ],
+                indent_step=1,
+            )
         )
-    )
-    all_lines.append("")
-    all_lines.append("Tags:")
+
     tags = lib.tag.config([])
-    if not tags:
-        all_lines.append(" No tags defined")
-    tag_lines = []
-    for tag in tags:
-        tag_lines.append(tag["tag_id"])
-        tag_lines.extend(indent(tag["idref_list"]))
-    all_lines.extend(indent(tag_lines, indent_step=1))
+    if tags:
+        if all_lines:
+            all_lines.append("")
+        all_lines.append("Tags:")
+        tag_lines = []
+        for tag in tags:
+            tag_lines.append(tag["tag_id"])
+            tag_lines.extend(indent(tag["idref_list"]))
+        all_lines.extend(indent(tag_lines, indent_step=1))
+
     return all_lines
 
 

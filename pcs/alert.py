@@ -218,17 +218,18 @@ def print_alert_config(lib, argv, modifiers):
     modifiers.ensure_only_supported("-f")
     if argv:
         raise CmdLineInputError()
-    print("\n".join(alert_config_lines(lib)))
+    lines = alert_config_lines(lib)
+    if lines:
+        print("\n".join(lines))
 
 
 def alert_config_lines(lib):
-    lines = ["Alerts:"]
+    lines = []
     alert_list = lib.alert.get_all_alerts()
     if alert_list:
+        lines.append("Alerts:")
         for alert in alert_list:
             lines.extend(indent(_alert_to_str(alert), 1))
-    else:
-        lines.append(" No alerts defined")
     return lines
 
 

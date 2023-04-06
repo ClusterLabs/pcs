@@ -262,34 +262,14 @@ class PcsConfigTagsTest(TestTagMixin, TestCase):
         Cluster Name: test99
         Corosync Nodes:
          rh7-1 rh7-2
-        {pacemaker_nodes}
-        {resources}
-        {stonith_devices}{fencing_levels}{constraints}
-        Alerts:
-         No alerts defined
-
-        Resources Defaults:
-          No defaults set
-        Operations Defaults:
-          No defaults set
-
-        Cluster Properties:
-        {tags}
-        Quorum:
-          Options:
-        """
+        {pacemaker_nodes}{resources}{stonith_devices}{fencing_levels}{constraints}{tags}"""
     )
-    empty_pacemaker_nodes = "Pacemaker Nodes:"
-    empty_resources = "\nResources:\n"
-    empty_stonith_devices = "Stonith Devices:\n"
-    empty_fencing_levels = "Fencing Levels:\n"
+    empty_pacemaker_nodes = "Pacemaker Nodes:\n"
+    empty_resources = ""
+    empty_stonith_devices = ""
+    empty_fencing_levels = ""
     empty_constraints = ""
-    empty_tags = outdent(
-        """
-        Tags:
-         No tags defined
-        """
-    )
+    empty_tags = ""
     expected_pacemaker_nodes = outdent(
         """\
         Pacemaker Nodes:
@@ -297,44 +277,37 @@ class PcsConfigTagsTest(TestTagMixin, TestCase):
         """
     )
     expected_resources = outdent(
-        # pylint: disable=line-too-long
-        """\
+        """
         Resources:
           Resource: not-in-tags (class=ocf provider=pacemaker type=Dummy)
             Operations:
               monitor: not-in-tags-monitor-interval-10s
-                interval=10s
-                timeout=20s
+                interval=10s timeout=20s
           Resource: x1 (class=ocf provider=pacemaker type=Dummy)
             Operations:
               monitor: x1-monitor-interval-10s
-                interval=10s
-                timeout=20s
+                interval=10s timeout=20s
           Resource: x2 (class=ocf provider=pacemaker type=Dummy)
             Operations:
               monitor: x2-monitor-interval-10s
-                interval=10s
-                timeout=20s
+                interval=10s timeout=20s
           Resource: x3 (class=ocf provider=pacemaker type=Dummy)
             Operations:
               monitor: x3-monitor-interval-10s
-                interval=10s
-                timeout=20s
+                interval=10s timeout=20s
           Resource: y1 (class=ocf provider=pacemaker type=Dummy)
             Operations:
               monitor: y1-monitor-interval-10s
-                interval=10s
-                timeout=20s
+                interval=10s timeout=20s
           Clone: y2-clone
             Resource: y2 (class=ocf provider=pacemaker type=Dummy)
               Operations:
                 monitor: y2-monitor-interval-10s
-                  interval=10s
-                  timeout=20s
+                  interval=10s timeout=20s
         """
     )
     expected_stonith_devices = outdent(
-        """\
+        """
         Stonith Devices:
           Resource: fence-rh-1 (class=stonith type=fence_xvm)
             Operations:
@@ -353,7 +326,7 @@ class PcsConfigTagsTest(TestTagMixin, TestCase):
         """
     )
     expected_fencing_levels = outdent(
-        """\
+        """
         Fencing Levels:
           Target: rh-1
             Level 1 - fence-kdump

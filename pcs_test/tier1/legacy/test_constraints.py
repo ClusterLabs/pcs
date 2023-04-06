@@ -182,22 +182,22 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
                 Location Constraints:
                   resource 'D1' (id: location-D1)
                     Rules:
-                      Rule: score=222 (id:location-D1-rule)
-                        Expression: #uname eq c00n03 (id:location-D1-rule-expr)
+                      Rule: score=222 (id: location-D1-rule)
+                        Expression: #uname eq c00n03 (id: location-D1-rule-expr)
                   resource 'D2' (id: location-D2)
                     Rules:
-                      Rule: score=-INFINITY (id:location-D2-rule)
-                        Expression: #uname eq c00n04 (id:location-D2-rule-expr)
+                      Rule: score=-INFINITY (id: location-D2-rule)
+                        Expression: #uname eq c00n04 (id: location-D2-rule-expr)
                   resource 'D3' (id: location-D3)
                     Rules:
-                      Rule: boolean-op=or score=-INFINITY (id:location-D3-rule)
-                        Expression: not_defined pingd (id:location-D3-rule-expr)
-                        Expression: pingd lte 0 (id:location-D3-rule-expr-1)
+                      Rule: boolean-op=or score=-INFINITY (id: location-D3-rule)
+                        Expression: not_defined pingd (id: location-D3-rule-expr)
+                        Expression: pingd lte 0 (id: location-D3-rule-expr-1)
                   resource 'D3' (id: location-D3-1)
                     Rules:
-                      Rule: boolean-op=and score=-INFINITY (id:location-D3-1-rule)
-                        Expression: not_defined pingd (id:location-D3-1-rule-expr)
-                        Expression: pingd lte 0 (id:location-D3-1-rule-expr-1)
+                      Rule: boolean-op=and score=-INFINITY (id: location-D3-1-rule)
+                        Expression: not_defined pingd (id: location-D3-1-rule-expr)
+                        Expression: pingd lte 0 (id: location-D3-1-rule-expr-1)
                 """
             ),
         )
@@ -222,9 +222,9 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
                 Location Constraints:
                   resource 'D1' (id: location-D1)
                     Rules:
-                      Rule: boolean-op=or score=INFINITY (id:location-D1-rule)
-                        Expression: not_defined pingd (id:location-D1-rule-expr)
-                        Expression: pingd lte 0 (id:location-D1-rule-expr-1)
+                      Rule: boolean-op=or score=INFINITY (id: location-D1-rule)
+                        Expression: not_defined pingd (id: location-D1-rule-expr)
+                        Expression: pingd lte 0 (id: location-D1-rule-expr-1)
                 """
             ),
         )
@@ -1275,14 +1275,14 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
                   resource 'crd' (id: location-crd)
                     resource-discovery=exclusive
                     Rules:
-                      Rule: boolean-op=and score=-INFINITY (id:location-crd-rule)
-                        Expression: opsrole ne controller0 (id:location-crd-rule-expr)
-                        Expression: opsrole ne controller1 (id:location-crd-rule-expr-1)
+                      Rule: boolean-op=and score=-INFINITY (id: location-crd-rule)
+                        Expression: opsrole ne controller0 (id: location-crd-rule-expr)
+                        Expression: opsrole ne controller1 (id: location-crd-rule-expr-1)
                   resource 'crd1' (id: location-crd1)
                     resource-discovery=exclusive
                     Rules:
-                      Rule: score=-INFINITY (id:location-crd1-rule)
-                        Expression: opsrole2 ne controller2 (id:location-crd1-rule-expr)
+                      Rule: score=-INFINITY (id: location-crd1-rule)
+                        Expression: opsrole2 ne controller2 (id: location-crd1-rule-expr)
                 """
             ),
         )
@@ -1843,17 +1843,17 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
                 Location Constraints:
                   resource 'D1' (id: location-D1-rh7-1-INFINITY)
                     Rules:
-                      Rule: score=INFINITY (id:location-D1-rh7-1-INFINITY-rule)
-                        Expression: #uname eq rh7-1 (id:location-D1-rh7-1-INFINITY-rule-expr)
-                      Rule: score=INFINITY (id:location-D1-rh7-1-INFINITY-rule-1)
-                        Expression: #uname eq rh7-1 (id:location-D1-rh7-1-INFINITY-rule-1-expr)
-                      Rule: score=INFINITY (id:location-D1-rh7-1-INFINITY-rule-2)
-                        Expression: #uname eq rh7-1 (id:location-D1-rh7-1-INFINITY-rule-2-expr)
+                      Rule: score=INFINITY (id: location-D1-rh7-1-INFINITY-rule)
+                        Expression: #uname eq rh7-1 (id: location-D1-rh7-1-INFINITY-rule-expr)
+                      Rule: score=INFINITY (id: location-D1-rh7-1-INFINITY-rule-1)
+                        Expression: #uname eq rh7-1 (id: location-D1-rh7-1-INFINITY-rule-1-expr)
+                      Rule: score=INFINITY (id: location-D1-rh7-1-INFINITY-rule-2)
+                        Expression: #uname eq rh7-1 (id: location-D1-rh7-1-INFINITY-rule-2-expr)
                   resource 'D2' (id: location-D2-rh7-2-INFINITY)
                     Rules:
-                      Rule: score=INFINITY (id:location-D2-rh7-2-INFINITY-rule)
-                        Expression: (id:location-D2-rh7-2-INFINITY-rule-expr)
-                          Date Spec: hours=9-16 weekdays=1-5 (id:location-D2-rh7-2-INFINITY-rule-expr-datespec)
+                      Rule: score=INFINITY (id: location-D2-rh7-2-INFINITY-rule)
+                        Expression: (id: location-D2-rh7-2-INFINITY-rule-expr)
+                          Date Spec: hours=9-16 weekdays=1-5 (id: location-D2-rh7-2-INFINITY-rule-expr-datespec)
                 """
             ),
         )
@@ -1885,13 +1885,13 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
                 Location Constraints:
                   resource 'D1' (id: location-D1-rh7-1-INFINITY)
                     Rules:
-                      Rule: score=INFINITY (id:location-D1-rh7-1-INFINITY-rule)
-                        Expression: #uname eq rh7-1 (id:location-D1-rh7-1-INFINITY-rule-expr)
+                      Rule: score=INFINITY (id: location-D1-rh7-1-INFINITY-rule)
+                        Expression: #uname eq rh7-1 (id: location-D1-rh7-1-INFINITY-rule-expr)
                   resource 'D2' (id: location-D2-rh7-2-INFINITY)
                     Rules:
-                      Rule: score=INFINITY (id:location-D2-rh7-2-INFINITY-rule)
-                        Expression: (id:location-D2-rh7-2-INFINITY-rule-expr)
-                          Date Spec: hours=9-16 weekdays=1-5 (id:location-D2-rh7-2-INFINITY-rule-expr-datespec)
+                      Rule: score=INFINITY (id: location-D2-rh7-2-INFINITY-rule)
+                        Expression: (id: location-D2-rh7-2-INFINITY-rule-expr)
+                          Date Spec: hours=9-16 weekdays=1-5 (id: location-D2-rh7-2-INFINITY-rule-expr-datespec)
                 """
             ),
         )
@@ -1913,9 +1913,9 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
                 Location Constraints:
                   resource 'D2' (id: location-D2-rh7-2-INFINITY)
                     Rules:
-                      Rule: score=INFINITY (id:location-D2-rh7-2-INFINITY-rule)
-                        Expression: (id:location-D2-rh7-2-INFINITY-rule-expr)
-                          Date Spec: hours=9-16 weekdays=1-5 (id:location-D2-rh7-2-INFINITY-rule-expr-datespec)
+                      Rule: score=INFINITY (id: location-D2-rh7-2-INFINITY-rule)
+                        Expression: (id: location-D2-rh7-2-INFINITY-rule-expr)
+                          Date Spec: hours=9-16 weekdays=1-5 (id: location-D2-rh7-2-INFINITY-rule-expr-datespec)
                 """
             ),
         )
@@ -1985,8 +1985,8 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
                 Location Constraints:
                   resource 'stateful0' (id: location-stateful0)
                     Rules:
-                      Rule: role={const.PCMK_ROLE_PROMOTED_PRIMARY} score=INFINITY (id:location-stateful0-rule)
-                        Expression: #uname eq rh7-1 (id:location-stateful0-rule-expr)
+                      Rule: role={const.PCMK_ROLE_PROMOTED_PRIMARY} score=INFINITY (id: location-stateful0-rule)
+                        Expression: #uname eq rh7-1 (id: location-stateful0-rule-expr)
                 """
             ),
         )
@@ -2266,8 +2266,8 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
                   resource 'stateful1' prefers node 'rh7-1' with score INFINITY (id: location-stateful1-rh7-1-INFINITY)
                   resource 'statefulG' (id: location-statefulG)
                     Rules:
-                      Rule: score=INFINITY (id:location-statefulG-rule)
-                        Expression: #uname eq rh7-1 (id:location-statefulG-rule-expr)
+                      Rule: score=INFINITY (id: location-statefulG-rule)
+                        Expression: #uname eq rh7-1 (id: location-statefulG-rule-expr)
                 Colocation Constraints:
                   resource 'stateful1' with resource 'dummy1' (id: colocation-stateful1-dummy1-INFINITY)
                     score=INFINITY
@@ -2526,8 +2526,8 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
                   resource 'dummy' prefers node 'rh7-1' with score INFINITY (id: location-dummy-rh7-1-INFINITY)
                   resource 'dummyG' (id: location-dummyG)
                     Rules:
-                      Rule: score=INFINITY (id:location-dummyG-rule)
-                        Expression: #uname eq rh7-1 (id:location-dummyG-rule-expr)
+                      Rule: score=INFINITY (id: location-dummyG-rule)
+                        Expression: #uname eq rh7-1 (id: location-dummyG-rule-expr)
                 Colocation Constraints:
                   resource 'dummy' with resource 'dummy1' (id: colocation-dummy-dummy1-INFINITY)
                     score=INFINITY
@@ -3609,26 +3609,26 @@ Error: duplicate constraint already exists, use --force to override
                 Location Constraints:
                   resource 'D1' (id: location-D1)
                     Rules:
-                      Rule: score=INFINITY (id:location-D1-rule)
-                        Expression: #uname eq node1 (id:location-D1-rule-expr)
+                      Rule: score=INFINITY (id: location-D1-rule)
+                        Expression: #uname eq node1 (id: location-D1-rule-expr)
                   resource 'D1' (id: location-D1-1)
                     Rules:
-                      Rule: score=INFINITY (id:location-D1-1-rule)
-                        Expression: #uname eq node1 (id:location-D1-1-rule-expr)
+                      Rule: score=INFINITY (id: location-D1-1-rule)
+                        Expression: #uname eq node1 (id: location-D1-1-rule-expr)
                   resource 'D2' (id: location-D2)
                     Rules:
-                      Rule: score=INFINITY (id:location-D2-rule)
-                        Expression: #uname eq node1 (id:location-D2-rule-expr)
+                      Rule: score=INFINITY (id: location-D2-rule)
+                        Expression: #uname eq node1 (id: location-D2-rule-expr)
                   resource 'D2' (id: location-D2-1)
                     Rules:
-                      Rule: boolean-op=or score=INFINITY (id:location-D2-1-rule)
-                        Expression: #uname eq node1 (id:location-D2-1-rule-expr)
-                        Expression: #uname eq node2 (id:location-D2-1-rule-expr-1)
+                      Rule: boolean-op=or score=INFINITY (id: location-D2-1-rule)
+                        Expression: #uname eq node1 (id: location-D2-1-rule-expr)
+                        Expression: #uname eq node2 (id: location-D2-1-rule-expr-1)
                   resource 'D2' (id: location-D2-2)
                     Rules:
-                      Rule: boolean-op=or score=INFINITY (id:location-D2-2-rule)
-                        Expression: #uname eq node2 (id:location-D2-2-rule-expr)
-                        Expression: #uname eq node1 (id:location-D2-2-rule-expr-1)
+                      Rule: boolean-op=or score=INFINITY (id: location-D2-2-rule)
+                        Expression: #uname eq node2 (id: location-D2-2-rule-expr)
+                        Expression: #uname eq node1 (id: location-D2-2-rule-expr-1)
                 """
             ),
         )
@@ -3832,12 +3832,12 @@ Error: duplicate constraint already exists, use --force to override
                 Location Constraints:
                   resource 'D1' (id: id9)
                     Rules:
-                      Rule: score=INFINITY (id:id9-rule)
-                        Expression: defined pingd (id:id9-rule-expr)
+                      Rule: score=INFINITY (id: id9-rule)
+                        Expression: defined pingd (id: id9-rule-expr)
                   resource 'D2' (id: id10)
                     Rules:
-                      Rule: score=100 (id:rule1)
-                        Expression: defined pingd (id:rule1-expr)
+                      Rule: score=100 (id: rule1)
+                        Expression: defined pingd (id: rule1-expr)
                 Colocation Constraints:
                   resource 'D1' with resource 'D2' (id: id1)
                     score=INFINITY
@@ -4373,8 +4373,8 @@ class LocationShowWithPattern(ConstraintBaseTest):
                     resource-discovery=never
                   resource pattern 'R_[0-9]+' (id: location-R_0-9)
                     Rules:
-                      Rule: score=20 (id:location-R_0-9-rule)
-                        Expression: defined pingd (id:location-R_0-9-rule-expr)
+                      Rule: score=20 (id: location-R_0-9-rule)
+                        Expression: defined pingd (id: location-R_0-9-rule-expr)
                 """
             ),
         )
@@ -5146,8 +5146,8 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'dummy' (id: location-dummy)
                     Rules:
-                      Rule: score=INFINITY (id:test-rule)
-                        Expression: date gt 2019-01-01 (id:test-rule-expr)
+                      Rule: score=INFINITY (id: test-rule)
+                        Expression: date gt 2019-01-01 (id: test-rule-expr)
                 """
             ),
         )
@@ -5188,8 +5188,8 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'dummy' (id: location-dummy)
                     Rules:
-                      Rule: score=INFINITY (id:test-rule)
-                        Expression: date gt 2019-01-01 (id:test-rule-expr)
+                      Rule: score=INFINITY (id: test-rule)
+                        Expression: date gt 2019-01-01 (id: test-rule-expr)
                 """
             ),
         )
@@ -5271,8 +5271,8 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'dummy' (id: location-dummy)
                     Rules:
-                      Rule (expired): score=INFINITY (id:test-rule)
-                        Expression: date lt 2019-01-01 (id:test-rule-expr)
+                      Rule (expired): score=INFINITY (id: test-rule)
+                        Expression: date lt 2019-01-01 (id: test-rule-expr)
                 """
             ),
         )
@@ -5324,9 +5324,9 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'dummy' (id: location-dummy)
                     Rules:
-                      Rule: boolean-op=or score=INFINITY (id:test-rule)
-                        Expression: date eq 2019-01-01 (id:test-rule-expr)
-                        Expression: date eq 2019-03-01 (id:test-rule-expr-1)
+                      Rule: boolean-op=or score=INFINITY (id: test-rule)
+                        Expression: date eq 2019-01-01 (id: test-rule-expr)
+                        Expression: date eq 2019-03-01 (id: test-rule-expr-1)
                 """
             ),
         )
@@ -5368,9 +5368,9 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'dummy' (id: location-dummy)
                     Rules:
-                      Rule: boolean-op=or score=INFINITY (id:test-rule)
-                        Expression: date eq 2019-01-01 (id:test-rule-expr)
-                        Expression: date eq 2019-03-01 (id:test-rule-expr-1)
+                      Rule: boolean-op=or score=INFINITY (id: test-rule)
+                        Expression: date eq 2019-01-01 (id: test-rule-expr)
+                        Expression: date eq 2019-03-01 (id: test-rule-expr-1)
                 """
             ),
         )
@@ -5429,8 +5429,8 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'dummy' (id: location-dummy)
                     Rules:
-                      Rule (not yet in effect): score=INFINITY (id:test-rule)
-                        Expression: date gt {self._tomorrow} (id:test-rule-expr)
+                      Rule (not yet in effect): score=INFINITY (id: test-rule)
+                        Expression: date gt {self._tomorrow} (id: test-rule-expr)
                 """
             ),
         )
@@ -5467,8 +5467,8 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'dummy' (id: location-dummy)
                     Rules:
-                      Rule (not yet in effect): score=INFINITY (id:test-rule)
-                        Expression: date gt {self._tomorrow} (id:test-rule-expr)
+                      Rule (not yet in effect): score=INFINITY (id: test-rule)
+                        Expression: date gt {self._tomorrow} (id: test-rule-expr)
                 """
             ),
         )
