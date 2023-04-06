@@ -9,6 +9,7 @@ from pcs.cli.rule import (
 )
 from pcs.common.pacemaker.nvset import CibNvsetDto
 from pcs.common.str_tools import (
+    format_name_value_id_list,
     format_name_value_list,
     format_optional,
     indent,
@@ -54,9 +55,20 @@ def nvset_dto_to_lines(
             " ".join(format_name_value_list(sorted(nvset.options.items())))
         )
 
-    lines = format_name_value_list(
-        sorted([(nvpair.name, nvpair.value) for nvpair in nvset.nvpairs])
-    )
+    if with_ids:
+        lines = format_name_value_id_list(
+            sorted(
+                [
+                    (nvpair.name, nvpair.value, nvpair.id)
+                    for nvpair in nvset.nvpairs
+                ]
+            )
+        )
+    else:
+        lines = format_name_value_list(
+            sorted([(nvpair.name, nvpair.value) for nvpair in nvset.nvpairs])
+        )
+
     if nvset.rule:
         lines.extend(
             rule_expression_dto_to_lines(nvset.rule, with_ids=with_ids)

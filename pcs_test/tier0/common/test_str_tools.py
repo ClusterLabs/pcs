@@ -241,6 +241,27 @@ class FormatNameValueList(TestCase):
         )
 
 
+class FormatNameValueIdList(TestCase):
+    def test_empty(self):
+        self.assertEqual([], tools.format_name_value_id_list([]))
+
+    def test_many(self):
+        self.assertEqual(
+            [
+                "name1=value1 (id: id1)",
+                '"name=2"="value 2" (id: id: 2)',
+                '"name 3"="value=3" (id: id 3)',
+            ],
+            tools.format_name_value_id_list(
+                [
+                    ("name1", "value1", "id1"),
+                    ("name=2", "value 2", "id: 2"),
+                    ("name 3", "value=3", "id 3"),
+                ]
+            ),
+        )
+
+
 class Quote(TestCase):
     def test_no_quote(self):
         self.assertEqual("string", tools.quote("string", " "))

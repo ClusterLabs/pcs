@@ -153,14 +153,14 @@ class DefaultsConfigMixin(DefaultsBaseMixin):
         self.lib_command.assert_called_once_with(True)
         mock_print.assert_called_once_with(
             dedent(
-                '''\
+                """\
                 Meta Attrs (expired): my-meta_attributes
-                  name1=value1
-                  name2=value2
+                  name1=value1 (id: my-id-pair1)
+                  name2=value2 (id: my-id-pair2)
                   Rule (expired): boolean-op=and score=INFINITY (id: my-meta-rule)
                     Expression: resource ocf:pacemaker:Dummy (id: my-meta-rule-rsc)
                 Meta Attrs: meta-plain score=123
-                  "name 1"="value 1"'''
+                  "name 1"="value 1" (id: my-id-pair3)"""
             )
         )
 
