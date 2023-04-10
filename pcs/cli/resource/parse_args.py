@@ -50,6 +50,12 @@ def parse_clone(arg_list, promotable=False):
         raise CmdLineInputError(
             "op settings must be changed on base resource, not the clone",
         )
+
+    if "meta" in groups:
+        deprecation_warning(
+            "option 'meta' is deprecated and will be removed in a future release."
+        )
+
     parts["meta"] = prepare_options(
         groups.get("options", []) + groups.get("meta", []),
     )
