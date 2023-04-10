@@ -6,6 +6,7 @@ from pcs.cli.common.parse_args import (
     group_by_keywords,
     prepare_options,
 )
+from pcs.cli.reports.output import deprecation_warning
 
 
 def parse_create_simple(arg_list):
