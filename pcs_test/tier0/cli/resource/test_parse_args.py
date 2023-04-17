@@ -1,20 +1,42 @@
-from unittest import TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.resource import parse_args
 
 
 class ParseCloneArgs(TestCase):
-    def assert_produce(self, arg_list, result, promotable=False):
+    def setUp(self):
+        print_patcher = mock.patch("pcs.cli.reports.output.print_to_stderr")
+        self.print_mock = print_patcher.start()
+        self.addCleanup(print_patcher.stop)
+        self.meta_deprecated = (
+            "Deprecation Warning: option 'meta' is deprecated and will be "
+            "removed in a future release."
+        )
+
+    def assert_stderr(self, stderr=None):
+        if stderr is None:
+            self.print_mock.assert_not_called()
+        else:
+            self.print_mock.assert_called_once_with(stderr)
+
+    def assert_produce(self, arg_list, result, promotable=False, stderr=None):
         self.assertEqual(
             parse_args.parse_clone(arg_list, promotable=promotable),
             result,
         )
+        self.assert_stderr(stderr)
 
-    def assert_raises_cmdline(self, args, expected_msg, promotable=False):
+    def assert_raises_cmdline(
+        self, args, expected_msg, promotable=False, stderr=None
+    ):
         with self.assertRaises(CmdLineInputError) as cm:
             parse_args.parse_clone(args, promotable=promotable)
         self.assertEqual(cm.exception.message, expected_msg)
+        self.assert_stderr(stderr)
 
     def test_no_args(self):
         self.assert_produce([], {"clone_id": None, "meta": {}})
@@ -35,6 +57,7 @@ class ParseCloneArgs(TestCase):
         self.assert_produce(
             ["meta", "a=b", "c=d"],
             {"clone_id": None, "meta": {"a": "b", "c": "d"}},
+            stderr=self.meta_deprecated,
         )
 
     def test_clone_id_and_clone_meta_options(self):
@@ -44,6 +67,7 @@ class ParseCloneArgs(TestCase):
                 "clone_id": "CustomCloneId",
                 "meta": {"a": "b", "c": "d", "e": "f", "g": "h"},
             },
+            stderr=self.meta_deprecated,
         )
 
     def test_op_options(self):
@@ -64,13 +88,18 @@ class ParseCloneArgs(TestCase):
         )
 
     def test_missing_meta_option_value(self):
-        self.assert_raises_cmdline(["meta", "m"], "missing value of 'm' option")
+        self.assert_raises_cmdline(
+            ["meta", "m"],
+            "missing value of 'm' option",
+            stderr=self.meta_deprecated,
+        )
 
     def test_promotable_keyword_and_option(self):
         self.assert_raises_cmdline(
             ["CloneId", "promotable=true", "meta", "promotable=true"],
             "you cannot specify both promotable option and promotable keyword",
             promotable=True,
+            stderr=self.meta_deprecated,
         )
 
     def test_different_values_of_option_and_meta_option(self):
@@ -81,6 +110,7 @@ class ParseCloneArgs(TestCase):
                 " 'false'"
             ),
             promotable=True,
+            stderr=self.meta_deprecated,
         )
 
 

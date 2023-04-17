@@ -529,6 +529,10 @@ class Clone(
                 "c=d"
             ).split(),
             fixture_resources_xml(FIXTURE_CLONE_WITH_OPTIONS),
+            stderr_full=(
+                "Deprecation Warning: option 'meta' is deprecated and will be "
+                "removed in a future release.\n"
+            ),
         )
 
     def test_group_last_member(self):
