@@ -23,10 +23,16 @@
     line
   - Specifying `--full` to show IDs of elements now shows IDs of nvpairs as well
 
+### Deprecated
+- Keyword `meta` in `pcs resource clone` and `pcs resource promotable` commands
+  (it wasn't doing anything anyway) ([rhbz#2168155], [ghpull#648])
+
 [ghissue#612]: https://github.com/ClusterLabs/pcs/issues/612
+[ghpull#648]: https://github.com/ClusterLabs/pcs/pull/648
 [rhbz#1423473]: https://bugzilla.redhat.com/show_bug.cgi?id=1423473
 [rhbz#1860626]: https://bugzilla.redhat.com/show_bug.cgi?id=1860626
 [rhbz#2163953]: https://bugzilla.redhat.com/show_bug.cgi?id=2163953
+[rhbz#2168155]: https://bugzilla.redhat.com/show_bug.cgi?id=2168155
 [rhbz#2175881]: https://bugzilla.redhat.com/show_bug.cgi?id=2175881
 [rhbz#2177996]: https://bugzilla.redhat.com/show_bug.cgi?id=2177996
 [rhbz#2179388]: https://bugzilla.redhat.com/show_bug.cgi?id=2179388

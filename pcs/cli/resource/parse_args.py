@@ -6,6 +6,7 @@ from pcs.cli.common.parse_args import (
     group_by_keywords,
     prepare_options,
 )
+from pcs.cli.reports.output import deprecation_warning
 
 
 def parse_create_simple(arg_list):
@@ -50,6 +51,12 @@ def parse_clone(arg_list, promotable=False):
         raise CmdLineInputError(
             "op settings must be changed on base resource, not the clone",
         )
+
+    if "meta" in groups:
+        deprecation_warning(
+            "option 'meta' is deprecated and will be removed in a future release."
+        )
+
     parts["meta"] = prepare_options(
         groups.get("options", []) + groups.get("meta", []),
     )
