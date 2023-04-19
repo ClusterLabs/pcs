@@ -46,6 +46,7 @@ patch_ruby_pcsd = create_patcher(ruby_pcsd)
 
 class RunRuby(AsyncTestCase):
     def setUp(self):
+        super().setUp()
         self.ruby_response = ""
         self.request = ruby_pcsd.RubyDaemonRequest(ruby_pcsd.SYNC_CONFIGS)
         self.wrapper = create_wrapper()
@@ -54,7 +55,6 @@ class RunRuby(AsyncTestCase):
         )
         self.addCleanup(patcher.stop)
         patcher.start()
-        super().setUp()
 
     async def send_to_ruby(self, ruby_request):
         self.assertEqual(ruby_request, self.request)

@@ -5,11 +5,9 @@ from dataclasses import dataclass
 from datetime import datetime
 from queue import Queue
 from unittest import (
-    TestCase,
+    IsolatedAsyncioTestCase,
     mock,
 )
-
-from tornado.testing import AsyncTestCase
 
 from pcs.common.async_tasks.dto import (
     CommandDto,
@@ -117,14 +115,7 @@ class SchedulerTestWrapper:
                 )
 
 
-class SchedulerBaseTestCase(SchedulerTestWrapper, TestCase):
-    def setUp(self):
-        SchedulerTestWrapper.prepare_scheduler(self)
-        super().setUp()
-        self.addCleanup(mock.patch.stopall)
-
-
-class SchedulerBaseAsyncTestCase(SchedulerTestWrapper, AsyncTestCase):
+class SchedulerBaseAsyncTestCase(SchedulerTestWrapper, IsolatedAsyncioTestCase):
     def setUp(self):
         SchedulerTestWrapper.prepare_scheduler(self)
         super().setUp()

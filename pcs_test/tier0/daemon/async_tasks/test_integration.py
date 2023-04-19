@@ -7,8 +7,6 @@ from multiprocessing.pool import worker as mp_worker_init  # type: ignore
 from queue import Queue
 from unittest import mock
 
-from tornado.testing import gen_test
-
 from pcs import settings
 from pcs.common.async_tasks.dto import (
     CommandDto,
@@ -95,12 +93,10 @@ class StateChangeTest(AssertTaskStatesMixin, IntegrationBaseTestCase):
     should work in an ideal (error-free) scenario.
     """
 
-    @gen_test
     async def test_created_from_empty(self):
         self._create_tasks(5)
         self.assert_task_state_counts_equal(5, 0, 0, 0)
 
-    @gen_test
     async def test_created_on_top_of_existing(self):
         self._create_tasks(5)
         await self.perform_actions(0)
@@ -110,13 +106,11 @@ class StateChangeTest(AssertTaskStatesMixin, IntegrationBaseTestCase):
         # 3/5 were executed, remaining are queued, 2 new arrived
         self.assert_task_state_counts_equal(2, 2, 3, 0)
 
-    @gen_test
     async def test_created_to_scheduled(self):
         self._create_tasks(4)
         await self.perform_actions(0)
         self.assert_task_state_counts_equal(0, 4, 0, 0)
 
-    @gen_test
     async def test_scheduled_to_executed(self):
         self._create_tasks(4)
         await self.perform_actions(0)
@@ -125,7 +119,6 @@ class StateChangeTest(AssertTaskStatesMixin, IntegrationBaseTestCase):
         await self.perform_actions(2)
         self.assert_task_state_counts_equal(0, 2, 2, 0)
 
-    @gen_test
     async def test_executed_to_finished(self):
         self._create_tasks(1)
         await self.perform_actions(0)
@@ -161,7 +154,6 @@ class GarbageCollectionTimeoutTests(
         self.assertEqual(task_finish_type, task_info.task_finish_type)
         self.assertEqual(task_kill_reason, task_info.kill_reason)
 
-    @gen_test
     async def test_get_task_removes_finished(self):
         self._create_tasks(1)
         await self.perform_actions(0)
@@ -175,7 +167,6 @@ class GarbageCollectionTimeoutTests(
             self.scheduler._task_register["id0"]._to_delete_timestamp
         )
 
-    @gen_test
     async def test_created_defunct_timeout(self):
         # Nothing should happen, created tasks can't be defunct
         self._create_tasks(1)
@@ -185,7 +176,6 @@ class GarbageCollectionTimeoutTests(
             task_kill_reason=None,
         )
 
-    @gen_test
     async def test_scheduled_defunct_timeout(self):
         # Nothing should happen, scheduled tasks can't be defunct
         self._create_tasks(1)
@@ -196,7 +186,6 @@ class GarbageCollectionTimeoutTests(
             task_kill_reason=None,
         )
 
-    @gen_test
     async def test_executed_defunct_timeout(self):
         # Task should be killed
         self._create_tasks(1)
@@ -209,7 +198,6 @@ class GarbageCollectionTimeoutTests(
             TaskKillReason.COMPLETION_TIMEOUT,
         )
 
-    @gen_test
     async def test_finished_defunct_timeout(self):
         # Only tasks in EXECUTED state can become defunct. In this case,
         # task is going to become ABANDONED and is deleted
@@ -228,7 +216,6 @@ class GarbageCollectionTimeoutTests(
         # If the guard task was removed, this fails the test case
         self.scheduler.get_task("id1", AUTH_USER)
 
-    @gen_test
     async def test_created_abandoned_timeout(self):
         self._create_tasks(1)
         await self._run_gc_and_assert_state(
@@ -237,7 +224,6 @@ class GarbageCollectionTimeoutTests(
             task_kill_reason=None,
         )
 
-    @gen_test
     async def test_scheduled_abandoned_timeout(self):
         self._create_tasks(1)
         await self.perform_actions(0)
@@ -247,7 +233,6 @@ class GarbageCollectionTimeoutTests(
             task_kill_reason=None,
         )
 
-    @gen_test
     async def test_executed_abandoned_timeout(self):
         self._create_tasks(1)
         await self.perform_actions(0)
@@ -259,7 +244,6 @@ class GarbageCollectionTimeoutTests(
             task_kill_reason=None,
         )
 
-    @gen_test
     async def test_finished_abandoned_timeout(self):
         self._create_tasks(1)
         await self.perform_actions(0)
@@ -299,7 +283,6 @@ class GarbageCollectionUserKillTests(
         )
         self.assertIsNone(task_info_alive.kill_reason)
 
-    @gen_test
     async def test_kill_created(self):
         self._create_tasks(2)
         self.scheduler.kill_task("id0", AUTH_USER)
@@ -311,7 +294,6 @@ class GarbageCollectionUserKillTests(
         self.mock_os_kill.assert_not_called()
         self.assert_end_state()
 
-    @gen_test
     async def test_kill_scheduled(self):
         self._create_tasks(2)
         await self.perform_actions(0)
@@ -326,7 +308,6 @@ class GarbageCollectionUserKillTests(
         self.mock_os_kill.assert_called_once()
         self.assert_end_state()
 
-    @gen_test
     async def test_kill_executed(self):
         self._create_tasks(2)
         await self.perform_actions(0)
@@ -339,7 +320,6 @@ class GarbageCollectionUserKillTests(
         self.mock_os_kill.assert_called_once()
         self.assert_end_state()
 
-    @gen_test
     async def test_kill_finished(self):
         self._create_tasks(2)
         await self.perform_actions(0)
@@ -419,7 +399,6 @@ class TaskResultsTests(MockOsKillMixin, IntegrationBaseTestCase):
                 AUTH_USER,
             )
 
-    @gen_test
     async def test_task_successful_no_result_with_reports(self):
         # How is no result different from a None return value in DTO?
         # Functions without return values also return None - should we
@@ -439,7 +418,6 @@ class TaskResultsTests(MockOsKillMixin, IntegrationBaseTestCase):
         self.assertEqual(TaskFinishType.SUCCESS, task_info.task_finish_type)
         self.assertIsNone(task_info.result)
 
-    @gen_test
     async def test_task_successful_with_result(self):
         task_id = "id0"
         self._new_task(task_id, "success")
@@ -456,7 +434,6 @@ class TaskResultsTests(MockOsKillMixin, IntegrationBaseTestCase):
         self.assertEqual(TaskFinishType.SUCCESS, task_info.task_finish_type)
         self.assertEqual(RESULT, task_info.result)
 
-    @gen_test
     async def test_task_error(self):
         task_id = "id0"
         self._new_task(task_id, "lib_exc")
@@ -473,7 +450,6 @@ class TaskResultsTests(MockOsKillMixin, IntegrationBaseTestCase):
         self.assertEqual(TaskFinishType.FAIL, task_info.task_finish_type)
         self.assertIsNone(task_info.result)
 
-    @gen_test
     async def test_task_unhandled_exception(self):
         task_id = "id0"
         self._new_task(task_id, "unhandled_exc")
@@ -492,7 +468,6 @@ class TaskResultsTests(MockOsKillMixin, IntegrationBaseTestCase):
         )
         self.assertIsNone(task_info.result)
 
-    @gen_test
     async def test_wait_for_task(self):
         task_id = "id0"
         self._new_task(task_id, "success")
@@ -527,7 +502,6 @@ class DeadlockTests(
             "pcs.daemon.async_tasks.scheduler.mp.Process", self.process_cls_mock
         ).start()
 
-    @gen_test
     async def test_deadlock_mitigation(self, mock_kill):
         self._create_tasks(2)
         self.execute_tasks(["id0"])
@@ -563,7 +537,6 @@ class DeadlockTests(
         self.assert_task_state_counts_equal(0, 0, 1, 1)
         self.process_obj_mock.close.assert_called_once_with()
 
-    @gen_test
     async def test_max_worker_count_reached(self, mock_kill):
         self.scheduler._config = dataclasses.replace(
             self.scheduler._config, max_worker_count=1

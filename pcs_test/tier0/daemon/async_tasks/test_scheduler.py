@@ -3,8 +3,6 @@ import dataclasses
 from queue import Empty
 from unittest import mock
 
-from tornado.testing import gen_test
-
 from pcs.common.async_tasks.dto import (
     CommandDto,
     CommandOptionsDto,
@@ -32,14 +30,13 @@ from .helpers import (
     ANOTHER_AUTH_USER,
     AUTH_USER,
     SchedulerBaseAsyncTestCase,
-    SchedulerBaseTestCase,
 )
 
 WORKER1_PID = 2222
 WORKER2_PID = 3333
 
 
-class GetTaskTest(SchedulerBaseTestCase):
+class GetTaskTest(SchedulerBaseAsyncTestCase):
     def test_task_exists(self):
         self._create_tasks(1)
         task_result = self.scheduler.get_task("id0", AUTH_USER)
@@ -67,7 +64,7 @@ class GetTaskTest(SchedulerBaseTestCase):
             self.scheduler.get_task("id0", ANOTHER_AUTH_USER)
 
 
-class KillTaskTest(SchedulerBaseTestCase):
+class KillTaskTest(SchedulerBaseAsyncTestCase):
     def test_task_exists(self):
         self._create_tasks(2)
         self.scheduler.kill_task("id0", AUTH_USER)
@@ -92,7 +89,7 @@ class KillTaskTest(SchedulerBaseTestCase):
             self.scheduler.kill_task("id0", ANOTHER_AUTH_USER)
 
 
-class NewTaskTest(SchedulerBaseTestCase):
+class NewTaskTest(SchedulerBaseAsyncTestCase):
     def test_new_task(self):
         self._create_tasks(1)
         self.assertEqual(
@@ -132,7 +129,6 @@ class NewTaskTest(SchedulerBaseTestCase):
 
 
 class ReceiveMessagesTest(SchedulerBaseAsyncTestCase):
-    @gen_test
     async def test_wrong_payload_type(self):
         worker_com = self.worker_com
         self._create_tasks(2)
@@ -148,12 +144,10 @@ class ReceiveMessagesTest(SchedulerBaseAsyncTestCase):
         )
         self.assertIsNone(task2_dto.kill_reason)
 
-    @gen_test
     async def test_wrong_message_id(self):
         # TODO
         pass
 
-    @gen_test
     async def test_wrong_message_type(self):
         self._create_tasks(2)
         self.worker_com.put(Message("id0", TaskExecuted(WORKER1_PID)))
@@ -163,7 +157,6 @@ class ReceiveMessagesTest(SchedulerBaseAsyncTestCase):
             received += await self.scheduler._receive_messages()
         self.logger_mock.error.assert_called_once()
 
-    @gen_test
     async def test_all_messages_consumed(self):
         task_count = 3
         message_count = 3
@@ -184,12 +177,10 @@ class ReceiveMessagesTest(SchedulerBaseAsyncTestCase):
 
 
 class ProcessTasksTest(SchedulerBaseAsyncTestCase):
-    @gen_test
     async def test_empty_created_task_index(self):
         await self.scheduler._process_tasks()
         self.mp_pool_mock.assert_not_called()
 
-    @gen_test
     async def test_normal_run(self):
         task_count = 4
         self._create_tasks(task_count)
@@ -210,7 +201,6 @@ class ProcessTasksTest(SchedulerBaseAsyncTestCase):
             ),
         )
 
-    @gen_test
     async def test_killed_task(self):
         self._create_tasks(3)
         tasks = list(self.scheduler._task_register.values())
@@ -250,7 +240,7 @@ def get_generator(return_values):
     return lambda *args, **kwargs: next(gen)
 
 
-class DeadlockDetectionTest(SchedulerBaseTestCase):
+class DeadlockDetectionTest(SchedulerBaseAsyncTestCase):
     @staticmethod
     def _create_task(index, state=TaskState.CREATED):
         task = Task(

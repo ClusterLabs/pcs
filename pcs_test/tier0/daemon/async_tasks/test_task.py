@@ -1,7 +1,7 @@
 # pylint: disable=protected-access
 from datetime import timedelta
 from unittest import (
-    TestCase,
+    IsolatedAsyncioTestCase,
     mock,
 )
 
@@ -37,7 +37,7 @@ DATETIME_AFTER_TIMEOUT = DATETIME_NOW - timedelta(seconds=TEST_TIMEOUT_S + 1)
 WORKER_PID = 2222
 
 
-class TaskBaseTestCase(TestCase):
+class TaskBaseTestCase(IsolatedAsyncioTestCase):
     def setUp(self):
         self.task = tasks.Task(
             TASK_IDENT,
