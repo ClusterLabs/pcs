@@ -9,7 +9,6 @@ from pcs import (
     utils,
 )
 from pcs.cli.common import (
-    capabilities,
     completion,
     errors,
     parse_args,
@@ -41,6 +40,7 @@ from pcs.cli.routing import (
     stonith,
     tag,
 )
+from pcs.common import capabilities
 from pcs.lib.errors import LibraryError
 
 
@@ -214,7 +214,7 @@ def main(argv=None):
                     " ".join(
                         sorted(
                             [
-                                feat["id"]
+                                feat.code
                                 for feat in capabilities.get_pcs_capabilities()
                             ]
                         )

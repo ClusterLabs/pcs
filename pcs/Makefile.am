@@ -26,7 +26,6 @@ EXTRA_DIST		= \
 			  cli/cluster/command.py \
 			  cli/cluster/__init__.py \
 			  cli/cluster_property.py \
-			  cli/common/capabilities.py \
 			  cli/common/completion.py \
 			  cli/common/env_cli.py \
 			  cli/common/errors.py \
@@ -106,6 +105,7 @@ EXTRA_DIST		= \
 			  common/async_tasks/__init__.py \
 			  common/async_tasks/dto.py \
 			  common/async_tasks/types.py \
+			  common/capabilities.py \
 			  common/communication/__init__.py \
 			  common/communication/const.py \
 			  common/communication/dto.py \

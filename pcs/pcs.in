@@ -17,7 +17,9 @@ sys.path.insert(0, PACKAGE_DIR)
 
 if "-d" in sys.argv:
     from pcs.daemon.run import main
-    main()
+    argv = sys.argv[:]
+    argv.remove("-d")
+    main(argv[1:])
 else:
     from pcs import (
         app,

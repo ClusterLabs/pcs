@@ -1,6 +1,7 @@
 import os
 import signal
 import socket
+import sys
 from pathlib import Path
 from typing import Optional
 
@@ -12,6 +13,7 @@ from tornado.locks import Lock
 from tornado.web import Application
 
 from pcs import settings
+from pcs.common import capabilities
 from pcs.daemon import (
     log,
     ruby_pcsd,
@@ -129,7 +131,27 @@ def configure_app(
     return make_app
 
 
-def main():
+def main(argv=None):
+    argv = argv if argv is not None else sys.argv[1:]
+    if "--version" in argv:
+        print(settings.pcs_version)
+        if "--full" in argv:
+            print(
+                " ".join(
+                    sorted(
+                        [
+                            feat.code
+                            for feat in capabilities.get_pcsd_capabilities()
+                        ]
+                    )
+                )
+            )
+        return
+
+    if argv:
+        sys.stderr.write(f"Error: option {argv[0]} is not recognized\n")
+        raise SystemExit(1)
+
     signal.signal(signal.SIGTERM, handle_signal)
     signal.signal(signal.SIGINT, handle_signal)
 

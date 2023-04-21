@@ -2,8 +2,17 @@
 .SH NAME
 pcsd \- pacemaker/corosync configuration system daemon
 
+.SH SYNOPSIS
+pcsd
+.br
+pcsd \fB\-\-version\fR [\fB\-\-full\fR]
+
 .SH DESCRIPTION
 Daemon for controlling and configuring pacemaker/corosync clusters via pcs.
+
+.TP
+\fB\-\-version\fR
+Print pcsd version information. List pcsd capabilities if \fB\-\-full\fR is specified.
 
 .SH ENVIRONMENT
 
