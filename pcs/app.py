@@ -208,19 +208,17 @@ def main(argv=None):
         elif opt == "--corosync_conf":
             settings.corosync_conf_file = val
         elif opt == "--version":
-            print(settings.pcs_version)
-            if full:
-                print(
-                    " ".join(
-                        sorted(
-                            [
-                                feat.code
-                                for feat in capabilities.get_pcs_capabilities()
-                            ]
+            try:
+                print(settings.pcs_version)
+                if full:
+                    print(
+                        capabilities.capabilities_to_codes_str(
+                            capabilities.get_pcs_capabilities()
                         )
                     )
-                )
-            sys.exit()
+                sys.exit()
+            except capabilities.CapabilitiesError as e:
+                raise error(e.msg) from e
         elif opt == "--fullhelp":
             usage.full_usage()
             sys.exit()

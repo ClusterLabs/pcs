@@ -180,6 +180,7 @@ EXTRA_DIST		= \
 			  daemon/app/api_v1.py \
 			  daemon/app/api_v2.py \
 			  daemon/app/auth.py \
+			  daemon/app/capabilities.py \
 			  daemon/app/sinatra_common.py \
 			  daemon/app/sinatra_remote.py \
 			  daemon/app/sinatra_ui.py \

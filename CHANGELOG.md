@@ -7,6 +7,9 @@
   ([rhbz#2179388], [rhbz#1423473], [rhbz#2163953])
 - Automatic restarts of the Puma web server in the legacy Ruby daemon to reduce
   its memory footprint ([rhbz#1860626])
+- New URL for listing pcsd capabilities: `/capabilities`
+- It is now possible to list pcsd capabilities even if pcsd is not running:
+  `pcsd --version --full`
 
 ### Fixed
 - Crash in commands that ask for user input (like `pcs cluster destroy`) when

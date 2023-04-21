@@ -1,20 +1,29 @@
 import os.path
 from dataclasses import dataclass
 from textwrap import dedent
+from typing import Iterable
 
 from lxml import etree
 
 from pcs import settings
-from pcs.cli.reports.output import error
 from pcs.common.tools import xml_fromstring
 
 
-@dataclass
+@dataclass(frozen=True)
 class Capability:
     code: str
     description: str
     in_pcs: bool
     in_pcsd: bool
+
+
+class CapabilitiesError(Exception):
+    def __init__(self, msg: str):
+        super().__init__()
+        self.msg = msg
+
+    def __str__(self) -> str:
+        return self.msg
 
 
 def get_capabilities_definition() -> list[Capability]:
@@ -28,7 +37,7 @@ def get_capabilities_definition() -> list[Capability]:
         with open(filename, mode="r") as xml_file:
             capabilities_xml = xml_fromstring(xml_file.read())
     except (OSError, etree.XMLSyntaxError, etree.DocumentInvalid) as e:
-        raise error(
+        raise CapabilitiesError(
             f"Cannot read capabilities definition file '{filename}': '{e}'"
         ) from e
     capabilities = []
@@ -59,3 +68,7 @@ def get_pcsd_capabilities() -> list[Capability]:
     Get pcsd capabilities from the capabilities file
     """
     return [feat for feat in get_capabilities_definition() if feat.in_pcsd]
+
+
+def capabilities_to_codes_str(capabilities: Iterable[Capability]) -> str:
+    return " ".join(sorted([feat.code for feat in capabilities]))
