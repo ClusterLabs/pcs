@@ -60,7 +60,6 @@ EXTRA_DIST		= \
 			  tier0/cli/cluster/__init__.py \
 			  tier0/cli/cluster/test_command.py \
 			  tier0/cli/common/__init__.py \
-			  tier0/cli/common/test_capabilities.py \
 			  tier0/cli/common/test_completion.py \
 			  tier0/cli/common/test_lib_wrapper.py \
 			  tier0/cli/common/test_middleware.py \
@@ -105,6 +104,7 @@ EXTRA_DIST		= \
 			  tier0/common/services/drivers/test_systemd.py \
 			  tier0/common/services/drivers/test_sysvinit_rhel.py \
 			  tier0/common/services/__init__.py \
+			  tier0/common/test_capabilities.py \
 			  tier0/common/test_file.py \
 			  tier0/common/test_host.py \
 			  tier0/common/test_node_communicator.py \

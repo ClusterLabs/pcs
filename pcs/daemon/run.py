@@ -1,8 +1,12 @@
 import os
 import signal
 import socket
+import sys
 from pathlib import Path
-from typing import Optional
+from typing import (
+    Iterable,
+    Optional,
+)
 
 from tornado.ioloop import (
     IOLoop,
@@ -12,6 +16,8 @@ from tornado.locks import Lock
 from tornado.web import Application
 
 from pcs import settings
+from pcs.common import capabilities
+from pcs.common.types import StringCollection
 from pcs.daemon import (
     log,
     ruby_pcsd,
@@ -24,6 +30,9 @@ from pcs.daemon.app import (
     api_v1,
     api_v2,
     auth,
+)
+from pcs.daemon.app import capabilities as capabilities_app
+from pcs.daemon.app import (
     sinatra_remote,
     sinatra_ui,
     ui,
@@ -80,10 +89,13 @@ def configure_app(
     session_storage: session.Storage,
     ruby_pcsd_wrapper: ruby_pcsd.Wrapper,
     sync_config_lock: Lock,
-    public_dir,
-    disable_gui=False,
-    debug=False,
+    public_dir: str,
+    pcsd_capabilities: Iterable[capabilities.Capability],
+    disable_gui: bool = False,
+    debug: bool = False,
 ):
+    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-statements
     def make_app(https_server_manage: HttpsServerManage):
         """
         https_server_manage -- allows to control the server (specifically
@@ -95,6 +107,9 @@ def configure_app(
         routes.extend(api_v1.get_routes(async_scheduler, auth_provider))
         routes.extend(api_v0.get_routes(async_scheduler, auth_provider))
         routes.extend(auth.get_routes(auth_provider))
+        routes.extend(
+            capabilities_app.get_routes(auth_provider, pcsd_capabilities)
+        )
         routes.extend(
             sinatra_remote.get_routes(
                 ruby_pcsd_wrapper,
@@ -129,7 +144,30 @@ def configure_app(
     return make_app
 
 
-def main():
+def _print_version(argv: StringCollection) -> None:
+    try:
+        print(settings.pcs_version)
+        if "--full" in argv:
+            print(
+                capabilities.capabilities_to_codes_str(
+                    capabilities.get_pcsd_capabilities()
+                )
+            )
+    except capabilities.CapabilitiesError as e:
+        sys.stderr.write(f"Error: {e.msg}\n")
+        raise SystemExit(1) from e
+
+
+def main(argv=None) -> None:
+    argv = argv if argv is not None else sys.argv[1:]
+    if "--version" in argv:
+        _print_version(argv)
+        return
+
+    if argv:
+        sys.stderr.write(f"Error: option {argv[0]} is not recognized\n")
+        raise SystemExit(1)
+
     signal.signal(signal.SIGTERM, handle_signal)
     signal.signal(signal.SIGINT, handle_signal)
 
@@ -164,6 +202,13 @@ def main():
         settings.pcsd_ruby_socket,
         debug=env.PCSD_DEBUG,
     )
+
+    try:
+        pcsd_capabilities = capabilities.get_pcsd_capabilities()
+    except capabilities.CapabilitiesError as e:
+        pcsd_capabilities = []
+        log.pcsd.error(e.msg)
+
     make_app = configure_app(
         async_scheduler,
         auth_provider,
@@ -171,6 +216,7 @@ def main():
         ruby_pcsd_wrapper,
         sync_config_lock,
         env.PCSD_STATIC_FILES_DIR,
+        pcsd_capabilities,
         disable_gui=env.PCSD_DISABLE_GUI,
         debug=env.PCSD_DEV,
     )

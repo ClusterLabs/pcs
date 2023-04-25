@@ -14,18 +14,19 @@ BUNDLED_PACKAGES_DIR = os.path.join(PACKAGE_DIR, "@PCS_BUNDLED_DIR_LOCAL@", "pac
 sys.path.insert(0, BUNDLED_PACKAGES_DIR)
 sys.path.insert(0, PACKAGE_DIR)
 
+# pylint: disable=wrong-import-position
+# we need settings to be imported from a path defined above
+from pcs import settings
+
+settings.pcsd_exec_location = os.path.join(PACKAGE_DIR, "pcsd")
+settings.pcsd_gem_path = os.path.join(PACKAGE_DIR, "@PCSD_BUNDLED_DIR_ROOT_LOCAL@")
+settings.pcs_data_dir = os.path.join(PACKAGE_DIR, "data")
 
 if "-d" in sys.argv:
     from pcs.daemon.run import main
-    main()
+    argv = sys.argv[:]
+    argv.remove("-d")
+    main(argv[1:])
 else:
-    from pcs import (
-        app,
-        settings,
-    )
-
-    settings.pcsd_exec_location = os.path.join(PACKAGE_DIR, "pcsd")
-    settings.pcsd_gem_path = os.path.join(PACKAGE_DIR, "@PCSD_BUNDLED_DIR_ROOT_LOCAL@")
-
-    settings.pcs_data_dir = os.path.join(PACKAGE_DIR, "data")
+    from pcs import app
     app.main(sys.argv[1:])
