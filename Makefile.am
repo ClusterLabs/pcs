@@ -379,7 +379,7 @@ $(SPEC): $(SPEC).in .version config.status stamps/download_python_deps stamps/do
 		dirty="" && \
 		numcomm="0"; \
 	else \
-		gitver="`echo $$gvgver | sed 's/\(.*\)\./\1-/'`" && \
+		gitver="`echo $$gvgver | sed 's/\(.*\)+/\1-/'`" && \
 		rpmver=`echo $$gitver | sed 's/-.*//g'` && \
 		alphatag=`echo $$gvgver | sed 's/[^-]*-\([^-]*\).*/\1/'` && \
 		numcomm=`echo $$gitver | sed 's/[^-]*-\([^-]*\).*/\1/'` && \
