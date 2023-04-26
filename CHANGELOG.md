@@ -1,5 +1,14 @@
 # Change Log
 
+## [Unreleased]
+
+### Added
+- Automatic restarts of the Puma web server in the legacy Ruby daemon to reduce
+  its memory footprint ([rhbz#2189958])
+
+[rhbz#2189958]: https://bugzilla.redhat.com/show_bug.cgi?id=2189958
+
+
 ## [0.10.16] - 2023-04-06
 
 ### Added

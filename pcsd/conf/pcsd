@@ -39,6 +39,11 @@ PCSD_SESSION_LIFETIME=3600
 # Do not use proxy for specified hostnames
 #NO_PROXY=
 
+# Ruby server restart
+# In order to free memory allocated by the server, it is restarted after this
+# number of requests. If 0, restarts will be disabled, minimum value
+# is 50 (even if set lower).
+PCSD_RESTART_AFTER_REQUESTS=200
 
 # Do not change
 RACK_ENV=production

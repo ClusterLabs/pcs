@@ -50,6 +50,25 @@ if not defined? $cur_node_name
   $cur_node_name = `/bin/hostname`.chomp
 end
 
+if ENV['PCSD_RESTART_AFTER_REQUESTS']
+  begin
+    PCSD_RESTART_AFTER_REQUESTS = Integer(ENV['PCSD_RESTART_AFTER_REQUESTS'])
+  rescue ArgumentError
+    # The value will be left on default from constant definition in settings.rb
+  else
+    if
+      PCSD_RESTART_AFTER_REQUESTS != 0 &&
+      PCSD_RESTART_AFTER_REQUESTS < PCSD_RESTART_AFTER_REQUESTS_MIN
+    then
+      PCSD_RESTART_AFTER_REQUESTS = PCSD_RESTART_AFTER_REQUESTS_MIN
+    end
+  end
+end
+
+if not defined? $request_counter
+  $request_counter = 0
+end
+
 def configure_logger()
   logger = Logger.new(StringIO.new())
   logger.formatter = proc {|severity, datetime, progname, msg|
