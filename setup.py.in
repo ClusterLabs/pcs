@@ -2,8 +2,12 @@
 
 import os
 
-from setuptools import setup, Command, find_packages
-from setuptools import Distribution
+from setuptools import (
+    Command,
+    Distribution,
+    find_packages,
+    setup,
+)
 from setuptools.command.install import install
 
 
@@ -108,6 +112,7 @@ setup(
     author_email="cfeist@redhat.com",
     url="https://github.com/ClusterLabs/pcs",
     packages=find_packages(exclude=["pcs_test", "pcs_test.*"]),
+    package_data={"pcs": ["py.typed"]},
     zip_safe=False,
     entry_points={
         "console_scripts": [
