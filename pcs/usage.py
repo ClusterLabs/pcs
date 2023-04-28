@@ -2303,12 +2303,16 @@ Commands:
         See 'pcs property describe' for a description of the properties.
 {output_format_desc}
 
-    defaults [<property>] ...
+    defaults [<property>] ... [--full]
         List all property defaults or only defaults for specified properties.
+        If --full is specified, all properties defaults including advanced are
+        shown.
 
-    describe [<property>...] [{output_format_syntax_no_cmd}]
+    describe [<property>...] [{output_format_syntax_no_cmd}] [--full]
         Show cluster properties.
 {output_format_desc_no_cmd}
+        If --full is specified, all properties descriptions including advanced
+        are shown.
 
     set <property>=[<value>] ... [--force]
         Set specific pacemaker properties (if the value is blank then the

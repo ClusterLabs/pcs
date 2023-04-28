@@ -1057,15 +1057,16 @@ permission remove <permission id>
 Remove the permission id specified (permission id's are listed in parenthesis after permissions in 'pcs acl' output).
 .SS "property"
 .TP
-[config [<property>... | \fB\-\-all\fR | \fB\-\-defaults\fR | (\fB\-\-output\-format\fR text|cmd|json)]] | [\fB\-\-all\fR | \fB\-\-defaults\fR | (\fB\-\-output\-format\fR text|cmd|json)]
+[config [<property>... | \fB\-\-all\fR | \fB\-\-defaults\fR | (@OUTPUT_FORMAT_SYNTAX_DOC@)]] | [\fB\-\-all\fR | \fB\-\-defaults\fR | (@OUTPUT_FORMAT_SYNTAX_DOC@)]
 List property settings (default: lists configured properties). If \fB\-\-defaults\fR is specified will show all property defaults, if \fB\-\-all\fR is specified, current configured properties will be shown with unset properties and their defaults.
-See 'pcs property describe' for a description of the properties. There are 3 formats of output available: 'cmd', 'json' and 'text', default is 'text'. Format 'text' is a human friendly output. Format 'cmd' prints pcs commands which can be used to recreate the same configuration. Format 'json' is a machine oriented output of the configuration.
+See 'pcs property describe' for a description of the properties. @OUTPUT_FORMAT_DESC_DOC@
 .TP
-defaults [<property>]...
-List all property defaults or only defaults for specified properties.
+defaults [<property>]... [\fB\-\-full\fR]
+List all property defaults or only defaults for specified properties. If \fB\-\-full\fR is specified, all properties defaults including advanced are shown.
+
 .TP
-describe [<property>...] [\fB\-\-output-format text|json\fR]
-Show cluster properties. There are 2 formats of output available: 'json' and 'text', default is 'text'. Format 'text' is a human friendly output. Format 'json' is a machine oriented output of the configuration.
+describe [<property>...] [\fB\-\-output-format text|json\fR] [\fB\-\-full\fR]
+Show cluster properties. There are 2 formats of output available: 'json' and 'text', default is 'text'. Format 'text' is a human friendly output. Format 'json' is a machine oriented output of the configuration. If \fB\-\-full\fR is specified, all properties descriptions including advanced are shown.
 .TP
 set <property>=[<value>] ... [\fB\-\-force\fR]
 Set specific pacemaker properties (if the value is blank then the property is removed from the configuration).  If a property is not recognized by pcs the property will not be created unless the \fB\-\-force\fR is used.
