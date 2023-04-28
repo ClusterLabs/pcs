@@ -13,6 +13,8 @@
 - Add lib commands `cluster_property.get_properties` and
   `cluster_property.get_properties_metadata` to API v2
 - Add `pcs property defaults` and `pcs property describe` CLI commands
+- Support for output formats `json` and `cmd` to property config command
+  ([rhbz#2163914])
 
 ### Fixed
 - Crash in commands that ask for user input (like `pcs cluster destroy`) when
@@ -37,12 +39,12 @@
 [ghpull#648]: https://github.com/ClusterLabs/pcs/pull/648
 [rhbz#1423473]: https://bugzilla.redhat.com/show_bug.cgi?id=1423473
 [rhbz#1860626]: https://bugzilla.redhat.com/show_bug.cgi?id=1860626
+[rhbz#2163914]: https://bugzilla.redhat.com/show_bug.cgi?id=2163914
 [rhbz#2163953]: https://bugzilla.redhat.com/show_bug.cgi?id=2163953
 [rhbz#2168155]: https://bugzilla.redhat.com/show_bug.cgi?id=2168155
 [rhbz#2175881]: https://bugzilla.redhat.com/show_bug.cgi?id=2175881
 [rhbz#2177996]: https://bugzilla.redhat.com/show_bug.cgi?id=2177996
 [rhbz#2179388]: https://bugzilla.redhat.com/show_bug.cgi?id=2179388
-
 
 ## [0.11.5] - 2023-03-01
 
