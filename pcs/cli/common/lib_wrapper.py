@@ -530,6 +530,7 @@ def load_module(env, middleware_factory, name):
                 "set_properties": cluster_property.set_properties,
                 "get_properties": cluster_property.get_properties,
                 "get_properties_metadata": cluster_property.get_properties_metadata,
+                "get_cluster_properties_definition_legacy": cluster_property.get_cluster_properties_definition_legacy,
             },
         )
 
