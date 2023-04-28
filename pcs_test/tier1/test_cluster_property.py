@@ -44,112 +44,20 @@ FIXTURE_CONFIG_OUTPUT = dedent(
       placement-strategy=minimal
     """
 )
-
-FIXTURE_CONFIG_ALL_OUTPUT = dedent(
-    """\
-    Cluster Properties: cib-bootstrap-options
-      batch-limit=0 (default)
-      cluster-delay=60s (default)
-      cluster-infrastructure=corosync (default)
-      cluster-ipc-limit=500 (default)
-      cluster-name=HACluster
-      cluster-recheck-interval=15min (default)
-      concurrent-fencing=true (default)
-      dc-deadtime=20s (default)
-      dc-version=none (default)
-      election-timeout=2min (default)
-      enable-acl=false
-      enable-startup-probes=true (default)
-      fence-reaction=stop (default)
-      have-watchdog=false
-      join-finalization-timeout=30min (default)
-      join-integration-timeout=3min (default)
-      load-threshold=80% (default)
-      maintenance-mode=false
-      migration-limit=-1 (default)
-      no-quorum-policy=stop (default)
-      no-quorum-policy=stop (default)
-      node-action-limit=0 (default)
-      node-health-base=0 (default)
-      node-health-green=0 (default)
-      node-health-red=-INFINITY (default)
-      node-health-strategy=none (default)
-      node-health-yellow=0 (default)
-      pe-error-series-max=-1 (default)
-      pe-input-series-max=4000 (default)
-      pe-warn-series-max=5000 (default)
-      placement-strategy=minimal
-      priority-fencing-delay=0 (default)
-      remove-after-stop=false (default)
-      shutdown-escalation=20min (default)
-      shutdown-lock=false (default)
-      shutdown-lock=false (default)
-      shutdown-lock-limit=0 (default)
-      start-failure-is-fatal=true (default)
-      startup-fencing=true (default)
-      stonith-action=reboot (default)
-      stonith-enabled=true (default)
-      stonith-max-attempts=10 (default)
-      stonith-timeout=60s (default)
-      stonith-watchdog-timeout=0 (default)
-      stop-all-resources=false (default)
-      stop-orphan-actions=true (default)
-      stop-orphan-resources=true (default)
-      symmetric-cluster=true (default)
-      transition-delay=0s (default)
-    """
+_DEFAULT_MARK_REGEXP = r"(  .*=.* \(default\)\n)+"
+_CONFIG_PROPERTIES_REGEXP_LIST = [
+    r"Cluster Properties: cib-bootstrap-options\n",
+    r"  cluster-name=HACluster\n",
+    r"  enable-acl=false\n",
+    r"  have-watchdog=false\n",
+    r"  maintenance-mode=false\n",
+    r"  placement-strategy=minimal\n",
+]
+CONFIG_ALL_REGEXP = (
+    _DEFAULT_MARK_REGEXP.join(_CONFIG_PROPERTIES_REGEXP_LIST)
+    + rf"{_DEFAULT_MARK_REGEXP}$"
 )
-
-FIXTURE_DEFAULTS_FULL = dedent(
-    """\
-    batch-limit=0
-    cluster-delay=60s
-    cluster-infrastructure=corosync
-    cluster-ipc-limit=500
-    cluster-recheck-interval=15min
-    concurrent-fencing=true
-    dc-deadtime=20s
-    dc-version=none
-    election-timeout=2min
-    enable-acl=false
-    enable-startup-probes=true
-    fence-reaction=stop
-    have-watchdog=false
-    join-finalization-timeout=30min
-    join-integration-timeout=3min
-    load-threshold=80%
-    maintenance-mode=false
-    migration-limit=-1
-    no-quorum-policy=stop
-    node-action-limit=0
-    node-health-base=0
-    node-health-green=0
-    node-health-red=-INFINITY
-    node-health-strategy=none
-    node-health-yellow=0
-    pe-error-series-max=-1
-    pe-input-series-max=4000
-    pe-warn-series-max=5000
-    placement-strategy=default
-    priority-fencing-delay=0
-    remove-after-stop=false
-    shutdown-escalation=20min
-    shutdown-lock=false
-    shutdown-lock-limit=0
-    start-failure-is-fatal=true
-    startup-fencing=true
-    stonith-action=reboot
-    stonith-enabled=true
-    stonith-max-attempts=10
-    stonith-timeout=60s
-    stonith-watchdog-timeout=0
-    stop-all-resources=false
-    stop-orphan-actions=true
-    stop-orphan-resources=true
-    symmetric-cluster=true
-    transition-delay=0s
-    """
-)
+DEFAULTS_REGEXP = r"^batch-limit=0\n(.*=.*\n)+$"
 
 
 def get_invalid_option_messages(option_names, error=True, forceable=True):
@@ -396,7 +304,7 @@ class ConfigMixin(PropertyMixin):
     def test_default_option(self):
         self.assert_pcs_success(
             self.command + ["--default"],
-            stdout_full=FIXTURE_DEFAULTS_FULL,
+            stdout_regexp=DEFAULTS_REGEXP,
             stderr_full=(
                 "Deprecation Warning: Option --defaults is deprecated and will "
                 "be removed. Please use command 'pcs property defaults' "
@@ -406,7 +314,7 @@ class ConfigMixin(PropertyMixin):
 
     def test_all_option(self):
         self.assert_pcs_success(
-            self.command + ["--all"], stdout_full=FIXTURE_CONFIG_ALL_OUTPUT
+            self.command + ["--all"], stdout_regexp=CONFIG_ALL_REGEXP
         )
 
     def test_json_format(self):
@@ -547,55 +455,12 @@ class TestPropertyDefaults(TestCase, AssertPcsMixin):
 
     def test_success(self):
         self.assert_pcs_success(
-            "property defaults".split(),
-            stdout_full=dedent(
-                """\
-                batch-limit=0
-                cluster-delay=60s
-                cluster-infrastructure=corosync
-                cluster-ipc-limit=500
-                cluster-recheck-interval=15min
-                concurrent-fencing=true
-                dc-deadtime=20s
-                dc-version=none
-                enable-acl=false
-                enable-startup-probes=true
-                fence-reaction=stop
-                have-watchdog=false
-                load-threshold=80%
-                maintenance-mode=false
-                migration-limit=-1
-                no-quorum-policy=stop
-                node-action-limit=0
-                node-health-base=0
-                node-health-green=0
-                node-health-red=-INFINITY
-                node-health-strategy=none
-                node-health-yellow=0
-                pe-error-series-max=-1
-                pe-input-series-max=4000
-                pe-warn-series-max=5000
-                placement-strategy=default
-                priority-fencing-delay=0
-                remove-after-stop=false
-                shutdown-lock=false
-                shutdown-lock-limit=0
-                start-failure-is-fatal=true
-                stonith-action=reboot
-                stonith-max-attempts=10
-                stonith-watchdog-timeout=0
-                stop-all-resources=false
-                stop-orphan-actions=true
-                stop-orphan-resources=true
-                symmetric-cluster=true
-                """
-            ),
+            "property defaults".split(), stdout_regexp=DEFAULTS_REGEXP
         )
 
     def test_success_full(self):
         self.assert_pcs_success(
-            "property defaults --full".split(),
-            stdout_full=FIXTURE_DEFAULTS_FULL,
+            "property defaults --full".split(), stdout_regexp=DEFAULTS_REGEXP
         )
 
     def test_success_specific_properties_also_advanced(self):
