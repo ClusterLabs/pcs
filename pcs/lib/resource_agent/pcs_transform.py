@@ -97,8 +97,8 @@ def ocf_unified_to_pcs(
         result = _metadata_parameter_extract_enum_values_from_desc(result)
         result = _metadata_parameter_remove_select_enum_values_from_desc(result)
         result = _metadata_parameter_deduplicate_desc(result)
-        result = _metadata_parameter_join_short_long_desc(result)
         result = _metadata_parameter_extract_advanced_from_desc(result)
+        result = _metadata_parameter_join_short_long_desc(result)
     if metadata.name.is_stonith:
         result = _metadata_remove_unwanted_stonith_parameters(result)
         result = _metadata_make_stonith_action_parameter_deprecated(result)
@@ -138,11 +138,17 @@ def _metadata_parameter_extract_advanced_from_desc(
 def _parameter_extract_advanced_from_desc(
     parameter: ResourceAgentParameter,
 ) -> ResourceAgentParameter:
-    advanced_str_list = ["Advanced use only: ", "*** Advanced Use Only *** "]
-    if parameter.shortdesc:
-        for advanced_str in advanced_str_list:
-            if parameter.shortdesc.startswith(advanced_str):
-                return replace(parameter, advanced=True)
+    advanced_str_beginings = ["Advanced use only:", "*** Advanced Use Only ***"]
+    shortdesc = parameter.shortdesc
+    if shortdesc:
+        for advanced_str in advanced_str_beginings:
+            if shortdesc.startswith(advanced_str):
+                new_shortdesc = shortdesc.removeprefix(advanced_str).lstrip()
+                return replace(
+                    parameter,
+                    advanced=True,
+                    shortdesc=new_shortdesc if new_shortdesc else None,
+                )
     return parameter
 
 
@@ -165,6 +171,8 @@ def _parameter_join_short_long_desc(
     longdesc = parameter.longdesc
     if shortdesc is None or longdesc is None:
         return parameter
+    if shortdesc and not shortdesc.endswith("."):
+        shortdesc = f"{shortdesc}."
     return replace(parameter, longdesc=f"{shortdesc}\n{longdesc}".strip())
 
 

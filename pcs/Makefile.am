@@ -23,9 +23,11 @@ EXTRA_DIST		= \
 			  cli/booth/command.py \
 			  cli/booth/env.py \
 			  cli/booth/__init__.py \
-			  cli/cluster/command.py \
 			  cli/cluster/__init__.py \
-			  cli/cluster_property.py \
+			  cli/cluster/command.py \
+			  cli/cluster_property/__init__.py \
+			  cli/cluster_property/command.py \
+			  cli/cluster_property/output.py \
 			  cli/common/completion.py \
 			  cli/common/env_cli.py \
 			  cli/common/errors.py \
@@ -114,6 +116,7 @@ EXTRA_DIST		= \
 			  common/interface/__init__.py \
 			  common/node_communicator.py \
 			  common/pacemaker/__init__.py \
+			  common/pacemaker/cluster_property.py \
 			  common/pacemaker/constraint/__init__.py \
 			  common/pacemaker/constraint/all.py \
 			  common/pacemaker/constraint/colocation.py \
@@ -126,8 +129,8 @@ EXTRA_DIST		= \
 			  common/pacemaker/resource/__init__.py \
 			  common/pacemaker/resource/bundle.py \
 			  common/pacemaker/resource/clone.py \
-			  common/pacemaker/resource/list.py \
 			  common/pacemaker/resource/group.py \
+			  common/pacemaker/resource/list.py \
 			  common/pacemaker/resource/operations.py \
 			  common/pacemaker/resource/primitive.py \
 			  common/pacemaker/resource/relations.py \
@@ -379,7 +382,6 @@ EXTRA_DIST		= \
 			  node.py \
 			  pcsd.py \
 			  pcs_internal.py \
-			  prop.py \
 			  py.typed \
 			  qdevice.py \
 			  quorum.py \

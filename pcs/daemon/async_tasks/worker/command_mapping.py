@@ -125,6 +125,14 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=cluster.setup,
         required_permission=p.SUPERUSER,
     ),
+    "cluster_property.get_properties": _Cmd(
+        cmd=cluster_property.get_properties,
+        required_permission=p.READ,
+    ),
+    "cluster_property.get_properties_metadata": _Cmd(
+        cmd=cluster_property.get_properties_metadata,
+        required_permission=p.READ,
+    ),
     "cluster_property.set_properties": _Cmd(
         cmd=cluster_property.set_properties,
         required_permission=p.WRITE,

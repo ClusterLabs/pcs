@@ -262,6 +262,27 @@ class FormatNameValueIdList(TestCase):
         )
 
 
+class FormatNameValueDefaultList(TestCase):
+    def test_empty(self):
+        self.assertEqual([], tools.format_name_value_default_list([]))
+
+    def test_many(self):
+        self.assertEqual(
+            [
+                '"name 3"="value=3"',
+                '"name=2"="value 2" (default)',
+                "name1=value1",
+            ],
+            tools.format_name_value_default_list(
+                [
+                    ("name 3", "value=3", False),
+                    ("name=2", "value 2", True),
+                    ("name1", "value1", False),
+                ]
+            ),
+        )
+
+
 class Quote(TestCase):
     def test_no_quote(self):
         self.assertEqual("string", tools.quote("string", " "))

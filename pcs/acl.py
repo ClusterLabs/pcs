@@ -1,7 +1,4 @@
-from pcs import (
-    prop,
-    utils,
-)
+from pcs.cli.cluster_property.output import PropertyConfigurationFacade
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.reports.output import deprecation_warning
 from pcs.common.str_tools import indent
@@ -35,10 +32,14 @@ def acl_config(lib, argv, modifiers):
     modifiers.ensure_only_supported("-f")
     if argv:
         raise CmdLineInputError()
-    properties = utils.get_set_properties(
-        defaults=prop.get_default_properties()
+
+    properties_facade = PropertyConfigurationFacade.from_properties_dtos(
+        lib.cluster_property.get_properties(),
+        lib.cluster_property.get_properties_metadata(),
     )
-    acl_enabled = properties.get("enable-acl", "").lower()
+    acl_enabled = properties_facade.get_property_value_or_default(
+        "enable-acl", ""
+    )
     if is_true(acl_enabled):
         print("ACLs are enabled")
     else:

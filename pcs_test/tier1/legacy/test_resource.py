@@ -67,8 +67,13 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
     def fixture_description(self, advanced=False):
         # pylint: disable=no-self-use
         advanced_params = """\
-              trace_ra: Set to 1 to turn on resource agent tracing (expect large output) The trace output will be saved to trace_file, if set, or by default to $HA_VARRUN/ra_trace/<type>/<id>.<action>.<timestamp> e.g. $HA_VARRUN/ra_trace/oracle/db.start.2012-11-27.08:37:08
-              trace_file: Path to a file to store resource agent tracing log
+              trace_ra (advanced use only)
+                Description: Set to 1 to turn on resource agent tracing (expect large output) The trace output will be saved to trace_file, if set, or by default to $HA_VARRUN/ra_trace/<type>/<id>.<action>.<timestamp> e.g. $HA_VARRUN/ra_trace/oracle/db.start.2012-11-27.08:37:08
+                Type: integer
+                Default: 0
+              trace_file (advanced use only)
+                Description: Path to a file to store resource agent tracing log
+                Type: string
             """
         return dedent(
             """\
@@ -77,9 +82,18 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
             System health agent that measures the CPU idling and updates the #health-cpu attribute.
 
             Resource options:
-              state (unique): Location to store the resource state in.
-              yellow_limit (unique): Lower (!) limit of idle percentage to switch the health attribute to yellow. I.e. the #health-cpu will go yellow if the %idle of the CPU falls below 50%.
-              red_limit: Lower (!) limit of idle percentage to switch the health attribute to red. I.e. the #health-cpu will go red if the %idle of the CPU falls below 10%.
+              state (unique)
+                Description: Location to store the resource state in.
+                Type: string
+                Default: /var/run/health-cpu-HealthCPU.state
+              yellow_limit (unique)
+                Description: Lower (!) limit of idle percentage to switch the health attribute to yellow. I.e. the #health-cpu will go yellow if the %idle of the CPU falls below 50%.
+                Type: string
+                Default: 50
+              red_limit
+                Description: Lower (!) limit of idle percentage to switch the health attribute to red. I.e. the #health-cpu will go red if the %idle of the CPU falls below 10%.
+                Type: string
+                Default: 10
 {0}
             Default operations:
               start:

@@ -58,6 +58,9 @@ EXTRA_DIST		= \
 			  tier0/cli/booth/__init__.py \
 			  tier0/cli/booth/test_env.py \
 			  tier0/cli/cluster/__init__.py \
+			  tier0/cli/cluster_property/__init__.py \
+			  tier0/cli/cluster_property/test_command.py \
+			  tier0/cli/cluster_property/test_output.py \
 			  tier0/cli/cluster/test_command.py \
 			  tier0/cli/common/__init__.py \
 			  tier0/cli/common/test_completion.py \
@@ -82,7 +85,6 @@ EXTRA_DIST		= \
 			  tier0/cli/tag/test_command.py \
 			  tier0/cli/test_booth.py \
 			  tier0/cli/test_cluster.py \
-			  tier0/cli/test_cluster_property.py \
 			  tier0/cli/test_dr.py \
 			  tier0/cli/test_nvset.py \
 			  tier0/cli/test_quorum.py \
@@ -355,7 +357,6 @@ EXTRA_DIST		= \
 			  tier1/legacy/test_cluster.py \
 			  tier1/legacy/test_constraints.py \
 			  tier1/legacy/test_node.py \
-			  tier1/legacy/test_properties.py \
 			  tier1/legacy/test_resource.py \
 			  tier1/legacy/test_rule.py \
 			  tier1/legacy/test_stonith.py \

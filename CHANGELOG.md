@@ -10,6 +10,13 @@
 - New URL for listing pcsd capabilities: `/capabilities`
 - It is now possible to list pcsd capabilities even if pcsd is not running:
   `pcsd --version --full`
+- Add lib commands `cluster_property.get_properties` and
+  `cluster_property.get_properties_metadata` to API v2
+- Add `pcs property defaults` and `pcs property describe` CLI commands
+- Support for output formats `json` and `cmd` to property config command
+  ([rhbz#2163914])
+- Commands `pcs resource describe` and `pcs stonith describe` print detailed
+  info about resource options (data type or allowed values, default value)
 
 ### Fixed
 - Crash in commands that ask for user input (like `pcs cluster destroy`) when
@@ -34,6 +41,7 @@
 [ghpull#648]: https://github.com/ClusterLabs/pcs/pull/648
 [rhbz#1423473]: https://bugzilla.redhat.com/show_bug.cgi?id=1423473
 [rhbz#1860626]: https://bugzilla.redhat.com/show_bug.cgi?id=1860626
+[rhbz#2163914]: https://bugzilla.redhat.com/show_bug.cgi?id=2163914
 [rhbz#2163953]: https://bugzilla.redhat.com/show_bug.cgi?id=2163953
 [rhbz#2168155]: https://bugzilla.redhat.com/show_bug.cgi?id=2168155
 [rhbz#2175881]: https://bugzilla.redhat.com/show_bug.cgi?id=2175881
