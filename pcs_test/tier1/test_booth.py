@@ -8,7 +8,7 @@ from unittest import (
 from pcs.cli.booth import command as booth_cmd
 from pcs.lib.booth import constants
 
-from pcs_test.tools.assertions import AssertPcsMixinOld as AssertPcsMixin
+from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
     get_tmp_dir,
@@ -17,7 +17,7 @@ from pcs_test.tools.misc import (
     skip_unless_booth_resource_agent_installed,
     write_file_to_tmpfile,
 )
-from pcs_test.tools.pcs_runner import PcsRunnerOld as PcsRunner
+from pcs_test.tools.pcs_runner import PcsRunner
 
 EMPTY_CIB = rc("cib-empty.xml")
 
@@ -185,11 +185,11 @@ class SetupTest(BoothMixin, TestCase):
     def test_show_usage_when_no_site_specified(self):
         self.assert_pcs_fail(
             "booth setup arbitrators 3.3.3.3".split(),
-            stdout_start="\nUsage: pcs booth <command>\n    setup",
+            stderr_start="\nUsage: pcs booth <command>\n    setup",
         )
         self.assert_pcs_fail(
             "booth setup".split(),
-            stdout_start="\nUsage: pcs booth <command>\n    setup",
+            stderr_start="\nUsage: pcs booth <command>\n    setup",
         )
 
 
@@ -291,13 +291,13 @@ class AddTicketTest(BoothTest):
         )
         self.assert_pcs_success(
             "booth ticket add TicketA unknown=a --force".split(),
-            "Warning: {0}\n".format(msg),
+            stderr_full="Warning: {0}\n".format(msg),
         )
 
     def test_not_enough_args(self):
         self.assert_pcs_fail(
             "booth ticket add".split(),
-            stdout_start="\nUsage: pcs booth <command>\n    ticket add",
+            stderr_start="\nUsage: pcs booth <command>\n    ticket add",
         )
 
 
@@ -307,7 +307,7 @@ class DeleteRemoveTicketMixin:
     def test_not_enough_args(self):
         self.assert_pcs_fail(
             ["booth", "ticket", self.command],
-            stdout_start=outdent(
+            stderr_start=outdent(
                 f"""
                 Usage: pcs booth <command>
                     ticket {self.command} <"""
@@ -317,7 +317,7 @@ class DeleteRemoveTicketMixin:
     def test_too_many_args(self):
         self.assert_pcs_fail(
             ["booth", "ticket", self.command, "aaa", "bbb"],
-            stdout_start=outdent(
+            stderr_start=outdent(
                 f"""
                 Usage: pcs booth <command>
                     ticket {self.command} <"""
@@ -381,7 +381,7 @@ class CreateTest(BoothMixinNoFiles, TestCase):
     def test_not_enough_args(self):
         self.assert_pcs_fail(
             "booth create".split(),
-            stdout_start=outdent(
+            stderr_start=outdent(
                 """
                 Usage: pcs booth <command>
                     create ip <"""
@@ -389,7 +389,7 @@ class CreateTest(BoothMixinNoFiles, TestCase):
         )
         self.assert_pcs_fail(
             "booth create ip".split(),
-            stdout_start=outdent(
+            stderr_start=outdent(
                 """
                 Usage: pcs booth <command>
                     create ip <"""
@@ -399,7 +399,7 @@ class CreateTest(BoothMixinNoFiles, TestCase):
     def test_too_many_args(self):
         self.assert_pcs_fail(
             "booth create ip aaa bbb".split(),
-            stdout_start=outdent(
+            stderr_start=outdent(
                 """
                 Usage: pcs booth <command>
                     create ip <"""
@@ -425,7 +425,7 @@ class DeleteRemoveTestMixin(AssertPcsMixin):
     def test_usage(self):
         self.assert_pcs_fail(
             ["booth", self.command, "a", "b"],
-            stdout_start=outdent(
+            stderr_start=outdent(
                 f"""
                 Usage: pcs booth <command>
                     {self.command}
@@ -461,7 +461,7 @@ class TicketGrantTest(BoothMixinNoFiles, TestCase):
     def test_not_enough_args(self):
         self.assert_pcs_fail(
             "booth ticket grant".split(),
-            stdout_start=outdent(
+            stderr_start=outdent(
                 """
                 Usage: pcs booth <command>
                     ticket grant <"""
@@ -471,7 +471,7 @@ class TicketGrantTest(BoothMixinNoFiles, TestCase):
     def test_too_many_args(self):
         self.assert_pcs_fail(
             "booth ticket grant aaa bbb ccc".split(),
-            stdout_start=outdent(
+            stderr_start=outdent(
                 """
                 Usage: pcs booth <command>
                     ticket grant <"""
@@ -483,7 +483,7 @@ class TicketRevokeTest(BoothMixinNoFiles, TestCase):
     def test_not_enough_args(self):
         self.assert_pcs_fail(
             "booth ticket revoke".split(),
-            stdout_start=outdent(
+            stderr_start=outdent(
                 """
                 Usage: pcs booth <command>
                     ticket revoke <"""
@@ -493,7 +493,7 @@ class TicketRevokeTest(BoothMixinNoFiles, TestCase):
     def test_too_many_args(self):
         self.assert_pcs_fail(
             "booth ticket revoke aaa bbb ccc".split(),
-            stdout_start=outdent(
+            stderr_start=outdent(
                 """
                 Usage: pcs booth <command>
                     ticket revoke <"""
@@ -505,7 +505,7 @@ class Restart(BoothMixinNoFiles, TestCase):
     def test_too_many_args(self):
         self.assert_pcs_fail(
             "booth restart aaa".split(),
-            stdout_start=outdent(
+            stderr_start=outdent(
                 """
                 Usage: pcs booth <command>
                     restart"""
@@ -517,7 +517,7 @@ class Sync(BoothMixinNoFiles, TestCase):
     def test_too_many_args(self):
         self.assert_pcs_fail(
             "booth sync aaa".split(),
-            stdout_start=outdent(
+            stderr_start=outdent(
                 """
                 Usage: pcs booth <command>
                     sync"""
@@ -529,7 +529,7 @@ class BoothServiceTestMixin(BoothMixinNoFiles):
     def test_too_many_args(self):
         self.assert_pcs_fail(
             ["booth", self.cmd_label, "aaa"],
-            stdout_start=outdent(
+            stderr_start=outdent(
                 f"""
                 Usage: pcs booth <command>
                     {self.cmd_label}"""
@@ -569,7 +569,7 @@ class Pull(BoothMixinNoFiles, TestCase):
     def test_not_enough_args(self):
         self.assert_pcs_fail(
             "booth pull".split(),
-            stdout_start=outdent(
+            stderr_start=outdent(
                 """
                 Usage: pcs booth <command>
                     pull"""
@@ -579,7 +579,7 @@ class Pull(BoothMixinNoFiles, TestCase):
     def test_too_many_args(self):
         self.assert_pcs_fail(
             "booth pull aaa bbb".split(),
-            stdout_start=outdent(
+            stderr_start=outdent(
                 """
                 Usage: pcs booth <command>
                     pull"""
@@ -593,7 +593,7 @@ class Status(BoothMixinNoFiles, TestCase):
     def test_too_many_args(self):
         self.assert_pcs_fail(
             "booth status aaa".split(),
-            stdout_start=outdent(
+            stderr_start=outdent(
                 """
                 Usage: pcs booth <command>
                     status"""

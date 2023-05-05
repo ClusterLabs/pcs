@@ -3,10 +3,8 @@ from unittest import TestCase
 
 from lxml import etree
 
-from pcs_test.tools.assertions import AssertPcsMixinOld as AssertPcsMixin
-from pcs_test.tools.cib import (
-    get_assert_pcs_effect_mixin_old as get_assert_pcs_effect_mixin,
-)
+from pcs_test.tools.assertions import AssertPcsMixin
+from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
     get_tmp_file,
@@ -15,7 +13,7 @@ from pcs_test.tools.misc import (
     write_data_to_tmpfile,
     write_file_to_tmpfile,
 )
-from pcs_test.tools.pcs_runner import PcsRunnerOld as PcsRunner
+from pcs_test.tools.pcs_runner import PcsRunner
 from pcs_test.tools.xml import XmlManipulation
 
 empty_cib = rc("cib-empty.xml")
@@ -339,7 +337,7 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
                 </{self.cib_tag}>
             """
             ),
-            output=(
+            stderr_full=(
                 "Warning: Defaults do not apply to resources which override "
                 "them with their own defined values\n"
             ),
@@ -359,7 +357,7 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
                 </{self.cib_tag}>
             """
             ),
-            output=(
+            stderr_full=(
                 "Warning: Defaults do not apply to resources which override "
                 "them with their own defined values\n"
             ),
@@ -413,7 +411,7 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
                 </{self.cib_tag}>
             """
             ),
-            output=(
+            stderr_full=(
                 "Warning: Defaults do not apply to resources which override "
                 "them with their own defined values\n"
             ),
@@ -479,7 +477,7 @@ class RscDefaultsSetCreate(
                 </meta_attributes>
             </{self.cib_tag}>
             """,
-            output=(
+            stderr_full=(
                 "CIB has been upgraded to the latest schema version.\n"
                 "Warning: Defaults do not apply to resources which override "
                 "them with their own defined values\n"
@@ -574,7 +572,7 @@ class OpDefaultsSetCreate(
                 </meta_attributes>
             </{self.cib_tag}>
             """,
-            output=(
+            stderr_full=(
                 "CIB has been upgraded to the latest schema version.\n"
                 "Warning: Defaults do not apply to resources which override "
                 "them with their own defined values\n"
@@ -694,7 +692,7 @@ class DefaultsSetUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
                 </{self.cib_tag}>
             """
             ),
-            output=warnings,
+            stderr_full=warnings,
         )
 
         self.assert_effect(
@@ -706,7 +704,7 @@ class DefaultsSetUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
                 </{self.cib_tag}>
             """
             ),
-            output=warnings,
+            stderr_full=warnings,
         )
 
 
@@ -746,13 +744,13 @@ class DefaultsSetUsageMixin(TestDefaultsMixin, AssertPcsMixin):
     def test_no_args(self):
         self.assert_pcs_fail(
             self.cli_command + ["set"],
-            stdout_start=f"\nUsage: pcs {' '.join(self.cli_command)} set...\n",
+            stderr_start=f"\nUsage: pcs {' '.join(self.cli_command)} set...\n",
         )
 
     def test_bad_command(self):
         self.assert_pcs_fail(
             self.cli_command + ["set", "bad-command"],
-            stdout_start=f"\nUsage: pcs {' '.join(self.cli_command)} set ...\n",
+            stderr_start=f"\nUsage: pcs {' '.join(self.cli_command)} set ...\n",
         )
 
 
@@ -813,7 +811,7 @@ class DefaultsUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
                 </{self.cib_tag}>
             """
             ),
-            output=warnings,
+            stderr_full=warnings,
         )
 
         self.assert_effect(
@@ -832,7 +830,7 @@ class DefaultsUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
                 </{self.cib_tag}>
             """
             ),
-            output=warnings,
+            stderr_full=warnings,
         )
 
         self.assert_effect(
@@ -844,7 +842,7 @@ class DefaultsUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
                 </{self.cib_tag}>
             """
             ),
-            output=warnings,
+            stderr_full=warnings,
         )
 
     def test_deprecated(self):

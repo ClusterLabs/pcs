@@ -5,7 +5,7 @@ from unittest import TestCase
 
 from pcs import settings
 
-from pcs_test.tools.assertions import AssertPcsMixinOld as AssertPcsMixin
+from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
@@ -15,7 +15,7 @@ from pcs_test.tools.misc import (
     outdent,
     write_file_to_tmpfile,
 )
-from pcs_test.tools.pcs_runner import PcsRunnerOld as PcsRunner
+from pcs_test.tools.pcs_runner import PcsRunner
 
 PCMK_2_0_3_PLUS = is_minimum_pacemaker_version(2, 0, 3)
 
@@ -38,8 +38,10 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
                 "stonith create Sa fence_apc ip=i username=u action=reboot "
                 "--force"
             ).split(),
-            stdout_start="Warning: stonith option 'action' is deprecated and should not be "
-            "used, use 'pcmk_off_action', 'pcmk_reboot_action' instead\n",
+            stderr_start=(
+                "Warning: stonith option 'action' is deprecated and should not be "
+                "used, use 'pcmk_off_action', 'pcmk_reboot_action' instead\n"
+            ),
         )
 
     def fixture_stonith_cycle(self):
@@ -60,9 +62,11 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
                 "resource create dummy ocf:pacemaker:Dummy action=reboot "
                 "method=cycle --force"
             ).split(),
-            "Warning: invalid resource options: 'action', 'method', allowed "
-            "options are: 'envfile', 'fail_start_on', 'fake', 'op_sleep', "
-            "'passwd', 'state', 'trace_file', 'trace_ra'\n",
+            stderr_full=(
+                "Warning: invalid resource options: 'action', 'method', allowed "
+                "options are: 'envfile', 'fail_start_on', 'fake', 'op_sleep', "
+                "'passwd', 'state', 'trace_file', 'trace_ra'\n"
+            ),
         )
 
     def test_warning_stonith_action(self):
@@ -205,7 +209,7 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
     def test_no_stonith_warning_when_stonith_in_group(self):
         self.assert_pcs_success(
             "stonith create S fence_xvm --group G".split(),
-            (
+            stderr_full=(
                 "Deprecation Warning: Option to group stonith resource is "
                 "deprecated and will be removed in a future release.\n"
             ),
@@ -286,31 +290,31 @@ class ResourceStonithStatusBase(AssertPcsMixin):
     def test_not_resource_or_tag_id(self):
         self.assert_pcs_fail(
             self.command + ["cx1"],
-            stdout_full="Error: resource or tag id 'cx1' not found\n",
+            "Error: resource or tag id 'cx1' not found\n",
         )
 
     def test_nonexistent_id(self):
         self.assert_pcs_fail(
             self.command + ["nonexistent"],
-            stdout_full="Error: resource or tag id 'nonexistent' not found\n",
+            "Error: resource or tag id 'nonexistent' not found\n",
         )
 
     def test_missing_node_value(self):
         self.assert_pcs_fail(
             self.command + ["node="],
-            stdout_full="Error: missing value of 'node' option\n",
+            "Error: missing value of 'node' option\n",
         )
 
     def test_missing_node_key(self):
         self.assert_pcs_fail(
             self.command + ["=node"],
-            stdout_full="Error: missing key in '=node' option\n",
+            "Error: missing key in '=node' option\n",
         )
 
     def test_more_node_options(self):
         self.assert_pcs_fail(
             self.command + ["node=rh-1", "node=rh-2"],
-            stdout_full=(
+            (
                 "Error: duplicate option 'node' with different values 'rh-1' "
                 "and 'rh-2'\n"
             ),
@@ -319,7 +323,7 @@ class ResourceStonithStatusBase(AssertPcsMixin):
     def test_more_no_node_option(self):
         self.assert_pcs_fail(
             self.command + ["r1", "r2"],
-            stdout_full="Error: missing value of 'r2' option\n",
+            "Error: missing value of 'r2' option\n",
         )
 
     def test_resource_id(self):

@@ -1,14 +1,14 @@
 from textwrap import dedent
 from unittest import TestCase
 
-from pcs_test.tools.assertions import AssertPcsMixinOld as AssertPcsMixin
+from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.misc import ParametrizedTestMetaClass
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
     get_tmp_file,
     write_file_to_tmpfile,
 )
-from pcs_test.tools.pcs_runner import PcsRunnerOld as PcsRunner
+from pcs_test.tools.pcs_runner import PcsRunner
 
 # pylint: disable=line-too-long
 
@@ -61,7 +61,7 @@ class QuorumUpdateTest(TestBase):
     def test_no_options(self):
         self.assert_pcs_fail(
             "quorum update".split(),
-            stdout_start="\nUsage: pcs quorum <command>\n    update ",
+            stderr_start="\nUsage: pcs quorum <command>\n    update ",
         )
 
     def test_invalid_option(self):
@@ -105,13 +105,13 @@ class DeviceAddTest(TestBase):
     def test_no_model_keyword(self):
         self.assert_pcs_fail_regardless_of_force(
             "quorum device add option=value host=127.0.0.1".split(),
-            stdout_start="\nUsage: pcs quorum <command>\n    device add ",
+            stderr_start="\nUsage: pcs quorum <command>\n    device add ",
         )
 
     def test_no_model_value(self):
         self.assert_pcs_fail_regardless_of_force(
             "quorum device add option=value model host=127.0.0.1".split(),
-            stdout_start="\nUsage: pcs quorum <command>\n    device add ",
+            stderr_start="\nUsage: pcs quorum <command>\n    device add ",
         )
 
     def test_more_models(self):
@@ -230,8 +230,10 @@ class DeviceAddTest(TestBase):
                 "quorum device add model net host=127.0.0.1 algorithm=ffsplit "
                 "heuristics mode=on"
             ).split(),
-            "Warning: No exec_NAME options are specified, so heuristics are "
-            "effectively disabled\n",
+            stderr_full=(
+                "Warning: No exec_NAME options are specified, so heuristics are "
+                "effectively disabled\n"
+            ),
         )
         self.assert_pcs_success(
             "quorum config".split(),
@@ -296,15 +298,19 @@ class DeviceAddTest(TestBase):
                 "quorum device add a=b timeout=-1 model net host=127.0.0.1 "
                 "algorithm=x c=d heuristics mode=bad e=f"
             ).split(),
-            """\
-Error: invalid quorum device model option 'c', allowed options are: 'algorithm', 'connect_timeout', 'force_ip_version', 'host', 'port', 'tie_breaker', use --force to override
-Error: 'x' is not a valid algorithm value, use 'ffsplit', 'lms', use --force to override
-Error: invalid quorum device option 'a', allowed options are: 'sync_timeout', 'timeout', use --force to override
-Error: '-1' is not a valid timeout value, use a positive integer, use --force to override
-Error: invalid heuristics option 'e', allowed options are: 'interval', 'mode', 'sync_timeout', 'timeout' and options matching patterns: 'exec_NAME', use --force to override
-Error: 'bad' is not a valid mode value, use 'off', 'on', 'sync', use --force to override
-Error: Errors have occurred, therefore pcs is unable to continue
-""",
+            stderr_full=(
+                dedent(
+                    """\
+                    Error: invalid quorum device model option 'c', allowed options are: 'algorithm', 'connect_timeout', 'force_ip_version', 'host', 'port', 'tie_breaker', use --force to override
+                    Error: 'x' is not a valid algorithm value, use 'ffsplit', 'lms', use --force to override
+                    Error: invalid quorum device option 'a', allowed options are: 'sync_timeout', 'timeout', use --force to override
+                    Error: '-1' is not a valid timeout value, use a positive integer, use --force to override
+                    Error: invalid heuristics option 'e', allowed options are: 'interval', 'mode', 'sync_timeout', 'timeout' and options matching patterns: 'exec_NAME', use --force to override
+                    Error: 'bad' is not a valid mode value, use 'off', 'on', 'sync', use --force to override
+                    Error: Errors have occurred, therefore pcs is unable to continue
+                    """
+                )
+            ),
         )
 
         self.assert_pcs_success(
@@ -312,14 +318,18 @@ Error: Errors have occurred, therefore pcs is unable to continue
                 "quorum device add a=b timeout=-1 model net host=127.0.0.1 "
                 "algorithm=x c=d heuristics mode=bad e=f --force"
             ).split(),
-            """\
-Warning: invalid quorum device model option 'c', allowed options are: 'algorithm', 'connect_timeout', 'force_ip_version', 'host', 'port', 'tie_breaker'
-Warning: 'x' is not a valid algorithm value, use 'ffsplit', 'lms'
-Warning: invalid quorum device option 'a', allowed options are: 'sync_timeout', 'timeout'
-Warning: '-1' is not a valid timeout value, use a positive integer
-Warning: invalid heuristics option 'e', allowed options are: 'interval', 'mode', 'sync_timeout', 'timeout' and options matching patterns: 'exec_NAME'
-Warning: 'bad' is not a valid mode value, use 'off', 'on', 'sync'
-""",
+            stderr_full=(
+                dedent(
+                    """\
+                    Warning: invalid quorum device model option 'c', allowed options are: 'algorithm', 'connect_timeout', 'force_ip_version', 'host', 'port', 'tie_breaker'
+                    Warning: 'x' is not a valid algorithm value, use 'ffsplit', 'lms'
+                    Warning: invalid quorum device option 'a', allowed options are: 'sync_timeout', 'timeout'
+                    Warning: '-1' is not a valid timeout value, use a positive integer
+                    Warning: invalid heuristics option 'e', allowed options are: 'interval', 'mode', 'sync_timeout', 'timeout' and options matching patterns: 'exec_NAME'
+                    Warning: 'bad' is not a valid mode value, use 'off', 'on', 'sync'
+                    """
+                )
+            ),
         )
         self.assert_pcs_success(
             "quorum config".split(),
@@ -349,7 +359,9 @@ Warning: 'bad' is not a valid mode value, use 'off', 'on', 'sync'
         )
         self.assert_pcs_success(
             "quorum device add model invalid x=y --force".split(),
-            "Warning: 'invalid' is not a valid model value, use 'net'\n",
+            stderr_full=(
+                "Warning: 'invalid' is not a valid model value, use 'net'\n"
+            ),
         )
         self.assert_pcs_success(
             "quorum config".split(),
@@ -380,7 +392,7 @@ class DeviceDeleteRemoveTest(TestBase):
     def _test_bad_options(self):
         self.assert_pcs_fail(
             ["quorum", "device", self.command, "net"],
-            stdout_start=dedent(
+            stderr_start=dedent(
                 f"""
                 Usage: pcs quorum <command>
                     device {self.command}
@@ -413,7 +425,7 @@ class DeviceHeuristicsDeleteRemove(TestBase):
     def _test_bad_options(self):
         self.assert_pcs_fail(
             ["quorum", "device", "heuristics", self.command, "option"],
-            stdout_start=dedent(
+            stderr_start=dedent(
                 f"""
                 Usage: pcs quorum <command>
                     device heuristics {self.command}
@@ -518,8 +530,10 @@ class DeviceUpdateTest(TestBase):
         self.fixture_conf_qdevice()
         self.assert_pcs_success(
             "quorum device update heuristics mode=on".split(),
-            "Warning: No exec_NAME options are specified, so heuristics are "
-            "effectively disabled\n",
+            stderr_full=(
+                "Warning: No exec_NAME options are specified, so heuristics are "
+                "effectively disabled\n"
+            ),
         )
         self.assert_pcs_success(
             "quorum config".split(),
@@ -632,12 +646,16 @@ class DeviceUpdateTest(TestBase):
         )
         self.assert_pcs_success(
             "quorum device update a=b timeout=-1 model port=x c=d --force".split(),
-            """\
-Warning: invalid quorum device model option 'c', allowed options are: 'algorithm', 'connect_timeout', 'force_ip_version', 'host', 'port', 'tie_breaker'
-Warning: 'x' is not a valid port value, use a port number (1..65535)
-Warning: invalid quorum device option 'a', allowed options are: 'sync_timeout', 'timeout'
-Warning: '-1' is not a valid timeout value, use a positive integer
-""",
+            stderr_full=(
+                dedent(
+                    """\
+                    Warning: invalid quorum device model option 'c', allowed options are: 'algorithm', 'connect_timeout', 'force_ip_version', 'host', 'port', 'tie_breaker'
+                    Warning: 'x' is not a valid port value, use a port number (1..65535)
+                    Warning: invalid quorum device option 'a', allowed options are: 'sync_timeout', 'timeout'
+                    Warning: '-1' is not a valid timeout value, use a positive integer
+                    """
+                )
+            ),
         )
         self.assert_pcs_success(
             "quorum config".split(),

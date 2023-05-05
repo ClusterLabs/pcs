@@ -1,12 +1,12 @@
 from textwrap import dedent
 from unittest import TestCase
 
-from pcs_test.tools.assertions import AssertPcsMixinOld as AssertPcsMixin
+from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.misc import (
     get_tmp_file,
     write_data_to_tmpfile,
 )
-from pcs_test.tools.pcs_runner import PcsRunnerOld as PcsRunner
+from pcs_test.tools.pcs_runner import PcsRunner
 
 from .common import fixture_corosync_conf_minimal
 
@@ -143,7 +143,7 @@ class UpdateLocal(AssertPcsMixin, TestCase):
         self.pcs_runner.corosync_conf_opt = file_name
         self.assert_pcs_fail(
             "cluster config update transport ip_version=ipv4 totem token=12".split(),
-            stdout_full=(
+            (
                 f"Error: Unable to read Corosync configuration '{file_name}': "
                 f"No such file or directory: '{file_name}'\n"
             ),
@@ -155,7 +155,7 @@ class UpdateLocal(AssertPcsMixin, TestCase):
         )
         self.assert_pcs_fail(
             "cluster config update transport ip_version=ipv4 totem token=12".split(),
-            stdout_full=(
+            (
                 "Error: Unable to parse corosync config: a line is not opening "
                 "or closing a section or key: value\n"
                 "Error: Errors have occurred, therefore pcs is unable to continue\n"
@@ -174,7 +174,7 @@ class UpdateLocal(AssertPcsMixin, TestCase):
                 "crypto hash= model=openssl "
                 "totem consensus=0 down_check=1 token=12"
             ).split(),
-            stdout_full=(
+            (
                 "Error: invalid totem option 'down_check', allowed options "
                 "are: 'block_unlisted_ips', 'consensus', 'downcheck', 'fail_recv_const', "
                 "'heartbeat_failures_allowed', 'hold', 'join', 'max_messages', "

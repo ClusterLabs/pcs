@@ -6,7 +6,7 @@ from unittest import (
 from pcs.cli.booth import command as booth_cmd
 from pcs.cli.common.errors import CmdLineInputError
 
-from pcs_test.tools.assertions import AssertPcsMixinOld as AssertPcsMixin
+from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.misc import dict_to_modifiers
 
 

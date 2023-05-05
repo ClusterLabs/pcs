@@ -3,16 +3,14 @@ from unittest import TestCase
 
 from lxml import etree
 
-from pcs_test.tools.cib import (
-    get_assert_pcs_effect_mixin_old as get_assert_pcs_effect_mixin,
-)
+from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
     get_tmp_file,
     outdent,
     write_file_to_tmpfile,
 )
-from pcs_test.tools.pcs_runner import PcsRunnerOld as PcsRunner
+from pcs_test.tools.pcs_runner import PcsRunner
 
 empty_cib = rc("cib-empty.xml")
 tags_cib = rc("cib-tags.xml")
@@ -87,11 +85,11 @@ class TagCreate(TestTagMixin, TestCase):
     def test_create_not_enough_arguments(self):
         self.assert_pcs_fail(
             "tag create".split(),
-            stdout_start="\nUsage: pcs tag <command>",
+            stderr_start="\nUsage: pcs tag <command>",
         )
         self.assert_pcs_fail(
             "tag create tag".split(),
-            stdout_start="\nUsage: pcs tag <command>",
+            stderr_start="\nUsage: pcs tag <command>",
         )
         self.assert_resources_xml_in_cib(self.fixture_tags_xml())
 
@@ -176,12 +174,12 @@ class TagConfigListBase(TestTagMixin):
 
         self.assert_pcs_success(
             ["tag"],
-            " No tags defined\n",
+            stderr_full=" No tags defined\n",
         )
 
         self.assert_pcs_success(
             ["tag", self.command],
-            self.deprecation_msg + " No tags defined\n",
+            stderr_full=(self.deprecation_msg + " No tags defined\n"),
         )
 
     def test_config_tag_does_not_exist(self):
@@ -199,8 +197,7 @@ class TagConfigListBase(TestTagMixin):
     def test_config_tags_defined(self):
         self.assert_pcs_success(
             ["tag", self.command],
-            self.deprecation_msg
-            + dedent(
+            dedent(
                 """\
                 tag1
                   x1
@@ -218,13 +215,13 @@ class TagConfigListBase(TestTagMixin):
                   x3
                 """
             ),
+            stderr_full=self.deprecation_msg,
         )
 
     def test_config_specified_tags(self):
         self.assert_pcs_success(
             ["tag", self.command, "tag2", "tag1"],
-            self.deprecation_msg
-            + dedent(
+            dedent(
                 """\
                 tag2
                   y1
@@ -235,6 +232,7 @@ class TagConfigListBase(TestTagMixin):
                   x3
                 """
             ),
+            stderr_full=self.deprecation_msg,
         )
 
 
@@ -415,7 +413,7 @@ class TagRemoveDeleteBase(TestTagMixin):
     def test_remove_not_enough_arguments(self):
         self.assert_pcs_fail(
             ["tag", self.command],
-            stdout_start="\nUsage: pcs tag <command>",
+            stderr_start="\nUsage: pcs tag <command>",
         )
         self.assert_resources_xml_in_cib(self.fixture_tags_xml())
 
@@ -484,7 +482,7 @@ class ResourceRemoveDeleteBase(TestTagMixin):
     def test_resource_not_referenced_in_tags(self):
         self.assert_pcs_success(
             ["resource", self.command, "not-in-tags"],
-            "Deleting Resource - not-in-tags\n",
+            stderr_full="Deleting Resource - not-in-tags\n",
         )
         self.assert_resources_xml_in_cib(self.fixture_tags_xml())
 
@@ -562,14 +560,14 @@ class TagUpdate(TestTagMixin, TestCase):
     def test_fail_not_enough_arguments(self):
         self.assert_pcs_fail(
             "tag update".split(),
-            stdout_start="\nUsage: pcs tag <command>",
+            stderr_start="\nUsage: pcs tag <command>",
         )
         self.assert_resources_xml_in_cib(self.fixture_tags_xml())
 
     def test_fail_tag_update_ids_not_specified(self):
         self.assert_pcs_fail(
             "tag update tag1".split(),
-            stdout_start=(
+            stderr_start=(
                 "Hint: Specify at least one id for 'add' or 'remove' arguments."
             ),
         )
@@ -578,7 +576,7 @@ class TagUpdate(TestTagMixin, TestCase):
     def test_fail_tag_update_add_ids_not_specified(self):
         self.assert_pcs_fail(
             "tag update tag1 add".split(),
-            stdout_start=(
+            stderr_start=(
                 "Hint: Specify at least one id for 'add' or 'remove' arguments."
             ),
         )
@@ -587,7 +585,7 @@ class TagUpdate(TestTagMixin, TestCase):
     def test_fail_tag_update_remove_ids_not_specified(self):
         self.assert_pcs_fail(
             "tag update tag1 remove".split(),
-            stdout_start=(
+            stderr_start=(
                 "Hint: Specify at least one id for 'add' or 'remove' arguments."
             ),
         )

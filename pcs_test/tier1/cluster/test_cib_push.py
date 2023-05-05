@@ -1,11 +1,11 @@
 from unittest import TestCase
 
-from pcs_test.tools.assertions import AssertPcsMixinOld as AssertPcsMixin
+from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.misc import (
     get_tmp_file,
     write_data_to_tmpfile,
 )
-from pcs_test.tools.pcs_runner import PcsRunnerOld as PcsRunner
+from pcs_test.tools.pcs_runner import PcsRunner
 
 CIB_EPOCH_TEMPLATE = """
     <cib epoch="{epoch}" num_updates="122" admin_epoch="0"
@@ -68,7 +68,7 @@ class CibPush(AssertPcsMixin, TestCase):
 
     def test_bad_args(self):
         self.assert_pcs_fail(
-            "cluster cib-push a b c".split(), stdout_start="\nUsage: "
+            "cluster cib-push a b c".split(), stderr_start="\nUsage: "
         )
 
     def test_error_scope_and_config(self):
@@ -86,7 +86,7 @@ class CibPush(AssertPcsMixin, TestCase):
     def test_error_scope_and_diff(self):
         self.assert_pcs_fail(
             "cluster cib-push file scope=configuration diff-against=f".split(),
-            stdout_start="\nUsage: ",
+            stderr_start="\nUsage: ",
         )
 
     def test_error_diff_and_config(self):
@@ -98,7 +98,7 @@ class CibPush(AssertPcsMixin, TestCase):
     def test_error_unknown_option(self):
         self.assert_pcs_fail(
             "cluster cib-push file unknown=value".split(),
-            stdout_start="\nUsage: ",
+            stderr_start="\nUsage: ",
         )
 
     def test_error_scope_not_present(self):
@@ -113,16 +113,18 @@ class CibPush(AssertPcsMixin, TestCase):
     def test_unable_to_parse_new_cib(self):
         write_data_to_tmpfile("", self.updated_cib)
         self.assert_pcs_fail(
-            self.cib_push_cmd, stdout_start="Error: unable to parse new cib:"
+            self.cib_push_cmd, stderr_start="Error: unable to parse new cib:"
         )
 
     def test_diff_no_difference(self):
         write_data_to_tmpfile(CIB_EPOCH, self.updated_cib)
         self.assert_pcs_success(
             self.cib_push_diff_cmd,
-            "The new CIB is the same as the original CIB, nothing to push.\n",
+            stderr_full=(
+                "The new CIB is the same as the original CIB, nothing to push.\n"
+            ),
         )
 
     def test_cib_updated(self):
         write_data_to_tmpfile(CIB_EPOCH_NEWER, self.updated_cib)
-        self.assert_pcs_success(self.cib_push_cmd, "CIB updated\n")
+        self.assert_pcs_success(self.cib_push_cmd, stderr_full="CIB updated\n")

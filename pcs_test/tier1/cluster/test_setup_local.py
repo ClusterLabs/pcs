@@ -4,12 +4,12 @@ from unittest import TestCase
 
 from pcs import settings
 
-from pcs_test.tools.assertions import AssertPcsMixinOld as AssertPcsMixin
+from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.misc import (
     get_tmp_file,
     skip_unless_root,
 )
-from pcs_test.tools.pcs_runner import PcsRunnerOld as PcsRunner
+from pcs_test.tools.pcs_runner import PcsRunner
 
 
 @skip_unless_root()
@@ -98,8 +98,7 @@ class SetupLocal(AssertPcsMixin, TestCase):
         self.corosync_conf_file.write("some already existing content")
         self.assert_pcs_fail(
             "cluster setup cluster_name node1 node2 --no-cluster-uuid".split(),
-            dedent(
-                # pylint: disable=line-too-long
+            stderr_full=dedent(
                 f"""\
                 No addresses specified for host 'node1', using '10.0.1.1'
                 No addresses specified for host 'node2', using '10.0.1.2'
@@ -118,8 +117,7 @@ class SetupLocal(AssertPcsMixin, TestCase):
             # need to use --force for not failing on unresolvable addresses
             "cluster setup cluster_name node1 node2 --force --overwrite "
             "--no-cluster-uuid".split(),
-            dedent(
-                # pylint: disable=line-too-long
+            stderr_full=dedent(
                 f"""\
                 Warning: Unable to read the known-hosts file: No such file or directory: '{self.known_hosts_file.name}'
                 No addresses specified for host 'node1', using 'node1'
@@ -143,7 +141,7 @@ class SetupLocal(AssertPcsMixin, TestCase):
         self.assert_pcs_success(
             "cluster setup cluster_name node1 node2 --overwrite "
             "--no-cluster-uuid".split(),
-            dedent(
+            stderr_full=dedent(
                 """\
                 No addresses specified for host 'node1', using '10.0.1.1'
                 No addresses specified for host 'node2', using '10.0.1.2'
@@ -276,7 +274,7 @@ class SetupLocal(AssertPcsMixin, TestCase):
                 "quorum lst_man_standing=1 last_man_standing_window=10 "
                 "--no-cluster-uuid"
             ).split(),
-            stdout_full=dedent(
+            dedent(
                 """\
                 Error: Unable to resolve addresses: '127.0.1.1.2', use --force to override
                 Error: All nodes must have the same number of addresses; nodes 'node1', 'node3' have 3 addresses; node 'node2' has 2 addresses

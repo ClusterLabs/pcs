@@ -7,7 +7,7 @@ from pcs.common.pacemaker.resource.list import CibResourcesDto
 from pcs_test.tier1.resource.test_config import ResourceConfigCmdMixin
 from pcs_test.tools import resources_dto
 from pcs_test.tools.misc import get_test_resource
-from pcs_test.tools.pcs_runner import PcsRunnerOld as PcsRunner
+from pcs_test.tools.pcs_runner import PcsRunner
 
 
 class StonithConfigJson(TestCase):
@@ -18,9 +18,12 @@ class StonithConfigJson(TestCase):
         self.maxDiff = None
 
     def test_all(self):
-        stdout, retval = self.pcs_runner.run(
+        stdout, stderr, retval = self.pcs_runner.run(
             ["stonith", "config", "--output-format=json"],
-            ignore_stderr=True,
+        )
+        self.assertEqual(
+            stderr,
+            "Warning: Only 'text' output format is supported for stonith levels\n",
         )
         self.assertEqual(retval, 0)
         expected = CibResourcesDto(
@@ -35,9 +38,12 @@ class StonithConfigJson(TestCase):
         self.assertEqual(json.loads(stdout), to_dict(expected))
 
     def test_get_specified(self):
-        stdout, retval = self.pcs_runner.run(
+        stdout, stderr, retval = self.pcs_runner.run(
             ["stonith", "config", "--output-format=json", "S1"],
-            ignore_stderr=True,
+        )
+        self.assertEqual(
+            stderr,
+            "Warning: Only 'text' output format is supported for stonith levels\n",
         )
         self.assertEqual(retval, 0)
         expected = CibResourcesDto(

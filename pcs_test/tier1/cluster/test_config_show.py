@@ -2,12 +2,12 @@ import json
 from textwrap import dedent
 from unittest import TestCase
 
-from pcs_test.tools.assertions import AssertPcsMixinOld as AssertPcsMixin
+from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.misc import (
     get_tmp_file,
     write_data_to_tmpfile,
 )
-from pcs_test.tools.pcs_runner import PcsRunnerOld as PcsRunner
+from pcs_test.tools.pcs_runner import PcsRunner
 
 from .common import fixture_corosync_conf_minimal
 
@@ -145,7 +145,7 @@ class ClusterConfigMixin(AssertPcsMixin):
     def test_output_format_unsupported_value(self):
         self.assert_pcs_fail(
             (self.command + " --output-format=xml").split(),
-            stdout_full=(
+            (
                 "Error: Unknown value 'xml' for '--output-format' option. "
                 "Supported values are: 'cmd', 'json', 'text'\n"
             ),
@@ -154,7 +154,7 @@ class ClusterConfigMixin(AssertPcsMixin):
     def test_unsupported_option(self):
         self.assert_pcs_fail(
             (self.command + " --corosync").split(),
-            stdout_full=dedent(
+            dedent(
                 """\
                 Error: Specified option '--corosync' is not supported in this command
                 """

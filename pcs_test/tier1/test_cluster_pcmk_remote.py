@@ -1,11 +1,10 @@
-from pcs_test.tier1.cib_resource.common import ResourceTestOld as ResourceTest
+from textwrap import dedent
+
+from pcs_test.tier1.cib_resource.common import ResourceTest
 from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.misc import ParametrizedTestMetaClass
 from pcs_test.tools.misc import get_test_resource as rc
-from pcs_test.tools.misc import (
-    outdent,
-    write_data_to_tmpfile,
-)
+from pcs_test.tools.misc import write_data_to_tmpfile
 
 ERRORS_HAVE_OCCURRED = (
     "Error: Errors have occurred, therefore pcs is unable to continue\n"
@@ -14,7 +13,7 @@ ERRORS_HAVE_OCCURRED = (
 
 def fixture_nolive_add_report(node_name):
     # pylint: disable=line-too-long
-    return outdent(
+    return dedent(
         f"""\
         Unable to check if there is a conflict with nodes set in corosync because the command does not run on a live cluster (e.g. -f was used)
         Distribution of 'pacemaker authkey' to '{node_name}' was skipped because the command does not run on a live cluster (e.g. -f was used). Please, distribute the file(s) manually.
@@ -25,7 +24,7 @@ def fixture_nolive_add_report(node_name):
 
 def fixture_nolive_remove_report(host_list):
     # pylint: disable=line-too-long
-    return outdent(
+    return dedent(
         """\
         Running action(s) 'pacemaker_remote disable', 'pacemaker_remote stop' on {hosts} was skipped because the command does not run on a live cluster (e.g. -f was used). Please, run the action(s) manually.
         Removing 'pacemaker authkey' from {hosts} was skipped because the command does not run on a live cluster (e.g. -f was used). Please, remove the file(s) manually.
@@ -68,7 +67,7 @@ class NodeAddRemote(RemoteTest):
     def test_fail_on_bad_commandline_usage(self):
         self.assert_pcs_fail(
             "cluster node add-remote".split(),
-            stdout_start="\nUsage: pcs cluster node add-remote...",
+            stderr_start="\nUsage: pcs cluster node add-remote...",
         )
 
     def test_success(self):
@@ -105,7 +104,7 @@ class NodeAddRemote(RemoteTest):
                     </operations>
                 </primitive>
             </resources>""",
-            output=fixture_nolive_add_report("node-name"),
+            stderr_full=fixture_nolive_add_report("node-name"),
         )
 
     def test_success_no_default_ops(self):
@@ -127,7 +126,7 @@ class NodeAddRemote(RemoteTest):
                     </operations>
                 </primitive>
             </resources>""",
-            output=fixture_nolive_add_report("node-name"),
+            stderr_full=fixture_nolive_add_report("node-name"),
         )
 
     def test_fail_when_server_already_used(self):
@@ -149,7 +148,7 @@ class NodeAddRemote(RemoteTest):
                     </operations>
                 </primitive>
             </resources>""",
-            output=fixture_nolive_add_report("A"),
+            stderr_full=fixture_nolive_add_report("A"),
         )
         self.assert_pcs_fail(
             "cluster node add-remote B node-addr".split(),
@@ -167,7 +166,7 @@ class NodeAddRemote(RemoteTest):
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_success(
             "cluster node add-guest node-name G remote-addr=node-addr".split(),
-            fixture_nolive_add_report("node-name"),
+            stderr_full=fixture_nolive_add_report("node-name"),
         )
         self.assert_pcs_fail(
             "cluster node add-remote B node-addr".split(),
@@ -198,14 +197,14 @@ class NodeAddGuest(RemoteTest):
     def test_fail_on_bad_commandline_usage(self):
         self.assert_pcs_fail(
             "cluster node add-guest".split(),
-            stdout_start="\nUsage: pcs cluster node add-guest...",
+            stderr_start="\nUsage: pcs cluster node add-guest...",
         )
 
     def test_fail_when_option_remote_node_specified(self):
         self.create_resource()
         self.assert_pcs_fail(
             "cluster node add-guest node-name G remote-node=node-name".split(),
-            stdout_regexp=(
+            stderr_regexp=(
                 ".*Error: invalid guest option 'remote-node', allowed options "
                 "are: 'remote-addr', 'remote-connect-timeout', 'remote-port'.*"
             ),
@@ -218,8 +217,10 @@ class NodeAddGuest(RemoteTest):
                 "resource create already-guest-node ocf:heartbeat:Dummy "
                 "meta remote-node=some --force"
             ).split(),
-            "Warning: this command is not sufficient for creating a guest node,"
-            " use 'pcs cluster node add-guest'\n",
+            stderr_full=(
+                "Warning: this command is not sufficient for creating a guest node,"
+                " use 'pcs cluster node add-guest'\n"
+            ),
         )
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_fail(
@@ -305,7 +306,7 @@ class NodeAddGuest(RemoteTest):
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_success(
             "cluster node add-guest node-name G remote-addr=a".split(),
-            fixture_nolive_add_report("node-name"),
+            stderr_full=fixture_nolive_add_report("node-name"),
         )
         self.assert_pcs_fail(
             "cluster node add-guest node-name H remote-addr=b".split(),
@@ -320,8 +321,10 @@ class NodeAddGuest(RemoteTest):
         self.pcs_runner.corosync_conf_opt = None
         self.assert_pcs_success(
             "resource create R ocf:pacemaker:remote server=node-addr --force".split(),
-            "Warning: this command is not sufficient for creating a remote"
-            " connection, use 'pcs cluster node add-remote'\n",
+            stderr_full=(
+                "Warning: this command is not sufficient for creating a remote"
+                " connection, use 'pcs cluster node add-remote'\n"
+            ),
         )
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_fail(
@@ -337,8 +340,10 @@ class NodeAddGuest(RemoteTest):
         self.pcs_runner.corosync_conf_opt = None
         self.assert_pcs_success(
             "resource create R ocf:pacemaker:remote server=node-addr --force".split(),
-            "Warning: this command is not sufficient for creating a remote"
-            " connection, use 'pcs cluster node add-remote'\n",
+            stderr_full=(
+                "Warning: this command is not sufficient for creating a remote"
+                " connection, use 'pcs cluster node add-remote'\n"
+            ),
         )
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_fail(
@@ -370,7 +375,7 @@ class NodeAddGuest(RemoteTest):
                     </operations>
                 </primitive>
             </resources>""",
-            output=fixture_nolive_add_report("node-name"),
+            stderr_full=fixture_nolive_add_report("node-name"),
         )
 
     def test_success_when_guest_node_matches_with_existing_guest(self):
@@ -380,7 +385,7 @@ class NodeAddGuest(RemoteTest):
         self.create_resource()
         self.assert_pcs_success(
             "cluster node add-guest node-name G remote-addr=a".split(),
-            fixture_nolive_add_report("node-name"),
+            stderr_full=fixture_nolive_add_report("node-name"),
         )
         self.pcs_runner.corosync_conf_opt = None
         self.assert_pcs_success(
@@ -417,7 +422,7 @@ class NodeAddGuest(RemoteTest):
                     </operations>
                 </primitive>
             </resources>""",
-            output=fixture_nolive_add_report("node-name"),
+            stderr_full=fixture_nolive_add_report("node-name"),
         )
 
 
@@ -447,8 +452,10 @@ class NodeDeleteRemoveRemote(RemoteTest):
                     </operations>
                 </primitive>
             </resources>""",
-            "Warning: this command is not sufficient for creating a remote"
-            " connection, use 'pcs cluster node add-remote'\n",
+            stderr_full=(
+                "Warning: this command is not sufficient for creating a remote"
+                " connection, use 'pcs cluster node add-remote'\n"
+            ),
         )
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
 
@@ -494,7 +501,7 @@ class NodeDeleteRemoveRemote(RemoteTest):
     def _test_usage(self):
         self.assert_pcs_fail(
             ["cluster", "node", self.command],
-            stdout_start=f"\nUsage: pcs cluster node {self.command}...",
+            stderr_start=f"\nUsage: pcs cluster node {self.command}...",
         )
 
     def _test_fail_when_node_does_not_exists(self):
@@ -509,11 +516,9 @@ class NodeDeleteRemoveRemote(RemoteTest):
         self.assert_effect(
             ["cluster", "node", self.command, "NODE-HOST"],
             "<resources/>",
-            fixture_nolive_remove_report(["NODE-NAME"])
-            + outdent(
-                """\
-                Deleting Resource - NODE-NAME
-                """
+            stderr_full=(
+                fixture_nolive_remove_report(["NODE-NAME"])
+                + "Deleting Resource - NODE-NAME\n"
             ),
         )
 
@@ -522,11 +527,9 @@ class NodeDeleteRemoveRemote(RemoteTest):
         self.assert_effect(
             ["cluster", "node", self.command, "NODE-NAME"],
             "<resources/>",
-            fixture_nolive_remove_report(["NODE-NAME"])
-            + outdent(
-                """\
-                Deleting Resource - NODE-NAME
-                """
+            stderr_full=(
+                fixture_nolive_remove_report(["NODE-NAME"])
+                + "Deleting Resource - NODE-NAME\n"
             ),
         )
 
@@ -544,16 +547,16 @@ class NodeDeleteRemoveRemote(RemoteTest):
         self.assert_effect(
             ["cluster", "node", self.command, "HOST-A", "--force"],
             "<resources/>",
-            (
+            stderr_full=(
                 "Warning: more than one resource for 'HOST-A' found: "
                 "'HOST-A', 'NODE-NAME'\n"
-            )
-            + fixture_nolive_remove_report(["HOST-A", "NODE-NAME"])
-            + outdent(
-                """\
-                Deleting Resource - NODE-NAME
-                Deleting Resource - HOST-A
-                """
+                + fixture_nolive_remove_report(["HOST-A", "NODE-NAME"])
+                + dedent(
+                    """\
+                    Deleting Resource - NODE-NAME
+                    Deleting Resource - HOST-A
+                    """
+                )
             ),
         )
 
@@ -599,15 +602,17 @@ class NodeDeleteRemoveGuest(RemoteTest):
                     </operations>
                 </primitive>
             </resources>""",
-            "Warning: this command is not sufficient for creating a guest node"
-            ", use 'pcs cluster node add-guest'\n",
+            stderr_full=(
+                "Warning: this command is not sufficient for creating a guest node"
+                ", use 'pcs cluster node add-guest'\n"
+            ),
         )
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
 
     def _test_usage(self):
         self.assert_pcs_fail(
             ["cluster", "node", self.command],
-            stdout_start=f"\nUsage: pcs cluster node {self.command}...",
+            stderr_start=f"\nUsage: pcs cluster node {self.command}...",
         )
 
     def _test_fail_when_node_does_not_exists(self):
@@ -633,7 +638,7 @@ class NodeDeleteRemoveGuest(RemoteTest):
                     </operations>
                 </primitive>
             </resources>""",
-            fixture_nolive_remove_report(["NODE-NAME"]),
+            stderr_full=fixture_nolive_remove_report(["NODE-NAME"]),
         )
 
     def _test_success_remove_by_node_name(self):

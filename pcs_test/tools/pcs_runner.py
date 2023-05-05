@@ -1,6 +1,12 @@
 import os.path
 import signal
 import subprocess
+from typing import (
+    Mapping,
+    Optional,
+)
+
+from pcs.common.types import StringSequence
 
 from pcs_test import TEST_ROOT
 
@@ -10,12 +16,17 @@ test_installed = False
 
 
 class PcsRunner:
-    def __init__(self, cib_file, corosync_conf_opt=None, mock_settings=None):
+    def __init__(
+        self,
+        cib_file: str,
+        corosync_conf_opt: Optional[str] = None,
+        mock_settings: Optional[Mapping[str, str]] = None,
+    ):
         self.cib_file = cib_file
         self.corosync_conf_opt = corosync_conf_opt
         self.mock_settings = mock_settings
 
-    def run(self, args):
+    def run(self, args: StringSequence) -> tuple[str, str, int]:
         return pcs(
             self.cib_file,
             args,
@@ -24,16 +35,12 @@ class PcsRunner:
         )
 
 
-class PcsRunnerOld(PcsRunner):
-    # TODO remove this class
-    def run(self, args, ignore_stderr=False):
-        stdout, stderr, retval = super().run(args)
-        if ignore_stderr:
-            stderr = None
-        return "".join(filter(None, [stderr, stdout])), retval
-
-
-def pcs(cib_file, args, corosync_conf_opt=None, mock_settings=None):
+def pcs(
+    cib_file: Optional[str],
+    args: StringSequence,
+    corosync_conf_opt: Optional[str] = None,
+    mock_settings: Optional[Mapping[str, str]] = None,
+) -> tuple[str, str, int]:
     if mock_settings is None:
         mock_settings = {}
 
@@ -55,26 +62,9 @@ def pcs(cib_file, args, corosync_conf_opt=None, mock_settings=None):
     return _run(cmd, env_extend=env)
 
 
-def pcs_old(
-    cib_file,
-    args,
-    corosync_conf_opt=None,
-    mock_settings=None,
-    ignore_stderr=False,
-):
-    # TODO remove this function
-    stdout, stderr, retval = pcs(
-        cib_file,
-        args,
-        corosync_conf_opt=corosync_conf_opt,
-        mock_settings=mock_settings,
-    )
-    if ignore_stderr:
-        stderr = None
-    return "".join(filter(None, [stderr, stdout])), retval
-
-
-def _run(args, env_extend=None):
+def _run(
+    args: StringSequence, env_extend: Optional[Mapping[str, str]] = None
+) -> tuple[str, str, int]:
     env_vars = {"LC_ALL": "C"}
     env_vars.update(dict(env_extend) if env_extend else {})
 
