@@ -300,7 +300,7 @@ def _output_format_desc(cmd=True):
     _cmd_desc = (
         (
             "Format 'cmd' prints pcs commands which can be used to recreate "
-            "the same configuration."
+            "the same configuration. "
         )
         if cmd
         else ""
@@ -2303,7 +2303,7 @@ Commands:
         See 'pcs property describe' for a description of the properties.
 {output_format_desc}
 
-    defaults [<property>] ... [--full]
+    defaults [<property>...] | [--full]
         List all property defaults or only defaults for specified properties.
         If --full is specified, all properties defaults including advanced are
         shown.

@@ -105,7 +105,7 @@ class TestPropertyConfigurationFacadeCreate(TestCase):
 
     def test_from_properties_config(self):
         facade = PropertyConfigurationFacade.from_properties_config(
-            properties=ListCibNvsetDto(nvsets=FIXTURE_TWO_PROPERTY_SETS)
+            properties_dto=ListCibNvsetDto(nvsets=FIXTURE_TWO_PROPERTY_SETS)
         )
         self.assertEqual(facade.properties, FIXTURE_TWO_PROPERTY_SETS)
         self.assertEqual(facade.properties_metadata, [])
@@ -400,7 +400,7 @@ class TestPropertiesToTextWithDefaultMark(TestCase):
         )
         self.assert_lines(facade, output)
 
-    def test_specified_proprties(self):
+    def test_specified_properties(self):
         facade = PropertyConfigurationFacade(
             properties=[
                 CibNvsetDto(

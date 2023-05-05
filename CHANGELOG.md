@@ -15,6 +15,8 @@
 - Add `pcs property defaults` and `pcs property describe` CLI commands
 - Support for output formats `json` and `cmd` to property config command
   ([rhbz#2163914])
+- Commands `pcs resource describe` and `pcs stonith describe` print detailed
+  info about resource options (data type or allowed values, default value)
 
 ### Fixed
 - Crash in commands that ask for user input (like `pcs cluster destroy`) when
@@ -45,6 +47,7 @@
 [rhbz#2175881]: https://bugzilla.redhat.com/show_bug.cgi?id=2175881
 [rhbz#2177996]: https://bugzilla.redhat.com/show_bug.cgi?id=2177996
 [rhbz#2179388]: https://bugzilla.redhat.com/show_bug.cgi?id=2179388
+
 
 ## [0.11.5] - 2023-03-01
 

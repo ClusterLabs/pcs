@@ -826,3 +826,26 @@ class NvsetUpdate(TestCase):
             """,
             etree_to_str(nvset_element),
         )
+
+    def test_keep_empty_nvset(self):
+        parent_element = etree.fromstring(
+            """
+            <primitive>
+                <meta_attributes id="set1">
+                    <nvpair id="pair1" name="name1" value="value1" />
+                </meta_attributes>
+            </primitive>
+            """
+        )
+        nvset_element = parent_element.find(".//meta_attributes")
+        id_provider = IdProvider(parent_element)
+        nvpair_multi.nvset_update(nvset_element, id_provider, {"name1": ""})
+        assert_xml_equal(
+            """
+            <primitive>
+                <meta_attributes id="set1">
+                </meta_attributes>
+            </primitive>
+            """,
+            etree_to_str(parent_element),
+        )

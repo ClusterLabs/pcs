@@ -289,9 +289,9 @@ class ConfigMixin(PropertyMixin):
             ),
         )
 
-    def test_default_option(self):
+    def test_defaults_option(self):
         self.assert_pcs_success(
-            self.command + ["--default"],
+            self.command + ["--defaults"],
             stdout_regexp=DEFAULTS_REGEXP,
             stderr_full=(
                 "Deprecation Warning: Option --defaults is deprecated and will "

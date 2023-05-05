@@ -475,12 +475,12 @@ class MetadataParameterExtractAdvancedFromDesc(TestCase):
                 metadata_in = self._fixture_metadata(
                     [
                         self._fixture_parameter(
-                            f"{advanced_str}   : some shortdesc", None, False
+                            f"{advanced_str}    some shortdesc", None, False
                         )
                     ]
                 )
                 metadata_out = self._fixture_metadata(
-                    [self._fixture_parameter(": some shortdesc", None, True)]
+                    [self._fixture_parameter("some shortdesc", None, True)]
                 )
                 self.assertEqual(
                     # pylint: disable=protected-access

@@ -1109,6 +1109,13 @@
         daemon urls: update_cluster_settings
       </description>
     </capability>
+    <capability id="pcmk.properties.cluster.config.output-formats" in-pcs="1" in-pcsd="0">
+      <description>
+        Display cluster properties configuration in various formats.
+
+        pcs commands: property config --output-format=text|json|cmd
+      </description>
+    </capability>
     <capability id="pcmk.properties.cluster.set_properties.rest-api.v2" in-pcs="0" in-pcsd="1">
       <description>
         Set specified pacemaker cluster properties, remove those with empty
@@ -1122,13 +1129,6 @@
         Get configured pacemaker cluster properties.
 
         API v2: cluster_property.get_properties
-      </description>
-    </capability>
-    <capability id="pcmk.properties.cluster.get_properties_metadata.rest-api.v2" in-pcs="0" in-pcsd="1">
-      <description>
-        Get pacemaker cluster properties metadata.
-
-        API v2: cluster_property.get_properties_metadata
       </description>
     </capability>
     <capability id="pcmk.properties.cluster.describe" in-pcs="1" in-pcsd="1">
@@ -1147,11 +1147,11 @@
         pcs commands: property describe --output-format=text|json
       </description>
     </capability>
-    <capability id="pcmk.properties.cluster.config.output-formats" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.properties.cluster.describe.rest-api.v2" in-pcs="0" in-pcsd="1">
       <description>
-        Display cluster properties configuration in various formats.
+        Get pacemaker cluster properties metadata.
 
-        pcs commands: property config --output-format=text|json|cmd
+        API v2: cluster_property.get_properties_metadata
       </description>
     </capability>
     <capability id="pcmk.properties.cluster.defaults" in-pcs="1" in-pcsd="0">

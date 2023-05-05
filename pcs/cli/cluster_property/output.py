@@ -5,6 +5,7 @@ from typing import (
 )
 
 from pcs.cli.nvset import nvset_dto_to_lines
+from pcs.cli.resource.output import resource_agent_parameter_metadata_to_text
 from pcs.common.pacemaker.cluster_property import ClusterPropertyMetadataDto
 from pcs.common.pacemaker.nvset import (
     CibNvsetDto,
@@ -12,7 +13,6 @@ from pcs.common.pacemaker.nvset import (
 )
 from pcs.common.resource_agent.dto import ResourceAgentParameterDto
 from pcs.common.str_tools import (
-    format_list,
     format_name_value_default_list,
     format_name_value_list,
     indent,
@@ -61,10 +61,10 @@ class PropertyConfigurationFacade:
 
     @classmethod
     def from_properties_config(
-        cls, properties: ListCibNvsetDto
+        cls, properties_dto: ListCibNvsetDto
     ) -> "PropertyConfigurationFacade":
         return cls(
-            properties.nvsets,
+            properties_dto.nvsets,
             [],
             [],
         )
@@ -229,38 +229,7 @@ def properties_defaults_to_text(property_dict: dict[str, str]) -> list[str]:
 
     property_dict -- name to default value map
     """
-    return format_name_value_list(
-        sorted((key, value) for key, value in property_dict.items())
-    )
-
-
-def _parameter_metadata_to_text(
-    metadata: ResourceAgentParameterDto,
-) -> list[str]:
-    text: list[str] = []
-    desc = ""
-    if metadata.longdesc:
-        desc = metadata.longdesc.replace("\n", " ")
-    if not desc and metadata.shortdesc:
-        desc = metadata.shortdesc.replace("\n", " ")
-    if not desc:
-        desc = "No description available"
-    text.append(f"Description: {desc}")
-    if metadata.enum_values:
-        type_or_allowed_values = "Allowed values: {}".format(
-            format_list(metadata.enum_values)
-        )
-    else:
-        type_or_allowed_values = f"Type: {metadata.type}"
-    text.append(type_or_allowed_values)
-    if metadata.default:
-        text.append(f"Default: {metadata.default}")
-
-    return [
-        f"{metadata.name} (advanced use only)"
-        if metadata.advanced
-        else metadata.name
-    ] + indent(text)
+    return format_name_value_list(sorted(property_dict.items()))
 
 
 def cluster_property_metadata_to_text(
@@ -279,6 +248,6 @@ def cluster_property_metadata_to_text(
         property metadata
     """
     text: list[str] = []
-    for metadata_dto in metadata:
-        text.extend(_parameter_metadata_to_text(metadata_dto))
+    for parameter_dto in metadata:
+        text.extend(resource_agent_parameter_metadata_to_text(parameter_dto))
     return text

@@ -1061,7 +1061,7 @@ Remove the permission id specified (permission id's are listed in parenthesis af
 List property settings (default: lists configured properties). If \fB\-\-defaults\fR is specified will show all property defaults, if \fB\-\-all\fR is specified, current configured properties will be shown with unset properties and their defaults.
 See 'pcs property describe' for a description of the properties. @OUTPUT_FORMAT_DESC_DOC@
 .TP
-defaults [<property>]... [\fB\-\-full\fR]
+defaults [<property>...] | [\fB\-\-full\fR]
 List all property defaults or only defaults for specified properties. If \fB\-\-full\fR is specified, all properties defaults including advanced are shown.
 
 .TP
