@@ -75,6 +75,22 @@ def format_name_value_list(item_list: Sequence[Tuple[str, str]]) -> List[str]:
     return output
 
 
+def format_name_value_default_list(
+    item_list: Sequence[Tuple[str, str, bool]]
+) -> List[str]:
+    """
+    Turn 3-tuples to 'name=value' or 'name=value (default)' strings with
+    standard quoting
+    """
+    output = []
+    for name, value, is_default in item_list:
+        name = quote(name, "= ")
+        value = quote(value, "= ")
+        default = " (default)" if is_default else ""
+        output.append(f"{name}={value}{default}")
+    return output
+
+
 def quote(string: str, chars_to_quote: str) -> str:
     """
     Quote a string if it contains specified characters

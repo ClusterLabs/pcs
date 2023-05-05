@@ -41,6 +41,7 @@ from pcs.common.pacemaker.resource.operations import (
 from pcs.common.pacemaker.resource.primitive import CibResourcePrimitiveDto
 from pcs.common.resource_agent.dto import ResourceAgentNameDto
 from pcs.common.str_tools import (
+    format_list,
     format_name_value_list,
     format_optional,
     indent,
@@ -105,6 +106,58 @@ def _resource_operation_to_str(
     ] + indent(lines, indent_step=INDENT_STEP)
 
 
+def resource_agent_parameter_metadata_to_text(
+    parameter: resource_agent.dto.ResourceAgentParameterDto,
+) -> List[str]:
+    # pylint: disable=too-many-branches
+    # title line
+    param_title = [parameter.name]
+    if parameter.deprecated_by:
+        param_title.append(
+            "(deprecated by {})".format(", ".join(parameter.deprecated_by))
+        )
+    elif parameter.deprecated:
+        param_title.append("(deprecated)")
+    if parameter.required:
+        param_title.append("(required)")
+    if parameter.unique_group:
+        if parameter.unique_group.startswith(
+            resource_agent.const.DEFAULT_UNIQUE_GROUP_PREFIX
+        ):
+            param_title.append("(unique)")
+        else:
+            param_title.append(f"(unique group: {parameter.unique_group})")
+    if parameter.advanced:
+        param_title.append("(advanced use only)")
+
+    # description lines
+    text: List[str] = []
+
+    if parameter.deprecated_desc:
+        text.append("DEPRECATED: {parameter.deprecated_desc}")
+
+    desc = ""
+    if parameter.longdesc:
+        desc = parameter.longdesc.replace("\n", " ")
+    elif parameter.shortdesc:
+        desc = parameter.shortdesc.replace("\n", " ")
+    else:
+        desc = "No description available"
+    text.append(f"Description: {desc}")
+
+    if parameter.enum_values:
+        text.append(
+            "Allowed values: {}".format(format_list(parameter.enum_values))
+        )
+    elif parameter.type:
+        text.append(f"Type: {parameter.type}")
+
+    if parameter.default:
+        text.append(f"Default: {parameter.default}")
+
+    return [" ".join(param_title)] + indent(text)
+
+
 def resource_agent_metadata_to_text(
     metadata: resource_agent.dto.ResourceAgentMetadataDto,
     default_operations: List[CibResourceOperationDto],
@@ -142,34 +195,8 @@ def resource_agent_metadata_to_text(
     for param in metadata.parameters:
         if not verbose and (param.advanced or param.deprecated):
             continue
-        param_title = [param.name]
-        if param.deprecated_by:
-            param_title.append(
-                "(deprecated by {})".format(", ".join(param.deprecated_by))
-            )
-        elif param.deprecated:
-            param_title.append("(deprecated)")
-        if param.required:
-            param_title.append("(required)")
-        if param.unique_group:
-            if param.unique_group.startswith(
-                resource_agent.const.DEFAULT_UNIQUE_GROUP_PREFIX
-            ):
-                param_title.append("(unique)")
-            else:
-                param_title.append(
-                    "(unique group: {})".format(param.unique_group)
-                )
-        desc = ""
-        if param.longdesc:
-            desc = param.longdesc.replace("\n", " ")
-        if not desc and param.shortdesc:
-            desc = param.shortdesc.replace("\n", " ")
-        if not desc:
-            desc = "No description available"
-        if param.deprecated_desc:
-            desc += "DEPRECATED: {param.deprecated_desc}"
-        params.append("{}: {}".format(" ".join(param_title), desc))
+        params.extend(resource_agent_parameter_metadata_to_text(param))
+
     if params:
         output.append("")
         if _is_stonith:

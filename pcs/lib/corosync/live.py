@@ -74,7 +74,7 @@ class QuorumStatusParsingException(QuorumStatusException):
 
 class QuorumStatus:
     """
-    Parse corosync quourm status and provide access to parsed info
+    Parse corosync quorum status and provide access to parsed info
     """
 
     def __init__(self, data):

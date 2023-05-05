@@ -1080,15 +1080,38 @@
         Show and set pacemaker cluster properties, can set multiple properties
         at once.
 
-        pcs commands: prop [ set | unset ]
+        pcs commands: property [ set | unset ]
         daemon urls: update_cluster_settings
       </description>
     </capability>
-    <capability id="pcmk.properties.cluster.describe" in-pcs="0" in-pcsd="1">
+    <capability id="pcmk.properties.cluster.config.output-formats" in-pcs="1" in-pcsd="0">
+      <description>
+        Display cluster properties configuration in various formats.
+
+        pcs commands: property config --output-format=text|json|cmd
+      </description>
+    </capability>
+    <capability id="pcmk.properties.cluster.describe" in-pcs="1" in-pcsd="1">
       <description>
         Show cluster properties definition and description (meta data).
 
+        pcs commands: property describe
         daemon urls: get_cluster_properties_definition
+      </description>
+    </capability>
+    <capability id="pcmk.properties.cluster.describe.output-formats" in-pcs="1" in-pcsd="0">
+      <description>
+        Show cluster properties definition and description (meta data) in
+        various formats.
+
+        pcs commands: property describe --output-format=text|json
+      </description>
+    </capability>
+    <capability id="pcmk.properties.cluster.defaults" in-pcs="1" in-pcsd="0">
+      <description>
+        List all property defaults or only defaults for specified properties.
+
+        pcs commands: property defaults
       </description>
     </capability>
     <capability id="pcmk.properties.operation-defaults" in-pcs="1" in-pcsd="0">

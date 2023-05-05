@@ -515,6 +515,9 @@ def load_module(env, middleware_factory, name):
             middleware.build(middleware_factory.cib),
             {
                 "set_properties": cluster_property.set_properties,
+                "get_properties": cluster_property.get_properties,
+                "get_properties_metadata": cluster_property.get_properties_metadata,
+                "get_cluster_properties_definition_legacy": cluster_property.get_cluster_properties_definition_legacy,
             },
         )
 

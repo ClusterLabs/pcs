@@ -5,7 +5,13 @@
 ### Added
 - Automatic restarts of the Puma web server in the legacy Ruby daemon to reduce
   its memory footprint ([rhbz#2189958])
+- Add `pcs property defaults` and `pcs property describe` CLI commands
+- Support for output formats `json` and `cmd` to property config command
+  ([rhbz#2166289])
+- Commands `pcs resource describe` and `pcs stonith describe` print detailed
+  info about resource options (data type or allowed values, default value)
 
+[rhbz#2166289]: https://bugzilla.redhat.com/show_bug.cgi?id=2166289
 [rhbz#2189958]: https://bugzilla.redhat.com/show_bug.cgi?id=2189958
 
 

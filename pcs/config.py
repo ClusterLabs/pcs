@@ -45,6 +45,10 @@ from pcs import (
     usage,
     utils,
 )
+from pcs.cli.cluster_property.output import (
+    PropertyConfigurationFacade,
+    properties_to_text,
+)
 from pcs.cli.common import middleware
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.output import (
@@ -59,9 +63,9 @@ from pcs.cli.resource.output import (
     ResourcesConfigurationFacade,
     resources_to_text,
 )
+from pcs.common.interface import dto
 from pcs.common.reports import constraints as constraints_reports
 from pcs.common.str_tools import indent
-from pcs.lib.commands import quorum as lib_quorum
 from pcs.lib.errors import LibraryError
 from pcs.lib.node import get_existing_nodes_names
 
@@ -78,10 +82,30 @@ def config_show(lib, argv, modifiers):
     modifiers.ensure_only_supported("-f", "--corosync_conf")
     if argv:
         raise CmdLineInputError()
-    print("Cluster Name: %s" % utils.getClusterName())
+
+    corosync_conf_dto = None
+    cluster_name = ""
+    properties_facade = PropertyConfigurationFacade.from_properties_config(
+        lib.cluster_property.get_properties(),
+    )
+    try:
+        corosync_conf_dto = lib.cluster.get_corosync_conf_struct()
+        cluster_name = corosync_conf_dto.cluster_name
+    except LibraryError:
+        # there is no corosync.conf on remote nodes, we can try to
+        # get cluster name from pacemaker
+        pass
+    if not cluster_name:
+        cluster_name = properties_facade.get_property_value("cluster-name", "")
+    print("Cluster Name: %s" % cluster_name)
+
     status.nodes_status(lib, ["config"], modifiers.get_subset("-f"))
     print()
-    print("\n".join(_config_show_cib_lines(lib)))
+    print(
+        "\n".join(
+            _config_show_cib_lines(lib, properties_facade=properties_facade)
+        )
+    )
     if (
         utils.hasCorosyncConf()
         and not modifiers.is_specified("-f")
@@ -90,17 +114,21 @@ def config_show(lib, argv, modifiers):
         cluster.cluster_uidgid(
             lib, [], modifiers.get_subset(), silent_list=True
         )
-    if modifiers.is_specified("--corosync_conf") or utils.hasCorosyncConf():
+    if corosync_conf_dto:
+        quorum_device_dict = {}
+        if corosync_conf_dto.quorum_device:
+            quorum_device_dict = dto.to_dict(corosync_conf_dto.quorum_device)
+        config = dict(
+            options=corosync_conf_dto.quorum_options,
+            device=quorum_device_dict,
+        )
+        quorum_lines = quorum.quorum_config_to_str(config)
         print()
         print("Quorum:")
-        try:
-            config = lib_quorum.get_config(utils.get_lib_env())
-            print("\n".join(indent(quorum.quorum_config_to_str(config))))
-        except LibraryError as e:
-            process_library_reports(e.args)
+        print("\n".join(indent(quorum_lines)))
 
 
-def _config_show_cib_lines(lib):
+def _config_show_cib_lines(lib, properties_facade=None):
     """
     Commandline options:
       * -f - CIB file
@@ -210,18 +238,14 @@ def _config_show_cib_lines(lib):
         )
     )
 
-    all_lines.append("")
-    all_lines.append("Cluster Properties:")
-    properties = utils.get_set_properties()
-    all_lines.extend(
-        indent(
-            [
-                "{0}: {1}".format(prop, val)
-                for prop, val in sorted(properties.items())
-            ],
-            indent_step=1,
+    if not properties_facade:
+        properties_facade = PropertyConfigurationFacade.from_properties_config(
+            lib.cluster_property.get_properties()
         )
-    )
+    properties_lines = properties_to_text(properties_facade)
+    all_lines.append("")
+    all_lines.extend(properties_lines)
+
     all_lines.append("")
     all_lines.append("Tags:")
     tags = lib.tag.config([])

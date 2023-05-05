@@ -4999,7 +4999,7 @@ class CibAclRoleIsNotAssignedToTarget(ReportItemMessage):
 @dataclass(frozen=True)
 class CibAclTargetAlreadyExists(ReportItemMessage):
     """
-    Error that target with specified id aleready axists in configuration.
+    Error that target with specified id already exists in configuration.
     """
 
     target_id: str

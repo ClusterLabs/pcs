@@ -31,7 +31,7 @@ def from_external_source(level, created: float, usecs: int, message, group_id):
     # self.relativeCreated = (self.created - _startTime) * 1000
     # To update it, we need to reduce it by difference between current value
     # of attribute created (which is newer, so higher) and the correct one
-    # (which commes from an external source)
+    # (which comes from an external source)
     record.relativeCreated -= (record.created - created) * 1000
     record.created = created
     record.msec = usecs // 1000

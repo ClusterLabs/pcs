@@ -286,19 +286,35 @@ Commands:
     return output
 
 
-_OUTPUT_FORMAT_SYNTAX = "--output-format text|cmd|json"
-_OUTPUT_FORMAT_DESC = _unwrap(
-    """
-    There are 3 formats of output available: 'cmd', 'json' and 'text', default
-    is 'text'. Format 'text' is a human friendly output. Format 'cmd' prints
-    pcs commands which can be used to recreate the same configuration. Format 'json' is a
-    machine oriented output of the configuration.
-    """
-)
+def _output_format_syntax(cmd=True):
+    _cmd = "|cmd" if cmd else ""
+    return f"--output-format text{_cmd}|json"
+
+
+def _output_format_desc(cmd=True):
+    _number = "3" if cmd else "2"
+    _cmd = "'cmd', " if cmd else ""
+    _cmd_desc = (
+        (
+            "Format 'cmd' prints pcs commands which can be used to recreate "
+            "the same configuration. "
+        )
+        if cmd
+        else ""
+    )
+
+    return _unwrap(
+        f"""
+        There are {_number} formats of output available: {_cmd}'json' and
+        'text', default is 'text'. Format 'text' is a human friendly output.
+        {_cmd_desc}Format 'json' is a machine oriented output of the
+        configuration.
+        """
+    )
 
 
 def _resource_config_syntax(obj: str) -> str:
-    return f"config [{_OUTPUT_FORMAT_SYNTAX}] [<{obj} id>]..."
+    return f"config [{_output_format_syntax()}] [<{obj} id>]..."
 
 
 def _resource_config_desc(obj: str) -> Iterable[str]:
@@ -308,12 +324,12 @@ def _resource_config_desc(obj: str) -> Iterable[str]:
         specified show the options for the specified {obj} ids.
         """,
         "",
-        _OUTPUT_FORMAT_DESC,
+        _output_format_desc(),
     )
 
 
 _CLUSTER_CONFIG_SHOW_SYNTAX = (
-    f"config [show] [{_OUTPUT_FORMAT_SYNTAX}] [--corosync_conf <path>]"
+    f"config [show] [{_output_format_syntax()}] [--corosync_conf <path>]"
 )
 _CLUSTER_CONFIG_SHOW_DESC = (
     """
@@ -322,7 +338,7 @@ _CLUSTER_CONFIG_SHOW_DESC = (
     current cluster configuration.
     """,
     "",
-    _OUTPUT_FORMAT_DESC,
+    _output_format_desc(),
 )
 
 
@@ -1656,30 +1672,48 @@ Usage: pcs property [commands]...
 Configure pacemaker properties
 
 Commands:
-    [config|list|show [<property> | --all | --defaults]] | [--all | --defaults]
+    [config|list|show [<property>... | --all | --defaults
+            | ({output_format_syntax})]]
+            | [--all | --defaults | ({output_format_syntax})]
         List property settings (default: lists configured properties).
         If --defaults is specified will show all property defaults, if --all
         is specified, current configured properties will be shown with unset
         properties and their defaults.
-        See pacemaker-controld(7) and pacemaker-schedulerd(7) man pages for
-        a description of the properties.
+        See 'pcs property describe' for a description of the properties.
+{output_format_desc}
+
+    defaults [<property>...] | [--full]
+        List all property defaults or only defaults for specified properties.
+        If --full is specified, all properties defaults including advanced are
+        shown.
+
+    describe [<property>...] [{output_format_syntax_no_cmd}] [--full]
+        Show cluster properties.
+{output_format_desc_no_cmd}
+        If --full is specified, all properties descriptions including advanced
+        are shown.
 
     set <property>=[<value>] ... [--force]
         Set specific pacemaker properties (if the value is blank then the
         property is removed from the configuration).  If a property is not
         recognized by pcs the property will not be created unless the
         --force is used.
-        See pacemaker-controld(7) and pacemaker-schedulerd(7) man pages for
-        a description of the properties.
+        See 'pcs property describe' for a description of the properties.
 
     unset <property> ...
         Remove property from configuration.
-        See pacemaker-controld(7) and pacemaker-schedulerd(7) man pages for
-        a description of the properties.
+        See 'pcs property describe' for a description of the properties.
 
 Examples:
     pcs property set stonith-enabled=false
-"""
+""".format(
+        output_format_syntax=_output_format_syntax(),
+        output_format_syntax_no_cmd=_output_format_syntax(cmd=False),
+        output_format_desc=_format_desc([_output_format_desc()]),
+        output_format_desc_no_cmd=_format_desc(
+            [_output_format_desc(cmd=False)]
+        ),
+    )
     if pout:
         print(sub_usage(args, output))
         return None

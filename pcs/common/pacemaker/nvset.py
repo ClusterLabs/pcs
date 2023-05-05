@@ -23,3 +23,8 @@ class CibNvsetDto(DataTransferObject):
     options: Mapping[str, str]
     rule: Optional[CibRuleExpressionDto]
     nvpairs: Sequence[CibNvpairDto]
+
+
+@dataclass(frozen=True)
+class ListCibNvsetDto(DataTransferObject):
+    nvsets: Sequence[CibNvsetDto]

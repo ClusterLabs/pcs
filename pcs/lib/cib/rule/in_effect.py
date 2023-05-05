@@ -1,8 +1,12 @@
 from lxml.etree import _Element
 
+from pcs.common import reports
 from pcs.common.types import CibRuleInEffectStatus
 from pcs.lib.external import CommandRunner
-from pcs.lib.pacemaker.live import get_rule_in_effect_status
+from pcs.lib.pacemaker.live import (
+    get_rule_in_effect_status,
+    has_rule_in_effect_status_tool,
+)
 from pcs.lib.xml_tools import etree_to_str
 
 
@@ -54,3 +58,20 @@ class RuleInEffectEvalOneByOne(RuleInEffectEval):
 # would be a significant speedup comparing to running the tool for each rule.
 # class RuleInEffectEvalAllAtOnce(RuleInEffectEval):
 #     pass
+
+
+def get_rule_evaluator(
+    cib: _Element,
+    runner: CommandRunner,
+    report_processor: reports.ReportProcessor,
+    evaluate_expired: bool,
+) -> RuleInEffectEval:
+    if evaluate_expired:
+        if has_rule_in_effect_status_tool():
+            return RuleInEffectEvalOneByOne(cib, runner)
+        report_processor.report(
+            reports.ReportItem.warning(
+                reports.messages.RuleInEffectStatusDetectionNotSupported()
+            )
+        )
+    return RuleInEffectEvalDummy()

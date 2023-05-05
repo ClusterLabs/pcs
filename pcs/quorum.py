@@ -2,11 +2,13 @@ from pcs import (
     stonith,
     utils,
 )
+from pcs.cli.cluster_property.output import PropertyConfigurationFacade
 from pcs.cli.common import parse_args
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.reports import process_library_reports
 from pcs.common.str_tools import indent
 from pcs.lib.node import get_existing_nodes_names
+from pcs.lib.pacemaker.values import is_false
 
 
 def quorum_config_cmd(lib, argv, modifiers):
@@ -315,10 +317,18 @@ def quorum_unblock_cmd(lib, argv, modifiers):
         utils.err("unable to cancel waiting for nodes")
     print("Quorum unblocked")
 
-    startup_fencing = utils.get_set_properties().get("startup-fencing", "")
-    utils.set_cib_property(
-        "startup-fencing",
-        "false" if startup_fencing.lower() != "false" else "true",
+    properties_facade = PropertyConfigurationFacade.from_properties_config(
+        lib.cluster_property.get_properties(),
     )
-    utils.set_cib_property("startup-fencing", startup_fencing)
+    startup_fencing = properties_facade.get_property_value(
+        "startup-fencing", ""
+    )
+    lib.cluster_property.set_properties(
+        {
+            "startup-fencing": (
+                "false" if not is_false(startup_fencing) else "true"
+            )
+        }
+    )
+    lib.cluster_property.set_properties({"startup-fencing": startup_fencing})
     print("Waiting for nodes canceled")

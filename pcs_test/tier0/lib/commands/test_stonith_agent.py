@@ -46,7 +46,7 @@ _fixture_fenced_parsed = [
     _fixture_parameter(
         "fenced-param",
         "testing fenced parameter",
-        "testing fenced parameter\nwith a longdesc",
+        "testing fenced parameter.\nwith a longdesc",
     )
 ]
 

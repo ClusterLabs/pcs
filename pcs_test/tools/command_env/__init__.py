@@ -23,7 +23,7 @@ message from Queue. Then the mock compares expected and real message. When the
 messages match each other then the Mock returns expected result. Otherwise Mock
 call fails.
 
-With each Mock commes Call that represent message appropriate for the concrete
+With each Mock comes Call that represent message appropriate for the concrete
 Mock.
 
 Config (with RunnerConfig, CibShortcuts, EnvConfig, ...)
