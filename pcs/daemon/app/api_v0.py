@@ -121,6 +121,7 @@ class _BaseApiV0Handler(LegacyTokenAuthenticationHandler):
             and task_result_dto.reports
             and task_result_dto.reports[0].message.code
             == reports.codes.NOT_AUTHORIZED
+            and not task_result_dto.reports[0].context
         ):
             raise self._error("Permission denied", 403)
 

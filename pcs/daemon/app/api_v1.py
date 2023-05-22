@@ -232,6 +232,7 @@ class _BaseApiV1Handler(BaseHandler):
             and task_result_dto.reports
             and task_result_dto.reports[0].message.code
             == reports.codes.NOT_AUTHORIZED
+            and not task_result_dto.reports[0].context
         ):
             raise ApiError(
                 communication.const.COM_STATUS_NOT_AUTHORIZED, "Not authorized"
