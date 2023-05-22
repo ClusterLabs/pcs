@@ -280,8 +280,8 @@ class TestConfig(TestCase):
                 property_name=default"""
             )
         )
-        mock_warn(
-            "Deprecation Warning: Option --defaults is deprecated and will be "
+        mock_warn.assert_called_once_with(
+            "Option --defaults is deprecated and will be "
             "removed. Please use command 'pcs property defaults' instead."
         )
 
