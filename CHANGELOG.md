@@ -25,6 +25,8 @@
   `pcs config checkpoint diff` command ([rhbz#2175881])
 - Fix `pcs stonith update-scsi-devices` command which was broken since
   Pacemaker-2.1.5-rc1 ([rhbz#2177996])
+- Make `pcs resource disable --simulate --brief` documentation clearer
+  ([rhbz#2109852])
 
 ### Changed
 - Commands for displaying cluster configuration have been slightly updated:
@@ -41,6 +43,7 @@
 [ghpull#648]: https://github.com/ClusterLabs/pcs/pull/648
 [rhbz#1423473]: https://bugzilla.redhat.com/show_bug.cgi?id=1423473
 [rhbz#1860626]: https://bugzilla.redhat.com/show_bug.cgi?id=1860626
+[rhbz#2109852]: https://bugzilla.redhat.com/show_bug.cgi?id=2109852
 [rhbz#2163914]: https://bugzilla.redhat.com/show_bug.cgi?id=2163914
 [rhbz#2163953]: https://bugzilla.redhat.com/show_bug.cgi?id=2163953
 [rhbz#2168155]: https://bugzilla.redhat.com/show_bug.cgi?id=2168155

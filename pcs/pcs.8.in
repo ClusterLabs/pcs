@@ -116,7 +116,7 @@ If \fB\-\-safe\fR is specified, no changes to the cluster configuration will be 
 .br
 If \fB\-\-no\-strict\fR is specified, no changes to the cluster configuration will be made if other than specified resources would get stopped or demoted. Moving resources between nodes is allowed.
 .br
-If \fB\-\-simulate\fR is specified, no changes to the cluster configuration will be made and the effect of the changes will be printed instead. If \fB\-\-brief\fR is also specified, only a list of affected resources will be printed.
+If \fB\-\-simulate\fR is specified, no changes to the cluster configuration will be made and the effect of the changes will be printed instead. If \fB\-\-brief\fR is also specified, only a list of affected resources not specified in the command will be printed.
 .br
 If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the resources to stop and then return 0 if the resources are stopped or 1 if the resources have not stopped. If 'n' is not specified it defaults to 60 minutes.
 .TP
@@ -127,7 +127,7 @@ If \fB\-\-brief\fR is specified, only errors are printed.
 .br
 If \fB\-\-no\-strict\fR is specified, no changes to the cluster configuration will be made if other than specified resources would get stopped or demoted. Moving resources between nodes is allowed.
 .br
-If \fB\-\-simulate\fR is specified, no changes to the cluster configuration will be made and the effect of the changes will be printed instead. If \fB\-\-brief\fR is also specified, only a list of affected resources will be printed.
+If \fB\-\-simulate\fR is specified, no changes to the cluster configuration will be made and the effect of the changes will be printed instead. If \fB\-\-brief\fR is also specified, only a list of affected resources not specified in the command will be printed.
 .br
 If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the resources to stop and then return 0 if the resources are stopped or 1 if the resources have not stopped. If 'n' is not specified it defaults to 60 minutes.
 .br
