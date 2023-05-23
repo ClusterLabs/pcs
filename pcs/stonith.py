@@ -1007,7 +1007,7 @@ def disable_cmd(
     _check_is_stonith(lib, argv, "pcs resource disable")
     if modifiers.is_specified_any(("--safe", "--no-strict", "--simulate")):
         deprecation_warning(
-            "Options '--safe', '--no-strict' and '--simualte' are deprecated "
+            "Options '--safe', '--no-strict' and '--simulate' are deprecated "
             "and will be removed in a future release."
         )
     resource.resource_disable_common(lib, argv, modifiers)
