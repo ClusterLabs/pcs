@@ -352,6 +352,7 @@ EXTRA_DIST		= \
 			  tier1/constraint/test_config.py \
 			  tier1/__init__.py \
 			  tier1/legacy/__init__.py \
+			  tier1/legacy/common.py \
 			  tier1/legacy/test_acl.py \
 			  tier1/legacy/test_alert.py \
 			  tier1/legacy/test_cluster.py \

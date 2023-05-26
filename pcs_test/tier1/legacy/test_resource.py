@@ -17,6 +17,7 @@ from pcs.common.str_tools import format_list_custom_last_separator
 from pcs.constraint import LOCATION_NODE_VALIDATION_SKIP_MSG
 
 from pcs_test.tier1.cib_resource.common import ResourceTest
+from pcs_test.tier1.legacy.common import FIXTURE_UTILIZATION_WARNING
 from pcs_test.tools.assertions import (
     AssertPcsMixin,
     assert_pcs_status,
@@ -4385,6 +4386,7 @@ class Utilization(
         self.assert_effect(
             "resource utilization R test=100".split(),
             self.fixture_xml_resource_with_utilization(),
+            stderr_full=FIXTURE_UTILIZATION_WARNING,
         )
 
     def testResourceUtilizationSet(self):
@@ -4393,6 +4395,7 @@ class Utilization(
 
         self.assert_pcs_success(
             "resource utilization dummy test1=10".split(),
+            stderr_full=FIXTURE_UTILIZATION_WARNING,
         )
         self.assert_pcs_success(
             "resource utilization dummy1".split(),
@@ -4402,6 +4405,7 @@ class Utilization(
                  dummy1: 
                 """
             ),
+            stderr_full=FIXTURE_UTILIZATION_WARNING,
         )
         self.assert_pcs_success(
             "resource utilization dummy".split(),
@@ -4411,9 +4415,11 @@ class Utilization(
                  dummy: test1=10
                 """
             ),
+            stderr_full=FIXTURE_UTILIZATION_WARNING,
         )
         self.assert_pcs_success(
             "resource utilization dummy test1=-10 test4=1234".split(),
+            stderr_full=FIXTURE_UTILIZATION_WARNING,
         )
         self.assert_pcs_success(
             "resource utilization dummy".split(),
@@ -4423,9 +4429,11 @@ class Utilization(
                  dummy: test1=-10 test4=1234
                 """
             ),
+            stderr_full=FIXTURE_UTILIZATION_WARNING,
         )
         self.assert_pcs_success(
             "resource utilization dummy1 test2=321 empty=".split(),
+            stderr_full=FIXTURE_UTILIZATION_WARNING,
         )
         self.assert_pcs_success(
             "resource utilization dummy1".split(),
@@ -4435,6 +4443,7 @@ class Utilization(
                  dummy1: test2=321
                 """
             ),
+            stderr_full=FIXTURE_UTILIZATION_WARNING,
         )
         self.assert_pcs_success(
             "resource utilization".split(),
@@ -4445,29 +4454,77 @@ class Utilization(
                  dummy1: test2=321
                 """
             ),
+            stderr_full=FIXTURE_UTILIZATION_WARNING,
+        )
+
+    def test_no_warning_printed_placement_strategy_is_set(self):
+        self.fixture_resource()
+        self.assert_effect(
+            "property set placement-strategy=minimal".split(),
+            self.fixture_xml_resource_no_utilization(),
+        )
+        self.assert_resources_xml_in_cib(
+            """
+            <crm_config>
+                <cluster_property_set id="cib-bootstrap-options">
+                    <nvpair id="cib-bootstrap-options-placement-strategy"
+                        name="placement-strategy" value="minimal"
+                    />
+                </cluster_property_set>
+            </crm_config>
+            """,
+            get_cib_part_func=lambda cib: etree.tostring(
+                etree.parse(cib).findall(".//crm_config")[0],
+            ),
+        )
+        self.assert_effect(
+            "resource utilization R test=100".split(),
+            self.fixture_xml_resource_with_utilization(),
+        )
+        self.assert_pcs_success(
+            "resource utilization".split(),
+            dedent(
+                """\
+                Resource Utilization:
+                 R: test=100
+                """
+            ),
         )
 
     def test_resource_utilization_set_invalid(self):
         self.pcs_runner = PcsRunner(self.temp_large_cib.name)
         self.assert_pcs_fail(
             "resource utilization dummy test".split(),
-            "Error: missing value of 'test' option\n",
+            (
+                f"{FIXTURE_UTILIZATION_WARNING}"
+                "Error: missing value of 'test' option\n"
+            ),
         )
         self.assert_pcs_fail(
             "resource utilization dummy =10".split(),
-            "Error: missing key in '=10' option\n",
+            f"{FIXTURE_UTILIZATION_WARNING}Error: missing key in '=10' option\n",
         )
         self.assert_pcs_fail(
             "resource utilization dummy0".split(),
-            "Error: Unable to find a resource: dummy0\n",
+            (
+                f"{FIXTURE_UTILIZATION_WARNING}"
+                "Error: Unable to find a resource: dummy0\n"
+            ),
         )
         self.assert_pcs_fail(
             "resource utilization dummy0 test=10".split(),
-            "Error: Unable to find a resource: dummy0\n",
+            (
+                f"{FIXTURE_UTILIZATION_WARNING}"
+                "Error: Unable to find a resource: dummy0\n"
+            ),
         )
         self.assert_pcs_fail(
             "resource utilization dummy1 test1=10 test=int".split(),
-            "Error: Value of utilization attribute must be integer: 'test=int'\n",
+            (
+                f"{FIXTURE_UTILIZATION_WARNING}"
+                "Error: Value of utilization attribute must be integer: "
+                "'test=int'\n"
+            ),
         )
 
     def test_keep_empty_nvset(self):
@@ -4475,6 +4532,7 @@ class Utilization(
         self.assert_effect(
             "resource utilization R test=".split(),
             self.fixture_xml_resource_empty_utilization(),
+            stderr_full=FIXTURE_UTILIZATION_WARNING,
         )
 
     def test_dont_create_nvset_on_removal(self):
@@ -4482,6 +4540,7 @@ class Utilization(
         self.assert_effect(
             "resource utilization R test=".split(),
             self.fixture_xml_resource_no_utilization(),
+            stderr_full=FIXTURE_UTILIZATION_WARNING,
         )
 
 
@@ -5616,7 +5675,10 @@ class BundleMiscCommands(BundleCommon):
         self.fixture_bundle("B")
         self.assert_pcs_fail(
             "resource utilization B aaa=10".split(),
-            "Error: Unable to find a resource: B\n",
+            (
+                f"{FIXTURE_UTILIZATION_WARNING}"
+                "Error: Unable to find a resource: B\n"
+            ),
         )
 
     @skip(
