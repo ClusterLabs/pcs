@@ -430,7 +430,7 @@ relocate clear
 Remove all constraints created by the 'relocate run' command.
 .TP
 utilization [<resource id> [<name>=<value> ...]]
-Add specified utilization options to specified resource. If resource is not specified, shows utilization of all resources. If utilization options are not specified, shows utilization of specified resource. Utilization option should be in format name=value, value has to be integer. Options may be removed by setting an option without a value. Example: pcs resource utilization TestResource cpu= ram=20
+Add specified utilization options to specified resource. If resource is not specified, shows utilization of all resources. If utilization options are not specified, shows utilization of specified resource. Utilization option should be in format name=value, value has to be integer. Options may be removed by setting an option without a value. Example: pcs resource utilization TestResource cpu= ram=20  For the utilization configuration to be in effect, cluster property 'placement-strategy' must be configured accordingly.
 .TP
 relations <resource id> [\fB\-\-full\fR]
 Display relations of a resource specified by its id with other resources in a tree structure. Supported types of resource relations are: ordering constraints, ordering set constraints, relations defined by resource hierarchy (clones, groups, bundles). If \fB\-\-full\fR is used, more verbose output will be printed.
@@ -1420,7 +1420,7 @@ unstandby [\fB\-\-all\fR | <node>...] [\fB\-\-wait\fR[=n]]
 Remove node(s) from standby mode (the node specified will now be able to host resources), if no nodes or options are specified the current node will be removed from standby mode, if \fB\-\-all\fR is specified all nodes will be removed from standby mode. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the node(s) to be removed from standby mode and then return 0 on success or 1 if the operation not succeeded yet. If 'n' is not specified it defaults to 60 minutes.
 .TP
 utilization [[<node>] [\fB\-\-name\fR <name>] | <node> <name>=<value> ...]
-Add specified utilization options to specified node.  If node is not specified, shows utilization of all nodes.  If \fB\-\-name\fR is specified, shows specified utilization value from all nodes. If utilization options are not specified, shows utilization of specified node.  Utilization option should be in format name=value, value has to be integer.  Options may be removed by setting an option without a value.  Example: pcs node utilization node1 cpu=4 ram=
+Add specified utilization options to specified node.  If node is not specified, shows utilization of all nodes.  If \fB\-\-name\fR is specified, shows specified utilization value from all nodes. If utilization options are not specified, shows utilization of specified node.  Utilization option should be in format name=value, value has to be integer.  Options may be removed by setting an option without a value.  Example: pcs node utilization node1 cpu=4 ram=  For the utilization configuration to be in effect, cluster property 'placement-strategy' must be configured accordingly.
 .SS "alert"
 .TP
 [config]

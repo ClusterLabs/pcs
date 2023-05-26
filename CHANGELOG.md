@@ -17,6 +17,9 @@
   ([rhbz#2163914])
 - Commands `pcs resource describe` and `pcs stonith describe` print detailed
   info about resource options (data type or allowed values, default value)
+- Add warning to `pcs resource utilization` and `pcs node utilization` for the
+  case configuration is not in effect (cluster property `placement-strategy` is
+  not set appropriately) ([rhbz#1465829])
 
 ### Fixed
 - Crash in commands that ask for user input (like `pcs cluster destroy`) when
@@ -42,6 +45,7 @@
 [ghissue#612]: https://github.com/ClusterLabs/pcs/issues/612
 [ghpull#648]: https://github.com/ClusterLabs/pcs/pull/648
 [rhbz#1423473]: https://bugzilla.redhat.com/show_bug.cgi?id=1423473
+[rhbz#1465829]: https://bugzilla.redhat.com/show_bug.cgi?id=1465829
 [rhbz#1860626]: https://bugzilla.redhat.com/show_bug.cgi?id=1860626
 [rhbz#2109852]: https://bugzilla.redhat.com/show_bug.cgi?id=2109852
 [rhbz#2163914]: https://bugzilla.redhat.com/show_bug.cgi?id=2163914

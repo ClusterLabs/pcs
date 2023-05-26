@@ -22,6 +22,7 @@ from pcs import (
     constraint,
     utils,
 )
+from pcs.cli.cluster_property.output import PropertyConfigurationFacade
 from pcs.cli.common.errors import (
     SEE_MAN_CHANGES,
     CmdLineInputError,
@@ -162,6 +163,12 @@ def resource_utilization_cmd(
       * -f - CIB file
     """
     modifiers.ensure_only_supported("-f")
+    utils.print_warning_if_utilization_attrs_has_no_effect(
+        PropertyConfigurationFacade.from_properties_dtos(
+            lib.cluster_property.get_properties(),
+            lib.cluster_property.get_properties_metadata(),
+        )
+    )
     if not argv:
         print_resources_utilization()
         return
