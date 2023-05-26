@@ -10,6 +10,7 @@ from pcs import (
     utils,
 )
 
+from pcs_test.tier1.legacy.common import FIXTURE_UTILIZATION_WARNING
 from pcs_test.tools.assertions import (
     AssertPcsMixin,
     ac,
@@ -90,13 +91,14 @@ class NodeUtilizationSet(
         output, returnVal = pcs(
             self.temp_cib.name, "node utilization rh7-1 test1=10".split()
         )
-        ac("", output)
+        ac(FIXTURE_UTILIZATION_WARNING, output)
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             self.temp_cib.name, "node utilization rh7-2".split()
         )
-        expected_out = """\
+        expected_out = f"""\
+{FIXTURE_UTILIZATION_WARNING}\
 Node Utilization:
 """
         ac(expected_out, output)
@@ -105,7 +107,8 @@ Node Utilization:
         output, returnVal = pcs(
             self.temp_cib.name, "node utilization rh7-1".split()
         )
-        expected_out = """\
+        expected_out = f"""\
+{FIXTURE_UTILIZATION_WARNING}\
 Node Utilization:
  rh7-1: test1=10
 """
@@ -116,12 +119,13 @@ Node Utilization:
             self.temp_cib.name,
             "node utilization rh7-1 test1=-10 test4=1234".split(),
         )
-        ac("", output)
+        ac(FIXTURE_UTILIZATION_WARNING, output)
         self.assertEqual(0, returnVal)
         output, returnVal = pcs(
             self.temp_cib.name, "node utilization rh7-1".split()
         )
-        expected_out = """\
+        expected_out = f"""\
+{FIXTURE_UTILIZATION_WARNING}\
 Node Utilization:
  rh7-1: test1=-10 test4=1234
 """
@@ -132,12 +136,13 @@ Node Utilization:
             self.temp_cib.name,
             "node utilization rh7-2 test2=321 empty=".split(),
         )
-        ac("", output)
+        ac(FIXTURE_UTILIZATION_WARNING, output)
         self.assertEqual(0, returnVal)
         output, returnVal = pcs(
             self.temp_cib.name, "node utilization rh7-2".split()
         )
-        expected_out = """\
+        expected_out = f"""\
+{FIXTURE_UTILIZATION_WARNING}\
 Node Utilization:
  rh7-2: test2=321
 """
@@ -145,7 +150,8 @@ Node Utilization:
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(self.temp_cib.name, "node utilization".split())
-        expected_out = """\
+        expected_out = f"""\
+{FIXTURE_UTILIZATION_WARNING}\
 Node Utilization:
  rh7-1: test1=-10 test4=1234
  rh7-2: test2=321
@@ -156,13 +162,14 @@ Node Utilization:
         output, returnVal = pcs(
             self.temp_cib.name, "node utilization rh7-2 test1=-20".split()
         )
-        ac("", output)
+        ac(FIXTURE_UTILIZATION_WARNING, output)
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             self.temp_cib.name, "node utilization --name test1".split()
         )
-        expected_out = """\
+        expected_out = f"""\
+{FIXTURE_UTILIZATION_WARNING}\
 Node Utilization:
  rh7-1: test1=-10
  rh7-2: test1=-20
@@ -174,7 +181,8 @@ Node Utilization:
             self.temp_cib.name,
             "node utilization --name test1 rh7-2".split(),
         )
-        expected_out = """\
+        expected_out = f"""\
+{FIXTURE_UTILIZATION_WARNING}\
 Node Utilization:
  rh7-2: test1=-20
 """
@@ -184,42 +192,83 @@ Node Utilization:
     def test_refuse_non_option_attribute_parameter_among_options(self):
         self.assert_pcs_fail(
             "node utilization rh7-1 net".split(),
-            "Error: missing value of 'net' option\n",
+            (
+                f"{FIXTURE_UTILIZATION_WARNING}"
+                "Error: missing value of 'net' option\n"
+            ),
         )
 
     def test_refuse_option_without_key(self):
         self.assert_pcs_fail(
             "node utilization rh7-1 =1".split(),
-            "Error: missing key in '=1' option\n",
+            f"{FIXTURE_UTILIZATION_WARNING}Error: missing key in '=1' option\n",
         )
 
     def test_refuse_unknown_node(self):
         self.assert_pcs_fail(
             "node utilization rh7-0 test=10".split(),
-            "Error: Unable to find a node: rh7-0\n",
+            (
+                f"{FIXTURE_UTILIZATION_WARNING}"
+                "Error: Unable to find a node: rh7-0\n"
+            ),
         )
 
     def test_refuse_value_not_int(self):
         self.assert_pcs_fail(
             "node utilization rh7-1 test1=10 test=int".split(),
-            "Error: Value of utilization attribute must be integer: "
-            "'test=int'\n",
+            (
+                f"{FIXTURE_UTILIZATION_WARNING}"
+                "Error: Value of utilization attribute must be integer: "
+                "'test=int'\n"
+            ),
         )
 
     def test_keep_empty_nvset(self):
         self.assert_effect(
             "node utilization rh7-1 test=100".split(),
             self.fixture_xml_with_utilization(),
+            FIXTURE_UTILIZATION_WARNING,
         )
         self.assert_effect(
             "node utilization rh7-1 test=".split(),
             self.fixture_xml_empty_utilization(),
+            FIXTURE_UTILIZATION_WARNING,
         )
 
     def test_dont_create_nvset_on_removal(self):
         self.assert_effect(
             "node utilization rh7-1 test=".split(),
             self.fixture_xml_no_utilization(),
+            FIXTURE_UTILIZATION_WARNING,
+        )
+
+    def test_no_warning_printed_placement_strategy_is_set(self):
+        self.assert_effect(
+            "property set placement-strategy=minimal".split(),
+            self.fixture_xml_no_utilization(),
+        )
+        self.assert_resources_xml_in_cib(
+            """
+            <crm_config>
+                <cluster_property_set id="cib-bootstrap-options">
+                    <nvpair id="cib-bootstrap-options-placement-strategy"
+                        name="placement-strategy" value="minimal"
+                    />
+                </cluster_property_set>
+            </crm_config>
+            """,
+            get_cib_part_func=lambda cib: etree.tostring(
+                etree.parse(cib).findall(".//crm_config")[0],
+            ),
+        )
+        self.assert_effect(
+            "node utilization rh7-1 test=".split(),
+            self.fixture_xml_no_utilization(),
+        )
+        self.assert_effect(
+            "node utilization".split(),
+            self.fixture_xml_no_utilization(),
+            "Node Utilization:\n",
         )
 
 
@@ -249,9 +298,10 @@ class NodeUtilizationPrint(TestCase, AssertPcsMixin):
     def test_refuse_when_node_not_in_mocked_cib(self):
         self.assert_pcs_fail(
             "node utilization some_nonexistent_node".split(),
-            [
-                "Error: Unable to find a node: some_nonexistent_node",
-            ],
+            (
+                f"{FIXTURE_UTILIZATION_WARNING}"
+                "Error: Unable to find a node: some_nonexistent_node\n"
+            ),
         )
 
 

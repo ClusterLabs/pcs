@@ -340,6 +340,12 @@ _CLUSTER_CONFIG_SHOW_DESC = (
     "",
     _output_format_desc(),
 )
+_UTILIZATION_PLACEMENT_STRATEGY_DESC = (
+    """
+    For the utilization configuration to be in effect, cluster property
+    'placement-strategy' must be configured accordingly.
+    """,
+)
 
 
 def resource(args=(), pout=True):
@@ -931,6 +937,7 @@ Commands:
         Utilization option should be in format name=value, value has to be
         integer. Options may be removed by setting an option without a value.
         Example: pcs resource utilization TestResource cpu= ram=20
+{utilization_placement_strategy_desc}
 
     relations <resource id> [--full]
         Display relations of a resource specified by its id with other resources
@@ -974,6 +981,9 @@ Notes:
 """.format(
         config_syntax=_format_syntax(_resource_config_syntax("resource")),
         config_desc=_format_desc(_resource_config_desc("resource")),
+        utilization_placement_strategy_desc=_format_desc(
+            _UTILIZATION_PLACEMENT_STRATEGY_DESC
+        ),
     )
     if pout:
         print(sub_usage(args, output))
@@ -2241,7 +2251,12 @@ Commands:
         option should be in format name=value, value has to be integer.  Options
         may be removed by setting an option without a value.
         Example: pcs node utilization node1 cpu=4 ram=
-"""
+{utilization_placement_strategy_desc}
+""".format(
+        utilization_placement_strategy_desc=_format_desc(
+            _UTILIZATION_PLACEMENT_STRATEGY_DESC
+        )
+    )
     if pout:
         print(sub_usage(args, output))
         return None

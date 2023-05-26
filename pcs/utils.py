@@ -32,6 +32,7 @@ from pcs import (
     settings,
     usage,
 )
+from pcs.cli.cluster_property.output import PropertyConfigurationFacade
 from pcs.cli.common import middleware
 from pcs.cli.common.env_cli import Env
 from pcs.cli.common.errors import CmdLineInputError
@@ -56,6 +57,7 @@ from pcs.common.reports.item import ReportItemList
 from pcs.common.reports.messages import CibUpgradeFailedToMinimalRequiredVersion
 from pcs.common.services.errors import ManageServiceError
 from pcs.common.services.interfaces import ServiceManagerInterface
+from pcs.common.str_tools import format_list
 from pcs.common.tools import (
     Version,
     timeout_to_seconds,
@@ -2672,3 +2674,23 @@ def get_token_from_file(file_name: str) -> str:
     except OSError as e:
         err(f"Unable to read file '{file_name}': {e}", exit_after_error=False)
         raise SystemExit(1) from e
+
+
+def print_warning_if_utilization_attrs_has_no_effect(
+    properties_facade: PropertyConfigurationFacade,
+):
+    PLACEMENT_STRATEGIES_USING_UTILIZATION_ATTRS = [
+        "balanced",
+        "minimal",
+        "utilization",
+    ]
+    value = properties_facade.get_property_value_or_default(
+        "placement-strategy"
+    )
+    if value not in PLACEMENT_STRATEGIES_USING_UTILIZATION_ATTRS:
+        reports_output.warn(
+            "Utilization attributes configuration has no effect until cluster "
+            "property option 'placement-strategy' is set to one of the "
+            "values: "
+            f"{format_list(PLACEMENT_STRATEGIES_USING_UTILIZATION_ATTRS)}"
+        )

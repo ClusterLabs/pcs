@@ -17,6 +17,7 @@ from pcs.common.str_tools import format_list_custom_last_separator
 from pcs.constraint import LOCATION_NODE_VALIDATION_SKIP_MSG
 
 from pcs_test.tier1.cib_resource.common import ResourceTest
+from pcs_test.tier1.legacy.common import FIXTURE_UTILIZATION_WARNING
 from pcs_test.tools.assertions import (
     AssertPcsMixin,
     ac,
@@ -5280,6 +5281,7 @@ class Utilization(
         self.assert_effect(
             "resource utilization R test=100".split(),
             self.fixture_xml_resource_with_utilization(),
+            FIXTURE_UTILIZATION_WARNING,
         )
 
     def testResourceUtilizationSet(self):
@@ -5288,13 +5290,14 @@ class Utilization(
             self.temp_large_cib.name,
             "resource utilization dummy test1=10".split(),
         )
-        ac("", output)
+        ac(FIXTURE_UTILIZATION_WARNING, output)
         self.assertEqual(0, returnVal)
 
         output, returnVal = pcs(
             self.temp_large_cib.name, "resource utilization dummy1".split()
         )
-        expected_out = """\
+        expected_out = f"""\
+{FIXTURE_UTILIZATION_WARNING}\
 Resource Utilization:
  dummy1: \n"""
         ac(expected_out, output)
@@ -5303,7 +5306,8 @@ Resource Utilization:
         output, returnVal = pcs(
             self.temp_large_cib.name, "resource utilization dummy".split()
         )
-        expected_out = """\
+        expected_out = f"""\
+{FIXTURE_UTILIZATION_WARNING}\
 Resource Utilization:
  dummy: test1=10
 """
@@ -5314,12 +5318,13 @@ Resource Utilization:
             self.temp_large_cib.name,
             "resource utilization dummy test1=-10 test4=1234".split(),
         )
-        ac("", output)
+        ac(FIXTURE_UTILIZATION_WARNING, output)
         self.assertEqual(0, returnVal)
         output, returnVal = pcs(
             self.temp_large_cib.name, "resource utilization dummy".split()
         )
-        expected_out = """\
+        expected_out = f"""\
+{FIXTURE_UTILIZATION_WARNING}\
 Resource Utilization:
  dummy: test1=-10 test4=1234
 """
@@ -5330,12 +5335,13 @@ Resource Utilization:
             self.temp_large_cib.name,
             "resource utilization dummy1 test2=321 empty=".split(),
         )
-        ac("", output)
+        ac(FIXTURE_UTILIZATION_WARNING, output)
         self.assertEqual(0, returnVal)
         output, returnVal = pcs(
             self.temp_large_cib.name, "resource utilization dummy1".split()
         )
-        expected_out = """\
+        expected_out = f"""\
+{FIXTURE_UTILIZATION_WARNING}\
 Resource Utilization:
  dummy1: test2=321
 """
@@ -5345,7 +5351,8 @@ Resource Utilization:
         output, returnVal = pcs(
             self.temp_large_cib.name, "resource utilization".split()
         )
-        expected_out = """\
+        expected_out = f"""\
+{FIXTURE_UTILIZATION_WARNING}\
 Resource Utilization:
  dummy: test1=-10 test4=1234
  dummy1: test2=321
@@ -5353,11 +5360,46 @@ Resource Utilization:
         ac(expected_out, output)
         self.assertEqual(0, returnVal)
 
+    def test_no_warning_printed_placement_strategy_is_set(self):
+        self.fixture_resource()
+        self.assert_effect(
+            "property set placement-strategy=minimal".split(),
+            self.fixture_xml_resource_no_utilization(),
+        )
+        self.assert_resources_xml_in_cib(
+            """
+            <crm_config>
+                <cluster_property_set id="cib-bootstrap-options">
+                    <nvpair id="cib-bootstrap-options-placement-strategy"
+                        name="placement-strategy" value="minimal"
+                    />
+                </cluster_property_set>
+            </crm_config>
+            """,
+            get_cib_part_func=lambda cib: etree.tostring(
+                etree.parse(cib).findall(".//crm_config")[0],
+            ),
+        )
+        self.assert_effect(
+            "resource utilization R test=100".split(),
+            self.fixture_xml_resource_with_utilization(),
+        )
+        self.assert_pcs_success(
+            "resource utilization".split(),
+            dedent(
+                """\
+                Resource Utilization:
+                 R: test=100
+                """
+            ),
+        )
+
     def test_resource_utilization_set_invalid(self):
         output, returnVal = pcs(
             self.temp_large_cib.name, "resource utilization dummy test".split()
         )
-        expected_out = """\
+        expected_out = f"""\
+{FIXTURE_UTILIZATION_WARNING}\
 Error: missing value of 'test' option
 """
         ac(expected_out, output)
@@ -5366,7 +5408,8 @@ Error: missing value of 'test' option
         output, returnVal = pcs(
             self.temp_large_cib.name, "resource utilization dummy =10".split()
         )
-        expected_out = """\
+        expected_out = f"""\
+{FIXTURE_UTILIZATION_WARNING}\
 Error: missing key in '=10' option
 """
         ac(expected_out, output)
@@ -5375,7 +5418,8 @@ Error: missing key in '=10' option
         output, returnVal = pcs(
             self.temp_large_cib.name, "resource utilization dummy0".split()
         )
-        expected_out = """\
+        expected_out = f"""\
+{FIXTURE_UTILIZATION_WARNING}\
 Error: Unable to find a resource: dummy0
 """
         ac(expected_out, output)
@@ -5385,7 +5429,8 @@ Error: Unable to find a resource: dummy0
             self.temp_large_cib.name,
             "resource utilization dummy0 test=10".split(),
         )
-        expected_out = """\
+        expected_out = f"""\
+{FIXTURE_UTILIZATION_WARNING}\
 Error: Unable to find a resource: dummy0
 """
         ac(expected_out, output)
@@ -5395,7 +5440,8 @@ Error: Unable to find a resource: dummy0
             self.temp_large_cib.name,
             "resource utilization dummy1 test1=10 test=int".split(),
         )
-        expected_out = """\
+        expected_out = f"""\
+{FIXTURE_UTILIZATION_WARNING}\
 Error: Value of utilization attribute must be integer: 'test=int'
 """
         ac(expected_out, output)
@@ -5406,6 +5452,7 @@ Error: Value of utilization attribute must be integer: 'test=int'
         self.assert_effect(
             "resource utilization R test=".split(),
             self.fixture_xml_resource_empty_utilization(),
+            FIXTURE_UTILIZATION_WARNING,
         )
 
     def test_dont_create_nvset_on_removal(self):
@@ -5413,6 +5460,7 @@ Error: Value of utilization attribute must be integer: 'test=int'
         self.assert_effect(
             "resource utilization R test=".split(),
             self.fixture_xml_resource_no_utilization(),
+            FIXTURE_UTILIZATION_WARNING,
         )
 
 
@@ -6438,7 +6486,10 @@ class BundleMiscCommands(BundleCommon):
         self.fixture_bundle("B")
         self.assert_pcs_fail(
             "resource utilization B aaa=10".split(),
-            "Error: Unable to find a resource: B\n",
+            (
+                f"{FIXTURE_UTILIZATION_WARNING}"
+                "Error: Unable to find a resource: B\n"
+            ),
         )
 
     @skip(

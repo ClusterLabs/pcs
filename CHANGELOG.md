@@ -10,7 +10,11 @@
   ([rhbz#2166289])
 - Commands `pcs resource describe` and `pcs stonith describe` print detailed
   info about resource options (data type or allowed values, default value)
+- Add warning to `pcs resource utilization` and `pcs node utilization` for the
+  case configuration is not in effect (cluster property `placement-strategy` is
+  not set appropriately) ([rhbz#2112259])
 
+[rhbz#2112259]: https://bugzilla.redhat.com/show_bug.cgi?id=2112259
 [rhbz#2166289]: https://bugzilla.redhat.com/show_bug.cgi?id=2166289
 [rhbz#2189958]: https://bugzilla.redhat.com/show_bug.cgi?id=2189958
 

@@ -2,6 +2,7 @@ import json
 
 import pcs.lib.pacemaker.live as lib_pacemaker
 from pcs import utils
+from pcs.cli.cluster_property.output import PropertyConfigurationFacade
 from pcs.cli.common.errors import (
     ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE,
     CmdLineInputError,
@@ -35,10 +36,15 @@ def node_utilization_cmd(lib, argv, modifiers):
       * -f - CIB file (in lib wrapper)
       * --name - specify attribute name to filter out
     """
-    del lib
     modifiers.ensure_only_supported("-f", "--name")
     if modifiers.get("--name") and len(argv) > 1:
         raise CmdLineInputError()
+    utils.print_warning_if_utilization_attrs_has_no_effect(
+        PropertyConfigurationFacade.from_properties_dtos(
+            lib.cluster_property.get_properties(),
+            lib.cluster_property.get_properties_metadata(),
+        )
+    )
     if not argv:
         print_node_utilization(filter_name=modifiers.get("--name"))
     elif len(argv) == 1:
