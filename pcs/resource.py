@@ -1043,9 +1043,7 @@ def resource_update(args: List[str], modifiers: InputModifiers) -> None:
             clone_child = utils.dom_elem_get_clone_ms_resource(clone)
             if clone_child:
                 child_id = clone_child.getAttribute("id")
-                # Drop 'meta' keyword as it is not allowed in 'pcs resource
-                # clone' command ultimately called from here
-                new_args = ra_values + meta_values
+                new_args = ["meta"] + ra_values + meta_values
                 for op_args in op_values:
                     if op_args:
                         new_args += ["op"] + op_args

@@ -2723,7 +2723,7 @@ class Resource(TestCase, AssertPcsMixin):
         self.assert_pcs_success("resource clone D0".split())
 
         self.assert_pcs_fail(
-            "resource promotable D3 promotable=false".split(),
+            "resource promotable D3 meta promotable=false".split(),
             "Error: you cannot specify both promotable option and promotable keyword\n",
         )
 

@@ -13,8 +13,9 @@ class ParseCloneArgs(TestCase):
         self.print_mock = print_patcher.start()
         self.addCleanup(print_patcher.stop)
         self.meta_deprecated = (
-            "Deprecation Warning: option 'meta' is deprecated and will be "
-            "removed in a future release."
+            "Deprecation Warning: configuring meta attributes without "
+            "specifying the 'meta' keyword is deprecated and will be removed "
+            "in a future release"
         )
 
     def assert_stderr(self, stderr=None):
@@ -51,13 +52,13 @@ class ParseCloneArgs(TestCase):
         self.assert_produce(
             ["a=b", "c=d"],
             {"clone_id": None, "meta": {"a": "b", "c": "d"}},
+            stderr=self.meta_deprecated,
         )
 
     def test_meta_options(self):
         self.assert_produce(
             ["meta", "a=b", "c=d"],
             {"clone_id": None, "meta": {"a": "b", "c": "d"}},
-            stderr=self.meta_deprecated,
         )
 
     def test_clone_id_and_clone_meta_options(self):
@@ -84,15 +85,13 @@ class ParseCloneArgs(TestCase):
 
     def test_missing_option_value(self):
         self.assert_raises_cmdline(
-            ["CloneId", "a"], "missing value of 'a' option"
+            ["CloneId", "a"],
+            "missing value of 'a' option",
+            stderr=self.meta_deprecated,
         )
 
     def test_missing_meta_option_value(self):
-        self.assert_raises_cmdline(
-            ["meta", "m"],
-            "missing value of 'm' option",
-            stderr=self.meta_deprecated,
-        )
+        self.assert_raises_cmdline(["meta", "m"], "missing value of 'm' option")
 
     def test_promotable_keyword_and_option(self):
         self.assert_raises_cmdline(

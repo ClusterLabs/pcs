@@ -385,7 +385,7 @@ class Clone(
             )
         )
         self.assert_pcs_fail(
-            "resource clone C globally-unique=true".split(),
+            "resource clone C meta globally-unique=true".split(),
             (
                 "Error: Clone option 'globally-unique' is not compatible with "
                 "'systemd:pacemaker' resource agent of resource 'C'\n"
@@ -417,7 +417,7 @@ class Clone(
             + "</group>"
         )
         self.assert_pcs_fail(
-            "resource clone G promotable=true".split(),
+            "resource clone G meta promotable=true".split(),
             (
                 "Error: Clone option 'promotable' is not compatible with "
                 "'systemd:pacemaker' resource agent of resource 'A' in group "
@@ -437,7 +437,7 @@ class Clone(
             )
         )
         self.assert_pcs_fail(
-            "resource clone C promotable=true".split(),
+            "resource clone C meta promotable=true".split(),
             (
                 "Error: Clone option 'promotable' is not compatible with "
                 "'systemd:pacemaker' resource agent of resource 'C'\n"
@@ -512,7 +512,7 @@ class Clone(
 
     def test_promotable_keyword_and_option(self):
         self.assert_pcs_fail(
-            "resource promotable C CustomCloneId promotable=false".split(),
+            "resource promotable C CustomCloneId meta promotable=false".split(),
             (
                 "Error: you cannot specify both promotable option and "
                 "promotable keyword\n"
@@ -530,8 +530,9 @@ class Clone(
             ).split(),
             fixture_resources_xml(FIXTURE_CLONE_WITH_OPTIONS),
             stderr_full=(
-                "Deprecation Warning: option 'meta' is deprecated and will be "
-                "removed in a future release.\n"
+                "Deprecation Warning: configuring meta attributes without "
+                "specifying the 'meta' keyword is deprecated and will be "
+                "removed in a future release\n"
             ),
         )
 
