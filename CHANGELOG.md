@@ -27,6 +27,8 @@
   Pacemaker-2.1.5-rc1 ([rhbz#2177996])
 - Make `pcs resource disable --simulate --brief` documentation clearer
   ([rhbz#2109852])
+- Fixed a regression causing crash in `pcs resource move` command (broken since
+  pcs-0.11.5) ([rhbz#2210855])
 
 ### Changed
 - Commands for displaying cluster configuration have been slightly updated:
@@ -50,6 +52,7 @@
 [rhbz#2175881]: https://bugzilla.redhat.com/show_bug.cgi?id=2175881
 [rhbz#2177996]: https://bugzilla.redhat.com/show_bug.cgi?id=2177996
 [rhbz#2179388]: https://bugzilla.redhat.com/show_bug.cgi?id=2179388
+[rhbz#2210855]: https://bugzilla.redhat.com/show_bug.cgi?id=2210855
 
 
 ## [0.11.5] - 2023-03-01

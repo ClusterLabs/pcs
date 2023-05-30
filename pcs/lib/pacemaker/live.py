@@ -384,7 +384,10 @@ def simulate_cib_xml(runner, cib_xml):
     string cib_xml -- CIB XML to simulate
     """
     try:
-        with tools.get_tmp_file() as new_cib_file, tools.get_tmp_file() as transitions_file:
+        with (
+            tools.get_tmp_file(None) as new_cib_file,
+            tools.get_tmp_file(None) as transitions_file,
+        ):
             cmd = [
                 __exec("crm_simulate"),
                 "--simulate",

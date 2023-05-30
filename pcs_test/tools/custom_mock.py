@@ -101,7 +101,7 @@ class TmpFileMock:
         except StopIteration:
             pass
 
-    def _mock_side_effect(self, data=None, binary=False):
+    def _mock_side_effect(self, data, binary=False):
         def _seek_callback(offset):
             if offset != 0:
                 raise AssertionError(
