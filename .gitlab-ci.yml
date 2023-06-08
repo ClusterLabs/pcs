@@ -1,19 +1,24 @@
 variables:
   APP_VERSION: "0.0.1+ci"
-  DIST_VERSION: "${APP_VERSION}.${CI_PROJECT_NAMESPACE}-${CI_COMMIT_SHORT_SHA}"
-  RPM_VERSION: "${APP_VERSION}-1.${CI_PROJECT_NAMESPACE}.$CI_COMMIT_SHORT_SHA"
-  BASE_IMAGE_NAME: "pcs-0.10"
+  DIST_VERSION: "${APP_VERSION}.${CI_PROJECT_NAMESPACE}.${BASE_IMAGE_NAME}-${CI_COMMIT_SHORT_SHA}"
+  RPM_VERSION: "${APP_VERSION}-1.${CI_PROJECT_NAMESPACE}.${BASE_IMAGE_NAME}.${CI_COMMIT_SHORT_SHA}"
 
 default:
   before_script:
     - "echo ${DIST_VERSION} > .tarball-version"
     - cat .tarball-version
 
+.parallel:
+  parallel:
+    matrix:
+      - BASE_IMAGE_NAME: ["PcsRhel8CurrentRelease", "PcsRhel8Next"]
+
 stages:
   - stage1
   - stage2
 
 rpm_build:
+  extends: .parallel
   stage: stage1
   script:
     - ./autogen.sh
@@ -28,6 +33,7 @@ rpm_build:
       - rpms
 
 distcheck:
+  extends: .parallel
   stage: stage1
   script:
     - "pip3 install
@@ -45,6 +51,7 @@ distcheck:
       - dist
 
 typos:
+  extends: .parallel
   stage: stage1
   script:
     - ./autogen.sh
@@ -53,6 +60,7 @@ typos:
     - make typos_check
 
 black:
+  extends: .parallel
   stage: stage1
   script:
     - python3 -m pip install --upgrade -r dev_requirements.txt
@@ -61,6 +69,7 @@ black:
     - make black_check
 
 isort:
+  extends: .parallel
   stage: stage1
   script:
     - python3 -m pip install --upgrade -r dev_requirements.txt
@@ -69,6 +78,7 @@ isort:
     - make isort_check
 
 pylint:
+  extends: .parallel
   stage: stage1
   script:
     - python3 -m pip install --upgrade -r dev_requirements.txt
@@ -78,6 +88,7 @@ pylint:
     - make pylint
 
 mypy:
+  extends: .parallel
   stage: stage1
   script:
     - python3 -m pip install --upgrade -r dev_requirements.txt
@@ -87,6 +98,7 @@ mypy:
     - make mypy
 
 ruby_tests:
+  extends: .parallel
   stage: stage1
   script:
     - ./autogen.sh
@@ -95,6 +107,7 @@ ruby_tests:
     - make pcsd-tests
 
 python_tier0_tests:
+  extends: .parallel
   stage: stage1
   script:
     - python3 -m pip install concurrencytest
@@ -104,11 +117,12 @@ python_tier0_tests:
     - make tests_tier0
 
 python_tier1_tests:
+  extends: .parallel
   stage: stage2
   needs:
     - rpm_build
   script:
-    - "dnf install -y rpms/pcs-*.rpm"
+    - "dnf install -y rpms/pcs-*${BASE_IMAGE_NAME}*$(rpm -E %{dist}).*.rpm"
     - python3 -m pip install concurrencytest
     - ./autogen.sh
     - ./configure --enable-local-build --enable-destructive-tests --enable-tests-only
@@ -116,17 +130,20 @@ python_tier1_tests:
     - pcs_test/suite -v --installed --tier1
 
 python_smoke_tests:
+  extends: .parallel
   stage: stage2
   needs:
     - rpm_build
   script:
-    - "dnf install -y rpms/pcs-*.rpm"
+    - "dnf install -y rpms/pcs-*${BASE_IMAGE_NAME}*$(rpm -E %{dist}).*.rpm"
     - systemctl start pcsd
     - sleep 2
     - ./autogen.sh
     - ./configure --enable-local-build --enable-tests-only
+    - rm -rf pcs
     - pcs_test/smoke.sh
   artifacts:
     paths:
       - /var/log/pcsd/
     when: on_failure
+    expire_in: 1 week
