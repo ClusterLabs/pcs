@@ -36,28 +36,29 @@ UNCHANGED_CRM_CONFIG = etree_to_str(
 )
 FIXTURE_CONFIG_OUTPUT = dedent(
     """\
-    Cluster Properties: cib-bootstrap-options
-      cluster-name=HACluster
-      enable-acl=false
-      have-watchdog=false
-      maintenance-mode=false
-      placement-strategy=minimal
+    Cluster Properties:
+     cluster-name: HACluster
+     enable-acl: false
+     have-watchdog: false
+     maintenance-mode: false
+     placement-strategy: minimal
     """
 )
-_DEFAULT_MARK_REGEXP = r"(  .*=.* \(default\)\n)+"
+_OTHER_PROPERTIES_REGEXP = r"( .*: .*\n)+"
 _CONFIG_PROPERTIES_REGEXP_LIST = [
-    r"Cluster Properties: cib-bootstrap-options\n",
-    r"  cluster-name=HACluster\n",
-    r"  enable-acl=false\n",
-    r"  have-watchdog=false\n",
-    r"  maintenance-mode=false\n",
-    r"  placement-strategy=minimal\n",
+    r"Cluster Properties:\n",
+    r" cluster-name: HACluster\n",
+    r" enable-acl: false\n",
+    r" have-watchdog: false\n",
+    r" maintenance-mode: false\n",
+    r" placement-strategy: minimal\n",
 ]
 CONFIG_ALL_REGEXP = (
-    _DEFAULT_MARK_REGEXP.join(_CONFIG_PROPERTIES_REGEXP_LIST)
-    + rf"{_DEFAULT_MARK_REGEXP}$"
+    _OTHER_PROPERTIES_REGEXP.join(_CONFIG_PROPERTIES_REGEXP_LIST)
+    + rf"{_OTHER_PROPERTIES_REGEXP}$"
 )
 DEFAULTS_REGEXP = r"^batch-limit=0\n(.*=.*\n)+$"
+DEFAULTS_REGEXP_LEGACY = r"^Cluster Properties:\n batch-limit: 0\n (.*: .*\n)+$"
 
 
 def get_invalid_option_messages(option_names, error=True, forceable=True):
@@ -304,7 +305,7 @@ class ConfigMixin(PropertyMixin):
     def test_defaults_option(self):
         self.assert_pcs_success(
             self.command + ["--defaults"],
-            stdout_regexp=DEFAULTS_REGEXP,
+            stdout_regexp=DEFAULTS_REGEXP_LEGACY,
         )
 
     def test_all_option(self):
@@ -428,9 +429,9 @@ class TestPropertyConfig(ConfigMixin, TestCase):
             UNCHANGED_CRM_CONFIG,
             dedent(
                 """\
-                Cluster Properties: cib-bootstrap-options
-                  batch-limit=0 (default)
-                  maintenance-mode=false
+                Cluster Properties:
+                 batch-limit: 0
+                 maintenance-mode: false
                 """
             ),
         )

@@ -46,6 +46,16 @@ FIXTURE_TEXT_OUTPUT_FIRST_SET = dedent(
     """
 )
 
+FIXTURE_LEGACY_TEXT_OUTPUT_FIRST_SET = dedent(
+    """\
+    Cluster Properties:
+     property1: val1
+     property2: val2
+     readonly1: ro_val1
+     readonly2: ro_val2
+    """
+)
+
 
 def fixture_property_metadata(
     name="property-name",
@@ -84,6 +94,24 @@ FIXTURE_PROPERTY_METADATA_LIST = [
         name="property4", default="default4", advanced=True
     ),
 ]
+
+FIXTURE_PROPERTIES_FACADE = PropertyConfigurationFacade(
+    properties=[
+        CibNvsetDto(
+            id="id1",
+            options={},
+            rule=None,
+            nvpairs=[
+                CibNvpairDto(id="", name="readonly1", value="ro_val1"),
+                CibNvpairDto(id="", name="readonly2", value="ro_val2"),
+                CibNvpairDto(id="", name="property2", value="val2"),
+                CibNvpairDto(id="", name="property1", value="default1"),
+            ],
+        )
+    ],
+    properties_metadata=FIXTURE_PROPERTY_METADATA_LIST,
+    readonly_properties=FIXTURE_READONLY_PROPERTIES_LIST,
+)
 
 
 class TestPropertyConfigurationFacadeCreate(TestCase):
@@ -655,3 +683,118 @@ class TestClusterPropertyMetadataToText(TestCase):
             """
         )
         self.assert_lines(metadata, output)
+
+
+class TestPropertiesToTextLegacy(TestCase):
+    def assert_lines(
+        self,
+        facade,
+        output,
+        property_names=None,
+        defaults_only=False,
+        include_defaults=False,
+    ):
+        self.assertEqual(
+            "\n".join(
+                cluster_property.properties_to_text_legacy(
+                    facade, property_names, defaults_only, include_defaults
+                )
+            )
+            + "\n",
+            output,
+        )
+
+    def test_no_cluster_properties(self):
+        facade = PropertyConfigurationFacade(
+            properties=[], properties_metadata=[], readonly_properties=[]
+        )
+        output = "Cluster Properties:\n"
+        self.assert_lines(facade, output)
+
+    def test_empty_cluster_property_set(self):
+        facade = PropertyConfigurationFacade(
+            properties=[
+                CibNvsetDto(id="id1", options={}, rule=None, nvpairs=[])
+            ],
+            properties_metadata=[],
+            readonly_properties=[],
+        )
+        output = dedent(
+            """\
+            Cluster Properties:
+            """
+        )
+        self.assert_lines(facade, output)
+
+    def test_one_cluster_property_set(self):
+        facade = PropertyConfigurationFacade(
+            properties=FIXTURE_TWO_PROPERTY_SETS[0:1],
+            properties_metadata=[],
+            readonly_properties=[],
+        )
+        output = FIXTURE_LEGACY_TEXT_OUTPUT_FIRST_SET
+        self.assert_lines(facade, output)
+
+    def test_more_cluster_property_sets_first_is_displayed(self):
+        facade = PropertyConfigurationFacade(
+            properties=FIXTURE_TWO_PROPERTY_SETS,
+            properties_metadata=[],
+            readonly_properties=[],
+        )
+        output = FIXTURE_LEGACY_TEXT_OUTPUT_FIRST_SET
+        self.assert_lines(facade, output)
+
+    def test_specified_properties(self):
+        facade = FIXTURE_PROPERTIES_FACADE
+        output = dedent(
+            """\
+            Cluster Properties:
+             property2: val2
+             property4: default4
+             readonly2: ro_val2
+            """
+        )
+        self.assert_lines(
+            facade,
+            output,
+            property_names=["property2", "readonly2", "property4", "other"],
+        )
+
+    def test_defaults(self):
+        facade = FIXTURE_PROPERTIES_FACADE
+        output = dedent(
+            """\
+            Cluster Properties:
+             property1: default1
+             property2: default2
+             property3: default3
+             property4: default4
+            """
+        )
+        self.assert_lines(facade, output, defaults_only=True)
+
+    def test_all(self):
+        facade = FIXTURE_PROPERTIES_FACADE
+        output = dedent(
+            """\
+            Cluster Properties:
+             property1: default1
+             property2: val2
+             property3: default3
+             property4: default4
+             readonly1: ro_val1
+             readonly2: ro_val2
+            """
+        )
+        self.assert_lines(facade, output, include_defaults=True)
+
+    def test_assertion_error(self):
+        with self.assertRaises(AssertionError) as cm:
+            cluster_property.properties_to_text_legacy(
+                FIXTURE_PROPERTIES_FACADE,
+                property_names=["property_name1"],
+                include_defaults=True,
+            )
+        self.assertEqual(
+            str(cm.exception), "Mutually exclusive parameters were used."
+        )

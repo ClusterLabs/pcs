@@ -6,8 +6,7 @@ from pcs.cli.cluster_property.output import (
     cluster_property_metadata_to_text,
     properties_defaults_to_text,
     properties_to_cmd,
-    properties_to_text,
-    properties_to_text_with_default_mark,
+    properties_to_text_legacy,
 )
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.output import smart_wrap_text
@@ -135,19 +134,15 @@ def config(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
 
     if argv:
         output = "\n".join(
-            properties_to_text_with_default_mark(
-                properties_facade, property_names=argv
-            )
+            properties_to_text_legacy(properties_facade, property_names=argv)
         )
     elif modifiers.get("--all"):
         output = "\n".join(
-            properties_to_text_with_default_mark(properties_facade)
+            properties_to_text_legacy(properties_facade, include_defaults=True)
         )
     elif modifiers.get("--defaults"):
         output = "\n".join(
-            properties_defaults_to_text(
-                properties_facade.get_defaults(include_advanced=True)
-            )
+            properties_to_text_legacy(properties_facade, defaults_only=True)
         )
     elif output_format == "cmd":
         output = " \\\n".join(properties_to_cmd(properties_facade))
@@ -156,7 +151,7 @@ def config(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
             dto.to_dict(ListCibNvsetDto(properties_facade.properties[0:1]))
         )
     else:
-        output = "\n".join(properties_to_text(properties_facade))
+        output = "\n".join(properties_to_text_legacy(properties_facade))
 
     if output:
         print(output)

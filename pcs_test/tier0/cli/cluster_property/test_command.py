@@ -230,8 +230,8 @@ class TestConfig(TestCase):
         mock_print.assert_called_once_with(
             dedent(
                 """\
-                Cluster Properties: cib-bootstrap-options
-                  property_name=value1"""
+                Cluster Properties:
+                 property_name: value1"""
             )
         )
 
@@ -242,9 +242,9 @@ class TestConfig(TestCase):
         mock_print.assert_called_once_with(
             dedent(
                 """\
-                Cluster Properties: cib-bootstrap-options
-                  property_advanced=default (default)
-                  property_name=value1"""
+                Cluster Properties:
+                 property_advanced: default
+                 property_name: value1"""
             )
         )
 
@@ -263,9 +263,9 @@ class TestConfig(TestCase):
         mock_print.assert_called_once_with(
             dedent(
                 """\
-                Cluster Properties: cib-bootstrap-options
-                  property_advanced=default (default)
-                  property_name=value1"""
+                Cluster Properties:
+                 property_advanced: default
+                 property_name: value1"""
             )
         )
 
@@ -276,8 +276,9 @@ class TestConfig(TestCase):
         mock_print.assert_called_once_with(
             dedent(
                 """\
-                property_advanced=default
-                property_name=default"""
+                Cluster Properties:
+                 property_advanced: default
+                 property_name: default"""
             )
         )
 

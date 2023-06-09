@@ -254,3 +254,58 @@ def cluster_property_metadata_to_text(
     for parameter_dto in metadata:
         text.extend(resource_agent_parameter_metadata_to_text(parameter_dto))
     return text
+
+
+def properties_to_text_legacy(
+    properties_facade: PropertyConfigurationFacade,
+    property_names: Optional[StringSequence] = None,
+    defaults_only=False,
+    include_defaults=False,
+) -> List[str]:
+    """
+    Return legacy text format of configured properties. If property_names is
+    specified, then only properties from the list are displayed. If specified
+    property is missing, then property with its default value is displayed.
+    Parameters property_names, defaults_only and include_defaults are
+    mutually_exclusive.
+
+    properties_facade -- cluster property configuration and metadata
+    property_names -- properties to be displayed
+    defaults_only -- display only properties default values
+    include_defaults -- display default values for not configured properties
+    """
+    mutual_exclusive = [
+        bool(param)
+        for param in [property_names, defaults_only, include_defaults]
+    ]
+    if mutual_exclusive.count(True) > 1:
+        raise AssertionError("Mutually exclusive parameters were used.")
+    text = ["Cluster Properties:"]
+    configured_properties_dict = {}
+    if properties_facade.properties:
+        configured_properties_dict = {
+            nvpair.name: nvpair.value
+            for nvpair in properties_facade.properties[0].nvpairs
+        }
+    default_properties_dict = properties_facade.get_defaults(
+        include_advanced=True
+    )
+    all_properties_dict = {
+        **default_properties_dict,
+        **configured_properties_dict,
+    }
+    if defaults_only:
+        properties_dict = default_properties_dict
+    elif include_defaults:
+        properties_dict = all_properties_dict
+    elif property_names:
+        properties_dict = {
+            name: value
+            for name, value in all_properties_dict.items()
+            if name in property_names
+        }
+    else:
+        properties_dict = configured_properties_dict
+    for name, value in sorted(properties_dict.items()):
+        text.append(f" {name}: {value}")
+    return text

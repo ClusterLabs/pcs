@@ -47,7 +47,7 @@ from pcs import (
 )
 from pcs.cli.cluster_property.output import (
     PropertyConfigurationFacade,
-    properties_to_text,
+    properties_to_text_legacy,
 )
 from pcs.cli.common import middleware
 from pcs.cli.common.errors import CmdLineInputError
@@ -242,7 +242,7 @@ def _config_show_cib_lines(lib, properties_facade=None):
         properties_facade = PropertyConfigurationFacade.from_properties_config(
             lib.cluster_property.get_properties()
         )
-    properties_lines = properties_to_text(properties_facade)
+    properties_lines = properties_to_text_legacy(properties_facade)
     all_lines.append("")
     all_lines.extend(properties_lines)
 
