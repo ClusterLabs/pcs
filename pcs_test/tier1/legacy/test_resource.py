@@ -4782,6 +4782,42 @@ class MetaAttrs(
             ),
         )
 
+    def test_clone_promotable_unsupported_force(self):
+        self.set_cib_file(
+            f"""
+            <clone id="clone-R">
+                {self._fixture_xml_resource_no_meta()}
+            </clone>
+            """
+        )
+        self.assert_effect(
+            "resource meta clone-R promotable=1 --force".split(),
+            """
+                <resources>
+                    <clone id="clone-R">
+                        <primitive class="ocf" id="R" provider="pacemaker"
+                            type="Dummy"
+                        >
+                            <operations>
+                                <op id="R-monitor-interval-10s" interval="10s"
+                                    name="monitor" timeout="20s"
+                                />
+                            </operations>
+                        </primitive>
+                        <meta_attributes id="clone-R-meta_attributes">
+                            <nvpair id="clone-R-meta_attributes-promotable"
+                                name="promotable" value="1"
+                            />
+                        </meta_attributes>
+                    </clone>
+                </resources>
+            """,
+            stderr_full=(
+                "Warning: Clone option 'promotable' is not compatible with "
+                "'ocf:pacemaker:Dummy' resource agent of resource 'R'\n"
+            ),
+        )
+
 
 class UpdateInstanceAttrs(
     TestCase,
@@ -5052,7 +5088,7 @@ class UpdateInstanceAttrs(
 
     def test_clone_promotable_not_ocf(self):
         self.set_cib_file(self.fixture_not_ocf_clone())
-        self.assert_pcs_fail(
+        self.assert_pcs_fail_regardless_of_force(
             "resource update clone-R promotable=1".split(),
             (
                 "Error: Clone option 'promotable' is not compatible with "
@@ -5062,7 +5098,7 @@ class UpdateInstanceAttrs(
 
     def test_clone_globally_unique_not_ocf(self):
         self.set_cib_file(self.fixture_not_ocf_clone())
-        self.assert_pcs_fail(
+        self.assert_pcs_fail_regardless_of_force(
             "resource update clone-R globally-unique=1".split(),
             (
                 "Error: Clone option 'globally-unique' is not compatible with "

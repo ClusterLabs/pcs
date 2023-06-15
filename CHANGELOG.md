@@ -35,6 +35,8 @@
   ([rhbz#2109852])
 - Fixed a regression causing crash in `pcs resource move` command (broken since
   pcs-0.11.5) ([rhbz#2210855])
+- Using `--force` in `pcs resource meta` command had no effect on a specific
+  error message even if the message suggested otherwise.
 
 ### Changed
 - Commands for displaying cluster configuration have been slightly updated:

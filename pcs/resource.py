@@ -1794,7 +1794,7 @@ def _check_clone_incompatible_options_child(
     report_list = []
     if child_el.tagName == "primitive":
         report_list = _check_clone_incompatible_options_primitive(
-            child_el, clone_meta_attrs
+            child_el, clone_meta_attrs, force=force
         )
     elif child_el.tagName == "group":
         group_id = child_el.getAttribute("id")
