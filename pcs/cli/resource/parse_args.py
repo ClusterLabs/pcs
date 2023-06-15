@@ -3,6 +3,7 @@ from pcs.cli.common.errors import (
     CmdLineInputError,
 )
 from pcs.cli.common.parse_args import (
+    FUTURE_OPTION,
     group_by_keywords,
     prepare_options,
 )
@@ -71,22 +72,126 @@ def parse_clone(arg_list, promotable=False):
     return parts
 
 
-def parse_create(arg_list):
-    groups = group_by_keywords(
+def parse_create(arg_list, new_parser=False):
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-statements
+    groups = {}
+    top_groups = group_by_keywords(
         arg_list,
-        set(["op", "meta", "clone", "promotable", "bundle"]),
+        set(["clone", "promotable", "bundle"]),
+        implicit_first_group_key="primitive",
+        keyword_repeat_allowed=False,
+        only_found_keywords=True,
+    )
+
+    primitive_groups = group_by_keywords(
+        top_groups.get("primitive", []),
+        set(["op", "meta"]),
         implicit_first_group_key="options",
         group_repeated_keywords=["op"],
         only_found_keywords=True,
     )
+    groups["options"] = primitive_groups.get("options", [])
+    groups["meta"] = primitive_groups.get("meta", [])
+    groups["op"] = primitive_groups.get("op", [])
+
+    for clone_type in ("clone", "promotable"):
+        if clone_type in top_groups:
+            clone_groups = group_by_keywords(
+                top_groups[clone_type],
+                set(["op", "meta"]),
+                implicit_first_group_key="options",
+                group_repeated_keywords=["op"],
+                only_found_keywords=True,
+            )
+            groups[clone_type] = clone_groups.get("options", [])
+            if groups[clone_type]:
+                clone_meta = (
+                    groups[clone_type][1:]
+                    if "=" not in groups[clone_type][0]
+                    else groups[clone_type]
+                )
+                if clone_meta:
+                    if new_parser:
+                        raise CmdLineInputError(
+                            f"Specifying instance attributes for a {clone_type} "
+                            f"is not supported. Use 'meta' after '{clone_type}' "
+                            "if you want to specify meta attributes."
+                        )
+                    deprecation_warning(
+                        f"Configuring {clone_type} meta attributes without specifying "
+                        f"the 'meta' keyword after the '{clone_type}' keyword "
+                        "is deprecated and will be removed in a future release. "
+                        f"Specify {FUTURE_OPTION} to switch to the future behavior."
+                    )
+            if "op" in clone_groups:
+                if new_parser:
+                    raise CmdLineInputError(
+                        "op settings must be defined on the base resource, "
+                        f"not the {clone_type}"
+                    )
+                deprecation_warning(
+                    f"Specifying 'op' after '{clone_type}' now defines "
+                    "operations for the base resource. In future, this "
+                    f"will be removed and operations will have to be specified "
+                    f"before '{clone_type}'. "
+                    f"Specify {FUTURE_OPTION} to switch to the future behavior."
+                )
+                groups["op"] += clone_groups["op"]
+            if "meta" in clone_groups:
+                if new_parser:
+                    groups[clone_type] += clone_groups["meta"]
+                else:
+                    deprecation_warning(
+                        f"Specifying 'meta' after '{clone_type}' now defines "
+                        "meta attributes for the base resource. In future, this "
+                        f"will define meta attributes for the {clone_type}. "
+                        f"Specify {FUTURE_OPTION} to switch to the future behavior."
+                    )
+                    groups["meta"] += clone_groups["meta"]
+
+    if "bundle" in top_groups:
+        bundle_groups = group_by_keywords(
+            top_groups["bundle"],
+            set(["op", "meta"]),
+            implicit_first_group_key="options",
+            group_repeated_keywords=["op"],
+            only_found_keywords=True,
+        )
+        groups["bundle"] = bundle_groups.get("options", [])
+        if "meta" in bundle_groups:
+            if new_parser:
+                raise CmdLineInputError(
+                    "meta options must be defined on the base resource, "
+                    "not the bundle"
+                )
+            deprecation_warning(
+                "Specifying 'meta' after 'bundle' now defines meta options for "
+                "the base resource. In future, this will be removed and meta "
+                "options will have to be specified before 'bundle'. "
+                f"Specify {FUTURE_OPTION} to switch to the future behavior."
+            )
+            groups["meta"] += bundle_groups["meta"]
+        if "op" in bundle_groups:
+            if new_parser:
+                raise CmdLineInputError(
+                    "op settings must be defined on the base resource, "
+                    "not the bundle"
+                )
+            deprecation_warning(
+                "Specifying 'op' after 'bundle' now defines operations for the "
+                "base resource. In future, this will be removed and operations "
+                "will have to be specified before 'bundle'. "
+                f"Specify {FUTURE_OPTION} to switch to the future behavior."
+            )
+            groups["op"] += bundle_groups["op"]
 
     try:
         parts = {
-            "meta": prepare_options(groups.get("meta", [])),
-            "options": prepare_options(groups.get("options", [])),
+            "meta": prepare_options(groups["meta"]),
+            "options": prepare_options(groups["options"]),
             "op": [
-                prepare_options(op)
-                for op in build_operations(groups.get("op", []))
+                prepare_options(op) for op in build_operations(groups["op"])
             ],
         }
 

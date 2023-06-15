@@ -114,8 +114,83 @@ class ParseCloneArgs(TestCase):
 
 
 class ParseCreateArgs(TestCase):
+    # pylint: disable=too-many-public-methods
+    future = False
+    msg_clone_without_meta = (
+        "Deprecation Warning: Configuring clone meta attributes without "
+        "specifying the 'meta' keyword after the 'clone' keyword is deprecated "
+        "and will be removed in a future release. Specify --future to switch "
+        "to the future behavior."
+    )
+    msg_clone_without_meta_err = (
+        "Specifying instance attributes for a clone is not supported. Use "
+        "'meta' after 'clone' if you want to specify meta attributes."
+    )
+    msg_promotable_without_meta = (
+        "Deprecation Warning: Configuring promotable meta attributes without "
+        "specifying the 'meta' keyword after the 'promotable' keyword is deprecated "
+        "and will be removed in a future release. Specify --future to switch "
+        "to the future behavior."
+    )
+    msg_promotable_without_meta_err = (
+        "Specifying instance attributes for a promotable is not supported. Use "
+        "'meta' after 'promotable' if you want to specify meta attributes."
+    )
+    msg_meta_after_clone = (
+        "Deprecation Warning: Specifying 'meta' after 'clone' now defines "
+        "meta attributes for the base resource. In future, this will define "
+        "meta attributes for the clone. Specify --future to switch to the "
+        "future behavior."
+    )
+    msg_op_after_clone = (
+        "Deprecation Warning: Specifying 'op' after 'clone' now defines "
+        "operations for the base resource. In future, this will be removed and "
+        "operations will have to be specified before 'clone'. Specify --future "
+        "to switch to the future behavior."
+    )
+    msg_op_after_clone_err = (
+        "op settings must be defined on the base resource, not the clone"
+    )
+    msg_meta_after_bundle = (
+        "Deprecation Warning: Specifying 'meta' after 'bundle' now defines "
+        "meta options for the base resource. In future, this will be removed "
+        "and meta options will have to be specified before 'bundle'. Specify "
+        "--future to switch to the future behavior."
+    )
+    msg_meta_after_bundle_err = (
+        "meta options must be defined on the base resource, not the bundle"
+    )
+    msg_op_after_bundle = (
+        "Deprecation Warning: Specifying 'op' after 'bundle' now defines "
+        "operations for the base resource. In future, this will be removed and "
+        "operations will have to be specified before 'bundle'. Specify "
+        "--future to switch to the future behavior."
+    )
+    msg_op_after_bundle_err = (
+        "op settings must be defined on the base resource, not the bundle"
+    )
+
+    def setUp(self):
+        print_patcher = mock.patch("pcs.cli.reports.output.print_to_stderr")
+        self.print_mock = print_patcher.start()
+        self.addCleanup(print_patcher.stop)
+
+    def assert_stderr(self, stderr=None):
+        if stderr is None:
+            self.print_mock.assert_not_called()
+        else:
+            calls = [mock.call(item) for item in stderr]
+            self.print_mock.assert_has_calls(calls)
+            self.assertEqual(self.print_mock.call_count, len(calls))
+
     def assert_produce(self, arg_list, result):
-        self.assertEqual(parse_args.parse_create(arg_list), result)
+        self.assertEqual(parse_args.parse_create(arg_list, self.future), result)
+
+    def assert_raises_cmdline(self, args, msg=""):
+        with self.assertRaises(CmdLineInputError) as cm:
+            parse_args.parse_create(args, self.future)
+        exception = cm.exception
+        self.assertEqual(msg, exception.message)
 
     def test_no_args(self):
         self.assert_produce(
@@ -126,6 +201,7 @@ class ParseCreateArgs(TestCase):
                 "op": [],
             },
         )
+        self.assert_stderr()
 
     def test_only_instance_attributes(self):
         self.assert_produce(
@@ -139,6 +215,7 @@ class ParseCreateArgs(TestCase):
                 "op": [],
             },
         )
+        self.assert_stderr()
 
     def test_only_meta(self):
         self.assert_produce(
@@ -152,6 +229,7 @@ class ParseCreateArgs(TestCase):
                 },
             },
         )
+        self.assert_stderr()
 
     def test_only_clone(self):
         self.assert_produce(
@@ -166,8 +244,22 @@ class ParseCreateArgs(TestCase):
                 },
             },
         )
+        self.assert_stderr([self.msg_clone_without_meta])
 
     def test_only_clone_with_custom_id(self):
+        self.assert_produce(
+            ["clone", "CustomCloneId"],
+            {
+                "meta": {},
+                "options": {},
+                "op": [],
+                "clone": {},
+                "clone_id": "CustomCloneId",
+            },
+        )
+        self.assert_stderr()
+
+    def test_only_clone_with_custom_id_and_meta(self):
         self.assert_produce(
             ["clone", "CustomCloneId", "a=b", "c=d"],
             {
@@ -181,6 +273,7 @@ class ParseCreateArgs(TestCase):
                 "clone_id": "CustomCloneId",
             },
         )
+        self.assert_stderr([self.msg_clone_without_meta])
 
     def test_only_promotable(self):
         self.assert_produce(
@@ -195,8 +288,22 @@ class ParseCreateArgs(TestCase):
                 },
             },
         )
+        self.assert_stderr([self.msg_promotable_without_meta])
 
     def test_only_promotable_with_custom_id(self):
+        self.assert_produce(
+            ["promotable", "CustomCloneId"],
+            {
+                "meta": {},
+                "options": {},
+                "op": [],
+                "promotable": {},
+                "clone_id": "CustomCloneId",
+            },
+        )
+        self.assert_stderr()
+
+    def test_only_promotable_with_custom_id_and_meta(self):
         self.assert_produce(
             ["promotable", "CustomCloneId", "a=b", "c=d"],
             {
@@ -210,6 +317,7 @@ class ParseCreateArgs(TestCase):
                 "clone_id": "CustomCloneId",
             },
         )
+        self.assert_stderr([self.msg_promotable_without_meta])
 
     def test_only_operations(self):
         self.assert_produce(
@@ -230,6 +338,7 @@ class ParseCreateArgs(TestCase):
                 ],
             },
         )
+        self.assert_stderr()
 
     def test_args_op_clone_meta(self):
         self.assert_produce(
@@ -268,22 +377,23 @@ class ParseCreateArgs(TestCase):
                 },
             },
         )
-
-    def assert_raises_cmdline(self, args):
-        self.assertRaises(
-            CmdLineInputError, lambda: parse_args.parse_create(args)
-        )
+        self.assert_stderr([self.msg_clone_without_meta])
 
     def test_raises_when_operation_name_does_not_follow_op_keyword(self):
-        self.assert_raises_cmdline(["op", "a=b"])
-        self.assert_raises_cmdline(["op", "monitor", "a=b", "op", "c=d"])
+        msg = "When using 'op' you must specify an operation name after 'op'"
+        self.assert_raises_cmdline(["op", "a=b"], msg)
+        self.assert_raises_cmdline(["op", "monitor", "a=b", "op", "c=d"], msg)
 
     def test_raises_when_operation_have_no_option(self):
-        self.assert_raises_cmdline(
-            ["op", "monitor", "a=b", "start", "stop", "c=d"]
+        msg = (
+            "When using 'op' you must specify an operation name and at least "
+            "one option"
         )
         self.assert_raises_cmdline(
-            ["op", "monitor", "a=b", "stop", "c=d", "op", "start"]
+            ["op", "monitor", "a=b", "start", "stop", "c=d"], msg
+        )
+        self.assert_raises_cmdline(
+            ["op", "monitor", "a=b", "stop", "c=d", "op", "start"], msg
         )
 
     def test_allow_to_repeat_op(self):
@@ -306,9 +416,312 @@ class ParseCreateArgs(TestCase):
                 ],
             },
         )
+        self.assert_stderr()
 
     def test_deal_with_empty_operatins(self):
-        self.assert_raises_cmdline(["op", "monitoring", "a=b", "op"])
+        msg = (
+            "When using 'op' you must specify an operation name and at least "
+            "one option"
+        )
+        self.assert_raises_cmdline(["op", "monitoring", "a=b", "op"], msg)
+
+    def test_op_after_clone(self):
+        self.assert_produce(
+            [
+                "a=b",
+                "c=d",
+                "meta",
+                "e=f",
+                "g=h",
+                "clone",
+                "o=p",
+                "q=r",
+                "op",
+                "monitor",
+                "i=j",
+                "k=l",
+                "start",
+                "m=n",
+            ],
+            {
+                "options": {
+                    "a": "b",
+                    "c": "d",
+                },
+                "op": [
+                    {"name": "monitor", "i": "j", "k": "l"},
+                    {"name": "start", "m": "n"},
+                ],
+                "meta": {
+                    "e": "f",
+                    "g": "h",
+                },
+                "clone": {
+                    "o": "p",
+                    "q": "r",
+                },
+            },
+        )
+        self.assert_stderr(
+            [self.msg_clone_without_meta, self.msg_op_after_clone]
+        )
+
+    def test_meta_after_clone(self):
+        self.assert_produce(
+            [
+                "a=b",
+                "c=d",
+                "op",
+                "monitor",
+                "i=j",
+                "k=l",
+                "start",
+                "m=n",
+                "clone",
+                "o=p",
+                "q=r",
+                "meta",
+                "e=f",
+                "g=h",
+            ],
+            {
+                "options": {
+                    "a": "b",
+                    "c": "d",
+                },
+                "op": [
+                    {"name": "monitor", "i": "j", "k": "l"},
+                    {"name": "start", "m": "n"},
+                ],
+                "meta": {
+                    "e": "f",
+                    "g": "h",
+                },
+                "clone": {
+                    "o": "p",
+                    "q": "r",
+                },
+            },
+        )
+        self.assert_stderr(
+            [self.msg_clone_without_meta, self.msg_meta_after_clone]
+        )
+
+    def test_bundle_no_options(self):
+        self.assert_produce(
+            ["bundle"],
+            {
+                "bundle": [],
+                "meta": {},
+                "op": [],
+                "options": {},
+            },
+        )
+        self.assert_stderr()
+
+    def test_bundle(self):
+        self.assert_produce(
+            ["bundle", "b"],
+            {
+                "bundle": ["b"],
+                "meta": {},
+                "op": [],
+                "options": {},
+            },
+        )
+        self.assert_stderr()
+
+    def test_op_after_bundle(self):
+        self.assert_produce(
+            ["bundle", "b", "op", "monitor", "a=b", "c=d", "start", "e=f"],
+            {
+                "bundle": ["b"],
+                "meta": {},
+                "op": [
+                    {"name": "monitor", "a": "b", "c": "d"},
+                    {"name": "start", "e": "f"},
+                ],
+                "options": {},
+            },
+        )
+        self.assert_stderr([self.msg_op_after_bundle])
+
+    def test_meta_after_bundle(self):
+        self.assert_produce(
+            ["bundle", "b", "meta", "a=b", "c=d"],
+            {
+                "bundle": ["b"],
+                "meta": {"a": "b", "c": "d"},
+                "op": [],
+                "options": {},
+            },
+        )
+        self.assert_stderr([self.msg_meta_after_bundle])
+
+    def test_multiple_meta(self):
+        self.assert_produce(
+            [
+                "a=b",
+                "c=d",
+                "meta",
+                "e=f",
+                "meta",
+                "g=h",
+                "clone",
+                "meta",
+                "m=n",
+                "meta",
+                "o=p",
+            ],
+            {
+                "options": {"a": "b", "c": "d"},
+                "meta": {"e": "f", "g": "h", "m": "n", "o": "p"},
+                "op": [],
+                "clone": {},
+            },
+        )
+        self.assert_stderr([self.msg_meta_after_clone])
+
+
+class ParseCreateArgsFuture(ParseCreateArgs):
+    future = True
+
+    def test_op_after_clone(self):
+        self.assert_raises_cmdline(
+            ["clone", "op", "monitor", "i=j", "k=l"],
+            self.msg_op_after_clone_err,
+        )
+
+    def test_only_clone(self):
+        self.assert_raises_cmdline(
+            ["clone", "a=b", "c=d"], self.msg_clone_without_meta_err
+        )
+
+    def test_only_clone_with_custom_id_and_meta(self):
+        self.assert_raises_cmdline(
+            ["clone", "CustomCloneId", "a=b", "c=d"],
+            self.msg_clone_without_meta_err,
+        )
+
+    def test_only_clone_with_custom_id_and_meta_correct(self):
+        self.assert_produce(
+            ["clone", "CustomCloneId", "meta", "a=b", "c=d"],
+            {
+                "meta": {},
+                "options": {},
+                "op": [],
+                "clone": {"a": "b", "c": "d"},
+                "clone_id": "CustomCloneId",
+            },
+        )
+
+    def test_only_promotable(self):
+        self.assert_raises_cmdline(
+            ["promotable", "a=b", "c=d"], self.msg_promotable_without_meta_err
+        )
+
+    def test_only_promotable_with_custom_id_and_meta(self):
+        self.assert_raises_cmdline(
+            ["promotable", "CustomCloneId", "a=b", "c=d"],
+            self.msg_promotable_without_meta_err,
+        )
+
+    def test_only_promotable_with_custom_id_and_meta_correct(self):
+        self.assert_produce(
+            ["promotable", "CustomCloneId", "meta", "a=b", "c=d"],
+            {
+                "meta": {},
+                "options": {},
+                "op": [],
+                "promotable": {"a": "b", "c": "d"},
+                "clone_id": "CustomCloneId",
+            },
+        )
+
+    def test_args_op_clone_meta(self):
+        self.assert_raises_cmdline(
+            [
+                "a=b",
+                "c=d",
+                "meta",
+                "e=f",
+                "g=h",
+                "op",
+                "monitor",
+                "i=j",
+                "k=l",
+                "start",
+                "m=n",
+                "clone",
+                "o=p",
+                "q=r",
+            ],
+            self.msg_clone_without_meta_err,
+        )
+
+    def test_meta_after_clone(self):
+        self.assert_produce(
+            [
+                "a=b",
+                "c=d",
+                "op",
+                "monitor",
+                "i=j",
+                "k=l",
+                "start",
+                "m=n",
+                "clone",
+                "meta",
+                "e=f",
+                "g=h",
+            ],
+            {
+                "options": {"a": "b", "c": "d"},
+                "op": [
+                    {"name": "monitor", "i": "j", "k": "l"},
+                    {"name": "start", "m": "n"},
+                ],
+                "meta": {},
+                "clone": {"e": "f", "g": "h"},
+            },
+        )
+        self.assert_stderr()
+
+    def test_op_after_bundle(self):
+        self.assert_raises_cmdline(
+            ["bundle", "b", "op", "monitor", "a=b", "c=d", "start", "e=f"],
+            self.msg_op_after_bundle_err,
+        )
+
+    def test_meta_after_bundle(self):
+        self.assert_raises_cmdline(
+            ["bundle", "b", "meta", "a=b", "c=d"],
+            self.msg_meta_after_bundle_err,
+        )
+
+    def test_multiple_meta(self):
+        self.assert_produce(
+            [
+                "a=b",
+                "c=d",
+                "meta",
+                "e=f",
+                "meta",
+                "g=h",
+                "clone",
+                "meta",
+                "m=n",
+                "meta",
+                "o=p",
+            ],
+            {
+                "options": {"a": "b", "c": "d"},
+                "meta": {"e": "f", "g": "h"},
+                "op": [],
+                "clone": {"m": "n", "o": "p"},
+            },
+        )
+        self.assert_stderr()
 
 
 class ParseCreateSimple(TestCase):

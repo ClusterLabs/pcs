@@ -146,7 +146,7 @@ class SplitListTest(TestCase):
         )
 
 
-class SplitByKeywords(TestCase):
+class GroupByKeywords(TestCase):
     def test_split_with_implicit_first_keyword(self):
         self.assertEqual(
             group_by_keywords(

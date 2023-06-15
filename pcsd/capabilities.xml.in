@@ -1330,6 +1330,16 @@
                      /api/v1/resource-create-in-group/v1
       </description>
     </capability>
+    <capability id="pcmk.resource.create.meta.future" in-pcs="1" in-pcsd="0">
+      <!-- TODO remove this capability in pcs-0.12 -->
+      <description>
+        Specifying --future enables the new resource create command line parser.
+        It requires that meta attributes are prepended with 'meta' keyword for
+        clones and promotables.
+
+        pcs commands: resource create
+      </description>
+    </capability>
     <capability id="pcmk.resource.create.operations" in-pcs="1" in-pcsd="1">
       <description>
         Set resource operations when creating a resource, also allow to disable

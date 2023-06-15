@@ -30,6 +30,7 @@ from pcs.cli.common.errors import (
 )
 from pcs.cli.common.output import smart_wrap_text
 from pcs.cli.common.parse_args import (
+    FUTURE_OPTION,
     InputModifiers,
     group_by_keywords,
     prepare_options,
@@ -638,6 +639,7 @@ def resource_create(lib, argv, modifiers):
       * --no-default-ops - do not add default operations
       * --wait
       * -f - CIB file
+      * --future - enable future cli parser behavior
     """
     modifiers.ensure_only_supported(
         "--agent-validation",
@@ -649,6 +651,7 @@ def resource_create(lib, argv, modifiers):
         "--no-default-ops",
         "--wait",
         "-f",
+        FUTURE_OPTION,
     )
     if len(argv) < 2:
         raise CmdLineInputError()
@@ -656,7 +659,7 @@ def resource_create(lib, argv, modifiers):
     ra_id = argv[0]
     ra_type = argv[1]
 
-    parts = parse_create_args(argv[2:])
+    parts = parse_create_args(argv[2:], modifiers.get(FUTURE_OPTION))
 
     parts_sections = ["clone", "promotable", "bundle"]
     defined_options = [opt for opt in parts_sections if opt in parts]

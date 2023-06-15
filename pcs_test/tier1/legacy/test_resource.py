@@ -1931,6 +1931,12 @@ class Resource(TestCase, AssertPcsMixin):
 
         self.assert_pcs_success(
             "resource create d99 ocf:heartbeat:Dummy clone globally-unique=true".split(),
+            stderr_full=(
+                "Deprecation Warning: Configuring clone meta attributes without "
+                "specifying the 'meta' keyword after the 'clone' keyword is "
+                "deprecated and will be removed in a future release. Specify "
+                "--future to switch to the future behavior.\n"
+            ),
         )
 
         self.assert_pcs_success(
