@@ -15,7 +15,6 @@ from pcs.common.str_tools import (
     format_plural,
 )
 
-from pcs_test.tier0.lib.commands.test_cluster_property import ALLOWED_PROPERTIES
 from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.misc import get_test_resource as rc
@@ -58,22 +57,25 @@ CONFIG_ALL_REGEXP = (
     + rf"{_DEFAULT_MARK_REGEXP}$"
 )
 DEFAULTS_REGEXP = r"^batch-limit=0\n(.*=.*\n)+$"
+ALLOWED_PROPERTIES_REGEXP = r"'[^']+'(, '[^']+')*"
 
 
-def get_invalid_option_messages(option_names, error=True, forceable=True):
+def get_invalid_option_messages_regexp(
+    option_names, error=True, forceable=True
+):
     error_occurred = (
         "Error: Errors have occurred, therefore pcs is unable to continue\n"
     )
     use_force = ", use --force to override"
     return (
-        "{severity}: invalid cluster property {option_pl} {option_name_list}, "
-        "allowed options are: {allowed_properties}{use_force}\n"
-        "{error_occurred}"
+        r"{severity}: invalid cluster property {option_pl} {option_name_list}, "
+        r"allowed options are: {allowed_properties_regexp}{use_force}\n"
+        r"{error_occurred}"
     ).format(
         severity="Error" if error else "Warning",
         option_name_list=format_list(option_names),
         option_pl=format_plural(option_names, "option", "options:"),
-        allowed_properties=format_list(ALLOWED_PROPERTIES),
+        allowed_properties_regexp=ALLOWED_PROPERTIES_REGEXP,
         use_force=use_force if error and forceable else "",
         error_occurred=error_occurred if error else "",
     )
@@ -148,7 +150,7 @@ class TestPropertySet(PropertyMixin, TestCase):
     def test_unknown_properties(self):
         self.assert_pcs_fail(
             "property set unknown=value".split(),
-            stderr_full=get_invalid_option_messages(["unknown"]),
+            stderr_regexp=get_invalid_option_messages_regexp(["unknown"]),
         )
         self.assert_resources_xml_in_cib(UNCHANGED_CRM_CONFIG)
 
@@ -184,13 +186,15 @@ class TestPropertySet(PropertyMixin, TestCase):
                 </cluster_property_set>
             </crm_config>
             """,
-            stderr_full=get_invalid_option_messages(["unknown"], error=False),
+            stderr_regexp=get_invalid_option_messages_regexp(
+                ["unknown"], error=False
+            ),
         )
 
     def test_forbidden_properties(self):
         self.assert_pcs_fail(
             "property set cluster-name=NewName".split(),
-            stderr_full=get_invalid_option_messages(
+            stderr_regexp=get_invalid_option_messages_regexp(
                 ["cluster-name"], forceable=False
             ),
         )
@@ -199,7 +203,7 @@ class TestPropertySet(PropertyMixin, TestCase):
     def test_forbidden_properties_forced(self):
         self.assert_pcs_fail(
             "property set cluster-name=NewName --force".split(),
-            stderr_full=get_invalid_option_messages(
+            stderr_regexp=get_invalid_option_messages_regexp(
                 ["cluster-name"], forceable=False
             ),
         )
