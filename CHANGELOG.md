@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.10.17] - 2023-06-19
 
 ### Added
 - Automatic restarts of the Puma web server in the legacy Ruby daemon to reduce
