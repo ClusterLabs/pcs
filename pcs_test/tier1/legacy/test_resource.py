@@ -1931,6 +1931,12 @@ class Resource(TestCase, AssertPcsMixin):
 
         self.assert_pcs_success(
             "resource create d99 ocf:heartbeat:Dummy clone globally-unique=true".split(),
+            stderr_full=(
+                "Deprecation Warning: Configuring clone meta attributes without "
+                "specifying the 'meta' keyword after the 'clone' keyword is "
+                "deprecated and will be removed in a future release. Specify "
+                "--future to switch to the future behavior.\n"
+            ),
         )
 
         self.assert_pcs_success(
@@ -2723,7 +2729,7 @@ class Resource(TestCase, AssertPcsMixin):
         self.assert_pcs_success("resource clone D0".split())
 
         self.assert_pcs_fail(
-            "resource promotable D3 promotable=false".split(),
+            "resource promotable D3 meta promotable=false".split(),
             "Error: you cannot specify both promotable option and promotable keyword\n",
         )
 

@@ -20,6 +20,9 @@
 - Add warning to `pcs resource utilization` and `pcs node utilization` for the
   case configuration is not in effect (cluster property `placement-strategy` is
   not set appropriately) ([rhbz#1465829])
+- New format of `pcs resource create` command which requires `meta` keyword for
+  specifying clone and promotable meta attributes is available to be enabled
+  by specifying --future ([rhbz#2168155])
 
 ### Fixed
 - Crash in commands that ask for user input (like `pcs cluster destroy`) when
@@ -41,8 +44,10 @@
   - Specifying `--full` to show IDs of elements now shows IDs of nvpairs as well
 
 ### Deprecated
-- Keyword `meta` in `pcs resource clone` and `pcs resource promotable` commands
-  (it wasn't doing anything anyway) ([rhbz#2168155], [ghpull#648])
+- Specifying clone and promotable meta attributes without the `meta` keyword is
+  now deprecated, i.e. `pcs resource clone myResource name=value` is deprecated
+  by `pcs resource clone myResource meta name=value`
+  ([rhbz#2168155], [ghpull#648])
 
 [ghissue#612]: https://github.com/ClusterLabs/pcs/issues/612
 [ghpull#648]: https://github.com/ClusterLabs/pcs/pull/648

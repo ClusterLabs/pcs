@@ -95,10 +95,30 @@ Show list of all available resource agents (if filter is provided then only reso
 describe [<standard>:[<provider>:]]<type> [\fB\-\-full\fR]
 Show options for the specified resource. If \fB\-\-full\fR is specified, all options including advanced and deprecated ones are shown.
 .TP
-create <resource id> [<standard>:[<provider>:]]<type> [resource options] [\fBop\fR <operation action> <operation options> [<operation action> <operation options>]...] [\fBmeta\fR <meta options>...] [\fBclone\fR [<clone id>] [<clone options>] | promotable [<clone id>] [<promotable options>] | \fB\-\-group\fR <group id> [\fB\-\-before\fR <resource id> | \fB\-\-after\fR <resource id>] | \fBbundle\fR <bundle id>] [\fB\-\-disabled\fR] [\fB\-\-agent\-validation\fR] [\fB\-\-no\-default\-ops\fR] [\fB\-\-wait\fR[=n]]
-Create specified resource. If \fBclone\fR is used a clone resource is created. If \fBpromotable\fR is used a promotable clone resource is created. If \fB\-\-group\fR is specified the resource is added to the group named. You can use \fB\-\-before\fR or \fB\-\-after\fR to specify the position of the added resource relatively to some resource already existing in the group. If \fBbundle\fR is specified, resource will be created inside of the specified bundle. If \fB\-\-disabled\fR is specified the resource is not started automatically. If \fB\-\-agent\-validation\fR is specified, resource agent validate\-all action will be used to validate resource options. If \fB\-\-no\-default\-ops\fR is specified, only monitor operations are created for the resource and all other operations use default settings. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the resource to start and then return 0 if the resource is started, or 1 if the resource has not yet started. If 'n' is not specified it defaults to 60 minutes.
+create <resource id> [<standard>:[<provider>:]]<type> [<resource options>] [\fBop\fR <operation action> <operation options> [<operation action> <operation options>]...] [\fBmeta\fR <meta options>] [\fBclone\fR [<clone id>] [<clone meta options>] | \fBpromotable\fR [<clone id>] [<promotable meta options>] | \fB\-\-group\fR <group id> [\fB\-\-before\fR <resource id> | \fB\-\-after\fR <resource id>] | \fBbundle\fR <bundle id>] [\fB\-\-disabled\fR] [\fB\-\-agent\-validation\fR] [\fB\-\-no\-default\-ops\fR] [\fB\-\-wait\fR[=n]]
+.TQ
+create \fB\-\-future\fR <resource id> [<standard>:[<provider>:]]<type> [<resource options>] [\fBop\fR <operation action> <operation options> [<operation action> <operation options>]...] [\fBmeta\fR <meta options>] [\fBclone\fR [<clone id>] [\fBmeta\fR <clone meta options>] | \fBpromotable\fR [<clone id>] [\fBmeta\fR <promotable meta options>] | \fB\-\-group\fR <group id> [\fB\-\-before\fR <resource id> | \fB\-\-after\fR <resource id>] | \fBbundle\fR <bundle id>] [\fB\-\-disabled\fR] [\fB\-\-agent\-validation\fR] [\fB\-\-no\-default\-ops\fR] [\fB\-\-wait\fR[=n]]
+Create specified resource.
+.br
+If \fBclone\fR is used, a clone resource is created. If \fBpromotable\fR is used, a promotable clone resource is created.
+.br
+If \fB\-\-group\fR is specified, the resource is added to the group named. You can use \fB\-\-before\fR or \fB\-\-after\fR to specify the position of the added resource relatively to some resource already existing in the group.
+.br
+If \fBbundle\fR is specified, resource will be created inside of the specified bundle.
+.br
+If \fB\-\-disabled\fR is specified, the resource is not started automatically.
+.br
+If \fB\-\-agent\-validation\fR is specified, resource agent validate\-all action will be used to validate resource options.
+.br
+If \fB\-\-no\-default\-ops\fR is specified, only monitor operations are created for the resource and all other operations use default settings.
+.br
+If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the resource to start and then return 0 if the resource is started, or 1 if the resource has not yet started. If 'n' is not specified it defaults to 60 minutes.
+.br
+Specifying \fB\-\-future\fR switches to the new command format that changes the way clone and promotable meta options are expected to be specified.
 
-Example: Create a new resource called 'VirtualIP' with IP address 192.168.0.99, netmask of 32, monitored everything 30 seconds, on eth2: pcs resource create VirtualIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 nic=eth2 op monitor interval=30s
+Example: Create a new resource called 'VirtualIP' with IP address 192.168.0.99, netmask of 32, monitored everything 30 seconds, on eth2:
+.br
+pcs resource create VirtualIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 nic=eth2 op monitor interval=30s
 .TP
 delete <resource id|group id|bundle id|clone id>
 Deletes the resource, group, bundle or clone (and all resources within the group/bundle/clone).
@@ -204,7 +224,7 @@ List available OCF resource agent providers.
 agents [standard[:provider]]
 List available agents optionally filtered by standard and provider.
 .TP
-update <resource id> [resource options] [op [<operation action> <operation options>]...] [meta <meta operations>...] [\fB\-\-agent\-validation\fR] [\fB\-\-wait\fR[=n]]
+update <resource id> [resource options] [op [<operation action> <operation options>]...] [meta <meta options>] [\fB\-\-agent\-validation\fR] [\fB\-\-wait\fR[=n]]
 Add, remove or change options of specified resource, clone or multi\-state resource. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='.
 
 If an operation (op) is specified it will update the first found operation with the same action on the specified resource. If no operation with that action exists then a new operation will be created. (WARNING: all existing options on the updated operation will be reset if not specified.) If you want to create multiple monitor operations you should use the 'op add' & 'op remove' commands.
@@ -313,10 +333,10 @@ Remove the group (note: this does not remove any resources from the cluster) or 
 ungroup <group id> [resource id]... [\fB\-\-wait\fR[=n]]
 Remove the group (note: this does not remove any resources from the cluster) or if resources are specified, remove the specified resources from the group.  If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the operation to finish (including moving resources if appropriate) and the return 0 on success or 1 on error.  If 'n' is not specified it defaults to 60 minutes.
 .TP
-clone <resource id | group id> [<clone id>] [clone options]... [\fB\-\-wait\fR[=n]]
+clone <resource id | group id> [<clone id>] [meta <clone meta options>] [\fB\-\-wait\fR[=n]]
 Set up the specified resource or group as a clone. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the operation to finish (including starting clone instances if appropriate) and then return 0 on success or 1 on error. If 'n' is not specified it defaults to 60 minutes.
 .TP
-promotable <resource id | group id> [<clone id>] [clone options]... [\fB\-\-wait\fR[=n]]
+promotable <resource id | group id> [<clone id>] [meta <clone meta options>] [\fB\-\-wait\fR[=n]]
 Set up the specified resource or group as a promotable clone. This is an alias for 'pcs resource clone <resource id> promotable=true'.
 .TP
 unclone <clone id | resource id | group id> [\fB\-\-wait\fR[=n]]
@@ -608,7 +628,7 @@ Shutdown specified nodes and remove them from the cluster.
 node remove <node name> [<node name>]...
 Shutdown specified nodes and remove them from the cluster.
 .TP
-node add\-remote <node name> [<node address>] [options] [op <operation action> <operation options> [<operation action> <operation options>]...] [meta <meta options>...] [\fB\-\-wait\fR[=<n>]]
+node add\-remote <node name> [<node address>] [options] [op <operation action> <operation options> [<operation action> <operation options>]...] [meta <meta options>] [\fB\-\-wait\fR[=<n>]]
 Add the node to the cluster as a remote node. Sync all relevant configuration files to the new node. Start the node and configure it to start the cluster on boot. Options are port and reconnect_interval. Operations and meta belong to an underlying connection resource (ocf:pacemaker:remote). If node address is not specified for the node, pcs will configure pacemaker to communicate with the node using an address provided in 'pcs host auth' command. Otherwise, pcs will configure pacemaker to communicate with the node using the specified addresses. If \fB\-\-wait\fR is specified, wait up to 'n' seconds for the node to start.
 .TP
 node delete\-remote <node identifier>
@@ -691,7 +711,7 @@ Show list of all available stonith agents (if filter is provided then only stoni
 describe <stonith agent> [\fB\-\-full\fR]
 Show options for specified stonith agent. If \fB\-\-full\fR is specified, all options including advanced and deprecated ones are shown.
 .TP
-create <stonith id> <stonith device type> [stonith device options] [op <operation action> <operation options> [<operation action> <operation options>]...] [meta <meta options>...] [\fB\-\-group\fR <group id> [\fB\-\-before\fR <stonith id> | \fB\-\-after\fR <stonith id>]] [\fB\-\-disabled\fR] [\fB\-\-agent\-validation\fR] [\fB\-\-wait\fR[=n]]
+create <stonith id> <stonith device type> [stonith device options] [op <operation action> <operation options> [<operation action> <operation options>]...] [meta <meta options>] [\fB\-\-group\fR <group id> [\fB\-\-before\fR <stonith id> | \fB\-\-after\fR <stonith id>]] [\fB\-\-disabled\fR] [\fB\-\-agent\-validation\fR] [\fB\-\-wait\fR[=n]]
 Create stonith device with specified type and options. If \fB\-\-group\fR is specified the stonith device is added to the group named. You can use \fB\-\-before\fR or \fB\-\-after\fR to specify the position of the added stonith device relatively to some stonith device already existing in the group. If\fB\-\-disabled\fR is specified the stonith device is not used. If \fB\-\-agent\-validation\fR is specified, stonith agent validate\-all action will be used to validate stonith device options. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the stonith device to start and then return 0 if the stonith device is started, or 1 if the stonith device has not yet started. If 'n' is not specified it defaults to 60 minutes.
 
 Example: Create a device for nodes node1 and node2
@@ -702,7 +722,7 @@ Example: Use port p1 for node n1 and ports p2 and p3 for node n2
 .br
 pcs stonith create MyFence fence_virt 'pcmk_host_map=n1:p1;n2:p2,p3'
 .TP
-update <stonith id> [stonith options] [op [<operation action> <operation options>]...] [meta <meta operations>...] [\fB\-\-agent\-validation\fR] [\fB\-\-wait\fR[=n]]
+update <stonith id> [stonith options] [op [<operation action> <operation options>]...] [meta <meta options>] [\fB\-\-agent\-validation\fR] [\fB\-\-wait\fR[=n]]
 Add, remove or change options of specified stonith device. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='.
 
 If an operation (op) is specified it will update the first found operation with the same action on the specified stonith device. If no operation with that action exists then a new operation will be created. (WARNING: all existing options on the updated operation will be reset if not specified.) If you want to create multiple monitor operations you should use the 'op add' & 'op remove' commands.

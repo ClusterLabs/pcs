@@ -30,6 +30,7 @@ from pcs.cli.common.errors import (
 )
 from pcs.cli.common.output import smart_wrap_text
 from pcs.cli.common.parse_args import (
+    FUTURE_OPTION,
     InputModifiers,
     group_by_keywords,
     prepare_options,
@@ -638,6 +639,7 @@ def resource_create(lib, argv, modifiers):
       * --no-default-ops - do not add default operations
       * --wait
       * -f - CIB file
+      * --future - enable future cli parser behavior
     """
     modifiers.ensure_only_supported(
         "--agent-validation",
@@ -649,6 +651,7 @@ def resource_create(lib, argv, modifiers):
         "--no-default-ops",
         "--wait",
         "-f",
+        FUTURE_OPTION,
     )
     if len(argv) < 2:
         raise CmdLineInputError()
@@ -656,7 +659,7 @@ def resource_create(lib, argv, modifiers):
     ra_id = argv[0]
     ra_type = argv[1]
 
-    parts = parse_create_args(argv[2:])
+    parts = parse_create_args(argv[2:], modifiers.get(FUTURE_OPTION))
 
     parts_sections = ["clone", "promotable", "bundle"]
     defined_options = [opt for opt in parts_sections if opt in parts]
@@ -1043,9 +1046,7 @@ def resource_update(args: List[str], modifiers: InputModifiers) -> None:
             clone_child = utils.dom_elem_get_clone_ms_resource(clone)
             if clone_child:
                 child_id = clone_child.getAttribute("id")
-                # Drop 'meta' keyword as it is not allowed in 'pcs resource
-                # clone' command ultimately called from here
-                new_args = ra_values + meta_values
+                new_args = ["meta"] + ra_values + meta_values
                 for op_args in op_values:
                     if op_args:
                         new_args += ["op"] + op_args

@@ -23,6 +23,13 @@ ERRORS_HAVE_OCCURRED = (
 
 
 class Success(ResourceTest):
+    msg_clone_without_meta = (
+        "Deprecation Warning: Configuring clone meta attributes without "
+        "specifying the 'meta' keyword after the 'clone' keyword is deprecated "
+        "and will be removed in a future release. Specify --future to switch "
+        "to the future behavior.\n"
+    )
+
     def setUp(self):
         super().setUp()
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
@@ -255,6 +262,7 @@ class Success(ResourceTest):
                     </meta_attributes>
                 </clone>
             </resources>""",
+            stderr_full=self.msg_clone_without_meta,
         )
 
     def test_create_with_options_and_meta(self):
@@ -543,6 +551,66 @@ class SuccessOperations(ResourceTest):
         )
 
 
+class SuccessNewParser(ResourceTest):
+    def test_primitive_meta(self):
+        self.assert_effect(
+            "resource create R ocf:pacemaker:Dummy meta a=b --no-default-ops --future".split(),
+            """<resources>
+                <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+                    <meta_attributes id="R-meta_attributes">
+                        <nvpair id="R-meta_attributes-a" name="a" value="b"/>
+                    </meta_attributes>
+                    <operations>
+                        <op id="R-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
+                        />
+                    </operations>
+                </primitive>
+            </resources>""",
+        )
+
+    def test_clone_meta(self):
+        self.assert_effect(
+            "resource create R ocf:pacemaker:Dummy clone meta a=b --no-default-ops --future".split(),
+            """<resources>
+                <clone id="R-clone">
+                    <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+                        <operations>
+                            <op id="R-monitor-interval-10s" interval="10s"
+                                name="monitor" timeout="20s"
+                            />
+                        </operations>
+                    </primitive>
+                    <meta_attributes id="R-clone-meta_attributes">
+                        <nvpair id="R-clone-meta_attributes-a" name="a" value="b"/>
+                    </meta_attributes>
+                </clone>
+            </resources>""",
+        )
+
+    def test_primitive_and_clone_meta(self):
+        self.assert_effect(
+            "resource create R ocf:pacemaker:Dummy meta a=b clone meta c=d --no-default-ops --future".split(),
+            """<resources>
+                <clone id="R-clone">
+                    <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+                        <meta_attributes id="R-meta_attributes">
+                            <nvpair id="R-meta_attributes-a" name="a" value="b"/>
+                        </meta_attributes>
+                        <operations>
+                            <op id="R-monitor-interval-10s" interval="10s"
+                                name="monitor" timeout="20s"
+                            />
+                        </operations>
+                    </primitive>
+                    <meta_attributes id="R-clone-meta_attributes">
+                        <nvpair id="R-clone-meta_attributes-c" name="c" value="d"/>
+                    </meta_attributes>
+                </clone>
+            </resources>""",
+        )
+
+
 class SuccessGroup(ResourceTest):
     def test_with_group(self):
         self.assert_effect(
@@ -737,6 +805,13 @@ class SuccessClone(ResourceTest):
 
 
 class Promotable(TestCase, AssertPcsMixin):
+    msg_promotable_without_meta = (
+        "Deprecation Warning: Configuring promotable meta attributes without "
+        "specifying the 'meta' keyword after the 'promotable' keyword is deprecated "
+        "and will be removed in a future release. Specify --future to switch "
+        "to the future behavior.\n"
+    )
+
     def setUp(self):
         self.lib = mock.Mock(spec_set=["resource"])
         self.resource = mock.Mock(spec_set=["create_as_clone"])
@@ -758,7 +833,9 @@ class Promotable(TestCase, AssertPcsMixin):
         # pylint: disable=unused-argument
         return locals()
 
-    def test_alias_for_clone(self):
+    @mock.patch("pcs.cli.reports.output.print_to_stderr")
+    def test_alias_for_clone(self, mock_print_to_stderr):
+        del mock_print_to_stderr
         resource.resource_create(
             self.lib,
             ["R", "ocf:pacemaker:Stateful", "promotable", "a=b", "c=d"],
@@ -782,8 +859,11 @@ class Promotable(TestCase, AssertPcsMixin):
                 "resource create R ocf:pacemaker:Stateful promotable "
                 "promotable=a"
             ).split(),
-            "Error: you cannot specify both promotable option and promotable "
-            "keyword\n",
+            (
+                self.msg_promotable_without_meta
+                + "Error: you cannot specify both promotable option and promotable "
+                "keyword\n"
+            ),
         )
 
     def test_fail_on_promotable_true(self):
@@ -792,8 +872,11 @@ class Promotable(TestCase, AssertPcsMixin):
                 "resource create R ocf:pacemaker:Stateful promotable "
                 "promotable=true"
             ).split(),
-            "Error: you cannot specify both promotable option and promotable "
-            "keyword\n",
+            (
+                self.msg_promotable_without_meta
+                + "Error: you cannot specify both promotable option and promotable "
+                "keyword\n"
+            ),
         )
 
     def test_fail_on_promotable_false(self):
@@ -802,8 +885,11 @@ class Promotable(TestCase, AssertPcsMixin):
                 "resource create R ocf:pacemaker:Stateful promotable "
                 "promotable=false"
             ).split(),
-            "Error: you cannot specify both promotable option and promotable "
-            "keyword\n",
+            (
+                self.msg_promotable_without_meta
+                + "Error: you cannot specify both promotable option and promotable "
+                "keyword\n"
+            ),
         )
 
 

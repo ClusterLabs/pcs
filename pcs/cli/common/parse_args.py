@@ -23,6 +23,8 @@ from pcs.common.types import (
 
 ModifierValueType = Union[None, bool, str]
 
+_FUTURE_OPTION_STR = "future"
+FUTURE_OPTION = f"--{_FUTURE_OPTION_STR}"
 _OUTPUT_FORMAT_OPTION_STR = "output-format"
 _OUTPUT_FORMAT_OPTION = f"--{_OUTPUT_FORMAT_OPTION_STR}"
 OUTPUT_FORMAT_VALUE_TEXT = "text"
@@ -53,6 +55,7 @@ PCS_LONG_OPTIONS = [
     "off",
     "request-timeout=",
     "brief",
+    _FUTURE_OPTION_STR,
     # resource (safe-)disable
     "safe",
     "no-strict",
@@ -503,6 +506,7 @@ class InputModifiers:
                 "--expired": "--expired" in options,
                 "--force": "--force" in options,
                 "--full": "--full" in options,
+                FUTURE_OPTION: FUTURE_OPTION in options,
                 # TODO remove
                 # used only in deprecated 'pcs resource|stonith show'
                 "--groups": "--groups" in options,
