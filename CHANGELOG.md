@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.11.6] - 2023-06-20
 
 ### Added
 - Support for output formats `json` and `cmd` to constraints config commands
