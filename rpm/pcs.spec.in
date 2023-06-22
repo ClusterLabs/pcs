@@ -1,10 +1,11 @@
 %global numcomm @numcomm@
 %global alphatag @alphatag@
 %global dirty @dirty@
+%global cibranch @cibranch@
 
 Name: pcs
 Version: @version@
-Release: 1%{?numcomm:+%{numcomm}}%{?alphatag:.%{alphatag}}%{?dirty:.%{dirty}}%{?dist}
+Release: 99+git.%{?numcomm:%{numcomm}}%{?alphatag:.%{alphatag}}%{?dirty:.%{dirty}}%{?cibranch:.%{cibranch}}%{?dist}
 # https://docs.fedoraproject.org/en-US/packaging-guidelines/LicensingGuidelines/
 # https://fedoraproject.org/wiki/Licensing:Main?rd=Licensing#Good_Licenses
 # GPL-2.0-only: pcs
