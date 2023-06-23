@@ -377,7 +377,7 @@ $(SPEC): $(SPEC).in .version config.status stamps/download_python_deps stamps/do
 		dirty="" && \
 		numcomm="0"; \
 	else \
-		gitver="`echo $$gvgver | sed 's/\(.*\)\./\1-/'`" && \
+		gitver="`echo $$gvgver | sed 's/\(.*\)+/\1-/'`" && \
 		rpmver=`echo $$gitver | sed 's/-.*//g'` && \
 		alphatag=`echo $$gvgver | sed 's/[^-]*-\([^-]*\).*/\1/'` && \
 		numcomm=`echo $$gitver | sed 's/[^-]*-\([^-]*\).*/\1/'` && \
@@ -406,6 +406,11 @@ $(SPEC): $(SPEC).in .version config.status stamps/download_python_deps stamps/do
 			-e "s#@pcs_bundled_dir@#${PCS_BUNDLED_DIR_LOCAL}#g" \
 		$(abs_srcdir)/$@.in > $@-t; \
 	fi; \
+	if [ -z "$(CI_BRANCH)" ]; then \
+		sed -i -e "s#%glo.*cibranch.*##g" $@-t; \
+	else \
+		sed -i -e "s#@cibranch@#$(CI_BRANCH)#g" $@-t; \
+	fi && \
 	if [ -z "$$dirty" ]; then sed -i -e "s#%glo.*dirty.*##g" $@-t; fi && \
 	sed -i -e "s#@pyagentx_version@#${PYAGENTX_VERSION}#g" $@-t && \
 	pylist="`ls rpm/*.tar.gz | grep -v ^rpm/pyagentx- | grep -v ^rpm/pcs- | sed -e 's#rpm/##g' -e 's#.tar.gz##'`" && \

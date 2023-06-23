@@ -1,12 +1,7 @@
-variables:
-  APP_VERSION: "0.0.1+ci"
-  DIST_VERSION: "${APP_VERSION}.${CI_PROJECT_NAMESPACE}.${BASE_IMAGE_NAME}-${CI_COMMIT_SHORT_SHA}"
-  RPM_VERSION: "${APP_VERSION}-1.${CI_PROJECT_NAMESPACE}.${BASE_IMAGE_NAME}.${CI_COMMIT_SHORT_SHA}"
-
 default:
   before_script:
-    - "echo ${DIST_VERSION} > .tarball-version"
-    - cat .tarball-version
+    - git remote add upstream https://github.com/ClusterLabs/pcs.git
+    - git fetch upstream
 
 .parallel:
   parallel:
@@ -23,9 +18,9 @@ rpm_build:
   script:
     - ./autogen.sh
     - ./configure --enable-local-build
-    - make rpm/pcs.spec
+    - make CI_BRANCH=${BASE_IMAGE_NAME} rpm/pcs.spec
     - dnf builddep -y rpm/pcs.spec
-    - make rpm
+    - make CI_BRANCH=${BASE_IMAGE_NAME} rpm
     - mkdir -p rpms && cp -v $(find rpm  -type f -name '*.rpm' -not -name '*.src.rpm') rpms
   artifacts:
     expire_in: 1 week
@@ -44,6 +39,7 @@ distcheck:
     - ./autogen.sh
     - ./configure --enable-local-build
     - make distcheck DISTCHECK_CONFIGURE_FLAGS='--enable-local-build'
+    - rename --verbose .tar. ".${BASE_IMAGE_NAME}.tar." pcs*.tar.*
     - mkdir -p dist && cp -v pcs*.tar.* dist/
   artifacts:
     expire_in: 1 week

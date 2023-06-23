@@ -1,10 +1,11 @@
 %global numcomm @numcomm@
 %global alphatag @alphatag@
 %global dirty @dirty@
+%global cibranch @cibranch@
 
 Name: pcs
 Version: @version@
-Release: 1%{?numcomm:.%{numcomm}}%{?alphatag:.%{alphatag}}%{?dirty:.%{dirty}}%{?dist}
+Release: 99+git.%{?numcomm:%{numcomm}}%{?alphatag:.%{alphatag}}%{?dirty:.%{dirty}}%{?cibranch:.%{cibranch}}%{?dist}
 # https://docs.fedoraproject.org/en-US/packaging-guidelines/LicensingGuidelines/
 # https://fedoraproject.org/wiki/Licensing:Main?rd=Licensing#Good_Licenses
 # GPL-2.0-only: pcs
@@ -64,7 +65,7 @@ Summary: Pacemaker/Corosync Configuration System
 #    /usr/bin/python will be removed or switched to Python 3 in the future.
 #global __python {__python3}
 
-Source0: %{name}-%{version}%{?numcomm:.%{numcomm}}%{?alphatag:-%{alphatag}}%{?dirty:-%{dirty}}.tar.gz
+Source0: %{name}-%{version}%{?numcomm:+%{numcomm}}%{?alphatag:-%{alphatag}}%{?dirty:-%{dirty}}.tar.gz
 
 Source41: pyagentx-%{pyagentx_version}.tar.gz
 @pysrc@
@@ -185,7 +186,7 @@ Provides: bundled(pyagentx) = %{pyagentx_version}
 SNMP agent that provides information about pacemaker cluster to the master agent (snmpd)
 
 %prep
-%autosetup -n %{name}-%{version}%{?numcomm:.%{numcomm}}%{?alphatag:-%{alphatag}}%{?dirty:-%{dirty}}
+%autosetup -n %{name}-%{version}%{?numcomm:+%{numcomm}}%{?alphatag:-%{alphatag}}%{?dirty:-%{dirty}}
 
 # prepare dirs/files necessary for building all bundles
 # -----------------------------------------------------
@@ -373,6 +374,6 @@ sed -i -e 's#^@#%#g' dynamic_files/pcs-snmp
 %license COPYING
 
 %changelog
-* @date@ Autotools generated version <nobody@nowhere.org> - @version@-1-@numcomm@.@alphatag@.@dirty@
+* @date@ Autotools generated version <nobody@nowhere.org> - @version@-1+@numcomm@.@alphatag@.@dirty@
 - Autotools generated version
 - These aren't the droids you're looking for.
