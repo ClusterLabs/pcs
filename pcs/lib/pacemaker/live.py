@@ -462,7 +462,7 @@ def wait_for_idle(runner: CommandRunner, timeout: int) -> None:
         args.append("--timeout={0}".format(timeout))
     stdout, stderr, retval = runner.run(args)
     if retval != 0:
-        # Usefull info goes to stderr - not only error messages, a list of
+        # Useful info goes to stderr - not only error messages, a list of
         # pending actions in case of timeout goes there as well.
         # We use stdout just to be sure if that's get changed.
         if retval == __EXITCODE_WAIT_TIMEOUT:
@@ -589,7 +589,7 @@ def resource_cleanup(
                 )
             )
         )
-    # usefull output (what has been done) goes to stderr
+    # useful output (what has been done) goes to stderr
     return join_multilines([stdout, stderr])
 
 
@@ -631,7 +631,7 @@ def resource_refresh(
                 )
             )
         )
-    # usefull output (what has been done) goes to stderr
+    # useful output (what has been done) goes to stderr
     return join_multilines([stdout, stderr])
 
 

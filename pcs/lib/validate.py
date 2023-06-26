@@ -21,7 +21,7 @@ Example of use (how things play together):
         'allowed_values': ['B', 'C']
     }
 
-ValuePair class and values_to_pairs and pairs_to_values helpers are usefull in
+ValuePair class and values_to_pairs and pairs_to_values helpers are useful in
 cases when we walidate a normalized value. If the normalized value is not
 valid, we want to put the original value into resulting reports. This is to
 prevent confusion which may happen if the normalized value different from the
