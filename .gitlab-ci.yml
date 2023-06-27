@@ -106,6 +106,8 @@ python_tier0_tests:
   extends: .parallel
   stage: stage1
   script:
+    # make sure that tier0 tests run without cluster packages installed
+    - dnf remove -y corosync* pacemaker* fence-agents* resource-agents* booth* sbd
     - python3 -m pip install concurrencytest
     - ./autogen.sh
     - ./configure --enable-local-build
