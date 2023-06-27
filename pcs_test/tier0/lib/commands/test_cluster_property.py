@@ -890,6 +890,10 @@ class TestGetProperties(TestCase):
         )
         self.env_assist.assert_reports([])
 
+    @mock.patch(
+        "pcs.lib.cib.rule.in_effect.has_rule_in_effect_status_tool",
+        lambda: True,
+    )
     def test_evaluate_expired_but_no_set_rule(self):
         self.config.runner.cib.load(
             crm_config=fixture_crm_config_properties([("set_id", {})])
@@ -901,6 +905,30 @@ class TestGetProperties(TestCase):
                     CibNvsetDto(id="set_id", options={}, rule=None, nvpairs=[])
                 ]
             ),
+        )
+
+    @mock.patch(
+        "pcs.lib.cib.rule.in_effect.has_rule_in_effect_status_tool",
+        lambda: False,
+    )
+    def test_evaluate_expired_no_status_tool(self):
+        self.config.runner.cib.load(
+            crm_config=fixture_crm_config_properties([("set_id", {})])
+        )
+        self.assertEqual(
+            self.command(evaluate_expired=True),
+            ListCibNvsetDto(
+                nvsets=[
+                    CibNvsetDto(id="set_id", options={}, rule=None, nvpairs=[])
+                ]
+            ),
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.RULE_IN_EFFECT_STATUS_DETECTION_NOT_SUPPORTED,
+                )
+            ]
         )
 
 
