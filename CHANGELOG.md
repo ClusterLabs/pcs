@@ -5,6 +5,8 @@
 ### Fixed
 - Exporting constraints with rules in form of pcs commands now escapes `#` and
   fixes spaces in dates to make the commands valid ([rhbz#2163953])
+- Do not display duplicate records in commands `pcs property [config] --all`
+  and `pcs property describe` ([rhbz#2217850])
 
 ### Changed
 - When exporting constraints in form of pcs commands, constraints containing
@@ -17,6 +19,7 @@
   rules in other parts of configuration was never allowed) ([rhbz#2163953])
 
 [rhbz#2163953]: https://bugzilla.redhat.com/show_bug.cgi?id=2163953
+[rhbz#2217850]: https://bugzilla.redhat.com/show_bug.cgi?id=2217850
 
 
 ## [0.11.6] - 2023-06-20

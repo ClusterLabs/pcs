@@ -31,21 +31,15 @@ class PropertyConfigurationFacade:
         readonly_properties: StringCollection,
     ) -> None:
         self._properties = properties
+        self._first_nvpair_set = (
+            self._properties[0].nvpairs if self._properties else []
+        )
         self._properties_metadata = properties_metadata
         self._readonly_properties = readonly_properties
-        self._defaults_map = {
-            metadata.name: metadata.default
-            for metadata in self._properties_metadata
-            if metadata.default is not None
+        self._defaults_map = self.get_defaults(include_advanced=True)
+        self._name_nvpair_dto_map = {
+            nvpair_dto.name: nvpair_dto for nvpair_dto in self._first_nvpair_set
         }
-        self._name_nvpair_dto_map = (
-            {
-                nvpair_dto.name: nvpair_dto
-                for nvpair_dto in self._properties[0].nvpairs
-            }
-            if self._properties
-            else {}
-        )
 
     @classmethod
     def from_properties_dtos(
@@ -105,17 +99,6 @@ class PropertyConfigurationFacade:
             return value
         return self._defaults_map.get(property_name, custom_default)
 
-    @staticmethod
-    def _filter_names_advanced(
-        metadata: ResourceAgentParameterDto,
-        property_names: Optional[StringSequence] = None,
-        include_advanced: bool = False,
-    ) -> bool:
-        return bool(
-            (not property_names and (include_advanced or not metadata.advanced))
-            or (property_names and metadata.name in property_names)
-        )
-
     def get_defaults(
         self,
         property_names: Optional[StringSequence] = None,
@@ -123,11 +106,10 @@ class PropertyConfigurationFacade:
     ) -> dict[str, str]:
         return {
             metadata.name: metadata.default
-            for metadata in self._properties_metadata
-            if metadata.default is not None
-            and self._filter_names_advanced(
-                metadata, property_names, include_advanced
+            for metadata in self.get_properties_metadata(
+                property_names, include_advanced
             )
+            if metadata.default is not None
         }
 
     def get_properties_metadata(
@@ -135,23 +117,34 @@ class PropertyConfigurationFacade:
         property_names: Optional[StringSequence] = None,
         include_advanced: bool = False,
     ) -> Sequence[ResourceAgentParameterDto]:
-        return [
-            metadata
-            for metadata in self._properties_metadata
-            if self._filter_names_advanced(
-                metadata, property_names, include_advanced
-            )
-        ]
+        if property_names:
+            filtered_metadata = [
+                metadata
+                for metadata in self._properties_metadata
+                if metadata.name in property_names
+            ]
+        else:
+            filtered_metadata = [
+                metadata
+                for metadata in self._properties_metadata
+                if include_advanced or not metadata.advanced
+            ]
+        deduplicated_metadata = {
+            metadata.name: metadata for metadata in filtered_metadata
+        }
+        return list(deduplicated_metadata.values())
 
     def get_name_value_default_list(self) -> list[tuple[str, str, bool]]:
         name_value_default_list = [
             (nvpair_dto.name, nvpair_dto.value, False)
-            for nvpair_dto in self._name_nvpair_dto_map.values()
+            for nvpair_dto in self._first_nvpair_set
         ]
         name_value_default_list.extend(
             [
                 (metadata_dto.name, metadata_dto.default, True)
-                for metadata_dto in self._properties_metadata
+                for metadata_dto in self.get_properties_metadata(
+                    include_advanced=True
+                )
                 if metadata_dto.name not in self._name_nvpair_dto_map
                 and metadata_dto.default is not None
             ]
