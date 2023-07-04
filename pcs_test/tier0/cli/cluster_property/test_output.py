@@ -21,6 +21,7 @@ FIXTURE_TWO_PROPERTY_SETS = [
             CibNvpairDto(id="", name="readonly2", value="ro_val2"),
             CibNvpairDto(id="", name="property2", value="val2"),
             CibNvpairDto(id="", name="property1", value="val1"),
+            CibNvpairDto(id="", name="property1", value="duplicate_val1"),
         ],
     ),
     CibNvsetDto(
@@ -39,6 +40,7 @@ FIXTURE_READONLY_PROPERTIES_LIST = ["readonly1", "readonly2"]
 FIXTURE_TEXT_OUTPUT_FIRST_SET = dedent(
     """\
     Cluster Properties: id1 score=150
+      property1=duplicate_val1
       property1=val1
       property2=val2
       readonly1=ro_val1
@@ -49,7 +51,7 @@ FIXTURE_TEXT_OUTPUT_FIRST_SET = dedent(
 FIXTURE_LEGACY_TEXT_OUTPUT_FIRST_SET = dedent(
     """\
     Cluster Properties:
-     property1: val1
+     property1: duplicate_val1
      property2: val2
      readonly1: ro_val1
      readonly2: ro_val2
@@ -85,6 +87,7 @@ def fixture_property_metadata(
 
 
 FIXTURE_PROPERTY_METADATA_LIST = [
+    fixture_property_metadata(name="property1", default="duplicate_default1"),
     fixture_property_metadata(name="property1", default="default1"),
     fixture_property_metadata(name="property2", default="default2"),
     fixture_property_metadata(
@@ -164,7 +167,7 @@ class TestPropertyConfigurationFacadeGetPropertyValue(TestCase):
         )
 
     def test_property_value_from_first_set(self):
-        self.assertEqual(self.facade.get_property_value("property1"), "val1")
+        self.assertEqual(self.facade.get_property_value("property2"), "val2")
 
     def test_property_value_from_second_set(self):
         self.assertEqual(self.facade.get_property_value("property3"), None)
@@ -180,6 +183,11 @@ class TestPropertyConfigurationFacadeGetPropertyValue(TestCase):
             "custom",
         )
 
+    def test_property_with_multiple_values(self):
+        self.assertEqual(
+            self.facade.get_property_value("property1"), "duplicate_val1"
+        )
+
 
 class TestPropertyConfigurationFacadeGetPropertyValueOrDefault(TestCase):
     def setUp(self):
@@ -191,7 +199,7 @@ class TestPropertyConfigurationFacadeGetPropertyValueOrDefault(TestCase):
 
     def test_property_value_from_first_set(self):
         self.assertEqual(
-            self.facade.get_property_value_or_default("property1"), "val1"
+            self.facade.get_property_value_or_default("property2"), "val2"
         )
 
     def test_property_value_not_in_set(self):
@@ -267,21 +275,22 @@ class TestPropertyConfigurationFacadeGetPropertiesMetadata(TestCase):
         )
 
     def test_metadata_without_advanced(self):
-        metadata = FIXTURE_PROPERTY_METADATA_LIST[0:2]
-        self.assertEqual(self.facade.get_properties_metadata(), metadata)
+        metadata = FIXTURE_PROPERTY_METADATA_LIST[1:3]
+        self.assertCountEqual(self.facade.get_properties_metadata(), metadata)
 
     def test_metadata_with_advanced(self):
-        metadata = FIXTURE_PROPERTY_METADATA_LIST
-        self.assertEqual(
-            self.facade.get_properties_metadata(include_advanced=True), metadata
+        metadata = FIXTURE_PROPERTY_METADATA_LIST[1:]
+        self.assertCountEqual(
+            self.facade.get_properties_metadata(include_advanced=True),
+            metadata,
         )
 
     def test_metadata_specified(self):
         metadata = (
-            FIXTURE_PROPERTY_METADATA_LIST[0:1]
+            FIXTURE_PROPERTY_METADATA_LIST[1:2]
             + FIXTURE_PROPERTY_METADATA_LIST[-1:]
         )
-        self.assertEqual(
+        self.assertCountEqual(
             self.facade.get_properties_metadata(
                 property_names=["property4", "property1"]
             ),
@@ -303,6 +312,7 @@ class TestPropertyConfigurationFacadeGetNameValueDefaultList(TestCase):
             ("readonly2", "ro_val2", False),
             ("property2", "val2", False),
             ("property1", "val1", False),
+            ("property1", "duplicate_val1", False),
             ("property3", "default3", True),
             ("property4", "default4", True),
         ]
@@ -531,7 +541,8 @@ class TestPropertiesToCmd(TestCase):
             """\
             pcs property set --force -- \\
               property2=val2 \\
-              property1=val1
+              property1=val1 \\
+              property1=duplicate_val1
             """
         )
         self.assert_lines(facade, output)

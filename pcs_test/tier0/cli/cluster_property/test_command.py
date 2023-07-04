@@ -23,6 +23,21 @@ FIXTURE_PROPERTY_METADATA = ClusterPropertyMetadataDto(
     properties_metadata=[
         ResourceAgentParameterDto(
             name="property_name",
+            shortdesc="Duplicate property",
+            longdesc=None,
+            type="string",
+            default="duplicate_default",
+            enum_values=None,
+            required=False,
+            advanced=False,
+            deprecated=False,
+            deprecated_by=[],
+            deprecated_desc=None,
+            unique_group=None,
+            reloadable=False,
+        ),
+        ResourceAgentParameterDto(
+            name="property_name",
             shortdesc=None,
             longdesc=None,
             type="string",

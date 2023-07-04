@@ -1,5 +1,14 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+- Do not display duplicate records in commands `pcs property [config] --all`
+  and `pcs property describe` ([rhbz#2217850])
+
+[rhbz#2217850]: https://bugzilla.redhat.com/show_bug.cgi?id=2217850
+
+
 ## [0.10.17] - 2023-06-19
 
 ### Added
