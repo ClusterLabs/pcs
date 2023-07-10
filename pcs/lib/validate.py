@@ -62,12 +62,14 @@ from pcs.common.validate import (
     is_port_number,
 )
 from pcs.lib.cib.tools import IdProvider
+from pcs.lib.external import CommandRunner
 from pcs.lib.corosync import constants as corosync_constants
 from pcs.lib.pacemaker.values import (
     BOOLEAN_VALUES,
     SCORE_INFINITY,
     is_boolean,
     is_score,
+    is_duration,
     validate_id,
 )
 
@@ -546,6 +548,7 @@ class ValuePredicateBase(ValueValidator):
         option_name: TypeOptionName,
         option_name_for_report: Optional[str] = None,
         severity: Optional[ReportItemSeverity] = None,
+        runner: CommandRunner = None,
     ):
         """
         severity -- severity of produced reports, defaults to error
@@ -556,6 +559,7 @@ class ValuePredicateBase(ValueValidator):
         self._severity = (
             ReportItemSeverity.error() if severity is None else severity
         )
+        self.runner = runner
         self._value_cannot_be_empty = False
         self._forbidden_characters = None
 
@@ -988,6 +992,22 @@ class ValueScore(ValueValidator):
                 ReportItem.error(reports.messages.InvalidScore(value.original))
             )
         return report_list
+
+class ValueTimeIntervalOrDuration(ValuePredicateBase):
+    """
+    Time interval in number+units or ISO8601 duration (e.g. 1, 2s, 3m, 4h, PT1H2M3S, ...)
+    """
+    def _is_valid(self, value: TypeOptionValue) -> bool:
+        if value.startswith('P'):
+            if is_duration(self.runner, value):
+                return value
+            else:
+                return None
+        else:
+            return timeout_to_seconds(value) is not None
+
+    def _get_allowed_values(self) -> Any:
+        return "time interval (e.g. 1, 2s, 3m, 4h, PT1H2M3S, ...)"
 
 
 class ValueTimeInterval(ValuePredicateBase):

@@ -20,6 +20,7 @@ from pcs.lib.cib.tools import (
     get_pacemaker_version_by_which_cib_was_validated,
 )
 from pcs.lib.errors import LibraryError
+from pcs.lib.external import CommandRunner
 from pcs.lib.resource_agent import ResourceAgentFacade
 
 READONLY_CLUSTER_PROPERTY_LIST = [
@@ -40,7 +41,7 @@ def _validate_stonith_watchdog_timeout_property(
     report_list: reports.ReportItemList = []
     original_value = value
     # if value is not empty, try to convert time interval string
-    if value:
+    if value and not value.startswith('P'):
         seconds = timeout_to_seconds(value)
         if seconds is None:
             # returns empty list because this should be reported by
@@ -66,6 +67,7 @@ def _validate_stonith_watchdog_timeout_property(
 
 
 def validate_set_cluster_properties(
+    runner: CommandRunner,
     cluster_property_facade_list: Iterable[ResourceAgentFacade],
     properties_set_id: str,
     configured_properties: StringSequence,
@@ -166,8 +168,9 @@ def validate_set_cluster_properties(
         elif property_metadata.type == "time":
             # make stonith-watchdog-timeout value not forcable
             validators.append(
-                validate.ValueTimeInterval(
+                validate.ValueTimeIntervalOrDuration(
                     property_metadata.name,
+                    runner=runner,
                     severity=severity
                     if property_metadata.name != "stonith-watchdog-timeout"
                     else reports.ReportItemSeverity.error(),

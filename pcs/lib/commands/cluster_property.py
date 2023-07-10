@@ -158,6 +158,7 @@ def set_properties(
 
     env.report_processor.report_list(
         cluster_property.validate_set_cluster_properties(
+            env.cmd_runner(),
             property_facade_list,
             set_id,
             configured_properties,
