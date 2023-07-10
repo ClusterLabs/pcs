@@ -20,6 +20,7 @@ EXTRA_DIST		= \
 			  resources/cib-property.xml \
 			  resources/cib-resources.xml \
 			  resources/cib-all.xml \
+			  resources/cib-rule-with-spaces-in-date.xml \
 			  resources/cib-tags.xml \
 			  resources/controld_metadata.xml \
 			  resources/corosync-3nodes.conf \

@@ -202,6 +202,117 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
             ),
         )
 
+    def test_constraint_rules_space_deprecated(self):
+        self.fixture_resources()
+        message = (
+            "Deprecation Warning: Using spaces in date values is deprecated and "
+            "will be removed. Use 'T' as a delimiter between date and time.\n"
+        )
+        self.assert_pcs_success(
+            "constraint location D1 rule".split()
+            + [
+                "date",
+                "gt",
+                "2023-01-01 12:00 +3:00",
+                "and",
+                "date",
+                "lt",
+                "2023-12-31 12:00 -10:30",
+                "and",
+                "date",
+                "in_range",
+                "2023-01-01 12:00",
+                "to",
+                "2023-12-31 12:00",
+            ],
+            stderr_full=message,
+        )
+        self.assert_pcs_success(
+            "constraint location D1 rule".split()
+            + ["date", "gt", "2023-01-01 12:00"],
+            stderr_full=message,
+        )
+        self.assert_pcs_success(
+            "constraint location D1 rule".split()
+            + ["date", "lt", "2023-12-31 12:00"],
+            stderr_full=message,
+        )
+        self.assert_pcs_success(
+            "constraint location D1 rule".split()
+            + [
+                "date",
+                "in_range",
+                "2023-01-01 12:00",
+                "to",
+                "2023-12-31T12:00",
+            ],
+            stderr_full=message,
+        )
+        self.assert_pcs_success(
+            "constraint location D1 rule".split()
+            + [
+                "date",
+                "in_range",
+                "2023-01-01T12:00",
+                "to",
+                "2023-12-31 12:00",
+            ],
+            stderr_full=message,
+        )
+        # when exporting the rules, spaces are replaced by T
+        self.assert_pcs_success(
+            "constraint config".split(),
+            dedent(
+                """\
+                Location Constraints:
+                  resource 'D1'
+                    Rules:
+                      Rule: boolean-op=and score=INFINITY
+                        Expression: date gt 2023-01-01T12:00+3:00
+                        Expression: date lt 2023-12-31T12:00-10:30
+                        Expression: date in_range 2023-01-01T12:00 to 2023-12-31T12:00
+                  resource 'D1'
+                    Rules:
+                      Rule: score=INFINITY
+                        Expression: date gt 2023-01-01T12:00
+                  resource 'D1'
+                    Rules:
+                      Rule: score=INFINITY
+                        Expression: date lt 2023-12-31T12:00
+                  resource 'D1'
+                    Rules:
+                      Rule: score=INFINITY
+                        Expression: date in_range 2023-01-01T12:00 to 2023-12-31T12:00
+                  resource 'D1'
+                    Rules:
+                      Rule: score=INFINITY
+                        Expression: date in_range 2023-01-01T12:00 to 2023-12-31T12:00
+                """
+            ),
+        )
+        self.assert_pcs_success(
+            "constraint config --output-format=cmd".split(),
+            dedent(
+                """\
+                pcs -- constraint location resource%D1 rule \\
+                  id=location-D1-rule constraint-id=location-D1 score=INFINITY \\
+                  date gt 2023-01-01T12:00+3:00 and date lt 2023-12-31T12:00-10:30 and date in_range 2023-01-01T12:00 to 2023-12-31T12:00;
+                pcs -- constraint location resource%D1 rule \\
+                  id=location-D1-1-rule constraint-id=location-D1-1 score=INFINITY \\
+                  date gt 2023-01-01T12:00;
+                pcs -- constraint location resource%D1 rule \\
+                  id=location-D1-2-rule constraint-id=location-D1-2 score=INFINITY \\
+                  date lt 2023-12-31T12:00;
+                pcs -- constraint location resource%D1 rule \\
+                  id=location-D1-3-rule constraint-id=location-D1-3 score=INFINITY \\
+                  date in_range 2023-01-01T12:00 to 2023-12-31T12:00;
+                pcs -- constraint location resource%D1 rule \\
+                  id=location-D1-4-rule constraint-id=location-D1-4 score=INFINITY \\
+                  date in_range 2023-01-01T12:00 to 2023-12-31T12:00
+                """
+            ),
+        )
+
     def testAdvancedConstraintRule(self):
         self.fixture_resources()
         stdout, stderr, retval = pcs(

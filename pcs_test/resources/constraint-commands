@@ -5,15 +5,12 @@ pcs -- constraint location add location-R7-localhost-INFINITY resource%R7 localh
   resource-discovery=always;
 pcs -- constraint location add location-G2-localhost-INFINITY resource%G2 localhost INFINITY;
 pcs -- constraint location add location-R-localhost-INFINITY 'regexp%R*' localhost INFINITY;
-pcs -- constraint location resource%B2 rule \
-  id=loc_constr_with_expired_rule-rule constraint-id=loc_constr_with_expired_rule score=500 \
-  date lt 2000-01-01;
 pcs -- constraint location resource%R6-clone rule \
   id=loc_constr_with_not_expired_rule-rule constraint-id=loc_constr_with_not_expired_rule role=Unpromoted score=500 \
-  date gt 2000-01-01;
+  '#uname' eq node1 and date gt 2000-01-01;
 pcs -- constraint rule add loc_constr_with_not_expired_rule \
   id=loc_constr_with_not_expired_rule-rule-1 role=Promoted score-attribute=test-attr \
-  date gt 2010-12-31;
+  date gt 2010-12-31 and '#uname' eq node1;
 pcs -- constraint colocation add Promoted G1-clone with Stopped R6-clone -100 \
   id=colocation-G1-clone-R6-clone--100;
 pcs -- constraint colocation \

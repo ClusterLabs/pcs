@@ -1,3 +1,4 @@
+import re
 from typing import (
     Dict,
     cast,
@@ -16,6 +17,8 @@ class RuleToStr:
     """
     Export a rule XML element to a string which creates the same element
     """
+
+    _date_separators_re = re.compile(r"\s*([TZ:.+-])\s*")
 
     def __init__(self) -> None:
         # The cache prevents evaluating subtrees repeatedly.
@@ -42,6 +45,16 @@ class RuleToStr:
                 sorted(export_attributes(el, with_id=False).items())
             )
         )
+
+    @staticmethod
+    def _date_to_str(date: str) -> str:
+        # remove spaces around separators
+        result = re.sub(RuleToStr._date_separators_re, r"\1", date)
+        # if there are any spaces left, replace the first one with T
+        result = re.sub(r"\s+", "T", result, count=1)
+        # keep all other spaces in place
+        # the date wouldn't be valid, but there is nothing more we can do
+        return result
 
     def _rule_to_str(self, rule_el: _Element) -> str:
         # "and" is a documented pacemaker default
@@ -95,10 +108,10 @@ class RuleToStr:
             string_parts.extend(["date", "in_range"])
             # CIB schema allows "start" + "duration" or optional "start" + "end"
             if "start" in expr_el.attrib:
-                string_parts.append(str(expr_el.get("start", "")))
+                string_parts.append(self._date_to_str(expr_el.get("start", "")))
             string_parts.append("to")
             if "end" in expr_el.attrib:
-                string_parts.append(str(expr_el.get("end", "")))
+                string_parts.append(self._date_to_str(expr_el.get("end", "")))
             if duration is not None:
                 string_parts.append("duration")
                 string_parts.append(self._attrs_to_str(duration))
@@ -107,9 +120,9 @@ class RuleToStr:
             # operation=="lt" + "end"
             string_parts.extend(["date", str(expr_el.get("operation", ""))])
             if "start" in expr_el.attrib:
-                string_parts.append(str(expr_el.get("start", "")))
+                string_parts.append(self._date_to_str(expr_el.get("start", "")))
             if "end" in expr_el.attrib:
-                string_parts.append(str(expr_el.get("end", "")))
+                string_parts.append(self._date_to_str(expr_el.get("end", "")))
         return " ".join(string_parts)
 
     def _op_expr_to_str(self, expr_el: _Element) -> str:

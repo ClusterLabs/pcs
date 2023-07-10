@@ -1,0 +1,44 @@
+<cib crm_feature_set="3.17.4" validate-with="pacemaker-3.9" epoch="246" num_updates="0" admin_epoch="0" cib-last-written="Mon Jul  3 14:47:48 2023" update-origin="rh92-node1" update-client="cibadmin" update-user="root" have-quorum="1" dc-uuid="1">
+  <configuration>
+    <crm_config>
+      <cluster_property_set id="cib-bootstrap-options">
+        <nvpair id="cib-bootstrap-options-have-watchdog" name="have-watchdog" value="false"/>
+        <nvpair id="cib-bootstrap-options-dc-version" name="dc-version" value="2.1.6-3.el9-6fdc9deea29"/>
+        <nvpair id="cib-bootstrap-options-cluster-infrastructure" name="cluster-infrastructure" value="corosync"/>
+        <nvpair id="cib-bootstrap-options-cluster-name" name="cluster-name" value="rh92"/>
+      </cluster_property_set>
+    </crm_config>
+    <nodes>
+      <node id="1" uname="node1"/>
+    </nodes>
+    <!--
+    commands used to create this CIB:
+    pcs resource create R1 ocf:pacemaker:Dummy;
+    pcs constraint location R1 rule \#uname eq node1 and date gt '2023-01-01 12:00' and date lt '2023-12-31 12:00' and date in_range '2023-01-01 12:00' to '2023-12-31 12:00';
+    pcs constraint rule add location-R1 \#uname eq node1 and date gt '2023-01-01 12:00' and date lt '2023-12-31 12:00' and date in_range '2023-01-01 12:00' to '2023-12-31 12:00';
+    -->
+    <resources>
+      <primitive id="R1" class="ocf" type="Dummy" provider="pacemaker">
+        <operations>
+          <op name="monitor" interval="10s" timeout="20s" id="R1-monitor-interval-10s"/>
+        </operations>
+      </primitive>
+    </resources>
+    <constraints>
+      <rsc_location id="location-R1" rsc="R1">
+        <rule id="location-R1-rule" boolean-op="and" score="INFINITY">
+          <expression id="location-R1-rule-expr" operation="eq" attribute="#uname" value="node1"/>
+          <date_expression id="location-R1-rule-expr-1" operation="gt" start="2023-01-01 12:00"/>
+          <date_expression id="location-R1-rule-expr-2" operation="lt" end="2023-12-31 12:00"/>
+          <date_expression id="location-R1-rule-expr-3" operation="in_range" start="2023-01-01 12:00" end="2023-12-31 12:00"/>
+        </rule>
+        <rule id="location-R1-rule-1" boolean-op="and" score="INFINITY">
+          <expression id="location-R1-rule-1-expr" operation="eq" attribute="#uname" value="node1"/>
+          <date_expression id="location-R1-rule-1-expr-1" operation="gt" start="2023-01-01 12:00"/>
+          <date_expression id="location-R1-rule-1-expr-2" operation="lt" end="2023-12-31 12:00"/>
+          <date_expression id="location-R1-rule-1-expr-3" operation="in_range" start="2023-01-01 12:00" end="2023-12-31 12:00"/>
+        </rule>
+      </rsc_location>
+    </constraints>
+  </configuration>
+</cib>

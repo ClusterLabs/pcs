@@ -72,18 +72,19 @@ class ConstraintConfigJson(TestCase):
 
 
 class ConstraintConfigCmdMixin:
-    # pylint: disable=invalid-name
+    orig_cib_file_path = get_test_resource("cib-all.xml")
+
     def setUp(self):
-        orig_cib_file_path = get_test_resource("cib-all.xml")
+        # pylint: disable=invalid-name
         self.new_cib_file = get_tmp_file(self._get_tmp_file_name())
-        self.pcs_runner_orig = PcsRunner(cib_file=orig_cib_file_path)
+        self.pcs_runner_orig = PcsRunner(cib_file=self.orig_cib_file_path)
         self.pcs_runner_new = PcsRunner(cib_file=self.new_cib_file.name)
         write_data_to_tmpfile(
             fixture_cib.modify_cib_file(
                 get_test_resource("cib-empty.xml"),
                 resources=etree_to_str(
                     get_resources(
-                        XmlManipulation.from_file(orig_cib_file_path).tree
+                        XmlManipulation.from_file(self.orig_cib_file_path).tree
                     )
                 ),
             ),
@@ -92,6 +93,7 @@ class ConstraintConfigCmdMixin:
         self.maxDiff = None
 
     def tearDown(self):
+        # pylint: disable=invalid-name
         self.new_cib_file.close()
 
     def _get_as_json(self, runner, use_all):
@@ -141,6 +143,68 @@ class ConstraintConfigCmd(ConstraintConfigCmdMixin, TestCase):
         return "tier1_constraint_test_config_cib.xml"
 
 
+class ConstraintConfigCmdSpaceInDate(ConstraintConfigCmdMixin, TestCase):
+    # This class tests that pcs exports dates from location rules constraint
+    # with spaces replaced by T in pcs commands, so that they can be run and
+    # processed by pcs correctly.
+    orig_cib_file_path = get_test_resource("cib-rule-with-spaces-in-date.xml")
+
+    @staticmethod
+    def _get_tmp_file_name():
+        return "tier1_constraint_test_config_cib_date_space.xml"
+
+    @staticmethod
+    def _replace(struct, search_replace):
+        if isinstance(struct, dict):
+            for key, val in struct.items():
+                struct[key] = ConstraintConfigCmdSpaceInDate._replace(
+                    val, search_replace
+                )
+            return struct
+        if isinstance(struct, list):
+            return [
+                ConstraintConfigCmdSpaceInDate._replace(val, search_replace)
+                for val in struct
+            ]
+        for search, replace in search_replace:
+            if struct == search:
+                return replace
+        return struct
+
+    def _get_as_json(self, runner, use_all):
+        data = super()._get_as_json(runner, use_all)
+        data = self._replace(
+            data,
+            [
+                ("2023-01-01 12:00", "2023-01-01T12:00"),
+                ("2023-12-31 12:00", "2023-12-31T12:00"),
+            ],
+        )
+        return data
+
+    def test_commands(self):
+        stdout, stderr, retval = self.pcs_runner_orig.run(
+            ["constraint", "config", "--output-format=cmd"]
+        )
+        self.assertEqual(retval, 0)
+        self.assertEqual(stderr, "")
+        self.assertEqual(
+            stdout,
+            (
+                "pcs -- constraint location resource%R1 rule \\\n"
+                "  id=location-R1-rule constraint-id=location-R1 score=INFINITY \\\n"
+                "  '#uname' eq node1 and date gt 2023-01-01T12:00 and "
+                "date lt 2023-12-31T12:00 and date in_range 2023-01-01T12:00 "
+                "to 2023-12-31T12:00;\n"
+                "pcs -- constraint rule add location-R1 \\\n"
+                "  id=location-R1-rule-1 score=INFINITY \\\n"
+                "  '#uname' eq node1 and date gt 2023-01-01T12:00 and "
+                "date lt 2023-12-31T12:00 and date in_range 2023-01-01T12:00 "
+                "to 2023-12-31T12:00\n"
+            ),
+        )
+
+
 class ConstraintConfigText(TestCase):
     def setUp(self):
         self.maxDiff = None
@@ -161,10 +225,12 @@ class ConstraintConfigText(TestCase):
               resource pattern 'R*' prefers node 'localhost' with score INFINITY
               resource 'R6-clone'
                 Rules:
-                  Rule: role=Unpromoted score=500
+                  Rule: boolean-op=and role=Unpromoted score=500
+                    Expression: #uname eq node1
                     Expression: date gt 2000-01-01
-                  Rule: role=Promoted score-attribute=test-attr
+                  Rule: boolean-op=and role=Promoted score-attribute=test-attr
                     Expression: date gt 2010-12-31
+                    Expression: #uname eq node1
             Colocation Constraints:
               Promoted resource 'G1-clone' with Stopped resource 'R6-clone'
                 score=-100
@@ -225,10 +291,12 @@ class ConstraintConfigText(TestCase):
                     Expression: date lt 2000-01-01
               resource 'R6-clone'
                 Rules:
-                  Rule: role=Unpromoted score=500
+                  Rule: boolean-op=and role=Unpromoted score=500
+                    Expression: #uname eq node1
                     Expression: date gt 2000-01-01
-                  Rule: role=Promoted score-attribute=test-attr
+                  Rule: boolean-op=and role=Promoted score-attribute=test-attr
                     Expression: date gt 2010-12-31
+                    Expression: #uname eq node1
             Colocation Constraints:
               Promoted resource 'G1-clone' with Stopped resource 'R6-clone'
                 score=-100
@@ -285,10 +353,12 @@ class ConstraintConfigText(TestCase):
               resource pattern 'R*' prefers node 'localhost' with score INFINITY (id: location-R-localhost-INFINITY)
               resource 'R6-clone' (id: loc_constr_with_not_expired_rule)
                 Rules:
-                  Rule: role=Unpromoted score=500 (id: loc_constr_with_not_expired_rule-rule)
-                    Expression: date gt 2000-01-01 (id: loc_constr_with_not_expired_rule-rule-expr)
-                  Rule: role=Promoted score-attribute=test-attr (id: loc_constr_with_not_expired_rule-rule-1)
+                  Rule: boolean-op=and role=Unpromoted score=500 (id: loc_constr_with_not_expired_rule-rule)
+                    Expression: #uname eq node1 (id: loc_constr_with_not_expired_rule-rule-expr)
+                    Expression: date gt 2000-01-01 (id: loc_constr_with_not_expired_rule-rule-expr-1)
+                  Rule: boolean-op=and role=Promoted score-attribute=test-attr (id: loc_constr_with_not_expired_rule-rule-1)
                     Expression: date gt 2010-12-31 (id: loc_constr_with_not_expired_rule-rule-1-expr)
+                    Expression: #uname eq node1 (id: loc_constr_with_not_expired_rule-rule-1-expr-1)
             Colocation Constraints:
               Promoted resource 'G1-clone' with Stopped resource 'R6-clone' (id: colocation-G1-clone-R6-clone--100)
                 score=-100
@@ -349,10 +419,12 @@ class ConstraintConfigText(TestCase):
                     Expression: date lt 2000-01-01 (id: loc_constr_with_expired_rule-rule-expr)
               resource 'R6-clone' (id: loc_constr_with_not_expired_rule)
                 Rules:
-                  Rule: role=Unpromoted score=500 (id: loc_constr_with_not_expired_rule-rule)
-                    Expression: date gt 2000-01-01 (id: loc_constr_with_not_expired_rule-rule-expr)
-                  Rule: role=Promoted score-attribute=test-attr (id: loc_constr_with_not_expired_rule-rule-1)
+                  Rule: boolean-op=and role=Unpromoted score=500 (id: loc_constr_with_not_expired_rule-rule)
+                    Expression: #uname eq node1 (id: loc_constr_with_not_expired_rule-rule-expr)
+                    Expression: date gt 2000-01-01 (id: loc_constr_with_not_expired_rule-rule-expr-1)
+                  Rule: boolean-op=and role=Promoted score-attribute=test-attr (id: loc_constr_with_not_expired_rule-rule-1)
                     Expression: date gt 2010-12-31 (id: loc_constr_with_not_expired_rule-rule-1-expr)
+                    Expression: #uname eq node1 (id: loc_constr_with_not_expired_rule-rule-1-expr-1)
             Colocation Constraints:
               Promoted resource 'G1-clone' with Stopped resource 'R6-clone' (id: colocation-G1-clone-R6-clone--100)
                 score=-100

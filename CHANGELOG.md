@@ -1,5 +1,18 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+- Exporting constraints with rules in form of pcs commands now escapes `#` and
+  fixes spaces in dates to make the commands valid ([rhbz#2163953])
+
+### Deprecated
+- Using spaces in dates in location constraint rules (using spaces in dates in
+  rules in other parts of configuration was never allowed) ([rhbz#2163953])
+
+[rhbz#2163953]: https://bugzilla.redhat.com/show_bug.cgi?id=2163953
+
+
 ## [0.11.6] - 2023-06-20
 
 ### Added

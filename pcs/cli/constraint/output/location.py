@@ -1,5 +1,5 @@
+import shlex
 from collections import defaultdict
-from shlex import quote
 from typing import (
     Callable,
     Iterable,
@@ -149,7 +149,7 @@ def _plain_constraint_get_resource_for_cmd(
         resource = f"resource%{constraint_dto.resource_id}"
     else:
         resource = f"regexp%{constraint_dto.resource_pattern}"
-    return quote(resource)
+    return shlex.quote(resource)
 
 
 def _plain_constraint_to_cmd(
@@ -157,9 +157,9 @@ def _plain_constraint_to_cmd(
 ) -> list[str]:
     result = [
         "pcs -- constraint location add {id} {resource} {node} {score}".format(
-            id=quote(constraint_dto.attributes.constraint_id),
+            id=shlex.quote(constraint_dto.attributes.constraint_id),
             resource=_plain_constraint_get_resource_for_cmd(constraint_dto),
-            node=quote(str(constraint_dto.attributes.node)),
+            node=shlex.quote(str(constraint_dto.attributes.node)),
             score=constraint_dto.attributes.score,
         )
     ]
@@ -185,12 +185,12 @@ def _rule_to_cmd_pairs(rule: CibRuleExpressionDto) -> list[tuple[str, str]]:
 
 
 def _add_rule_cmd(constraint_id: str, rule: CibRuleExpressionDto) -> list[str]:
-    result = [f"pcs -- constraint rule add {quote(constraint_id)}"]
+    result = [f"pcs -- constraint rule add {shlex.quote(constraint_id)}"]
     result.extend(
         indent(
             [
                 pairs_to_cmd([("id", rule.id)] + _rule_to_cmd_pairs(rule)),
-                rule.as_string,
+                shlex.join(shlex.split(rule.as_string)),
             ],
             indent_step=INDENT_STEP,
         )
@@ -221,7 +221,7 @@ def _plain_constraint_rule_to_cmd(
                     + _attributes_to_pairs(constraint_dto.attributes)
                     + _rule_to_cmd_pairs(first_rule)
                 ),
-                first_rule.as_string,
+                shlex.join(shlex.split(first_rule.as_string)),
             ],
             indent_step=INDENT_STEP,
         )

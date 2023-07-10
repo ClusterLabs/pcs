@@ -7,6 +7,7 @@ from typing import (
 )
 
 from pcs import utils
+from pcs.cli.reports.output import deprecation_warning
 from pcs.common import (
     const,
     pacemaker,
@@ -893,6 +894,17 @@ class RuleParser(Parser):
 class CibBuilder:
     def __init__(self, cib_schema_version):
         self.cib_schema_version = cib_schema_version
+        self.space_deprecation_printed = False
+
+    # deprecated since pcs-0.11.7
+    def date_space_deprecation(self, date):
+        if self.space_deprecation_printed or " " not in date:
+            return
+        self.space_deprecation_printed = True
+        deprecation_warning(
+            "Using spaces in date values is deprecated and will be removed. "
+            "Use 'T' as a delimiter between date and time."
+        )
 
     def build(self, dom_element, syntactic_tree, rule_id=None):
         dom_rule = self.add_element(
@@ -978,6 +990,7 @@ class CibBuilder:
                 "'%s' is not an ISO 8601 date"
                 % syntactic_tree.children[1].value
             )
+        self.date_space_deprecation(syntactic_tree.children[1].value)
         dom_expression.setAttribute("operation", syntactic_tree.symbol_id)
         if syntactic_tree.symbol_id == "gt":
             dom_expression.setAttribute(
@@ -1008,6 +1021,7 @@ class CibBuilder:
                         "'%s' is not an ISO 8601 date"
                         % syntactic_tree.children[2].value
                     )
+                self.date_space_deprecation(syntactic_tree.children[2].value)
                 dom_expression.setAttribute(
                     "end", syntactic_tree.children[2].value
                 )

@@ -15,14 +15,15 @@ pcs resource bundle create B2 \
   container docker \
     image=pcs:test;
 pcs resource create R1 ocf:pacemaker:Dummy --no-default-ops bundle B2 --force;
-pcs resource create R2 ocf:pacemaker:Dummy --no-default-ops;
-pcs resource create R3 ocf:pacemaker:Dummy --no-default-ops;
-pcs resource create R4 ocf:pacemaker:Dummy --no-default-ops;
+pcs resource create R2 ocf:pacemaker:Stateful --no-default-ops;
+pcs resource create R3 ocf:pacemaker:Stateful --no-default-ops;
+pcs resource create R4 ocf:pacemaker:Stateful --no-default-ops;
 pcs resource create R5 ocf:pacemaker:Dummy --no-default-ops;
 pcs resource create R6 ocf:pacemaker:Dummy;
 pcs resource create R7 ocf:pacemaker:Dummy --force \
   fake=looool envfile=/dev/null \
   op custom_action interval=10s OCF_CHECK_LEVEL=2 \
+    migrate_to interval=0s id=R7-migrate_to-interval-0s timeout=20s enabled=0 record-pending=0 \
   meta m1=value1 meta2=valueofmeta2isthisverylongstring "anotherone=something'\"special" m10=value1 meta20=valueofmeta2isthisverylongstring "another one0=a + b = c";
 pcs stonith create S1 fence_kdump nodename=testnodename;
 pcs stonith create S2 fence_kdump;

@@ -160,6 +160,7 @@ def get_all_constraints(
                             "loc_constr_with_not_expired_rule-rule"
                         ),
                         options={
+                            "boolean-op": "and",
                             "role": "Unpromoted",
                             "score": "500",
                         },
@@ -168,9 +169,25 @@ def get_all_constraints(
                         expressions=[
                             CibRuleExpressionDto(
                                 id="loc_constr_with_not_expired_rule-rule-expr",
-                                type=CibRuleExpressionType.DATE_EXPRESSION,
+                                type=CibRuleExpressionType.EXPRESSION,
                                 in_effect=rule_eval.get_rule_status(
                                     "loc_constr_with_not_expired_rule-rule-expr"
+                                ),
+                                options={
+                                    "operation": "eq",
+                                    "attribute": "#uname",
+                                    "value": "node1",
+                                },
+                                date_spec=None,
+                                duration=None,
+                                expressions=[],
+                                as_string="#uname eq node1",
+                            ),
+                            CibRuleExpressionDto(
+                                id="loc_constr_with_not_expired_rule-rule-expr-1",
+                                type=CibRuleExpressionType.DATE_EXPRESSION,
+                                in_effect=rule_eval.get_rule_status(
+                                    "loc_constr_with_not_expired_rule-rule-expr-1"
                                 ),
                                 options={
                                     "operation": "gt",
@@ -180,9 +197,9 @@ def get_all_constraints(
                                 duration=None,
                                 expressions=[],
                                 as_string="date gt 2000-01-01",
-                            )
+                            ),
                         ],
-                        as_string="date gt 2000-01-01",
+                        as_string="#uname eq node1 and date gt 2000-01-01",
                     ),
                     CibRuleExpressionDto(
                         id="loc_constr_with_not_expired_rule-rule-1",
@@ -191,6 +208,7 @@ def get_all_constraints(
                             "loc_constr_with_not_expired_rule-rule-1"
                         ),
                         options={
+                            "boolean-op": "and",
                             "role": "Promoted",
                             "score-attribute": "test-attr",
                         },
@@ -211,9 +229,25 @@ def get_all_constraints(
                                 duration=None,
                                 expressions=[],
                                 as_string="date gt 2010-12-31",
-                            )
+                            ),
+                            CibRuleExpressionDto(
+                                id="loc_constr_with_not_expired_rule-rule-1-expr-1",
+                                type=CibRuleExpressionType.EXPRESSION,
+                                in_effect=rule_eval.get_rule_status(
+                                    "loc_constr_with_not_expired_rule-rule-1-expr-1"
+                                ),
+                                options={
+                                    "operation": "eq",
+                                    "attribute": "#uname",
+                                    "value": "node1",
+                                },
+                                date_spec=None,
+                                duration=None,
+                                expressions=[],
+                                as_string="#uname eq node1",
+                            ),
                         ],
-                        as_string="date gt 2010-12-31",
+                        as_string="date gt 2010-12-31 and #uname eq node1",
                     ),
                 ],
                 lifetime=[],

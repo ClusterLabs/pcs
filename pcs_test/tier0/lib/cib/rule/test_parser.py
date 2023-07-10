@@ -513,11 +513,27 @@ class Parser(TestCase):
                 ),
             ),
             (
+                "date gt 2014-06-26T12:00:00",
+                dedent(
+                    """\
+                    BoolExpr AND
+                      DateUnaryExpr operator=GT date=2014-06-26T12:00:00"""
+                ),
+            ),
+            (
                 "date lt 2014-06-26",
                 dedent(
                     """\
                     BoolExpr AND
                       DateUnaryExpr operator=LT date=2014-06-26"""
+                ),
+            ),
+            (
+                "date lt 2014-06-26T12:00:00",
+                dedent(
+                    """\
+                    BoolExpr AND
+                      DateUnaryExpr operator=LT date=2014-06-26T12:00:00"""
                 ),
             ),
             (
@@ -529,6 +545,14 @@ class Parser(TestCase):
                 ),
             ),
             (
+                "date in_range 2014-06-26T12:00:00 to 2014-07-26T13:00:00",
+                dedent(
+                    """\
+                    BoolExpr AND
+                      DateInRangeExpr date_start=2014-06-26T12:00:00 date_end=2014-07-26T13:00:00"""
+                ),
+            ),
+            (
                 "date in_range to 2014-07-26",
                 dedent(
                     """\
@@ -537,11 +561,29 @@ class Parser(TestCase):
                 ),
             ),
             (
+                "date in_range to 2014-07-26T12:00:00",
+                dedent(
+                    """\
+                    BoolExpr AND
+                      DateInRangeExpr date_end=2014-07-26T12:00:00"""
+                ),
+            ),
+            (
                 "date in_range 2014-06-26 to duration years=1",
                 dedent(
                     """\
                     BoolExpr AND
                       DateInRangeExpr date_start=2014-06-26 duration_parts=(
+                        years=1 
+                      )"""
+                ),
+            ),
+            (
+                "date in_range 2014-06-26T12:00:00 to duration years=1",
+                dedent(
+                    """\
+                    BoolExpr AND
+                      DateInRangeExpr date_start=2014-06-26T12:00:00 duration_parts=(
                         years=1 
                       )"""
                 ),
@@ -875,6 +917,22 @@ class Parser(TestCase):
             (
                 "#uname in_range 2014-06-26 to 2014-07-26",
                 (1, 8, 7, "Expected 'eq'"),
+            ),
+            (
+                "date gt 2014-06-24 12:00:00",
+                (1, 20, 19, "Expected end of text"),
+            ),
+            (
+                "date lt 2014-06-24 12:00:00",
+                (1, 20, 19, "Expected end of text"),
+            ),
+            (
+                "date in_range 2014-06-26 12:00:00 to 2014-07-26",
+                (1, 15, 14, "Expected 'to'"),
+            ),
+            (
+                "date in_range 2014-06-26 to 2014-07-26 12:00:00",
+                (1, 40, 39, "Expected end of text"),
             ),
             # braces
             ("(#uname)", (1, 8, 7, "Expected 'eq'")),

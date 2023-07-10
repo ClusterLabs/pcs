@@ -454,8 +454,16 @@ class ParserTest(TestCase):
             str(self.parser.parse(["date", "gt", "2014-06-26"])),
         )
         self.assertEqual(
+            "(gt (literal date) (literal 2014-06-26 12:00:00))",
+            str(self.parser.parse(["date", "gt", "2014-06-26 12:00:00"])),
+        )
+        self.assertEqual(
             "(lt (literal date) (literal 2014-06-26))",
             str(self.parser.parse(["date", "lt", "2014-06-26"])),
+        )
+        self.assertEqual(
+            "(lt (literal date) (literal 2014-06-26 12:00:00))",
+            str(self.parser.parse(["date", "lt", "2014-06-26 12:00:00"])),
         )
         self.assertEqual(
             "(in_range "
@@ -464,6 +472,22 @@ class ParserTest(TestCase):
             str(
                 self.parser.parse(
                     ["date", "in_range", "2014-06-26", "to", "2014-07-26"]
+                )
+            ),
+        )
+        self.assertEqual(
+            "(in_range "
+            "(literal date) (literal 2014-06-26 12:00) (literal 2014-07-26 13:00)"
+            ")",
+            str(
+                self.parser.parse(
+                    [
+                        "date",
+                        "in_range",
+                        "2014-06-26 12:00",
+                        "to",
+                        "2014-07-26 13:00",
+                    ]
                 )
             ),
         )

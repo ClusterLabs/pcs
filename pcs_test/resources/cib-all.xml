@@ -135,11 +135,13 @@
         </rule>
       </rsc_location>
       <rsc_location id="loc_constr_with_not_expired_rule" rsc="R6-clone">
-        <rule id="loc_constr_with_not_expired_rule-rule" score="500" role="Unpromoted">
-          <date_expression id="loc_constr_with_not_expired_rule-rule-expr" operation="gt" start="2000-01-01"/>
+        <rule id="loc_constr_with_not_expired_rule-rule" boolean-op="and" score="500" role="Unpromoted">
+          <expression id="loc_constr_with_not_expired_rule-rule-expr" operation="eq" attribute="#uname" value="node1"/>
+          <date_expression id="loc_constr_with_not_expired_rule-rule-expr-1" operation="gt" start="2000-01-01"/>
         </rule>
-        <rule id="loc_constr_with_not_expired_rule-rule-1" role="Promoted" score-attribute="test-attr">
+        <rule id="loc_constr_with_not_expired_rule-rule-1" boolean-op="and" role="Promoted" score-attribute="test-attr">
           <date_expression id="loc_constr_with_not_expired_rule-rule-1-expr" operation="gt" start="2010-12-31"/>
+          <expression id="loc_constr_with_not_expired_rule-rule-1-expr-1" operation="eq" attribute="#uname" value="node1"/>
         </rule>
       </rsc_location>
       <rsc_order first="R7" then="G2" score="-123" require-all="false" first-action="stop" then-action="stop" symmetrical="false" id="order-R7-G2-mandatory"/>
