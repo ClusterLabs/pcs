@@ -22,13 +22,13 @@ from pcs.common.types import CorosyncNodeAddressType
 
 def _import_all(_path):
     # arbitrary prefix so it doesn't iteract with real import in real tests
-    for loader, module_name, is_pkg in pkgutil.walk_packages(
+    for module_finder, module_name, is_pkg in pkgutil.walk_packages(
         _path, prefix="_pcs."
     ):
         if module_name.startswith("_pcs.snmp."):
             continue
         del is_pkg
-        loader.find_module(module_name).load_module(module_name)
+        module_finder.find_spec(module_name).loader.load_module(module_name)
 
 
 def _all_subclasses(cls):
