@@ -2,11 +2,16 @@
 
 ## [Unreleased]
 
+### Security
+- Make use of filters when extracting tarballs to enhance security if provided
+  by Python (`pcs config restore` command) ([rhbz#2219388])
+
 ### Fixed
 - Do not display duplicate records in commands `pcs property [config] --all`
   and `pcs property describe` ([rhbz#2217850])
 
 [rhbz#2217850]: https://bugzilla.redhat.com/show_bug.cgi?id=2217850
+[rhbz#2219388]: https://bugzilla.redhat.com/show_bug.cgi?id=2219388
 
 
 ## [0.10.17] - 2023-06-19
