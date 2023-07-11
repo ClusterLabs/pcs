@@ -488,14 +488,36 @@ def config_restore_local(infile_name, infile_obj):
                 if "rename" in extract_info and extract_info["rename"]:
                     if tmp_dir is None:
                         tmp_dir = tempfile.mkdtemp()
-                    tarball.extractall(tmp_dir, [tar_member_info])
+                    if hasattr(tarfile, "data_filter"):
+                        # Safe way of extraction is available since Python 3.12,
+                        # hasattr above checks if it's available.
+                        # It's also backported to 3.11.4, 3.10.12, 3.9.17.
+                        # It may be backported to older versions in downstream.
+                        tarball.extractall(
+                            tmp_dir, [tar_member_info], filter="data"
+                        )
+                    else:
+                        # Unsafe way of extraction
+                        # Remove once we don't support Python 3.8 and older
+                        tarball.extractall(tmp_dir, [tar_member_info])
                     path_full = extract_info["path"]
                     shutil.move(
                         os.path.join(tmp_dir, tar_member_info.name), path_full
                     )
                 else:
                     dir_path = os.path.dirname(extract_info["path"])
-                    tarball.extractall(dir_path, [tar_member_info])
+                    if hasattr(tarfile, "data_filter"):
+                        # Safe way of extraction is available since Python 3.12,
+                        # hasattr above checks if it's available.
+                        # It's also backported to 3.11.4, 3.10.12, 3.9.17.
+                        # It may be backported to older versions in downstream.
+                        tarball.extractall(
+                            dir_path, [tar_member_info], filter="data"
+                        )
+                    else:
+                        # Unsafe way of extracting
+                        # Remove once we don't support Python 3.8 and older
+                        tarball.extractall(dir_path, [tar_member_info])
                     path_full = os.path.join(dir_path, tar_member_info.name)
                 file_attrs = extract_info["attrs"]
                 os.chmod(path_full, file_attrs["mode"])
