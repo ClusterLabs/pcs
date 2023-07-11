@@ -240,13 +240,17 @@ def plain_constraint_to_cmd(
             "Lifetime configuration detected in constraint "
             f"'{constraint_dto.attributes.constraint_id}' but not supported by "
             "this command."
+            " Command for creating the constraint is omitted."
         )
+        return []
     if constraint_dto.role:
         warn(
-            f"Resource role '{constraint_dto.role}' detected in constraint "
+            f"Resource role detected in constraint "
             f"'{constraint_dto.attributes.constraint_id}' but not supported by "
             "this command."
+            " Command for creating the constraint is omitted."
         )
+        return []
     if constraint_dto.attributes.rules:
         return _plain_constraint_rule_to_cmd(constraint_dto)
     return [_plain_constraint_to_cmd(constraint_dto)]

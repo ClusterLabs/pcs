@@ -47,38 +47,44 @@ def constraints_to_cmd(constraints_dto: CibConstraintsDto) -> list[list[str]]:
     for location_set_dto in constraints_dto.location_set:
         warn(
             "Location set constraint with id "
-            f"'{location_set_dto.attributes.constraint_id}'configured but it's "
-            "not supported by this command"
+            f"'{location_set_dto.attributes.constraint_id}' configured but it's "
+            "not supported by this command."
+            " Command for creating the constraint is omitted."
         )
     location_cmds = []
     for location_dto in constraints_dto.location:
         location_cmds.extend(location.plain_constraint_to_cmd(location_dto))
-    return (
-        location_cmds
-        + [
-            colocation.plain_constraint_to_cmd(colocation_dto)
-            for colocation_dto in constraints_dto.colocation
-        ]
-        + [
-            colocation.set_constraint_to_cmd(colocation_set_dto)
-            for colocation_set_dto in constraints_dto.colocation_set
-        ]
-        + [
-            order.plain_constraint_to_cmd(order_dto)
-            for order_dto in constraints_dto.order
-        ]
-        + [
-            order.set_constraint_to_cmd(order_set_dto)
-            for order_set_dto in constraints_dto.order_set
-        ]
-        + [
-            ticket.plain_constraint_to_cmd(ticket_dto)
-            for ticket_dto in constraints_dto.ticket
-        ]
-        + [
-            ticket.set_constraint_to_cmd(ticket_set_dto)
-            for ticket_set_dto in constraints_dto.ticket_set
-        ]
+    return list(
+        filter(
+            None,
+            (
+                location_cmds
+                + [
+                    colocation.plain_constraint_to_cmd(colocation_dto)
+                    for colocation_dto in constraints_dto.colocation
+                ]
+                + [
+                    colocation.set_constraint_to_cmd(colocation_set_dto)
+                    for colocation_set_dto in constraints_dto.colocation_set
+                ]
+                + [
+                    order.plain_constraint_to_cmd(order_dto)
+                    for order_dto in constraints_dto.order
+                ]
+                + [
+                    order.set_constraint_to_cmd(order_set_dto)
+                    for order_set_dto in constraints_dto.order_set
+                ]
+                + [
+                    ticket.plain_constraint_to_cmd(ticket_dto)
+                    for ticket_dto in constraints_dto.ticket
+                ]
+                + [
+                    ticket.set_constraint_to_cmd(ticket_set_dto)
+                    for ticket_set_dto in constraints_dto.ticket_set
+                ]
+            ),
+        )
     )
 
 

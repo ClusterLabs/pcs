@@ -121,11 +121,10 @@ def set_constraint_to_cmd(
 ) -> list[str]:
     result = ["pcs -- constraint ticket"]
     for resource_set in constraint_dto.resource_sets:
-        result.extend(
-            indent(
-                _set.resource_set_to_cmd(resource_set), indent_step=INDENT_STEP
-            )
-        )
+        set_cmd_part = _set.resource_set_to_cmd(resource_set)
+        if not set_cmd_part:
+            return []
+        result.extend(indent(set_cmd_part, indent_step=INDENT_STEP))
     params = pairs_to_cmd(
         _attributes_to_cmd_pairs(constraint_dto.attributes)
         + [("ticket", constraint_dto.attributes.ticket)]

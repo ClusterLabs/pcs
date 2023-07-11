@@ -127,7 +127,9 @@ def plain_constraint_to_cmd(
             "Resource instance(s) detected in constraint "
             f"'{constraint_dto.attributes.constraint_id}' but not supported by "
             "this command."
+            " Command for creating the constraint is omitted."
         )
+        return []
     result = [
         "pcs -- constraint order {first_action}{first_resource_id} then {then_action}{then_resource_id}".format(
             first_action=format_optional(constraint_dto.first_action),
@@ -147,11 +149,10 @@ def set_constraint_to_cmd(
 ) -> list[str]:
     result = ["pcs -- constraint order"]
     for resource_set in constraint_dto.resource_sets:
-        result.extend(
-            indent(
-                _set.resource_set_to_cmd(resource_set), indent_step=INDENT_STEP
-            )
-        )
+        set_cmd_part = _set.resource_set_to_cmd(resource_set)
+        if not set_cmd_part:
+            return []
+        result.extend(indent(set_cmd_part, indent_step=INDENT_STEP))
     pairs = []
     for pair in _attributes_to_cmd_pairs(constraint_dto.attributes):
         # this list is based on pcs.lib.cib.constraint.order.ATTRIB
@@ -159,8 +160,10 @@ def set_constraint_to_cmd(
             warn(
                 f"Option '{pair[0]}' detected in constraint "
                 f"'{constraint_dto.attributes.constraint_id}' but not "
-                "supported by this command"
+                "supported by this command."
+                " Command for creating the constraint is omitted."
             )
+            return []
         pairs.append(pair)
     if pairs:
         result.extend(

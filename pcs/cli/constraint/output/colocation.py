@@ -1,5 +1,8 @@
 from shlex import quote
-from typing import Iterable
+from typing import (
+    Iterable,
+    Optional,
+)
 
 from pcs.cli.common.output import (
     INDENT_STEP,
@@ -120,13 +123,15 @@ def constraints_to_text(
 def _attributes_to_cmd_pairs(
     attributes_dto: CibConstraintColocationAttributesDto,
     filter_out: StringCollection = tuple(),
-) -> list[tuple[str, str]]:
+) -> Optional[list[tuple[str, str]]]:
     if attributes_dto.lifetime:
         warn(
             "Lifetime configuration detected in constraint "
             f"'{attributes_dto.constraint_id}' but not supported by this "
             "command."
+            " Command for creating the constraint is omitted."
         )
+        return None
     unsupported_options = {"influence"}
     result = []
     for pair in [("id", attributes_dto.constraint_id)] + _attributes_to_pairs(
@@ -136,8 +141,10 @@ def _attributes_to_cmd_pairs(
             warn(
                 f"Option '{pair[0]}' detected in constraint "
                 f"'{attributes_dto.constraint_id}' but not supported by this "
-                "command"
+                "command."
+                " Command for creating the constraint is omitted."
             )
+            return None
         if pair[0] in filter_out:
             continue
         result.append(pair)
@@ -155,7 +162,17 @@ def plain_constraint_to_cmd(
             "Resource instance(s) detected in constraint "
             f"'{constraint_dto.attributes.constraint_id}' but not supported by "
             "this command."
+            " Command for creating the constraint is omitted."
         )
+        return []
+    if constraint_dto.node_attribute is not None:
+        warn(
+            "Option 'node_attribute' detected in constraint "
+            f"'{constraint_dto.attributes.constraint_id}' but not supported by "
+            "this command."
+            " Command for creating the constraint is omitted."
+        )
+        return []
     result = [
         "pcs -- constraint colocation add {resource_role}{resource_id} with {with_resource_role}{with_resource_id}{score}".format(
             resource_role=format_optional(constraint_dto.resource_role),
@@ -169,11 +186,12 @@ def plain_constraint_to_cmd(
             ),
         )
     ]
-    params = pairs_to_cmd(
-        _attributes_to_cmd_pairs(
-            constraint_dto.attributes, filter_out=("score",)
-        )
+    pairs = _attributes_to_cmd_pairs(
+        constraint_dto.attributes, filter_out=("score",)
     )
+    if pairs is None:
+        return []
+    params = pairs_to_cmd(pairs)
     if params:
         result.extend(indent([params], indent_step=INDENT_STEP))
     return result
@@ -184,12 +202,14 @@ def set_constraint_to_cmd(
 ) -> list[str]:
     result = ["pcs -- constraint colocation"]
     for resource_set in constraint_dto.resource_sets:
-        result.extend(
-            indent(
-                _set.resource_set_to_cmd(resource_set), indent_step=INDENT_STEP
-            )
-        )
-    params = pairs_to_cmd(_attributes_to_cmd_pairs(constraint_dto.attributes))
+        set_cmd_part = _set.resource_set_to_cmd(resource_set)
+        if not set_cmd_part:
+            return []
+        result.extend(indent(set_cmd_part, indent_step=INDENT_STEP))
+    pairs = _attributes_to_cmd_pairs(constraint_dto.attributes)
+    if pairs is None:
+        return []
+    params = pairs_to_cmd(pairs)
     if params:
         result.extend(indent([f"setoptions {params}"], indent_step=INDENT_STEP))
     return result

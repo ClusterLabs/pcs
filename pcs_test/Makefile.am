@@ -22,6 +22,7 @@ EXTRA_DIST		= \
 			  resources/cib-all.xml \
 			  resources/cib-rule-with-spaces-in-date.xml \
 			  resources/cib-tags.xml \
+			  resources/cib-unexportable-constraints.xml \
 			  resources/controld_metadata.xml \
 			  resources/corosync-3nodes.conf \
 			  resources/corosync-3nodes-qdevice.conf \

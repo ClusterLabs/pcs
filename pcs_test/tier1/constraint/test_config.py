@@ -205,6 +205,53 @@ class ConstraintConfigCmdSpaceInDate(ConstraintConfigCmdMixin, TestCase):
         )
 
 
+class ConstraintConfigCmdUnsupported(TestCase):
+    def setUp(self):
+        self.maxDiff = None
+        self.pcs_runner = PcsRunner(
+            cib_file=get_test_resource("cib-unexportable-constraints.xml"),
+        )
+
+    def test_dont_export_unsupported_constraints(self):
+        stdout, stderr, retval = self.pcs_runner.run(
+            ["constraint", "config", "--output-format=cmd"]
+        )
+        self.assertEqual(retval, 0)
+        sufix = "not supported by this command. Command for creating the constraint is omitted.\n"
+        self.assertEqual(
+            stderr,
+            (
+                f"Warning: Location set constraint with id 'location-set' configured but it's {sufix}"
+                f"Warning: Resource role detected in constraint 'location-role' but {sufix}"
+                f"Warning: Lifetime configuration detected in constraint 'location-lifetime' but {sufix}"
+                f"Warning: Option 'influence' detected in constraint 'colocation-influence' but {sufix}"
+                f"Warning: Lifetime configuration detected in constraint 'colocation-lifetime' but {sufix}"
+                f"Warning: Option 'node_attribute' detected in constraint 'colocation-node-attribute' but {sufix}"
+                f"Warning: Option 'ordering' detected in resource set 'colocation-set-ordering-set' but {sufix}"
+                f"Warning: Option 'require-all' detected in constraint 'order-set-require-all' but {sufix}"
+                f"Warning: Option 'ordering' detected in resource set 'order-set-ordering-set' but {sufix}"
+            ),
+        )
+        self.assertEqual(
+            stdout,
+            (
+                "pcs -- constraint location add location-OK resource%R1 node1 INFINITY;\n"
+                "pcs -- constraint colocation add R1 with R3 INFINITY \\\n"
+                "  id=colocation-OK;\n"
+                "pcs -- constraint colocation \\\n"
+                "  set R1 R3 \\\n"
+                "  setoptions id=colocation-set-OK;\n"
+                "pcs -- constraint order start R1 then start R3 \\\n"
+                "  id=order-OK;\n"
+                "pcs -- constraint order start R1 then start R3 \\\n"
+                "  id=order-lifetime;\n"
+                "pcs -- constraint order \\\n"
+                "  set R1 R3 \\\n"
+                "  setoptions id=order-set-OK\n"
+            ),
+        )
+
+
 class ConstraintConfigText(TestCase):
     def setUp(self):
         self.maxDiff = None

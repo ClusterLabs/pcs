@@ -6,6 +6,12 @@
 - Exporting constraints with rules in form of pcs commands now escapes `#` and
   fixes spaces in dates to make the commands valid ([rhbz#2163953])
 
+### Changed
+- When exporting constraints in form of pcs commands, constraints containing
+  options unsupported by pcs are not exported and a warning is printed instead.
+  Previously, the warnings were printed, but the constraints were exported
+  regardless. ([rhbz#2163953])
+
 ### Deprecated
 - Using spaces in dates in location constraint rules (using spaces in dates in
   rules in other parts of configuration was never allowed) ([rhbz#2163953])
