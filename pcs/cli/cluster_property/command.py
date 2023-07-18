@@ -12,6 +12,11 @@ from pcs.cli.cluster_property.output import (
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.output import smart_wrap_text
 from pcs.cli.common.parse_args import (
+    OUTPUT_FORMAT_OPTION,
+    OUTPUT_FORMAT_VALUE_CMD,
+    OUTPUT_FORMAT_VALUE_JSON,
+    OUTPUT_FORMAT_VALUE_TEXT,
+    Argv,
     InputModifiers,
     ensure_unique_args,
     prepare_options,
@@ -25,12 +30,9 @@ from pcs.common.str_tools import (
     format_list,
     format_plural,
 )
-from pcs.common.types import StringSequence
 
 
-def set_property(
-    lib: Any, argv: StringSequence, modifiers: InputModifiers
-) -> None:
+def set_property(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --force - allow unknown options
@@ -46,9 +48,7 @@ def set_property(
     lib.cluster_property.set_properties(cluster_options, force_flags)
 
 
-def unset_property(
-    lib: Any, argv: StringSequence, modifiers: InputModifiers
-) -> None:
+def unset_property(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --force - no error when removing not existing properties
@@ -69,8 +69,8 @@ def unset_property(
 
 
 def list_property_deprecated(
-    lib: Any, argv: StringSequence, modifiers: InputModifiers
-):
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     deprecation_warning(
         "This command is deprecated and will be removed. "
         "Please use 'pcs property config' instead."
@@ -78,7 +78,7 @@ def list_property_deprecated(
     return config(lib, argv, modifiers)
 
 
-def config(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
+def config(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file
@@ -101,7 +101,11 @@ def config(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
     modifiers.ensure_not_mutually_exclusive(*mutually_exclusive_options)
     output_format = modifiers.get_output_format()
 
-    if argv or output_format == "cmd" or modifiers.get("--all"):
+    if (
+        argv
+        or output_format == OUTPUT_FORMAT_VALUE_CMD
+        or modifiers.get("--all")
+    ):
         properties_facade = PropertyConfigurationFacade.from_properties_dtos(
             lib.cluster_property.get_properties(),
             lib.cluster_property.get_properties_metadata(),
@@ -141,9 +145,9 @@ def config(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
                 properties_facade.get_defaults(include_advanced=True)
             )
         )
-    elif output_format == "cmd":
+    elif output_format == OUTPUT_FORMAT_VALUE_CMD:
         output = " \\\n".join(properties_to_cmd(properties_facade))
-    elif output_format == "json":
+    elif output_format == OUTPUT_FORMAT_VALUE_JSON:
         output = json.dumps(
             dto.to_dict(ListCibNvsetDto(properties_facade.properties[0:1]))
         )
@@ -154,7 +158,7 @@ def config(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
         print(output)
 
 
-def defaults(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
+def defaults(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --full - also list advanced cluster properties
@@ -181,7 +185,7 @@ def defaults(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
         print(output)
 
 
-def describe(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
+def describe(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --full - also list advanced cluster properties
@@ -191,17 +195,19 @@ def describe(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
     if argv and modifiers.is_specified("--full"):
         raise CmdLineInputError("cannot specify properties when using '--full'")
     output_format = modifiers.get_output_format(
-        supported_formats={"text", "json"}
+        supported_formats={OUTPUT_FORMAT_VALUE_TEXT, OUTPUT_FORMAT_VALUE_JSON}
     )
-    if output_format == "json" and (argv or modifiers.is_specified("--full")):
+    if output_format == OUTPUT_FORMAT_VALUE_JSON and (
+        argv or modifiers.is_specified("--full")
+    ):
         raise CmdLineInputError(
-            "property filtering is not supported with --output-format=json"
+            "property filtering is not supported with "
+            f"{OUTPUT_FORMAT_OPTION}={OUTPUT_FORMAT_VALUE_JSON}"
         )
     properties_facade = PropertyConfigurationFacade.from_properties_metadata(
         lib.cluster_property.get_properties_metadata()
     )
-
-    if output_format == "json":
+    if output_format == OUTPUT_FORMAT_VALUE_JSON:
         output = json.dumps(
             dto.to_dict(
                 ClusterPropertyMetadataDto(
@@ -236,7 +242,7 @@ def describe(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
 
 
 def print_cluster_properties_definition_legacy(
-    lib: Any, argv: StringSequence, modifiers: InputModifiers
+    lib: Any, argv: Argv, modifiers: InputModifiers
 ) -> None:
     """
     Options: no options

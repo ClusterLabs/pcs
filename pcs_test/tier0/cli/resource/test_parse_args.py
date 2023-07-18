@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 from unittest import (
     TestCase,
     mock,
@@ -40,34 +41,41 @@ class ParseCloneArgs(TestCase):
         self.assert_stderr(stderr)
 
     def test_no_args(self):
-        self.assert_produce([], {"clone_id": None, "meta": {}})
+        self.assert_produce(
+            [],
+            parse_args.CloneOptions(clone_id=None, meta_attrs={}),
+        )
 
     def test_clone_id(self):
         self.assert_produce(
             ["CustomCloneId"],
-            {"clone_id": "CustomCloneId", "meta": {}},
+            parse_args.CloneOptions(clone_id="CustomCloneId", meta_attrs={}),
         )
 
     def test_clone_options(self):
         self.assert_produce(
             ["a=b", "c=d"],
-            {"clone_id": None, "meta": {"a": "b", "c": "d"}},
+            parse_args.CloneOptions(
+                clone_id=None, meta_attrs={"a": "b", "c": "d"}
+            ),
             stderr=self.meta_deprecated,
         )
 
     def test_meta_options(self):
         self.assert_produce(
             ["meta", "a=b", "c=d"],
-            {"clone_id": None, "meta": {"a": "b", "c": "d"}},
+            parse_args.CloneOptions(
+                clone_id=None, meta_attrs={"a": "b", "c": "d"}
+            ),
         )
 
     def test_clone_id_and_clone_meta_options(self):
         self.assert_produce(
             ["CustomCloneId", "a=b", "c=d", "meta", "e=f", "g=h"],
-            {
-                "clone_id": "CustomCloneId",
-                "meta": {"a": "b", "c": "d", "e": "f", "g": "h"},
-            },
+            parse_args.CloneOptions(
+                clone_id="CustomCloneId",
+                meta_attrs={"a": "b", "c": "d", "e": "f", "g": "h"},
+            ),
             stderr=self.meta_deprecated,
         )
 
@@ -105,8 +113,8 @@ class ParseCloneArgs(TestCase):
         self.assert_raises_cmdline(
             ["CloneId", "promotable=true", "meta", "promotable=false"],
             (
-                "duplicate option 'promotable' with different values 'true' and"
-                " 'false'"
+                "duplicate option 'promotable' with different values 'false' "
+                "and 'true'"
             ),
             promotable=True,
             stderr=self.meta_deprecated,
@@ -195,127 +203,190 @@ class ParseCreateArgs(TestCase):
     def test_no_args(self):
         self.assert_produce(
             [],
-            {
-                "meta": {},
-                "options": {},
-                "op": [],
-            },
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={},
+                    operations=[],
+                ),
+                clone=None,
+                promotable=None,
+                bundle_id=None,
+            ),
         )
         self.assert_stderr()
 
     def test_only_instance_attributes(self):
         self.assert_produce(
             ["a=b", "c=d"],
-            {
-                "meta": {},
-                "options": {
-                    "a": "b",
-                    "c": "d",
-                },
-                "op": [],
-            },
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={"a": "b", "c": "d"},
+                    meta_attrs={},
+                    operations=[],
+                ),
+                clone=None,
+                promotable=None,
+                bundle_id=None,
+            ),
         )
         self.assert_stderr()
 
     def test_only_meta(self):
         self.assert_produce(
             ["meta", "a=b", "c=d"],
-            {
-                "options": {},
-                "op": [],
-                "meta": {
-                    "a": "b",
-                    "c": "d",
-                },
-            },
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={"a": "b", "c": "d"},
+                    operations=[],
+                ),
+                clone=None,
+                promotable=None,
+                bundle_id=None,
+            ),
         )
         self.assert_stderr()
 
     def test_only_clone(self):
         self.assert_produce(
+            ["clone"],
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={},
+                    operations=[],
+                ),
+                clone=parse_args.CloneOptions(clone_id=None, meta_attrs={}),
+                promotable=None,
+                bundle_id=None,
+            ),
+        )
+        self.assert_stderr()
+
+    def test_only_clone_with_options(self):
+        self.assert_produce(
             ["clone", "a=b", "c=d"],
-            {
-                "meta": {},
-                "options": {},
-                "op": [],
-                "clone": {
-                    "a": "b",
-                    "c": "d",
-                },
-            },
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={},
+                    operations=[],
+                ),
+                clone=parse_args.CloneOptions(
+                    clone_id=None, meta_attrs={"a": "b", "c": "d"}
+                ),
+                promotable=None,
+                bundle_id=None,
+            ),
         )
         self.assert_stderr([self.msg_clone_without_meta])
 
     def test_only_clone_with_custom_id(self):
         self.assert_produce(
             ["clone", "CustomCloneId"],
-            {
-                "meta": {},
-                "options": {},
-                "op": [],
-                "clone": {},
-                "clone_id": "CustomCloneId",
-            },
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={},
+                    operations=[],
+                ),
+                clone=parse_args.CloneOptions(
+                    clone_id="CustomCloneId", meta_attrs={}
+                ),
+                promotable=None,
+                bundle_id=None,
+            ),
         )
         self.assert_stderr()
 
     def test_only_clone_with_custom_id_and_meta(self):
         self.assert_produce(
             ["clone", "CustomCloneId", "a=b", "c=d"],
-            {
-                "meta": {},
-                "options": {},
-                "op": [],
-                "clone": {
-                    "a": "b",
-                    "c": "d",
-                },
-                "clone_id": "CustomCloneId",
-            },
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={},
+                    operations=[],
+                ),
+                clone=parse_args.CloneOptions(
+                    clone_id="CustomCloneId", meta_attrs={"a": "b", "c": "d"}
+                ),
+                promotable=None,
+                bundle_id=None,
+            ),
         )
         self.assert_stderr([self.msg_clone_without_meta])
 
     def test_only_promotable(self):
         self.assert_produce(
+            ["promotable"],
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={},
+                    operations=[],
+                ),
+                clone=None,
+                promotable=parse_args.CloneOptions(
+                    clone_id=None, meta_attrs={}
+                ),
+                bundle_id=None,
+            ),
+        )
+        self.assert_stderr()
+
+    def test_only_promotable_with_options(self):
+        self.assert_produce(
             ["promotable", "a=b", "c=d"],
-            {
-                "meta": {},
-                "options": {},
-                "op": [],
-                "promotable": {
-                    "a": "b",
-                    "c": "d",
-                },
-            },
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={},
+                    operations=[],
+                ),
+                clone=None,
+                promotable=parse_args.CloneOptions(
+                    clone_id=None, meta_attrs={"a": "b", "c": "d"}
+                ),
+                bundle_id=None,
+            ),
         )
         self.assert_stderr([self.msg_promotable_without_meta])
 
     def test_only_promotable_with_custom_id(self):
         self.assert_produce(
             ["promotable", "CustomCloneId"],
-            {
-                "meta": {},
-                "options": {},
-                "op": [],
-                "promotable": {},
-                "clone_id": "CustomCloneId",
-            },
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={},
+                    operations=[],
+                ),
+                clone=None,
+                promotable=parse_args.CloneOptions(
+                    clone_id="CustomCloneId", meta_attrs={}
+                ),
+                bundle_id=None,
+            ),
         )
         self.assert_stderr()
 
     def test_only_promotable_with_custom_id_and_meta(self):
         self.assert_produce(
             ["promotable", "CustomCloneId", "a=b", "c=d"],
-            {
-                "meta": {},
-                "options": {},
-                "op": [],
-                "promotable": {
-                    "a": "b",
-                    "c": "d",
-                },
-                "clone_id": "CustomCloneId",
-            },
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={},
+                    operations=[],
+                ),
+                clone=None,
+                promotable=parse_args.CloneOptions(
+                    clone_id="CustomCloneId", meta_attrs={"a": "b", "c": "d"}
+                ),
+                bundle_id=None,
+            ),
         )
         self.assert_stderr([self.msg_promotable_without_meta])
 
@@ -329,14 +400,19 @@ class ParseCreateArgs(TestCase):
                 "start",
                 "e=f",
             ],
-            {
-                "meta": {},
-                "options": {},
-                "op": [
-                    {"name": "monitor", "a": "b", "c": "d"},
-                    {"name": "start", "e": "f"},
-                ],
-            },
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={},
+                    operations=[
+                        {"name": "monitor", "a": "b", "c": "d"},
+                        {"name": "start", "e": "f"},
+                    ],
+                ),
+                clone=None,
+                promotable=None,
+                bundle_id=None,
+            ),
         )
         self.assert_stderr()
 
@@ -358,24 +434,21 @@ class ParseCreateArgs(TestCase):
                 "o=p",
                 "q=r",
             ],
-            {
-                "options": {
-                    "a": "b",
-                    "c": "d",
-                },
-                "op": [
-                    {"name": "monitor", "i": "j", "k": "l"},
-                    {"name": "start", "m": "n"},
-                ],
-                "meta": {
-                    "e": "f",
-                    "g": "h",
-                },
-                "clone": {
-                    "o": "p",
-                    "q": "r",
-                },
-            },
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={"a": "b", "c": "d"},
+                    meta_attrs={"e": "f", "g": "h"},
+                    operations=[
+                        {"name": "monitor", "i": "j", "k": "l"},
+                        {"name": "start", "m": "n"},
+                    ],
+                ),
+                clone=parse_args.CloneOptions(
+                    clone_id=None, meta_attrs={"o": "p", "q": "r"}
+                ),
+                promotable=None,
+                bundle_id=None,
+            ),
         )
         self.assert_stderr([self.msg_clone_without_meta])
 
@@ -407,18 +480,23 @@ class ParseCreateArgs(TestCase):
                 "start",
                 "e=f",
             ],
-            {
-                "meta": {},
-                "options": {},
-                "op": [
-                    {"name": "monitor", "a": "b", "c": "d"},
-                    {"name": "start", "e": "f"},
-                ],
-            },
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={},
+                    operations=[
+                        {"name": "monitor", "a": "b", "c": "d"},
+                        {"name": "start", "e": "f"},
+                    ],
+                ),
+                clone=None,
+                promotable=None,
+                bundle_id=None,
+            ),
         )
         self.assert_stderr()
 
-    def test_deal_with_empty_operatins(self):
+    def test_deal_with_empty_operations(self):
         msg = (
             "When using 'op' you must specify an operation name and at least "
             "one option"
@@ -443,24 +521,21 @@ class ParseCreateArgs(TestCase):
                 "start",
                 "m=n",
             ],
-            {
-                "options": {
-                    "a": "b",
-                    "c": "d",
-                },
-                "op": [
-                    {"name": "monitor", "i": "j", "k": "l"},
-                    {"name": "start", "m": "n"},
-                ],
-                "meta": {
-                    "e": "f",
-                    "g": "h",
-                },
-                "clone": {
-                    "o": "p",
-                    "q": "r",
-                },
-            },
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={"a": "b", "c": "d"},
+                    meta_attrs={"e": "f", "g": "h"},
+                    operations=[
+                        {"name": "monitor", "i": "j", "k": "l"},
+                        {"name": "start", "m": "n"},
+                    ],
+                ),
+                clone=parse_args.CloneOptions(
+                    clone_id=None, meta_attrs={"o": "p", "q": "r"}
+                ),
+                promotable=None,
+                bundle_id=None,
+            ),
         )
         self.assert_stderr(
             [self.msg_clone_without_meta, self.msg_op_after_clone]
@@ -484,77 +559,80 @@ class ParseCreateArgs(TestCase):
                 "e=f",
                 "g=h",
             ],
-            {
-                "options": {
-                    "a": "b",
-                    "c": "d",
-                },
-                "op": [
-                    {"name": "monitor", "i": "j", "k": "l"},
-                    {"name": "start", "m": "n"},
-                ],
-                "meta": {
-                    "e": "f",
-                    "g": "h",
-                },
-                "clone": {
-                    "o": "p",
-                    "q": "r",
-                },
-            },
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={"a": "b", "c": "d"},
+                    meta_attrs={"e": "f", "g": "h"},
+                    operations=[
+                        {"name": "monitor", "i": "j", "k": "l"},
+                        {"name": "start", "m": "n"},
+                    ],
+                ),
+                clone=parse_args.CloneOptions(
+                    clone_id=None, meta_attrs={"o": "p", "q": "r"}
+                ),
+                promotable=None,
+                bundle_id=None,
+            ),
         )
         self.assert_stderr(
             [self.msg_clone_without_meta, self.msg_meta_after_clone]
         )
 
     def test_bundle_no_options(self):
-        self.assert_produce(
+        self.assert_raises_cmdline(
             ["bundle"],
-            {
-                "bundle": [],
-                "meta": {},
-                "op": [],
-                "options": {},
-            },
+            "you have to specify exactly one bundle",
         )
-        self.assert_stderr()
 
     def test_bundle(self):
         self.assert_produce(
             ["bundle", "b"],
-            {
-                "bundle": ["b"],
-                "meta": {},
-                "op": [],
-                "options": {},
-            },
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={},
+                    operations=[],
+                ),
+                clone=None,
+                promotable=None,
+                bundle_id="b",
+            ),
         )
         self.assert_stderr()
 
     def test_op_after_bundle(self):
         self.assert_produce(
             ["bundle", "b", "op", "monitor", "a=b", "c=d", "start", "e=f"],
-            {
-                "bundle": ["b"],
-                "meta": {},
-                "op": [
-                    {"name": "monitor", "a": "b", "c": "d"},
-                    {"name": "start", "e": "f"},
-                ],
-                "options": {},
-            },
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={},
+                    operations=[
+                        {"name": "monitor", "a": "b", "c": "d"},
+                        {"name": "start", "e": "f"},
+                    ],
+                ),
+                clone=None,
+                promotable=None,
+                bundle_id="b",
+            ),
         )
         self.assert_stderr([self.msg_op_after_bundle])
 
     def test_meta_after_bundle(self):
         self.assert_produce(
             ["bundle", "b", "meta", "a=b", "c=d"],
-            {
-                "bundle": ["b"],
-                "meta": {"a": "b", "c": "d"},
-                "op": [],
-                "options": {},
-            },
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={"a": "b", "c": "d"},
+                    operations=[],
+                ),
+                clone=None,
+                promotable=None,
+                bundle_id="b",
+            ),
         )
         self.assert_stderr([self.msg_meta_after_bundle])
 
@@ -573,12 +651,16 @@ class ParseCreateArgs(TestCase):
                 "meta",
                 "o=p",
             ],
-            {
-                "options": {"a": "b", "c": "d"},
-                "meta": {"e": "f", "g": "h", "m": "n", "o": "p"},
-                "op": [],
-                "clone": {},
-            },
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={"a": "b", "c": "d"},
+                    meta_attrs={"e": "f", "g": "h", "m": "n", "o": "p"},
+                    operations=[],
+                ),
+                clone=parse_args.CloneOptions(clone_id=None, meta_attrs={}),
+                promotable=None,
+                bundle_id=None,
+            ),
         )
         self.assert_stderr([self.msg_meta_after_clone])
 
@@ -592,7 +674,7 @@ class ParseCreateArgsFuture(ParseCreateArgs):
             self.msg_op_after_clone_err,
         )
 
-    def test_only_clone(self):
+    def test_only_clone_with_options(self):
         self.assert_raises_cmdline(
             ["clone", "a=b", "c=d"], self.msg_clone_without_meta_err
         )
@@ -606,16 +688,21 @@ class ParseCreateArgsFuture(ParseCreateArgs):
     def test_only_clone_with_custom_id_and_meta_correct(self):
         self.assert_produce(
             ["clone", "CustomCloneId", "meta", "a=b", "c=d"],
-            {
-                "meta": {},
-                "options": {},
-                "op": [],
-                "clone": {"a": "b", "c": "d"},
-                "clone_id": "CustomCloneId",
-            },
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={},
+                    operations=[],
+                ),
+                clone=parse_args.CloneOptions(
+                    clone_id="CustomCloneId", meta_attrs={"a": "b", "c": "d"}
+                ),
+                promotable=None,
+                bundle_id=None,
+            ),
         )
 
-    def test_only_promotable(self):
+    def test_only_promotable_with_options(self):
         self.assert_raises_cmdline(
             ["promotable", "a=b", "c=d"], self.msg_promotable_without_meta_err
         )
@@ -629,13 +716,18 @@ class ParseCreateArgsFuture(ParseCreateArgs):
     def test_only_promotable_with_custom_id_and_meta_correct(self):
         self.assert_produce(
             ["promotable", "CustomCloneId", "meta", "a=b", "c=d"],
-            {
-                "meta": {},
-                "options": {},
-                "op": [],
-                "promotable": {"a": "b", "c": "d"},
-                "clone_id": "CustomCloneId",
-            },
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={},
+                    operations=[],
+                ),
+                clone=None,
+                promotable=parse_args.CloneOptions(
+                    clone_id="CustomCloneId", meta_attrs={"a": "b", "c": "d"}
+                ),
+                bundle_id=None,
+            ),
         )
 
     def test_args_op_clone_meta(self):
@@ -675,15 +767,21 @@ class ParseCreateArgsFuture(ParseCreateArgs):
                 "e=f",
                 "g=h",
             ],
-            {
-                "options": {"a": "b", "c": "d"},
-                "op": [
-                    {"name": "monitor", "i": "j", "k": "l"},
-                    {"name": "start", "m": "n"},
-                ],
-                "meta": {},
-                "clone": {"e": "f", "g": "h"},
-            },
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={"a": "b", "c": "d"},
+                    meta_attrs={},
+                    operations=[
+                        {"name": "monitor", "i": "j", "k": "l"},
+                        {"name": "start", "m": "n"},
+                    ],
+                ),
+                clone=parse_args.CloneOptions(
+                    clone_id=None, meta_attrs={"e": "f", "g": "h"}
+                ),
+                promotable=None,
+                bundle_id=None,
+            ),
         )
         self.assert_stderr()
 
@@ -714,79 +812,72 @@ class ParseCreateArgsFuture(ParseCreateArgs):
                 "meta",
                 "o=p",
             ],
-            {
-                "options": {"a": "b", "c": "d"},
-                "meta": {"e": "f", "g": "h"},
-                "op": [],
-                "clone": {"m": "n", "o": "p"},
-            },
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={"a": "b", "c": "d"},
+                    meta_attrs={"e": "f", "g": "h"},
+                    operations=[],
+                ),
+                clone=parse_args.CloneOptions(
+                    clone_id=None, meta_attrs={"m": "n", "o": "p"}
+                ),
+                promotable=None,
+                bundle_id=None,
+            ),
         )
         self.assert_stderr()
 
 
-class ParseCreateSimple(TestCase):
+class ParsePrimitive(TestCase):
     def assert_produce(self, arg_list, result):
-        self.assertEqual(parse_args.parse_create_simple(arg_list), result)
+        self.assertEqual(parse_args.parse_primitive(arg_list), result)
 
     def test_without_args(self):
         self.assert_produce(
             [],
-            {
-                "meta": {},
-                "options": {},
-                "op": [],
-            },
+            parse_args.PrimitiveOptions(
+                instance_attrs={},
+                meta_attrs={},
+                operations=[],
+            ),
         )
 
     def test_only_instance_attributes(self):
         self.assert_produce(
             ["a=b", "c=d"],
-            {
-                "meta": {},
-                "options": {
-                    "a": "b",
-                    "c": "d",
-                },
-                "op": [],
-            },
+            parse_args.PrimitiveOptions(
+                instance_attrs={"a": "b", "c": "d"},
+                meta_attrs={},
+                operations=[],
+            ),
         )
 
     def test_only_meta(self):
         self.assert_produce(
             ["meta", "a=b", "c=d"],
-            {
-                "options": {},
-                "op": [],
-                "meta": {
-                    "a": "b",
-                    "c": "d",
-                },
-            },
+            parse_args.PrimitiveOptions(
+                instance_attrs={},
+                meta_attrs={"a": "b", "c": "d"},
+                operations=[],
+            ),
         )
 
     def test_only_operations(self):
         self.assert_produce(
-            [
-                "op",
-                "monitor",
-                "a=b",
-                "c=d",
-                "start",
-                "e=f",
-            ],
-            {
-                "meta": {},
-                "options": {},
-                "op": [
+            ["op", "monitor", "a=b", "c=d", "start", "e=f"],
+            parse_args.PrimitiveOptions(
+                instance_attrs={},
+                meta_attrs={},
+                operations=[
                     {"name": "monitor", "a": "b", "c": "d"},
                     {"name": "start", "e": "f"},
                 ],
-            },
+            ),
         )
 
     def assert_raises_cmdline(self, args):
         self.assertRaises(
-            CmdLineInputError, lambda: parse_args.parse_create_simple(args)
+            CmdLineInputError, lambda: parse_args.parse_primitive(args)
         )
 
     def test_raises_when_operation_name_does_not_follow_op_keyword(self):
@@ -812,217 +903,246 @@ class ParseCreateSimple(TestCase):
                 "start",
                 "e=f",
             ],
-            {
-                "meta": {},
-                "options": {},
-                "op": [
+            parse_args.PrimitiveOptions(
+                instance_attrs={},
+                meta_attrs={},
+                operations=[
                     {"name": "monitor", "a": "b", "c": "d"},
                     {"name": "start", "e": "f"},
                 ],
-            },
+            ),
         )
 
 
-class ParseBundleCreateOptions(TestCase):
+class ParseBundleCreateAndResetMixin:
     # pylint: disable=too-many-public-methods
     def assert_produce(self, arg_list, result):
-        self.assertEqual(
-            result, parse_args.parse_bundle_create_options(arg_list)
-        )
+        self.assertEqual(result, self.parse_fn(arg_list))
 
-    def assert_raises_cmdline(self, arg_list):
-        self.assertRaises(
-            CmdLineInputError,
-            lambda: parse_args.parse_bundle_create_options(arg_list),
-        )
+    def assert_raises_cmdline(self, arg_list, msg=""):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.parse_fn(arg_list)
+        exception = cm.exception
+        self.assertEqual(msg, exception.message)
 
     def test_no_args(self):
         self.assert_produce(
             [],
-            {
-                "container_type": "",
-                "container": {},
-                "network": {},
-                "port_map": [],
-                "storage_map": [],
-                "meta": {},
-            },
+            parse_args.BundleCreateOptions(
+                container_type="",
+                container={},
+                network={},
+                port_map=[],
+                storage_map=[],
+                meta_attrs={},
+            ),
         )
 
     def test_container_empty(self):
-        self.assert_raises_cmdline(["container"])
+        self.assert_raises_cmdline(
+            ["container"], "No container options specified"
+        )
 
     def test_container_type(self):
         self.assert_produce(
             ["container", "docker"],
-            {
-                "container_type": "docker",
-                "container": {},
-                "network": {},
-                "port_map": [],
-                "storage_map": [],
-                "meta": {},
-            },
+            parse_args.BundleCreateOptions(
+                container_type="docker",
+                container={},
+                network={},
+                port_map=[],
+                storage_map=[],
+                meta_attrs={},
+            ),
         )
 
     def test_container_options(self):
         self.assert_produce(
             ["container", "a=b", "c=d"],
-            {
-                "container_type": "",
-                "container": {"a": "b", "c": "d"},
-                "network": {},
-                "port_map": [],
-                "storage_map": [],
-                "meta": {},
-            },
+            parse_args.BundleCreateOptions(
+                container_type="",
+                container={"a": "b", "c": "d"},
+                network={},
+                port_map=[],
+                storage_map=[],
+                meta_attrs={},
+            ),
         )
 
     def test_container_type_and_options(self):
         self.assert_produce(
             ["container", "docker", "a=b", "c=d"],
-            {
-                "container_type": "docker",
-                "container": {"a": "b", "c": "d"},
-                "network": {},
-                "port_map": [],
-                "storage_map": [],
-                "meta": {},
-            },
+            parse_args.BundleCreateOptions(
+                container_type="docker",
+                container={"a": "b", "c": "d"},
+                network={},
+                port_map=[],
+                storage_map=[],
+                meta_attrs={},
+            ),
         )
 
     def test_container_type_must_be_first(self):
-        self.assert_raises_cmdline(["container", "a=b", "docker", "c=d"])
+        self.assert_raises_cmdline(
+            ["container", "a=b", "docker", "c=d"],
+            "missing value of 'docker' option",
+        )
 
     def test_container_missing_value(self):
-        self.assert_raises_cmdline(["container", "docker", "a", "c=d"])
+        self.assert_raises_cmdline(
+            ["container", "docker", "a", "c=d"], "missing value of 'a' option"
+        )
 
     def test_container_missing_key(self):
-        self.assert_raises_cmdline(["container", "docker", "=b", "c=d"])
+        self.assert_raises_cmdline(
+            ["container", "docker", "=b", "c=d"], "missing key in '=b' option"
+        )
 
     def test_network(self):
         self.assert_produce(
             ["network", "a=b", "c=d"],
-            {
-                "container_type": "",
-                "container": {},
-                "network": {"a": "b", "c": "d"},
-                "port_map": [],
-                "storage_map": [],
-                "meta": {},
-            },
+            parse_args.BundleCreateOptions(
+                container_type="",
+                container={},
+                network={"a": "b", "c": "d"},
+                port_map=[],
+                storage_map=[],
+                meta_attrs={},
+            ),
         )
 
     def test_network_empty(self):
-        self.assert_raises_cmdline(["network"])
+        self.assert_raises_cmdline(["network"], "No network options specified")
 
     def test_network_missing_value(self):
-        self.assert_raises_cmdline(["network", "a", "c=d"])
+        self.assert_raises_cmdline(
+            ["network", "a", "c=d"], "missing value of 'a' option"
+        )
 
     def test_network_missing_key(self):
-        self.assert_raises_cmdline(["network", "=b", "c=d"])
+        self.assert_raises_cmdline(
+            ["network", "=b", "c=d"], "missing key in '=b' option"
+        )
 
     def test_port_map_empty(self):
-        self.assert_raises_cmdline(["port-map"])
+        self.assert_raises_cmdline(
+            ["port-map"], "No port-map options specified"
+        )
 
     def test_one_of_port_map_empty(self):
         self.assert_raises_cmdline(
-            ["port-map", "a=b", "port-map", "network", "c=d"]
+            ["port-map", "a=b", "port-map", "network", "c=d"],
+            "No port-map options specified",
         )
 
     def test_port_map_one(self):
         self.assert_produce(
             ["port-map", "a=b", "c=d"],
-            {
-                "container_type": "",
-                "container": {},
-                "network": {},
-                "port_map": [{"a": "b", "c": "d"}],
-                "storage_map": [],
-                "meta": {},
-            },
+            parse_args.BundleCreateOptions(
+                container_type="",
+                container={},
+                network={},
+                port_map=[{"a": "b", "c": "d"}],
+                storage_map=[],
+                meta_attrs={},
+            ),
         )
 
     def test_port_map_more(self):
         self.assert_produce(
             ["port-map", "a=b", "c=d", "port-map", "e=f"],
-            {
-                "container_type": "",
-                "container": {},
-                "network": {},
-                "port_map": [{"a": "b", "c": "d"}, {"e": "f"}],
-                "storage_map": [],
-                "meta": {},
-            },
+            parse_args.BundleCreateOptions(
+                container_type="",
+                container={},
+                network={},
+                port_map=[{"a": "b", "c": "d"}, {"e": "f"}],
+                storage_map=[],
+                meta_attrs={},
+            ),
         )
 
     def test_port_map_missing_value(self):
-        self.assert_raises_cmdline(["port-map", "a", "c=d"])
+        self.assert_raises_cmdline(
+            ["port-map", "a", "c=d"], "missing value of 'a' option"
+        )
 
     def test_port_map_missing_key(self):
-        self.assert_raises_cmdline(["port-map", "=b", "c=d"])
+        self.assert_raises_cmdline(
+            ["port-map", "=b", "c=d"], "missing key in '=b' option"
+        )
 
     def test_storage_map_empty(self):
-        self.assert_raises_cmdline(["storage-map"])
+        self.assert_raises_cmdline(
+            ["storage-map"], "No storage-map options specified"
+        )
 
     def test_one_of_storage_map_empty(self):
         self.assert_raises_cmdline(
-            ["storage-map", "port-map", "a=b", "storage-map", "c=d"]
+            ["storage-map", "port-map", "a=b", "storage-map", "c=d"],
+            "No storage-map options specified",
         )
 
     def test_storage_map_one(self):
         self.assert_produce(
             ["storage-map", "a=b", "c=d"],
-            {
-                "container_type": "",
-                "container": {},
-                "network": {},
-                "port_map": [],
-                "storage_map": [{"a": "b", "c": "d"}],
-                "meta": {},
-            },
+            parse_args.BundleCreateOptions(
+                container_type="",
+                container={},
+                network={},
+                port_map=[],
+                storage_map=[{"a": "b", "c": "d"}],
+                meta_attrs={},
+            ),
         )
 
     def test_storage_map_more(self):
         self.assert_produce(
             ["storage-map", "a=b", "c=d", "storage-map", "e=f"],
-            {
-                "container_type": "",
-                "container": {},
-                "network": {},
-                "port_map": [],
-                "storage_map": [{"a": "b", "c": "d"}, {"e": "f"}],
-                "meta": {},
-            },
+            parse_args.BundleCreateOptions(
+                container_type="",
+                container={},
+                network={},
+                port_map=[],
+                storage_map=[{"a": "b", "c": "d"}, {"e": "f"}],
+                meta_attrs={},
+            ),
         )
 
     def test_storage_map_missing_value(self):
-        self.assert_raises_cmdline(["storage-map", "a", "c=d"])
+        self.assert_raises_cmdline(
+            ["storage-map", "a", "c=d"], "missing value of 'a' option"
+        )
 
     def test_storage_map_missing_key(self):
-        self.assert_raises_cmdline(["storage-map", "=b", "c=d"])
+        self.assert_raises_cmdline(
+            ["storage-map", "=b", "c=d"], "missing key in '=b' option"
+        )
 
     def test_meta(self):
         self.assert_produce(
             ["meta", "a=b", "c=d"],
-            {
-                "container_type": "",
-                "container": {},
-                "network": {},
-                "port_map": [],
-                "storage_map": [],
-                "meta": {"a": "b", "c": "d"},
-            },
+            parse_args.BundleCreateOptions(
+                container_type="",
+                container={},
+                network={},
+                port_map=[],
+                storage_map=[],
+                meta_attrs={"a": "b", "c": "d"},
+            ),
         )
 
     def test_meta_empty(self):
-        self.assert_raises_cmdline(["meta"])
+        self.assert_raises_cmdline(["meta"], "No meta options specified")
 
     def test_meta_missing_value(self):
-        self.assert_raises_cmdline(["meta", "a", "c=d"])
+        self.assert_raises_cmdline(
+            ["meta", "a", "c=d"], "missing value of 'a' option"
+        )
 
     def test_meta_missing_key(self):
-        self.assert_raises_cmdline(["meta", "=b", "c=d"])
+        self.assert_raises_cmdline(
+            ["meta", "=b", "c=d"], "missing key in '=b' option"
+        )
 
     def test_all(self):
         self.assert_produce(
@@ -1050,14 +1170,14 @@ class ParseBundleCreateOptions(TestCase):
                 "y=z",
                 "A=B",
             ],
-            {
-                "container_type": "docker",
-                "container": {"a": "b", "c": "d"},
-                "network": {"e": "f", "g": "h"},
-                "port_map": [{"i": "j", "k": "l"}, {"m": "n", "o": "p"}],
-                "storage_map": [{"q": "r", "s": "t"}, {"u": "v", "w": "x"}],
-                "meta": {"y": "z", "A": "B"},
-            },
+            parse_args.BundleCreateOptions(
+                container_type="docker",
+                container={"a": "b", "c": "d"},
+                network={"e": "f", "g": "h"},
+                port_map=[{"i": "j", "k": "l"}, {"m": "n", "o": "p"}],
+                storage_map=[{"q": "r", "s": "t"}, {"u": "v", "w": "x"}],
+                meta_attrs={"y": "z", "A": "B"},
+            ),
         )
 
     def test_all_mixed(self):
@@ -1089,14 +1209,117 @@ class ParseBundleCreateOptions(TestCase):
                 "container",
                 "c=d",
             ],
-            {
-                "container_type": "docker",
-                "container": {"a": "b", "c": "d"},
-                "network": {"e": "f", "g": "h"},
-                "port_map": [{"i": "j", "k": "l"}, {"m": "n", "o": "p"}],
-                "storage_map": [{"q": "r", "s": "t"}, {"u": "v", "w": "x"}],
-                "meta": {"y": "z", "A": "B"},
-            },
+            parse_args.BundleCreateOptions(
+                container_type="docker",
+                container={"a": "b", "c": "d"},
+                network={"e": "f", "g": "h"},
+                port_map=[{"i": "j", "k": "l"}, {"m": "n", "o": "p"}],
+                storage_map=[{"q": "r", "s": "t"}, {"u": "v", "w": "x"}],
+                meta_attrs={"y": "z", "A": "B"},
+            ),
+        )
+
+
+class ParseBundleCreate(ParseBundleCreateAndResetMixin, TestCase):
+    parse_fn = staticmethod(parse_args.parse_bundle_create_options)
+
+
+class ParseBundleReset(ParseBundleCreateAndResetMixin, TestCase):
+    parse_fn = staticmethod(parse_args.parse_bundle_reset_options)
+
+    def test_container_type(self):
+        self.assert_raises_cmdline(
+            ["container", "docker"],
+            "missing value of 'docker' option",
+        )
+
+    def test_container_type_and_options(self):
+        self.assert_raises_cmdline(
+            ["container", "docker", "a=b", "c=d"],
+            "missing value of 'docker' option",
+        )
+
+    def test_container_missing_value(self):
+        self.assert_raises_cmdline(
+            ["container", "a", "c=d"], "missing value of 'a' option"
+        )
+
+    def test_container_missing_key(self):
+        self.assert_raises_cmdline(
+            ["container", "=b", "c=d"], "missing key in '=b' option"
+        )
+
+    def test_all(self):
+        self.assert_produce(
+            [
+                "container",
+                "a=b",
+                "c=d",
+                "network",
+                "e=f",
+                "g=h",
+                "port-map",
+                "i=j",
+                "k=l",
+                "port-map",
+                "m=n",
+                "o=p",
+                "storage-map",
+                "q=r",
+                "s=t",
+                "storage-map",
+                "u=v",
+                "w=x",
+                "meta",
+                "y=z",
+                "A=B",
+            ],
+            parse_args.BundleCreateOptions(
+                container_type="",
+                container={"a": "b", "c": "d"},
+                network={"e": "f", "g": "h"},
+                port_map=[{"i": "j", "k": "l"}, {"m": "n", "o": "p"}],
+                storage_map=[{"q": "r", "s": "t"}, {"u": "v", "w": "x"}],
+                meta_attrs={"y": "z", "A": "B"},
+            ),
+        )
+
+    def test_all_mixed(self):
+        self.assert_produce(
+            [
+                "storage-map",
+                "q=r",
+                "s=t",
+                "meta",
+                "y=z",
+                "port-map",
+                "i=j",
+                "k=l",
+                "network",
+                "e=f",
+                "container",
+                "a=b",
+                "storage-map",
+                "u=v",
+                "w=x",
+                "port-map",
+                "m=n",
+                "o=p",
+                "meta",
+                "A=B",
+                "network",
+                "g=h",
+                "container",
+                "c=d",
+            ],
+            parse_args.BundleCreateOptions(
+                container_type="",
+                container={"a": "b", "c": "d"},
+                network={"e": "f", "g": "h"},
+                port_map=[{"i": "j", "k": "l"}, {"m": "n", "o": "p"}],
+                storage_map=[{"q": "r", "s": "t"}, {"u": "v", "w": "x"}],
+                meta_attrs={"y": "z", "A": "B"},
+            ),
         )
 
 
@@ -1107,93 +1330,118 @@ class ParseBundleUpdateOptions(TestCase):
             result, parse_args.parse_bundle_update_options(arg_list)
         )
 
-    def assert_raises_cmdline(self, arg_list):
-        self.assertRaises(
-            CmdLineInputError,
-            lambda: parse_args.parse_bundle_update_options(arg_list),
-        )
+    def assert_raises_cmdline(self, arg_list, msg=""):
+        with self.assertRaises(CmdLineInputError) as cm:
+            parse_args.parse_bundle_update_options(arg_list)
+        exception = cm.exception
+        self.assertEqual(msg, exception.message)
 
     def test_no_args(self):
         self.assert_produce(
             [],
-            {
-                "container": {},
-                "network": {},
-                "port_map_add": [],
-                "port_map_remove": [],
-                "storage_map_add": [],
-                "storage_map_remove": [],
-                "meta": {},
-            },
+            parse_args.BundleUpdateOptions(
+                container={},
+                network={},
+                port_map_add=[],
+                port_map_remove=[],
+                storage_map_add=[],
+                storage_map_remove=[],
+                meta_attrs={},
+            ),
         )
 
     def test_container_options(self):
         self.assert_produce(
             ["container", "a=b", "c=d"],
-            {
-                "container": {"a": "b", "c": "d"},
-                "network": {},
-                "port_map_add": [],
-                "port_map_remove": [],
-                "storage_map_add": [],
-                "storage_map_remove": [],
-                "meta": {},
-            },
+            parse_args.BundleUpdateOptions(
+                container={"a": "b", "c": "d"},
+                network={},
+                port_map_add=[],
+                port_map_remove=[],
+                storage_map_add=[],
+                storage_map_remove=[],
+                meta_attrs={},
+            ),
         )
 
     def test_container_empty(self):
-        self.assert_raises_cmdline(["container"])
+        self.assert_raises_cmdline(
+            ["container"], "No container options specified"
+        )
 
     def test_container_missing_value(self):
-        self.assert_raises_cmdline(["container", "a", "c=d"])
+        self.assert_raises_cmdline(
+            ["container", "a", "c=d"], "missing value of 'a' option"
+        )
 
     def test_container_missing_key(self):
-        self.assert_raises_cmdline(["container", "=b", "c=d"])
+        self.assert_raises_cmdline(
+            ["container", "=b", "c=d"], "missing key in '=b' option"
+        )
 
     def test_network(self):
         self.assert_produce(
             ["network", "a=b", "c=d"],
-            {
-                "container": {},
-                "network": {"a": "b", "c": "d"},
-                "port_map_add": [],
-                "port_map_remove": [],
-                "storage_map_add": [],
-                "storage_map_remove": [],
-                "meta": {},
-            },
+            parse_args.BundleUpdateOptions(
+                container={},
+                network={"a": "b", "c": "d"},
+                port_map_add=[],
+                port_map_remove=[],
+                storage_map_add=[],
+                storage_map_remove=[],
+                meta_attrs={},
+            ),
         )
 
     def test_network_empty(self):
-        self.assert_raises_cmdline(["network"])
+        self.assert_raises_cmdline(["network"], "No network options specified")
 
     def test_network_missing_value(self):
-        self.assert_raises_cmdline(["network", "a", "c=d"])
+        self.assert_raises_cmdline(
+            ["network", "a", "c=d"], "missing value of 'a' option"
+        )
 
     def test_network_missing_key(self):
-        self.assert_raises_cmdline(["network", "=b", "c=d"])
+        self.assert_raises_cmdline(
+            ["network", "=b", "c=d"], "missing key in '=b' option"
+        )
 
     def test_port_map_empty(self):
-        self.assert_raises_cmdline(["port-map"])
+        self.assert_raises_cmdline(
+            ["port-map"], "No port-map options specified"
+        )
 
     def test_one_of_port_map_empty(self):
         self.assert_raises_cmdline(
-            ["port-map", "a=b", "port-map", "network", "c=d"]
+            ["port-map", "a=b", "port-map", "network", "c=d"],
+            "No port-map options specified",
         )
 
     def test_port_map_missing_params(self):
-        self.assert_raises_cmdline(["port-map"])
-        self.assert_raises_cmdline(["port-map add"])
-        self.assert_raises_cmdline(["port-map remove"])
+        self.assert_raises_cmdline(
+            ["port-map"], "No port-map options specified"
+        )
+        self.assert_raises_cmdline(["port-map add"], None)
+        self.assert_raises_cmdline(["port-map remove"], None)
 
     def test_port_map_wrong_keyword(self):
-        self.assert_raises_cmdline(["port-map", "wrong", "a=b"])
+        self.assert_raises_cmdline(
+            ["port-map", "wrong", "a=b"],
+            (
+                "When using 'port-map' you must specify either 'add' and "
+                "options or either of 'delete' or 'remove' and id(s)"
+            ),
+        )
 
     def test_port_map_missing_value(self):
-        self.assert_raises_cmdline(["port-map", "add", "a", "c=d"])
+        self.assert_raises_cmdline(
+            ["port-map", "add", "a", "c=d"], "missing value of 'a' option"
+        )
 
     def test_port_map_missing_key(self):
-        self.assert_raises_cmdline(["port-map", "add", "=b", "c=d"])
+        self.assert_raises_cmdline(
+            ["port-map", "add", "=b", "c=d"], "missing key in '=b' option"
+        )
 
     def test_port_map_more(self):
         self.assert_produce(
@@ -1213,46 +1461,53 @@ class ParseBundleUpdateOptions(TestCase):
                 "remove",
                 "i",
             ],
-            {
-                "container": {},
-                "network": {},
-                "port_map_add": [
-                    {
-                        "a": "b",
-                    },
-                    {
-                        "e": "f",
-                        "g": "h",
-                    },
-                ],
-                "port_map_remove": ["c", "d", "i"],
-                "storage_map_add": [],
-                "storage_map_remove": [],
-                "meta": {},
-            },
+            parse_args.BundleUpdateOptions(
+                container={},
+                network={},
+                port_map_add=[{"a": "b"}, {"e": "f", "g": "h"}],
+                port_map_remove=["c", "d", "i"],
+                storage_map_add=[],
+                storage_map_remove=[],
+                meta_attrs={},
+            ),
         )
 
     def test_storage_map_empty(self):
-        self.assert_raises_cmdline(["storage-map"])
+        self.assert_raises_cmdline(
+            ["storage-map"], "No storage-map options specified"
+        )
 
     def test_one_of_storage_map_empty(self):
         self.assert_raises_cmdline(
-            ["storage-map", "port-map", "a=b", "storage-map", "c=d"]
+            ["storage-map", "port-map", "a=b", "storage-map", "c=d"],
+            "No storage-map options specified",
         )
 
     def test_storage_map_missing_params(self):
-        self.assert_raises_cmdline(["storage-map"])
-        self.assert_raises_cmdline(["storage-map add"])
-        self.assert_raises_cmdline(["storage-map remove"])
+        self.assert_raises_cmdline(
+            ["storage-map"], "No storage-map options specified"
+        )
+        self.assert_raises_cmdline(["storage-map add"], None)
+        self.assert_raises_cmdline(["storage-map remove"], None)
 
     def test_storage_map_wrong_keyword(self):
-        self.assert_raises_cmdline(["storage-map", "wrong", "a=b"])
+        self.assert_raises_cmdline(
+            ["storage-map", "wrong", "a=b"],
+            (
+                "When using 'storage-map' you must specify either 'add' and "
+                "options or either of 'delete' or 'remove' and id(s)"
+            ),
+        )
 
     def test_storage_map_missing_value(self):
-        self.assert_raises_cmdline(["storage-map", "add", "a", "c=d"])
+        self.assert_raises_cmdline(
+            ["storage-map", "add", "a", "c=d"], "missing value of 'a' option"
+        )
 
     def test_storage_map_missing_key(self):
-        self.assert_raises_cmdline(["storage-map", "add", "=b", "c=d"])
+        self.assert_raises_cmdline(
+            ["storage-map", "add", "=b", "c=d"], "missing key in '=b' option"
+        )
 
     def test_storage_map_more(self):
         self.assert_produce(
@@ -1272,47 +1527,43 @@ class ParseBundleUpdateOptions(TestCase):
                 "remove",
                 "i",
             ],
-            {
-                "container": {},
-                "network": {},
-                "port_map_add": [],
-                "port_map_remove": [],
-                "storage_map_add": [
-                    {
-                        "a": "b",
-                    },
-                    {
-                        "e": "f",
-                        "g": "h",
-                    },
-                ],
-                "storage_map_remove": ["c", "d", "i"],
-                "meta": {},
-            },
+            parse_args.BundleUpdateOptions(
+                container={},
+                network={},
+                port_map_add=[],
+                port_map_remove=[],
+                storage_map_add=[{"a": "b"}, {"e": "f", "g": "h"}],
+                storage_map_remove=["c", "d", "i"],
+                meta_attrs={},
+            ),
         )
 
     def test_meta(self):
         self.assert_produce(
             ["meta", "a=b", "c=d"],
-            {
-                "container": {},
-                "network": {},
-                "port_map_add": [],
-                "port_map_remove": [],
-                "storage_map_add": [],
-                "storage_map_remove": [],
-                "meta": {"a": "b", "c": "d"},
-            },
+            parse_args.BundleUpdateOptions(
+                container={},
+                network={},
+                port_map_add=[],
+                port_map_remove=[],
+                storage_map_add=[],
+                storage_map_remove=[],
+                meta_attrs={"a": "b", "c": "d"},
+            ),
         )
 
     def test_meta_empty(self):
-        self.assert_raises_cmdline(["meta"])
+        self.assert_raises_cmdline(["meta"], "No meta options specified")
 
     def test_meta_missing_value(self):
-        self.assert_raises_cmdline(["meta", "a", "c=d"])
+        self.assert_raises_cmdline(
+            ["meta", "a", "c=d"], "missing value of 'a' option"
+        )
 
     def test_meta_missing_key(self):
-        self.assert_raises_cmdline(["meta", "=b", "c=d"])
+        self.assert_raises_cmdline(
+            ["meta", "=b", "c=d"], "missing key in '=b' option"
+        )
 
     def test_all(self):
         self.assert_produce(
@@ -1355,21 +1606,15 @@ class ParseBundleUpdateOptions(TestCase):
                 "A=B",
                 "C=D",
             ],
-            {
-                "container": {"a": "b", "c": "d"},
-                "network": {"e": "f", "g": "h"},
-                "port_map_add": [
-                    {"i": "j", "k": "l"},
-                    {"m": "n"},
-                ],
-                "port_map_remove": ["o", "p", "q"],
-                "storage_map_add": [
-                    {"r": "s", "t": "u"},
-                    {"v": "w"},
-                ],
-                "storage_map_remove": ["x", "y", "z"],
-                "meta": {"A": "B", "C": "D"},
-            },
+            parse_args.BundleUpdateOptions(
+                container={"a": "b", "c": "d"},
+                network={"e": "f", "g": "h"},
+                port_map_add=[{"i": "j", "k": "l"}, {"m": "n"}],
+                port_map_remove=["o", "p", "q"],
+                storage_map_add=[{"r": "s", "t": "u"}, {"v": "w"}],
+                storage_map_remove=["x", "y", "z"],
+                meta_attrs={"A": "B", "C": "D"},
+            ),
         )
 
     def test_all_mixed(self):
@@ -1414,21 +1659,15 @@ class ParseBundleUpdateOptions(TestCase):
                 "add",
                 "m=n",
             ],
-            {
-                "container": {"a": "b", "c": "d"},
-                "network": {"e": "f", "g": "h"},
-                "port_map_add": [
-                    {"i": "j", "k": "l"},
-                    {"m": "n"},
-                ],
-                "port_map_remove": ["o", "p", "q"],
-                "storage_map_add": [
-                    {"r": "s", "t": "u"},
-                    {"v": "w"},
-                ],
-                "storage_map_remove": ["x", "y", "z"],
-                "meta": {"A": "B", "C": "D"},
-            },
+            parse_args.BundleUpdateOptions(
+                container={"a": "b", "c": "d"},
+                network={"e": "f", "g": "h"},
+                port_map_add=[{"i": "j", "k": "l"}, {"m": "n"}],
+                port_map_remove=["o", "p", "q"],
+                storage_map_add=[{"r": "s", "t": "u"}, {"v": "w"}],
+                storage_map_remove=["x", "y", "z"],
+                meta_attrs={"A": "B", "C": "D"},
+            ),
         )
 
 

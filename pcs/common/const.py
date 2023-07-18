@@ -6,6 +6,7 @@ PcmkRoleType = NewType("PcmkRoleType", str)
 PcmkOnFailAction = NewType("PcmkOnFailAction", str)
 PcmkAction = NewType("PcmkAction", str)
 
+INFINITY = "INFINITY"
 PCMK_ROLE_STARTED = PcmkRoleType("Started")
 PCMK_ROLE_STOPPED = PcmkRoleType("Stopped")
 PCMK_ROLE_PROMOTED = PcmkRoleType("Promoted")

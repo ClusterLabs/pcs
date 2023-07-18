@@ -21,15 +21,14 @@ def config_setup(lib, arg_list, modifiers):
         "--booth-key",
         "--name",
     )
-    peers = group_by_keywords(
-        arg_list, set(["sites", "arbitrators"]), keyword_repeat_allowed=False
-    )
-    if "sites" not in peers or not peers["sites"]:
+    peers = group_by_keywords(arg_list, set(["sites", "arbitrators"]))
+    peers.ensure_unique_keywords()
+    if not peers.has_keyword("sites") or not peers.get_args_flat("sites"):
         raise CmdLineInputError()
 
     lib.booth.config_setup(
-        peers["sites"],
-        peers["arbitrators"],
+        peers.get_args_flat("sites"),
+        peers.get_args_flat("arbitrators"),
         instance_name=modifiers.get("--name"),
         overwrite_existing=modifiers.get("--force"),
     )

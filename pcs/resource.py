@@ -31,6 +31,9 @@ from pcs.cli.common.errors import (
 from pcs.cli.common.output import smart_wrap_text
 from pcs.cli.common.parse_args import (
     FUTURE_OPTION,
+    OUTPUT_FORMAT_VALUE_CMD,
+    OUTPUT_FORMAT_VALUE_JSON,
+    Argv,
     InputModifiers,
     group_by_keywords,
     prepare_options,
@@ -79,7 +82,6 @@ from pcs.common.str_tools import (
     format_list_custom_last_separator,
     format_optional,
 )
-from pcs.common.types import StringSequence
 from pcs.lib.cib.resource import (
     guest_node,
     primitive,
@@ -157,7 +159,7 @@ def _detect_guest_change(meta_attributes, allow_not_suitable_command):
 
 
 def resource_utilization_cmd(
-    lib: Any, argv: List[str], modifiers: InputModifiers
+    lib: Any, argv: Argv, modifiers: InputModifiers
 ) -> None:
     """
     Options:
@@ -182,34 +184,32 @@ def resource_utilization_cmd(
 
 
 def _defaults_set_create_cmd(
-    lib_command: Callable[..., Any],
-    argv: StringSequence,
-    modifiers: InputModifiers,
+    lib_command: Callable[..., Any], argv: Argv, modifiers: InputModifiers
 ):
     modifiers.ensure_only_supported("-f", "--force")
 
     groups = group_by_keywords(
-        argv,
-        set(["meta", "rule"]),
-        implicit_first_group_key="options",
-        keyword_repeat_allowed=False,
+        argv, set(["meta", "rule"]), implicit_first_keyword="options"
     )
+    groups.ensure_unique_keywords()
     force_flags = set()
     if modifiers.get("--force"):
         force_flags.add(reports.codes.FORCE)
 
     lib_command(
-        prepare_options(groups["meta"]),
-        prepare_options(groups["options"]),
-        nvset_rule=(" ".join(groups["rule"]) if groups["rule"] else None),
+        prepare_options(groups.get_args_flat("meta")),
+        prepare_options(groups.get_args_flat("options")),
+        nvset_rule=(
+            " ".join(groups.get_args_flat("rule"))
+            if groups.get_args_flat("rule")
+            else None
+        ),
         force_flags=force_flags,
     )
 
 
 def resource_defaults_set_create_cmd(
-    lib: Any,
-    argv: StringSequence,
-    modifiers: InputModifiers,
+    lib: Any, argv: Argv, modifiers: InputModifiers
 ) -> None:
     """
     Options:
@@ -222,9 +222,7 @@ def resource_defaults_set_create_cmd(
 
 
 def resource_op_defaults_set_create_cmd(
-    lib: Any,
-    argv: StringSequence,
-    modifiers: InputModifiers,
+    lib: Any, argv: Argv, modifiers: InputModifiers
 ) -> None:
     """
     Options:
@@ -238,7 +236,7 @@ def resource_op_defaults_set_create_cmd(
 
 def _defaults_config_cmd(
     lib_command: Callable[[bool], CibDefaultsDto],
-    argv: StringSequence,
+    argv: Argv,
     modifiers: InputModifiers,
 ) -> None:
     """
@@ -264,9 +262,7 @@ def _defaults_config_cmd(
 
 
 def resource_defaults_config_cmd(
-    lib: Any,
-    argv: StringSequence,
-    modifiers: InputModifiers,
+    lib: Any, argv: Argv, modifiers: InputModifiers
 ) -> None:
     """
     Options:
@@ -279,9 +275,7 @@ def resource_defaults_config_cmd(
 
 
 def resource_op_defaults_config_cmd(
-    lib: Any,
-    argv: StringSequence,
-    modifiers: InputModifiers,
+    lib: Any, argv: Argv, modifiers: InputModifiers
 ) -> None:
     """
     Options:
@@ -294,9 +288,7 @@ def resource_op_defaults_config_cmd(
 
 
 def _defaults_set_remove_cmd(
-    lib_command: Callable[..., Any],
-    argv: StringSequence,
-    modifiers: InputModifiers,
+    lib_command: Callable[..., Any], argv: Argv, modifiers: InputModifiers
 ) -> None:
     """
     Options:
@@ -307,9 +299,7 @@ def _defaults_set_remove_cmd(
 
 
 def resource_defaults_set_remove_cmd(
-    lib: Any,
-    argv: StringSequence,
-    modifiers: InputModifiers,
+    lib: Any, argv: Argv, modifiers: InputModifiers
 ) -> None:
     """
     Options:
@@ -321,9 +311,7 @@ def resource_defaults_set_remove_cmd(
 
 
 def resource_op_defaults_set_remove_cmd(
-    lib: Any,
-    argv: StringSequence,
-    modifiers: InputModifiers,
+    lib: Any, argv: Argv, modifiers: InputModifiers
 ) -> None:
     """
     Options:
@@ -335,9 +323,7 @@ def resource_op_defaults_set_remove_cmd(
 
 
 def _defaults_set_update_cmd(
-    lib_command: Callable[..., Any],
-    argv: StringSequence,
-    modifiers: InputModifiers,
+    lib_command: Callable[..., Any], argv: Argv, modifiers: InputModifiers
 ) -> None:
     """
     Options:
@@ -348,21 +334,13 @@ def _defaults_set_update_cmd(
         raise CmdLineInputError()
 
     set_id = argv[0]
-    groups = group_by_keywords(
-        argv[1:],
-        set(["meta"]),
-        keyword_repeat_allowed=False,
-    )
-    lib_command(
-        set_id,
-        prepare_options(groups["meta"]),
-    )
+    groups = group_by_keywords(argv[1:], set(["meta"]))
+    groups.ensure_unique_keywords()
+    lib_command(set_id, prepare_options(groups.get_args_flat("meta")))
 
 
 def resource_defaults_set_update_cmd(
-    lib: Any,
-    argv: StringSequence,
-    modifiers: InputModifiers,
+    lib: Any, argv: Argv, modifiers: InputModifiers
 ) -> None:
     """
     Options:
@@ -374,9 +352,7 @@ def resource_defaults_set_update_cmd(
 
 
 def resource_op_defaults_set_update_cmd(
-    lib: Any,
-    argv: StringSequence,
-    modifiers: InputModifiers,
+    lib: Any, argv: Argv, modifiers: InputModifiers
 ) -> None:
     """
     Options:
@@ -389,7 +365,7 @@ def resource_op_defaults_set_update_cmd(
 
 def resource_defaults_legacy_cmd(
     lib: Any,
-    argv: StringSequence,
+    argv: Argv,
     modifiers: InputModifiers,
     deprecated_syntax_used: bool = False,
 ) -> None:
@@ -408,7 +384,7 @@ def resource_defaults_legacy_cmd(
 
 def resource_op_defaults_legacy_cmd(
     lib: Any,
-    argv: StringSequence,
+    argv: Argv,
     modifiers: InputModifiers,
     deprecated_syntax_used: bool = False,
 ) -> None:
@@ -427,7 +403,7 @@ def resource_op_defaults_legacy_cmd(
     )
 
 
-def op_add_cmd(lib: Any, argv: List[str], modifiers: InputModifiers) -> None:
+def op_add_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file
@@ -439,7 +415,7 @@ def op_add_cmd(lib: Any, argv: List[str], modifiers: InputModifiers) -> None:
     resource_op_add(argv, modifiers)
 
 
-def resource_op_add(argv: List[str], modifiers: InputModifiers) -> None:
+def resource_op_add(argv: Argv, modifiers: InputModifiers) -> None:
     """
     Commandline options:
       * -f - CIB file
@@ -472,7 +448,7 @@ def resource_op_add(argv: List[str], modifiers: InputModifiers) -> None:
     utils.replace_cib_configuration(resource_operation_add(dom, res_id, argv))
 
 
-def op_delete_cmd(lib: Any, argv: List[str], modifiers: InputModifiers) -> None:
+def op_delete_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file
@@ -519,7 +495,9 @@ def parse_resource_options(argv):
     return ra_values, op_values, meta_values
 
 
-def resource_list_available(lib, argv, modifiers):
+def resource_list_available(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options:
       * --nodesc - don't display description
@@ -558,7 +536,7 @@ def resource_list_available(lib, argv, modifiers):
 
 
 def resource_list_options(
-    lib: Any, argv: List[str], modifiers: InputModifiers
+    lib: Any, argv: Argv, modifiers: InputModifiers
 ) -> None:
     """
     Options:
@@ -624,7 +602,7 @@ def _format_desc(indentation, desc):
     return output.rstrip()
 
 
-def resource_create(lib, argv, modifiers):
+def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --agent-validation - use agent self validation of instance attributes
@@ -659,24 +637,24 @@ def resource_create(lib, argv, modifiers):
     ra_id = argv[0]
     ra_type = argv[1]
 
-    parts = parse_create_args(argv[2:], modifiers.get(FUTURE_OPTION))
+    parts = parse_create_args(argv[2:], bool(modifiers.get(FUTURE_OPTION)))
 
-    parts_sections = ["clone", "promotable", "bundle"]
-    defined_options = [opt for opt in parts_sections if opt in parts]
+    defined_options = set()
+    if parts.bundle_id:
+        defined_options.add("bundle")
+    if parts.clone:
+        defined_options.add("clone")
+    if parts.promotable:
+        defined_options.add("promotable")
     if modifiers.is_specified("--group"):
-        defined_options.append("group")
+        defined_options.add("group")
     if (
-        len(set(defined_options).intersection(set(parts_sections + ["group"])))
+        len(defined_options & set(["clone", "promotable", "bundle", "group"]))
         > 1
     ):
         raise error(
-            "you can specify only one of {0} or --group".format(
-                ", ".join(parts_sections)
-            )
+            "you can specify only one of clone, promotable, bundle or --group"
         )
-
-    if "bundle" in parts and len(parts["bundle"]) != 1:
-        raise error("you have to specify exactly one bundle")
 
     if modifiers.is_specified("--before") and modifiers.is_specified("--after"):
         raise error(
@@ -693,7 +671,7 @@ def resource_create(lib, argv, modifiers):
         if modifiers.is_specified("--after"):
             raise error("you cannot use --after without --group")
 
-    if "promotable" in parts and "promotable" in parts["promotable"]:
+    if parts.promotable and "promotable" in parts.promotable.meta_attrs:
         raise error(
             "you cannot specify both promotable option and promotable keyword"
         )
@@ -709,40 +687,39 @@ def resource_create(lib, argv, modifiers):
         enable_agent_self_validation=modifiers.get("--agent-validation"),
     )
 
-    clone_id = parts.get("clone_id", None)
-    if "clone" in parts:
+    if parts.clone:
         lib.resource.create_as_clone(
             ra_id,
             ra_type,
-            parts["op"],
-            parts["meta"],
-            parts["options"],
-            parts["clone"],
-            clone_id=clone_id,
+            parts.primitive.operations,
+            parts.primitive.meta_attrs,
+            parts.primitive.instance_attrs,
+            parts.clone.meta_attrs,
+            clone_id=parts.clone.clone_id,
             allow_incompatible_clone_meta_attributes=modifiers.get("--force"),
             **settings,
         )
-    elif "promotable" in parts:
+    elif parts.promotable:
         lib.resource.create_as_clone(
             ra_id,
             ra_type,
-            parts["op"],
-            parts["meta"],
-            parts["options"],
-            dict(**parts["promotable"], promotable="true"),
-            clone_id=clone_id,
+            parts.primitive.operations,
+            parts.primitive.meta_attrs,
+            parts.primitive.instance_attrs,
+            dict(**parts.promotable.meta_attrs, promotable="true"),
+            clone_id=parts.promotable.clone_id,
             allow_incompatible_clone_meta_attributes=modifiers.get("--force"),
             **settings,
         )
-    elif "bundle" in parts:
+    elif parts.bundle_id:
         settings["allow_not_accessible_resource"] = modifiers.get("--force")
         lib.resource.create_into_bundle(
             ra_id,
             ra_type,
-            parts["op"],
-            parts["meta"],
-            parts["options"],
-            parts["bundle"][0],
+            parts.primitive.operations,
+            parts.primitive.meta_attrs,
+            parts.primitive.instance_attrs,
+            parts.bundle_id,
             **settings,
         )
 
@@ -750,9 +727,9 @@ def resource_create(lib, argv, modifiers):
         lib.resource.create(
             ra_id,
             ra_type,
-            parts["op"],
-            parts["meta"],
-            parts["options"],
+            parts.primitive.operations,
+            parts.primitive.meta_attrs,
+            parts.primitive.instance_attrs,
             **settings,
         )
     else:
@@ -769,16 +746,16 @@ def resource_create(lib, argv, modifiers):
             ra_id,
             ra_type,
             modifiers.get("--group"),
-            parts["op"],
-            parts["meta"],
-            parts["options"],
+            parts.primitive.operations,
+            parts.primitive.meta_attrs,
+            parts.primitive.instance_attrs,
             adjacent_resource_id=adjacent_resource_id,
             put_after_adjacent=put_after_adjacent,
             **settings,
         )
 
 
-def _parse_resource_move_ban(argv):
+def _parse_resource_move_ban(argv: Argv):
     resource_id = argv.pop(0)
     node = None
     lifetime = None
@@ -798,8 +775,8 @@ def _parse_resource_move_ban(argv):
 
 
 def resource_move_with_constraint(
-    lib: Any, argv: List[str], modifiers: InputModifiers
-):
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options:
       * -f - CIB file
@@ -823,7 +800,7 @@ def resource_move_with_constraint(
     )
 
 
-def resource_move(lib: Any, argv: List[str], modifiers: InputModifiers) -> None:
+def resource_move(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --autodelete - deprecated, not needed anymore
@@ -865,7 +842,7 @@ def resource_move(lib: Any, argv: List[str], modifiers: InputModifiers) -> None:
     )
 
 
-def resource_ban(lib: Any, argv: List[str], modifiers: InputModifiers) -> None:
+def resource_ban(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file
@@ -890,7 +867,7 @@ def resource_ban(lib: Any, argv: List[str], modifiers: InputModifiers) -> None:
 
 
 def resource_unmove_unban(
-    lib: Any, argv: List[str], modifiers: InputModifiers
+    lib: Any, argv: Argv, modifiers: InputModifiers
 ) -> None:
     """
     Options:
@@ -916,7 +893,7 @@ def resource_unmove_unban(
     )
 
 
-def resource_standards(lib, argv, modifiers):
+def resource_standards(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options: no options
     """
@@ -932,7 +909,7 @@ def resource_standards(lib, argv, modifiers):
         utils.err("No standards found")
 
 
-def resource_providers(lib, argv, modifiers):
+def resource_providers(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options: no options
     """
@@ -948,7 +925,7 @@ def resource_providers(lib, argv, modifiers):
         utils.err("No OCF providers found")
 
 
-def resource_agents(lib, argv, modifiers):
+def resource_agents(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options: no options
     """
@@ -970,7 +947,7 @@ def resource_agents(lib, argv, modifiers):
         )
 
 
-def update_cmd(lib: Any, argv: List[str], modifiers: InputModifiers) -> None:
+def update_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file
@@ -987,7 +964,7 @@ def update_cmd(lib: Any, argv: List[str], modifiers: InputModifiers) -> None:
 
 # Update a resource, removing any args that are empty and adding/updating
 # args that are not empty
-def resource_update(args: List[str], modifiers: InputModifiers) -> None:
+def resource_update(args: Argv, modifiers: InputModifiers) -> None:
     """
     Commandline options:
       * -f - CIB file
@@ -1471,7 +1448,7 @@ def resource_operation_remove(res_id, argv):
     utils.replace_cib_configuration(dom)
 
 
-def meta_cmd(lib: Any, argv: List[str], modifiers: InputModifiers) -> None:
+def meta_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --force - allow not suitable command
@@ -1484,7 +1461,7 @@ def meta_cmd(lib: Any, argv: List[str], modifiers: InputModifiers) -> None:
     resource_meta(argv, modifiers)
 
 
-def resource_meta(argv: List[str], modifiers: InputModifiers) -> None:
+def resource_meta(argv: Argv, modifiers: InputModifiers) -> None:
     """
     Commandline options:
       * --force - allow not suitable command
@@ -1558,7 +1535,9 @@ def resource_meta(argv: List[str], modifiers: InputModifiers) -> None:
             utils.err("\n".join(msg).strip())
 
 
-def resource_group_rm_cmd(lib, argv, modifiers):
+def resource_group_rm_cmd(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options:
       * --wait
@@ -1592,7 +1571,9 @@ def resource_group_rm_cmd(lib, argv, modifiers):
             utils.err("\n".join(msg).strip())
 
 
-def resource_group_add_cmd(lib, argv, modifiers):
+def resource_group_add_cmd(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options:
       * --wait
@@ -1629,10 +1610,7 @@ def resource_group_add_cmd(lib, argv, modifiers):
 
 
 def resource_clone(
-    lib: Any,
-    argv: List[str],
-    modifiers: InputModifiers,
-    promotable: bool = False,
+    lib: Any, argv: Argv, modifiers: InputModifiers, promotable: bool = False
 ) -> None:
     """
     Options:
@@ -1760,11 +1738,11 @@ def resource_clone_create(
 
     parts = parse_clone_args(argv, promotable=promotable)
     _check_clone_incompatible_options_child(
-        element, parts["meta"], force=reports.codes.FORCE in force_flags
+        element, parts.meta_attrs, force=reports.codes.FORCE in force_flags
     )
 
     if not update_existing:
-        clone_id = parts["clone_id"]
+        clone_id = parts.clone_id
         if clone_id is not None:
             report_list = []
             validate_id(clone_id, reporter=report_list)
@@ -1781,7 +1759,7 @@ def resource_clone_create(
         clone.appendChild(element)
         resources_el.appendChild(clone)
 
-    utils.dom_update_meta_attr(clone, sorted(parts["meta"].items()))
+    utils.dom_update_meta_attr(clone, sorted(parts.meta_attrs.items()))
 
     return cib_dom, clone.getAttribute("id")
 
@@ -1862,7 +1840,9 @@ def _check_clone_incompatible_options_primitive(
     return []
 
 
-def resource_clone_master_remove(lib, argv, modifiers):
+def resource_clone_master_remove(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options:
       * -f - CIB file
@@ -1930,7 +1910,7 @@ def resource_clone_master_remove(lib, argv, modifiers):
 
 
 def resource_remove_cmd(
-    lib: Any, argv: List[str], modifiers: InputModifiers
+    lib: Any, argv: Argv, modifiers: InputModifiers
 ) -> None:
     """
     Options:
@@ -2385,7 +2365,9 @@ def resource_group_rm(cib_dom, group_name, resource_ids):
     return cib_dom
 
 
-def resource_group_list(lib, argv, modifiers):
+def resource_group_list(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options:
       * -f - CIB file
@@ -2416,7 +2398,9 @@ def resource_group_list(lib, argv, modifiers):
         print(" ".join(line_parts))
 
 
-def resource_show(lib, argv, modifiers, stonith=False):
+def resource_show(
+    lib: Any, argv: Argv, modifiers: InputModifiers, stonith: bool = False
+) -> None:
     # TODO remove, deprecated command
     # replaced with 'resource status' and 'resource config'
     """
@@ -2550,7 +2534,7 @@ def resource_status(lib, argv, modifiers, stonith=False):
 
 
 def resource_disable_cmd(
-    lib: Any, argv: List[str], modifiers: InputModifiers
+    lib: Any, argv: Argv, modifiers: InputModifiers
 ) -> None:
     """
     Options:
@@ -2568,7 +2552,7 @@ def resource_disable_cmd(
 
 
 def resource_disable_common(
-    lib: Any, argv: List[str], modifiers: InputModifiers
+    lib: Any, argv: Argv, modifiers: InputModifiers
 ) -> None:
     """
     Commandline options:
@@ -2624,7 +2608,7 @@ def resource_disable_common(
 
 
 def resource_safe_disable_cmd(
-    lib: Any, argv: List[str], modifiers: InputModifiers
+    lib: Any, argv: Argv, modifiers: InputModifiers
 ) -> None:
     """
     Options:
@@ -2656,7 +2640,7 @@ def resource_safe_disable_cmd(
 
 
 def resource_enable_cmd(
-    lib: Any, argv: List[str], modifiers: InputModifiers
+    lib: Any, argv: Argv, modifiers: InputModifiers
 ) -> None:
     """
     Options:
@@ -2726,9 +2710,7 @@ def resource_disable(argv):
     return None
 
 
-def resource_restart(
-    lib: Any, argv: List[str], modifiers: InputModifiers
-) -> None:
+def resource_restart(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --wait
@@ -2783,7 +2765,7 @@ def resource_restart(
 
 
 def resource_force_action(
-    lib: Any, argv: List[str], modifiers: InputModifiers, action: str
+    lib: Any, argv: Argv, modifiers: InputModifiers, action: str
 ) -> None:
     """
     Options:
@@ -2866,7 +2848,7 @@ def resource_force_action(
 
 
 def resource_manage_cmd(
-    lib: Any, argv: List[str], modifiers: InputModifiers
+    lib: Any, argv: Argv, modifiers: InputModifiers
 ) -> None:
     """
     Options:
@@ -2882,7 +2864,7 @@ def resource_manage_cmd(
 
 
 def resource_unmanage_cmd(
-    lib: Any, argv: List[str], modifiers: InputModifiers
+    lib: Any, argv: Argv, modifiers: InputModifiers
 ) -> None:
     """
     Options:
@@ -2929,7 +2911,7 @@ def is_managed(resource_id):
 
 
 def resource_failcount_show(
-    lib: Any, argv: List[str], modifiers: InputModifiers
+    lib: Any, argv: Argv, modifiers: InputModifiers
 ) -> None:
     """
     Options:
@@ -3123,7 +3105,7 @@ def resource_refresh(lib, argv, modifiers):
 
 
 def resource_relocate_show_cmd(
-    lib: Any, argv: List[str], modifiers: InputModifiers
+    lib: Any, argv: Argv, modifiers: InputModifiers
 ) -> None:
     """
     Options: no options
@@ -3136,7 +3118,7 @@ def resource_relocate_show_cmd(
 
 
 def resource_relocate_dry_run_cmd(
-    lib: Any, argv: List[str], modifiers: InputModifiers
+    lib: Any, argv: Argv, modifiers: InputModifiers
 ) -> None:
     """
     Options:
@@ -3149,7 +3131,7 @@ def resource_relocate_dry_run_cmd(
 
 
 def resource_relocate_run_cmd(
-    lib: Any, argv: List[str], modifiers: InputModifiers
+    lib: Any, argv: Argv, modifiers: InputModifiers
 ) -> None:
     """
     Options: no options
@@ -3161,7 +3143,7 @@ def resource_relocate_run_cmd(
 
 
 def resource_relocate_clear_cmd(
-    lib: Any, argv: List[str], modifiers: InputModifiers
+    lib: Any, argv: Argv, modifiers: InputModifiers
 ) -> None:
     """
     Options:
@@ -3430,8 +3412,11 @@ def print_resources_utilization():
         print(" {0}: {1}".format(resource, utilization[resource]))
 
 
+# deprecated
 # This is used only by pcsd, will be removed in new architecture
-def get_resource_agent_info(lib, argv, modifiers):
+def get_resource_agent_info(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options: no options
     """
@@ -3441,7 +3426,9 @@ def get_resource_agent_info(lib, argv, modifiers):
     print(json.dumps(lib.resource_agent.describe_agent(argv[0])))
 
 
-def resource_bundle_create_cmd(lib, argv, modifiers):
+def resource_bundle_create_cmd(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options:
       * --force - allow unknown options
@@ -3457,19 +3444,21 @@ def resource_bundle_create_cmd(lib, argv, modifiers):
     parts = parse_bundle_create_options(argv[1:])
     lib.resource.bundle_create(
         bundle_id,
-        parts["container_type"],
-        container_options=parts["container"],
-        network_options=parts["network"],
-        port_map=parts["port_map"],
-        storage_map=parts["storage_map"],
-        meta_attributes=parts["meta"],
+        parts.container_type,
+        container_options=parts.container,
+        network_options=parts.network,
+        port_map=parts.port_map,
+        storage_map=parts.storage_map,
+        meta_attributes=parts.meta_attrs,
         force_options=modifiers.get("--force"),
         ensure_disabled=modifiers.get("--disabled"),
         wait=modifiers.get("--wait"),
     )
 
 
-def resource_bundle_reset_cmd(lib, argv, modifiers):
+def resource_bundle_reset_cmd(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options:
       * --force - allow unknown options
@@ -3485,18 +3474,20 @@ def resource_bundle_reset_cmd(lib, argv, modifiers):
     parts = parse_bundle_reset_options(argv[1:])
     lib.resource.bundle_reset(
         bundle_id,
-        container_options=parts["container"],
-        network_options=parts["network"],
-        port_map=parts["port_map"],
-        storage_map=parts["storage_map"],
-        meta_attributes=parts["meta"],
+        container_options=parts.container,
+        network_options=parts.network,
+        port_map=parts.port_map,
+        storage_map=parts.storage_map,
+        meta_attributes=parts.meta_attrs,
         force_options=modifiers.get("--force"),
         ensure_disabled=modifiers.get("--disabled"),
         wait=modifiers.get("--wait"),
     )
 
 
-def resource_bundle_update_cmd(lib, argv, modifiers):
+def resource_bundle_update_cmd(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options:
       * --force - allow unknown options
@@ -3511,24 +3502,24 @@ def resource_bundle_update_cmd(lib, argv, modifiers):
     parts = parse_bundle_update_options(argv[1:])
     lib.resource.bundle_update(
         bundle_id,
-        container_options=parts["container"],
-        network_options=parts["network"],
-        port_map_add=parts["port_map_add"],
-        port_map_remove=parts["port_map_remove"],
-        storage_map_add=parts["storage_map_add"],
-        storage_map_remove=parts["storage_map_remove"],
-        meta_attributes=parts["meta"],
+        container_options=parts.container,
+        network_options=parts.network,
+        port_map_add=parts.port_map_add,
+        port_map_remove=parts.port_map_remove,
+        storage_map_add=parts.storage_map_add,
+        storage_map_remove=parts.storage_map_remove,
+        meta_attributes=parts.meta_attrs,
         force_options=modifiers.get("--force"),
         wait=modifiers.get("--wait"),
     )
 
 
-def config(lib: Any, argv: List[str], modifiers: InputModifiers) -> None:
+def config(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     config_common(lib, argv, modifiers, stonith=False)
 
 
 def config_common(
-    lib: Any, argv: List[str], modifiers: InputModifiers, stonith: bool
+    lib: Any, argv: Argv, modifiers: InputModifiers, stonith: bool
 ) -> None:
     """
     Options:
@@ -3544,11 +3535,11 @@ def config_common(
         .filter_resources(argv)
     )
     output_format = modifiers.get_output_format()
-    if output_format == "cmd":
+    if output_format == OUTPUT_FORMAT_VALUE_CMD:
         output = ";\n".join(
             " \\\n".join(cmd) for cmd in resources_to_cmd(resources_facade)
         )
-    elif output_format == "json":
+    elif output_format == OUTPUT_FORMAT_VALUE_JSON:
         output = json.dumps(
             dto.to_dict(
                 CibResourcesDto(

@@ -1,29 +1,46 @@
-def has_applicable_environment(environment):
-    """
-    dict environment - very likely os.environ
-    """
-    return bool(
-        all(
-            key in environment
-            for key in [
-                "COMP_WORDS",
-                "COMP_LENGTHS",
-                "COMP_CWORD",
-                "PCS_AUTO_COMPLETE",
-            ]
-        )
-        and environment["PCS_AUTO_COMPLETE"].strip() not in ("0", "")
-        and environment["COMP_CWORD"].isdigit()
-    )
+from typing import Mapping
+
+from pcs.common.types import StringSequence
+
+SuggestionTree = Mapping[str, "SuggestionTree"]
 
 
-def make_suggestions(environment, suggestion_tree):
+def has_applicable_environment(environment: Mapping[str, str]) -> bool:
     """
-    dict environment - very likely os.environ
-    dict suggestion_tree - {'acl': {'role': {'create': ...}}}...
+    Check if environment variables for shell command completion are set
+
+    environment -- very likely os.environ
+    """
+    if not all(
+        key in environment
+        for key in [
+            "COMP_WORDS",
+            "COMP_LENGTHS",
+            "COMP_CWORD",
+            "PCS_AUTO_COMPLETE",
+        ]
+    ):
+        return False
+    if environment["PCS_AUTO_COMPLETE"].strip() in ("0", ""):
+        return False
+    try:
+        int(environment["COMP_CWORD"])
+    except ValueError:
+        return False
+    return True
+
+
+def make_suggestions(
+    environment: Mapping[str, str], suggestion_tree: SuggestionTree
+) -> str:
+    """
+    Suggest possible shell command completions
+
+    environment -- very likely os.environ
+    suggestion_tree -- {'acl': {'role': {'create': ...}}}...
     """
     if not has_applicable_environment(environment):
-        raise EnvironmentError("Environment is not completion read")
+        raise EnvironmentError("Environment is not completion ready")
 
     try:
         typed_word_list = _split_words(
@@ -40,16 +57,17 @@ def make_suggestions(environment, suggestion_tree):
     )
 
 
-def _split_words(joined_words, word_lengths):
+def _split_words(joined_words: str, word_lengths: StringSequence) -> list[str]:
     cursor_position = 0
     words_string_len = len(joined_words)
     word_list = []
     for length in word_lengths:
-        if not length.isdigit():
+        try:
+            next_position = cursor_position + int(length)
+        except ValueError as e:
             raise EnvironmentError(
                 "Length of word '{0}' is not digit".format(length)
-            )
-        next_position = cursor_position + int(length)
+            ) from e
         if next_position > words_string_len:
             raise EnvironmentError(
                 "Expected lengths are bigger than word lengths"
@@ -69,7 +87,11 @@ def _split_words(joined_words, word_lengths):
     return word_list
 
 
-def _find_suggestions(suggestion_tree, typed_word_list, word_under_cursor_idx):
+def _find_suggestions(
+    suggestion_tree: SuggestionTree,
+    typed_word_list: StringSequence,
+    word_under_cursor_idx: int,
+) -> list[str]:
     if not 1 <= word_under_cursor_idx <= len(typed_word_list):
         return []
 
@@ -90,7 +112,9 @@ def _find_suggestions(suggestion_tree, typed_word_list, word_under_cursor_idx):
     ]
 
 
-def _get_subcommands(suggestion_tree, previous_subcommand_list):
+def _get_subcommands(
+    suggestion_tree: SuggestionTree, previous_subcommand_list: StringSequence
+) -> list[str]:
     subcommand_tree = suggestion_tree
     for subcommand in previous_subcommand_list:
         if subcommand not in subcommand_tree:

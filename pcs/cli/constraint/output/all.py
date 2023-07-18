@@ -6,7 +6,11 @@ from typing import (
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.output import lines_to_str
-from pcs.cli.common.parse_args import InputModifiers
+from pcs.cli.common.parse_args import (
+    OUTPUT_FORMAT_VALUE_CMD,
+    OUTPUT_FORMAT_VALUE_JSON,
+    InputModifiers,
+)
 from pcs.cli.reports.output import warn
 from pcs.common.interface import dto
 from pcs.common.pacemaker.constraint import (
@@ -140,7 +144,7 @@ def print_config(
         include_expired=modifiers.is_specified("--all"),
     )
 
-    if modifiers.get_output_format() == "json":
+    if modifiers.get_output_format() == OUTPUT_FORMAT_VALUE_JSON:
         if modifiers.is_specified("--full"):
             raise CmdLineInputError(
                 f"Option '--full' is not compatible with '{modifiers.get_output_format()}' output format."
@@ -148,7 +152,7 @@ def print_config(
         print(json.dumps(dto.to_dict(constraints_dto), indent=2))
         return
 
-    if modifiers.get_output_format() == "cmd":
+    if modifiers.get_output_format() == OUTPUT_FORMAT_VALUE_CMD:
         print(
             ";\n".join(
                 " \\\n".join(cmd) for cmd in constraints_to_cmd(constraints_dto)

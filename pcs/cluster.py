@@ -29,6 +29,10 @@ from pcs.cli.common.errors import (
     CmdLineInputError,
     raise_command_replaced,
 )
+from pcs.cli.common.parse_args import (
+    OUTPUT_FORMAT_VALUE_CMD,
+    OUTPUT_FORMAT_VALUE_JSON,
+)
 from pcs.cli.common.tools import print_to_stderr
 from pcs.cli.file import metadata as file_metadata
 from pcs.cli.reports import process_library_reports
@@ -1635,17 +1639,18 @@ def _parse_transport(transport_args):
     parsed_options = parse_args.group_by_keywords(
         transport_options,
         keywords,
-        implicit_first_group_key=TRANSPORT_DEFAULT_SECTION,
-        group_repeated_keywords=[LINK_KEYWORD],
+        implicit_first_keyword=TRANSPORT_DEFAULT_SECTION,
     )
     options = {
-        section: parse_args.prepare_options(parsed_options[section])
+        section: parse_args.prepare_options(
+            parsed_options.get_args_flat(section)
+        )
         for section in keywords | {TRANSPORT_DEFAULT_SECTION}
         if section != LINK_KEYWORD
     }
     options[LINK_KEYWORD] = [
         parse_args.prepare_options(link_options)
-        for link_options in parsed_options[LINK_KEYWORD]
+        for link_options in parsed_options.get_args_groups(LINK_KEYWORD)
     ]
 
     return transport_type, options
@@ -1700,26 +1705,22 @@ def cluster_setup(lib, argv, modifiers):
     cluster_name, *argv = argv
     keywords = [TRANSPORT_KEYWORD, "totem", "quorum"]
     parsed_args = parse_args.group_by_keywords(
-        argv,
-        keywords,
-        implicit_first_group_key="nodes",
-        keyword_repeat_allowed=False,
-        only_found_keywords=True,
+        argv, keywords, implicit_first_keyword="nodes"
     )
+    parsed_args.ensure_unique_keywords()
     nodes = [
         _parse_node_options(node, options)
         for node, options in parse_args.split_list_by_any_keywords(
-            parsed_args["nodes"],
-            "node name",
+            parsed_args.get_args_flat("nodes"), "node name"
         ).items()
     ]
 
     transport_type = None
     transport_options = {}
 
-    if TRANSPORT_KEYWORD in parsed_args:
+    if parsed_args.has_keyword(TRANSPORT_KEYWORD):
         transport_type, transport_options = _parse_transport(
-            parsed_args[TRANSPORT_KEYWORD]
+            parsed_args.get_args_flat(TRANSPORT_KEYWORD)
         )
 
     force_flags = []
@@ -1738,10 +1739,10 @@ def cluster_setup(lib, argv, modifiers):
             compression_options=transport_options.get("compression", {}),
             crypto_options=transport_options.get("crypto", {}),
             totem_options=parse_args.prepare_options(
-                parsed_args.get("totem", [])
+                parsed_args.get_args_flat("totem")
             ),
             quorum_options=parse_args.prepare_options(
-                parsed_args.get("quorum", [])
+                parsed_args.get_args_flat("quorum")
             ),
             wait=modifiers.get("--wait"),
             start=modifiers.get("--start"),
@@ -1760,9 +1761,11 @@ def cluster_setup(lib, argv, modifiers):
         link_list=transport_options.get(LINK_KEYWORD, []),
         compression_options=transport_options.get("compression", {}),
         crypto_options=transport_options.get("crypto", {}),
-        totem_options=parse_args.prepare_options(parsed_args.get("totem", [])),
+        totem_options=parse_args.prepare_options(
+            parsed_args.get_args_flat("totem")
+        ),
         quorum_options=parse_args.prepare_options(
-            parsed_args.get("quorum", [])
+            parsed_args.get_args_flat("quorum")
         ),
         no_cluster_uuid=modifiers.is_specified("--no-cluster-uuid"),
         force_flags=force_flags,
@@ -1809,10 +1812,12 @@ def config_update(
     )
     if not modifiers.is_specified("--corosync_conf"):
         lib.cluster.config_update(
-            parse_args.prepare_options(parsed_args["transport"]),
-            parse_args.prepare_options(parsed_args["compression"]),
-            parse_args.prepare_options(parsed_args["crypto"]),
-            parse_args.prepare_options(parsed_args["totem"]),
+            parse_args.prepare_options(parsed_args.get_args_flat("transport")),
+            parse_args.prepare_options(
+                parsed_args.get_args_flat("compression")
+            ),
+            parse_args.prepare_options(parsed_args.get_args_flat("crypto")),
+            parse_args.prepare_options(parsed_args.get_args_flat("totem")),
         )
         return
 
@@ -1820,10 +1825,12 @@ def config_update(
         modifiers.get("--corosync_conf"),
         lambda corosync_conf_content: lib.cluster.config_update_local(
             corosync_conf_content,
-            parse_args.prepare_options(parsed_args["transport"]),
-            parse_args.prepare_options(parsed_args["compression"]),
-            parse_args.prepare_options(parsed_args["crypto"]),
-            parse_args.prepare_options(parsed_args["totem"]),
+            parse_args.prepare_options(parsed_args.get_args_flat("transport")),
+            parse_args.prepare_options(
+                parsed_args.get_args_flat("compression")
+            ),
+            parse_args.prepare_options(parsed_args.get_args_flat("crypto")),
+            parse_args.prepare_options(parsed_args.get_args_flat("totem")),
         ),
     )
 
@@ -1864,14 +1871,14 @@ def config_show(
         raise CmdLineInputError()
     output_format = modifiers.get_output_format()
     corosync_conf_dto = lib.cluster.get_corosync_conf_struct()
-    if output_format == "cmd":
+    if output_format == OUTPUT_FORMAT_VALUE_CMD:
         if corosync_conf_dto.quorum_device is not None:
             warn(
                 "Quorum device configuration detected but not yet supported by "
                 "this command."
             )
         output = " \\\n".join(_config_get_cmd(corosync_conf_dto))
-    elif output_format == "json":
+    elif output_format == OUTPUT_FORMAT_VALUE_JSON:
         output = json.dumps(dto.to_dict(corosync_conf_dto))
     else:
         output = "\n".join(_config_get_text(corosync_conf_dto))
@@ -2078,15 +2085,13 @@ def link_add(lib, argv, modifiers):
         force_flags.append(reports.codes.SKIP_OFFLINE_NODES)
 
     parsed = parse_args.group_by_keywords(
-        argv,
-        {"options"},
-        implicit_first_group_key="nodes",
-        keyword_repeat_allowed=False,
+        argv, {"options"}, implicit_first_keyword="nodes"
     )
+    parsed.ensure_unique_keywords()
 
     lib.cluster.add_link(
-        parse_args.prepare_options(parsed["nodes"]),
-        parse_args.prepare_options(parsed["options"]),
+        parse_args.prepare_options(parsed.get_args_flat("nodes")),
+        parse_args.prepare_options(parsed.get_args_flat("options")),
         force_flags=force_flags,
     )
 
@@ -2130,16 +2135,14 @@ def link_update(lib, argv, modifiers):
 
     linknumber = argv[0]
     parsed = parse_args.group_by_keywords(
-        argv[1:],
-        {"options"},
-        implicit_first_group_key="nodes",
-        keyword_repeat_allowed=False,
+        argv[1:], {"options"}, implicit_first_keyword="nodes"
     )
+    parsed.ensure_unique_keywords()
 
     lib.cluster.update_link(
         linknumber,
-        parse_args.prepare_options(parsed["nodes"]),
-        parse_args.prepare_options(parsed["options"]),
+        parse_args.prepare_options(parsed.get_args_flat("nodes")),
+        parse_args.prepare_options(parsed.get_args_flat("options")),
         force_flags=force_flags,
     )
 
