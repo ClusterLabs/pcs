@@ -73,10 +73,8 @@ def is_duration(runner: CommandRunner, value: str) -> bool:
         "--duration",
         value
     ]
-    stdout, stderr, retval = runner.run(cmd)
-    if retval != 0:
-        return False
-    return True
+    _, _, retval = runner.run(cmd)
+    return retval == 0
 
 
 def get_valid_timeout_seconds(

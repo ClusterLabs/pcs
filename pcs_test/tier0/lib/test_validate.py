@@ -1,8 +1,5 @@
 import re
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase
 
 from lxml import etree
 
@@ -13,10 +10,10 @@ from pcs.common.reports.const import (
 )
 from pcs.lib import validate
 from pcs.lib.cib.tools import IdProvider
-from pcs.lib.external import CommandRunner
 
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal
+from pcs_test.tools.custom_mock import get_runner_mock
 
 # pylint: disable=no-self-use
 # pylint: disable=too-many-lines
@@ -1753,23 +1750,17 @@ class ValueTimeInterval(TestCase):
 
 
 class ValueTimeIntervalOrDuration(TestCase):
-    def get_runner(stdout="", stderr="", returncode=0, env_vars=None):
-        runner = mock.MagicMock(spec_set=CommandRunner)
-        runner.run.return_value = (stdout, stderr, returncode)
-        runner.env_vars = env_vars if env_vars else {}
-        return runner
-
     def test_no_reports_for_valid_time_interval(self):
         for interval in ["0", "1s", "2sec", "3m", "4min", "5h", "PT1H2M3S", "6hr"]:
             with self.subTest(value=interval):
                 assert_report_item_list_equal(
-                    validate.ValueTimeIntervalOrDuration("a", runner=self.get_runner()).validate({"a": interval}),
+                    validate.ValueTimeIntervalOrDuration("a", runner=get_runner_mock()).validate({"a": interval}),
                     [],
                 )
 
     def test_reports_about_invalid_interval(self):
         assert_report_item_list_equal(
-            validate.ValueTimeIntervalOrDuration("a", runner=self.get_runner()).validate({"a": "invalid_value"}),
+            validate.ValueTimeIntervalOrDuration("a", runner=get_runner_mock()).validate({"a": "invalid_value"}),
             [
                 fixture.error(
                     reports.codes.INVALID_OPTION_VALUE,

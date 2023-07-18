@@ -157,7 +157,7 @@ class StonithWatchdogTimeoutMixin(LoadMetadataMixin):
                     reports.codes.INVALID_OPTION_VALUE,
                     option_name="stonith-watchdog-timeout",
                     option_value="15x",
-                    allowed_values="time interval (e.g. 1, 2s, 3m, 4h, PT1H2M3S, ...)",
+                    allowed_values="time interval (e.g. 1, 2s, 3m, 4h, ...)",
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),

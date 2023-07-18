@@ -41,7 +41,7 @@ def _validate_stonith_watchdog_timeout_property(
     report_list: reports.ReportItemList = []
     original_value = value
     # if value is not empty, try to convert time interval string
-    if value and not value.startswith('P'):
+    if value:
         seconds = timeout_to_seconds(value)
         if seconds is None:
             # returns empty list because this should be reported by
@@ -167,15 +167,19 @@ def validate_set_cluster_properties(
             )
         elif property_metadata.type == "time":
             # make stonith-watchdog-timeout value not forcable
-            validators.append(
-                validate.ValueTimeIntervalOrDuration(
-                    property_metadata.name,
-                    runner=runner,
-                    severity=severity
-                    if property_metadata.name != "stonith-watchdog-timeout"
-                    else reports.ReportItemSeverity.error(),
+            if property_metadata.name == "stonith-watchdog-timeout":
+                validators.append(validate.ValueTimeInterval(
+                        property_metadata.name,
+                        severity=reports.ReportItemSeverity.error()
+                    )
                 )
-            )
+            else:
+                validators.append(validate.ValueTimeIntervalOrDuration(
+                        property_metadata.name,
+                        runner=runner,
+                        severity=severity
+                    )
+                )
     report_list.extend(
         validate.ValidatorAll(validators).validate(to_be_set_properties)
     )

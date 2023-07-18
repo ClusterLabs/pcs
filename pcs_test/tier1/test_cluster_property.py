@@ -214,7 +214,7 @@ class TestPropertySet(PropertyMixin, TestCase):
             "property set stonith-watchdog-timeout=5x".split(),
             stderr_full=(
                 "Error: '5x' is not a valid stonith-watchdog-timeout value, use"
-                " time interval (e.g. 1, 2s, 3m, 4h, PT1H2M3S, ...)\n"
+                " time interval (e.g. 1, 2s, 3m, 4h, ...)\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
                 "continue\n"
             ),

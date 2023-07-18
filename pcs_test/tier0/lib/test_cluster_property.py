@@ -15,13 +15,13 @@ from pcs.lib.resource_agent.types import (
     ResourceAgentParameter,
 )
 from pcs.lib.xml_tools import etree_to_str
-from pcs.lib.external import CommandRunner
 
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import (
     assert_report_item_list_equal,
     assert_xml_equal,
 )
+from pcs_test.tools.custom_mock import get_runner_mock
 
 TEMPLATE_CRM_CONFIG = """
 <cib validate-with="pacemaker-3.8">
@@ -182,11 +182,6 @@ FIXTURE_ERROR_REPORTS = [
     ),
 ]
 
-def get_runner(stdout="", stderr="", returncode=0, env_vars=None):
-    runner = mock.MagicMock(spec_set=CommandRunner)
-    runner.run.return_value = (stdout, stderr, returncode)
-    runner.env_vars = env_vars if env_vars else {}
-    return runner
 
 def warning_reports(report_list):
     warning_report_list = []
@@ -255,7 +250,7 @@ class TestValidateSetClusterProperties(TestCase):
         self.mock_sbd_timeout.return_value = 10
         assert_report_item_list_equal(
             lib_cluster_property.validate_set_cluster_properties(
-                get_runner(),
+                get_runner_mock(),
                 self.mock_facade_list,
                 "property-set-id",
                 configured_properties,
@@ -425,7 +420,7 @@ class TestValidateSetClusterProperties(TestCase):
                             reports.codes.INVALID_OPTION_VALUE,
                             option_name="stonith-watchdog-timeout",
                             option_value=value,
-                            allowed_values="time interval (e.g. 1, 2s, 3m, 4h, PT1H2M3S, ...)",
+                            allowed_values="time interval (e.g. 1, 2s, 3m, 4h, ...)",
                             cannot_be_empty=False,
                             forbidden_characters=None,
                         )

@@ -5,6 +5,7 @@ from pcs.common.reports import ReportItemSeverity as severity
 from pcs.common.reports import codes as report_codes
 
 from pcs_test.tools.assertions import assert_raise_library_error
+from pcs_test.tools.custom_mock import get_runner_mock
 
 # pylint: disable=no-self-use
 
@@ -245,3 +246,10 @@ class IsScoreValueTest(TestCase):
 
     def test_returns_false_for_multiple_operators(self):
         self.assertFalse(lib.is_score("++INFINITY"))
+
+class IsDurationValueTest(TestCase):
+    def test_return_true_for_iso8601_time(self):
+        self.assertTrue(lib.is_duration(get_runner_mock(),"P600S"))
+
+    def test_return_false_for_number(self):
+        self.assertTrue(lib.is_duration(get_runner_mock(),"600"))
