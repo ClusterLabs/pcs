@@ -1,6 +1,7 @@
 EXTRA_DIST		= \
 			  pam/pcsd.debian \
 			  pam/pcsd.fedora \
+			  pam/pcsd.opencloudos \
 			  test/cib1.xml \
 			  test/corosync.conf \
 			  test/crm1.xml \
