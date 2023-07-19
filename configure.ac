@@ -247,6 +247,15 @@ for i in $DISTRO $DISTROS; do
 			DISTROEXT=fedora
 			break
 		;;
+		opencloudos)
+			FOUND_DISTRO=1
+			CONFIGDIR="$sysconfdir/sysconfig"
+			PCSLIBDIR="$LIBDIR"
+			PCMKDAEMONDIR="$prefix/libexec/pacemaker"
+			COROSYNCLOGDIR="$localstatedir/log/cluster"
+			DISTROEXT=opencloudos
+			break
+		;;
 	esac
 done
 
