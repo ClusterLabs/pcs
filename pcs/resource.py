@@ -61,9 +61,10 @@ from pcs.cli.resource.parse_args import (
     parse_bundle_create_options,
     parse_bundle_reset_options,
     parse_bundle_update_options,
+    parse_clone,
+    parse_create_new,
+    parse_create_old,
 )
-from pcs.cli.resource.parse_args import parse_clone as parse_clone_args
-from pcs.cli.resource.parse_args import parse_create as parse_create_args
 from pcs.cli.resource_agent import find_single_agent
 from pcs.common import (
     const,
@@ -637,7 +638,10 @@ def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     ra_id = argv[0]
     ra_type = argv[1]
 
-    parts = parse_create_args(argv[2:], bool(modifiers.get(FUTURE_OPTION)))
+    parse_function = (
+        parse_create_new if modifiers.get(FUTURE_OPTION) else parse_create_old
+    )
+    parts = parse_function(argv[2:])
 
     defined_options = set()
     if parts.bundle_id:
@@ -1736,7 +1740,7 @@ def resource_clone_create(
             ]
         )
 
-    parts = parse_clone_args(argv, promotable=promotable)
+    parts = parse_clone(argv, promotable=promotable)
     _check_clone_incompatible_options_child(
         element, parts.meta_attrs, force=reports.codes.FORCE in force_flags
     )
