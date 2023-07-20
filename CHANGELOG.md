@@ -6,6 +6,10 @@
 - Make use of filters when extracting tarballs to enhance security if provided
   by Python (`pcs config restore` command) ([rhbz#2219407])
 
+### Added
+- Support ISO 8601 duration specifications for pacemaker "time" properties
+  ([rhbz#2112268], [ghpull#712])
+
 ### Fixed
 - Exporting constraints with rules in form of pcs commands now escapes `#` and
   fixes spaces in dates to make the commands valid ([rhbz#2163953])
@@ -22,6 +26,8 @@
 - Using spaces in dates in location constraint rules (using spaces in dates in
   rules in other parts of configuration was never allowed) ([rhbz#2163953])
 
+[ghpull#712]: https://github.com/ClusterLabs/pcs/pull/712
+[rhbz#2112268]: https://bugzilla.redhat.com/show_bug.cgi?id=2112268
 [rhbz#2163953]: https://bugzilla.redhat.com/show_bug.cgi?id=2163953
 [rhbz#2217850]: https://bugzilla.redhat.com/show_bug.cgi?id=2217850
 [rhbz#2219407]: https://bugzilla.redhat.com/show_bug.cgi?id=2219407

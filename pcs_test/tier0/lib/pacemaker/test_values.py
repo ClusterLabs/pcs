@@ -1,6 +1,8 @@
+import os
 from unittest import TestCase
 
 import pcs.lib.pacemaker.values as lib
+from pcs import settings
 from pcs.common.reports import ReportItemSeverity as severity
 from pcs.common.reports import codes as report_codes
 
@@ -247,9 +249,22 @@ class IsScoreValueTest(TestCase):
     def test_returns_false_for_multiple_operators(self):
         self.assertFalse(lib.is_score("++INFINITY"))
 
-class IsDurationValueTest(TestCase):
-    def test_return_true_for_iso8601_time(self):
-        self.assertTrue(lib.is_duration(get_runner_mock(),"P600S"))
 
-    def test_return_false_for_number(self):
-        self.assertTrue(lib.is_duration(get_runner_mock(),"600"))
+class IsDurationValueTest(TestCase):
+    def assert_is_duration(self, return_value):
+        duration = "P"
+        mock_runner = get_runner_mock(returncode=0 if return_value else 1)
+        self.assertEqual(lib.is_duration(mock_runner, duration), return_value)
+        mock_runner.run.assert_called_once_with(
+            [
+                os.path.join(settings.pacemaker_binaries, "iso8601"),
+                "--duration",
+                duration,
+            ]
+        )
+
+    def test_duration_valid(self):
+        self.assert_is_duration(True)
+
+    def test_duration_invalid(self):
+        self.assert_is_duration(False)

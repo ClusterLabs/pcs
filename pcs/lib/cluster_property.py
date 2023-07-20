@@ -85,6 +85,7 @@ def validate_set_cluster_properties(
     service_manager -- manager for system daemon services
     force -- if True, produce warnings instead of errors
     """
+    # pylint: disable=too-many-branches
     # pylint: disable=too-many-locals
     possible_properties_dict = {
         parameter.name: parameter
@@ -168,16 +169,16 @@ def validate_set_cluster_properties(
         elif property_metadata.type == "time":
             # make stonith-watchdog-timeout value not forcable
             if property_metadata.name == "stonith-watchdog-timeout":
-                validators.append(validate.ValueTimeInterval(
+                validators.append(
+                    validate.ValueTimeInterval(
                         property_metadata.name,
-                        severity=reports.ReportItemSeverity.error()
+                        severity=reports.ReportItemSeverity.error(),
                     )
                 )
             else:
-                validators.append(validate.ValueTimeIntervalOrDuration(
-                        property_metadata.name,
-                        runner=runner,
-                        severity=severity
+                validators.append(
+                    validate.ValueTimeIntervalOrDuration(
+                        runner, property_metadata.name, severity=severity
                     )
                 )
     report_list.extend(

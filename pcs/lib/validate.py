@@ -991,16 +991,19 @@ class ValueScore(ValueValidator):
             )
         return report_list
 
+
 class ValueTimeIntervalOrDuration(ValuePredicateBase):
     """
-    Time interval in number+units or ISO8601 duration (e.g. 1, 2s, 3m, 4h, PT1H2M3S, ...)
+    Time interval in number+units or ISO8601 duration (e.g. 1, 2s, 3m, 4h,
+    PT1H2M3S, ...)
     """
+
     def __init__(
         self,
+        runner: CommandRunner,
         option_name: TypeOptionName,
         option_name_for_report: Optional[str] = None,
         severity: Optional[ReportItemSeverity] = None,
-        runner: CommandRunner = None,
     ):
         super().__init__(
             option_name,
@@ -1010,10 +1013,9 @@ class ValueTimeIntervalOrDuration(ValuePredicateBase):
         self.runner = runner
 
     def _is_valid(self, value: TypeOptionValue) -> bool:
-        if value.startswith('P'):
+        if value.startswith("P"):
             return is_duration(self.runner, value)
-        else:
-            return timeout_to_seconds(value) is not None
+        return timeout_to_seconds(value) is not None
 
     def _get_allowed_values(self) -> Any:
         return "time interval (e.g. 1, 2s, 3m, 4h, PT1H2M3S, ...)"
