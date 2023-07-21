@@ -32,6 +32,7 @@ from pcs_test.tools.custom_mock import (
     TmpFileCall,
     TmpFileMock,
 )
+from pcs_test.tools.custom_mock import get_runner_mock as get_runner
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.xml import (
     XmlManipulation,
@@ -39,13 +40,6 @@ from pcs_test.tools.xml import (
 )
 
 _EXITCODE_NOT_CONNECTED = 102
-
-
-def get_runner(stdout="", stderr="", returncode=0, env_vars=None):
-    runner = mock.MagicMock(spec_set=CommandRunner)
-    runner.run.return_value = (stdout, stderr, returncode)
-    runner.env_vars = env_vars if env_vars else {}
-    return runner
 
 
 def path(name):

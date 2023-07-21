@@ -63,10 +63,12 @@ from pcs.common.validate import (
 )
 from pcs.lib.cib.tools import IdProvider
 from pcs.lib.corosync import constants as corosync_constants
+from pcs.lib.external import CommandRunner
 from pcs.lib.pacemaker.values import (
     BOOLEAN_VALUES,
     SCORE_INFINITY,
     is_boolean,
+    is_duration,
     is_score,
     validate_id,
 )
@@ -988,6 +990,35 @@ class ValueScore(ValueValidator):
                 ReportItem.error(reports.messages.InvalidScore(value.original))
             )
         return report_list
+
+
+class ValueTimeIntervalOrDuration(ValuePredicateBase):
+    """
+    Time interval in number+units or ISO8601 duration (e.g. 1, 2s, 3m, 4h,
+    PT1H2M3S, ...)
+    """
+
+    def __init__(
+        self,
+        runner: CommandRunner,
+        option_name: TypeOptionName,
+        option_name_for_report: Optional[str] = None,
+        severity: Optional[ReportItemSeverity] = None,
+    ):
+        super().__init__(
+            option_name,
+            option_name_for_report=option_name_for_report,
+            severity=severity,
+        )
+        self.runner = runner
+
+    def _is_valid(self, value: TypeOptionValue) -> bool:
+        if value.startswith("P"):
+            return is_duration(self.runner, value)
+        return timeout_to_seconds(value) is not None
+
+    def _get_allowed_values(self) -> Any:
+        return "time interval (e.g. 1, 2s, 3m, 4h, PT1H2M3S, ...)"
 
 
 class ValueTimeInterval(ValuePredicateBase):

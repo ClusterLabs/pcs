@@ -1,3 +1,4 @@
+import os
 import re
 from typing import (
     List,
@@ -5,6 +6,7 @@ from typing import (
     Union,
 )
 
+from pcs import settings
 from pcs.common import reports
 from pcs.common.reports.item import (
     ReportItem,
@@ -12,6 +14,7 @@ from pcs.common.reports.item import (
 )
 from pcs.common.tools import timeout_to_seconds
 from pcs.lib.errors import LibraryError
+from pcs.lib.external import CommandRunner
 
 _BOOLEAN_TRUE = frozenset(["true", "on", "yes", "y", "1"])
 _BOOLEAN_FALSE = frozenset(["false", "off", "no", "n", "0"])
@@ -19,6 +22,10 @@ BOOLEAN_VALUES = _BOOLEAN_TRUE | _BOOLEAN_FALSE
 _ID_FIRST_CHAR_NOT_RE = re.compile("[^a-zA-Z_]")
 _ID_REST_CHARS_NOT_RE = re.compile("[^a-zA-Z0-9_.-]")
 SCORE_INFINITY = "INFINITY"
+
+
+def __exec(name):
+    return os.path.join(settings.pacemaker_binaries, name)
 
 
 def is_boolean(val: str) -> bool:
@@ -59,6 +66,12 @@ def is_score(value: str) -> bool:
         return False
     unsigned_value = value[1:] if value[0] in ("+", "-") else value
     return unsigned_value == SCORE_INFINITY or unsigned_value.isdigit()
+
+
+def is_duration(runner: CommandRunner, value: str) -> bool:
+    cmd = [__exec("iso8601"), "--duration", value]
+    _, _, retval = runner.run(cmd)
+    return retval == 0
 
 
 def get_valid_timeout_seconds(

@@ -21,6 +21,7 @@ from pcs_test.tools.assertions import (
     assert_report_item_list_equal,
     assert_xml_equal,
 )
+from pcs_test.tools.custom_mock import get_runner_mock
 
 TEMPLATE_CRM_CONFIG = """
 <cib validate-with="pacemaker-3.8">
@@ -175,7 +176,7 @@ FIXTURE_ERROR_REPORTS = [
         force_code=reports.codes.FORCE,
         option_name="time_param",
         option_value="10x",
-        allowed_values="time interval (e.g. 1, 2s, 3m, 4h, ...)",
+        allowed_values="time interval (e.g. 1, 2s, 3m, 4h, PT1H2M3S, ...)",
         cannot_be_empty=False,
         forbidden_characters=None,
     ),
@@ -249,6 +250,7 @@ class TestValidateSetClusterProperties(TestCase):
         self.mock_sbd_timeout.return_value = 10
         assert_report_item_list_equal(
             lib_cluster_property.validate_set_cluster_properties(
+                get_runner_mock(),
                 self.mock_facade_list,
                 "property-set-id",
                 configured_properties,

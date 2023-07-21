@@ -17,6 +17,7 @@ from pcs.common.reports import (
 )
 from pcs.common.types import CibRuleInEffectStatus
 from pcs.lib.cib.rule.in_effect import RuleInEffectEval
+from pcs.lib.external import CommandRunner
 
 from pcs_test.tools.assertions import assert_report_item_list_equal
 
@@ -28,6 +29,13 @@ def get_getaddrinfo_mock(resolvable_addr_list):
             raise socket.gaierror(1, "")
 
     return socket_getaddrinfo
+
+
+def get_runner_mock(stdout="", stderr="", returncode=0, env_vars=None):
+    runner = mock.MagicMock(spec_set=CommandRunner)
+    runner.run.return_value = (stdout, stderr, returncode)
+    runner.env_vars = env_vars if env_vars else {}
+    return runner
 
 
 def patch_getaddrinfo(test_case, addr_list):

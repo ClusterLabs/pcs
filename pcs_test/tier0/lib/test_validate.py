@@ -1,8 +1,10 @@
+import os
 import re
 from unittest import TestCase
 
 from lxml import etree
 
+from pcs import settings
 from pcs.common import reports
 from pcs.common.reports.const import (
     ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE,
@@ -13,6 +15,7 @@ from pcs.lib.cib.tools import IdProvider
 
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal
+from pcs_test.tools.custom_mock import get_runner_mock
 
 # pylint: disable=no-self-use
 # pylint: disable=too-many-lines
@@ -1746,6 +1749,64 @@ class ValueTimeInterval(TestCase):
                 ),
             ],
         )
+
+
+class ValueTimeIntervalOrDuration(TestCase):
+    duration = "PT1H2M3S"
+
+    def assert_runner(self, mock_runner, interval):
+        if interval == self.duration:
+            mock_runner.run.assert_called_once_with(
+                [
+                    os.path.join(settings.pacemaker_binaries, "iso8601"),
+                    "--duration",
+                    self.duration,
+                ]
+            )
+        else:
+            mock_runner.run.assert_not_called()
+
+    def test_no_reports_for_valid_time_interval(self):
+        for interval in [
+            "0",
+            "1s",
+            "2sec",
+            "3m",
+            "4min",
+            "5h",
+            self.duration,
+            "6hr",
+        ]:
+            with self.subTest(value=interval):
+                mock_runner = get_runner_mock()
+                assert_report_item_list_equal(
+                    validate.ValueTimeIntervalOrDuration(
+                        mock_runner, "a"
+                    ).validate({"a": interval}),
+                    [],
+                )
+                self.assert_runner(mock_runner, interval)
+
+    def test_reports_about_invalid_interval(self):
+        for interval in ["invalid_value", self.duration]:
+            with self.subTest(value=interval):
+                mock_runner = get_runner_mock(returncode=1)
+                assert_report_item_list_equal(
+                    validate.ValueTimeIntervalOrDuration(
+                        mock_runner, "a"
+                    ).validate({"a": interval}),
+                    [
+                        fixture.error(
+                            reports.codes.INVALID_OPTION_VALUE,
+                            option_name="a",
+                            option_value=interval,
+                            allowed_values="time interval (e.g. 1, 2s, 3m, 4h, PT1H2M3S, ...)",
+                            cannot_be_empty=False,
+                            forbidden_characters=None,
+                        ),
+                    ],
+                )
+                self.assert_runner(mock_runner, interval)
 
 
 class ValueVersion(TestCase):

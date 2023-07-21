@@ -1109,6 +1109,15 @@
         daemon urls: update_cluster_settings
       </description>
     </capability>
+    <capability id="pcmk.properties.cluster.set_properties.iso8601duration" in-pcs="1" in-pcsd="1">
+      <description>
+        Support ISO 8601 duration specifications for pacemaker "time"
+        properties.
+
+        pcs commands: property set
+        daemon urls: update_cluster_settings
+      </description>
+    </capability>
     <capability id="pcmk.properties.cluster.config.output-formats" in-pcs="1" in-pcsd="0">
       <description>
         Display cluster properties configuration in various formats.

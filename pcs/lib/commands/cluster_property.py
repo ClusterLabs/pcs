@@ -134,6 +134,7 @@ def set_properties(
     force_flags -- list of flags codes
     """
     cib = env.get_cib()
+    runner = env.cmd_runner()
     id_provider = IdProvider(cib)
     force = reports.codes.FORCE in force_flags
     cluster_property_set_el = (
@@ -145,7 +146,7 @@ def set_properties(
 
     property_facade_list = _get_property_facade_list(
         env.report_processor,
-        ResourceAgentFacadeFactory(env.cmd_runner(), env.report_processor),
+        ResourceAgentFacadeFactory(runner, env.report_processor),
     )
 
     configured_properties = [
@@ -158,6 +159,7 @@ def set_properties(
 
     env.report_processor.report_list(
         cluster_property.validate_set_cluster_properties(
+            runner,
             property_facade_list,
             set_id,
             configured_properties,

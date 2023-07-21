@@ -20,6 +20,7 @@ from pcs.lib.cib.tools import (
     get_pacemaker_version_by_which_cib_was_validated,
 )
 from pcs.lib.errors import LibraryError
+from pcs.lib.external import CommandRunner
 from pcs.lib.resource_agent import ResourceAgentFacade
 
 READONLY_CLUSTER_PROPERTY_LIST = [
@@ -66,6 +67,7 @@ def _validate_stonith_watchdog_timeout_property(
 
 
 def validate_set_cluster_properties(
+    runner: CommandRunner,
     cluster_property_facade_list: Iterable[ResourceAgentFacade],
     properties_set_id: str,
     configured_properties: StringSequence,
@@ -83,6 +85,7 @@ def validate_set_cluster_properties(
     service_manager -- manager for system daemon services
     force -- if True, produce warnings instead of errors
     """
+    # pylint: disable=too-many-branches
     # pylint: disable=too-many-locals
     possible_properties_dict = {
         parameter.name: parameter
@@ -165,14 +168,19 @@ def validate_set_cluster_properties(
             )
         elif property_metadata.type == "time":
             # make stonith-watchdog-timeout value not forcable
-            validators.append(
-                validate.ValueTimeInterval(
-                    property_metadata.name,
-                    severity=severity
-                    if property_metadata.name != "stonith-watchdog-timeout"
-                    else reports.ReportItemSeverity.error(),
+            if property_metadata.name == "stonith-watchdog-timeout":
+                validators.append(
+                    validate.ValueTimeInterval(
+                        property_metadata.name,
+                        severity=reports.ReportItemSeverity.error(),
+                    )
                 )
-            )
+            else:
+                validators.append(
+                    validate.ValueTimeIntervalOrDuration(
+                        runner, property_metadata.name, severity=severity
+                    )
+                )
     report_list.extend(
         validate.ValidatorAll(validators).validate(to_be_set_properties)
     )
