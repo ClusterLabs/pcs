@@ -625,6 +625,8 @@ class InputModifiers:
                 "--booth-key": options.get("--booth-key", None),
                 "--corosync_conf": options.get("--corosync_conf", None),
                 "--from": options.get("--from", None),
+                # TODO remove
+                # used in resource create and stonith create, deprecated in both
                 "--group": options.get("--group", None),
                 "--name": options.get("--name", None),
                 "--node": options.get("--node", None),

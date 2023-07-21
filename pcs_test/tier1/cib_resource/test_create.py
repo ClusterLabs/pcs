@@ -612,11 +612,31 @@ class SuccessNewParser(ResourceTest):
 
 
 class SuccessGroup(ResourceTest):
+    FUTURE = ""
+    GROUP = "--group"
+    AFTER = "--after"
+    BEFORE = "--before"
+    DEPRECATED_GROUP = (
+        "Deprecation Warning: Using '--group' is deprecated and will be "
+        "replaced with 'group' in a future release. Specify --future to switch "
+        "to the future behavior.\n"
+    )
+    DEPRECATED_AFTER = (
+        "Deprecation Warning: Using '--after' is deprecated and will be "
+        "replaced with 'after' in a future release. Specify --future to switch "
+        "to the future behavior.\n"
+    )
+    DEPRECATED_BEFORE = (
+        "Deprecation Warning: Using '--before' is deprecated and will be "
+        "replaced with 'before' in a future release. Specify --future to switch "
+        "to the future behavior.\n"
+    )
+
     def test_with_group(self):
         self.assert_effect(
             (
                 "resource create R ocf:heartbeat:Dummy --no-default-ops "
-                "--group G"
+                f"{self.GROUP} G {self.FUTURE}"
             ).split(),
             """<resources>
                 <group id="G">
@@ -631,26 +651,22 @@ class SuccessGroup(ResourceTest):
                     </primitive>
                 </group>
             </resources>""",
+            stderr_full=self.DEPRECATED_GROUP,
         )
 
     def test_with_existing_group(self):
         self.assert_pcs_success(
             (
                 "resource create R0 ocf:heartbeat:Dummy --no-default-ops "
-                "--group G"
+                f"{self.GROUP} G {self.FUTURE}"
             ).split(),
+            stderr_full=self.DEPRECATED_GROUP,
         )
         self.assert_effect(
-            [
-                (
-                    "resource create R ocf:heartbeat:Dummy --no-default-ops "
-                    "--group G"
-                ).split(),
-                (
-                    "resource create R ocf:heartbeat:Dummy --no-default-ops "
-                    "--group G --after R0"
-                ).split(),
-            ],
+            (
+                "resource create R ocf:heartbeat:Dummy --no-default-ops "
+                f"{self.GROUP} G {self.FUTURE}"
+            ).split(),
             """<resources>
                 <group id="G">
                     <primitive class="ocf" id="R0" provider="heartbeat"
@@ -673,25 +689,28 @@ class SuccessGroup(ResourceTest):
                     </primitive>
                 </group>
             </resources>""",
+            stderr_full=self.DEPRECATED_GROUP,
         )
 
     def test_with_group_with_after(self):
-        self.assert_pcs_success_all(
-            [
-                (
-                    "resource create R0 ocf:heartbeat:Dummy --no-default-ops "
-                    "--group G"
-                ).split(),
-                (
-                    "resource create R1 ocf:heartbeat:Dummy --no-default-ops "
-                    "--group G"
-                ).split(),
-            ]
+        self.assert_pcs_success(
+            (
+                "resource create R0 ocf:heartbeat:Dummy --no-default-ops "
+                f"{self.GROUP} G {self.FUTURE}"
+            ).split(),
+            stderr_full=self.DEPRECATED_GROUP,
+        )
+        self.assert_pcs_success(
+            (
+                "resource create R1 ocf:heartbeat:Dummy --no-default-ops "
+                f"{self.GROUP} G {self.FUTURE}"
+            ).split(),
+            stderr_full=self.DEPRECATED_GROUP,
         )
         self.assert_effect(
             (
                 "resource create R ocf:heartbeat:Dummy --no-default-ops "
-                "--group G --after R0"
+                f"{self.GROUP} G {self.AFTER} R0 {self.FUTURE}"
             ).split(),
             """<resources>
                 <group id="G">
@@ -722,22 +741,70 @@ class SuccessGroup(ResourceTest):
                             />
                         </operations>
                     </primitive>
-
                 </group>
             </resources>""",
+            stderr_full=self.DEPRECATED_GROUP + self.DEPRECATED_AFTER,
+        )
+        self.assert_effect(
+            (
+                "resource create Rx ocf:heartbeat:Dummy --no-default-ops "
+                f"{self.GROUP} G {self.AFTER} R1 {self.FUTURE}"
+            ).split(),
+            """<resources>
+                <group id="G">
+                    <primitive class="ocf" id="R0" provider="heartbeat"
+                        type="Dummy"
+                    >
+                        <operations>
+                            <op id="R0-monitor-interval-10s" interval="10s"
+                                name="monitor" timeout="20s"
+                            />
+                        </operations>
+                    </primitive>
+                    <primitive class="ocf" id="R" provider="heartbeat"
+                        type="Dummy"
+                    >
+                        <operations>
+                            <op id="R-monitor-interval-10s" interval="10s"
+                                name="monitor" timeout="20s"
+                            />
+                        </operations>
+                    </primitive>
+                    <primitive class="ocf" id="R1" provider="heartbeat"
+                        type="Dummy"
+                    >
+                        <operations>
+                            <op id="R1-monitor-interval-10s" interval="10s"
+                                name="monitor" timeout="20s"
+                            />
+                        </operations>
+                    </primitive>
+                    <primitive class="ocf" id="Rx" provider="heartbeat"
+                        type="Dummy"
+                    >
+                        <operations>
+                            <op id="Rx-monitor-interval-10s" interval="10s"
+                                name="monitor" timeout="20s"
+                            />
+                        </operations>
+                    </primitive>
+                </group>
+            </resources>""",
+            stderr_full=self.DEPRECATED_GROUP + self.DEPRECATED_AFTER,
         )
 
     def test_with_group_with_before(self):
         self.assert_pcs_success(
             (
                 "resource create R0 ocf:heartbeat:Dummy --no-default-ops "
-                "--group G"
+                f"{self.GROUP} G {self.FUTURE}"
             ).split(),
+            stderr_full=self.DEPRECATED_GROUP,
         )
         self.assert_effect(
             (
                 "resource create R ocf:heartbeat:Dummy --no-default-ops "
-                "--group G --before R0"
+                f"{self.GROUP} G {self.BEFORE} R0 {self.FUTURE}"
             ).split(),
             """<resources>
                 <group id="G">
@@ -761,7 +828,16 @@ class SuccessGroup(ResourceTest):
                     </primitive>
                 </group>
             </resources>""",
+            stderr_full=self.DEPRECATED_GROUP + self.DEPRECATED_BEFORE,
         )
+
+
+class SuccessGroupFuture(SuccessGroup):
+    FUTURE = "--future"
+    GROUP = "group"
+    AFTER = "after"
+    BEFORE = "before"
+    DEPRECATED_GROUP = DEPRECATED_AFTER = DEPRECATED_BEFORE = ""
 
 
 class SuccessClone(ResourceTest):
@@ -986,37 +1062,67 @@ class Bundle(ResourceTest):
         )
 
 
-class FailOrWarn(ResourceTest):
+class FailOrWarnGroupCloneBundleCombination(ResourceTest):
+    FUTURE = ""
+    GROUP = "--group"
+    AFTER = "--after"
+    BEFORE = "--before"
+    DEPRECATED_GROUP = (
+        "Deprecation Warning: Using '--group' is deprecated and will be "
+        "replaced with 'group' in a future release. Specify --future to switch "
+        "to the future behavior.\n"
+    )
+
     def test_error_group_clone_combination(self):
         self.assert_pcs_fail(
             (
                 "resource create R ocf:heartbeat:Dummy --no-default-ops "
-                "clone --group G"
+                f"clone {self.GROUP} G {self.FUTURE}"
             ).split(),
-            "Error: you can specify only one of clone, promotable, bundle or "
-            "--group\n",
+            (
+                self.DEPRECATED_GROUP
+                + "Error: you can specify only one of clone, promotable, bundle "
+                f"or {self.GROUP}\n"
+            ),
         )
 
     def test_error_bundle_clone_combination(self):
         self.assert_pcs_fail(
             (
                 "resource create R ocf:heartbeat:Dummy --no-default-ops "
-                "clone bundle bundle_id"
+                f"clone bundle bundle_id {self.FUTURE}"
             ).split(),
-            "Error: you can specify only one of clone, promotable, bundle or "
-            "--group\n",
+            (
+                "Error: you can specify only one of clone, promotable, bundle "
+                f"or {self.GROUP}\n"
+            ),
         )
 
     def test_error_bundle_group_combination(self):
         self.assert_pcs_fail(
             (
                 "resource create R ocf:heartbeat:Dummy --no-default-ops "
-                "--group G bundle bundle_id"
+                f"{self.GROUP} G bundle bundle_id {self.FUTURE}"
             ).split(),
-            "Error: you can specify only one of clone, promotable, bundle or "
-            "--group\n",
+            (
+                self.DEPRECATED_GROUP
+                + "Error: you can specify only one of clone, promotable, bundle "
+                f"or {self.GROUP}\n"
+            ),
         )
 
+
+class FailOrWarnGroupCloneBundleCombinationFuture(
+    FailOrWarnGroupCloneBundleCombination
+):
+    FUTURE = "--future"
+    GROUP = "group"
+    AFTER = "after"
+    BEFORE = "before"
+    DEPRECATED_GROUP = ""
+
+
+class FailOrWarn(ResourceTest):
     def test_fail_when_nonexisting_agent(self):
         # pacemaker 2.0.5 adds 'crm_resource:'
         # The exact message returned form pacemaker differs from version to
@@ -1418,11 +1524,34 @@ class FailOrWarnOp(ResourceTest):
 
 
 class FailOrWarnGroup(ResourceTest):
+    FUTURE = ""
+    GROUP = "--group"
+    AFTER = "--after"
+    BEFORE = "--before"
+    DEPRECATED_GROUP = (
+        "Deprecation Warning: Using '--group' is deprecated and will be "
+        "replaced with 'group' in a future release. Specify --future to switch "
+        "to the future behavior.\n"
+    )
+    DEPRECATED_AFTER = (
+        "Deprecation Warning: Using '--after' is deprecated and will be "
+        "replaced with 'after' in a future release. Specify --future to switch "
+        "to the future behavior.\n"
+    )
+    DEPRECATED_BEFORE = (
+        "Deprecation Warning: Using '--before' is deprecated and will be "
+        "replaced with 'before' in a future release. Specify --future to switch "
+        "to the future behavior.\n"
+    )
+
     def test_fail_when_invalid_group(self):
         self.assert_pcs_fail(
-            "resource create R ocf:heartbeat:Dummy --group 1".split(),
-            "Error: invalid group name '1', '1' is not a valid first character"
-            " for a group name\n" + ERRORS_HAVE_OCCURRED,
+            f"resource create R ocf:heartbeat:Dummy {self.GROUP} 1 {self.FUTURE}".split(),
+            (
+                self.DEPRECATED_GROUP
+                + "Error: invalid group name '1', '1' is not a valid first character"
+                " for a group name\n" + ERRORS_HAVE_OCCURRED
+            ),
         )
 
     def test_fail_when_try_use_id_of_another_element(self):
@@ -1449,19 +1578,27 @@ class FailOrWarnGroup(ResourceTest):
         self.assert_pcs_fail(
             (
                 "resource create R2 ocf:heartbeat:Dummy "
-                "--group R1-meta_attributes"
+                f"{self.GROUP} R1-meta_attributes {self.FUTURE}"
             ).split(),
-            "Error: 'R1-meta_attributes' is not a group\n"
-            + ERRORS_HAVE_OCCURRED,
+            (
+                self.DEPRECATED_GROUP
+                + "Error: 'R1-meta_attributes' is not a group\n"
+                + ERRORS_HAVE_OCCURRED
+            ),
         )
 
     def test_fail_when_entered_both_after_and_before(self):
         self.assert_pcs_fail(
             (
                 "resource create R ocf:heartbeat:Dummy "
-                "--group G --after S1 --before S2"
+                f"{self.GROUP} G {self.AFTER} S1 {self.BEFORE} S2 {self.FUTURE}"
             ).split(),
-            "Error: you cannot specify both --before and --after\n",
+            (
+                self.DEPRECATED_GROUP
+                + self.DEPRECATED_BEFORE
+                + self.DEPRECATED_AFTER
+                + f"Error: you cannot specify both {self.BEFORE} and {self.AFTER}\n"
+            ),
         )
 
     def test_fail_when_after_is_used_without_group(self):
@@ -1479,40 +1616,121 @@ class FailOrWarnGroup(ResourceTest):
     def test_fail_when_before_after_conflicts_and_moreover_without_group(self):
         self.assert_pcs_fail(
             "resource create R ocf:heartbeat:Dummy --after S1 --before S2".split(),
-            "Error: you cannot specify both --before and --after"
-            " and you have to specify --group\n",
+            "Error: you cannot use --before without --group\n",
         )
 
     def test_fail_when_before_does_not_exist(self):
         self.assert_pcs_success(
-            "resource create R0 ocf:heartbeat:Dummy --group G1".split()
+            (
+                f"resource create R0 ocf:heartbeat:Dummy {self.GROUP} G1 "
+                f"{self.FUTURE}"
+            ).split(),
+            stderr_full=self.DEPRECATED_GROUP,
         )
         self.assert_pcs_fail(
-            "resource create R2 ocf:heartbeat:Dummy --group G1 --before R1".split(),
-            "Error: 'R1' does not exist\n" + ERRORS_HAVE_OCCURRED,
+            (
+                f"resource create R2 ocf:heartbeat:Dummy {self.GROUP} G1 "
+                f"{self.BEFORE} R1 {self.FUTURE}"
+            ).split(),
+            (
+                self.DEPRECATED_GROUP
+                + self.DEPRECATED_BEFORE
+                + "Error: 'R1' does not exist\n"
+                + ERRORS_HAVE_OCCURRED
+            ),
         )
 
     def test_fail_when_use_before_with_new_group(self):
         self.assert_pcs_fail(
-            "resource create R2 ocf:heartbeat:Dummy --group G1 --before R1".split(),
-            "Error: 'R1' does not exist\n" + ERRORS_HAVE_OCCURRED,
+            (
+                f"resource create R2 ocf:heartbeat:Dummy {self.GROUP} G1 "
+                f"{self.BEFORE} R1 {self.FUTURE}"
+            ).split(),
+            (
+                self.DEPRECATED_GROUP
+                + self.DEPRECATED_BEFORE
+                + "Error: 'R1' does not exist\n"
+                + ERRORS_HAVE_OCCURRED
+            ),
         )
 
     def test_fail_when_after_does_not_exist(self):
         self.assert_pcs_success(
-            "resource create R0 ocf:heartbeat:Dummy --group G1".split()
+            (
+                f"resource create R0 ocf:heartbeat:Dummy {self.GROUP} G1 "
+                f"{self.FUTURE}"
+            ).split(),
+            stderr_full=self.DEPRECATED_GROUP,
         )
         self.assert_pcs_fail(
-            "resource create R2 ocf:heartbeat:Dummy --group G1 --after R1".split(),
-            "Error: 'R1' does not exist\n" + ERRORS_HAVE_OCCURRED,
+            (
+                f"resource create R2 ocf:heartbeat:Dummy {self.GROUP} G1 "
+                f"{self.AFTER} R1 {self.FUTURE}"
+            ).split(),
+            (
+                self.DEPRECATED_GROUP
+                + self.DEPRECATED_AFTER
+                + "Error: 'R1' does not exist\n"
+                + ERRORS_HAVE_OCCURRED
+            ),
         )
 
     def test_fail_when_use_after_with_new_group(self):
         self.assert_pcs_fail(
-            "resource create R2 ocf:heartbeat:Dummy --group G1 --after R1".split(),
-            "Error: 'R1' does not exist\n" + ERRORS_HAVE_OCCURRED,
+            (
+                f"resource create R2 ocf:heartbeat:Dummy {self.GROUP} G1 "
+                f"{self.AFTER} R1 {self.FUTURE}"
+            ).split(),
+            (
+                self.DEPRECATED_GROUP
+                + self.DEPRECATED_AFTER
+                + "Error: 'R1' does not exist\n"
+                + ERRORS_HAVE_OCCURRED
+            ),
         )
 
+
+class FailOrWarnGroupFuture(FailOrWarnGroup):
+    FUTURE = "--future"
+    GROUP = "group"
+    AFTER = "after"
+    BEFORE = "before"
+    DEPRECATED_GROUP = DEPRECATED_AFTER = DEPRECATED_BEFORE = ""
+
+    def test_fail_when_entered_both_after_and_before(self):
+        self.assert_pcs_fail(
+            (
+                "resource create R ocf:heartbeat:Dummy "
+                f"{self.GROUP} G {self.AFTER} S1 {self.BEFORE} S2 {self.FUTURE}"
+            ).split(),
+            (
+                self.DEPRECATED_GROUP
+                + self.DEPRECATED_BEFORE
+                + self.DEPRECATED_AFTER
+                + f"Error: you cannot specify both '{self.BEFORE}' and '{self.AFTER}'\n"
+            ),
+        )
+
+    def test_fail_when_after_is_used_without_group(self):
+        self.assert_pcs_fail(
+            "resource create R ocf:heartbeat:Dummy after S1".split(),
+            "Error: missing value of 'after' option\n",
+        )
+
+    def test_fail_when_before_is_used_without_group(self):
+        self.assert_pcs_fail(
+            "resource create R ocf:heartbeat:Dummy before S1".split(),
+            "Error: missing value of 'before' option\n",
+        )
+
+    def test_fail_when_before_after_conflicts_and_moreover_without_group(self):
+        self.assert_pcs_fail(
+            "resource create R ocf:heartbeat:Dummy after S1 before S2".split(),
+            "Error: missing value of 'after' option\n",
+        )
+
+
+class FailOrWarnPacemakerRemoteOrGuestNode(ResourceTest):
     def test_fail_when_on_pacemaker_remote_attempt(self):
         self.assert_pcs_fail(
             "resource create R2 ocf:pacemaker:remote".split(),

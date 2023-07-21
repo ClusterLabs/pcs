@@ -9,6 +9,7 @@ from pcs.cli.common.parse_args import (
     FUTURE_OPTION,
     ArgsByKeywords,
     Argv,
+    InputModifiers,
     KeyValueParser,
     group_by_keywords,
 )
@@ -29,8 +30,16 @@ class CloneOptions:
 
 
 @dataclass(frozen=True)
+class GroupOptions:
+    group_id: str
+    after_resource: Optional[str]
+    before_resource: Optional[str]
+
+
+@dataclass(frozen=True)
 class ComplexResourceOptions:
     primitive: PrimitiveOptions
+    group: Optional[GroupOptions]
     clone: Optional[CloneOptions]
     promotable: Optional[CloneOptions]
     bundle_id: Optional[str]
@@ -120,12 +129,15 @@ def parse_clone(arg_list: Argv, promotable: bool = False) -> CloneOptions:
 
 
 def parse_create_new(arg_list: Argv) -> ComplexResourceOptions:
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-locals
     try:
         top_groups = group_by_keywords(
             arg_list,
-            set(["clone", "promotable", "bundle"]),
+            set(["clone", "promotable", "bundle", "group"]),
             implicit_first_keyword="primitive",
         )
+        top_groups.ensure_unique_keywords()
 
         primitive_groups = group_by_keywords(
             top_groups.get_args_flat("primitive"),
@@ -146,6 +158,41 @@ def parse_create_new(arg_list: Argv) -> ComplexResourceOptions:
                 )
             ],
         )
+
+        group_options = None
+        if top_groups.has_keyword("group"):
+            group_groups = group_by_keywords(
+                top_groups.get_args_flat("group"),
+                set(["before", "after", "op", "meta"]),
+                implicit_first_keyword="group_id",
+            )
+            if group_groups.has_keyword("meta"):
+                raise CmdLineInputError(
+                    "meta options must be defined on the base resource, "
+                    "not the group"
+                )
+            if group_groups.has_keyword("op"):
+                raise CmdLineInputError(
+                    "op settings must be defined on the base resource, "
+                    "not the group"
+                )
+            if len(group_groups.get_args_flat("group_id")) != 1:
+                raise CmdLineInputError(
+                    "You have to specify exactly one group after 'group'"
+                )
+            position: dict[str, Optional[str]] = {"after": None, "before": None}
+            for where in position:
+                if group_groups.has_keyword(where):
+                    if len(group_groups.get_args_flat(where)) != 1:
+                        raise CmdLineInputError(
+                            f"You have to specify exactly one resource after '{where}'"
+                        )
+                    position[where] = group_groups.get_args_flat(where)[0]
+            group_options = GroupOptions(
+                group_id=group_groups.get_args_flat("group_id")[0],
+                before_resource=position["before"],
+                after_resource=position["after"],
+            )
 
         clone_options: dict[str, Optional[CloneOptions]] = {
             "clone": None,
@@ -206,6 +253,7 @@ def parse_create_new(arg_list: Argv) -> ComplexResourceOptions:
 
         return ComplexResourceOptions(
             primitive=primitive_options,
+            group=group_options,
             clone=clone_options["clone"],
             promotable=clone_options["promotable"],
             bundle_id=bundle_id,
@@ -227,8 +275,13 @@ def parse_create_new(arg_list: Argv) -> ComplexResourceOptions:
         raise
 
 
-# deprecated in pcs-0.11.6
-def parse_create_old(arg_list: Argv) -> ComplexResourceOptions:
+# deprecated since 0.11.6
+def parse_create_old(
+    arg_list: Argv, modifiers: InputModifiers
+) -> ComplexResourceOptions:
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-statements
     try:
         top_groups = group_by_keywords(
             arg_list,
@@ -244,6 +297,34 @@ def parse_create_old(arg_list: Argv) -> ComplexResourceOptions:
         primitive_instance_attrs = primitive_groups.get_args_flat("instance")
         primitive_meta_attrs = primitive_groups.get_args_flat("meta")
         primitive_operations = primitive_groups.get_args_groups("op")
+
+        group_options = None
+        if modifiers.is_specified("--group"):
+            dash_deprecation = (
+                "Using '--{option}' is deprecated and will be replaced with "
+                "'{option}' in a future release. "
+                f"Specify {FUTURE_OPTION} to switch to the future behavior."
+            )
+            deprecation_warning(dash_deprecation.format(option="group"))
+            before_resource = None
+            if modifiers.get("--before"):
+                before_resource = str(modifiers.get("--before"))
+                deprecation_warning(dash_deprecation.format(option="before"))
+            after_resource = None
+            if modifiers.get("--after"):
+                after_resource = str(modifiers.get("--after"))
+                deprecation_warning(dash_deprecation.format(option="after"))
+            group_options = GroupOptions(
+                group_id=str(modifiers.get("--group")),
+                before_resource=before_resource,
+                after_resource=after_resource,
+            )
+        else:
+            for option in ("--before", "--after"):
+                if modifiers.is_specified(option):
+                    raise CmdLineInputError(
+                        f"you cannot use {option} without --group"
+                    )
 
         clone_options: dict[str, Optional[CloneOptions]] = {
             "clone": None,
@@ -328,6 +409,7 @@ def parse_create_old(arg_list: Argv) -> ComplexResourceOptions:
                     for op in build_operations(primitive_operations)
                 ],
             ),
+            group=group_options,
             clone=clone_options["clone"],
             promotable=clone_options["promotable"],
             bundle_id=bundle_id,

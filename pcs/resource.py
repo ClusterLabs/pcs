@@ -48,7 +48,6 @@ from pcs.cli.nvset import nvset_dto_list_to_lines
 from pcs.cli.reports import process_library_reports
 from pcs.cli.reports.output import (
     deprecation_warning,
-    error,
     warn,
 )
 from pcs.cli.resource.output import (
@@ -620,17 +619,20 @@ def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
       * -f - CIB file
       * --future - enable future cli parser behavior
     """
+    modifiers_deprecated = ["--before", "--after", "--group"]
     modifiers.ensure_only_supported(
-        "--agent-validation",
-        "--before",
-        "--after",
-        "--group",
-        "--force",
-        "--disabled",
-        "--no-default-ops",
-        "--wait",
-        "-f",
-        FUTURE_OPTION,
+        *(
+            [
+                "--agent-validation",
+                "--force",
+                "--disabled",
+                "--no-default-ops",
+                "--wait",
+                "-f",
+                FUTURE_OPTION,
+            ]
+            + ([] if modifiers.get(FUTURE_OPTION) else modifiers_deprecated)
+        )
     )
     if len(argv) < 2:
         raise CmdLineInputError()
@@ -638,10 +640,12 @@ def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     ra_id = argv[0]
     ra_type = argv[1]
 
-    parse_function = (
-        parse_create_new if modifiers.get(FUTURE_OPTION) else parse_create_old
-    )
-    parts = parse_function(argv[2:])
+    if modifiers.get(FUTURE_OPTION):
+        parts = parse_create_new(argv[2:])
+    else:
+        parts = parse_create_old(
+            argv[2:], modifiers.get_subset(*modifiers_deprecated)
+        )
 
     defined_options = set()
     if parts.bundle_id:
@@ -650,33 +654,25 @@ def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         defined_options.add("clone")
     if parts.promotable:
         defined_options.add("promotable")
-    if modifiers.is_specified("--group"):
+    if parts.group:
         defined_options.add("group")
-    if (
-        len(defined_options & set(["clone", "promotable", "bundle", "group"]))
-        > 1
-    ):
-        raise error(
-            "you can specify only one of clone, promotable, bundle or --group"
-        )
-
-    if modifiers.is_specified("--before") and modifiers.is_specified("--after"):
-        raise error(
-            "you cannot specify both --before and --after{0}".format(
-                ""
-                if modifiers.is_specified("--group")
-                else " and you have to specify --group"
+    if len(defined_options) > 1:
+        raise CmdLineInputError(
+            "you can specify only one of clone, promotable, bundle or {}group".format(
+                "" if modifiers.get(FUTURE_OPTION) else "--"
             )
         )
 
-    if not modifiers.is_specified("--group"):
-        if modifiers.is_specified("--before"):
-            raise error("you cannot use --before without --group")
-        if modifiers.is_specified("--after"):
-            raise error("you cannot use --after without --group")
+    if parts.group:
+        if parts.group.after_resource and parts.group.before_resource:
+            raise CmdLineInputError(
+                "you cannot specify both 'before' and 'after'"
+                if modifiers.get(FUTURE_OPTION)
+                else "you cannot specify both --before and --after"
+            )
 
     if parts.promotable and "promotable" in parts.promotable.meta_attrs:
-        raise error(
+        raise CmdLineInputError(
             "you cannot specify both promotable option and promotable keyword"
         )
 
@@ -726,35 +722,34 @@ def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
             parts.bundle_id,
             **settings,
         )
+    elif parts.group:
+        adjacent_resource_id = None
+        put_after_adjacent = False
+        if parts.group.after_resource:
+            adjacent_resource_id = parts.group.after_resource
+            put_after_adjacent = True
+        if parts.group.before_resource:
+            adjacent_resource_id = parts.group.before_resource
+            put_after_adjacent = False
 
-    elif not modifiers.is_specified("--group"):
+        lib.resource.create_in_group(
+            ra_id,
+            ra_type,
+            parts.group.group_id,
+            parts.primitive.operations,
+            parts.primitive.meta_attrs,
+            parts.primitive.instance_attrs,
+            adjacent_resource_id=adjacent_resource_id,
+            put_after_adjacent=put_after_adjacent,
+            **settings,
+        )
+    else:
         lib.resource.create(
             ra_id,
             ra_type,
             parts.primitive.operations,
             parts.primitive.meta_attrs,
             parts.primitive.instance_attrs,
-            **settings,
-        )
-    else:
-        adjacent_resource_id = None
-        put_after_adjacent = False
-        if modifiers.get("--after"):
-            adjacent_resource_id = modifiers.get("--after")
-            put_after_adjacent = True
-        if modifiers.get("--before"):
-            adjacent_resource_id = modifiers.get("--before")
-            put_after_adjacent = False
-
-        lib.resource.create_in_group(
-            ra_id,
-            ra_type,
-            modifiers.get("--group"),
-            parts.primitive.operations,
-            parts.primitive.meta_attrs,
-            parts.primitive.instance_attrs,
-            adjacent_resource_id=adjacent_resource_id,
-            put_after_adjacent=put_after_adjacent,
             **settings,
         )
 
@@ -1489,7 +1484,9 @@ def resource_meta(argv: Argv, modifiers: InputModifiers) -> None:
     else:
         resource_el = utils.dom_get_any_resource(dom, res_id)
     if resource_el is None:
-        raise error(f"unable to find a resource/clone/group: {res_id}")
+        raise CmdLineInputError(
+            f"unable to find a resource/clone/group: {res_id}"
+        )
 
     if modifiers.is_specified("--wait"):
         wait_timeout = utils.validate_wait_get_timeout()

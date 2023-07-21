@@ -5,6 +5,7 @@ from unittest import (
 )
 
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.parse_args import InputModifiers
 from pcs.cli.resource import parse_args
 
 
@@ -145,6 +146,7 @@ class ParseCreateArgsCommonMixin:
                     meta_attrs={},
                     operations=[],
                 ),
+                group=None,
                 clone=None,
                 promotable=None,
                 bundle_id=None,
@@ -161,6 +163,7 @@ class ParseCreateArgsCommonMixin:
                     meta_attrs={},
                     operations=[],
                 ),
+                group=None,
                 clone=None,
                 promotable=None,
                 bundle_id=None,
@@ -177,6 +180,7 @@ class ParseCreateArgsCommonMixin:
                     meta_attrs={"a": "b", "c": "d"},
                     operations=[],
                 ),
+                group=None,
                 clone=None,
                 promotable=None,
                 bundle_id=None,
@@ -193,6 +197,7 @@ class ParseCreateArgsCommonMixin:
                     meta_attrs={},
                     operations=[],
                 ),
+                group=None,
                 clone=parse_args.CloneOptions(clone_id=None, meta_attrs={}),
                 promotable=None,
                 bundle_id=None,
@@ -209,6 +214,7 @@ class ParseCreateArgsCommonMixin:
                     meta_attrs={},
                     operations=[],
                 ),
+                group=None,
                 clone=parse_args.CloneOptions(
                     clone_id="CustomCloneId", meta_attrs={}
                 ),
@@ -227,6 +233,7 @@ class ParseCreateArgsCommonMixin:
                     meta_attrs={},
                     operations=[],
                 ),
+                group=None,
                 clone=None,
                 promotable=parse_args.CloneOptions(
                     clone_id=None, meta_attrs={}
@@ -245,6 +252,7 @@ class ParseCreateArgsCommonMixin:
                     meta_attrs={},
                     operations=[],
                 ),
+                group=None,
                 clone=None,
                 promotable=parse_args.CloneOptions(
                     clone_id="CustomCloneId", meta_attrs={}
@@ -273,6 +281,7 @@ class ParseCreateArgsCommonMixin:
                         {"name": "start", "e": "f"},
                     ],
                 ),
+                group=None,
                 clone=None,
                 promotable=None,
                 bundle_id=None,
@@ -317,6 +326,7 @@ class ParseCreateArgsCommonMixin:
                         {"name": "start", "e": "f"},
                     ],
                 ),
+                group=None,
                 clone=None,
                 promotable=None,
                 bundle_id=None,
@@ -346,6 +356,7 @@ class ParseCreateArgsCommonMixin:
                     meta_attrs={},
                     operations=[],
                 ),
+                group=None,
                 clone=None,
                 promotable=None,
                 bundle_id="b",
@@ -396,12 +407,19 @@ class ParseCreateArgsOld(ParseCreateArgsCommonMixin, TestCase):
         "--future to switch to the future behavior."
     )
 
-    def assert_produce(self, arg_list, result):
-        self.assertEqual(parse_args.parse_create_old(arg_list), result)
+    def assert_produce(self, arg_list, result, modifiers=None):
+        self.assertEqual(
+            parse_args.parse_create_old(
+                arg_list, InputModifiers(modifiers or {})
+            ),
+            result,
+        )
 
-    def assert_raises_cmdline(self, args, msg=""):
+    def assert_raises_cmdline(self, arg_list, msg="", modifiers=None):
         with self.assertRaises(CmdLineInputError) as cm:
-            parse_args.parse_create_old(args)
+            parse_args.parse_create_old(
+                arg_list, InputModifiers(modifiers or {})
+            )
         exception = cm.exception
         self.assertEqual(msg, exception.message)
 
@@ -413,6 +431,92 @@ class ParseCreateArgsOld(ParseCreateArgsCommonMixin, TestCase):
 
     def test_only_meta(self):
         super().test_only_meta()
+
+    def test_group_and_id(self):
+        self.assert_produce(
+            [],
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={},
+                    operations=[],
+                ),
+                group=parse_args.GroupOptions(
+                    group_id="G1", after_resource=None, before_resource=None
+                ),
+                clone=None,
+                promotable=None,
+                bundle_id=None,
+            ),
+            {"--group": "G1"},
+        )
+
+    def test_group_after_and_id(self):
+        self.assert_produce(
+            [],
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={},
+                    operations=[],
+                ),
+                group=parse_args.GroupOptions(
+                    group_id="G1", after_resource="R1", before_resource=None
+                ),
+                clone=None,
+                promotable=None,
+                bundle_id=None,
+            ),
+            {"--group": "G1", "--after": "R1"},
+        )
+
+    def test_group_before_and_id(self):
+        self.assert_produce(
+            [],
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={},
+                    operations=[],
+                ),
+                group=parse_args.GroupOptions(
+                    group_id="G1", after_resource=None, before_resource="R2"
+                ),
+                clone=None,
+                promotable=None,
+                bundle_id=None,
+            ),
+            {"--group": "G1", "--before": "R2"},
+        )
+
+    def test_group_after_and_before(self):
+        self.assert_produce(
+            [],
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={},
+                    operations=[],
+                ),
+                group=parse_args.GroupOptions(
+                    group_id="G1", after_resource="R1", before_resource="R2"
+                ),
+                clone=None,
+                promotable=None,
+                bundle_id=None,
+            ),
+            {"--group": "G1", "--after": "R1", "--before": "R2"},
+        )
+
+    def test_after_without_group(self):
+        self.assert_raises_cmdline(
+            [], "you cannot use --after without --group", {"--after": "R2"}
+        )
+
+    def test_before_without_group(self):
+        self.assert_raises_cmdline(
+            [], "you cannot use --before without --group", {"--before": "R2"}
+        )
 
     def test_only_clone(self):
         super().test_only_clone()
@@ -426,6 +530,7 @@ class ParseCreateArgsOld(ParseCreateArgsCommonMixin, TestCase):
                     meta_attrs={},
                     operations=[],
                 ),
+                group=None,
                 clone=parse_args.CloneOptions(
                     clone_id=None, meta_attrs={"a": "b", "c": "d"}
                 ),
@@ -447,6 +552,7 @@ class ParseCreateArgsOld(ParseCreateArgsCommonMixin, TestCase):
                     meta_attrs={},
                     operations=[],
                 ),
+                group=None,
                 clone=parse_args.CloneOptions(
                     clone_id="CustomCloneId", meta_attrs={"a": "b", "c": "d"}
                 ),
@@ -465,6 +571,7 @@ class ParseCreateArgsOld(ParseCreateArgsCommonMixin, TestCase):
                     meta_attrs={"a": "b", "c": "d"},
                     operations=[],
                 ),
+                group=None,
                 clone=parse_args.CloneOptions(
                     clone_id="CustomCloneId", meta_attrs={}
                 ),
@@ -485,6 +592,7 @@ class ParseCreateArgsOld(ParseCreateArgsCommonMixin, TestCase):
                     meta_attrs={},
                     operations=[],
                 ),
+                group=None,
                 clone=None,
                 promotable=parse_args.CloneOptions(
                     clone_id=None, meta_attrs={"a": "b", "c": "d"}
@@ -506,6 +614,7 @@ class ParseCreateArgsOld(ParseCreateArgsCommonMixin, TestCase):
                     meta_attrs={},
                     operations=[],
                 ),
+                group=None,
                 clone=None,
                 promotable=parse_args.CloneOptions(
                     clone_id="CustomCloneId", meta_attrs={"a": "b", "c": "d"}
@@ -524,6 +633,7 @@ class ParseCreateArgsOld(ParseCreateArgsCommonMixin, TestCase):
                     meta_attrs={"a": "b", "c": "d"},
                     operations=[],
                 ),
+                group=None,
                 clone=None,
                 promotable=parse_args.CloneOptions(
                     clone_id="CustomCloneId", meta_attrs={}
@@ -562,6 +672,7 @@ class ParseCreateArgsOld(ParseCreateArgsCommonMixin, TestCase):
                         {"name": "start", "m": "n"},
                     ],
                 ),
+                group=None,
                 clone=parse_args.CloneOptions(
                     clone_id=None, meta_attrs={"o": "p", "q": "r"}
                 ),
@@ -610,6 +721,7 @@ class ParseCreateArgsOld(ParseCreateArgsCommonMixin, TestCase):
                         {"name": "start", "m": "n"},
                     ],
                 ),
+                group=None,
                 clone=parse_args.CloneOptions(
                     clone_id=None, meta_attrs={"o": "p", "q": "r"}
                 ),
@@ -648,6 +760,7 @@ class ParseCreateArgsOld(ParseCreateArgsCommonMixin, TestCase):
                         {"name": "start", "m": "n"},
                     ],
                 ),
+                group=None,
                 clone=parse_args.CloneOptions(
                     clone_id=None, meta_attrs={"o": "p", "q": "r"}
                 ),
@@ -677,6 +790,7 @@ class ParseCreateArgsOld(ParseCreateArgsCommonMixin, TestCase):
                         {"name": "start", "e": "f"},
                     ],
                 ),
+                group=None,
                 clone=None,
                 promotable=None,
                 bundle_id="b",
@@ -693,6 +807,7 @@ class ParseCreateArgsOld(ParseCreateArgsCommonMixin, TestCase):
                     meta_attrs={"a": "b", "c": "d"},
                     operations=[],
                 ),
+                group=None,
                 clone=None,
                 promotable=None,
                 bundle_id="b",
@@ -721,6 +836,7 @@ class ParseCreateArgsOld(ParseCreateArgsCommonMixin, TestCase):
                     meta_attrs={"e": "f", "g": "h", "m": "n", "o": "p"},
                     operations=[],
                 ),
+                group=None,
                 clone=parse_args.CloneOptions(clone_id=None, meta_attrs={}),
                 promotable=None,
                 bundle_id=None,
@@ -751,6 +867,12 @@ class ParseCreateArgsNew(ParseCreateArgsCommonMixin, TestCase):
     msg_op_after_bundle_err = (
         "op settings must be defined on the base resource, not the bundle"
     )
+    msg_meta_after_group_err = (
+        "meta options must be defined on the base resource, not the group"
+    )
+    msg_op_after_group_err = (
+        "op settings must be defined on the base resource, not the group"
+    )
 
     def assert_produce(self, arg_list, result):
         self.assertEqual(parse_args.parse_create_new(arg_list), result)
@@ -769,6 +891,125 @@ class ParseCreateArgsNew(ParseCreateArgsCommonMixin, TestCase):
 
     def test_only_meta(self):
         super().test_only_meta()
+
+    def test_group_no_options(self):
+        self.assert_raises_cmdline(
+            ["group"], "You have to specify exactly one group after 'group'"
+        )
+
+    def test_group_and_id(self):
+        self.assert_produce(
+            ["group", "G1"],
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={},
+                    operations=[],
+                ),
+                group=parse_args.GroupOptions(
+                    group_id="G1", after_resource=None, before_resource=None
+                ),
+                clone=None,
+                promotable=None,
+                bundle_id=None,
+            ),
+        )
+
+    def test_group_multiple_ids(self):
+        self.assert_raises_cmdline(
+            ["group", "G1", "G2"],
+            "You have to specify exactly one group after 'group'",
+        )
+
+    def test_group_after(self):
+        self.assert_raises_cmdline(
+            ["group", "G1", "after"],
+            "You have to specify exactly one resource after 'after'",
+        )
+
+    def test_group_after_and_id(self):
+        self.assert_produce(
+            ["group", "G1", "after", "R1"],
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={},
+                    operations=[],
+                ),
+                group=parse_args.GroupOptions(
+                    group_id="G1", after_resource="R1", before_resource=None
+                ),
+                clone=None,
+                promotable=None,
+                bundle_id=None,
+            ),
+        )
+
+    def test_group_after_multiple_ids(self):
+        self.assert_raises_cmdline(
+            ["group", "G1", "after", "R1", "R2"],
+            "You have to specify exactly one resource after 'after'",
+        )
+
+    def test_group_before(self):
+        self.assert_raises_cmdline(
+            ["group", "G1", "before"],
+            "You have to specify exactly one resource after 'before'",
+        )
+
+    def test_group_before_and_id(self):
+        self.assert_produce(
+            ["group", "G1", "before", "R1"],
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={},
+                    operations=[],
+                ),
+                group=parse_args.GroupOptions(
+                    group_id="G1", after_resource=None, before_resource="R1"
+                ),
+                clone=None,
+                promotable=None,
+                bundle_id=None,
+            ),
+        )
+
+    def test_group_before_multiple_ids(self):
+        self.assert_raises_cmdline(
+            ["group", "G1", "before", "R1", "R2"],
+            "You have to specify exactly one resource after 'before'",
+        )
+
+    def test_group_after_and_before(self):
+        self.assert_produce(
+            ["group", "G1", "before", "R1", "after", "R2"],
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={},
+                    operations=[],
+                ),
+                group=parse_args.GroupOptions(
+                    group_id="G1", after_resource="R2", before_resource="R1"
+                ),
+                clone=None,
+                promotable=None,
+                bundle_id=None,
+            ),
+        )
+
+    def test_op_after_group(self):
+        self.assert_raises_cmdline(
+            ["group", "g", "op", "monitor", "a=b", "c=d", "start", "e=f"],
+            self.msg_op_after_group_err,
+        )
+
+    def test_meta_after_group(self):
+        self.assert_raises_cmdline(
+            ["group", "g", "meta", "a=b", "c=d"],
+            self.msg_meta_after_group_err,
+        )
 
     def test_only_clone(self):
         super().test_only_clone()
@@ -796,6 +1037,7 @@ class ParseCreateArgsNew(ParseCreateArgsCommonMixin, TestCase):
                     meta_attrs={},
                     operations=[],
                 ),
+                group=None,
                 clone=parse_args.CloneOptions(
                     clone_id="CustomCloneId", meta_attrs={"a": "b", "c": "d"}
                 ),
@@ -830,6 +1072,7 @@ class ParseCreateArgsNew(ParseCreateArgsCommonMixin, TestCase):
                     meta_attrs={},
                     operations=[],
                 ),
+                group=None,
                 clone=None,
                 promotable=parse_args.CloneOptions(
                     clone_id="CustomCloneId", meta_attrs={"a": "b", "c": "d"}
@@ -905,6 +1148,7 @@ class ParseCreateArgsNew(ParseCreateArgsCommonMixin, TestCase):
                         {"name": "start", "m": "n"},
                     ],
                 ),
+                group=None,
                 clone=parse_args.CloneOptions(
                     clone_id=None, meta_attrs={"e": "f", "g": "h"}
                 ),
@@ -953,6 +1197,7 @@ class ParseCreateArgsNew(ParseCreateArgsCommonMixin, TestCase):
                     meta_attrs={"e": "f", "g": "h"},
                     operations=[],
                 ),
+                group=None,
                 clone=parse_args.CloneOptions(
                     clone_id=None, meta_attrs={"m": "n", "o": "p"}
                 ),

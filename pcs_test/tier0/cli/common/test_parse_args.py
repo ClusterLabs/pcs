@@ -448,6 +448,18 @@ class GroupByKeywords(TestCase):
             {"zero": [[1, 2], [4]], "first": [[3]]},
         )
 
+    def test_implicit_first_keyword_ignored_when_another_keyword_is_first_arg(
+        self,
+    ):
+        self.assertEqual(
+            group_by_keywords(
+                ["first", "1", "2", "second", "3"],
+                set(["first", "second"]),
+                implicit_first_keyword="zero",
+            )._groups,
+            {"first": [["1", "2"]], "second": [["3"]]},
+        )
+
 
 class SplitOption(TestCase):
     def test_no_eq_char(self):

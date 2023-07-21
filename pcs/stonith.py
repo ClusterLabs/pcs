@@ -208,6 +208,7 @@ def stonith_create(lib, argv, modifiers):
             **settings,
         )
     else:
+        # deprecated since 0.11.3
         deprecation_warning(
             "Option to group stonith resource is deprecated and will be "
             "removed in a future release."

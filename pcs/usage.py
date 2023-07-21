@@ -818,7 +818,7 @@ Commands:
            [meta <meta options>]
            [clone [<clone id>] [meta <clone meta options>] |
            promotable [<clone id>] [meta <promotable meta options>] |
-           --group <group id> [--before <resource id> | --after <resource id>] |
+           group <group id> [before <resource id> | after <resource id>] |
            bundle <bundle id>] [--disabled] [--agent-validation]
            [--no-default-ops] [--wait[=n]]
         Create specified resource.

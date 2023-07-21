@@ -27,6 +27,8 @@
 ### Deprecated
 - Using spaces in dates in location constraint rules (using spaces in dates in
   rules in other parts of configuration was never allowed) ([rhbz#2163953])
+- Using `--group`, `--after` and `--before` in `pcs resource create` command is
+  deprecated in favor of `group`, `after` and `before`, respectively
 
 [ghpull#712]: https://github.com/ClusterLabs/pcs/pull/712
 [rhbz#2112268]: https://bugzilla.redhat.com/show_bug.cgi?id=2112268

@@ -55,6 +55,11 @@ LOCATION_NODE_VALIDATION_SKIP_WARNING = (
 ERRORS_HAVE_OCCURRED = (
     "Error: Errors have occurred, therefore pcs is unable to continue\n"
 )
+DEPRECATED_DASH_DASH_GROUP = (
+    "Deprecation Warning: Using '--group' is deprecated and will be replaced "
+    "with 'group' in a future release. Specify --future to switch to the future "
+    "behavior.\n"
+)
 
 empty_cib = rc("cib-empty.xml")
 large_cib = rc("cib-large.xml")
@@ -1559,12 +1564,15 @@ class Resource(TestCase, AssertPcsMixin):
     def testGroupDeleteTest(self):
         self.assert_pcs_success(
             "resource create --no-default-ops A1 ocf:heartbeat:Dummy --group AGroup".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
             "resource create --no-default-ops A2 ocf:heartbeat:Dummy --group AGroup".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
             "resource create --no-default-ops A3 ocf:heartbeat:Dummy --group AGroup".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
 
         stdout, stderr, returncode = self.pcs_runner.run(
@@ -2617,9 +2625,11 @@ class Resource(TestCase, AssertPcsMixin):
     def testCloneGroupMember(self):
         self.assert_pcs_success(
             "resource create --no-default-ops D0 ocf:heartbeat:Dummy --group AG".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
             "resource create --no-default-ops D1 ocf:heartbeat:Dummy --group AG".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
 
         self.assert_pcs_success("resource clone D0".split())
@@ -2663,9 +2673,11 @@ class Resource(TestCase, AssertPcsMixin):
     def testPromotableGroupMember(self):
         self.assert_pcs_success(
             "resource create --no-default-ops D0 ocf:heartbeat:Dummy --group AG".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
             "resource create --no-default-ops D1 ocf:heartbeat:Dummy --group AG".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
 
         self.assert_pcs_success("resource promotable D0".split())
@@ -2891,9 +2903,11 @@ class Resource(TestCase, AssertPcsMixin):
     def testDebugStartCloneGroup(self):
         self.assert_pcs_success(
             "resource create D0 ocf:heartbeat:Dummy --group DGroup".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
             "resource create D1 ocf:heartbeat:Dummy --group DGroup".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
             "resource create D2 ocf:heartbeat:Dummy clone".split(),
@@ -2919,6 +2933,7 @@ class Resource(TestCase, AssertPcsMixin):
     def testGroupCloneCreation(self):
         self.assert_pcs_success(
             "resource create --no-default-ops D1 ocf:heartbeat:Dummy --group DGroup".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
 
         self.assert_pcs_fail(
@@ -2949,6 +2964,7 @@ class Resource(TestCase, AssertPcsMixin):
     def testGroupPromotableCreation(self):
         self.assert_pcs_success(
             "resource create --no-default-ops D1 ocf:heartbeat:Dummy --group DGroup".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
 
         self.assert_pcs_fail(
@@ -2990,9 +3006,11 @@ class Resource(TestCase, AssertPcsMixin):
 
         self.assert_pcs_success(
             "resource create --no-default-ops D1 ocf:heartbeat:Dummy --group DGroup".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
             "resource create --no-default-ops D2 ocf:heartbeat:Dummy --group DGroup".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
 
         stdout, stderr, returncode = self.pcs_runner.run(
@@ -3243,9 +3261,11 @@ class Resource(TestCase, AssertPcsMixin):
     def testGroupRemoveWithConstraints2(self):
         self.assert_pcs_success(
             "resource create --no-default-ops A ocf:heartbeat:Dummy --group AG".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
             "resource create --no-default-ops B ocf:heartbeat:Dummy --group AG".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
             "constraint location AG prefers rh7-1".split(),
@@ -3275,9 +3295,11 @@ class Resource(TestCase, AssertPcsMixin):
 
         self.assert_pcs_success(
             "resource create --no-default-ops A1 ocf:heartbeat:Dummy --group AA".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
             "resource create --no-default-ops A2 ocf:heartbeat:Dummy --group AA".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         # pcs no longer allows turning resources into masters but supports
         # existing ones. In order to test it, we need to put a master in the
@@ -3307,12 +3329,15 @@ class Resource(TestCase, AssertPcsMixin):
     def testMasteredGroup(self):
         self.assert_pcs_success(
             "resource create --no-default-ops A ocf:heartbeat:Dummy --group AG".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
             "resource create --no-default-ops B ocf:heartbeat:Dummy --group AG".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
             "resource create --no-default-ops C ocf:heartbeat:Dummy --group AG".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         # pcs no longer allows turning resources into masters but supports
         # existing ones. In order to test it, we need to put a master in the
@@ -3363,10 +3388,12 @@ class Resource(TestCase, AssertPcsMixin):
 
     def testClonedGroup(self):
         self.assert_pcs_success(
-            "resource create --no-default-ops D1 ocf:heartbeat:Dummy --group DG".split()
+            "resource create --no-default-ops D1 ocf:heartbeat:Dummy --group DG".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops D2 ocf:heartbeat:Dummy --group DG".split()
+            "resource create --no-default-ops D2 ocf:heartbeat:Dummy --group DG".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success("resource clone DG".split())
         self.assert_pcs_success(
@@ -3498,16 +3525,19 @@ class Resource(TestCase, AssertPcsMixin):
     def testGroupMSAndClone(self):
         self.assert_pcs_fail(
             "resource create --no-default-ops D3 ocf:heartbeat:Dummy promotable --group xxx clone".split(),
-            "Error: you can specify only one of clone, promotable, bundle or --group\n",
+            DEPRECATED_DASH_DASH_GROUP
+            + "Error: you can specify only one of clone, promotable, bundle or --group\n",
         )
         self.assert_pcs_fail(
             "resource create --no-default-ops D4 ocf:heartbeat:Dummy promotable --group xxx".split(),
-            "Error: you can specify only one of clone, promotable, bundle or --group\n",
+            DEPRECATED_DASH_DASH_GROUP
+            + "Error: you can specify only one of clone, promotable, bundle or --group\n",
         )
 
     def testResourceCloneGroup(self):
         self.assert_pcs_success(
             "resource create --no-default-ops dummy0 ocf:heartbeat:Dummy --group group".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success("resource clone group".split())
         self.assert_pcs_success(
@@ -3595,12 +3625,15 @@ class Resource(TestCase, AssertPcsMixin):
     def testClonedMasteredGroup(self):
         self.assert_pcs_success(
             "resource create dummy1 ocf:heartbeat:Dummy --no-default-ops --group dummies".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
             "resource create dummy2 ocf:heartbeat:Dummy --no-default-ops --group dummies".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
             "resource create dummy3 ocf:heartbeat:Dummy --no-default-ops --group dummies".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success("resource clone dummies".split())
         self.assert_pcs_success(
@@ -3709,12 +3742,15 @@ class Resource(TestCase, AssertPcsMixin):
 
         self.assert_pcs_success(
             "resource create dummy1 ocf:heartbeat:Dummy --no-default-ops --group dummies".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
             "resource create dummy2 ocf:heartbeat:Dummy --no-default-ops --group dummies".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
             "resource create dummy3 ocf:heartbeat:Dummy --no-default-ops --group dummies".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         # pcs no longer allows turning resources into masters but supports
         # existing ones. In order to test it, we need to put a master in the
@@ -3838,19 +3874,23 @@ class Resource(TestCase, AssertPcsMixin):
             "resource create D1 ocf:pacemaker:Dummy --no-default-ops".split()
         )
         self.assert_pcs_success(
-            "resource create DG1 ocf:pacemaker:Dummy --no-default-ops --group GR".split()
+            "resource create DG1 ocf:pacemaker:Dummy --no-default-ops --group GR".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
-            "resource create DG2 ocf:pacemaker:Dummy --no-default-ops --group GR".split()
+            "resource create DG2 ocf:pacemaker:Dummy --no-default-ops --group GR".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
             "resource create DC ocf:pacemaker:Dummy --no-default-ops clone".split()
         )
         self.assert_pcs_success(
-            "resource create DGC1 ocf:pacemaker:Dummy --no-default-ops --group GRC".split()
+            "resource create DGC1 ocf:pacemaker:Dummy --no-default-ops --group GRC".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
-            "resource create DGC2 ocf:pacemaker:Dummy --no-default-ops --group GRC".split()
+            "resource create DGC2 ocf:pacemaker:Dummy --no-default-ops --group GRC".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success("resource clone GRC".split())
 
