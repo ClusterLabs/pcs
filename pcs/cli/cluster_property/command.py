@@ -20,7 +20,10 @@ from pcs.common import reports
 from pcs.common.interface import dto
 from pcs.common.pacemaker.cluster_property import ClusterPropertyMetadataDto
 from pcs.common.pacemaker.nvset import ListCibNvsetDto
-from pcs.common.str_tools import format_list
+from pcs.common.str_tools import (
+    format_list,
+    format_plural,
+)
 from pcs.common.types import StringSequence
 
 
@@ -171,6 +174,14 @@ def defaults(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
     defaults_dict = properties_facade.get_defaults(
         argv, include_advanced=modifiers.is_specified("--full")
     )
+    extra_args = set(argv) - defaults_dict.keys()
+    if extra_args:
+        raise CmdLineInputError(
+            "No default value for {property_pl}: {name_list}".format(
+                property_pl=format_plural(extra_args, "property"),
+                name_list=format_list(list(extra_args)),
+            )
+        )
     output = "\n".join(properties_defaults_to_text(defaults_dict))
     if output:
         print(output)
@@ -195,6 +206,7 @@ def describe(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
     properties_facade = PropertyConfigurationFacade.from_properties_metadata(
         lib.cluster_property.get_properties_metadata()
     )
+
     if output_format == "json":
         output = json.dumps(
             dto.to_dict(
@@ -205,16 +217,23 @@ def describe(lib: Any, argv: StringSequence, modifiers: InputModifiers) -> None:
             )
         )
     else:
+        filtered_metadata = properties_facade.get_properties_metadata(
+            argv, include_advanced=modifiers.is_specified("--full")
+        )
+        extra_args = set(argv) - {
+            metadata.name for metadata in filtered_metadata
+        }
+        if extra_args:
+            raise CmdLineInputError(
+                "No description for {property_pl}: {name_list}".format(
+                    property_pl=format_plural(extra_args, "property"),
+                    name_list=format_list(list(extra_args)),
+                )
+            )
         output = "\n".join(
             smart_wrap_text(
                 cluster_property_metadata_to_text(
-                    sorted(
-                        properties_facade.get_properties_metadata(
-                            argv,
-                            include_advanced=modifiers.is_specified("--full"),
-                        ),
-                        key=lambda x: x.name,
-                    )
+                    sorted(filtered_metadata, key=lambda x: x.name)
                 )
             )
         )

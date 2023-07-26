@@ -9,9 +9,12 @@
 ### Fixed
 - Do not display duplicate records in commands `pcs property [config] --all`
   and `pcs property describe` ([rhbz#2217850])
+- Commands `pcs property defaults` and `pcs property describe` print error
+  message in case specified properties do not have metadata. ([rhbz#2226778])
 
 [rhbz#2217850]: https://bugzilla.redhat.com/show_bug.cgi?id=2217850
 [rhbz#2219388]: https://bugzilla.redhat.com/show_bug.cgi?id=2219388
+[rhbz#2226778]: https://bugzilla.redhat.com/show_bug.cgi?id=2226778
 
 
 ## [0.10.17] - 2023-06-19

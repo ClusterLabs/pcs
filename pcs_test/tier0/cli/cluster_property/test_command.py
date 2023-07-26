@@ -431,7 +431,12 @@ class TestDefaults(TestCase):
         )
 
     def test_properties_without_defaults(self, mock_print):
-        self._call_cmd(["arg1", "arg2"])
+        with self.assertRaises(CmdLineInputError) as cm:
+            self._call_cmd(["arg1", "arg2"])
+        self.assertEqual(
+            cm.exception.message,
+            "No default value for properties: 'arg1', 'arg2'",
+        )
         self.cluster_property.get_properties_metadata.assert_called_once()
         mock_print.assert_not_called()
 
@@ -507,7 +512,12 @@ class TestDescribe(TestCase):
         mock_print.assert_called_once_with(self.text_output_advanced)
 
     def test_properties_without_metadata(self, mock_print):
-        self._call_cmd(["arg1", "arg2"])
+        with self.assertRaises(CmdLineInputError) as cm:
+            self._call_cmd(["arg1", "arg2"])
+        self.assertEqual(
+            cm.exception.message,
+            "No description for properties: 'arg1', 'arg2'",
+        )
         self.cluster_property.get_properties_metadata.assert_called_once()
         mock_print.assert_not_called()
 
