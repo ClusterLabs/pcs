@@ -467,8 +467,9 @@ class TestPropertyDefaults(TestCase, AssertPcsMixin):
         )
 
     def test_notexistent(self):
-        self.assert_pcs_success(
-            "property defaults nonexistent".split(), stdout_full=""
+        self.assert_pcs_fail(
+            "property defaults nonexistent".split(),
+            stderr_full="Error: No default value for property: 'nonexistent'\n",
         )
 
     def test_unsupported_option(self):
@@ -531,6 +532,12 @@ class TestPropertyDescribe(TestCase, AssertPcsMixin):
         self.assert_pcs_success(
             "property describe stonith-enabled batch-limit".split(),
             stdout_full=FIXTURE_BATCH_LIMIT_DESC + FIXTURE_STONITH_ENABLED_DESC,
+        )
+
+    def test_notexistent(self):
+        self.assert_pcs_fail(
+            "property describe nonexistent".split(),
+            stderr_full="Error: No description for property: 'nonexistent'\n",
         )
 
     def test_success_output_format_json(self):
