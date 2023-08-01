@@ -1953,7 +1953,7 @@ def remove_nodes_from_cib(env: LibraryEnvironment, node_list):
     for node in node_list:
         stdout, stderr, retval = env.cmd_runner().run(
             [
-                settings.cibadmin,
+                settings.cibadmin_exec,
                 "--delete-all",
                 "--force",
                 f"--xpath=/cib/configuration/nodes/node[@uname='{node}']",

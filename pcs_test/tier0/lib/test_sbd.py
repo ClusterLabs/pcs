@@ -329,7 +329,7 @@ class InitializeBlockDeviceTest(TestCase):
             self.mock_rep, self.mock_runner, device_list, option_dict
         )
         cmd = [
-            settings.sbd_binary,
+            settings.sbd_exec,
             "-d",
             "/dev/sdb",
             "-d",
@@ -379,7 +379,7 @@ class InitializeBlockDeviceTest(TestCase):
             ),
         )
         cmd = [
-            settings.sbd_binary,
+            settings.sbd_exec,
             "-d",
             "/dev/sdb",
             "-d",
@@ -521,7 +521,7 @@ class GetDeviceMessagesInfoTest(TestCase):
             output, lib_sbd.get_device_messages_info(self.mock_runner, device)
         )
         self.mock_runner.run.assert_called_once_with(
-            [settings.sbd_binary, "-d", device, "list"]
+            [settings.sbd_exec, "-d", device, "list"]
         )
 
     def test_failed(self):
@@ -540,7 +540,7 @@ class GetDeviceMessagesInfoTest(TestCase):
             ),
         )
         self.mock_runner.run.assert_called_once_with(
-            [settings.sbd_binary, "-d", device, "list"]
+            [settings.sbd_exec, "-d", device, "list"]
         )
 
 
@@ -556,7 +556,7 @@ class GetDeviceSbdHeaderDumpTest(TestCase):
             output, lib_sbd.get_device_sbd_header_dump(self.mock_runner, device)
         )
         self.mock_runner.run.assert_called_once_with(
-            [settings.sbd_binary, "-d", device, "dump"]
+            [settings.sbd_exec, "-d", device, "dump"]
         )
 
     def test_failed(self):
@@ -577,7 +577,7 @@ class GetDeviceSbdHeaderDumpTest(TestCase):
             ),
         )
         self.mock_runner.run.assert_called_once_with(
-            [settings.sbd_binary, "-d", device, "dump"]
+            [settings.sbd_exec, "-d", device, "dump"]
         )
 
 
@@ -589,7 +589,7 @@ class SetMessageTest(TestCase):
         self.mock_runner.run.return_value = "", "", 0
         lib_sbd.set_message(self.mock_runner, "device", "node", "test")
         self.mock_runner.run.assert_called_once_with(
-            [settings.sbd_binary, "-d", "device", "message", "node", "test"]
+            [settings.sbd_exec, "-d", "device", "message", "node", "test"]
         )
 
     def test_failure(self):
@@ -611,7 +611,7 @@ class SetMessageTest(TestCase):
             ),
         )
         self.mock_runner.run.assert_called_once_with(
-            [settings.sbd_binary, "-d", "device", "message", "node", "test"]
+            [settings.sbd_exec, "-d", "device", "message", "node", "test"]
         )
 
 

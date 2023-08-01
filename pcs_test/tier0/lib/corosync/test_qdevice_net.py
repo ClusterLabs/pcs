@@ -15,15 +15,9 @@ from pcs.lib.external import CommandRunner
 from pcs_test.tools.assertions import assert_raise_library_error
 from pcs_test.tools.misc import get_tmp_dir
 
-_qnetd_cert_tool = os.path.join(
-    settings.corosync_qnet_binaries, "corosync-qnetd-certutil"
-)
-_qnetd_tool = os.path.join(
-    settings.corosync_qnet_binaries, "corosync-qnetd-tool"
-)
-_client_cert_tool = os.path.join(
-    settings.corosync_qdevice_binaries, "corosync-qdevice-net-certutil"
-)
+_qnetd_cert_tool = settings.corosync_qnetd_certutil_exec
+_qnetd_tool = settings.corosync_qnetd_tool_exec
+_client_cert_tool = settings.corosync_qdevice_net_certutil_exec
 
 
 def cert_to_url(cert):

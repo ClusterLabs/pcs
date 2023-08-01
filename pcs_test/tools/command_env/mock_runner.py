@@ -1,5 +1,3 @@
-from os import path
-
 from pcs import settings
 
 from pcs_test.tools.assertions import assert_xml_equal
@@ -50,28 +48,22 @@ def check_no_stdin(stdin, command, order_num):
 
 
 COMMAND_COMPLETIONS = {
-    "cibadmin": path.join(settings.pacemaker_binaries, "cibadmin"),
-    "corosync": path.join(settings.corosync_binaries, "corosync"),
-    "corosync-cfgtool": path.join(
-        settings.corosync_binaries, "corosync-cfgtool"
-    ),
-    "corosync-qdevice-net-certutil": path.join(
-        settings.corosync_qdevice_binaries, "corosync-qdevice-net-certutil"
-    ),
-    "corosync-quorumtool": path.join(
-        settings.corosync_binaries, "corosync-quorumtool"
-    ),
-    "crm_diff": path.join(settings.pacemaker_binaries, "crm_diff"),
-    "crm_mon": path.join(settings.pacemaker_binaries, "crm_mon"),
-    "crm_node": path.join(settings.pacemaker_binaries, "crm_node"),
-    "crm_resource": path.join(settings.pacemaker_binaries, "crm_resource"),
-    "crm_rule": path.join(settings.pacemaker_binaries, "crm_rule"),
-    "crm_simulate": path.join(settings.pacemaker_binaries, "crm_simulate"),
-    "crm_ticket": path.join(settings.pacemaker_binaries, "crm_ticket"),
-    "crm_verify": path.join(settings.pacemaker_binaries, "crm_verify"),
-    "iso8601": path.join(settings.pacemaker_binaries, "iso8601"),
-    "sbd": settings.sbd_binary,
-    "stonith_admin": path.join(settings.pacemaker_binaries, "stonith_admin"),
+    "cibadmin": settings.cibadmin_exec,
+    "corosync": settings.corosync_exec,
+    "corosync-cfgtool": settings.corosync_cfgtool_exec,
+    "corosync-qdevice-net-certutil": settings.corosync_qdevice_net_certutil_exec,
+    "corosync-quorumtool": settings.corosync_quorumtool_exec,
+    "crm_diff": settings.crm_diff_exec,
+    "crm_mon": settings.crm_mon_exec,
+    "crm_node": settings.crm_node_exec,
+    "crm_resource": settings.crm_resource_exec,
+    "crm_rule": settings.crm_rule_exec,
+    "crm_simulate": settings.crm_simulate_exec,
+    "crm_ticket": settings.crm_ticket_exec,
+    "crm_verify": settings.crm_verify_exec,
+    "iso8601": settings.iso8601_exec,
+    "sbd": settings.sbd_exec,
+    "stonith_admin": settings.stonith_admin_exec,
 }
 
 

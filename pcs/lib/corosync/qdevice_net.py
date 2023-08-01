@@ -25,15 +25,6 @@ from pcs.lib.tools import get_tmp_file
 SERVICE_NAME = "corosync-qnetd"
 
 __model = "net"
-__qnetd_certutil = os.path.join(
-    settings.corosync_qnet_binaries, "corosync-qnetd-certutil"
-)
-__qnetd_tool = os.path.join(
-    settings.corosync_qnet_binaries, "corosync-qnetd-tool"
-)
-__qdevice_certutil = os.path.join(
-    settings.corosync_qdevice_binaries, "corosync-qdevice-net-certutil"
-)
 __nss_certificate_db_files = (
     # new NSS DB format
     "cert9.db",
@@ -121,7 +112,9 @@ def qdevice_setup(runner: CommandRunner) -> None:
             )
         )
 
-    stdout, stderr, retval = runner.run([__qnetd_certutil, "-i"])
+    stdout, stderr, retval = runner.run(
+        [settings.corosync_qnetd_certutil_exec, "-i"]
+    )
     if retval != 0:
         raise LibraryError(
             reports.ReportItem.error(
@@ -231,7 +224,9 @@ def _qdevice_run_tool(
 
     iterable args -- corosync-qnetd-tool arguments
     """
-    stdout, stderr, retval = runner.run([__qnetd_tool] + list(args))
+    stdout, stderr, retval = runner.run(
+        [settings.corosync_qnetd_tool_exec] + list(args)
+    )
     if retval == 3 and "is qnetd running?" in stderr.lower():
         raise QnetdNotRunningException()
     return stdout, stderr, retval
@@ -257,7 +252,14 @@ def qdevice_sign_certificate_request(
         with get_tmp_file(cert_request, binary=True) as tmpfile:
             # sign the request
             stdout, stderr, retval = runner.run(
-                [__qnetd_certutil, "-s", "-c", tmpfile.name, "-n", cluster_name]
+                [
+                    settings.corosync_qnetd_certutil_exec,
+                    "-s",
+                    "-c",
+                    tmpfile.name,
+                    "-n",
+                    cluster_name,
+                ]
             )
     except EnvironmentError as e:
         raise LibraryError(
@@ -310,7 +312,12 @@ def client_setup(runner: CommandRunner, ca_certificate: bytes) -> None:
         ) from e
     # initialize client's certificate storage
     stdout, stderr, retval = runner.run(
-        [__qdevice_certutil, "-i", "-c", ca_file_path]
+        [
+            settings.corosync_qdevice_net_certutil_exec,
+            "-i",
+            "-c",
+            ca_file_path,
+        ]
     )
     if retval != 0:
         raise LibraryError(
@@ -362,7 +369,12 @@ def client_generate_certificate_request(
             )
         )
     stdout, stderr, retval = runner.run(
-        [__qdevice_certutil, "-r", "-n", cluster_name]
+        [
+            settings.corosync_qdevice_net_certutil_exec,
+            "-r",
+            "-n",
+            cluster_name,
+        ]
     )
     if retval != 0:
         raise LibraryError(
@@ -402,7 +414,12 @@ def client_cert_request_to_pk12(
         with get_tmp_file(cert_request, binary=True) as tmpfile:
             # transform it
             stdout, stderr, retval = runner.run(
-                [__qdevice_certutil, "-M", "-c", tmpfile.name]
+                [
+                    settings.corosync_qdevice_net_certutil_exec,
+                    "-M",
+                    "-c",
+                    tmpfile.name,
+                ]
             )
     except EnvironmentError as e:
         raise LibraryError(
@@ -440,7 +457,12 @@ def client_import_certificate_and_key(
     try:
         with get_tmp_file(pk12_certificate, binary=True) as tmpfile:
             stdout, stderr, retval = runner.run(
-                [__qdevice_certutil, "-m", "-c", tmpfile.name]
+                [
+                    settings.corosync_qdevice_net_certutil_exec,
+                    "-m",
+                    "-c",
+                    tmpfile.name,
+                ]
             )
     except EnvironmentError as e:
         raise LibraryError(

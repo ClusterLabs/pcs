@@ -32,7 +32,7 @@ class Success(ResourceTest):
 
     def setUp(self):
         super().setUp()
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
 
     def test_base_create(self):
         self.assert_effect(
@@ -301,7 +301,7 @@ class Success(ResourceTest):
 class SuccessOperations(ResourceTest):
     def setUp(self):
         super().setUp()
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
 
     def test_create_with_operations(self):
         self.assert_effect(
@@ -1335,7 +1335,7 @@ class FailOrWarn(ResourceTest):
         )
 
     def test_unique_err(self):
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
         self.assert_pcs_success(
             "resource create R1 ocf:pacemaker:Dummy state=1".split()
         )
@@ -1350,7 +1350,7 @@ class FailOrWarn(ResourceTest):
         )
 
     def test_unique_multiple_resources_warn_and_err(self):
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
         self.assert_pcs_success(
             "resource create R1 ocf:pacemaker:Dummy state=1".split()
         )

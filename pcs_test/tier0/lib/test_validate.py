@@ -1,4 +1,3 @@
-import os
 import re
 from unittest import TestCase
 
@@ -1757,11 +1756,7 @@ class ValueTimeIntervalOrDuration(TestCase):
     def assert_runner(self, mock_runner, interval):
         if interval == self.duration:
             mock_runner.run.assert_called_once_with(
-                [
-                    os.path.join(settings.pacemaker_binaries, "iso8601"),
-                    "--duration",
-                    self.duration,
-                ]
+                [settings.iso8601_exec, "--duration", self.duration]
             )
         else:
             mock_runner.run.assert_not_called()

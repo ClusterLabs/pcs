@@ -61,7 +61,13 @@ def get_cluster_status_xml_raw(runner: CommandRunner) -> Tuple[str, str, int]:
     runner -- a class for running external processes
     """
     return runner.run(
-        [__exec("crm_mon"), "--one-shot", "--inactive", "--output-as", "xml"]
+        [
+            settings.crm_mon_exec,
+            "--one-shot",
+            "--inactive",
+            "--output-as",
+            "xml",
+        ]
     )
 
 
@@ -109,7 +115,7 @@ def get_cluster_status_text(
     hide_inactive_resources: bool,
     verbose: bool,
 ) -> Tuple[str, List[str]]:
-    cmd = [__exec("crm_mon"), "--one-shot"]
+    cmd = [settings.crm_mon_exec, "--one-shot"]
     if not hide_inactive_resources:
         cmd.append("--inactive")
     if verbose:
@@ -138,7 +144,7 @@ def get_cluster_status_text(
 
 
 def get_ticket_status_text(runner: CommandRunner) -> Tuple[str, str, int]:
-    stdout, stderr, retval = runner.run([__exec("crm_ticket"), "--details"])
+    stdout, stderr, retval = runner.run([settings.crm_ticket_exec, "--details"])
     return stdout.strip(), stderr.strip(), retval
 
 
@@ -148,7 +154,7 @@ def get_ticket_status_text(runner: CommandRunner) -> Tuple[str, str, int]:
 def get_cib_xml_cmd_results(
     runner: CommandRunner, scope: Optional[str] = None
 ) -> tuple[str, str, int]:
-    command = [__exec("cibadmin"), "--local", "--query"]
+    command = [settings.cibadmin_exec, "--local", "--query"]
     if scope:
         command.append("--scope={0}".format(scope))
     stdout, stderr, returncode = runner.run(command)
@@ -188,7 +194,7 @@ def get_cib(xml: str) -> _Element:
 
 
 def verify(runner, verbose=False):
-    crm_verify_cmd = [__exec("crm_verify")]
+    crm_verify_cmd = [settings.crm_verify_exec]
     # Currently, crm_verify can suggest up to two -V options but it accepts
     # more than two. We stick with two -V options if verbose mode was enabled.
     if verbose:
@@ -225,7 +231,7 @@ def verify(runner, verbose=False):
 
 def replace_cib_configuration_xml(runner, xml):
     cmd = [
-        __exec("cibadmin"),
+        settings.cibadmin_exec,
         "--replace",
         "--verbose",
         "--xml-pipe",
@@ -245,7 +251,7 @@ def replace_cib_configuration(runner, tree):
 
 def push_cib_diff_xml(runner, cib_diff_xml):
     cmd = [
-        __exec("cibadmin"),
+        settings.cibadmin_exec,
         "--patch",
         "--verbose",
         "--xml-pipe",
@@ -278,7 +284,7 @@ def diff_cibs_xml(
     ) as cib_new_tmp_file:
         stdout, stderr, retval = runner.run(
             [
-                __exec("crm_diff"),
+                settings.crm_diff_exec,
                 "--original",
                 cib_old_tmp_file.name,
                 "--new",
@@ -361,7 +367,7 @@ def _upgrade_cib(runner):
     CommandRunner runner
     """
     stdout, stderr, retval = runner.run(
-        [__exec("cibadmin"), "--upgrade", "--force"]
+        [settings.cibadmin_exec, "--upgrade", "--force"]
     )
     # If we are already on the latest schema available, cibadmin exits with 0.
     # That is fine. We do not know here what version is required anyway. The
@@ -389,7 +395,7 @@ def simulate_cib_xml(runner, cib_xml):
             tools.get_tmp_file(None) as transitions_file,
         ):
             cmd = [
-                __exec("crm_simulate"),
+                settings.crm_simulate_exec,
                 "--simulate",
                 "--save-output",
                 new_cib_file.name,
@@ -451,7 +457,7 @@ def wait_for_idle(runner: CommandRunner, timeout: int) -> None:
     timeout -- waiting timeout in seconds, wait indefinitely if non-positive
         integer
     """
-    args = [__exec("crm_resource"), "--wait"]
+    args = [settings.crm_resource_exec, "--wait"]
     if timeout > 0:
         args.append("--timeout={0}".format(timeout))
     stdout, stderr, retval = runner.run(args)
@@ -480,7 +486,7 @@ def wait_for_idle(runner: CommandRunner, timeout: int) -> None:
 
 
 def get_local_node_name(runner):
-    stdout, stderr, retval = runner.run([__exec("crm_node"), "--name"])
+    stdout, stderr, retval = runner.run([settings.crm_node_exec, "--name"])
     if retval != 0:
         klass = (
             PacemakerNotConnectedException
@@ -533,7 +539,7 @@ def get_local_node_status(runner):
 def remove_node(runner, node_name):
     stdout, stderr, retval = runner.run(
         [
-            __exec("crm_node"),
+            settings.crm_node_exec,
             "--force",
             "--remove",
             node_name,
@@ -561,7 +567,7 @@ def resource_cleanup(
     interval: Optional[str] = None,
     strict: bool = False,
 ):
-    cmd = [__exec("crm_resource"), "--cleanup"]
+    cmd = [settings.crm_resource_exec, "--cleanup"]
     if resource:
         cmd.extend(["--resource", resource])
     if node:
@@ -607,7 +613,7 @@ def resource_refresh(
                 )
             )
 
-    cmd = [__exec("crm_resource"), "--refresh"]
+    cmd = [settings.crm_resource_exec, "--refresh"]
     if resource:
         cmd.extend(["--resource", resource])
     if node:
@@ -665,7 +671,9 @@ def resource_unmove_unban(
 
 
 def has_resource_unmove_unban_expired_support(runner):
-    return _is_in_pcmk_tool_help(runner, "crm_resource", ["--expired"])
+    return _is_in_pcmk_tool_help(
+        runner, settings.crm_resource_exec, ["--expired"]
+    )
 
 
 def _resource_move_ban_clear(
@@ -678,7 +686,7 @@ def _resource_move_ban_clear(
     expired=False,
 ):
     command = [
-        __exec("crm_resource"),
+        settings.crm_resource_exec,
         action,
         "--resource",
         resource_id,
@@ -699,12 +707,16 @@ def _resource_move_ban_clear(
 
 
 def is_fence_history_supported_status(runner: CommandRunner) -> bool:
-    return _is_in_pcmk_tool_help(runner, "crm_mon", ["--fence-history"])
+    return _is_in_pcmk_tool_help(
+        runner, settings.crm_mon_exec, ["--fence-history"]
+    )
 
 
 def is_fence_history_supported_management(runner: CommandRunner) -> bool:
     return _is_in_pcmk_tool_help(
-        runner, "stonith_admin", ["--history", "--broadcast", "--cleanup"]
+        runner,
+        settings.stonith_admin_exec,
+        ["--history", "--broadcast", "--cleanup"],
     )
 
 
@@ -725,7 +737,12 @@ def fence_history_update(runner):
 
 def _run_fence_history_command(runner, command, node=None):
     stdout, stderr, retval = runner.run(
-        [__exec("stonith_admin"), "--history", node if node else "*", command]
+        [
+            settings.stonith_admin_exec,
+            "--history",
+            node if node else "*",
+            command,
+        ]
     )
     if retval != 0:
         raise FenceHistoryCommandErrorException(
@@ -738,7 +755,7 @@ def _run_fence_history_command(runner, command, node=None):
 
 
 def has_rule_in_effect_status_tool() -> bool:
-    return os.path.isfile(settings.crm_rule)
+    return os.path.isfile(settings.crm_rule_exec)
 
 
 def get_rule_in_effect_status(
@@ -762,7 +779,14 @@ def get_rule_in_effect_status(
         # 112: undetermined (rule is too complicated for current implementation)
     }
     dummy_stdout, dummy_stderr, retval = runner.run(
-        [settings.crm_rule, "--check", "--rule", rule_id, "--xml-text", "-"],
+        [
+            settings.crm_rule_exec,
+            "--check",
+            "--rule",
+            rule_id,
+            "--xml-text",
+            "-",
+        ],
         stdin_string=cib_xml,
     )
     return translation_map.get(retval, CibRuleInEffectStatus.UNKNOWN)
@@ -793,15 +817,10 @@ def _get_status_from_api_result(dom: _Element) -> api_result.Status:
     )
 
 
-# shortcut for getting a full path to a pacemaker executable
-def __exec(name):
-    return os.path.join(settings.pacemaker_binaries, name)
-
-
 def _is_in_pcmk_tool_help(
     runner: CommandRunner, tool: str, text_list: StringCollection
 ) -> bool:
-    stdout, stderr, dummy_retval = runner.run([__exec(tool), "--help-all"])
+    stdout, stderr, dummy_retval = runner.run([tool, "--help-all"])
     # Help goes to stderr but we check stdout as well if that gets changed. Use
     # generators in all to return early.
     return all(text in stderr for text in text_list) or all(
@@ -810,7 +829,9 @@ def _is_in_pcmk_tool_help(
 
 
 def is_getting_resource_digest_supported(runner):
-    return _is_in_pcmk_tool_help(runner, "crm_resource", "--digests")
+    return _is_in_pcmk_tool_help(
+        runner, settings.crm_resource_exec, "--digests"
+    )
 
 
 def get_resource_digests(
@@ -835,7 +856,7 @@ def get_resource_digests(
     if crm_meta_attributes is None:
         crm_meta_attributes = {}
     command = [
-        __exec("crm_resource"),
+        settings.crm_resource_exec,
         "--digests",
         "--resource",
         resource_id,
@@ -891,7 +912,7 @@ def _validate_stonith_instance_attributes_via_pcmk(
     instance_attributes: Mapping[str, str],
 ) -> tuple[Optional[bool], str]:
     cmd = [
-        settings.stonith_admin,
+        settings.stonith_admin_exec,
         "--validate",
         "--output-as",
         "xml",
@@ -912,7 +933,7 @@ def _validate_resource_instance_attributes_via_pcmk(
     instance_attributes: Mapping[str, str],
 ) -> tuple[Optional[bool], str]:
     cmd = [
-        settings.crm_resource_binary,
+        settings.crm_resource_exec,
         "--validate",
         "--output-as",
         "xml",

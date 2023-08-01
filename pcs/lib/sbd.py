@@ -292,7 +292,7 @@ def initialize_block_devices(
         )
     )
 
-    cmd = [settings.sbd_binary]
+    cmd = [settings.sbd_exec]
     for device in device_list:
         cmd += ["-d", device]
 
@@ -348,7 +348,7 @@ def get_device_messages_info(cmd_runner, device):
     device -- string
     """
     std_out, dummy_std_err, ret_val = cmd_runner.run(
-        [settings.sbd_binary, "-d", device, "list"]
+        [settings.sbd_exec, "-d", device, "list"]
     )
     if ret_val != 0:
         # sbd writes error message into std_out
@@ -368,7 +368,7 @@ def get_device_sbd_header_dump(cmd_runner, device):
     device -- string
     """
     std_out, dummy_std_err, ret_val = cmd_runner.run(
-        [settings.sbd_binary, "-d", device, "dump"]
+        [settings.sbd_exec, "-d", device, "dump"]
     )
     if ret_val != 0:
         # sbd writes error message into std_out
@@ -453,7 +453,7 @@ def set_message(cmd_runner, device, node_name, message):
     message -- string, message type
     """
     dummy_std_out, std_err, ret_val = cmd_runner.run(
-        [settings.sbd_binary, "-d", device, "message", node_name, message]
+        [settings.sbd_exec, "-d", device, "message", node_name, message]
     )
     if ret_val != 0:
         raise LibraryError(
@@ -473,7 +473,7 @@ def get_available_watchdogs(cmd_runner):
         r"(\nCAUTION: (?P<caution>.+)$)?"
     )
     std_out, std_err, ret_val = cmd_runner.run(
-        [settings.sbd_binary, "query-watchdog"]
+        [settings.sbd_exec, "query-watchdog"]
     )
     if ret_val != 0:
         raise LibraryError(
@@ -490,7 +490,7 @@ def get_available_watchdogs(cmd_runner):
 
 
 def test_watchdog(cmd_runner, watchdog=None):
-    cmd = [settings.sbd_binary, "test-watchdog"]
+    cmd = [settings.sbd_exec, "test-watchdog"]
     if watchdog:
         cmd.extend(["-w", watchdog])
     std_out, dummy_std_err, ret_val = cmd_runner.run(cmd)

@@ -1,4 +1,3 @@
-import os.path
 from textwrap import dedent
 from unittest import (
     TestCase,
@@ -47,38 +46,38 @@ class GetLocalCorosyncConfTest(TestCase):
 class GetQuorumStatusTextTest(TestCase):
     def setUp(self):
         self.mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        self.quorum_tool = os.path.join(
-            settings.corosync_binaries, "corosync-quorumtool"
-        )
 
     def test_success(self):
         self.mock_runner.run.return_value = ("status info", "", 0)
         self.assertEqual(
             "status info", lib.get_quorum_status_text(self.mock_runner)
         )
-        self.mock_runner.run.assert_called_once_with([self.quorum_tool, "-p"])
+        self.mock_runner.run.assert_called_once_with(
+            [settings.corosync_quorumtool_exec, "-p"]
+        )
 
     def test_success_with_retval_1(self):
         self.mock_runner.run.return_value = ("status info", "", 1)
         self.assertEqual(
             "status info", lib.get_quorum_status_text(self.mock_runner)
         )
-        self.mock_runner.run.assert_called_once_with([self.quorum_tool, "-p"])
+        self.mock_runner.run.assert_called_once_with(
+            [settings.corosync_quorumtool_exec, "-p"]
+        )
 
     def test_error(self):
         self.mock_runner.run.return_value = ("some info", "status error", 2)
         with self.assertRaises(lib.QuorumStatusReadException) as cm:
             lib.get_quorum_status_text(self.mock_runner)
-        self.mock_runner.run.assert_called_once_with([self.quorum_tool, "-p"])
+        self.mock_runner.run.assert_called_once_with(
+            [settings.corosync_quorumtool_exec, "-p"]
+        )
         self.assertEqual(cm.exception.reason, "status error")
 
 
 class SetExpectedVotesTest(TestCase):
     def setUp(self):
         self.mock_runner = mock.MagicMock(spec_set=CommandRunner)
-
-    def path(self, name):
-        return os.path.join(settings.corosync_binaries, name)
 
     def test_success(self):
         cmd_retval = 0
@@ -90,7 +89,7 @@ class SetExpectedVotesTest(TestCase):
         lib.set_expected_votes(mock_runner, 3)
 
         mock_runner.run.assert_called_once_with(
-            [self.path("corosync-quorumtool"), "-e", "3"]
+            [settings.corosync_quorumtool_exec, "-e", "3"]
         )
 
     def test_error(self):
@@ -112,7 +111,7 @@ class SetExpectedVotesTest(TestCase):
         )
 
         mock_runner.run.assert_called_once_with(
-            [self.path("corosync-quorumtool"), "-e", "3"]
+            [settings.corosync_quorumtool_exec, "-e", "3"]
         )
 
 

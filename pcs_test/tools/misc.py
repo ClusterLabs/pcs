@@ -144,10 +144,7 @@ def is_minimum_pacemaker_version(major, minor, rev):
 @lru_cache()
 def _get_current_pacemaker_version():
     output, dummy_stderr, dummy_retval = runner.run(
-        [
-            os.path.join(settings.pacemaker_binaries, "crm_mon"),
-            "--version",
-        ]
+        [settings.crm_mon_exec, "--version"]
     )
     pacemaker_version = output.split("\n", maxsplit=1)[0]
     regexp = re.compile(r"Pacemaker (\d+)\.(\d+)\.(\d+)")
@@ -200,10 +197,7 @@ def _has_pacemaker_features(requested_features):
 @lru_cache()
 def _get_current_pacemaker_features():
     output, dummy_stderr, dummy_retval = runner.run(
-        [
-            os.path.join(settings.pacemaker_binaries, "pacemakerd"),
-            "--features",
-        ]
+        [settings.pacemakerd_exec, "--features"]
     )
     features_string = output.split("\n")[1]
     regexp = re.compile(r"Supporting v(\d+)\.(\d+)\.(\d+):\s*(.*)")
@@ -287,11 +281,7 @@ def skip_unless_root():
 @lru_cache()
 def _is_booth_resource_agent_installed():
     output, dummy_stderr, dummy_retval = runner.run(
-        [
-            os.path.join(settings.pacemaker_binaries, "crm_resource"),
-            "--list-agents",
-            "ocf:pacemaker",
-        ]
+        [settings.crm_resource_exec, "--list-agents", "ocf:pacemaker"]
     )
     return "booth-site" in output
 

@@ -778,7 +778,7 @@ def kill_local_cluster_services():
         "corosync-qdevice",
         "corosync",
     ]
-    return utils.run([settings.killall_executable, "-9"] + all_cluster_daemons)
+    return utils.run([settings.killall_exec, "-9"] + all_cluster_daemons)
 
 
 def cluster_push(lib, argv, modifiers):
@@ -836,7 +836,7 @@ def cluster_push(lib, argv, modifiers):
     if diff_against:
         runner = utils.cmd_runner()
         command = [
-            settings.crm_diff,
+            settings.crm_diff_exec,
             "--original",
             diff_against,
             "--new",
@@ -857,7 +857,7 @@ def cluster_push(lib, argv, modifiers):
             sys.exit(0)
 
         command = [
-            settings.cibadmin,
+            settings.cibadmin_exec,
             "--patch",
             "--xml-pipe",
         ]
@@ -1353,7 +1353,7 @@ def cluster_destroy(lib, argv, modifiers):
         print_to_stderr("Removing all cluster configuration files...")
         dummy_output, dummy_retval = utils.run(
             [
-                settings.rm_executable,
+                settings.rm_exec,
                 "-f",
                 settings.corosync_conf_file,
                 settings.corosync_authkey_file,
@@ -1373,12 +1373,12 @@ def cluster_destroy(lib, argv, modifiers):
         for name in state_files:
             dummy_output, dummy_retval = utils.run(
                 [
-                    settings.find_executable,
+                    settings.find_exec,
                     settings.pacemaker_local_state_dir,
                     "-name",
                     name,
                     "-exec",
-                    settings.rm_executable,
+                    settings.rm_exec,
                     "-f",
                     "{}",
                     ";",
@@ -1444,7 +1444,7 @@ def cluster_report(lib, argv, modifiers):
         crm_report_opts.append(yesterday.strftime("%Y-%m-%d %H:%M"))
 
     crm_report_opts.append(outfile)
-    output, retval = utils.run([settings.crm_report] + crm_report_opts)
+    output, retval = utils.run([settings.crm_report_exec] + crm_report_opts)
     if retval != 0 and (
         "ERROR: Cannot determine nodes; specify --nodes or --single-node"
         in output

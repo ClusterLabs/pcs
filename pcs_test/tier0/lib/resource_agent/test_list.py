@@ -26,7 +26,7 @@ class ListResourceAgentsStandards(TestCase):
 
     def assert_runner(self):
         self.mock_runner.run.assert_called_once_with(
-            [settings.crm_resource_binary, "--list-standards"]
+            [settings.crm_resource_exec, "--list-standards"]
         )
 
     def test_success(self):
@@ -76,7 +76,7 @@ class ListResourceAgentsOcfProviders(TestCase):
 
     def assert_runner(self):
         self.mock_runner.run.assert_called_once_with(
-            [settings.crm_resource_binary, "--list-ocf-providers"]
+            [settings.crm_resource_exec, "--list-ocf-providers"]
         )
 
     def test_success_filter_whitespace(self):
@@ -171,13 +171,8 @@ class ListResourceAgentsStandardsAndProviders(TestCase):
         self.assertEqual(2, len(mock_runner.run.mock_calls))
         mock_runner.run.assert_has_calls(
             [
-                mock.call([settings.crm_resource_binary, "--list-standards"]),
-                mock.call(
-                    [
-                        settings.crm_resource_binary,
-                        "--list-ocf-providers",
-                    ]
-                ),
+                mock.call([settings.crm_resource_exec, "--list-standards"]),
+                mock.call([settings.crm_resource_exec, "--list-ocf-providers"]),
             ]
         )
 
@@ -188,7 +183,7 @@ class ListResourceAgents(TestCase):
 
     def assert_runner(self, standard_provider):
         self.mock_runner.run.assert_called_once_with(
-            [settings.crm_resource_binary, "--list-agents", standard_provider]
+            [settings.crm_resource_exec, "--list-agents", standard_provider]
         )
 
     def test_success_standard(self):

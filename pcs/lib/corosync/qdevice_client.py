@@ -1,5 +1,3 @@
-import os.path
-
 from pcs import settings
 from pcs.common import reports
 from pcs.common.reports.item import ReportItem
@@ -14,12 +12,7 @@ def get_status_text(runner: CommandRunner, verbose: bool = False) -> str:
 
     verbose -- get more detailed output
     """
-    cmd = [
-        os.path.join(
-            settings.corosync_qdevice_binaries, "corosync-qdevice-tool"
-        ),
-        "-s",
-    ]
+    cmd = [settings.corosync_qdevice_tool_exec, "-s"]
     if verbose:
         cmd.append("-v")
     stdout, stderr, retval = runner.run(cmd)

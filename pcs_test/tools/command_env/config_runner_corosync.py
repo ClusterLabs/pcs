@@ -156,7 +156,7 @@ class CorosyncShortcuts:
             name,
             RunnerCall(
                 [
-                    settings.certutil_executable,
+                    settings.certutil_exec,
                     "-d",
                     settings.corosync_qdevice_net_client_certs_dir,
                     "-L",
@@ -177,7 +177,7 @@ class CorosyncShortcuts:
         name="runner.corosync.qdevice_show_cert",
     ):
         cmd = [
-            settings.certutil_executable,
+            settings.certutil_exec,
             "-d",
             settings.corosync_qdevice_net_client_certs_dir,
             "-L",

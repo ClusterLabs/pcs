@@ -1,4 +1,3 @@
-import os
 from unittest import TestCase
 
 import pcs.lib.pacemaker.values as lib
@@ -256,11 +255,7 @@ class IsDurationValueTest(TestCase):
         mock_runner = get_runner_mock(returncode=0 if return_value else 1)
         self.assertEqual(lib.is_duration(mock_runner, duration), return_value)
         mock_runner.run.assert_called_once_with(
-            [
-                os.path.join(settings.pacemaker_binaries, "iso8601"),
-                "--duration",
-                duration,
-            ]
+            [settings.iso8601_exec, "--duration", duration]
         )
 
     def test_duration_valid(self):

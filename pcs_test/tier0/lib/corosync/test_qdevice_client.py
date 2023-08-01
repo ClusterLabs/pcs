@@ -1,4 +1,3 @@
-import os.path
 from unittest import (
     TestCase,
     mock,
@@ -16,9 +15,7 @@ from pcs_test.tools.assertions import assert_raise_library_error
 class GetStatusTextTest(TestCase):
     def setUp(self):
         self.mock_runner = mock.MagicMock(spec_set=CommandRunner)
-        self.qdevice_tool = os.path.join(
-            settings.corosync_qdevice_binaries, "corosync-qdevice-tool"
-        )
+        self.qdevice_tool = settings.corosync_qdevice_tool_exec
 
     def test_success(self):
         self.mock_runner.run.return_value = ("status info", "", 0)

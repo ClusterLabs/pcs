@@ -856,9 +856,9 @@ def run(
         "iso8601",
         "stonith_admin",
     ]:
-        args[0] = os.path.join(settings.pacemaker_binaries, command)
+        args[0] = os.path.join(settings.pacemaker_execs, command)
     elif command[0:8] == "corosync":
-        args[0] = os.path.join(settings.corosync_binaries, command)
+        args[0] = os.path.join(settings.corosync_execs, command)
 
     try:
         if "--debug" in pcs_options:
@@ -946,7 +946,7 @@ def run_pcsdcli(command, data=None):
     if settings.pcsd_gem_path is not None:
         env_var["GEM_HOME"] = settings.pcsd_gem_path
     stdout, dummy_stderr, retval = cmd_runner().run(
-        [settings.ruby_executable, "-I" + pcsd_dir_path, pcsdcli_path, command],
+        [settings.ruby_exec, "-I" + pcsd_dir_path, pcsdcli_path, command],
         json.dumps(data),
         env_var,
     )

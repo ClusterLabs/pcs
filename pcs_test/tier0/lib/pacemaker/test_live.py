@@ -1,5 +1,4 @@
 # pylint: disable=too-many-lines
-import os.path
 from unittest import (
     TestCase,
     mock,
@@ -40,10 +39,6 @@ from pcs_test.tools.xml import (
 )
 
 _EXITCODE_NOT_CONNECTED = 102
-
-
-def path(name):
-    return os.path.join(settings.pacemaker_binaries, name)
 
 
 class GetStatusFromApiResult(TestCase):
@@ -224,7 +219,7 @@ class GetClusterStatusText(TestCase):
         )
 
         mock_runner.run.assert_called_once_with(
-            [settings.crm_mon, "--one-shot", "--inactive"]
+            [settings.crm_mon_exec, "--one-shot", "--inactive"]
         )
         self.assertEqual(self.expected_stdout, real_status)
         self.assertEqual(warnings, [])
@@ -237,7 +232,7 @@ class GetClusterStatusText(TestCase):
 
         mock_runner.run.assert_called_once_with(
             [
-                settings.crm_mon,
+                settings.crm_mon_exec,
                 "--one-shot",
                 "--inactive",
                 "--show-detail",
@@ -264,7 +259,7 @@ class GetClusterStatusText(TestCase):
 
         mock_runner.run.assert_called_once_with(
             [
-                settings.crm_mon,
+                settings.crm_mon_exec,
                 "--one-shot",
                 "--inactive",
                 "--show-detail",
@@ -282,7 +277,7 @@ class GetClusterStatusText(TestCase):
         )
 
         mock_runner.run.assert_called_once_with(
-            [settings.crm_mon, "--one-shot"]
+            [settings.crm_mon_exec, "--one-shot"]
         )
         self.assertEqual(self.expected_stdout, real_status)
         self.assertEqual(warnings, [])
@@ -295,7 +290,7 @@ class GetClusterStatusText(TestCase):
 
         mock_runner.run.assert_called_once_with(
             [
-                settings.crm_mon,
+                settings.crm_mon_exec,
                 "--one-shot",
                 "--show-detail",
                 "--show-node-attributes",
@@ -317,7 +312,7 @@ class GetClusterStatusText(TestCase):
             ),
         )
         mock_runner.run.assert_called_once_with(
-            [settings.crm_mon, "--one-shot", "--inactive"]
+            [settings.crm_mon_exec, "--one-shot", "--inactive"]
         )
 
     def test_warnings(self):
@@ -329,7 +324,7 @@ class GetClusterStatusText(TestCase):
         )
 
         mock_runner.run.assert_called_once_with(
-            [settings.crm_mon, "--one-shot", "--inactive"]
+            [settings.crm_mon_exec, "--one-shot", "--inactive"]
         )
         self.assertEqual(self.expected_stdout, real_status)
         self.assertEqual(warnings, ["msgA", "msgC"])
@@ -344,7 +339,7 @@ class GetClusterStatusText(TestCase):
 
         mock_runner.run.assert_called_once_with(
             [
-                settings.crm_mon,
+                settings.crm_mon_exec,
                 "--one-shot",
                 "--inactive",
                 "--show-detail",
@@ -372,7 +367,7 @@ class GetCibXmlTest(TestCase):
         real_xml = lib.get_cib_xml(mock_runner)
 
         mock_runner.run.assert_called_once_with(
-            [path("cibadmin"), "--local", "--query"]
+            [settings.cibadmin_exec, "--local", "--query"]
         )
         self.assertEqual(expected_stdout, real_xml)
 
@@ -396,7 +391,7 @@ class GetCibXmlTest(TestCase):
         )
 
         mock_runner.run.assert_called_once_with(
-            [path("cibadmin"), "--local", "--query"]
+            [settings.cibadmin_exec, "--local", "--query"]
         )
 
     def test_success_scope(self):
@@ -412,7 +407,7 @@ class GetCibXmlTest(TestCase):
 
         mock_runner.run.assert_called_once_with(
             [
-                path("cibadmin"),
+                settings.cibadmin_exec,
                 "--local",
                 "--query",
                 "--scope={0}".format(scope),
@@ -447,7 +442,7 @@ class GetCibXmlTest(TestCase):
 
         mock_runner.run.assert_called_once_with(
             [
-                path("cibadmin"),
+                settings.cibadmin_exec,
                 "--local",
                 "--query",
                 "--scope={0}".format(scope),
@@ -481,7 +476,7 @@ class Verify(TestCase):
         runner = get_runner()
         self.assertEqual(lib.verify(runner), ("", "", 0, False))
         runner.run.assert_called_once_with(
-            [path("crm_verify"), "--live-check"],
+            [settings.crm_verify_exec, "--live-check"],
         )
 
     def test_run_on_mocked_cib(self):
@@ -490,14 +485,14 @@ class Verify(TestCase):
 
         self.assertEqual(lib.verify(runner), ("", "", 0, False))
         runner.run.assert_called_once_with(
-            [path("crm_verify"), "--xml-file", fake_tmp_file],
+            [settings.crm_verify_exec, "--xml-file", fake_tmp_file],
         )
 
     def test_run_verbose(self):
         runner = get_runner()
         self.assertEqual(lib.verify(runner, verbose=True), ("", "", 0, False))
         runner.run.assert_called_once_with(
-            [path("crm_verify"), "-V", "-V", "--live-check"],
+            [settings.crm_verify_exec, "-V", "-V", "--live-check"],
         )
 
     def test_run_verbose_on_mocked_cib(self):
@@ -506,7 +501,7 @@ class Verify(TestCase):
 
         self.assertEqual(lib.verify(runner, verbose=True), ("", "", 0, False))
         runner.run.assert_called_once_with(
-            [path("crm_verify"), "-V", "-V", "--xml-file", fake_tmp_file],
+            [settings.crm_verify_exec, "-V", "-V", "--xml-file", fake_tmp_file],
         )
 
     @staticmethod
@@ -569,7 +564,7 @@ class Verify(TestCase):
                     lib.verify(runner, verbose=verbose),
                     ("", "".join(out_stderr), 78, can_be_more_verbose),
                 )
-                args = [path("crm_verify")]
+                args = [settings.crm_verify_exec]
                 if verbose:
                     args.extend(["-V", "-V"])
                 args.extend(["--xml-file", fake_tmp_file])
@@ -615,7 +610,7 @@ class ReplaceCibConfigurationTest(TestCase):
 
         mock_runner.run.assert_called_once_with(
             [
-                path("cibadmin"),
+                settings.cibadmin_exec,
                 "--replace",
                 "--verbose",
                 "--xml-pipe",
@@ -650,7 +645,7 @@ class ReplaceCibConfigurationTest(TestCase):
 
         mock_runner.run.assert_called_once_with(
             [
-                path("cibadmin"),
+                settings.cibadmin_exec,
                 "--replace",
                 "--verbose",
                 "--xml-pipe",
@@ -668,7 +663,7 @@ class UpgradeCibTest(TestCase):
         mock_runner = get_runner("", "", 0)
         lib._upgrade_cib(mock_runner)
         mock_runner.run.assert_called_once_with(
-            [settings.cibadmin, "--upgrade", "--force"]
+            [settings.cibadmin_exec, "--upgrade", "--force"]
         )
 
     def test_error(self):
@@ -689,7 +684,7 @@ class UpgradeCibTest(TestCase):
             ),
         )
         mock_runner.run.assert_called_once_with(
-            [settings.cibadmin, "--upgrade", "--force"]
+            [settings.cibadmin_exec, "--upgrade", "--force"]
         )
 
 
@@ -828,7 +823,7 @@ class SimulateCibXml(TestCase):
 
         mock_runner.run.assert_called_once_with(
             [
-                path("crm_simulate"),
+                settings.crm_simulate_exec,
                 "--simulate",
                 "--save-output",
                 cib_file_name,
@@ -1162,7 +1157,7 @@ class RemoveNode(TestCase):
         mock_runner = get_runner("", "", 0)
         lib.remove_node(mock_runner, "NODE_NAME")
         mock_runner.run.assert_called_once_with(
-            [path("crm_node"), "--force", "--remove", "NODE_NAME"]
+            [settings.crm_node_exec, "--force", "--remove", "NODE_NAME"]
         )
 
     def test_error(self):
@@ -1422,7 +1417,7 @@ class ResourcesWaitingTest(TestCase):
         self.assertEqual(None, lib.wait_for_idle(mock_runner, 0))
 
         mock_runner.run.assert_called_once_with(
-            [path("crm_resource"), "--wait"]
+            [settings.crm_resource_exec, "--wait"]
         )
 
     def test_wait_timeout_success(self):
@@ -1437,7 +1432,11 @@ class ResourcesWaitingTest(TestCase):
         self.assertEqual(None, lib.wait_for_idle(mock_runner, timeout))
 
         mock_runner.run.assert_called_once_with(
-            [path("crm_resource"), "--wait", "--timeout={0}".format(timeout)]
+            [
+                settings.crm_resource_exec,
+                "--wait",
+                "--timeout={0}".format(timeout),
+            ]
         )
 
     def test_wait_error(self):
@@ -1460,7 +1459,7 @@ class ResourcesWaitingTest(TestCase):
         )
 
         mock_runner.run.assert_called_once_with(
-            [path("crm_resource"), "--wait"]
+            [settings.crm_resource_exec, "--wait"]
         )
 
     def test_wait_error_timeout(self):
@@ -1483,7 +1482,7 @@ class ResourcesWaitingTest(TestCase):
         )
 
         mock_runner.run.assert_called_once_with(
-            [path("crm_resource"), "--wait"]
+            [settings.crm_resource_exec, "--wait"]
         )
 
 
@@ -1542,7 +1541,7 @@ class GetResourceDigests(TestCase):
         "nonreloadable": "0" * 31 + "3",
     }
     CALL_ARGS = [
-        path("crm_resource"),
+        settings.crm_resource_exec,
         "--digests",
         "--resource",
         "resource-id",
@@ -1890,7 +1889,7 @@ class ValidateResourceInstanceAttributesViaPcmkTest(TestCase):
         self.mock_handler.assert_called_once_with(
             self.runner,
             [
-                settings.crm_resource_binary,
+                settings.crm_resource_exec,
                 "--validate",
                 "--output-as",
                 "xml",
@@ -1918,7 +1917,7 @@ class ValidateResourceInstanceAttributesViaPcmkTest(TestCase):
         self.mock_handler.assert_called_once_with(
             self.runner,
             [
-                settings.crm_resource_binary,
+                settings.crm_resource_exec,
                 "--validate",
                 "--output-as",
                 "xml",
@@ -1958,7 +1957,7 @@ class ValidateStonithInstanceAttributesViaPcmkTest(TestCase):
         self.mock_handler.assert_called_once_with(
             self.runner,
             [
-                settings.stonith_admin,
+                settings.stonith_admin_exec,
                 "--validate",
                 "--output-as",
                 "xml",

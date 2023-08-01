@@ -31,7 +31,7 @@ def _unfence_node_devices(
     devices_to_unfence = set(updated_devices) - set(original_devices)
     if not devices_to_unfence:
         return
-    fence_agent_bin = os.path.join(settings.fence_agent_binaries, fence_agent)
+    fence_agent_bin = os.path.join(settings.fence_agent_execs, fence_agent)
     fenced_devices = []
     # do not check devices being removed
     for device in sorted(set(original_devices) & set(updated_devices)):

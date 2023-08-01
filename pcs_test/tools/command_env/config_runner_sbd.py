@@ -20,7 +20,7 @@ class SbdShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                [settings.sbd_binary, "query-watchdog"],
+                [settings.sbd_exec, "query-watchdog"],
                 stdout=output,
                 stderr=stderr,
                 returncode=returncode,
@@ -38,7 +38,7 @@ class SbdShortcuts:
         return_code=0,
         name="runner.sbd.initialize_devices",
     ):
-        cmd = [settings.sbd_binary]
+        cmd = [settings.sbd_exec]
         for device in devices:
             cmd += ["-d", device]
 
@@ -67,7 +67,7 @@ class SbdShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                [settings.sbd_binary, "-d", device, "list"],
+                [settings.sbd_exec, "-d", device, "list"],
                 stdout=stdout,
                 stderr=stderr,
                 returncode=return_code,
@@ -85,7 +85,7 @@ class SbdShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                [settings.sbd_binary, "-d", device, "dump"],
+                [settings.sbd_exec, "-d", device, "dump"],
                 stdout=stdout,
                 stderr=stderr,
                 returncode=return_code,
@@ -105,7 +105,7 @@ class SbdShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                [settings.sbd_binary, "-d", device, "message", node, message],
+                [settings.sbd_exec, "-d", device, "message", node, message],
                 stdout=stdout,
                 stderr=stderr,
                 returncode=return_code,

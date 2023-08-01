@@ -382,7 +382,7 @@ class PcmkShortcuts:
             env = {}
         env["PATH"] = ":".join(
             [
-                settings.fence_agent_binaries,
+                settings.fence_agent_execs,
                 "/bin",
                 "/usr/bin",
             ]
@@ -475,7 +475,7 @@ class PcmkShortcuts:
         if stdout is None:
             with open(rc(name_to_metadata_file[agent_name])) as a_file:
                 stdout = a_file.read()
-        agent_path = settings.__dict__[agent_name.replace("-", "_")]
+        agent_path = settings.__dict__[agent_name.replace("-", "_") + "_exec"]
         self.__calls.place(
             name,
             RunnerCall(

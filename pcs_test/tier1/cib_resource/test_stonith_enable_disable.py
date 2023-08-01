@@ -4,7 +4,7 @@ from pcs_test.tools.bin_mock import get_mock_settings
 
 class Enable(ResourceTest):
     def test_enable_disabled_stonith(self):
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
         self.assert_effect(
             "stonith create S fence_xvm --disabled".split(),
             """<resources>
@@ -37,7 +37,7 @@ class Enable(ResourceTest):
         )
 
     def test_keep_enabled_stonith(self):
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
         result_xml = """<resources>
             <primitive class="stonith" id="S" type="fence_xvm">
                 <operations>
@@ -54,7 +54,7 @@ class Enable(ResourceTest):
 
 class Disable(ResourceTest):
     def test_disable_enabled_stonith(self):
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
         self.assert_effect(
             "stonith create S fence_xvm".split(),
             """<resources>
@@ -86,7 +86,7 @@ class Disable(ResourceTest):
         )
 
     def test_keep_disabled_stonith(self):
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
         result_xml = """<resources>
             <primitive class="stonith" id="S" type="fence_xvm">
                 <meta_attributes id="S-meta_attributes">

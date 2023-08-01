@@ -34,7 +34,7 @@ class ScsiShortcuts:
             name,
             RunnerCall(
                 [
-                    os.path.join(settings.fence_agent_binaries, fence_agent),
+                    os.path.join(settings.fence_agent_execs, fence_agent),
                     "--action=on",
                     "--devices",
                     ",".join(sorted(devices)),
@@ -70,7 +70,7 @@ class ScsiShortcuts:
             name,
             RunnerCall(
                 [
-                    os.path.join(settings.fence_agent_binaries, fence_agent),
+                    os.path.join(settings.fence_agent_execs, fence_agent),
                     "--action=status",
                     f"--devices={device}",
                     f"--plug={node}",

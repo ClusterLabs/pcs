@@ -1,15 +1,15 @@
 import os.path
 
 # generic system paths
-chkconfig_binary = "/sbin/chkconfig"
-find_executable = "@FIND@"
-killall_executable = "@KILLALL@"
-rm_executable = "@RM@"
-ruby_executable = "@RUBY@"
-service_binary = "@SERVICE@"
-systemctl_binary = "@SYSTEMCTL@"
+chkconfig_exec = "/sbin/chkconfig"
+find_exec = "@FIND@"
+killall_exec = "@KILLALL@"
+rm_exec = "@RM@"
+ruby_exec = "@RUBY@"
+service_exec = "@SERVICE@"
+systemctl_exec = "@SYSTEMCTL@"
 systemd_unit_path = "@SYSTEMD_UNIT_PATH@".split(":")
-certutil_executable = "@CERTUTIL@"
+certutil_exec = "@CERTUTIL@"
 
 
 # pcs
@@ -20,6 +20,7 @@ pcs_data_dir = "@LIB_DIR@/pcs/data/"
 
 # pcsd
 pcsd_exec_location = "@LIB_DIR@/pcsd"
+pcs_capabilities = os.path.join(pcsd_exec_location, "capabilities.xml")
 # Set pcsd_gem_path to None if there are no bundled ruby gems and the path does
 # not exists.
 pcsd_gem_path = "@GEM_HOME@" or None
@@ -72,8 +73,12 @@ task_deletion_timeout_seconds = 1 * 60
 
 
 # corosync
-corosync_binaries = "@COROEXECPREFIX@/sbin"
+# Used only in settings.py and utils.py. Make it private once utils.py is removed.
+corosync_execs = "@COROEXECPREFIX@/sbin"
 corosync_conf_dir = "@COROCONFDIR@/corosync"
+corosync_exec = os.path.join(corosync_execs, "corosync")
+corosync_cfgtool_exec = os.path.join(corosync_execs, "corosync-cfgtool")
+corosync_quorumtool_exec = os.path.join(corosync_execs, "corosync-quorumtool")
 corosync_conf_file = os.path.join(corosync_conf_dir, "corosync.conf")
 corosync_uidgid_dir = os.path.join(corosync_conf_dir, "uidgid.d")
 corosync_authkey_file = os.path.join(corosync_conf_dir, "authkey")
@@ -83,8 +88,14 @@ corosync_log_file = "@COROLOGDIR@/corosync.log"
 
 
 # corosync qnetd and qdevice
-corosync_qnet_binaries = "@COROQDEVEXECPREFIX@/bin"
-corosync_qdevice_binaries = "@COROQDEVEXECPREFIX@/sbin"
+corosync_qnet_execs = "@COROQDEVEXECPREFIX@/bin"
+corosync_qnetd_certutil_exec = os.path.join(
+    corosync_qnet_execs, "corosync-qnetd-certutil"
+)
+corosync_qnetd_tool_exec = os.path.join(
+    corosync_qnet_execs, "corosync-qnetd-tool"
+)
+corosync_qdevice_execs = "@COROQDEVEXECPREFIX@/sbin"
 corosync_qdevice_conf_dir = "@COROQDEVCONFDIR@"
 corosync_qdevice_net_server_certs_dir = os.path.join(
     corosync_qdevice_conf_dir, "qnetd/nssdb"
@@ -94,10 +105,17 @@ corosync_qdevice_net_client_certs_dir = os.path.join(
     corosync_qdevice_conf_dir, "qdevice/net/nssdb"
 )
 corosync_qdevice_net_client_ca_file_name = "qnetd-cacert.crt"
+corosync_qdevice_tool_exec = os.path.join(
+    corosync_qdevice_execs, "corosync-qdevice-tool"
+)
+corosync_qdevice_net_certutil_exec = os.path.join(
+    corosync_qdevice_execs, "corosync-qdevice-net-certutil"
+)
 
 
 # pacemaker
-pacemaker_binaries = "@PCMKEXECPREFIX@/sbin"
+# Used only in settings.py and utils.py. Make it private once utils.py is removed.
+pacemaker_execs = "@PCMKEXECPREFIX@/sbin"
 pacemaker_authkey_file = "@PCMKCONFDIR@/pacemaker/authkey"
 # Using the same value as for corosync. Higher values MAY work in FIPS.
 pacemaker_authkey_bytes = 256
@@ -105,19 +123,25 @@ pacemaker_local_state_dir = os.path.join(
     "/", "@PCMKLOCALSTATEDIR@", "lib/pacemaker"
 )
 pacemaker_daemon_dir = "@PCMK_DAEMON_DIR@"
-pacemaker_schedulerd = os.path.join(
+pacemaker_schedulerd_exec = os.path.join(
     pacemaker_daemon_dir, "pacemaker-schedulerd"
 )
-pacemaker_controld = os.path.join(pacemaker_daemon_dir, "pacemaker-controld")
-pacemaker_based = os.path.join(pacemaker_daemon_dir, "pacemaker-based")
-pacemaker_fenced = os.path.join(pacemaker_daemon_dir, "pacemaker-fenced")
-crm_resource_binary = "@PCMKEXECPREFIX@/sbin/crm_resource"
-crm_mon = "@PCMKEXECPREFIX@/sbin/crm_mon"
-crm_report = "@PCMKEXECPREFIX@/sbin/crm_report"
-crm_rule = "@PCMKEXECPREFIX@/sbin/crm_rule"
-crm_diff = "@PCMKEXECPREFIX@/sbin/crm_diff"
-cibadmin = "@PCMKEXECPREFIX@/sbin/cibadmin"
-stonith_admin = "@PCMKEXECPREFIX@/sbin/stonith_admin"
+pacemakerd_exec = os.path.join(pacemaker_execs, "pacemakerd")
+iso8601_exec = os.path.join(pacemaker_execs, "iso8601")
+pacemaker_controld_exec = os.path.join(pacemaker_daemon_dir, "pacemaker-controld")
+pacemaker_based_exec = os.path.join(pacemaker_daemon_dir, "pacemaker-based")
+pacemaker_fenced_exec = os.path.join(pacemaker_daemon_dir, "pacemaker-fenced")
+crm_resource_exec = os.path.join(pacemaker_execs, "crm_resource")
+crm_mon_exec = os.path.join(pacemaker_execs, "crm_mon")
+crm_report_exec = os.path.join(pacemaker_execs, "crm_report")
+crm_rule_exec = os.path.join(pacemaker_execs, "crm_rule")
+crm_diff_exec = os.path.join(pacemaker_execs, "crm_diff")
+crm_simulate_exec = os.path.join(pacemaker_execs, "crm_simulate")
+crm_ticket_exec = os.path.join(pacemaker_execs, "crm_ticket")
+crm_verify_exec = os.path.join(pacemaker_execs, "crm_verify")
+crm_node_exec = os.path.join(pacemaker_execs, "crm_node")
+cibadmin_exec = os.path.join(pacemaker_execs, "cibadmin")
+stonith_admin_exec = os.path.join(pacemaker_execs, "stonith_admin")
 pacemaker_api_result_schema = "@PCMK_SCHEMA_DIR@/api/api-result.rng"
 cib_dir = "@PCMK_CIB_DIR@"
 pacemaker_uname = "@PCMK_USER@"
@@ -126,11 +150,11 @@ pacemaker_wait_timeout_status = 124
 
 
 # resource / stonith agents
-fence_agent_binaries = "@FASEXECPREFIX@/sbin"
+fence_agent_execs = "@FASEXECPREFIX@/sbin"
 
 
 # sbd
-sbd_binary = "@SBDEXECPREFIX@/sbin/sbd"
+sbd_exec = "@SBDEXECPREFIX@/sbin/sbd"
 sbd_config = "@SBDCONFDIR@/sbd"
 # this limit is also mentioned in docs, change there as well
 sbd_max_device_num = 3
@@ -143,7 +167,7 @@ sbd_watchdog_default = "/dev/watchdog"
 # Booth does not support keys longer than 64 bytes.
 booth_authkey_bytes = 64
 booth_authkey_file_mode = 0o600
-booth_binary = "@BOOTHEXECPREFIX@/sbin/booth"
+booth_exec = "@BOOTHEXECPREFIX@/sbin/booth"
 booth_config_dir = "@BOOTHCONFDIR@"
 booth_enable_authfile_set_enabled = @BOOTH_ENABLE_AUTHFILE_SET_ENABLED@
 booth_enable_authfile_unset_enabled = @BOOTH_ENABLE_AUTHFILE_UNSET_ENABLED@ or booth_enable_authfile_set_enabled

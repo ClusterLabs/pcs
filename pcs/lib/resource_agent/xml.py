@@ -44,7 +44,7 @@ def _load_metadata_xml(
         [
             # otherwise pacemaker cannot run RHEL fence agents to get their
             # metadata
-            settings.fence_agent_binaries,
+            settings.fence_agent_execs,
             # otherwise heartbeat and cluster-glue agents don't work
             "/bin",
             # otherwise heartbeat and cluster-glue agents don't work
@@ -52,7 +52,7 @@ def _load_metadata_xml(
         ]
     )
     stdout, stderr, retval = runner.run(
-        [settings.crm_resource_binary, "--show-metadata", agent_name.full_name],
+        [settings.crm_resource_exec, "--show-metadata", agent_name.full_name],
         env_extend={"PATH": env_path},
     )
     if retval != 0:
@@ -70,10 +70,10 @@ def _load_fake_agent_metadata_xml(
     agent_name -- name of pacemaker part whose metadata we want to get
     """
     name_to_executable = {
-        const.PACEMAKER_BASED: settings.pacemaker_based,
-        const.PACEMAKER_CONTROLD: settings.pacemaker_controld,
-        const.PACEMAKER_FENCED: settings.pacemaker_fenced,
-        const.PACEMAKER_SCHEDULERD: settings.pacemaker_schedulerd,
+        const.PACEMAKER_BASED: settings.pacemaker_based_exec,
+        const.PACEMAKER_CONTROLD: settings.pacemaker_controld_exec,
+        const.PACEMAKER_FENCED: settings.pacemaker_fenced_exec,
+        const.PACEMAKER_SCHEDULERD: settings.pacemaker_schedulerd_exec,
     }
     if agent_name not in name_to_executable:
         raise UnableToGetAgentMetadata(agent_name, "Unknown agent")

@@ -641,7 +641,7 @@ def _ticket_operation(
         site_ip = site_ip_list[0]
 
     stdout, stderr, return_code = env.cmd_runner().run(
-        [settings.booth_binary, operation, "-s", site_ip, ticket_name]
+        [settings.booth_exec, operation, "-s", site_ip, ticket_name]
     )
 
     if return_code != 0:

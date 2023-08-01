@@ -215,7 +215,7 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
             ),
         )
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
         if PCMK_2_0_3_PLUS:
             self.assert_pcs_success(
                 ["status"],
@@ -736,7 +736,7 @@ class XmlStatus(AssertPcsMixin, TestCase):
               <status code="0" message="OK"/>
             </pacemaker-result>
         """.format(
-            crm_mon=settings.crm_mon
+            crm_mon=settings.crm_mon_exec
         )
         self.assert_pcs_success(
             ["status", "xml"],

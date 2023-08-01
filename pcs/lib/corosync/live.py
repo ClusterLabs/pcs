@@ -1,4 +1,3 @@
-import os.path
 import re
 from dataclasses import dataclass
 from typing import (
@@ -36,11 +35,7 @@ def set_expected_votes(runner: CommandRunner, votes: int) -> str:
     set expected votes in live cluster to the specified value
     """
     stdout, stderr, retval = runner.run(
-        [
-            os.path.join(settings.corosync_binaries, "corosync-quorumtool"),
-            "-e",
-            str(votes),
-        ]
+        [settings.corosync_quorumtool_exec, "-e", str(votes)]
     )
     if retval != 0:
         raise LibraryError(
@@ -70,7 +65,7 @@ def get_quorum_status_text(runner: CommandRunner) -> str:
     Get runtime quorum status from the local node
     """
     stdout, stderr, retval = runner.run(
-        [os.path.join(settings.corosync_binaries, "corosync-quorumtool"), "-p"]
+        [settings.corosync_quorumtool_exec, "-p"]
     )
     # retval is 0 on success if the node is not in a partition with quorum
     # retval is 1 on error OR on success if the node has quorum

@@ -1,4 +1,3 @@
-import os.path
 from dataclasses import dataclass
 from textwrap import dedent
 from typing import Iterable
@@ -32,7 +31,7 @@ def get_capabilities_definition() -> list[Capability]:
 
     The point is to return all data in python structures for further processing.
     """
-    filename = os.path.join(settings.pcsd_exec_location, "capabilities.xml")
+    filename = settings.pcs_capabilities
     try:
         with open(filename, mode="r") as xml_file:
             capabilities_xml = xml_fromstring(xml_file.read())

@@ -1,4 +1,3 @@
-import os.path
 from unittest import TestCase
 
 from pcs import settings
@@ -541,10 +540,7 @@ class DefaultsConfigMixin:
         self.config.runner.cib.load(
             filename="cib-empty-3.4.xml", optional_in_conf=defaults_xml
         )
-        self.config.fs.isfile(
-            (os.path.join(settings.pacemaker_binaries, "crm_rule")),
-            return_value=True,
-        )
+        self.config.fs.isfile(settings.crm_rule_exec, return_value=True)
         self.assertEqual(
             CibDefaultsDto(instance_attributes=[], meta_attributes=[]),
             self.command(self.env_assist.get_env(), True),
@@ -624,10 +620,7 @@ class DefaultsConfigMixin:
         self.config.runner.cib.load(
             filename="cib-empty-3.4.xml", optional_in_conf=defaults_xml
         )
-        self.config.fs.isfile(
-            (os.path.join(settings.pacemaker_binaries, "crm_rule")),
-            return_value=False,
-        )
+        self.config.fs.isfile(settings.crm_rule_exec, return_value=False)
         self.assertEqual(
             CibDefaultsDto(
                 instance_attributes=[
@@ -842,8 +835,7 @@ class DefaultsConfigMixin:
         )
         if crm_rule_check:
             self.config.fs.isfile(
-                (os.path.join(settings.pacemaker_binaries, "crm_rule")),
-                return_value=crm_rule_present,
+                settings.crm_rule_exec, return_value=crm_rule_present
             )
 
     def test_crm_rule_missing(self):

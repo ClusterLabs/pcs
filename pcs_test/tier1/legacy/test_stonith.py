@@ -38,7 +38,7 @@ class StonithDescribeTest(TestCase, AssertPcsMixin):
     def setUp(self):
         self.pcs_runner = PcsRunner(cib_file=None)
         self.pcs_runner.mock_settings = get_mock_settings(
-            "crm_resource_binary", "pacemaker_fenced"
+            "crm_resource_exec", "pacemaker_fenced_exec"
         )
 
     def test_success(self):
@@ -1136,7 +1136,7 @@ class StonithTest(TestCase, AssertPcsMixin):
         self.temp_corosync_conf = get_tmp_file("tier1_test_stonith")
         write_file_to_tmpfile(rc("corosync.conf"), self.temp_corosync_conf)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
         self.pcs_runner.mock_settings[
             "corosync_conf_file"
         ] = self.temp_corosync_conf.name
@@ -2132,7 +2132,7 @@ class LevelTestsBase(TestCase, AssertPcsMixin):
         self.temp_cib = get_tmp_file("tier1_test_stonith_level")
         write_file_to_tmpfile(rc("cib-empty-withnodes.xml"), self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
         self.config = ""
         self.config_lines = []
 
@@ -3390,7 +3390,7 @@ class StonithUpdate(ResourceTest):
 
     def setUp(self):
         super().setUp()
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
         self.fixture_create_stonith()
 
     def fixture_create_stonith(self):

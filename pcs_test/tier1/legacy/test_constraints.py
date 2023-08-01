@@ -2145,11 +2145,10 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         self.assertEqual(retval, 1)
 
     def testMasterSlaveConstraint(self):
-        cibadmin = os.path.join(settings.pacemaker_binaries, "cibadmin")
         os.system(
             "CIB_file="
             + self.temp_cib.name
-            + f' {cibadmin} -R --scope nodes --xml-text \'<nodes><node id="1" uname="rh7-1"/><node id="2" uname="rh7-2"/></nodes>\''
+            + f' {settings.cibadmin_exec} -R --scope nodes --xml-text \'<nodes><node id="1" uname="rh7-1"/><node id="2" uname="rh7-2"/></nodes>\''
         )
 
         stdout, stderr, retval = pcs(
@@ -2167,7 +2166,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "resource create stateful2 ocf:pacemaker:Stateful --group statefulG".split(),
-            mock_settings=get_mock_settings("crm_resource_binary"),
+            mock_settings=get_mock_settings("crm_resource_exec"),
         )
         self.assertEqual(stdout, "")
         ac(
@@ -2404,11 +2403,10 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         )
 
     def testCloneConstraint(self):
-        cibadmin = os.path.join(settings.pacemaker_binaries, "cibadmin")
         os.system(
             "CIB_file="
             + self.temp_cib.name
-            + f' {cibadmin} -R --scope nodes --xml-text \'<nodes><node id="1" uname="rh7-1"/><node id="2" uname="rh7-2"/></nodes>\''
+            + f' {settings.cibadmin_exec} -R --scope nodes --xml-text \'<nodes><node id="1" uname="rh7-1"/><node id="2" uname="rh7-2"/></nodes>\''
         )
 
         stdout, stderr, retval = pcs(
@@ -2664,11 +2662,10 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         )
 
     def testMissingRole(self):
-        cibadmin = os.path.join(settings.pacemaker_binaries, "cibadmin")
         os.system(
             "CIB_file="
             + self.temp_cib.name
-            + f' {cibadmin} -R --scope nodes --xml-text \'<nodes><node id="1" uname="rh7-1"/><node id="2" uname="rh7-2"/></nodes>\''
+            + f' {settings.cibadmin_exec} -R --scope nodes --xml-text \'<nodes><node id="1" uname="rh7-1"/><node id="2" uname="rh7-2"/></nodes>\''
         )
 
         # pcs no longer allows creating masters but supports existing ones. In
@@ -2678,7 +2675,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         os.system(
             "CIB_file="
             + self.temp_cib.name
-            + f' {cibadmin} -R --scope constraints --xml-text \'<constraints><rsc_location id="cli-prefer-stateful0-master" role="Master" rsc="stateful0-master" node="rh7-1" score="INFINITY"/><rsc_location id="cli-ban-stateful0-master-on-rh7-1" rsc="stateful0-master" role="Slave" node="rh7-1" score="-INFINITY"/></constraints>\''
+            + f' {settings.cibadmin_exec} -R --scope constraints --xml-text \'<constraints><rsc_location id="cli-prefer-stateful0-master" role="Master" rsc="stateful0-master" node="rh7-1" score="INFINITY"/><rsc_location id="cli-ban-stateful0-master-on-rh7-1" rsc="stateful0-master" role="Slave" node="rh7-1" score="-INFINITY"/></constraints>\''
         )
 
         self.assert_pcs_success(
@@ -5204,7 +5201,7 @@ class ExpiredConstraints(ConstraintBaseTest):
 
     def test_crm_rule_missing(self):
         self.pcs_runner = PcsRunner(
-            self.temp_cib.name, mock_settings={"crm_rule": ""}
+            self.temp_cib.name, mock_settings={"crm_rule_exec": ""}
         )
         self.fixture_primitive()
         self.assert_pcs_success(

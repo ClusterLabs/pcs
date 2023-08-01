@@ -8,7 +8,7 @@ from pcs.common import capabilities
 from pcs_test.tools.misc import get_test_resource as rc
 
 
-@mock.patch("pcs.settings.pcsd_exec_location", rc(""))
+@mock.patch("pcs.settings.pcs_capabilities", rc("capabilities.xml"))
 class Capabilities(TestCase):
     def test_get_definition(self):
         self.assertEqual(

@@ -13,7 +13,7 @@ from pcs.lib.interface.config import ParserErrorException
 
 
 def get_daemon_status(runner, name=None):
-    cmd = [settings.booth_binary, "status"]
+    cmd = [settings.booth_exec, "status"]
     if name:
         cmd += ["-c", name]
     stdout, stderr, return_value = runner.run(cmd)
@@ -30,7 +30,7 @@ def get_daemon_status(runner, name=None):
 
 
 def get_tickets_status(runner, name=None):
-    cmd = [settings.booth_binary, "list"]
+    cmd = [settings.booth_exec, "list"]
     if name:
         cmd += ["-c", name]
     stdout, stderr, return_value = runner.run(cmd)
@@ -46,7 +46,7 @@ def get_tickets_status(runner, name=None):
 
 
 def get_peers_status(runner, name=None):
-    cmd = [settings.booth_binary, "peers"]
+    cmd = [settings.booth_exec, "peers"]
     if name:
         cmd += ["-c", name]
     stdout, stderr, return_value = runner.run(cmd)

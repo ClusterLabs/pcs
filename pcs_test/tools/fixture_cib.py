@@ -92,7 +92,7 @@ def wrap_element_by_master(cib_file, resource_id, master_id=None):
     )
     stdout, stderr, retval = runner.run(
         [
-            os.path.join(settings.pacemaker_binaries, "cibadmin"),
+            settings.cibadmin_exec,
             "--replace",
             "--scope",
             "resources",
@@ -168,7 +168,7 @@ def fixture_to_cib(cib_file, xml):
     )
     stdout, stderr, retval = runner.run(
         [
-            os.path.join(settings.pacemaker_binaries, "cibadmin"),
+            settings.cibadmin_exec,
             "--create",
             "--scope",
             "resources",

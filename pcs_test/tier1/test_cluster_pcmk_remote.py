@@ -38,7 +38,7 @@ class RemoteTest(ResourceTest):
     def setUp(self):
         super().setUp()
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
 
 
 class NodeAddRemote(RemoteTest):

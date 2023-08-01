@@ -68,7 +68,7 @@ large_cib = rc("cib-large.xml")
 class ResourceDescribe(TestCase, AssertPcsMixin):
     def setUp(self):
         self.pcs_runner = PcsRunner(None)
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
 
     def fixture_description(self, advanced=False):
         # pylint: disable=no-self-use
@@ -545,7 +545,7 @@ class Resource(TestCase, AssertPcsMixin):
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         write_file_to_tmpfile(large_cib, self.temp_large_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
 
     def tearDown(self):
         self.temp_cib.close()
@@ -2996,6 +2996,10 @@ class Resource(TestCase, AssertPcsMixin):
 
     @skip_unless_crm_rule()
     def testGroupRemoveWithConstraints1(self):
+        # The mock executable for crm_resource does not support the
+        # `move-with-constraint` command, and so the real executable is used.
+        self.pcs_runner.mock_settings = {}
+
         # Load nodes into cib so move will work
         self.temp_cib.seek(0)
         xml = etree.fromstring(self.temp_cib.read())
@@ -3065,7 +3069,6 @@ class Resource(TestCase, AssertPcsMixin):
                 """
             ),
         )
-
         self.assert_pcs_success(
             "resource delete D1".split(),
             stderr_full="Deleting Resource - D1\n",
@@ -4200,7 +4203,7 @@ class OperationDeleteRemoveMixin(
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         write_file_to_tmpfile(large_cib, self.temp_large_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
         self.command = "to-be-overridden"
 
     def tearDown(self):
@@ -4367,7 +4370,7 @@ class Utilization(
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         write_file_to_tmpfile(large_cib, self.temp_large_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
 
     def tearDown(self):
         self.temp_cib.close()
@@ -4604,7 +4607,7 @@ class MetaAttrs(
         self.temp_cib = get_tmp_file("tier1_resource_meta")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
 
     def tearDown(self):
         self.temp_cib.close()
@@ -4879,7 +4882,7 @@ class UpdateInstanceAttrs(
         self.temp_cib = get_tmp_file("tier1_resource_update_instance_attrs")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
 
     def tearDown(self):
         self.temp_cib.close()
@@ -6014,7 +6017,7 @@ class ResourceUpdateUniqueAttrChecks(TestCase, AssertPcsMixin):
         self.temp_cib = get_tmp_file("tier1_resource_update_unique_attr")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
 
     def tearDown(self):
         self.temp_cib.close()

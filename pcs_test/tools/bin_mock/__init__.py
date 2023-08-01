@@ -10,8 +10,8 @@ PACEMAKER_FENCED_BIN = os.path.abspath(
 )
 
 MOCK_SETTINGS = {
-    "crm_resource_binary": CRM_RESOURCE_BIN,
-    "pacemaker_fenced": PACEMAKER_FENCED_BIN,
+    "crm_resource_exec": CRM_RESOURCE_BIN,
+    "pacemaker_fenced_exec": PACEMAKER_FENCED_BIN,
 }
 
 

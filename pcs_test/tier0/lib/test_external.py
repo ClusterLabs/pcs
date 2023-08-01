@@ -402,7 +402,7 @@ class KillServicesTest(TestCase):
         self.mock_runner.run.return_value = ("", "", 0)
         lib.kill_services(self.mock_runner, self.services)
         self.mock_runner.run.assert_called_once_with(
-            [settings.killall_executable, "--quiet", "--signal", "9", "--"]
+            [settings.killall_exec, "--quiet", "--signal", "9", "--"]
             + self.services
         )
 
@@ -413,7 +413,7 @@ class KillServicesTest(TestCase):
             lambda: lib.kill_services(self.mock_runner, self.services),
         )
         self.mock_runner.run.assert_called_once_with(
-            [settings.killall_executable, "--quiet", "--signal", "9", "--"]
+            [settings.killall_exec, "--quiet", "--signal", "9", "--"]
             + self.services
         )
 
@@ -421,7 +421,7 @@ class KillServicesTest(TestCase):
         self.mock_runner.run.return_value = ("", "", 1)
         lib.kill_services(self.mock_runner, self.services)
         self.mock_runner.run.assert_called_once_with(
-            [settings.killall_executable, "--quiet", "--signal", "9", "--"]
+            [settings.killall_exec, "--quiet", "--signal", "9", "--"]
             + self.services
         )
 

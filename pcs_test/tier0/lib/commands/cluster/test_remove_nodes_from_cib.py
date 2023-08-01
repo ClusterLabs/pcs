@@ -73,7 +73,7 @@ class SuccessMinimal(TestCase):
         for node in self.nodes:
             self.config.runner.place(
                 [
-                    settings.cibadmin,
+                    settings.cibadmin_exec,
                     "--delete-all",
                     "--force",
                     f"--xpath=/cib/configuration/nodes/node[@uname='{node}']",
@@ -86,7 +86,7 @@ class SuccessMinimal(TestCase):
     def test_failure_pcmk_not_running(self):
         err_msg = "an error"
         cmd_env = dict(CIB_file=os.path.join(settings.cib_dir, "cib.xml"))
-        cmd = [settings.cibadmin, "--delete-all", "--force"]
+        cmd = [settings.cibadmin_exec, "--delete-all", "--force"]
         cmd_xpath = "--xpath=/cib/configuration/nodes/node[@uname='{}']"
         self.config.services.is_running("pacemaker", return_value=False)
         self.config.runner.place(

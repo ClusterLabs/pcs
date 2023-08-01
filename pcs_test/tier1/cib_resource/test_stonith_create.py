@@ -13,7 +13,7 @@ ERRORS_HAVE_OCCURRED = (
 
 class PlainStonith(ResourceTest):
     def test_simplest(self):
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
         self.assert_effect(
             "stonith create S fence_xvm".split(),
             """<resources>
@@ -28,7 +28,7 @@ class PlainStonith(ResourceTest):
         )
 
     def test_base_with_agent_that_provides_unfencing(self):
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
         self.assert_effect(
             "stonith create S fence_scsi --force".split(),
             """<resources>
@@ -122,7 +122,7 @@ class PlainStonith(ResourceTest):
         )
 
     def test_disabled_puts_target_role_stopped(self):
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
         self.assert_effect(
             "stonith create S fence_xvm --disabled".split(),
             """<resources>
@@ -142,7 +142,7 @@ class PlainStonith(ResourceTest):
         )
 
     def test_debug_and_verbose_allowed(self):
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
         self.assert_effect(
             "stonith create S fence_apc ip=i username=u verbose=v debug=d password=1234".split(),
             """<resources>
@@ -178,7 +178,7 @@ class PlainStonith(ResourceTest):
         )
 
     def test_error_when_action_specified(self):
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
         self.assert_pcs_fail(
             "stonith create S fence_xvm action=reboot".split(),
             "Error: stonith option 'action' is deprecated and should not be"
@@ -187,7 +187,7 @@ class PlainStonith(ResourceTest):
         )
 
     def test_warn_when_action_specified_forced(self):
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
         self.assert_effect(
             "stonith create S fence_xvm action=reboot --force".split(),
             """<resources>
@@ -213,7 +213,7 @@ class PlainStonith(ResourceTest):
 
 class WithMeta(ResourceTest):
     def test_simplest_with_meta_provides(self):
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
         self.assert_effect(
             "stonith create S fence_xvm meta provides=something".split(),
             """<resources>
@@ -233,7 +233,7 @@ class WithMeta(ResourceTest):
         )
 
     def test_base_with_agent_that_provides_unfencing_with_meta_provides(self):
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
         self.assert_effect(
             "stonith create S fence_scsi meta provides=something --force".split(),
             """<resources>
@@ -260,7 +260,7 @@ class InGroup(ResourceTest):
     )
 
     def test_command_simply_puts_stonith_into_group(self):
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
         self.assert_effect(
             "stonith create S fence_xvm --group G".split(),
             """<resources>
@@ -278,7 +278,7 @@ class InGroup(ResourceTest):
         )
 
     def test_command_simply_puts_stonith_into_group_at_the_end(self):
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
         self.assert_pcs_success(
             "stonith create S1 fence_xvm --group G".split(),
             stderr_full=self.deprecation_warning,
@@ -307,7 +307,7 @@ class InGroup(ResourceTest):
         )
 
     def test_command_simply_puts_stonith_into_group_before_another(self):
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
         self.assert_pcs_success(
             "stonith create S1 fence_xvm --group G".split(),
             stderr_full=self.deprecation_warning,
@@ -336,7 +336,7 @@ class InGroup(ResourceTest):
         )
 
     def test_command_simply_puts_stonith_into_group_after_another(self):
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
         self.assert_pcs_success_all(
             [
                 "stonith create S1 fence_xvm --group G".split(),
@@ -374,7 +374,7 @@ class InGroup(ResourceTest):
         )
 
     def test_fail_when_intended_before_item_does_not_exist(self):
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
         self.assert_pcs_fail(
             "stonith create S2 fence_xvm --group G --before S1".split(),
             (
@@ -385,7 +385,7 @@ class InGroup(ResourceTest):
         )
 
     def test_fail_when_intended_after_item_does_not_exist(self):
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
         self.assert_pcs_fail(
             "stonith create S2 fence_xvm --group G --after S1".split(),
             (

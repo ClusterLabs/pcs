@@ -38,7 +38,7 @@ def list_resource_agents_standards(runner: CommandRunner) -> List[str]:
     """
     # retval is the number of standards found
     stdout, dummy_stderr, dummy_retval = runner.run(
-        [settings.crm_resource_binary, "--list-standards"]
+        [settings.crm_resource_exec, "--list-standards"]
     )
     return sorted(set(split_multiline(stdout)), key=str.lower)
 
@@ -49,7 +49,7 @@ def list_resource_agents_ocf_providers(runner: CommandRunner) -> List[str]:
     """
     # retval is the number of providers found
     stdout, dummy_stderr, dummy_retval = runner.run(
-        [settings.crm_resource_binary, "--list-ocf-providers"]
+        [settings.crm_resource_exec, "--list-ocf-providers"]
     )
     return sorted(set(split_multiline(stdout)), key=str.lower)
 
@@ -86,7 +86,7 @@ def list_resource_agents(
     # retval is 0 on success, anything else when no agents were found
     stdout, dummy_stderr, retval = runner.run(
         [
-            settings.crm_resource_binary,
+            settings.crm_resource_exec,
             "--list-agents",
             (
                 f"{standard_provider.standard}:{standard_provider.provider}"

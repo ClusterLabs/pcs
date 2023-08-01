@@ -493,7 +493,7 @@ def device_net_certificate_check_local(
 
     # check if certificates are present
     list_certs_cmd = [
-        settings.certutil_executable,
+        settings.certutil_exec,
         "-d",
         settings.corosync_qdevice_net_client_certs_dir,
         "-L",

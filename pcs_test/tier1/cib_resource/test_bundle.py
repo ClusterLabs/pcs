@@ -35,7 +35,7 @@ class BundleCreateCommon(
         self.temp_cib = get_tmp_file("tier1_bundle_create")
         write_file_to_tmpfile(self.empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
 
     def tearDown(self):
         self.temp_cib.close()
@@ -668,7 +668,7 @@ class BundleShow(TestCase, AssertPcsMixin):
         self.temp_cib = get_tmp_file("tier1_bundle_show")
         write_file_to_tmpfile(self.empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_binary")
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
 
     def tearDown(self):
         self.temp_cib.close()

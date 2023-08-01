@@ -29,21 +29,21 @@ class GetDaemonStatusTest(TestCase):
         self.mock_run.run.return_value = ("output", "", 0)
         self.assertEqual("output", lib.get_daemon_status(self.mock_run))
         self.mock_run.run.assert_called_once_with(
-            [settings.booth_binary, "status"]
+            [settings.booth_exec, "status"]
         )
 
     def test_with_name(self):
         self.mock_run.run.return_value = ("output", "", 0)
         self.assertEqual("output", lib.get_daemon_status(self.mock_run, "name"))
         self.mock_run.run.assert_called_once_with(
-            [settings.booth_binary, "status", "-c", "name"]
+            [settings.booth_exec, "status", "-c", "name"]
         )
 
     def test_daemon_not_running(self):
         self.mock_run.run.return_value = ("", "error", 7)
         self.assertEqual("", lib.get_daemon_status(self.mock_run))
         self.mock_run.run.assert_called_once_with(
-            [settings.booth_binary, "status"]
+            [settings.booth_exec, "status"]
         )
 
     def test_failure(self):
@@ -57,7 +57,7 @@ class GetDaemonStatusTest(TestCase):
             ),
         )
         self.mock_run.run.assert_called_once_with(
-            [settings.booth_binary, "status"]
+            [settings.booth_exec, "status"]
         )
 
 
@@ -68,9 +68,7 @@ class GetTicketsStatusTest(TestCase):
     def test_no_name(self):
         self.mock_run.run.return_value = ("output", "", 0)
         self.assertEqual("output", lib.get_tickets_status(self.mock_run))
-        self.mock_run.run.assert_called_once_with(
-            [settings.booth_binary, "list"]
-        )
+        self.mock_run.run.assert_called_once_with([settings.booth_exec, "list"])
 
     def test_with_name(self):
         self.mock_run.run.return_value = ("output", "", 0)
@@ -78,7 +76,7 @@ class GetTicketsStatusTest(TestCase):
             "output", lib.get_tickets_status(self.mock_run, "name")
         )
         self.mock_run.run.assert_called_once_with(
-            [settings.booth_binary, "list", "-c", "name"]
+            [settings.booth_exec, "list", "-c", "name"]
         )
 
     def test_failure(self):
@@ -91,9 +89,7 @@ class GetTicketsStatusTest(TestCase):
                 {"reason": "error\nout"},
             ),
         )
-        self.mock_run.run.assert_called_once_with(
-            [settings.booth_binary, "list"]
-        )
+        self.mock_run.run.assert_called_once_with([settings.booth_exec, "list"])
 
 
 class GetPeersStatusTest(TestCase):
@@ -104,14 +100,14 @@ class GetPeersStatusTest(TestCase):
         self.mock_run.run.return_value = ("output", "", 0)
         self.assertEqual("output", lib.get_peers_status(self.mock_run))
         self.mock_run.run.assert_called_once_with(
-            [settings.booth_binary, "peers"]
+            [settings.booth_exec, "peers"]
         )
 
     def test_with_name(self):
         self.mock_run.run.return_value = ("output", "", 0)
         self.assertEqual("output", lib.get_peers_status(self.mock_run, "name"))
         self.mock_run.run.assert_called_once_with(
-            [settings.booth_binary, "peers", "-c", "name"]
+            [settings.booth_exec, "peers", "-c", "name"]
         )
 
     def test_failure(self):
@@ -125,7 +121,7 @@ class GetPeersStatusTest(TestCase):
             ),
         )
         self.mock_run.run.assert_called_once_with(
-            [settings.booth_binary, "peers"]
+            [settings.booth_exec, "peers"]
         )
 
 

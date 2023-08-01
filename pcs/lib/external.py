@@ -160,7 +160,7 @@ def kill_services(runner, services):
     """
     # make killall not report that a process is not running
     stdout, stderr, retval = runner.run(
-        [settings.killall_executable, "--quiet", "--signal", "9", "--"]
+        [settings.killall_exec, "--quiet", "--signal", "9", "--"]
         + list(services)
     )
     # If a process isn't running, killall will still return 1 even with --quiet.

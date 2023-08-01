@@ -1,4 +1,3 @@
-import os
 import re
 from typing import (
     List,
@@ -22,10 +21,6 @@ BOOLEAN_VALUES = _BOOLEAN_TRUE | _BOOLEAN_FALSE
 _ID_FIRST_CHAR_NOT_RE = re.compile("[^a-zA-Z_]")
 _ID_REST_CHARS_NOT_RE = re.compile("[^a-zA-Z0-9_.-]")
 SCORE_INFINITY = "INFINITY"
-
-
-def __exec(name):
-    return os.path.join(settings.pacemaker_binaries, name)
 
 
 def is_boolean(val: str) -> bool:
@@ -69,7 +64,7 @@ def is_score(value: str) -> bool:
 
 
 def is_duration(runner: CommandRunner, value: str) -> bool:
-    cmd = [__exec("iso8601"), "--duration", value]
+    cmd = [settings.iso8601_exec, "--duration", value]
     _, _, retval = runner.run(cmd)
     return retval == 0
 

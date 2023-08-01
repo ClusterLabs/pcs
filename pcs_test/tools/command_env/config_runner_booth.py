@@ -30,7 +30,7 @@ class BoothShortcuts:
         string instead -- the key of a call instead of which this new call is to
             be placed
         """
-        cmd = [settings.booth_binary, "status"]
+        cmd = [settings.booth_exec, "status"]
         if instance_name:
             cmd.extend(["-c", instance_name])
         self.__calls.place(
@@ -68,7 +68,7 @@ class BoothShortcuts:
         string instead -- the key of a call instead of which this new call is to
             be placed
         """
-        cmd = [settings.booth_binary, "peers"]
+        cmd = [settings.booth_exec, "peers"]
         if instance_name:
             cmd.extend(["-c", instance_name])
         self.__calls.place(
@@ -106,7 +106,7 @@ class BoothShortcuts:
         string instead -- the key of a call instead of which this new call is to
             be placed
         """
-        cmd = [settings.booth_binary, "list"]
+        cmd = [settings.booth_exec, "list"]
         if instance_name:
             cmd.extend(["-c", instance_name])
         self.__calls.place(
@@ -150,7 +150,7 @@ class BoothShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                [settings.booth_binary, "grant", "-s", site_ip, ticket_name],
+                [settings.booth_exec, "grant", "-s", site_ip, ticket_name],
                 stdout=stdout,
                 stderr=stderr,
                 returncode=returncode,
@@ -188,7 +188,7 @@ class BoothShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                [settings.booth_binary, "revoke", "-s", site_ip, ticket_name],
+                [settings.booth_exec, "revoke", "-s", site_ip, ticket_name],
                 stdout=stdout,
                 stderr=stderr,
                 returncode=returncode,

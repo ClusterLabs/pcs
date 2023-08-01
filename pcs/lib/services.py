@@ -81,10 +81,10 @@ def get_service_manager(
     executor = _CmdExecutor(cmd_runner)
     drivers: List[services.interfaces.ServiceManagerInterface] = [
         services.drivers.SystemdDriver(
-            executor, settings.systemctl_binary, settings.systemd_unit_path
+            executor, settings.systemctl_exec, settings.systemd_unit_path
         ),
         services.drivers.SysVInitRhelDriver(
-            executor, settings.service_binary, settings.chkconfig_binary
+            executor, settings.service_exec, settings.chkconfig_exec
         ),
     ]
 
