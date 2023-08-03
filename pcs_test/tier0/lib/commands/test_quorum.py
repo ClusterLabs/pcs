@@ -368,103 +368,293 @@ class CheckIfAtbCanBeDisabledTest(TestCase):
         self.assertEqual([], self.mock_reporter.report_item_list)
 
 
-@mock.patch("pcs.lib.commands.quorum._check_if_atb_can_be_disabled")
-@mock.patch.object(LibraryEnvironment, "push_corosync_conf")
-@mock.patch.object(LibraryEnvironment, "get_corosync_conf_data")
-@mock.patch.object(LibraryEnvironment, "cmd_runner")
 class SetQuorumOptionsTest(TestCase):
     def setUp(self):
-        self.mock_logger = mock.MagicMock(logging.Logger)
-        self.mock_reporter = MockLibraryReportProcessor()
+        self.env_assist, self.config = get_env_tools(self)
+        self.node_labels = ["rh7-1", "rh7-2"]
+        self.config.env.set_known_nodes(self.node_labels)
+        self.original_corosync_conf = _read_file_rc("corosync.conf")
+        self.success_reports = (
+            [
+                fixture.info(reports.codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
+                fixture.info(
+                    reports.codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED,
+                ),
+            ]
+            + [
+                fixture.info(
+                    reports.codes.COROSYNC_NOT_RUNNING_CHECK_NODE_STOPPED,
+                    node=node,
+                )
+                for node in self.node_labels
+            ]
+            + [
+                fixture.info(
+                    reports.codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE, node=node
+                )
+                for node in self.node_labels
+            ]
+        )
 
-    @mock.patch.object(LibraryEnvironment, "service_manager", "service manager")
-    def test_success(
-        self, mock_runner, mock_get_corosync, mock_push_corosync, mock_check
-    ):
-        original_conf = _read_file_rc("corosync-3nodes.conf")
-        mock_get_corosync.return_value = original_conf
-        mock_runner.return_value = "cmd_runner"
-        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+    def fixture_config_unable_to_connect(self):
+        self.config.corosync_conf.load()
+        self.config.http.corosync.get_corosync_online_targets(
+            communication_list=[
+                dict(
+                    label=self.node_labels[0],
+                    output='{"corosync":false}',
+                ),
+                dict(
+                    label=self.node_labels[1],
+                    was_connected=False,
+                    errno=7,
+                    error_msg="an error",
+                ),
+            ]
+        )
+
+    def test_success(self):
+        expected_conf = self.original_corosync_conf.replace(
+            "   two_node: 1", "   two_node: 1\n    wait_for_all: 1"
+        )
+        self.config.corosync_conf.load()
+        self.config.http.corosync.check_corosync_offline(
+            node_labels=self.node_labels
+        )
+        self.config.http.corosync.set_corosync_conf(
+            expected_conf, node_labels=self.node_labels
+        )
 
         new_options = {"wait_for_all": "1"}
-        lib.set_options(lib_env, new_options)
+        lib.set_options(self.env_assist.get_env(), new_options)
+        self.env_assist.assert_reports(self.success_reports)
 
-        self.assertEqual(1, len(mock_push_corosync.mock_calls))
-        ac(
-            mock_push_corosync.mock_calls[0][1][0].config.export(),
-            original_conf.replace(
-                "provider: corosync_votequorum\n",
-                "provider: corosync_votequorum\n    wait_for_all: 1\n",
-            ),
-        )
-        self.assertEqual([], self.mock_reporter.report_item_list)
-        self.assertEqual(1, mock_check.call_count)
-        self.assertEqual("service manager", mock_check.call_args[0][0])
-        self.assertEqual(self.mock_reporter, mock_check.call_args[0][1])
-        self.assertFalse(mock_check.call_args[0][3])
-        self.assertFalse(mock_check.call_args[0][4])
-
-    def test_bad_options(
-        self, mock_runner, mock_get_corosync, mock_push_corosync, mock_check
-    ):
-        # pylint: disable=unused-argument
-        original_conf = _read_file_rc("corosync.conf")
-        mock_get_corosync.return_value = original_conf
-        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+    def test_bad_options(self):
+        self.config.corosync_conf.load()
 
         new_options = {"invalid": "option"}
         assert_raise_library_error(
-            lambda: lib.set_options(lib_env, new_options)
+            lambda: lib.set_options(self.env_assist.get_env(), new_options)
         )
-        assert_report_item_list_equal(
-            self.mock_reporter.report_item_list,
+
+        self.env_assist.assert_reports(
             [
-                (
-                    severity.ERROR,
-                    report_codes.INVALID_OPTIONS,
-                    {
-                        "option_names": ["invalid"],
-                        "option_type": "quorum",
-                        "allowed": [
-                            "auto_tie_breaker",
-                            "last_man_standing",
-                            "last_man_standing_window",
-                            "wait_for_all",
-                        ],
-                        "allowed_patterns": [],
-                    },
+                fixture.error(
+                    reports.codes.INVALID_OPTIONS,
+                    option_names=["invalid"],
+                    allowed=[
+                        "auto_tie_breaker",
+                        "last_man_standing",
+                        "last_man_standing_window",
+                        "wait_for_all",
+                    ],
+                    option_type="quorum",
+                    allowed_patterns=[],
                 )
-            ],
+            ]
         )
 
-        mock_push_corosync.assert_not_called()
-        mock_check.assert_not_called()
+    def test_bad_config(self):
+        self.config.corosync_conf.load_content("invalid {\nconfig: this is")
+        new_options = {"wait_for_all": "1"}
+        assert_raise_library_error(
+            lambda: lib.set_options(self.env_assist.get_env(), new_options)
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.PARSE_ERROR_COROSYNC_CONF_MISSING_CLOSING_BRACE
+                )
+            ]
+        )
 
-    def test_bad_config(
-        self, mock_runner, mock_get_corosync, mock_push_corosync, mock_check
-    ):
-        # pylint: disable=unused-argument
-        original_conf = "invalid {\nconfig: this is"
-        mock_get_corosync.return_value = original_conf
-        lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+    def test_corosync_not_offline(self):
+        self.config.corosync_conf.load()
+        self.config.http.corosync.get_corosync_online_targets(self.node_labels)
 
         new_options = {"wait_for_all": "1"}
         assert_raise_library_error(
-            lambda: lib.set_options(lib_env, new_options)
+            lambda: lib.set_options(self.env_assist.get_env(), new_options)
         )
-        assert_report_item_list_equal(
-            self.mock_reporter.report_item_list,
+        self.env_assist.assert_reports(
             [
-                (
-                    severity.ERROR,
-                    report_codes.PARSE_ERROR_COROSYNC_CONF_MISSING_CLOSING_BRACE,
-                    {},
+                fixture.info(reports.codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
+                fixture.error(
+                    reports.codes.COROSYNC_NOT_RUNNING_CHECK_NODE_RUNNING,
+                    node=self.node_labels[0],
+                ),
+                fixture.error(
+                    reports.codes.COROSYNC_NOT_RUNNING_CHECK_NODE_RUNNING,
+                    node=self.node_labels[1],
+                ),
+                fixture.error(
+                    reports.codes.COROSYNC_NOT_RUNNING_CHECK_FINISHED_RUNNING,
+                    node_list=self.node_labels,
+                ),
+            ]
+        )
+
+    def test_disable_atb_sbd_disabled(self):
+        expected_conf = self.original_corosync_conf.replace(
+            "   two_node: 1", "   two_node: 1\n    auto_tie_breaker: 0"
+        )
+        self.config.corosync_conf.load(auto_tie_breaker=True)
+        self.config.services.is_installed("sbd", return_value=True)
+        self.config.services.is_enabled("sbd", return_value=False)
+        self.config.http.corosync.check_corosync_offline(
+            node_labels=self.node_labels
+        )
+        self.config.http.corosync.set_corosync_conf(
+            expected_conf, node_labels=self.node_labels
+        )
+
+        new_options = {"auto_tie_breaker": "0"}
+        lib.set_options(self.env_assist.get_env(), new_options)
+        self.env_assist.assert_reports(self.success_reports)
+
+    def test_disable_atb_sbd_enabled(self):
+        self.config.corosync_conf.load(auto_tie_breaker=True)
+        self.config.services.is_installed("sbd", return_value=True)
+        self.config.services.is_enabled("sbd", return_value=True)
+
+        new_options = {"auto_tie_breaker": "0"}
+        assert_raise_library_error(
+            lambda: lib.set_options(self.env_assist.get_env(), new_options)
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.COROSYNC_QUORUM_ATB_CANNOT_BE_DISABLED_DUE_TO_SBD,
+                    force_code=reports.codes.FORCE,
+                )
+            ]
+        )
+
+    def test_force_disable_atb_sbd_enabled(self):
+        expected_conf = self.original_corosync_conf.replace(
+            "   two_node: 1", "   two_node: 1\n    auto_tie_breaker: 0"
+        )
+        self.config.corosync_conf.load(auto_tie_breaker=True)
+        self.config.services.is_installed("sbd", return_value=True)
+        self.config.services.is_enabled("sbd", return_value=True)
+        self.config.http.corosync.check_corosync_offline(
+            node_labels=self.node_labels
+        )
+        self.config.http.corosync.set_corosync_conf(
+            expected_conf, node_labels=self.node_labels
+        )
+
+        new_options = {"auto_tie_breaker": "0"}
+        lib.set_options(self.env_assist.get_env(), new_options, force=True)
+        self.env_assist.assert_reports(
+            self.success_reports
+            + [
+                fixture.warn(
+                    reports.codes.COROSYNC_QUORUM_ATB_CANNOT_BE_DISABLED_DUE_TO_SBD
+                )
+            ]
+        )
+
+    def test_not_live(self):
+        original_conf = self.original_corosync_conf.replace(
+            "   two_node: 1", "   two_node: 1\n    auto_tie_breaker: 1"
+        )
+        expected_conf = self.original_corosync_conf.replace(
+            "   two_node: 1", "   two_node: 1\n    auto_tie_breaker: 0"
+        )
+        self.config.env.set_corosync_conf_data(original_conf)
+        self.config.env.push_corosync_conf(
+            corosync_conf_text=expected_conf, need_stopped_cluster=True
+        )
+
+        new_options = {"auto_tie_breaker": "0"}
+        lib.set_options(self.env_assist.get_env(), new_options)
+
+    def test_unable_to_connect(self):
+        self.fixture_config_unable_to_connect()
+        new_options = {"wait_for_all": "1"}
+        assert_raise_library_error(
+            lambda: lib.set_options(self.env_assist.get_env(), new_options)
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.info(reports.codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
+                fixture.info(
+                    reports.codes.COROSYNC_NOT_RUNNING_CHECK_NODE_STOPPED,
+                    node=self.node_labels[0],
+                ),
+                fixture.error(
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    force_code=reports.codes.SKIP_OFFLINE_NODES,
+                    node=self.node_labels[1],
+                    command="remote/status",
+                    reason="an error",
+                ),
+                fixture.error(
+                    reports.codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
+                    node=self.node_labels[1],
+                    force_code=reports.codes.SKIP_OFFLINE_NODES,
+                ),
+            ]
+        )
+
+    def test_unable_to_connect_skip_offline_nodes(self):
+        expected_conf = self.original_corosync_conf.replace(
+            "   two_node: 1", "   two_node: 1\n    wait_for_all: 1"
+        )
+        self.fixture_config_unable_to_connect()
+        self.config.http.corosync.set_corosync_conf(
+            expected_conf,
+            communication_list=[
+                dict(label=self.node_labels[0]),
+                dict(
+                    label=self.node_labels[1],
+                    response_code=400,
+                    output="an error",
                 ),
             ],
         )
 
-        mock_push_corosync.assert_not_called()
-        mock_check.assert_not_called()
+        new_options = {"wait_for_all": "1"}
+        lib.set_options(
+            self.env_assist.get_env(), new_options, skip_offline_nodes=True
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.info(reports.codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
+                fixture.info(
+                    reports.codes.COROSYNC_NOT_RUNNING_CHECK_NODE_STOPPED,
+                    node=self.node_labels[0],
+                ),
+                fixture.warn(
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    node=self.node_labels[1],
+                    command="remote/status",
+                    reason="an error",
+                ),
+                fixture.warn(
+                    reports.codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
+                    node=self.node_labels[1],
+                ),
+                fixture.info(
+                    reports.codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED
+                ),
+                fixture.info(
+                    reports.codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE,
+                    node=self.node_labels[0],
+                ),
+                fixture.warn(
+                    reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node=self.node_labels[1],
+                    command="remote/set_corosync_conf",
+                    reason="an error",
+                ),
+                fixture.warn(
+                    reports.codes.COROSYNC_CONFIG_DISTRIBUTION_NODE_ERROR,
+                    node=self.node_labels[1],
+                ),
+            ]
+        )
 
 
 @mock.patch("pcs.lib.commands.quorum.corosync_live.get_quorum_status_text")

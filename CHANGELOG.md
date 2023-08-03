@@ -11,14 +11,16 @@
   and `pcs property describe` ([rhbz#2217850])
 - Commands `pcs property defaults` and `pcs property describe` print error
   message in case specified properties do not have metadata. ([rhbz#2226778])
-
-- Clarify messages informing users that the cluster must be stopped in order to
+- Clarify messages informing users that cluster must be stopped in order to
   change certain corosync options ([rhbz#2227234])
+- Prevent disabling `auto_tie_breaker` when it would make SBD not working
+  properly ([rhbz#2227233])
 
 [rhbz#2217850]: https://bugzilla.redhat.com/show_bug.cgi?id=2217850
 [rhbz#2219388]: https://bugzilla.redhat.com/show_bug.cgi?id=2219388
 [rhbz#2226778]: https://bugzilla.redhat.com/show_bug.cgi?id=2226778
 [rhbz#2227234]: https://bugzilla.redhat.com/show_bug.cgi?id=2227234
+[rhbz#2227233]: https://bugzilla.redhat.com/show_bug.cgi?id=2227233
 
 
 ## [0.10.17] - 2023-06-19
