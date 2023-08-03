@@ -110,13 +110,16 @@ def set_options(
         )
     ).has_errors:
         raise LibraryError()
+
+    was_enabled_atb = cfg.is_enabled_auto_tie_breaker()
+
     cfg.set_quorum_options(options)
     if lib_env.is_corosync_conf_live:
         _check_if_atb_can_be_disabled(
             lib_env.service_manager,
             lib_env.report_processor,
             cfg,
-            cfg.is_enabled_auto_tie_breaker(),
+            was_enabled_atb,
             force,
         )
     lib_env.push_corosync_conf(cfg, skip_offline_nodes)

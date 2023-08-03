@@ -19,6 +19,8 @@
   message in case specified properties do not have metadata. ([rhbz#2222744])
 - Clarify messages informing users that cluster must be stopped in order to
   change certain corosync options ([rhbz#2175797])
+- Prevent disabling `auto_tie_breaker` when it would make SBD not working
+  properly ([rhbz#2227230])
 
 ### Changed
 - When exporting constraints in form of pcs commands, constraints containing
@@ -39,6 +41,7 @@
 [rhbz#2217850]: https://bugzilla.redhat.com/show_bug.cgi?id=2217850
 [rhbz#2219407]: https://bugzilla.redhat.com/show_bug.cgi?id=2219407
 [rhbz#2222744]: https://bugzilla.redhat.com/show_bug.cgi?id=2222744
+[rhbz#2227230]: https://bugzilla.redhat.com/show_bug.cgi?id=2227230
 
 
 ## [0.11.6] - 2023-06-20
