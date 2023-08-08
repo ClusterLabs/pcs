@@ -48,3 +48,13 @@ CANNOT_GROUP_RESOURCE_NEXT_TO_ITSELF = _D(
 # Removed after 0.11.3, unused after 0.10.8
 # Produced only with Pacemaker 1.x
 MULTIPLE_SCORE_OPTIONS = _D("MULTIPLE_SCORE_OPTIONS")
+
+
+# Removed after 0.11.6, unused after 0.11.6
+# Replaced by COROSYNC_NOT_RUNNING_CHECK_NODE_STOPPED
+# and COROSYNC_NOT_RUNNING_CHECK_NODE_RUNNING
+# These reports were replaced as they were to generic (both the codes and the
+# messages) and thus didn't convey the required specific information and use
+# case
+COROSYNC_NOT_RUNNING_ON_NODE = _D("COROSYNC_NOT_RUNNING_ON_NODE")
+COROSYNC_RUNNING_ON_NODE = _D("COROSYNC_RUNNING_ON_NODE")

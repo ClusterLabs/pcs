@@ -1375,13 +1375,13 @@ class CorosyncNotRunningCheckStarted(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        return "Checking corosync is not running on nodes..."
+        return "Checking that corosync is not running on nodes..."
 
 
 @dataclass(frozen=True)
 class CorosyncNotRunningCheckNodeError(ReportItemMessage):
     """
-    Communication error occurred when checking corosync is not running on a nodea
+    Communication error occurred when checking corosync is not running on a node
 
     node -- faulty node address / name
     """
@@ -1391,39 +1391,62 @@ class CorosyncNotRunningCheckNodeError(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        return f"{self.node}: Unable to check if corosync is not running"
+        return (
+            f"Unable to check if corosync is not running on node '{self.node}'"
+        )
 
 
 @dataclass(frozen=True)
-class CorosyncNotRunningOnNode(ReportItemMessage):
+class CorosyncNotRunningCheckNodeStopped(ReportItemMessage):
     """
-    Corosync is not running on a node
+    Check that corosync is not running on a node passed, corosync is stopped
 
     node -- node address / name
     """
 
     node: str
-    _code = codes.COROSYNC_NOT_RUNNING_ON_NODE
+    _code = codes.COROSYNC_NOT_RUNNING_CHECK_NODE_STOPPED
 
     @property
     def message(self) -> str:
-        return f"{self.node}: corosync is not running"
+        return f"Corosync is not running on node '{self.node}'"
 
 
 @dataclass(frozen=True)
-class CorosyncRunningOnNode(ReportItemMessage):
+class CorosyncNotRunningCheckNodeRunning(ReportItemMessage):
     """
-    Corosync is running on a node, which is not ok
+    Check that corosync is not running on a node passed, but corosync is running
 
     node -- node address / name
     """
 
     node: str
-    _code = codes.COROSYNC_RUNNING_ON_NODE
+    _code = codes.COROSYNC_NOT_RUNNING_CHECK_NODE_RUNNING
 
     @property
     def message(self) -> str:
-        return f"{self.node}: corosync is running"
+        return f"Corosync is running on node '{self.node}'"
+
+
+@dataclass(frozen=True)
+class CorosyncNotRunningCheckFinishedRunning(ReportItemMessage):
+    """
+    Check that corosync is not running revealed corosync is running on nodes
+    """
+
+    node_list: list[str]
+    _code = codes.COROSYNC_NOT_RUNNING_CHECK_FINISHED_RUNNING
+
+    @property
+    def message(self) -> str:
+        return (
+            "Corosync is running on {node} {node_list}. Requested change can "
+            "only be made if the cluster is stopped. In order to proceed, stop "
+            "the cluster."
+        ).format(
+            node=format_plural(self.node_list, "node"),
+            node_list=format_list(self.node_list),
+        )
 
 
 @dataclass(frozen=True)
@@ -4872,7 +4895,7 @@ class CorosyncQuorumAtbCannotBeDisabledDueToSbd(ReportItemMessage):
 class CorosyncQuorumAtbWillBeEnabledDueToSbd(ReportItemMessage):
     """
     Quorum option auto_tie_breaker will be enabled due to a user action in
-    order to make SBD fencing effective. The cluster has to be stopped to make
+    order to keep SBD fencing effective. The cluster has to be stopped to make
     this change.
     """
 
@@ -4881,9 +4904,31 @@ class CorosyncQuorumAtbWillBeEnabledDueToSbd(ReportItemMessage):
     @property
     def message(self) -> str:
         return (
-            "auto_tie_breaker quorum option will be enabled to make SBD "
-            "fencing effective. Cluster has to be offline to be able to make "
-            "this change."
+            "SBD fencing is enabled in the cluster. To keep it effective, "
+            "auto_tie_breaker quorum option will be enabled."
+        )
+
+
+@dataclass(frozen=True)
+class CorosyncQuorumAtbWillBeEnabledDueToSbdClusterIsRunning(ReportItemMessage):
+    """
+    Pcs needs to enable quorum option auto_tie_breaker due to a user action in
+    order to keep SBD fencing effective. The cluster has to be stopped to make
+    this change, but it is currently running.
+    """
+
+    _code = (
+        codes.COROSYNC_QUORUM_ATB_WILL_BE_ENABLED_DUE_TO_SBD_CLUSTER_IS_RUNNING
+    )
+
+    @property
+    def message(self) -> str:
+        return (
+            "SBD fencing is enabled in the cluster. To keep it effective, "
+            "auto_tie_breaker quorum option needs to be enabled. This can only "
+            "be done when the cluster is stopped. To proceed, stop the cluster, "
+            "enable auto_tie_breaker, and start the cluster. Then, repeat the "
+            "requested action."
         )
 
 

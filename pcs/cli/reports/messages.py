@@ -311,6 +311,33 @@ class CorosyncNodeConflictCheckSkipped(CliReportMessageCustom):
         ).format(reason=_skip_reason_to_string(self._obj.reason_type))
 
 
+class CorosyncNotRunningCheckFinishedRunning(CliReportMessageCustom):
+    _obj: messages.CorosyncNotRunningCheckFinishedRunning
+
+    @property
+    def message(self) -> str:
+        return self._obj.message + (
+            """ Run "pcs cluster stop {node_list}" to stop the {node} or """
+            """"pcs cluster stop --all" to stop the whole cluster."""
+        ).format(
+            node=format_plural(self._obj.node_list, "node"),
+            node_list=format_list(self._obj.node_list, separator=" "),
+        )
+
+
+class CorosyncQuorumAtbWillBeEnabledDueToSbdClusterIsRunning(
+    CliReportMessageCustom
+):
+    _obj: messages.CorosyncQuorumAtbWillBeEnabledDueToSbdClusterIsRunning
+
+    @property
+    def message(self) -> str:
+        return self._obj.message + (
+            " Use commands 'pcs cluster stop --all', 'pcs quorum update "
+            "auto_tie_breaker=1', 'pcs cluster start --all'."
+        )
+
+
 class LiveEnvironmentNotConsistent(CliReportMessageCustom):
     _obj: messages.LiveEnvironmentNotConsistent
 

@@ -42,6 +42,8 @@ class AllClassesTested(TestCase):
 
 
 class CliReportMessageTestBase(TestCase):
+    maxDiff = None
+
     @staticmethod
     def _get_cli_msg_obj(
         msg_obj: item.ReportItemMessage,
@@ -726,5 +728,50 @@ class BoothUnsupportedOptionEnableAuthfile(CliReportMessageTestBase):
                 "Unsupported option 'enable-authfile' is set in booth "
                 "configuration. Run 'pcs booth clean-enable-authfile --name "
                 "instance' to remove the option."
+            ),
+        )
+
+
+class CorosyncNotRunningCheckFinishedRunning(CliReportMessageTestBase):
+    def test_one_node(self):
+        self.assert_message(
+            messages.CorosyncNotRunningCheckFinishedRunning(["node1"]),
+            (
+                "Corosync is running on node 'node1'. Requested change can "
+                "only be made if the cluster is stopped. In order to proceed, "
+                "stop the cluster. Run \"pcs cluster stop 'node1'\" to stop "
+                'the node or "pcs cluster stop --all" to stop the whole cluster.'
+            ),
+        )
+
+    def test_more_nodes(self):
+        self.assert_message(
+            messages.CorosyncNotRunningCheckFinishedRunning(
+                ["node2", "node1", "node3"]
+            ),
+            (
+                "Corosync is running on nodes 'node1', 'node2', 'node3'. "
+                "Requested change can only be made if the cluster is stopped. "
+                'In order to proceed, stop the cluster. Run "pcs cluster stop '
+                "'node1' 'node2' 'node3'\" to stop the nodes or \"pcs cluster "
+                'stop --all" to stop the whole cluster.'
+            ),
+        )
+
+
+class CorosyncQuorumAtbWillBeEnabledDueToSbdClusterIsRunning(
+    CliReportMessageTestBase
+):
+    def test_success(self):
+        self.assert_message(
+            messages.CorosyncQuorumAtbWillBeEnabledDueToSbdClusterIsRunning(),
+            (
+                "SBD fencing is enabled in the cluster. To keep it effective, "
+                "auto_tie_breaker quorum option needs to be enabled. This can "
+                "only be done when the cluster is stopped. To proceed, stop the "
+                "cluster, enable auto_tie_breaker, and start the cluster. Then, "
+                "repeat the requested action. Use commands 'pcs cluster stop "
+                "--all', 'pcs quorum update auto_tie_breaker=1', 'pcs cluster "
+                "start --all'."
             ),
         )

@@ -875,31 +875,56 @@ class CorosyncConfigDistributionNodeError(NameBuildTest):
 class CorosyncNotRunningCheckStarted(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(
-            "Checking corosync is not running on nodes...",
+            "Checking that corosync is not running on nodes...",
             reports.CorosyncNotRunningCheckStarted(),
+        )
+
+
+class CorosyncNotRunningCheckFinishedRunning(NameBuildTest):
+    def test_one_node(self):
+        self.assert_message_from_report(
+            (
+                "Corosync is running on node 'node1'. Requested change can "
+                "only be made if the cluster is stopped. In order to proceed, "
+                "stop the cluster."
+            ),
+            reports.CorosyncNotRunningCheckFinishedRunning(["node1"]),
+        )
+
+    def test_more_nodes(self):
+        self.assert_message_from_report(
+            (
+                "Corosync is running on nodes 'node1', 'node2', 'node3'. "
+                "Requested change can only be made if the cluster is stopped. "
+                "In order to proceed, stop the cluster."
+            ),
+            reports.CorosyncNotRunningCheckFinishedRunning(
+                ["node2", "node1", "node3"]
+            ),
         )
 
 
 class CorosyncNotRunningCheckNodeError(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(
-            "node1: Unable to check if corosync is not running",
+            "Unable to check if corosync is not running on node 'node1'",
             reports.CorosyncNotRunningCheckNodeError("node1"),
         )
 
 
-class CorosyncNotRunningOnNode(NameBuildTest):
+class CorosyncNotRunningCheckNodeStopped(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(
-            "node2: corosync is not running",
-            reports.CorosyncNotRunningOnNode("node2"),
+            "Corosync is not running on node 'node2'",
+            reports.CorosyncNotRunningCheckNodeStopped("node2"),
         )
 
 
-class CorosyncRunningOnNode(NameBuildTest):
+class CorosyncNotRunningCheckNodeRunning(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(
-            "node3: corosync is running", reports.CorosyncRunningOnNode("node3")
+            "Corosync is running on node 'node3'",
+            reports.CorosyncNotRunningCheckNodeRunning("node3"),
         )
 
 
@@ -3599,11 +3624,24 @@ class CorosyncQuorumAtbWillBeEnabledDueToSbd(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
             (
-                "auto_tie_breaker quorum option will be enabled to make SBD "
-                "fencing effective. Cluster has to be offline to be able to "
-                "make this change."
+                "SBD fencing is enabled in the cluster. To keep it effective, "
+                "auto_tie_breaker quorum option will be enabled."
             ),
             reports.CorosyncQuorumAtbWillBeEnabledDueToSbd(),
+        )
+
+
+class CorosyncQuorumAtbWillBeEnabledDueToSbdClusterIsRunning(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "SBD fencing is enabled in the cluster. To keep it effective, "
+                "auto_tie_breaker quorum option needs to be enabled. This can "
+                "only be done when the cluster is stopped. To proceed, stop the "
+                "cluster, enable auto_tie_breaker, and start the cluster. Then, "
+                "repeat the requested action."
+            ),
+            reports.CorosyncQuorumAtbWillBeEnabledDueToSbdClusterIsRunning(),
         )
 
 

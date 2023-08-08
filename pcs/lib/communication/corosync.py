@@ -26,6 +26,7 @@ class CheckCorosyncOffline(
         super().__init__(report_processor)
         if allow_skip_offline:
             self._set_skip_offline(skip_offline_targets)
+        self._corosync_running_target_list = []
 
     def _get_request_data(self):
         return RequestData("remote/status", [("version", "2")])
@@ -55,11 +56,18 @@ class CheckCorosyncOffline(
             status = response.data
             if not json.loads(status)["node"]["corosync"]:
                 report_item = ReportItem.info(
-                    reports.messages.CorosyncNotRunningOnNode(node_label),
+                    reports.messages.CorosyncNotRunningCheckNodeStopped(
+                        node_label
+                    ),
                 )
             else:
                 report_item = ReportItem.error(
-                    reports.messages.CorosyncRunningOnNode(node_label),
+                    reports.messages.CorosyncNotRunningCheckNodeRunning(
+                        node_label
+                    ),
+                )
+                self._corosync_running_target_list.append(
+                    response.request.target
                 )
         except (KeyError, json.JSONDecodeError):
             report_item = ReportItem(
@@ -77,6 +85,9 @@ class CheckCorosyncOffline(
         self._report(
             ReportItem.info(reports.messages.CorosyncNotRunningCheckStarted())
         )
+
+    def on_complete(self):
+        return self._corosync_running_target_list
 
 
 class GetCorosyncOnlineTargets(

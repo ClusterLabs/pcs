@@ -1,4 +1,5 @@
-# pylint: disable=too-many-lines,no-member
+# pylint: disable=too-many-lines
+# pylint: disable=no-member
 import json
 import re
 from functools import partial
@@ -14,6 +15,9 @@ from pcs.lib.commands import cluster
 
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.command_env.config_http_corosync import (
+    corosync_running_check_response,
+)
 from pcs_test.tools.misc import outdent
 
 QDEVICE_HOST = "qdevice.host"
@@ -487,7 +491,7 @@ class SuccessAtbRequired(TestCase):
             ]
             + [
                 fixture.info(
-                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
+                    report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_STOPPED,
                     node=node,
                 )
                 for node in self.nodes_to_stay
@@ -595,10 +599,86 @@ class FailureAtbRequired(TestCase):
         )
         self.expected_reports.extend(
             [
-                fixture.warn(
-                    report_codes.COROSYNC_QUORUM_ATB_WILL_BE_ENABLED_DUE_TO_SBD
-                ),
                 fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
+            ]
+        )
+
+    def test_cluster_is_running_somewhere(self):
+        self.config.http.corosync.check_corosync_offline(
+            communication_list=[
+                {"label": self.nodes_to_stay[0]},
+                {
+                    "label": self.nodes_to_stay[1],
+                    "output": corosync_running_check_response(True),
+                },
+                {"label": self.nodes_to_stay[2]},
+                {"label": self.nodes_to_stay[3]},
+            ]
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.remove_nodes(
+                self.env_assist.get_env(),
+                self.nodes_to_remove,
+            )
+        )
+
+        self.env_assist.assert_reports(
+            self.expected_reports
+            + [
+                fixture.info(
+                    report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_STOPPED,
+                    node=self.nodes_to_stay[0],
+                ),
+                fixture.error(
+                    report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_RUNNING,
+                    node=self.nodes_to_stay[1],
+                ),
+                fixture.info(
+                    report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_STOPPED,
+                    node=self.nodes_to_stay[2],
+                ),
+                fixture.info(
+                    report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_STOPPED,
+                    node=self.nodes_to_stay[3],
+                ),
+                fixture.error(
+                    report_codes.COROSYNC_QUORUM_ATB_WILL_BE_ENABLED_DUE_TO_SBD_CLUSTER_IS_RUNNING
+                ),
+            ]
+        )
+
+    def test_cluster_is_running_everywhere(self):
+        self.config.http.corosync.check_corosync_offline(
+            communication_list=[
+                {
+                    "label": node,
+                    "output": corosync_running_check_response(True),
+                }
+                for node in self.nodes_to_stay
+            ]
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.remove_nodes(
+                self.env_assist.get_env(),
+                self.nodes_to_remove,
+            )
+        )
+
+        self.env_assist.assert_reports(
+            self.expected_reports
+            + [
+                fixture.error(
+                    report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_RUNNING,
+                    node=node,
+                )
+                for node in self.nodes_to_stay
+            ]
+            + [
+                fixture.error(
+                    report_codes.COROSYNC_QUORUM_ATB_WILL_BE_ENABLED_DUE_TO_SBD_CLUSTER_IS_RUNNING
+                ),
             ]
         )
 
@@ -632,7 +712,7 @@ class FailureAtbRequired(TestCase):
             self.expected_reports
             + [
                 fixture.info(
-                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
+                    report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_STOPPED,
                     node=node,
                 )
                 for node in [self.nodes_to_stay[0], self.nodes_to_stay[2]]
@@ -653,6 +733,9 @@ class FailureAtbRequired(TestCase):
                     report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
                     node=self.nodes_to_stay[3],
                     force_code=None,
+                ),
+                fixture.warn(
+                    report_codes.COROSYNC_QUORUM_ATB_WILL_BE_ENABLED_DUE_TO_SBD
                 ),
             ]
         )
@@ -695,6 +778,11 @@ class FailureAtbRequired(TestCase):
                     node=node,
                 )
                 for node in self.nodes_to_stay
+            ]
+            + [
+                fixture.warn(
+                    report_codes.COROSYNC_QUORUM_ATB_WILL_BE_ENABLED_DUE_TO_SBD
+                ),
             ]
         )
 

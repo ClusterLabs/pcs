@@ -412,7 +412,22 @@ class LibraryEnvironment:
                 self.report_processor, skip_offline_nodes
             )
             com_cmd.set_targets(target_list)
-            run_and_raise(self.get_node_communicator(), com_cmd)
+            cluster_running_target_list = run(
+                self.get_node_communicator(), com_cmd
+            )
+            if cluster_running_target_list:
+                self.report_processor.report(
+                    ReportItem.error(
+                        reports.messages.CorosyncNotRunningCheckFinishedRunning(
+                            [
+                                target.label
+                                for target in cluster_running_target_list
+                            ],
+                        ),
+                    )
+                )
+            if self.report_processor.has_errors:
+                raise LibraryError()
         # Distribute corosync.conf
         com_cmd = DistributeCorosyncConf(
             self.report_processor, corosync_conf_data, skip_offline_nodes

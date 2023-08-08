@@ -17,6 +17,8 @@
   and `pcs property describe` ([rhbz#2217850])
 - Commands `pcs property defaults` and `pcs property describe` print error
   message in case specified properties do not have metadata. ([rhbz#2222744])
+- Clarify messages informing users that cluster must be stopped in order to
+  change certain corosync options ([rhbz#2175797])
 
 ### Changed
 - When exporting constraints in form of pcs commands, constraints containing
@@ -33,6 +35,7 @@
 [ghpull#712]: https://github.com/ClusterLabs/pcs/pull/712
 [rhbz#2112268]: https://bugzilla.redhat.com/show_bug.cgi?id=2112268
 [rhbz#2163953]: https://bugzilla.redhat.com/show_bug.cgi?id=2163953
+[rhbz#2175797]: https://bugzilla.redhat.com/show_bug.cgi?id=2175797
 [rhbz#2217850]: https://bugzilla.redhat.com/show_bug.cgi?id=2217850
 [rhbz#2219407]: https://bugzilla.redhat.com/show_bug.cgi?id=2219407
 [rhbz#2222744]: https://bugzilla.redhat.com/show_bug.cgi?id=2222744
