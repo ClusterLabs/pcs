@@ -1,8 +1,9 @@
 from collections import Counter
-from collections.abc import Set
 from functools import partial
 from typing import (
+    Final,
     Mapping,
+    Optional,
     Union,
     cast,
 )
@@ -11,31 +12,44 @@ from pcs.cli.common.errors import (
     SEE_MAN_CHANGES,
     CmdLineInputError,
 )
+from pcs.common.const import INFINITY
 from pcs.common.str_tools import (
     format_list,
+    format_list_custom_last_separator,
     format_plural,
 )
 from pcs.common.tools import timeout_to_seconds
 from pcs.common.types import (
+    StringCollection,
     StringIterable,
     StringSequence,
 )
 
+# sys.argv always returns a list, we don't need StringSequence in here
+Argv = list[str]
 ModifierValueType = Union[None, bool, str]
 
-_FUTURE_OPTION_STR = "future"
-FUTURE_OPTION = f"--{_FUTURE_OPTION_STR}"
-_OUTPUT_FORMAT_OPTION_STR = "output-format"
-_OUTPUT_FORMAT_OPTION = f"--{_OUTPUT_FORMAT_OPTION_STR}"
-OUTPUT_FORMAT_VALUE_TEXT = "text"
-OUTPUT_FORMAT_VALUES = frozenset((OUTPUT_FORMAT_VALUE_TEXT, "cmd", "json"))
+_FUTURE_OPTION_STR: Final = "future"
+FUTURE_OPTION: Final = f"--{_FUTURE_OPTION_STR}"
+_OUTPUT_FORMAT_OPTION_STR: Final = "output-format"
+OUTPUT_FORMAT_OPTION: Final = f"--{_OUTPUT_FORMAT_OPTION_STR}"
+OUTPUT_FORMAT_VALUE_CMD: Final = "cmd"
+OUTPUT_FORMAT_VALUE_JSON: Final = "json"
+OUTPUT_FORMAT_VALUE_TEXT: Final = "text"
+OUTPUT_FORMAT_VALUES: Final = frozenset(
+    (
+        OUTPUT_FORMAT_VALUE_CMD,
+        OUTPUT_FORMAT_VALUE_JSON,
+        OUTPUT_FORMAT_VALUE_TEXT,
+    )
+)
 
-ARG_TYPE_DELIMITER = "%"
+ARG_TYPE_DELIMITER: Final = "%"
 
 # h = help, f = file,
 # p = password (cluster auth), u = user (cluster auth),
-PCS_SHORT_OPTIONS = "hf:p:u:"
-PCS_LONG_OPTIONS = [
+PCS_SHORT_OPTIONS: Final = "hf:p:u:"
+PCS_LONG_OPTIONS: Final = [
     "debug",
     "version",
     "help",
@@ -104,8 +118,13 @@ PCS_LONG_OPTIONS = [
 ]
 
 
-def split_list(arg_list, separator):
-    """return list of list of arg_list using separator as delimiter"""
+def split_list(arg_list: Argv, separator: str) -> list[Argv]:
+    """
+    split a list of arguments to several lists using separator as a delimiter
+
+    arg_list -- list of command line arguments to split
+    separator -- delimiter
+    """
     separator_indexes = [i for i, x in enumerate(arg_list) if x == separator]
     bounds = zip(
         [0] + [i + 1 for i in separator_indexes], separator_indexes + [None]
@@ -113,23 +132,27 @@ def split_list(arg_list, separator):
     return [arg_list[i:j] for i, j in bounds]
 
 
-def split_list_by_any_keywords(arg_list, keyword_label):
+def split_list_by_any_keywords(
+    arg_list: Argv, keyword_label: str
+) -> dict[str, Argv]:
     """
-    Return a list of lists of args using any arg not containing = as a delimiter
+    split a list of arguments using any argument not containing = as a delimiter
 
-    iterable arg_list -- (part of) argv
-    string keyword_label -- description of all keywords
+    arg_list -- list of command line arguments to split
+    keyword_label -- description of all keywords
     """
+    groups: dict[str, Argv] = {}
+    if not arg_list:
+        return groups
+
     if "=" in arg_list[0]:
         raise CmdLineInputError(
-            "Invalid character '=' in {} '{}'".format(
-                keyword_label,
-                arg_list[0],
-            )
+            f"Invalid character '=' in {keyword_label} '{arg_list[0]}'"
         )
-    current_keyword = None
-    groups = {}
-    for arg in arg_list:
+
+    current_keyword = arg_list[0]
+    groups[current_keyword] = []
+    for arg in arg_list[1:]:
         if "=" in arg:
             groups[current_keyword].append(arg)
         else:
@@ -144,30 +167,27 @@ def split_list_by_any_keywords(arg_list, keyword_label):
     return groups
 
 
-def split_option(arg, allow_empty_value=True):
+def split_option(arg: str, allow_empty_value: bool = True) -> tuple[str, str]:
     """
     Get (key, value) from a key=value commandline argument.
 
     Split the argument by the first = and return resulting parts. Raise
     CmdLineInputError if the argument cannot be split.
 
-    string arg -- commandline argument
-    allow_empty_value -- if True, empty value is allowed. Otherwise,
-        CmdLineInputError exception is raised
-
-    Commandline options: no options
+    arg -- commandline argument to split
+    allow_empty_value -- if False, raise CmdLineInputError on empty value
     """
     if "=" not in arg:
-        raise CmdLineInputError("missing value of '{0}' option".format(arg))
+        raise CmdLineInputError(f"missing value of '{arg}' option")
     if arg.startswith("="):
-        raise CmdLineInputError("missing key in '{0}' option".format(arg))
+        raise CmdLineInputError(f"missing key in '{arg}' option")
     key, value = arg.split("=", 1)
     if not (value or allow_empty_value):
-        raise CmdLineInputError("value of '{0}' option is empty".format(key))
+        raise CmdLineInputError(f"value of '{key}' option is empty")
     return key, value
 
 
-def ensure_unique_args(cmdline_args: StringSequence) -> None:
+def ensure_unique_args(cmdline_args: Argv) -> None:
     """
     Raises in case there are duplicate args
     """
@@ -180,16 +200,20 @@ def ensure_unique_args(cmdline_args: StringSequence) -> None:
         raise CmdLineInputError(f"duplicate {argument_pl}: {duplicities_list}")
 
 
-def prepare_options(cmdline_args, allowed_repeatable_options=()):
+# deprecated, use KeyValueParser
+def prepare_options(
+    cmdline_args: Argv,
+    allowed_repeatable_options: StringCollection = (),
+) -> dict[str, Union[str, list[str]]]:
     """
     Get a dict of options from cmdline key=value args
 
-    iterable cmdline_args -- command line arguments
-    iterable allowed_repeatable_options -- options that can be set several times
+    cmdline_args -- command line arguments
+    allowed_repeatable_options -- options that can be set several times
 
     Commandline options: no options
     """
-    options = {}
+    options: dict[str, Union[str, list[str]]] = {}
     for arg in cmdline_args:
         name, value = split_option(arg)
         if name not in options:
@@ -198,7 +222,7 @@ def prepare_options(cmdline_args, allowed_repeatable_options=()):
             else:
                 options[name] = value
         elif name in allowed_repeatable_options:
-            options[name].append(value)
+            cast(list[str], options[name]).append(value)
         elif options[name] != value:
             raise CmdLineInputError(
                 (
@@ -209,15 +233,18 @@ def prepare_options(cmdline_args, allowed_repeatable_options=()):
     return options
 
 
+# deprecated, use KeyValueParser
 def prepare_options_allowed(
-    cmdline_args, allowed_options, allowed_repeatable_options=()
-):
+    cmdline_args: Argv,
+    allowed_options: StringCollection,
+    allowed_repeatable_options: StringCollection = (),
+) -> dict[str, Union[str, list[str]]]:
     """
     Get a dict of options from cmdline key=value args, raise on unallowed key
 
-    iterable cmdline_args -- command line arguments
-    iterable allowed_options -- list of allowed options
-    iterable allowed_repeatable_options -- options that can be set several times
+    cmdline_args -- command line arguments
+    allowed_options -- list of allowed options
+    allowed_repeatable_options -- options that can be set several times
 
     Commandline options: no options
     """
@@ -237,106 +264,166 @@ def prepare_options_allowed(
     return parsed_options
 
 
-def group_by_keywords(
-    arg_list,
-    keyword_set,
-    implicit_first_group_key=None,
-    keyword_repeat_allowed=True,
-    group_repeated_keywords=None,
-    only_found_keywords=False,
-):
+class KeyValueParser:
     """
-    Return dictionary with keywords as keys and following arguments as value.
-    For example when keywords are "first" and "seconds" then for arg_list
-    ["first", 1, 2, "second", 3] it returns {"first": [1, 2], "second": [3]}
-
-    list arg_list is commandline arguments containing keywords
-    set keyword_set contain all expected keywords
-    string implicit_first_group_key is the key for capturing of arguments before
-        the occurrence of the first keyword. implicit_first_group_key is not
-        a keyword => its occurrence in args is considered as ordinary argument.
-    bool keyword_repeat_allowed is the flag to turn on/off checking the
-        uniqueness of each keyword in arg_list.
-    list group_repeated_keywords contains keywords for which each occurrence is
-        packed separately. For example when keywords are "first" and "seconds"
-        and group_repeated_keywords is ["first"] then for arg_list
-        ["first", 1, 2, "second", 3, "first", 4] it returns
-        {"first": [[1, 2], [4]], "second": [3]}.
-        For these keywords is allowed repeating.
-    bool only_found_keywords is flag for deciding to (not)contain keywords
-        that do not appeared in arg_list.
+    Parse and check key=value options
     """
 
-    def get_keywords_for_grouping():
-        if not group_repeated_keywords:
-            return []
-        # implicit_first_group_key is not keyword: when it is in
-        # group_repeated_keywords but not in keyword_set is considered as
-        # unknown.
-        unknown_keywords = set(group_repeated_keywords) - set(keyword_set)
-        if unknown_keywords:
-            # to avoid developer mistake
-            raise AssertionError(
-                "Keywords in grouping not in keyword set: {0}".format(
-                    ", ".join(unknown_keywords)
+    def __init__(self, arg_list: Argv, repeatable: StringCollection = ()):
+        """
+        arg_list -- commandline arguments to be parsed
+        repeatable -- keys that are allowed to be specified several times
+        """
+        self._repeatable_keys = repeatable
+        self._key_value_map: dict[str, list[str]] = {}
+        for arg in arg_list:
+            name, value = split_option(arg)
+            if name not in self._key_value_map:
+                self._key_value_map[name] = [value]
+            else:
+                self._key_value_map[name].append(value)
+
+    def check_allowed_keys(self, allowed_keys: StringCollection) -> None:
+        """
+        Check that only allowed keys were specified
+
+        allowed_keys -- list of allowed keys
+        """
+        unknown_options = set(self._key_value_map.keys()) - set(allowed_keys)
+        if unknown_options:
+            raise CmdLineInputError(
+                "Unknown option{s} '{options}'".format(
+                    s=("s" if len(unknown_options) > 1 else ""),
+                    options="', '".join(sorted(unknown_options)),
                 )
             )
-        return group_repeated_keywords
 
-    def get_completed_groups():
-        completed_groups = groups.copy()
-        if not only_found_keywords:
-            for keyword in keyword_set:
-                if keyword not in completed_groups:
-                    completed_groups[keyword] = []
-            if (
-                implicit_first_group_key
-                and implicit_first_group_key not in completed_groups
-            ):
-                completed_groups[implicit_first_group_key] = []
-        return completed_groups
+    def get_unique(self) -> dict[str, str]:
+        """
+        Get all non-repeatable keys and their values; raise if a key has more values
+        """
+        result: dict[str, str] = {}
+        for key, values in self._key_value_map.items():
+            if key in self._repeatable_keys:
+                continue
+            values_uniq = set(values)
+            if len(values_uniq) > 1:
+                raise CmdLineInputError(
+                    f"duplicate option '{key}' with different values "
+                    f"{format_list_custom_last_separator(values_uniq, ' and ')}"
+                )
+            result[key] = values[0]
+        return result
 
-    def is_acceptable_keyword_occurrence(keyword):
-        return (
-            keyword not in groups
-            or keyword_repeat_allowed
-            or keyword in keywords_for_grouping
-        )
+    def get_repeatable(self) -> dict[str, list[str]]:
+        """
+        Get all repeatable keys and their values
+        """
+        return {key: self._key_value_map[key] for key in self._repeatable_keys}
 
-    def process_keyword(keyword):
-        if not is_acceptable_keyword_occurrence(keyword):
-            raise CmdLineInputError(
-                "'{0}' cannot be used more than once".format(keyword)
-            )
-        groups.setdefault(keyword, [])
-        if keyword in keywords_for_grouping:
-            groups[keyword].append([])
 
-    def process_non_keyword(keyword, arg):
-        place = groups[keyword]
-        if keyword in keywords_for_grouping:
-            place = place[-1]
-        place.append(arg)
+class ArgsByKeywords:
+    def __init__(self, groups: Mapping[str, list[Argv]]):
+        self._groups = groups
+        self._flat_cache: dict[str, Argv] = {}
 
-    groups = {}
-    keywords_for_grouping = get_keywords_for_grouping()
+    def allow_repetition_only_for(self, keyword_set: StringCollection) -> None:
+        """
+        Raise CmdLineInputError if a keyword has been repetead when not allowed
+
+        keyword_set -- repetition is allowed for these keywords
+        """
+        for keyword, arg_groups in self._groups.items():
+            if len(arg_groups) > 1 and keyword not in keyword_set:
+                raise CmdLineInputError(
+                    f"'{keyword}' cannot be used more than once"
+                )
+
+    def ensure_unique_keywords(self) -> None:
+        """
+        Raise CmdLineInputError if any keyword has been repetead
+        """
+        return self.allow_repetition_only_for(set())
+
+    def is_empty(self) -> bool:
+        """
+        Check if any args have been specified
+        """
+        return not self._groups
+
+    def has_keyword(self, keyword: str) -> bool:
+        """
+        Check if a keyword has been specified
+
+        keyword -- a keyword to check
+        """
+        return keyword in self._groups
+
+    def has_empty_keyword(self, keyword: str) -> bool:
+        """
+        Check if a keyword has been specified without any following args
+
+        keyword -- a keyword to check
+        """
+        return self.has_keyword(keyword) and not self.get_args_flat(keyword)
+
+    def get_args_flat(self, keyword: str) -> Argv:
+        """
+        Get arguments of a keyword in one sequence
+        """
+        if keyword in self._groups:
+            if keyword not in self._flat_cache:
+                self._flat_cache[keyword] = [
+                    arg
+                    for one_group in self._groups[keyword]
+                    for arg in one_group
+                ]
+            return self._flat_cache[keyword]
+        return []
+
+    def get_args_groups(self, keyword: str) -> list[Argv]:
+        """
+        Get arguments of a keyword, one group for each keyword occurrence
+        """
+        if keyword in self._groups:
+            return self._groups[keyword]
+        return []
+
+
+def group_by_keywords(
+    arg_list: Argv,
+    keyword_set: StringCollection,
+    implicit_first_keyword: Optional[str] = None,
+) -> ArgsByKeywords:
+    """
+    Separate argv into groups delimited by specified keywords
+
+    arg_list -- commandline arguments containing keywords
+    keyword_set -- all expected keywords
+    implicit_first_keyword -- key for capturing args before the first keyword
+    """
+    args_by_keywords: dict[str, list[Argv]] = {}
+
+    def new_keyword(keyword: str) -> None:
+        if keyword not in args_by_keywords:
+            args_by_keywords[keyword] = []
+        args_by_keywords[keyword].append([])
 
     if arg_list:
-        current_keyword = None
         if arg_list[0] not in keyword_set:
-            if not implicit_first_group_key:
+            if not implicit_first_keyword:
                 raise CmdLineInputError()
-            process_keyword(implicit_first_group_key)
-            current_keyword = implicit_first_group_key
+            current_keyword = implicit_first_keyword
+            new_keyword(current_keyword)
 
         for arg in arg_list:
             if arg in keyword_set:
-                process_keyword(arg)
                 current_keyword = arg
+                new_keyword(current_keyword)
             else:
-                process_non_keyword(current_keyword, arg)
+                args_by_keywords[current_keyword][-1].append(arg)
 
-    return get_completed_groups()
+    return ArgsByKeywords(args_by_keywords)
 
 
 def parse_typed_arg(
@@ -370,8 +457,14 @@ def parse_typed_arg(
     return arg_type, arg_value
 
 
-def _is_num(arg):
-    return arg.isdigit() or arg.lower() == "infinity"
+def _is_num(arg: str) -> bool:
+    if arg.lower() == INFINITY.lower():
+        return True
+    try:
+        int(arg)
+        return True
+    except ValueError:
+        return False
 
 
 def _is_float(arg: str) -> bool:
@@ -386,23 +479,17 @@ def _is_negative_num(arg: str) -> bool:
     return arg.startswith("-") and (_is_num(arg[1:]) or _is_float(arg))
 
 
-def is_short_option_expecting_value(arg):
+def is_short_option_expecting_value(arg: str) -> bool:
+    return len(arg) == 2 and arg[0] == "-" and f"{arg[1]}:" in PCS_SHORT_OPTIONS
+
+
+def is_long_option_expecting_value(arg: str) -> bool:
     return (
-        len(arg) == 2
-        and arg[0] == "-"
-        and "{0}:".format(arg[1]) in PCS_SHORT_OPTIONS
+        len(arg) > 2 and arg[0:2] == "--" and f"{arg[2:]}=" in PCS_LONG_OPTIONS
     )
 
 
-def is_long_option_expecting_value(arg):
-    return (
-        len(arg) > 2
-        and arg[0:2] == "--"
-        and "{0}=".format(arg[2:]) in PCS_LONG_OPTIONS
-    )
-
-
-def is_option_expecting_value(arg):
+def is_option_expecting_value(arg: str) -> bool:
     return is_short_option_expecting_value(
         arg
     ) or is_long_option_expecting_value(arg)
@@ -412,7 +499,7 @@ def is_option_expecting_value(arg):
 # TODO remove
 # This function is called only by deprecated code for parsing argv containing
 # negative numbers without -- prepending them.
-def filter_out_non_option_negative_numbers(arg_list):
+def filter_out_non_option_negative_numbers(arg_list: Argv) -> tuple[Argv, Argv]:
     """
     Return arg_list without non-option negative numbers.
     Negative numbers following the option expecting value are kept.
@@ -457,13 +544,13 @@ def filter_out_non_option_negative_numbers(arg_list):
 # TODO remove
 # This function is called only by deprecated code for parsing argv containing
 # negative numbers without -- prepending them.
-def filter_out_options(arg_list):
+def filter_out_options(arg_list: Argv) -> Argv:
     """
-    Return arg_list without options and its negative numbers.
+    Return arg_list without options and negative numbers
 
     See a comment in filter_out_non_option_negative_numbers.
 
-    list arg_list contains command line arguments
+    arg_list -- command line arguments
     """
     args_without_options = []
     for i, arg in enumerate(arg_list):
@@ -519,8 +606,9 @@ class InputModifiers:
                 "--no-cluster-uuid": "--no-cluster-uuid" in options,
                 "--no-keys-sync": "--no-keys-sync" in options,
                 "--no-strict": "--no-strict" in options,
-                "--no-watchdog-validation": "--no-watchdog-validation"
-                in options,
+                "--no-watchdog-validation": (
+                    "--no-watchdog-validation" in options
+                ),
                 "--off": "--off" in options,
                 "--overwrite": "--overwrite" in options,
                 "--pacemaker": "--pacemaker" in options,
@@ -537,11 +625,13 @@ class InputModifiers:
                 "--booth-key": options.get("--booth-key", None),
                 "--corosync_conf": options.get("--corosync_conf", None),
                 "--from": options.get("--from", None),
+                # TODO remove
+                # used in resource create and stonith create, deprecated in both
                 "--group": options.get("--group", None),
                 "--name": options.get("--name", None),
                 "--node": options.get("--node", None),
-                _OUTPUT_FORMAT_OPTION: options.get(
-                    _OUTPUT_FORMAT_OPTION, OUTPUT_FORMAT_VALUE_TEXT
+                OUTPUT_FORMAT_OPTION: options.get(
+                    OUTPUT_FORMAT_OPTION, OUTPUT_FORMAT_VALUE_TEXT
                 ),
                 "--request-timeout": options.get("--request-timeout", None),
                 "--to": options.get("--to", None),
@@ -553,7 +643,9 @@ class InputModifiers:
             }
         )
 
-    def get_subset(self, *options, **custom_options):
+    def get_subset(
+        self, *options: str, **custom_options: ModifierValueType
+    ) -> "InputModifiers":
         opt_dict = {
             opt: self.get(opt) for opt in options if self.is_specified(opt)
         }
@@ -569,7 +661,7 @@ class InputModifiers:
         # --debug is supported in all commands
         supported_options_set = set(supported_options) | {"--debug"}
         if output_format_supported:
-            supported_options_set.add(_OUTPUT_FORMAT_OPTION)
+            supported_options_set.add(OUTPUT_FORMAT_OPTION)
         unsupported_options = self._defined_options - supported_options_set
         if unsupported_options:
             pluralize = partial(format_plural, unsupported_options)
@@ -587,7 +679,12 @@ class InputModifiers:
                 else None,
             )
 
-    def ensure_not_mutually_exclusive(self, *mutually_exclusive):
+    def ensure_not_mutually_exclusive(self, *mutually_exclusive: str) -> None:
+        """
+        Raise CmdLineInputError if several exclusive options were specified
+
+        mutually_exclusive -- mutually exclusive options
+        """
         options_to_report = self._defined_options & set(mutually_exclusive)
         if len(options_to_report) > 1:
             raise CmdLineInputError(
@@ -596,7 +693,16 @@ class InputModifiers:
                 )
             )
 
-    def ensure_not_incompatible(self, checked, incompatible):
+    def ensure_not_incompatible(
+        self, checked: str, incompatible: StringCollection
+    ) -> None:
+        """
+        Raise CmdLineInputError if both the checked and an incompatible option
+        were specified
+
+        checked -- option incompatible with any of incompatible options
+        incompatible -- set of options incompatible with checked
+        """
         if not checked in self._defined_options:
             return
         disallowed = self._defined_options & set(incompatible)
@@ -608,15 +714,15 @@ class InputModifiers:
             )
 
     def ensure_dependency_satisfied(
-        self, main_option: str, dependent_options: StringIterable
+        self, main_option: str, dependent_options: StringCollection
     ) -> None:
         """
-        Raise a `CmdLineInputError` exception if any of `dependent_options` is
-        present without `main_option` being present.
+        Raise CmdLineInputError if any of dependent_options is present and
+        main_option is not present.
 
-        main_option -- option on which `dependent_options` depend
+        main_option -- option on which dependent_options depend
         dependent_options -- none of these options can be specified if
-            `main_option` was not
+            main_option is not specified
         """
         if main_option in self._defined_options:
             return
@@ -649,18 +755,19 @@ class InputModifiers:
         raise AssertionError(f"Non existing default value for '{option}'")
 
     def get_output_format(
-        self, supported_formats: Set[str] = OUTPUT_FORMAT_VALUES
+        self,
+        supported_formats: StringCollection = OUTPUT_FORMAT_VALUES,
     ) -> str:
-        output_format = self.get(_OUTPUT_FORMAT_OPTION)
+        output_format = self.get(OUTPUT_FORMAT_OPTION)
         if output_format in supported_formats:
-            return cast(str, output_format)
+            return str(output_format)
         raise CmdLineInputError(
             (
                 "Unknown value '{value}' for '{option}' option. Supported "
                 "{value_pl} {is_pl}: {supported}"
             ).format(
                 value=output_format,
-                option=_OUTPUT_FORMAT_OPTION,
+                option=OUTPUT_FORMAT_OPTION,
                 value_pl=format_plural(supported_formats, "value"),
                 is_pl=format_plural(supported_formats, "is"),
                 supported=format_list(list(supported_formats)),

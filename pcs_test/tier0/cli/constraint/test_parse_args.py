@@ -1,7 +1,4 @@
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.constraint.parse_args import (
@@ -10,16 +7,9 @@ from pcs.cli.constraint.parse_args import (
 )
 
 
-@mock.patch("pcs.cli.common.parse_args.prepare_options")
 class PrepareResourceSetsTest(TestCase):
-    def test_prepare_resource_sets(self, options):
-        opts = [{"id": "1"}, {"id": "2", "sequential": "true"}]
-        options.side_effect = opts
+    def test_prepare_resource_sets(self):
         self.assertEqual(
-            [
-                {"ids": ["resA", "resB"], "options": opts[0]},
-                {"ids": ["resC"], "options": opts[1]},
-            ],
             prepare_resource_sets(
                 [
                     "resA",
@@ -31,55 +21,48 @@ class PrepareResourceSetsTest(TestCase):
                     "sequential=true",
                 ]
             ),
+            [
+                {"ids": ["resA", "resB"], "options": {"id": "resource-set-1"}},
+                {
+                    "ids": ["resC"],
+                    "options": {"id": "resource-set-2", "sequential": "true"},
+                },
+            ],
         )
 
-    def test_has_no_responsibility_to_assess_the_content(self, options):
-        options.return_value = {}
+    def test_has_no_responsibility_to_assess_the_content(self):
         self.assertEqual(
-            [{"ids": [], "options": {}}], prepare_resource_sets([])
+            prepare_resource_sets([]),
+            [{"ids": [], "options": {}}],
         )
 
 
-@mock.patch("pcs.cli.common.parse_args.prepare_options")
-@mock.patch("pcs.cli.constraint.parse_args.prepare_resource_sets")
 class PrepareSetArgvTest(TestCase):
-    # pylint: disable=no-self-use, unused-argument
-    def test_return_tuple_of_given_resource_set_list_and_options(
-        self, res_sets, options
-    ):
-        res_sets.return_value = [{"ids": "A"}]
-        options.return_value = "O"
-
+    def test_right_distribute_full_args(self):
         self.assertEqual(
-            ([{"ids": "A"}], "O"),
             prepare_set_args(["A", "b=c", "setoptions", "d=e"]),
+            ([{"ids": ["A"], "options": {"b": "c"}}], {"d": "e"}),
         )
 
-    def test_right_distribute_full_args(self, res_sets, options):
-        prepare_set_args(["A", "b=c", "setoptions", "d=e"])
-        res_sets.assert_called_once_with(["A", "b=c"])
-        options.assert_called_once_with(["d=e"])
+    def test_right_distribute_args_without_options(self):
+        self.assertEqual(
+            prepare_set_args(["A", "b=c"]),
+            ([{"ids": ["A"], "options": {"b": "c"}}], {}),
+        )
 
-    def test_right_distribute_args_without_options(self, res_sets, options):
-        prepare_set_args(["A", "b=c"])
-        res_sets.assert_called_once_with(["A", "b=c"])
-        options.assert_not_called()
+    def test_right_distribute_args_with_empty_options(self):
+        self.assertEqual(
+            prepare_set_args(["A", "b=c", "setoptions"]),
+            ([{"ids": ["A"], "options": {"b": "c"}}], {}),
+        )
 
-    def test_right_distribute_args_with_empty_options(self, res_sets, options):
-        prepare_set_args(["A", "b=c", "setoptions"])
-        res_sets.assert_called_once_with(["A", "b=c"])
-        options.assert_not_called()
-
-    def test_raises_when_no_set_specified(self, res_sets, options):
+    def test_raises_when_no_set_specified(self):
         self.assertRaises(CmdLineInputError, lambda: prepare_set_args([]))
-        res_sets.assert_not_called()
 
-    def test_raises_when_no_resource_in_set(self, res_sets, options):
-        res_sets.return_value = [{"ids": [], "options": {"b": "c"}}]
+    def test_raises_when_no_resource_in_set(self):
         self.assertRaises(CmdLineInputError, lambda: prepare_set_args(["b=c"]))
-        res_sets.assert_called_once_with(["b=c"])
 
-    def test_raises_when_setoption_more_than_once(self, res_sets, options):
+    def test_raises_when_setoption_more_than_once(self):
         self.assertRaises(
             CmdLineInputError,
             lambda: prepare_set_args(

@@ -1349,6 +1349,16 @@
         pcs commands: resource create
       </description>
     </capability>
+    <capability id="pcmk.resource.create.group.future" in-pcs="1" in-pcsd="0">
+      <!-- TODO remove this capability in pcs-0.12 -->
+      <description>
+        Specifying --future enables the new resource create command line parser.
+        It replaces '--group', '--after' and '--before' with 'group', 'after'
+        and 'before', respectively.
+
+        pcs commands: resource create
+      </description>
+    </capability>
     <capability id="pcmk.resource.create.operations" in-pcs="1" in-pcsd="1">
       <description>
         Set resource operations when creating a resource, also allow to disable

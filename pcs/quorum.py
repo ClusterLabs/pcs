@@ -7,7 +7,11 @@ from pcs import (
 from pcs.cli.cluster_property.output import PropertyConfigurationFacade
 from pcs.cli.common import parse_args
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.parse_args import InputModifiers
+from pcs.cli.common.parse_args import (
+    ArgsByKeywords,
+    Argv,
+    InputModifiers,
+)
 from pcs.cli.common.tools import print_to_stderr
 from pcs.cli.reports import process_library_reports
 from pcs.common.str_tools import (
@@ -136,20 +140,17 @@ def quorum_update_cmd(lib, argv, modifiers):
     )
 
 
-def _parse_quorum_device_groups(arg_list):
+def _parse_quorum_device_groups(arg_list: Argv) -> ArgsByKeywords:
     keyword_list = ["model", "heuristics"]
     groups = parse_args.group_by_keywords(
-        arg_list,
-        set(keyword_list),
-        implicit_first_group_key="generic",
-        keyword_repeat_allowed=False,
-        only_found_keywords=True,
+        arg_list, set(keyword_list), implicit_first_keyword="generic"
     )
+    groups.ensure_unique_keywords()
     for keyword in keyword_list:
-        if keyword not in groups:
+        if not groups.has_keyword(keyword):
             continue
-        if not groups[keyword]:
-            raise CmdLineInputError("No {0} options specified".format(keyword))
+        if not groups.get_args_flat(keyword):
+            raise CmdLineInputError(f"No {keyword} options specified")
     return groups
 
 
@@ -166,16 +167,18 @@ def quorum_device_add_cmd(lib, argv, modifiers):
         "--force", "--skip-offline", "--request-timeout", "--corosync_conf"
     )
     groups = _parse_quorum_device_groups(argv)
-    model_and_model_options = groups.get("model", [])
+    model_and_model_options = groups.get_args_flat("model")
     # we expect "model" keyword once, followed by the actual model value
     if not model_and_model_options or "=" in model_and_model_options[0]:
         raise CmdLineInputError()
 
-    generic_options = parse_args.prepare_options(groups.get("generic", []))
+    generic_options = parse_args.prepare_options(
+        groups.get_args_flat("generic")
+    )
     model = model_and_model_options[0]
     model_options = parse_args.prepare_options(model_and_model_options[1:])
     heuristics_options = parse_args.prepare_options(
-        groups.get("heuristics", [])
+        groups.get_args_flat("heuristics")
     )
 
     if "model" in generic_options:
@@ -233,12 +236,14 @@ def quorum_device_update_cmd(lib, argv, modifiers):
         "--force", "--skip-offline", "--request-timeout", "--corosync_conf"
     )
     groups = _parse_quorum_device_groups(argv)
-    if not groups:
+    if groups.is_empty():
         raise CmdLineInputError()
-    generic_options = parse_args.prepare_options(groups.get("generic", []))
-    model_options = parse_args.prepare_options(groups.get("model", []))
+    generic_options = parse_args.prepare_options(
+        groups.get_args_flat("generic")
+    )
+    model_options = parse_args.prepare_options(groups.get_args_flat("model"))
     heuristics_options = parse_args.prepare_options(
-        groups.get("heuristics", [])
+        groups.get_args_flat("heuristics")
     )
 
     if "model" in generic_options:

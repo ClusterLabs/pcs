@@ -20,7 +20,9 @@ from pcs.cli.reports.output import (
     warn,
 )
 from pcs.cli.resource.output import resource_agent_metadata_to_text
-from pcs.cli.resource.parse_args import parse_create_simple as parse_create_args
+from pcs.cli.resource.parse_args import (
+    parse_primitive as parse_primitive_resource,
+)
 from pcs.common import reports
 from pcs.common.fencing_topology import (
     TARGET_TYPE_ATTRIBUTE,
@@ -184,7 +186,7 @@ def stonith_create(lib, argv, modifiers):
     stonith_id = argv[0]
     stonith_type = argv[1]
 
-    parts = parse_create_args(argv[2:])
+    parts = parse_primitive_resource(argv[2:])
 
     settings = dict(
         allow_absent_agent=modifiers.get("--force"),
@@ -200,12 +202,13 @@ def stonith_create(lib, argv, modifiers):
         lib.stonith.create(
             stonith_id,
             stonith_type,
-            parts["op"],
-            parts["meta"],
-            parts["options"],
+            parts.operations,
+            parts.meta_attrs,
+            parts.instance_attrs,
             **settings,
         )
     else:
+        # deprecated since 0.11.3
         deprecation_warning(
             "Option to group stonith resource is deprecated and will be "
             "removed in a future release."
@@ -223,9 +226,9 @@ def stonith_create(lib, argv, modifiers):
             stonith_id,
             stonith_type,
             modifiers.get("--group"),
-            parts["op"],
-            parts["meta"],
-            parts["options"],
+            parts.operations,
+            parts.meta_attrs,
+            parts.instance_attrs,
             adjacent_resource_id=adjacent_resource_id,
             put_after_adjacent=put_after_adjacent,
             **settings,
@@ -251,23 +254,19 @@ def _stonith_level_parse_target_and_stonith(argv):
     target_type, target_value, devices = None, None, None
     allowed_keywords = {"target", "stonith"}
     missing_target_value, missing_stonith_value = False, False
-    groups = parse_args.group_by_keywords(
-        argv,
-        allowed_keywords,
-        only_found_keywords=True,
-    )
-    if "target" in groups:
-        if len(groups["target"]) > 1:
+    groups = parse_args.group_by_keywords(argv, allowed_keywords)
+    if groups.has_keyword("target"):
+        if len(groups.get_args_flat("target")) > 1:
             raise CmdLineInputError("At most one target can be specified")
-        if groups["target"]:
+        if groups.get_args_flat("target"):
             target_type, target_value = _stonith_level_parse_node(
-                groups["target"][0]
+                groups.get_args_flat("target")[0]
             )
         else:
             missing_target_value = True
-    if "stonith" in groups:
-        if groups["stonith"]:
-            devices = groups["stonith"]
+    if groups.has_keyword("stonith"):
+        if groups.get_args_flat("stonith"):
+            devices = groups.get_args_flat("stonith")
         else:
             missing_stonith_value = True
 
@@ -920,11 +919,9 @@ def stonith_update_scsi_devices(lib, argv, modifiers):
         raise CmdLineInputError()
     stonith_id = argv[0]
     parsed_args = parse_args.group_by_keywords(
-        argv[1:],
-        ["set", "add", "remove", "delete"],
-        keyword_repeat_allowed=False,
-        only_found_keywords=True,
+        argv[1:], ["set", "add", "remove", "delete"]
     )
+    parsed_args.ensure_unique_keywords()
     cmd_exception = CmdLineInputError(
         show_both_usage_and_message=True,
         hint=(
@@ -932,24 +929,31 @@ def stonith_update_scsi_devices(lib, argv, modifiers):
             " for add or delete/remove devices"
         ),
     )
-    if "set" in parsed_args and {"add", "remove", "delete"} & set(
-        parsed_args.keys()
+    if parsed_args.has_keyword("set") and (
+        parsed_args.has_keyword("add")
+        or parsed_args.has_keyword("remove")
+        or parsed_args.has_keyword("delete")
     ):
         raise cmd_exception
-    if "set" in parsed_args:
-        if not parsed_args["set"]:
+    if parsed_args.has_keyword("set"):
+        if not parsed_args.get_args_flat("set"):
             raise cmd_exception
         lib.stonith.update_scsi_devices(
-            stonith_id, parsed_args["set"], force_flags=force_flags
+            stonith_id,
+            parsed_args.get_args_flat("set"),
+            force_flags=force_flags,
         )
     else:
         for key in ("add", "remove", "delete"):
-            if key in parsed_args and not parsed_args[key]:
+            if parsed_args.has_empty_keyword(key):
                 raise cmd_exception
         lib.stonith.update_scsi_devices_add_remove(
             stonith_id,
-            parsed_args.get("add", []),
-            parsed_args.get("delete", []) + parsed_args.get("remove", []),
+            parsed_args.get_args_flat("add"),
+            (
+                parsed_args.get_args_flat("delete")
+                + parsed_args.get_args_flat("remove")
+            ),
             force_flags=force_flags,
         )
 

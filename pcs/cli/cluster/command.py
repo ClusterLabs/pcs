@@ -1,7 +1,7 @@
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import prepare_options
 from pcs.cli.resource.parse_args import (
-    parse_create_simple as parse_resource_create_args,
+    parse_primitive as parse_primitive_resource,
 )
 
 
@@ -51,15 +51,15 @@ def node_add_remote(lib, arg_list, modifiers):
         arg_list
     )
 
-    parts = parse_resource_create_args(rest_args)
+    parts = parse_primitive_resource(rest_args)
     force = modifiers.get("--force")
 
     lib.remote_node.node_add_remote(
         node_name,
         node_addr,
-        parts["op"],
-        parts["meta"],
-        parts["options"],
+        parts.operations,
+        parts.meta_attrs,
+        parts.instance_attrs,
         skip_offline_nodes=modifiers.get("--skip-offline"),
         allow_incomplete_distribution=force,
         allow_pacemaker_remote_service_fail=force,

@@ -53,6 +53,11 @@ CRM_RULE_MISSING_MSG = (
     "crm_rule is not available, therefore expired parts of configuration may "
     "not be detected. Consider upgrading pacemaker."
 )
+DEPRECATED_DASH_DASH_GROUP = (
+    "Deprecation Warning: Using '--group' is deprecated and will be replaced "
+    "with 'group' in a future release. Specify --future to switch to the future "
+    "behavior.\n"
+)
 
 empty_cib = rc("cib-empty-3.7.xml")
 large_cib = rc("cib-large.xml")
@@ -149,7 +154,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
             self.temp_cib.name,
             "resource create C1 ocf:heartbeat:Dummy --group C1-group".split(),
         )
-        self.assertEqual(stderr, "")
+        self.assertEqual(stderr, DEPRECATED_DASH_DASH_GROUP)
         self.assertEqual(stdout, "")
         self.assertEqual(retval, 0)
 
@@ -2167,7 +2172,8 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         self.assertEqual(stdout, "")
         ac(
             stderr,
-            "Warning: changing a monitor operation interval from 10s to 11 to make the operation unique\n",
+            DEPRECATED_DASH_DASH_GROUP
+            + "Warning: changing a monitor operation interval from 10s to 11 to make the operation unique\n",
         )
         self.assertEqual(retval, 0)
 
@@ -2426,7 +2432,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
             "resource create dummy2 ocf:heartbeat:Dummy --group dummyG".split(),
         )
         self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
+        self.assertEqual(stderr, DEPRECATED_DASH_DASH_GROUP)
         self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(
@@ -5751,13 +5757,16 @@ class OrderVsGroup(unittest.TestCase, AssertPcsMixin):
         write_file_to_tmpfile(self.empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
         self.assert_pcs_success(
-            "resource create A ocf:heartbeat:Dummy --group grAB".split()
+            "resource create A ocf:heartbeat:Dummy --group grAB".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
-            "resource create B ocf:heartbeat:Dummy --group grAB".split()
+            "resource create B ocf:heartbeat:Dummy --group grAB".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
-            "resource create C ocf:heartbeat:Dummy --group grC".split()
+            "resource create C ocf:heartbeat:Dummy --group grC".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success("resource create D ocf:heartbeat:Dummy".split())
 

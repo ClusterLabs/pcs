@@ -1,16 +1,28 @@
+from typing import (
+    Any,
+    Callable,
+)
+
+from pcs.cli.common.parse_args import (
+    Argv,
+    InputModifiers,
+)
 from pcs.cli.constraint import parse_args
 
 
-def create_with_set(create_with_set_library_call, argv, modifiers):
+def create_with_set(
+    create_with_set_library_call: Callable[..., Any],
+    argv: Argv,
+    modifiers: InputModifiers,
+) -> None:
     """
     callable create_with_set_library_call create constraint with set
-    list argv part of comandline args
-        see usage for  "constraint (colocation|resource|ticket) set"
-    dict like object modifiers can contain
-        "force" allows resource in clone/master and constraint duplicity
+    argv -- part of comandline args
+    modifiers -- can contain "force" allowing resources in clone/promotable and
+        constraint duplicity
 
     Commandline options:
-      * --force - allow resource inside clone (or master), allow duplicate
+      * --force - allow a resource inside clone or promotable, allow duplicate
         element
       * -f - CIB file
     """

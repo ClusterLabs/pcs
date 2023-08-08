@@ -1,17 +1,20 @@
 from collections.abc import Iterable as IterableAbc
 from typing import (
     Any,
-    Iterable,
     List,
     Mapping,
     Optional,
     Sequence,
+    Sized,
     Tuple,
     TypeVar,
     Union,
 )
 
-from pcs.common.types import StringSequence
+from pcs.common.types import (
+    StringCollection,
+    StringSequence,
+)
 
 
 def indent(line_list: StringSequence, indent_step: int = 2) -> List[str]:
@@ -58,7 +61,7 @@ def format_list(
 
 
 def format_list_custom_last_separator(
-    item_list: StringSequence,
+    item_list: StringCollection,
     last_separator: str,
     separator: str = ", ",
 ) -> str:
@@ -180,11 +183,11 @@ def format_optional(
     return empty_case
 
 
-def _is_multiple(what):
+def _is_multiple(what: Union[int, Sized]):
     """
     Return True if 'what' does not mean one item, False otherwise
 
-    iterable/int what -- this will be counted
+    what -- this will be counted
     """
     retval = False
     if isinstance(what, int):
@@ -227,7 +230,7 @@ def get_plural(singular: str) -> str:
 
 
 def format_plural(
-    depends_on: Union[int, Iterable[Any]],
+    depends_on: Union[int, Sized],
     singular: str,
     plural: Optional[str] = None,
 ) -> str:
@@ -235,8 +238,7 @@ def format_plural(
     Takes the singular word form and returns its plural form if depends_on
     is not equal to one/contains one item
 
-    iterable/int/string depends_on -- if number (of items) isn't equal to one,
-        returns plural
+    depends_on -- if number (of items) isn't equal to one, return plural
     singular -- singular word (like: is, do, node)
     plural -- optional irregular plural form
     """

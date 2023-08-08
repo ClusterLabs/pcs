@@ -2,7 +2,9 @@ from unittest import TestCase
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import (
+    ArgsByKeywords,
     InputModifiers,
+    KeyValueParser,
     _is_negative_num,
     _is_num,
     ensure_unique_args,
@@ -16,6 +18,7 @@ from pcs.cli.common.parse_args import (
     prepare_options,
     prepare_options_allowed,
     split_list,
+    split_list_by_any_keywords,
     split_option,
 )
 
@@ -130,6 +133,71 @@ class PrepareOptionsAllowedTest(TestCase):
         self.assertEqual(str(cm.exception), "Unknown options 'c', 'd'")
 
 
+class KeyValueParserTest(TestCase):
+    def test_refuse_option_without_value(self):
+        self.assertRaises(CmdLineInputError, lambda: KeyValueParser(["abc"]))
+
+    def test_refuse_option_without_key(self):
+        self.assertRaises(CmdLineInputError, lambda: KeyValueParser(["=a"]))
+
+    def test_prepare_option_dict_form_args(self):
+        kvp = KeyValueParser(["a=b", "c=d"])
+        self.assertEqual({"a": "b", "c": "d"}, kvp.get_unique())
+        self.assertEqual({}, kvp.get_repeatable())
+
+    def test_prepare_option_dict_with_empty_value(self):
+        kvp = KeyValueParser(["a=", "c="])
+        self.assertEqual({"a": "", "c": ""}, kvp.get_unique())
+        self.assertEqual({}, kvp.get_repeatable())
+
+    def test_refuse_options_with_same_key_and_different_value(self):
+        kvp = KeyValueParser(["a=a", "a=b", "a=c"])
+        with self.assertRaises(CmdLineInputError) as cm:
+            kvp.get_unique()
+        self.assertEqual(
+            str(cm.exception),
+            "duplicate option 'a' with different values 'a', 'b' and 'c'",
+        )
+        self.assertEqual({}, kvp.get_repeatable())
+
+    def test_accept_options_with_same_key_and_same_value(self):
+        kvp = KeyValueParser(["a=1", "a=1"])
+        self.assertEqual({"a": "1"}, kvp.get_unique())
+        self.assertEqual({}, kvp.get_repeatable())
+
+    def test_option_not_allowed(self):
+        kvp = KeyValueParser(["a=b", "c=d"])
+        with self.assertRaises(CmdLineInputError) as cm:
+            kvp.check_allowed_keys(["c"])
+        self.assertEqual(str(cm.exception), "Unknown option 'a'")
+
+    def test_options_not_allowed(self):
+        kvp = KeyValueParser(["d=1", "a=2", "c=3", "b=4"])
+        with self.assertRaises(CmdLineInputError) as cm:
+            kvp.check_allowed_keys(["a", "b"])
+        self.assertEqual(str(cm.exception), "Unknown options 'c', 'd'")
+
+    def test_repeatable(self):
+        kvp = KeyValueParser(["a=1", "a=2"], ["a"])
+        self.assertEqual({}, kvp.get_unique())
+        self.assertEqual({"a": ["1", "2"]}, kvp.get_repeatable())
+
+    def test_repeatable_only_once(self):
+        kvp = KeyValueParser(["a=1"], ["a"])
+        self.assertEqual({}, kvp.get_unique())
+        self.assertEqual({"a": ["1"]}, kvp.get_repeatable())
+
+    def test_repeatable_multiple(self):
+        kvp = KeyValueParser(["a=1", "a=3", "a=2", "a=4"], ["a"])
+        self.assertEqual({}, kvp.get_unique())
+        self.assertEqual({"a": ["1", "3", "2", "4"]}, kvp.get_repeatable())
+
+    def test_repeatable_and_unique(self):
+        kvp = KeyValueParser(["a=1", "b=B", "a=2"], ["a"])
+        self.assertEqual({"b": "B"}, kvp.get_unique())
+        self.assertEqual({"a": ["1", "2"]}, kvp.get_repeatable())
+
+
 class SplitListTest(TestCase):
     def test_returns_list_with_original_when_separator_not_in_original(self):
         self.assertEqual([["a", "b"]], split_list(["a", "b"], "c"))
@@ -146,19 +214,155 @@ class SplitListTest(TestCase):
         )
 
 
+class SplitListByAnyKeywords(TestCase):
+    def test_empty(self):
+        self.assertEqual(split_list_by_any_keywords([], "label"), {})
+
+    def test_doesnt_start_with_keyword(self):
+        with self.assertRaises(CmdLineInputError):
+            split_list_by_any_keywords(["a=b", "c=d"], "label")
+
+    def test_only_one_keyword(self):
+        self.assertEqual(split_list_by_any_keywords(["a"], "label"), {"a": []})
+
+    def test_only_keywords(self):
+        self.assertEqual(
+            split_list_by_any_keywords(["a", "b"], "label"), {"a": [], "b": []}
+        )
+
+    def test_one_keyword_and_options(self):
+        self.assertEqual(
+            split_list_by_any_keywords(["a", "a1=1", "a2=2"], "label"),
+            {"a": ["a1=1", "a2=2"]},
+        )
+
+    def test_keywords_and_options(self):
+        self.assertEqual(
+            split_list_by_any_keywords(
+                ["a", "a1=1", "a2=2", "b", "b1=1", "b2=2"], "label"
+            ),
+            {"a": ["a1=1", "a2=2"], "b": ["b1=1", "b2=2"]},
+        )
+
+    def test_keyword_repeated(self):
+        with self.assertRaises(CmdLineInputError):
+            split_list_by_any_keywords(["a", "a"], "label")
+        with self.assertRaises(CmdLineInputError):
+            split_list_by_any_keywords(["a", "b", "a"], "label")
+        with self.assertRaises(CmdLineInputError):
+            split_list_by_any_keywords(["a", "a1=1", "a", "a2=2"], "label")
+        with self.assertRaises(CmdLineInputError):
+            split_list_by_any_keywords(
+                ["a", "a1=1", "b", "b1=1", "a", "a2=2"], "label"
+            )
+
+
+class ArgsByKeywordsTest(TestCase):
+    def setUp(self):
+        self.fixture_unique = [["u1", "u2"]]
+        self.fixture_repeated = [["f1", "f2"], ["f3"], ["f4", "f5"]]
+        self.fixture_sparse = [[], ["s1"], [], ["s2"], []]
+        self.fixture_abkw = ArgsByKeywords(
+            {
+                "unique": self.fixture_unique,
+                "repeated": self.fixture_repeated,
+                "sparse": self.fixture_sparse,
+                "empty": [[]],
+                "empty_repeated": [[], []],
+            }
+        )
+
+    def test_is_empty(self):
+        self.assertFalse(self.fixture_abkw.is_empty())
+        self.assertTrue(ArgsByKeywords({}).is_empty())
+
+    def test_has_keyword(self):
+        self.assertTrue(self.fixture_abkw.has_keyword("unique"))
+        self.assertTrue(self.fixture_abkw.has_keyword("repeated"))
+        self.assertTrue(self.fixture_abkw.has_keyword("sparse"))
+        self.assertTrue(self.fixture_abkw.has_keyword("empty"))
+        self.assertTrue(self.fixture_abkw.has_keyword("empty_repeated"))
+        self.assertFalse(self.fixture_abkw.has_keyword("missing"))
+
+    def test_has_empty_keyword(self):
+        self.assertFalse(self.fixture_abkw.has_empty_keyword("unique"))
+        self.assertFalse(self.fixture_abkw.has_empty_keyword("repeated"))
+        self.assertFalse(self.fixture_abkw.has_empty_keyword("sparse"))
+        self.assertFalse(self.fixture_abkw.has_empty_keyword("missing"))
+        self.assertTrue(self.fixture_abkw.has_empty_keyword("empty"))
+        self.assertTrue(self.fixture_abkw.has_empty_keyword("empty_repeated"))
+
+    def test_get_flat(self):
+        for _ in range(2):  # test cache
+            self.assertEqual(
+                self.fixture_abkw.get_args_flat("unique"),
+                ["u1", "u2"],
+            )
+            self.assertEqual(
+                self.fixture_abkw.get_args_flat("repeated"),
+                ["f1", "f2", "f3", "f4", "f5"],
+            )
+            self.assertEqual(
+                self.fixture_abkw.get_args_flat("sparse"),
+                ["s1", "s2"],
+            )
+            self.assertEqual(self.fixture_abkw.get_args_flat("empty"), [])
+            self.assertEqual(
+                self.fixture_abkw.get_args_flat("empty_repeated"), []
+            )
+            self.assertEqual(self.fixture_abkw.get_args_flat("missing"), [])
+
+    def test_get_groups(self):
+        self.assertEqual(
+            self.fixture_abkw.get_args_groups("unique"), self.fixture_unique
+        )
+        self.assertEqual(
+            self.fixture_abkw.get_args_groups("repeated"), self.fixture_repeated
+        )
+        self.assertEqual(
+            self.fixture_abkw.get_args_groups("sparse"), self.fixture_sparse
+        )
+        self.assertEqual(self.fixture_abkw.get_args_groups("empty"), [[]])
+        self.assertEqual(
+            self.fixture_abkw.get_args_groups("empty_repeated"), [[], []]
+        )
+        self.assertEqual(self.fixture_abkw.get_args_groups("missing"), [])
+
+    def test_ensure_unique(self):
+        with self.assertRaises(CmdLineInputError):
+            self.fixture_abkw.ensure_unique_keywords()
+        try:
+            ArgsByKeywords(
+                {"unique": self.fixture_unique, "other": [["1", "2", "3"]]}
+            ).ensure_unique_keywords()
+        except CmdLineInputError:
+            self.fail("Unexpected CmdLineInputError raised")
+
+    def test_allow_repetition(self):
+        with self.assertRaises(CmdLineInputError):
+            self.fixture_abkw.allow_repetition_only_for([])
+        with self.assertRaises(CmdLineInputError):
+            self.fixture_abkw.allow_repetition_only_for(["sparse"])
+        with self.assertRaises(CmdLineInputError):
+            self.fixture_abkw.allow_repetition_only_for(["unique", "repeated"])
+        try:
+            self.fixture_abkw.allow_repetition_only_for(
+                ["sparse", "repeated", "empty_repeated"]
+            )
+        except CmdLineInputError:
+            self.fail("Unexpected CmdLineInputError raised")
+
+
 class GroupByKeywords(TestCase):
+    # pylint: disable=protected-access
     def test_split_with_implicit_first_keyword(self):
         self.assertEqual(
             group_by_keywords(
                 [0, "first", 1, 2, "second", 3],
                 set(["first", "second"]),
-                implicit_first_group_key="zero",
-            ),
-            {
-                "zero": [0],
-                "first": [1, 2],
-                "second": [3],
-            },
+                implicit_first_keyword="zero",
+            )._groups,
+            {"zero": [[0]], "first": [[1, 2]], "second": [[3]]},
         )
 
     def test_split_without_implicit_keyword(self):
@@ -166,11 +370,8 @@ class GroupByKeywords(TestCase):
             group_by_keywords(
                 ["first", 1, 2, "second", 3],
                 set(["first", "second"]),
-            ),
-            {
-                "first": [1, 2],
-                "second": [3],
-            },
+            )._groups,
+            {"first": [[1, 2]], "second": [[3]]},
         )
 
     def test_raises_when_args_do_not_start_with_keyword_nor_implicit(self):
@@ -182,143 +383,81 @@ class GroupByKeywords(TestCase):
             ),
         )
 
-    def test_returns_dict_with_empty_lists_for_no_args(self):
+    def test_no_args(self):
         self.assertEqual(
-            group_by_keywords([], set(["first", "second"])),
-            {
-                "first": [],
-                "second": [],
-            },
+            group_by_keywords([], set(["first", "second"]))._groups,
+            {},
         )
 
-    def test_returns_dict_with_empty_lists_for_no_args_implicit_case(self):
+    def test_no_args_implicit_case(self):
         self.assertEqual(
             group_by_keywords(
                 [],
                 set(["first", "second"]),
-                implicit_first_group_key="zero",
-            ),
-            {
-                "zero": [],
-                "first": [],
-                "second": [],
-            },
+                implicit_first_keyword="zero",
+            )._groups,
+            {},
         )
 
-    def test_returns_dict_with_empty_lists_for_no_opts_and_only_found_kws(self):
+    def test_no_args_for_keyword(self):
         self.assertEqual(
             group_by_keywords(
                 ["first"],
                 set(["first", "second"]),
-                only_found_keywords=True,
-            ),
-            {
-                "first": [],
-            },
+            )._groups,
+            {"first": [[]]},
         )
 
-    def test_returns_empty_lists_no_opts_and_only_found_kws_with_grouping(self):
+    def test_keywords_repeating(self):
+        self.assertEqual(
+            group_by_keywords(
+                ["first", 1, 2, "second", 3, "first", 4],
+                set(["first", "second"]),
+            )._groups,
+            {"first": [[1, 2], [4]], "second": [[3]]},
+        )
+
+    def test_no_args_for_group(self):
         self.assertEqual(
             group_by_keywords(
                 ["second", 1, "second", "second", 2, 3],
                 set(["first", "second"]),
-                group_repeated_keywords=["second"],
-                only_found_keywords=True,
-            ),
-            {
-                "second": [
-                    [1],
-                    [],
-                    [2, 3],
-                ],
-            },
+            )._groups,
+            {"second": [[1], [], [2, 3]]},
         )
 
-    def test_empty_repeatable(self):
-        self.assertEqual(
-            group_by_keywords(
-                ["second"],
-                set(["first", "second"]),
-                group_repeated_keywords=["second"],
-                only_found_keywords=True,
-            ),
-            {
-                "second": [
-                    [],
-                ],
-            },
-        )
-
-    def test_allow_keywords_repeating(self):
-        self.assertEqual(
-            group_by_keywords(
-                ["first", 1, 2, "second", 3, "first", 4],
-                set(["first", "second"]),
-            ),
-            {
-                "first": [1, 2, 4],
-                "second": [3],
-            },
-        )
-
-    def test_can_disallow_keywords_repeating(self):
-        self.assertRaises(
-            CmdLineInputError,
-            lambda: group_by_keywords(
-                ["first", 1, 2, "second", 3, "first"],
-                set(["first", "second"]),
-                keyword_repeat_allowed=False,
-            ),
-        )
-
-    def test_group_repeating_keyword_occurrences(self):
-        self.assertEqual(
-            group_by_keywords(
-                ["first", 1, 2, "second", 3, "first", 4],
-                set(["first", "second"]),
-                group_repeated_keywords=["first"],
-            ),
-            {
-                "first": [[1, 2], [4]],
-                "second": [3],
-            },
-        )
-
-    def test_raises_on_group_repeated_keywords_inconsistency(self):
-        self.assertRaises(
-            AssertionError,
-            lambda: group_by_keywords(
-                [],
-                set(["first", "second"]),
-                group_repeated_keywords=["first", "third"],
-                implicit_first_group_key="third",
-            ),
-        )
-
-    def test_implicit_first_kw_not_applied_in_the_middle(self):
+    def test_implicit_first_keyword_not_applied_in_the_middle(self):
         self.assertEqual(
             group_by_keywords(
                 [1, 2, "first", 3, "zero", 4],
                 set(["first"]),
-                implicit_first_group_key="zero",
-            ),
-            {
-                "zero": [1, 2],
-                "first": [3, "zero", 4],
-            },
+                implicit_first_keyword="zero",
+            )._groups,
+            {"zero": [[1, 2]], "first": [[3, "zero", 4]]},
         )
 
-    def test_implicit_first_kw_applied_in_the_middle_when_is_in_kwds(self):
+    def test_implicit_first_keyword_applied_in_the_middle_when_in_keywords(
+        self,
+    ):
         self.assertEqual(
             group_by_keywords(
                 [1, 2, "first", 3, "zero", 4],
                 set(["first", "zero"]),
-                implicit_first_group_key="zero",
-            ),
-            {
-                "zero": [1, 2, 4],
-                "first": [3],
-            },
+                implicit_first_keyword="zero",
+            )._groups,
+            {"zero": [[1, 2], [4]], "first": [[3]]},
+        )
+
+    def test_implicit_first_keyword_ignored_when_another_keyword_is_first_arg(
+        self,
+    ):
+        self.assertEqual(
+            group_by_keywords(
+                ["first", "1", "2", "second", "3"],
+                set(["first", "second"]),
+                implicit_first_keyword="zero",
+            )._groups,
+            {"first": [["1", "2"]], "second": [["3"]]},
         )
 
 

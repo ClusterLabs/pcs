@@ -1,5 +1,4 @@
 import json
-from functools import partial
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import (
@@ -8,8 +7,6 @@ from pcs.cli.common.parse_args import (
 )
 from pcs.cli.reports.output import deprecation_warning
 from pcs.common.str_tools import indent
-
-parse_cmd_sections = partial(group_by_keywords, implicit_first_group_key="main")
 
 
 def ensure_only_allowed_options(parameter_dict, allowed_list):
@@ -29,15 +26,17 @@ def alert_add(lib, argv, modifiers):
     if not argv:
         raise CmdLineInputError()
 
-    sections = parse_cmd_sections(argv, set(["options", "meta"]))
-    main_args = prepare_options(sections["main"])
+    sections = group_by_keywords(
+        argv, set(["options", "meta"]), implicit_first_keyword="main"
+    )
+    main_args = prepare_options(sections.get_args_flat("main"))
     ensure_only_allowed_options(main_args, ["id", "description", "path"])
 
     lib.alert.create_alert(
         main_args.get("id", None),
         main_args.get("path", None),
-        prepare_options(sections["options"]),
-        prepare_options(sections["meta"]),
+        prepare_options(sections.get_args_flat("options")),
+        prepare_options(sections.get_args_flat("meta")),
         main_args.get("description", None),
     )
 
@@ -53,15 +52,17 @@ def alert_update(lib, argv, modifiers):
 
     alert_id = argv[0]
 
-    sections = parse_cmd_sections(argv[1:], set(["options", "meta"]))
-    main_args = prepare_options(sections["main"])
+    sections = group_by_keywords(
+        argv[1:], set(["options", "meta"]), implicit_first_keyword="main"
+    )
+    main_args = prepare_options(sections.get_args_flat("main"))
     ensure_only_allowed_options(main_args, ["description", "path"])
 
     lib.alert.update_alert(
         alert_id,
         main_args.get("path", None),
-        prepare_options(sections["options"]),
-        prepare_options(sections["meta"]),
+        prepare_options(sections.get_args_flat("options")),
+        prepare_options(sections.get_args_flat("meta")),
         main_args.get("description", None),
     )
 
@@ -90,15 +91,17 @@ def recipient_add(lib, argv, modifiers):
 
     alert_id = argv[0]
 
-    sections = parse_cmd_sections(argv[1:], set(["options", "meta"]))
-    main_args = prepare_options(sections["main"])
+    sections = group_by_keywords(
+        argv[1:], set(["options", "meta"]), implicit_first_keyword="main"
+    )
+    main_args = prepare_options(sections.get_args_flat("main"))
     ensure_only_allowed_options(main_args, ["description", "id", "value"])
 
     lib.alert.add_recipient(
         alert_id,
         main_args.get("value", None),
-        prepare_options(sections["options"]),
-        prepare_options(sections["meta"]),
+        prepare_options(sections.get_args_flat("options")),
+        prepare_options(sections.get_args_flat("meta")),
         recipient_id=main_args.get("id", None),
         description=main_args.get("description", None),
         allow_same_value=modifiers.get("--force"),
@@ -117,14 +120,16 @@ def recipient_update(lib, argv, modifiers):
 
     recipient_id = argv[0]
 
-    sections = parse_cmd_sections(argv[1:], set(["options", "meta"]))
-    main_args = prepare_options(sections["main"])
+    sections = group_by_keywords(
+        argv[1:], set(["options", "meta"]), implicit_first_keyword="main"
+    )
+    main_args = prepare_options(sections.get_args_flat("main"))
     ensure_only_allowed_options(main_args, ["description", "value"])
 
     lib.alert.update_recipient(
         recipient_id,
-        prepare_options(sections["options"]),
-        prepare_options(sections["meta"]),
+        prepare_options(sections.get_args_flat("options")),
+        prepare_options(sections.get_args_flat("meta")),
         recipient_value=main_args.get("value", None),
         description=main_args.get("description", None),
         allow_same_value=modifiers.get("--force"),
