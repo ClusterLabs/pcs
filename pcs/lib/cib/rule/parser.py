@@ -5,8 +5,7 @@ from typing import (
     Tuple,
 )
 
-import pyparsing
-
+from . import compat_pyparsing as pyparsing
 from .expression_part import (
     BOOL_AND,
     BOOL_OR,
@@ -61,7 +60,7 @@ _token_to_node_expr_type = {
 }
 
 
-pyparsing.ParserElement.enablePackrat()
+pyparsing.ParserElement.enable_packrat()
 
 
 class RuleParseError(Exception):
@@ -93,7 +92,9 @@ def parse_rule(rule_string: str) -> BoolExpr:
         return BoolExpr(BOOL_AND, [])
 
     try:
-        parsed = __get_rule_parser().parseString(rule_string, parseAll=True)[0]
+        parsed = __get_rule_parser().parse_string(rule_string, parse_all=True)[
+            0
+        ]
     except pyparsing.ParseException as e:
         raise RuleParseError(
             rule_string,
@@ -101,7 +102,7 @@ def parse_rule(rule_string: str) -> BoolExpr:
             e.lineno,
             e.col,
             e.loc,
-            e.args[2],
+            e.args[2] if e.args[2] is not None else "",
         ) from e
 
     if not isinstance(parsed, BoolExpr):
@@ -178,16 +179,14 @@ def __build_date_inrange_expr(
     return DateInRangeExpr(
         parse_result.date1 if parse_result.date1 else None,
         parse_result.date2 if parse_result.date2 else None,
-        parse_result.duration.asList() if parse_result.duration else None,
+        parse_result.duration.as_list() if parse_result.duration else None,
     )
 
 
-def __build_datespec_expr(
-    parse_result: pyparsing.ParseResults,
-) -> RuleExprPart:
+def __build_datespec_expr(parse_result: pyparsing.ParseResults) -> RuleExprPart:
     # Those attrs are defined by setResultsName in datespec_expr grammar rule
     return DatespecExpr(
-        parse_result.datespec.asList() if parse_result.datespec else None
+        parse_result.datespec.as_list() if parse_result.datespec else None
     )
 
 
@@ -249,17 +248,17 @@ def __get_date_common_parser_part() -> pyparsing.ParserElement:
                     # It can by any string containing any characters except
                     # whitespace (token separator), '=' (name-value separator)
                     # and "()" (brackets).
-                    pyparsing.Regex(r"[^=\s()]+").setName("<date part name>"),
+                    pyparsing.Regex(r"[^=\s()]+").set_name("<date part name>"),
                     # Suppress is needed so the '=' doesn't pollute the
                     # resulting structure produced automatically by pyparsing.
                     pyparsing.Suppress(
                         # no spaces allowed around the "="
-                        pyparsing.Literal("=").leaveWhitespace()
+                        pyparsing.Literal("=").leave_whitespace()
                     ),
                     # value
                     # It can by any string containing any characters except
                     # whitespace (token separator) and "()" (brackets).
-                    pyparsing.Regex(r"[^\s()]+").setName("<date part value>"),
+                    pyparsing.Regex(r"[^\s()]+").set_name("<date part value>"),
                 ]
             )
         )
@@ -286,19 +285,19 @@ def __get_rule_parser() -> pyparsing.ParserElement:
             # operator
             pyparsing.Or(
                 [
-                    pyparsing.CaselessKeyword(op).setName(f"'{op}'")
+                    pyparsing.CaselessKeyword(op).set_name(f"'{op}'")
                     for op in _token_to_node_expr_unary_op
                 ]
-            ).setResultsName("operator"),
+            ).set_results_name("operator"),
             # attribute name
             # It can by any string containing any characters except whitespace
             # (token separator) and "()" (brackets).
             pyparsing.Regex(r"[^\s()]+")
-            .setName("<attribute name>")
-            .setResultsName("attr_name"),
+            .set_name("<attribute name>")
+            .set_results_name("attr_name"),
         ]
     )
-    node_attr_unary_expr.setParseAction(__build_node_attr_unary_expr)
+    node_attr_unary_expr.set_parse_action(__build_node_attr_unary_expr)
 
     node_attr_binary_expr = pyparsing.And(
         [
@@ -306,61 +305,61 @@ def __get_rule_parser() -> pyparsing.ParserElement:
             # It can by any string containing any characters except whitespace
             # (token separator) and "()" (brackets).
             pyparsing.Regex(r"[^\s()]+")
-            .setName("<attribute name>")
-            .setResultsName("attr_name"),
+            .set_name("<attribute name>")
+            .set_results_name("attr_name"),
             # operator
             pyparsing.Or(
                 [
-                    pyparsing.CaselessKeyword(op).setName(f"'{op}'")
+                    pyparsing.CaselessKeyword(op).set_name(f"'{op}'")
                     for op in _token_to_node_expr_binary_op
                 ]
-            ).setResultsName("operator"),
+            ).set_results_name("operator"),
             # attribute type
             pyparsing.Optional(
                 pyparsing.Or(
                     [
-                        pyparsing.CaselessKeyword(type_).setName(f"'{type_}'")
+                        pyparsing.CaselessKeyword(type_).set_name(f"'{type_}'")
                         for type_ in _token_to_node_expr_type
                     ]
-                )
+                ),
             )
-            .setName("<attribute type>")
-            .setResultsName("attr_type"),
+            .set_name("<attribute type>")
+            .set_results_name("attr_type"),
             # attribute value
             # It can by any string containing any characters except whitespace
             # (token separator) and "()" (brackets).
             pyparsing.Regex(r"[^\s()]+")
-            .setName("<attribute value>")
-            .setResultsName("attr_value"),
+            .set_name("<attribute value>")
+            .set_results_name("attr_value"),
         ]
     )
-    node_attr_binary_expr.setParseAction(__build_node_attr_binary_expr)
+    node_attr_binary_expr.set_parse_action(__build_node_attr_binary_expr)
 
     date_unary_expr = pyparsing.And(
         [
-            pyparsing.CaselessKeyword("date").setName("'date'"),
+            pyparsing.CaselessKeyword("date").set_name("'date'"),
             # operator
             pyparsing.Or(
                 [
-                    pyparsing.CaselessKeyword(op).setName(f"'{op}'")
+                    pyparsing.CaselessKeyword(op).set_name(f"'{op}'")
                     for op in _token_to_date_expr_unary_op
                 ]
-            ).setResultsName("operator"),
+            ).set_results_name("operator"),
             # date
             # It can by any string containing any characters except whitespace
             # (token separator) and "()" (brackets).
             # The actual value should be validated elsewhere.
             pyparsing.Regex(r"[^\s()]+")
-            .setName("<date>")
-            .setResultsName("date"),
+            .set_name("<date>")
+            .set_results_name("date"),
         ]
     )
-    date_unary_expr.setParseAction(__build_date_unary_expr)
+    date_unary_expr.set_parse_action(__build_date_unary_expr)
 
     date_inrange_expr = pyparsing.And(
         [
-            pyparsing.CaselessKeyword("date").setName("'date'"),
-            pyparsing.CaselessKeyword("in_range").setName("'in_range'"),
+            pyparsing.CaselessKeyword("date").set_name("'date'"),
+            pyparsing.CaselessKeyword("in_range").set_name("'in_range'"),
             # date
             # It can by any string containing any characters except whitespace
             # (token separator) and "()" (brackets).
@@ -371,15 +370,15 @@ def __get_rule_parser() -> pyparsing.ParserElement:
                 pyparsing.And(
                     [
                         pyparsing.Regex(r"[^\s()]+")
-                        .setName("[<date>]")
-                        .setResultsName("date1"),
+                        .set_name("[<date>]")
+                        .set_results_name("date1"),
                         pyparsing.FollowedBy(
-                            pyparsing.CaselessKeyword("to").setName("'to'")
+                            pyparsing.CaselessKeyword("to").set_name("'to'")
                         ),
                     ]
                 )
             ),
-            pyparsing.CaselessKeyword("to").setName("'to'"),
+            pyparsing.CaselessKeyword("to").set_name("'to'"),
             pyparsing.Or(
                 [
                     # date
@@ -387,15 +386,15 @@ def __get_rule_parser() -> pyparsing.ParserElement:
                     # whitespace (token separator) and "()" (brackets).
                     # The actual value should be validated elsewhere.
                     pyparsing.Regex(r"[^\s()]+")
-                    .setName("<date>")
-                    .setResultsName("date2"),
+                    .set_name("<date>")
+                    .set_results_name("date2"),
                     # duration
                     pyparsing.And(
                         [
-                            pyparsing.CaselessKeyword("duration").setName(
+                            pyparsing.CaselessKeyword("duration").set_name(
                                 "'duration'"
                             ),
-                            __get_date_common_parser_part().setResultsName(
+                            __get_date_common_parser_part().set_results_name(
                                 "duration"
                             ),
                         ]
@@ -404,35 +403,35 @@ def __get_rule_parser() -> pyparsing.ParserElement:
             ),
         ]
     )
-    date_inrange_expr.setParseAction(__build_date_inrange_expr)
+    date_inrange_expr.set_parse_action(__build_date_inrange_expr)
 
     datespec_expr = pyparsing.And(
         [
-            pyparsing.CaselessKeyword("date-spec").setName("'date-spec'"),
-            __get_date_common_parser_part().setResultsName("datespec"),
+            pyparsing.CaselessKeyword("date-spec").set_name("'date-spec'"),
+            __get_date_common_parser_part().set_results_name("datespec"),
         ]
     )
-    datespec_expr.setParseAction(__build_datespec_expr)
+    datespec_expr.set_parse_action(__build_datespec_expr)
 
     rsc_expr = pyparsing.And(
         [
-            pyparsing.CaselessKeyword("resource").setName("'resource'"),
+            pyparsing.CaselessKeyword("resource").set_name("'resource'"),
             # resource name
             # Up to three parts separated by ":". The parts can contain any
             # characters except whitespace (token separator), ":" (parts
             # separator) and "()" (brackets).
             pyparsing.Regex(
                 r"(?P<standard>[^\s:()]+)?:(?P<provider>[^\s:()]+)?:(?P<type>[^\s:()]+)?"
-            ).setName("<resource name>"),
+            ).set_name("<resource name>"),
         ]
     )
-    rsc_expr.setParseAction(__build_rsc_expr)
+    rsc_expr.set_parse_action(__build_rsc_expr)
 
     op_interval = pyparsing.And(
         [
-            pyparsing.CaselessKeyword("interval").setName("'interval'"),
+            pyparsing.CaselessKeyword("interval").set_name("'interval'"),
             # no spaces allowed around the "="
-            pyparsing.Literal("=").leaveWhitespace(),
+            pyparsing.Literal("=").leave_whitespace(),
             # interval value: number followed by a time unit, no spaces allowed
             # between the number and the unit thanks to Combine being used
             pyparsing.Combine(
@@ -443,13 +442,13 @@ def __get_rule_parser() -> pyparsing.ParserElement:
                     ]
                 )
             )
-            .setName("<integer>[<time unit>]")
-            .setResultsName("interval_value"),
+            .set_name("<integer>[<time unit>]")
+            .set_results_name("interval_value"),
         ]
     )
     op_expr = pyparsing.And(
         [
-            pyparsing.CaselessKeyword("op").setName("'op'"),
+            pyparsing.CaselessKeyword("op").set_name("'op'"),
             # operation name
             # It can by any string containing any characters except whitespace
             # (token separator) and "()" (brackets). Operations are defined in
@@ -457,12 +456,12 @@ def __get_rule_parser() -> pyparsing.ParserElement:
             # user sets operation "my_check" and doesn't even specify agent's
             # name).
             pyparsing.Regex(r"[^\s()]+")
-            .setName("<operation name>")
-            .setResultsName("name"),
-            pyparsing.Optional(op_interval).setResultsName("interval"),
+            .set_name("<operation name>")
+            .set_results_name("name"),
+            pyparsing.Optional(op_interval).set_results_name("interval"),
         ]
     )
-    op_expr.setParseAction(__build_op_expr)
+    op_expr.set_parse_action(__build_op_expr)
 
     # Ordering matters here as the first expression which matches wins. This is
     # mostly not an issue as the expressions don't overlap and the grammar is
@@ -490,16 +489,16 @@ def __get_rule_parser() -> pyparsing.ParserElement:
     # https://github.com/pyparsing/pyparsing/blob/master/examples/eval_arith.py
     bool_operator = pyparsing.Or(
         [
-            pyparsing.CaselessKeyword("and").setName("'and'"),
-            pyparsing.CaselessKeyword("or").setName("'or'"),
+            pyparsing.CaselessKeyword("and").set_name("'and'"),
+            pyparsing.CaselessKeyword("or").set_name("'or'"),
         ]
     )
-    bool_expr = pyparsing.infixNotation(
+    bool_expr = pyparsing.infix_notation(
         simple_expr,
         # By putting both "and" and "or" in one tuple we say they have the same
         # priority. This is consistent with legacy pcs parsers. And it is how
         # it should be, they work as a glue between "simple_expr"s.
-        [(bool_operator, 2, pyparsing.opAssoc.LEFT, __build_bool_tree)],
+        [(bool_operator, 2, pyparsing.OpAssoc.LEFT, __build_bool_tree)],
     )
 
     return pyparsing.Or([bool_expr, simple_expr])
