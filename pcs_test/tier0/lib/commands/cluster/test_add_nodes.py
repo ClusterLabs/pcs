@@ -1,4 +1,5 @@
-# pylint: disable=too-many-lines,no-member
+# pylint: disable=too-many-lines
+# pylint: disable=no-member
 import base64
 import json
 import os.path
@@ -218,7 +219,8 @@ class LocalConfig:
             ]
             + [
                 fixture.info(
-                    reports.codes.COROSYNC_NOT_RUNNING_ON_NODE, node=node
+                    reports.codes.COROSYNC_NOT_RUNNING_CHECK_NODE_STOPPED,
+                    node=node,
                 )
                 for node in node_labels
             ]

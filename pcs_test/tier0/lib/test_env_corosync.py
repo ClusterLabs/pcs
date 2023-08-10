@@ -384,11 +384,11 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
             [
                 fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
                 fixture.info(
-                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
+                    report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_STOPPED,
                     node="node-1",
                 ),
                 fixture.info(
-                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
+                    report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_STOPPED,
                     node="node-2",
                 ),
                 fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
@@ -429,12 +429,16 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
             [
                 fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
                 fixture.error(
-                    report_codes.COROSYNC_RUNNING_ON_NODE,
+                    report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_RUNNING,
                     node="node-1",
                 ),
                 fixture.info(
-                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
+                    report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_STOPPED,
                     node="node-2",
+                ),
+                fixture.error(
+                    report_codes.COROSYNC_NOT_RUNNING_CHECK_FINISHED_RUNNING,
+                    node_list=["node-1"],
                 ),
             ]
         )
@@ -467,12 +471,16 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
             [
                 fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
                 fixture.error(
-                    report_codes.COROSYNC_RUNNING_ON_NODE,
+                    report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_RUNNING,
                     node="node-1",
                 ),
                 fixture.info(
-                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
+                    report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_STOPPED,
                     node="node-2",
+                ),
+                fixture.error(
+                    report_codes.COROSYNC_NOT_RUNNING_CHECK_FINISHED_RUNNING,
+                    node_list=["node-1"],
                 ),
             ]
         )
@@ -537,7 +545,7 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
             [
                 fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
                 fixture.info(
-                    report_codes.COROSYNC_NOT_RUNNING_ON_NODE,
+                    report_codes.COROSYNC_NOT_RUNNING_CHECK_NODE_STOPPED,
                     node="node-1",
                 ),
                 fixture.error(

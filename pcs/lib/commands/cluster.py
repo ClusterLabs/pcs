@@ -1080,18 +1080,26 @@ def add_nodes(
         env.service_manager, corosync_conf, len(new_nodes)
     )
     if atb_has_to_be_enabled:
-        report_processor.report(
-            ReportItem.warning(
-                reports.messages.CorosyncQuorumAtbWillBeEnabledDueToSbd()
-            )
-        )
         if online_cluster_target_list:
             com_cmd = CheckCorosyncOffline(
-                report_processor,
-                allow_skip_offline=False,
+                report_processor, allow_skip_offline=False
             )
             com_cmd.set_targets(online_cluster_target_list)
-            run_com(env.get_node_communicator(), com_cmd)
+            cluster_running_target_list = run_com(
+                env.get_node_communicator(), com_cmd
+            )
+            if cluster_running_target_list:
+                report_processor.report(
+                    ReportItem.error(
+                        reports.messages.CorosyncQuorumAtbWillBeEnabledDueToSbdClusterIsRunning()
+                    )
+                )
+            else:
+                report_processor.report(
+                    ReportItem.warning(
+                        reports.messages.CorosyncQuorumAtbWillBeEnabledDueToSbd()
+                    )
+                )
 
     # Validate new nodes. All new nodes have to be online.
     com_cmd = GetHostInfo(report_processor)
@@ -1817,17 +1825,25 @@ def remove_nodes(
         env.service_manager, corosync_conf, -len(node_list)
     )
     if atb_has_to_be_enabled:
-        report_processor.report(
-            ReportItem.warning(
-                reports.messages.CorosyncQuorumAtbWillBeEnabledDueToSbd()
-            )
-        )
         com_cmd = CheckCorosyncOffline(
-            report_processor,
-            allow_skip_offline=False,
+            report_processor, allow_skip_offline=False
         )
         com_cmd.set_targets(staying_online_target_list)
-        run_com(env.get_node_communicator(), com_cmd)
+        cluster_running_target_list = run_com(
+            env.get_node_communicator(), com_cmd
+        )
+        if cluster_running_target_list:
+            report_processor.report(
+                ReportItem.error(
+                    reports.messages.CorosyncQuorumAtbWillBeEnabledDueToSbdClusterIsRunning()
+                )
+            )
+        else:
+            report_processor.report(
+                ReportItem.warning(
+                    reports.messages.CorosyncQuorumAtbWillBeEnabledDueToSbd()
+                )
+            )
     else:
         # Check if removing the nodes would cause quorum loss. We ask the nodes
         # to be removed for their view of quorum. If they are all stopped or

@@ -1189,12 +1189,10 @@ class ClusterStatus(TestCase):
                     node="new1",
                     watchdog="/dev/watchdog",
                 ),
-                fixture.warn(
-                    reports.codes.COROSYNC_QUORUM_ATB_WILL_BE_ENABLED_DUE_TO_SBD
-                ),
                 fixture.info(reports.codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
                 fixture.error(
-                    reports.codes.COROSYNC_RUNNING_ON_NODE, node="node1"
+                    reports.codes.COROSYNC_NOT_RUNNING_CHECK_NODE_RUNNING,
+                    node="node1",
                 ),
                 fixture.error(
                     reports.codes.COROSYNC_NOT_RUNNING_CHECK_NODE_ERROR,
@@ -1211,10 +1209,15 @@ class ClusterStatus(TestCase):
                     node="node3",
                 ),
                 fixture.error(
-                    reports.codes.COROSYNC_RUNNING_ON_NODE, node="node4"
+                    reports.codes.COROSYNC_NOT_RUNNING_CHECK_NODE_RUNNING,
+                    node="node4",
                 ),
                 fixture.info(
-                    reports.codes.COROSYNC_NOT_RUNNING_ON_NODE, node="node5"
+                    reports.codes.COROSYNC_NOT_RUNNING_CHECK_NODE_STOPPED,
+                    node="node5",
+                ),
+                fixture.error(
+                    reports.codes.COROSYNC_QUORUM_ATB_WILL_BE_ENABLED_DUE_TO_SBD_CLUSTER_IS_RUNNING
                 ),
                 fixture.info(reports.codes.SBD_CHECK_STARTED),
                 fixture.info(reports.codes.SBD_CHECK_SUCCESS, node="new1"),
