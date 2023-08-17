@@ -338,7 +338,7 @@ if test "x$tests_only" != "xyes"; then
 	PCS_CHECK_PYMOD([cryptography])
 	PCS_CHECK_PYMOD([lxml])
 	PCS_CHECK_PYMOD([pycurl])
-	PCS_CHECK_PYMOD([pyparsing])
+	PCS_CHECK_PYMOD([pyparsing], [< 3])
 
 	# those are kind of problematic.
 	# use them all from the BaseOS or embedded them all as necessary (--enable-local-build)
