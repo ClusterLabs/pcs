@@ -41,7 +41,7 @@ else:
         ) -> None:
             del force
             # pylint: disable=too-many-function-args
-            pyparsing.ParserElement.enablePackrat(cache_size_limit)
+            pyparsing.ParserElement.enablePackrat(cache_size_limit)  # type: ignore
 
         def leave_whitespace(self) -> pyparsing.ParserElement:
             return self.leaveWhitespace()  # type: ignore
