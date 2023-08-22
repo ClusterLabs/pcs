@@ -32,6 +32,7 @@ from pcs.cli.common.errors import (
 from pcs.cli.common.parse_args import (
     OUTPUT_FORMAT_VALUE_CMD,
     OUTPUT_FORMAT_VALUE_JSON,
+    KeyValueParser,
 )
 from pcs.cli.common.tools import print_to_stderr
 from pcs.cli.file import metadata as file_metadata
@@ -1605,19 +1606,23 @@ def _parse_node_options(
     ADDR_OPT_KEYWORD = "addr"
     supported_options = {ADDR_OPT_KEYWORD} | set(additional_options)
     repeatable_options = {ADDR_OPT_KEYWORD} | set(additional_repeatable_options)
-    parsed_options = parse_args.prepare_options(options, repeatable_options)
-    unknown_options = set(parsed_options.keys()) - supported_options
+    parser = KeyValueParser(options, repeatable_options)
+    parsed_unique = parser.get_unique()
+    parsed_repeatable = parser.get_repeatable()
+    unknown_options = (
+        set(parsed_unique.keys()) | set(parsed_repeatable)
+    ) - supported_options
     if unknown_options:
         raise CmdLineInputError(
             "Unknown options '{}' for node '{}'".format(
                 "', '".join(sorted(unknown_options)), node
             )
         )
-    parsed_options["name"] = node
-    if ADDR_OPT_KEYWORD in parsed_options:
-        parsed_options["addrs"] = parsed_options[ADDR_OPT_KEYWORD]
-        del parsed_options[ADDR_OPT_KEYWORD]
-    return parsed_options
+    parsed_unique["name"] = node
+    if ADDR_OPT_KEYWORD in parsed_repeatable:
+        parsed_repeatable["addrs"] = parsed_repeatable[ADDR_OPT_KEYWORD]
+        del parsed_repeatable[ADDR_OPT_KEYWORD]
+    return parsed_unique | parsed_repeatable
 
 
 TRANSPORT_KEYWORD = "transport"
@@ -1642,14 +1647,14 @@ def _parse_transport(transport_args):
         implicit_first_keyword=TRANSPORT_DEFAULT_SECTION,
     )
     options = {
-        section: parse_args.prepare_options(
+        section: KeyValueParser(
             parsed_options.get_args_flat(section)
-        )
+        ).get_unique()
         for section in keywords | {TRANSPORT_DEFAULT_SECTION}
         if section != LINK_KEYWORD
     }
     options[LINK_KEYWORD] = [
-        parse_args.prepare_options(link_options)
+        KeyValueParser(link_options).get_unique()
         for link_options in parsed_options.get_args_groups(LINK_KEYWORD)
     ]
 
@@ -1727,6 +1732,13 @@ def cluster_setup(lib, argv, modifiers):
     if modifiers.get("--force"):
         force_flags.append(reports.codes.FORCE)
 
+    totem_options = KeyValueParser(
+        parsed_args.get_args_flat("totem")
+    ).get_unique()
+    quorum_options = KeyValueParser(
+        parsed_args.get_args_flat("quorum")
+    ).get_unique()
+
     if not is_local:
         lib.cluster.setup(
             cluster_name,
@@ -1738,12 +1750,8 @@ def cluster_setup(lib, argv, modifiers):
             link_list=transport_options.get(LINK_KEYWORD, []),
             compression_options=transport_options.get("compression", {}),
             crypto_options=transport_options.get("crypto", {}),
-            totem_options=parse_args.prepare_options(
-                parsed_args.get_args_flat("totem")
-            ),
-            quorum_options=parse_args.prepare_options(
-                parsed_args.get_args_flat("quorum")
-            ),
+            totem_options=totem_options,
+            quorum_options=quorum_options,
             wait=modifiers.get("--wait"),
             start=modifiers.get("--start"),
             enable=modifiers.get("--enable"),
@@ -1761,12 +1769,8 @@ def cluster_setup(lib, argv, modifiers):
         link_list=transport_options.get(LINK_KEYWORD, []),
         compression_options=transport_options.get("compression", {}),
         crypto_options=transport_options.get("crypto", {}),
-        totem_options=parse_args.prepare_options(
-            parsed_args.get_args_flat("totem")
-        ),
-        quorum_options=parse_args.prepare_options(
-            parsed_args.get_args_flat("quorum")
-        ),
+        totem_options=totem_options,
+        quorum_options=quorum_options,
         no_cluster_uuid=modifiers.is_specified("--no-cluster-uuid"),
         force_flags=force_flags,
     )
@@ -1810,14 +1814,26 @@ def config_update(
         argv,
         ["transport", "compression", "crypto", "totem"],
     )
+
+    transport_options = KeyValueParser(
+        parsed_args.get_args_flat("transport")
+    ).get_unique()
+    compression_options = KeyValueParser(
+        parsed_args.get_args_flat("compression")
+    ).get_unique()
+    crypto_options = KeyValueParser(
+        parsed_args.get_args_flat("crypto")
+    ).get_unique()
+    totem_options = KeyValueParser(
+        parsed_args.get_args_flat("totem")
+    ).get_unique()
+
     if not modifiers.is_specified("--corosync_conf"):
         lib.cluster.config_update(
-            parse_args.prepare_options(parsed_args.get_args_flat("transport")),
-            parse_args.prepare_options(
-                parsed_args.get_args_flat("compression")
-            ),
-            parse_args.prepare_options(parsed_args.get_args_flat("crypto")),
-            parse_args.prepare_options(parsed_args.get_args_flat("totem")),
+            transport_options,
+            compression_options,
+            crypto_options,
+            totem_options,
         )
         return
 
@@ -1825,12 +1841,10 @@ def config_update(
         modifiers.get("--corosync_conf"),
         lambda corosync_conf_content: lib.cluster.config_update_local(
             corosync_conf_content,
-            parse_args.prepare_options(parsed_args.get_args_flat("transport")),
-            parse_args.prepare_options(
-                parsed_args.get_args_flat("compression")
-            ),
-            parse_args.prepare_options(parsed_args.get_args_flat("crypto")),
-            parse_args.prepare_options(parsed_args.get_args_flat("totem")),
+            transport_options,
+            compression_options,
+            crypto_options,
+            totem_options,
         ),
     )
 
@@ -2090,8 +2104,8 @@ def link_add(lib, argv, modifiers):
     parsed.ensure_unique_keywords()
 
     lib.cluster.add_link(
-        parse_args.prepare_options(parsed.get_args_flat("nodes")),
-        parse_args.prepare_options(parsed.get_args_flat("options")),
+        KeyValueParser(parsed.get_args_flat("nodes")).get_unique(),
+        KeyValueParser(parsed.get_args_flat("options")).get_unique(),
         force_flags=force_flags,
     )
 
@@ -2141,8 +2155,8 @@ def link_update(lib, argv, modifiers):
 
     lib.cluster.update_link(
         linknumber,
-        parse_args.prepare_options(parsed.get_args_flat("nodes")),
-        parse_args.prepare_options(parsed.get_args_flat("options")),
+        KeyValueParser(parsed.get_args_flat("nodes")).get_unique(),
+        KeyValueParser(parsed.get_args_flat("options")).get_unique(),
         force_flags=force_flags,
     )
 

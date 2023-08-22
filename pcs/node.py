@@ -7,7 +7,7 @@ from pcs.cli.common.errors import (
     ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE,
     CmdLineInputError,
 )
-from pcs.cli.common.parse_args import prepare_options
+from pcs.cli.common.parse_args import KeyValueParser
 
 
 def node_attribute_cmd(lib, argv, modifiers):
@@ -98,7 +98,7 @@ def set_node_utilization(node, argv):
     Commandline options:
       * -f - CIB file
     """
-    nvpair_dict = prepare_options(argv)
+    nvpair_dict = KeyValueParser(argv).get_unique()
     if not nvpair_dict:
         return
     only_removing = True
@@ -207,7 +207,7 @@ def attribute_set_cmd(node, argv):
       * -f - CIB file
       * --force - no error if attribute to delete doesn't exist
     """
-    for name, value in prepare_options(argv).items():
+    for name, value in KeyValueParser(argv).get_unique().items():
         utils.set_node_attribute(name, value, node)
 
 

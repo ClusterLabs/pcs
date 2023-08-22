@@ -4,15 +4,18 @@ from pcs import (
     settings,
     utils,
 )
-from pcs.cli.common import parse_args
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.parse_args import (
+    KeyValueParser,
+    split_list_by_any_keywords,
+)
 
 
 def _parse_host_options(host, options):
     # pylint: disable=invalid-name
     ADDR_OPT_KEYWORD = "addr"
     supported_options = set([ADDR_OPT_KEYWORD])
-    parsed_options = parse_args.prepare_options(options)
+    parsed_options = KeyValueParser(options).get_unique()
     unknown_options = set(parsed_options.keys()) - supported_options
     if unknown_options:
         raise CmdLineInputError(
@@ -60,9 +63,7 @@ def auth_cmd(lib, argv, modifiers):
         raise CmdLineInputError("No host specified")
     host_dict = {
         host: _parse_host_options(host, opts)
-        for host, opts in parse_args.split_list_by_any_keywords(
-            argv, "host name"
-        ).items()
+        for host, opts in split_list_by_any_keywords(argv, "host name").items()
     }
     token = modifiers.get("--token")
     if token:

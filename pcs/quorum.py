@@ -11,6 +11,7 @@ from pcs.cli.common.parse_args import (
     ArgsByKeywords,
     Argv,
     InputModifiers,
+    KeyValueParser,
 )
 from pcs.cli.common.tools import print_to_stderr
 from pcs.cli.reports import process_library_reports
@@ -129,7 +130,7 @@ def quorum_update_cmd(lib, argv, modifiers):
     modifiers.ensure_only_supported(
         "--skip-offline", "--force", "--corosync_conf", "--request-timeout"
     )
-    options = parse_args.prepare_options(argv)
+    options = KeyValueParser(argv).get_unique()
     if not options:
         raise CmdLineInputError()
 
@@ -172,14 +173,14 @@ def quorum_device_add_cmd(lib, argv, modifiers):
     if not model_and_model_options or "=" in model_and_model_options[0]:
         raise CmdLineInputError()
 
-    generic_options = parse_args.prepare_options(
+    generic_options = KeyValueParser(
         groups.get_args_flat("generic")
-    )
+    ).get_unique()
     model = model_and_model_options[0]
-    model_options = parse_args.prepare_options(model_and_model_options[1:])
-    heuristics_options = parse_args.prepare_options(
+    model_options = KeyValueParser(model_and_model_options[1:]).get_unique()
+    heuristics_options = KeyValueParser(
         groups.get_args_flat("heuristics")
-    )
+    ).get_unique()
 
     if "model" in generic_options:
         raise CmdLineInputError("Model cannot be specified in generic options")
@@ -238,13 +239,13 @@ def quorum_device_update_cmd(lib, argv, modifiers):
     groups = _parse_quorum_device_groups(argv)
     if groups.is_empty():
         raise CmdLineInputError()
-    generic_options = parse_args.prepare_options(
+    generic_options = KeyValueParser(
         groups.get_args_flat("generic")
-    )
-    model_options = parse_args.prepare_options(groups.get_args_flat("model"))
-    heuristics_options = parse_args.prepare_options(
+    ).get_unique()
+    model_options = KeyValueParser(groups.get_args_flat("model")).get_unique()
+    heuristics_options = KeyValueParser(
         groups.get_args_flat("heuristics")
-    )
+    ).get_unique()
 
     if "model" in generic_options:
         raise CmdLineInputError("Model cannot be specified in generic options")

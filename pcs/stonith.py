@@ -12,6 +12,7 @@ from pcs import (
 from pcs.cli.common import parse_args
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.output import smart_wrap_text
+from pcs.cli.common.parse_args import KeyValueParser
 from pcs.cli.fencing_topology import target_type_map_cli_to_lib
 from pcs.cli.reports.output import (
     deprecation_warning,
@@ -637,24 +638,19 @@ def sbd_enable(lib, argv, modifiers):
         "--skip-offline",
         "--no-watchdog-validation",
     )
-    options = parse_args.prepare_options(
-        argv, allowed_repeatable_options=("device", "watchdog")
-    )
+    parser = KeyValueParser(argv, repeatable=("device", "watchdog"))
+    repeatable_options = parser.get_repeatable()
     default_watchdog, watchdog_dict = _sbd_parse_watchdogs(
-        options.get("watchdog", [])
+        repeatable_options.get("watchdog", [])
     )
     default_device_list, node_device_dict = _sbd_parse_node_specific_options(
-        options.get("device", [])
+        repeatable_options.get("device", [])
     )
 
     lib.sbd.enable_sbd(
         default_watchdog,
         watchdog_dict,
-        {
-            name: value
-            for name, value in options.items()
-            if name not in ("device", "watchdog")
-        },
+        parser.get_unique(),
         default_device_list=(
             default_device_list if default_device_list else None
         ),
@@ -837,10 +833,9 @@ def sbd_setup_block_device(lib, argv, modifiers):
       * --force - do not show warning about wiping the devices
     """
     modifiers.ensure_only_supported("--force")
-    options = parse_args.prepare_options(
-        argv, allowed_repeatable_options=("device",)
-    )
-    device_list = options.get("device", [])
+    parser = KeyValueParser(argv, repeatable=("device",))
+    repeatable_options = parser.get_repeatable()
+    device_list = repeatable_options.get("device", [])
     if not device_list:
         raise CmdLineInputError("No device defined")
 
@@ -851,10 +846,7 @@ def sbd_setup_block_device(lib, argv, modifiers):
     ):
         return
 
-    lib.sbd.initialize_block_devices(
-        device_list,
-        {name: value for name, value in options.items() if name != "device"},
-    )
+    lib.sbd.initialize_block_devices(device_list, parser.get_unique())
 
 
 def sbd_message(lib, argv, modifiers):

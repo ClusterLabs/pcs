@@ -319,7 +319,11 @@ class KeyValueParser:
         """
         Get all repeatable keys and their values
         """
-        return {key: self._key_value_map[key] for key in self._repeatable_keys}
+        return {
+            key: self._key_value_map[key]
+            for key in self._repeatable_keys
+            if key in self._key_value_map
+        }
 
 
 class ArgsByKeywords:

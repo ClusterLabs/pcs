@@ -1,7 +1,11 @@
+from typing import Any
+
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import (
+    Argv,
+    InputModifiers,
+    KeyValueParser,
     group_by_keywords,
-    prepare_options,
 )
 
 
@@ -90,7 +94,7 @@ def config_ticket_add(lib, arg_list, modifiers):
         raise CmdLineInputError
     lib.booth.config_ticket_add(
         arg_list[0],
-        prepare_options(arg_list[1:]),
+        KeyValueParser(arg_list[1:]).get_unique(),
         instance_name=modifiers.get("--name"),
         allow_unknown_options=modifiers.get("--force"),
     )

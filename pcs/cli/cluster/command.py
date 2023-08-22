@@ -1,5 +1,5 @@
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.parse_args import prepare_options
+from pcs.cli.common.parse_args import KeyValueParser
 from pcs.cli.resource.parse_args import (
     parse_primitive as parse_primitive_resource,
 )
@@ -128,7 +128,7 @@ def node_add_guest(lib, arg_list, modifiers):
 
     node_name = arg_list[0]
     resource_id = arg_list[1]
-    meta_options = prepare_options(arg_list[2:])
+    meta_options = KeyValueParser(arg_list[2:]).get_unique()
 
     lib.remote_node.node_add_guest(
         node_name,

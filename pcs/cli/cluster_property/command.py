@@ -18,8 +18,8 @@ from pcs.cli.common.parse_args import (
     OUTPUT_FORMAT_VALUE_TEXT,
     Argv,
     InputModifiers,
+    KeyValueParser,
     ensure_unique_args,
-    prepare_options,
 )
 from pcs.cli.reports.output import deprecation_warning
 from pcs.common import reports
@@ -44,7 +44,7 @@ def set_property(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     force_flags = set()
     if modifiers.get("--force"):
         force_flags.add(reports.codes.FORCE)
-    cluster_options = prepare_options(argv)
+    cluster_options = KeyValueParser(argv).get_unique()
     lib.cluster_property.set_properties(cluster_options, force_flags)
 
 

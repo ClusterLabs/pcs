@@ -197,6 +197,11 @@ class KeyValueParserTest(TestCase):
         self.assertEqual({"b": "B"}, kvp.get_unique())
         self.assertEqual({"a": ["1", "2"]}, kvp.get_repeatable())
 
+    def test_repeatable_missing(self):
+        kvp = KeyValueParser(["a=1"], ["b"])
+        self.assertEqual({"a": "1"}, kvp.get_unique())
+        self.assertEqual({}, kvp.get_repeatable())
+
 
 class SplitListTest(TestCase):
     def test_returns_list_with_original_when_separator_not_in_original(self):

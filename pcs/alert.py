@@ -2,19 +2,11 @@ import json
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import (
+    KeyValueParser,
     group_by_keywords,
-    prepare_options,
 )
 from pcs.cli.reports.output import deprecation_warning
 from pcs.common.str_tools import indent
-
-
-def ensure_only_allowed_options(parameter_dict, allowed_list):
-    for arg, value in parameter_dict.items():
-        if arg not in allowed_list:
-            raise CmdLineInputError(
-                "Unexpected parameter '{0}={1}'".format(arg, value)
-            )
 
 
 def alert_add(lib, argv, modifiers):
@@ -29,14 +21,15 @@ def alert_add(lib, argv, modifiers):
     sections = group_by_keywords(
         argv, set(["options", "meta"]), implicit_first_keyword="main"
     )
-    main_args = prepare_options(sections.get_args_flat("main"))
-    ensure_only_allowed_options(main_args, ["id", "description", "path"])
+    parser = KeyValueParser(sections.get_args_flat("main"))
+    parser.check_allowed_keys(["id", "description", "path"])
+    main_args = parser.get_unique()
 
     lib.alert.create_alert(
         main_args.get("id", None),
         main_args.get("path", None),
-        prepare_options(sections.get_args_flat("options")),
-        prepare_options(sections.get_args_flat("meta")),
+        KeyValueParser(sections.get_args_flat("options")).get_unique(),
+        KeyValueParser(sections.get_args_flat("meta")).get_unique(),
         main_args.get("description", None),
     )
 
@@ -55,14 +48,15 @@ def alert_update(lib, argv, modifiers):
     sections = group_by_keywords(
         argv[1:], set(["options", "meta"]), implicit_first_keyword="main"
     )
-    main_args = prepare_options(sections.get_args_flat("main"))
-    ensure_only_allowed_options(main_args, ["description", "path"])
+    parser = KeyValueParser(sections.get_args_flat("main"))
+    parser.check_allowed_keys(["description", "path"])
+    main_args = parser.get_unique()
 
     lib.alert.update_alert(
         alert_id,
         main_args.get("path", None),
-        prepare_options(sections.get_args_flat("options")),
-        prepare_options(sections.get_args_flat("meta")),
+        KeyValueParser(sections.get_args_flat("options")).get_unique(),
+        KeyValueParser(sections.get_args_flat("meta")).get_unique(),
         main_args.get("description", None),
     )
 
@@ -94,14 +88,15 @@ def recipient_add(lib, argv, modifiers):
     sections = group_by_keywords(
         argv[1:], set(["options", "meta"]), implicit_first_keyword="main"
     )
-    main_args = prepare_options(sections.get_args_flat("main"))
-    ensure_only_allowed_options(main_args, ["description", "id", "value"])
+    parser = KeyValueParser(sections.get_args_flat("main"))
+    parser.check_allowed_keys(["description", "id", "value"])
+    main_args = parser.get_unique()
 
     lib.alert.add_recipient(
         alert_id,
         main_args.get("value", None),
-        prepare_options(sections.get_args_flat("options")),
-        prepare_options(sections.get_args_flat("meta")),
+        KeyValueParser(sections.get_args_flat("options")).get_unique(),
+        KeyValueParser(sections.get_args_flat("meta")).get_unique(),
         recipient_id=main_args.get("id", None),
         description=main_args.get("description", None),
         allow_same_value=modifiers.get("--force"),
@@ -123,13 +118,14 @@ def recipient_update(lib, argv, modifiers):
     sections = group_by_keywords(
         argv[1:], set(["options", "meta"]), implicit_first_keyword="main"
     )
-    main_args = prepare_options(sections.get_args_flat("main"))
-    ensure_only_allowed_options(main_args, ["description", "value"])
+    parser = KeyValueParser(sections.get_args_flat("main"))
+    parser.check_allowed_keys(["description", "value"])
+    main_args = parser.get_unique()
 
     lib.alert.update_recipient(
         recipient_id,
-        prepare_options(sections.get_args_flat("options")),
-        prepare_options(sections.get_args_flat("meta")),
+        KeyValueParser(sections.get_args_flat("options")).get_unique(),
+        KeyValueParser(sections.get_args_flat("meta")).get_unique(),
         recipient_value=main_args.get("value", None),
         description=main_args.get("description", None),
         allow_same_value=modifiers.get("--force"),
