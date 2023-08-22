@@ -1,7 +1,13 @@
 import json
+from typing import (
+    Any,
+    List,
+)
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import (
+    Argv,
+    InputModifiers,
     KeyValueParser,
     group_by_keywords,
 )
@@ -9,7 +15,7 @@ from pcs.cli.reports.output import deprecation_warning
 from pcs.common.str_tools import indent
 
 
-def alert_add(lib, argv, modifiers):
+def alert_add(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file (in lib wrapper)
@@ -34,7 +40,7 @@ def alert_add(lib, argv, modifiers):
     )
 
 
-def alert_update(lib, argv, modifiers):
+def alert_update(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file (in lib wrapper)
@@ -61,7 +67,7 @@ def alert_update(lib, argv, modifiers):
     )
 
 
-def alert_remove(lib, argv, modifiers):
+def alert_remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file (in lib wrapper)
@@ -73,7 +79,7 @@ def alert_remove(lib, argv, modifiers):
     lib.alert.remove_alert(argv)
 
 
-def recipient_add(lib, argv, modifiers):
+def recipient_add(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file (in lib wrapper)
@@ -103,7 +109,7 @@ def recipient_add(lib, argv, modifiers):
     )
 
 
-def recipient_update(lib, argv, modifiers):
+def recipient_update(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file (in lib wrapper)
@@ -132,7 +138,7 @@ def recipient_update(lib, argv, modifiers):
     )
 
 
-def recipient_remove(lib, argv, modifiers):
+def recipient_remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file (in lib wrapper)
@@ -203,7 +209,7 @@ def _recipient_to_str(recipient):
     ] + indent(__description_attributes_to_str(recipient), 1)
 
 
-def print_alert_show(lib, argv, modifiers):
+def print_alert_show(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     deprecation_warning(
         "This command is deprecated and will be removed. "
         "Please use 'pcs alert config' instead."
@@ -211,7 +217,7 @@ def print_alert_show(lib, argv, modifiers):
     return print_alert_config(lib, argv, modifiers)
 
 
-def print_alert_config(lib, argv, modifiers):
+def print_alert_config(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file (in lib wrapper)
@@ -224,7 +230,7 @@ def print_alert_config(lib, argv, modifiers):
         print("\n".join(lines))
 
 
-def alert_config_lines(lib):
+def alert_config_lines(lib: Any) -> List[str]:
     lines = []
     alert_list = lib.alert.get_all_alerts()
     if alert_list:
@@ -234,7 +240,9 @@ def alert_config_lines(lib):
     return lines
 
 
-def print_alerts_in_json(lib, argv, modifiers):
+def print_alerts_in_json(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     This is used only by pcsd, will be removed in new architecture
 

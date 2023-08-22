@@ -2141,7 +2141,7 @@ def is_iso8601_date(var):
     return retVal == 0
 
 
-def err(errorText, exit_after_error=True):
+def err(errorText: str, exit_after_error: bool = True) -> None:
     retval = reports_output.error(errorText)
     if exit_after_error:
         raise retval

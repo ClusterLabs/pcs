@@ -1,3 +1,8 @@
+from typing import (
+    Any,
+    Optional,
+    Tuple,
+)
 from urllib.parse import urlparse
 
 from pcs import (
@@ -6,6 +11,8 @@ from pcs import (
 )
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import (
+    Argv,
+    InputModifiers,
     KeyValueParser,
     split_list_by_any_keywords,
 )
@@ -27,7 +34,7 @@ def _parse_host_options(host, options):
     return {"dest_list": [dict(addr=addr, port=port)]}
 
 
-def _parse_addr(addr):
+def _parse_addr(addr: str) -> Tuple[Optional[str], int]:
     if addr.count(":") > 1 and not addr.startswith("["):
         # if IPv6 without port put it in parentheses
         addr = "[{0}]".format(addr)
@@ -49,7 +56,7 @@ def _parse_addr(addr):
     return url.hostname, (port if port else settings.pcsd_default_port)
 
 
-def auth_cmd(lib, argv, modifiers):
+def auth_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     # pylint: disable=unused-argument
     """
     Options:
@@ -67,7 +74,7 @@ def auth_cmd(lib, argv, modifiers):
     }
     token = modifiers.get("--token")
     if token:
-        token_value = utils.get_token_from_file(token)
+        token_value = utils.get_token_from_file(str(token))
         for host_info in host_dict.values():
             host_info.update(dict(token=token_value))
         utils.auth_hosts_token(host_dict)
@@ -78,7 +85,7 @@ def auth_cmd(lib, argv, modifiers):
     utils.auth_hosts(host_dict)
 
 
-def deauth_cmd(lib, argv, modifiers):
+def deauth_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     # pylint: disable=unused-argument
     """
     Options:

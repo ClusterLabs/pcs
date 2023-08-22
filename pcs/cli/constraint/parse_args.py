@@ -10,7 +10,7 @@ from pcs.cli.common.parse_args import (
 
 def prepare_resource_sets(
     cmdline_args: Argv,
-) -> list[dict[str, Union[list[str], dict[str, Union[str, list[str]]]]]]:
+) -> list[dict[str, Union[list[str], dict[str, str]]]]:
     return [
         {
             "ids": [id for id in args if "=" not in id],
@@ -24,10 +24,7 @@ def prepare_resource_sets(
 
 def prepare_set_args(
     argv: Argv,
-) -> tuple[
-    list[dict[str, Union[list[str], dict[str, Union[str, list[str]]]]]],
-    dict[str, Union[str, list[str]]],
-]:
+) -> tuple[list[dict[str, Union[list[str], dict[str, str]]]], dict[str, str]]:
     args_groups = split_list(argv, "setoptions")
     if len(args_groups) > 2:
         raise CmdLineInputError(

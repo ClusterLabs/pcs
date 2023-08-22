@@ -1,8 +1,10 @@
 import json
 from typing import (
     Any,
+    Dict,
     List,
     Optional,
+    Tuple,
 )
 
 from pcs import (
@@ -12,7 +14,11 @@ from pcs import (
 from pcs.cli.common import parse_args
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.output import smart_wrap_text
-from pcs.cli.common.parse_args import KeyValueParser
+from pcs.cli.common.parse_args import (
+    Argv,
+    InputModifiers,
+    KeyValueParser,
+)
 from pcs.cli.fencing_topology import target_type_map_cli_to_lib
 from pcs.cli.reports.output import (
     deprecation_warning,
@@ -41,26 +47,28 @@ from pcs.lib.errors import LibraryError
 # pylint: disable=too-many-branches, too-many-statements, protected-access
 
 
-def stonith_show_cmd(lib, argv, modifiers):
+def stonith_show_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     # TODO remove, deprecated command
     # replaced with 'stonith status' and 'stonith config'
     resource.resource_show(lib, argv, modifiers, stonith=True)
 
 
-def stonith_status_cmd(lib, argv, modifiers):
+def stonith_status_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     resource.resource_status(lib, argv[:], modifiers, stonith=True)
     if not argv:
         _print_stonith_levels(lib)
 
 
-def _print_stonith_levels(lib):
+def _print_stonith_levels(lib: Any) -> None:
     levels = stonith_level_config_to_str(lib.fencing_topology.get_config())
     if levels:
         print("\nFencing Levels:")
         print("\n".join(indent(levels, 1)))
 
 
-def stonith_list_available(lib, argv, modifiers):
+def stonith_list_available(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options:
       * --nodesc - do not show description of the agents
@@ -100,7 +108,7 @@ def stonith_list_available(lib, argv, modifiers):
 
 
 def stonith_list_options(
-    lib: Any, argv: List[str], modifiers: parse_args.InputModifiers
+    lib: Any, argv: Argv, modifiers: InputModifiers
 ) -> None:
     """
     Options:
@@ -139,7 +147,7 @@ def _check_is_stonith(
         )
 
 
-def stonith_create(lib, argv, modifiers):
+def stonith_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --before - specified resource inside a group before which new resource
@@ -251,7 +259,7 @@ def _stonith_level_parse_node(arg):
     return target_type, target_value
 
 
-def _stonith_level_parse_target_and_stonith(argv):
+def _stonith_level_parse_target_and_stonith(argv: Argv):
     target_type, target_value, devices = None, None, None
     allowed_keywords = {"target", "stonith"}
     missing_target_value, missing_stonith_value = False, False
@@ -281,7 +289,7 @@ def _stonith_level_parse_target_and_stonith(argv):
     return target_type, target_value, devices
 
 
-def _stonith_level_normalize_devices(argv):
+def _stonith_level_normalize_devices(argv: Argv) -> Argv:
     """
     Commandline options: no options
     """
@@ -295,7 +303,9 @@ def _stonith_level_normalize_devices(argv):
     return ",".join(argv).split(",")
 
 
-def stonith_level_add_cmd(lib, argv, modifiers):
+def stonith_level_add_cmd(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options:
       * -f - CIB file
@@ -318,7 +328,9 @@ def stonith_level_add_cmd(lib, argv, modifiers):
     )
 
 
-def stonith_level_clear_cmd(lib, argv, modifiers):
+def stonith_level_clear_cmd(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options:
       * -f - CIB file
@@ -434,7 +446,9 @@ def stonith_level_config_to_str(config):
     return lines
 
 
-def stonith_level_config_cmd(lib, argv, modifiers):
+def stonith_level_config_cmd(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options:
       * -f - CIB file
@@ -448,7 +462,9 @@ def stonith_level_config_cmd(lib, argv, modifiers):
         print("\n".join(lines))
 
 
-def stonith_level_remove_cmd(lib, argv, modifiers):
+def stonith_level_remove_cmd(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options:
       * -f - CIB file
@@ -497,7 +513,9 @@ def stonith_level_remove_cmd(lib, argv, modifiers):
     )
 
 
-def stonith_level_verify_cmd(lib, argv, modifiers):
+def stonith_level_verify_cmd(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options:
       * -f - CIB file
@@ -509,7 +527,7 @@ def stonith_level_verify_cmd(lib, argv, modifiers):
     lib.fencing_topology.verify()
 
 
-def stonith_fence(lib, argv, modifiers):
+def stonith_fence(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --off - use off action of fence agent
@@ -532,7 +550,7 @@ def stonith_fence(lib, argv, modifiers):
         print_to_stderr(f"Node: {node} fenced")
 
 
-def stonith_confirm(lib, argv, modifiers):
+def stonith_confirm(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --force - do not warn user
@@ -546,7 +564,7 @@ def stonith_confirm(lib, argv, modifiers):
     if not utils.get_continue_confirmation_or_force(
         f"If node '{node}' is not powered off or it does have access to shared "
         "resources, data corruption and/or cluster failure may occur",
-        modifiers.get("--force"),
+        bool(modifiers.get("--force")),
     ):
         return
     args = ["stonith_admin", "-C", node]
@@ -559,7 +577,9 @@ def stonith_confirm(lib, argv, modifiers):
 
 
 # This is used only by pcsd, will be removed in new architecture
-def get_fence_agent_info(lib, argv, modifiers):
+def get_fence_agent_info(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options: no options
     """
@@ -577,7 +597,7 @@ def get_fence_agent_info(lib, argv, modifiers):
     )
 
 
-def sbd_watchdog_list(lib, argv, modifiers):
+def sbd_watchdog_list(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options: no options
     """
@@ -595,7 +615,9 @@ def sbd_watchdog_list(lib, argv, modifiers):
         print_to_stderr("No available watchdog")
 
 
-def sbd_watchdog_list_json(lib, argv, modifiers):
+def sbd_watchdog_list_json(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options: no options
     """
@@ -605,7 +627,7 @@ def sbd_watchdog_list_json(lib, argv, modifiers):
     print(json.dumps(lib.sbd.get_local_available_watchdogs()))
 
 
-def sbd_watchdog_test(lib, argv, modifiers):
+def sbd_watchdog_test(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options: no options
     """
@@ -615,7 +637,7 @@ def sbd_watchdog_test(lib, argv, modifiers):
     if not utils.get_continue_confirmation_or_force(
         "This operation is expected to force-reboot this system without "
         "following any shutdown procedures",
-        modifiers.get("--force"),
+        bool(modifiers.get("--force")),
     ):
         return
     watchdog = None
@@ -624,7 +646,7 @@ def sbd_watchdog_test(lib, argv, modifiers):
     lib.sbd.test_local_watchdog(watchdog)
 
 
-def sbd_enable(lib, argv, modifiers):
+def sbd_enable(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --request-timeout - HTTP request timeout
@@ -661,12 +683,14 @@ def sbd_enable(lib, argv, modifiers):
     )
 
 
-def _sbd_parse_node_specific_options(arg_list):
+def _sbd_parse_node_specific_options(
+    arg_list: Argv,
+) -> Tuple[List[str], Dict[str, List[str]]]:
     """
     Commandline options: no options
     """
     default_option_list = []
-    node_specific_option_dict = {}
+    node_specific_option_dict: Dict[str, List[str]] = {}
 
     for arg in arg_list:
         if "@" in arg:
@@ -681,7 +705,9 @@ def _sbd_parse_node_specific_options(arg_list):
     return default_option_list, node_specific_option_dict
 
 
-def _sbd_parse_watchdogs(watchdog_list):
+def _sbd_parse_watchdogs(
+    watchdog_list: List[str],
+) -> Tuple[Optional[str], Dict[str, str]]:
     """
     Commandline options: no options
     """
@@ -709,7 +735,7 @@ def _sbd_parse_watchdogs(watchdog_list):
     return default_watchdog, watchdog_dict
 
 
-def sbd_disable(lib, argv, modifiers):
+def sbd_disable(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --request-timeout - HTTP request timeout
@@ -722,7 +748,7 @@ def sbd_disable(lib, argv, modifiers):
     lib.sbd.disable_sbd(modifiers.get("--skip-offline"))
 
 
-def sbd_status(lib, argv, modifiers):
+def sbd_status(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --request-timeout - HTTP request timeout
@@ -730,7 +756,7 @@ def sbd_status(lib, argv, modifiers):
     """
     modifiers.ensure_only_supported("--request-timeout", "--full")
 
-    def _bool_to_str(val):
+    def _bool_to_str(val: Optional[bool]) -> str:
         if val is None:
             return "N/A"
         return "YES" if val else " NO"
@@ -777,7 +803,7 @@ def _print_per_node_option(config_list, config_option):
         print("  {node}: {value}".format(node=config["node"], value=value))
 
 
-def sbd_config(lib, argv, modifiers):
+def sbd_config(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --request-timeout - HTTP request timeout
@@ -817,7 +843,7 @@ def sbd_config(lib, argv, modifiers):
         _print_per_node_option(config_list, "SBD_DEVICE")
 
 
-def local_sbd_config(lib, argv, modifiers):
+def local_sbd_config(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options: no options
     """
@@ -827,7 +853,9 @@ def local_sbd_config(lib, argv, modifiers):
     print(json.dumps(lib.sbd.get_local_sbd_config()))
 
 
-def sbd_setup_block_device(lib, argv, modifiers):
+def sbd_setup_block_device(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options:
       * --force - do not show warning about wiping the devices
@@ -842,14 +870,14 @@ def sbd_setup_block_device(lib, argv, modifiers):
     if not utils.get_continue_confirmation_or_force(
         f"All current content on device(s) {format_list(device_list)} will be "
         "overwritten",
-        modifiers.get("--force"),
+        bool(modifiers.get("--force")),
     ):
         return
 
     lib.sbd.initialize_block_devices(device_list, parser.get_unique())
 
 
-def sbd_message(lib, argv, modifiers):
+def sbd_message(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options: no options
     """
@@ -861,7 +889,9 @@ def sbd_message(lib, argv, modifiers):
     lib.sbd.set_message(device, node, message)
 
 
-def stonith_history_show_cmd(lib, argv, modifiers):
+def stonith_history_show_cmd(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options: no options
     """
@@ -873,7 +903,9 @@ def stonith_history_show_cmd(lib, argv, modifiers):
     print(lib.stonith.history_get_text(node))
 
 
-def stonith_history_cleanup_cmd(lib, argv, modifiers):
+def stonith_history_cleanup_cmd(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options: no options
     """
@@ -885,7 +917,9 @@ def stonith_history_cleanup_cmd(lib, argv, modifiers):
     print_to_stderr(lib.stonith.history_cleanup(node))
 
 
-def stonith_history_update_cmd(lib, argv, modifiers):
+def stonith_history_update_cmd(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options: no options
     """
@@ -896,7 +930,9 @@ def stonith_history_update_cmd(lib, argv, modifiers):
     print_to_stderr(lib.stonith.history_update())
 
 
-def stonith_update_scsi_devices(lib, argv, modifiers):
+def stonith_update_scsi_devices(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options:
       * --request-timeout - timeout for HTTP requests
@@ -950,9 +986,7 @@ def stonith_update_scsi_devices(lib, argv, modifiers):
         )
 
 
-def delete_cmd(
-    lib: Any, argv: List[str], modifiers: parse_args.InputModifiers
-) -> None:
+def delete_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file
@@ -966,9 +1000,7 @@ def delete_cmd(
     resource.resource_remove(resource_id)
 
 
-def enable_cmd(
-    lib: Any, argv: List[str], modifiers: parse_args.InputModifiers
-) -> None:
+def enable_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --wait
@@ -984,9 +1016,7 @@ def enable_cmd(
     lib.resource.enable(resources, modifiers.get("--wait"))
 
 
-def disable_cmd(
-    lib: Any, argv: List[str], modifiers: parse_args.InputModifiers
-) -> None:
+def disable_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file
@@ -1009,9 +1039,7 @@ def disable_cmd(
     resource.resource_disable_common(lib, argv, modifiers)
 
 
-def update_cmd(
-    lib: Any, argv: List[str], modifiers: parse_args.InputModifiers
-) -> None:
+def update_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file
@@ -1025,9 +1053,7 @@ def update_cmd(
     resource.resource_update(argv, modifiers)
 
 
-def op_add_cmd(
-    lib: Any, argv: List[str], modifiers: parse_args.InputModifiers
-) -> None:
+def op_add_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file
@@ -1039,9 +1065,7 @@ def op_add_cmd(
     resource.resource_op_add(argv, modifiers)
 
 
-def op_delete_cmd(
-    lib: Any, argv: List[str], modifiers: parse_args.InputModifiers
-) -> None:
+def op_delete_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file
@@ -1053,9 +1077,7 @@ def op_delete_cmd(
     resource.resource_operation_remove(argv[0], argv[1:])
 
 
-def meta_cmd(
-    lib: Any, argv: List[str], modifiers: parse_args.InputModifiers
-) -> None:
+def meta_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --force - allow not suitable command
@@ -1068,9 +1090,7 @@ def meta_cmd(
     resource.resource_meta(argv, modifiers)
 
 
-def config_cmd(
-    lib: Any, argv: List[str], modifiers: parse_args.InputModifiers
-) -> None:
+def config_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     is_text_format = (
         modifiers.get_output_format() == parse_args.OUTPUT_FORMAT_VALUE_TEXT
     )

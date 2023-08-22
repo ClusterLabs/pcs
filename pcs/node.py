@@ -1,4 +1,8 @@
 import json
+from typing import (
+    Any,
+    Optional,
+)
 
 import pcs.lib.pacemaker.live as lib_pacemaker
 from pcs import utils
@@ -7,10 +11,15 @@ from pcs.cli.common.errors import (
     ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE,
     CmdLineInputError,
 )
-from pcs.cli.common.parse_args import KeyValueParser
+from pcs.cli.common.parse_args import (
+    Argv,
+    InputModifiers,
+    KeyValueParser,
+    ModifierValueType,
+)
 
 
-def node_attribute_cmd(lib, argv, modifiers):
+def node_attribute_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file (in lib wrapper)
@@ -30,7 +39,9 @@ def node_attribute_cmd(lib, argv, modifiers):
         attribute_set_cmd(argv.pop(0), argv)
 
 
-def node_utilization_cmd(lib, argv, modifiers):
+def node_utilization_cmd(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options:
       * -f - CIB file (in lib wrapper)
@@ -53,7 +64,9 @@ def node_utilization_cmd(lib, argv, modifiers):
         set_node_utilization(argv.pop(0), argv)
 
 
-def node_maintenance_cmd(lib, argv, modifiers, enable):
+def node_maintenance_cmd(
+    lib: Any, argv: Argv, modifiers: InputModifiers, enable: bool
+) -> None:
     """
     Options:
       * -f - CIB file (in lib wrapper)
@@ -73,7 +86,9 @@ def node_maintenance_cmd(lib, argv, modifiers, enable):
         lib.node.maintenance_unmaintenance_local(enable, wait)
 
 
-def node_standby_cmd(lib, argv, modifiers, enable):
+def node_standby_cmd(
+    lib: Any, argv: Argv, modifiers: InputModifiers, enable: bool
+) -> None:
     """
     Options:
       * -f - CIB file (in lib wrapper)
@@ -93,7 +108,7 @@ def node_standby_cmd(lib, argv, modifiers, enable):
         lib.node.standby_unstandby_local(enable, wait)
 
 
-def set_node_utilization(node, argv):
+def set_node_utilization(node: str, argv: Argv) -> None:
     """
     Commandline options:
       * -f - CIB file
@@ -139,7 +154,10 @@ def set_node_utilization(node, argv):
     utils.replace_cib_configuration(cib)
 
 
-def print_node_utilization(filter_node=None, filter_name=None):
+def print_node_utilization(
+    filter_node: Optional[str] = None,
+    filter_name: Optional[ModifierValueType] = None,
+) -> None:
     """
     Commandline options:
       * -f - CIB file
@@ -179,7 +197,9 @@ def print_node_utilization(filter_node=None, filter_name=None):
         print(" {0}: {1}".format(node, utilization[node]))
 
 
-def node_pacemaker_status(lib, argv, modifiers):
+def node_pacemaker_status(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     Internal pcs-pcsd command
     """
@@ -189,7 +209,10 @@ def node_pacemaker_status(lib, argv, modifiers):
     print(json.dumps(lib_pacemaker.get_local_node_status(utils.cmd_runner())))
 
 
-def attribute_show_cmd(filter_node=None, filter_attr=None):
+def attribute_show_cmd(
+    filter_node: Optional[str] = None,
+    filter_attr: Optional[ModifierValueType] = None,
+) -> None:
     """
     Commandline options:
       * -f - CIB file (in lib wrapper)
@@ -201,7 +224,7 @@ def attribute_show_cmd(filter_node=None, filter_attr=None):
     attribute_print(node_attributes)
 
 
-def attribute_set_cmd(node, argv):
+def attribute_set_cmd(node: str, argv: Argv) -> None:
     """
     Commandline options:
       * -f - CIB file

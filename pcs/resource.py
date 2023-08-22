@@ -8,9 +8,11 @@ from functools import partial
 from typing import (
     Any,
     Callable,
+    Dict,
     List,
     Mapping,
     Optional,
+    Tuple,
     cast,
 )
 from xml.dom.minidom import parseString
@@ -128,7 +130,9 @@ def _check_is_not_stonith(
         )
 
 
-def _detect_guest_change(meta_attributes, allow_not_suitable_command):
+def _detect_guest_change(
+    meta_attributes: Dict[str, str], allow_not_suitable_command: bool
+) -> None:
     """
     Commandline options:
       * -f - CIB file
@@ -184,7 +188,7 @@ def resource_utilization_cmd(
 
 def _defaults_set_create_cmd(
     lib_command: Callable[..., Any], argv: Argv, modifiers: InputModifiers
-):
+) -> Any:
     modifiers.ensure_only_supported("-f", "--force")
 
     groups = group_by_keywords(
@@ -464,12 +468,14 @@ def op_delete_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     resource_operation_remove(resource_id, argv)
 
 
-def parse_resource_options(argv):
+def parse_resource_options(
+    argv: Argv,
+) -> Tuple[List[str], List[List[str]], List[str]]:
     """
     Commandline options: no options
     """
     ra_values = []
-    op_values = []
+    op_values: List[List[str]] = []
     meta_values = []
     op_args = False
     meta_args = False
@@ -582,7 +588,7 @@ def resource_list_options(
 
 
 # Return the string formatted with a line length of terminal width  and indented
-def _format_desc(indentation, desc):
+def _format_desc(indentation: int, desc: str) -> str:
     """
     Commandline options: no options
     """
@@ -757,7 +763,9 @@ def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         )
 
 
-def _parse_resource_move_ban(argv: Argv):
+def _parse_resource_move_ban(
+    argv: Argv,
+) -> Tuple[str, Optional[str], Optional[str]]:
     resource_id = argv.pop(0)
     node = None
     lifetime = None
@@ -1084,7 +1092,7 @@ def resource_update(args: Argv, modifiers: InputModifiers) -> None:
     if remote_node_name != guest_node.get_guest_option_value(meta_options):
         _detect_guest_change(
             meta_options,
-            modifiers.get("--force"),
+            bool(modifiers.get("--force")),
         )
 
     utils.dom_update_meta_attr(
@@ -1380,7 +1388,7 @@ def resource_operation_add(
     return dom
 
 
-def resource_operation_remove(res_id, argv):
+def resource_operation_remove(res_id: str, argv: Argv) -> None:
     """
     Commandline options:
       * -f - CIB file
@@ -1416,6 +1424,8 @@ def resource_operation_remove(res_id, argv):
 
     if not resource_el:
         utils.err("Unable to find resource: %s" % res_id)
+        # return to let mypy know that resource_el is not None anymore
+        return
 
     remove_all = False
     if not argv:
@@ -1475,7 +1485,7 @@ def resource_meta(argv: Argv, modifiers: InputModifiers) -> None:
     res_id = argv.pop(0)
     _detect_guest_change(
         KeyValueParser(argv).get_unique(),
-        modifiers.get("--force"),
+        bool(modifiers.get("--force")),
     )
 
     dom = utils.get_cib_dom()
@@ -2427,7 +2437,9 @@ def resource_show(
     raise_command_replaced([f"pcs {keyword} status"], pcs_version="0.11")
 
 
-def resource_status(lib, argv, modifiers, stonith=False):
+def resource_status(
+    lib: Any, argv: Argv, modifiers: InputModifiers, stonith: bool = False
+) -> None:
     """
     Options:
       * -f - CIB file
@@ -2661,7 +2673,7 @@ def resource_enable_cmd(
 
 
 # DEPRECATED, moved to pcs.lib.commands.resource
-def resource_disable(argv):
+def resource_disable(argv: Argv) -> Optional[bool]:
     """
     Commandline options:
       * -f - CIB file
@@ -2885,7 +2897,7 @@ def resource_unmanage_cmd(
 
 
 # moved to pcs.lib.pacemaker.state
-def is_managed(resource_id):
+def is_managed(resource_id: str) -> bool:
     # pylint: disable=too-many-return-statements
     """
     Commandline options:
@@ -3061,7 +3073,7 @@ def operation_to_string(op_el):
     return " ".join(parts)
 
 
-def resource_cleanup(lib, argv, modifiers):
+def resource_cleanup(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options: no options
     """
@@ -3079,12 +3091,12 @@ def resource_cleanup(lib, argv, modifiers):
             node=parsed_options.get("node"),
             operation=parsed_options.get("operation"),
             interval=parsed_options.get("interval"),
-            strict=modifiers.get("--strict"),
+            strict=bool(modifiers.get("--strict")),
         )
     )
 
 
-def resource_refresh(lib, argv, modifiers):
+def resource_refresh(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --force - do refresh even though it may be time consuming
@@ -3107,8 +3119,8 @@ def resource_refresh(lib, argv, modifiers):
             utils.cmd_runner(),
             resource=resource,
             node=parsed_options.get("node"),
-            strict=modifiers.get("--strict"),
-            force=modifiers.get("--force"),
+            strict=bool(modifiers.get("--strict")),
+            force=bool(modifiers.get("--force")),
         )
     )
 
@@ -3376,7 +3388,7 @@ def resource_relocate_clear(cib_dom):
     return cib_dom
 
 
-def set_resource_utilization(resource_id, argv):
+def set_resource_utilization(resource_id: str, argv: Argv) -> None:
     """
     Commandline options:
       * -f - CIB file
@@ -3389,7 +3401,7 @@ def set_resource_utilization(resource_id, argv):
     utils.replace_cib_configuration(cib)
 
 
-def print_resource_utilization(resource_id):
+def print_resource_utilization(resource_id: str) -> None:
     """
     Commandline options:
       * -f - CIB file
@@ -3404,7 +3416,7 @@ def print_resource_utilization(resource_id):
     print(" {0}: {1}".format(resource_id, utilization))
 
 
-def print_resources_utilization():
+def print_resources_utilization() -> None:
     """
     Commandline options:
       * -f - CIB file
