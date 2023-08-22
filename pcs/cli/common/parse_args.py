@@ -5,7 +5,6 @@ from typing import (
     Mapping,
     Optional,
     Union,
-    cast,
 )
 
 from pcs.cli.common.errors import (
@@ -198,70 +197,6 @@ def ensure_unique_args(cmdline_args: Argv) -> None:
         argument_pl = format_plural(duplicities, "argument")
         duplicities_list = format_list(duplicities)
         raise CmdLineInputError(f"duplicate {argument_pl}: {duplicities_list}")
-
-
-# deprecated, use KeyValueParser
-def prepare_options(
-    cmdline_args: Argv,
-    allowed_repeatable_options: StringCollection = (),
-) -> dict[str, Union[str, list[str]]]:
-    """
-    Get a dict of options from cmdline key=value args
-
-    cmdline_args -- command line arguments
-    allowed_repeatable_options -- options that can be set several times
-
-    Commandline options: no options
-    """
-    options: dict[str, Union[str, list[str]]] = {}
-    for arg in cmdline_args:
-        name, value = split_option(arg)
-        if name not in options:
-            if name in allowed_repeatable_options:
-                options[name] = [value]
-            else:
-                options[name] = value
-        elif name in allowed_repeatable_options:
-            cast(list[str], options[name]).append(value)
-        elif options[name] != value:
-            raise CmdLineInputError(
-                (
-                    "duplicate option '{0}' with different values '{1}' and "
-                    "'{2}'"
-                ).format(name, options[name], value)
-            )
-    return options
-
-
-# deprecated, use KeyValueParser
-def prepare_options_allowed(
-    cmdline_args: Argv,
-    allowed_options: StringCollection,
-    allowed_repeatable_options: StringCollection = (),
-) -> dict[str, Union[str, list[str]]]:
-    """
-    Get a dict of options from cmdline key=value args, raise on unallowed key
-
-    cmdline_args -- command line arguments
-    allowed_options -- list of allowed options
-    allowed_repeatable_options -- options that can be set several times
-
-    Commandline options: no options
-    """
-    parsed_options = prepare_options(
-        cmdline_args, allowed_repeatable_options=allowed_repeatable_options
-    )
-    unknown_options = frozenset(parsed_options.keys()) - frozenset(
-        allowed_options
-    )
-    if unknown_options:
-        raise CmdLineInputError(
-            "Unknown option{s} '{options}'".format(
-                s=("s" if len(unknown_options) > 1 else ""),
-                options="', '".join(sorted(unknown_options)),
-            )
-        )
-    return parsed_options
 
 
 class KeyValueParser:

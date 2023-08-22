@@ -1,5 +1,5 @@
-from pcs.cli.common import parse_args
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.parse_args import KeyValueParser
 
 
 def separate_tail_option_candidates(arg_list):
@@ -35,5 +35,5 @@ def parse_add(arg_list):
         ticket,
         resource_id,
         resource_role,
-        parse_args.prepare_options(option_candidates),
+        KeyValueParser(option_candidates).get_unique(),
     )
