@@ -190,6 +190,13 @@ AC_ARG_WITH([distro],
 	    [AS_HELP_STRING([--with-distro=DIR], [Set defaults to specified distro. Default: autodetected])],
 	    [DISTRO="$withval"])
 
+AC_ARG_WITH([pcsd-default-cipherlist],
+	[AS_HELP_STRING([--with-pcsd-default-cipherlist=CIPHERLIST],
+		[Default pcsd server OpenSSL cipher list. Default: DEFAULT:!RC4:!3DES:@STRENGTH])],
+	[PCSD_DEFAULT_CIPHERLIST="$withval"],
+	[PCSD_DEFAULT_CIPHERLIST="DEFAULT:!RC4:!3DES:@STRENGTH"])
+AC_SUBST([PCSD_DEFAULT_CIPHERLIST])
+
 if test "x$cache_only" != "xyes"; then
 	AC_CHECK_PROGS([WGET], [wget])
 	if test "x$WGET" = "x"; then

@@ -31,6 +31,9 @@ PCSD_SESSION_LIFETIME=3600
 #PCSD_SSL_OPTIONS='OP_NO_COMPRESSION,OP_CIPHER_SERVER_PREFERENCE,OP_SINGLE_DH_USE,OP_SINGLE_ECDH_USE,OP_NO_SSLv2,OP_NO_SSLv3,OP_NO_TLSv1,OP_NO_TLSv1_1,OP_NO_RENEGOTIATION'
 # set SSL ciphers
 #PCSD_SSL_CIPHERS='DEFAULT:!RC4:!3DES:@STRENGTH'
+# In case you are running a system with crypto-policies (such as RHEL, CentOS
+# Stream or Fedora), you can set pcsd to use the configured policy:
+#PCSD_SSL_CIPHERS='PROFILE=SYSTEM'
 
 # Proxy settings for pcsd node to node communication
 # See ENVIRONMENT section in curl(1) man page for more details.
