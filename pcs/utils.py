@@ -2710,7 +2710,7 @@ def exit_on_cmdline_input_error(
     if error and error.hint:
         print_to_stderr(f"Hint: {error.hint}")
     if not error or (not error.message or error.show_both_usage_and_message):
-        usage.show(main_name, usage_name)
+        usage.show(main_name, list(usage_name))
     sys.exit(1)
 
 

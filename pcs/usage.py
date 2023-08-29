@@ -1,11 +1,9 @@
 import re
-from typing import (
-    List,
-    Tuple,
-)
+from typing import Callable
 
 from pcs import settings
 from pcs.cli.common.output import format_wrap
+from pcs.cli.common.parse_args import Argv
 from pcs.cli.reports.output import print_to_stderr
 from pcs.common.str_tools import (
     format_optional,
@@ -64,7 +62,7 @@ def _format_desc(cmd_desc_list: StringIterable) -> str:
     )
 
 
-def _format_desc_item_list(item_list: StringIterable) -> List[str]:
+def _format_desc_item_list(item_list: StringIterable) -> list[str]:
     lines = []
     for item in item_list:
         lines.extend(
@@ -77,7 +75,7 @@ def _format_desc_item_list(item_list: StringIterable) -> List[str]:
     return indent(lines, indent_step=2)
 
 
-def full_usage():
+def full_usage() -> None:
     out = ""
     out += main()
     out += strip_extras(resource([]))
@@ -102,7 +100,7 @@ def full_usage():
     print("Examples:\n" + examples.replace(r" \ ", ""))
 
 
-def strip_extras(text):
+def strip_extras(text: str) -> str:
     global examples
     ret = ""
     group_name = text.split(" ")[2]
@@ -144,12 +142,10 @@ def strip_extras(text):
     return ret
 
 
-# Print only output for items that match the args
-# For now we only look at the first arg
-# If no args, then we return the full output
-
-
-def sub_usage(args, output):
+def sub_usage(args: Argv, output: str) -> str:
+    # Print only output for items that match the args
+    # For now we only look at the first arg
+    # If no args, then we return the full output
     if not args:
         return output
     args_str = " ".join(args)
@@ -178,14 +174,10 @@ def sub_usage(args, output):
     return sub_usage([" ".join(args_str.split()[:-1])], output)
 
 
-def dict_depth(d, depth=0):
-    # pylint: disable=invalid-name
-    if not isinstance(d, dict) or not d:
-        return depth
-    return max(dict_depth(v, depth + 1) for k, v in d.items())
+CompletionTree = dict[str, "CompletionTree"]
 
 
-def generate_completion_tree_from_usage():
+def generate_completion_tree_from_usage() -> CompletionTree:
     tree = {}
     tree["resource"] = generate_tree(resource([]))
     tree["cluster"] = generate_tree(cluster([]))
@@ -208,9 +200,9 @@ def generate_completion_tree_from_usage():
     return tree
 
 
-def generate_tree(usage_txt):
+def generate_tree(usage_txt: str) -> CompletionTree:
     ignore = True
-    ret_hash = {}
+    ret_hash: CompletionTree = {}
     for line in usage_txt.split("\n"):
         if line.startswith("Commands:"):
             ignore = False
@@ -237,7 +229,7 @@ def generate_tree(usage_txt):
     return ret_hash
 
 
-def main():
+def main() -> str:
     output = """
 Usage: pcs [-f file] [-h] [commands]...
 Control and configure pacemaker and corosync.
@@ -289,12 +281,12 @@ def _alias_of(cmd: str) -> str:
     return f"This command is an alias of '{cmd}' command."
 
 
-def _output_format_syntax(cmd=True):
+def _output_format_syntax(cmd: bool = True) -> str:
     _cmd = "|cmd" if cmd else ""
     return f"--output-format text{_cmd}|json"
 
 
-def _output_format_desc(cmd=True):
+def _output_format_desc(cmd: bool = True) -> str:
     _number = "3" if cmd else "2"
     _cmd = "'cmd', " if cmd else ""
     _cmd_desc = (
@@ -423,7 +415,7 @@ _RESOURCE_OP_ADD_CMD = f"{_RESOURCE_OP_CMD} add"
 _RESOURCE_OP_ADD_SYNTAX = "<{obj} id> <operation action> [operation properties]"
 
 
-def _resource_op_add_desc_fn(obj: str) -> Tuple[str]:
+def _resource_op_add_desc_fn(obj: str) -> tuple[str]:
     return (f"Add operation for specified {obj}.",)
 
 
@@ -776,7 +768,7 @@ _UTILIZATION_PLACEMENT_STRATEGY_DESC = (
 )
 
 
-def resource(args=()):
+def resource(args: Argv) -> str:
     output = """
 Usage: pcs resource [commands]...
 Manage pacemaker resources
@@ -1441,7 +1433,7 @@ Notes:
     return sub_usage(args, output)
 
 
-def cluster(args=()):
+def cluster(args: Argv) -> str:
     output = """
 Usage: pcs cluster [commands]...
 Configure cluster for use with pacemaker
@@ -1870,7 +1862,7 @@ Commands:
     return sub_usage(args, output)
 
 
-def stonith(args=()):
+def stonith(args: Argv) -> str:
     output = """
 Usage: pcs stonith [commands]...
 Configure fence devices for use with pacemaker
@@ -2316,7 +2308,8 @@ Commands:
     return sub_usage(args, output)
 
 
-def property(args=()):
+def property(args: Argv) -> str:
+    # 'property' is a built-in
     # pylint: disable=redefined-builtin
     output = """
 Usage: pcs property [commands]...
@@ -2368,7 +2361,7 @@ Examples:
     return sub_usage(args, output)
 
 
-def constraint(args=()):
+def constraint(args: Argv) -> str:
     output = """
 Usage: pcs constraint [constraints]...
 Manage resource constraints
@@ -2564,7 +2557,7 @@ Commands:
     return sub_usage(args, output)
 
 
-def acl(args=()):
+def acl(args: Argv) -> str:
     output = """
 Usage: pcs acl [commands]...
 View and modify current cluster access control lists
@@ -2687,7 +2680,7 @@ Commands:
     return sub_usage(args, output)
 
 
-def status(args=()):
+def status(args=Argv) -> str:
     output = """
 Usage: pcs status [commands]...
 View current cluster and resource status
@@ -2737,7 +2730,7 @@ Commands:
     return sub_usage(args, output)
 
 
-def config(args=()):
+def config(args: Argv) -> str:
     output = """
 Usage: pcs config [commands]...
 View and manage cluster configuration
@@ -2772,7 +2765,7 @@ Commands:
     return sub_usage(args, output)
 
 
-def pcsd(args=()):
+def pcsd(args: Argv) -> str:
     output = """
 Usage: pcs pcsd [commands]...
 Manage pcs daemon
@@ -2797,7 +2790,7 @@ Commands:
     return sub_usage(args, output)
 
 
-def host(args=()):
+def host(args: Argv) -> str:
     output = """
 Usage: pcs host [commands]...
 Manage hosts known to pcs/pcsd
@@ -2821,7 +2814,7 @@ Commands:
     return sub_usage(args, output)
 
 
-def node(args=()):
+def node(args: Argv) -> str:
     output = """
 Usage: pcs node <command>
 Manage cluster nodes
@@ -2890,7 +2883,7 @@ Commands:
     return sub_usage(args, output)
 
 
-def qdevice(args=()):
+def qdevice(args: Argv) -> str:
     output = """
 Usage: pcs qdevice <command>
 Manage quorum device provider on the local host, currently only 'net' model is
@@ -2934,7 +2927,7 @@ Commands:
     return sub_usage(args, output)
 
 
-def quorum(args=()):
+def quorum(args: Argv) -> str:
     output = """
 Usage: pcs quorum <command>
 Manage cluster quorum settings.
@@ -3021,7 +3014,7 @@ Commands:
     return sub_usage(args, output)
 
 
-def booth(args=()):
+def booth(args: Argv) -> str:
     enable_authfile = """
     enable-authfile
         Add option 'enable-authfile' to booth configuration. In some versions of
@@ -3126,7 +3119,7 @@ Commands:
     return sub_usage(args, output)
 
 
-def alert(args=()):
+def alert(args: Argv) -> str:
     output = """
 Usage: pcs alert <command>
 Set pacemaker alerts.
@@ -3173,7 +3166,7 @@ Commands:
     return sub_usage(args, output)
 
 
-def client(args=()):
+def client(args: Argv) -> str:
     output = """
 Usage: pcs client <command>
 Manage pcsd client configuration.
@@ -3187,7 +3180,7 @@ Commands:
     return sub_usage(args, output)
 
 
-def tag(args=()):
+def tag(args: Argv) -> str:
     output = """
 Usage: pcs tag <command>
 Manage pacemaker tags.
@@ -3216,7 +3209,7 @@ Commands:
     return sub_usage(args, output)
 
 
-def dr(args=()):
+def dr(args: Argv) -> str:
     output = """
 Usage: pcs dr <command>
 Manage disaster recovery configuration.
@@ -3239,8 +3232,8 @@ Commands:
     return sub_usage(args, output)
 
 
-def show(main_usage_name, rest_usage_names):
-    usage_map = {
+def show(main_usage_name: str, rest_usage_names: Argv) -> None:
+    usage_map: dict[str, Callable[[Argv], str]] = {
         "acl": acl,
         "alert": alert,
         "booth": booth,

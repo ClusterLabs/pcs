@@ -12,7 +12,10 @@ from pcs import (
     utils,
 )
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.parse_args import InputModifiers
+from pcs.cli.common.parse_args import (
+    Argv,
+    InputModifiers,
+)
 from pcs.cli.reports import (
     output,
     process_library_reports,
@@ -21,7 +24,6 @@ from pcs.cli.reports.output import print_to_stderr
 from pcs.common import file as pcs_file
 from pcs.common import reports
 from pcs.common.reports.item import ReportItem
-from pcs.common.types import StringSequence
 from pcs.lib.auth import config as auth_config
 from pcs.lib.auth.const import SUPERUSER
 from pcs.lib.file.instance import FileInstance
@@ -31,7 +33,7 @@ from pcs.lib.interface.config import ParserErrorException
 from pcs.lib.node import get_existing_nodes_names
 
 
-def pcsd_certkey_cmd(lib, argv, modifiers):
+def pcsd_certkey_cmd(lib: Any, argv: Argv, modifiers: InputModifiers):
     """
     Options:
       * --force - overwrite existing file
@@ -50,7 +52,7 @@ def pcsd_certkey_cmd(lib, argv, modifiers):
         with open(keyfile, "rb") as myfile:
             key = myfile.read()
     except IOError as e:
-        utils.err(e)
+        utils.err(str(e))
     errors = pcs.common.ssl.check_cert_key(certfile, keyfile)
     if errors:
         for err in errors:
@@ -97,7 +99,7 @@ def pcsd_certkey_cmd(lib, argv, modifiers):
             myfile.write(key)
 
     except IOError as e:
-        utils.err(e)
+        utils.err(str(e))
 
     print_to_stderr(
         "Certificate and key updated, you may need to restart pcsd for new "
@@ -250,7 +252,7 @@ def _check_nodes(node_list, prefix=""):
 
 def pcsd_status_cmd(
     lib: Any,
-    argv: StringSequence,
+    argv: Argv,
     modifiers: InputModifiers,
     dont_exit: bool = False,
 ) -> None:

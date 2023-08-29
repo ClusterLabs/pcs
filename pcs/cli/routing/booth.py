@@ -26,9 +26,11 @@ mapping = {
         ["booth", "ticket"],
     ),
     "create": command.create_in_cluster,
-    "delete": command.get_remove_from_cluster(resource_remove),
-    "remove": command.get_remove_from_cluster(resource_remove),
-    "restart": command.get_restart(resource_restart),
+    # ignoring mypy errors, these functions need to be fixed, they are passing
+    # a function to pcs.lib
+    "delete": command.get_remove_from_cluster(resource_remove),  # type:ignore
+    "remove": command.get_remove_from_cluster(resource_remove),  # type:ignore
+    "restart": command.get_restart(resource_restart),  # type:ignore
     "sync": command.sync,
     "pull": command.pull,
     "enable": command.enable,
