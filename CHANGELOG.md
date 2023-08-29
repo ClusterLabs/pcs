@@ -25,6 +25,8 @@
   ([rhbz#2219554])
 - Do not create files in /tmp directory for commands running by ruby daemon
   ([ghissue#731])
+- Do not display warning in `pcs status` for expired constraints that were
+  created by moving resources ([rhbz#2111591])
 
 ### Changed
 - When exporting constraints in form of pcs commands, constraints containing
@@ -48,6 +50,7 @@
 [rhbz#2219554]: https://bugzilla.redhat.com/show_bug.cgi?id=2219554
 [rhbz#2222744]: https://bugzilla.redhat.com/show_bug.cgi?id=2222744
 [rhbz#2227230]: https://bugzilla.redhat.com/show_bug.cgi?id=2227230
+[rhbz#2111591]: https://bugzilla.redhat.com/show_bug.cgi?id=2111591
 
 
 ## [0.11.6] - 2023-06-20

@@ -4,7 +4,6 @@ from typing import (
     List,
     Mapping,
     NamedTuple,
-    cast,
 )
 
 from lxml.etree import _Element
@@ -22,12 +21,18 @@ from pcs.common.str_tools import (
     format_list,
     indent,
 )
-from pcs.common.types import StringSequence
+from pcs.common.types import (
+    CibRuleInEffectStatus,
+    StringSequence,
+)
 from pcs.lib.booth import status as booth_status
 from pcs.lib.booth.env import BoothEnv
 from pcs.lib.cib import nvpair
+from pcs.lib.cib.constraint.location import get_all_as_dtos
 from pcs.lib.cib.resource import stonith
+from pcs.lib.cib.rule.in_effect import get_rule_evaluator
 from pcs.lib.cib.tools import (
+    get_constraints,
     get_crm_config,
     get_resources,
 )
@@ -35,6 +40,7 @@ from pcs.lib.communication.nodes import CheckReachability
 from pcs.lib.communication.tools import run as run_communication
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
+from pcs.lib.external import CommandRunner
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.node_communication import NodeTargetLibFactory
 from pcs.lib.pacemaker.live import (
@@ -146,7 +152,9 @@ def full_cluster_status_plaintext(
     # check stonith configuration
     warning_list = list(warning_list)
     warning_list.extend(_stonith_warnings(cib, is_sbd_running))
-    warning_list.extend(_move_constraints_warnings(cib))
+    warning_list.extend(
+        _move_constraints_warnings(cib, runner, report_processor)
+    )
     warning_list.extend(
         _booth_authfile_warning(env.report_processor, env.get_booth_env(None))
     )
@@ -237,18 +245,33 @@ def _stonith_warnings(cib: _Element, is_sbd_running: bool) -> List[str]:
     return warning_list
 
 
-def _move_constraints_warnings(cib: _Element) -> List[str]:
+def _move_constraints_warnings(
+    cib: _Element, runner: CommandRunner, report_processor: ReportProcessor
+) -> List[str]:
     warning_list: List[str] = []
-    resource_id_list = cast(
-        List[str],
-        cib.xpath("//constraints/rsc_location[starts-with(@id, 'cli-')]/@rsc"),
+    rule_evaluator = get_rule_evaluator(cib, runner, report_processor, True)
+    constraint_el = get_constraints(cib)
+
+    location_constraints, _ = get_all_as_dtos(constraint_el, rule_evaluator)
+
+    resource_ids = set(
+        constraint_dto.resource_id
+        for constraint_dto in location_constraints
+        if constraint_dto.resource_id
+        and constraint_dto.attributes.constraint_id.startswith("cli-")
+        and (
+            not constraint_dto.attributes.rules
+            or not all(
+                rule.in_effect == CibRuleInEffectStatus.EXPIRED
+                for rule in constraint_dto.attributes.rules
+            )
+        )
     )
-    if resource_id_list:
+
+    if resource_ids:
         warning_list.append(
             "Following resources have been moved and their move constraints "
-            "are still in place: {0}".format(
-                format_list(list(set(resource_id_list)))
-            )
+            "are still in place: {0}".format(format_list(list(resource_ids)))
         )
         warning_list.append(
             "Run 'pcs constraint location' or 'pcs resource clear "
