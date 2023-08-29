@@ -315,11 +315,11 @@ def quorum_unblock_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     if report_list:
         process_library_reports(report_list)
 
-    unjoined_nodes = set(all_nodes) - set(utils.getCorosyncActiveNodes())
+    unjoined_nodes = list(set(all_nodes) - set(utils.getCorosyncActiveNodes()))
     if not unjoined_nodes:
         utils.err("no unjoined nodes found")
     if not utils.get_continue_confirmation_or_force(
-        f"If node(s) {format_list(list(unjoined_nodes))} are not powered off or they "
+        f"If node(s) {format_list(unjoined_nodes)} are not powered off or they "
         "do have access to shared resources, data corruption and/or cluster "
         "failure may occur",
         bool(modifiers.get("--force")),
@@ -341,13 +341,13 @@ def quorum_unblock_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     properties_facade = PropertyConfigurationFacade.from_properties_config(
         lib.cluster_property.get_properties(),
     )
-    startup_fencing = properties_facade.get_property_value(
-        "startup-fencing", ""
+    startup_fencing = str(
+        properties_facade.get_property_value("startup-fencing", "")
     )
     lib.cluster_property.set_properties(
         {
             "startup-fencing": (
-                "false" if not is_false(str(startup_fencing)) else "true"
+                "false" if not is_false(startup_fencing) else "true"
             )
         }
     )

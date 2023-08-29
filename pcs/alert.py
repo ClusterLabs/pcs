@@ -1,8 +1,5 @@
 import json
-from typing import (
-    Any,
-    List,
-)
+from typing import Any
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import (
@@ -230,7 +227,7 @@ def print_alert_config(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         print("\n".join(lines))
 
 
-def alert_config_lines(lib: Any) -> List[str]:
+def alert_config_lines(lib: Any) -> list[str]:
     lines = []
     alert_list = lib.alert.get_all_alerts()
     if alert_list:

@@ -1,10 +1,7 @@
 import json
 from typing import (
     Any,
-    Dict,
-    List,
     Optional,
-    Tuple,
 )
 
 from pcs import (
@@ -135,7 +132,7 @@ def stonith_list_options(
 
 def _check_is_stonith(
     lib: Any,
-    resource_id_list: List[str],
+    resource_id_list: list[str],
     cmd_to_use: Optional[str] = None,
 ) -> None:
     if lib.resource.is_any_resource_except_stonith(resource_id_list):
@@ -685,12 +682,12 @@ def sbd_enable(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
 
 def _sbd_parse_node_specific_options(
     arg_list: Argv,
-) -> Tuple[List[str], Dict[str, List[str]]]:
+) -> tuple[list[str], dict[str, list[str]]]:
     """
     Commandline options: no options
     """
     default_option_list = []
-    node_specific_option_dict: Dict[str, List[str]] = {}
+    node_specific_option_dict: dict[str, list[str]] = {}
 
     for arg in arg_list:
         if "@" in arg:
@@ -706,8 +703,8 @@ def _sbd_parse_node_specific_options(
 
 
 def _sbd_parse_watchdogs(
-    watchdog_list: List[str],
-) -> Tuple[Optional[str], Dict[str, str]]:
+    watchdog_list: list[str],
+) -> tuple[Optional[str], dict[str, str]]:
     """
     Commandline options: no options
     """

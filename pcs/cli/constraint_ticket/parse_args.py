@@ -1,9 +1,3 @@
-from typing import (
-    Dict,
-    List,
-    Tuple,
-)
-
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import (
     Argv,
@@ -13,7 +7,7 @@ from pcs.cli.common.parse_args import (
 
 def separate_tail_option_candidates(
     arg_list: Argv,
-) -> Tuple[List[str], List[str]]:
+) -> tuple[list[str], list[str]]:
     for i, arg in enumerate(arg_list):
         if "=" in arg:
             return arg_list[:i], arg_list[i:]
@@ -21,7 +15,7 @@ def separate_tail_option_candidates(
     return arg_list, []
 
 
-def parse_add(arg_list: Argv) -> Tuple[str, str, str, Dict[str, str]]:
+def parse_add(arg_list: Argv) -> tuple[str, str, str, dict[str, str]]:
     info, option_candidates = separate_tail_option_candidates(arg_list)
 
     if not info:

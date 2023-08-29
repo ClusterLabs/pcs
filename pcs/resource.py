@@ -8,10 +8,8 @@ from functools import partial
 from typing import (
     Any,
     Callable,
-    List,
     Mapping,
     Optional,
-    Tuple,
     cast,
 )
 from xml.dom.minidom import parseString
@@ -118,7 +116,7 @@ RESOURCE_RELOCATE_CONSTRAINT_PREFIX = "pcs-relocate-"
 
 
 def _check_is_not_stonith(
-    lib: Any, resource_id_list: List[str], cmd_to_use: Optional[str] = None
+    lib: Any, resource_id_list: list[str], cmd_to_use: Optional[str] = None
 ) -> None:
     if lib.resource.is_any_stonith(resource_id_list):
         deprecation_warning(
@@ -469,12 +467,12 @@ def op_delete_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
 
 def parse_resource_options(
     argv: Argv,
-) -> Tuple[List[str], List[List[str]], List[str]]:
+) -> tuple[list[str], list[list[str]], list[str]]:
     """
     Commandline options: no options
     """
     ra_values = []
-    op_values: List[List[str]] = []
+    op_values: list[list[str]] = []
     meta_values = []
     op_args = False
     meta_args = False
@@ -764,7 +762,7 @@ def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
 
 def _parse_resource_move_ban(
     argv: Argv,
-) -> Tuple[str, Optional[str], Optional[str]]:
+) -> tuple[str, Optional[str], Optional[str]]:
     resource_id = argv.pop(0)
     node = None
     lifetime = None

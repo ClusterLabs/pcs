@@ -1,7 +1,7 @@
 from typing import (
     Any,
     Optional,
-    Tuple,
+    Union,
 )
 from urllib.parse import urlparse
 
@@ -18,7 +18,9 @@ from pcs.cli.common.parse_args import (
 )
 
 
-def _parse_host_options(host, options):
+def _parse_host_options(
+    host: str, options: Argv
+) -> dict[str, Union[str, list[dict[str, Union[None, str, int]]]]]:
     # pylint: disable=invalid-name
     ADDR_OPT_KEYWORD = "addr"
     supported_options = set([ADDR_OPT_KEYWORD])
@@ -34,7 +36,7 @@ def _parse_host_options(host, options):
     return {"dest_list": [dict(addr=addr, port=port)]}
 
 
-def _parse_addr(addr: str) -> Tuple[Optional[str], int]:
+def _parse_addr(addr: str) -> tuple[Optional[str], int]:
     if addr.count(":") > 1 and not addr.startswith("["):
         # if IPv6 without port put it in parentheses
         addr = "[{0}]".format(addr)

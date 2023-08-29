@@ -1,8 +1,6 @@
 from typing import (
     Any,
-    List,
     Optional,
-    Tuple,
 )
 
 from pcs.cli.common.errors import CmdLineInputError
@@ -18,7 +16,7 @@ from pcs.cli.resource.parse_args import (
 
 def _node_add_remote_separate_name_and_addr(
     arg_list: Argv,
-) -> Tuple[str, Optional[str], List[str]]:
+) -> tuple[str, Optional[str], list[str]]:
     """
     Commandline options: no options
     """
@@ -85,7 +83,7 @@ def node_add_remote(
     )
 
 
-def create_node_remove_remote(remove_resource):
+def create_node_remove_remote(remove_resource):  # type:ignore
     def node_remove_remote(
         lib: Any, arg_list: Argv, modifiers: InputModifiers
     ) -> None:

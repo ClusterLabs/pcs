@@ -1,6 +1,6 @@
 from typing import (
     Any,
-    Callable,
+    Optional,
 )
 
 from pcs.cli.common.errors import CmdLineInputError
@@ -8,7 +8,6 @@ from pcs.cli.common.parse_args import (
     Argv,
     InputModifiers,
     KeyValueParser,
-    ModifierValueType,
     group_by_keywords,
 )
 
@@ -158,23 +157,14 @@ def enable_authfile_clean(
     )
 
 
-def _ticket_operation(
-    lib_call: Callable[[..., Any], None],
-    arg_list: Argv,
-    booth_name: ModifierValueType,
-) -> None:
-    """
-    Commandline options:
-      * --name - name of a booth instance
-    """
+def _parse_ticket_operation(arg_list: Argv) -> tuple[str, Optional[str]]:
     site_ip = None
     if len(arg_list) == 2:
         site_ip = arg_list[1]
     elif len(arg_list) != 1:
         raise CmdLineInputError()
-
     ticket = arg_list[0]
-    lib_call(ticket, site_ip=site_ip, instance_name=booth_name)
+    return ticket, site_ip
 
 
 def ticket_revoke(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
@@ -183,8 +173,9 @@ def ticket_revoke(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
       * --name - name of a booth instance
     """
     modifiers.ensure_only_supported("--name")
-    _ticket_operation(
-        lib.booth.ticket_revoke, arg_list, modifiers.get("--name")
+    ticket, site_ip = _parse_ticket_operation(arg_list)
+    lib.booth.ticket_revoke(
+        ticket, site_ip=site_ip, instance_name=modifiers.get("--name")
     )
 
 
@@ -194,7 +185,10 @@ def ticket_grant(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
       * --name - name of a booth instance
     """
     modifiers.ensure_only_supported("--name")
-    _ticket_operation(lib.booth.ticket_grant, arg_list, modifiers.get("--name"))
+    ticket, site_ip = _parse_ticket_operation(arg_list)
+    lib.booth.ticket_grant(
+        ticket, site_ip=site_ip, instance_name=modifiers.get("--name")
+    )
 
 
 def create_in_cluster(
@@ -217,7 +211,7 @@ def create_in_cluster(
     )
 
 
-def get_remove_from_cluster(resource_remove):
+def get_remove_from_cluster(resource_remove):  # type:ignore
     # TODO resource_remove is provisional hack until resources are not moved to
     # lib
     def remove_from_cluster(
@@ -242,7 +236,7 @@ def get_remove_from_cluster(resource_remove):
     return remove_from_cluster
 
 
-def get_restart(resource_restart):
+def get_restart(resource_restart):  # type:ignore
     # TODO resource_restart is provisional hack until resources are not moved to
     # lib
     def restart(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:

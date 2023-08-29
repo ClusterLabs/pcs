@@ -11,12 +11,10 @@ import xml.dom.minidom
 from typing import (
     Any,
     Callable,
-    Dict,
     Iterable,
-    List,
     Mapping,
     Optional,
-    Tuple,
+    Union,
     cast,
 )
 
@@ -63,7 +61,10 @@ from pcs.common.str_tools import (
     indent,
 )
 from pcs.common.tools import format_os_error
-from pcs.common.types import StringCollection
+from pcs.common.types import (
+    StringCollection,
+    StringIterable,
+)
 from pcs.lib import sbd as lib_sbd
 from pcs.lib.commands.remote_node import _destroy_pcmk_remote_env
 from pcs.lib.communication.nodes import CheckAuth
@@ -387,7 +388,7 @@ def is_node_fully_started(node_status) -> bool:
 
 def wait_for_local_node_started(
     stop_at: datetime.datetime, interval: float
-) -> Tuple[int, str]:
+) -> tuple[int, str]:
     """
     Commandline options: no options
     """
@@ -418,7 +419,7 @@ def wait_for_local_node_started(
 
 def wait_for_remote_node_started(
     node: str, stop_at: datetime.datetime, interval: float
-) -> Tuple[int, str]:
+) -> tuple[int, str]:
     """
     Commandline options:
       * --request-timeout - timeout for HTTP requests
@@ -443,7 +444,7 @@ def wait_for_remote_node_started(
 
 
 def wait_for_nodes_started(
-    node_list: Iterable, timeout: Optional[int] = None
+    node_list: StringIterable, timeout: Optional[int] = None
 ) -> None:
     """
     Commandline options:
@@ -645,7 +646,7 @@ def disable_cluster_all() -> None:
     disable_cluster_nodes(all_nodes)
 
 
-def enable_cluster_nodes(nodes: StringCollection) -> None:
+def enable_cluster_nodes(nodes: StringIterable) -> None:
     """
     Commandline options:
       * --request-timeout - timeout for HTTP requests
@@ -655,7 +656,7 @@ def enable_cluster_nodes(nodes: StringCollection) -> None:
         utils.err("unable to enable all nodes\n" + "\n".join(error_list))
 
 
-def disable_cluster_nodes(nodes: StringCollection) -> None:
+def disable_cluster_nodes(nodes: StringIterable) -> None:
     """
     Commandline options:
       * --request-timeout - timeout for HTTP requests
@@ -774,7 +775,7 @@ def kill_cluster(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
 #        sys.exit(1)
 
 
-def kill_local_cluster_services() -> Tuple[str, int]:
+def kill_local_cluster_services() -> tuple[str, int]:
     """
     Commandline options: no options
     """
@@ -1497,10 +1498,10 @@ def cluster_report(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
 
 
 def send_local_configs(
-    node_name_list: List[str],
+    node_name_list: StringIterable,
     clear_local_cluster_permissions: bool = False,
     force: bool = False,
-) -> List[str]:
+) -> list[str]:
     """
     Commandline options:
       * --request-timeout - timeout of HTTP requests
@@ -1620,11 +1621,11 @@ def cluster_auth_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
 
 
 def _parse_node_options(
-    node,
-    options,
-    additional_options=(),
-    additional_repeatable_options=(),
-):
+    node: str,
+    options: Argv,
+    additional_options: StringCollection = (),
+    additional_repeatable_options: StringCollection = (),
+) -> dict[str, Union[str, list[str]]]:
     """
     Commandline options: no options
     """
@@ -1656,7 +1657,9 @@ TRANSPORT_DEFAULT_SECTION = "__default__"
 LINK_KEYWORD = "link"
 
 
-def _parse_transport(transport_args):
+def _parse_transport(
+    transport_args: Argv,
+) -> tuple[str, dict[str, Union[dict[str, str], list[dict[str, str]]]]]:
     """
     Commandline options: no options
     """
@@ -1672,7 +1675,7 @@ def _parse_transport(transport_args):
         keywords,
         implicit_first_keyword=TRANSPORT_DEFAULT_SECTION,
     )
-    options = {
+    options: dict[str, Union[dict[str, str], list[dict[str, str]]]] = {
         section: KeyValueParser(
             parsed_options.get_args_flat(section)
         ).get_unique()
@@ -1747,7 +1750,9 @@ def cluster_setup(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     ]
 
     transport_type = None
-    transport_options = {}
+    transport_options: dict[
+        str, Union[dict[str, str], list[dict[str, str]]]
+    ] = {}
 
     if parsed_args.has_keyword(TRANSPORT_KEYWORD):
         transport_type, transport_options = _parse_transport(
@@ -1873,7 +1878,7 @@ def config_update(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     )
 
 
-def _format_options(label: str, options: Mapping[str, str]) -> List[str]:
+def _format_options(label: str, options: Mapping[str, str]) -> list[str]:
     output = []
     if options:
         output.append(f"{label}:")
@@ -1883,7 +1888,7 @@ def _format_options(label: str, options: Mapping[str, str]) -> List[str]:
     return output
 
 
-def _format_nodes(nodes: Iterable[CorosyncNodeDto]) -> List[str]:
+def _format_nodes(nodes: Iterable[CorosyncNodeDto]) -> list[str]:
     output = ["Nodes:"]
     for node in sorted(nodes, key=lambda node: node.name):
         node_attrs = [
@@ -1895,7 +1900,7 @@ def _format_nodes(nodes: Iterable[CorosyncNodeDto]) -> List[str]:
 
 
 def config_show(
-    lib: Any, argv: List[str], modifiers: parse_args.InputModifiers
+    lib: Any, argv: Argv, modifiers: parse_args.InputModifiers
 ) -> None:
     """
     Options:
@@ -1923,7 +1928,7 @@ def config_show(
     print(output)
 
 
-def _config_get_text(corosync_conf: CorosyncConfDto) -> List[str]:
+def _config_get_text(corosync_conf: CorosyncConfDto) -> list[str]:
     lines = [f"Cluster Name: {corosync_conf.cluster_name}"]
     if corosync_conf.cluster_uuid:
         lines.append(f"Cluster UUID: {corosync_conf.cluster_uuid}")
@@ -1993,8 +1998,8 @@ def _corosync_node_to_cmd_line(node: CorosyncNodeDto) -> str:
 
 def _section_to_lines(
     options: Mapping[str, str], keyword: Optional[str] = None
-) -> List[str]:
-    output: List[str] = []
+) -> list[str]:
+    output: list[str] = []
     if options:
         if keyword:
             output.append(keyword)
@@ -2004,7 +2009,7 @@ def _section_to_lines(
     return indent(output)
 
 
-def _config_get_cmd(corosync_conf: CorosyncConfDto) -> List[str]:
+def _config_get_cmd(corosync_conf: CorosyncConfDto) -> list[str]:
     lines = [f"pcs cluster setup {corosync_conf.cluster_name}"]
     lines += indent(
         [
@@ -2032,7 +2037,7 @@ def _config_get_cmd(corosync_conf: CorosyncConfDto) -> List[str]:
     return lines
 
 
-def _parse_add_node(argv: Argv) -> Dict[str, str]:
+def _parse_add_node(argv: Argv) -> dict[str, Union[str, list[str]]]:
     # pylint: disable=invalid-name
     DEVICE_KEYWORD = "device"
     WATCHDOG_KEYWORD = "watchdog"
