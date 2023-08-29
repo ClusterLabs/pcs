@@ -13,6 +13,10 @@ from pcs.lib.commands import status
 
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.command_env.config_runner_pcmk import (
+    RULE_EXPIRED_RETURNCODE,
+    RULE_IN_EFFECT_RETURNCODE,
+)
 from pcs_test.tools.misc import read_test_resource as rc_read
 
 
@@ -252,6 +256,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
     def test_success_live(self):
         self._fixture_config_live_minimal()
         self._fixture_config_local_daemons()
+        self.config.fs.isfile(settings.crm_rule, return_value=True)
         self.assertEqual(
             status.full_cluster_status_plaintext(self.env_assist.get_env()),
             dedent(
@@ -294,6 +299,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
                 node_labels=self.node_name_list
             )
         )
+        self.config.fs.isfile(settings.crm_rule, return_value=True)
 
         self.assertEqual(
             status.full_cluster_status_plaintext(
@@ -329,6 +335,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
             pacemaker_remote_enabled=True,
             pacemaker_remote_active=True,
         )
+        self.config.fs.isfile(settings.crm_rule, return_value=True)
         self.assertEqual(
             status.full_cluster_status_plaintext(self.env_assist.get_env()),
             dedent(
@@ -375,6 +382,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
             pacemaker_remote_enabled=True,
             pacemaker_remote_active=True,
         )
+        self.config.fs.isfile(settings.crm_rule, return_value=True)
 
         self.assertEqual(
             status.full_cluster_status_plaintext(
@@ -414,6 +422,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
             """,
                 env=env,
             )
+            .fs.isfile(settings.crm_rule, return_value=True)
         )
         self.assertEqual(
             status.full_cluster_status_plaintext(self.env_assist.get_env()),
@@ -450,6 +459,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
             .runner.pcmk.load_ticket_state_plaintext(
                 stdout="ticket status", env=env
             )
+            .fs.isfile(settings.crm_rule, return_value=True)
         )
         self.assertEqual(
             status.full_cluster_status_plaintext(
@@ -495,6 +505,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
                 node_labels=self.node_name_list
             )
         )
+        self.config.fs.isfile(settings.crm_rule, return_value=True)
 
         self.assertEqual(
             status.full_cluster_status_plaintext(
@@ -552,6 +563,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
                 node_labels=self.node_name_list
             )
         )
+        self.config.fs.isfile(settings.crm_rule, return_value=True)
 
         self.assertEqual(
             status.full_cluster_status_plaintext(
@@ -599,6 +611,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
             )
         )
         self._fixture_config_local_daemons()
+        self.config.fs.isfile(settings.crm_rule, return_value=True)
 
         self.assertEqual(
             status.full_cluster_status_plaintext(self.env_assist.get_env()),
@@ -631,6 +644,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
             )
         )
         self._fixture_config_local_daemons()
+        self.config.fs.isfile(settings.crm_rule, return_value=True)
 
         self.assertEqual(
             status.full_cluster_status_plaintext(self.env_assist.get_env()),
@@ -681,6 +695,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
             )
         )
         self._fixture_config_local_daemons()
+        self.config.fs.isfile(settings.crm_rule, return_value=True)
 
         self.assertEqual(
             # pylint: disable=line-too-long
@@ -753,6 +768,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
                 ]
             )
         )
+        self.config.fs.isfile(settings.crm_rule, return_value=True)
 
         self.assertEqual(
             status.full_cluster_status_plaintext(
@@ -794,6 +810,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
             sbd_enabled=True,
             sbd_active=True,
         )
+        self.config.fs.isfile(settings.crm_rule, return_value=True)
         self.assertEqual(
             status.full_cluster_status_plaintext(self.env_assist.get_env()),
             dedent(
@@ -824,6 +841,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
             sbd_enabled=False,
             sbd_active=False,
         )
+        self.config.fs.isfile(settings.crm_rule, return_value=True)
         self.assertEqual(
             status.full_cluster_status_plaintext(self.env_assist.get_env()),
             dedent(
@@ -874,9 +892,9 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
             "sbd", return_value=True, name="services.is_running.sbd"
         )
         self._fixture_config_local_daemons(sbd_enabled=True, sbd_active=True)
+        self.config.fs.isfile(settings.crm_rule, return_value=True)
 
         self.assertEqual(
-            # pylint: disable=line-too-long
             status.full_cluster_status_plaintext(self.env_assist.get_env()),
             dedent(
                 """\
@@ -884,6 +902,144 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
 
                 WARNINGS:
                 Following resources have been moved and their move constraints are still in place: 'P1', 'P2'
+                Run 'pcs constraint location' or 'pcs resource clear <resource id>' to view or remove the constraints, respectively
+
+                crm_mon cluster status
+
+                Daemon Status:
+                  corosync: active/enabled
+                  pacemaker: active/enabled
+                  pcsd: active/enabled
+                  sbd: active/enabled"""
+            ),
+        )
+
+    def test_expired_move_constraints_warnings(self):
+        self.config.runner.pcmk.load_state_plaintext(
+            stdout="crm_mon cluster status",
+        )
+        self.config.fs.exists(settings.corosync_conf_file, return_value=True)
+        self.config.corosync_conf.load()
+        self.config.runner.cib.load(
+            constraints="""
+            <constraints>
+                <rsc_location id="cli-ban-P1-on-node1" rsc="P1"
+                    role="Started" node="node1" score="-INFINITY"/>
+                <rsc_location id="cli-prefer-P2" rsc="P2" role="Started"
+                    node="node1" score="INFINITY">
+                    <rule id="cli-prefer-rule-P2" score="INFINITY" boolean-op="and">
+                        <expression id="cli-prefer-expr-P2" attribute="#uname"
+                                    operation="eq" value="P2" type="string"/>
+                        <date_expression id="cli-prefer-lifetime-end-P2"
+                                    operation="lt" end="0000-01-1 01:00:00 +02:00"/>
+                    </rule>
+                </rsc_location>
+            </constraints>
+        """,
+            resources="""
+            <resources>
+                <primitive class="ocf" id="P1" provider="pacemaker"
+                    type="Dummy"/>
+                <primitive class="ocf" id="P2" provider="pacemaker"
+                    type="Dummy"/>
+                <primitive class="ocf" id="P3" provider="pacemaker"
+                    type="Dummy"/>
+            </resources>
+        """,
+        )
+        self.config.services.is_running(
+            "sbd", return_value=True, name="services.is_running.sbd"
+        )
+        self._fixture_config_local_daemons(sbd_enabled=True, sbd_active=True)
+        self.config.fs.isfile(settings.crm_rule, return_value=True)
+        self.config.runner.pcmk.get_rule_in_effect_status(
+            "cli-prefer-rule-P2", returncode=RULE_EXPIRED_RETURNCODE
+        )
+
+        self.assertEqual(
+            status.full_cluster_status_plaintext(self.env_assist.get_env()),
+            dedent(
+                """\
+                Cluster name: test99
+
+                WARNINGS:
+                Following resources have been moved and their move constraints are still in place: 'P1'
+                Run 'pcs constraint location' or 'pcs resource clear <resource id>' to view or remove the constraints, respectively
+
+                crm_mon cluster status
+
+                Daemon Status:
+                  corosync: active/enabled
+                  pacemaker: active/enabled
+                  pcsd: active/enabled
+                  sbd: active/enabled"""
+            ),
+        )
+
+    def test_expired_and_in_effect_move_constraints_warnings(self):
+        self.config.runner.pcmk.load_state_plaintext(
+            stdout="crm_mon cluster status",
+        )
+        self.config.fs.exists(settings.corosync_conf_file, return_value=True)
+        self.config.corosync_conf.load()
+        self.config.runner.cib.load(
+            constraints="""
+            <constraints>
+                <rsc_location id="cli-prefer-P1" rsc="P1" role="Started"
+                    node="node1" score="INFINITY">
+                    <rule id="cli-prefer-rule-P1" score="INFINITY" boolean-op="and">
+                        <expression id="cli-prefer-expr-P1" attribute="#uname"
+                                    operation="eq" value="P1" type="string"/>
+                        <date_expression id="cli-prefer-lifetime-end-P1"
+                                    operation="lt" end="0000-01-1 01:00:00 +02:00"/>
+                    </rule>
+                </rsc_location>
+                <rsc_location id="cli-prefer-P2" rsc="P2" role="Started"
+                    node="node2" score="INFINITY">
+                    <rule id="cli-prefer-rule-P2" score="INFINITY" boolean-op="and">
+                        <expression id="cli-prefer-expr-P2" attribute="#uname"
+                                    operation="eq" value="P2" type="string"/>
+                        <date_expression id="cli-prefer-lifetime-end-P2"
+                                    operation="lt" end="0000-01-1 01:00:00 +02:00"/>
+                    </rule>
+                </rsc_location>
+            </constraints>
+        """,
+            resources="""
+            <resources>
+                <primitive class="ocf" id="P1" provider="pacemaker"
+                    type="Dummy"/>
+                <primitive class="ocf" id="P2" provider="pacemaker"
+                    type="Dummy"/>
+                <primitive class="ocf" id="P3" provider="pacemaker"
+                    type="Dummy"/>
+            </resources>
+        """,
+        )
+        self.config.services.is_running(
+            "sbd", return_value=True, name="services.is_running.sbd"
+        )
+        self._fixture_config_local_daemons(sbd_enabled=True, sbd_active=True)
+        self.config.fs.isfile(settings.crm_rule, return_value=True)
+        self.config.runner.pcmk.get_rule_in_effect_status(
+            "cli-prefer-rule-P1",
+            returncode=RULE_EXPIRED_RETURNCODE,
+            name="runner.pcmk.get_rule_in_effect_status-1",
+        )
+        self.config.runner.pcmk.get_rule_in_effect_status(
+            "cli-prefer-rule-P2",
+            returncode=RULE_IN_EFFECT_RETURNCODE,
+            name="runner.pcmk.get_rule_in_effect_status-2",
+        )
+
+        self.assertEqual(
+            status.full_cluster_status_plaintext(self.env_assist.get_env()),
+            dedent(
+                """\
+                Cluster name: test99
+
+                WARNINGS:
+                Following resources have been moved and their move constraints are still in place: 'P2'
                 Run 'pcs constraint location' or 'pcs resource clear <resource id>' to view or remove the constraints, respectively
 
                 crm_mon cluster status
@@ -925,6 +1081,7 @@ class FullClusterStatusPlaintextBoothWarning(FullClusterStatusPlaintextBase):
     @mock.patch("pcs.settings.booth_enable_authfile_set_enabled", True)
     @mock.patch("pcs.settings.booth_enable_authfile_unset_enabled", False)
     def test_booth_not_configured_set_enabled(self):
+        self.config.fs.isfile(settings.crm_rule, return_value=True)
         self.config.raw_file.exists(
             file_type_codes.BOOTH_CONFIG,
             _booth_config_path_fixture(),
@@ -935,6 +1092,7 @@ class FullClusterStatusPlaintextBoothWarning(FullClusterStatusPlaintextBase):
     @mock.patch("pcs.settings.booth_enable_authfile_set_enabled", True)
     @mock.patch("pcs.settings.booth_enable_authfile_unset_enabled", False)
     def test_booth_authfile_not_configured_set_enabled(self):
+        self.config.fs.isfile(settings.crm_rule, return_value=True)
         self.config.raw_file.exists(
             file_type_codes.BOOTH_CONFIG,
             _booth_config_path_fixture(),
@@ -954,6 +1112,7 @@ class FullClusterStatusPlaintextBoothWarning(FullClusterStatusPlaintextBase):
     @mock.patch("pcs.settings.booth_enable_authfile_set_enabled", False)
     @mock.patch("pcs.settings.booth_enable_authfile_unset_enabled", True)
     def test_booth_not_configured_unset_enabled(self):
+        self.config.fs.isfile(settings.crm_rule, return_value=True)
         self.config.raw_file.exists(
             file_type_codes.BOOTH_CONFIG,
             _booth_config_path_fixture(),
@@ -964,6 +1123,7 @@ class FullClusterStatusPlaintextBoothWarning(FullClusterStatusPlaintextBase):
     @mock.patch("pcs.settings.booth_enable_authfile_set_enabled", True)
     @mock.patch("pcs.settings.booth_enable_authfile_unset_enabled", False)
     def test_missing_option(self):
+        self.config.fs.isfile(settings.crm_rule, return_value=True)
         self.config.raw_file.exists(
             file_type_codes.BOOTH_CONFIG,
             _booth_config_path_fixture(),
@@ -988,6 +1148,7 @@ class FullClusterStatusPlaintextBoothWarning(FullClusterStatusPlaintextBase):
     @mock.patch("pcs.settings.booth_enable_authfile_set_enabled", True)
     @mock.patch("pcs.settings.booth_enable_authfile_unset_enabled", False)
     def test_properly_configured(self):
+        self.config.fs.isfile(settings.crm_rule, return_value=True)
         self.config.raw_file.exists(
             file_type_codes.BOOTH_CONFIG,
             _booth_config_path_fixture(),
@@ -1009,6 +1170,7 @@ class FullClusterStatusPlaintextBoothWarning(FullClusterStatusPlaintextBase):
     @mock.patch("pcs.settings.booth_enable_authfile_set_enabled", False)
     @mock.patch("pcs.settings.booth_enable_authfile_unset_enabled", True)
     def test_unsupported_option(self):
+        self.config.fs.isfile(settings.crm_rule, return_value=True)
         self.config.raw_file.exists(
             file_type_codes.BOOTH_CONFIG,
             _booth_config_path_fixture(),
@@ -1034,6 +1196,7 @@ class FullClusterStatusPlaintextBoothWarning(FullClusterStatusPlaintextBase):
     @mock.patch("pcs.settings.booth_enable_authfile_set_enabled", False)
     @mock.patch("pcs.settings.booth_enable_authfile_unset_enabled", True)
     def test_unsupported_option_not_present(self):
+        self.config.fs.isfile(settings.crm_rule, return_value=True)
         self.config.raw_file.exists(
             file_type_codes.BOOTH_CONFIG,
             _booth_config_path_fixture(),
