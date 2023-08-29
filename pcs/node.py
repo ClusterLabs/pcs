@@ -156,7 +156,7 @@ def set_node_utilization(node: str, argv: Argv) -> None:
 
 def print_node_utilization(
     filter_node: Optional[str] = None,
-    filter_name: Optional[ModifierValueType] = None,
+    filter_name: ModifierValueType = None,
 ) -> None:
     """
     Commandline options:
@@ -211,7 +211,7 @@ def node_pacemaker_status(
 
 def attribute_show_cmd(
     filter_node: Optional[str] = None,
-    filter_attr: Optional[ModifierValueType] = None,
+    filter_attr: ModifierValueType = None,
 ) -> None:
     """
     Commandline options:

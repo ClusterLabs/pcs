@@ -11,6 +11,7 @@ import xml.dom.minidom
 from typing import (
     Any,
     Callable,
+    Dict,
     Iterable,
     List,
     Mapping,
@@ -2031,7 +2032,7 @@ def _config_get_cmd(corosync_conf: CorosyncConfDto) -> List[str]:
     return lines
 
 
-def _parse_add_node(argv: Argv) -> Mapping[str, str]:
+def _parse_add_node(argv: Argv) -> Dict[str, str]:
     # pylint: disable=invalid-name
     DEVICE_KEYWORD = "device"
     WATCHDOG_KEYWORD = "watchdog"

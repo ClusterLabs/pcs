@@ -289,7 +289,7 @@ def quorum_device_heuristics_remove_cmd(
 
 
 # TODO switch to new architecture, move to lib
-def quorum_unblock_cmd(lib, argv, modifiers) -> None:
+def quorum_unblock_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --force - no error when removing non existing property and no warning
@@ -376,7 +376,7 @@ def check_local_qnetd_certs_cmd(
 
 def setup_local_qnetd_certs_cmd(
     lib: Any, argv: Argv, modifiers: InputModifiers
-) -> Any:
+) -> None:
     modifiers.ensure_only_supported()
     if not argv or len(argv) != 2 or not argv[0] or not argv[1]:
         raise CmdLineInputError(

@@ -8,7 +8,6 @@ from functools import partial
 from typing import (
     Any,
     Callable,
-    Dict,
     List,
     Mapping,
     Optional,
@@ -131,7 +130,7 @@ def _check_is_not_stonith(
 
 
 def _detect_guest_change(
-    meta_attributes: Dict[str, str], allow_not_suitable_command: bool
+    meta_attributes: Mapping[str, str], allow_not_suitable_command: bool
 ) -> None:
     """
     Commandline options:
@@ -188,7 +187,7 @@ def resource_utilization_cmd(
 
 def _defaults_set_create_cmd(
     lib_command: Callable[..., Any], argv: Argv, modifiers: InputModifiers
-) -> Any:
+) -> None:
     modifiers.ensure_only_supported("-f", "--force")
 
     groups = group_by_keywords(

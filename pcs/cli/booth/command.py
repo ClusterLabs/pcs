@@ -158,9 +158,8 @@ def enable_authfile_clean(
     )
 
 
-# TODO type Callable
 def _ticket_operation(
-    lib_call: Callable,
+    lib_call: Callable[[..., Any], None],
     arg_list: Argv,
     booth_name: ModifierValueType,
 ) -> None:
@@ -218,10 +217,7 @@ def create_in_cluster(
     )
 
 
-# TODO type Callable
-def get_remove_from_cluster(
-    resource_remove: Callable,
-) -> Callable[[Any, Argv, InputModifiers], None]:
+def get_remove_from_cluster(resource_remove):
     # TODO resource_remove is provisional hack until resources are not moved to
     # lib
     def remove_from_cluster(
