@@ -3,18 +3,20 @@ from typing import Union
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import (
     Argv,
-    prepare_options,
+    KeyValueParser,
     split_list,
 )
 
 
 def prepare_resource_sets(
     cmdline_args: Argv,
-) -> list[dict[str, Union[list[str], dict[str, Union[str, list[str]]]]]]:
+) -> list[dict[str, Union[list[str], dict[str, str]]]]:
     return [
         {
             "ids": [id for id in args if "=" not in id],
-            "options": prepare_options([opt for opt in args if "=" in opt]),
+            "options": KeyValueParser(
+                [opt for opt in args if "=" in opt]
+            ).get_unique(),
         }
         for args in split_list(cmdline_args, "set")
     ]
@@ -22,10 +24,7 @@ def prepare_resource_sets(
 
 def prepare_set_args(
     argv: Argv,
-) -> tuple[
-    list[dict[str, Union[list[str], dict[str, Union[str, list[str]]]]]],
-    dict[str, Union[str, list[str]]],
-]:
+) -> tuple[list[dict[str, Union[list[str], dict[str, str]]]], dict[str, str]]:
     args_groups = split_list(argv, "setoptions")
     if len(args_groups) > 2:
         raise CmdLineInputError(
@@ -45,6 +44,8 @@ def prepare_set_args(
 
     constraint_options = {}
     if constraint_options_args:
-        constraint_options = prepare_options(constraint_options_args)
+        constraint_options = KeyValueParser(
+            constraint_options_args
+        ).get_unique()
 
     return (resource_set_list, constraint_options)

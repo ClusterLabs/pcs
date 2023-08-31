@@ -11,6 +11,7 @@ from pcs.cli.common.parse_args import (
     ArgsByKeywords,
     Argv,
     InputModifiers,
+    KeyValueParser,
 )
 from pcs.cli.common.tools import print_to_stderr
 from pcs.cli.reports import process_library_reports
@@ -18,12 +19,11 @@ from pcs.common.str_tools import (
     format_list,
     indent,
 )
-from pcs.common.types import StringSequence
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.pacemaker.values import is_false
 
 
-def quorum_config_cmd(lib, argv, modifiers):
+def quorum_config_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --corosync_conf - mocked corosync configuration file
@@ -97,7 +97,9 @@ def quorum_config_to_str(config):
     return lines
 
 
-def quorum_expected_votes_cmd(lib, argv, modifiers):
+def quorum_expected_votes_cmd(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options: no options
     """
@@ -107,7 +109,7 @@ def quorum_expected_votes_cmd(lib, argv, modifiers):
     lib.quorum.set_expected_votes_live(argv[0])
 
 
-def quorum_status_cmd(lib, argv, modifiers):
+def quorum_status_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options: no options
     """
@@ -117,7 +119,7 @@ def quorum_status_cmd(lib, argv, modifiers):
     print(lib.quorum.status_text())
 
 
-def quorum_update_cmd(lib, argv, modifiers):
+def quorum_update_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --skip-offline - skip offline nodes
@@ -129,7 +131,7 @@ def quorum_update_cmd(lib, argv, modifiers):
     modifiers.ensure_only_supported(
         "--skip-offline", "--force", "--corosync_conf", "--request-timeout"
     )
-    options = parse_args.prepare_options(argv)
+    options = KeyValueParser(argv).get_unique()
     if not options:
         raise CmdLineInputError()
 
@@ -154,7 +156,9 @@ def _parse_quorum_device_groups(arg_list: Argv) -> ArgsByKeywords:
     return groups
 
 
-def quorum_device_add_cmd(lib, argv, modifiers):
+def quorum_device_add_cmd(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options:
       * --force - allow unknown model or options
@@ -172,14 +176,14 @@ def quorum_device_add_cmd(lib, argv, modifiers):
     if not model_and_model_options or "=" in model_and_model_options[0]:
         raise CmdLineInputError()
 
-    generic_options = parse_args.prepare_options(
+    generic_options = KeyValueParser(
         groups.get_args_flat("generic")
-    )
+    ).get_unique()
     model = model_and_model_options[0]
-    model_options = parse_args.prepare_options(model_and_model_options[1:])
-    heuristics_options = parse_args.prepare_options(
+    model_options = KeyValueParser(model_and_model_options[1:]).get_unique()
+    heuristics_options = KeyValueParser(
         groups.get_args_flat("heuristics")
-    )
+    ).get_unique()
 
     if "model" in generic_options:
         raise CmdLineInputError("Model cannot be specified in generic options")
@@ -195,7 +199,9 @@ def quorum_device_add_cmd(lib, argv, modifiers):
     )
 
 
-def quorum_device_remove_cmd(lib, argv, modifiers):
+def quorum_device_remove_cmd(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options:
       * --skip-offline - skip offline nodes
@@ -212,7 +218,9 @@ def quorum_device_remove_cmd(lib, argv, modifiers):
     lib.quorum.remove_device(skip_offline_nodes=modifiers.get("--skip-offline"))
 
 
-def quorum_device_status_cmd(lib, argv, modifiers):
+def quorum_device_status_cmd(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options:
       * --full - more detailed output
@@ -223,7 +231,9 @@ def quorum_device_status_cmd(lib, argv, modifiers):
     print(lib.quorum.status_device_text(modifiers.get("--full")))
 
 
-def quorum_device_update_cmd(lib, argv, modifiers):
+def quorum_device_update_cmd(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options:
       * --force - allow unknown options
@@ -238,13 +248,13 @@ def quorum_device_update_cmd(lib, argv, modifiers):
     groups = _parse_quorum_device_groups(argv)
     if groups.is_empty():
         raise CmdLineInputError()
-    generic_options = parse_args.prepare_options(
+    generic_options = KeyValueParser(
         groups.get_args_flat("generic")
-    )
-    model_options = parse_args.prepare_options(groups.get_args_flat("model"))
-    heuristics_options = parse_args.prepare_options(
+    ).get_unique()
+    model_options = KeyValueParser(groups.get_args_flat("model")).get_unique()
+    heuristics_options = KeyValueParser(
         groups.get_args_flat("heuristics")
-    )
+    ).get_unique()
 
     if "model" in generic_options:
         raise CmdLineInputError("Model cannot be specified in generic options")
@@ -258,7 +268,9 @@ def quorum_device_update_cmd(lib, argv, modifiers):
     )
 
 
-def quorum_device_heuristics_remove_cmd(lib, argv, modifiers):
+def quorum_device_heuristics_remove_cmd(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options:
       * --skip-offline - skip offline nodes
@@ -277,7 +289,7 @@ def quorum_device_heuristics_remove_cmd(lib, argv, modifiers):
 
 
 # TODO switch to new architecture, move to lib
-def quorum_unblock_cmd(lib, argv, modifiers):
+def quorum_unblock_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --force - no error when removing non existing property and no warning
@@ -303,14 +315,14 @@ def quorum_unblock_cmd(lib, argv, modifiers):
     if report_list:
         process_library_reports(report_list)
 
-    unjoined_nodes = set(all_nodes) - set(utils.getCorosyncActiveNodes())
+    unjoined_nodes = list(set(all_nodes) - set(utils.getCorosyncActiveNodes()))
     if not unjoined_nodes:
         utils.err("no unjoined nodes found")
     if not utils.get_continue_confirmation_or_force(
         f"If node(s) {format_list(unjoined_nodes)} are not powered off or they "
         "do have access to shared resources, data corruption and/or cluster "
         "failure may occur",
-        modifiers.get("--force"),
+        bool(modifiers.get("--force")),
     ):
         return
     for node in unjoined_nodes:
@@ -329,8 +341,8 @@ def quorum_unblock_cmd(lib, argv, modifiers):
     properties_facade = PropertyConfigurationFacade.from_properties_config(
         lib.cluster_property.get_properties(),
     )
-    startup_fencing = properties_facade.get_property_value(
-        "startup-fencing", ""
+    startup_fencing = str(
+        properties_facade.get_property_value("startup-fencing", "")
     )
     lib.cluster_property.set_properties(
         {
@@ -344,8 +356,8 @@ def quorum_unblock_cmd(lib, argv, modifiers):
 
 
 def check_local_qnetd_certs_cmd(
-    lib: Any, argv: StringSequence, modifiers: InputModifiers
-):
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     modifiers.ensure_only_supported()
     if not argv or len(argv) != 2 or not argv[0] or not argv[1]:
         raise CmdLineInputError(
@@ -363,8 +375,8 @@ def check_local_qnetd_certs_cmd(
 
 
 def setup_local_qnetd_certs_cmd(
-    lib: Any, argv: StringSequence, modifiers: InputModifiers
-):
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     modifiers.ensure_only_supported()
     if not argv or len(argv) != 2 or not argv[0] or not argv[1]:
         raise CmdLineInputError(

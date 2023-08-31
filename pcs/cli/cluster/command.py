@@ -1,11 +1,22 @@
+from typing import (
+    Any,
+    Optional,
+)
+
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.parse_args import prepare_options
+from pcs.cli.common.parse_args import (
+    Argv,
+    InputModifiers,
+    KeyValueParser,
+)
 from pcs.cli.resource.parse_args import (
     parse_primitive as parse_primitive_resource,
 )
 
 
-def _node_add_remote_separate_name_and_addr(arg_list):
+def _node_add_remote_separate_name_and_addr(
+    arg_list: Argv,
+) -> tuple[str, Optional[str], list[str]]:
     """
     Commandline options: no options
     """
@@ -22,7 +33,9 @@ def _node_add_remote_separate_name_and_addr(arg_list):
     return node_name, node_addr, rest_args
 
 
-def node_add_remote(lib, arg_list, modifiers):
+def node_add_remote(
+    lib: Any, arg_list: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options:
       * --wait
@@ -70,8 +83,10 @@ def node_add_remote(lib, arg_list, modifiers):
     )
 
 
-def create_node_remove_remote(remove_resource):
-    def node_remove_remote(lib, arg_list, modifiers):
+def create_node_remove_remote(remove_resource):  # type:ignore
+    def node_remove_remote(
+        lib: Any, arg_list: Argv, modifiers: InputModifiers
+    ) -> None:
         """
         Options:
           * --force - allow multiple nodes removal, allow pcmk remote service
@@ -103,7 +118,7 @@ def create_node_remove_remote(remove_resource):
     return node_remove_remote
 
 
-def node_add_guest(lib, arg_list, modifiers):
+def node_add_guest(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --wait
@@ -128,7 +143,7 @@ def node_add_guest(lib, arg_list, modifiers):
 
     node_name = arg_list[0]
     resource_id = arg_list[1]
-    meta_options = prepare_options(arg_list[2:])
+    meta_options = KeyValueParser(arg_list[2:]).get_unique()
 
     lib.remote_node.node_add_guest(
         node_name,
@@ -141,7 +156,9 @@ def node_add_guest(lib, arg_list, modifiers):
     )
 
 
-def node_remove_guest(lib, arg_list, modifiers):
+def node_remove_guest(
+    lib: Any, arg_list: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options:
       * --wait
@@ -173,7 +190,7 @@ def node_remove_guest(lib, arg_list, modifiers):
     )
 
 
-def node_clear(lib, arg_list, modifiers):
+def node_clear(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --force - allow to clear a cluster node

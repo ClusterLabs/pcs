@@ -6,7 +6,10 @@ from typing import (
 )
 
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.parse_args import InputModifiers
+from pcs.cli.common.parse_args import (
+    Argv,
+    InputModifiers,
+)
 from pcs.cli.constraint import command
 from pcs.cli.constraint.output import print_config
 from pcs.cli.constraint_ticket import parse_args
@@ -17,10 +20,9 @@ from pcs.cli.reports.output import (
 from pcs.common import reports
 from pcs.common.pacemaker.constraint import CibConstraintsDto
 from pcs.common.reports.messages import InvalidOptions
-from pcs.common.types import StringSequence
 
 
-def create_with_set(lib, argv, modifiers):
+def create_with_set(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     create ticket constraint with resource set
     object lib exposes library
@@ -41,7 +43,7 @@ def create_with_set(lib, argv, modifiers):
     )
 
 
-def add(lib, argv, modifiers):
+def add(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     create ticket constraint
     object lib exposes library
@@ -90,7 +92,7 @@ def add(lib, argv, modifiers):
     )
 
 
-def remove(lib, argv, modifiers):
+def remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file
@@ -103,7 +105,7 @@ def remove(lib, argv, modifiers):
         raise error("no matching ticket constraint found")
 
 
-def show(lib, argv, modifiers):
+def show(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     deprecation_warning(
         "This command is deprecated and will be removed. "
         "Please use 'pcs constraint ticket config' instead."
@@ -111,9 +113,7 @@ def show(lib, argv, modifiers):
     return config_cmd(lib, argv, modifiers)
 
 
-def config_cmd(
-    lib: Any, argv: StringSequence, modifiers: InputModifiers
-) -> None:
+def config_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     modifiers.ensure_only_supported("-f", "--output-format", "--full")
     if argv:
         raise CmdLineInputError()

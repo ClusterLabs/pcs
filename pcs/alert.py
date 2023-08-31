@@ -1,23 +1,18 @@
 import json
+from typing import Any
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import (
+    Argv,
+    InputModifiers,
+    KeyValueParser,
     group_by_keywords,
-    prepare_options,
 )
 from pcs.cli.reports.output import deprecation_warning
 from pcs.common.str_tools import indent
 
 
-def ensure_only_allowed_options(parameter_dict, allowed_list):
-    for arg, value in parameter_dict.items():
-        if arg not in allowed_list:
-            raise CmdLineInputError(
-                "Unexpected parameter '{0}={1}'".format(arg, value)
-            )
-
-
-def alert_add(lib, argv, modifiers):
+def alert_add(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file (in lib wrapper)
@@ -29,19 +24,20 @@ def alert_add(lib, argv, modifiers):
     sections = group_by_keywords(
         argv, set(["options", "meta"]), implicit_first_keyword="main"
     )
-    main_args = prepare_options(sections.get_args_flat("main"))
-    ensure_only_allowed_options(main_args, ["id", "description", "path"])
+    parser = KeyValueParser(sections.get_args_flat("main"))
+    parser.check_allowed_keys(["id", "description", "path"])
+    main_args = parser.get_unique()
 
     lib.alert.create_alert(
         main_args.get("id", None),
         main_args.get("path", None),
-        prepare_options(sections.get_args_flat("options")),
-        prepare_options(sections.get_args_flat("meta")),
+        KeyValueParser(sections.get_args_flat("options")).get_unique(),
+        KeyValueParser(sections.get_args_flat("meta")).get_unique(),
         main_args.get("description", None),
     )
 
 
-def alert_update(lib, argv, modifiers):
+def alert_update(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file (in lib wrapper)
@@ -55,19 +51,20 @@ def alert_update(lib, argv, modifiers):
     sections = group_by_keywords(
         argv[1:], set(["options", "meta"]), implicit_first_keyword="main"
     )
-    main_args = prepare_options(sections.get_args_flat("main"))
-    ensure_only_allowed_options(main_args, ["description", "path"])
+    parser = KeyValueParser(sections.get_args_flat("main"))
+    parser.check_allowed_keys(["description", "path"])
+    main_args = parser.get_unique()
 
     lib.alert.update_alert(
         alert_id,
         main_args.get("path", None),
-        prepare_options(sections.get_args_flat("options")),
-        prepare_options(sections.get_args_flat("meta")),
+        KeyValueParser(sections.get_args_flat("options")).get_unique(),
+        KeyValueParser(sections.get_args_flat("meta")).get_unique(),
         main_args.get("description", None),
     )
 
 
-def alert_remove(lib, argv, modifiers):
+def alert_remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file (in lib wrapper)
@@ -79,7 +76,7 @@ def alert_remove(lib, argv, modifiers):
     lib.alert.remove_alert(argv)
 
 
-def recipient_add(lib, argv, modifiers):
+def recipient_add(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file (in lib wrapper)
@@ -94,21 +91,22 @@ def recipient_add(lib, argv, modifiers):
     sections = group_by_keywords(
         argv[1:], set(["options", "meta"]), implicit_first_keyword="main"
     )
-    main_args = prepare_options(sections.get_args_flat("main"))
-    ensure_only_allowed_options(main_args, ["description", "id", "value"])
+    parser = KeyValueParser(sections.get_args_flat("main"))
+    parser.check_allowed_keys(["description", "id", "value"])
+    main_args = parser.get_unique()
 
     lib.alert.add_recipient(
         alert_id,
         main_args.get("value", None),
-        prepare_options(sections.get_args_flat("options")),
-        prepare_options(sections.get_args_flat("meta")),
+        KeyValueParser(sections.get_args_flat("options")).get_unique(),
+        KeyValueParser(sections.get_args_flat("meta")).get_unique(),
         recipient_id=main_args.get("id", None),
         description=main_args.get("description", None),
         allow_same_value=modifiers.get("--force"),
     )
 
 
-def recipient_update(lib, argv, modifiers):
+def recipient_update(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file (in lib wrapper)
@@ -123,20 +121,21 @@ def recipient_update(lib, argv, modifiers):
     sections = group_by_keywords(
         argv[1:], set(["options", "meta"]), implicit_first_keyword="main"
     )
-    main_args = prepare_options(sections.get_args_flat("main"))
-    ensure_only_allowed_options(main_args, ["description", "value"])
+    parser = KeyValueParser(sections.get_args_flat("main"))
+    parser.check_allowed_keys(["description", "value"])
+    main_args = parser.get_unique()
 
     lib.alert.update_recipient(
         recipient_id,
-        prepare_options(sections.get_args_flat("options")),
-        prepare_options(sections.get_args_flat("meta")),
+        KeyValueParser(sections.get_args_flat("options")).get_unique(),
+        KeyValueParser(sections.get_args_flat("meta")).get_unique(),
         recipient_value=main_args.get("value", None),
         description=main_args.get("description", None),
         allow_same_value=modifiers.get("--force"),
     )
 
 
-def recipient_remove(lib, argv, modifiers):
+def recipient_remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file (in lib wrapper)
@@ -207,7 +206,7 @@ def _recipient_to_str(recipient):
     ] + indent(__description_attributes_to_str(recipient), 1)
 
 
-def print_alert_show(lib, argv, modifiers):
+def print_alert_show(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     deprecation_warning(
         "This command is deprecated and will be removed. "
         "Please use 'pcs alert config' instead."
@@ -215,7 +214,7 @@ def print_alert_show(lib, argv, modifiers):
     return print_alert_config(lib, argv, modifiers)
 
 
-def print_alert_config(lib, argv, modifiers):
+def print_alert_config(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file (in lib wrapper)
@@ -228,7 +227,7 @@ def print_alert_config(lib, argv, modifiers):
         print("\n".join(lines))
 
 
-def alert_config_lines(lib):
+def alert_config_lines(lib: Any) -> list[str]:
     lines = []
     alert_list = lib.alert.get_all_alerts()
     if alert_list:
@@ -238,7 +237,9 @@ def alert_config_lines(lib):
     return lines
 
 
-def print_alerts_in_json(lib, argv, modifiers):
+def print_alerts_in_json(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     This is used only by pcsd, will be removed in new architecture
 

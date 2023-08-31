@@ -1,11 +1,18 @@
+from typing import (
+    Any,
+    Optional,
+)
+
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import (
+    Argv,
+    InputModifiers,
+    KeyValueParser,
     group_by_keywords,
-    prepare_options,
 )
 
 
-def config_setup(lib, arg_list, modifiers):
+def config_setup(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
     """
     create booth config
 
@@ -34,7 +41,7 @@ def config_setup(lib, arg_list, modifiers):
     )
 
 
-def config_destroy(lib, arg_list, modifiers):
+def config_destroy(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
     """
     destroy booth config
 
@@ -51,7 +58,7 @@ def config_destroy(lib, arg_list, modifiers):
     )
 
 
-def config_show(lib, arg_list, modifiers):
+def config_show(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
     """
     print booth config
 
@@ -73,7 +80,9 @@ def config_show(lib, arg_list, modifiers):
     )
 
 
-def config_ticket_add(lib, arg_list, modifiers):
+def config_ticket_add(
+    lib: Any, arg_list: Argv, modifiers: InputModifiers
+) -> None:
     """
     add ticket to current configuration
 
@@ -90,13 +99,15 @@ def config_ticket_add(lib, arg_list, modifiers):
         raise CmdLineInputError
     lib.booth.config_ticket_add(
         arg_list[0],
-        prepare_options(arg_list[1:]),
+        KeyValueParser(arg_list[1:]).get_unique(),
         instance_name=modifiers.get("--name"),
         allow_unknown_options=modifiers.get("--force"),
     )
 
 
-def config_ticket_remove(lib, arg_list, modifiers):
+def config_ticket_remove(
+    lib: Any, arg_list: Argv, modifiers: InputModifiers
+) -> None:
     """
     add ticket to current configuration
 
@@ -114,7 +125,9 @@ def config_ticket_remove(lib, arg_list, modifiers):
     )
 
 
-def enable_authfile(lib, arg_list, modifiers) -> None:
+def enable_authfile(
+    lib: Any, arg_list: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options:
       * --booth-conf - booth config file
@@ -127,7 +140,9 @@ def enable_authfile(lib, arg_list, modifiers) -> None:
     lib.booth.config_set_enable_authfile(instance_name=modifiers.get("--name"))
 
 
-def enable_authfile_clean(lib, arg_list, modifiers) -> None:
+def enable_authfile_clean(
+    lib: Any, arg_list: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options:
       * --booth-conf - booth config file
@@ -142,42 +157,43 @@ def enable_authfile_clean(lib, arg_list, modifiers) -> None:
     )
 
 
-def _ticket_operation(lib_call, arg_list, booth_name):
-    """
-    Commandline options:
-      * --name - name of a booth instance
-    """
+def _parse_ticket_operation(arg_list: Argv) -> tuple[str, Optional[str]]:
     site_ip = None
     if len(arg_list) == 2:
         site_ip = arg_list[1]
     elif len(arg_list) != 1:
         raise CmdLineInputError()
-
     ticket = arg_list[0]
-    lib_call(ticket, site_ip=site_ip, instance_name=booth_name)
+    return ticket, site_ip
 
 
-def ticket_revoke(lib, arg_list, modifiers):
+def ticket_revoke(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --name - name of a booth instance
     """
     modifiers.ensure_only_supported("--name")
-    _ticket_operation(
-        lib.booth.ticket_revoke, arg_list, modifiers.get("--name")
+    ticket, site_ip = _parse_ticket_operation(arg_list)
+    lib.booth.ticket_revoke(
+        ticket, site_ip=site_ip, instance_name=modifiers.get("--name")
     )
 
 
-def ticket_grant(lib, arg_list, modifiers):
+def ticket_grant(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --name - name of a booth instance
     """
     modifiers.ensure_only_supported("--name")
-    _ticket_operation(lib.booth.ticket_grant, arg_list, modifiers.get("--name"))
+    ticket, site_ip = _parse_ticket_operation(arg_list)
+    lib.booth.ticket_grant(
+        ticket, site_ip=site_ip, instance_name=modifiers.get("--name")
+    )
 
 
-def create_in_cluster(lib, arg_list, modifiers):
+def create_in_cluster(
+    lib: Any, arg_list: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options:
       * --force - allows to create booth resource even if its agent is not
@@ -195,10 +211,12 @@ def create_in_cluster(lib, arg_list, modifiers):
     )
 
 
-def get_remove_from_cluster(resource_remove):
+def get_remove_from_cluster(resource_remove):  # type:ignore
     # TODO resource_remove is provisional hack until resources are not moved to
     # lib
-    def remove_from_cluster(lib, arg_list, modifiers):
+    def remove_from_cluster(
+        lib: Any, arg_list: Argv, modifiers: InputModifiers
+    ) -> None:
         """
         Options:
           * --force - allow remove of multiple
@@ -218,10 +236,10 @@ def get_remove_from_cluster(resource_remove):
     return remove_from_cluster
 
 
-def get_restart(resource_restart):
+def get_restart(resource_restart):  # type:ignore
     # TODO resource_restart is provisional hack until resources are not moved to
     # lib
-    def restart(lib, arg_list, modifiers):
+    def restart(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
         """
         Options:
           * --force - allow multiple
@@ -242,7 +260,7 @@ def get_restart(resource_restart):
     return restart
 
 
-def sync(lib, arg_list, modifiers):
+def sync(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --skip-offline - skip offline nodes
@@ -266,7 +284,7 @@ def sync(lib, arg_list, modifiers):
     )
 
 
-def enable(lib, arg_list, modifiers):
+def enable(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --name - name of a booth instance
@@ -277,7 +295,7 @@ def enable(lib, arg_list, modifiers):
     lib.booth.enable_booth(instance_name=modifiers.get("--name"))
 
 
-def disable(lib, arg_list, modifiers):
+def disable(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --name - name of a booth instance
@@ -288,7 +306,7 @@ def disable(lib, arg_list, modifiers):
     lib.booth.disable_booth(instance_name=modifiers.get("--name"))
 
 
-def start(lib, arg_list, modifiers):
+def start(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --name - name of a booth instance
@@ -299,7 +317,7 @@ def start(lib, arg_list, modifiers):
     lib.booth.start_booth(instance_name=modifiers.get("--name"))
 
 
-def stop(lib, arg_list, modifiers):
+def stop(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --name - name of a booth instance
@@ -310,7 +328,7 @@ def stop(lib, arg_list, modifiers):
     lib.booth.stop_booth(instance_name=modifiers.get("--name"))
 
 
-def pull(lib, arg_list, modifiers):
+def pull(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --name - name of a booth instance
@@ -325,7 +343,7 @@ def pull(lib, arg_list, modifiers):
     )
 
 
-def status(lib, arg_list, modifiers):
+def status(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --name - name of booth instance

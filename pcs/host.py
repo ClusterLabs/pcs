@@ -1,18 +1,30 @@
+from typing import (
+    Any,
+    Optional,
+    Union,
+)
 from urllib.parse import urlparse
 
 from pcs import (
     settings,
     utils,
 )
-from pcs.cli.common import parse_args
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.parse_args import (
+    Argv,
+    InputModifiers,
+    KeyValueParser,
+    split_list_by_any_keywords,
+)
 
 
-def _parse_host_options(host, options):
+def _parse_host_options(
+    host: str, options: Argv
+) -> dict[str, Union[str, list[dict[str, Union[None, str, int]]]]]:
     # pylint: disable=invalid-name
     ADDR_OPT_KEYWORD = "addr"
     supported_options = set([ADDR_OPT_KEYWORD])
-    parsed_options = parse_args.prepare_options(options)
+    parsed_options = KeyValueParser(options).get_unique()
     unknown_options = set(parsed_options.keys()) - supported_options
     if unknown_options:
         raise CmdLineInputError(
@@ -24,7 +36,7 @@ def _parse_host_options(host, options):
     return {"dest_list": [dict(addr=addr, port=port)]}
 
 
-def _parse_addr(addr):
+def _parse_addr(addr: str) -> tuple[Optional[str], int]:
     if addr.count(":") > 1 and not addr.startswith("["):
         # if IPv6 without port put it in parentheses
         addr = "[{0}]".format(addr)
@@ -46,7 +58,7 @@ def _parse_addr(addr):
     return url.hostname, (port if port else settings.pcsd_default_port)
 
 
-def auth_cmd(lib, argv, modifiers):
+def auth_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     # pylint: disable=unused-argument
     """
     Options:
@@ -60,13 +72,11 @@ def auth_cmd(lib, argv, modifiers):
         raise CmdLineInputError("No host specified")
     host_dict = {
         host: _parse_host_options(host, opts)
-        for host, opts in parse_args.split_list_by_any_keywords(
-            argv, "host name"
-        ).items()
+        for host, opts in split_list_by_any_keywords(argv, "host name").items()
     }
     token = modifiers.get("--token")
     if token:
-        token_value = utils.get_token_from_file(token)
+        token_value = utils.get_token_from_file(str(token))
         for host_info in host_dict.values():
             host_info.update(dict(token=token_value))
         utils.auth_hosts_token(host_dict)
@@ -77,7 +87,7 @@ def auth_cmd(lib, argv, modifiers):
     utils.auth_hosts(host_dict)
 
 
-def deauth_cmd(lib, argv, modifiers):
+def deauth_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     # pylint: disable=unused-argument
     """
     Options:
