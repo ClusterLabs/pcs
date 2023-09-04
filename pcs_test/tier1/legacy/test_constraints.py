@@ -5168,7 +5168,9 @@ class LocationAdd(ConstraintEffect):
 
 @skip_unless_crm_rule()
 class ExpiredConstraints(ConstraintBaseTest):
-    _tomorrow = (datetime.date.today() + datetime.timedelta(days=1)).strftime(
+    # Setting tomorrow to the day after tomorrow in case the tests run close to
+    # midnight.
+    _tomorrow = (datetime.date.today() + datetime.timedelta(days=2)).strftime(
         "%Y-%m-%d"
     )
 
