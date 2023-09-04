@@ -554,6 +554,19 @@ def _ticket_operation(
     _ensure_live_env(env, booth_env)
 
     if not site_ip:
+        stdout, stderr, return_code = env.cmd_runner().run(
+            [settings.booth_exec, "status"]
+        )
+
+        booth_status = stdout.rstrip()
+        booth_type = booth_status.split(" ")[4].split("=")[1]
+        if booth_type == "arbitrator":
+            raise LibraryError(
+                ReportItem.error(
+                    reports.messages.BoothSiteIpNotSpecifiedOnArbitrator()
+                )
+            )
+
         site_ip_list = resource.find_bound_ip(
             get_resources(env.get_cib()), booth_env.config_path
         )

@@ -4984,6 +4984,14 @@ class BoothCannotDetermineLocalSiteIp(NameBuildTest):
         )
 
 
+class BoothSiteIpNotSpecifiedOnArbitrator(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Unable to operate booth ticket on arbitator node without specifying site ip",
+            reports.BoothSiteIpNotSpecifiedOnArbitrator(),
+        )
+
+
 class BoothTicketOperationFailed(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(

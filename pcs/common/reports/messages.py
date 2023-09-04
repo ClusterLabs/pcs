@@ -6729,6 +6729,19 @@ class BoothCannotDetermineLocalSiteIp(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class BoothSiteIpNotSpecifiedOnArbitrator(ReportItemMessage):
+    """
+    booth site must be specified when granting tickets from an arbitrator.
+    """
+
+    _code = codes.BOOTH_SITE_IP_NOT_SPECIFIED_ON_ARBITRATOR
+
+    @property
+    def message(self) -> str:
+        return "Unable to operate booth ticket on arbitator node without specifying site ip"
+
+
+@dataclass(frozen=True)
 class BoothTicketOperationFailed(ReportItemMessage):
     """
     Pcs uses external booth tools for some ticket_name operations. For example
