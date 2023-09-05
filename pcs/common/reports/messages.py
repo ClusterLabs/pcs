@@ -6295,19 +6295,32 @@ class ResourceMoveAutocleanSimulationFailure(ReportItemMessage):
     resource_id -- id of the resource to be moved
     others_affected -- True if also other resource would be affected, False
         otherwise
+    node -- target node the resource should be moved to
+    move_constraint_left_in_cib -- move has happened and the failure occurred
+        when trying to remove the move constraint from the live cib
     """
 
     resource_id: str
     others_affected: bool
+    node: Optional[str] = None
+    move_constraint_left_in_cib: bool = False
     _code = codes.RESOURCE_MOVE_AUTOCLEAN_SIMULATION_FAILURE
 
     @property
     def message(self) -> str:
-        return (
+        template = (
             "Unable to ensure that moved resource '{resource_id}'{others} will "
             "stay on the same node after a constraint used for moving it is "
             "removed."
-        ).format(
+        )
+        if self.move_constraint_left_in_cib:
+            template += (
+                " The constraint to move the resource has not been removed "
+                "from configuration. Consider removing it manually. Be aware "
+                "that removing the constraint may cause resources to move "
+                "to other nodes."
+            )
+        return template.format(
             resource_id=self.resource_id,
             others=" or other resources" if self.others_affected else "",
         )

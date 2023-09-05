@@ -1707,6 +1707,16 @@ def _nodes_exist_reports(
     ]
 
 
+class ResourceMoveAutocleanSimulationFailure(Exception):
+    def __init__(self, other_resources_affected: bool):
+        super().__init__()
+        self._other_resources_affected = other_resources_affected
+
+    @property
+    def other_resources_affected(self) -> bool:
+        return self._other_resources_affected
+
+
 def move_autoclean(
     env: LibraryEnvironment,
     resource_id: str,
@@ -1728,7 +1738,9 @@ def move_autoclean(
     strict -- if True affecting other resources than the specified resource
         will cause failure. If False affecting other resources is allowed.
     """
+    # pylint: disable=too-many-branches
     # pylint: disable=too-many-locals
+    # pylint: disable=too-many-statements
     wait_timeout = max(wait_timeout, 0)
     if not env.is_cib_live:
         raise LibraryError(
@@ -1765,6 +1777,8 @@ def move_autoclean(
             )
         )
 
+    # add a move constraint to a temporary cib and get a cib diff which adds
+    # the move constraint
     with get_tmp_cib(env.report_processor, cib_xml) as rsc_moved_cib_file:
         stdout, stderr, retval = resource_move(
             env.cmd_runner(dict(CIB_file=rsc_moved_cib_file.name)),
@@ -1786,6 +1800,9 @@ def move_autoclean(
     add_constraint_cib_diff = diff_cibs_xml(
         env.cmd_runner(), env.report_processor, cib_xml, rsc_moved_cib_xml
     )
+
+    # clear the move constraint from the temporary cib and get a cib diff which
+    # removes the move constraint
     with get_tmp_cib(
         env.report_processor, rsc_moved_cib_xml
     ) as rsc_moved_constraint_cleared_cib_file:
@@ -1814,16 +1831,19 @@ def move_autoclean(
         constraint_removed_cib,
     )
 
+    # if both the diffs are no-op, nothing needs to be done
     if not (add_constraint_cib_diff and remove_constraint_cib_diff):
         env.report_processor.report(
             reports.ReportItem.info(reports.messages.NoActionNecessary())
         )
         return
 
+    # simulate applying the diff which adds the move constraint
     _, move_transitions, after_move_simulated_cib = simulate_cib(
         env.cmd_runner(), get_cib(rsc_moved_cib_xml)
     )
     if strict:
+        # check if other resources would be affected
         resources_affected_by_move = (
             simulate_tools.get_resources_from_operations(
                 simulate_tools.get_operations_from_transitions(
@@ -1840,16 +1860,37 @@ def move_autoclean(
                     )
                 )
             )
-    _ensure_resource_moved_and_not_moved_back(
-        env.cmd_runner,
-        env.report_processor,
-        etree_to_str(after_move_simulated_cib),
-        remove_constraint_cib_diff,
-        resource_id,
-        strict,
-        resource_state_before,
-        node,
-    )
+    # verify that:
+    # - a cib with added move constraint causes the resource to move by
+    #   comparing the original status of the resource with a status computed
+    #   from the cib with the added constraint
+    # - applying the diff which removes the move constraint won't trigger
+    #   moving the resource (or other resources) around
+    try:
+        _ensure_resource_moved_and_not_moved_back(
+            env.cmd_runner,
+            env.report_processor,
+            etree_to_str(after_move_simulated_cib),
+            remove_constraint_cib_diff,
+            resource_id,
+            strict,
+            resource_state_before,
+            node,
+        )
+    except ResourceMoveAutocleanSimulationFailure as e:
+        raise LibraryError(
+            reports.ReportItem.error(
+                reports.messages.ResourceMoveAutocleanSimulationFailure(
+                    resource_id,
+                    e.other_resources_affected,
+                    node=node,
+                    move_constraint_left_in_cib=False,
+                )
+            )
+        ) from e
+
+    # apply the diff which adds the move constraint to the live cib and wait
+    # for the cluster to settle
     push_cib_diff_xml(env.cmd_runner(), add_constraint_cib_diff)
     env.report_processor.report(
         ReportItem.info(
@@ -1857,16 +1898,36 @@ def move_autoclean(
         )
     )
     env.wait_for_idle(wait_timeout)
-    _ensure_resource_moved_and_not_moved_back(
-        env.cmd_runner,
-        env.report_processor,
-        get_cib_xml(env.cmd_runner()),
-        remove_constraint_cib_diff,
-        resource_id,
-        strict,
-        resource_state_before,
-        node,
-    )
+    # verify that:
+    # - the live cib (now containing the move constraint) causes the resource
+    #   to move by comparing the original status of the resource with a status
+    #   computed from the live cib
+    # - applying the diff which removes the move constraint won't trigger
+    #   moving the resource (or other resources) around
+    try:
+        _ensure_resource_moved_and_not_moved_back(
+            env.cmd_runner,
+            env.report_processor,
+            get_cib_xml(env.cmd_runner()),
+            remove_constraint_cib_diff,
+            resource_id,
+            strict,
+            resource_state_before,
+            node,
+        )
+    except ResourceMoveAutocleanSimulationFailure as e:
+        raise LibraryError(
+            reports.ReportItem.error(
+                reports.messages.ResourceMoveAutocleanSimulationFailure(
+                    resource_id,
+                    e.other_resources_affected,
+                    node=node,
+                    move_constraint_left_in_cib=True,
+                )
+            )
+        ) from e
+    # apply the diff which removes the move constraint to the live cib and wait
+    # for the cluster to settle
     push_cib_diff_xml(env.cmd_runner(), remove_constraint_cib_diff)
     env.report_processor.report(
         ReportItem.info(
@@ -1932,13 +1993,7 @@ def _ensure_resource_moved_and_not_moved_back(
     )
     if strict:
         if clean_operations:
-            raise LibraryError(
-                reports.ReportItem.error(
-                    reports.messages.ResourceMoveAutocleanSimulationFailure(
-                        resource_id, others_affected=True
-                    )
-                )
-            )
+            raise ResourceMoveAutocleanSimulationFailure(True)
     else:
         if any(
             rsc == resource_id
@@ -1946,13 +2001,7 @@ def _ensure_resource_moved_and_not_moved_back(
                 clean_operations
             )
         ):
-            raise LibraryError(
-                reports.ReportItem.error(
-                    reports.messages.ResourceMoveAutocleanSimulationFailure(
-                        resource_id, others_affected=False
-                    )
-                )
-            )
+            raise ResourceMoveAutocleanSimulationFailure(False)
 
 
 def ban(env, resource_id, node=None, master=False, lifetime=None, wait=False):

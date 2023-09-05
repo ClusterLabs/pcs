@@ -172,7 +172,7 @@ debug\-monitor <resource id> [\fB\-\-full\fR]
 This command will force the specified resource to be monitored on this node ignoring the cluster recommendations and print the output from monitoring the resource.  Using \fB\-\-full\fR will give more detailed output.  This is mainly used for debugging resources that fail to be monitored.
 .TP
 move <resource id> [destination node] [\fB\-\-promoted\fR] [\fB\-\-strict\fR] [\fB\-\-wait\fR[=n]]
-Move the resource off the node it is currently running on. This is achieved by creating a \-INFINITY location constraint to ban the node.  If destination node is specified the resource will be moved to that node by creating an INFINITY location constraint to prefer the destination node. The constraint needed for moving the resource will be automatically removed once the resource is running on it's new location. The command will fail in case it is not possible to verify that the resource will not be moved back after deleting the constraint.
+Move the resource off the node it is currently running on. This is achieved by creating a \-INFINITY location constraint to ban the node. If destination node is specified the resource will be moved to that node by creating an INFINITY location constraint to prefer the destination node. The constraint needed for moving the resource will be automatically removed once the resource is running on its new location. The command will fail in case it is not possible to verify that the resource will not be moved back after deleting the constraint. If this happens after the location constraint has been created, the constraint will be left in the configuration.
 
 If \fB\-\-strict\fR is specified, the command will also fail if other resources would be affected.
 

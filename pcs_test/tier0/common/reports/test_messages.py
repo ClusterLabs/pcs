@@ -4616,7 +4616,7 @@ class ResourceMoveAffectsOtherResources(NameBuildTest):
 
 
 class ResourceMoveAutocleanSimulationFailure(NameBuildTest):
-    def test_success(self):
+    def test_simulation(self):
         self.assert_message_from_report(
             (
                 "Unable to ensure that moved resource 'R1' will stay on the "
@@ -4627,7 +4627,7 @@ class ResourceMoveAutocleanSimulationFailure(NameBuildTest):
             ),
         )
 
-    def test_others_affected(self):
+    def test_simulation_others_affected(self):
         self.assert_message_from_report(
             (
                 "Unable to ensure that moved resource 'R1' or other resources "
@@ -4636,6 +4636,37 @@ class ResourceMoveAutocleanSimulationFailure(NameBuildTest):
             ),
             reports.ResourceMoveAutocleanSimulationFailure(
                 "R1", others_affected=True
+            ),
+        )
+
+    def test_live(self):
+        self.assert_message_from_report(
+            (
+                "Unable to ensure that moved resource 'R1' will stay on the "
+                "same node after a constraint used for moving it is removed."
+                " The constraint to move the resource has not been removed "
+                "from configuration. Consider removing it manually. Be aware "
+                "that removing the constraint may cause resources to move to "
+                "other nodes."
+            ),
+            reports.ResourceMoveAutocleanSimulationFailure(
+                "R1", others_affected=False, move_constraint_left_in_cib=True
+            ),
+        )
+
+    def test_live_others_affected(self):
+        self.assert_message_from_report(
+            (
+                "Unable to ensure that moved resource 'R1' or other resources "
+                "will stay on the same node after a constraint used for moving "
+                "it is removed."
+                " The constraint to move the resource has not been removed "
+                "from configuration. Consider removing it manually. Be aware "
+                "that removing the constraint may cause resources to move to "
+                "other nodes."
+            ),
+            reports.ResourceMoveAutocleanSimulationFailure(
+                "R1", others_affected=True, move_constraint_left_in_cib=True
             ),
         )
 

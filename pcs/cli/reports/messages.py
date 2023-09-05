@@ -619,6 +619,20 @@ class BoothUnsupportedOptionEnableAuthfile(CliReportMessageCustom):
         )
 
 
+class ResourceMoveAutocleanSimulationFailure(CliReportMessageCustom):
+    _obj: messages.ResourceMoveAutocleanSimulationFailure
+
+    @property
+    def message(self) -> str:
+        if not self._obj.move_constraint_left_in_cib:
+            return self._obj.message
+        node = format_optional(self._obj.node, " {}")
+        return (
+            f"{self._obj.message} Run 'pcs resource clear "
+            f"{self._obj.resource_id}{node}' to remove the constraint."
+        )
+
+
 def _create_report_msg_map() -> Dict[str, type]:
     result: Dict[str, type] = {}
     for report_msg_cls in get_all_subclasses(CliReportMessageCustom):

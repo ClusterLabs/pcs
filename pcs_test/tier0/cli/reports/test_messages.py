@@ -775,3 +775,53 @@ class CorosyncQuorumAtbWillBeEnabledDueToSbdClusterIsRunning(
                 "start --all'."
             ),
         )
+
+
+class ResourceMoveAutocleanSimulationFailure(CliReportMessageTestBase):
+    def test_constraint_not_created(self):
+        self.assert_message(
+            messages.ResourceMoveAutocleanSimulationFailure(
+                "R1", others_affected=True
+            ),
+            (
+                "Unable to ensure that moved resource 'R1' or other resources "
+                "will stay on the same node after a constraint used for moving "
+                "it is removed."
+            ),
+        )
+
+    def test_without_node(self):
+        self.assert_message(
+            messages.ResourceMoveAutocleanSimulationFailure(
+                "R1", others_affected=True, move_constraint_left_in_cib=True
+            ),
+            (
+                "Unable to ensure that moved resource 'R1' or other resources "
+                "will stay on the same node after a constraint used for moving "
+                "it is removed."
+                " The constraint to move the resource has not been removed "
+                "from configuration. Consider removing it manually. Be aware "
+                "that removing the constraint may cause resources to move to "
+                "other nodes."
+                " Run 'pcs resource clear R1' to remove the constraint."
+            ),
+        )
+
+    def test_with_node(self):
+        self.assert_message(
+            messages.ResourceMoveAutocleanSimulationFailure(
+                "R1",
+                others_affected=False,
+                node="node1",
+                move_constraint_left_in_cib=True,
+            ),
+            (
+                "Unable to ensure that moved resource 'R1' will stay on the "
+                "same node after a constraint used for moving it is removed."
+                " The constraint to move the resource has not been removed "
+                "from configuration. Consider removing it manually. Be aware "
+                "that removing the constraint may cause resources to move to "
+                "other nodes."
+                " Run 'pcs resource clear R1 node1' to remove the constraint."
+            ),
+        )
