@@ -15,12 +15,15 @@
   change certain corosync options ([rhbz#2227234])
 - Prevent disabling `auto_tie_breaker` when it would make SBD not working
   properly ([rhbz#2227233])
+- Improved error messages and documentation of `pcs resource move` command
+  ([rhbz#2233763])
 
 [rhbz#2217850]: https://bugzilla.redhat.com/show_bug.cgi?id=2217850
 [rhbz#2219388]: https://bugzilla.redhat.com/show_bug.cgi?id=2219388
 [rhbz#2226778]: https://bugzilla.redhat.com/show_bug.cgi?id=2226778
-[rhbz#2227234]: https://bugzilla.redhat.com/show_bug.cgi?id=2227234
 [rhbz#2227233]: https://bugzilla.redhat.com/show_bug.cgi?id=2227233
+[rhbz#2227234]: https://bugzilla.redhat.com/show_bug.cgi?id=2227234
+[rhbz#2233763]: https://bugzilla.redhat.com/show_bug.cgi?id=2233763
 
 
 ## [0.10.17] - 2023-06-19

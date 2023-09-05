@@ -1264,6 +1264,8 @@ class MoveAutocleanFailures(MoveAutocleanCommonSetup):
                     reports.codes.RESOURCE_MOVE_AUTOCLEAN_SIMULATION_FAILURE,
                     resource_id=self.resource_id,
                     others_affected=False,
+                    node=None,
+                    move_constraint_left_in_cib=False,
                 )
             ],
             expected_in_processor=False,
@@ -1295,6 +1297,8 @@ class MoveAutocleanFailures(MoveAutocleanCommonSetup):
                     reports.codes.RESOURCE_MOVE_AUTOCLEAN_SIMULATION_FAILURE,
                     resource_id=self.resource_id,
                     others_affected=True,
+                    node=None,
+                    move_constraint_left_in_cib=False,
                 )
             ],
             expected_in_processor=False,
@@ -1327,6 +1331,8 @@ class MoveAutocleanFailures(MoveAutocleanCommonSetup):
                     reports.codes.RESOURCE_MOVE_AUTOCLEAN_SIMULATION_FAILURE,
                     resource_id=self.resource_id,
                     others_affected=False,
+                    node=None,
+                    move_constraint_left_in_cib=True,
                 )
             ],
             expected_in_processor=False,
@@ -1358,6 +1364,8 @@ class MoveAutocleanFailures(MoveAutocleanCommonSetup):
                     reports.codes.RESOURCE_MOVE_AUTOCLEAN_SIMULATION_FAILURE,
                     resource_id=self.resource_id,
                     others_affected=True,
+                    node=None,
+                    move_constraint_left_in_cib=True,
                 )
             ],
             expected_in_processor=False,
