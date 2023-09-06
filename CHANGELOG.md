@@ -23,6 +23,8 @@
   properly ([rhbz#2227230])
 - Improved error messages and documentation of `pcs resource move` command
   ([rhbz#2219554])
+- Do not create files in /tmp directory for commands running by ruby daemon
+  ([ghissue#731])
 
 ### Changed
 - When exporting constraints in form of pcs commands, constraints containing
@@ -36,6 +38,7 @@
 - Using `--group`, `--after` and `--before` in `pcs resource create` command is
   deprecated in favor of `group`, `after` and `before`, respectively
 
+[ghissue#731]: https://github.com/ClusterLabs/pcs/issues/731
 [ghpull#712]: https://github.com/ClusterLabs/pcs/pull/712
 [rhbz#2112268]: https://bugzilla.redhat.com/show_bug.cgi?id=2112268
 [rhbz#2163953]: https://bugzilla.redhat.com/show_bug.cgi?id=2163953

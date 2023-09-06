@@ -13,6 +13,7 @@ require 'backports/latest'
 require 'base64'
 require 'ethon'
 require 'openssl'
+require 'stringio'
 
 require 'config.rb'
 require 'cfgsync.rb'
@@ -844,45 +845,69 @@ end
 
 def run_cmd_options(auth_user, options, *args)
   $logger.info("Running: " + args.join(" "))
-  start = Time.now
-  out = Tempfile.new
-  errout = Tempfile.new
-
   cib_user = auth_user[:username]
   # when running 'id -Gn' to get the groups they are not defined yet
   cib_groups = (auth_user[:usergroups] || []).join(' ')
   $logger.info("CIB USER: #{cib_user}, groups: #{cib_groups}")
 
-  ChildProcess.posix_spawn = true
-  cmd = ChildProcess.build(*args)
-  cmd.io.stdout = out
-  cmd.io.stdout.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
-  cmd.io.stderr = errout
-  cmd.io.stderr.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
-  cmd.duplex = true
-  cmd.environment['CIB_user'] = cib_user
-  cmd.environment['CIB_user_groups'] = cib_groups
-  cmd.environment['LC_ALL'] = 'C'
-  cmd.start
+  read_stdout, write_stdout = IO.pipe
+  read_stderr, write_stderr = IO.pipe
+  begin
+    ChildProcess.posix_spawn = true
+    cmd = ChildProcess.build(*args)
+    cmd.io.stdout = write_stdout
+    cmd.io.stderr = write_stderr
+    cmd.duplex = true
+    cmd.environment['CIB_user'] = cib_user
+    cmd.environment['CIB_user_groups'] = cib_groups
+    cmd.environment['LC_ALL'] = 'C'
+    start = Time.now
+    cmd.start
 
-  if options and options.key?('stdin')
-    cmd.io.stdin.puts options['stdin']
+    # close parent's copy of the write end of the pipe
+    write_stdout.close
+    write_stderr.close
+
+
+    if options and options.key?('stdin')
+      cmd.io.stdin.puts options['stdin']
+    end
     cmd.io.stdin.close
+
+    threads = []
+    output_io = StringIO.new
+    error_output_io = StringIO.new
+    [
+      [output_io, read_stdout],
+      [error_output_io, read_stderr],
+    ].each do |strio, pipe|
+      threads << Thread.new do
+        begin
+          loop do
+            strio.write(pipe.readpartial(16384))
+          end
+        rescue EOFError
+          # Child has closed the write end of the pipe
+        end
+      end
+    end
+
+    cmd.wait
+    threads.each{|t| t.join}
+  ensure
+    read_stdout.close
+    read_stderr.close
   end
 
-  cmd.wait
   duration = Time.now - start
   retval = cmd.exit_code
 
-  out.rewind
-  output = out.readlines
-  errout.rewind
-  error_output = errout.readlines
-  out.close
-  errout.close
-
-  $logger.debug(output.join(" "))
-  $logger.debug(error_output.join(" "))
+  output_io.rewind
+  output = output_io.readlines
+  error_output_io.rewind
+  error_output = error_output_io.readlines
+  $logger.debug(output.join(""))
+  $logger.debug(error_output.join(""))
   $logger.debug("Duration: " + duration.to_s + "s")
   $logger.info("Return Value: " + retval.to_s)
 

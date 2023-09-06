@@ -5,6 +5,7 @@ require 'set'
 require 'timeout'
 require 'rexml/document'
 require 'tempfile'
+require 'stringio'
 
 require 'pcs.rb'
 require 'resource.rb'
@@ -326,28 +327,40 @@ def config_restore(params, request, auth_user)
     end
     $logger.info "Restore node configuration"
     if params[:tarball] != nil and params[:tarball] != ""
-      errout = Tempfile.new
-
-      ChildProcess.posix_spawn = true
-      pcs_restore_config = ChildProcess.build(PCS, "config", "restore", "--local")
-      pcs_restore_config.io.stderr = errout
-      pcs_restore_config.duplex = true
-      pcs_restore_config.start
-      pcs_restore_config.io.stdin.print params[:tarball]
-      pcs_restore_config.io.stdin.close
+      read_stderr, write_stderr = IO.pipe
+      begin
+        ChildProcess.posix_spawn = true
+        pcs_restore_config = ChildProcess.build(PCS, "config", "restore", "--local")
+        pcs_restore_config.io.stderr = write_stderr
+        pcs_restore_config.duplex = true
+        pcs_restore_config.start
+        write_stderr.close
+        pcs_restore_config.io.stdin.print params[:tarball]
+        pcs_restore_config.io.stdin.close
+        error_output_io = StringIO.new
+        thread = Thread.new do
+          begin
+            loop do
+              error_output_io.write(read_stderr.readpartial(16384))
+            end
+          rescue EOFError
+            # Child has closed the write end of the pipe
+          end
+        end
       pcs_restore_config.wait
+      thread.join
+      ensure
+        read_stderr.close
+      end
+      error_output_io.rewind
+      error_output = error_output_io.readlines()
       retval = pcs_restore_config.exit_code
-
-      errout.rewind
-      error_output = errout.readlines
-      errout.close
-
       if retval == 0
         $logger.info "Restore successful"
         return "Succeeded"
       else
-        $logger.info "Error during restore: #{error_output.join(' ').strip()}"
-        return error_output.length > 0 ? error_output.join(' ').strip() : "Error"
+        $logger.info "Error during restore: #{error_output.join('').strip()}"
+        return error_output.length > 0 ? error_output.join('').strip() : "Error"
       end
     else
       $logger.info "Error: Invalid tarball"
