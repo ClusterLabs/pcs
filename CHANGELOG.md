@@ -20,6 +20,11 @@
 - Do not display warning in `pcs status` for expired constraints that were
   created by moving resources ([rhbz#2111583])
 
+### Changed
+- Allow `tls` and `keep_active_partition_tie_breaker` options for qdevice model
+  "net" to be set using `pcs quorum device add` and `pcs quorum device update`
+  commands ([rhbz#2234665])
+
 [rhbz#2217850]: https://bugzilla.redhat.com/show_bug.cgi?id=2217850
 [rhbz#2219388]: https://bugzilla.redhat.com/show_bug.cgi?id=2219388
 [rhbz#2226778]: https://bugzilla.redhat.com/show_bug.cgi?id=2226778
@@ -27,7 +32,7 @@
 [rhbz#2227234]: https://bugzilla.redhat.com/show_bug.cgi?id=2227234
 [rhbz#2233763]: https://bugzilla.redhat.com/show_bug.cgi?id=2233763
 [rhbz#2111583]: https://bugzilla.redhat.com/show_bug.cgi?id=2111583
-
+[rhbz#2234665]: https://bugzilla.redhat.com/show_bug.cgi?id=2234665
 
 ## [0.10.17] - 2023-06-19
 

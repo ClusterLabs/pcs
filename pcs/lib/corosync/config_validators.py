@@ -35,8 +35,10 @@ _QDEVICE_NET_REQUIRED_OPTIONS = (
 _QDEVICE_NET_OPTIONAL_OPTIONS = (
     "connect_timeout",
     "force_ip_version",
+    "keep_active_partition_tie_breaker",
     "port",
     "tie_breaker",
+    "tls",
 )
 
 
@@ -2007,6 +2009,12 @@ def _get_qdevice_model_net_options_validators(
         validate.ValuePortNumber("port", severity=severity),
         validate.ValueIn(
             "tie_breaker", ["lowest", "highest"] + node_ids, severity=severity
+        ),
+        validate.ValueIn("tls", ("on", "off", "required"), severity=severity),
+        validate.ValueIn(
+            "keep_active_partition_tie_breaker",
+            ("on", "off"),
+            severity=severity,
         ),
     ]
 

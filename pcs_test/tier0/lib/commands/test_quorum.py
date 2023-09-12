@@ -934,6 +934,71 @@ class AddDeviceNetTest(TestCase):
             {},
         )
 
+    def test_not_live_success_full(self):
+        original_config = _read_file_rc(self.corosync_conf_name)
+        expected_config = original_config.replace(
+            "    provider: corosync_votequorum\n",
+            outdent(
+                """\
+                    provider: corosync_votequorum
+
+                    device {
+                        sync_timeout: 34567
+                        timeout: 23456
+                        model: net
+                        votes: 1
+
+                        net {
+                            algorithm: ffsplit
+                            connect_timeout: 12345
+                            force_ip_version: 4
+                            host: qnetd-host
+                            keep_active_partition_tie_breaker: off
+                            port: 4433
+                            tie_breaker: lowest
+                            tls: required
+                        }
+
+                        heuristics {
+                            exec_ls: test -f /tmp/test
+                            exec_ping: ping -q -c 1 "127.0.0.1"
+                            interval: 30
+                            mode: on
+                            sync_timeout: 15
+                            timeout: 5
+                        }
+                    }
+                """
+            ),
+        )
+
+        self.config.env.set_corosync_conf_data(original_config)
+        self.config.env.push_corosync_conf(corosync_conf_text=expected_config)
+
+        lib.add_device(
+            self.env_assist.get_env(),
+            "net",
+            {
+                "host": self.qnetd_host,
+                "port": "4433",
+                "algorithm": "ffsplit",
+                "connect_timeout": "12345",
+                "force_ip_version": "4",
+                "tie_breaker": "lowest",
+                "tls": "required",
+                "keep_active_partition_tie_breaker": "off",
+            },
+            {"timeout": "23456", "sync_timeout": "34567"},
+            {
+                "mode": "on",
+                "timeout": "5",
+                "sync_timeout": "15",
+                "interval": "30",
+                "exec_ping": 'ping -q -c 1 "127.0.0.1"',
+                "exec_ls": "test -f /tmp/test",
+            },
+        )
+
     def test_not_live_error(self):
         (
             self.config.env.set_corosync_conf_data(
@@ -1269,8 +1334,10 @@ class AddDeviceNetTest(TestCase):
                             connect_timeout: 12345
                             force_ip_version: 4
                             host: qnetd-host
+                            keep_active_partition_tie_breaker: off
                             port: 4433
                             tie_breaker: lowest
+                            tls: required
                         }
 
                         heuristics {
@@ -1300,6 +1367,8 @@ class AddDeviceNetTest(TestCase):
                 "connect_timeout": "12345",
                 "force_ip_version": "4",
                 "tie_breaker": "lowest",
+                "tls": "required",
+                "keep_active_partition_tie_breaker": "off",
             },
             {"timeout": "23456", "sync_timeout": "34567"},
             {
