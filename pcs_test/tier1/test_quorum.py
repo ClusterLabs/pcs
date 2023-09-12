@@ -260,6 +260,8 @@ class DeviceAddTest(TestBase):
                 "model",
                 "net",
                 "host=127.0.0.1",
+                "tls=required",
+                "keep_active_partition_tie_breaker=on",
                 "algorithm=ffsplit",
                 "heuristics",
                 "mode=on",
@@ -276,6 +278,8 @@ class DeviceAddTest(TestBase):
                   Model: net
                     algorithm: ffsplit
                     host: 127.0.0.1
+                    keep_active_partition_tie_breaker: on
+                    tls: required
                   Heuristics:
                     exec_ls: test -f /tmp/test
                     mode: on
@@ -301,7 +305,7 @@ class DeviceAddTest(TestBase):
             stderr_full=(
                 dedent(
                     """\
-                    Error: invalid quorum device model option 'c', allowed options are: 'algorithm', 'connect_timeout', 'force_ip_version', 'host', 'port', 'tie_breaker', use --force to override
+                    Error: invalid quorum device model option 'c', allowed options are: 'algorithm', 'connect_timeout', 'force_ip_version', 'host', 'keep_active_partition_tie_breaker', 'port', 'tie_breaker', 'tls', use --force to override
                     Error: 'x' is not a valid algorithm value, use 'ffsplit', 'lms', use --force to override
                     Error: invalid quorum device option 'a', allowed options are: 'sync_timeout', 'timeout', use --force to override
                     Error: '-1' is not a valid timeout value, use a positive integer, use --force to override
@@ -321,7 +325,7 @@ class DeviceAddTest(TestBase):
             stderr_full=(
                 dedent(
                     """\
-                    Warning: invalid quorum device model option 'c', allowed options are: 'algorithm', 'connect_timeout', 'force_ip_version', 'host', 'port', 'tie_breaker'
+                    Warning: invalid quorum device model option 'c', allowed options are: 'algorithm', 'connect_timeout', 'force_ip_version', 'host', 'keep_active_partition_tie_breaker', 'port', 'tie_breaker', 'tls'
                     Warning: 'x' is not a valid algorithm value, use 'ffsplit', 'lms'
                     Warning: invalid quorum device option 'a', allowed options are: 'sync_timeout', 'timeout'
                     Warning: '-1' is not a valid timeout value, use a positive integer
@@ -632,8 +636,8 @@ class DeviceUpdateTest(TestBase):
             (
                 "Error: invalid quorum device model option 'c', allowed "
                 "options are: 'algorithm', 'connect_timeout', "
-                "'force_ip_version', 'host', 'port', 'tie_breaker', use "
-                "--force to override\n"
+                "'force_ip_version', 'host', 'keep_active_partition_tie_breaker',"
+                " 'port', 'tie_breaker', 'tls', use --force to override\n"
                 "Error: 'x' is not a valid port value, use a port number "
                 "(1..65535), use --force to override\n"
                 "Error: invalid quorum device option 'a', allowed options are: "
@@ -649,7 +653,7 @@ class DeviceUpdateTest(TestBase):
             stderr_full=(
                 dedent(
                     """\
-                    Warning: invalid quorum device model option 'c', allowed options are: 'algorithm', 'connect_timeout', 'force_ip_version', 'host', 'port', 'tie_breaker'
+                    Warning: invalid quorum device model option 'c', allowed options are: 'algorithm', 'connect_timeout', 'force_ip_version', 'host', 'keep_active_partition_tie_breaker', 'port', 'tie_breaker', 'tls'
                     Warning: 'x' is not a valid port value, use a port number (1..65535)
                     Warning: invalid quorum device option 'a', allowed options are: 'sync_timeout', 'timeout'
                     Warning: '-1' is not a valid timeout value, use a positive integer

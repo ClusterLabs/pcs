@@ -967,8 +967,10 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
                             connect_timeout: 12345
                             force_ip_version: 4
                             host: qnetd-host
+                            keep_active_partition_tie_breaker: off
                             port: 4433
                             tie_breaker: lowest
+                            tls: required
                         }
 
                         heuristics {
@@ -997,6 +999,8 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
                 "connect_timeout": "12345",
                 "force_ip_version": "4",
                 "tie_breaker": "lowest",
+                "tls": "required",
+                "keep_active_partition_tie_breaker": "off",
             },
             {"timeout": "23456", "sync_timeout": "34567"},
             {
@@ -1329,8 +1333,10 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
                             connect_timeout: 12345
                             force_ip_version: 4
                             host: qnetd-host
+                            keep_active_partition_tie_breaker: off
                             port: 4433
                             tie_breaker: lowest
+                            tls: required
                         }
 
                         heuristics {
@@ -1361,6 +1367,8 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
                 "connect_timeout": "12345",
                 "force_ip_version": "4",
                 "tie_breaker": "lowest",
+                "tls": "required",
+                "keep_active_partition_tie_breaker": "off",
             },
             {"timeout": "23456", "sync_timeout": "34567"},
             {

@@ -33,6 +33,9 @@
   options unsupported by pcs are not exported and a warning is printed instead.
   Previously, the warnings were printed, but the constraints were exported
   regardless. ([rhbz#2163953])
+- Allow `tls` and `keep_active_partition_tie_breaker` options for qdevice model
+  "net" to be set using `pcs quorum device add` and `pcs quorum device update`
+  commands ([rhbz#2234717])
 
 ### Deprecated
 - Using spaces in dates in location constraint rules (using spaces in dates in
@@ -51,6 +54,7 @@
 [rhbz#2222744]: https://bugzilla.redhat.com/show_bug.cgi?id=2222744
 [rhbz#2227230]: https://bugzilla.redhat.com/show_bug.cgi?id=2227230
 [rhbz#2111591]: https://bugzilla.redhat.com/show_bug.cgi?id=2111591
+[rhbz#2234717]: https://bugzilla.redhat.com/show_bug.cgi?id=2234717
 
 
 ## [0.11.6] - 2023-06-20

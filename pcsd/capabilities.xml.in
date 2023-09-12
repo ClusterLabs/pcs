@@ -371,6 +371,13 @@
           quorum config
       </description>
     </capability>
+    <capability id="corosync.quorum.device.model.net.options_tls_and_kaptb" in-pcs="1" in-pcsd="0">
+      <description>
+        Set and change qdevice model "net" options tls and keep_active_partition_tie_breaker.
+
+        pcs commands: quorum device ( add | update )
+      </description>
+    </capability>
     <capability id="corosync.quorum.device.client" in-pcs="0" in-pcsd="1">
       <description>
         Control qdevice client service: start, stop, enable, disable
