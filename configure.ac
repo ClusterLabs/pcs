@@ -143,11 +143,6 @@ AC_ARG_ENABLE([concise-tests],
 	      [concise_tests="yes"])
 AM_CONDITIONAL([CONCISE_TESTS], [test "x$concise_tests" = "xyes"])
 
-AC_ARG_ENABLE([parallel-tests],
-	      [AS_HELP_STRING([--enable-parallel-tests], [Python parallel testing requires pip modules that are not packaged anywhere (default: no)])],
-	      [parallel_tests="yes"])
-AM_CONDITIONAL([PARALLEL_TESTS], [test "x$parallel_tests" = "xyes"])
-
 AC_ARG_ENABLE([parallel-pylint],
 	      [AS_HELP_STRING([--enable-parallel-pylint], [Enable running pylint in multiple threads (default: no)])],
 	      [parallel_pylint="yes"])

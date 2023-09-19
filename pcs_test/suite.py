@@ -1,19 +1,11 @@
 import os
-import platform
 import sys
 import time
 import unittest
 from importlib import import_module
+from multiprocessing import Pool
 from threading import Thread
-
-try:
-    import concurrencytest
-    from testtools import ConcurrentTestSuite
-
-    can_concurrency = True
-except ImportError:
-    can_concurrency = False
-
+from typing import Optional
 
 PACKAGE_DIR = os.path.realpath(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -43,7 +35,7 @@ def prepare_test_name(test_name):
         return candidate[: -len(py_extension)]
 
 
-def tests_from_suite(test_candidate):
+def tests_from_suite(test_candidate: unittest.TestCase) -> list[str]:
     if isinstance(test_candidate, unittest.TestCase):
         return [test_candidate.id()]
     test_id_list = []
@@ -52,7 +44,7 @@ def tests_from_suite(test_candidate):
     return test_id_list
 
 
-def autodiscover_tests(tier=None):
+def autodiscover_tests(tier: Optional[int] = None) -> unittest.TestSuite:
     # ...Find all the test modules by recursing into subdirectories from the
     # specified start directory...
     # ...All test modules must be importable from the top level of the project.
@@ -69,22 +61,27 @@ def autodiscover_tests(tier=None):
 
 
 def discover_tests(
-    explicitly_enumerated_tests, exclude_enumerated_tests=False, tier=None
-):
+    explicitly_enumerated_tests: list[str],
+    exclude_enumerated_tests: bool = False,
+    tier: Optional[int] = None,
+) -> list[str]:
     if not explicitly_enumerated_tests:
-        return autodiscover_tests(tier=tier)
+        return tests_from_suite(autodiscover_tests(tier=tier))
     if exclude_enumerated_tests:
-        return unittest.TestLoader().loadTestsFromNames(
-            [
-                test_name
-                for test_name in tests_from_suite(autodiscover_tests(tier=tier))
-                if test_name not in explicitly_enumerated_tests
-            ]
+        return [
+            test_name
+            for test_name in tests_from_suite(autodiscover_tests(tier=tier))
+            if test_name not in explicitly_enumerated_tests
+        ]
+
+    return tests_from_suite(
+        unittest.defaultTestLoader.loadTestsFromNames(
+            sorted(set(explicitly_enumerated_tests))
         )
-    return unittest.TestLoader().loadTestsFromNames(explicitly_enumerated_tests)
+    )
 
 
-def tier1_fixtures_needed(test_list):
+def tier1_fixtures_needed(test_list: list[str]) -> set[str]:
     fixture_modules = set(
         [
             "pcs_test.tier1.legacy.test_constraints",
@@ -93,7 +90,7 @@ def tier1_fixtures_needed(test_list):
         ]
     )
     fixtures_needed = set()
-    for test_name in tests_from_suite(test_list):
+    for test_name in test_list:
         for module in fixture_modules:
             if test_name.startswith(module):
                 fixtures_needed.add(module)
@@ -102,14 +99,9 @@ def tier1_fixtures_needed(test_list):
     return fixtures_needed
 
 
-def has_tier0_test(test_list):
-    for test_name in tests_from_suite(test_list):
-        if test_name.startswith("pcs_test.tier0."):
-            return True
-    return False
-
-
-def run_tier1_fixtures(modules, run_concurrently=True):
+def run_tier1_fixtures(
+    modules: set[str], run_concurrently: bool = True
+) -> None:
     fixture_instances = []
     for mod in modules:
         tmp_mod = import_module(mod)
@@ -156,7 +148,44 @@ def run_tier1_fixtures(modules, run_concurrently=True):
     return cleanup
 
 
-def main():
+def parallel_run(tests: list[str], result_class) -> bool:
+    # pylint: disable=import-outside-toplevel
+    from pcs_test.tools.parallel_test_runner import (
+        ParallelTestManager,
+        aggregate_test_results,
+    )
+
+    manager = ParallelTestManager(
+        result_class, verbosity=2 if "-v" in sys.argv else 1
+    )
+
+    with Pool() as pool:
+        start_time = time.perf_counter()
+        results = pool.map(manager.run_test, tests)
+        end_time = time.perf_counter()
+
+    test_result = aggregate_test_results(results)
+
+    test_result.print_summary(
+        end_time - start_time,
+        vanilla="--vanilla" in sys.argv,
+        last_slash="--last-slash" in sys.argv,
+    )
+    return test_result.was_successful
+
+
+def non_parallel_run(tests: list[str], result_class) -> bool:
+    test_runner = unittest.TextTestRunner(
+        verbosity=2 if "-v" in sys.argv else 1,
+        resultclass=result_class,
+    )
+    tests_to_run = unittest.defaultTestLoader.loadTestsFromNames(tests)
+    test_result = test_runner.run(tests_to_run)
+
+    return test_result.wasSuccessful()
+
+
+def main() -> None:
     # pylint: disable=import-outside-toplevel
     # pylint: disable=too-many-locals
     if "BUNDLED_LIB_LOCATION" in os.environ:
@@ -178,17 +207,6 @@ def main():
         from pcs import settings
 
         settings.pcs_data_dir = os.path.join(PACKAGE_DIR, "data")
-
-    from pcs_test.tools.misc import compare_version
-
-    def is_minimum_python_version(cmajor, cminor):
-        major, minor, _ = platform.python_version_tuple()
-        return (
-            compare_version(
-                (int(major), int(minor), 0), (int(cmajor), int(cminor), 0)
-            )
-            > -1
-        )
 
     measure_test_time = "--time" in sys.argv
 
@@ -223,30 +241,19 @@ def main():
         explicitly_enumerated_tests, "--all-but" in sys.argv, tier=tier
     )
     if "--list" in sys.argv:
-        test_list = tests_from_suite(discovered_tests)
-        print("\n".join(sorted(test_list)))
-        print("{0} tests found".format(len(test_list)))
+        print("\n".join(sorted(discovered_tests)))
+        print("{0} tests found".format(len(discovered_tests)))
         sys.exit()
 
-    tests_to_run = discovered_tests
-    run_concurrently = (
-        can_concurrency
-        and "--no-parallel" not in sys.argv
-        and not measure_test_time
-        and not (
-            has_tier0_test(tests_to_run) and is_minimum_python_version(3, 11)
-        )
-    )
+    run_concurrently = "--no-parallel" not in sys.argv and not measure_test_time
     tier1_fixtures_cleanup = run_tier1_fixtures(
-        tier1_fixtures_needed(tests_to_run), run_concurrently=run_concurrently
+        tier1_fixtures_needed(discovered_tests),
+        run_concurrently=run_concurrently,
     )
-    if run_concurrently:
-        tests_to_run = ConcurrentTestSuite(
-            discovered_tests,
-            concurrencytest.fork_for_tests(),
-        )
 
-    ResultClass = unittest.TextTestResult
+    from pcs_test.tools.parallel_test_runner import VanillaTextTestResult
+
+    ResultClass = VanillaTextTestResult
     if "--vanilla" not in sys.argv:
         from pcs_test.tools.color_text_runner import get_text_test_result_class
 
@@ -270,12 +277,12 @@ def main():
             measure_time=("--time" in sys.argv),
         )
 
-    test_runner = unittest.TextTestRunner(
-        verbosity=2 if "-v" in sys.argv else 1, resultclass=ResultClass
-    )
-    test_result = test_runner.run(tests_to_run)
+    if run_concurrently:
+        test_success = parallel_run(discovered_tests, ResultClass)
+    else:
+        test_success = non_parallel_run(discovered_tests, ResultClass)
     tier1_fixtures_cleanup()
-    if not test_result.wasSuccessful():
+    if not test_success:
         sys.exit(1)
 
 

@@ -9,7 +9,6 @@ EXTRA_DIST		= \
 			  make/release.mk \
 			  MANIFEST.in \
 			  mypy.ini \
-			  parallel_tests_requirements.txt \
 			  pylintrc \
 			  pyproject.toml \
 			  rpm/pcs.spec.in \
@@ -85,12 +84,6 @@ endif
 
 stamps/install_python_devel_deps: dev_requirements.txt
 if DEV_TESTS
-	PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring $(PIP) install --upgrade -r $<
-endif
-	touch $@
-
-stamps/install_python_parallel_tests_deps: parallel_tests_requirements.txt
-if PARALLEL_TESTS
 	PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring $(PIP) install --upgrade -r $<
 endif
 	touch $@
@@ -267,7 +260,7 @@ pcsd-tests:
 		${abs_top_builddir}/pcsd/test/test_all_suite.rb
 
 if LOCAL_BUILD
-check-local-deps: stamps/install_python_embedded_mods_local stamps/install_ruby_deps_local stamps/install_python_devel_deps stamps/install_python_parallel_tests_deps
+check-local-deps: stamps/install_python_embedded_mods_local stamps/install_ruby_deps_local stamps/install_python_devel_deps
 else
 check-local-deps:
 endif
