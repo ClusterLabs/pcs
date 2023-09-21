@@ -1321,6 +1321,18 @@ class FailOrWarnOp(ResourceTest):
             ),
         )
 
+    def test_fail_on_invalid_interval(self):
+        self.assert_pcs_fail_regardless_of_force(
+            (
+                "resource create --no-default-ops R ocf:heartbeat:Dummy "
+                "op monitor interval="
+            ).split(),
+            (
+                "Error: '' is not a valid interval value, use time interval "
+                "(e.g. 1, 2s, 3m, 4h, ...)\n" + ERRORS_HAVE_OCCURRED
+            ),
+        )
+
 
 class FailOrWarnGroup(ResourceTest):
     def test_fail_when_invalid_group(self):

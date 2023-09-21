@@ -313,6 +313,8 @@ class ValidateOperation(TestCase):
                 "enabled": "d",
                 "id": "0",
                 "unknown": "invalid",
+                "interval": "",
+                "timeout": "e",
             },
             [
                 fixture.error(
@@ -386,6 +388,22 @@ class ValidateOperation(TestCase):
                     option_value="d",
                     option_name="enabled",
                     allowed_values=["0", "1", "true", "false"],
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="",
+                    option_name="interval",
+                    allowed_values="time interval (e.g. 1, 2s, 3m, 4h, ...)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="e",
+                    option_name="timeout",
+                    allowed_values="time interval (e.g. 1, 2s, 3m, 4h, ...)",
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
