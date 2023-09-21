@@ -3256,7 +3256,7 @@ def show(main_usage_name: str, rest_usage_names: Argv) -> None:
         "tag": tag,
     }
     if main_usage_name not in usage_map:
-        raise Exception(
+        raise ValueError(
             "Bad usage name '{0}' there can be '{1}'".format(
                 main_usage_name, list(usage_map.keys())
             )

@@ -385,7 +385,7 @@ class ResourcesConfigurationFacade:
             elif isinstance(resource_dto, CibResourceBundleDto):
                 bundles.add(resource_id)
             else:
-                AssertionError()
+                raise AssertionError()
 
         if not processed_ids:
             raise CmdLineInputError(f"No {label} found")

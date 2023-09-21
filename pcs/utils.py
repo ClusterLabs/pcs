@@ -2715,7 +2715,7 @@ def exit_on_cmdline_input_error(
 
 
 def get_report_processor() -> ReportProcessor:
-    return ReportProcessorToConsole(debug=("--debug" in pcs_options))
+    return ReportProcessorToConsole(debug="--debug" in pcs_options)
 
 
 def get_user_and_pass():

@@ -14,7 +14,7 @@ load-plugins=pylint.extensions.no_self_use
 [MESSAGES CONTROL]
 # line-too-long and trailing-whitespace is handled by black
 # wrong-import-order is handled by isort
-disable=fixme, line-too-long, missing-docstring, trailing-whitespace, consider-using-f-string, unspecified-encoding, wrong-import-order
+disable=fixme, line-too-long, missing-docstring, trailing-whitespace, consider-using-f-string, unspecified-encoding, wrong-import-order, use-dict-literal
 # Everything in module context is a constant, but our naming convention allows
 # constants to have the same name format as variables
 const-rgx=(([A-Z_][A-Z0-9_]*)|(__.*__))|([a-z_][a-z0-9_]*)$

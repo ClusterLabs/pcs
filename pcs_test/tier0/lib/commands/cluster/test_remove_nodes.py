@@ -2693,7 +2693,7 @@ class OfflineNodes(TestCase):
     def test_all_removed_unknown(self):
         (
             self.config.env.set_known_nodes(self.nodes_to_stay)
-            .http.host.check_auth(node_labels=(self.nodes_to_stay))
+            .http.host.check_auth(node_labels=self.nodes_to_stay)
             # SBD not installed
             .services.is_installed(
                 "sbd",
@@ -2728,7 +2728,7 @@ class OfflineNodes(TestCase):
     def test_all_removed_unknown_forced(self):
         (
             self.config.env.set_known_nodes(self.nodes_to_stay)
-            .http.host.check_auth(node_labels=(self.nodes_to_stay))
+            .http.host.check_auth(node_labels=self.nodes_to_stay)
             # SBD not installed
             .services.is_installed(
                 "sbd",

@@ -231,9 +231,9 @@ class AssertPcsMixin:
             if output is not None
         ]
         if not specified_output:
-            raise Exception(msg + ", none specified")
+            raise TypeError(msg + ", none specified")
         if len(specified_output) > 1:
-            raise Exception(msg + ", more than one specified")
+            raise TypeError(msg + ", more than one specified")
 
     def __fail_on_unexpected_output(
         self,

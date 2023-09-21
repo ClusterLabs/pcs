@@ -2683,6 +2683,7 @@ def resource_disable(argv: Argv) -> Optional[bool]:
     if not is_managed(resource):
         warn(f"'{resource}' is unmanaged")
 
+    wait_timeout = None
     if "--wait" in utils.pcs_options:
         wait_timeout = utils.validate_wait_get_timeout()
 
