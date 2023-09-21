@@ -191,6 +191,12 @@ def _validate_operation_list(
             ["interval-origin", "start-delay"], option_type=option_type
         ),
         validate.ValueId("id", option_name_for_report="operation id"),
+        validate.ValueTimeInterval(
+            "interval", severity=reports.ReportItemSeverity.error(),
+        ),
+        validate.ValueTimeInterval(
+            "timeout", severity=reports.ReportItemSeverity.error(),
+        ),
     ]
     validator_all = validate.ValidatorAll(validators)
 
