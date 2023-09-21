@@ -483,6 +483,7 @@ def _create_request_handle(request, cookies, timeout):
     dict cookies -- cookies to add to request
     int timeout -- request timeout
     """
+
     # it is not possible to take this callback out of this function, because of
     # curl API
     def __debug_callback(data_type, debug_data):

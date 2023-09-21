@@ -332,6 +332,7 @@ class MoveBanWaitMixin:
              </resource>
         </resources>
     """
+
     # pylint does not and can not know setUp is a method of TestCase
     # pylint: disable=invalid-name
     def setUp(self):

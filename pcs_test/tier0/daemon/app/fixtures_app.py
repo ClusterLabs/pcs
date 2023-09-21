@@ -47,8 +47,9 @@ class RubyPcsdWrapper(ruby_pcsd.Wrapper):
 
 class AppTest(AsyncHTTPTestCase):
     wrapper = None
-    # pylint: disable=abstract-method
+
     def get_app(self):
+        # pylint: disable=abstract-method
         return Application(self.get_routes())
 
     def get_routes(self):

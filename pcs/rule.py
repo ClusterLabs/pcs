@@ -327,7 +327,6 @@ def has_node_attr_expr_with_type_integer(rule_tree):
 
 
 class SymbolBase:
-
     END = "{end}"
     LITERAL = "{literal}"
 
@@ -370,7 +369,6 @@ class SymbolLiteral(SymbolBase):
 
 
 class SymbolParenthesisOpen(SymbolBase):
-
     expression_func = None
     advance_func = None
     close_symbol_id = None
@@ -382,7 +380,6 @@ class SymbolParenthesisOpen(SymbolBase):
 
 
 class SymbolOperator(SymbolBase):
-
     expression_func = None
     # Note: not properly typed
     allowed_child_ids: List[Any] = []
@@ -416,7 +413,6 @@ class SymbolPrefix(SymbolOperator):
 
 
 class SymbolType(SymbolPrefix):
-
     value_re = None
 
     def null_denotation(self):
@@ -446,7 +442,6 @@ class SymbolInfix(SymbolOperator):
 
 
 class SymbolTernary(SymbolOperator):
-
     advance_func = None
     symbol_second_id: Optional[str] = None
 
@@ -632,7 +627,6 @@ class SyntaxError(ParserException):
 
 
 class DateCommonValue:
-
     allowed_items = [
         "hours",
         "monthdays",
@@ -690,7 +684,6 @@ class DateCommonValue:
 
 
 class DateSpecValue(DateCommonValue):
-
     KEYWORD = "date-spec"
     part_re = re.compile(r"^(?P<since>\d+)(-(?P<until>\d+))?$")
     part_limits = {
@@ -739,7 +732,6 @@ class DateSpecValue(DateCommonValue):
 
 
 class DateDurationValue(DateCommonValue):
-
     KEYWORD = "duration"
 
     def __init__(self, parts_string):
@@ -756,7 +748,6 @@ class DateDurationValue(DateCommonValue):
 
 
 class SymbolTypeDateCommon(SymbolType):
-
     date_value_class = None
 
     def null_denotation(self):
@@ -767,7 +758,6 @@ class SymbolTypeDateCommon(SymbolType):
 
 
 class SymbolTernaryInRange(SymbolTernary):
-
     allowed_child_ids = [
         [SymbolBase.LITERAL],
         [SymbolBase.LITERAL],
@@ -791,7 +781,6 @@ class SymbolTernaryInRange(SymbolTernary):
 
 
 class RuleParser(Parser):
-
     comparison_list = ["eq", "ne", "lt", "gt", "lte", "gte", "in_range"]
     date_comparison_list = ["gt", "lt", "in_range"]
     prefix_list = ["defined", "not_defined"]

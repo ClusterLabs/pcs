@@ -155,7 +155,6 @@ class AssertPcsMixin:
         returncode=0,
         despace=False,
     ):
-
         self.__check_output_specified(
             stdout_full, stdout_start, stdout_regexp, "stdout"
         )

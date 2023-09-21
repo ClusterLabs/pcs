@@ -862,9 +862,9 @@ def _get_link_options_validators_knet(
     )
 
 
-def _get_link_options_validators_knet_relations() -> list[
-    validate.ValidatorInterface
-]:
+def _get_link_options_validators_knet_relations() -> (
+    list[validate.ValidatorInterface]
+):
     return [
         validate.DependsOnOption(
             ["ping_interval"],
