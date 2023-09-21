@@ -1333,6 +1333,7 @@ class FailOrWarnOp(ResourceTest):
             ),
         )
 
+
 class FailOrWarnGroup(ResourceTest):
     def test_fail_when_invalid_group(self):
         self.assert_pcs_fail(

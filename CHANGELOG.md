@@ -19,6 +19,8 @@
   ([rhbz#2233763])
 - Do not display warning in `pcs status` for expired constraints that were
   created by moving resources ([rhbz#2111583])
+- Fixed validation for interval and timeout option values of an operation
+  specified for `pcs resource create` command ([rhbz#2233766]).
 
 ### Changed
 - Allow `tls` and `keep_active_partition_tie_breaker` options for qdevice model
@@ -32,6 +34,7 @@
 [rhbz#2227234]: https://bugzilla.redhat.com/show_bug.cgi?id=2227234
 [rhbz#2233763]: https://bugzilla.redhat.com/show_bug.cgi?id=2233763
 [rhbz#2111583]: https://bugzilla.redhat.com/show_bug.cgi?id=2111583
+[rhbz#2233766]: https://bugzilla.redhat.com/show_bug.cgi?id=2233766
 [rhbz#2234665]: https://bugzilla.redhat.com/show_bug.cgi?id=2234665
 
 ## [0.10.17] - 2023-06-19
