@@ -1534,6 +1534,7 @@ class FailOrWarnOp(ResourceTest):
             ),
         )
 
+
 class FailOrWarnGroup(ResourceTest):
     FUTURE = ""
     GROUP = "--group"

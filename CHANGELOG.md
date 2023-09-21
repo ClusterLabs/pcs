@@ -27,6 +27,8 @@
   ([ghissue#731])
 - Do not display warning in `pcs status` for expired constraints that were
   created by moving resources ([rhbz#2111591])
+- Fixed validation for interval and timeout option values of an operation
+  specified for `pcs resource create` command ([rhbz#2179084]).
 
 ### Changed
 - When exporting constraints in form of pcs commands, constraints containing
@@ -48,6 +50,7 @@
 [rhbz#2112268]: https://bugzilla.redhat.com/show_bug.cgi?id=2112268
 [rhbz#2163953]: https://bugzilla.redhat.com/show_bug.cgi?id=2163953
 [rhbz#2175797]: https://bugzilla.redhat.com/show_bug.cgi?id=2175797
+[rhbz#2179084]: https://bugzilla.redhat.com/show_bug.cgi?id=2179084
 [rhbz#2217850]: https://bugzilla.redhat.com/show_bug.cgi?id=2217850
 [rhbz#2219407]: https://bugzilla.redhat.com/show_bug.cgi?id=2219407
 [rhbz#2219554]: https://bugzilla.redhat.com/show_bug.cgi?id=2219554
