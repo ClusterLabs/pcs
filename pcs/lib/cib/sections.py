@@ -52,7 +52,7 @@ def get(tree, section_name):
         to use constants defined in this module
     """
     if section_name in __MANDATORY_SECTIONS:
-        section = tree.find(".//{0}".format(section_name))
+        section = tree.find(f".//{section_name}")
         if section is not None:
             return section
         raise LibraryError(
@@ -64,10 +64,10 @@ def get(tree, section_name):
     if section_name in __OPTIONAL_SECTIONS:
         return get_sub_element(get(tree, CONFIGURATION), section_name)
 
-    raise AssertionError("Unknown cib section '{0}'".format(section_name))
+    raise AssertionError(f"Unknown cib section '{section_name}'")
 
 
 def exists(tree, section_name):
     if section_name not in __MANDATORY_SECTIONS + __OPTIONAL_SECTIONS:
-        raise AssertionError("Unknown cib section '{0}'".format(section_name))
-    return tree.find(".//{0}".format(section_name)) is not None
+        raise AssertionError(f"Unknown cib section '{section_name}'")
+    return tree.find(f".//{section_name}") is not None

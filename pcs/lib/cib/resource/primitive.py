@@ -110,9 +110,9 @@ def _find_primitives_by_agent(
         List[_Element],
         resources_section.xpath(
             ".//primitive[@class=$class_ and @type=$type_ {provider_part}]".format(
-                provider_part=" and @provider=$provider_"
-                if agent_name.provider
-                else "",
+                provider_part=(
+                    " and @provider=$provider_" if agent_name.provider else ""
+                ),
             ),
             class_=agent_name.standard,
             provider_=agent_name.provider or "",
@@ -182,7 +182,7 @@ def create(
                 reports.messages.IdAlreadyExists(resource_id)
             )
         )
-    validate_id(resource_id, "{0} name".format(resource_type))
+    validate_id(resource_id, f"{resource_type} name")
 
     agent_metadata = resource_agent_facade.metadata
 

@@ -114,7 +114,7 @@ def create_id(cib, type_prefix, resource_set_list):
     for _set in resource_set_list:
         resource_ids.extend(_set["ids"])
     id_part = "".join([_id[0] + _id[-1] for _id in resource_ids][:3])
-    return find_unique_id(cib, "{0}_set_{1}".format(type_prefix, id_part))
+    return find_unique_id(cib, f"{type_prefix}_set_{id_part}")
 
 
 def have_duplicate_resource_sets(element, other_element):

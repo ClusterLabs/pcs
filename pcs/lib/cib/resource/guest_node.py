@@ -148,7 +148,7 @@ def unset_guest(resource_element):
         "./meta_attributes/nvpair[{0}]".format(
             " or ".join(
                 [
-                    '@name="{0}"'.format(option)
+                    f'@name="{option}"'
                     for option in (GUEST_OPTIONS + ["remote-node"])
                 ]
             )

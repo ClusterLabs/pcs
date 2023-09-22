@@ -288,7 +288,7 @@ def run_permission_delete(lib, argv, modifiers):
 
 
 def _target_group_to_str(type_name, obj):
-    return ["{0}: {1}".format(type_name.title(), obj.get("id"))] + indent(
+    return [f"{type_name.title()}: {obj.get('id')}"] + indent(
         [" ".join(["Roles:"] + obj.get("role_list", []))]
     )
 
@@ -304,9 +304,9 @@ def group_to_str(group):
 def role_to_str(role):
     out = []
     if role.get("description"):
-        out.append("Description: {0}".format(role.get("description")))
+        out.append(f"Description: {role.get('description')}")
     out += map(_permission_to_str, role.get("permission_list", []))
-    return ["Role: {0}".format(role.get("id"))] + indent(out)
+    return [f"Role: {role.get('id')}"] + indent(out)
 
 
 def _permission_to_str(permission):
@@ -315,5 +315,5 @@ def _permission_to_str(permission):
         out += ["xpath", permission.get("xpath")]
     elif permission.get("reference") is not None:
         out += ["id", permission.get("reference")]
-    out.append("({0})".format(permission.get("id")))
+    out.append(f"({permission.get('id')})")
     return " ".join(out)

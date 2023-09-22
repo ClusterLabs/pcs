@@ -40,7 +40,7 @@ class BoothSendConfig(
     def _get_request_data(self):
         data = {
             "config": {
-                "name": "{0}.conf".format(self._booth_name),
+                "name": f"{self._booth_name}.conf",
                 "data": self._config_data,
             }
         }

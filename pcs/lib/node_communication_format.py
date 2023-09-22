@@ -12,7 +12,7 @@ from pcs.lib.errors import LibraryError
 
 def create_pcmk_remote_actions(action_list):
     return {
-        "pacemaker_remote {0}".format(action): service_cmd_format(
+        f"pacemaker_remote {action}": service_cmd_format(
             "pacemaker_remote", action
         )
         for action in action_list

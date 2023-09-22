@@ -97,12 +97,10 @@ class LibCommunicatorLogger(CommunicatorLoggerInterface):
         url = response.request.url
         debug_data = response.debug
         self._logger.debug(
-            (
-                "Communication debug info for calling: {url}\n"
-                "--Debug Communication Info Start--\n"
-                "{data}\n"
-                "--Debug Communication Info End--"
-            ).format(url=url, data=debug_data)
+            f"Communication debug info for calling: {url}\n"
+            "--Debug Communication Info Start--\n"
+            f"{debug_data}\n"
+            "--Debug Communication Info End--"
         )
         self._reporter.report(
             ReportItem.debug(
@@ -248,20 +246,20 @@ def response_to_report_item(
             reason = response.data.rstrip()
         elif response_code == 401:
             report_item = reports.messages.NodeCommunicationErrorNotAuthorized
-            reason = "HTTP error: {0}".format(response_code)
+            reason = f"HTTP error: {response_code}"
         elif response_code == 403:
             report_item = (
                 reports.messages.NodeCommunicationErrorPermissionDenied
             )
-            reason = "HTTP error: {0}".format(response_code)
+            reason = f"HTTP error: {response_code}"
         elif response_code == 404:
             report_item = (
                 reports.messages.NodeCommunicationErrorUnsupportedCommand
             )
-            reason = "HTTP error: {0}".format(response_code)
+            reason = f"HTTP error: {response_code}"
         elif response_code >= 400:
             report_item = reports.messages.NodeCommunicationError
-            reason = "HTTP error: {0}".format(response_code)
+            reason = f"HTTP error: {response_code}"
     else:
         if response.errno in [
             pycurl.E_OPERATION_TIMEDOUT,

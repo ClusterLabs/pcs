@@ -242,11 +242,7 @@ def authkey_corosync(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
             with open(argv[0], "rb") as file:
                 corosync_authkey = file.read()
         except OSError as e:
-            utils.err(
-                "Unable to read file '{0}': {1}".format(
-                    argv[0], format_os_error(e)
-                )
-            )
+            utils.err(f"Unable to read file '{argv[0]}': {format_os_error(e)}")
     lib.cluster.corosync_authkey_change(
         corosync_authkey=corosync_authkey,
         force_flags=force_flags,
@@ -1641,9 +1637,7 @@ def _parse_node_options(
     ) - supported_options
     if unknown_options:
         raise CmdLineInputError(
-            "Unknown options '{}' for node '{}'".format(
-                "', '".join(sorted(unknown_options)), node
-            )
+            f"Unknown options {format_list(unknown_options)} for node '{node}'"
         )
     parsed_unique["name"] = node
     if ADDR_OPT_KEYWORD in parsed_repeatable:
@@ -1665,7 +1659,7 @@ def _parse_transport(
     """
     if not transport_args:
         raise CmdLineInputError(
-            "{} type not defined".format(TRANSPORT_KEYWORD.capitalize())
+            f"{TRANSPORT_KEYWORD.capitalize()} type not defined"
         )
     transport_type, *transport_options = transport_args
 
@@ -1723,10 +1717,8 @@ def cluster_setup(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     )
     if is_local and modifiers.is_specified_any(allowed_options_live):
         raise CmdLineInputError(
-            (
-                "Cannot specify any of {banned} when '--corosync_conf' is "
-                "specified"
-            ).format(banned=format_list(allowed_options_live))
+            f"Cannot specify any of {format_list(allowed_options_live)} "
+            "when '--corosync_conf' is specified"
         )
     if not is_local and modifiers.is_specified("--overwrite"):
         raise CmdLineInputError(
@@ -1932,7 +1924,7 @@ def _config_get_text(corosync_conf: CorosyncConfDto) -> list[str]:
     lines = [f"Cluster Name: {corosync_conf.cluster_name}"]
     if corosync_conf.cluster_uuid:
         lines.append(f"Cluster UUID: {corosync_conf.cluster_uuid}")
-    lines.append("Transport: {}".format(corosync_conf.transport.lower()))
+    lines.append(f"Transport: {corosync_conf.transport.lower()}")
     lines.extend(_format_nodes(corosync_conf.nodes))
     if corosync_conf.links_options:
         lines.append("Links:")

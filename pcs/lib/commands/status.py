@@ -271,7 +271,7 @@ def _move_constraints_warnings(
     if resource_ids:
         warning_list.append(
             "Following resources have been moved and their move constraints "
-            "are still in place: {0}".format(format_list(list(resource_ids)))
+            f"are still in place: {format_list(resource_ids)}"
         )
         warning_list.append(
             "Run 'pcs constraint location' or 'pcs resource clear "

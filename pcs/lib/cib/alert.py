@@ -58,9 +58,9 @@ def ensure_recipient_value_is_unique(
         exists
     """
     recipient_list = alert.xpath(
-        "./recipient[@value='{value}' and @id!='{id}']".format(
-            value=recipient_value, id=recipient_id
-        )
+        "./recipient[@value=$value and @id!=$id]",
+        value=recipient_value,
+        id=recipient_id,
     )
     if recipient_list:
         reporter.report(
@@ -154,7 +154,7 @@ def add_recipient(
     allow_same_value -- if True unique recipient value is not required
     """
     if recipient_id is None:
-        recipient_id = find_unique_id(tree, "{0}-recipient".format(alert_id))
+        recipient_id = find_unique_id(tree, f"{alert_id}-recipient")
     else:
         validate_id_does_not_exist(tree, recipient_id)
 

@@ -607,7 +607,7 @@ def sbd_watchdog_list(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     if available_watchdogs:
         print("Available watchdog(s):")
         for watchdog in sorted(available_watchdogs.keys()):
-            print("  {}".format(watchdog))
+            print(f"  {watchdog}")
     else:
         print_to_stderr("No available watchdog")
 
@@ -723,9 +723,7 @@ def _sbd_parse_watchdogs(
     for node, node_watchdog_list in node_specific_watchdog_dict.items():
         if len(node_watchdog_list) > 1:
             raise CmdLineInputError(
-                "Multiple watchdog definitions for node '{node}'".format(
-                    node=node
-                )
+                f"Multiple watchdog definitions for node '{node}'"
             )
         watchdog_dict[node] = node_watchdog_list[0]
 
@@ -780,11 +778,11 @@ def sbd_status(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     device_list = lib.sbd.get_local_devices_info(modifiers.get("--full"))
     for device in device_list:
         print()
-        print("Messages list on device '{0}':".format(device["device"]))
+        print(f"Messages list on device '{device['device']}':")
         print("<unknown>" if device["list"] is None else device["list"])
         if modifiers.get("--full"):
             print()
-            print("SBD header on device '{0}':".format(device["device"]))
+            print(f"SBD header on device '{device['device']}':")
             print("<unknown>" if device["dump"] is None else device["dump"])
 
 
@@ -797,7 +795,7 @@ def _print_per_node_option(config_list, config_option):
         value = unknown_value
         if config["config"] is not None:
             value = config["config"].get(config_option, unknown_value)
-        print("  {node}: {value}".format(node=config["node"], value=value))
+        print(f"  {config['node']}: {value}")
 
 
 def sbd_config(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
@@ -828,7 +826,7 @@ def sbd_config(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
             with_device = True
         if key in filtered_options:
             continue
-        print("{key}={val}".format(key=key, val=val))
+        print(f"{key}={val}")
 
     print()
     print("Watchdogs:")

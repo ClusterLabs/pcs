@@ -381,7 +381,7 @@ def create_id(context_element, id_provider, name, interval):
     mixed interval is the interval attribute of operation
     """
     return create_subelement_id(
-        context_element, "{0}-interval-{1}".format(name, interval), id_provider
+        context_element, f"{name}-interval-{interval}", id_provider
     )
 
 

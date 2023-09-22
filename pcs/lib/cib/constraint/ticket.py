@@ -65,7 +65,7 @@ def _create_id(cib, ticket, resource_id, resource_role):
     return tools.find_unique_id(
         cib,
         "-".join(("ticket", ticket, resource_id))
-        + ("-{0}".format(resource_role) if resource_role else ""),
+        + (f"-{resource_role}" if resource_role else ""),
     )
 
 

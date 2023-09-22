@@ -163,19 +163,13 @@ def _nvset_to_str(nvset_obj):
 def __description_attributes_to_str(obj):
     output = []
     if obj.get("description"):
-        output.append("Description: {desc}".format(desc=obj["description"]))
+        output.append(f"Description: {obj['description']}")
     if obj.get("instance_attributes"):
-        output.append(
-            "Options: {attributes}".format(
-                attributes=_nvset_to_str(obj["instance_attributes"])
-            )
-        )
+        attributes = _nvset_to_str(obj["instance_attributes"])
+        output.append(f"Options: {attributes}")
     if obj.get("meta_attributes"):
-        output.append(
-            "Meta options: {attributes}".format(
-                attributes=_nvset_to_str(obj["meta_attributes"])
-            )
-        )
+        attributes = _nvset_to_str(obj["meta_attributes"])
+        output.append(f"Meta options: {attributes}")
     return output
 
 
@@ -191,18 +185,12 @@ def _alert_to_str(alert):
         content.append("Recipients:")
         content.extend(indent(recipients, 1))
 
-    return [
-        "Alert: {alert_id} (path={path})".format(
-            alert_id=alert["id"], path=alert["path"]
-        )
-    ] + indent(content, 1)
+    return [f"Alert: {alert['id']} (path={alert['path']})"] + indent(content, 1)
 
 
 def _recipient_to_str(recipient):
     return [
-        "Recipient: {id} (value={value})".format(
-            value=recipient["value"], id=recipient["id"]
-        )
+        f"Recipient: {recipient['id']} (value={recipient['value']})"
     ] + indent(__description_attributes_to_str(recipient), 1)
 
 

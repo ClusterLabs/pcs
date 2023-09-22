@@ -507,8 +507,6 @@ def _get_output_certificate(
     except EnvironmentError as e:
         raise LibraryError(
             reports.ReportItem.error(
-                report_message_func(
-                    "{path}: {error}".format(path=filename, error=e.strerror)
-                )
+                report_message_func(f"{filename}: {e.strerror}")
             )
         ) from e

@@ -16,10 +16,9 @@ SEE_MAN_CHANGES = "See 'man pcs' -> Changes in pcs-{}."
 
 
 def _msg_command_replaced(new_commands: List[str], pcs_version: str) -> str:
-    return "This command has been replaced with {commands}. {changes}".format(
-        commands=format_list_base(quote_items(new_commands)),
-        changes=SEE_MAN_CHANGES.format(pcs_version),
-    )
+    commands = format_list_base(quote_items(new_commands))
+    changes = SEE_MAN_CHANGES.format(pcs_version)
+    return f"This command has been replaced with {commands}. {changes}"
 
 
 def raise_command_replaced(new_commands: List[str], pcs_version: str) -> None:

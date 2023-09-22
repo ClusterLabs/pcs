@@ -10,7 +10,7 @@ from pcs.lib.cib.tools import find_unique_id
 
 def create_resource_id(resources_section, name, suffix):
     return find_unique_id(
-        resources_section.getroottree(), "booth-{0}-{1}".format(name, suffix)
+        resources_section.getroottree(), f"booth-{name}-{suffix}"
     )
 
 

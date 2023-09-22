@@ -16,6 +16,7 @@ from pcs.cli.common.parse_args import (
     KeyValueParser,
     split_list_by_any_keywords,
 )
+from pcs.common.str_tools import format_list
 
 
 def _parse_host_options(
@@ -28,9 +29,7 @@ def _parse_host_options(
     unknown_options = set(parsed_options.keys()) - supported_options
     if unknown_options:
         raise CmdLineInputError(
-            "Unknown options {} for host '{}'".format(
-                ", ".join(unknown_options), host
-            )
+            f"Unknown options {format_list(unknown_options)} for host '{host}'"
         )
     addr, port = _parse_addr(parsed_options.get(ADDR_OPT_KEYWORD, host))
     return {"dest_list": [dict(addr=addr, port=port)]}
@@ -39,12 +38,12 @@ def _parse_host_options(
 def _parse_addr(addr: str) -> tuple[Optional[str], int]:
     if addr.count(":") > 1 and not addr.startswith("["):
         # if IPv6 without port put it in parentheses
-        addr = "[{0}]".format(addr)
+        addr = f"[{addr}]"
     # adding protocol so urlparse will parse hostname/ip and port correctly
-    url = urlparse("http://{0}".format(addr))
+    url = urlparse(f"http://{addr}")
 
     common_exception = CmdLineInputError(
-        "Invalid port number in address '{0}', use 1..65535".format(addr)
+        f"Invalid port number in address '{addr}', use 1..65535"
     )
     # Reading the port attribute will raise a ValueError if an invalid port is
     # specified in the URL.
@@ -107,11 +106,8 @@ def deauth_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     if retval == 0 and output["status"] == "ok" and output["data"]:
         try:
             if output["data"]["hosts_not_found"]:
-                utils.err(
-                    "Following hosts were not found: '{hosts}'".format(
-                        hosts="', '".join(output["data"]["hosts_not_found"])
-                    )
-                )
+                hosts = format_list(output["data"]["hosts_not_found"])
+                utils.err(f"Following hosts were not found: '{hosts}'")
             if not output["data"]["sync_successful"]:
                 utils.err(
                     "Some nodes had a newer known-hosts than the local node. "

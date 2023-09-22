@@ -865,7 +865,7 @@ def _append_port_map(parent_element, id_provider, id_base, port_map_options):
             id_suffix = port_map_options["range"]
         if id_suffix:
             port_map_options["id"] = id_provider.allocate_id(
-                sanitize_id("{0}-port-map-{1}".format(id_base, id_suffix))
+                sanitize_id(f"{id_base}-port-map-{id_suffix}")
             )
     port_map_element = etree.SubElement(parent_element, "port-mapping")
     # Do not add options with empty values. When updating, an empty value means
@@ -891,7 +891,7 @@ def _append_storage_map(
     if "id" not in storage_map_options:
         storage_map_options["id"] = id_provider.allocate_id(
             # use just numbers to keep the ids reasonably short
-            "{0}-storage-map".format(id_base)
+            f"{id_base}-storage-map"
         )
     storage_map_element = etree.SubElement(parent_element, "storage-mapping")
     # Do not add options with empty values. When updating, an empty value means

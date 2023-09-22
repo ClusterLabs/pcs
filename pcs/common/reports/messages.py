@@ -94,7 +94,7 @@ def _format_fencing_level_target(
     target_type: Optional[str], target_value: Any
 ) -> str:
     if target_type == TARGET_TYPE_ATTRIBUTE:
-        return "{0}={1}".format(target_value[0], target_value[1])
+        return f"{target_value[0]}={target_value[1]}"
     return target_value
 
 
@@ -190,7 +190,7 @@ def _service_action_str(action: types.ServiceAction, suffix: str = "") -> str:
         const.SERVICE_ACTION_ENABLE: "enabl",
         const.SERVICE_ACTION_DISABLE: "disabl",
     }.get(action, base)
-    return "{}{}".format(base, suffix)
+    return f"{base}{suffix}"
 
 
 def _skip_reason_to_string(reason: types.ReasonType) -> str:
@@ -212,7 +212,7 @@ def _typelist_to_string(
     new_list = sorted(
         {
             # get a translation or make a type_name a string
-            _type_translation.get(type_name, "{0}".format(type_name))
+            _type_translation.get(type_name, f"{type_name}")
             for type_name in type_list
         }
     )
@@ -220,7 +220,8 @@ def _typelist_to_string(
     if not article:
         return res_types
     return "{article} {types}".format(
-        article=_type_articles.get(new_list[0], "a"), types=res_types
+        article=_type_articles.get(new_list[0], "a"),
+        types=res_types,
     )
 
 
@@ -228,11 +229,12 @@ def _type_to_string(type_name: str, article: bool = False) -> str:
     if not type_name:
         return ""
     # get a translation or make a type_name a string
-    translated = _type_translation.get(type_name, "{0}".format(type_name))
+    translated = _type_translation.get(type_name, f"{type_name}")
     if not article:
         return translated
     return "{article} {type}".format(
-        article=_type_articles.get(translated, "a"), type=translated
+        article=_type_articles.get(translated, "a"),
+        type=translated,
     )
 
 
@@ -800,7 +802,7 @@ class InvalidCibContent(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        return "invalid cib:\n{report}".format(report=self.report)
+        return f"invalid cib:\n{self.report}"
 
 
 @dataclass(frozen=True)
@@ -912,7 +914,7 @@ class RunExternalProcessStarted(ReportItemMessage):
                 else "\n"
                 + "\n".join(
                     [
-                        "  {}={}".format(key, val)
+                        f"  {key}={val}"
                         for key, val in sorted(self.environment.items())
                     ]
                 )
@@ -5306,9 +5308,7 @@ class ServiceVersionMismatch(ReportItemMessage):
         version_host: Dict[str, List[str]] = defaultdict(list)
         for host_name, version in self.hosts_version.items():
             version_host[version].append(host_name)
-        parts = [
-            "Hosts do not have the same version of '{}'".format(self.service)
-        ]
+        parts = [f"Hosts do not have the same version of '{self.service}'"]
         # List most common versions first.
         for version, hosts in sorted(
             version_host.items(), key=lambda pair: len(pair[1]), reverse=True

@@ -534,7 +534,7 @@ def load_module(env, middleware_factory, name):
             },
         )
 
-    raise ValueError("No library part '{0}'".format(name))
+    raise ValueError(f"No library part '{name}'")
 
 
 class Library:

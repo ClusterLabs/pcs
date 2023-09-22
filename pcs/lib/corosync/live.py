@@ -239,9 +239,7 @@ def _parse_quorum_status(quorum_status: str) -> QuorumStatus:
         missing_sections.append("node_list")
     if missing_sections:
         raise QuorumStatusParsingException(
-            "Missing required section(s): {}".format(
-                format_list(missing_sections)
-            )
+            f"Missing required section(s): {format_list(missing_sections)}"
         )
     return QuorumStatus(
         node_list=node_list,

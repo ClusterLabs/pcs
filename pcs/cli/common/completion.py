@@ -66,7 +66,7 @@ def _split_words(joined_words: str, word_lengths: StringSequence) -> list[str]:
             next_position = cursor_position + int(length)
         except ValueError as e:
             raise EnvironmentError(
-                "Length of word '{0}' is not digit".format(length)
+                f"Length of word '{length}' is not digit"
             ) from e
         if next_position > words_string_len:
             raise EnvironmentError(

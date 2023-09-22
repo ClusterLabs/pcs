@@ -192,7 +192,7 @@ def main(argv=None):
         else:
             # If any options are a list then they've been entered twice which
             # isn't valid
-            utils.err("%s can only be used once" % opt)
+            utils.err(f"{opt} can only be used once")
 
         if opt in ("-h", "--help"):
             if not argv:
@@ -235,10 +235,8 @@ def main(argv=None):
                 pass
             if not request_timeout_valid:
                 utils.err(
-                    (
-                        "'{0}' is not a valid --request-timeout value, use "
-                        "a positive integer"
-                    ).format(val)
+                    f"'{val}' is not a valid --request-timeout value, use "
+                    "a positive integer"
                 )
 
     # initialize logger

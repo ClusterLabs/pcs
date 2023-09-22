@@ -532,8 +532,5 @@ def _create_request_handle(request, cookies, timeout):
 
 def _dict_to_cookies(cookies_dict):
     return ";".join(
-        [
-            "{0}={1}".format(key, value)
-            for key, value in sorted(cookies_dict.items())
-        ]
+        [f"{key}={value}" for key, value in sorted(cookies_dict.items())]
     )

@@ -420,7 +420,7 @@ def _append_level_element(tree, level, target_type, target_value, devices):
         id_part = target_value[0]
     level_el.set(
         "id",
-        find_unique_id(tree, sanitize_id("fl-{0}-{1}".format(id_part, level))),
+        find_unique_id(tree, sanitize_id(f"fl-{id_part}-{level}")),
     )
     return level_el
 
