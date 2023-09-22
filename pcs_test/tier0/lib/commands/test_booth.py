@@ -2320,6 +2320,21 @@ class TicketGrantRevokeMixin(FixtureMixin):
             expected_in_processor=False,
         )
 
+    def test_cannot_load_cib(self):
+        self.config.runner.cib.load(
+            stderr="some stderr",
+            returncode=1,
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: self.command(self.env_assist.get_env(), self.ticket),
+            [
+                fixture.error(
+                    reports.codes.BOOTH_CANNOT_DETERMINE_LOCAL_SITE_IP,
+                ),
+            ],
+            expected_in_processor=False,
+        )
+
     def test_ticket_action_failed(self):
         self.get_booth_call()(
             self.ticket,
