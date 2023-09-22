@@ -630,10 +630,8 @@ def _ticket_operation(
 
     if not site_ip:
         site_error = LibraryError(
-                        ReportItem.error(
-                            reports.messages.BoothCannotDetermineLocalSiteIp()
-                        )
-                    )
+            ReportItem.error(reports.messages.BoothCannotDetermineLocalSiteIp())
+        )
 
         try:
             cib = env.get_cib()
@@ -641,8 +639,8 @@ def _ticket_operation(
             raise site_error from e
 
         site_ip_list = resource.find_bound_ip(
-                get_resources(cib), booth_env.config_path
-            )
+            get_resources(cib), booth_env.config_path
+        )
         if len(site_ip_list) != 1:
             raise site_error
 

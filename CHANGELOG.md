@@ -29,6 +29,8 @@
   created by moving resources ([rhbz#2111591])
 - Fixed validation for interval and timeout option values of an operation
   specified for `pcs resource create` command ([rhbz#2179084]).
+- Improved error message of `pcs booth ticket grant|revoke` commands in case a
+  booth site address parameter is needed ([rhbz#2232143])
 
 ### Changed
 - When exporting constraints in form of pcs commands, constraints containing
@@ -57,6 +59,7 @@
 [rhbz#2222744]: https://bugzilla.redhat.com/show_bug.cgi?id=2222744
 [rhbz#2227230]: https://bugzilla.redhat.com/show_bug.cgi?id=2227230
 [rhbz#2111591]: https://bugzilla.redhat.com/show_bug.cgi?id=2111591
+[rhbz#2232143]: https://bugzilla.redhat.com/show_bug.cgi?id=2232143
 [rhbz#2234717]: https://bugzilla.redhat.com/show_bug.cgi?id=2234717
 
 
