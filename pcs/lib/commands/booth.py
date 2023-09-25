@@ -629,15 +629,21 @@ def _ticket_operation(
     _ensure_live_env(env, booth_env)
 
     if not site_ip:
+        site_error = LibraryError(
+            ReportItem.error(reports.messages.BoothCannotDetermineLocalSiteIp())
+        )
+
+        try:
+            cib = env.get_cib()
+        except LibraryError as e:
+            raise site_error from e
+
         site_ip_list = resource.find_bound_ip(
-            get_resources(env.get_cib()), booth_env.config_path
+            get_resources(cib), booth_env.config_path
         )
         if len(site_ip_list) != 1:
-            raise LibraryError(
-                ReportItem.error(
-                    reports.messages.BoothCannotDetermineLocalSiteIp()
-                )
-            )
+            raise site_error
+
         site_ip = site_ip_list[0]
 
     stdout, stderr, return_code = env.cmd_runner().run(
