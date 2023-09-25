@@ -329,7 +329,6 @@ def config_restore(params, request, auth_user)
     if params[:tarball] != nil and params[:tarball] != ""
       read_stderr, write_stderr = IO.pipe
       begin
-        ChildProcess.posix_spawn = true
         pcs_restore_config = ChildProcess.build(PCS, "config", "restore", "--local")
         pcs_restore_config.io.stderr = write_stderr
         pcs_restore_config.duplex = true

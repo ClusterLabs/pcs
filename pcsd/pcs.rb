@@ -853,7 +853,6 @@ def run_cmd_options(auth_user, options, *args)
   read_stdout, write_stdout = IO.pipe
   read_stderr, write_stderr = IO.pipe
   begin
-    ChildProcess.posix_spawn = true
     cmd = ChildProcess.build(*args)
     cmd.io.stdout = write_stdout
     cmd.io.stderr = write_stderr
