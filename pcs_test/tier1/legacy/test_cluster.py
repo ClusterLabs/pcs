@@ -16,14 +16,13 @@ from pcs_test.tools.pcs_runner import (
 
 
 class UidGidTest(TestCase):
-    # pylint: disable=invalid-name
     def setUp(self):
         self.uid_gid_dir = get_tmp_dir("tier1_cluster_uidgid")
 
     def tearDown(self):
         self.uid_gid_dir.cleanup()
 
-    def testUIDGID(self):
+    def test_uidgid(self):
         # pylint: disable=too-many-statements
         _pcs = partial(
             pcs,
@@ -171,7 +170,6 @@ class ClusterUpgradeTest(TestCase, AssertPcsMixin):
         self.temp_cib.close()
 
     def test_cluster_upgrade(self):
-        # pylint: disable=invalid-name
         self.temp_cib.seek(0)
         data = self.temp_cib.read()
         assert data.find("pacemaker-1.2") != -1

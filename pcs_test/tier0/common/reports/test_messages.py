@@ -1032,7 +1032,6 @@ class ParseErrorCorosyncConfUnexpectedClosingBrace(NameBuildTest):
 
 class ParseErrorCorosyncConfMissingSectionNameBeforeOpeningBrace(NameBuildTest):
     def test_all(self):
-        # pylint: disable=line-too-long
         self.assert_message_from_report(
             "Unable to parse corosync config: missing a section name before {",
             reports.ParseErrorCorosyncConfMissingSectionNameBeforeOpeningBrace(),
@@ -1052,7 +1051,6 @@ class ParseErrorCorosyncConfExtraCharactersBeforeOrAfterClosingBrace(
 ):
     def test_all(self):
         self.assert_message_from_report(
-            # pylint: disable=line-too-long
             (
                 "Unable to parse corosync config: extra characters before "
                 "or after }"

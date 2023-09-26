@@ -242,7 +242,6 @@ class SessionAuthProvider(_BaseLibAuthProvider):
         not start new one.
         """
         # TODO this method should exist temporarily (for sinatra compatibility)
-        # pylint: disable=invalid-name
         if self.__sid_from_client is not None:
             self._handler.set_cookie(
                 PCSD_SESSION, self.__sid_from_client, **self.__cookie_options

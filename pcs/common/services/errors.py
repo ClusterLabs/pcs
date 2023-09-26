@@ -2,7 +2,6 @@ from typing import Optional
 
 
 class ManageServiceError(Exception):
-    # pylint: disable=super-init-not-called
     def __init__(
         self,
         service: str,

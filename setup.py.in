@@ -78,7 +78,6 @@ class _SomeDir(Command):
 
         """
 
-        # pylint: disable=no-self-use
         # Create fake install to get a setuptools script directory path.
         dist = Distribution({"cmdclass": {"install": _ScriptDirSpy}})
         dist.dry_run = True
@@ -91,16 +90,19 @@ class _SomeDir(Command):
 
 class ScriptDir(_SomeDir):
     def get_dir_from_distribution(self, dist):
+        # pylint: disable=no-self-use
         return dist.install_scripts
 
 
 class PlatLib(_SomeDir):
     def get_dir_from_distribution(self, dist):
+        # pylint: disable=no-self-use
         return dist.install_platlib
 
 
 class PureLib(_SomeDir):
     def get_dir_from_distribution(self, dist):
+        # pylint: disable=no-self-use
         return dist.install_purelib
 
 

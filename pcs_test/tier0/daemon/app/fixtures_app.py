@@ -49,7 +49,6 @@ class AppTest(AsyncHTTPTestCase):
     wrapper = None
 
     def get_app(self):
-        # pylint: disable=abstract-method
         return Application(self.get_routes())
 
     def get_routes(self):
@@ -57,7 +56,6 @@ class AppTest(AsyncHTTPTestCase):
         return []
 
     def fetch(self, path, raise_error=False, **kwargs):
-        # pylint: disable=arguments-differ
         if "follow_redirects" not in kwargs:
             kwargs["follow_redirects"] = False
         response = super().fetch(path, raise_error=raise_error, **kwargs)

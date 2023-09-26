@@ -41,8 +41,6 @@ from pcs.common.str_tools import (
 )
 from pcs.lib.errors import LibraryError
 
-# pylint: disable=too-many-branches, too-many-statements, protected-access
-
 
 def stonith_show_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     # TODO remove, deprecated command
@@ -95,6 +93,7 @@ def stonith_list_available(
             print(
                 "{0} - {1}".format(
                     name,
+                    # pylint: disable=protected-access
                     resource._format_desc(
                         len(name + " - "), shortdesc.replace("\n", " ")
                     ),

@@ -130,7 +130,6 @@ class RemoveLinks(TestCase):
                     link_number_list=["0"],
                 ),
                 fixture.error(
-                    # pylint: disable=line-too-long
                     report_codes.COROSYNC_CANNOT_ADD_REMOVE_LINKS_TOO_MANY_FEW_LINKS,
                     links_change_count=1,
                     links_new_count=0,

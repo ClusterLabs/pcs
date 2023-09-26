@@ -524,7 +524,6 @@ class ConfigSetupAuthfileFix(TestCase, FixtureMixin):
 
 
 class ConfigDestroy(TestCase, FixtureMixin):
-    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
 
@@ -2254,8 +2253,6 @@ class Restart(TestCase, FixtureMixin):
 
 class TicketGrantRevokeMixin(FixtureMixin):
     def setUp(self):
-        # pylint cannot know this will be mixed in a TestCase class
-        # pylint: disable=invalid-name
         self.env_assist, self.config = get_env_tools(self)
         self.ticket = "ticketA"
 
@@ -2912,8 +2909,6 @@ class ConfigSyncTest(TestCase, FixtureMixin):
 
 class EnableDisableStartStopMixin(FixtureMixin):
     def setUp(self):
-        # pylint cannot know this will be mixed in a TestCase class
-        # pylint: disable=invalid-name
         self.env_assist, self.config = get_env_tools(self)
 
     def test_invalid_instance(self):

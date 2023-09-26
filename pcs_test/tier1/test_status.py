@@ -1,4 +1,3 @@
-# pylint: disable=line-too-long
 import re
 from textwrap import dedent
 from unittest import TestCase
@@ -278,13 +277,11 @@ class ResourceStonithStatusBase(AssertPcsMixin):
     no_active_resources_msg = "No active resources\n"
 
     def setUp(self):
-        # pylint: disable=invalid-name
         self.temp_cib = get_tmp_file("tier1_status_resource_stonith_status")
         write_file_to_tmpfile(self.cib_file, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
 
     def tearDown(self):
-        # pylint: disable=invalid-name
         self.temp_cib.close()
 
     def test_not_resource_or_tag_id(self):

@@ -210,7 +210,6 @@ class GetCib(TestCase, ManageCibAssertionMixin):
 
 
 class PushLoadedCib(TestCase, ManageCibAssertionMixin):
-    # pylint: disable=too-many-public-methods
     wait_timeout = 10
 
     def setUp(self):

@@ -16,8 +16,6 @@ from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal
 from pcs_test.tools.misc import create_patcher
 
-# pylint: disable=no-self-use
-
 
 def _operation_fixture(name, interval="", role=None):
     return CibResourceOperationDto(
@@ -56,6 +54,7 @@ class Prepare(TestCase):
         complete_operations_options,
         get_remaining_defaults,
     ):
+        # pylint: disable=no-self-use
         new_role_names_supported = False
         validate_operation_list.return_value = ["options_report"]
         validate_different_intervals.return_value = [
@@ -128,18 +127,27 @@ class Prepare(TestCase):
 
 class ValidateDifferentIntervals(TestCase):
     def test_return_empty_reports_on_empty_list(self):
-        operations.validate_different_intervals([])
+        # pylint: disable=no-self-use
+        assert_report_item_list_equal(
+            operations.validate_different_intervals([]),
+            [],
+        )
 
     def test_return_empty_reports_on_operations_without_duplication(self):
-        operations.validate_different_intervals(
-            [
-                {"name": "monitor", "interval": "10s"},
-                {"name": "monitor", "interval": "5s"},
-                {"name": "start", "interval": "5s"},
-            ]
+        # pylint: disable=no-self-use
+        assert_report_item_list_equal(
+            operations.validate_different_intervals(
+                [
+                    {"name": "monitor", "interval": "10s"},
+                    {"name": "monitor", "interval": "5s"},
+                    {"name": "start", "interval": "5s"},
+                ]
+            ),
+            [],
         )
 
     def test_return_report_on_duplicated_intervals(self):
+        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             operations.validate_different_intervals(
                 [
@@ -247,7 +255,6 @@ class MakeUniqueIntervals(TestCase):
 
 
 class Normalize(TestCase):
-    # pylint: disable=protected-access
     def test_return_operation_with_the_same_values(self):
         operation = {
             "name": "monitor",
@@ -258,6 +265,7 @@ class Normalize(TestCase):
         self.assertEqual(
             operation,
             {
+                # pylint: disable=protected-access
                 key: operations._normalize(key, value)
                 for key, value in operation.items()
             },
@@ -274,6 +282,7 @@ class Normalize(TestCase):
                 "enabled": "1",
             },
             {
+                # pylint: disable=protected-access
                 key: operations._normalize(key, value)
                 for key, value in {
                     "name": "monitor",
@@ -289,6 +298,7 @@ class Normalize(TestCase):
 
 class ValidateOperation(TestCase):
     def assert_operation_produces_report(self, operation, report_list):
+        # pylint: disable=no-self-use
         # pylint: disable=protected-access
         assert_report_item_list_equal(
             operations._validate_operation_list(

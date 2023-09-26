@@ -34,7 +34,6 @@ class DefaultsCreateMixin:
     tag = ""
 
     def setUp(self):
-        # pylint: disable=invalid-name
         self.env_assist, self.config = get_env_tools(self)
         self.config.runner.cib.load()
 
@@ -500,7 +499,6 @@ class DefaultsConfigMixin:
     tag = ""
 
     def setUp(self):
-        # pylint: disable=invalid-name
         self.env_assist, self.config = get_env_tools(self)
 
     @staticmethod
@@ -954,7 +952,6 @@ class DefaultsRemoveMixin:
     tag = ""
 
     def setUp(self):
-        # pylint: disable=invalid-name
         self.env_assist, self.config = get_env_tools(self)
 
     def test_nothing_to_delete(self):
@@ -1060,12 +1057,10 @@ class DefaultsUpdateLegacyMixin:
     command_for_report = None
 
     def setUp(self):
-        # pylint: disable=invalid-name
         self.env_assist, self.config = get_env_tools(self)
         self.reports = [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN)]
 
     def tearDown(self):
-        # pylint: disable=invalid-name
         self.env_assist.assert_reports(self.reports)
 
     def fixture_initial_defaults(self):
@@ -1196,7 +1191,6 @@ class DefaultsUpdateMixin:
     tag = ""
 
     def setUp(self):
-        # pylint: disable=invalid-name
         self.env_assist, self.config = get_env_tools(self)
 
     def fixture_initial_defaults(self):

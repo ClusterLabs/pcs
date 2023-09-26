@@ -121,7 +121,6 @@ class TestTagRemove(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    # pylint: disable=line-too-long
                     reports.codes.TAG_CANNOT_REMOVE_TAG_REFERENCED_IN_CONSTRAINTS,
                     tag_id="tag1",
                     constraint_id_list=["location-tag1"],
@@ -145,13 +144,11 @@ class TestTagRemove(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    # pylint: disable=line-too-long
                     reports.codes.TAG_CANNOT_REMOVE_TAG_REFERENCED_IN_CONSTRAINTS,
                     tag_id="tag1",
                     constraint_id_list=["location-tag1"],
                 ),
                 fixture.error(
-                    # pylint: disable=line-too-long
                     reports.codes.TAG_CANNOT_REMOVE_TAG_REFERENCED_IN_CONSTRAINTS,
                     tag_id="tag2",
                     constraint_id_list=["location-tag2"],

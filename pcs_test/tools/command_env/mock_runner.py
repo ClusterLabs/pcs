@@ -2,8 +2,6 @@ from pcs import settings
 
 from pcs_test.tools.assertions import assert_xml_equal
 
-# pylint: disable=unused-argument
-
 CALL_TYPE_RUNNER = "CALL_TYPE_RUNNER"
 
 
@@ -38,6 +36,7 @@ class CheckStdinEqualXml:
 
 
 def check_no_stdin(stdin, command, order_num):
+    del order_num
     if stdin:
         raise AssertionError(
             (
@@ -122,6 +121,7 @@ class Runner:
     def run(
         self, args, stdin_string=None, env_extend=None, binary_output=False
     ):
+        del binary_output
         i, call = self.__call_queue.take(CALL_TYPE_RUNNER, args)
 
         if args != call.command:

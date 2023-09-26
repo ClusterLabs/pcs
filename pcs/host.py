@@ -22,8 +22,7 @@ from pcs.common.str_tools import format_list
 def _parse_host_options(
     host: str, options: Argv
 ) -> dict[str, Union[str, list[dict[str, Union[None, str, int]]]]]:
-    # pylint: disable=invalid-name
-    ADDR_OPT_KEYWORD = "addr"
+    ADDR_OPT_KEYWORD = "addr"  # pylint: disable=invalid-name
     supported_options = set([ADDR_OPT_KEYWORD])
     parsed_options = KeyValueParser(options).get_unique()
     unknown_options = set(parsed_options.keys()) - supported_options
@@ -58,7 +57,6 @@ def _parse_addr(addr: str) -> tuple[Optional[str], int]:
 
 
 def auth_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
-    # pylint: disable=unused-argument
     """
     Options:
       * -u - username
@@ -66,6 +64,7 @@ def auth_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
       * --token - auth token
       * --request-timeout - timeout for HTTP requests
     """
+    del lib
     modifiers.ensure_only_supported("-u", "-p", "--request-timeout", "--token")
     if not argv:
         raise CmdLineInputError("No host specified")
@@ -87,11 +86,11 @@ def auth_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
 
 
 def deauth_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
-    # pylint: disable=unused-argument
     """
     Options:
       * --request-timeout - timeout for HTTP requests
     """
+    del lib
     modifiers.ensure_only_supported("--request-timeout")
     if not argv:
         # Object of type 'dict_keys' is not JSON serializable, make it a list

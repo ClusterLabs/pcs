@@ -12,7 +12,7 @@ from pcs.common.str_tools import (
 )
 from pcs.common.types import StringIterable
 
-# pylint: disable=too-many-lines, too-many-branches, global-statement
+# pylint: disable=too-many-lines
 
 examples = ""
 
@@ -101,6 +101,8 @@ def full_usage() -> None:
 
 
 def strip_extras(text: str) -> str:
+    # pylint: disable=global-statement
+    # pylint: disable=too-many-branches
     global examples
     ret = ""
     group_name = text.split(" ")[2]

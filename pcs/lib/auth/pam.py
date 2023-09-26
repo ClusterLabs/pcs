@@ -14,23 +14,20 @@ from ctypes import (
 )
 from ctypes.util import find_library
 
-# pylint: disable=invalid-name
-
-
 PAM_SUCCESS = 0
 PAM_PROMPT_ECHO_OFF = 1
 PCSD_SERVICE = "pcsd"
 
 
-class pam_message(Structure):
+class pam_message(Structure):  # pylint: disable=invalid-name
     _fields_ = [("msg_style", c_int), ("msg", POINTER(c_char))]
 
 
-class pam_response(Structure):
+class pam_response(Structure):  # pylint: disable=invalid-name
     _fields_ = [("resp", POINTER(c_char)), ("resp_retcode", c_int)]
 
 
-class pam_handle(Structure):
+class pam_handle(Structure):  # pylint: disable=invalid-name
     _fields_ = [("handle", c_void_p)]
 
 
@@ -43,11 +40,11 @@ pam_conversation = CFUNCTYPE(
 )
 
 
-class pam_conv(Structure):
+class pam_conv(Structure):  # pylint: disable=invalid-name
     _fields_ = [("conv", pam_conversation), ("appdata_ptr", c_void_p)]
 
 
-def _prep_fn(fn, restype, argtypes):
+def _prep_fn(fn, restype, argtypes):  # pylint: disable=invalid-name
     fn.restype = restype
     fn.argtypes = argtypes
     return fn
@@ -72,9 +69,8 @@ pam_start = _prep_fn(
 
 def authenticate_user(username: str, password: str) -> bool:
     @pam_conversation
-    def conv(
-        num_msg, msg, resp, appdata_ptr
-    ):  # pylint: disable=unused-argument
+    def conv(num_msg, msg, resp, appdata_ptr):
+        del appdata_ptr
         # it is: *resp = (pam_response *) calloc(num_msg, sizeof(pam_response))
         resp[0] = cast(
             calloc(num_msg, sizeof(pam_response)), POINTER(pam_response)

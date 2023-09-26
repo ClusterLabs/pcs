@@ -458,7 +458,6 @@ def validate_resource_instance_attributes_update(
     force: bool = False,
     enable_agent_self_validation: bool = False,
 ) -> reports.ReportItemList:
-    # pylint: disable=too-many-locals
     # TODO This function currently accepts the updated resource as a string and
     # finds the corresponding xml element by itself. This is needed as the
     # function is called from old pcs code which uses dom while pcs.lib uses

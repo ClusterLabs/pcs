@@ -31,7 +31,6 @@ class AppTest(fixtures_app.AppTest):
 
 
 class Auth(AppTest):
-    # pylint: disable=too-many-ancestors
     def setUp(self):
         super().setUp()
         self.auth_provider_mock = self._mock_auth_provider_method(

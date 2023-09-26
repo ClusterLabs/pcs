@@ -134,7 +134,8 @@ def corosync_conf_fixture(
     cluster_name=None,
     cluster_uuid=CLUSTER_UUID,
 ):
-    # pylint: disable=too-many-arguments, too-many-locals
+    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-locals
     if cluster_uuid:
         cluster_uuid = f"\n    cluster_uuid: {cluster_uuid}"
 

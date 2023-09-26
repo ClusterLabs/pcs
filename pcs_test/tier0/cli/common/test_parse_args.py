@@ -618,7 +618,7 @@ class IsOptionExpectingValue(TestCase):
 
 
 class InputModifiersTest(TestCase):
-    # pylint: disable=too-many-public-methods, no-self-use
+    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.supported = ["a", "b", "c"]
         self.bool_opts = [
@@ -670,9 +670,11 @@ class InputModifiersTest(TestCase):
         ]
 
     def _get_specified(self, *keys):
+        # pylint: disable=no-self-use
         return {key: i for i, key in enumerate(keys)}
 
     def ensure(self, *specified):
+        # pylint: disable=no-self-use
         InputModifiers(self._get_specified(*specified)).ensure_only_supported(
             *self.supported
         )
@@ -717,6 +719,7 @@ class InputModifiersTest(TestCase):
         self.assertEqual(2, InputModifiers({"a": 1}).get("b", default=2))
 
     def test_debug_implicit(self):
+        # pylint: disable=no-self-use
         InputModifiers({"--debug": ""}).ensure_only_supported()
 
     def test_bool_options(self):
@@ -793,11 +796,13 @@ class InputModifiersTest(TestCase):
         )
 
     def test_mutually_exclusive_not_specified(self):
+        # pylint: disable=no-self-use
         InputModifiers({"a": 1, "b": 2, "c": 3}).ensure_not_mutually_exclusive(
             "x", "y"
         )
 
     def test_mutually_exclusive_one_specified(self):
+        # pylint: disable=no-self-use
         InputModifiers({"a": 1, "b": 2}).ensure_not_mutually_exclusive("a", "c")
 
     def test_mutually_exclusive_more_specified(self):
@@ -808,11 +813,13 @@ class InputModifiersTest(TestCase):
         self.assertEqual(str(cm.exception), "Only one of 'a', 'c' can be used")
 
     def test_incompatible_checked_not_defined(self):
+        # pylint: disable=no-self-use
         InputModifiers({"a": 1, "b": 2, "c": 3}).ensure_not_incompatible(
             "x", ["a", "c"]
         )
 
     def test_incompatible_incompatible_not_defined(self):
+        # pylint: disable=no-self-use
         InputModifiers({"a": 1, "b": 2, "c": 3}).ensure_not_incompatible(
             "a", ["z", "y"]
         )
@@ -832,11 +839,13 @@ class InputModifiersTest(TestCase):
         self.assertEqual(str(cm.exception), "'a' cannot be used with 'b', 'd'")
 
     def test_dependencies_main_defined(self):
+        # pylint: disable=no-self-use
         InputModifiers({"a": 1, "b": 2, "c": 3}).ensure_dependency_satisfied(
             "a", ["x", "y"]
         )
 
     def test_dependencies_main_defined_with_deps(self):
+        # pylint: disable=no-self-use
         InputModifiers(
             {"a": 1, "b": 2, "c": 3, "d": 4}
         ).ensure_dependency_satisfied("a", ["b", "c"])

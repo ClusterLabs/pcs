@@ -45,7 +45,6 @@ class SetUpMixin:
     initial_cib_filename = "cib-empty.xml"
 
     def setUp(self):
-        # pylint: disable=invalid-name
         self.env_assist, self.config = get_env_tools(test_case=self)
         self.config.runner.cib.load(
             filename=self.initial_cib_filename,

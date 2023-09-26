@@ -9,13 +9,11 @@ from pcs_test.tools.misc import (
 )
 from pcs_test.tools.pcs_runner import PcsRunner
 
-# pylint: disable=invalid-name
-# pylint: disable=too-many-public-methods
-
 empty_cib = rc("cib-empty.xml")
 
 
 class ACLTest(TestCase, AssertPcsMixin):
+    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.temp_cib = get_tmp_file("tier1_acl")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
@@ -24,7 +22,7 @@ class ACLTest(TestCase, AssertPcsMixin):
     def tearDown(self):
         self.temp_cib.close()
 
-    def testEnableDisable(self):
+    def test_enable_disable(self):
         self.assert_pcs_success("acl disable".split())
         self.assert_pcs_success(
             ["acl"],
@@ -41,7 +39,7 @@ class ACLTest(TestCase, AssertPcsMixin):
             "ACLs are disabled, run 'pcs acl enable' to enable\n\n",
         )
 
-    def testUserGroupCreateDeleteWithRoles(self):
+    def test_user_group_create_delete_with_roles(self):
         self.assert_pcs_success(
             "acl role create role1 read xpath /xpath1/ write xpath /xpath2/".split()
         )
@@ -365,7 +363,7 @@ class ACLTest(TestCase, AssertPcsMixin):
             ),
         )
 
-    def testUserGroupCreateDelete(self):
+    def test_user_group_create_delete(self):
         self.assert_pcs_success(
             ["acl"],
             "ACLs are disabled, run 'pcs acl enable' to enable\n\n",
@@ -468,7 +466,7 @@ class ACLTest(TestCase, AssertPcsMixin):
             "ACLs are disabled, run 'pcs acl enable' to enable\n\n",
         )
 
-    def testRoleCreateDelete(self):
+    def test_role_create_delete(self):
         self.assert_pcs_fail(
             "acl role create role0 read".split(),
             stderr_start="\nUsage: pcs acl role create...",
@@ -626,7 +624,7 @@ class ACLTest(TestCase, AssertPcsMixin):
             "ACLs are disabled, run 'pcs acl enable' to enable\n\n",
         )
 
-    def testPermissionAddDelete(self):
+    def test_permission_add_delete(self):
         self.assert_pcs_success(
             "acl role create role1 read xpath /xpath1/ write xpath /xpath2/".split()
         )

@@ -23,7 +23,6 @@ class SPAHandler(LegacyApiBaseHandler):
     __fallback = None
 
     def initialize(self, index: str, fallback: str) -> None:
-        # pylint: disable=arguments-differ
         self.__index = index
         self.__fallback = fallback
 
@@ -84,7 +83,6 @@ class Logout(AjaxMixin, BaseHandler):
         session_storage: session.Storage,
         auth_provider: AuthProvider,
     ) -> None:
-        # pylint: disable=arguments-differ
         self._auth_provider = SessionAuthProvider(
             self, auth_provider, session_storage
         )
@@ -99,9 +97,7 @@ class Logout(AjaxMixin, BaseHandler):
 
 class StaticFileMayBe(StaticFile):
     # pylint: disable=abstract-method
-    def get(self, *args, **kwargs):
-        # pylint: disable=signature-differs
-        # pylint: disable=invalid-overridden-method
+    async def get(self, *args, **kwargs):
         if not os.path.isdir(str(self.root)):
             # spa is probably not installed
             self.set_status(404, "Not Found")

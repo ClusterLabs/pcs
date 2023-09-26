@@ -403,7 +403,6 @@ class ValidateTagUpdateByIds:
             if self._adjacent_idref is None and existing_element_id_list:
                 report_list.append(
                     ReportItem.error(
-                        # pylint: disable=line-too-long
                         reports.messages.TagCannotAddReferenceIdsAlreadyInTheTag(
                             self._tag_id,
                             sorted(existing_element_id_list),
@@ -452,7 +451,6 @@ class ValidateTagUpdateByIds:
             if not remove_difference:
                 report_list.append(
                     ReportItem.error(
-                        # pylint: disable=line-too-long
                         reports.messages.TagCannotRemoveReferencesWithoutRemovingTag(
                             self._tag_id,
                         )

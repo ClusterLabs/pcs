@@ -382,7 +382,7 @@ def update(
     storage_map_remove,
     meta_attributes,
 ):
-    # pylint: disable=too-many-arguments, too-many-locals
+    # pylint: disable=too-many-arguments
     """
     Modify an existing bundle (does not touch encapsulated resources)
 

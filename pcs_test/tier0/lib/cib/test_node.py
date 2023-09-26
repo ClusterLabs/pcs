@@ -20,8 +20,6 @@ from pcs_test.tools.assertions import (
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.xml import etree_to_str
 
-# pylint: disable=protected-access
-
 
 @mock.patch("pcs.lib.cib.node._ensure_node_exists")
 class UpdateNodeInstanceAttrs(TestCase):
@@ -197,6 +195,7 @@ class UpdateNodeInstanceAttrs(TestCase):
 
 
 class EnsureNodeExists(TestCase):
+    # pylint: disable=protected-access
     def setUp(self):
         self.node1 = etree.fromstring(
             """
@@ -279,6 +278,7 @@ class EnsureNodeExists(TestCase):
 
 
 class GetNodeByUname(TestCase):
+    # pylint: disable=protected-access
     def setUp(self):
         self.node1 = etree.fromstring(
             """
@@ -305,6 +305,7 @@ class GetNodeByUname(TestCase):
 
 
 class CreateNode(TestCase):
+    # pylint: disable=protected-access
     def setUp(self):
         self.nodes = etree.Element("nodes")
 

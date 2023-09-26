@@ -1,5 +1,4 @@
 # pylint: disable=too-many-lines
-# pylint: disable=line-too-long
 from unittest import (
     TestCase,
     mock,
@@ -2081,8 +2080,6 @@ class DisableSafeFixturesMixin:
     """
 
     def setUp(self):
-        # pylint does not know this will be mixed into TestCase classes
-        # pylint: disable=invalid-name
         self.env_assist, self.config = get_env_tools(test_case=self)
         tmp_file_patcher = mock.patch("pcs.lib.tools.get_tmp_file")
         self.addCleanup(tmp_file_patcher.stop)

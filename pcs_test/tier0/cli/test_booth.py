@@ -110,8 +110,6 @@ class AddTicketTest(TestCase):
 class DeleteRemoveTicketMixin:
     command = None
 
-    # pylint cannot possibly know this is being mixed into TestCase classes
-    # pylint: disable=invalid-name
     def setUp(self):
         self.lib = mock.Mock(spec_set=["booth"])
         self.lib.booth = mock.Mock(spec_set=["config_ticket_remove"])
@@ -183,8 +181,6 @@ class DeleteRemoveTestMixin(AssertPcsMixin):
     command = None
 
     def setUp(self):
-        # pylint cannot know this will be mixed into a TetsCase class
-        # pylint: disable=invalid-name
         self.lib = mock.Mock(spec_set=["booth"])
         self.lib.booth = mock.Mock(spec_set=["remove_from_cluster"])
 
@@ -385,8 +381,6 @@ class Sync(TestCase):
 
 
 class BoothServiceTestMixin:
-    # pylint cannot possibly know this is being mixed into TestCase classes
-    # pylint: disable=invalid-name
     def setUp(self):
         self.lib = mock.Mock(spec_set=["booth"])
 

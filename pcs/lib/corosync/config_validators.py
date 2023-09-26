@@ -101,8 +101,8 @@ def create(
     force_unresolvable: bool = False,
     force_cluster_name: bool = False,
 ) -> ReportItemList:
-    # pylint: disable=too-many-locals
     # pylint: disable=too-many-branches
+    # pylint: disable=too-many-locals
     # pylint: disable=too-many-statements
     """
     Validate creating a new minimalistic corosync.conf
@@ -409,8 +409,8 @@ def add_nodes(
     pcmk_existing_nodes: Iterable[PacemakerNode],
     force_unresolvable: bool = False,
 ) -> ReportItemList:
-    # pylint: disable=too-many-locals
     # pylint: disable=too-many-branches
+    # pylint: disable=too-many-locals
     # pylint: disable=too-many-statements
     """
     Validate adding nodes to a config with a nonempty nodelist
@@ -794,7 +794,6 @@ def create_link_list_knet(
                         # Links are defined by node addresses. Therefore we
                         # update link options here, we do not create links.
                         ReportItem.error(
-                            # pylint: disable=line-too-long
                             reports.messages.CorosyncLinkDoesNotExistCannotUpdate(
                                 options["linknumber"],
                                 [str(x) for x in range(max_allowed_link_count)],

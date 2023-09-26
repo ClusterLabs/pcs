@@ -15,7 +15,6 @@ class TestUnfenceNodeBase:
         raise NotImplementedError()
 
     def setUp(self):
-        # pylint: disable=invalid-name
         self.env_assist, self.config = get_env_tools(self)
         self.old_devices = ["device1", "device3"]
         self.new_devices = ["device3", "device0", "device2"]

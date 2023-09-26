@@ -10,8 +10,6 @@ from pcs_test.tools.misc import (
 )
 from pcs_test.tools.pcs_runner import PcsRunner
 
-# pylint: disable=line-too-long
-
 coro_conf = rc("corosync.conf")
 coro_qdevice_conf = rc("corosync-3nodes-qdevice.conf")
 coro_qdevice_heuristics_conf = rc("corosync-3nodes-qdevice-heuristics.conf")

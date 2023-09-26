@@ -45,7 +45,6 @@ def add_level(
     force_device=False,
     force_node=False,
 ):
-    # pylint: disable=too-many-arguments
     """
     Validate and add a new fencing level. Raise LibraryError if not valid.
 
@@ -60,6 +59,7 @@ def add_level(
     bool force_device -- continue even if a stonith device does not exist
     bool force_node -- continue even if a node (target) does not exist
     """
+    # pylint: disable=too-many-arguments
     report_list, valid_level = _validate_level(level)
     reporter.report_list(
         report_list

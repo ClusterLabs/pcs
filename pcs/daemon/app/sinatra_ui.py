@@ -29,7 +29,6 @@ class SinatraAjaxProtected(LegacyApiHandler, SinatraMixin, AjaxMixin):
         ruby_pcsd_wrapper: ruby_pcsd.Wrapper,
         auth_provider: AuthProvider,
     ) -> None:
-        # pylint: disable=arguments-differ
         self.initialize_sinatra(ruby_pcsd_wrapper)
         self._auth_provider = SessionAuthProvider(
             self, auth_provider, session_storage

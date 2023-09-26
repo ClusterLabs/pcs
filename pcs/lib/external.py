@@ -19,7 +19,6 @@ from pcs.lib.errors import LibraryError
 
 
 class KillServicesError(Exception):
-    # pylint: disable=super-init-not-called
     def __init__(self, service, message=None, instance=None):
         self.service = service
         self.message = message

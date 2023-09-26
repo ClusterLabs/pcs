@@ -64,7 +64,6 @@ class Scheduler:
         worker_reset_limit -- number of tasks a worker will process
             before restarting itself
         """
-        # pylint: disable=consider-using-with
         self._config = config
         self._proc_pool_manager = mp.Manager()
         self._worker_message_q = self._proc_pool_manager.Queue()
@@ -72,6 +71,7 @@ class Scheduler:
         self._logging_q = self._proc_pool_manager.Queue()
         self._worker_log_listener = self._init_worker_logging()
         self._single_use_process_pool: List[mp.Process] = []
+        # pylint: disable=consider-using-with
         self._proc_pool = mp.Pool(
             processes=self._config.worker_count,
             maxtasksperchild=self._config.worker_reset_limit,

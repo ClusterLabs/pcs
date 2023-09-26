@@ -741,7 +741,6 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
         self.config.fs.isfile(settings.crm_rule_exec, return_value=True)
 
         self.assertEqual(
-            # pylint: disable=line-too-long
             status.full_cluster_status_plaintext(self.env_assist.get_env()),
             dedent(
                 """\
@@ -1097,7 +1096,6 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
 
 
 class FullClusterStatusPlaintextBoothWarning(FullClusterStatusPlaintextBase):
-    # pylint: disable=too-many-public-methods
     def setUp(self):
         super().setUp()
         self._fixture_config_live_minimal()

@@ -36,16 +36,12 @@ fixture_nodes = [
 class Move(
     TestCase,
     get_assert_pcs_effect_mixin(
-        lambda cib: etree.tostring(
-            # pylint:disable=undefined-variable
-            etree.parse(cib).findall(".//resources")[0]
-        )
+        lambda cib: etree.tostring(etree.parse(cib).findall(".//resources")[0])
     ),
 ):
     empty_cib = rc("cib-empty.xml")
 
     def setUp(self):
-        # pylint: disable=invalid-name
         self.temp_cib = get_tmp_file("tier1_cib_resource_move")
         self.pcs_runner = PcsRunner(self.temp_cib.name)
         xml_manip = XmlManipulation.from_file(self.empty_cib)
@@ -61,7 +57,6 @@ class Move(
         write_data_to_tmpfile(str(xml_manip), self.temp_cib)
 
     def tearDown(self):
-        # pylint: disable=invalid-name
         self.temp_cib.close()
 
     def test_move_to_node_with_existing_ban_constraints(self):

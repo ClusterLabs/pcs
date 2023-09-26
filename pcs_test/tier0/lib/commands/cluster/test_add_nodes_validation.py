@@ -1,4 +1,5 @@
-# pylint: disable=too-many-lines,no-member
+# pylint: disable=too-many-lines
+# pylint: disable=no-member
 import json
 import re
 from functools import partial

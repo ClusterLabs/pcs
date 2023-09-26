@@ -19,8 +19,6 @@ from pcs_test.tools.assertions import assert_report_item_equal
 from pcs_test.tools.fixture_crm_mon import complete_state
 from pcs_test.tools.misc import get_test_resource as rc
 
-# pylint: disable=no-self-use, protected-access
-
 
 class AttrsTest(TestCase):
     def test_get_declared_attr(self):
@@ -51,6 +49,7 @@ class ChildrenTest(TestCase):
         )
 
     def wrap(self, element):
+        # pylint: disable=no-self-use
         return "{0}.{1}".format(element.tag, element.attrib["name"])
 
     def test_get_declared_section(self):
@@ -173,6 +172,7 @@ class GetPrimitiveRolesWithNodes(TestCase):
         primitives = [etree.fromstring(xml) for xml in primitives_xml]
 
         self.assertEqual(
+            # pylint: disable=protected-access
             state._get_primitive_roles_with_nodes(primitives),
             {
                 "Started": ["node1", "node5"],
@@ -182,6 +182,7 @@ class GetPrimitiveRolesWithNodes(TestCase):
         )
 
     def test_empty(self):
+        # pylint: disable=protected-access
         self.assertEqual(state._get_primitive_roles_with_nodes([]), {})
 
 
@@ -330,6 +331,7 @@ class GetPrimitivesForStateCheck(TestCase):
         self.assertEqual(
             [
                 elem.attrib["id"]
+                # pylint: disable=protected-access
                 for elem in state._get_primitives_for_state_check(
                     self.status, resource_id, expected_running
                 )
@@ -489,6 +491,7 @@ class CommonResourceState(TestCase):
         self.get_primitive_roles_with_nodes = patcher_roles.start()
 
     def fixture_running_state_info(self):
+        # pylint: disable=no-self-use
         return {
             "Started": ["node1"],
             "Master": ["node2"],

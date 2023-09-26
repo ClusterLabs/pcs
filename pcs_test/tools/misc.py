@@ -77,7 +77,6 @@ def get_test_resource(name):
 
 def get_tmp_dir(name=None):
     """Create a temp directory with a unique name in our test dir"""
-    # pylint: disable=consider-using-with
     tmp_dir = get_test_resource("temp")
     os.makedirs(tmp_dir, exist_ok=True)
     return tempfile.TemporaryDirectory(
@@ -89,7 +88,6 @@ def get_tmp_dir(name=None):
 
 def get_tmp_file(name=None, mode="w+"):
     """Create a temp file with a unique name in our test dir"""
-    # pylint: disable=consider-using-with
     tmp_dir = get_test_resource("temp")
     os.makedirs(tmp_dir, exist_ok=True)
     return tempfile.NamedTemporaryFile(

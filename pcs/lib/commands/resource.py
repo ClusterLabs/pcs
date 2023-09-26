@@ -363,7 +363,8 @@ def create(
     allow_not_suitable_command: bool = False,
     enable_agent_self_validation: bool = False,
 ):
-    # pylint: disable=too-many-arguments, too-many-locals
+    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-locals
     """
     Create a primitive resource in a cib.
 
@@ -471,7 +472,8 @@ def create_as_clone(
     allow_incompatible_clone_meta_attributes: bool = False,
     enable_agent_self_validation: bool = False,
 ):
-    # pylint: disable=too-many-arguments, too-many-locals
+    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-locals
     """
     Create a primitive resource in a clone
 
@@ -619,7 +621,8 @@ def create_in_group(
     allow_not_suitable_command: bool = False,
     enable_agent_self_validation: bool = False,
 ):
-    # pylint: disable=too-many-arguments, too-many-locals
+    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-locals
     """
     Create resource in a cib and put it into defined group
 
@@ -763,7 +766,8 @@ def create_into_bundle(
     allow_not_accessible_resource: bool = False,
     enable_agent_self_validation: bool = False,
 ):
-    # pylint: disable=too-many-arguments, too-many-locals
+    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-locals
     """
     Create a new resource in a cib and put it into an existing bundle
 
@@ -1223,7 +1227,6 @@ def disable_safe(
     strict -- if False, allow resources to be migrated
     wait -- False: no wait, None: wait default timeout, int: wait timeout
     """
-    # pylint: disable=too-many-locals
     if not env.is_cib_live:
         raise LibraryError(
             ReportItem.error(
@@ -1956,7 +1959,6 @@ def _ensure_resource_moved_and_not_moved_back(
     resource_state_before: Dict[str, List[str]],
     node: Optional[str],
 ) -> None:
-    # pylint: disable=too-many-locals
     with get_tmp_cib(report_processor, cib_xml) as rsc_unmove_cib_file:
         if not _was_resource_moved(
             node,

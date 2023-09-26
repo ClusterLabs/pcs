@@ -22,12 +22,10 @@ empty_cib_rules = rc("cib-empty-3.4.xml")
 
 class TestDefaultsMixin:
     def setUp(self):
-        # pylint: disable=invalid-name
         self.temp_cib = get_tmp_file("tier1_cib_options")
         self.pcs_runner = PcsRunner(self.temp_cib.name)
 
     def tearDown(self):
-        # pylint: disable=invalid-name
         self.temp_cib.close()
 
 
@@ -452,7 +450,6 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
 class RscDefaultsSetCreate(
     get_assert_pcs_effect_mixin(
         lambda cib: etree.tostring(
-            # pylint:disable=undefined-variable
             etree.parse(cib).findall(".//rsc_defaults")[0]
         )
     ),
@@ -498,7 +495,6 @@ class RscDefaultsSetCreate(
 class OpDefaultsSetCreate(
     get_assert_pcs_effect_mixin(
         lambda cib: etree.tostring(
-            # pylint:disable=undefined-variable
             etree.parse(cib).findall(".//op_defaults")[0]
         )
     ),
@@ -629,7 +625,6 @@ class DefaultsSetDeleteMixin(TestDefaultsMixin, AssertPcsMixin):
 class RscDefaultsSetDelete(
     get_assert_pcs_effect_mixin(
         lambda cib: etree.tostring(
-            # pylint:disable=undefined-variable
             etree.parse(cib).findall(".//rsc_defaults")[0]
         )
     ),
@@ -644,7 +639,6 @@ class RscDefaultsSetDelete(
 class OpDefaultsSetDelete(
     get_assert_pcs_effect_mixin(
         lambda cib: etree.tostring(
-            # pylint:disable=undefined-variable
             etree.parse(cib).findall(".//op_defaults")[0]
         )
     ),
@@ -711,7 +705,6 @@ class DefaultsSetUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
 class RscDefaultsSetUpdate(
     get_assert_pcs_effect_mixin(
         lambda cib: etree.tostring(
-            # pylint:disable=undefined-variable
             etree.parse(cib).findall(".//rsc_defaults")[0]
         )
     ),
@@ -726,7 +719,6 @@ class RscDefaultsSetUpdate(
 class OpDefaultsSetUpdate(
     get_assert_pcs_effect_mixin(
         lambda cib: etree.tostring(
-            # pylint:disable=undefined-variable
             etree.parse(cib).findall(".//op_defaults")[0]
         )
     ),
@@ -855,7 +847,6 @@ class DefaultsUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
 class RscDefaultsUpdate(
     get_assert_pcs_effect_mixin(
         lambda cib: etree.tostring(
-            # pylint:disable=undefined-variable
             etree.parse(cib).findall(".//rsc_defaults")[0]
         )
     ),
@@ -870,7 +861,6 @@ class RscDefaultsUpdate(
 class OpDefaultsUpdate(
     get_assert_pcs_effect_mixin(
         lambda cib: etree.tostring(
-            # pylint:disable=undefined-variable
             etree.parse(cib).findall(".//op_defaults")[0]
         )
     ),

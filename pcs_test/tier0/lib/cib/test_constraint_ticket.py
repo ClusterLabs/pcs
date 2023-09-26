@@ -183,7 +183,7 @@ class PrepareOptionsPlainTest(TestCase):
         )
 
     def test_refuse_unknown_lost_policy(self, mock_check_new_id_applicable):
-        # pylint: disable=unused-argument
+        del mock_check_new_id_applicable
         assert_raise_library_error(
             lambda: self.prepare(
                 {"loss-policy": "unknown", "id": "id"},
@@ -339,7 +339,6 @@ class PrepareOptionsWithSetTest(TestCase):
 
 
 class Element:
-    # pylint: disable=too-few-public-methods
     def __init__(self, attrib):
         self.attrib = attrib
 

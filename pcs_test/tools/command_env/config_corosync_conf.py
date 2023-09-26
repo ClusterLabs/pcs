@@ -31,7 +31,6 @@ class CorosyncConf:
         auto_tie_breaker=None,
         instead=None,
     ):
-        # pylint: disable=too-many-locals
         with open(rc(filename)) as a_file:
             content = a_file.read()
         corosync_conf = None

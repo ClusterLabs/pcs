@@ -20,7 +20,6 @@ class QdeviceBase(
 
 
 class Stop(SimpleResponseProcessingMixin, QdeviceBase):
-    # pylint: disable=too-many-ancestors
     def _get_request_data(self):
         return RequestData("remote/qdevice_client_stop")
 

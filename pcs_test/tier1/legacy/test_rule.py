@@ -24,7 +24,6 @@ from pcs_test.tools.misc import (
 from pcs_test.tools.pcs_runner import PcsRunner
 
 # pylint: disable=invalid-name
-# pylint: disable=line-too-long
 
 empty_cib = rc("cib-empty-3.2.xml")
 empty_cib_new_roles_supported = rc("cib-empty-3.7.xml")

@@ -12,9 +12,14 @@ extension-pkg-whitelist=lxml.etree,pycurl
 load-plugins=pylint.extensions.no_self_use
 
 [MESSAGES CONTROL]
-# line-too-long and trailing-whitespace is handled by black
-# wrong-import-order is handled by isort
-disable=fixme, line-too-long, missing-docstring, trailing-whitespace, consider-using-f-string, unspecified-encoding, wrong-import-order, use-dict-literal
+# consider-using-f-string - not critical, plus we use str.format() for readability
+# fixme - TODO is used to mark e.g. deprecations which are to be resolved in next pcs major version
+# line-too-long - handled by black
+# missing-docstring - we dont require pointless docstring to be present
+# trailing-whitespace - handled by black
+# use-dict-literal - lot of dict() in code to be replaced, not worth the effort now
+# wrong-import-order - handled by isort
+disable=consider-using-f-string, fixme, line-too-long, missing-docstring, unspecified-encoding, use-dict-literal, wrong-import-order
 # Everything in module context is a constant, but our naming convention allows
 # constants to have the same name format as variables
 const-rgx=(([A-Z_][A-Z0-9_]*)|(__.*__))|([a-z_][a-z0-9_]*)$
@@ -26,7 +31,7 @@ max-parents=10
 min-public-methods=0
 
 [BASIC]
-good-names=e, i, op, ip, el, maxDiff, cm, ok, T, dr
+good-names=e, i, op, ip, el, maxDiff, cm, ok, T, dr, setUp, tearDown
 
 [VARIABLES]
 # A regular expression matching the name of dummy variables (i.e. expectedly

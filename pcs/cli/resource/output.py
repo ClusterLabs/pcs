@@ -166,7 +166,6 @@ def resource_agent_metadata_to_text(
     default_operations: List[CibResourceOperationDto],
     verbose: bool = False,
 ) -> List[str]:
-    # pylint: disable=too-many-branches
     output = []
     _is_stonith = is_stonith(metadata.name)
     agent_name = (

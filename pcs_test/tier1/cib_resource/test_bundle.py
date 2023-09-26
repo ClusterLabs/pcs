@@ -13,8 +13,6 @@ from pcs_test.tools.misc import (
 )
 from pcs_test.tools.pcs_runner import PcsRunner
 
-# pylint: disable=too-many-public-methods
-
 ERRORS_HAVE_OCCURRED = (
     "Error: Errors have occurred, therefore pcs is unable to continue\n"
 )
@@ -23,10 +21,7 @@ ERRORS_HAVE_OCCURRED = (
 class BundleCreateCommon(
     TestCase,
     get_assert_pcs_effect_mixin(
-        lambda cib: etree.tostring(
-            # pylint:disable=undefined-variable
-            etree.parse(cib).findall(".//resources")[0]
-        )
+        lambda cib: etree.tostring(etree.parse(cib).findall(".//resources")[0])
     ),
 ):
     empty_cib = rc("cib-empty.xml")
@@ -296,6 +291,7 @@ class BundleCreate(BundleCreateCommon):
 
 
 class BundleUpdate(BundleCreateCommon):
+    # pylint: disable=too-many-public-methods
     empty_cib = rc("cib-empty.xml")
 
     success_xml = """

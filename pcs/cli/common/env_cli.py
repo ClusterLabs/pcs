@@ -1,5 +1,5 @@
 class Env:
-    # pylint: disable=too-many-instance-attributes, too-few-public-methods
+    # pylint: disable=too-many-instance-attributes
     def __init__(self):
         self.cib_data = None
         self.user = None

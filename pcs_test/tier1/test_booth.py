@@ -24,15 +24,11 @@ EMPTY_CIB = rc("cib-empty.xml")
 
 class BoothMixinNoFiles(AssertPcsMixin):
     def setUp(self):
-        # pylint cannot possibly know this is being mixed into TestCase classes
-        # pylint: disable=invalid-name
         self.pcs_runner = PcsRunner(None)
 
 
 class BoothMixin(AssertPcsMixin):
     def setUp(self):
-        # pylint cannot possibly know this is being mixed into TestCase classes
-        # pylint: disable=invalid-name
         self.booth_dir = get_tmp_dir("tier1_booth")
         self.booth_cfg_path = os.path.join(self.booth_dir.name, "booth.cfg")
         self.booth_key_path = os.path.join(self.booth_dir.name, "booth.key")
@@ -47,8 +43,6 @@ class BoothMixin(AssertPcsMixin):
         )
 
     def tearDown(self):
-        # pylint cannot possibly know this is being mixed into TestCase classes
-        # pylint: disable=invalid-name
         self.temp_cib.close()
         self.booth_dir.cleanup()
 
@@ -70,13 +64,11 @@ class BoothMixin(AssertPcsMixin):
             os.remove(self.booth_key_path)
 
     def assert_pcs_success(self, command, *args, **kwargs):
-        # pylint: disable=signature-differs
         return super().assert_pcs_success(
             self.fake_file(command), *args, **kwargs
         )
 
     def assert_pcs_fail(self, command, *args, **kwargs):
-        # pylint: disable=signature-differs
         return super().assert_pcs_fail(self.fake_file(command), *args, **kwargs)
 
     def assert_pcs_fail_original(self, *args, **kwargs):
@@ -411,15 +403,11 @@ class DeleteRemoveTestMixin(AssertPcsMixin):
     command = None
 
     def setUp(self):
-        # pylint cannot know this will be mixed into a TetsCase class
-        # pylint: disable=invalid-name
         self.temp_cib = get_tmp_file("tier1_booth_delete_remove")
         write_file_to_tmpfile(EMPTY_CIB, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
 
     def tearDown(self):
-        # pylint cannot possibly know this is being mixed into TestCase classes
-        # pylint: disable=invalid-name
         self.temp_cib.close()
 
     def test_usage(self):
@@ -440,7 +428,6 @@ class DeleteRemoveTestMixin(AssertPcsMixin):
         self.assert_pcs_fail(
             ["booth", self.command],
             [
-                # pylint: disable=line-too-long
                 "Error: booth instance 'booth' not found in cib",
                 "Error: Errors have occurred, therefore pcs is unable to continue",
             ],

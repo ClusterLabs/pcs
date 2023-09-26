@@ -10,8 +10,6 @@ from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal
 from pcs_test.tools.custom_mock import patch_getaddrinfo
 
-# pylint: disable=no-self-use
-
 forbidden_characters_kwargs = dict(
     allowed_values=None,
     cannot_be_empty=False,
@@ -182,6 +180,7 @@ class AddNodes(TestCase):
         )
 
     def test_nodename_already_used(self):
+        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             config_validators.add_nodes(
                 [
@@ -352,6 +351,7 @@ class AddNodes(TestCase):
         )
 
     def test_node_addrs_not_unique(self):
+        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             config_validators.add_nodes(
                 [
@@ -403,6 +403,7 @@ class AddNodes(TestCase):
         )
 
     def test_node_addrs_already_used(self):
+        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             config_validators.add_nodes(
                 [
@@ -425,6 +426,7 @@ class AddNodes(TestCase):
         )
 
     def test_node_addrs_ip_version_ok(self):
+        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             config_validators.add_nodes(
                 [
@@ -475,6 +477,7 @@ class AddNodes(TestCase):
         )
 
     def test_node_addrs_ip_version_mismatch(self):
+        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             config_validators.add_nodes(
                 [
@@ -496,6 +499,7 @@ class AddNodes(TestCase):
         )
 
     def test_node_addrs_mismatch_existing_links(self):
+        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             config_validators.add_nodes(
                 [
@@ -531,6 +535,7 @@ class AddNodes(TestCase):
         )
 
     def test_node_addrs_ip_version_mismatch_complex(self):
+        # pylint: disable=no-self-use
         # several cases tested:
         # * not all links are defined - testing link indexes in reports
         # * link 1 - unresolvable addresses do not trigger ip mismatch reports

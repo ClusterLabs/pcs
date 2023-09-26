@@ -100,7 +100,6 @@ def fixture_cmd_output(no_cluster_uuid=False):
 
 
 class ClusterConfigMixin(AssertPcsMixin):
-    # pylint: disable=invalid-name
     command = None
 
     def setUp(self):
@@ -171,7 +170,6 @@ class ClusterConfigShow(ClusterConfigMixin, TestCase):
 
 
 class ClusterConfigNoUuid(AssertPcsMixin, TestCase):
-    # pylint: disable=invalid-name
     def setUp(self):
         self.corosync_conf_file_no_uuid = get_tmp_file(
             "tier1_cluster_config_show_corosync_no_uuid.conf"

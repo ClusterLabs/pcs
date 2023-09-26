@@ -45,9 +45,6 @@ def start_tag_error_text():
 class AssertPcsMixin:
     """Run pcs command and assert its result"""
 
-    # pylint: disable=too-many-arguments
-    # pylint: disable=too-many-locals
-
     def assert_pcs_success_all(self, command_list):
         for command in command_list:
             stdout, stderr, retval = self.pcs_runner.run(command)
@@ -70,6 +67,7 @@ class AssertPcsMixin:
         stderr_regexp=None,
         despace=False,
     ):
+        # pylint: disable=too-many-arguments
         # It is common that successful commands don't print anything, so we
         # default stdout and stderr to an empty string if not specified
         # otherwise.
@@ -155,6 +153,7 @@ class AssertPcsMixin:
         returncode=0,
         despace=False,
     ):
+        # pylint: disable=too-many-arguments
         self.__check_output_specified(
             stdout_full, stdout_start, stdout_regexp, "stdout"
         )

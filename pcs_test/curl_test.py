@@ -1,7 +1,9 @@
 # This module is intended to test just the new Communicator/MultiringCommunicator
 # classes which are using curllib
 
-# pylint: disable=wrong-import-position, no-member, protected-access
+# pylint: disable=no-member
+# pylint: disable=protected-access
+# pylint: disable=wrong-import-position
 
 import logging
 import os.path

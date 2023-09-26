@@ -14,7 +14,6 @@ from pcs_test.tools.command_env import get_env_tools
 # This class does not focusing on validation testing, there are validator tests
 # for that in pcs_test.tier0.lib.cib.test_tag
 class TestTagUpdate(TestCase):
-    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.config.runner.cib.load(
@@ -191,7 +190,6 @@ class TestTagUpdate(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    # pylint: disable=line-too-long
                     reports.codes.TAG_CANNOT_REMOVE_REFERENCES_WITHOUT_REMOVING_TAG,
                     tag_id="t",
                 )

@@ -38,7 +38,6 @@ class NodeTargetFactory(TestCase):
         )
 
     def test_get_target_not_found(self):
-        # pylint: disable=invalid-name
         with self.assertRaises(lib.HostNotFound) as cm:
             self.factory.get_target(self.unknown_name)
         self.assertEqual(self.unknown_name, cm.exception.name)
@@ -269,7 +268,7 @@ class ResponseTest(TestCase):
 
 @mock.patch("pcs.common.node_communicator.pycurl.Curl")
 class CreateRequestHandleTest(TestCase):
-    # pylint: disable=no-member, protected-access
+    # pylint: disable=no-member
     _common_opts = {
         pycurl.PROTOCOLS: pycurl.PROTO_HTTPS,
         pycurl.VERBOSE: 1,
@@ -299,6 +298,7 @@ class CreateRequestHandleTest(TestCase):
             "name1": "val1",
             "name2": "val2",
         }
+        # pylint: disable=protected-access
         handle = lib._create_request_handle(request, cookies, 1)
         expected_opts = {
             pycurl.TIMEOUT: 1,
@@ -328,6 +328,7 @@ class CreateRequestHandleTest(TestCase):
         request = lib.Request(
             lib.RequestTarget("label"), lib.RequestData("action")
         )
+        # pylint: disable=protected-access
         handle = lib._create_request_handle(request, {}, 10)
         expected_opts = {
             pycurl.TIMEOUT: 10,
@@ -390,7 +391,6 @@ class CommunicatorSimpleTest(CommunicatorBaseTest):
         return response
 
     def assert_common_checks(self, com, response):
-        # pylint: disable=protected-access
         self.assertEqual(response.handle.error is None, response.was_connected)
         self.mock_com_log.log_request_start.assert_called_once_with(
             response.request
@@ -398,6 +398,7 @@ class CommunicatorSimpleTest(CommunicatorBaseTest):
         self.mock_com_log.log_response.assert_called_once_with(response)
         self.assertEqual(0, self.mock_com_log.log_retry.call_count)
         self.assertEqual(0, self.mock_com_log.log_no_more_addresses.call_count)
+        # pylint: disable=protected-access
         com._multi_handle.assert_no_handle_left()
 
     def test_simple(self, mock_create_handle, _):

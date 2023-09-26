@@ -1,4 +1,3 @@
-# pylint: disable=global-statement
 import json
 import os
 import signal
@@ -50,7 +49,8 @@ def get_token_for_localhost() -> str:
 
 def get_signal_handler(token: str):
     def signal_handler(sig, frame):
-        # pylint: disable=unused-argument
+        # pylint: disable=global-statement
+        del frame
         if sig == signal.SIGINT:
             global kill_requested
             if not task_ident:
@@ -143,9 +143,10 @@ def error(text: str) -> None:
 def fetch_task_result(
     task_ident_dto: TaskIdentDto, auth_token: str, sleep_interval: float = 0.3
 ) -> TaskResultDto:
-    task_state = TaskState.CREATED
+    # pylint: disable=global-statement
     # Using global report list to recall reports in signal handler
     global report_list
+    task_state = TaskState.CREATED
     while task_state != TaskState.FINISHED:
         response = make_api_request_get(
             "task/result",
@@ -169,11 +170,12 @@ def fetch_task_result(
 
 
 def perform_command(command_dto: CommandDto, auth_token: str) -> TaskResultDto:
+    # pylint: disable=global-statement
+    global task_ident
     response = make_api_request_post(
         "task/create", json.dumps(to_dict(command_dto)), auth_token
     )
     task_ident_dto = from_dict(TaskIdentDto, json.loads(response))
-    global task_ident
     task_ident = task_ident_dto.task_ident
 
     task_result_dto = fetch_task_result(task_ident_dto, auth_token)

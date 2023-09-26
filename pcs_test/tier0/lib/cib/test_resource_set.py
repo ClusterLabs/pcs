@@ -18,8 +18,6 @@ from pcs_test.tools.assertions import (
 )
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
-# pylint: disable=no-self-use
-
 
 class PrepareSetTest(TestCase):
     def setUp(self):
@@ -82,6 +80,7 @@ class PrepareSetTest(TestCase):
 
 class CreateTest(TestCase):
     def test_resource_set_to_parent(self):
+        # pylint: disable=no-self-use
         constraint_element = etree.Element("constraint")
         resource_set.create(
             constraint_element,

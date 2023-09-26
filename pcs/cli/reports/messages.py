@@ -58,7 +58,6 @@ class CliReportMessage:
 
 
 class CliReportMessageCustom(CliReportMessage):
-    # pylint: disable=no-member
     _obj: item.ReportItemMessage
 
     def __init__(self, dto_obj: dto.ReportItemMessageDto) -> None:

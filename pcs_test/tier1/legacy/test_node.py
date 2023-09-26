@@ -24,18 +24,13 @@ from pcs_test.tools.pcs_runner import (
     pcs,
 )
 
-# pylint: disable=invalid-name, line-too-long
-
 empty_cib = rc("cib-empty-withnodes.xml")
 
 
 class NodeUtilizationSet(
     TestCase,
     get_assert_pcs_effect_mixin(
-        lambda cib: etree.tostring(
-            # pylint:disable=undefined-variable
-            etree.parse(cib).findall(".//nodes")[0]
-        )
+        lambda cib: etree.tostring(etree.parse(cib).findall(".//nodes")[0])
     ),
 ):
     def setUp(self):
@@ -640,10 +635,7 @@ class NodeMaintenance(TestCase, AssertPcsMixin):
 class NodeAttributeTest(
     TestCase,
     get_assert_pcs_effect_mixin(
-        lambda cib: etree.tostring(
-            # pylint:disable=undefined-variable
-            etree.parse(cib).findall(".//nodes")[0]
-        )
+        lambda cib: etree.tostring(etree.parse(cib).findall(".//nodes")[0])
     ),
 ):
     # pylint: disable=too-many-public-methods
@@ -665,6 +657,7 @@ class NodeAttributeTest(
                     '<instance_attributes id="nodes-{0}">'.format(node_id),
                 ]
             )
+            # pylint: disable=invalid-name
             nv = '<nvpair id="nodes-{id}-{name}" name="{name}" value="{val}"/>'
             for name, value in attrs.get(node_name, {}).items():
                 xml_lines.append(nv.format(id=node_id, name=name, val=value))

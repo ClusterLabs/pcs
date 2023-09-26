@@ -200,10 +200,7 @@ def fixture_clone_stonith_msg(forced=False, group=False):
 class Unclone(
     TestCase,
     get_assert_pcs_effect_mixin(
-        lambda cib: etree.tostring(
-            # pylint:disable=undefined-variable
-            etree.parse(cib).findall(".//resources")[0]
-        )
+        lambda cib: etree.tostring(etree.parse(cib).findall(".//resources")[0])
     ),
 ):
     empty_cib = rc("cib-empty.xml")
@@ -225,7 +222,6 @@ class Unclone(
         )
 
     def setUp(self):
-        # pylint: disable=invalid-name
         self.temp_cib = get_tmp_file("tier1_cib_resource_group_ungroup")
         self.pcs_runner = PcsRunner(self.temp_cib.name)
         xml_manip = XmlManipulation.from_file(self.empty_cib)
@@ -252,7 +248,6 @@ class Unclone(
         write_data_to_tmpfile(str(xml_manip), self.temp_cib)
 
     def tearDown(self):
-        # pylint: disable=invalid-name
         self.temp_cib.close()
 
     def test_nonexistent_clone(self):
@@ -289,10 +284,7 @@ class Unclone(
 class Clone(
     TestCase,
     get_assert_pcs_effect_mixin(
-        lambda cib: etree.tostring(
-            # pylint:disable=undefined-variable
-            etree.parse(cib).findall(".//resources")[0]
-        )
+        lambda cib: etree.tostring(etree.parse(cib).findall(".//resources")[0])
     ),
 ):
     # pylint: disable=too-many-public-methods

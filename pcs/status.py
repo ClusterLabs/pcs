@@ -11,8 +11,6 @@ from pcs.lib.pacemaker.live import get_cluster_status_dom
 from pcs.lib.pacemaker.state import ClusterState
 from pcs.pcsd import pcsd_status_cmd
 
-# pylint: disable=too-many-branches, too-many-locals, too-many-statements
-
 
 def full_status(lib, argv, modifiers):
     """
@@ -49,6 +47,9 @@ def nodes_status(lib, argv, modifiers):
 
     NOTE: modifiers check is in subcommand
     """
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-statements
     del lib
     if len(argv) == 1 and (argv[0] == "config"):
         modifiers.ensure_only_supported("-f", "--corosync_conf")

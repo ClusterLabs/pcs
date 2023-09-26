@@ -75,7 +75,6 @@ class ConstraintConfigCmdMixin:
     orig_cib_file_path = get_test_resource("cib-all.xml")
 
     def setUp(self):
-        # pylint: disable=invalid-name
         self.new_cib_file = get_tmp_file(self._get_tmp_file_name())
         self.pcs_runner_orig = PcsRunner(cib_file=self.orig_cib_file_path)
         self.pcs_runner_new = PcsRunner(cib_file=self.new_cib_file.name)
@@ -93,7 +92,6 @@ class ConstraintConfigCmdMixin:
         self.maxDiff = None
 
     def tearDown(self):
-        # pylint: disable=invalid-name
         self.new_cib_file.close()
 
     def _get_as_json(self, runner, use_all):

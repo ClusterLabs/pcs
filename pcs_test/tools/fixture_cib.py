@@ -17,8 +17,6 @@ from pcs_test.tools.misc import (
 from pcs_test.tools.pcs_runner import PcsRunner
 from pcs_test.tools.xml import etree_to_str
 
-# pylint: disable=line-too-long
-
 
 class CachedCibFixture(AssertPcsMixin):
     def __init__(self, cache_name, empty_cib_path):

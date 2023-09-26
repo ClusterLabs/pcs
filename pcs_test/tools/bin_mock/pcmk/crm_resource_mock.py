@@ -1,7 +1,3 @@
-# pylint: disable=invalid-name
-# pylint: disable=missing-docstring
-# pylint: disable=too-many-branches
-
 import os.path
 import sys
 
@@ -30,6 +26,7 @@ def get_arg_values(argv, name):
 
 
 def main():
+    # pylint: disable=too-many-branches
     argv = sys.argv[1:]
     if not argv:
         raise AssertionError()

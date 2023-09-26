@@ -139,7 +139,6 @@ class ValidateMoveResourcesToGroup(TestCase):
         )
 
     def test_adjacent_resource_not_in_the_group(self):
-        # pylint: disable=line-too-long
         assert_report_item_list_equal(
             self._validate("G", ["R1"], "R2"),
             [
@@ -154,7 +153,6 @@ class ValidateMoveResourcesToGroup(TestCase):
         )
 
     def test_adjacent_resource_in_another_group(self):
-        # pylint: disable=line-too-long
         assert_report_item_list_equal(
             self._validate("G", ["R1"], "RGX"),
             [
@@ -312,7 +310,7 @@ class ValidateMoveResourcesToGroup(TestCase):
 
 
 class ValidateMoveBanClearMixin:
-    # pylint: disable=too-many-public-methods,line-too-long
+    # pylint: disable=too-many-public-methods
     @staticmethod
     def _fixture_clone(promotable=False):
         return etree.fromstring(

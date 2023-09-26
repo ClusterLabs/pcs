@@ -305,13 +305,13 @@ class CreateQuorumOptions(BaseQuorumOptions, TestCase):
 
 
 class QuorumOptionsUpdate(BaseQuorumOptions, TestCase):
-    # pylint: disable=no-self-use
     def setUp(self):
         self.validator = lambda options, has_qdevice: (
             config_validators.update_quorum_options(options, has_qdevice, {})
         )
 
     def test_last_man_standing_required_currently_disabled(self):
+        # pylint: disable=no-self-use
         has_qdevice = False
         assert_report_item_list_equal(
             config_validators.update_quorum_options(
@@ -335,6 +335,7 @@ class QuorumOptionsUpdate(BaseQuorumOptions, TestCase):
         )
 
     def test_last_man_standing_required_currently_enabled(self):
+        # pylint: disable=no-self-use
         has_qdevice = False
         assert_report_item_list_equal(
             config_validators.update_quorum_options(

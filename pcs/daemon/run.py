@@ -52,14 +52,13 @@ from pcs.lib.auth.provider import AuthProvider
 
 
 class SignalInfo:
-    # pylint: disable=too-few-public-methods
     async_scheduler: Optional[Scheduler] = None
     server_manage = None
     ioloop_started = False
 
 
 def handle_signal(incoming_signal, frame):
-    # pylint: disable=unused-argument
+    del frame
     log.pcsd.warning("Caught signal: %s, shutting down", incoming_signal)
     if SignalInfo.server_manage:
         SignalInfo.server_manage.stop()
@@ -95,7 +94,6 @@ def configure_app(
     debug: bool = False,
 ):
     # pylint: disable=too-many-arguments
-    # pylint: disable=too-many-statements
     def make_app(https_server_manage: HttpsServerManage):
         """
         https_server_manage -- allows to control the server (specifically

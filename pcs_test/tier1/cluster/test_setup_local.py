@@ -255,7 +255,6 @@ class SetupLocal(AssertPcsMixin, TestCase):
         )
 
     def test_failure(self):
-        # pylint: disable=line-too-long
         self.fixture_known_hosts([])
         self.assert_pcs_fail(
             (

@@ -1,4 +1,3 @@
-# pylint: disable=protected-access
 from unittest import TestCase
 
 from pcs.common import str_tools as tools
@@ -49,6 +48,7 @@ class FormatOptionalTest(TestCase):
 
 
 class IsMultipleTest(TestCase):
+    # pylint: disable=protected-access
     def test_unsupported(self):
         def empty_func():
             pass
@@ -102,6 +102,7 @@ class IsMultipleTest(TestCase):
 
 
 class AddSTest(TestCase):
+    # pylint: disable=protected-access
     def test_add_s(self):
         self.assertEqual(tools._add_s("fedora"), "fedoras")
 

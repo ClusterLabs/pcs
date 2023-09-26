@@ -9,8 +9,6 @@ from pcs_test.tools.fixture_crm_mon import complete_state
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.xml import etree_to_str
 
-# pylint: disable=too-many-arguments
-
 DEFAULT_WAIT_TIMEOUT = 10
 WAIT_TIMEOUT_EXPIRED_RETURNCODE = 124
 AGENT_FILENAME_MAP = {
@@ -30,6 +28,7 @@ RULE_NOT_YET_IN_EFFECT_RETURNCODE = 111
 
 
 class PcmkShortcuts:
+    # pylint: disable=too-many-arguments
     # pylint: disable=too-many-public-methods
     def __init__(self, calls):
         self.__calls = calls

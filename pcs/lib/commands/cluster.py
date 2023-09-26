@@ -209,7 +209,6 @@ def setup(
     # pylint: disable=too-many-arguments
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-statements
-    # pylint: disable=too-many-branches
     """
     Set up cluster on specified nodes.
     Validation of the inputs is done here. Possible existing clusters are
@@ -846,7 +845,9 @@ def add_nodes(
     no_watchdog_validation=False,
     force_flags: Collection[reports.types.ForceCode] = (),
 ):
-    # pylint: disable=too-many-locals, too-many-statements, too-many-branches
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-statements
     """
     Add specified nodes to the local cluster
     Raise LibraryError on any error.
@@ -1128,7 +1129,6 @@ def add_nodes(
             # Do not send watchdog if validation is turned off. Listing of
             # available watchdogs in pcsd may restart the machine in some
             # corner cases.
-            # pylint: disable=unexpected-keyword-arg
             com_cmd_sbd.add_request(
                 new_node_target,
                 watchdog="" if no_watchdog_validation else new_node["watchdog"],
@@ -1185,7 +1185,6 @@ def add_nodes(
         com_cmd_sbd_cfg = SetSbdConfig(env.report_processor)
         for new_node_target in new_nodes_target_list:
             new_node = new_nodes_dict[new_node_target.label]
-            # pylint: disable=too-many-function-args
             com_cmd_sbd_cfg.add_request(
                 new_node_target,
                 sbd.create_sbd_config(
@@ -1720,7 +1719,9 @@ def remove_nodes(
     node_list,
     force_flags: Collection[reports.types.ForceCode] = (),
 ):
-    # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-statements
     """
     Remove nodes from a cluster.
 

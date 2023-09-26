@@ -832,8 +832,7 @@ class InvalidIdBadChar(ReportItemMessage):
     is_first_char -- is it the first character which is forbidden?
     """
 
-    # pylint: disable=invalid-name, redefined-builtin
-    id: str
+    id: str  # pylint: disable=invalid-name
     id_description: str
     invalid_character: str
     is_first_char: bool
@@ -1617,7 +1616,6 @@ class ParseErrorCorosyncConfMissingSectionNameBeforeOpeningBrace(
     Corosync config cannot be parsed due to a section name missing before {
     """
 
-    # pylint: disable=line-too-long
     _code = (
         codes.PARSE_ERROR_COROSYNC_CONF_MISSING_SECTION_NAME_BEFORE_OPENING_BRACE
     )
@@ -1650,7 +1648,6 @@ class ParseErrorCorosyncConfExtraCharactersBeforeOrAfterClosingBrace(
     Corosync config cannot be parsed due to extra characters before or after }
     """
 
-    # pylint: disable=line-too-long
     _code = (
         codes.PARSE_ERROR_COROSYNC_CONF_EXTRA_CHARACTERS_BEFORE_OR_AFTER_CLOSING_BRACE
     )
@@ -2622,8 +2619,7 @@ class IdAlreadyExists(ReportItemMessage):
     id -- existing id
     """
 
-    # pylint: disable=invalid-name, redefined-builtin
-    id: str
+    id: str  # pylint: disable=invalid-name
     _code = codes.ID_ALREADY_EXISTS
 
     @property
@@ -2639,8 +2635,7 @@ class IdBelongsToUnexpectedType(ReportItemMessage):
     But id does not belong to group.
     """
 
-    # pylint: disable=invalid-name, redefined-builtin
-    id: str
+    id: str  # pylint: disable=invalid-name
     expected_types: List[str]
     current_type: str
     _code = codes.ID_BELONGS_TO_UNEXPECTED_TYPE
@@ -2689,8 +2684,7 @@ class IdNotFound(ReportItemMessage):
     context_id -- specifies the search area
     """
 
-    # pylint: disable=invalid-name, redefined-builtin
-    id: str
+    id: str  # pylint: disable=invalid-name
     expected_types: List[str]
     context_type: str = ""
     context_id: str = ""
@@ -6328,7 +6322,6 @@ class ResourceMoveAutocleanSimulationFailure(ReportItemMessage):
 
 @dataclass(frozen=True)
 class ParseErrorJsonFile(ReportItemMessage):
-    # pylint: disable=too-many-instance-attributes
     """
     Unable to parse a file with JSON data
 

@@ -34,7 +34,6 @@ TOTEM_OPTIONS = {
 
 
 class CheckLiveMixin:
-    # pylint: disable=invalid-name
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
 

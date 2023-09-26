@@ -57,7 +57,6 @@ def _rule_dto_to_lines(
 def _date_dto_to_lines(
     rule_expr: CibRuleExpressionDto, with_ids: bool = False
 ) -> List[str]:
-    # pylint: disable=too-many-branches
     operation = rule_expr.options.get("operation", None)
 
     if operation == "date_spec":

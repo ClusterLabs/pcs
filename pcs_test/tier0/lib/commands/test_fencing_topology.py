@@ -19,8 +19,6 @@ from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 from pcs_test.tools.misc import create_patcher
 
-# pylint: disable=no-self-use
-
 create_lib_env = partial(
     LibraryEnvironment,
     mock.MagicMock(logging.Logger),
@@ -46,6 +44,7 @@ class AddLevel(TestCase):
         mock_get_topology,
         mock_get_resources,
     ):
+        # pylint: disable=no-self-use
         mock_get_cib.return_value = "mocked cib"
         mock_status_dom.return_value = "mock get_cluster_status_dom"
         mock_status.return_value = mock.MagicMock(
@@ -62,6 +61,7 @@ class AddLevel(TestCase):
         mock_get_resources,
         mock_push_cib,
     ):
+        # pylint: disable=no-self-use
         mock_status_dom.assert_called_once_with()
         mock_status.assert_called_once_with("mock get_cluster_status_dom")
         mock_get_topology.assert_called_once_with("mocked cib")
@@ -242,6 +242,7 @@ class GetConfig(TestCase):
 @patch_env("get_cib", lambda self: "mocked cib")
 class RemoveAllLevels(TestCase):
     def test_success(self, mock_push_cib, mock_get_topology, mock_remove):
+        # pylint: disable=no-self-use
         mock_get_topology.return_value = "topology el"
         lib_env = create_lib_env()
 
@@ -469,6 +470,7 @@ class Verify(TestCase):
         mock_get_resources,
         mock_verify,
     ):
+        # pylint: disable=no-self-use
         mock_status_dom.return_value = "mock get_cluster_status_dom"
         mock_status.return_value = mock.MagicMock(
             node_section=mock.MagicMock(nodes="nodes")
