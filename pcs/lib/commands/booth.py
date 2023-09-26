@@ -630,10 +630,8 @@ def _ticket_operation(
 
     if not site_ip:
         site_error = LibraryError(
-                        ReportItem.error(
-                            reports.messages.BoothCannotDetermineLocalSiteIp()
-                        )
-                    )
+            ReportItem.error(reports.messages.BoothCannotDetermineLocalSiteIp())
+        )
         try:
             cib = env.get_cib()
         except LibraryError as e:

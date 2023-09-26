@@ -21,12 +21,15 @@
   created by moving resources ([rhbz#2111583])
 - Fixed validation for interval and timeout option values of an operation
   specified for `pcs resource create` command ([rhbz#2233766]).
+- Improved error message of `pcs booth ticket grant|revoke` commands in case a
+  booth site address parameter is needed ([RHEL-8467])
 
 ### Changed
 - Allow `tls` and `keep_active_partition_tie_breaker` options for qdevice model
   "net" to be set using `pcs quorum device add` and `pcs quorum device update`
   commands ([rhbz#2234665])
 
+[RHEL-8467]: https://issues.redhat.com/browse/RHEL-8467
 [rhbz#2217850]: https://bugzilla.redhat.com/show_bug.cgi?id=2217850
 [rhbz#2219388]: https://bugzilla.redhat.com/show_bug.cgi?id=2219388
 [rhbz#2226778]: https://bugzilla.redhat.com/show_bug.cgi?id=2226778
