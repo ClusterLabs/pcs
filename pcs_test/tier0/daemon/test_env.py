@@ -1,7 +1,10 @@
 from functools import partial
 from os.path import join as join_path
 from ssl import OP_NO_SSLv2
-from unittest import TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from pcs import settings
 from pcs.daemon import env
@@ -144,8 +147,8 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
             errors=["Ignoring unknown SSL option 'invalid'"],
         )
 
+    @mock.patch.object(env.settings, "default_ssl_options", "invalid")
     def test_report_invalid_ssl_options_warning(self):
-        env.settings.default_ssl_options = "invalid"
         self.assert_environ_produces_modified_pcsd_env(
             specific_env_values={env.PCSD_SSL_OPTIONS: 0},
             warnings=["Ignoring unknown SSL option 'invalid'"],
