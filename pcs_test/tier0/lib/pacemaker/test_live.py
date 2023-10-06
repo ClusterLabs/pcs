@@ -1926,6 +1926,7 @@ class ValidateResourceInstanceAttributesViaPcmkTest(TestCase):
             "pcs.lib.pacemaker.live._handle_instance_attributes_validation_via_pcmk"
         )
         self.mock_handler = patcher.start()
+        self.addCleanup(patcher.stop)
         self.ret_val = "ret val"
         self.mock_handler.return_value = self.ret_val
 
@@ -1994,6 +1995,7 @@ class ValidateStonithInstanceAttributesViaPcmkTest(TestCase):
             "pcs.lib.pacemaker.live._handle_instance_attributes_validation_via_pcmk"
         )
         self.mock_handler = patcher.start()
+        self.addCleanup(patcher.stop)
         self.ret_val = "ret val"
         self.mock_handler.return_value = self.ret_val
 

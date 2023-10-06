@@ -1,7 +1,10 @@
 import json
 import re
 from textwrap import dedent
-from unittest import TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from pcs.common import reports
 from pcs.common.reports import codes as report_codes
@@ -50,8 +53,6 @@ class PushCorosyncConfLiveBase(TestCase):
         self.corosync_conf_facade = CorosyncConfigFacade(
             CorosyncParser.parse(config.encode("utf-8"))
         )
-        CorosyncConfigFacade.need_stopped_cluster = False
-        CorosyncConfigFacade.need_qdevice_reload = False
 
 
 class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
@@ -368,8 +369,8 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
             ]
         )
 
+    @mock.patch.object(CorosyncConfigFacade, "need_stopped_cluster", True)
     def test_need_stopped_cluster(self):
-        self.corosync_conf_facade.need_stopped_cluster = True
         (
             self.config.http.corosync.check_corosync_offline(
                 node_labels=self.node_labels
@@ -403,8 +404,8 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
             ]
         )
 
+    @mock.patch.object(CorosyncConfigFacade, "need_stopped_cluster", True)
     def test_need_stopped_cluster_not_stopped(self):
-        self.corosync_conf_facade.need_stopped_cluster = True
         (
             self.config.http.corosync.check_corosync_offline(
                 communication_list=[
@@ -443,10 +444,10 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
             ]
         )
 
+    @mock.patch.object(CorosyncConfigFacade, "need_stopped_cluster", True)
     def test_need_stopped_cluster_not_stopped_skip_offline(self):
         # If we know for sure that corosync is running, skip_offline doesn't
         # matter.
-        self.corosync_conf_facade.need_stopped_cluster = True
         (
             self.config.http.corosync.check_corosync_offline(
                 communication_list=[
@@ -485,8 +486,8 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
             ]
         )
 
+    @mock.patch.object(CorosyncConfigFacade, "need_stopped_cluster", True)
     def test_need_stopped_cluster_json_error(self):
-        self.corosync_conf_facade.need_stopped_cluster = True
         (
             self.config.http.corosync.check_corosync_offline(
                 communication_list=[
@@ -521,8 +522,8 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
             ]
         )
 
+    @mock.patch.object(CorosyncConfigFacade, "need_stopped_cluster", True)
     def test_need_stopped_cluster_comunnication_failure(self):
-        self.corosync_conf_facade.need_stopped_cluster = True
         (
             self.config.http.corosync.check_corosync_offline(
                 communication_list=[
@@ -563,9 +564,9 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
             ]
         )
 
+    @mock.patch.object(CorosyncConfigFacade, "need_stopped_cluster", True)
     def test_need_stopped_cluster_comunnication_failures_skip_offline(self):
         # If we don't know if corosync is running, skip_offline matters.
-        self.corosync_conf_facade.need_stopped_cluster = True
         (
             self.config.http.corosync.check_corosync_offline(
                 communication_list=[
@@ -630,9 +631,9 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
 
 
 class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
+    @mock.patch.object(CorosyncConfigFacade, "need_qdevice_reload", True)
     def test_some_node_names_missing(self):
         self.fixture_corosync_conf(node1_name=False)
-        self.corosync_conf_facade.need_qdevice_reload = True
 
         self.env_assistant.assert_raise_library_error(
             lambda: self.env_assistant.get_env().push_corosync_conf(
@@ -648,9 +649,9 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
             ]
         )
 
+    @mock.patch.object(CorosyncConfigFacade, "need_qdevice_reload", True)
     def test_all_node_names_missing(self):
         self.fixture_corosync_conf(node1_name=False, node2_name=False)
-        self.corosync_conf_facade.need_qdevice_reload = True
 
         self.env_assistant.assert_raise_library_error(
             lambda: self.env_assistant.get_env().push_corosync_conf(
@@ -666,8 +667,8 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
             ]
         )
 
+    @mock.patch.object(CorosyncConfigFacade, "need_qdevice_reload", True)
     def test_qdevice_reload(self):
-        self.corosync_conf_facade.need_qdevice_reload = True
         (
             self.config.http.corosync.set_corosync_conf(
                 self.corosync_conf_text, node_labels=self.node_labels
@@ -729,8 +730,8 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
             ]
         )
 
+    @mock.patch.object(CorosyncConfigFacade, "need_qdevice_reload", True)
     def test_qdevice_reload_corosync_stopped(self):
-        self.corosync_conf_facade.need_qdevice_reload = True
         (
             self.config.http.corosync.set_corosync_conf(
                 self.corosync_conf_text, node_labels=self.node_labels
@@ -818,10 +819,10 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
             ]
         )
 
+    @mock.patch.object(CorosyncConfigFacade, "need_qdevice_reload", True)
     def test_qdevice_reload_failures(self):
         # This also tests that failing to stop qdevice on a node doesn't prevent
         # starting qdevice on the same node.
-        self.corosync_conf_facade.need_qdevice_reload = True
         (
             self.config.http.corosync.set_corosync_conf(
                 self.corosync_conf_text, node_labels=self.node_labels
@@ -907,8 +908,8 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
             ]
         )
 
+    @mock.patch.object(CorosyncConfigFacade, "need_qdevice_reload", True)
     def test_qdevice_reload_failures_skip_offline(self):
-        self.corosync_conf_facade.need_qdevice_reload = True
         (
             self.config.http.corosync.set_corosync_conf(
                 self.corosync_conf_text,
@@ -1028,8 +1029,8 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
             ]
         )
 
+    @mock.patch.object(CorosyncConfigFacade, "need_qdevice_reload", True)
     def test_reload_not_successful(self):
-        self.corosync_conf_facade.need_qdevice_reload = True
         (
             self.config.http.corosync.set_corosync_conf(
                 self.corosync_conf_text, node_labels=self.node_labels
