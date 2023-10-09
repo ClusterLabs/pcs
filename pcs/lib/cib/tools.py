@@ -343,7 +343,7 @@ def find_unique_id(tree, check_id, reserved_ids=None):
     counter = 1
     temp_id = check_id
     while temp_id in reserved_ids or does_id_exist(tree, temp_id):
-        temp_id = "{0}-{1}".format(check_id, counter)
+        temp_id = f"{check_id}-{counter}"
         counter += 1
     return temp_id
 
@@ -521,7 +521,7 @@ def get_pacemaker_version_by_which_cib_was_validated(cib: _Element) -> Version:
     return _get_cib_version(
         cib.getroottree(),
         "validate-with",
-        re.compile(r"pacemaker-{0}".format(_VERSION_FORMAT)),
+        re.compile(f"pacemaker-{_VERSION_FORMAT}"),
     )
 
 

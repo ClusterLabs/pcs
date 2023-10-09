@@ -14,9 +14,6 @@ from pcs.common import const
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.xml import dom_get_child_elements
 
-# pylint: disable=line-too-long
-# pylint: disable=invalid-name
-
 cib_with_nodes = rc("cib-empty-withnodes.xml")
 empty_cib = rc("cib-empty.xml")
 
@@ -90,7 +87,7 @@ class UtilsTest(TestCase):
         resources.parentNode.replaceChild(new_resources, resources)
         return cib_dom
 
-    def testDomGetResources(self):
+    def test_dom_get_resources(self):
         # pylint: disable=too-many-statements
         def test_dom_get(method, dom, ok_ids, bad_ids):
             for element_id in ok_ids:
@@ -341,7 +338,7 @@ class UtilsTest(TestCase):
             )
         )
 
-    def testDomGetResourceRemoteNodeName(self):
+    def test_dom_get_resource_remote_node_name(self):
         dom = self.get_cib_empty()
         new_resources = xml.dom.minidom.parseString(
             """
@@ -462,7 +459,7 @@ class UtilsTest(TestCase):
             ),
         )
 
-    def testGetElementWithId(self):
+    def test_get_element_with_id(self):
         dom = xml.dom.minidom.parseString(
             """
             <aa>
@@ -535,7 +532,7 @@ class UtilsTest(TestCase):
         self.assertEqual(None, utils.dom_get_parent_by_tag_names(cc1, ["dd"]))
         self.assertEqual(None, utils.dom_get_parent_by_tag_names(cc1, ["ee"]))
 
-    def testValidateConstraintResource(self):
+    def test_validate_constraint_resource(self):
         dom = self.get_cib_resources()
         self.assertEqual(
             (True, "", "myClone"),
@@ -672,7 +669,7 @@ class UtilsTest(TestCase):
             utils.validate_constraint_resource(dom, "myBundledResource"),
         )
 
-    def testValidateXmlId(self):
+    def test_validate_xml_id(self):
         self.assertEqual((True, ""), utils.validate_xml_id("dummy"))
         self.assertEqual((True, ""), utils.validate_xml_id("DUMMY"))
         self.assertEqual((True, ""), utils.validate_xml_id("dUmMy"))
@@ -741,7 +738,7 @@ class UtilsTest(TestCase):
             utils.validate_xml_id("dummy?", "test id"),
         )
 
-    def testIsIso8601Date(self):
+    def test_is_iso8601_date(self):
         self.assertTrue(utils.is_iso8601_date("2014-07-03"))
         self.assertTrue(utils.is_iso8601_date("2014-07-03T11:35:14"))
         self.assertTrue(utils.is_iso8601_date("20140703"))
@@ -1509,7 +1506,7 @@ class UtilsTest(TestCase):
         )
 
         self.assertEqual(len(dom_get_child_elements(el)), 1)
-        u = dom_get_child_elements(el)[0]
+        u = dom_get_child_elements(el)[0]  # pylint: disable=invalid-name
         self.assertEqual(u.tagName, "utilization")
         self.assertEqual(u.getAttribute("id"), "test_id-utilization")
         self.assertEqual(len(dom_get_child_elements(u)), 2)
@@ -1554,7 +1551,7 @@ class UtilsTest(TestCase):
             },
         )
 
-        u = dom_get_child_elements(el)[0]
+        u = dom_get_child_elements(el)[0]  # pylint: disable=invalid-name
         self.assertEqual(len(dom_get_child_elements(u)), 1)
         self.assertEqual(
             dom_get_child_elements(u)[0].getAttribute("id"),
@@ -1578,7 +1575,7 @@ class UtilsTest(TestCase):
         )
 
         self.assertEqual(len(dom_get_child_elements(el)), 1)
-        u = dom_get_child_elements(el)[0]
+        u = dom_get_child_elements(el)[0]  # pylint: disable=invalid-name
         self.assertEqual(u.tagName, "meta_attributes")
         self.assertEqual(u.getAttribute("id"), "test_id-meta_attributes")
         self.assertEqual(len(dom_get_child_elements(u)), 2)
@@ -1617,7 +1614,7 @@ class UtilsTest(TestCase):
         ).documentElement
         utils.dom_update_meta_attr(el, [("key", "another_val"), ("key2", "")])
 
-        u = dom_get_child_elements(el)[0]
+        u = dom_get_child_elements(el)[0]  # pylint: disable=invalid-name
         self.assertEqual(len(dom_get_child_elements(u)), 1)
         self.assertEqual(
             dom_get_child_elements(u)[0].getAttribute("id"),
@@ -1669,6 +1666,7 @@ class UtilsTest(TestCase):
 class RunParallelTest(TestCase):
     @staticmethod
     def fixture_create_worker(log, name, sleepSeconds=0):
+        # pylint: disable=invalid-name
         def worker():
             sleep(sleepSeconds)
             log.append(name)

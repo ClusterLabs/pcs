@@ -47,7 +47,7 @@ class RubyPcsdWrapper(ruby_pcsd.Wrapper):
 
 class AppTest(AsyncHTTPTestCase):
     wrapper = None
-    # pylint: disable=abstract-method
+
     def get_app(self):
         return Application(self.get_routes())
 
@@ -56,7 +56,6 @@ class AppTest(AsyncHTTPTestCase):
         return []
 
     def fetch(self, path, raise_error=False, **kwargs):
-        # pylint: disable=arguments-differ
         if "follow_redirects" not in kwargs:
             kwargs["follow_redirects"] = False
         response = super().fetch(path, raise_error=raise_error, **kwargs)

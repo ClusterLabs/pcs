@@ -245,7 +245,6 @@ class RunActionBase(
 
 
 class ServiceAction(RunActionBase):
-    # pylint: disable=too-many-ancestors
     def _init_properties(self):
         self._request_url = "remote/manage_services"
         self._response_key = "actions"
@@ -279,14 +278,13 @@ class ServiceAction(RunActionBase):
 
 
 class FileActionBase(RunActionBase):
-    # pylint: disable=abstract-method, too-many-ancestors
+    # pylint: disable=abstract-method
     def _init_properties(self):
         self._response_key = "files"
         self._force_code = report_codes.FORCE
 
 
 class DistributeFiles(FileActionBase):
-    # pylint: disable=too-many-ancestors
     def _init_properties(self):
         super()._init_properties()
         self._request_url = "remote/put_file"
@@ -319,7 +317,6 @@ class DistributeFiles(FileActionBase):
 
 
 class DistributeFilesWithoutForces(DistributeFiles):
-    # pylint: disable=too-many-ancestors
     def _init_properties(self):
         super()._init_properties()
         # We don't want to allow any kind of force or skip, therefore all force
@@ -330,7 +327,6 @@ class DistributeFilesWithoutForces(DistributeFiles):
 
 
 class RemoveFiles(FileActionBase):
-    # pylint: disable=too-many-ancestors
     def _init_properties(self):
         super()._init_properties()
         self._request_url = "remote/remove_file"
@@ -363,7 +359,6 @@ class RemoveFiles(FileActionBase):
 
 
 class RemoveFilesWithoutForces(RemoveFiles):
-    # pylint: disable=too-many-ancestors
     def _init_properties(self):
         super()._init_properties()
         # We don't want to allow any kind of force or skip, therefore all force
@@ -472,7 +467,6 @@ class UpdateKnownHosts(
     ):
         super().__init__(report_processor)
         self._json_data = dict(
-            # pylint: disable=consider-using-dict-comprehension
             known_hosts_add=dict(
                 [host.to_known_host_dict() for host in known_hosts_to_add]
             ),

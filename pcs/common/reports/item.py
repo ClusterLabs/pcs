@@ -26,7 +26,6 @@ from .types import (
 
 @dataclass(frozen=True)
 class ReportItemSeverity(ImplementsToDto, ImplementsFromDto):
-    # pylint: disable=invalid-name
     ERROR = SeverityLevel("ERROR")
     WARNING = SeverityLevel("WARNING")
     DEPRECATION = SeverityLevel("DEPRECATION")

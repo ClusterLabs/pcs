@@ -1,4 +1,5 @@
-# pylint: disable=wildcard-import, unused-wildcard-import
+# pylint: disable=unused-wildcard-import
+# pylint: disable=wildcard-import
 # Wildcard import of deprecated report codes will prevent creation of a new
 # report with the code of deprecated report
 from .deprecated_codes import *

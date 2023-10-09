@@ -45,8 +45,6 @@ from pcs_test.tools.misc import (
 from pcs_test.tools.pcs_runner import PcsRunner
 from pcs_test.tools.xml import XmlManipulation
 
-# pylint: disable=invalid-name
-
 PCMK_2_0_3_PLUS = is_minimum_pacemaker_version(2, 0, 3)
 
 LOCATION_NODE_VALIDATION_SKIP_WARNING = (
@@ -70,8 +68,8 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
         self.pcs_runner = PcsRunner(None)
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
 
-    def fixture_description(self, advanced=False):
-        # pylint: disable=no-self-use
+    @staticmethod
+    def fixture_description(advanced=False):
         advanced_params = """\
               trace_ra (advanced use only)
                 Description: Set to 1 to turn on resource agent tracing (expect large output) The trace output will be saved to trace_file, if set, or by default to $HA_VARRUN/ra_trace/<type>/<id>.<action>.<timestamp> e.g. $HA_VARRUN/ra_trace/oracle/db.start.2012-11-27.08:37:08
@@ -552,10 +550,10 @@ class Resource(TestCase, AssertPcsMixin):
         self.temp_large_cib.close()
 
     # Setups up a cluster with Resources, groups, master/slave resource & clones
-    def setupClusterA(self):
+    def setup_cluster_a(self):
         write_file_to_tmpfile(CIB_FIXTURE.cache_path, self.temp_cib)
 
-    def testCaseInsensitive(self):
+    def test_case_insensitive(self):
         self.assert_pcs_fail(
             "resource create --no-default-ops D0 dummy".split(),
             (
@@ -597,10 +595,10 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
-    def testEmpty(self):
+    def test_empty(self):
         self.assert_pcs_success(["resource"], "NO resources configured\n")
 
-    def testAddResourcesLargeCib(self):
+    def test_add_resources_large_cib(self):
         self.pcs_runner = PcsRunner(self.temp_large_cib.name)
         self.assert_pcs_success(
             "resource create dummy0 ocf:heartbeat:Dummy --no-default-ops".split(),
@@ -647,7 +645,7 @@ class Resource(TestCase, AssertPcsMixin):
             "Error: Resource 'ClusterIP' does not exist.\n",
         )
 
-    def testDeleteResources(self):
+    def test_delete_resources(self):
         # Verify deleting resources works
         # Additional tests are in class BundleDeleteTest
         self.assert_pcs_fail(
@@ -657,7 +655,7 @@ class Resource(TestCase, AssertPcsMixin):
 
         self._test_delete_remove_resources("delete")
 
-    def testRemoveResources(self):
+    def test_remove_resources(self):
         # Verify deleting resources works
         # Additional tests are in class BundleDeleteTest
         self.assert_pcs_fail(
@@ -667,7 +665,7 @@ class Resource(TestCase, AssertPcsMixin):
 
         self._test_delete_remove_resources("remove")
 
-    def testResourceShow(self):
+    def test_resource_show(self):
         self.assert_pcs_success(
             (
                 "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
@@ -689,7 +687,7 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
-    def testAddOperation(self):
+    def test_add_operation(self):
         # see also BundleMiscCommands
         self.assert_pcs_success(
             (
@@ -1209,7 +1207,7 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
-    def testDeleteOperation(self):
+    def test_delete_operation(self):
         # see also BundleMiscCommands
         self.assert_pcs_fail(
             "resource op delete".split(),
@@ -1218,7 +1216,7 @@ class Resource(TestCase, AssertPcsMixin):
 
         self._test_delete_remove_operation("delete")
 
-    def testRemoveOperation(self):
+    def test_remove_operation(self):
         # see also BundleMiscCommands
         self.assert_pcs_fail(
             "resource op remove".split(),
@@ -1227,7 +1225,7 @@ class Resource(TestCase, AssertPcsMixin):
 
         self._test_delete_remove_operation("remove")
 
-    def testUpdateOperation(self):
+    def test_update_operation(self):
         self.assert_pcs_success(
             (
                 "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
@@ -1561,7 +1559,7 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
-    def testGroupDeleteTest(self):
+    def test_group_delete_test(self):
         self.assert_pcs_success(
             "resource create --no-default-ops A1 ocf:heartbeat:Dummy --group AGroup".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
@@ -1631,8 +1629,8 @@ class Resource(TestCase, AssertPcsMixin):
         )
 
     @skip_unless_crm_rule()
-    def testGroupUngroup(self):
-        self.setupClusterA()
+    def test_group_ungroup(self):
+        self.setup_cluster_a()
         self.assert_pcs_success(
             "constraint location ClusterIP3 prefers rh7-1".split(),
             stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
@@ -1653,7 +1651,6 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
-        # pylint: disable=unused-variable
         self.assert_pcs_success(
             "resource create --no-default-ops A1 ocf:heartbeat:Dummy".split(),
         )
@@ -1703,7 +1700,7 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
-    def testGroupLargeResourceRemove(self):
+    def test_group_large_resource_remove(self):
         self.pcs_runner = PcsRunner(self.temp_large_cib.name)
         self.assert_pcs_success(
             "resource group add dummies dummylarge".split(),
@@ -1719,7 +1716,7 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
-    def testGroupOrder(self):
+    def test_group_order(self):
         # This was cosidered for removing during 'resource group add' command
         # and tests overhaul. However, this is the only test where "resource
         # group list" is called. Due to that this test was not deleted.
@@ -1826,8 +1823,8 @@ class Resource(TestCase, AssertPcsMixin):
         )
 
     @skip_unless_crm_rule()
-    def testClusterConfig(self):
-        self.setupClusterA()
+    def test_cluster_config(self):
+        self.setup_cluster_a()
 
         self.pcs_runner.mock_settings = {
             "corosync_conf_file": rc("corosync.conf"),
@@ -1894,7 +1891,7 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
-    def testCloneRemove(self):
+    def test_clone_remove(self):
         self.assert_pcs_success(
             "resource create --no-default-ops D1 ocf:heartbeat:Dummy clone".split(),
         )
@@ -1952,7 +1949,7 @@ class Resource(TestCase, AssertPcsMixin):
             stderr_full="Deleting Resource - d99\n",
         )
 
-    def testCloneRemoveLarge(self):
+    def test_clone_remove_large(self):
         self.pcs_runner = PcsRunner(self.temp_large_cib.name)
         self.assert_pcs_success("resource clone dummylarge".split())
         self.assert_pcs_success(
@@ -1960,7 +1957,7 @@ class Resource(TestCase, AssertPcsMixin):
             stderr_full="Deleting Resource - dummylarge\n",
         )
 
-    def testCloneGroupLargeResourceRemove(self):
+    def test_clone_group_large_resource_remove(self):
         self.pcs_runner = PcsRunner(self.temp_large_cib.name)
         self.assert_pcs_success(
             "resource group add dummies dummylarge".split(),
@@ -1978,8 +1975,8 @@ class Resource(TestCase, AssertPcsMixin):
         )
 
     @skip_unless_crm_rule()
-    def testMasterSlaveRemove(self):
-        self.setupClusterA()
+    def test_master_slave_remove(self):
+        self.setup_cluster_a()
         self.assert_pcs_success(
             "constraint location ClusterIP5 prefers rh7-1 --force".split(),
             stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
@@ -2121,7 +2118,7 @@ class Resource(TestCase, AssertPcsMixin):
             stderr_full="Deleting Resource - dummylarge\n",
         )
 
-    def testMasterSlaveGroupLargeResourceRemove(self):
+    def test_master_slave_group_large_resource_remove(self):
         self.pcs_runner = PcsRunner(self.temp_large_cib.name)
         self.assert_pcs_success(
             "resource group add dummies dummylarge".split(),
@@ -2141,7 +2138,7 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
-    def testMSGroup(self):
+    def test_ms_group(self):
         self.assert_pcs_success(
             "resource create --no-default-ops D0 ocf:heartbeat:Dummy".split(),
         )
@@ -2183,7 +2180,7 @@ class Resource(TestCase, AssertPcsMixin):
             stderr_full="Deleting Resource (and group and M/S) - D1\n",
         )
 
-    def testUnclone(self):
+    def test_unclone(self):
         # see also BundleClone
         self.assert_pcs_success(
             "resource create --no-default-ops dummy1 ocf:heartbeat:Dummy".split()
@@ -2331,7 +2328,7 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
-    def testUncloneMaster(self):
+    def test_unclone_master(self):
         # see also BundleClone
         self.assert_pcs_success(
             "resource create --no-default-ops dummy1 ocf:pacemaker:Stateful".split(),
@@ -2622,7 +2619,7 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
-    def testCloneGroupMember(self):
+    def test_clone_group_member(self):
         self.assert_pcs_success(
             "resource create --no-default-ops D0 ocf:heartbeat:Dummy --group AG".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
@@ -2670,7 +2667,7 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
-    def testPromotableGroupMember(self):
+    def test_promotable_group_member(self):
         self.assert_pcs_success(
             "resource create --no-default-ops D0 ocf:heartbeat:Dummy --group AG".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
@@ -2724,7 +2721,7 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
-    def testCloneMaster(self):
+    def test_clone_master(self):
         # see also BundleClone
         self.assert_pcs_success(
             "resource create --no-default-ops D0 ocf:heartbeat:Dummy".split(),
@@ -2838,7 +2835,7 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
-    def testLSBResource(self):
+    def test_lsb_resource(self):
         self.assert_pcs_fail(
             "resource create --no-default-ops D2 lsb:network foo=bar".split(),
             (
@@ -2900,7 +2897,7 @@ class Resource(TestCase, AssertPcsMixin):
         "test of 'pcs resource debug-*' to be moved to pcs.lib with the "
         "command itself"
     )
-    def testDebugStartCloneGroup(self):
+    def test_debug_start_clone_group(self):
         self.assert_pcs_success(
             "resource create D0 ocf:heartbeat:Dummy --group DGroup".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
@@ -2930,7 +2927,7 @@ class Resource(TestCase, AssertPcsMixin):
             "Error: unable to debug-start a master, try the master's resource: D3\n",
         )
 
-    def testGroupCloneCreation(self):
+    def test_group_clone_creation(self):
         self.assert_pcs_success(
             "resource create --no-default-ops D1 ocf:heartbeat:Dummy --group DGroup".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
@@ -2961,7 +2958,7 @@ class Resource(TestCase, AssertPcsMixin):
             "Error: cannot clone a group that has already been cloned\n",
         )
 
-    def testGroupPromotableCreation(self):
+    def test_group_promotable_creation(self):
         self.assert_pcs_success(
             "resource create --no-default-ops D1 ocf:heartbeat:Dummy --group DGroup".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
@@ -2995,7 +2992,7 @@ class Resource(TestCase, AssertPcsMixin):
         )
 
     @skip_unless_crm_rule()
-    def testGroupRemoveWithConstraints1(self):
+    def test_group_remove_with_constraints1(self):
         # The mock executable for crm_resource does not support the
         # `move-with-constraint` command, and so the real executable is used.
         self.pcs_runner.mock_settings = {}
@@ -3088,12 +3085,12 @@ class Resource(TestCase, AssertPcsMixin):
             "NO resources configured\n",
         )
 
-    def testResourceCloneCreation(self):
+    def test_resource_clone_creation(self):
         self.pcs_runner = PcsRunner(self.temp_large_cib.name)
         # resource "dummy1" is already in "temp_large_cib
         self.assert_pcs_success("resource clone dummy1".split())
 
-    def testResourceCloneId(self):
+    def test_resource_clone_id(self):
         self.assert_pcs_success(
             "resource create --no-default-ops dummy-clone ocf:heartbeat:Dummy".split(),
         )
@@ -3142,7 +3139,7 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
-    def testResourcePromotableId(self):
+    def test_resource_promotable_id(self):
         self.assert_pcs_success(
             "resource create --no-default-ops dummy-clone ocf:heartbeat:Dummy".split(),
         )
@@ -3195,7 +3192,7 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
-    def testResourceCloneUpdate(self):
+    def test_resource_clone_update(self):
         self.assert_pcs_success(
             "resource create --no-default-ops D1 ocf:heartbeat:Dummy clone".split(),
         )
@@ -3261,7 +3258,7 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
-    def testGroupRemoveWithConstraints2(self):
+    def test_group_remove_with_constraints2(self):
         self.assert_pcs_success(
             "resource create --no-default-ops A ocf:heartbeat:Dummy --group AG".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
@@ -3329,7 +3326,7 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
-    def testMasteredGroup(self):
+    def test_mastered_group(self):
         self.assert_pcs_success(
             "resource create --no-default-ops A ocf:heartbeat:Dummy --group AG".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
@@ -3389,7 +3386,7 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
-    def testClonedGroup(self):
+    def test_cloned_group(self):
         self.assert_pcs_success(
             "resource create --no-default-ops D1 ocf:heartbeat:Dummy --group DG".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
@@ -3430,7 +3427,7 @@ class Resource(TestCase, AssertPcsMixin):
             "Error: 'DG-clone' already exists\n",
         )
 
-    def testOPOption(self):
+    def test_op_option(self):
         self.assert_pcs_success(
             "resource create --no-default-ops B ocf:heartbeat:Dummy".split(),
         )
@@ -3506,8 +3503,8 @@ class Resource(TestCase, AssertPcsMixin):
             "Error: interval=5s does not appear to be a valid operation action\n",
         )
 
-    def testCloneBadResources(self):
-        self.setupClusterA()
+    def test_clone_bad_resources(self):
+        self.setup_cluster_a()
         self.assert_pcs_fail(
             "resource clone ClusterIP4".split(),
             "Error: ClusterIP4 is already a clone resource\n",
@@ -3525,7 +3522,7 @@ class Resource(TestCase, AssertPcsMixin):
             "Error: ClusterIP5 is already a clone resource\n",
         )
 
-    def testGroupMSAndClone(self):
+    def test_group_ms_and_clone(self):
         self.assert_pcs_fail(
             "resource create --no-default-ops D3 ocf:heartbeat:Dummy promotable --group xxx clone".split(),
             DEPRECATED_DASH_DASH_GROUP
@@ -3537,7 +3534,7 @@ class Resource(TestCase, AssertPcsMixin):
             + "Error: you can specify only one of clone, promotable, bundle or --group\n",
         )
 
-    def testResourceCloneGroup(self):
+    def test_resource_clone_group(self):
         self.assert_pcs_success(
             "resource create --no-default-ops dummy0 ocf:heartbeat:Dummy --group group".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
@@ -3548,7 +3545,7 @@ class Resource(TestCase, AssertPcsMixin):
             stderr_full="Deleting Resource (and group and clone) - dummy0\n",
         )
 
-    def testResourceMissingValues(self):
+    def test_resource_missing_values(self):
         self.assert_pcs_success(
             "resource create --no-default-ops myip IPaddr2 --force".split(),
             stderr_full=(
@@ -3625,7 +3622,7 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
-    def testClonedMasteredGroup(self):
+    def test_cloned_mastered_group(self):
         self.assert_pcs_success(
             "resource create dummy1 ocf:heartbeat:Dummy --no-default-ops --group dummies".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
@@ -4186,10 +4183,7 @@ class Resource(TestCase, AssertPcsMixin):
 
 class OperationDeleteRemoveMixin(
     get_assert_pcs_effect_mixin(
-        lambda cib: etree.tostring(
-            # pylint:disable=undefined-variable
-            etree.parse(cib).findall(".//resources")[0]
-        )
+        lambda cib: etree.tostring(etree.parse(cib).findall(".//resources")[0])
     )
 ):
     # see also BundleMiscCommands
@@ -4357,10 +4351,7 @@ class OperationRemove(OperationDeleteRemoveMixin, TestCase):
 class Utilization(
     TestCase,
     get_assert_pcs_effect_mixin(
-        lambda cib: etree.tostring(
-            # pylint:disable=undefined-variable
-            etree.parse(cib).findall(".//resources")[0]
-        )
+        lambda cib: etree.tostring(etree.parse(cib).findall(".//resources")[0])
     ),
 ):
     def setUp(self):
@@ -4438,7 +4429,7 @@ class Utilization(
             stderr_full=FIXTURE_UTILIZATION_WARNING,
         )
 
-    def testResourceUtilizationSet(self):
+    def test_resource_utilization_set(self):
         # see also BundleMiscCommands
         self.pcs_runner = PcsRunner(self.temp_large_cib.name)
 
@@ -4596,10 +4587,7 @@ class Utilization(
 class MetaAttrs(
     TestCase,
     get_assert_pcs_effect_mixin(
-        lambda cib: etree.tostring(
-            # pylint:disable=undefined-variable
-            etree.parse(cib).findall(".//resources")[0]
-        )
+        lambda cib: etree.tostring(etree.parse(cib).findall(".//resources")[0])
     ),
 ):
     def setUp(self):
@@ -4681,7 +4669,7 @@ class MetaAttrs(
             self.fixture_xml_resource_with_meta(),
         )
 
-    def testMetaAttrs(self):
+    def test_meta_attrs(self):
         # see also BundleMiscCommands
         self.assert_pcs_success(
             (
@@ -4865,10 +4853,7 @@ class MetaAttrs(
 class UpdateInstanceAttrs(
     TestCase,
     get_assert_pcs_effect_mixin(
-        lambda cib: etree.tostring(
-            # pylint:disable=undefined-variable
-            etree.parse(cib).findall(".//resources")[0]
-        )
+        lambda cib: etree.tostring(etree.parse(cib).findall(".//resources")[0])
     ),
 ):
     # The idempotency with remote-node is tested in
@@ -4964,7 +4949,7 @@ class UpdateInstanceAttrs(
             stderr_start="\nUsage: pcs resource update...\n",
         )
 
-    def testBadInstanceVariables(self):
+    def test_bad_instance_variables(self):
         self.assert_pcs_fail(
             (
                 "resource create --no-default-ops D0 ocf:heartbeat:Dummy"
@@ -5554,10 +5539,7 @@ class ResourceRemoveWithTicket(TestCase, AssertPcsMixin):
 class BundleCommon(
     TestCase,
     get_assert_pcs_effect_mixin(
-        lambda cib: etree.tostring(
-            # pylint:disable=undefined-variable
-            etree.parse(cib).findall(".//resources")[0]
-        )
+        lambda cib: etree.tostring(etree.parse(cib).findall(".//resources")[0])
     ),
 ):
     def setUp(self):

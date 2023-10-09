@@ -184,7 +184,6 @@ class AddLink(TestCase):
             ),
             [
                 fixture.error(
-                    # pylint: disable=line-too-long
                     report_codes.COROSYNC_CANNOT_ADD_REMOVE_LINKS_TOO_MANY_FEW_LINKS,
                     links_change_count=1,
                     links_new_count=(constants.LINKS_KNET_MAX + 1),
@@ -776,7 +775,6 @@ class RemoveLinks(TestCase):
             config_validators.remove_links([], self.existing, "knet"),
             [
                 fixture.error(
-                    # pylint: disable=line-too-long
                     report_codes.COROSYNC_CANNOT_ADD_REMOVE_LINKS_NO_LINKS_SPECIFIED,
                     add_or_not_remove=False,
                 )
@@ -824,7 +822,6 @@ class RemoveLinks(TestCase):
             ),
             [
                 fixture.error(
-                    # pylint: disable=line-too-long
                     report_codes.COROSYNC_CANNOT_ADD_REMOVE_LINKS_TOO_MANY_FEW_LINKS,
                     links_change_count=len(self.existing),
                     links_new_count=0,
@@ -841,7 +838,6 @@ class RemoveLinks(TestCase):
             ),
             [
                 fixture.error(
-                    # pylint: disable=line-too-long
                     report_codes.COROSYNC_CANNOT_ADD_REMOVE_LINKS_TOO_MANY_FEW_LINKS,
                     # We try to remove more links than defined yet only defined
                     # links are counted here - nonexistent links cannot be

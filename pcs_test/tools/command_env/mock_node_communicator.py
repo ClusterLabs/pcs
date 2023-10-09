@@ -13,8 +13,6 @@ from pcs.common.node_communicator import (
 
 from pcs_test.tools.custom_mock import MockCurlSimple
 
-# pylint: disable=too-many-arguments, protected-access
-
 CALL_TYPE_HTTP_ADD_REQUESTS = "CALL_TYPE_HTTP_ADD_REQUESTS"
 CALL_TYPE_HTTP_START_LOOP = "CALL_TYPE_HTTP_START_LOOP"
 
@@ -124,6 +122,7 @@ def _communication_to_response(
     error_msg,
     raw_data,
 ):
+    # pylint: disable=too-many-arguments
     return Response(
         MockCurlSimple(
             info={pycurl.RESPONSE_CODE: response_code},
@@ -187,6 +186,7 @@ def create_communication(
     string error_msg -- see Response
     string raw_data -- see data attrib in RequestData
     """
+    # pylint: disable=too-many-arguments
     # We don't care about tokens, see _communication_to_response.
     common = dict(
         action=action,
@@ -383,6 +383,7 @@ class NodeCommunicator:
                     real_request.target.dest_list,
                 )
 
+            # pylint: disable=protected-access
             if not _compare_request_data(
                 expected_request._data.structured_data,
                 real_request._data.structured_data,

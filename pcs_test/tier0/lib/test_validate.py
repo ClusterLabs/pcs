@@ -2041,7 +2041,6 @@ class ValidateAddRemoveItems(TestCase):
     def _validate(
         self, add, remove, current=None, adjacent=None, can_be_empty=False
     ):
-        # pylint: disable=protected-access
         return validate.validate_add_remove_items(
             add,
             remove,

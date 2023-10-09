@@ -213,11 +213,12 @@ def validate_nodes_devices(
 def create_sbd_config(base_config, node_label, watchdog, device_list=None):
     # TODO: figure out which name/ring has to be in SBD_OPTS
     config = dict(base_config)
-    config["SBD_OPTS"] = '"-n {node_name}"'.format(node_name=node_label)
+    config["SBD_OPTS"] = f'"-n {node_label}"'
     if watchdog:
         config["SBD_WATCHDOG_DEV"] = watchdog
     if device_list:
-        config["SBD_DEVICE"] = '"{0}"'.format(";".join(device_list))
+        device_list_str = ";".join(device_list)
+        config["SBD_DEVICE"] = f'"{device_list_str}"'
     return dict_to_environment_file(config)
 
 

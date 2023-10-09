@@ -23,9 +23,6 @@ from pcs_test.tools.misc import (
 )
 from pcs_test.tools.pcs_runner import PcsRunner
 
-# pylint: disable=invalid-name
-# pylint: disable=line-too-long
-
 PCMK_2_0_3_PLUS = is_minimum_pacemaker_version(2, 0, 3)
 ERRORS_HAVE_OCCURRED = (
     "Error: Errors have occurred, therefore pcs is unable to continue\n"
@@ -1146,7 +1143,7 @@ class StonithTest(TestCase, AssertPcsMixin):
         self.temp_corosync_conf.close()
 
     @skip_unless_crm_rule()
-    def testStonithCreation(self):
+    def test_stonith_creation(self):
         self.assert_pcs_fail(
             "stonith create test1 fence_noexist".split(),
             (
@@ -1682,7 +1679,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             ),
         )
 
-    def testStonithFenceConfirm(self):
+    def test_stonith_fence_confirm(self):
         self.pcs_runner.cib_file = None
         self.assert_pcs_fail(
             "stonith fence blah blah".split(),
@@ -1693,7 +1690,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             "Error: must specify one (and only one) node to confirm fenced\n",
         )
 
-    def testPcmkHostList(self):
+    def test_pcmk_host_list(self):
         self.assert_pcs_success(
             [
                 "stonith",
@@ -1725,7 +1722,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             ),
         )
 
-    def testStonithDeleteRemovesLevel(self):
+    def test_stonith_delete_removes_level(self):
         shutil.copyfile(rc("cib-empty-with3nodes.xml"), self.temp_cib.name)
 
         deprecated_warnings = (
@@ -2046,7 +2043,7 @@ class StonithTest(TestCase, AssertPcsMixin):
                 ),
             )
 
-    def testNoStonithWarning(self):
+    def test_no_stonith_warning(self):
         self.pcs_runner.corosync_conf_opt = self.temp_corosync_conf.name
         self.assert_pcs_success(
             ["status"],
@@ -2158,7 +2155,7 @@ class LevelTestsBase(TestCase, AssertPcsMixin):
         write_data_to_tmpfile(cib, self.temp_cib)
 
     def fixture_cib_config_cache(self):
-        # pylint: disable=global-statement,global-variable-not-assigned
+        # pylint: disable=global-variable-not-assigned
         global _fixture_stonith_level_cache, _fixture_stonith_level_cache_lock
         with _fixture_stonith_level_cache_lock:
             if _fixture_stonith_level_cache is None:

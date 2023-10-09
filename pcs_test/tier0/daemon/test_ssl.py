@@ -20,15 +20,11 @@ SSL_CIPHERS = "DEFAULT:!RC4"
 
 class SslFilesMixin:
     def setUp(self):
-        # pylint cannot possibly know this is being mixed into TestCase classes
-        # pylint: disable=invalid-name
         self.ssl_dir = get_tmp_dir("tier0_daemon_ssl")
         self.cert_path = os.path.join(self.ssl_dir.name, "daemon.cert")
         self.key_path = os.path.join(self.ssl_dir.name, "daemon.key")
 
     def tearDown(self):
-        # pylint cannot possibly know this is being mixed into TestCase classes
-        # pylint: disable=invalid-name
         self.ssl_dir.cleanup()
 
     def damage_ssl_files(self):

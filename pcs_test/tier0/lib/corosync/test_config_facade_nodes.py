@@ -111,7 +111,6 @@ class GetNodesTest(TestCase):
         )
 
     def test_missing_values(self):
-        # pylint: disable=trailing-whitespace
         config = dedent(
             """\
             nodelist {

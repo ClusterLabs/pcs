@@ -166,7 +166,6 @@ def resource_agent_metadata_to_text(
     default_operations: List[CibResourceOperationDto],
     verbose: bool = False,
 ) -> List[str]:
-    # pylint: disable=too-many-branches
     output = []
     _is_stonith = is_stonith(metadata.name)
     agent_name = (
@@ -385,7 +384,7 @@ class ResourcesConfigurationFacade:
             elif isinstance(resource_dto, CibResourceBundleDto):
                 bundles.add(resource_id)
             else:
-                AssertionError()
+                raise AssertionError()
 
         if not processed_ids:
             raise CmdLineInputError(f"No {label} found")

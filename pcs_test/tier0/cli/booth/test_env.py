@@ -42,7 +42,6 @@ class BoothConfTest(TestCase):
     @mock.patch.object(env.pcs_file.RawFile, "read", autospec=True)
     @mock.patch.object(env.pcs_file.RawFile, "exists")
     def test_mocked(self, mock_exists, mock_read, mock_write):
-        # pylint: disable=too-many-locals
         conf_content = "file content".encode("utf-8")
         key_content = "key file content".encode("utf-8")
         conf_path = "/tmp/pcs_test/file/path.conf"

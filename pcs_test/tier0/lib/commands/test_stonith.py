@@ -91,8 +91,6 @@ expected_cib_unknown = """
 
 class CreateMixin:
     def setUp(self):
-        # pylint does not know this method is defined in TestCase
-        # pylint: disable=invalid-name
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_minimal_success(self):

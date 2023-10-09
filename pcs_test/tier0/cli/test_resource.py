@@ -223,7 +223,6 @@ class FailcountShow(TestCase):
         )
 
     def test_no_failcounts_node_operation_interval(self):
-        # pylint: disable=line-too-long
         self.assert_failcount_output(
             [],
             "No failcounts for operation 'ope' with interval '10' on node 'nod'",

@@ -257,9 +257,7 @@ class ConfigFacade(FacadeInterface):
                 try:
                     available_link_numbers.remove(int(link["linknumber"]))
                 except ValueError as e:
-                    raise AssertionError(
-                        "Invalid link number: {}".format(e)
-                    ) from e
+                    raise AssertionError(f"Invalid link number: {e}") from e
                 links.append(dict(link))
             else:
                 linknumber_missing.append(link)
@@ -270,7 +268,7 @@ class ConfigFacade(FacadeInterface):
                 link["linknumber"] = str(available_link_numbers.pop(0))
             except IndexError as e:
                 raise AssertionError(
-                    "Link number no longer available: {}".format(e)
+                    f"Link number no longer available: {e}"
                 ) from e
             links.append(link)
 
@@ -968,4 +966,4 @@ class ConfigFacade(FacadeInterface):
 def _add_prefix_to_dict_keys(
     prefix: str, data: Mapping[str, T]
 ) -> dict[str, T]:
-    return {"{}{}".format(prefix, key): value for key, value in data.items()}
+    return {f"{prefix}{key}": value for key, value in data.items()}

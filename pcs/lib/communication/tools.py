@@ -85,7 +85,6 @@ class RunRemotelyBase(CommunicationCommandInterface):
     reporting.
     """
 
-    # pylint: disable=abstract-method
     _report_pcsd_too_old_on_404 = False
 
     def __init__(self, report_processor):

@@ -169,7 +169,6 @@ class DistributeCorosyncConf(
                             self._failure_severity,
                             self._failure_forceable,
                         ),
-                        # pylint: disable=line-too-long
                         message=reports.messages.CorosyncConfigDistributionNodeError(
                             node_label,
                         ),

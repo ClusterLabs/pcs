@@ -5,6 +5,7 @@ from dataclasses import (
 )
 from enum import Enum
 from typing import (
+    TYPE_CHECKING,
     Any,
     Dict,
     Iterable,
@@ -19,6 +20,14 @@ import dacite
 import pcs.common.async_tasks.types as async_tasks_types
 import pcs.common.permissions.types as permissions_types
 from pcs.common import types
+
+if TYPE_CHECKING:
+    from _typeshed import DataclassInstance  # pylint: disable=import-error
+else:
+
+    class DataclassInstance:
+        pass
+
 
 PrimitiveType = Union[str, int, float, bool, None]
 DtoPayload = Dict[str, "SerializableType"]  # type: ignore
@@ -38,7 +47,7 @@ class PayloadConversionError(Exception):
     pass
 
 
-class DataTransferObject:
+class DataTransferObject(DataclassInstance):
     pass
 
 

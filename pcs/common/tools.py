@@ -52,9 +52,7 @@ def format_environment_error(e):
 
 
 def format_os_error(e: OSError):
-    if e.filename:
-        return "{0}: '{1}'".format(e.strerror, e.filename)
-    return e.strerror
+    return f"{e.strerror}: '{e.filename}'" if e.filename else e.strerror
 
 
 def xml_fromstring(xml: str) -> _Element:

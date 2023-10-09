@@ -43,9 +43,6 @@ def _read_file_rc(name):
         return a_file.read()
 
 
-# pylint: disable=protected-access
-
-
 @mock.patch.object(LibraryEnvironment, "get_corosync_conf_data")
 class GetQuorumConfigTest(TestCase):
     def setUp(self):
@@ -188,6 +185,7 @@ class GetQuorumConfigTest(TestCase):
 
 @mock.patch("pcs.lib.sbd.is_auto_tie_breaker_needed")
 class CheckIfAtbCanBeDisabledTest(TestCase):
+    # pylint: disable=protected-access
     def setUp(self):
         self.mock_reporter = MockLibraryReportProcessor()
         self.mock_runner = "cmd_runner"
@@ -2428,7 +2426,6 @@ class DeviceNetCertificateSetupLocal(DeviceNetCertsMixin, TestCase):
 
 
 class DeviceNetCertificateCheckLocal(DeviceNetCertsMixin, TestCase):
-    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
         self.qnetd_host = "qnetd-host"

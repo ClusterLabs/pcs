@@ -69,9 +69,12 @@ from pcs.lib.pacemaker.values import (
     sanitize_id,
 )
 
-# pylint: disable=too-many-branches, too-many-statements
-# pylint: disable=invalid-name, too-many-nested-blocks
-# pylint: disable=too-many-locals, too-many-lines
+# pylint: disable=invalid-name
+# pylint: disable=too-many-branches
+# pylint: disable=too-many-lines
+# pylint: disable=too-many-locals
+# pylint: disable=too-many-nested-blocks
+# pylint: disable=too-many-statements
 
 DEFAULT_ACTION = const.PCMK_ACTION_START
 DEFAULT_ROLE = const.PCMK_ROLE_STARTED

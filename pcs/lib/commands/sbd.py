@@ -128,7 +128,8 @@ def enable_sbd(
     no_watchdog_validation=False,
     allow_invalid_option_values=False,
 ):
-    # pylint: disable=too-many-arguments, too-many-locals
+    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-locals
     """
     Enable SBD on all nodes in cluster.
 
@@ -384,12 +385,12 @@ def get_cluster_sbd_config(lib_env):
 
 
 def get_local_sbd_config(lib_env):
-    # pylint: disable=unused-argument
     """
     Returns local SBD config as dictionary.
 
     lib_env -- LibraryEnvironment
     """
+    del lib_env
     return environment_file_to_dict(sbd.get_local_sbd_config())
 
 

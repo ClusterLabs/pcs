@@ -69,7 +69,6 @@ class Call:
     def finish(self):
         if self.side_effect:
             if isinstance(self.side_effect, Exception):
-                # pylint: disable=raising-bad-type
                 raise self.side_effect
             raise AssertionError(
                 "side_effect other than instance of exception not supported yet"

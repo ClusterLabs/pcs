@@ -83,21 +83,16 @@ def get_invalid_option_messages_regexp(
 
 class PropertyMixin(
     get_assert_pcs_effect_mixin(
-        lambda cib: etree.tostring(
-            # pylint:disable=undefined-variable
-            etree.parse(cib).findall(".//crm_config")[0]
-        )
+        lambda cib: etree.tostring(etree.parse(cib).findall(".//crm_config")[0])
     )
 ):
     def setUp(self):
-        # pylint: disable=invalid-name
         self.maxDiff = None
         self.temp_cib = get_tmp_file("tier1_cluster_property")
         write_file_to_tmpfile(property_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
 
     def tearDown(self):
-        # pylint: disable=invalid-name
         self.temp_cib.close()
 
 

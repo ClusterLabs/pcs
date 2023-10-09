@@ -12,7 +12,6 @@ ERRORS_HAVE_OCCURRED = (
 
 
 def fixture_nolive_add_report(node_name):
-    # pylint: disable=line-too-long
     return dedent(
         f"""\
         Unable to check if there is a conflict with nodes set in corosync because the command does not run on a live cluster (e.g. -f was used)
@@ -23,7 +22,6 @@ def fixture_nolive_add_report(node_name):
 
 
 def fixture_nolive_remove_report(host_list):
-    # pylint: disable=line-too-long
     return dedent(
         """\
         Running action(s) 'pacemaker_remote disable', 'pacemaker_remote stop' on {hosts} was skipped because the command does not run on a live cluster (e.g. -f was used). Please, run the action(s) manually.

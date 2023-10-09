@@ -19,9 +19,6 @@ from pcs_test.tools.assertions import (
     assert_xml_equal,
 )
 
-# pylint: disable=protected-access
-# pylint: disable=too-many-lines
-
 TagWithRefs = namedtuple("TagWithRefs", ["tag_id", "idref_list"])
 
 FIXTURE_ONE_TAG = """
@@ -272,6 +269,7 @@ class ValidateCreateTag(ValidateCommonTestData):
 
 
 class ValidateTagIdTest(ValidateCommonTestData):
+    # pylint: disable=protected-access
     def test_tag_id_is_valid(self):
         assert_report_item_list_equal(
             lib._validate_tag_id("new-tag-id", self.id_provider),
@@ -326,6 +324,7 @@ class ValidateTagIdTest(ValidateCommonTestData):
 
 
 class ValidateTagIdNotInIdrefList(TestCase):
+    # pylint: disable=protected-access
     def setUp(self):
         self.idref_list = ["id1", "id2", "id3"]
 
@@ -349,6 +348,7 @@ class ValidateTagIdNotInIdrefList(TestCase):
 
 
 class ValidateDuplicateReferenceIds(ValidateCommonTestData):
+    # pylint: disable=protected-access
     duplicated_ids_input_output = (
         (
             ["id1", "id1"],
@@ -387,6 +387,7 @@ class ValidateDuplicateReferenceIds(ValidateCommonTestData):
 
 
 class ValidateTagCreateIdrefListNotEmpty(TestCase):
+    # pylint: disable=protected-access
     def test_empty_list(self):
         # pylint: disable=no-self-use
         assert_report_item_list_equal(
@@ -407,6 +408,7 @@ class ValidateTagCreateIdrefListNotEmpty(TestCase):
 
 
 class ValidateReferenceIdsAreResources(ValidateCommonTestData):
+    # pylint: disable=protected-access
     def test_ids_exist(self):
         assert_report_item_list_equal(
             lib._validate_reference_ids_are_resources(
@@ -677,7 +679,6 @@ class ValidateRemoveTag(ValidateCommonConstraintsTestData):
             ),
             [
                 fixture.error(
-                    # pylint: disable=line-too-long
                     reports.codes.TAG_CANNOT_REMOVE_TAG_REFERENCED_IN_CONSTRAINTS,
                     tag_id="tag-location",
                     constraint_id_list=["location"],
@@ -694,7 +695,6 @@ class ValidateRemoveTag(ValidateCommonConstraintsTestData):
             ),
             [
                 fixture.error(
-                    # pylint: disable=line-too-long
                     reports.codes.TAG_CANNOT_REMOVE_TAG_REFERENCED_IN_CONSTRAINTS,
                     tag_id="multitag",
                     constraint_id_list=sorted(
@@ -769,6 +769,7 @@ class FindConstraintsReferencingTag(ValidateCommonConstraintsTestData):
 
 
 class ValidateAddRemoveDuplicateReferenceIds(ValidateCommonTestData):
+    # pylint: disable=protected-access
     duplicated_ids_input_output = (
         (
             ["id1", "id1"],
@@ -1196,7 +1197,6 @@ class ValidateTagUpdateByIds(TestCase):
                     reports.codes.TAG_CANNOT_UPDATE_TAG_NO_IDS_SPECIFIED,
                 ),
                 fixture.error(
-                    # pylint: disable=line-too-long
                     reports.codes.TAG_CANNOT_SPECIFY_ADJACENT_ID_WITHOUT_IDS_TO_ADD,
                     adjacent_id="none",
                 ),
@@ -1216,7 +1216,6 @@ class ValidateTagUpdateByIds(TestCase):
                     reports.codes.TAG_CANNOT_UPDATE_TAG_NO_IDS_SPECIFIED,
                 ),
                 fixture.error(
-                    # pylint: disable=line-too-long
                     reports.codes.TAG_CANNOT_SPECIFY_ADJACENT_ID_WITHOUT_IDS_TO_ADD,
                     adjacent_id="e1",
                 ),
@@ -1228,7 +1227,6 @@ class ValidateTagUpdateByIds(TestCase):
             self._validate("tag", [], ["e2"], adjacent="e1"),
             [
                 fixture.error(
-                    # pylint: disable=line-too-long
                     reports.codes.TAG_CANNOT_SPECIFY_ADJACENT_ID_WITHOUT_IDS_TO_ADD,
                     adjacent_id="e1",
                 ),
@@ -1282,7 +1280,6 @@ class ValidateTagUpdateByIds(TestCase):
                     expected_types=self.OBJ_REF_EXPECTED_TYPES,
                 ),
                 fixture.error(
-                    # pylint: disable=line-too-long
                     reports.codes.TAG_CANNOT_ADD_REFERENCE_IDS_ALREADY_IN_THE_TAG,
                     idref_list=["e1", "e2"],
                     tag_id="tag",
@@ -1359,7 +1356,6 @@ class ValidateTagUpdateByIds(TestCase):
             self._validate("tag", [], ["e1", "e2", "e3"]),
             [
                 fixture.error(
-                    # pylint: disable=line-too-long
                     reports.codes.TAG_CANNOT_REMOVE_REFERENCES_WITHOUT_REMOVING_TAG,
                     tag_id="tag",
                 ),
@@ -1389,7 +1385,6 @@ class ValidateTagUpdateByIds(TestCase):
             self._validate("tag", ["new1"], ["new1"]),
             [
                 fixture.error(
-                    # pylint: disable=line-too-long
                     reports.codes.TAG_CANNOT_ADD_AND_REMOVE_IDS_AT_THE_SAME_TIME,
                     idref_list=["new1"],
                 ),
@@ -1406,7 +1401,6 @@ class ValidateTagUpdateByIds(TestCase):
             self._validate("tag", ["e1", "e2"], ["e2", "e1"], adjacent="e3"),
             [
                 fixture.error(
-                    # pylint: disable=line-too-long
                     reports.codes.TAG_CANNOT_ADD_AND_REMOVE_IDS_AT_THE_SAME_TIME,
                     idref_list=["e1", "e2"],
                 ),

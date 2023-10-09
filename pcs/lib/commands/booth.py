@@ -336,9 +336,6 @@ def config_text(env: LibraryEnvironment, instance_name=None, node_name=None):
     com_cmd.set_targets(
         [env.get_node_target_factory().get_target_from_hostname(node_name)]
     )
-    # pylint: disable=unsubscriptable-object
-    # In general, pylint is right. And it cannot know in this case code is OK.
-    # It is covered by tests.
     remote_data = run_and_raise(env.get_node_communicator(), com_cmd)[0][1]
     try:
         # TODO switch to new file transfer commands (not implemented yet)
@@ -872,9 +869,6 @@ def pull_config(env: LibraryEnvironment, node_name, instance_name=None):
     com_cmd.set_targets(
         [env.get_node_target_factory().get_target_from_hostname(node_name)]
     )
-    # pylint: disable=unsubscriptable-object
-    # In general, pylint is right. And it cannot know in this case code is OK.
-    # It is covered by tests.
     output = run_and_raise(env.get_node_communicator(), com_cmd)[0][1]
     try:
         # TODO adapt to new file transfer framework once it is written

@@ -8,8 +8,6 @@ from pcs.common.reports import codes as report_codes
 from pcs_test.tools.assertions import assert_raise_library_error
 from pcs_test.tools.custom_mock import get_runner_mock
 
-# pylint: disable=no-self-use
-
 
 class BooleanTest(TestCase):
     def test_true_is_true(self):
@@ -99,6 +97,7 @@ class ValidateIdTest(TestCase):
         self.assertEqual(None, lib.validate_id("dum_my"))
 
     def test_invalid_empty(self):
+        # pylint: disable=no-self-use
         assert_raise_library_error(
             lambda: lib.validate_id("", "test id"),
             (
@@ -111,6 +110,7 @@ class ValidateIdTest(TestCase):
         )
 
     def test_invalid_first_character(self):
+        # pylint: disable=no-self-use
         desc = "test id"
         info = {
             "id": "",
@@ -161,6 +161,7 @@ class ValidateIdTest(TestCase):
         )
 
     def test_invalid_character(self):
+        # pylint: disable=no-self-use
         desc = "test id"
         info = {
             "id": "",

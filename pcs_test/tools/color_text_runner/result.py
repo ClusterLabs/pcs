@@ -23,12 +23,12 @@ def get_text_test_result_class(
     measure_time=False,
 ):
     class ColorTextTestResult(unittest.TextTestResult):
-        # pylint: disable=bad-super-call, invalid-name
         def __init__(self, stream, descriptions, verbosity):
             super().__init__(stream, descriptions, verbosity)
             self.verbosity = 2 if traditional_verbose else verbosity
 
             self._format = Format(Output(rich_format))
+            # pylint: disable=invalid-name
             self.reportWriter = self.__chooseWriter()(
                 self.stream,
                 self._format,
@@ -102,7 +102,7 @@ def get_text_test_result_class(
             for line in line_list:
                 self.stream.writeln(line)
 
-        def __chooseWriter(self):
+        def __chooseWriter(self):  # pylint: disable=invalid-name
             if measure_time:
                 return TimeWriter
             if traditional_verbose:

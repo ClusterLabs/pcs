@@ -15,7 +15,6 @@ from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.pcs_runner import PcsRunner
 
 # pylint: disable=too-many-lines
-# pylint: disable=too-many-public-methods
 
 ERRORS_HAVE_OCCURRED = (
     "Error: Errors have occurred, therefore pcs is unable to continue\n"
@@ -1123,6 +1122,7 @@ class FailOrWarnGroupCloneBundleCombinationFuture(
 
 
 class FailOrWarn(ResourceTest):
+    # pylint: disable=too-many-public-methods
     def test_fail_when_nonexisting_agent(self):
         # pacemaker 2.0.5 adds 'crm_resource:'
         # The exact message returned form pacemaker differs from version to

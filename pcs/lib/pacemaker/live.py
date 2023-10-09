@@ -156,7 +156,7 @@ def get_cib_xml_cmd_results(
 ) -> tuple[str, str, int]:
     command = [settings.cibadmin_exec, "--local", "--query"]
     if scope:
-        command.append("--scope={0}".format(scope))
+        command.append(f"--scope={scope}")
     stdout, stderr, returncode = runner.run(command)
     return stdout, stderr, returncode
 
@@ -459,7 +459,7 @@ def wait_for_idle(runner: CommandRunner, timeout: int) -> None:
     """
     args = [settings.crm_resource_exec, "--wait"]
     if timeout > 0:
-        args.append("--timeout={0}".format(timeout))
+        args.append(f"--timeout={timeout}")
     stdout, stderr, retval = runner.run(args)
     if retval != 0:
         # Useful info goes to stderr - not only error messages, a list of

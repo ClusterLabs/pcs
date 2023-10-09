@@ -106,12 +106,6 @@ from pcs.settings import (
     pacemaker_wait_timeout_status as PACEMAKER_WAIT_TIMEOUT_STATUS,
 )
 
-# pylint: disable=invalid-name
-# pylint: disable=too-many-branches
-# pylint: disable=too-many-locals
-# pylint: disable=too-many-nested-blocks
-# pylint: disable=too-many-statements
-
 RESOURCE_RELOCATE_CONSTRAINT_PREFIX = "pcs-relocate-"
 
 
@@ -625,6 +619,7 @@ def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
       * -f - CIB file
       * --future - enable future cli parser behavior
     """
+    # pylint: disable=too-many-branches
     modifiers_deprecated = ["--before", "--after", "--group"]
     modifiers.ensure_only_supported(
         *(
@@ -980,6 +975,9 @@ def resource_update(args: Argv, modifiers: InputModifiers) -> None:
       * --force - allow invalid options, do not fail if not possible to get
         agent metadata, allow not suitable command
     """
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-statements
     modifiers.ensure_only_supported(
         "-f", "--wait", "--force", "--agent-validation"
     )
@@ -1009,8 +1007,8 @@ def resource_update(args: Argv, modifiers: InputModifiers) -> None:
             continue
         # argv[0] is an operation name
         op_vars = utils.convert_args_to_tuples(op_argv[1:])
-        for k, v in op_vars:
-            if k == "on-fail" and v == "demote":
+        for key, value in op_vars:
+            if key == "on-fail" and value == "demote":
                 utils.cluster_upgrade_to_version(
                     const.PCMK_ON_FAIL_DEMOTE_CIB_VERSION
                 )
@@ -1125,9 +1123,9 @@ def resource_update(args: Argv, modifiers: InputModifiers) -> None:
         op_role = ""
         op_vars = utils.convert_args_to_tuples(op_argv[1:])
 
-        for k, v in op_vars:
-            if k == "role":
-                op_role = get_role(v)
+        for key, value in op_vars:
+            if key == "role":
+                op_role = get_role(value)
                 break
 
         updating_op = None
@@ -1239,6 +1237,9 @@ def resource_operation_add(
     Commandline options:
       * --force
     """
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-statements
     if not argv:
         raise CmdLineInputError()
 
@@ -1390,6 +1391,7 @@ def resource_operation_remove(res_id: str, argv: Argv) -> None:
     Commandline options:
       * -f - CIB file
     """
+    # pylint: disable=too-many-branches
     # if no args, then we're removing an operation id
 
     # Do not ever remove an operations element, even if it is empty. There may
@@ -1433,11 +1435,11 @@ def resource_operation_remove(res_id: str, argv: Argv) -> None:
     found_match = False
     for op in resource_el.getElementsByTagName("op"):
         temp_properties = []
-        for attrName in op.attributes.keys():
-            if attrName == "id":
+        for attr_name in op.attributes.keys():
+            if attr_name == "id":
                 continue
             temp_properties.append(
-                tuple([attrName, op.attributes.get(attrName).nodeValue])
+                tuple([attr_name, op.attributes.get(attr_name).nodeValue])
             )
 
         if remove_all and op.attributes["name"].value == op_name:
@@ -1476,6 +1478,7 @@ def resource_meta(argv: Argv, modifiers: InputModifiers) -> None:
       * --wait
       * -f - CIB file
     """
+    # pylint: disable=too-many-branches
     modifiers.ensure_only_supported("--force", "--wait", "-f")
     if len(argv) < 2:
         raise CmdLineInputError()
@@ -1696,6 +1699,7 @@ def resource_clone_create(
     Commandline options:
       * --force - allow to clone stonith resource
     """
+    # pylint: disable=too-many-branches
     name = argv.pop(0)
 
     resources_el = cib_dom.getElementsByTagName("resources")[0]
@@ -1858,6 +1862,7 @@ def resource_clone_master_remove(
       * -f - CIB file
       * --wait
     """
+    # pylint: disable=too-many-locals
     del lib
     modifiers.ensure_only_supported("-f", "--wait")
     if len(argv) != 1:
@@ -1959,6 +1964,10 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
     bool output -- suppresses output of this and subsequent commands (buggy)
     bool is_remove_remote_context -- is this running on a remote node
     """
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-nested-blocks
+    # pylint: disable=too-many-statements
 
     def is_bundle_running(bundle_id):
         roles_with_nodes = get_resource_state(
@@ -2051,8 +2060,8 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
             "--xpath",
             "//bundle[@id='{0}']".format(resource_id),
         ]
-        dummy_cmdoutput, retVal = utils.run(args)
-        if retVal != 0:
+        dummy_cmdoutput, retval = utils.run(args)
+        if retval != 0:
             utils.err("Unable to remove resource '{0}'".format(resource_id))
         return True
 
@@ -2187,8 +2196,8 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
             ]
         if output is True:
             print_to_stderr("Deleting Resource - " + resource_id)
-        output, retVal = utils.run(args)
-        if retVal != 0:
+        output, retval = utils.run(args)
+        if retval != 0:
             utils.err(
                 f"unable to remove resource: {resource_id}, it may still be "
                 "referenced in constraints."
@@ -2243,8 +2252,8 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
         args = ["cibadmin", "-o", "resources", "-D", "--xpath", to_remove_xpath]
         if output is True:
             print_to_stderr("Deleting Resource (" + msg + ") - " + resource_id)
-        dummy_cmdoutput, retVal = utils.run(args)
-        if retVal != 0:
+        dummy_cmdoutput, retval = utils.run(args)
+        if retval != 0:
             if output is True:
                 utils.err(
                     "Unable to remove resource '%s' (do constraints exist?)"
@@ -2442,6 +2451,9 @@ def resource_status(
       * -f - CIB file
       * --hide-inactive - print only active resources
     """
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-statements
     del lib
     modifiers.ensure_only_supported("-f", "--hide-inactive")
     if len(argv) > 2:
@@ -2683,6 +2695,7 @@ def resource_disable(argv: Argv) -> Optional[bool]:
     if not is_managed(resource):
         warn(f"'{resource}' is unmanaged")
 
+    wait_timeout = None
     if "--wait" in utils.pcs_options:
         wait_timeout = utils.validate_wait_get_timeout()
 
@@ -2786,6 +2799,7 @@ def resource_force_action(
       * --force
       * --full - more verbose output
     """
+    # pylint: disable=too-many-branches
     modifiers.ensure_only_supported("--force", "--full")
     action_command = {
         "debug-start": "--force-start",
@@ -2932,6 +2946,7 @@ def resource_failcount_show(
       * --full
       * -f - CIB file
     """
+    # pylint: disable=too-many-locals
     modifiers.ensure_only_supported("-f", "--full")
 
     resource = argv.pop(0) if argv and "=" not in argv[0] else None
@@ -3312,6 +3327,7 @@ def resource_relocate_run(cib_dom, resources=None, dry=True):
       * --force - allow constraint on any resource, may not have any effective
         as an invalid copnstraint is ignored anyway
     """
+    # pylint: disable=too-many-branches
     resources = [] if resources is None else resources
     was_error = False
     anything_changed = False
@@ -3421,9 +3437,9 @@ def print_resources_utilization() -> None:
     cib = utils.get_cib_dom()
     utilization = {}
     for resource_el in cib.getElementsByTagName("primitive"):
-        u = utils.get_utilization_str(resource_el)
-        if u:
-            utilization[resource_el.getAttribute("id")] = u
+        utilization_str = utils.get_utilization_str(resource_el)
+        if utilization_str:
+            utilization[resource_el.getAttribute("id")] = utilization_str
 
     print("Resource Utilization:")
     for resource in sorted(utilization):

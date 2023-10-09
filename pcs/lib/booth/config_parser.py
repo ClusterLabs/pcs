@@ -59,8 +59,9 @@ class Exporter(ExporterInterface):
 def _build_to_lines(config_line_list, deep=0):
     line_list = []
     for key, value, details in config_line_list:
-        line_value = value if key != "ticket" else '"{0}"'.format(value)
-        line_list.append("{0}{1} = {2}".format("  " * deep, key, line_value))
+        line_value = value if key != "ticket" else f'"{value}"'
+        indent = "  " * deep
+        line_list.append(f"{indent}{key} = {line_value}")
         if details:
             line_list.extend(_build_to_lines(details, deep + 1))
     return line_list

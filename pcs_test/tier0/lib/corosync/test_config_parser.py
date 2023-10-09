@@ -839,7 +839,6 @@ class ParserTest(TestCase):
         )
 
     def test_attributes_more_attributes_whitespace(self):
-        # pylint: disable=trailing-whitespace
         string = outdent(
             """\
               name1:value1  
@@ -876,7 +875,6 @@ class ParserTest(TestCase):
         self.assertEqual(str(root), parsed)
 
     def test_attributes_empty_value(self):
-        # pylint: disable=trailing-whitespace
         string = outdent(
             """\
             name :  
@@ -909,7 +907,6 @@ class ParserTest(TestCase):
         )
 
     def test_sections_empty_section_in_section_whitespace(self):
-        # pylint: disable=trailing-whitespace
         string = outdent(
             """\
             section1 {
@@ -1193,7 +1190,6 @@ class ParserTest(TestCase):
         )
 
     def test_full_1(self):
-        # pylint: disable=line-too-long
         string = outdent(
             """\
             # Please read the corosync.conf.5 manual page

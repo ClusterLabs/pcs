@@ -44,7 +44,6 @@ patch_lib_env = partial(mock.patch.object, LibraryEnvironment)
 
 
 def patch_env(call_queue, config, init_env, is_systemd=True):
-    # pylint: disable=too-many-locals
     # It is mandatory to patch some env objects/methods. It is ok when a
     # command does not use these objects/methods and specifies no calls for
     # them. But it would be a problem when a test succeeds thanks to a live

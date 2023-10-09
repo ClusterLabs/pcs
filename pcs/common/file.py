@@ -176,9 +176,6 @@ class RawFile(RawFileInterface):
                 write_mode="w" if can_overwrite else "x",
                 binary_mode="b" if self.metadata.is_binary else "",
             )
-            # It seems pylint cannot process constructing the mode variable and
-            # gives a false positive.
-            # pylint: disable=bad-open-mode
             with open(self.metadata.path, mode) as my_file:
                 # the lock is released when the file gets closed on leaving the
                 # with statement

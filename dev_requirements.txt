@@ -1,8 +1,8 @@
 lxml-stubs
-pylint==2.15.6
-astroid==2.12.13
-mypy==0.991
-black==22.10.0
+pylint==2.17.5
+astroid==2.15.6
+mypy==1.5.1
+black==23.9.1
 isort
 types-cryptography
 types-dataclasses

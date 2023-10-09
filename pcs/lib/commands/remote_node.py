@@ -412,7 +412,6 @@ def node_add_remote(
         already_exists = []
         unified_report_list = []
         for report_item in report_list + list(e.args):
-            # pylint: disable=no-member
             dto_obj = report_item.message.to_dto()
             if dto_obj.code not in (
                 reports.codes.ID_ALREADY_EXISTS,

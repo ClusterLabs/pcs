@@ -47,7 +47,7 @@ def quorum_config_to_str(config):
         lines.extend(
             indent(
                 [
-                    "{n}: {v}".format(n=name, v=value)
+                    f"{name}: {value}"
                     for name, value in sorted(config["options"].items())
                 ]
             )
@@ -58,7 +58,7 @@ def quorum_config_to_str(config):
         lines.extend(
             indent(
                 [
-                    "{n}: {v}".format(n=name, v=value)
+                    f"{name}: {value}"
                     for name, value in sorted(
                         config["device"].get("generic_options", {}).items()
                     )
@@ -72,7 +72,7 @@ def quorum_config_to_str(config):
         model_settings.extend(
             indent(
                 [
-                    "{n}: {v}".format(n=name, v=value)
+                    f"{name}: {value}"
                     for name, value in sorted(
                         config["device"].get("model_options", {}).items()
                     )
@@ -87,7 +87,7 @@ def quorum_config_to_str(config):
             heuristics_settings.extend(
                 indent(
                     [
-                        "{n}: {v}".format(n=name, v=value)
+                        f"{name}: {value}"
                         for name, value in sorted(heuristics_options.items())
                     ]
                 )

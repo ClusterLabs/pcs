@@ -38,10 +38,6 @@ from pcs_test.tools.pcs_runner import (
     pcs,
 )
 
-# pylint: disable=too-many-public-methods
-# pylint: disable=invalid-name
-# pylint: disable=too-many-statements
-
 LOCATION_NODE_VALIDATION_SKIP_WARNING = (
     f"Warning: {LOCATION_NODE_VALIDATION_SKIP_MSG}\n"
 )
@@ -118,6 +114,7 @@ CIB_FIXTURE = ConstraintTestCibFixture("fixture_tier1_constraints", empty_cib)
 
 @skip_unless_crm_rule()
 class ConstraintTest(unittest.TestCase, AssertPcsMixin):
+    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.temp_cib = get_tmp_file("tier1_constraints")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
@@ -132,7 +129,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
     def fixture_resources(self):
         write_file_to_tmpfile(CIB_FIXTURE.cache_path, self.temp_cib)
 
-    def testConstraintRules(self):
+    def test_constraint_rules(self):
         self.fixture_resources()
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
@@ -318,7 +315,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
             ),
         )
 
-    def testAdvancedConstraintRule(self):
+    def test_advanced_constraint_rule(self):
         self.fixture_resources()
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
@@ -345,10 +342,10 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
             ),
         )
 
-    def testEmptyConstraints(self):
+    def test_empty_constraints(self):
         self.assert_pcs_success(["constraint"])
 
-    def testMultipleOrderConstraints(self):
+    def test_multiple_order_constraints(self):
         self.fixture_resources()
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
@@ -464,7 +461,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         self.assertEqual(stdout, "")
         self.assertEqual(retval, 1)
 
-    def testOrderConstraintRequireAll(self):
+    def test_order_constraint_require_all(self):
         self.fixture_resources()
         stdout, stderr, retval = pcs(
             self.temp_cib.name, "cluster cib-upgrade".split()
@@ -497,7 +494,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
             ),
         )
 
-    def testAllConstraints(self):
+    def test_all_constraints(self):
         self.fixture_resources()
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
@@ -556,7 +553,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         )
 
     # see also BundleLocation
-    def testLocationConstraints(self):
+    def test_location_constraints(self):
         self.fixture_resources()
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
@@ -627,7 +624,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
 
         self.assert_pcs_success("constraint --full".split())
 
-    def testConstraintRemoval(self):
+    def test_constraint_removal(self):
         self.fixture_resources()
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
@@ -687,7 +684,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         self.assert_pcs_success("constraint location config --full".split())
 
     # see also BundleColocation
-    def testColocationConstraints(self):
+    def test_colocation_constraints(self):
         self.fixture_resources()
         # pcs no longer allows creating masters but supports existing ones. In
         # order to test it, we need to put a master in the CIB without pcs.
@@ -1035,7 +1032,8 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         self.assertEqual(retval, 1)
 
     # see also BundleColocation
-    def testColocationSets(self):
+    def test_colocation_sets(self):
+        # pylint: disable=too-many-statements
         self.fixture_resources()
         line = "resource create D7 ocf:heartbeat:Dummy".split()
         stdout, stderr, retval = pcs(self.temp_cib.name, line)
@@ -1344,7 +1342,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         )
         self.assertEqual(retval, 1)
 
-    def testConstraintResourceDiscoveryRules(self):
+    def test_constraint_resource_discovery_rules(self):
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "resource create crd ocf:heartbeat:Dummy".split(),
@@ -1403,7 +1401,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
             ),
         )
 
-    def testConstraintResourceDiscovery(self):
+    def test_constraint_resource_discovery(self):
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "resource create crd ocf:heartbeat:Dummy".split(),
@@ -1459,7 +1457,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         )
         self.assertEqual(retval, 1)
 
-    def testOrderSetsRemoval(self):
+    def test_order_sets_removal(self):
         for i in range(9):
             stdout, stderr, retval = pcs(
                 self.temp_cib.name,
@@ -1574,7 +1572,8 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         self.assert_pcs_success("constraint order".split())
 
     # see also BundleOrder
-    def testOrderSets(self):
+    def test_order_sets(self):
+        # pylint: disable=too-many-statements
         self.fixture_resources()
         line = "resource create D7 ocf:heartbeat:Dummy".split()
         stdout, stderr, retval = pcs(self.temp_cib.name, line)
@@ -1902,7 +1901,8 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
             ),
         )
 
-    def testLocationConstraintRule(self):
+    def test_location_constraint_rule(self):
+        # pylint: disable=too-many-statements
         self.fixture_resources()
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
@@ -2076,7 +2076,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         self.assertEqual(stdout, "")
         self.assertEqual(retval, 1)
 
-    def testLocationBadRules(self):
+    def test_location_bad_rules(self):
         # pcs no longer allows creating masters but supports existing ones. In
         # order to test it, we need to put a master in the CIB without pcs.
         fixture_to_cib(self.temp_cib.name, fixture_master_xml("stateful0"))
@@ -2144,7 +2144,8 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         self.assertEqual(stdout, "")
         self.assertEqual(retval, 1)
 
-    def testMasterSlaveConstraint(self):
+    def test_master_slave_constraint(self):
+        # pylint: disable=too-many-statements
         os.system(
             "CIB_file="
             + self.temp_cib.name
@@ -2402,7 +2403,8 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
             ),
         )
 
-    def testCloneConstraint(self):
+    def test_clone_constraint(self):
+        # pylint: disable=too-many-statements
         os.system(
             "CIB_file="
             + self.temp_cib.name
@@ -2661,7 +2663,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
             ),
         )
 
-    def testMissingRole(self):
+    def test_missing_role(self):
         os.system(
             "CIB_file="
             + self.temp_cib.name
@@ -2689,7 +2691,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
             ),
         )
 
-    def testManyConstraints(self):
+    def test_many_constraints(self):
         write_file_to_tmpfile(large_cib, self.temp_cib)
 
         stdout, stderr, retval = pcs(
@@ -2782,7 +2784,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
-    def testConstraintResourceCloneUpdate(self):
+    def test_constraint_resource_clone_update(self):
         self.fixture_resources()
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
@@ -2844,7 +2846,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
             ),
         )
 
-    def testConstraintGroupCloneUpdate(self):
+    def test_constraint_group_clone_update(self):
         self.fixture_resources()
         stdout, stderr, retval = pcs(
             self.temp_cib.name, "resource group add DG D1".split()
@@ -2913,7 +2915,8 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
             ),
         )
 
-    def testRemoteNodeConstraintsRemove(self):
+    def test_remote_node_constraints_remove(self):
+        # pylint: disable=too-many-statements
         self.temp_corosync_conf = get_tmp_file("tier1_test_constraints")
         write_file_to_tmpfile(rc("corosync.conf"), self.temp_corosync_conf)
         self.fixture_resources()
@@ -3125,7 +3128,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         )
         self.assertEqual(retval, 0)
 
-    def testDuplicateOrder(self):
+    def test_duplicate_order(self):
         self.fixture_resources()
         stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint order D1 then D2".split()
@@ -3275,7 +3278,7 @@ Error: duplicate constraint already exists, use --force to override
             ),
         )
 
-    def testDuplicateColocation(self):
+    def test_duplicate_colocation(self):
         self.fixture_resources()
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
@@ -3403,7 +3406,8 @@ Error: duplicate constraint already exists, use --force to override
             ),
         )
 
-    def testDuplicateSetConstraints(self):
+    def test_duplicate_set_constraints(self):
+        # pylint: disable=too-many-statements
         self.fixture_resources()
         stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint order set D1 D2".split()
@@ -3624,7 +3628,7 @@ Error: duplicate constraint already exists, use --force to override
             ),
         )
 
-    def testDuplicateLocationRules(self):
+    def test_duplicate_location_rules(self):
         self.fixture_resources()
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
@@ -3747,7 +3751,8 @@ Error: duplicate constraint already exists, use --force to override
             ),
         )
 
-    def testConstraintsCustomId(self):
+    def test_constraints_custom_id(self):
+        # pylint: disable=too-many-statements
         self.fixture_resources()
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
@@ -4289,7 +4294,6 @@ class ConstraintEffect(
     unittest.TestCase,
     get_assert_pcs_effect_mixin(
         lambda cib: etree.tostring(
-            # pylint:disable=undefined-variable
             etree.parse(cib).findall(".//constraints")[0]
         )
     ),
@@ -4604,7 +4608,6 @@ class Bundle(ConstraintEffect):
         self.fixture_bundle("B")
 
     def fixture_primitive(self, name, bundle=None):
-        # pylint:disable=arguments-differ
         if not bundle:
             super().fixture_primitive(name)
             return
@@ -4999,7 +5002,6 @@ NodeScore = namedtuple("NodeScore", "node score")
 class LocationPrefersAvoidsMixin(
     get_assert_pcs_effect_mixin(
         lambda cib: etree.tostring(
-            # pylint:disable=undefined-variable
             etree.parse(cib).findall(".//constraints")[0]
         )
     )
@@ -5168,6 +5170,7 @@ class LocationAdd(ConstraintEffect):
 
 @skip_unless_crm_rule()
 class ExpiredConstraints(ConstraintBaseTest):
+    # pylint: disable=too-many-public-methods
     # Setting tomorrow to the day after tomorrow in case the tests run close to
     # midnight.
     _tomorrow = (datetime.date.today() + datetime.timedelta(days=2)).strftime(

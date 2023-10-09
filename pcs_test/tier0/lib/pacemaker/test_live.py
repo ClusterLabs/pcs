@@ -68,8 +68,6 @@ class GetStatusFromApiResult(TestCase):
 
 class GetClusterStatusMixin(TestCase):
     def setUp(self):
-        # 'setUp' not defined in TestCase class
-        # pylint: disable=invalid-name
         self.env_assist, self.config = get_env_tools(test_case=self)
         self._xml_summary = etree_to_str(
             etree.parse(rc("crm_mon.minimal.xml")).find("/summary")
@@ -355,7 +353,6 @@ class GetClusterStatusText(TestCase):
 
 
 class GetCibXmlTest(TestCase):
-    # pylint: disable=no-self-use
     def test_success(self):
         expected_stdout = "<xml />"
         expected_stderr = ""
@@ -372,6 +369,7 @@ class GetCibXmlTest(TestCase):
         self.assertEqual(expected_stdout, real_xml)
 
     def test_error(self):
+        # pylint: disable=no-self-use
         expected_stdout = "some info"
         expected_stderr = "some error"
         expected_retval = 1
@@ -416,6 +414,7 @@ class GetCibXmlTest(TestCase):
         self.assertEqual(expected_stdout, real_xml)
 
     def test_scope_error(self):
+        # pylint: disable=no-self-use
         expected_stdout = "some info"
         # yes, the numbers do not match, tested and verified with
         # pacemaker-2.0.0-1.fc29.1.x86_64
@@ -793,7 +792,6 @@ class SimulateCibXml(TestCase):
             self.tmp_file_mock_obj.get_mock_side_effect()
         )
 
-    # pylint: disable=no-self-use
     def test_success(self):
         orig_cib_data = "orig cib"
         cib_file_name = "new_cib_file.tmp"

@@ -79,7 +79,6 @@ class GetFullClusterStatusPlaintext(
                         report_data["severity"] == ReportItemSeverity.ERROR
                         and report_data["report_text"]
                     ):
-                        # pylint: disable=line-too-long
                         self._report(
                             ReportItem.error(
                                 reports.messages.NodeCommunicationCommandUnsuccessful(

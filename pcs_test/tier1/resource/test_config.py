@@ -73,7 +73,6 @@ class ResourceConfigJson(TestCase):
 
 
 class ResourceConfigCmdMixin:
-    # pylint: disable=invalid-name
     def setUp(self):
         self.new_cib_file = get_tmp_file(self._get_tmp_file_name())
         self.pcs_runner_orig = PcsRunner(

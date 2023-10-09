@@ -52,8 +52,6 @@ from pcs.common.str_tools import indent
 from pcs.lib.errors import LibraryError
 from pcs.lib.node import get_existing_nodes_names
 
-# pylint: disable=too-many-branches, too-many-locals, too-many-statements
-
 
 def config_show(lib, argv, modifiers):
     """
@@ -115,6 +113,10 @@ def _config_show_cib_lines(lib, properties_facade=None):
     Commandline options:
       * -f - CIB file
     """
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-statements
+
     # update of pcs_options will change output of constraint show and
     # displaying resources and operations defaults
     utils.pcs_options["--full"] = 1
@@ -336,6 +338,8 @@ def config_restore_remote(infile_name, infile_obj):
     Commandline options:
       * --request-timeout - timeout for HTTP requests
     """
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-locals
     extracted = {
         "version.txt": "",
         "corosync.conf": "",
@@ -422,6 +426,9 @@ def config_restore_local(infile_name, infile_obj):
     """
     Commandline options: no options
     """
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-statements
     service_manager = utils.get_service_manager()
     if (
         service_manager.is_running("corosync")
@@ -826,7 +833,6 @@ def config_checkpoint_restore(lib, argv, modifiers):
     Options:
       * -f - CIB file, a checkpoint will be restored into a specified file
     """
-    # pylint: disable=broad-except
     del lib
     modifiers.ensure_only_supported("-f")
     if len(argv) != 1:
@@ -836,6 +842,7 @@ def config_checkpoint_restore(lib, argv, modifiers):
     cib_path = os.path.join(settings.cib_dir, "cib-%s.raw" % argv[0])
     try:
         snapshot_dom = parse(cib_path)
+    # pylint: disable=broad-except
     except Exception as e:
         utils.err("unable to read the checkpoint: %s" % e)
     utils.replace_cib_configuration(snapshot_dom)

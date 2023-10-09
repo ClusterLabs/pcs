@@ -1017,7 +1017,7 @@ class GetRoleListOfTargetTest(LibraryAclTest):
 @mock.patch("pcs.lib.cib.acl.find_target")
 class FindTargetOrGroup(TestCase):
     def test_returns_target(self, find_target, find_group):
-        # pylint: disable=unused-argument
+        del find_group
         find_target.return_value = "target_element"
         self.assertEqual(
             lib.find_target_or_group("acl_section", "target_id"),

@@ -242,7 +242,6 @@ def validate_unmove_unban(resource_element, master):
     analysis = _validate_move_ban_clear_analyzer(resource_element)
 
     if master and not analysis.is_promotable_clone:
-        # pylint: disable=line-too-long
         report_list.append(
             reports.ReportItem.error(
                 reports.messages.CannotUnmoveUnbanResourceMasterResourceNotPromotable(

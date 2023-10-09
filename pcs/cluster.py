@@ -80,8 +80,6 @@ from pcs.lib.errors import LibraryError
 from pcs.lib.node import get_existing_nodes_names
 from pcs.utils import parallel_for_nodes
 
-# pylint: disable=too-many-branches, too-many-statements
-
 
 def _corosync_conf_local_cmd_call(
     corosync_conf_path: parse_args.ModifierValueType,
@@ -242,11 +240,7 @@ def authkey_corosync(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
             with open(argv[0], "rb") as file:
                 corosync_authkey = file.read()
         except OSError as e:
-            utils.err(
-                "Unable to read file '{0}': {1}".format(
-                    argv[0], format_os_error(e)
-                )
-            )
+            utils.err(f"Unable to read file '{argv[0]}': {format_os_error(e)}")
     lib.cluster.corosync_authkey_change(
         corosync_authkey=corosync_authkey,
         force_flags=force_flags,
@@ -406,7 +400,6 @@ def wait_for_local_node_started(
         return (
             1,
             "Unable to get node status: {0}".format(
-                # pylint: disable=no-member
                 "\n".join(
                     report_item_msg_from_dto(
                         cast(reports.ReportItemDto, item).message
@@ -497,6 +490,7 @@ def stop_cluster_nodes(nodes: StringCollection) -> None:
       * --force - no error when possible quorum loss
       * --request-timeout - timeout for HTTP requests
     """
+    # pylint: disable=too-many-branches
     all_nodes, report_list = get_existing_nodes_names(
         utils.get_corosync_conf_facade()
     )
@@ -805,7 +799,9 @@ def cluster_push(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
       * --config - push only configuration section of CIB
       * -f - CIB file
     """
-    # pylint: disable=too-many-locals,
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-statements
     del lib
     modifiers.ensure_only_supported("--wait", "--config", "-f")
     if len(argv) > 2:
@@ -924,6 +920,7 @@ def cluster_edit(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
       * -f - CIB file
       * --wait
     """
+    # pylint: disable=too-many-branches
     modifiers.ensure_only_supported("--config", "--wait", "-f")
     if "EDITOR" in os.environ:
         if len(argv) > 1:
@@ -980,6 +977,7 @@ def get_cib(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
       * --config show configuration section of CIB
       * -f - CIB file
     """
+    # pylint: disable=too-many-branches
     del lib
     modifiers.ensure_only_supported("--config", "-f")
     if len(argv) > 2:
@@ -1173,7 +1171,8 @@ def cluster_uidgid(
     """
     Options: no options
     """
-    # pylint: disable=too-many-locals,
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-locals
     del lib
     modifiers.ensure_only_supported()
     if not argv:
@@ -1288,7 +1287,8 @@ def cluster_destroy(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
       * --all - destroy cluster on all cluster nodes => destroy whole cluster
       * --request-timeout - timeout of HTTP requests, effective only with --all
     """
-    # pylint: disable=bare-except
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-statements
     del lib
     modifiers.ensure_only_supported("--all", "--request-timeout", "--force")
     if argv:
@@ -1360,6 +1360,7 @@ def cluster_destroy(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         kill_local_cluster_services()
         try:
             utils.disableServices()
+        # pylint: disable=bare-except
         except:
             # previously errors were suppressed in here, let's keep it that way
             # for now
@@ -1369,6 +1370,7 @@ def cluster_destroy(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
             service_manager.disable(
                 lib_sbd.get_sbd_service_name(service_manager)
             )
+        # pylint: disable=bare-except
         except:
             # it's not a big deal if sbd disable fails
             pass
@@ -1409,6 +1411,7 @@ def cluster_destroy(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
             )
         try:
             qdevice_net.client_destroy()
+        # pylint: disable=bare-except
         except:
             # errors from deleting other files are suppressed as well
             # we do not want to fail if qdevice was not set up
@@ -1435,6 +1438,7 @@ def cluster_report(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
       * --from - timestamp
       * --to - timestamp
     """
+    # pylint: disable=too-many-branches
     del lib
     modifiers.ensure_only_supported("--force", "--from", "--to")
     if len(argv) != 1:
@@ -1506,7 +1510,6 @@ def send_local_configs(
     Commandline options:
       * --request-timeout - timeout of HTTP requests
     """
-    # pylint: disable=bare-except
     pcsd_data = {
         "nodes": node_name_list,
         "force": force,
@@ -1529,6 +1532,7 @@ def send_local_configs(
                     err_msgs.append(
                         "Unable to set pcsd configs on {0}".format(node_name)
                     )
+        # pylint: disable=bare-except
         except:
             err_msgs.append("Unable to communicate with pcsd")
     else:
@@ -1544,7 +1548,8 @@ def cluster_auth_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
       * -u - username
       * -p - password
     """
-    # pylint: disable=too-many-locals,
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-locals
     del lib
     modifiers.ensure_only_supported(
         "--corosync_conf", "--request-timeout", "-u", "-p"
@@ -1629,8 +1634,7 @@ def _parse_node_options(
     """
     Commandline options: no options
     """
-    # pylint: disable=invalid-name
-    ADDR_OPT_KEYWORD = "addr"
+    ADDR_OPT_KEYWORD = "addr"  # pylint: disable=invalid-name
     supported_options = {ADDR_OPT_KEYWORD} | set(additional_options)
     repeatable_options = {ADDR_OPT_KEYWORD} | set(additional_repeatable_options)
     parser = KeyValueParser(options, repeatable_options)
@@ -1641,9 +1645,7 @@ def _parse_node_options(
     ) - supported_options
     if unknown_options:
         raise CmdLineInputError(
-            "Unknown options '{}' for node '{}'".format(
-                "', '".join(sorted(unknown_options)), node
-            )
+            f"Unknown options {format_list(unknown_options)} for node '{node}'"
         )
     parsed_unique["name"] = node
     if ADDR_OPT_KEYWORD in parsed_repeatable:
@@ -1665,7 +1667,7 @@ def _parse_transport(
     """
     if not transport_args:
         raise CmdLineInputError(
-            "{} type not defined".format(TRANSPORT_KEYWORD.capitalize())
+            f"{TRANSPORT_KEYWORD.capitalize()} type not defined"
         )
     transport_type, *transport_options = transport_args
 
@@ -1723,10 +1725,8 @@ def cluster_setup(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     )
     if is_local and modifiers.is_specified_any(allowed_options_live):
         raise CmdLineInputError(
-            (
-                "Cannot specify any of {banned} when '--corosync_conf' is "
-                "specified"
-            ).format(banned=format_list(allowed_options_live))
+            f"Cannot specify any of {format_list(allowed_options_live)} "
+            "when '--corosync_conf' is specified"
         )
     if not is_local and modifiers.is_specified("--overwrite"):
         raise CmdLineInputError(
@@ -1932,7 +1932,7 @@ def _config_get_text(corosync_conf: CorosyncConfDto) -> list[str]:
     lines = [f"Cluster Name: {corosync_conf.cluster_name}"]
     if corosync_conf.cluster_uuid:
         lines.append(f"Cluster UUID: {corosync_conf.cluster_uuid}")
-    lines.append("Transport: {}".format(corosync_conf.transport.lower()))
+    lines.append(f"Transport: {corosync_conf.transport.lower()}")
     lines.extend(_format_nodes(corosync_conf.nodes))
     if corosync_conf.links_options:
         lines.append("Links:")
@@ -2038,9 +2038,8 @@ def _config_get_cmd(corosync_conf: CorosyncConfDto) -> list[str]:
 
 
 def _parse_add_node(argv: Argv) -> dict[str, Union[str, list[str]]]:
-    # pylint: disable=invalid-name
-    DEVICE_KEYWORD = "device"
-    WATCHDOG_KEYWORD = "watchdog"
+    DEVICE_KEYWORD = "device"  # pylint: disable=invalid-name
+    WATCHDOG_KEYWORD = "watchdog"  # pylint: disable=invalid-name
     hostname, *argv = argv
     node_dict = _parse_node_options(
         hostname,

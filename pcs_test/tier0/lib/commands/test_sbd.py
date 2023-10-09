@@ -19,8 +19,6 @@ from pcs_test.tools.assertions import (
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.misc import outdent
 
-# pylint: disable=protected-access
-
 
 def _assert_equal_list_of_dictionaries_without_order(expected, actual):
     for item in actual:
@@ -32,6 +30,7 @@ def _assert_equal_list_of_dictionaries_without_order(expected, actual):
 
 
 class ValidateSbdOptionsTest(TestCase):
+    # pylint: disable=protected-access
     def setUp(self):
         self.allowed_sbd_options = sorted(
             [
@@ -314,6 +313,7 @@ class ValidateSbdOptionsTest(TestCase):
 
 
 class ValidateWatchdogDictTest(TestCase):
+    # pylint: disable=protected-access
     def test_all_ok(self):
         watchdog_dict = {
             "node1": "/dev/watchdog1",
@@ -342,6 +342,7 @@ class ValidateWatchdogDictTest(TestCase):
 
 
 class GetFullTargetDictTest(TestCase):
+    # pylint: disable=protected-access
     def setUp(self):
         self.target_list = [
             RequestTarget("node{0}".format(i)) for i in range(1, 4)

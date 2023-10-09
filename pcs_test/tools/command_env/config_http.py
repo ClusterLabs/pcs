@@ -16,8 +16,6 @@ from pcs_test.tools.command_env.mock_node_communicator import (
     place_responses,
 )
 
-# pylint: disable=line-too-long
-
 
 def _mutual_exclusive(param_names, **kwargs):
     entered = {

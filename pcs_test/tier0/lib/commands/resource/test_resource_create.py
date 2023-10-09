@@ -2615,7 +2615,6 @@ class CreateInToBundle(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    # pylint: disable=line-too-long
                     reports.codes.RESOURCE_IN_BUNDLE_NOT_ACCESSIBLE,
                     bundle_id="B",
                     inner_resource_id="A",

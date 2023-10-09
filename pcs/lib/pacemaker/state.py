@@ -49,15 +49,12 @@ class _Attrs:
                 return self.attrib[attr_specification]
             except KeyError as e:
                 raise AttributeError(
-                    "Missing attribute '{0}' ('{1}' in source) in '{2}'".format(
-                        name, self.required_attrs[name], self.owner_name
-                    )
+                    f"Missing attribute '{name}' ('{self.required_attrs[name]}' "
+                    f"in source) in '{self.owner_name}'"
                 ) from e
 
         raise AttributeError(
-            "'{0}' does not declare attribute '{1}'".format(
-                self.owner_name, name
-            )
+            f"'{self.owner_name}' does not declare attribute '{name}'"
         )
 
 
@@ -87,9 +84,7 @@ class _Children:
             )
 
         raise AttributeError(
-            "'{0}' does not declare child or section '{1}'".format(
-                self.owner_name, name
-            )
+            f"'{self.owner_name}' does not declare child or section '{name}'"
         )
 
 

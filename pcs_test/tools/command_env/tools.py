@@ -15,7 +15,6 @@ def get_env_tools(
     local_extensions=None,
     booth_env=None,
 ):
-    # pylint: disable=unused-argument
     """
     Shortcut for preparing EnvAssistant and Config
 
@@ -26,7 +25,7 @@ def get_env_tools(
         something like this in a config :
             config.my_local_extension.my_local_call_shortcut()
     """
-
+    del booth_env
     env_assistant = EnvAssistant(
         test_case=test_case,
         exception_reports_in_processor_by_default=(

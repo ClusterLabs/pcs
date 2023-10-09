@@ -15,8 +15,8 @@ class HttpsServerManageException(Exception):
     pass
 
 
-# pylint: disable=too-many-instance-attributes
 class HttpsServerManage:
+    # pylint: disable=too-many-instance-attributes
     """
     Instance of HttpsServerManage encapsulates the construction of an HTTPServer
     """

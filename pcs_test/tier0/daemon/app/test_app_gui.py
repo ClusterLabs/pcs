@@ -31,7 +31,6 @@ class AppTest(fixtures_app.AppUiTestMixin):
     lambda _self, username: AuthUser(username=username, groups=[username]),
 )
 class SinatraAjaxProtected(AppTest):
-    # pylint: disable=too-many-ancestors
     def test_deal_without_authentication(self):
         self.assert_unauth_ajax(self.get("/some-ajax", is_ajax=True))
 

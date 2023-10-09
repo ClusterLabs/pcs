@@ -12,7 +12,7 @@ from pcs.common.str_tools import (
 )
 from pcs.common.types import StringIterable
 
-# pylint: disable=too-many-lines, too-many-branches, global-statement
+# pylint: disable=too-many-lines
 
 examples = ""
 
@@ -101,6 +101,8 @@ def full_usage() -> None:
 
 
 def strip_extras(text: str) -> str:
+    # pylint: disable=global-statement
+    # pylint: disable=too-many-branches
     global examples
     ret = ""
     group_name = text.split(" ")[2]
@@ -3256,7 +3258,7 @@ def show(main_usage_name: str, rest_usage_names: Argv) -> None:
         "tag": tag,
     }
     if main_usage_name not in usage_map:
-        raise Exception(
+        raise ValueError(
             "Bad usage name '{0}' there can be '{1}'".format(
                 main_usage_name, list(usage_map.keys())
             )

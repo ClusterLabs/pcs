@@ -26,7 +26,6 @@ class DefaultsBaseMixin:
     lib_command_name = ""
 
     def setUp(self):
-        # pylint: disable=invalid-name
         self.lib = mock.Mock(spec_set=["cib_options"])
         self.cib_options = mock.Mock(spec_set=[self.lib_command_name])
         self.lib.cib_options = self.cib_options

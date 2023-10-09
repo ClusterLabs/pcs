@@ -8,13 +8,13 @@ from pcs.lib.cib.tools import IdProvider
 from pcs_test.tools.assertions import assert_xml_equal
 from pcs_test.tools.xml import etree_to_str
 
-# pylint: disable=no-self-use, protected-access
-
 
 class AppendNewNvpair(TestCase):
     def test_append_new_nvpair_to_given_element(self):
+        # pylint: disable=no-self-use
         nvset_element = etree.fromstring('<nvset id="a"/>')
         id_provider = IdProvider(nvset_element)
+        # pylint: disable=protected-access
         nvpair._append_new_nvpair(nvset_element, "b", "c", id_provider)
         assert_xml_equal(
             etree_to_str(nvset_element),
@@ -26,9 +26,11 @@ class AppendNewNvpair(TestCase):
         )
 
     def test_with_id_provider(self):
+        # pylint: disable=no-self-use
         nvset_element = etree.fromstring('<nvset id="a"/>')
         provider = IdProvider(nvset_element)
         provider.book_ids("a-b")
+        # pylint: disable=protected-access
         nvpair._append_new_nvpair(nvset_element, "b", "c", provider)
         assert_xml_equal(
             etree_to_str(nvset_element),
@@ -42,6 +44,7 @@ class AppendNewNvpair(TestCase):
 
 class UpdateNvsetTest(TestCase):
     def test_updates_nvset(self):
+        # pylint: disable=no-self-use
         nvset_element = etree.fromstring(
             """
             <instance_attributes id="iattrs">
@@ -73,6 +76,7 @@ class UpdateNvsetTest(TestCase):
         )
 
     def test_empty_value_has_no_effect(self):
+        # pylint: disable=no-self-use
         xml = """
             <instance_attributes id="iattrs">
                 <nvpair id="iattrs-b" name="a" value="b"/>
@@ -86,6 +90,7 @@ class UpdateNvsetTest(TestCase):
         assert_xml_equal(xml, etree_to_str(nvset_element))
 
     def test_keep_empty_nvset(self):
+        # pylint: disable=no-self-use
         xml_pre = """
             <resource>
                 <instance_attributes id="iattrs">
@@ -174,6 +179,7 @@ class SetNvpairInNvsetTest(TestCase):
 
 class AppendNewNvsetTest(TestCase):
     def test_append_new_nvset_to_given_element(self):
+        # pylint: disable=no-self-use
         context_element = etree.fromstring('<context id="a"/>')
         id_provider = IdProvider(context_element)
         nvpair.append_new_nvset(
@@ -202,6 +208,7 @@ class AppendNewNvsetTest(TestCase):
         )
 
     def test_with_id_provider_booked_ids(self):
+        # pylint: disable=no-self-use
         context_element = etree.fromstring('<context id="a"/>')
         provider = IdProvider(context_element)
         provider.book_ids("a-instance_attributes", "a-instance_attributes-1-a")

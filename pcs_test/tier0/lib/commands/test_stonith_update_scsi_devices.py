@@ -373,7 +373,6 @@ class ScsiMixin:
 
 class UpdateScsiDevicesMixin:
     def setUp(self):
-        # pylint: disable=invalid-name
         self.env_assist, self.config = get_env_tools(self)
 
         self.existing_nodes = ["node1", "node2", "node3"]

@@ -124,7 +124,6 @@ class ParseCloneArgs(TestCase):
 
 class ParseCreateArgsCommonMixin:
     def setUp(self):
-        # pylint: disable=invalid-name
         print_patcher = mock.patch("pcs.cli.reports.output.print_to_stderr")
         self.print_mock = print_patcher.start()
         self.addCleanup(print_patcher.stop)

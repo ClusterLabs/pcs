@@ -12,7 +12,7 @@ from typing import (
 )
 
 from pcs.common.types import (
-    StringCollection,
+    StringIterable,
     StringSequence,
 )
 
@@ -39,29 +39,23 @@ def outdent(line_list: StringSequence) -> List[str]:
     return [line[smallest_indentation:] for line in line_list]
 
 
-def format_list_base(
-    item_list: StringSequence,
-    separator: str = ", ",
-) -> str:
+def format_list_base(item_list: StringIterable, separator: str = ", ") -> str:
     return separator.join(item_list)
 
 
 def format_list_dont_sort(
-    item_list: StringSequence,
+    item_list: StringIterable,
     separator: str = ", ",
 ) -> str:
     return format_list_base(quote_items(item_list), separator)
 
 
-def format_list(
-    item_list: StringSequence,
-    separator: str = ", ",
-) -> str:
+def format_list(item_list: StringIterable, separator: str = ", ") -> str:
     return format_list_dont_sort(sorted(item_list), separator)
 
 
 def format_list_custom_last_separator(
-    item_list: StringCollection,
+    item_list: StringIterable,
     last_separator: str,
     separator: str = ", ",
 ) -> str:
@@ -86,7 +80,7 @@ def format_list_custom_last_separator_dont_sort(
     )
 
 
-def quote_items(item_list: StringSequence) -> List[str]:
+def quote_items(item_list: StringIterable) -> List[str]:
     return [f"'{item}'" for item in item_list]
 
 

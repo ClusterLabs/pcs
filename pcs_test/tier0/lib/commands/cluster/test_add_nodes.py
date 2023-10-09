@@ -2763,8 +2763,7 @@ class FailureBoothConfigsDistribution(TestCase):
         if report_list is None:
             report_list = []
         self.env_assist.assert_raise_library_error(
-            # pylint: disable=unnecessary-lambda
-            lambda: self._add_nodes(),
+            self._add_nodes,
             report_list,
             expected_in_processor=False,
         )

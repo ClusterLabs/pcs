@@ -6,6 +6,7 @@ from pcs.lib.permissions.config.types import PermissionAccessType as p
 
 RESULT = "I'm done."
 
+
 # These functions use _ to discard environment that is hardcoded in
 # task_executor because all library functions use it
 def dummy_workload_no_result_with_reports(lib_env) -> None:
@@ -17,6 +18,7 @@ def dummy_workload_with_result(_) -> str:
 
 
 def dummy_workload_unhandled_exception(_) -> None:
+    # pylint: disable=broad-exception-raised
     raise Exception("Whoa, something happened to this task!")
 
 

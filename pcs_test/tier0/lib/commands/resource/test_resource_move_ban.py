@@ -65,8 +65,6 @@ def _action_kwargs(kwargs):
 
 
 class MoveBanClearBaseMixin:
-    # pylint does not and can not know setUp is a method of TestCase
-    # pylint: disable=invalid-name
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
 
@@ -304,7 +302,6 @@ class UnmoveUnban(UnmoveUnbanMixin, MoveBanClearBaseMixin, TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    # pylint: disable=line-too-long
                     report_codes.RESOURCE_UNMOVE_UNBAN_PCMK_EXPIRED_NOT_SUPPORTED
                 ),
             ]
@@ -332,8 +329,7 @@ class MoveBanWaitMixin:
              </resource>
         </resources>
     """
-    # pylint does not and can not know setUp is a method of TestCase
-    # pylint: disable=invalid-name
+
     def setUp(self):
         self.timeout = 10
         self.env_assist, self.config = get_env_tools(self)

@@ -121,7 +121,6 @@ class StonithWatchdogTimeoutMixin(LoadMetadataMixin):
     sbd_enabled = None
 
     def setUp(self):
-        # pylint: disable=invalid-name
         self.env_assist, self.config = get_env_tools(self)
         self.config.runner.cib.load(
             crm_config=fixture_crm_config_properties(
@@ -500,7 +499,6 @@ class MetadataErrorMixin:
 
 
 class TestPropertySet(LoadMetadataMixin, MetadataErrorMixin, TestCase):
-    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
 

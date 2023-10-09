@@ -19,8 +19,6 @@ from pcs_test.tools.assertions import assert_raise_library_error
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 from pcs_test.tools.misc import create_patcher
 
-# pylint: disable=protected-access
-
 mocked_cib = etree.fromstring("<cib />")
 
 patch_env = partial(mock.patch.object, LibraryEnvironment)
@@ -146,7 +144,7 @@ class SetInstanceAttrsBase(TestCase):
 
         @contextmanager
         def cib_runner_nodes_contextmanager(env, wait):
-            # pylint: disable=unused-argument
+            del env, wait
             self.launch["pre"] = True
             yield (self.cib, "mock_runner", self.cluster_nodes)
             self.launch["post"] = True
@@ -169,6 +167,7 @@ class SetInstanceAttrsBase(TestCase):
 @patch_command("update_node_instance_attrs")
 @patch_command("get_local_node_name")
 class SetInstanceAttrsLocal(SetInstanceAttrsBase):
+    # pylint: disable=protected-access
     node_count = 2
 
     def test_not_possible_with_cib_file(self, mock_name, mock_attrs):
@@ -202,6 +201,7 @@ class SetInstanceAttrsLocal(SetInstanceAttrsBase):
 
 @patch_command("update_node_instance_attrs")
 class SetInstanceAttrsAll(SetInstanceAttrsBase):
+    # pylint: disable=protected-access
     node_count = 2
 
     def test_success(self, mock_attrs):
@@ -219,6 +219,7 @@ class SetInstanceAttrsAll(SetInstanceAttrsBase):
 
 @patch_command("update_node_instance_attrs")
 class SetInstanceAttrsList(SetInstanceAttrsBase):
+    # pylint: disable=protected-access
     node_count = 4
 
     def test_success(self, mock_attrs):

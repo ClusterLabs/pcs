@@ -83,10 +83,6 @@ from pcs.lib.services import service_exception_to_report
 
 # pylint: disable=invalid-name
 # pylint: disable=too-many-branches
-# pylint: disable=too-many-locals
-# pylint: disable=too-many-nested-blocks
-# pylint: disable=too-many-return-statements
-# pylint: disable=too-many-statements
 
 # usefile & filename variables are set in pcs module
 usefile = False
@@ -531,6 +527,8 @@ def sendHTTPRequest(
       * --request-timeout - timeout for HTTP requests
       * --debug
     """
+    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-statements
     port = None
     addr = host
     token = None
@@ -1039,6 +1037,7 @@ def call_local_pcsd(argv, options, std_in=None):
     Commandline options:
       * --request-timeout - timeout of call to local pcsd
     """
+    # pylint: disable=too-many-return-statements
     # some commands cannot be run under a non-root account
     # so we pass those commands to locally running pcsd to execute them
     # returns [list_of_errors, exit_code, stdout, stderr]
@@ -1383,6 +1382,7 @@ def validate_constraint_resource(dom, resource_id):
     Commandline options:
       * --force - allow constraint on any resource
     """
+    # pylint: disable=too-many-return-statements
     resource_el = (
         dom_get_clone(dom, resource_id)
         or dom_get_master(dom, resource_id)
@@ -1540,6 +1540,7 @@ def get_resource_for_running_check(cluster_state, resource_id, stopped=False):
     """
     Commandline options: no options
     """
+    # pylint: disable=too-many-nested-blocks
     for clone in cluster_state.getElementsByTagName("clone"):
         if clone.getAttribute("id") == resource_id:
             for child in clone.childNodes:
@@ -1574,6 +1575,7 @@ def resource_running_on(resource, passed_state=None, stopped=False):
     Commandline options:
       * -f - has effect but doesn't make sense to check state of resource
     """
+    # pylint: disable=too-many-locals
     nodes_started = []
     nodes_promoted = []
     nodes_unpromoted = []
@@ -2715,7 +2717,7 @@ def exit_on_cmdline_input_error(
 
 
 def get_report_processor() -> ReportProcessor:
-    return ReportProcessorToConsole(debug=("--debug" in pcs_options))
+    return ReportProcessorToConsole(debug="--debug" in pcs_options)
 
 
 def get_user_and_pass():

@@ -126,14 +126,14 @@ def set_node_utilization(node: str, argv: Argv) -> None:
     node_el = utils.dom_get_node(cib, node)
     if node_el is None:
         if utils.usefile:
-            utils.err("Unable to find a node: {0}".format(node))
+            utils.err(f"Unable to find a node: {node}")
 
         for attrs in utils.getNodeAttributesFromPacemaker():
             if attrs.name == node and attrs.type == "remote":
                 node_attrs = attrs
                 break
         else:
-            utils.err("Unable to find a node: {0}".format(node))
+            utils.err(f"Unable to find a node: {node}")
 
         nodes_section_list = cib.getElementsByTagName("nodes")
         if not nodes_section_list:
@@ -182,7 +182,7 @@ def print_node_utilization(
             ]
         )
     ):
-        utils.err("Unable to find a node: {0}".format(filter_node))
+        utils.err(f"Unable to find a node: {filter_node}")
 
     utilization = {}
     for node_el in node_element_list:
@@ -194,7 +194,7 @@ def print_node_utilization(
             utilization[node] = util_str
     print("Node Utilization:")
     for node in sorted(utilization):
-        print(" {0}: {1}".format(node, utilization[node]))
+        print(f" {node}: {utilization[node]}")
 
 
 def node_pacemaker_status(
@@ -241,5 +241,5 @@ def attribute_print(node_attributes):
     for node in sorted(node_attributes.keys()):
         line_parts = [" " + node + ":"]
         for name, value in sorted(node_attributes[node].items()):
-            line_parts.append("{0}={1}".format(name, value))
+            line_parts.append(f"{name}={value}")
         print(" ".join(line_parts))

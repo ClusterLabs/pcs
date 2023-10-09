@@ -1,4 +1,3 @@
-# pylint: disable=global-statement
 import dataclasses
 import inspect
 import multiprocessing as mp
@@ -64,6 +63,7 @@ def worker_init(message_q: mp.Queue, logging_q: mp.Queue) -> None:
     :param message_q: Queue instance for sending messages to the scheduler
     :param logging_q: Queue instance for sending log records to the scheduler
     """
+    # pylint: disable=global-statement
     # Create and configure new logger
     logger = setup_worker_logger(logging_q)
     logger.info("Worker initialized.")
@@ -205,7 +205,6 @@ def task_executor(task: WorkerCommand) -> None:
         # processor here
 
         for report in e.args:
-            # pylint: disable=no-member
             worker_com.put(Message(task.task_ident, report.to_dto()))
         worker_com.put(
             Message(

@@ -59,7 +59,6 @@ class OrganizeLinesTest(TestCase):
         )
 
     def test_use_ticket_key_as_ticket_detail(self):
-        # pylint: disable=invalid-name
         self.maxDiff = None
         self.assertEqual(
             [

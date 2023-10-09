@@ -117,7 +117,8 @@ def create(
     wait: WaitType = False,
     enable_agent_self_validation: bool = False,
 ):
-    # pylint: disable=too-many-arguments, too-many-locals
+    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-locals
     """
     Create stonith as resource in a cib.
 
@@ -201,7 +202,8 @@ def create_in_group(
     wait: WaitType = False,
     enable_agent_self_validation: bool = False,
 ):
-    # pylint: disable=too-many-arguments, too-many-locals
+    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-locals
     """
     DEPRECATED
     Create stonith as resource in a cib and put it into defined group.

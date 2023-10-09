@@ -110,9 +110,9 @@ def _find_primitives_by_agent(
         List[_Element],
         resources_section.xpath(
             ".//primitive[@class=$class_ and @type=$type_ {provider_part}]".format(
-                provider_part=" and @provider=$provider_"
-                if agent_name.provider
-                else "",
+                provider_part=(
+                    " and @provider=$provider_" if agent_name.provider else ""
+                ),
             ),
             class_=agent_name.standard,
             provider_=agent_name.provider or "",
@@ -182,7 +182,7 @@ def create(
                 reports.messages.IdAlreadyExists(resource_id)
             )
         )
-    validate_id(resource_id, "{0} name".format(resource_type))
+    validate_id(resource_id, f"{resource_type} name")
 
     agent_metadata = resource_agent_facade.metadata
 
@@ -458,7 +458,6 @@ def validate_resource_instance_attributes_update(
     force: bool = False,
     enable_agent_self_validation: bool = False,
 ) -> reports.ReportItemList:
-    # pylint: disable=too-many-locals
     # TODO This function currently accepts the updated resource as a string and
     # finds the corresponding xml element by itself. This is needed as the
     # function is called from old pcs code which uses dom while pcs.lib uses

@@ -507,10 +507,8 @@ def _split_bundle_map_update_op_and_options(
 
 def _bundle_map_update_not_valid(map_name: str) -> CmdLineInputError:
     return CmdLineInputError(
-        (
-            "When using '{map}' you must specify either 'add' and options or "
-            "either of 'delete' or 'remove' and id(s)"
-        ).format(map=map_name)
+        f"When using '{map_name}' you must specify either 'add' and options or "
+        "either of 'delete' or 'remove' and id(s)"
     )
 
 
@@ -562,7 +560,7 @@ def build_operations(op_group_list: list[Argv]) -> list[Argv]:
 
         for arg in op_group:
             if "=" not in arg:
-                operation_list.append(["name={0}".format(arg)])
+                operation_list.append([f"name={arg}"])
             else:
                 operation_list[-1].append(arg)
 

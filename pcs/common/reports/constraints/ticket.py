@@ -7,7 +7,7 @@ def constraint_plain(constraint_info):
     """
     options = constraint_info["options"]
     role = options.get("rsc-role", "")
-    role_prefix = "{0} ".format(role) if role else ""
+    role_prefix = f"{role} " if role else ""
 
     return role_prefix + " ".join(
         [options.get("rsc", "")]

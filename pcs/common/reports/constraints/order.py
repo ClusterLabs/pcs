@@ -42,7 +42,7 @@ def constraint_plain(constraint_info):
     )
     oc_options = " ".join(
         [
-            "{0}={1}".format(name, value)
+            f"{name}={value}"
             for name, value in options.items()
             if name not in already_processed_options
         ]
