@@ -129,9 +129,6 @@ class Format:
         if isinstance(test, unittest.case._SubTest):
             subtest_desc = test._subDescription()
             test = test.test_case
-        doc_first_line = test.shortDescription()
-        if descriptions and doc_first_line:
-            return "\n".join((str(test), doc_first_line))
         module_parts = test.__class__.__module__.split(".")
         module = module_parts[-1]
         package = ".".join(module_parts[:-1]) + "." if module_parts else ""
@@ -146,7 +143,11 @@ class Format:
         )
 
         if subtest_desc:
-            return f"{desc} {subtest_desc}"
+            desc = f"{desc} {subtest_desc}"
+
+        doc_first_line = test.shortDescription()
+        if descriptions and doc_first_line:
+            return f"{desc}\n{doc_first_line}"
         return desc
 
     def error_list(self, flavour, errors, descriptions, traceback_highlight):
