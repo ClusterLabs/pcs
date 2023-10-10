@@ -454,6 +454,7 @@ EXTRA_DIST		= \
 			  tools/__init__.py \
 			  tools/misc.py \
 			  tools/pcs_runner.py \
+			  tools/parallel_test_runner.py \
 			  tools/resources_dto.py \
 			  tools/constraints_dto.py \
 			  tools/xml.py

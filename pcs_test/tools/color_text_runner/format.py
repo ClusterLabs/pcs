@@ -1,4 +1,5 @@
 import re
+import unittest
 
 separator1 = "=" * 70
 separator2 = "-" * 70
@@ -90,57 +91,66 @@ class Format:
         return self._output.lightgrey("_").join(parts)
 
     def error_overview(self, errors, failures, slash_last):
-        return (
-            [
-                self._output.red(
-                    "for running failed tests only (errors are first then "
-                    "failures):"
-                ),
-                "",
-            ]
-            + [
-                self._output.lightgrey(err)
-                for err in slash_errors(
-                    [self.test_name(test) for test, _ in errors + failures],
-                    slash_last,
-                )
-            ]
-            + [""]
+        error_names = sorted(set(self.test_name(test) for test, _ in errors))
+        failure_names = sorted(
+            set(self.test_name(test) for test, _ in failures)
         )
 
+        overview = []
+        overview.append(
+            self._output.red(
+                "for running failed tests only (errors are first then "
+                "failures):"
+            )
+        )
+        overview.append("")
+        overview.extend(
+            self._output.lightgrey(err)
+            for err in slash_errors(
+                error_names + failure_names,
+                slash_last,
+            )
+        )
+        overview.append("")
+
+        return overview
+
     def test_name(self, test):
-        if (
-            test.__class__.__module__ == "subunit"
-            and test.__class__.__name__ == "RemotedTestCase"
-        ):
-            return self.test_method_name(test)
-        return (
-            self.module(test)
-            + "."
-            + test.__class__.__name__
-            + "."
-            + self.test_method_name(test)
+        # pylint: disable=protected-access
+        if isinstance(test, unittest.case._SubTest):
+            test = test.test_case
+        return "{module_name}.{class_name}.{method_name}".format(
+            module_name=self.module(test),
+            class_name=test.__class__.__name__,
+            method_name=self.test_method_name(test),
         )
 
     def description(self, test, descriptions):
-        doc_first_line = test.shortDescription()
-        if descriptions and doc_first_line:
-            return "\n".join((str(test), doc_first_line))
+        subtest_desc = None
+        # pylint: disable=protected-access
+        if isinstance(test, unittest.case._SubTest):
+            subtest_desc = test._subDescription()
+            test = test.test_case
         module_parts = test.__class__.__module__.split(".")
         module = module_parts[-1]
         package = ".".join(module_parts[:-1]) + "." if module_parts else ""
 
-        return (
-            # pylint: disable=protected-access
-            test._testMethodName
-            + " "
-            + self._output.lightgrey("(")
-            + self._output.lightgrey(package)
-            + self._output.bold(module)
-            + "."
-            + test.__class__.__name__
-            + self._output.lightgrey(")")
+        desc = (
+            "{method_name} ({package_name}{module_name}.{class_name})".format(
+                method_name=test._testMethodName,
+                package_name=self._output.lightgrey(package),
+                module_name=self._output.bold(module),
+                class_name=test.__class__.__name__,
+            )
         )
+
+        if subtest_desc:
+            desc = f"{desc} {subtest_desc}"
+
+        doc_first_line = test.shortDescription()
+        if descriptions and doc_first_line:
+            return f"{desc}\n{doc_first_line}"
+        return desc
 
     def error_list(self, flavour, errors, descriptions, traceback_highlight):
         line_list = []
@@ -193,13 +203,11 @@ class Format:
                 was_prev_path = False
         return "\n".join(formatted_err) + "\n"
 
-    def skips(self, skip_map):
+    def skip_overview(self, skip_map):
         return (
             [self._output.blue("Some tests have been skipped:")]
             + [
-                self._output.lightgrey(
-                    "{0} ({1}x)".format(reason, len(test_list))
-                )
+                "{0} ({1}x)".format(reason, len(test_list))
                 for reason, test_list in skip_map.items()
             ]
             + [""]

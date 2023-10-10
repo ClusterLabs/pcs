@@ -46,6 +46,7 @@ class Writer:
                 if self.traceback_highlight
                 else traceback
             )
+            self.stream.flush()
 
 
 class DotWriter(Writer):
@@ -79,17 +80,21 @@ class DotWriter(Writer):
 class StandardVerboseWriter(Writer):
     def addSuccess(self, test):
         self.stream.writeln(self.format.green("OK"))
+        self.stream.flush()
 
     def addError(self, test, err, traceback):
         self.stream.writeln(self.format.red("ERROR"))
+        self.stream.flush()
         self.show_fast_info(traceback)
 
     def addFailure(self, test, err, traceback):
         self.stream.writeln(self.format.red("FAIL"))
+        self.stream.flush()
         self.show_fast_info(traceback)
 
     def addSkip(self, test, reason):
         self.stream.writeln(self.format.blue("skipped {0!r}".format(reason)))
+        self.stream.flush()
 
     def startTest(self, test):
         self.stream.write(self.format.description(test, self.descriptions))
@@ -98,9 +103,11 @@ class StandardVerboseWriter(Writer):
 
     def addExpectedFailure(self, test, err):
         self.stream.writeln(self.format.blue("expected failure"))
+        self.stream.flush()
 
     def addUnexpectedSuccess(self, test):
         self.stream.writeln(self.format.red("unexpected success"))
+        self.stream.flush()
 
 
 class TimeWriter(StandardVerboseWriter):
@@ -195,13 +202,11 @@ class ImprovedVerboseWriter(StandardVerboseWriter):
         return test.__class__.__name__
 
     def startTest(self, test):
-        self.stream.write(
-            self.__format_module(test)
-            + self.format.lightgrey(".")
-            + self.__format_class(test)
-            + self.format.lightgrey(".")
-            + self.format.test_method_name(test)
-            + self.format.lightgrey(" : ")
-        )
+        self.stream.write(self.__format_module(test))
+        self.stream.write(self.format.lightgrey("."))
+        self.stream.write(self.__format_class(test))
+        self.stream.write(self.format.lightgrey("."))
+        self.stream.write(self.format.test_method_name(test))
+        self.stream.write(self.format.lightgrey(" : "))
         self.stream.flush()
         self.last_test = test
