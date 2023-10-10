@@ -29,7 +29,7 @@
   * To list available options and their description, run `./configure -h`.
   * Recommended setup for development is to run
     `./configure --enable-local-build --enable-dev-tests
-    --enable-destructive-tests --enable-concise-tests --enable-parallel-tests`
+    --enable-destructive-tests --enable-concise-tests`
 * Run `make`.
   * This downloads and installs dependencies, such as python modules and
     rubygems.

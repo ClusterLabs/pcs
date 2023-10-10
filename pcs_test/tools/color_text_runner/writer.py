@@ -46,6 +46,7 @@ class Writer:
                 if self.traceback_highlight
                 else traceback
             )
+            self.stream.flush()
 
 
 class DotWriter(Writer):
@@ -207,4 +208,5 @@ class ImprovedVerboseWriter(StandardVerboseWriter):
         self.stream.write(self.format.lightgrey("."))
         self.stream.write(self.format.test_method_name(test))
         self.stream.write(self.format.lightgrey(" : "))
+        self.stream.flush()
         self.last_test = test

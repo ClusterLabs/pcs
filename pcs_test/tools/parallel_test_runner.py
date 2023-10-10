@@ -59,7 +59,7 @@ class VanillaTextTestResult(unittest.TextTestResult):
             line_list.append(self.separator1)
             line_list.append(f"{severity}: {self.getDescription(test)}")
             line_list.append(self.separator2)
-            line_list.append(f"{err}")
+            line_list.append(err)
         return line_list
 
     def stopTest(self, test):

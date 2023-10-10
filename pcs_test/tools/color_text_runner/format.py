@@ -91,27 +91,29 @@ class Format:
         return self._output.lightgrey("_").join(parts)
 
     def error_overview(self, errors, failures, slash_last):
-        return (
-            [
-                self._output.red(
-                    "for running failed tests only (errors are first then "
-                    "failures):"
-                ),
-                "",
-            ]
-            + [
-                self._output.lightgrey(err)
-                for err in slash_errors(
-                    [
-                        self.test_name(test)
-                        for test, _ in sorted(set(errors))
-                        + sorted(set(failures))
-                    ],
-                    slash_last,
-                )
-            ]
-            + [""]
+        error_names = sorted(set(self.test_name(test) for test, _ in errors))
+        failure_names = sorted(
+            set(self.test_name(test) for test, _ in failures)
         )
+
+        overview = []
+        overview.append(
+            self._output.red(
+                "for running failed tests only (errors are first then "
+                "failures):"
+            )
+        )
+        overview.append("")
+        overview.extend(
+            self._output.lightgrey(err)
+            for err in slash_errors(
+                error_names + failure_names,
+                slash_last,
+            )
+        )
+        overview.append("")
+
+        return overview
 
     def test_name(self, test):
         # pylint: disable=protected-access

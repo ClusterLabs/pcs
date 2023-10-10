@@ -5,7 +5,11 @@ import unittest
 from importlib import import_module
 from multiprocessing import Pool
 from threading import Thread
-from typing import Optional
+from typing import (
+    Callable,
+    Optional,
+    Union,
+)
 
 PACKAGE_DIR = os.path.realpath(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -35,7 +39,9 @@ def prepare_test_name(test_name):
         return candidate[: -len(py_extension)]
 
 
-def tests_from_suite(test_candidate: unittest.TestCase) -> list[str]:
+def tests_from_suite(
+    test_candidate: Union[unittest.TestCase, unittest.TestSuite]
+) -> list[str]:
     if isinstance(test_candidate, unittest.TestCase):
         return [test_candidate.id()]
     test_id_list = []
@@ -101,7 +107,7 @@ def tier1_fixtures_needed(test_list: list[str]) -> set[str]:
 
 def run_tier1_fixtures(
     modules: set[str], run_concurrently: bool = True
-) -> None:
+) -> Callable[[], None]:
     fixture_instances = []
     for mod in modules:
         tmp_mod = import_module(mod)
@@ -148,16 +154,14 @@ def run_tier1_fixtures(
     return cleanup
 
 
-def parallel_run(tests: list[str], result_class) -> bool:
+def parallel_run(tests: list[str], result_class, verbosity: int) -> bool:
     # pylint: disable=import-outside-toplevel
     from pcs_test.tools.parallel_test_runner import (
         ParallelTestManager,
         aggregate_test_results,
     )
 
-    manager = ParallelTestManager(
-        result_class, verbosity=2 if "-v" in sys.argv else 1
-    )
+    manager = ParallelTestManager(result_class, verbosity=verbosity)
 
     with Pool() as pool:
         start_time = time.perf_counter()
@@ -174,9 +178,9 @@ def parallel_run(tests: list[str], result_class) -> bool:
     return test_result.was_successful
 
 
-def non_parallel_run(tests: list[str], result_class) -> bool:
+def non_parallel_run(tests: list[str], result_class, verbosity: int) -> bool:
     test_runner = unittest.TextTestRunner(
-        verbosity=2 if "-v" in sys.argv else 1,
+        verbosity=verbosity,
         resultclass=result_class,
     )
     tests_to_run = unittest.defaultTestLoader.loadTestsFromNames(tests)
@@ -277,10 +281,13 @@ def main() -> None:
             measure_time=("--time" in sys.argv),
         )
 
+    verbosity = 2 if "-v" in sys.argv else 1
     if run_concurrently:
-        test_success = parallel_run(discovered_tests, ResultClass)
+        test_success = parallel_run(discovered_tests, ResultClass, verbosity)
     else:
-        test_success = non_parallel_run(discovered_tests, ResultClass)
+        test_success = non_parallel_run(
+            discovered_tests, ResultClass, verbosity
+        )
     tier1_fixtures_cleanup()
     if not test_success:
         sys.exit(1)
