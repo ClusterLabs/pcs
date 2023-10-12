@@ -377,7 +377,7 @@ class ValidateMoveBanClearMixin:
                 fixture.error(
                     self.report_code_bad_master,
                     resource_id="R-clone",
-                    promotable_id=None,
+                    promotable_id="",
                 ),
             ],
         )
@@ -459,7 +459,7 @@ class ValidateMoveBanClearMixin:
                 fixture.error(
                     self.report_code_bad_master,
                     resource_id="R",
-                    promotable_id=None,
+                    promotable_id="",
                 ),
             ],
         )
@@ -478,7 +478,7 @@ class ValidateMoveBanClearMixin:
                 fixture.error(
                     self.report_code_bad_master,
                     resource_id="G",
-                    promotable_id=None,
+                    promotable_id="",
                 ),
             ],
         )
@@ -497,7 +497,7 @@ class ValidateMoveBanClearMixin:
                 fixture.error(
                     self.report_code_bad_master,
                     resource_id="R",
-                    promotable_id=None,
+                    promotable_id="",
                 ),
             ],
         )

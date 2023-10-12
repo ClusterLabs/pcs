@@ -1,4 +1,4 @@
-from collections import namedtuple
+from dataclasses import dataclass
 from typing import (
     List,
     Optional,
@@ -116,12 +116,14 @@ def validate_move_resources_to_group(
     return report_list
 
 
-def validate_move(resource_element, master):
+def validate_move(
+    resource_element: _Element, master: bool
+) -> reports.ReportItemList:
     """
     Validate moving a resource to a node
 
-    etree resource_element -- the resource to be moved
-    bool master -- limit moving to the master role
+    resource_element -- the resource to be moved
+    master -- limit moving to the master role
     """
     report_list = []
 
@@ -140,7 +142,7 @@ def validate_move(resource_element, master):
         report_list.append(
             reports.ReportItem.error(
                 reports.messages.CannotMoveResourceBundle(
-                    resource_element.get("id")
+                    str(resource_element.get("id"))
                 )
             )
         )
@@ -152,7 +154,7 @@ def validate_move(resource_element, master):
         report_list.append(
             reports.ReportItem.error(
                 reports.messages.CannotMoveResourceClone(
-                    resource_element.get("id")
+                    str(resource_element.get("id"))
                 )
             )
         )
@@ -170,8 +172,8 @@ def validate_move(resource_element, master):
         report_list.append(
             reports.ReportItem.error(
                 reports.messages.CannotMoveResourcePromotableInner(
-                    resource_element.get("id"),
-                    analysis.promotable_clone_id,
+                    str(resource_element.get("id")),
+                    str(analysis.promotable_clone_id),
                 )
             )
         )
@@ -179,8 +181,8 @@ def validate_move(resource_element, master):
         report_list.append(
             reports.ReportItem.error(
                 reports.messages.CannotMoveResourceMasterResourceNotPromotable(
-                    resource_element.get("id"),
-                    promotable_id=analysis.promotable_clone_id,
+                    str(resource_element.get("id")),
+                    promotable_id=analysis.promotable_clone_id or "",
                 )
             )
         )
@@ -188,12 +190,14 @@ def validate_move(resource_element, master):
     return report_list
 
 
-def validate_ban(resource_element, master):
+def validate_ban(
+    resource_element: _Element, master: bool
+) -> reports.ReportItemList:
     """
     Validate banning a resource on a node
 
-    etree resource_element -- the resource to be banned
-    bool master -- limit banning to the master role
+    resource_element -- the resource to be banned
+    master -- limit banning to the master role
     """
     report_list = []
 
@@ -212,8 +216,8 @@ def validate_ban(resource_element, master):
         report_list.append(
             reports.ReportItem.error(
                 reports.messages.CannotBanResourceMasterResourceNotPromotable(
-                    resource_element.get("id"),
-                    promotable_id=analysis.promotable_clone_id,
+                    str(resource_element.get("id")),
+                    promotable_id=analysis.promotable_clone_id or "",
                 )
             )
         )
@@ -221,12 +225,14 @@ def validate_ban(resource_element, master):
     return report_list
 
 
-def validate_unmove_unban(resource_element, master):
+def validate_unmove_unban(
+    resource_element: _Element, master: bool
+) -> reports.ReportItemList:
     """
     Validate unmoving/unbanning a resource to/on nodes
 
-    etree resource_element -- the resource to be unmoved/unbanned
-    bool master -- limit unmoving/unbanning to the master role
+    resource_element -- the resource to be unmoved/unbanned
+    master -- limit unmoving/unbanning to the master role
     """
     report_list = []
 
@@ -245,8 +251,8 @@ def validate_unmove_unban(resource_element, master):
         report_list.append(
             reports.ReportItem.error(
                 reports.messages.CannotUnmoveUnbanResourceMasterResourceNotPromotable(
-                    resource_element.get("id"),
-                    promotable_id=analysis.promotable_clone_id,
+                    str(resource_element.get("id")),
+                    promotable_id=analysis.promotable_clone_id or "",
                 )
             )
         )
@@ -254,29 +260,27 @@ def validate_unmove_unban(resource_element, master):
     return report_list
 
 
-class _MoveBanClearAnalysis(
-    namedtuple(
-        "_MoveBanClearAnalysis",
-        [
-            "is_bundle",
-            "is_clone",
-            "is_in_clone",
-            "is_promotable_clone",
-            "is_in_promotable_clone",
-            "promotable_clone_id",
-        ],
-    )
-):
-    pass
+@dataclass(frozen=True)
+class _MoveBanClearAnalysis:
+    is_bundle: bool
+    is_clone: bool
+    is_in_clone: bool
+    is_promotable_clone: bool
+    is_in_promotable_clone: bool
+    promotable_clone_id: Optional[str]
 
 
-def _validate_move_ban_clear_analyzer(resource_element):
+def _validate_move_ban_clear_analyzer(
+    resource_element: _Element,
+) -> _MoveBanClearAnalysis:
     resource_is_bundle = False
     resource_is_clone = False
     resource_is_in_clone = False
     resource_is_promotable_clone = False
     resource_is_in_promotable_clone = False
     promotable_clone_element = None
+
+    parent_clone = get_parent_any_clone(resource_element)
 
     if is_bundle(resource_element):
         resource_is_bundle = True
@@ -285,8 +289,7 @@ def _validate_move_ban_clear_analyzer(resource_element):
         if is_master(resource_element) or is_promotable_clone(resource_element):
             resource_is_promotable_clone = True
             promotable_clone_element = resource_element
-    elif get_parent_any_clone(resource_element) is not None:
-        parent_clone = get_parent_any_clone(resource_element)
+    elif parent_clone is not None:
         resource_is_in_clone = True
         if is_master(parent_clone) or is_promotable_clone(parent_clone):
             resource_is_in_promotable_clone = True
