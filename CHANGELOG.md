@@ -31,6 +31,8 @@
   specified for `pcs resource create` command ([rhbz#2179084]).
 - Improved error message of `pcs booth ticket grant|revoke` commands in case a
   booth site address parameter is needed ([rhbz#2232143])
+- When moving or banning a resource in a bundle, pcs now errors out instead of
+  creating a move / ban constraint which does nothing ([RHEL-7744])
 
 ### Changed
 - When exporting constraints in form of pcs commands, constraints containing
@@ -61,6 +63,7 @@
 [rhbz#2111591]: https://bugzilla.redhat.com/show_bug.cgi?id=2111591
 [rhbz#2232143]: https://bugzilla.redhat.com/show_bug.cgi?id=2232143
 [rhbz#2234717]: https://bugzilla.redhat.com/show_bug.cgi?id=2234717
+[RHEL-7744]: https://issues.redhat.com/browse/RHEL-7744
 
 
 ## [0.11.6] - 2023-06-20

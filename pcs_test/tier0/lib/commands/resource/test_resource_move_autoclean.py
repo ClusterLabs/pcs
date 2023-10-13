@@ -648,15 +648,14 @@ class MoveAutocleanValidations(MoveAutocleanCommonSetup):
             ]
         )
 
-    def test_resource_wrong_type_bundle(self):
-        resource_id = "bundle_rsc"
+    def test_resource_wrong_type_bundle_inner(self):
+        bundle_id = "bundle_rsc"
+        resource_id = "bundle_rsc-primitive"
         self.config.runner.cib.load(
             resources=_resources_tag(
-                '<bundle id="{res_id}">{primitive}</bundle>'.format(
-                    res_id=resource_id,
-                    primitive=_rsc_primitive_fixture(
-                        f"{resource_id}-primitive"
-                    ),
+                '<bundle id="{bundle_id}">{primitive}</bundle>'.format(
+                    bundle_id=bundle_id,
+                    primitive=_rsc_primitive_fixture(resource_id),
                 )
             )
         )
@@ -666,8 +665,9 @@ class MoveAutocleanValidations(MoveAutocleanCommonSetup):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    reports.codes.CANNOT_MOVE_RESOURCE_BUNDLE,
+                    reports.codes.CANNOT_MOVE_RESOURCE_BUNDLE_INNER,
                     resource_id=resource_id,
+                    bundle_id=bundle_id,
                 )
             ]
         )

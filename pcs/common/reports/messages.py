@@ -5875,6 +5875,27 @@ class CannotMoveResourceBundle(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class CannotMoveResourceBundleInner(ReportItemMessage):
+    """
+    User is trying to move a bundle's inner resource
+
+    resource_id -- id of the resource to be moved
+    bundle_id -- id of the relevant parent bundle resource
+    """
+
+    resource_id: str
+    bundle_id: str
+    _code = codes.CANNOT_MOVE_RESOURCE_BUNDLE_INNER
+
+    @property
+    def message(self) -> str:
+        return (
+            "Resources cannot be moved out of their bundles. If you want to "
+            f"move a bundle, use the bundle id ({self.bundle_id})"
+        )
+
+
+@dataclass(frozen=True)
 class CannotMoveResourceClone(ReportItemMessage):
     """
     User is trying to move a clone resource which is not possible
@@ -6011,6 +6032,27 @@ class ResourceMovePcmkSuccess(ReportItemMessage):
     @property
     def message(self) -> str:
         return _resource_move_ban_pcmk_success(self.stdout, self.stderr)
+
+
+@dataclass(frozen=True)
+class CannotBanResourceBundleInner(ReportItemMessage):
+    """
+    User is trying to ban a bundle's inner resource
+
+    resource_id -- id of the resource to be banned
+    bundle_id -- id of the relevant parent bundle resource
+    """
+
+    resource_id: str
+    bundle_id: str
+    _code = codes.CANNOT_BAN_RESOURCE_BUNDLE_INNER
+
+    @property
+    def message(self) -> str:
+        return (
+            f"Resource '{self.resource_id}' is in a bundle and cannot be banned. "
+            f"If you want to ban the bundle, use the bundle id ({self.bundle_id})"
+        )
 
 
 @dataclass(frozen=True)
