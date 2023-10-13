@@ -1715,10 +1715,8 @@ def move_autoclean(
 
     if retval != 0:
         raise LibraryError(
-            ReportItem.error(
-                reports.messages.ResourceMovePcmkError(
-                    resource_id, stdout, stderr
-                )
+            _move_ban_pcmk_error_report(
+                resource_id, stdout, stderr, is_ban=False
             )
         )
     add_constraint_cib_diff = diff_cibs_xml(
@@ -1997,17 +1995,34 @@ def _move_wait_report(
     )
 
 
+def _move_ban_pcmk_error_report(
+    resource_id: str, stdout: str, stderr: str, is_ban: bool
+) -> reports.ReportItem:
+    if f"Resource '{resource_id}' not moved: active in 0 locations" in stderr:
+        message_stopped = (
+            reports.messages.CannotBanResourceStoppedNoNodeSpecified
+            if is_ban
+            else reports.messages.CannotMoveResourceStoppedNoNodeSpecified
+        )
+        return reports.ReportItem.error(message_stopped(resource_id))
+
+    message_generic = (
+        reports.messages.ResourceBanPcmkError
+        if is_ban
+        else reports.messages.ResourceMovePcmkError
+    )
+    return reports.ReportItem.error(
+        message_generic(resource_id, stdout, stderr)
+    )
+
+
 class _MoveBanTemplate:
+    _is_ban = False
+
     def _validate(self, resource_el, master):
         raise NotImplementedError()
 
     def _run_action(self, runner, resource_id, node, master, lifetime):
-        raise NotImplementedError()
-
-    def _report_action_stopped_resource(self, resource_id):
-        raise NotImplementedError()
-
-    def _report_action_pcmk_error(self, resource_id, stdout, stderr):
         raise NotImplementedError()
 
     def _report_action_pcmk_success(self, resource_id, stdout, stderr):
@@ -2067,18 +2082,13 @@ class _MoveBanTemplate:
             master=master,
             lifetime=lifetime,
         )
-
         if retval != 0:
-            if (
-                f"Resource '{resource_id}' not moved: active in 0 locations"
-                in stderr
-            ):
-                raise LibraryError(
-                    self._report_action_stopped_resource(resource_id)
-                )
             raise LibraryError(
-                self._report_action_pcmk_error(resource_id, stdout, stderr)
+                _move_ban_pcmk_error_report(
+                    resource_id, stdout, stderr, self._is_ban
+                )
             )
+
         if node and not stdout and not stderr:
             env.report_processor.report_list(
                 self._report_resource_may_or_may_not_move(resource_id)
@@ -2111,18 +2121,6 @@ class _Move(_MoveBanTemplate):
     def _run_action(self, runner, resource_id, node, master, lifetime):
         return resource_move(
             runner, resource_id, node=node, master=master, lifetime=lifetime
-        )
-
-    def _report_action_stopped_resource(self, resource_id):
-        return ReportItem.error(
-            reports.messages.CannotMoveResourceStoppedNoNodeSpecified(
-                resource_id
-            )
-        )
-
-    def _report_action_pcmk_error(self, resource_id, stdout, stderr):
-        return ReportItem.error(
-            reports.messages.ResourceMovePcmkError(resource_id, stdout, stderr)
         )
 
     def _report_action_pcmk_success(self, resource_id, stdout, stderr):
@@ -2160,24 +2158,14 @@ class _Move(_MoveBanTemplate):
 
 
 class _Ban(_MoveBanTemplate):
+    _is_ban = True
+
     def _validate(self, resource_el, master):
         return resource.common.validate_ban(resource_el, master)
 
     def _run_action(self, runner, resource_id, node, master, lifetime):
         return resource_ban(
             runner, resource_id, node=node, master=master, lifetime=lifetime
-        )
-
-    def _report_action_stopped_resource(self, resource_id):
-        return ReportItem.error(
-            reports.messages.CannotBanResourceStoppedNoNodeSpecified(
-                resource_id,
-            )
-        )
-
-    def _report_action_pcmk_error(self, resource_id, stdout, stderr):
-        return ReportItem.error(
-            reports.messages.ResourceBanPcmkError(resource_id, stdout, stderr)
         )
 
     def _report_action_pcmk_success(
