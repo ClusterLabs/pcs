@@ -5920,19 +5920,24 @@ class CannotMoveResourceMultipleInstancesNoNodeSpecified(ReportItemMessage):
 
 
 @dataclass(frozen=True)
-class CannotMoveResourceClone(ReportItemMessage):
+class CannotMoveResourceCloneInner(ReportItemMessage):
     """
-    User is trying to move a clone resource which is not possible
+    User is trying to move a clone's inner resource which is not possible
 
     resource_id -- id of the resource to be moved
+    clone_id -- id of relevant parent clone resource
     """
 
     resource_id: str
-    _code = codes.CANNOT_MOVE_RESOURCE_CLONE
+    clone_id: str
+    _code = codes.CANNOT_MOVE_RESOURCE_CLONE_INNER
 
     @property
     def message(self) -> str:
-        return "cannot move cloned resources"
+        return (
+            "to move clone resources you must use the clone id "
+            f"({self.clone_id})"
+        )
 
 
 @dataclass(frozen=True)

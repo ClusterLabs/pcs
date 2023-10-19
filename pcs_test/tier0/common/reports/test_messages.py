@@ -4356,10 +4356,11 @@ class CannotMoveResourceBundleInner(NameBuildTest):
         )
 
 
-class CannotMoveResourceClone(NameBuildTest):
+class CannotMoveResourceCloneInner(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
-            "cannot move cloned resources", reports.CannotMoveResourceClone("R")
+            "to move clone resources you must use the clone id (C)",
+            reports.CannotMoveResourceCloneInner("R", "C"),
         )
 
 

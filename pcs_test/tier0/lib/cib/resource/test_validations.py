@@ -584,8 +584,9 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             self.validate(element, True),
             [
                 fixture.error(
-                    reports.codes.CANNOT_MOVE_RESOURCE_CLONE,
+                    reports.codes.CANNOT_MOVE_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE,
                     resource_id="R-clone",
+                    promotable_id="",
                 ),
             ],
         )
@@ -594,12 +595,7 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
         element = self._fixture_clone(False)
         assert_report_item_list_equal(
             self.validate(element, False),
-            [
-                fixture.error(
-                    reports.codes.CANNOT_MOVE_RESOURCE_CLONE,
-                    resource_id="R-clone",
-                ),
-            ],
+            [],
         )
 
     def test_master_false_master(self):
@@ -661,8 +657,9 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             self.validate(element.find("./primitive"), True),
             [
                 fixture.error(
-                    reports.codes.CANNOT_MOVE_RESOURCE_CLONE,
+                    reports.codes.CANNOT_MOVE_RESOURCE_CLONE_INNER,
                     resource_id="R",
+                    clone_id="R-clone",
                 ),
             ],
         )
@@ -673,8 +670,9 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             self.validate(element.find("./primitive"), False),
             [
                 fixture.error(
-                    reports.codes.CANNOT_MOVE_RESOURCE_CLONE,
+                    reports.codes.CANNOT_MOVE_RESOURCE_CLONE_INNER,
                     resource_id="R",
+                    clone_id="R-clone",
                 ),
             ],
         )
@@ -685,8 +683,9 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             self.validate(element.find("./group"), True),
             [
                 fixture.error(
-                    reports.codes.CANNOT_MOVE_RESOURCE_CLONE,
+                    reports.codes.CANNOT_MOVE_RESOURCE_CLONE_INNER,
                     resource_id="G",
+                    clone_id="G-clone",
                 ),
             ],
         )
@@ -697,8 +696,9 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             self.validate(element.find("./group"), False),
             [
                 fixture.error(
-                    reports.codes.CANNOT_MOVE_RESOURCE_CLONE,
+                    reports.codes.CANNOT_MOVE_RESOURCE_CLONE_INNER,
                     resource_id="G",
+                    clone_id="G-clone",
                 ),
             ],
         )
@@ -709,8 +709,9 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             self.validate(element.find("./group/primitive"), True),
             [
                 fixture.error(
-                    reports.codes.CANNOT_MOVE_RESOURCE_CLONE,
+                    reports.codes.CANNOT_MOVE_RESOURCE_CLONE_INNER,
                     resource_id="R",
+                    clone_id="G-clone",
                 ),
             ],
         )
@@ -721,8 +722,9 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             self.validate(element.find("./group/primitive"), False),
             [
                 fixture.error(
-                    reports.codes.CANNOT_MOVE_RESOURCE_CLONE,
+                    reports.codes.CANNOT_MOVE_RESOURCE_CLONE_INNER,
                     resource_id="R",
+                    clone_id="G-clone",
                 ),
             ],
         )
