@@ -151,16 +151,6 @@ def validate_move(
             )
         )
 
-    if analysis.is_bundle:
-        report_list.append(
-            reports.ReportItem.error(
-                reports.messages.CannotMoveResourceBundle(
-                    str(resource_element.get("id"))
-                )
-            )
-        )
-        return report_list
-
     if (analysis.is_clone or analysis.is_in_clone) and not (
         analysis.is_promotable_clone or analysis.is_in_promotable_clone
     ):

@@ -731,12 +731,7 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
         element = self._fixture_bundle()
         assert_report_item_list_equal(
             self.validate(element, False),
-            [
-                fixture.error(
-                    reports.codes.CANNOT_MOVE_RESOURCE_BUNDLE,
-                    resource_id="R-bundle",
-                ),
-            ],
+            [],
         )
 
     def test_bundle_resource(self):

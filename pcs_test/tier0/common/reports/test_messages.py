@@ -4345,14 +4345,6 @@ class CannotLeaveGroupEmptyAfterMove(NameBuildTest):
         )
 
 
-class CannotMoveResourceBundle(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            "cannot move bundle resources",
-            reports.CannotMoveResourceBundle("R"),
-        )
-
-
 class CannotMoveResourceBundleInner(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
@@ -4368,6 +4360,29 @@ class CannotMoveResourceClone(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
             "cannot move cloned resources", reports.CannotMoveResourceClone("R")
+        )
+
+
+class CannotMoveResourceMultipleInstances(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "more than one instance of resource 'R' is running, "
+                "thus the resource cannot be moved"
+            ),
+            reports.CannotMoveResourceMultipleInstances("R"),
+        )
+
+
+class CannotMoveResourceMultipleInstancesNoNodeSpecified(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "more than one instance of resource 'R' is running, "
+                "thus the resource cannot be moved, "
+                "unless a destination node is specified"
+            ),
+            reports.CannotMoveResourceMultipleInstancesNoNodeSpecified("R"),
         )
 
 
@@ -4488,6 +4503,18 @@ class CannotBanResourceMasterResourceNotPromotable(NameBuildTest):
             reports.CannotBanResourceMasterResourceNotPromotable(
                 "R", promotable_id="P"
             ),
+        )
+
+
+class CannotBanResourceMultipleInstancesNoNodeSpecified(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "more than one instance of resource 'R' is running, "
+                "thus the resource cannot be banned, "
+                "unless a destination node is specified"
+            ),
+            reports.CannotBanResourceMultipleInstancesNoNodeSpecified("R"),
         )
 
 

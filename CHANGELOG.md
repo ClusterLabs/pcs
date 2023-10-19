@@ -9,6 +9,8 @@
 ### Added
 - Support ISO 8601 duration specifications for pacemaker "time" properties
   ([rhbz#2112268], [ghpull#712])
+- It is now possible to move bundle resources, pacemaker 2.1.6 or newer is
+  needed for this to work ([RHEL-7744])
 
 ### Fixed
 - Exporting constraints with rules in form of pcs commands now escapes `#` and

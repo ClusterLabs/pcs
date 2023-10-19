@@ -15,6 +15,8 @@ from .types import DeprecatedMessageCode as _D
 # Optionally, if the report is being replaced by a different report, a comment
 # with the new report code can be added
 
+# Removed after 0.11.6
+CANNOT_MOVE_RESOURCE_BUNDLE = _D("CANNOT_MOVE_RESOURCE_BUNDLE")
 
 # Removed after 0.11.3
 SBD_NOT_INSTALLED = _D("SBD_NOT_INSTALLED")

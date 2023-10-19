@@ -1,4 +1,5 @@
 # pylint: disable=too-many-lines
+import re
 from contextlib import contextmanager
 from functools import partial
 from typing import (
@@ -2076,13 +2077,29 @@ def _move_wait_report(
 def _move_ban_pcmk_error_report(
     resource_id: str, stdout: str, stderr: str, is_ban: bool
 ) -> reports.ReportItem:
-    if f"Resource '{resource_id}' not moved: active in 0 locations" in stderr:
-        message_stopped = (
-            reports.messages.CannotBanResourceStoppedNoNodeSpecified
+    active_in_locations = re.search(
+        f"Resource '{resource_id}' not moved: active in (?P<locations>\\d+) locations",
+        stderr,
+    )
+    if active_in_locations:
+        if active_in_locations.group("locations") == "0":
+            message_stopped = (
+                reports.messages.CannotBanResourceStoppedNoNodeSpecified
+                if is_ban
+                else reports.messages.CannotMoveResourceStoppedNoNodeSpecified
+            )
+            return reports.ReportItem.error(message_stopped(resource_id))
+        message_multiple = (
+            reports.messages.CannotBanResourceMultipleInstancesNoNodeSpecified
             if is_ban
-            else reports.messages.CannotMoveResourceStoppedNoNodeSpecified
+            else reports.messages.CannotMoveResourceMultipleInstancesNoNodeSpecified
         )
-        return reports.ReportItem.error(message_stopped(resource_id))
+        return reports.ReportItem.error(message_multiple(resource_id))
+
+    if not is_ban and "Multiple items match request" in stderr:
+        return reports.ReportItem.error(
+            reports.messages.CannotMoveResourceMultipleInstances(resource_id)
+        )
 
     message_generic = (
         reports.messages.ResourceBanPcmkError
