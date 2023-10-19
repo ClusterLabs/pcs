@@ -263,13 +263,7 @@ def main() -> None:
 
         ResultClass = get_text_test_result_class(
             slash_last_fail_in_overview=("--last-slash" in sys.argv),
-            traditional_verbose=(
-                "--traditional-verbose" in sys.argv
-                or
-                # temporary workaround - our verbose writer is not compatible with
-                # running tests in parallel, use our traditional writer
-                (run_concurrently and "-v" in sys.argv)
-            ),
+            traditional_verbose=("--traditional-verbose" in sys.argv),
             traceback_highlight=("--traceback-highlight" in sys.argv),
             fast_info=("--fast-info" in sys.argv),
             rich_format=(
