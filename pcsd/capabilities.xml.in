@@ -1819,6 +1819,30 @@
           /api/v1/resource-unmove-unban/v1
       </description>
     </capability>
+    <capability id="pcmk.resource.ban-move-clear.bundles" in-pcs="1" in-pcsd="1">
+      <description>
+        It is possible to move, ban and clear bundle resources.
+
+        pcs commands: pcs resource ( ban | clear | move | move-with-constraint )
+        daemon urls:
+          /api/v1/resource-ban/v1
+          /api/v1/resource-move/v1
+          /api/v1/resource-move-autoclean/v1
+          /api/v1/resource-unmove-unban/v1
+      </description>
+    </capability>
+    <capability id="pcmk.resource.ban-move-clear.clone" in-pcs="1" in-pcsd="1">
+      <description>
+        It is possible to move, ban and clear clone resources.
+
+        pcs commands: pcs resource ( ban | clear | move | move-with-constraint )
+        daemon urls:
+          /api/v1/resource-ban/v1
+          /api/v1/resource-move/v1
+          /api/v1/resource-move-autoclean/v1
+          /api/v1/resource-unmove-unban/v1
+      </description>
+    </capability>
     <capability id="pcmk.resource.ban-move-clear.clear-expired" in-pcs="1" in-pcsd="1">
       <description>
         An option to clear only constraints with expired lifetime.

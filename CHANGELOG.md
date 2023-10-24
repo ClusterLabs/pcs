@@ -9,6 +9,8 @@
 ### Added
 - Support ISO 8601 duration specifications for pacemaker "time" properties
   ([rhbz#2112268], [ghpull#712])
+- It is now possible to move bundle resources (requires pacemaker 2.1.6 or
+  newer) and clone resources ([RHEL-7744])
 
 ### Fixed
 - Exporting constraints with rules in form of pcs commands now escapes `#` and
@@ -31,6 +33,8 @@
   specified for `pcs resource create` command ([rhbz#2179084]).
 - Improved error message of `pcs booth ticket grant|revoke` commands in case a
   booth site address parameter is needed ([rhbz#2232143])
+- When moving or banning a resource in a bundle, pcs now errors out instead of
+  creating a move / ban constraint which does nothing ([RHEL-7744])
 
 ### Changed
 - When exporting constraints in form of pcs commands, constraints containing
@@ -61,6 +65,7 @@
 [rhbz#2111591]: https://bugzilla.redhat.com/show_bug.cgi?id=2111591
 [rhbz#2232143]: https://bugzilla.redhat.com/show_bug.cgi?id=2232143
 [rhbz#2234717]: https://bugzilla.redhat.com/show_bug.cgi?id=2234717
+[RHEL-7744]: https://issues.redhat.com/browse/RHEL-7744
 
 
 ## [0.11.6] - 2023-06-20

@@ -312,6 +312,16 @@ class ValidateMoveResourcesToGroup(TestCase):
 class ValidateMoveBanClearMixin:
     # pylint: disable=too-many-public-methods
     @staticmethod
+    def _fixture_bundle():
+        return etree.fromstring(
+            """
+            <bundle id="R-bundle">
+                <primitive id="R" />
+            </bundle>
+            """
+        )
+
+    @staticmethod
     def _fixture_clone(promotable=False):
         return etree.fromstring(
             f"""
@@ -377,7 +387,7 @@ class ValidateMoveBanClearMixin:
                 fixture.error(
                     self.report_code_bad_master,
                     resource_id="R-clone",
-                    promotable_id=None,
+                    promotable_id="",
                 ),
             ],
         )
@@ -459,7 +469,7 @@ class ValidateMoveBanClearMixin:
                 fixture.error(
                     self.report_code_bad_master,
                     resource_id="R",
-                    promotable_id=None,
+                    promotable_id="",
                 ),
             ],
         )
@@ -478,7 +488,7 @@ class ValidateMoveBanClearMixin:
                 fixture.error(
                     self.report_code_bad_master,
                     resource_id="G",
-                    promotable_id=None,
+                    promotable_id="",
                 ),
             ],
         )
@@ -497,7 +507,7 @@ class ValidateMoveBanClearMixin:
                 fixture.error(
                     self.report_code_bad_master,
                     resource_id="R",
-                    promotable_id=None,
+                    promotable_id="",
                 ),
             ],
         )
@@ -554,16 +564,6 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
         reports.codes.CANNOT_MOVE_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE
     )
 
-    @staticmethod
-    def _fixture_bundle():
-        return etree.fromstring(
-            """
-            <bundle id="R-bundle">
-                <primitive id="R" />
-            </bundle>
-            """
-        )
-
     def test_master_false_promotable_clone(self):
         element = self._fixture_clone(True)
         assert_report_item_list_equal(
@@ -584,8 +584,9 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             self.validate(element, True),
             [
                 fixture.error(
-                    reports.codes.CANNOT_MOVE_RESOURCE_CLONE,
+                    reports.codes.CANNOT_MOVE_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE,
                     resource_id="R-clone",
+                    promotable_id="",
                 ),
             ],
         )
@@ -594,12 +595,7 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
         element = self._fixture_clone(False)
         assert_report_item_list_equal(
             self.validate(element, False),
-            [
-                fixture.error(
-                    reports.codes.CANNOT_MOVE_RESOURCE_CLONE,
-                    resource_id="R-clone",
-                ),
-            ],
+            [],
         )
 
     def test_master_false_master(self):
@@ -661,8 +657,9 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             self.validate(element.find("./primitive"), True),
             [
                 fixture.error(
-                    reports.codes.CANNOT_MOVE_RESOURCE_CLONE,
+                    reports.codes.CANNOT_MOVE_RESOURCE_CLONE_INNER,
                     resource_id="R",
+                    clone_id="R-clone",
                 ),
             ],
         )
@@ -673,8 +670,9 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             self.validate(element.find("./primitive"), False),
             [
                 fixture.error(
-                    reports.codes.CANNOT_MOVE_RESOURCE_CLONE,
+                    reports.codes.CANNOT_MOVE_RESOURCE_CLONE_INNER,
                     resource_id="R",
+                    clone_id="R-clone",
                 ),
             ],
         )
@@ -685,8 +683,9 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             self.validate(element.find("./group"), True),
             [
                 fixture.error(
-                    reports.codes.CANNOT_MOVE_RESOURCE_CLONE,
+                    reports.codes.CANNOT_MOVE_RESOURCE_CLONE_INNER,
                     resource_id="G",
+                    clone_id="G-clone",
                 ),
             ],
         )
@@ -697,8 +696,9 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             self.validate(element.find("./group"), False),
             [
                 fixture.error(
-                    reports.codes.CANNOT_MOVE_RESOURCE_CLONE,
+                    reports.codes.CANNOT_MOVE_RESOURCE_CLONE_INNER,
                     resource_id="G",
+                    clone_id="G-clone",
                 ),
             ],
         )
@@ -709,8 +709,9 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             self.validate(element.find("./group/primitive"), True),
             [
                 fixture.error(
-                    reports.codes.CANNOT_MOVE_RESOURCE_CLONE,
+                    reports.codes.CANNOT_MOVE_RESOURCE_CLONE_INNER,
                     resource_id="R",
+                    clone_id="G-clone",
                 ),
             ],
         )
@@ -721,8 +722,9 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             self.validate(element.find("./group/primitive"), False),
             [
                 fixture.error(
-                    reports.codes.CANNOT_MOVE_RESOURCE_CLONE,
+                    reports.codes.CANNOT_MOVE_RESOURCE_CLONE_INNER,
                     resource_id="R",
+                    clone_id="G-clone",
                 ),
             ],
         )
@@ -731,18 +733,20 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
         element = self._fixture_bundle()
         assert_report_item_list_equal(
             self.validate(element, False),
-            [
-                fixture.error(
-                    reports.codes.CANNOT_MOVE_RESOURCE_BUNDLE,
-                    resource_id="R-bundle",
-                ),
-            ],
+            [],
         )
 
     def test_bundle_resource(self):
         element = self._fixture_bundle()
         assert_report_item_list_equal(
-            self.validate(element.find("./primitive"), False), []
+            self.validate(element.find("./primitive"), False),
+            [
+                fixture.error(
+                    reports.codes.CANNOT_MOVE_RESOURCE_BUNDLE_INNER,
+                    resource_id="R",
+                    bundle_id="R-bundle",
+                ),
+            ],
         )
 
 
@@ -751,6 +755,19 @@ class ValidateBan(ValidateMoveBanClearMixin, TestCase):
     report_code_bad_master = (
         reports.codes.CANNOT_BAN_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE
     )
+
+    def test_bundle_resource(self):
+        element = self._fixture_bundle()
+        assert_report_item_list_equal(
+            self.validate(element.find("./primitive"), False),
+            [
+                fixture.error(
+                    reports.codes.CANNOT_BAN_RESOURCE_BUNDLE_INNER,
+                    resource_id="R",
+                    bundle_id="R-bundle",
+                ),
+            ],
+        )
 
 
 class ValidateUnmoveUnban(ValidateMoveBanClearMixin, TestCase):
