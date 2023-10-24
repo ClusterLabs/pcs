@@ -1,4 +1,5 @@
 from typing import (
+    Collection,
     Iterable,
     cast,
 )
@@ -7,38 +8,43 @@ from lxml import etree
 from lxml.etree import _Element
 
 from pcs.common import reports
+from pcs.common.types import StringSequence
 from pcs.lib.cib.const import TAG_OBJREF
 from pcs.lib.cib.constraint.all import is_constraint
-from pcs.lib.cib.constraint.location import is_location_constraint
+from pcs.lib.cib.constraint.location import (
+    is_location_constraint,
+    is_location_rule,
+)
 from pcs.lib.cib.constraint.resource_set import is_set_constraint
 from pcs.lib.cib.resource.bundle import is_bundle
 from pcs.lib.cib.resource.clone import is_any_clone
-from pcs.lib.cib.resource.common import (
-    get_inner_resources,
-    is_resource,
-)
+from pcs.lib.cib.resource.common import get_inner_resources
 from pcs.lib.cib.resource.group import is_group
 from pcs.lib.cib.tag import is_tag
 from pcs.lib.cib.tools import (
     find_elements_referencing_id,
-    get_configuration,
     get_elements_by_ids,
     remove_element_by_id,
 )
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.live import parse_cib_xml
-from pcs.lib.xml_tools import remove_one_element
 
 
-def remove_elements(env: LibraryEnvironment, ids: list[str]) -> None:
+def remove_elements(
+    env: LibraryEnvironment,
+    ids: StringSequence,
+    force_flags: Collection[reports.types.ForceCode] = (),
+) -> None:
     """
     Remove elements with specified ids from CIB. This function is aware of
     relations and references between elements and will also remove all elements
     that are somehow referencing elements with specified ids.
 
     ids -- ids of configuration elements to remove
+    force_flags -- list of flags codes
     """
+    del force_flags
     cib = env.get_cib()
     wip_cib = parse_cib_xml(etree.tostring(cib).decode())
     report_processor = env.report_processor
@@ -53,6 +59,19 @@ def remove_elements(env: LibraryEnvironment, ids: list[str]) -> None:
                 )
             )
         )
+
+    for element in elements_to_process:
+        if not (is_constraint(element) or is_location_rule(element)):
+            report_processor.report(
+                reports.ReportItem.error(
+                    reports.messages.IdBelongsToUnexpectedType(
+                        str(element.get("id")),
+                        ["constraint", "location rule"],
+                        element.tag,
+                    )
+                )
+            )
+
     if report_processor.has_errors:
         raise LibraryError()
 
@@ -87,7 +106,7 @@ def _get_dependencies_to_remove(elements: list[_Element]) -> set[str]:
             elements_to_process.extend(_get_inner_references(el))
         parent_el = el.getparent()
         if parent_el is not None:
-            if _is_empty_after_inner_el_removal(parent_el, el):
+            if _is_empty_after_inner_el_removal(parent_el):
                 elements_to_process.append(parent_el)
             parent_el.remove(el)
 
@@ -125,20 +144,18 @@ def _is_last_element(parent_element: _Element, child_tag: str) -> bool:
     return len(parent_element.findall(f"./{child_tag}")) == 1
 
 
-def _is_empty_after_inner_el_removal(
-    parent_el: _Element, to_remove_el: _Element
-) -> bool:
+def _is_empty_after_inner_el_removal(parent_el: _Element) -> bool:
     # pylint: disable=too-many-return-statements
     if is_bundle(parent_el) or is_any_clone(parent_el):
         return True
     if is_group(parent_el):
         return len(get_inner_resources(parent_el)) == 1
-    if is_tag(parent_el) and to_remove_el.tag == TAG_OBJREF:
+    if is_tag(parent_el):
         return _is_last_element(parent_el, TAG_OBJREF)
-    if parent_el.tag == "resource_set" and to_remove_el.tag == "resource_ref":
+    if parent_el.tag == "resource_set":
         return _is_last_element(parent_el, "resource_ref")
-    if is_set_constraint(parent_el) and to_remove_el.tag == "resource_set":
+    if is_set_constraint(parent_el):
         return _is_last_element(parent_el, "resource_set")
-    if is_location_constraint(parent_el) and to_remove_el.tag == "rule":
+    if is_location_constraint(parent_el):
         return _is_last_element(parent_el, "rule")
     return False

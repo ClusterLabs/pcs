@@ -5,7 +5,6 @@ client.
 """
 from functools import partial
 
-from pcs.common import reports
 from pcs.common.pacemaker.constraint import CibConstraintsDto
 from pcs.lib.cib.constraint import (
     colocation,
@@ -15,14 +14,9 @@ from pcs.lib.cib.constraint import (
     resource_set,
     ticket,
 )
-from pcs.lib.cib.constraint.all import is_constraint
 from pcs.lib.cib.rule.in_effect import get_rule_evaluator
-from pcs.lib.cib.tools import (
-    get_constraints,
-    get_elements_by_ids,
-)
+from pcs.lib.cib.tools import get_constraints
 from pcs.lib.env import LibraryEnvironment
-from pcs.lib.errors import LibraryError
 
 
 def create_with_set(
@@ -119,45 +113,3 @@ def get_config(
         ticket=ticket_constraints,
         ticket_set=ticket_set_constraints,
     )
-
-
-def remove(env: LibraryEnvironment, ids: list[str]) -> None:
-    cib = env.get_cib()
-    report_processor = env.report_processor
-    elements, not_found_ids = get_elements_by_ids(cib, ids)
-
-    for non_existing_id in not_found_ids:
-        report_processor.report(
-            reports.ReportItem.error(
-                reports.messages.IdNotFound(non_existing_id, ["constraint"])
-            )
-        )
-
-    constraints_elements = []
-    for element in elements:
-        if is_constraint(element):
-            constraints_elements.append(element)
-        else:
-            report_processor.report(
-                reports.ReportItem.error(
-                    reports.messages.IdBelongsToUnexpectedType(
-                        str(element.get("id")), ["constraint"], element.tag
-                    )
-                )
-            )
-
-    if report_processor.has_errors:
-        raise LibraryError()
-
-    for constraint_el in constraints_elements:
-        parent_el = constraint_el.getparent()
-        if parent_el is None:
-            # This should never happen as all constraitns are inside element
-            # with tag 'constraints'
-            constraint_id = constraint_el.get("id")
-            raise AssertionError(
-                f"Invalid CIB, constraint '{constraint_id}' has no parrent element"
-            )
-        parent_el.remove(constraint_el)
-
-    env.push_cib()

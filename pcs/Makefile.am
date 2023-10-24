@@ -241,6 +241,7 @@ EXTRA_DIST		= \
 			  lib/cib/acl.py \
 			  lib/cib/alert.py \
 			  lib/cib/const.py \
+			  lib/cib/constraint/all.py \
 			  lib/cib/constraint/colocation.py \
 			  lib/cib/constraint/constraint.py \
 			  lib/cib/constraint/location.py \
@@ -287,6 +288,7 @@ EXTRA_DIST		= \
 			  lib/commands/acl.py \
 			  lib/commands/alert.py \
 			  lib/commands/booth.py \
+			  lib/commands/cib.py \
 			  lib/commands/cib_options.py \
 			  lib/commands/cluster.py \
 			  lib/commands/cluster_property.py \
