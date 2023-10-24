@@ -146,7 +146,7 @@ def validate_move(
             reports.ReportItem.error(
                 reports.messages.CannotMoveResourceBundleInner(
                     str(resource_element.get("id")),
-                    bundle_id=analysis.bundle_id or "",
+                    bundle_id=analysis.parent_bundle_id,
                 )
             )
         )
@@ -158,7 +158,7 @@ def validate_move(
             reports.ReportItem.error(
                 reports.messages.CannotMoveResourceCloneInner(
                     str(resource_element.get("id")),
-                    analysis.clone_id or "",
+                    clone_id=analysis.parent_clone_id,
                 )
             )
         )
@@ -177,7 +177,7 @@ def validate_move(
             reports.ReportItem.error(
                 reports.messages.CannotMoveResourcePromotableInner(
                     str(resource_element.get("id")),
-                    promotable_id=analysis.promotable_clone_id or "",
+                    promotable_id=analysis.parent_promotable_id,
                 )
             )
         )
@@ -186,7 +186,7 @@ def validate_move(
             reports.ReportItem.error(
                 reports.messages.CannotMoveResourceMasterResourceNotPromotable(
                     str(resource_element.get("id")),
-                    promotable_id=analysis.promotable_clone_id or "",
+                    promotable_id=analysis.parent_promotable_id,
                 )
             )
         )
@@ -221,7 +221,7 @@ def validate_ban(
             reports.ReportItem.error(
                 reports.messages.CannotBanResourceBundleInner(
                     str(resource_element.get("id")),
-                    bundle_id=str(analysis.bundle_id),
+                    bundle_id=analysis.parent_bundle_id,
                 )
             )
         )
@@ -231,7 +231,7 @@ def validate_ban(
             reports.ReportItem.error(
                 reports.messages.CannotBanResourceMasterResourceNotPromotable(
                     str(resource_element.get("id")),
-                    promotable_id=analysis.promotable_clone_id or "",
+                    promotable_id=analysis.parent_promotable_id,
                 )
             )
         )
@@ -266,7 +266,7 @@ def validate_unmove_unban(
             reports.ReportItem.error(
                 reports.messages.CannotUnmoveUnbanResourceMasterResourceNotPromotable(
                     str(resource_element.get("id")),
-                    promotable_id=analysis.promotable_clone_id or "",
+                    promotable_id=analysis.parent_promotable_id,
                 )
             )
         )
@@ -283,9 +283,19 @@ class _MoveBanClearAnalysis:
     is_in_clone: bool
     is_promotable_clone: bool
     is_in_promotable_clone: bool
-    promotable_clone_id: Optional[str]
-    bundle_id: Optional[str]
-    clone_id: Optional[str]
+    parent_id: str
+
+    @property
+    def parent_bundle_id(self) -> str:
+        return self.parent_id if self.is_in_bundle else ""
+
+    @property
+    def parent_clone_id(self) -> str:
+        return self.parent_id if self.is_in_clone else ""
+
+    @property
+    def parent_promotable_id(self) -> str:
+        return self.parent_id if self.is_in_promotable_clone else ""
 
 
 def _validate_move_ban_clear_analyzer(
@@ -297,31 +307,27 @@ def _validate_move_ban_clear_analyzer(
     resource_is_in_clone = False
     resource_is_promotable_clone = False
     resource_is_in_promotable_clone = False
-    promotable_clone_element = None
-    bundle_element = None
-    clone_element = None
+    parent_element = None
 
     parent_bundle = get_parent_bundle(resource_element)
     parent_clone = get_parent_any_clone(resource_element)
 
     if is_bundle(resource_element):
         resource_is_bundle = True
-        bundle_element = resource_element
     elif is_any_clone(resource_element):
-        resource_is_clone = True
-        clone_element = resource_element
         if is_master(resource_element) or is_promotable_clone(resource_element):
             resource_is_promotable_clone = True
-            promotable_clone_element = resource_element
+        else:
+            resource_is_clone = True
     elif parent_bundle is not None:
         resource_is_in_bundle = True
-        bundle_element = parent_bundle
+        parent_element = parent_bundle
     elif parent_clone is not None:
-        resource_is_in_clone = True
-        clone_element = parent_clone
+        parent_element = parent_clone
         if is_master(parent_clone) or is_promotable_clone(parent_clone):
             resource_is_in_promotable_clone = True
-            promotable_clone_element = parent_clone
+        else:
+            resource_is_in_clone = True
     return _MoveBanClearAnalysis(
         resource_is_bundle,
         resource_is_in_bundle,
@@ -329,11 +335,5 @@ def _validate_move_ban_clear_analyzer(
         resource_is_in_clone,
         resource_is_promotable_clone,
         resource_is_in_promotable_clone,
-        (
-            promotable_clone_element.get("id")
-            if promotable_clone_element is not None
-            else None
-        ),
-        bundle_element.get("id") if bundle_element is not None else None,
-        clone_element.get("id") if clone_element is not None else None,
+        (parent_element.get("id") or "") if parent_element is not None else "",
     )
