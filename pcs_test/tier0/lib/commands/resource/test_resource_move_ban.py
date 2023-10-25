@@ -95,7 +95,7 @@ class MoveBanClearBaseMixin:
                 fixture.error(
                     self.report_code_bad_master,
                     resource_id="A",
-                    promotable_id=None,
+                    promotable_id="",
                 ),
             ]
         )

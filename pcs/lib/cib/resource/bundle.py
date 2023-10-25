@@ -80,6 +80,18 @@ def is_bundle(resource_el: _Element) -> bool:
     return resource_el.tag == TAG
 
 
+def get_parent_bundle(resource_el: _Element) -> Optional[_Element]:
+    """
+    Get a parent bundle of a primitive or None
+
+    resource_el -- the primitive to get its parent bundle
+    """
+    parent_el = resource_el.getparent()
+    if parent_el is not None and is_bundle(parent_el):
+        return parent_el
+    return None
+
+
 def bundle_element_to_dto(
     bundle_element: _Element,
     rule_eval: Optional[rule.RuleInEffectEval] = None,
