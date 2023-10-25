@@ -672,6 +672,30 @@ class MoveAutocleanValidations(MoveAutocleanCommonSetup):
             ]
         )
 
+    def test_resource_wrong_type_bundle_inner(self):
+        bundle_id = "bundle_rsc"
+        resource_id = "bundle_rsc-primitive"
+        self.config.runner.cib.load(
+            resources=_resources_tag(
+                '<bundle id="{bundle_id}">{primitive}</bundle>'.format(
+                    bundle_id=bundle_id,
+                    primitive=_rsc_primitive_fixture(resource_id),
+                )
+            )
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: move_autoclean(self.env_assist.get_env(), resource_id),
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.CANNOT_MOVE_RESOURCE_BUNDLE_INNER,
+                    resource_id=resource_id,
+                    bundle_id=bundle_id,
+                )
+            ]
+        )
+
     def test_resource_wrong_type_clone(self):
         resource_id = "clone_rsc"
         self.config.runner.cib.load(

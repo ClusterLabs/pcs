@@ -4445,6 +4445,17 @@ class CannotMoveResourceBundle(NameBuildTest):
         )
 
 
+class CannotMoveResourceBundleInner(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Resources cannot be moved out of their bundles. If you want "
+                "to move a bundle, use the bundle id (B)"
+            ),
+            reports.CannotMoveResourceBundleInner("R", "B"),
+        )
+
+
 class CannotMoveResourceClone(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
@@ -4542,6 +4553,17 @@ class ResourceMovePcmkSuccess(NameBuildTest):
                     "in the cluster\n"
                 ),
             ),
+        )
+
+
+class CannotBanResourceBundleInner(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Resource 'R' is in a bundle and cannot be banned. If you want "
+                "to ban the bundle, use the bundle id (B)"
+            ),
+            reports.CannotBanResourceBundleInner("R", "B"),
         )
 
 

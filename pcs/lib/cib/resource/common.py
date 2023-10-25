@@ -433,6 +433,16 @@ def validate_move(
     report_list = []
     analysis = _validate_move_ban_clear_analyzer(resource_element)
 
+    if analysis.is_in_bundle:
+        report_list.append(
+            reports.ReportItem.error(
+                reports.messages.CannotMoveResourceBundleInner(
+                    str(resource_element.get("id")),
+                    bundle_id=analysis.parent_bundle_id,
+                )
+            )
+        )
+
     if analysis.is_bundle:
         report_list.append(
             ReportItem.error(
@@ -496,6 +506,16 @@ def validate_ban(
     """
     report_list = []
     analysis = _validate_move_ban_clear_analyzer(resource_element)
+
+    if analysis.is_in_bundle:
+        report_list.append(
+            reports.ReportItem.error(
+                reports.messages.CannotBanResourceBundleInner(
+                    str(resource_element.get("id")),
+                    bundle_id=analysis.parent_bundle_id,
+                )
+            )
+        )
 
     if master and not analysis.is_promotable_clone:
         report_list.append(

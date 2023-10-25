@@ -864,7 +864,17 @@ class Unmanage(TestCase):
 
 
 class ValidateMoveBanClearMixin:
-    # pylint: disable=too-many-public-methods,line-too-long
+    # pylint: disable=too-many-public-methods
+    @staticmethod
+    def _fixture_bundle():
+        return etree.fromstring(
+            """
+            <bundle id="R-bundle">
+                <primitive id="R" />
+            </bundle>
+            """
+        )
+
     @staticmethod
     def _fixture_clone(promotable=False):
         return etree.fromstring(
@@ -1108,16 +1118,6 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
         report_codes.CANNOT_MOVE_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE
     )
 
-    @staticmethod
-    def _fixture_bundle():
-        return etree.fromstring(
-            """
-            <bundle id="R-bundle">
-                <primitive id="R" />
-            </bundle>
-            """
-        )
-
     def test_master_false_promotable_clone(self):
         element = self._fixture_clone(True)
         assert_report_item_list_equal(
@@ -1296,7 +1296,14 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
     def test_bundle_resource(self):
         element = self._fixture_bundle()
         assert_report_item_list_equal(
-            self.validate(element.find("./primitive"), False), []
+            self.validate(element.find("./primitive"), False),
+            [
+                fixture.error(
+                    report_codes.CANNOT_MOVE_RESOURCE_BUNDLE_INNER,
+                    resource_id="R",
+                    bundle_id="R-bundle",
+                ),
+            ],
         )
 
 
@@ -1305,6 +1312,19 @@ class ValidateBan(ValidateMoveBanClearMixin, TestCase):
     report_code_bad_master = (
         report_codes.CANNOT_BAN_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE
     )
+
+    def test_bundle_resource(self):
+        element = self._fixture_bundle()
+        assert_report_item_list_equal(
+            self.validate(element.find("./primitive"), False),
+            [
+                fixture.error(
+                    report_codes.CANNOT_BAN_RESOURCE_BUNDLE_INNER,
+                    resource_id="R",
+                    bundle_id="R-bundle",
+                ),
+            ],
+        )
 
 
 class ValidateUnmoveUnban(ValidateMoveBanClearMixin, TestCase):
