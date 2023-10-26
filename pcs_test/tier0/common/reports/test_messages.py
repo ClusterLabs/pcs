@@ -4463,6 +4463,29 @@ class CannotMoveResourceClone(NameBuildTest):
         )
 
 
+class CannotMoveResourceMultipleInstances(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "more than one instance of resource 'R' is running, "
+                "thus the resource cannot be moved"
+            ),
+            reports.CannotMoveResourceMultipleInstances("R"),
+        )
+
+
+class CannotMoveResourceMultipleInstancesNoNodeSpecified(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "more than one instance of resource 'R' is running, "
+                "thus the resource cannot be moved, "
+                "unless a destination node is specified"
+            ),
+            reports.CannotMoveResourceMultipleInstancesNoNodeSpecified("R"),
+        )
+
+
 class CannotMoveResourcePromotableInner(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
@@ -4580,6 +4603,18 @@ class CannotBanResourceMasterResourceNotPromotable(NameBuildTest):
             reports.CannotBanResourceMasterResourceNotPromotable(
                 "R", promotable_id="P"
             ),
+        )
+
+
+class CannotBanResourceMultipleInstancesNoNodeSpecified(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "more than one instance of resource 'R' is running, "
+                "thus the resource cannot be banned, "
+                "unless a destination node is specified"
+            ),
+            reports.CannotBanResourceMultipleInstancesNoNodeSpecified("R"),
         )
 
 

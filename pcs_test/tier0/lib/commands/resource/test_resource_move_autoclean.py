@@ -648,30 +648,6 @@ class MoveAutocleanValidations(MoveAutocleanCommonSetup):
             ]
         )
 
-    def test_resource_wrong_type_bundle(self):
-        resource_id = "bundle_rsc"
-        self.config.runner.cib.load(
-            resources=_resources_tag(
-                '<bundle id="{res_id}">{primitive}</bundle>'.format(
-                    res_id=resource_id,
-                    primitive=_rsc_primitive_fixture(
-                        f"{resource_id}-primitive"
-                    ),
-                )
-            )
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: move_autoclean(self.env_assist.get_env(), resource_id),
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.CANNOT_MOVE_RESOURCE_BUNDLE,
-                    resource_id=resource_id,
-                )
-            ]
-        )
-
     def test_resource_wrong_type_bundle_inner(self):
         bundle_id = "bundle_rsc"
         resource_id = "bundle_rsc-primitive"
@@ -1571,4 +1547,52 @@ class MoveAutocleanFailures(MoveAutocleanCommonSetup):
                     roles_with_nodes=dict(Started=[different_node]),
                 )
             ]
+        )
+
+    def assert_moving_bundle_with_more_instances(self, stderr, report_code):
+        # This tests that error messages from crm_resources are translated to
+        # report messages correctly. For the purpose of the test, no bundle is
+        # needed. The only thing that matters is the error message from
+        # crm_resource. So we don't bother creating a CIB with a bundle in it.
+        self.tmp_file_mock_obj.set_calls(
+            self.get_tmp_files_mocks(
+                _simulation_transition_fixture(
+                    _simulation_synapses_fixture(self.resource_id)
+                )
+            )[:1]
+        )
+        self.config.runner.pcmk.load_state(
+            resources=_state_resource_fixture(
+                self.resource_id, "Started", "node1"
+            ),
+        )
+        self.config.runner.pcmk.resource_move(
+            resource=self.resource_id,
+            env=dict(CIB_file=self.cib_rsc_move_tmp_file_name),
+            returncode=1,
+            stderr=stderr,
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: move_autoclean(
+                self.env_assist.get_env(),
+                self.resource_id,
+            ),
+            [
+                fixture.error(report_code, resource_id=self.resource_id),
+            ],
+            expected_in_processor=False,
+        )
+        self.env_assist.assert_reports(self.get_reports(stage=1))
+
+    def test_moving_bundle_with_more_instances_1(self):
+        self.assert_moving_bundle_with_more_instances(
+            "Error performing operation: Multiple items match request",
+            reports.codes.CANNOT_MOVE_RESOURCE_MULTIPLE_INSTANCES,
+        )
+
+    def test_moving_bundle_with_more_instances_2(self):
+        self.assert_moving_bundle_with_more_instances(
+            "Resource 'A' not moved: active in 2 locations.",
+            reports.codes.CANNOT_MOVE_RESOURCE_MULTIPLE_INSTANCES_NO_NODE_SPECIFIED,
         )

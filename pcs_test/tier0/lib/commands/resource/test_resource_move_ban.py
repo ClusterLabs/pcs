@@ -196,6 +196,25 @@ class MoveBanBaseMixin(MoveBanClearBaseMixin):
             ]
         )
 
+    def assert_multiple_instance(self, stderr, report_code):
+        self.config.runner.cib.load(
+            resources=resources_primitive, nodes=nodes_section
+        )
+        self.config_pcmk_action(resource="A", stderr=stderr, returncode=1)
+        self.env_assist.assert_raise_library_error(
+            lambda: self.lib_action(self.env_assist.get_env(), "A"),
+            [
+                fixture.error(report_code, resource_id="A"),
+            ],
+            expected_in_processor=False,
+        )
+
+    def test_multiple_instance_1(self):
+        self.assert_multiple_instance(
+            "Resource 'A' not moved: active in 2 locations.",
+            self.report_code_multiple_instances,
+        )
+
 
 class MoveMixin:
     lib_action = staticmethod(resource.move)
@@ -206,6 +225,9 @@ class MoveMixin:
     report_code_pcmk_success = report_codes.RESOURCE_MOVE_PCMK_SUCCESS
     report_code_resource_stopped = (
         report_codes.CANNOT_MOVE_RESOURCE_STOPPED_NO_NODE_SPECIFIED
+    )
+    report_code_multiple_instances = (
+        report_codes.CANNOT_MOVE_RESOURCE_MULTIPLE_INSTANCES_NO_NODE_SPECIFIED
     )
 
     def config_pcmk_action(self, *args, **kwargs):
@@ -236,6 +258,12 @@ class Move(MoveMixin, MoveBanBaseMixin, TestCase):
             ]
         )
 
+    def test_multiple_instance_2(self):
+        self.assert_multiple_instance(
+            "Error performing operation: Multiple items match request",
+            report_codes.CANNOT_MOVE_RESOURCE_MULTIPLE_INSTANCES,
+        )
+
 
 class BanMixin:
     lib_action = staticmethod(resource.ban)
@@ -246,6 +274,9 @@ class BanMixin:
     report_code_pcmk_success = report_codes.RESOURCE_BAN_PCMK_SUCCESS
     report_code_resource_stopped = (
         report_codes.CANNOT_BAN_RESOURCE_STOPPED_NO_NODE_SPECIFIED
+    )
+    report_code_multiple_instances = (
+        report_codes.CANNOT_BAN_RESOURCE_MULTIPLE_INSTANCES_NO_NODE_SPECIFIED
     )
 
     def config_pcmk_action(self, *args, **kwargs):
