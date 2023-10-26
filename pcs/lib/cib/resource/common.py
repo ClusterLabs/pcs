@@ -443,13 +443,14 @@ def validate_move(
             )
         )
 
-    if (analysis.is_clone or analysis.is_in_clone) and not (
-        analysis.is_promotable_clone or analysis.is_in_promotable_clone
-    ):
+    if analysis.is_in_clone and not analysis.is_in_promotable_clone:
+        # there is a more specific message for resources in a promotable clone
+        # in the condition bellow
         report_list.append(
             ReportItem.error(
-                reports.messages.CannotMoveResourceClone(
-                    str(resource_element.get("id", ""))
+                reports.messages.CannotMoveResourceCloneInner(
+                    str(resource_element.get("id", "")),
+                    clone_id=analysis.parent_clone_id,
                 )
             )
         )

@@ -7,8 +7,8 @@
   by Python (`pcs config restore` command) ([rhbz#2219388])
 
 ### Added
-- It is now possible to move bundle resources, pacemaker 2.1.6 or newer is
-  needed for this to work ([RHEL-7584])
+- It is now possible to move bundle resources (requires pacemaker 2.1.6 or
+  newer) and clone resources ([RHEL-7584])
 
 ### Fixed
 - Do not display duplicate records in commands `pcs property [config] --all`

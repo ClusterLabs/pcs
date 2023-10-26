@@ -4463,6 +4463,14 @@ class CannotMoveResourceClone(NameBuildTest):
         )
 
 
+class CannotMoveResourceCloneInner(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "to move clone resources you must use the clone id (C)",
+            reports.CannotMoveResourceCloneInner("R", "C"),
+        )
+
+
 class CannotMoveResourceMultipleInstances(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(

@@ -6067,6 +6067,27 @@ class CannotMoveResourceClone(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class CannotMoveResourceCloneInner(ReportItemMessage):
+    """
+    User is trying to move a clone's inner resource which is not possible
+
+    resource_id -- id of the resource to be moved
+    clone_id -- id of relevant parent clone resource
+    """
+
+    resource_id: str
+    clone_id: str
+    _code = codes.CANNOT_MOVE_RESOURCE_CLONE_INNER
+
+    @property
+    def message(self) -> str:
+        return (
+            "to move clone resources you must use the clone id "
+            f"({self.clone_id})"
+        )
+
+
+@dataclass(frozen=True)
 class CannotMoveResourcePromotableInner(ReportItemMessage):
     """
     User is trying to move a promotable clone's inner resource
