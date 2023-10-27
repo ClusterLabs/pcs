@@ -4,6 +4,8 @@ from pcs import (
     usage,
 )
 from pcs.cli.common.routing import create_router
+from pcs.cli.constraint import command as constraint_command
+from pcs.cli.constraint.rule import command as rule_command
 from pcs.cli.constraint_ticket import command as ticket_command
 
 constraint_cmd = create_router(
@@ -28,8 +30,8 @@ constraint_cmd = create_router(
         "colocation": create_router(
             {
                 "add": constraint.colocation_add,
-                "remove": constraint.colocation_rm,
-                "delete": constraint.colocation_rm,
+                "remove": colocation_command.remove,
+                "delete": colocation_command.remove,
                 "set": colocation_command.create_with_set,
                 # TODO remove, deprecated command
                 # replaced with 'config'
@@ -39,8 +41,8 @@ constraint_cmd = create_router(
             ["constraint", "colocation"],
             default_cmd="config",
         ),
-        "remove": constraint.constraint_rm,
-        "delete": constraint.constraint_rm,
+        "remove": constraint_command.remove,
+        "delete": constraint_command.remove,
         # TODO remove, deprecated command
         # replaced with 'config'
         "show": constraint.constraint_show,
@@ -49,7 +51,14 @@ constraint_cmd = create_router(
         "list": constraint.constraint_show,
         "config": constraint.config_cmd,
         "ref": constraint.ref,
-        "rule": constraint.constraint_rule,
+        "rule": create_router(
+            {
+                "add": constraint.constraint_rule_add,
+                "remove": rule_command.remove,
+                "delete": rule_command.remove,
+            },
+            ["constraint", "rule"],
+        ),
     },
     ["constraint"],
     default_cmd="config",

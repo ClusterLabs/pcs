@@ -42,6 +42,8 @@ EXTRA_DIST		= \
 			  cli/constraint_colocation/command.py \
 			  cli/constraint_colocation/__init__.py \
 			  cli/constraint/command.py \
+			  cli/constraint/location/__init__.py \
+			  cli/constraint/location/command.py \
 			  cli/constraint/output/__init__.py \
 			  cli/constraint/output/all.py \
 			  cli/constraint/output/colocation.py \
@@ -49,6 +51,8 @@ EXTRA_DIST		= \
 			  cli/constraint/output/order.py \
 			  cli/constraint/output/set.py \
 			  cli/constraint/output/ticket.py \
+			  cli/constraint/rule/__init__.py \
+			  cli/constraint/rule/command.py \
 			  cli/constraint/__init__.py \
 			  cli/constraint_order/command.py \
 			  cli/constraint_order/__init__.py \

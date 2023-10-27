@@ -60,3 +60,42 @@ def config_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         ),
         modifiers,
     )
+
+
+def remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
+    """
+    Options:
+      * -f - CIB file
+    """
+    modifiers.ensure_only_supported("-f")
+    if len(argv) != 2:
+        raise CmdLineInputError()
+    source_rsc_id, target_rsc_id = argv
+    constraint_ids_to_remove: list[str] = []
+    constraint_dto = lib.constraint.get_config(evaluate_rules=False)
+    for colocation_dto in constraint_dto.colocation:
+        if (
+            colocation_dto.resource_id == source_rsc_id
+            and colocation_dto.with_resource_id == target_rsc_id
+        ):
+            constraint_ids_to_remove.append(
+                colocation_dto.attributes.constraint_id
+            )
+        if (
+            colocation_dto.resource_id == target_rsc_id
+            and colocation_dto.with_resource_id == source_rsc_id
+        ):
+            deprecation_warning(
+                "Removing colocation constraint with interchanged source "
+                "resource id and targert resource id. This behavior is "
+                "deprecated and will be removed."
+            )
+            constraint_ids_to_remove.append(
+                colocation_dto.attributes.constraint_id
+            )
+    if not constraint_ids_to_remove:
+        raise CmdLineInputError(
+            f"Unable to find colocation constraint with source resource id "
+            f"'{source_rsc_id}' and target resource id '{target_rsc_id}'"
+        )
+    lib.cib.remove_elements(constraint_ids_to_remove)

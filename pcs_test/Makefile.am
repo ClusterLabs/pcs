@@ -72,7 +72,14 @@ EXTRA_DIST		= \
 			  tier0/cli/common/test_printable_tree.py \
 			  tier0/cli/common/test_tools.py \
 			  tier0/cli/constraint/__init__.py \
+			  tier0/cli/constraint/location/__init__.py \
+			  tier0/cli/constraint/location/test_command.py \
+			  tier0/cli/constraint/rule/__init__.py \
+			  tier0/cli/constraint/rule/test_command.py \
+			  tier0/cli/constraint/test_command.py \
 			  tier0/cli/constraint/test_parse_args.py \
+			  tier0/cli/constraint_colocation/__init__.py \
+			  tier0/cli/constraint_colocation/test_command.py \
 			  tier0/cli/constraint_ticket/__init__.py \
 			  tier0/cli/constraint_ticket/test_command.py \
 			  tier0/cli/constraint_ticket/test_parse_args.py \
@@ -97,6 +104,8 @@ EXTRA_DIST		= \
 			  tier0/common/__init__.py \
 			  tier0/common/interface/__init__.py \
 			  tier0/common/interface/test_dto.py \
+			  tier0/common/pacemaker/constraint/__init__.py \
+			  tier0/common/pacemaker/constraint/all.py \
 			  tier0/common/reports/constraints/__init__.py \
 			  tier0/common/reports/constraints/test_common.py \
 			  tier0/common/reports/constraints/test_init.py \

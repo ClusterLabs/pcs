@@ -7,6 +7,7 @@ from pcs.lib.commands import (
     acl,
     alert,
     booth,
+    cib,
     cib_options,
     cluster,
     cluster_property,
@@ -175,6 +176,15 @@ def load_module(env, middleware_factory, name):
                 middleware_factory.booth_conf, middleware_factory.cib
             ),
             bindings,
+        )
+
+    if name == "cib":
+        return bind_all(
+            env,
+            middleware.build(middleware_factory.cib),
+            {
+                "remove_elements": cib.remove_elements,
+            },
         )
 
     if name == "cluster":

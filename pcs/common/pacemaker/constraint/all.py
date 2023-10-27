@@ -58,6 +58,21 @@ def _get_constraint_ids(
     ]
 
 
+def _get_location_rule_ids(
+    constraint_dtos: Iterable[
+        Union[
+            CibConstraintLocationDto,
+            CibConstraintLocationSetDto,
+        ]
+    ]
+) -> list[str]:
+    return [
+        rule_dto.id
+        for constraint_dto in constraint_dtos
+        for rule_dto in constraint_dto.attributes.rules
+    ]
+
+
 def get_all_constraints_ids(constraints_dto: CibConstraintsDto) -> set[str]:
     return set(
         _get_constraint_ids(constraints_dto.location)
@@ -68,4 +83,22 @@ def get_all_constraints_ids(constraints_dto: CibConstraintsDto) -> set[str]:
         + _get_constraint_ids(constraints_dto.order_set)
         + _get_constraint_ids(constraints_dto.ticket)
         + _get_constraint_ids(constraints_dto.ticket_set)
+    )
+
+
+def get_all_location_rules_ids(
+    constraints_dto: CibConstraintsDto,
+) -> set[str]:
+    return set(
+        _get_location_rule_ids(constraints_dto.location)
+        + _get_location_rule_ids(constraints_dto.location_set)
+    )
+
+
+def get_all_location_constraints_ids(
+    constraints_dto: CibConstraintsDto,
+) -> set[str]:
+    return set(
+        _get_constraint_ids(constraints_dto.location)
+        + _get_constraint_ids(constraints_dto.location_set)
     )

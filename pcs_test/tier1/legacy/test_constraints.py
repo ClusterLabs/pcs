@@ -647,7 +647,9 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         )
         self.assertEqual(retval, 1)
         self.assertTrue(
-            stderr.startswith("Error: Unable to find constraint - 'blahblah'"),
+            stderr.startswith(
+                "Error: Unable to find constraint or rule ids: 'blahblah'"
+            ),
             stderr,
         )
         self.assertEqual(stdout, "")
@@ -657,7 +659,9 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         )
         self.assertEqual(retval, 1)
         self.assertTrue(
-            stderr.startswith("Error: Unable to find constraint - 'blahblah'"),
+            stderr.startswith(
+                "Error: Unable to find constraint or rule ids: 'blahblah'"
+            ),
             stderr,
         )
         self.assertEqual(stdout, "")
@@ -1979,9 +1983,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
             "constraint rule remove location-D1-rh7-1-INFINITY-rule-1".split(),
         )
         self.assertEqual(stdout, "")
-        self.assertEqual(
-            stderr, "Removing Rule: location-D1-rh7-1-INFINITY-rule-1\n"
-        )
+        self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(
@@ -1989,9 +1991,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
             "constraint rule remove location-D1-rh7-1-INFINITY-rule-2".split(),
         )
         self.assertEqual(stdout, "")
-        self.assertEqual(
-            stderr, "Removing Rule: location-D1-rh7-1-INFINITY-rule-2\n"
-        )
+        self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
         self.assert_pcs_success(

@@ -20,6 +20,7 @@ from pcs.cli.common.output import (
     INDENT_STEP,
     lines_to_str,
 )
+from pcs.cli.constraint.location import command as location_command
 from pcs.cli.constraint.output import (
     CibConstraintLocationAnyDto,
     location,
@@ -28,7 +29,6 @@ from pcs.cli.constraint.output import (
 from pcs.cli.reports import process_library_reports
 from pcs.cli.reports.output import (
     deprecation_warning,
-    error,
     print_to_stderr,
     warn,
 )
@@ -101,7 +101,7 @@ def constraint_location_cmd(lib, argv, modifiers):
         if sub_cmd == "add":
             location_add(lib, argv, modifiers)
         elif sub_cmd in ["remove", "delete"]:
-            location_remove(lib, argv, modifiers)
+            location_command.remove(lib, argv, modifiers)
         elif sub_cmd == "show":
             location_show(lib, argv, modifiers)
         elif sub_cmd == "config":
@@ -162,42 +162,6 @@ def config_cmd(
         ),
         modifiers,
     )
-
-
-def colocation_rm(lib, argv, modifiers):
-    """
-    Options:
-      * -f - CIB file
-    """
-    del lib
-    modifiers.ensure_only_supported("-f")
-    elementFound = False
-    if len(argv) < 2:
-        raise CmdLineInputError()
-
-    (dom, constraintsElement) = getCurrentConstraints()
-
-    resource1 = argv[0]
-    resource2 = argv[1]
-
-    for co_loc in constraintsElement.getElementsByTagName("rsc_colocation")[:]:
-        if (
-            co_loc.getAttribute("rsc") == resource1
-            and co_loc.getAttribute("with-rsc") == resource2
-        ):
-            constraintsElement.removeChild(co_loc)
-            elementFound = True
-        if (
-            co_loc.getAttribute("rsc") == resource2
-            and co_loc.getAttribute("with-rsc") == resource1
-        ):
-            constraintsElement.removeChild(co_loc)
-            elementFound = True
-
-    if elementFound:
-        utils.replace_cib_configuration(dom)
-    else:
-        raise error("No matching resources found in ordering list")
 
 
 def _validate_constraint_resource(cib_dom, resource_id):
@@ -1003,40 +967,6 @@ def location_add(lib, argv, modifiers, skip_score_and_node_check=False):
     utils.replace_cib_configuration(dom)
 
 
-def location_remove(lib, argv, modifiers):
-    """
-    Options:
-      * -f - CIB file
-    """
-    # This code was originally merged in the location_add function and was
-    # documented to take 1 or 4 arguments:
-    # location remove <id> [<resource id> <node> <score>]
-    # However it has always ignored all arguments but constraint id. Therefore
-    # this command / function has no use as it can be fully replaced by "pcs
-    # constraint remove" which also removes constraints by id. For now I keep
-    # things as they are but we should solve this when moving these functions
-    # to pcs.lib.
-    del lib
-    modifiers.ensure_only_supported("-f")
-    if len(argv) != 1:
-        raise CmdLineInputError()
-
-    constraint_id = argv.pop(0)
-    dom, constraintsElement = getCurrentConstraints()
-
-    elementsToRemove = []
-    for rsc_loc in constraintsElement.getElementsByTagName("rsc_location"):
-        if constraint_id == rsc_loc.getAttribute("id"):
-            elementsToRemove.append(rsc_loc)
-
-    if not elementsToRemove:
-        utils.err("resource location id: " + constraint_id + " not found.")
-    for etr in elementsToRemove:
-        constraintsElement.removeChild(etr)
-
-    utils.replace_cib_configuration(dom)
-
-
 def location_rule(lib, argv, modifiers):
     """
     Options:
@@ -1479,89 +1409,44 @@ def constraint_resource_update(old_id, dom):
     return dom
 
 
-def constraint_rule(lib, argv, modifiers):
+def constraint_rule_add(lib, argv, modifiers):
     """
     Options:
       * -f - CIB file
-      * --force - allow duplicate constraints, only for add command
-
-    NOTE: modifiers check is in subcommand
+      * --force - allow duplicate constraints
     """
     del lib
-    if len(argv) < 2:
+    modifiers.ensure_only_supported("-f", "--force")
+    if not argv:
         raise CmdLineInputError()
-
-    found = False
-    command = argv.pop(0)
-
-    constraint_id = None
-
-    if command == "add":
-        modifiers.ensure_only_supported("-f", "--force")
-        constraint_id = argv.pop(0)
-        options, rule_argv = rule_utils.parse_argv(argv)
-        try:
-            # Parse the rule to see if we need to upgrade CIB schema. All errors
-            # would be properly reported by a validator called bellow, so we can
-            # safely ignore them here.
-            parsed_rule = rule_utils.RuleParser().parse(
-                rule_utils.TokenPreprocessor().run(rule_argv)
+    constraint_id = argv.pop(0)
+    options, rule_argv = rule_utils.parse_argv(argv)
+    try:
+        # Parse the rule to see if we need to upgrade CIB schema. All errors
+        # would be properly reported by a validator called bellow, so we can
+        # safely ignore them here.
+        parsed_rule = rule_utils.RuleParser().parse(
+            rule_utils.TokenPreprocessor().run(rule_argv)
+        )
+        if rule_utils.has_node_attr_expr_with_type_integer(parsed_rule):
+            utils.checkAndUpgradeCIB(
+                const.PCMK_RULES_NODE_ATTR_EXPR_WITH_INT_TYPE_CIB_VERSION
             )
-            if rule_utils.has_node_attr_expr_with_type_integer(parsed_rule):
-                utils.checkAndUpgradeCIB(
-                    const.PCMK_RULES_NODE_ATTR_EXPR_WITH_INT_TYPE_CIB_VERSION
-                )
-        except (rule_utils.ParserException, rule_utils.CibBuilderException):
-            pass
-        cib = utils.get_cib_dom()
-        constraint = utils.dom_get_element_with_id(
-            cib.getElementsByTagName("constraints")[0],
-            "rsc_location",
-            constraint_id,
-        )
-        if not constraint:
-            utils.err("Unable to find constraint: " + constraint_id)
-        rule_utils.dom_rule_add(
-            constraint,
-            options,
-            rule_argv,
-            utils.getValidateWithVersion(cib),
-        )
-        location_rule_check_duplicates(
-            cib, constraint, modifiers.get("--force")
-        )
-        utils.replace_cib_configuration(cib)
-
-    elif command in ["remove", "delete"]:
-        modifiers.ensure_only_supported("-f")
-        cib = utils.get_cib_etree()
-        temp_id = argv.pop(0)
-        constraints = cib.find(".//constraints")
-        loc_cons = cib.findall(str(".//rsc_location"))
-
-        for loc_con in loc_cons:
-            for rule in loc_con:
-                if rule.get("id") == temp_id:
-                    if len(loc_con) > 1:
-                        print_to_stderr(
-                            "Removing Rule: {0}".format(rule.get("id"))
-                        )
-                        loc_con.remove(rule)
-                        found = True
-                    else:
-                        print_to_stderr(
-                            "Removing Constraint: {0}".format(loc_con.get("id"))
-                        )
-                        constraints.remove(loc_con)
-                        found = True
-                    break
-
-            if found:
-                break
-
-        if found:
-            utils.replace_cib_configuration(cib)
-        else:
-            utils.err("unable to find rule with id: %s" % temp_id)
-    else:
-        raise CmdLineInputError()
+    except (rule_utils.ParserException, rule_utils.CibBuilderException):
+        pass
+    cib = utils.get_cib_dom()
+    constraint = utils.dom_get_element_with_id(
+        cib.getElementsByTagName("constraints")[0],
+        "rsc_location",
+        constraint_id,
+    )
+    if not constraint:
+        utils.err("Unable to find constraint: " + constraint_id)
+    rule_utils.dom_rule_add(
+        constraint,
+        options,
+        rule_argv,
+        utils.getValidateWithVersion(cib),
+    )
+    location_rule_check_duplicates(cib, constraint, modifiers.get("--force"))
+    utils.replace_cib_configuration(cib)
