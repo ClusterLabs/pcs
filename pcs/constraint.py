@@ -7,7 +7,6 @@ from typing import (
     Optional,
     Set,
     TypeVar,
-    Union,
     cast,
 )
 from xml.dom.minidom import parseString
@@ -39,15 +38,12 @@ from pcs.common import (
     reports,
 )
 from pcs.common.pacemaker.constraint import (
-    CibConstraintColocationDto,
     CibConstraintColocationSetDto,
-    CibConstraintLocationDto,
     CibConstraintLocationSetDto,
-    CibConstraintOrderDto,
     CibConstraintOrderSetDto,
     CibConstraintsDto,
-    CibConstraintTicketDto,
     CibConstraintTicketSetDto,
+    get_all_constraints_ids,
 )
 from pcs.common.pacemaker.resource.list import CibResourcesDto
 from pcs.common.reports import ReportItem
@@ -1277,39 +1273,6 @@ def constraint_rm(
     return None
 
 
-def _get_constraint_ids(
-    constraint_dtos: Iterable[
-        Union[
-            CibConstraintLocationDto,
-            CibConstraintLocationSetDto,
-            CibConstraintColocationDto,
-            CibConstraintColocationSetDto,
-            CibConstraintOrderDto,
-            CibConstraintOrderSetDto,
-            CibConstraintTicketDto,
-            CibConstraintTicketSetDto,
-        ]
-    ]
-) -> list[str]:
-    return [
-        constraint_dto.attributes.constraint_id
-        for constraint_dto in constraint_dtos
-    ]
-
-
-def _get_all_constraints_ids(constraints_dto: CibConstraintsDto) -> Set[str]:
-    return set(
-        _get_constraint_ids(constraints_dto.location)
-        + _get_constraint_ids(constraints_dto.location_set)
-        + _get_constraint_ids(constraints_dto.colocation)
-        + _get_constraint_ids(constraints_dto.colocation_set)
-        + _get_constraint_ids(constraints_dto.order)
-        + _get_constraint_ids(constraints_dto.order_set)
-        + _get_constraint_ids(constraints_dto.ticket)
-        + _get_constraint_ids(constraints_dto.ticket_set)
-    )
-
-
 def _split_set_constraints(
     constraints_dto: CibConstraintsDto,
 ) -> tuple[CibConstraintsDto, CibConstraintsDto]:
@@ -1368,7 +1331,7 @@ def ref(
     )
 
     for resource_id in sorted(set(argv)):
-        constraint_ids = _get_all_constraints_ids(
+        constraint_ids = get_all_constraints_ids(
             _find_constraints_containing_resource(
                 resources_dto, constraints_dto, resource_id
             )
@@ -1407,14 +1370,14 @@ def remove_constraints_containing(
         )
     )
     constraints = sorted(
-        _get_all_constraints_ids(
+        get_all_constraints_ids(
             _find_constraints_containing_resource(
                 resources_dto, constraints_dto, resource_id
             )
         )
     )
     set_constraints = sorted(
-        _get_all_constraints_ids(
+        get_all_constraints_ids(
             _find_constraints_containing_resource(
                 resources_dto, set_constraints_dto, resource_id
             )
