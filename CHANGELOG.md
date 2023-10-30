@@ -6,6 +6,10 @@
 - Make use of filters when extracting tarballs to enhance security if provided
   by Python (`pcs config restore` command) ([rhbz#2219388])
 
+### Added
+- It is now possible to move bundle resources (requires pacemaker 2.1.6 or
+  newer) and clone resources ([RHEL-7584])
+
 ### Fixed
 - Do not display duplicate records in commands `pcs property [config] --all`
   and `pcs property describe` ([rhbz#2217850])
@@ -23,12 +27,15 @@
   specified for `pcs resource create` command ([rhbz#2233766]).
 - Improved error message of `pcs booth ticket grant|revoke` commands in case a
   booth site address parameter is needed ([RHEL-8467])
+- When moving or banning a resource in a bundle, pcs now errors out instead of
+  creating a move / ban constraint which does nothing ([RHEL-7584])
 
 ### Changed
 - Allow `tls` and `keep_active_partition_tie_breaker` options for qdevice model
   "net" to be set using `pcs quorum device add` and `pcs quorum device update`
   commands ([rhbz#2234665])
 
+[RHEL-7584]: https://issues.redhat.com/browse/RHEL-7584
 [RHEL-8467]: https://issues.redhat.com/browse/RHEL-8467
 [rhbz#2217850]: https://bugzilla.redhat.com/show_bug.cgi?id=2217850
 [rhbz#2219388]: https://bugzilla.redhat.com/show_bug.cgi?id=2219388

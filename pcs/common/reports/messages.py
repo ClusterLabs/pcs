@@ -5990,6 +5990,67 @@ class CannotMoveResourceBundle(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class CannotMoveResourceBundleInner(ReportItemMessage):
+    """
+    User is trying to move a bundle's inner resource
+
+    resource_id -- id of the resource to be moved
+    bundle_id -- id of the relevant parent bundle resource
+    """
+
+    resource_id: str
+    bundle_id: str
+    _code = codes.CANNOT_MOVE_RESOURCE_BUNDLE_INNER
+
+    @property
+    def message(self) -> str:
+        return (
+            "Resources cannot be moved out of their bundles. If you want to "
+            f"move a bundle, use the bundle id ({self.bundle_id})"
+        )
+
+
+@dataclass(frozen=True)
+class CannotMoveResourceMultipleInstances(ReportItemMessage):
+    """
+    User is trying to move a resource of which more than one instance is running
+
+    resource_id -- id of the resource to be moved
+    """
+
+    resource_id: str
+    _code = codes.CANNOT_MOVE_RESOURCE_MULTIPLE_INSTANCES
+
+    @property
+    def message(self) -> str:
+        return (
+            f"more than one instance of resource '{self.resource_id}' is "
+            "running, thus the resource cannot be moved"
+        )
+
+
+@dataclass(frozen=True)
+class CannotMoveResourceMultipleInstancesNoNodeSpecified(ReportItemMessage):
+    """
+    User is trying to move a resource of which more than one instance is running
+    without specifying a destination node
+
+    resource_id -- id of the resource to be moved
+    """
+
+    resource_id: str
+    _code = codes.CANNOT_MOVE_RESOURCE_MULTIPLE_INSTANCES_NO_NODE_SPECIFIED
+
+    @property
+    def message(self) -> str:
+        return (
+            f"more than one instance of resource '{self.resource_id}' is "
+            "running, thus the resource cannot be moved, "
+            "unless a destination node is specified"
+        )
+
+
+@dataclass(frozen=True)
 class CannotMoveResourceClone(ReportItemMessage):
     """
     User is trying to move a clone resource which is not possible
@@ -6003,6 +6064,27 @@ class CannotMoveResourceClone(ReportItemMessage):
     @property
     def message(self) -> str:
         return "cannot move cloned resources"
+
+
+@dataclass(frozen=True)
+class CannotMoveResourceCloneInner(ReportItemMessage):
+    """
+    User is trying to move a clone's inner resource which is not possible
+
+    resource_id -- id of the resource to be moved
+    clone_id -- id of relevant parent clone resource
+    """
+
+    resource_id: str
+    clone_id: str
+    _code = codes.CANNOT_MOVE_RESOURCE_CLONE_INNER
+
+    @property
+    def message(self) -> str:
+        return (
+            "to move clone resources you must use the clone id "
+            f"({self.clone_id})"
+        )
 
 
 @dataclass(frozen=True)
@@ -6129,6 +6211,27 @@ class ResourceMovePcmkSuccess(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class CannotBanResourceBundleInner(ReportItemMessage):
+    """
+    User is trying to ban a bundle's inner resource
+
+    resource_id -- id of the resource to be banned
+    bundle_id -- id of the relevant parent bundle resource
+    """
+
+    resource_id: str
+    bundle_id: str
+    _code = codes.CANNOT_BAN_RESOURCE_BUNDLE_INNER
+
+    @property
+    def message(self) -> str:
+        return (
+            f"Resource '{self.resource_id}' is in a bundle and cannot be banned. "
+            f"If you want to ban the bundle, use the bundle id ({self.bundle_id})"
+        )
+
+
+@dataclass(frozen=True)
 class CannotBanResourceMasterResourceNotPromotable(ReportItemMessage):
     """
     User is trying to ban a non-promotable resource and limit it to master role
@@ -6145,6 +6248,27 @@ class CannotBanResourceMasterResourceNotPromotable(ReportItemMessage):
     def message(self) -> str:
         return _resource_move_ban_clear_master_resource_not_promotable(
             self.promotable_id
+        )
+
+
+@dataclass(frozen=True)
+class CannotBanResourceMultipleInstancesNoNodeSpecified(ReportItemMessage):
+    """
+    User is trying to ban a resource of which more than one instance is running
+    without specifying a destination node
+
+    resource_id -- id of the resource to be banned
+    """
+
+    resource_id: str
+    _code = codes.CANNOT_BAN_RESOURCE_MULTIPLE_INSTANCES_NO_NODE_SPECIFIED
+
+    @property
+    def message(self) -> str:
+        return (
+            f"more than one instance of resource '{self.resource_id}' is "
+            "running, thus the resource cannot be banned, "
+            "unless a destination node is specified"
         )
 
 

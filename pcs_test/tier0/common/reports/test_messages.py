@@ -4445,10 +4445,52 @@ class CannotMoveResourceBundle(NameBuildTest):
         )
 
 
+class CannotMoveResourceBundleInner(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Resources cannot be moved out of their bundles. If you want "
+                "to move a bundle, use the bundle id (B)"
+            ),
+            reports.CannotMoveResourceBundleInner("R", "B"),
+        )
+
+
 class CannotMoveResourceClone(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
             "cannot move cloned resources", reports.CannotMoveResourceClone("R")
+        )
+
+
+class CannotMoveResourceCloneInner(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "to move clone resources you must use the clone id (C)",
+            reports.CannotMoveResourceCloneInner("R", "C"),
+        )
+
+
+class CannotMoveResourceMultipleInstances(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "more than one instance of resource 'R' is running, "
+                "thus the resource cannot be moved"
+            ),
+            reports.CannotMoveResourceMultipleInstances("R"),
+        )
+
+
+class CannotMoveResourceMultipleInstancesNoNodeSpecified(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "more than one instance of resource 'R' is running, "
+                "thus the resource cannot be moved, "
+                "unless a destination node is specified"
+            ),
+            reports.CannotMoveResourceMultipleInstancesNoNodeSpecified("R"),
         )
 
 
@@ -4545,6 +4587,17 @@ class ResourceMovePcmkSuccess(NameBuildTest):
         )
 
 
+class CannotBanResourceBundleInner(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Resource 'R' is in a bundle and cannot be banned. If you want "
+                "to ban the bundle, use the bundle id (B)"
+            ),
+            reports.CannotBanResourceBundleInner("R", "B"),
+        )
+
+
 class CannotBanResourceMasterResourceNotPromotable(NameBuildTest):
     def test_without_promotable(self):
         self.assert_message_from_report(
@@ -4558,6 +4611,18 @@ class CannotBanResourceMasterResourceNotPromotable(NameBuildTest):
             reports.CannotBanResourceMasterResourceNotPromotable(
                 "R", promotable_id="P"
             ),
+        )
+
+
+class CannotBanResourceMultipleInstancesNoNodeSpecified(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "more than one instance of resource 'R' is running, "
+                "thus the resource cannot be banned, "
+                "unless a destination node is specified"
+            ),
+            reports.CannotBanResourceMultipleInstancesNoNodeSpecified("R"),
         )
 
 
