@@ -3734,6 +3734,57 @@ class CibFencingLevelDoesNotExist(NameBuildTest):
         )
 
 
+class CibRemoveDependantElements(NameBuildTest):
+    def test_single_element_type_with_single_id(self):
+        self.assert_message_from_report(
+            "Removing dependant element:\n  Location constraint: 'id1'",
+            reports.CibRemoveDependantElements({"id1": "rsc_location"}),
+        )
+
+    def test_single_element_type_with_multiple_ids(self):
+        self.assert_message_from_report(
+            (
+                "Removing dependant elements:\n"
+                "  Location constraints: 'id1', 'id2'"
+            ),
+            reports.CibRemoveDependantElements(
+                {"id1": "rsc_location", "id2": "rsc_location"}
+            ),
+        )
+
+    def test_multiple_element_types_with_single_id(self):
+        self.assert_message_from_report(
+            (
+                "Removing dependant elements:\n"
+                "  Clone: 'id2'\n"
+                "  Location constraint: 'id1'"
+            ),
+            reports.CibRemoveDependantElements(
+                {"id1": "rsc_location", "id2": "clone"}
+            ),
+        )
+
+    def test_multiple_element_types_with_multiple_ids(self):
+        self.assert_message_from_report(
+            (
+                "Removing dependant elements:\n"
+                "  Another_elements: 'id5', 'id6'\n"
+                "  Clones: 'id3', 'id4'\n"
+                "  Location constraints: 'id1', 'id2'"
+            ),
+            reports.CibRemoveDependantElements(
+                {
+                    "id1": "rsc_location",
+                    "id2": "rsc_location",
+                    "id3": "clone",
+                    "id4": "clone",
+                    "id5": "another_element",
+                    "id6": "another_element",
+                }
+            ),
+        )
+
+
 class UseCommandNodeAddRemote(NameBuildTest):
     def test_build_messages(self):
         self.assert_message_from_report(

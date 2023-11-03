@@ -2018,7 +2018,11 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         )
         self.assertEqual(stdout, "")
         self.assertEqual(
-            stderr, "Removing Constraint: location-D1-rh7-1-INFINITY\n"
+            stderr,
+            (
+                "Removing dependant element:\n"
+                "  Location constraint: 'location-D1-rh7-1-INFINITY'\n"
+            ),
         )
         self.assertEqual(retval, 0)
 

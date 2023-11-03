@@ -1,7 +1,6 @@
 from typing import (
     Collection,
     Iterable,
-    cast,
 )
 
 from lxml import etree
@@ -77,6 +76,20 @@ def remove_elements(
         raise LibraryError()
 
     element_ids_to_remove = _get_dependencies_to_remove(elements_to_process)
+    dependant_elements, _ = get_elements_by_ids(
+        cib, element_ids_to_remove - id_set
+    )
+    if dependant_elements:
+        report_processor.report(
+            reports.ReportItem.info(
+                reports.messages.CibRemoveDependantElements(
+                    {
+                        str(element.attrib["id"]): element.tag
+                        for element in dependant_elements
+                    }
+                )
+            )
+        )
 
     for element_id in element_ids_to_remove:
         remove_element_by_id(cib, element_id)
@@ -128,8 +141,14 @@ def _get_inner_references(element: _Element) -> Iterable[_Element]:
     Get all inner elements with attribute id, which means that they might be
     refernenced in IDREF. Elements with attribute id and type IDREF are also
     returned.
+
+    Note:
+        Only removing of constraint or location rule elements is supported.
+        Theirs inner elements cannot be referenced or referencing is not
+        supported.
     """
-    return cast(Iterable[_Element], element.xpath("./*[@id]"))
+    # pylint: disable=unused-argument
+    # return cast(Iterable[_Element], element.xpath("./*[@id]"))
     # if is_resource(element):
     #     return get_inner_resources(element)
     # if element.tag == "alert":
@@ -138,7 +157,7 @@ def _get_inner_references(element: _Element) -> Iterable[_Element]:
     #     return element.findall("resource_set")
     # if element.tag == "acl_role":
     #     return element.findall("acl_permission")
-    # return []
+    return []
 
 
 def _is_last_element(parent_element: _Element, child_tag: str) -> bool:

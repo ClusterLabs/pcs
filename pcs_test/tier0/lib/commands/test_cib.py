@@ -2,6 +2,7 @@ from unittest import TestCase
 
 from lxml import etree
 
+from pcs.common import reports
 from pcs.lib.commands import cib as lib
 
 from pcs_test.tools import fixture
@@ -199,6 +200,14 @@ class RemoveElements(TestCase):
             constraints=_constraints(FIXTURE_LOC_CONSTRAINT_WITH_2_RULES)
         )
         lib.remove_elements(self.env_assist.get_env(), ["r1"])
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    reports.codes.CIB_REMOVE_DEPENDANT_ELEMENTS,
+                    id_tag_map={"lr1": "rsc_location"},
+                ),
+            ]
+        )
 
     def test_remove_one_rule_from_location_constraint_with_two_rules(self):
         self.config.runner.cib.load(
@@ -232,6 +241,14 @@ class RemoveElements(TestCase):
         )
         self.config.env.push_cib(constraints="<constraints/>")
         lib.remove_elements(self.env_assist.get_env(), ["r1", "r2", "r3"])
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    reports.codes.CIB_REMOVE_DEPENDANT_ELEMENTS,
+                    id_tag_map={"lr1": "rsc_location", "lr2": "rsc_location"},
+                ),
+            ]
+        )
 
     def test_remove_location_rule_expressions(self):
         self.config.runner.cib.load(
@@ -261,7 +278,7 @@ class GetInnerReferences(TestCase):
             [], lib._get_inner_references(etree.fromstring("<A/>"))
         )
 
-    def test_inner_references(self):
+    def test_not_supported_inner_references(self):
         element = etree.fromstring(
             """
             <A>
@@ -274,11 +291,7 @@ class GetInnerReferences(TestCase):
             </A>
             """
         )
-        expected_elements = [
-            element.find("./a[@id='1']"),
-            element.find("./b[@id='2']"),
-        ]
-        self.assertEqual(expected_elements, lib._get_inner_references(element))
+        self.assertEqual([], lib._get_inner_references(element))
 
 
 class IsLastElement(TestCase):
