@@ -95,6 +95,24 @@ class RemoveElements(TestCase):
             ]
         )
 
+    def test_duplicate_ids_specified(self):
+        self.config.runner.cib.load(
+            constraints="""
+                <constraints>
+                    <rsc_location id="l1" rsc="A" node="node1" score="200"/>
+                    <rsc_location id="l2" rsc="A" node="node2" score="100"/>
+                </constraints>
+            """
+        )
+        self.config.env.push_cib(
+            constraints="""
+                <constraints>
+                    <rsc_location id="l2" rsc="A" node="node2" score="100"/>
+                </constraints>
+            """
+        )
+        lib.remove_elements(self.env_assist.get_env(), ["l1", "l1"])
+
     def test_remove_location_constraint(self):
         self.config.runner.cib.load(
             constraints="""

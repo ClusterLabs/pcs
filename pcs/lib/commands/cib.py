@@ -45,11 +45,12 @@ def remove_elements(
     force_flags -- list of flags codes
     """
     del force_flags
+    id_set = set(ids)
     cib = env.get_cib()
     wip_cib = parse_cib_xml(etree.tostring(cib).decode())
     report_processor = env.report_processor
 
-    elements_to_process, not_found_ids = get_elements_by_ids(wip_cib, ids)
+    elements_to_process, not_found_ids = get_elements_by_ids(wip_cib, id_set)
 
     for non_existing_id in not_found_ids:
         report_processor.report(
