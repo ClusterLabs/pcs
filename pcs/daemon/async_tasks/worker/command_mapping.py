@@ -8,6 +8,7 @@ from typing import (
 from pcs.lib.commands import (  # services,
     acl,
     alert,
+    cib,
     cluster,
     cluster_property,
     constraint,
@@ -135,6 +136,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
     ),
     "cluster_property.set_properties": _Cmd(
         cmd=cluster_property.set_properties,
+        required_permission=p.WRITE,
+    ),
+    "cib.remove_elements": _Cmd(
+        cmd=cib.remove_elements,
         required_permission=p.WRITE,
     ),
     "constraint.colocation.create_with_set": _Cmd(

@@ -11,6 +11,7 @@
   ([rhbz#2112268], [ghpull#712])
 - It is now possible to move bundle resources (requires pacemaker 2.1.6 or
   newer) and clone resources ([RHEL-7744])
+- Add lib command `cib.remove_elements` to API v2.
 
 ### Fixed
 - Exporting constraints with rules in form of pcs commands now escapes `#` and
