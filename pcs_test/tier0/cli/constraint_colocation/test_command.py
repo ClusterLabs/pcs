@@ -117,8 +117,8 @@ class TestRemoveColocationConstraint(TestCase):
         self.assertEqual(
             cm.exception.message,
             (
-                "Unable to find colocation constraint with source resource id "
-                "'A' and target resource id 'D'"
+                "Unable to find colocation constraint with source resource "
+                "'A' and target resource 'D'"
             ),
         )
         self.constraint.get_config.assert_called_once_with(evaluate_rules=False)

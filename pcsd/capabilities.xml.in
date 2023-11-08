@@ -896,10 +896,16 @@
         pcs commands: cluster cib-push
       </description>
     </capability>
-    <capability id="pcmk.cib.remove_elements.constraints.rest-api.v2" in-pcs="0" in-pcsd="1">
+    <capability id="pcmk.cib.remove_elements.constraints" in-pcs="0" in-pcsd="1">
       <description>
-        Remove cib elements by ids. Currently supported are constraints elements
-        and location rule elements.
+        Remove constraints and constraint rules by ids.
+
+        API v2: cib.remove_elements
+      </description>
+    </capability>
+    <capability id="pcmk.cib.remove_elements.rest-api.v2" in-pcs="0" in-pcsd="1">
+      <description>
+        Remove cib elements by ids.
 
         API v2: cib.remove_elements
       </description>

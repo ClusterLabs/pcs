@@ -81,10 +81,11 @@ def remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
             constraint_ids_to_remove.append(
                 colocation_dto.attributes.constraint_id
             )
-        if (
+        elif (
             colocation_dto.resource_id == target_rsc_id
             and colocation_dto.with_resource_id == source_rsc_id
         ):
+            # deprecated since pcs-0.11.7
             deprecation_warning(
                 "Removing colocation constraint with interchanged source "
                 "resource id and targert resource id. This behavior is "
@@ -95,7 +96,7 @@ def remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
             )
     if not constraint_ids_to_remove:
         raise CmdLineInputError(
-            f"Unable to find colocation constraint with source resource id "
-            f"'{source_rsc_id}' and target resource id '{target_rsc_id}'"
+            f"Unable to find colocation constraint with source resource "
+            f"'{source_rsc_id}' and target resource '{target_rsc_id}'"
         )
     lib.cib.remove_elements(constraint_ids_to_remove)

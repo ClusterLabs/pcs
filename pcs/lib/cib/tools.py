@@ -1,6 +1,5 @@
 import re
 from typing import (
-    Iterable,
     List,
     Pattern,
     Set,
@@ -563,7 +562,7 @@ def _get_configuration(element: _Element) -> _Element:
 def _find_elements_without_id_referencing_id(
     element: _Element,
     referenced_id: str,
-) -> Iterable[_Element]:
+) -> list[_Element]:
     """
     Find elements which are referencing specified id (resource or tag).
 
@@ -571,7 +570,7 @@ def _find_elements_without_id_referencing_id(
     referenced_id -- id which references should be found
     """
     return cast(
-        Iterable[_Element],
+        list[_Element],
         _get_configuration(element).xpath(
             _ELEMENTS_WITH_IDREF_WITHOUT_ID_XPATH,
             referenced_id=referenced_id,
@@ -582,7 +581,7 @@ def _find_elements_without_id_referencing_id(
 def find_elements_referencing_id(
     element: _Element,
     referenced_id: str,
-) -> Iterable[_Element]:
+) -> list[_Element]:
     """
     Find elements which are referencing specified id (resource or tag).
 
@@ -590,7 +589,7 @@ def find_elements_referencing_id(
     referenced_id -- id which references should be found
     """
     return cast(
-        Iterable[_Element],
+        list[_Element],
         _get_configuration(element).xpath(
             """
         ./constraints/rsc_colocation[

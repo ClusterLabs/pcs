@@ -21,10 +21,22 @@ class TestRemoveLocationConstraint(TestCase):
         )
         self.lib.cib = self.cib
         self.lib.constraint = self.constraint
+        self.patch_warn = mock.patch(
+            "pcs.cli.constraint.location.command.deprecation_warning"
+        )
+        self.mock_warn = self.patch_warn.start()
+
+    def tearDown(self):
+        self.patch_warn.stop()
 
     def _call_cmd(self, argv, modifiers=None):
         location_command.remove(
             self.lib, argv, dict_to_modifiers(modifiers or {})
+        )
+        self.mock_warn.assert_called_once_with(
+            "This command is deprecated and will be removed. "
+            "Please use 'pcs constraint delete' or 'pcs constraint remove' "
+            "instead."
         )
 
     def test_no_args(self):
@@ -36,7 +48,7 @@ class TestRemoveLocationConstraint(TestCase):
 
     def test_duplicate_args(self):
         with self.assertRaises(CmdLineInputError) as cm:
-            self._call_cmd(["id1", "id2", "id1", "id2"])
+            self._call_cmd(["id1", "id2", "id1", "id2", "id3"])
         self.assertEqual(
             cm.exception.message, "duplicate arguments: 'id1', 'id2'"
         )
@@ -65,7 +77,7 @@ class TestRemoveLocationConstraint(TestCase):
         self.assertEqual(
             cm.exception.message,
             (
-                "Unable to find location constraint ids: 'id1', "
+                "Unable to find location constraints: 'id1', "
                 "'order-R7-G2-mandatory'"
             ),
         )

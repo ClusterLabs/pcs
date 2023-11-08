@@ -6,6 +6,7 @@ from pcs.cli.common.parse_args import (
     InputModifiers,
     ensure_unique_args,
 )
+from pcs.cli.reports.output import deprecation_warning
 from pcs.common.pacemaker.constraint import get_all_location_constraints_ids
 from pcs.common.str_tools import format_list
 
@@ -15,6 +16,12 @@ def remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     Options:
       * -f - CIB file
     """
+    # deprecated since pcs-0.11.7
+    deprecation_warning(
+        "This command is deprecated and will be removed. "
+        "Please use 'pcs constraint delete' or 'pcs constraint remove' "
+        "instead."
+    )
     modifiers.ensure_only_supported("-f")
     if not argv:
         raise CmdLineInputError()
@@ -24,7 +31,6 @@ def remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     )
     if missing_ids:
         raise CmdLineInputError(
-            "Unable to find location constraint ids: "
-            f"{format_list(missing_ids)}"
+            f"Unable to find location constraints: {format_list(missing_ids)}"
         )
     lib.cib.remove_elements(argv)

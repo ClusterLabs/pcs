@@ -2432,10 +2432,10 @@ Commands:
         resource name regular expression regexp%<resource_pattern>.
 
     location delete <id>...
-        Remove location constraint with the appropriate ids.
+        Remove location constraints with the specified ids.
 
     location remove <id>...
-        Remove location constraint with the appropriate ids.
+        Remove location constraints with the specified ids.
 
     order [config] [--full] [{output_format_syntax}]
         List all current ordering constraints (if --full is specified show
@@ -2547,11 +2547,11 @@ Commands:
         generated from the constraint id.
 
     rule delete <rule id>...
-        Remove rules from its location constraints and if all the rules are
+        Remove rules from their location constraints. If all rules are
         removed from a constraint, the constraint will also be removed.
 
     rule remove <rule id>...
-        Remove rules from its location constraints and if all the rules are
+        Remove rules from their location constraints. If all rules are
         removed from a constraint, the constraint will also be removed.
 """.format(
         output_format_syntax=_output_format_syntax(),

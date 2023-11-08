@@ -36,7 +36,7 @@ class TestRemoveConstraint(TestCase):
 
     def test_duplicate_args(self):
         with self.assertRaises(CmdLineInputError) as cm:
-            self._call_cmd(["id1", "id2", "id1", "id2"])
+            self._call_cmd(["id3", "id1", "id2", "id1", "id2"])
         self.assertEqual(
             cm.exception.message, "duplicate arguments: 'id1', 'id2'"
         )
@@ -58,7 +58,7 @@ class TestRemoveConstraint(TestCase):
             self._call_cmd(["id1", "id2", "location-R7-localhost-INFINITY"])
         self.assertEqual(
             cm.exception.message,
-            "Unable to find constraint or rule ids: 'id1', 'id2'",
+            "Unable to find constraints or constraint rules: 'id1', 'id2'",
         )
         self.constraint.get_config.assert_called_once_with(evaluate_rules=False)
         self.cib.remove_elements.assert_not_called()

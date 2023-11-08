@@ -7,7 +7,7 @@ from lxml import etree
 from lxml.etree import _Element
 
 from pcs.common import reports
-from pcs.common.types import StringSequence
+from pcs.common.types import StringCollection
 from pcs.lib.cib.const import TAG_OBJREF
 from pcs.lib.cib.constraint.all import is_constraint
 from pcs.lib.cib.constraint.location import (
@@ -32,7 +32,7 @@ from pcs.lib.pacemaker.live import parse_cib_xml
 
 def remove_elements(
     env: LibraryEnvironment,
-    ids: StringSequence,
+    ids: StringCollection,
     force_flags: Collection[reports.types.ForceCode] = (),
 ) -> None:
     """
@@ -61,6 +61,7 @@ def remove_elements(
         )
 
     for element in elements_to_process:
+        # TODO: add support for other CIB elements
         if not (is_constraint(element) or is_location_rule(element)):
             report_processor.report(
                 reports.ReportItem.error(

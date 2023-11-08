@@ -34,7 +34,7 @@ class TestRemoveColocationConstraint(TestCase):
 
     def test_duplicate_args(self):
         with self.assertRaises(CmdLineInputError) as cm:
-            self._call_cmd(["id1", "id2", "id1", "id2"])
+            self._call_cmd(["id1", "id2", "id3", "id1", "id2"])
         self.assertEqual(
             cm.exception.message, "duplicate arguments: 'id1', 'id2'"
         )
@@ -56,7 +56,7 @@ class TestRemoveColocationConstraint(TestCase):
             self._call_cmd(["id1", "id2"])
         self.assertEqual(
             cm.exception.message,
-            "Unable to find rule ids: 'id1', 'id2'",
+            "Unable to find constraint rules: 'id1', 'id2'",
         )
         self.constraint.get_config.assert_called_once_with(evaluate_rules=False)
         self.cib.remove_elements.assert_not_called()

@@ -58,6 +58,7 @@ def remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     )
     if missing_ids:
         raise CmdLineInputError(
-            f"Unable to find constraint or rule ids: {format_list(missing_ids)}"
+            "Unable to find constraints or constraint rules: "
+            f"{format_list(missing_ids)}"
         )
     lib.cib.remove_elements(argv)
