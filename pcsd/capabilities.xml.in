@@ -896,6 +896,20 @@
         pcs commands: cluster cib-push
       </description>
     </capability>
+    <capability id="pcmk.cib.remove_elements.constraints" in-pcs="0" in-pcsd="1">
+      <description>
+        Remove constraints and constraint rules by ids.
+
+        API v2: cib.remove_elements
+      </description>
+    </capability>
+    <capability id="pcmk.cib.remove_elements.rest-api.v2" in-pcs="0" in-pcsd="1">
+      <description>
+        Remove cib elements by ids.
+
+        API v2: cib.remove_elements
+      </description>
+    </capability>
     <capability id="pcmk.cib.roles.promoted-unpromoted" in-pcs="1" in-pcsd="1">
       <description>
         Support for new roles `Promoted` and `Unpromoted` introduced in

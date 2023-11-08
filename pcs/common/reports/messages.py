@@ -143,6 +143,7 @@ _type_translation = {
     # with a master, say we were doing it with a clone instead.
     "master": "clone",
     "primitive": "resource",
+    "rsc_location": "location constraint",
 }
 _type_articles = {
     "ACL group": "an",
@@ -5032,6 +5033,32 @@ class CibFencingLevelDoesNotExist(ReportItemMessage):
                 format_list(self.devices), "with device(s) {0} "
             ),
         )
+
+
+@dataclass(frozen=True)
+class CibRemoveDependantElements(ReportItemMessage):
+    """
+    Information about removal of additional cib elements due to dependencies.
+    """
+
+    id_tag_map: Mapping[str, str]
+    _code = codes.CIB_REMOVE_DEPENDANT_ELEMENTS
+
+    @property
+    def message(self) -> str:
+        def _format_line(tag: str, ids: list[str]) -> str:
+            tag_desc = format_plural(ids, _type_to_string(tag)).capitalize()
+            id_list = format_list(ids)
+            return f"  {tag_desc}: {id_list}"
+
+        element_pl = format_plural(self.id_tag_map, "element")
+        tag_ids_map: Mapping[str, list[str]] = defaultdict(list)
+        for _id, tag in self.id_tag_map.items():
+            tag_ids_map[tag].append(_id)
+        info_lines = "\n".join(
+            sorted([_format_line(tag, ids) for tag, ids in tag_ids_map.items()])
+        )
+        return f"Removing dependant {element_pl}:\n{info_lines}"
 
 
 @dataclass(frozen=True)

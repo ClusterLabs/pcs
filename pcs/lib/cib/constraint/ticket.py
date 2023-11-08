@@ -43,6 +43,10 @@ ATTRIB_PLAIN = {
 }
 
 
+def is_ticket_constraint(element: _Element) -> bool:
+    return element.tag == TAG_NAME
+
+
 def _validate_options_common(options):
     report_list = []
     if "loss-policy" in options:

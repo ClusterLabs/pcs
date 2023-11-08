@@ -1133,11 +1133,11 @@ List all the current location constraints that are not expired. If 'resources' i
 location add <id> <resource> <node> <score> [resource\-discovery=<option>]
 Add a location constraint with the appropriate id for the specified resource, node name and score. Resource may be either a resource id <resource_id> or %<resource_id> or resource%<resource_id>, or a resource name regular expression regexp%<resource_pattern>.
 .TP
-location delete <id>
-Remove a location constraint with the appropriate id.
+location delete <id>...
+Remove location constraints with the specified ids.
 .TP
-location remove <id>
-Remove a location constraint with the appropriate id.
+location remove <id>...
+Remove location constraints with the specified ids.
 .TP
 order [config] [\fB\-\-full\fR] [@OUTPUT_FORMAT_SYNTAX_DOC@]
 List all current ordering constraints (if \fB\-\-full\fR is specified show the internal constraint id's as well). @OUTPUT_FORMAT_DESC_DOC@
@@ -1214,11 +1214,11 @@ Add a rule to a location constraint specified by 'constraint id' where the expre
 .br
 where duration options and date spec options are: hours, monthdays, weekdays, yeardays, months, weeks, years, weekyears, moon. If score is omitted it defaults to INFINITY. If id is omitted one is generated from the constraint id.
 .TP
-rule delete <rule id>
-Remove a rule from its location constraint and if it's the last rule, the constraint will also be removed.
+rule delete <rule id>...
+Remove rules from their location constraints. If all rules are removed from a constraint, the constraint will also be removed.
 .TP
-rule remove <rule id>
-Remove a rule from its location constraint and if it's the last rule, the constraint will also be removed.
+rule remove <rule id>...
+Remove rules from their location constraints. If all rules are removed from a constraint, the constraint will also be removed.
 .SS "qdevice"
 .TP
 status <device model> [\fB\-\-full\fR] [<cluster name>]

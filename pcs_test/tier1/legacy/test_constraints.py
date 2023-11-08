@@ -54,6 +54,10 @@ DEPRECATED_DASH_DASH_GROUP = (
     "with 'group' in a future release. Specify --future to switch to the future "
     "behavior.\n"
 )
+DEPRECATED_LOCATION_CONSTRAINT_REMOVE = (
+    "Deprecation Warning: This command is deprecated and will be removed. "
+    "Please use 'pcs constraint delete' or 'pcs constraint remove' instead.\n"
+)
 
 empty_cib = rc("cib-empty-3.7.xml")
 large_cib = rc("cib-large.xml")
@@ -611,7 +615,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
             "constraint location delete location-D5-node1-INFINITY".split(),
         )
         self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
+        self.assertEqual(stderr, DEPRECATED_LOCATION_CONSTRAINT_REMOVE)
         self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(
@@ -619,7 +623,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
             "constraint location remove location-D5-node2--INFINITY".split(),
         )
         self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
+        self.assertEqual(stderr, DEPRECATED_LOCATION_CONSTRAINT_REMOVE)
         self.assertEqual(retval, 0)
 
         self.assert_pcs_success("constraint --full".split())
@@ -647,7 +651,10 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         )
         self.assertEqual(retval, 1)
         self.assertTrue(
-            stderr.startswith("Error: Unable to find constraint - 'blahblah'"),
+            stderr.startswith(
+                "Error: Unable to find constraints or constraint rules: "
+                "'blahblah'"
+            ),
             stderr,
         )
         self.assertEqual(stdout, "")
@@ -657,7 +664,10 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         )
         self.assertEqual(retval, 1)
         self.assertTrue(
-            stderr.startswith("Error: Unable to find constraint - 'blahblah'"),
+            stderr.startswith(
+                "Error: Unable to find constraints or constraint rules: "
+                "'blahblah'"
+            ),
             stderr,
         )
         self.assertEqual(stdout, "")
@@ -1979,9 +1989,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
             "constraint rule remove location-D1-rh7-1-INFINITY-rule-1".split(),
         )
         self.assertEqual(stdout, "")
-        self.assertEqual(
-            stderr, "Removing Rule: location-D1-rh7-1-INFINITY-rule-1\n"
-        )
+        self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(
@@ -1989,9 +1997,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
             "constraint rule remove location-D1-rh7-1-INFINITY-rule-2".split(),
         )
         self.assertEqual(stdout, "")
-        self.assertEqual(
-            stderr, "Removing Rule: location-D1-rh7-1-INFINITY-rule-2\n"
-        )
+        self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
         self.assert_pcs_success(
@@ -2018,7 +2024,11 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         )
         self.assertEqual(stdout, "")
         self.assertEqual(
-            stderr, "Removing Constraint: location-D1-rh7-1-INFINITY\n"
+            stderr,
+            (
+                "Removing dependant element:\n"
+                "  Location constraint: 'location-D1-rh7-1-INFINITY'\n"
+            ),
         )
         self.assertEqual(retval, 0)
 
@@ -2719,7 +2729,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
             "constraint location remove location-dummy-rh7-1-INFINITY".split(),
         )
         self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
+        self.assertEqual(stderr, DEPRECATED_LOCATION_CONSTRAINT_REMOVE)
         self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(

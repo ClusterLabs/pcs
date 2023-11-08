@@ -2431,11 +2431,11 @@ Commands:
         <resource_id> or %<resource_id> or resource%<resource_id>, or a
         resource name regular expression regexp%<resource_pattern>.
 
-    location delete <id>
-        Remove a location constraint with the appropriate id.
+    location delete <id>...
+        Remove location constraints with the specified ids.
 
-    location remove <id>
-        Remove a location constraint with the appropriate id.
+    location remove <id>...
+        Remove location constraints with the specified ids.
 
     order [config] [--full] [{output_format_syntax}]
         List all current ordering constraints (if --full is specified show
@@ -2546,13 +2546,13 @@ Commands:
         If score is omitted it defaults to INFINITY. If id is omitted, one is
         generated from the constraint id.
 
-    rule delete <rule id>
-        Remove a rule from its location constraint and if it's the last rule,
-        the constraint will also be removed.
+    rule delete <rule id>...
+        Remove rules from their location constraints. If all rules are
+        removed from a constraint, the constraint will also be removed.
 
-    rule remove <rule id>
-        Remove a rule from its location constraint and if it's the last rule,
-        the constraint will also be removed.
+    rule remove <rule id>...
+        Remove rules from their location constraints. If all rules are
+        removed from a constraint, the constraint will also be removed.
 """.format(
         output_format_syntax=_output_format_syntax(),
         output_format_desc=_format_desc((" ", _output_format_desc())),

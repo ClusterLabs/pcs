@@ -15,9 +15,13 @@ from pcs_test.tools import fixture
 from pcs_test.tools.assertions import (
     assert_raise_library_error,
     assert_report_item_list_equal,
+    assert_xml_equal,
 )
 from pcs_test.tools.misc import get_test_resource as rc
-from pcs_test.tools.xml import get_xml_manipulation_creator_from_file
+from pcs_test.tools.xml import (
+    etree_to_str,
+    get_xml_manipulation_creator_from_file,
+)
 
 cib_element_lookup = etree.fromstring(
     """
@@ -44,6 +48,97 @@ cib_element_lookup = etree.fromstring(
                 </status>
             </cib>
             """
+)
+
+FIXTURE_REFERENCES_IN_CONSTRAINTS = """
+    <constraints>
+        <rsc_location>
+            <resource_set>
+                <resource_ref id="A"/>
+                <resource_ref id="B"/>
+            </resource_set>
+            <resource_ref id="A" invalid="position"/>
+        </rsc_location>
+        <resource_ref id="A" invalid="position"/>
+        <rsc_colocation>
+            <resource_set>
+                <resource_ref id="C"/>
+                <resource_ref id="A"/>
+            </resource_set>
+        </rsc_colocation>
+        <rsc_colocation rsc="A" with-rsc="B"/>
+        <rsc_colocation rsc="B" with-rsc="A"/>
+        <rsc_colocation id="coloc_rsc_set" rsc="A" with-rsc="B">
+            <resource_set/>
+        </rsc_colocation>
+        <rsc_location rsc="A"/>
+        <rsc_location rsc="A" with-rsc="B">
+            <resource_set/>
+        </rsc_location>
+        <rsc_order first="A" then="B"/>
+        <rsc_order first="B" then="A"/>
+        <rsc_order id="order_first_set" first="A" then="B">
+            <resource_set/>
+        </rsc_order>
+        <rsc_ticket id="ticket_rsc" rsc="A"/>
+        <rsc_ticket id="ticket_rsc_set" rsc="A">
+            <resource_set/>
+        </rsc_ticket>
+        <rsc_ticket rsc="C"/>
+    </constraints>
+    <resource_ref id="A" invalid="position"/>
+"""
+
+FIXTURE_REFERENCES_IN_TAGS = """
+    <tags>
+        <tag id="X">
+            <obj_ref id="A"/>
+        </tag>
+        <obj_ref id="A" invalid="position"/>
+        <tag id="Y">
+            <obj_ref id="C"/>
+            <obj_ref id="A"/>
+            <obj_ref id="D"/>
+        </tag>
+        <tag id="Z">
+            <obj_ref id="C"/>
+        </tag>
+    </tags>
+    <obj_ref id="A" invalid="position"/>
+"""
+
+FIXTURE_REFERENCES_IN_ACLS = """
+    <acls>
+        <acl_role id="A">
+            <acl_permission reference="A"/>
+        </acl_role>
+        <acl_role id="B">
+            <acl_permission reference="A"/>
+        </acl_role>
+        <acl_role id="N"/>
+        <acl_permission reference="A" invalid="position"/>
+        <acl_target>
+            <role id="A"/>
+            <role id="B"/>
+            <acl_permission reference="A" invalid="position"/>
+        </acl_target>
+        <role id="A" invalid="position"/>
+        <acl_group>
+            <role id="D"/>
+            <role id="A"/>
+            <role id="C"/>
+            <acl_permission reference="A" invalid="position"/>
+        </acl_group>
+    </acls>
+    <role id="A" invalid="position"/>
+    <acl_permission reference="A" invalid="position"/>
+    """
+FIXTURE_ALL_SECTIONS_WITH_REFERENCES = "".join(
+    [
+        FIXTURE_REFERENCES_IN_CONSTRAINTS,
+        FIXTURE_REFERENCES_IN_TAGS,
+        FIXTURE_REFERENCES_IN_ACLS,
+    ]
 )
 
 
@@ -958,3 +1053,337 @@ class GetElementsById(TestCase):
 
     def test_no_match_in_obj_ref(self):
         self.assert_result([], ["RX1"])
+
+
+def _configuration_fixture(configuration_content):
+    return f"""
+    <cib>
+      <configuration>
+      {configuration_content}
+      </configuration>
+      <status>
+      {configuration_content}
+      </status>
+      {configuration_content}
+    </cib>
+    """
+
+
+class FindElementsWithoutIdReferencingId(TestCase):
+    # pylint: disable=protected-access
+    def test_constraint_set_reference(self):
+        cib = etree.fromstring(
+            _configuration_fixture(FIXTURE_REFERENCES_IN_CONSTRAINTS)
+        )
+        self.assertEqual(
+            [
+                cib.find(
+                    "./configuration/constraints/rsc_location/resource_set/resource_ref[@id='A']"
+                ),
+                cib.find(
+                    "./configuration/constraints/rsc_colocation/resource_set/resource_ref[@id='A']"
+                ),
+            ],
+            list(lib._find_elements_without_id_referencing_id(cib, "A")),
+        )
+
+    def test_tag_reference(self):
+        cib = etree.fromstring(
+            _configuration_fixture(FIXTURE_REFERENCES_IN_TAGS)
+        )
+        self.assertEqual(
+            [
+                cib.find("./configuration/tags/tag[@id='X']/obj_ref[@id='A']"),
+                cib.find("./configuration/tags/tag[@id='Y']/obj_ref[@id='A']"),
+            ],
+            list(lib._find_elements_without_id_referencing_id(cib, "A")),
+        )
+
+    def test_acl_reference(self):
+        cib = etree.fromstring(
+            _configuration_fixture(FIXTURE_REFERENCES_IN_ACLS)
+        )
+        self.assertEqual(
+            [
+                cib.find("./configuration/acls/acl_target/role[@id='A']"),
+                cib.find("./configuration/acls/acl_group/role[@id='A']"),
+            ],
+            list(lib._find_elements_without_id_referencing_id(cib, "A")),
+        )
+
+    def test_all_references_types(self):
+        cib = etree.fromstring(
+            _configuration_fixture(FIXTURE_ALL_SECTIONS_WITH_REFERENCES)
+        )
+        self.assertEqual(
+            [
+                cib.find(
+                    "./configuration/constraints/rsc_location/resource_set/"
+                    "resource_ref[@id='A']"
+                ),
+                cib.find(
+                    "./configuration/constraints/rsc_colocation/resource_set/"
+                    "resource_ref[@id='A']"
+                ),
+                cib.find("./configuration/tags/tag[@id='X']/obj_ref[@id='A']"),
+                cib.find("./configuration/tags/tag[@id='Y']/obj_ref[@id='A']"),
+                cib.find("./configuration/acls/acl_target/role[@id='A']"),
+                cib.find("./configuration/acls/acl_group/role[@id='A']"),
+            ],
+            list(lib._find_elements_without_id_referencing_id(cib, "A")),
+        )
+
+    def test_no_reference_to_id(self):
+        cib = etree.fromstring(
+            _configuration_fixture(FIXTURE_ALL_SECTIONS_WITH_REFERENCES)
+        )
+        self.assertEqual(
+            [], list(lib._find_elements_without_id_referencing_id(cib, "N"))
+        )
+
+
+class FindElementsReferencingId(TestCase):
+    def test_constraint_reference(self):
+        cib = etree.fromstring(
+            _configuration_fixture(FIXTURE_REFERENCES_IN_CONSTRAINTS)
+        )
+        self.assertEqual(
+            [
+                cib.find(
+                    "./configuration/constraints/rsc_location/resource_set/"
+                    "resource_ref[@id='A']"
+                ),
+                cib.find(
+                    "./configuration/constraints/rsc_colocation/resource_set/"
+                    "resource_ref[@id='A']"
+                ),
+                cib.find(
+                    "./configuration/constraints/rsc_colocation[@rsc='A']"
+                ),
+                cib.find(
+                    "./configuration/constraints/rsc_colocation[@with-rsc='A']"
+                ),
+                cib.find("./configuration/constraints/rsc_location[@rsc='A']"),
+                cib.find("./configuration/constraints/rsc_order[@first='A']"),
+                cib.find("./configuration/constraints/rsc_order[@then='A']"),
+                cib.find(
+                    "./configuration/constraints/rsc_ticket[@id='ticket_rsc']"
+                ),
+            ],
+            list(lib.find_elements_referencing_id(cib, "A")),
+        )
+
+    def test_tag_reference(self):
+        cib = etree.fromstring(
+            _configuration_fixture(FIXTURE_REFERENCES_IN_TAGS)
+        )
+        self.assertEqual(
+            [
+                cib.find("./configuration/tags/tag[@id='Y']/obj_ref[@id='C']"),
+                cib.find("./configuration/tags/tag[@id='Z']/obj_ref[@id='C']"),
+            ],
+            list(lib.find_elements_referencing_id(cib, "C")),
+        )
+
+    def test_acl_reference(self):
+        cib = etree.fromstring(
+            _configuration_fixture(FIXTURE_REFERENCES_IN_ACLS)
+        )
+        self.assertEqual(
+            [
+                cib.find(
+                    "./configuration/acls/acl_role[@id='A']/acl_permission"
+                    "[@reference='A']"
+                ),
+                cib.find(
+                    "./configuration/acls/acl_role[@id='B']/acl_permission"
+                    "[@reference='A']"
+                ),
+                cib.find("./configuration/acls/acl_target/role[@id='A']"),
+                cib.find("./configuration/acls/acl_group/role[@id='A']"),
+            ],
+            list(lib.find_elements_referencing_id(cib, "A")),
+        )
+
+    def test_all_references_types(self):
+        cib = etree.fromstring(
+            _configuration_fixture(FIXTURE_ALL_SECTIONS_WITH_REFERENCES)
+        )
+        self.assertEqual(
+            [
+                cib.find(
+                    "./configuration/constraints/rsc_colocation/resource_set/"
+                    "resource_ref[@id='C']"
+                ),
+                cib.find("./configuration/constraints/rsc_ticket[@rsc='C']"),
+                cib.find("./configuration/tags/tag[@id='Y']/obj_ref[@id='C']"),
+                cib.find("./configuration/tags/tag[@id='Z']/obj_ref[@id='C']"),
+                cib.find("./configuration/acls/acl_group/role[@id='C']"),
+            ],
+            list(lib.find_elements_referencing_id(cib, "C")),
+        )
+
+    def test_no_reference_to_id(self):
+        cib = etree.fromstring(
+            _configuration_fixture(FIXTURE_ALL_SECTIONS_WITH_REFERENCES)
+        )
+        self.assertEqual([], list(lib.find_elements_referencing_id(cib, "N")))
+
+
+class RemoveElementById(TestCase):
+    # pylint: disable=no-self-use
+    def test_element_not_found(self):
+        expected_cib = """<cib><configuration/></cib>"""
+        cib = etree.fromstring(expected_cib)
+        lib.remove_element_by_id(cib, "id-not-found")
+        assert_xml_equal(expected_cib, etree_to_str(cib))
+
+    def test_remove_element_without_references(self):
+        cib = etree.fromstring(
+            """
+            <cib>
+                <configuration>
+                    <resources>
+                        <primitive id="id-without-references"/>
+                    </resources>
+                </configuration>
+            </cib>
+            """
+        )
+        expected_cib = """
+            <cib>
+                <configuration>
+                    <resources/>
+                </configuration>
+            </cib>
+        """
+        lib.remove_element_by_id(cib, "id-without-references")
+        assert_xml_equal(expected_cib, etree_to_str(cib))
+
+    def test_remove_element_with_references(self):
+        cib = etree.fromstring(
+            """
+            <cib>
+                <configuration>
+                    <resources>
+                        <primitive id="id-with-references"/>
+                    </resources>
+                    <constraints>
+                        <any>
+                            <resource_set>
+                                <resource_ref id="id-with-references"/>
+                            </resource_set>
+                        </any>
+                        <resource_set>
+                            <resource_ref id="id-with-references"/>
+                        </resource_set>
+                    </constraints>
+                    <acls>
+                        <role id="id-with-references"/>
+                        <acl_target>
+                            <role id="id-with-references"/>
+                        </acl_target>
+                        <acl_group>
+                            <role id="id-with-references"/>
+                        </acl_group>
+                    </acls>
+                    <tags>
+                        <tag id="T1">
+                            <obj_ref id="id-with-references"/>
+                            <obj_ref id="B"/>
+                        </tag>
+                        <tag id="T2">
+                            <obj_ref id="id-with-references"/>
+                        </tag>
+                    </tags>
+                </configuration>
+                <status>
+                    <element id="id-with-references"/>
+                </status>
+                <element id="id-with-references"/>
+            </cib>
+            """
+        )
+        expected_cib = """
+            <cib>
+                <configuration>
+                    <resources/>
+                    <constraints>
+                        <any>
+                            <resource_set/>
+                        </any>
+                        <resource_set>
+                            <resource_ref id="id-with-references"/>
+                        </resource_set>
+                    </constraints>
+                    <acls>
+                        <role id="id-with-references"/>
+                        <acl_target>
+                        </acl_target>
+                        <acl_group>
+                        </acl_group>
+                    </acls>
+                    <tags>
+                        <tag id="T1">
+                            <obj_ref id="B"/>
+                        </tag>
+                        <tag id="T2">
+                        </tag>
+                    </tags>
+                </configuration>
+                <status>
+                    <element id="id-with-references"/>
+                </status>
+                <element id="id-with-references"/>
+            </cib>
+        """
+        lib.remove_element_by_id(cib, "id-with-references")
+        assert_xml_equal(expected_cib, etree_to_str(cib))
+
+    def test_assert_raised_for_duplicate_ids(self):
+        expected_cib = """
+            <cib>
+                <configuration>
+                    <element id="duplicate-id"/>
+                    <element id="duplicate-id"/>
+                </configuration>
+            </cib>
+        """
+        cib = etree.fromstring(expected_cib)
+        with self.assertRaises(AssertionError) as cm:
+            lib.remove_element_by_id(cib, "duplicate-id")
+        self.assertEqual(
+            str(cm.exception),
+            "Found more than one match for id 'duplicate-id' in the CIB",
+        )
+        assert_xml_equal(expected_cib, etree_to_str(cib))
+
+    def test_assert_not_raised_for_duplicate_ids(self):
+        expected_cib = """
+            <cib>
+                <configuration/>
+                <status>
+                    <element id="duplicate-id"/>
+                    <element id="duplicate-id"/>
+                </status>
+                <element id="duplicate-id"/>
+                <element id="duplicate-id"/>
+            </cib>
+        """
+        cib = etree.fromstring(expected_cib)
+        lib.remove_element_by_id(cib, "duplicate-id")
+        assert_xml_equal(expected_cib, etree_to_str(cib))
+
+    def test_missing_configuration_section(self):
+        expected_cib = """
+            <cib><element id="missing-configuration-section"/></cib>
+        """
+        cib = etree.fromstring(expected_cib)
+        assert_raise_library_error(
+            lambda: lib.remove_element_by_id(cib, "missing-config-section"),
+            fixture.error(
+                report_codes.CIB_CANNOT_FIND_MANDATORY_SECTION,
+                section="configuration",
+            ),
+        )
+        assert_xml_equal(expected_cib, etree_to_str(cib))

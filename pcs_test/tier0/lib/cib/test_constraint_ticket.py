@@ -19,6 +19,16 @@ from pcs_test.tools.assertions import (
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
 
+class IsTicketConstraint(TestCase):
+    def test_ticket_constraint_true(self):
+        self.assertTrue(
+            ticket.is_ticket_constraint(etree.Element("rsc_ticket"))
+        )
+
+    def test_ticket_constraint_false(self):
+        self.assertFalse(ticket.is_ticket_constraint(etree.Element("ticket")))
+
+
 @mock.patch(
     "pcs.lib.cib.constraint.ticket.tools.are_new_role_names_supported",
     lambda _: True,

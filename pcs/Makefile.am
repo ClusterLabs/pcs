@@ -42,6 +42,8 @@ EXTRA_DIST		= \
 			  cli/constraint_colocation/command.py \
 			  cli/constraint_colocation/__init__.py \
 			  cli/constraint/command.py \
+			  cli/constraint/location/__init__.py \
+			  cli/constraint/location/command.py \
 			  cli/constraint/output/__init__.py \
 			  cli/constraint/output/all.py \
 			  cli/constraint/output/colocation.py \
@@ -49,6 +51,8 @@ EXTRA_DIST		= \
 			  cli/constraint/output/order.py \
 			  cli/constraint/output/set.py \
 			  cli/constraint/output/ticket.py \
+			  cli/constraint/rule/__init__.py \
+			  cli/constraint/rule/command.py \
 			  cli/constraint/__init__.py \
 			  cli/constraint_order/command.py \
 			  cli/constraint_order/__init__.py \
@@ -241,6 +245,7 @@ EXTRA_DIST		= \
 			  lib/cib/acl.py \
 			  lib/cib/alert.py \
 			  lib/cib/const.py \
+			  lib/cib/constraint/all.py \
 			  lib/cib/constraint/colocation.py \
 			  lib/cib/constraint/constraint.py \
 			  lib/cib/constraint/location.py \
@@ -287,6 +292,7 @@ EXTRA_DIST		= \
 			  lib/commands/acl.py \
 			  lib/commands/alert.py \
 			  lib/commands/booth.py \
+			  lib/commands/cib.py \
 			  lib/commands/cib_options.py \
 			  lib/commands/cluster.py \
 			  lib/commands/cluster_property.py \

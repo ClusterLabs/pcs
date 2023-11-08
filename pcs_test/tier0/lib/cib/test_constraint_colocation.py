@@ -3,11 +3,25 @@ from unittest import (
     mock,
 )
 
+from lxml import etree
+
 from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
 from pcs.lib.cib.constraint import colocation
 
 from pcs_test.tools.assertions import assert_raise_library_error
+
+
+class IsColocationConstraint(TestCase):
+    def test_colocation_constraint_true(self):
+        self.assertTrue(
+            colocation.is_colocation_constraint(etree.Element("rsc_colocation"))
+        )
+
+    def test_colocation_constraint_false(self):
+        self.assertFalse(
+            colocation.is_colocation_constraint(etree.Element("colocation"))
+        )
 
 
 # Patch check_new_id_applicable is always desired when working with

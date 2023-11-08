@@ -3,12 +3,22 @@ from unittest import (
     mock,
 )
 
+from lxml import etree
+
 from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
 from pcs.lib.cib.constraint import order
 from pcs.lib.pacemaker.values import BOOLEAN_VALUES
 
 from pcs_test.tools.assertions import assert_raise_library_error
+
+
+class IsOrderConstraint(TestCase):
+    def test_order_constraint_true(self):
+        self.assertTrue(order.is_order_constraint(etree.Element("rsc_order")))
+
+    def test_order_constraint_false(self):
+        self.assertFalse(order.is_order_constraint(etree.Element("order")))
 
 
 # Patch check_new_id_applicable is always desired when working with

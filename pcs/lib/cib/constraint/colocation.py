@@ -31,6 +31,10 @@ TAG_NAME = "rsc_colocation"
 DESCRIPTION = "constraint id"
 
 
+def is_colocation_constraint(element: _Element) -> bool:
+    return element.tag == TAG_NAME
+
+
 def prepare_options_with_set(cib, options, resource_set_list):
     options = constraint.prepare_options(
         ("score",),

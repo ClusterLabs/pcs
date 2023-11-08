@@ -32,6 +32,10 @@ ATTRIB = {
 }
 
 
+def is_order_constraint(element: _Element) -> bool:
+    return element.tag == TAG_NAME
+
+
 def prepare_options_with_set(cib, options, resource_set_list):
     options = constraint.prepare_options(
         tuple(ATTRIB.keys()),
