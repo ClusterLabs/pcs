@@ -102,7 +102,7 @@ class StaticFileMayBe(StaticFile):
             # spa is probably not installed
             self.set_status(404, "Not Found")
             return None
-        return super().get(*args, **kwargs)
+        return await super().get(*args, **kwargs)
 
 
 def get_routes(
