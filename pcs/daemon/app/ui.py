@@ -127,7 +127,12 @@ def get_routes(
 
     return [
         (f"{url_prefix}static/(.*)", StaticFileMayBe, static_path("static")),
-        (f"{url_prefix}manifest.json", StaticFileMayBe, static_path()),
+        (f"{url_prefix}(manifest\\.json)", StaticFileMayBe, static_path()),
+        (
+            f"{url_prefix}(manifest_test_marks\\.json)",
+            StaticFileMayBe,
+            static_path(),
+        ),
         (
             f"{url_prefix}login",
             Login,
