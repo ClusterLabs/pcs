@@ -212,6 +212,7 @@ def create(
                 report_msg = cast(
                     reports.messages.InvalidOptions, report_item.message
                 )
+                # pylint: disable=no-member
                 report_item.message = reports.messages.InvalidOptions(
                     report_msg.option_names,
                     sorted(

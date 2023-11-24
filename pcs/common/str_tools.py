@@ -1,11 +1,11 @@
 from collections.abc import Iterable as IterableAbc
+from collections.abc import Sized
 from typing import (
     Any,
     List,
     Mapping,
     Optional,
     Sequence,
-    Sized,
     Tuple,
     TypeVar,
     Union,
