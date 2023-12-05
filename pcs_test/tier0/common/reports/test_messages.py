@@ -1952,7 +1952,7 @@ class CannotGroupResourceWrongType(NameBuildTest):
 class UnableToGetResourceOperationDigests(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
-            "unable to get resource operation digets:\ncrm_resource output",
+            "unable to get resource operation digests:\ncrm_resource output",
             reports.UnableToGetResourceOperationDigests("crm_resource output"),
         )
 
