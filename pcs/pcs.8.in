@@ -156,7 +156,7 @@ Move the resource off the node it is currently running on by creating a \-INFINI
 
 If lifetime is specified then the constraint will expire after that time, otherwise it defaults to infinity and the constraint can be cleared manually with 'pcs resource clear' or 'pcs constraint delete'. Lifetime is expected to be specified as ISO 8601 duration (see https://en.wikipedia.org/wiki/ISO_8601#Durations).
 
-If \fB\-\-autodelete\fR is specified, a constraint needed for moving the resource will be automatically removed once the resource is running on it's new location. The command will fail in case it is not possible to verify that the resource will not be moved after deleting the constraint. If this happens after the location constraint has been created, the constraint will be left in the configuration. If \fB\-\-strict\fR is specified, the command will also fail if other resources would be affected.
+If \fB\-\-autodelete\fR is specified, a constraint needed for moving the resource will be automatically removed once the resource is running on its new location. The command will fail in case it is not possible to verify that the resource will not be moved after deleting the constraint. If this happens after the location constraint has been created, the constraint will be left in the configuration. If \fB\-\-strict\fR is specified, the command will also fail if other resources would be affected.
 
 If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the resource to move and then return 0 on success or 1 on error. If 'n' is not specified it defaults to 60 minutes.
 
