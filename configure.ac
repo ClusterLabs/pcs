@@ -240,7 +240,7 @@ for i in $DISTRO $DISTROS; do
 			DISTROEXT=debian
 			break
 		;;
-		fedora|rhel|centos|opensuse*)
+		fedora|rhel|centos|centos-stream*|opensuse*)
 			FOUND_DISTRO=1
 			CONFIGDIR="$sysconfdir/sysconfig"
 			PCSLIBDIR="$LIBDIR"
