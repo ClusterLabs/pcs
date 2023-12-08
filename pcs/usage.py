@@ -514,7 +514,7 @@ Commands:
 
         If --autodelete is specified, a constraint needed for moving the
         resource will be automatically removed once the resource is running on
-        it's new location. The command will fail in case it is not possible to
+        its new location. The command will fail in case it is not possible to
         verify that the resource will not be moved after deleting the
         constraint. If this happens after the location constraint has been
         created, the constraint will be left in the configuration. If --strict
