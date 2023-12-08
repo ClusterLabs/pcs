@@ -2776,7 +2776,7 @@ class UnableToGetResourceOperationDigests(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        return f"unable to get resource operation digets:\n{self.output}"
+        return f"unable to get resource operation digests:\n{self.output}"
 
 
 @dataclass(frozen=True)
