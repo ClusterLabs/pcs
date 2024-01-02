@@ -219,28 +219,28 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
             + [
                 "date",
                 "gt",
-                "2023-01-01 12:00 +3:00",
+                "1923-01-01 12:00 +3:00",
                 "and",
                 "date",
                 "lt",
-                "2023-12-31 12:00 -10:30",
+                "2123-12-31 12:00 -10:30",
                 "and",
                 "date",
                 "in_range",
-                "2023-01-01 12:00",
+                "1923-01-01 12:00",
                 "to",
-                "2023-12-31 12:00",
+                "2123-12-31 12:00",
             ],
             stderr_full=message,
         )
         self.assert_pcs_success(
             "constraint location D1 rule".split()
-            + ["date", "gt", "2023-01-01 12:00"],
+            + ["date", "gt", "1923-01-01 12:00"],
             stderr_full=message,
         )
         self.assert_pcs_success(
             "constraint location D1 rule".split()
-            + ["date", "lt", "2023-12-31 12:00"],
+            + ["date", "lt", "2123-12-31 12:00"],
             stderr_full=message,
         )
         self.assert_pcs_success(
@@ -248,9 +248,9 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
             + [
                 "date",
                 "in_range",
-                "2023-01-01 12:00",
+                "1923-01-01 12:00",
                 "to",
-                "2023-12-31T12:00",
+                "2123-12-31T12:00",
             ],
             stderr_full=message,
         )
@@ -259,9 +259,9 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
             + [
                 "date",
                 "in_range",
-                "2023-01-01T12:00",
+                "1923-01-01T12:00",
                 "to",
-                "2023-12-31 12:00",
+                "2123-12-31 12:00",
             ],
             stderr_full=message,
         )
@@ -274,25 +274,25 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
                   resource 'D1'
                     Rules:
                       Rule: boolean-op=and score=INFINITY
-                        Expression: date gt 2023-01-01T12:00+3:00
-                        Expression: date lt 2023-12-31T12:00-10:30
-                        Expression: date in_range 2023-01-01T12:00 to 2023-12-31T12:00
+                        Expression: date gt 1923-01-01T12:00+3:00
+                        Expression: date lt 2123-12-31T12:00-10:30
+                        Expression: date in_range 1923-01-01T12:00 to 2123-12-31T12:00
                   resource 'D1'
                     Rules:
                       Rule: score=INFINITY
-                        Expression: date gt 2023-01-01T12:00
+                        Expression: date gt 1923-01-01T12:00
                   resource 'D1'
                     Rules:
                       Rule: score=INFINITY
-                        Expression: date lt 2023-12-31T12:00
+                        Expression: date lt 2123-12-31T12:00
                   resource 'D1'
                     Rules:
                       Rule: score=INFINITY
-                        Expression: date in_range 2023-01-01T12:00 to 2023-12-31T12:00
+                        Expression: date in_range 1923-01-01T12:00 to 2123-12-31T12:00
                   resource 'D1'
                     Rules:
                       Rule: score=INFINITY
-                        Expression: date in_range 2023-01-01T12:00 to 2023-12-31T12:00
+                        Expression: date in_range 1923-01-01T12:00 to 2123-12-31T12:00
                 """
             ),
         )
@@ -302,19 +302,19 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
                 """\
                 pcs -- constraint location resource%D1 rule \\
                   id=location-D1-rule constraint-id=location-D1 score=INFINITY \\
-                  date gt 2023-01-01T12:00+3:00 and date lt 2023-12-31T12:00-10:30 and date in_range 2023-01-01T12:00 to 2023-12-31T12:00;
+                  date gt 1923-01-01T12:00+3:00 and date lt 2123-12-31T12:00-10:30 and date in_range 1923-01-01T12:00 to 2123-12-31T12:00;
                 pcs -- constraint location resource%D1 rule \\
                   id=location-D1-1-rule constraint-id=location-D1-1 score=INFINITY \\
-                  date gt 2023-01-01T12:00;
+                  date gt 1923-01-01T12:00;
                 pcs -- constraint location resource%D1 rule \\
                   id=location-D1-2-rule constraint-id=location-D1-2 score=INFINITY \\
-                  date lt 2023-12-31T12:00;
+                  date lt 2123-12-31T12:00;
                 pcs -- constraint location resource%D1 rule \\
                   id=location-D1-3-rule constraint-id=location-D1-3 score=INFINITY \\
-                  date in_range 2023-01-01T12:00 to 2023-12-31T12:00;
+                  date in_range 1923-01-01T12:00 to 2123-12-31T12:00;
                 pcs -- constraint location resource%D1 rule \\
                   id=location-D1-4-rule constraint-id=location-D1-4 score=INFINITY \\
-                  date in_range 2023-01-01T12:00 to 2023-12-31T12:00
+                  date in_range 1923-01-01T12:00 to 2123-12-31T12:00
                 """
             ),
         )
