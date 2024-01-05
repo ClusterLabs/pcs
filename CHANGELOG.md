@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.11.7] - 2024-01-11
 
 ### Security
 - Make use of filters when extracting tarballs to enhance security if provided
