@@ -8,11 +8,13 @@ from typing import (
 
 from lxml.etree import _Element
 
-from pcs.common import reports
+from pcs.common import (
+    const,
+    reports,
+)
 from pcs.common.pacemaker.defaults import CibDefaultsDto
 from pcs.common.pacemaker.nvset import CibNvsetDto
 from pcs.common.reports.item import ReportItem
-from pcs.common.tools import Version
 from pcs.common.types import StringCollection
 from pcs.lib.cib import (
     nvpair_multi,
@@ -114,9 +116,13 @@ def _defaults_create(
         try:
             rule_tree = parse_rule(nvset_rule)
             if has_rsc_or_op_expression(rule_tree):
-                required_cib_version = Version(3, 4, 0)
+                required_cib_version = (
+                    const.PCMK_RULES_WITH_RSC_OR_OP_EXPR_CIB_VERSION
+                )
             if has_node_attr_expr_with_type_integer(rule_tree):
-                nice_to_have_cib_version = Version(3, 5, 0)
+                nice_to_have_cib_version = (
+                    const.PCMK_RULES_NODE_ATTR_EXPR_WITH_INT_TYPE_CIB_VERSION
+                )
         except RuleParseError:
             pass
 
