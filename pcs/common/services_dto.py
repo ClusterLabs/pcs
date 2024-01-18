@@ -1,8 +1,5 @@
 from dataclasses import dataclass
-from typing import (
-    List,
-    Optional,
-)
+from typing import Optional
 
 from pcs.common.interface.dto import DataTransferObject
 
@@ -17,4 +14,4 @@ class ServiceStatusDto(DataTransferObject):
 
 @dataclass(frozen=True)
 class ServicesInfoResultDto(DataTransferObject):
-    services: List[ServiceStatusDto]
+    services: list[ServiceStatusDto]
