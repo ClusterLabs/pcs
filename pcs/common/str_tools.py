@@ -2,11 +2,9 @@ from collections.abc import Iterable as IterableAbc
 from collections.abc import Sized
 from typing import (
     Any,
-    List,
     Mapping,
     Optional,
     Sequence,
-    Tuple,
     TypeVar,
     Union,
 )
@@ -17,7 +15,7 @@ from pcs.common.types import (
 )
 
 
-def indent(line_list: StringIterable, indent_step: int = 2) -> List[str]:
+def indent(line_list: StringIterable, indent_step: int = 2) -> list[str]:
     """
     return line list where each line of input is prefixed by N spaces
 
@@ -30,7 +28,7 @@ def indent(line_list: StringIterable, indent_step: int = 2) -> List[str]:
     ]
 
 
-def outdent(line_list: StringSequence) -> List[str]:
+def outdent(line_list: StringSequence) -> list[str]:
     if not line_list:
         return []
     smallest_indentation = min(
@@ -80,13 +78,13 @@ def format_list_custom_last_separator_dont_sort(
     )
 
 
-def quote_items(item_list: StringIterable) -> List[str]:
+def quote_items(item_list: StringIterable) -> list[str]:
     return [f"'{item}'" for item in item_list]
 
 
-# For now, Tuple[str, str] is sufficient. Feel free to change it if needed,
+# For now, tuple[str, str] is sufficient. Feel free to change it if needed,
 # e.g. when values can be integers.
-def format_name_value_list(item_list: Sequence[Tuple[str, str]]) -> List[str]:
+def format_name_value_list(item_list: Sequence[tuple[str, str]]) -> list[str]:
     """
     Turn 2-tuples to 'name=value' strings with standard quoting
     """
@@ -98,11 +96,11 @@ def format_name_value_list(item_list: Sequence[Tuple[str, str]]) -> List[str]:
     return output
 
 
-# For now, Tuple[str, str, str] is sufficient. Feel free to change it if
+# For now, tuple[str, str, str] is sufficient. Feel free to change it if
 # needed, e.g. when values can be integers.
 def format_name_value_id_list(
-    item_list: Sequence[Tuple[str, str, str]]
-) -> List[str]:
+    item_list: Sequence[tuple[str, str, str]]
+) -> list[str]:
     """
     Turn 3-tuples to 'name=value (id: id))' strings with standard quoting
     """
@@ -121,8 +119,8 @@ def pairs_to_text(pairs: Sequence[tuple[str, str]]) -> list[str]:
 
 
 def format_name_value_default_list(
-    item_list: Sequence[Tuple[str, str, bool]]
-) -> List[str]:
+    item_list: Sequence[tuple[str, str, bool]]
+) -> list[str]:
     """
     Turn 3-tuples to 'name=value' or 'name=value (default)' strings with
     standard quoting
@@ -156,7 +154,7 @@ def join_multilines(strings: StringSequence) -> str:
     return "\n".join([a.strip() for a in strings if a.strip()])
 
 
-def split_multiline(string: str) -> List[str]:
+def split_multiline(string: str) -> list[str]:
     return [
         line for line in [line.strip() for line in string.splitlines()] if line
     ]
@@ -177,7 +175,7 @@ def format_optional(
     return empty_case
 
 
-def _is_multiple(what: Union[int, Sized]):
+def _is_multiple(what: Union[int, Sized]) -> bool:
     """
     Return True if 'what' does not mean one item, False otherwise
 
@@ -194,11 +192,11 @@ def _is_multiple(what: Union[int, Sized]):
     return retval
 
 
-def _add_s(word):
+def _add_s(word: str) -> str:
     """
     add "s" or "es" to the word based on its ending
 
-    string word -- word where "s" or "es" should be added
+    word -- word where "s" or "es" should be added
     """
     if word[-1:] in ("s", "x", "o") or word[-2:] in ("ss", "sh", "ch"):
         return word + "es"
@@ -246,9 +244,9 @@ def format_plural(
 T = TypeVar("T")
 
 
-def transform(items: List[T], mapping: Mapping[T, str]) -> List[str]:
+def transform(items: list[T], mapping: Mapping[T, str]) -> list[str]:
     return list(map(lambda item: mapping.get(item, str(item)), items))
 
 
-def is_iterable_not_str(value):
+def is_iterable_not_str(value: Union[IterableAbc, str]) -> bool:
     return isinstance(value, IterableAbc) and not isinstance(value, str)

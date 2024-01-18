@@ -678,7 +678,10 @@ class InvalidOptionValue(ReportItemMessage):
         return template.format(
             hint=(
                 format_list(cast(List[str], self.allowed_values))
-                if is_iterable_not_str(self.allowed_values)
+                if (
+                    self.allowed_values
+                    and is_iterable_not_str(self.allowed_values)
+                )
                 else self.allowed_values
             ),
             option_name=self.option_name,
