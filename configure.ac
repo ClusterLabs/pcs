@@ -404,6 +404,7 @@ if test "x$tests_only" != "xyes"; then
 	PCS_CHECK_GEM([rack])
 	PCS_CHECK_GEM([rack-protection])
 	PCS_CHECK_GEM([rack-test])
+	PCS_CHECK_GEM([rackup])
 	PCS_CHECK_GEM([sinatra])
 	PCS_CHECK_GEM([tilt])
 	PCS_CHECK_GEM([nio4r])

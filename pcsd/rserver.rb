@@ -2,6 +2,7 @@ require "base64"
 require "date"
 require "json"
 require 'rack'
+require 'rackup'
 require 'sinatra'
 
 require 'settings.rb'
@@ -59,7 +60,7 @@ use TornadoCommunicationMiddleware
 
 require 'pcsd'
 
-::Rack::Handler.get('puma').run(
+::Rackup::Handler.get('puma').run(
   Sinatra::Application, :Host => "#{PCSD_RUBY_SOCKET}?umask=0o077", :timeout => 0
 ) do |server|
   puts server.class
