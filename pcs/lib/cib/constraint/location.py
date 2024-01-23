@@ -1,3 +1,5 @@
+from typing import Final
+
 from lxml.etree import _Element
 
 from pcs.common.pacemaker.constraint import (
@@ -15,7 +17,8 @@ from pcs.lib.cib.rule.cib_to_dto import rule_element_to_dto
 from pcs.lib.cib.tools import role_constructor
 from pcs.lib.tools import get_optional_value
 
-TAG_NAME = "rsc_location"
+TAG_NAME: Final = "rsc_location"
+TAG_NAME_RULE: Final = "rule"
 
 
 def is_location_constraint(element: _Element) -> bool:
@@ -25,7 +28,9 @@ def is_location_constraint(element: _Element) -> bool:
 def is_location_rule(element: _Element) -> bool:
     parent = element.getparent()
     return (
-        parent is not None and element.tag == "rule" and parent.tag == TAG_NAME
+        parent is not None
+        and element.tag == TAG_NAME_RULE
+        and parent.tag == TAG_NAME
     )
 
 
@@ -38,7 +43,7 @@ def _element_to_attributes_dto(
         node=element.get("node"),
         rules=[
             rule_element_to_dto(rule_in_effect_eval, rule_el)
-            for rule_el in element.findall("./rule")
+            for rule_el in element.findall(f"./{TAG_NAME_RULE}")
         ],
         lifetime=[
             rule_element_to_dto(rule_in_effect_eval, rule_el)
@@ -50,7 +55,7 @@ def _element_to_attributes_dto(
     )
 
 
-def _constraint_el_to_dto(
+def _plain_constraint_el_to_dto(
     element: _Element, rule_in_effect_eval: RuleInEffectEval
 ) -> CibConstraintLocationDto:
     return CibConstraintLocationDto(
@@ -82,6 +87,6 @@ def get_all_as_dtos(
             )
         else:
             plain_list.append(
-                _constraint_el_to_dto(constraint_el, rule_in_effect_eval)
+                _plain_constraint_el_to_dto(constraint_el, rule_in_effect_eval)
             )
     return plain_list, set_list

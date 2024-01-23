@@ -17,7 +17,7 @@ from pcs.common.types import (
 )
 
 
-def indent(line_list: StringSequence, indent_step: int = 2) -> List[str]:
+def indent(line_list: StringIterable, indent_step: int = 2) -> List[str]:
     """
     return line list where each line of input is prefixed by N spaces
 
