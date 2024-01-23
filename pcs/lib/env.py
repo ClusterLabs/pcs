@@ -102,8 +102,7 @@ class LibraryEnvironment:
         known_hosts_getter: Optional[
             Callable[[], Mapping[str, PcsKnownHost]]
         ] = None,
-        # TODO there is no validation and transformation from str to int
-        request_timeout: Optional[Union[int, str]] = None,
+        request_timeout: Optional[int] = None,
     ):
         # pylint: disable=too-many-arguments
         self._logger = logger
