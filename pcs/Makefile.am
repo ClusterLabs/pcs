@@ -248,6 +248,7 @@ EXTRA_DIST		= \
 			  lib/cib/const.py \
 			  lib/cib/constraint/all.py \
 			  lib/cib/constraint/colocation.py \
+			  lib/cib/constraint/common.py \
 			  lib/cib/constraint/constraint.py \
 			  lib/cib/constraint/location.py \
 			  lib/cib/constraint/__init__.py \

@@ -4,7 +4,6 @@ from unittest import (
 )
 
 from pcs.common import const
-from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands.constraint import ticket as ticket_command
 
@@ -75,26 +74,17 @@ class CreateTest(TestCase):
                 str(const.PCMK_ROLE_UNPROMOTED_LEGACY).lower(),
                 {"loss-policy": "fence"},
             ),
+        )
+        env_assist.assert_reports(
             [
-                (
-                    severities.ERROR,
+                fixture.error(
                     report_codes.ID_NOT_FOUND,
-                    {
-                        "context_type": "cib",
-                        "context_id": "",
-                        "id": "resourceA",
-                        "expected_types": [
-                            "bundle",
-                            "clone",
-                            "group",
-                            "master",
-                            "primitive",
-                        ],
-                    },
-                    None,
-                ),
-            ],
-            expected_in_processor=False,
+                    id="resourceA",
+                    expected_types=[],
+                    context_type="",
+                    context_id="",
+                )
+            ]
         )
 
 

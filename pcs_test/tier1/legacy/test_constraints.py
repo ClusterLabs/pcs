@@ -2267,7 +2267,8 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         self.assertEqual(stdout, "")
         ac(
             stderr,
-            "Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints, use --force to override\n",
+            "Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints, use --force to override\n"
+            + ERRORS_HAVE_OCCURRED,
         )
         self.assertEqual(retval, 1)
 
@@ -2278,7 +2279,8 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         self.assertEqual(stdout, "")
         ac(
             stderr,
-            "Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints, use --force to override\n",
+            "Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints, use --force to override\n"
+            + ERRORS_HAVE_OCCURRED,
         )
         self.assertEqual(retval, 1)
 
@@ -2311,7 +2313,8 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         self.assertEqual(stdout, "")
         ac(
             stderr,
-            "Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints, use --force to override\n",
+            "Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints, use --force to override\n"
+            + ERRORS_HAVE_OCCURRED,
         )
         self.assertEqual(retval, 1)
 
@@ -2322,7 +2325,8 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         self.assertEqual(stdout, "")
         ac(
             stderr,
-            "Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints, use --force to override\n",
+            "Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints, use --force to override\n"
+            + ERRORS_HAVE_OCCURRED,
         )
         self.assertEqual(retval, 1)
 
@@ -2527,7 +2531,8 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         self.assertEqual(stdout, "")
         ac(
             stderr,
-            "Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints, use --force to override\n",
+            "Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints, use --force to override\n"
+            + ERRORS_HAVE_OCCURRED,
         )
         self.assertEqual(retval, 1)
 
@@ -2538,7 +2543,8 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         self.assertEqual(stdout, "")
         ac(
             stderr,
-            "Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints, use --force to override\n",
+            "Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints, use --force to override\n"
+            + ERRORS_HAVE_OCCURRED,
         )
         self.assertEqual(retval, 1)
 
@@ -2571,7 +2577,8 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         self.assertEqual(stdout, "")
         ac(
             stderr,
-            "Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints, use --force to override\n",
+            "Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints, use --force to override\n"
+            + ERRORS_HAVE_OCCURRED,
         )
         self.assertEqual(retval, 1)
 
@@ -2582,7 +2589,8 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         self.assertEqual(stdout, "")
         ac(
             stderr,
-            "Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints, use --force to override\n",
+            "Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints, use --force to override\n"
+            + ERRORS_HAVE_OCCURRED,
         )
         self.assertEqual(retval, 1)
 
@@ -4016,7 +4024,7 @@ class CommonCreateWithSet(ConstraintBaseTest):
     def test_refuse_when_resource_does_not_exist(self):
         self.assert_pcs_fail(
             "constraint ticket set A C setoptions ticket=T".split(),
-            ["Error: bundle/clone/group/resource 'C' does not exist"],
+            "Error: 'C' does not exist\n" + ERRORS_HAVE_OCCURRED,
         )
 
 
@@ -4108,7 +4116,7 @@ class TicketAdd(ConstraintBaseTest):
     def test_refuse_noexistent_resource_id(self):
         self.assert_pcs_fail(
             "constraint ticket add T master AA loss-policy=fence".split(),
-            ["Error: bundle/clone/group/resource 'AA' does not exist"],
+            "Error: 'AA' does not exist\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def test_refuse_invalid_role(self):
@@ -4816,7 +4824,8 @@ class BundleColocation(Bundle):
         self.assert_pcs_fail(
             "constraint colocation set R X".split(),
             "Error: R is a bundle resource, you should use the bundle id: B "
-            "when adding constraints, use --force to override\n",
+            "when adding constraints, use --force to override\n"
+            + ERRORS_HAVE_OCCURRED,
         )
 
     def test_primitive_set_force(self):
@@ -4906,7 +4915,8 @@ class BundleOrder(Bundle):
         self.assert_pcs_fail(
             "constraint order set R X".split(),
             "Error: R is a bundle resource, you should use the bundle id: B "
-            "when adding constraints, use --force to override\n",
+            "when adding constraints, use --force to override\n"
+            + ERRORS_HAVE_OCCURRED,
         )
 
     def test_primitive_set_force(self):
@@ -4946,7 +4956,8 @@ class BundleTicket(Bundle):
         self.assert_pcs_fail(
             "constraint ticket add T R".split(),
             "Error: R is a bundle resource, you should use the bundle id: B "
-            "when adding constraints, use --force to override\n",
+            "when adding constraints, use --force to override\n"
+            + ERRORS_HAVE_OCCURRED,
         )
 
     def test_primitive_force(self):
@@ -4983,7 +4994,8 @@ class BundleTicket(Bundle):
         self.assert_pcs_fail(
             "constraint ticket set R setoptions ticket=T".split(),
             "Error: R is a bundle resource, you should use the bundle id: B "
-            "when adding constraints, use --force to override\n",
+            "when adding constraints, use --force to override\n"
+            + ERRORS_HAVE_OCCURRED,
         )
 
     def test_primitive_set_force(self):

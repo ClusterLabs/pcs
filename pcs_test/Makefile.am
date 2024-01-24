@@ -169,6 +169,8 @@ EXTRA_DIST		= \
 			  tier0/lib/booth/test_status.py \
 			  tier0/lib/booth/test_sync.py \
 			  tier0/lib/cib/__init__.py \
+			  tier0/lib/cib/constraint/__init__.py \
+			  tier0/lib/cib/constraint/test_common.py \
 			  tier0/lib/cib/resource/__init__.py \
 			  tier0/lib/cib/resource/test_agent.py \
 			  tier0/lib/cib/resource/test_hierarchy.py \

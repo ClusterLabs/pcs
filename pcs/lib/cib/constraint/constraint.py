@@ -12,18 +12,15 @@ from lxml.etree import (
 )
 
 from pcs.common import reports
-from pcs.lib.cib import resource
 from pcs.lib.cib.constraint import resource_set
-from pcs.lib.cib.tools import (
-    find_element_by_tag_and_id,
-    find_unique_id,
-)
+from pcs.lib.cib.tools import find_unique_id
 from pcs.lib.errors import LibraryError
 from pcs.lib.xml_tools import (
     export_attributes,
-    find_parent,
     get_root,
 )
+
+from .common import validate_resource_id
 
 
 def _validate_attrib_names(attrib_names, options):
@@ -40,41 +37,15 @@ def _validate_attrib_names(attrib_names, options):
         )
 
 
+# DEPRECATED, use pcs.lib.cib.constraint.common.validate_resource_id
 def find_valid_resource_id(
     report_processor: reports.ReportProcessor, cib, in_clone_allowed, _id
 ):
-    parent_tags = resource.clone.ALL_TAGS + [resource.bundle.TAG]
-    resource_element = find_element_by_tag_and_id(
-        sorted(parent_tags + [resource.primitive.TAG, resource.group.TAG]),
-        cib,
-        _id,
-    )
-
-    if resource_element.tag in parent_tags:
-        return resource_element.attrib["id"]
-
-    clone = find_parent(resource_element, parent_tags)
-    if clone is None:
-        return resource_element.attrib["id"]
-
-    report_msg = reports.messages.ResourceForConstraintIsMultiinstance(
-        resource_element.attrib["id"],
-        "clone" if clone.tag == "master" else clone.tag,
-        str(clone.attrib["id"]),
-    )
-    if in_clone_allowed:
-        if report_processor.report(
-            reports.ReportItem.warning(report_msg)
-        ).has_errors:
-            raise LibraryError()
-        return resource_element.attrib["id"]
-
-    raise LibraryError(
-        reports.ReportItem.error(
-            report_msg,
-            force_code=reports.codes.FORCE,
-        )
-    )
+    if report_processor.report_list(
+        validate_resource_id(cib, _id, in_clone_allowed)
+    ).has_errors:
+        raise LibraryError()
+    return _id
 
 
 def prepare_options(attrib_names, options, create_id_fn, validate_id):
