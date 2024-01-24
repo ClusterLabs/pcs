@@ -46,7 +46,6 @@ from . import (
     const,
     types,
 )
-from .constraints import constraint_to_str
 from .dto import ReportItemMessageDto
 from .item import ReportItemMessage
 
@@ -313,30 +312,6 @@ class ResourceForConstraintIsMultiinstance(ReportItemMessage):
 
 
 @dataclass(frozen=True)
-class DuplicateConstraintsList(ReportItemMessage):
-    """
-    List duplicate constraints
-    NOTE: This is a temporary solution
-
-    constraint_type -- "rsc_colocation", "rsc_order", "rsc_ticket"
-    constraint_info_list -- structured constraint data according to type
-    """
-
-    constraint_type: str
-    constraint_info_list: List[Mapping[str, Any]]
-    _code = codes.DUPLICATE_CONSTRAINTS_LIST
-
-    @property
-    def message(self) -> str:
-        return "Duplicate constraints:\n" + "\n".join(
-            [
-                "  " + constraint_to_str(self.constraint_type, constraint_info)
-                for constraint_info in self.constraint_info_list
-            ]
-        )
-
-
-@dataclass(frozen=True)
 class DuplicateConstraintsExist(ReportItemMessage):
     """
     When creating a constraint pcs detected a similar constraint already exists
@@ -344,12 +319,15 @@ class DuplicateConstraintsExist(ReportItemMessage):
     constraint_ids -- ids of similar constraints
     """
 
-    constraint_ids: List[str]
+    constraint_ids: list[str]
     _code = codes.DUPLICATE_CONSTRAINTS_EXIST
 
     @property
     def message(self) -> str:
-        return "duplicate constraint already exists"
+        pluralize = partial(format_plural, self.constraint_ids)
+        constraint = pluralize("constraint")
+        exists = pluralize("exists", "exist")
+        return f"Duplicate {constraint} already {exists}"
 
 
 @dataclass(frozen=True)

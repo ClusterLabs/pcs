@@ -114,37 +114,6 @@ class CreateWithSetTest(TestCase):
                     },
                     report_codes.FORCE,
                 ),
-                (
-                    severities.INFO,
-                    report_codes.DUPLICATE_CONSTRAINTS_LIST,
-                    {
-                        "constraint_type": "rsc_some",
-                        "constraint_info_list": [
-                            {
-                                "options": {
-                                    "symmetrical": "true",
-                                    "id": "some_id",
-                                },
-                                "resource_sets": [
-                                    {
-                                        "ids": ["A", "B"],
-                                        "options": {
-                                            "role": const.PCMK_ROLE_PROMOTED_PRIMARY,
-                                            "id": "some_id_set",
-                                        },
-                                    },
-                                    {
-                                        "ids": ["E", "F"],
-                                        "options": {
-                                            "action": "start",
-                                            "id": "some_id_set-1",
-                                        },
-                                    },
-                                ],
-                            }
-                        ],
-                    },
-                ),
             ]
             + [
                 fixture.deprecation(

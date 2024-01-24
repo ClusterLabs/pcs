@@ -3441,8 +3441,10 @@ Error: duplicate constraint already exists, use --force to override
             stderr,
             (
                 "Duplicate constraints:\n"
-                "  set D1 D2 (id:order_set_D1D2_set) setoptions (id:order_set_D1D2)\n"
-                "Error: duplicate constraint already exists, use --force to "
+                "  Set Constraint: order_set_D1D2\n"
+                "    Resource Set: order_set_D1D2_set\n"
+                "      Resources: 'D1', 'D2'\n"
+                "Error: Duplicate constraint already exists, use --force to "
                 "override\n" + ERRORS_HAVE_OCCURRED
             ),
         )
@@ -3457,8 +3459,10 @@ Error: duplicate constraint already exists, use --force to override
             stderr,
             (
                 "Duplicate constraints:\n"
-                "  set D1 D2 (id:order_set_D1D2_set) setoptions (id:order_set_D1D2)\n"
-                "Warning: duplicate constraint already exists\n"
+                "  Set Constraint: order_set_D1D2\n"
+                "    Resource Set: order_set_D1D2_set\n"
+                "      Resources: 'D1', 'D2'\n"
+                "Warning: Duplicate constraint already exists\n"
             ),
         )
         self.assertEqual(stdout, "")
@@ -3481,8 +3485,12 @@ Error: duplicate constraint already exists, use --force to override
             stderr,
             (
                 "Duplicate constraints:\n"
-                "  set D1 D2 (id:order_set_D1D2D5_set) set D5 D6 (id:order_set_D1D2D5_set-1) setoptions (id:order_set_D1D2D5)\n"
-                "Error: duplicate constraint already exists, use --force to "
+                "  Set Constraint: order_set_D1D2D5\n"
+                "    Resource Set: order_set_D1D2D5_set\n"
+                "      Resources: 'D1', 'D2'\n"
+                "    Resource Set: order_set_D1D2D5_set-1\n"
+                "      Resources: 'D5', 'D6'\n"
+                "Error: Duplicate constraint already exists, use --force to "
                 "override\n" + ERRORS_HAVE_OCCURRED
             ),
         )
@@ -3497,8 +3505,12 @@ Error: duplicate constraint already exists, use --force to override
             stderr,
             (
                 "Duplicate constraints:\n"
-                "  set D1 D2 (id:order_set_D1D2D5_set) set D5 D6 (id:order_set_D1D2D5_set-1) setoptions (id:order_set_D1D2D5)\n"
-                "Warning: duplicate constraint already exists\n"
+                "  Set Constraint: order_set_D1D2D5\n"
+                "    Resource Set: order_set_D1D2D5_set\n"
+                "      Resources: 'D1', 'D2'\n"
+                "    Resource Set: order_set_D1D2D5_set-1\n"
+                "      Resources: 'D5', 'D6'\n"
+                "Warning: Duplicate constraint already exists\n"
             ),
         )
         self.assertEqual(retval, 0)
@@ -3518,8 +3530,11 @@ Error: duplicate constraint already exists, use --force to override
             stderr,
             (
                 "Duplicate constraints:\n"
-                "  set D1 D2 (id:colocation_set_D1D2_set) setoptions score=INFINITY (id:colocation_set_D1D2)\n"
-                "Error: duplicate constraint already exists, use --force to "
+                "  Set Constraint: colocation_set_D1D2\n"
+                "    score=INFINITY\n"
+                "    Resource Set: colocation_set_D1D2_set\n"
+                "      Resources: 'D1', 'D2'\n"
+                "Error: Duplicate constraint already exists, use --force to "
                 "override\n" + ERRORS_HAVE_OCCURRED
             ),
         )
@@ -3534,8 +3549,11 @@ Error: duplicate constraint already exists, use --force to override
             stderr,
             (
                 "Duplicate constraints:\n"
-                "  set D1 D2 (id:colocation_set_D1D2_set) setoptions score=INFINITY (id:colocation_set_D1D2)\n"
-                "Warning: duplicate constraint already exists\n"
+                "  Set Constraint: colocation_set_D1D2\n"
+                "    score=INFINITY\n"
+                "    Resource Set: colocation_set_D1D2_set\n"
+                "      Resources: 'D1', 'D2'\n"
+                "Warning: Duplicate constraint already exists\n"
             ),
         )
         self.assertEqual(retval, 0)
@@ -3557,8 +3575,13 @@ Error: duplicate constraint already exists, use --force to override
             stderr,
             (
                 "Duplicate constraints:\n"
-                "  set D1 D2 (id:colocation_set_D1D2D5_set) set D5 D6 (id:colocation_set_D1D2D5_set-1) setoptions score=INFINITY (id:colocation_set_D1D2D5)\n"
-                "Error: duplicate constraint already exists, use --force to "
+                "  Set Constraint: colocation_set_D1D2D5\n"
+                "    score=INFINITY\n"
+                "    Resource Set: colocation_set_D1D2D5_set\n"
+                "      Resources: 'D1', 'D2'\n"
+                "    Resource Set: colocation_set_D1D2D5_set-1\n"
+                "      Resources: 'D5', 'D6'\n"
+                "Error: Duplicate constraint already exists, use --force to "
                 "override\n" + ERRORS_HAVE_OCCURRED
             ),
         )
@@ -3573,8 +3596,13 @@ Error: duplicate constraint already exists, use --force to override
             stderr,
             (
                 "Duplicate constraints:\n"
-                "  set D1 D2 (id:colocation_set_D1D2D5_set) set D5 D6 (id:colocation_set_D1D2D5_set-1) setoptions score=INFINITY (id:colocation_set_D1D2D5)\n"
-                "Warning: duplicate constraint already exists\n"
+                "  Set Constraint: colocation_set_D1D2D5\n"
+                "    score=INFINITY\n"
+                "    Resource Set: colocation_set_D1D2D5_set\n"
+                "      Resources: 'D1', 'D2'\n"
+                "    Resource Set: colocation_set_D1D2D5_set-1\n"
+                "      Resources: 'D5', 'D6'\n"
+                "Warning: Duplicate constraint already exists\n"
             ),
         )
         self.assertEqual(retval, 0)
@@ -4145,8 +4173,9 @@ class TicketAdd(ConstraintBaseTest):
                 f"deprecated and should not be used, use "
                 f"'{const.PCMK_ROLE_UNPROMOTED}' value instead\n"
                 "Duplicate constraints:\n"
-                f"  {const.PCMK_ROLE_UNPROMOTED} A loss-policy=fence ticket=T (id:ticket-T-A-{const.PCMK_ROLE_UNPROMOTED})\n"
-                "Error: duplicate constraint already exists, use --force to override\n"
+                f"  {const.PCMK_ROLE_UNPROMOTED} resource 'A' depends on ticket 'T' (id: ticket-T-A-{const.PCMK_ROLE_UNPROMOTED})\n"
+                "    loss-policy=fence\n"
+                "Error: Duplicate constraint already exists, use --force to override\n"
                 + ERRORS_HAVE_OCCURRED
             ),
         )
@@ -4169,8 +4198,9 @@ class TicketAdd(ConstraintBaseTest):
             ).split(),
             stderr_full=[
                 "Duplicate constraints:",
-                f"  {promoted_role} A loss-policy=fence ticket=T (id:ticket-T-A-{promoted_role})",
-                "Warning: duplicate constraint already exists",
+                f"  {promoted_role} resource 'A' depends on ticket 'T' (id: ticket-T-A-{promoted_role})",
+                "    loss-policy=fence\n"
+                "Warning: Duplicate constraint already exists",
             ],
         )
         self.assert_pcs_success(
@@ -4207,8 +4237,8 @@ class TicketDeleteRemoveTest(ConstraintBaseTest):
             "constraint ticket add T A --force".split(),
             stderr_full=[
                 "Duplicate constraints:",
-                "  A ticket=T (id:ticket-T-A)",
-                "Warning: duplicate constraint already exists",
+                "  resource 'A' depends on ticket 'T' (id: ticket-T-A)",
+                "Warning: Duplicate constraint already exists",
             ],
         )
         self.assert_pcs_success(

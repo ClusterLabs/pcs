@@ -107,25 +107,11 @@ class CheckIsWithoutDuplicationTest(TestCase):
                 ),
                 element,
                 are_duplicate=lambda e1, e2: True,
-                export_element=constraint.export_with_set,
             )
         )
         assert_report_item_list_equal(
             report_processor.report_item_list,
             [
-                (
-                    severities.INFO,
-                    report_codes.DUPLICATE_CONSTRAINTS_LIST,
-                    {
-                        "constraint_info_list": [
-                            {
-                                "resource_sets": [],
-                                "options": {"id": "duplicate_element"},
-                            }
-                        ],
-                        "constraint_type": "constraint_type",
-                    },
-                ),
                 (
                     severities.ERROR,
                     report_codes.DUPLICATE_CONSTRAINTS_EXIST,
@@ -137,10 +123,8 @@ class CheckIsWithoutDuplicationTest(TestCase):
             ],
         )
 
-    @mock.patch("pcs.lib.cib.constraint.constraint.export_with_set")
-    def test_success_when_no_duplication_found(self, export_with_set):
+    def test_success_when_no_duplication_found(self):
         # pylint: disable=no-self-use
-        export_with_set.return_value = "exported_duplicate_element"
         element = mock.MagicMock()
         element.tag = "constraint_type"
         # no exception raised
@@ -150,7 +134,6 @@ class CheckIsWithoutDuplicationTest(TestCase):
             fixture_constraint_section([]),
             element,
             are_duplicate=lambda e1, e2: True,
-            export_element=constraint.export_with_set,
         )
 
     def test_report_when_duplication_allowed(self):
@@ -166,25 +149,11 @@ class CheckIsWithoutDuplicationTest(TestCase):
             ),
             element,
             are_duplicate=lambda e1, e2: True,
-            export_element=constraint.export_with_set,
             duplication_allowed=True,
         )
         assert_report_item_list_equal(
             report_processor.report_item_list,
             [
-                (
-                    severities.INFO,
-                    report_codes.DUPLICATE_CONSTRAINTS_LIST,
-                    {
-                        "constraint_info_list": [
-                            {
-                                "resource_sets": [],
-                                "options": {"id": "duplicate_element"},
-                            }
-                        ],
-                        "constraint_type": "constraint_type",
-                    },
-                ),
                 (
                     severities.WARNING,
                     report_codes.DUPLICATE_CONSTRAINTS_EXIST,

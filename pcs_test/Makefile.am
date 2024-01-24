@@ -112,10 +112,6 @@ EXTRA_DIST		= \
 			  tier0/common/interface/test_dto.py \
 			  tier0/common/pacemaker/constraint/__init__.py \
 			  tier0/common/pacemaker/constraint/all.py \
-			  tier0/common/reports/constraints/__init__.py \
-			  tier0/common/reports/constraints/test_common.py \
-			  tier0/common/reports/constraints/test_init.py \
-			  tier0/common/reports/constraints/test_ticket.py \
 			  tier0/common/reports/__init__.py \
 			  tier0/common/reports/test_item.py \
 			  tier0/common/reports/test_messages.py \

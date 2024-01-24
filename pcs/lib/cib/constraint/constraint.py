@@ -1,8 +1,5 @@
 from typing import (
-    Any,
     Callable,
-    Dict,
-    List,
     cast,
 )
 
@@ -15,10 +12,7 @@ from pcs.common import reports
 from pcs.lib.cib.constraint import resource_set
 from pcs.lib.cib.tools import find_unique_id
 from pcs.lib.errors import LibraryError
-from pcs.lib.xml_tools import (
-    export_attributes,
-    get_root,
-)
+from pcs.lib.xml_tools import get_root
 
 from .common import validate_resource_id
 
@@ -59,20 +53,6 @@ def prepare_options(attrib_names, options, create_id_fn, validate_id):
     return options
 
 
-def export_with_set(element: _Element) -> Dict[str, Any]:
-    return {
-        "resource_sets": [
-            resource_set.export(resource_set_item)
-            for resource_set_item in element.findall(".//resource_set")
-        ],
-        "options": export_attributes(element),
-    }
-
-
-def export_plain(element: _Element) -> Dict[str, Any]:
-    return {"options": export_attributes(element)}
-
-
 def create_id(cib, type_prefix, resource_set_list):
     # Create a semi-random id. We need it to be predictable (for testing), short
     # and somehow different than other ids so that we don't spend much time in
@@ -103,7 +83,6 @@ def check_is_without_duplication(
     constraint_section: _Element,
     element: _Element,
     are_duplicate: Callable[[_Element, _Element], bool],
-    export_element: Callable[[_Element], Dict[str, Any]],
     duplication_allowed: bool = False,
 ) -> None:
     duplicate_element_list = [
@@ -111,7 +90,7 @@ def check_is_without_duplication(
         for duplicate_element in cast(
             # The xpath method has a complicated return value, but we know our
             # xpath expression returns only elements.
-            List[_Element],
+            list[_Element],
             constraint_section.xpath(
                 ".//*[local-name()=$tag_name]", tag_name=element.tag
             ),
@@ -126,15 +105,6 @@ def check_is_without_duplication(
 
     if report_processor.report_list(
         [
-            reports.ReportItem.info(
-                reports.messages.DuplicateConstraintsList(
-                    element.tag,
-                    [
-                        export_element(duplicate_element)
-                        for duplicate_element in duplicate_element_list
-                    ],
-                )
-            ),
             reports.ReportItem(
                 severity=reports.item.get_severity(
                     reports.codes.FORCE,

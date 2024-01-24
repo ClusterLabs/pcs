@@ -47,8 +47,6 @@ from pcs.common.pacemaker.constraint import (
 )
 from pcs.common.pacemaker.resource.list import CibResourcesDto
 from pcs.common.reports import ReportItem
-from pcs.common.reports.constraints import colocation as colocation_format
-from pcs.common.reports.constraints import order as order_format
 from pcs.common.str_tools import (
     format_list,
     indent,
@@ -62,6 +60,7 @@ from pcs.lib.cib.constraint.order import ATTRIB as order_attrib
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.pacemaker.values import (
     SCORE_INFINITY,
+    is_true,
     sanitize_id,
 )
 
@@ -316,6 +315,25 @@ def colocation_add(lib, argv, modifiers):
     for nv_pair in nv_pairs:
         element.setAttribute(nv_pair[0], nv_pair[1])
     if not modifiers.get("--force"):
+
+        def _constraint_export(constraint_info):
+            options_dict = constraint_info["options"]
+            co_resource1 = options_dict.get("rsc", "")
+            co_resource2 = options_dict.get("with-rsc", "")
+            co_id = options_dict.get("id", "")
+            co_score = options_dict.get("score", "")
+            score_text = "(score:" + co_score + ")"
+            console_option_list = [
+                f"({option[0]}:{option[1]})"
+                for option in sorted(options_dict.items())
+                if option[0] not in ("rsc", "with-rsc", "id", "score")
+            ]
+            console_option_list.append(f"(id:{co_id})")
+            return " ".join(
+                [co_resource1, "with", co_resource2, score_text]
+                + console_option_list
+            )
+
         duplicates = colocation_find_duplicates(constraintsElement, element)
         if duplicates:
             utils.err(
@@ -323,7 +341,7 @@ def colocation_add(lib, argv, modifiers):
                 + "\n".join(
                     [
                         "  "
-                        + colocation_format.constraint_plain(
+                        + _constraint_export(
                             {"options": dict(dup.attributes.items())}
                         )
                         for dup in duplicates
@@ -546,6 +564,67 @@ def _order_add(resource1, resource2, options_list, modifiers):
         element.setAttribute(order_opt[0], order_opt[1])
     constraintsElement.appendChild(element)
     if not modifiers.get("--force"):
+
+        def _constraint_export(constraint_info):
+            options = constraint_info["options"]
+            oc_resource1 = options.get("first", "")
+            oc_resource2 = options.get("then", "")
+            first_action = options.get("first-action", "")
+            then_action = options.get("then-action", "")
+            oc_id = options.get("id", "")
+            oc_score = options.get("score", "")
+            oc_kind = options.get("kind", "")
+            oc_sym = ""
+            oc_id_out = ""
+            oc_options = ""
+            if "symmetrical" in options and not is_true(
+                options.get("symmetrical", "false")
+            ):
+                oc_sym = "(non-symmetrical)"
+            if oc_kind != "":
+                score_text = "(kind:" + oc_kind + ")"
+            elif oc_kind == "" and oc_score == "":
+                score_text = "(kind:Mandatory)"
+            else:
+                score_text = "(score:" + oc_score + ")"
+            oc_id_out = "(id:" + oc_id + ")"
+            already_processed_options = (
+                "first",
+                "then",
+                "first-action",
+                "then-action",
+                "id",
+                "score",
+                "kind",
+                "symmetrical",
+            )
+            oc_options = " ".join(
+                [
+                    f"{name}={value}"
+                    for name, value in options.items()
+                    if name not in already_processed_options
+                ]
+            )
+            if oc_options:
+                oc_options = "(Options: " + oc_options + ")"
+            return " ".join(
+                [
+                    arg
+                    for arg in [
+                        first_action,
+                        oc_resource1,
+                        "then",
+                        then_action,
+                        oc_resource2,
+                        score_text,
+                        oc_sym,
+                        oc_options,
+                        oc_id_out,
+                    ]
+                    if arg
+                ]
+            )
+
         duplicates = order_find_duplicates(constraintsElement, element)
         if duplicates:
             utils.err(
@@ -553,7 +632,7 @@ def _order_add(resource1, resource2, options_list, modifiers):
                 + "\n".join(
                     [
                         "  "
-                        + order_format.constraint_plain(
+                        + _constraint_export(
                             {"options": dict(dup.attributes.items())}
                         )
                         for dup in duplicates

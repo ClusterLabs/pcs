@@ -60,7 +60,6 @@ def create(
         are_duplicate=ticket.get_duplicit_checker_callback(
             are_new_role_names_supported(constraint_section)
         ),
-        export_element=constraint.export_plain,
         duplication_allowed=duplication_alowed,
     )
 

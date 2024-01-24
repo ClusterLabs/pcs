@@ -74,7 +74,6 @@ def create_with_set(
         constraint_section,
         constraint_element,
         are_duplicate=duplicate_check,
-        export_element=constraint.export_with_set,
         duplication_allowed=duplication_alowed,
     )
 
