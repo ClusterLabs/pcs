@@ -52,7 +52,7 @@ class SimpleBool(Base):
         self.assert_cib(
             BoolExpr(BOOL_AND, []),
             """
-                <rule id="X-rule" boolean-op="and" score="INFINITY" />
+                <rule id="X-rule" boolean-op="and" />
             """,
         )
 
@@ -60,7 +60,7 @@ class SimpleBool(Base):
         self.assert_cib(
             BoolExpr(BOOL_AND, [OpExpr("start", None)]),
             """
-                <rule id="X-rule" boolean-op="and" score="INFINITY">
+                <rule id="X-rule" boolean-op="and">
                     <op_expression id="X-rule-op-start" name="start" />
                 </rule>
             """,
@@ -82,7 +82,7 @@ class SimpleBool(Base):
                         ],
                     ),
                     f"""
-                        <rule id="X-rule" boolean-op="{op_out}" score="INFINITY">
+                        <rule id="X-rule" boolean-op="{op_out}">
                             <op_expression id="X-rule-op-start" name="start" />
                             <rsc_expression id="X-rule-rsc-systemd-pcsd"
                                 class="systemd" type="pcsd"
@@ -431,7 +431,7 @@ class Complex(Base):
                 ],
             ),
             """
-                <rule id="X-rule" boolean-op="and" score="INFINITY">
+                <rule id="X-rule" boolean-op="and">
                   <rule id="X-rule-rule" boolean-op="or" score="0">
                     <rsc_expression id="X-rule-rule-rsc-ocf-pacemaker-Dummy"
                         class="ocf" provider="pacemaker" type="Dummy"

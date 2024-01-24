@@ -61,15 +61,12 @@ class _Exporter:
 
     def export(self, parent_el: _Element, expr_tree: BoolExpr) -> _Element:
         element = self._export_part(parent_el, expr_tree)
-        # Add score only to the top level rule element (which is represented by
-        # BoolExpr class). This is achieved by this function not being called for
-        # child nodes.
-        # TODO This was implemented originally only for rules in resource and
-        # operation defaults. In those cases, score is the only rule attribute and
-        # it is always INFINITY. Once this code is used for other rules, modify
-        # this behavior as needed.
-        if isinstance(expr_tree, BoolExpr):
-            element.attrib["score"] = "INFINITY"
+        # Adjust top level rule element (which is represented by BoolExpr
+        # class). This is achieved by this function not being called for child
+        # nodes.
+        # Remove score set by self._export_part. It is a responsibility of the
+        # caller to set it properly.
+        element.attrib.pop("score", "")
         return element
 
     def _export_part(
@@ -86,10 +83,11 @@ class _Exporter:
             {
                 "id": create_subelement_id(parent_el, "rule", self.id_provider),
                 "boolean-op": boolean.operator.lower(),
-                # Score or score-attribute is required for nested rules, otherwise
-                # the CIB is not valid. Pacemaker doesn't use the score of nested
-                # rules. Score for the top rule, which is used by pacemaker, is
-                # supposed to be set in the export function above.
+                # Score or score-attribute is required for nested rules,
+                # otherwise the CIB is not valid. Pacemaker doesn't use the
+                # score of nested rules. Score for the top rule, which is used
+                # by pacemaker, is supposed to be set by the caller of the
+                # export function.
                 "score": "0",
             },
         )
