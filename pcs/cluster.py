@@ -1176,8 +1176,8 @@ def cluster_uidgid(
     del lib
     modifiers.ensure_only_supported()
     if not argv:
-        found = False
         uid_gid_files = os.listdir(settings.corosync_uidgid_dir)
+        uid_gid_lines: list[str] = []
         for ug_file in uid_gid_files:
             uid_gid_dict = utils.read_uid_gid_file(ug_file)
             if "uid" in uid_gid_dict or "gid" in uid_gid_dict:
@@ -1188,9 +1188,10 @@ def cluster_uidgid(
                 if "gid" in uid_gid_dict:
                     line += uid_gid_dict["gid"]
 
-                print(line)
-                found = True
-        if not found and not silent_list:
+                uid_gid_lines.append(line)
+        if uid_gid_lines:
+            print("\n".join(sorted(uid_gid_lines)))
+        elif not silent_list:
             print_to_stderr("No uidgids configured")
         return
 

@@ -1,5 +1,15 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+- Do not put empty uid/gid corosync configuration options to an uidgid file
+  when not specified in `pcs cluster uidgid add` command. Empty options cause
+  corosync start failure. ([ghissue#772])
+
+[ghissue#772]: https://github.com/ClusterLabs/pcs/issues/772
+
+
 ## [0.11.7] - 2024-01-11
 
 ### Security

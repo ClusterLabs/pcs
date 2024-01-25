@@ -16,9 +16,11 @@ import xml.dom.minidom
 import xml.etree.ElementTree as ET
 from functools import lru_cache
 from io import BytesIO
+from textwrap import dedent
 from typing import (
     Any,
     Dict,
+    Optional,
     Tuple,
 )
 from urllib.parse import urlencode
@@ -221,6 +223,25 @@ def read_uid_gid_file(uidgid_filename):
     return uidgid
 
 
+def get_uidgid_file_content(
+    uid: Optional[str] = None, gid: Optional[str] = None
+) -> Optional[str]:
+    if not uid and not gid:
+        return None
+    uid_gid_lines = []
+    if uid:
+        uid_gid_lines.append(f"  uid: {uid}")
+    if gid:
+        uid_gid_lines.append(f"  gid: {gid}")
+    return dedent(
+        """\
+        uidgid {{
+        {uid_gid_keys}
+        }}
+        """
+    ).format(uid_gid_keys="\n".join(uid_gid_lines))
+
+
 def write_uid_gid_file(uid, gid):
     """
     Commandline options: no options
@@ -237,11 +258,12 @@ def write_uid_gid_file(uid, gid):
         counter = counter + 1
         uidgid_filename = orig_filename + "-" + str(counter)
 
-    data = "uidgid {\n  uid: %s\ngid: %s\n}\n" % (uid, gid)
-    with open(
-        os.path.join(settings.corosync_uidgid_dir, uidgid_filename), "w"
-    ) as uidgid_file:
-        uidgid_file.write(data)
+    data = get_uidgid_file_content(uid, gid)
+    if data:
+        with open(
+            os.path.join(settings.corosync_uidgid_dir, uidgid_filename), "w"
+        ) as uidgid_file:
+            uidgid_file.write(data)
 
 
 def find_uid_gid_files(uid, gid):

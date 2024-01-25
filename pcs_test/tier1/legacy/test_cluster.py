@@ -1,3 +1,4 @@
+import os
 from functools import partial
 from unittest import TestCase
 
@@ -6,6 +7,8 @@ from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
     get_tmp_dir,
     get_tmp_file,
+    outdent,
+    read_test_resource,
     skip_unless_root,
     write_file_to_tmpfile,
 )
@@ -18,28 +21,40 @@ from pcs_test.tools.pcs_runner import (
 class UidGidTest(TestCase):
     def setUp(self):
         self.uid_gid_dir = get_tmp_dir("tier1_cluster_uidgid")
-
-    def tearDown(self):
-        self.uid_gid_dir.cleanup()
-
-    def test_uidgid(self):
-        # pylint: disable=too-many-statements
-        _pcs = partial(
+        self._pcs = partial(
             pcs,
             None,
             mock_settings={"corosync_uidgid_dir": self.uid_gid_dir.name},
         )
-        stdout, stderr, retval = _pcs("cluster uidgid".split())
+
+    def tearDown(self):
+        self.uid_gid_dir.cleanup()
+
+    def assert_uidgid_file_content(self, filename, content):
+        self.assertEqual(
+            read_test_resource(os.path.join(self.uid_gid_dir.name, filename)),
+            content,
+        )
+
+    def assert_uidgid_file_removed(self, filename):
+        self.assertEqual(
+            os.path.isfile(os.path.join(self.uid_gid_dir.name, filename)),
+            False,
+        )
+
+    def test_uidgid(self):
+        # pylint: disable=too-many-statements
+        stdout, stderr, retval = self._pcs("cluster uidgid".split())
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "No uidgids configured\n")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = _pcs("cluster uidgid add".split())
+        stdout, stderr, retval = self._pcs("cluster uidgid add".split())
         self.assertEqual(stdout, "")
         self.assertTrue(stderr.startswith("\nUsage:"))
         self.assertEqual(retval, 1)
 
-        stdout, stderr, retval = _pcs("cluster uidgid rm".split())
+        stdout, stderr, retval = self._pcs("cluster uidgid rm".split())
         self.assertEqual(stdout, "")
         self.assertTrue(
             stderr.startswith(
@@ -49,19 +64,30 @@ class UidGidTest(TestCase):
         )
         self.assertEqual(retval, 1)
 
-        stdout, stderr, retval = _pcs("cluster uidgid xx".split())
+        stdout, stderr, retval = self._pcs("cluster uidgid xx".split())
         self.assertEqual(stdout, "")
         self.assertTrue(stderr.startswith("\nUsage:"))
         self.assertEqual(retval, 1)
 
-        stdout, stderr, retval = _pcs(
+        stdout, stderr, retval = self._pcs(
             "cluster uidgid add uid=testuid gid=testgid".split()
         )
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
+        self.assert_uidgid_file_content(
+            "pcs-uidgid-testuid-testgid",
+            outdent(
+                """\
+                uidgid {
+                  uid: testuid
+                  gid: testgid
+                }
+                """
+            ),
+        )
 
-        stdout, stderr, retval = _pcs(
+        stdout, stderr, retval = self._pcs(
             "cluster uidgid add uid=testuid gid=testgid".split()
         )
         self.assertEqual(stdout, "")
@@ -72,7 +98,7 @@ class UidGidTest(TestCase):
         )
         self.assertEqual(retval, 1)
 
-        stdout, stderr, retval = _pcs(
+        stdout, stderr, retval = self._pcs(
             "cluster uidgid delete uid=testuid2 gid=testgid2".split()
         )
         self.assertEqual(stdout, "")
@@ -82,7 +108,7 @@ class UidGidTest(TestCase):
         )
         self.assertEqual(retval, 1)
 
-        stdout, stderr, retval = _pcs(
+        stdout, stderr, retval = self._pcs(
             "cluster uidgid remove uid=testuid gid=testgid2".split()
         )
         self.assertEqual(stdout, "")
@@ -92,7 +118,7 @@ class UidGidTest(TestCase):
         )
         self.assertEqual(retval, 1)
 
-        stdout, stderr, retval = _pcs(
+        stdout, stderr, retval = self._pcs(
             "cluster uidgid rm uid=testuid2 gid=testgid".split()
         )
         self.assertEqual(stdout, "")
@@ -104,57 +130,139 @@ class UidGidTest(TestCase):
         )
         self.assertEqual(retval, 1)
 
-        stdout, stderr, retval = _pcs("cluster uidgid".split())
+        stdout, stderr, retval = self._pcs("cluster uidgid".split())
         self.assertEqual(stdout, "UID/GID: uid=testuid gid=testgid\n")
         self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = _pcs(
+        stdout, stderr, retval = self._pcs(
             "cluster uidgid delete uid=testuid gid=testgid".split()
         )
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
+        self.assert_uidgid_file_removed("pcs-uidgid-testuid-testgid")
 
-        stdout, stderr, retval = _pcs(
+        stdout, stderr, retval = self._pcs(
             "cluster uidgid add uid=testuid gid=testgid".split()
         )
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = _pcs("cluster uidgid".split())
+        stdout, stderr, retval = self._pcs("cluster uidgid".split())
         self.assertEqual(stdout, "UID/GID: uid=testuid gid=testgid\n")
         self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = _pcs(
+        stdout, stderr, retval = self._pcs(
             "cluster uidgid remove uid=testuid gid=testgid".split()
         )
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = _pcs(
+        stdout, stderr, retval = self._pcs(
             "cluster uidgid add uid=testuid gid=testgid".split()
         )
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
+        self.assert_uidgid_file_content(
+            "pcs-uidgid-testuid-testgid",
+            outdent(
+                """\
+                uidgid {
+                  uid: testuid
+                  gid: testgid
+                }
+                """
+            ),
+        )
 
-        stdout, stderr, retval = _pcs("cluster uidgid".split())
+        stdout, stderr, retval = self._pcs("cluster uidgid".split())
         self.assertEqual(stdout, "UID/GID: uid=testuid gid=testgid\n")
         self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = _pcs(
+        stdout, stderr, retval = self._pcs(
             "cluster uidgid delete uid=testuid gid=testgid".split()
         )
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
+        self.assert_uidgid_file_removed("pcs-uidgid-testuid-testgid")
 
-        stdout, stderr, retval = _pcs("cluster uidgid".split())
+        stdout, stderr, retval = self._pcs("cluster uidgid".split())
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "No uidgids configured\n")
+        self.assertEqual(retval, 0)
+
+    def test_missing_uid_gid(self):
+        stdout, stderr, retval = self._pcs(
+            "cluster uidgid add uid=1000".split()
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
+        self.assert_uidgid_file_content(
+            "pcs-uidgid-1000-",
+            outdent(
+                """\
+                uidgid {
+                  uid: 1000
+                }
+                """
+            ),
+        )
+
+        stdout, stderr, retval = self._pcs(
+            "cluster uidgid add gid=1001".split()
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
+        self.assert_uidgid_file_content(
+            "pcs-uidgid--1001",
+            outdent(
+                """\
+                uidgid {
+                  gid: 1001
+                }
+                """
+            ),
+        )
+
+        stdout, stderr, retval = self._pcs("cluster uidgid".split())
+        self.assertEqual(
+            stdout,
+            outdent(
+                """\
+                UID/GID: uid= gid=1001
+                UID/GID: uid=1000 gid=
+                """
+            ),
+        )
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
+
+        stdout, stderr, retval = self._pcs(
+            "cluster uidgid delete uid=1000".split()
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
+        self.assert_uidgid_file_removed("pcs-uidgid-1000-")
+
+        stdout, stderr, retval = self._pcs(
+            "cluster uidgid delete gid=1001".split()
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
+        self.assert_uidgid_file_removed("pcs-uidgid--1001")
+
+        stdout, stderr, retval = self._pcs("cluster uidgid".split())
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "No uidgids configured\n")
         self.assertEqual(retval, 0)
