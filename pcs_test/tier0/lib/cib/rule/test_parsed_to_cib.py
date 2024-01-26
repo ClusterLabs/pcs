@@ -37,11 +37,13 @@ from pcs_test.tools.xml import etree_to_str
 
 class Base(TestCase):
     @staticmethod
-    def assert_cib(tree, expected_xml, schema_version=None):
+    def assert_cib(tree, expected_xml, schema_version=None, rule_id=None):
         if schema_version is None:
             schema_version = Version(3, 5, 0)
         xml = etree.fromstring('<root id="X"/>')
-        rule.rule_to_cib(xml, IdProvider(xml), schema_version, tree)
+        rule.rule_to_cib(
+            xml, IdProvider(xml), schema_version, tree, rule_id=rule_id
+        )
         assert_xml_equal(
             '<root id="X">' + expected_xml + "</root>", etree_to_str(xml)
         )
@@ -406,56 +408,63 @@ class SimpleRsc(Base):
 
 class Complex(Base):
     def test_expr_1(self):
-        self.assert_cib(
-            BoolExpr(
-                BOOL_AND,
-                [
-                    BoolExpr(
-                        BOOL_OR,
-                        [
-                            RscExpr("ocf", "pacemaker", "Dummy"),
-                            OpExpr("start", None),
-                            RscExpr("systemd", None, "pcsd"),
-                            RscExpr("ocf", "heartbeat", "Dummy"),
-                        ],
-                    ),
-                    BoolExpr(
-                        BOOL_OR,
-                        [
-                            OpExpr("monitor", "30s"),
-                            RscExpr("ocf", "pacemaker", "Dummy"),
-                            OpExpr("start", None),
-                            OpExpr("monitor", "2min"),
-                        ],
-                    ),
-                ],
-            ),
-            """
-                <rule id="X-rule" boolean-op="and">
-                  <rule id="X-rule-rule" boolean-op="or" score="0">
-                    <rsc_expression id="X-rule-rule-rsc-ocf-pacemaker-Dummy"
+        expression = BoolExpr(
+            BOOL_AND,
+            [
+                BoolExpr(
+                    BOOL_OR,
+                    [
+                        RscExpr("ocf", "pacemaker", "Dummy"),
+                        OpExpr("start", None),
+                        RscExpr("systemd", None, "pcsd"),
+                        RscExpr("ocf", "heartbeat", "Dummy"),
+                    ],
+                ),
+                BoolExpr(
+                    BOOL_OR,
+                    [
+                        NodeAttrExpr(NODE_ATTR_OP_EQ, "#uname", "node1", None),
+                        DatespecExpr([("hours", "1")]),
+                        DateInRangeExpr("2014-06-26", "2014-07-26", None),
+                    ],
+                ),
+            ],
+        )
+        xml = """
+                <rule id="{id}" boolean-op="and">
+                  <rule id="{id}-rule" boolean-op="or" score="0">
+                    <rsc_expression id="{id}-rule-rsc-ocf-pacemaker-Dummy"
                         class="ocf" provider="pacemaker" type="Dummy"
                     />
-                    <op_expression id="X-rule-rule-op-start" name="start" />
-                    <rsc_expression id="X-rule-rule-rsc-systemd-pcsd"
+                    <op_expression id="{id}-rule-op-start" name="start" />
+                    <rsc_expression id="{id}-rule-rsc-systemd-pcsd"
                         class="systemd" type="pcsd"
                     />
-                    <rsc_expression id="X-rule-rule-rsc-ocf-heartbeat-Dummy"
+                    <rsc_expression id="{id}-rule-rsc-ocf-heartbeat-Dummy"
                         class="ocf" provider="heartbeat" type="Dummy"
                     />
                   </rule>
-                  <rule id="X-rule-rule-1" boolean-op="or" score="0">
-                    <op_expression id="X-rule-rule-1-op-monitor"
-                        name="monitor" interval="30s"
+                  <rule id="{id}-rule-1" boolean-op="or" score="0">
+                    <expression id="{id}-rule-1-expr"
+                        attribute="#uname" operation="eq" value="node1"
                     />
-                    <rsc_expression id="X-rule-rule-1-rsc-ocf-pacemaker-Dummy"
-                        class="ocf" provider="pacemaker" type="Dummy"
-                    />
-                    <op_expression id="X-rule-rule-1-op-start" name="start" />
-                    <op_expression id="X-rule-rule-1-op-monitor-1"
-                        name="monitor" interval="2min"
+                    <date_expression id="{id}-rule-1-expr-1"
+                        operation="date_spec"
+                    >
+                      <date_spec id="{id}-rule-1-expr-1-datespec" hours="1" />
+                    </date_expression>
+                    <date_expression id="{id}-rule-1-expr-2"
+                        operation="in_range" start="2014-06-26" end="2014-07-26"
                     />
                   </rule>
                 </rule>
-            """,
+            """
+        id_map = (
+            (None, "X-rule"),
+            ("myid", "myid"),
         )
+        for rule_id, xml_id in id_map:
+            with self.subTest(rule_id=rule_id, xml_id=xml_id):
+                self.assert_cib(
+                    expression, xml.format(id=xml_id), rule_id=rule_id
+                )
