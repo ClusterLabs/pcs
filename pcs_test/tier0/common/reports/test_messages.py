@@ -2195,6 +2195,26 @@ class BadClusterStateFormat(NameBuildTest):
         )
 
 
+class BadClusterState(NameBuildTest):
+    def test_no_reason(self):
+        self.assert_message_from_report(
+            (
+                "Cannot load cluster status, xml does not describe "
+                "valid cluster status."
+            ),
+            reports.BadClusterState(),
+        )
+
+    def test_reason(self):
+        self.assert_message_from_report(
+            (
+                "Cannot load cluster status, xml does not describe "
+                "valid cluster status: sample reason."
+            ),
+            reports.BadClusterState("sample reason"),
+        )
+
+
 class WaitForIdleStarted(NameBuildTest):
     def test_timeout(self):
         timeout = 20
@@ -5818,143 +5838,26 @@ class CannotCreateDefaultClusterPropertySet(NameBuildTest):
         )
 
 
-class ClusterStatusBundleDifferentReplicas(NameBuildTest):
-    def test_message(self):
-        self.assert_message_from_report(
-            "Replicas of bundle 'bundle' are not the same.",
-            reports.ClusterStatusBundleDifferentReplicas("bundle"),
-        )
-
-
 class ClusterStatusBundleMemberIdAsImplicit(NameBuildTest):
-    def test_message(self):
+    def test_one(self):
         self.assert_message_from_report(
             (
-                "Skipping bundle 'bundle': resource 'test' has "
-                "the same id as some of the implicit bundle resources."
-            ),
-            reports.ClusterStatusBundleMemberIdAsImplicit("bundle", ["test"]),
-        )
-
-    def test_multiple_ids(self):
-        self.assert_message_from_report(
-            (
-                "Skipping bundle 'bundle': resources 'test1', 'test2' have "
+                "Skipping bundle 'resource-bundle': resource 'resource' has "
                 "the same id as some of the implicit bundle resources."
             ),
             reports.ClusterStatusBundleMemberIdAsImplicit(
-                "bundle", ["test1", "test2"]
+                "resource-bundle", ["resource"]
             ),
         )
 
-
-class ClusterStatusBundleReplicaInvalidCount(NameBuildTest):
-    def test_message(self):
+    def test_multiple(self):
         self.assert_message_from_report(
             (
-                "Replica '0' of bundle 'bundle' has invalid number of members. "
-                "Expecting 2-4 members."
+                "Skipping bundle 'resource-bundle': resources 'resource-0', "
+                "'resource-1' have the same id as some of the implicit bundle "
+                "resources."
             ),
-            reports.ClusterStatusBundleReplicaInvalidCount("bundle", "0"),
-        )
-
-
-class ClusterStatusBundleReplicaMissingRemote(NameBuildTest):
-    def test_message(self):
-        self.assert_message_from_report(
-            (
-                "Replica '0' of bundle 'bundle' is missing implicit pacemaker "
-                "remote resource while it must be present."
+            reports.ClusterStatusBundleMemberIdAsImplicit(
+                "resource-bundle", ["resource-0", "resource-1"]
             ),
-            reports.ClusterStatusBundleReplicaMissingRemote("bundle", "0"),
-        )
-
-
-class ClusterStatusBundleReplicaNoContainer(NameBuildTest):
-    def test_message(self):
-        self.assert_message_from_report(
-            (
-                "Replica '0' of bundle 'bundle' is missing implicit container "
-                "resource."
-            ),
-            reports.ClusterStatusBundleReplicaNoContainer("bundle", "0"),
-        )
-
-
-class ClusterStatusCloneMembersDifferentIds(NameBuildTest):
-    def test_message(self):
-        self.assert_message_from_report(
-            "Members with different ids in clone 'clone'.",
-            reports.ClusterStatusCloneMembersDifferentIds("clone"),
-        )
-
-
-class ClusterStatusCloneMixedMembers(NameBuildTest):
-    def test_message(self):
-        self.assert_message_from_report(
-            "Primitive and group members mixed in clone 'clone'.",
-            reports.ClusterStatusCloneMixedMembers("clone"),
-        )
-
-
-class ClusterStatusEmptyNodeName(NameBuildTest):
-    def test_message(self):
-        self.assert_message_from_report(
-            "Resource with id 'resource' contains node with empty name.",
-            reports.ClusterStatusEmptyNodeName("resource"),
-        )
-
-
-class ClusterStatusUnexpectedMember(NameBuildTest):
-    def test_one_expected(self):
-        self.assert_message_from_report(
-            (
-                "Unexpected resource 'member' inside of resource 'resource' of "
-                "type 'group'. Only resources of type 'primitive' "
-                "can be in group."
-            ),
-            reports.ClusterStatusUnexpectedMember(
-                resource_id="resource",
-                resource_type="group",
-                member_id="member",
-                expected_types=["primitive"],
-            ),
-        )
-
-    def test_multiple_expected(self):
-        self.assert_message_from_report(
-            (
-                "Unexpected resource 'member' inside of resource 'resource' of "
-                "type 'clone'. Only resources of type 'group'|'primitive' "
-                "can be in clone."
-            ),
-            reports.ClusterStatusUnexpectedMember(
-                resource_id="resource",
-                resource_type="clone",
-                member_id="member",
-                expected_types=["primitive", "group"],
-            ),
-        )
-
-
-class ClusterStatusUnknownPcmkRole(NameBuildTest):
-    def test_no_role(self):
-        self.assert_message_from_report(
-            "Attribute of resource with id 'resource' contains empty pcmk role.",
-            reports.ClusterStatusUnknownPcmkRole(None, "resource"),
-        )
-
-    def test_empty_role(self):
-        self.assert_message_from_report(
-            "Attribute of resource with id 'resource' contains empty pcmk role.",
-            reports.ClusterStatusUnknownPcmkRole("", "resource"),
-        )
-
-    def test_role(self):
-        self.assert_message_from_report(
-            (
-                "Attribute of resource with id 'resource' contains invalid "
-                "pcmk role 'NotValidRole'."
-            ),
-            reports.ClusterStatusUnknownPcmkRole("NotValidRole", "resource"),
         )

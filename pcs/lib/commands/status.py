@@ -49,7 +49,11 @@ from pcs.lib.pacemaker.live import (
     get_cluster_status_xml_raw,
     get_ticket_status_text,
 )
-from pcs.lib.pacemaker.status import status_xml_to_dto
+from pcs.lib.pacemaker.status import (
+    ClusterStatusParser,
+    ClusterStatusParsingError,
+    cluster_status_parsing_error_to_report,
+)
 from pcs.lib.resource_agent.const import STONITH_ACTION_REPLACED_BY
 from pcs.lib.sbd import get_sbd_service_name
 
@@ -79,7 +83,15 @@ def resources_status(env: LibraryEnvironment) -> ResourcesStatusDto:
     """
     status_xml = env.get_cluster_state()
 
-    return status_xml_to_dto(env.report_processor, status_xml)
+    parser = ClusterStatusParser(status_xml)
+    try:
+        dto = parser.status_xml_to_dto()
+    except ClusterStatusParsingError as e:
+        raise LibraryError(cluster_status_parsing_error_to_report(e)) from e
+
+    env.report_processor.report_list(parser.get_warnings())
+
+    return dto
 
 
 def full_cluster_status_plaintext(

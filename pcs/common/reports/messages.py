@@ -3277,183 +3277,32 @@ class BadClusterStateFormat(ReportItemMessage):
 
 
 @dataclass(frozen=True)
-class ClusterStatusUnknownPcmkRole(ReportItemMessage):
+class BadClusterState(ReportItemMessage):
     """
-    Value of pcmk role in the status xml is not valid
+    crm_mon xml output is invalid despite conforming to the schema
 
-    role -- value of the role attribute
-    resource_id -- id of the resource
+    reason -- error description
     """
 
-    role: Optional[str]
-    resource_id: str
-    _code = codes.CLUSTER_STATUS_UNKNOWN_PCMK_ROLE
+    reason: Optional[str] = None
+    _code = codes.BAD_CLUSTER_STATE
 
     @property
     def message(self) -> str:
         return (
-            "Attribute of resource with id '{id}' "
-            "contains {invalid} pcmk role{role}."
-        ).format(
-            id=self.resource_id,
-            invalid="empty" if not self.role else "invalid",
-            role=f" '{self.role}'" if self.role else "",
-        )
-
-
-@dataclass(frozen=True)
-class ClusterStatusEmptyNodeName(ReportItemMessage):
-    """
-    Resource in the status xml contains node with empty name
-
-    resource_id -- id of the resource
-    """
-
-    resource_id: str
-    _code = codes.CLUSTER_STATUS_EMPTY_NODE_NAME
-
-    @property
-    def message(self) -> str:
-        return (
-            f"Resource with id '{self.resource_id}' contains node "
-            "with empty name."
-        )
-
-
-@dataclass(frozen=True)
-class ClusterStatusUnexpectedMember(ReportItemMessage):
-    """
-    Unexpected resource type is present in present as child element
-    in another resource type
-
-    resource_id -- id of the outer resource
-    resource_type -- type of the outer resource
-    member_id -- id of the unexpected member
-    expected_type -- valid types for members
-    """
-
-    resource_id: str
-    resource_type: str
-    member_id: str
-    expected_types: list[str]
-    _code = codes.CLUSTER_STATUS_UNEXPECTED_MEMBER
-
-    @property
-    def message(self) -> str:
-        return (
-            f"Unexpected resource '{self.member_id}' inside of resource "
-            f"'{self.resource_id}' of type '{self.resource_type}'. "
-            f"Only resources of type {format_list(self.expected_types, '|')} "
-            f"can be in {self.resource_type}."
-        )
-
-
-@dataclass(frozen=True)
-class ClusterStatusCloneMixedMembers(ReportItemMessage):
-    """
-    Members of multiple types are present in a clone in the status xml
-
-    member_id -- id of the unexpected member
-    clone_id -- id of the clone
-    """
-
-    clone_id: str
-    _code = codes.CLUSTER_STATUS_CLONE_MIXED_MEMBERS
-
-    @property
-    def message(self) -> str:
-        return f"Primitive and group members mixed in clone '{self.clone_id}'."
-
-
-@dataclass(frozen=True)
-class ClusterStatusCloneMembersDifferentIds(ReportItemMessage):
-    """
-    Clone instances in crm_mon status xml have different ids
-
-    clone_id -- id of the clone
-    """
-
-    clone_id: str
-    _code = codes.CLUSTER_STATUS_CLONE_MEMBERS_DIFFERENT_IDS
-
-    @property
-    def message(self) -> str:
-        return f"Members with different ids in clone '{self.clone_id}'."
-
-
-@dataclass(frozen=True)
-class ClusterStatusBundleReplicaNoContainer(ReportItemMessage):
-    """
-    Bundle replica is missing implicit container resource in the status xml
-
-    bundle_id -- id of the bundle
-    replica_id -- id of the replica
-    """
-
-    bundle_id: str
-    replica_id: str
-    _code = codes.CLUSTER_STATUS_BUNDLE_REPLICA_NO_CONTAINER
-
-    @property
-    def message(self) -> str:
-        return (
-            f"Replica '{self.replica_id}' of bundle '{self.bundle_id}' "
-            "is missing implicit container resource."
-        )
-
-
-@dataclass(frozen=True)
-class ClusterStatusBundleReplicaMissingRemote(ReportItemMessage):
-    """
-    Bundle replica is missing implicit pacemaker remote resource
-    in the status xml
-
-    bundle_id -- id of the bundle
-    replica_id -- id of the replica
-    """
-
-    bundle_id: str
-    replica_id: str
-    _code = codes.CLUSTER_STATUS_BUNDLE_REPLICA_MISSING_REMOTE
-
-    @property
-    def message(self) -> str:
-        return (
-            f"Replica '{self.replica_id}' of bundle '{self.bundle_id}' is "
-            "missing implicit pacemaker remote resource while it must be "
-            "present."
-        )
-
-
-@dataclass(frozen=True)
-class ClusterStatusBundleReplicaInvalidCount(ReportItemMessage):
-    """
-    Bundle replica is has invalid number of members in the status xml
-
-    bundle_id -- id of the bundle
-    replica_id -- id of the replica
-    """
-
-    bundle_id: str
-    replica_id: str
-    _code = codes.CLUSTER_STATUS_BUNDLE_REPLICA_INVALID_COUNT
-
-    @property
-    def message(self) -> str:
-        return (
-            f"Replica '{self.replica_id}' of bundle '{self.bundle_id}' has "
-            f"invalid number of members. Expecting 2-4 members."
+            "Cannot load cluster status, xml does not describe valid cluster "
+            f"status{format_optional(self.reason, template=': {}')}."
         )
 
 
 @dataclass(frozen=True)
 class ClusterStatusBundleMemberIdAsImplicit(ReportItemMessage):
     """
-    Member of bundle in cluster status xml has the same id as one of
-    the implicit resources
+    Member of bundle in cluster status xml has the same id as one of the
+    implicit resources
 
     bundle_id -- id of the bundle
-    member_id -- id if the bundle member
+    bad_ids -- ids of the bad members
     """
 
     bundle_id: str
@@ -3472,22 +3321,6 @@ class ClusterStatusBundleMemberIdAsImplicit(ReportItemMessage):
             bad_ids=format_list(self.bad_ids),
             has=format_plural(self.bad_ids, "has"),
         )
-
-
-@dataclass(frozen=True)
-class ClusterStatusBundleDifferentReplicas(ReportItemMessage):
-    """
-    Replicas of bundle are different in the cluster status xml
-
-    bundle_id -- id of the bundle
-    """
-
-    bundle_id: str
-    _code = codes.CLUSTER_STATUS_BUNDLE_DIFFERENT_REPLICAS
-
-    @property
-    def message(self) -> str:
-        return f"Replicas of bundle '{self.bundle_id}' are not the same."
 
 
 @dataclass(frozen=True)

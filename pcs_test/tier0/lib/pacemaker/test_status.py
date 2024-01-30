@@ -11,11 +11,9 @@ from lxml import etree
 from pcs.common import reports
 from pcs.common.const import (
     PCMK_ROLE_STARTED,
-    PCMK_ROLE_UNKNOWN,
     PCMK_ROLES,
     PCMK_STATUS_ROLE_STARTED,
     PCMK_STATUS_ROLE_STOPPED,
-    PCMK_STATUS_ROLE_UNKNOWN,
     PCMK_STATUS_ROLE_UNPROMOTED,
     PCMK_STATUS_ROLES,
     PCMK_STATUS_ROLES_PENDING,
@@ -34,10 +32,9 @@ from pcs.lib.pacemaker import status
 
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import (
-    assert_raise_library_error,
+    assert_report_item_equal,
     assert_report_item_list_equal,
 )
-from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
 
 def fixture_primitive_xml(
@@ -327,33 +324,162 @@ def fixture_crm_mon_xml(resources: list[str]) -> str:
     """
 
 
+class TestParsingErrorToReport(TestCase):
+    # pylint: disable=no-self-use
+
+    def test_empty_resource_id(self):
+        report = status.cluster_status_parsing_error_to_report(
+            status.EmptyResourceIdError()
+        )
+        assert_report_item_equal(
+            report,
+            fixture.error(
+                reports.codes.BAD_CLUSTER_STATE,
+                reason="Resource with empty id.",
+            ),
+        )
+
+    def test_empty_node_name(self):
+        report = status.cluster_status_parsing_error_to_report(
+            status.EmptyNodeNameError("resource")
+        )
+        assert_report_item_equal(
+            report,
+            fixture.error(
+                reports.codes.BAD_CLUSTER_STATE,
+                reason="Resource with id 'resource' contains node with empty name.",
+            ),
+        )
+
+    def test_unknow_pcmk_role(self):
+        report = status.cluster_status_parsing_error_to_report(
+            status.UnknownPcmkRoleError("resource", "NotPcmkRole")
+        )
+        assert_report_item_equal(
+            report,
+            fixture.error(
+                reports.codes.BAD_CLUSTER_STATE,
+                reason="Resource with id 'resource' contains unknown pcmk role 'NotPcmkRole'.",
+            ),
+        )
+
+    def test_unexpected_member_group(self):
+        report = status.cluster_status_parsing_error_to_report(
+            status.UnexpectedMemberError(
+                "resource", "group", "member", ["primitive"]
+            )
+        )
+        assert_report_item_equal(
+            report,
+            fixture.error(
+                reports.codes.BAD_CLUSTER_STATE,
+                reason=(
+                    "Unexpected resource 'member' inside of resource "
+                    "'resource' of type 'group'. Only resources of type "
+                    "'primitive' can be in group."
+                ),
+            ),
+        )
+
+    def test_unexpected_member_clone(self):
+        report = status.cluster_status_parsing_error_to_report(
+            status.UnexpectedMemberError(
+                "resource", "clone", "member", ["primitive", "group"]
+            )
+        )
+        assert_report_item_equal(
+            report,
+            fixture.error(
+                reports.codes.BAD_CLUSTER_STATE,
+                reason=(
+                    "Unexpected resource 'member' inside of resource "
+                    "'resource' of type 'clone'. Only resources of type "
+                    "'group'|'primitive' can be in clone."
+                ),
+            ),
+        )
+
+    def test_mixed_members(self):
+        report = status.cluster_status_parsing_error_to_report(
+            status.MixedMembersError("resource")
+        )
+        assert_report_item_equal(
+            report,
+            fixture.error(
+                reports.codes.BAD_CLUSTER_STATE,
+                reason="Primitive and group members mixed in clone 'resource'.",
+            ),
+        )
+
+    def test_different_member_ids(self):
+        report = status.cluster_status_parsing_error_to_report(
+            status.DifferentMemberIdsError("resource")
+        )
+        assert_report_item_equal(
+            report,
+            fixture.error(
+                reports.codes.BAD_CLUSTER_STATE,
+                reason="Members with different ids in resource 'resource'.",
+            ),
+        )
+
+    def test_bundle_replica_missing_implicit(self):
+        report = status.cluster_status_parsing_error_to_report(
+            status.BundleReplicaMissingImplicitResourceError(
+                "resource", "0", "container"
+            )
+        )
+        assert_report_item_equal(
+            report,
+            fixture.error(
+                reports.codes.BAD_CLUSTER_STATE,
+                reason="Replica '0' of bundle 'resource' is missing implicit container resource.",
+            ),
+        )
+
+    def test_bundle_replica_invalid_member_count(self):
+        report = status.cluster_status_parsing_error_to_report(
+            status.BundleReplicaInvalidMemberCountError("resource", "0")
+        )
+        assert_report_item_equal(
+            report,
+            fixture.error(
+                reports.codes.BAD_CLUSTER_STATE,
+                reason="Replica '0' of bundle 'resource' has invalid number of members.",
+            ),
+        )
+
+    def test_bundle_different_replicas(self):
+        report = status.cluster_status_parsing_error_to_report(
+            status.BundleDifferentReplicas("resource")
+        )
+        assert_report_item_equal(
+            report,
+            fixture.error(
+                reports.codes.BAD_CLUSTER_STATE,
+                reason="Replicas of bundle 'resource' are not the same.",
+            ),
+        )
+
+
 class TestPrimitiveStatusToDto(TestCase):
     # pylint: disable=protected-access
-    def setUp(self):
-        self.report_processor = MockLibraryReportProcessor()
-
     def test_simple(self):
         primitive_xml = etree.fromstring(fixture_primitive_xml())
 
-        result = status._primitive_to_dto(self.report_processor, primitive_xml)
+        result = status._primitive_to_dto(primitive_xml)
 
         self.assertEqual(result, fixture_primitive_dto())
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list, []
-        )
 
     def test_empty_node_list(self):
         primitive_xml = etree.fromstring(
             fixture_primitive_xml(role=PCMK_STATUS_ROLE_STOPPED, node_names=[])
         )
-        result = status._primitive_to_dto(self.report_processor, primitive_xml)
+        result = status._primitive_to_dto(primitive_xml)
 
         self.assertEqual(
             result,
             fixture_primitive_dto(role=PCMK_STATUS_ROLE_STOPPED, node_names=[]),
-        )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list, []
         )
 
     def test_all_attributes(self):
@@ -363,7 +489,7 @@ class TestPrimitiveStatusToDto(TestCase):
             )
         )
 
-        result = status._primitive_to_dto(self.report_processor, primitive_xml)
+        result = status._primitive_to_dto(primitive_xml)
 
         self.assertEqual(
             result,
@@ -371,74 +497,40 @@ class TestPrimitiveStatusToDto(TestCase):
                 target_role=PCMK_STATUS_ROLE_STOPPED, add_optional_args=True
             ),
         )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list, []
-        )
 
     def test_remove_clone_suffix(self):
         primitive_xml = etree.fromstring(
             fixture_primitive_xml(resource_id="resource:0")
         )
 
-        result = status._primitive_to_dto(
-            self.report_processor, primitive_xml, True
-        )
+        result = status._primitive_to_dto(primitive_xml, True)
 
         self.assertEqual(result, fixture_primitive_dto())
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list, []
-        )
 
     def test_running_on_multiple_nodes(self):
         primitive_xml = etree.fromstring(
             fixture_primitive_xml(node_names=["node1", "node2", "node3"])
         )
 
-        result = status._primitive_to_dto(self.report_processor, primitive_xml)
+        result = status._primitive_to_dto(primitive_xml)
 
         self.assertEqual(
             result,
             fixture_primitive_dto(node_names=["node1", "node2", "node3"]),
         )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list, []
-        )
 
     def test_empty_node_name(self):
         primitive_xml = etree.fromstring(fixture_primitive_xml(node_names=[""]))
 
-        assert_raise_library_error(
-            lambda: status._primitive_to_dto(
-                self.report_processor, primitive_xml
-            )
-        )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list,
-            [
-                fixture.error(
-                    reports.codes.CLUSTER_STATUS_EMPTY_NODE_NAME,
-                    resource_id="resource",
-                )
-            ],
-        )
+        with self.assertRaises(status.EmptyNodeNameError) as cm:
+            status._primitive_to_dto(primitive_xml)
+        self.assertEqual(cm.exception.resource_id, "resource")
 
     def test_empty_resource_id(self):
         primitive_xml = etree.fromstring(fixture_primitive_xml(resource_id=""))
 
-        assert_raise_library_error(
-            lambda: status._primitive_to_dto(
-                self.report_processor, primitive_xml
-            )
-        )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list,
-            [
-                fixture.error(
-                    reports.codes.INVALID_ID_IS_EMPTY,
-                    id_description="resource id",
-                )
-            ],
-        )
+        with self.assertRaises(status.EmptyResourceIdError):
+            status._primitive_to_dto(primitive_xml)
 
     def test_role(self):
         for role in PCMK_STATUS_ROLES:
@@ -446,35 +538,17 @@ class TestPrimitiveStatusToDto(TestCase):
                 primitive_xml = etree.fromstring(
                     fixture_primitive_xml(role=role)
                 )
-
-                result = status._primitive_to_dto(
-                    self.report_processor, primitive_xml
-                )
+                result = status._primitive_to_dto(primitive_xml)
                 self.assertEqual(result, fixture_primitive_dto(role=role))
-                assert_report_item_list_equal(
-                    self.report_processor.report_item_list, []
-                )
 
     def test_invalid_role(self):
         primitive_xml = etree.fromstring(
             fixture_primitive_xml(role="NotPcmkRole")
         )
 
-        result = status._primitive_to_dto(self.report_processor, primitive_xml)
-
-        self.assertEqual(
-            result, fixture_primitive_dto(role=PCMK_STATUS_ROLE_UNKNOWN)
-        )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list,
-            [
-                fixture.warn(
-                    reports.codes.CLUSTER_STATUS_UNKNOWN_PCMK_ROLE,
-                    role="NotPcmkRole",
-                    resource_id="resource",
-                )
-            ],
-        )
+        with self.assertRaises(status.UnknownPcmkRoleError) as cm:
+            status._primitive_to_dto(primitive_xml)
+        self.assertEqual(cm.exception.resource_id, "resource")
 
     def test_target_role(self):
         for role in PCMK_ROLES:
@@ -483,61 +557,35 @@ class TestPrimitiveStatusToDto(TestCase):
                     fixture_primitive_xml(target_role=role)
                 )
 
-                result = status._primitive_to_dto(
-                    self.report_processor, primitive_xml
-                )
+                result = status._primitive_to_dto(primitive_xml)
 
                 self.assertEqual(
                     result, fixture_primitive_dto(target_role=role)
-                )
-                assert_report_item_list_equal(
-                    self.report_processor.report_item_list, []
                 )
 
     def test_invalid_target_role(self):
         for value in PCMK_STATUS_ROLES_PENDING + ("NotPcmkRole",):
             with self.subTest(value=value):
-                self.setUp()
                 primitive_xml = etree.fromstring(
                     fixture_primitive_xml(target_role=value)
                 )
 
-                result = status._primitive_to_dto(
-                    self.report_processor, primitive_xml
-                )
-
-                self.assertEqual(
-                    result, fixture_primitive_dto(target_role=PCMK_ROLE_UNKNOWN)
-                )
-                assert_report_item_list_equal(
-                    self.report_processor.report_item_list,
-                    [
-                        fixture.warn(
-                            reports.codes.CLUSTER_STATUS_UNKNOWN_PCMK_ROLE,
-                            role=value,
-                            resource_id="resource",
-                        )
-                    ],
-                )
+                with self.assertRaises(status.UnknownPcmkRoleError) as cm:
+                    status._primitive_to_dto(primitive_xml)
+                self.assertEqual(cm.exception.resource_id, "resource")
 
 
 class TestGroupStatusToDto(TestCase):
     # pylint: disable=protected-access
-    def setUp(self):
-        self.report_processor = MockLibraryReportProcessor()
-
     def test_all_attributes(self):
         group_xml = etree.fromstring(
             fixture_group_xml(description="Test description")
         )
 
-        result = status._group_to_dto(self.report_processor, group_xml)
+        result = status._group_to_dto(group_xml)
 
         self.assertEqual(
             result, fixture_group_dto(description="Test description")
-        )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list, []
         )
 
     def test_single_member(self):
@@ -545,13 +593,10 @@ class TestGroupStatusToDto(TestCase):
             fixture_group_xml(members=[fixture_primitive_xml()])
         )
 
-        result = status._group_to_dto(self.report_processor, group_xml)
+        result = status._group_to_dto(group_xml)
 
         self.assertEqual(
             result, fixture_group_dto(members=[fixture_primitive_dto()])
-        )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list, []
         )
 
     def test_multiple_members(self):
@@ -564,7 +609,7 @@ class TestGroupStatusToDto(TestCase):
             )
         )
 
-        result = status._group_to_dto(self.report_processor, group_xml)
+        result = status._group_to_dto(group_xml)
 
         self.assertEqual(
             result,
@@ -574,9 +619,6 @@ class TestGroupStatusToDto(TestCase):
                     fixture_primitive_dto(resource_id="resource2"),
                 ]
             ),
-        )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list, []
         )
 
     def test_multiple_members_different_state(self):
@@ -594,7 +636,7 @@ class TestGroupStatusToDto(TestCase):
             )
         )
 
-        result = status._group_to_dto(self.report_processor, group_xml)
+        result = status._group_to_dto(group_xml)
 
         self.assertEqual(
             result,
@@ -610,9 +652,30 @@ class TestGroupStatusToDto(TestCase):
                 ]
             ),
         )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list, []
+
+    def test_member_invalid_role(self):
+        group_xml = etree.fromstring(
+            fixture_group_xml(
+                members=[fixture_primitive_xml(role="NotPcmkRole")]
+            )
         )
+
+        with self.assertRaises(status.UnknownPcmkRoleError) as cm:
+            status._group_to_dto(group_xml)
+        self.assertEqual(cm.exception.resource_id, "resource")
+        self.assertEqual(cm.exception.role, "NotPcmkRole")
+
+    def test_member_invalid_target_role(self):
+        group_xml = etree.fromstring(
+            fixture_group_xml(
+                members=[fixture_primitive_xml(target_role="NotPcmkRole")]
+            )
+        )
+
+        with self.assertRaises(status.UnknownPcmkRoleError) as cm:
+            status._group_to_dto(group_xml)
+        self.assertEqual(cm.exception.resource_id, "resource")
+        self.assertEqual(cm.exception.role, "NotPcmkRole")
 
     def test_invalid_member(self):
         resources = {
@@ -623,31 +686,17 @@ class TestGroupStatusToDto(TestCase):
 
         for resource_id, member in resources.items():
             with self.subTest(value=resource_id):
-                self.setUp()
                 group_xml = etree.fromstring(
                     fixture_group_xml(
                         resource_id="outer-group", members=[member]
                     )
                 )
 
-                # pylint: disable=cell-var-from-loop
-                assert_raise_library_error(
-                    lambda: status._group_to_dto(
-                        self.report_processor, group_xml
-                    )
-                )
-                assert_report_item_list_equal(
-                    self.report_processor.report_item_list,
-                    [
-                        fixture.error(
-                            reports.codes.CLUSTER_STATUS_UNEXPECTED_MEMBER,
-                            resource_id="outer-group",
-                            resource_type="group",
-                            member_id=resource_id,
-                            expected_types=["primitive"],
-                        )
-                    ],
-                )
+                with self.assertRaises(status.UnexpectedMemberError) as cm:
+                    status._group_to_dto(group_xml)
+                self.assertEqual(cm.exception.resource_id, "outer-group")
+                self.assertEqual(cm.exception.member_id, resource_id)
+                self.assertEqual(cm.exception.expected_types, ["primitive"])
 
     def test_remove_clone_suffix(self):
         group_xml = etree.fromstring(
@@ -657,21 +706,15 @@ class TestGroupStatusToDto(TestCase):
             )
         )
 
-        result = status._group_to_dto(self.report_processor, group_xml, True)
+        result = status._group_to_dto(group_xml, True)
         self.assertEqual(
             result,
             fixture_group_dto(members=[fixture_primitive_dto()]),
-        )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list, []
         )
 
 
 class TestCloneStatusToDto(TestCase):
     # pylint: disable=protected-access
-    def setUp(self):
-        self.report_processor = MockLibraryReportProcessor()
-
     def test_all_attributes(self):
         clone_xml = etree.fromstring(
             fixture_clone_xml(
@@ -680,7 +723,7 @@ class TestCloneStatusToDto(TestCase):
             )
         )
 
-        result = status._clone_to_dto(self.report_processor, clone_xml)
+        result = status._clone_to_dto(clone_xml)
 
         self.assertEqual(
             result,
@@ -688,22 +731,16 @@ class TestCloneStatusToDto(TestCase):
                 description="Test description", target_role=PCMK_ROLE_STARTED
             ),
         )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list, []
-        )
 
     def test_primitive_member(self):
         clone_xml = etree.fromstring(
             fixture_clone_xml(instances=[fixture_primitive_xml()])
         )
 
-        result = status._clone_to_dto(self.report_processor, clone_xml)
+        result = status._clone_to_dto(clone_xml)
 
         self.assertEqual(
             result, fixture_clone_dto(instances=[fixture_primitive_dto()])
-        )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list, []
         )
 
     def test_primitive_member_multiple(self):
@@ -716,7 +753,7 @@ class TestCloneStatusToDto(TestCase):
             )
         )
 
-        result = status._clone_to_dto(self.report_processor, clone_xml)
+        result = status._clone_to_dto(clone_xml)
 
         self.assertEqual(
             result,
@@ -726,9 +763,6 @@ class TestCloneStatusToDto(TestCase):
                     fixture_primitive_dto(node_names=["node2"]),
                 ]
             ),
-        )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list, []
         )
 
     def test_primitive_member_unique(self):
@@ -744,7 +778,7 @@ class TestCloneStatusToDto(TestCase):
             )
         )
 
-        result = status._clone_to_dto(self.report_processor, clone_xml)
+        result = status._clone_to_dto(clone_xml)
 
         self.assertEqual(
             result,
@@ -755,9 +789,6 @@ class TestCloneStatusToDto(TestCase):
                     fixture_primitive_dto(node_names=["node2"]),
                 ],
             ),
-        )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list, []
         )
 
     def test_primitive_member_promotable(self):
@@ -772,7 +803,7 @@ class TestCloneStatusToDto(TestCase):
                 ],
             )
         )
-        result = status._clone_to_dto(self.report_processor, clone_xml)
+        result = status._clone_to_dto(clone_xml)
 
         self.assertEqual(
             result,
@@ -786,9 +817,30 @@ class TestCloneStatusToDto(TestCase):
                 ],
             ),
         )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list, []
+
+    def test_primitive_member_invalid_role(self):
+        clone_xml = etree.fromstring(
+            fixture_clone_xml(
+                instances=[fixture_primitive_xml(role="NotPcmkRole")]
+            )
         )
+
+        with self.assertRaises(status.UnknownPcmkRoleError) as cm:
+            status._clone_to_dto(clone_xml)
+        self.assertEqual(cm.exception.resource_id, "resource")
+        self.assertEqual(cm.exception.role, "NotPcmkRole")
+
+    def test_primitive_member_invalid_target_role(self):
+        clone_xml = etree.fromstring(
+            fixture_clone_xml(
+                instances=[fixture_primitive_xml(target_role="NotPcmkRole")]
+            )
+        )
+
+        with self.assertRaises(status.UnknownPcmkRoleError) as cm:
+            status._clone_to_dto(clone_xml)
+        self.assertEqual(cm.exception.resource_id, "resource")
+        self.assertEqual(cm.exception.role, "NotPcmkRole")
 
     def test_primitive_member_different_ids(self):
         clone_xml = etree.fromstring(
@@ -802,18 +854,9 @@ class TestCloneStatusToDto(TestCase):
             )
         )
 
-        assert_raise_library_error(
-            lambda: status._clone_to_dto(self.report_processor, clone_xml)
-        )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list,
-            [
-                fixture.error(
-                    reports.codes.CLUSTER_STATUS_CLONE_MEMBERS_DIFFERENT_IDS,
-                    clone_id="resource-clone",
-                )
-            ],
-        )
+        with self.assertRaises(status.DifferentMemberIdsError) as cm:
+            status._clone_to_dto(clone_xml)
+        self.assertEqual(cm.exception.resource_id, "resource-clone")
 
     def test_group_member(self):
         clone_xml = etree.fromstring(
@@ -830,7 +873,7 @@ class TestCloneStatusToDto(TestCase):
                 ],
             )
         )
-        result = status._clone_to_dto(self.report_processor, clone_xml)
+        result = status._clone_to_dto(clone_xml)
 
         self.assertEqual(
             result,
@@ -842,9 +885,6 @@ class TestCloneStatusToDto(TestCase):
                     ),
                 ],
             ),
-        )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list, []
         )
 
     def test_group_member_unique(self):
@@ -869,7 +909,7 @@ class TestCloneStatusToDto(TestCase):
                 ],
             )
         )
-        result = status._clone_to_dto(self.report_processor, clone_xml)
+        result = status._clone_to_dto(clone_xml)
 
         self.assertEqual(
             result,
@@ -882,9 +922,6 @@ class TestCloneStatusToDto(TestCase):
                     ),
                 ],
             ),
-        )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list, []
         )
 
     def test_group_member_different_group_ids(self):
@@ -903,18 +940,9 @@ class TestCloneStatusToDto(TestCase):
             )
         )
 
-        assert_raise_library_error(
-            lambda: status._clone_to_dto(self.report_processor, clone_xml)
-        )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list,
-            [
-                fixture.error(
-                    reports.codes.CLUSTER_STATUS_CLONE_MEMBERS_DIFFERENT_IDS,
-                    clone_id="resource-clone",
-                )
-            ],
-        )
+        with self.assertRaises(status.DifferentMemberIdsError) as cm:
+            status._clone_to_dto(clone_xml)
+        self.assertEqual(cm.exception.resource_id, "resource-clone")
 
     def test_group_member_different_primitive_ids(self):
         clone_xml = etree.fromstring(
@@ -937,18 +965,9 @@ class TestCloneStatusToDto(TestCase):
             )
         )
 
-        assert_raise_library_error(
-            lambda: status._clone_to_dto(self.report_processor, clone_xml)
-        )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list,
-            [
-                fixture.error(
-                    reports.codes.CLUSTER_STATUS_CLONE_MEMBERS_DIFFERENT_IDS,
-                    clone_id="resource-clone",
-                )
-            ],
-        )
+        with self.assertRaises(status.DifferentMemberIdsError) as cm:
+            status._clone_to_dto(clone_xml)
+        self.assertEqual(cm.exception.resource_id, "resource-clone")
 
     def test_primitive_member_types_mixed(self):
         clone_xml = etree.fromstring(
@@ -965,18 +984,9 @@ class TestCloneStatusToDto(TestCase):
             )
         )
 
-        assert_raise_library_error(
-            lambda: status._clone_to_dto(self.report_processor, clone_xml)
-        )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list,
-            [
-                fixture.error(
-                    reports.codes.CLUSTER_STATUS_CLONE_MIXED_MEMBERS,
-                    clone_id="resource-clone",
-                )
-            ],
-        )
+        with self.assertRaises(status.MixedMembersError) as cm:
+            status._clone_to_dto(clone_xml)
+        self.assertEqual(cm.exception.resource_id, "resource-clone")
 
     def test_invalid_member(self):
         resources = {
@@ -985,61 +995,43 @@ class TestCloneStatusToDto(TestCase):
         }
         for resource_id, element in resources.items():
             with self.subTest(value=resource_id):
-                self.setUp()
                 clone_xml = etree.fromstring(
-                    fixture_clone_xml(instances=[element])
-                )
-
-                # pylint: disable=cell-var-from-loop
-                assert_raise_library_error(
-                    lambda: status._clone_to_dto(
-                        self.report_processor, clone_xml
+                    fixture_clone_xml(
+                        resource_id="outer-clone", instances=[element]
                     )
                 )
-                assert_report_item_list_equal(
-                    self.report_processor.report_item_list,
-                    [
-                        fixture.error(
-                            reports.codes.CLUSTER_STATUS_UNEXPECTED_MEMBER,
-                            resource_id="resource-clone",
-                            resource_type="clone",
-                            member_id=resource_id,
-                            expected_types=["primitive", "group"],
-                        )
-                    ],
+
+                with self.assertRaises(status.UnexpectedMemberError) as cm:
+                    status._clone_to_dto(clone_xml)
+
+                self.assertEqual(cm.exception.resource_id, "outer-clone")
+                self.assertEqual(cm.exception.member_id, resource_id)
+                self.assertEqual(
+                    cm.exception.expected_types, ["primitive", "group"]
                 )
 
 
 class TestBundleReplicaStatusToDto(TestCase):
     # pylint: disable=protected-access
     def setUp(self):
-        self.report_processor = MockLibraryReportProcessor()
+        self.bundle_id = "resource-bundle"
+        self.bundle_type = "podman"
 
     def test_no_member_no_ip(self):
         replica_xml = etree.fromstring(fixture_replica_xml())
 
-        bundle_id = "resource-bundle"
-        bundle_type = "podman"
         result = status._replica_to_dto(
-            self.report_processor, replica_xml, bundle_id, bundle_type
+            replica_xml, self.bundle_id, self.bundle_type
         )
         self.assertEqual(result, fixture_replica_dto())
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list, []
-        )
 
     def test_no_member(self):
         replica_xml = etree.fromstring(fixture_replica_xml(ip=True))
 
-        bundle_id = "resource-bundle"
-        bundle_type = "podman"
         result = status._replica_to_dto(
-            self.report_processor, replica_xml, bundle_id, bundle_type
+            replica_xml, self.bundle_id, self.bundle_type
         )
         self.assertEqual(result, fixture_replica_dto(ip=True))
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list, []
-        )
 
     def test_member(self):
         replica_xml = etree.fromstring(
@@ -1051,10 +1043,8 @@ class TestBundleReplicaStatusToDto(TestCase):
             )
         )
 
-        bundle_id = "resource-bundle"
-        bundle_type = "podman"
         result = status._replica_to_dto(
-            self.report_processor, replica_xml, bundle_id, bundle_type
+            replica_xml, self.bundle_id, self.bundle_type
         )
         self.assertEqual(
             result,
@@ -1062,9 +1052,6 @@ class TestBundleReplicaStatusToDto(TestCase):
                 ip=True,
                 member=fixture_primitive_dto(node_names=["resource-bundle-0"]),
             ),
-        )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list, []
         )
 
     def test_member_no_ip(self):
@@ -1076,10 +1063,8 @@ class TestBundleReplicaStatusToDto(TestCase):
             )
         )
 
-        bundle_id = "resource-bundle"
-        bundle_type = "podman"
         result = status._replica_to_dto(
-            self.report_processor, replica_xml, bundle_id, bundle_type
+            replica_xml, self.bundle_id, self.bundle_type
         )
         self.assertEqual(
             result,
@@ -1087,9 +1072,34 @@ class TestBundleReplicaStatusToDto(TestCase):
                 member=fixture_primitive_dto(node_names=["resource-bundle-0"])
             ),
         )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list, []
+
+    def test_invalid_role(self):
+        replica_xml = etree.fromstring(
+            fixture_replica_xml(
+                member=fixture_primitive_xml(role="NotPcmkRole")
+            )
         )
+
+        with self.assertRaises(status.UnknownPcmkRoleError) as cm:
+            status._replica_to_dto(
+                replica_xml, self.bundle_id, self.bundle_type
+            )
+        self.assertEqual(cm.exception.resource_id, "resource")
+        self.assertEqual(cm.exception.role, "NotPcmkRole")
+
+    def test_invalid_target_role(self):
+        replica_xml = etree.fromstring(
+            fixture_replica_xml(
+                member=fixture_primitive_xml(target_role="NotPcmkRole")
+            )
+        )
+
+        with self.assertRaises(status.UnknownPcmkRoleError) as cm:
+            status._replica_to_dto(
+                replica_xml, self.bundle_id, self.bundle_type
+            )
+        self.assertEqual(cm.exception.resource_id, "resource")
+        self.assertEqual(cm.exception.role, "NotPcmkRole")
 
     def test_no_container(self):
         replica_xml = etree.fromstring(
@@ -1108,44 +1118,28 @@ class TestBundleReplicaStatusToDto(TestCase):
           """
         )
 
-        bundle_id = "resource-bundle"
-        bundle_type = "podman"
-        assert_raise_library_error(
-            lambda: status._replica_to_dto(
-                self.report_processor, replica_xml, bundle_id, bundle_type
+        with self.assertRaises(
+            status.BundleReplicaMissingImplicitResourceError
+        ) as cm:
+            status._replica_to_dto(
+                replica_xml, self.bundle_id, self.bundle_type
             )
-        )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list,
-            [
-                fixture.error(
-                    reports.codes.CLUSTER_STATUS_BUNDLE_REPLICA_NO_CONTAINER,
-                    bundle_id=bundle_id,
-                    replica_id="0",
-                )
-            ],
-        )
+        self.assertEqual(cm.exception.resource_id, self.bundle_id)
+        self.assertEqual(cm.exception.replica_id, "0")
+        self.assertEqual(cm.exception.implicit_type, "container")
 
     def test_empty_replica(self):
         replica_xml = etree.fromstring('<replica id="0" />')
 
-        bundle_id = "resource-bundle"
-        bundle_type = "podman"
-        assert_raise_library_error(
-            lambda: status._replica_to_dto(
-                self.report_processor, replica_xml, bundle_id, bundle_type
+        with self.assertRaises(
+            status.BundleReplicaMissingImplicitResourceError
+        ) as cm:
+            status._replica_to_dto(
+                replica_xml, self.bundle_id, self.bundle_type
             )
-        )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list,
-            [
-                fixture.error(
-                    reports.codes.CLUSTER_STATUS_BUNDLE_REPLICA_NO_CONTAINER,
-                    bundle_id=bundle_id,
-                    replica_id="0",
-                )
-            ],
-        )
+        self.assertEqual(cm.exception.resource_id, self.bundle_id)
+        self.assertEqual(cm.exception.replica_id, "0")
+        self.assertEqual(cm.exception.implicit_type, "container")
 
     def test_member_no_remote(self):
         replica_xml = etree.fromstring(
@@ -1159,23 +1153,15 @@ class TestBundleReplicaStatusToDto(TestCase):
             """
         )
 
-        bundle_id = "resource-bundle"
-        bundle_type = "podman"
-        assert_raise_library_error(
-            lambda: status._replica_to_dto(
-                self.report_processor, replica_xml, bundle_id, bundle_type
+        with self.assertRaises(
+            status.BundleReplicaMissingImplicitResourceError
+        ) as cm:
+            status._replica_to_dto(
+                replica_xml, self.bundle_id, self.bundle_type
             )
-        )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list,
-            [
-                fixture.error(
-                    reports.codes.CLUSTER_STATUS_BUNDLE_REPLICA_MISSING_REMOTE,
-                    bundle_id=bundle_id,
-                    replica_id="0",
-                )
-            ],
-        )
+        self.assertEqual(cm.exception.resource_id, self.bundle_id)
+        self.assertEqual(cm.exception.replica_id, "0")
+        self.assertEqual(cm.exception.implicit_type, "remote")
 
     def test_member_same_id_as_container(self):
         # xml taken from crm_mon output
@@ -1198,22 +1184,14 @@ class TestBundleReplicaStatusToDto(TestCase):
             </replica>
             """
         )
-        bundle_id = "resource-bundle"
-        bundle_type = "podman"
-        result = status._replica_to_dto(
-            self.report_processor, replica_xml, bundle_id, bundle_type
-        )
-        self.assertTrue(result is None)
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list,
-            [
-                fixture.warn(
-                    reports.codes.CLUSTER_STATUS_BUNDLE_MEMBER_ID_AS_IMPLICIT,
-                    bundle_id=bundle_id,
-                    bad_ids=["resource-bundle-podman-0"],
-                )
-            ],
-        )
+        with self.assertRaises(
+            status.BundleSameIdAsImplicitResourceError
+        ) as cm:
+            status._replica_to_dto(
+                replica_xml, self.bundle_id, self.bundle_type
+            )
+        self.assertEqual(cm.exception.bundle_id, self.bundle_id)
+        self.assertEqual(cm.exception.bad_ids, ["resource-bundle-podman-0"])
 
     def test_member_same_id_as_remote(self):
         # xml taken from crm_mon output
@@ -1233,22 +1211,14 @@ class TestBundleReplicaStatusToDto(TestCase):
             </replica>
             """
         )
-        bundle_id = "resource-bundle"
-        bundle_type = "podman"
-        result = status._replica_to_dto(
-            self.report_processor, replica_xml, bundle_id, bundle_type
-        )
-        self.assertTrue(result is None)
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list,
-            [
-                fixture.warn(
-                    reports.codes.CLUSTER_STATUS_BUNDLE_MEMBER_ID_AS_IMPLICIT,
-                    bundle_id=bundle_id,
-                    bad_ids=["resource-bundle-0"],
-                )
-            ],
-        )
+        with self.assertRaises(
+            status.BundleSameIdAsImplicitResourceError
+        ) as cm:
+            status._replica_to_dto(
+                replica_xml, self.bundle_id, self.bundle_type
+            )
+        self.assertEqual(cm.exception.bundle_id, self.bundle_id)
+        self.assertEqual(cm.exception.bad_ids, ["resource-bundle-0"])
 
     def test_member_same_id_as_ip(self):
         # xml taken from crm_mon output
@@ -1271,22 +1241,15 @@ class TestBundleReplicaStatusToDto(TestCase):
             </replica>
             """
         )
-        bundle_id = "resource-bundle"
-        bundle_type = "podman"
-
-        result = status._replica_to_dto(
-            self.report_processor, replica_xml, bundle_id, bundle_type
-        )
-        self.assertTrue(result is None)
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list,
-            [
-                fixture.warn(
-                    reports.codes.CLUSTER_STATUS_BUNDLE_MEMBER_ID_AS_IMPLICIT,
-                    bundle_id=bundle_id,
-                    bad_ids=["resource-bundle-ip-192.168.122.250"],
-                )
-            ],
+        with self.assertRaises(
+            status.BundleSameIdAsImplicitResourceError
+        ) as cm:
+            status._replica_to_dto(
+                replica_xml, self.bundle_id, self.bundle_type
+            )
+        self.assertEqual(cm.exception.bundle_id, self.bundle_id)
+        self.assertEqual(
+            cm.exception.bad_ids, ["resource-bundle-ip-192.168.122.250"]
         )
 
     def test_too_many_members(self):
@@ -1312,41 +1275,26 @@ class TestBundleReplicaStatusToDto(TestCase):
             """
         )
 
-        bundle_id = "resource-bundle"
-        bundle_type = "podman"
-        assert_raise_library_error(
-            lambda: status._replica_to_dto(
-                self.report_processor, replica_xml, bundle_id, bundle_type
+        with self.assertRaises(
+            status.BundleReplicaInvalidMemberCountError
+        ) as cm:
+            status._replica_to_dto(
+                replica_xml, self.bundle_id, self.bundle_type
             )
-        )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list,
-            [
-                fixture.error(
-                    reports.codes.CLUSTER_STATUS_BUNDLE_REPLICA_INVALID_COUNT,
-                    bundle_id=bundle_id,
-                    replica_id="0",
-                )
-            ],
-        )
+        self.assertEqual(cm.exception.resource_id, self.bundle_id)
+        self.assertEqual(cm.exception.replica_id, "0")
 
 
 class TestBundleStatusToDto(TestCase):
     # pylint: disable=protected-access
-    def setUp(self):
-        self.report_processor = MockLibraryReportProcessor()
-
     def test_no_member(self):
         bundle_xml = etree.fromstring(
             fixture_bundle_xml(replicas=[fixture_replica_xml()])
         )
 
-        result = status._bundle_to_dto(self.report_processor, bundle_xml, False)
+        result = status._bundle_to_dto(bundle_xml, False)
         self.assertEqual(
             result, fixture_bundle_dto(replicas=[fixture_replica_dto()])
-        )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list, []
         )
 
     def test_member(self):
@@ -1362,7 +1310,7 @@ class TestBundleStatusToDto(TestCase):
                 ]
             )
         )
-        result = status._bundle_to_dto(self.report_processor, bundle_xml, False)
+        result = status._bundle_to_dto(bundle_xml, False)
         self.assertEqual(
             result,
             fixture_bundle_dto(
@@ -1375,9 +1323,6 @@ class TestBundleStatusToDto(TestCase):
                     )
                 ]
             ),
-        )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list, []
         )
 
     def test_multiple_replicas(self):
@@ -1401,7 +1346,7 @@ class TestBundleStatusToDto(TestCase):
                 ]
             )
         )
-        result = status._bundle_to_dto(self.report_processor, bundle_xml, False)
+        result = status._bundle_to_dto(bundle_xml, False)
         self.assertEqual(
             result,
             fixture_bundle_dto(
@@ -1422,9 +1367,6 @@ class TestBundleStatusToDto(TestCase):
                     ),
                 ]
             ),
-        )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list, []
         )
 
     def test_same_id_as_implicit(self):
@@ -1447,18 +1389,13 @@ class TestBundleStatusToDto(TestCase):
             </bundle>
             """
         )
-        result = status._bundle_to_dto(self.report_processor, bundle_xml, False)
-        self.assertTrue(result is None)
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list,
-            [
-                fixture.warn(
-                    reports.codes.CLUSTER_STATUS_BUNDLE_MEMBER_ID_AS_IMPLICIT,
-                    bundle_id="resource-bundle",
-                    bad_ids=["resource-bundle-0"],
-                )
-            ],
-        )
+
+        with self.assertRaises(
+            status.BundleSameIdAsImplicitResourceError
+        ) as cm:
+            status._bundle_to_dto(bundle_xml, False)
+        self.assertEqual(cm.exception.bundle_id, "resource-bundle")
+        self.assertEqual(cm.exception.bad_ids, ["resource-bundle-0"])
 
     def test_same_id_as_implicit_multiple_replicas(self):
         bundle_xml = etree.fromstring(
@@ -1491,18 +1428,12 @@ class TestBundleStatusToDto(TestCase):
             </bundle>
             """
         )
-        result = status._bundle_to_dto(self.report_processor, bundle_xml, False)
-        self.assertTrue(result is None)
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list,
-            [
-                fixture.warn(
-                    reports.codes.CLUSTER_STATUS_BUNDLE_MEMBER_ID_AS_IMPLICIT,
-                    bundle_id="resource-bundle",
-                    bad_ids=["resource-bundle-1"],
-                )
-            ],
-        )
+        with self.assertRaises(
+            status.BundleSameIdAsImplicitResourceError
+        ) as cm:
+            status._bundle_to_dto(bundle_xml, False)
+        self.assertEqual(cm.exception.bundle_id, "resource-bundle")
+        self.assertEqual(cm.exception.bad_ids, ["resource-bundle-1"])
 
     def test_replicas_different(self):
         replicas = {
@@ -1522,8 +1453,6 @@ class TestBundleStatusToDto(TestCase):
         }
         for name, element in replicas.items():
             with self.subTest(value=name):
-                self.setUp()
-
                 bundle_xml = etree.fromstring(
                     fixture_bundle_xml(
                         replicas=[
@@ -1537,47 +1466,29 @@ class TestBundleStatusToDto(TestCase):
                     )
                 )
 
-                # pylint: disable=cell-var-from-loop
-                assert_raise_library_error(
-                    lambda: status._bundle_to_dto(
-                        self.report_processor, bundle_xml
-                    )
-                )
-
-                assert_report_item_list_equal(
-                    self.report_processor.report_item_list,
-                    [
-                        fixture.error(
-                            reports.codes.CLUSTER_STATUS_BUNDLE_DIFFERENT_REPLICAS,
-                            bundle_id="resource-bundle",
-                        )
-                    ],
-                )
+                with self.assertRaises(status.BundleDifferentReplicas) as cm:
+                    status._bundle_to_dto(bundle_xml)
+                self.assertEqual(cm.exception.resource_id, "resource-bundle")
 
 
 class TestResourcesStatusToDto(TestCase):
-    def setUp(self):
-        self.report_processor = MockLibraryReportProcessor()
-
     def test_empty_resources(self):
         status_xml = etree.fromstring(fixture_crm_mon_xml([]))
 
-        result = status.status_xml_to_dto(self.report_processor, status_xml)
+        parser = status.ClusterStatusParser(status_xml)
+        result = parser.status_xml_to_dto()
         self.assertEqual(result, ResourcesStatusDto([]))
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list, []
-        )
+        assert_report_item_list_equal(parser.get_warnings(), [])
 
     def test_single_primitive(self):
         status_xml = etree.fromstring(
             fixture_crm_mon_xml([fixture_primitive_xml()])
         )
 
-        result = status.status_xml_to_dto(self.report_processor, status_xml)
+        parser = status.ClusterStatusParser(status_xml)
+        result = parser.status_xml_to_dto()
         self.assertEqual(result, ResourcesStatusDto([fixture_primitive_dto()]))
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list, []
-        )
+        assert_report_item_list_equal(parser.get_warnings(), [])
 
     def test_single_group(self):
         status_xml = etree.fromstring(
@@ -1586,16 +1497,15 @@ class TestResourcesStatusToDto(TestCase):
             )
         )
 
-        result = status.status_xml_to_dto(self.report_processor, status_xml)
+        parser = status.ClusterStatusParser(status_xml)
+        result = parser.status_xml_to_dto()
         self.assertEqual(
             result,
             ResourcesStatusDto(
                 [fixture_group_dto(members=[fixture_primitive_dto()])]
             ),
         )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list, []
-        )
+        assert_report_item_list_equal(parser.get_warnings(), [])
 
     def test_single_clone(self):
         status_xml = etree.fromstring(
@@ -1604,16 +1514,15 @@ class TestResourcesStatusToDto(TestCase):
             )
         )
 
-        result = status.status_xml_to_dto(self.report_processor, status_xml)
+        parser = status.ClusterStatusParser(status_xml)
+        result = parser.status_xml_to_dto()
         self.assertEqual(
             result,
             ResourcesStatusDto(
                 [fixture_clone_dto(instances=[fixture_primitive_dto()])]
             ),
         )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list, []
-        )
+        assert_report_item_list_equal(parser.get_warnings(), [])
 
     def test_single_bundle(self):
         status_xml = etree.fromstring(
@@ -1633,7 +1542,8 @@ class TestResourcesStatusToDto(TestCase):
             )
         )
 
-        result = status.status_xml_to_dto(self.report_processor, status_xml)
+        parser = status.ClusterStatusParser(status_xml)
+        result = parser.status_xml_to_dto()
         self.assertEqual(
             result,
             ResourcesStatusDto(
@@ -1651,9 +1561,7 @@ class TestResourcesStatusToDto(TestCase):
                 ]
             ),
         )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list, []
-        )
+        assert_report_item_list_equal(parser.get_warnings(), [])
 
     def test_all_resource_types(self):
         status_xml = etree.fromstring(
@@ -1675,30 +1583,30 @@ class TestResourcesStatusToDto(TestCase):
                 ]
             )
         )
-        result = status.status_xml_to_dto(self.report_processor, status_xml)
+        parser = status.ClusterStatusParser(status_xml)
+        result = parser.status_xml_to_dto()
 
-        self.assertEqual(result.resources[0], fixture_primitive_dto())
         self.assertEqual(
-            result.resources[1],
-            fixture_group_dto(members=[fixture_primitive_dto()]),
-        )
-        self.assertEqual(
-            result.resources[2],
-            fixture_clone_dto(instances=[fixture_primitive_dto()]),
-        )
-        self.assertEqual(
-            result.resources[3],
-            fixture_bundle_dto(
-                replicas=[
-                    fixture_replica_dto(
-                        ip=True,
-                        member=fixture_primitive_dto(
-                            node_names=["resource-bundle-0"]
-                        ),
-                    )
+            result,
+            ResourcesStatusDto(
+                [
+                    fixture_primitive_dto(),
+                    fixture_group_dto(members=[fixture_primitive_dto()]),
+                    fixture_clone_dto(instances=[fixture_primitive_dto()]),
+                    fixture_bundle_dto(
+                        replicas=[
+                            fixture_replica_dto(
+                                ip=True,
+                                member=fixture_primitive_dto(
+                                    node_names=["resource-bundle-0"]
+                                ),
+                            )
+                        ]
+                    ),
                 ]
             ),
         )
+        assert_report_item_list_equal(parser.get_warnings(), [])
 
     def test_skip_bundle(self):
         status_xml = etree.fromstring(
@@ -1726,11 +1634,12 @@ class TestResourcesStatusToDto(TestCase):
             )
         )
 
-        result = status.status_xml_to_dto(self.report_processor, status_xml)
+        parser = status.ClusterStatusParser(status_xml)
+        result = parser.status_xml_to_dto()
 
         self.assertEqual(result, ResourcesStatusDto([fixture_primitive_dto()]))
         assert_report_item_list_equal(
-            self.report_processor.report_item_list,
+            parser.get_warnings(),
             [
                 fixture.warn(
                     reports.codes.CLUSTER_STATUS_BUNDLE_MEMBER_ID_AS_IMPLICIT,
