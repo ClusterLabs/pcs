@@ -105,7 +105,7 @@ class StatusNodesMixin:
 @patch_lib("_validate_level_target_devices_does_not_exist", return_value=[])
 @patch_lib("_validate_devices", return_value=[])
 @patch_lib("_validate_target", return_value=[])
-@patch_lib("_validate_level", return_value=([], "valid_level"))
+@patch_lib("_validate_level", return_value=[])
 class AddLevel(TestCase):
     # pylint: disable=too-many-instance-attributes
     def setUp(self):
@@ -193,6 +193,7 @@ class AddLevel(TestCase):
         mock_val_dupl,
         mock_append,
     ):
+        self.level = 1
         lib.add_level(
             self.reporter,
             self.topology_el,
@@ -210,7 +211,7 @@ class AddLevel(TestCase):
         )
         mock_append.assert_called_once_with(
             self.topology_el,
-            "valid_level",
+            self.level,
             self.target_type,
             self.target_value,
             self.devices,
@@ -224,22 +225,17 @@ class AddLevel(TestCase):
         mock_val_dupl,
         mock_append,
     ):
-        mock_val_level.return_value = (
-            [
-                reports.item.ReportItem.error(
-                    reports.messages.InvalidOptionValue(
-                        "level", self.level, "a positive integer"
-                    )
-                )
-            ],
-            None,
-        )
+        mock_val_level.return_value = [
+            reports.item.ReportItem.error(
+                reports.messages.InvalidOptionValue("level", self.level, "1..9")
+            )
+        ]
         report_list = [
             fixture.error(
                 report_codes.INVALID_OPTION_VALUE,
                 option_value=self.level,
                 option_name="level",
-                allowed_values="a positive integer",
+                allowed_values="1..9",
                 cannot_be_empty=False,
                 forbidden_characters=None,
             ),
@@ -746,25 +742,17 @@ class Verify(TestCase, CibMixin, StatusNodesMixin):
 
 class ValidateLevel(TestCase):
     def test_success(self):
-        level_list = [
-            (1, 1),
-            ("1", 1),
-            (9, 9),
-            ("9", 9),
-            ("05", 5),
-        ]
-        for level_in, level_out in level_list:
-            with self.subTest(level=level_in):
-                report_list, valid_level = lib._validate_level(level_in)
-                self.assertEqual(level_out, valid_level)
+        level_list = [1, "1", 9, "9", "05"]
+        for level in level_list:
+            with self.subTest(level=level):
+                report_list = lib._validate_level(level)
                 assert_report_item_list_equal(report_list, [])
 
     def test_invalid(self):
-        level_list = ["", 0, "0", -1, "-1", "1abc"]
+        level_list = ["", 0, "0", -1, "-1", "1abc", "10"]
         for level in level_list:
             with self.subTest(level=level):
-                report_list, valid_level = lib._validate_level(level)
-                self.assertEqual(None, valid_level)
+                report_list = lib._validate_level(level)
                 assert_report_item_list_equal(
                     report_list,
                     [
@@ -772,7 +760,7 @@ class ValidateLevel(TestCase):
                             report_codes.INVALID_OPTION_VALUE,
                             option_value=level,
                             option_name="level",
-                            allowed_values="a positive integer",
+                            allowed_values="1..9",
                             cannot_be_empty=False,
                             forbidden_characters=None,
                         ),

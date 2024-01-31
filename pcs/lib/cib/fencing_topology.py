@@ -2,7 +2,6 @@ from typing import (
     Optional,
     Sequence,
     Set,
-    Tuple,
 )
 
 from lxml import etree
@@ -23,6 +22,7 @@ from pcs.common.reports import codes as report_codes
 from pcs.common.reports import has_errors
 from pcs.common.reports.item import ReportItem
 from pcs.common.types import StringCollection
+from pcs.common.validate import is_integer
 from pcs.lib.cib.resource.stonith import is_stonith_resource
 from pcs.lib.cib.tools import find_unique_id
 from pcs.lib.errors import LibraryError
@@ -60,9 +60,8 @@ def add_level(
     bool force_node -- continue even if a node (target) does not exist
     """
     # pylint: disable=too-many-arguments
-    report_list, valid_level = _validate_level(level)
     reporter.report_list(
-        report_list
+        _validate_level(level)
         + _validate_target(
             cluster_status_nodes, target_type, target_value, force_node
         )
@@ -78,7 +77,7 @@ def add_level(
     if reporter.has_errors:
         raise LibraryError()
     _append_level_element(
-        topology_el, valid_level, target_type, target_value, devices
+        topology_el, int(level), target_type, target_value, devices
     )
 
 
@@ -262,22 +261,15 @@ def verify(
     return report_list
 
 
-def _validate_level(level) -> Tuple[ReportItemList, Optional[int]]:
+def _validate_level(level) -> ReportItemList:
     report_list: ReportItemList = []
-    try:
-        candidate = int(level)
-        if candidate > 0:
-            return report_list, candidate
-    except ValueError:
-        pass
-    report_list.append(
-        ReportItem.error(
-            reports.messages.InvalidOptionValue(
-                "level", level, "a positive integer"
+    if not is_integer(level, 1, 9):
+        report_list.append(
+            ReportItem.error(
+                reports.messages.InvalidOptionValue("level", level, "1..9")
             )
         )
-    )
-    return report_list, None
+    return report_list
 
 
 def _validate_target(

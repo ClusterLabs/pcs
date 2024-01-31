@@ -2227,36 +2227,36 @@ class LevelAdd(LevelTestsBase):
         self.assert_pcs_fail(
             "stonith level add NaN rh7-1 F1".split(),
             (
-                "Error: 'NaN' is not a valid level value, use a positive "
-                "integer\n" + ERRORS_HAVE_OCCURRED
+                "Error: 'NaN' is not a valid level value, use 1..9\n"
+                + ERRORS_HAVE_OCCURRED
             ),
         )
         self.assert_pcs_fail(
             "-- stonith level add -10 rh7-1 F1".split(),
             (
-                "Error: '-10' is not a valid level value, use a positive "
-                "integer\n" + ERRORS_HAVE_OCCURRED
+                "Error: '-10' is not a valid level value, use 1..9\n"
+                + ERRORS_HAVE_OCCURRED
             ),
         )
         self.assert_pcs_fail(
             "stonith level add 10abc rh7-1 F1".split(),
             (
-                "Error: '10abc' is not a valid level value, use a positive "
-                "integer\n" + ERRORS_HAVE_OCCURRED
+                "Error: '10abc' is not a valid level value, use 1..9\n"
+                + ERRORS_HAVE_OCCURRED
             ),
         )
         self.assert_pcs_fail(
             "stonith level add 0 rh7-1 F1".split(),
             (
-                "Error: '0' is not a valid level value, use a positive "
-                "integer\n" + ERRORS_HAVE_OCCURRED
+                "Error: '0' is not a valid level value, use 1..9\n"
+                + ERRORS_HAVE_OCCURRED
             ),
         )
         self.assert_pcs_fail(
             "stonith level add 000 rh7-1 F1".split(),
             (
-                "Error: '000' is not a valid level value, use a positive "
-                "integer\n" + ERRORS_HAVE_OCCURRED
+                "Error: '000' is not a valid level value, use 1..9\n"
+                + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -2273,7 +2273,7 @@ class LevelAdd(LevelTestsBase):
         self.assert_pcs_fail(
             "stonith level add x rh7-X F0 dev@ce".split(),
             (
-                "Error: 'x' is not a valid level value, use a positive integer\n"
+                "Error: 'x' is not a valid level value, use 1..9\n"
                 "Error: Node 'rh7-X' does not appear to exist in configuration, "
                 "use --force to override\n"
                 "Error: invalid device id 'dev@ce', '@' is not a valid character "
@@ -2286,7 +2286,7 @@ class LevelAdd(LevelTestsBase):
         self.assert_pcs_fail(
             "stonith level add x rh7-X F0 dev@ce --force".split(),
             (
-                "Error: 'x' is not a valid level value, use a positive integer\n"
+                "Error: 'x' is not a valid level value, use 1..9\n"
                 "Warning: Node 'rh7-X' does not appear to exist in configuration\n"
                 "Error: invalid device id 'dev@ce', '@' is not a valid character "
                 "for a device id\n"
