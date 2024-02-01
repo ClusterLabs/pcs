@@ -12,6 +12,7 @@ from pcs.common import reports
 from pcs.common.const import (
     PCMK_ROLE_STARTED,
     PCMK_ROLES,
+    PCMK_STATUS_ROLE_PROMOTED,
     PCMK_STATUS_ROLE_STARTED,
     PCMK_STATUS_ROLE_STOPPED,
     PCMK_STATUS_ROLE_UNPROMOTED,
@@ -334,8 +335,8 @@ class TestParsingErrorToReport(TestCase):
         assert_report_item_equal(
             report,
             fixture.error(
-                reports.codes.BAD_CLUSTER_STATE,
-                reason="Resource with empty id.",
+                reports.codes.BAD_CLUSTER_STATE_DATA,
+                reason="Resource with an empty id",
             ),
         )
 
@@ -346,8 +347,8 @@ class TestParsingErrorToReport(TestCase):
         assert_report_item_equal(
             report,
             fixture.error(
-                reports.codes.BAD_CLUSTER_STATE,
-                reason="Resource with id 'resource' contains node with empty name.",
+                reports.codes.BAD_CLUSTER_STATE_DATA,
+                reason="Resource 'resource' contains a node with an empty name",
             ),
         )
 
@@ -358,25 +359,25 @@ class TestParsingErrorToReport(TestCase):
         assert_report_item_equal(
             report,
             fixture.error(
-                reports.codes.BAD_CLUSTER_STATE,
-                reason="Resource with id 'resource' contains unknown pcmk role 'NotPcmkRole'.",
+                reports.codes.BAD_CLUSTER_STATE_DATA,
+                reason="Resource 'resource' contains an unknown role 'NotPcmkRole'",
             ),
         )
 
     def test_unexpected_member_group(self):
         report = status.cluster_status_parsing_error_to_report(
             status.UnexpectedMemberError(
-                "resource", "group", "member", ["primitive"]
+                "resource", "group", "member", "bundle", ["primitive"]
             )
         )
         assert_report_item_equal(
             report,
             fixture.error(
-                reports.codes.BAD_CLUSTER_STATE,
+                reports.codes.BAD_CLUSTER_STATE_DATA,
                 reason=(
-                    "Unexpected resource 'member' inside of resource "
-                    "'resource' of type 'group'. Only resources of type "
-                    "'primitive' can be in group."
+                    "Unexpected resource 'member' of type 'bundle' inside of "
+                    "resource 'resource' of type 'group'. Only resources of "
+                    "type 'primitive' can be in a group"
                 ),
             ),
         )
@@ -384,17 +385,17 @@ class TestParsingErrorToReport(TestCase):
     def test_unexpected_member_clone(self):
         report = status.cluster_status_parsing_error_to_report(
             status.UnexpectedMemberError(
-                "resource", "clone", "member", ["primitive", "group"]
+                "resource", "clone", "member", "bundle", ["primitive", "group"]
             )
         )
         assert_report_item_equal(
             report,
             fixture.error(
-                reports.codes.BAD_CLUSTER_STATE,
+                reports.codes.BAD_CLUSTER_STATE_DATA,
                 reason=(
-                    "Unexpected resource 'member' inside of resource "
-                    "'resource' of type 'clone'. Only resources of type "
-                    "'group'|'primitive' can be in clone."
+                    "Unexpected resource 'member' of type 'bundle' inside of "
+                    "resource 'resource' of type 'clone'. Only resources of "
+                    "type 'group', 'primitive' can be in a clone"
                 ),
             ),
         )
@@ -406,8 +407,8 @@ class TestParsingErrorToReport(TestCase):
         assert_report_item_equal(
             report,
             fixture.error(
-                reports.codes.BAD_CLUSTER_STATE,
-                reason="Primitive and group members mixed in clone 'resource'.",
+                reports.codes.BAD_CLUSTER_STATE_DATA,
+                reason="Primitive and group members mixed in clone 'resource'",
             ),
         )
 
@@ -418,8 +419,8 @@ class TestParsingErrorToReport(TestCase):
         assert_report_item_equal(
             report,
             fixture.error(
-                reports.codes.BAD_CLUSTER_STATE,
-                reason="Members with different ids in resource 'resource'.",
+                reports.codes.BAD_CLUSTER_STATE_DATA,
+                reason="Members with different ids in clone 'resource'",
             ),
         )
 
@@ -432,8 +433,8 @@ class TestParsingErrorToReport(TestCase):
         assert_report_item_equal(
             report,
             fixture.error(
-                reports.codes.BAD_CLUSTER_STATE,
-                reason="Replica '0' of bundle 'resource' is missing implicit container resource.",
+                reports.codes.BAD_CLUSTER_STATE_DATA,
+                reason="Replica '0' of bundle 'resource' is missing implicit container resource",
             ),
         )
 
@@ -444,8 +445,8 @@ class TestParsingErrorToReport(TestCase):
         assert_report_item_equal(
             report,
             fixture.error(
-                reports.codes.BAD_CLUSTER_STATE,
-                reason="Replica '0' of bundle 'resource' has invalid number of members.",
+                reports.codes.BAD_CLUSTER_STATE_DATA,
+                reason="Replica '0' of bundle 'resource' has invalid number of members",
             ),
         )
 
@@ -456,8 +457,8 @@ class TestParsingErrorToReport(TestCase):
         assert_report_item_equal(
             report,
             fixture.error(
-                reports.codes.BAD_CLUSTER_STATE,
-                reason="Replicas of bundle 'resource' are not the same.",
+                reports.codes.BAD_CLUSTER_STATE_DATA,
+                reason="Replicas of bundle 'resource' are not the same",
             ),
         )
 
@@ -549,6 +550,7 @@ class TestPrimitiveStatusToDto(TestCase):
         with self.assertRaises(status.UnknownPcmkRoleError) as cm:
             status._primitive_to_dto(primitive_xml)
         self.assertEqual(cm.exception.resource_id, "resource")
+        self.assertEqual(cm.exception.role, "NotPcmkRole")
 
     def test_target_role(self):
         for role in PCMK_ROLES:
@@ -573,6 +575,7 @@ class TestPrimitiveStatusToDto(TestCase):
                 with self.assertRaises(status.UnknownPcmkRoleError) as cm:
                     status._primitive_to_dto(primitive_xml)
                 self.assertEqual(cm.exception.resource_id, "resource")
+                self.assertEqual(cm.exception.role, value)
 
 
 class TestGroupStatusToDto(TestCase):
@@ -695,7 +698,11 @@ class TestGroupStatusToDto(TestCase):
                 with self.assertRaises(status.UnexpectedMemberError) as cm:
                     status._group_to_dto(group_xml)
                 self.assertEqual(cm.exception.resource_id, "outer-group")
+                self.assertEqual(cm.exception.resource_type, "group")
                 self.assertEqual(cm.exception.member_id, resource_id)
+                self.assertEqual(
+                    cm.exception.member_type, resource_id.split("-")[1]
+                )
                 self.assertEqual(cm.exception.expected_types, ["primitive"])
 
     def test_remove_clone_suffix(self):
@@ -796,7 +803,7 @@ class TestCloneStatusToDto(TestCase):
             fixture_clone_xml(
                 multi_state=True,
                 instances=[
-                    fixture_primitive_xml(role=PCMK_STATUS_ROLE_UNPROMOTED),
+                    fixture_primitive_xml(role=PCMK_STATUS_ROLE_PROMOTED),
                     fixture_primitive_xml(
                         role=PCMK_STATUS_ROLE_UNPROMOTED, node_names=["node2"]
                     ),
@@ -810,7 +817,7 @@ class TestCloneStatusToDto(TestCase):
             fixture_clone_dto(
                 multi_state=True,
                 instances=[
-                    fixture_primitive_dto(role=PCMK_STATUS_ROLE_UNPROMOTED),
+                    fixture_primitive_dto(role=PCMK_STATUS_ROLE_PROMOTED),
                     fixture_primitive_dto(
                         role=PCMK_STATUS_ROLE_UNPROMOTED, node_names=["node2"]
                     ),
@@ -1003,9 +1010,12 @@ class TestCloneStatusToDto(TestCase):
 
                 with self.assertRaises(status.UnexpectedMemberError) as cm:
                     status._clone_to_dto(clone_xml)
-
                 self.assertEqual(cm.exception.resource_id, "outer-clone")
+                self.assertEqual(cm.exception.resource_type, "clone")
                 self.assertEqual(cm.exception.member_id, resource_id)
+                self.assertEqual(
+                    cm.exception.member_type, resource_id.split("-")[1]
+                )
                 self.assertEqual(
                     cm.exception.expected_types, ["primitive", "group"]
                 )

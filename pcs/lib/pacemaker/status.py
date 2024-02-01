@@ -2,7 +2,6 @@ from collections import Counter
 from typing import (
     Optional,
     Sequence,
-    Union,
     cast,
 )
 
@@ -60,11 +59,13 @@ class UnexpectedMemberError(ClusterStatusParsingError):
         resource_id: str,
         resource_type: str,
         member_id: str,
+        member_type: str,
         expected_types: list[str],
     ):
         super().__init__(resource_id)
         self.resource_type = resource_type
         self.member_id = member_id
+        self.member_type = member_type
         self.expected_types = expected_types
 
 
@@ -106,46 +107,44 @@ def cluster_status_parsing_error_to_report(
 ) -> reports.ReportItem:
     reason = ""
     if isinstance(e, EmptyResourceIdError):
-        reason = "Resource with empty id."
+        reason = "Resource with an empty id"
     elif isinstance(e, EmptyNodeNameError):
         reason = (
-            f"Resource with id '{e.resource_id}' contains node with empty name."
+            f"Resource '{e.resource_id}' contains a node with an empty name"
         )
     elif isinstance(e, UnknownPcmkRoleError):
         reason = (
-            f"Resource with id '{e.resource_id}' contains unknown "
-            f"pcmk role '{e.role}'."
+            f"Resource '{e.resource_id}' contains an unknown "
+            f"role '{e.role}'"
         )
     elif isinstance(e, UnexpectedMemberError):
         reason = (
-            f"Unexpected resource '{e.member_id}' inside of resource "
-            f"'{e.resource_id}' of type '{e.resource_type}'. "
-            f"Only resources of type {format_list(e.expected_types, '|')} "
-            f"can be in {e.resource_type}."
+            f"Unexpected resource '{e.member_id}' of type '{e.member_type}' "
+            f"inside of resource '{e.resource_id}' of type '{e.resource_type}'."
+            f" Only resources of type {format_list(e.expected_types)} "
+            f"can be in a {e.resource_type}"
         )
 
     elif isinstance(e, MixedMembersError):
-        reason = (
-            f"Primitive and group members mixed in clone '{e.resource_id}'."
-        )
+        reason = f"Primitive and group members mixed in clone '{e.resource_id}'"
     elif isinstance(e, DifferentMemberIdsError):
-        reason = f"Members with different ids in resource '{e.resource_id}'."
+        reason = f"Members with different ids in clone '{e.resource_id}'"
     elif isinstance(e, BundleReplicaMissingImplicitResourceError):
         reason = (
             f"Replica '{e.replica_id}' of bundle '{e.resource_id}' "
-            f"is missing implicit {e.implicit_type} resource."
+            f"is missing implicit {e.implicit_type} resource"
         )
     elif isinstance(e, BundleReplicaInvalidMemberCountError):
         reason = (
             f"Replica '{e.replica_id}' of bundle '{e.resource_id}' has "
-            "invalid number of members."
+            "invalid number of members"
         )
     elif isinstance(e, BundleDifferentReplicas):
-        reason = f"Replicas of bundle '{e.resource_id}' are not the same."
+        reason = f"Replicas of bundle '{e.resource_id}' are not the same"
 
     return reports.ReportItem(
         reports.ReportItemSeverity.error(),
-        reports.messages.BadClusterState(reason),
+        reports.messages.BadClusterStateData(reason),
     )
 
 
@@ -160,7 +159,7 @@ def _primitive_to_dto(
     target_role = _get_target_role(primitive_el)
 
     node_names = [
-        str(node.get("name")) for node in primitive_el.iterfind("node")
+        str(node.attrib["name"]) for node in primitive_el.iterfind("node")
     ]
 
     if node_names and any(not name for name in node_names):
@@ -168,7 +167,7 @@ def _primitive_to_dto(
 
     return PrimitiveStatusDto(
         resource_id,
-        str(primitive_el.get("resource_agent")),
+        str(primitive_el.attrib["resource_agent"]),
         role,
         target_role,
         is_true(primitive_el.get("active", "false")),
@@ -179,7 +178,7 @@ def _primitive_to_dto(
         is_true(primitive_el.get("failed", "false")),
         is_true(primitive_el.get("managed", "false")),
         is_true(primitive_el.get("failure_ignored", "false")),
-        [str(node.get("name")) for node in primitive_el.iterfind("node")],
+        node_names,
         primitive_el.get("pending"),
         primitive_el.get("locked_to"),
     )
@@ -197,7 +196,11 @@ def _group_to_dto(
             member_list.append(_primitive_to_dto(member, remove_clone_suffix))
         else:
             raise UnexpectedMemberError(
-                group_id, "group", str(member.get("id")), ["primitive"]
+                group_id,
+                "group",
+                str(member.attrib["id"]),
+                member.tag,
+                ["primitive"],
             )
 
     return GroupStatusDto(
@@ -228,28 +231,27 @@ def _clone_to_dto(
             group_list.append(_group_to_dto(member, is_unique))
         else:
             raise UnexpectedMemberError(
-                clone_id, "clone", str(member.get("id")), ["primitive", "group"]
+                clone_id,
+                "clone",
+                str(member.attrib["id"]),
+                member.tag,
+                ["primitive", "group"],
             )
 
     if primitive_list and group_list:
         raise MixedMembersError(clone_id)
 
-    instance_list: Union[list[PrimitiveStatusDto], list[GroupStatusDto]]
     if primitive_list:
         if len(set(res.resource_id for res in primitive_list)) > 1:
             raise DifferentMemberIdsError(clone_id)
-        instance_list = primitive_list
-    else:
+    if group_list:
         group_ids = set(group.resource_id for group in group_list)
         children_ids = set(
             tuple(child.resource_id for child in group.members)
             for group in group_list
         )
-
         if len(group_ids) > 1 or len(children_ids) > 1:
             raise DifferentMemberIdsError(clone_id)
-
-        instance_list = group_list
 
     return CloneStatusDto(
         clone_id,
@@ -262,7 +264,7 @@ def _clone_to_dto(
         is_true(clone_el.get("failed", "false")),
         is_true(clone_el.get("failure_ignored", "false")),
         target_role,
-        instance_list,
+        primitive_list or group_list,
     )
 
 
@@ -270,7 +272,7 @@ def _bundle_to_dto(
     bundle_el: _Element, _remove_clone_suffix: bool = False
 ) -> BundleStatusDto:
     bundle_id = _get_resource_id(bundle_el)
-    bundle_type = str(bundle_el.get("type"))
+    bundle_type = str(bundle_el.attrib["type"])
 
     replica_list = [
         _replica_to_dto(replica, bundle_id, bundle_type)
@@ -283,7 +285,7 @@ def _bundle_to_dto(
     return BundleStatusDto(
         bundle_id,
         bundle_type,
-        str(bundle_el.get("image")),
+        str(bundle_el.attrib["image"]),
         is_true(bundle_el.get("unique", "false")),
         is_true(bundle_el.get("maintenance", "false")),
         bundle_el.get("description"),
@@ -302,17 +304,18 @@ class ClusterStatusParser:
     }
 
     def __init__(self, status: _Element):
-        self.status = status
-        self.warnings: reports.ReportItemList = []
+        """
+        status -- xml element from crm_mon xml, validated using the appropriate
+            rng schema
+        """
+        self._status = status
+        self._warnings: reports.ReportItemList = []
 
     def status_xml_to_dto(self) -> ResourcesStatusDto:
         """
         Return dto containing status of configured resources in the cluster
-
-        status -- status xml document from crm_mon, validated using
-            the appropriate rng schema
         """
-        resource_list = cast(list[_Element], self.status.xpath("resources/*"))
+        resource_list = cast(list[_Element], self._status.xpath("resources/*"))
 
         resource_dto_list = []
         for resource in resource_list:
@@ -328,7 +331,7 @@ class ClusterStatusParser:
                 # the implicitly created resource.
                 # We only skip such bundles while still providing status of the
                 # other resources.
-                self.warnings.append(
+                self._warnings.append(
                     reports.ReportItem.warning(
                         reports.messages.ClusterStatusBundleMemberIdAsImplicit(
                             e.bundle_id, e.bad_ids
@@ -339,11 +342,11 @@ class ClusterStatusParser:
         return ResourcesStatusDto(resource_dto_list)
 
     def get_warnings(self) -> reports.ReportItemList:
-        return self.warnings
+        return self._warnings
 
 
 def _get_resource_id(resource: _Element) -> str:
-    resource_id = resource.get("id")
+    resource_id = resource.attrib["id"]
     if not resource_id:
         raise EmptyResourceIdError()
     return str(resource_id)
@@ -374,7 +377,7 @@ def _remove_clone_suffix(resource_id: str) -> str:
 def _replica_to_dto(
     replica_el: _Element, bundle_id: str, bundle_type: str
 ) -> BundleReplicaStatusDto:
-    replica_id = str(replica_el.get("id"))
+    replica_id = str(replica_el.attrib["id"])
 
     resource_list = [
         _primitive_to_dto(resource)

@@ -1342,8 +1342,8 @@ class ResourcesStatus(TestCase):
             lambda: status.resources_status(self.env_assist.get_env()),
             [
                 fixture.error(
-                    report_codes.BAD_CLUSTER_STATE,
-                    reason="Resource with id 'R7' contains unknown pcmk role 'NotPcmkRole'.",
+                    report_codes.BAD_CLUSTER_STATE_DATA,
+                    reason="Resource 'R7' contains an unknown role 'NotPcmkRole'",
                 ),
             ],
             False,

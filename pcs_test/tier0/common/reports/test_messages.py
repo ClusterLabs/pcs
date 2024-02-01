@@ -2195,23 +2195,23 @@ class BadClusterStateFormat(NameBuildTest):
         )
 
 
-class BadClusterState(NameBuildTest):
+class BadClusterStateData(NameBuildTest):
     def test_no_reason(self):
         self.assert_message_from_report(
             (
                 "Cannot load cluster status, xml does not describe "
-                "valid cluster status."
+                "valid cluster status"
             ),
-            reports.BadClusterState(),
+            reports.BadClusterStateData(),
         )
 
     def test_reason(self):
         self.assert_message_from_report(
             (
                 "Cannot load cluster status, xml does not describe "
-                "valid cluster status: sample reason."
+                "valid cluster status: sample reason"
             ),
-            reports.BadClusterState("sample reason"),
+            reports.BadClusterStateData("sample reason"),
         )
 
 
@@ -5843,7 +5843,7 @@ class ClusterStatusBundleMemberIdAsImplicit(NameBuildTest):
         self.assert_message_from_report(
             (
                 "Skipping bundle 'resource-bundle': resource 'resource' has "
-                "the same id as some of the implicit bundle resources."
+                "the same id as some of the implicit bundle resources"
             ),
             reports.ClusterStatusBundleMemberIdAsImplicit(
                 "resource-bundle", ["resource"]
@@ -5855,7 +5855,7 @@ class ClusterStatusBundleMemberIdAsImplicit(NameBuildTest):
             (
                 "Skipping bundle 'resource-bundle': resources 'resource-0', "
                 "'resource-1' have the same id as some of the implicit bundle "
-                "resources."
+                "resources"
             ),
             reports.ClusterStatusBundleMemberIdAsImplicit(
                 "resource-bundle", ["resource-0", "resource-1"]
