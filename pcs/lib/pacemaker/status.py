@@ -152,8 +152,9 @@ def _primitive_to_dto(
     primitive_el: _Element, remove_clone_suffix: bool = False
 ) -> PrimitiveStatusDto:
     resource_id = _get_resource_id(primitive_el)
+    clone_suffix = None
     if remove_clone_suffix:
-        resource_id = _remove_clone_suffix(resource_id)
+        resource_id, clone_suffix = _remove_clone_suffix(resource_id)
 
     role = _get_role(primitive_el)
     target_role = _get_target_role(primitive_el)
@@ -167,6 +168,7 @@ def _primitive_to_dto(
 
     return PrimitiveStatusDto(
         resource_id,
+        clone_suffix,
         str(primitive_el.attrib["resource_agent"]),
         role,
         target_role,
@@ -187,8 +189,11 @@ def _primitive_to_dto(
 def _group_to_dto(
     group_el: _Element, remove_clone_suffix: bool = False
 ) -> GroupStatusDto:
-    # clone suffix is added even when the clone is non unique
-    group_id = _remove_clone_suffix(_get_resource_id(group_el))
+    # clone instance id present even when the clone is non unique
+    group_id, clone_instance_id = _remove_clone_suffix(
+        _get_resource_id(group_el)
+    )
+
     member_list = []
 
     for member in group_el:
@@ -205,6 +210,7 @@ def _group_to_dto(
 
     return GroupStatusDto(
         group_id,
+        clone_instance_id,
         is_true(group_el.get("maintenance", "false")),
         group_el.get("description"),
         is_true(group_el.get("managed", "false")),
@@ -368,10 +374,11 @@ def _get_target_role(resource: _Element) -> Optional[PcmkRoleType]:
     return PcmkRoleType(target_role)
 
 
-def _remove_clone_suffix(resource_id: str) -> str:
+def _remove_clone_suffix(resource_id: str) -> tuple[str, Optional[str]]:
     if ":" in resource_id:
-        return resource_id.rsplit(":", 1)[0]
-    return resource_id
+        resource_id, clone_suffix = resource_id.rsplit(":", 1)
+        return resource_id, clone_suffix
+    return resource_id, None
 
 
 def _replica_to_dto(

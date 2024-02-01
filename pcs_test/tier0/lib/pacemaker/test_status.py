@@ -85,6 +85,7 @@ def fixture_primitive_xml(
 
 def fixture_primitive_dto(
     resource_id: str = "resource",
+    clone_instance_id: Optional[str] = None,
     resource_agent: str = "ocf:heartbeat:Dummy",
     role: PcmkStatusRoleType = PCMK_STATUS_ROLE_STARTED,
     target_role: Optional[str] = None,
@@ -94,6 +95,7 @@ def fixture_primitive_dto(
 ) -> PrimitiveStatusDto:
     return PrimitiveStatusDto(
         resource_id,
+        clone_instance_id,
         resource_agent,
         role,
         target_role,
@@ -136,11 +138,13 @@ def fixture_group_xml(
 
 def fixture_group_dto(
     resource_id: str = "resource-group",
+    clone_instance_id: Optional[str] = None,
     description: Optional[str] = None,
     members: Sequence[PrimitiveStatusDto] = (),
 ) -> GroupStatusDto:
     return GroupStatusDto(
         resource_id,
+        clone_instance_id,
         maintenance=False,
         description=description,
         managed=True,
@@ -506,7 +510,7 @@ class TestPrimitiveStatusToDto(TestCase):
 
         result = status._primitive_to_dto(primitive_xml, True)
 
-        self.assertEqual(result, fixture_primitive_dto())
+        self.assertEqual(result, fixture_primitive_dto(clone_instance_id="0"))
 
     def test_running_on_multiple_nodes(self):
         primitive_xml = etree.fromstring(
@@ -716,7 +720,10 @@ class TestGroupStatusToDto(TestCase):
         result = status._group_to_dto(group_xml, True)
         self.assertEqual(
             result,
-            fixture_group_dto(members=[fixture_primitive_dto()]),
+            fixture_group_dto(
+                clone_instance_id="0",
+                members=[fixture_primitive_dto(clone_instance_id="0")],
+            ),
         )
 
 
@@ -792,8 +799,10 @@ class TestCloneStatusToDto(TestCase):
             fixture_clone_dto(
                 unique=True,
                 instances=[
-                    fixture_primitive_dto(),
-                    fixture_primitive_dto(node_names=["node2"]),
+                    fixture_primitive_dto(clone_instance_id="0"),
+                    fixture_primitive_dto(
+                        clone_instance_id="1", node_names=["node2"]
+                    ),
                 ],
             ),
         )
@@ -886,9 +895,12 @@ class TestCloneStatusToDto(TestCase):
             result,
             fixture_clone_dto(
                 instances=[
-                    fixture_group_dto(members=[fixture_primitive_dto()]),
                     fixture_group_dto(
-                        members=[fixture_primitive_dto(node_names=["node2"])]
+                        clone_instance_id="0", members=[fixture_primitive_dto()]
+                    ),
+                    fixture_group_dto(
+                        clone_instance_id="1",
+                        members=[fixture_primitive_dto(node_names=["node2"])],
                     ),
                 ],
             ),
@@ -923,9 +935,17 @@ class TestCloneStatusToDto(TestCase):
             fixture_clone_dto(
                 unique=True,
                 instances=[
-                    fixture_group_dto(members=[fixture_primitive_dto()]),
                     fixture_group_dto(
-                        members=[fixture_primitive_dto(node_names=["node2"])]
+                        clone_instance_id="0",
+                        members=[fixture_primitive_dto(clone_instance_id="0")],
+                    ),
+                    fixture_group_dto(
+                        clone_instance_id="1",
+                        members=[
+                            fixture_primitive_dto(
+                                clone_instance_id="1", node_names=["node2"]
+                            )
+                        ],
                     ),
                 ],
             ),
