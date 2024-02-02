@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from pcs.common import reports
-from pcs.lib.cib.constraint.common import validate_resource_id
+from pcs.lib.cib.constraint.common import validate_constrainable_elements
 
 from pcs_test.tools.assertions import assert_report_item_list_equal
 from pcs_test.tools.fixture import ReportItemFixture
@@ -47,11 +47,13 @@ class ValidateResourceId(TestCase):
                 resource_id=res_id, resource_description=res_desc
             ):
                 assert_report_item_list_equal(
-                    validate_resource_id(self._cib, res_id),
+                    validate_constrainable_elements(
+                        self._cib.xpath("//*[@id=$id]", id=res_id)
+                    ),
                     [],
                 )
 
-    def _test_report(self, in_clone_allowed, severity, force_code):
+    def _test_report(self, in_multiinstance_allowed, severity, force_code):
         id_map = {
             "B_R": "primitive in a bundle",
             "C1_G": "group in a clone",
@@ -63,7 +65,10 @@ class ValidateResourceId(TestCase):
                 resource_id=res_id, resource_description=res_desc
             ):
                 assert_report_item_list_equal(
-                    validate_resource_id(self._cib, res_id, in_clone_allowed),
+                    validate_constrainable_elements(
+                        self._cib.xpath("//*[@id=$id]", id=res_id),
+                        in_multiinstance_allowed,
+                    ),
                     [
                         ReportItemFixture(
                             severity,

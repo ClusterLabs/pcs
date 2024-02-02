@@ -10,11 +10,15 @@ from lxml.etree import (
 
 from pcs.common import reports
 from pcs.lib.cib.constraint import resource_set
-from pcs.lib.cib.tools import find_unique_id
+from pcs.lib.cib.tools import (
+    ElementNotFound,
+    find_unique_id,
+    get_element_by_id,
+)
 from pcs.lib.errors import LibraryError
 from pcs.lib.xml_tools import get_root
 
-from .common import validate_resource_id
+from .common import validate_constrainable_elements
 
 
 def _validate_attrib_names(attrib_names, options):
@@ -31,13 +35,21 @@ def _validate_attrib_names(attrib_names, options):
         )
 
 
-# DEPRECATED, use pcs.lib.cib.constraint.common.validate_resource_id
+# DEPRECATED, use pcs.lib.cib.constraint.common.validate_constrainable_elements
 def find_valid_resource_id(
     report_processor: reports.ReportProcessor, cib, in_clone_allowed, _id
 ):
-    if report_processor.report_list(
-        validate_resource_id(cib, _id, in_clone_allowed)
-    ).has_errors:
+    try:
+        report_processor.report_list(
+            validate_constrainable_elements(
+                [get_element_by_id(cib, _id)], in_clone_allowed
+            )
+        )
+    except ElementNotFound:
+        report_processor.report(
+            reports.ReportItem.error(reports.messages.IdNotFound(_id, []))
+        )
+    if report_processor.has_errors:
         raise LibraryError()
     return _id
 

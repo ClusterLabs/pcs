@@ -304,9 +304,10 @@ class ResourceForConstraintIsMultiinstance(ReportItemMessage):
 
     @property
     def message(self) -> str:
+        parent_type = _type_to_string(self.parent_type)
         return (
-            f"{self.resource_id} is a {self.parent_type} resource, you should "
-            f"use the {self.parent_type} id: {self.parent_id} when adding "
+            f"{self.resource_id} is a {parent_type} resource, you should "
+            f"use the {parent_type} id: {self.parent_id} when adding "
             "constraints"
         )
 
