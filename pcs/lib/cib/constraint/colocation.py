@@ -9,6 +9,7 @@ from pcs.common.pacemaker.constraint import (
     CibConstraintColocationSetDto,
 )
 from pcs.common.reports.item import ReportItem
+from pcs.lib.cib.const import TAG_CONSTRAINT_COLOCATION as TAG
 from pcs.lib.cib.constraint import constraint
 from pcs.lib.cib.constraint.resource_set import (
     constraint_element_to_resource_set_dto_list,
@@ -27,12 +28,11 @@ from pcs.lib.pacemaker.values import (
 )
 from pcs.lib.tools import get_optional_value
 
-TAG_NAME = "rsc_colocation"
-DESCRIPTION = "constraint id"
+_DESCRIPTION = "constraint id"
 
 
 def is_colocation_constraint(element: _Element) -> bool:
-    return element.tag == TAG_NAME
+    return element.tag == TAG
 
 
 def prepare_options_with_set(cib, options, resource_set_list):
@@ -40,7 +40,7 @@ def prepare_options_with_set(cib, options, resource_set_list):
         ("score",),
         options,
         partial(constraint.create_id, cib, "colocation", resource_set_list),
-        partial(check_new_id_applicable, cib, DESCRIPTION),
+        partial(check_new_id_applicable, cib, _DESCRIPTION),
     )
 
     if "score" in options:
@@ -107,7 +107,7 @@ def get_all_as_dtos(
 ]:
     plain_list: list[CibConstraintColocationDto] = []
     set_list: list[CibConstraintColocationSetDto] = []
-    for constraint_el in constraints_el.findall(f"./{TAG_NAME}"):
+    for constraint_el in constraints_el.findall(f"./{TAG}"):
         if is_set_constraint(constraint_el):
             set_list.append(
                 _set_constraint_el_to_dto(constraint_el, rule_in_effect_eval)

@@ -14,7 +14,7 @@ from . import common
 # configure common constraint command
 create_with_set = partial(
     common.create_with_set,
-    ticket.TAG_NAME,
+    ticket.TAG,
     ticket.prepare_options_with_set,
     duplicate_check=ticket.are_duplicate_with_resource_set,
 )

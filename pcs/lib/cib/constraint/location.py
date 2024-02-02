@@ -1,5 +1,3 @@
-from typing import Final
-
 from lxml.etree import _Element
 
 from pcs.common.pacemaker.constraint import (
@@ -8,6 +6,8 @@ from pcs.common.pacemaker.constraint import (
     CibConstraintLocationSetDto,
 )
 from pcs.common.pacemaker.types import CibResourceDiscovery
+from pcs.lib.cib.const import TAG_CONSTRAINT_LOCATION as TAG
+from pcs.lib.cib.const import TAG_RULE
 from pcs.lib.cib.constraint.resource_set import (
     constraint_element_to_resource_set_dto_list,
     is_set_constraint,
@@ -17,21 +17,14 @@ from pcs.lib.cib.rule.cib_to_dto import rule_element_to_dto
 from pcs.lib.cib.tools import role_constructor
 from pcs.lib.tools import get_optional_value
 
-TAG_NAME: Final = "rsc_location"
-TAG_NAME_RULE: Final = "rule"
-
 
 def is_location_constraint(element: _Element) -> bool:
-    return element.tag == TAG_NAME
+    return element.tag == TAG
 
 
 def is_location_rule(element: _Element) -> bool:
     parent = element.getparent()
-    return (
-        parent is not None
-        and element.tag == TAG_NAME_RULE
-        and parent.tag == TAG_NAME
-    )
+    return parent is not None and element.tag == TAG_RULE and parent.tag == TAG
 
 
 def _element_to_attributes_dto(
@@ -43,7 +36,7 @@ def _element_to_attributes_dto(
         node=element.get("node"),
         rules=[
             rule_element_to_dto(rule_in_effect_eval, rule_el)
-            for rule_el in element.findall(f"./{TAG_NAME_RULE}")
+            for rule_el in element.findall(f"./{TAG_RULE}")
         ],
         lifetime=[
             rule_element_to_dto(rule_in_effect_eval, rule_el)
@@ -80,7 +73,7 @@ def get_all_as_dtos(
 ) -> tuple[list[CibConstraintLocationDto], list[CibConstraintLocationSetDto]]:
     plain_list: list[CibConstraintLocationDto] = []
     set_list: list[CibConstraintLocationSetDto] = []
-    for constraint_el in constraints_el.findall(f"./{TAG_NAME}"):
+    for constraint_el in constraints_el.findall(f"./{TAG}"):
         if is_set_constraint(constraint_el):
             set_list.append(
                 _set_constraint_el_to_dto(constraint_el, rule_in_effect_eval)

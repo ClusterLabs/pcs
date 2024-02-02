@@ -62,7 +62,7 @@ class PrepareOptionsWithSetTest(TestCase):
             ),
         )
         mock_check_new_id_applicable.assert_called_once_with(
-            self.cib, colocation.DESCRIPTION, invalid_id
+            self.cib, "constraint id", invalid_id
         )
 
     def test_refuse_bad_score(self, _):

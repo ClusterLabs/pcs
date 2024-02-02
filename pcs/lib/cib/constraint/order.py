@@ -11,6 +11,7 @@ from pcs.common.pacemaker.constraint import (
 )
 from pcs.common.pacemaker.types import CibResourceSetOrderType
 from pcs.common.reports.item import ReportItem
+from pcs.lib.cib.const import TAG_CONSTRAINT_ORDER as TAG
 from pcs.lib.cib.constraint import constraint
 from pcs.lib.cib.constraint.resource_set import (
     constraint_element_to_resource_set_dto_list,
@@ -24,8 +25,7 @@ from pcs.lib.pacemaker.values import (
 )
 from pcs.lib.tools import get_optional_value
 
-TAG_NAME = "rsc_order"
-DESCRIPTION = "constraint id"
+_DESCRIPTION = "constraint id"
 ATTRIB = {
     "symmetrical": BOOLEAN_VALUES,
     "kind": ("Optional", "Mandatory", "Serialize"),
@@ -33,7 +33,7 @@ ATTRIB = {
 
 
 def is_order_constraint(element: _Element) -> bool:
-    return element.tag == TAG_NAME
+    return element.tag == TAG
 
 
 def prepare_options_with_set(cib, options, resource_set_list):
@@ -43,7 +43,7 @@ def prepare_options_with_set(cib, options, resource_set_list):
         create_id_fn=partial(
             constraint.create_id, cib, "order", resource_set_list
         ),
-        validate_id=partial(check_new_id_applicable, cib, DESCRIPTION),
+        validate_id=partial(check_new_id_applicable, cib, _DESCRIPTION),
     )
 
     report_items = []
@@ -121,7 +121,7 @@ def get_all_as_dtos(
 ) -> tuple[list[CibConstraintOrderDto], list[CibConstraintOrderSetDto]]:
     plain_list: list[CibConstraintOrderDto] = []
     set_list: list[CibConstraintOrderSetDto] = []
-    for constraint_el in constraints_el.findall(f"./{TAG_NAME}"):
+    for constraint_el in constraints_el.findall(f"./{TAG}"):
         if is_set_constraint(constraint_el):
             set_list.append(_set_constraint_el_to_dto(constraint_el))
         else:
