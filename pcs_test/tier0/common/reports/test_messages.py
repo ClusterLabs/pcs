@@ -2195,6 +2195,26 @@ class BadClusterStateFormat(NameBuildTest):
         )
 
 
+class BadClusterStateData(NameBuildTest):
+    def test_no_reason(self):
+        self.assert_message_from_report(
+            (
+                "Cannot load cluster status, xml does not describe "
+                "valid cluster status"
+            ),
+            reports.BadClusterStateData(),
+        )
+
+    def test_reason(self):
+        self.assert_message_from_report(
+            (
+                "Cannot load cluster status, xml does not describe "
+                "valid cluster status: sample reason"
+            ),
+            reports.BadClusterStateData("sample reason"),
+        )
+
+
 class WaitForIdleStarted(NameBuildTest):
     def test_timeout(self):
         timeout = 20
@@ -5814,5 +5834,30 @@ class CannotCreateDefaultClusterPropertySet(NameBuildTest):
             ),
             reports.CannotCreateDefaultClusterPropertySet(
                 "cib-bootstrap-options"
+            ),
+        )
+
+
+class ClusterStatusBundleMemberIdAsImplicit(NameBuildTest):
+    def test_one(self):
+        self.assert_message_from_report(
+            (
+                "Skipping bundle 'resource-bundle': resource 'resource' has "
+                "the same id as some of the implicit bundle resources"
+            ),
+            reports.ClusterStatusBundleMemberIdAsImplicit(
+                "resource-bundle", ["resource"]
+            ),
+        )
+
+    def test_multiple(self):
+        self.assert_message_from_report(
+            (
+                "Skipping bundle 'resource-bundle': resources 'resource-0', "
+                "'resource-1' have the same id as some of the implicit bundle "
+                "resources"
+            ),
+            reports.ClusterStatusBundleMemberIdAsImplicit(
+                "resource-bundle", ["resource-0", "resource-1"]
             ),
         )

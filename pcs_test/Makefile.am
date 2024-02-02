@@ -32,13 +32,19 @@ EXTRA_DIST		= \
 			  resources/corosync-qdevice.conf \
 			  resources/corosync-some-node-names.conf \
 			  resources/crm_mon.minimal.xml \
+			  resources/crm_mon.all_resources.xml \
 			  resources/fenced_metadata.xml \
 			  resources/schedulerd_metadata.xml \
 			  resources/pcmk_api_rng/api-result.rng \
-			  resources/pcmk_api_rng/crm_mon-2.4.rng \
+			  resources/pcmk_api_rng/crm_mon-2.29.rng \
 			  resources/pcmk_api_rng/digests-2.9.rng \
-			  resources/pcmk_api_rng/fence-event-2.0.rng \
-			  resources/pcmk_api_rng/resources-2.4.rng \
+			  resources/pcmk_api_rng/failure-2.8.rng \
+			  resources/pcmk_api_rng/fence-event-2.15.rng \
+			  resources/pcmk_api_rng/node-attrs-2.8.rng \
+			  resources/pcmk_api_rng/node-history-2.12.rng \
+			  resources/pcmk_api_rng/nodes-2.29.rng \
+			  resources/pcmk_api_rng/pacemakerd-health-2.25.rng \
+			  resources/pcmk_api_rng/resources-2.29.rng \
 			  resources/pcmk_api_rng/status-2.0.rng \
 			  resources/resource_agent_ocf_heartbeat_dummy_insane_action.xml \
 			  resources/resource_agent_ocf_heartbeat_dummy_utf8.xml \
@@ -317,6 +323,7 @@ EXTRA_DIST		= \
 			  tier0/lib/pacemaker/test_live.py \
 			  tier0/lib/pacemaker/test_simulate.py \
 			  tier0/lib/pacemaker/test_state.py \
+			  tier0/lib/pacemaker/test_status.py \
 			  tier0/lib/pacemaker/test_values.py \
 			  tier0/lib/permissions/__init__.py \
 			  tier0/lib/permissions/config/__init__.py \

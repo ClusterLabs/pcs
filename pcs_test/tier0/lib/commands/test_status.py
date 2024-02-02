@@ -1,5 +1,7 @@
+# pylint: disable=too-many-lines
 import os
 from textwrap import dedent
+from typing import Optional
 from unittest import (
     TestCase,
     mock,
@@ -7,7 +9,20 @@ from unittest import (
 
 from pcs import settings
 from pcs.common import file_type_codes
+from pcs.common.const import (
+    PCMK_ROLE_STOPPED,
+    PCMK_STATUS_ROLE_STOPPED,
+    PcmkRoleType,
+)
 from pcs.common.reports import codes as report_codes
+from pcs.common.status_dto import (
+    BundleReplicaStatusDto,
+    BundleStatusDto,
+    CloneStatusDto,
+    GroupStatusDto,
+    PrimitiveStatusDto,
+    ResourcesStatusDto,
+)
 from pcs.lib.booth import constants
 from pcs.lib.commands import status
 from pcs.lib.errors import LibraryError
@@ -22,6 +37,7 @@ from pcs_test.tools.command_env.config_runner_pcmk import (
     RULE_EXPIRED_RETURNCODE,
     RULE_IN_EFFECT_RETURNCODE,
 )
+from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import read_test_resource as rc_read
 
 
@@ -1254,3 +1270,276 @@ class FullClusterStatusPlaintextBoothWarning(FullClusterStatusPlaintextBase):
             ).encode("utf-8"),
         )
         self._assert_status_output()
+
+
+def _fixture_primitive_resource_dto(
+    resource_id: str,
+    resource_agent: str,
+    target_role: Optional[PcmkRoleType] = None,
+    managed: bool = True,
+) -> PrimitiveStatusDto:
+    return PrimitiveStatusDto(
+        resource_id=resource_id,
+        clone_instance_id=None,
+        resource_agent=resource_agent,
+        role=PCMK_STATUS_ROLE_STOPPED,
+        target_role=target_role,
+        active=False,
+        orphaned=False,
+        blocked=False,
+        maintenance=False,
+        description=None,
+        failed=False,
+        managed=managed,
+        failure_ignored=False,
+        node_names=[],
+        pending=None,
+        locked_to=None,
+    )
+
+
+@mock.patch.object(
+    settings,
+    "pacemaker_api_result_schema",
+    rc("pcmk_api_rng/api-result.rng"),
+)
+class ResourcesStatus(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+
+    def test_empty_resources(self):
+        self.config.runner.pcmk.load_state()
+
+        result = status.resources_status(self.env_assist.get_env())
+        self.assertEqual(result, ResourcesStatusDto([]))
+
+    def test_bad_xml_format(self):
+        self.config.runner.pcmk.load_state(
+            resources="""
+                <resources>
+                    <resource />
+                </resources>
+            """,
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: status.resources_status(
+                self.env_assist.get_env(),
+            ),
+            [fixture.error(report_codes.BAD_CLUSTER_STATE_FORMAT)],
+            False,
+        )
+
+    def test_bad_xml(self):
+        self.config.runner.pcmk.load_state(
+            resources="""
+                <resources>
+                    <resource id="R7" role="NotPcmkRole" resource_agent="ocf:pacemaker:Dummy" active="false" orphaned="false" blocked="false" maintenance="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="0"/>
+                </resources>
+            """,
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: status.resources_status(self.env_assist.get_env()),
+            [
+                fixture.error(
+                    report_codes.BAD_CLUSTER_STATE_DATA,
+                    reason="Resource 'R7' contains an unknown role 'NotPcmkRole'",
+                ),
+            ],
+            False,
+        )
+
+    def test_all_resources(self):
+        self.config.runner.pcmk.load_state(
+            filename=rc("crm_mon.all_resources.xml")
+        )
+
+        result = status.resources_status(self.env_assist.get_env())
+
+        self.assertEqual(
+            result,
+            ResourcesStatusDto(
+                [
+                    BundleStatusDto(
+                        resource_id="B1",
+                        type="docker",
+                        image="pcs:test",
+                        unique=True,
+                        maintenance=False,
+                        description=None,
+                        managed=False,
+                        failed=False,
+                        replicas=[
+                            BundleReplicaStatusDto(
+                                replica_id="0",
+                                member=None,
+                                remote=None,
+                                container=_fixture_primitive_resource_dto(
+                                    "B1-docker-0",
+                                    "ocf:heartbeat:docker",
+                                    target_role=PCMK_ROLE_STOPPED,
+                                    managed=False,
+                                ),
+                                ip_address=_fixture_primitive_resource_dto(
+                                    "B1-ip-192.168.100.200",
+                                    "ocf:heartbeat:IPaddr2",
+                                    target_role=PCMK_ROLE_STOPPED,
+                                    managed=False,
+                                ),
+                            ),
+                            BundleReplicaStatusDto(
+                                replica_id="1",
+                                member=None,
+                                remote=None,
+                                container=_fixture_primitive_resource_dto(
+                                    "B1-docker-1",
+                                    "ocf:heartbeat:docker",
+                                    target_role=PCMK_ROLE_STOPPED,
+                                    managed=False,
+                                ),
+                                ip_address=_fixture_primitive_resource_dto(
+                                    "B1-ip-192.168.100.201",
+                                    "ocf:heartbeat:IPaddr2",
+                                    target_role=PCMK_ROLE_STOPPED,
+                                    managed=False,
+                                ),
+                            ),
+                            BundleReplicaStatusDto(
+                                replica_id="2",
+                                member=None,
+                                remote=None,
+                                container=_fixture_primitive_resource_dto(
+                                    "B1-docker-2",
+                                    "ocf:heartbeat:docker",
+                                    target_role=PCMK_ROLE_STOPPED,
+                                    managed=False,
+                                ),
+                                ip_address=_fixture_primitive_resource_dto(
+                                    "B1-ip-192.168.100.202",
+                                    "ocf:heartbeat:IPaddr2",
+                                    target_role=PCMK_ROLE_STOPPED,
+                                    managed=False,
+                                ),
+                            ),
+                            BundleReplicaStatusDto(
+                                replica_id="3",
+                                member=None,
+                                remote=None,
+                                container=_fixture_primitive_resource_dto(
+                                    "B1-docker-3",
+                                    "ocf:heartbeat:docker",
+                                    target_role=PCMK_ROLE_STOPPED,
+                                    managed=False,
+                                ),
+                                ip_address=_fixture_primitive_resource_dto(
+                                    "B1-ip-192.168.100.203",
+                                    "ocf:heartbeat:IPaddr2",
+                                    target_role=PCMK_ROLE_STOPPED,
+                                    managed=False,
+                                ),
+                            ),
+                        ],
+                    ),
+                    _fixture_primitive_resource_dto(
+                        "R7", "ocf:pacemaker:Dummy"
+                    ),
+                    _fixture_primitive_resource_dto(
+                        "S2", "stonith:fence_kdump"
+                    ),
+                    GroupStatusDto(
+                        resource_id="G2",
+                        clone_instance_id=None,
+                        maintenance=False,
+                        description=None,
+                        managed=True,
+                        disabled=False,
+                        members=[
+                            _fixture_primitive_resource_dto(
+                                "R5", "ocf:pacemaker:Dummy"
+                            ),
+                            _fixture_primitive_resource_dto(
+                                "S1", "stonith:fence_kdump"
+                            ),
+                        ],
+                    ),
+                    CloneStatusDto(
+                        resource_id="G1-clone",
+                        multi_state=True,
+                        unique=False,
+                        maintenance=False,
+                        description=None,
+                        managed=True,
+                        disabled=False,
+                        failed=False,
+                        failure_ignored=False,
+                        target_role=None,
+                        instances=[
+                            GroupStatusDto(
+                                resource_id="G1",
+                                clone_instance_id="0",
+                                maintenance=False,
+                                description=None,
+                                managed=True,
+                                disabled=False,
+                                members=[
+                                    _fixture_primitive_resource_dto(
+                                        "R2", "ocf:pacemaker:Stateful"
+                                    ),
+                                    _fixture_primitive_resource_dto(
+                                        "R3", "ocf:pacemaker:Stateful"
+                                    ),
+                                    _fixture_primitive_resource_dto(
+                                        "R4", "ocf:pacemaker:Stateful"
+                                    ),
+                                ],
+                            )
+                        ],
+                    ),
+                    CloneStatusDto(
+                        resource_id="R6-clone",
+                        multi_state=False,
+                        unique=False,
+                        maintenance=False,
+                        description=None,
+                        managed=True,
+                        disabled=False,
+                        failed=False,
+                        failure_ignored=False,
+                        target_role=None,
+                        instances=[
+                            _fixture_primitive_resource_dto(
+                                "R6", "ocf:pacemaker:Dummy"
+                            )
+                        ],
+                    ),
+                ]
+            ),
+        )
+
+    def test_bundle_skip(self):
+        self.config.runner.pcmk.load_state(
+            resources="""
+                <resources>
+                    <bundle id="B1" type="docker" image="pcs:test" unique="true" maintenance="false" managed="false" failed="false">
+                        <replica id="0">
+                            <resource id="B1-0" resource_agent="ocf:heartbeat:Dummy" role="Stopped" target_role="Stopped" active="false" orphaned="false" blocked="false" maintenance="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="0"/>
+                            <resource id="B1-docker-0" resource_agent="ocf:heartbeat:docker" role="Stopped" target_role="Stopped" active="false" orphaned="false" blocked="false" maintenance="false" managed="false" failed="false" failure_ignored="false" nodes_running_on="0"/>
+                            <resource id="B1-0" resource_agent="ocf:pacemaker:remote" role="Stopped" target_role="Stopped" active="false" orphaned="false" blocked="false" maintenance="false" managed="false" failed="false" failure_ignored="false" nodes_running_on="0"/>
+                        </replica>
+                    </bundle>
+                </resources>
+            """,
+        )
+
+        result = status.resources_status(self.env_assist.get_env())
+        self.assertEqual(result, ResourcesStatusDto([]))
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    report_codes.CLUSTER_STATUS_BUNDLE_MEMBER_ID_AS_IMPLICIT,
+                    bundle_id="B1",
+                    bad_ids=["B1-0"],
+                )
+            ]
+        )

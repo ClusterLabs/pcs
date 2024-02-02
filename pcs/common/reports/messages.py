@@ -3277,6 +3277,53 @@ class BadClusterStateFormat(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class BadClusterStateData(ReportItemMessage):
+    """
+    crm_mon xml output is invalid despite conforming to the schema
+
+    reason -- error description
+    """
+
+    reason: Optional[str] = None
+    _code = codes.BAD_CLUSTER_STATE_DATA
+
+    @property
+    def message(self) -> str:
+        return (
+            "Cannot load cluster status, xml does not describe valid cluster "
+            f"status{format_optional(self.reason, template=': {}')}"
+        )
+
+
+@dataclass(frozen=True)
+class ClusterStatusBundleMemberIdAsImplicit(ReportItemMessage):
+    """
+    Member of bundle in cluster status xml has the same id as one of the
+    implicit resources
+
+    bundle_id -- id of the bundle
+    bad_ids -- ids of the bad members
+    """
+
+    bundle_id: str
+    bad_ids: list[str]
+    _code = codes.CLUSTER_STATUS_BUNDLE_MEMBER_ID_AS_IMPLICIT
+
+    @property
+    def message(self) -> str:
+        return (
+            "Skipping bundle '{bundle_id}': {resource_word} "
+            "{bad_ids} {has} the same id as some of the "
+            "implicit bundle resources"
+        ).format(
+            bundle_id=self.bundle_id,
+            resource_word=format_plural(self.bad_ids, "resource"),
+            bad_ids=format_list(self.bad_ids),
+            has=format_plural(self.bad_ids, "has"),
+        )
+
+
+@dataclass(frozen=True)
 class WaitForIdleStarted(ReportItemMessage):
     """
     Waiting for cluster to apply updated configuration and to settle down
