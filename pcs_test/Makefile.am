@@ -35,10 +35,15 @@ EXTRA_DIST		= \
 			  resources/fenced_metadata.xml \
 			  resources/schedulerd_metadata.xml \
 			  resources/pcmk_api_rng/api-result.rng \
-			  resources/pcmk_api_rng/crm_mon-2.4.rng \
+			  resources/pcmk_api_rng/crm_mon-2.29.rng \
 			  resources/pcmk_api_rng/digests-2.9.rng \
-			  resources/pcmk_api_rng/fence-event-2.0.rng \
-			  resources/pcmk_api_rng/resources-2.4.rng \
+			  resources/pcmk_api_rng/failure-2.8.rng \
+			  resources/pcmk_api_rng/fence-event-2.15.rng \
+			  resources/pcmk_api_rng/node-attrs-2.8.rng \
+			  resources/pcmk_api_rng/node-history-2.12.rng \
+			  resources/pcmk_api_rng/nodes-2.29.rng \
+			  resources/pcmk_api_rng/pacemakerd-health-2.25.rng \
+			  resources/pcmk_api_rng/resources-2.29.rng \
 			  resources/pcmk_api_rng/status-2.0.rng \
 			  resources/resource_agent_ocf_heartbeat_dummy_insane_action.xml \
 			  resources/resource_agent_ocf_heartbeat_dummy_utf8.xml \
