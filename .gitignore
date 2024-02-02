@@ -40,6 +40,7 @@ pcs_test/resources/temp*
 pcsd/capabilities.xml
 pcsd/pcsd
 pcsd/pcsd-cli.rb
+pcsd/rserver.rb
 pcsd/settings.rb
 build/
 *.egg-info

@@ -29,12 +29,12 @@ AC_DEFUN([AC_RUBY_GEM],[
 		fi
 		AC_MSG_RESULT([yes (detected: $curversion)])
 		eval AS_TR_CPP(HAVE_RUBYGEM_$module)=yes
-		eval AS_TR_CPP(HAVE_RUBYGEM_$module_version)=$curversion
+		eval AS_TR_CPP(HAVE_RUBYGEM_${module}_version)=$curversion
 		$3
 	else
 		AC_MSG_RESULT([no])
 		eval AS_TR_CPP(HAVE_RUBYGEM_$module)=no
-		eval AS_TR_CPP(HAVE_RUBYGEM_$module_version)=""
+		eval AS_TR_CPP(HAVE_RUBYGEM_${module}_version)=""
 		$4
 	fi
 ])

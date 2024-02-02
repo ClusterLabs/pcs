@@ -390,8 +390,21 @@ AC_DEFUN([PCS_CHECK_GEM], [
 	fi
 ])
 
+# PCS_GEM_ACTION([curversion], [op], [cmpversion][, action-if-true] [, action-if-false])
+AC_DEFUN([PCS_GEM_ACTION], [
+	if test -n "$1"; then
+		AC_COMPARE_VERSIONS([$1], [$2], [$3], [$4], [$5])
+	else
+		true
+		$5
+	fi
+])
+
 PCS_CHECK_GEM([power_assert])
 PCS_CHECK_GEM([test-unit])
+
+RACK_HANDLER="Rackup"
+REQUIRE_RACKUP="require 'rackup'"
 
 if test "x$tests_only" != "xyes"; then
 	PCS_CHECK_GEM([backports])
@@ -402,15 +415,17 @@ if test "x$tests_only" != "xyes"; then
 	PCS_CHECK_GEM([ruby2_keywords])
 	PCS_CHECK_GEM([mustermann])
 	PCS_CHECK_GEM([rack])
+	PCS_GEM_ACTION([$HAVE_RUBYGEM_RACK_VERSION], [<], [3.0], [RACK_HANDLER=Rack REQUIRE_RACKUP=""], [PCS_CHECK_GEM([rackup])])
 	PCS_CHECK_GEM([rack-protection])
 	PCS_CHECK_GEM([rack-test])
-	PCS_CHECK_GEM([rackup])
 	PCS_CHECK_GEM([sinatra])
 	PCS_CHECK_GEM([tilt])
 	PCS_CHECK_GEM([nio4r])
 	PCS_CHECK_GEM([puma])
 	PCS_CHECK_GEM([rexml])
 fi
+AC_SUBST([RACK_HANDLER])
+AC_SUBST([REQUIRE_RACKUP])
 
 if test "x$local_build" = "xyes" && test $(wc -l < Gemfile) -gt 2; then
 	GEM_HOME="$LIB_DIR/$PCSD_BUNDLED_DIR_ROOT_LOCAL"
@@ -595,6 +610,7 @@ AC_CONFIG_FILES([Makefile
 		 pcsd/pcsd-cli.rb
 		 pcsd/pcsd-ruby.service
 		 pcsd/pcsd.service
+		 pcsd/rserver.rb
 		 pcsd/settings.rb
 		 pcsd/logrotate/pcsd])
 
