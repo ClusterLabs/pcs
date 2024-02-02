@@ -18,6 +18,8 @@ from .processor import ReportItemPreprocessor
 def get_duplicate_constraint_exists_preprocessor(
     lib: Any,
 ) -> ReportItemPreprocessor:
+    constraints_dto: Optional[CibConstraintsDto] = None
+
     def _report_item_preprocessor(
         report_item: reports.ReportItem,
     ) -> Optional[reports.ReportItem]:
@@ -32,6 +34,8 @@ def get_duplicate_constraint_exists_preprocessor(
         """
 
         # pylint: disable=too-many-branches
+        nonlocal constraints_dto
+
         def my_print(lines: StringIterable) -> None:
             print_to_stderr("\n".join(indent(lines, INDENT_STEP)))
 
@@ -46,10 +50,11 @@ def get_duplicate_constraint_exists_preprocessor(
         ):
             print_to_stderr("Duplicate constraints:")
             duplicate_id_list = report_item.message.constraint_ids
-            constraints_dto = cast(
-                CibConstraintsDto,
-                lib.constraint.get_config(evaluate_rules=False),
-            )
+            if constraints_dto is None:
+                constraints_dto = cast(
+                    CibConstraintsDto,
+                    lib.constraint.get_config(evaluate_rules=False),
+                )
             for dto_lp in constraints_dto.location:
                 if dto_lp.attributes.constraint_id in duplicate_id_list:
                     my_print(
