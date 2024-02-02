@@ -448,6 +448,7 @@ def load_module(env, middleware_factory, name):
                 "full_cluster_status_plaintext": (
                     status.full_cluster_status_plaintext
                 ),
+                "resources_status": status.resources_status,
             },
         )
 

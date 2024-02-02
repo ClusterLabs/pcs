@@ -1,0 +1,40 @@
+<pacemaker-result api-version="2.30" request="crm_mon --output-as xml">
+  <summary>
+    <stack type="corosync" />
+    <current_dc present="false" />
+    <last_update time="Wed Nov  6 13:45:41 2019" />
+    <last_change time="Wed Nov  6 10:42:54 2019" user="hacluster" client="crmd" origin="node1" />
+    <nodes_configured number="0" />
+    <resources_configured number="0" disabled="0" blocked="0" />
+    <cluster_options stonith-enabled="true" symmetric-cluster="true" no-quorum-policy="stop" maintenance-mode="false" stop-all-resources="false" stonith-timeout-ms="60000" priority-fencing-delay-ms="0"/>
+  </summary>
+  <nodes>
+    <node name="node1" id="1" online="true" standby="false" standby_onfail="false" maintenance="false" pending="false" unclean="false" health="green" feature_set="3.17.4" shutdown="false" expected_up="true" is_dc="false" resources_running="16" type="member"/>
+  </nodes>
+  <resources>
+    <resource id="dummy" resource_agent="ocf:pacemaker:Dummy" role="Started" active="true" orphaned="false" blocked="false" maintenance="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="1">
+      <node name="node1" id="1" cached="true"/>
+    </resource>
+    <group id="group" number_resources="2" maintenance="false" managed="true" disabled="false">
+      <resource id="grouped" resource_agent="ocf:pacemaker:Dummy" role="Started" active="true" orphaned="false" blocked="false" maintenance="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="1">
+        <node name="node1" id="1" cached="true"/>
+      </resource>
+    </group>
+    <clone id="clone" multi_state="false" unique="false" maintenance="false" managed="true" disabled="false" failed="false" failure_ignored="false">
+      <resource id="cloned" resource_agent="ocf:pacemaker:Dummy" role="Started" active="true" orphaned="false" blocked="false" maintenance="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="1">
+        <node name="node1" id="1" cached="true"/>
+      </resource>
+    </clone>
+    <bundle id="bundle" type="podman" image="localhost/pcmktest:http" unique="false" maintenance="false" managed="true" failed="false">
+      <replica id="0">
+        <resource id="bundle-ip-192.168.122.250" resource_agent="ocf:heartbeat:IPaddr2" role="Started" active="true" orphaned="false" blocked="false" maintenance="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="1">
+          <node name="node1" id="1" cached="true"/>
+        </resource>
+        <resource id="bundle-podman-0" resource_agent="ocf:heartbeat:podman" role="Started" active="true" orphaned="false" blocked="false" maintenance="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="1">
+          <node name="node1" id="1" cached="true"/>
+        </resource>
+      </replica>
+    </bundle>
+  </resources>
+  <status code="0" message="OK" />
+</pacemaker-result>

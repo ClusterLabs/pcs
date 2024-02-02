@@ -32,6 +32,7 @@ EXTRA_DIST		= \
 			  resources/corosync-qdevice.conf \
 			  resources/corosync-some-node-names.conf \
 			  resources/crm_mon.minimal.xml \
+			  resources/crm_mon.all_resources.xml \
 			  resources/fenced_metadata.xml \
 			  resources/schedulerd_metadata.xml \
 			  resources/pcmk_api_rng/api-result.rng \
@@ -322,6 +323,7 @@ EXTRA_DIST		= \
 			  tier0/lib/pacemaker/test_live.py \
 			  tier0/lib/pacemaker/test_simulate.py \
 			  tier0/lib/pacemaker/test_state.py \
+			  tier0/lib/pacemaker/test_status.py \
 			  tier0/lib/pacemaker/test_values.py \
 			  tier0/lib/permissions/__init__.py \
 			  tier0/lib/permissions/config/__init__.py \

@@ -179,6 +179,7 @@ EXTRA_DIST		= \
 			  common/tools.py \
 			  common/types.py \
 			  common/validate.py \
+			  common/status_dto.py \
 			  config.py \
 			  constraint.py \
 			  daemon/app/common.py \
@@ -363,6 +364,7 @@ EXTRA_DIST		= \
 			  lib/pacemaker/live.py \
 			  lib/pacemaker/simulate.py \
 			  lib/pacemaker/state.py \
+			  lib/pacemaker/status.py \
 			  lib/pacemaker/values.py \
 			  lib/permissions/__init__.py \
 			  lib/permissions/checker.py \

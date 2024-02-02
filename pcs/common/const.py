@@ -3,6 +3,7 @@ from typing import NewType
 from pcs.common.tools import Version
 
 PcmkRoleType = NewType("PcmkRoleType", str)
+PcmkStatusRoleType = NewType("PcmkStatusRoleType", str)
 PcmkOnFailAction = NewType("PcmkOnFailAction", str)
 PcmkAction = NewType("PcmkAction", str)
 
@@ -13,6 +14,14 @@ PCMK_ROLE_PROMOTED = PcmkRoleType("Promoted")
 PCMK_ROLE_UNPROMOTED = PcmkRoleType("Unpromoted")
 PCMK_ROLE_PROMOTED_LEGACY = PcmkRoleType("Master")
 PCMK_ROLE_UNPROMOTED_LEGACY = PcmkRoleType("Slave")
+PCMK_ROLE_UNKNOWN = PcmkRoleType("Unknown")
+PCMK_STATUS_ROLE_STARTED = PcmkStatusRoleType("Started")
+PCMK_STATUS_ROLE_STOPPED = PcmkStatusRoleType("Stopped")
+PCMK_STATUS_ROLE_PROMOTED = PcmkStatusRoleType("Promoted")
+PCMK_STATUS_ROLE_UNPROMOTED = PcmkStatusRoleType("Unpromoted")
+PCMK_STATUS_ROLE_STARTING = PcmkStatusRoleType("Starting")
+PCMK_STATUS_ROLE_STOPPING = PcmkStatusRoleType("Stopping")
+PCMK_STATUS_ROLE_UNKNOWN = PcmkStatusRoleType("Unknown")
 PCMK_ON_FAIL_ACTION_IGNORE = PcmkOnFailAction("ignore")
 PCMK_ON_FAIL_ACTION_BLOCK = PcmkOnFailAction("block")
 PCMK_ON_FAIL_ACTION_DEMOTE = PcmkOnFailAction("demote")
@@ -29,6 +38,20 @@ PCMK_ROLES_RUNNING = (
     (PCMK_ROLE_STARTED,) + PCMK_ROLES_PROMOTED + PCMK_ROLES_UNPROMOTED
 )
 PCMK_ROLES = (PCMK_ROLE_STOPPED,) + PCMK_ROLES_RUNNING
+PCMK_STATUS_ROLES_RUNNING = (
+    PCMK_STATUS_ROLE_STARTED,
+    PCMK_STATUS_ROLE_PROMOTED,
+    PCMK_STATUS_ROLE_UNPROMOTED,
+)
+PCMK_STATUS_ROLES_PENDING = (
+    PCMK_STATUS_ROLE_STARTING,
+    PCMK_STATUS_ROLE_STOPPING,
+)
+PCMK_STATUS_ROLES = (
+    PCMK_STATUS_ROLES_RUNNING
+    + PCMK_STATUS_ROLES_PENDING
+    + (PCMK_STATUS_ROLE_STOPPED,)
+)
 PCMK_ACTION_START = PcmkAction("start")
 PCMK_ACTION_STOP = PcmkAction("stop")
 PCMK_ACTION_PROMOTE = PcmkAction("promote")
