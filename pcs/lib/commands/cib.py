@@ -9,7 +9,7 @@ from lxml.etree import _Element
 from pcs.common import reports
 from pcs.common.types import StringCollection
 from pcs.lib.cib.const import TAG_OBJREF
-from pcs.lib.cib.constraint.all import is_constraint
+from pcs.lib.cib.constraint.common import is_constraint
 from pcs.lib.cib.constraint.location import (
     is_location_constraint,
     is_location_rule,

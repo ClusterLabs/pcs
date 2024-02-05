@@ -2436,16 +2436,13 @@ def _find_resources_expand_tags(
     rsc_or_tag_el_list, report_list = resource.common.find_resources(
         cib,
         resource_or_tag_ids,
-        resource_tags=resource.common.ALL_RESOURCE_XML_TAGS
-        + [cib_const.TAG_TAG],
+        resource_tags=cib_const.TAG_LIST_RESOURCE | {cib_const.TAG_TAG},
     )
 
     resource_set = set()
     for el in rsc_or_tag_el_list:
         resource_set.update(
-            expand_tag(
-                el, only_expand_types=resource.common.ALL_RESOURCE_XML_TAGS
-            )
+            expand_tag(el, only_expand_types=cib_const.TAG_LIST_RESOURCE)
         )
     if not additional_search:
         return list(resource_set), report_list

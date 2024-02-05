@@ -189,7 +189,7 @@ class ElementSearcher:
                 ReportItem.error(
                     reports.messages.IdBelongsToUnexpectedType(
                         self._element_id,
-                        expected_types=self._expected_types,
+                        expected_types=sorted(self._expected_types),
                         current_type=element.tag,
                     )
                 )

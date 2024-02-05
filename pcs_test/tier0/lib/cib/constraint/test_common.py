@@ -1,11 +1,31 @@
 from unittest import TestCase
 
+from lxml import etree
+
 from pcs.common import reports
-from pcs.lib.cib.constraint.common import validate_constrainable_elements
+from pcs.lib.cib.constraint.common import (
+    is_constraint,
+    validate_constrainable_elements,
+)
 
 from pcs_test.tools.assertions import assert_report_item_list_equal
 from pcs_test.tools.fixture import ReportItemFixture
 from pcs_test.tools.xml import str_to_etree
+
+
+class IsConstraint(TestCase):
+    def test_is_constraint_true(self):
+        for element in (
+            etree.Element("rsc_colocation"),
+            etree.Element("rsc_location"),
+            etree.Element("rsc_order"),
+            etree.Element("rsc_ticket"),
+        ):
+            with self.subTest(element=element):
+                self.assertTrue(is_constraint(element))
+
+    def test_is_constraint_false(self):
+        self.assertFalse(is_constraint(etree.Element("element")))
 
 
 class ValidateResourceId(TestCase):

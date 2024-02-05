@@ -5,9 +5,14 @@ from lxml.etree import _Element
 from pcs.common import reports
 from pcs.lib.cib.const import (
     TAG_LIST_CONSTRAINABLE,
+    TAG_LIST_CONSTRAINT,
     TAG_LIST_RESOURCE_MULTIINSTANCE,
 )
 from pcs.lib.xml_tools import find_parent
+
+
+def is_constraint(element: _Element) -> bool:
+    return element.tag in TAG_LIST_CONSTRAINT
 
 
 def validate_constrainable_elements(
