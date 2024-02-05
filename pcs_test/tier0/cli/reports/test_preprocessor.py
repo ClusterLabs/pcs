@@ -13,12 +13,19 @@ from pcs.common.pacemaker.constraint.location import (
     CibConstraintLocationAttributesDto,
     CibConstraintLocationDto,
 )
+from pcs.lib.errors import LibraryError
 
 
 class Preprocessor(TestCase):
+    def setUp(self):
+        self.mock_get_config = mock.Mock()
+        self.mock_lib = mock.Mock(spec_set=["constraint"])
+        self.mock_lib.constraint = mock.Mock(spec_set=["get_config"])
+        self.mock_lib.constraint.get_config = self.mock_get_config
+
     @mock.patch("pcs.cli.reports.preprocessor.print_to_stderr")
     def test_cib_cache(self, mock_print_stderr):
-        cib_dto = CibConstraintsDto(
+        self.mock_get_config.return_value = CibConstraintsDto(
             [
                 CibConstraintLocationDto(
                     "R1",
@@ -38,13 +45,10 @@ class Preprocessor(TestCase):
                 ),
             ]
         )
-        mock_get_config = mock.Mock()
-        mock_get_config.return_value = cib_dto
-        mock_lib = mock.Mock(spec_set=["constraint"])
-        mock_lib.constraint = mock.Mock(spec_set=["get_config"])
-        mock_lib.constraint.get_config = mock_get_config
 
-        preprocessor = get_duplicate_constraint_exists_preprocessor(mock_lib)
+        preprocessor = get_duplicate_constraint_exists_preprocessor(
+            self.mock_lib
+        )
         preprocessor(
             reports.ReportItem.error(
                 reports.messages.DuplicateConstraintsExist(["location1"])
@@ -67,4 +71,25 @@ class Preprocessor(TestCase):
         stderr_calls = [mock.call(item) for item in stderr.splitlines()]
         mock_print_stderr.assert_has_calls(stderr_calls)
         self.assertEqual(mock_print_stderr.call_count, len(stderr_calls))
-        mock_get_config.assert_called_once_with(evaluate_rules=False)
+        self.mock_get_config.assert_called_once_with(evaluate_rules=False)
+
+    @mock.patch("pcs.cli.reports.preprocessor.print_to_stderr")
+    @mock.patch("pcs.cli.reports.output.print_to_stderr")
+    def test_error_when_loading_constraints(
+        self, mock_print_stderr_o, mock_print_stderr_p
+    ):
+        self.mock_get_config.side_effect = LibraryError(
+            reports.ReportItem.error(reports.messages.CibLoadError("reason"))
+        )
+        preprocessor = get_duplicate_constraint_exists_preprocessor(
+            self.mock_lib
+        )
+        preprocessor(
+            reports.ReportItem.error(
+                reports.messages.DuplicateConstraintsExist(["id2", "id1"])
+            )
+        )
+        mock_print_stderr_o.assert_called_once_with("Error: unable to get cib")
+        mock_print_stderr_p.assert_called_once_with(
+            "Duplicate constraints: 'id1', 'id2'"
+        )

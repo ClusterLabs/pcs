@@ -32,7 +32,9 @@ def add_context_to_message(
     return msg
 
 
-def process_library_reports(report_item_list: ReportItemList) -> None:
+def process_library_reports(
+    report_item_list: ReportItemList, exit_on_error: bool = True
+) -> None:
     if not report_item_list:
         raise error("Errors have occurred, therefore pcs is unable to continue")
 
@@ -65,5 +67,5 @@ def process_library_reports(report_item_list: ReportItemList) -> None:
         )
         critical_error = True
 
-    if critical_error:
+    if critical_error and exit_on_error:
         sys.exit(1)
