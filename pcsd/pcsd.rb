@@ -848,6 +848,7 @@ end
 post '/managec/:cluster/api/v1/:command' do
   auth_user = getAuthUser()
   if params[:cluster] and params[:command]
+    request.body.rewind
     return send_cluster_request_with_token(
       auth_user,
       params[:cluster],
@@ -855,7 +856,7 @@ post '/managec/:cluster/api/v1/:command' do
       true, # post
       {}, # data - useless when there are raw_data
       false, # remote
-      request.env['rack.input'].read # raw_data
+      request.body.read # raw_data
     )
   end
 end
@@ -863,6 +864,7 @@ end
 get '/managec/:cluster/api/v1/:command' do
   auth_user = getAuthUser()
   if params[:cluster] and params[:command]
+    request.body.rewind
     return send_cluster_request_with_token(
       auth_user,
       params[:cluster],
@@ -870,14 +872,15 @@ get '/managec/:cluster/api/v1/:command' do
       false, # post
       {}, # data - useless when there are raw_data
       false, # remote
-      request.env['rack.input'].read # raw_data
+      request.body.read # raw_data
     )
   end
 end
 
 post '/managec/:cluster/?*' do
   auth_user = getAuthUser()
-  raw_data = request.env["rack.input"].read
+  request.body.rewind
+  raw_data = request.body.read
   if params[:cluster]
     request = "/" + params[:splat].join("/")
 
@@ -889,7 +892,8 @@ end
 
 get '/managec/:cluster/?*' do
   auth_user = getAuthUser()
-  raw_data = request.env["rack.input"].read
+  request.body.rewind
+  raw_data = request.body.read
   if params[:cluster]
     request = "/" + params[:splat].join("/")
     code, out = send_cluster_request_with_token(

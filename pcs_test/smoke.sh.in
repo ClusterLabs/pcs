@@ -5,7 +5,9 @@ SCRIPT_DIR="$(dirname -- "$(realpath -- "$0")")"
 
 cluster_user=hacluster
 cluster_user_password=qa57Jk27eP
+cluster_name="cluster-name"
 pcsd_socket_path="@LOCALSTATEDIR@/run/pcsd.socket"
+pcsd_settings_conf_path="@LOCALSTATEDIR@/lib/pcsd/pcs_settings.conf"
 
 echo "${cluster_user_password}" | passwd --stdin "${cluster_user}";
 
@@ -14,11 +16,12 @@ pcs --version
 pcs host auth localhost --debug -u ${cluster_user} -p ${cluster_user_password}
 if pidof systemd | grep "\b1\b"; then
     # this command requires full system with proper init process
-    pcs cluster setup cluster-name localhost --debug
+    pcs cluster setup ${cluster_name} localhost --debug
 fi
 
 output_file=$(mktemp)
 token_file=$(mktemp)
+cookie_file=$(mktemp)
 
 # Sanity check of API V0
 token=$(python3 -c "import json; print(json.load(open('@LOCALSTATEDIR@/lib/pcsd/known-hosts'))['known_hosts']['localhost']['token']);")
@@ -32,6 +35,41 @@ custom_localhost_node_name="custom-node-name"
 pcs host auth "${custom_localhost_node_name}" addr=localhost --token "${token_file}"
 pcs pcsd accept_token "${token_file}"
 pcs pcsd status "${custom_localhost_node_name}" | grep "${custom_localhost_node_name}: Online"
+
+# Test passing request body (raw_data) in ruby daemon
+cat <<EOF > ${pcsd_settings_conf_path}
+{
+  "format_version": 2,
+  "data_version": 1,
+  "clusters": [
+    {
+      "name": "${cluster_name}",
+      "nodes": [
+        "localhost"
+      ]
+    }
+  ],
+  "permissions": {
+    "local_cluster": [
+      {
+        "type": "group",
+        "name": "haclient",
+        "allow": [
+          "grant",
+          "read",
+          "write"
+        ]
+      }
+    ]
+  }
+}
+EOF
+cat ${pcsd_settings_conf_path}
+pcs cluster start --all --wait
+curl --insecure --data "username=${cluster_user}&password=${cluster_user_password}" --cookie-jar ${cookie_file} https://localhost:2224/ui/login
+curl --insecure --cookie ${cookie_file} --header "X-Requested-With: XMLHttpRequest" --data "hidden[hidden_input]=&config[stonith-enabled]=false" https://localhost:2224/managec/${cluster_name}/update_cluster_settings > "${output_file}"
+cat "${output_file}"; echo ""
+[ "$(cat ${output_file})" = "Update Successful" ]
 
 # Sanity check of API V1
 curl -kb "token=${token}" https://localhost:2224/api/v1/resource-agent-get-agents-list/v1 --data '{}' > "${output_file}"
@@ -57,6 +95,8 @@ su testuser -c '! curl --unix-socket '"${pcsd_socket_path}"' http:/something/api
 # cleanup
 rm "${token_file}"
 rm "${output_file}"
+rm "${cookie_file}"
+rm "${pcsd_settings_conf_path}"
 pcs cluster destroy --force
 userdel -r testuser
 exit 0
