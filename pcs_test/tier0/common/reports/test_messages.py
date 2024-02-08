@@ -66,47 +66,16 @@ class ResourceForConstraintIsMultiinstance(NameBuildTest):
         )
 
 
-class DuplicateConstraintsList(NameBuildTest):
-    def test_single_constraint(self):
-        self.assert_message_from_report(
-            "Duplicate constraints:\n"
-            "  resourceA with resourceD (score:score) (id:id123)",
-            reports.DuplicateConstraintsList(
-                "rsc_colocation",
-                [
-                    {
-                        "options": {
-                            "id": "id123",
-                            "rsc": "resourceA",
-                            "with-rsc": "resourceD",
-                            "score": "score",
-                        }
-                    }
-                ],
-            ),
-        )
-
-    def test_multiple_constraints(self):
-        self.assert_message_from_report(
-            (
-                "Duplicate constraints:\n"
-                "  rsc_another rsc=resourceA (id:id123)\n"
-                "  rsc_another rsc=resourceB (id:id321)"
-            ),
-            reports.DuplicateConstraintsList(
-                "rsc_another",
-                [
-                    {"options": {"id": "id123", "rsc": "resourceA"}},
-                    {"options": {"id": "id321", "rsc": "resourceB"}},
-                ],
-            ),
-        )
-
-
 class DuplicateConstraintsExist(NameBuildTest):
-    def test_build_message(self):
+    def test_build_singular(self):
         self.assert_message_from_report(
-            "duplicate constraint already exists",
+            "Duplicate constraint already exists",
+            reports.DuplicateConstraintsExist(["c1"]),
+        )
+
+    def test_build_plural(self):
+        self.assert_message_from_report(
+            "Duplicate constraints already exist",
             reports.DuplicateConstraintsExist(["c1", "c3", "c0"]),
         )
 

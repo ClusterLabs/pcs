@@ -142,7 +142,7 @@ def validate_id(
                 raise LibraryError(report_item)
 
 
-def sanitize_id(id_candidate, replacement=""):
+def sanitize_id(id_candidate: str, replacement: str = "") -> str:
     if not id_candidate:
         return id_candidate
     return "".join(

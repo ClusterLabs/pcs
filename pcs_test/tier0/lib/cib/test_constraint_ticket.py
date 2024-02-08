@@ -290,7 +290,7 @@ class PrepareOptionsWithSetTest(TestCase):
             ),
         )
         mock_check_new_id_applicable.assert_called_once_with(
-            self.cib, ticket.DESCRIPTION, invalid_id
+            self.cib, "constraint id", invalid_id
         )
 
     def test_refuse_unknown_lost_policy(self, _):

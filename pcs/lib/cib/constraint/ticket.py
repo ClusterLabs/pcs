@@ -21,6 +21,7 @@ from pcs.common.reports.item import ReportItem
 from pcs.lib import validate
 from pcs.lib.booth.config_validators import validate_ticket_name
 from pcs.lib.cib import tools
+from pcs.lib.cib.const import TAG_CONSTRAINT_TICKET as TAG
 from pcs.lib.cib.constraint import constraint
 from pcs.lib.cib.constraint.resource_set import (
     constraint_element_to_resource_set_dto_list,
@@ -31,8 +32,7 @@ from pcs.lib.errors import LibraryError
 from pcs.lib.tools import get_optional_value
 from pcs.lib.xml_tools import remove_when_pointless
 
-TAG_NAME = "rsc_ticket"
-DESCRIPTION = "constraint id"
+_DESCRIPTION = "constraint id"
 ATTRIB = {
     "loss-policy": ("fence", "stop", "freeze", "demote"),
     "ticket": None,
@@ -44,7 +44,7 @@ ATTRIB_PLAIN = {
 
 
 def is_ticket_constraint(element: _Element) -> bool:
-    return element.tag == TAG_NAME
+    return element.tag == TAG
 
 
 def _validate_options_common(options):
@@ -80,7 +80,7 @@ def prepare_options_with_set(cib, options, resource_set_list):
         create_id_fn=partial(
             constraint.create_id, cib, "ticket", resource_set_list
         ),
-        validate_id=partial(tools.check_new_id_applicable, cib, DESCRIPTION),
+        validate_id=partial(tools.check_new_id_applicable, cib, _DESCRIPTION),
     )
     report_list = _validate_options_common(options)
     if "ticket" not in options or not options["ticket"].strip():
@@ -182,12 +182,12 @@ def prepare_options_plain(
             options.get("rsc-role", ""),
         )
     else:
-        tools.check_new_id_applicable(cib, DESCRIPTION, options["id"])
+        tools.check_new_id_applicable(cib, _DESCRIPTION, options["id"])
     return options
 
 
 def create_plain(constraint_section, options):
-    element = SubElement(constraint_section, TAG_NAME)
+    element = SubElement(constraint_section, TAG)
     element.attrib.update(options)
     return element
 
@@ -285,7 +285,7 @@ def get_all_as_dtos(
 ) -> tuple[list[CibConstraintTicketDto], list[CibConstraintTicketSetDto]]:
     plain_list: list[CibConstraintTicketDto] = []
     set_list: list[CibConstraintTicketSetDto] = []
-    for constraint_el in constraints_el.findall(f"./{TAG_NAME}"):
+    for constraint_el in constraints_el.findall(f"./{TAG}"):
         if is_set_constraint(constraint_el):
             set_list.append(_set_constraint_el_to_dto(constraint_el))
         else:

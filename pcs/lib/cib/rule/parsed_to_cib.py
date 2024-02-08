@@ -1,3 +1,5 @@
+from typing import Optional
+
 from lxml import etree
 from lxml.etree import _Element
 
@@ -27,6 +29,7 @@ def export(
     id_provider: IdProvider,
     cib_schema_version: Version,
     expr_tree: BoolExpr,
+    rule_id: Optional[str] = None,
 ) -> _Element:
     """
     Export parsed rule to a CIB element
@@ -35,9 +38,10 @@ def export(
     id_provider -- elements' ids generator
     cib_schema_version -- makes the export compatible with specified CIB schema
     expr_tree -- parsed rule tree root
+    rule_id -- custom rule element id
     """
     return _Exporter(id_provider, cib_schema_version).export(
-        parent_el, expr_tree
+        parent_el, expr_tree, rule_id
     )
 
 
@@ -59,37 +63,55 @@ class _Exporter:
         self.id_provider = id_provider
         self.cib_schema_version = cib_schema_version
 
-    def export(self, parent_el: _Element, expr_tree: BoolExpr) -> _Element:
-        element = self._export_part(parent_el, expr_tree)
-        # Add score only to the top level rule element (which is represented by
-        # BoolExpr class). This is achieved by this function not being called for
-        # child nodes.
-        # TODO This was implemented originally only for rules in resource and
-        # operation defaults. In those cases, score is the only rule attribute and
-        # it is always INFINITY. Once this code is used for other rules, modify
-        # this behavior as needed.
-        if isinstance(expr_tree, BoolExpr):
-            element.attrib["score"] = "INFINITY"
+    def export(
+        self,
+        parent_el: _Element,
+        expr_tree: BoolExpr,
+        rule_id: Optional[str] = None,
+    ) -> _Element:
+        element = self._export_part(parent_el, expr_tree, rule_id)
+        # Adjust top level rule element (which is represented by BoolExpr
+        # class). This is achieved by this function not being called for child
+        # nodes.
+        # Remove score set by self._export_part. It is a responsibility of the
+        # caller to set it properly.
+        element.attrib.pop("score", "")
         return element
 
     def _export_part(
-        self, parent_el: _Element, expr_tree: RuleExprPart
+        self,
+        parent_el: _Element,
+        expr_tree: RuleExprPart,
+        id_: Optional[str] = None,
     ) -> _Element:
         func = self.part_export_map[type(expr_tree)]
+        # pylint: disable=comparison-with-callable
+        if func == self._export_bool:
+            # mypy doesn't handle this dynamic call
+            return func(parent_el, expr_tree, id_)  # type: ignore
         # mypy doesn't handle this dynamic call
         return func(parent_el, expr_tree)  # type: ignore
 
-    def _export_bool(self, parent_el: _Element, boolean: BoolExpr) -> _Element:
+    def _export_bool(
+        self, parent_el: _Element, boolean: BoolExpr, id_: Optional[str] = None
+    ) -> _Element:
         element = etree.SubElement(
             parent_el,
             "rule",
             {
-                "id": create_subelement_id(parent_el, "rule", self.id_provider),
+                "id": (
+                    id_
+                    if id_
+                    else create_subelement_id(
+                        parent_el, "rule", self.id_provider
+                    )
+                ),
                 "boolean-op": boolean.operator.lower(),
-                # Score or score-attribute is required for nested rules, otherwise
-                # the CIB is not valid. Pacemaker doesn't use the score of nested
-                # rules. Score for the top rule, which is used by pacemaker, is
-                # supposed to be set in the export function above.
+                # Score or score-attribute is required for nested rules,
+                # otherwise the CIB is not valid. Pacemaker doesn't use the
+                # score of nested rules. Score for the top rule, which is used
+                # by pacemaker, is supposed to be set by the caller of the
+                # export function.
                 "score": "0",
             },
         )

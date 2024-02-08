@@ -1,8 +1,50 @@
-TAG_CRM_CONFIG = "crm_config"
-TAG_RESOURCE_PRIMITIVE = "primitive"
-TAG_RESOURCE_GROUP = "group"
-TAG_RESOURCE_BUNDLE = "bundle"
-TAG_RESOURCE_CLONE = "clone"
-TAG_RESOURCE_MASTER = "master"
-TAG_TAG = "tag"
-TAG_OBJREF = "obj_ref"
+from typing import Final
+
+TAG_CONSTRAINT_COLOCATION: Final = "rsc_colocation"
+TAG_CONSTRAINT_LOCATION: Final = "rsc_location"
+TAG_CONSTRAINT_ORDER: Final = "rsc_order"
+TAG_CONSTRAINT_TICKET: Final = "rsc_ticket"
+TAG_CRM_CONFIG: Final = "crm_config"
+TAG_OBJREF: Final = "obj_ref"
+TAG_RESOURCE_BUNDLE: Final = "bundle"
+TAG_RESOURCE_CLONE: Final = "clone"
+TAG_RESOURCE_GROUP: Final = "group"
+TAG_RESOURCE_MASTER: Final = "master"
+TAG_RESOURCE_PRIMITIVE: Final = "primitive"
+TAG_RULE: Final = "rule"
+TAG_TAG: Final = "tag"
+
+TAG_LIST_CONSTRAINABLE: Final = frozenset(
+    (
+        TAG_RESOURCE_BUNDLE,
+        TAG_RESOURCE_CLONE,
+        TAG_RESOURCE_GROUP,
+        TAG_RESOURCE_MASTER,
+        TAG_RESOURCE_PRIMITIVE,
+        TAG_TAG,
+    )
+)
+TAG_LIST_CONSTRAINT = frozenset(
+    (
+        TAG_CONSTRAINT_COLOCATION,
+        TAG_CONSTRAINT_LOCATION,
+        TAG_CONSTRAINT_ORDER,
+        TAG_CONSTRAINT_TICKET,
+    )
+)
+TAG_LIST_RESOURCE: Final = frozenset(
+    (
+        TAG_RESOURCE_BUNDLE,
+        TAG_RESOURCE_CLONE,
+        TAG_RESOURCE_GROUP,
+        TAG_RESOURCE_MASTER,
+        TAG_RESOURCE_PRIMITIVE,
+    )
+)
+TAG_LIST_RESOURCE_MULTIINSTANCE: Final = frozenset(
+    (
+        TAG_RESOURCE_BUNDLE,
+        TAG_RESOURCE_CLONE,
+        TAG_RESOURCE_MASTER,
+    )
+)

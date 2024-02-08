@@ -70,6 +70,7 @@ EXTRA_DIST		= \
 			  cli/reports/__init__.py \
 			  cli/reports/messages.py \
 			  cli/reports/output.py \
+			  cli/reports/preprocessor.py \
 			  cli/reports/processor.py \
 			  cli/resource/__init__.py \
 			  cli/resource/parse_args.py \
@@ -147,11 +148,6 @@ EXTRA_DIST		= \
 			  common/pcs_pycurl.py \
 			  common/reports/codes.py \
 			  common/reports/const.py \
-			  common/reports/constraints/colocation.py \
-			  common/reports/constraints/common.py \
-			  common/reports/constraints/__init__.py \
-			  common/reports/constraints/order.py \
-			  common/reports/constraints/ticket.py \
 			  common/reports/conversions.py \
 			  common/reports/deprecated_codes.py \
 			  common/reports/dto.py \
@@ -246,8 +242,8 @@ EXTRA_DIST		= \
 			  lib/cib/acl.py \
 			  lib/cib/alert.py \
 			  lib/cib/const.py \
-			  lib/cib/constraint/all.py \
 			  lib/cib/constraint/colocation.py \
+			  lib/cib/constraint/common.py \
 			  lib/cib/constraint/constraint.py \
 			  lib/cib/constraint/location.py \
 			  lib/cib/constraint/__init__.py \

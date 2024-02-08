@@ -1,8 +1,5 @@
 from typing import (
-    Any,
     Callable,
-    Dict,
-    List,
     cast,
 )
 
@@ -12,18 +9,16 @@ from lxml.etree import (
 )
 
 from pcs.common import reports
-from pcs.lib.cib import resource
 from pcs.lib.cib.constraint import resource_set
 from pcs.lib.cib.tools import (
-    find_element_by_tag_and_id,
+    ElementNotFound,
     find_unique_id,
+    get_element_by_id,
 )
 from pcs.lib.errors import LibraryError
-from pcs.lib.xml_tools import (
-    export_attributes,
-    find_parent,
-    get_root,
-)
+from pcs.lib.xml_tools import get_root
+
+from .common import validate_constrainable_elements
 
 
 def _validate_attrib_names(attrib_names, options):
@@ -40,41 +35,23 @@ def _validate_attrib_names(attrib_names, options):
         )
 
 
+# DEPRECATED, use pcs.lib.cib.constraint.common.validate_constrainable_elements
 def find_valid_resource_id(
     report_processor: reports.ReportProcessor, cib, in_clone_allowed, _id
 ):
-    parent_tags = resource.clone.ALL_TAGS + [resource.bundle.TAG]
-    resource_element = find_element_by_tag_and_id(
-        sorted(parent_tags + [resource.primitive.TAG, resource.group.TAG]),
-        cib,
-        _id,
-    )
-
-    if resource_element.tag in parent_tags:
-        return resource_element.attrib["id"]
-
-    clone = find_parent(resource_element, parent_tags)
-    if clone is None:
-        return resource_element.attrib["id"]
-
-    report_msg = reports.messages.ResourceForConstraintIsMultiinstance(
-        resource_element.attrib["id"],
-        "clone" if clone.tag == "master" else clone.tag,
-        str(clone.attrib["id"]),
-    )
-    if in_clone_allowed:
-        if report_processor.report(
-            reports.ReportItem.warning(report_msg)
-        ).has_errors:
-            raise LibraryError()
-        return resource_element.attrib["id"]
-
-    raise LibraryError(
-        reports.ReportItem.error(
-            report_msg,
-            force_code=reports.codes.FORCE,
+    try:
+        report_processor.report_list(
+            validate_constrainable_elements(
+                [get_element_by_id(cib, _id)], in_clone_allowed
+            )
         )
-    )
+    except ElementNotFound:
+        report_processor.report(
+            reports.ReportItem.error(reports.messages.IdNotFound(_id, []))
+        )
+    if report_processor.has_errors:
+        raise LibraryError()
+    return _id
 
 
 def prepare_options(attrib_names, options, create_id_fn, validate_id):
@@ -86,20 +63,6 @@ def prepare_options(attrib_names, options, create_id_fn, validate_id):
     else:
         validate_id(options["id"])
     return options
-
-
-def export_with_set(element: _Element) -> Dict[str, Any]:
-    return {
-        "resource_sets": [
-            resource_set.export(resource_set_item)
-            for resource_set_item in element.findall(".//resource_set")
-        ],
-        "options": export_attributes(element),
-    }
-
-
-def export_plain(element: _Element) -> Dict[str, Any]:
-    return {"options": export_attributes(element)}
 
 
 def create_id(cib, type_prefix, resource_set_list):
@@ -132,7 +95,6 @@ def check_is_without_duplication(
     constraint_section: _Element,
     element: _Element,
     are_duplicate: Callable[[_Element, _Element], bool],
-    export_element: Callable[[_Element], Dict[str, Any]],
     duplication_allowed: bool = False,
 ) -> None:
     duplicate_element_list = [
@@ -140,7 +102,7 @@ def check_is_without_duplication(
         for duplicate_element in cast(
             # The xpath method has a complicated return value, but we know our
             # xpath expression returns only elements.
-            List[_Element],
+            list[_Element],
             constraint_section.xpath(
                 ".//*[local-name()=$tag_name]", tag_name=element.tag
             ),
@@ -155,15 +117,6 @@ def check_is_without_duplication(
 
     if report_processor.report_list(
         [
-            reports.ReportItem.info(
-                reports.messages.DuplicateConstraintsList(
-                    element.tag,
-                    [
-                        export_element(duplicate_element)
-                        for duplicate_element in duplicate_element_list
-                    ],
-                )
-            ),
             reports.ReportItem(
                 severity=reports.item.get_severity(
                     reports.codes.FORCE,

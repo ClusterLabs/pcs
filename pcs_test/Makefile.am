@@ -112,10 +112,6 @@ EXTRA_DIST		= \
 			  tier0/common/interface/test_dto.py \
 			  tier0/common/pacemaker/constraint/__init__.py \
 			  tier0/common/pacemaker/constraint/all.py \
-			  tier0/common/reports/constraints/__init__.py \
-			  tier0/common/reports/constraints/test_common.py \
-			  tier0/common/reports/constraints/test_init.py \
-			  tier0/common/reports/constraints/test_ticket.py \
 			  tier0/common/reports/__init__.py \
 			  tier0/common/reports/test_item.py \
 			  tier0/common/reports/test_messages.py \
@@ -169,6 +165,8 @@ EXTRA_DIST		= \
 			  tier0/lib/booth/test_status.py \
 			  tier0/lib/booth/test_sync.py \
 			  tier0/lib/cib/__init__.py \
+			  tier0/lib/cib/constraint/__init__.py \
+			  tier0/lib/cib/constraint/test_common.py \
 			  tier0/lib/cib/resource/__init__.py \
 			  tier0/lib/cib/resource/test_agent.py \
 			  tier0/lib/cib/resource/test_hierarchy.py \
@@ -185,7 +183,6 @@ EXTRA_DIST		= \
 			  tier0/lib/cib/rule/test_validator.py \
 			  tier0/lib/cib/test_acl.py \
 			  tier0/lib/cib/test_alert.py \
-			  tier0/lib/cib/test_constraint_all.py \
 			  tier0/lib/cib/test_constraint_colocation.py \
 			  tier0/lib/cib/test_constraint_location.py \
 			  tier0/lib/cib/test_constraint_order.py \

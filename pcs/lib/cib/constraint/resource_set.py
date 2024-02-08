@@ -24,7 +24,6 @@ from pcs.lib.cib.tools import (
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import is_true
 from pcs.lib.tools import get_optional_value
-from pcs.lib.xml_tools import export_attributes
 
 _ATTRIBUTES = ("action", "require-all", "role", "sequential")
 
@@ -91,13 +90,6 @@ def get_resource_id_set_list(element):
         resource_ref_element.attrib["id"]
         for resource_ref_element in element.findall(".//resource_ref")
     ]
-
-
-def export(element):
-    return {
-        "ids": get_resource_id_set_list(element),
-        "options": export_attributes(element),
-    }
 
 
 def is_resource_in_same_group(cib, resource_id_list):

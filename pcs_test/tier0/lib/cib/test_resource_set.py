@@ -108,19 +108,3 @@ class GetResourceIdListTest(TestCase):
         self.assertEqual(
             ["A", "B"], resource_set.get_resource_id_set_list(element)
         )
-
-
-class ExportTest(TestCase):
-    def test_returns_element_in_dict_representation(self):
-        element = etree.Element("resource_set")
-        element.attrib.update({"role": const.PCMK_ROLE_PROMOTED_LEGACY})
-        for _id in ("A", "B"):
-            etree.SubElement(element, "resource_ref").attrib["id"] = _id
-
-        self.assertEqual(
-            {
-                "options": {"role": const.PCMK_ROLE_PROMOTED_PRIMARY},
-                "ids": ["A", "B"],
-            },
-            resource_set.export(element),
-        )

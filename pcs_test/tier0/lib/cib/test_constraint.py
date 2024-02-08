@@ -1,4 +1,3 @@
-from functools import partial
 from unittest import (
     TestCase,
     mock,
@@ -16,156 +15,6 @@ from pcs_test.tools.assertions import (
     assert_xml_equal,
 )
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
-
-
-def fixture_element(tag, _id):
-    element = mock.MagicMock()
-    element.tag = tag
-    element.attrib = {"id": _id}
-    return element
-
-
-@mock.patch("pcs.lib.cib.constraint.constraint.find_parent")
-@mock.patch("pcs.lib.cib.constraint.constraint.find_element_by_tag_and_id")
-class FindValidResourceId(TestCase):
-    def setUp(self):
-        self.cib = "cib"
-        self.report_processor = MockLibraryReportProcessor()
-        self.find = partial(
-            constraint.find_valid_resource_id,
-            self.report_processor,
-            self.cib,
-            in_clone_allowed=False,
-        )
-
-    @staticmethod
-    def fixture_error_multiinstance(parent_type, parent_id):
-        return (
-            severities.ERROR,
-            report_codes.RESOURCE_FOR_CONSTRAINT_IS_MULTIINSTANCE,
-            {
-                "resource_id": "resourceA",
-                "parent_type": parent_type,
-                "parent_id": parent_id,
-            },
-            report_codes.FORCE,
-        )
-
-    @staticmethod
-    def fixture_warning_multiinstance(parent_type, parent_id):
-        return (
-            severities.WARNING,
-            report_codes.RESOURCE_FOR_CONSTRAINT_IS_MULTIINSTANCE,
-            {
-                "resource_id": "resourceA",
-                "parent_type": parent_type,
-                "parent_id": parent_id,
-            },
-            None,
-        )
-
-    def test_return_same_id_when_resource_is_clone(self, mock_find_by_id, _):
-        mock_find_by_id.return_value = fixture_element("clone", "resourceA")
-        self.assertEqual("resourceA", self.find(_id="resourceA"))
-
-    def test_return_same_id_when_resource_is_master(self, mock_find_by_id, _):
-        mock_find_by_id.return_value = fixture_element("master", "resourceA")
-        self.assertEqual("resourceA", self.find(_id="resourceA"))
-
-    def test_return_same_id_when_resource_is_bundle(self, mock_find_by_id, _):
-        mock_find_by_id.return_value = fixture_element("bundle", "resourceA")
-        self.assertEqual("resourceA", self.find(_id="resourceA"))
-
-    def test_return_same_id_when_resource_is_standalone_primitive(
-        self, mock_find_by_id, mock_find_parent
-    ):
-        mock_find_by_id.return_value = fixture_element("primitive", "resourceA")
-        mock_find_parent.return_value = None
-        self.assertEqual("resourceA", self.find(_id="resourceA"))
-
-    def test_refuse_when_resource_is_in_clone(
-        self, mock_find_by_id, mock_find_parent
-    ):
-        mock_find_by_id.return_value = fixture_element("primitive", "resourceA")
-        mock_find_parent.return_value = fixture_element("clone", "clone_id")
-        assert_raise_library_error(
-            lambda: self.find(_id="resourceA"),
-            self.fixture_error_multiinstance("clone", "clone_id"),
-        )
-
-    def test_refuse_when_resource_is_in_master(
-        self, mock_find_by_id, mock_find_parent
-    ):
-        mock_find_by_id.return_value = fixture_element("primitive", "resourceA")
-        mock_find_parent.return_value = fixture_element("master", "master_id")
-        assert_raise_library_error(
-            lambda: self.find(_id="resourceA"),
-            self.fixture_error_multiinstance("clone", "master_id"),
-        )
-
-    def test_refuse_when_resource_is_in_bundle(
-        self, mock_find_by_id, mock_find_parent
-    ):
-        mock_find_by_id.return_value = fixture_element("primitive", "resourceA")
-        mock_find_parent.return_value = fixture_element("bundle", "bundle_id")
-        assert_raise_library_error(
-            lambda: self.find(_id="resourceA"),
-            self.fixture_error_multiinstance("bundle", "bundle_id"),
-        )
-
-    def test_return_resource_id_when_in_clone_allowed(
-        self, mock_find_by_id, mock_find_parent
-    ):
-        mock_find_by_id.return_value = fixture_element("primitive", "resourceA")
-        mock_find_parent.return_value = fixture_element("clone", "clone_id")
-
-        self.assertEqual(
-            "resourceA",
-            # pylint: disable=redundant-keyword-arg
-            self.find(in_clone_allowed=True, _id="resourceA"),
-        )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list,
-            [
-                self.fixture_warning_multiinstance("clone", "clone_id"),
-            ],
-        )
-
-    def test_return_resource_id_when_in_master_allowed(
-        self, mock_find_by_id, mock_find_parent
-    ):
-        mock_find_by_id.return_value = fixture_element("primitive", "resourceA")
-        mock_find_parent.return_value = fixture_element("master", "master_id")
-
-        self.assertEqual(
-            "resourceA",
-            # pylint: disable=redundant-keyword-arg
-            self.find(in_clone_allowed=True, _id="resourceA"),
-        )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list,
-            [
-                self.fixture_warning_multiinstance("clone", "master_id"),
-            ],
-        )
-
-    def test_return_resource_id_when_in_bundle_allowed(
-        self, mock_find_by_id, mock_find_parent
-    ):
-        mock_find_by_id.return_value = fixture_element("primitive", "resourceA")
-        mock_find_parent.return_value = fixture_element("bundle", "bundle_id")
-
-        self.assertEqual(
-            "resourceA",
-            # pylint: disable=redundant-keyword-arg
-            self.find(in_clone_allowed=True, _id="resourceA"),
-        )
-        assert_report_item_list_equal(
-            self.report_processor.report_item_list,
-            [
-                self.fixture_warning_multiinstance("bundle", "bundle_id"),
-            ],
-        )
 
 
 class PrepareOptionsTest(TestCase):
@@ -258,25 +107,11 @@ class CheckIsWithoutDuplicationTest(TestCase):
                 ),
                 element,
                 are_duplicate=lambda e1, e2: True,
-                export_element=constraint.export_with_set,
             )
         )
         assert_report_item_list_equal(
             report_processor.report_item_list,
             [
-                (
-                    severities.INFO,
-                    report_codes.DUPLICATE_CONSTRAINTS_LIST,
-                    {
-                        "constraint_info_list": [
-                            {
-                                "resource_sets": [],
-                                "options": {"id": "duplicate_element"},
-                            }
-                        ],
-                        "constraint_type": "constraint_type",
-                    },
-                ),
                 (
                     severities.ERROR,
                     report_codes.DUPLICATE_CONSTRAINTS_EXIST,
@@ -288,10 +123,8 @@ class CheckIsWithoutDuplicationTest(TestCase):
             ],
         )
 
-    @mock.patch("pcs.lib.cib.constraint.constraint.export_with_set")
-    def test_success_when_no_duplication_found(self, export_with_set):
+    def test_success_when_no_duplication_found(self):
         # pylint: disable=no-self-use
-        export_with_set.return_value = "exported_duplicate_element"
         element = mock.MagicMock()
         element.tag = "constraint_type"
         # no exception raised
@@ -301,7 +134,6 @@ class CheckIsWithoutDuplicationTest(TestCase):
             fixture_constraint_section([]),
             element,
             are_duplicate=lambda e1, e2: True,
-            export_element=constraint.export_with_set,
         )
 
     def test_report_when_duplication_allowed(self):
@@ -317,25 +149,11 @@ class CheckIsWithoutDuplicationTest(TestCase):
             ),
             element,
             are_duplicate=lambda e1, e2: True,
-            export_element=constraint.export_with_set,
             duplication_allowed=True,
         )
         assert_report_item_list_equal(
             report_processor.report_item_list,
             [
-                (
-                    severities.INFO,
-                    report_codes.DUPLICATE_CONSTRAINTS_LIST,
-                    {
-                        "constraint_info_list": [
-                            {
-                                "resource_sets": [],
-                                "options": {"id": "duplicate_element"},
-                            }
-                        ],
-                        "constraint_type": "constraint_type",
-                    },
-                ),
                 (
                     severities.WARNING,
                     report_codes.DUPLICATE_CONSTRAINTS_EXIST,

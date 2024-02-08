@@ -17,6 +17,9 @@ from pcs.cli.reports.output import (
     deprecation_warning,
     error,
 )
+from pcs.cli.reports.preprocessor import (
+    get_duplicate_constraint_exists_preprocessor,
+)
 from pcs.common import reports
 from pcs.common.pacemaker.constraint import CibConstraintsDto
 from pcs.common.reports.messages import InvalidOptions
@@ -36,6 +39,9 @@ def create_with_set(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
       * -f - CIB file
     """
     modifiers.ensure_only_supported("--force", "-f")
+    lib.env.report_processor.set_report_item_preprocessor(
+        get_duplicate_constraint_exists_preprocessor(lib)
+    )
     command.create_with_set(
         lib.constraint_ticket.create_with_set,
         argv,
@@ -57,7 +63,9 @@ def add(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
       * -f - CIB file
     """
 
-    def _report_item_preprocessor(
+    generic_preprocessor = get_duplicate_constraint_exists_preprocessor(lib)
+
+    def _rsc_role_preprocessor(
         report_item: reports.ReportItem,
     ) -> Optional[reports.ReportItem]:
         if isinstance(report_item.message, InvalidOptions):
@@ -67,6 +75,14 @@ def add(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
             )
             return dataclasses.replace(report_item, message=new_message)
         return report_item
+
+    def _report_item_preprocessor(
+        report_item: reports.ReportItem,
+    ) -> Optional[reports.ReportItem]:
+        report_item_2 = generic_preprocessor(report_item)
+        if not report_item_2:
+            return None
+        return _rsc_role_preprocessor(report_item_2)
 
     modifiers.ensure_only_supported("--force", "-f")
     ticket, resource_id, resource_role, options = parse_args.parse_add(argv)

@@ -11,6 +11,9 @@ from pcs.cli.common.parse_args import (
 from pcs.cli.constraint import command
 from pcs.cli.constraint.output import print_config
 from pcs.cli.reports.output import deprecation_warning
+from pcs.cli.reports.preprocessor import (
+    get_duplicate_constraint_exists_preprocessor,
+)
 from pcs.common.pacemaker.constraint import CibConstraintsDto
 
 
@@ -28,6 +31,9 @@ def create_with_set(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
       * -f - CIB file
     """
     modifiers.ensure_only_supported("-f", "--force")
+    lib.env.report_processor.set_report_item_preprocessor(
+        get_duplicate_constraint_exists_preprocessor(lib)
+    )
     command.create_with_set(
         lib.constraint_colocation.create_with_set,
         argv,

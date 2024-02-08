@@ -46,7 +46,6 @@ from . import (
     const,
     types,
 )
-from .constraints import constraint_to_str
 from .dto import ReportItemMessageDto
 from .item import ReportItemMessage
 
@@ -305,34 +304,11 @@ class ResourceForConstraintIsMultiinstance(ReportItemMessage):
 
     @property
     def message(self) -> str:
+        parent_type = _type_to_string(self.parent_type)
         return (
-            f"{self.resource_id} is a {self.parent_type} resource, you should "
-            f"use the {self.parent_type} id: {self.parent_id} when adding "
+            f"{self.resource_id} is a {parent_type} resource, you should "
+            f"use the {parent_type} id: {self.parent_id} when adding "
             "constraints"
-        )
-
-
-@dataclass(frozen=True)
-class DuplicateConstraintsList(ReportItemMessage):
-    """
-    List duplicate constraints
-    NOTE: This is a temporary solution
-
-    constraint_type -- "rsc_colocation", "rsc_order", "rsc_ticket"
-    constraint_info_list -- structured constraint data according to type
-    """
-
-    constraint_type: str
-    constraint_info_list: List[Mapping[str, Any]]
-    _code = codes.DUPLICATE_CONSTRAINTS_LIST
-
-    @property
-    def message(self) -> str:
-        return "Duplicate constraints:\n" + "\n".join(
-            [
-                "  " + constraint_to_str(self.constraint_type, constraint_info)
-                for constraint_info in self.constraint_info_list
-            ]
         )
 
 
@@ -344,12 +320,15 @@ class DuplicateConstraintsExist(ReportItemMessage):
     constraint_ids -- ids of similar constraints
     """
 
-    constraint_ids: List[str]
+    constraint_ids: list[str]
     _code = codes.DUPLICATE_CONSTRAINTS_EXIST
 
     @property
     def message(self) -> str:
-        return "duplicate constraint already exists"
+        pluralize = partial(format_plural, self.constraint_ids)
+        constraint = pluralize("constraint")
+        exists = pluralize("exists", "exist")
+        return f"Duplicate {constraint} already {exists}"
 
 
 @dataclass(frozen=True)

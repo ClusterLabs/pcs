@@ -14,7 +14,7 @@ from . import common
 # configure common constraint command
 create_with_set = partial(
     common.create_with_set,
-    ticket.TAG_NAME,
+    ticket.TAG,
     ticket.prepare_options_with_set,
     duplicate_check=ticket.are_duplicate_with_resource_set,
 )
@@ -60,7 +60,6 @@ def create(
         are_duplicate=ticket.get_duplicit_checker_callback(
             are_new_role_names_supported(constraint_section)
         ),
-        export_element=constraint.export_plain,
         duplication_allowed=duplication_alowed,
     )
 

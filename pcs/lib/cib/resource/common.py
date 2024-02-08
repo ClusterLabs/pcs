@@ -12,27 +12,20 @@ from lxml.etree import _Element
 from pcs.common.reports.item import ReportItemList
 from pcs.common.types import StringCollection
 from pcs.lib.cib import nvpair
+from pcs.lib.cib.const import TAG_LIST_RESOURCE
 from pcs.lib.cib.tools import (
     ElementSearcher,
     IdProvider,
 )
 from pcs.lib.xml_tools import find_parent
 
-from .bundle import TAG as TAG_BUNDLE
 from .bundle import get_inner_resource as get_bundle_inner_resource
 from .bundle import is_bundle
-from .clone import ALL_TAGS as TAG_CLONE_ALL
 from .clone import get_inner_resource as get_clone_inner_resource
 from .clone import is_any_clone
-from .group import TAG as TAG_GROUP
 from .group import get_inner_resources as get_group_inner_resources
 from .group import is_group
-from .primitive import TAG as TAG_PRIMITIVE
 from .primitive import is_primitive
-
-ALL_RESOURCE_XML_TAGS = sorted(
-    TAG_CLONE_ALL + [TAG_GROUP, TAG_PRIMITIVE, TAG_BUNDLE]
-)
 
 
 def are_meta_disabled(meta_attributes: Mapping[str, str]) -> bool:
@@ -88,7 +81,7 @@ def find_resources(
     """
     report_list: ReportItemList = []
     if resource_tags is None:
-        resource_tags = ALL_RESOURCE_XML_TAGS
+        resource_tags = TAG_LIST_RESOURCE
     resource_el_list = []
     for res_id in resource_ids:
         searcher = ElementSearcher(resource_tags, res_id, context_element)
@@ -159,7 +152,7 @@ def is_resource(element: _Element) -> bool:
 
     element -- element to check
     """
-    return element.tag in ALL_RESOURCE_XML_TAGS
+    return element.tag in TAG_LIST_RESOURCE
 
 
 def is_wrapper_resource(resource_el: _Element) -> bool:

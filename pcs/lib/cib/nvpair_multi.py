@@ -12,6 +12,7 @@ from lxml import etree
 from lxml.etree import _Element
 
 from pcs.common import reports
+from pcs.common.const import INFINITY
 from pcs.common.pacemaker.nvset import (
     CibNvpairDto,
     CibNvsetDto,
@@ -248,7 +249,12 @@ def nvset_append_new(
         if value != "":
             nvset_el.attrib[name] = value
     if nvset_rule:
-        rule_to_cib(nvset_el, id_provider, cib_schema_version, nvset_rule)
+        rule_el = rule_to_cib(
+            nvset_el, id_provider, cib_schema_version, nvset_rule
+        )
+        # It is required to set a score to make the CIB valid. In later pcmk
+        # versions, the score may be changed not to be required.
+        rule_el.attrib["score"] = INFINITY
     for name, value in nvpair_dict.items():
         _set_nvpair(nvset_el, id_provider, name, value)
     return nvset_el
