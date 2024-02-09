@@ -1,12 +1,14 @@
 import base64
 import io
 import re
+from dataclasses import (
+    dataclass,
+    field,
+)
 from typing import (
-    Any,
     Generator,
     Iterable,
     Mapping,
-    NamedTuple,
     Optional,
     Sequence,
     Union,
@@ -38,34 +40,23 @@ class HostNotFound(Exception):
         self.name = name
 
 
-class RequestTarget(
-    NamedTuple(
-        "RequestTarget",
-        [
-            ("label", str),
-            ("token", Optional[str]),
-            ("dest_list", list[Destination]),
-        ],
-    )
-):
+@dataclass(frozen=True)
+class RequestTarget:
     """
     This class represents target (host) for request to be performed on
     """
 
-    def __new__(
-        cls,
-        label: str,
-        token: Optional[str] = None,
-        dest_list: Iterable[Destination] = (),
-    ) -> "RequestTarget":
-        if not dest_list:
-            dest_list = [Destination(label, settings.pcsd_default_port)]
-        return super(RequestTarget, cls).__new__(
-            cls,
-            label,
-            token=token,
-            dest_list=list(dest_list),
-        )
+    label: str
+    token: Optional[str] = None
+    dest_list: list[Destination] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        if not self.dest_list:
+            object.__setattr__(
+                self,
+                "dest_list",
+                [Destination(self.label, settings.pcsd_default_port)],
+            )
 
     @classmethod
     def from_known_host(cls, known_host: PcsKnownHost) -> "RequestTarget":
@@ -77,7 +68,8 @@ class RequestTarget(
 
     @property
     def first_addr(self) -> str:
-        # __new__ ensures there is always at least one item in self.dest_list
+        # __post_init__ ensures there is always at least one item in
+        # self.dest_list
         return self.dest_list[0].addr
 
 
@@ -98,48 +90,29 @@ class NodeTargetFactory:
             return RequestTarget(hostname)
 
 
-class RequestData(
-    NamedTuple(
-        "RequestData",
-        [
-            ("action", str),
-            (
-                "structured_data",
-                Union[
-                    Sequence[tuple[Any, Any]],
-                    Sequence[tuple[Any, Sequence[Any]]],
-                ],
-            ),
-            ("data", str),
-        ],
-    )
-):
+@dataclass(frozen=True)
+class RequestData:
     """
     This class represents action and data associated with action which will be
     send in request
+
+    action -- action to perform
+    structured_data -- list of tuples, data to send with specified action
+    data -- raw data to send in request's body
     """
 
-    def __new__(
-        cls,
-        action: str,
-        structured_data: Union[
-            Sequence[tuple[Union[str, bytes], Union[str, bytes]]],
-            Sequence[tuple[Union[str, bytes], Sequence[Union[str, bytes]]]],
-        ] = (),
-        data: Optional[str] = None,
-    ) -> "RequestData":
-        """
-        action -- action to perform
-        structured_data -- list of tuples, data to send with specified
-            action
-        data -- raw data to send in request's body
-        """
-        return super(RequestData, cls).__new__(
-            cls,
-            action,
-            () if data else structured_data,
-            data if data else urlencode(structured_data),
-        )
+    action: str
+    structured_data: Union[
+        Sequence[tuple[Union[str, bytes], Union[str, bytes]]],
+        Sequence[tuple[Union[str, bytes], Sequence[Union[str, bytes]]]],
+    ] = ()
+    data: str = ""
+
+    def __post_init__(self) -> None:
+        if not self.data:
+            object.__setattr__(self, "data", urlencode(self.structured_data))
+        else:
+            object.__setattr__(self, "structured_data", ())
 
 
 class Request:
