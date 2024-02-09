@@ -1,18 +1,20 @@
+from dataclasses import dataclass
 from typing import (
     Any,
     Mapping,
-    NamedTuple,
 )
 
 from pcs import settings
 
 
-class Destination(NamedTuple):
+@dataclass(frozen=True)
+class Destination:
     addr: str
     port: int
 
 
-class PcsKnownHost(NamedTuple):
+@dataclass(frozen=True)
+class PcsKnownHost:
     name: str
     token: str
     dest_list: list[Destination]
