@@ -1,12 +1,16 @@
 import threading
 import uuid
+from dataclasses import (
+    astuple,
+    dataclass,
+)
 from typing import (
     Any,
     Callable,
+    Generator,
     Iterable,
     Mapping,
     MutableSet,
-    NamedTuple,
     Optional,
     TypeVar,
     Union,
@@ -108,7 +112,8 @@ def timeout_to_seconds(timeout: Union[int, str]) -> Optional[int]:
     return None
 
 
-class Version(NamedTuple):
+@dataclass(frozen=True)
+class Version:
     major: int
     minor: Optional[int] = None
     revision: Optional[int] = None
@@ -124,21 +129,22 @@ class Version(NamedTuple):
     def normalize(self) -> "Version":
         return self.__class__(*self.as_full_tuple)
 
+    def __iter__(self) -> Generator[Optional[int], None, None]:
+        yield from astuple(self)
+
+    def __getitem__(self, index: int) -> Optional[int]:
+        return astuple(self)[index]
+
     def __str__(self) -> str:
-        # pylint: disable=not-an-iterable
         return ".".join([str(x) for x in self if x is not None])
 
-    # See, https://stackoverflow.com/questions/37557411/why-does-defining-the-argument-types-for-eq-throw-a-mypy-type-error
-    def __lt__(self, other: tuple[Optional[int], ...]) -> bool:
-        if not isinstance(other, Version):
-            return NotImplemented
+    def __lt__(self, other: "Version") -> bool:
         return self.as_full_tuple < other.as_full_tuple
 
-    def __le__(self, other: tuple[Optional[int], ...]) -> bool:
-        if not isinstance(other, Version):
-            return NotImplemented
+    def __le__(self, other: "Version") -> bool:
         return self.as_full_tuple <= other.as_full_tuple
 
+    # See, https://stackoverflow.com/questions/37557411/why-does-defining-the-argument-types-for-eq-throw-a-mypy-type-error
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Version):
             return NotImplemented
@@ -149,12 +155,10 @@ class Version(NamedTuple):
             return NotImplemented
         return self.as_full_tuple != other.as_full_tuple
 
-    def __gt__(self, other: tuple[Optional[int], ...]) -> bool:
+    def __gt__(self, other: "Version") -> bool:
         if not isinstance(other, Version):
             return NotImplemented
         return self.as_full_tuple > other.as_full_tuple
 
-    def __ge__(self, other: tuple[Optional[int], ...]) -> bool:
-        if not isinstance(other, Version):
-            return NotImplemented
+    def __ge__(self, other: "Version") -> bool:
         return self.as_full_tuple >= other.as_full_tuple
