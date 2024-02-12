@@ -58,10 +58,6 @@ def run_parallel(
         thread.join()
 
 
-def format_environment_error(e: OSError) -> str:
-    return format_os_error(e)
-
-
 def format_os_error(e: OSError) -> str:
     return f"{e.strerror}: '{e.filename}'" if e.filename else e.strerror
 
@@ -156,8 +152,6 @@ class Version:
         return self.as_full_tuple != other.as_full_tuple
 
     def __gt__(self, other: "Version") -> bool:
-        if not isinstance(other, Version):
-            return NotImplemented
         return self.as_full_tuple > other.as_full_tuple
 
     def __ge__(self, other: "Version") -> bool:

@@ -5,7 +5,7 @@ from pcs.common import (
 )
 from pcs.common.file import RawFileError
 from pcs.common.reports.item import ReportItem
-from pcs.common.tools import format_environment_error
+from pcs.common.tools import format_os_error
 from pcs.lib.communication.nodes import SendPcsdSslCertAndKey
 from pcs.lib.communication.tools import run_and_raise
 from pcs.lib.env import LibraryEnvironment
@@ -40,13 +40,13 @@ def synchronize_ssl_certificate(env: LibraryEnvironment, skip_offline=False):
     try:
         with open(settings.pcsd_cert_location, "r") as file:
             ssl_cert = file.read()
-    except EnvironmentError as e:
+    except OSError as e:
         report_processor.report(
             ReportItem.error(
                 reports.messages.FileIoError(
                     file_type_codes.PCSD_SSL_CERT,
                     RawFileError.ACTION_READ,
-                    format_environment_error(e),
+                    format_os_error(e),
                     file_path=settings.pcsd_cert_location,
                 )
             )
@@ -54,13 +54,13 @@ def synchronize_ssl_certificate(env: LibraryEnvironment, skip_offline=False):
     try:
         with open(settings.pcsd_key_location, "r") as file:
             ssl_key = file.read()
-    except EnvironmentError as e:
+    except OSError as e:
         report_processor.report(
             ReportItem.error(
                 reports.messages.FileIoError(
                     file_type_codes.PCSD_SSL_KEY,
                     RawFileError.ACTION_READ,
-                    format_environment_error(e),
+                    format_os_error(e),
                     file_path=settings.pcsd_key_location,
                 )
             )

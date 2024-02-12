@@ -30,7 +30,6 @@ from pcs.common.host import (
     Destination,
     PcsKnownHost,
 )
-from pcs.common.pcs_pycurl import Curl
 from pcs.common.types import StringIterable
 
 
@@ -112,7 +111,7 @@ class RequestData:
         if not self.data:
             object.__setattr__(self, "data", urlencode(self.structured_data))
         else:
-            object.__setattr__(self, "structured_data", ())
+            object.__setattr__(self, "structured_data", self.data)
 
 
 class Request:
@@ -124,14 +123,9 @@ class Request:
     def __init__(
         self, request_target: RequestTarget, request_data: RequestData
     ) -> None:
-        """
-        RequestTarget request_target
-        RequestData request_data
-        """
         self._target = request_target
         self._data = request_data
         self._current_dest_iterator = iter(self._target.dest_list)
-        self._current_dest: Optional[Destination] = None
         self.next_dest()
 
     def next_dest(self) -> None:
@@ -146,8 +140,6 @@ class Request:
         """
         URL representing request using current host.
         """
-        if self.dest is None:
-            return ""
         addr = self.dest.addr
         port = self.dest.port
         return "https://{host}:{port}/{request}".format(
@@ -157,7 +149,7 @@ class Request:
         )
 
     @property
-    def dest(self) -> Optional[Destination]:
+    def dest(self) -> Destination:
         return self._current_dest
 
     @property
@@ -195,7 +187,7 @@ class Response:
 
     def __init__(
         self,
-        handle: Curl,
+        handle: pycurl.Curl,
         was_connected: bool,
         errno: Optional[int] = None,
         error_msg: Optional[str] = None,
@@ -208,7 +200,7 @@ class Response:
         self._debug = None
 
     @classmethod
-    def connection_successful(cls, handle: Curl) -> "Response":
+    def connection_successful(cls, handle: pycurl.Curl) -> "Response":
         """
         Returns Response instance that is marked as successfully connected.
 
@@ -218,7 +210,7 @@ class Response:
 
     @classmethod
     def connection_failure(
-        cls, handle: Curl, errno: int, error_msg: str
+        cls, handle: pycurl.Curl, errno: int, error_msg: str
     ) -> "Response":
         """
         Returns Response instance that is marked as not successfully connected.
@@ -234,7 +226,7 @@ class Response:
         return self._handle.request_obj  # type: ignore[attr-defined]
 
     @property
-    def handle(self) -> Curl:
+    def handle(self) -> pycurl.Curl:
         return self._handle
 
     @property
@@ -323,7 +315,7 @@ class Communicator:
         # This is used just for storing references of curl easy handles.
         # We need to have references for all the handles, so they don't be
         # cleaned up by the garbage collector.
-        self._easy_handle_list: list[Curl] = []
+        self._easy_handle_list: list[pycurl.Curl] = []
 
     def add_requests(self, request_list: Iterable[Request]) -> None:
         """
@@ -422,11 +414,11 @@ class Communicator:
         # try to wait until there is something to do for us
         need_to_wait = True
         while need_to_wait:
-            timeout = float(self._multi_handle.timeout())
+            timeout = self._multi_handle.timeout()
             if timeout == 0:
                 # if timeout == 0 then there is something to precess already
                 return
-            timeout = (
+            select_timeout = (
                 timeout / 1000.0
                 if timeout > 0
                 # curl don't have timeout set, so we can use our default
@@ -434,7 +426,7 @@ class Communicator:
             )
             # when value returned from select is -1, it timed out, so we can
             # wait
-            need_to_wait = self._multi_handle.select(timeout) == -1
+            need_to_wait = self._multi_handle.select(select_timeout) == -1
 
 
 class MultiaddressCommunicator(Communicator):
@@ -522,8 +514,8 @@ def _get_auth_cookies(
 
 
 def _create_request_handle(
-    request: Request, cookies: dict[str, str], timeout: int
-) -> Curl:
+    request: Request, cookies: Mapping[str, str], timeout: int
+) -> pycurl.Curl:
     """
     Returns Curl object (easy handle) which is set up with specified parameters.
 
@@ -552,7 +544,8 @@ def _create_request_handle(
 
     output = io.BytesIO()
     debug_output = io.BytesIO()
-    cookies.update(request.cookies)
+    handle_cookies = dict(cookies.items())
+    handle_cookies.update(request.cookies)
     handle = pycurl.Curl()
     handle.setopt(pycurl.PROTOCOLS, pycurl.PROTO_HTTPS)
     handle.setopt(pycurl.TIMEOUT, timeout)
@@ -564,8 +557,10 @@ def _create_request_handle(
     handle.setopt(pycurl.SSL_VERIFYPEER, 0)
     handle.setopt(pycurl.NOSIGNAL, 1)  # required for multi-threading
     handle.setopt(pycurl.HTTPHEADER, ["Expect: "])
-    if cookies:
-        handle.setopt(pycurl.COOKIE, _dict_to_cookies(cookies).encode("utf-8"))
+    if handle_cookies:
+        handle.setopt(
+            pycurl.COOKIE, _dict_to_cookies(handle_cookies).encode("utf-8")
+        )
     if request.data:
         handle.setopt(pycurl.COPYPOSTFIELDS, request.data.encode("utf-8"))
     # add reference for request object and output buffers to handle, so later
@@ -579,7 +574,7 @@ def _create_request_handle(
     return handle
 
 
-def _dict_to_cookies(cookies_dict: dict[str, str]) -> str:
+def _dict_to_cookies(cookies_dict: Mapping[str, str]) -> str:
     return ";".join(
         [f"{key}={value}" for key, value in sorted(cookies_dict.items())]
     )
