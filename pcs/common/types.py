@@ -19,8 +19,13 @@ StringIterable = Union[StringCollection, Generator[str, None, None]]
 
 
 class AutoNameEnum(str, Enum):
-    def _generate_next_value_(name, start, count, last_values):  # type: ignore
-        # pylint: disable=no-self-argument
+    @staticmethod
+    def _generate_next_value_(
+        name: str,
+        start: int,
+        count: int,
+        last_values: list[int],
+    ) -> str:
         del start, count, last_values
         return name
 

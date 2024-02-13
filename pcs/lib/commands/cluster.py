@@ -31,7 +31,7 @@ from pcs.common.reports.item import (
     ReportItemList,
 )
 from pcs.common.str_tools import join_multilines
-from pcs.common.tools import format_environment_error
+from pcs.common.tools import format_os_error
 from pcs.common.types import (
     CorosyncTransportType,
     UnknownCorosyncTransportTypeException,
@@ -1226,14 +1226,14 @@ def add_nodes(
                         corosync_authkey_file.read()
                     )
                 )
-        except EnvironmentError as e:
+        except OSError as e:
             report_processor.report(
                 ReportItem(
                     severity,
                     reports.messages.FileIoError(
                         file_type_codes.COROSYNC_AUTHKEY,
                         RawFileError.ACTION_READ,
-                        format_environment_error(e),
+                        format_os_error(e),
                         file_path=settings.corosync_authkey_file,
                     ),
                 )
@@ -1249,14 +1249,14 @@ def add_nodes(
                         pcmk_authkey_file.read()
                     )
                 )
-        except EnvironmentError as e:
+        except OSError as e:
             report_processor.report(
                 ReportItem(
                     severity,
                     reports.messages.FileIoError(
                         file_type_codes.PACEMAKER_AUTHKEY,
                         RawFileError.ACTION_READ,
-                        format_environment_error(e),
+                        format_os_error(e),
                         file_path=settings.pacemaker_authkey_file,
                     ),
                 )
@@ -1272,14 +1272,14 @@ def add_nodes(
                         pcs_dr_config_file.read()
                     )
                 )
-        except EnvironmentError as e:
+        except OSError as e:
             report_processor.report(
                 ReportItem(
                     severity,
                     reports.messages.FileIoError(
                         file_type_codes.PCS_DR_CONFIG,
                         RawFileError.ACTION_READ,
-                        format_environment_error(e),
+                        format_os_error(e),
                         file_path=settings.pcsd_dr_config_location,
                     ),
                 )
@@ -1298,14 +1298,14 @@ def add_nodes(
                         pcs_settings_conf_file.read()
                     )
                 )
-        except EnvironmentError as e:
+        except OSError as e:
             report_processor.report(
                 ReportItem(
                     severity,
                     reports.messages.FileIoError(
                         file_type_codes.PCS_SETTINGS_CONF,
                         RawFileError.ACTION_READ,
-                        format_environment_error(e),
+                        format_os_error(e),
                         file_path=settings.pcsd_settings_conf_location,
                     ),
                 )
@@ -1335,13 +1335,13 @@ def add_nodes(
         try:
             with open(settings.pcsd_cert_location, "r") as file:
                 ssl_cert = file.read()
-        except EnvironmentError as e:
+        except OSError as e:
             report_processor.report(
                 ReportItem.error(
                     reports.messages.FileIoError(
                         file_type_codes.PCSD_SSL_CERT,
                         RawFileError.ACTION_READ,
-                        format_environment_error(e),
+                        format_os_error(e),
                         file_path=settings.pcsd_cert_location,
                     )
                 )
@@ -1349,13 +1349,13 @@ def add_nodes(
         try:
             with open(settings.pcsd_key_location, "r") as file:
                 ssl_key = file.read()
-        except EnvironmentError as e:
+        except OSError as e:
             report_processor.report(
                 ReportItem.error(
                     reports.messages.FileIoError(
                         file_type_codes.PCSD_SSL_KEY,
                         RawFileError.ACTION_READ,
-                        format_environment_error(e),
+                        format_os_error(e),
                         file_path=settings.pcsd_key_location,
                     )
                 )
@@ -1679,13 +1679,13 @@ def _is_ssl_cert_sync_enabled(report_processor: ReportProcessor):
                     cfg.get("PCSD_SSL_CERT_SYNC_ENABLED", "false").lower()
                     == "true"
                 )
-    except EnvironmentError as e:
+    except OSError as e:
         report_processor.report(
             ReportItem.error(
                 reports.messages.FileIoError(
                     file_type_codes.PCSD_ENVIRONMENT_CONFIG,
                     RawFileError.ACTION_READ,
-                    format_environment_error(e),
+                    format_os_error(e),
                     file_path=settings.pcsd_config,
                 )
             )

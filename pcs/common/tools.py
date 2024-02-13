@@ -1,7 +1,15 @@
 import threading
 import uuid
-from collections import namedtuple
+from dataclasses import (
+    astuple,
+    dataclass,
+)
 from typing import (
+    Any,
+    Callable,
+    Generator,
+    Iterable,
+    Mapping,
     MutableSet,
     Optional,
     TypeVar,
@@ -35,7 +43,10 @@ def get_unique_uuid(already_used: StringCollection) -> str:
     return candidate
 
 
-def run_parallel(worker, data_list):
+def run_parallel(
+    worker: Callable[..., Any],
+    data_list: tuple[Iterable[Any], Mapping[str, Any]],
+) -> None:
     thread_list = []
     for args, kwargs in data_list:
         thread = threading.Thread(target=worker, args=args, kwargs=kwargs)
@@ -47,11 +58,7 @@ def run_parallel(worker, data_list):
         thread.join()
 
 
-def format_environment_error(e):
-    return format_os_error(e)
-
-
-def format_os_error(e: OSError):
+def format_os_error(e: OSError) -> str:
     return f"{e.strerror}: '{e.filename}'" if e.filename else e.strerror
 
 
@@ -101,43 +108,51 @@ def timeout_to_seconds(timeout: Union[int, str]) -> Optional[int]:
     return None
 
 
-class Version(namedtuple("Version", ["major", "minor", "revision"])):
-    def __new__(
-        cls,
-        major: int,
-        minor: Optional[int] = None,
-        revision: Optional[int] = None,
-    ):
-        return super(Version, cls).__new__(cls, major, minor, revision)
+@dataclass(frozen=True)
+class Version:
+    major: int
+    minor: Optional[int] = None
+    revision: Optional[int] = None
 
     @property
-    def as_full_tuple(self):
+    def as_full_tuple(self) -> tuple[int, int, int]:
         return (
             self.major,
             self.minor if self.minor is not None else 0,
             self.revision if self.revision is not None else 0,
         )
 
-    def normalize(self):
+    def normalize(self) -> "Version":
         return self.__class__(*self.as_full_tuple)
 
-    def __str__(self):
+    def __iter__(self) -> Generator[Optional[int], None, None]:
+        yield from astuple(self)
+
+    def __getitem__(self, index: int) -> Optional[int]:
+        return astuple(self)[index]
+
+    def __str__(self) -> str:
         return ".".join([str(x) for x in self if x is not None])
 
-    def __lt__(self, other):
+    def __lt__(self, other: "Version") -> bool:
         return self.as_full_tuple < other.as_full_tuple
 
-    def __le__(self, other):
+    def __le__(self, other: "Version") -> bool:
         return self.as_full_tuple <= other.as_full_tuple
 
-    def __eq__(self, other):
+    # See, https://stackoverflow.com/questions/37557411/why-does-defining-the-argument-types-for-eq-throw-a-mypy-type-error
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Version):
+            return NotImplemented
         return self.as_full_tuple == other.as_full_tuple
 
-    def __ne__(self, other):
+    def __ne__(self, other: object) -> bool:
+        if not isinstance(other, Version):
+            return NotImplemented
         return self.as_full_tuple != other.as_full_tuple
 
-    def __gt__(self, other):
+    def __gt__(self, other: "Version") -> bool:
         return self.as_full_tuple > other.as_full_tuple
 
-    def __ge__(self, other):
+    def __ge__(self, other: "Version") -> bool:
         return self.as_full_tuple >= other.as_full_tuple
