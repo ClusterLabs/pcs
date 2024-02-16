@@ -131,7 +131,7 @@
       <rsc_location id="location-G2-localhost-INFINITY" rsc="G2" node="localhost" score="INFINITY"/>
       <rsc_location id="location-R-localhost-INFINITY" rsc-pattern="R*" node="localhost" score="INFINITY"/>
       <rsc_location id="loc_constr_with_expired_rule" rsc="B2">
-        <rule id="loc_constr_with_expired_rule-rule" score="500">
+        <rule id="loc_constr_with_expired_rule-rule" boolean-op="and" score="500">
           <date_expression id="loc_constr_with_expired_rule-rule-expr" operation="lt" end="2000-01-01"/>
         </rule>
       </rsc_location>

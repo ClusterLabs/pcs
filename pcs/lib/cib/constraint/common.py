@@ -1,4 +1,8 @@
-from typing import Iterable
+import abc
+from typing import (
+    Collection,
+    Iterable,
+)
 
 from lxml.etree import _Element
 
@@ -7,12 +11,106 @@ from pcs.lib.cib.const import (
     TAG_LIST_CONSTRAINABLE,
     TAG_LIST_CONSTRAINT,
     TAG_LIST_RESOURCE_MULTIINSTANCE,
+    TAG_RESOURCE_SET,
 )
 from pcs.lib.xml_tools import find_parent
 
 
 def is_constraint(element: _Element) -> bool:
     return element.tag in TAG_LIST_CONSTRAINT
+
+
+def is_set_constraint(element: _Element) -> bool:
+    return (
+        is_constraint(element)
+        and element.find(f"./{TAG_RESOURCE_SET}") is not None
+    )
+
+
+def find_constraints_of_same_type(
+    constraint_section: _Element,
+    constraint_to_check: _Element,
+) -> Iterable[_Element]:
+    """
+    Find constraints of the same type and setness as a specified constraint
+
+    constraint_section -- where to look for constraints
+    constraint_to_check -- defines a type and a setness to look for
+    """
+    looking_for_set_constraint = is_set_constraint(constraint_to_check)
+    return (
+        element
+        for element in constraint_section.iterfind(constraint_to_check.tag)
+        if element is not constraint_to_check
+        and is_set_constraint(element) == looking_for_set_constraint
+    )
+
+
+class DuplicatesChecker:
+    """
+    Base class for finding duplicate constraints
+
+    To use it, create a subclass and implement _are_duplicate method to compare
+    constraints of a specific type
+    """
+
+    def __init__(self) -> None:
+        pass
+
+    def check(
+        self,
+        constraint_section: _Element,
+        constraint_to_check: _Element,
+        force_flags: Collection[reports.types.ForceCode] = (),
+    ) -> reports.ReportItemList:
+        """
+        Check if a constraint is a duplicate of an already existing constraint
+
+        constraint_section -- where to look for existing constraints
+        constraint_to_check -- search for duplicates of this constraint
+        force_flags -- list of flags codes
+        """
+        report_list: reports.ReportItemList = []
+        duplication_allowed = reports.codes.FORCE in force_flags
+
+        duplicate_constraint_list = [
+            constraint_el
+            for constraint_el in find_constraints_of_same_type(
+                constraint_section, constraint_to_check
+            )
+            if self._are_duplicate(constraint_to_check, constraint_el)
+        ]
+
+        if duplicate_constraint_list:
+            report_list.append(
+                reports.ReportItem(
+                    severity=reports.item.get_severity(
+                        reports.codes.FORCE, duplication_allowed
+                    ),
+                    message=reports.messages.DuplicateConstraintsExist(
+                        [
+                            str(duplicate_el.attrib["id"])
+                            for duplicate_el in duplicate_constraint_list
+                        ]
+                    ),
+                ),
+            )
+
+        return report_list
+
+    @abc.abstractmethod
+    def _are_duplicate(
+        self,
+        constraint_to_check: _Element,
+        constraint_el: _Element,
+    ) -> bool:
+        """
+        Compare two constraints and decide if they are duplicate to each other
+
+        constraint_to_check -- search for duplicates of this constraint
+        constraint_el -- an already existing constraint
+        """
+        raise NotImplementedError()
 
 
 def validate_constrainable_elements(

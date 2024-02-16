@@ -481,6 +481,17 @@ class InvalidIdBadChar(NameBuildTest):
         )
 
 
+class InvalidIdType(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "'entered' is not a valid type of ID specification, "
+                "use 'expected1', 'expected2'"
+            ),
+            reports.InvalidIdType("entered", ["expected1", "expected2"]),
+        )
+
+
 class InvalidTimeoutValue(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(
@@ -5461,6 +5472,25 @@ class RuleExpressionNotAllowed(NameBuildTest):
             "Keywords 'defined', 'not_defined', 'eq', 'ne', 'gte', 'gt', "
             "'lte' and 'lt' cannot be used in a rule in this command",
             reports.RuleExpressionNotAllowed(CibRuleExpressionType.EXPRESSION),
+        )
+
+
+class RuleNoExpressionSpecified(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "No rule expression was specified",
+            reports.RuleNoExpressionSpecified(),
+        )
+
+
+class CannotAddRuleToConstraintWrongType(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Rules can only be added to location constraints, "
+                "'my_id' is a ticket constraint"
+            ),
+            reports.CannotAddRuleToConstraintWrongType("my_id", "rsc_ticket"),
         )
 
 

@@ -9,6 +9,8 @@
 
 from unittest import TestCase
 
+from lxml import etree
+
 from pcs.lib.cib.rule.cib_to_str import RuleToStr
 
 
@@ -97,4 +99,42 @@ class IsoToStr(TestCase):
         self.assertEqual(
             RuleToStr._date_to_str("2023 06 30 16 30 +02"),
             "2023T06 30 16 30+02",
+        )
+
+
+class NormalizedStr(TestCase):
+    def test_success(self):
+        xml = etree.fromstring(
+            """
+            <rule boolean-op="or" id="R1" score="INFINITY">
+              <rule id="R1-rule-1" boolean-op="and" score="0">
+                <date_expression id="R1-rule-1-expr" operation="date_spec">
+                  <date_spec id="R1-rule-1-expr-datespec"
+                      weekdays="1-5" hours="12-23"
+                  />
+                </date_expression>
+                <date_expression id="R1-rule-1-expr-1"
+                    operation="in_range" start="2014-07-26"
+                >
+                  <duration id="R1-rule-1-expr-1-duration" months="1"/>
+                </date_expression>
+              </rule>
+              <rule id="R1-rule" boolean-op="and" score="0">
+                <expression id="R1-rule-expr-1"
+                    attribute="foo" operation="gt" type="version" value="1.2"
+                />
+                <expression id="R1-rule-expr"
+                    attribute="#uname" operation="eq" value="node3 4"
+                />
+              </rule>
+            </rule>
+            """
+        )
+        self.assertEqual(
+            RuleToStr(normalize=True).get_str(xml),
+            (
+                '(#uname eq string "node3 4" and foo gt version 1.2) or '
+                "(date in_range 2014-07-26 to duration months=1 and "
+                "date-spec hours=12-23 weekdays=1-5)"
+            ),
         )

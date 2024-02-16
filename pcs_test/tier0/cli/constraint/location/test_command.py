@@ -5,6 +5,10 @@ from unittest import (
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.constraint.location import command as location_command
+from pcs.common import (
+    const,
+    reports,
+)
 
 from pcs_test.tools.constraints_dto import get_all_constraints
 from pcs_test.tools.custom_mock import RuleInEffectEvalMock
@@ -94,3 +98,167 @@ class TestRemoveLocationConstraint(TestCase):
         self.cib.remove_elements.assert_called_once_with(
             location_constraint_ids
         )
+
+
+class CreateWithRule(TestCase):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["constraint_location", "env"])
+        self.lib_module = mock.Mock(spec_set=["create_plain_with_rule"])
+        self.lib.constraint_location = self.lib_module
+        env = mock.Mock(spec_set=["report_processor"])
+        self.lib.env = env
+        self.report_processor = mock.Mock(
+            spec_set=["set_report_item_preprocessor"]
+        )
+        self.lib.env.report_processor = self.report_processor
+
+    def _call_cmd(self, argv, modifiers=None):
+        location_command.create_with_rule(
+            self.lib, argv, dict_to_modifiers(modifiers or {})
+        )
+
+    def test_no_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self._call_cmd([])
+        self.assertIsNone(cm.exception.message)
+        self.lib_module.create_plain_with_rule.assert_not_called()
+        self.report_processor.set_report_item_preprocessor.assert_not_called()
+
+    def test_not_enough_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self._call_cmd("R1 #uname eq node1".split())
+        self.assertIsNone(cm.exception.message)
+        self.lib_module.create_plain_with_rule.assert_not_called()
+        self.report_processor.set_report_item_preprocessor.assert_not_called()
+
+    def test_missing_rule_keyword(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self._call_cmd("R1 score=123 #uname eq node1".split())
+        self.assertIsNone(cm.exception.message)
+        self.lib_module.create_plain_with_rule.assert_not_called()
+        self.report_processor.set_report_item_preprocessor.assert_not_called()
+
+    def test_minimal(self):
+        self._call_cmd("R1 rule #uname eq node1".split())
+        self.lib_module.create_plain_with_rule.assert_called_once_with(
+            const.RESOURCE_ID_TYPE_PLAIN,
+            "R1",
+            "#uname eq node1",
+            {},
+            {},
+            set(),
+        )
+        self.report_processor.set_report_item_preprocessor.assert_called_once()
+
+    def test_resource_id(self):
+        self._call_cmd("resource%R1 rule #uname eq node1".split())
+        self.lib_module.create_plain_with_rule.assert_called_once_with(
+            const.RESOURCE_ID_TYPE_PLAIN,
+            "R1",
+            "#uname eq node1",
+            {},
+            {},
+            set(),
+        )
+        self.report_processor.set_report_item_preprocessor.assert_called_once()
+
+    def test_resource_pattern(self):
+        self._call_cmd("regexp%R1 rule #uname eq node1".split())
+        self.lib_module.create_plain_with_rule.assert_called_once_with(
+            const.RESOURCE_ID_TYPE_REGEXP,
+            "R1",
+            "#uname eq node1",
+            {},
+            {},
+            set(),
+        )
+        self.report_processor.set_report_item_preprocessor.assert_called_once()
+
+    def test_resource_id_type_bad(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self._call_cmd("pattern%R1 rule #uname eq node1".split())
+        self.assertEqual(
+            cm.exception.message,
+            "'pattern' is not an allowed type for 'pattern%R1', use regexp, resource",
+        )
+        self.lib_module.create_plain_with_rule.assert_not_called()
+        self.report_processor.set_report_item_preprocessor.assert_not_called()
+
+    def test_all_options(self):
+        self._call_cmd(
+            (
+                "R1 rule id=id1 constraint-id=id2 score=7 score-attribute=attr "
+                "resource-discovery=rd role=r something=anything #uname eq node1"
+            ).split(),
+            {"force": True},
+        )
+        self.lib_module.create_plain_with_rule.assert_called_once_with(
+            const.RESOURCE_ID_TYPE_PLAIN,
+            "R1",
+            "something=anything #uname eq node1",
+            {"id": "id1", "score": "7", "score-attribute": "attr", "role": "r"},
+            {"resource-discovery": "rd", "id": "id2"},
+            set([reports.codes.FORCE]),
+        )
+        self.report_processor.set_report_item_preprocessor.assert_called_once()
+
+
+class RuleAdd(TestCase):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["constraint_location", "env"])
+        self.lib_module = mock.Mock(spec_set=["add_rule_to_constraint"])
+        self.lib.constraint_location = self.lib_module
+        env = mock.Mock(spec_set=["report_processor"])
+        self.lib.env = env
+        self.report_processor = mock.Mock(
+            spec_set=["set_report_item_preprocessor"]
+        )
+        self.lib.env.report_processor = self.report_processor
+
+    def _call_cmd(self, argv, modifiers=None):
+        location_command.rule_add(
+            self.lib, argv, dict_to_modifiers(modifiers or {})
+        )
+
+    def test_no_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self._call_cmd([])
+        self.assertIsNone(cm.exception.message)
+        self.lib_module.add_rule_to_constraint.assert_not_called()
+        self.report_processor.set_report_item_preprocessor.assert_not_called()
+
+    def test_constraint_only(self):
+        self._call_cmd("constraint1".split())
+        self.lib_module.add_rule_to_constraint.assert_called_once_with(
+            "constraint1",
+            "",
+            {},
+            set(),
+        )
+        self.report_processor.set_report_item_preprocessor.assert_called_once()
+
+    def test_minimal(self):
+        self._call_cmd("constraint1 #uname eq node1".split())
+        self.lib_module.add_rule_to_constraint.assert_called_once_with(
+            "constraint1",
+            "#uname eq node1",
+            {},
+            set(),
+        )
+        self.report_processor.set_report_item_preprocessor.assert_called_once()
+
+    def test_all_options(self):
+        self._call_cmd(
+            (
+                "constraint1 id=id1 score=7 score-attribute=attr role=r "
+                "resource-discovery=rd something=anything #uname eq node1"
+            ).split(),
+            {"force": True},
+        )
+        self.lib_module.add_rule_to_constraint.assert_called_once_with(
+            "constraint1",
+            "resource-discovery=rd something=anything #uname eq node1",
+            {"id": "id1", "score": "7", "score-attribute": "attr", "role": "r"},
+            set([reports.codes.FORCE]),
+        )
+        self.report_processor.set_report_item_preprocessor.assert_called_once()

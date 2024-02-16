@@ -166,7 +166,13 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
                 "not_defined pingd or pingd lte 0 --force"
             ).split(),
         )
-        self.assertEqual(stderr, "")
+        self.assertEqual(
+            stderr,
+            (
+                "Warning: D3 is a clone resource, you should use the clone id: "
+                "D3-clone when adding constraints\n"
+            ),
+        )
         self.assertEqual(stdout, "")
         self.assertEqual(retval, 0)
 
@@ -177,7 +183,13 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
                 "not_defined pingd and pingd lte 0 --force"
             ).split(),
         )
-        self.assertEqual(stderr, "")
+        self.assertEqual(
+            stderr,
+            (
+                "Warning: D3 is a clone resource, you should use the clone id: "
+                "D3-clone when adding constraints\n"
+            ),
+        )
         self.assertEqual(stdout, "")
         self.assertEqual(retval, 0)
 
@@ -188,11 +200,11 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
                 Location Constraints:
                   resource 'D1' (id: location-D1)
                     Rules:
-                      Rule: score=222 (id: location-D1-rule)
+                      Rule: boolean-op=and score=222 (id: location-D1-rule)
                         Expression: #uname eq c00n03 (id: location-D1-rule-expr)
                   resource 'D2' (id: location-D2)
                     Rules:
-                      Rule: score=-INFINITY (id: location-D2-rule)
+                      Rule: boolean-op=and score=-INFINITY (id: location-D2-rule)
                         Expression: #uname eq c00n04 (id: location-D2-rule-expr)
                   resource 'D3' (id: location-D3)
                     Rules:
@@ -1417,7 +1429,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
                   resource 'crd1' (id: location-crd1)
                     resource-discovery=exclusive
                     Rules:
-                      Rule: score=-INFINITY (id: location-crd1-rule)
+                      Rule: boolean-op=and score=-INFINITY (id: location-crd1-rule)
                         Expression: opsrole2 ne controller2 (id: location-crd1-rule-expr)
                 """
             ),
@@ -1982,15 +1994,15 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
                 Location Constraints:
                   resource 'D1' (id: location-D1-rh7-1-INFINITY)
                     Rules:
-                      Rule: score=INFINITY (id: location-D1-rh7-1-INFINITY-rule)
+                      Rule: boolean-op=and score=INFINITY (id: location-D1-rh7-1-INFINITY-rule)
                         Expression: #uname eq rh7-1 (id: location-D1-rh7-1-INFINITY-rule-expr)
-                      Rule: score=INFINITY (id: location-D1-rh7-1-INFINITY-rule-1)
+                      Rule: boolean-op=and score=INFINITY (id: location-D1-rh7-1-INFINITY-rule-1)
                         Expression: #uname eq rh7-1 (id: location-D1-rh7-1-INFINITY-rule-1-expr)
-                      Rule: score=INFINITY (id: location-D1-rh7-1-INFINITY-rule-2)
+                      Rule: boolean-op=and score=INFINITY (id: location-D1-rh7-1-INFINITY-rule-2)
                         Expression: #uname eq rh7-1 (id: location-D1-rh7-1-INFINITY-rule-2-expr)
                   resource 'D2' (id: location-D2-rh7-2-INFINITY)
                     Rules:
-                      Rule: score=INFINITY (id: location-D2-rh7-2-INFINITY-rule)
+                      Rule: boolean-op=and score=INFINITY (id: location-D2-rh7-2-INFINITY-rule)
                         Expression: (id: location-D2-rh7-2-INFINITY-rule-expr)
                           Date Spec: hours=9-16 weekdays=1-5 (id: location-D2-rh7-2-INFINITY-rule-expr-datespec)
                 """
@@ -2020,11 +2032,11 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
                 Location Constraints:
                   resource 'D1' (id: location-D1-rh7-1-INFINITY)
                     Rules:
-                      Rule: score=INFINITY (id: location-D1-rh7-1-INFINITY-rule)
+                      Rule: boolean-op=and score=INFINITY (id: location-D1-rh7-1-INFINITY-rule)
                         Expression: #uname eq rh7-1 (id: location-D1-rh7-1-INFINITY-rule-expr)
                   resource 'D2' (id: location-D2-rh7-2-INFINITY)
                     Rules:
-                      Rule: score=INFINITY (id: location-D2-rh7-2-INFINITY-rule)
+                      Rule: boolean-op=and score=INFINITY (id: location-D2-rh7-2-INFINITY-rule)
                         Expression: (id: location-D2-rh7-2-INFINITY-rule-expr)
                           Date Spec: hours=9-16 weekdays=1-5 (id: location-D2-rh7-2-INFINITY-rule-expr-datespec)
                 """
@@ -2052,7 +2064,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
                 Location Constraints:
                   resource 'D2' (id: location-D2-rh7-2-INFINITY)
                     Rules:
-                      Rule: score=INFINITY (id: location-D2-rh7-2-INFINITY-rule)
+                      Rule: boolean-op=and score=INFINITY (id: location-D2-rh7-2-INFINITY-rule)
                         Expression: (id: location-D2-rh7-2-INFINITY-rule-expr)
                           Date Spec: hours=9-16 weekdays=1-5 (id: location-D2-rh7-2-INFINITY-rule-expr-datespec)
                 """
@@ -2063,7 +2075,10 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
             self.temp_cib.name,
             f"constraint location D1 rule role={const.PCMK_ROLE_PROMOTED}".split(),
         )
-        self.assertEqual(stderr, "Error: no rule expression was specified\n")
+        self.assertEqual(
+            stderr,
+            "Error: No rule expression was specified\n" + ERRORS_HAVE_OCCURRED,
+        )
         self.assertEqual(stdout, "")
         self.assertEqual(retval, 1)
 
@@ -2072,7 +2087,9 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
             f"constraint location non-existent-resource rule role={const.PCMK_ROLE_PROMOTED} #uname eq rh7-1".split(),
         )
         self.assertEqual(
-            stderr, "Error: Resource 'non-existent-resource' does not exist\n"
+            stderr,
+            "Error: 'non-existent-resource' does not exist\n"
+            + ERRORS_HAVE_OCCURRED,
         )
         self.assertEqual(stdout, "")
         self.assertEqual(retval, 1)
@@ -2083,7 +2100,8 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         )
         ac(
             stderr,
-            "Error: Unable to find constraint: location-D1-rh7-1-INFINITY\n",
+            "Error: 'location-D1-rh7-1-INFINITY' does not exist\n"
+            + ERRORS_HAVE_OCCURRED,
         )
         self.assertEqual(stdout, "")
         self.assertEqual(retval, 1)
@@ -2094,7 +2112,8 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         )
         ac(
             stderr,
-            "Error: invalid rule id '123', '1' is not a valid first character for a rule id\n",
+            "Error: invalid rule id '123', '1' is not a valid first character for a rule id\n"
+            + ERRORS_HAVE_OCCURRED,
         )
         self.assertEqual(stdout, "")
         self.assertEqual(retval, 1)
@@ -2114,7 +2133,13 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
             .split(),
         )
         self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
+        self.assertEqual(
+            stderr,
+            (
+                "Warning: stateful0 is a clone resource, you should use the "
+                "clone id: stateful0-master when adding constraints\n"
+            ),
+        )
         self.assertEqual(retval, 0)
 
         self.assert_pcs_success(
@@ -2124,7 +2149,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
                 Location Constraints:
                   resource 'stateful0' (id: location-stateful0)
                     Rules:
-                      Rule: role={const.PCMK_ROLE_PROMOTED_PRIMARY} score=INFINITY (id: location-stateful0-rule)
+                      Rule: boolean-op=and role={const.PCMK_ROLE_PROMOTED_PRIMARY} score=INFINITY (id: location-stateful0-rule)
                         Expression: #uname eq rh7-1 (id: location-stateful0-rule-expr)
                 """
             ),
@@ -2140,7 +2165,14 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         )
         ac(
             stderr,
-            "Error: 'rulename #uname eq rh7-1' is not a valid rule expression: unexpected '#uname'\n",
+            (
+                "Warning: stateful1 is a clone resource, you should use the "
+                "clone id: stateful1-master when adding constraints\n"
+                "Error: 'rulename #uname eq rh7-1' is not a valid rule "
+                "expression, parse error near or after line 1 column 10\n"
+                "  rulename #uname eq rh7-1\n"
+                "  ---------^\n" + ERRORS_HAVE_OCCURRED
+            ),
         )
         self.assertEqual(stdout, "")
         self.assertEqual(retval, 1)
@@ -2151,7 +2183,14 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         )
         ac(
             stderr,
-            "Error: 'rulename #uname eq rh7-1' is not a valid rule expression: unexpected '#uname'\n",
+            (
+                "Warning: stateful1 is a clone resource, you should use the "
+                "clone id: stateful1-master when adding constraints\n"
+                "Error: 'rulename #uname eq rh7-1' is not a valid rule "
+                "expression, parse error near or after line 1 column 10\n"
+                "  rulename #uname eq rh7-1\n"
+                "  ---------^\n" + ERRORS_HAVE_OCCURRED
+            ),
         )
         self.assertEqual(stdout, "")
         self.assertEqual(retval, 1)
@@ -2162,7 +2201,14 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         )
         ac(
             stderr,
-            "Error: '25' is not a valid rule expression: missing one of 'eq', 'ne', 'lt', 'gt', 'lte', 'gte', 'in_range', 'defined', 'not_defined', 'date-spec'\n",
+            (
+                "Warning: stateful1 is a clone resource, you should use the "
+                "clone id: stateful1-master when adding constraints\n"
+                "Error: '25' is not a valid rule expression, parse error near "
+                "or after line 1 column 3\n"
+                "  25\n"
+                "  --^\n" + ERRORS_HAVE_OCCURRED
+            ),
         )
         self.assertEqual(stdout, "")
         self.assertEqual(retval, 1)
@@ -2236,7 +2282,8 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         self.assertEqual(stdout, "")
         ac(
             stderr,
-            "Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints. Use --force to override.\n",
+            "Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints, use --force to override\n"
+            + ERRORS_HAVE_OCCURRED,
         )
         self.assertEqual(retval, 1)
 
@@ -2247,7 +2294,8 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         self.assertEqual(stdout, "")
         ac(
             stderr,
-            "Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints. Use --force to override.\n",
+            "Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints, use --force to override\n"
+            + ERRORS_HAVE_OCCURRED,
         )
         self.assertEqual(retval, 1)
 
@@ -2358,7 +2406,13 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
             "constraint location statefulG rule #uname eq rh7-1 --force".split(),
         )
         self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
+        self.assertEqual(
+            stderr,
+            (
+                "Warning: statefulG is a clone resource, you should use the "
+                "clone id: statefulG-master when adding constraints\n"
+            ),
+        )
         self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(
@@ -2410,7 +2464,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
                   resource 'stateful1' prefers node 'rh7-1' with score INFINITY (id: location-stateful1-rh7-1-INFINITY)
                   resource 'statefulG' (id: location-statefulG)
                     Rules:
-                      Rule: score=INFINITY (id: location-statefulG-rule)
+                      Rule: boolean-op=and score=INFINITY (id: location-statefulG-rule)
                         Expression: #uname eq rh7-1 (id: location-statefulG-rule-expr)
                 Colocation Constraints:
                   resource 'stateful1' with resource 'dummy1' (id: colocation-stateful1-dummy1-INFINITY)
@@ -2500,7 +2554,8 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         self.assertEqual(stdout, "")
         self.assertEqual(
             stderr,
-            "Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints. Use --force to override.\n",
+            "Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints, use --force to override\n"
+            + ERRORS_HAVE_OCCURRED,
         )
         self.assertEqual(retval, 1)
 
@@ -2511,7 +2566,8 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         self.assertEqual(stdout, "")
         self.assertEqual(
             stderr,
-            "Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints. Use --force to override.\n",
+            "Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints, use --force to override\n"
+            + ERRORS_HAVE_OCCURRED,
         )
         self.assertEqual(retval, 1)
 
@@ -2622,7 +2678,13 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
             "constraint location dummyG rule #uname eq rh7-1 --force".split(),
         )
         self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
+        self.assertEqual(
+            stderr,
+            (
+                "Warning: dummyG is a clone resource, you should use the clone "
+                "id: dummyG-clone when adding constraints\n"
+            ),
+        )
         self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(
@@ -2674,7 +2736,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
                   resource 'dummy' prefers node 'rh7-1' with score INFINITY (id: location-dummy-rh7-1-INFINITY)
                   resource 'dummyG' (id: location-dummyG)
                     Rules:
-                      Rule: score=INFINITY (id: location-dummyG-rule)
+                      Rule: boolean-op=and score=INFINITY (id: location-dummyG-rule)
                         Expression: #uname eq rh7-1 (id: location-dummyG-rule-expr)
                 Colocation Constraints:
                   resource 'dummy' with resource 'dummy1' (id: colocation-dummy-dummy1-INFINITY)
@@ -3689,95 +3751,88 @@ Error: duplicate constraint already exists, use --force to override
 
     def test_duplicate_location_rules(self):
         self.fixture_resources()
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
+
+        self.assert_pcs_success(
             "constraint location D1 rule #uname eq node1".split(),
         )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
+        self.assert_pcs_fail(
             "constraint location D1 rule #uname eq node1".split(),
+            dedent(
+                """\
+                Duplicate constraints:
+                  resource 'D1' (id: location-D1)
+                    Rules:
+                      Rule: boolean-op=and score=INFINITY (id: location-D1-rule)
+                        Expression: #uname eq node1 (id: location-D1-rule-expr)
+                Error: Duplicate constraint already exists, use --force to override
+                """
+            )
+            + ERRORS_HAVE_OCCURRED,
         )
-        ac(
-            stderr,
-            """\
-Error: duplicate constraint already exists, use --force to override
-  Constraint: location-D1
-    Rule: score=INFINITY (id:location-D1-rule)
-      Expression: #uname eq node1 (id:location-D1-rule-expr)
-""",
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(retval, 1)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
+        self.assert_pcs_success(
             "constraint location D1 rule #uname eq node1 --force".split(),
+            stderr_full=dedent(
+                """\
+                Duplicate constraints:
+                  resource 'D1' (id: location-D1)
+                    Rules:
+                      Rule: boolean-op=and score=INFINITY (id: location-D1-rule)
+                        Expression: #uname eq node1 (id: location-D1-rule-expr)
+                Warning: Duplicate constraint already exists
+                """
+            ),
         )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
+        self.assert_pcs_success(
             "constraint location D2 rule #uname eq node1".split(),
         )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
+        self.assert_pcs_success(
             "constraint location D2 rule #uname eq node1 or #uname eq node2".split(),
         )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
+        self.assert_pcs_fail(
             "constraint location D2 rule #uname eq node1 or #uname eq node2".split(),
+            dedent(
+                """\
+                Duplicate constraints:
+                  resource 'D2' (id: location-D2-1)
+                    Rules:
+                      Rule: boolean-op=or score=INFINITY (id: location-D2-1-rule)
+                        Expression: #uname eq node1 (id: location-D2-1-rule-expr)
+                        Expression: #uname eq node2 (id: location-D2-1-rule-expr-1)
+                Error: Duplicate constraint already exists, use --force to override
+                """
+            )
+            + ERRORS_HAVE_OCCURRED,
         )
-        self.assertEqual(stdout, "")
-        ac(
-            stderr,
-            """\
-Error: duplicate constraint already exists, use --force to override
-  Constraint: location-D2-1
-    Rule: boolean-op=or score=INFINITY (id:location-D2-1-rule)
-      Expression: #uname eq node1 (id:location-D2-1-rule-expr)
-      Expression: #uname eq node2 (id:location-D2-1-rule-expr-1)
-""",
-        )
-        self.assertEqual(retval, 1)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
+        self.assert_pcs_fail(
             "constraint location D2 rule #uname eq node2 or #uname eq node1".split(),
+            dedent(
+                """\
+                Duplicate constraints:
+                  resource 'D2' (id: location-D2-1)
+                    Rules:
+                      Rule: boolean-op=or score=INFINITY (id: location-D2-1-rule)
+                        Expression: #uname eq node1 (id: location-D2-1-rule-expr)
+                        Expression: #uname eq node2 (id: location-D2-1-rule-expr-1)
+                Error: Duplicate constraint already exists, use --force to override
+                """
+            )
+            + ERRORS_HAVE_OCCURRED,
         )
-        self.assertEqual(stdout, "")
-        ac(
-            stderr,
-            """\
-Error: duplicate constraint already exists, use --force to override
-  Constraint: location-D2-1
-    Rule: boolean-op=or score=INFINITY (id:location-D2-1-rule)
-      Expression: #uname eq node1 (id:location-D2-1-rule-expr)
-      Expression: #uname eq node2 (id:location-D2-1-rule-expr-1)
-""",
-        )
-        self.assertEqual(retval, 1)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
+        self.assert_pcs_success(
             "constraint location D2 rule #uname eq node2 or #uname eq node1 --force".split(),
+            stderr_full=dedent(
+                """\
+                Duplicate constraints:
+                  resource 'D2' (id: location-D2-1)
+                    Rules:
+                      Rule: boolean-op=or score=INFINITY (id: location-D2-1-rule)
+                        Expression: #uname eq node1 (id: location-D2-1-rule-expr)
+                        Expression: #uname eq node2 (id: location-D2-1-rule-expr-1)
+                Warning: Duplicate constraint already exists
+                """
+            ),
         )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
 
         self.assert_pcs_success(
             "constraint --full".split(),
@@ -3786,15 +3841,15 @@ Error: duplicate constraint already exists, use --force to override
                 Location Constraints:
                   resource 'D1' (id: location-D1)
                     Rules:
-                      Rule: score=INFINITY (id: location-D1-rule)
+                      Rule: boolean-op=and score=INFINITY (id: location-D1-rule)
                         Expression: #uname eq node1 (id: location-D1-rule-expr)
                   resource 'D1' (id: location-D1-1)
                     Rules:
-                      Rule: score=INFINITY (id: location-D1-1-rule)
+                      Rule: boolean-op=and score=INFINITY (id: location-D1-1-rule)
                         Expression: #uname eq node1 (id: location-D1-1-rule-expr)
                   resource 'D2' (id: location-D2)
                     Rules:
-                      Rule: score=INFINITY (id: location-D2-rule)
+                      Rule: boolean-op=and score=INFINITY (id: location-D2-rule)
                         Expression: #uname eq node1 (id: location-D2-rule-expr)
                   resource 'D2' (id: location-D2-1)
                     Rules:
@@ -3972,7 +4027,8 @@ Error: duplicate constraint already exists, use --force to override
         self.assertEqual(stdout, "")
         ac(
             stderr,
-            "Error: invalid constraint id '9id', '9' is not a valid first character for a constraint id\n",
+            "Error: invalid constraint id '9id', '9' is not a valid first character for a constraint id\n"
+            + ERRORS_HAVE_OCCURRED,
         )
         self.assertEqual(retval, 1)
 
@@ -3991,7 +4047,7 @@ Error: duplicate constraint already exists, use --force to override
         self.assertEqual(stdout, "")
         ac(
             stderr,
-            "Error: id 'id9' is already in use, please specify another one\n",
+            "Error: 'id9' already exists\n" + ERRORS_HAVE_OCCURRED,
         )
         self.assertEqual(retval, 1)
 
@@ -4010,11 +4066,11 @@ Error: duplicate constraint already exists, use --force to override
                 Location Constraints:
                   resource 'D1' (id: id9)
                     Rules:
-                      Rule: score=INFINITY (id: id9-rule)
+                      Rule: boolean-op=and score=INFINITY (id: id9-rule)
                         Expression: defined pingd (id: id9-rule-expr)
                   resource 'D2' (id: id10)
                     Rules:
-                      Rule: score=100 (id: rule1)
+                      Rule: boolean-op=and score=100 (id: rule1)
                         Expression: defined pingd (id: rule1-expr)
                 Colocation Constraints:
                   resource 'D1' with resource 'D2' (id: id1)
@@ -4439,7 +4495,7 @@ class LocationTypeId(ConstraintEffect):
             ],
             """<constraints>
                 <rsc_location id="location-A" rsc="A">
-                    <rule id="location-A-rule" score="INFINITY">
+                    <rule boolean-op="and" id="location-A-rule" score="INFINITY">
                         <expression id="location-A-rule-expr"
                             operation="eq" attribute="#uname" value="node1"
                         />
@@ -4492,7 +4548,7 @@ class LocationTypePattern(ConstraintEffect):
             "constraint location regexp%res_[0-9] rule #uname eq node1".split(),
             """<constraints>
                 <rsc_location id="location-res_0-9" rsc-pattern="res_[0-9]">
-                    <rule id="location-res_0-9-rule" score="INFINITY">
+                    <rule boolean-op="and" id="location-res_0-9-rule" score="INFINITY">
                         <expression id="location-res_0-9-rule-expr"
                             operation="eq" attribute="#uname" value="node1"
                         />
@@ -4555,7 +4611,7 @@ class LocationShowWithPattern(ConstraintBaseTest):
                     resource-discovery=never
                   resource pattern 'R_[0-9]+' (id: location-R_0-9)
                     Rules:
-                      Rule: score=20 (id: location-R_0-9-rule)
+                      Rule: boolean-op=and score=20 (id: location-R_0-9-rule)
                         Expression: defined pingd (id: location-R_0-9-rule-expr)
                 """
             ),
@@ -4586,7 +4642,7 @@ class LocationShowWithPattern(ConstraintBaseTest):
                     resource-discovery=never
                   resource pattern 'R_[0-9]+'
                     Rules:
-                      Rule: score=20
+                      Rule: boolean-op=and score=20
                         Expression: defined pingd
                 """
             ),
@@ -4659,7 +4715,7 @@ class LocationShowWithPattern(ConstraintBaseTest):
                       node 'node4' with score INFINITY
                     Constraint:
                       Rules:
-                        Rule: score=20
+                        Rule: boolean-op=and score=20
                           Expression: defined pingd
                 """
             ),
@@ -5290,7 +5346,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'dummy'
                     Rules:
-                      Rule: score=INFINITY
+                      Rule: boolean-op=and score=INFINITY
                         Expression: date lt 2019-01-01
                 """
             ),
@@ -5312,7 +5368,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'dummy'
                     Rules:
-                      Rule: score=INFINITY
+                      Rule: boolean-op=and score=INFINITY
                         Expression: date gt 2019-01-01
                 """
             ),
@@ -5333,7 +5389,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'dummy' (id: location-dummy)
                     Rules:
-                      Rule: score=INFINITY (id: test-rule)
+                      Rule: boolean-op=and score=INFINITY (id: test-rule)
                         Expression: date gt 2019-01-01 (id: test-rule-expr)
                 """
             ),
@@ -5354,7 +5410,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'dummy'
                     Rules:
-                      Rule: score=INFINITY
+                      Rule: boolean-op=and score=INFINITY
                         Expression: date gt 2019-01-01
                 """
             ),
@@ -5375,7 +5431,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'dummy' (id: location-dummy)
                     Rules:
-                      Rule: score=INFINITY (id: test-rule)
+                      Rule: boolean-op=and score=INFINITY (id: test-rule)
                         Expression: date gt 2019-01-01 (id: test-rule-expr)
                 """
             ),
@@ -5396,7 +5452,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'dummy_group'
                     Rules:
-                      Rule: score=INFINITY
+                      Rule: boolean-op=and score=INFINITY
                         Expression: date gt 2019-01-01
                 """
             ),
@@ -5437,7 +5493,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'dummy'
                     Rules:
-                      Rule (expired): score=INFINITY
+                      Rule (expired): boolean-op=and score=INFINITY
                         Expression: date lt 2019-01-01
                 """
             ),
@@ -5458,7 +5514,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'dummy' (id: location-dummy)
                     Rules:
-                      Rule (expired): score=INFINITY (id: test-rule)
+                      Rule (expired): boolean-op=and score=INFINITY (id: test-rule)
                         Expression: date lt 2019-01-01 (id: test-rule-expr)
                 """
             ),
@@ -5597,7 +5653,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'dummy'
                     Rules:
-                      Rule (not yet in effect): score=INFINITY
+                      Rule (not yet in effect): boolean-op=and score=INFINITY
                         Expression: date gt {self._tomorrow}
                 """
             ),
@@ -5616,7 +5672,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'dummy' (id: location-dummy)
                     Rules:
-                      Rule (not yet in effect): score=INFINITY (id: test-rule)
+                      Rule (not yet in effect): boolean-op=and score=INFINITY (id: test-rule)
                         Expression: date gt {self._tomorrow} (id: test-rule-expr)
                 """
             ),
@@ -5635,7 +5691,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'dummy'
                     Rules:
-                      Rule (not yet in effect): score=INFINITY
+                      Rule (not yet in effect): boolean-op=and score=INFINITY
                         Expression: date gt {self._tomorrow}
                 """
             ),
@@ -5654,7 +5710,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'dummy' (id: location-dummy)
                     Rules:
-                      Rule (not yet in effect): score=INFINITY (id: test-rule)
+                      Rule (not yet in effect): boolean-op=and score=INFINITY (id: test-rule)
                         Expression: date gt {self._tomorrow} (id: test-rule-expr)
                 """
             ),
@@ -5673,7 +5729,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'dummy_group'
                     Rules:
-                      Rule (not yet in effect): score=INFINITY
+                      Rule (not yet in effect): boolean-op=and score=INFINITY
                         Expression: date gt {self._tomorrow}
                 """
             ),
@@ -5725,7 +5781,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'D1'
                     Rules:
-                      Rule: score=INFINITY
+                      Rule: boolean-op=and score=INFINITY
                         Expression: not_defined pingd
                   resource 'D1'
                     Rules:
@@ -5736,10 +5792,10 @@ class ExpiredConstraints(ConstraintBaseTest):
                         Expression: #uname eq node1
                   resource 'D3'
                     Rules:
-                      Rule (expired): score=INFINITY
+                      Rule (expired): boolean-op=and score=INFINITY
                         Expression: date in_range 2019-03-01 to duration
                           Duration: weeks=2
-                      Rule: score=INFINITY
+                      Rule: boolean-op=and score=INFINITY
                         Expression: not_defined pingd
                 """
             ),
@@ -5791,7 +5847,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'D1'
                     Rules:
-                      Rule: score=INFINITY
+                      Rule: boolean-op=and score=INFINITY
                         Expression: not_defined pingd
                   resource 'D1'
                     Rules:
@@ -5802,17 +5858,17 @@ class ExpiredConstraints(ConstraintBaseTest):
                         Expression: #uname eq node1
                   resource 'D2'
                     Rules:
-                      Rule (expired): score=INFINITY
+                      Rule (expired): boolean-op=and score=INFINITY
                         Expression: date in_range 2019-01-01 to 2019-02-01
-                      Rule (expired): score=INFINITY
+                      Rule (expired): boolean-op=and score=INFINITY
                         Expression: date in_range 2019-03-01 to duration
                           Duration: weeks=2
                   resource 'D3'
                     Rules:
-                      Rule (expired): score=INFINITY
+                      Rule (expired): boolean-op=and score=INFINITY
                         Expression: date in_range 2019-03-01 to duration
                           Duration: weeks=2
-                      Rule: score=INFINITY
+                      Rule: boolean-op=and score=INFINITY
                         Expression: not_defined pingd
                 """
             ),

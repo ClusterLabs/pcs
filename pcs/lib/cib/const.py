@@ -11,6 +11,7 @@ TAG_RESOURCE_CLONE: Final = "clone"
 TAG_RESOURCE_GROUP: Final = "group"
 TAG_RESOURCE_MASTER: Final = "master"
 TAG_RESOURCE_PRIMITIVE: Final = "primitive"
+TAG_RESOURCE_SET: Final = "resource_set"
 TAG_RULE: Final = "rule"
 TAG_TAG: Final = "tag"
 

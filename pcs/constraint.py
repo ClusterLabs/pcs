@@ -21,6 +21,10 @@ from pcs.cli.common.output import (
     lines_to_str,
 )
 from pcs.cli.constraint.location import command as location_command
+from pcs.cli.constraint.location.command import (
+    RESOURCE_TYPE_REGEXP,
+    RESOURCE_TYPE_RESOURCE,
+)
 from pcs.cli.constraint.output import (
     CibConstraintLocationAnyDto,
     location,
@@ -68,7 +72,6 @@ from pcs.lib.pacemaker.values import (
 # pylint: disable=too-many-branches
 # pylint: disable=too-many-lines
 # pylint: disable=too-many-locals
-# pylint: disable=too-many-nested-blocks
 # pylint: disable=too-many-statements
 
 DEFAULT_ACTION = const.PCMK_ACTION_START
@@ -79,9 +82,6 @@ OPTIONS_SYMMETRICAL = order_attrib["symmetrical"]
 LOCATION_NODE_VALIDATION_SKIP_MSG = (
     "Validation for node existence in the cluster will be skipped"
 )
-
-RESOURCE_TYPE_RESOURCE = "resource"
-RESOURCE_TYPE_REGEXP = "regexp"
 
 
 class CrmRuleReturnCode(Enum):
@@ -672,7 +672,11 @@ def order_find_duplicates(dom, constraint_el):
     ]
 
 
-def location_show(lib, argv, modifiers):
+def location_show(
+    lib: Any,
+    argv: parse_args.Argv,
+    modifiers: parse_args.InputModifiers,
+) -> None:
     deprecation_warning(
         "This command is deprecated and will be removed. "
         "Please use 'pcs constraint location config' instead."
@@ -770,7 +774,7 @@ def _filter_location_by_node_base(
 
 
 def location_config_cmd(
-    lib: Any, argv: StringSequence, modifiers: parse_args.InputModifiers
+    lib: Any, argv: parse_args.Argv, modifiers: parse_args.InputModifiers
 ) -> None:
     """
     Options:
@@ -873,7 +877,9 @@ def _verify_score(score):
         )
 
 
-def location_prefer(lib, argv, modifiers):
+def location_prefer(
+    lib: Any, argv: parse_args.Argv, modifiers: parse_args.InputModifiers
+) -> None:
     """
     Options:
       * --force - allow unknown options, allow constraint for any resource type
@@ -948,7 +954,12 @@ def location_prefer(lib, argv, modifiers):
         location_add(lib, parameters, modifiers, skip_score_and_node_check=True)
 
 
-def location_add(lib, argv, modifiers, skip_score_and_node_check=False):
+def location_add(
+    lib: Any,
+    argv: parse_args.Argv,
+    modifiers: parse_args.InputModifiers,
+    skip_score_and_node_check: bool = False,
+) -> None:
     """
     Options:
       * --force - allow unknown options, allow constraint for any resource type

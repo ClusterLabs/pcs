@@ -11,7 +11,7 @@ from pcs import (
     utils,
 )
 from pcs.common import const
-from pcs.common.str_tools import format_list_custom_last_separator
+from pcs.common.str_tools import format_list
 
 from pcs_test.tools.assertions import (
     AssertPcsMixin,
@@ -25,6 +25,10 @@ from pcs_test.tools.misc import (
     write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import PcsRunner
+
+ERRORS_HAVE_OCCURRED = (
+    "Error: Errors have occurred, therefore pcs is unable to continue\n"
+)
 
 # pylint: disable=invalid-name
 
@@ -2265,11 +2269,11 @@ class DomRuleAddTest(TestCase, AssertPcsMixin):
                 Location Constraints:
                   resource 'dummy1' (id: location-dummy1)
                     Rules:
-                      Rule: score=INFINITY (id: location-dummy1-rule)
+                      Rule: boolean-op=and score=INFINITY (id: location-dummy1-rule)
                         Expression: #uname eq node1 (id: location-dummy1-rule-expr)
                   resource 'dummy1' (id: location-dummy1-1)
                     Rules:
-                      Rule: role={const.PCMK_ROLE_PROMOTED_PRIMARY} score=100 (id: MyRule)
+                      Rule: boolean-op=and role={const.PCMK_ROLE_PROMOTED_PRIMARY} score=100 (id: MyRule)
                         Expression: #uname eq node2 (id: MyRule-expr)
                   resource 'dummy1' (id: location-dummy1-2)
                     Rules:
@@ -2301,11 +2305,11 @@ class DomRuleAddTest(TestCase, AssertPcsMixin):
                 Location Constraints:
                   resource 'dummy1'
                     Rules:
-                      Rule: score=INFINITY
+                      Rule: boolean-op=and score=INFINITY
                         Expression: #uname eq node1
                   resource 'dummy1'
                     Rules:
-                      Rule: role={const.PCMK_ROLE_PROMOTED_PRIMARY} score=100
+                      Rule: boolean-op=and role={const.PCMK_ROLE_PROMOTED_PRIMARY} score=100
                         Expression: #uname eq node2
                   resource 'dummy1'
                     Rules:
@@ -2343,7 +2347,7 @@ class DomRuleAddTest(TestCase, AssertPcsMixin):
                 Location Constraints:
                   resource 'dummy1' (id: location-dummy1)
                     Rules:
-                      Rule: score-attribute=pingd (id: location-dummy1-rule)
+                      Rule: boolean-op=and score-attribute=pingd (id: location-dummy1-rule)
                         Expression: defined pingd (id: location-dummy1-rule-expr)
                 """,
             ),
@@ -2352,31 +2356,39 @@ class DomRuleAddTest(TestCase, AssertPcsMixin):
     def test_invalid_rule(self):
         self.assert_pcs_fail(
             "constraint location dummy1 rule score=100".split(),
-            "Error: no rule expression was specified\n",
+            "Error: No rule expression was specified\n" + ERRORS_HAVE_OCCURRED,
         )
 
         self.assert_pcs_fail(
             "constraint location dummy1 rule #uname eq".split(),
-            "Error: '#uname eq' is not a valid rule expression: unexpected end "
-            "of rule\n",
+            (
+                "Error: '#uname eq' is not a valid rule expression, "
+                "parse error near or after line 1 column 10\n"
+                "  #uname eq\n"
+                "  ---------^\n" + ERRORS_HAVE_OCCURRED
+            ),
         )
 
         self.assert_pcs_fail(
             "constraint location dummy1 rule string #uname eq node1".split(),
-            "Error: 'string #uname eq node1' is not a valid rule expression: "
-            "unexpected 'string' before 'eq'\n",
+            (
+                "Error: 'string #uname eq node1' is not a valid rule expression, "
+                "parse error near or after line 1 column 8\n"
+                "  string #uname eq node1\n"
+                "  -------^\n" + ERRORS_HAVE_OCCURRED
+            ),
         )
 
     @skip_unless_crm_rule()
     def test_ivalid_options(self):
         self.assert_pcs_fail(
             "constraint location dummy1 rule role=foo #uname eq node1".split(),
-            "Error: invalid role 'foo', use {}\n".format(
-                format_list_custom_last_separator(
-                    const.PCMK_ROLES_PROMOTED + const.PCMK_ROLES_UNPROMOTED,
-                    " or ",
+            "Error: 'foo' is not a valid role value, use {}\n".format(
+                format_list(
+                    const.PCMK_ROLES_PROMOTED + const.PCMK_ROLES_UNPROMOTED
                 )
-            ),
+            )
+            + ERRORS_HAVE_OCCURRED,
         )
 
         self.assert_pcs_fail(
@@ -2384,13 +2396,14 @@ class DomRuleAddTest(TestCase, AssertPcsMixin):
                 "constraint location dummy1 rule score=100 score-attribute=pingd "
                 "#uname eq node1"
             ).split(),
-            "Error: can not specify both score and score-attribute\n",
+            "Error: Only one of rule options 'score' and 'score-attribute' can be used\n"
+            + ERRORS_HAVE_OCCURRED,
         )
 
         self.assert_pcs_fail(
             "constraint location dummy1 rule id=1foo #uname eq node1".split(),
             "Error: invalid rule id '1foo', '1' is not a valid first character "
-            "for a rule id\n",
+            "for a rule id\n" + ERRORS_HAVE_OCCURRED,
         )
 
         self.assert_pcs_success("constraint location config --full".split(), "")
@@ -2406,7 +2419,7 @@ class DomRuleAddTest(TestCase, AssertPcsMixin):
                 Location Constraints:
                   resource 'dummy1' (id: location-dummy1)
                     Rules:
-                      Rule: score=INFINITY (id: MyRule)
+                      Rule: boolean-op=and score=INFINITY (id: MyRule)
                         Expression: #uname eq node1 (id: MyRule-expr)
                 """,
             ),
@@ -2414,7 +2427,7 @@ class DomRuleAddTest(TestCase, AssertPcsMixin):
 
         self.assert_pcs_fail(
             "constraint location dummy1 rule id=MyRule #uname eq node1".split(),
-            "Error: id 'MyRule' is already in use, please specify another one\n",
+            "Error: 'MyRule' already exists\n" + ERRORS_HAVE_OCCURRED,
         )
 
     @skip_unless_crm_rule()
@@ -2422,21 +2435,21 @@ class DomRuleAddTest(TestCase, AssertPcsMixin):
         self.assert_pcs_fail(
             "constraint location dummy1 rule date gt abcd".split(),
             (
-                "Error: 'date gt abcd' is not a valid rule expression: 'abcd' "
-                "is not an ISO 8601 date\n"
+                "Error: 'abcd' is not a valid date value, use ISO 8601 date\n"
+                + ERRORS_HAVE_OCCURRED
             ),
         )
         self.assert_pcs_fail(
             "constraint location dummy1 rule date in_range abcd to 2023-01-01".split(),
             (
-                "Error: 'date in_range abcd to 2023-01-01' is not a valid rule "
-                "expression: invalid date 'abcd' in 'in_range ... to'\n"
+                "Error: 'abcd' is not a valid date value, use ISO 8601 date\n"
+                + ERRORS_HAVE_OCCURRED
             ),
         )
         self.assert_pcs_fail(
             "constraint location dummy1 rule date in_range 2023-01-01 to abcd".split(),
             (
-                "Error: 'date in_range 2023-01-01 to abcd' is not a valid rule "
-                "expression: invalid date 'abcd' in 'in_range ... to'\n"
+                "Error: 'abcd' is not a valid date value, use ISO 8601 date\n"
+                + ERRORS_HAVE_OCCURRED
             ),
         )
