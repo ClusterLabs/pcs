@@ -1,3 +1,4 @@
+import shlex
 from collections import defaultdict
 from typing import (
     Container,
@@ -21,6 +22,7 @@ from pcs.cli.nvset import nvset_dto_to_lines
 from pcs.cli.reports.output import warn
 from pcs.cli.resource_agent import is_stonith
 from pcs.common import resource_agent
+from pcs.common.pacemaker.defaults import CibDefaultsDto
 from pcs.common.pacemaker.nvset import CibNvsetDto
 from pcs.common.pacemaker.resource.bundle import (
     CibResourceBundleContainerRuntimeOptionsDto,
@@ -892,3 +894,54 @@ def resources_to_cmd(
     for clone_dto in resources_facade.clones:
         output.extend(_resource_clone_to_cmd(clone_dto))
     return output
+
+
+def _nvset_options_to_pairs(nvset_dto: CibNvsetDto) -> list[tuple[str, str]]:
+    pairs = list(nvset_dto.options.items())
+    pairs.append(("id", nvset_dto.id))
+    return pairs
+
+
+def _nvset_rule_to_cmd(nvset_dto: CibNvsetDto) -> list[str]:
+    if not nvset_dto.rule:
+        return []
+    rule_str = shlex.quote(nvset_dto.rule.as_string)
+    return [f"rule {rule_str}"]
+
+
+def _defaults_to_cmd(
+    defaults_command: str,
+    cib_defaults_dto: CibDefaultsDto,
+) -> list[list[str]]:
+    command_list: list[list[str]] = []
+    for meta_attributes in cib_defaults_dto.meta_attributes:
+        nvset_options = pairs_to_cmd(
+            sorted(_nvset_options_to_pairs(meta_attributes))
+        )
+        command_list.append(
+            [f"{defaults_command} {nvset_options}"]
+            + indent(
+                (
+                    _nvset_to_cmd("meta", [meta_attributes])
+                    + _nvset_rule_to_cmd(meta_attributes)
+                ),
+                indent_step=INDENT_STEP,
+            )
+        )
+    return command_list
+
+
+def operation_defaults_to_cmd(
+    cib_defaults_dto: CibDefaultsDto,
+) -> list[list[str]]:
+    return _defaults_to_cmd(
+        "pcs -- resource op defaults set create", cib_defaults_dto
+    )
+
+
+def resource_defaults_to_cmd(
+    cib_defaults_dto: CibDefaultsDto,
+) -> list[list[str]]:
+    return _defaults_to_cmd(
+        "pcs -- resource defaults set create", cib_defaults_dto
+    )
