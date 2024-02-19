@@ -386,7 +386,6 @@ EXTRA_DIST		= \
 			  tier1/legacy/test_constraints.py \
 			  tier1/legacy/test_node.py \
 			  tier1/legacy/test_resource.py \
-			  tier1/legacy/test_rule.py \
 			  tier1/legacy/test_stonith.py \
 			  tier1/legacy/test_utils.py \
 			  tier1/resource/__init__.py \

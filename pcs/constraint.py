@@ -12,7 +12,6 @@ from typing import (
 from xml.dom.minidom import parseString
 
 import pcs.cli.constraint_order.command as order_command
-from pcs import rule as rule_utils
 from pcs import utils
 from pcs.cli.common import parse_args
 from pcs.cli.common.errors import CmdLineInputError
@@ -20,7 +19,6 @@ from pcs.cli.common.output import (
     INDENT_STEP,
     lines_to_str,
 )
-from pcs.cli.constraint.location import command as location_command
 from pcs.cli.constraint.location.command import (
     RESOURCE_TYPE_REGEXP,
     RESOURCE_TYPE_RESOURCE,
@@ -88,34 +86,6 @@ class CrmRuleReturnCode(Enum):
     IN_EFFECT = 0
     EXPIRED = 110
     TO_BE_IN_EFFECT = 111
-
-
-def constraint_location_cmd(lib, argv, modifiers):
-    if not argv:
-        sub_cmd = "config"
-    else:
-        sub_cmd = argv.pop(0)
-
-    try:
-        if sub_cmd == "add":
-            location_add(lib, argv, modifiers)
-        elif sub_cmd in ["remove", "delete"]:
-            location_command.remove(lib, argv, modifiers)
-        elif sub_cmd == "show":
-            location_show(lib, argv, modifiers)
-        elif sub_cmd == "config":
-            location_config_cmd(lib, argv, modifiers)
-        elif len(argv) >= 2:
-            if argv[0] == "rule":
-                location_rule(lib, [sub_cmd] + argv, modifiers)
-            else:
-                location_prefer(lib, [sub_cmd] + argv, modifiers)
-        else:
-            raise CmdLineInputError()
-    except CmdLineInputError as e:
-        utils.exit_on_cmdline_input_error(
-            e, "constraint", ["location", sub_cmd]
-        )
 
 
 def constraint_order_cmd(lib, argv, modifiers):
@@ -1062,152 +1032,6 @@ def location_add(
     utils.replace_cib_configuration(dom)
 
 
-def location_rule(lib, argv, modifiers):
-    """
-    Options:
-      * -f - CIB file
-      * --force - allow constraint on any resource type, allow duplicate
-        constraints
-    """
-    del lib
-    modifiers.ensure_only_supported("-f", "--force")
-    if len(argv) < 3:
-        raise CmdLineInputError()
-
-    rsc_type, rsc_value = parse_args.parse_typed_arg(
-        argv.pop(0),
-        [RESOURCE_TYPE_RESOURCE, RESOURCE_TYPE_REGEXP],
-        RESOURCE_TYPE_RESOURCE,
-    )
-    argv.pop(0)  # pop "rule"
-    options, rule_argv = rule_utils.parse_argv(
-        argv,
-        {
-            "constraint-id": None,
-            "resource-discovery": None,
-        },
-    )
-    resource_discovery = (
-        "resource-discovery" in options and options["resource-discovery"]
-    )
-
-    try:
-        # Parse the rule to see if we need to upgrade CIB schema. All errors
-        # would be properly reported by a validator called bellow, so we can
-        # safely ignore them here.
-        parsed_rule = rule_utils.RuleParser().parse(
-            rule_utils.TokenPreprocessor().run(rule_argv)
-        )
-        if rule_utils.has_node_attr_expr_with_type_integer(parsed_rule):
-            utils.checkAndUpgradeCIB(
-                const.PCMK_RULES_NODE_ATTR_EXPR_WITH_INT_TYPE_CIB_VERSION
-            )
-    except (rule_utils.ParserException, rule_utils.CibBuilderException):
-        pass
-
-    dom = utils.get_cib_dom()
-
-    if rsc_type == RESOURCE_TYPE_RESOURCE:
-        (
-            rsc_valid,
-            rsc_error,
-            dummy_correct_id,
-        ) = utils.validate_constraint_resource(dom, rsc_value)
-        if not rsc_valid:
-            utils.err(rsc_error)
-
-    cib, constraints = getCurrentConstraints(dom)
-    lc = cib.createElement("rsc_location")
-
-    # If resource-discovery is specified, we use it with the rsc_location
-    # element not the rule
-    if resource_discovery:
-        lc.setAttribute("resource-discovery", options.pop("resource-discovery"))
-
-    constraints.appendChild(lc)
-    if options.get("constraint-id"):
-        id_valid, id_error = utils.validate_xml_id(
-            options["constraint-id"], "constraint id"
-        )
-        if not id_valid:
-            utils.err(id_error)
-        if utils.does_id_exist(dom, options["constraint-id"]):
-            utils.err(
-                "id '%s' is already in use, please specify another one"
-                % options["constraint-id"]
-            )
-        lc.setAttribute("id", options["constraint-id"])
-        del options["constraint-id"]
-    else:
-        lc.setAttribute(
-            "id",
-            utils.find_unique_id(dom, sanitize_id("location-" + rsc_value)),
-        )
-    if rsc_type == RESOURCE_TYPE_RESOURCE:
-        lc.setAttribute("rsc", rsc_value)
-    elif rsc_type == RESOURCE_TYPE_REGEXP:
-        lc.setAttribute("rsc-pattern", rsc_value)
-
-    rule_utils.dom_rule_add(
-        lc, options, rule_argv, utils.getValidateWithVersion(cib)
-    )
-    location_rule_check_duplicates(constraints, lc, modifiers.get("--force"))
-    utils.replace_cib_configuration(cib)
-
-
-def location_rule_check_duplicates(dom, constraint_el, force):
-    """
-    Commandline options: no options
-    """
-    if not force:
-        duplicates = location_rule_find_duplicates(dom, constraint_el)
-        if duplicates:
-            lines = []
-            for dup in duplicates:
-                lines.append("  Constraint: %s" % dup.getAttribute("id"))
-                for dup_rule in utils.dom_get_children_by_tag_name(dup, "rule"):
-                    lines.append(
-                        rule_utils.ExportDetailed().get_string(
-                            dup_rule, False, True, indent="    "
-                        )
-                    )
-            utils.err(
-                "duplicate constraint already exists, use --force to override\n"
-                + "\n".join(lines)
-            )
-
-
-def location_rule_find_duplicates(dom, constraint_el):
-    """
-    Commandline options: no options
-    """
-
-    def normalize(constraint_el):
-        if constraint_el.hasAttribute("rsc-pattern"):
-            rsc = (
-                RESOURCE_TYPE_REGEXP,
-                constraint_el.getAttribute("rsc-pattern"),
-            )
-        else:
-            rsc = (RESOURCE_TYPE_RESOURCE, constraint_el.getAttribute("rsc"))
-        return (
-            rsc,
-            [
-                rule_utils.ExportAsExpression().get_string(rule_el, True)
-                for rule_el in constraint_el.getElementsByTagName("rule")
-            ],
-        )
-
-    normalized_el = normalize(constraint_el)
-    return [
-        other_el
-        for other_el in dom.getElementsByTagName("rsc_location")
-        if other_el.getElementsByTagName("rule")
-        and constraint_el is not other_el
-        and normalized_el == normalize(other_el)
-    ]
-
-
 # Grabs the current constraints and returns the dom and constraint element
 def getCurrentConstraints(passed_dom=None):
     """
@@ -1502,46 +1326,3 @@ def constraint_resource_update(old_id, dom):
                 if constraint.getAttribute(attr) == old_id:
                     constraint.setAttribute(attr, new_id)
     return dom
-
-
-def constraint_rule_add(lib, argv, modifiers):
-    """
-    Options:
-      * -f - CIB file
-      * --force - allow duplicate constraints
-    """
-    del lib
-    modifiers.ensure_only_supported("-f", "--force")
-    if not argv:
-        raise CmdLineInputError()
-    constraint_id = argv.pop(0)
-    options, rule_argv = rule_utils.parse_argv(argv)
-    try:
-        # Parse the rule to see if we need to upgrade CIB schema. All errors
-        # would be properly reported by a validator called bellow, so we can
-        # safely ignore them here.
-        parsed_rule = rule_utils.RuleParser().parse(
-            rule_utils.TokenPreprocessor().run(rule_argv)
-        )
-        if rule_utils.has_node_attr_expr_with_type_integer(parsed_rule):
-            utils.checkAndUpgradeCIB(
-                const.PCMK_RULES_NODE_ATTR_EXPR_WITH_INT_TYPE_CIB_VERSION
-            )
-    except (rule_utils.ParserException, rule_utils.CibBuilderException):
-        pass
-    cib = utils.get_cib_dom()
-    constraint = utils.dom_get_element_with_id(
-        cib.getElementsByTagName("constraints")[0],
-        "rsc_location",
-        constraint_id,
-    )
-    if not constraint:
-        utils.err("Unable to find constraint: " + constraint_id)
-    rule_utils.dom_rule_add(
-        constraint,
-        options,
-        rule_argv,
-        utils.getValidateWithVersion(cib),
-    )
-    location_rule_check_duplicates(cib, constraint, modifiers.get("--force"))
-    utils.replace_cib_configuration(cib)

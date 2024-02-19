@@ -397,7 +397,6 @@ EXTRA_DIST		= \
 			  qdevice.py \
 			  quorum.py \
 			  resource.py \
-			  rule.py \
 			  snmp/agentx/__init__.py \
 			  snmp/agentx/types.py \
 			  snmp/agentx/updater.py \

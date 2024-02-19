@@ -93,7 +93,7 @@ filename = ""
 pcs_options: Dict[Any, Any] = {}
 
 
-def getValidateWithVersion(dom) -> Version:
+def _getValidateWithVersion(dom) -> Version:
     """
     Commandline options: no options
     """
@@ -117,12 +117,12 @@ def getValidateWithVersion(dom) -> Version:
 def isCibVersionSatisfied(cib_dom, required_version: Version) -> bool:
     if not isinstance(cib_dom, DomDocument):
         cib_dom = cib_dom.ownerDocument
-    return getValidateWithVersion(cib_dom) >= required_version
+    return _getValidateWithVersion(cib_dom) >= required_version
 
 
 # Check the current pacemaker version in cib and upgrade it if necessary
 # Returns False if not upgraded and True if upgraded
-def checkAndUpgradeCIB(required_version: Version) -> bool:
+def _checkAndUpgradeCIB(required_version: Version) -> bool:
     """
     Commandline options:
       * -f - CIB file
@@ -154,9 +154,9 @@ def cluster_upgrade_to_version(required_version: Version) -> Any:
     Commandline options:
       * -f - CIB file
     """
-    checkAndUpgradeCIB(required_version)
+    _checkAndUpgradeCIB(required_version)
     dom = get_cib_dom()
-    current_version = getValidateWithVersion(dom)
+    current_version = _getValidateWithVersion(dom)
     if current_version < required_version:
         err(
             CibUpgradeFailedToMinimalRequiredVersion(
@@ -1491,16 +1491,6 @@ def dom_get_meta_attr_value(dom_resource, meta_name):
     return None
 
 
-def dom_get_element_with_id(dom, tag_name, element_id):
-    """
-    Commandline options: no options
-    """
-    for elem in dom.getElementsByTagName(tag_name):
-        if elem.hasAttribute("id") and elem.getAttribute("id") == element_id:
-            return elem
-    return None
-
-
 def dom_get_node(dom, node_name):
     """
     Commandline options: no options
@@ -1511,7 +1501,7 @@ def dom_get_node(dom, node_name):
     return None
 
 
-def dom_get_children_by_tag_name(dom_el, tag_name):
+def _dom_get_children_by_tag_name(dom_el, tag_name):
     """
     Commandline options: no options
     """
@@ -1797,7 +1787,7 @@ def does_id_exist(dom, check_id):
             else dom.ownerDocument
         )
         cib_found = False
-        for cib in dom_get_children_by_tag_name(document, "cib"):
+        for cib in _dom_get_children_by_tag_name(document, "cib"):
             cib_found = True
             for section in cib.childNodes:
                 if section.nodeType != xml.dom.minidom.Node.ELEMENT_NODE:
@@ -2478,7 +2468,7 @@ def dom_update_nvset(dom_element, nvpair_tuples, tag_name, id_candidate):
     # Do not use dom.getElementsByTagName, that would get elements we do not
     # want to. For example if dom_element is a clone, we would get the clones's
     # as well as clone's primitive's attributes.
-    nvset_element_list = dom_get_children_by_tag_name(dom_element, tag_name)
+    nvset_element_list = _dom_get_children_by_tag_name(dom_element, tag_name)
 
     # Do not create new nvset if we are only removing values from it.
     if not nvset_element_list and only_removing:
