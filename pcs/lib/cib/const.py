@@ -21,7 +21,12 @@ TAG_LIST_CONSTRAINABLE: Final = frozenset(
         TAG_RESOURCE_GROUP,
         TAG_RESOURCE_MASTER,
         TAG_RESOURCE_PRIMITIVE,
-        TAG_TAG,
+        # Not yet supported. What needs to be done:
+        # * move all constraint code to library
+        # * add support for using tags in constraints
+        # * write tests to verify creating constraints with tags
+        # * write tests verifying displaying constraints with tags
+        # TAG_TAG,
     )
 )
 TAG_LIST_CONSTRAINT = frozenset(
