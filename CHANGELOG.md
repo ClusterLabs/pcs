@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+- Support for output formats `json` and `cmd` to resourcs/stonith defaults and
+  resource/stonith op defaults config commands ([RHEL-16231])
+
 ### Fixed
 - Do not put empty uid/gid corosync configuration options to an uidgid file
   when not specified in `pcs cluster uidgid add` command. Empty options cause
@@ -12,6 +16,7 @@
 
 [ghissue#772]: https://github.com/ClusterLabs/pcs/issues/772
 [RHEL-2977]: https://issues.redhat.com/browse/RHEL-2977
+[RHEL-16231]: https://issues.redhat.com/browse/RHEL-16231
 [RHEL-27492]: https://issues.redhat.com/browse/RHEL-27492
 
 
