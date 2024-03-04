@@ -1,7 +1,4 @@
-from typing import (
-    Any,
-    Optional,
-)
+from typing import Any
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import (
@@ -20,7 +17,6 @@ from pcs.common import (
 )
 from pcs.common.pacemaker.constraint import get_all_location_constraints_ids
 from pcs.common.str_tools import format_list
-from pcs.common.types import StringIterable
 
 RESOURCE_TYPE_RESOURCE = "resource"
 RESOURCE_TYPE_REGEXP = "regexp"
@@ -56,24 +52,38 @@ def remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
 
 
 def _extract_rule_options(
-    argv: Argv, extra_options: Optional[StringIterable] = None
-) -> dict[str, str]:
-    option_name_list = {"id", "role", "score", "score-attribute"} | set(
-        extra_options or []
-    )
-    result_options: dict[str, str] = {}
+    argv: Argv, extract_constraint_options: bool = True
+) -> tuple[dict[str, str], dict[str, str]]:
+    rule_options: dict[str, str] = {}
+    constraint_options: dict[str, str] = {}
+
+    name_to_result = {
+        "id": rule_options,
+        "role": rule_options,
+        "score": rule_options,
+        "score-attribute": rule_options,
+    }
+    if extract_constraint_options:
+        name_to_result["constraint-id"] = constraint_options
+        name_to_result["resource-discovery"] = constraint_options
+
     while argv:
         found = False
         argument = argv.pop(0)
-        for name in option_name_list:
+        for name, result in name_to_result.items():
             if argument.startswith(name + "="):
-                result_options[name] = argument.split("=", 1)[1]
+                result[name] = argument.split("=", 1)[1]
                 found = True
                 break
         if not found:
             argv.insert(0, argument)
             break
-    return result_options
+
+    if "constraint-id" in constraint_options:
+        constraint_options["id"] = constraint_options["constraint-id"]
+        del constraint_options["constraint-id"]
+
+    return rule_options, constraint_options
 
 
 def create_with_rule(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
@@ -99,18 +109,7 @@ def create_with_rule(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         argv.pop(0)
     else:
         raise CmdLineInputError()
-    constraint_options_names = {"constraint-id", "resource-discovery"}
-    options = _extract_rule_options(argv, constraint_options_names)
-    constraint_options = {}
-    if "resource-discovery" in options:
-        constraint_options["resource-discovery"] = options["resource-discovery"]
-    if "constraint-id" in options:
-        constraint_options["id"] = options["constraint-id"]
-    rule_options = {
-        name: value
-        for name, value in options.items()
-        if name not in constraint_options_names
-    }
+    rule_options, constraint_options = _extract_rule_options(argv)
 
     lib.env.report_processor.set_report_item_preprocessor(
         get_duplicate_constraint_exists_preprocessor(lib)
@@ -141,7 +140,9 @@ def rule_add(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
 
     argv = argv[:]
     constraint_id = argv.pop(0)
-    options = _extract_rule_options(argv)
+    rule_options, _ = _extract_rule_options(
+        argv, extract_constraint_options=False
+    )
 
     lib.env.report_processor.set_report_item_preprocessor(
         get_duplicate_constraint_exists_preprocessor(lib)
@@ -149,6 +150,6 @@ def rule_add(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     lib.constraint_location.add_rule_to_constraint(
         constraint_id,
         " ".join(argv),
-        options,
+        rule_options,
         force_flags,
     )
