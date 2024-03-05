@@ -138,6 +138,11 @@ def _metadata_parameter_extract_advanced_from_desc(
 def _parameter_extract_advanced_from_desc(
     parameter: ResourceAgentParameter,
 ) -> ResourceAgentParameter:
+    # If the parameter had xml attribute advanced="1", it is already marked as
+    # advanced. Shortdesc is parsed regardless, to remove "advanced use only"
+    # strings. If either the strings are present OR the xml attribute is 1, the
+    # parameter is advanced and the behavior is the same in both cases: remove
+    # plaintext representation of structured data.
     advanced_str_beginings = ["Advanced use only:", "*** Advanced Use Only ***"]
     shortdesc = parameter.shortdesc
     if shortdesc:
@@ -287,6 +292,11 @@ def _metadata_parameter_remove_select_enum_values_from_desc(
 def _parameter_remove_select_enum_values_from_desc(
     parameter: ResourceAgentParameter,
 ) -> ResourceAgentParameter:
+    # If the parameter had xml attribute type="enum", it was changed to
+    # type="select" by _parameter_extract_enum_values_from_desc. No matter
+    # that, the enum / select values are removed from longdesc to make the
+    # behavior the same in both cases: remove plaintext representation of
+    # structured data.
     if parameter.type != "select":
         return parameter
     _, longdesc = _get_enum_values_and_new_longdesc(parameter)

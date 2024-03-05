@@ -282,6 +282,7 @@ def _parse_parameters_1_1(
                 default=default_value,
                 enum_values=enum_values,
                 required=parameter_el.get("required"),
+                advanced=parameter_el.get("advanced"),
                 deprecated=deprecated,
                 deprecated_by=deprecated_by,
                 deprecated_desc=deprecated_desc,

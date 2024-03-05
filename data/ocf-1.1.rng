@@ -122,6 +122,19 @@ RNGs. Thank you.
     <optional>
       <attribute name="reloadable"><ref name="boolean-values"/></attribute>
     </optional>
+    <optional>
+      <!-- this parameter is not meant to be set in usual use cases -->
+      <attribute name="advanced"><ref name="boolean-values"/></attribute>
+    </optional>
+    <optional>
+      <!--
+        Marks cluster properties generated and managed by pacemaker,
+        e.g. dc-version, cluster-infrastructure, have-watchdog.
+        This is ignored by pcs, we have own hard-coded list of read-only
+        cluster properties.
+      -->
+      <attribute name="generated"><ref name="boolean-values"/></attribute>
+    </optional>
 
     <interleave>
       <zeroOrMore>

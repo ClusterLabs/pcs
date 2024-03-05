@@ -159,7 +159,7 @@ def _ocf_1_1_parameter_list_to_ocf_unified(
             default=parameter.default,
             enum_values=parameter.enum_values,
             required=_bool_value(parameter.required),
-            advanced=False,
+            advanced=_bool_value(parameter.advanced),
             deprecated=parameter.deprecated,
             deprecated_by=parameter.deprecated_by,
             deprecated_desc=parameter.deprecated_desc,

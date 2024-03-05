@@ -7,9 +7,12 @@
   when not specified in `pcs cluster uidgid add` command. Empty options cause
   corosync start failure. ([ghissue#772])
 - Do not allow fencing levels other than 1..9 ([RHEL-2977])
+- Adjust OCF metadata processing to support the latest pacemaker changes
+  ([RHEL-27492])
 
 [ghissue#772]: https://github.com/ClusterLabs/pcs/issues/772
 [RHEL-2977]: https://issues.redhat.com/browse/RHEL-2977
+[RHEL-27492]: https://issues.redhat.com/browse/RHEL-27492
 
 
 ## [0.11.7] - 2024-01-11

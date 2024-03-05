@@ -940,6 +940,7 @@ class ParseOcf11(ParseOcfToolsMixin, TestCase):
                         default=None,
                         enum_values=None,
                         required=None,
+                        advanced=None,
                         deprecated=False,
                         deprecated_by=[],
                         deprecated_desc=None,
@@ -979,6 +980,7 @@ class ParseOcf11(ParseOcfToolsMixin, TestCase):
                         default=None,
                         enum_values=None,
                         required=None,
+                        advanced=None,
                         deprecated=True,
                         deprecated_by=[],
                         deprecated_desc=None,
@@ -1021,6 +1023,7 @@ class ParseOcf11(ParseOcfToolsMixin, TestCase):
                         default=None,
                         enum_values=None,
                         required=None,
+                        advanced=None,
                         deprecated=True,
                         deprecated_by=["new1", "new2"],
                         deprecated_desc=None,
@@ -1041,7 +1044,7 @@ class ParseOcf11(ParseOcfToolsMixin, TestCase):
                             <parameters>
                                 <parameter name="a_parameter"
                                     unique-group="ug1" unique="0" required="1"
-                                    reloadable="0"
+                                    reloadable="0" advanced="1" generated="1"
                                 >
                                     <longdesc>Long description</longdesc>
                                     <shortdesc>short description</shortdesc>
@@ -1070,6 +1073,7 @@ class ParseOcf11(ParseOcfToolsMixin, TestCase):
                         default="123",
                         enum_values=None,
                         required="1",
+                        advanced="1",
                         deprecated=True,
                         deprecated_by=["new1", "new2"],
                         deprecated_desc="deprecation explanation",
@@ -1116,6 +1120,7 @@ class ParseOcf11(ParseOcfToolsMixin, TestCase):
                         default=None,
                         enum_values=None,
                         required=None,
+                        advanced=None,
                         deprecated=False,
                         deprecated_by=[],
                         deprecated_desc=None,
@@ -1130,6 +1135,7 @@ class ParseOcf11(ParseOcfToolsMixin, TestCase):
                         default="b",
                         enum_values=["a", "b", "c"],
                         required=None,
+                        advanced=None,
                         deprecated=False,
                         deprecated_by=[],
                         deprecated_desc=None,

@@ -145,6 +145,8 @@ class ResourceAgentParameterOcf1_1:  # pylint: disable=invalid-name
     enum_values: Optional[List[str]]
     # is this a required parameter?
     required: Optional[str]
+    # Is the parameter meant for advanced users?
+    advanced: Optional[str]
     # is this parameter deprecated?
     deprecated: bool
     # list of parameters deprecating this one

@@ -469,26 +469,34 @@ class MetadataParameterExtractAdvancedFromDesc(TestCase):
                     metadata_out,
                 )
 
+    def _assert_advanced_extracted(self, advanced_str, advanced_from_xml):
+        metadata_in = self._fixture_metadata(
+            [
+                self._fixture_parameter(
+                    f"{advanced_str}    some shortdesc", None, advanced_from_xml
+                )
+            ]
+        )
+        metadata_out = self._fixture_metadata(
+            [self._fixture_parameter("some shortdesc", None, True)]
+        )
+        self.assertEqual(
+            # pylint: disable=protected-access
+            ra.pcs_transform._metadata_parameter_extract_advanced_from_desc(
+                metadata_in
+            ),
+            metadata_out,
+        )
+
     def test_advanced_str_in_shortedsc(self):
         for advanced_str in self.advanced_str_list:
             with self.subTest(advanced_str=advanced_str):
-                metadata_in = self._fixture_metadata(
-                    [
-                        self._fixture_parameter(
-                            f"{advanced_str}    some shortdesc", None, False
-                        )
-                    ]
-                )
-                metadata_out = self._fixture_metadata(
-                    [self._fixture_parameter("some shortdesc", None, True)]
-                )
-                self.assertEqual(
-                    # pylint: disable=protected-access
-                    ra.pcs_transform._metadata_parameter_extract_advanced_from_desc(
-                        metadata_in
-                    ),
-                    metadata_out,
-                )
+                self._assert_advanced_extracted(advanced_str, False)
+
+    def test_advanced_str_in_shortdesc_advanced_already_true(self):
+        for advanced_str in self.advanced_str_list:
+            with self.subTest(advanced_str=advanced_str):
+                self._assert_advanced_extracted(advanced_str, True)
 
     def test_advanced_str_in_shortdesc_end(self):
         for advanced_str in self.advanced_str_list:
