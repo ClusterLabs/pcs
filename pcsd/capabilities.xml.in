@@ -1239,6 +1239,16 @@
         pcs commands: resource op defaults set create
       </description>
     </capability>
+    <capability id="pcmk.properties.operation-defaults.config.output-formats" in-pcs="1" in-pcsd="0">
+      <description>
+        Display configured resource and stonith operation defaults in various
+        formats.
+
+        pcs commands:
+          resource op defaults config --output-format=text|json|cmd
+          stonith op defaults config --output-format=text|json|cmd
+      </description>
+    </capability>
     <capability id="pcmk.properties.resource-defaults" in-pcs="1" in-pcsd="0">
       <description>
         Show and set resources defaults, can set multiple defaults at once.
@@ -1286,7 +1296,15 @@
         pcs commands: resource defaults set create
       </description>
     </capability>
+    <capability id="pcmk.properties.resource-defaults.config.output-formats" in-pcs="1" in-pcsd="0">
+      <description>
+        Display configured resource and stonith defaults in various formats.
 
+        pcs commands:
+          resource defaults config --output-format=text|json|cmd
+          stonith defaults config --output-format=text|json|cmd
+      </description>
+    </capability>
 
 
     <capability id="pcmk.resource.create" in-pcs="1" in-pcsd="1">

@@ -74,11 +74,6 @@ FIXTURE_NVSET_NO_RULE = CibNvsetDto(
     [CibNvpairDto("my-id-pair3", "name 1", "value 1")],
 )
 
-FIXTURE_META_WITH_EXPIRED_RULE = [
-    FIXTURE_NVSET_EXPIRED_RULE,
-    FIXTURE_NVSET_NO_RULE,
-]
-
 FIXTURE_INSTANCE_ATTRIBUTES = [
     CibNvsetDto(
         "instance",
@@ -110,7 +105,10 @@ class DefaultsBaseMixin:
 class DefaultsConfigMixin(DefaultsBaseMixin):
     empty_dto = CibDefaultsDto(instance_attributes=[], meta_attributes=[])
     dto_list = CibDefaultsDto(
-        meta_attributes=FIXTURE_META_WITH_EXPIRED_RULE,
+        meta_attributes=[
+            FIXTURE_NVSET_EXPIRED_RULE,
+            FIXTURE_NVSET_NO_RULE,
+        ],
         instance_attributes=FIXTURE_INSTANCE_ATTRIBUTES,
     )
     dto_list_expired_excluded = CibDefaultsDto(

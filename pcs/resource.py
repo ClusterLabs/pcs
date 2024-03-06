@@ -10,8 +10,6 @@ from typing import (
     Callable,
     Mapping,
     Optional,
-    Sequence,
-    cast,
 )
 from xml.dom.minidom import parseString
 
@@ -44,7 +42,10 @@ from pcs.cli.common.tools import (
     print_to_stderr,
     timeout_to_seconds_legacy,
 )
-from pcs.cli.nvset import nvset_dto_list_to_lines
+from pcs.cli.nvset import (
+    filter_out_expired_nvset,
+    nvset_dto_list_to_lines,
+)
 from pcs.cli.reports import process_library_reports
 from pcs.cli.reports.output import (
     deprecation_warning,
@@ -71,11 +72,9 @@ from pcs.common import (
     const,
     pacemaker,
     reports,
-    types,
 )
 from pcs.common.interface import dto
 from pcs.common.pacemaker.defaults import CibDefaultsDto
-from pcs.common.pacemaker.nvset import CibNvsetDto
 from pcs.common.pacemaker.resource.list import CibResourcesDto
 from pcs.common.pacemaker.resource.operations import (
     OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME,
@@ -234,17 +233,6 @@ def resource_op_defaults_set_create_cmd(
     )
 
 
-def _filter_out_expired_nvset(
-    nvset_dtos: Sequence[CibNvsetDto],
-) -> list[CibNvsetDto]:
-    return [
-        dto
-        for dto in nvset_dtos
-        if not dto.rule
-        or dto.rule.in_effect != types.CibRuleInEffectStatus.EXPIRED
-    ]
-
-
 def _filter_defaults(
     cib_defaults_dto: CibDefaultsDto, include_expired: bool
 ) -> CibDefaultsDto:
@@ -252,12 +240,12 @@ def _filter_defaults(
         instance_attributes=(
             cib_defaults_dto.instance_attributes
             if include_expired
-            else _filter_out_expired_nvset(cib_defaults_dto.instance_attributes)
+            else filter_out_expired_nvset(cib_defaults_dto.instance_attributes)
         ),
         meta_attributes=(
             cib_defaults_dto.meta_attributes
             if include_expired
-            else _filter_out_expired_nvset(cib_defaults_dto.meta_attributes)
+            else filter_out_expired_nvset(cib_defaults_dto.meta_attributes)
         ),
     )
 
@@ -295,10 +283,9 @@ def _defaults_config_cmd(
             f"option '--full' is not compatible with '{output_format}' output "
             "format."
         )
-    include_expired = cast(bool, modifiers.get("--all"))
     cib_defaults_dto = _filter_defaults(
-        lib_command(cast(bool, not modifiers.get("--no-expire-check"))),
-        include_expired,
+        lib_command(not modifiers.get("--no-expire-check")),
+        bool(modifiers.get("--all")),
     )
     if output_format == OUTPUT_FORMAT_VALUE_CMD:
         output = ";\n".join(
@@ -311,8 +298,7 @@ def _defaults_config_cmd(
             nvset_dto_list_to_lines(
                 cib_defaults_dto.meta_attributes,
                 nvset_label="Meta Attrs",
-                with_ids=cast(bool, modifiers.get("--full")),
-                include_expired=include_expired,
+                with_ids=bool(modifiers.get("--full")),
             )
         )
     if output:
