@@ -17,19 +17,22 @@ from pcs.common.str_tools import (
 from pcs.common.types import CibRuleInEffectStatus
 
 
+def filter_out_expired_nvset(
+    nvset_dto_list: Iterable[CibNvsetDto],
+) -> list[CibNvsetDto]:
+    return [
+        nvset_dto
+        for nvset_dto in nvset_dto_list
+        if not nvset_dto.rule
+        or nvset_dto.rule.in_effect != CibRuleInEffectStatus.EXPIRED
+    ]
+
+
 def nvset_dto_list_to_lines(
     nvset_dto_list: Iterable[CibNvsetDto],
     nvset_label: str,
     with_ids: bool = False,
-    include_expired: bool = False,
 ) -> List[str]:
-    if not include_expired:
-        nvset_dto_list = [
-            nvset_dto
-            for nvset_dto in nvset_dto_list
-            if not nvset_dto.rule
-            or nvset_dto.rule.in_effect != CibRuleInEffectStatus.EXPIRED
-        ]
     return [
         line
         for nvset_dto in nvset_dto_list
