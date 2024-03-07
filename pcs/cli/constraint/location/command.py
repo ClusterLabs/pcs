@@ -17,6 +17,7 @@ from pcs.common import (
 )
 from pcs.common.pacemaker.constraint import get_all_location_constraints_ids
 from pcs.common.str_tools import format_list
+from pcs.common.types import StringIterable
 
 RESOURCE_TYPE_RESOURCE = "resource"
 RESOURCE_TYPE_REGEXP = "regexp"
@@ -51,33 +52,48 @@ def remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     lib.cib.remove_elements(argv)
 
 
+def _extract_options(
+    argv: Argv, options: StringIterable, ignored_options: StringIterable = ()
+) -> dict[str, str]:
+    result: dict[str, str] = {}
+    for argument in argv:
+        if "=" not in argument:
+            break
+        key, value = argument.split("=", 1)
+        if key in options:
+            result[key] = value
+            continue
+        if key not in ignored_options:
+            break
+    return result
+
+
 def _extract_rule_options(
     argv: Argv, extract_constraint_options: bool = True
 ) -> tuple[dict[str, str], dict[str, str]]:
-    rule_options: dict[str, str] = {}
-    constraint_options: dict[str, str] = {}
+    rule_options_def = {"id", "role", "score", "score-attribute"}
+    constraint_options_def = {"constraint-id", "resource-discovery"}
 
-    name_to_result = {
-        "id": rule_options,
-        "role": rule_options,
-        "score": rule_options,
-        "score-attribute": rule_options,
-    }
+    rule_options = _extract_options(
+        argv,
+        rule_options_def,
+        ignored_options=(
+            constraint_options_def if extract_constraint_options else set()
+        ),
+    )
+    constraint_options = dict()
     if extract_constraint_options:
-        name_to_result["constraint-id"] = constraint_options
-        name_to_result["resource-discovery"] = constraint_options
+        constraint_options = _extract_options(
+            argv, constraint_options_def, ignored_options=rule_options_def
+        )
 
-    while argv:
-        found = False
-        argument = argv.pop(0)
-        for name, result in name_to_result.items():
-            if argument.startswith(name + "="):
-                result[name] = argument.split("=", 1)[1]
-                found = True
-                break
-        if not found:
-            argv.insert(0, argument)
-            break
+    processed_options = set(rule_options_def)
+    if extract_constraint_options:
+        processed_options |= constraint_options_def
+    while (
+        argv and "=" in argv[0] and argv[0].split("=")[0] in processed_options
+    ):
+        argv.pop(0)
 
     if "constraint-id" in constraint_options:
         constraint_options["id"] = constraint_options["constraint-id"]
@@ -101,7 +117,7 @@ def create_with_rule(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     if modifiers.get("--force"):
         force_flags.add(reports.codes.FORCE)
 
-    argv = argv[:]
+    argv = argv[:]  # eliminate side-effect - do not modify the original argv
     rsc_type, rsc_value = parse_typed_arg(
         argv.pop(0), list(_RESOURCE_TYPE_MAP.keys()), RESOURCE_TYPE_RESOURCE
     )
@@ -138,7 +154,7 @@ def rule_add(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     if modifiers.get("--force"):
         force_flags.add(reports.codes.FORCE)
 
-    argv = argv[:]
+    argv = argv[:]  # eliminate side-effect - do not modify the original argv
     constraint_id = argv.pop(0)
     rule_options, _ = _extract_rule_options(
         argv, extract_constraint_options=False
