@@ -449,7 +449,9 @@ _RESOURCE_OP_DEFAULTS_DESC = (
 )
 
 _RESOURCE_OP_DEFAULTS_CONFIG_CMD = f"{_RESOURCE_OP_DEFAULTS_CMD} [config]"
-_RESOURCE_OP_DEFAULTS_CONFIG_SYNTAX = "[--all] [--full] [--no-expire-check]"
+_RESOURCE_OP_DEFAULTS_CONFIG_SYNTAX = (
+    f"[--all | --no-expire-check] [--full] [{_output_format_syntax()}]"
+)
 _RESOURCE_OP_DEFAULTS_CONFIG_DESC = (
     """
     List currently configured default values for operations. If --all is
@@ -457,6 +459,8 @@ _RESOURCE_OP_DEFAULTS_CONFIG_DESC = (
     list ids. If --no-expire-check is specified, do not evaluate whether sets
     of values are expired.
     """,
+    "",
+    _output_format_desc(),
 )
 
 _RESOURCE_OP_DEFAULTS_SET_CMD = f"{_RESOURCE_OP_DEFAULTS_CMD} set"
@@ -581,7 +585,9 @@ def _resource_meta_desc_fn(obj: str, parent_cmd: str) -> tuple[str, ...]:
 
 _RESOURCE_DEFAULTS_CMD = "defaults"
 _RESOURCE_DEFAULTS_CONFIG_CMD = f"{_RESOURCE_DEFAULTS_CMD} [config]"
-_RESOURCE_DEFAULTS_CONFIG_SYNTAX = "[--all] [--full] [--no-expire-check]"
+_RESOURCE_DEFAULTS_CONFIG_SYNTAX = (
+    f"[--all | --no-expire-check] [--full] [{_output_format_syntax()}]"
+)
 _RESOURCE_DEFAULTS_CONFIG_DESC = (
     """
     List currently configured default values for resources / stonith devices.
@@ -589,6 +595,8 @@ _RESOURCE_DEFAULTS_CONFIG_DESC = (
     specified, also list ids. If --no-expire-check is specified, do not
     evaluate whether sets of values are expired.
     """,
+    "",
+    _output_format_desc(),
 )
 
 _RESOURCE_DEFAULTS_DESC = (

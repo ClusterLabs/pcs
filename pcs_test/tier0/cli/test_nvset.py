@@ -14,6 +14,74 @@ from pcs.common.types import (
 )
 
 
+def fixture_dto(in_effect):
+    return CibNvsetDto(
+        f"id-{in_effect}",
+        {"score": "150"},
+        CibRuleExpressionDto(
+            f"id-{in_effect}-rule",
+            CibRuleExpressionType.RULE,
+            in_effect,
+            {"boolean-op": "or"},
+            None,
+            None,
+            [
+                CibRuleExpressionDto(
+                    f"id-{in_effect}-rule-op",
+                    CibRuleExpressionType.OP_EXPRESSION,
+                    CibRuleInEffectStatus.UNKNOWN,
+                    {"name": "monitor"},
+                    None,
+                    None,
+                    [],
+                    "op monitor",
+                ),
+            ],
+            "op monitor",
+        ),
+        [CibNvpairDto(f"id-{in_effect}-pair1", "name1", "value1")],
+    )
+
+
+def fixture_dto_list():
+    return [fixture_dto(in_effect.value) for in_effect in CibRuleInEffectStatus]
+
+
+class FilterOutExpiredNvset(TestCase):
+    def test_filter(self):
+        self.maxDiff = None
+        list_with_expired_nvsets = [
+            CibNvsetDto(id="nvset-no-rule", options={}, rule=None, nvpairs=[]),
+            CibNvsetDto(
+                id="nvset-2",
+                options={},
+                rule=CibRuleExpressionDto(
+                    id="rule-another-expired",
+                    type=CibRuleExpressionType.DATE_EXPRESSION,
+                    in_effect=CibRuleInEffectStatus.EXPIRED,
+                    options={},
+                    date_spec=None,
+                    duration=None,
+                    expressions=[],
+                    as_string="",
+                ),
+                nvpairs=[],
+            ),
+        ] + fixture_dto_list()
+        expected_list = [
+            item
+            for idx, item in enumerate(list_with_expired_nvsets[:])
+            if idx not in [1, 4]
+        ]
+        self.assertEqual(
+            nvset.filter_out_expired_nvset(list_with_expired_nvsets),
+            expected_list,
+        )
+
+    def test_empty_list(self):
+        self.assertEqual(nvset.filter_out_expired_nvset([]), [])
+
+
 class NvsetDtoToLines(TestCase):
     def setUp(self):
         self.label = "Meta Attributes"
@@ -95,65 +163,29 @@ class NvsetDtoListToLines(TestCase):
     def setUp(self):
         self.label = "Meta Attributes"
 
-    def _export(self, dto, with_ids, include_expired):
+    def _export(self, dto, with_ids):
         return (
             "\n".join(
                 nvset.nvset_dto_list_to_lines(
                     dto,
                     nvset_label=self.label,
                     with_ids=with_ids,
-                    include_expired=include_expired,
                 )
             )
             + "\n"
         )
 
-    def assert_lines(self, dto, include_expired, lines):
+    def assert_lines(self, dto, lines):
         self.assertEqual(
-            self._export(dto, True, include_expired),
+            self._export(dto, True),
             lines,
         )
         self.assertEqual(
-            self._export(dto, False, include_expired),
+            self._export(dto, False),
             re.sub(r" +\(id:.*\)", "", lines),
         )
 
-    @staticmethod
-    def fixture_dto(in_effect):
-        return CibNvsetDto(
-            f"id-{in_effect}",
-            {"score": "150"},
-            CibRuleExpressionDto(
-                f"id-{in_effect}-rule",
-                CibRuleExpressionType.RULE,
-                in_effect,
-                {"boolean-op": "or"},
-                None,
-                None,
-                [
-                    CibRuleExpressionDto(
-                        f"id-{in_effect}-rule-op",
-                        CibRuleExpressionType.OP_EXPRESSION,
-                        CibRuleInEffectStatus.UNKNOWN,
-                        {"name": "monitor"},
-                        None,
-                        None,
-                        [],
-                        "op monitor",
-                    ),
-                ],
-                "op monitor",
-            ),
-            [CibNvpairDto(f"id-{in_effect}-pair1", "name1", "value1")],
-        )
-
-    def fixture_dto_list(self):
-        return [
-            self.fixture_dto(in_effect.value)
-            for in_effect in CibRuleInEffectStatus
-        ]
-
-    def test_expired_included(self):
+    def test_lines(self):
         self.maxDiff = None
         output = dedent(
             f"""\
@@ -175,24 +207,4 @@ class NvsetDtoListToLines(TestCase):
                 Expression: op monitor (id: id-UNKNOWN-rule-op)
         """
         )
-        self.assert_lines(self.fixture_dto_list(), True, output)
-
-    def test_expired_excluded(self):
-        self.maxDiff = None
-        output = dedent(
-            f"""\
-            {self.label} (not yet in effect): id-NOT_YET_IN_EFFECT score=150
-              name1=value1 (id: id-NOT_YET_IN_EFFECT-pair1)
-              Rule (not yet in effect): boolean-op=or (id: id-NOT_YET_IN_EFFECT-rule)
-                Expression: op monitor (id: id-NOT_YET_IN_EFFECT-rule-op)
-            {self.label}: id-IN_EFFECT score=150
-              name1=value1 (id: id-IN_EFFECT-pair1)
-              Rule: boolean-op=or (id: id-IN_EFFECT-rule)
-                Expression: op monitor (id: id-IN_EFFECT-rule-op)
-            {self.label}: id-UNKNOWN score=150
-              name1=value1 (id: id-UNKNOWN-pair1)
-              Rule: boolean-op=or (id: id-UNKNOWN-rule)
-                Expression: op monitor (id: id-UNKNOWN-rule-op)
-        """
-        )
-        self.assert_lines(self.fixture_dto_list(), False, output)
+        self.assert_lines(fixture_dto_list(), output)

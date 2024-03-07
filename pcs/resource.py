@@ -10,7 +10,6 @@ from typing import (
     Callable,
     Mapping,
     Optional,
-    cast,
 )
 from xml.dom.minidom import parseString
 
@@ -32,6 +31,7 @@ from pcs.cli.common.parse_args import (
     FUTURE_OPTION,
     OUTPUT_FORMAT_VALUE_CMD,
     OUTPUT_FORMAT_VALUE_JSON,
+    OUTPUT_FORMAT_VALUE_TEXT,
     Argv,
     InputModifiers,
     KeyValueParser,
@@ -42,7 +42,10 @@ from pcs.cli.common.tools import (
     print_to_stderr,
     timeout_to_seconds_legacy,
 )
-from pcs.cli.nvset import nvset_dto_list_to_lines
+from pcs.cli.nvset import (
+    filter_out_expired_nvset,
+    nvset_dto_list_to_lines,
+)
 from pcs.cli.reports import process_library_reports
 from pcs.cli.reports.output import (
     deprecation_warning,
@@ -50,7 +53,9 @@ from pcs.cli.reports.output import (
 )
 from pcs.cli.resource.output import (
     ResourcesConfigurationFacade,
+    operation_defaults_to_cmd,
     resource_agent_metadata_to_text,
+    resource_defaults_to_cmd,
     resources_to_cmd,
     resources_to_text,
 )
@@ -228,8 +233,26 @@ def resource_op_defaults_set_create_cmd(
     )
 
 
+def _filter_defaults(
+    cib_defaults_dto: CibDefaultsDto, include_expired: bool
+) -> CibDefaultsDto:
+    return CibDefaultsDto(
+        instance_attributes=(
+            cib_defaults_dto.instance_attributes
+            if include_expired
+            else filter_out_expired_nvset(cib_defaults_dto.instance_attributes)
+        ),
+        meta_attributes=(
+            cib_defaults_dto.meta_attributes
+            if include_expired
+            else filter_out_expired_nvset(cib_defaults_dto.meta_attributes)
+        ),
+    )
+
+
 def _defaults_config_cmd(
     lib_command: Callable[[bool], CibDefaultsDto],
+    defaults_to_cmd: Callable[[CibDefaultsDto], list[list[str]]],
     argv: Argv,
     modifiers: InputModifiers,
 ) -> None:
@@ -239,20 +262,47 @@ def _defaults_config_cmd(
       * --all - display all nvsets including the ones with expired rules
       * --full - verbose output
       * --no-expire-check -- disable evaluating whether rules are expired
+      * --output-format - supported formats: text, cmd, json
     """
     if argv:
         raise CmdLineInputError()
     modifiers.ensure_only_supported(
-        "-f", "--all", "--full", "--no-expire-check"
+        "-f",
+        "--all",
+        "--full",
+        "--no-expire-check",
+        output_format_supported=True,
     )
-    lines = nvset_dto_list_to_lines(
-        lib_command(not modifiers.get("--no-expire-check")).meta_attributes,
-        nvset_label="Meta Attrs",
-        with_ids=cast(bool, modifiers.get("--full")),
-        include_expired=cast(bool, modifiers.get("--all")),
+    modifiers.ensure_not_mutually_exclusive("--all", "--no-expire-check")
+    output_format = modifiers.get_output_format()
+    if (
+        modifiers.is_specified("--full")
+        and output_format != OUTPUT_FORMAT_VALUE_TEXT
+    ):
+        raise CmdLineInputError(
+            f"option '--full' is not compatible with '{output_format}' output "
+            "format."
+        )
+    cib_defaults_dto = _filter_defaults(
+        lib_command(not modifiers.get("--no-expire-check")),
+        bool(modifiers.get("--all")),
     )
-    if lines:
-        print("\n".join(lines))
+    if output_format == OUTPUT_FORMAT_VALUE_CMD:
+        output = ";\n".join(
+            " \\\n".join(cmd) for cmd in defaults_to_cmd(cib_defaults_dto)
+        )
+    elif output_format == OUTPUT_FORMAT_VALUE_JSON:
+        output = json.dumps(dto.to_dict(cib_defaults_dto))
+    else:
+        output = "\n".join(
+            nvset_dto_list_to_lines(
+                cib_defaults_dto.meta_attributes,
+                nvset_label="Meta Attrs",
+                with_ids=bool(modifiers.get("--full")),
+            )
+        )
+    if output:
+        print(output)
 
 
 def resource_defaults_config_cmd(
@@ -264,7 +314,10 @@ def resource_defaults_config_cmd(
       * --full - verbose output
     """
     return _defaults_config_cmd(
-        lib.cib_options.resource_defaults_config, argv, modifiers
+        lib.cib_options.resource_defaults_config,
+        resource_defaults_to_cmd,
+        argv,
+        modifiers,
     )
 
 
@@ -277,7 +330,10 @@ def resource_op_defaults_config_cmd(
       * --full - verbose output
     """
     return _defaults_config_cmd(
-        lib.cib_options.operation_defaults_config, argv, modifiers
+        lib.cib_options.operation_defaults_config,
+        operation_defaults_to_cmd,
+        argv,
+        modifiers,
     )
 
 

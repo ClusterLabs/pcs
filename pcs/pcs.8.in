@@ -248,8 +248,8 @@ Remove specified operation (note: you must specify the exact operation propertie
 op remove <operation id>
 Remove the specified operation id.
 .TP
-op defaults [config] [\fB\-\-all\fR] [\fB\-\-full\fR] [\fB\-\-no\-check\-expired\fR]
-List currently configured default values for operations. If \fB\-\-all\fR is specified, also list expired sets of values. If \fB\-\-full\fR is specified, also list ids. If \fB\-\-no\-expire\-check\fR is specified, do not evaluate whether sets of values are expired.
+op defaults [config] [\fB\-\-all\fR | \fB\-\-no\-check\-expired\fR] [\fB\-\-full\fR] [@OUTPUT_FORMAT_SYNTAX_DOC@]
+List currently configured default values for operations. If \fB\-\-all\fR is specified, also list expired sets of values. If \fB\-\-full\fR is specified, also list ids. If \fB\-\-no\-expire\-check\fR is specified, do not evaluate whether sets of values are expired. @OUTPUT_FORMAT_DESC_DOC@
 .TP
 op defaults <name>=<value>...
 Set default values for operations.
@@ -361,8 +361,8 @@ Set resources listed to managed mode (default). If \fB\-\-monitor\fR is specifie
 unmanage <resource id | tag id>... [\fB\-\-monitor\fR]
 Set resources listed to unmanaged mode. When a resource is in unmanaged mode, the cluster is not allowed to start nor stop the resource. If \fB\-\-monitor\fR is specified, disable all monitor operations of the resources.
 .TP
-defaults [config] [\fB\-\-all\fR] [\fB\-\-full\fR] [\fB\-\-no\-check\-expired\fR]
-List currently configured default values for resources / stonith devices. If \fB\-\-all\fR is specified, also list expired sets of values. If \fB\-\-full\fR is specified, also list ids. If \fB\-\-no\-expire\-check\fR is specified, do not evaluate whether sets of values are expired.
+defaults [config] [\fB\-\-all\fR | \fB\-\-no\-check\-expired\fR] [\fB\-\-full\fR] [@OUTPUT_FORMAT_SYNTAX_DOC@]
+List currently configured default values for resources / stonith devices. If \fB\-\-all\fR is specified, also list expired sets of values. If \fB\-\-full\fR is specified, also list ids. If \fB\-\-no\-expire\-check\fR is specified, do not evaluate whether sets of values are expired. @OUTPUT_FORMAT_DESC_DOC@
 .TP
 defaults <name>=<value>...
 Set default values for resources / stonith devices.
@@ -755,10 +755,10 @@ Remove specified operation (note: you must specify the exact operation propertie
 op remove <operation id>
 Remove the specified operation id.
 .TP
-op defaults [config] [\fB\-\-all\fR] [\fB\-\-full\fR] [\fB\-\-no\-check\-expired\fR]
+op defaults [config] [\fB\-\-all\fR | \fB\-\-no\-check\-expired\fR] [\fB\-\-full\fR] [@OUTPUT_FORMAT_SYNTAX_DOC@]
 This command is an alias of 'resource op defaults [config]' command.
 
-List currently configured default values for operations. If \fB\-\-all\fR is specified, also list expired sets of values. If \fB\-\-full\fR is specified, also list ids. If \fB\-\-no\-expire\-check\fR is specified, do not evaluate whether sets of values are expired.
+List currently configured default values for operations. If \fB\-\-all\fR is specified, also list expired sets of values. If \fB\-\-full\fR is specified, also list ids. If \fB\-\-no\-expire\-check\fR is specified, do not evaluate whether sets of values are expired. @OUTPUT_FORMAT_DESC_DOC@
 .TP
 op defaults <name>=<value>...
 This command is an alias of 'resource op defaults' command.
@@ -835,10 +835,10 @@ Add specified options to the specified stonith device. Meta options should be in
 
 Example: pcs stonith meta test_stonith failure\-timeout=50 resource\-stickiness=
 .TP
-defaults [config] [\fB\-\-all\fR] [\fB\-\-full\fR] [\fB\-\-no\-check\-expired\fR]
+defaults [config] [\fB\-\-all\fR | \fB\-\-no\-check\-expired\fR] [\fB\-\-full\fR] [@OUTPUT_FORMAT_SYNTAX_DOC@]
 This command is an alias of 'resource defaults [config]' command.
 
-List currently configured default values for resources / stonith devices. If \fB\-\-all\fR is specified, also list expired sets of values. If \fB\-\-full\fR is specified, also list ids. If \fB\-\-no\-expire\-check\fR is specified, do not evaluate whether sets of values are expired.
+List currently configured default values for resources / stonith devices. If \fB\-\-all\fR is specified, also list expired sets of values. If \fB\-\-full\fR is specified, also list ids. If \fB\-\-no\-expire\-check\fR is specified, do not evaluate whether sets of values are expired. @OUTPUT_FORMAT_DESC_DOC@
 .TP
 defaults <name>=<value>...
 This command is an alias of 'resource defaults' command.

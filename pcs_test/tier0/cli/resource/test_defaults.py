@@ -1,3 +1,5 @@
+import json
+from dataclasses import replace
 from textwrap import dedent
 from unittest import (
     TestCase,
@@ -6,6 +8,7 @@ from unittest import (
 
 from pcs import resource
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.common.interface import dto
 from pcs.common.pacemaker.defaults import CibDefaultsDto
 from pcs.common.pacemaker.nvset import (
     CibNvpairDto,
@@ -20,10 +23,71 @@ from pcs.common.types import (
 
 from pcs_test.tools.misc import dict_to_modifiers
 
+FIXTURE_EXPIRED_RULE = CibRuleExpressionDto(
+    "my-meta-rule",
+    CibRuleExpressionType.RULE,
+    CibRuleInEffectStatus.EXPIRED,
+    {"boolean-op": "and", "score": "INFINITY"},
+    None,
+    None,
+    [
+        CibRuleExpressionDto(
+            "my-meta-rule-rsc",
+            CibRuleExpressionType.RSC_EXPRESSION,
+            CibRuleInEffectStatus.UNKNOWN,
+            {
+                "class": "ocf",
+                "provider": "pacemaker",
+                "type": "Dummy",
+            },
+            None,
+            None,
+            [],
+            "resource ocf:pacemaker:Dummy",
+        ),
+    ],
+    "resource ocf:pacemaker:Dummy",
+)
+
+FIXTURE_EXPIRED_RULE_NO_EXPIRE_CHECK = replace(
+    FIXTURE_EXPIRED_RULE, in_effect=CibRuleInEffectStatus.UNKNOWN
+)
+
+FIXTURE_NVSET_EXPIRED_RULE = CibNvsetDto(
+    "my-meta_attributes",
+    {},
+    FIXTURE_EXPIRED_RULE,
+    [
+        CibNvpairDto("my-id-pair1", "name1", "value1"),
+        CibNvpairDto("my-id-pair2", "name2", "value2"),
+    ],
+)
+
+FIXTURE_NVSET_EXPIRED_RULE_NO_EXPIRE_CHECK = replace(
+    FIXTURE_NVSET_EXPIRED_RULE, rule=FIXTURE_EXPIRED_RULE_NO_EXPIRE_CHECK
+)
+
+FIXTURE_NVSET_NO_RULE = CibNvsetDto(
+    "meta-plain",
+    {"score": "123"},
+    None,
+    [CibNvpairDto("my-id-pair3", "name 1", "value 1")],
+)
+
+FIXTURE_INSTANCE_ATTRIBUTES = [
+    CibNvsetDto(
+        "instance",
+        {},
+        None,
+        [CibNvpairDto("instance-pair", "inst", "ance")],
+    ),
+]
+
 
 class DefaultsBaseMixin:
     cli_command_name = ""
     lib_command_name = ""
+    defaults_command = ""
 
     def setUp(self):
         self.lib = mock.Mock(spec_set=["cib_options"])
@@ -42,54 +106,21 @@ class DefaultsConfigMixin(DefaultsBaseMixin):
     empty_dto = CibDefaultsDto(instance_attributes=[], meta_attributes=[])
     dto_list = CibDefaultsDto(
         meta_attributes=[
-            CibNvsetDto(
-                "my-meta_attributes",
-                {},
-                CibRuleExpressionDto(
-                    "my-meta-rule",
-                    CibRuleExpressionType.RULE,
-                    CibRuleInEffectStatus.EXPIRED,
-                    {"boolean-op": "and", "score": "INFINITY"},
-                    None,
-                    None,
-                    [
-                        CibRuleExpressionDto(
-                            "my-meta-rule-rsc",
-                            CibRuleExpressionType.RSC_EXPRESSION,
-                            CibRuleInEffectStatus.UNKNOWN,
-                            {
-                                "class": "ocf",
-                                "provider": "pacemaker",
-                                "type": "Dummy",
-                            },
-                            None,
-                            None,
-                            [],
-                            "resource ocf:pacemaker:Dummy",
-                        ),
-                    ],
-                    "resource ocf:pacemaker:Dummy",
-                ),
-                [
-                    CibNvpairDto("my-id-pair1", "name1", "value1"),
-                    CibNvpairDto("my-id-pair2", "name2", "value2"),
-                ],
-            ),
-            CibNvsetDto(
-                "meta-plain",
-                {"score": "123"},
-                None,
-                [CibNvpairDto("my-id-pair3", "name 1", "value 1")],
-            ),
+            FIXTURE_NVSET_EXPIRED_RULE,
+            FIXTURE_NVSET_NO_RULE,
         ],
-        instance_attributes=[
-            CibNvsetDto(
-                "instance",
-                {},
-                None,
-                [CibNvpairDto("instance-pair", "inst", "ance")],
-            ),
+        instance_attributes=FIXTURE_INSTANCE_ATTRIBUTES,
+    )
+    dto_list_expired_excluded = CibDefaultsDto(
+        meta_attributes=[FIXTURE_NVSET_NO_RULE],
+        instance_attributes=FIXTURE_INSTANCE_ATTRIBUTES,
+    )
+    dto_list_no_expire_check = CibDefaultsDto(
+        meta_attributes=[
+            FIXTURE_NVSET_EXPIRED_RULE_NO_EXPIRE_CHECK,
+            FIXTURE_NVSET_NO_RULE,
         ],
+        instance_attributes=FIXTURE_INSTANCE_ATTRIBUTES,
     )
 
     def test_no_args(self, mock_print):
@@ -111,13 +142,35 @@ class DefaultsConfigMixin(DefaultsBaseMixin):
         self.lib_command.assert_called_once_with(True)
         mock_print.assert_not_called()
 
+    def test_full_with_no_text_format(self, mock_print):
+        self.lib_command.return_value = self.empty_dto
+        with self.assertRaises(CmdLineInputError) as cm:
+            self._call_cmd([], {"full": True, "output-format": "json"})
+        self.assertEqual(
+            cm.exception.message,
+            "option '--full' is not compatible with 'json' output format.",
+        )
+        self.lib_command.assert_not_called()
+        mock_print.assert_not_called()
+
     def test_no_expire_check(self, mock_print):
         self.lib_command.return_value = self.empty_dto
         self._call_cmd([], {"no-expire-check": True})
         self.lib_command.assert_called_once_with(False)
         mock_print.assert_not_called()
 
-    def test_print(self, mock_print):
+    def test_no_expire_check_and_include_expired(self, mock_print):
+        self.lib_command.return_value = self.empty_dto
+        with self.assertRaises(CmdLineInputError) as cm:
+            self._call_cmd([], {"all": True, "no-expire-check": True})
+        self.assertEqual(
+            cm.exception.message,
+            "Only one of '--all', '--no-expire-check' can be used",
+        )
+        self.lib_command.assert_not_called()
+        mock_print.assert_not_called()
+
+    def test_print_include_expired(self, mock_print):
         self.lib_command.return_value = self.dto_list
         self._call_cmd([], {"all": True})
         self.lib_command.assert_called_once_with(True)
@@ -136,11 +189,28 @@ class DefaultsConfigMixin(DefaultsBaseMixin):
 
     def test_print_exclude_expired(self, mock_print):
         self.lib_command.return_value = self.dto_list
-        self._call_cmd([], {"all": False})
+        self._call_cmd([], {})
         self.lib_command.assert_called_once_with(True)
         mock_print.assert_called_once_with(
             dedent(
                 '''\
+                Meta Attrs: meta-plain score=123
+                  "name 1"="value 1"'''
+            )
+        )
+
+    def test_print_no_expire_check(self, mock_print):
+        self.lib_command.return_value = self.dto_list_no_expire_check
+        self._call_cmd([], {"no-expire-check": True})
+        self.lib_command.assert_called_once_with(False)
+        mock_print.assert_called_once_with(
+            dedent(
+                '''\
+                Meta Attrs: my-meta_attributes
+                  name1=value1
+                  name2=value2
+                  Rule: boolean-op=and score=INFINITY
+                    Expression: resource ocf:pacemaker:Dummy
                 Meta Attrs: meta-plain score=123
                   "name 1"="value 1"'''
             )
@@ -163,15 +233,67 @@ class DefaultsConfigMixin(DefaultsBaseMixin):
             )
         )
 
+    def test_print_format_cmd_exclude_expired(self, mock_print):
+        self.lib_command.return_value = self.dto_list
+        self._call_cmd([], {"output-format": "cmd"})
+        self.lib_command.assert_called_once_with(True)
+        mock_print.assert_called_once_with(
+            dedent(
+                f"""\
+                pcs -- resource {self.defaults_command} set create id=meta-plain score=123 \\
+                  meta 'name 1=value 1'"""
+            )
+        )
+
+    def _fixture_commands_all(self):
+        return dedent(
+            f"""\
+                pcs -- resource {self.defaults_command} set create id=my-meta_attributes \\
+                  meta name1=value1 name2=value2 \\
+                  rule 'resource ocf:pacemaker:Dummy';
+                pcs -- resource {self.defaults_command} set create id=meta-plain score=123 \\
+                  meta 'name 1=value 1'"""
+        )
+
+    def test_print_format_cmd_include_expired(self, mock_print):
+        self.lib_command.return_value = self.dto_list
+        self._call_cmd([], {"all": True, "output-format": "cmd"})
+        self.lib_command.assert_called_once_with(True)
+        mock_print.assert_called_once_with(self._fixture_commands_all())
+
+    def test_print_format_cmd_no_expire_check(self, mock_print):
+        self.lib_command.return_value = self.dto_list_no_expire_check
+        self._call_cmd([], {"no-expire-check": True, "output-format": "cmd"})
+        self.lib_command.assert_called_once_with(False)
+        mock_print.assert_called_once_with(self._fixture_commands_all())
+
+    def test_print_format_json_exclude_expired(self, mock_print):
+        self.lib_command.return_value = self.dto_list
+        self._call_cmd([], {"output-format": "json"})
+        self.lib_command.assert_called_once_with(True)
+        mock_print.assert_called_once_with(
+            json.dumps(dto.to_dict(self.dto_list_expired_excluded))
+        )
+
+    def test_print_format_json_include_expired(self, mock_print):
+        self.lib_command.return_value = self.dto_list
+        self._call_cmd([], {"all": True, "output-format": "json"})
+        self.lib_command.assert_called_once_with(True)
+        mock_print.assert_called_once_with(
+            json.dumps(dto.to_dict(self.dto_list))
+        )
+
 
 class RscDefaultsConfig(DefaultsConfigMixin, TestCase):
     cli_command_name = "resource_defaults_config_cmd"
     lib_command_name = "resource_defaults_config"
+    defaults_command = "defaults"
 
 
 class OpDefaultsConfig(DefaultsConfigMixin, TestCase):
     cli_command_name = "resource_op_defaults_config_cmd"
     lib_command_name = "operation_defaults_config"
+    defaults_command = "op defaults"
 
 
 class DefaultsSetCreateMixin(DefaultsBaseMixin):

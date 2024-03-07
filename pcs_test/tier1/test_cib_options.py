@@ -1,7 +1,21 @@
+import json
+from shlex import split
 from textwrap import dedent
 from unittest import TestCase
 
 from lxml import etree
+
+from pcs.common.interface.dto import to_dict
+from pcs.common.pacemaker.defaults import CibDefaultsDto
+from pcs.common.pacemaker.nvset import (
+    CibNvpairDto,
+    CibNvsetDto,
+)
+from pcs.common.pacemaker.rule import CibRuleExpressionDto
+from pcs.common.types import (
+    CibRuleExpressionType,
+    CibRuleInEffectStatus,
+)
 
 from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
@@ -20,10 +34,123 @@ empty_cib = rc("cib-empty.xml")
 empty_cib_rules = rc("cib-empty-3.4.xml")
 
 
+def fixture_defaults_dto(prefix, include_expired):
+    meta_attributes = [
+        CibNvsetDto(
+            id=f"{prefix}-set1",
+            options={},
+            rule=CibRuleExpressionDto(
+                id=f"{prefix}-set1-rule",
+                type=CibRuleExpressionType.RULE,
+                in_effect=CibRuleInEffectStatus.NOT_YET_IN_EFFECT,
+                options={"boolean-op": "and", "score": "INFINITY"},
+                date_spec=None,
+                duration=None,
+                expressions=[
+                    CibRuleExpressionDto(
+                        id=f"{prefix}-set1-rule-expr",
+                        type=CibRuleExpressionType.DATE_EXPRESSION,
+                        in_effect=CibRuleInEffectStatus.UNKNOWN,
+                        options={"operation": "gt", "start": "3000-01-01"},
+                        date_spec=None,
+                        duration=None,
+                        expressions=[],
+                        as_string="date gt 3000-01-01",
+                    )
+                ],
+                as_string="date gt 3000-01-01",
+            ),
+            nvpairs=[
+                CibNvpairDto(
+                    id=f"{prefix}-set1-name1", name="name1", value="value1"
+                )
+            ],
+        ),
+        CibNvsetDto(
+            id=f"{prefix}-set2",
+            options={},
+            rule=CibRuleExpressionDto(
+                id=f"{prefix}-set2-rule",
+                type="RULE",
+                in_effect=CibRuleInEffectStatus.EXPIRED,
+                options={"boolean-op": "and", "score": "INFINITY"},
+                date_spec=None,
+                duration=None,
+                expressions=[
+                    CibRuleExpressionDto(
+                        id=f"{prefix}-set2-rule-expr",
+                        type=CibRuleExpressionType.DATE_EXPRESSION,
+                        in_effect=CibRuleInEffectStatus.UNKNOWN,
+                        options={"end": "1000-01-01", "operation": "lt"},
+                        date_spec=None,
+                        duration=None,
+                        expressions=[],
+                        as_string="date lt 1000-01-01",
+                    )
+                ],
+                as_string="date lt 1000-01-01",
+            ),
+            nvpairs=[
+                CibNvpairDto(
+                    id=f"{prefix}-set2-name2", name="name2", value="value2"
+                )
+            ],
+        ),
+        CibNvsetDto(
+            id=f"{prefix}-set3",
+            nvpairs=[
+                CibNvpairDto(
+                    id=f"{prefix}-set3-name3", name="name3", value="value3"
+                )
+            ],
+            options={},
+            rule=CibRuleExpressionDto(
+                id=f"{prefix}-set3-rule",
+                type="RULE",
+                in_effect=CibRuleInEffectStatus.IN_EFFECT,
+                options={"boolean-op": "and", "score": "INFINITY"},
+                date_spec=None,
+                duration=None,
+                expressions=[
+                    CibRuleExpressionDto(
+                        id=f"{prefix}-set3-rule-expr",
+                        type=CibRuleExpressionType.DATE_EXPRESSION,
+                        in_effect=CibRuleInEffectStatus.UNKNOWN,
+                        options={
+                            "end": "3000-01-01",
+                            "operation": "in_range",
+                            "start": "1000-01-01",
+                        },
+                        date_spec=None,
+                        duration=None,
+                        expressions=[],
+                        as_string="date in_range 1000-01-01 to 3000-01-01",
+                    )
+                ],
+                as_string="date in_range 1000-01-01 to 3000-01-01",
+            ),
+        ),
+    ]
+    return CibDefaultsDto(
+        instance_attributes=[],
+        meta_attributes=(
+            meta_attributes
+            if include_expired
+            else [
+                dto
+                for dto in meta_attributes
+                if not dto.rule
+                or dto.rule.in_effect != CibRuleInEffectStatus.EXPIRED
+            ]
+        ),
+    )
+
+
 class TestDefaultsMixin:
     def setUp(self):
         self.temp_cib = get_tmp_file("tier1_cib_options")
         self.pcs_runner = PcsRunner(self.temp_cib.name)
+        self.maxDiff = None
 
     def tearDown(self):
         self.temp_cib.close()
@@ -32,6 +159,13 @@ class TestDefaultsMixin:
 class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
     cli_command = []
     prefix = ""
+
+    def _prepare_cib_data(self, xml_template):
+        xml_rsc = xml_template.format(tag="rsc")
+        xml_op = xml_template.format(tag="op")
+        xml_manip = XmlManipulation.from_file(empty_cib)
+        xml_manip.append_to_first_tag_name("configuration", xml_rsc, xml_op)
+        write_data_to_tmpfile(str(xml_manip), self.temp_cib)
 
     def test_success(self):
         xml_rsc = """
@@ -131,11 +265,7 @@ class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
                 <nvpair id="{tag}-set1-nam2" name="nam2" value="val2"/>
             </meta_attributes>
         </{tag}_defaults>"""
-        xml_rsc = xml_template.format(tag="rsc")
-        xml_op = xml_template.format(tag="op")
-        xml_manip = XmlManipulation.from_file(empty_cib)
-        xml_manip.append_to_first_tag_name("configuration", xml_rsc, xml_op)
-        write_data_to_tmpfile(str(xml_manip), self.temp_cib)
+        self._prepare_cib_data(xml_template)
 
         self.assert_pcs_success(
             self.cli_command,
@@ -170,7 +300,7 @@ class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
                     operation="gt" start="3000-01-01"
                 />
             </rule>
-            <nvpair id="{tag}-set1-name" name="name1" value="value1"/>
+            <nvpair id="{tag}-set1-name1" name="name1" value="value1"/>
         </meta_attributes>
         <meta_attributes id="{tag}-set2">
             <rule id="{tag}-set2-rule" boolean-op="and" score="INFINITY">
@@ -178,7 +308,7 @@ class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
                     operation="lt" end="1000-01-01"
                 />
             </rule>
-            <nvpair id="{tag}-set2-name" name="name2" value="value2"/>
+            <nvpair id="{tag}-set2-name2" name="name2" value="value2"/>
         </meta_attributes>
         <meta_attributes id="{tag}-set3">
             <rule id="{tag}-set3-rule" boolean-op="and" score="INFINITY">
@@ -186,18 +316,13 @@ class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
                     operation="in_range" start="1000-01-01" end="3000-01-01"
                 />
             </rule>
-            <nvpair id="{tag}-set3-name" name="name3" value="value3"/>
+            <nvpair id="{tag}-set3-name3" name="name3" value="value3"/>
         </meta_attributes>
     </{tag}_defaults>"""
 
     @skip_unless_crm_rule()
     def test_success_rule_expired(self):
-        xml_rsc = self.xml_expired_template.format(tag="rsc")
-        xml_op = self.xml_expired_template.format(tag="op")
-        xml_manip = XmlManipulation.from_file(empty_cib)
-        xml_manip.append_to_first_tag_name("configuration", xml_rsc, xml_op)
-        write_data_to_tmpfile(str(xml_manip), self.temp_cib)
-
+        self._prepare_cib_data(self.xml_expired_template)
         self.assert_pcs_success(
             self.cli_command,
             stdout_full=dedent(
@@ -216,12 +341,7 @@ class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
 
     @skip_unless_crm_rule()
     def test_success_rule_expired_all(self):
-        xml_rsc = self.xml_expired_template.format(tag="rsc")
-        xml_op = self.xml_expired_template.format(tag="op")
-        xml_manip = XmlManipulation.from_file(empty_cib)
-        xml_manip.append_to_first_tag_name("configuration", xml_rsc, xml_op)
-        write_data_to_tmpfile(str(xml_manip), self.temp_cib)
-
+        self._prepare_cib_data(self.xml_expired_template)
         self.assert_pcs_success(
             self.cli_command + ["--all"],
             stdout_full=dedent(
@@ -238,6 +358,108 @@ class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
                   name3=value3
                   Rule: boolean-op=and score=INFINITY
                     Expression: date in_range 1000-01-01 to 3000-01-01
+            """
+            ),
+        )
+
+    def _test_success_json(self, use_all):
+        self._prepare_cib_data(self.xml_expired_template)
+        args = ["--output-format=json"]
+        if use_all:
+            args.append("--all")
+        stdout, stderr, retval = self.pcs_runner.run(self.cli_command + args)
+        self.assertEqual(
+            json.loads(stdout),
+            to_dict(fixture_defaults_dto(self.prefix, use_all)),
+        )
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
+
+    @skip_unless_crm_rule()
+    def test_success_json_format_all(self):
+        self._test_success_json(use_all=True)
+
+    @skip_unless_crm_rule()
+    def test_success_json_format_not_all(self):
+        self._test_success_json(use_all=False)
+
+    def _get_as_json(self, runner, use_all):
+        args = ["--output-format=json"]
+        if use_all:
+            args.append("--all")
+        stdout, stderr, retval = runner.run(self.cli_command + args)
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
+        return json.loads(stdout)
+
+    def _test_success_cmd(self, use_all):
+        self._prepare_cib_data(self.xml_expired_template)
+        new_cib = get_tmp_file("tier1_cib_options_new")
+        xml_manip = XmlManipulation.from_file(empty_cib)
+        write_data_to_tmpfile(str(xml_manip), new_cib)
+        pcs_runner_new = PcsRunner(new_cib.name)
+        args = ["--output-format=cmd"]
+        if use_all:
+            args.append("--all")
+        stdout, stderr, retval = self.pcs_runner.run(self.cli_command + args)
+        self.assertEqual(retval, 0)
+        self.assertEqual(stderr, "")
+        cmds = [
+            split(cmd)[1:]
+            for cmd in stdout.replace("\\\n", "").strip().split(";\n")
+        ]
+        for cmd in cmds:
+            stdout, stderr, retval = pcs_runner_new.run(cmd)
+            self.assertEqual(
+                retval,
+                0,
+                (
+                    f"Command {cmd} exited with {retval}\nstdout:\n{stdout}\n"
+                    f"stderr:\n{stderr}"
+                ),
+            )
+        self.assertEqual(
+            self._get_as_json(pcs_runner_new, use_all),
+            self._get_as_json(self.pcs_runner, use_all),
+        )
+
+    @skip_unless_crm_rule()
+    def test_success_cmd_use_all(self):
+        self._test_success_cmd(use_all=True)
+
+    @skip_unless_crm_rule()
+    def test_success_cmd_not_all(self):
+        self._test_success_cmd(use_all=False)
+
+    def _test_full_error(self, output_format):
+        self.assert_pcs_fail(
+            self.cli_command + [f"--output-format={output_format}", "--full"],
+            stderr_full=(
+                "Error: option '--full' is not compatible with "
+                f"'{output_format}' output format.\n"
+            ),
+        )
+
+    def test_full_json(self):
+        self._test_full_error("json")
+
+    def test_full__cmd(self):
+        self._test_full_error("cmd")
+
+    def test_full_text(self):
+        self._prepare_cib_data(self.xml_expired_template)
+        self.assert_pcs_success(
+            self.cli_command + ["--full"],
+            stdout_full=dedent(
+                f"""\
+                Meta Attrs (not yet in effect): {self.prefix}-set1
+                  name1=value1 (id: {self.prefix}-set1-name1)
+                  Rule (not yet in effect): boolean-op=and score=INFINITY (id: {self.prefix}-set1-rule)
+                    Expression: date gt 3000-01-01 (id: {self.prefix}-set1-rule-expr)
+                Meta Attrs: {self.prefix}-set3
+                  name3=value3 (id: {self.prefix}-set3-name3)
+                  Rule: boolean-op=and score=INFINITY (id: {self.prefix}-set3-rule)
+                    Expression: date in_range 1000-01-01 to 3000-01-01 (id: {self.prefix}-set3-rule-expr)
             """
             ),
         )
