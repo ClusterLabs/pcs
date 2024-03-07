@@ -87,13 +87,34 @@ class RubyDaemonRequest(
         http_request: HTTPServerRequest = None,
         payload=None,
     ):
-        headers = http_request.headers if http_request else HTTPHeaders()
+        # Headers from request are not propagated to ruby part. Ruby part doesn't
+        # work with standard headers in any special way. So, we send only path,
+        # method, query, body and special headers for communication between
+        # python part and ruby part. Tornado then adds necessary default
+        # headers. The motivation here is to prevent processing potentially
+        # maliciously crafted headers by rack.
+        headers = HTTPHeaders()
         headers.add("X-Pcsd-Type", request_type)
         if payload:
             headers.add(
                 "X-Pcsd-Payload",
                 b64encode(json.dumps(payload).encode()).decode(),
             )
+        if http_request:
+            for key, val in http_request.headers.get_all():
+                # From webui, POST request can come with either
+                # application/x-www-form-urlencoded or application/json content
+                # type. When we remove original HTTP headers, content type is
+                # added by tornado. But in the case of original application/json,
+                # tornado puts application/x-www-form-urlencoded there. To fix
+                # this let's keep the original header here in this case.
+                #
+                # The token, CIB_user and CIB_user_groups are transferred by the
+                # "Cookie" header and these information are evaluated in ruby.
+                if (
+                    key.lower() == "content-type" and val == "application/json"
+                ) or key.lower() == "cookie":
+                    headers.add(key, val)
         return super(RubyDaemonRequest, cls).__new__(
             cls,
             request_type,
