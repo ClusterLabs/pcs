@@ -118,12 +118,16 @@ def get_all_as_dtos(
 class DuplicatesCheckerLocationRulePlain(DuplicatesChecker):
     """
     Searcher of duplicate plain location constraints with rules
+
+    The constraint_to_check is limited to contain one rule at most. If you need
+    more, split it to individual constraint elements containing one rule each
+    for the purposes of the check.
     """
 
     def __init__(self) -> None:
         super().__init__()
         self._rule_to_str = rule.RuleToStr(normalize=True)
-        self._constraint_to_check_rules: Optional[set[str]] = None
+        self._constraint_to_check_rule: Optional[str] = None
 
     def check(
         self,
@@ -131,7 +135,11 @@ class DuplicatesCheckerLocationRulePlain(DuplicatesChecker):
         constraint_to_check: _Element,
         force_flags: Collection[reports.types.ForceCode] = (),
     ) -> reports.ReportItemList:
-        self._constraint_to_check_rules = None
+        self._constraint_to_check_rule = None
+        if len(constraint_to_check.findall(TAG_RULE)) != 1:
+            raise RuntimeError(
+                "constraint_to_check must contain exactly one rule"
+            )
         return super().check(
             constraint_section, constraint_to_check, force_flags
         )
@@ -145,12 +153,13 @@ class DuplicatesCheckerLocationRulePlain(DuplicatesChecker):
         if not is_location_constraint_with_rule(constraint_el):
             return False
 
-        # get the base constraint's rules as strings
-        if self._constraint_to_check_rules is None:
-            self._constraint_to_check_rules = {
-                self._rule_to_str.get_str(rule_el)
-                for rule_el in constraint_to_check.iterfind(TAG_RULE)
-            }
+        # get the base constraint's rule as string
+        if self._constraint_to_check_rule is None:
+            rule_el = constraint_to_check.find(TAG_RULE)
+            if rule_el is not None:
+                self._constraint_to_check_rule = self._rule_to_str.get_str(
+                    rule_el
+                )
 
         # get the tested constraint's rules as strings
         rules = {
@@ -167,7 +176,7 @@ class DuplicatesCheckerLocationRulePlain(DuplicatesChecker):
             # A location constraint may contain one or more top-level rules.
             # The cluster will act as if there is a separate location
             # constraint for each rule that evaluates as true.
-            and bool(self._constraint_to_check_rules & rules)
+            and self._constraint_to_check_rule in rules
         )
 
 

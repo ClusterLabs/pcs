@@ -141,7 +141,8 @@ class DuplicatesCheckerLocationRulePlainTest(TestCase):
 
     def test_success(self):
         duplicates = {
-            "L2": ["L3", "L4"],  # rsc matches, one normalized rule matches
+            # L1 has no rules
+            # L2 has more than one rule - not compatible with the checker
             "L3": ["L2"],  # rsc matches, the only rule matches when normalized
             "L4": ["L2"],  # rsc matches, the only rule matches
             "L5": [],  # rsc doesn't match, rule matches

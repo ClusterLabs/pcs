@@ -264,6 +264,45 @@ class RuleAdd(RuleBaseMixin, TestCase):
             ),
         )
 
+    def test_duplicate_rule_in_own_constraint(self):
+        self.assert_pcs_fail(
+            "constraint rule add loc-rule #uname eq node2".split(),
+            stderr_full=dedent(
+                """\
+                Duplicate constraints:
+                  resource 'R1' (id: loc-rule)
+                    Rules:
+                      Rule: boolean-op=and score=INFINITY (id: loc-rule-rule)
+                        Expression: #uname eq node2 (id: loc-rule-rule-expr)
+                Error: Duplicate constraint already exists, use --force to override
+                """
+                + ERRORS_HAVE_OCCURRED
+            ),
+        )
+
+    def test_duplicate_rule_in_own_constraint_forced(self):
+        self.assert_effect(
+            "--force constraint rule add loc-rule #uname eq node2".split(),
+            self.fixture_constraints(
+                """
+                <rule id="loc-rule-rule-1" boolean-op="and" score="INFINITY">
+                  <expression id="loc-rule-rule-1-expr"
+                      attribute="#uname" operation="eq" value="node2" />
+                </rule>
+                """
+            ),
+            stderr_full=dedent(
+                """\
+                Duplicate constraints:
+                  resource 'R1' (id: loc-rule)
+                    Rules:
+                      Rule: boolean-op=and score=INFINITY (id: loc-rule-rule)
+                        Expression: #uname eq node2 (id: loc-rule-rule-expr)
+                Warning: Duplicate constraint already exists
+                """
+            ),
+        )
+
     def test_simple_to_rule(self):
         self.assert_effect(
             "constraint rule add loc-simple #uname eq node1".split(),

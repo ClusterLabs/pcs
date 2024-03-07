@@ -3,6 +3,8 @@ from typing import (
     Mapping,
 )
 
+from lxml import etree
+
 from pcs.common import (
     const,
     reports,
@@ -166,7 +168,6 @@ def add_rule_to_constraint(
         nice_to_have_version=nice_to_have_cib_version,
     )
     id_provider = IdProvider(cib)
-    constraint_section = get_constraints(cib)
 
     # load the constraint to be modified
     try:
@@ -189,27 +190,42 @@ def add_rule_to_constraint(
     validator = location.ValidateAddRuleToConstraint(
         id_provider, rule, rule_options_pairs, constraint_el
     )
-    if env.report_processor.report_list(
-        validator.validate(force_flags)
-    ).has_errors:
+    env.report_processor.report_list(validator.validate(force_flags))
+
+    if env.report_processor.has_errors:
+        raise LibraryError()
+
+    # check for duplicities
+    mock_constraint_el = etree.Element(
+        constraint_el.tag,
+        attrib=dict(constraint_el.attrib.items()),  # type: ignore
+    )
+    cib_validated_with = get_pacemaker_version_by_which_cib_was_validated(cib)
+    rule_options_clean = validate.pairs_to_values(rule_options_pairs)
+    location.add_rule_to_constraint(
+        mock_constraint_el,
+        IdProvider(cib),
+        cib_validated_with,
+        validator.get_parsed_rule(),
+        rule_options_clean,
+    )
+    env.report_processor.report_list(
+        location.DuplicatesCheckerLocationRulePlain().check(
+            get_constraints(cib), mock_constraint_el, force_flags
+        )
+    )
+
+    if env.report_processor.has_errors:
         raise LibraryError()
 
     # modify CIB
     location.add_rule_to_constraint(
         constraint_el,
         id_provider,
-        get_pacemaker_version_by_which_cib_was_validated(cib),
+        cib_validated_with,
         validator.get_parsed_rule(),
-        validate.pairs_to_values(rule_options_pairs),
+        rule_options_clean,
     )
-
-    # Check whether the created constraint is a duplicate of an existing one
-    if env.report_processor.report_list(
-        location.DuplicatesCheckerLocationRulePlain().check(
-            constraint_section, constraint_el, force_flags
-        )
-    ).has_errors:
-        raise LibraryError()
 
     # push CIB
     env.push_cib()

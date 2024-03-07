@@ -33,7 +33,7 @@
           <date_expression id="location-R1-rule-expr-3" operation="in_range" start="2023-01-01 12:00" end="2023-12-31 12:00"/>
         </rule>
         <rule id="location-R1-rule-1" boolean-op="and" score="INFINITY">
-          <expression id="location-R1-rule-1-expr" operation="eq" attribute="#uname" value="node1"/>
+          <expression id="location-R1-rule-1-expr" operation="eq" attribute="#uname" value="node2"/>
           <date_expression id="location-R1-rule-1-expr-1" operation="gt" start="2023-01-01 12:00"/>
           <date_expression id="location-R1-rule-1-expr-2" operation="lt" end="2023-12-31 12:00"/>
           <date_expression id="location-R1-rule-1-expr-3" operation="in_range" start="2023-01-01 12:00" end="2023-12-31 12:00"/>

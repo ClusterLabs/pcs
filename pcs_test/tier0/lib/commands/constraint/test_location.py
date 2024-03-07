@@ -797,6 +797,64 @@ class AddRuleToConstraint(TestCase):
             ]
         )
 
+    def test_duplicate_rule_in_own_constraint(self):
+        self.config.runner.cib.load(
+            resources=self.resources_xml,
+            constraints=self.constraints_xml.format(other_rule=""),
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: location.add_rule_to_constraint(
+                self.env_assist.get_env(),
+                "location-R1",
+                "#uname eq node1",
+                {},
+                [],
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.DUPLICATE_CONSTRAINTS_EXIST,
+                    force_code=reports.codes.FORCE,
+                    constraint_ids=["location-R1"],
+                )
+            ]
+        )
+
+    def test_duplicate_rule_in_own_constraint_forced(self):
+        self.config.runner.cib.load(
+            resources=self.resources_xml,
+            constraints=self.constraints_xml.format(other_rule=""),
+        )
+        self.config.env.push_cib(
+            constraints=self.constraints_xml.format(
+                other_rule="""
+                  <rule id="location-R1-rule-1" boolean-op="and" score="INFINITY">
+                    <expression id="location-R1-rule-1-expr"
+                        attribute="#uname" operation="eq" value="node1"
+                    />
+                  </rule>
+                """
+            )
+        )
+
+        location.add_rule_to_constraint(
+            self.env_assist.get_env(),
+            "location-R1",
+            "#uname eq node1",
+            {},
+            [reports.codes.FORCE],
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.DUPLICATE_CONSTRAINTS_EXIST,
+                    constraint_ids=["location-R1"],
+                )
+            ]
+        )
+
     def test_constraint_not_found(self):
         self.config.runner.cib.load(
             resources=self.resources_xml,
