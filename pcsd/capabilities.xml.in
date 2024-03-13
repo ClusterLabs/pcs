@@ -1249,11 +1249,25 @@
           stonith op defaults config --output-format=text|json|cmd
       </description>
     </capability>
+    <capability id="pcmk.properties.resource-defaults.config.rest-api.v2" in-pcs="0" in-pcsd="1">
+      <description>
+        Get configured pacemaker resource defaults.
+
+        API v2: cib_options.resource_defaults_config
+      </description>
+    </capability>
     <capability id="pcmk.properties.resource-defaults" in-pcs="1" in-pcsd="0">
       <description>
         Show and set resources defaults, can set multiple defaults at once.
 
         pcs commands: resource defaults
+      </description>
+    </capability>
+    <capability id="pcmk.properties.resource_defaults.config.rest-api.v2" in-pcs="0" in-pcsd="1">
+      <description>
+        Get configured pacemaker operation defaults.
+
+        API v2: cib_options.operation_defaults_config
       </description>
     </capability>
     <capability id="pcmk.properties.resource-defaults.multiple" in-pcs="1" in-pcsd="0">
