@@ -9,6 +9,7 @@ from pcs.lib.commands import (  # services,
     acl,
     alert,
     cib,
+    cib_options,
     cluster,
     cluster_property,
     constraint,
@@ -141,6 +142,14 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
     "cib.remove_elements": _Cmd(
         cmd=cib.remove_elements,
         required_permission=p.WRITE,
+    ),
+    "cib_options.operation_defaults_config": _Cmd(
+        cmd=cib_options.operation_defaults_config,
+        required_permission=p.READ,
+    ),
+    "cib_options.resource_defaults_config": _Cmd(
+        cmd=cib_options.resource_defaults_config,
+        required_permission=p.READ,
     ),
     "constraint.colocation.create_with_set": _Cmd(
         cmd=constraint.colocation.create_with_set,

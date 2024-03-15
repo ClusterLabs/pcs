@@ -3,8 +3,10 @@
 ## [Unreleased]
 
 ### Added
-- Support for output formats `json` and `cmd` to resourcs/stonith defaults and
+- Support for output formats `json` and `cmd` to resources/stonith defaults and
   resource/stonith op defaults config commands ([RHEL-16231])
+- Add lib commands `cib_options.resource_defaults_config` and
+  `cib_options.operation_defaults_config` to API v2
 
 ### Fixed
 - Do not put empty uid/gid corosync configuration options to an uidgid file
