@@ -70,9 +70,11 @@ class HostAuth(TestCase):
                 name: {
                     "dest_list": [
                         dict(
-                            addr=addr
-                            if addr.count(":") <= 1
-                            else addr.strip("[]"),
+                            addr=(
+                                addr
+                                if addr.count(":") <= 1
+                                else addr.strip("[]")
+                            ),
                             port=port,
                         )
                     ],

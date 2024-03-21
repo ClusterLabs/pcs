@@ -152,9 +152,9 @@ class TimeWriter(StandardVerboseWriter):
 
     def startTest(self, test):
         super().startTest(test)
-        self._start_time_map[
-            self.format.test_name(test)
-        ] = datetime.datetime.now()
+        self._start_time_map[self.format.test_name(test)] = (
+            datetime.datetime.now()
+        )
 
     def addExpectedFailure(self, test, err):
         super().addExpectedFailure(test, err)

@@ -103,9 +103,11 @@ def _fixture_stonith(actions=None):
 def _fixture_void(stonith=False):
     return ResourceAgentFacade(
         ResourceAgentMetadata(
-            ResourceAgentName("stonith", None, "type")
-            if stonith
-            else ResourceAgentName("standard", "provider", "type"),
+            (
+                ResourceAgentName("stonith", None, "type")
+                if stonith
+                else ResourceAgentName("standard", "provider", "type")
+            ),
             agent_exists=False,
             ocf_version=const.OCF_1_0,
             shortdesc=None,

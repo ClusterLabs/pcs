@@ -592,9 +592,9 @@ class EnableAuthfile(BoothMixin, TestCase):
     def setUp(self):
         super().setUp()
         self.pcs_runner.cib_file = None
-        self.pcs_runner.mock_settings[
-            "booth_enable_authfile_set_enabled"
-        ] = str(True)
+        self.pcs_runner.mock_settings["booth_enable_authfile_set_enabled"] = (
+            str(True)
+        )
         self.ensure_booth_config_not_exists()
 
     def test_not_enabled(self):
@@ -640,9 +640,9 @@ class CleanEnableAuthfile(BoothMixin, TestCase):
         super().setUp()
         self.pcs_runner.cib_file = None
         self.ensure_booth_config_not_exists()
-        self.pcs_runner.mock_settings[
-            "booth_enable_authfile_unset_enabled"
-        ] = str(True)
+        self.pcs_runner.mock_settings["booth_enable_authfile_unset_enabled"] = (
+            str(True)
+        )
 
     def test_not_set(self):
         with open(self.booth_cfg_path, "w") as config_file:

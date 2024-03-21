@@ -422,9 +422,11 @@ def stonith_level_config_to_str(config):
             lines.append(
                 "Target{0}: {1}".format(
                     " (regexp)" if target_type == TARGET_TYPE_REGEXP else "",
-                    "=".join(target_value)
-                    if target_type == TARGET_TYPE_ATTRIBUTE
-                    else target_value,
+                    (
+                        "=".join(target_value)
+                        if target_type == TARGET_TYPE_ATTRIBUTE
+                        else target_value
+                    ),
                 )
             )
             level_lines = []

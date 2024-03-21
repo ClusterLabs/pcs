@@ -2,6 +2,7 @@
 Data structures in this file correspond to resources configured in
 pcs_test/resources/cib-resources.xml
 """
+
 from pcs.common.pacemaker.nvset import (
     CibNvpairDto,
     CibNvsetDto,

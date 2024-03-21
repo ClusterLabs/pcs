@@ -362,12 +362,16 @@ def _expected_report_item_format(report_item_expectation):
         ),
         report_item_expectation[1],
         _format_report_item_info(report_item_expectation[2]),
-        report_item_expectation[3]
-        if len(report_item_expectation) > 3
-        else None,
-        report_item_expectation[4]
-        if len(report_item_expectation) > 4
-        else None,
+        (
+            report_item_expectation[3]
+            if len(report_item_expectation) > 3
+            else None
+        ),
+        (
+            report_item_expectation[4]
+            if len(report_item_expectation) > 4
+            else None
+        ),
     )
 
 
@@ -391,12 +395,16 @@ def assert_report_item_equal(real_report_item, report_item_info):
                         report_item_info[0],
                         report_item_info[1],
                         report_item_info[2],
-                        None
-                        if len(report_item_info) < 4
-                        else report_item_info[3],
-                        None
-                        if len(report_item_info) < 5
-                        else report_item_info[4],
+                        (
+                            None
+                            if len(report_item_info) < 4
+                            else report_item_info[3]
+                        ),
+                        (
+                            None
+                            if len(report_item_info) < 5
+                            else report_item_info[4]
+                        ),
                     )
                 ),
                 _format_report_item(real_report_item),
@@ -423,23 +431,27 @@ def _unexpected_report_given(
         ).format(
             _format_report_item(real_report_item),
             len(remaining_expected_report_info_list),
-            "\n    ".join(
-                map(
-                    _expected_report_item_format,
-                    remaining_expected_report_info_list,
+            (
+                "\n    ".join(
+                    map(
+                        _expected_report_item_format,
+                        remaining_expected_report_info_list,
+                    )
                 )
-            )
-            if remaining_expected_report_info_list
-            else "No other report is expected!",
+                if remaining_expected_report_info_list
+                else "No other report is expected!"
+            ),
             len(expected_report_info_list),
-            "\n    ".join(
-                map(
-                    _expected_report_item_format,
-                    expected_report_info_list,
+            (
+                "\n    ".join(
+                    map(
+                        _expected_report_item_format,
+                        expected_report_info_list,
+                    )
                 )
-            )
-            if expected_report_info_list
-            else "No report is expected!",
+                if expected_report_info_list
+                else "No report is expected!"
+            ),
             len(real_report_item_list),
             "\n    ".join(map(_format_report_item, real_report_item_list)),
         )

@@ -1,6 +1,7 @@
 """
 Provides classes used as nodes of a semantic tree of a parsed rule expression.
 """
+
 from dataclasses import dataclass
 from typing import (
     NewType,

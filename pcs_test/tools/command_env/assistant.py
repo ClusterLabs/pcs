@@ -55,9 +55,11 @@ def patch_env(call_queue, config, init_env, is_systemd=True):
     mock_communicator_factory = mock.Mock(spec_set=NodeCommunicatorFactory)
     mock_communicator_factory.get_communicator = (
         # TODO: use request_timeout
-        lambda request_timeout=None: NodeCommunicator(call_queue)
-        if not config.spy
-        else spy.NodeCommunicator(get_node_communicator())
+        lambda request_timeout=None: (
+            NodeCommunicator(call_queue)
+            if not config.spy
+            else spy.NodeCommunicator(get_node_communicator())
+        )
     )
 
     def get_cmd_runner(self, env=None):
@@ -75,9 +77,11 @@ def patch_env(call_queue, config, init_env, is_systemd=True):
         patch_lib_env("cmd_runner", get_cmd_runner),
         mock.patch(
             "pcs.lib.env.get_local_corosync_conf",
-            get_get_local_corosync_conf(call_queue)
-            if not config.spy
-            else spy.get_local_corosync_conf,
+            (
+                get_get_local_corosync_conf(call_queue)
+                if not config.spy
+                else spy.get_local_corosync_conf
+            ),
         ),
         patch_lib_env("communicator_factory", mock_communicator_factory),
         # Use our custom ServiceManager in tests

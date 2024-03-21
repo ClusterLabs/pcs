@@ -611,11 +611,13 @@ class InputModifiers:
                     option_list=format_list(sorted(unsupported_options)),
                     _is=pluralize("is"),
                 ),
-                hint="Syntax has changed from previous version. {}".format(
-                    SEE_MAN_CHANGES.format("0.11")
-                )
-                if hint_syntax_changed
-                else None,
+                hint=(
+                    "Syntax has changed from previous version. {}".format(
+                        SEE_MAN_CHANGES.format("0.11")
+                    )
+                    if hint_syntax_changed
+                    else None
+                ),
             )
 
     def ensure_not_mutually_exclusive(self, *mutually_exclusive: str) -> None:

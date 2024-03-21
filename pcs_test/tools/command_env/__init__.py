@@ -74,6 +74,7 @@ class ExampleTest(TestCase):
             wait=False,
         )
 """
+
 from pcs_test.tools.command_env.assistant import EnvAssistant
 from pcs_test.tools.command_env.config import Config
 from pcs_test.tools.command_env.tools import get_env_tools

@@ -212,9 +212,11 @@ def __build_node_attr_binary_expr(
         _token_to_node_expr_binary_op[parse_result.operator],
         parse_result.attr_name,
         parse_result.attr_value,
-        _token_to_node_expr_type[parse_result.attr_type]
-        if parse_result.attr_type
-        else None,
+        (
+            _token_to_node_expr_type[parse_result.attr_type]
+            if parse_result.attr_type
+            else None
+        ),
     )
 
 

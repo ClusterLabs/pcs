@@ -3,6 +3,7 @@ Common functions used from specific constraint commands.
 Functions of this module are not intended to be used for direct call from
 client.
 """
+
 from functools import partial
 
 from pcs.common.pacemaker.constraint import CibConstraintsDto

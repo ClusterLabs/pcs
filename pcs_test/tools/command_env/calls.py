@@ -67,9 +67,11 @@ class Queue:
                 call.type,
                 real_type,
                 call,
-                "\n  real call: {0}".format(real_call_info)
-                if real_call_info
-                else "",
+                (
+                    "\n  real call: {0}".format(real_call_info)
+                    if real_call_info
+                    else ""
+                ),
             )
         )
 

@@ -7,6 +7,7 @@ promotable clones are clones with meta attribute promotable=true. Master
 elements are deprecated yet still supported in pacemaker. We provide read-only
 support for them to be able to read, process and display CIBs containing them.
 """
+
 import dataclasses
 from typing import (
     List,
@@ -161,11 +162,13 @@ def append_new(
     clone_element = etree.SubElement(
         resources_section,
         TAG_CLONE,
-        id=id_provider.allocate_id(
-            "{0}-{1}".format(str(primitive_element.get("id")), TAG_CLONE)
-        )
-        if clone_id is None
-        else clone_id,
+        id=(
+            id_provider.allocate_id(
+                "{0}-{1}".format(str(primitive_element.get("id")), TAG_CLONE)
+            )
+            if clone_id is None
+            else clone_id
+        ),
     )
     clone_element.append(primitive_element)
 
