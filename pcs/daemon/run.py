@@ -1,3 +1,4 @@
+import multiprocessing as mp
 import os
 import signal
 import socket
@@ -157,6 +158,12 @@ def _print_version(argv: StringCollection) -> None:
 
 
 def main(argv=None) -> None:
+    # set the way how processes are started
+    # https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
+    # avoid deadlock in multiprocessing.pool.Pool on terminate
+    # https://github.com/python/cpython/issues/73945
+    mp.set_start_method(method="forkserver")
+
     argv = argv if argv is not None else sys.argv[1:]
     if "--version" in argv:
         _print_version(argv)
