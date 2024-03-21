@@ -233,8 +233,7 @@ class ProcessTasksTest(SchedulerBaseAsyncTestCase):
 
 def get_generator(return_values):
     def generator():
-        for item in return_values:
-            yield item
+        yield from return_values
 
     gen = generator()
     return lambda *args, **kwargs: next(gen)
