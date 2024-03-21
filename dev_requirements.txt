@@ -1,7 +1,7 @@
 lxml-stubs
 pylint==3.0.2
 astroid==3.0.1
-mypy==1.7.0
+mypy==1.9.0
 black==24.3.0
 isort
 types-cryptography
