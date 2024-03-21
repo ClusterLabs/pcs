@@ -89,15 +89,17 @@ def fixture_unexpected_element_reports(id_list, expected_types=None):
         fixture.report_unexpected_element(
             _id,
             ValidateCommonTestData.id_to_context_type_map[_id],
-            expected_types=[
-                "bundle",
-                "clone",
-                "group",
-                "master",
-                "primitive",
-            ]
-            if expected_types is None
-            else expected_types,
+            expected_types=(
+                [
+                    "bundle",
+                    "clone",
+                    "group",
+                    "master",
+                    "primitive",
+                ]
+                if expected_types is None
+                else expected_types
+            ),
         )
         for _id in id_list
     ]

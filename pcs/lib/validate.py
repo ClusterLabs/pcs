@@ -27,6 +27,7 @@ valid, we want to put the original value into resulting reports. This is to
 prevent confusion which may happen if the normalized value different from the
 entered one is reported as not valid.
 """
+
 import ipaddress
 import re
 from collections import Counter

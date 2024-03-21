@@ -2,6 +2,7 @@
 This module defines mandatory and optional cib sections. It provides functions
 for getting existing sections from the cib (lxml) tree.
 """
+
 from pcs.common import reports
 from pcs.common.reports.item import ReportItem
 from pcs.lib.errors import LibraryError

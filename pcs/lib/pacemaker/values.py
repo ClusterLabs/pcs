@@ -147,9 +147,11 @@ def sanitize_id(id_candidate: str, replacement: str = "") -> str:
         return id_candidate
     return "".join(
         [
-            ""
-            if _ID_FIRST_CHAR_NOT_RE.match(id_candidate[0])
-            else id_candidate[0],
+            (
+                ""
+                if _ID_FIRST_CHAR_NOT_RE.match(id_candidate[0])
+                else id_candidate[0]
+            ),
             _ID_REST_CHARS_NOT_RE.sub(replacement, id_candidate[1:]),
         ]
     )

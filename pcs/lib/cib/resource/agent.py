@@ -152,9 +152,9 @@ def operation_dto_to_legacy_dict(
     for nvset in operation.instance_attributes:
         for nvpair in nvset.nvpairs:
             if nvpair.name == OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME:
-                operation_dict[
-                    OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME
-                ] = nvpair.value
+                operation_dict[OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME] = (
+                    nvpair.value
+                )
     return operation_dict
 
 

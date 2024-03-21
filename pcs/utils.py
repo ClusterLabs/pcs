@@ -1545,9 +1545,11 @@ def dom_attrs_to_list(dom_el, with_id=False):
         "%s=%s"
         % (
             name,
-            value
-            if name != "role"
-            else common_pacemaker.role.get_value_primary(value.capitalize()),
+            (
+                value
+                if name != "role"
+                else common_pacemaker.role.get_value_primary(value.capitalize())
+            ),
         )
         for name, value in sorted(dom_el.attributes.items())
         if name != "id"
@@ -2303,11 +2305,14 @@ def simulate_cib(cib_dom):
     Commandline options: no options
     """
     try:
-        with tempfile.NamedTemporaryFile(
-            mode="w+", suffix=".pcs"
-        ) as new_cib_file, tempfile.NamedTemporaryFile(
-            mode="w+", suffix=".pcs"
-        ) as transitions_file:
+        with (
+            tempfile.NamedTemporaryFile(
+                mode="w+", suffix=".pcs"
+            ) as new_cib_file,
+            tempfile.NamedTemporaryFile(
+                mode="w+", suffix=".pcs"
+            ) as transitions_file,
+        ):
             output, retval = run(
                 [
                     "crm_simulate",

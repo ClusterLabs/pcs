@@ -2,6 +2,7 @@
 The intention is put there knowledge about cluster state structure.
 Hide information about underlying xml is desired too.
 """
+
 from collections import defaultdict
 from typing import (
     Any,

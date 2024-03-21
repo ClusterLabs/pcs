@@ -34,9 +34,10 @@ class CachedCibFixture(AssertPcsMixin):
         self._cache_path = os.path.join(fixture_dir, self._cache_name)
         self._pcs_runner = PcsRunner(self._cache_path)
 
-        with open(self._empty_cib_path, "r") as template_file, open(
-            self.cache_path, "w"
-        ) as cache_file:
+        with (
+            open(self._empty_cib_path, "r") as template_file,
+            open(self.cache_path, "w") as cache_file,
+        ):
             cache_file.write(template_file.read())
         self._setup_cib()
 

@@ -97,9 +97,11 @@ def validate_move_resources_to_group(
             reports.const.ADD_REMOVE_CONTAINER_TYPE_GROUP,
             reports.const.ADD_REMOVE_ITEM_TYPE_RESOURCE,
             str(group_element.attrib["id"]),
-            str(adjacent_resource_element.attrib["id"])
-            if adjacent_resource_element is not None
-            else None,
+            (
+                str(adjacent_resource_element.attrib["id"])
+                if adjacent_resource_element is not None
+                else None
+            ),
             True,
         )
     else:

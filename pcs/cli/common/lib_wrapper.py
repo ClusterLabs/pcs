@@ -163,13 +163,13 @@ def load_module(env, middleware_factory, name):
             "ticket_revoke": booth.ticket_revoke,
         }
         if settings.booth_enable_authfile_set_enabled:
-            bindings[
-                "config_set_enable_authfile"
-            ] = booth.config_set_enable_authfile
+            bindings["config_set_enable_authfile"] = (
+                booth.config_set_enable_authfile
+            )
         if settings.booth_enable_authfile_unset_enabled:
-            bindings[
-                "config_unset_enable_authfile"
-            ] = booth.config_unset_enable_authfile
+            bindings["config_unset_enable_authfile"] = (
+                booth.config_unset_enable_authfile
+            )
         return bind_all(
             env,
             middleware.build(

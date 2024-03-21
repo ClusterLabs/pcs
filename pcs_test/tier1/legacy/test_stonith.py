@@ -1134,9 +1134,9 @@ class StonithTest(TestCase, AssertPcsMixin):
         write_file_to_tmpfile(rc("corosync.conf"), self.temp_corosync_conf)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
-        self.pcs_runner.mock_settings[
-            "corosync_conf_file"
-        ] = self.temp_corosync_conf.name
+        self.pcs_runner.mock_settings["corosync_conf_file"] = (
+            self.temp_corosync_conf.name
+        )
 
     def tearDown(self):
         self.temp_cib.close()

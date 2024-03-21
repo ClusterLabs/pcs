@@ -27,9 +27,11 @@ def report_dto_to_item(
         context=(
             context
             if context
-            else ReportItemContext.from_dto(dto_obj.context)
-            if dto_obj.context
-            else None
+            else (
+                ReportItemContext.from_dto(dto_obj.context)
+                if dto_obj.context
+                else None
+            )
         ),
     )
 

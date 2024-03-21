@@ -277,11 +277,10 @@ def diff_cibs_xml(
     cib_old_xml -- original CIB
     cib_new_xml -- modified CIB
     """
-    with tools.get_tmp_cib(
-        reporter, cib_old_xml
-    ) as cib_old_tmp_file, tools.get_tmp_cib(
-        reporter, cib_new_xml
-    ) as cib_new_tmp_file:
+    with (
+        tools.get_tmp_cib(reporter, cib_old_xml) as cib_old_tmp_file,
+        tools.get_tmp_cib(reporter, cib_new_xml) as cib_new_tmp_file,
+    ):
         stdout, stderr, retval = runner.run(
             [
                 settings.crm_diff_exec,

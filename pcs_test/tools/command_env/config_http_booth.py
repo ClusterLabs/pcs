@@ -64,9 +64,11 @@ class BoothShortcuts:
                     },
                     "authfile": {
                         "name": authfile,
-                        "data": base64.b64encode(authfile_data).decode("utf-8")
-                        if authfile_data
-                        else None,
+                        "data": (
+                            base64.b64encode(authfile_data).decode("utf-8")
+                            if authfile_data
+                            else None
+                        ),
                     },
                 }
             ),

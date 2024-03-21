@@ -809,9 +809,11 @@ def config_checkpoint_diff(lib, argv, modifiers):
     print(
         "Differences between {0} (-) and {1} (+):".format(
             *[
-                "live configuration"
-                if label == "live"
-                else f"checkpoint {label}"
+                (
+                    "live configuration"
+                    if label == "live"
+                    else f"checkpoint {label}"
+                )
                 for label in argv
             ]
         )
