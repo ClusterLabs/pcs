@@ -165,7 +165,7 @@ def parallel_run(tests: list[str], result_class, verbosity: int) -> bool:
 
     with Pool() as pool:
         start_time = time.perf_counter()
-        results = pool.map(manager.run_test, tests)
+        results = pool.map(manager.run_test, tests, 10)
         end_time = time.perf_counter()
 
     test_result = aggregate_test_results(results)
