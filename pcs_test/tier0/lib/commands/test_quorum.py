@@ -401,6 +401,19 @@ class SetQuorumOptionsTest(TestCase):
             ]
         )
 
+    @staticmethod
+    def fixture_sbd_config():
+        return dedent(
+            """\
+            SBD_DELAY_START=no
+            SBD_OPTS="-n rh7-1"
+            SBD_PACEMAKER=yes
+            SBD_STARTMODE=always
+            SBD_WATCHDOG_DEV=/dev/watchdog
+            SBD_WATCHDOG_TIMEOUT=5
+            """
+        )
+
     def fixture_config_unable_to_connect(self):
         self.config.corosync_conf.load()
         self.config.http.corosync.get_corosync_online_targets(
@@ -517,10 +530,15 @@ class SetQuorumOptionsTest(TestCase):
         lib.set_options(self.env_assist.get_env(), new_options)
         self.env_assist.assert_reports(self.success_reports)
 
-    def test_disable_atb_sbd_enabled(self):
+    def test_disable_atb_sbd_requires_atb(self):
         self.config.corosync_conf.load(auto_tie_breaker=True)
         self.config.services.is_installed("sbd", return_value=True)
         self.config.services.is_enabled("sbd", return_value=True)
+        self.config.fs.exists(settings.sbd_config)
+        self.config.fs.open(
+            settings.sbd_config,
+            mock.mock_open(read_data=self.fixture_sbd_config())(),
+        )
 
         new_options = {"auto_tie_breaker": "0"}
         assert_raise_library_error(
@@ -535,13 +553,18 @@ class SetQuorumOptionsTest(TestCase):
             ]
         )
 
-    def test_force_disable_atb_sbd_enabled(self):
+    def test_force_disable_atb_sbd_requires_atb(self):
         expected_conf = self.original_corosync_conf.replace(
             "   two_node: 1", "   two_node: 1\n    auto_tie_breaker: 0"
         )
         self.config.corosync_conf.load(auto_tie_breaker=True)
         self.config.services.is_installed("sbd", return_value=True)
         self.config.services.is_enabled("sbd", return_value=True)
+        self.config.fs.exists(settings.sbd_config)
+        self.config.fs.open(
+            settings.sbd_config,
+            mock.mock_open(read_data=self.fixture_sbd_config())(),
+        )
         self.config.http.corosync.check_corosync_offline(
             node_labels=self.node_labels
         )
