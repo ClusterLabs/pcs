@@ -5564,6 +5564,11 @@ class BundleCommon(
         )
 
     def fixture_bundle(self, name, container="docker"):
+        deprecated_rkt = (
+            "Deprecation Warning: Value 'rkt' of option container type is "
+            "deprecated and might be removed in future, therefore it should "
+            "not be used\n"
+        )
         self.assert_pcs_success(
             [
                 "resource",
@@ -5575,7 +5580,8 @@ class BundleCommon(
                 "image=pcs:test",
                 "network",
                 "control-port=1234",
-            ]
+            ],
+            stderr_full=(deprecated_rkt if container == "rkt" else None),
         )
 
 
