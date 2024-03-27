@@ -394,6 +394,18 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         self.assertEqual(stdout, "")
         self.assertEqual(retval, 1)
 
+    def test_order_score(self):
+        self.fixture_resources()
+        self.assert_pcs_success(
+            "constraint order D1 then D2 score=123".split(),
+            stderr_full=(
+                "Deprecation Warning: option 'score' is deprecated and might "
+                "be removed in future, therefore it should not be used\n"
+                "Adding D1 D2 (score: 123) (Options: first-action=start "
+                "then-action=start)\n"
+            ),
+        )
+
     def test_order_too_many_resources(self):
         msg = (
             "Error: Multiple 'then's cannot be specified.\n"
