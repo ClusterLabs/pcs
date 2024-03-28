@@ -1,0 +1,91 @@
+<?xml version="1.0"?>
+<!DOCTYPE resource-agent SYSTEM "ra-api-1.dtd">
+<resource-agent name="fping">
+<version>1.0</version>
+
+<longdesc lang="en">
+This plugin will use the fping command to ping the specified host for a fast check
+The threshold is set as pair rta,pl%, where rta is the round trip average
+travel time in ms and pl is the percentage of packet loss.
+Note that it is necessary to set the suid flag on fping.
+</longdesc>
+<shortdesc lang="en">ping the specified host</shortdesc>
+
+<parameters>
+
+<parameter name="hostname" unique="0" required="1">
+<longdesc lang="en">
+name or IP Address of host to ping (IP Address bypasses name lookup, reducing system load)
+</longdesc>
+<shortdesc lang="en">name or IP Address of host to ping (IP Address bypasses name lookup, reducing system load)</shortdesc>
+<content type="string" default="" />
+</parameter>
+
+<parameter name="warning" unique="0" required="0">
+<longdesc lang="en">
+warning threshold
+</longdesc>
+<shortdesc lang="en">warning threshold</shortdesc>
+<content type="string" default="" />
+</parameter>
+
+<parameter name="critical" unique="0" required="0">
+<longdesc lang="en">
+critical threshold
+</longdesc>
+<shortdesc lang="en">critical threshold</shortdesc>
+<content type="string" default="" />
+</parameter>
+
+<parameter name="bytes" unique="0" required="0">
+<longdesc lang="en">
+size of ICMP packet (default: 56)
+</longdesc>
+<shortdesc lang="en">size of ICMP packet (default: 56)</shortdesc>
+<content type="integer" default="56" />
+</parameter>
+
+<parameter name="number" unique="0" required="0">
+<longdesc lang="en">
+number of ICMP packets to send (default: 1)
+</longdesc>
+<shortdesc lang="en">number of ICMP packets to send (default: 1)</shortdesc>
+<content type="integer" default="1" />
+</parameter>
+
+<parameter name="target-timeout" unique="0" required="0">
+<longdesc lang="en">
+Target timeout (ms) (default: fping's default for -t)
+</longdesc>
+<shortdesc lang="en">Target timeout (ms) (default: fping's default for -t)</shortdesc>
+<content type="integer" default="" />
+</parameter>
+
+<parameter name="interval" unique="0" required="0">
+<longdesc lang="en">
+Interval (ms) between sending packets (default: fping's default for -p)
+</longdesc>
+<shortdesc lang="en">Interval (ms) between sending packets (default: fping's default for -p)</shortdesc>
+<content type="integer" default="" />
+</parameter>
+
+<parameter name="extra-opts" unique="0" required="0">
+<longdesc lang="en">
+Read options from an ini file. See http://nagiosplugins.org/extra-opts
+for usage and examples.
+</longdesc>
+<shortdesc lang="en">ini file with extra options</shortdesc>
+<content type="string" default="" />
+</parameter>
+
+</parameters>
+
+<actions>
+<action name="start"   timeout="20" />
+<action name="stop"    timeout="15" />
+<action name="status"  timeout="20" />
+<action name="monitor" timeout="20" interval="60" />
+<action name="meta-data"  timeout="15" />
+</actions>
+
+</resource-agent>

@@ -11,6 +11,7 @@ from pcs.cli.reports.output import deprecation_warning
 from pcs.common import (
     const,
     pacemaker,
+    reports,
 )
 from pcs.common.str_tools import format_list_custom_last_separator
 
@@ -696,6 +697,7 @@ class DateSpecValue(DateCommonValue):
         "weekyears": (1, 53),
         "moon": (0, 7),
     }
+    _deprecated_options = {"moon"}
 
     def __init__(self, parts_string):
         super().__init__(parts_string, self.KEYWORD)
@@ -706,6 +708,12 @@ class DateSpecValue(DateCommonValue):
                 raise SyntaxError(
                     "invalid %s '%s' in '%s'"
                     % (name, value, DateSpecValue.KEYWORD)
+                )
+            if name in self._deprecated_options:
+                deprecation_warning(
+                    reports.messages.DeprecatedOption(
+                        name, [], self.KEYWORD
+                    ).message
                 )
         return self
 
@@ -733,6 +741,13 @@ class DateSpecValue(DateCommonValue):
 
 class DateDurationValue(DateCommonValue):
     KEYWORD = "duration"
+    _deprecated_options = {
+        "monthdays",
+        "weekdays",
+        "weekyears",
+        "yearsdays",
+        "moon",
+    }
 
     def __init__(self, parts_string):
         super().__init__(parts_string, self.KEYWORD)
@@ -743,6 +758,12 @@ class DateDurationValue(DateCommonValue):
                 raise SyntaxError(
                     "invalid %s '%s' in '%s'"
                     % (name, value, DateDurationValue.KEYWORD)
+                )
+            if name in self._deprecated_options:
+                deprecation_warning(
+                    reports.messages.DeprecatedOption(
+                        name, [], self.KEYWORD
+                    ).message
                 )
         return self
 

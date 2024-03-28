@@ -518,7 +518,7 @@ _RESOURCE_OP_DEFAULTS_SET_CREATE_DESC = (
     "",
     _unwrap(
         """
-        Date-spec options are: hours, monthdays, weekdays, yearsdays, months,
+        Date-spec options are: hours, monthdays, weekdays, yeardays, months,
         weeks, years, weekyears, moon. Value for these options is an integer or
         a range written as integer-integer.
         """

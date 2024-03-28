@@ -31,6 +31,7 @@ def create(
     agent_name="ocf:heartbeat:Dummy",
     allow_invalid_instance_attributes=False,
     enable_agent_self_validation=False,
+    instance_attributes=None,
 ):
     # pylint: disable=too-many-arguments
     return resource.create(
@@ -39,7 +40,7 @@ def create(
         agent_name,
         operation_list=operation_list if operation_list else [],
         meta_attributes=meta_attributes if meta_attributes else {},
-        instance_attributes={},
+        instance_attributes=instance_attributes if instance_attributes else {},
         wait=wait,
         ensure_disabled=disabled,
         allow_invalid_operation=allow_invalid_operation,
@@ -55,15 +56,17 @@ def create_group(
     meta_attributes=None,
     operation_list=None,
     enable_agent_self_validation=False,
+    instance_attributes=None,
+    agent="ocf:heartbeat:Dummy",
 ):
     return resource.create_in_group(
         env,
         "A",
-        "ocf:heartbeat:Dummy",
+        agent,
         "G",
         operation_list=operation_list if operation_list else [],
         meta_attributes=meta_attributes if meta_attributes else {},
-        instance_attributes={},
+        instance_attributes=instance_attributes if instance_attributes else {},
         wait=wait,
         ensure_disabled=disabled,
         enable_agent_self_validation=enable_agent_self_validation,
@@ -81,6 +84,7 @@ def create_clone(
     agent="ocf:heartbeat:Dummy",
     allow_incompatible_clone_meta_attributes=False,
     enable_agent_self_validation=False,
+    instance_attributes=None,
 ):
     # pylint: disable=too-many-arguments
     return resource.create_as_clone(
@@ -89,7 +93,7 @@ def create_clone(
         agent,
         operation_list=operation_list if operation_list else [],
         meta_attributes=meta_attributes if meta_attributes else {},
-        instance_attributes={},
+        instance_attributes=instance_attributes if instance_attributes else {},
         clone_meta_options=clone_options if clone_options else {},
         clone_id=clone_id,
         wait=wait,
@@ -2708,3 +2712,82 @@ class CreateInToBundle(TestCase):
                 )
             ]
         )
+
+
+class DeprecatedNagios(TestCase):
+    primitive_xml = outdent(
+        """\
+            <primitive class="nagios" id="A" type="check_fping">
+              <instance_attributes id="A-instance_attributes">
+                <nvpair id="A-instance_attributes-hostname"
+                    name="hostname" value="localhost"
+                />
+              </instance_attributes>
+              <operations>
+                <op id="A-monitor-interval-60"
+                    interval="60" name="monitor" timeout="20"
+                />
+                <op id="A-start-interval-0s"
+                    interval="0s" name="start" timeout="20"
+                />
+                <op id="A-stop-interval-0s"
+                    interval="0s" name="stop" timeout="15"
+                />
+              </operations>
+            </primitive>
+        """
+    )
+    report = fixture.deprecation(
+        reports.codes.DEPRECATED_OPTION_VALUE,
+        option_name="standard",
+        deprecated_value="nagios",
+        replaced_by=None,
+    )
+
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
+        self.config.runner.pcmk.load_agent(
+            agent_name="nagios:check_fping",
+            agent_filename="resource_agent_nagios_check_fping.xml",
+        )
+        self.config.runner.cib.load()
+
+    def test_primitive(self):
+        self.config.env.push_cib(
+            resources=f"<resources>{self.primitive_xml}</resources>"
+        )
+        create(
+            self.env_assist.get_env(),
+            agent_name="nagios:check_fping",
+            instance_attributes={"hostname": "localhost"},
+        )
+        self.env_assist.assert_reports([self.report])
+
+    def test_group(self):
+        self.config.env.push_cib(
+            resources=(
+                f'<resources><group id="G">{self.primitive_xml}</group></resources>'
+            )
+        )
+        create_group(
+            self.env_assist.get_env(),
+            agent="nagios:check_fping",
+            instance_attributes={"hostname": "localhost"},
+            wait=False,
+        )
+        self.env_assist.assert_reports([self.report])
+
+    def test_clone(self):
+        self.config.env.push_cib(
+            resources=(
+                f'<resources><clone id="A-clone">{self.primitive_xml}</clone></resources>'
+            )
+        )
+        create_clone(
+            self.env_assist.get_env(),
+            agent="nagios:check_fping",
+            instance_attributes={"hostname": "localhost"},
+            wait=False,
+        )
+        self.env_assist.assert_reports([self.report])

@@ -1,7 +1,10 @@
 # pylint: disable=too-many-lines
 import xml.dom.minidom
 from textwrap import dedent
-from unittest import TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from pcs import (
     rule,
@@ -85,12 +88,24 @@ class DateValueTest(TestCase):
         )
 
     # already moved to the new architecture tests
-    def testDurationValidate(self):
+    @mock.patch("pcs.rule.deprecation_warning")
+    def testDurationValidate(self, mock_deprecation):
         for value, item in enumerate(rule.DateCommonValue.allowed_items, 1):
             self.assertEqual(
                 str(value),
                 rule.DateDurationValue("%s=%s" % (item, value)).parts[item],
             )
+        deprecation_call_list = [
+            mock.call(
+                f"duration option '{option}' is deprecated and might be removed "
+                "in future, therefore it should not be used"
+            )
+            for option in ("monthdays", "weekdays", "weekyears", "moon")
+        ]
+        mock_deprecation.assert_has_calls(deprecation_call_list)
+        self.assertEqual(
+            mock_deprecation.call_count, len(deprecation_call_list)
+        )
         for item in rule.DateCommonValue.allowed_items:
             self.assertSyntaxError(
                 "invalid %s '%s' in 'duration'" % (item, "foo"),
@@ -109,7 +124,8 @@ class DateValueTest(TestCase):
             )
 
     # already moved to the new architecture tests
-    def testDateSpecValidation(self):
+    @mock.patch("pcs.rule.deprecation_warning")
+    def testDateSpecValidation(self, mock_deprecation):
         for item in rule.DateCommonValue.allowed_items:
             value = 1
             self.assertEqual(
@@ -122,6 +138,17 @@ class DateValueTest(TestCase):
                     item
                 ],
             )
+        deprecation_call_list = [
+            mock.call(
+                f"date-spec option '{option}' is deprecated and might be removed "
+                "in future, therefore it should not be used"
+            )
+            for option in ("moon", "moon")
+        ]
+        mock_deprecation.assert_has_calls(deprecation_call_list)
+        self.assertEqual(
+            mock_deprecation.call_count, len(deprecation_call_list)
+        )
         self.assertEqual(
             "hours=9-16 weekdays=1-5",
             str(rule.DateSpecValue("hours=9-16 weekdays=1-5")),
@@ -792,6 +819,7 @@ class ParserTest(TestCase):
         )
 
     # already moved to pcs_test/tier0/lib/cib/rule/test_parser.py
+    @mock.patch("pcs.rule.deprecation_warning", mock.Mock())
     def testAndOrExpressionBad(self):
         self.assertSyntaxError("unexpected 'and'", ["and"])
         self.assertSyntaxError("unexpected 'or'", ["or"])

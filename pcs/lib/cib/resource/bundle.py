@@ -524,7 +524,22 @@ def _validate_container(container_type, container_options, force_options=False):
                 )
             )
         ]
-    return _validate_generic_container_options(container_options, force_options)
+    report_list = []
+    if container_type == "rkt":
+        # TODO deprecated in pacemaker 2, to be removed in pacemaker 3
+        # added to pcs after 0.11.7
+        report_list.append(
+            reports.ReportItem.deprecation(
+                reports.messages.DeprecatedOptionValue(
+                    "container type", container_type
+                )
+            )
+        )
+
+    report_list += _validate_generic_container_options(
+        container_options, force_options
+    )
+    return report_list
 
 
 def _validate_generic_container_options(container_options, force_options=False):
