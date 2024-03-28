@@ -182,6 +182,7 @@ class BundleCreate(BundleCreateCommon):
             """,
             stderr_full=(
                 "Deprecation Warning: container option 'masters' is deprecated and "
+                "might be removed in future, therefore it "
                 "should not be used, use 'promoted-max' instead\n"
             ),
         )
@@ -195,6 +196,7 @@ class BundleCreate(BundleCreateCommon):
             "Error: Only one of container options 'masters' and "
             "'promoted-max' can be used\n"
             "Deprecation Warning: container option 'masters' is deprecated and "
+            "might be removed in future, therefore it "
             "should not be used, use 'promoted-max' instead\n"
             + ERRORS_HAVE_OCCURRED,
         )
@@ -499,6 +501,7 @@ class BundleUpdate(BundleCreateCommon):
             """,
             stderr_full=(
                 "Deprecation Warning: container option 'masters' is deprecated and "
+                "might be removed in future, therefore it "
                 "should not be used, use 'promoted-max' instead\n"
             ),
         )
@@ -509,6 +512,7 @@ class BundleUpdate(BundleCreateCommon):
             "resource bundle update B container masters=2".split(),
             stderr_full=(
                 "Deprecation Warning: container option 'masters' is deprecated and "
+                "might be removed in future, therefore it "
                 "should not be used, use 'promoted-max' instead\n"
             ),
         )
@@ -536,8 +540,9 @@ class BundleUpdate(BundleCreateCommon):
         )
         self.assert_pcs_fail(
             "resource bundle update B container masters=2".split(),
-            "Deprecation Warning: container option 'masters' is deprecated "
-            "and should not be used, use 'promoted-max' instead\n"
+            "Deprecation Warning: container option 'masters' is deprecated and "
+            "might be removed in future, therefore it "
+            "should not be used, use 'promoted-max' instead\n"
             "Error: Cannot set container option 'masters' because container "
             "option 'promoted-max' is already set\n" + ERRORS_HAVE_OCCURRED,
         )
@@ -558,6 +563,7 @@ class BundleUpdate(BundleCreateCommon):
             """,
             stderr_full=(
                 "Deprecation Warning: container option 'masters' is deprecated and "
+                "might be removed in future, therefore it "
                 "should not be used, use 'promoted-max' instead\n"
             ),
         )
@@ -568,6 +574,7 @@ class BundleUpdate(BundleCreateCommon):
             "resource bundle update B container masters=2".split(),
             stderr_full=(
                 "Deprecation Warning: container option 'masters' is deprecated and "
+                "might be removed in future, therefore it "
                 "should not be used, use 'promoted-max' instead\n"
             ),
         )
@@ -584,6 +591,7 @@ class BundleUpdate(BundleCreateCommon):
             "resource bundle update B container masters=2".split(),
             stderr_full=(
                 "Deprecation Warning: container option 'masters' is deprecated and "
+                "might be removed in future, therefore it "
                 "should not be used, use 'promoted-max' instead\n"
             ),
         )

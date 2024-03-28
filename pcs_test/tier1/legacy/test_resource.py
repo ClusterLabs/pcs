@@ -5515,7 +5515,8 @@ class ResourceRemoveWithTicket(TestCase, AssertPcsMixin):
             f"constraint ticket add T {role} A loss-policy=fence".split(),
             stderr_full=(
                 f"Deprecation Warning: Value '{role}' of option role is "
-                f"deprecated and should not be used, use "
+                "deprecated and might be removed in future, therefore it "
+                "should not be used, use "
                 f"'{const.PCMK_ROLE_PROMOTED}' value instead\n"
             ),
         )
