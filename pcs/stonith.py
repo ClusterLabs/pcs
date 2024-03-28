@@ -39,7 +39,6 @@ from pcs.common.str_tools import (
     format_optional,
     indent,
 )
-from pcs.lib.errors import LibraryError
 
 
 def stonith_show_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
@@ -285,20 +284,6 @@ def _stonith_level_parse_target_and_stonith(argv: Argv):
     return target_type, target_value, devices
 
 
-def _stonith_level_normalize_devices(argv: Argv) -> Argv:
-    """
-    Commandline options: no options
-    """
-    # normalize devices - previously it was possible to delimit devices by both
-    # a comma and a space
-    if any("," in arg for arg in argv):
-        deprecation_warning(
-            "Delimiting stonith devices with ',' is deprecated and will be "
-            "removed. Please use a space to delimit stonith devices."
-        )
-    return ",".join(argv).split(",")
-
-
 def stonith_level_add_cmd(
     lib: Any, argv: Argv, modifiers: InputModifiers
 ) -> None:
@@ -311,11 +296,12 @@ def stonith_level_add_cmd(
     modifiers.ensure_only_supported("-f", "--force")
     if len(argv) < 3:
         raise CmdLineInputError()
+    level = argv[0]
     target_type, target_value = _stonith_level_parse_node(argv[1])
-    stonith_devices = _stonith_level_normalize_devices(argv[2:])
+    stonith_devices = argv[2:]
     _check_is_stonith(lib, stonith_devices)
     lib.fencing_topology.add_level(
-        argv[0],
+        level,
         target_type,
         target_value,
         stonith_devices,
@@ -337,65 +323,19 @@ def stonith_level_clear_cmd(
         lib.fencing_topology.remove_all_levels()
         return
 
-    allowed_keywords = {"target", "stonith"}
-    if len(argv) > 1 or (len(argv) == 1 and argv[0] in allowed_keywords):
-        (
-            target_type,
-            target_value,
-            devices,
-        ) = _stonith_level_parse_target_and_stonith(argv)
-        if devices is not None and target_value is not None:
-            raise CmdLineInputError(
-                "Only one of 'target' and 'stonith' can be used"
-            )
-        lib.fencing_topology.remove_levels_by_params(
-            None,
-            target_type,
-            target_value,
-            devices,
-        )
-        return
-
-    # TODO remove, deprecated backward compatibility mode for old syntax
-    # Command parameters are: node, stonith-list
-    # Both the node and the stonith list are optional. If the node is omitted
-    # and the stonith list is present, there is no way to figure it out, since
-    # there is no specification of what the parameter is. Hence the pre-lib
-    # code tried both. It deleted all levels having the first parameter as
-    # either a node or a device list. Since it was only possible to specify
-    # node as a target back then, this is enabled only in that case.
-    deprecation_warning(
-        "Syntax 'pcs stonith level clear [<target> | <stonith id(s)>] is "
-        "deprecated and will be removed. Please use 'pcs stonith level clear "
-        "[target <target>] | [stonith <stonith id>...]'."
+    (target_type, target_value, devices) = (
+        _stonith_level_parse_target_and_stonith(argv)
     )
-    target_type, target_value = _stonith_level_parse_node(argv[0])
-    was_error = False
-    try:
-        lib.fencing_topology.remove_levels_by_params(
-            None,
-            target_type,
-            target_value,
-            None,
-            # pre-lib code didn't return any error when no level was found
-            ignore_if_missing=True,
+    if devices is not None and target_value is not None:
+        raise CmdLineInputError(
+            "Only one of 'target' and 'stonith' can be used"
         )
-    except LibraryError:
-        was_error = True
-    if target_type == TARGET_TYPE_NODE:
-        try:
-            lib.fencing_topology.remove_levels_by_params(
-                None,
-                None,
-                None,
-                argv[0].split(","),
-                # pre-lib code didn't return any error when no level was found
-                ignore_if_missing=True,
-            )
-        except LibraryError:
-            was_error = True
-    if was_error:
-        raise LibraryError()
+    lib.fencing_topology.remove_levels_by_params(
+        None,
+        target_type,
+        target_value,
+        devices,
+    )
 
 
 def stonith_level_config_to_str(config):
@@ -468,46 +408,19 @@ def stonith_level_remove_cmd(
       * -f - CIB file
     """
     modifiers.ensure_only_supported("-f")
-    if not argv:
+    if not argv or len(argv) < 1:
         raise CmdLineInputError()
-    target_type, target_value, devices = None, None, None
-    level = argv[0]
 
-    allowed_keywords = {"target", "stonith"}
-    if len(argv) > 1 and argv[1] in allowed_keywords:
-        (
-            target_type,
-            target_value,
-            devices,
-        ) = _stonith_level_parse_target_and_stonith(argv[1:])
-        target_may_be_a_device = False
-    else:
-        # TODO remove, deprecated backward compatibility layer for old syntax
-        if len(argv) > 1:
-            deprecation_warning(
-                "Syntax 'pcs stonith level delete | remove <level> [<target>] "
-                "[<stonith id>...]' is deprecated and will be removed. Please "
-                "use 'pcs stonith level delete | remove <level> "
-                "[target <target>] [stonith <stonith id>...]'."
-            )
-            if not parse_args.ARG_TYPE_DELIMITER in argv[1] and "," in argv[1]:
-                deprecation_warning(
-                    "Delimiting stonith devices with ',' is deprecated and "
-                    "will be removed. Please use a space to delimit stonith "
-                    "devices."
-                )
-            target_type, target_value = _stonith_level_parse_node(argv[1])
-        if len(argv) > 2:
-            devices = _stonith_level_normalize_devices(argv[2:])
-        target_may_be_a_device = True
+    level = argv[0]
+    target_type, target_value, devices = (
+        _stonith_level_parse_target_and_stonith(argv[1:])
+    )
 
     lib.fencing_topology.remove_levels_by_params(
         level,
         target_type,
         target_value,
         devices,
-        # backward compatibility mode, see lib command for details
-        target_may_be_a_device=target_may_be_a_device,
     )
 
 

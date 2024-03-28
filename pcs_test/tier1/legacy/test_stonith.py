@@ -1769,9 +1769,9 @@ class StonithTest(TestCase, AssertPcsMixin):
         self.assert_pcs_success_all(
             [
                 "stonith level add 1 rh7-1 n1-ipmi".split(),
-                "stonith level add 2 rh7-1 n1-apc1,n1-apc2,n2-apc2".split(),
+                "stonith level add 2 rh7-1 n1-apc1 n1-apc2 n2-apc2".split(),
                 "stonith level add 1 rh7-2 n2-ipmi".split(),
-                "stonith level add 2 rh7-2 n2-apc1,n2-apc2,n2-apc3".split(),
+                "stonith level add 2 rh7-2 n2-apc1 n2-apc2 n2-apc3".split(),
             ]
         )
 
@@ -2426,61 +2426,30 @@ class LevelAdd(LevelTestsBase):
         self.fixture_stonith_resource("F2")
         self.fixture_stonith_resource("F3")
 
-        self.assert_pcs_success(
+        self.assert_pcs_fail(
             "stonith level add 1 rh7-1 F1,F2".split(),
             stderr_full=(
-                "Deprecation Warning: Delimiting stonith devices with ',' is "
-                "deprecated and will be removed. Please use a space to delimit "
-                "stonith devices.\n"
+                "Error: invalid device id 'F1,F2', ',' is not a valid character "
+                "for a device id\n" + ERRORS_HAVE_OCCURRED
             ),
         )
-        self.assert_pcs_success(
-            "stonith level".split(),
-            dedent(
-                """\
-                Target: rh7-1
-                  Level 1 - F1,F2
-                """
-            ),
-        )
-
-        self.assert_pcs_success(
+        self.assert_pcs_fail(
             "stonith level add 2 rh7-1 F1,F2 F3".split(),
             stderr_full=(
-                "Deprecation Warning: Delimiting stonith devices with ',' is "
-                "deprecated and will be removed. Please use a space to delimit "
-                "stonith devices.\n"
+                "Error: invalid device id 'F1,F2', ',' is not a valid character "
+                "for a device id\n" + ERRORS_HAVE_OCCURRED
             ),
         )
-        self.assert_pcs_success(
-            "stonith level".split(),
-            dedent(
-                """\
-                Target: rh7-1
-                  Level 1 - F1,F2
-                  Level 2 - F1,F2,F3
-                """
-            ),
-        )
-
-        self.assert_pcs_success(
+        self.assert_pcs_fail(
             "stonith level add 3 rh7-1 F1 F2,F3".split(),
             stderr_full=(
-                "Deprecation Warning: Delimiting stonith devices with ',' is "
-                "deprecated and will be removed. Please use a space to delimit "
-                "stonith devices.\n"
+                "Error: invalid device id 'F2,F3', ',' is not a valid character "
+                "for a device id\n" + ERRORS_HAVE_OCCURRED
             ),
         )
         self.assert_pcs_success(
             "stonith level".split(),
-            dedent(
-                """\
-                Target: rh7-1
-                  Level 1 - F1,F2
-                  Level 2 - F1,F2,F3
-                  Level 3 - F1,F2,F3
-                """
-            ),
+            "",
         )
 
     def test_nonexistent_node(self):
@@ -2661,97 +2630,6 @@ class LevelConfig(LevelTestsBase):
         )
 
 
-class LevelClearDeprecatedSyntax(LevelTestsBase):
-    deprecated_syntax = (
-        "Deprecation Warning: Syntax 'pcs stonith level clear [<target> | "
-        "<stonith id(s)>] is deprecated and will be removed. Please use 'pcs "
-        "stonith level clear [target <target>] | [stonith <stonith id>...]'.\n"
-    )
-
-    def setUp(self):
-        super().setUp()
-        self.fixture_full_configuration()
-
-    def test_clear_all(self):
-        self.assert_pcs_success("stonith level clear".split())
-        self.assert_pcs_success("stonith level config".split(), "")
-
-    def test_clear_nonexistent_node_or_device(self):
-        self.assert_pcs_success(
-            "stonith level clear rh-X".split(),
-            stderr_full=self.deprecated_syntax,
-        )
-        self.assert_pcs_success("stonith level config".split(), self.config)
-
-    def test_clear_nonexistent_devices(self):
-        self.assert_pcs_success(
-            "stonith level clear F1,F5".split(),
-            stderr_full=self.deprecated_syntax,
-        )
-        self.assert_pcs_success("stonith level config".split(), self.config)
-
-    def test_pattern_is_not_device(self):
-        self.assert_pcs_success(
-            "stonith level clear regexp%F1".split(),
-            stderr_full=self.deprecated_syntax,
-        )
-        self.assert_pcs_success("stonith level config".split(), self.config)
-
-    def test_clear_node(self):
-        self.assert_pcs_success(
-            "stonith level clear rh7-1".split(),
-            stderr_full=self.deprecated_syntax,
-        )
-        self.assert_pcs_success(
-            "stonith level config".split(),
-            "\n".join(self.config_lines[3:]) + "\n",
-        )
-
-    def test_clear_pattern(self):
-        self.assert_pcs_success(
-            "stonith level clear regexp%rh7-\\d".split(),
-            stderr_full=self.deprecated_syntax,
-        )
-        self.assert_pcs_success(
-            "stonith level config".split(),
-            "\n".join(self.config_lines[:6] + self.config_lines[9:]) + "\n",
-        )
-
-    def test_clear_attribute(self):
-        self.assert_pcs_success(
-            "stonith level clear attrib%fencewith=levels2".split(),
-            stderr_full=self.deprecated_syntax,
-        )
-        self.assert_pcs_success(
-            "stonith level config".split(),
-            "\n".join(self.config_lines[:11]) + "\n",
-        )
-
-    def test_clear_device(self):
-        self.assert_pcs_success(
-            "stonith level clear F1".split(), stderr_full=self.deprecated_syntax
-        )
-        self.assert_pcs_success(
-            "stonith level config".split(),
-            "\n".join(
-                self.config_lines[0:1]
-                + self.config_lines[2:5]
-                + self.config_lines[6:]
-            )
-            + "\n",
-        )
-
-    def test_clear_devices(self):
-        self.assert_pcs_success(
-            "stonith level clear F2,F1".split(),
-            stderr_full=self.deprecated_syntax,
-        )
-        self.assert_pcs_success(
-            "stonith level config".split(),
-            "\n".join(self.config_lines[:7] + self.config_lines[8:]) + "\n",
-        )
-
-
 class LevelClear(LevelTestsBase):
     def setUp(self):
         super().setUp()
@@ -2854,212 +2732,23 @@ class LevelClear(LevelTestsBase):
         )
         self.assert_pcs_success("stonith level config".split(), self.config)
 
-
-class LevelDeleteRemoveDeprecatedSyntax(LevelTestsBase):
-    command = None
-    deprecation_warning = (
-        "Deprecation Warning: Syntax 'pcs stonith level delete | remove "
-        "<level> [<target>] [<stonith id>...]' is deprecated and will be "
-        "removed. Please use 'pcs stonith level delete | remove <level> "
-        "[target <target>] [stonith <stonith id>...]'.\n"
-    )
-
-    def setUp(self):
-        super().setUp()
-        self.fixture_full_configuration()
-
-    def _test_usage(self):
+    def _test_missing_stonith_keyword(self):
         self.assert_pcs_fail(
-            ["stonith", "level", self.command],
-            stderr_start=dedent(
-                f"""
-                Usage: pcs stonith level {self.command}...
-                    level {self.command} <"""
-            ),
+            "stonith level clear target rh7-2 F2".split(),
+            "Error: At most one target can be specified\n",
         )
 
-    def _test_nonexisting_level_node_device(self):
+    def _test_missing_target_keyword(self):
         self.assert_pcs_fail(
-            ["stonith", "level", self.command, "1", "rh7-1", "F3"],
-            self.deprecation_warning
-            + (
-                "Error: Fencing level for 'rh7-1' at level '1' with device(s) "
-                "'F3' does not exist\n"
-                "Error: Fencing level at level '1' with device(s) 'F3', 'rh7-1' "
-                "does not exist\n"
-            )
-            + ERRORS_HAVE_OCCURRED,
+            "stonith level clear rh7-2 stonith F2".split(),
+            "Error: At most one target can be specified\n",
         )
-        self.assert_pcs_success("stonith level config".split(), self.config)
 
-    def _test_nonexisting_level_pattern_device(self):
+    def _test_missing_target_stonith_keyword(self):
         self.assert_pcs_fail(
-            ["stonith", "level", self.command, "1", r"regexp%rh7-\d", "F3"],
-            (
-                self.deprecation_warning
-                + "Error: Fencing level for 'rh7-\\d' at level '1' with "
-                "device(s) 'F3' does not exist\n" + ERRORS_HAVE_OCCURRED
-            ),
+            "stonith level clear rh7-2 F2".split(),
+            "Error: At most one target can be specified\n",
         )
-        self.assert_pcs_success("stonith level config".split(), self.config)
-
-        self.assert_pcs_fail(
-            ["stonith", "level", self.command, "3", r"regexp%rh7-\d", "F1,F2"],
-            (
-                self.deprecation_warning
-                + "Deprecation Warning: Delimiting stonith devices with ',' is "
-                "deprecated and will be removed. Please use a space to delimit "
-                "stonith devices.\n"
-                "Error: Fencing level for 'rh7-\\d' at level '3' with "
-                "device(s) 'F1', 'F2' does not exist\n" + ERRORS_HAVE_OCCURRED
-            ),
-        )
-        self.assert_pcs_success("stonith level config".split(), self.config)
-
-    def _test_nonexisting_level(self):
-        self.assert_pcs_fail(
-            ["stonith", "level", self.command, "9"],
-            (
-                "Error: Fencing level at level '9' does not exist\n"
-                + ERRORS_HAVE_OCCURRED
-            ),
-        )
-        self.assert_pcs_success("stonith level config".split(), self.config)
-
-    def _test_remove_level(self):
-        self.assert_pcs_success(["stonith", "level", self.command, "1"])
-        self.assert_pcs_success(
-            "stonith level config".split(),
-            "\n".join(
-                self.config_lines[0:1]
-                + self.config_lines[2:4]
-                + self.config_lines[5:]
-            )
-            + "\n",
-        )
-
-    def _test_remove_level_node(self):
-        self.assert_pcs_success(
-            ["stonith", "level", self.command, "1", "rh7-2"],
-            stderr_full=self.deprecation_warning,
-        )
-        self.assert_pcs_success(
-            "stonith level config".split(),
-            "\n".join(self.config_lines[:4] + self.config_lines[5:]) + "\n",
-        )
-
-    def _test_remove_level_pattern(self):
-        self.assert_pcs_success(
-            ["stonith", "level", self.command, "3", r"regexp%rh7-\d"],
-            stderr_full=self.deprecation_warning,
-        )
-        self.assert_pcs_success(
-            "stonith level config".split(),
-            "\n".join(self.config_lines[:7] + self.config_lines[8:]) + "\n",
-        )
-
-    def _test_remove_level_attrib(self):
-        self.assert_pcs_success(
-            ["stonith", "level", self.command, "6", "attrib%fencewith=levels2"],
-            stderr_full=self.deprecation_warning,
-        )
-        self.assert_pcs_success(
-            "stonith level config".split(),
-            "\n".join(self.config_lines[:11]) + "\n",
-        )
-
-    def _test_remove_level_device(self):
-        self.assert_pcs_success(
-            ["stonith", "level", self.command, "1", "F2"],
-            stderr_full=self.deprecation_warning,
-        )
-        self.assert_pcs_success(
-            "stonith level config".split(),
-            "\n".join(self.config_lines[:4] + self.config_lines[5:]) + "\n",
-        )
-
-    def _test_remove_level_devices(self):
-        self.assert_pcs_success(
-            ["stonith", "level", self.command, "3", "F2", "F1"],
-            stderr_full=self.deprecation_warning,
-        )
-        self.assert_pcs_success(
-            "stonith level config".split(),
-            "\n".join(self.config_lines[:7] + self.config_lines[8:]) + "\n",
-        )
-
-    def _test_remove_level_devices_old_syntax(self):
-        self.assert_pcs_success(
-            ["stonith", "level", self.command, "3", "F2,F1"],
-            stderr_full=(
-                self.deprecation_warning
-                + "Deprecation Warning: Delimiting stonith devices with ',' is "
-                "deprecated and will be removed. Please use a space to delimit "
-                "stonith devices.\n"
-            ),
-        )
-        self.assert_pcs_success(
-            "stonith level config".split(),
-            "\n".join(self.config_lines[:7] + self.config_lines[8:]) + "\n",
-        )
-
-    def _test_remove_level_node_device(self):
-        self.assert_pcs_success(
-            ["stonith", "level", self.command, "1", "rh7-2", "F2"],
-            stderr_full=self.deprecation_warning,
-        )
-        self.assert_pcs_success(
-            "stonith level config".split(),
-            "\n".join(self.config_lines[:4] + self.config_lines[5:]) + "\n",
-        )
-
-    def _test_remove_level_pattern_device(self):
-        self.assert_pcs_success(
-            [
-                "stonith",
-                "level",
-                self.command,
-                "3",
-                r"regexp%rh7-\d",
-                "F2",
-                "F1",
-            ],
-            stderr_full=self.deprecation_warning,
-        )
-        self.assert_pcs_success(
-            "stonith level config".split(),
-            "\n".join(self.config_lines[:7] + self.config_lines[8:]) + "\n",
-        )
-
-    def _test_remove_level_attrib_device(self):
-        self.assert_pcs_success(
-            [
-                "stonith",
-                "level",
-                self.command,
-                "6",
-                "attrib%fencewith=levels2",
-                "F3",
-                "F1",
-            ],
-            stderr_full=self.deprecation_warning,
-        )
-        self.assert_pcs_success(
-            "stonith level config".split(),
-            "\n".join(self.config_lines[:11]) + "\n",
-        )
-
-
-class LevelDeleteDeprecatedSyntax(
-    LevelDeleteRemoveDeprecatedSyntax, metaclass=ParametrizedTestMetaClass
-):
-    command = "delete"
-
-
-class LevelRemoveDeprecatedSyntax(
-    LevelDeleteRemoveDeprecatedSyntax, metaclass=ParametrizedTestMetaClass
-):
-    command = "remove"
 
 
 class LevelDeleteRemove(LevelTestsBase):
@@ -3296,6 +2985,26 @@ class LevelDeleteRemove(LevelTestsBase):
         self.assert_pcs_fail(
             ["stonith", "level", self.command, "1", "target", "rh7-2", "F2"],
             "Error: At most one target can be specified\n",
+        )
+
+    def _test_missing_target_keyword(self):
+        self.assert_pcs_fail(
+            ["stonith", "level", self.command, "1", "rh7-2", "stonith", "F2"],
+            stderr_start=dedent(
+                f"""
+                Usage: pcs stonith level {self.command}...
+                    level {self.command} <"""
+            ),
+        )
+
+    def _test_missing_target_stonith_keyword(self):
+        self.assert_pcs_fail(
+            ["stonith", "level", self.command, "1", "rh7-2", "F2"],
+            stderr_start=dedent(
+                f"""
+                Usage: pcs stonith level {self.command}...
+                    level {self.command} <"""
+            ),
         )
 
     def _test_missing_target_stonith_values(self):

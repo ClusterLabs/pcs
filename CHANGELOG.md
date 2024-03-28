@@ -4,6 +4,9 @@
 
 ### Removed
 - Using spaces in dates in location constraint rules ([rhbz#2163953])
+- Delimiting stonith devices with a comma in `pcs stonith level add | clear |
+  delete | remove` commands
+- Ambiguous syntax of `pcs stonith level clear | delete | remove`
 
 ### Added
 - Support for output formats `json` and `cmd` to resources/stonith defaults and

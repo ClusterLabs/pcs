@@ -383,52 +383,7 @@ class RemoveLevelsByParams(TestCase):
             devices=["dev1", "dev2"],
         )
 
-    def test_devices_target_node_missing_success(self):
-        self.config.runner.cib.load(fencing_topology=self.fixture_cib_node)
-        self.config.env.push_cib(fencing_topology=self.fixture_cib_other_level)
-
-        lib.remove_levels_by_params(
-            self.env_assist.get_env(),
-            level="1",
-            target_type=TARGET_TYPE_NODE,
-            target_value="dev1",
-            devices=["dev2"],
-            target_may_be_a_device=True,
-        )
-
-    def test_devices_target_node_missing_not_found(self):
-        self.config.runner.cib.load(fencing_topology=self.fixture_cib_node)
-
-        self.env_assist.assert_raise_library_error(
-            lambda: lib.remove_levels_by_params(
-                self.env_assist.get_env(),
-                level="2",
-                target_type=TARGET_TYPE_NODE,
-                target_value="dev1",
-                devices=["dev2"],
-                target_may_be_a_device=True,
-            )
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    report_codes.CIB_FENCING_LEVEL_DOES_NOT_EXIST,
-                    level="2",
-                    target_type=TARGET_TYPE_NODE,
-                    target_value="dev1",
-                    devices=["dev2"],
-                ),
-                fixture.error(
-                    report_codes.CIB_FENCING_LEVEL_DOES_NOT_EXIST,
-                    level="2",
-                    target_type=None,
-                    target_value=None,
-                    devices=["dev1", "dev2"],
-                ),
-            ]
-        )
-
-    def test_devices_target_node_missing_guessing_disabled(self):
+    def test_devices_target_node_missing(self):
         self.config.runner.cib.load(fencing_topology=self.fixture_cib_node)
 
         self.env_assist.assert_raise_library_error(
@@ -436,8 +391,8 @@ class RemoveLevelsByParams(TestCase):
                 self.env_assist.get_env(),
                 level="1",
                 target_type=TARGET_TYPE_NODE,
-                target_value="dev1",
-                devices=["dev2"],
+                target_value="nodeX",
+                devices=["dev1", "dev2"],
             )
         )
         self.env_assist.assert_reports(
@@ -446,8 +401,8 @@ class RemoveLevelsByParams(TestCase):
                     report_codes.CIB_FENCING_LEVEL_DOES_NOT_EXIST,
                     level="1",
                     target_type=TARGET_TYPE_NODE,
-                    target_value="dev1",
-                    devices=["dev2"],
+                    target_value="nodeX",
+                    devices=["dev1", "dev2"],
                 ),
             ]
         )

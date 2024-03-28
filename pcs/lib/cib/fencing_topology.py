@@ -104,10 +104,6 @@ def remove_levels_by_params(
     target_type: Optional[str] = None,
     target_value=None,
     devices: Optional[StringCollection] = None,
-    # TODO remove, deprecated backward compatibility layer
-    ignore_if_missing: bool = False,
-    # TODO remove, deprecated backward compatibility layer
-    validate_device_ids: bool = True,
 ) -> ReportItemList:
     """
     Remove specified fencing level(s)
@@ -117,7 +113,6 @@ def remove_levels_by_params(
     target_type -- the removed fencing level target value type
     mixed target_value -- the removed fencing level target value
     devices -- list of stonith devices of the removed fencing level
-    ignore_if_missing -- when True, do not report if level not found
     """
     # Do not ever remove a fencing-topology element, even if it is empty. There
     # may be ACLs set in pacemaker which allow "write" for fencing-level
@@ -132,7 +127,7 @@ def remove_levels_by_params(
         if has_errors(report_list):
             return report_list
 
-    if validate_device_ids and devices is not None:
+    if devices is not None:
         for device_id in devices:
             validate_id(
                 device_id, description="stonith id", reporter=report_list
@@ -143,8 +138,6 @@ def remove_levels_by_params(
     )
 
     if not level_el_list:
-        if ignore_if_missing:
-            return report_list
         report_list.append(
             ReportItem.error(
                 reports.messages.CibFencingLevelDoesNotExist(

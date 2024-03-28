@@ -1640,6 +1640,12 @@ Several date-spec and duration options have been removed in pacemaker 3. Therefo
 Using spaces in dates in location constraint rules is no longer allowed.
 .br
 Rules are supposed to be specified as a single string argument. Specifying rules as multiple arguments has been deprecated and might be removed in a future release.
+.SS "stonith"
+.TP
+level add | clear | delete | remove
+Delimiting stonith devices with a comma is no longer allowed.
+.br
+Ambiguous syntax of 'pcs stonith level clear | delete | remove' is no longer supported.
 .SH CHANGES IN PCS-0.11
 This section summarizes the most important changes in commands done in pcs-0.11.x compared to pcs-0.10.x. For detailed description of current commands see above.
 .SS "Legacy role names"

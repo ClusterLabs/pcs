@@ -511,27 +511,6 @@ class RemoveLevelsByParams(TestCase, CibMixin):
             ],
         )
 
-    def test_no_such_level_ignore_missing(self):
-        report_list = lib.remove_levels_by_params(
-            self.tree, 9, TARGET_TYPE_NODE, "nodeB", ["d3"], True
-        )
-        assert_report_item_list_equal(report_list, [])
-        self.assertEqual(
-            self.get_remaining_ids(),
-            [
-                "fl1",
-                "fl2",
-                "fl3",
-                "fl4",
-                "fl5",
-                "fl6",
-                "fl7",
-                "fl8",
-                "fl9",
-                "fl10",
-            ],
-        )
-
 
 class RemoveDeviceFromAllLevels(TestCase, CibMixin):
     def setUp(self):
