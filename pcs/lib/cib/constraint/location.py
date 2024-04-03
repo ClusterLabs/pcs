@@ -437,9 +437,11 @@ def create_plain_with_rule(
             sanitize_id(f"location-{resource_id}")
         )
     constraint_options[
-        "rsc-pattern"
-        if resource_id_type == const.RESOURCE_ID_TYPE_REGEXP
-        else "rsc"
+        (
+            "rsc-pattern"
+            if resource_id_type == const.RESOURCE_ID_TYPE_REGEXP
+            else "rsc"
+        )
     ] = resource_id
     for name, value in constraint_options.items():
         if value != "":
