@@ -5,6 +5,7 @@ from pcs.cli.common.parse_args import (
     Argv,
     InputModifiers,
     ensure_unique_args,
+    get_rule_str,
     parse_typed_arg,
 )
 from pcs.cli.reports.output import deprecation_warning
@@ -133,7 +134,7 @@ def create_with_rule(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     lib.constraint_location.create_plain_with_rule(
         _RESOURCE_TYPE_MAP[rsc_type],
         rsc_value,
-        " ".join(argv),
+        get_rule_str(argv) or "",
         rule_options,
         constraint_options,
         force_flags,
@@ -165,7 +166,7 @@ def rule_add(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     )
     lib.constraint_location.add_rule_to_constraint(
         constraint_id,
-        " ".join(argv),
+        get_rule_str(argv) or "",
         rule_options,
         force_flags,
     )

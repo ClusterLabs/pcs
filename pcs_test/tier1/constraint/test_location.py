@@ -19,6 +19,11 @@ from pcs_test.tools.xml import XmlManipulation
 ERRORS_HAVE_OCCURRED = (
     "Error: Errors have occurred, therefore pcs is unable to continue\n"
 )
+RULE_ARGV_DEPRECATED = (
+    "Deprecation Warning: Specifying a rule as multiple arguments is "
+    "deprecated and might be removed in future, specify the rule as a single "
+    "string instead\n"
+)
 empty_cib = get_test_resource("cib-empty-3.7.xml")
 
 
@@ -86,6 +91,28 @@ class CreateWithRule(RuleBaseMixin, TestCase):
     def test_success_minimal(self):
         self.assert_effect(
             [
+                "constraint location R1 rule".split() + ["#uname eq node1"],
+                "constraint location %R1 rule".split() + ["#uname eq node1"],
+                (
+                    "constraint location resource%R1 rule".split()
+                    + ["#uname eq node1"]
+                ),
+            ],
+            self.fixture_constraints(
+                """
+                <rsc_location id="location-R1" rsc="R1">
+                  <rule id="location-R1-rule" boolean-op="and" score="INFINITY">
+                    <expression id="location-R1-rule-expr"
+                        attribute="#uname" operation="eq" value="node1" />
+                  </rule>
+                </rsc_location>
+                """
+            ),
+        )
+
+    def test_success_minimal_deprecated_form(self):
+        self.assert_effect(
+            [
                 "constraint location R1 rule #uname eq node1".split(),
                 "constraint location %R1 rule #uname eq node1".split(),
                 "constraint location resource%R1 rule #uname eq node1".split(),
@@ -100,6 +127,7 @@ class CreateWithRule(RuleBaseMixin, TestCase):
                 </rsc_location>
                 """
             ),
+            stderr_full=RULE_ARGV_DEPRECATED,
         )
 
     def test_success_all_options(self):
@@ -107,8 +135,8 @@ class CreateWithRule(RuleBaseMixin, TestCase):
             (
                 "constraint location regexp%R\\d+ rule id=my-rule score=7 "
                 "constraint-id=my-loc resource-discovery=always role=Promoted "
-                "#uname eq node1"
-            ).split(),
+            ).split()
+            + ["#uname eq node1"],
             self.fixture_constraints(
                 """
                 <rsc_location id="my-loc" rsc-pattern="R\\d+"
@@ -125,7 +153,7 @@ class CreateWithRule(RuleBaseMixin, TestCase):
 
     def test_duplicate_constraint(self):
         self.assert_pcs_fail(
-            "constraint location R1 rule #uname eq node2".split(),
+            "constraint location R1 rule".split() + ["#uname eq node2"],
             stderr_full=dedent(
                 """\
                 Duplicate constraints:
@@ -141,7 +169,7 @@ class CreateWithRule(RuleBaseMixin, TestCase):
 
     def test_duplicate_constraint_forced(self):
         self.assert_effect(
-            "--force constraint location R1 rule #uname eq node2".split(),
+            "--force constraint location R1 rule".split() + ["#uname eq node2"],
             self.fixture_constraints(
                 """
                 <rsc_location id="location-R1" rsc="R1">
@@ -173,7 +201,8 @@ class CreateWithRule(RuleBaseMixin, TestCase):
                 "constraint location R1 rule resource-discovery=badly "
                 "role=bad-role bad=option #uname eq"
             ).split(),
-            stderr_full=dedent(
+            stderr_full=RULE_ARGV_DEPRECATED
+            + dedent(
                 f"""\
                 Error: 'badly' is not a valid resource-discovery value, use 'always', 'exclusive', 'never', use --force to override
                 Error: 'bad-role' is not a valid role value, use {roles}
@@ -198,7 +227,7 @@ class RuleAdd(RuleBaseMixin, TestCase):
 
     def test_success_minimal(self):
         self.assert_effect(
-            "constraint rule add loc-rule #uname eq node1".split(),
+            "constraint rule add loc-rule".split() + ["#uname eq node1"],
             self.fixture_constraints(
                 """
                 <rule id="loc-rule-rule-1" boolean-op="and" score="INFINITY">
@@ -209,12 +238,24 @@ class RuleAdd(RuleBaseMixin, TestCase):
             ),
         )
 
+    def test_success_minimal_deprecated_form(self):
+        self.assert_effect(
+            "constraint rule add loc-rule #uname eq node1".split(),
+            self.fixture_constraints(
+                """
+                <rule id="loc-rule-rule-1" boolean-op="and" score="INFINITY">
+                  <expression id="loc-rule-rule-1-expr"
+                      attribute="#uname" operation="eq" value="node1" />
+                </rule>
+                """
+            ),
+            stderr_full=RULE_ARGV_DEPRECATED,
+        )
+
     def test_success_all_options(self):
         self.assert_effect(
-            (
-                "constraint rule add loc-rule id=my-rule score=7 role=Promoted "
-                "#uname eq node1"
-            ).split(),
+            "constraint rule add loc-rule id=my-rule score=7 role=Promoted ".split()
+            + ["#uname eq node1"],
             self.fixture_constraints(
                 """
                 <rule id="my-rule" boolean-op="and" score="7" role="Promoted">
@@ -227,7 +268,7 @@ class RuleAdd(RuleBaseMixin, TestCase):
 
     def test_duplicate_constraint(self):
         self.assert_pcs_fail(
-            "constraint rule add loc-rule #uname eq node3".split(),
+            "constraint rule add loc-rule".split() + ["#uname eq node3"],
             stderr_full=dedent(
                 """\
                 Duplicate constraints:
@@ -243,7 +284,8 @@ class RuleAdd(RuleBaseMixin, TestCase):
 
     def test_duplicate_constraint_forced(self):
         self.assert_effect(
-            "--force constraint rule add loc-rule #uname eq node3".split(),
+            "--force constraint rule add loc-rule".split()
+            + ["#uname eq node3"],
             self.fixture_constraints(
                 """
                 <rule id="loc-rule-rule-1" boolean-op="and" score="INFINITY">
@@ -266,7 +308,7 @@ class RuleAdd(RuleBaseMixin, TestCase):
 
     def test_duplicate_rule_in_own_constraint(self):
         self.assert_pcs_fail(
-            "constraint rule add loc-rule #uname eq node2".split(),
+            "constraint rule add loc-rule".split() + ["#uname eq node2"],
             stderr_full=dedent(
                 """\
                 Duplicate constraints:
@@ -282,7 +324,8 @@ class RuleAdd(RuleBaseMixin, TestCase):
 
     def test_duplicate_rule_in_own_constraint_forced(self):
         self.assert_effect(
-            "--force constraint rule add loc-rule #uname eq node2".split(),
+            "--force constraint rule add loc-rule".split()
+            + ["#uname eq node2"],
             self.fixture_constraints(
                 """
                 <rule id="loc-rule-rule-1" boolean-op="and" score="INFINITY">
@@ -305,7 +348,7 @@ class RuleAdd(RuleBaseMixin, TestCase):
 
     def test_simple_to_rule(self):
         self.assert_effect(
-            "constraint rule add loc-simple #uname eq node1".split(),
+            "constraint rule add loc-simple".split() + ["#uname eq node1"],
             self.fixture_constraints(
                 "",
                 """
@@ -325,7 +368,8 @@ class RuleAdd(RuleBaseMixin, TestCase):
         )
         self.assert_pcs_fail(
             "constraint rule add loc-rule role=bad-role bad=option #uname eq".split(),
-            stderr_full=dedent(
+            stderr_full=RULE_ARGV_DEPRECATED
+            + dedent(
                 f"""\
                 Error: 'bad-role' is not a valid role value, use {roles}
                 Error: 'bad=option #uname eq' is not a valid rule expression, parse error near or after line 1 column 12
