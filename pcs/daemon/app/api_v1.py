@@ -106,7 +106,6 @@ API_V1_MAP: Mapping[str, str] = {
     # deprecated, use resource-agent-get-agents-list/v1 instead
     "stonith-agent-list-agents/v1": "stonith_agent.list_agents",
     "stonith-create/v1": "stonith.create",
-    "stonith-create-in-group/v1": "stonith.create_in_group",
 }
 
 

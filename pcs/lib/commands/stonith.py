@@ -18,11 +18,7 @@ from pcs.lib.cib.nvpair import (
     INSTANCE_ATTRIBUTES_TAG,
     get_value,
 )
-from pcs.lib.cib.tools import (
-    ElementNotFound,
-    IdProvider,
-    get_element_by_id,
-)
+from pcs.lib.cib.tools import IdProvider
 from pcs.lib.commands.resource import (
     _ensure_disabled_after_wait,
     resource_environment,
@@ -51,7 +47,6 @@ from pcs.lib.pacemaker.live import (
     is_fence_history_supported_management,
     is_getting_resource_digest_supported,
 )
-from pcs.lib.pacemaker.values import validate_id
 from pcs.lib.resource_agent import (
     InvalidResourceAgentName,
     ResourceAgentError,
@@ -63,7 +58,6 @@ from pcs.lib.resource_agent import (
     resource_agent_error_to_report_item,
 )
 from pcs.lib.validate import validate_add_remove_items
-from pcs.lib.xml_tools import get_root
 
 
 def _get_agent_facade(
@@ -189,150 +183,6 @@ def create(
         )
         if ensure_disabled:
             resource.common.disable(stonith_element, id_provider)
-
-
-# DEPRECATED: this command is deprecated and will be removed in a future release
-def create_in_group(
-    env: LibraryEnvironment,
-    stonith_id: str,
-    stonith_agent_name: str,
-    group_id: str,
-    operations: Collection[Mapping[str, str]],
-    meta_attributes: Mapping[str, str],
-    instance_attributes: Mapping[str, str],
-    allow_absent_agent: bool = False,
-    allow_invalid_operation: bool = False,
-    allow_invalid_instance_attributes: bool = False,
-    use_default_operations: bool = True,
-    ensure_disabled: bool = False,
-    adjacent_resource_id: Optional[str] = None,
-    put_after_adjacent: bool = False,
-    wait: WaitType = False,
-    enable_agent_self_validation: bool = False,
-):
-    # pylint: disable=too-many-arguments
-    # pylint: disable=too-many-locals
-    """
-    DEPRECATED
-    Create stonith as resource in a cib and put it into defined group.
-
-    env -- provides all for communication with externals
-    stonith_id --an identifier of stonith resource
-    stonith_agent_name -- contains name for the identification of agent
-    group_id -- identificator for group to put stonith inside
-    operations -- contains attributes for each entered operation
-    meta_attributes -- contains attributes for primitive/meta_attributes
-    instance_attributes -- contains attributes for primitive/instance_attributes
-    allow_absent_agent -- a flag for allowing agent not installed in a system
-    allow_invalid_operation -- a flag for allowing to use operations that
-        are not listed in a stonith agent metadata
-    allow_invalid_instance_attributes -- a flag for allowing to use instance
-        attributes that are not listed in a stonith agent metadata or for
-        allowing to not use the instance_attributes that are required in
-        stonith agent metadata
-    use_default_operations -- a flag for stopping of adding default cib
-        operations (specified in a stonith agent)
-    ensure_disabled -- flag that keeps resource in target-role "Stopped"
-    adjacent_resource_id -- identify neighbor of a newly created stonith
-    put_after_adjacent -- is flag to put a newly create resource befor/after
-        adjacent stonith
-    wait -- flag for controlling waiting for pacemaker idle mechanism
-    enable_agent_self_validation -- if True, use agent self-validation feature
-        to validate instance attributes
-    """
-    if wait is not False:
-        # deprecated in the first version of 0.12
-        env.report_processor.report(
-            reports.ReportItem.deprecation(
-                reports.messages.ResourceWaitDeprecated()
-            )
-        )
-
-    runner = env.cmd_runner()
-    agent_factory = ResourceAgentFacadeFactory(runner, env.report_processor)
-    stonith_agent = _get_agent_facade(
-        env.report_processor,
-        agent_factory,
-        stonith_agent_name,
-        allow_absent_agent,
-    )
-    if stonith_agent.metadata.provides_unfencing:
-        meta_attributes = dict(meta_attributes, provides="unfencing")
-
-    with resource_environment(
-        env,
-        wait,
-        [stonith_id],
-        _ensure_disabled_after_wait(
-            ensure_disabled
-            or resource.common.are_meta_disabled(meta_attributes),
-        ),
-    ) as resources_section:
-        id_provider = IdProvider(resources_section)
-
-        adjacent_resource_element = None
-        if adjacent_resource_id:
-            try:
-                adjacent_resource_element = get_element_by_id(
-                    get_root(resources_section), adjacent_resource_id
-                )
-            except ElementNotFound:
-                # We cannot continue without adjacent element because
-                # the validator might produce misleading reports
-                if env.report_processor.report(
-                    ReportItem.error(
-                        reports.messages.IdNotFound(adjacent_resource_id, [])
-                    )
-                ).has_errors:
-                    raise LibraryError() from None
-
-        try:
-            group_element = get_element_by_id(
-                get_root(resources_section), group_id
-            )
-        except ElementNotFound:
-            group_id_reports: List[ReportItem] = []
-            validate_id(
-                group_id, description="group name", reporter=group_id_reports
-            )
-            env.report_processor.report_list(group_id_reports)
-            group_element = resource.group.append_new(
-                resources_section, group_id
-            )
-
-        stonith_element = resource.primitive.create(
-            env.report_processor,
-            runner,
-            resources_section,
-            id_provider,
-            stonith_id,
-            stonith_agent,
-            operations,
-            meta_attributes,
-            instance_attributes,
-            allow_invalid_operation,
-            allow_invalid_instance_attributes,
-            use_default_operations,
-            enable_agent_self_validation=enable_agent_self_validation,
-        )
-        if ensure_disabled:
-            resource.common.disable(stonith_element, id_provider)
-
-        if env.report_processor.report_list(
-            resource.validations.validate_move_resources_to_group(
-                group_element,
-                [stonith_element],
-                adjacent_resource_element,
-            )
-        ).has_errors:
-            raise LibraryError()
-
-        resource.hierarchy.move_resources_to_group(
-            group_element,
-            [stonith_element],
-            adjacent_resource_element,
-            put_after_adjacent,
-        )
 
 
 def history_get_text(env: LibraryEnvironment, node: Optional[str] = None):

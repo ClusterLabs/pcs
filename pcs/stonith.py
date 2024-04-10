@@ -19,7 +19,6 @@ from pcs.cli.common.parse_args import (
 from pcs.cli.fencing_topology import target_type_map_cli_to_lib
 from pcs.cli.reports.output import (
     deprecation_warning,
-    error,
     print_to_stderr,
     warn,
 )
@@ -145,11 +144,6 @@ def _check_is_stonith(
 def stonith_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
-      * --before - specified resource inside a group before which new resource
-        will be placed inside the group
-      * --after - specified resource inside a group after which new resource
-        will be placed inside the group
-      * --group - specifies group in which resource will be created
       * --force - allow not existing agent, invalid operations or invalid
         instance attributes
       * --disabled - created resource will be disabled
@@ -159,9 +153,6 @@ def stonith_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
       * -f - CIB file
     """
     modifiers.ensure_only_supported(
-        "--before",
-        "--after",
-        "--group",
         "--force",
         "--disabled",
         "--no-default-ops",
@@ -169,20 +160,6 @@ def stonith_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         "--wait",
         "-f",
     )
-    if modifiers.is_specified("--before") and modifiers.is_specified("--after"):
-        raise error(
-            "you cannot specify both --before and --after{0}".format(
-                ""
-                if modifiers.is_specified("--group")
-                else " and you have to specify --group"
-            )
-        )
-
-    if not modifiers.is_specified("--group"):
-        if modifiers.is_specified("--before"):
-            raise error("you cannot use --before without --group")
-        if modifiers.is_specified("--after"):
-            raise error("you cannot use --after without --group")
 
     if len(argv) < 2:
         raise CmdLineInputError()
@@ -202,41 +179,14 @@ def stonith_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         enable_agent_self_validation=modifiers.get("--agent-validation"),
     )
 
-    if not modifiers.get("--group"):
-        lib.stonith.create(
-            stonith_id,
-            stonith_type,
-            parts.operations,
-            parts.meta_attrs,
-            parts.instance_attrs,
-            **settings,
-        )
-    else:
-        # deprecated since 0.11.3
-        deprecation_warning(
-            "Option to group stonith resource is deprecated and will be "
-            "removed in a future release."
-        )
-        adjacent_resource_id = None
-        put_after_adjacent = False
-        if modifiers.get("--after"):
-            adjacent_resource_id = modifiers.get("--after")
-            put_after_adjacent = True
-        if modifiers.get("--before"):
-            adjacent_resource_id = modifiers.get("--before")
-            put_after_adjacent = False
-
-        lib.stonith.create_in_group(
-            stonith_id,
-            stonith_type,
-            modifiers.get("--group"),
-            parts.operations,
-            parts.meta_attrs,
-            parts.instance_attrs,
-            adjacent_resource_id=adjacent_resource_id,
-            put_after_adjacent=put_after_adjacent,
-            **settings,
-        )
+    lib.stonith.create(
+        stonith_id,
+        stonith_type,
+        parts.operations,
+        parts.meta_attrs,
+        parts.instance_attrs,
+        **settings,
+    )
 
 
 def _stonith_level_parse_node(arg):

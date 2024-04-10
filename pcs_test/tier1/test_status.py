@@ -12,9 +12,11 @@ from pcs_test.tools.misc import (
     is_minimum_pacemaker_version,
     is_pacemaker_21_without_20_compatibility,
     outdent,
+    write_data_to_tmpfile,
     write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import PcsRunner
+from pcs_test.tools.xml import XmlManipulation
 
 PCMK_2_0_3_PLUS = is_minimum_pacemaker_version(2, 0, 3)
 
@@ -207,13 +209,21 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
             )
 
     def test_no_stonith_warning_when_stonith_in_group(self):
-        self.assert_pcs_success(
-            "stonith create S fence_xvm --group G".split(),
-            stderr_full=(
-                "Deprecation Warning: Option to group stonith resource is "
-                "deprecated and will be removed in a future release.\n"
-            ),
+        xml_manip = XmlManipulation.from_file(self.temp_cib.name)
+        xml_manip.append_to_first_tag_name(
+            "resources",
+            """
+            <group id="G">
+                <primitive class="stonith" id="S" type="fence_xvm">
+                    <operations>
+                        <op id="S-monitor-interval-60s" interval="60s"
+                            name="monitor"/>
+                    </operations>
+                </primitive>
+            </group>
+            """,
         )
+        write_data_to_tmpfile(str(xml_manip), self.temp_cib)
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
         if PCMK_2_0_3_PLUS:
