@@ -1,5 +1,6 @@
 require 'logger'
 require 'pathname'
+require 'socket'
 require 'stringio'
 
 require 'settings.rb'
@@ -46,7 +47,7 @@ COROSYNC_CMAPCTL = File.join(COROSYNC_BINARIES, "corosync-cmapctl")
 COROSYNC_QUORUMTOOL = File.join(COROSYNC_BINARIES, "corosync-quorumtool")
 
 if not defined? $cur_node_name
-  $cur_node_name = `/bin/hostname`.chomp
+  $cur_node_name = Socket.gethostname
 end
 
 if ENV['PCSD_RESTART_AFTER_REQUESTS']

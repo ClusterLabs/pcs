@@ -1435,7 +1435,7 @@ def cluster_status_from_nodes(auth_user, cluster_nodes, cluster_name)
 end
 
 def get_node_uptime()
-  uptime = `/bin/cat /proc/uptime`.chomp.split(' ')[0].split('.')[0].to_i
+  uptime = IO.read('/proc/uptime').chomp.split(' ')[0].split('.')[0].to_i
   mm, ss = uptime.divmod(60)
   hh, mm = mm.divmod(60)
   dd, hh = hh.divmod(24)
