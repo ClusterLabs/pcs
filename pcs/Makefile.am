@@ -98,6 +98,8 @@ EXTRA_DIST		= \
 			  cli/routing/stonith.py \
 			  cli/routing/tag.py \
 			  cli/rule.py \
+			  cli/status/command.py \
+			  cli/status/__init__.py \
 			  cli/tag/command.py \
 			  cli/tag/__init__.py \
 			  cluster.py \

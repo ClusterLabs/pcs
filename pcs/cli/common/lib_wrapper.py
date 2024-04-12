@@ -208,7 +208,7 @@ def load_module(env, middleware_factory, name):
                 "verify": cluster.verify,
                 "generate_cluster_uuid": cluster.generate_cluster_uuid,
                 "generate_cluster_uuid_local": cluster.generate_cluster_uuid_local,
-                "wait": cluster.wait_for_idle,
+                "wait_for_pcmk_idle": cluster.wait_for_pcmk_idle,
             },
         )
 

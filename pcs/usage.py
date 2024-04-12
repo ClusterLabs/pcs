@@ -2738,6 +2738,13 @@ Commands:
 
     xml
         View xml version of status (output from crm_mon -r -1 -X).
+
+    wait [<timeout>]
+        Wait for the cluster to settle into stable state. Timeout can be
+        specified as bare number which describes number of seconds or number
+        with unit (s or sec for seconds, m or min for minutes, h or hr for
+        hours). If 'timeout' is not specified it defaults to 60 minutes.
+        Example: pcs status wait 30min
 """
     return sub_usage(args, output)
 
