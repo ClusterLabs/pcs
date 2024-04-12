@@ -258,7 +258,7 @@ class Normalize(TestCase):
     def test_return_operation_with_the_same_values(self):
         operation = {
             "name": "monitor",
-            "role": const.PCMK_ROLE_PROMOTED_LEGACY,
+            "role": const.PCMK_ROLE_PROMOTED,
             "timeout": "10",
         }
 
@@ -275,7 +275,7 @@ class Normalize(TestCase):
         self.assertEqual(
             {
                 "name": "monitor",
-                "role": const.PCMK_ROLE_PROMOTED_LEGACY,
+                "role": const.PCMK_ROLE_PROMOTED,
                 "timeout": "10",
                 "on-fail": "ignore",
                 "record-pending": "true",
@@ -286,7 +286,7 @@ class Normalize(TestCase):
                 key: operations._normalize(key, value)
                 for key, value in {
                     "name": "monitor",
-                    "role": "master",
+                    "role": "promoted",
                     "timeout": "10",
                     "on-fail": "Ignore",
                     "record-pending": "True",
@@ -550,10 +550,10 @@ class GetResourceOperations(TestCase):
             <operations>
                 <op id="dummy-start" interval="0s" name="start" timeout="20"/>
                 <op id="dummy-stop" interval="0s" name="stop" timeout="20"/>
-                <op id="dummy-monitor-m" interval="10" name="monitor"
-                    role="Master" timeout="20"/>
-                <op id="dummy-monitor-s" interval="11" name="monitor"
-                    role="Slave" timeout="20"/>
+                <op id="dummy-monitor-p" interval="10" name="monitor"
+                    role="Promoted" timeout="20"/>
+                <op id="dummy-monitor-u" interval="11" name="monitor"
+                    role="Unpromoted" timeout="20"/>
             </operations>
         </primitive>
     """
@@ -571,7 +571,7 @@ class GetResourceOperations(TestCase):
     def test_all_operations(self):
         self.assert_op_list(
             operations.get_resource_operations(self.resource_el),
-            ["dummy-start", "dummy-stop", "dummy-monitor-m", "dummy-monitor-s"],
+            ["dummy-start", "dummy-stop", "dummy-monitor-p", "dummy-monitor-u"],
         )
 
     def test_filter_operations(self):
@@ -585,7 +585,7 @@ class GetResourceOperations(TestCase):
             operations.get_resource_operations(
                 self.resource_el, ["monitor", "stop"]
             ),
-            ["dummy-stop", "dummy-monitor-m", "dummy-monitor-s"],
+            ["dummy-stop", "dummy-monitor-p", "dummy-monitor-u"],
         )
 
     def test_filter_none(self):

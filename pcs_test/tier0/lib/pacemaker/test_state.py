@@ -499,8 +499,8 @@ class CommonResourceState(TestCase):
         # pylint: disable=no-self-use
         return {
             "Started": ["node1"],
-            "Master": ["node2"],
-            "Slave": ["node3", "node4"],
+            "Promoted": ["node2"],
+            "Unpromoted": ["node3", "node4"],
         }
 
     def fixture_running_report(self, severity):
