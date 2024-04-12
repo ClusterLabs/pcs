@@ -1,4 +1,5 @@
 from collections.abc import Set
+from dataclasses import dataclass
 from enum import (
     Enum,
     auto,
@@ -100,3 +101,41 @@ class CorosyncNodeAddressType(Enum):
     IPV6 = "IPv6"
     FQDN = "FQDN"
     UNRESOLVABLE = "unresolvable"
+
+
+class ResourceType(Enum):
+    PRIMITIVE = "primitive"
+    GROUP = "group"
+    CLONE = "clone"
+    BUNDLE = "bundle"
+
+
+class ResourceState(Enum):
+    STARTED = "Started"
+    STOPPED = "Stopped"
+    PROMOTED = "Promoted"
+    UNPROMOTED = "Unpromoted"
+    STARTING = "Starting"
+    STOPPING = "Stopping"
+    DISABLED = "disabled"
+    MANAGED = "managed"
+    MAINTENANCE = "maintenance"
+    FAILED = "failed"
+    ACTIVE = "active"
+    ORPHANED = "orphaned"
+    BLOCKED = "blocked"
+    FAILURE_IGNORED = "failure_ignored"
+    PENDING = "pending"
+    LOCKED_TO = "locked_to"
+
+
+class MoreChildrenCheckType(Enum):
+    ALL = auto()
+    ANY = auto()
+    NONE = auto()
+
+
+@dataclass(frozen=True)
+class ResourceStatusQueryResult:
+    query_result: bool
+    text_output: list[Union[str, list[str]]]

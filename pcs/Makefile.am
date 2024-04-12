@@ -176,6 +176,7 @@ EXTRA_DIST		= \
 			  common/types.py \
 			  common/validate.py \
 			  common/status_dto.py \
+			  common/resource_status.py \
 			  config.py \
 			  constraint.py \
 			  daemon/app/common.py \
