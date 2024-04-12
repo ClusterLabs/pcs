@@ -123,6 +123,7 @@ EXTRA_DIST		= \
 			  tier0/common/test_file.py \
 			  tier0/common/test_host.py \
 			  tier0/common/test_node_communicator.py \
+			  tier0/common/test_resource_status.py \
 			  tier0/common/test_str_tools.py \
 			  tier0/common/test_tools.py \
 			  tier0/common/test_tools_xml_fromstring.py \
