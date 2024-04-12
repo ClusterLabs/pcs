@@ -2304,3 +2304,8 @@ def generate_cluster_uuid_local(
         raise LibraryError()
 
     return corosync_conf_instance.facade_to_raw(corosync_conf)
+
+
+def wait_for_idle(env: LibraryEnvironment, wait_value: WaitType) -> None:
+    timeout = env.ensure_wait_satisfiable(wait_value)
+    env.wait_for_idle(timeout)

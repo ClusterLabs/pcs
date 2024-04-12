@@ -202,3 +202,12 @@ def node_clear(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
     lib.cluster.node_clear(
         arg_list[0], allow_clear_cluster_node=modifiers.get("--force")
     )
+
+
+def wait(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
+    modifiers.ensure_only_supported()
+
+    if len(argv) > 1:
+        raise CmdLineInputError()
+
+    lib.cluster.wait(argv[0] if argv else None)
