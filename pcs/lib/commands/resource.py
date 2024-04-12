@@ -1703,12 +1703,17 @@ def move(
     LibraryEnvironment env
     resource_id -- id of a resource to be moved
     node -- node to move the resource to, ban on the current node if None
-    master -- limit the constraint to the Master role
+    master -- limit the constraint to the Promoted role
     lifetime -- lifespan of the constraint, forever if None
     wait -- flag for controlling waiting for pacemaker idle mechanism
     """
     return _Move().run(
-        env, resource_id, node=node, master=master, lifetime=lifetime, wait=wait
+        env,
+        resource_id,
+        node=node,
+        promoted=master,
+        lifetime=lifetime,
+        wait=wait,
     )
 
 
@@ -1747,7 +1752,7 @@ def move_autoclean(
 
     resource_id -- id of a resource to be moved
     node -- node to move the resource to, ban on the current node if None
-    master -- limit the constraint to the Master role
+    master -- limit the constraint to the Promoted role
     wait_timeout -- timeout when waiting for the cluster to apply new
         configuration, if <= 0 wait indefinitely
     strict -- if True affecting other resources than the specified resource
@@ -1799,7 +1804,7 @@ def move_autoclean(
             env.cmd_runner(dict(CIB_file=rsc_moved_cib_file.name)),
             resource_id,
             node=node,
-            master=master,
+            promoted=master,
         )
         rsc_moved_cib_file.seek(0)
         rsc_moved_cib_xml = rsc_moved_cib_file.read()
@@ -2023,12 +2028,17 @@ def ban(env, resource_id, node=None, master=False, lifetime=None, wait=False):
     LibraryEnvironment env
     string resource_id -- id of a resource to be banned
     string node -- node to ban the resource on, ban on the current node if None
-    bool master -- limit the constraint to the Master role
+    bool master -- limit the constraint to the Promoted role
     string lifetime -- lifespan of the constraint, forever if None
     mixed wait -- flag for controlling waiting for pacemaker idle mechanism
     """
     return _Ban().run(
-        env, resource_id, node=node, master=master, lifetime=lifetime, wait=wait
+        env,
+        resource_id,
+        node=node,
+        promoted=master,
+        lifetime=lifetime,
+        wait=wait,
     )
 
 
@@ -2125,10 +2135,10 @@ def _move_ban_pcmk_error_report(
 class _MoveBanTemplate:
     _is_ban = False
 
-    def _validate(self, resource_el, master):
+    def _validate(self, resource_el, promoted):
         raise NotImplementedError()
 
-    def _run_action(self, runner, resource_id, node, master, lifetime):
+    def _run_action(self, runner, resource_id, node, promoted, lifetime):
         raise NotImplementedError()
 
     def _report_action_pcmk_success(self, resource_id, stdout, stderr):
@@ -2155,7 +2165,7 @@ class _MoveBanTemplate:
         env: LibraryEnvironment,
         resource_id,
         node=None,
-        master=False,
+        promoted=False,
         lifetime=None,
         wait: WaitType = False,
     ):
@@ -2168,7 +2178,7 @@ class _MoveBanTemplate:
             get_resources(cib), resource_id
         )
         if resource_el is not None:
-            report_list.extend(self._validate(resource_el, master))
+            report_list.extend(self._validate(resource_el, promoted))
         if node:
             report_list.extend(_nodes_exist_reports(cib, [node]))
         if env.report_processor.report_list(report_list).has_errors:
@@ -2185,7 +2195,7 @@ class _MoveBanTemplate:
             env.cmd_runner(),
             resource_id,
             node=node,
-            master=master,
+            promoted=promoted,
             lifetime=lifetime,
         )
         if retval != 0:
@@ -2221,12 +2231,12 @@ class _MoveBanTemplate:
 
 
 class _Move(_MoveBanTemplate):
-    def _validate(self, resource_el, master):
-        return resource.validations.validate_move(resource_el, master)
+    def _validate(self, resource_el, promoted):
+        return resource.validations.validate_move(resource_el, promoted)
 
-    def _run_action(self, runner, resource_id, node, master, lifetime):
+    def _run_action(self, runner, resource_id, node, promoted, lifetime):
         return resource_move(
-            runner, resource_id, node=node, master=master, lifetime=lifetime
+            runner, resource_id, node=node, promoted=promoted, lifetime=lifetime
         )
 
     def _report_action_pcmk_success(self, resource_id, stdout, stderr):
@@ -2266,12 +2276,12 @@ class _Move(_MoveBanTemplate):
 class _Ban(_MoveBanTemplate):
     _is_ban = True
 
-    def _validate(self, resource_el, master):
-        return resource.validations.validate_ban(resource_el, master)
+    def _validate(self, resource_el, promoted):
+        return resource.validations.validate_ban(resource_el, promoted)
 
-    def _run_action(self, runner, resource_id, node, master, lifetime):
+    def _run_action(self, runner, resource_id, node, promoted, lifetime):
         return resource_ban(
-            runner, resource_id, node=node, master=master, lifetime=lifetime
+            runner, resource_id, node=node, promoted=promoted, lifetime=lifetime
         )
 
     def _report_action_pcmk_success(
@@ -2327,7 +2337,7 @@ def unmove_unban(
     LibraryEnvironment env
     string resource_id -- id of a resource to be unmoved/unbanned
     string node -- node to limit unmoving/unbanning to, all nodes if None
-    bool master -- only remove constraints for Master role
+    bool master -- only remove constraints for Promoted role
     bool expired -- only remove constrains which have already expired
     mixed wait -- flag for controlling waiting for pacemaker idle mechanism
     """
@@ -2354,7 +2364,11 @@ def unmove_unban(
 
     # run the action
     stdout, stderr, retval = resource_unmove_unban(
-        env.cmd_runner(), resource_id, node=node, master=master, expired=expired
+        env.cmd_runner(),
+        resource_id,
+        node=node,
+        promoted=master,
+        expired=expired,
     )
     if retval != 0:
         raise LibraryError(

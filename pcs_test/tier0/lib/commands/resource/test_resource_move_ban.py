@@ -79,7 +79,7 @@ class MoveBanClearBaseMixin:
             ]
         )
 
-    def test_master_of_nonpromotable_resource(self):
+    def test_promoted_of_nonpromotable_resource(self):
         # This is a basic test which checks validation is being done. It
         # utilizes the fact all three commands (move, ban, unmove_unban) share
         # a common situation to check. Detailed validation tests are in
@@ -91,7 +91,7 @@ class MoveBanClearBaseMixin:
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    self.report_code_bad_master,
+                    self.report_code_bad_promoted,
                     resource_id="A",
                     promotable_id="",
                 ),
@@ -172,7 +172,7 @@ class MoveBanBaseMixin(MoveBanClearBaseMixin):
         )
         self.config_pcmk_action(
             resource="A-clone",
-            master=True,
+            promoted=True,
             node="node",
             lifetime="1h",
         )
@@ -216,7 +216,7 @@ class MoveBanBaseMixin(MoveBanClearBaseMixin):
 
 class MoveMixin:
     lib_action = staticmethod(resource.move)
-    report_code_bad_master = (
+    report_code_bad_promoted = (
         report_codes.CANNOT_MOVE_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE
     )
     report_code_pcmk_error = report_codes.RESOURCE_MOVE_PCMK_ERROR
@@ -265,7 +265,7 @@ class Move(MoveMixin, MoveBanBaseMixin, TestCase):
 
 class BanMixin:
     lib_action = staticmethod(resource.ban)
-    report_code_bad_master = (
+    report_code_bad_promoted = (
         report_codes.CANNOT_BAN_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE
     )
     report_code_pcmk_error = report_codes.RESOURCE_BAN_PCMK_ERROR
@@ -287,7 +287,7 @@ class Ban(BanMixin, MoveBanBaseMixin, TestCase):
 
 class UnmoveUnbanMixin:
     lib_action = staticmethod(resource.unmove_unban)
-    report_code_bad_master = (
+    report_code_bad_promoted = (
         report_codes.CANNOT_UNMOVE_UNBAN_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE
     )
     report_code_pcmk_error = report_codes.RESOURCE_UNMOVE_UNBAN_PCMK_ERROR
@@ -302,7 +302,7 @@ class UnmoveUnban(UnmoveUnbanMixin, MoveBanClearBaseMixin, TestCase):
         self.config.runner.cib.load(resources=resources_promotable)
         self.config.runner.pcmk.can_clear_expired()
         self.config_pcmk_action(
-            resource="A-clone", master=True, node="node", expired=True
+            resource="A-clone", promoted=True, node="node", expired=True
         )
         self.lib_action(
             self.env_assist.get_env(),

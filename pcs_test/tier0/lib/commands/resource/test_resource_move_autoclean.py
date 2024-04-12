@@ -322,7 +322,7 @@ class MoveAutocleanSuccess(MoveAutocleanCommonSetup):
         )
         self.config.runner.pcmk.resource_move(
             resource=resource_id,
-            master=is_promotable,
+            promoted=is_promotable,
             node=self.new_node if with_node else None,
             env=dict(CIB_file=self.cib_rsc_move_tmp_file_name),
         )
@@ -334,7 +334,7 @@ class MoveAutocleanSuccess(MoveAutocleanCommonSetup):
         )
         self.config.runner.pcmk.resource_clear(
             resource=resource_id,
-            master=is_promotable,
+            promoted=is_promotable,
             node=self.new_node if with_node else None,
             env=dict(CIB_file=self.cib_constraint_removed_by_unmove_file_name),
         )
@@ -506,7 +506,7 @@ class MoveAutocleanSuccess(MoveAutocleanCommonSetup):
         move_autoclean(self.env_assist.get_env(), resource_id, strict=True)
         self.env_assist.assert_reports(self.get_reports(resource_id))
 
-    def test_master(self):
+    def test_promoted(self):
         resource_id = "clone-A"
         self.tmp_file_mock_obj.set_calls(
             self.get_tmp_files(_simulation_transition_fixture())
@@ -533,7 +533,7 @@ class MoveAutocleanSuccess(MoveAutocleanCommonSetup):
             ]
         )
 
-    def test_master_with_node(self):
+    def test_promoted_with_node(self):
         resource_id = "clone-A"
         self.tmp_file_mock_obj.set_calls(
             self.get_tmp_files(
@@ -570,7 +570,7 @@ class MoveAutocleanSuccess(MoveAutocleanCommonSetup):
             ]
         )
 
-    def test_master_with_node_strict(self):
+    def test_promoted_with_node_strict(self):
         resource_id = "clone-A"
         self.tmp_file_mock_obj.set_calls(
             self.get_tmp_files(_simulation_transition_fixture())
