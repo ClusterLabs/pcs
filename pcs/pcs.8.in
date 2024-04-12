@@ -1382,7 +1382,9 @@ xml
 View xml version of status (output from crm_mon \fB\-r\fR \fB\-1\fR \fB\-X\fR).
 .TP
 wait [<timeout>]
-Wait for the cluster to settle into stable state. Timeout can be specified as number of seconds or pacemaker style timeout. Wait indefinitely long if timeout is not specified.
+Wait for the cluster to settle into stable state. Timeout can be specified as bare number which describes number of seconds or number with unit (s or sec for seconds, m or min for minutes, h or hr for hours). If 'timeout' is not specified it defaults to 60 minutes.
+.br
+Example: pcs status wait 30min
 .TP
 query resource <resource\-id> exists [\fB\-\-quiet\fR]
 Query the existence of the resource.

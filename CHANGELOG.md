@@ -7,6 +7,10 @@
   resource/stonith op defaults config commands ([RHEL-16231])
 - Add lib commands `cib_options.resource_defaults_config` and
   `cib_options.operation_defaults_config` to API v2
+- Add lib command `cluster.wait_for_pcmk_idle` to API v2
+- Add lib command `status.resources_status` to API v2
+- Add `pcs status wait` CLI command ([RHEL-25854])
+- Add `pcs status query resource` CLI commands ([RHEL-21051])
 
 ### Fixed
 - Do not put empty uid/gid corosync configuration options to an uidgid file
@@ -25,6 +29,8 @@
 [RHEL-16231]: https://issues.redhat.com/browse/RHEL-16231
 [RHEL-27492]: https://issues.redhat.com/browse/RHEL-27492
 [RHEL-28749]: https://issues.redhat.com/browse/RHEL-28749
+[RHEL-25854]: https://issues.redhat.com/browse/RHEL-25854
+[RHEL-21051]: https://issues.redhat.com/browse/RHEL-21051
 
 
 ## [0.11.7] - 2024-01-11
