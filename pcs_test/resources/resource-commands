@@ -13,7 +13,8 @@ pcs resource bundle create B1 --force \
   meta is-managed=false target-role=Stopped;
 pcs resource bundle create B2 \
   container docker \
-    image=pcs:test;
+    image=pcs:test \
+  network control-port=9000;
 pcs resource create R1 ocf:pacemaker:Dummy --no-default-ops bundle B2 --force;
 pcs resource create R2 ocf:pacemaker:Stateful --no-default-ops;
 pcs resource create R3 ocf:pacemaker:Stateful --no-default-ops;

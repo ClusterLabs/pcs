@@ -67,6 +67,8 @@ EXTRA_DIST		= \
 			  cli/file/metadata.py \
 			  cli/__init__.py \
 			  cli/nvset.py \
+			  cli/query/__init__.py \
+			  cli/query/resource.py \
 			  cli/reports/__init__.py \
 			  cli/reports/messages.py \
 			  cli/reports/output.py \
