@@ -1662,7 +1662,7 @@ class TestResourcesStatusToDto(TestCase):
         )
         assert_report_item_list_equal(parser.get_warnings(), [])
 
-    def test_skip_bundle(self):
+    def test_skip_bundle_same_id(self):
         status_xml = etree.fromstring(
             fixture_crm_mon_xml(
                 [
@@ -1699,6 +1699,30 @@ class TestResourcesStatusToDto(TestCase):
                     reports.codes.CLUSTER_STATUS_BUNDLE_MEMBER_ID_AS_IMPLICIT,
                     bundle_id="resource-bundle",
                     bad_ids=["resource-bundle-0"],
+                )
+            ],
+        )
+
+    def test_skip_bundle_missing_implicit(self):
+        status_xml = etree.fromstring(
+            fixture_crm_mon_xml(
+                [fixture_bundle_xml("bundle", ['<replica id="0"/>'])]
+            )
+        )
+
+        parser = status.ClusterStatusParser(status_xml)
+        result = parser.status_xml_to_dto()
+
+        self.assertEqual(result, ResourcesStatusDto([]))
+        assert_report_item_list_equal(
+            parser.get_warnings(),
+            [
+                fixture.warn(
+                    reports.codes.BAD_CLUSTER_STATE_DATA,
+                    reason=(
+                        "Replica '0' of bundle 'bundle' is missing implicit "
+                        "container resource"
+                    ),
                 )
             ],
         )

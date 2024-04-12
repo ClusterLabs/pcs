@@ -104,6 +104,7 @@ class BundleSameIdAsImplicitResourceError(Exception):
 
 def cluster_status_parsing_error_to_report(
     e: ClusterStatusParsingError,
+    severity: reports.ReportItemSeverity = reports.ReportItemSeverity.error(),
 ) -> reports.ReportItem:
     reason = ""
     if isinstance(e, EmptyResourceIdError):
@@ -143,7 +144,7 @@ def cluster_status_parsing_error_to_report(
         reason = f"Replicas of bundle '{e.resource_id}' are not the same"
 
     return reports.ReportItem(
-        reports.ReportItemSeverity.error(),
+        severity,
         reports.messages.BadClusterStateData(reason),
     )
 
@@ -345,6 +346,16 @@ class ClusterStatusParser:
                         reports.messages.ClusterStatusBundleMemberIdAsImplicit(
                             e.bundle_id, e.bad_ids
                         )
+                    )
+                )
+            except BundleReplicaMissingImplicitResourceError as e:
+                # TODO crm_mon on Fedora 39 returns resource_agent in legacy
+                # format "ocf::*:*" instead of the new "ocf:*:*" and the parser
+                # then cannot find the proper resources in the replicas.
+                # Skip bundles when the legacy format is used.
+                self._warnings.append(
+                    cluster_status_parsing_error_to_report(
+                        e, reports.ReportItemSeverity.warning()
                     )
                 )
 
