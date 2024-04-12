@@ -16,7 +16,7 @@ from pcs.common.interface.dto import DataTransferObject
 class PrimitiveStatusDto(DataTransferObject):
     # pylint: disable=too-many-instance-attributes
     resource_id: str
-    clone_instance_id: Optional[str]
+    instance_id: Optional[str]
     resource_agent: str
     role: PcmkStatusRoleType
     target_role: Optional[PcmkRoleType]
@@ -36,7 +36,7 @@ class PrimitiveStatusDto(DataTransferObject):
 @dataclass(frozen=True)
 class GroupStatusDto(DataTransferObject):
     resource_id: str
-    clone_instance_id: Optional[str]
+    instance_id: Optional[str]
     maintenance: bool
     description: Optional[str]
     managed: bool

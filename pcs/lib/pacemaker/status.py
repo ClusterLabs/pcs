@@ -149,11 +149,11 @@ def cluster_status_parsing_error_to_report(
 
 
 def _primitive_to_dto(
-    primitive_el: _Element, remove_clone_suffix: bool = False
+    primitive_el: _Element, remove_instance_suffix: bool = False
 ) -> PrimitiveStatusDto:
     resource_id = _get_resource_id(primitive_el)
     clone_suffix = None
-    if remove_clone_suffix:
+    if remove_instance_suffix:
         resource_id, clone_suffix = _remove_clone_suffix(resource_id)
 
     role = _get_role(primitive_el)
@@ -187,7 +187,7 @@ def _primitive_to_dto(
 
 
 def _group_to_dto(
-    group_el: _Element, remove_clone_suffix: bool = False
+    group_el: _Element, remove_instance_suffix: bool = False
 ) -> GroupStatusDto:
     # clone instance id present even when the clone is non unique
     group_id, clone_instance_id = _remove_clone_suffix(
@@ -198,7 +198,9 @@ def _group_to_dto(
 
     for member in group_el:
         if member.tag == _PRIMITIVE_TAG:
-            member_list.append(_primitive_to_dto(member, remove_clone_suffix))
+            member_list.append(
+                _primitive_to_dto(member, remove_instance_suffix)
+            )
         else:
             raise UnexpectedMemberError(
                 group_id,
@@ -220,7 +222,7 @@ def _group_to_dto(
 
 
 def _clone_to_dto(
-    clone_el: _Element, _remove_clone_suffix: bool = False
+    clone_el: _Element, _remove_instance_suffix: bool = False
 ) -> CloneStatusDto:
     clone_id = _get_resource_id(clone_el)
     is_unique = is_true(clone_el.get("unique", "false"))
@@ -275,13 +277,14 @@ def _clone_to_dto(
 
 
 def _bundle_to_dto(
-    bundle_el: _Element, _remove_clone_suffix: bool = False
+    bundle_el: _Element, _remove_instance_suffix: bool = False
 ) -> BundleStatusDto:
     bundle_id = _get_resource_id(bundle_el)
     bundle_type = str(bundle_el.attrib["type"])
+    is_unique = is_true(bundle_el.get("unique", "false"))
 
     replica_list = [
-        _replica_to_dto(replica, bundle_id, bundle_type)
+        _replica_to_dto(replica, bundle_id, bundle_type, is_unique)
         for replica in bundle_el.iterfind(_REPLICA_TAG)
     ]
 
@@ -292,7 +295,7 @@ def _bundle_to_dto(
         bundle_id,
         bundle_type,
         str(bundle_el.attrib["image"]),
-        is_true(bundle_el.get("unique", "false")),
+        is_unique,
         is_true(bundle_el.get("maintenance", "false")),
         bundle_el.get("description"),
         is_true(bundle_el.get("managed", "false")),
@@ -382,12 +385,15 @@ def _remove_clone_suffix(resource_id: str) -> tuple[str, Optional[str]]:
 
 
 def _replica_to_dto(
-    replica_el: _Element, bundle_id: str, bundle_type: str
+    replica_el: _Element,
+    bundle_id: str,
+    bundle_type: str,
+    remove_instance_suffix: bool = False,
 ) -> BundleReplicaStatusDto:
     replica_id = str(replica_el.attrib["id"])
 
     resource_list = [
-        _primitive_to_dto(resource)
+        _primitive_to_dto(resource, remove_instance_suffix)
         for resource in replica_el.iterfind(_PRIMITIVE_TAG)
     ]
 
