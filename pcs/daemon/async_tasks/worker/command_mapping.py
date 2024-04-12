@@ -139,6 +139,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=cluster_property.set_properties,
         required_permission=p.WRITE,
     ),
+    "cluster.wait_for_pcmk_idle": _Cmd(
+        cmd=cluster.wait_for_pcmk_idle,
+        required_permission=p.READ,
+    ),
     "cib.remove_elements": _Cmd(
         cmd=cib.remove_elements,
         required_permission=p.WRITE,
@@ -356,6 +360,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
     # deprecated, API v1 compatibility
     "status.full_cluster_status_plaintext": _Cmd(
         cmd=status.full_cluster_status_plaintext,
+        required_permission=p.READ,
+    ),
+    "status.resources_status": _Cmd(
+        cmd=status.resources_status,
         required_permission=p.READ,
     ),
     # deprecated, API v1 compatibility
