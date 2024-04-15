@@ -718,7 +718,7 @@ class ResourcesStatusFacade:
             raise ResourceNonExistentException(resource_id, instance_id)
 
         if isinstance(resource, GroupStatusDto):
-            return [resource.resource_id for resource in resource.members]
+            return [member.resource_id for member in resource.members]
 
         if isinstance(resource, CloneStatusDto):
             return list(
